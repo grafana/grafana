@@ -131,7 +131,7 @@ interface Props {
   hideQuickRanges?: boolean;
 }
 
-interface PropsWithScreenSize extends Props {
+export interface PropsWithScreenSize extends Props {
   isFullscreen: boolean;
 }
 

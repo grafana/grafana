@@ -1,7 +1,7 @@
 import { dateTime, TimeRange } from '@grafana/data';
-import { render, RenderResult } from '@testing-library/react';
+import { render, RenderResult, screen } from '@testing-library/react';
 import React from 'react';
-import { TimePickerContentWithScreenSize } from './TimePickerContent';
+import { PropsWithScreenSize, TimePickerContentWithScreenSize } from './TimePickerContent';
 
 describe('TimePickerContent', () => {
   const absoluteValue = createAbsoluteTimeRange('2019-12-17T07:48:27.433Z', '2019-12-18T07:49:27.433Z');
@@ -13,112 +13,112 @@ describe('TimePickerContent', () => {
 
   describe('Wide Screen', () => {
     it('renders with history', () => {
-      const container = renderComponent({ value: absoluteValue, history });
-      expect(container.queryByText(/recently used absolute ranges/i)).toBeInTheDocument();
-      expect(container.queryByText(/2019-12-17 07:48:27 to 2019-12-17 07:49:27/i)).toBeInTheDocument();
-      expect(container.queryByText(/2019-10-18 07:50:27 to 2019-10-18 07:51:27/i)).toBeInTheDocument();
+      renderComponent({ value: absoluteValue, history });
+      expect(screen.queryByText(/recently used absolute ranges/i)).toBeInTheDocument();
+      expect(screen.queryByText(/2019-12-17 07:48:27 to 2019-12-17 07:49:27/i)).toBeInTheDocument();
+      expect(screen.queryByText(/2019-10-18 07:50:27 to 2019-10-18 07:51:27/i)).toBeInTheDocument();
     });
 
     it('renders with empty history', () => {
-      const container = renderComponent({ value: absoluteValue });
-      expect(container.queryByText(/recently used absolute ranges/i)).not.toBeInTheDocument();
+      renderComponent({ value: absoluteValue });
+      expect(screen.queryByText(/recently used absolute ranges/i)).not.toBeInTheDocument();
       expect(
-        container.queryByText(
+        screen.queryByText(
           /it looks like you haven't used this time picker before\. as soon as you enter some time intervals, recently used intervals will appear here\./i
         )
       ).toBeInTheDocument();
     });
 
     it('renders without history', () => {
-      const container = renderComponent({ value: absoluteValue, history, showHistory: false });
-      expect(container.queryByText(/recently used absolute ranges/i)).not.toBeInTheDocument();
-      expect(container.queryByText(/2019-12-17 07:48:27 to 2019-12-17 07:49:27/i)).not.toBeInTheDocument();
-      expect(container.queryByText(/2019-10-18 07:50:27 to 2019-10-18 07:51:27/i)).not.toBeInTheDocument();
+      renderComponent({ value: absoluteValue, history, showHistory: false });
+      expect(screen.queryByText(/recently used absolute ranges/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/2019-12-17 07:48:27 to 2019-12-17 07:49:27/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/2019-10-18 07:50:27 to 2019-10-18 07:51:27/i)).not.toBeInTheDocument();
     });
 
     it('renders with relative picker', () => {
-      const container = renderComponent({ value: absoluteValue });
-      expect(container.queryByText(/relative time ranges/i)).toBeInTheDocument();
-      expect(container.queryByText(/other quick ranges/i)).toBeInTheDocument();
+      renderComponent({ value: absoluteValue });
+      expect(screen.queryByText(/relative time ranges/i)).toBeInTheDocument();
+      expect(screen.queryByText(/other quick ranges/i)).toBeInTheDocument();
     });
 
     it('renders without relative picker', () => {
-      const container = renderComponent({ value: absoluteValue, hideQuickRanges: true });
-      expect(container.queryByText(/relative time ranges/i)).not.toBeInTheDocument();
-      expect(container.queryByText(/other quick ranges/i)).not.toBeInTheDocument();
+      renderComponent({ value: absoluteValue, hideQuickRanges: true });
+      expect(screen.queryByText(/relative time ranges/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/other quick ranges/i)).not.toBeInTheDocument();
     });
 
     it('renders with timezone picker', () => {
-      const container = renderComponent({ value: absoluteValue, hideTimeZone: false });
-      expect(container.queryByText(/coordinated universal time/i)).toBeInTheDocument();
+      renderComponent({ value: absoluteValue, hideTimeZone: false });
+      expect(screen.queryByText(/coordinated universal time/i)).toBeInTheDocument();
     });
 
     it('renders without timezone picker', () => {
-      const container = renderComponent({ value: absoluteValue, hideTimeZone: true });
-      expect(container.queryByText(/coordinated universal time/i)).not.toBeInTheDocument();
+      renderComponent({ value: absoluteValue, hideTimeZone: true });
+      expect(screen.queryByText(/coordinated universal time/i)).not.toBeInTheDocument();
     });
   });
 
   describe('Narrow Screen', () => {
     it('renders with history', () => {
-      const container = renderComponent({ value: absoluteValue, history, isFullscreen: false });
-      expect(container.queryByText(/recently used absolute ranges/i)).toBeInTheDocument();
-      expect(container.queryByText(/2019-12-17 07:48:27 to 2019-12-17 07:49:27/i)).toBeInTheDocument();
-      expect(container.queryByText(/2019-10-18 07:50:27 to 2019-10-18 07:51:27/i)).toBeInTheDocument();
+      renderComponent({ value: absoluteValue, history, isFullscreen: false });
+      expect(screen.queryByText(/recently used absolute ranges/i)).toBeInTheDocument();
+      expect(screen.queryByText(/2019-12-17 07:48:27 to 2019-12-17 07:49:27/i)).toBeInTheDocument();
+      expect(screen.queryByText(/2019-10-18 07:50:27 to 2019-10-18 07:51:27/i)).toBeInTheDocument();
     });
 
     it('renders with empty history', () => {
-      const container = renderComponent({ value: absoluteValue, isFullscreen: false });
-      expect(container.queryByText(/recently used absolute ranges/i)).not.toBeInTheDocument();
+      renderComponent({ value: absoluteValue, isFullscreen: false });
+      expect(screen.queryByText(/recently used absolute ranges/i)).not.toBeInTheDocument();
       expect(
-        container.queryByText(
+        screen.queryByText(
           /it looks like you haven't used this time picker before\. as soon as you enter some time intervals, recently used intervals will appear here\./i
         )
       ).not.toBeInTheDocument();
     });
 
     it('renders without history', () => {
-      const container = renderComponent({ value: absoluteValue, isFullscreen: false, history, showHistory: false });
-      expect(container.queryByText(/recently used absolute ranges/i)).not.toBeInTheDocument();
-      expect(container.queryByText(/2019-12-17 07:48:27 to 2019-12-17 07:49:27/i)).not.toBeInTheDocument();
-      expect(container.queryByText(/2019-10-18 07:50:27 to 2019-10-18 07:51:27/i)).not.toBeInTheDocument();
+      renderComponent({ value: absoluteValue, isFullscreen: false, history, showHistory: false });
+      expect(screen.queryByText(/recently used absolute ranges/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/2019-12-17 07:48:27 to 2019-12-17 07:49:27/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/2019-10-18 07:50:27 to 2019-10-18 07:51:27/i)).not.toBeInTheDocument();
     });
 
     it('renders with relative picker', () => {
-      const container = renderComponent({ value: absoluteValue, isFullscreen: false });
-      expect(container.queryByText(/relative time ranges/i)).toBeInTheDocument();
-      expect(container.queryByText(/other quick ranges/i)).toBeInTheDocument();
+      renderComponent({ value: absoluteValue, isFullscreen: false });
+      expect(screen.queryByText(/relative time ranges/i)).toBeInTheDocument();
+      expect(screen.queryByText(/other quick ranges/i)).toBeInTheDocument();
     });
 
     it('renders without relative picker', () => {
-      const container = renderComponent({ value: absoluteValue, isFullscreen: false, hideQuickRanges: true });
-      expect(container.queryByText(/relative time ranges/i)).not.toBeInTheDocument();
-      expect(container.queryByText(/other quick ranges/i)).not.toBeInTheDocument();
+      renderComponent({ value: absoluteValue, isFullscreen: false, hideQuickRanges: true });
+      expect(screen.queryByText(/relative time ranges/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/other quick ranges/i)).not.toBeInTheDocument();
     });
 
     it('renders with absolute picker when absolute value and quick ranges are visible', () => {
-      const container = renderComponent({ value: absoluteValue, isFullscreen: false });
-      expect(container.queryByLabelText(/timepicker from field/i)).toBeInTheDocument();
+      renderComponent({ value: absoluteValue, isFullscreen: false });
+      expect(screen.queryByLabelText(/timepicker from field/i)).toBeInTheDocument();
     });
 
     it('renders with absolute picker when absolute value and quick ranges are hidden', () => {
-      const container = renderComponent({ value: absoluteValue, isFullscreen: false, hideQuickRanges: true });
-      expect(container.queryByLabelText(/timepicker from field/i)).toBeInTheDocument();
+      renderComponent({ value: absoluteValue, isFullscreen: false, hideQuickRanges: true });
+      expect(screen.queryByLabelText(/timepicker from field/i)).toBeInTheDocument();
     });
 
     it('renders without absolute picker when narrow screen and quick ranges are visible', () => {
-      const container = renderComponent({ value: relativeValue, isFullscreen: false });
-      expect(container.queryByLabelText(/timepicker from field/i)).not.toBeInTheDocument();
+      renderComponent({ value: relativeValue, isFullscreen: false });
+      expect(screen.queryByLabelText(/timepicker from field/i)).not.toBeInTheDocument();
     });
 
     it('renders with absolute picker when narrow screen and quick ranges are hidden', () => {
-      const container = renderComponent({ value: relativeValue, isFullscreen: false, hideQuickRanges: true });
-      expect(container.queryByLabelText(/timepicker from field/i)).toBeInTheDocument();
+      renderComponent({ value: relativeValue, isFullscreen: false, hideQuickRanges: true });
+      expect(screen.queryByLabelText(/timepicker from field/i)).toBeInTheDocument();
     });
 
     it('renders without timezone picker', () => {
-      const container = renderComponent({ value: absoluteValue, hideTimeZone: true });
-      expect(container.queryByText(/coordinated universal time/i)).not.toBeInTheDocument();
+      renderComponent({ value: absoluteValue, hideTimeZone: true });
+      expect(screen.queryByText(/coordinated universal time/i)).not.toBeInTheDocument();
     });
   });
 });
@@ -134,14 +134,7 @@ function renderComponent({
   history = [],
   hideQuickRanges = false,
   hideTimeZone = false,
-}: {
-  value: TimeRange;
-  isFullscreen?: boolean;
-  showHistory?: boolean;
-  history?: TimeRange[];
-  hideQuickRanges?: boolean;
-  hideTimeZone?: boolean;
-}): RenderResult {
+}: Pick<PropsWithScreenSize, 'value'> & Partial<PropsWithScreenSize>): RenderResult {
   return render(
     <TimePickerContentWithScreenSize
       onChangeTimeZone={noop}
