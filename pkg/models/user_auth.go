@@ -47,6 +47,7 @@ type LoginInfo struct {
 }
 
 // RequestURIKey is used as key to save request URI in contexts
+// (used for the Enterprise auditing feature)
 type RequestURIKey struct{}
 
 // ---------------------
