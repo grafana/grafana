@@ -27,7 +27,6 @@ export const VizLegendListItem: React.FunctionComponent<Props> = ({ item, onSeri
             onSeriesColorChange(item.label, color);
           }
         }}
-        yAxis={item.yAxis}
       />
       <div
         onClick={event => {

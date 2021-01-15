@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -159,36 +160,36 @@ func tryOAuthAutoLogin(c *models.ReqContext) bool {
 	return false
 }
 
-func (hs *HTTPServer) LoginAPIPing(c *models.ReqContext) Response {
+func (hs *HTTPServer) LoginAPIPing(c *models.ReqContext) response.Response {
 	if c.IsSignedIn || c.IsAnonymous {
-		return JSON(200, "Logged in")
+		return response.JSON(200, "Logged in")
 	}
 
-	return Error(401, "Unauthorized", nil)
+	return response.Error(401, "Unauthorized", nil)
 }
 
-func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Response {
+func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) response.Response {
 	authModule := ""
 	var user *models.User
-	var response *NormalResponse
+	var resp *response.NormalResponse
 
 	defer func() {
-		err := response.err
-		if err == nil && response.errMessage != "" {
-			err = errors.New(response.errMessage)
+		err := resp.Err()
+		if err == nil && resp.ErrMessage() != "" {
+			err = errors.New(resp.ErrMessage())
 		}
 		hs.HooksService.RunLoginHook(&models.LoginInfo{
 			AuthModule:    authModule,
 			User:          user,
 			LoginUsername: cmd.User,
-			HTTPStatus:    response.status,
+			HTTPStatus:    resp.Status(),
 			Error:         err,
 		}, c)
 	}()
 
 	if setting.DisableLoginForm {
-		response = Error(http.StatusUnauthorized, "Login is disabled", nil)
-		return response
+		resp = response.Error(http.StatusUnauthorized, "Login is disabled", nil)
+		return resp
 	}
 
 	authQuery := &models.LoginUserQuery{
@@ -202,29 +203,29 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Res
 	err := bus.Dispatch(authQuery)
 	authModule = authQuery.AuthModule
 	if err != nil {
-		response = Error(401, "Invalid username or password", err)
+		resp = response.Error(401, "Invalid username or password", err)
 		if errors.Is(err, login.ErrInvalidCredentials) || errors.Is(err, login.ErrTooManyLoginAttempts) || errors.Is(err,
 			models.ErrUserNotFound) {
-			return response
+			return resp
 		}
 
 		// Do not expose disabled status,
 		// just show incorrect user credentials error (see #17947)
 		if errors.Is(err, login.ErrUserDisabled) {
 			hs.log.Warn("User is disabled", "user", cmd.User)
-			return response
+			return resp
 		}
 
-		response = Error(500, "Error while trying to authenticate user", err)
-		return response
+		resp = response.Error(500, "Error while trying to authenticate user", err)
+		return resp
 	}
 
 	user = authQuery.User
 
 	err = hs.loginUserWithUser(user, c)
 	if err != nil {
-		response = Error(http.StatusInternalServerError, "Error while signing in user", err)
-		return response
+		resp = response.Error(http.StatusInternalServerError, "Error while signing in user", err)
+		return resp
 	}
 
 	result := map[string]interface{}{
@@ -241,8 +242,8 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Res
 	}
 
 	metrics.MApiLoginPost.Inc()
-	response = JSON(http.StatusOK, result)
-	return response
+	resp = response.JSON(http.StatusOK, result)
+	return resp
 }
 
 func (hs *HTTPServer) loginUserWithUser(user *models.User, c *models.ReqContext) error {
@@ -324,11 +325,11 @@ func (hs *HTTPServer) redirectWithError(ctx *models.ReqContext, err error, v ...
 	ctx.Redirect(setting.AppSubUrl + "/login")
 }
 
-func (hs *HTTPServer) RedirectResponseWithError(ctx *models.ReqContext, err error, v ...interface{}) *RedirectResponse {
+func (hs *HTTPServer) RedirectResponseWithError(ctx *models.ReqContext, err error, v ...interface{}) *response.RedirectResponse {
 	ctx.Logger.Error(err.Error(), v...)
 	if err := hs.trySetEncryptedCookie(ctx, loginErrorCookieName, err.Error(), 60); err != nil {
 		hs.log.Error("Failed to set encrypted cookie", "err", err)
 	}
 
-	return Redirect(setting.AppSubUrl + "/login")
+	return response.Redirect(setting.AppSubUrl + "/login")
 }
