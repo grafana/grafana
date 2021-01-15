@@ -83,6 +83,28 @@ func TestExtractFiles(t *testing.T) {
 		_, err = os.Stat(pluginsDir + "/plugin-with-symlink/symlink_to_txt")
 		require.NoError(t, err)
 	})
+
+	t.Run("Should detect if archive members point outside of the destination directory", func(t *testing.T) {
+		pluginsDir := setupFakePluginsDir(t)
+
+		err := extractFiles("testdata/plugin-with-parent-member.zip", "plugin-with-parent-member",
+			pluginsDir, true)
+		require.EqualError(t, err, fmt.Sprintf(
+			`archive member "../member.txt" tries to write outside of plugin directory: %q, this can be a security risk`,
+			pluginsDir,
+		))
+	})
+
+	t.Run("Should detect if archive members are absolute", func(t *testing.T) {
+		pluginsDir := setupFakePluginsDir(t)
+
+		err := extractFiles("testdata/plugin-with-absolute-member.zip", "plugin-with-absolute-member",
+			pluginsDir, true)
+		require.EqualError(t, err, fmt.Sprintf(
+			`archive member "/member.txt" tries to write outside of plugin directory: %q, this can be a security risk`,
+			pluginsDir,
+		))
+	})
 }
 
 func TestInstallPluginCommand(t *testing.T) {
@@ -200,6 +222,9 @@ func setupFakePluginsDir(t *testing.T) string {
 		err := os.RemoveAll(dirname)
 		assert.NoError(t, err)
 	})
+
+	dirname, err = filepath.Abs(dirname)
+	require.NoError(t, err)
 
 	return dirname
 }
