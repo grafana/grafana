@@ -19,6 +19,7 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
   table: any;
   renderer: any;
   panelHasRowColorMode: boolean;
+  panelHasLinks: boolean;
 
   panelDefaults: any = {
     targets: [{}],
@@ -66,7 +67,8 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
 
     _.defaults(this.panel, this.panelDefaults);
 
-    this.panelHasRowColorMode = this.panel.styles.find((style: any) => style.colorMode === 'row');
+    this.panelHasRowColorMode = Boolean(this.panel.styles.find((style: any) => style.colorMode === 'row'));
+    this.panelHasLinks = Boolean(this.panel.styles.find((style: any) => style.link));
 
     this.events.on(PanelEvents.dataReceived, this.onDataReceived.bind(this));
     this.events.on(PanelEvents.dataSnapshotLoad, this.onDataReceived.bind(this));
