@@ -173,6 +173,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
       const showPoints = customConfig.drawStyle === DrawStyle.Points ? PointVisibility.Always : customConfig.showPoints;
 
+      let { fillOpacity } = customConfig;
       if (customConfig.fillBelowTo) {
         if (!indexByName) {
           indexByName = getNamesToFieldIndex(alignedFrame);
@@ -184,6 +185,9 @@ export const GraphNG: React.FC<GraphNGProps> = ({
             series: [t, b],
             fill: null as any, // using null will have the band use fill options from `t`
           });
+        }
+        if (!fillOpacity) {
+          fillOpacity = 35; // default from flot
         }
       }
 
@@ -197,7 +201,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         showPoints,
         pointSize: customConfig.pointSize,
         pointColor: customConfig.pointColor ?? seriesColor,
-        fillOpacity: customConfig.fillOpacity,
+        fillOpacity,
         spanNulls: customConfig.spanNulls || false,
         show: !customConfig.hideFrom?.graph,
         fillGradient: customConfig.fillGradient,

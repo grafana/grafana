@@ -81,7 +81,20 @@ export class UPlotConfigBuilder {
     }, {});
 
     config.cursor = this.cursor || {};
+
+    // When bands exist, only keep fill when defined
     config.bands = this.bands;
+    if (config.bands?.length) {
+      const keepFill = new Set<number>();
+      for (const b of config.bands) {
+        keepFill.add(b.series[0]);
+      }
+      for (let i = 1; i < config.series.length; i++) {
+        if (!keepFill.has(i)) {
+          config.series[i].fill = undefined;
+        }
+      }
+    }
 
     const cursorDefaults: Cursor = {
       // prevent client-side zoom from triggering at the end of a selection
