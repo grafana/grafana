@@ -6,7 +6,7 @@ import { EdgeDatum, NodeDatum } from './types';
 import { Node } from './Node';
 import { Edge } from './Edge';
 import { ViewControls } from './ViewControls';
-import { DataFrame, Field, FieldType, GrafanaTheme, LinkModel } from '@grafana/data';
+import { DataFrame, GrafanaTheme, LinkModel } from '@grafana/data';
 import { useZoom } from './useZoom';
 import { Bounds, Config, defaultConfig, useLayout } from './layout';
 import { EdgeArrowMarker } from './EdgeArrowMarker';
@@ -15,7 +15,7 @@ import { css } from 'emotion';
 import { useCategorizeFrames } from './useCategorizeFrames';
 import { EdgeLabel } from './EdgeLabel';
 import { useContextMenu } from './useContextMenu';
-import {getEdgeFields, getNodeFields, processServices} from './utils';
+import { processServices } from './utils';
 import { Icon } from '..';
 import { useNodeLimit } from './useNodeLimit';
 
@@ -54,6 +54,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
     border-radius: ${theme.border.radius.md};
     align-items: center;
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: ${theme.palette.warn};
+    color: ${theme.palette.white};
   `,
 }));
 
@@ -91,7 +96,6 @@ export function NodeGraph({ getLinks, dataFrames }: Props) {
   const { panRef, zoomRef, onStepUp, onStepDown, isPanning, position, scale } = usePanAndZoom(bounds);
   const { onEdgeOpen, onNodeOpen, MenuComponent } = useContextMenu(getLinks, nodesDataFrames[0], edgesDataFrames[0]);
   const styles = getStyles(useTheme());
-  const theme = useTheme();
 
   return (
     <div
@@ -142,10 +146,7 @@ export function NodeGraph({ getLinks, dataFrames }: Props) {
       </div>
 
       {hiddenNodesCount > 0 && (
-        <div
-          className={styles.alert}
-          style={{ position: 'absolute', top: 0, right: 0, background: theme.palette.warn, color: 'white' }}
-        >
+        <div className={styles.alert}>
           <Icon size="sm" name={'info-circle'} /> {hiddenNodesCount} nodes are hidden for performance reasons.
         </div>
       )}
