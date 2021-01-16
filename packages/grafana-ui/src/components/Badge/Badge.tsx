@@ -62,7 +62,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, color: BadgeColor) => {
       .setAlpha(0.1)
       .toString();
     borderColor = tinycolor(sourceColor)
-      .lighten(15)
+      .lighten(25)
       .toString();
     textColor = tinycolor(sourceColor)
       .darken(15)
