@@ -32,6 +32,9 @@ export const defaultGraphConfig: GraphFieldConfig = {
 };
 
 export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOptionsArgs<GraphFieldConfig> {
+  const stylesCategory = ['Draw styles'];
+  const axisCategory = ['Axis'];
+
   return {
     standardOptions: {
       [FieldConfigProperty.Color]: {
@@ -48,6 +51,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
         .addRadio({
           path: 'drawStyle',
           name: 'Style',
+          category: stylesCategory,
           defaultValue: cfg.drawStyle,
           settings: {
             options: graphFieldOptions.drawStyle,
@@ -56,6 +60,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
         .addRadio({
           path: 'lineInterpolation',
           name: 'Line interpolation',
+          category: stylesCategory,
           defaultValue: cfg.lineInterpolation,
           settings: {
             options: graphFieldOptions.lineInterpolation,
@@ -65,6 +70,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
         .addSliderInput({
           path: 'lineWidth',
           name: 'Line width',
+          category: stylesCategory,
           defaultValue: cfg.lineWidth,
           settings: {
             min: 0,
@@ -76,6 +82,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
         .addSliderInput({
           path: 'fillOpacity',
           name: 'Fill opacity',
+          category: stylesCategory,
           defaultValue: cfg.fillOpacity,
           settings: {
             min: 0,
@@ -87,6 +94,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
         .addRadio({
           path: 'fillGradient',
           name: 'Fill gradient',
+          category: stylesCategory,
           defaultValue: graphFieldOptions.fillGradient[0].value,
           settings: {
             options: graphFieldOptions.fillGradient,
@@ -107,6 +115,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           id: 'lineStyle',
           path: 'lineStyle',
           name: 'Line style',
+          category: stylesCategory,
           showIf: c => c.drawStyle === DrawStyle.Line,
           editor: LineStyleEditor,
           override: LineStyleEditor,
@@ -117,6 +126,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           path: 'spanNulls',
           name: 'Null values',
           defaultValue: false,
+          category: stylesCategory,
           settings: {
             options: [
               { label: 'Gaps', value: false },
@@ -128,6 +138,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
         .addRadio({
           path: 'showPoints',
           name: 'Show points',
+          category: stylesCategory,
           defaultValue: graphFieldOptions.showPoints[0].value,
           settings: {
             options: graphFieldOptions.showPoints,
@@ -138,6 +149,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           path: 'pointSize',
           name: 'Point size',
           defaultValue: 5,
+          category: stylesCategory,
           settings: {
             min: 1,
             max: 40,
@@ -148,7 +160,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
         .addRadio({
           path: 'axisPlacement',
           name: 'Placement',
-          category: ['Axis'],
+          category: axisCategory,
           defaultValue: graphFieldOptions.axisPlacement[0].value,
           settings: {
             options: graphFieldOptions.axisPlacement,
@@ -157,7 +169,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
         .addTextInput({
           path: 'axisLabel',
           name: 'Label',
-          category: ['Axis'],
+          category: axisCategory,
           defaultValue: '',
           settings: {
             placeholder: 'Optional text',
@@ -169,7 +181,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
         .addNumberInput({
           path: 'axisWidth',
           name: 'Width',
-          category: ['Axis'],
+          category: axisCategory,
           settings: {
             placeholder: 'Auto',
           },
@@ -195,7 +207,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           id: 'scaleDistribution',
           path: 'scaleDistribution',
           name: 'Scale',
-          category: ['Axis'],
+          category: axisCategory,
           editor: ScaleDistributionEditor,
           override: ScaleDistributionEditor,
           defaultValue: { type: ScaleDistribution.Linear },

@@ -14,6 +14,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(TimeSeriesPanel
         path: 'tooltipOptions.mode',
         name: 'Tooltip mode',
         description: '',
+        category: ['Legend & tooltip'],
         defaultValue: 'single',
         settings: {
           options: [
@@ -27,6 +28,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(TimeSeriesPanel
         path: 'legend.displayMode',
         name: 'Legend mode',
         description: '',
+        category: ['Legend & tooltip'],
         defaultValue: LegendDisplayMode.List,
         settings: {
           options: [
@@ -40,6 +42,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(TimeSeriesPanel
         path: 'legend.placement',
         name: 'Legend placement',
         description: '',
+        category: ['Legend & tooltip'],
         defaultValue: 'bottom',
         settings: {
           options: [
@@ -53,6 +56,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(TimeSeriesPanel
         id: 'legend.calcs',
         path: 'legend.calcs',
         name: 'Legend calculations',
+        category: ['Legend & tooltip'],
         description: 'Choose a reducer functions / calculations to include in legend',
         editor: standardEditorsRegistry.get('stats-picker').editor as any,
         defaultValue: [],

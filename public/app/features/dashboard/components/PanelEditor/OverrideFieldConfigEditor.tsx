@@ -94,7 +94,7 @@ export const OverrideFieldConfigEditor: React.FC<Props> = props => {
 
   return (
     <div aria-label={selectors.components.OverridesConfigEditor.content}>
-      <OptionsGroup title="Data option overrides" id="Data option overrides">
+      <OptionsGroup title="Overrides" id="Option overrides" defaultToClosed>
         {config.overrides.length === 0 && (
           <FeatureInfoBox
             title="Overrides"

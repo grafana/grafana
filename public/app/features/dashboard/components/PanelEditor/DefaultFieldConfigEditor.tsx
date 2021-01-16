@@ -72,9 +72,15 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
     return i.category[0] ? i.category[0] : GENERAL_OPTIONS_CATEGORY;
   });
 
+  var priority = ['Common options'];
+
+  const outerConfigGroups = Object.keys(groupedConfigs).sort((a, b) => {
+    return priority.indexOf(b) - priority.indexOf(a);
+  });
+
   return (
     <div aria-label={selectors.components.FieldConfigEditor.content}>
-      {Object.keys(groupedConfigs).map((groupName, i) => {
+      {outerConfigGroups.map((groupName, i) => {
         const group = groupedConfigs[groupName];
         const groupItemsCounter = countGroupItems(group, config);
 

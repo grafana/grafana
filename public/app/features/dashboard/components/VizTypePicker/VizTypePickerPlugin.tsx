@@ -79,7 +79,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 
       &:hover {
         > div:first-child {
-          transform: scale(1.05);
           border-color: ${theme.colors.formFocusOutline};
         }
       }
@@ -92,7 +91,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     current: css`
       label: currentVisualizationItem;
       > div:first-child {
-        ${styleMixins.focusCss(theme)};
+        border-image: linear-gradient(to right, #f05a28 30%, #fbca0a 99%);
+        border-image-slice: 1;
+        border-style: solid;
+        border-top-width: 2px;
+        border-right: 0;
+        border-left: 0;
+        border-bottom: 0;
       }
     `,
     disabled: css`
