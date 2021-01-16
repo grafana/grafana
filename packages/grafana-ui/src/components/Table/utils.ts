@@ -14,6 +14,7 @@ import { DefaultCell } from './DefaultCell';
 import { BarGaugeCell } from './BarGaugeCell';
 import { TableCellDisplayMode, TableFieldOptions } from './types';
 import { JSONViewCell } from './JSONViewCell';
+import { PopupCell } from './PopupCell';
 import { ImageCell } from './ImageCell';
 
 export function getTextAlign(field?: Field): ContentPosition {
@@ -105,6 +106,8 @@ function getCellComponent(displayMode: TableCellDisplayMode, field: Field) {
     case TableCellDisplayMode.BasicGauge:
     case TableCellDisplayMode.GradientGauge:
       return BarGaugeCell;
+    case TableCellDisplayMode.Popup:
+      return PopupCell;
     case TableCellDisplayMode.JSONView:
       return JSONViewCell;
   }

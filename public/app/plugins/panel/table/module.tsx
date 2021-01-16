@@ -2,7 +2,7 @@ import { PanelPlugin } from '@grafana/data';
 import { TablePanel } from './TablePanel';
 import { CustomFieldConfig, Options } from './types';
 import { tableMigrationHandler, tablePanelChangedHandler } from './migrations';
-import { TableCellDisplayMode } from '@grafana/ui';
+import { TableCellDisplayMode, TableCellPopupDisplayMode } from '@grafana/ui';
 
 export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
   .setPanelChangeHandler(tablePanelChangedHandler)
@@ -47,7 +47,23 @@ export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
               { value: TableCellDisplayMode.LcdGauge, label: 'LCD gauge' },
               { value: TableCellDisplayMode.BasicGauge, label: 'Basic gauge' },
               { value: TableCellDisplayMode.JSONView, label: 'JSON View' },
+              { value: TableCellDisplayMode.Popup, label: 'Popup' },
               { value: TableCellDisplayMode.Image, label: 'Image' },
+            ],
+          },
+        })
+        .addSelect({
+          path: 'popupDisplayMode',
+          name: 'Cell Display Mode : Popup - Display mode',
+          defaultValue: TableCellPopupDisplayMode.Auto,
+          showIf: currentOptions => {
+            return currentOptions.displayMode === TableCellDisplayMode.Popup;
+          },
+          settings: {
+            options: [
+              { value: TableCellPopupDisplayMode.Auto, label: 'Auto' },
+              { value: TableCellPopupDisplayMode.JSON, label: 'JSON' },
+              { value: TableCellPopupDisplayMode.Code, label: 'Stack Trace / Source Code' },
             ],
           },
         })

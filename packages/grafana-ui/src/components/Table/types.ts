@@ -18,7 +18,14 @@ export enum TableCellDisplayMode {
   LcdGauge = 'lcd-gauge',
   JSONView = 'json-view',
   BasicGauge = 'basic',
+  Popup = 'popup',
   Image = 'image',
+}
+
+export enum TableCellPopupDisplayMode {
+  Auto = 'auto',
+  Code = 'code',
+  JSON = 'json',
 }
 
 export type FieldTextAlignment = 'auto' | 'left' | 'right' | 'center';
