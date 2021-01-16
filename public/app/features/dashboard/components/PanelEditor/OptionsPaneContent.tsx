@@ -82,8 +82,6 @@ export const OptionsPaneContent: React.FC<Props> = ({
 
   // When the panel has no query only show the main tab
   //const showMainTab = activeTab === 'options' || plugin.meta.skipDataQuery;
-  const onPluginTypeChange = () => {};
-  const onSearchClose = () => {};
   const onToggleVizPicker = () => {
     setVizPickerIsOpen(!vizPickerIsOpen);
   };

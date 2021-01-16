@@ -277,7 +277,7 @@ export const getStandardOptionEditors = () => {
     name: 'Radio',
     description: 'Allows option selection',
     editor(props) {
-      return <RadioButtonGroup {...props} options={props.item.settings?.options} fullWidth />;
+      return <RadioButtonGroup {...props} options={props.item.settings?.options} />;
     },
   };
 

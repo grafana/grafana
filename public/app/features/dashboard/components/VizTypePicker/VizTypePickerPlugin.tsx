@@ -1,6 +1,6 @@
 import React from 'react';
 import { GrafanaTheme, PanelPluginMeta, PluginState } from '@grafana/data';
-import { Badge, BadgeProps, styleMixins, stylesFactory, useTheme } from '@grafana/ui';
+import { Badge, BadgeProps, stylesFactory, useTheme } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import { selectors } from '@grafana/e2e-selectors';
 import { isUnsignedPluginSignature, PluginSignatureBadge } from '../../../plugins/PluginSignatureBadge';
