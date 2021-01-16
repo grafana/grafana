@@ -6,6 +6,7 @@ import { ALL_VARIABLE_TEXT } from './state/types';
 import { QueryVariableModel, VariableModel, VariableRefresh } from './types';
 import { getTimeSrv } from '../dashboard/services/TimeSrv';
 import { variableAdapters } from './adapters';
+import { safeStringifyValue } from '../../core/utils/explore';
 
 /*
  * This regex matches 3 types of variable reference with an optional format specifier
@@ -51,7 +52,7 @@ export const getSearchFilterScopedVar = (args: {
 
 export function containsVariable(...args: any[]) {
   const variableName = args[args.length - 1];
-  args[0] = isString(args[0]) ? args[0] : JSON.stringify(args[0]);
+  args[0] = isString(args[0]) ? args[0] : safeStringifyValue(args[0]);
   const variableString = args.slice(0, -1).join(' ');
   const matches = variableString.match(variableRegex);
   const isMatchingVariable =
