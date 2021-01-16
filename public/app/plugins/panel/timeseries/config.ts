@@ -175,6 +175,22 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           },
           showIf: c => c.axisPlacement !== AxisPlacement.Hidden,
         })
+        .addNumberInput({
+          path: 'axisSoftMin',
+          name: 'Soft min',
+          category: ['Axis'],
+          settings: {
+            placeholder: 'See: Standard options > Min',
+          },
+        })
+        .addNumberInput({
+          path: 'axisSoftMax',
+          name: 'Soft max',
+          category: ['Axis'],
+          settings: {
+            placeholder: 'See: Standard options > Max',
+          },
+        })
         .addCustomEditor<void, ScaleDistributionConfig>({
           id: 'scaleDistribution',
           path: 'scaleDistribution',
