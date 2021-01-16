@@ -114,6 +114,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       overflow: hidden;
       white-space: nowrap;
       font-size: ${theme.typography.size.sm};
+      color: ${theme.colors.textSemiWeak};
       text-align: center;
       height: 23px;
       font-weight: ${theme.typography.weight.semibold};
