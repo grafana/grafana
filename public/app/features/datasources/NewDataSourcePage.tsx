@@ -156,13 +156,7 @@ const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
           {!isPhantom && <Button disabled={plugin.unlicensed}>Select</Button>}
         </>
       }
-      labels={
-        !isPhantom && (
-          <div>
-            <PluginSignatureBadge status={plugin.signature} />
-          </div>
-        )
-      }
+      labels={!isPhantom && <PluginSignatureBadge status={plugin.signature} />}
       className={isPhantom ? 'add-data-source-item--phantom' : ''}
       onClick={onClick}
       aria-label={selectors.pages.AddDataSource.dataSourcePlugins(plugin.name)}
