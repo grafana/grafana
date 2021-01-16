@@ -11,7 +11,7 @@ import { Field } from '@grafana/ui/src/components/Forms/Field';
 
 interface OwnProps {
   panel: PanelModel;
-  onToggleOptionGroup: (expand: boolean) => void;
+  onClose: (expand: boolean) => void;
 }
 
 interface ConnectedProps {
@@ -25,7 +25,7 @@ interface DispatchProps {
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
 export const VisualizationTabUnconnected = React.forwardRef<HTMLInputElement, Props>(
-  ({ panel, plugin, changePanelPlugin, onToggleOptionGroup }, ref) => {
+  ({ panel, plugin, changePanelPlugin, onClose }, ref) => {
     const [searchQuery, setSearchQuery] = useState('');
     const theme = useTheme();
     const styles = getStyles(theme);
@@ -35,7 +35,7 @@ export const VisualizationTabUnconnected = React.forwardRef<HTMLInputElement, Pr
     }
     const onPluginTypeChange = (meta: PanelPluginMeta) => {
       if (meta.id === plugin.meta.id) {
-        onToggleOptionGroup(false);
+        onClose(false);
       } else {
         changePanelPlugin(panel, meta.id);
       }
@@ -72,6 +72,7 @@ export const VisualizationTabUnconnected = React.forwardRef<HTMLInputElement, Pr
             onKeyPress={onKeyPress}
             prefix={<Icon name="filter" className={styles.icon} />}
             suffix={suffix}
+            autoFocus
             placeholder="Filter visualizations"
             ref={ref}
           />
@@ -98,6 +99,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     wrapper: css`
       display: flex;
       flex-direction: column;
+      padding: ${theme.spacing.sm};
+      padding-top: 0;
     `,
     searchClear: css`
       color: ${theme.palette.gray60};

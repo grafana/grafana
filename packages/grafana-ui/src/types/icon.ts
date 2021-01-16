@@ -24,6 +24,7 @@ export type IconName =
   | 'download-alt'
   | 'mobile-android'
   | 'plus-square'
+  | 'minus-square'
   | 'folder-plus'
   | 'folder-open'
   | 'folder'

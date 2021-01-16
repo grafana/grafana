@@ -22,7 +22,9 @@ interface PanelOptionsEditorProps<TOptions> {
   options: TOptions;
   onChange: (options: TOptions) => void;
 }
-const DISPLAY_OPTIONS_CATEGORY = 'Display';
+
+const DISPLAY_OPTIONS_CATEGORY = 'Display options';
+
 export const PanelOptionsEditor: React.FC<PanelOptionsEditorProps<any>> = ({
   plugin,
   options,
@@ -57,37 +59,43 @@ export const PanelOptionsEditor: React.FC<PanelOptionsEditorProps<any>> = ({
 
   return (
     <>
-      {Object.keys(optionEditors).map((c, i) => {
-        const optionsToShow = optionEditors[c]
-          .map((e, j) => {
-            if (e.showIf && !e.showIf(options)) {
-              return null;
-            }
+      <OptionsGroup title={DISPLAY_OPTIONS_CATEGORY} id={DISPLAY_OPTIONS_CATEGORY}>
+        {Object.keys(optionEditors).map((c, i) => {
+          const optionsToShow = optionEditors[c]
+            .map((e, j) => {
+              if (e.showIf && !e.showIf(options)) {
+                return null;
+              }
 
-            const label = (
-              <Label description={e.description} category={e.category?.slice(1) as string[]}>
-                {e.name}
-              </Label>
-            );
-            return (
-              <Field label={label} key={`${e.id}/${j}`}>
-                <e.editor
-                  value={lodashGet(options, e.path)}
-                  onChange={value => onOptionChange(e.path, value)}
-                  item={e}
-                  context={context}
-                />
-              </Field>
-            );
-          })
-          .filter(e => e !== null);
+              const label = (
+                <Label description={e.description} category={e.category?.slice(1) as string[]}>
+                  {e.name}
+                </Label>
+              );
+              return (
+                <Field label={label} key={`${e.id}/${j}`}>
+                  <e.editor
+                    value={lodashGet(options, e.path)}
+                    onChange={value => onOptionChange(e.path, value)}
+                    item={e}
+                    context={context}
+                  />
+                </Field>
+              );
+            })
+            .filter(e => e !== null);
 
-        return optionsToShow.length > 0 ? (
-          <OptionsGroup title={c} defaultToClosed id={`${c}/${i}`} key={`${c}/${i}`}>
-            <div>{optionsToShow}</div>
-          </OptionsGroup>
-        ) : null;
-      })}
+          if (c === DISPLAY_OPTIONS_CATEGORY) {
+            return <div>{optionsToShow}</div>;
+          }
+
+          return optionsToShow.length > 0 ? (
+            <OptionsGroup title={c} defaultToClosed id={`${c}/${i}`} key={`${c}/${i}`} nested>
+              <div>{optionsToShow}</div>
+            </OptionsGroup>
+          ) : null;
+        })}
+      </OptionsGroup>
     </>
   );
 };

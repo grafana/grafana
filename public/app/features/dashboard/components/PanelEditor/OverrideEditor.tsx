@@ -140,7 +140,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
   const isSystemOverride = isSystemOverrideGuard(override);
 
   return (
-    <OptionsGroup renderTitle={renderOverrideTitle} id={name} key={name}>
+    <OptionsGroup renderTitle={renderOverrideTitle} id={name} key={name} nested>
       <Field label={matcherLabel}>
         <matcherUi.component
           matcher={matcherUi.matcher}

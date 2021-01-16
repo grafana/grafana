@@ -6,7 +6,7 @@ import { Subscription } from 'rxjs';
 
 import { FieldConfigSource, GrafanaTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Button, HorizontalGroup, Icon, RadioButtonGroup, stylesFactory } from '@grafana/ui';
+import { Button, HorizontalGroup, RadioButtonGroup, stylesFactory } from '@grafana/ui';
 
 import config from 'app/core/config';
 import { appEvents } from 'app/core/core';
@@ -14,7 +14,7 @@ import { calculatePanelSize } from './utils';
 
 import { PanelEditorTabs } from './PanelEditorTabs';
 import { DashNavTimeControls } from '../DashNav/DashNavTimeControls';
-import { OptionsPaneContent } from './OptionsPaneContent';
+import { OptionsPaneContent, VizButton } from './OptionsPaneContent';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
 import { SubMenuItems } from 'app/features/dashboard/components/SubMenu/SubMenuItems';
 import { BackButton } from 'app/core/components/BackButton/BackButton';
@@ -223,7 +223,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 
   renderPanelToolbar(styles: EditorStyles) {
-    const { dashboard, location, uiState, variables, updateTimeZoneForSession } = this.props;
+    const { dashboard, location, uiState, variables, updateTimeZoneForSession, plugin } = this.props;
     return (
       <div className={styles.panelToolbar}>
         <HorizontalGroup justify={variables.length > 0 ? 'space-between' : 'flex-end'} align="flex-start">
@@ -236,14 +236,11 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
               location={location}
               onChangeTimeZone={updateTimeZoneForSession}
             />
-            {!uiState.isPanelOptionsVisible && (
-              <DashNavButton
-                onClick={this.onTogglePanelOptions}
-                tooltip="Open options pane"
-                classSuffix="close-options"
-              >
-                <Icon name="angle-left" /> <span style={{ paddingLeft: '6px' }}>Show options</span>
-              </DashNavButton>
+            {!uiState.isPanelOptionsVisible && plugin && (
+              <>
+                <VizButton plugin={plugin} onClick={this.onTogglePanelOptions} />
+                <DashNavButton icon="cog" onClick={this.onTogglePanelOptions} tooltip="Open options pane" />
+              </>
             )}
           </HorizontalGroup>
         </HorizontalGroup>

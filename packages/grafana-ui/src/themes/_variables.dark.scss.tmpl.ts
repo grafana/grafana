@@ -241,7 +241,7 @@ $navbarHeight: 55px;
 $navbarBorder: 1px solid $dark-6;
 
 $navbarButtonBackground: $panel-bg;
-$navbar-button-border: #2f2f32;
+$navbar-button-border: ${theme.colors.border1};
 
 // Sidemenu
 // -------------------------

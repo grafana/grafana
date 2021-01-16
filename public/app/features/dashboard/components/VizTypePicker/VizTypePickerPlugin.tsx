@@ -56,8 +56,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       left: 0;
       width: 100%;
       height: 100%;
-      background: ${theme.colors.bg2};
-      border: 1px solid ${theme.colors.border2};
+      background: ${theme.colors.bg1};
+      border: 1px solid ${theme.colors.border1};
       border-radius: 3px;
       transform: scale(1);
       transform-origin: center;
@@ -70,7 +70,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       text-align: center;
       cursor: pointer;
       display: flex;
-      margin-right: 10px;
       align-items: center;
       justify-content: center;
       padding-bottom: 6px;

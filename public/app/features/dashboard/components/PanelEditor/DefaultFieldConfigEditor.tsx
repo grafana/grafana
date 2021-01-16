@@ -33,11 +33,7 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
           : undefined
         : get(defaults, item.path);
 
-      let label: ReactNode | undefined = (
-        <Label description={item.description} category={item.category?.slice(1) as string[]}>
-          {item.name}
-        </Label>
-      );
+      let label: ReactNode | undefined = <Label description={item.description}>{item.name}</Label>;
 
       // hide label if there is only one item and category name is same as item, name
       if (categoryItemCount === 1 && item.category?.[0] === item.name) {

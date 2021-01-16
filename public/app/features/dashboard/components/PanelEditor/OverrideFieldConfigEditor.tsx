@@ -7,6 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { css } from 'emotion';
 import { getDocsLink } from 'app/core/utils/docsLinks';
 import { Props } from './types';
+import { OptionsGroup } from './OptionsGroup';
 
 /**
  * Expects the container div to have size set and will fill it 100%
@@ -93,20 +94,22 @@ export const OverrideFieldConfigEditor: React.FC<Props> = props => {
 
   return (
     <div aria-label={selectors.components.OverridesConfigEditor.content}>
-      {config.overrides.length === 0 && (
-        <FeatureInfoBox
-          title="Overrides"
-          url={getDocsLink(DocsId.FieldConfigOverrides)}
-          className={css`
-            margin: ${theme.spacing.md};
-          `}
-        >
-          Field override rules give you a fine grained control over how your data is displayed.
-        </FeatureInfoBox>
-      )}
+      <OptionsGroup title="Data option overrides" id="Data option overrides">
+        {config.overrides.length === 0 && (
+          <FeatureInfoBox
+            title="Overrides"
+            url={getDocsLink(DocsId.FieldConfigOverrides)}
+            className={css`
+              margin: ${theme.spacing.md};
+            `}
+          >
+            Field override rules give you a fine grained control over how your data is displayed.
+          </FeatureInfoBox>
+        )}
 
-      {renderOverrides()}
-      {renderAddOverride()}
+        {renderOverrides()}
+        {renderAddOverride()}
+      </OptionsGroup>
     </div>
   );
 };

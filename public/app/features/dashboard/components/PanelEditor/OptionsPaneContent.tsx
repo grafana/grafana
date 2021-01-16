@@ -1,8 +1,7 @@
-import React, { CSSProperties, useCallback, useState } from 'react';
-import Transition from 'react-transition-group/Transition';
-import { FieldConfigSource, GrafanaTheme, PanelPlugin, SelectableValue } from '@grafana/data';
+import React, { useState, useCallback } from 'react';
+import { FieldConfigSource, GrafanaTheme, PanelPlugin } from '@grafana/data';
 import { DashboardModel, PanelModel } from '../../state';
-import { CustomScrollbar, Icon, Input, Select, stylesFactory, Tab, TabContent, TabsBar, useTheme } from '@grafana/ui';
+import { CustomScrollbar, Icon, stylesFactory, TabContent, useStyles, useTheme } from '@grafana/ui';
 import { OverrideFieldConfigEditor } from './OverrideFieldConfigEditor';
 import { DefaultFieldConfigEditor } from './DefaultFieldConfigEditor';
 import { css } from 'emotion';
@@ -10,6 +9,7 @@ import { PanelOptionsTab } from './PanelOptionsTab';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
 import { usePanelLatestData } from './usePanelLatestData';
 import { selectors } from '@grafana/e2e-selectors';
+import { VisualizationTab } from './VisualizationTab';
 
 interface Props {
   plugin: PanelPlugin;
@@ -34,8 +34,8 @@ export const OptionsPaneContent: React.FC<Props> = ({
 }: Props) => {
   const theme = useTheme();
   const styles = getStyles(theme);
-  const [activeTab, setActiveTab] = useState('options');
-  const [isSearching, setSearchMode] = useState(false);
+  const [vizPickerIsOpen, setVizPickerIsOpen] = useState(false);
+  //const [isSearching, setSearchMode] = useState(false);
   const { data, hasSeries } = usePanelLatestData(panel, { withTransforms: true, withFieldConfig: false });
 
   const renderFieldOptions = useCallback(
@@ -81,177 +81,113 @@ export const OptionsPaneContent: React.FC<Props> = ({
   );
 
   // When the panel has no query only show the main tab
-  const showMainTab = activeTab === 'options' || plugin.meta.skipDataQuery;
+  //const showMainTab = activeTab === 'options' || plugin.meta.skipDataQuery;
+  const onPluginTypeChange = () => {};
+  const onSearchClose = () => {};
+  const onToggleVizPicker = () => {
+    setVizPickerIsOpen(!vizPickerIsOpen);
+  };
 
   return (
     <div className={styles.panelOptionsPane} aria-label={selectors.components.PanelEditor.OptionsPane.content}>
-      {plugin && (
+      <VisualizationButtons plugin={plugin} styles={styles} onClose={onClose} onToggleVizPicker={onToggleVizPicker} />
+      <CustomScrollbar autoHeightMin="100%">
         <div className={styles.wrapper}>
-          <TabsBar className={styles.tabsBar}>
-            <TabsBarContent
-              width={width}
-              plugin={plugin}
-              isSearching={isSearching}
-              styles={styles}
-              activeTab={activeTab}
-              onClose={onClose}
-              setSearchMode={setSearchMode}
-              setActiveTab={setActiveTab}
-              panel={panel}
-            />
-          </TabsBar>
+          {vizPickerIsOpen && <VisualizationTab panel={panel} onClose={onToggleVizPicker} />}
           <TabContent className={styles.tabContent}>
-            <CustomScrollbar autoHeightMin="100%">
-              {showMainTab ? (
-                <PanelOptionsTab
-                  panel={panel}
-                  plugin={plugin}
-                  dashboard={dashboard}
-                  data={data}
-                  onPanelConfigChange={onPanelConfigChange}
-                  onPanelOptionsChanged={onPanelOptionsChanged}
-                />
-              ) : (
-                <>
-                  {activeTab === 'defaults' && renderFieldOptions(plugin)}
-                  {activeTab === 'overrides' && renderFieldOverrideOptions(plugin)}
-                </>
-              )}
-            </CustomScrollbar>
+            <PanelOptionsTab
+              panel={panel}
+              plugin={plugin}
+              dashboard={dashboard}
+              data={data}
+              onPanelConfigChange={onPanelConfigChange}
+              onPanelOptionsChanged={onPanelOptionsChanged}
+            />
+            {renderFieldOptions(plugin)}
+            {renderFieldOverrideOptions(plugin)}
           </TabContent>
         </div>
-      )}
+      </CustomScrollbar>
     </div>
   );
 };
 
-export const TabsBarContent: React.FC<{
-  width: number;
+export const VisualizationButtons: React.FC<{
   plugin: PanelPlugin;
-  isSearching: boolean;
-  activeTab: string;
-  styles: OptionsPaneStyles;
+  onToggleVizPicker: () => void;
   onClose: () => void;
-  setSearchMode: (mode: boolean) => void;
-  setActiveTab: (tab: string) => void;
-  panel: PanelModel;
-}> = ({ width, plugin, isSearching, activeTab, onClose, setSearchMode, setActiveTab, styles, panel }) => {
-  const overridesCount =
-    panel.getFieldConfig().overrides.length === 0 ? undefined : panel.getFieldConfig().overrides.length;
-
-  if (isSearching) {
-    const defaultStyles = {
-      transition: 'width 50ms ease-in-out',
-      width: '50%',
-      display: 'flex',
-    };
-
-    const transitionStyles: { [str: string]: CSSProperties } = {
-      entered: { width: '100%' },
-    };
-
-    return (
-      <Transition in={true} timeout={0} appear={true}>
-        {state => {
-          return (
-            <div className={styles.searchWrapper}>
-              <div style={{ ...defaultStyles, ...transitionStyles[state] }}>
-                <Input
-                  className={styles.searchInput}
-                  type="text"
-                  prefix={<Icon name="search" />}
-                  ref={elem => elem && elem.focus()}
-                  placeholder="Search all options"
-                  suffix={
-                    <Icon name="times" onClick={() => setSearchMode(false)} className={styles.searchRemoveIcon} />
-                  }
-                />
-              </div>
-            </div>
-          );
-        }}
-      </Transition>
-    );
-  }
-
-  // Show the appropriate tabs
-  let tabs = tabSelections;
-  let active = tabs.find(v => v.value === activeTab)!;
-
-  // If no field configs hide Fields & Override tab
-  if (plugin.fieldConfigRegistry.isEmpty()) {
-    active = tabSelections[0];
-    tabs = [active];
-  }
-
+  styles: OptionsPaneStyles;
+}> = ({ plugin, onToggleVizPicker, onClose, styles }) => {
   return (
-    <>
-      {width < 352 ? (
-        <div className="flex-grow-1" aria-label={selectors.components.PanelEditor.OptionsPane.select}>
-          <Select
-            options={tabs}
-            value={active}
-            onChange={v => {
-              setActiveTab(v.value!);
-            }}
-          />
-        </div>
-      ) : (
-        <>
-          {tabs.map(item => (
-            <Tab
-              key={item.value}
-              label={item.label!}
-              counter={item.value === 'overrides' ? overridesCount : undefined}
-              active={active.value === item.value}
-              onChangeTab={() => setActiveTab(item.value!)}
-              title={item.tooltip}
-              aria-label={selectors.components.PanelEditor.OptionsPane.tab(item.label!)}
-            />
-          ))}
-          <div className="flex-grow-1" />
-        </>
-      )}
-      <div className={styles.tabsButton}>
-        <DashNavButton
-          icon="angle-right"
-          tooltip="Close options pane"
-          classSuffix="close-options"
-          onClick={onClose}
-          iconSize="lg"
-        />
-      </div>
-    </>
+    <div className={styles.vizButtonBar}>
+      <VizButton plugin={plugin} onClick={onToggleVizPicker} />
+      <DashNavButton icon="search" tooltip="Search options" />
+      <DashNavButton icon="minus-square" tooltip="Collapse all sections" />
+      <DashNavButton icon="plus-square" tooltip="Expand all sections" />
+      <DashNavButton icon="cog" onClick={onClose} tooltip="Close options pane" />
+    </div>
   );
 };
 
-const tabSelections: Array<SelectableValue<string>> = [
-  {
-    label: 'Panel',
-    value: 'options',
-    tooltip: 'Configure panel display options',
-  },
-  {
-    label: 'Field',
-    value: 'defaults',
-    tooltip: 'Configure field options',
-  },
-  {
-    label: 'Overrides',
-    value: 'overrides',
-    tooltip: 'Configure field option overrides',
-  },
-];
+export const VizButton: React.FC<{
+  plugin: PanelPlugin;
+  onClick: () => void;
+}> = ({ plugin, onClick }) => {
+  const styles = useStyles((theme: GrafanaTheme) => ({
+    button: css`
+      background: ${theme.colors.bg1};
+      border: 1px solid ${theme.colors.border1};
+      height: ${theme.height.md}px;
+      padding: 0 ${theme.spacing.sm};
+      color: ${theme.colors.textWeak};
+      display: flex;
+      align-items: center;
+      flex-grow: 1;
+
+      &:focus {
+        outline: none;
+      }
+
+      &:hover {
+        color: ${theme.colors.textStrong};
+      }
+
+      span {
+        flex-grow: 1;
+        text-align: left;
+      }
+
+      img {
+        width: 16px;
+        height: 16px;
+        margin-right: ${theme.spacing.sm};
+      }
+
+      svg {
+        margin-left: ${theme.spacing.xs};
+      }
+    `,
+  }));
+
+  return (
+    <button className={styles.button} onClick={onClick}>
+      <img src={plugin.meta.info.logos.small} />
+      <span>{plugin.meta.name}</span>
+      <Icon name="angle-down" />
+    </button>
+  );
+};
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     wrapper: css`
       display: flex;
       flex-direction: column;
-      height: 100%;
+      min-height: 100%;
       padding-top: ${theme.spacing.md};
     `,
     panelOptionsPane: css`
+      padding-top: ${theme.spacing.md};
       height: 100%;
       width: 100%;
     `,
@@ -275,9 +211,15 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       flex-direction: column;
       flex-grow: 1;
-      min-height: 0;
       background: ${theme.colors.bodyBg};
       border-left: 1px solid ${theme.colors.pageHeaderBorder};
+      border-top: 1px solid ${theme.colors.pageHeaderBorder};
+    `,
+    vizButtonBar: css`
+      display: flex;
+      flex-direction: row;
+      flex-grow: 1;
+      margin-right: ${theme.spacing.xs};
     `,
     tabsButton: css``,
     legacyOptions: css`

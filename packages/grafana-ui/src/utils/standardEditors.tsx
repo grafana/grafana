@@ -46,7 +46,8 @@ import { StatsPickerEditor } from '../components/OptionsUI/stats';
  * Returns collection of common field config properties definitions
  */
 export const getStandardFieldConfigs = () => {
-  const category = ['Standard options'];
+  const standardCategoryName = 'Standard data options';
+
   const displayName: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
     id: 'displayName',
     path: 'displayName',
@@ -60,7 +61,7 @@ export const getStandardFieldConfigs = () => {
       expandTemplateVars: true,
     },
     shouldApply: () => true,
-    category,
+    category: [standardCategoryName],
   };
 
   const unit: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
@@ -78,7 +79,7 @@ export const getStandardFieldConfigs = () => {
     },
 
     shouldApply: field => field.type === FieldType.number,
-    category,
+    category: [standardCategoryName],
   };
 
   const min: FieldConfigPropertyItem<any, number, NumberFieldConfigSettings> = {
@@ -95,7 +96,7 @@ export const getStandardFieldConfigs = () => {
       placeholder: 'auto',
     },
     shouldApply: field => field.type === FieldType.number,
-    category,
+    category: [standardCategoryName],
   };
 
   const max: FieldConfigPropertyItem<any, number, NumberFieldConfigSettings> = {
@@ -113,7 +114,7 @@ export const getStandardFieldConfigs = () => {
     },
 
     shouldApply: field => field.type === FieldType.number,
-    category,
+    category: [standardCategoryName],
   };
 
   const decimals: FieldConfigPropertyItem<any, number, NumberFieldConfigSettings> = {
@@ -133,7 +134,7 @@ export const getStandardFieldConfigs = () => {
     },
 
     shouldApply: field => field.type === FieldType.number,
-    category,
+    category: [standardCategoryName],
   };
 
   const thresholds: FieldConfigPropertyItem<any, ThresholdsConfig, ThresholdsFieldConfigSettings> = {
@@ -152,7 +153,7 @@ export const getStandardFieldConfigs = () => {
       ],
     },
     shouldApply: () => true,
-    category: ['Thresholds'],
+    category: [standardCategoryName, 'Thresholds'],
     getItemsCount: value => (value ? value.steps.length : 0),
   };
 
@@ -168,7 +169,7 @@ export const getStandardFieldConfigs = () => {
     settings: {},
     defaultValue: [],
     shouldApply: () => true,
-    category: ['Value mappings'],
+    category: [standardCategoryName, 'Value mappings'],
     getItemsCount: (value?) => (value ? value.length : 0),
   };
 
@@ -187,7 +188,7 @@ export const getStandardFieldConfigs = () => {
     },
     // ??? any optionsUi with no value
     shouldApply: () => true,
-    category,
+    category: [standardCategoryName],
   };
 
   const links: FieldConfigPropertyItem<any, DataLink[], StringFieldConfigSettings> = {
@@ -201,7 +202,7 @@ export const getStandardFieldConfigs = () => {
       placeholder: '-',
     },
     shouldApply: () => true,
-    category: ['Data links'],
+    category: [standardCategoryName, 'Data links'],
     getItemsCount: value => (value ? value.length : 0),
   };
 
@@ -217,7 +218,7 @@ export const getStandardFieldConfigs = () => {
       byValueSupport: true,
       preferThresholdsMode: true,
     },
-    category,
+    category: [standardCategoryName],
   };
 
   return [unit, min, max, decimals, displayName, noValue, color, thresholds, mappings, links];
