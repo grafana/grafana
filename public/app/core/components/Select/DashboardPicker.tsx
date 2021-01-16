@@ -9,7 +9,7 @@ import { DashboardDTO } from 'app/types';
 
 export interface Props {
   onSelected: (dashboard: DashboardDTO) => void;
-  currentDashboard?: SelectableValue<string>;
+  currentDashboard?: SelectableValue<number>;
   width?: number;
   isClearable?: boolean;
   invalid?: boolean;
@@ -20,7 +20,8 @@ const getDashboards = (query = '') => {
   return backendSrv.search({ type: 'dash-db', query }).then((result: DashboardSearchHit[]) => {
     return result.map((item: DashboardSearchHit) => ({
       id: item.id,
-      value: item.uid,
+      uid: item.uid,
+      value: item.id,
       label: `${item.folderTitle ? item.folderTitle : 'General'}/${item.title}`,
     }));
   });
