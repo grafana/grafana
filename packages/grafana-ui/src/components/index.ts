@@ -131,7 +131,8 @@ export { FieldConfigItemHeaderTitle } from './FieldConfigs/FieldConfigItemHeader
 // Next-gen forms
 export { Form } from './Forms/Form';
 export { InputControl } from './InputControl';
-export * from './Button';
+export { Button, LinkButton, ButtonVariant } from './Button';
+export { ToolbarButton } from './ToolbarButton/ToolbarButton';
 export { ValuePicker } from './ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
 export { getFormStyles } from './Forms/getFormStyles';
