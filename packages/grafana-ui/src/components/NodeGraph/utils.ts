@@ -53,10 +53,10 @@ export function getEdgeFields(edges: DataFrame) {
 /**
  * Transform nodes and edges dataframes into array of objects that the layout code can then work with.
  */
-export function processServices(nodes: DataFrame, edges: DataFrame): { nodes: NodeDatum[]; links: EdgeDatum[] } {
+export function processNodes(nodes: DataFrame, edges: DataFrame): { nodes: NodeDatum[]; links: EdgeDatum[] } {
   const nodeFields = getNodeFields(nodes);
 
-  const servicesMap =
+  const nodesMap =
     nodeFields.id?.values.toArray().reduce<{ [id: string]: NodeDatum }>((acc, id, index) => {
       acc[id] = {
         id: id,
@@ -81,7 +81,7 @@ export function processServices(nodes: DataFrame, edges: DataFrame): { nodes: No
     const target = edgeFields.target?.values.get(index);
     const source = edgeFields.source?.values.get(index);
     // We are adding incoming edges count so we can later on find out which nodes are the roots
-    servicesMap[target].incoming++;
+    nodesMap[target].incoming++;
 
     return {
       id,
@@ -94,7 +94,7 @@ export function processServices(nodes: DataFrame, edges: DataFrame): { nodes: No
   });
 
   return {
-    nodes: Object.values(servicesMap),
+    nodes: Object.values(nodesMap),
     links: edgesMapped || [],
   };
 }

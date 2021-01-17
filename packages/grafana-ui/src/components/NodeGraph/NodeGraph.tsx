@@ -15,7 +15,7 @@ import { css } from 'emotion';
 import { useCategorizeFrames } from './useCategorizeFrames';
 import { EdgeLabel } from './EdgeLabel';
 import { useContextMenu } from './useContextMenu';
-import { processServices } from './utils';
+import { processNodes } from './utils';
 import { Icon } from '..';
 import { useNodeLimit } from './useNodeLimit';
 
@@ -84,7 +84,7 @@ export function NodeGraph({ getLinks, dataFrames }: Props) {
 
   // TODO we should be able to allow multiple dataframes for both edges and nodes, could be issue with node ids which in
   //  that case should be unique or figure a way to link edges and nodes dataframes together.
-  const processed = useMemo(() => processServices(nodesDataFrames[0], edgesDataFrames[0]), [
+  const processed = useMemo(() => processNodes(nodesDataFrames[0], edgesDataFrames[0]), [
     nodesDataFrames[0],
     edgesDataFrames[0],
   ]);
