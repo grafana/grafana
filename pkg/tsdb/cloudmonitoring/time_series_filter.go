@@ -149,7 +149,8 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 			timeSeriesFilter.handleNonDistributionSeries(
 				series, defaultMetricName, seriesLabels, queryRes, frame)
 			frames = append(frames, frame)
-		} else {
+			continue
+		} 
 			buckets := make(map[int]*data.Frame)
 			for i := len(series.Points) - 1; i >= 0; i-- {
 				point := series.Points[i]
@@ -210,7 +211,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 			for i := 0; i < len(buckets); i++ {
 				frames = append(frames, buckets[i])
 			}
-		}
+		
 	}
 	if len(response.TimeSeries) > 0 {
 		resourceType := ""
