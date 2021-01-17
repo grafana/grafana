@@ -87,8 +87,16 @@ export const inputSizesPixels = (size: string) => {
 };
 
 export const getPropertiesForButtonSize = (props: StyleProps) => {
-  const { hasText, hasIcon, size } = props;
+  const { size } = props;
   const { spacing, typography, height } = props.theme;
+
+  if (props.variant === 'toolbar') {
+    return {
+      padding: `0 ${spacing.sm}`,
+      fontSize: typography.size.md,
+      height: height.md,
+    };
+  }
 
   switch (size) {
     case 'sm':
@@ -100,14 +108,14 @@ export const getPropertiesForButtonSize = (props: StyleProps) => {
 
     case 'lg':
       return {
-        padding: `0 ${hasText ? spacing.lg : spacing.md} 0 ${hasIcon ? spacing.md : spacing.lg}`,
+        padding: `0 ${spacing.lg}`,
         fontSize: typography.size.lg,
         height: height.lg,
       };
     case 'md':
     default:
       return {
-        padding: `0 ${hasText ? spacing.md : spacing.sm} 0 ${hasIcon ? spacing.sm : spacing.md}`,
+        padding: `0 ${spacing.md}`,
         fontSize: typography.size.md,
         height: height.md,
       };

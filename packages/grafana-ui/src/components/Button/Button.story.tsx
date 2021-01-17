@@ -35,31 +35,59 @@ export const Variants: Story<ButtonProps> = ({ children, ...args }) => {
   const variants: ButtonVariant[] = ['primary', 'secondary', 'destructive', 'link'];
 
   return (
-    <HorizontalGroup spacing="lg">
-      {variants.map(variant => (
-        <VerticalGroup spacing="lg" key={variant}>
-          {sizes.map(size => (
-            <Button variant={variant} size={size} key={size}>
-              {variant} {size}
-            </Button>
-          ))}
-        </VerticalGroup>
-      ))}
-    </HorizontalGroup>
+    <VerticalGroup>
+      <HorizontalGroup spacing="lg">
+        {variants.map(variant => (
+          <VerticalGroup spacing="lg" key={variant}>
+            {sizes.map(size => (
+              <Button variant={variant} size={size} key={size}>
+                {variant} {size}
+              </Button>
+            ))}
+          </VerticalGroup>
+        ))}
+      </HorizontalGroup>
+      <div />
+      <HorizontalGroup spacing="lg">
+        <div>With icon and text</div>
+        <Button icon="cloud" size="sm">
+          Configure
+        </Button>
+        <Button icon="cloud">Configure</Button>
+        <Button icon="cloud" size="lg">
+          Configure
+        </Button>
+      </HorizontalGroup>
+      <div />
+      <HorizontalGroup spacing="lg">
+        <div>With icon only</div>
+        <Button icon="cloud" size="sm" />
+        <Button icon="cloud" size="md" />
+        <Button icon="cloud" size="lg" />
+      </HorizontalGroup>
+      <div />
+      <HorizontalGroup spacing="lg">
+        <div>Inside ButtonGroup</div>
+        <ToolbarButtonGroup noSpacing>
+          <Button icon="cloud">Cloud</Button>
+          <Button icon="sync" />
+        </ToolbarButtonGroup>
+      </HorizontalGroup>
+    </VerticalGroup>
   );
 };
 
-// export const ToolbarButton = () => {
-//   const theme = useTheme();
+export const ToolbarButton = () => {
+  const theme = useTheme();
 
-//   return (
-//     <div style={{ background: theme.colors.dashboardBg, padding: '32px' }}>
-//       <VerticalGroup>
-//         Wrapped in normal ToolbarButtonGroup (md spacing)
-//         <ToolbarButtonGroup>
-//           <Button variant="toolbar">Just text</Button>
-//         </ToolbarButtonGroup>
-//       </VerticalGroup>
-//     </div>
-//   );
-// };
+  return (
+    <div style={{ background: theme.colors.dashboardBg, padding: '32px' }}>
+      <VerticalGroup>
+        Wrapped in normal ToolbarButtonGroup (md spacing)
+        <ToolbarButtonGroup>
+          <Button variant="toolbar">Just text</Button>
+        </ToolbarButtonGroup>
+      </VerticalGroup>
+    </div>
+  );
+};
