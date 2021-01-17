@@ -25,8 +25,8 @@ const getStyles = (theme: GrafanaTheme) => ({
   wrapper: css`
     display: flex;
 
-    a,
-    button {
+    > a,
+    > button {
       margin-left: ${theme.spacing.sm};
 
       &:first-child {
@@ -37,8 +37,8 @@ const getStyles = (theme: GrafanaTheme) => ({
   wrapperNoSpacing: css`
     display: flex;
 
-    a,
-    button {
+    > a,
+    > button {
       border-radius: 0;
       border-right: 0;
 

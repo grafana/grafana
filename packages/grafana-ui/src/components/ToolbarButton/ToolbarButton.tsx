@@ -83,7 +83,6 @@ const getStyles = (theme: GrafanaTheme) => ({
 
     &:hover {
       color: ${theme.colors.text};
-      border: 1px solid ${theme.colors.border3};
       background: ${styleMixins.hoverColor(theme.colors.bg1, theme)};
     }
   `,
