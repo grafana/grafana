@@ -31,7 +31,6 @@ export default {
 };
 
 export const Variants: Story<ButtonProps> = ({ children, ...args }) => {
-  const theme = useTheme();
   const sizes: ComponentSize[] = ['lg', 'md', 'sm'];
   const variants: ButtonVariant[] = ['primary', 'secondary', 'destructive', 'link'];
 
@@ -72,8 +71,8 @@ export const Variants: Story<ButtonProps> = ({ children, ...args }) => {
       <HorizontalGroup spacing="lg">
         <div>Inside ButtonGroup</div>
         <ButtonGroup noSpacing>
-          <Button icon="cloud">Cloud</Button>
-          <Button icon="sync" />
+          <Button icon="sync">Run query</Button>
+          <Button icon="angle-down" />
         </ButtonGroup>
       </HorizontalGroup>
     </VerticalGroup>

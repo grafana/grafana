@@ -43,7 +43,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, Props>(
     const body = (
       <button ref={ref} className={buttonStyles} {...rest}>
         {icon && <Icon name={icon} size={'lg'} />}
-        {imgSrc && <img src={imgSrc} />}
+        {imgSrc && <img className={styles.img} src={imgSrc} />}
         {children && <span className={contentStyles}>{children}</span>}
         {isOpen === false && <Icon name="angle-down" />}
         {isOpen === true && <Icon name="angle-up" />}
@@ -75,12 +75,6 @@ const getStyles = (theme: GrafanaTheme) => ({
       outline: none;
     }
 
-    img {
-      width: 16px;
-      height: 16px;
-      margin-right: ${theme.spacing.sm};
-    }
-
     &:hover {
       color: ${theme.colors.text};
       background: ${styleMixins.hoverColor(theme.colors.bg1, theme)};
@@ -88,6 +82,11 @@ const getStyles = (theme: GrafanaTheme) => ({
   `,
   narrow: css`
     padding: 0 ${theme.spacing.xs};
+  `,
+  img: css`
+    width: 16px;
+    height: 16px;
+    margin-right: ${theme.spacing.sm};
   `,
   buttonFullWidth: css`
     flex-grow: 1;
