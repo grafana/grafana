@@ -15,23 +15,38 @@ export interface Props extends HTMLAttributes<HTMLButtonElement> {
   imgSrc?: string;
   /** if true or false will show angle-down/up */
   isOpen?: boolean;
+  /** Controls flex-grow: 1 */
+  fullWidth?: boolean;
+  /** reduces padding to xs */
+  narrow?: boolean;
 }
 
 export const ToolbarButton = forwardRef<HTMLButtonElement, Props>(
-  ({ tooltip, icon, className, children, imgSrc, isOpen, ...rest }, ref) => {
+  ({ tooltip, icon, className, children, imgSrc, fullWidth, isOpen, narrow, ...rest }, ref) => {
     const styles = useStyles(getStyles);
+
     const contentStyles = cx({
       [styles.content]: true,
       [styles.contentWithIcon]: !!icon,
+      [styles.contentWithRightIcon]: isOpen !== undefined,
     });
 
+    const buttonStyles = cx(
+      {
+        [styles.button]: true,
+        [styles.buttonFullWidth]: fullWidth,
+        [styles.narrow]: narrow,
+      },
+      className
+    );
+
     const body = (
-      <button ref={ref} className={cx(styles.button, className)} {...rest}>
+      <button ref={ref} className={buttonStyles} {...rest}>
         {icon && <Icon name={icon} size={'lg'} />}
         {imgSrc && <img src={imgSrc} />}
         {children && <span className={contentStyles}>{children}</span>}
-        {isOpen === false && <Icon className={styles.angleIcon} name="angle-down" />}
-        {isOpen === true && <Icon className={styles.angleIcon} name="angle-up" />}
+        {isOpen === false && <Icon name="angle-down" />}
+        {isOpen === true && <Icon name="angle-up" />}
       </button>
     );
 
@@ -48,14 +63,13 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, Props>(
 const getStyles = (theme: GrafanaTheme) => ({
   button: css`
     background: ${theme.colors.bg1};
-    border: 1px solid ${theme.colors.border1};
+    border: 1px solid ${theme.colors.border2};
     height: ${theme.height.md}px;
     padding: 0 ${theme.spacing.sm};
     color: ${theme.colors.textWeak};
     border-radius: ${theme.border.radius.md};
     display: flex;
     align-items: center;
-    flex-grow: 1;
 
     &:focus {
       outline: none;
@@ -69,16 +83,23 @@ const getStyles = (theme: GrafanaTheme) => ({
 
     &:hover {
       color: ${theme.colors.text};
+      border: 1px solid ${theme.colors.border3};
       background: ${styleMixins.hoverColor(theme.colors.bg1, theme)};
     }
   `,
-  angleIcon: css`
-    margin-left: ${theme.spacing.sm};
+  narrow: css`
+    padding: 0 ${theme.spacing.xs};
+  `,
+  buttonFullWidth: css`
+    flex-grow: 1;
   `,
   content: css`
-    margin: 1;
+    flex-grow: 1;
   `,
   contentWithIcon: css`
     padding-left: ${theme.spacing.sm};
+  `,
+  contentWithRightIcon: css`
+    padding-right: ${theme.spacing.sm};
   `,
 });
