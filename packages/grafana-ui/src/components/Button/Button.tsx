@@ -1,7 +1,7 @@
 import React, { AnchorHTMLAttributes, ButtonHTMLAttributes } from 'react';
 import { css, cx } from 'emotion';
 import tinycolor from 'tinycolor2';
-import { styleMixins, stylesFactory, useTheme } from '../../themes';
+import { stylesFactory, useTheme } from '../../themes';
 import { IconName } from '../../types/icon';
 import { getPropertiesForButtonSize } from '../Forms/commonStyles';
 import { GrafanaTheme } from '@grafana/data';
@@ -122,7 +122,11 @@ export const getButtonStyles = stylesFactory((props: StyleProps) => {
       cursor: pointer;
       border: 1px solid ${borderColor};
       border-radius: ${theme.border.radius.sm};
-      ${fullWidth && `flex-grow: 1;`}
+      ${fullWidth &&
+        `
+        flex-grow: 1;
+        justify-content: center;
+      `}
       ${variantStyles}      
 
       &[disabled],
@@ -142,7 +146,12 @@ export const getButtonStyles = stylesFactory((props: StyleProps) => {
       ${iconOnly && `margin-right: -${padding / 2}px;`}
     `,
     content: css`
-      flex-grow: 1;
+      display: flex;
+      align-items: center;
+      flex-direction: row;
+      align-items: center;
+      white-space: nowrap;
+      height: 100%;
     `,
   };
 });

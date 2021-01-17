@@ -66,7 +66,9 @@ export const Variants: Story<ButtonProps> = ({ children, ...args }) => {
         <Button icon="cloud" size="lg" />
       </HorizontalGroup>
       <div />
-      <Button fullWidth>Button with fullWidth</Button>
+      <Button icon="plus" fullWidth>
+        Button with fullWidth
+      </Button>
       <div />
       <HorizontalGroup spacing="lg">
         <div>Inside ButtonGroup</div>
