@@ -21,6 +21,7 @@ type StandardOptionConfig = {
   settings?: any;
 };
 
+/** @beta */
 export interface SetFieldConfigOptionsArgs<TFieldConfigOptions = any> {
   /**
    * Configuration object of the standard field config properites

@@ -92,7 +92,9 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
   }, []);
 
   const mapAnnotationToXYCoords = useCallback(
-    (annotation: AnnotationsDataFrameViewDTO) => {
+    (frame: DataFrame, index: number) => {
+      const view = new DataFrameView<AnnotationsDataFrameViewDTO>(frame);
+      const annotation = view.get(index);
       const plotInstance = plotCtx.getPlotInstance();
       if (!annotation.time || !plotInstance) {
         return undefined;
@@ -107,14 +109,16 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
   );
 
   const renderMarker = useCallback(
-    (annotation: AnnotationsDataFrameViewDTO) => {
+    (frame: DataFrame, index: number) => {
+      const view = new DataFrameView<AnnotationsDataFrameViewDTO>(frame);
+      const annotation = view.get(index);
       return <AnnotationMarker time={timeFormatter(annotation.time)} text={annotation.text} tags={annotation.tags} />;
     },
     [timeFormatter]
   );
 
   return (
-    <EventsCanvas<AnnotationsDataFrameViewDTO>
+    <EventsCanvas
       id="annotations"
       events={annotations}
       renderEventMarker={renderMarker}

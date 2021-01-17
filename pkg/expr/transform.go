@@ -131,14 +131,17 @@ func QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.Que
 	}
 
 	datasourceID := int64(0)
+	var datasourceUID string
 
 	if req.PluginContext.DataSourceInstanceSettings != nil {
 		datasourceID = req.PluginContext.DataSourceInstanceSettings.ID
+		datasourceUID = req.PluginContext.DataSourceInstanceSettings.UID
 	}
 
 	getDsInfo := &models.GetDataSourceQuery{
 		OrgId: req.PluginContext.OrgID,
 		Id:    datasourceID,
+		Uid:   datasourceUID,
 	}
 
 	if err := bus.Dispatch(getDsInfo); err != nil {

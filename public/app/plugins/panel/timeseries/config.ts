@@ -1,4 +1,11 @@
-import { FieldColorModeId, FieldConfigProperty, FieldType, identityOverrideProcessor } from '@grafana/data';
+import {
+  FieldColorModeId,
+  FieldConfigProperty,
+  FieldType,
+  identityOverrideProcessor,
+  SetFieldConfigOptionsArgs,
+  stringOverrideProcessor,
+} from '@grafana/data';
 import {
   AxisPlacement,
   DrawStyle,
@@ -9,12 +16,12 @@ import {
   PointVisibility,
   ScaleDistribution,
   ScaleDistributionConfig,
+  GraphGradientMode,
 } from '@grafana/ui';
 import { SeriesConfigEditor } from './HideSeriesConfigEditor';
 import { ScaleDistributionEditor } from './ScaleDistributionEditor';
 import { LineStyleEditor } from './LineStyleEditor';
-import { SetFieldConfigOptionsArgs } from '@grafana/data/src/panel/PanelPlugin';
-import { GraphGradientMode } from '@grafana/ui/src/components/uPlot/config';
+import { FillBellowToEditor } from './FillBelowToEditor';
 
 export const defaultGraphConfig: GraphFieldConfig = {
   drawStyle: DrawStyle.Line,
@@ -88,6 +95,16 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           },
           showIf: c => c.drawStyle !== DrawStyle.Points,
         })
+        .addCustomEditor({
+          id: 'fillBelowTo',
+          path: 'fillBelowTo',
+          name: 'Fill below to',
+          editor: FillBellowToEditor,
+          override: FillBellowToEditor,
+          process: stringOverrideProcessor,
+          hideFromDefaults: true,
+          shouldApply: f => true,
+        })
         .addCustomEditor<void, LineStyle>({
           id: 'lineStyle',
           path: 'lineStyle',
@@ -159,6 +176,22 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
             placeholder: 'Auto',
           },
           showIf: c => c.axisPlacement !== AxisPlacement.Hidden,
+        })
+        .addNumberInput({
+          path: 'axisSoftMin',
+          name: 'Soft min',
+          category: ['Axis'],
+          settings: {
+            placeholder: 'See: Standard options > Min',
+          },
+        })
+        .addNumberInput({
+          path: 'axisSoftMax',
+          name: 'Soft max',
+          category: ['Axis'],
+          settings: {
+            placeholder: 'See: Standard options > Max',
+          },
         })
         .addCustomEditor<void, ScaleDistributionConfig>({
           id: 'scaleDistribution',

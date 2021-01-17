@@ -73,6 +73,7 @@ export interface LineConfig {
 export interface FillConfig {
   fillColor?: string;
   fillOpacity?: number;
+  fillBelowTo?: string; // name of the field
 }
 
 /**
@@ -111,6 +112,8 @@ export interface AxisConfig {
   axisPlacement?: AxisPlacement;
   axisLabel?: string;
   axisWidth?: number; // pixels ideally auto?
+  axisSoftMin?: number;
+  axisSoftMax?: number;
   scaleDistribution?: ScaleDistributionConfig;
 }
 
@@ -163,9 +166,9 @@ export const graphFieldOptions = {
   ] as Array<SelectableValue<AxisPlacement>>,
 
   fillGradient: [
-    { label: 'None', value: undefined },
+    { label: 'None', value: GraphGradientMode.None },
     { label: 'Opacity', value: GraphGradientMode.Opacity },
     { label: 'Hue', value: GraphGradientMode.Hue },
-    { label: 'Color scheme', value: GraphGradientMode.Scheme },
+    //  { label: 'Color scheme', value: GraphGradientMode.Scheme },
   ] as Array<SelectableValue<GraphGradientMode>>,
 };

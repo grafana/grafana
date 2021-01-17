@@ -24,6 +24,7 @@ import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { useRevision } from '../uPlot/hooks';
 import { getFieldColorModeForField, getFieldSeriesColor } from '@grafana/data';
 import { GraphNGLegendEvent, GraphNGLegendEventMode } from './types';
+import { isNumber } from 'lodash';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
@@ -44,6 +45,8 @@ const defaultConfig: GraphFieldConfig = {
   showPoints: PointVisibility.Auto,
   axisPlacement: AxisPlacement.Auto,
 };
+
+export const FIXED_UNIT = '__fixed';
 
 export const GraphNG: React.FC<GraphNGProps> = ({
   data,
@@ -88,7 +91,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
     [onLegendClick, data]
   );
 
-  // reference change will not triger re-render
+  // reference change will not trigger re-render
   const currentTimeRange = useRef<TimeRange>(timeRange);
 
   useLayoutEffect(() => {
@@ -104,7 +107,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       return builder;
     }
 
-    // X is the first field in the alligned frame
+    // X is the first field in the aligned frame
     const xField = alignedFrame.fields[0];
 
     if (xField.type === FieldType.time) {
@@ -136,6 +139,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         theme,
       });
     }
+    let indexByName: Map<string, number> | undefined = undefined;
 
     for (let i = 0; i < alignedFrame.fields.length; i++) {
       const field = alignedFrame.fields[i];
@@ -150,7 +154,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       }
 
       const fmt = field.display ?? defaultFormatter;
-      const scaleKey = config.unit || '__fixed';
+      const scaleKey = config.unit || FIXED_UNIT;
       const colorMode = getFieldColorModeForField(field);
       const scaleColor = getFieldSeriesColor(field, theme);
       const seriesColor = scaleColor.color;
@@ -163,6 +167,8 @@ export const GraphNG: React.FC<GraphNGProps> = ({
           log: customConfig.scaleDistribution?.log,
           min: field.config.min,
           max: field.config.max,
+          softMin: customConfig.axisSoftMin,
+          softMax: customConfig.axisSoftMax,
         });
 
         builder.addAxis({
@@ -178,10 +184,29 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       const showPoints = customConfig.drawStyle === DrawStyle.Points ? PointVisibility.Always : customConfig.showPoints;
       const dataFrameFieldIndex = getDataFrameFieldIndex ? getDataFrameFieldIndex(i) : undefined;
 
+      let { fillOpacity } = customConfig;
+      if (customConfig.fillBelowTo) {
+        if (!indexByName) {
+          indexByName = getNamesToFieldIndex(alignedFrame);
+        }
+        const t = indexByName.get(getFieldDisplayName(field, alignedFrame));
+        const b = indexByName.get(customConfig.fillBelowTo);
+        if (isNumber(b) && isNumber(t)) {
+          builder.addBand({
+            series: [t, b],
+            fill: null as any, // using null will have the band use fill options from `t`
+          });
+        }
+        if (!fillOpacity) {
+          fillOpacity = 35; // default from flot
+        }
+      }
+
       builder.addSeries({
         scaleKey,
         showPoints,
         colorMode,
+        fillOpacity,
         drawStyle: customConfig.drawStyle!,
         lineColor: customConfig.lineColor ?? seriesColor,
         lineWidth: customConfig.lineWidth,
@@ -189,7 +214,6 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         lineStyle: customConfig.lineStyle,
         pointSize: customConfig.pointSize,
         pointColor: customConfig.pointColor ?? seriesColor,
-        fillOpacity: customConfig.fillOpacity,
         spanNulls: customConfig.spanNulls || false,
         show: !customConfig.hideFrom?.graph,
         gradientMode: customConfig.gradientMode,
@@ -295,3 +319,11 @@ const mapMouseEventToMode = (event: React.MouseEvent): GraphNGLegendEventMode =>
   }
   return GraphNGLegendEventMode.ToggleSelection;
 };
+
+function getNamesToFieldIndex(frame: DataFrame): Map<string, number> {
+  const names = new Map<string, number>();
+  for (let i = 0; i < frame.fields.length; i++) {
+    names.set(getFieldDisplayName(frame.fields[i], frame), i);
+  }
+  return names;
+}

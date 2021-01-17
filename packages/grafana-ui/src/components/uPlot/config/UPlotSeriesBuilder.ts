@@ -209,16 +209,22 @@ function getHueGradientFn(color: string, opacity: number): (self: uPlot, seriesI
   return (plot: uPlot, seriesIdx: number) => {
     const ctx = getCanvasContext();
     const gradient = ctx.createLinearGradient(0, plot.bbox.top, 0, plot.bbox.top + plot.bbox.height);
+
     const color1 = tinycolor(color)
       .spin(-25)
       .darken(30)
       .setAlpha(opacity)
-      .toString();
+      .toRgbString();
+
     const color2 = tinycolor(color)
       .spin(25)
-      .lighten(35)
+      .lighten(25)
       .setAlpha(opacity)
-      .toString();
+      .toRgbString();
+
+    console.log('color', color);
+    console.log('color1', color1);
+    console.log('color2', color2);
 
     gradient.addColorStop(0, color2);
     gradient.addColorStop(1, color1);
@@ -229,6 +235,7 @@ function getHueGradientFn(color: string, opacity: number): (self: uPlot, seriesI
 
 /**
  * Experimental & quick and dirty test
+ * Not being used
  */
 function getScaleGradientFn(
   opacity: number,
