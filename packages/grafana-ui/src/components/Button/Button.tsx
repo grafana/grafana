@@ -1,39 +1,43 @@
-import React, { AnchorHTMLAttributes, ButtonHTMLAttributes, useContext } from 'react';
+import React, { AnchorHTMLAttributes, ButtonHTMLAttributes } from 'react';
 import { css, cx } from 'emotion';
 import tinycolor from 'tinycolor2';
-import { styleMixins, stylesFactory, ThemeContext } from '../../themes';
+import { styleMixins, stylesFactory, useTheme } from '../../themes';
 import { IconName } from '../../types/icon';
-import { getFocusStyle, getPropertiesForButtonSize } from '../Forms/commonStyles';
+import { getPropertiesForButtonSize } from '../Forms/commonStyles';
 import { GrafanaTheme } from '@grafana/data';
-import { ButtonContent } from './ButtonContent';
 import { ComponentSize } from '../../types/size';
 import { focusCss } from '../../themes/mixins';
+import { Icon } from '../Icon/Icon';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'link' | 'toolbar';
+export type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'link';
 
 type CommonProps = {
   size?: ComponentSize;
   variant?: ButtonVariant;
   icon?: IconName;
   className?: string;
+  children?: React.ReactNode;
+  fullWidth?: boolean;
 };
 
 export type ButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ variant, icon, children, className, ...otherProps }, ref) => {
-    const theme = useContext(ThemeContext);
+  ({ variant = 'primary', size = 'md', icon, fullWidth, children, className, ...otherProps }, ref) => {
+    const theme = useTheme();
     const styles = getButtonStyles({
       theme,
-      size: otherProps.size || 'md',
-      variant: variant || 'primary',
+      size,
+      variant,
+      icon,
+      fullWidth,
+      children,
     });
 
     return (
       <button className={cx(styles.button, className)} {...otherProps} ref={ref}>
-        <ButtonContent icon={icon} size={otherProps.size}>
-          {children}
-        </ButtonContent>
+        {icon && <Icon name={icon} size={size} className={styles.icon} />}
+        {children && <span className={styles.content}>{children}</span>}
       </button>
     );
   }
@@ -44,12 +48,15 @@ Button.displayName = 'Button';
 type ButtonLinkProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement> & AnchorHTMLAttributes<HTMLAnchorElement>;
 
 export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
-  ({ variant, icon, children, className, disabled, ...otherProps }, ref) => {
-    const theme = useContext(ThemeContext);
+  ({ variant = 'primary', size = 'md', icon, fullWidth, children, className, disabled, ...otherProps }, ref) => {
+    const theme = useTheme();
     const styles = getButtonStyles({
       theme,
-      size: otherProps.size || 'md',
-      variant: variant || 'primary',
+      fullWidth,
+      size,
+      variant,
+      icon,
+      children,
     });
 
     const linkButtonStyles =
@@ -68,9 +75,8 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
         ref={ref}
         tabIndex={disabled ? -1 : 0}
       >
-        <ButtonContent icon={icon} size={otherProps.size}>
-          {children}
-        </ButtonContent>
+        {icon && <Icon name={icon} size={size} className={styles.icon} />}
+        {children && <span className={styles.content}>{children}</span>}
       </a>
     );
   }
@@ -79,9 +85,13 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
 LinkButton.displayName = 'LinkButton';
 
 export interface StyleProps {
-  theme: GrafanaTheme;
   size: ComponentSize;
   variant: ButtonVariant;
+  children?: React.ReactNode;
+  icon?: IconName;
+  theme: GrafanaTheme;
+  fullWidth?: boolean;
+  narrow?: boolean;
 }
 
 const disabledStyles = css`
@@ -91,9 +101,10 @@ const disabledStyles = css`
 `;
 
 export const getButtonStyles = stylesFactory((props: StyleProps) => {
-  const { theme, variant } = props;
-  const { padding, fontSize, height } = getPropertiesForButtonSize(props);
+  const { theme, variant, size, children, fullWidth } = props;
+  const { padding, fontSize, height } = getPropertiesForButtonSize(size, theme);
   const { borderColor, variantStyles } = getPropertiesForVariant(theme, variant);
+  const iconOnly = !children;
 
   return {
     button: css`
@@ -103,7 +114,7 @@ export const getButtonStyles = stylesFactory((props: StyleProps) => {
       font-weight: ${theme.typography.weight.semibold};
       font-family: ${theme.typography.fontFamily.sansSerif};
       font-size: ${fontSize};
-      padding: ${padding};
+      padding: 0 ${padding}px;
       height: ${height}px;
       // Deduct border from line-height for perfect vertical centering on windows and linux
       line-height: ${height - 2}px;
@@ -111,22 +122,27 @@ export const getButtonStyles = stylesFactory((props: StyleProps) => {
       cursor: pointer;
       border: 1px solid ${borderColor};
       border-radius: ${theme.border.radius.sm};
-      ${variantStyles}
+      ${fullWidth && `flex-grow: 1;`}
+      ${variantStyles}      
 
       &[disabled],
         &:disabled {
         ${disabledStyles};
       }
     `,
-    // used for buttons with icon only
-    iconButton: css`
-      padding-right: 0;
+    img: css`
+      width: 16px;
+      height: 16px;
+      margin-right: ${theme.spacing.sm};
+      margin-left: -${theme.spacing.xs};
     `,
-    iconWrap: css`
-      label: button-icon-wrap;
-      & + * {
-        margin-left: ${theme.spacing.sm};
-      }
+    icon: css`
+      margin-left: -${padding / 2}px;
+      ${!iconOnly && `margin-right: ${padding / 2}px;`}
+      ${iconOnly && `margin-right: -${padding / 2}px;`}
+    `,
+    content: css`
+      flex-grow: 1;
     `,
   };
 });
@@ -189,25 +205,7 @@ function getPropertiesForVariant(theme: GrafanaTheme, variant: ButtonVariant) {
 
           &:focus {
             outline: none;
-            ${focusCss(theme)};
-          }
-        `,
-      };
-    case 'toolbar':
-      return {
-        borderColor: theme.colors.border2,
-        variantStyles: css`
-          background: ${theme.colors.bg1};
-          color: ${theme.colors.textWeak};
-
-          &:hover {
-            color: ${theme.colors.text};
-            background: ${styleMixins.hoverColor(theme.colors.bg1, theme)};
-          }
-
-          &:focus {
-            outline: none;
-            background: ${styleMixins.hoverColor(theme.colors.bg1, theme)};
+            text-decoration: underline;
           }
         `,
       };

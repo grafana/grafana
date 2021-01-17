@@ -7,7 +7,7 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
   noSpacing?: boolean;
 }
 
-export const ToolbarButtonGroup = forwardRef<HTMLDivElement, Props>(({ noSpacing, children, ...rest }, ref) => {
+export const ButtonGroup = forwardRef<HTMLDivElement, Props>(({ noSpacing, children, ...rest }, ref) => {
   const styles = useStyles(getStyles);
   const className = cx({
     [styles.wrapper]: !noSpacing,

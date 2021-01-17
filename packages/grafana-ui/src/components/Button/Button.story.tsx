@@ -6,7 +6,7 @@ import { iconOptions } from '../../utils/storybook/knobs';
 import mdx from './Button.mdx';
 import { useTheme } from '../../themes/ThemeContext';
 import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
-import { ToolbarButtonGroup } from '../ToolbarButton/ToolbarButtonGroup';
+import { ButtonGroup } from './ButtonGroup';
 import { ComponentSize } from '../../types/size';
 
 export default {
@@ -31,6 +31,7 @@ export default {
 };
 
 export const Variants: Story<ButtonProps> = ({ children, ...args }) => {
+  const theme = useTheme();
   const sizes: ComponentSize[] = ['lg', 'md', 'sm'];
   const variants: ButtonVariant[] = ['primary', 'secondary', 'destructive', 'link'];
 
@@ -66,28 +67,15 @@ export const Variants: Story<ButtonProps> = ({ children, ...args }) => {
         <Button icon="cloud" size="lg" />
       </HorizontalGroup>
       <div />
+      <Button fullWidth>Button with fullWidth</Button>
+      <div />
       <HorizontalGroup spacing="lg">
         <div>Inside ButtonGroup</div>
-        <ToolbarButtonGroup noSpacing>
+        <ButtonGroup noSpacing>
           <Button icon="cloud">Cloud</Button>
           <Button icon="sync" />
-        </ToolbarButtonGroup>
+        </ButtonGroup>
       </HorizontalGroup>
     </VerticalGroup>
-  );
-};
-
-export const ToolbarButton = () => {
-  const theme = useTheme();
-
-  return (
-    <div style={{ background: theme.colors.dashboardBg, padding: '32px' }}>
-      <VerticalGroup>
-        Wrapped in normal ToolbarButtonGroup (md spacing)
-        <ToolbarButtonGroup>
-          <Button variant="toolbar">Just text</Button>
-        </ToolbarButtonGroup>
-      </VerticalGroup>
-    </div>
   );
 };
