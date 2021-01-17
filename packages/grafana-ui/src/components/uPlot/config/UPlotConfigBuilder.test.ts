@@ -327,6 +327,7 @@ describe('UPlotConfigBuilder', () => {
       scaleKey: 'scale-x',
       fieldName: 'A-series',
       lineColor: '#0000ff',
+      theme: darkTheme,
     });
 
     expect(builder.getConfig().series[1].fill).toBe(undefined);
@@ -340,6 +341,7 @@ describe('UPlotConfigBuilder', () => {
       fieldName: 'A-series',
       lineColor: '#FFAABB',
       fillOpacity: 50,
+      theme: darkTheme,
     });
 
     expect(builder.getConfig().series[1].fill).toBe('rgba(255, 170, 187, 0.5)');
@@ -354,6 +356,7 @@ describe('UPlotConfigBuilder', () => {
       lineColor: '#FFAABB',
       fillOpacity: 50,
       fillColor: '#FF0000',
+      theme: darkTheme,
     });
 
     expect(builder.getConfig().series[1].fill).toBe('#FF0000');
@@ -368,6 +371,7 @@ describe('UPlotConfigBuilder', () => {
       lineColor: '#FFAABB',
       fillOpacity: 50,
       gradientMode: GraphGradientMode.Opacity,
+      theme: darkTheme,
     });
 
     expect(builder.getConfig().series[1].fill).toBeInstanceOf(Function);
@@ -387,6 +391,7 @@ describe('UPlotConfigBuilder', () => {
       lineColor: '#0000ff',
       lineWidth: 1,
       spanNulls: false,
+      theme: darkTheme,
     });
 
     expect(builder.getConfig()).toMatchInlineSnapshot(`

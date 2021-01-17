@@ -207,6 +207,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         showPoints,
         colorMode,
         fillOpacity,
+        theme,
         drawStyle: customConfig.drawStyle!,
         lineColor: customConfig.lineColor ?? seriesColor,
         lineWidth: customConfig.lineWidth,

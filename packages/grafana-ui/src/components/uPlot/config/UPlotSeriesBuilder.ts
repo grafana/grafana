@@ -1,8 +1,6 @@
-import { FALLBACK_COLOR, FieldColorMode, getColorForTheme, ThresholdsConfig } from '@grafana/data';
+import { FALLBACK_COLOR, FieldColorMode, GrafanaTheme, ThresholdsConfig } from '@grafana/data';
 import tinycolor from 'tinycolor2';
 import uPlot, { Series } from 'uplot';
-import darkTheme from '../../../themes/dark';
-import { getCanvasContext } from '../../../utils/measureText';
 import {
   DrawStyle,
   LineConfig,
@@ -14,6 +12,7 @@ import {
 } from '../config';
 import { PlotConfigBuilder } from '../types';
 import { DataFrameFieldIndex } from '@grafana/data';
+import { getScaleGradientFn, getOpacityGradientFn, getHueGradientFn } from './gradientFills';
 
 export interface SeriesProps extends LineConfig, FillConfig, PointsConfig {
   scaleKey: string;
@@ -27,6 +26,7 @@ export interface SeriesProps extends LineConfig, FillConfig, PointsConfig {
   show?: boolean;
   dataFrameFieldIndex?: DataFrameFieldIndex;
   hideInLegend?: boolean;
+  theme: GrafanaTheme;
 }
 
 export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
@@ -107,7 +107,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
   }
 
   private getFill(): Series.Fill | undefined {
-    const { lineColor, fillColor, gradientMode, fillOpacity, colorMode, thresholds } = this.props;
+    const { lineColor, fillColor, gradientMode, fillOpacity, colorMode, thresholds, theme } = this.props;
 
     if (fillColor) {
       return fillColor;
@@ -120,7 +120,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       case GraphGradientMode.Opacity:
         return getOpacityGradientFn((fillColor ?? lineColor)!, opacityPercent);
       case GraphGradientMode.Hue:
-        return getHueGradientFn((fillColor ?? lineColor)!, opacityPercent);
+        return getHueGradientFn((fillColor ?? lineColor)!, opacityPercent, theme);
       case GraphGradientMode.Scheme:
         return getScaleGradientFn(opacityPercent, colorMode, thresholds);
       default:
@@ -181,110 +181,4 @@ function mapDrawStyleToPathBuilder(
   }
 
   return builders.linear; // the default
-}
-
-function getOpacityGradientFn(color: string, opacity: number): (self: uPlot, seriesIdx: number) => CanvasGradient {
-  return (plot: uPlot, seriesIdx: number) => {
-    const ctx = getCanvasContext();
-    const gradient = ctx.createLinearGradient(0, plot.bbox.top, 0, plot.bbox.top + plot.bbox.height);
-
-    gradient.addColorStop(
-      0,
-      tinycolor(color)
-        .setAlpha(opacity)
-        .toRgbString()
-    );
-    gradient.addColorStop(
-      1,
-      tinycolor(color)
-        .setAlpha(0)
-        .toRgbString()
-    );
-
-    return gradient;
-  };
-}
-
-function getHueGradientFn(color: string, opacity: number): (self: uPlot, seriesIdx: number) => CanvasGradient {
-  return (plot: uPlot, seriesIdx: number) => {
-    const ctx = getCanvasContext();
-    const gradient = ctx.createLinearGradient(0, plot.bbox.top, 0, plot.bbox.top + plot.bbox.height);
-
-    const color1 = tinycolor(color)
-      .spin(-25)
-      .darken(30)
-      .setAlpha(opacity)
-      .toRgbString();
-
-    const color2 = tinycolor(color)
-      .spin(25)
-      .lighten(25)
-      .setAlpha(opacity)
-      .toRgbString();
-
-    console.log('color', color);
-    console.log('color1', color1);
-    console.log('color2', color2);
-
-    gradient.addColorStop(0, color2);
-    gradient.addColorStop(1, color1);
-
-    return gradient;
-  };
-}
-
-/**
- * Experimental & quick and dirty test
- * Not being used
- */
-function getScaleGradientFn(
-  opacity: number,
-  colorMode?: FieldColorMode,
-  thresholds?: ThresholdsConfig
-): (self: uPlot, seriesIdx: number) => CanvasGradient {
-  if (!colorMode) {
-    throw Error('Missing colorMode required for color scheme gradients');
-  }
-
-  if (!thresholds) {
-    throw Error('Missing thresholds required for color scheme gradients');
-  }
-
-  return (plot: uPlot, seriesIdx: number) => {
-    const ctx = getCanvasContext();
-    const gradient = ctx.createLinearGradient(0, plot.bbox.top, 0, plot.bbox.top + plot.bbox.height);
-    const series = plot.series[seriesIdx];
-    const scale = plot.scales[series.scale!];
-    const range = plot.bbox.height;
-
-    console.log('scale', scale);
-    console.log('series.min', series.min);
-    console.log('series.max', series.max);
-
-    const getColorWithAlpha = (color: string) => {
-      return tinycolor(getColorForTheme(color, darkTheme))
-        .setAlpha(opacity)
-        .toString();
-    };
-
-    const addColorStop = (value: number, color: string) => {
-      const pos = plot.valToPos(value, series.scale!);
-      const percent = pos / range;
-      console.log(`addColorStop(value = ${value}, xPos=${pos})`);
-      gradient.addColorStop(Math.min(percent, 1), getColorWithAlpha(color));
-    };
-
-    for (let idx = 0; idx < thresholds.steps.length; idx++) {
-      const step = thresholds.steps[idx];
-      const value = step.value === -Infinity ? 0 : step.value;
-      addColorStop(value, step.color);
-
-      // to make the gradient discrete
-      if (thresholds.steps.length > idx + 1) {
-        addColorStop(thresholds.steps[idx + 1].value - 0.0000001, step.color);
-      }
-    }
-
-    return gradient;
-  };
 }
