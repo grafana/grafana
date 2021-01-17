@@ -36,7 +36,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
     standardOptions: {
       [FieldConfigProperty.Color]: {
         settings: {
-          byValueSupport: true,
+          byValueSupport: false,
           bySeriesSupport: true,
           preferThresholdsMode: false,
         },
