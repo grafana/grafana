@@ -135,7 +135,7 @@ func (e *CloudMonitoringExecutor) executeTimeSeriesQuery(ctx context.Context, ts
 	if err != nil {
 		return nil, err
 	}
-	
+
 	unit := e.resolvePanelUnitFromQueries(queryExecutors)
 
 	for _, queryExecutor := range queryExecutors {
@@ -572,4 +572,19 @@ func unmarshalResponse(res *http.Response) (cloudMonitoringResponse, error) {
 	}
 
 	return data, nil
+}
+
+func addConfigData(frames data.Frames, dl string) data.Frames {
+	for i := range frames {
+		if frames[i].Fields[1].Config == nil {
+			frames[i].Fields[1].Config = &data.FieldConfig{}
+		}
+		deepLink := data.DataLink{
+			Title:       "View in Metrics Explorer",
+			TargetBlank: true,
+			URL:         dl,
+		}
+		frames[i].Fields[1].Config.Links = append(frames[i].Fields[1].Config.Links, deepLink)
+	}
+	return frames
 }

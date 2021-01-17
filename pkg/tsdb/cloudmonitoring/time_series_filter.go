@@ -150,78 +150,71 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 				series, defaultMetricName, seriesLabels, queryRes, frame)
 			frames = append(frames, frame)
 			continue
-		} 
-			buckets := make(map[int]*data.Frame)
-			for i := len(series.Points) - 1; i >= 0; i-- {
-				point := series.Points[i]
-				if len(point.Value.DistributionValue.BucketCounts) == 0 {
+		}
+		buckets := make(map[int]*data.Frame)
+		for i := len(series.Points) - 1; i >= 0; i-- {
+			point := series.Points[i]
+			if len(point.Value.DistributionValue.BucketCounts) == 0 {
+				continue
+			}
+			maxKey := 0
+			for i := 0; i < len(point.Value.DistributionValue.BucketCounts); i++ {
+				value, err := strconv.ParseFloat(point.Value.DistributionValue.BucketCounts[i], 64)
+				if err != nil {
 					continue
 				}
-				maxKey := 0
-				for i := 0; i < len(point.Value.DistributionValue.BucketCounts); i++ {
-					value, err := strconv.ParseFloat(point.Value.DistributionValue.BucketCounts[i], 64)
-					if err != nil {
-						continue
+				if _, ok := buckets[i]; !ok {
+					// set lower bounds
+					// https://cloud.google.com/monitoring/api/ref_v3/rest/v3/TimeSeries#Distribution
+					bucketBound := calcBucketBound(point.Value.DistributionValue.BucketOptions, i)
+					additionalLabels := map[string]string{"bucket": bucketBound}
+
+					timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, []time.Time{})
+					valueField := data.NewField(data.TimeSeriesValueFieldName, nil, []float64{})
+
+					frameName := formatLegendKeys(series.Metric.Type, defaultMetricName, nil, additionalLabels, timeSeriesFilter)
+					valueField.Name = frameName
+					buckets[i] = &data.Frame{
+						Name: frameName,
+						Fields: []*data.Field{
+							timeField,
+							valueField,
+						},
+						RefID: timeSeriesFilter.RefID,
 					}
-					if _, ok := buckets[i]; !ok {
-						// set lower bounds
-						// https://cloud.google.com/monitoring/api/ref_v3/rest/v3/TimeSeries#Distribution
-						bucketBound := calcBucketBound(point.Value.DistributionValue.BucketOptions, i)
-						additionalLabels := map[string]string{"bucket": bucketBound}
 
-						timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, []time.Time{})
-						valueField := data.NewField(data.TimeSeriesValueFieldName, nil, []float64{})
-
-						frameName := formatLegendKeys(series.Metric.Type, defaultMetricName, nil, additionalLabels, timeSeriesFilter)
-						valueField.Name = frameName
-						buckets[i] = &data.Frame{
-							Name: frameName,
-							Fields: []*data.Field{
-								timeField,
-								valueField,
-							},
-							RefID: timeSeriesFilter.RefID,
-						}
-
-						if maxKey < i {
-							maxKey = i
-						}
+					if maxKey < i {
+						maxKey = i
 					}
-					buckets[i].AppendRow(point.Interval.EndTime, value)
 				}
-				for i := 0; i < maxKey; i++ {
-					if _, ok := buckets[i]; !ok {
-						bucketBound := calcBucketBound(point.Value.DistributionValue.BucketOptions, i)
-						additionalLabels := data.Labels{"bucket": bucketBound}
-						timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, []time.Time{})
-						valueField := data.NewField(data.TimeSeriesValueFieldName, nil, []float64{})
-						frameName := formatLegendKeys(series.Metric.Type, defaultMetricName, seriesLabels, additionalLabels, timeSeriesFilter)
-						valueField.Name = frameName
-						buckets[i] = &data.Frame{
-							Name: frameName,
-							Fields: []*data.Field{
-								timeField,
-								valueField,
-							},
-							RefID: timeSeriesFilter.RefID,
-						}
+				buckets[i].AppendRow(point.Interval.EndTime, value)
+			}
+			for i := 0; i < maxKey; i++ {
+				if _, ok := buckets[i]; !ok {
+					bucketBound := calcBucketBound(point.Value.DistributionValue.BucketOptions, i)
+					additionalLabels := data.Labels{"bucket": bucketBound}
+					timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, []time.Time{})
+					valueField := data.NewField(data.TimeSeriesValueFieldName, nil, []float64{})
+					frameName := formatLegendKeys(series.Metric.Type, defaultMetricName, seriesLabels, additionalLabels, timeSeriesFilter)
+					valueField.Name = frameName
+					buckets[i] = &data.Frame{
+						Name: frameName,
+						Fields: []*data.Field{
+							timeField,
+							valueField,
+						},
+						RefID: timeSeriesFilter.RefID,
 					}
 				}
 			}
-			for i := 0; i < len(buckets); i++ {
-				frames = append(frames, buckets[i])
-			}
-		
+		}
+		for i := 0; i < len(buckets); i++ {
+			frames = append(frames, buckets[i])
+		}
 	}
 	if len(response.TimeSeries) > 0 {
-		resourceType := ""
-		for _, s := range response.TimeSeries {
-			resourceType = s.Resource.Type
-			// set the first resource type found
-			break
-		}
-		timeSeriesFilter.Params.Set("resourceType", resourceType)
-		frames = timeSeriesFilter.addConfigData(frames)
+		dl := timeSeriesFilter.buildDeepLink()
+		frames = addConfigData(frames, dl)
 	}
 
 	queryRes.Dataframes = tsdb.NewDecodedDataFrames(frames)
@@ -240,46 +233,30 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 
 func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) handleNonDistributionSeries(series timeSeries, defaultMetricName string, seriesLabels map[string]string,
 	queryRes *tsdb.QueryResult, frame *data.Frame) {
-   for i := 0; i < len(series.Points); i++ {
-	   point := series.Points[i]
-	   value := point.Value.DoubleValue
+	for i := 0; i < len(series.Points); i++ {
+		point := series.Points[i]
+		value := point.Value.DoubleValue
 
-	   if series.ValueType == "INT64" {
-		   parsedValue, err := strconv.ParseFloat(point.Value.IntValue, 64)
-		   if err == nil {
-			   value = parsedValue
-		   }
-	   }
-
-	   if series.ValueType == "BOOL" {
-		   if point.Value.BoolValue {
-			   value = 1
-		   } else {
-			   value = 0
-		   }
-	   }
-	   frame.SetRow(len(series.Points)-1-i, point.Interval.EndTime, value)
-   }
-
-   metricName := formatLegendKeys(series.Metric.Type, defaultMetricName, seriesLabels, nil, timeSeriesFilter)
-   dataField := frame.Fields[1]
-   dataField.Name = metricName
-}
-
-func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) addConfigData(frames data.Frames) data.Frames {
-	dl := timeSeriesFilter.buildDeepLink()
-	for i := range frames {
-		if frames[i].Fields[1].Config == nil {
-			frames[i].Fields[1].Config = &data.FieldConfig{}
+		if series.ValueType == "INT64" {
+			parsedValue, err := strconv.ParseFloat(point.Value.IntValue, 64)
+			if err == nil {
+				value = parsedValue
+			}
 		}
-		deepLink := data.DataLink{
-			Title:       "View in Metrics Explorer",
-			TargetBlank: true,
-			URL:         dl,
+
+		if series.ValueType == "BOOL" {
+			if point.Value.BoolValue {
+				value = 1
+			} else {
+				value = 0
+			}
 		}
-		frames[i].Fields[1].Config.Links = append(frames[i].Fields[1].Config.Links, deepLink)
+		frame.SetRow(len(series.Points)-1-i, point.Interval.EndTime, value)
 	}
-	return frames
+
+	metricName := formatLegendKeys(series.Metric.Type, defaultMetricName, seriesLabels, nil, timeSeriesFilter)
+	dataField := frame.Fields[1]
+	dataField.Name = metricName
 }
 
 func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseToAnnotations(queryRes *tsdb.QueryResult, data cloudMonitoringResponse, title string, text string, tags string) error {
@@ -314,11 +291,9 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) buildDeepLink() string 
 	filter := timeSeriesFilter.Params.Get("filter")
 	if !strings.Contains(filter, "resource.type=") {
 		resourceType := timeSeriesFilter.Params.Get("resourceType")
-		if resourceType == "" {
-			slog.Error("Failed to generate deep link: no resource type found", "ProjectName", timeSeriesFilter.ProjectName, "query", timeSeriesFilter.RefID)
-			return ""
+		if resourceType != "" {
+			filter = fmt.Sprintf(`resource.type="%s" %s`, resourceType, filter)
 		}
-		filter = fmt.Sprintf(`resource.type="%s" %s`, resourceType, filter)
 	}
 
 	u, err := url.Parse("https://console.cloud.google.com/monitoring/metrics-explorer")

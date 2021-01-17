@@ -14,8 +14,8 @@ type (
 		parseResponse(queryRes *tsdb.QueryResult, data cloudMonitoringResponse) error
 		parseToAnnotations(queryRes *tsdb.QueryResult, data cloudMonitoringResponse, title string, text string, tags string) error
 		buildDeepLink() string
-    getRefID() string
-    getUnit() string
+		getRefID() string
+		getUnit() string
 	}
 
 	// Used to build time series filters

@@ -164,7 +164,6 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *ts
 				continue
 			}
 
-
 			// process distribution series
 			buckets := make(map[int]*data.Frame)
 			// reverse the order to be ascending
@@ -232,7 +231,8 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *ts
 		}
 	}
 	if len(response.TimeSeriesData) > 0 {
-		frames = timeSeriesQuery.addConfigData(frames)
+		dl := timeSeriesQuery.buildDeepLink()
+		frames = addConfigData(frames, dl)
 	}
 
 	queryRes.Dataframes = tsdb.NewDecodedDataFrames(frames)
@@ -247,22 +247,6 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *ts
 	queryRes.Meta.Set("labels", labelsByKey)
 
 	return nil
-}
-
-func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) addConfigData(frames data.Frames) data.Frames {
-	dl := timeSeriesQuery.buildDeepLink()
-	for i := range frames {
-		if frames[i].Fields[1].Config == nil {
-			frames[i].Fields[1].Config = &data.FieldConfig{}
-		}
-		deepLink := data.DataLink{
-			Title:       "View in Metrics Explorer",
-			TargetBlank: true,
-			URL:         dl,
-		}
-		frames[i].Fields[1].Config.Links = append(frames[i].Fields[1].Config.Links, deepLink)
-	}
-	return frames
 }
 
 func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseToAnnotations(queryRes *tsdb.QueryResult, data cloudMonitoringResponse, title string, text string, tags string) error {
