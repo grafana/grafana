@@ -15,15 +15,14 @@ Just add it as a data source and you are ready to query your traces in [Explore]
 
 To access Jaeger settings, click the **Configuration** (gear) icon, then click **Data Sources** > **Jaeger**.
 
-| Name         | Description                                                                                                                           |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `Name`       | The data source name. This is how you refer to the data source in panels, queries, and Explore.                                       |
-| `Default`    | Data source will be pre-selected for new panels.                                                                                      |
-| `URL`        | The URL of the Jaeger instance, for example, `http://localhost:16686`                                                                 |
-| `Access`     | Server (default) = URL needs to be accessible from the Grafana backend/server. Browser = URL needs to be accessible from the browser. |
-| `Basic Auth` | Enable basic authentication to the Jaeger data source.                                                                                |
-| `User`       | User name for basic authentication.                                                                                                   |
-| `Password`   | Password for basic authentication.                                                                                                    |
+| Name         | Description                                                                                     |
+| ------------ | ----------------------------------------------------------------------------------------------- |
+| `Name`       | The data source name. This is how you refer to the data source in panels, queries, and Explore. |
+| `Default`    | Data source will be pre-selected for new panels.                                                |
+| `URL`        | The URL of the Jaeger instance, for example, `http://localhost:16686`                           |
+| `Basic Auth` | Enable basic authentication to the Jaeger data source.                                          |
+| `User`       | User name for basic authentication.                                                             |
+| `Password`   | Password for basic authentication.                                                              |
 
 ### Trace to logs
 
