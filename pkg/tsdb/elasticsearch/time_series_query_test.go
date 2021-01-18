@@ -127,6 +127,80 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			So(avgAgg.Aggregation.Type, ShouldEqual, "avg")
 		})
 
+		Convey("With term agg and order by count metric agg", func() {
+			c := newFakeClient(5)
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [
+					{
+						"type": "terms",
+						"field": "@host",
+						"id": "2",
+						"settings": { "size": "5", "order": "asc", "orderBy": "1"	}
+					},
+					{ "type": "date_histogram", "field": "@timestamp", "id": "3" }
+				],
+				"metrics": [
+					{"type": "count", "id": "1" }
+				]
+			}`, from, to, 15*time.Second)
+			So(err, ShouldBeNil)
+			sr := c.multisearchRequests[0].Requests[0]
+
+			termsAgg := sr.Aggs[0].Aggregation.Aggregation.(*es.TermsAggregation)
+			So(termsAgg.Order["_count"], ShouldEqual, "asc")
+		})
+
+		Convey("With term agg and order by percentiles agg", func() {
+			c := newFakeClient(5)
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [
+					{
+						"type": "terms",
+						"field": "@host",
+						"id": "2",
+						"settings": { "size": "5", "order": "asc", "orderBy": "1[95.0]"	}
+					},
+					{ "type": "date_histogram", "field": "@timestamp", "id": "3" }
+				],
+				"metrics": [
+        {"type": "percentiles", "field": "@value", "id": "1", "settings": { "percents": ["95","99"] } }
+				]
+			}`, from, to, 15*time.Second)
+			So(err, ShouldBeNil)
+			sr := c.multisearchRequests[0].Requests[0]
+
+			orderByAgg := sr.Aggs[0].Aggregation.Aggs[0]
+			So(orderByAgg.Key, ShouldEqual, "1")
+			So(orderByAgg.Aggregation.Type, ShouldEqual, "percentiles")
+		})
+
+		Convey("With term agg and order by extended stats agg", func() {
+			c := newFakeClient(5)
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [
+					{
+						"type": "terms",
+						"field": "@host",
+						"id": "2",
+						"settings": { "size": "5", "order": "asc", "orderBy": "1[std_deviation]"	}
+					},
+					{ "type": "date_histogram", "field": "@timestamp", "id": "3" }
+				],
+				"metrics": [
+        {"type": "extended_stats", "field": "@value", "id": "1", "meta": { "std_deviation": true } }
+				]
+			}`, from, to, 15*time.Second)
+			So(err, ShouldBeNil)
+			sr := c.multisearchRequests[0].Requests[0]
+
+			orderByAgg := sr.Aggs[0].Aggregation.Aggs[0]
+			So(orderByAgg.Key, ShouldEqual, "1")
+			So(orderByAgg.Aggregation.Type, ShouldEqual, "extended_stats")
+		})
+
 		Convey("With term agg and order by term", func() {
 			c := newFakeClient(5)
 			_, err := executeTsdbQuery(c, `{

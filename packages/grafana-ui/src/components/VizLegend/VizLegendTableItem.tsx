@@ -35,7 +35,6 @@ export const LegendTableItem: React.FunctionComponent<Props> = ({
                 onSeriesColorChange(item.label, color);
               }
             }}
-            yAxis={item.yAxis}
           />
           <div
             onClick={event => {
@@ -49,8 +48,8 @@ export const LegendTableItem: React.FunctionComponent<Props> = ({
           </div>
         </span>
       </td>
-      {item.displayValues &&
-        item.displayValues.map((stat, index) => {
+      {item.getDisplayValues &&
+        item.getDisplayValues().map((stat, index) => {
           return (
             <td className={styles.value} key={`${stat.title}-${index}`}>
               {formattedValueToString(stat)}

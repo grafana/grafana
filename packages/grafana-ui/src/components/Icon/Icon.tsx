@@ -61,7 +61,7 @@ export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
     const svgSize = getSvgSize(size);
 
     /* Temporary solution to display also font awesome icons */
-    if (name?.startsWith('fa-')) {
+    if (name?.startsWith('fa fa-')) {
       return <i className={cx(name, className)} {...divElementProps} style={style} />;
     }
 

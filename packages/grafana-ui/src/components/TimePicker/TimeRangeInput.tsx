@@ -14,7 +14,7 @@ const isValidTimeRange = (range: any) => {
   return dateMath.isValid(range.from) && dateMath.isValid(range.to);
 };
 
-export interface Props {
+export interface TimeRangeInputProps {
   value: TimeRange;
   timeZone?: TimeZone;
   onChange: (timeRange: TimeRange) => void;
@@ -22,18 +22,22 @@ export interface Props {
   hideTimeZone?: boolean;
   placeholder?: string;
   clearable?: boolean;
+  isReversed?: boolean;
+  hideQuickRanges?: boolean;
 }
 
 const noop = () => {};
 
-export const TimeRangeInput: FC<Props> = ({
+export const TimeRangeInput: FC<TimeRangeInputProps> = ({
   value,
   onChange,
-  onChangeTimeZone,
+  onChangeTimeZone = noop,
   clearable,
   hideTimeZone = true,
   timeZone = 'browser',
   placeholder = 'Select time range',
+  isReversed = true,
+  hideQuickRanges = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const styles = useStyles(getStyles);
@@ -84,10 +88,11 @@ export const TimeRangeInput: FC<Props> = ({
             onChange={onRangeChange}
             otherOptions={otherOptions}
             quickOptions={quickOptions}
-            onChangeTimeZone={onChangeTimeZone || noop}
+            onChangeTimeZone={onChangeTimeZone}
             className={styles.content}
             hideTimeZone={hideTimeZone}
-            isReversed
+            isReversed={isReversed}
+            hideQuickRanges={hideQuickRanges}
           />
         </ClickOutsideWrapper>
       )}
