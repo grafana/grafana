@@ -52,6 +52,8 @@ This creates and starts Elasticsearch, Filebeat, Metricbeat, Kibana, and a proce
 
 Once you have your Elasticsearch instance up and running and some process pushing data to it, you can configure your data source within Grafana.
 
+For more information on Elasticsearch configuration, refer to [Using Elasticsearch in Grafana](/docs/grafana/latest/datasources/elasticsearch/).
+
 To add the Elasticsearch data source:
 
 1. In the Grafana side menu, hover your cursor over the **Configuration** (gear) icon and then click **Data Sources**.
