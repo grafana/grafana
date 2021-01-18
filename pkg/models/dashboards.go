@@ -2,7 +2,6 @@ package models
 
 import (
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -461,25 +460,4 @@ type GetDashboardRefByIdQuery struct {
 
 type UnprovisionDashboardCommand struct {
 	Id int64
-}
-
-type GetLibraryPanelsQuery struct {
-	DashboardId int64
-
-	Result map[string]LibraryPanel
-}
-
-type LibraryPanel struct {
-	ID       int64  `xorm:"pk autoincr 'id'"`
-	OrgID    int64  `xorm:"org_id"`
-	FolderID int64  `xorm:"folder_id"`
-	UID      string `xorm:"uid"`
-	Name     string
-	Model    json.RawMessage
-
-	Created time.Time
-	Updated time.Time
-
-	CreatedBy int64
-	UpdatedBy int64
 }
