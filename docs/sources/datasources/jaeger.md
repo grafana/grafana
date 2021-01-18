@@ -17,12 +17,12 @@ To access Jaeger settings, click the **Configuration** (gear) icon, then click *
 
 | Name         | Description                                                                                     |
 | ------------ | ----------------------------------------------------------------------------------------------- |
-| `Name`       | The data source name. This is how you refer to the data source in panels, queries, and Explore. |
-| `Default`    | Data source will be pre-selected for new panels.                                                |
-| `URL`        | The URL of the Jaeger instance, for example, `http://localhost:16686`                           |
+| `Name`       | The data source name in panels, queries, and Explore. |
+| `Default`    | The pre-selected data source for a new panel.                                                |
+| `URL`        | The URL of the Jaeger instance. For example, `http://localhost:16686`.                           |
 | `Basic Auth` | Enable basic authentication to the Jaeger data source.                                          |
-| `User`       | User name for basic authentication.                                                             |
-| `Password`   | Password for basic authentication.                                                              |
+| `User`       | Specify a user name for basic authentication.                                                             |
+| `Password`   | Specify a password for basic authentication.                                                              |
 
 ### Trace to logs
 
