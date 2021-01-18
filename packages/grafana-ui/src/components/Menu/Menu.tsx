@@ -84,7 +84,14 @@ const MenuGroup: React.FC<MenuGroupProps> = ({ group, onClick }) => {
               target={item.target}
               icon={item.icon}
               onClick={(e: React.MouseEvent<HTMLElement>) => {
+                // We can have both url and onClick and we want to allow user to open the link in new tab/window
+                const isSpecialKeyPressed = e.ctrlKey || e.metaKey || e.shiftKey;
+                if (isSpecialKeyPressed && item.url) {
+                  return;
+                }
+
                 if (item.onClick) {
+                  e.preventDefault();
                   item.onClick(e);
                 }
 
@@ -115,23 +122,7 @@ const MenuItemComponent: React.FC<MenuItemProps> = React.memo(({ url, icon, labe
   const styles = useStyles(getMenuStyles);
   return (
     <div className={styles.item}>
-      <a
-        href={url ? url : undefined}
-        target={target}
-        className={cx(className, styles.link)}
-        onClick={e => {
-          // We can have both url and onClick and we want to allow user to open the link in new tab/window
-          const isSpecialKeyPressed = e.ctrlKey || e.metaKey || e.shiftKey;
-          if (isSpecialKeyPressed && url) {
-            return;
-          }
-
-          if (onClick) {
-            e.preventDefault();
-            onClick(e);
-          }
-        }}
-      >
+      <a href={url ? url : undefined} target={target} className={cx(className, styles.link)} onClick={onClick}>
         {icon && <Icon name={icon} className={styles.icon} />} {label}
       </a>
     </div>

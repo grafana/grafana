@@ -15,7 +15,9 @@ const PluginListItem: FC<Props> = props => {
       <a className="card-item" href={`plugins/${plugin.id}/`}>
         <div className="card-item-header">
           <div className="card-item-type">{plugin.type}</div>
-          <PluginSignatureBadge status={plugin.signature} />
+          <div className="card-item-badge">
+            <PluginSignatureBadge status={plugin.signature} />
+          </div>
           {plugin.hasUpdate && (
             <div className="card-item-notice">
               <span bs-tooltip="plugin.latestVersion">Update available!</span>
