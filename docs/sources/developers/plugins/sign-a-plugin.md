@@ -107,6 +107,6 @@ Due to an issue when signing the plugin on Windows, grafana-toolkit generates an
 
 ### Error signing manifest: Field is required: rootUrls
 
-If you're trying to sign a **public** plugin, this means that your plugin doesn't yet have a plugin signature level assigned to it yet. A Grafana team member will assign a signature level to your plugin once it has been reviewed and approved. For more information, refer to [Sign a public plugin](#sign-a-public-plugin).
+If you're trying to sign a **public** plugin, this means that your plugin doesn't have a plugin signature level assigned to it yet. A Grafana team member will assign a signature level to your plugin once it has been reviewed and approved. For more information, refer to [Sign a public plugin](#sign-a-public-plugin).
 
 If you're trying to sign a **private** plugin, this means that you need to add a `rootUrls` flag to the `plugin:sign` command. The `rootUrls` must match the [root_url]({{< relref "../../administration/configuration.md#root_url" >}}) configuration. For more information, refer to [Sign a private plugin](#sign-a-private-plugin).
