@@ -311,20 +311,18 @@ export class QueryGroup extends PureComponent<Props, State> {
           </Button>
         )}
         {isAddingMixed && this.renderMixedPicker()}
-        <div>
-          <Button
-            icon="plus"
-            onClick={this.onAddExpressionClick}
-            variant="secondary"
-            className={styles.expressionButton}
-          >
-            Expression
-          </Button>
-          <FeatureBadge
-            featureState={FeatureState.beta}
-            tooltip="Expressions are currently in beta and are subject to break in future releases."
-          />
-        </div>
+        {dsSettings.meta.alerting && (
+          <div>
+            <Button
+              icon="plus"
+              onClick={this.onAddExpressionClick}
+              variant="secondary"
+              className={styles.expressionButton}
+            >
+              Expression (beta)
+            </Button>
+          </div>
+        )}
       </HorizontalGroup>
     );
   }
