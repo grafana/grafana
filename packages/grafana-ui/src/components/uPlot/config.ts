@@ -74,6 +74,7 @@ export interface FillConfig {
   fillColor?: string;
   fillOpacity?: number;
   fillGradient?: FillGradientMode;
+  fillBelowTo?: string; // name of the field
 }
 
 /**
@@ -111,6 +112,8 @@ export interface AxisConfig {
   axisPlacement?: AxisPlacement;
   axisLabel?: string;
   axisWidth?: number; // pixels ideally auto?
+  axisSoftMin?: number;
+  axisSoftMax?: number;
   scaleDistribution?: ScaleDistributionConfig;
 }
 

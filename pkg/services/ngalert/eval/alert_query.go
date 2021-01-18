@@ -68,12 +68,12 @@ type AlertQuery struct {
 	// RelativeTimeRange is the relative Start and End of the query as sent by the frontend.
 	RelativeTimeRange RelativeTimeRange `json:"relativeTimeRange"`
 
-	DatasourceID int64 `json:"-"`
+	DatasourceUID string `json:"-"`
 
 	// JSON is the raw JSON query and includes the above properties as well as custom properties.
 	Model json.RawMessage `json:"model"`
 
-	modelProps map[string]interface{} `json:"-"`
+	modelProps map[string]interface{}
 }
 
 func (aq *AlertQuery) setModelProps() error {
@@ -102,20 +102,20 @@ func (aq *AlertQuery) setDatasource() error {
 	}
 
 	if dsName == expr.DatasourceName {
-		aq.DatasourceID = expr.DatasourceID
-		aq.modelProps["datasourceId"] = expr.DatasourceID
+		aq.DatasourceUID = expr.DatasourceUID
+		aq.modelProps["datasourceUid"] = expr.DatasourceUID
 		return nil
 	}
 
-	i, ok := aq.modelProps["datasourceId"]
+	i, ok := aq.modelProps["datasourceUid"]
 	if !ok {
-		return fmt.Errorf("failed to get datasourceId from query model")
+		return fmt.Errorf("failed to get datasourceUid from query model")
 	}
-	dsID, ok := i.(float64)
+	dsUID, ok := i.(string)
 	if !ok {
-		return fmt.Errorf("failed to cast datasourceId to float64: %v", i)
+		return fmt.Errorf("failed to cast datasourceUid to string: %v", i)
 	}
-	aq.DatasourceID = int64(dsID)
+	aq.DatasourceUID = dsUID
 	return nil
 }
 
@@ -125,7 +125,7 @@ func (aq *AlertQuery) IsExpression() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	return aq.DatasourceID == expr.DatasourceID, nil
+	return aq.DatasourceUID == expr.DatasourceUID, nil
 }
 
 // setMaxDatapoints sets the model maxDataPoints if it's missing or invalid
@@ -206,12 +206,12 @@ func (aq *AlertQuery) getIntervalDuration() (time.Duration, error) {
 }
 
 // GetDatasource returns the query datasource identifier.
-func (aq *AlertQuery) GetDatasource() (int64, error) {
+func (aq *AlertQuery) GetDatasource() (string, error) {
 	err := aq.setDatasource()
 	if err != nil {
-		return 0, err
+		return "", err
 	}
-	return aq.DatasourceID, nil
+	return aq.DatasourceUID, nil
 }
 
 func (aq *AlertQuery) getModel() ([]byte, error) {

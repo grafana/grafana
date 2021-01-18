@@ -125,7 +125,7 @@ export function ExploreGraphNGPanel({
           height={400}
           timeRange={timeRange}
           onLegendClick={onLegendClick}
-          legend={{ displayMode: LegendDisplayMode.List, placement: 'bottom' }}
+          legend={{ displayMode: LegendDisplayMode.List, placement: 'bottom', calcs: [] }}
           timeZone={timeZone}
         >
           <TooltipPlugin mode="single" timeZone={timeZone} />
