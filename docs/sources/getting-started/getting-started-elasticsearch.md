@@ -105,4 +105,4 @@ You can now start editing your query to get data out of your Elasticsearch insta
 
 Now that you have your Elasticsearch powered Grafana dashboard you can start exploring different ways of querying your Elasticsearch index to get the most out of your data.
 
-You can read more about topics not covered in this guide, such as [Elasticsearch aggregations](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations.html), [metricbeat](https://www.elastic.co/beats/metricbeat) and [filebeat](https://www.elastic.co/beats/filebeat) on [Elastic's website](https://www.elastic.co).
+For more information, refer to [Elasticsearch aggregations](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations.html), [metricbeat](https://www.elastic.co/beats/metricbeat) and [filebeat](https://www.elastic.co/beats/filebeat) on [Elastic's website](https://www.elastic.co).
