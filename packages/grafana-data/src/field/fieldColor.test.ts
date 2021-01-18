@@ -64,7 +64,7 @@ describe('getFieldSeriesColor', () => {
   const field = getTestField('continuous-GrYlRd');
   field.values = new ArrayVector([0, -10, 5, 10, 2, 5]);
 
-  it.only('When color.seriesBy is last use that to calc series color', () => {
+  it('When color.seriesBy is last use that to calc series color', () => {
     field.config.color!.seriesBy = 'last';
     const color = getFieldSeriesColor(field, getTestTheme());
     const calcFn = getCalculator({ mode: 'continuous-GrYlRd' });
