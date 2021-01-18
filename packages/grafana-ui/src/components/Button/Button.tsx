@@ -146,7 +146,6 @@ export const getButtonStyles = stylesFactory((props: StyleProps) => {
     `,
     content: css`
       display: flex;
-      align-items: center;
       flex-direction: row;
       align-items: center;
       white-space: nowrap;

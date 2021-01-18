@@ -87,26 +87,26 @@ export const inputSizesPixels = (size: string) => {
 };
 
 export function getPropertiesForButtonSize(size: ComponentSize, theme: GrafanaTheme) {
-  const { typography, height } = theme;
+  const { typography, height, spacing } = theme;
 
   switch (size) {
     case 'sm':
       return {
-        padding: 8,
+        padding: spacing.base,
         fontSize: typography.size.sm,
         height: height.sm,
       };
 
     case 'lg':
       return {
-        padding: 24,
+        padding: spacing.base * 3,
         fontSize: typography.size.lg,
         height: height.lg,
       };
     case 'md':
     default:
       return {
-        padding: 16,
+        padding: spacing.base * 2,
         fontSize: typography.size.md,
         height: height.md,
       };
