@@ -505,7 +505,6 @@ class UnthemedLokiLabelBrowser extends Component<Props> {
               {this.pickerTriggerRef.current && (
                 <Popover
                   {...popperProps}
-                  // show
                   placement="bottom-end"
                   referenceElement={this.pickerTriggerRef.current}
                   wrapperClassName={styles.wrapper}

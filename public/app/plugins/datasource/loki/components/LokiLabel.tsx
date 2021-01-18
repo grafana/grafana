@@ -60,6 +60,8 @@ export const LokiLabel = forwardRef<HTMLElement, Props>(
   }
 );
 
+LokiLabel.displayName = 'LokiLabel';
+
 const getLabelStyles = (theme: GrafanaTheme, name: string) => {
   const colors = ['#FF7368', '#459EE7'];
 

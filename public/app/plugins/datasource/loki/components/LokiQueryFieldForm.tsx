@@ -2,7 +2,6 @@
 import React, { ReactNode } from 'react';
 
 import {
-  CascaderOption,
   SlatePrism,
   TypeaheadOutput,
   SuggestionsState,
@@ -64,18 +63,18 @@ function willApplySuggestion(suggestion: string, { typeaheadContext, typeaheadTe
 
 export interface LokiQueryFieldFormProps extends ExploreQueryFieldProps<LokiDatasource, LokiQuery, LokiOptions> {
   history: LokiHistoryItem[];
-  logLabelOptions: CascaderOption[];
-  labelsLoaded: boolean;
   absoluteRange: AbsoluteTimeRange;
   ExtraFieldElement?: ReactNode;
   runOnBlur?: boolean;
 }
 
-export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormProps> {
+export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormProps, { labelsLoaded: boolean }> {
   plugins: Plugin[];
 
-  constructor(props: LokiQueryFieldFormProps, context: React.Context<any>) {
-    super(props, context);
+  constructor(props: LokiQueryFieldFormProps) {
+    super(props);
+
+    this.state = { labelsLoaded: false };
 
     this.plugins = [
       BracesPlugin(),
@@ -87,6 +86,11 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
         { ...(prismLanguages as LanguageMap), logql: this.props.datasource.languageProvider.getSyntax() }
       ),
     ];
+  }
+
+  async componentDidUpdate() {
+    await this.props.datasource.languageProvider.start();
+    this.setState({ labelsLoaded: true });
   }
 
   onChangeLogLabels = (selector: string) => {
@@ -125,11 +129,11 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
   };
 
   render() {
-    const { ExtraFieldElement, query, labelsLoaded, logLabelOptions, datasource, runOnBlur } = this.props;
-
+    const { ExtraFieldElement, query, datasource, runOnBlur } = this.props;
+    const { labelsLoaded } = this.state;
     const lokiLanguageProvider = datasource.languageProvider as LokiLanguageProvider;
     const cleanText = datasource.languageProvider ? lokiLanguageProvider.cleanText : undefined;
-    const hasLogLabels = logLabelOptions && logLabelOptions.length > 0;
+    const hasLogLabels = lokiLanguageProvider.getLabelKeys().length > 0;
     const chooserText = getChooserText(labelsLoaded, hasLogLabels);
     const buttonDisabled = !(labelsLoaded && hasLogLabels);
 
