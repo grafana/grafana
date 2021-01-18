@@ -2,7 +2,7 @@
 
 By adding a help component to your plugin, you can for example create "cheat sheets" with commonly used queries. When the user clicks on one of the examples, it automatically updates the query editor. It's a great way to increase productivity for your users.
 
-\1. Create a file `QueryEditorHelp.tsx` in the `src` directory of your plugin, with the following content:
+1. Create a file `QueryEditorHelp.tsx` in the `src` directory of your plugin, with the following content:
 
    ```ts
    import React from 'react';
@@ -15,7 +15,7 @@ By adding a help component to your plugin, you can for example create "cheat she
    };
    ```
 
-\1. Configure the plugin to use the `QueryEditorHelp`.
+1. Configure the plugin to use the `QueryEditorHelp`.
 
    ```ts
    import QueryEditorHelp from './QueryEditorHelp';
@@ -29,7 +29,7 @@ By adding a help component to your plugin, you can for example create "cheat she
      .setQueryEditorHelp(QueryEditorHelp);
    ```
 
-\1. Create a few examples.
+1. Create a few examples.
 
    ```ts
    import React from 'react';
