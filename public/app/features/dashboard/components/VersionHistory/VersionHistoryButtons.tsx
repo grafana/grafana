@@ -5,7 +5,7 @@ type VersionsButtonsType = {
   hasMore: boolean;
   canCompare: boolean;
   getVersions: (append: boolean) => void;
-  getDiff: () => void;
+  getDiff: (diff: string) => void;
   isLastPage: boolean;
 };
 export const VersionsHistoryButtons: React.FC<VersionsButtonsType> = ({
@@ -22,7 +22,7 @@ export const VersionsHistoryButtons: React.FC<VersionsButtonsType> = ({
       </Button>
     )}
     <Tooltip content="Select 2 versions to start comparing" placement="bottom">
-      <Button type="button" disabled={canCompare} onClick={getDiff} icon="code-branch">
+      <Button type="button" disabled={canCompare} onClick={() => getDiff('basic')} icon="code-branch">
         Compare versions
       </Button>
     </Tooltip>

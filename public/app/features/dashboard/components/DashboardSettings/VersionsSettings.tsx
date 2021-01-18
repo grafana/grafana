@@ -69,7 +69,7 @@ export class VersionsSettings extends PureComponent<Props, State> {
       .finally(() => this.setState({ isAppending: false }));
   };
 
-  getDiff = (diff = 'basic') => {
+  getDiff = (diff: string) => {
     const selectedVersions = this.state.versions.filter(version => version.checked);
     const [newInfo, baseInfo] = selectedVersions;
     const isNewLatest = newInfo.version === this.props.dashboard.version;
