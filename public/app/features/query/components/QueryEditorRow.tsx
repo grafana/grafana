@@ -27,6 +27,7 @@ import { QueryOperationAction } from 'app/core/components/QueryOperationRow/Quer
 import { DashboardModel } from '../../dashboard/state/DashboardModel';
 import { selectors } from '@grafana/e2e-selectors';
 import { PanelModel } from 'app/features/dashboard/state';
+import { ChangeQueryOptions } from 'app/types';
 
 interface Props {
   data: PanelData;
@@ -37,7 +38,7 @@ interface Props {
   index: number;
   onAddQuery: (query?: DataQuery) => void;
   onRemoveQuery: (query: DataQuery) => void;
-  onChange: (query: DataQuery) => void;
+  onChange: (query: DataQuery, options?: ChangeQueryOptions) => void;
   onRunQuery: () => void;
 }
 

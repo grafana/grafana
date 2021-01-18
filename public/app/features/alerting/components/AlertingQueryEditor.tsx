@@ -1,14 +1,13 @@
 import React, { PureComponent } from 'react';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { css } from 'emotion';
-import { dateMath, GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme } from '@grafana/data';
 import { RefreshPicker, stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { QueryGroup } from '../../query/components/QueryGroup';
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
-import { QueryGroupOptions } from '../../query/components/QueryGroupOptions';
-import { queryOptionsChange } from '../state/actions';
-import { StoreState } from '../../../types';
+import { onRunQueries, queryOptionsChange } from '../state/actions';
+import { QueryGroupOptions, StoreState } from 'app/types';
 
 interface OwnProps {}
 
@@ -18,6 +17,7 @@ interface ConnectedProps {
 }
 interface DispatchProps {
   queryOptionsChange: typeof queryOptionsChange;
+  onRunQueries: typeof onRunQueries;
 }
 
 type Props = ConnectedProps & DispatchProps & OwnProps;
@@ -28,18 +28,7 @@ export class AlertingQueryEditor extends PureComponent<Props> {
   };
 
   onRunQueries = () => {
-    console.log('onRunQueries');
-    const { queryRunner, queryOptions } = this.props;
-    const timeRange = { from: 'now-1h', to: 'now' };
-
-    queryRunner.run({
-      timezone: 'browser',
-      timeRange: { from: dateMath.parse(timeRange.from)!, to: dateMath.parse(timeRange.to)!, raw: timeRange },
-      maxDataPoints: queryOptions.maxDataPoints ?? 100,
-      minInterval: queryOptions.minInterval,
-      queries: queryOptions.queries,
-      datasource: queryOptions.dataSource.name!,
-    });
+    this.props.onRunQueries();
   };
 
   onIntervalChanged = (interval: string) => {
@@ -82,6 +71,7 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = s
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   queryOptionsChange,
+  onRunQueries,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(AlertingQueryEditor);

@@ -18,11 +18,18 @@ export const PreviewQueryTab: FC<Props> = ({ data, height, width }) => {
     [data.series]
   );
 
+  // Select padding
+  const padding = 16;
+
   if (data.series.length > 1) {
     return (
       <div className={styles.wrapper}>
         <div style={{ height: height - theme.spacing.formInputHeight - 16 }}>
-          <Table data={data.series[currentSeries]} height={height - theme.spacing.formInputHeight - 16} width={width} />
+          <Table
+            data={data.series[currentSeries]}
+            height={height - theme.spacing.formInputHeight - padding}
+            width={width}
+          />
         </div>
         <div className={styles.selectWrapper}>
           <Select onChange={selectedValue => setSeries(selectedValue.value!)} options={series} value={currentSeries} />
