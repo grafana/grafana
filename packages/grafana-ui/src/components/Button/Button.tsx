@@ -1,7 +1,7 @@
 import React, { AnchorHTMLAttributes, ButtonHTMLAttributes } from 'react';
 import { css, cx } from 'emotion';
 import tinycolor from 'tinycolor2';
-import { stylesFactory, useTheme } from '../../themes';
+import { useTheme } from '../../themes';
 import { IconName } from '../../types/icon';
 import { getPropertiesForButtonSize } from '../Forms/commonStyles';
 import { GrafanaTheme } from '@grafana/data';
@@ -100,7 +100,7 @@ const disabledStyles = css`
   box-shadow: none;
 `;
 
-export const getButtonStyles = stylesFactory((props: StyleProps) => {
+export const getButtonStyles = (props: StyleProps) => {
   const { theme, variant, size, children, fullWidth } = props;
   const { padding, fontSize, height } = getPropertiesForButtonSize(size, theme);
   const { borderColor, variantStyles } = getPropertiesForVariant(theme, variant);
@@ -152,7 +152,7 @@ export const getButtonStyles = stylesFactory((props: StyleProps) => {
       height: 100%;
     `,
   };
-});
+};
 
 function getButtonVariantStyles(from: string, to: string, textColor: string, theme: GrafanaTheme) {
   return css`
