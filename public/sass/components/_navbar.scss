@@ -84,23 +84,7 @@
   }
 }
 
-// element is needed here to override font-awesome specificity
-i.navbar-page-btn__folder-icon {
-  font-size: $font-size-sm;
-  color: $text-color-weak;
-  padding: 0 $space-sm;
-  position: relative;
-  top: -1px;
-}
-
-// element is needed here to override font-awesome specificity
-i.navbar-page-btn__search {
-  font-size: $font-size-xs;
-  padding: 0 $space-xs;
-}
-
 .navbar-buttons {
-  // height: $navbarHeight;
   display: flex;
   align-items: center;
   justify-content: flex-end;
