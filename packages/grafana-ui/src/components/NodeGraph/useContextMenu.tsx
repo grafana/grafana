@@ -29,27 +29,33 @@ export function useContextMenu(
   let MenuComponent = null;
 
   if (openedNode) {
-    MenuComponent = (
-      <ContextMenu
-        renderHeader={() => <NodeHeader node={openedNode.node} nodes={nodes} />}
-        items={getItems(getLinks(nodes, openedNode.node.dataFrameRowIndex))}
-        onClose={() => setOpenedNode(undefined)}
-        x={openedNode.event.pageX}
-        y={openedNode.event.pageY}
-      />
-    );
+    const items = getItems(getLinks(nodes, openedNode.node.dataFrameRowIndex));
+    if (items.length) {
+      MenuComponent = (
+        <ContextMenu
+          renderHeader={() => <NodeHeader node={openedNode.node} nodes={nodes} />}
+          items={items}
+          onClose={() => setOpenedNode(undefined)}
+          x={openedNode.event.pageX}
+          y={openedNode.event.pageY}
+        />
+      );
+    }
   }
 
   if (openedEdge) {
-    MenuComponent = (
-      <ContextMenu
-        renderHeader={() => <EdgeHeader edge={openedEdge.edge} edges={edges} />}
-        items={getItems(getLinks(edges, openedEdge.edge.dataFrameRowIndex))}
-        onClose={() => setOpenedEdge(undefined)}
-        x={openedEdge.event.pageX}
-        y={openedEdge.event.pageY}
-      />
-    );
+    const items = getItems(getLinks(edges, openedEdge.edge.dataFrameRowIndex));
+    if (items.length) {
+      MenuComponent = (
+        <ContextMenu
+          renderHeader={() => <EdgeHeader edge={openedEdge.edge} edges={edges} />}
+          items={items}
+          onClose={() => setOpenedEdge(undefined)}
+          x={openedEdge.event.pageX}
+          y={openedEdge.event.pageY}
+        />
+      );
+    }
   }
 
   return { onEdgeOpen, onNodeOpen, MenuComponent };
