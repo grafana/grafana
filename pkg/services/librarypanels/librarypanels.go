@@ -46,6 +46,10 @@ func (lps *LibraryPanelService) IsEnabled() bool {
 
 // LoadLibraryPanelsForDashboard loads library panels JSON from the database for a dashboard.
 func (lps *LibraryPanelService) LoadLibraryPanelsForDashboard(dash *models.Dashboard) error {
+	if !lps.IsEnabled() {
+		return nil
+	}
+
 	libraryPanels, err := lps.getLibraryPanelsForDashboardID(dash.Id)
 	if err != nil {
 		return err
