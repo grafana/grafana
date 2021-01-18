@@ -47,7 +47,7 @@ export const AlertingQueryPreview: FC<Props> = ({ queryRunner }) => {
         {data && data.state === 'Error' ? (
           <div className={styles.noQueries}>
             <h4 className={styles.noQueriesHeader}>There was an error :(</h4>
-            <div>{data.error?.message}</div>
+            <div>{data.error?.data?.error}</div>
           </div>
         ) : data && data.series.length > 0 ? (
           <AutoSizer style={{ width: '100%', height: '100%' }}>
