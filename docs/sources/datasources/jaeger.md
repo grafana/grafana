@@ -15,14 +15,14 @@ Just add it as a data source and you are ready to query your traces in [Explore]
 
 To access Jaeger settings, click the **Configuration** (gear) icon, then click **Data Sources** > **Jaeger**.
 
-| Name         | Description                                                                                     |
-| ------------ | ----------------------------------------------------------------------------------------------- |
-| `Name`       | The data source name in panels, queries, and Explore. |
-| `Default`    | The pre-selected data source for a new panel.                                                |
-| `URL`        | The URL of the Jaeger instance. For example, `http://localhost:16686`.                           |
-| `Basic Auth` | Enable basic authentication to the Jaeger data source.                                          |
-| `User`       | Specify a user name for basic authentication.                                                             |
-| `Password`   | Specify a password for basic authentication.                                                              |
+| Name         | Description                                                            |
+| ------------ | ---------------------------------------------------------------------- |
+| `Name`       | The data source name in panels, queries, and Explore.                  |
+| `Default`    | The pre-selected data source for a new panel.                          |
+| `URL`        | The URL of the Jaeger instance. For example, `http://localhost:16686`. |
+| `Basic Auth` | Enable basic authentication for the Jaeger data source.                |
+| `User`       | Specify a user name for basic authentication.                          |
+| `Password`   | Specify a password for basic authentication.                           |
 
 ### Trace to logs
 
