@@ -139,11 +139,11 @@ func (e *CloudMonitoringExecutor) executeTimeSeriesQuery(ctx context.Context, ts
 	unit := e.resolvePanelUnitFromQueries(queryExecutors)
 
 	for _, queryExecutor := range queryExecutors {
-		queryRes, resp, err := queryExecutor.run(ctx, tsdbQuery, e)
+		queryRes, resp, executedQueryString, err := queryExecutor.run(ctx, tsdbQuery, e)
 		if err != nil {
 			return nil, err
 		}
-		err = queryExecutor.parseResponse(queryRes, resp)
+		err = queryExecutor.parseResponse(queryRes, resp, executedQueryString)
 		if err != nil {
 			queryRes.Error = err
 		}

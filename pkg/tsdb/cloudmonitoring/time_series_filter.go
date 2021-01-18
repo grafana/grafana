@@ -13,19 +13,18 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb"
-	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/net/context/ctxhttp"
 )
 
-func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context, tsdbQuery *tsdb.TsdbQuery, e *CloudMonitoringExecutor) (*tsdb.QueryResult, cloudMonitoringResponse, error) {
+func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context, tsdbQuery *tsdb.TsdbQuery, e *CloudMonitoringExecutor) (*tsdb.QueryResult, cloudMonitoringResponse, string, error) {
 	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: timeSeriesFilter.RefID}
 	projectName := timeSeriesFilter.ProjectName
 	if projectName == "" {
 		defaultProject, err := e.getDefaultProject(ctx)
 		if err != nil {
 			queryResult.Error = err
-			return queryResult, cloudMonitoringResponse{}, nil
+			return queryResult, cloudMonitoringResponse{}, "", nil
 		}
 		projectName = defaultProject
 		slog.Info("No project name set on query, using project name from datasource", "projectName", projectName)
@@ -34,11 +33,10 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context
 	req, err := e.createRequest(ctx, e.dsInfo, path.Join("cloudmonitoringv3/projects", projectName, "timeSeries"), nil)
 	if err != nil {
 		queryResult.Error = err
-		return queryResult, cloudMonitoringResponse{}, nil
+		return queryResult, cloudMonitoringResponse{}, "", nil
 	}
 
 	req.URL.RawQuery = timeSeriesFilter.Params.Encode()
-	queryResult.Meta.Set(sqleng.MetaKeyExecutedQueryString, req.URL.RawQuery)
 	alignmentPeriod, ok := req.URL.Query()["aggregation.alignmentPeriod"]
 
 	if ok {
@@ -62,25 +60,25 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context
 		opentracing.HTTPHeaders,
 		opentracing.HTTPHeadersCarrier(req.Header)); err != nil {
 		queryResult.Error = err
-		return queryResult, cloudMonitoringResponse{}, nil
+		return queryResult, cloudMonitoringResponse{}, "", nil
 	}
 
 	res, err := ctxhttp.Do(ctx, e.httpClient, req)
 	if err != nil {
 		queryResult.Error = err
-		return queryResult, cloudMonitoringResponse{}, nil
+		return queryResult, cloudMonitoringResponse{}, "", nil
 	}
 
 	data, err := unmarshalResponse(res)
 	if err != nil {
 		queryResult.Error = err
-		return queryResult, cloudMonitoringResponse{}, nil
+		return queryResult, cloudMonitoringResponse{}, "", nil
 	}
 
-	return queryResult, data, nil
+	return queryResult, data, req.URL.RawQuery, nil
 }
 
-func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes *tsdb.QueryResult, response cloudMonitoringResponse) error {
+func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes *tsdb.QueryResult, response cloudMonitoringResponse, executedQueryString string) error {
 	labels := make(map[string]map[string]bool)
 	frames := data.Frames{}
 	for _, series := range response.TimeSeries {
@@ -91,6 +89,9 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 
 		frame := data.NewFrameOfFieldTypes("", len(series.Points), data.FieldTypeTime, data.FieldTypeFloat64)
 		frame.RefID = timeSeriesFilter.RefID
+		frame.Meta = &data.FrameMeta{
+			ExecutedQueryString: executedQueryString,
+		}
 
 		for key, value := range series.Metric.Labels {
 			if _, ok := labels["metric.label."+key]; !ok {

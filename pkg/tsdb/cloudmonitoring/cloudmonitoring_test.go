@@ -628,7 +628,7 @@ func TestCloudMonitoring(t *testing.T) {
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
 				query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}}
-				err = query.parseResponse(res, data)
+				err = query.parseResponse(res, data, "")
 				So(err, ShouldBeNil)
 				frames, _ := res.Dataframes.Decoded()
 				So(len(frames), ShouldEqual, 1)
@@ -654,7 +654,7 @@ func TestCloudMonitoring(t *testing.T) {
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
 				query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}}
-				err = query.parseResponse(res, data)
+				err = query.parseResponse(res, data, "")
 				So(err, ShouldBeNil)
 				frames, _ := res.Dataframes.Decoded()
 
@@ -697,7 +697,7 @@ func TestCloudMonitoring(t *testing.T) {
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
 				query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}, GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}}
-				err = query.parseResponse(res, data)
+				err = query.parseResponse(res, data, "")
 				So(err, ShouldBeNil)
 				frames, _ := res.Dataframes.Decoded()
 				Convey("Should add instance name and zone labels to metric name", func() {
@@ -717,7 +717,7 @@ func TestCloudMonitoring(t *testing.T) {
 
 				Convey("and the alias pattern is for metric type, a metric label and a resource label", func() {
 					query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}, AliasBy: "{{metric.type}} - {{metric.label.instance_name}} - {{resource.label.zone}}", GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}}
-					err = query.parseResponse(res, data)
+					err = query.parseResponse(res, data, "")
 					So(err, ShouldBeNil)
 					frames, _ := res.Dataframes.Decoded()
 					Convey("Should use alias by formatting and only show instance name", func() {
@@ -730,7 +730,7 @@ func TestCloudMonitoring(t *testing.T) {
 
 				Convey("and the alias pattern is for metric name", func() {
 					query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}, AliasBy: "metric {{metric.name}} service {{metric.service}}", GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}}
-					err = query.parseResponse(res, data)
+					err = query.parseResponse(res, data, "")
 					So(err, ShouldBeNil)
 					frames, _ := res.Dataframes.Decoded()
 					Convey("Should use alias by formatting and only show instance name", func() {
@@ -749,7 +749,7 @@ func TestCloudMonitoring(t *testing.T) {
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
 				query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}, AliasBy: "{{bucket}}"}
-				err = query.parseResponse(res, data)
+				err = query.parseResponse(res, data, "")
 				So(err, ShouldBeNil)
 				frames, _ := res.Dataframes.Decoded()
 				So(len(frames), ShouldEqual, 11)
@@ -796,7 +796,7 @@ func TestCloudMonitoring(t *testing.T) {
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
 				query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}, AliasBy: "{{bucket}}"}
-				err = query.parseResponse(res, data)
+				err = query.parseResponse(res, data, "")
 				So(err, ShouldBeNil)
 				frames, _ := res.Dataframes.Decoded()
 				So(len(frames), ShouldEqual, 33)
@@ -836,7 +836,7 @@ func TestCloudMonitoring(t *testing.T) {
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
 				query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}, AliasBy: "{{bucket}}"}
-				err = query.parseResponse(res, data)
+				err = query.parseResponse(res, data, "")
 				labels := res.Meta.Get("labels").Interface().(map[string][]string)
 				So(err, ShouldBeNil)
 				frames, _ := res.Dataframes.Decoded()
@@ -875,7 +875,7 @@ func TestCloudMonitoring(t *testing.T) {
 				Convey("and systemlabel contains key with array of string", func() {
 					res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
 					query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}, AliasBy: "{{metadata.system_labels.test}}"}
-					err = query.parseResponse(res, data)
+					err = query.parseResponse(res, data, "")
 					So(err, ShouldBeNil)
 					frames, _ := res.Dataframes.Decoded()
 					So(len(frames), ShouldEqual, 3)
@@ -888,7 +888,7 @@ func TestCloudMonitoring(t *testing.T) {
 				Convey("and systemlabel contains key with array of string2", func() {
 					res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
 					query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}, AliasBy: "{{metadata.system_labels.test2}}"}
-					err = query.parseResponse(res, data)
+					err = query.parseResponse(res, data, "")
 					So(err, ShouldBeNil)
 					frames, _ := res.Dataframes.Decoded()
 					So(len(frames), ShouldEqual, 3)
@@ -911,7 +911,7 @@ func TestCloudMonitoring(t *testing.T) {
 						Slo:         "test-slo",
 						AliasBy:     "{{project}} - {{service}} - {{slo}} - {{selector}}",
 					}
-					err = query.parseResponse(res, data)
+					err = query.parseResponse(res, data, "")
 					frames, _ := res.Dataframes.Decoded()
 					So(err, ShouldBeNil)
 					So(frames[0].Fields[1].Name, ShouldEqual, "test-proj - test-service - test-slo - select_slo_compliance")
@@ -932,7 +932,7 @@ func TestCloudMonitoring(t *testing.T) {
 						Service:     "test-service",
 						Slo:         "test-slo",
 					}
-					err = query.parseResponse(res, data)
+					err = query.parseResponse(res, data, "")
 					frames, _ := res.Dataframes.Decoded()
 					So(err, ShouldBeNil)
 					So(frames[0].Fields[1].Name, ShouldEqual, "select_slo_compliance(\"projects/test-proj/services/test-service/serviceLevelObjectives/test-slo\")")
@@ -1017,7 +1017,7 @@ func TestCloudMonitoring(t *testing.T) {
 							To:   fmt.Sprintf("%v", fromStart.Add(34*time.Minute).Unix()*1000),
 						},
 					}
-					err = query.parseResponse(res, data)
+					err = query.parseResponse(res, data, "")
 					So(err, ShouldBeNil)
 					frames, _ := res.Dataframes.Decoded()
 					So(frames[0].Fields[1].Name, ShouldEqual, "test-proj - asia-northeast1-c - 6724404429462225363")

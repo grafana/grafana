@@ -10,8 +10,8 @@ import (
 
 type (
 	cloudMonitoringQueryExecutor interface {
-		run(ctx context.Context, tsdbQuery *tsdb.TsdbQuery, e *CloudMonitoringExecutor) (*tsdb.QueryResult, cloudMonitoringResponse, error)
-		parseResponse(queryRes *tsdb.QueryResult, data cloudMonitoringResponse) error
+		run(ctx context.Context, tsdbQuery *tsdb.TsdbQuery, e *CloudMonitoringExecutor) (*tsdb.QueryResult, cloudMonitoringResponse, string, error)
+		parseResponse(queryRes *tsdb.QueryResult, data cloudMonitoringResponse, executedQueryString string) error
 		parseToAnnotations(queryRes *tsdb.QueryResult, data cloudMonitoringResponse, title string, text string, tags string) error
 		buildDeepLink() string
 		getRefID() string

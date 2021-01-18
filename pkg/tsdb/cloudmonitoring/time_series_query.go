@@ -18,14 +18,14 @@ import (
 	"golang.org/x/net/context/ctxhttp"
 )
 
-func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, tsdbQuery *tsdb.TsdbQuery, e *CloudMonitoringExecutor) (*tsdb.QueryResult, cloudMonitoringResponse, error) {
+func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, tsdbQuery *tsdb.TsdbQuery, e *CloudMonitoringExecutor) (*tsdb.QueryResult, cloudMonitoringResponse, string, error) {
 	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: timeSeriesQuery.RefID}
 	projectName := timeSeriesQuery.ProjectName
 	if projectName == "" {
 		defaultProject, err := e.getDefaultProject(ctx)
 		if err != nil {
 			queryResult.Error = err
-			return queryResult, cloudMonitoringResponse{}, nil
+			return queryResult, cloudMonitoringResponse{}, "", nil
 		}
 		projectName = defaultProject
 		slog.Info("No project name set on query, using project name from datasource", "projectName", projectName)
@@ -34,12 +34,12 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, t
 	from, err := tsdbQuery.TimeRange.ParseFrom()
 	if err != nil {
 		queryResult.Error = err
-		return queryResult, cloudMonitoringResponse{}, nil
+		return queryResult, cloudMonitoringResponse{}, "", nil
 	}
 	to, err := tsdbQuery.TimeRange.ParseTo()
 	if err != nil {
 		queryResult.Error = err
-		return queryResult, cloudMonitoringResponse{}, nil
+		return queryResult, cloudMonitoringResponse{}, "", nil
 	}
 	intervalCalculator := tsdb.NewIntervalCalculator(&tsdb.IntervalOptions{})
 	interval := intervalCalculator.Calculate(tsdbQuery.TimeRange, time.Duration(timeSeriesQuery.IntervalMS/1000)*time.Second)
@@ -51,15 +51,13 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, t
 	})
 	if err != nil {
 		queryResult.Error = err
-		return queryResult, cloudMonitoringResponse{}, nil
+		return queryResult, cloudMonitoringResponse{}, "", nil
 	}
 	req, err := e.createRequest(ctx, e.dsInfo, path.Join("cloudmonitoringv3/projects", projectName, "timeSeries:query"), bytes.NewBuffer(buf))
 	if err != nil {
 		queryResult.Error = err
-		return queryResult, cloudMonitoringResponse{}, nil
+		return queryResult, cloudMonitoringResponse{}, "", nil
 	}
-
-	queryResult.Meta.Set("executedQueryString", timeSeriesQuery.Query)
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "cloudMonitoring MQL query")
 	span.SetTag("query", timeSeriesQuery.Query)
@@ -75,32 +73,35 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, t
 		opentracing.HTTPHeaders,
 		opentracing.HTTPHeadersCarrier(req.Header)); err != nil {
 		queryResult.Error = err
-		return queryResult, cloudMonitoringResponse{}, nil
+		return queryResult, cloudMonitoringResponse{}, "", nil
 	}
 
 	res, err := ctxhttp.Do(ctx, e.httpClient, req)
 	if err != nil {
 		queryResult.Error = err
-		return queryResult, cloudMonitoringResponse{}, nil
+		return queryResult, cloudMonitoringResponse{}, "", nil
 	}
 
 	data, err := unmarshalResponse(res)
 
 	if err != nil {
 		queryResult.Error = err
-		return queryResult, cloudMonitoringResponse{}, nil
+		return queryResult, cloudMonitoringResponse{}, "", nil
 	}
 
-	return queryResult, data, nil
+	return queryResult, data, timeSeriesQuery.Query, nil
 }
 
-func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *tsdb.QueryResult, response cloudMonitoringResponse) error {
+func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *tsdb.QueryResult, response cloudMonitoringResponse, executedQueryString string) error {
 	labels := make(map[string]map[string]bool)
 	frames := data.Frames{}
 	for _, series := range response.TimeSeriesData {
 		seriesLabels := make(map[string]string)
 		frame := data.NewFrameOfFieldTypes("", len(series.PointData), data.FieldTypeTime, data.FieldTypeFloat64)
 		frame.RefID = timeSeriesQuery.RefID
+		frame.Meta = &data.FrameMeta{
+			ExecutedQueryString: executedQueryString,
+		}
 
 		for n, d := range response.TimeSeriesDescriptor.LabelDescriptors {
 			key := toSnakeCase(d.Key)

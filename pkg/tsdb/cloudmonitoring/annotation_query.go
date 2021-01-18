@@ -19,7 +19,7 @@ func (e *CloudMonitoringExecutor) executeAnnotationQuery(ctx context.Context, ts
 		return nil, err
 	}
 
-	queryRes, resp, err := queries[0].run(ctx, tsdbQuery, e)
+	queryRes, resp, _, err := queries[0].run(ctx, tsdbQuery, e)
 	if err != nil {
 		return nil, err
 	}
