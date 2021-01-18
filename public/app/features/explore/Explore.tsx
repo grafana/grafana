@@ -12,7 +12,6 @@ import {
   DataQuery,
   DataSourceApi,
   GrafanaTheme,
-  GraphSeriesXY,
   LoadingState,
   PanelData,
   RawTimeRange,
@@ -20,6 +19,7 @@ import {
   TimeZone,
   ExploreUrlState,
   LogsModel,
+  DataFrame,
   EventBusExtended,
   EventBusSrv,
   TraceViewData,
@@ -50,11 +50,11 @@ import { ExploreToolbar } from './ExploreToolbar';
 import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
 import { getTimeZone } from '../profile/state/selectors';
 import { ErrorContainer } from './ErrorContainer';
-import { ExploreGraphPanel } from './ExploreGraphPanel';
 //TODO:unification
 import { TraceView } from './TraceView/TraceView';
 import { SecondaryActions } from './SecondaryActions';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, FilterItem } from '@grafana/ui/src/components/Table/types';
+import { ExploreGraphNGPanel } from './ExploreGraphNGPanel';
 import { NodeGraphContainer } from './NodeGraphContainer';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
@@ -102,11 +102,10 @@ export interface ExploreProps {
   isLive: boolean;
   syncedTimes: boolean;
   updateTimeRange: typeof updateTimeRange;
-  graphResult?: GraphSeriesXY[] | null;
+  graphResult: DataFrame[] | null;
   logsResult?: LogsModel;
-  loading?: boolean;
   absoluteRange: AbsoluteTimeRange;
-  timeZone?: TimeZone;
+  timeZone: TimeZone;
   onHiddenSeriesChanged?: (hiddenSeries: string[]) => void;
   queryResponse: PanelData;
   originPanelId: number;
@@ -289,20 +288,18 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   };
 
   renderGraphPanel = (width: number) => {
-    const { graphResult, loading, absoluteRange, timeZone } = this.props;
+    const { graphResult, absoluteRange, timeZone, splitOpen, queryResponse } = this.props;
+    const isLoading = queryResponse.state === LoadingState.Loading;
     return (
-      <ExploreGraphPanel
-        ariaLabel={selectors.pages.Explore.General.graph}
-        series={graphResult}
+      <ExploreGraphNGPanel
+        data={graphResult!}
         width={width}
-        loading={loading}
         absoluteRange={absoluteRange}
-        isStacked={false}
-        showPanel={true}
         timeZone={timeZone}
         onUpdateTimeRange={this.onUpdateTimeRange}
-        showBars={false}
-        showLines={true}
+        annotations={queryResponse.annotations}
+        splitOpenFn={splitOpen}
+        isLoading={isLoading}
       />
     );
   };
@@ -373,6 +370,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       exploreId,
       split,
       queryKeys,
+      graphResult,
       queryResponse,
       isLive,
       theme,
@@ -436,7 +434,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                       )}
                       {!showStartPage && (
                         <>
-                          {showMetrics && this.renderGraphPanel(width)}
+                          {showMetrics && graphResult && this.renderGraphPanel(width)}
                           {showTable && this.renderTablePanel(width)}
                           {showLogs && this.renderLogsPanel(width)}
                           {showNodeGraph && this.renderNodeGraphPanel()}
@@ -491,7 +489,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     showMetrics,
     showTable,
     showTrace,
-    loading,
     absoluteRange,
     queryResponse,
     showNodeGraph,
@@ -515,9 +512,8 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     initialQueries,
     initialRange,
     isLive,
-    graphResult: graphResult ?? undefined,
+    graphResult,
     logsResult: logsResult ?? undefined,
-    loading,
     absoluteRange,
     queryResponse,
     originPanelId,

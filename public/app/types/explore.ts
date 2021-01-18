@@ -6,7 +6,6 @@ import {
   DataQueryRequest,
   DataSourceApi,
   ExploreUrlState,
-  GraphSeriesXY,
   HistoryItem,
   LogLevel,
   LogsDedupStrategy,
@@ -69,7 +68,7 @@ export interface ExploreItemState {
   /**
    * List of timeseries to be shown in the Explore graph result viewer.
    */
-  graphResult: GraphSeriesXY[] | null;
+  graphResult: DataFrame[] | null;
   /**
    * History of recent queries. Datasource-specific and initialized via localStorage.
    */
@@ -218,7 +217,7 @@ export interface ExplorePanelData extends PanelData {
   logsFrames: DataFrame[];
   traceFrames: DataFrame[];
   nodeGraphFrames: DataFrame[];
-  graphResult: GraphSeriesXY[] | null;
+  graphResult: DataFrame[] | null;
   tableResult: DataFrame | null;
   logsResult: LogsModel | null;
 }

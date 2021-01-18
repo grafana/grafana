@@ -1,13 +1,14 @@
 import React, { PureComponent } from 'react';
 import appEvents from 'app/core/app_events';
 import { CoreEvents } from 'app/types';
-import { Help, MetricQueryEditor, QueryTypeSelector, SLOQueryEditor } from './';
-import { CloudMonitoringQuery, MetricQuery, QueryType, SLOQuery } from '../types';
+import { ExploreQueryFieldProps, SelectableValue } from '@grafana/data';
+import { Segment } from '@grafana/ui';
+import { Help, MetricQueryEditor, SLOQueryEditor } from './';
+import { CloudMonitoringQuery, MetricQuery, QueryType, SLOQuery, queryTypes, EditorMode } from '../types';
 import { defaultQuery } from './MetricQueryEditor';
 import { defaultQuery as defaultSLOQuery } from './SLOQueryEditor';
 import { formatCloudMonitoringError, toOption } from '../functions';
 import CloudMonitoringDatasource from '../datasource';
-import { ExploreQueryFieldProps } from '@grafana/data';
 
 export type Props = ExploreQueryFieldProps<CloudMonitoringDatasource, CloudMonitoringQuery>;
 
@@ -18,7 +19,7 @@ interface State {
 export class QueryEditor extends PureComponent<Props, State> {
   state: State = { lastQueryError: '' };
 
-  async UNSAFE_UNSAFE_componentWillMount() {
+  async UNSAFE_componentWillMount() {
     const { datasource, query } = this.props;
 
     // Unfortunately, migrations like this need to go UNSAFE_componentWillMount. As soon as there's
@@ -76,21 +77,51 @@ export class QueryEditor extends PureComponent<Props, State> {
 
     return (
       <>
-        <QueryTypeSelector
-          value={queryType}
-          templateVariableOptions={variableOptionGroup.options}
-          onChange={(queryType: QueryType) => {
-            onChange({ ...query, sloQuery, queryType });
-            onRunQuery();
-          }}
-        ></QueryTypeSelector>
+        <div className="gf-form-inline">
+          <label className="gf-form-label query-keyword width-9">Query Type</label>
+          <Segment
+            value={[...queryTypes, ...variableOptionGroup.options].find(qt => qt.value === queryType)}
+            options={[
+              ...queryTypes,
+              {
+                label: 'Template Variables',
+                options: variableOptionGroup.options,
+              },
+            ]}
+            onChange={({ value }: SelectableValue<QueryType>) => {
+              onChange({ ...query, sloQuery, queryType: value! });
+              onRunQuery();
+            }}
+          />
+
+          {query.queryType !== QueryType.SLO && (
+            <button
+              className="gf-form-label "
+              onClick={() =>
+                this.onQueryChange('metricQuery', {
+                  ...metricQuery,
+                  editorMode: metricQuery.editorMode === EditorMode.MQL ? EditorMode.Visual : EditorMode.MQL,
+                })
+              }
+            >
+              <span className="query-keyword">{'<>'}</span>&nbsp;&nbsp;
+              {metricQuery.editorMode === EditorMode.MQL ? 'Switch to builder' : 'Edit MQL'}
+            </button>
+          )}
+
+          <div className="gf-form gf-form--grow">
+            <label className="gf-form-label gf-form-label--grow"></label>
+          </div>
+        </div>
 
         {queryType === QueryType.METRICS && (
           <MetricQueryEditor
             refId={query.refId}
             variableOptionGroup={variableOptionGroup}
             usedAlignmentPeriod={usedAlignmentPeriod}
-            onChange={(query: MetricQuery) => this.onQueryChange('metricQuery', query)}
+            onChange={(metricQuery: MetricQuery) => {
+              this.props.onChange({ ...this.props.query, metricQuery });
+            }}
             onRunQuery={onRunQuery}
             datasource={datasource}
             query={metricQuery}
@@ -107,6 +138,7 @@ export class QueryEditor extends PureComponent<Props, State> {
             query={sloQuery}
           ></SLOQueryEditor>
         )}
+
         <Help
           rawQuery={decodeURIComponent(meta?.executedQueryString ?? '')}
           lastQueryError={this.state.lastQueryError}

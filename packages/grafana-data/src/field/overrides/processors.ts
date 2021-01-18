@@ -132,3 +132,14 @@ export interface FieldColorConfigSettings {
    */
   preferThresholdsMode?: boolean;
 }
+
+export interface StatsPickerConfigSettings {
+  /**
+   * Enable multi-selection in the stats picker
+   */
+  allowMultiple: boolean;
+  /**
+   * Default stats to be use in the stats picker
+   */
+  defaultStat?: string;
+}

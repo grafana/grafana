@@ -1,4 +1,4 @@
-export const docsTpl = `import { Story, Preview, Props } from '@storybook/addon-docs/blocks';
+export const docsTpl = `import { ArgsTable } from '@storybook/addon-docs/blocks';
 import { <%= name %> } from './<%= name %>';
 
 # <%= name %>
@@ -12,5 +12,5 @@ import { <%= name %> } from '@grafana/ui';
 \`\`\`
 
 ### Props
-<Props of={<%= name %>} />
+<ArgsTable of={<%= name %>} />
 `;

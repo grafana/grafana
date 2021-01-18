@@ -6,7 +6,7 @@
         <select
           class="gf-form-input service-dropdown min-width-12"
           ng-model="ctrl.target.queryType"
-          ng-options="f as f for f in ['Application Insights', 'Azure Monitor', 'Azure Log Analytics', 'Insights Analytics']"
+          ng-options="f.id as f.label for f in ctrl.queryQueryTypeOptions"
           ng-change="ctrl.onQueryTypeChange()"
         ></select>
       </div>
