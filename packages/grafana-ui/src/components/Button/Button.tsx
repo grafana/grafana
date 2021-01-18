@@ -142,8 +142,7 @@ export const getButtonStyles = stylesFactory((props: StyleProps) => {
     `,
     icon: css`
       margin-left: -${padding / 2}px;
-      ${!iconOnly && `margin-right: ${padding / 2}px;`}
-      ${iconOnly && `margin-right: -${padding / 2}px;`}
+      margin-right: ${(iconOnly ? -padding : padding) / 2}px;
     `,
     content: css`
       display: flex;
