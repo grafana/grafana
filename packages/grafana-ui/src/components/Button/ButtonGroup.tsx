@@ -9,10 +9,7 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
 
 export const ButtonGroup = forwardRef<HTMLDivElement, Props>(({ noSpacing, children, ...rest }, ref) => {
   const styles = useStyles(getStyles);
-  const className = cx({
-    [styles.wrapper]: !noSpacing,
-    [styles.wrapperNoSpacing]: noSpacing,
-  });
+  const className = noSpacing ? styles.wrapperNoSpacing : styles.wrapper;
 
   return (
     <div ref={ref} className={className} {...rest}>
