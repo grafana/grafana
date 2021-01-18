@@ -30,6 +30,9 @@ describe('VersionSettings', () => {
     await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());
     const tableBodyRows = within(screen.getAllByRole('rowgroup')[1]).getAllByRole('row');
     expect(tableBodyRows.length).toBe(versions.length);
+    const firstRow = within(screen.getAllByRole('rowgroup')[1]).getAllByRole('row')[0];
+    expect(within(firstRow).getByText(/latest/i)).toBeInTheDocument();
+    expect(within(screen.getByRole('table')).getAllByText(/latest/i)).toHaveLength(1);
   });
 
   test('does not render buttons if versions === 1', async () => {
@@ -88,6 +91,21 @@ describe('VersionSettings', () => {
     await waitFor(() =>
       expect(within(screen.getAllByRole('rowgroup')[1]).getAllByRole('row').length).toBe(versions.length)
     );
+  });
+
+  test('clicking restore button opens modal', async () => {
+    // @ts-ignore
+    historySrv.getHistoryList.mockResolvedValue(versions.slice(0, VERSIONS_FETCH_LIMIT));
+    const { getByText, getByRole } = render(<VersionsSettings dashboard={dashboard} />, {
+      container: document.body,
+    });
+    await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());
+    const tableRow = within(screen.getAllByRole('rowgroup')[1]).getAllByRole('row')[2];
+    const restoreButton = within(tableRow).getByText(/restore/i);
+    userEvent.click(restoreButton);
+    expect(getByText(/restore version/i)).toBeInTheDocument();
+    expect(getByRole('button', { name: /yes, restore to version/i })).toBeInTheDocument();
+    expect(getByRole('button', { name: /cancel/i })).toBeInTheDocument();
   });
   test('selecting two versions and clicking compare button should render compare view', async () => {
     // @ts-ignore
