@@ -192,7 +192,6 @@ class LegendSeriesIcon extends PureComponent<LegendSeriesIconProps, LegendSeries
         color={this.props.color}
         onChange={this.onColorChange}
         onToggleAxis={this.props.onToggleAxis}
-        enableNamedColors
       >
         {({ ref, showColorPicker, hideColorPicker }) => (
           <SeriesIcon

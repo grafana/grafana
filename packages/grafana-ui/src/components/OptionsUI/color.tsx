@@ -16,7 +16,7 @@ export const ColorValueEditor: React.FC<Props> = ({ value, onChange }) => {
   const styles = getStyles(theme);
 
   return (
-    <ColorPicker color={value ?? ''} onChange={onChange} enableNamedColors={true}>
+    <ColorPicker color={value ?? ''} onChange={onChange}>
       {({ ref, showColorPicker, hideColorPicker }) => {
         return (
           <div className={styles.spot} onBlur={hideColorPicker}>

@@ -12,7 +12,7 @@ export const VizLegendSeriesIcon: React.FunctionComponent<Props> = ({ disabled, 
   return disabled ? (
     <SeriesIcon color={color} />
   ) : (
-    <SeriesColorPicker color={color} onChange={onColorChange} enableNamedColors>
+    <SeriesColorPicker color={color} onChange={onColorChange}>
       {({ ref, showColorPicker, hideColorPicker }) => (
         <SeriesIcon
           color={color}

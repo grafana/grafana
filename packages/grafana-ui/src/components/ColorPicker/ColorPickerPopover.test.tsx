@@ -57,12 +57,7 @@ describe('ColorPickerPopover', () => {
 
     it('should pass color name to onChange prop when named colors enabled', () => {
       wrapper = mount(
-        <ColorPickerPopover
-          enableNamedColors
-          color={'green'}
-          onChange={onChangeSpy}
-          theme={getTheme(GrafanaThemeType.Light)}
-        />
+        <ColorPickerPopover color={'green'} onChange={onChangeSpy} theme={getTheme(GrafanaThemeType.Light)} />
       );
 
       const basicBlueSwatch = wrapper.find(ColorSwatch).findWhere(node => node.key() === 'green');

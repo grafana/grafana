@@ -160,7 +160,6 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
                 <ColorPicker
                   color={threshold.color}
                   onChange={color => this.onChangeThresholdColor(threshold, color)}
-                  enableNamedColors={true}
                 />
               </div>
             )
@@ -185,7 +184,6 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
                 <ColorPicker
                   color={threshold.color}
                   onChange={color => this.onChangeThresholdColor(threshold, color)}
-                  enableNamedColors={true}
                 />
               </div>
             )}
