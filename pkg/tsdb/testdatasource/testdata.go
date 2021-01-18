@@ -92,13 +92,10 @@ func executeFallbackScenario(ctx context.Context, logger log.Logger, req *backen
 				return nil, err
 			}
 			respD := resp.Responses[refID]
-			logger.Info("appending frame", "frame", frame)
 			respD.Frames = append(respD.Frames, frame)
 			resp.Responses[refID] = respD
 		}
 	}
-
-	logger.Info("Payload", "payload", resp, "tsdb", result)
 
 	return resp, nil
 }
