@@ -278,15 +278,15 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     }
   };
 
-  renderEmptyState = () => {
+  renderEmptyState() {
     return (
       <div className="explore-container">
         <NoDataSourceCallToAction />
       </div>
     );
-  };
+  }
 
-  renderGraphPanel = (width: number) => {
+  renderGraphPanel(width: number) {
     const { graphResult, absoluteRange, timeZone, splitOpen, queryResponse } = this.props;
     const isLoading = queryResponse.state === LoadingState.Loading;
     return (
@@ -301,9 +301,9 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         isLoading={isLoading}
       />
     );
-  };
+  }
 
-  renderTablePanel = (width: number) => {
+  renderTablePanel(width: number) {
     const { exploreId, datasourceInstance } = this.props;
     return (
       <TableContainer
@@ -313,9 +313,9 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         onCellFilterAdded={datasourceInstance?.modifyQuery ? this.onCellFilterAdded : undefined}
       />
     );
-  };
+  }
 
-  renderLogsPanel = (width: number) => {
+  renderLogsPanel(width: number) {
     const { exploreId, syncedTimes } = this.props;
     return (
       <LogsContainer
@@ -328,9 +328,9 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         onStopScanning={this.onStopScanning}
       />
     );
-  };
+  }
 
-  renderNodeGraphPanel = () => {
+  renderNodeGraphPanel() {
     const { exploreId, showTrace, queryResponse } = this.props;
     return (
       <NodeGraphContainer
@@ -339,7 +339,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         short={showTrace}
       />
     );
-  };
+  }
 
   getNodeGraphDataFrames = memoizeOne((frames: DataFrame[]) => {
     // TODO: this not in sync with how other types of responses are handled. Other types have a query response
@@ -349,7 +349,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     return frames.filter(frame => frame.meta?.preferredVisualisationType === 'nodeGraph');
   });
 
-  renderTraceViewPanel = () => {
+  renderTraceViewPanel() {
     const { queryResponse, splitOpen } = this.props;
     const dataFrames = queryResponse.series.filter(series => series.meta?.preferredVisualisationType === 'trace');
 
@@ -360,7 +360,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         <TraceView trace={dataFrames[0].fields[0].values.get(0) as TraceViewData | undefined} splitOpenFn={splitOpen} />
       )
     );
-  };
+  }
 
   render() {
     const {
