@@ -93,20 +93,6 @@ describe('VersionSettings', () => {
     );
   });
 
-  test('clicking restore button opens modal', async () => {
-    // @ts-ignore
-    historySrv.getHistoryList.mockResolvedValue(versions.slice(0, VERSIONS_FETCH_LIMIT));
-    const { getByText, getByRole } = render(<VersionsSettings dashboard={dashboard} />, {
-      container: document.body,
-    });
-    await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());
-    const tableRow = within(screen.getAllByRole('rowgroup')[1]).getAllByRole('row')[2];
-    const restoreButton = within(tableRow).getByText(/restore/i);
-    userEvent.click(restoreButton);
-    expect(getByText(/restore version/i)).toBeInTheDocument();
-    expect(getByRole('button', { name: /yes, restore to version/i })).toBeInTheDocument();
-    expect(getByRole('button', { name: /cancel/i })).toBeInTheDocument();
-  });
   test('selecting two versions and clicking compare button should render compare view', async () => {
     // @ts-ignore
     historySrv.getHistoryList.mockResolvedValue(versions.slice(0, VERSIONS_FETCH_LIMIT));
