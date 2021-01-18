@@ -9,7 +9,7 @@ aliases = ["/docs/grafana/latest/http_api/licensing/"]
 
 ## Manually force license refresh
 
-> **Note:** Only available in Grafana Enterprise v7.4+.
+> **Note:** Available in Grafana Enterprise v7.4+.
 
 `POST /api/licensing/token/renew`
 
@@ -59,7 +59,7 @@ Status Codes:
 
 ## Remove license from database
 
-> **Note:** Only available in Grafana Enterprise v7.4+.
+> **Note:** Available in Grafana Enterprise v7.4+.
 
 `DELETE /api/licensing/token`
 
