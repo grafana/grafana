@@ -13,10 +13,6 @@ export interface QueryGroupOptions {
   };
 }
 
-export interface ChangeQueryOptions {
-  runQueries?: boolean;
-}
-
 interface QueryGroupDataSource {
   name?: string | null;
   uid?: string;
