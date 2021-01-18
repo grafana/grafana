@@ -45,7 +45,7 @@ There are three different ways to add the license to a Grafana instance:
 
   This setting can also be set with an environment variable, which is useful if you're running Grafana with Docker and have a custom volume where you have placed the license file. In this case, set the environment variable `GF_ENTERPRISE_LICENSE_PATH` to point to the location of your license file.
 
-### Set the content of the license file on the *enterprise.license_text* configuration option
+### Set the content of the license file as a configuration option
 
   You can add a license by pasting the content of the `license.jwt`
   to the grafana.ini configuration file:
