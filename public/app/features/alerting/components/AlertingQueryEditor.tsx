@@ -28,6 +28,7 @@ export class AlertingQueryEditor extends PureComponent<Props> {
   };
 
   onRunQueries = () => {
+    console.log('onRunQueries');
     const { queryRunner, queryOptions } = this.props;
     const timeRange = { from: 'now-1h', to: 'now' };
 

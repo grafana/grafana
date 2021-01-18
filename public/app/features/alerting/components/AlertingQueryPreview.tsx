@@ -88,7 +88,7 @@ const getStyles = (theme: GrafanaTheme) => {
     `,
     tabContent: css`
       background: ${theme.colors.panelBg};
-      flex: 1;
+      height: 100%;
     `,
     noQueries: css`
       color: ${theme.colors.textSemiWeak};
