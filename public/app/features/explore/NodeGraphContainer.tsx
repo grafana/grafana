@@ -1,5 +1,5 @@
 import React from 'react';
-import { NodeGraph } from '@grafana/ui';
+import { Badge, NodeGraph } from '@grafana/ui';
 import { DataFrame, TimeRange } from '@grafana/data';
 import { ExploreId, StoreState } from '../../types';
 import { splitOpen } from './state/main';
@@ -21,7 +21,14 @@ export function UnconnectedNodeGraphContainer(props: Props) {
 
   return (
     <div style={{ height: short ? 300 : 600 }}>
-      <Collapse label="Service Map" isOpen>
+      <Collapse
+        label={
+          <span>
+            Node graph <Badge text={'Beta'} color={'blue'} icon={'rocket'} tooltip={'This visualization is in beta'} />
+          </span>
+        }
+        isOpen
+      >
         <NodeGraph dataFrames={dataFrames} getLinks={getLinks} />
       </Collapse>
     </div>
