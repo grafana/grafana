@@ -1,6 +1,6 @@
 import React from 'react';
 import uPlot, { Options, Hooks, AlignedData } from 'uplot';
-import { EventBus, TimeRange } from '@grafana/data';
+import { EventBus } from '@grafana/data';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 
 export type PlotConfig = Pick<
@@ -24,8 +24,7 @@ export interface PlotProps {
   width: number;
   height: number;
   config: UPlotConfigBuilder;
-  timeRange: TimeRange;
-  children?: React.ReactNode;
+  children?: React.ReactElement[];
   eventBus: EventBus;
 }
 

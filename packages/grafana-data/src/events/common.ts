@@ -1,5 +1,4 @@
 import { DataFrame } from '../types';
-import { eventFactory } from './eventFactory';
 import { BusEventWithPayload } from './types';
 
 /** @alpha */
