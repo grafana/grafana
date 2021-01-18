@@ -64,11 +64,12 @@ describe('getFieldSeriesColor', () => {
   const field = getTestField('continuous-GrYlRd');
   field.values = new ArrayVector([0, -10, 5, 10, 2, 5]);
 
-  it('When color.seriesBy is last use that to calc series color', () => {
+  it.only('When color.seriesBy is last use that to calc series color', () => {
     field.config.color!.seriesBy = 'last';
     const color = getFieldSeriesColor(field, getTestTheme());
     const calcFn = getCalculator({ mode: 'continuous-GrYlRd' });
 
+    // the 4 can be anything, 0.75 comes from 5 being 75% in the range -10 to 10 (see data above)
     expect(color.color).toEqual(calcFn(4, 0.75));
   });
 
