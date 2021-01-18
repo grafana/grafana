@@ -44,8 +44,9 @@ Alternately you can install Elasticsearch using the resources available in [graf
     make devenv sources=elastic7
    ```
 
-This creates and starts Elasticsearch, Filebeat, Metricbeat, Kibana, and a process that sends random data to your new Elasticsearch instance. 
-> **Note**:  Filebeat, Metricbeat, and Kibana are outside the scope of this topic.
+This creates and starts Elasticsearch, Filebeat, Metricbeat, Kibana, and a process that sends random data to your new Elasticsearch instance.
+
+> **Note**: Filebeat, Metricbeat, and Kibana are outside the scope of this topic.
 
 ## Step 3. Configure and add the Elasticsearch data source
 
@@ -103,6 +104,6 @@ You can now start editing your query to get data out of your Elasticsearch insta
 
 ## Next steps
 
-Now that you have your Elasticsearch powered Grafana dashboard you can start exploring different ways of querying your Elasticsearch index to get the most out of your data.
+Now that you have your Elasticsearch powered Grafana dashboard you can start [exploring](/docs/grafana/latest/explore/) different ways of querying your Elasticsearch index to get the most out of your data.
 
 For more information, refer to [Elasticsearch aggregations](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations.html), [metricbeat](https://www.elastic.co/beats/metricbeat) and [filebeat](https://www.elastic.co/beats/filebeat) on [Elastic's website](https://www.elastic.co).
