@@ -18,7 +18,7 @@ You can sign your plugin as a _public_ or a _private_ plugin. In both cases, you
 
 Plugins signed under the community or commercial signature level are considered _public plugins_. Public plugins are published on [Grafana Plugin](https://grafana.com/plugins). For more information about installing public plugins, refer to [Install Grafana plugins]({{< relref "../../plugins/installation.md" >}}).
 
-1. Submit your plugin for review by creating a pull request on [grafana-plugin-repository](https://github.com/grafana/grafana-plugin-repository).
+1. Submit your plugin for review by creating a pull request in the [grafana-plugin-repository](https://github.com/grafana/grafana-plugin-repository).
 1. When your plugin is approved, you're granted a [plugin signature level](#plugin-signature-levels). **Without a plugin signature level, you won't be able to sign your plugin**.
 1. Sign the plugin with the API key you just created. Grafana Toolkit creates a [MANIFEST.txt](#plugin-manifest) file in the `dist` directory of your plugin.
 
