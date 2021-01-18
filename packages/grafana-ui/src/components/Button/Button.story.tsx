@@ -4,7 +4,6 @@ import { Button, ButtonProps, ButtonVariant } from './Button';
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { iconOptions } from '../../utils/storybook/knobs';
 import mdx from './Button.mdx';
-import { useTheme } from '../../themes/ThemeContext';
 import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
 import { ButtonGroup } from './ButtonGroup';
 import { ComponentSize } from '../../types/size';
