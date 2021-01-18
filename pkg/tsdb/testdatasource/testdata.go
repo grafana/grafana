@@ -44,15 +44,18 @@ func executeFallbackScenario(ctx context.Context, logger log.Logger, req *backen
 
 	tsdbQuery := &tsdb.TsdbQuery{
 		TimeRange: tsdb.NewTimeRange(strconv.FormatInt(req.Queries[0].TimeRange.From.UnixNano()/int64(time.Millisecond), 10), strconv.FormatInt(req.Queries[0].TimeRange.To.UnixNano()/int64(time.Millisecond), 10)),
-		User: &models.SignedInUser{
+		Headers:   map[string]string{},
+		Queries:   []*tsdb.Query{},
+	}
+
+	if req.PluginContext.User != nil {
+		tsdbQuery.User = &models.SignedInUser{
 			OrgId:   req.PluginContext.OrgID,
 			Name:    req.PluginContext.User.Name,
 			Login:   req.PluginContext.User.Login,
 			Email:   req.PluginContext.User.Email,
 			OrgRole: models.RoleType(req.PluginContext.User.Role),
-		},
-		Headers: map[string]string{},
-		Queries: []*tsdb.Query{},
+		}
 	}
 
 	for _, q := range req.Queries {
