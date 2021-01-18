@@ -98,8 +98,13 @@ func (m *manager) Register(pluginID string, factory PluginFactoryFunc) error {
 		hostEnv = append(
 			hostEnv,
 			fmt.Sprintf("GF_ENTERPRISE_LICENSE_PATH=%s", m.Cfg.EnterpriseLicensePath),
-			fmt.Sprintf("GF_ENTERPRISE_LICENSE_TEXT=%s", m.License.TokenRaw()),
 		)
+
+		if envProvider, ok := m.License.(models.LicenseEnvironment); ok {
+			for k, v := range envProvider.Environment() {
+				hostEnv = append(hostEnv, fmt.Sprintf("%s=%s", k, v))
+			}
+		}
 	}
 
 	env := pluginSettings.ToEnv("GF_PLUGIN", hostEnv)
