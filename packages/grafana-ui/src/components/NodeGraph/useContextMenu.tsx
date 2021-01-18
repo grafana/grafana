@@ -90,8 +90,8 @@ function NodeHeader(props: { node: NodeDatum; nodes: DataFrame }) {
   const fields = getNodeFields(props.nodes);
   return (
     <div>
-      <Label field={fields.title} index={index} />
-      <Label field={fields.subTitle} index={index} />
+      {fields.title && <Label field={fields.title} index={index} />}
+      {fields.subTitle && <Label field={fields.subTitle} index={index} />}
       {fields.details.map(f => (
         <Label key={f.name} field={f} index={index} />
       ))}
@@ -134,7 +134,7 @@ export const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
 });
 function Label(props: { field: Field; index: number }) {
   const { field, index } = props;
-  const value = field.values.get(index);
+  const value = field.values.get(index) || '';
   const styles = getLabelStyles(useTheme());
 
   return (

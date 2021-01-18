@@ -19,7 +19,6 @@ import {
   TimeZone,
   ExploreUrlState,
   LogsModel,
-  DataFrame,
   EventBusExtended,
   EventBusSrv,
   TraceViewData,
