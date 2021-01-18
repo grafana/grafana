@@ -49,7 +49,7 @@ describe('fieldColorModeRegistry', () => {
     const field = getTestField('continuous-GrYlRd');
 
     field.config.color!.seriesBy = 'last';
-    // min = -10, max -10, last: 5
+    // min = -10, max = 10, last = 5
     // last percent 75%
     field.values = new ArrayVector([0, -10, 5, 10, 2, 5]);
 
