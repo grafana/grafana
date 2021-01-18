@@ -27,7 +27,7 @@ func (td *testdataV2) Init() error {
 	factory := coreplugin.New(backend.ServeOpts{
 		CallResourceHandler: httpadapter.New(mux),
 	})
-	err := td.BackendPluginManager.Register("testdata", factory)
+	err := td.BackendPluginManager.Register("testdatav2", factory)
 	if err != nil {
 		td.logger.Error("Failed to register plugin", "error", err)
 	}
