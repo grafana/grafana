@@ -542,57 +542,6 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     return period || '';
   }
 
-  buildCloudwatchConsoleUrl(
-    { region, namespace, metricName, dimensions, statistics, expression }: CloudWatchMetricsQuery,
-    start: string,
-    end: string,
-    title: string,
-    gmdMeta: Array<{ Expression: string; Period: string }>
-  ) {
-    region = this.getActualRegion(region);
-    let conf = {
-      view: 'timeSeries',
-      stacked: false,
-      title,
-      start,
-      end,
-      region,
-    } as any;
-
-    const isSearchExpression =
-      gmdMeta && gmdMeta.length && gmdMeta.every(({ Expression: expression }) => /SEARCH().*/.test(expression));
-    const isMathExpression = !isSearchExpression && expression;
-
-    if (isMathExpression) {
-      return '';
-    }
-
-    if (isSearchExpression) {
-      const metrics: any =
-        gmdMeta && gmdMeta.length ? gmdMeta.map(({ Expression: expression }) => ({ expression })) : [{ expression }];
-      conf = { ...conf, metrics };
-    } else {
-      conf = {
-        ...conf,
-        metrics: [
-          ...statistics.map(stat => [
-            namespace,
-            metricName,
-            ...Object.entries(dimensions).reduce((acc, [key, value]) => [...acc, key, value[0]], []),
-            {
-              stat,
-              period: gmdMeta.length ? gmdMeta[0].Period : 60,
-            },
-          ]),
-        ],
-      };
-    }
-
-    return `https://${region}.console.aws.amazon.com/cloudwatch/deeplink.js?region=${region}#metricsV2:graph=${encodeURIComponent(
-      JSON.stringify(conf)
-    )}`;
-  }
-
   performTimeSeriesQuery(request: MetricRequest, { from, to }: TimeRange): Observable<any> {
     return this.awsRequest(TSDB_QUERY_ENDPOINT, request).pipe(
       map(res => {
@@ -601,41 +550,12 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
           return { data: [] };
         }
 
-        const data = dataframes.map(frame => {
-          const queryResult = res.results[frame.refId!];
-          const error = queryResult.error ? { message: queryResult.error } : null;
-          if (!queryResult) {
-            return { frame, error };
-          }
-
-          const requestQuery = request.queries.find(q => q.refId === frame.refId!) as any;
-
-          const link = this.buildCloudwatchConsoleUrl(
-            requestQuery!,
-            from.toISOString(),
-            to.toISOString(),
-            frame.refId!,
-            queryResult.meta.gmdMeta
-          );
-
-          if (link) {
-            for (const field of frame.fields) {
-              field.config.links = [
-                {
-                  url: link,
-                  title: 'View in CloudWatch console',
-                  targetBlank: true,
-                },
-              ];
-            }
-          }
-          return { frame, error };
-        });
-
         return {
-          data: data.map(o => o.frame),
-          error: data
-            .map(o => o.error)
+          data: dataframes,
+          error: Object.values(res.results)
+            .map(o => ({
+              message: o.error,
+            }))
             .reduce((err, error) => {
               return err || error;
             }, null),

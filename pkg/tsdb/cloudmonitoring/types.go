@@ -16,6 +16,7 @@ type (
 		Selector    string
 		Service     string
 		Slo         string
+		Unit        string
 	}
 
 	metricQuery struct {
@@ -28,6 +29,7 @@ type (
 		Filters            []string
 		AliasBy            string
 		View               string
+		Unit               string
 	}
 
 	sloQuery struct {

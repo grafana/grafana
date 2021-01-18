@@ -73,14 +73,14 @@ const getStyles = (theme: GrafanaTheme) => ({
     margin-bottom: ${theme.spacing.xs};
   `,
   rightWrapper: css`
-    margin-left: ${theme.spacing.sm};
+    padding-left: ${theme.spacing.sm};
   `,
   bottomWrapper: css`
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
     width: 100%;
-    margin-left: ${theme.spacing.md};
+    padding-left: ${theme.spacing.md};
   `,
   section: css`
     display: flex;

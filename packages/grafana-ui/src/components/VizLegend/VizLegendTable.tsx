@@ -22,8 +22,8 @@ export const VizLegendTable: FC<VizLegendTableProps> = ({
 
   const columns = items
     .map(item => {
-      if (item.displayValues) {
-        return item.displayValues.map(i => i.title);
+      if (item.getDisplayValues) {
+        return item.getDisplayValues().map(i => i.title);
       }
       return [];
     })
@@ -39,8 +39,8 @@ export const VizLegendTable: FC<VizLegendTableProps> = ({
 
   const sortedItems = sortKey
     ? sortBy(items, item => {
-        if (item.displayValues) {
-          const stat = item.displayValues.filter(stat => stat.title === sortKey)[0];
+        if (item.getDisplayValues) {
+          const stat = item.getDisplayValues().filter(stat => stat.title === sortKey)[0];
           return stat && stat.numeric;
         }
         return undefined;
@@ -67,7 +67,7 @@ export const VizLegendTable: FC<VizLegendTableProps> = ({
             return (
               <th
                 key={columnHeader}
-                className={styles.header}
+                className={cx(styles.header, onToggleSort && styles.headerSortable)}
                 onClick={() => {
                   if (onToggleSort) {
                     onToggleSort(columnHeader);
@@ -99,6 +99,8 @@ const getStyles = (theme: GrafanaTheme) => ({
     border-bottom: 1px solid ${theme.colors.border1};
     padding: ${theme.spacing.xxs} ${theme.spacing.sm};
     text-align: right;
+  `,
+  headerSortable: css`
     cursor: pointer;
   `,
   sortIcon: css`

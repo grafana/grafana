@@ -1,6 +1,19 @@
 import { DataFrame } from '@grafana/data';
 import { transform } from './result_transformer';
 
+jest.mock('@grafana/runtime', () => ({
+  getTemplateSrv: () => ({
+    replace: (str: string) => str,
+  }),
+  getDataSourceSrv: () => {
+    return {
+      getInstanceSettings: () => {
+        return { name: 'Tempo' };
+      },
+    };
+  },
+}));
+
 const matrixResponse = {
   status: 'success',
   data: {
@@ -436,6 +449,104 @@ describe('Prometheus Result Transformer', () => {
           const result: DataFrame[] = transform({ data: response } as any, { ...options, target: { format: 'table' } });
           expect(result[0].fields[3].values.toArray()).toEqual([Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]);
         });
+      });
+    });
+  });
+
+  const exemplarsResponse = {
+    status: 'success',
+    data: [
+      {
+        seriesLabels: { __name__: 'test' },
+        exemplars: [
+          {
+            scrapeTimestamp: 1610449069957,
+            exemplar: {
+              labels: { traceID: '5020b5bc45117f07' },
+              value: 0.002074123,
+              timestamp: 1610449054960,
+              hasTimestamp: true,
+            },
+          },
+        ],
+      },
+    ],
+  };
+
+  describe('When the response is exemplar data', () => {
+    it('should return as an data frame with a dataTopic annotations', () => {
+      const result = transform({ data: exemplarsResponse } as any, options);
+
+      expect(result[0].meta?.dataTopic).toBe('annotations');
+      expect(result[0].fields.length).toBe(4); // __name__, traceID, Time, Value
+      expect(result[0].length).toBe(1);
+    });
+
+    it('should remove exemplars that are too close to each other', () => {
+      const response = {
+        status: 'success',
+        data: [
+          {
+            exemplars: [
+              {
+                scrapeTimestamp: 1610449070000,
+                exemplar: {
+                  value: 5,
+                },
+              },
+              {
+                scrapeTimestamp: 1610449070000,
+                exemplar: {
+                  value: 1,
+                },
+              },
+              {
+                scrapeTimestamp: 1610449070500,
+                exemplar: {
+                  value: 13,
+                },
+              },
+              {
+                scrapeTimestamp: 1610449070300,
+                exemplar: {
+                  value: 20,
+                },
+              },
+            ],
+          },
+        ],
+      };
+      /**
+       * the standard deviation for the above values is 8.4 this means that we show the highest
+       * value (20) and then the next value should be 2 times the standard deviation which is 1
+       **/
+      const result = transform({ data: response } as any, options);
+      expect(result[0].length).toBe(2);
+    });
+
+    describe('data link', () => {
+      it('should be added to the field if found with url', () => {
+        const result = transform({ data: exemplarsResponse } as any, {
+          ...options,
+          exemplarTraceIdDestinations: [{ name: 'traceID', url: 'http://localhost' }],
+        });
+
+        expect(result[0].fields.some(f => f.config.links?.length)).toBe(true);
+      });
+
+      it('should be added to the field if found with internal link', () => {
+        const result = transform({ data: exemplarsResponse } as any, {
+          ...options,
+          exemplarTraceIdDestinations: [{ name: 'traceID', datasourceUid: 'jaeger' }],
+        });
+
+        expect(result[0].fields.some(f => f.config.links?.length)).toBe(true);
+      });
+
+      it('should not add link if exemplarTraceIdDestinations is not configured', () => {
+        const result = transform({ data: exemplarsResponse } as any, options);
+
+        expect(result[0].fields.some(f => f.config.links?.length)).toBe(false);
       });
     });
   });

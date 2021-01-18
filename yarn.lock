@@ -5731,6 +5731,20 @@
     lodash "^4.17.15"
     redent "^3.0.0"
 
+"@testing-library/jest-dom@5.11.9":
+  version "5.11.9"
+  resolved "https://registry.yarnpkg.com/@testing-library/jest-dom/-/jest-dom-5.11.9.tgz#e6b3cd687021f89f261bd53cbe367041fbd3e975"
+  integrity sha512-Mn2gnA9d1wStlAIT2NU8J15LNob0YFBVjs2aEQ3j8rsfRQo+lAs7/ui1i2TGaJjapLmuNPLTsrm+nPjmZDwpcQ==
+  dependencies:
+    "@babel/runtime" "^7.9.2"
+    "@types/testing-library__jest-dom" "^5.9.1"
+    aria-query "^4.2.2"
+    chalk "^3.0.0"
+    css "^3.0.0"
+    css.escape "^1.5.1"
+    lodash "^4.17.15"
+    redent "^3.0.0"
+
 "@testing-library/react-hooks@^3.2.1":
   version "3.2.1"
   resolved "https://registry.yarnpkg.com/@testing-library/react-hooks/-/react-hooks-3.2.1.tgz#19b6caa048ef15faa69d439c469033873ea01294"
@@ -22933,15 +22947,6 @@ rollup@^0.25.8:
     minimist "^1.2.0"
     source-map-support "^0.3.2"
 
-rollup@^0.25.8:
-  version "0.25.8"
-  resolved "https://registry.yarnpkg.com/rollup/-/rollup-0.25.8.tgz#bf6ce83b87510d163446eeaa577ed6a6fc5835e0"
-  integrity sha1-v2zoO4dRDRY0Ru6qV37WpvxYNeA=
-  dependencies:
-    chalk "^1.1.1"
-    minimist "^1.2.0"
-    source-map-support "^0.3.2"
-
 rollup@^0.63.4:
   version "0.63.5"
   resolved "https://registry.yarnpkg.com/rollup/-/rollup-0.63.5.tgz#5543eecac9a1b83b7e1be598b5be84c9c0a089db"
@@ -25535,10 +25540,10 @@ update-notifier@^2.5.0:
     semver-diff "^2.0.0"
     xdg-basedir "^3.0.0"
 
-uplot@1.5.2:
-  version "1.5.2"
-  resolved "https://registry.yarnpkg.com/uplot/-/uplot-1.5.2.tgz#758e894b6e9c1d864b50a82aef50d392212d20de"
-  integrity sha512-GK/orAJjCz1thBiQUAzwCVur016z/0m/vmoxCU8kWXwbn4HnYBsKQ2Iixxj8fPy+uA9Pa7m99U+D/zXxMuo3gQ==
+uplot@1.6.1:
+  version "1.6.1"
+  resolved "https://registry.yarnpkg.com/uplot/-/uplot-1.6.1.tgz#68f2e5118c2b66490ba097155e0a753331fc2e4d"
+  integrity sha512-wg6CVWEq9WDHssw3jd0jMmJ7dWSVmfaYazcuad4d3cyiJoTxcSjUEp5Q9TiDzmPhJASjk77orh2+r/6WS9Uz7A==
 
 upper-case@^1.1.1:
   version "1.1.3"

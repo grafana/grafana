@@ -325,6 +325,7 @@ describe('UPlotConfigBuilder', () => {
     builder.addSeries({
       drawStyle: DrawStyle.Line,
       scaleKey: 'scale-x',
+      fieldName: 'A-series',
       lineColor: '#0000ff',
     });
 
@@ -336,6 +337,7 @@ describe('UPlotConfigBuilder', () => {
     builder.addSeries({
       drawStyle: DrawStyle.Line,
       scaleKey: 'scale-x',
+      fieldName: 'A-series',
       lineColor: '#FFAABB',
       fillOpacity: 50,
     });
@@ -348,6 +350,7 @@ describe('UPlotConfigBuilder', () => {
     builder.addSeries({
       drawStyle: DrawStyle.Line,
       scaleKey: 'scale-x',
+      fieldName: 'A-series',
       lineColor: '#FFAABB',
       fillOpacity: 50,
       fillColor: '#FF0000',
@@ -361,6 +364,7 @@ describe('UPlotConfigBuilder', () => {
     builder.addSeries({
       drawStyle: DrawStyle.Line,
       scaleKey: 'scale-x',
+      fieldName: 'A-series',
       lineColor: '#FFAABB',
       fillOpacity: 50,
       fillGradient: FillGradientMode.Opacity,
@@ -374,6 +378,7 @@ describe('UPlotConfigBuilder', () => {
     builder.addSeries({
       drawStyle: DrawStyle.Line,
       scaleKey: 'scale-x',
+      fieldName: 'A-series',
       fillOpacity: 50,
       fillGradient: FillGradientMode.Opacity,
       showPoints: PointVisibility.Auto,
