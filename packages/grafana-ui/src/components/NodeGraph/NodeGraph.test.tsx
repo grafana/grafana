@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor, getByText } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NodeGraph } from './NodeGraph';
-import { ArrayVector, FieldType, MutableDataFrame } from '@grafana/data';
+import { makeEdgesDataFrame, makeNodesDataFrame } from './utils';
 
 describe('NodeGraph', () => {
   it('doesnt fail without any data', async () => {
@@ -78,7 +78,7 @@ describe('NodeGraph', () => {
     await screen.findByText(/Edge traces/);
   });
 
-  it('lays out 3 nodes in single line', async () => {
+  it('lays out 3 nodes in single line', () => {
     render(
       <NodeGraph
         dataFrames={[
@@ -92,18 +92,57 @@ describe('NodeGraph', () => {
       />
     );
 
-    screen.debug();
+    expectNodePositionCloseTo('service:0', { x: -221, y: 0 });
+    expectNodePositionCloseTo('service:1', { x: -21, y: 0 });
+    expectNodePositionCloseTo('service:2', { x: 221, y: 0 });
+  });
 
-    expect(getNodeXY('service:0').x).toBeCloseTo(-221, -1);
-    expect(getNodeXY('service:0').y).toBeCloseTo(0, -1);
+  it('lays out first children on one vertical line', () => {
+    render(
+      <NodeGraph
+        dataFrames={[
+          makeNodesDataFrame(3),
+          makeEdgesDataFrame([
+            [0, 1],
+            [0, 2],
+          ]),
+        ]}
+        getLinks={() => []}
+      />
+    );
 
-    expect(getNodeXY('service:1').x).toBeCloseTo(-21, -1);
-    expect(getNodeXY('service:1').y).toBeCloseTo(0, -1);
+    // Should basically look like <
+    expectNodePositionCloseTo('service:0', { x: -100, y: 0 });
+    expectNodePositionCloseTo('service:1', { x: 100, y: -100 });
+    expectNodePositionCloseTo('service:2', { x: 100, y: 100 });
+  });
 
-    expect(getNodeXY('service:2').x).toBeCloseTo(221, -1);
-    expect(getNodeXY('service:2').y).toBeCloseTo(0, -1);
+  it('limits the number of nodes shown and shows a warning', () => {
+    render(
+      <NodeGraph
+        dataFrames={[
+          makeNodesDataFrame(3),
+          makeEdgesDataFrame([
+            [0, 1],
+            [0, 2],
+          ]),
+        ]}
+        getLinks={() => []}
+        nodeLimit={2}
+      />
+    );
+
+    const nodes = screen.getAllByLabelText(/Node: service:\d/);
+    expect(nodes.length).toBe(2);
+    screen.getByLabelText(/Nodes hidden warning/);
   });
 });
+
+function expectNodePositionCloseTo(node: string, pos: { x: number; y: number }) {
+  const nodePos = getNodeXY(node);
+  expect(nodePos.x).toBeCloseTo(pos.x, -1);
+  expect(nodePos.y).toBeCloseTo(pos.y, -1);
+}
 
 function getNodeXY(node: string) {
   const group = screen.getByLabelText(new RegExp(`Node: ${node}`));
@@ -146,114 +185,4 @@ function getXY(e: Element) {
     x: parseFloat(e.attributes.getNamedItem('cx')?.value || ''),
     y: parseFloat(e.attributes.getNamedItem('cy')?.value || ''),
   };
-}
-
-function makeNodesDataFrame(count: number) {
-  const frame = nodesFrame();
-  for (let i = 0; i < count; i++) {
-    frame.add(makeNode(i));
-  }
-
-  return frame;
-}
-
-function makeNode(index: number) {
-  return {
-    id: index.toString(),
-    title: `service:${index}`,
-    subTitle: 'service',
-    success: 0.5,
-    error: 0.5,
-    stat1: 0.1,
-    stat2: 2,
-  };
-}
-
-function nodesFrame() {
-  const fields: any = {
-    id: {
-      values: new ArrayVector(),
-      type: FieldType.string,
-    },
-    title: {
-      values: new ArrayVector(),
-      type: FieldType.string,
-      labels: { NodeGraphValueType: 'title' },
-    },
-    subTitle: {
-      values: new ArrayVector(),
-      type: FieldType.string,
-      labels: { NodeGraphValueType: 'subTitle' },
-    },
-    stat1: {
-      values: new ArrayVector(),
-      type: FieldType.number,
-      labels: { NodeGraphValueType: 'mainStat' },
-    },
-    stat2: {
-      values: new ArrayVector(),
-      type: FieldType.number,
-      labels: { NodeGraphValueType: 'secondaryStat' },
-    },
-    success: {
-      values: new ArrayVector(),
-      type: FieldType.number,
-      labels: { NodeGraphValueType: 'arc' },
-      config: { color: { fixedColor: 'green' } },
-    },
-    error: {
-      values: new ArrayVector(),
-      type: FieldType.number,
-      labels: { NodeGraphValueType: 'arc' },
-      config: { color: { fixedColor: 'red' } },
-    },
-  };
-
-  return new MutableDataFrame({
-    name: 'nodes',
-    fields: Object.keys(fields).map(key => ({
-      ...fields[key],
-      name: key,
-    })),
-    meta: { preferredVisualisationType: 'nodeGraph' },
-  });
-}
-
-function makeEdgesDataFrame(edges: Array<[number, number]>) {
-  const frame = edgesFrame();
-  for (const edge of edges) {
-    frame.add({
-      id: edge[0] + '--' + edge[1],
-      source: edge[0].toString(),
-      target: edge[1].toString(),
-    });
-  }
-
-  return frame;
-}
-
-function edgesFrame() {
-  const fields: any = {
-    id: {
-      values: new ArrayVector(),
-      type: FieldType.string,
-    },
-    source: {
-      values: new ArrayVector(),
-      type: FieldType.string,
-    },
-    target: {
-      values: new ArrayVector(),
-      type: FieldType.string,
-    },
-  };
-
-  return new MutableDataFrame({
-    name: 'edges',
-    fields: Object.keys(fields).map(key => ({
-      ...fields[key],
-      name: key,
-    })),
-    meta: { preferredVisualisationType: 'nodeGraph' },
-  });
 }

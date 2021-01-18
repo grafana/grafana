@@ -1,4 +1,4 @@
-import { DataFrame, Field, FieldCache, FieldType } from '@grafana/data';
+import { DataFrame, Field, FieldCache, FieldType, ArrayVector, MutableDataFrame } from '@grafana/data';
 import { EdgeDatum, NodeDatum } from './types';
 
 type Line = { x1: number; y1: number; x2: number; y2: number };
@@ -144,3 +144,117 @@ export const DataFrameTypeValues = {
 export const DataFrameDetailValues = {
   true: 'true',
 };
+
+/**
+ * Utilities mainly for testing
+ */
+
+export function makeNodesDataFrame(count: number) {
+  const frame = nodesFrame();
+  for (let i = 0; i < count; i++) {
+    frame.add(makeNode(i));
+  }
+
+  return frame;
+}
+
+function makeNode(index: number) {
+  return {
+    id: index.toString(),
+    title: `service:${index}`,
+    subTitle: 'service',
+    success: 0.5,
+    error: 0.5,
+    stat1: 0.1,
+    stat2: 2,
+  };
+}
+
+function nodesFrame() {
+  const fields: any = {
+    id: {
+      values: new ArrayVector(),
+      type: FieldType.string,
+    },
+    title: {
+      values: new ArrayVector(),
+      type: FieldType.string,
+      labels: { NodeGraphValueType: 'title' },
+    },
+    subTitle: {
+      values: new ArrayVector(),
+      type: FieldType.string,
+      labels: { NodeGraphValueType: 'subTitle' },
+    },
+    stat1: {
+      values: new ArrayVector(),
+      type: FieldType.number,
+      labels: { NodeGraphValueType: 'mainStat' },
+    },
+    stat2: {
+      values: new ArrayVector(),
+      type: FieldType.number,
+      labels: { NodeGraphValueType: 'secondaryStat' },
+    },
+    success: {
+      values: new ArrayVector(),
+      type: FieldType.number,
+      labels: { NodeGraphValueType: 'arc' },
+      config: { color: { fixedColor: 'green' } },
+    },
+    error: {
+      values: new ArrayVector(),
+      type: FieldType.number,
+      labels: { NodeGraphValueType: 'arc' },
+      config: { color: { fixedColor: 'red' } },
+    },
+  };
+
+  return new MutableDataFrame({
+    name: 'nodes',
+    fields: Object.keys(fields).map(key => ({
+      ...fields[key],
+      name: key,
+    })),
+    meta: { preferredVisualisationType: 'nodeGraph' },
+  });
+}
+
+export function makeEdgesDataFrame(edges: Array<[number, number]>) {
+  const frame = edgesFrame();
+  for (const edge of edges) {
+    frame.add({
+      id: edge[0] + '--' + edge[1],
+      source: edge[0].toString(),
+      target: edge[1].toString(),
+    });
+  }
+
+  return frame;
+}
+
+function edgesFrame() {
+  const fields: any = {
+    id: {
+      values: new ArrayVector(),
+      type: FieldType.string,
+    },
+    source: {
+      values: new ArrayVector(),
+      type: FieldType.string,
+    },
+    target: {
+      values: new ArrayVector(),
+      type: FieldType.string,
+    },
+  };
+
+  return new MutableDataFrame({
+    name: 'edges',
+    fields: Object.keys(fields).map(key => ({
+      ...fields[key],
+      name: key,
+    })),
+    meta: { preferredVisualisationType: 'nodeGraph' },
+  });
+}

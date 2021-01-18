@@ -63,13 +63,15 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
 }));
 
 // This is mainly for performance reasons.
-const nodeCountLimit = 1500;
+const defaultNodeCountLimit = 1500;
 
 interface Props {
   dataFrames: DataFrame[];
   getLinks: (dataFrame: DataFrame, rowIndex: number) => LinkModel[];
+  nodeLimit?: number;
 }
-export function NodeGraph({ getLinks, dataFrames }: Props) {
+export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
+  const nodeCountLimit = nodeLimit || defaultNodeCountLimit;
   const { edges: edgesDataFrames, nodes: nodesDataFrames } = useCategorizeFrames(dataFrames);
 
   const [measureRef, { width, height }] = useMeasure();
@@ -146,7 +148,7 @@ export function NodeGraph({ getLinks, dataFrames }: Props) {
       </div>
 
       {hiddenNodesCount > 0 && (
-        <div className={styles.alert}>
+        <div className={styles.alert} aria-label={'Nodes hidden warning'}>
           <Icon size="sm" name={'info-circle'} /> {hiddenNodesCount} nodes are hidden for performance reasons.
         </div>
       )}
