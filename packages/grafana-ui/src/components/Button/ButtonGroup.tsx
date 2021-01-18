@@ -42,12 +42,12 @@ const getStyles = (theme: GrafanaTheme) => ({
       border-right: 0;
 
       &:last-child {
-        border-radius: 0 3px 3px 0;
+        border-radius: 0 ${theme.border.radius.sm} ${theme.border.radius.sm} 0;
         border-right: 1px solid ${theme.colors.border2};
       }
 
       &:first-child {
-        border-radius: 3px 0 0 3px;
+        border-radius: ${theme.border.radius.sm} 0 0 ${theme.border.radius.sm};
       }
     }
   `,
