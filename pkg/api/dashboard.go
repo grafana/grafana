@@ -151,7 +151,7 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 		// load library panels
 		err = loadLibraryPanels(dash)
 		if err != nil {
-			return Error(500, "Error while loading library panels", err)
+			return response.Error(500, "Error while loading library panels", err)
 		}
 	}
 
