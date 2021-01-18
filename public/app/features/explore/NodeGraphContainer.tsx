@@ -3,7 +3,7 @@ import { Badge, NodeGraph } from '@grafana/ui';
 import { DataFrame, TimeRange } from '@grafana/data';
 import { ExploreId, StoreState } from '../../types';
 import { splitOpen } from './state/main';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { Collapse } from '@grafana/ui';
 import { useLinks } from './utils/links';
 
@@ -15,7 +15,7 @@ interface Props {
   splitOpen: typeof splitOpen;
   short?: boolean;
 }
-export function UnconnectedNodeGraphContainer(props: Props) {
+export function UnconnectedNodeGraphContainer(props: Props & ConnectedProps<typeof connector>) {
   const { dataFrames, range, splitOpen, short } = props;
   const getLinks = useLinks(range, splitOpen);
 
@@ -45,4 +45,5 @@ const mapDispatchToProps = {
   splitOpen,
 };
 
-export const NodeGraphContainer = connect(mapStateToProps, mapDispatchToProps)(UnconnectedNodeGraphContainer);
+const connector = connect(mapStateToProps, mapDispatchToProps);
+export const NodeGraphContainer = connector(UnconnectedNodeGraphContainer);
