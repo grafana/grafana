@@ -2,11 +2,13 @@ package testdatasource
 
 import (
 	"context"
+	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -29,8 +31,11 @@ func (p *testDataPlugin) Init() error {
 	p.logger = log.New("tsdb.testdata")
 	queryMux := datasource.NewQueryTypeMux()
 	RegisterScenarioQueryHandlers(p.logger, queryMux)
+	resourceMux := http.NewServeMux()
+	p.registerRoutes(resourceMux)
 	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler: queryMux,
+		QueryDataHandler:    queryMux,
+		CallResourceHandler: httpadapter.New(resourceMux),
 	})
 	err := p.BackendPluginManager.Register("testdata", factory)
 	if err != nil {

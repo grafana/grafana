@@ -1,4 +1,4 @@
-package testdatasourcev2
+package testdatasource
 
 import (
 	"encoding/json"
@@ -14,30 +14,30 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 )
 
-func (td *testdataV2) registerRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("/", td.testGetHandler)
-	mux.HandleFunc("/stream", td.testStreamHandler)
-	mux.Handle("/test", createJSONHandler(td.logger))
-	mux.Handle("/test/json", createJSONHandler(td.logger))
-	mux.HandleFunc("/boom", td.testPanicHandler)
+func (p *testDataPlugin) registerRoutes(mux *http.ServeMux) {
+	mux.HandleFunc("/", p.testGetHandler)
+	mux.HandleFunc("/stream", p.testStreamHandler)
+	mux.Handle("/test", createJSONHandler(p.logger))
+	mux.Handle("/test/json", createJSONHandler(p.logger))
+	mux.HandleFunc("/boom", p.testPanicHandler)
 }
 
-func (td *testdataV2) testGetHandler(rw http.ResponseWriter, req *http.Request) {
-	td.logger.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
+func (p *testDataPlugin) testGetHandler(rw http.ResponseWriter, req *http.Request) {
+	p.logger.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
 
 	if req.Method != http.MethodGet {
 		return
 	}
 
 	if _, err := rw.Write([]byte("Hello world from test datasource!")); err != nil {
-		td.logger.Error("Failed to write response", "error", err)
+		p.logger.Error("Failed to write response", "error", err)
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (td *testdataV2) testStreamHandler(rw http.ResponseWriter, req *http.Request) {
-	td.logger.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
+func (p *testDataPlugin) testStreamHandler(rw http.ResponseWriter, req *http.Request) {
+	p.logger.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
 
 	if req.Method != http.MethodGet {
 		return
@@ -62,7 +62,7 @@ func (td *testdataV2) testStreamHandler(rw http.ResponseWriter, req *http.Reques
 
 	for i := 1; i <= count; i++ {
 		if _, err := io.WriteString(rw, fmt.Sprintf("Message #%d", i)); err != nil {
-			td.logger.Error("Failed to write response", "error", err)
+			p.logger.Error("Failed to write response", "error", err)
 			return
 		}
 		rw.(http.Flusher).Flush()
@@ -119,6 +119,6 @@ func createJSONHandler(logger log.Logger) http.Handler {
 	})
 }
 
-func (td *testdataV2) testPanicHandler(rw http.ResponseWriter, req *http.Request) {
+func (p *testDataPlugin) testPanicHandler(rw http.ResponseWriter, req *http.Request) {
 	panic("BOOM")
 }
