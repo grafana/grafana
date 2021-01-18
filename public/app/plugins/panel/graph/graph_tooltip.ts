@@ -1,7 +1,14 @@
 import $ from 'jquery';
 import { appEvents } from 'app/core/core';
 import { CoreEvents } from 'app/types';
-import { textUtil, systemDateFormats, LegacyGraphHoverClearEvent, LegacyGraphHoverEvent } from '@grafana/data';
+import {
+  textUtil,
+  systemDateFormats,
+  LegacyGraphHoverClearEvent,
+  LegacyGraphHoverEvent,
+  DataHoverEvent,
+  DataHoverClearEvent,
+} from '@grafana/data';
 
 export default function GraphTooltip(this: any, elem: any, dashboard: any, scope: any, getSeriesFn: any) {
   const self = this;
@@ -160,13 +167,34 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
     // broadcast to other graph panels that we are hovering!
     pos.panelRelY = (pos.pageY - elem.offset().top) / elem.height();
     dashboard.events.publish(new LegacyGraphHoverEvent({ pos: pos, panel: panel }));
+
+    dashboard.events.publish(
+      new DataHoverEvent({
+        raw: event,
+        x: {
+          time: event.timeStamp,
+        },
+        y: {
+          panelRelY: pos.panelRelY, // todo
+          pageY: pos.pageY, // 2nd axis
+        },
+      })
+    );
   });
 
   elem.bind('plotclick', (event: any, pos: any, item: any) => {
     appEvents.emit(CoreEvents.graphClicked, { pos: pos, panel: panel, item: item });
   });
 
-  elem.bind('plotleave', () => {
+  elem.bind('plotleave', (event: any) => {
+    dashboard.events.publish(
+      new DataHoverClearEvent({
+        raw: event,
+        x: {},
+        y: {},
+      })
+    );
+
     if (!panel.tooltip.shared) {
       return;
     }

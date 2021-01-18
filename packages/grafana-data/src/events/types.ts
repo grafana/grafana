@@ -16,6 +16,7 @@ export interface BusEvent {
 export abstract class BusEventBase implements BusEvent {
   readonly type: string;
   readonly payload?: any;
+  readonly source?: any; // panel
 
   constructor() {
     //@ts-ignore
@@ -29,10 +30,12 @@ export abstract class BusEventBase implements BusEvent {
  */
 export abstract class BusEventWithPayload<T> extends BusEventBase {
   readonly payload: T;
+  readonly source?: any; // panel
 
-  constructor(payload: T) {
+  constructor(payload: T, source?: any) {
     super();
     this.payload = payload;
+    this.source = source;
   }
 }
 

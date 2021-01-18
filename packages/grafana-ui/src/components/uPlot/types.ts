@@ -1,6 +1,6 @@
 import React from 'react';
 import uPlot, { Options, Series, Hooks } from 'uplot';
-import { DataFrame, DataFrameFieldIndex, TimeRange, TimeZone } from '@grafana/data';
+import { DataFrame, DataFrameFieldIndex, EventBus, TimeRange, TimeZone } from '@grafana/data';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 
 export type PlotSeriesConfig = Pick<Options, 'series' | 'scales' | 'axes' | 'cursor' | 'bands'>;
@@ -23,6 +23,7 @@ export interface PlotProps {
   height: number;
   config: UPlotConfigBuilder;
   children?: React.ReactElement[];
+  eventBus: EventBus;
 }
 
 export abstract class PlotConfigBuilder<P, T> {
