@@ -121,6 +121,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     badge: css`
       position: absolute;
+      background: ${theme.colors.bg2};
       bottom: ${theme.spacing.xs};
       right: ${theme.spacing.xs};
       z-index: 1;
