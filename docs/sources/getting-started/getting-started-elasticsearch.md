@@ -44,7 +44,8 @@ Alternately you can install Elasticsearch using the resources available in [graf
     make devenv sources=elastic7
    ```
 
-This will create and start Elasticsearch, filebeat, metricbeat, kibana and a process that sends random data to your new Elasticsearch instance. We'll ignore filebeat, metricbeat and kibana in this guide.
+This creates and starts Elasticsearch, Filebeat, Metricbeat, Kibana, and a process that sends random data to your new Elasticsearch instance. 
+> **Note**:  Filebeat, Metricbeat, and Kibana are outside the scope of this topic.
 
 ## Step 3. Configure and add the Elasticsearch data source
 
