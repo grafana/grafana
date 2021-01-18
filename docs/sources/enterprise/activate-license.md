@@ -81,3 +81,6 @@ GF_SERVER_ROOT_URL=https://grafana.blah.com/
 
 To finalize the installation of Grafana Enterprise, restart Grafana to
 enable all Grafana Enterprise features.
+
+On Linux, when installed as a Systemd service you can restart Grafana
+by running `sudo systemctl restart grafana-server.service`.
