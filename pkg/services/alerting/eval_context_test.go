@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/assert"
 )
@@ -294,7 +296,8 @@ func TestBuildTemplateDataMap(t *testing.T) {
 
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
-			result := buildTemplateDataMap(tc.matches)
+			result, err := buildTemplateDataMap(tc.matches)
+			require.NoError(t, err)
 			assert.Equal(t, tc.expected, result, "failed: %s \n expected '%s' have '%s'\n", tc.name, tc.expected, result)
 		})
 	}
@@ -329,7 +332,8 @@ func TestEvaluateTemplate(t *testing.T) {
 	}
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
-			result := evaluateTemplate(tc.message, tc.data)
+			result, err := evaluateTemplate(tc.message, tc.data)
+			require.NoError(t, err)
 			assert.Equal(t, tc.expected, result, "failed: %s \n expected '%s' have '%s'\n", tc.name, tc.expected, result)
 		})
 	}
