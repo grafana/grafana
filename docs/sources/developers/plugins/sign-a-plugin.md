@@ -103,7 +103,7 @@ T6scfmuhWC/TOcm83EVoCzIV3R5dOTKHqkjIUg==
 
 ### Why am I getting a "Modified signature" in Grafana?
 
-Due to a issue when signing the plugin on Windows, grafana-toolkit generates an invalid MANIFEST.txt. You can fix this by opening the MANIFEST.txt and replacing all double backslashes, `\\`, with a forward slash, `/`. You need to do this every time you sign your plugin.
+Due to an issue when signing the plugin on Windows, grafana-toolkit generates an invalid MANIFEST.txt. You can fix this by replacing all double backslashes, `\\`, with a forward slash, `/` in the MANIFEST.txt file. You need to do this every time you sign your plugin.
 
 ### Error signing manifest: Field is required: rootUrls
 
