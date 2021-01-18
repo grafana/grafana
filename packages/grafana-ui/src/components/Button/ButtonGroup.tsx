@@ -1,5 +1,5 @@
 import React, { forwardRef, HTMLAttributes } from 'react';
-import { css, cx } from 'emotion';
+import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { useStyles } from '../../themes';
 
@@ -17,6 +17,8 @@ export const ButtonGroup = forwardRef<HTMLDivElement, Props>(({ noSpacing, child
     </div>
   );
 });
+
+ButtonGroup.displayName = 'ButtonGroup';
 
 const getStyles = (theme: GrafanaTheme) => ({
   wrapper: css`
