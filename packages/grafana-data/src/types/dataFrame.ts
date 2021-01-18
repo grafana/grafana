@@ -202,3 +202,13 @@ export interface FieldCalcs extends Record<string, any> {}
 export const TIME_SERIES_VALUE_FIELD_NAME = 'Value';
 export const TIME_SERIES_TIME_FIELD_NAME = 'Time';
 export const TIME_SERIES_METRIC_FIELD_NAME = 'Metric';
+
+/**
+ * Describes where a specific data frame field is located within a
+ * dataset of type DataFrame[]
+ * @public
+ */
+export interface DataFrameFieldIndex {
+  frameIndex: number;
+  fieldIndex: number;
+}

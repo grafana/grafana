@@ -21,6 +21,13 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
 
   dummyDiminsionString = '+';
 
+  queryQueryTypeOptions = [
+    { id: AzureQueryType.ApplicationInsights, label: 'Application Insights' },
+    { id: AzureQueryType.AzureMonitor, label: 'Metrics' },
+    { id: AzureQueryType.LogAnalytics, label: 'Logs' },
+    { id: AzureQueryType.InsightsAnalytics, label: 'Insights Analytics' },
+  ];
+
   target: {
     // should be: AzureMonitorQuery
     refId: string;

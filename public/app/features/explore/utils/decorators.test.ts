@@ -159,37 +159,7 @@ describe('decorateWithGraphResult', () => {
   it('should process the graph dataFrames', () => {
     const { timeSeries } = getTestContext();
     const panelData = createExplorePanelData({ graphFrames: [timeSeries] });
-    console.log(decorateWithGraphResult(panelData).graphResult);
-    expect(decorateWithGraphResult(panelData).graphResult).toMatchObject([
-      {
-        label: 'A-series',
-        data: [
-          [100, 4],
-          [200, 5],
-          [300, 6],
-        ],
-        isVisible: true,
-        yAxis: {
-          index: 1,
-        },
-        seriesIndex: 0,
-        timeStep: 100,
-      },
-      {
-        label: 'B-series',
-        data: [
-          [100, 7],
-          [200, 8],
-          [300, 9],
-        ],
-        isVisible: true,
-        yAxis: {
-          index: 1,
-        },
-        seriesIndex: 1,
-        timeStep: 100,
-      },
-    ]);
+    expect(decorateWithGraphResult(panelData).graphResult).toMatchObject([timeSeries]);
   });
 
   it('returns null if it gets empty array', () => {

@@ -1,6 +1,6 @@
 import React, { FC, FormEvent, MouseEvent, useState } from 'react';
 import { css, cx } from 'emotion';
-import { dateTime, GrafanaTheme, TimeRange, TimeZone, dateMath } from '@grafana/data';
+import { dateMath, dateTime, getDefaultTimeRange, GrafanaTheme, TimeRange, TimeZone } from '@grafana/data';
 import { useStyles } from '../../themes/ThemeContext';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 import { Icon } from '../Icon/Icon';
@@ -10,17 +10,11 @@ import { TimePickerButtonLabel } from './TimeRangePicker';
 import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
 import { otherOptions, quickOptions } from './rangeOptions';
 
-export const defaultTimeRange: TimeRange = {
-  from: dateTime().subtract(6, 'hour'),
-  to: dateTime(),
-  raw: { from: 'now-6h', to: 'now' },
-};
-
 const isValidTimeRange = (range: any) => {
   return dateMath.isValid(range.from) && dateMath.isValid(range.to);
 };
 
-export interface Props {
+export interface TimeRangeInputProps {
   value: TimeRange;
   timeZone?: TimeZone;
   onChange: (timeRange: TimeRange) => void;
@@ -28,18 +22,22 @@ export interface Props {
   hideTimeZone?: boolean;
   placeholder?: string;
   clearable?: boolean;
+  isReversed?: boolean;
+  hideQuickRanges?: boolean;
 }
 
 const noop = () => {};
 
-export const TimeRangeInput: FC<Props> = ({
+export const TimeRangeInput: FC<TimeRangeInputProps> = ({
   value,
   onChange,
-  onChangeTimeZone,
+  onChangeTimeZone = noop,
   clearable,
   hideTimeZone = true,
   timeZone = 'browser',
   placeholder = 'Select time range',
+  isReversed = true,
+  hideQuickRanges = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const styles = useStyles(getStyles);
@@ -86,14 +84,15 @@ export const TimeRangeInput: FC<Props> = ({
         <ClickOutsideWrapper includeButtonPress={false} onClick={onClose}>
           <TimePickerContent
             timeZone={timeZone}
-            value={isValidTimeRange(value) ? (value as TimeRange) : defaultTimeRange}
+            value={isValidTimeRange(value) ? (value as TimeRange) : getDefaultTimeRange()}
             onChange={onRangeChange}
             otherOptions={otherOptions}
             quickOptions={quickOptions}
-            onChangeTimeZone={onChangeTimeZone || noop}
+            onChangeTimeZone={onChangeTimeZone}
             className={styles.content}
             hideTimeZone={hideTimeZone}
-            isReversed
+            isReversed={isReversed}
+            hideQuickRanges={hideQuickRanges}
           />
         </ClickOutsideWrapper>
       )}

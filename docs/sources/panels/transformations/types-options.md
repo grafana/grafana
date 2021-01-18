@@ -8,7 +8,7 @@ weight = 300
 Grafana comes with the following transformations:
 
 - [Reduce](#reduce)
-- [Filter by name](#filter-by-name)
+- [Filter data by name](#filter-data-by-name)
 - [Filter data by query](#filter-data-by-query)
 - [Filter data by value](#filter-data-by-value)
 - [Organize fields](#organize-fields)
@@ -26,7 +26,7 @@ Keep reading for detailed descriptions of each type of transformation and the op
 ## Reduce
 
 The _Reduce_ transformation will apply a calculation to each field in the frame and return a single value.  Time fields are removed when applying
-this transformation.  
+this transformation.
 
 Consider the input:
 
@@ -48,11 +48,11 @@ The reduce transformer has two modes:
 - **Series to rows -** Creates a row for each field and a column for each calculation.
 - **Reduce fields -** Keeps the existing frame structure, but collapses each field into a single value.
 
-For example, if you used the **First** and **Last** calculation with a **Series to rows** transformation, then 
+For example, if you used the **First** and **Last** calculation with a **Series to rows** transformation, then
 the result would be:
 
-| Field   | First   | Last    | 
-| ------- | ------- | ------- | 
+| Field   | First   | Last    |
+| ------- | ------- | ------- |
 | Temp    | 12.3    | 15.4    |
 | Uptime  | 256122  | 1230233 |
 | AQI     | 6.5     | 3.2     |
@@ -104,7 +104,7 @@ Here is the result after applying the Merge transformation.
 | 2020-07-07 11:34:20 | node    | 15     | 25260122  |
 | 2020-07-07 11:24:20 | postgre | 5      | 123001233 |
 
-## Filter by name
+## Filter data by name
 
 Use this transformation to remove portions of the query results.
 
@@ -188,14 +188,12 @@ In the example below, I added two fields together and named them Sum.
 
 ## Labels to fields
 
-> **Note:** In order to apply this transformation, your query needs to return labeled fields.
+This transformation changes time series results that include labels or tags into to a table structure where each label becomes its own field.
 
-When you select this transformation, Grafana automatically transforms all labeled data into fields.
+Given a query result of two time series:
 
-Example: Given a query result of two time series
-
-1: labels Server=Server A, Datacenter=EU
-2: labels Server=Server B, Datacenter=EU
+* Series 1: labels Server=Server A, Datacenter=EU
+* Series 2: labels Server=Server B, Datacenter=EU
 
 This would result in a table like this:
 
@@ -204,7 +202,7 @@ This would result in a table like this:
 | 2020-07-07 11:34:20 | Server A | EU         | 1     |
 | 2020-07-07 11:34:20 | Server B | EU         | 2     |
 
-**Value field name**
+### Value field name
 
 If you selected Server as the **Value field name**, then you would get one field for every value of the Server label.
 
@@ -212,13 +210,31 @@ If you selected Server as the **Value field name**, then you would get one field
 | ------------------- | ---------- | -------- | -------- |
 | 2020-07-07 11:34:20 | EU         | 1        | 2        |
 
-For this example, I manually defined labels in the Random Walk visualization of TestData DB.
+### Merging behavior
 
-{{< docs-imagebox img="/img/docs/transformations/labels-to-fields-before-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+The labels to fields transformer is internally two separate transformations. The first acts on single series and extracts labels to fields. The second is the [merge](#merge) transformation that joins all the results into a single table. The merge transformation tries to join on all matching fields. This merge step is required and cannot be turned off.
 
-After I apply the transformation, my labels appear in the table as fields.
+To illustrate this, here is an example where you have two queries that return time series with no overlapping labels.
 
-{{< docs-imagebox img="/img/docs/transformations/labels-to-fields-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+* Series 1: labels Server=ServerA
+* Series 2: labels Datacenter=EU
+
+This will first result in these two tables:
+
+| Time                | Server  | Value |
+| ------------------- | ------- | ----- |
+| 2020-07-07 11:34:20 | ServerA | 10
+
+| Time                | Datacenter | Value |
+| ------------------- | ---------- | ----- |
+| 2020-07-07 11:34:20 | EU         | 20
+
+After merge:
+
+| Time                | Server  | Value | Datacenter |
+| ------------------- | ------- | ----- | ---------- |
+| 2020-07-07 11:34:20 | ServerA | 10    |            |
+| 2020-07-07 11:34:20 |         | 20    | EU         |
 
 ## Group by
 
@@ -342,7 +358,7 @@ Here is the result after applying the Series to rows transformation.
 | 2020-07-07 09:30:57 | Humidity    | 33    |
 | 2020-07-07 09:30:05 | Temperature | 19    |
 
-## Filter by value
+## Filter data by value
 
 > **Note:** This transformation is available in Grafana 7.4+.
 

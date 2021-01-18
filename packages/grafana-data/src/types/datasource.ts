@@ -175,6 +175,11 @@ export abstract class DataSourceApi<
   readonly id: number;
 
   /**
+   *  Set in constructor
+   */
+  readonly type: string;
+
+  /**
    *  min interval range
    */
   interval?: string;
@@ -182,6 +187,7 @@ export abstract class DataSourceApi<
   constructor(instanceSettings: DataSourceInstanceSettings<TOptions>) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
+    this.type = instanceSettings.type;
     this.meta = {} as DataSourcePluginMeta;
   }
 
@@ -276,7 +282,7 @@ export abstract class DataSourceApi<
   interpolateVariablesInQueries?(queries: TQuery[], scopedVars: ScopedVars | {}): TQuery[];
 
   /**
-   * An annotation processor allows explict control for how annotations are managed.
+   * An annotation processor allows explicit control for how annotations are managed.
    *
    * It is only necessary to configure an annotation processor if the default behavior is not desirable
    */
@@ -425,7 +431,7 @@ export interface DataQuery {
   queryType?: string;
 
   /**
-   * The data topic resuls should be attached to
+   * The data topic results should be attached to
    */
   dataTopic?: DataTopic;
 

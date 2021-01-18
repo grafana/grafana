@@ -100,6 +100,7 @@ func (db *SQLite3) TruncateDBTables() error {
 
 	for _, table := range tables {
 		switch table.Name {
+		case "migration_log":
 		case "dashboard_acl":
 			// keep default dashboard permissions
 			if _, err := sess.Exec(fmt.Sprintf("DELETE FROM %q WHERE dashboard_id != -1 AND org_id != -1;", table.Name)); err != nil {

@@ -4,17 +4,22 @@ import { getCanvasContext } from '../../../utils/measureText';
 import {
   DrawStyle,
   LineConfig,
-  AreaConfig,
+  FillConfig,
   PointsConfig,
   PointVisibility,
   LineInterpolation,
-  AreaGradientMode,
+  FillGradientMode,
 } from '../config';
 import { PlotConfigBuilder } from '../types';
+import { DataFrameFieldIndex } from '@grafana/data';
 
-export interface SeriesProps extends LineConfig, AreaConfig, PointsConfig {
-  drawStyle: DrawStyle;
+export interface SeriesProps extends LineConfig, FillConfig, PointsConfig {
   scaleKey: string;
+  fieldName: string;
+  drawStyle: DrawStyle;
+  show?: boolean;
+  dataFrameFieldIndex?: DataFrameFieldIndex;
+  hideInLegend?: boolean;
 }
 
 export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
@@ -24,11 +29,13 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       lineInterpolation,
       lineColor,
       lineWidth,
+      lineStyle,
       showPoints,
       pointColor,
       pointSize,
       scaleKey,
       spanNulls,
+      show = true,
     } = this.props;
 
     let lineConfig: Partial<Series> = {};
@@ -38,6 +45,12 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
     } else {
       lineConfig.stroke = lineColor;
       lineConfig.width = lineWidth;
+      if (lineStyle && lineStyle.fill !== 'solid') {
+        if (lineStyle.fill === 'dot') {
+          lineConfig.cap = 'round';
+        }
+        lineConfig.dash = lineStyle.dash ?? [10, 10];
+      }
       lineConfig.paths = (self: uPlot, seriesIdx: number, idx0: number, idx1: number) => {
         let pathsBuilder = mapDrawStyleToPathBuilder(drawStyle, lineInterpolation);
         return pathsBuilder(self, seriesIdx, idx0, idx1);
@@ -53,19 +66,24 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
     };
 
     // we cannot set points.show property above (even to undefined) as that will clear uPlot's default auto behavior
-    if (showPoints === PointVisibility.Auto) {
-      if (drawStyle === DrawStyle.Bars) {
-        pointsConfig.points!.show = false;
-      }
-    } else if (showPoints === PointVisibility.Never) {
-      pointsConfig.points!.show = false;
-    } else if (showPoints === PointVisibility.Always) {
+    if (drawStyle === DrawStyle.Points) {
       pointsConfig.points!.show = true;
+    } else {
+      if (showPoints === PointVisibility.Auto) {
+        if (drawStyle === DrawStyle.Bars) {
+          pointsConfig.points!.show = false;
+        }
+      } else if (showPoints === PointVisibility.Never) {
+        pointsConfig.points!.show = false;
+      } else if (showPoints === PointVisibility.Always) {
+        pointsConfig.points!.show = true;
+      }
     }
 
     return {
       scale: scaleKey,
       spanGaps: spanNulls,
+      show,
       fill: this.getFill(),
       ...lineConfig,
       ...pointsConfig,
@@ -79,10 +97,10 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       return fillColor;
     }
 
-    const mode = fillGradient ?? AreaGradientMode.None;
+    const mode = fillGradient ?? FillGradientMode.None;
     let fillOpacityNumber = fillOpacity ?? 0;
 
-    if (mode !== AreaGradientMode.None) {
+    if (mode !== FillGradientMode.None) {
       return getCanvasGradient({
         color: (fillColor ?? lineColor)!,
         opacity: fillOpacityNumber / 100,
@@ -150,7 +168,7 @@ function mapDrawStyleToPathBuilder(
 
 interface AreaGradientOptions {
   color: string;
-  mode: AreaGradientMode;
+  mode: FillGradientMode;
   opacity: number;
 }
 
@@ -162,7 +180,7 @@ function getCanvasGradient(opts: AreaGradientOptions): (self: uPlot, seriesIdx: 
     const gradient = ctx.createLinearGradient(0, plot.bbox.top, 0, plot.bbox.top + plot.bbox.height);
 
     switch (mode) {
-      case AreaGradientMode.Hue:
+      case FillGradientMode.Hue:
         const color1 = tinycolor(color)
           .spin(-25)
           .darken(30)
@@ -176,7 +194,7 @@ function getCanvasGradient(opts: AreaGradientOptions): (self: uPlot, seriesIdx: 
         gradient.addColorStop(0, color2);
         gradient.addColorStop(1, color1);
 
-      case AreaGradientMode.Opacity:
+      case FillGradientMode.Opacity:
       default:
         gradient.addColorStop(
           0,

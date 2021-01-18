@@ -5,8 +5,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
 import { StoreState } from '../../../types';
 import { VariableEditorEditor } from './VariableEditorEditor';
-import { MapDispatchToProps, MapStateToProps } from 'react-redux';
-import { connectWithStore } from '../../../core/utils/connectWithReduxStore';
+import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
 import { getEditorVariables } from '../state/selectors';
 import { VariableModel } from '../types';
 import { switchToEditMode, switchToListMode, switchToNewMode } from './actions';
@@ -140,8 +139,4 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   switchToListMode,
 };
 
-export const VariableEditorContainer = connectWithStore(
-  VariableEditorContainerUnconnected,
-  mapStateToProps,
-  mapDispatchToProps
-);
+export const VariableEditorContainer = connect(mapStateToProps, mapDispatchToProps)(VariableEditorContainerUnconnected);

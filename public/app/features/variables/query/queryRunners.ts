@@ -4,7 +4,7 @@ import {
   DataQuery,
   DataQueryRequest,
   DataSourceApi,
-  DefaultTimeRange,
+  getDefaultTimeRange,
   LoadingState,
   PanelData,
   VariableSupportType,
@@ -91,7 +91,7 @@ class LegacyQueryRunner implements QueryRunner {
         }
 
         const series: any = values;
-        return of({ series, state: LoadingState.Done, timeRange: DefaultTimeRange });
+        return of({ series, state: LoadingState.Done, timeRange: queryOptions.range });
       })
     );
   }
@@ -174,5 +174,5 @@ class DatasourceQueryRunner implements QueryRunner {
 }
 
 function getEmptyMetricFindValueObservable(): Observable<PanelData> {
-  return of({ state: LoadingState.Done, series: [], timeRange: DefaultTimeRange });
+  return of({ state: LoadingState.Done, series: [], timeRange: getDefaultTimeRange() });
 }

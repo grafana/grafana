@@ -393,7 +393,7 @@ const tokenizer: Grammar = {
     },
   },
   'context-labels': {
-    pattern: /\{[^}]*(?=})/,
+    pattern: /\{[^}]*(?=}?)/,
     greedy: true,
     inside: {
       comment: {

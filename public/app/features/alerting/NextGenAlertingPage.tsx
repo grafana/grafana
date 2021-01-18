@@ -66,11 +66,11 @@ class NextGenAlertingPage extends PureComponent<Props, State> {
       <Button variant="destructive" key="discard" onClick={this.onDiscard}>
         Discard
       </Button>,
-      <Button variant="primary" key="save" onClick={this.onSaveAlert}>
-        Save
-      </Button>,
       <Button variant="secondary" key="test" onClick={this.onTest}>
         Test
+      </Button>,
+      <Button variant="primary" key="save" onClick={this.onSaveAlert}>
+        Save
       </Button>,
     ];
   }
@@ -93,21 +93,23 @@ class NextGenAlertingPage extends PureComponent<Props, State> {
           actions={this.renderToolbarActions()}
           titlePadding="sm"
         />
-        <SplitPaneWrapper
-          leftPaneComponents={[
-            <AlertingQueryPreview key="queryPreview" queryRunner={queryRunner} />,
-            <AlertingQueryEditor key="queryEditor" />,
-          ]}
-          uiState={uiState}
-          updateUiState={updateAlertDefinitionUiState}
-          rightPaneComponents={
-            <AlertDefinitionOptions
-              alertDefinition={alertDefinition}
-              onChange={this.onChangeAlertOption}
-              notificationChannelTypes={notificationChannelTypes}
-            />
-          }
-        />
+        <div className={styles.splitPanesWrapper}>
+          <SplitPaneWrapper
+            leftPaneComponents={[
+              <AlertingQueryPreview key="queryPreview" queryRunner={queryRunner} />,
+              <AlertingQueryEditor key="queryEditor" />,
+            ]}
+            uiState={uiState}
+            updateUiState={updateAlertDefinitionUiState}
+            rightPaneComponents={
+              <AlertDefinitionOptions
+                alertDefinition={alertDefinition}
+                onChange={this.onChangeAlertOption}
+                notificationChannelTypes={notificationChannelTypes}
+              />
+            }
+          />
+        </div>
       </div>
     );
   }
@@ -131,10 +133,25 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(NextGenAlertingPage));
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  return {
-    wrapper: css`
-      background-color: ${theme.colors.dashboardBg};
-    `,
-  };
-});
+const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+  wrapper: css`
+    width: 100%;
+    height: 100%;
+    position: fixed;
+    z-index: ${theme.zIndex.sidemenu};
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: ${theme.colors.dashboardBg};
+    display: flex;
+    flex-direction: column;
+  `,
+  splitPanesWrapper: css`
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    position: relative;
+  `,
+}));
