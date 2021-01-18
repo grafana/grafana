@@ -32,7 +32,7 @@ There are three different ways to add the license to a Grafana instance:
   1. Click **Upload license token file**.
   1. Select your license file, and upload it.
 
-### Place the *license.jwt* file in Grafana's data folder
+### Place the license.jwt file in Grafana's data folder
 
   The data folder is usually `/var/lib/grafana` on Linux systems.
 
