@@ -16,7 +16,6 @@ export interface ColorPickerProps extends Themeable {
    * @deprecated Use onChange instead
    */
   onColorChange?: ColorPickerChangeHandler;
-  enableNamedColors?: boolean;
 }
 
 export interface Props<T> extends ColorPickerProps, PopoverContentProps {
@@ -51,12 +50,9 @@ export class ColorPickerPopover<T extends CustomPickersDescriptor> extends React
   };
 
   handleChange = (color: any) => {
-    const { onColorChange, onChange, enableNamedColors, theme } = this.props;
+    const { onColorChange, onChange, theme } = this.props;
     const changeHandler = onColorChange || onChange;
 
-    if (enableNamedColors) {
-      return changeHandler(color);
-    }
     changeHandler(getColorForTheme(color, theme));
   };
 
