@@ -1,5 +1,6 @@
 import { DataFrame, Field, FieldCache, FieldType, ArrayVector, MutableDataFrame } from '@grafana/data';
 import { EdgeDatum, NodeDatum } from './types';
+import { NodeGraphDataFrameFieldNames } from './index';
 
 type Line = { x1: number; y1: number; x2: number; y2: number };
 
@@ -162,49 +163,43 @@ function makeNode(index: number) {
     id: index.toString(),
     title: `service:${index}`,
     subTitle: 'service',
-    success: 0.5,
-    error: 0.5,
-    stat1: 0.1,
-    stat2: 2,
+    arc__success: 0.5,
+    arc__errors: 0.5,
+    mainStat: 0.1,
+    secondaryStat: 2,
   };
 }
 
 function nodesFrame() {
   const fields: any = {
-    id: {
+    [NodeGraphDataFrameFieldNames.id]: {
       values: new ArrayVector(),
       type: FieldType.string,
     },
-    title: {
+    [NodeGraphDataFrameFieldNames.title]: {
       values: new ArrayVector(),
       type: FieldType.string,
-      labels: { NodeGraphValueType: 'title' },
     },
-    subTitle: {
+    [NodeGraphDataFrameFieldNames.subTitle]: {
       values: new ArrayVector(),
       type: FieldType.string,
-      labels: { NodeGraphValueType: 'subTitle' },
     },
-    stat1: {
+    [NodeGraphDataFrameFieldNames.mainStat]: {
       values: new ArrayVector(),
       type: FieldType.number,
-      labels: { NodeGraphValueType: 'mainStat' },
     },
-    stat2: {
+    [NodeGraphDataFrameFieldNames.secondaryStat]: {
       values: new ArrayVector(),
       type: FieldType.number,
-      labels: { NodeGraphValueType: 'secondaryStat' },
     },
-    success: {
+    [NodeGraphDataFrameFieldNames.arc + 'success']: {
       values: new ArrayVector(),
       type: FieldType.number,
-      labels: { NodeGraphValueType: 'arc' },
       config: { color: { fixedColor: 'green' } },
     },
-    error: {
+    [NodeGraphDataFrameFieldNames.arc + 'errors']: {
       values: new ArrayVector(),
       type: FieldType.number,
-      labels: { NodeGraphValueType: 'arc' },
       config: { color: { fixedColor: 'red' } },
     },
   };
@@ -234,15 +229,15 @@ export function makeEdgesDataFrame(edges: Array<[number, number]>) {
 
 function edgesFrame() {
   const fields: any = {
-    id: {
+    [NodeGraphDataFrameFieldNames.id]: {
       values: new ArrayVector(),
       type: FieldType.string,
     },
-    source: {
+    [NodeGraphDataFrameFieldNames.source]: {
       values: new ArrayVector(),
       type: FieldType.string,
     },
-    target: {
+    [NodeGraphDataFrameFieldNames.target]: {
       values: new ArrayVector(),
       type: FieldType.string,
     },
