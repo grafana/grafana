@@ -55,7 +55,7 @@ func (cp *corePlugin) Stop(ctx context.Context) error {
 }
 
 func (cp *corePlugin) IsManaged() bool {
-	return false
+	return true
 }
 
 func (cp *corePlugin) Exited() bool {
