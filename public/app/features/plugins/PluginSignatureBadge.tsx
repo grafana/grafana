@@ -49,24 +49,27 @@ function getSignatureDisplayModel(signature?: PluginSignatureStatus): BadgeProps
     case PluginSignatureStatus.invalid:
       return {
         text: 'Invalid signature',
+        icon: 'exclamation-triangle',
         color: 'red',
         tooltip: 'Invalid plugin signature',
       };
     case PluginSignatureStatus.modified:
       return {
         text: 'Modified signature',
+        icon: 'exclamation-triangle',
         color: 'red',
         tooltip: 'Valid signature but content has been modified',
       };
     case PluginSignatureStatus.missing:
       return {
         text: 'Missing signature',
+        icon: 'exclamation-triangle',
         color: 'red',
         tooltip: 'Missing plugin signature',
       };
   }
 
-  return { text: 'Unsigned', color: 'red', tooltip: 'Unsigned external plugin' };
+  return { text: 'Unsigned', icon: 'exclamation-triangle', color: 'red', tooltip: 'Unsigned external plugin' };
 }
 
 PluginSignatureBadge.displayName = 'PluginSignatureBadge';
