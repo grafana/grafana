@@ -1,6 +1,7 @@
 package testdatasource
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -9,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/util/errutil"
 
@@ -28,6 +31,12 @@ type Scenario struct {
 }
 
 var ScenarioRegistry map[string]*Scenario
+
+func RegisterScenarioQueryHandlers(logger log.Logger, mux *datasource.QueryTypeMux) {
+	mux.HandleFunc("", func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+		return executeFallbackScenario(ctx, logger, req)
+	})
+}
 
 func init() {
 	ScenarioRegistry = make(map[string]*Scenario)

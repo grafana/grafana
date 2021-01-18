@@ -1,6 +1,6 @@
 import set from 'lodash/set';
 import { from, merge, Observable, of } from 'rxjs';
-import { delay, map } from 'rxjs/operators';
+import { delay } from 'rxjs/operators';
 
 import {
   AnnotationEvent,
@@ -11,7 +11,6 @@ import {
   DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
-  DataSourceApi,
   DataSourceInstanceSettings,
   DataTopic,
   LiveChannelScope,
@@ -22,6 +21,7 @@ import {
 } from '@grafana/data';
 import { Scenario, TestDataQuery } from './types';
 import {
+  DataSourceWithBackend,
   getBackendSrv,
   getLiveMeasurementsObserver,
   getTemplateSrv,
@@ -35,7 +35,7 @@ import { TestDataVariableSupport } from './variables';
 
 type TestData = TimeSeries | TableData;
 
-export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
+export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
   scenariosCache?: Promise<Scenario[]>;
 
   constructor(
@@ -47,7 +47,7 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
   }
 
   query(options: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
-    const queries: any[] = [];
+    const backendQueries: TestDataQuery[] = [];
     const streams: Array<Observable<DataQueryResponse>> = [];
 
     // Start streams and prepare queries
@@ -76,30 +76,16 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
           streams.push(this.variablesQuery(target, options));
           break;
         default:
-          queries.push({
-            ...target,
-            intervalMs: options.intervalMs,
-            maxDataPoints: options.maxDataPoints,
-            datasourceId: this.id,
-            alias: this.templateSrv.replace(target.alias || '', options.scopedVars),
-          });
+          backendQueries.push(target);
       }
     }
 
-    if (queries.length) {
-      const stream = getBackendSrv()
-        .fetch({
-          method: 'POST',
-          url: '/api/tsdb/query',
-          data: {
-            from: options.range.from.valueOf().toString(),
-            to: options.range.to.valueOf().toString(),
-            queries: queries,
-          },
-        })
-        .pipe(map(res => this.processQueryResult(queries, res)));
-
-      streams.push(stream);
+    if (backendQueries.length) {
+      const backendOpts = {
+        ...options,
+        targets: backendQueries,
+      };
+      streams.push(super.query(backendOpts));
     }
 
     return merge(...streams);
