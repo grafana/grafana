@@ -2,7 +2,6 @@
 
 import { UPlotConfigBuilder } from './UPlotConfigBuilder';
 import { GrafanaTheme } from '@grafana/data';
-import { expect } from '../../../../../../public/test/lib/common';
 import { GraphGradientMode, AxisPlacement, DrawStyle, PointVisibility, ScaleDistribution } from '../config';
 import darkTheme from '../../../themes/dark';
 
