@@ -59,7 +59,7 @@ export const UnThemedLogLabels: FunctionComponent<Props> = ({ labels, theme }) =
     <span className={cx([styles.logsLabels])}>
       {displayLabels.sort().map(label => {
         const value = labels[label];
-        if (!Boolean(value)) {
+        if (!value) {
           return;
         }
         const tooltip = `${label}: ${value}`;
