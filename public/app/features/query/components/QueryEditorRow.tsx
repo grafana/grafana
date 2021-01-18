@@ -74,9 +74,9 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   }
 
   getAngularQueryComponentScope(): AngularQueryComponentScope {
-    const { query, onChange } = this.props;
+    const { query, onChange, onRunQuery, queries } = this.props;
     const { datasource } = this.state;
-    const panel = new PanelModel({});
+    const panel = new PanelModel({ targets: queries });
     const dashboard = {} as DashboardModel;
 
     return {
@@ -87,6 +87,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
       refresh: () => {
         // Old angular editors modify the query model and just call refresh
         onChange(query);
+        onRunQuery();
       },
       render: () => () => console.log('legacy render function called, it does nothing'),
       events: panel.events,
@@ -172,12 +173,8 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     this.renderAngularQueryEditor();
   };
 
-  onRunQuery = () => {
-    this.props.onRunQuery();
-  };
-
   renderPluginEditor = () => {
-    const { query, onChange, queries } = this.props;
+    const { query, onChange, queries, onRunQuery } = this.props;
     const { datasource, data } = this.state;
 
     if (datasource?.components?.QueryCtrl) {
@@ -193,7 +190,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
           query={query}
           datasource={datasource}
           onChange={onChange}
-          onRunQuery={this.onRunQuery}
+          onRunQuery={onRunQuery}
           data={data}
           range={getTimeSrv().timeRange()}
           queries={queries}
@@ -226,7 +223,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
 
   onDisableQuery = () => {
     this.props.query.hide = !this.props.query.hide;
-    this.onRunQuery();
+    this.props.onRunQuery();
     this.forceUpdate();
   };
 

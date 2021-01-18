@@ -121,6 +121,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     badge: css`
       position: absolute;
+      background: ${theme.colors.bg2};
       bottom: ${theme.spacing.xs};
       right: ${theme.spacing.xs};
       z-index: 1;
@@ -140,13 +141,14 @@ const PanelPluginBadge: React.FC<PanelPluginBadgeProps> = ({ plugin }) => {
     return <PluginSignatureBadge status={plugin.signature} />;
   }
 
-  if (plugin.state !== PluginState.deprecated && plugin.state !== PluginState.alpha) {
+  if (!display) {
     return null;
   }
+
   return <Badge color={display.color} text={display.text} icon={display.icon} tooltip={display.tooltip} />;
 };
 
-function getPanelStateBadgeDisplayModel(panel: PanelPluginMeta): BadgeProps {
+function getPanelStateBadgeDisplayModel(panel: PanelPluginMeta): BadgeProps | null {
   switch (panel.state) {
     case PluginState.deprecated:
       return {
@@ -155,14 +157,23 @@ function getPanelStateBadgeDisplayModel(panel: PanelPluginMeta): BadgeProps {
         color: 'red',
         tooltip: `${panel.name} panel is deprecated`,
       };
+    case PluginState.alpha:
+      return {
+        text: 'Alpha',
+        icon: 'rocket',
+        color: 'blue',
+        tooltip: `${panel.name} panel is experimental`,
+      };
+    case PluginState.beta:
+      return {
+        text: 'Beta',
+        icon: 'rocket',
+        color: 'blue',
+        tooltip: `${panel.name} panel is in beta`,
+      };
+    default:
+      return null;
   }
-
-  return {
-    text: 'Alpha',
-    icon: 'rocket',
-    color: 'blue',
-    tooltip: `${panel.name} panel is experimental`,
-  };
 }
 
 PanelPluginBadge.displayName = 'PanelPluginBadge';

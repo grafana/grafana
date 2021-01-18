@@ -1,7 +1,8 @@
 // @ts-ignore
-import program from 'commander';
-import { execTask } from './utils/execTask';
 import chalk from 'chalk';
+import program from 'commander';
+import { promises as fs } from 'fs';
+import { execTask } from './utils/execTask';
 import { startTask } from './tasks/core.start';
 import { changelogTask } from './tasks/changelog';
 import { cherryPickTask } from './tasks/cherrypick';
@@ -129,6 +130,12 @@ export const run = (includeInternalScripts = false) => {
         await execTask(componentCreateTask)({});
       });
   }
+
+  program.option('-v, --version', 'Toolkit version').action(async () => {
+    const pkg = await fs.readFile(`${__dirname}/../../package.json`, 'utf8');
+    const { version } = JSON.parse(pkg);
+    console.log(`v${version}`);
+  });
 
   program
     .command('plugin:create [name]')

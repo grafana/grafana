@@ -6,13 +6,14 @@ import (
 
 	"github.com/grafana/grafana/pkg/util"
 
+	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/search"
 )
 
-func Search(c *models.ReqContext) Response {
+func Search(c *models.ReqContext) response.Response {
 	query := c.Query("query")
 	tags := c.QueryStrings("tag")
 	starred := c.Query("starred")
@@ -23,7 +24,7 @@ func Search(c *models.ReqContext) Response {
 	permission := models.PERMISSION_VIEW
 
 	if limit > 5000 {
-		return Error(422, "Limit is above maximum allowed (5000), use page parameter to access hits beyond limit", nil)
+		return response.Error(422, "Limit is above maximum allowed (5000), use page parameter to access hits beyond limit", nil)
 	}
 
 	if c.Query("permission") == "Edit" {
@@ -63,14 +64,14 @@ func Search(c *models.ReqContext) Response {
 
 	err := bus.Dispatch(&searchQuery)
 	if err != nil {
-		return Error(500, "Search failed", err)
+		return response.Error(500, "Search failed", err)
 	}
 
 	c.TimeRequest(metrics.MApiDashboardSearch)
-	return JSON(200, searchQuery.Result)
+	return response.JSON(200, searchQuery.Result)
 }
 
-func (hs *HTTPServer) ListSortOptions(c *models.ReqContext) Response {
+func (hs *HTTPServer) ListSortOptions(c *models.ReqContext) response.Response {
 	opts := hs.SearchService.SortOptions()
 
 	res := []util.DynMap{}
@@ -82,7 +83,7 @@ func (hs *HTTPServer) ListSortOptions(c *models.ReqContext) Response {
 		})
 	}
 
-	return JSON(http.StatusOK, util.DynMap{
+	return response.JSON(http.StatusOK, util.DynMap{
 		"sortOptions": res,
 	})
 }

@@ -3,7 +3,8 @@
 import { UPlotConfigBuilder } from './UPlotConfigBuilder';
 import { GrafanaTheme } from '@grafana/data';
 import { expect } from '../../../../../../public/test/lib/common';
-import { AreaGradientMode, AxisPlacement, DrawStyle, PointVisibility, ScaleDistribution } from '../config';
+import { FillGradientMode, AxisPlacement, DrawStyle, PointVisibility, ScaleDistribution } from '../config';
+import darkTheme from '../../../themes/dark';
 
 describe('UPlotConfigBuilder', () => {
   describe('default config', () => {
@@ -34,17 +35,21 @@ describe('UPlotConfigBuilder', () => {
       `);
     });
   });
+
   describe('scales config', () => {
     it('allows scales configuration', () => {
       const builder = new UPlotConfigBuilder();
+
       builder.addScale({
         scaleKey: 'scale-x',
         isTime: true,
       });
+
       builder.addScale({
         scaleKey: 'scale-y',
         isTime: false,
       });
+
       expect(builder.getConfig()).toMatchInlineSnapshot(`
         Object {
           "axes": Array [],
@@ -85,10 +90,12 @@ describe('UPlotConfigBuilder', () => {
 
     it('prevents duplicate scales', () => {
       const builder = new UPlotConfigBuilder();
+
       builder.addScale({
         scaleKey: 'scale-x',
         isTime: true,
       });
+
       builder.addScale({
         scaleKey: 'scale-x',
         isTime: false,
@@ -229,6 +236,7 @@ describe('UPlotConfigBuilder', () => {
 
   it('allows axes configuration', () => {
     const builder = new UPlotConfigBuilder();
+
     builder.addAxis({
       scaleKey: 'scale-x',
       label: 'test label',
@@ -294,19 +302,22 @@ describe('UPlotConfigBuilder', () => {
 
   it('Handles auto axis placement', () => {
     const builder = new UPlotConfigBuilder();
+
     builder.addAxis({
       scaleKey: 'y1',
       placement: AxisPlacement.Auto,
-      theme: { isDark: true, palette: { gray25: '#ffffff' } } as GrafanaTheme,
+      theme: darkTheme,
     });
+
     builder.addAxis({
       scaleKey: 'y2',
       placement: AxisPlacement.Auto,
-      theme: { isDark: true, palette: { gray25: '#ffffff' } } as GrafanaTheme,
+      theme: darkTheme,
     });
 
     expect(builder.getAxisPlacement('y1')).toBe(AxisPlacement.Left);
     expect(builder.getAxisPlacement('y2')).toBe(AxisPlacement.Right);
+    expect(builder.getConfig().axes![1].grid!.show).toBe(false);
   });
 
   it('When fillColor is not set fill', () => {
@@ -314,6 +325,7 @@ describe('UPlotConfigBuilder', () => {
     builder.addSeries({
       drawStyle: DrawStyle.Line,
       scaleKey: 'scale-x',
+      fieldName: 'A-series',
       lineColor: '#0000ff',
     });
 
@@ -325,6 +337,7 @@ describe('UPlotConfigBuilder', () => {
     builder.addSeries({
       drawStyle: DrawStyle.Line,
       scaleKey: 'scale-x',
+      fieldName: 'A-series',
       lineColor: '#FFAABB',
       fillOpacity: 50,
     });
@@ -337,6 +350,7 @@ describe('UPlotConfigBuilder', () => {
     builder.addSeries({
       drawStyle: DrawStyle.Line,
       scaleKey: 'scale-x',
+      fieldName: 'A-series',
       lineColor: '#FFAABB',
       fillOpacity: 50,
       fillColor: '#FF0000',
@@ -350,9 +364,10 @@ describe('UPlotConfigBuilder', () => {
     builder.addSeries({
       drawStyle: DrawStyle.Line,
       scaleKey: 'scale-x',
+      fieldName: 'A-series',
       lineColor: '#FFAABB',
       fillOpacity: 50,
-      fillGradient: AreaGradientMode.Opacity,
+      fillGradient: FillGradientMode.Opacity,
     });
 
     expect(builder.getConfig().series[1].fill).toBeInstanceOf(Function);
@@ -363,8 +378,9 @@ describe('UPlotConfigBuilder', () => {
     builder.addSeries({
       drawStyle: DrawStyle.Line,
       scaleKey: 'scale-x',
+      fieldName: 'A-series',
       fillOpacity: 50,
-      fillGradient: AreaGradientMode.Opacity,
+      fillGradient: FillGradientMode.Opacity,
       showPoints: PointVisibility.Auto,
       pointSize: 5,
       pointColor: '#00ff00',
