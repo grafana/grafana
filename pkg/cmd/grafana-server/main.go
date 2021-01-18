@@ -32,7 +32,6 @@ import (
 	_ "github.com/grafana/grafana/pkg/tsdb/postgres"
 	_ "github.com/grafana/grafana/pkg/tsdb/prometheus"
 	_ "github.com/grafana/grafana/pkg/tsdb/testdatasource"
-	_ "github.com/grafana/grafana/pkg/tsdb/testdatasourcev2"
 )
 
 // The following variables cannot be constants, since they can be overridden through the -X link flag
