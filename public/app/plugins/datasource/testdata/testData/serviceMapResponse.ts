@@ -1,9 +1,10 @@
 import { FieldColorModeId, FieldType, PreferredVisualisationType } from '@grafana/data';
+import { NodeGraphDataFrameFieldNames } from '@grafana/ui';
 
 export const nodes = {
   fields: [
     {
-      name: 'id',
+      name: NodeGraphDataFrameFieldNames.id,
       type: FieldType.string,
       config: {
         links: [
@@ -60,7 +61,7 @@ export const nodes = {
       values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
     },
     {
-      name: 'name',
+      name: NodeGraphDataFrameFieldNames.title,
       type: FieldType.string,
       config: { displayName: 'Name' },
       values: [
@@ -80,10 +81,9 @@ export const nodes = {
         'www',
         'products',
       ],
-      labels: { NodeGraphValueType: 'title' },
     },
     {
-      name: 'type',
+      name: NodeGraphDataFrameFieldNames.subTitle,
       type: FieldType.string,
       config: { displayName: 'Type' },
       values: [
@@ -103,12 +103,11 @@ export const nodes = {
         'client',
         'Compute',
       ],
-      labels: { NodeGraphValueType: 'subTitle' },
     },
     {
-      name: 'average_response_time',
+      name: NodeGraphDataFrameFieldNames.mainStat,
       type: FieldType.number,
-      config: { unit: 'ms/t' },
+      config: { unit: 'ms/t', displayName: 'Average response time' },
       values: [
         3.5394042646735553,
         15.906441318223264,
@@ -126,12 +125,11 @@ export const nodes = {
         77.63447512700567,
         27.648950187374872,
       ],
-      labels: { NodeGraphValueType: 'mainStat' },
     },
     {
-      name: 'transactions_per_minute',
+      name: NodeGraphDataFrameFieldNames.secondaryStat,
       type: FieldType.number,
-      config: { unit: 't/min' },
+      config: { unit: 't/min', displayName: 'Transactions per minute' },
       values: [
         50.56317154501667,
         682.4,
@@ -149,12 +147,11 @@ export const nodes = {
         165.675,
         162.33055555555555,
       ],
-      labels: { NodeGraphValueType: 'secondaryStat' },
     },
     {
-      name: 'success',
+      name: NodeGraphDataFrameFieldNames.arc + 'success',
       type: FieldType.number,
-      config: { color: { mode: FieldColorModeId.Fixed, fixedColor: 'green' } },
+      config: { color: { mode: FieldColorModeId.Fixed, fixedColor: 'green' }, displayName: 'Sucesss' },
       values: [
         0.9338865684765882,
         1,
@@ -172,12 +169,11 @@ export const nodes = {
         0.9624432037288534,
         0.9824945669843769,
       ],
-      labels: { NodeGraphValueType: 'arc' },
     },
     {
-      name: 'faults',
+      name: NodeGraphDataFrameFieldNames.arc + 'faults',
       type: FieldType.number,
-      config: { color: { mode: FieldColorModeId.Fixed, fixedColor: 'red' } },
+      config: { color: { mode: FieldColorModeId.Fixed, fixedColor: 'red' }, displayName: 'faults' },
       values: [
         0,
         0,
@@ -195,12 +191,11 @@ export const nodes = {
         0.017168821152524185,
         0.01750543301562313,
       ],
-      labels: { NodeGraphValueType: 'arc' },
     },
     {
-      name: 'errors',
+      name: NodeGraphDataFrameFieldNames.arc + 'errors',
       type: FieldType.number,
-      config: { color: { mode: FieldColorModeId.Fixed, fixedColor: 'semi-dark-yellow' } },
+      config: { color: { mode: FieldColorModeId.Fixed, fixedColor: 'semi-dark-yellow' }, displayName: 'Errors' },
       values: [
         0.06611343152341174,
         0,
@@ -218,14 +213,12 @@ export const nodes = {
         0.02038797511862247,
         0,
       ],
-      labels: { NodeGraphValueType: 'arc' },
     },
     {
-      name: 'throttled',
+      name: NodeGraphDataFrameFieldNames.arc + 'throttled',
       type: FieldType.number,
-      config: { color: { mode: FieldColorModeId.Fixed, fixedColor: 'purple' } },
+      config: { color: { mode: FieldColorModeId.Fixed, fixedColor: 'purple' }, displayName: 'Throttled' },
       values: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-      labels: { NodeGraphValueType: 'arc' },
     },
   ],
   meta: { preferredVisualisationType: 'nodeGraph' as PreferredVisualisationType },
@@ -235,7 +228,7 @@ export const nodes = {
 export const edges = {
   fields: [
     {
-      name: 'id',
+      name: NodeGraphDataFrameFieldNames.id,
       type: FieldType.string,
       config: {
         links: [
@@ -310,7 +303,7 @@ export const edges = {
       ],
     },
     {
-      name: 'source',
+      name: NodeGraphDataFrameFieldNames.source,
       type: FieldType.string,
       config: {},
       values: [0, 5, 6, 6, 6, 6, 6, 6, 8, 10, 11, 11, 12, 13, 14, 14, 14],
@@ -340,7 +333,7 @@ export const edges = {
       ],
     },
     {
-      name: 'target',
+      name: NodeGraphDataFrameFieldNames.target,
       type: FieldType.string,
       config: {},
       values: [2, 8, 0, 5, 9, 2, 14, 4, 3, 7, 0, 6, 6, 11, 1, 2, 10],
@@ -370,9 +363,9 @@ export const edges = {
       ],
     },
     {
-      name: 'response_percentage',
+      name: NodeGraphDataFrameFieldNames.mainStat,
       type: FieldType.string,
-      config: {},
+      config: { displayName: 'Response percentage' },
       values: [
         'Success 100.00%',
         'Success 100.00%',
@@ -392,12 +385,11 @@ export const edges = {
         'Success 100.00%',
         'Faults 9.30%',
       ],
-      labels: { NodeGraphValueType: 'mainStat' },
     },
     {
-      name: 'transactions_per_minute',
+      name: NodeGraphDataFrameFieldNames.secondaryStat,
       type: FieldType.number,
-      config: { unit: 't/min' },
+      config: { unit: 't/min', displayName: 'Transactions per minute' },
       values: [
         50.56317154501667,
         125.77222222222223,
@@ -417,7 +409,6 @@ export const edges = {
         162.33055555555555,
         30.558333333333334,
       ],
-      labels: { NodeGraphValueType: 'secondaryStat' },
     },
   ],
   meta: { preferredVisualisationType: 'nodeGraph' as PreferredVisualisationType },

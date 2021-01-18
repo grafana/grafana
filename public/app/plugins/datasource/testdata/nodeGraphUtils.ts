@@ -1,5 +1,6 @@
 import { ArrayVector, FieldType, MutableDataFrame } from '@grafana/data';
 import { nodes, edges } from './testData/serviceMapResponse';
+import { NodeGraphDataFrameFieldNames } from '@grafana/ui';
 
 export function generateRandomNodes(count = 10) {
   const nodes = [];
@@ -44,40 +45,34 @@ export function generateRandomNodes(count = 10) {
   }
 
   const nodeFields: any = {
-    id: {
+    [NodeGraphDataFrameFieldNames.id]: {
       values: new ArrayVector(),
       type: FieldType.string,
     },
-    title: {
+    [NodeGraphDataFrameFieldNames.title]: {
       values: new ArrayVector(),
       type: FieldType.string,
-      labels: { NodeGraphValueType: 'title' },
     },
-    subTitle: {
+    [NodeGraphDataFrameFieldNames.subTitle]: {
       values: new ArrayVector(),
       type: FieldType.string,
-      labels: { NodeGraphValueType: 'subTitle' },
     },
-    stat1: {
+    [NodeGraphDataFrameFieldNames.mainStat]: {
       values: new ArrayVector(),
       type: FieldType.number,
-      labels: { NodeGraphValueType: 'mainStat' },
     },
-    stat2: {
+    [NodeGraphDataFrameFieldNames.secondaryStat]: {
       values: new ArrayVector(),
       type: FieldType.number,
-      labels: { NodeGraphValueType: 'secondaryStat' },
     },
-    success: {
+    [NodeGraphDataFrameFieldNames.arc + 'success']: {
       values: new ArrayVector(),
       type: FieldType.number,
-      labels: { NodeGraphValueType: 'arc' },
       config: { color: { fixedColor: 'green' } },
     },
-    error: {
+    [NodeGraphDataFrameFieldNames.arc + 'errors']: {
       values: new ArrayVector(),
       type: FieldType.number,
-      labels: { NodeGraphValueType: 'arc' },
       config: { color: { fixedColor: 'red' } },
     },
   };
@@ -92,15 +87,15 @@ export function generateRandomNodes(count = 10) {
   });
 
   const edgeFields: any = {
-    id: {
+    [NodeGraphDataFrameFieldNames.id]: {
       values: new ArrayVector(),
       type: FieldType.string,
     },
-    source: {
+    [NodeGraphDataFrameFieldNames.source]: {
       values: new ArrayVector(),
       type: FieldType.string,
     },
-    target: {
+    [NodeGraphDataFrameFieldNames.target]: {
       values: new ArrayVector(),
       type: FieldType.string,
     },
@@ -120,10 +115,10 @@ export function generateRandomNodes(count = 10) {
     nodeFields.id.values.add(node.id);
     nodeFields.title.values.add(node.title);
     nodeFields.subTitle.values.add(node.subTitle);
-    nodeFields.stat1.values.add(node.stat1);
-    nodeFields.stat2.values.add(node.stat2);
-    nodeFields.success.values.add(node.success);
-    nodeFields.error.values.add(node.error);
+    nodeFields.mainStat.values.add(node.stat1);
+    nodeFields.secondaryStat.values.add(node.stat2);
+    nodeFields.arc__success.values.add(node.success);
+    nodeFields.arc__errors.values.add(node.error);
     for (const edge of node.edges) {
       const id = `${node.id}--${edge}`;
       // We can have duplicate edges when we added some more by random

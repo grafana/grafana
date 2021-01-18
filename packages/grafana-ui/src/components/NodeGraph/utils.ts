@@ -28,26 +28,42 @@ export function shortenLine(line: Line, length: number): Line {
 export function getNodeFields(nodes: DataFrame) {
   const fieldsCache = new FieldCache(nodes);
   return {
-    id: fieldsCache.getFieldByName('id'),
-    title: fieldsCache.getFieldsByLabel(DataFrameLabels.type, DataFrameTypeValues.title)[0],
-    subTitle: fieldsCache.getFieldsByLabel(DataFrameLabels.type, DataFrameTypeValues.subTitle)[0],
-    mainStat: fieldsCache.getFieldsByLabel(DataFrameLabels.type, DataFrameTypeValues.mainStat)[0],
-    secondaryStat: fieldsCache.getFieldsByLabel(DataFrameLabels.type, DataFrameTypeValues.secondaryStat)[0],
-    arc: fieldsCache.getFieldsByLabel(DataFrameLabels.type, DataFrameTypeValues.arc),
-    details: fieldsCache.getFieldsByLabel(DataFrameLabels.detail, DataFrameDetailValues.true),
+    id: fieldsCache.getFieldByName(DataFrameFieldNames.id),
+    title: fieldsCache.getFieldByName(DataFrameFieldNames.title),
+    subTitle: fieldsCache.getFieldByName(DataFrameFieldNames.subTitle),
+    mainStat: fieldsCache.getFieldByName(DataFrameFieldNames.mainStat),
+    secondaryStat: fieldsCache.getFieldByName(DataFrameFieldNames.secondaryStat),
+    arc: findFieldsByPrefix(nodes, DataFrameFieldNames.arc),
+    details: findFieldsByPrefix(nodes, DataFrameFieldNames.detail),
   };
 }
 
 export function getEdgeFields(edges: DataFrame) {
   const fieldsCache = new FieldCache(edges);
   return {
-    id: fieldsCache.getFieldByName('id'),
-    source: fieldsCache.getFieldByName('source'),
-    target: fieldsCache.getFieldByName('target'),
-    mainStat: fieldsCache.getFieldsByLabel(DataFrameLabels.type, DataFrameTypeValues.mainStat)[0],
-    secondaryStat: fieldsCache.getFieldsByLabel(DataFrameLabels.type, DataFrameTypeValues.secondaryStat)[0],
-    details: fieldsCache.getFieldsByLabel(DataFrameLabels.type, DataFrameDetailValues.true),
+    id: fieldsCache.getFieldByName(DataFrameFieldNames.id),
+    source: fieldsCache.getFieldByName(DataFrameFieldNames.source),
+    target: fieldsCache.getFieldByName(DataFrameFieldNames.target),
+    mainStat: fieldsCache.getFieldByName(DataFrameFieldNames.mainStat),
+    secondaryStat: fieldsCache.getFieldByName(DataFrameFieldNames.secondaryStat),
+    details: findFieldsByPrefix(edges, DataFrameFieldNames.detail),
   };
+}
+
+function findFieldsByPrefix(frame: DataFrame, prefix: string) {
+  return frame.fields.filter(f => f.name.match(new RegExp('^' + prefix)));
+}
+
+export enum DataFrameFieldNames {
+  id = 'id',
+  title = 'title',
+  subTitle = 'subTitle',
+  mainStat = 'mainStat',
+  secondaryStat = 'secondaryStat',
+  source = 'source',
+  target = 'target',
+  detail = 'detail__',
+  arc = 'arc__',
 }
 
 /**
@@ -67,7 +83,7 @@ export function processNodes(nodes?: DataFrame, edges?: DataFrame): { nodes: Nod
     nodeFields.id.values.toArray().reduce<{ [id: string]: NodeDatum }>((acc, id, index) => {
       acc[id] = {
         id: id,
-        title: nodeFields.title.values.get(index),
+        title: nodeFields.title?.values.get(index) || '',
         subTitle: nodeFields.subTitle ? nodeFields.subTitle.values.get(index) : '',
         dataFrameRowIndex: index,
         incoming: 0,
@@ -127,23 +143,6 @@ function statToString(field: Field, index: number) {
     }
   }
 }
-
-export const DataFrameLabels = {
-  type: 'NodeGraphValueType',
-  detail: 'NodeGraphDetailField',
-};
-
-export const DataFrameTypeValues = {
-  title: 'title',
-  subTitle: 'subTitle',
-  mainStat: 'mainStat',
-  secondaryStat: 'secondaryStat',
-  arc: 'arc',
-};
-
-export const DataFrameDetailValues = {
-  true: 'true',
-};
 
 /**
  * Utilities mainly for testing
