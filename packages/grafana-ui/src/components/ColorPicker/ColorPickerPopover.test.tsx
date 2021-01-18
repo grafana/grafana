@@ -54,17 +54,5 @@ describe('ColorPickerPopover', () => {
       expect(onChangeSpy).toBeCalledTimes(1);
       expect(onChangeSpy).toBeCalledWith(getColorFromHexRgbOrName('green', GrafanaThemeType.Light));
     });
-
-    it('should pass color name to onChange prop when named colors enabled', () => {
-      wrapper = mount(
-        <ColorPickerPopover color={'green'} onChange={onChangeSpy} theme={getTheme(GrafanaThemeType.Light)} />
-      );
-
-      const basicBlueSwatch = wrapper.find(ColorSwatch).findWhere(node => node.key() === 'green');
-      basicBlueSwatch.simulate('click');
-
-      expect(onChangeSpy).toBeCalledTimes(1);
-      expect(onChangeSpy).toBeCalledWith('green');
-    });
   });
 });
