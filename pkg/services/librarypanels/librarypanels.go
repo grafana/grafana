@@ -1,8 +1,13 @@
 package librarypanels
 
 import (
+	"errors"
+	"fmt"
+
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -37,6 +42,59 @@ func (lps *LibraryPanelService) IsEnabled() bool {
 	}
 
 	return lps.Cfg.IsPanelLibraryEnabled()
+}
+
+// LoadLibraryPanelsForDashboard loads library panels JSON from the database for a dashboard.
+func (lps *LibraryPanelService) LoadLibraryPanelsForDashboard(dash *models.Dashboard) error {
+	libraryPanels, err := lps.getLibraryPanelsForDashboardID(dash.Id)
+	if err != nil {
+		return err
+	}
+
+	panels := dash.Data.Get("panels").MustArray()
+	for i, panel := range panels {
+		panelAsJSON := simplejson.NewFromAny(panel)
+		libraryPanel := panelAsJSON.Get("libraryPanel")
+		if libraryPanel.Interface() == nil {
+			continue
+		}
+
+		// we have a library panel
+		uid := libraryPanel.Get("uid").MustString()
+		if len(uid) == 0 {
+			return errors.New("found a library panel without uid")
+		}
+
+		libraryPanelInDB, ok := libraryPanels[uid]
+		if !ok {
+			return errors.New("found a library panel that does not exists as a connection")
+		}
+
+		// we have a match between what is stored in db and in dashboard json
+		libraryPanelModel, err := libraryPanelInDB.Model.MarshalJSON()
+		if err != nil {
+			return fmt.Errorf("could not marshal library panel JSON: %w", err)
+		}
+
+		libraryPanelModelAsJSON, err := simplejson.NewJson(libraryPanelModel)
+		if err != nil {
+			return fmt.Errorf("could not convert library panel to JSON: %w", err)
+		}
+
+		// set the library panel json as new panel json in dashboard json
+		dash.Data.Get("panels").SetIndex(i, libraryPanelModelAsJSON.Interface())
+
+		// set dashboard specific props
+		elem := dash.Data.Get("panels").GetIndex(i)
+		elem.Set("gridPos", panelAsJSON.Get("gridPos").MustMap())
+		elem.Set("id", panelAsJSON.Get("id").MustInt64())
+		elem.Set("libraryPanel", map[string]interface{}{
+			"uid":  libraryPanelInDB.UID,
+			"name": libraryPanelInDB.Name,
+		})
+	}
+
+	return nil
 }
 
 // AddMigration defines database migrations.

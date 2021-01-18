@@ -183,6 +183,33 @@ func (lps *LibraryPanelService) getConnectedDashboards(c *models.ReqContext, uid
 	return connectedDashboardIDs, err
 }
 
+func (lps *LibraryPanelService) getLibraryPanelsForDashboardID(dashboardID int64) (map[string]LibraryPanel, error) {
+	libraryPanelMap := make(map[string]LibraryPanel)
+	err := lps.SQLStore.WithDbSession(context.Background(), func(session *sqlstore.DBSession) error {
+		sql := `SELECT
+				lp.id, lp.org_id, lp.folder_id, lp.uid, lp.name, lp.model, lp.created, lp.created_by, lp.updated, updated_by
+			FROM
+				library_panel_dashboard AS lpd
+			INNER JOIN
+				library_panel AS lp ON lpd.librarypanel_id = lp.id AND lpd.dashboard_id=?`
+
+		var libraryPanels []LibraryPanel
+		sess := session.SQL(sql, dashboardID)
+		err := sess.Find(&libraryPanels)
+		if err != nil {
+			return err
+		}
+
+		for _, panel := range libraryPanels {
+			libraryPanelMap[panel.UID] = panel
+		}
+
+		return nil
+	})
+
+	return libraryPanelMap, err
+}
+
 // patchLibraryPanel updates a Library Panel.
 func (lps *LibraryPanelService) patchLibraryPanel(c *models.ReqContext, cmd patchLibraryPanelCommand, uid string) (LibraryPanel, error) {
 	var libraryPanel LibraryPanel
