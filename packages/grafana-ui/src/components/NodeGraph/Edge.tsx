@@ -26,7 +26,11 @@ export const Edge = memo(function Edge(props: Props) {
   );
 
   return (
-    <g onClick={event => onClick(event, edge)} style={{ cursor: 'pointer' }}>
+    <g
+      onClick={event => onClick(event, edge)}
+      style={{ cursor: 'pointer' }}
+      aria-label={`Edge from: ${(edge.source as NodeDatum).id} to: ${(edge.target as NodeDatum).id}`}
+    >
       <line
         strokeWidth={hovering ? 2 : 1}
         stroke={'#999'}

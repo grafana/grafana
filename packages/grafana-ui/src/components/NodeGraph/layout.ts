@@ -36,6 +36,10 @@ export function useLayout(
   // TODO the use effect is probably not needed here right now, but may make sense later if we decide to move the layout
   // to webworker or just postpone until other things are rendered. Also right now it memoizes this for us.
   useEffect(() => {
+    if (rawNodes.length === 0) {
+      return;
+    }
+
     // d3 just modifies the nodes directly, so lets make sure we don't leak that outside
     const rawNodesCopy = rawNodes.map(n => ({ ...n }));
     const rawEdgesCopy = rawEdges.map(e => ({ ...e }));
@@ -184,6 +188,10 @@ export interface Bounds {
  * Get bounds of the graph meaning the extent of the nodes in all directions.
  */
 function graphBounds(nodes: NodeDatum[]): Bounds {
+  if (nodes.length === 0) {
+    return { top: 0, right: 0, bottom: 0, left: 0 };
+  }
+
   return nodes.reduce(
     (acc, node) => {
       if (node.x! > acc.right) {

@@ -53,11 +53,18 @@ export function getEdgeFields(edges: DataFrame) {
 /**
  * Transform nodes and edges dataframes into array of objects that the layout code can then work with.
  */
-export function processNodes(nodes: DataFrame, edges: DataFrame): { nodes: NodeDatum[]; links: EdgeDatum[] } {
+export function processNodes(nodes?: DataFrame, edges?: DataFrame): { nodes: NodeDatum[]; edges: EdgeDatum[] } {
+  if (!nodes) {
+    return { nodes: [], edges: [] };
+  }
+
   const nodeFields = getNodeFields(nodes);
+  if (!nodeFields.id) {
+    throw new Error('id field is required for nodes data frame.');
+  }
 
   const nodesMap =
-    nodeFields.id?.values.toArray().reduce<{ [id: string]: NodeDatum }>((acc, id, index) => {
+    nodeFields.id.values.toArray().reduce<{ [id: string]: NodeDatum }>((acc, id, index) => {
       acc[id] = {
         id: id,
         title: nodeFields.title.values.get(index),
@@ -76,26 +83,34 @@ export function processNodes(nodes: DataFrame, edges: DataFrame): { nodes: NodeD
       return acc;
     }, {}) || {};
 
-  const edgeFields = getEdgeFields(edges);
-  const edgesMapped = edgeFields.id?.values.toArray().map((id, index) => {
-    const target = edgeFields.target?.values.get(index);
-    const source = edgeFields.source?.values.get(index);
-    // We are adding incoming edges count so we can later on find out which nodes are the roots
-    nodesMap[target].incoming++;
+  let edgesMapped: EdgeDatum[] = [];
+  // We may not have edges in case of single node
+  if (edges) {
+    const edgeFields = getEdgeFields(edges);
+    if (!edgeFields.id) {
+      throw new Error('id field is required for edges data frame.');
+    }
 
-    return {
-      id,
-      dataFrameRowIndex: index,
-      source,
-      target,
-      mainStat: edgeFields.mainStat ? statToString(edgeFields.mainStat, index) : '',
-      secondaryStat: edgeFields.secondaryStat ? statToString(edgeFields.secondaryStat, index) : '',
-    } as EdgeDatum;
-  });
+    edgesMapped = edgeFields.id.values.toArray().map((id, index) => {
+      const target = edgeFields.target?.values.get(index);
+      const source = edgeFields.source?.values.get(index);
+      // We are adding incoming edges count so we can later on find out which nodes are the roots
+      nodesMap[target].incoming++;
+
+      return {
+        id,
+        dataFrameRowIndex: index,
+        source,
+        target,
+        mainStat: edgeFields.mainStat ? statToString(edgeFields.mainStat, index) : '',
+        secondaryStat: edgeFields.secondaryStat ? statToString(edgeFields.secondaryStat, index) : '',
+      } as EdgeDatum;
+    });
+  }
 
   return {
     nodes: Object.values(nodesMap),
-    links: edgesMapped || [],
+    edges: edgesMapped || [],
   };
 }
 

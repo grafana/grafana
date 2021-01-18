@@ -64,6 +64,7 @@ export const Node = memo(function Node(props: {
       onClick={event => {
         onClick(event, node);
       }}
+      aria-label={`Node: ${node.title}`}
     >
       <circle className={styles.mainCircle} r={nodeR} cx={node.x} cy={node.y} />
       {hovering && <circle className={styles.hoverCircle} r={nodeR - 3} cx={node.x} cy={node.y} strokeWidth={2} />}

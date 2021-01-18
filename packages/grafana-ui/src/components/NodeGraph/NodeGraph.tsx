@@ -89,7 +89,7 @@ export function NodeGraph({ getLinks, dataFrames }: Props) {
     edgesDataFrames[0],
   ]);
 
-  const { nodes: rawNodes, edges: rawEdges } = useNodeLimit(processed.nodes, processed.links, nodeCountLimit);
+  const { nodes: rawNodes, edges: rawEdges } = useNodeLimit(processed.nodes, processed.edges, nodeCountLimit);
   const hiddenNodesCount = processed.nodes.length - rawNodes.length;
 
   const { nodes, edges, bounds } = useLayout(rawNodes, rawEdges, config);
@@ -112,7 +112,7 @@ export function NodeGraph({ getLinks, dataFrames }: Props) {
       >
         <g
           className={styles.mainGroup}
-          style={{ transform: `scale(${scale}) translate(${position.x}px, ${position.y}px)` }}
+          style={{ transform: `scale(${scale}) translate(${Math.floor(position.x)}px, ${Math.floor(position.y)}px)` }}
         >
           <EdgeArrowMarker />
           <Edges

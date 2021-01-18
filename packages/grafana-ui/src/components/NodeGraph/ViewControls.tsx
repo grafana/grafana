@@ -41,9 +41,12 @@ export function ViewControls<Config extends Record<string, any>>(props: Props<Co
 
   return (
     <>
-      <Button icon={'plus-circle'} onClick={onPlus} size={'sm'} />
-      <Button className={styles.minusButton} icon={'minus-circle'} onClick={onMinus} size={'sm'} />
-      <span className={styles.scale}> {scale.toFixed(2)}x</span>
+      <Button icon={'plus-circle'} onClick={onPlus} size={'sm'} title={'Zoom in'} />
+      <Button className={styles.minusButton} icon={'minus-circle'} onClick={onMinus} size={'sm'} title={'Zoom out'} />
+      <span className={styles.scale} title={'Zoom level'}>
+        {' '}
+        {scale.toFixed(2)}x
+      </span>
       <div className={styles.scrollHelp}>Or ctrl/meta + scroll</div>
       {allowConfiguration && (
         <Button size={'xs'} variant={'link'} onClick={() => setShowConfig(showConfig => !showConfig)}>
