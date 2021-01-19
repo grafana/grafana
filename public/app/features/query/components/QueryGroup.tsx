@@ -2,7 +2,7 @@
 import React, { PureComponent } from 'react';
 // Components
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
-import { Button, CustomScrollbar, HorizontalGroup, Modal, stylesFactory } from '@grafana/ui';
+import { Button, CustomScrollbar, HorizontalGroup, Icon, Modal, stylesFactory, Tooltip } from '@grafana/ui';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { QueryEditorRows } from './QueryEditorRows';
 // Services
@@ -315,16 +315,16 @@ export class QueryGroup extends PureComponent<Props, State> {
         )}
         {isAddingMixed && this.renderMixedPicker()}
         {this.isExpressionsSupported(dsSettings) && (
-          <div>
+          <Tooltip content="Experimental feature, queries might break in next version">
             <Button
               icon="plus"
               onClick={this.onAddExpressionClick}
               variant="secondary"
               className={styles.expressionButton}
             >
-              Expression (beta)
+              Expression <Icon name="exclamation-triangle" className="muted" size="sm" />
             </Button>
-          </div>
+          </Tooltip>
         )}
       </HorizontalGroup>
     );
