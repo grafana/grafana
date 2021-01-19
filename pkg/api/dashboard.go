@@ -147,10 +147,12 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	// make sure db version is in sync with json model version
 	dash.Data.Set("version", dash.Version)
 
-	// load library panels
-	err = hs.LibraryPanelService.LoadLibraryPanelsForDashboard(dash)
-	if err != nil {
-		return response.Error(500, "Error while loading library panels", err)
+	if hs.Cfg.IsPanelLibraryEnabled() {
+		// load library panels
+		err = hs.LibraryPanelService.LoadLibraryPanelsForDashboard(dash)
+		if err != nil {
+			return response.Error(500, "Error while loading library panels", err)
+		}
 	}
 
 	dto := dtos.DashboardFullWithMeta{
@@ -262,10 +264,12 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		allowUiUpdate = hs.ProvisioningService.GetAllowUIUpdatesFromConfig(provisioningData.Name)
 	}
 
-	// clean library panels
-	err = hs.LibraryPanelService.CleanLibraryPanelsForDashboard(dash)
-	if err != nil {
-		return response.Error(500, "Error while cleaning library panels", err)
+	if hs.Cfg.IsPanelLibraryEnabled() {
+		// clean library panels
+		err = hs.LibraryPanelService.CleanLibraryPanelsForDashboard(dash)
+		if err != nil {
+			return response.Error(500, "Error while cleaning library panels", err)
+		}
 	}
 
 	dashItem := &dashboards.SaveDashboardDTO{
@@ -300,10 +304,12 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		}
 	}
 
-	// connect library panels for dashboard after they get an ID
-	err = hs.LibraryPanelService.ConnectLibraryPanelsForDashboard(c, dashboard)
-	if err != nil {
-		return response.Error(500, "Error while connecting library panels", err)
+	if hs.Cfg.IsPanelLibraryEnabled() {
+		// connect library panels for dashboard after they get an ID
+		err = hs.LibraryPanelService.ConnectLibraryPanelsForDashboard(c, dashboard)
+		if err != nil {
+			return response.Error(500, "Error while connecting library panels", err)
+		}
 	}
 
 	c.TimeRequest(metrics.MApiDashboardSave)
