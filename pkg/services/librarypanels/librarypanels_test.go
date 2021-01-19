@@ -871,7 +871,7 @@ func TestCleanLibraryPanelsForDashboard(t *testing.T) {
 }
 
 func TestConnectLibraryPanelsForDashboard(t *testing.T) {
-	testScenario(t, "When an admin tries to store a dashboard with a library panel, it should connect the dashboard",
+	testScenario(t, "When an admin tries to store a dashboard with a library panel, it should connect the two",
 		func(t *testing.T, sc scenarioContext) {
 			command := getCreateCommand(1, "Text - Library Panel1")
 			response := sc.service.createHandler(sc.reqContext, command)
