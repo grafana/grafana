@@ -241,7 +241,7 @@
     "is-hotkey": "0.1.6",
     "jquery": "3.5.1",
     "jsurl": "^0.1.5",
-    "lodash": "4.17.19",
+    "lodash": "4.17.20",
     "lru-cache": "^5.1.1",
     "md5": "^2.2.1",
     "memoize-one": "5.1.1",

@@ -151,16 +151,6 @@ describe('getPanelMenu', () => {
             "text": "More...",
             "type": "submenu",
           },
-          Object {
-            "text": "",
-            "type": "divider",
-          },
-          Object {
-            "iconClassName": "trash-alt",
-            "onClick": [Function],
-            "shortcut": "p r",
-            "text": "Remove",
-          },
         ]
       `);
     });

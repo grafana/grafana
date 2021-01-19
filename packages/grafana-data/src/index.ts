@@ -18,5 +18,5 @@ export {
   BasicValueMatcherOptions,
   RangeValueMatcherOptions,
 } from './transformations/matchers/valueMatchers/types';
-export { PanelPlugin } from './panel/PanelPlugin';
+export { PanelPlugin, SetFieldConfigOptionsArgs } from './panel/PanelPlugin';
 export { createFieldConfigRegistry } from './panel/registryFactories';
