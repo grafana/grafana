@@ -1,4 +1,11 @@
-import { FieldColorModeId, FieldConfigProperty, FieldType, identityOverrideProcessor } from '@grafana/data';
+import {
+  FieldColorModeId,
+  FieldConfigProperty,
+  FieldType,
+  identityOverrideProcessor,
+  SetFieldConfigOptionsArgs,
+  stringOverrideProcessor,
+} from '@grafana/data';
 import {
   AxisPlacement,
   DrawStyle,
@@ -9,19 +16,19 @@ import {
   PointVisibility,
   ScaleDistribution,
   ScaleDistributionConfig,
+  GraphGradientMode,
 } from '@grafana/ui';
 import { SeriesConfigEditor } from './HideSeriesConfigEditor';
 import { ScaleDistributionEditor } from './ScaleDistributionEditor';
 import { LineStyleEditor } from './LineStyleEditor';
-import { SetFieldConfigOptionsArgs } from '@grafana/data/src/panel/PanelPlugin';
-import { FillGradientMode } from '@grafana/ui/src/components/uPlot/config';
+import { FillBellowToEditor } from './FillBelowToEditor';
 
 export const defaultGraphConfig: GraphFieldConfig = {
   drawStyle: DrawStyle.Line,
   lineInterpolation: LineInterpolation.Linear,
   lineWidth: 1,
   fillOpacity: 0,
-  fillGradient: FillGradientMode.None,
+  gradientMode: GraphGradientMode.None,
 };
 
 export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOptionsArgs<GraphFieldConfig> {
@@ -30,6 +37,8 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
       [FieldConfigProperty.Color]: {
         settings: {
           byValueSupport: false,
+          bySeriesSupport: true,
+          preferThresholdsMode: false,
         },
         defaultValue: {
           mode: FieldColorModeId.PaletteClassic,
@@ -78,13 +87,23 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           showIf: c => c.drawStyle !== DrawStyle.Points,
         })
         .addRadio({
-          path: 'fillGradient',
-          name: 'Fill gradient',
-          defaultValue: graphFieldOptions.fillGradient[0].value,
+          path: 'gradientMode',
+          name: 'Gradient mode',
+          defaultValue: graphFieldOptions.fillGradient[0],
           settings: {
             options: graphFieldOptions.fillGradient,
           },
-          showIf: c => !!(c.drawStyle !== DrawStyle.Points && c.fillOpacity && c.fillOpacity > 0),
+          showIf: c => c.drawStyle !== DrawStyle.Points,
+        })
+        .addCustomEditor({
+          id: 'fillBelowTo',
+          path: 'fillBelowTo',
+          name: 'Fill below to',
+          editor: FillBellowToEditor,
+          override: FillBellowToEditor,
+          process: stringOverrideProcessor,
+          hideFromDefaults: true,
+          shouldApply: f => true,
         })
         .addCustomEditor<void, LineStyle>({
           id: 'lineStyle',
@@ -115,6 +134,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           settings: {
             options: graphFieldOptions.showPoints,
           },
+          showIf: c => c.drawStyle !== DrawStyle.Points,
         })
         .addSliderInput({
           path: 'pointSize',
@@ -156,6 +176,22 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
             placeholder: 'Auto',
           },
           showIf: c => c.axisPlacement !== AxisPlacement.Hidden,
+        })
+        .addNumberInput({
+          path: 'axisSoftMin',
+          name: 'Soft min',
+          category: ['Axis'],
+          settings: {
+            placeholder: 'See: Standard options > Min',
+          },
+        })
+        .addNumberInput({
+          path: 'axisSoftMax',
+          name: 'Soft max',
+          category: ['Axis'],
+          settings: {
+            placeholder: 'See: Standard options > Max',
+          },
         })
         .addCustomEditor<void, ScaleDistributionConfig>({
           id: 'scaleDistribution',

@@ -72,6 +72,7 @@ The following sections provide general guidelines on topics specific to Grafana 
 - Files that are displayed in the help system should have names that are all lowercase, no spaces. Use hyphens instead of spaces. Example: glossary.md
 - Documentation file names should match the title. **Note:** This only applies to new files at this time. Do not change the names of older files unless directed to do so.
 - Internal reference file names should be all uppercase except the file extension. Example: CONTRIBUTING.md
+- Image file names should be descriptive and unique. Also, add the software version number that the image applies to or the screenshot was taken in. Example: share-dashboard-link-7-3.png
 
 ### Headings
 
@@ -112,6 +113,7 @@ If that is the case, then use the following format for headings:
 - Screenshots should be readable, but not too large.
 - _Do not_ use image shortcodes. Follow the guidance in the [Grafana markdown guide](https://github.com/grafana/grafana/blob/master/contribute/style-guides/documentation-markdown-guide.md#images).
 - Markdown image links are preferred. Only use the HTML image links if you need to style the image in ways unsupported in Markdown.
+- When you name a file, follow the [file naming conventions](#file-naming-conventions). Example: image-name-7-3.png
 
 ### Capitalization
 

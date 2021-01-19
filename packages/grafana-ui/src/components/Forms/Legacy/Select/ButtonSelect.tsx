@@ -72,6 +72,7 @@ export class ButtonSelect<T> extends PureComponent<Props<T>> {
       tabSelectsValue,
       autoFocus = true,
     } = this.props;
+
     const combinedComponents = {
       ...components,
       Control: ButtonComponent({ label, className, iconClass }),

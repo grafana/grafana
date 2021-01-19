@@ -4,17 +4,21 @@ import { css, cx } from 'emotion';
 
 // Types
 import { InlineFormLabel, RadioButtonGroup } from '@grafana/ui';
+import { PromQuery } from '../types';
+import { PromExemplarField } from './PromExemplarField';
 
 export interface PromExploreExtraFieldProps {
   queryType: string;
   stepValue: string;
+  query: PromQuery;
   onStepChange: (e: React.SyntheticEvent<HTMLInputElement>) => void;
   onKeyDownFunc: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   onQueryTypeChange: (value: string) => void;
+  onChange: (value: PromQuery) => void;
 }
 
 export const PromExploreExtraField: React.FC<PromExploreExtraFieldProps> = memo(
-  ({ queryType, stepValue, onStepChange, onQueryTypeChange, onKeyDownFunc }) => {
+  ({ queryType, stepValue, query, onChange, onStepChange, onQueryTypeChange, onKeyDownFunc }) => {
     const rangeOptions = [
       { value: 'range', label: 'Range' },
       { value: 'instant', label: 'Instant' },
@@ -71,6 +75,8 @@ export const PromExploreExtraField: React.FC<PromExploreExtraFieldProps> = memo(
             value={stepValue}
           />
         </div>
+
+        <PromExemplarField query={query} onChange={onChange} />
       </div>
     );
   }

@@ -209,11 +209,16 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
           const styles = getStyles(theme);
           return (
             <div className={styles.wrapper}>
-              <FullWidthButtonContainer className={styles.addButton}>
-                <Button size="sm" icon="plus" onClick={() => this.onAddThreshold()} variant="secondary">
-                  Add threshold
-                </Button>
-              </FullWidthButtonContainer>
+              <Button
+                size="sm"
+                icon="plus"
+                onClick={() => this.onAddThreshold()}
+                variant="secondary"
+                className={styles.addButton}
+                fullWidth
+              >
+                Add threshold
+              </Button>
               <div className={styles.thresholds}>
                 {steps
                   .slice(0)

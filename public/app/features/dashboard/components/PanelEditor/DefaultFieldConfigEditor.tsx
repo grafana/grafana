@@ -34,7 +34,7 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
         : get(defaults, item.path);
 
       let label: ReactNode | undefined = (
-        <Label description={item.description} category={item.category?.slice(1)}>
+        <Label description={item.description} category={item.category?.slice(1) as string[]}>
           {item.name}
         </Label>
       );
@@ -67,27 +67,39 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
     [config]
   );
 
-  const groupedConfigs = groupBy(plugin.fieldConfigRegistry.list(), i => i.category && i.category[0]);
+  const GENERAL_OPTIONS_CATEGORY = `${plugin.meta.name} options`;
+
+  const groupedConfigs = groupBy(plugin.fieldConfigRegistry.list(), i => {
+    if (!i.category) {
+      return GENERAL_OPTIONS_CATEGORY;
+    }
+    return i.category[0] ? i.category[0] : GENERAL_OPTIONS_CATEGORY;
+  });
 
   return (
     <div aria-label={selectors.components.FieldConfigEditor.content}>
-      {Object.keys(groupedConfigs).map((k, i) => {
-        const groupItemsCounter = countGroupItems(groupedConfigs[k], config);
+      {Object.keys(groupedConfigs).map((groupName, i) => {
+        const group = groupedConfigs[groupName];
+        const groupItemsCounter = countGroupItems(group, config);
+
+        if (!shouldRenderGroup(group)) {
+          return undefined;
+        }
 
         return (
           <OptionsGroup
             renderTitle={isExpanded => {
               return (
                 <>
-                  {k} {!isExpanded && groupItemsCounter && <Counter value={groupItemsCounter} />}
+                  {groupName} {!isExpanded && groupItemsCounter && <Counter value={groupItemsCounter} />}
                 </>
               );
             }}
-            id={`${k}/${i}`}
-            key={`${k}/${i}`}
+            id={`${groupName}/${i}`}
+            key={`${groupName}/${i}`}
           >
-            {groupedConfigs[k].map(c => {
-              return renderEditor(c, groupedConfigs[k].length);
+            {group.map(c => {
+              return renderEditor(c, group.length);
             })}
           </OptionsGroup>
         );
@@ -96,7 +108,7 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
   );
 };
 
-const countGroupItems = (group: FieldConfigPropertyItem[], config: FieldConfigSource) => {
+function countGroupItems(group: FieldConfigPropertyItem[], config: FieldConfigSource) {
   let counter = 0;
 
   for (const item of group) {
@@ -111,4 +123,9 @@ const countGroupItems = (group: FieldConfigPropertyItem[], config: FieldConfigSo
   }
 
   return counter === 0 ? undefined : counter;
-};
+}
+
+function shouldRenderGroup(group: FieldConfigPropertyItem[]) {
+  const hiddenPropertiesCount = group.filter(i => i.hideFromDefaults).length;
+  return group.length - hiddenPropertiesCount > 0;
+}

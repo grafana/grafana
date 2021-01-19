@@ -16,7 +16,6 @@ export { ButtonCascader } from './ButtonCascader/ButtonCascader';
 export { LoadingPlaceholder, LoadingPlaceholderProps } from './LoadingPlaceholder/LoadingPlaceholder';
 export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
-export { PanelOptionsGrid } from './PanelOptionsGrid/PanelOptionsGrid';
 export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
 export { PieChart, PieChartType } from './PieChart/PieChart';
 export { UnitPicker } from './UnitPicker/UnitPicker';
@@ -69,7 +68,6 @@ export {
 
 export { Gauge } from './Gauge/Gauge';
 export { Graph } from './Graph/Graph';
-export { GraphLegend } from './Graph/GraphLegend';
 export { GraphWithLegend } from './Graph/GraphWithLegend';
 export { GraphContextMenu, GraphContextMenuHeader } from './Graph/GraphContextMenu';
 export { BarGauge, BarGaugeDisplayMode } from './BarGauge/BarGauge';
@@ -77,17 +75,8 @@ export { GraphTooltipOptions } from './Graph/GraphTooltip/types';
 export { VizRepeater, VizRepeaterRenderValueProps } from './VizRepeater/VizRepeater';
 export { graphTimeFormat, graphTickFormatter } from './Graph/utils';
 export { VizLayout, VizLayoutComponentType, VizLayoutLegendProps, VizLayoutProps } from './VizLayout/VizLayout';
-
-export {
-  LegendOptions,
-  LegendBasicOptions,
-  LegendRenderOptions,
-  LegendList,
-  LegendTable,
-  LegendItem,
-  LegendPlacement,
-  LegendDisplayMode,
-} from './Legend/Legend';
+export { VizLegendItem, LegendPlacement, LegendDisplayMode, VizLegendOptions } from './VizLegend/types';
+export { VizLegend } from './VizLegend/VizLegend';
 
 export { Alert, AlertVariant } from './Alert/Alert';
 export { GraphSeriesToggler, GraphSeriesTogglerAPI } from './Graph/GraphSeriesToggler';
@@ -97,6 +86,7 @@ export { LogLabels } from './Logs/LogLabels';
 export { LogMessageAnsi } from './Logs/LogMessageAnsi';
 export { LogRows } from './Logs/LogRows';
 export { getLogRowStyles } from './Logs/getLogRowStyles';
+export { FieldLink } from './Logs/FieldLink';
 export { ToggleButtonGroup, ToggleButton } from './ToggleButtonGroup/ToggleButtonGroup';
 // Panel editors
 export { FullWidthButtonContainer } from './Button/FullWidthButtonContainer';
@@ -109,7 +99,7 @@ export { WithContextMenu } from './ContextMenu/WithContextMenu';
 export { DataLinksInlineEditor } from './DataLinks/DataLinksInlineEditor/DataLinksInlineEditor';
 export { DataLinkInput } from './DataLinks/DataLinkInput';
 export { DataLinksContextMenu } from './DataLinks/DataLinksContextMenu';
-export { SeriesIcon } from './Legend/SeriesIcon';
+export { SeriesIcon } from './VizLegend/SeriesIcon';
 export { InfoBox } from './InfoBox/InfoBox';
 export { FeatureInfoBox } from './InfoBox/FeatureInfoBox';
 
@@ -119,6 +109,8 @@ export { ErrorBoundary, ErrorBoundaryAlert } from './ErrorBoundary/ErrorBoundary
 export { ErrorWithStack } from './ErrorBoundary/ErrorWithStack';
 export { AlphaNotice } from './AlphaNotice/AlphaNotice';
 export { DataSourceHttpSettings } from './DataSourceSettings/DataSourceHttpSettings';
+export { TLSAuthSettings } from './DataSourceSettings/TLSAuthSettings';
+export { CertificationKey } from './DataSourceSettings/CertificationKey';
 export { Spinner } from './Spinner/Spinner';
 export { FadeTransition } from './transitions/FadeTransition';
 export { SlideOutTransition } from './transitions/SlideOutTransition';
@@ -140,7 +132,7 @@ export { FieldConfigItemHeaderTitle } from './FieldConfigs/FieldConfigItemHeader
 // Next-gen forms
 export { Form } from './Forms/Form';
 export { InputControl } from './InputControl';
-export * from './Button';
+export { Button, LinkButton, ButtonVariant, ToolbarButton, ButtonGroup } from './Button';
 export { ValuePicker } from './ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
 export { getFormStyles } from './Forms/getFormStyles';
@@ -214,5 +206,5 @@ export * from './uPlot/geometries';
 export * from './uPlot/plugins';
 export { useRefreshAfterGraphRendered } from './uPlot/hooks';
 export { usePlotContext, usePlotData, usePlotPluginContext } from './uPlot/context';
-export { GraphNG } from './GraphNG/GraphNG';
+export { GraphNG, FIXED_UNIT } from './GraphNG/GraphNG';
 export { GraphNGLegendEvent, GraphNGLegendEventMode } from './GraphNG/types';
