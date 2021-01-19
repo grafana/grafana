@@ -22,12 +22,10 @@ export class MssqlConfigCtrl {
   }
 
   onAuthenticationTypeChange() {
-    // Workaround to reset the user value in the database and xorm ignoring empty strings. Needs to be an empty string for the Windows auth to work.
     // This is using the fallback in https://github.com/denisenkom/go-mssqldb to use Windows Auth if login/user id is empty.
     if (this.current.jsonData.authenticationType === 'Windows Authentication') {
-      this.current.user = ' ';
-    } else {
       this.current.user = '';
+      this.current.password = '';
     }
 
     this.showUserCredentials = this.current.jsonData.authenticationType !== 'Windows Authentication';
