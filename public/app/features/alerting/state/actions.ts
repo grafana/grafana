@@ -99,7 +99,7 @@ export function createAlertDefinition(): ThunkResult<void> {
             expression: query.expr,
             type: query.queryType,
             datasource: queryOptions.dataSource.name,
-            dataSourceUid: queryOptions.dataSource.uid,
+            datasourceUid: queryOptions.dataSource.uid,
           },
           refId: query.refId,
           relativeTimeRange: {

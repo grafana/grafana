@@ -1,11 +1,12 @@
 import React, { FormEvent, PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
-import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
+import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { css } from 'emotion';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { Button, Icon, stylesFactory } from '@grafana/ui';
 import { PageToolbar } from 'app/core/components/PageToolbar/PageToolbar';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
+import { connectWithCleanUp } from 'app/core/components/connectWithCleanUp';
 import AlertingQueryEditor from './components/AlertingQueryEditor';
 import { AlertDefinitionOptions } from './components/AlertDefinitionOptions';
 import { AlertingQueryPreview } from './components/AlertingQueryPreview';
@@ -155,7 +156,9 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   loadNotificationTypes,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(NextGenAlertingPage));
+export default hot(module)(
+  connectWithCleanUp(mapStateToProps, mapDispatchToProps, state => state.alertDefinition)(NextGenAlertingPage)
+);
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   wrapper: css`
