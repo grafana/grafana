@@ -1,5 +1,5 @@
 +++
-title = "Adding notification templating"
+title = "Alert notification templating"
 keywords = ["grafana", "documentation", "alerting", "alerts", "notification", "templating"]
 weight = 110
 +++
