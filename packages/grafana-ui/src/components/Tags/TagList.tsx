@@ -1,5 +1,5 @@
 import React, { FC, memo } from 'react';
-import { cx, css } from 'emotion';
+import { css, cx } from 'emotion';
 import { OnTagClick, Tag } from './Tag';
 
 export interface Props {
@@ -29,11 +29,11 @@ const getStyles = () => {
       display: flex;
       flex: 1 1 auto;
       flex-wrap: wrap;
+      margin-bottom: -6px;
+      justify-content: flex-end;
     `,
     tag: css`
-      &:not(:first-child) {
-        margin-left: 6px;
-      }
+      margin: 0 0 6px 6px;
     `,
   };
 };

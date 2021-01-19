@@ -86,6 +86,11 @@ export function splitOpen<T extends DataQuery = any>(options?: {
       rightState.queryKeys = [];
       urlState.queries = [];
       rightState.urlState = urlState;
+      rightState.showLogs = false;
+      rightState.showMetrics = false;
+      rightState.showNodeGraph = false;
+      rightState.showTrace = false;
+      rightState.showTable = false;
       if (options.range) {
         urlState.range = options.range.raw;
         // This is super hacky. In traces to logs we want to create a link but also internally open split window.

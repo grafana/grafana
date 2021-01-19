@@ -154,30 +154,32 @@ export class DashboardSettings extends PureComponent<Props> {
             <span>{dashboard.title} / Settings</span>
           </div>
         </div>
-        <CustomScrollbar>
-          <div className="dashboard-settings__body">
-            <aside className="dashboard-settings__aside">
-              {pages.map(page => (
-                <a
-                  className={cx('dashboard-settings__nav-item', { active: page.id === editview })}
-                  aria-label={selectors.pages.Dashboard.Settings.General.sectionItems(page.title)}
-                  onClick={() => this.onChangePage(page.id)}
-                  key={page.id}
-                >
-                  <Icon name={page.icon} style={{ marginRight: '4px' }} />
-                  {page.title}
-                </a>
-              ))}
-              <div className="dashboard-settings__aside-actions">
-                {canSave && <SaveDashboardButton dashboard={dashboard} onSaveSuccess={this.onPostSave} />}
-                {canSaveAs && (
-                  <SaveDashboardAsButton dashboard={dashboard} onSaveSuccess={this.onPostSave} variant="secondary" />
-                )}
-              </div>
-            </aside>
-            <div className="dashboard-settings__content">{currentPage.render()}</div>
+        <div className="dashboard-settings__body">
+          <aside className="dashboard-settings__aside">
+            {pages.map(page => (
+              <a
+                className={cx('dashboard-settings__nav-item', { active: page.id === editview })}
+                aria-label={selectors.pages.Dashboard.Settings.General.sectionItems(page.title)}
+                onClick={() => this.onChangePage(page.id)}
+                key={page.id}
+              >
+                <Icon name={page.icon} style={{ marginRight: '4px' }} />
+                {page.title}
+              </a>
+            ))}
+            <div className="dashboard-settings__aside-actions">
+              {canSave && <SaveDashboardButton dashboard={dashboard} onSaveSuccess={this.onPostSave} />}
+              {canSaveAs && (
+                <SaveDashboardAsButton dashboard={dashboard} onSaveSuccess={this.onPostSave} variant="secondary" />
+              )}
+            </div>
+          </aside>
+          <div className="dashboard-settings__scroll">
+            <CustomScrollbar autoHeightMin="100%">
+              <div className="dashboard-settings__content">{currentPage.render()}</div>
+            </CustomScrollbar>
           </div>
-        </CustomScrollbar>
+        </div>
       </div>
     );
   }
