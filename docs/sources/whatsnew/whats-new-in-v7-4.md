@@ -12,11 +12,6 @@ list = false
 
 This topic includes the release notes for Grafana v7.4 beta. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
-The main highlights are:
-
-- [Grafana OSS featuresff](#grafana-oss-featuresff)
-- [Grafana Enterprise features](#grafana-enterprise-features)
-
 ## Grafana OSS features
 
 These features are included in the Grafana Enterprise edition software.
