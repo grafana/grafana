@@ -38,7 +38,8 @@ func TestCreatingAlertDefinition(t *testing.T) {
 		inputTitle           string
 		expectedError        error
 		expectedInterval     int64
-		expectedUpdated      time.Time
+
+		expectedUpdated time.Time
 	}{
 		{
 			desc:                 "should create successfuly an alert definition with default interval",
@@ -57,8 +58,14 @@ func TestCreatingAlertDefinition(t *testing.T) {
 		{
 			desc:                 "should fail to create an alert definition with too big name",
 			inputIntervalSeconds: &customIntervalSeconds,
-			inputTitle:           getLongString(alertDefinitionMaxNameLength + 1),
+			inputTitle:           getLongString(alertDefinitionMaxTitleLength + 1),
 			expectedError:        errors.New(""),
+		},
+		{
+			desc:                 "should fail to create an alert definition with empty title",
+			inputIntervalSeconds: &customIntervalSeconds,
+			inputTitle:           "",
+			expectedError:        errEmptyTitleError,
 		},
 	}
 	for _, tc := range testCases {
@@ -195,6 +202,7 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 			expectedError           error
 			expectedIntervalSeconds int64
 			expectedUpdated         time.Time
+			expectedTitle           string
 		}{
 			{
 				desc:                    "should not update previous interval if it's not provided",
@@ -203,6 +211,7 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 				inputTitle:              "something completely different",
 				expectedIntervalSeconds: initialInterval,
 				expectedUpdated:         time.Unix(1, 0).UTC(),
+				expectedTitle:           "something completely different",
 			},
 			{
 				desc:                    "should update interval if it's provided",
@@ -211,6 +220,7 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 				inputTitle:              "something completely different",
 				expectedIntervalSeconds: customInterval,
 				expectedUpdated:         time.Unix(2, 0).UTC(),
+				expectedTitle:           "something completely different",
 			},
 			{
 				desc:                    "should not update organisation if it's provided",
@@ -219,19 +229,28 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 				inputTitle:              "something completely different",
 				expectedIntervalSeconds: customInterval,
 				expectedUpdated:         time.Unix(3, 0).UTC(),
+				expectedTitle:           "something completely different",
 			},
 			{
-				desc:          "should not update alert definition if the name it's too big",
+				desc:          "should not update alert definition if the title it's too big",
 				inputInterval: &customInterval,
 				inputOrgID:    0,
-				inputTitle:    getLongString(alertDefinitionMaxNameLength + 1),
+				inputTitle:    getLongString(alertDefinitionMaxTitleLength + 1),
 				expectedError: errors.New(""),
+			},
+			{
+				desc:                    "should not update alert definition title if the title is empty",
+				inputInterval:           &customInterval,
+				inputOrgID:              0,
+				inputTitle:              "",
+				expectedIntervalSeconds: customInterval,
+				expectedUpdated:         time.Unix(4, 0).UTC(),
+				expectedTitle:           "something completely different",
 			},
 		}
 
 		q := updateAlertDefinitionCommand{
-			UID:   (*alertDefinition).UID,
-			Title: "something completely different",
+			UID: (*alertDefinition).UID,
 			Condition: eval.Condition{
 				RefID: "B",
 				QueriesAndExpressions: []eval.AlertQuery{
