@@ -23,9 +23,9 @@ var (
 	ErrFolderNameMissing = errors.New("folder name missing")
 )
 
-// FileReader is responsible for reading dashboards from disc and
+// FileReader is responsible for reading dashboards from disk and
 // insert/update dashboards to the Grafana database using
-// `dashboards.DashboardProvisioningService`
+// `dashboards.DashboardProvisioningService`.
 type FileReader struct {
 	Cfg                          *config
 	Path                         string

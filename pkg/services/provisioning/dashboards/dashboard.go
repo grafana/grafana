@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-// DashboardProvisioner is responsible for syncing dashboard from disc to
+// DashboardProvisioner is responsible for syncing dashboard from disk to
 // Grafanas database.
 type DashboardProvisioner interface {
 	Provision() error
@@ -55,7 +55,7 @@ func New(configDirectory string) (*Provisioner, error) {
 	return d, nil
 }
 
-// Provision starts scanning the disc for dashboards and updates
+// Provision starts scanning the disk for dashboards and updates
 // the database with the latest versions of those dashboards.
 func (provider *Provisioner) Provision() error {
 	for _, reader := range provider.fileReaders {

@@ -319,7 +319,7 @@ func TestDashboardFileReader(t *testing.T) {
 
 			absPath1, err := filepath.Abs(unprovision + "/dashboard1.json")
 			So(err, ShouldBeNil)
-			// This one does not exist on disc, simulating a deleted file
+			// This one does not exist on disk, simulating a deleted file
 			absPath2, err := filepath.Abs(unprovision + "/dashboard2.json")
 			So(err, ShouldBeNil)
 
