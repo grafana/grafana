@@ -15,7 +15,6 @@ import { DynamicConfigValueEditor } from './DynamicConfigValueEditor';
 import { getDataLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
 import { css } from 'emotion';
 import { OptionsGroup } from './OptionsGroup';
-import { selectors } from '@grafana/e2e-selectors';
 
 interface OverrideEditorProps {
   name: string;
