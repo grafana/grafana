@@ -235,7 +235,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
           </Field>
         </FieldSet>
 
-        <div className="gf-form-button-row">
+        <div>
           <Button className="width-10" variant="primary" disabled={isLoading} onClick={this.createSnapshot()}>
             Local Snapshot
           </Button>

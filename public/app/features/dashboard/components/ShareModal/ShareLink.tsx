@@ -115,8 +115,7 @@ export class ShareLink extends PureComponent<Props, State> {
               <Field label="Shorten URL">
                 <Switch id="share-shorten-url" value={useShortUrl} onChange={this.onUrlShorten} />
               </Field>
-            </FieldSet>
-            <FieldSet>
+
               <Field label="Link URL">
                 <Input
                   value={shareUrl}
