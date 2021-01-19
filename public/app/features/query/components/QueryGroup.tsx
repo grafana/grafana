@@ -2,7 +2,7 @@
 import React, { PureComponent } from 'react';
 // Components
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
-import { Button, CustomScrollbar, FeatureBadge, HorizontalGroup, Modal, stylesFactory } from '@grafana/ui';
+import { Button, CustomScrollbar, HorizontalGroup, Modal, stylesFactory } from '@grafana/ui';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { QueryEditorRows } from './QueryEditorRows';
 // Services
@@ -13,7 +13,6 @@ import {
   DataQuery,
   DataSourceApi,
   DataSourceInstanceSettings,
-  FeatureState,
   getDefaultTimeRange,
   LoadingState,
   PanelData,
