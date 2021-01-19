@@ -68,3 +68,28 @@ func addAlertDefinitionVersionMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("alter alert_definition_version table data column to mediumtext in mysql", migrator.NewRawSQLMigration("").
 		Mysql("ALTER TABLE alert_definition_version MODIFY data MEDIUMTEXT;"))
 }
+
+func alertInstanceMigration(mg *migrator.Migrator) {
+	alertInstance := migrator.Table{
+		Name: "alert_instance",
+		Columns: []*migrator.Column{
+			{Name: "def_org_id", Type: migrator.DB_BigInt, Nullable: false},
+			{Name: "def_uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: false, Default: "0"},
+			{Name: "labels", Type: migrator.DB_Text, Nullable: false},
+			{Name: "labels_hash", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "current_state", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "current_state_since", Type: migrator.DB_BigInt, Nullable: false},
+			{Name: "last_eval_time", Type: migrator.DB_BigInt, Nullable: false},
+		},
+		PrimaryKeys: []string{"def_org_id", "def_uid", "labels_hash"},
+		Indices: []*migrator.Index{
+			{Cols: []string{"def_org_id", "def_uid", "current_state"}, Type: migrator.IndexType},
+			{Cols: []string{"def_org_id", "current_state"}, Type: migrator.IndexType},
+		},
+	}
+
+	// create table
+	mg.AddMigration("create alert_instance table", migrator.NewAddTableMigration(alertInstance))
+	mg.AddMigration("add index in alert_instance table on def_org_id, def_uid and current_state columns", migrator.NewAddIndexMigration(alertInstance, alertInstance.Indices[0]))
+	mg.AddMigration("add index in alert_instance table on def_org_id, current_state columns", migrator.NewAddIndexMigration(alertInstance, alertInstance.Indices[1]))
+}

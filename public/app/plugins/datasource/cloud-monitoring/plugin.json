@@ -35,7 +35,7 @@
     {
       "path": "cloudmonitoring",
       "method": "GET",
-      "url": "https://content-monitoring.googleapis.com",
+      "url": "https://monitoring.googleapis.com",
       "jwtTokenAuth": {
         "scopes": ["https://www.googleapis.com/auth/monitoring.read"],
         "params": {

@@ -89,8 +89,8 @@ Object {
       "custom": Object {
         "axisPlacement": "hidden",
         "drawStyle": "line",
-        "fillGradient": "opacity",
         "fillOpacity": 60,
+        "gradientMode": "opacity",
         "lineInterpolation": "stepAfter",
         "lineWidth": 1,
         "pointSize": 6,

@@ -16,6 +16,9 @@ type Licensing interface {
 	LicenseURL(user *SignedInUser) string
 
 	StateInfo() string
+}
 
-	TokenRaw() string
+type LicenseEnvironment interface {
+	// Environment is a map of environment variables
+	Environment() map[string]string
 }
