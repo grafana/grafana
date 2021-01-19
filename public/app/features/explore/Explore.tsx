@@ -312,7 +312,8 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     const isLoading = queryResponse.state === LoadingState.Loading;
 
     // gets an error without a refID, so non-query-row-related error, like a connection error
-    const queryErrors = queryResponse.error ? [queryResponse.error] : undefined;
+    const queryErrors =
+      queryResponse.state === LoadingState.Error && queryResponse.error ? [queryResponse.error] : undefined;
     const queryError = getFirstNonQueryRowSpecificError(queryErrors);
 
     const showRichHistory = openDrawer === ExploreDrawer.RichHistory;

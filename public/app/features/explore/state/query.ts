@@ -657,7 +657,7 @@ export const processQueryResponse = (
 
     return {
       ...state,
-      loading: false,
+      loading: loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming,
       queryResponse: response,
       graphResult: null,
       tableResult: null,
