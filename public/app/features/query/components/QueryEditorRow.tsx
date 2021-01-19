@@ -17,6 +17,7 @@ import {
   toLegacyResponseData,
   EventBusExtended,
   DataSourceInstanceSettings,
+  EventBusSrv,
 } from '@grafana/data';
 import { QueryEditorRowTitle } from './QueryEditorRowTitle';
 import {
@@ -88,7 +89,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
         onRunQuery();
       },
       render: () => () => console.log('legacy render function called, it does nothing'),
-      events: panel.events,
+      events: new EventBusSrv(),
       range: getTimeSrv().timeRange(),
     };
   }
@@ -128,7 +129,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
       }
 
       if (this.angularQueryEditor) {
-        notifyAngularQueryEditorsOfData(this.angularScope?.panel!, data, this.angularQueryEditor);
+        notifyAngularQueryEditorsOfData(this.angularScope!, data, this.angularQueryEditor);
       }
     }
 
@@ -322,7 +323,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
 // So we can check if we already emitted this legacy data event
 let globalLastPanelDataCache: PanelData | null = null;
 
-function notifyAngularQueryEditorsOfData(panel: PanelModel, data: PanelData, editor: AngularComponent) {
+function notifyAngularQueryEditorsOfData(scope: AngularQueryComponentScope, data: PanelData, editor: AngularComponent) {
   if (data === globalLastPanelDataCache) {
     return;
   }
@@ -331,9 +332,9 @@ function notifyAngularQueryEditorsOfData(panel: PanelModel, data: PanelData, edi
 
   if (data.state === LoadingState.Done) {
     const legacy = data.series.map(v => toLegacyResponseData(v));
-    panel.events.emit(PanelEvents.dataReceived, legacy);
+    scope.events.emit(PanelEvents.dataReceived, legacy);
   } else if (data.state === LoadingState.Error) {
-    panel.events.emit(PanelEvents.dataError, data.error);
+    scope.events.emit(PanelEvents.dataError, data.error);
   }
 
   // Some query controllers listen to data error events and need a digest
