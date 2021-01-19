@@ -52,7 +52,7 @@ export const getFieldLinksForExplore = (options: {
   }
 
   return field.config.links
-    ? field.config.links.map(link => {
+    ? field.config.links.map((link) => {
         if (!link.internal) {
           const replace: InterpolateFunction = (value, vars) =>
             getTemplateSrv().replace(value, { ...vars, ...scopedVars });
@@ -102,7 +102,7 @@ function getTitleFromHref(href: string): string {
 export function useLinks(range: TimeRange, splitOpenFn?: typeof splitOpen) {
   return useCallback(
     (dataFrame: DataFrame, rowIndex: number) => {
-      return dataFrame.fields.flatMap(f => {
+      return dataFrame.fields.flatMap((f) => {
         if (f.config?.links && f.config?.links.length) {
           return getFieldLinksForExplore({
             field: f,

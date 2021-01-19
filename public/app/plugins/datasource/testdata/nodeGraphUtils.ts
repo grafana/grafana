@@ -79,7 +79,7 @@ export function generateRandomNodes(count = 10) {
 
   const nodeFrame = new MutableDataFrame({
     name: 'nodes',
-    fields: Object.keys(nodeFields).map(key => ({
+    fields: Object.keys(nodeFields).map((key) => ({
       ...nodeFields[key],
       name: key,
     })),
@@ -103,7 +103,7 @@ export function generateRandomNodes(count = 10) {
 
   const edgesFrame = new MutableDataFrame({
     name: 'edges',
-    fields: Object.keys(edgeFields).map(key => ({
+    fields: Object.keys(edgeFields).map((key) => ({
       ...edgeFields[key],
       name: key,
     })),

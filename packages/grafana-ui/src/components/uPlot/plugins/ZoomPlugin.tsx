@@ -16,7 +16,7 @@ export const ZoomPlugin: React.FC<ZoomPluginProps> = ({ onZoom }) => {
     <SelectionPlugin
       id="Zoom"
       /* very time series oriented for now */
-      onSelect={selection => {
+      onSelect={(selection) => {
         if (selection.bbox.width < MIN_ZOOM_DIST) {
           return;
         }

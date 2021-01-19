@@ -45,14 +45,14 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
     onRunQuery();
   };
 
-  const currentScenario = useMemo(() => scenarioList?.find(scenario => scenario.id === query.scenarioId), [
+  const currentScenario = useMemo(() => scenarioList?.find((scenario) => scenario.id === query.scenarioId), [
     scenarioList,
     query,
   ]);
   const scenarioId = currentScenario?.id;
 
   const onScenarioChange = (item: SelectableValue<string>) => {
-    const scenario = scenarioList?.find(sc => sc.id === item.value);
+    const scenario = scenarioList?.find((sc) => sc.id === item.value);
 
     if (!scenario) {
       return;
@@ -114,7 +114,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
   const options = useMemo(
     () =>
       (scenarioList || [])
-        .map(item => ({ label: item.name, value: item.id }))
+        .map((item) => ({ label: item.name, value: item.id }))
         .sort((a, b) => a.label.localeCompare(b.label)),
     [scenarioList]
   );
@@ -130,7 +130,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
         <InlineField labelWidth={14} label="Scenario">
           <Select
             options={options}
-            value={options.find(item => item.value === query.scenarioId)}
+            value={options.find((item) => item.value === query.scenarioId)}
             onChange={onScenarioChange}
             width={32}
           />
@@ -216,7 +216,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
             options={endpoints}
             onChange={onEndPointChange}
             width={32}
-            value={endpoints.find(ep => ep.value === query.stringInput)}
+            value={endpoints.find((ep) => ep.value === query.stringInput)}
           />
         </InlineField>
       )}

@@ -158,7 +158,7 @@ function addRegionMarking(regions: any[], flotOptions: { grid: { markings: any }
   const defaultColor = DEFAULT_ANNOTATION_COLOR;
   let fillColor;
 
-  _.each(regions, region => {
+  _.each(regions, (region) => {
     if (region.source) {
       fillColor = region.source.iconColor || defaultColor;
     } else {

@@ -177,7 +177,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     const { datasource, data } = this.state;
 
     if (datasource?.components?.QueryCtrl) {
-      return <div ref={element => (this.element = element)} />;
+      return <div ref={(element) => (this.element = element)} />;
     }
 
     if (datasource?.components?.QueryEditor) {
@@ -249,7 +249,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
           <QueryOperationAction
             title="Toggle text edit mode"
             icon="pen"
-            onClick={e => {
+            onClick={(e) => {
               this.onToggleEditMode(e, props);
             }}
           />
@@ -277,7 +277,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
         inMixedMode={dsSettings.meta.mixed}
         dataSourceName={datasource!.name}
         disabled={isDisabled}
-        onClick={e => this.onToggleEditMode(e, props)}
+        onClick={(e) => this.onToggleEditMode(e, props)}
         onChange={onChange}
         collapsedText={!props.isOpen ? this.renderCollapsedText() : null}
       />
@@ -331,7 +331,7 @@ function notifyAngularQueryEditorsOfData(scope: AngularQueryComponentScope, data
   globalLastPanelDataCache = data;
 
   if (data.state === LoadingState.Done) {
-    const legacy = data.series.map(v => toLegacyResponseData(v));
+    const legacy = data.series.map((v) => toLegacyResponseData(v));
     scope.events.emit(PanelEvents.dataReceived, legacy);
   } else if (data.state === LoadingState.Error) {
     scope.events.emit(PanelEvents.dataError, data.error);
@@ -359,7 +359,7 @@ export interface AngularQueryComponentScope {
  * Get a version of the PanelData limited to the query we are looking at
  */
 export function filterPanelDataToQuery(data: PanelData, refId: string): PanelData | undefined {
-  const series = data.series.filter(series => series.refId === refId);
+  const series = data.series.filter((series) => series.refId === refId);
 
   // No matching series
   if (!series.length) {

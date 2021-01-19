@@ -48,7 +48,7 @@ export function usePanning<T extends Element>(
         // Snapshot the current position of both mouse pointer and the element
         startMousePosition.current = getEventXY(event);
         prevPosition.current = { ...currentPosition.current };
-        setState(state => ({ ...state, isPanning: true }));
+        setState((state) => ({ ...state, isPanning: true }));
         bindEvents();
       }
     };
@@ -56,7 +56,7 @@ export function usePanning<T extends Element>(
     const stopPanning = () => {
       if (isPanning.current && isMounted()) {
         isPanning.current = false;
-        setState(state => ({ ...state, isPanning: false }));
+        setState((state) => ({ ...state, isPanning: false }));
         unbindEvents();
       }
     };
@@ -95,7 +95,7 @@ export function usePanning<T extends Element>(
             x: inBounds(prevPosition.current.x + xDiff / scale, bounds?.left, bounds?.right),
             y: inBounds(prevPosition.current.y + yDiff / scale, bounds?.top, bounds?.bottom),
           };
-          setState(state => ({
+          setState((state) => ({
             ...state,
             position: {
               ...currentPosition.current,

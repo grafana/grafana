@@ -90,8 +90,8 @@ export const IconsOverview = () => {
         `}
       >
         {icons
-          .filter(val => val.includes(filter))
-          .map(i => {
+          .filter((val) => val.includes(filter))
+          .map((i) => {
             return <IconWrapper name={i} key={i} />;
           })}
       </div>

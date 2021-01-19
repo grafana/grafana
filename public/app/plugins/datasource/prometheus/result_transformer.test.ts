@@ -531,7 +531,7 @@ describe('Prometheus Result Transformer', () => {
           exemplarTraceIdDestinations: [{ name: 'traceID', url: 'http://localhost' }],
         });
 
-        expect(result[0].fields.some(f => f.config.links?.length)).toBe(true);
+        expect(result[0].fields.some((f) => f.config.links?.length)).toBe(true);
       });
 
       it('should be added to the field if found with internal link', () => {
@@ -540,13 +540,13 @@ describe('Prometheus Result Transformer', () => {
           exemplarTraceIdDestinations: [{ name: 'traceID', datasourceUid: 'jaeger' }],
         });
 
-        expect(result[0].fields.some(f => f.config.links?.length)).toBe(true);
+        expect(result[0].fields.some((f) => f.config.links?.length)).toBe(true);
       });
 
       it('should not add link if exemplarTraceIdDestinations is not configured', () => {
         const result = transform({ data: exemplarsResponse } as any, options);
 
-        expect(result[0].fields.some(f => f.config.links?.length)).toBe(false);
+        expect(result[0].fields.some((f) => f.config.links?.length)).toBe(false);
       });
     });
   });

@@ -31,7 +31,7 @@
     "packages:clean": "lerna run clean",
     "precommit": "yarn run lint-staged",
     "prettier:check": "prettier --list-different \"**/*.{ts,tsx,scss}\"",
-    "prettier:write": "prettier --list-different \"**/*.{ts,tsx,scss}\" --write",
+    "prettier:write": "prettier --list-different \"**/*.{ts,tsx,scss,js}\" --write",
     "start": "grafana-toolkit core:start --watchTheme",
     "start:hot": "grafana-toolkit core:start --hot --watchTheme",
     "start:ignoreTheme": "grafana-toolkit core:start --hot",

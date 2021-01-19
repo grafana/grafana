@@ -17,7 +17,7 @@ import { AlertDefinition, AlertDefinitionUiState, AlertRuleDTO, NotifierDTO, Thu
 import { QueryGroupOptions } from 'app/types';
 
 export function getAlertRulesAsync(options: { state: string }): ThunkResult<void> {
-  return async dispatch => {
+  return async (dispatch) => {
     dispatch(loadAlertRules());
     const rules: AlertRuleDTO[] = await getBackendSrv().get('/api/alerts', options);
     dispatch(loadedAlertRules(rules));
@@ -33,7 +33,7 @@ export function togglePauseAlertRule(id: number, options: { paused: boolean }): 
 }
 
 export function createNotificationChannel(data: any): ThunkResult<void> {
-  return async dispatch => {
+  return async (dispatch) => {
     try {
       await getBackendSrv().post(`/api/alert-notifications`, data);
       appEvents.emit(AppEvents.alertSuccess, ['Notification created']);
@@ -45,7 +45,7 @@ export function createNotificationChannel(data: any): ThunkResult<void> {
 }
 
 export function updateNotificationChannel(data: any): ThunkResult<void> {
-  return async dispatch => {
+  return async (dispatch) => {
     try {
       await getBackendSrv().put(`/api/alert-notifications/${data.id}`, data);
       appEvents.emit(AppEvents.alertSuccess, ['Notification updated']);
@@ -64,7 +64,7 @@ export function testNotificationChannel(data: any): ThunkResult<void> {
 }
 
 export function loadNotificationTypes(): ThunkResult<void> {
-  return async dispatch => {
+  return async (dispatch) => {
     const alertNotifiers: NotifierDTO[] = await getBackendSrv().get(`/api/alert-notifiers`);
 
     const notificationTypes = alertNotifiers.sort((o1, o2) => {
@@ -79,7 +79,7 @@ export function loadNotificationTypes(): ThunkResult<void> {
 }
 
 export function loadNotificationChannel(id: number): ThunkResult<void> {
-  return async dispatch => {
+  return async (dispatch) => {
     await dispatch(loadNotificationTypes());
     const notificationChannel = await getBackendSrv().get(`/api/alert-notifications/${id}`);
     dispatch(notificationChannelLoaded(notificationChannel));
@@ -128,13 +128,13 @@ export function updateAlertDefinitionUiState(uiState: Partial<AlertDefinitionUiS
 }
 
 export function updateAlertDefinitionOption(alertDefinition: Partial<AlertDefinition>): ThunkResult<void> {
-  return dispatch => {
+  return (dispatch) => {
     dispatch(updateAlertDefinition(alertDefinition));
   };
 }
 
 export function queryOptionsChange(queryOptions: QueryGroupOptions): ThunkResult<void> {
-  return dispatch => {
+  return (dispatch) => {
     dispatch(setQueryOptions(queryOptions));
   };
 }

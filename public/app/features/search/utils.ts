@@ -20,11 +20,11 @@ export const hasId = (str: string) => {
  * @param sections
  */
 export const getFlattenedSections = (sections: DashboardSection[]): string[] => {
-  return sections.flatMap(section => {
+  return sections.flatMap((section) => {
     const id = hasId(section.title) ? String(section.id) : section.title;
 
     if (section.expanded && section.items.length) {
-      return [id, ...section.items.map(item => `${id}-${item.id}`)];
+      return [id, ...section.items.map((item) => `${id}-${item.id}`)];
     }
     return id;
   });
@@ -35,7 +35,7 @@ export const getFlattenedSections = (sections: DashboardSection[]): string[] => 
  * @param sections
  */
 export const getVisibleItems = (sections: DashboardSection[]) => {
-  return sections.flatMap(section => {
+  return sections.flatMap((section) => {
     if (section.expanded) {
       return section.items;
     }
@@ -65,7 +65,7 @@ export const markSelected = (sections: DashboardSection[], selectedId: string) =
     if (result.expanded && result.items.length) {
       return {
         ...result,
-        items: result.items.map(item => {
+        items: result.items.map((item) => {
           const [sectionId, itemId] = selectedId.split('-');
           const lookup = getLookupField(sectionId);
           return { ...item, selected: String(item.id) === itemId && String(result[lookup]) === sectionId };
@@ -137,7 +137,7 @@ export const getCheckedDashboards = (sections: DashboardSection[]): DashboardSec
   }
 
   return sections.reduce((uids, section) => {
-    return section.items ? [...uids, ...section.items.filter(item => item.checked)] : uids;
+    return section.items ? [...uids, ...section.items.filter((item) => item.checked)] : uids;
   }, []);
 };
 
@@ -150,7 +150,7 @@ export const getCheckedDashboardsUids = (sections: DashboardSection[]) => {
     return [];
   }
 
-  return getCheckedDashboards(sections).map(item => item.uid);
+  return getCheckedDashboards(sections).map((item) => item.uid);
 };
 
 /**

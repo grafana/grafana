@@ -64,7 +64,9 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
       projects,
     });
 
-    datasource.getLabels(target.metricType, target.projectName, target.refId).then(labels => this.setState({ labels }));
+    datasource
+      .getLabels(target.metricType, target.projectName, target.refId)
+      .then((labels) => this.setState({ labels }));
   }
 
   onMetricTypeChange = ({ valueType, metricKind, type, unit }: MetricDescriptor) => {
@@ -80,7 +82,7 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
         onQueryChange(this.state);
       }
     );
-    datasource.getLabels(type, this.state.refId, this.state.projectName).then(labels => this.setState({ labels }));
+    datasource.getLabels(type, this.state.refId, this.state.projectName).then((labels) => this.setState({ labels }));
   };
 
   onChange(prop: string, value: string | string[]) {
@@ -99,7 +101,7 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
           templateVariableOptions={variableOptions}
           datasource={datasource}
           projectName={projectName || datasource.getDefaultProject()}
-          onChange={value => this.onChange('projectName', value)}
+          onChange={(value) => this.onChange('projectName', value)}
         />
         <Metrics
           projectName={projectName}
@@ -107,14 +109,14 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
           templateSrv={datasource.templateSrv}
           datasource={datasource}
           templateVariableOptions={variableOptions}
-          onChange={metric => this.onMetricTypeChange(metric)}
+          onChange={(metric) => this.onMetricTypeChange(metric)}
         >
-          {metric => (
+          {(metric) => (
             <>
               <LabelFilter
                 labels={labels}
                 filters={filters}
-                onChange={value => this.onChange('filters', value)}
+                onChange={(value) => this.onChange('filters', value)}
                 variableOptionGroup={variableOptionGroup}
               />
             </>
@@ -127,7 +129,7 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
               type="text"
               className="gf-form-input width-20"
               value={title}
-              onChange={e => this.onChange('title', e.target.value)}
+              onChange={(e) => this.onChange('title', e.target.value)}
             />
           </div>
           <div className="gf-form">
@@ -136,7 +138,7 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
               type="text"
               className="gf-form-input width-20"
               value={text}
-              onChange={e => this.onChange('text', e.target.value)}
+              onChange={(e) => this.onChange('text', e.target.value)}
             />
           </div>
           <div className="gf-form gf-form--grow">

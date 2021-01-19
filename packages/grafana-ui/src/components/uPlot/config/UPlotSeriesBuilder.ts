@@ -125,9 +125,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
         return getScaleGradientFn(opacityPercent, colorMode, thresholds);
       default:
         if (opacityPercent > 0) {
-          return tinycolor(lineColor)
-            .setAlpha(opacityPercent)
-            .toString();
+          return tinycolor(lineColor).setAlpha(opacityPercent).toString();
         }
     }
 

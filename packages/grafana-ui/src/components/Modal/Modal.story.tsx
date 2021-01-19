@@ -66,7 +66,7 @@ export const WithTabs = () => {
       icon="cog"
       tabs={tabs}
       activeTab={activeTab}
-      onChangeTab={t => {
+      onChangeTab={(t) => {
         setActiveTab(t.value);
       }}
     />

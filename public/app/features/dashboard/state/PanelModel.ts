@@ -296,7 +296,7 @@ export class PanelModel implements DataConfigSource {
   private restorePanelOptions(pluginId: string) {
     const prevOptions = this.cachedPluginOptions[pluginId] || {};
 
-    Object.keys(prevOptions).map(property => {
+    Object.keys(prevOptions).map((property) => {
       (this as any)[property] = prevOptions[property];
     });
   }

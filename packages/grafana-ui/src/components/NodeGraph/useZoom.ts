@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 const defaultOptions: Options = {
-  stepDown: s => s / 1.5,
-  stepUp: s => s * 1.5,
+  stepDown: (s) => s / 1.5,
+  stepUp: (s) => s * 1.5,
   min: 0.13,
   max: 2.25,
 };
@@ -44,7 +44,7 @@ export function useZoom({ stepUp, stepDown, min, max } = defaultOptions) {
   }, [scale, stepDown, min]);
 
   const onWheel = useCallback(
-    function(event: Event) {
+    function (event: Event) {
       // Seems like typing for the addEventListener is lacking a bit
       const wheelEvent = event as WheelEvent;
 

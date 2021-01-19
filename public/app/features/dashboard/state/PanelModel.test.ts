@@ -38,7 +38,7 @@ setTemplateSrv(
     },
     // @ts-ignore
     getVariableWithName: (name: string) => {
-      return variablesMock.filter(v => v.name === name)[0];
+      return variablesMock.filter((v) => v.name === name)[0];
     },
   })
 );
@@ -121,7 +121,7 @@ describe('PanelModel', () => {
         {} // angular
       );
 
-      panelPlugin.setPanelOptions(builder => {
+      panelPlugin.setPanelOptions((builder) => {
         builder.addBooleanSwitch({
           name: 'Show thresholds',
           path: 'showThresholds',
@@ -242,7 +242,7 @@ describe('PanelModel', () => {
           },
         });
 
-        newPlugin.setPanelOptions(builder => {
+        newPlugin.setPanelOptions((builder) => {
           builder.addBooleanSwitch({
             name: 'Show thresholds labels',
             path: 'showThresholdLabels',
@@ -458,7 +458,7 @@ const variablesMock = [
     hide: false,
     current: { value: 'val1' },
     skipUrlSync: false,
-    getValueForUrl: function() {
+    getValueForUrl: function () {
       return 'val1';
     },
   } as VariableModel,
@@ -469,7 +469,7 @@ const variablesMock = [
     hide: false,
     current: { value: 'val2' },
     skipUrlSync: false,
-    getValueForUrl: function() {
+    getValueForUrl: function () {
       return 'val2';
     },
   } as VariableModel,

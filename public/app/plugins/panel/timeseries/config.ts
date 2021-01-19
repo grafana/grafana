@@ -45,7 +45,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
         },
       },
     },
-    useCustomConfig: builder => {
+    useCustomConfig: (builder) => {
       builder
         .addRadio({
           path: 'drawStyle',
@@ -62,7 +62,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           settings: {
             options: graphFieldOptions.lineInterpolation,
           },
-          showIf: c => c.drawStyle === DrawStyle.Line,
+          showIf: (c) => c.drawStyle === DrawStyle.Line,
         })
         .addSliderInput({
           path: 'lineWidth',
@@ -73,7 +73,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
             max: 10,
             step: 1,
           },
-          showIf: c => c.drawStyle !== DrawStyle.Points,
+          showIf: (c) => c.drawStyle !== DrawStyle.Points,
         })
         .addSliderInput({
           path: 'fillOpacity',
@@ -84,7 +84,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
             max: 100,
             step: 1,
           },
-          showIf: c => c.drawStyle !== DrawStyle.Points,
+          showIf: (c) => c.drawStyle !== DrawStyle.Points,
         })
         .addRadio({
           path: 'gradientMode',
@@ -93,7 +93,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           settings: {
             options: graphFieldOptions.fillGradient,
           },
-          showIf: c => c.drawStyle !== DrawStyle.Points,
+          showIf: (c) => c.drawStyle !== DrawStyle.Points,
         })
         .addCustomEditor({
           id: 'fillBelowTo',
@@ -103,17 +103,17 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           override: FillBellowToEditor,
           process: stringOverrideProcessor,
           hideFromDefaults: true,
-          shouldApply: f => true,
+          shouldApply: (f) => true,
         })
         .addCustomEditor<void, LineStyle>({
           id: 'lineStyle',
           path: 'lineStyle',
           name: 'Line style',
-          showIf: c => c.drawStyle === DrawStyle.Line,
+          showIf: (c) => c.drawStyle === DrawStyle.Line,
           editor: LineStyleEditor,
           override: LineStyleEditor,
           process: identityOverrideProcessor,
-          shouldApply: f => f.type === FieldType.number,
+          shouldApply: (f) => f.type === FieldType.number,
         })
         .addRadio({
           path: 'spanNulls',
@@ -125,7 +125,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
               { label: 'Connected', value: true },
             ],
           },
-          showIf: c => c.drawStyle === DrawStyle.Line,
+          showIf: (c) => c.drawStyle === DrawStyle.Line,
         })
         .addRadio({
           path: 'showPoints',
@@ -134,7 +134,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           settings: {
             options: graphFieldOptions.showPoints,
           },
-          showIf: c => c.drawStyle !== DrawStyle.Points,
+          showIf: (c) => c.drawStyle !== DrawStyle.Points,
         })
         .addSliderInput({
           path: 'pointSize',
@@ -145,7 +145,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
             max: 40,
             step: 1,
           },
-          showIf: c => c.showPoints !== PointVisibility.Never || c.drawStyle === DrawStyle.Points,
+          showIf: (c) => c.showPoints !== PointVisibility.Never || c.drawStyle === DrawStyle.Points,
         })
         .addRadio({
           path: 'axisPlacement',
@@ -164,7 +164,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           settings: {
             placeholder: 'Optional text',
           },
-          showIf: c => c.axisPlacement !== AxisPlacement.Hidden,
+          showIf: (c) => c.axisPlacement !== AxisPlacement.Hidden,
           // no matter what the field type is
           shouldApply: () => true,
         })
@@ -175,7 +175,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           settings: {
             placeholder: 'Auto',
           },
-          showIf: c => c.axisPlacement !== AxisPlacement.Hidden,
+          showIf: (c) => c.axisPlacement !== AxisPlacement.Hidden,
         })
         .addNumberInput({
           path: 'axisSoftMin',
@@ -201,7 +201,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           editor: ScaleDistributionEditor,
           override: ScaleDistributionEditor,
           defaultValue: { type: ScaleDistribution.Linear },
-          shouldApply: f => f.type === FieldType.number,
+          shouldApply: (f) => f.type === FieldType.number,
           process: identityOverrideProcessor,
         })
         .addCustomEditor({
@@ -219,7 +219,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           shouldApply: () => true,
           hideFromDefaults: true,
           hideFromOverrides: true,
-          process: value => value,
+          process: (value) => value,
         });
     },
   };

@@ -161,15 +161,11 @@ export abstract class BigValueLayout {
     switch (colorMode) {
       case BigValueColorMode.Value:
         lineColor = this.valueColor;
-        fillColor = tinycolor(this.valueColor)
-          .setAlpha(0.2)
-          .toRgbString();
+        fillColor = tinycolor(this.valueColor).setAlpha(0.2).toRgbString();
         break;
       case BigValueColorMode.Background:
         fillColor = 'rgba(255,255,255,0.4)';
-        lineColor = tinycolor(this.valueColor)
-          .brighten(40)
-          .toRgbString();
+        lineColor = tinycolor(this.valueColor).brighten(40).toRgbString();
     }
 
     // The graph field configuration applied to Y values

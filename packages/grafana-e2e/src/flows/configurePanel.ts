@@ -116,9 +116,7 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
 
     // @todo alias '/**/*.js*' as '@pluginModule' when possible: https://github.com/cypress-io/cypress/issues/1296
 
-    e2e()
-      .route(chartData.method, chartData.route)
-      .as('chartData');
+    e2e().route(chartData.method, chartData.route).as('chartData');
 
     if (dataSourceName) {
       selectOption({
@@ -153,9 +151,7 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
 
         if (visualizationName) {
           openOptionsGroup('type');
-          e2e.components.PluginVisualization.item(visualizationName)
-            .scrollIntoView()
-            .click();
+          e2e.components.PluginVisualization.item(visualizationName).scrollIntoView().click();
 
           // @todo wait for '@pluginModule' if not a core visualization and not already loaded
           e2e().wait(2000);
@@ -188,19 +184,12 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
     //e2e().wait('@chartData');
 
     if (!isExplore) {
-      e2e()
-        .get('button[title="Apply changes and go back to dashboard"]')
-        .click();
-      e2e()
-        .url()
-        .should('include', `/d/${dashboardUid}`);
+      e2e().get('button[title="Apply changes and go back to dashboard"]').click();
+      e2e().url().should('include', `/d/${dashboardUid}`);
     }
 
     // Avoid annotations flakiness
-    e2e()
-      .get('.refresh-picker-buttons .btn')
-      .first()
-      .click();
+    e2e().get('.refresh-picker-buttons .btn').first().click();
 
     e2e().wait('@chartData');
 
@@ -244,17 +233,13 @@ const closeRequestErrors = () => {
   e2e().wait(1000); // emulate `cy.get()` for nested errors
   e2e()
     .get('app-notifications-list')
-    .then($elm => {
+    .then(($elm) => {
       // Avoid failing when none are found
       const selector = '[aria-label="Alert error"]:contains("Failed to call resource")';
       const numErrors = $elm.find(selector).length;
 
       for (let i = 0; i < numErrors; i++) {
-        e2e()
-          .get(selector)
-          .first()
-          .find('button')
-          .click();
+        e2e().get(selector).first().find('button').click();
       }
     });
 };
@@ -296,10 +281,7 @@ const openOptionsGroup = (name: string): any =>
     }
   });
 
-const toggleOptionsGroup = (name: string) =>
-  getOptionsGroup(name)
-    .find('.editor-options-group-toggle')
-    .click();
+const toggleOptionsGroup = (name: string) => getOptionsGroup(name).find('.editor-options-group-toggle').click();
 
 export const VISUALIZATION_ALERT_LIST = 'Alert list';
 export const VISUALIZATION_BAR_GAUGE = 'Bar gauge';
