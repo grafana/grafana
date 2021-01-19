@@ -1,5 +1,5 @@
 import React, { InputHTMLAttributes, FunctionComponent } from 'react';
-import { cx } from 'emotion';
+import { css, cx } from 'emotion';
 import { InlineFormLabel } from '../FormLabel/FormLabel';
 import { PopoverContent } from '../Tooltip/Tooltip';
 
@@ -30,8 +30,19 @@ export const FormField: FunctionComponent<Props> = ({
   className,
   ...inputProps
 }) => {
+  const formField = css`
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    text-align: left;
+    position: relative;
+
+    &--grow {
+      flex-grow: 1;
+    }
+  `;
   return (
-    <div className={cx('form-field', className)}>
+    <div className={cx(formField, className)}>
       <InlineFormLabel width={labelWidth} tooltip={tooltip}>
         {label}
       </InlineFormLabel>
