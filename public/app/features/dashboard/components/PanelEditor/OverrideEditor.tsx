@@ -9,17 +9,7 @@ import {
   isSystemOverride as isSystemOverrideGuard,
   VariableSuggestionsScope,
 } from '@grafana/data';
-import {
-  Field,
-  fieldMatchersUI,
-  HorizontalGroup,
-  Icon,
-  IconButton,
-  Label,
-  stylesFactory,
-  useTheme,
-  ValuePicker,
-} from '@grafana/ui';
+import { Field, fieldMatchersUI, HorizontalGroup, Icon, IconButton, Label, useStyles, ValuePicker } from '@grafana/ui';
 import { DynamicConfigValueEditor } from './DynamicConfigValueEditor';
 
 import { getDataLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
@@ -49,9 +39,9 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
   onRemove,
   registry,
 }) => {
-  const theme = useTheme();
   const matcherUi = fieldMatchersUI.get(override.matcher.id);
-  const styles = getStyles(theme);
+  const styles = useStyles(getStyles);
+  const properties = override.properties.map(p => registry.getIfExists(p.id)).filter(prop => !!prop);
 
   const matcherLabel = <Label>{matcherUi.name}</Label>;
 
@@ -114,8 +104,9 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
     });
 
   const renderOverrideTitle = (isExpanded: boolean) => {
-    const overriddenProperites = override.properties.map(p => registry.get(p.id).name).join(', ');
+    const propertyNames = properties.map(p => p?.name).join(', ');
     const matcherOptions = matcherUi.optionsToLabel(override.matcher.options);
+
     return (
       <div>
         <HorizontalGroup justify="space-between">
@@ -127,9 +118,9 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
             <div className={styles.options} title={matcherOptions}>
               {matcherUi.name} <Icon name="angle-right" /> {matcherOptions}
             </div>
-            <div className={styles.options} title={overriddenProperites}>
+            <div className={styles.options} title={propertyNames}>
               Properties overridden <Icon name="angle-right" />
-              {overriddenProperites}
+              {propertyNames}
             </div>
           </div>
         )}
@@ -153,10 +144,9 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
       <>
         {override.properties.map((p, j) => {
           const item = registry.getIfExists(p.id);
-          console.log('item', item);
 
           if (!item) {
-            return <div>Unknown property: {p.id}</div>;
+            return null;
           }
 
           const isCollapsible =
@@ -197,7 +187,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme) => {
   return {
     matcherUi: css`
       padding: ${theme.spacing.sm};
@@ -214,5 +204,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       overflow: hidden;
       padding-right: ${theme.spacing.xl};
     `,
+    unknownLabel: css`
+      margin-bottom: 0;
+    `,
   };
-});
+};

@@ -20,4 +20,9 @@ describe('<LogLabels />', () => {
     expect(wrapper.text()).not.toContain('42');
     expect(wrapper.text()).not.toContain('13');
   });
+  it('excludes labels with empty string values', () => {
+    const wrapper = shallow(<LogLabels labels={{ foo: 'bar', baz: '' }} theme={getTheme()} />);
+    expect(wrapper.text()).toContain('bar');
+    expect(wrapper.html()).not.toContain('baz');
+  });
 });
