@@ -10,18 +10,8 @@
   "includes": [
     {
       "type": "dashboard",
-      "name": "BigQuery Query Monitoring",
-      "path": "dashboards/bigquery-monitoring.json"
-    },
-    {
-      "type": "dashboard",
       "name": "Data Processing Monitoring",
       "path": "dashboards/dataprocessing-monitoring.json"
-    },
-    {
-      "type": "dashboard",
-      "name": "Autoscaler Monitoring",
-      "path": "dashboards/autoscaler-monitoring.json"
     },
     {
       "type": "dashboard",
@@ -30,33 +20,13 @@
     },
     {
       "type": "dashboard",
-      "name": "Cloud Run Monitoring",
-      "path": "dashboards/cloudrun-monitoring.json"
-    },
-    {
-      "type": "dashboard",
       "name": "GCE VM Instance Monitoring",
       "path": "dashboards/gce-vm-instance-monitoring.json"
     },
     {
       "type": "dashboard",
-      "name": "GKE Cluster Monitoring",
-      "path": "dashboards/gke-cluster-monitoring.json"
-    },
-    {
-      "type": "dashboard",
       "name": "GKE Prometheus Pod/Node Monitoring",
       "path": "dashboards/gke-prometheus-pod-node-monitoring.json"
-    },
-    {
-      "type": "dashboard",
-      "name": "Cloud DNS Monitoring",
-      "path": "dashboards/clouddns-monitoring.json"
-    },
-    {
-      "type": "dashboard",
-      "name": "VPN Monitoring",
-      "path": "dashboards/cloudvpn-monitoring.json"
     },
     {
       "type": "dashboard",
@@ -85,63 +55,8 @@
     },
     {
       "type": "dashboard",
-      "name": "Network UDP Load Balancer Monitoring",
-      "path": "dashboards/network-udp-loadbalancer-monitoring.json"
-    },
-    {
-      "type": "dashboard",
-      "name": "TCP/SSL Load Balancer Monitoring",
-      "path": "dashboards/tcp-ssl-loadbalancer-monitoring.json"
-    },
-    {
-      "type": "dashboard",
-      "name": "VPC Connector Access Monitoring",
-      "path": "dashboards/vpc-connector-access-monitoring.json"
-    },
-    {
-      "type": "dashboard",
-      "name": "VPC Flow Logs Monitoring",
-      "path": "dashboards/vpc-flow-logs-monitoring.json"
-    },
-    {
-      "type": "dashboard",
-      "name": "Host Monitoring using BindPlane",
-      "path": "dashboards/host-monitoring.json"
-    },
-    {
-      "type": "dashboard",
-      "name": "CartService Monitoring",
-      "path": "dashboards/cart-service-monitoring.json"
-    },
-    {
-      "type": "dashboard",
       "name": "MicroService Monitoring",
       "path": "dashboards/micro-service-monitoring.json"
-    },
-    {
-      "type": "dashboard",
-      "name": "UseCase(payment) Monitoring",
-      "path": "dashboards/usecase-payment-monitoring.json"
-    },
-    {
-      "type": "dashboard",
-      "name": "Active Directory",
-      "path": "dashboards/active-directory-monitoring.json"
-    },
-    {
-      "type": "dashboard",
-      "name": "Windows Server Monitoring",
-      "path": "dashboards/windows-server-monitoring.json"
-    },
-    {
-      "type": "dashboard",
-      "name": "Istio Control Plane Dashboard",
-      "path": "dashboards/anthos-service-mesh-control-plane-monitoring.json"
-    },
-    {
-      "type": "dashboard",
-      "name": "Bigtable Monitoring",
-      "path": "dashboards/bigtable-monitoring.json"
     },
     {
       "type": "dashboard",
@@ -157,36 +72,6 @@
       "type": "dashboard",
       "name": "Cloud SQL(MySQL) Monitoring",
       "path": "dashboards/cloudsql-mysql-monitoring.json"
-    },
-    {
-      "type": "dashboard",
-      "name": "Datastore Monitoring",
-      "path": "dashboards/datastore-monitoring.json"
-    },
-    {
-      "type": "dashboard",
-      "name": "Firestore Monitoring",
-      "path": "dashboards/firestore-monitoring.json"
-    },
-    {
-      "type": "dashboard",
-      "name": "Memcache Monitoring",
-      "path": "dashboards/memcache-monitoring.json"
-    },
-    {
-      "type": "dashboard",
-      "name": "Redis Ops Monitoring",
-      "path": "dashboards/redis-ops-monitoring.json"
-    },
-    {
-      "type": "dashboard",
-      "name": "Redis Stats monitoring",
-      "path": "dashboards/redis-stats-monitoring.json"
-    },
-    {
-      "type": "dashboard",
-      "name": "Spanner Monitoring",
-      "path": "dashboards/spanner-monitoring.json"
     }
   ],
   "queryOptions": {
