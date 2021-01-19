@@ -235,4 +235,4 @@ This URL is based on the [domain]({{< relref "../administration/configuration/#d
 
 > **Note:** Alert notification templating is only available in Grafana v7.4 and above.
 
-You can [inject alert query labels into an alert notification]({{< relref "./add-notification-template.md" >}}) by referring to the matching alert condition query's [labels]({{< relref "../getting-started/timeseries-dimensions.md#labels" >}}) using the `${Label}` syntax.
+The alert notification template feature allows you to take the [label]({{< relref "../getting-started/timeseries-dimensions.md#labels" >}}) value from an alert query and [inject that into alert notifications]({{< relref "./add-notification-template.md" >}}).
