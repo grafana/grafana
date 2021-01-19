@@ -140,7 +140,7 @@ func (lps *LibraryPanelService) CleanLibraryPanelsForDashboard(dash *models.Dash
 	return nil
 }
 
-// ConnectLibraryPanelsForDashboard connects library panels to a new dashboard.
+// ConnectLibraryPanelsForDashboard connects library panels to a dashboard.
 func (lps *LibraryPanelService) ConnectLibraryPanelsForDashboard(c *models.ReqContext, dash *models.Dashboard) error {
 	if !lps.IsEnabled() {
 		return nil
@@ -164,6 +164,38 @@ func (lps *LibraryPanelService) ConnectLibraryPanelsForDashboard(c *models.ReqCo
 			return errors.New("found a library panel without uid")
 		}
 		err := lps.connectDashboard(c, uid, dash.Id)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// DisconnectLibraryPanelsForDashboard disconnects library panels from a dashboard.
+func (lps *LibraryPanelService) DisconnectLibraryPanelsForDashboard(c *models.ReqContext, dash *models.Dashboard) error {
+	if !lps.IsEnabled() {
+		return nil
+	}
+
+	if dash.Id == 0 || dash.Uid == "" {
+		return errors.New("dashboard is missing an ID or uid")
+	}
+
+	panels := dash.Data.Get("panels").MustArray()
+	for _, panel := range panels {
+		panelAsJSON := simplejson.NewFromAny(panel)
+		libraryPanel := panelAsJSON.Get("libraryPanel")
+		if libraryPanel.Interface() == nil {
+			continue
+		}
+
+		// we have a library panel
+		uid := libraryPanel.Get("uid").MustString()
+		if len(uid) == 0 {
+			return errors.New("found a library panel without uid")
+		}
+		err := lps.disconnectDashboard(c, uid, dash.Id)
 		if err != nil {
 			return err
 		}

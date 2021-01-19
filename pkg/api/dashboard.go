@@ -189,7 +189,7 @@ func getDashboardHelper(orgID int64, slug string, id int64, uid string) (*models
 	return query.Result, nil
 }
 
-func DeleteDashboardBySlug(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) DeleteDashboardBySlug(c *models.ReqContext) response.Response {
 	query := models.GetDashboardsBySlugQuery{OrgId: c.OrgId, Slug: c.Params(":slug")}
 
 	if err := bus.Dispatch(&query); err != nil {
@@ -200,14 +200,14 @@ func DeleteDashboardBySlug(c *models.ReqContext) response.Response {
 		return response.JSON(412, util.DynMap{"status": "multiple-slugs-exists", "message": models.ErrDashboardsWithSameSlugExists.Error()})
 	}
 
-	return deleteDashboard(c)
+	return hs.deleteDashboard(c)
 }
 
-func DeleteDashboardByUID(c *models.ReqContext) response.Response {
-	return deleteDashboard(c)
+func (hs *HTTPServer) DeleteDashboardByUID(c *models.ReqContext) response.Response {
+	return hs.deleteDashboard(c)
 }
 
-func deleteDashboard(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 	dash, rsp := getDashboardHelper(c.OrgId, c.Params(":slug"), 0, c.Params(":uid"))
 	if rsp != nil {
 		return rsp
@@ -228,6 +228,13 @@ func deleteDashboard(c *models.ReqContext) response.Response {
 		}
 
 		return response.Error(500, "Failed to delete dashboard", err)
+	}
+
+	if hs.Cfg.IsPanelLibraryEnabled() {
+		err = hs.LibraryPanelService.DisconnectLibraryPanelsForDashboard(c, dash)
+		if err != nil {
+			return response.Error(500, "Failed to disconnect library panels", err)
+		}
 	}
 
 	return response.JSON(200, util.DynMap{
