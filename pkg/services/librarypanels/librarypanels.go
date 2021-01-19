@@ -101,6 +101,77 @@ func (lps *LibraryPanelService) LoadLibraryPanelsForDashboard(dash *models.Dashb
 	return nil
 }
 
+// CleanLibraryPanelsForDashboard cleans library panels JSON before storing a dashboard to the database.
+func (lps *LibraryPanelService) CleanLibraryPanelsForDashboard(dash *models.Dashboard) error {
+	if !lps.IsEnabled() {
+		return nil
+	}
+
+	panels := dash.Data.Get("panels").MustArray()
+	for i, panel := range panels {
+		panelAsJSON := simplejson.NewFromAny(panel)
+		libraryPanel := panelAsJSON.Get("libraryPanel")
+		if libraryPanel.Interface() == nil {
+			continue
+		}
+
+		// we have a library panel
+		uid := libraryPanel.Get("uid").MustString()
+		if len(uid) == 0 {
+			return errors.New("found a library panel without uid")
+		}
+		name := libraryPanel.Get("name").MustString()
+		if len(name) == 0 {
+			return errors.New("found a library panel without name")
+		}
+
+		gridPos := panelAsJSON.Get("gridPos").MustMap()
+		id := panelAsJSON.Get("id").MustInt64(int64(i))
+		dash.Data.Get("panels").SetIndex(i, map[string]interface{}{
+			"id":      id,
+			"gridPos": gridPos,
+			"libraryPanel": map[string]interface{}{
+				"uid":  uid,
+				"name": name,
+			},
+		})
+	}
+
+	return nil
+}
+
+// ConnectLibraryPanelsForDashboard connects library panels to a new dashboard.
+func (lps *LibraryPanelService) ConnectLibraryPanelsForDashboard(c *models.ReqContext, dash *models.Dashboard) error {
+	if !lps.IsEnabled() {
+		return nil
+	}
+
+	if dash.Id == 0 || dash.Uid == "" {
+		return errors.New("dashboard is missing an ID or uid")
+	}
+
+	panels := dash.Data.Get("panels").MustArray()
+	for _, panel := range panels {
+		panelAsJSON := simplejson.NewFromAny(panel)
+		libraryPanel := panelAsJSON.Get("libraryPanel")
+		if libraryPanel.Interface() == nil {
+			continue
+		}
+
+		// we have a library panel
+		uid := libraryPanel.Get("uid").MustString()
+		if len(uid) == 0 {
+			return errors.New("found a library panel without uid")
+		}
+		err := lps.connectDashboard(c, uid, dash.Id)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // AddMigration defines database migrations.
 // If Panel Library is not enabled does nothing.
 func (lps *LibraryPanelService) AddMigration(mg *migrator.Migrator) {

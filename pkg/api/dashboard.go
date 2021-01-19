@@ -262,6 +262,12 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		allowUiUpdate = hs.ProvisioningService.GetAllowUIUpdatesFromConfig(provisioningData.Name)
 	}
 
+	// clean library panels
+	err = hs.LibraryPanelService.CleanLibraryPanelsForDashboard(dash)
+	if err != nil {
+		return response.Error(500, "Error while cleaning library panels", err)
+	}
+
 	dashItem := &dashboards.SaveDashboardDTO{
 		Dashboard: dash,
 		Message:   cmd.Message,
@@ -292,6 +298,12 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		if err != nil {
 			hs.log.Warn("unable to broadcast save event", "uid", dashboard.Uid, "error", err)
 		}
+	}
+
+	// connect library panels for dashboard after they get an ID
+	err = hs.LibraryPanelService.ConnectLibraryPanelsForDashboard(c, dashboard)
+	if err != nil {
+		return response.Error(500, "Error while connecting library panels", err)
 	}
 
 	c.TimeRequest(metrics.MApiDashboardSave)
