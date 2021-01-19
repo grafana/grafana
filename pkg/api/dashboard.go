@@ -218,6 +218,13 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 		return dashboardGuardianResponse(err)
 	}
 
+	if hs.Cfg.IsPanelLibraryEnabled() {
+		err := hs.LibraryPanelService.DisconnectLibraryPanelsForDashboard(c, dash)
+		if err != nil {
+			return response.Error(500, "Failed to disconnect library panels", err)
+		}
+	}
+
 	err := dashboards.NewService().DeleteDashboard(dash.Id, c.OrgId)
 	if err != nil {
 		var dashboardErr models.DashboardErr
@@ -228,13 +235,6 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 		}
 
 		return response.Error(500, "Failed to delete dashboard", err)
-	}
-
-	if hs.Cfg.IsPanelLibraryEnabled() {
-		err = hs.LibraryPanelService.DisconnectLibraryPanelsForDashboard(c, dash)
-		if err != nil {
-			return response.Error(500, "Failed to disconnect library panels", err)
-		}
 	}
 
 	return response.JSON(200, util.DynMap{
