@@ -162,20 +162,28 @@ function fixThresholds(thresholds: ThresholdsConfig) {
 }
 
 export function restoreCustomOverrideRules(current: FieldConfigSource, old: FieldConfigSource): FieldConfigSource {
+  const result = {
+    defaults: {
+      ...current.defaults,
+      custom: old.defaults.custom,
+    },
+    overrides: [...current.overrides],
+  };
+
   for (const override of old.overrides) {
     for (const prop of override.properties) {
       if (isCustomFieldProp(prop)) {
-        const currentOverride = current.overrides.find(o => isEqual(o.matcher, override.matcher));
+        const currentOverride = result.overrides.find(o => isEqual(o.matcher, override.matcher));
         if (currentOverride) {
           currentOverride.properties.push(prop);
         } else {
-          current.overrides.push(override);
+          result.overrides.push(override);
         }
       }
     }
   }
 
-  return current;
+  return result;
 }
 
 export function isCustomFieldProp(prop: DynamicConfigValue): boolean {
