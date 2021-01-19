@@ -92,7 +92,6 @@ export class ShareLink extends PureComponent<Props, State> {
     return (
       <div className="share-modal-body">
         <div className="share-modal-header">
-          <Icon name="link" className="share-modal-big-icon" size="xxl" />
           <div className="share-modal-content">
             <p className="share-modal-info-text">
               Create a direct link to this dashboard or panel, customized with the options below.
@@ -118,15 +117,17 @@ export class ShareLink extends PureComponent<Props, State> {
               </Field>
             </FieldSet>
             <FieldSet>
-              <Input
-                value={shareUrl}
-                readOnly
-                addonAfter={
-                  <ClipboardButton variant="primary" getText={this.getShareUrl} onClipboardCopy={this.onShareUrlCopy}>
-                    <Icon name="copy" /> Copy
-                  </ClipboardButton>
-                }
-              />
+              <Field label="Link URL">
+                <Input
+                  value={shareUrl}
+                  readOnly
+                  addonAfter={
+                    <ClipboardButton variant="primary" getText={this.getShareUrl} onClipboardCopy={this.onShareUrlCopy}>
+                      <Icon name="copy" /> Copy
+                    </ClipboardButton>
+                  }
+                />
+              </Field>
             </FieldSet>
             {panel && config.rendererAvailable && (
               <div className="gf-form">

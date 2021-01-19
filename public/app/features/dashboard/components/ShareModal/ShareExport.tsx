@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { saveAs } from 'file-saver';
-import { Button, Field, Switch, Icon } from '@grafana/ui';
+import { Button, Field, Switch } from '@grafana/ui';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardExporter } from 'app/features/dashboard/components/DashExportModal';
 import { appEvents } from 'app/core/core';
@@ -90,7 +90,6 @@ export class ShareExport extends PureComponent<Props, State> {
     return (
       <div className="share-modal-body">
         <div className="share-modal-header">
-          <Icon name="cloud-upload" size="xxl" className="share-modal-big-icon" />
           <div className="share-modal-content">
             <Field label="Export for sharing externally">
               <Switch value={shareExternally} onChange={this.onShareExternallyChange} />

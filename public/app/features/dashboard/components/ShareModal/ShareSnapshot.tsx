@@ -226,14 +226,11 @@ export class ShareSnapshot extends PureComponent<Props, State> {
           <Field label="Expire">
             <Select width={30} options={expireOptions} value={selectedExpireOption} onChange={this.onExpireChange} />
           </Field>
-        </FieldSet>
-
-        <p className="share-modal-info-text">
-          You may need to configure the timeout value if it takes a long time to collect your dashboard&apos;s metrics.
-        </p>
-
-        <FieldSet className="share-modal-options">
-          <Field label="Timeout (seconds)">
+          <Field
+            label="Timeout (seconds)"
+            description="You may need to configure the timeout value if it takes a long time to collect your dashboard's
+            metrics."
+          >
             <Input type="number" width={21} value={timeoutSeconds} onChange={this.onTimeoutChange} />
           </Field>
         </FieldSet>
@@ -299,17 +296,11 @@ export class ShareSnapshot extends PureComponent<Props, State> {
     return (
       <div className="share-modal-body">
         <div className="share-modal-header">
-          {isLoading ? (
-            <div className="share-modal-big-icon">
-              <Spinner inline={true} />
-            </div>
-          ) : (
-            <Icon name="camera" className="share-modal-big-icon" size="xxl" />
-          )}
           <div className="share-modal-content">
             {step === 1 && this.renderStep1()}
             {step === 2 && this.renderStep2()}
             {step === 3 && this.renderStep3()}
+            {isLoading && <Spinner inline={true} />}
           </div>
         </div>
       </div>
