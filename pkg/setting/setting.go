@@ -341,11 +341,6 @@ type Cfg struct {
 	AutoAssignOrgRole string
 }
 
-// IsExpressionsEnabled returns whether the expressions feature is enabled.
-func (cfg Cfg) IsExpressionsEnabled() bool {
-	return cfg.FeatureToggles["expressions"]
-}
-
 // IsLiveEnabled returns if grafana live should be enabled
 func (cfg Cfg) IsLiveEnabled() bool {
 	return cfg.FeatureToggles["live"]

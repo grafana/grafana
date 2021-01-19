@@ -26,12 +26,14 @@ To access Jaeger settings, click the **Configuration** (gear) icon, then click *
 
 ### Trace to logs
 
-{{< docs-imagebox img="/img/docs/v74/trace-to-logs-settings.png" class="docs-image--no-shadow" caption="Screenshot of the trace to logs settings" >}}
+> **Note:** This feature is available in Grafana 7.4+.
 
 This is a configuration for the [trace to logs feature]({{< relref "../explore/index.md#trace-to-logs" >}}). Select target data source (at this moment limited to Loki data sources) and select which tags will be used in the logs query.
 
 - **Data source -** Target data source.
 - **Tags -** The tags that will be used in the Loki query. Default is `'cluster', 'hostname', 'namespace', 'pod'`.
+
+{{< docs-imagebox img="/img/docs/v74/trace-to-logs-settings.png" class="docs-image--no-shadow" caption="Screenshot of the trace to logs settings" >}}
 
 ## Query traces
 

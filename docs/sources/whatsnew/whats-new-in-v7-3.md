@@ -10,7 +10,7 @@ list = false
 
 # What's new in Grafana v7.3
 
-This topic includes the release notes for Grafana v7.3. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
+This topic includes the release notes for Grafana v7.3. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) or the [Patch release notes](#patch-release-notes).
 
 The main highlights are:
 
@@ -36,12 +36,12 @@ Another new feature that can be seen in the image above is the new image cell di
 
 A new standard field [color scheme]({{< relref "../panels/field-options/standard-field-options.md#color-scheme" >}}) option has been added. This new option will provide a unified way for all new panels to specify how colors should be assigned.
 
-* **Single color**: Specify a single color, useful in an override rule.
-* **From thresholds**: Informs Grafana to take the color from the matching threshold.
-* **Classic palette**: Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations.
-* **Green-Yellow-Red (by value)**: This is a continuous color scheme where Grafana will interpolate a color based on the value being displayed and the field  min & max values.
-* **Blue-Yellow-Red (by value)**: Same as above but different colors.
-* **Blues (by value)**: Same as above but color scheme go from panel background to blue.
+- **Single color**: Specifies a single color. Useful in an override rule.
+- **From thresholds**: Informs Grafana to take color from the matching threshold.
+- **Classic palette**: Assigns a color by looking up a color in a palette by series index. Useful for Graphs and pie charts, and other categorical data visualizations in Grafana.
+- **Green-Yellow-Red (by value)**: A continuous color scheme where Grafana will interpolate a color based on the value assigned to the green, yellow, and red components. The value must be within the min & max limits.
+- **Blue-Yellow-Red (by value)**: Same as above but different colors.
+- **Blues (by value)**: Same as above but color scheme go from panel background to blue.
 
 <div class="clearfix"></div>
 
@@ -149,4 +149,13 @@ See [upgrade notes]({{< relref "../installation/upgrading.md" >}}).
 
 Check out [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) for a complete list of new features, changes, and bug fixes.
 
+## Patch release notes
 
+- [Grafana 7.3.0 release notes]({{< relref "../release-notes/release-notes-7-3-0.md" >}})
+- [Grafana 7.3.1 release notes]({{< relref "../release-notes/release-notes-7-3-1.md" >}})
+- [Grafana 7.3.2 release notes]({{< relref "../release-notes/release-notes-7-3-2.md" >}})
+- [Grafana 7.3.3 release notes]({{< relref "../release-notes/release-notes-7-3-3.md" >}})
+- [Grafana 7.3.4 release notes]({{< relref "../release-notes/release-notes-7-3-4.md" >}})
+- [Grafana 7.3.5 release notes]({{< relref "../release-notes/release-notes-7-3-5.md" >}})
+- [Grafana 7.3.6 release notes]({{< relref "../release-notes/release-notes-7-3-6.md" >}})
+- [Grafana 7.3.7 release notes]({{< relref "../release-notes/release-notes-7-3-7.md" >}})
