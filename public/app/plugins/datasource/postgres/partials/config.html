@@ -28,6 +28,17 @@
     </div>
   </div>
   <div class="gf-form">
+    <label class="gf-form-label width-10">SSL Configure Method</label>
+    <div class="gf-form-select-wrapper max-width-15 gf-form-select-wrapper--has-help-icon">
+	  <select class="gf-form-input" ng-model="ctrl.current.jsonData.sslconfiguremethod" 
+	  ng-options="mode for mode in ['file-path', 'file-content']" 
+	  ng-init="ctrl.current.jsonData.sslconfiguremethod"></select>
+      <info-popover mode="right-absolute">
+        This option determines whether SSL (TLS) certifications will be stored in files or directly read from UI.
+      </info-popover>
+	</div>
+  </div>
+  <div class="gf-form">
     <label class="gf-form-label width-10">SSL Mode</label>
     <div class="gf-form-select-wrapper max-width-15 gf-form-select-wrapper--has-help-icon">
 	  <select class="gf-form-input" ng-model="ctrl.current.jsonData.sslmode" 
@@ -39,7 +50,39 @@
     </div>
   </div>
 
-  <datasource-tls-auth-settings current="ctrl.current" ng-if="(ctrl.current.jsonData.tlsAuth || ctrl.current.jsonData.tlsAuthWithCACert)">
+
+  <div class="gf-form-group" ng-if="ctrl.current.jsonData.sslmode != 'disable' && ctrl.current.jsonData.sslconfiguremethod === 'file-path'">
+	<div class="gf-form">
+		<h6>TLS Auth Details</h6>
+		<info-popover mode="header">TLS Certs file path are stored in the Grafana database.</info-popover>
+	</div>
+	<div class="gf-form max-width-30">
+		<span class="gf-form-label width-10">SSL Root Certificate</span>
+		<input type="text" class="gf-form-input gf-form-input--has-help-icon" ng-model='ctrl.current.jsonData.sslRootCertFile' placeholder="SSL/TLS root cert file"></input>
+		<info-popover mode="right-absolute">
+		If the selected SSL mode requires a server root certificate, provide the path to the file here.
+		Be sure that the file is readable by the user executing the grafana process.
+		</info-popover>
+	</div>
+	<div class="gf-form max-width-30">
+		<span class="gf-form-label width-10">SSL Client Certificate</span>
+		<input type="text" class="gf-form-input gf-form-input--has-help-icon" ng-model='ctrl.current.jsonData.sslCertFile' placeholder="SSL/TLS client cert file"></input>
+		<info-popover mode="right-absolute">
+		To authenticate with an SSL/TLS client certificate, provide the path to the file here.
+		Be sure that the file is readable by the user executing the grafana process.
+		</info-popover>
+	</div>
+	<div class="gf-form max-width-30">
+		<span class="gf-form-label width-10">SSL Client Key</span>
+		<input type="text" class="gf-form-input gf-form-input--has-help-icon" ng-model='ctrl.current.jsonData.sslKeyFile' placeholder="SSL/TLS client key file"></input>
+		<info-popover mode="right-absolute">
+		To authenticate with a client SSL/TLS certificate, provide the path to the corresponding key file here.
+		Be sure that the file is <i>only</i> readable by the user executing the grafana process.
+		</info-popover>
+	</div>
+  </div>
+  <datasource-tls-auth-settings current="ctrl.current" 
+  ng-if="(ctrl.current.jsonData.tlsAuth || ctrl.current.jsonData.tlsAuthWithCACert) && ctrl.current.jsonData.sslconfiguremethod === 'file-content'">
   </datasource-tls-auth-settings>
 </div>
 
