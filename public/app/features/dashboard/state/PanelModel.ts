@@ -29,7 +29,11 @@ import {
 } from 'app/types/events';
 import { getTimeSrv } from '../services/TimeSrv';
 import { getAllVariableValuesForUrl } from '../../variables/getAllVariableValuesForUrl';
-import { getPanelOptionsWithDefaults } from './getPanelOptionsWithDefaults';
+import {
+  filterFieldConfigOverrides,
+  getPanelOptionsWithDefaults,
+  isStandardFieldProp,
+} from './getPanelOptionsWithDefaults';
 
 export interface GridPos {
   x: number;
@@ -91,6 +95,7 @@ const mustKeepProps: { [str: string]: boolean } = {
   editSourceId: true,
   maxDataPoints: true,
   interval: true,
+  replaceVariables: true,
 };
 
 const defaults: any = {
@@ -341,26 +346,38 @@ export class PanelModel implements DataConfigSource {
     this.resendLastResult();
   }
 
+  clearPropertiesBeforePluginChange() {
+    // remove panel type specific  options
+    for (const key of _.keys(this)) {
+      if (mustKeepProps[key]) {
+        continue;
+      }
+      delete (this as any)[key];
+    }
+
+    // clear custom options
+    this.fieldConfig = {
+      defaults: {
+        ...this.fieldConfig.defaults,
+        custom: {},
+      },
+      // filter out custom overrides
+      overrides: filterFieldConfigOverrides(this.fieldConfig.overrides, isStandardFieldProp),
+    };
+  }
+
   changePlugin(newPlugin: PanelPlugin) {
     const pluginId = newPlugin.meta.id;
     const oldOptions: any = this.getOptionsToRemember();
     const oldPluginId = this.type;
     const wasAngular = this.isAngularPlugin();
 
-    // remove panel type specific  options
-    for (const key of _.keys(this)) {
-      if (mustKeepProps[key]) {
-        continue;
-      }
-
-      delete (this as any)[key];
-    }
-
     this.cachedPluginOptions[oldPluginId] = {
       properties: oldOptions,
       fieldConfig: this.fieldConfig,
     };
 
+    this.clearPropertiesBeforePluginChange();
     this.restorePanelOptions(pluginId);
 
     // Let panel plugins inspect options from previous panel and keep any that it can use

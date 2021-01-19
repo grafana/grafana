@@ -12,7 +12,7 @@ import {
 } from '@grafana/data';
 import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
 import { mockStandardFieldConfigOptions } from 'test/helpers/fieldConfig';
-import { getPanelOptionsWithDefaults } from './getPanelOptionsWithDefaults';
+import { getPanelOptionsWithDefaults, restoreCustomOverrideRules } from './getPanelOptionsWithDefaults';
 
 standardFieldConfigEditorRegistry.setInit(() => mockStandardFieldConfigOptions());
 standardEditorsRegistry.setInit(() => mockStandardFieldConfigOptions());
@@ -89,6 +89,19 @@ describe('getPanelOptionsWithDefaults', () => {
               "custom": Object {
                 "hideLines": false,
               },
+              "thresholds": Object {
+                "mode": "absolute",
+                "steps": Array [
+                  Object {
+                    "color": "green",
+                    "value": -Infinity,
+                  },
+                  Object {
+                    "color": "red",
+                    "value": 80,
+                  },
+                ],
+              },
             },
             "overrides": Array [],
           },
@@ -127,6 +140,19 @@ describe('getPanelOptionsWithDefaults', () => {
                 "hideLines": false,
               },
               "decimals": 2,
+              "thresholds": Object {
+                "mode": "absolute",
+                "steps": Array [
+                  Object {
+                    "color": "green",
+                    "value": -Infinity,
+                  },
+                  Object {
+                    "color": "red",
+                    "value": 80,
+                  },
+                ],
+              },
               "unit": "bytes",
             },
             "overrides": Array [],
@@ -227,6 +253,19 @@ describe('getPanelOptionsWithDefaults', () => {
               "nestedA": "A",
             },
           },
+          "thresholds": Object {
+            "mode": "absolute",
+            "steps": Array [
+              Object {
+                "color": "green",
+                "value": -Infinity,
+              },
+              Object {
+                "color": "red",
+                "value": 80,
+              },
+            ],
+          },
           "unit": "bytes",
         }
       `);
@@ -260,6 +299,55 @@ describe('getPanelOptionsWithDefaults', () => {
       expect(result.fieldConfig.overrides.length).toBe(1);
       expect(result.fieldConfig.overrides[0].properties[0].id).toBe('custom.customProp');
     });
+  });
+});
+
+describe('restoreCustomOverrideRules', () => {
+  it('should add back custom rules', () => {
+    const current = {
+      defaults: {},
+      overrides: [
+        {
+          matcher: { id: 'byName', options: 'SeriesA' },
+          properties: [
+            {
+              id: 'decimals',
+              value: 2,
+            },
+          ],
+        },
+      ],
+    };
+    const old = {
+      defaults: {},
+      overrides: [
+        {
+          matcher: { id: 'byName', options: 'SeriesA' },
+          properties: [
+            {
+              id: 'custom.propName',
+              value: 10,
+            },
+          ],
+        },
+        {
+          matcher: { id: 'byName', options: 'SeriesB' },
+          properties: [
+            {
+              id: 'custom.propName',
+              value: 20,
+            },
+          ],
+        },
+      ],
+    };
+
+    const result = restoreCustomOverrideRules(current, old);
+    expect(result.overrides.length).toBe(2);
+    expect(result.overrides[0].properties[0].id).toBe('decimals');
+    expect(result.overrides[0].properties[1].id).toBe('custom.propName');
+    expect(result.overrides[1].properties.length).toBe(1);
+    expect(result.overrides[1].matcher.options).toBe('SeriesB');
   });
 });
 

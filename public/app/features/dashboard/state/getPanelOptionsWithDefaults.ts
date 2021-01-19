@@ -1,4 +1,6 @@
 import {
+  ConfigOverrideRule,
+  DynamicConfigValue,
   FieldColorConfigSettings,
   FieldColorModeId,
   fieldColorModeRegistry,
@@ -9,7 +11,7 @@ import {
   ThresholdsConfig,
   ThresholdsMode,
 } from '@grafana/data';
-import { mergeWith, isArray, isObject, unset } from 'lodash';
+import { mergeWith, isArray, isObject, unset, isEqual } from 'lodash';
 
 export interface Props {
   plugin: PanelPlugin;
@@ -65,18 +67,9 @@ function applyFieldConfigDefaults(existingFieldConfig: FieldConfigSource, plugin
   }
 
   // Filter out overrides for properties that cannot be found in registry
-  result.overrides = result.overrides
-    .map(x => {
-      const properties = x.properties.filter(prop => {
-        return plugin.fieldConfigRegistry.getIfExists(prop.id) !== undefined;
-      });
-
-      return {
-        ...x,
-        properties,
-      };
-    })
-    .filter(x => x.properties.length > 0);
+  result.overrides = filterFieldConfigOverrides(result.overrides, prop => {
+    return plugin.fieldConfigRegistry.getIfExists(prop.id) !== undefined;
+  });
 
   for (const override of result.overrides) {
     for (const property of override.properties) {
@@ -87,6 +80,22 @@ function applyFieldConfigDefaults(existingFieldConfig: FieldConfigSource, plugin
   }
 
   return result;
+}
+
+export function filterFieldConfigOverrides(
+  overrides: ConfigOverrideRule[],
+  condition: (value: DynamicConfigValue) => boolean
+): ConfigOverrideRule[] {
+  return overrides
+    .map(x => {
+      const properties = x.properties.filter(condition);
+
+      return {
+        ...x,
+        properties,
+      };
+    })
+    .filter(x => x.properties.length > 0);
 }
 
 function cleanProperties(obj: any, parentPath: string, fieldConfigRegistry: FieldConfigOptionsRegistry) {
@@ -150,4 +159,29 @@ function fixThresholds(thresholds: ThresholdsConfig) {
     // JSON saves it as null
     thresholds.steps[0].value = -Infinity;
   }
+}
+
+export function restoreCustomOverrideRules(current: FieldConfigSource, old: FieldConfigSource): FieldConfigSource {
+  for (const override of old.overrides) {
+    for (const prop of override.properties) {
+      if (isCustomFieldProp(prop)) {
+        const currentOverride = current.overrides.find(o => isEqual(o.matcher, override.matcher));
+        if (currentOverride) {
+          currentOverride.properties.push(prop);
+        } else {
+          current.overrides.push(override);
+        }
+      }
+    }
+  }
+
+  return current;
+}
+
+export function isCustomFieldProp(prop: DynamicConfigValue): boolean {
+  return prop.id.startsWith('custom.');
+}
+
+export function isStandardFieldProp(prop: DynamicConfigValue): boolean {
+  return !isCustomFieldProp(prop);
 }

@@ -49,6 +49,41 @@ describe('PanelModel', () => {
     let modelJson: any;
     let persistedOptionsMock;
 
+    const tablePlugin = getPanelPlugin(
+      {
+        id: 'table',
+      },
+      (null as unknown) as ComponentClass<PanelProps>, // react
+      {} // angular
+    );
+
+    tablePlugin.setPanelOptions(builder => {
+      builder.addBooleanSwitch({
+        name: 'Show thresholds',
+        path: 'showThresholds',
+        defaultValue: true,
+        description: '',
+      });
+    });
+
+    tablePlugin.useFieldConfig({
+      standardOptions: {
+        [FieldConfigProperty.Unit]: {
+          defaultValue: 'flop',
+        },
+        [FieldConfigProperty.Decimals]: {
+          defaultValue: 2,
+        },
+      },
+      useCustomConfig: builder => {
+        builder.addBooleanSwitch({
+          name: 'CustomProp',
+          path: 'customProp',
+          defaultValue: false,
+        });
+      },
+    });
+
     beforeEach(() => {
       persistedOptionsMock = {
         fieldOptions: {
@@ -110,35 +145,7 @@ describe('PanelModel', () => {
       };
 
       model = new PanelModel(modelJson);
-
-      const panelPlugin = getPanelPlugin(
-        {
-          id: 'table',
-        },
-        (null as unknown) as ComponentClass<PanelProps>, // react
-        {} // angular
-      );
-
-      panelPlugin.setPanelOptions(builder => {
-        builder.addBooleanSwitch({
-          name: 'Show thresholds',
-          path: 'showThresholds',
-          defaultValue: true,
-          description: '',
-        });
-      });
-
-      panelPlugin.useFieldConfig({
-        standardOptions: {
-          [FieldConfigProperty.Unit]: {
-            defaultValue: 'flop',
-          },
-          [FieldConfigProperty.Decimals]: {
-            defaultValue: 2,
-          },
-        },
-      });
-      model.pluginLoaded(panelPlugin);
+      model.pluginLoaded(tablePlugin);
     });
 
     it('should apply defaults', () => {
@@ -238,6 +245,13 @@ describe('PanelModel', () => {
               },
             },
           },
+          useCustomConfig: builder => {
+            builder.addNumberInput({
+              path: 'customProp',
+              name: 'customProp',
+              defaultValue: 100,
+            });
+          },
         });
 
         newPlugin.setPanelOptions(builder => {
@@ -250,6 +264,25 @@ describe('PanelModel', () => {
         });
 
         model.editSourceId = 1001;
+        model.fieldConfig.defaults.decimals = 3;
+        model.fieldConfig.defaults.custom = {
+          customProp: true,
+        };
+        model.fieldConfig.overrides = [
+          {
+            matcher: { id: 'byName', options: 'D-series' },
+            properties: [
+              {
+                id: 'custom.customProp',
+                value: false,
+              },
+              {
+                id: 'decimals',
+                value: 0,
+              },
+            ],
+          },
+        ];
         model.changePlugin(newPlugin);
         model.alert = { id: 2 };
       });
@@ -266,6 +299,21 @@ describe('PanelModel', () => {
         expect(model.interval).toBe('5m');
       });
 
+      it('should preseve standard field config', () => {
+        expect(model.fieldConfig.defaults.decimals).toEqual(3);
+      });
+
+      it('should clear custom field config and apply new defaults', () => {
+        expect(model.fieldConfig.defaults.custom).toEqual({
+          customProp: 100,
+        });
+      });
+
+      it('should remove overrides with custom props', () => {
+        expect(model.fieldConfig.overrides.length).toEqual(1);
+        expect(model.fieldConfig.overrides[0].properties[0].id).toEqual('decimals');
+      });
+
       it('should apply next panel option defaults', () => {
         expect(model.getOptions().showThresholdLabels).toBeFalsy();
         expect(model.getOptions().showThresholds).toBeUndefined();
@@ -276,8 +324,13 @@ describe('PanelModel', () => {
       });
 
       it('should restore table properties when changing back', () => {
-        model.changePlugin(getPanelPlugin({ id: 'table' }));
+        model.changePlugin(tablePlugin);
         expect(model.showColumns).toBe(true);
+      });
+
+      it('should restore custom field config to what it was and preseve standard options', () => {
+        model.changePlugin(tablePlugin);
+        expect(model.fieldConfig.defaults.custom.customProp).toBe(true);
       });
 
       it('should remove alert rule when changing type that does not support it', () => {
