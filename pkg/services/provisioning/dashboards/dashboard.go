@@ -55,7 +55,7 @@ func New(configDirectory string) (*Provisioner, error) {
 	return d, nil
 }
 
-// Provision starts scanning the disk for dashboards and updates
+// Provision scans the disk for dashboards and updates
 // the database with the latest versions of those dashboards.
 func (provider *Provisioner) Provision() error {
 	for _, reader := range provider.fileReaders {
@@ -86,7 +86,7 @@ func (provider *Provisioner) CleanUpOrphanedDashboards() {
 	}
 }
 
-// PollChanges starts polling for changes in dashboard definition files. It creates goroutine for each provider
+// PollChanges starts polling for changes in dashboard definition files. It creates a goroutine for each provider
 // defined in the config.
 func (provider *Provisioner) PollChanges(ctx context.Context) {
 	for _, reader := range provider.fileReaders {
