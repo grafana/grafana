@@ -2,13 +2,14 @@ import {
   FieldColorConfigSettings,
   FieldColorModeId,
   fieldColorModeRegistry,
+  FieldConfigOptionsRegistry,
   FieldConfigProperty,
   FieldConfigSource,
   PanelPlugin,
   ThresholdsConfig,
   ThresholdsMode,
 } from '@grafana/data';
-import { mergeWith, isArray } from 'lodash';
+import { mergeWith, isArray, isPlainObject, isObject, unset } from 'lodash';
 
 export interface Props {
   plugin: PanelPlugin;
@@ -33,31 +34,49 @@ export function getPanelOptionsWithDefaults({ plugin, currentOptions, currentFie
     }
   );
 
-  const fieldConfigWithDefaults = applyFieldConfigDefaults(currentFieldConfig, plugin.fieldConfigDefaults);
+  const fieldConfigWithDefaults = applyFieldConfigDefaults(currentFieldConfig, plugin);
   const fieldConfigWithOptimalColorMode = adaptFieldColorMode(plugin, fieldConfigWithDefaults);
 
   return { options: optionsWithDefaults, fieldConfig: fieldConfigWithOptimalColorMode };
 }
 
-function applyFieldConfigDefaults(fieldConfig: FieldConfigSource, defaults: FieldConfigSource): FieldConfigSource {
+function applyFieldConfigDefaults(existingFieldConfig: FieldConfigSource, plugin: PanelPlugin): FieldConfigSource {
+  const pluginDefaults = plugin.fieldConfigDefaults;
+
   const result: FieldConfigSource = {
     defaults: mergeWith(
       {},
-      defaults.defaults,
-      fieldConfig ? fieldConfig.defaults : {},
+      pluginDefaults.defaults,
+      existingFieldConfig ? existingFieldConfig.defaults : {},
       (objValue: any, srcValue: any): any => {
         if (isArray(srcValue)) {
           return srcValue;
         }
       }
     ),
-    overrides: fieldConfig?.overrides ?? [],
+    overrides: existingFieldConfig?.overrides ?? [],
   };
+
+  cleanProperties(result.defaults, '', plugin.fieldConfigRegistry);
 
   // Thresholds base values are null in JSON but need to be converted to -Infinity
   if (result.defaults.thresholds) {
     fixThresholds(result.defaults.thresholds);
   }
+
+  // Filter out overrides for properties that cannot be found in registry
+  result.overrides = result.overrides
+    .map((x) => {
+      const properties = x.properties.filter((prop) => {
+        return plugin.fieldConfigRegistry.getIfExists(prop.id) !== undefined;
+      });
+
+      return {
+        ...x,
+        properties,
+      };
+    })
+    .filter((x) => x.properties.length > 0);
 
   for (const override of result.overrides) {
     for (const property of override.properties) {
@@ -68,6 +87,27 @@ function applyFieldConfigDefaults(fieldConfig: FieldConfigSource, defaults: Fiel
   }
 
   return result;
+}
+
+function cleanProperties(obj: any, parentPath: string, fieldConfigRegistry: FieldConfigOptionsRegistry) {
+  for (const propName of Object.keys(obj)) {
+    const value = obj[propName];
+    const fullPath = `${parentPath}${propName}`;
+    const existsInRegistry = !!fieldConfigRegistry.getIfExists(fullPath);
+
+    // need to check early here as some standard properties have nested properies
+    if (existsInRegistry) {
+      continue;
+    }
+
+    if (isArray(value) || !isObject(value)) {
+      if (!existsInRegistry) {
+        unset(obj, propName);
+      }
+    } else {
+      cleanProperties(value, `${fullPath}.`, fieldConfigRegistry);
+    }
+  }
 }
 
 function adaptFieldColorMode(plugin: PanelPlugin, fieldConfig: FieldConfigSource): FieldConfigSource {

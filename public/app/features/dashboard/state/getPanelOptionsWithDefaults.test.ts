@@ -1,11 +1,14 @@
 import {
+  ConfigOverrideRule,
   FieldColorConfigSettings,
   FieldColorModeId,
   FieldConfig,
   FieldConfigProperty,
   FieldConfigSource,
+  PanelPlugin,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
+  StandardOptionConfig,
 } from '@grafana/data';
 import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
 import { mockStandardFieldConfigOptions } from 'test/helpers/fieldConfig';
@@ -25,6 +28,7 @@ pluginA.useFieldConfig({
     });
   },
 });
+
 pluginA.setPanelOptions((builder) => {
   builder.addBooleanSwitch({
     name: 'Show thresholds',
@@ -46,14 +50,11 @@ pluginA.setPanelOptions((builder) => {
 describe('getPanelOptionsWithDefaults', () => {
   describe('When panel plugin has no options', () => {
     it('Should set defaults', () => {
-      const pluginWithNoOptions = getPanelPlugin({ id: 'graph' });
-      const result = getPanelOptionsWithDefaults({
-        plugin: pluginWithNoOptions,
-        currentOptions: {},
-        currentFieldConfig: {
-          defaults: {},
-          overrides: [],
-        },
+      const result = runScenario({
+        plugin: getPanelPlugin({ id: 'graph' }),
+        options: {},
+        defaults: {},
+        overrides: [],
       });
 
       expect(result).toMatchInlineSnapshot(`
@@ -111,8 +112,8 @@ describe('getPanelOptionsWithDefaults', () => {
         },
         currentFieldConfig: {
           defaults: {
-            min: 10,
-            max: 20,
+            unit: 'bytes',
+            decimals: 2,
           },
           overrides: [],
         },
@@ -125,8 +126,8 @@ describe('getPanelOptionsWithDefaults', () => {
               "custom": Object {
                 "hideLines": false,
               },
-              "max": 20,
-              "min": 10,
+              "decimals": 2,
+              "unit": "bytes",
             },
             "overrides": Array [],
           },
@@ -168,40 +169,135 @@ describe('getPanelOptionsWithDefaults', () => {
   });
 
   describe('when changing panel type from one not supporting by value color mode to one that supports it', () => {
-    const prepareModel = (colorOptions?: FieldColorConfigSettings) => {
-      const fieldConfig: FieldConfigSource = {
+    it('should keep supported mode', () => {
+      const result = runScenario({
         defaults: {
           color: { mode: FieldColorModeId.PaletteClassic },
         },
-        overrides: [],
-      };
-
-      const plugin = getPanelPlugin({ id: 'graph' }).useFieldConfig({
         standardOptions: {
           [FieldConfigProperty.Color]: {
             settings: {
               byValueSupport: true,
-              ...colorOptions,
+            },
+          },
+        },
+      });
+      expect(result.fieldConfig.defaults.color!.mode).toBe(FieldColorModeId.PaletteClassic);
+    });
+
+    it('should change to thresholds mode when it prefers to', () => {
+      const result = runScenario({
+        defaults: {
+          color: { mode: FieldColorModeId.PaletteClassic },
+        },
+        standardOptions: {
+          [FieldConfigProperty.Color]: {
+            settings: {
+              byValueSupport: true,
+              preferThresholdsMode: true,
+            },
+          },
+        },
+      });
+      expect(result.fieldConfig.defaults.color!.mode).toBe(FieldColorModeId.Thresholds);
+    });
+  });
+
+  describe('when applying defaults clean properties that no longer part of the registry', () => {
+    it('should remove custom defaults that no longer exist', () => {
+      const result = runScenario({
+        defaults: {
+          unit: 'bytes',
+          custom: {
+            customProp: 20,
+            customPropNoExist: true,
+            nested: {
+              nestedA: 'A',
+              nestedB: 'B',
             },
           },
         },
       });
 
-      return getPanelOptionsWithDefaults({
-        plugin,
-        currentOptions: {},
-        currentFieldConfig: fieldConfig,
-      });
-    };
-
-    it('should keep supported mode', () => {
-      const testModel = prepareModel();
-      expect(testModel.fieldConfig.defaults.color!.mode).toBe(FieldColorModeId.PaletteClassic);
+      expect(result.fieldConfig.defaults).toMatchInlineSnapshot(`
+        Object {
+          "custom": Object {
+            "customProp": 20,
+            "nested": Object {
+              "nestedA": "A",
+            },
+          },
+          "unit": "bytes",
+        }
+      `);
     });
 
-    it('should change to thresholds mode when it prefers to', () => {
-      const testModel = prepareModel({ preferThresholdsMode: true });
-      expect(testModel.fieldConfig.defaults.color!.mode).toBe(FieldColorModeId.Thresholds);
+    it('should remove custom overrides that no longer exist', () => {
+      const result = runScenario({
+        defaults: {},
+        overrides: [
+          {
+            matcher: { id: 'byName', options: 'D-series' },
+            properties: [
+              {
+                id: 'custom.customPropNoExist',
+                value: 'google',
+              },
+            ],
+          },
+          {
+            matcher: { id: 'byName', options: 'D-series' },
+            properties: [
+              {
+                id: 'custom.customProp',
+                value: 30,
+              },
+            ],
+          },
+        ],
+      });
+
+      expect(result.fieldConfig.overrides.length).toBe(1);
+      expect(result.fieldConfig.overrides[0].properties[0].id).toBe('custom.customProp');
     });
   });
 });
+
+interface ScenarioOptions {
+  defaults?: FieldConfig<any>;
+  overrides?: ConfigOverrideRule[];
+  disabledStandardOptions?: FieldConfigProperty[];
+  standardOptions?: Partial<Record<FieldConfigProperty, StandardOptionConfig>>;
+  plugin?: PanelPlugin;
+  options?: any;
+}
+
+function runScenario(options: ScenarioOptions) {
+  const fieldConfig: FieldConfigSource = {
+    defaults: options.defaults || {},
+    overrides: options.overrides || [],
+  };
+
+  const plugin =
+    options.plugin ??
+    getPanelPlugin({ id: 'graph' }).useFieldConfig({
+      standardOptions: options.standardOptions,
+      useCustomConfig: (builder) => {
+        builder.addNumberInput({
+          name: 'Custom prop',
+          path: 'customProp',
+          defaultValue: 10,
+        });
+        builder.addTextInput({
+          name: 'Nested prop',
+          path: 'nested.nestedA',
+        });
+      },
+    });
+
+  return getPanelOptionsWithDefaults({
+    plugin,
+    currentOptions: options.options || {},
+    currentFieldConfig: fieldConfig,
+  });
+}

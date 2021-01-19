@@ -16,7 +16,8 @@ import { deprecationWarning } from '../utils';
 import { FieldConfigOptionsRegistry } from '../field';
 import { createFieldConfigRegistry } from './registryFactories';
 
-type StandardOptionConfig = {
+/** @beta */
+export type StandardOptionConfig = {
   defaultValue?: any;
   settings?: any;
 };

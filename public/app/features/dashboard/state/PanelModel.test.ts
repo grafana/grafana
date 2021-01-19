@@ -6,8 +6,6 @@ import {
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
   PanelData,
-  FieldColorModeId,
-  FieldColorConfigSettings,
   DataLinkBuiltInVars,
   VariableModel,
 } from '@grafana/data';
