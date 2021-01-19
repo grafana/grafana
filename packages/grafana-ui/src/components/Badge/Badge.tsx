@@ -49,20 +49,20 @@ const getStyles = stylesFactory((theme: GrafanaTheme, color: BadgeColor) => {
 
   if (theme.isDark) {
     bgColor = tinycolor(sourceColor)
-      .setAlpha(0.1)
+      .setAlpha(0.15)
       .toString();
     borderColor = tinycolor(sourceColor)
-      .darken(35)
+      .darken(30)
       .toString();
     textColor = tinycolor(sourceColor)
       .lighten(15)
       .toString();
   } else {
     bgColor = tinycolor(sourceColor)
-      .setAlpha(0.1)
+      .setAlpha(0.15)
       .toString();
     borderColor = tinycolor(sourceColor)
-      .lighten(25)
+      .lighten(20)
       .toString();
     textColor = tinycolor(sourceColor)
       .darken(15)
@@ -78,6 +78,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, color: BadgeColor) => {
       background: ${bgColor};
       border: 1px solid ${borderColor};
       color: ${textColor};
+      font-weight: ${theme.typography.weight.regular};
 
       > span {
         position: relative;

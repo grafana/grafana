@@ -3,6 +3,7 @@ import {
   FieldConfigProperty,
   FieldType,
   identityOverrideProcessor,
+  SetFieldConfigOptionsArgs,
   stringOverrideProcessor,
 } from '@grafana/data';
 import {
@@ -15,12 +16,11 @@ import {
   PointVisibility,
   ScaleDistribution,
   ScaleDistributionConfig,
+  GraphGradientMode,
 } from '@grafana/ui';
 import { SeriesConfigEditor } from './HideSeriesConfigEditor';
 import { ScaleDistributionEditor } from './ScaleDistributionEditor';
 import { LineStyleEditor } from './LineStyleEditor';
-import { SetFieldConfigOptionsArgs } from '@grafana/data/src/panel/PanelPlugin';
-import { FillGradientMode } from '@grafana/ui/src/components/uPlot/config';
 import { FillBellowToEditor } from './FillBelowToEditor';
 
 export const defaultGraphConfig: GraphFieldConfig = {
@@ -28,7 +28,7 @@ export const defaultGraphConfig: GraphFieldConfig = {
   lineInterpolation: LineInterpolation.Linear,
   lineWidth: 1,
   fillOpacity: 0,
-  fillGradient: FillGradientMode.None,
+  gradientMode: GraphGradientMode.None,
 };
 
 export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOptionsArgs<GraphFieldConfig> {
@@ -37,6 +37,8 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
       [FieldConfigProperty.Color]: {
         settings: {
           byValueSupport: false,
+          bySeriesSupport: true,
+          preferThresholdsMode: false,
         },
         defaultValue: {
           mode: FieldColorModeId.PaletteClassic,
@@ -85,13 +87,13 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           showIf: c => c.drawStyle !== DrawStyle.Points,
         })
         .addRadio({
-          path: 'fillGradient',
-          name: 'Fill gradient',
-          defaultValue: graphFieldOptions.fillGradient[0].value,
+          path: 'gradientMode',
+          name: 'Gradient mode',
+          defaultValue: graphFieldOptions.fillGradient[0],
           settings: {
             options: graphFieldOptions.fillGradient,
           },
-          showIf: c => !!(c.drawStyle !== DrawStyle.Points && c.fillOpacity && c.fillOpacity > 0),
+          showIf: c => c.drawStyle !== DrawStyle.Points,
         })
         .addCustomEditor({
           id: 'fillBelowTo',

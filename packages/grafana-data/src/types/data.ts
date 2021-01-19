@@ -20,7 +20,7 @@ export enum DataTopic {
   Annotations = 'annotations',
 }
 
-export type PreferredVisualisationType = 'graph' | 'table' | 'logs' | 'trace';
+export type PreferredVisualisationType = 'graph' | 'table' | 'logs' | 'trace' | 'nodeGraph';
 
 /**
  * @public

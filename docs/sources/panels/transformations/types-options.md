@@ -17,6 +17,7 @@ Grafana comes with the following transformations:
 - [Add field from calculation](#add-field-from-calculation)
 - [Labels to fields](#labels-to-fields)
 - [Concatenate fields](#concatenate-fields)
+- [Sort by](#sort-by)
 - [Group by](#group-by)
 - [Merge](#merge)
 - [Rename by regex](#rename-by-regex)
@@ -235,6 +236,14 @@ After merge:
 | ------------------- | ------- | ----- | ---------- |
 | 2020-07-07 11:34:20 | ServerA | 10    |            |
 | 2020-07-07 11:34:20 |         | 20    | EU         |
+
+## Sort by
+
+> **Note:** This transformation is available in Grafana 7.4+.
+
+This transformation will sort each frame by the configured field, When `reverse` is checked, the values will return in
+the opposite order.
+
 
 ## Group by
 

@@ -1,14 +1,13 @@
 import React, { PureComponent } from 'react';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { css } from 'emotion';
-import { dateMath, GrafanaTheme } from '@grafana/data';
-import { stylesFactory } from '@grafana/ui';
+import { GrafanaTheme } from '@grafana/data';
+import { RefreshPicker, stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { QueryGroup } from '../../query/components/QueryGroup';
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
-import { QueryGroupOptions } from '../../query/components/QueryGroupOptions';
-import { queryOptionsChange } from '../state/actions';
-import { StoreState } from '../../../types';
+import { onRunQueries, queryOptionsChange } from '../state/actions';
+import { QueryGroupOptions, StoreState } from 'app/types';
 
 interface OwnProps {}
 
@@ -18,6 +17,7 @@ interface ConnectedProps {
 }
 interface DispatchProps {
   queryOptionsChange: typeof queryOptionsChange;
+  onRunQueries: typeof onRunQueries;
 }
 
 type Props = ConnectedProps & DispatchProps & OwnProps;
@@ -28,17 +28,11 @@ export class AlertingQueryEditor extends PureComponent<Props> {
   };
 
   onRunQueries = () => {
-    const { queryRunner, queryOptions } = this.props;
-    const timeRange = { from: 'now-1h', to: 'now' };
+    this.props.onRunQueries();
+  };
 
-    queryRunner.run({
-      timezone: 'browser',
-      timeRange: { from: dateMath.parse(timeRange.from)!, to: dateMath.parse(timeRange.to)!, raw: timeRange },
-      maxDataPoints: queryOptions.maxDataPoints ?? 100,
-      minInterval: queryOptions.minInterval,
-      queries: queryOptions.queries,
-      datasource: queryOptions.dataSource.name!,
-    });
+  onIntervalChanged = (interval: string) => {
+    this.props.queryOptionsChange({ ...this.props.queryOptions, minInterval: interval });
   };
 
   render() {
@@ -49,6 +43,13 @@ export class AlertingQueryEditor extends PureComponent<Props> {
       <div className={styles.wrapper}>
         <div className={styles.container}>
           <h4>Queries</h4>
+          <div className={styles.refreshWrapper}>
+            <RefreshPicker
+              onIntervalChanged={this.onIntervalChanged}
+              onRefresh={this.onRunQueries}
+              intervals={['15s', '30s']}
+            />
+          </div>
           <QueryGroup
             queryRunner={queryRunner}
             options={queryOptions}
@@ -70,6 +71,7 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = s
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   queryOptionsChange,
+  onRunQueries,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(AlertingQueryEditor);
@@ -84,6 +86,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       padding: ${theme.spacing.md};
       background-color: ${theme.colors.panelBg};
       height: 100%;
+    `,
+    refreshWrapper: css`
+      display: flex;
+      justify-content: flex-end;
     `,
     editorWrapper: css`
       border: 1px solid ${theme.colors.panelBorder};

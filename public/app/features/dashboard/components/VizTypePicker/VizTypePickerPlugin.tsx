@@ -121,7 +121,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     badge: css`
       position: absolute;
-      background: ${theme.colors.bg2};
+      background: ${theme.colors.bg1};
       bottom: ${theme.spacing.xs};
       right: ${theme.spacing.xs};
       z-index: 1;
@@ -153,21 +153,18 @@ function getPanelStateBadgeDisplayModel(panel: PanelPluginMeta): BadgeProps | nu
     case PluginState.deprecated:
       return {
         text: 'Deprecated',
-        icon: 'exclamation-triangle',
         color: 'red',
         tooltip: `${panel.name} panel is deprecated`,
       };
     case PluginState.alpha:
       return {
         text: 'Alpha',
-        icon: 'rocket',
         color: 'blue',
         tooltip: `${panel.name} panel is experimental`,
       };
     case PluginState.beta:
       return {
         text: 'Beta',
-        icon: 'rocket',
         color: 'blue',
         tooltip: `${panel.name} panel is in beta`,
       };

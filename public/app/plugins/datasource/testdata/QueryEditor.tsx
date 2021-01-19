@@ -10,11 +10,12 @@ import { StreamingClientEditor, ManualEntryEditor, RandomWalkEditor } from './co
 
 // Types
 import { TestDataDataSource } from './datasource';
-import { TestDataQuery, Scenario } from './types';
+import { TestDataQuery, Scenario, NodesQuery } from './types';
 import { PredictablePulseEditor } from './components/PredictablePulseEditor';
 import { CSVWaveEditor } from './components/CSVWaveEditor';
 import { defaultQuery } from './constants';
 import { GrafanaLiveEditor } from './components/GrafanaLiveEditor';
+import { NodeGraphEditor } from './components/NodeGraphEditor';
 
 const showLabelsFor = ['random_walk', 'predictable_pulse', 'predictable_csv_wave'];
 const endpoints = [
@@ -234,6 +235,9 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
 
       {scenarioId === 'predictable_pulse' && <PredictablePulseEditor onChange={onPulseWaveChange} query={query} />}
       {scenarioId === 'predictable_csv_wave' && <CSVWaveEditor onChange={onCSVWaveChange} query={query} />}
+      {scenarioId === 'node_graph' && (
+        <NodeGraphEditor onChange={(val: NodesQuery) => onChange({ ...query, nodes: val })} query={query} />
+      )}
     </>
   );
 };

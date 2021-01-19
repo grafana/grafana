@@ -100,6 +100,7 @@ const dummyProps: ExploreProps = {
   showLogs: true,
   showTable: true,
   showTrace: true,
+  showNodeGraph: true,
   splitOpen: (() => {}) as any,
 };
 

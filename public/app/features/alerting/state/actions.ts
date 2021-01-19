@@ -1,4 +1,4 @@
-import { AppEvents } from '@grafana/data';
+import { AppEvents, dateMath } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
 import { updateLocation } from 'app/core/actions';
@@ -14,7 +14,7 @@ import {
   setQueryOptions,
 } from './reducers';
 import { AlertDefinition, AlertDefinitionUiState, AlertRuleDTO, NotifierDTO, ThunkResult } from 'app/types';
-import { QueryGroupOptions } from '../../query/components/QueryGroupOptions';
+import { QueryGroupOptions } from 'app/types';
 
 export function getAlertRulesAsync(options: { state: string }): ThunkResult<void> {
   return async dispatch => {
@@ -136,5 +136,21 @@ export function updateAlertDefinitionOption(alertDefinition: Partial<AlertDefini
 export function queryOptionsChange(queryOptions: QueryGroupOptions): ThunkResult<void> {
   return dispatch => {
     dispatch(setQueryOptions(queryOptions));
+  };
+}
+
+export function onRunQueries(): ThunkResult<void> {
+  return (dispatch, getStore) => {
+    const { queryRunner, queryOptions } = getStore().alertDefinition;
+    const timeRange = { from: 'now-1h', to: 'now' };
+
+    queryRunner.run({
+      timezone: 'browser',
+      timeRange: { from: dateMath.parse(timeRange.from)!, to: dateMath.parse(timeRange.to)!, raw: timeRange },
+      maxDataPoints: queryOptions.maxDataPoints ?? 100,
+      minInterval: queryOptions.minInterval,
+      queries: queryOptions.queries,
+      datasource: queryOptions.dataSource.name!,
+    });
   };
 }
