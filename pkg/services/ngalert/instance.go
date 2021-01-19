@@ -63,14 +63,14 @@ type listAlertInstancesQuery struct {
 
 // listAlertInstancesQueryResult represents the result of listAlertInstancesQuery.
 type listAlertInstancesQueryResult struct {
-	DefinitionOrgID   int64  `xorm:"def_org_id"`
-	DefinitionUID     string `xorm:"def_uid"`
-	DefinitionTitle   string `xorm:"def_title"`
-	Labels            InstanceLabels
-	LabelsHash        string
-	CurrentState      InstanceStateType
-	CurrentStateSince time.Time
-	LastEvalTime      time.Time
+	DefinitionOrgID   int64             `xorm:"def_org_id" json:"definitionOrgId"`
+	DefinitionUID     string            `xorm:"def_uid" json:"definitionUid"`
+	DefinitionTitle   string            `xorm:"def_title" json:"definitionTitle"`
+	Labels            InstanceLabels    `json:"labels"`
+	LabelsHash        string            `json:"labeHash"`
+	CurrentState      InstanceStateType `json:"currentState"`
+	CurrentStateSince time.Time         `json:"currentStateSince"`
+	LastEvalTime      time.Time         `json:"lastEvalTime"`
 }
 
 // validateAlertInstance validates that the alert instance contains an alert definition id,

@@ -32,6 +32,7 @@ import { queryMetricTree } from './metricTree';
 import { runStream } from './runStreams';
 import { getSearchFilterScopedVar } from 'app/features/variables/utils';
 import { TestDataVariableSupport } from './variables';
+import { generateRandomNodes, savedNodesResponse } from './nodeGraphUtils';
 
 type TestData = TimeSeries | TableData;
 
@@ -74,6 +75,9 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
           break;
         case 'variables-query':
           streams.push(this.variablesQuery(target, options));
+          break;
+        case 'node_graph':
+          streams.push(this.nodesQuery(target, options));
           break;
         default:
           queries.push({
@@ -203,6 +207,23 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
     const dataFrame = new ArrayDataFrame(items);
 
     return of({ data: [dataFrame] }).pipe(delay(100));
+  }
+
+  nodesQuery(target: TestDataQuery, options: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
+    const type = target.nodes?.type || 'random';
+    let frames: DataFrame[];
+    switch (type) {
+      case 'random':
+        frames = generateRandomNodes(target.nodes?.count);
+        break;
+      case 'response':
+        frames = savedNodesResponse();
+        break;
+      default:
+        throw new Error(`Unknown node_graph sub type ${type}`);
+    }
+
+    return of({ data: frames }).pipe(delay(100));
   }
 }
 
