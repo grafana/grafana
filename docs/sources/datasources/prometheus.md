@@ -29,6 +29,8 @@ To access Prometheus settings, hover your mouse over the **Configuration** (gear
 
 ### Exemplars
 
+> **Note:** This feature is available in Prometheus 2.25+.
+
 The Exemplars configuration allows you to add multiple endpoints to any of your Exemplar label.
 
 You can use this functionality to link to your tracing backend from an Exemplar.
@@ -195,6 +197,16 @@ datasources:
     # Access mode - proxy (server in the UI) or direct (browser in the UI).
     access: proxy
     url: http://localhost:9090
+    jsonData:
+      exemplarTraceIdDestinations:
+        # Field with internal link pointing to data source in Grafana.
+        # datasourceUid value can be anything, but it should be unique across all defined data source uids.
+        - datasourceUid: my_jaeger_uid
+          name: traceID
+
+        # Field with external link.
+        - name: traceID
+          url: "http://localhost:3000/explore?orgId=1&left=%5B%22now-1h%22,%22now%22,%22Jaeger%22,%7B%22query%22:%22$${__value.raw}%22%7D%5D"
 ```
 
 ## Amazon Managed Service for Prometheus
