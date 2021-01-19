@@ -59,7 +59,8 @@ The white labeling feature is turned off, meaning that any white labeling option
 
 ### Usage insights
 
-All the usage insights features are turned off, meaning that you won't be able to look at dashboard usage, presence indicator or to use improved search. Grafana still collects usage data and you will have access to it as soon as you update your license.
+Exporting usage insights logs to Loki is not affected by an expired license.
+All the other usage insights features are turned off, meaning that you won't be able to look at dashboard usage, presence indicator, to use improved search. Grafana still collects usage data and you will have access to it as soon as you update your license.
 
 ### Vault integration
 

@@ -425,6 +425,15 @@
       link: /enterprise/white-labeling/
     - name: Usage insights
       link: /enterprise/usage-insights/
+      children:
+      - name: Dashboard and data source insights
+        link: /enterprise/usage-insights/dashboard-datasource-insights/
+      - name: Presence indicator
+        link: /enterprise/usage-insights/presence-indicator/
+      - name: Improved dashboard search
+        link: /enterprise/usage-insights/improved-search/
+      - name: Export logs of usage insights
+        link: /enterprise/usage-insights/export-logs/
     - name: Vault integration
       link: /enterprise/vault/
     - name: License expiration
