@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { Select, Switch, Icon, InlineField } from '@grafana/ui';
+import { Select, Switch, Icon, Field, FieldSet } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { buildIframeHtml } from './utils';
@@ -17,7 +17,6 @@ interface Props {
 
 interface State {
   useCurrentTimeRange: boolean;
-  includeTemplateVars: boolean;
   selectedTheme: SelectableValue<string>;
   iframeHtml: string;
 }
@@ -27,7 +26,6 @@ export class ShareEmbed extends PureComponent<Props, State> {
     super(props);
     this.state = {
       useCurrentTimeRange: true,
-      includeTemplateVars: true,
       selectedTheme: themeOptions[0],
       iframeHtml: '',
     };
@@ -39,9 +37,9 @@ export class ShareEmbed extends PureComponent<Props, State> {
 
   buildIframeHtml = () => {
     const { panel } = this.props;
-    const { useCurrentTimeRange, includeTemplateVars, selectedTheme } = this.state;
+    const { useCurrentTimeRange, selectedTheme } = this.state;
 
-    const iframeHtml = buildIframeHtml(useCurrentTimeRange, includeTemplateVars, selectedTheme.value, panel);
+    const iframeHtml = buildIframeHtml(useCurrentTimeRange, selectedTheme.value, panel);
     this.setState({ iframeHtml });
   };
 
@@ -49,15 +47,6 @@ export class ShareEmbed extends PureComponent<Props, State> {
     this.setState(
       {
         useCurrentTimeRange: !this.state.useCurrentTimeRange,
-      },
-      this.buildIframeHtml
-    );
-  };
-
-  onIncludeTemplateVarsChange = () => {
-    this.setState(
-      {
-        includeTemplateVars: !this.state.includeTemplateVars,
       },
       this.buildIframeHtml
     );
@@ -73,32 +62,31 @@ export class ShareEmbed extends PureComponent<Props, State> {
   };
 
   render() {
-    const { useCurrentTimeRange, includeTemplateVars, selectedTheme, iframeHtml } = this.state;
+    const { useCurrentTimeRange, selectedTheme, iframeHtml } = this.state;
+    const isRelativeTime = this.props.dashboard ? this.props.dashboard.time.to === 'now' : false;
 
     return (
       <div className="share-modal-body">
         <div className="share-modal-header">
           <Icon name="link" className="share-modal-big-icon" size="xxl" />
           <div className="share-modal-content">
-            <div className="gf-form-group">
-              <InlineField labelWidth={24} label="Current time range">
+            <FieldSet>
+              <Field
+                label="Current time range"
+                description={
+                  isRelativeTime ? 'Transforms the current relative time range to an absolute time range' : ''
+                }
+              >
                 <Switch
                   id="share-current-time-range"
                   value={useCurrentTimeRange}
                   onChange={this.onUseCurrentTimeRangeChange}
                 />
-              </InlineField>
-              <InlineField labelWidth={24} label="Template variables">
-                <Switch
-                  id="share-template-variables"
-                  value={includeTemplateVars}
-                  onChange={this.onIncludeTemplateVarsChange}
-                />
-              </InlineField>
-              <InlineField labelWidth={24} label="Theme">
+              </Field>
+              <Field label="Theme">
                 <Select width={20} options={themeOptions} value={selectedTheme} onChange={this.onThemeChange} />
-              </InlineField>
-            </div>
+              </Field>
+            </FieldSet>
             <p className="share-modal-info-text">
               The html code below can be pasted and included in another web page. Unless anonymous access is enabled,
               the user viewing that page need to be signed into grafana for the graph to load.
