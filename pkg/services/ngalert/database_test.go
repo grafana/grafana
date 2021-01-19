@@ -104,6 +104,41 @@ func TestCreatingAlertDefinition(t *testing.T) {
 		})
 	}
 }
+func TestCreatingConflictionAlertDefinition(t *testing.T) {
+	t.Run("Should fail to create alert definition with conflicting org_id, title", func(t *testing.T) {
+		ng := setupTestEnv(t)
+		t.Cleanup(registry.ClearOverrides)
+
+		q := saveAlertDefinitionCommand{
+			OrgID: 1,
+			Title: "title",
+			Condition: eval.Condition{
+				RefID: "B",
+				QueriesAndExpressions: []eval.AlertQuery{
+					{
+						Model: json.RawMessage(`{
+								"datasource": "__expr__",
+								"type":"math",
+								"expression":"2 + 3 > 1"
+							}`),
+						RefID: "B",
+						RelativeTimeRange: eval.RelativeTimeRange{
+							From: eval.Duration(time.Duration(5) * time.Hour),
+							To:   eval.Duration(time.Duration(3) * time.Hour),
+						},
+					},
+				},
+			},
+		}
+
+		err := ng.saveAlertDefinition(&q)
+		require.NoError(t, err)
+
+		err = ng.saveAlertDefinition(&q)
+		require.Error(t, err)
+		assert.True(t, ng.SQLStore.Dialect.IsUniqueConstraintViolation(err))
+	})
+}
 
 func TestUpdatingAlertDefinition(t *testing.T) {
 	t.Run("zero rows affected when updating unknown alert", func(t *testing.T) {
