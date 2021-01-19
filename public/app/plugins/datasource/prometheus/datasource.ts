@@ -663,7 +663,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   }
 
   getExemplars(query: PromQueryRequest) {
-    const url = '/api/v1/query_exemplar';
+    const url = '/api/v1/query_exemplars';
     return this._request<PromDataSuccessResponse<PromExemplarData>>(
       url,
       { query: query.expr, start: query.start.toString(), end: query.end.toString() },

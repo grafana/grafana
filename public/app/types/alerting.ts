@@ -1,6 +1,6 @@
 import { PanelData, SelectableValue } from '@grafana/data';
 import { PanelQueryRunner } from '../features/query/state/PanelQueryRunner';
-import { QueryGroupOptions } from '../features/query/components/QueryGroupOptions';
+import { QueryGroupOptions } from './query';
 
 export interface AlertRuleDTO {
   id: number;
