@@ -25,17 +25,17 @@ describe('VersionSettings', () => {
     // @ts-ignore
     historySrv.getHistoryList.mockResolvedValue(versions);
     render(<VersionsSettings dashboard={dashboard} />);
-    
+
     expect(screen.getByRole('heading', { name: /versions/i })).toBeInTheDocument();
     expect(screen.queryByText(/fetching history list/i)).toBeInTheDocument();
-    
+
     await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());
     const tableBodyRows = within(screen.getAllByRole('rowgroup')[1]).getAllByRole('row');
-    
+
     expect(tableBodyRows.length).toBe(versions.length);
-    
+
     const firstRow = within(screen.getAllByRole('rowgroup')[1]).getAllByRole('row')[0];
-    
+
     expect(within(firstRow).getByText(/latest/i)).toBeInTheDocument();
     expect(within(screen.getByRole('table')).getAllByText(/latest/i)).toHaveLength(1);
   });
@@ -44,9 +44,12 @@ describe('VersionSettings', () => {
     // @ts-ignore
     historySrv.getHistoryList.mockResolvedValue(versions.slice(0, 1));
     render(<VersionsSettings dashboard={dashboard} />);
+
     expect(screen.queryByRole('button', { name: /show more versions/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /compare versions/i })).not.toBeInTheDocument();
+
     await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());
+
     expect(screen.queryByRole('button', { name: /show more versions/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /compare versions/i })).not.toBeInTheDocument();
   });
@@ -55,9 +58,12 @@ describe('VersionSettings', () => {
     // @ts-ignore
     historySrv.getHistoryList.mockResolvedValue(versions.slice(0, VERSIONS_FETCH_LIMIT - 5));
     render(<VersionsSettings dashboard={dashboard} />);
+
     expect(screen.queryByRole('button', { name: /show more versions|/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /compare versions/i })).not.toBeInTheDocument();
+
     await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());
+
     expect(screen.queryByRole('button', { name: /show more versions/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /compare versions/i })).toBeInTheDocument();
   });
@@ -66,8 +72,10 @@ describe('VersionSettings', () => {
     // @ts-ignore
     historySrv.getHistoryList.mockResolvedValue(versions.slice(0, VERSIONS_FETCH_LIMIT));
     render(<VersionsSettings dashboard={dashboard} />);
+
     expect(screen.queryByRole('button', { name: /show more versions/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /compare versions/i })).not.toBeInTheDocument();
+
     await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());
     const compareButton = screen.getByRole('button', { name: /compare versions/i });
     const showMoreButton = screen.getByRole('button', { name: /show more versions/i });
@@ -86,13 +94,19 @@ describe('VersionSettings', () => {
       .mockImplementationOnce(() => Promise.resolve(versions.slice(VERSIONS_FETCH_LIMIT, versions.length)));
 
     render(<VersionsSettings dashboard={dashboard} />);
+
     expect(historySrv.getHistoryList).toBeCalledTimes(1);
+
     await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());
+
     expect(within(screen.getAllByRole('rowgroup')[1]).getAllByRole('row').length).toBe(VERSIONS_FETCH_LIMIT);
+
     const showMoreButton = screen.getByRole('button', { name: /show more versions/i });
     userEvent.click(showMoreButton);
+
     expect(historySrv.getHistoryList).toBeCalledTimes(2);
     expect(screen.queryByText(/Fetching more entries/i)).toBeInTheDocument();
+
     await waitFor(() =>
       expect(within(screen.getAllByRole('rowgroup')[1]).getAllByRole('row').length).toBe(versions.length)
     );
@@ -105,8 +119,11 @@ describe('VersionSettings', () => {
     historySrv.calculateDiff.mockResolvedValue('<div></div>');
 
     render(<VersionsSettings dashboard={dashboard} />);
+
     expect(historySrv.getHistoryList).toBeCalledTimes(1);
+
     await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());
+
     const compareButton = screen.getByRole('button', { name: /compare versions/i });
     const tableBody = screen.getAllByRole('rowgroup')[1];
     userEvent.click(within(tableBody).getAllByRole('checkbox')[1]);
