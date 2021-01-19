@@ -25,6 +25,6 @@ e2e.scenario({
       });
 
     const canvases = e2e().get('canvas');
-    canvases.should('have.length', 2);
+    canvases.should('have.length', 1);
   },
 });

@@ -5,28 +5,14 @@ import { SeriesIcon } from './SeriesIcon';
 interface Props {
   disabled: boolean;
   color: string;
-  yAxis: number;
   onColorChange: (color: string) => void;
-  onToggleAxis?: () => void;
 }
 
-export const VizLegendSeriesIcon: React.FunctionComponent<Props> = ({
-  disabled,
-  yAxis,
-  color,
-  onColorChange,
-  onToggleAxis,
-}) => {
+export const VizLegendSeriesIcon: React.FunctionComponent<Props> = ({ disabled, color, onColorChange }) => {
   return disabled ? (
     <SeriesIcon color={color} />
   ) : (
-    <SeriesColorPicker
-      yaxis={yAxis}
-      color={color}
-      onChange={onColorChange}
-      onToggleAxis={onToggleAxis}
-      enableNamedColors
-    >
+    <SeriesColorPicker color={color} onChange={onColorChange} enableNamedColors>
       {({ ref, showColorPicker, hideColorPicker }) => (
         <SeriesIcon
           color={color}

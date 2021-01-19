@@ -22,7 +22,7 @@ interface PanelOptionsEditorProps<TOptions> {
   options: TOptions;
   onChange: (options: TOptions) => void;
 }
-
+const DISPLAY_OPTIONS_CATEGORY = 'Display';
 export const PanelOptionsEditor: React.FC<PanelOptionsEditorProps<any>> = ({
   plugin,
   options,
@@ -33,7 +33,10 @@ export const PanelOptionsEditor: React.FC<PanelOptionsEditorProps<any>> = ({
 }) => {
   const optionEditors = useMemo<Record<string, PanelOptionsEditorItem[]>>(() => {
     return groupBy(plugin.optionEditors.list(), i => {
-      return i.category ? i.category[0] : 'Display';
+      if (!i.category) {
+        return DISPLAY_OPTIONS_CATEGORY;
+      }
+      return i.category[0] ? i.category[0] : DISPLAY_OPTIONS_CATEGORY;
     });
   }, [plugin]);
 
@@ -62,7 +65,7 @@ export const PanelOptionsEditor: React.FC<PanelOptionsEditorProps<any>> = ({
             }
 
             const label = (
-              <Label description={e.description} category={e.category?.slice(1)}>
+              <Label description={e.description} category={e.category?.slice(1) as string[]}>
                 {e.name}
               </Label>
             );

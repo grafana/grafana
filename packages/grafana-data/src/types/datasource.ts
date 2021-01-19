@@ -282,7 +282,7 @@ export abstract class DataSourceApi<
   interpolateVariablesInQueries?(queries: TQuery[], scopedVars: ScopedVars | {}): TQuery[];
 
   /**
-   * An annotation processor allows explict control for how annotations are managed.
+   * An annotation processor allows explicit control for how annotations are managed.
    *
    * It is only necessary to configure an annotation processor if the default behavior is not desirable
    */
@@ -431,7 +431,7 @@ export interface DataQuery {
   queryType?: string;
 
   /**
-   * The data topic resuls should be attached to
+   * The data topic results should be attached to
    */
   dataTopic?: DataTopic;
 

@@ -1,4 +1,4 @@
-import uPlot, { Scale } from 'uplot';
+import uPlot, { Scale, Range } from 'uplot';
 import { PlotConfigBuilder } from '../types';
 import { ScaleDistribution } from '../config';
 
@@ -7,6 +7,8 @@ export interface ScaleProps {
   isTime?: boolean;
   min?: number | null;
   max?: number | null;
+  softMin?: number | null;
+  softMax?: number | null;
   range?: () => number[]; // min/max
   distribution?: ScaleDistribution;
   log?: number;
@@ -18,26 +20,8 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
     this.props.max = optMinMax('max', this.props.max, props.max);
   }
 
-  // uPlot range function
-  range = (u: uPlot, dataMin: number, dataMax: number, scaleKey: string) => {
-    const { min, max } = this.props;
-
-    const scale = u.scales[scaleKey];
-
-    let smin, smax;
-
-    if (scale.distr === 1) {
-      [smin, smax] = uPlot.rangeNum(min ?? dataMin, max ?? dataMax, 0.1 as any, true);
-    } else if (scale.distr === 3) {
-      /**@ts-ignore (uPlot 1.4.7 typings are wrong and exclude logBase arg) */
-      [smin, smax] = uPlot.rangeLog(min ?? dataMin, max ?? dataMax, scale.log, true);
-    }
-
-    return [min ?? smin, max ?? smax];
-  };
-
   getConfig() {
-    const { isTime, scaleKey, range } = this.props;
+    const { isTime, scaleKey, min: hardMin, max: hardMax, softMin, softMax, range } = this.props;
     const distribution = !isTime
       ? {
           distr: this.props.distribution === ScaleDistribution.Logarithmic ? 3 : 1,
@@ -45,11 +29,58 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
         }
       : {};
 
+    // uPlot's default ranging config for both min & max is {pad: 0.1, hard: null, soft: 0, mode: 3}
+    let softMinMode: Range.SoftMode = softMin == null ? 3 : softMin === 0 ? 1 : 2;
+    let softMaxMode: Range.SoftMode = softMax == null ? 3 : softMax === 0 ? 1 : 2;
+
+    const rangeConfig: Range.Config = {
+      min: {
+        pad: 0.1,
+        hard: hardMin ?? -Infinity,
+        soft: softMin || 0,
+        mode: softMinMode,
+      },
+      max: {
+        pad: 0.1,
+        hard: hardMax ?? Infinity,
+        soft: softMax || 0,
+        mode: softMaxMode,
+      },
+    };
+
+    // uPlot range function
+    const rangeFn = (u: uPlot, dataMin: number, dataMax: number, scaleKey: string) => {
+      const scale = u.scales[scaleKey];
+
+      let minMax = [dataMin, dataMax];
+
+      let hardMinOnly = softMin == null && hardMin != null;
+      let hardMaxOnly = softMax == null && hardMax != null;
+
+      if (scale.distr === 1) {
+        // @ts-ignore here we may use hardMin / hardMax to make sure any extra padding is computed from a more accurate delta
+        minMax = uPlot.rangeNum(hardMinOnly ? hardMin : dataMin, hardMaxOnly ? hardMax : dataMax, rangeConfig);
+      } else if (scale.distr === 3) {
+        minMax = uPlot.rangeLog(dataMin, dataMax, scale.log ?? 10, true);
+      }
+
+      // if all we got were hard limits, treat them as static min/max
+      if (hardMinOnly) {
+        minMax[0] = hardMin!;
+      }
+
+      if (hardMaxOnly) {
+        minMax[1] = hardMax!;
+      }
+
+      return minMax;
+    };
+
     return {
       [scaleKey]: {
         time: isTime,
         auto: !isTime,
-        range: range ?? this.range,
+        range: range ?? rangeFn,
         ...distribution,
       },
     };

@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -18,9 +19,9 @@ import (
 
 // QueryMetricsV2 returns query metrics.
 // POST /api/ds/query   DataSource query w/ expressions
-func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricRequest) Response {
+func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricRequest) response.Response {
 	if len(reqDTO.Queries) == 0 {
-		return Error(400, "No queries found in query", nil)
+		return response.Error(400, "No queries found in query", nil)
 	}
 
 	request := &tsdb.TsdbQuery{
@@ -41,7 +42,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 		datasourceID, err := query.Get("datasourceId").Int64()
 		if err != nil {
 			hs.log.Debug("Can't process query since it's missing data source ID")
-			return Error(400, "Query missing data source ID", nil)
+			return response.Error(400, "Query missing data source ID", nil)
 		}
 
 		if i == 0 && !hasExpr {
@@ -49,12 +50,12 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 			if err != nil {
 				hs.log.Debug("Encountered error getting data source", "err", err, "id", datasourceID)
 				if errors.Is(err, models.ErrDataSourceAccessDenied) {
-					return Error(403, "Access denied to data source", err)
+					return response.Error(403, "Access denied to data source", err)
 				}
 				if errors.Is(err, models.ErrDataSourceNotFound) {
-					return Error(400, "Invalid data source ID", err)
+					return response.Error(400, "Invalid data source ID", err)
 				}
-				return Error(500, "Unable to load data source metadata", err)
+				return response.Error(500, "Unable to load data source metadata", err)
 			}
 		}
 
@@ -73,16 +74,16 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 	if !hasExpr {
 		resp, err = tsdb.HandleRequest(c.Req.Context(), ds, request)
 		if err != nil {
-			return Error(500, "Metric request error", err)
+			return response.Error(500, "Metric request error", err)
 		}
 	} else {
 		if !hs.Cfg.IsExpressionsEnabled() {
-			return Error(404, "Expressions feature toggle is not enabled", nil)
+			return response.Error(404, "Expressions feature toggle is not enabled", nil)
 		}
 
 		resp, err = expr.WrapTransformData(c.Req.Context(), request)
 		if err != nil {
-			return Error(500, "Transform request error", err)
+			return response.Error(500, "Transform request error", err)
 		}
 	}
 
@@ -95,29 +96,29 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 		}
 	}
 
-	return jsonStreaming(statusCode, resp)
+	return response.JSONStreaming(statusCode, resp)
 }
 
 // QueryMetrics returns query metrics
 // POST /api/tsdb/query
-func (hs *HTTPServer) QueryMetrics(c *models.ReqContext, reqDto dtos.MetricRequest) Response {
+func (hs *HTTPServer) QueryMetrics(c *models.ReqContext, reqDto dtos.MetricRequest) response.Response {
 	timeRange := tsdb.NewTimeRange(reqDto.From, reqDto.To)
 
 	if len(reqDto.Queries) == 0 {
-		return Error(400, "No queries found in query", nil)
+		return response.Error(400, "No queries found in query", nil)
 	}
 
 	datasourceId, err := reqDto.Queries[0].Get("datasourceId").Int64()
 	if err != nil {
-		return Error(400, "Query missing datasourceId", nil)
+		return response.Error(400, "Query missing datasourceId", nil)
 	}
 
 	ds, err := hs.DatasourceCache.GetDatasource(datasourceId, c.SignedInUser, c.SkipCache)
 	if err != nil {
 		if errors.Is(err, models.ErrDataSourceAccessDenied) {
-			return Error(403, "Access denied to datasource", err)
+			return response.Error(403, "Access denied to datasource", err)
 		}
-		return Error(500, "Unable to load datasource meta data", err)
+		return response.Error(500, "Unable to load datasource meta data", err)
 	}
 
 	request := &tsdb.TsdbQuery{
@@ -138,7 +139,7 @@ func (hs *HTTPServer) QueryMetrics(c *models.ReqContext, reqDto dtos.MetricReque
 
 	resp, err := tsdb.HandleRequest(c.Req.Context(), ds, request)
 	if err != nil {
-		return Error(500, "Metric request error", err)
+		return response.Error(500, "Metric request error", err)
 	}
 
 	statusCode := 200
@@ -150,11 +151,11 @@ func (hs *HTTPServer) QueryMetrics(c *models.ReqContext, reqDto dtos.MetricReque
 		}
 	}
 
-	return JSON(statusCode, &resp)
+	return response.JSON(statusCode, &resp)
 }
 
 // GET /api/tsdb/testdata/scenarios
-func GetTestDataScenarios(c *models.ReqContext) Response {
+func GetTestDataScenarios(c *models.ReqContext) response.Response {
 	result := make([]interface{}, 0)
 
 	scenarioIds := make([]string, 0)
@@ -173,27 +174,27 @@ func GetTestDataScenarios(c *models.ReqContext) Response {
 		})
 	}
 
-	return JSON(200, &result)
+	return response.JSON(200, &result)
 }
 
 // GenerateError generates a index out of range error
-func GenerateError(c *models.ReqContext) Response {
+func GenerateError(c *models.ReqContext) response.Response {
 	var array []string
 	// nolint: govet
-	return JSON(200, array[20])
+	return response.JSON(200, array[20])
 }
 
 // GET /api/tsdb/testdata/gensql
-func GenerateSQLTestData(c *models.ReqContext) Response {
+func GenerateSQLTestData(c *models.ReqContext) response.Response {
 	if err := bus.Dispatch(&models.InsertSQLTestDataCommand{}); err != nil {
-		return Error(500, "Failed to insert test data", err)
+		return response.Error(500, "Failed to insert test data", err)
 	}
 
-	return JSON(200, &util.DynMap{"message": "OK"})
+	return response.JSON(200, &util.DynMap{"message": "OK"})
 }
 
 // GET /api/tsdb/testdata/random-walk
-func GetTestDataRandomWalk(c *models.ReqContext) Response {
+func GetTestDataRandomWalk(c *models.ReqContext) response.Response {
 	from := c.Query("from")
 	to := c.Query("to")
 	intervalMs := c.QueryInt64("intervalMs")
@@ -213,8 +214,8 @@ func GetTestDataRandomWalk(c *models.ReqContext) Response {
 
 	resp, err := tsdb.HandleRequest(context.Background(), dsInfo, request)
 	if err != nil {
-		return Error(500, "Metric request error", err)
+		return response.Error(500, "Metric request error", err)
 	}
 
-	return JSON(200, &resp)
+	return response.JSON(200, &resp)
 }
