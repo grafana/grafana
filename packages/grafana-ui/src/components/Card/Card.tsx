@@ -290,15 +290,15 @@ const Figure: FC<ChildProps & { align?: 'top' | 'center' }> = ({ children, style
 
 Figure.displayName = 'Figure';
 
-const Meta: FC<ChildProps> = memo(({ children, styles }) => {
+const Meta: FC<ChildProps & { separator?: string }> = memo(({ children, styles, separator = '|' }) => {
   let meta = children;
 
-  // Join meta data elements by '|'
+  // Join meta data elements by separator
   if (Array.isArray(children)) {
     meta = React.Children.toArray(children).reduce((prev, curr, i) => [
       prev,
       <span key={`separator_${i}`} className={styles?.separator}>
-        |
+        {separator}
       </span>,
       curr,
     ]);
