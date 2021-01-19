@@ -1,7 +1,6 @@
 package librarypanels
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -66,7 +65,7 @@ func (lps *LibraryPanelService) LoadLibraryPanelsForDashboard(dash *models.Dashb
 		// we have a library panel
 		uid := libraryPanel.Get("uid").MustString()
 		if len(uid) == 0 {
-			return errors.New("found a library panel without uid")
+			return errLibraryPanelHeaderUIDMissing
 		}
 
 		libraryPanelInDB, ok := libraryPanels[uid]
@@ -118,11 +117,11 @@ func (lps *LibraryPanelService) CleanLibraryPanelsForDashboard(dash *models.Dash
 		// we have a library panel
 		uid := libraryPanel.Get("uid").MustString()
 		if len(uid) == 0 {
-			return errors.New("found a library panel without uid")
+			return errLibraryPanelHeaderUIDMissing
 		}
 		name := libraryPanel.Get("name").MustString()
 		if len(name) == 0 {
-			return errors.New("found a library panel without name")
+			return errLibraryPanelHeaderNameMissing
 		}
 
 		gridPos := panelAsJSON.Get("gridPos").MustMap()
@@ -157,7 +156,7 @@ func (lps *LibraryPanelService) ConnectLibraryPanelsForDashboard(c *models.ReqCo
 		// we have a library panel
 		uid := libraryPanel.Get("uid").MustString()
 		if len(uid) == 0 {
-			return errors.New("found a library panel without uid")
+			return errLibraryPanelHeaderUIDMissing
 		}
 		err := lps.connectDashboard(c, uid, dash.Id)
 		if err != nil {
@@ -185,7 +184,7 @@ func (lps *LibraryPanelService) DisconnectLibraryPanelsForDashboard(c *models.Re
 		// we have a library panel
 		uid := libraryPanel.Get("uid").MustString()
 		if len(uid) == 0 {
-			return errors.New("found a library panel without uid")
+			return errLibraryPanelHeaderUIDMissing
 		}
 		err := lps.disconnectDashboard(c, uid, dash.Id)
 		if err != nil {
