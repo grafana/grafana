@@ -221,9 +221,9 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   };
 
   onDisableQuery = () => {
-    this.props.query.hide = !this.props.query.hide;
+    const { query } = this.props;
+    this.props.onChange({ ...query, hide: !query.hide });
     this.props.onRunQuery();
-    this.forceUpdate();
   };
 
   renderCollapsedText(): string | null {
