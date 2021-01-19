@@ -139,7 +139,7 @@ export class PanelPlugin<
     configDefaults.custom = {} as TFieldConfigOptions;
 
     for (const option of this.fieldConfigRegistry.list()) {
-      if (option.defaultValue === null || option.defaultValue === undefined) {
+      if (option.defaultValue === undefined) {
         continue;
       }
 

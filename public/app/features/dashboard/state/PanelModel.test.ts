@@ -38,7 +38,7 @@ setTemplateSrv(
     },
     // @ts-ignore
     getVariableWithName: (name: string) => {
-      return variablesMock.filter(v => v.name === name)[0];
+      return variablesMock.filter((v) => v.name === name)[0];
     },
   })
 );
@@ -121,7 +121,7 @@ describe('PanelModel', () => {
         {} // angular
       );
 
-      panelPlugin.setPanelOptions(builder => {
+      panelPlugin.setPanelOptions((builder) => {
         builder.addBooleanSwitch({
           name: 'Show thresholds',
           path: 'showThresholds',
@@ -242,7 +242,7 @@ describe('PanelModel', () => {
           },
         });
 
-        newPlugin.setPanelOptions(builder => {
+        newPlugin.setPanelOptions((builder) => {
           builder.addBooleanSwitch({
             name: 'Show thresholds labels',
             path: 'showThresholdLabels',
@@ -285,66 +285,6 @@ describe('PanelModel', () => {
       it('should remove alert rule when changing type that does not support it', () => {
         model.changePlugin(getPanelPlugin({ id: 'table' }));
         expect(model.alert).toBe(undefined);
-      });
-    });
-
-    describe('when changing panel type to one that does not support by value color mode', () => {
-      beforeEach(() => {
-        model.fieldConfig.defaults.color = { mode: FieldColorModeId.Thresholds };
-
-        const newPlugin = getPanelPlugin({ id: 'graph' });
-        newPlugin.useFieldConfig({
-          standardOptions: {
-            [FieldConfigProperty.Color]: {
-              settings: {
-                byValueSupport: false,
-              },
-            },
-          },
-        });
-
-        model.editSourceId = 1001;
-        model.changePlugin(newPlugin);
-        model.alert = { id: 2 };
-      });
-
-      it('should change color mode', () => {
-        expect(model.fieldConfig.defaults.color.mode).toBe(FieldColorModeId.PaletteClassic);
-      });
-    });
-
-    describe('when changing panel type from one not supporting by value color mode to one that supports it', () => {
-      const prepareModel = (colorOptions?: FieldColorConfigSettings) => {
-        const newModel = new PanelModel(modelJson);
-        newModel.fieldConfig.defaults.color = { mode: FieldColorModeId.PaletteClassic };
-
-        const newPlugin = getPanelPlugin({ id: 'graph' });
-        newPlugin.useFieldConfig({
-          standardOptions: {
-            [FieldConfigProperty.Color]: {
-              settings: {
-                byValueSupport: true,
-                ...colorOptions,
-              },
-            },
-          },
-        });
-
-        newModel.editSourceId = 1001;
-        newModel.changePlugin(newPlugin);
-        newModel.alert = { id: 2 };
-        return newModel;
-      };
-
-      it('should keep supported mode', () => {
-        const testModel = prepareModel();
-
-        expect(testModel.fieldConfig.defaults.color!.mode).toBe(FieldColorModeId.PaletteClassic);
-      });
-
-      it('should change to thresholds mode when it prefers to', () => {
-        const testModel = prepareModel({ preferThresholdsMode: true });
-        expect(testModel.fieldConfig.defaults.color!.mode).toBe(FieldColorModeId.Thresholds);
       });
     });
 
@@ -458,7 +398,7 @@ const variablesMock = [
     hide: false,
     current: { value: 'val1' },
     skipUrlSync: false,
-    getValueForUrl: function() {
+    getValueForUrl: function () {
       return 'val1';
     },
   } as VariableModel,
@@ -469,7 +409,7 @@ const variablesMock = [
     hide: false,
     current: { value: 'val2' },
     skipUrlSync: false,
-    getValueForUrl: function() {
+    getValueForUrl: function () {
       return 'val2';
     },
   } as VariableModel,
