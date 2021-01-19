@@ -270,3 +270,16 @@ datasources:
     access: proxy
     url: http://localhost:9411
     editable: false
+
+  - name: postgres-cert
+    type: postgres
+    url: localhost:5432
+    database: grafana
+    user: grafana
+    secureJsonData:
+      password: password
+    jsonData:
+      sslmode: "verify-ca"
+      sslRootCertFile: devenv/docker/blocks/postgres_ssl/certs/ca.crt
+      sslCertFile: devenv/docker/blocks/postgres_ssl/tmp/certs/client.crt
+      sslKeyFile: devenv/docker/blocks/postgres_ssl/tmp/keys/client.key

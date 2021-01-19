@@ -1,0 +1,28 @@
+  postgres:
+    image: postgres:${postgres_version}
+    volumes:
+      - ./docker/blocks/postgres_ssl/pgconf/server.crt:/var/lib/postgresql/server.crt
+      - ./docker/blocks/postgres_ssl/pgconf/server.key:/var/lib/postgresql/server.key
+      - ./docker/blocks/postgres_ssl/pgconf/ca.crt:/var/lib/postgresql/ca.crt
+    environment:
+      POSTGRES_USER: grafana
+      POSTGRES_PASSWORD: password
+      POSTGRES_DATABASE: grafana
+    ports:
+      - "5432:5432"
+    command: postgres -c log_connections=on -c logging_collector=on -c log_destination=stderr -c log_directory=/var/log/postgresql -c ssl=on -c ssl_cert_file=/var/lib/postgresql/server.crt -c ssl_key_file=/var/lib/postgresql/server.key -c ssl_ca_file=/var/lib/postgresql/ca.crt
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-q", "-d", "$$POSTGRES_DATABASE", "-U", "$$POSTGRES_USER" ]
+      timeout: 45s
+      interval: 10s
+      retries: 10
+
+  fake-postgres-data:
+    image: grafana/fake-data-gen
+    network_mode: bridge
+    environment:
+      FD_DATASOURCE: postgres
+      FD_PORT: 5432
+    depends_on:
+      postgres:
+        condition: service_healthy
