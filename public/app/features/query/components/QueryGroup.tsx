@@ -294,6 +294,10 @@ export class QueryGroup extends PureComponent<Props, State> {
     );
   }
 
+  isExpressionsSupported(dsSettings: DataSourceInstanceSettings): boolean {
+    return (dsSettings.meta.alerting || dsSettings.meta.mixed) === true;
+  }
+
   renderAddQueryRow(dsSettings: DataSourceInstanceSettings, styles: QueriesTabStyles) {
     const { isAddingMixed } = this.state;
     const showAddButton = !(isAddingMixed || isSharedDashboardQuery(dsSettings.name));
@@ -311,7 +315,7 @@ export class QueryGroup extends PureComponent<Props, State> {
           </Button>
         )}
         {isAddingMixed && this.renderMixedPicker()}
-        {dsSettings.meta.alerting && (
+        {this.isExpressionsSupported(dsSettings) && (
           <div>
             <Button
               icon="plus"
