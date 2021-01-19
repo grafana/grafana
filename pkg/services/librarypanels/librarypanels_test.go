@@ -978,7 +978,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 }
 
 func TestDisconnectLibraryPanelsForDashboard(t *testing.T) {
-	testScenario(t, "When an admin tries to delete a dashboard with a library panel, it should disconnect the dashboard",
+	testScenario(t, "When an admin tries to delete a dashboard with a library panel, it should disconnect the two",
 		func(t *testing.T, sc scenarioContext) {
 			command := getCreateCommand(1, "Text - Library Panel1")
 			response := sc.service.createHandler(sc.reqContext, command)
