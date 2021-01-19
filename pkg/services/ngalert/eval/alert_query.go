@@ -40,8 +40,8 @@ func (d *Duration) UnmarshalJSON(b []byte) error {
 // RelativeTimeRange is the per query start and end time
 // for requests.
 type RelativeTimeRange struct {
-	From Duration
-	To   Duration
+	From Duration `json:"from"`
+	To   Duration `json:"to"`
 }
 
 // isValid checks that From duration is greater than To duration.
