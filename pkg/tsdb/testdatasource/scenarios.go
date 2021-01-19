@@ -12,7 +12,9 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util/errutil"
 
 	"github.com/grafana/grafana/pkg/components/null"
@@ -32,10 +34,94 @@ type Scenario struct {
 
 var ScenarioRegistry map[string]*Scenario
 
-func RegisterScenarioQueryHandlers(logger log.Logger, mux *datasource.QueryTypeMux) {
-	mux.HandleFunc("", func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-		return executeFallbackScenario(ctx, logger, req)
-	})
+func (p *testDataPlugin) registerScenarioQueryHandlers(mux *datasource.QueryTypeMux) {
+	mux.HandleFunc("random_walk", p.handleRandomWalkScenario)
+
+	mux.HandleFunc("", p.handleFallbackScenario)
+}
+
+func (p *testDataPlugin) handleFallbackScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+
+	tsdbQuery := &tsdb.TsdbQuery{
+		TimeRange: tsdb.NewTimeRange(strconv.FormatInt(req.Queries[0].TimeRange.From.UnixNano()/int64(time.Millisecond), 10), strconv.FormatInt(req.Queries[0].TimeRange.To.UnixNano()/int64(time.Millisecond), 10)),
+		Headers:   map[string]string{},
+		Queries:   []*tsdb.Query{},
+	}
+
+	if req.PluginContext.User != nil {
+		tsdbQuery.User = &models.SignedInUser{
+			OrgId:   req.PluginContext.OrgID,
+			Name:    req.PluginContext.User.Name,
+			Login:   req.PluginContext.User.Login,
+			Email:   req.PluginContext.User.Email,
+			OrgRole: models.RoleType(req.PluginContext.User.Role),
+		}
+	}
+
+	for _, q := range req.Queries {
+		model, err := simplejson.NewJson(q.JSON)
+		if err != nil {
+			p.logger.Error("Failed to unmarschal query model to JSON", "error", err)
+			continue
+		}
+		tsdbQuery.Queries = append(tsdbQuery.Queries, &tsdb.Query{
+			DataSource:    &models.DataSource{},
+			IntervalMs:    q.Interval.Milliseconds(),
+			MaxDataPoints: q.MaxDataPoints,
+			QueryType:     "",
+			RefId:         q.RefID,
+			Model:         model,
+		})
+	}
+
+	result := &tsdb.Response{}
+	result.Results = make(map[string]*tsdb.QueryResult)
+
+	for _, query := range tsdbQuery.Queries {
+		scenarioId := query.Model.Get("scenarioId").MustString("random_walk")
+		if scenario, exist := ScenarioRegistry[scenarioId]; exist {
+			result.Results[query.RefId] = scenario.Handler(query, tsdbQuery)
+			result.Results[query.RefId].RefId = query.RefId
+		} else {
+			p.logger.Error("Scenario not found", "scenarioId", scenarioId)
+		}
+	}
+
+	for refID, r := range result.Results {
+		for _, series := range r.Series {
+			frame, err := tsdb.SeriesToFrame(series)
+			frame.RefID = refID
+			if err != nil {
+				return nil, err
+			}
+			respD := resp.Responses[refID]
+			respD.Frames = append(respD.Frames, frame)
+			resp.Responses[refID] = respD
+		}
+	}
+
+	return resp, nil
+}
+
+func (p *testDataPlugin) handleRandomWalkScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+
+	for _, q := range req.Queries {
+		model, err := simplejson.NewJson(q.JSON)
+		if err != nil {
+			continue
+		}
+		seriesCount := model.Get("seriesCount").MustInt(1)
+
+		for i := 0; i < seriesCount; i++ {
+			respD := resp.Responses[q.RefID]
+			respD.Frames = append(respD.Frames, getRandomWalkV2(q, model, i))
+			resp.Responses[q.RefID] = respD
+		}
+	}
+
+	return resp, nil
 }
 
 func init() {
@@ -574,6 +660,50 @@ func predictableSeries(timeRange *tsdb.TimeRange, timeStep, length int64, getVal
 	return &points, nil
 }
 
+func getRandomWalkV2(query backend.DataQuery, model *simplejson.Json, index int) *data.Frame {
+	timeWalkerMs := query.TimeRange.From.UnixNano() / int64(time.Millisecond)
+	to := query.TimeRange.To.UnixNano() / int64(time.Millisecond)
+	startValue := model.Get("startValue").MustFloat64(rand.Float64() * 100)
+	spread := model.Get("spread").MustFloat64(1)
+	noise := model.Get("noise").MustFloat64(0)
+
+	min, err := model.Get("min").Float64()
+	hasMin := err == nil
+	max, err := model.Get("max").Float64()
+	hasMax := err == nil
+
+	timeVec := make([]*time.Time, 0)
+	floatVec := make([]*float64, 0)
+
+	walker := startValue
+
+	for i := int64(0); i < 10000 && timeWalkerMs < to; i++ {
+		nextValue := walker + (rand.Float64() * noise)
+
+		if hasMin && nextValue < min {
+			nextValue = min
+			walker = min
+		}
+
+		if hasMax && nextValue > max {
+			nextValue = max
+			walker = max
+		}
+
+		t := time.Unix(timeWalkerMs/int64(1e+3), (timeWalkerMs%int64(1e+3))*int64(1e+6))
+		timeVec = append(timeVec, &t)
+		floatVec = append(floatVec, &nextValue)
+
+		walker += (rand.Float64() - 0.5) * spread
+		timeWalkerMs += query.Interval.Milliseconds()
+	}
+
+	return data.NewFrame(frameNameForQuery(query, model, index),
+		data.NewField("time", nil, timeVec),
+		data.NewField("value", parseLabelsV2(model), floatVec),
+	)
+}
+
 func getRandomWalk(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery, index int) *tsdb.TimeSeries {
 	timeWalkerMs := tsdbQuery.TimeRange.GetFromAsMsEpoch()
 	to := tsdbQuery.TimeRange.GetToAsMsEpoch()
@@ -646,6 +776,37 @@ func parseLabels(query *tsdb.Query) map[string]string {
 	return tags
 }
 
+/**
+ * Looks for a labels request and adds them as tags
+ *
+ * '{job="foo", instance="bar"} => {job: "foo", instance: "bar"}`
+ */
+func parseLabelsV2(model *simplejson.Json) data.Labels {
+	tags := data.Labels{}
+
+	labelText := model.Get("labels").MustString("")
+	if labelText == "" {
+		return data.Labels{}
+	}
+
+	text := strings.Trim(labelText, `{}`)
+	if len(text) < 2 {
+		return tags
+	}
+
+	tags = make(data.Labels)
+
+	for _, keyval := range strings.Split(text, ",") {
+		idx := strings.Index(keyval, "=")
+		key := strings.TrimSpace(keyval[:idx])
+		val := strings.TrimSpace(keyval[idx+1:])
+		val = strings.Trim(val, "\"")
+		tags[key] = val
+	}
+
+	return tags
+}
+
 func getRandomWalkTable(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery) *tsdb.QueryResult {
 	timeWalkerMs := tsdbQuery.TimeRange.GetFromAsMsEpoch()
 	to := tsdbQuery.TimeRange.GetToAsMsEpoch()
@@ -706,6 +867,29 @@ func getRandomWalkTable(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery) *tsdb.Quer
 
 func registerScenario(scenario *Scenario) {
 	ScenarioRegistry[scenario.Id] = scenario
+}
+
+func frameNameForQuery(query backend.DataQuery, model *simplejson.Json, index int) string {
+	name := model.Get("alias").MustString("")
+	suffix := ""
+
+	if index > 0 {
+		suffix = strconv.Itoa(index)
+	}
+
+	if name == "" {
+		name = fmt.Sprintf("%s-series%s", query.RefID, suffix)
+	}
+
+	if name == "__server_names" && len(serverNames) > index {
+		name = serverNames[index]
+	}
+
+	if name == "__house_locations" && len(houseLocations) > index {
+		name = houseLocations[index]
+	}
+
+	return name
 }
 
 func newSeriesForQuery(query *tsdb.Query, index int) *tsdb.TimeSeries {
