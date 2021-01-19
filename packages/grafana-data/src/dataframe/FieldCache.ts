@@ -77,4 +77,13 @@ export class FieldCache {
   getFieldByName(name: string): FieldWithIndex | undefined {
     return this.fieldByName[name];
   }
+
+  /**
+   * Returns the fields with the given label.
+   */
+  getFieldsByLabel(label: string, value: string): FieldWithIndex[] {
+    return Object.values(this.fieldByName).filter(f => {
+      return f.labels && f.labels[label] === value;
+    });
+  }
 }

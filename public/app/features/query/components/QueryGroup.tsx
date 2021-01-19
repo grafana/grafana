@@ -23,9 +23,10 @@ import { Unsubscribable } from 'rxjs';
 import { expressionDatasource, ExpressionDatasourceID } from 'app/features/expressions/ExpressionDatasource';
 import { selectors } from '@grafana/e2e-selectors';
 import { PanelQueryRunner } from '../state/PanelQueryRunner';
-import { QueryGroupOptions, QueryGroupOptionsEditor } from './QueryGroupOptions';
+import { QueryGroupOptionsEditor } from './QueryGroupOptions';
 import { DashboardQueryEditor, isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
 import { css } from 'emotion';
+import { QueryGroupOptions } from 'app/types';
 
 interface Props {
   queryRunner: PanelQueryRunner;

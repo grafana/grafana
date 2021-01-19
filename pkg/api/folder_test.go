@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -143,7 +145,7 @@ func createFolderScenario(t *testing.T, desc string, url string, routePattern st
 		}
 
 		sc := setupScenarioContext(t, url)
-		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
+		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			sc.context.SignedInUser = &models.SignedInUser{OrgId: testOrgID, UserId: testUserID}
 
@@ -173,7 +175,7 @@ func updateFolderScenario(t *testing.T, desc string, url string, routePattern st
 		defer bus.ClearBusHandlers()
 
 		sc := setupScenarioContext(t, url)
-		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
+		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			sc.context.SignedInUser = &models.SignedInUser{OrgId: testOrgID, UserId: testUserID}
 

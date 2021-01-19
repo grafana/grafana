@@ -32,7 +32,7 @@ interface InputState {
 const errorMessage = 'Please enter a past date or "now"';
 
 export const TimeRangeForm: React.FC<Props> = props => {
-  const { value, isFullscreen = false, timeZone, onApply: onApplyFromProps } = props;
+  const { value, isFullscreen = false, timeZone, onApply: onApplyFromProps, isReversed } = props;
 
   const [from, setFrom] = useState<InputState>(valueToState(value.raw.from, false, timeZone));
   const [to, setTo] = useState<InputState>(valueToState(value.raw.to, true, timeZone));
@@ -122,7 +122,7 @@ export const TimeRangeForm: React.FC<Props> = props => {
         onClose={() => setOpen(false)}
         onChange={onChange}
         timeZone={timeZone}
-        isReversed={props.isReversed}
+        isReversed={isReversed}
       />
     </>
   );

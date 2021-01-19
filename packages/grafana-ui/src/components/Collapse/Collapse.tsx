@@ -94,8 +94,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
 export interface Props {
   /** Expand or collapse te content */
   isOpen?: boolean;
-  /** Text for the Collapse header */
-  label: string;
+  /** Element or text for the Collapse header */
+  label: React.ReactNode;
   /** Indicates loading state of the content */
   loading?: boolean;
   /** Toggle collapsed header icon */

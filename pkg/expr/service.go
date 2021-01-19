@@ -14,6 +14,10 @@ const DatasourceName = "__expr__"
 // expression command.
 const DatasourceID = -100
 
+// DatasourceUID is the fake datasource uid used in requests to identify it as an
+// expression command.
+const DatasourceUID = "-100"
+
 // Service is service representation for expression handling.
 type Service struct {
 }

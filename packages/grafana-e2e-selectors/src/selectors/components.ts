@@ -127,7 +127,7 @@ export const Components = {
     backArrow: 'Go Back button',
   },
   OptionsGroup: {
-    toggle: (title: string) => `Options group ${title}`,
+    toggle: (title?: string) => (title ? `Options group ${title}` : 'Options group'),
   },
   PluginVisualization: {
     item: (title: string) => `Plugin visualization item ${title}`,

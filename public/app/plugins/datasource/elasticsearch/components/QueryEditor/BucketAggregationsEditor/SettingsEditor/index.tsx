@@ -4,11 +4,16 @@ import { useDispatch } from '../../../../hooks/useStatelessReducer';
 import { SettingsEditorContainer } from '../../SettingsEditorContainer';
 import { changeBucketAggregationSetting } from '../state/actions';
 import { BucketAggregation } from '../aggregations';
-import { bucketAggregationConfig, intervalOptions, orderByOptions, orderOptions, sizeOptions } from '../utils';
+import {
+  bucketAggregationConfig,
+  createOrderByOptionsFromMetrics,
+  intervalOptions,
+  orderOptions,
+  sizeOptions,
+} from '../utils';
 import { FiltersSettingsEditor } from './FiltersSettingsEditor';
 import { useDescription } from './useDescription';
 import { useQuery } from '../../ElasticsearchQueryContext';
-import { describeMetric } from '../../../../utils';
 
 const inlineFieldProps: Partial<ComponentProps<typeof InlineField>> = {
   labelWidth: 16,
@@ -22,8 +27,7 @@ export const SettingsEditor: FunctionComponent<Props> = ({ bucketAgg }) => {
   const dispatch = useDispatch();
   const { metrics } = useQuery();
   const settingsDescription = useDescription(bucketAgg);
-
-  const orderBy = [...orderByOptions, ...(metrics || []).map(m => ({ label: describeMetric(m), value: m.id }))];
+  const orderBy = createOrderByOptionsFromMetrics(metrics);
 
   return (
     <SettingsEditorContainer label={settingsDescription}>
