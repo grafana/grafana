@@ -71,7 +71,7 @@ func (lps *LibraryPanelService) LoadLibraryPanelsForDashboard(dash *models.Dashb
 
 		libraryPanelInDB, ok := libraryPanels[uid]
 		if !ok {
-			return errors.New("found a library panel that does not exists as a connection")
+			return fmt.Errorf("found connection to library panel %q that isn't in database", uid)
 		}
 
 		// we have a match between what is stored in db and in dashboard json
