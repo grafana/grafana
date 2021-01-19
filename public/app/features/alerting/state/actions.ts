@@ -1,5 +1,5 @@
 import { AppEvents, dateMath } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
 import { updateLocation } from 'app/core/actions';
 import store from 'app/core/store';
@@ -90,6 +90,8 @@ export function createAlertDefinition(): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const queryOptions = getStore().alertDefinition.queryOptions;
     const currentAlertDefinition = getStore().alertDefinition.alertDefinition;
+    const defaultDataSource = await getDataSourceSrv().get(null);
+
     const alertDefinition: AlertDefinition = {
       ...currentAlertDefinition,
       condition: {
@@ -98,8 +100,8 @@ export function createAlertDefinition(): ThunkResult<void> {
           model: {
             expression: query.expr,
             type: query.queryType,
-            datasource: queryOptions.dataSource.name,
-            datasourceUid: queryOptions.dataSource.uid,
+            datasource: queryOptions.dataSource.name ?? defaultDataSource.name,
+            datasourceUid: queryOptions.dataSource.uid ?? defaultDataSource.uid,
           },
           refId: query.refId,
           relativeTimeRange: {
