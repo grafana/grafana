@@ -169,6 +169,9 @@ func (ng *AlertNG) updateAlertDefinition(cmd *updateAlertDefinitionCommand) erro
 
 		_, err = sess.ID(existingAlertDefinition.ID).Update(alertDefinition)
 		if err != nil {
+			if ng.SQLStore.Dialect.IsUniqueConstraintViolation(err) && strings.Contains(err.Error(), "title") {
+				return fmt.Errorf("an alert definition with the title '%s' already exists: %w", cmd.Title, err)
+			}
 			return err
 		}
 
