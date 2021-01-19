@@ -332,7 +332,7 @@ func TestPatchLibraryPanel(t *testing.T) {
 								{
 								  "datasource": "${DS_GDEV-TESTDATA}",
 								  "id": 1,
-								  "name": "Model - New name",
+								  "title": "Model - New name",
 								  "type": "text"
 								}
 							`),
@@ -346,7 +346,7 @@ func TestPatchLibraryPanel(t *testing.T) {
 			require.NoError(t, err)
 			existing.Result.FolderID = int64(2)
 			existing.Result.Name = "Panel - New name"
-			existing.Result.Model["name"] = "Model - New name"
+			existing.Result.Model["title"] = "Model - New name"
 			if diff := cmp.Diff(existing.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 			}
@@ -590,8 +590,8 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 							"uid":  existing.Result.UID,
 							"name": existing.Result.Name,
 						},
-						"name": "Text - Library Panel",
-						"type": "text",
+						"title": "Text - Library Panel",
+						"type":  "text",
 					},
 				},
 			}
@@ -695,6 +695,180 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 		})
 }
 
+func TestCleanLibraryPanelsForDashboard(t *testing.T) {
+	testScenario(t, "When an admin tries to store a dashboard with a library panel, it should just keep the correct JSON properties in library panel",
+		func(t *testing.T, sc scenarioContext) {
+			command := getCreateCommand(1, "Text - Library Panel1")
+			response := sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, response.Status())
+
+			var existing libraryPanelResult
+			err := json.Unmarshal(response.Body(), &existing)
+			require.NoError(t, err)
+
+			dashJSON := map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id": int64(1),
+						"gridPos": map[string]interface{}{
+							"h": 6,
+							"w": 6,
+							"x": 0,
+							"y": 0,
+						},
+					},
+					map[string]interface{}{
+						"id": int64(2),
+						"gridPos": map[string]interface{}{
+							"h": 6,
+							"w": 6,
+							"x": 6,
+							"y": 0,
+						},
+						"datasource": "${DS_GDEV-TESTDATA}",
+						"libraryPanel": map[string]interface{}{
+							"uid":  existing.Result.UID,
+							"name": existing.Result.Name,
+						},
+						"title": "Text - Library Panel",
+						"type":  "text",
+					},
+				},
+			}
+			dash := models.Dashboard{
+				Id:   1,
+				Data: simplejson.NewFromAny(dashJSON),
+			}
+
+			err = sc.service.CleanLibraryPanelsForDashboard(&dash)
+			require.NoError(t, err)
+			expectedJSON := map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id": int64(1),
+						"gridPos": map[string]interface{}{
+							"h": 6,
+							"w": 6,
+							"x": 0,
+							"y": 0,
+						},
+					},
+					map[string]interface{}{
+						"id": int64(2),
+						"gridPos": map[string]interface{}{
+							"h": 6,
+							"w": 6,
+							"x": 6,
+							"y": 0,
+						},
+						"libraryPanel": map[string]interface{}{
+							"uid":  existing.Result.UID,
+							"name": existing.Result.Name,
+						},
+					},
+				},
+			}
+			expected := simplejson.NewFromAny(expectedJSON)
+			if diff := cmp.Diff(expected.Interface(), dash.Data.Interface(), getCompareOptions()...); diff != "" {
+				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+			}
+		})
+
+	testScenario(t, "When an admin tries to store a dashboard with a library panel without uid, it should fail",
+		func(t *testing.T, sc scenarioContext) {
+			command := getCreateCommand(1, "Text - Library Panel1")
+			response := sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, response.Status())
+
+			var existing libraryPanelResult
+			err := json.Unmarshal(response.Body(), &existing)
+			require.NoError(t, err)
+
+			dashJSON := map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id": int64(1),
+						"gridPos": map[string]interface{}{
+							"h": 6,
+							"w": 6,
+							"x": 0,
+							"y": 0,
+						},
+					},
+					map[string]interface{}{
+						"id": int64(2),
+						"gridPos": map[string]interface{}{
+							"h": 6,
+							"w": 6,
+							"x": 6,
+							"y": 0,
+						},
+						"datasource": "${DS_GDEV-TESTDATA}",
+						"libraryPanel": map[string]interface{}{
+							"name": existing.Result.Name,
+						},
+						"title": "Text - Library Panel",
+						"type":  "text",
+					},
+				},
+			}
+			dash := models.Dashboard{
+				Id:   1,
+				Data: simplejson.NewFromAny(dashJSON),
+			}
+
+			err = sc.service.CleanLibraryPanelsForDashboard(&dash)
+			require.Error(t, err)
+		})
+
+	testScenario(t, "When an admin tries to store a dashboard with a library panel without name, it should fail",
+		func(t *testing.T, sc scenarioContext) {
+			command := getCreateCommand(1, "Text - Library Panel1")
+			response := sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, response.Status())
+
+			var existing libraryPanelResult
+			err := json.Unmarshal(response.Body(), &existing)
+			require.NoError(t, err)
+
+			dashJSON := map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id": int64(1),
+						"gridPos": map[string]interface{}{
+							"h": 6,
+							"w": 6,
+							"x": 0,
+							"y": 0,
+						},
+					},
+					map[string]interface{}{
+						"id": int64(2),
+						"gridPos": map[string]interface{}{
+							"h": 6,
+							"w": 6,
+							"x": 6,
+							"y": 0,
+						},
+						"datasource": "${DS_GDEV-TESTDATA}",
+						"libraryPanel": map[string]interface{}{
+							"uid": existing.Result.UID,
+						},
+						"title": "Text - Library Panel",
+						"type":  "text",
+					},
+				},
+			}
+			dash := models.Dashboard{
+				Id:   1,
+				Data: simplejson.NewFromAny(dashJSON),
+			}
+
+			err = sc.service.CleanLibraryPanelsForDashboard(&dash)
+			require.Error(t, err)
+		})
+}
+
 type libraryPanel struct {
 	ID        int64                  `json:"id"`
 	OrgID     int64                  `json:"orgId"`
@@ -749,7 +923,7 @@ func getCreateCommand(folderID int64, name string) createLibraryPanelCommand {
 			{
 			  "datasource": "${DS_GDEV-TESTDATA}",
 			  "id": 1,
-			  "name": "Text - Library Panel",
+			  "title": "Text - Library Panel",
 			  "type": "text"
 			}
 		`),
