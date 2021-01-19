@@ -15,6 +15,6 @@ data into an alert notification. This page explains how to use alert query label
 1. On the Alert tab, click **Create Alert**. If an alert already exists for this panel, then you can just edit the alert directly on the Alert tab.
 1. Labels that exist from the evaluation of the alert query can be used in the alert rule name or alert notification message fields. Alert data template syntax is formatted as follows: `${Label}`. See the image below for an example.    
 1. When you finish writing your rule, click **Save** in the upper right corner to save the alert rule and the dashboard.
-1. Finally, when the alert is in the alerting state, the alert label data is injected into the notification fields where appropriate. 
+1. Finally, when the alert is in the alerting state, the alert label data is injected into the notification fields where appropriate. In the cases where there are multiple unique label values, they will be shown in the notification as comma separated. 
 
 ![Alerting notification template](/img/docs/alerting/notification_template.png)
