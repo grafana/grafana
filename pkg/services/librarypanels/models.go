@@ -33,6 +33,11 @@ type libraryPanelDashboard struct {
 	CreatedBy int64
 }
 
+type libraryPanelHeader struct {
+	UID  string `json:"uid"`
+	Name string `json:"name"`
+}
+
 var (
 	// errLibraryPanelAlreadyExists is an error for when the user tries to add a library panel that already exists.
 	errLibraryPanelAlreadyExists = errors.New("library panel with that name already exists")

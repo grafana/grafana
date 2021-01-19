@@ -2,6 +2,7 @@ package librarypanels
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -11,6 +12,25 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
+
+func setLibraryPanelHeader(libraryPanel *LibraryPanel) error {
+	var m map[string]interface{}
+	err := json.Unmarshal(libraryPanel.Model, &m)
+	if err != nil {
+		return err
+	}
+
+	m["libraryPanel"] = libraryPanelHeader{
+		UID:  libraryPanel.UID,
+		Name: libraryPanel.Name,
+	}
+	libraryPanel.Model, err = json.Marshal(&m)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
 
 // createLibraryPanel adds a Library Panel.
 func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd createLibraryPanelCommand) (LibraryPanel, error) {
@@ -28,12 +48,17 @@ func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd cre
 		UpdatedBy: c.SignedInUser.UserId,
 	}
 	err := lps.SQLStore.WithTransactionalDbSession(context.Background(), func(session *sqlstore.DBSession) error {
+		err := setLibraryPanelHeader(&libraryPanel)
+		if err != nil {
+			return err
+		}
 		if _, err := session.Insert(&libraryPanel); err != nil {
 			if lps.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
 				return errLibraryPanelAlreadyExists
 			}
 			return err
 		}
+
 		return nil
 	})
 
@@ -215,6 +240,10 @@ func (lps *LibraryPanelService) patchLibraryPanel(c *models.ReqContext, cmd patc
 			libraryPanel.Model = panelInDB.Model
 		}
 
+		err = setLibraryPanelHeader(&libraryPanel)
+		if err != nil {
+			return err
+		}
 		if rowsAffected, err := session.ID(panelInDB.ID).Update(&libraryPanel); err != nil {
 			if lps.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
 				return errLibraryPanelAlreadyExists

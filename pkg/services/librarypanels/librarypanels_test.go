@@ -25,6 +25,19 @@ func TestCreateLibraryPanel(t *testing.T) {
 			response = sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 400, response.Status())
 		})
+
+	testScenario(t, "When an admin tries to create a library panel that does not exist, it should succeed",
+		func(t *testing.T, sc scenarioContext) {
+			command := getCreateCommand(1, "Text - Library Panel")
+			response := sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, response.Status())
+
+			var result libraryPanelResult
+			err := json.Unmarshal(response.Body(), &result)
+			l := result.Result.Model["libraryPanel"].(map[string]interface{})
+			require.NoError(t, err)
+			require.Equal(t, l["name"], "Text - Library Panel")
+		})
 }
 
 func TestConnectLibraryPanel(t *testing.T) {
@@ -345,6 +358,10 @@ func TestPatchLibraryPanel(t *testing.T) {
 			existing.Result.FolderID = int64(2)
 			existing.Result.Name = "Panel - New name"
 			existing.Result.Model["name"] = "Model - New name"
+			existing.Result.Model["libraryPanel"] = map[string]interface{}{
+				"uid":  existing.Result.UID,
+				"name": "Panel - New name",
+			}
 			if diff := cmp.Diff(existing.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 			}
@@ -396,6 +413,10 @@ func TestPatchLibraryPanel(t *testing.T) {
 			err = json.Unmarshal(response.Body(), &result)
 			require.NoError(t, err)
 			existing.Result.Name = "New Name"
+			existing.Result.Model["libraryPanel"] = map[string]interface{}{
+				"uid":  existing.Result.UID,
+				"name": "New Name",
+			}
 			if diff := cmp.Diff(existing.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 			}
@@ -422,6 +443,10 @@ func TestPatchLibraryPanel(t *testing.T) {
 			require.NoError(t, err)
 			existing.Result.Model = map[string]interface{}{
 				"name": "New Model Name",
+			}
+			existing.Result.Model["libraryPanel"] = map[string]interface{}{
+				"uid":  existing.Result.UID,
+				"name": existing.Result.Name,
 			}
 			if diff := cmp.Diff(existing.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
