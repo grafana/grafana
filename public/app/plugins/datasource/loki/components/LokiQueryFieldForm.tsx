@@ -118,12 +118,12 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
     }
 
     const lokiLanguageProvider = datasource.languageProvider as LokiLanguageProvider;
-    const { history, absoluteRange } = this.props;
+    const { history } = this.props;
     const { prefix, text, value, wrapperClasses, labelKey } = typeahead;
 
     const result = await lokiLanguageProvider.provideCompletionItems(
       { text, value, prefix, wrapperClasses, labelKey },
-      { history, absoluteRange }
+      { history }
     );
     return result;
   };

@@ -24,7 +24,7 @@ const MAX_VALUE_COUNT = 10000;
 const EMPTY_SELECTOR = '{}';
 export const LAST_USED_LABELS_KEY = 'grafana.datasources.loki.browser.labels';
 
-type onChange = (selector: string) => any;
+type onChange = (selector: string) => void;
 
 interface Props {
   buttonClass: string;
