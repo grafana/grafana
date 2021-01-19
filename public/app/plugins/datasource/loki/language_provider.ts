@@ -443,6 +443,13 @@ export default class LokiLanguageProvider extends LanguageProvider {
     return value;
   };
 
+  fetchSeries = async (match: string): Promise<Array<Record<string, string>>> => {
+    const url = '/loki/api/v1/series';
+    const { from: start, to: end } = this.datasource.getTimeRangeParams();
+    const params = { match, start, end };
+    return await this.request(url, params);
+  };
+
   // Cache key is a bit different here. We round up to a minute the intervals.
   // The rounding may seem strange but makes relative intervals like now-1h less prone to need separate request every
   // millisecond while still actually getting all the keys for the correct interval. This still can create problems

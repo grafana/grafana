@@ -101,6 +101,7 @@ describe('LokiLabelBrowser', () => {
     const defaults: BrowserProps = {
       theme: getTheme(),
       onChange: () => {},
+      autoSelect: 0,
       languageProvider: (mockLanguageProvider as unknown) as LokiLanguageProvider,
     };
 

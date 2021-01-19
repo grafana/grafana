@@ -43,6 +43,7 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
         "addLabelValuesToOptions": [Function],
         "cleanText": [Function],
         "datasource": [Circular],
+        "fetchSeries": [Function],
         "fetchSeriesLabels": [Function],
         "getBeginningCompletionItems": [Function],
         "getPipeCompletionItem": [Function],
