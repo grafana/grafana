@@ -15,11 +15,16 @@ import {
   updateAlertDefinitionUiState,
   loadNotificationTypes,
 } from './state/actions';
-import { AlertDefinition, AlertDefinitionUiState, NotificationChannelType, StoreState } from '../../types';
+import {
+  AlertDefinition,
+  AlertDefinitionUiState,
+  NotificationChannelType,
+  QueryGroupOptions,
+  StoreState,
+} from '../../types';
 
 import { config } from 'app/core/config';
 import { PanelQueryRunner } from '../query/state/PanelQueryRunner';
-import { QueryGroupOptions } from '../query/components/QueryGroupOptions';
 
 interface OwnProps {}
 
