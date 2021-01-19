@@ -23,7 +23,7 @@ export interface Props extends Omit<HTMLAttributes<HTMLElement>, 'onClick'> {
 export const LokiLabel = forwardRef<HTMLElement, Props>(
   ({ name, value, hidden, facets, onClick, className, loading, searchTerm, active, style, ...rest }, ref) => {
     const theme = useTheme();
-    const styles = getLabelStyles(theme, name);
+    const styles = getLabelStyles(theme);
 
     const onLabelClick = (event: React.MouseEvent<HTMLElement>) => {
       if (onClick && !hidden) {
@@ -62,63 +62,59 @@ export const LokiLabel = forwardRef<HTMLElement, Props>(
 
 LokiLabel.displayName = 'LokiLabel';
 
-const getLabelStyles = (theme: GrafanaTheme, name: string) => {
-  const colors = ['#FF7368', '#459EE7'];
-
-  return {
-    base: css`
+const getLabelStyles = (theme: GrafanaTheme) => ({
+  base: css`
+    cursor: pointer;
+    font-size: ${theme.typography.size.sm};
+    line-height: ${theme.typography.lineHeight.xs};
+    border: 1px solid ${theme.colors.border1};
+    vertical-align: baseline;
+    color: ${theme.colors.text};
+    white-space: nowrap;
+    text-shadow: none;
+    padding: 3px 6px;
+    border-radius: ${theme.border.radius.md};
+    margin-right: ${theme.spacing.sm};
+    margin-bottom: ${theme.spacing.xs};
+    text-overflow: ellipsis;
+    overflow: hidden;
+  `,
+  loading: css`
+    font-weight: ${theme.typography.weight.semibold};
+    background-color: ${theme.colors.formSwitchBgHover};
+    color: ${theme.palette.gray98};
+    animation: pulse 3s ease-out 0s infinite normal forwards;
+    @keyframes pulse {
+      0% {
+        color: ${theme.colors.textSemiWeak};
+      }
+      50% {
+        color: ${theme.colors.textFaint};
+      }
+      100% {
+        color: ${theme.colors.textSemiWeak};
+      }
+    }
+  `,
+  active: css`
+    font-weight: ${theme.typography.weight.semibold};
+    background-color: ${theme.colors.formSwitchBgActive};
+    color: ${theme.colors.formSwitchDot};
+  `,
+  matchHighLight: css`
+    background: inherit;
+    color: ${theme.palette.yellow};
+    background-color: rgba(${theme.palette.yellow}, 0.1);
+  `,
+  hidden: css`
+    opacity: 0.6;
+    cursor: default;
+    border: 1px solid transparent;
+  `,
+  hover: css`
+    &:hover {
+      opacity: 0.85;
       cursor: pointer;
-      font-size: ${theme.typography.size.sm};
-      line-height: ${theme.typography.lineHeight.xs};
-      border: 1px solid ${theme.colors.border1};
-      vertical-align: baseline;
-      color: ${theme.colors.text};
-      white-space: nowrap;
-      text-shadow: none;
-      padding: 3px 6px;
-      border-radius: ${theme.border.radius.md};
-      margin-right: ${theme.spacing.sm};
-      margin-bottom: ${theme.spacing.xs};
-      text-overflow: ellipsis;
-      overflow: hidden;
-    `,
-    loading: css`
-      font-weight: ${theme.typography.weight.semibold};
-      background-color: ${colors[0]};
-      color: ${theme.palette.gray98};
-      animation: pulse 3s ease-out 0s infinite normal forwards;
-      @keyframes pulse {
-        0% {
-          color: ${theme.colors.textSemiWeak};
-        }
-        50% {
-          color: ${theme.colors.textFaint};
-        }
-        100% {
-          color: ${theme.colors.textSemiWeak};
-        }
-      }
-    `,
-    active: css`
-      font-weight: ${theme.typography.weight.semibold};
-      background-color: ${colors[1]};
-      color: ${theme.colors.textStrong};
-    `,
-    matchHighLight: css`
-      background: inherit;
-      color: ${theme.palette.yellow};
-      background-color: rgba(${theme.palette.yellow}, 0.1);
-    `,
-    hidden: css`
-      opacity: 0.6;
-      cursor: default;
-      border: 1px solid transparent;
-    `,
-    hover: css`
-      &:hover {
-        opacity: 0.85;
-        cursor: pointer;
-      }
-    `,
-  };
-};
+    }
+  `,
+});

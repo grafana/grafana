@@ -105,104 +105,58 @@ export function facetLabels(
   });
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const { white, black, dark1, dark2, dark7, gray1, gray3, gray5, gray7 } = theme.palette;
-  const lightThemeStyles = {
-    linkColor: dark2,
-    linkColorHover: theme.colors.link,
-    wrapperBg: gray7,
-    wrapperShadow: gray3,
-    itemColor: black,
-    groupLabelColor: gray1,
-    itemBgHover: gray5,
-    headerBg: white,
-    headerSeparator: white,
-  };
-  const darkThemeStyles = {
-    linkColor: theme.colors.text,
-    linkColorHover: white,
-    wrapperBg: dark2,
-    wrapperShadow: black,
-    itemColor: white,
-    groupLabelColor: theme.colors.textWeak,
-    itemBgHover: dark7,
-    headerBg: dark1,
-    headerSeparator: dark7,
-  };
-
-  const styles = theme.isDark ? darkThemeStyles : lightThemeStyles;
-
-  return {
-    header: css`
-      padding: 4px;
-      border-bottom: 1px solid ${styles.headerSeparator};
-      background: ${styles.headerBg};
-      margin-bottom: ${theme.spacing.xs};
-      border-radius: ${theme.border.radius.sm} ${theme.border.radius.sm} 0 0;
-    `,
-    wrapper: css`
-      z-index: 1040;
-      max-width: 50rem;
-    `,
-    popover: css`
-      color: ${styles.itemColor};
-      background: ${styles.wrapperBg};
-      z-index: 1;
-      box-shadow: 0 2px 5px 0 ${styles.wrapperShadow};
-      min-width: 200px;
-      display: inline-block;
-      border-radius: ${theme.border.radius.sm};
-      padding: ${theme.spacing.sm};
-    `,
-    list: css`
-      margin-top: ${theme.spacing.sm};
-      display: flex;
-      flex-wrap: wrap;
-      max-height: 200px;
-      overflow: auto;
-    `,
-    filterListRow: css`
-      label: filterListRow;
-      cursor: pointer;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      padding: ${theme.spacing.xs};
-      :hover {
-        background-color: ${theme.colors.bg3};
-      }
-    `,
-    section: css`
-      & + & {
-        margin: ${theme.spacing.md} 0;
-      }
-    `,
-    selector: css`
-      font-family: ${theme.typography.fontFamily.monospace};
-      margin-bottom: ${theme.spacing.sm};
-    `,
-    valueCell: css`
-      overflow: hidden;
-      text-overflow: ellipsis;
-    `,
-    valueList: css`
-      margin-right: ${theme.spacing.sm};
-    `,
-    valueListWrapper: css`
-      padding: ${theme.spacing.xs};
-      border-left: 1px solid ${theme.colors.border1};
-    `,
-    valueListArea: css`
-      display: flex;
-      flex-direction: row;
-      margin-top: ${theme.spacing.sm};
-    `,
-    valueTitle: css`
-      margin-left: -${theme.spacing.xs};
-      margin-bottom: ${theme.spacing.sm};
-    `,
-  };
-});
+const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+  wrapper: css`
+    z-index: 1040;
+    max-width: 70rem;
+  `,
+  popover: css`
+    color: ${theme.colors.text};
+    background: ${theme.colors.bg2};
+    z-index: 1;
+    box-shadow: 0 2px 5px 0 ${theme.colors.dropdownShadow};
+    min-width: 200px;
+    display: inline-block;
+    border-radius: ${theme.border.radius.sm};
+    padding: ${theme.spacing.sm};
+  `,
+  list: css`
+    margin-top: ${theme.spacing.sm};
+    display: flex;
+    flex-wrap: wrap;
+    max-height: 200px;
+    overflow: auto;
+  `,
+  section: css`
+    & + & {
+      margin: ${theme.spacing.md} 0;
+    }
+  `,
+  selector: css`
+    font-family: ${theme.typography.fontFamily.monospace};
+    margin-bottom: ${theme.spacing.sm};
+  `,
+  valueCell: css`
+    overflow: hidden;
+    text-overflow: ellipsis;
+  `,
+  valueList: css`
+    margin-right: ${theme.spacing.sm};
+  `,
+  valueListWrapper: css`
+    padding: ${theme.spacing.xs};
+    border-left: 1px solid ${theme.colors.border1};
+  `,
+  valueListArea: css`
+    display: flex;
+    flex-direction: row;
+    margin-top: ${theme.spacing.sm};
+  `,
+  valueTitle: css`
+    margin-left: -${theme.spacing.xs};
+    margin-bottom: ${theme.spacing.sm};
+  `,
+}));
 
 export class LokiLabelBrowserPopover extends React.Component<BrowserProps, BrowserState> {
   state = {
