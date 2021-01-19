@@ -33,6 +33,7 @@ import {
   filterFieldConfigOverrides,
   getPanelOptionsWithDefaults,
   isStandardFieldProp,
+  restoreCustomOverrideRules,
 } from './getPanelOptionsWithDefaults';
 
 export interface GridPos {
@@ -154,13 +155,7 @@ export class PanelModel implements DataConfigSource {
   hasRefreshed: boolean;
   events: EventBusSrv;
   cacheTimeout?: any;
-  cachedPluginOptions: Record<
-    string,
-    {
-      properties: any;
-      fieldConfig: FieldConfigSource;
-    }
-  >;
+  cachedPluginOptions: Record<string, PanelOptionsCache>;
   legend?: { show: boolean; sort?: string; sortDesc?: boolean };
   plugin?: PanelPlugin;
 
@@ -314,9 +309,7 @@ export class PanelModel implements DataConfigSource {
       (this as any)[property] = prevOptions.properties[property];
     });
 
-    this.fieldConfig.defaults.custom = prevOptions.fieldConfig.defaults?.custom;
-    // TODO: This needs a more complex restore logic
-    this.fieldConfig.overrides = prevOptions.fieldConfig.overrides;
+    this.fieldConfig = restoreCustomOverrideRules(this.fieldConfig, prevOptions.fieldConfig);
   }
 
   applyPluginOptionDefaults(plugin: PanelPlugin) {
@@ -537,4 +530,9 @@ export class PanelModel implements DataConfigSource {
 
 function getPluginVersion(plugin: PanelPlugin): string {
   return plugin && plugin.meta.info.version ? plugin.meta.info.version : config.buildInfo.version;
+}
+
+interface PanelOptionsCache {
+  properties: any;
+  fieldConfig: FieldConfigSource;
 }
