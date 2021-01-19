@@ -9,11 +9,15 @@ import {
   GrafanaTheme,
   getColorForTheme,
   FieldColorConfigSettings,
+  FieldColorSeriesByMode,
+  getFieldColorMode,
 } from '@grafana/data';
 import { Select } from '../Select/Select';
 import { ColorValueEditor } from './color';
 import { useStyles, useTheme } from '../../themes/ThemeContext';
 import { css } from 'emotion';
+import { Field } from '../Forms/Field';
+import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
 
 export const FieldColorEditor: React.FC<FieldConfigEditorProps<FieldColor | undefined, FieldColorConfigSettings>> = ({
   value,
@@ -23,6 +27,7 @@ export const FieldColorEditor: React.FC<FieldConfigEditorProps<FieldColor | unde
   const theme = useTheme();
   const styles = useStyles(getStyles);
 
+  const colorMode = getFieldColorMode(value?.mode);
   const availableOptions = item.settings?.byValueSupport
     ? fieldColorModeRegistry.list()
     : fieldColorModeRegistry.list().filter(m => !m.isByValue);
@@ -44,14 +49,24 @@ export const FieldColorEditor: React.FC<FieldConfigEditorProps<FieldColor | unde
 
   const onModeChange = (newMode: SelectableValue<string>) => {
     onChange({
+      ...value,
       mode: newMode.value! as FieldColorModeId,
     });
   };
 
   const onColorChange = (color?: string) => {
     onChange({
+      ...value,
       mode,
       fixedColor: color,
+    });
+  };
+
+  const onSeriesModeChange = (seriesBy?: FieldColorSeriesByMode) => {
+    onChange({
+      ...value,
+      mode,
+      seriesBy,
     });
   };
 
@@ -63,6 +78,25 @@ export const FieldColorEditor: React.FC<FieldConfigEditorProps<FieldColor | unde
         <Select minMenuHeight={200} options={options} value={mode} onChange={onModeChange} className={styles.select} />
         <ColorValueEditor value={value?.fixedColor} onChange={onColorChange} />
       </div>
+    );
+  }
+
+  if (item.settings?.bySeriesSupport && colorMode.isByValue) {
+    const seriesModes: Array<SelectableValue<FieldColorSeriesByMode>> = [
+      { label: 'Last', value: 'last' },
+      { label: 'Min', value: 'min' },
+      { label: 'Max', value: 'max' },
+    ];
+
+    return (
+      <>
+        <div style={{ marginBottom: theme.spacing.formInputMargin }}>
+          <Select minMenuHeight={200} options={options} value={mode} onChange={onModeChange} />
+        </div>
+        <Field label="Color series by">
+          <RadioButtonGroup value={value?.seriesBy ?? 'last'} options={seriesModes} onChange={onSeriesModeChange} />
+        </Field>
+      </>
     );
   }
 
