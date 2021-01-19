@@ -25,12 +25,17 @@ describe('VersionSettings', () => {
     // @ts-ignore
     historySrv.getHistoryList.mockResolvedValue(versions);
     render(<VersionsSettings dashboard={dashboard} />);
+    
     expect(screen.getByRole('heading', { name: /versions/i })).toBeInTheDocument();
     expect(screen.queryByText(/fetching history list/i)).toBeInTheDocument();
+    
     await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());
     const tableBodyRows = within(screen.getAllByRole('rowgroup')[1]).getAllByRole('row');
+    
     expect(tableBodyRows.length).toBe(versions.length);
+    
     const firstRow = within(screen.getAllByRole('rowgroup')[1]).getAllByRole('row')[0];
+    
     expect(within(firstRow).getByText(/latest/i)).toBeInTheDocument();
     expect(within(screen.getByRole('table')).getAllByText(/latest/i)).toHaveLength(1);
   });
