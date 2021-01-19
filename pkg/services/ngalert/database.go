@@ -93,7 +93,7 @@ func (ng *AlertNG) saveAlertDefinition(cmd *saveAlertDefinitionCommand) error {
 
 		if _, err := sess.Insert(alertDefinition); err != nil {
 			if ng.SQLStore.Dialect.IsUniqueConstraintViolation(err) && strings.Contains(err.Error(), "title") {
-				return fmt.Errorf("an alert definition with the title '%s' already exits: %w", cmd.Title, err)
+				return fmt.Errorf("an alert definition with the title '%s' already exists: %w", cmd.Title, err)
 			}
 			return err
 		}
