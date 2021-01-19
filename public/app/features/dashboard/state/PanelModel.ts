@@ -149,7 +149,13 @@ export class PanelModel implements DataConfigSource {
   hasRefreshed: boolean;
   events: EventBusSrv;
   cacheTimeout?: any;
-  cachedPluginOptions?: any;
+  cachedPluginOptions: Record<
+    string,
+    {
+      properties: any;
+      fieldConfig: FieldConfigSource;
+    }
+  >;
   legend?: { show: boolean; sort?: string; sortDesc?: boolean };
   plugin?: PanelPlugin;
 
@@ -289,11 +295,23 @@ export class PanelModel implements DataConfigSource {
   }
 
   private restorePanelOptions(pluginId: string) {
-    const prevOptions = this.cachedPluginOptions[pluginId] || {};
+    if (!this.cachedPluginOptions) {
+      return;
+    }
 
-    Object.keys(prevOptions).map(property => {
-      (this as any)[property] = prevOptions[property];
+    const prevOptions = this.cachedPluginOptions[pluginId];
+
+    if (!prevOptions) {
+      return;
+    }
+
+    Object.keys(prevOptions.properties).map(property => {
+      (this as any)[property] = prevOptions.properties[property];
     });
+
+    this.fieldConfig.defaults.custom = prevOptions.fieldConfig.defaults?.custom;
+    // TODO: This needs a more complex restore logic
+    this.fieldConfig.overrides = prevOptions.fieldConfig.overrides;
   }
 
   applyPluginOptionDefaults(plugin: PanelPlugin) {
@@ -338,7 +356,11 @@ export class PanelModel implements DataConfigSource {
       delete (this as any)[key];
     }
 
-    this.cachedPluginOptions[oldPluginId] = oldOptions;
+    this.cachedPluginOptions[oldPluginId] = {
+      properties: oldOptions,
+      fieldConfig: this.fieldConfig,
+    };
+
     this.restorePanelOptions(pluginId);
 
     // Let panel plugins inspect options from previous panel and keep any that it can use
