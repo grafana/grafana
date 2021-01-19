@@ -82,7 +82,7 @@ func (lps *LibraryPanelService) LoadLibraryPanelsForDashboard(dash *models.Dashb
 
 		libraryPanelModelAsJSON, err := simplejson.NewJson(libraryPanelModel)
 		if err != nil {
-			return fmt.Errorf("could not convert library panel to JSON: %w", err)
+			return fmt.Errorf("could not convert library panel to simplejson model: %w", err)
 		}
 
 		// set the library panel json as new panel json in dashboard json
