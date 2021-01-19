@@ -42,7 +42,6 @@ func New(configDirectory string) (*Provisioner, error) {
 	}
 
 	fileReaders, err := getFileReaders(configs, logger)
-
 	if err != nil {
 		return nil, errutil.Wrap("Failed to initialize file readers", err)
 	}
@@ -57,10 +56,10 @@ func New(configDirectory string) (*Provisioner, error) {
 }
 
 // Provision starts scanning the disc for dashboards and updates
-// the database with the latest versions of those dashboards
+// the database with the latest versions of those dashboards.
 func (provider *Provisioner) Provision() error {
 	for _, reader := range provider.fileReaders {
-		if err := reader.startWalkingDisk(); err != nil {
+		if err := reader.walkDisk(); err != nil {
 			if os.IsNotExist(err) {
 				// don't stop the provisioning service in case the folder is missing. The folder can appear after the startup
 				provider.log.Warn("Failed to provision config", "name", reader.Cfg.Name, "error", err)
