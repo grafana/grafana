@@ -19,7 +19,7 @@ import { GrafanaTheme } from '@grafana/data';
 import { LokiLabel } from './LokiLabel';
 
 // Hard limit on labels to render
-const MAX_LABEL_COUNT = 100;
+const MAX_LABEL_COUNT = 1000;
 const MAX_VALUE_COUNT = 10000;
 const EMPTY_SELECTOR = '{}';
 export const LAST_USED_LABELS_KEY = 'grafana.datasources.loki.browser.labels';
@@ -115,7 +115,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     background: ${theme.colors.bg2};
     z-index: 1;
     box-shadow: 0 2px 5px 0 ${theme.colors.dropdownShadow};
-    min-width: 200px;
+    width: 100%;
     display: inline-block;
     border-radius: ${theme.border.radius.sm};
     padding: ${theme.spacing.sm};
@@ -151,6 +151,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     display: flex;
     flex-direction: row;
     margin-top: ${theme.spacing.sm};
+    overflow-x: auto;
   `,
   valueTitle: css`
     margin-left: -${theme.spacing.xs};
@@ -246,7 +247,12 @@ export class LokiLabelBrowserPopover extends React.Component<BrowserProps, Brows
         const labels: SelectableLabel[] = languageProvider
           .getLabelKeys()
           .slice(0, MAX_LABEL_COUNT)
-          .map(label => ({ name: label, selected: selectedLabels.includes(label), loading: false }));
+          .map((label, i, arr) => ({
+            name: label,
+            // Auto-select all if label list is small
+            selected: (arr.length < 5 && selectedLabels.length === 0) || selectedLabels.includes(label),
+            loading: false,
+          }));
         this.setState({ labels }, () => {
           this.state.labels.forEach(label => {
             if (label.selected) {
