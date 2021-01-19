@@ -71,7 +71,6 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
       const xIndex = frame.fields.indexOf(dims.x);
       frame = sortDataFrame(frame, xIndex);
       dims = mapDimesions(fields, frame, frames);
-      console.log('SORTed!!!?');
     }
 
     let nullModesFrame: JoinNullMode[] = [0];
