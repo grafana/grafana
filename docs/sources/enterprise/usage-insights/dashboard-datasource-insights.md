@@ -8,17 +8,17 @@ weight = 200
 
 # Dashboard and data source insights
 
-For every dashboard and data source, you can access usage information in one click.
+For every dashboard and data source, you can access usage information.
 
 ## Dashboard insights
 
 > **Note:** Available in Grafana Enterprise v7.0+.
 
-You can see dashboard usage information by clicking on the `Dashboard insights` button in the top bar.
+To see dashboard usage information, from the top bar, click **Dashboard insights**.
 
 {{< docs-imagebox img="/img/docs/enterprise/dashboard_insights_button.png" max-width="400px" class="docs-image--no-shadow" >}}
 
-It shows two kinds of information:
+Dashboard insights displays the following information:
 
 - **Stats:** Shows the daily query count and error count for the last 30 days.
 - **Users & activity:** Shows the daily view count for the last 30 days; last activities on the dashboard and recent users (with a limit of 20).
@@ -35,10 +35,9 @@ Data source insights give you information about how a data source has been used 
 - Errors per day
 - Average load duration per day (ms)
  
-To find data source insights, go to:
-1. Data source list view.
+Find data source insights:
+1. Go to the Data source list view.
 1. Click on a data source.
-1. Click the Insights tab.
+1. Click the **Insights** tab.
 
 {{< docs-imagebox img="/img/docs/enterprise/datasource_insights.png" max-width="650px" class="docs-image--no-shadow" >}}
-

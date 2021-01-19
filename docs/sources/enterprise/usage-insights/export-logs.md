@@ -14,13 +14,13 @@ By exporting usage logs to Loki, you can directly query them and create dashboar
 
 ## Usage insights logs
 
-Usage insights logs are JSON objects that represent various user activity:
+Usage insights logs are JSON objects that represent certain user activities:
 - A user opens a dashboard.
 - A query is sent to a data source.
 
 ### Scope
 
-A log is created every time a user opens a dashboard or when a query is sent to a data source in the dashboard view. A query that is made through Explore does not generate a log.
+A log is created every time a user opens a dashboard or when a query is sent to a data source in the dashboard view. A query that is performed via Explore does not generate a log.
 
 ### Format
 Logs of usage insights contain the following fields, where the fields followed by * are always available, and the others depend on the logged event:
@@ -76,7 +76,6 @@ Now that your logs are exported into Loki, you can build Grafana dashboards to u
 1. Play with usage insights to understand them:
     * <TODO> Example log-style query using labels
     * <TODO> Example metric-style query using labels
-
 
 
 
