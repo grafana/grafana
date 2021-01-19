@@ -55,7 +55,13 @@ This transformation is very useful if your data source does not natively filter 
 
 For more information, refer to [Filter data by value]({{< relref "../panels/transformations/types-options.md#filter-data-by-value" >}}) in [Transformation types and options]({{< relref "../panels/transformations/types-options.md" >}}).
 
+### Exemplar support
 
+Grafana graphs now support Prometheus exemplars. They are displayed as diamonds in the graph visualization.
+
+> **Note:** Support for exemplars will be added in version Prometheus 2.25+,
+
+![Exemplar example](/img/docs/v74/exemplars.png)
 
 ## Grafana Enterprise features
 
