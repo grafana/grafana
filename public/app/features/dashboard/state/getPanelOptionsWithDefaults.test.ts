@@ -1,6 +1,5 @@
 import {
   ConfigOverrideRule,
-  FieldColorConfigSettings,
   FieldColorModeId,
   FieldConfig,
   FieldConfigProperty,
