@@ -47,11 +47,12 @@ func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd cre
 		CreatedBy: c.SignedInUser.UserId,
 		UpdatedBy: c.SignedInUser.UserId,
 	}
-	err := lps.SQLStore.WithTransactionalDbSession(context.Background(), func(session *sqlstore.DBSession) error {
-		err := setLibraryPanelHeader(&libraryPanel)
-		if err != nil {
-			return err
-		}
+	err := setLibraryPanelHeader(&libraryPanel)
+	if err != nil {
+		return libraryPanel, err
+	}
+
+	err = lps.SQLStore.WithTransactionalDbSession(context.Background(), func(session *sqlstore.DBSession) error {
 		if _, err := session.Insert(&libraryPanel); err != nil {
 			if lps.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
 				return errLibraryPanelAlreadyExists

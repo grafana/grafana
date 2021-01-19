@@ -34,9 +34,15 @@ func TestCreateLibraryPanel(t *testing.T) {
 
 			var result libraryPanelResult
 			err := json.Unmarshal(response.Body(), &result)
-			l := result.Result.Model["libraryPanel"].(map[string]interface{})
 			require.NoError(t, err)
-			require.Equal(t, l["name"], "Text - Library Panel")
+			var existing = map[string]interface{}{
+				"uid":  result.Result.UID,
+				"name": "Text - Library Panel",
+			}
+			actual := result.Result.Model["libraryPanel"].(map[string]interface{})
+			if diff := cmp.Diff(existing, actual, getCompareOptions()...); diff != "" {
+				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+			}
 		})
 }
 
