@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { stripIndent, stripIndents } from 'common-tags';
-import { ExploreStartPageProps } from '@grafana/data';
+import { QueryEditorHelpProps } from '@grafana/data';
 import Prism from 'prismjs';
 import tokenizer from '../syntax';
 import { flattenTokens } from '@grafana/ui/src/slate-plugins/slate-prism';
@@ -214,7 +214,7 @@ const exampleCategory = css`
   margin-top: 5px;
 `;
 
-export default class LogsCheatSheet extends PureComponent<ExploreStartPageProps, { userExamples: string[] }> {
+export default class LogsCheatSheet extends PureComponent<QueryEditorHelpProps, { userExamples: string[] }> {
   onClickExample(query: CloudWatchLogsQuery) {
     this.props.onClickExample(query);
   }
