@@ -9,7 +9,7 @@ import {
   ThresholdsConfig,
   ThresholdsMode,
 } from '@grafana/data';
-import { mergeWith, isArray, isPlainObject, isObject, unset } from 'lodash';
+import { mergeWith, isArray, isObject, unset } from 'lodash';
 
 export interface Props {
   plugin: PanelPlugin;
