@@ -66,7 +66,7 @@ describe('HistoryListCtrl', () => {
         expect(historyListCtrl.delta).toEqual({ basic: '', json: '' });
 
         expect(historyListCtrl.canCompare).toBe(false);
-        expect(_.find(historyListCtrl.revisions, rev => rev.checked)).toBe(undefined);
+        expect(_.find(historyListCtrl.revisions, (rev) => rev.checked)).toBe(undefined);
       });
 
       it('should indicate loading has finished', () => {
@@ -81,7 +81,7 @@ describe('HistoryListCtrl', () => {
       });
 
       it('should add a checked property to each revision', () => {
-        const actual = _.filter(historyListCtrl.revisions, rev => rev.hasOwnProperty('checked'));
+        const actual = _.filter(historyListCtrl.revisions, (rev) => rev.hasOwnProperty('checked'));
         expect(actual.length).toBe(4);
       });
 
@@ -89,7 +89,7 @@ describe('HistoryListCtrl', () => {
         historyListCtrl.revisions[0].checked = true;
         historyListCtrl.revisions[2].checked = true;
         historyListCtrl.reset();
-        const actual = _.filter(historyListCtrl.revisions, rev => !rev.checked);
+        const actual = _.filter(historyListCtrl.revisions, (rev) => !rev.checked);
         expect(actual.length).toBe(4);
       });
     });
@@ -106,7 +106,7 @@ describe('HistoryListCtrl', () => {
       it("should reset the controller's state", () => {
         expect(historyListCtrl.mode).toBe('list');
         expect(historyListCtrl.delta).toEqual({ basic: '', json: '' });
-        expect(_.find(historyListCtrl.revisions, rev => rev.checked)).toBe(undefined);
+        expect(_.find(historyListCtrl.revisions, (rev) => rev.checked)).toBe(undefined);
       });
 
       it('should indicate loading has finished', () => {

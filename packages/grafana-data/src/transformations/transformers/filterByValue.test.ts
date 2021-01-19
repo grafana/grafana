@@ -47,7 +47,7 @@ describe('FilterByValue transformer', () => {
       },
     };
 
-    await expect(transformDataFrame([cfg], [seriesAWithSingleField])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [seriesAWithSingleField])).toEmitValuesWith((received) => {
       const processed = received[0];
 
       expect(processed.length).toEqual(1);
@@ -90,7 +90,7 @@ describe('FilterByValue transformer', () => {
       },
     };
 
-    await expect(transformDataFrame([cfg], [seriesAWithSingleField])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [seriesAWithSingleField])).toEmitValuesWith((received) => {
       const processed = received[0];
 
       expect(processed.length).toEqual(1);
@@ -142,7 +142,7 @@ describe('FilterByValue transformer', () => {
       },
     };
 
-    await expect(transformDataFrame([cfg], [seriesAWithSingleField])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [seriesAWithSingleField])).toEmitValuesWith((received) => {
       const processed = received[0];
 
       expect(processed.length).toEqual(1);
@@ -194,7 +194,7 @@ describe('FilterByValue transformer', () => {
       },
     };
 
-    await expect(transformDataFrame([cfg], [seriesAWithSingleField])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [seriesAWithSingleField])).toEmitValuesWith((received) => {
       const processed = received[0];
 
       expect(processed.length).toEqual(1);

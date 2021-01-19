@@ -65,7 +65,7 @@ export const PluginsErrorsInfoUnconnected: React.FC<PluginsErrorsInfoProps> = ({
           className={css`
             list-style-type: circle;
           `}
-          renderItem={e => (
+          renderItem={(e) => (
             <div
               className={css`
                 margin-top: ${theme.spacing.sm};

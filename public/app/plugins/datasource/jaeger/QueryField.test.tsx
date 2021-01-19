@@ -4,8 +4,8 @@ import { shallow, mount } from 'enzyme';
 import { JaegerDatasource, JaegerQuery } from './datasource';
 import { ButtonCascader } from '@grafana/ui';
 
-describe('JaegerQueryField', function() {
-  it('shows empty value if no services returned', function() {
+describe('JaegerQueryField', function () {
+  it('shows empty value if no services returned', function () {
     const wrapper = shallow(
       <JaegerQueryField
         history={[]}
@@ -18,7 +18,7 @@ describe('JaegerQueryField', function() {
     expect(wrapper.find(ButtonCascader).props().options[0].label).toBe('No traces found');
   });
 
-  it('uses URL encoded service name in metadataRequest request', async function() {
+  it('uses URL encoded service name in metadataRequest request', async function () {
     const wrapper = mount(
       <JaegerQueryField
         history={[]}
@@ -64,7 +64,7 @@ describe('JaegerQueryField', function() {
     });
   });
 
-  it('shows root span as 3rd level in cascader', async function() {
+  it('shows root span as 3rd level in cascader', async function () {
     const wrapper = mount(
       <JaegerQueryField
         history={[]}

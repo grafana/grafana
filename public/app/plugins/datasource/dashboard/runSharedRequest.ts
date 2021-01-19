@@ -24,7 +24,7 @@ export function isSharedDashboardQuery(datasource: string | DataSourceApi | null
 }
 
 export function runSharedRequest(options: QueryRunnerOptions): Observable<PanelData> {
-  return new Observable<PanelData>(subscriber => {
+  return new Observable<PanelData>((subscriber) => {
     const dashboard = getDashboardSrv().getCurrent();
     const listenToPanelId = getPanelIdFromQuery(options.queries);
 

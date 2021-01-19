@@ -153,14 +153,14 @@ export class HistoryListCtrl {
   }
 
   isLastPage() {
-    return _.find(this.revisions, rev => rev.version === 1);
+    return _.find(this.revisions, (rev) => rev.version === 1);
   }
 
   reset() {
     this.delta = { basic: '', json: '' };
     this.diff = 'basic';
     this.mode = 'list';
-    this.revisions = _.map(this.revisions, rev => _.extend({}, rev, { checked: false }));
+    this.revisions = _.map(this.revisions, (rev) => _.extend({}, rev, { checked: false }));
     this.canCompare = false;
     this.start = 0;
     this.isNewLatest = false;

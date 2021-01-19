@@ -36,7 +36,7 @@ export class SetInterval extends PureComponent<Props> {
       .pipe(
         // switchMap creates a new observables based on the input stream,
         // which becomes part of the propsSubject stream
-        switchMap(props => {
+        switchMap((props) => {
           // If the query is live, empty value is emitted. `of` creates single value,
           // which is merged to propsSubject stream
           if (RefreshPicker.isLive(props.interval)) {

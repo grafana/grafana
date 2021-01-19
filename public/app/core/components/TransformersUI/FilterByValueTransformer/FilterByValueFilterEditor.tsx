@@ -16,7 +16,7 @@ export interface DataFrameFieldsInfo {
   fieldByDisplayName: Record<string, Field>;
 }
 
-export const FilterByValueFilterEditor: React.FC<Props> = props => {
+export const FilterByValueFilterEditor: React.FC<Props> = (props) => {
   const { onDelete, onChange, filter, fieldsInfo } = props;
   const { fieldsAsOptions, fieldByDisplayName } = fieldsInfo;
   const fieldName = getFieldName(filter, fieldsAsOptions) ?? '';
@@ -65,7 +65,7 @@ export const FilterByValueFilterEditor: React.FC<Props> = props => {
   );
 
   const onChangeMatcherOptions = useCallback(
-    options => {
+    (options) => {
       onChange({
         ...filter,
         config: {
@@ -138,7 +138,7 @@ const getSelectedMatcherId = (
   filter: FilterByValueFilter,
   matcherOptions: Array<SelectableValue<string>>
 ): string | undefined => {
-  const matcher = matcherOptions.find(m => m.value === filter.config.id);
+  const matcher = matcherOptions.find((m) => m.value === filter.config.id);
 
   if (matcher && matcher.value) {
     return matcher.value;
@@ -155,7 +155,7 @@ const getFieldName = (
   filter: FilterByValueFilter,
   fieldOptions: Array<SelectableValue<string>>
 ): string | undefined => {
-  const fieldName = fieldOptions.find(m => m.value === filter.fieldName);
+  const fieldName = fieldOptions.find((m) => m.value === filter.fieldName);
 
   if (fieldName && fieldName.value) {
     return fieldName.value;

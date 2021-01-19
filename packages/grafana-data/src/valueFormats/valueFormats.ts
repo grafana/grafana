@@ -170,7 +170,7 @@ function buildFormats() {
   }
 
   // Resolve units pointing to old IDs
-  [{ from: 'farenheit', to: 'fahrenheit' }].forEach(alias => {
+  [{ from: 'farenheit', to: 'fahrenheit' }].forEach((alias) => {
     const f = index[alias.to];
     if (f) {
       index[alias.from] = f;
@@ -244,10 +244,10 @@ export function getValueFormats() {
     buildFormats();
   }
 
-  return categories.map(cat => {
+  return categories.map((cat) => {
     return {
       text: cat.name,
-      submenu: cat.formats.map(format => {
+      submenu: cat.formats.map((format) => {
         return {
           text: format.name,
           value: format.id,

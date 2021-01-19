@@ -77,8 +77,8 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
       if (!option.items) {
         selectOptions.push({
           singleLabel: cpy[cpy.length - 1].label,
-          label: cpy.map(o => o.label).join(this.props.separator || ' / '),
-          value: cpy.map(o => o.value),
+          label: cpy.map((o) => o.label).join(this.props.separator || ' / '),
+          value: cpy.map((o) => o.value),
         });
       } else {
         selectOptions = [...selectOptions, ...this.flattenOptions(option.items, cpy)];

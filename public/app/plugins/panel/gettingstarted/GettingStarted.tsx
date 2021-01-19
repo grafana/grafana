@@ -31,14 +31,14 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
 
     const checkedStepsPromises: Array<Promise<SetupStep>> = steps.map(async (step: SetupStep) => {
       const checkedCardsPromises: Array<Promise<Card>> = step.cards.map((card: Card) => {
-        return card.check().then(passed => {
+        return card.check().then((passed) => {
           return { ...card, done: passed };
         });
       });
       const checkedCards = await Promise.all(checkedCardsPromises);
       return {
         ...step,
-        done: checkedCards.every(c => c.done),
+        done: checkedCards.every((c) => c.done),
         cards: checkedCards,
       };
     });
@@ -53,13 +53,13 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
   }
 
   onForwardClick = () => {
-    this.setState(prevState => ({
+    this.setState((prevState) => ({
       currentStep: prevState.currentStep + 1,
     }));
   };
 
   onPreviousClick = () => {
-    this.setState(prevState => ({
+    this.setState((prevState) => ({
       currentStep: prevState.currentStep - 1,
     }));
   };

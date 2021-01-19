@@ -14,15 +14,15 @@ describe('Array DataFrame', () => {
   const frame = new ArrayDataFrame(input);
   frame.name = 'Hello';
   frame.refId = 'Z';
-  frame.setFieldType('phantom', FieldType.string, v => '🦥');
-  const field = frame.fields.find(f => f.name === 'value');
+  frame.setFieldType('phantom', FieldType.string, (v) => '🦥');
+  const field = frame.fields.find((f) => f.name === 'value');
   field!.config.unit = 'kwh';
 
   test('Should support functional methods', () => {
-    const expectedNames = input.map(row => row.name);
+    const expectedNames = input.map((row) => row.name);
 
     // Check map
-    expect(frame.map(row => row.name)).toEqual(expectedNames);
+    expect(frame.map((row) => row.name)).toEqual(expectedNames);
 
     let names: string[] = [];
     for (const row of frame) {
@@ -31,7 +31,7 @@ describe('Array DataFrame', () => {
     expect(names).toEqual(expectedNames);
 
     names = [];
-    frame.forEach(row => {
+    frame.forEach((row) => {
       names.push(row.name);
     });
     expect(names).toEqual(expectedNames);

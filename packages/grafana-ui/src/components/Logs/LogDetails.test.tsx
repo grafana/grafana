@@ -107,7 +107,7 @@ describe('LogDetails', () => {
       {
         getFieldLinks: (field: Field, rowIndex: number) => {
           if (field.config && field.config.links) {
-            return field.config.links.map(link => {
+            return field.config.links.map((link) => {
               return {
                 href: link.url.replace('${__value.text}', field.values.get(rowIndex)),
                 title: link.title,

@@ -17,7 +17,7 @@ export const NamedColorsPalette = ({ color, onChange, theme }: NamedColorsPalett
         theme={theme}
         selectedColor={color}
         colors={colors}
-        onColorSelect={color => {
+        onColorSelect={(color) => {
           onChange(color.name);
         }}
       />

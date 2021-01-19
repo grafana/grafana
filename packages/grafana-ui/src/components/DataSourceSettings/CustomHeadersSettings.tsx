@@ -62,7 +62,7 @@ const CustomHeaderRow: React.FC<CustomHeaderRowProps> = ({ header, onBlur, onCha
         placeholder="X-Custom-Header"
         labelWidth={5}
         value={header.name || ''}
-        onChange={e => onChange({ ...header, name: e.target.value })}
+        onChange={(e) => onChange({ ...header, name: e.target.value })}
         onBlur={onBlur}
       />
       <SecretFormField
@@ -74,10 +74,10 @@ const CustomHeaderRow: React.FC<CustomHeaderRowProps> = ({ header, onBlur, onCha
         inputWidth={header.configured ? 11 : 12}
         placeholder="Header Value"
         onReset={() => onReset(header.id)}
-        onChange={e => onChange({ ...header, value: e.target.value })}
+        onChange={(e) => onChange({ ...header, value: e.target.value })}
         onBlur={onBlur}
       />
-      <Button variant="secondary" size="xs" onClick={_e => onRemove(header.id)}>
+      <Button variant="secondary" size="xs" onClick={(_e) => onRemove(header.id)}>
         <Icon name="trash-alt" />
       </Button>
     </div>
@@ -97,7 +97,7 @@ export class CustomHeadersSettings extends PureComponent<Props, State> {
     this.state = {
       headers: Object.keys(jsonData)
         .sort()
-        .filter(key => key.startsWith('httpHeaderName'))
+        .filter((key) => key.startsWith('httpHeaderName'))
         .map((key, index) => {
           return {
             id: uniqueId(),
@@ -120,10 +120,10 @@ export class CustomHeadersSettings extends PureComponent<Props, State> {
       }
       Object.keys(jsonData)
         .filter(
-          key =>
+          (key) =>
             key.startsWith('httpHeaderName') && parseInt(key.substring('httpHeaderName'.length), 10) > headers.length
         )
-        .forEach(key => {
+        .forEach((key) => {
           delete jsonData[key];
         });
     }
@@ -136,7 +136,7 @@ export class CustomHeadersSettings extends PureComponent<Props, State> {
   };
 
   onHeaderAdd = () => {
-    this.setState(prevState => {
+    this.setState((prevState) => {
       return { headers: [...prevState.headers, { id: uniqueId(), name: '', value: '', configured: false }] };
     }, this.updateSettings);
   };
@@ -174,7 +174,7 @@ export class CustomHeadersSettings extends PureComponent<Props, State> {
   onHeaderRemove = (headerId: string) => {
     this.setState(
       ({ headers }) => ({
-        headers: headers.filter(h => h.id !== headerId),
+        headers: headers.filter((h) => h.id !== headerId),
       }),
       this.updateSettings
     );
@@ -192,7 +192,7 @@ export class CustomHeadersSettings extends PureComponent<Props, State> {
             <CustomHeaderRow
               key={header.id}
               header={header}
-              onChange={h => {
+              onChange={(h) => {
                 this.onHeaderChange(i, h);
               }}
               onBlur={this.updateSettings}
@@ -205,7 +205,7 @@ export class CustomHeadersSettings extends PureComponent<Props, State> {
           <Button
             variant="secondary"
             icon="plus"
-            onClick={e => {
+            onClick={(e) => {
               this.onHeaderAdd();
             }}
           >

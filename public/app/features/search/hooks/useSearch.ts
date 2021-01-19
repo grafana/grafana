@@ -23,7 +23,7 @@ export const useSearch: UseSearch = (query, reducer, params = {}) => {
   const search = () => {
     dispatch({ type: SEARCH_START });
     const parsedQuery = getParsedQuery(query, queryParsing);
-    searchSrv.search(parsedQuery).then(results => {
+    searchSrv.search(parsedQuery).then((results) => {
       dispatch({ type: FETCH_RESULTS, payload: results });
     });
   };
@@ -38,7 +38,7 @@ export const useSearch: UseSearch = (query, reducer, params = {}) => {
   const onToggleSection = (section: DashboardSection) => {
     if (hasId(section.title) && !section.items.length) {
       dispatch({ type: FETCH_ITEMS_START, payload: section.id });
-      backendSrv.search({ folderIds: [section.id] }).then(items => {
+      backendSrv.search({ folderIds: [section.id] }).then((items) => {
         dispatch({ type: FETCH_ITEMS, payload: { section, items } });
         dispatch({ type: TOGGLE_SECTION, payload: section });
       });

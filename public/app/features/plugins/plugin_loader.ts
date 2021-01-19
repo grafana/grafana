@@ -192,7 +192,7 @@ export async function importPluginModule(path: string): Promise<any> {
 }
 
 export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<GenericDataSourcePlugin> {
-  return importPluginModule(meta.module).then(pluginExports => {
+  return importPluginModule(meta.module).then((pluginExports) => {
     if (pluginExports.plugin) {
       const dsPlugin = pluginExports.plugin as GenericDataSourcePlugin;
       dsPlugin.meta = meta;
@@ -215,7 +215,7 @@ export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<Gene
 }
 
 export function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
-  return importPluginModule(meta.module).then(pluginExports => {
+  return importPluginModule(meta.module).then((pluginExports) => {
     const plugin = pluginExports.plugin ? (pluginExports.plugin as AppPlugin) : new AppPlugin();
     plugin.init(meta);
     plugin.meta = meta;
@@ -246,7 +246,7 @@ export function importPanelPlugin(id: string): Promise<PanelPlugin> {
   }
 
   panelCache[id] = importPluginModule(meta.module)
-    .then(pluginExports => {
+    .then((pluginExports) => {
       if (pluginExports.plugin) {
         return pluginExports.plugin as PanelPlugin;
       } else if (pluginExports.PanelCtrl) {
@@ -256,11 +256,11 @@ export function importPanelPlugin(id: string): Promise<PanelPlugin> {
       }
       throw new Error('missing export: plugin or PanelCtrl');
     })
-    .then(plugin => {
+    .then((plugin) => {
       plugin.meta = meta;
       return plugin;
     })
-    .catch(err => {
+    .catch((err) => {
       // TODO, maybe a different error plugin
       console.warn('Error loading panel plugin: ' + id, err);
       return getPanelPluginLoadError(meta, err);

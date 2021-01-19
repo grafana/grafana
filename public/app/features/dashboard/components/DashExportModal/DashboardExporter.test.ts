@@ -22,7 +22,7 @@ jest.mock('app/core/store', () => {
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
   getDataSourceSrv: () => ({
-    get: jest.fn(arg => getStub(arg)),
+    get: jest.fn((arg) => getStub(arg)),
   }),
   config: {
     buildInfo: {},
@@ -40,7 +40,7 @@ variableAdapters.register(createDataSourceVariableAdapter());
 describe('given dashboard with repeated panels', () => {
   let dash: any, exported: any;
 
-  beforeEach(done => {
+  beforeEach((done) => {
     dash = {
       templating: {
         list: [
@@ -137,7 +137,7 @@ describe('given dashboard with repeated panels', () => {
 
     dash = new DashboardModel(dash, {}, () => dash.templating.list);
     const exporter = new DashboardExporter();
-    exporter.makeExportable(dash).then(clean => {
+    exporter.makeExportable(dash).then((clean) => {
       exported = clean;
       done();
     });

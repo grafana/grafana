@@ -100,8 +100,8 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
 
   let configPropertiesOptions = registry
     .list()
-    .filter(o => !o.hideFromOverrides)
-    .map(item => {
+    .filter((o) => !o.hideFromOverrides)
+    .map((item) => {
       let label = item.name;
       if (item.category && item.category.length > 1) {
         label = [...item.category!.slice(1), item.name].join(' > ');
@@ -114,7 +114,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
     });
 
   const renderOverrideTitle = (isExpanded: boolean) => {
-    const overriddenProperites = override.properties.map(p => registry.get(p.id).name).join(', ');
+    const overriddenProperites = override.properties.map((p) => registry.get(p.id).name).join(', ');
     const matcherOptions = matcherUi.optionsToLabel(override.matcher.options);
     return (
       <div>
@@ -146,7 +146,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
           matcher={matcherUi.matcher}
           data={data}
           options={override.matcher.options}
-          onChange={option => onMatcherConfigChange(option)}
+          onChange={(option) => onMatcherConfigChange(option)}
         />
       </Field>
 
@@ -167,7 +167,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
               key={`${p.id}/${j}`}
               isCollapsible={isCollapsible}
               isSystemOverride={isSystemOverride}
-              onChange={value => onDynamicConfigValueChange(j, value)}
+              onChange={(value) => onDynamicConfigValueChange(j, value)}
               onRemove={() => onDynamicConfigValueRemove(j)}
               property={p}
               registry={registry}
@@ -185,7 +185,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
               variant="secondary"
               icon="plus"
               options={configPropertiesOptions}
-              onChange={o => {
+              onChange={(o) => {
                 onDynamicConfigValueAdd(o.value!);
               }}
               isFullWidth={false}

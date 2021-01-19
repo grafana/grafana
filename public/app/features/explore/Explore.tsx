@@ -253,7 +253,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   };
 
   toggleShowRichHistory = () => {
-    this.setState(state => {
+    this.setState((state) => {
       return {
         openDrawer: state.openDrawer === ExploreDrawer.RichHistory ? undefined : ExploreDrawer.RichHistory,
       };
@@ -261,7 +261,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   };
 
   toggleShowQueryInspector = () => {
-    this.setState(state => {
+    this.setState((state) => {
       return {
         openDrawer: state.openDrawer === ExploreDrawer.QueryInspector ? undefined : ExploreDrawer.QueryInspector,
       };

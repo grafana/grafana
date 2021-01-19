@@ -56,7 +56,7 @@ export function RichHistorySettings(props: RichHistorySettingsProps) {
   } = props;
   const theme = useTheme();
   const styles = getStyles(theme);
-  const selectedOption = retentionPeriodOptions.find(v => v.value === retentionPeriod);
+  const selectedOption = retentionPeriodOptions.find((v) => v.value === retentionPeriod);
 
   const onDelete = () => {
     appEvents.emit(CoreEvents.showConfirmModal, {
