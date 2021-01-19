@@ -925,7 +925,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 			var dashResult libraryPanelDashboardsResult
 			err = json.Unmarshal(response.Body(), &dashResult)
 			require.NoError(t, err)
-			require.Equal(t, 1, len(dashResult.Result))
+			require.Len(t, dashResult.Result, 1)
 			require.Equal(t, int64(1), dashResult.Result[0])
 		})
 
