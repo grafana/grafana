@@ -146,13 +146,12 @@ func (fr *FileReader) storeDashboardsInFolder(filesFoundOnDisk map[string]os.Fil
 	// save dashboards based on json files
 	for path, fileInfo := range filesFoundOnDisk {
 		provisioningMetadata, err := fr.saveDashboard(path, folderID, fileInfo, dashboardRefs)
-		usageTracker.track(provisioningMetadata)
 		if err != nil {
 			fr.log.Error("failed to save dashboard", "error", err)
 			continue
 		}
 
-		sanityChecker.track(provisioningMetadata)
+		usageTracker.track(provisioningMetadata)
 	}
 	return nil
 }

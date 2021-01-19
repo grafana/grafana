@@ -52,10 +52,10 @@ func TestDuplicatesValidator(t *testing.T) {
 
 		duplicateValidator := newDuplicateValidator([]*FileReader{reader1, reader2})
 
-		err = reader1.startWalkingDisk()
+		err = reader1.walkDisk()
 		require.NoError(t, err)
 
-		err = reader2.startWalkingDisk()
+		err = reader2.walkDisk()
 		require.NoError(t, err)
 
 		duplicates := duplicateValidator.getDuplicates()
@@ -93,10 +93,10 @@ func TestDuplicatesValidator(t *testing.T) {
 
 		duplicateValidator := newDuplicateValidator([]*FileReader{reader1, reader2})
 
-		err = reader1.startWalkingDisk()
+		err = reader1.walkDisk()
 		require.NoError(t, err)
 
-		err = reader2.startWalkingDisk()
+		err = reader2.walkDisk()
 		require.NoError(t, err)
 
 		duplicates := duplicateValidator.getDuplicates()
