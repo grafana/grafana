@@ -272,7 +272,7 @@ export class KeybindingSrv {
     this.bind('p r', () => {
       const panelId = dashboard.meta.focusPanelId;
 
-      if (panelId && dashboard.canEditPanelById(panelId)) {
+      if (panelId && dashboard.canEditPanelById(panelId) && !(dashboard.panelInView || dashboard.panelInEdit)) {
         appEvents.emit(CoreEvents.removePanel, panelId);
         dashboard.meta.focusPanelId = 0;
       }

@@ -11,7 +11,7 @@ export const ConfigEditor: React.FC<Props> = ({ options, onOptionsChange }) => {
       <DataSourceHttpSettings
         defaultUrl="http://localhost:16686"
         dataSourceConfig={options}
-        showAccessOptions={true}
+        showAccessOptions={false}
         onChange={onOptionsChange}
       />
 

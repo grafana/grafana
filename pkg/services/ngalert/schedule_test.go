@@ -184,5 +184,5 @@ func concatenate(keys []alertDefinitionKey) string {
 	for _, k := range keys {
 		s = append(s, k.String())
 	}
-	return fmt.Sprintf("[%s]", strings.TrimLeft(strings.Join(s, ","), ","))
+	return fmt.Sprintf("[%s]", strings.Join(s, ","))
 }

@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/teamguardian"
@@ -11,11 +12,11 @@ import (
 )
 
 // GET /api/teams/:teamId/members
-func (hs *HTTPServer) GetTeamMembers(c *models.ReqContext) Response {
+func (hs *HTTPServer) GetTeamMembers(c *models.ReqContext) response.Response {
 	query := models.GetTeamMembersQuery{OrgId: c.OrgId, TeamId: c.ParamsInt64(":teamId")}
 
 	if err := bus.Dispatch(&query); err != nil {
-		return Error(500, "Failed to get Team Members", err)
+		return response.Error(500, "Failed to get Team Members", err)
 	}
 
 	filteredMembers := make([]*models.TeamMemberDTO, 0, len(query.Result))
@@ -35,42 +36,42 @@ func (hs *HTTPServer) GetTeamMembers(c *models.ReqContext) Response {
 		filteredMembers = append(filteredMembers, member)
 	}
 
-	return JSON(200, filteredMembers)
+	return response.JSON(200, filteredMembers)
 }
 
 // POST /api/teams/:teamId/members
-func (hs *HTTPServer) AddTeamMember(c *models.ReqContext, cmd models.AddTeamMemberCommand) Response {
+func (hs *HTTPServer) AddTeamMember(c *models.ReqContext, cmd models.AddTeamMemberCommand) response.Response {
 	cmd.OrgId = c.OrgId
 	cmd.TeamId = c.ParamsInt64(":teamId")
 
 	if err := teamguardian.CanAdmin(hs.Bus, cmd.OrgId, cmd.TeamId, c.SignedInUser); err != nil {
-		return Error(403, "Not allowed to add team member", err)
+		return response.Error(403, "Not allowed to add team member", err)
 	}
 
 	if err := hs.Bus.Dispatch(&cmd); err != nil {
 		if errors.Is(err, models.ErrTeamNotFound) {
-			return Error(404, "Team not found", nil)
+			return response.Error(404, "Team not found", nil)
 		}
 
 		if errors.Is(err, models.ErrTeamMemberAlreadyAdded) {
-			return Error(400, "User is already added to this team", nil)
+			return response.Error(400, "User is already added to this team", nil)
 		}
 
-		return Error(500, "Failed to add Member to Team", err)
+		return response.Error(500, "Failed to add Member to Team", err)
 	}
 
-	return JSON(200, &util.DynMap{
+	return response.JSON(200, &util.DynMap{
 		"message": "Member added to Team",
 	})
 }
 
 // PUT /:teamId/members/:userId
-func (hs *HTTPServer) UpdateTeamMember(c *models.ReqContext, cmd models.UpdateTeamMemberCommand) Response {
+func (hs *HTTPServer) UpdateTeamMember(c *models.ReqContext, cmd models.UpdateTeamMemberCommand) response.Response {
 	teamId := c.ParamsInt64(":teamId")
 	orgId := c.OrgId
 
 	if err := teamguardian.CanAdmin(hs.Bus, orgId, teamId, c.SignedInUser); err != nil {
-		return Error(403, "Not allowed to update team member", err)
+		return response.Error(403, "Not allowed to update team member", err)
 	}
 
 	if c.OrgRole != models.ROLE_ADMIN {
@@ -83,21 +84,21 @@ func (hs *HTTPServer) UpdateTeamMember(c *models.ReqContext, cmd models.UpdateTe
 
 	if err := hs.Bus.Dispatch(&cmd); err != nil {
 		if errors.Is(err, models.ErrTeamMemberNotFound) {
-			return Error(404, "Team member not found.", nil)
+			return response.Error(404, "Team member not found.", nil)
 		}
-		return Error(500, "Failed to update team member.", err)
+		return response.Error(500, "Failed to update team member.", err)
 	}
-	return Success("Team member updated")
+	return response.Success("Team member updated")
 }
 
 // DELETE /api/teams/:teamId/members/:userId
-func (hs *HTTPServer) RemoveTeamMember(c *models.ReqContext) Response {
+func (hs *HTTPServer) RemoveTeamMember(c *models.ReqContext) response.Response {
 	orgId := c.OrgId
 	teamId := c.ParamsInt64(":teamId")
 	userId := c.ParamsInt64(":userId")
 
 	if err := teamguardian.CanAdmin(hs.Bus, orgId, teamId, c.SignedInUser); err != nil {
-		return Error(403, "Not allowed to remove team member", err)
+		return response.Error(403, "Not allowed to remove team member", err)
 	}
 
 	protectLastAdmin := false
@@ -107,14 +108,14 @@ func (hs *HTTPServer) RemoveTeamMember(c *models.ReqContext) Response {
 
 	if err := hs.Bus.Dispatch(&models.RemoveTeamMemberCommand{OrgId: orgId, TeamId: teamId, UserId: userId, ProtectLastAdmin: protectLastAdmin}); err != nil {
 		if errors.Is(err, models.ErrTeamNotFound) {
-			return Error(404, "Team not found", nil)
+			return response.Error(404, "Team not found", nil)
 		}
 
 		if errors.Is(err, models.ErrTeamMemberNotFound) {
-			return Error(404, "Team member not found", nil)
+			return response.Error(404, "Team member not found", nil)
 		}
 
-		return Error(500, "Failed to remove Member from Team", err)
+		return response.Error(500, "Failed to remove Member from Team", err)
 	}
-	return Success("Team Member removed")
+	return response.Success("Team Member removed")
 }

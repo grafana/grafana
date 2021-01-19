@@ -39,7 +39,7 @@ func (ng *AlertNG) definitionRoutine(grafanaCtx context.Context, key alertDefini
 						return err
 					}
 					alertDefinition = q.Result
-					ng.schedule.log.Debug("new alert definition version fetched", "key", key, "version", alertDefinition.Version)
+					ng.schedule.log.Debug("new alert definition version fetched", "title", alertDefinition.Title, "key", key, "version", alertDefinition.Version)
 				}
 
 				condition := eval.Condition{
@@ -50,11 +50,17 @@ func (ng *AlertNG) definitionRoutine(grafanaCtx context.Context, key alertDefini
 				results, err := eval.ConditionEval(&condition, ctx.now)
 				end = timeNow()
 				if err != nil {
-					ng.schedule.log.Error("failed to evaluate alert definition", "key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "error", err)
+					// consider saving alert instance on error
+					ng.schedule.log.Error("failed to evaluate alert definition", "title", alertDefinition.Title, "key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "error", err)
 					return err
 				}
 				for _, r := range results {
-					ng.schedule.log.Info("alert definition result", "key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "instance", r.Instance, "state", r.State.String())
+					ng.schedule.log.Debug("alert definition result", "title", alertDefinition.Title, "key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "instance", r.Instance, "state", r.State.String())
+					cmd := saveAlertInstanceCommand{DefinitionOrgID: key.orgID, DefinitionUID: key.definitionUID, State: InstanceStateType(r.State.String()), Labels: InstanceLabels(r.Instance), LastEvalTime: ctx.now}
+					err := ng.saveAlertInstance(&cmd)
+					if err != nil {
+						ng.schedule.log.Error("failed saving alert instance", "title", alertDefinition.Title, "key", key, "attempt", attempt, "now", ctx.now, "instance", r.Instance, "state", r.State.String(), "error", err)
+					}
 				}
 				return nil
 			}

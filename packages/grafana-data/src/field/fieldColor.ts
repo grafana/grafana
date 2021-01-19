@@ -3,6 +3,8 @@ import { classicColors, getColorForTheme, RegistryItem } from '../utils';
 import { Registry } from '../utils/Registry';
 import { interpolateRgbBasis } from 'd3-interpolate';
 import { fallBackTreshold } from './thresholds';
+import { getScaleCalculator, ColorScaleValue } from './scale';
+import { reduceField } from '../transformations/fieldReducer';
 
 export type FieldValueColorCalculator = (value: number, percent: number, Threshold?: Threshold) => string;
 
@@ -207,6 +209,30 @@ export function getFieldColorModeForField(field: Field): FieldColorMode {
 
 export function getFieldColorMode(mode?: FieldColorModeId): FieldColorMode {
   return fieldColorModeRegistry.get(mode ?? FieldColorModeId.Thresholds);
+}
+
+/**
+ * @alpha
+ * Function that will return a series color for any given color mode. If the color mode is a by value color
+ * mode it will use the field.config.color.seriesBy property to figure out which value to use
+ */
+export function getFieldSeriesColor(field: Field, theme: GrafanaTheme): ColorScaleValue {
+  const mode = getFieldColorModeForField(field);
+
+  if (!mode.isByValue) {
+    return {
+      color: mode.getCalculator(field, theme)(0, 0),
+      threshold: fallBackTreshold,
+      percent: 1,
+    };
+  }
+
+  const scale = getScaleCalculator(field, theme);
+  const stat = field.config.color?.seriesBy ?? 'last';
+  const calcs = reduceField({ field, reducers: [stat] });
+  const value = calcs[stat] ?? 0;
+
+  return scale(value);
 }
 
 function getFixedColor(field: Field, theme: GrafanaTheme) {

@@ -6,7 +6,7 @@ import { SelectableValue } from '@grafana/data';
 import CloudMonitoringDatasource from '../datasource';
 import { AnnotationsHelp, LabelFilter, Metrics, Project } from './';
 import { toOption } from '../functions';
-import { AnnotationTarget, MetricDescriptor } from '../types';
+import { AnnotationTarget, EditorMode, MetricDescriptor } from '../types';
 
 const { Input } = LegacyForms;
 
@@ -25,6 +25,7 @@ interface State extends AnnotationTarget {
 }
 
 const DefaultTarget: State = {
+  editorMode: EditorMode.Visual,
   projectName: '',
   projects: [],
   metricType: '',
@@ -42,7 +43,7 @@ const DefaultTarget: State = {
 export class AnnotationQueryEditor extends React.Component<Props, State> {
   state: State = DefaultTarget;
 
-  async UNSAFE_UNSAFE_componentWillMount() {
+  async UNSAFE_componentWillMount() {
     // Unfortunately, migrations like this need to go UNSAFE_componentWillMount. As soon as there's
     // migration hook for this module.ts, we can do the migrations there instead.
     const { target, datasource } = this.props;

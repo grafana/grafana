@@ -1,6 +1,6 @@
+import { FALLBACK_COLOR, FieldColorMode, GrafanaTheme, ThresholdsConfig } from '@grafana/data';
 import tinycolor from 'tinycolor2';
 import uPlot, { Series } from 'uplot';
-import { getCanvasContext } from '../../../utils/measureText';
 import {
   DrawStyle,
   LineConfig,
@@ -8,18 +8,25 @@ import {
   PointsConfig,
   PointVisibility,
   LineInterpolation,
-  FillGradientMode,
+  GraphGradientMode,
 } from '../config';
 import { PlotConfigBuilder } from '../types';
 import { DataFrameFieldIndex } from '@grafana/data';
+import { getScaleGradientFn, getOpacityGradientFn, getHueGradientFn } from './gradientFills';
 
 export interface SeriesProps extends LineConfig, FillConfig, PointsConfig {
   scaleKey: string;
+  gradientMode?: GraphGradientMode;
+  /** Used when gradientMode is set to Scheme */
+  thresholds?: ThresholdsConfig;
+  /** Used when gradientMode is set to Scheme  */
+  colorMode?: FieldColorMode;
   fieldName: string;
   drawStyle: DrawStyle;
   show?: boolean;
   dataFrameFieldIndex?: DataFrameFieldIndex;
   hideInLegend?: boolean;
+  theme: GrafanaTheme;
 }
 
 export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
@@ -27,7 +34,6 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
     const {
       drawStyle,
       lineInterpolation,
-      lineColor,
       lineWidth,
       lineStyle,
       showPoints,
@@ -43,7 +49,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
     if (drawStyle === DrawStyle.Points) {
       lineConfig.paths = () => null;
     } else {
-      lineConfig.stroke = lineColor;
+      lineConfig.stroke = this.getLineColor();
       lineConfig.width = lineWidth;
       if (lineStyle && lineStyle.fill !== 'solid') {
         if (lineStyle.fill === 'dot') {
@@ -90,28 +96,39 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
     };
   }
 
-  getFill(): Series.Fill | undefined {
-    const { lineColor, fillColor, fillGradient, fillOpacity } = this.props;
+  private getLineColor(): Series.Stroke {
+    const { lineColor, gradientMode, colorMode, thresholds } = this.props;
+
+    if (gradientMode === GraphGradientMode.Scheme) {
+      return getScaleGradientFn(1, colorMode, thresholds);
+    }
+
+    return lineColor ?? FALLBACK_COLOR;
+  }
+
+  private getFill(): Series.Fill | undefined {
+    const { lineColor, fillColor, gradientMode, fillOpacity, colorMode, thresholds, theme } = this.props;
 
     if (fillColor) {
       return fillColor;
     }
 
-    const mode = fillGradient ?? FillGradientMode.None;
-    let fillOpacityNumber = fillOpacity ?? 0;
+    const mode = gradientMode ?? GraphGradientMode.None;
+    const opacityPercent = (fillOpacity ?? 0) / 100;
 
-    if (mode !== FillGradientMode.None) {
-      return getCanvasGradient({
-        color: (fillColor ?? lineColor)!,
-        opacity: fillOpacityNumber / 100,
-        mode,
-      });
-    }
-
-    if (fillOpacityNumber > 0) {
-      return tinycolor(lineColor)
-        .setAlpha(fillOpacityNumber / 100)
-        .toString();
+    switch (mode) {
+      case GraphGradientMode.Opacity:
+        return getOpacityGradientFn((fillColor ?? lineColor)!, opacityPercent);
+      case GraphGradientMode.Hue:
+        return getHueGradientFn((fillColor ?? lineColor)!, opacityPercent, theme);
+      case GraphGradientMode.Scheme:
+        return getScaleGradientFn(opacityPercent, colorMode, thresholds);
+      default:
+        if (opacityPercent > 0) {
+          return tinycolor(lineColor)
+            .setAlpha(opacityPercent)
+            .toString();
+        }
     }
 
     return undefined;
@@ -164,51 +181,4 @@ function mapDrawStyleToPathBuilder(
   }
 
   return builders.linear; // the default
-}
-
-interface AreaGradientOptions {
-  color: string;
-  mode: FillGradientMode;
-  opacity: number;
-}
-
-function getCanvasGradient(opts: AreaGradientOptions): (self: uPlot, seriesIdx: number) => CanvasGradient {
-  return (plot: uPlot, seriesIdx: number) => {
-    const { color, mode, opacity } = opts;
-
-    const ctx = getCanvasContext();
-    const gradient = ctx.createLinearGradient(0, plot.bbox.top, 0, plot.bbox.top + plot.bbox.height);
-
-    switch (mode) {
-      case FillGradientMode.Hue:
-        const color1 = tinycolor(color)
-          .spin(-25)
-          .darken(30)
-          .setAlpha(opacity)
-          .toRgbString();
-        const color2 = tinycolor(color)
-          .spin(25)
-          .lighten(35)
-          .setAlpha(opacity)
-          .toRgbString();
-        gradient.addColorStop(0, color2);
-        gradient.addColorStop(1, color1);
-
-      case FillGradientMode.Opacity:
-      default:
-        gradient.addColorStop(
-          0,
-          tinycolor(color)
-            .setAlpha(opacity)
-            .toRgbString()
-        );
-        gradient.addColorStop(
-          1,
-          tinycolor(color)
-            .setAlpha(0)
-            .toRgbString()
-        );
-        return gradient;
-    }
-  };
 }

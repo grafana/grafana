@@ -79,7 +79,7 @@
     "jest-junit": "^6.4.0",
     "less": "^3.11.1",
     "less-loader": "^5.0.0",
-    "lodash": "4.17.19",
+    "lodash": "4.17.20",
     "md5-file": "^4.0.0",
     "mini-css-extract-plugin": "^0.7.0",
     "optimize-css-assets-webpack-plugin": "^5.0.3",
