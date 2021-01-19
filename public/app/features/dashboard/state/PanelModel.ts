@@ -35,6 +35,7 @@ import {
 } from 'app/types/events';
 import { getTimeSrv } from '../services/TimeSrv';
 import { getAllVariableValuesForUrl } from '../../variables/getAllVariableValuesForUrl';
+import { getPanelOptionsWithDefaults } from './getPanelOptionsWithDefaults';
 
 export interface GridPos {
   x: number;
@@ -296,51 +297,20 @@ export class PanelModel implements DataConfigSource {
   private restorePanelOptions(pluginId: string) {
     const prevOptions = this.cachedPluginOptions[pluginId] || {};
 
-    Object.keys(prevOptions).map(property => {
+    Object.keys(prevOptions).map((property) => {
       (this as any)[property] = prevOptions[property];
     });
   }
 
-  private applyPluginOptionDefaults(plugin: PanelPlugin) {
-    if (plugin.angularConfigCtrl) {
-      return;
-    }
-
-    this.options = _.mergeWith({}, plugin.defaults, this.options || {}, (objValue: any, srcValue: any): any => {
-      if (_.isArray(srcValue)) {
-        return srcValue;
-      }
+  applyPluginOptionDefaults(plugin: PanelPlugin) {
+    const options = getPanelOptionsWithDefaults({
+      plugin,
+      currentOptions: this.options,
+      currentFieldConfig: this.fieldConfig,
     });
 
-    this.fieldConfig = applyFieldConfigDefaults(this.fieldConfig, plugin.fieldConfigDefaults);
-    this.validateFieldColorMode(plugin);
-  }
-
-  private validateFieldColorMode(plugin: PanelPlugin) {
-    // adjust to prefered field color setting if needed
-    const color = plugin.fieldConfigRegistry.getIfExists(FieldConfigProperty.Color);
-
-    if (color && color.settings) {
-      const colorSettings = color.settings as FieldColorConfigSettings;
-      const mode = fieldColorModeRegistry.getIfExists(this.fieldConfig.defaults.color?.mode);
-
-      // When no support fo value colors, use classic palette
-      if (!colorSettings.byValueSupport) {
-        if (!mode || mode.isByValue) {
-          this.fieldConfig.defaults.color = { mode: FieldColorModeId.PaletteClassic };
-          return;
-        }
-      }
-
-      // When supporting value colors and prefering thresholds, use Thresholds mode.
-      // Otherwise keep current mode
-      if (colorSettings.byValueSupport && colorSettings.preferThresholdsMode) {
-        if (!mode || !mode.isByValue) {
-          this.fieldConfig.defaults.color = { mode: FieldColorModeId.Thresholds };
-          return;
-        }
-      }
-    }
+    this.fieldConfig = options.fieldConfig;
+    this.options = options.options;
   }
 
   pluginLoaded(plugin: PanelPlugin) {
@@ -529,51 +499,6 @@ export class PanelModel implements DataConfigSource {
    * */
   getSavedId(): number {
     return this.editSourceId ?? this.id;
-  }
-}
-
-function applyFieldConfigDefaults(fieldConfig: FieldConfigSource, defaults: FieldConfigSource): FieldConfigSource {
-  const result: FieldConfigSource = {
-    defaults: _.mergeWith(
-      {},
-      defaults.defaults,
-      fieldConfig ? fieldConfig.defaults : {},
-      (objValue: any, srcValue: any): any => {
-        if (_.isArray(srcValue)) {
-          return srcValue;
-        }
-      }
-    ),
-    overrides: fieldConfig?.overrides ?? [],
-  };
-
-  // Thresholds base values are null in JSON but need to be converted to -Infinity
-  if (result.defaults.thresholds) {
-    fixThresholds(result.defaults.thresholds);
-  }
-
-  for (const override of result.overrides) {
-    for (const property of override.properties) {
-      if (property.id === 'thresholds') {
-        fixThresholds(property.value as ThresholdsConfig);
-      }
-    }
-  }
-
-  return result;
-}
-
-function fixThresholds(thresholds: ThresholdsConfig) {
-  if (!thresholds.mode) {
-    thresholds.mode = ThresholdsMode.Absolute;
-  }
-
-  if (!thresholds.steps) {
-    thresholds.steps = [];
-  } else if (thresholds.steps.length) {
-    // First value is always -Infinity
-    // JSON saves it as null
-    thresholds.steps[0].value = -Infinity;
   }
 }
 

@@ -82,9 +82,10 @@ export interface SetFieldConfigOptionsArgs<TFieldConfigOptions = any> {
   useCustomConfig?: (builder: FieldConfigEditorBuilder<TFieldConfigOptions>) => void;
 }
 
-export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = any> extends GrafanaPlugin<
-  PanelPluginMeta
-> {
+export class PanelPlugin<
+  TOptions = any,
+  TFieldConfigOptions extends object = any
+> extends GrafanaPlugin<PanelPluginMeta> {
   private _defaults?: TOptions;
   private _fieldConfigDefaults: FieldConfigSource<TFieldConfigOptions> = {
     defaults: {},
@@ -129,6 +130,7 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
         set(result, editor.id, editor.defaultValue);
       }
     }
+
     return result;
   }
 
@@ -137,6 +139,10 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
     configDefaults.custom = {} as TFieldConfigOptions;
 
     for (const option of this.fieldConfigRegistry.list()) {
+      if (option.defaultValue === null || option.defaultValue === undefined) {
+        continue;
+      }
+
       set(configDefaults, option.id, option.defaultValue);
     }
 
