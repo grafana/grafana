@@ -42,6 +42,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
 }) => {
   const matcherUi = fieldMatchersUI.get(override.matcher.id);
   const styles = useStyles(getStyles);
+  const properties = override.properties.map(p => registry.getIfExists(p.id)).filter(prop => !!prop);
 
   const matcherLabel = <Label>{matcherUi.name}</Label>;
 
@@ -104,11 +105,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
     });
 
   const renderOverrideTitle = (isExpanded: boolean) => {
-    const overriddenProperites = override.properties
-      .map(p => registry.getIfExists(p.id)?.name)
-      .filter(name => !!name)
-      .join(', ');
-
+    const propertyNames = properties.map(p => p?.name).join(', ');
     const matcherOptions = matcherUi.optionsToLabel(override.matcher.options);
 
     return (
@@ -122,9 +119,9 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
             <div className={styles.options} title={matcherOptions}>
               {matcherUi.name} <Icon name="angle-right" /> {matcherOptions}
             </div>
-            <div className={styles.options} title={overriddenProperites}>
+            <div className={styles.options} title={propertyNames}>
               Properties overridden <Icon name="angle-right" />
-              {overriddenProperites}
+              {propertyNames}
             </div>
           </div>
         )}
@@ -150,15 +147,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
           const item = registry.getIfExists(p.id);
 
           if (!item) {
-            return (
-              <HorizontalGroup key={`${p.id}/${j}`} justify="space-between">
-                <HorizontalGroup>
-                  <Label className={styles.unknownLabel}>Unknown property:</Label>
-                  <code aria-label={selectors.components.OverridesConfigEditor.unknownPropertiesList}>{p.id}</code>
-                </HorizontalGroup>
-                <IconButton name="times" onClick={() => onDynamicConfigValueRemove(j)} />
-              </HorizontalGroup>
-            );
+            return null;
           }
 
           const isCollapsible =
