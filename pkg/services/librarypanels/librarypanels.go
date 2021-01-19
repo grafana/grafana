@@ -146,10 +146,6 @@ func (lps *LibraryPanelService) ConnectLibraryPanelsForDashboard(c *models.ReqCo
 		return nil
 	}
 
-	if dash.Id == 0 || dash.Uid == "" {
-		return errors.New("dashboard is missing an ID or uid")
-	}
-
 	panels := dash.Data.Get("panels").MustArray()
 	for _, panel := range panels {
 		panelAsJSON := simplejson.NewFromAny(panel)
@@ -176,10 +172,6 @@ func (lps *LibraryPanelService) ConnectLibraryPanelsForDashboard(c *models.ReqCo
 func (lps *LibraryPanelService) DisconnectLibraryPanelsForDashboard(c *models.ReqContext, dash *models.Dashboard) error {
 	if !lps.IsEnabled() {
 		return nil
-	}
-
-	if dash.Id == 0 || dash.Uid == "" {
-		return errors.New("dashboard is missing an ID or uid")
 	}
 
 	panels := dash.Data.Get("panels").MustArray()
