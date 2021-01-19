@@ -322,6 +322,46 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 	})
 }
 
+func TestUpdatingConflictingAlertDefinition(t *testing.T) {
+	t.Run("should fail to update alert definition with reserved title", func(t *testing.T) {
+		mockTimeNow()
+		defer resetTimeNow()
+
+		ng := setupTestEnv(t)
+		t.Cleanup(registry.ClearOverrides)
+
+		var initialInterval int64 = 120
+		alertDef1 := createTestAlertDefinition(t, ng, initialInterval)
+		alertDef2 := createTestAlertDefinition(t, ng, initialInterval)
+
+		q := updateAlertDefinitionCommand{
+			UID:   (*alertDef2).UID,
+			Title: alertDef1.Title,
+			Condition: eval.Condition{
+				RefID: "B",
+				QueriesAndExpressions: []eval.AlertQuery{
+					{
+						Model: json.RawMessage(`{
+							"datasource": "__expr__",
+							"type":"math",
+							"expression":"2 + 3 > 1"
+						}`),
+						RefID: "B",
+						RelativeTimeRange: eval.RelativeTimeRange{
+							From: eval.Duration(5 * time.Hour),
+							To:   eval.Duration(3 * time.Hour),
+						},
+					},
+				},
+			},
+		}
+
+		err := ng.updateAlertDefinition(&q)
+		require.Error(t, err)
+		assert.True(t, ng.SQLStore.Dialect.IsUniqueConstraintViolation(err))
+	})
+}
+
 func TestDeletingAlertDefinition(t *testing.T) {
 	t.Run("zero rows affected when deleting unknown alert", func(t *testing.T) {
 		ng := setupTestEnv(t)
