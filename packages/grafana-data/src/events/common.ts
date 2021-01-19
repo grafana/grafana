@@ -31,15 +31,3 @@ export class DataHoverClearEvent extends BusEventWithPayload<DataHoverPayload> {
 export class DataSelectEvent extends BusEventWithPayload<DataHoverPayload> {
   static type = 'data-select';
 }
-
-/** @alpha */
-export const DataEvents = {
-  // mouse move & drag (down will be set)
-  dataHover: eventFactory<DataHoverEvent>(DataHoverEvent.type),
-
-  // mouse out
-  dataHoverClear: eventFactory<DataHoverEvent>(DataHoverClearEvent.type),
-
-  // mouse up and click
-  dataSelect: eventFactory<DataHoverEvent>(DataSelectEvent.type),
-};
