@@ -24,7 +24,7 @@ type DashboardProvisioner interface {
 // DashboardProvisionerFactory creates DashboardProvisioners based on input
 type DashboardProvisionerFactory func(string) (DashboardProvisioner, error)
 
-// Provisioner is responsible for syncing dashboard from disc to Grafanas database.
+// Provisioner is responsible for syncing dashboard from disk to Grafanas database.
 type Provisioner struct {
 	log         log.Logger
 	fileReaders []*FileReader
