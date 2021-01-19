@@ -95,7 +95,9 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
   const hiddenNodesCount = processed.nodes.length - rawNodes.length;
 
   const { nodes, edges, bounds } = useLayout(rawNodes, rawEdges, config);
-  const { panRef, zoomRef, onStepUp, onStepDown, isPanning, position, scale } = usePanAndZoom(bounds);
+  const { panRef, zoomRef, onStepUp, onStepDown, isPanning, position, scale, isMaxZoom, isMinZoom } = usePanAndZoom(
+    bounds
+  );
   const { onEdgeOpen, onNodeOpen, MenuComponent } = useContextMenu(getLinks, nodesDataFrames[0], edgesDataFrames[0]);
   const styles = getStyles(useTheme());
 
@@ -144,6 +146,8 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
           onMinus={onStepDown}
           onPlus={onStepUp}
           scale={scale}
+          disableZoomIn={isMaxZoom}
+          disableZoomOut={isMinZoom}
         />
       </div>
 
@@ -233,11 +237,11 @@ const EdgeLabels = memo(function EdgeLabels(props: EdgeLabelsProps) {
 });
 
 function usePanAndZoom(bounds: Bounds) {
-  const { scale, onStepDown, onStepUp, ref } = useZoom();
+  const { scale, onStepDown, onStepUp, ref, isMax, isMin } = useZoom();
   const { state: panningState, ref: panRef } = usePanning<SVGSVGElement>({
     scale,
     bounds,
   });
   const { position, isPanning } = panningState;
-  return { zoomRef: ref, panRef, position, isPanning, scale, onStepDown, onStepUp };
+  return { zoomRef: ref, panRef, position, isPanning, scale, onStepDown, onStepUp, isMaxZoom: isMax, isMinZoom: isMin };
 }

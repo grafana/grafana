@@ -81,6 +81,8 @@ export function useZoom({ stepUp, stepDown, min, max } = defaultOptions) {
     onStepUp,
     onStepDown,
     scale: Math.max(Math.min(scale, max ?? Infinity), min ?? -Infinity),
+    isMax: scale >= (max ?? Infinity),
+    isMin: scale <= (min ?? -Infinity),
     ref,
   };
 }
