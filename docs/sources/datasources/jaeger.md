@@ -35,6 +35,8 @@ This is a configuration for the [trace to logs feature]({{< relref "../explore/i
 
 {{< docs-imagebox img="/img/docs/v74/trace-to-logs-settings.png" class="docs-image--no-shadow" caption="Screenshot of the trace to logs settings" >}}
 
+![Trace to logs settings](/img/docs/explore/trace-to-logs-settings-7-4.png "Screenshot of the trace to logs settings")
+
 ## Query traces
 
 You can query and display traces from Jaeger via [Explore]({{< relref "../explore/index.md" >}}).
