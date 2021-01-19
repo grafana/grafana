@@ -1036,7 +1036,7 @@ func TestDisconnectLibraryPanelsForDashboard(t *testing.T) {
 			var dashResult libraryPanelDashboardsResult
 			err = json.Unmarshal(response.Body(), &dashResult)
 			require.NoError(t, err)
-			require.Equal(t, 0, len(dashResult.Result))
+			require.Empty(t, dashResult.Result)
 		})
 
 	testScenario(t, "When an admin tries to delete a dashboard with a library panel without uid, it should fail",
