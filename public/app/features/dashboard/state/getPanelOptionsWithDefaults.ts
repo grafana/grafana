@@ -66,8 +66,8 @@ function applyFieldConfigDefaults(existingFieldConfig: FieldConfigSource, plugin
 
   // Filter out overrides for properties that cannot be found in registry
   result.overrides = result.overrides
-    .map((x) => {
-      const properties = x.properties.filter((prop) => {
+    .map(x => {
+      const properties = x.properties.filter(prop => {
         return plugin.fieldConfigRegistry.getIfExists(prop.id) !== undefined;
       });
 
@@ -76,7 +76,7 @@ function applyFieldConfigDefaults(existingFieldConfig: FieldConfigSource, plugin
         properties,
       };
     })
-    .filter((x) => x.properties.length > 0);
+    .filter(x => x.properties.length > 0);
 
   for (const override of result.overrides) {
     for (const property of override.properties) {
