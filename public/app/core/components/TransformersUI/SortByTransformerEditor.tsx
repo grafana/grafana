@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
 import { DataTransformerID, standardTransformers, TransformerRegistyItem, TransformerUIProps } from '@grafana/data';
 import { getAllFieldNamesFromDataFrames } from './OrganizeFieldsTransformerEditor';
-import { InlineField, InlineFieldRow, Select, Switch } from '@grafana/ui';
+import { InlineField, InlineSwitch, InlineFieldRow, Select } from '@grafana/ui';
 
 import { SortByField, SortByTransformerOptions } from '@grafana/data/src/transformations/transformers/sortBy';
 
@@ -44,13 +44,8 @@ export const SortByTransformerEditor: React.FC<TransformerUIProps<SortByTransfor
                 }}
               />
             </InlineField>
-            <InlineField
-              label="Reverse"
-              onClick={() => {
-                onSortChange(index, { ...s, desc: !!!s.desc });
-              }}
-            >
-              <Switch
+            <InlineField label="Reverse">
+              <InlineSwitch
                 value={!!s.desc}
                 onChange={() => {
                   onSortChange(index, { ...s, desc: !!!s.desc });
