@@ -59,7 +59,7 @@ import * as logsPanel from 'app/plugins/panel/logs/module';
 import * as newsPanel from 'app/plugins/panel/news/module';
 import * as livePanel from 'app/plugins/panel/live/module';
 import * as welcomeBanner from 'app/plugins/panel/welcome/module';
-import * as serviceMap from 'app/plugins/panel/nodeGraph/module';
+import * as nodeGraph from 'app/plugins/panel/nodeGraph/module';
 
 const builtInPlugins: any = {
   'app/plugins/datasource/graphite/module': graphitePlugin,
@@ -103,7 +103,7 @@ const builtInPlugins: any = {
   'app/plugins/panel/bargauge/module': barGaugePanel,
   'app/plugins/panel/logs/module': logsPanel,
   'app/plugins/panel/welcome/module': welcomeBanner,
-  'app/plugins/panel/serviceMap/module': serviceMap,
+  'app/plugins/panel/nodeGraph/module': nodeGraph,
 };
 
 export default builtInPlugins;
