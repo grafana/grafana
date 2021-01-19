@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import uPlot, { AlignedData, AlignedDataWithGapTest, Options } from 'uplot';
 import { buildPlotContext, PlotContext } from './context';
-import { pluginLog } from './utils';
+import { enableLogs, pluginLog } from './utils';
 import { usePlotConfig } from './hooks';
 import { AlignedFrameWithGapTest, PlotProps } from './types';
 import { DataFrame } from '@grafana/data';
@@ -25,6 +25,7 @@ export const UPlotChart: React.FC<PlotProps> = props => {
     props.timeZone,
     props.config
   );
+
   const getPlotInstance = useCallback(() => {
     return plotInstance.current;
   }, []);
