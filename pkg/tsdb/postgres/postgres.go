@@ -162,7 +162,7 @@ func writeConnectionFiles(ds *models.DataSource, logger log.Logger) error {
 }
 
 func generateConnectionString(datasource *models.DataSource, logger log.Logger) (string, error) {
-	sslConfigureMethod := strings.TrimSpace(strings.ToLower(datasource.JsonData.Get("sslconfiguremethod").MustString("file-content")))
+	sslConfigureMethod := strings.TrimSpace(strings.ToLower(datasource.JsonData.Get("sslconfiguremethod").MustString("file-path")))
 	sslMode := strings.TrimSpace(strings.ToLower(datasource.JsonData.Get("sslmode").MustString("verify-full")))
 	isSSLDisabled := sslMode == "disable"
 
