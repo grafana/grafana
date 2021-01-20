@@ -36,6 +36,7 @@ var ScenarioRegistry map[string]*Scenario
 
 func (p *testDataPlugin) registerScenarioQueryHandlers(mux *datasource.QueryTypeMux) {
 	mux.HandleFunc("random_walk", p.handleRandomWalkScenario)
+	mux.HandleFunc("random_walk_table", p.handleRandomWalkTableScenario)
 
 	mux.HandleFunc("", p.handleFallbackScenario)
 }
@@ -119,6 +120,23 @@ func (p *testDataPlugin) handleRandomWalkScenario(ctx context.Context, req *back
 			respD.Frames = append(respD.Frames, getRandomWalkV2(q, model, i))
 			resp.Responses[q.RefID] = respD
 		}
+	}
+
+	return resp, nil
+}
+
+func (p *testDataPlugin) handleRandomWalkTableScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+
+	for _, q := range req.Queries {
+		model, err := simplejson.NewJson(q.JSON)
+		if err != nil {
+			continue
+		}
+
+		respD := resp.Responses[q.RefID]
+		respD.Frames = append(respD.Frames, getRandomWalkTableV2(q, model))
+		resp.Responses[q.RefID] = respD
 	}
 
 	return resp, nil
@@ -666,6 +684,47 @@ func predictableSeries(timeRange *tsdb.TimeRange, timeStep, length int64, getVal
 	return &points, nil
 }
 
+func getRandomWalk(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery, index int) *tsdb.TimeSeries {
+	timeWalkerMs := tsdbQuery.TimeRange.GetFromAsMsEpoch()
+	to := tsdbQuery.TimeRange.GetToAsMsEpoch()
+	series := newSeriesForQuery(query, index)
+
+	startValue := query.Model.Get("startValue").MustFloat64(rand.Float64() * 100)
+	spread := query.Model.Get("spread").MustFloat64(1)
+	noise := query.Model.Get("noise").MustFloat64(0)
+
+	min, err := query.Model.Get("min").Float64()
+	hasMin := err == nil
+	max, err := query.Model.Get("max").Float64()
+	hasMax := err == nil
+
+	points := make(tsdb.TimeSeriesPoints, 0)
+	walker := startValue
+
+	for i := int64(0); i < 10000 && timeWalkerMs < to; i++ {
+		nextValue := walker + (rand.Float64() * noise)
+
+		if hasMin && nextValue < min {
+			nextValue = min
+			walker = min
+		}
+
+		if hasMax && nextValue > max {
+			nextValue = max
+			walker = max
+		}
+
+		points = append(points, tsdb.NewTimePoint(null.FloatFrom(nextValue), float64(timeWalkerMs)))
+
+		walker += (rand.Float64() - 0.5) * spread
+		timeWalkerMs += query.IntervalMs
+	}
+
+	series.Points = points
+	series.Tags = parseLabels(query)
+	return series
+}
+
 func getRandomWalkV2(query backend.DataQuery, model *simplejson.Json, index int) *data.Frame {
 	timeWalkerMs := query.TimeRange.From.UnixNano() / int64(time.Millisecond)
 	to := query.TimeRange.To.UnixNano() / int64(time.Millisecond)
@@ -708,47 +767,6 @@ func getRandomWalkV2(query backend.DataQuery, model *simplejson.Json, index int)
 		data.NewField("time", nil, timeVec),
 		data.NewField("value", parseLabelsV2(model), floatVec),
 	)
-}
-
-func getRandomWalk(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery, index int) *tsdb.TimeSeries {
-	timeWalkerMs := tsdbQuery.TimeRange.GetFromAsMsEpoch()
-	to := tsdbQuery.TimeRange.GetToAsMsEpoch()
-	series := newSeriesForQuery(query, index)
-
-	startValue := query.Model.Get("startValue").MustFloat64(rand.Float64() * 100)
-	spread := query.Model.Get("spread").MustFloat64(1)
-	noise := query.Model.Get("noise").MustFloat64(0)
-
-	min, err := query.Model.Get("min").Float64()
-	hasMin := err == nil
-	max, err := query.Model.Get("max").Float64()
-	hasMax := err == nil
-
-	points := make(tsdb.TimeSeriesPoints, 0)
-	walker := startValue
-
-	for i := int64(0); i < 10000 && timeWalkerMs < to; i++ {
-		nextValue := walker + (rand.Float64() * noise)
-
-		if hasMin && nextValue < min {
-			nextValue = min
-			walker = min
-		}
-
-		if hasMax && nextValue > max {
-			nextValue = max
-			walker = max
-		}
-
-		points = append(points, tsdb.NewTimePoint(null.FloatFrom(nextValue), float64(timeWalkerMs)))
-
-		walker += (rand.Float64() - 0.5) * spread
-		timeWalkerMs += query.IntervalMs
-	}
-
-	series.Points = points
-	series.Tags = parseLabels(query)
-	return series
 }
 
 /**
@@ -869,6 +887,60 @@ func getRandomWalkTable(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery) *tsdb.Quer
 	queryRes := tsdb.NewQueryResult()
 	queryRes.Tables = append(queryRes.Tables, &table)
 	return queryRes
+}
+
+func getRandomWalkTableV2(query backend.DataQuery, model *simplejson.Json) *data.Frame {
+	timeWalkerMs := query.TimeRange.From.UnixNano() / int64(time.Millisecond)
+	to := query.TimeRange.To.UnixNano() / int64(time.Millisecond)
+	// withNil := model.Get("withNil").MustBool(false)
+	walker := model.Get("startValue").MustFloat64(rand.Float64() * 100)
+	spread := 2.5
+
+	// Name of the frame?
+	frame := data.NewFrame(query.RefID,
+		data.NewField("Time", nil, []*time.Time{}),
+		data.NewField("Value", nil, []*float64{}),
+		data.NewField("Min", nil, []*float64{}),
+		data.NewField("Max", nil, []*float64{}),
+		data.NewField("Info", nil, []*string{}),
+	)
+
+	var info strings.Builder
+
+	for i := int64(0); i < query.MaxDataPoints && timeWalkerMs < to; i++ {
+		delta := rand.Float64() - 0.5
+		walker += delta
+
+		info.Reset()
+		if delta > 0 {
+			info.WriteString("up")
+		} else {
+			info.WriteString("down")
+		}
+		if math.Abs(delta) > .4 {
+			info.WriteString(" fast")
+		}
+
+		t := time.Unix(timeWalkerMs/int64(1e+3), (timeWalkerMs%int64(1e+3))*int64(1e+6))
+		val := walker
+		min := walker - ((rand.Float64() * spread) + 0.01)
+		max := walker + ((rand.Float64() * spread) + 0.01)
+		infoString := info.String()
+		frame.AppendRow(&t, &val, &min, &max, &infoString)
+
+		// // Add some random null values
+		// if withNil && rand.Float64() > 0.8 {
+		// 	for i := 1; i < 4; i++ {
+		// 		if rand.Float64() > .2 {
+		// 			row[i] = nil
+		// 		}
+		// 	}
+		// }
+
+		timeWalkerMs += query.Interval.Milliseconds()
+	}
+
+	return frame
 }
 
 func registerScenario(scenario *Scenario) {
