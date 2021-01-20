@@ -30,9 +30,7 @@ func (d *duplicateEntries) InvolvedReaders() map[string]struct{} {
 		}
 
 		for readerName := range duplicate.InvolvedReaders {
-			if _, ok := involvedReaders[readerName]; !ok {
-				involvedReaders[readerName] = struct{}{}
-			}
+			involvedReaders[readerName] = struct{}{}
 		}
 	}
 
@@ -42,9 +40,7 @@ func (d *duplicateEntries) InvolvedReaders() map[string]struct{} {
 		}
 
 		for readerName := range duplicate.InvolvedReaders {
-			if _, ok := involvedReaders[readerName]; !ok {
-				involvedReaders[readerName] = struct{}{}
-			}
+			involvedReaders[readerName] = struct{}{}
 		}
 	}
 
@@ -55,8 +51,8 @@ type duplicateValidator struct {
 	readers []*FileReader
 }
 
-func newDuplicateValidator(readers []*FileReader) *duplicateValidator {
-	return &duplicateValidator{readers: readers}
+func newDuplicateValidator(readers []*FileReader) duplicateValidator {
+	return duplicateValidator{readers: readers}
 }
 
 func (c *duplicateValidator) getDuplicates() *duplicateEntries {
@@ -74,7 +70,7 @@ func (c *duplicateValidator) getDuplicates() *duplicateEntries {
 				duplicates.UIDs[uid] = newDuplicate()
 			}
 			duplicates.UIDs[uid].Sum += times
-			duplicates.UIDs[uid].InvolvedReaders[reader.Cfg.Name] = struct{}{}
+			duplicates.UIDs[uid].InvolvedReaders[readerName] = struct{}{}
 		}
 
 		for id, times := range tracker.titleUsage {

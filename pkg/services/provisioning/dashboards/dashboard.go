@@ -30,7 +30,7 @@ type Provisioner struct {
 	log                log.Logger
 	fileReaders        []*FileReader
 	configs            []*config
-	duplicateValidator *duplicateValidator
+	duplicateValidator duplicateValidator
 }
 
 // New returns a new DashboardProvisioner

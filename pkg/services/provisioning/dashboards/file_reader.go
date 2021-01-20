@@ -137,7 +137,8 @@ func (fr *FileReader) isDatabaseAccessRestricted() bool {
 }
 
 // storeDashboardsInFolder saves dashboards from the filesystem on disk to the folder from config
-func (fr *FileReader) storeDashboardsInFolder(filesFoundOnDisk map[string]os.FileInfo, dashboardRefs map[string]*models.DashboardProvisioning, usageTracker *usageTracker) error {
+func (fr *FileReader) storeDashboardsInFolder(filesFoundOnDisk map[string]os.FileInfo, 
+	dashboardRefs map[string]*models.DashboardProvisioning, usageTracker *usageTracker) error {
 	folderID, err := getOrCreateFolderID(fr.Cfg, fr.dashboardProvisioningService, fr.Cfg.Folder)
 	if err != nil && !errors.Is(err, ErrFolderNameMissing) {
 		return err
@@ -158,7 +159,8 @@ func (fr *FileReader) storeDashboardsInFolder(filesFoundOnDisk map[string]os.Fil
 
 // storeDashboardsInFoldersFromFilesystemStructure saves dashboards from the filesystem on disk to the same folder
 // in grafana as they are in on the filesystem
-func (fr *FileReader) storeDashboardsInFoldersFromFileStructure(filesFoundOnDisk map[string]os.FileInfo, dashboardRefs map[string]*models.DashboardProvisioning, resolvedPath string, usageTracker *usageTracker) error {
+func (fr *FileReader) storeDashboardsInFoldersFromFileStructure(filesFoundOnDisk map[string]os.FileInfo,
+	dashboardRefs map[string]*models.DashboardProvisioning, resolvedPath string, usageTracker *usageTracker) error {
 	for path, fileInfo := range filesFoundOnDisk {
 		folderName := ""
 
@@ -263,7 +265,12 @@ func (fr *FileReader) saveDashboard(path string, folderID int64, fileInfo os.Fil
 			Updated:    resolvedFileInfo.ModTime().Unix(),
 			CheckSum:   jsonFile.checkSum,
 		}
-		_, err = fr.dashboardProvisioningService.SaveProvisionedDashboard(dash, dp)
+		if _, err := fr.dashboardProvisioningService.SaveProvisionedDashboard(dash, dp); err != nil {
+			return provisioningMetadata, err
+		}
+	} else {
+		fr.log.Warn("Not saving new dashboard due to restricted database access", "provisioner", fr.Cfg.Name, 
+			"file", path, "folderId", dash.Dashboard.FolderId)
 	}
 
 	return provisioningMetadata, err

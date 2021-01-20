@@ -71,8 +71,8 @@ func TestDuplicatesValidator(t *testing.T) {
 		require.Equal(t, []string{"first", "second"}, titleUsageReaders)
 
 		duplicateValidator.validate(logger)
-		require.Equal(t, true, reader1.isDatabaseAccessRestricted())
-		require.Equal(t, true, reader2.isDatabaseAccessRestricted())
+		require.True(t, reader1.isDatabaseAccessRestricted())
+		require.True(t, reader2.isDatabaseAccessRestricted())
 	})
 
 	t.Run("Duplicates validator should restrict write access for only reader with duplicates", func(t *testing.T) {
@@ -117,7 +117,7 @@ func TestDuplicatesValidator(t *testing.T) {
 		require.Equal(t, []string{"first"}, titleUsageReaders)
 
 		duplicateValidator.validate(logger)
-		require.Equal(t, true, reader1.isDatabaseAccessRestricted())
-		require.Equal(t, false, reader2.isDatabaseAccessRestricted())
+		require.True(t, reader1.isDatabaseAccessRestricted())
+		require.False(t, reader2.isDatabaseAccessRestricted())
 	})
 }
