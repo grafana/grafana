@@ -95,7 +95,7 @@ func (c *duplicateValidator) logWarnings(log log.Logger, duplicates *duplicateEn
 
 	for id, usage := range duplicates.Titles {
 		if usage.Sum > 1 {
-			log.Warn("dashboard title is not unique in folder", "title", id.title, "folderID", id.folderID, "times", 
+			log.Warn("dashboard title is not unique in folder", "title", id.title, "folderID", id.folderID, "times",
 				usage.Sum, "providers", keysToSlice(usage.InvolvedReaders))
 		}
 	}
