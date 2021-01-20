@@ -19,10 +19,10 @@ import {
   TimeZone,
   ExploreUrlState,
   LogsModel,
-  DataFrame,
   EventBusExtended,
   EventBusSrv,
   TraceViewData,
+  DataFrame,
 } from '@grafana/data';
 
 import store from 'app/core/store';
@@ -54,6 +54,7 @@ import { TraceView } from './TraceView/TraceView';
 import { SecondaryActions } from './SecondaryActions';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, FilterItem } from '@grafana/ui/src/components/Table/types';
 import { ExploreGraphNGPanel } from './ExploreGraphNGPanel';
+import { NodeGraphContainer } from './NodeGraphContainer';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
@@ -113,6 +114,7 @@ export interface ExploreProps {
   showTable: boolean;
   showLogs: boolean;
   showTrace: boolean;
+  showNodeGraph: boolean;
   splitOpen: typeof splitOpen;
 }
 
@@ -276,13 +278,89 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     }
   };
 
-  renderEmptyState = () => {
+  renderEmptyState() {
     return (
       <div className="explore-container">
         <NoDataSourceCallToAction />
       </div>
     );
-  };
+  }
+
+  renderGraphPanel(width: number) {
+    const { graphResult, absoluteRange, timeZone, splitOpen, queryResponse } = this.props;
+    const isLoading = queryResponse.state === LoadingState.Loading;
+    return (
+      <ExploreGraphNGPanel
+        data={graphResult!}
+        width={width}
+        absoluteRange={absoluteRange}
+        timeZone={timeZone}
+        onUpdateTimeRange={this.onUpdateTimeRange}
+        annotations={queryResponse.annotations}
+        splitOpenFn={splitOpen}
+        isLoading={isLoading}
+      />
+    );
+  }
+
+  renderTablePanel(width: number) {
+    const { exploreId, datasourceInstance } = this.props;
+    return (
+      <TableContainer
+        ariaLabel={selectors.pages.Explore.General.table}
+        width={width}
+        exploreId={exploreId}
+        onCellFilterAdded={datasourceInstance?.modifyQuery ? this.onCellFilterAdded : undefined}
+      />
+    );
+  }
+
+  renderLogsPanel(width: number) {
+    const { exploreId, syncedTimes } = this.props;
+    return (
+      <LogsContainer
+        width={width}
+        exploreId={exploreId}
+        syncedTimes={syncedTimes}
+        onClickFilterLabel={this.onClickFilterLabel}
+        onClickFilterOutLabel={this.onClickFilterOutLabel}
+        onStartScanning={this.onStartScanning}
+        onStopScanning={this.onStopScanning}
+      />
+    );
+  }
+
+  renderNodeGraphPanel() {
+    const { exploreId, showTrace, queryResponse } = this.props;
+    return (
+      <NodeGraphContainer
+        dataFrames={this.getNodeGraphDataFrames(queryResponse.series)}
+        exploreId={exploreId}
+        short={showTrace}
+      />
+    );
+  }
+
+  getNodeGraphDataFrames = memoizeOne((frames: DataFrame[]) => {
+    // TODO: this not in sync with how other types of responses are handled. Other types have a query response
+    //  processing pipeline which ends up populating redux state with proper data. As we move towards more dataFrame
+    //  oriented API it seems like a better direction to move such processing into to visualisations and do minimal
+    //  and lazy processing here. Needs bigger refactor so keeping nodeGraph and Traces as they are for now.
+    return frames.filter(frame => frame.meta?.preferredVisualisationType === 'nodeGraph');
+  });
+
+  renderTraceViewPanel() {
+    const { queryResponse, splitOpen } = this.props;
+    const dataFrames = queryResponse.series.filter(series => series.meta?.preferredVisualisationType === 'trace');
+
+    return (
+      // We expect only one trace at the moment to be in the dataframe
+      // If there is no data (like 404) we show a separate error so no need to show anything here
+      dataFrames[0] && (
+        <TraceView trace={dataFrames[0].fields[0].values.get(0) as TraceViewData | undefined} splitOpenFn={splitOpen} />
+      )
+    );
+  }
 
   render() {
     const {
@@ -292,24 +370,20 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       split,
       queryKeys,
       graphResult,
-      absoluteRange,
-      timeZone,
       queryResponse,
-      syncedTimes,
       isLive,
       theme,
       showMetrics,
       showTable,
       showLogs,
       showTrace,
-      splitOpen,
+      showNodeGraph,
     } = this.props;
     const { openDrawer } = this.state;
     const exploreClass = split ? 'explore explore-split' : 'explore';
     const styles = getStyles(theme);
     const StartPage = datasourceInstance?.components?.ExploreStartPage;
     const showStartPage = !queryResponse || queryResponse.state === LoadingState.NotStarted;
-    const isLoading = queryResponse.state === LoadingState.Loading;
 
     // gets an error without a refID, so non-query-row-related error, like a connection error
     const queryErrors =
@@ -360,49 +434,11 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                       )}
                       {!showStartPage && (
                         <>
-                          {showMetrics && graphResult && (
-                            <ExploreGraphNGPanel
-                              data={graphResult}
-                              width={width}
-                              absoluteRange={absoluteRange}
-                              timeZone={timeZone}
-                              onUpdateTimeRange={this.onUpdateTimeRange}
-                              annotations={queryResponse.annotations}
-                              splitOpenFn={splitOpen}
-                              isLoading={isLoading}
-                            />
-                          )}
-                          {showTable && (
-                            <TableContainer
-                              ariaLabel={selectors.pages.Explore.General.table}
-                              width={width}
-                              exploreId={exploreId}
-                              onCellFilterAdded={
-                                this.props.datasourceInstance?.modifyQuery ? this.onCellFilterAdded : undefined
-                              }
-                            />
-                          )}
-                          {showLogs && (
-                            <LogsContainer
-                              width={width}
-                              exploreId={exploreId}
-                              syncedTimes={syncedTimes}
-                              onClickFilterLabel={this.onClickFilterLabel}
-                              onClickFilterOutLabel={this.onClickFilterOutLabel}
-                              onStartScanning={this.onStartScanning}
-                              onStopScanning={this.onStopScanning}
-                            />
-                          )}
-                          {/* TODO:unification */}
-                          {showTrace &&
-                            // We expect only one trace at the moment to be in the dataframe
-                            // If there is not data (like 404) we show a separate error so no need to show anything here
-                            queryResponse.series[0] && (
-                              <TraceView
-                                trace={queryResponse.series[0].fields[0].values.get(0) as TraceViewData | undefined}
-                                splitOpenFn={splitOpen}
-                              />
-                            )}
+                          {showMetrics && graphResult && this.renderGraphPanel(width)}
+                          {showTable && this.renderTablePanel(width)}
+                          {showLogs && this.renderLogsPanel(width)}
+                          {showNodeGraph && this.renderNodeGraphPanel()}
+                          {showTrace && this.renderTraceViewPanel()}
                         </>
                       )}
                       {showRichHistory && (
@@ -455,6 +491,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     showTrace,
     absoluteRange,
     queryResponse,
+    showNodeGraph,
   } = item;
 
   const { datasource, queries, range: urlRange, originPanelId } = (urlState || {}) as ExploreUrlState;
@@ -486,6 +523,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     showMetrics,
     showTable,
     showTrace,
+    showNodeGraph,
   };
 }
 
