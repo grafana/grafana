@@ -47,7 +47,7 @@ SAML authentication is not affected by an expired license.
 ### Reporting
 
 - You're unable to configure new reports or generate previews.
-- Scheduled reports are not generated or sent.
+- Existing reports continue to be sent.
 
 ### Enterprise plugins
 
