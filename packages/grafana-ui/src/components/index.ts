@@ -16,7 +16,6 @@ export { ButtonCascader } from './ButtonCascader/ButtonCascader';
 export { LoadingPlaceholder, LoadingPlaceholderProps } from './LoadingPlaceholder/LoadingPlaceholder';
 export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
-export { PanelOptionsGrid } from './PanelOptionsGrid/PanelOptionsGrid';
 export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
 export { PieChart, PieChartType } from './PieChart/PieChart';
 export { UnitPicker } from './UnitPicker/UnitPicker';
@@ -102,7 +101,7 @@ export { DataLinkInput } from './DataLinks/DataLinkInput';
 export { DataLinksContextMenu } from './DataLinks/DataLinksContextMenu';
 export { SeriesIcon } from './VizLegend/SeriesIcon';
 export { InfoBox } from './InfoBox/InfoBox';
-export { FeatureInfoBox } from './InfoBox/FeatureInfoBox';
+export { FeatureBadge, FeatureInfoBox } from './InfoBox/FeatureInfoBox';
 
 export { JSONFormatter } from './JSONFormatter/JSONFormatter';
 export { JsonExplorer } from './JSONFormatter/json_explorer/json_explorer';
@@ -110,6 +109,8 @@ export { ErrorBoundary, ErrorBoundaryAlert } from './ErrorBoundary/ErrorBoundary
 export { ErrorWithStack } from './ErrorBoundary/ErrorWithStack';
 export { AlphaNotice } from './AlphaNotice/AlphaNotice';
 export { DataSourceHttpSettings } from './DataSourceSettings/DataSourceHttpSettings';
+export { TLSAuthSettings } from './DataSourceSettings/TLSAuthSettings';
+export { CertificationKey } from './DataSourceSettings/CertificationKey';
 export { Spinner } from './Spinner/Spinner';
 export { FadeTransition } from './transitions/FadeTransition';
 export { SlideOutTransition } from './transitions/SlideOutTransition';
@@ -131,7 +132,7 @@ export { FieldConfigItemHeaderTitle } from './FieldConfigs/FieldConfigItemHeader
 // Next-gen forms
 export { Form } from './Forms/Form';
 export { InputControl } from './InputControl';
-export * from './Button';
+export { Button, LinkButton, ButtonVariant, ToolbarButton, ButtonGroup } from './Button';
 export { ValuePicker } from './ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
 export { getFormStyles } from './Forms/getFormStyles';
@@ -207,3 +208,4 @@ export { useRefreshAfterGraphRendered } from './uPlot/hooks';
 export { usePlotContext, usePlotData, usePlotPluginContext } from './uPlot/context';
 export { GraphNG, FIXED_UNIT } from './GraphNG/GraphNG';
 export { GraphNGLegendEvent, GraphNGLegendEventMode } from './GraphNG/types';
+export * from './NodeGraph';

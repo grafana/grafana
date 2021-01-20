@@ -53,7 +53,7 @@ export function SegmentAsync<T>({
       onClickOutside={() => {
         setExpanded(false);
       }}
-      onChange={item => {
+      onChange={(item) => {
         setExpanded(false);
         onChange(item);
       }}

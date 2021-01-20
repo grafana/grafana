@@ -8,7 +8,6 @@ import {
   fieldReducers,
   FieldType,
   formattedValueToString,
-  getFieldColorModeForField,
   getFieldDisplayName,
   reduceField,
   TimeRange,
@@ -23,13 +22,14 @@ import { LegendDisplayMode, VizLegendItem, VizLegendOptions } from '../VizLegend
 import { VizLegend } from '../VizLegend/VizLegend';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { useRevision } from '../uPlot/hooks';
+import { getFieldColorModeForField, getFieldSeriesColor } from '@grafana/data';
 import { GraphNGLegendEvent, GraphNGLegendEventMode } from './types';
 import { isNumber } from 'lodash';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
 export interface XYFieldMatchers {
-  x: FieldMatcher;
+  x: FieldMatcher; // first match
   y: FieldMatcher;
 }
 export interface GraphNGProps extends Omit<PlotProps, 'data' | 'config'> {
@@ -109,6 +109,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
     // X is the first field in the aligned frame
     const xField = alignedFrame.fields[0];
+
     if (xField.type === FieldType.time) {
       builder.addScale({
         scaleKey: 'x',
@@ -118,6 +119,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
           return [r.from.valueOf(), r.to.valueOf()];
         },
       });
+
       builder.addAxis({
         scaleKey: 'x',
         isTime: true,
@@ -130,6 +132,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       builder.addScale({
         scaleKey: 'x',
       });
+
       builder.addAxis({
         scaleKey: 'x',
         placement: AxisPlacement.Bottom,
@@ -153,7 +156,8 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       const fmt = field.display ?? defaultFormatter;
       const scaleKey = config.unit || FIXED_UNIT;
       const colorMode = getFieldColorModeForField(field);
-      const seriesColor = colorMode.getCalculator(field, theme)(0, 0);
+      const scaleColor = getFieldSeriesColor(field, theme);
+      const seriesColor = scaleColor.color;
 
       if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
         // The builder will manage unique scaleKeys and combine where appropriate
@@ -172,7 +176,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
           label: customConfig.axisLabel,
           size: customConfig.axisWidth,
           placement: customConfig.axisPlacement ?? AxisPlacement.Auto,
-          formatValue: v => formattedValueToString(fmt(v)),
+          formatValue: (v) => formattedValueToString(fmt(v)),
           theme,
         });
       }
@@ -200,18 +204,21 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
       builder.addSeries({
         scaleKey,
+        showPoints,
+        colorMode,
+        fillOpacity,
+        theme,
         drawStyle: customConfig.drawStyle!,
         lineColor: customConfig.lineColor ?? seriesColor,
         lineWidth: customConfig.lineWidth,
         lineInterpolation: customConfig.lineInterpolation,
         lineStyle: customConfig.lineStyle,
-        showPoints,
         pointSize: customConfig.pointSize,
         pointColor: customConfig.pointColor ?? seriesColor,
-        fillOpacity,
         spanNulls: customConfig.spanNulls || false,
         show: !customConfig.hideFrom?.graph,
-        fillGradient: customConfig.fillGradient,
+        gradientMode: customConfig.gradientMode,
+        thresholds: config.thresholds,
 
         // The following properties are not used in the uPlot config, but are utilized as transport for legend config
         dataFrameFieldIndex,
@@ -232,7 +239,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
   const legendItems = configBuilder
     .getSeries()
-    .map<VizLegendItem | undefined>(s => {
+    .map<VizLegendItem | undefined>((s) => {
       const seriesConfig = s.props;
       const fieldIndex = seriesConfig.dataFrameFieldIndex;
       const axisPlacement = configBuilder.getAxisPlacement(s.props.scaleKey);
@@ -261,7 +268,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
             reducers: legend.calcs,
           });
 
-          return legend.calcs.map<DisplayValue>(reducer => {
+          return legend.calcs.map<DisplayValue>((reducer) => {
             return {
               ...fmt(fieldCalcs[reducer]),
               title: fieldReducers.get(reducer).name,
@@ -270,7 +277,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         },
       };
     })
-    .filter(i => i !== undefined) as VizLegendItem[];
+    .filter((i) => i !== undefined) as VizLegendItem[];
 
   let legendElement: React.ReactElement | undefined;
 

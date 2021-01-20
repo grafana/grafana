@@ -1,6 +1,7 @@
-<!-- 7.4.0 START -->
 
-# 7.4.0 (unreleased)
+<!-- 7.4.0-beta1 START -->
+
+# 7.4.0-beta1 (unreleased)
 
 ### Features and enhancements
 
@@ -26,16 +27,18 @@
 * **Elasticsearch**: View in context feature for logs. [#28764](https://github.com/grafana/grafana/pull/28764), [@simianhacker](https://github.com/simianhacker)
 * **Explore/Logs**: Alphabetically sort unique labels, labels and parsed fields. [#29030](https://github.com/grafana/grafana/pull/29030), [@ivanahuckova](https://github.com/ivanahuckova)
 * **Explore/Logs**: Update Parsed fields to Detected fields. [#28881](https://github.com/grafana/grafana/pull/28881), [@ivanahuckova](https://github.com/ivanahuckova)
-* **Explore/Prometheus**: Update default query type option to "Both". [#28935](https://github.com/grafana/grafana/pull/28935), [@ivanahuckova](https://github.com/ivanahuckova)
 * **Field overrides**: Added matcher to match all fields returned by a specific query. [#28872](https://github.com/grafana/grafana/pull/28872), [@mckn](https://github.com/mckn)
+* **Graph**: Add support for spline interpolation (smoothing) added in new time series panel. [#4303](https://github.com/grafana/grafana/issues/4303)
 * **Instrumentation**: Add histograms for database queries. [#29662](https://github.com/grafana/grafana/pull/29662), [@dafydd-t](https://github.com/dafydd-t)
 * **LogsPanel**: Don't show scroll bars when not needed. [#28972](https://github.com/grafana/grafana/pull/28972), [@aocenas](https://github.com/aocenas)
-* **Loki/Explore**: Add query type selector. [#28817](https://github.com/grafana/grafana/pull/28817), [@ivanahuckova](https://github.com/ivanahuckova)
 * **Loki**: Add query type and line limit to query editor in dashboard. [#29356](https://github.com/grafana/grafana/pull/29356), [@ivanahuckova](https://github.com/ivanahuckova)
+* **Loki**: Add query type selector to query editor in Explore. [#28817](https://github.com/grafana/grafana/pull/28817), [@ivanahuckova](https://github.com/ivanahuckova)
 * **Loki**: Retry web socket connection when connection is closed abnormally. [#29438](https://github.com/grafana/grafana/pull/29438), [@ivanahuckova](https://github.com/ivanahuckova)
 * **Middleware**: Add CSP support. [#29740](https://github.com/grafana/grafana/pull/29740), [@aknuds1](https://github.com/aknuds1)
 * **OAuth**: Configurable user name attribute. [#28286](https://github.com/grafana/grafana/pull/28286), [@alexanderzobnin](https://github.com/alexanderzobnin)
+* **Prometheus**: Add support for Exemplars. [#28057](https://github.com/grafana/grafana/pull/28057), [@zoltanbedi](https://github.com/zoltanbedi)
 * **Prometheus**: Improve autocomplete performance and remove disabling of dynamic label lookup. [#30199](https://github.com/grafana/grafana/pull/30199), [@ivanahuckova](https://github.com/ivanahuckova)
+* **Prometheus**: Update default query type option to "Both" in Explore query editor. [#28935](https://github.com/grafana/grafana/pull/28935), [@ivanahuckova](https://github.com/ivanahuckova)
 * **Prometheus**: Use customQueryParameters for all queries. [#28949](https://github.com/grafana/grafana/pull/28949), [@alexbumbacea](https://github.com/alexbumbacea)
 * **Security**: Prefer server cipher suites for http2. [#29379](https://github.com/grafana/grafana/pull/29379), [@bergquist](https://github.com/bergquist)
 * **Security**: Remove insecure cipher suit as default option. [#29378](https://github.com/grafana/grafana/pull/29378), [@bergquist](https://github.com/bergquist)
@@ -58,6 +61,7 @@
 * **Alerting**: Return proper status code when trying to create alert notification channel with duplicate name or uid. [#28043](https://github.com/grafana/grafana/pull/28043), [@jgulick48](https://github.com/jgulick48)
 * **Auth**: Fix default maximum lifetime  an authenticated user can be logged in. [#30030](https://github.com/grafana/grafana/pull/30030), [@papagian](https://github.com/papagian)
 * **Backend**: Fix IPv6 address parsing erroneous. [#28585](https://github.com/grafana/grafana/pull/28585), [@taciomcosta](https://github.com/taciomcosta)
+* **CloudWatch**:  Make sure stats grow horizontally and not vertically in the Query Editor. [#30106](https://github.com/grafana/grafana/pull/30106), [@sunker](https://github.com/sunker)
 * **Cloudwatch**: Fix issue with field calculation transform not working properly with Cloudwatch data. [#28761](https://github.com/grafana/grafana/pull/28761), [@torkelo](https://github.com/torkelo)
 * **Dashboards**: Hide playlist edit functionality from viewers and snapshots link from unauthenticated users. [#28992](https://github.com/grafana/grafana/pull/28992), [@jackw](https://github.com/jackw)
 * **Data source proxy**: Convert 401 HTTP status code from data source to 400. [#28962](https://github.com/grafana/grafana/pull/28962), [@aknuds1](https://github.com/aknuds1)
@@ -65,6 +69,8 @@
 * **Elasticsearch**: Fix date histogram auto interval handling for alert queries. [#30049](https://github.com/grafana/grafana/pull/30049), [@simianhacker](https://github.com/simianhacker)
 * **Elasticsearch**: Fix index pattern not working with multiple base sections. [#28348](https://github.com/grafana/grafana/pull/28348), [@tomdaly](https://github.com/tomdaly)
 * **Graph**: Fixes stacking issues like floating bars when data is not aligned. [#29051](https://github.com/grafana/grafana/pull/29051), [@torkelo](https://github.com/torkelo)
+* **Graph**: Staircase and null value=null calculates auto Y-Min incorrectly (fixed in new Time series panel). [#12995](https://github.com/grafana/grafana/issues/12995)
+* **Graph**: Staircase mode, do now draw line segment from zero when drawing null values as null (Fixed in new Time series panel). [#17838](https://github.com/grafana/grafana/issues/17838)
 * **Image uploader**: Fix uploading of images to GCS. [#26493](https://github.com/grafana/grafana/pull/26493), [@gastonqiu](https://github.com/gastonqiu)
 * **Influx**: Fixes issue with many queries being issued as you type in the variable query field. [#29968](https://github.com/grafana/grafana/pull/29968), [@dprokop](https://github.com/dprokop)
 * **Logs Panel**: Fix inconsistent highlighting. [#28971](https://github.com/grafana/grafana/pull/28971), [@ivanahuckova](https://github.com/ivanahuckova)
@@ -86,9 +92,6 @@
 * **Variables**: Fixes so clicking on Selected in drop down will exclude All value from selection. [#29844](https://github.com/grafana/grafana/pull/29844), [@hugohaggmark](https://github.com/hugohaggmark)
 
 ### Breaking changes
-
-The default menu placement for the `Select` component was previously set to `auto`. This meant that the drop down for the select would open downwards/upwards depending on available space. We've noticed that the `auto` doesn't always work when the drop down for `Select` is opened upwards so therefore we've changed the default to `bottom` instead.
- Issue [#29837](https://github.com/grafana/grafana/issues/29837)
 
 
 #### Constant variables
@@ -112,19 +115,19 @@ This option to group query variable values into groups by tags has been an exper
 
 ### Plugin development fixes & changes
 
-* **Field Config API**: Add ability to hide field option or disable it from the overrides. [#29879](https://github.com/grafana/grafana/pull/29879), [@dprokop](https://github.com/dprokop)
+* **FieldConfig API**: Add ability to hide field option or disable it from the overrides. [#29879](https://github.com/grafana/grafana/pull/29879), [@dprokop](https://github.com/dprokop)
 * **Select**: Changes default menu placement for Select from auto to bottom. [#29837](https://github.com/grafana/grafana/pull/29837), [@hugohaggmark](https://github.com/hugohaggmark)
-* **Grafana-ui**: Fix collapsible children sizing. [#29776](https://github.com/grafana/grafana/pull/29776), [@aocenas](https://github.com/aocenas)
+* **Collapse**: Allow component children to use height: 100% styling. [#29776](https://github.com/grafana/grafana/pull/29776), [@aocenas](https://github.com/aocenas)
 * **DataSourceWithBackend**: Throw error if health check fails in DataSourceWithBackend. [#29743](https://github.com/grafana/grafana/pull/29743), [@aocenas](https://github.com/aocenas)
 * **FieldColor**: Handling color changes when switching panel types. [#28875](https://github.com/grafana/grafana/pull/28875), [@dprokop](https://github.com/dprokop)
 * **CodeEditor**: Added support for javascript language. [#28818](https://github.com/grafana/grafana/pull/28818), [@ae3e](https://github.com/ae3e)
 * **grafana/toolkit**: Allow builds with lint warnings. [#28810](https://github.com/grafana/grafana/pull/28810), [@dprokop](https://github.com/dprokop)
 * **grafana/toolkit**: Drop console and debugger statements by default when building plugin. [#28776](https://github.com/grafana/grafana/pull/28776), [@dprokop](https://github.com/dprokop)
-* **Grafana-UI**: Add Card component. [#28216](https://github.com/grafana/grafana/pull/28216), [@Clarity-89](https://github.com/Clarity-89)
+* **Card**: Add new Card component. [#28216](https://github.com/grafana/grafana/pull/28216), [@Clarity-89](https://github.com/Clarity-89)
 * **FieldConfig**: Implementation slider editor (#27592). [#28007](https://github.com/grafana/grafana/pull/28007), [@isaozlerfm](https://github.com/isaozlerfm)
 * **MutableDataFrame**: Remove unique field name constraint and values field index and unused/seldom used stuff. [#27573](https://github.com/grafana/grafana/pull/27573), [@torkelo](https://github.com/torkelo)
 
-<!-- 7.4.0 END -->
+<!-- 7.4.0-beta1 END -->
 
 <!-- 7.3.7 START -->
 

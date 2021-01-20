@@ -36,7 +36,7 @@ export class TempoDatasource extends DataSourceApi<TempoQuery> {
     const id = options.targets[0]?.query;
     if (id) {
       return this._request(`/api/traces/${encodeURIComponent(id)}`).pipe(
-        map(response => {
+        map((response) => {
           return {
             data: [
               new MutableDataFrame({

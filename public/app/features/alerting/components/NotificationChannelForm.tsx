@@ -45,8 +45,8 @@ export const NotificationChannelForm: FC<Props> = ({
   const fieldsToWatch =
     new Set(
       selectedChannel?.options
-        .filter(o => o.showWhen.field)
-        .map(option => {
+        .filter((o) => o.showWhen.field)
+        .map((option) => {
           return `settings.${option.showWhen.field}`;
         })
     ) || [];
@@ -76,7 +76,7 @@ export const NotificationChannelForm: FC<Props> = ({
         />
       </div>
       {/* If there are no non-required fields, don't render this section*/}
-      {selectedChannel.options.filter(o => !o.required).length > 0 && (
+      {selectedChannel.options.filter((o) => !o.required).length > 0 && (
         <div className={styles.formItem}>
           <ChannelSettings
             selectedChannel={selectedChannel}

@@ -144,7 +144,7 @@ export function RichHistoryQueriesTab(props: Props) {
   const theme = useTheme();
   const styles = getStyles(theme, height);
 
-  const datasourcesRetrievedFromQueryHistory = uniqBy(queries, 'datasourceName').map(d => d.datasourceName);
+  const datasourcesRetrievedFromQueryHistory = uniqBy(queries, 'datasourceName').map((d) => d.datasourceName);
   const listOfDatasources = createDatasourcesList(datasourcesRetrievedFromQueryHistory);
 
   const filterAndSortQueriesDebounced = useCallback(
@@ -153,7 +153,7 @@ export function RichHistoryQueriesTab(props: Props) {
         filterAndSortQueries(
           queries,
           sortOrder,
-          datasourceFilters?.map(d => d.value) as string[] | null,
+          datasourceFilters?.map((d) => d.value) as string[] | null,
           searchValue,
           timeFilter
         )
@@ -167,7 +167,7 @@ export function RichHistoryQueriesTab(props: Props) {
       filterAndSortQueries(
         queries,
         sortOrder,
-        datasourceFilters?.map(d => d.value) as string[] | null,
+        datasourceFilters?.map((d) => d.value) as string[] | null,
         searchInput,
         timeFilter
       )
@@ -228,21 +228,21 @@ export function RichHistoryQueriesTab(props: Props) {
           </div>
           <div aria-label="Sort queries" className={styles.sort}>
             <Select
-              value={sortOrderOptions.filter(order => order.value === sortOrder)}
+              value={sortOrderOptions.filter((order) => order.value === sortOrder)}
               options={sortOrderOptions}
               placeholder="Sort queries by"
-              onChange={e => onChangeSortOrder(e.value as SortOrder)}
+              onChange={(e) => onChangeSortOrder(e.value as SortOrder)}
             />
           </div>
         </div>
-        {Object.keys(mappedQueriesToHeadings).map(heading => {
+        {Object.keys(mappedQueriesToHeadings).map((heading) => {
           return (
             <div key={heading}>
               <div className={styles.heading}>
                 {heading} <span className={styles.queries}>{mappedQueriesToHeadings[heading].length} queries</span>
               </div>
               {mappedQueriesToHeadings[heading].map((q: RichHistoryQuery) => {
-                const idx = listOfDatasources.findIndex(d => d.label === q.datasourceName);
+                const idx = listOfDatasources.findIndex((d) => d.label === q.datasourceName);
                 return (
                   <RichHistoryCard
                     query={q}

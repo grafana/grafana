@@ -15,10 +15,9 @@ func TestCloudMonitoringExecutor_parseToAnnotations(t *testing.T) {
 	require.Len(t, data.TimeSeries, 3)
 
 	res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "annotationQuery"}
-	query := &cloudMonitoringQuery{}
+	query := &cloudMonitoringTimeSeriesFilter{}
 
-	executor := &CloudMonitoringExecutor{}
-	err = executor.parseToAnnotations(res, data, query, "atitle {{metric.label.instance_name}} {{metric.value}}", "atext {{resource.label.zone}}", "atag")
+	err = query.parseToAnnotations(res, data, "atitle {{metric.label.instance_name}} {{metric.value}}", "atext {{resource.label.zone}}", "atag")
 	require.NoError(t, err)
 
 	require.Len(t, res.Tables, 1)

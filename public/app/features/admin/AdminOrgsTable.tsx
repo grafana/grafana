@@ -19,7 +19,7 @@ export const AdminOrgsTable: FC<Props> = ({ orgs, onDelete }) => {
         </tr>
       </thead>
       <tbody>
-        {orgs.map(org => (
+        {orgs.map((org) => (
           <tr key={`${org.id}-${org.name}`}>
             <td className="link-td">
               <a href={`admin/orgs/edit/${org.id}`}>{org.id}</a>

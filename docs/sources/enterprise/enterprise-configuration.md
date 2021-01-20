@@ -9,6 +9,31 @@ weight = 300
 
 This page describes Grafana Enterprise-specific configuration options that you can specify in a `.ini` configuration file or using environment variables. Refer to [Configuration]({{< relref "../administration/configuration.md" >}}) for more information about available configuration options.
 
+## [enterprise]
+
+### license_path
+
+Local filesystem path to Grafana Enterprise's license file.
+Defaults to `<paths.data>/license.jwt`.
+
+### license_text
+
+> **Note:** Available in Grafana Enterprise v7.4+.
+
+When set to the text representation (i.e. content of the license file)
+of the license, Grafana will evaluate and apply the given license to
+the instance.
+
+### auto_refresh_license
+
+> **Note:** Available in Grafana Enterprise v7.4+.
+
+When enabled, Grafana will send the license and usage statistics to
+the license issuer. If the license has been updated on the issuer's
+side to be valid for a different number of users or a new duration,
+your Grafana instance will be updated with the new terms
+automatically. Defaults to `true`.
+
 ## [white_labeling]
 
 ### app_title

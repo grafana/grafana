@@ -78,7 +78,7 @@ export class TimeSrv {
       return intervals;
     }
 
-    return intervals.filter(str => str !== '').filter(this.contextSrv.isAllowedInterval);
+    return intervals.filter((str) => str !== '').filter(this.contextSrv.isAllowedInterval);
   }
 
   private parseTime() {

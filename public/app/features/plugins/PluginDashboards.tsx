@@ -44,7 +44,7 @@ export class PluginDashboards extends PureComponent<Props, State> {
     const { dashboards } = this.state;
     return this.import(dashboards[index], true).then(() => {
       if (index + 1 < dashboards.length) {
-        return new Promise<void>(resolve => {
+        return new Promise<void>((resolve) => {
           setTimeout(() => {
             this.importNext(index + 1).then(() => {
               resolve();

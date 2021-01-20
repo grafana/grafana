@@ -21,6 +21,7 @@ type StandardOptionConfig = {
   settings?: any;
 };
 
+/** @beta */
 export interface SetFieldConfigOptionsArgs<TFieldConfigOptions = any> {
   /**
    * Configuration object of the standard field config properites
@@ -81,9 +82,10 @@ export interface SetFieldConfigOptionsArgs<TFieldConfigOptions = any> {
   useCustomConfig?: (builder: FieldConfigEditorBuilder<TFieldConfigOptions>) => void;
 }
 
-export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = any> extends GrafanaPlugin<
-  PanelPluginMeta
-> {
+export class PanelPlugin<
+  TOptions = any,
+  TFieldConfigOptions extends object = any
+> extends GrafanaPlugin<PanelPluginMeta> {
   private _defaults?: TOptions;
   private _fieldConfigDefaults: FieldConfigSource<TFieldConfigOptions> = {
     defaults: {},

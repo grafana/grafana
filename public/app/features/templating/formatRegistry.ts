@@ -163,7 +163,7 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
         // escape single quotes by pairing them
         const regExp = new RegExp(`'`, 'g');
         if (isArray(value)) {
-          return map(value, v => `'${replace(v, regExp, "''")}'`).join(',');
+          return map(value, (v) => `'${replace(v, regExp, "''")}'`).join(',');
         }
         return `'${replace(value, regExp, "''")}'`;
       },
@@ -231,13 +231,7 @@ function luceneEscape(value: string) {
  * unicode handling uses UTF-8 as in ECMA-262.
  */
 function encodeURIComponentStrict(str: string) {
-  return encodeURIComponent(str).replace(/[!'()*]/g, c => {
-    return (
-      '%' +
-      c
-        .charCodeAt(0)
-        .toString(16)
-        .toUpperCase()
-    );
+  return encodeURIComponent(str).replace(/[!'()*]/g, (c) => {
+    return '%' + c.charCodeAt(0).toString(16).toUpperCase();
   });
 }

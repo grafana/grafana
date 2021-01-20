@@ -34,7 +34,7 @@ export class PieChartOptionsBox extends PureComponent<PanelEditorProps<PieChartO
             width={12}
             options={pieChartOptions}
             onChange={this.onPieTypeChange}
-            value={pieChartOptions.find(option => option.value === pieType)}
+            value={pieChartOptions.find((option) => option.value === pieType)}
           />
         </div>
         <div className="gf-form">

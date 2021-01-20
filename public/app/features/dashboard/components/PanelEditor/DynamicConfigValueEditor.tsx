@@ -35,7 +35,10 @@ export const DynamicConfigValueEditor: React.FC<DynamicConfigValueEditorProps> =
   // eslint-disable-next-line react/display-name
   const renderLabel = (includeDescription = true, includeCounter = false) => (isExpanded = false) => (
     <HorizontalGroup justify="space-between">
-      <Label category={item.category?.splice(1)} description={includeDescription ? item.description : undefined}>
+      <Label
+        category={item.category?.filter((c) => c !== undefined) as string[]}
+        description={includeDescription ? item.description : undefined}
+      >
         {item.name}
         {!isExpanded && includeCounter && item.getItemsCount && <Counter value={item.getItemsCount(property.value)} />}
       </Label>
@@ -61,7 +64,7 @@ export const DynamicConfigValueEditor: React.FC<DynamicConfigValueEditorProps> =
       >
         <item.override
           value={property.value}
-          onChange={value => {
+          onChange={(value) => {
             onChange(value);
           }}
           item={item}
@@ -75,7 +78,7 @@ export const DynamicConfigValueEditor: React.FC<DynamicConfigValueEditorProps> =
         <Field label={renderLabel()()} description={item.description}>
           <item.override
             value={property.value}
-            onChange={value => {
+            onChange={(value) => {
               onChange(value);
             }}
             item={item}

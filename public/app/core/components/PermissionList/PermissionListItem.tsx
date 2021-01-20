@@ -51,7 +51,7 @@ export default class PermissionsListItem extends PureComponent<Props> {
   render() {
     const { item, folderInfo } = this.props;
     const inheritedFromRoot = item.dashboardId === -1 && !item.inherited;
-    const currentPermissionLevel = dashboardPermissionLevels.find(dp => dp.value === item.permission);
+    const currentPermissionLevel = dashboardPermissionLevels.find((dp) => dp.value === item.permission);
 
     return (
       <tr className={setClassNameHelper(Boolean(item?.inherited))}>

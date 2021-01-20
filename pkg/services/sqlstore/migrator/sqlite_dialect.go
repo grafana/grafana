@@ -3,6 +3,7 @@ package migrator
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/mattn/go-sqlite3"
@@ -146,4 +147,41 @@ func (db *SQLite3) IsUniqueConstraintViolation(err error) bool {
 
 func (db *SQLite3) IsDeadlock(err error) bool {
 	return false // No deadlock
+}
+
+// UpsertSQL returns the upsert sql statement for SQLite dialect
+func (db *SQLite3) UpsertSQL(tableName string, keyCols, updateCols []string) string {
+	columnsStr := strings.Builder{}
+	onConflictStr := strings.Builder{}
+	colPlaceHoldersStr := strings.Builder{}
+	setStr := strings.Builder{}
+
+	const separator = ", "
+	separatorVar := separator
+	for i, c := range updateCols {
+		if i == len(updateCols)-1 {
+			separatorVar = ""
+		}
+
+		columnsStr.WriteString(fmt.Sprintf("%s%s", db.Quote(c), separatorVar))
+		colPlaceHoldersStr.WriteString(fmt.Sprintf("?%s", separatorVar))
+		setStr.WriteString(fmt.Sprintf("%s=excluded.%s%s", db.Quote(c), db.Quote(c), separatorVar))
+	}
+
+	separatorVar = separator
+	for i, c := range keyCols {
+		if i == len(keyCols)-1 {
+			separatorVar = ""
+		}
+		onConflictStr.WriteString(fmt.Sprintf("%s%s", db.Quote(c), separatorVar))
+	}
+
+	s := fmt.Sprintf(`INSERT INTO %s (%s) VALUES (%s) ON CONFLICT(%s) DO UPDATE SET %s`,
+		tableName,
+		columnsStr.String(),
+		colPlaceHoldersStr.String(),
+		onConflictStr.String(),
+		setStr.String(),
+	)
+	return s
 }

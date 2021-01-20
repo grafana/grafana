@@ -78,7 +78,7 @@ describe('LogRows', () => {
 
   it('renders with default preview limit', () => {
     // PREVIEW_LIMIT * 2 is there because otherwise we just render all rows
-    const rows: LogRowModel[] = range(PREVIEW_LIMIT * 2 + 1).map(num => makeLog({ uid: num.toString() }));
+    const rows: LogRowModel[] = range(PREVIEW_LIMIT * 2 + 1).map((num) => makeLog({ uid: num.toString() }));
     const wrapper = mount(
       <LogRows
         logRows={rows}
@@ -113,24 +113,9 @@ describe('LogRows', () => {
       />
     );
 
-    expect(
-      wrapper
-        .find(LogRow)
-        .at(0)
-        .text()
-    ).toBe('log message 1');
-    expect(
-      wrapper
-        .find(LogRow)
-        .at(1)
-        .text()
-    ).toBe('log message 2');
-    expect(
-      wrapper
-        .find(LogRow)
-        .at(2)
-        .text()
-    ).toBe('log message 3');
+    expect(wrapper.find(LogRow).at(0).text()).toBe('log message 1');
+    expect(wrapper.find(LogRow).at(1).text()).toBe('log message 2');
+    expect(wrapper.find(LogRow).at(2).text()).toBe('log message 3');
   });
   it('renders desc ordered rows if order and function supplied', () => {
     const rows: LogRowModel[] = [
@@ -151,24 +136,9 @@ describe('LogRows', () => {
       />
     );
 
-    expect(
-      wrapper
-        .find(LogRow)
-        .at(0)
-        .text()
-    ).toBe('log message 3');
-    expect(
-      wrapper
-        .find(LogRow)
-        .at(1)
-        .text()
-    ).toBe('log message 2');
-    expect(
-      wrapper
-        .find(LogRow)
-        .at(2)
-        .text()
-    ).toBe('log message 1');
+    expect(wrapper.find(LogRow).at(0).text()).toBe('log message 3');
+    expect(wrapper.find(LogRow).at(1).text()).toBe('log message 2');
+    expect(wrapper.find(LogRow).at(2).text()).toBe('log message 1');
   });
 });
 

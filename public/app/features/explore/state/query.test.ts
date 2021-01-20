@@ -148,13 +148,13 @@ describe('reducer', () => {
         )
         .thenStatePredicateShouldEqual((resultingState: ExploreItemState) => {
           expect(resultingState.queries.length).toBe(2);
-          const queriesRefIds = resultingState.queries.map(query => query.refId);
-          const queriesKeys = resultingState.queries.map(query => query.key);
+          const queriesRefIds = resultingState.queries.map((query) => query.refId);
+          const queriesKeys = resultingState.queries.map((query) => query.key);
           expect(queriesRefIds).toEqual(['A', 'B']);
-          queriesKeys.forEach(queryKey => {
+          queriesKeys.forEach((queryKey) => {
             expect(queryKey).toMatch(QUERY_KEY_REGEX);
           });
-          resultingState.queryKeys.forEach(queryKey => {
+          resultingState.queryKeys.forEach((queryKey) => {
             expect(queryKey).toMatch(QUERY_KEY_REGEX);
           });
           return true;

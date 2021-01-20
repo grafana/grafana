@@ -58,12 +58,18 @@ export enum QueryType {
   SLO = 'slo',
 }
 
+export enum EditorMode {
+  Visual = 'visual',
+  MQL = 'mql',
+}
+
 export const queryTypes = [
   { label: 'Metrics', value: QueryType.METRICS },
   { label: 'Service Level Objectives (SLO)', value: QueryType.SLO },
 ];
 
 export interface MetricQuery {
+  editorMode: EditorMode;
   projectName: string;
   unit?: string;
   metricType: string;
@@ -76,6 +82,7 @@ export interface MetricQuery {
   metricKind?: string;
   valueType?: string;
   view?: string;
+  query: string;
 }
 
 export interface SLOQuery {

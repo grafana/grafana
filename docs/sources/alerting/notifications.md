@@ -230,3 +230,9 @@ Notification services which need public image access are marked as 'external onl
 
 All alert notifications contain a link back to the triggered alert in the Grafana instance.
 This URL is based on the [domain]({{< relref "../administration/configuration/#domain" >}}) setting in Grafana.
+
+## Notification templating
+
+> **Note:** Alert notification templating is only available in Grafana v7.4 and above.
+
+The alert notification template feature allows you to take the [label]({{< relref "../getting-started/timeseries-dimensions.md#labels" >}}) value from an alert query and [inject that into alert notifications]({{< relref "./add-notification-template.md" >}}).
