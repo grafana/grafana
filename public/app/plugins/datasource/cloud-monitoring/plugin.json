@@ -8,11 +8,71 @@
   "alerting": true,
   "annotations": true,
   "includes": [
-    { "type": "dashboard", "name": "BigQuery Query Monitoring", "path": "dashboards/bigQuery.json" },
-    { "type": "dashboard", "name": "Cloud SQL Monitoring", "path": "dashboards/cloudSQL.json" },
-    { "type": "dashboard", "name": "GCE VM Instance Monitoring", "path": "dashboards/gce.json" },
-    { "type": "dashboard", "name": "GKE Cluster Monitoring", "path": "dashboards/gke.json" },
-    { "type": "dashboard", "name": "HTTP_S Load Balancer Monitoring", "path": "dashboards/loadBalancer.json" }
+    {
+      "type": "dashboard",
+      "name": "Data Processing Monitoring",
+      "path": "dashboards/dataprocessing-monitoring.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "Cloud Functions Monitoring",
+      "path": "dashboards/cloudfunctions-monitoring.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "GCE VM Instance Monitoring",
+      "path": "dashboards/gce-vm-instance-monitoring.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "GKE Prometheus Pod/Node Monitoring",
+      "path": "dashboards/gke-prometheus-pod-node-monitoring.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "Firewall Insights Monitoring",
+      "path": "dashboards/firewall-insight-monitoring.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "GCE Network Monitoring",
+      "path": "dashboards/gce-network-monitoring.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "HTTP/S LB Backend Services",
+      "path": "dashboards/https-lb-backend-services-monitoring.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "HTTP/S Load Balancer Monitoring",
+      "path": "dashboards/https-loadbalancer-monitoring.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "Network TCP Load Balancer Monitoring",
+      "path": "dashboards/network-tcp-loadbalancer-monitoring.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "MicroService Monitoring",
+      "path": "dashboards/micro-service-monitoring.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "Cloud Storage Monitoring",
+      "path": "dashboards/cloud-storage-monitoring.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "Cloud SQL Monitoring",
+      "path": "dashboards/cloudsql-monitoring.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "Cloud SQL(MySQL) Monitoring",
+      "path": "dashboards/cloudsql-mysql-monitoring.json"
+    }
   ],
   "queryOptions": {
     "maxDataPoints": true,
