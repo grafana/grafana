@@ -29,7 +29,7 @@ describe('<SpanBar>', () => {
     hintSide: 'right',
     viewEnd: 1,
     viewStart: 0,
-    getViewedBounds: s => {
+    getViewedBounds: (s) => {
       // Log entries
       if (s === 10) {
         return { start: 0.1, end: 0.1 };

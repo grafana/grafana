@@ -55,7 +55,7 @@ const HttpAccessHelp = () => (
   </div>
 );
 
-export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
+export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
   const { defaultUrl, dataSourceConfig, onChange, showAccessOptions, sigV4AuthToggleEnabled } = props;
   let urlTooltip;
   const [isAccessHelpVisible, setIsAccessHelpVisible] = useState(false);
@@ -95,8 +95,8 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
     <Select
       width={20}
       options={ACCESS_OPTIONS}
-      value={ACCESS_OPTIONS.filter(o => o.value === dataSourceConfig.access)[0] || DEFAULT_ACCESS_OPTION}
-      onChange={selectedValue => onSettingsChange({ access: selectedValue.value })}
+      value={ACCESS_OPTIONS.filter((o) => o.value === dataSourceConfig.access)[0] || DEFAULT_ACCESS_OPTION}
+      onChange={(selectedValue) => onSettingsChange({ access: selectedValue.value })}
     />
   );
 
@@ -115,7 +115,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
       className={inputStyle}
       placeholder={defaultUrl}
       value={dataSourceConfig.url}
-      onChange={event => onSettingsChange({ url: event.currentTarget.value })}
+      onChange={(event) => onSettingsChange({ url: event.currentTarget.value })}
     />
   );
 
@@ -137,7 +137,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
                 <div className="gf-form">
                   <label
                     className="gf-form-label query-keyword pointer"
-                    onClick={() => setIsAccessHelpVisible(isVisible => !isVisible)}
+                    onClick={() => setIsAccessHelpVisible((isVisible) => !isVisible)}
                   >
                     Help&nbsp;
                     <Icon name={isAccessHelpVisible ? 'angle-down' : 'angle-right'} style={{ marginBottom: 0 }} />
@@ -157,7 +157,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
               </InlineFormLabel>
               <TagsInput
                 tags={dataSourceConfig.jsonData.keepCookies}
-                onChange={cookies =>
+                onChange={(cookies) =>
                   onSettingsChange({ jsonData: { ...dataSourceConfig.jsonData, keepCookies: cookies } })
                 }
                 width={20}
@@ -175,7 +175,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
               label="Basic auth"
               labelClass="width-13"
               checked={dataSourceConfig.basicAuth}
-              onChange={event => {
+              onChange={(event) => {
                 onSettingsChange({ basicAuth: event!.currentTarget.checked });
               }}
             />
@@ -183,7 +183,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
               label="With Credentials"
               labelClass="width-13"
               checked={dataSourceConfig.withCredentials}
-              onChange={event => {
+              onChange={(event) => {
                 onSettingsChange({ withCredentials: event!.currentTarget.checked });
               }}
               tooltip="Whether credentials such as cookies or auth headers should be sent with cross-site requests."
@@ -196,7 +196,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
                 label="SigV4 auth"
                 labelClass="width-13"
                 checked={dataSourceConfig.jsonData.sigV4Auth || false}
-                onChange={event => {
+                onChange={(event) => {
                   onSettingsChange({
                     jsonData: { ...dataSourceConfig.jsonData, sigV4Auth: event!.currentTarget.checked },
                   });
@@ -208,7 +208,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
           {dataSourceConfig.access === 'proxy' && (
             <HttpProxySettings
               dataSourceConfig={dataSourceConfig}
-              onChange={jsonData => onSettingsChange({ jsonData })}
+              onChange={(jsonData) => onSettingsChange({ jsonData })}
             />
           )}
         </div>

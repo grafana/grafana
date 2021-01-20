@@ -25,7 +25,7 @@ export class PieChartPanel extends PureComponent<Props> {
       theme: config.theme,
       replaceVariables: replaceVariables,
       timeZone,
-    }).map(v => v.display);
+    }).map((v) => v.display);
 
     return (
       <PieChart

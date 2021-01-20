@@ -15,7 +15,7 @@ export class ImpressionSrv {
       }
     }
 
-    impressions = impressions.filter(imp => {
+    impressions = impressions.filter((imp) => {
       return dashboardId !== imp;
     });
 
@@ -32,7 +32,7 @@ export class ImpressionSrv {
 
     impressions = JSON.parse(impressions);
 
-    impressions = _.filter(impressions, el => {
+    impressions = _.filter(impressions, (el) => {
       return _.isNumber(el);
     });
 

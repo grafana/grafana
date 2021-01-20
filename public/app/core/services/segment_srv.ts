@@ -46,7 +46,7 @@ export function uiSegmentSrv(this: any, $sce: any, templateSrv: any) {
     }
   }
 
-  this.getSegmentForValue = function(value: string, fallbackText: string) {
+  this.getSegmentForValue = function (value: string, fallbackText: string) {
     if (value) {
       return this.newSegment(value);
     } else {
@@ -83,19 +83,19 @@ export function uiSegmentSrv(this: any, $sce: any, templateSrv: any) {
   };
 
   this.newOperators = (ops: string[]) => {
-    return _.map(ops, op => {
+    return _.map(ops, (op) => {
       return new MetricSegment({ value: op, type: 'operator', cssClass: 'query-segment-operator' });
     });
   };
 
   this.transformToSegments = (addTemplateVars: boolean, variableTypeFilter: string) => {
     return (results: any[]) => {
-      const segments = _.map(results, segment => {
+      const segments = _.map(results, (segment) => {
         return self.newSegment({ value: segment.text, expandable: segment.expandable });
       });
 
       if (addTemplateVars) {
-        _.each(templateSrv.getVariables(), variable => {
+        _.each(templateSrv.getVariables(), (variable) => {
           if (variableTypeFilter === void 0 || variableTypeFilter === variable.type) {
             segments.unshift(self.newSegment({ type: 'value', value: '$' + variable.name, expandable: true }));
           }

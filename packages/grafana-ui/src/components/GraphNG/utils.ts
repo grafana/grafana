@@ -95,7 +95,7 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
       let joinNullMode = field.config.custom?.spanNulls ? 0 : 2;
 
       if (field.config.nullValueMode === NullValueMode.AsZero) {
-        values = values.map(v => (v === null ? 0 : v));
+        values = values.map((v) => (v === null ? 0 : v));
         joinNullMode = 0;
       }
 

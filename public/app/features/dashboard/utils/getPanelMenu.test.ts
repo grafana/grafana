@@ -168,7 +168,7 @@ describe('getPanelMenu', () => {
       const panel = new PanelModel({});
       const dashboard = new DashboardModel({});
       const menuItems = getPanelMenu(dashboard, panel);
-      explore = menuItems.find(item => item.text === 'Explore') as PanelMenuItem;
+      explore = menuItems.find((item) => item.text === 'Explore') as PanelMenuItem;
       navigateSpy = jest.spyOn(actions, 'navigateToExplore');
       window.open = windowOpen;
 

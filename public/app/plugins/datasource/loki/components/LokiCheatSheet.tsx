@@ -55,12 +55,12 @@ export default class LokiCheatSheet extends PureComponent<QueryEditorHelpProps, 
     const provider: LokiLanguageProvider = this.props.datasource?.languageProvider;
     if (provider.started) {
       const labels = provider.getLabelKeys() || [];
-      const preferredLabel = PREFERRED_LABELS.find(l => labels.includes(l));
+      const preferredLabel = PREFERRED_LABELS.find((l) => labels.includes(l));
       if (preferredLabel) {
         const values = await provider.getLabelValues(preferredLabel);
         const userExamples = shuffle(values)
           .slice(0, EXAMPLES_LIMIT)
-          .map(value => `{${preferredLabel}="${value}"}`);
+          .map((value) => `{${preferredLabel}="${value}"}`);
         this.setState({ userExamples });
       }
     } else {
@@ -75,7 +75,7 @@ export default class LokiCheatSheet extends PureComponent<QueryEditorHelpProps, 
       <div
         className="cheat-sheet-item__example"
         key={expr}
-        onClick={e => onClickExample({ refId: 'A', expr } as DataQuery)}
+        onClick={(e) => onClickExample({ refId: 'A', expr } as DataQuery)}
       >
         <code>{expr}</code>
       </div>
@@ -98,7 +98,7 @@ export default class LokiCheatSheet extends PureComponent<QueryEditorHelpProps, 
           {userExamples !== DEFAULT_EXAMPLES && userExamples.length > 0 ? (
             <div>
               <div className="cheat-sheet-item__label">Here are some example streams from your logs:</div>
-              {userExamples.map(example => this.renderExpression(example))}
+              {userExamples.map((example) => this.renderExpression(example))}
             </div>
           ) : null}
         </div>
@@ -120,7 +120,7 @@ export default class LokiCheatSheet extends PureComponent<QueryEditorHelpProps, 
             supports exact and regular expression filters.
           </div>
         </div>
-        {LOGQL_EXAMPLES.map(item => (
+        {LOGQL_EXAMPLES.map((item) => (
           <div className="cheat-sheet-item" key={item.expression}>
             <div className="cheat-sheet-item__title">{item.title}</div>
             {this.renderExpression(item.expression)}

@@ -60,10 +60,7 @@ describe('DerivedFields', () => {
     await act(async () => {
       wrapper = await mount(<DerivedFields value={testValue} onChange={onChangeMock} />);
     });
-    const removeButton = wrapper
-      .find(DerivedField)
-      .at(0)
-      .find(Button);
+    const removeButton = wrapper.find(DerivedField).at(0).find(Button);
     removeButton.simulate('click');
     const newValue = onChangeMock.mock.calls[0][0];
     expect(newValue.length).toBe(1);

@@ -29,7 +29,7 @@ describe('Live Stream Tests', () => {
     dropped_entries: null,
   };
 
-  it('reads the values into the buffer', done => {
+  it('reads the values into the buffer', (done) => {
     fakeSocket = new Subject<any>();
     const labels: Labels = { job: 'varlogs' };
     const target = makeTarget('fake', labels);
@@ -55,7 +55,7 @@ describe('Live Stream Tests', () => {
       },
     ];
     stream.subscribe({
-      next: val => {
+      next: (val) => {
         const test = tests.shift();
         test!(val);
       },
@@ -140,7 +140,7 @@ describe('Live Stream Tests', () => {
       })
     ) as any;
     const liveStreams = new LiveStreams();
-    await expect(liveStreams.getStream(makeTarget('url_to_match'), 100)).toEmitValuesWith(received => {
+    await expect(liveStreams.getStream(makeTarget('url_to_match'), 100)).toEmitValuesWith((received) => {
       const data = received[0];
       const view = new DataFrameView(data[0]);
       const firstLog = { ...view.get(0) };

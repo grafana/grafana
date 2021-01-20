@@ -55,7 +55,7 @@ export class OrgSwitcher extends React.PureComponent<Props, State> {
             </tr>
           </thead>
           <tbody>
-            {orgs.map(org => (
+            {orgs.map((org) => (
               <tr key={org.orgId}>
                 <td>{org.name}</td>
                 <td>{org.role}</td>

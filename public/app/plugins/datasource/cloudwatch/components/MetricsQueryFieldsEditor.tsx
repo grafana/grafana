@@ -81,7 +81,7 @@ export function MetricsQueryFieldsEditor({
     );
     return datasource
       .getDimensionValues(query.region, query.namespace, metricsQuery.metricName, newKey, newDimensions)
-      .then(values => (values.length ? [{ value: '*', text: '*', label: '*' }, ...values] : values))
+      .then((values) => (values.length ? [{ value: '*', text: '*', label: '*' }, ...values] : values))
       .then(appendTemplateVariables);
   };
 
@@ -124,7 +124,7 @@ export function MetricsQueryFieldsEditor({
             <Stats
               stats={datasource.standardStatistics.map(toOption)}
               values={metricsQuery.statistics}
-              onChange={statistics => onQueryChange({ ...metricsQuery, statistics })}
+              onChange={(statistics) => onQueryChange({ ...metricsQuery, statistics })}
               variableOptionGroup={variableOptionGroup}
             />
           </QueryInlineField>
@@ -132,7 +132,7 @@ export function MetricsQueryFieldsEditor({
           <QueryInlineField label="Dimensions">
             <Dimensions
               dimensions={metricsQuery.dimensions}
-              onChange={dimensions => onQueryChange({ ...metricsQuery, dimensions })}
+              onChange={(dimensions) => onQueryChange({ ...metricsQuery, dimensions })}
               loadKeys={() => datasource.getDimensionKeys(query.namespace, query.region).then(appendTemplateVariables)}
               loadValues={loadDimensionValues}
             />

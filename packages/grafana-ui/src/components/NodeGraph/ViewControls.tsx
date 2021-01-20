@@ -64,7 +64,7 @@ export function ViewControls<Config extends Record<string, any>>(props: Props<Co
       </HorizontalGroup>
       <div className={styles.scrollHelp}>Or ctrl/meta + scroll</div>
       {allowConfiguration && (
-        <Button size={'xs'} variant={'link'} onClick={() => setShowConfig(showConfig => !showConfig)}>
+        <Button size={'xs'} variant={'link'} onClick={() => setShowConfig((showConfig) => !showConfig)}>
           {showConfig ? 'Hide config' : 'Show config'}
         </Button>
       )}
@@ -72,15 +72,15 @@ export function ViewControls<Config extends Record<string, any>>(props: Props<Co
       {allowConfiguration &&
         showConfig &&
         Object.keys(config)
-          .filter(k => k !== 'show')
-          .map(k => (
+          .filter((k) => k !== 'show')
+          .map((k) => (
             <div key={k}>
               {k}
               <input
                 style={{ width: 50 }}
                 type={'number'}
                 value={config[k]}
-                onChange={e => {
+                onChange={(e) => {
                   onConfigChange({ ...config, [k]: parseFloat(e.target.value) });
                 }}
               />

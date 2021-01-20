@@ -66,7 +66,7 @@ describe('<SpanGraph>', () => {
 
   it('passes items to CanvasSpanGraph', () => {
     const canvasGraph = wrapper.find(CanvasSpanGraph).first();
-    const items = trace.spans.map(span => ({
+    const items = trace.spans.map((span) => ({
       valueOffset: span.relativeStartTime,
       valueWidth: span.duration,
       serviceName: span.process.serviceName,

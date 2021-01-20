@@ -50,7 +50,7 @@ export const Menu = React.forwardRef<HTMLDivElement, MenuProps>(({ header, items
       {header && <div className={styles.header}>{header}</div>}
       <List
         items={items || []}
-        renderItem={item => {
+        renderItem={(item) => {
           return <MenuGroup group={item} onClick={onClick} />;
         }}
       />
@@ -76,7 +76,7 @@ const MenuGroup: React.FC<MenuGroupProps> = ({ group, onClick }) => {
       {group.label && <div className={styles.groupLabel}>{group.label}</div>}
       <List
         items={group.items || []}
-        renderItem={item => {
+        renderItem={(item) => {
           return (
             <MenuItemComponent
               url={item.url}

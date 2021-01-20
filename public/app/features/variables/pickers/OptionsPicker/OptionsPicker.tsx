@@ -119,7 +119,7 @@ const getSelectedTags = (variable: VariableWithOptions): VariableTag[] => {
   if (!isQuery(variable) || !Array.isArray(variable.tags)) {
     return [];
   }
-  return variable.tags.filter(t => t.selected);
+  return variable.tags.filter((t) => t.selected);
 };
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
@@ -132,7 +132,7 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   navigateOptions,
 };
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => ({
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state) => ({
   picker: state.templating.optionsPicker,
 });
 

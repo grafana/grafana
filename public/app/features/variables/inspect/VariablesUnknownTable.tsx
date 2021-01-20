@@ -48,7 +48,7 @@ export const UnProvidedVariablesUnknownTable: FC<Props> = ({ variables, dashboar
             </tr>
           </thead>
           <tbody>
-            {networks.map(network => {
+            {networks.map((network) => {
               const { variable } = network;
               const { id, name } = variable;
               return (
@@ -98,7 +98,7 @@ const getStyles = (theme: GrafanaTheme) => ({
   `,
 });
 
-export const VariablesUnknownTable: FC<Props> = props => (
+export const VariablesUnknownTable: FC<Props> = (props) => (
   <Provider store={store}>
     <UnProvidedVariablesUnknownTable {...props} />
   </Provider>

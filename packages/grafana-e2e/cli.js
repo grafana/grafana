@@ -23,7 +23,7 @@ const cypress = (commandName, { updateScreenshots }) => {
 
   return execa(resolveBin('cypress'), cypressOptions, execaOptions)
     .then(() => {}) // no return value
-    .catch(error => {
+    .catch((error) => {
       console.error(error.message);
       process.exitCode = 1;
     });
@@ -37,13 +37,13 @@ module.exports = () => {
     .command('open')
     .description('runs tests within the interactive GUI')
     .option(updateOption, updateDescription)
-    .action(options => cypress('open', options));
+    .action((options) => cypress('open', options));
 
   program
     .command('run')
     .description('runs tests from the CLI without the GUI')
     .option(updateOption, updateDescription)
-    .action(options => cypress('run', options));
+    .action((options) => cypress('run', options));
 
   program.parse(process.argv);
 };

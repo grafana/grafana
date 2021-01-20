@@ -43,12 +43,12 @@ export class RenameByRegexTransformerEditor extends React.PureComponent<
         isRegexValid = false;
       }
     }
-    this.setState(previous => ({ ...previous, regex, isRegexValid }));
+    this.setState((previous) => ({ ...previous, regex, isRegexValid }));
   };
 
   handleRenameChange = (e: React.FormEvent<HTMLInputElement>) => {
     const renamePattern = e.currentTarget.value;
-    this.setState(previous => ({ ...previous, renamePattern }));
+    this.setState((previous) => ({ ...previous, renamePattern }));
   };
 
   handleRegexBlur = (e: React.FocusEvent<HTMLInputElement>) => {

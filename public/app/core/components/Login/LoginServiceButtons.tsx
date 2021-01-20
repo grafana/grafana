@@ -117,7 +117,7 @@ const LoginDivider = () => {
 export const LoginServiceButtons = () => {
   const styles = useStyles(getServiceStyles);
   const keyNames = Object.keys(loginServices());
-  const serviceElementsEnabled = keyNames.filter(key => {
+  const serviceElementsEnabled = keyNames.filter((key) => {
     const service: LoginService = loginServices()[key];
     return service.enabled;
   });
@@ -126,7 +126,7 @@ export const LoginServiceButtons = () => {
     return null;
   }
 
-  const serviceElements = serviceElementsEnabled.map(key => {
+  const serviceElements = serviceElementsEnabled.map((key) => {
     const service: LoginService = loginServices()[key];
     return (
       <a

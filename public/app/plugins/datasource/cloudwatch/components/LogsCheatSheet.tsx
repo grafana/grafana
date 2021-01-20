@@ -195,7 +195,7 @@ function renderHighlightedMarkup(code: string, keyPrefix: string) {
   const grammar = tokenizer;
   const tokens = flattenTokens(Prism.tokenize(code, grammar));
   const spans = tokens
-    .filter(token => typeof token !== 'string')
+    .filter((token) => typeof token !== 'string')
     .map((token, i) => {
       return (
         <span
@@ -224,7 +224,7 @@ export default class LogsCheatSheet extends PureComponent<QueryEditorHelpProps, 
       <div
         className="cheat-sheet-item__example"
         key={expr}
-        onClick={e =>
+        onClick={(e) =>
           this.onClickExample({ refId: 'A', expression: expr, queryMode: 'Logs', region: 'default', id: 'A' })
         }
       >
