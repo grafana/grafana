@@ -33,7 +33,7 @@ Audit logs contain the following fields. The fields followed by **\*** are alway
 | `user.tokenId` | number | ID of the user authentication token. |
 | `user.apiKeyId` | number | ID of the Grafana API key used to make the request. |
 | `user.isAnonymous`\* | boolean | `true` if an anonymous user made the request, `false` otherwise. |
-| `action`\* | string | The request action (eg. `create`, `update`, `manage-permissions`). |
+| `action`\* | string | The request action. For example, `create`, `update`, or `manage-permissions`. |
 | `request`\* | object | Information about the HTTP request. |
 | `request.params` | object | Request path parameters. |
 | `request.query` | object | Request query parameters. |
@@ -49,8 +49,8 @@ Audit logs contain the following fields. The fields followed by **\*** are alway
 | `requestUri`\* | string | Request URI. |
 | `ipAddress`\* | string | IP address that the request was made from. |
 | `userAgent`\* | string | Agent through which the request was made. |
-| `grafanaVersion`\* | string | Grafana current version when this log is created. |
-| `additionalData` | object | Provide additional information on the request. |
+| `grafanaVersion`\* | string | Current version of Grafana when this log is created. |
+| `additionalData` | object | Provide additional information about the request. |
 
 The `additionalData` field can contain the following information:
 | Field name | Action | Description |
