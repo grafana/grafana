@@ -104,7 +104,7 @@ function sortColorsByHue(hexColors: string[]) {
 
   const sortedHSLColors = sortBy(hslColors, ['h']);
   const chunkedHSLColors = chunk(sortedHSLColors, PALETTE_ROWS);
-  const sortedChunkedHSLColors = map(chunkedHSLColors, chunk => {
+  const sortedChunkedHSLColors = map(chunkedHSLColors, (chunk) => {
     return sortBy(chunk, 'l');
   });
   const flattenedZippedSortedChunkedHSLColors = flattenDeep(zip(...sortedChunkedHSLColors));

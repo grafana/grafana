@@ -123,7 +123,7 @@ export const getButtonStyles = (props: StyleProps) => {
       border: 1px solid ${borderColor};
       border-radius: ${theme.border.radius.sm};
       ${fullWidth &&
-        `
+      `
         flex-grow: 1;
         justify-content: center;
       `}
@@ -175,13 +175,7 @@ function getPropertiesForVariant(theme: GrafanaTheme, variant: ButtonVariant) {
   switch (variant) {
     case 'secondary':
       const from = theme.isLight ? theme.palette.gray7 : theme.palette.gray15;
-      const to = theme.isLight
-        ? tinycolor(from)
-            .darken(5)
-            .toString()
-        : tinycolor(from)
-            .lighten(4)
-            .toString();
+      const to = theme.isLight ? tinycolor(from).darken(5).toString() : tinycolor(from).lighten(4).toString();
       return {
         borderColor: theme.isLight ? theme.palette.gray85 : theme.palette.gray25,
         variantStyles: getButtonVariantStyles(

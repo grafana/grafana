@@ -25,7 +25,7 @@ export const defaultState: State = {
   labels: {},
 };
 
-export const defaultQuery: (dataSource: CloudMonitoringDatasource) => MetricQuery = dataSource => ({
+export const defaultQuery: (dataSource: CloudMonitoringDatasource) => MetricQuery = (dataSource) => ({
   editorMode: EditorMode.Visual,
   projectName: dataSource.getDefaultProject(),
   metricType: '',
@@ -56,7 +56,7 @@ function Editor({
     if (query && query.projectName && query.metricType) {
       datasource
         .getLabels(query.metricType, refId, query.projectName, query.groupBys)
-        .then(labels => setState({ ...state, labels }));
+        .then((labels) => setState({ ...state, labels }));
     }
   }, [query.projectName, query.groupBys, query.metricType]);
 
@@ -83,7 +83,7 @@ function Editor({
         templateVariableOptions={variableOptionGroup.options}
         projectName={query.projectName}
         datasource={datasource}
-        onChange={projectName => {
+        onChange={(projectName) => {
           onChange({ ...query, projectName });
         }}
       />
@@ -110,7 +110,7 @@ function Editor({
 
       <AliasBy
         value={query.aliasBy}
-        onChange={aliasBy => {
+        onChange={(aliasBy) => {
           onChange({ ...query, aliasBy });
         }}
       />

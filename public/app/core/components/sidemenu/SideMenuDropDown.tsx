@@ -8,11 +8,11 @@ interface Props {
   onHeaderClick?: () => void;
 }
 
-const SideMenuDropDown: FC<Props> = props => {
+const SideMenuDropDown: FC<Props> = (props) => {
   const { link, onHeaderClick } = props;
   let childrenLinks: NavModelItem[] = [];
   if (link.children) {
-    childrenLinks = _.filter(link.children, item => !item.hideFromMenu);
+    childrenLinks = _.filter(link.children, (item) => !item.hideFromMenu);
   }
 
   return (

@@ -172,7 +172,7 @@ const wrap = (x, openCode, closeCode) => {
 
   return String(x)
     .split('\n')
-    .map(line => denormalizeBrightness(open + replaceAll(normalizeBrightness(line), close, open) + close))
+    .map((line) => denormalizeBrightness(open + replaceAll(normalizeBrightness(line), close, open) + close))
     .join('\n');
 };
 
@@ -229,7 +229,7 @@ const assignStringWrappingAPI = (target, wrapBefore = target) =>
     (memo, [k, open, close]) =>
       O.defineProperty(memo, k, {
         // @ts-ignore
-        get: () => assignStringWrappingAPI(str => wrapBefore(wrap(str, open, close))),
+        get: () => assignStringWrappingAPI((str) => wrapBefore(wrap(str, open, close))),
       }),
 
     target
@@ -368,7 +368,7 @@ export default class Colors {
 
     return O.assign(new Colors(), {
       spans: this.spans
-        .map(span => {
+        .map((span) => {
           const c = span.code;
 
           const inverted = styles.has('inverse'),
@@ -417,7 +417,7 @@ export default class Colors {
 
           return styledSpan;
         })
-        .filter(s => s.text.length > 0),
+        .filter((s) => s.text.length > 0),
     });
   }
 
@@ -426,7 +426,7 @@ export default class Colors {
   get asChromeConsoleLogArguments() {
     const spans = this.parsed.spans;
 
-    return [spans.map(s => '%c' + s.text).join(''), ...spans.map(s => s.css)];
+    return [spans.map((s) => '%c' + s.text).join(''), ...spans.map((s) => s.css)];
   }
 
   get browserConsoleArguments() /* LEGACY, DEPRECATED */ {
@@ -440,10 +440,10 @@ export default class Colors {
    * console.log ('foo'.bright.red)
    */
   static get nice() {
-    Colors.names.forEach(k => {
+    Colors.names.forEach((k) => {
       if (!(k in String.prototype)) {
         O.defineProperty(String.prototype, k, {
-          get: function() {
+          get: function () {
             // @ts-ignore
             return Colors[k](this);
           },

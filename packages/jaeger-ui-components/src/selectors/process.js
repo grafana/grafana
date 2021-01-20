@@ -12,5 +12,5 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export const getProcessServiceName = proc => proc.serviceName;
-export const getProcessTags = proc => proc.tags;
+export const getProcessServiceName = (proc) => proc.serviceName;
+export const getProcessTags = (proc) => proc.tags;

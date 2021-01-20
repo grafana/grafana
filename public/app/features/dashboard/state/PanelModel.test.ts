@@ -36,7 +36,7 @@ setTemplateSrv(
     },
     // @ts-ignore
     getVariableWithName: (name: string) => {
-      return variablesMock.filter(v => v.name === name)[0];
+      return variablesMock.filter((v) => v.name === name)[0];
     },
   })
 );
@@ -57,7 +57,7 @@ describe('PanelModel', () => {
       {} // angular
     );
 
-    tablePlugin.setPanelOptions(builder => {
+    tablePlugin.setPanelOptions((builder) => {
       builder.addBooleanSwitch({
         name: 'Show thresholds',
         path: 'showThresholds',
@@ -75,7 +75,7 @@ describe('PanelModel', () => {
           defaultValue: 2,
         },
       },
-      useCustomConfig: builder => {
+      useCustomConfig: (builder) => {
         builder.addBooleanSwitch({
           name: 'CustomProp',
           path: 'customProp',
@@ -245,7 +245,7 @@ describe('PanelModel', () => {
               },
             },
           },
-          useCustomConfig: builder => {
+          useCustomConfig: (builder) => {
             builder.addNumberInput({
               path: 'customProp',
               name: 'customProp',
@@ -254,7 +254,7 @@ describe('PanelModel', () => {
           },
         });
 
-        newPlugin.setPanelOptions(builder => {
+        newPlugin.setPanelOptions((builder) => {
           builder.addBooleanSwitch({
             name: 'Show thresholds labels',
             path: 'showThresholdLabels',
@@ -449,7 +449,7 @@ const variablesMock = [
     hide: false,
     current: { value: 'val1' },
     skipUrlSync: false,
-    getValueForUrl: function() {
+    getValueForUrl: function () {
       return 'val1';
     },
   } as VariableModel,
@@ -460,7 +460,7 @@ const variablesMock = [
     hide: false,
     current: { value: 'val2' },
     skipUrlSync: false,
-    getValueForUrl: function() {
+    getValueForUrl: function () {
       return 'val2';
     },
   } as VariableModel,

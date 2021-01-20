@@ -63,7 +63,7 @@ export const sortVariableValues = (options: any[], sortOrder: VariableSort) => {
   if (sortType === 1) {
     options = _.sortBy(options, 'text');
   } else if (sortType === 2) {
-    options = _.sortBy(options, opt => {
+    options = _.sortBy(options, (opt) => {
       if (!opt.text) {
         return -1;
       }
@@ -76,7 +76,7 @@ export const sortVariableValues = (options: any[], sortOrder: VariableSort) => {
       }
     });
   } else if (sortType === 3) {
-    options = _.sortBy(options, opt => {
+    options = _.sortBy(options, (opt) => {
       return _.toLower(opt.text);
     });
   }

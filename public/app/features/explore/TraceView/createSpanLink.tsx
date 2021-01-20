@@ -26,7 +26,7 @@ export function createSpanLinkFactory(
     return undefined;
   }
 
-  return function(span: TraceSpan): { href: string; onClick?: (event: any) => void; content: React.ReactNode } {
+  return function (span: TraceSpan): { href: string; onClick?: (event: any) => void; content: React.ReactNode } {
     // This is reusing existing code from derived fields which may not be ideal match so some data is a bit faked at
     // the moment. Issue is that the trace itself isn't clearly mapped to dataFrame (right now it's just a json blob
     // inside a single field) so the dataLinks as config of that dataFrame abstraction breaks down a bit and we do

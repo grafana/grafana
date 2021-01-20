@@ -7,7 +7,7 @@ interface Props {
   label: string;
 }
 
-export const SimpleSelect: FC<Props> = props => {
+export const SimpleSelect: FC<Props> = (props) => {
   const { label, onValueChange, value, options } = props;
   return (
     <div className="gf-form max-width-21">

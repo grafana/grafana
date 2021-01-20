@@ -12,15 +12,15 @@ var errAlertDefinitionFailedGenerateUniqueUID = errors.New("failed to generate a
 
 // AlertDefinition is the model for alert definitions in Alerting NG.
 type AlertDefinition struct {
-	ID              int64 `xorm:"pk autoincr 'id'"`
-	OrgID           int64 `xorm:"org_id"`
-	Title           string
-	Condition       string
-	Data            []eval.AlertQuery
-	Updated         time.Time
-	IntervalSeconds int64
-	Version         int64
-	UID             string `xorm:"uid"`
+	ID              int64             `xorm:"pk autoincr 'id'" json:"id"`
+	OrgID           int64             `xorm:"org_id" json:"orgId"`
+	Title           string            `json:"title"`
+	Condition       string            `json:"condition"`
+	Data            []eval.AlertQuery `json:"data"`
+	Updated         time.Time         `json:"updated"`
+	IntervalSeconds int64             `json:"intervalSeconds"`
+	Version         int64             `json:"version"`
+	UID             string            `xorm:"uid" json:"uid"`
 }
 
 type alertDefinitionKey struct {

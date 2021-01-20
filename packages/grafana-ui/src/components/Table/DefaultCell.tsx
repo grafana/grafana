@@ -7,7 +7,7 @@ import { TableStyles } from './styles';
 import { FilterActions } from './FilterActions';
 import { getTextColorForBackground } from '../../utils';
 
-export const DefaultCell: FC<TableCellProps> = props => {
+export const DefaultCell: FC<TableCellProps> = (props) => {
   const { field, cell, tableStyles, row, cellProps } = props;
 
   const displayValue = field.display!(cell.value);
@@ -32,7 +32,7 @@ export const DefaultCell: FC<TableCellProps> = props => {
   }
 
   if (link && link.onClick) {
-    onClick = event => {
+    onClick = (event) => {
       // Allow opening in new tab
       if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link!.onClick) {
         event.preventDefault();

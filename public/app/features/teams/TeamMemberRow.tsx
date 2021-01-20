@@ -41,7 +41,7 @@ export class TeamMemberRow extends PureComponent<Props> {
 
   renderPermissions(member: TeamMember) {
     const { editorsCanAdmin, signedInUserIsTeamAdmin } = this.props;
-    const value = teamsPermissionLevels.find(dp => dp.value === member.permission)!;
+    const value = teamsPermissionLevels.find((dp) => dp.value === member.permission)!;
 
     return (
       <WithFeatureToggle featureToggle={editorsCanAdmin}>
@@ -51,7 +51,7 @@ export class TeamMemberRow extends PureComponent<Props> {
               <Select
                 isSearchable={false}
                 options={teamsPermissionLevels}
-                onChange={item => this.onPermissionChange(item, member)}
+                onChange={(item) => this.onPermissionChange(item, member)}
                 className="gf-form-select-box__control--menu-right"
                 value={value}
               />
@@ -70,7 +70,7 @@ export class TeamMemberRow extends PureComponent<Props> {
 
     return (
       <td>
-        {labels.map(label => (
+        {labels.map((label) => (
           <TagBadge key={label} label={label} removeIcon={false} count={0} onClick={() => {}} />
         ))}
       </td>

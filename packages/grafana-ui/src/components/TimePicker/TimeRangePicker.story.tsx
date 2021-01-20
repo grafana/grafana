@@ -30,7 +30,7 @@ const getComponentWithState = (initialState: State, props: TimeRangePickerProps)
             timeZone={state.timeZone}
             value={state.value}
             history={state.history}
-            onChange={value => {
+            onChange={(value) => {
               action('onChange fired')(value);
               updateValue({
                 ...state,
@@ -39,7 +39,7 @@ const getComponentWithState = (initialState: State, props: TimeRangePickerProps)
                   isDateTime(value.raw.from) && isDateTime(value.raw.to) ? [...state.history, value] : state.history,
               });
             }}
-            onChangeTimeZone={timeZone => {
+            onChangeTimeZone={(timeZone) => {
               action('onChangeTimeZone fired')(timeZone);
               updateValue({
                 ...state,
@@ -72,7 +72,7 @@ const getComponentWithState = (initialState: State, props: TimeRangePickerProps)
   </UseState>
 );
 
-export const Relative: Story<TimeRangePickerProps> = props => {
+export const Relative: Story<TimeRangePickerProps> = (props) => {
   const to = dateTime();
   const from = to.subtract(6, 'h');
 
@@ -93,7 +93,7 @@ export const Relative: Story<TimeRangePickerProps> = props => {
   );
 };
 
-export const Absolute: Story<TimeRangePickerProps> = props => {
+export const Absolute: Story<TimeRangePickerProps> = (props) => {
   const to = dateTime();
   const from = to.subtract(6, 'h');
 

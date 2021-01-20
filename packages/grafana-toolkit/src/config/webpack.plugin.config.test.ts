@@ -33,7 +33,7 @@ describe('Plugin webpack config', () => {
       const moduleFiles = await findModuleFiles('/', modulePathsMock);
       expect(moduleFiles.length).toBe(2);
       // normalize windows path - \\ -> /
-      expect(moduleFiles.map(p => p.replace(/\\/g, '/'))).toEqual(['/some/path/module.ts', '/some/path/module.tsx']);
+      expect(moduleFiles.map((p) => p.replace(/\\/g, '/'))).toEqual(['/some/path/module.ts', '/some/path/module.tsx']);
     });
   });
 

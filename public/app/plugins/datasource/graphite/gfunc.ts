@@ -1090,10 +1090,10 @@ function getFuncDef(name: string, idx?: any) {
 
 function getFuncDefs(graphiteVersion: string, idx?: any) {
   const funcs: any = {};
-  _.forEach(idx || index, funcDef => {
+  _.forEach(idx || index, (funcDef) => {
     if (isVersionRelatedFunction(funcDef, graphiteVersion)) {
       funcs[funcDef.name] = _.assign({}, funcDef, {
-        params: _.filter(funcDef.params, param => {
+        params: _.filter(funcDef.params, (param) => {
           return isVersionRelatedFunction(param, graphiteVersion);
         }),
       });
@@ -1145,7 +1145,7 @@ function parseFuncDefs(rawDefs: any) {
       func.fake = true;
     }
 
-    _.forEach(funcDef.params, rawParam => {
+    _.forEach(funcDef.params, (rawParam) => {
       const param: any = {
         name: rawParam.name,
         type: 'string',

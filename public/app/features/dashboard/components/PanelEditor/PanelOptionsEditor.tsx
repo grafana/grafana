@@ -32,7 +32,7 @@ export const PanelOptionsEditor: React.FC<PanelOptionsEditorProps<any>> = ({
   replaceVariables,
 }) => {
   const optionEditors = useMemo<Record<string, PanelOptionsEditorItem[]>>(() => {
-    return groupBy(plugin.optionEditors.list(), i => {
+    return groupBy(plugin.optionEditors.list(), (i) => {
       if (!i.category) {
         return DISPLAY_OPTIONS_CATEGORY;
       }
@@ -73,14 +73,14 @@ export const PanelOptionsEditor: React.FC<PanelOptionsEditorProps<any>> = ({
               <Field label={label} key={`${e.id}/${j}`}>
                 <e.editor
                   value={lodashGet(options, e.path)}
-                  onChange={value => onOptionChange(e.path, value)}
+                  onChange={(value) => onOptionChange(e.path, value)}
                   item={e}
                   context={context}
                 />
               </Field>
             );
           })
-          .filter(e => e !== null);
+          .filter((e) => e !== null);
 
         return optionsToShow.length > 0 ? (
           <OptionsGroup title={c} defaultToClosed id={`${c}/${i}`} key={`${c}/${i}`}>

@@ -14,7 +14,7 @@ import usePrevious from 'react-use/lib/usePrevious';
  * Receives a data frame that is x-axis aligned, as of https://github.com/leeoniya/uPlot/tree/master/docs#data-format
  * Exposes contexts for plugins registration and uPlot instance access
  */
-export const UPlotChart: React.FC<PlotProps> = props => {
+export const UPlotChart: React.FC<PlotProps> = (props) => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const plotInstance = useRef<uPlot>();
   const [isPlotReady, setIsPlotReady] = useState(false);
@@ -87,7 +87,7 @@ export const UPlotChart: React.FC<PlotProps> = props => {
 
 function prepareData(data: AlignedFrameWithGapTest) {
   return {
-    data: data.frame.fields.map(f => f.values.toArray()) as AlignedData,
+    data: data.frame.fields.map((f) => f.values.toArray()) as AlignedData,
     isGap: data.isGap,
   };
 }

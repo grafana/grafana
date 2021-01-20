@@ -47,7 +47,7 @@ export function getLoadingNav(): NavModel {
 }
 
 export function loadPlugin(pluginId: string): Promise<GrafanaPlugin> {
-  return getPluginSettings(pluginId).then(info => {
+  return getPluginSettings(pluginId).then((info) => {
     if (info.type === PluginType.app) {
       return importAppPlugin(info);
     }
@@ -55,9 +55,9 @@ export function loadPlugin(pluginId: string): Promise<GrafanaPlugin> {
       return importDataSourcePlugin(info);
     }
     if (info.type === PluginType.panel) {
-      return importPanelPlugin(pluginId).then(plugin => {
+      return importPanelPlugin(pluginId).then((plugin) => {
         // Panel Meta does not have the *full* settings meta
-        return getPluginSettings(pluginId).then(meta => {
+        return getPluginSettings(pluginId).then((meta) => {
           plugin.meta = {
             ...meta, // Set any fields that do not exist
             ...plugin.meta,
@@ -153,7 +153,7 @@ class PluginPage extends PureComponent<Props, State> {
       return <Alert severity={AppNotificationSeverity.Error} title="Plugin Not Found" />;
     }
 
-    const active = nav.main.children!.find(tab => tab.active);
+    const active = nav.main.children!.find((tab) => tab.active);
     if (active) {
       // Find the current config tab
       if (plugin.configPages) {
@@ -237,7 +237,7 @@ class PluginPage extends PureComponent<Props, State> {
       <section className="page-sidebar-section">
         <h4>Includes</h4>
         <ul className="ui-list plugin-info-list">
-          {includes.map(include => {
+          {includes.map((include) => {
             return (
               <li className="plugin-info-list-item" key={include.name}>
                 {this.renderSidebarIncludeBody(include)}
@@ -263,7 +263,7 @@ class PluginPage extends PureComponent<Props, State> {
             Grafana {dependencies.grafanaVersion}
           </li>
           {dependencies.plugins &&
-            dependencies.plugins.map(plug => {
+            dependencies.plugins.map((plug) => {
               return (
                 <li className="plugin-info-list-item" key={plug.name}>
                   <i className={getPluginIcon(plug.type)} />
@@ -285,7 +285,7 @@ class PluginPage extends PureComponent<Props, State> {
       <section className="page-sidebar-section">
         <h4>Links</h4>
         <ul className="ui-list">
-          {info.links.map(link => {
+          {info.links.map((link) => {
             return (
               <li key={link.url}>
                 <a href={link.url} className="external-link" target="_blank" rel="noreferrer noopener">
@@ -459,7 +459,7 @@ function getPluginTabsNav(
 function setActivePage(pageId: string, pages: NavModelItem[], defaultPageId: string): NavModelItem[] {
   let found = false;
   const selected = pageId || defaultPageId;
-  const changed = pages.map(p => {
+  const changed = pages.map((p) => {
     const active = !found && selected === p.id;
     if (active) {
       found = true;

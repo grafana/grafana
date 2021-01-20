@@ -33,7 +33,7 @@ export const ScaleDistributionEditor: React.FC<FieldOverrideEditorProps<ScaleDis
       <RadioButtonGroup
         value={value.type || ScaleDistribution.Linear}
         options={DISTRIBUTION_OPTIONS}
-        onChange={v => {
+        onChange={(v) => {
           console.log(v, value);
           onChange({
             ...value,
@@ -50,7 +50,7 @@ export const ScaleDistributionEditor: React.FC<FieldOverrideEditorProps<ScaleDis
           value={value.log || 2}
           prefix={'base'}
           width={12}
-          onChange={v => {
+          onChange={(v) => {
             onChange({
               ...value,
               log: v.value!,

@@ -110,14 +110,14 @@ export const testDataSource = (
 };
 
 export function loadDataSources(): ThunkResult<void> {
-  return async dispatch => {
+  return async (dispatch) => {
     const response = await getBackendSrv().get('/api/datasources');
     dispatch(dataSourcesLoaded(response));
   };
 }
 
 export function loadDataSource(id: number): ThunkResult<void> {
-  return async dispatch => {
+  return async (dispatch) => {
     const dataSource = (await getBackendSrv().get(`/api/datasources/${id}`)) as DataSourceSettings;
     const pluginInfo = (await getPluginSettings(dataSource.type)) as DataSourcePluginMeta;
     const plugin = await importDataSourcePlugin(pluginInfo);
@@ -151,7 +151,7 @@ export function addDataSource(plugin: DataSourcePluginMeta): ThunkResult<void> {
 }
 
 export function loadDataSourcePlugins(): ThunkResult<void> {
-  return async dispatch => {
+  return async (dispatch) => {
     dispatch(dataSourcePluginsLoad());
     const plugins = await getBackendSrv().get('/api/plugins', { enabled: 1, type: 'datasource' });
     const categories = buildCategories(plugins);
@@ -160,7 +160,7 @@ export function loadDataSourcePlugins(): ThunkResult<void> {
 }
 
 export function updateDataSource(dataSource: DataSourceSettings): ThunkResult<void> {
-  return async dispatch => {
+  return async (dispatch) => {
     await getBackendSrv().put(`/api/datasources/${dataSource.id}`, dataSource);
     await updateFrontendSettings();
     return dispatch(loadDataSource(dataSource.id));
@@ -182,7 +182,7 @@ interface ItemWithName {
 
 export function nameExits(dataSources: ItemWithName[], name: string) {
   return (
-    dataSources.filter(dataSource => {
+    dataSources.filter((dataSource) => {
       return dataSource.name.toLowerCase() === name.toLowerCase();
     }).length > 0
   );

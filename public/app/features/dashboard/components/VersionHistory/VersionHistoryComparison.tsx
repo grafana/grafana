@@ -42,6 +42,6 @@ export class VersionHistoryComparison extends PureComponent<DiffViewProps> {
   }
 
   render() {
-    return <div data-testid="angular-history-comparison" ref={ref => (this.element = ref)} />;
+    return <div data-testid="angular-history-comparison" ref={(ref) => (this.element = ref)} />;
   }
 }

@@ -24,7 +24,7 @@ interface HeaderParser {
 
 const defaultHeaderParser: HeaderParser = {
   canParse: () => true,
-  parse: headers => {
+  parse: (headers) => {
     const accept = headers.get('accept');
     if (accept) {
       return headers;
@@ -36,11 +36,11 @@ const defaultHeaderParser: HeaderParser = {
 };
 
 const parseHeaderByMethodFactory = (methodPredicate: string): HeaderParser => ({
-  canParse: options => {
+  canParse: (options) => {
     const method = options?.method ? options?.method.toLowerCase() : '';
     return method === methodPredicate;
   },
-  parse: headers => {
+  parse: (headers) => {
     const contentType = headers.get('content-type');
     if (contentType) {
       return headers;
@@ -58,7 +58,7 @@ const headerParsers = [postHeaderParser, putHeaderParser, defaultHeaderParser];
 
 export const parseHeaders = (options: BackendSrvRequest) => {
   const headers = options?.headers ? new Headers(options.headers) : new Headers();
-  const parsers = headerParsers.filter(parser => parser.canParse(options));
+  const parsers = headerParsers.filter((parser) => parser.canParse(options));
   const combinedHeaders = parsers.reduce((prev, parser) => {
     return parser.parse(prev);
   }, headers);
@@ -120,10 +120,10 @@ export async function parseResponseBody<T>(
 
 export function serializeParams(data: Record<string, any>): string {
   return Object.keys(data)
-    .map(key => {
+    .map((key) => {
       const value = data[key];
       if (Array.isArray(value)) {
-        return value.map(arrayValue => `${encodeURIComponent(key)}=${encodeURIComponent(arrayValue)}`).join('&');
+        return value.map((arrayValue) => `${encodeURIComponent(key)}=${encodeURIComponent(arrayValue)}`).join('&');
       }
       return `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
     })
@@ -131,7 +131,7 @@ export function serializeParams(data: Record<string, any>): string {
 }
 
 export const parseUrlFromOptions = (options: BackendSrvRequest): string => {
-  const cleanParams = omitBy(options.params, v => v === undefined || (v && v.length === 0));
+  const cleanParams = omitBy(options.params, (v) => v === undefined || (v && v.length === 0));
   const serializedParams = serializeParams(cleanParams);
   return options.params && serializedParams.length ? `${options.url}?${serializedParams}` : options.url;
 };

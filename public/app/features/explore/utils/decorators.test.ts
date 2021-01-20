@@ -15,7 +15,7 @@ import {
 } from '@grafana/data';
 
 import {
-  decorateWithGraphLogsTraceAndTable,
+  decorateWithFrameTypeMetadata,
   decorateWithGraphResult,
   decorateWithLogsResult,
   decorateWithTableResult,
@@ -78,6 +78,7 @@ const createExplorePanelData = (args: Partial<ExplorePanelData>): ExplorePanelDa
     tableFrames: [],
     tableResult: (undefined as unknown) as null,
     traceFrames: [],
+    nodeGraphFrames: [],
   };
 
   return { ...defaults, ...args };
@@ -93,7 +94,7 @@ describe('decorateWithGraphLogsTraceAndTable', () => {
       timeRange: ({} as unknown) as TimeRange,
     };
 
-    expect(decorateWithGraphLogsTraceAndTable(panelData)).toEqual({
+    expect(decorateWithFrameTypeMetadata(panelData)).toEqual({
       series,
       state: LoadingState.Done,
       timeRange: {},
@@ -101,6 +102,7 @@ describe('decorateWithGraphLogsTraceAndTable', () => {
       tableFrames: [table, emptyTable],
       logsFrames: [logs],
       traceFrames: [],
+      nodeGraphFrames: [],
       graphResult: null,
       tableResult: null,
       logsResult: null,
@@ -115,7 +117,7 @@ describe('decorateWithGraphLogsTraceAndTable', () => {
       timeRange: ({} as unknown) as TimeRange,
     };
 
-    expect(decorateWithGraphLogsTraceAndTable(panelData)).toEqual({
+    expect(decorateWithFrameTypeMetadata(panelData)).toEqual({
       series: [],
       state: LoadingState.Done,
       timeRange: {},
@@ -123,6 +125,7 @@ describe('decorateWithGraphLogsTraceAndTable', () => {
       tableFrames: [],
       logsFrames: [],
       traceFrames: [],
+      nodeGraphFrames: [],
       graphResult: null,
       tableResult: null,
       logsResult: null,
@@ -139,7 +142,7 @@ describe('decorateWithGraphLogsTraceAndTable', () => {
       timeRange: ({} as unknown) as TimeRange,
     };
 
-    expect(decorateWithGraphLogsTraceAndTable(panelData)).toEqual({
+    expect(decorateWithFrameTypeMetadata(panelData)).toEqual({
       series: [timeSeries, logs, table],
       error: {},
       state: LoadingState.Error,
@@ -148,6 +151,7 @@ describe('decorateWithGraphLogsTraceAndTable', () => {
       tableFrames: [],
       logsFrames: [],
       traceFrames: [],
+      nodeGraphFrames: [],
       graphResult: null,
       tableResult: null,
       logsResult: null,

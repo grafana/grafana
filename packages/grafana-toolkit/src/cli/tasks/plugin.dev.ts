@@ -31,7 +31,7 @@ const yarnlink = () =>
     console.log('Added dependencies required by local @grafana/toolkit.  Do not checkin this package.json!');
   });
 
-const pluginDevRunner: TaskRunner<PluginBundleOptions> = async options => {
+const pluginDevRunner: TaskRunner<PluginBundleOptions> = async (options) => {
   if (options.yarnlink) {
     return yarnlink();
   }

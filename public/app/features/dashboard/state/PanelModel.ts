@@ -305,7 +305,7 @@ export class PanelModel implements DataConfigSource {
       return;
     }
 
-    Object.keys(prevOptions.properties).map(property => {
+    Object.keys(prevOptions.properties).map((property) => {
       (this as any)[property] = prevOptions.properties[property];
     });
 

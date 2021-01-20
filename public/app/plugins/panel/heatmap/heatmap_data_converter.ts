@@ -94,8 +94,8 @@ function convertToCards(buckets: any, hideZero = false): { cards: HeatmapCard[];
   let min = 0,
     max = 0;
   const cards: HeatmapCard[] = [];
-  _.forEach(buckets, xBucket => {
-    _.forEach(xBucket.buckets, yBucket => {
+  _.forEach(buckets, (xBucket) => {
+    _.forEach(xBucket.buckets, (yBucket) => {
       const card: HeatmapCard = {
         x: xBucket.x,
         y: yBucket.y,
@@ -139,7 +139,7 @@ function convertToCards(buckets: any, hideZero = false): { cards: HeatmapCard[];
  * @returns {Object}          Transformed buckets
  */
 function mergeZeroBuckets(buckets: any, minValue: number) {
-  _.forEach(buckets, xBucket => {
+  _.forEach(buckets, (xBucket) => {
     const yBuckets = xBucket.buckets;
 
     const emptyBucket: any = {
@@ -217,7 +217,7 @@ function convertToHeatMap(seriesList: TimeSeries[], yBucketSize: number, xBucket
     // |** *|    | ***|    |*   |
     // |____|____|____|____|____|_
     //
-    _.forEach(datapoints, point => {
+    _.forEach(datapoints, (point) => {
       const bucketBound = getBucketBound(point[TIME_INDEX], xBucketSize);
       pushToXBuckets(heatmap, point, bucketBound, seriesName);
     });
