@@ -156,7 +156,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
         {QueryEditor}
         {DatasourceCheatsheet && (
           <HelpToggle>
-            <DatasourceCheatsheet onClickExample={query => this.onChange(query)} datasource={datasourceInstance} />
+            <DatasourceCheatsheet onClickExample={(query) => this.onChange(query)} datasource={datasourceInstance} />
           </HelpToggle>
         )}
       </>

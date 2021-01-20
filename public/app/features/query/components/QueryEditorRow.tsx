@@ -229,7 +229,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   };
 
   onToggleHelp = () => {
-    this.setState(state => ({
+    this.setState((state) => ({
       showingHelp: !state.showingHelp,
     }));
   };
@@ -336,7 +336,10 @@ export class QueryEditorRow extends PureComponent<Props, State> {
             <ErrorBoundaryAlert>
               {showingHelp && DatasourceCheatsheet && (
                 <InfoBox onDismiss={this.onToggleHelp}>
-                  <DatasourceCheatsheet onClickExample={query => this.onClickExample(query)} datasource={datasource} />
+                  <DatasourceCheatsheet
+                    onClickExample={(query) => this.onClickExample(query)}
+                    datasource={datasource}
+                  />
                 </InfoBox>
               )}
               {editor}

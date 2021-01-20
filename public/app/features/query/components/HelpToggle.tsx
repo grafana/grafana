@@ -16,7 +16,7 @@ export const HelpToggle: React.FunctionComponent = ({ children }) => {
 
   return (
     <>
-      <button className="gf-form-label query-keyword pointer" onClick={_ => setIsHelpVisible(!isHelpVisible)}>
+      <button className="gf-form-label query-keyword pointer" onClick={(_) => setIsHelpVisible(!isHelpVisible)}>
         Help
         <Icon name={isHelpVisible ? 'angle-down' : 'angle-right'} />
       </button>
