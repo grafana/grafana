@@ -16,7 +16,7 @@ export function graphiteAddFunc($compile: any) {
     '<icon name="\'plus\'" size="\'sm\'"></name></a>';
 
   return {
-    link: function($scope: any, elem: JQuery) {
+    link: function ($scope: any, elem: JQuery) {
       const ctrl = $scope.ctrl;
 
       const $input = $(inputTemplate);
@@ -40,7 +40,7 @@ export function graphiteAddFunc($compile: any) {
             if (!funcDef) {
               // try find close match
               value = value.toLowerCase();
-              funcDef = _.find(allFunctions, funcName => {
+              funcDef = _.find(allFunctions, (funcName) => {
                 return funcName.toLowerCase().indexOf(value) === 0;
               });
 
@@ -138,7 +138,7 @@ coreModule.directive('graphiteAddFunc', graphiteAddFunc);
 function createFunctionDropDownMenu(funcDefs: FuncDef[]) {
   const categories: any = {};
 
-  _.forEach(funcDefs, funcDef => {
+  _.forEach(funcDefs, (funcDef) => {
     if (!funcDef.category) {
       return;
     }

@@ -38,9 +38,9 @@ export const concatenateTransformer: DataTransformerInfo<ConcatenateTransformerO
     frameNameMode: ConcatenateFrameNameMode.FieldName,
     frameNameLabel: 'frame',
   },
-  operator: options => source =>
+  operator: (options) => (source) =>
     source.pipe(
-      map(dataFrames => {
+      map((dataFrames) => {
         if (!Array.isArray(dataFrames) || dataFrames.length < 2) {
           return dataFrames; // noop with single frame
         }
@@ -85,7 +85,7 @@ export function concatenateFields(data: DataFrame[], opts: ConcatenateTransforme
 
   // Make sure all fields have the same length
   if (!sameLength) {
-    fields = fields.map(f => {
+    fields = fields.map((f) => {
       if (f.values.length === maxLength) {
         return f;
       }

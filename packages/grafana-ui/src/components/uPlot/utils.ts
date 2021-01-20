@@ -5,7 +5,7 @@ import { PlotPlugin, PlotProps } from './types';
 const ALLOWED_FORMAT_STRINGS_REGEX = /\b(YYYY|YY|MMMM|MMM|MM|M|DD|D|WWWW|WWW|HH|H|h|AA|aa|a|mm|m|ss|s|fff)\b/g;
 
 export const timeFormatToTemplate = (f: string) => {
-  return f.replace(ALLOWED_FORMAT_STRINGS_REGEX, match => `{${match}}`);
+  return f.replace(ALLOWED_FORMAT_STRINGS_REGEX, (match) => `{${match}}`);
 };
 
 export const buildPlotConfig = (props: PlotProps, plugins: Record<string, PlotPlugin>): Options => {
@@ -23,7 +23,7 @@ export const buildPlotConfig = (props: PlotProps, plugins: Record<string, PlotPl
     legend: {
       show: false,
     },
-    plugins: Object.entries(plugins).map(p => ({
+    plugins: Object.entries(plugins).map((p) => ({
       hooks: p[1].hooks,
     })),
     hooks: {},

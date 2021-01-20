@@ -120,7 +120,7 @@ export function processLinkPattern(pattern: any): ProcessedLinkPattern | TNil {
 
 export function getParameterInArray(name: string, array: TraceKeyValuePair[]) {
   if (array) {
-    return array.find(entry => entry.key === name);
+    return array.find((entry) => entry.key === name);
   }
   return undefined;
 }
@@ -144,14 +144,14 @@ function callTemplate(template: ProcessedTemplate, data: any) {
 export function computeTraceLink(linkPatterns: ProcessedLinkPattern[], trace: Trace) {
   const result: TLinksRV = [];
   const validKeys = (Object.keys(trace) as Array<keyof Trace>).filter(
-    key => typeof trace[key] === 'string' || trace[key] === 'number'
+    (key) => typeof trace[key] === 'string' || trace[key] === 'number'
   );
 
   linkPatterns
-    .filter(pattern => pattern.type('traces'))
-    .forEach(pattern => {
+    .filter((pattern) => pattern.type('traces'))
+    .forEach((pattern) => {
       const parameterValues: Record<string, any> = {};
-      const allParameters = pattern.parameters.every(parameter => {
+      const allParameters = pattern.parameters.every((parameter) => {
         const key = parameter as keyof Trace;
         if (validKeys.includes(key)) {
           // At this point is safe to access to trace object using parameter variable because
@@ -189,10 +189,10 @@ export function computeLinks(
     type = 'tags';
   }
   const result: Array<{ url: string; text: string }> = [];
-  linkPatterns.forEach(pattern => {
+  linkPatterns.forEach((pattern) => {
     if (pattern.type(type) && pattern.key(item.key) && pattern.value(item.value)) {
       const parameterValues: Record<string, any> = {};
-      const allParameters = pattern.parameters.every(parameter => {
+      const allParameters = pattern.parameters.every((parameter) => {
         let entry = getParameterInArray(parameter, items);
         if (!entry && !processTags) {
           // do not look in ancestors for process tags because the same object may appear in different places in the hierarchy

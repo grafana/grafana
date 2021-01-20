@@ -23,15 +23,11 @@ const getStyles = (theme: GrafanaTheme) => ({
   logsRowFade: css`
     label: logs-row-fresh;
     color: ${theme.colors.text};
-    background-color: ${tinycolor(theme.palette.blue95)
-      .setAlpha(0.25)
-      .toString()};
+    background-color: ${tinycolor(theme.palette.blue95).setAlpha(0.25).toString()};
     animation: fade 1s ease-out 1s 1 normal forwards;
     @keyframes fade {
       from {
-        background-color: ${tinycolor(theme.palette.blue95)
-          .setAlpha(0.25)
-          .toString()};
+        background-color: ${tinycolor(theme.palette.blue95).setAlpha(0.25).toString()};
       }
       to {
         background-color: transparent;
@@ -156,7 +152,7 @@ class LiveLogs extends PureComponent<Props, State> {
               );
             })}
             <tr
-              ref={element => {
+              ref={(element) => {
                 this.liveEndDiv = element;
                 // This is triggered on every update so on every new row. It keeps the view scrolled at the bottom by
                 // default.

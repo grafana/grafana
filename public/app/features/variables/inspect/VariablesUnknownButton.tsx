@@ -22,14 +22,14 @@ type Props = OwnProps & ConnectedProps & DispatchProps;
 export const UnProvidedVariablesUnknownGraphButton: FC<Props> = ({ variable, variables, dashboard }) => {
   const { id } = variable;
   const { unknown } = useMemo(() => createUsagesNetwork(variables, dashboard), [variables, dashboard]);
-  const network = useMemo(() => transformUsagesToNetwork(unknown).find(n => n.variable.id === id), [id, unknown]);
+  const network = useMemo(() => transformUsagesToNetwork(unknown).find((n) => n.variable.id === id), [id, unknown]);
   const unknownExist = useMemo(() => Object.keys(unknown).length > 0, [unknown]);
 
   if (!unknownExist || !network) {
     return null;
   }
 
-  const nodes = network.nodes.map(n => {
+  const nodes = network.nodes.map((n) => {
     if (n.label.includes(`$${id}`)) {
       return { ...n, color: '#FB7E81' };
     }
@@ -45,7 +45,7 @@ export const UnProvidedVariablesUnknownGraphButton: FC<Props> = ({ variable, var
   );
 };
 
-export const VariablesUnknownButton: FC<Props> = props => (
+export const VariablesUnknownButton: FC<Props> = (props) => (
   <Provider store={store}>
     <UnProvidedVariablesUnknownGraphButton {...props} />
   </Provider>

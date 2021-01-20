@@ -34,7 +34,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "drawStyle": "line",
-            "fillGradient": 0,
+            "fillGradient": "none",
             "fillOpacity": 0,
             "hideFrom": {
               "graph": false,
@@ -135,7 +135,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "drawStyle": "line",
-            "fillGradient": 0,
+            "fillGradient": "none",
             "fillOpacity": 0,
             "hideFrom": {
               "graph": false,
@@ -245,7 +245,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "drawStyle": "line",
-            "fillGradient": 0,
+            "fillGradient": "none",
             "fillOpacity": 0,
             "hideFrom": {
               "graph": false,
@@ -374,7 +374,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "drawStyle": "line",
-            "fillGradient": 0,
+            "fillGradient": "none",
             "fillOpacity": 0,
             "hideFrom": {
               "graph": false,
@@ -475,7 +475,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "drawStyle": "line",
-            "fillGradient": 0,
+            "fillGradient": "none",
             "fillOpacity": 0,
             "hideFrom": {
               "graph": false,
@@ -585,7 +585,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "drawStyle": "line",
-            "fillGradient": 0,
+            "fillGradient": "none",
             "fillOpacity": 0,
             "hideFrom": {
               "graph": false,
@@ -726,9 +726,7 @@
             "fill": {
               "alpha": 0
             },
-            "fillGradient": {
-              "label": "None"
-            },
+            "fillGradient": "none",
             "fillOpacity": 10,
             "hideFrom": {
               "graph": false,
@@ -889,9 +887,7 @@
             "fill": {
               "alpha": 0
             },
-            "fillGradient": {
-              "label": "None"
-            },
+            "fillGradient": "none",
             "fillOpacity": 10,
             "hideFrom": {
               "graph": false,

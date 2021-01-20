@@ -17,12 +17,12 @@ export default function ExemplarSetting({ value, onChange, onDelete }: Props) {
     <div className="gf-form-group">
       <InlineField label="Internal link" labelWidth={24}>
         <>
-          <InlineSwitch value={isInternalLink} onChange={ev => setIsInternalLink(ev.currentTarget.checked)} />
+          <InlineSwitch value={isInternalLink} onChange={(ev) => setIsInternalLink(ev.currentTarget.checked)} />
           <Button
             variant="destructive"
             title="Remove link"
             icon="times"
-            onClick={event => {
+            onClick={(event) => {
               event.preventDefault();
               onDelete();
             }}
@@ -43,7 +43,7 @@ export default function ExemplarSetting({ value, onChange, onDelete }: Props) {
             tracing={true}
             current={value.datasourceUid}
             noDefault={true}
-            onChange={ds =>
+            onChange={(ds) =>
               onChange({
                 datasourceUid: ds.uid,
                 name: value.name,
@@ -63,7 +63,7 @@ export default function ExemplarSetting({ value, onChange, onDelete }: Props) {
             spellCheck={false}
             width={40}
             value={value.url}
-            onChange={event =>
+            onChange={(event) =>
               onChange({
                 datasourceUid: undefined,
                 name: value.name,
@@ -84,7 +84,7 @@ export default function ExemplarSetting({ value, onChange, onDelete }: Props) {
           spellCheck={false}
           width={40}
           value={value.name}
-          onChange={event =>
+          onChange={(event) =>
             onChange({
               ...value,
               name: event.currentTarget.value,

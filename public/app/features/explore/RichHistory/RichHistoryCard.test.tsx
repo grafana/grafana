@@ -52,24 +52,9 @@ describe('RichHistoryCard', () => {
   it('should render all queries', () => {
     const wrapper = setup();
     expect(wrapper.find({ 'aria-label': 'Query text' })).toHaveLength(3);
-    expect(
-      wrapper
-        .find({ 'aria-label': 'Query text' })
-        .at(0)
-        .text()
-    ).toEqual('{"expr":"query1"}');
-    expect(
-      wrapper
-        .find({ 'aria-label': 'Query text' })
-        .at(1)
-        .text()
-    ).toEqual('{"expr":"query2"}');
-    expect(
-      wrapper
-        .find({ 'aria-label': 'Query text' })
-        .at(2)
-        .text()
-    ).toEqual('{"expr":"query3"}');
+    expect(wrapper.find({ 'aria-label': 'Query text' }).at(0).text()).toEqual('{"expr":"query1"}');
+    expect(wrapper.find({ 'aria-label': 'Query text' }).at(1).text()).toEqual('{"expr":"query2"}');
+    expect(wrapper.find({ 'aria-label': 'Query text' }).at(2).text()).toEqual('{"expr":"query3"}');
   });
   it('should render data source icon', () => {
     const wrapper = setup();

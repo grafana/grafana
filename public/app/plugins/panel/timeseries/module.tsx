@@ -8,7 +8,7 @@ import { defaultGraphConfig, getGraphFieldConfig } from './config';
 export const plugin = new PanelPlugin<Options, GraphFieldConfig>(TimeSeriesPanel)
   .setPanelChangeHandler(graphPanelChangedHandler)
   .useFieldConfig(getGraphFieldConfig(defaultGraphConfig))
-  .setPanelOptions(builder => {
+  .setPanelOptions((builder) => {
     builder
       .addRadio({
         path: 'tooltipOptions.mode',
@@ -47,7 +47,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(TimeSeriesPanel
             { value: 'right', label: 'Right' },
           ],
         },
-        showIf: c => c.legend.displayMode !== LegendDisplayMode.Hidden,
+        showIf: (c) => c.legend.displayMode !== LegendDisplayMode.Hidden,
       })
       .addCustomEditor<StatsPickerConfigSettings, string[]>({
         id: 'legend.calcs',
@@ -59,6 +59,6 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(TimeSeriesPanel
         settings: {
           allowMultiple: true,
         },
-        showIf: currentConfig => currentConfig.legend.displayMode !== LegendDisplayMode.Hidden,
+        showIf: (currentConfig) => currentConfig.legend.displayMode !== LegendDisplayMode.Hidden,
       });
   });

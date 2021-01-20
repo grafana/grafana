@@ -94,7 +94,7 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
   if (draggable) {
     return (
       <Draggable draggableId={id} index={index}>
-        {provided => {
+        {(provided) => {
           return (
             <>
               <div ref={provided.innerRef} className={styles.wrapper} {...provided.draggableProps}>
@@ -120,6 +120,7 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     wrapper: css`
       margin-bottom: ${theme.spacing.md};
+      white-space: nowrap;
     `,
     header: css`
       padding: ${theme.spacing.xs} ${theme.spacing.sm};

@@ -32,8 +32,8 @@ export function dropdownTypeahead($compile: any) {
 
       if (attrs.ngModel) {
         $scope.$watch('model', (newValue: any) => {
-          _.each($scope.menuItems, item => {
-            _.each(item.submenu, subItem => {
+          _.each($scope.menuItems, (item) => {
+            _.each(item.submenu, (subItem) => {
               if (subItem.value === newValue) {
                 $button.html(subItem.text);
               }
@@ -84,8 +84,8 @@ export function dropdownTypeahead($compile: any) {
         items: 10,
         updater: (value: string) => {
           const result: any = {};
-          _.each($scope.menuItems, menuItem => {
-            _.each(menuItem.submenu, submenuItem => {
+          _.each($scope.menuItems, (menuItem) => {
+            _.each(menuItem.submenu, (submenuItem) => {
               if (value === menuItem.text + ' ' + submenuItem.text) {
                 result.$subItem = submenuItem;
                 result.$item = menuItem;
@@ -172,8 +172,8 @@ export function dropdownTypeahead2($compile: any) {
 
       if (attrs.ngModel) {
         $scope.$watch('model', (newValue: any) => {
-          _.each($scope.menuItems, item => {
-            _.each(item.submenu, subItem => {
+          _.each($scope.menuItems, (item) => {
+            _.each(item.submenu, (subItem) => {
               if (subItem.value === newValue) {
                 $button.html(subItem.text);
               }
@@ -224,8 +224,8 @@ export function dropdownTypeahead2($compile: any) {
         items: 10,
         updater: (value: string) => {
           const result: any = {};
-          _.each($scope.menuItems, menuItem => {
-            _.each(menuItem.submenu, submenuItem => {
+          _.each($scope.menuItems, (menuItem) => {
+            _.each(menuItem.submenu, (submenuItem) => {
               if (value === menuItem.text + ' ' + submenuItem.text) {
                 result.$subItem = submenuItem;
                 result.$item = menuItem;

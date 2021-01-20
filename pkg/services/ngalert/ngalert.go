@@ -74,6 +74,8 @@ func (ng *AlertNG) AddMigration(mg *migrator.Migrator) {
 	}
 	addAlertDefinitionMigrations(mg)
 	addAlertDefinitionVersionMigrations(mg)
+	// Create alert_instance table
+	alertInstanceMigration(mg)
 }
 
 // LoadAlertCondition returns a Condition object for the given alertDefinitionID.

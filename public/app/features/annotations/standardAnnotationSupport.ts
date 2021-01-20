@@ -54,9 +54,9 @@ export const standardAnnotationSupport: AnnotationSupport = {
  */
 
 export function singleFrameFromPanelData(): OperatorFunction<DataFrame[], DataFrame | undefined> {
-  return source =>
+  return (source) =>
     source.pipe(
-      mergeMap(data => {
+      mergeMap((data) => {
         if (!data?.length) {
           return of(undefined);
         }
@@ -67,7 +67,7 @@ export function singleFrameFromPanelData(): OperatorFunction<DataFrame[], DataFr
 
         return of(data).pipe(
           standardTransformers.mergeTransformer.operator({}),
-          map(d => d[0])
+          map((d) => d[0])
         );
       })
     );
@@ -93,7 +93,7 @@ export interface AnnotationFieldInfo {
 export const annotationEventNames: AnnotationFieldInfo[] = [
   {
     key: 'time',
-    field: (frame: DataFrame) => frame.fields.find(f => f.type === FieldType.time),
+    field: (frame: DataFrame) => frame.fields.find((f) => f.type === FieldType.time),
     placeholder: 'time, or the first time field',
   },
   { key: 'timeEnd', help: 'When this field is defined, the annotation will be treated as a range' },
@@ -102,7 +102,7 @@ export const annotationEventNames: AnnotationFieldInfo[] = [
   },
   {
     key: 'text',
-    field: (frame: DataFrame) => frame.fields.find(f => f.type === FieldType.string),
+    field: (frame: DataFrame) => frame.fields.find((f) => f.type === FieldType.string),
     placeholder: 'text, or the first text field',
   },
   { key: 'tags', split: ',', help: 'The results will be split on comma (,)' },
@@ -117,7 +117,7 @@ export function getAnnotationsFromData(
 ): Observable<AnnotationEvent[]> {
   return of(data).pipe(
     singleFrameFromPanelData(),
-    map(frame => {
+    map((frame) => {
       if (!frame?.length) {
         return [];
       }

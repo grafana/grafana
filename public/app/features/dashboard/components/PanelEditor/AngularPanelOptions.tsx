@@ -117,7 +117,7 @@ export class AngularPanelOptionsUnconnected extends PureComponent<Props> {
   }
 
   render() {
-    return <div ref={elem => (this.element = elem)} />;
+    return <div ref={(elem) => (this.element = elem)} />;
   }
 }
 

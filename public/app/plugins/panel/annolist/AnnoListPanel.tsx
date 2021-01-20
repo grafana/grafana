@@ -163,7 +163,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
 
   onTagClick = (e: React.SyntheticEvent, tag: string, remove?: boolean) => {
     e.stopPropagation();
-    const queryTags = remove ? this.state.queryTags.filter(item => item !== tag) : [...this.state.queryTags, tag];
+    const queryTags = remove ? this.state.queryTags.filter((item) => item !== tag) : [...this.state.queryTags, tag];
 
     this.setState({ queryTags });
   };
@@ -191,9 +191,9 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     }
     return (
       <>
-        {tags.map(tag => {
+        {tags.map((tag) => {
           return (
-            <span key={tag} onClick={e => this.onTagClick(e, tag, remove)} className="pointer">
+            <span key={tag} onClick={(e) => this.onTagClick(e, tag, remove)} className="pointer">
               <TagBadge label={tag} removeIcon={!!remove} count={0} />
             </span>
           );
@@ -211,7 +211,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
       <div className="dashlist-item">
         <span
           className="dashlist-link pointer"
-          onClick={e => {
+          onClick={(e) => {
             this.onAnnoClick(e, anno);
           }}
         >
@@ -239,7 +239,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
                   theme="info"
                   placement="top"
                 >
-                  <span onClick={e => this.onUserClick(e, anno)} className="graph-annotation__user">
+                  <span onClick={(e) => this.onUserClick(e, anno)} className="graph-annotation__user">
                     <img src={anno.avatarUrl} />
                   </span>
                 </Tooltip>
@@ -291,7 +291,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
         <AbstractList
           items={annotations}
           renderItem={this.renderItem}
-          getItemKey={item => {
+          getItemKey={(item) => {
             return item.id + '';
           }}
           className="dashlist"

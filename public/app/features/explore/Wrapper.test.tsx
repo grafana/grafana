@@ -221,13 +221,13 @@ function setup(options?: SetupOptions): { datasources: { [name: string]: DataSou
 
   setDataSourceSrv({
     getList(): DataSourceInstanceSettings[] {
-      return dsSettings.map(d => d.settings);
+      return dsSettings.map((d) => d.settings);
     },
     getInstanceSettings(name: string) {
-      return dsSettings.map(d => d.settings).find(x => x.name === name);
+      return dsSettings.map((d) => d.settings).find((x) => x.name === name);
     },
     get(name?: string | null, scopedVars?: ScopedVars): Promise<DataSourceApi> {
-      return Promise.resolve((name ? dsSettings.find(d => d.api.name === name) : dsSettings[0])!.api);
+      return Promise.resolve((name ? dsSettings.find((d) => d.api.name === name) : dsSettings[0])!.api);
     },
   } as any);
 
@@ -254,7 +254,7 @@ function setup(options?: SetupOptions): { datasources: { [name: string]: DataSou
       <Wrapper />
     </Provider>
   );
-  return { datasources: fromPairs(dsSettings.map(d => [d.api.name, d.api])) };
+  return { datasources: fromPairs(dsSettings.map((d) => [d.api.name, d.api])) };
 }
 
 function makeDatasourceSetup({ name = 'loki', id = 1 }: { name?: string; id?: number } = {}): DatasourceSetup {

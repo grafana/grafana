@@ -98,8 +98,8 @@ export const XYDimsEditor: FC<StandardEditorProps<XYDimensionConfig, any, Option
     <div>
       <Select
         options={frameNames}
-        value={frameNames.find(v => v.value === value?.frame) ?? frameNames[0]}
-        onChange={v => {
+        value={frameNames.find((v) => v.value === value?.frame) ?? frameNames[0]}
+        onChange={(v) => {
           onChange({
             ...value,
             frame: v.value!,
@@ -111,7 +111,7 @@ export const XYDimsEditor: FC<StandardEditorProps<XYDimensionConfig, any, Option
       <Select
         options={info.numberFields}
         value={info.xAxis}
-        onChange={v => {
+        onChange={(v) => {
           onChange({
             ...value,
             x: v.value,
@@ -125,7 +125,7 @@ export const XYDimsEditor: FC<StandardEditorProps<XYDimensionConfig, any, Option
       <br />
       <Label>Y Fields</Label>
       <div>
-        {info.yFields.map(v => (
+        {info.yFields.map((v) => (
           <div key={v.label} className={styles.row}>
             <IconButton
               name={v.value ? 'eye-slash' : 'eye'}

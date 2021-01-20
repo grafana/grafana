@@ -77,7 +77,7 @@ export const getStandardFieldConfigs = () => {
       placeholder: 'none',
     },
 
-    shouldApply: field => field.type === FieldType.number,
+    shouldApply: (field) => field.type === FieldType.number,
     category,
   };
 
@@ -94,7 +94,7 @@ export const getStandardFieldConfigs = () => {
     settings: {
       placeholder: 'auto',
     },
-    shouldApply: field => field.type === FieldType.number,
+    shouldApply: (field) => field.type === FieldType.number,
     category,
   };
 
@@ -112,7 +112,7 @@ export const getStandardFieldConfigs = () => {
       placeholder: 'auto',
     },
 
-    shouldApply: field => field.type === FieldType.number,
+    shouldApply: (field) => field.type === FieldType.number,
     category,
   };
 
@@ -132,7 +132,7 @@ export const getStandardFieldConfigs = () => {
       integer: true,
     },
 
-    shouldApply: field => field.type === FieldType.number,
+    shouldApply: (field) => field.type === FieldType.number,
     category,
   };
 
@@ -153,7 +153,7 @@ export const getStandardFieldConfigs = () => {
     },
     shouldApply: () => true,
     category: ['Thresholds'],
-    getItemsCount: value => (value ? value.steps.length : 0),
+    getItemsCount: (value) => (value ? value.steps.length : 0),
   };
 
   const mappings: FieldConfigPropertyItem<any, ValueMapping[], ValueMappingFieldConfigSettings> = {
@@ -202,7 +202,7 @@ export const getStandardFieldConfigs = () => {
     },
     shouldApply: () => true,
     category: ['Data links'],
-    getItemsCount: value => (value ? value.length : 0),
+    getItemsCount: (value) => (value ? value.length : 0),
   };
 
   const color: FieldConfigPropertyItem<any, FieldColor | undefined, FieldColorConfigSettings> = {
@@ -260,7 +260,7 @@ export const getStandardOptionEditors = () => {
     name: 'Boolean',
     description: 'Allows boolean values input',
     editor(props) {
-      return <Switch {...props} onChange={e => props.onChange(e.currentTarget.checked)} />;
+      return <Switch {...props} onChange={(e) => props.onChange(e.currentTarget.checked)} />;
     },
   };
 

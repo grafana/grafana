@@ -36,10 +36,10 @@ export const reducer = (
       return [...state, newAgg];
 
     case REMOVE_BUCKET_AGG:
-      return state.filter(bucketAgg => bucketAgg.id !== action.payload.id);
+      return state.filter((bucketAgg) => bucketAgg.id !== action.payload.id);
 
     case CHANGE_BUCKET_AGG_TYPE:
-      return state.map(bucketAgg => {
+      return state.map((bucketAgg) => {
         if (bucketAgg.id !== action.payload.id) {
           return bucketAgg;
         }
@@ -58,7 +58,7 @@ export const reducer = (
       });
 
     case CHANGE_BUCKET_AGG_FIELD:
-      return state.map(bucketAgg => {
+      return state.map((bucketAgg) => {
         if (bucketAgg.id !== action.payload.id) {
           return bucketAgg;
         }
@@ -83,7 +83,7 @@ export const reducer = (
       return state;
 
     case CHANGE_BUCKET_AGG_SETTING:
-      return state.map(bucketAgg => {
+      return state.map((bucketAgg) => {
         if (bucketAgg.id !== action.payload.bucketAgg.id) {
           return bucketAgg;
         }

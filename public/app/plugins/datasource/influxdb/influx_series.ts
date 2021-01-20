@@ -25,7 +25,7 @@ export default class InfluxSeries {
       return output;
     }
 
-    _.each(this.series, series => {
+    _.each(this.series, (series) => {
       const columns = series.columns.length;
       const tags = _.map(series.tags, (value, key) => {
         return key + ': ' + value;
@@ -90,7 +90,7 @@ export default class InfluxSeries {
   getAnnotations() {
     const list: any[] = [];
 
-    _.each(this.series, series => {
+    _.each(this.series, (series) => {
       let titleCol: any = null;
       let timeCol: any = null;
       const tagsCol: any = [];
@@ -122,7 +122,7 @@ export default class InfluxSeries {
         }
       });
 
-      _.each(series.values, value => {
+      _.each(series.values, (value) => {
         const data = {
           annotation: this.annotation,
           time: +new Date(value[timeCol]),
@@ -167,7 +167,7 @@ export default class InfluxSeries {
           table.columns.push({ text: 'Time', type: FieldType.time });
           j++;
         }
-        _.each(_.keys(series.tags), key => {
+        _.each(_.keys(series.tags), (key) => {
           table.columns.push({ text: key });
         });
         for (; j < series.columns.length; j++) {

@@ -129,14 +129,14 @@ export class ShareSnapshot extends PureComponent<Props, State> {
     dash.time = getTimeSrv().timeRange();
 
     // remove panel queries & links
-    dash.panels.forEach(panel => {
+    dash.panels.forEach((panel) => {
       panel.targets = [];
       panel.links = [];
       panel.datasource = null;
     });
 
     // remove annotation queries
-    const annotations = dash.annotations.list.filter(annotation => annotation.enable);
+    const annotations = dash.annotations.list.filter((annotation) => annotation.enable);
     dash.annotations.list = annotations.map((annotation: any) => {
       return {
         name: annotation.name,
@@ -171,7 +171,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
     this.dashboard.forEachPanel((panel: PanelModel) => {
       delete panel.snapshotData;
     });
-    this.dashboard.annotations.list.forEach(annotation => {
+    this.dashboard.annotations.list.forEach((annotation) => {
       delete annotation.snapshotData;
     });
   };
