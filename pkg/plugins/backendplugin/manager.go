@@ -196,6 +196,19 @@ func (m *manager) CollectMetrics(ctx context.Context, pluginID string) (*backend
 
 // CheckHealth checks the health of a registered backend plugin.
 func (m *manager) CheckHealth(ctx context.Context, pluginContext backend.PluginContext) (*backend.CheckHealthResult, error) {
+	var dsURL string
+	if pluginContext.DataSourceInstanceSettings != nil {
+		dsURL = pluginContext.DataSourceInstanceSettings.URL
+	}
+
+	err := m.PluginRequestValidator.Validate(dsURL, nil)
+	if err != nil {
+		return &backend.CheckHealthResult{
+			Status:  http.StatusForbidden,
+			Message: "Access denied",
+		}, nil
+	}
+
 	m.pluginsMu.RLock()
 	p, registered := m.plugins[pluginContext.PluginID]
 	m.pluginsMu.RUnlock()
@@ -205,7 +218,7 @@ func (m *manager) CheckHealth(ctx context.Context, pluginContext backend.PluginC
 	}
 
 	var resp *backend.CheckHealthResult
-	err := instrumentCheckHealthRequest(p.PluginID(), func() (innerErr error) {
+	err = instrumentCheckHealthRequest(p.PluginID(), func() (innerErr error) {
 		resp, innerErr = p.CheckHealth(ctx, &backend.CheckHealthRequest{PluginContext: pluginContext})
 		return
 	})
