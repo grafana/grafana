@@ -146,7 +146,7 @@ export interface AlertDefinitionState {
 
 export interface AlertDefinition {
   id: number;
-  name: string;
+  title: string;
   description: string;
   condition: AlertCondition;
   interval: number;

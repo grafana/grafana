@@ -54,7 +54,7 @@ const dataConfig = {
 export const initialAlertDefinitionState: AlertDefinitionState = {
   alertDefinition: {
     id: 0,
-    name: '',
+    title: '',
     description: '',
     condition: {} as AlertCondition,
     interval: 60,
