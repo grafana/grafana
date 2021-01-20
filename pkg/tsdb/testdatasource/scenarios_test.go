@@ -1,9 +1,11 @@
 package testdatasource
 
 import (
+	"context"
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/stretchr/testify/require"
@@ -89,6 +91,54 @@ func TestTestdataScenarios(t *testing.T) {
 			require.True(t, nil1)
 			require.True(t, nil2)
 			require.True(t, nil3)
+		})
+	})
+}
+
+func TestTestdataScenariosV2(t *testing.T) {
+	t.Run("random walk ", func(t *testing.T) {
+		p := &testDataPlugin{}
+
+		t.Run("Should start at the requested value", func(t *testing.T) {
+			timeRange := tsdb.NewFakeTimeRange("5m", "now", time.Now())
+
+			model := simplejson.New()
+			model.Set("startValue", 1.234)
+			modelBytes, err := model.MarshalJSON()
+			require.NoError(t, err)
+
+			query := backend.DataQuery{
+				RefID: "A",
+				TimeRange: backend.TimeRange{
+					From: timeRange.MustGetFrom(),
+					To:   timeRange.MustGetTo(),
+				},
+				Interval:      100 * time.Millisecond,
+				MaxDataPoints: 100,
+				JSON:          modelBytes,
+			}
+
+			req := &backend.QueryDataRequest{
+				PluginContext: backend.PluginContext{},
+				Queries:       []backend.DataQuery{query},
+			}
+
+			resp, err := p.handleRandomWalkScenario(context.Background(), req)
+			require.NoError(t, err)
+			require.NotNil(t, resp)
+
+			dResp, exists := resp.Responses[query.RefID]
+			require.True(t, exists)
+			require.NoError(t, dResp.Error)
+
+			require.Len(t, dResp.Frames, 1)
+			frame := dResp.Frames[0]
+			require.Len(t, frame.Fields, 2)
+			require.Equal(t, "time", frame.Fields[0].Name)
+			require.Equal(t, "value", frame.Fields[1].Name)
+			val, ok := frame.Fields[1].ConcreteAt(0)
+			require.True(t, ok)
+			require.Equal(t, 1.234, val)
 		})
 	})
 }
