@@ -13,6 +13,7 @@ import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { NavModel, SelectableValue } from '@grafana/data';
 import { setSearchQuery } from './state/reducers';
 import { Button, Select } from '@grafana/ui';
+import { AlertDefinitionItem } from './components/AlertDefinitionItem';
 
 export interface Props {
   navModel: NavModel;
@@ -132,7 +133,9 @@ export class AlertRuleList extends PureComponent<Props, any> {
                   onTogglePause={() => this.onTogglePause(rule)}
                 />
               ))}
-              {ngAlertDefinitions.map((alertDefinition) => {})}
+              {ngAlertDefinitions.map((alertDefinition, index) => (
+                <AlertDefinitionItem key={`${alertDefinition.id}-${index}`} alertDefinition={alertDefinition} />
+              ))}
             </ol>
           </section>
         </Page.Contents>

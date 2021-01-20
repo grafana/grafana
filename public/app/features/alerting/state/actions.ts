@@ -23,8 +23,8 @@ export function getAlertRulesAsync(options: { state: string }): ThunkResult<void
     const rules: AlertRuleDTO[] = await getBackendSrv().get('/api/alerts', options);
 
     if (config.featureToggles.ngalert) {
-      const ngAlertDefinitions: AlertDefinition[] = await getBackendSrv().get('/api/alert-definitions');
-      dispatch(setAlertDefinitions(ngAlertDefinitions));
+      const ngAlertDefinitions = await getBackendSrv().get('/api/alert-definitions');
+      dispatch(setAlertDefinitions(ngAlertDefinitions.results));
     }
 
     dispatch(loadedAlertRules(rules));
