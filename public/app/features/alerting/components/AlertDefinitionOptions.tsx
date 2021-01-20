@@ -29,7 +29,7 @@ export const AlertDefinitionOptions: FC<Props> = ({
     <div style={{ paddingTop: '16px' }}>
       <div className={styles.container}>
         <h4>Alert definition</h4>
-        <Field label="Name">
+        <Field label="Title">
           <Input width={25} name="title" value={alertDefinition.title} onChange={onChange} />
         </Field>
         <Field label="Description" description="What does the alert do and why was it created">
