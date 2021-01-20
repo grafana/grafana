@@ -4,7 +4,7 @@ import { PlotPlugin, PlotProps } from './types';
 
 const ALLOWED_FORMAT_STRINGS_REGEX = /\b(YYYY|YY|MMMM|MMM|MM|M|DD|D|WWWW|WWW|HH|H|h|AA|aa|a|mm|m|ss|s|fff)\b/g;
 
-let LOGGING_ENABLED = false;
+const LOGGING_ENABLED = false;
 
 export function timeFormatToTemplate(f: string) {
   return f.replace(ALLOWED_FORMAT_STRINGS_REGEX, match => `{${match}}`);
