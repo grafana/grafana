@@ -65,8 +65,8 @@ const InterpolationStepAfter: FC<SvgProps> = ({ size, ...rest }) => {
   );
 };
 
-const IconNotFound: FC<SvgProps> = ({ ...rest }) => {
-  return <svg {...rest} />;
+const IconNotFound: FC<SvgProps> = ({ size, ...rest }) => {
+  return <svg width={size} height={size} {...rest} />;
 };
 
 export const customIcons: Record<string, ComponentType<SvgProps>> = {
