@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { Field, Select, Switch, ClipboardButton, Icon, InfoBox, Input, FieldSet } from '@grafana/ui';
+import { Field, RadioButtonGroup, Switch, ClipboardButton, Icon, InfoBox, Input, FieldSet } from '@grafana/ui';
 import { SelectableValue, PanelModel, AppEvents } from '@grafana/data';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { buildImageUrl, buildShareUrl } from './utils';
@@ -21,7 +21,7 @@ export interface Props {
 export interface State {
   useCurrentTimeRange: boolean;
   useShortUrl: boolean;
-  selectedTheme: SelectableValue<string>;
+  selectedTheme: string;
   shareUrl: string;
   imageUrl: string;
 }
@@ -32,7 +32,7 @@ export class ShareLink extends PureComponent<Props, State> {
     this.state = {
       useCurrentTimeRange: true,
       useShortUrl: false,
-      selectedTheme: themeOptions[0],
+      selectedTheme: 'current',
       shareUrl: '',
       imageUrl: '',
     };
@@ -46,7 +46,7 @@ export class ShareLink extends PureComponent<Props, State> {
     const { useCurrentTimeRange, useShortUrl, selectedTheme } = this.state;
     if (
       prevState.useCurrentTimeRange !== useCurrentTimeRange ||
-      prevState.selectedTheme.value !== selectedTheme.value ||
+      prevState.selectedTheme !== selectedTheme ||
       prevState.useShortUrl !== useShortUrl
     ) {
       this.buildUrl();
@@ -57,8 +57,8 @@ export class ShareLink extends PureComponent<Props, State> {
     const { panel } = this.props;
     const { useCurrentTimeRange, useShortUrl, selectedTheme } = this.state;
 
-    const shareUrl = await buildShareUrl(useCurrentTimeRange, selectedTheme.value, panel, useShortUrl);
-    const imageUrl = buildImageUrl(useCurrentTimeRange, selectedTheme.value, panel);
+    const shareUrl = await buildShareUrl(useCurrentTimeRange, selectedTheme, panel, useShortUrl);
+    const imageUrl = buildImageUrl(useCurrentTimeRange, selectedTheme, panel);
 
     this.setState({ shareUrl, imageUrl });
   };
@@ -71,7 +71,7 @@ export class ShareLink extends PureComponent<Props, State> {
     this.setState({ useShortUrl: !this.state.useShortUrl });
   };
 
-  onThemeChange = (value: SelectableValue<string>) => {
+  onThemeChange = (value: string) => {
     this.setState({ selectedTheme: value });
   };
 
@@ -110,7 +110,7 @@ export class ShareLink extends PureComponent<Props, State> {
                 />
               </Field>
               <Field label="Theme">
-                <Select width={20} options={themeOptions} value={selectedTheme} onChange={this.onThemeChange} />
+                <RadioButtonGroup options={themeOptions} value={selectedTheme} onChange={this.onThemeChange} />
               </Field>
               <Field label="Shorten URL">
                 <Switch id="share-shorten-url" value={useShortUrl} onChange={this.onUrlShorten} />

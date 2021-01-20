@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { Select, Switch, Field, FieldSet } from '@grafana/ui';
+import { RadioButtonGroup, Switch, Field, FieldSet, TextArea } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { buildIframeHtml } from './utils';
@@ -17,7 +17,7 @@ interface Props {
 
 interface State {
   useCurrentTimeRange: boolean;
-  selectedTheme: SelectableValue<string>;
+  selectedTheme: string;
   iframeHtml: string;
 }
 
@@ -26,7 +26,7 @@ export class ShareEmbed extends PureComponent<Props, State> {
     super(props);
     this.state = {
       useCurrentTimeRange: true,
-      selectedTheme: themeOptions[0],
+      selectedTheme: 'current',
       iframeHtml: '',
     };
   }
@@ -39,7 +39,7 @@ export class ShareEmbed extends PureComponent<Props, State> {
     const { panel } = this.props;
     const { useCurrentTimeRange, selectedTheme } = this.state;
 
-    const iframeHtml = buildIframeHtml(useCurrentTimeRange, selectedTheme.value, panel);
+    const iframeHtml = buildIframeHtml(useCurrentTimeRange, selectedTheme, panel);
     this.setState({ iframeHtml });
   };
 
@@ -52,13 +52,8 @@ export class ShareEmbed extends PureComponent<Props, State> {
     );
   };
 
-  onThemeChange = (value: SelectableValue<string>) => {
-    this.setState(
-      {
-        selectedTheme: value,
-      },
-      this.buildIframeHtml
-    );
+  onThemeChange = (value: string) => {
+    this.setState({ selectedTheme: value }, this.buildIframeHtml);
   };
 
   render() {
@@ -83,19 +78,16 @@ export class ShareEmbed extends PureComponent<Props, State> {
                 />
               </Field>
               <Field label="Theme">
-                <Select width={20} options={themeOptions} value={selectedTheme} onChange={this.onThemeChange} />
+                <RadioButtonGroup options={themeOptions} value={selectedTheme} onChange={this.onThemeChange} />
+              </Field>
+              <Field
+                label="Embed html"
+                description="The html code below can be pasted and included in another web page. Unless anonymous access is enabled, 
+                the user viewing that page need to be signed into grafana for the graph to load."
+              >
+                <TextArea rows={5} readOnly value={iframeHtml}></TextArea>
               </Field>
             </FieldSet>
-            <p className="share-modal-info-text">
-              The html code below can be pasted and included in another web page. Unless anonymous access is enabled,
-              the user viewing that page need to be signed into grafana for the graph to load.
-            </p>
-
-            <div className="gf-form-group gf-form--grow">
-              <div className="gf-form">
-                <textarea rows={5} data-share-panel-url className="gf-form-input" defaultValue={iframeHtml}></textarea>
-              </div>
-            </div>
           </div>
         </div>
       </div>
