@@ -30,17 +30,18 @@ func TestDuplicatesValidator(t *testing.T) {
 	logger := log.New("test.logger")
 
 	t.Run("Duplicates validator should collect info about duplicate UIDs and titles within folders", func(t *testing.T) {
-		folderID, err := getOrCreateFolderID(cfg, fakeService, "duplicates-validator-folder")
+		const folderName = "duplicates-validator-folder"
+		folderID, err := getOrCreateFolderID(cfg, fakeService, folderName)
 		require.NoError(t, err)
 
 		identity := dashboardIdentity{folderID: folderID, title: "Grafana"}
 
 		cfg1 := &config{
-			Name: "first", Type: "file", OrgID: 1, Folder: "duplicates-validator-folder",
+			Name: "first", Type: "file", OrgID: 1, Folder: folderName,
 			Options: map[string]interface{}{"path": dashboardContainingUID},
 		}
 		cfg2 := &config{
-			Name: "second", Type: "file", OrgID: 1, Folder: "duplicates-validator-folder",
+			Name: "second", Type: "file", OrgID: 1, Folder: folderName,
 			Options: map[string]interface{}{"path": dashboardContainingUID},
 		}
 
@@ -101,7 +102,7 @@ func TestDuplicatesValidator(t *testing.T) {
 
 		duplicates := duplicateValidator.getDuplicates()
 
-		folderID, err := getOrCreateFolderID(cfg, fakeService, "duplicates-validator-folder")
+		folderID, err := getOrCreateFolderID(cfg, fakeService, cfg1.Folder)
 		require.NoError(t, err)
 
 		identity := dashboardIdentity{folderID: folderID, title: "Grafana"}
