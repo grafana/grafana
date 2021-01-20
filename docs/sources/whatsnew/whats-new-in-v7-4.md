@@ -75,7 +75,7 @@ _Server-side expressions_ is an experimental feature that allows you to manipula
 
 The main use case is for [multi-dimensional](https://grafana.com/docs/grafana/latest/getting-started/timeseries-dimensions/#time-series-dimensions) data sources used with the upcoming next generation alerting, but expressions can be used with backend data sources and visualization as well.
 
-> **Note:** Queries built with this feature may break with minor version upgrades until Grafana 8 is released.
+> **Note:** Queries built with this feature might break with minor version upgrades until Grafana 8 is released. This feature does not work with the current Grafana alerting.
 
 ### Variable support in alert notifications
 
