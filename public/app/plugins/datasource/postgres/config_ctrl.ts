@@ -63,7 +63,7 @@ export class PostgresConfigCtrl {
     this.showTimescaleDBHelp = !this.showTimescaleDBHelp;
   }
 
-  lssModeMapping() {
+  sslModeMapping() {
     if (this.current.jsonData.sslmode === 'disable') {
       this.current.jsonData.tlsAuth = false;
       this.current.jsonData.tlsAuthWithCACert = false;

@@ -43,7 +43,7 @@
     <div class="gf-form-select-wrapper max-width-15 gf-form-select-wrapper--has-help-icon">
 	  <select class="gf-form-input" ng-model="ctrl.current.jsonData.sslmode" 
 	  ng-options="mode for mode in ['disable', 'require', 'verify-ca', 'verify-full']" 
-	  ng-init="ctrl.current.jsonData.sslmode" ng-change="ctrl.lssModeMapping()"></select>
+	  ng-init="ctrl.current.jsonData.sslmode" ng-change="ctrl.sslModeMapping()"></select>
       <info-popover mode="right-absolute">
         This option determines whether or with what priority a secure SSL (TLS) TCP/IP connection will be negotiated with the server.
       </info-popover>
