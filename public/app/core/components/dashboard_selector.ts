@@ -12,8 +12,8 @@ export class DashboardSelectorCtrl {
   $onInit() {
     this.options = [{ value: 0, text: 'Default' }];
 
-    return backendSrv.search({ starred: true }).then(res => {
-      res.forEach(dash => {
+    return backendSrv.search({ starred: true }).then((res) => {
+      res.forEach((dash) => {
         this.options.push({ value: dash.id, text: dash.title });
       });
     });

@@ -25,7 +25,7 @@ describe('mapInternalLinkToExplore', () => {
         config: {},
         values: new ArrayVector([2]),
       },
-      replaceVariables: val => val,
+      replaceVariables: (val) => val,
     });
 
     expect(link).toEqual(

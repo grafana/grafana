@@ -104,7 +104,7 @@ export class Logs extends PureComponent<Props, State> {
     this.setState({ isFlipping: true });
     // we are using setTimeout here to make sure that disabled button is rendered before the rendering of reordered logs
     this.flipOrderTimer = setTimeout(() => {
-      this.setState(prevState => {
+      this.setState((prevState) => {
         if (prevState.logsSortOrder === null || prevState.logsSortOrder === LogsSortOrder.Descending) {
           return { logsSortOrder: LogsSortOrder.Ascending };
         }
@@ -156,7 +156,7 @@ export class Logs extends PureComponent<Props, State> {
   };
 
   onToggleLogLevel = (hiddenRawLevels: string[]) => {
-    const hiddenLogLevels: LogLevel[] = hiddenRawLevels.map(level => LogLevel[level as LogLevel]);
+    const hiddenLogLevels: LogLevel[] = hiddenRawLevels.map((level) => LogLevel[level as LogLevel]);
     this.props.onToggleLogLevel(hiddenLogLevels);
   };
 
@@ -178,7 +178,7 @@ export class Logs extends PureComponent<Props, State> {
     const index = this.state.showDetectedFields.indexOf(key);
 
     if (index === -1) {
-      this.setState(state => {
+      this.setState((state) => {
         return {
           showDetectedFields: state.showDetectedFields.concat(key),
         };
@@ -189,16 +189,16 @@ export class Logs extends PureComponent<Props, State> {
   hideDetectedField = (key: string) => {
     const index = this.state.showDetectedFields.indexOf(key);
     if (index > -1) {
-      this.setState(state => {
+      this.setState((state) => {
         return {
-          showDetectedFields: state.showDetectedFields.filter(k => key !== k),
+          showDetectedFields: state.showDetectedFields.filter((k) => key !== k),
         };
       });
     }
   };
 
   clearDetectedFields = () => {
-    this.setState(state => {
+    this.setState((state) => {
       return {
         showDetectedFields: [],
       };
@@ -246,7 +246,7 @@ export class Logs extends PureComponent<Props, State> {
       });
     }
 
-    if (logRows.some(r => r.entry.length > MAX_CHARACTERS)) {
+    if (logRows.some((r) => r.entry.length > MAX_CHARACTERS)) {
       meta.push({
         label: 'Info',
         value: 'Logs with more than 100,000 characters could not be parsed and highlighted',
@@ -314,7 +314,7 @@ export class Logs extends PureComponent<Props, State> {
 
         {meta && (
           <MetaInfoText
-            metaItems={meta.map(item => {
+            metaItems={meta.map((item) => {
               return {
                 label: item.label,
                 value: renderMetaItem(item.value, item.kind),

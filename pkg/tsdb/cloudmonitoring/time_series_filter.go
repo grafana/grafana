@@ -258,6 +258,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) handleNonDistributionSe
 	metricName := formatLegendKeys(series.Metric.Type, defaultMetricName, seriesLabels, nil, timeSeriesFilter)
 	dataField := frame.Fields[1]
 	dataField.Name = metricName
+	dataField.Labels = seriesLabels
 }
 
 func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseToAnnotations(queryRes *tsdb.QueryResult, data cloudMonitoringResponse, title string, text string, tags string) error {

@@ -12,7 +12,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(XYChartPanel)
       drawStyle: DrawStyle.Points,
     })
   )
-  .setPanelOptions(builder => {
+  .setPanelOptions((builder) => {
     builder
       .addCustomEditor({
         id: 'xyPlotConfig',
@@ -57,6 +57,6 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(XYChartPanel)
             { value: 'right', label: 'Right' },
           ],
         },
-        showIf: c => c.legend.displayMode !== LegendDisplayMode.Hidden,
+        showIf: (c) => c.legend.displayMode !== LegendDisplayMode.Hidden,
       });
   });

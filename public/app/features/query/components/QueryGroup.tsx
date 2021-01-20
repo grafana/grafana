@@ -2,7 +2,7 @@
 import React, { PureComponent } from 'react';
 // Components
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
-import { Button, CustomScrollbar, HorizontalGroup, Modal, stylesFactory } from '@grafana/ui';
+import { Button, CustomScrollbar, HorizontalGroup, Icon, Modal, stylesFactory, Tooltip } from '@grafana/ui';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { QueryEditorRows } from './QueryEditorRows';
 // Services
@@ -173,7 +173,7 @@ export class QueryGroup extends PureComponent<Props, State> {
     this.props.onRunQueries();
   };
 
-  renderTopSection(styles: QueriesTabStyls) {
+  renderTopSection(styles: QueriesTabStyles) {
     const { onOpenQueryInspector, options } = this.props;
     const { dataSource, data } = this.state;
 
@@ -294,7 +294,11 @@ export class QueryGroup extends PureComponent<Props, State> {
     );
   }
 
-  renderAddQueryRow(dsSettings: DataSourceInstanceSettings) {
+  isExpressionsSupported(dsSettings: DataSourceInstanceSettings): boolean {
+    return (dsSettings.meta.alerting || dsSettings.meta.mixed) === true;
+  }
+
+  renderAddQueryRow(dsSettings: DataSourceInstanceSettings, styles: QueriesTabStyles) {
     const { isAddingMixed } = this.state;
     const showAddButton = !(isAddingMixed || isSharedDashboardQuery(dsSettings.name));
 
@@ -311,10 +315,17 @@ export class QueryGroup extends PureComponent<Props, State> {
           </Button>
         )}
         {isAddingMixed && this.renderMixedPicker()}
-        {config.featureToggles.expressions && (
-          <Button icon="plus" onClick={this.onAddExpressionClick} variant="secondary">
-            Expression
-          </Button>
+        {this.isExpressionsSupported(dsSettings) && (
+          <Tooltip content="Experimental feature, queries might break in next version">
+            <Button
+              icon="plus"
+              onClick={this.onAddExpressionClick}
+              variant="secondary"
+              className={styles.expressionButton}
+            >
+              Expression <Icon name="exclamation-triangle" className="muted" size="sm" />
+            </Button>
+          </Tooltip>
         )}
       </HorizontalGroup>
     );
@@ -337,7 +348,7 @@ export class QueryGroup extends PureComponent<Props, State> {
           {dsSettings && (
             <>
               <div className={styles.queriesWrapper}>{this.renderQueries(dsSettings)}</div>
-              {this.renderAddQueryRow(dsSettings)}
+              {this.renderAddQueryRow(dsSettings, styles)}
               {isHelpOpen && (
                 <Modal title="Data source help" isOpen={true} onDismiss={this.onCloseHelp}>
                   <PluginHelp plugin={dsSettings.meta} type="query_help" />
@@ -375,7 +386,11 @@ const getStyles = stylesFactory(() => {
     queriesWrapper: css`
       padding-bottom: 16px;
     `,
+    expressionWrapper: css``,
+    expressionButton: css`
+      margin-right: ${theme.spacing.sm};
+    `,
   };
 });
 
-type QueriesTabStyls = ReturnType<typeof getStyles>;
+type QueriesTabStyles = ReturnType<typeof getStyles>;

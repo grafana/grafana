@@ -11,5 +11,5 @@ export const plugin = new DataSourcePlugin(Datasource)
   .setQueryEditor(LokiQueryEditor)
   .setConfigEditor(ConfigEditor)
   .setExploreQueryField(LokiExploreQueryEditor)
-  .setExploreStartPage(LokiCheatSheet)
+  .setQueryEditorHelp(LokiCheatSheet)
   .setAnnotationQueryCtrl(LokiAnnotationsQueryCtrl);

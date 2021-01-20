@@ -36,7 +36,7 @@ export const updateDataSourceVariableOptions = (
 
 export const initDataSourceVariableEditor = (
   dependencies: DataSourceVariableActionDependencies = { getDatasourceSrv: getDatasourceSrv }
-): ThunkResult<void> => dispatch => {
+): ThunkResult<void> => (dispatch) => {
   const dataSources = dependencies
     .getDatasourceSrv()
     .getList({ metrics: true, variables: true })

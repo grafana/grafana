@@ -57,7 +57,7 @@ export class DataSourceVariableEditorUnConnected extends PureComponent<Props> {
     if (!this.props.editor.extended?.dataSourceTypes?.length) {
       return '';
     }
-    const foundItem = this.props.editor.extended?.dataSourceTypes.find(ds => ds.value === this.props.variable.query);
+    const foundItem = this.props.editor.extended?.dataSourceTypes.find((ds) => ds.value === this.props.variable.query);
     const value = foundItem ? foundItem.value : this.props.editor.extended?.dataSourceTypes[0].value;
     return value ?? '';
   };
@@ -68,9 +68,9 @@ export class DataSourceVariableEditorUnConnected extends PureComponent<Props> {
 
   render() {
     const typeOptions = this.props.editor.extended?.dataSourceTypes?.length
-      ? this.props.editor.extended?.dataSourceTypes?.map(ds => ({ value: ds.value ?? '', label: ds.text }))
+      ? this.props.editor.extended?.dataSourceTypes?.map((ds) => ({ value: ds.value ?? '', label: ds.text }))
       : [];
-    const typeValue = typeOptions.find(o => o.value === this.props.variable.query) ?? typeOptions[0];
+    const typeValue = typeOptions.find((o) => o.value === this.props.variable.query) ?? typeOptions[0];
 
     return (
       <VerticalGroup spacing="xs">

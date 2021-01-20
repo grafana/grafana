@@ -69,7 +69,7 @@ export class Registry<T extends RegistryItem> {
   get(id: string): T {
     const v = this.getIfExists(id);
     if (!v) {
-      throw new Error(`"${id}" not found in: ${this.list().map(v => v.id)}`);
+      throw new Error(`"${id}" not found in: ${this.list().map((v) => v.id)}`);
     }
     return v;
   }

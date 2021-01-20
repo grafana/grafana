@@ -99,7 +99,7 @@ describe('ShareModal', () => {
     setTemplateSrv(templateSrv);
   });
 
-  shareLinkScenario('shareUrl with current time range and panel', ctx => {
+  shareLinkScenario('shareUrl with current time range and panel', (ctx) => {
     ctx.setup(() => {
       mockLocationHref('http://server/#!/test');
       config.bootData = {

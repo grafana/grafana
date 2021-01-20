@@ -139,7 +139,7 @@ class NextGenAlertingPage extends PureComponent<Props, State> {
   }
 }
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => {
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state) => {
   return {
     uiState: state.alertDefinition.uiState,
     alertDefinition: state.alertDefinition.alertDefinition,

@@ -35,7 +35,7 @@ describe('DefaultFieldConfigEditor', () => {
   it('should render custom  options', () => {
     const plugin = new PanelPlugin(() => null).useFieldConfig({
       standardOptions: {},
-      useCustomConfig: b => {
+      useCustomConfig: (b) => {
         b.addBooleanSwitch({
           name: 'a',
           path: 'a',
@@ -62,7 +62,7 @@ describe('DefaultFieldConfigEditor', () => {
   it('should not render options that are marked as hidden from defaults', () => {
     const plugin = new PanelPlugin(() => null).useFieldConfig({
       standardOptions: {},
-      useCustomConfig: b => {
+      useCustomConfig: (b) => {
         b.addBooleanSwitch({
           name: 'a',
           path: 'a',
@@ -91,7 +91,7 @@ describe('DefaultFieldConfigEditor', () => {
     it('should render uncategorized options under panel category', () => {
       const plugin = new PanelPlugin(() => null).useFieldConfig({
         standardOptions: {},
-        useCustomConfig: b => {
+        useCustomConfig: (b) => {
           b.addBooleanSwitch({
             name: 'a',
             path: 'a',
@@ -123,7 +123,7 @@ describe('DefaultFieldConfigEditor', () => {
       const CATEGORY_NAME = 'Cat1';
       const plugin = new PanelPlugin(() => null).useFieldConfig({
         standardOptions: {},
-        useCustomConfig: b => {
+        useCustomConfig: (b) => {
           b.addTextInput({
             name: 'b',
             path: 'b',
@@ -159,7 +159,7 @@ describe('DefaultFieldConfigEditor', () => {
       const SUBCATEGORY_NAME = 'Sub1';
       const plugin = new PanelPlugin(() => null).useFieldConfig({
         standardOptions: {},
-        useCustomConfig: b => {
+        useCustomConfig: (b) => {
           b.addTextInput({
             name: 'b',
             path: 'b',
@@ -193,7 +193,7 @@ describe('DefaultFieldConfigEditor', () => {
       const SUBCATEGORY_NAME = 'Sub1';
       const plugin = new PanelPlugin(() => null).useFieldConfig({
         standardOptions: {},
-        useCustomConfig: b => {
+        useCustomConfig: (b) => {
           b.addBooleanSwitch({
             name: 'a',
             path: 'a',
@@ -228,7 +228,7 @@ describe('DefaultFieldConfigEditor', () => {
       const SUBCATEGORY_NAME = 'Sub1';
       const plugin = new PanelPlugin(() => null).useFieldConfig({
         standardOptions: {},
-        useCustomConfig: b => {
+        useCustomConfig: (b) => {
           b.addBooleanSwitch({
             name: 'a',
             path: 'a',

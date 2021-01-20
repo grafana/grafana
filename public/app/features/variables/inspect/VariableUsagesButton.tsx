@@ -24,14 +24,14 @@ type Props = OwnProps & ConnectedProps & DispatchProps;
 export const UnProvidedVariableUsagesGraphButton: FC<Props> = ({ variables, variable, dashboard }) => {
   const { id } = variable;
   const { usages } = useMemo(() => createUsagesNetwork(variables, dashboard), [variables, dashboard]);
-  const network = useMemo(() => transformUsagesToNetwork(usages).find(n => n.variable.id === id), [usages, id]);
+  const network = useMemo(() => transformUsagesToNetwork(usages).find((n) => n.variable.id === id), [usages, id]);
   const adhoc = useMemo(() => isAdHoc(variable), [variable]);
 
   if (usages.length === 0 || adhoc || !network) {
     return null;
   }
 
-  const nodes = network.nodes.map(n => {
+  const nodes = network.nodes.map((n) => {
     if (n.label.includes(`$${id}`)) {
       return { ...n, color: '#FB7E81' };
     }
@@ -47,7 +47,7 @@ export const UnProvidedVariableUsagesGraphButton: FC<Props> = ({ variables, vari
   );
 };
 
-export const VariableUsagesButton: FC<Props> = props => (
+export const VariableUsagesButton: FC<Props> = (props) => (
   <Provider store={store}>
     <UnProvidedVariableUsagesGraphButton {...props} />
   </Provider>

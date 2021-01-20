@@ -28,7 +28,7 @@ export const basic = () => {
           labelWidth={10}
           value={value}
           isConfigured={knobs.isConfigured}
-          onChange={e => setValue(e.currentTarget.value)}
+          onChange={(e) => setValue(e.currentTarget.value)}
           onReset={() => {
             action('Value was reset')('');
             setValue('');

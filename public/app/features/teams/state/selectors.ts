@@ -17,7 +17,7 @@ export const getTeam = (state: TeamState, currentTeamId: any): Team | null => {
 export const getTeams = (state: TeamsState) => {
   const regex = RegExp(state.searchQuery, 'i');
 
-  return state.teams.filter(team => {
+  return state.teams.filter((team) => {
     return regex.test(team.name);
   });
 };
@@ -25,7 +25,7 @@ export const getTeams = (state: TeamsState) => {
 export const getTeamMembers = (state: TeamState) => {
   const regex = RegExp(state.searchMemberQuery, 'i');
 
-  return state.members.filter(member => {
+  return state.members.filter((member) => {
     return regex.test(member.login) || regex.test(member.email) || regex.test(member.name);
   });
 };
@@ -38,7 +38,7 @@ export interface Config {
 
 export const isSignedInUserTeamAdmin = (config: Config): boolean => {
   const { members, signedInUser, editorsCanAdmin } = config;
-  const userInMembers = members.find(m => m.userId === signedInUser.id);
+  const userInMembers = members.find((m) => m.userId === signedInUser.id);
   const permission = userInMembers ? userInMembers.permission : TeamPermissionLevel.Member;
 
   return isPermissionTeamAdmin({ permission, signedInUser, editorsCanAdmin });

@@ -192,7 +192,7 @@ export class Gauge extends PureComponent<Props> {
       <>
         <div
           style={{ height: `${autoProps.gaugeHeight}px`, width: '100%' }}
-          ref={element => (this.canvasElement = element)}
+          ref={(element) => (this.canvasElement = element)}
           onClick={onClick}
         />
         {autoProps.showLabel && (

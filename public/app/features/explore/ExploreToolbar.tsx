@@ -229,7 +229,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
             {hasLiveOption && (
               <div className={`explore-toolbar-content-item ${styles.liveTailButtons}`}>
                 <LiveTailControls exploreId={exploreId}>
-                  {controls => (
+                  {(controls) => (
                     <LiveTailButton
                       splitted={splitted}
                       isLive={isLive}
