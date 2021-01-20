@@ -34,7 +34,7 @@
 	  ng-options="mode for mode in ['file-path', 'file-content']" 
 	  ng-init="ctrl.current.jsonData.sslconfiguremethod"></select>
       <info-popover mode="right-absolute">
-        This option determines whether SSL (TLS) certifications will be stored in files or directly read from UI.
+        This option determines how SSL (TLS) certifications are configured. Selecting <i>File system path</i> will allow you to configure certificates by specifying paths to existing certificates on the local file system where Grafana is running. Be sure that the file is readable by the user executing the Grafana process. Selecting <i>Certificate content</i> will allow you to configure certificates by specifying its content. The content will be stored encrypted in Grafana's database. When connecting to the database the certificates will be written as files to Grafana's configured data path on the local file system.
       </info-popover>
 	</div>
   </div>
