@@ -39,8 +39,8 @@ export const AlertDefinitionOptions: FC<Props> = ({ alertDefinition, onChange })
       <TabContent className={styles.tabContent}>
         {activeTab === Tabs.Alert && (
           <div>
-            <Field label="Name">
-              <Input width={25} name="name" value={alertDefinition.name} onChange={onChange} />
+            <Field label="title">
+              <Input width={25} name="title" value={alertDefinition.title} onChange={onChange} />
             </Field>
             <Field label="Description" description="What does the alert do and why was it created">
               <TextArea

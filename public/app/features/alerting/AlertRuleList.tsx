@@ -6,7 +6,7 @@ import AlertRuleItem from './AlertRuleItem';
 import appEvents from 'app/core/app_events';
 import { updateLocation } from 'app/core/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { AlertRule, CoreEvents, StoreState } from 'app/types';
+import { AlertDefinition, AlertRule, CoreEvents, StoreState } from 'app/types';
 import { getAlertRulesAsync, togglePauseAlertRule } from './state/actions';
 import { getAlertRuleItems, getSearchQuery } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
@@ -17,6 +17,7 @@ import { Button, Select } from '@grafana/ui';
 export interface Props {
   navModel: NavModel;
   alertRules: AlertRule[];
+  ngAlertDefinitions: AlertDefinition[];
   updateLocation: typeof updateLocation;
   getAlertRulesAsync: typeof getAlertRulesAsync;
   setSearchQuery: typeof setSearchQuery;
@@ -90,7 +91,7 @@ export class AlertRuleList extends PureComponent<Props, any> {
   };
 
   render() {
-    const { navModel, alertRules, search, isLoading } = this.props;
+    const { navModel, alertRules, ngAlertDefinitions, search, isLoading } = this.props;
 
     return (
       <Page navModel={navModel}>
@@ -131,6 +132,7 @@ export class AlertRuleList extends PureComponent<Props, any> {
                   onTogglePause={() => this.onTogglePause(rule)}
                 />
               ))}
+              {ngAlertDefinitions.map((alertDefinition) => {})}
             </ol>
           </section>
         </Page.Contents>
@@ -145,6 +147,7 @@ const mapStateToProps = (state: StoreState) => ({
   stateFilter: state.location.query.state,
   search: getSearchQuery(state.alertRules),
   isLoading: state.alertRules.isLoading,
+  ngAlertDefinitions: state.alertDefinition.alertDefinitions,
 });
 
 const mapDispatchToProps = {
