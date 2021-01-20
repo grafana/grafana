@@ -30,6 +30,7 @@ Audit logs contain the following fields. The fields followed by **\*** are alway
 | `user.orgId`\* | number | Current organization of the user that made the request. |
 | `user.orgRole` | string | Current role of the user that made the request. |
 | `user.name` | string | Name of the Grafana user that made the request. |
+| `user.tokenId` | number | ID of the user authentication token. |
 | `user.apiKeyId` | number | ID of the Grafana API key used to make the request. |
 | `user.isAnonymous`\* | boolean | `true` if an anonymous user made the request, `false` otherwise. |
 | `action`\* | string | The request action (eg. `create`, `update`, `manage-permissions`). |
@@ -38,7 +39,7 @@ Audit logs contain the following fields. The fields followed by **\*** are alway
 | `request.query` | object | Request query parameters. |
 | `request.body` | string | Request body. |
 | `result`\* | object | Information about the HTTP response. |
-| `result.statusType`\* | string | `success` if the request action was successful, `failure` otherwise. |
+| `result.statusType` | string | `success` if the request action was successful, `failure` otherwise. |
 | `result.statusCode` | number | HTTP status of the request. |
 | `result.failureMessage` | string | HTTP error message. |
 | `result.body` | string | Response body. |
@@ -49,7 +50,15 @@ Audit logs contain the following fields. The fields followed by **\*** are alway
 | `ipAddress`\* | string | IP address that the request was made from. |
 | `userAgent`\* | string | Agent through which the request was made. |
 | `grafanaVersion`\* | string | Grafana current version when this log is created. |
-| `additionalData` | object | Provide additional information on the request. For now, it's only used in `login` actions to log external user information if an external system was used to log in. |
+| `additionalData` | object | Provide additional information on the request. |
+
+The `additionalData` field can contain the following information:
+| Field name | Action | Description |
+| ---------- | ------ | ----------- |
+| `loginUsername` | `login` | Login used in the Grafana authentication form. |
+| `extUserInfo` | `login` |  User information provided by the external system that was used to log in. |
+| `authTokenCount` | `login` | Number of active authentication tokens for the user that logged in. |
+| `terminationReason` | `logout` | What causes the user to log out (manual logout, token expiration...)  |     
 
 ### Recorded actions
 
@@ -58,7 +67,7 @@ The audit logs include records about the following categories of actions:
 **Sessions**
 
 - Log in.
-- Log out.
+- Log out (manual log out, token expired/revoked, [SAML Single Log Out]({{< saml.mld#single-logout >}})).
 - Revoke a user authentication token.
 - Create or delete an API key.
 
