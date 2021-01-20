@@ -23,18 +23,10 @@ func init() {
 	tsdb.RegisterTsdbQueryEndpoint("postgres", newPostgresQueryEndpoint)
 }
 
-func cleanUpFiles(config sslAuthenticationConfig) {
-	if config.tmpFilesPath != "" {
-		if err := os.RemoveAll(config.tmpFilesPath); err != nil {
-			log.Warnf("failed to delete temporary files %v: %v", config.tmpFilesPath, err)
-		}
-	}
-}
-
-func databaseConnection(datasource *models.DataSource, logger log.Logger) (tsdb.TsdbQueryEndpoint, sslAuthenticationConfig, error) {
-	cnnstr, sslCertificationCfg, err := generateConnectionString(datasource, logger)
+func databaseConnection(datasource *models.DataSource, logger log.Logger) (tsdb.TsdbQueryEndpoint, error) {
+	cnnstr, err := generateConnectionString(datasource, logger)
 	if err != nil {
-		return nil, sslCertificationCfg, err
+		return nil, err
 	}
 
 	if setting.Env == setting.Dev {
@@ -57,18 +49,17 @@ func databaseConnection(datasource *models.DataSource, logger log.Logger) (tsdb.
 	endpoint, err := sqleng.NewSqlQueryEndpoint(&config, &queryResultTransformer, newPostgresMacroEngine(timescaledb), logger)
 	if err != nil {
 		logger.Debug("Failed connecting to Postgres", "err", err)
-		return nil, sslCertificationCfg, err
+		return nil, err
 	}
 
 	logger.Debug("Successfully connected to Postgres")
-	return endpoint, sslCertificationCfg, err
+	return endpoint, err
 }
 
 func newPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 	logger := log.New("tsdb.postgres")
 	logger.Debug("Creating Postgres query endpoint")
-	endpoint, sslCertificationCfg, err := databaseConnection(datasource, logger)
-	defer cleanUpFiles(sslCertificationCfg)
+	endpoint, err := databaseConnection(datasource, logger)
 	return endpoint, err
 }
 
@@ -85,54 +76,87 @@ type sslAuthenticationConfig struct {
 	tmpFilesPath    string
 }
 
-func writeConnectionFiles(ds *models.DataSource, logger log.Logger) (sslAuthenticationConfig, error) {
-	sslMode := strings.TrimSpace(strings.ToLower(ds.JsonData.Get("sslmode").MustString("verify-full")))
-	config := sslAuthenticationConfig{}
-	config.sslMode = sslMode
-	if sslMode != "disable" {
-		decrypted := ds.SecureJsonData.Decrypt()
-		currentPath, err := os.Getwd()
-		if err != nil {
-			return config, err
-		}
-		currentPath, err = ioutil.TempDir(currentPath, "tmpSSLCerts")
-		if err != nil {
-			return config, err
-		}
-		config.tmpFilesPath = currentPath
-
-		if len(decrypted["tlsClientCert"]) > 0 {
-			clientCertification := filepath.Join(currentPath, "client.crt")
-			if err = ioutil.WriteFile(clientCertification, []byte(decrypted["tlsCACert"]), 0600); err != nil {
-				return config, err
-			}
-			config.sslCertFile = clientCertification
-		}
-		if len(decrypted["tlsClientKey"]) > 0 {
-			clientKey := filepath.Join(currentPath, "client.key")
-			if err = ioutil.WriteFile(clientKey, []byte(decrypted["tlsClientKey"]), 0600); err != nil {
-				return config, err
-			}
-			config.sslKeyFile = clientKey
-		}
-		if len(decrypted["tlsCACert"]) > 0 {
-			caCert := filepath.Join(currentPath, "ca.crt")
-			if err = ioutil.WriteFile(caCert, []byte(decrypted["tlsCACert"]), 0600); err != nil {
-				return config, err
-			}
-			config.sslRootCertFile = caCert
-		}
+func writeConnectionFile(
+	ds *models.DataSource, fileContent string, currentPath string, certFileName string, jsonFieldName string) error {
+	var generatedFilePath string
+	if ssljs, ok := ds.JsonData.CheckGet(jsonFieldName); ok {
+		generatedFilePath = ssljs.MustString("")
 	}
-	return config, nil
+	if len(fileContent) > 0 {
+		if len(generatedFilePath) == 0 {
+			generatedFilePath = filepath.Join(currentPath, certFileName)
+		}
+		if err := ioutil.WriteFile(generatedFilePath, []byte(fileContent), 0600); err != nil {
+			return err
+		}
+		ds.JsonData.Set(jsonFieldName, generatedFilePath)
+	} else {
+		if len(generatedFilePath) > 0 {
+			if err := os.Remove(generatedFilePath); err != nil {
+				return err
+			}
+		}
+		ds.JsonData.Set(jsonFieldName, "")
+	}
 }
 
-func generateConnectionString(datasource *models.DataSource, logger log.Logger) (string, sslAuthenticationConfig, error) {
-	sslCertificationCfg, err := writeConnectionFiles(datasource, logger)
-	if err != nil {
-		return "", sslCertificationCfg, err
+func writeConnectionFiles(ds *models.DataSource, logger log.Logger) error {
+	sslMode := strings.TrimSpace(strings.ToLower(ds.JsonData.Get("sslmode").MustString("verify-full")))
+	decrypted := ds.SecureJsonData.Decrypt()
+	tlsCACert := decrypted["tlsCACert"]
+	tlsClientCert := decrypted["tlsClientCert"]
+	tlsClientKey := decrypted["tlsClientKey"]
+
+	if sslMode != "disable" {
+		// create folder
+		currentPath, err := os.Getwd()
+		if err != nil {
+			return err
+		}
+		currentPath = filepath.Join(currentPath, ds.Uid+"generatedSSLCerts")
+		if _, err := os.Stat(currentPath); os.IsNotExist(err) {
+			os.Mkdir(currentPath, 0600)
+		}
+
+		// Create/Modify/Delete CA Certification
+		err = writeConnectionFile(
+			ds, tlsCACert, currentPath, "ca.crt", "generatedSSLRootCertFile")
+		if err != nil {
+			return err
+		}
+
+		err = writeConnectionFile(
+			ds, tlsClientCert, currentPath, "client.crt", "generatedSSLCertFile")
+		if err != nil {
+			return err
+		}
+
+		err = writeConnectionFile(
+			ds, tlsClientKey, currentPath, "client.key", "generatedSSLKeyFile")
+		if err != nil {
+			return err
+		}
+
+		if len(tlsCACert) == 0 && len(tlsClientCert) == 0 && len(tlsClientKey) == 0 {
+			if err := os.Remove(currentPath); err != nil {
+				log.Warnf("failed to delete temporary folder generated %v : %v", currentPath, err)
+			}
+		}
 	}
-	sslMode := sslCertificationCfg.sslMode
+	return nil
+}
+
+func generateConnectionString(datasource *models.DataSource, logger log.Logger) (string, error) {
+	sslConfigureMethod := strings.TrimSpace(strings.ToLower(datasource.JsonData.Get("sslconfiguremethod").MustString("file-content")))
+	sslMode := strings.TrimSpace(strings.ToLower(datasource.JsonData.Get("sslmode").MustString("verify-full")))
 	isSSLDisabled := sslMode == "disable"
+
+	if sslConfigureMethod == "file-content" {
+		err := writeConnectionFiles(datasource, logger)
+		if err != nil {
+			return "", err
+		}
+	}
 
 	var host string
 	var port int
@@ -146,7 +170,7 @@ func generateConnectionString(datasource *models.DataSource, logger log.Logger) 
 			var err error
 			port, err = strconv.Atoi(sp[1])
 			if err != nil {
-				return "", sslCertificationCfg, errutil.Wrapf(err, "invalid port in host specifier %q", sp[1])
+				return "", errutil.Wrapf(err, "invalid port in host specifier %q", sp[1])
 			}
 
 			logger.Debug("Generating connection string with network host/port pair", "host", host, "port", port)
@@ -167,16 +191,14 @@ func generateConnectionString(datasource *models.DataSource, logger log.Logger) 
 		logger.Debug("Postgres SSL is enabled", "sslMode", sslMode)
 
 		// Manage the backward compatibility for certification settings
-		sslRootCert := sslCertificationCfg.sslRootCertFile
-		if sslRootCert == "" {
+		var sslRootCert, sslCert, sslKey string
+		if sslConfigureMethod == "file-content" {
+			sslRootCert = datasource.JsonData.Get("generatedSSLRootCertFile").MustString("")
+			sslCert = datasource.JsonData.Get("generatedSSLCertFile").MustString("")
+			sslKey = datasource.JsonData.Get("generatedSSLKeyFile").MustString("")
+		} else {
 			sslRootCert = datasource.JsonData.Get("sslRootCertFile").MustString("")
-		}
-		sslCert := sslCertificationCfg.sslCertFile
-		if sslCert == "" {
 			sslCert = datasource.JsonData.Get("sslCertFile").MustString("")
-		}
-		sslKey := sslCertificationCfg.sslKeyFile
-		if sslKey == "" {
 			sslKey = datasource.JsonData.Get("sslKeyFile").MustString("")
 		}
 
@@ -191,12 +213,12 @@ func generateConnectionString(datasource *models.DataSource, logger log.Logger) 
 			logger.Debug("Setting SSL client auth", "sslCert", sslCert, "sslKey", sslKey)
 			connStr += fmt.Sprintf(" sslcert='%s' sslkey='%s'", sslCert, sslKey)
 		} else if sslCert != "" || sslKey != "" {
-			return "", sslCertificationCfg, fmt.Errorf("SSL client certificate and key must both be specified")
+			return "", fmt.Errorf("SSL client certificate and key must both be specified")
 		}
 	}
 
 	logger.Debug("Generated Postgres connection string successfully")
-	return connStr, sslCertificationCfg, nil
+	return connStr, nil
 }
 
 type postgresQueryResultTransformer struct {
