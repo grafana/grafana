@@ -160,6 +160,12 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *ts
 				metricName := formatLegendKeys(d.Key, defaultMetricName, seriesLabels, nil, &cloudMonitoringTimeSeriesFilter{ProjectName: timeSeriesQuery.ProjectName, AliasBy: timeSeriesQuery.AliasBy})
 				dataField := frame.Fields[1]
 				dataField.Name = metricName
+				dataField.Labels = seriesLabels
+
+				if dataField.Config == nil {
+					dataField.Config = &data.FieldConfig{}
+				}
+				dataField.Config.DisplayNameFromDS = dataField.Name
 
 				frames = append(frames, frame)
 				continue
