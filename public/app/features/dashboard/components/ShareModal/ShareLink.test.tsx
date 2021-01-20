@@ -156,7 +156,7 @@ describe('ShareModal', () => {
 
     it('should add theme when specified', async () => {
       ctx.wrapper?.setProps({ panel: undefined });
-      ctx.wrapper?.setState({ selectedTheme: { label: 'light', value: 'light' } });
+      ctx.wrapper?.setState({ selectedTheme: 'light' });
 
       await ctx.wrapper?.instance().buildUrl();
       const state = ctx.wrapper?.state();
