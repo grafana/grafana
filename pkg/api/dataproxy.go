@@ -27,16 +27,16 @@ func (hs *HTTPServer) ProxyDataSourceRequest(c *models.ReqContext) {
 		return
 	}
 
+	err = hs.PluginRequestValidator.Validate(ds.Url, c.Req.Request)
+	if err != nil {
+		c.JsonApiErr(http.StatusForbidden, "Access denied", err)
+		return
+	}
+
 	// find plugin
 	plugin, ok := plugins.DataSources[ds.Type]
 	if !ok {
 		c.JsonApiErr(http.StatusInternalServerError, "Unable to find datasource plugin", err)
-		return
-	}
-
-	err = hs.PluginRequestValidator.Validate(plugin.BaseUrl, c.Req.Request)
-	if err != nil {
-		c.JsonApiErr(http.StatusForbidden, "Access denied", err)
 		return
 	}
 

@@ -51,12 +51,13 @@ type Manager interface {
 }
 
 type manager struct {
-	Cfg            *setting.Cfg     `inject:""`
-	License        models.Licensing `inject:""`
-	pluginsMu      sync.RWMutex
-	plugins        map[string]Plugin
-	logger         log.Logger
-	pluginSettings map[string]pluginSettings
+	Cfg                    *setting.Cfg                  `inject:""`
+	License                models.Licensing              `inject:""`
+	PluginRequestValidator models.PluginRequestValidator `inject:""`
+	pluginsMu              sync.RWMutex
+	plugins                map[string]Plugin
+	logger                 log.Logger
+	pluginSettings         map[string]pluginSettings
 }
 
 func (m *manager) Init() error {
@@ -290,6 +291,17 @@ func (m *manager) callResourceInternal(w http.ResponseWriter, req *http.Request,
 
 // CallResource calls a plugin resource.
 func (m *manager) CallResource(pCtx backend.PluginContext, reqCtx *models.ReqContext, path string) {
+	var dsURL string
+	if pCtx.DataSourceInstanceSettings != nil {
+		dsURL = pCtx.DataSourceInstanceSettings.URL
+	}
+
+	err := m.PluginRequestValidator.Validate(dsURL, reqCtx.Req.Request)
+	if err != nil {
+		reqCtx.JsonApiErr(http.StatusForbidden, "Access denied", err)
+		return
+	}
+
 	clonedReq := reqCtx.Req.Clone(reqCtx.Req.Context())
 	rawURL := path
 	if clonedReq.URL.RawQuery != "" {
