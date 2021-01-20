@@ -98,6 +98,7 @@ func writeConnectionFile(
 		}
 		ds.JsonData.Set(jsonFieldName, "")
 	}
+	return nil
 }
 
 func writeConnectionFiles(ds *models.DataSource, logger log.Logger) error {

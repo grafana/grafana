@@ -42,6 +42,7 @@ func TestGenerateConnectionString(t *testing.T) {
 		expErr         string
 		jsonData       string
 		secureJsonData string
+		uid            string
 	}{
 		{
 			desc:       "Unix socket host",
@@ -98,29 +99,20 @@ func TestGenerateConnectionString(t *testing.T) {
 			password: "password",
 			database: "database",
 			jsonData: `{"sslmode" : "verify-full", "sslRootCertFile" : "i/am/coding/ca.crt",
-			"sslCertFile" : "i/am/coding/client.crt", "sslKeyFile" : "i/am/coding/client.key"}`,
+			"sslCertFile" : "i/am/coding/client.crt", "sslKeyFile" : "i/am/coding/client.key", "sslconfiguremethod" : "file-path"}`,
 			expConnStr: "user='user' password='password' host='host' dbname='database' sslmode='verify-full' " +
 				"sslrootcert='i/am/coding/ca.crt' sslcert='i/am/coding/client.crt' sslkey='i/am/coding/client.key'",
 		},
 		{
-			desc:           "Custom SSL mode verify-full with only input text",
+			desc:           "Custom SSL mode verify-full with input text",
 			host:           "host",
 			user:           "user",
 			password:       "password",
 			database:       "database",
-			jsonData:       `{"sslmode" : "verify-full"}`,
+			jsonData:       `{"sslmode" : "verify-full", "sslconfiguremethod" : "file-content"}`,
 			secureJsonData: `{"tlsClientCert" : "I am client certification", "tlsClientKey" : "I am client key", "tlsCACert" : "i am CA certification"}`,
 			expConnStr:     "user='user' password='password' host='host' dbname='database' sslmode='verify-full'",
-		},
-		{
-			desc:           "Custom SSL mode verify-full with input text and path",
-			host:           "host",
-			user:           "user",
-			password:       "password",
-			database:       "database",
-			jsonData:       `{"sslmode" : "verify-full"}`,
-			secureJsonData: `{"tlsClientCert" : "I am client certification", "tlsClientKey" : "I am client key", "tlsCACert" : "i am CA certification"}`,
-			expConnStr:     "user='user' password='password' host='host' dbname='database' sslmode='verify-full'",
+			uid:            "xxxxxx",
 		},
 	}
 	for _, tt := range testCases {
@@ -146,17 +138,30 @@ func TestGenerateConnectionString(t *testing.T) {
 				Database:       tt.database,
 				JsonData:       jsonData,
 				SecureJsonData: securejsondata.GetEncryptedJsonData(securityjsonData),
+				Uid:            tt.uid,
 			}
-			connStr, config, err := generateConnectionString(ds, logger)
-			if config.sslRootCertFile != "" {
-				tt.expConnStr += " sslrootcert='" + config.sslRootCertFile + "'"
+			connStr, err := generateConnectionString(ds, logger)
+			var generatedSSLRootCertFile, generatedSSLCertFile, generatedSSLKeyFile string
+			if ssljs, ok := ds.JsonData.CheckGet("generatedSSLRootCertFile"); ok {
+				generatedSSLRootCertFile = ssljs.MustString("")
 			}
-			if config.sslCertFile != "" {
-				tt.expConnStr += " sslcert='" + config.sslCertFile + "'"
+			if ssljs, ok := ds.JsonData.CheckGet("generatedSSLCertFile"); ok {
+				generatedSSLCertFile = ssljs.MustString("")
 			}
-			if config.sslKeyFile != "" {
-				tt.expConnStr += " sslkey='" + config.sslKeyFile + "'"
+			if ssljs, ok := ds.JsonData.CheckGet("generatedSSLKeyFile"); ok {
+				generatedSSLKeyFile = ssljs.MustString("")
 			}
+
+			if generatedSSLRootCertFile != "" {
+				tt.expConnStr += " sslrootcert='" + generatedSSLRootCertFile + "'"
+			}
+			if generatedSSLCertFile != "" {
+				tt.expConnStr += " sslcert='" + generatedSSLCertFile + "'"
+			}
+			if generatedSSLKeyFile != "" {
+				tt.expConnStr += " sslkey='" + generatedSSLKeyFile + "'"
+			}
+
 			if tt.expErr == "" {
 				require.NoError(t, err, tt.desc)
 				assert.Equal(t, tt.expConnStr, connStr, tt.desc)
@@ -165,7 +170,6 @@ func TestGenerateConnectionString(t *testing.T) {
 				assert.True(t, strings.HasPrefix(err.Error(), tt.expErr),
 					fmt.Sprintf("%s: %q doesn't start with %q", tt.desc, err, tt.expErr))
 			}
-			cleanUpFiles(config)
 		})
 	}
 }
