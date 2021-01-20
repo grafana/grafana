@@ -120,6 +120,8 @@ When generating reports, each panel renders separately before being collected in
 
 To modify the panels' clarity you can set a scale factor for the rendered images. A higher scale factor is more legible but will increase the file size of the generated PDF.
 
+It's also possible to specify custom fonts supporting different Unicode scripts. DejaVu that is the default font used for PFD rendering.
+
 These options are available in the [configuration]({{< relref "../administration/configuration.md">}}) file.
 
 ```ini
@@ -131,6 +133,14 @@ concurrent_render_limit = 4
 # Set the scale factor for rendering images. 2 is enough for monitor resolutions
 # 4 would be better for printed material. Setting a higher value affects performance and memory
 image_scale_factor = 2
+# Path to the directory containing font files
+fonts_path =
+# Name of the TrueType font file with Regular style, eg. DejaVuSansCondensed.ttf
+font_regular =
+# Name of the TrueType font file with Bold style, eg. DejaVuSansCondensed-Bold.ttf
+font_bold =
+# Name of the TrueType font file with Italic style, eg. DejaVuSansCondensed-Oblique.ttf
+font_italic =
 ```
 
 ## Report time range
