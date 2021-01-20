@@ -180,7 +180,7 @@ class GraphElement {
       return;
     }
 
-    if ((ranges.ctrlKey || ranges.metaKey) && this.canAddAnnotations()) {
+    if ((ranges.ctrlKey || ranges.metaKey) && this.dashboard.canAddAnnotations()) {
       // Add annotation
       setTimeout(() => {
         this.eventManager.updateTime(ranges.xaxis);
@@ -201,7 +201,7 @@ class GraphElement {
   ): (() => MenuItemsGroup[]) => {
     return () => {
       // Fixed context menu items
-      const items: MenuItemsGroup[] = this.canAddAnnotations()
+      const items: MenuItemsGroup[] = this.dashboard.canAddAnnotations()
         ? [
             {
               items: [
@@ -253,7 +253,7 @@ class GraphElement {
       }
 
       // skip if dashboard is not saved yet (exists in db) or user cannot edit
-      if (!this.dashboard.id || !this.canAddAnnotations()) {
+      if (!this.dashboard.id || !this.dashboard.canAddAnnotations()) {
         return;
       }
 
@@ -924,10 +924,6 @@ class GraphElement {
       }
       return formattedValueToString(formatter(val, axis.tickDecimals, axis.scaledDecimals));
     };
-  }
-
-  canAddAnnotations() {
-    return (this.dashboard.meta.canEdit || this.dashboard.meta.canMakeEditable) && this.dashboard.editable;
   }
 }
 

@@ -8,6 +8,7 @@ import TimeSeries from 'app/core/time_series2';
 import $ from 'jquery';
 import { graphDirective, GraphElement } from '../graph';
 import { dateTime, EventBusSrv } from '@grafana/data';
+import { DashboardModel } from '../../../../features/dashboard/state';
 
 jest.mock('app/features/annotations/all', () => ({
   EventManager: () => {
@@ -1288,9 +1289,9 @@ describe('grafanaGraph', () => {
   });
 
   describe('getContextMenuItemsSupplier', () => {
-    describe('when called and dashboard is editable and user can edit the dashboard', () => {
+    describe('when called and user can edit the dashboard', () => {
       it('then the correct menu items should be returned', () => {
-        const element = getGraphElement({ editable: true, canEdit: true, canMakeEditable: false });
+        const element = getGraphElement({ canEdit: true, canMakeEditable: false });
 
         const result = element.getContextMenuItemsSupplier({ x: 1, y: 1 })();
 
@@ -1302,9 +1303,9 @@ describe('grafanaGraph', () => {
       });
     });
 
-    describe('when called and dashboard is editable and user can make the dashboard editable', () => {
+    describe('when called and user can make the dashboard editable', () => {
       it('then the correct menu items should be returned', () => {
-        const element = getGraphElement({ editable: true, canEdit: false, canMakeEditable: true });
+        const element = getGraphElement({ canEdit: false, canMakeEditable: true });
 
         const result = element.getContextMenuItemsSupplier({ x: 1, y: 1 })();
 
@@ -1316,70 +1317,28 @@ describe('grafanaGraph', () => {
       });
     });
 
-    describe('when called and dashboard is not editable', () => {
+    describe('when called and user can not edit the dashboard and can not make the dashboard editable', () => {
       it('then the correct menu items should be returned', () => {
-        const element = getGraphElement({ editable: false, canMakeEditable: true, canEdit: true });
+        const element = getGraphElement({ canEdit: false, canMakeEditable: false });
 
         const result = element.getContextMenuItemsSupplier({ x: 1, y: 1 })();
 
         expect(result.length).toEqual(0);
       });
     });
-
-    describe('when called and dashboard is editable and user can not make the dashboard editable', () => {
-      it('then the correct menu items should be returned', () => {
-        const element = getGraphElement({ editable: true, canMakeEditable: false });
-
-        const result = element.getContextMenuItemsSupplier({ x: 1, y: 1 })();
-
-        expect(result.length).toEqual(0);
-      });
-    });
-
-    describe('when called and dashboard is editable and user can not edit the dashboard', () => {
-      it('then the correct menu items should be returned', () => {
-        const element = getGraphElement({ editable: true, canEdit: false });
-
-        const result = element.getContextMenuItemsSupplier({ x: 1, y: 1 })();
-
-        expect(result.length).toEqual(0);
-      });
-    });
-  });
-
-  describe('canAddAnnotations', () => {
-    it.each`
-      canEdit  | canMakeEditable | editable | expected
-      ${false} | ${false}        | ${false} | ${false}
-      ${false} | ${false}        | ${true}  | ${false}
-      ${false} | ${true}         | ${false} | ${false}
-      ${true}  | ${false}        | ${false} | ${false}
-      ${false} | ${true}         | ${true}  | ${true}
-      ${true}  | ${false}        | ${true}  | ${true}
-      ${true}  | ${true}         | ${true}  | ${true}
-    `(
-      'when called with canEdit:{$canEdit}, canMakeEditable:{$canMakeEditable}, editable:{$editable} and expected:{$expected}',
-      ({ canEdit, canMakeEditable, editable, expected }) => {
-        const element = getGraphElement({ canEdit, canMakeEditable, editable });
-
-        const result = element.canAddAnnotations();
-
-        expect(result).toBe(expected);
-      }
-    );
   });
 });
 
-function getGraphElement({
-  editable,
-  canEdit,
-  canMakeEditable,
-}: { canEdit?: boolean; canMakeEditable?: boolean; editable?: boolean } = {}) {
+function getGraphElement({ canEdit, canMakeEditable }: { canEdit?: boolean; canMakeEditable?: boolean } = {}) {
+  const dashboard = new DashboardModel({});
+  dashboard.events.on = jest.fn();
+  dashboard.meta.canEdit = canEdit;
+  dashboard.meta.canMakeEditable = canMakeEditable;
   const element = new GraphElement(
     {
       ctrl: {
         contextMenuCtrl: {},
-        dashboard: { editable, meta: { canEdit, canMakeEditable }, events: { on: jest.fn() } },
+        dashboard,
         events: { on: jest.fn() },
       },
     },
