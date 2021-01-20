@@ -4,6 +4,7 @@ import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 import uPlot, { AlignedData } from 'uplot';
 import { getTimeField } from '../../dataframe';
+import { getFieldDisplayName } from '../../field';
 
 export function pickBestJoinField(data: DataFrame[]): FieldMatcher {
   const { timeField } = getTimeField(data[0]);
@@ -47,6 +48,8 @@ export function alignDataFrames(data: DataFrame[], joinFieldMatcher?: FieldMatch
     let join: Field | undefined = undefined;
     let fields: Field[] = [];
     for (const field of frame.fields) {
+      getFieldDisplayName(field, frame, data); // caches the name (with frames) in state
+
       if (!join && joinFieldMatcher(field, frame, data)) {
         join = field;
       } else {
