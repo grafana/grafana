@@ -1357,13 +1357,16 @@ describe('grafanaGraph', () => {
       ${false} | ${true}         | ${true}  | ${true}
       ${true}  | ${false}        | ${true}  | ${true}
       ${true}  | ${true}         | ${true}  | ${true}
-    `('when called with value:{$value}', ({ canEdit, canMakeEditable, editable, expected }) => {
-      const element = getGraphElement({ canEdit, canMakeEditable, editable });
+    `(
+      'when called with canEdit:{$canEdit}, canMakeEditable:{$canMakeEditable}, editable:{$editable} and expected:{$expected}',
+      ({ canEdit, canMakeEditable, editable, expected }) => {
+        const element = getGraphElement({ canEdit, canMakeEditable, editable });
 
-      const result = element.canAddAnnotations();
+        const result = element.canAddAnnotations();
 
-      expect(result).toBe(expected);
-    });
+        expect(result).toBe(expected);
+      }
+    );
   });
 });
 
