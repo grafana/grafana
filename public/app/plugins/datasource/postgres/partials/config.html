@@ -82,7 +82,7 @@
 	</div>
   </div>
   <datasource-tls-auth-settings current="ctrl.current" 
-  ng-if="(ctrl.current.jsonData.tlsAuth || ctrl.current.jsonData.tlsAuthWithCACert) && ctrl.current.jsonData.sslconfiguremethod === 'file-content'">
+  ng-if="ctrl.current.jsonData.sslmode != 'disable' && ctrl.current.jsonData.sslconfiguremethod === 'file-content'">
   </datasource-tls-auth-settings>
 </div>
 
