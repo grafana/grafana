@@ -228,7 +228,7 @@ describe('getPanelOptionsWithDefaults', () => {
     });
   });
 
-  describe('when applying defaults clean properties that no longer part of the registry', () => {
+  describe('when applying defaults clean properties that are no longer part of the registry', () => {
     it('should remove custom defaults that no longer exist', () => {
       const result = runScenario({
         defaults: {
