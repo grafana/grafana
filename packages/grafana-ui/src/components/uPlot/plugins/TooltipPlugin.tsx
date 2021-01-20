@@ -48,8 +48,8 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', t
             <SeriesTable
               series={[
                 {
-                  // stroke is typed as CanvasRenderingContext2D['strokeStyle'] - we are using strings only for now
-                  color: plotContext.getSeries()[focusedSeriesIdx!].stroke as string,
+                  // TODO: align with uPlot typings
+                  color: (plotContext.getSeries()[focusedSeriesIdx!].stroke as any)(),
                   label: getFieldDisplayName(field, data),
                   value: fieldFmt(field.values.get(focusedPointIdx)).text,
                 },
@@ -76,8 +76,8 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', t
                 return [
                   ...agg,
                   {
-                    // stroke is typed as CanvasRenderingContext2D['strokeStyle'] - we are using strings only for now
-                    color: plotContext.getSeries()[i].stroke as string,
+                    // TODO: align with uPlot typings
+                    color: (plotContext.getSeries()[i].stroke as any)!(),
                     label: getFieldDisplayName(f, data),
                     value: formattedValueToString(f.display!(f.values.get(focusedPointIdx!))),
                     isActive: focusedSeriesIdx === i,
