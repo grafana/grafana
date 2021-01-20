@@ -77,33 +77,29 @@ export class ShareEmbed extends PureComponent<Props, State> {
       <div className="share-modal-body">
         <div className="share-modal-header">
           <div className="share-modal-content">
-            <FieldSet>
-              <Field
-                label="Current time range"
-                description={
-                  isRelativeTime ? 'Transforms the current relative time range to an absolute time range' : ''
-                }
-              >
-                <Switch
-                  id="share-current-time-range"
-                  value={useCurrentTimeRange}
-                  onChange={this.onUseCurrentTimeRangeChange}
-                />
-              </Field>
-              <Field label="Theme">
-                <RadioButtonGroup options={themeOptions} value={selectedTheme} onChange={this.onThemeChange} />
-              </Field>
-              <Field
-                label="Embed html"
-                description="The html code below can be pasted and included in another web page. Unless anonymous access is enabled, 
+            <Field
+              label="Current time range"
+              description={isRelativeTime ? 'Transforms the current relative time range to an absolute time range' : ''}
+            >
+              <Switch
+                id="share-current-time-range"
+                value={useCurrentTimeRange}
+                onChange={this.onUseCurrentTimeRangeChange}
+              />
+            </Field>
+            <Field label="Theme">
+              <RadioButtonGroup options={themeOptions} value={selectedTheme} onChange={this.onThemeChange} />
+            </Field>
+            <Field
+              label="Embed html"
+              description="The html code below can be pasted and included in another web page. Unless anonymous access is enabled, 
                 the user viewing that page need to be signed into grafana for the graph to load."
-              >
-                <TextArea rows={5} value={iframeHtml} onChange={this.onIframeHtmlChange}></TextArea>
-              </Field>
-              <ClipboardButton variant="primary" getText={this.getIframeHtml} onClipboardCopy={this.onIframeHtmlCopy}>
-                <Icon name="copy" /> Copy
-              </ClipboardButton>
-            </FieldSet>
+            >
+              <TextArea rows={5} value={iframeHtml} onChange={this.onIframeHtmlChange}></TextArea>
+            </Field>
+            <ClipboardButton variant="primary" getText={this.getIframeHtml} onClipboardCopy={this.onIframeHtmlCopy}>
+              <Icon name="copy" /> Copy
+            </ClipboardButton>
           </div>
         </div>
       </div>

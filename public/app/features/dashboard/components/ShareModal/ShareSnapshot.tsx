@@ -219,28 +219,26 @@ export class ShareSnapshot extends PureComponent<Props, State> {
             URL. Share wisely.
           </p>
         </div>
-        <FieldSet>
-          <Field label="Snapshot name">
-            <Input width={30} value={snapshotName} onChange={this.onSnapshotNameChange} />
-          </Field>
-          <Field label="Expire">
-            <Select width={30} options={expireOptions} value={selectedExpireOption} onChange={this.onExpireChange} />
-          </Field>
-          <Field
-            label="Timeout (seconds)"
-            description="You may need to configure the timeout value if it takes a long time to collect your dashboard's
+        <Field label="Snapshot name">
+          <Input width={30} value={snapshotName} onChange={this.onSnapshotNameChange} />
+        </Field>
+        <Field label="Expire">
+          <Select width={30} options={expireOptions} value={selectedExpireOption} onChange={this.onExpireChange} />
+        </Field>
+        <Field
+          label="Timeout (seconds)"
+          description="You may need to configure the timeout value if it takes a long time to collect your dashboard's
             metrics."
-          >
-            <Input type="number" width={21} value={timeoutSeconds} onChange={this.onTimeoutChange} />
-          </Field>
-        </FieldSet>
+        >
+          <Input type="number" width={21} value={timeoutSeconds} onChange={this.onTimeoutChange} />
+        </Field>
 
-        <div>
-          <Button className="width-10" variant="primary" disabled={isLoading} onClick={this.createSnapshot()}>
+        <div className="gf-form-button-row">
+          <Button variant="primary" disabled={isLoading} onClick={this.createSnapshot()}>
             Local Snapshot
           </Button>
           {externalEnabled && (
-            <Button className="width-16" variant="secondary" disabled={isLoading} onClick={this.createSnapshot(true)}>
+            <Button variant="secondary" disabled={isLoading} onClick={this.createSnapshot(true)}>
               {sharingButtonText}
             </Button>
           )}
