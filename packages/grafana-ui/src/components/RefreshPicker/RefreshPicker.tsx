@@ -20,6 +20,50 @@ const getStyles = memoizeOne((theme: GrafanaTheme) => {
         color: ${theme.palette.orange};
       }
     `,
+    refreshPicker: css`
+      position: relative;
+      display: none;
+
+      @include media-breakpoint-up(xs) {
+        display: block;
+      }
+    `,
+    refreshPickerOff: css`
+      .select-button-value {
+        display: none;
+      }
+    `,
+    refreshPickerButtons: css`
+      display: flex;
+    `,
+    navbarButtonBorderRight0: css`
+      border-right: 0;
+    `,
+    gfFormInputFormDropdown: css`
+      position: static;
+    `,
+    gfFormSelectBoxMenu: css`
+      position: absolute;
+      left: 0;
+      width: 100%;
+    `,
+    refreshPickerLive: css`
+      .select-button-value {
+        animation: liveText 2s infinite;
+      }
+
+      @keyframes liveText {
+        0% {
+          color: $orange;
+        }
+        50% {
+          color: $yellow;
+        }
+        100% {
+          color: $orange;
+        }
+      }
+    `,
   };
 });
 
@@ -88,21 +132,21 @@ export class RefreshPickerBase extends Component<Props> {
     const selectedValue = options.find((item) => item.value === currentValue) || RefreshPicker.offOption;
     const styles = getStyles(theme);
 
-    const cssClasses = classNames({
-      'refresh-picker': true,
-      'refresh-picker--off': selectedValue.label === RefreshPicker.offOption.label,
-      'refresh-picker--live': selectedValue === RefreshPicker.liveOption,
-    });
+    const cssClasses = classNames(
+      styles.refreshPicker,
+      selectedValue.label === RefreshPicker.offOption.label ? styles.refreshPickerOff : undefined,
+      selectedValue === RefreshPicker.liveOption ? styles.refreshPickerLive : undefined
+    );
 
     return (
       <div className={cssClasses}>
-        <div className="refresh-picker-buttons">
+        <div className={styles.refreshPickerButtons}>
           {refreshButton ? (
             refreshButton
           ) : (
             <Tooltip placement="top" content={tooltip!}>
               <button
-                className="btn btn--radius-right-0 navbar-button navbar-button--border-right-0"
+                className={classNames('btn', 'btn--radius-right-0', 'navbar-button', styles.navbarButtonBorderRight0)}
                 onClick={onRefresh!}
               >
                 <Icon name="sync" size="lg" />
