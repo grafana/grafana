@@ -17,4 +17,4 @@ export const plugin = new DataSourcePlugin(InfluxDatasource)
   .setQueryCtrl(InfluxQueryCtrl)
   .setAnnotationQueryCtrl(InfluxAnnotationsQueryCtrl)
   .setVariableQueryEditor(VariableQueryEditor)
-  .setExploreStartPage(InfluxStartPage);
+  .setQueryEditorHelp(InfluxStartPage);

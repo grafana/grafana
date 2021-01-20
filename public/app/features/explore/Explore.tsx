@@ -382,8 +382,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     const { openDrawer } = this.state;
     const exploreClass = split ? 'explore explore-split' : 'explore';
     const styles = getStyles(theme);
-    const StartPage = datasourceInstance?.components?.ExploreStartPage;
-    const showStartPage = !queryResponse || queryResponse.state === LoadingState.NotStarted;
+    const showPanels = queryResponse && queryResponse.state !== LoadingState.NotStarted;
 
     // gets an error without a refID, so non-query-row-related error, like a connection error
     const queryErrors =
@@ -423,16 +422,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                 return (
                   <main className={cx(styles.exploreMain)} style={{ width }}>
                     <ErrorBoundaryAlert>
-                      {showStartPage && StartPage && (
-                        <div className={'grafana-info-box grafana-info-box--max-lg'}>
-                          <StartPage
-                            onClickExample={this.onClickExample}
-                            datasource={datasourceInstance}
-                            exploreId={exploreId}
-                          />
-                        </div>
-                      )}
-                      {!showStartPage && (
+                      {showPanels && (
                         <>
                           {showMetrics && graphResult && this.renderGraphPanel(width)}
                           {showTable && this.renderTablePanel(width)}

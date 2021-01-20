@@ -17,4 +17,4 @@ export const plugin = new DataSourcePlugin(PrometheusDatasource)
   .setConfigEditor(ConfigEditor)
   .setExploreMetricsQueryField(PromExploreQueryEditor)
   .setAnnotationQueryCtrl(PrometheusAnnotationsQueryCtrl)
-  .setExploreStartPage(PromCheatSheet);
+  .setQueryEditorHelp(PromCheatSheet);

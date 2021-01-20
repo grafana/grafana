@@ -11,8 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-// DashboardProvisioner is responsible for syncing dashboard from disc to
-// Grafanas database.
+// DashboardProvisioner is responsible for syncing dashboard from disk to
+// Grafana's database.
 type DashboardProvisioner interface {
 	Provision() error
 	PollChanges(ctx context.Context)
@@ -24,7 +24,7 @@ type DashboardProvisioner interface {
 // DashboardProvisionerFactory creates DashboardProvisioners based on input
 type DashboardProvisionerFactory func(string) (DashboardProvisioner, error)
 
-// Provisioner is responsible for syncing dashboard from disc to Grafanas database.
+// Provisioner is responsible for syncing dashboard from disk to Grafana's database.
 type Provisioner struct {
 	log         log.Logger
 	fileReaders []*FileReader
@@ -42,7 +42,6 @@ func New(configDirectory string) (*Provisioner, error) {
 	}
 
 	fileReaders, err := getFileReaders(configs, logger)
-
 	if err != nil {
 		return nil, errutil.Wrap("Failed to initialize file readers", err)
 	}
@@ -56,11 +55,11 @@ func New(configDirectory string) (*Provisioner, error) {
 	return d, nil
 }
 
-// Provision starts scanning the disc for dashboards and updates
-// the database with the latest versions of those dashboards
+// Provision scans the disk for dashboards and updates
+// the database with the latest versions of those dashboards.
 func (provider *Provisioner) Provision() error {
 	for _, reader := range provider.fileReaders {
-		if err := reader.startWalkingDisk(); err != nil {
+		if err := reader.walkDisk(); err != nil {
 			if os.IsNotExist(err) {
 				// don't stop the provisioning service in case the folder is missing. The folder can appear after the startup
 				provider.log.Warn("Failed to provision config", "name", reader.Cfg.Name, "error", err)
@@ -87,7 +86,7 @@ func (provider *Provisioner) CleanUpOrphanedDashboards() {
 	}
 }
 
-// PollChanges starts polling for changes in dashboard definition files. It creates goroutine for each provider
+// PollChanges starts polling for changes in dashboard definition files. It creates a goroutine for each provider
 // defined in the config.
 func (provider *Provisioner) PollChanges(ctx context.Context) {
 	for _, reader := range provider.fileReaders {
