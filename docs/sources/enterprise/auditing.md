@@ -67,7 +67,7 @@ The audit logs include records about the following categories of actions:
 **Sessions**
 
 - Log in.
-- Log out (manual log out, token expired/revoked, [SAML Single Log Out]({{< saml.mld#single-logout >}})).
+- Log out (manual log out, token expired/revoked, [SAML Single Logout]({{< relref "saml.md#single-logout" >}})).
 - Revoke a user authentication token.
 - Create or delete an API key.
 
