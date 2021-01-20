@@ -75,8 +75,8 @@ func writeConnectionFile(
 	if ssljs, ok := ds.JsonData.CheckGet(jsonFieldName); ok {
 		generatedFilePath = ssljs.MustString("")
 	}
-	if len(fileContent) > 0 {
-		if len(generatedFilePath) == 0 {
+	if fileContent != "" {
+		if generatedFilePath == "" {
 			generatedFilePath = filepath.Join(currentPath, certFileName)
 		}
 
@@ -85,7 +85,7 @@ func writeConnectionFile(
 		}
 		ds.JsonData.Set(jsonFieldName, generatedFilePath)
 	} else {
-		if len(generatedFilePath) > 0 {
+		if generatedFilePath != "" {
 			if err := os.Remove(generatedFilePath); err != nil {
 				return err
 			}
@@ -147,7 +147,7 @@ func writeConnectionFiles(ds *models.DataSource, logger log.Logger) error {
 		}
 
 		mutex.Lock()
-		if len(tlsCACert) == 0 && len(tlsClientCert) == 0 && len(tlsClientKey) == 0 {
+		if tlsCACert == "" && tlsClientCert == "" && tlsClientKey == "" {
 			if err := os.Remove(currentPath); err != nil {
 				log.Warnf("failed to delete temporary folder generated %v : %v", currentPath, err)
 			}
