@@ -60,7 +60,7 @@ Grafana graphs now support Prometheus exemplars. They are displayed as diamonds 
 
 ### Trace to logs
 
-You can now navigate from a span in a trace view directly to logs relevant for that span. This feature is available for the Tempo, Jaeger, and Zipkin data sources].
+You can now navigate from a span in a trace view directly to logs relevant for that span. This feature is available for the Tempo, Jaeger, and Zipkin data sources.
 
 The following topics were updated as a result of this feature:
 
