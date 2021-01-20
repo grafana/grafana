@@ -133,9 +133,6 @@ func (lps *LibraryPanelService) disconnectDashboard(c *models.ReqContext, uid st
 
 // disconnectLibraryPanelsForDashboard deletes connections for all Library Panels in a Dashboard.
 func (lps *LibraryPanelService) disconnectLibraryPanelsForDashboard(dashboardID int64, panelCount int64) error {
-	if panelCount == 0 {
-		return nil
-	}
 	return lps.SQLStore.WithTransactionalDbSession(context.Background(), func(session *sqlstore.DBSession) error {
 		result, err := session.Exec("DELETE FROM library_panel_dashboard WHERE dashboard_id=?", dashboardID)
 		if err != nil {
@@ -144,7 +141,7 @@ func (lps *LibraryPanelService) disconnectLibraryPanelsForDashboard(dashboardID 
 		if rowsAffected, err := result.RowsAffected(); err != nil {
 			return err
 		} else if rowsAffected != panelCount {
-			return fmt.Errorf("disconnected %d panels, while expecting %d", rowsAffected, panelCount)
+			lps.log.Warn("Number of disconnects does not match number of panels", "dashboard", dashboardID, "rowsAffected", rowsAffected, "panelCount", panelCount)
 		}
 
 		return nil
