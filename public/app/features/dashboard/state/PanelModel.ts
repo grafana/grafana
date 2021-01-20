@@ -348,6 +348,8 @@ export class PanelModel implements DataConfigSource {
       delete (this as any)[key];
     }
 
+    this.options = {};
+
     // clear custom options
     this.fieldConfig = {
       defaults: {
@@ -362,12 +364,13 @@ export class PanelModel implements DataConfigSource {
   changePlugin(newPlugin: PanelPlugin) {
     const pluginId = newPlugin.meta.id;
     const oldOptions: any = this.getOptionsToRemember();
+    const oldFieldConfig = this.fieldConfig;
     const oldPluginId = this.type;
     const wasAngular = this.isAngularPlugin();
 
     this.cachedPluginOptions[oldPluginId] = {
       properties: oldOptions,
-      fieldConfig: this.fieldConfig,
+      fieldConfig: oldFieldConfig,
     };
 
     this.clearPropertiesBeforePluginChange();
@@ -375,15 +378,15 @@ export class PanelModel implements DataConfigSource {
 
     // Let panel plugins inspect options from previous panel and keep any that it can use
     if (newPlugin.onPanelTypeChanged) {
-      let old: any = {};
+      let oldOptions: any = {};
 
       if (wasAngular) {
-        old = { angular: oldOptions };
+        oldOptions = { angular: oldOptions };
       } else if (oldOptions && oldOptions.options) {
-        old = oldOptions.options;
+        oldOptions = oldOptions.options;
       }
-      this.options = this.options || {};
-      Object.assign(this.options, newPlugin.onPanelTypeChanged(this, oldPluginId, old));
+
+      Object.assign(this.options, newPlugin.onPanelTypeChanged(this, oldPluginId, oldOptions, oldFieldConfig));
     }
 
     // switch
