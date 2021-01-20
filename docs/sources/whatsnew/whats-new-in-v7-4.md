@@ -14,7 +14,7 @@ This topic includes the release notes for Grafana v7.4 beta. For all details, re
 
 ## Grafana OSS features
 
-These features are included in the Grafana Enterprise edition software.
+These features are included in the Grafana open source software.
 
 ### Beta Time series panel visualization
 
