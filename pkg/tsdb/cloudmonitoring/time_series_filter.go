@@ -175,6 +175,12 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 
 					frameName := formatLegendKeys(series.Metric.Type, defaultMetricName, nil, additionalLabels, timeSeriesFilter)
 					valueField.Name = frameName
+					valueField.Labels = seriesLabels
+					if valueField.Config == nil {
+						valueField.Config = &data.FieldConfig{}
+					}
+					valueField.Config.DisplayNameFromDS = valueField.Name
+
 					buckets[i] = &data.Frame{
 						Name: frameName,
 						Fields: []*data.Field{
@@ -198,6 +204,12 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 					valueField := data.NewField(data.TimeSeriesValueFieldName, nil, []float64{})
 					frameName := formatLegendKeys(series.Metric.Type, defaultMetricName, seriesLabels, additionalLabels, timeSeriesFilter)
 					valueField.Name = frameName
+					valueField.Labels = seriesLabels
+					if valueField.Config == nil {
+						valueField.Config = &data.FieldConfig{}
+					}
+					valueField.Config.DisplayNameFromDS = valueField.Name
+
 					buckets[i] = &data.Frame{
 						Name: frameName,
 						Fields: []*data.Field{
