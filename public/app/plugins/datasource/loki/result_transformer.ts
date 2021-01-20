@@ -248,7 +248,7 @@ export function lokiResultsToTableModel(
   ];
 
   // Populate rows, set value to empty string when label not present.
-  lokiResults.forEach(series => {
+  lokiResults.forEach((series) => {
     const newSeries: LokiMatrixResult = {
       metric: series.metric,
       values: (series as LokiVectorResult).value
@@ -266,7 +266,7 @@ export function lokiResultsToTableModel(
       table.rows.push(
         ...newSeries.values.map(([a, b]) => [
           a * 1000,
-          ...sortedLabels.map(label => newSeries.metric[label] || ''),
+          ...sortedLabels.map((label) => newSeries.metric[label] || ''),
           parseFloat(b),
         ])
       );
@@ -297,13 +297,13 @@ function getOriginalMetricName(labelData: { [key: string]: string }) {
   const metricName = labelData.__name__ || '';
   delete labelData.__name__;
   const labelPart = Object.entries(labelData)
-    .map(label => `${label[0]}="${label[1]}"`)
+    .map((label) => `${label[0]}="${label[1]}"`)
     .join(',');
   return `${metricName}{${labelPart}}`;
 }
 
 export function decamelize(s: string): string {
-  return s.replace(/[A-Z]/g, m => ` ${m.toLowerCase()}`);
+  return s.replace(/[A-Z]/g, (m) => ` ${m.toLowerCase()}`);
 }
 
 // Turn loki stats { metric: value } into meta stat { title: metric, value: value }
@@ -356,11 +356,11 @@ export function lokiStreamsToDataFrames(
     preferredVisualisationType: 'logs',
   };
 
-  const series: DataFrame[] = data.map(stream => {
+  const series: DataFrame[] = data.map((stream) => {
     const dataFrame = lokiStreamResultToDataFrame(stream, reverse, target.refId);
     enhanceDataFrame(dataFrame, config);
 
-    if (meta.custom && dataFrame.fields.some(f => f.labels && Object.keys(f.labels).some(l => l === '__error__'))) {
+    if (meta.custom && dataFrame.fields.some((f) => f.labels && Object.keys(f.labels).some(l => l === '__error__'))) {
       meta.custom.error = 'Error when parsing some of the logs';
     }
 
@@ -483,11 +483,11 @@ export function rangeQueryResponseToTimeSeries(
 
   switch (response.data.resultType) {
     case LokiResultType.Vector:
-      return response.data.result.map(vecResult =>
+      return response.data.result.map((vecResult) =>
         lokiMatrixToTimeSeries({ metric: vecResult.metric, values: [vecResult.value] }, transformerOptions)
       );
     case LokiResultType.Matrix:
-      return response.data.result.map(matrixResult => lokiMatrixToTimeSeries(matrixResult, transformerOptions));
+      return response.data.result.map((matrixResult) => lokiMatrixToTimeSeries(matrixResult, transformerOptions));
     default:
       return [];
   }
