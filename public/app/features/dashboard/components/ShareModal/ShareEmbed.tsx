@@ -1,5 +1,5 @@
 import React, { FormEvent, PureComponent } from 'react';
-import { RadioButtonGroup, Switch, Field, FieldSet, TextArea, Icon, ClipboardButton } from '@grafana/ui';
+import { RadioButtonGroup, Switch, Field, TextArea, Icon, ClipboardButton } from '@grafana/ui';
 import { SelectableValue, AppEvents } from '@grafana/data';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { appEvents } from 'app/core/core';
@@ -77,6 +77,7 @@ export class ShareEmbed extends PureComponent<Props, State> {
       <div className="share-modal-body">
         <div className="share-modal-header">
           <div className="share-modal-content">
+            <p className="share-modal-info-text">Generate HTML for embedding an iframe with this panel.</p>
             <Field
               label="Current time range"
               description={isRelativeTime ? 'Transforms the current relative time range to an absolute time range' : ''}

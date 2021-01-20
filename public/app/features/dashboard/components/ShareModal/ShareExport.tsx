@@ -91,6 +91,7 @@ export class ShareExport extends PureComponent<Props, State> {
       <div className="share-modal-body">
         <div className="share-modal-header">
           <div className="share-modal-content">
+            <p className="share-modal-info-text">Export this dashboard.</p>
             <Field label="Export for sharing externally">
               <Switch value={shareExternally} onChange={this.onShareExternallyChange} />
             </Field>
