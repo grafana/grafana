@@ -67,7 +67,7 @@ describe('loki result transformer', () => {
 
   describe('lokiStreamResultToDataFrame', () => {
     it('converts streams to series', () => {
-      const data = streamResult.map((stream) => ResultTransformer.lokiStreamResultToDataFrame(stream));
+      const data = streamResult.map(stream => ResultTransformer.lokiStreamResultToDataFrame(stream));
 
       expect(data.length).toBe(2);
       expect(data[0].fields[1].labels!['foo']).toEqual('bar');
@@ -132,7 +132,7 @@ describe('loki result transformer', () => {
       });
 
       expect(ResultTransformer.enhanceDataFrame).toBeCalled();
-      dataFrames.forEach((frame) => {
+      dataFrames.forEach(frame => {
         expect(
           frame.fields.filter(field => field.name === 'test' && field.type === 'string').length
         ).toBeGreaterThanOrEqual(1);
