@@ -1,7 +1,8 @@
-import React, { PureComponent } from 'react';
-import { RadioButtonGroup, Switch, Field, FieldSet, TextArea } from '@grafana/ui';
-import { SelectableValue } from '@grafana/data';
+import React, { FormEvent, PureComponent } from 'react';
+import { RadioButtonGroup, Switch, Field, FieldSet, TextArea, Icon, ClipboardButton } from '@grafana/ui';
+import { SelectableValue, AppEvents } from '@grafana/data';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { appEvents } from 'app/core/core';
 import { buildIframeHtml } from './utils';
 
 const themeOptions: Array<SelectableValue<string>> = [
@@ -43,6 +44,10 @@ export class ShareEmbed extends PureComponent<Props, State> {
     this.setState({ iframeHtml });
   };
 
+  onIframeHtmlChange = (event: FormEvent<HTMLTextAreaElement>) => {
+    this.setState({ iframeHtml: event.currentTarget.value });
+  };
+
   onUseCurrentTimeRangeChange = () => {
     this.setState(
       {
@@ -54,6 +59,14 @@ export class ShareEmbed extends PureComponent<Props, State> {
 
   onThemeChange = (value: string) => {
     this.setState({ selectedTheme: value }, this.buildIframeHtml);
+  };
+
+  onIframeHtmlCopy = () => {
+    appEvents.emit(AppEvents.alertSuccess, ['Content copied to clipboard']);
+  };
+
+  getIframeHtml = () => {
+    return this.state.iframeHtml;
   };
 
   render() {
@@ -85,8 +98,11 @@ export class ShareEmbed extends PureComponent<Props, State> {
                 description="The html code below can be pasted and included in another web page. Unless anonymous access is enabled, 
                 the user viewing that page need to be signed into grafana for the graph to load."
               >
-                <TextArea rows={5} readOnly value={iframeHtml}></TextArea>
+                <TextArea rows={5} value={iframeHtml} onChange={this.onIframeHtmlChange}></TextArea>
               </Field>
+              <ClipboardButton variant="primary" getText={this.getIframeHtml} onClipboardCopy={this.onIframeHtmlCopy}>
+                <Icon name="copy" /> Copy
+              </ClipboardButton>
             </FieldSet>
           </div>
         </div>
