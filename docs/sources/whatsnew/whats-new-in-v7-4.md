@@ -124,9 +124,9 @@ Many thanks to [mtanda](https://github.com/mtanda) this contribution!
 
 The feature previously referred to as DataSource Start Pages or Cheat Sheets has been renamed to Query Editor Help, and is now supported in panel query editors (depending on the data source), as well as in Explore.
 
-[Queries](../panels/queries.md) was updated as a result of this feature.
+[Queries]({{< relref "../panels/queries.md" >}}) was updated as a result of this feature.
 
-For more information about adding a query editor help component to your plugin, refer to [Add a query editor help component](../developers/plugins/add-query-editor-help.md).
+For more information about adding a query editor help component to your plugin, refer to [Add a query editor help component]({{< relref "../developers/plugins/add-query-editor-help.md" >}}).
 
 ### Variable inspector
 
