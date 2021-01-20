@@ -6,9 +6,9 @@ import { appEvents } from 'app/core/core';
 import { buildIframeHtml } from './utils';
 
 const themeOptions: Array<SelectableValue<string>> = [
-  { label: 'current', value: 'current' },
-  { label: 'dark', value: 'dark' },
-  { label: 'light', value: 'light' },
+  { label: 'Current', value: 'current' },
+  { label: 'Dark', value: 'dark' },
+  { label: 'Light', value: 'light' },
 ];
 
 interface Props {
