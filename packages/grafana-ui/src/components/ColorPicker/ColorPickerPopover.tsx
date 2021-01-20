@@ -100,7 +100,7 @@ export class ColorPickerPopover<T extends CustomPickersDescriptor> extends React
 
     return (
       <>
-        {Object.keys(customPickers).map(key => {
+        {Object.keys(customPickers).map((key) => {
           return (
             <div className={this.getTabClassName(key)} onClick={this.onTabChange(key)} key={key}>
               {customPickers[key].name}

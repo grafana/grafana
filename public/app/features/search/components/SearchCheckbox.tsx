@@ -19,12 +19,14 @@ export const SearchCheckbox: FC<Props> = memo(({ onClick, checked = false, edita
 });
 
 const getStyles = stylesFactory(() => ({
-  // Vertically align absolutely positioned checkbox element
   wrapper: css`
     height: 21px;
-    margin-right: 12px;
     & > label {
       height: 100%;
+
+      & > input {
+        position: relative;
+      }
     }
   `,
 }));

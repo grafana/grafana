@@ -5,8 +5,8 @@ export const getNextRefIdChar = (queries: DataQuery[]): string => {
   const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
   return (
-    _.find(letters, refId => {
-      return _.every(queries, other => {
+    _.find(letters, (refId) => {
+      return _.every(queries, (other) => {
         return other.refId !== refId;
       });
     }) ?? 'NA'
@@ -16,6 +16,7 @@ export const getNextRefIdChar = (queries: DataQuery[]): string => {
 export function addQuery(queries: DataQuery[], query?: Partial<DataQuery>): DataQuery[] {
   const q = query || {};
   q.refId = getNextRefIdChar(queries);
+  q.hide = false;
   return [...queries, q as DataQuery];
 }
 

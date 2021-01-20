@@ -44,7 +44,7 @@ function dashboardPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
 
     const ctx: ScenarioContext = {
       cleanUpDashboardAndVariablesMock: jest.fn(),
-      setup: fn => {
+      setup: (fn) => {
         setupFn = fn;
       },
       setDashboardProp: (overrides?: any, metaOverrides?: any) => {
@@ -84,7 +84,7 @@ function dashboardPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
 }
 
 describe('DashboardPage', () => {
-  dashboardPageScenario('Given initial state', ctx => {
+  dashboardPageScenario('Given initial state', (ctx) => {
     ctx.setup(() => {
       ctx.mount();
     });
@@ -94,7 +94,7 @@ describe('DashboardPage', () => {
     });
   });
 
-  dashboardPageScenario('Dashboard is fetching slowly', ctx => {
+  dashboardPageScenario('Dashboard is fetching slowly', (ctx) => {
     ctx.setup(() => {
       ctx.mount();
       ctx.wrapper?.setProps({
@@ -108,7 +108,7 @@ describe('DashboardPage', () => {
     });
   });
 
-  dashboardPageScenario('Dashboard init completed ', ctx => {
+  dashboardPageScenario('Dashboard init completed ', (ctx) => {
     ctx.setup(() => {
       ctx.mount();
       ctx.setDashboardProp();
@@ -123,7 +123,7 @@ describe('DashboardPage', () => {
     });
   });
 
-  dashboardPageScenario('When user goes into panel edit', ctx => {
+  dashboardPageScenario('When user goes into panel edit', (ctx) => {
     ctx.setup(() => {
       ctx.mount();
       ctx.setDashboardProp();
@@ -139,7 +139,7 @@ describe('DashboardPage', () => {
     });
   });
 
-  dashboardPageScenario('When user goes into panel edit but has no edit permissions', ctx => {
+  dashboardPageScenario('When user goes into panel edit but has no edit permissions', (ctx) => {
     ctx.setup(() => {
       ctx.mount();
       ctx.setDashboardProp({}, { canEdit: false });
@@ -153,7 +153,7 @@ describe('DashboardPage', () => {
       expect(state?.editPanel).toBe(null);
     });
   });
-  dashboardPageScenario('When user goes back to dashboard from view panel', ctx => {
+  dashboardPageScenario('When user goes back to dashboard from view panel', (ctx) => {
     ctx.setup(() => {
       ctx.mount();
       ctx.setDashboardProp();
@@ -181,7 +181,7 @@ describe('DashboardPage', () => {
     });
   });
 
-  dashboardPageScenario('When dashboard has editview url state', ctx => {
+  dashboardPageScenario('When dashboard has editview url state', (ctx) => {
     ctx.setup(() => {
       ctx.mount();
       ctx.setDashboardProp();
@@ -195,7 +195,7 @@ describe('DashboardPage', () => {
     });
   });
 
-  dashboardPageScenario('When adding panel', ctx => {
+  dashboardPageScenario('When adding panel', (ctx) => {
     ctx.setup(() => {
       ctx.mount();
       ctx.setDashboardProp();
@@ -215,7 +215,7 @@ describe('DashboardPage', () => {
     });
   });
 
-  dashboardPageScenario('Given panel with id 0', ctx => {
+  dashboardPageScenario('Given panel with id 0', (ctx) => {
     ctx.setup(() => {
       ctx.mount();
       ctx.setDashboardProp({
@@ -235,7 +235,7 @@ describe('DashboardPage', () => {
     });
   });
 
-  dashboardPageScenario('When dashboard unmounts', ctx => {
+  dashboardPageScenario('When dashboard unmounts', (ctx) => {
     ctx.setup(() => {
       ctx.mount();
       ctx.setDashboardProp({

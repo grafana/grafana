@@ -70,9 +70,7 @@ export const addDashboard = (config?: Partial<AddDashboardConfig>) => {
   setDashboardTimeRange(timeRange);
 
   e2e.pages.Dashboard.Toolbar.toolbarItems('Save dashboard').click();
-  e2e.pages.SaveDashboardAsModal.newName()
-    .clear()
-    .type(title);
+  e2e.pages.SaveDashboardAsModal.newName().clear().type(title);
   e2e.pages.SaveDashboardAsModal.save().click();
   e2e.flows.assertSuccessNotification();
 
@@ -105,33 +103,23 @@ const addAnnotation = (config: AddAnnotationConfig, isFirst: boolean) => {
     e2e.pages.Dashboard.Settings.Annotations.List.addAnnotationCTA().click();
   } else {
     // @todo add to e2e-selectors and `aria-label`
-    e2e()
-      .contains('.btn', 'New')
-      .click();
+    e2e().contains('.btn', 'New').click();
   }
 
   const { dataSource, dataSourceForm, name } = config;
 
   // @todo add to e2e-selectors and `aria-label`
-  e2e()
-    .contains('.gf-form', 'Data source')
-    .find('select')
-    .select(dataSource);
+  e2e().contains('.gf-form', 'Data source').find('select').select(dataSource);
 
   // @todo add to e2e-selectors and `aria-label`
-  e2e()
-    .contains('.gf-form', 'Name')
-    .find('input')
-    .type(name);
+  e2e().contains('.gf-form', 'Name').find('input').type(name);
 
   if (dataSourceForm) {
     dataSourceForm();
   }
 
   // @todo add to e2e-selectors and `aria-label`
-  e2e()
-    .contains('.btn', 'Add')
-    .click();
+  e2e().contains('.btn', 'Add').click();
 };
 
 const addAnnotations = (configs: AddAnnotationConfig[]) => {
@@ -204,9 +192,7 @@ const addVariable = (config: PartialAddVariableConfig, isFirst: boolean): AddVar
   }
 
   // Avoid flakiness
-  e2e()
-    .focused()
-    .blur();
+  e2e().focused().blur();
   e2e()
     .contains('.gf-form-group', 'Preview of values')
     .within(() => {

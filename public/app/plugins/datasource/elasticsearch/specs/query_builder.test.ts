@@ -10,7 +10,7 @@ describe('ElasticQueryBuilder', () => {
 
   const allBuilders = [builder, builder5x, builder56, builder6x, builder7x];
 
-  allBuilders.forEach(builder => {
+  allBuilders.forEach((builder) => {
     describe(`version ${builder.esVersion}`, () => {
       it('should return query with defaults', () => {
         const query = builder.build({

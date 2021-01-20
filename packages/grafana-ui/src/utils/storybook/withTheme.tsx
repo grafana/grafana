@@ -22,7 +22,7 @@ const ThemeableStory: React.FunctionComponent<{ handleSassThemeChange: SassTheme
 export const renderComponentWithTheme = (component: React.ComponentType<any>, props: any) => {
   return (
     <ThemeContext.Consumer>
-      {theme => {
+      {(theme) => {
         return React.createElement(component, {
           ...props,
           theme,

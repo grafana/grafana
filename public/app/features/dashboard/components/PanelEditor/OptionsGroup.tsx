@@ -62,7 +62,7 @@ export const OptionsGroup: FC<OptionsGroupProps> = ({
   );
 };
 
-const CollapsibleSectionWithPersistence: FC<OptionsGroupProps> = memo(props => {
+const CollapsibleSectionWithPersistence: FC<OptionsGroupProps> = memo((props) => {
   const [value, setValue] = useLocalStorage(getOptionGroupStorageKey(props.id), {
     defaultToClosed: props.defaultToClosed,
   });

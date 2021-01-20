@@ -75,7 +75,7 @@ export class DashboardExporter {
       promises.push(
         getDataSourceSrv()
           .get(datasource)
-          .then(ds => {
+          .then((ds) => {
             if (ds.meta?.builtIn) {
               return;
             }
@@ -204,7 +204,7 @@ export class DashboardExporter {
         _.defaults(newObj, saveModel);
         return newObj;
       })
-      .catch(err => {
+      .catch((err) => {
         console.error('Export failed:', err);
         return {
           error: err,

@@ -46,7 +46,7 @@ describe('Stats Calculators', () => {
     const stats = fieldReducers.list(names);
     expect(stats.length).toBe(2);
 
-    const found = stats.map(v => v.id);
+    const found = stats.map((v) => v.id);
     const notFound = difference(names, found);
     expect(notFound.length).toBe(2);
 

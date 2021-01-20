@@ -13,7 +13,7 @@ describe('AbstractList', () => {
     const list = shallow(
       <AbstractList
         items={items}
-        renderItem={item => (
+        renderItem={(item) => (
           <div>
             <h1>{item.name}</h1>
             <small>{item.id}</small>
@@ -35,8 +35,8 @@ describe('AbstractList', () => {
     const list = shallow(
       <AbstractList
         items={items}
-        getItemKey={item => item.id}
-        renderItem={item => (
+        getItemKey={(item) => item.id}
+        renderItem={(item) => (
           <div>
             <h1>{item.name}</h1>
             <small>{item.id}</small>

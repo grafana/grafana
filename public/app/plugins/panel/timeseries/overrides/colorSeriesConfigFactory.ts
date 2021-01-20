@@ -12,7 +12,7 @@ export const changeSeriesColorConfigFactory = (
   fieldConfig: FieldConfigSource
 ): FieldConfigSource => {
   const { overrides } = fieldConfig;
-  const currentIndex = fieldConfig.overrides.findIndex(override => {
+  const currentIndex = fieldConfig.overrides.findIndex((override) => {
     return override.matcher.id === FieldMatcherID.byName && override.matcher.options === label;
   });
 
@@ -25,7 +25,7 @@ export const changeSeriesColorConfigFactory = (
 
   const overridesCopy = Array.from(overrides);
   const existing = overridesCopy[currentIndex];
-  const propertyIndex = existing.properties.findIndex(p => p.id === 'color');
+  const propertyIndex = existing.properties.findIndex((p) => p.id === 'color');
 
   if (propertyIndex < 0) {
     overridesCopy[currentIndex] = {

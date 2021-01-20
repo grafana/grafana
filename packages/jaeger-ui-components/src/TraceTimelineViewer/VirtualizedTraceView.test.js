@@ -84,7 +84,7 @@ describe('<VirtualizedTraceViewImpl>', () => {
 
   beforeEach(() => {
     SpanTreeOffset.mockReturnValue(<div />);
-    Object.keys(props).forEach(key => {
+    Object.keys(props).forEach((key) => {
       if (typeof props[key] === 'function') {
         props[key].mockReset();
       }

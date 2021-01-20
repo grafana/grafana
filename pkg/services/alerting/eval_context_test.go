@@ -6,9 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestStateIsUpdatedWhenNeeded(t *testing.T) {
@@ -202,5 +203,138 @@ func TestGetStateFromEvalContext(t *testing.T) {
 		tc.applyFn(evalContext)
 		newState := evalContext.GetNewState()
 		assert.Equal(t, tc.expected, newState, "failed: %s \n expected '%s' have '%s'\n", tc.name, tc.expected, string(newState))
+	}
+}
+
+func TestBuildTemplateDataMap(t *testing.T) {
+	tcs := []struct {
+		name     string
+		matches  []*EvalMatch
+		expected map[string]string
+	}{
+		{
+			name: "single match",
+			matches: []*EvalMatch{
+				{
+					Tags: map[string]string{
+						"InstanceId": "i-123456789",
+						"Percentile": "0.999",
+					},
+				},
+			},
+			expected: map[string]string{
+				"InstanceId": "i-123456789",
+				"Percentile": "0.999",
+			},
+		},
+		{
+			name: "matches with duplicate keys",
+			matches: []*EvalMatch{
+				{
+					Tags: map[string]string{
+						"InstanceId": "i-123456789",
+					},
+				},
+				{
+					Tags: map[string]string{
+						"InstanceId": "i-987654321",
+						"Percentile": "0.999",
+					},
+				},
+			},
+			expected: map[string]string{
+				"InstanceId": "i-123456789, i-987654321",
+				"Percentile": "0.999",
+			},
+		},
+		{
+			name: "matches with duplicate keys and values",
+			matches: []*EvalMatch{
+				{
+					Tags: map[string]string{
+						"InstanceId": "i-123456789",
+						"Percentile": "0.999",
+					},
+				},
+				{
+					Tags: map[string]string{
+						"InstanceId": "i-987654321",
+						"Percentile": "0.995",
+					},
+				},
+				{
+					Tags: map[string]string{
+						"InstanceId": "i-987654321",
+						"Percentile": "0.999",
+					},
+				},
+			},
+			expected: map[string]string{
+				"InstanceId": "i-123456789, i-987654321",
+				"Percentile": "0.999, 0.995",
+			},
+		},
+		{
+			name: "a value and its substring for same key",
+			matches: []*EvalMatch{
+				{
+					Tags: map[string]string{
+						"Percentile": "0.9990",
+					},
+				},
+				{
+					Tags: map[string]string{
+						"Percentile": "0.999",
+					},
+				},
+			},
+			expected: map[string]string{
+				"Percentile": "0.9990, 0.999",
+			},
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := buildTemplateDataMap(tc.matches)
+			require.NoError(t, err)
+			assert.Equal(t, tc.expected, result, "failed: %s \n expected '%s' have '%s'\n", tc.name, tc.expected, result)
+		})
+	}
+}
+
+func TestEvaluateTemplate(t *testing.T) {
+	tcs := []struct {
+		name     string
+		message  string
+		data     map[string]string
+		expected string
+	}{
+		{
+			name:    "matching terms",
+			message: "Degraded ${percentile} latency on ${instance}",
+			data: map[string]string{
+				"instance":   "i-123456789",
+				"percentile": "0.95",
+			},
+			expected: "Degraded 0.95 latency on i-123456789",
+		},
+		{
+			name:    "non-matching terms",
+			message: "Degraded $percentile latency for endpoint ${ endpoint } on ${instance}",
+			data: map[string]string{
+				"INSTANCE":   "i-123456789",
+				"percentile": "0.95",
+				"endpoint":   "/api/dashboard/123",
+			},
+			expected: "Degraded $percentile latency for endpoint ${ endpoint } on ${instance}",
+		},
+	}
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := evaluateTemplate(tc.message, tc.data)
+			require.NoError(t, err)
+			assert.Equal(t, tc.expected, result, "failed: %s \n expected '%s' have '%s'\n", tc.name, tc.expected, result)
+		})
 	}
 }

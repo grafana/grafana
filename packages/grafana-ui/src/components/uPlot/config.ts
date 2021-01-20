@@ -73,17 +73,17 @@ export interface LineConfig {
 export interface FillConfig {
   fillColor?: string;
   fillOpacity?: number;
-  fillGradient?: FillGradientMode;
   fillBelowTo?: string; // name of the field
 }
 
 /**
  * @alpha
  */
-export enum FillGradientMode {
+export enum GraphGradientMode {
   None = 'none',
   Opacity = 'opacity',
   Hue = 'hue',
+  Scheme = 'scheme',
 }
 
 /**
@@ -131,6 +131,7 @@ export interface HideSeriesConfig {
  */
 export interface GraphFieldConfig extends LineConfig, FillConfig, PointsConfig, AxisConfig {
   drawStyle?: DrawStyle;
+  gradientMode?: GraphGradientMode;
   hideFrom?: HideSeriesConfig;
 }
 
@@ -165,8 +166,9 @@ export const graphFieldOptions = {
   ] as Array<SelectableValue<AxisPlacement>>,
 
   fillGradient: [
-    { label: 'None', value: FillGradientMode.None },
-    { label: 'Opacity', value: FillGradientMode.Opacity },
-    { label: 'Hue', value: FillGradientMode.Hue },
-  ] as Array<SelectableValue<FillGradientMode>>,
+    { label: 'None', value: GraphGradientMode.None },
+    { label: 'Opacity', value: GraphGradientMode.Opacity },
+    { label: 'Hue', value: GraphGradientMode.Hue },
+    //  { label: 'Color scheme', value: GraphGradientMode.Scheme },
+  ] as Array<SelectableValue<GraphGradientMode>>,
 };

@@ -14,12 +14,10 @@ import {
   fieldColorModeRegistry,
   FieldConfigProperty,
   FieldConfigSource,
-  PanelEvents,
   PanelPlugin,
   ScopedVars,
   ThresholdsConfig,
   ThresholdsMode,
-  EventBusExtended,
   EventBusSrv,
   DataFrameDTO,
   urlUtil,
@@ -154,7 +152,7 @@ export class PanelModel implements DataConfigSource {
   isInView: boolean;
 
   hasRefreshed: boolean;
-  events: EventBusExtended;
+  events: EventBusSrv;
   cacheTimeout?: any;
   cachedPluginOptions?: any;
   legend?: { show: boolean; sort?: string; sortDesc?: boolean };
@@ -298,7 +296,7 @@ export class PanelModel implements DataConfigSource {
   private restorePanelOptions(pluginId: string) {
     const prevOptions = this.cachedPluginOptions[pluginId] || {};
 
-    Object.keys(prevOptions).map(property => {
+    Object.keys(prevOptions).map((property) => {
       (this as any)[property] = prevOptions[property];
     });
   }
@@ -479,7 +477,6 @@ export class PanelModel implements DataConfigSource {
   }
 
   destroy() {
-    this.events.emit(PanelEvents.panelTeardown);
     this.events.removeAllListeners();
 
     if (this.queryRunner) {

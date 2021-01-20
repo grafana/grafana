@@ -43,9 +43,5 @@ const uiDelete = (uid: string, title: string) => {
   // @todo replace `e2e.pages.Dashboards.dashboards` with this when argument is empty
   e2e()
     .get('[aria-label^="Dashboard search item "]')
-    .each(item =>
-      e2e()
-        .wrap(item)
-        .should('not.contain', title)
-    );
+    .each((item) => e2e().wrap(item).should('not.contain', title));
 };

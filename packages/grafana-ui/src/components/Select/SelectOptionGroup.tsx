@@ -61,7 +61,7 @@ class UnthemedSelectOptionGroup extends PureComponent<ExtendedGroupProps, State>
     } else if (this.props.selectProps && this.props.selectProps.value) {
       const { value } = this.props.selectProps.value;
 
-      if (value && this.props.options.some(option => option.value === value)) {
+      if (value && this.props.options.some((option) => option.value === value)) {
         this.setState({ expanded: true });
       }
     }
@@ -74,7 +74,7 @@ class UnthemedSelectOptionGroup extends PureComponent<ExtendedGroupProps, State>
   }
 
   onToggleChildren = () => {
-    this.setState(prevState => ({
+    this.setState((prevState) => ({
       expanded: !prevState.expanded,
     }));
   };

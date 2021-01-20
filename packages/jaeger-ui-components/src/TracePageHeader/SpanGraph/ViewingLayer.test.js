@@ -231,7 +231,7 @@ describe('<SpanGraph>', () => {
               viewRangeUpdate: { shiftEnd: value },
             },
           ];
-          cases.forEach(_case => {
+          cases.forEach((_case) => {
             instance._handleScrubberDragUpdate(_case.dragUpdate);
             expect(props.updateNextViewRangeTime).lastCalledWith(_case.viewRangeUpdate);
           });
@@ -260,7 +260,7 @@ describe('<SpanGraph>', () => {
             viewRangeUpdate: [viewStart, value],
           },
         ];
-        cases.forEach(_case => {
+        cases.forEach((_case) => {
           const { manager } = _case.dragUpdate;
           wrapper.setState({ preventCursorLine: true });
           expect(wrapper.state('preventCursorLine')).toBe(true);

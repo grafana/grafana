@@ -47,7 +47,7 @@ export class AdHocFilterField<
     const { datasource, extendedOptions } = this.props;
     const options = extendedOptions || {};
     const tagKeys = datasource.getTagKeys ? await datasource.getTagKeys(options) : [];
-    const keys = tagKeys.map(tagKey => tagKey.text);
+    const keys = tagKeys.map((tagKey) => tagKey.text);
 
     return keys;
   };
@@ -56,7 +56,7 @@ export class AdHocFilterField<
     const { datasource, extendedOptions } = this.props;
     const options = extendedOptions || {};
     const tagValues = datasource.getTagValues ? await datasource.getTagValues({ ...options, key }) : [];
-    const values = tagValues.map(tagValue => tagValue.text);
+    const values = tagValues.map((tagValue) => tagValue.text);
 
     return values;
   };

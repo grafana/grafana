@@ -166,7 +166,7 @@ const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps> = ({
             {!error && (
               <List
                 items={rows}
-                renderItem={item => {
+                renderItem={(item) => {
                   return (
                     <div
                       className={css`
@@ -213,7 +213,7 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
     <ClickOutsideWrapper onClick={onOutsideClick}>
       {/* e.stopPropagation is necessary so the log details doesn't open when clicked on log line in context
        * and/or when context log line is being highlighted */}
-      <div onClick={e => e.stopPropagation()}>
+      <div onClick={(e) => e.stopPropagation()}>
         {context.after && (
           <LogRowContextGroup
             rows={context.after}

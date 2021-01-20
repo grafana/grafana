@@ -137,6 +137,7 @@ export class Sparkline extends PureComponent<Props, State> {
 
       builder.addSeries({
         scaleKey,
+        theme,
         fieldName: getFieldDisplayName(field, data),
         drawStyle: customConfig.drawStyle!,
         lineColor: customConfig.lineColor ?? seriesColor,

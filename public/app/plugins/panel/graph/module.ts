@@ -381,7 +381,7 @@ export class GraphCtrl extends MetricsPanelCtrl {
   getTimeZone = () => this.dashboard.getTimezone();
 
   getDataFrameByRefId = (refId: string) => {
-    return this.dataList.filter(dataFrame => dataFrame.refId === refId)[0];
+    return this.dataList.filter((dataFrame) => dataFrame.refId === refId)[0];
   };
 }
 

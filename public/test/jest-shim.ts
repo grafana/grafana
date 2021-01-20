@@ -4,7 +4,7 @@ declare var global: NodeJS.Global;
   setTimeout(callback, 0);
 };
 
-(Promise.prototype as any).finally = function(onFinally: any) {
+(Promise.prototype as any).finally = function (onFinally: any) {
   return this.then(
     /* onFulfilled */
     (res: any) => Promise.resolve(onFinally()).then(() => res),

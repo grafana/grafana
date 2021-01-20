@@ -14,7 +14,7 @@ export function unsavedChangesSrv(
   dashboardSrv: DashboardSrv,
   $window: any
 ) {
-  this.init = function(dashboard: any, scope: any) {
+  this.init = function (dashboard: any, scope: any) {
     this.tracker = new ChangeTracker(dashboard, scope, 1000, $location, $window, $timeout, contextSrv, $rootScope);
     return this.tracker;
   };

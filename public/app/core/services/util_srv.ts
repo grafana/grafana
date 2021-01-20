@@ -78,7 +78,7 @@ export class UtilSrv {
       backdrop: options.backdrop,
     });
 
-    Promise.resolve(modal).then(modalEl => {
+    Promise.resolve(modal).then((modalEl) => {
       modalEl.modal('show');
     });
   }
