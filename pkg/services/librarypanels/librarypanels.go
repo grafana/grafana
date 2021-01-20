@@ -43,7 +43,8 @@ func (lps *LibraryPanelService) IsEnabled() bool {
 	return lps.Cfg.IsPanelLibraryEnabled()
 }
 
-// LoadLibraryPanelsForDashboard loads library panels JSON from the database for a dashboard.
+// LoadLibraryPanelsForDashboard loops through all panels in dashboard JSON and replaces any library panel JSON
+// with JSON stored for library panel in db.
 func (lps *LibraryPanelService) LoadLibraryPanelsForDashboard(dash *models.Dashboard) error {
 	if !lps.IsEnabled() {
 		return nil
@@ -84,7 +85,7 @@ func (lps *LibraryPanelService) LoadLibraryPanelsForDashboard(dash *models.Dashb
 			return fmt.Errorf("could not convert library panel to simplejson model: %w", err)
 		}
 
-		// set the library panel json as new panel json in dashboard json
+		// set the library panel json as the new panel json in dashboard json
 		dash.Data.Get("panels").SetIndex(i, libraryPanelModelAsJSON.Interface())
 
 		// set dashboard specific props
@@ -100,7 +101,8 @@ func (lps *LibraryPanelService) LoadLibraryPanelsForDashboard(dash *models.Dashb
 	return nil
 }
 
-// CleanLibraryPanelsForDashboard cleans library panels JSON before storing a dashboard to the database.
+// CleanLibraryPanelsForDashboard loops through all panels in dashboard JSON and cleans up any library panel JSON so that
+// only the necessary JSON properties remain when storing the dashboard JSON.
 func (lps *LibraryPanelService) CleanLibraryPanelsForDashboard(dash *models.Dashboard) error {
 	if !lps.IsEnabled() {
 		return nil
@@ -124,6 +126,7 @@ func (lps *LibraryPanelService) CleanLibraryPanelsForDashboard(dash *models.Dash
 			return errLibraryPanelHeaderNameMissing
 		}
 
+		// keep only the necessary JSON properties, the rest of the properties should be safely stored in library_panels table
 		gridPos := panelAsJSON.Get("gridPos").MustMap()
 		id := panelAsJSON.Get("id").MustInt64(int64(i))
 		dash.Data.Get("panels").SetIndex(i, map[string]interface{}{
@@ -139,7 +142,7 @@ func (lps *LibraryPanelService) CleanLibraryPanelsForDashboard(dash *models.Dash
 	return nil
 }
 
-// ConnectLibraryPanelsForDashboard connects library panels to a dashboard.
+// ConnectLibraryPanelsForDashboard loops through all panels in dashboard JSON and connects any library panels to the dashboard.
 func (lps *LibraryPanelService) ConnectLibraryPanelsForDashboard(c *models.ReqContext, dash *models.Dashboard) error {
 	if !lps.IsEnabled() {
 		return nil
@@ -165,7 +168,7 @@ func (lps *LibraryPanelService) ConnectLibraryPanelsForDashboard(c *models.ReqCo
 	return lps.connectLibraryPanelsForDashboard(c, libraryPanels, dash.Id)
 }
 
-// DisconnectLibraryPanelsForDashboard disconnects library panels from a dashboard.
+// DisconnectLibraryPanelsForDashboard loops through all panels in dashboard JSON and disconnects any library panels from the dashboard.
 func (lps *LibraryPanelService) DisconnectLibraryPanelsForDashboard(dash *models.Dashboard) error {
 	if !lps.IsEnabled() {
 		return nil

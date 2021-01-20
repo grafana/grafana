@@ -148,7 +148,7 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	dash.Data.Set("version", dash.Version)
 
 	if hs.Cfg.IsPanelLibraryEnabled() {
-		// load library panels
+		// load library panels JSON for this dashboard
 		err = hs.LibraryPanelService.LoadLibraryPanelsForDashboard(dash)
 		if err != nil {
 			return response.Error(500, "Error while loading library panels", err)
@@ -219,6 +219,7 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 	}
 
 	if hs.Cfg.IsPanelLibraryEnabled() {
+		// disconnect all library panels for this dashboard
 		err := hs.LibraryPanelService.DisconnectLibraryPanelsForDashboard(dash)
 		if err != nil {
 			hs.log.Error("Failed to disconnect library panels", "dashboard", dash.Id, "user", c.SignedInUser.UserId, "error", err)
@@ -272,7 +273,7 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	}
 
 	if hs.Cfg.IsPanelLibraryEnabled() {
-		// clean library panels
+		// clean up all unnecessary library panels JSON properties so we store a minimum JSON
 		err = hs.LibraryPanelService.CleanLibraryPanelsForDashboard(dash)
 		if err != nil {
 			return response.Error(500, "Error while cleaning library panels", err)
@@ -312,7 +313,7 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	}
 
 	if hs.Cfg.IsPanelLibraryEnabled() {
-		// connect library panels for dashboard after they get an ID
+		// connect library panels for this dashboard after the dashboard is stored and has an ID
 		err = hs.LibraryPanelService.ConnectLibraryPanelsForDashboard(c, dashboard)
 		if err != nil {
 			return response.Error(500, "Error while connecting library panels", err)
