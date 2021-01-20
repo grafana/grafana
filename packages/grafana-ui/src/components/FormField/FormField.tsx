@@ -6,6 +6,7 @@ import { PopoverContent } from '../Tooltip/Tooltip';
 import { useStyles } from '../../themes';
 
 export interface Props extends InputHTMLAttributes<HTMLInputElement> {
+  grow?: boolean;
   label: string;
   tooltip?: PopoverContent;
   labelWidth?: number;
@@ -30,6 +31,7 @@ export const FormField: FunctionComponent<Props> = ({
   inputWidth,
   inputEl,
   className,
+  grow,
   ...inputProps
 }) => {
   const styles = useStyles(getStyles);
