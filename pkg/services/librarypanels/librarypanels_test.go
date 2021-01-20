@@ -1026,7 +1026,7 @@ func TestDisconnectLibraryPanelsForDashboard(t *testing.T) {
 				Data: simplejson.NewFromAny(dashJSON),
 			}
 
-			err = sc.service.DisconnectLibraryPanelsForDashboard(sc.reqContext, &dash)
+			err = sc.service.DisconnectLibraryPanelsForDashboard(&dash)
 			require.NoError(t, err)
 
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": existing.Result.UID})
@@ -1086,7 +1086,7 @@ func TestDisconnectLibraryPanelsForDashboard(t *testing.T) {
 				Data: simplejson.NewFromAny(dashJSON),
 			}
 
-			err = sc.service.DisconnectLibraryPanelsForDashboard(sc.reqContext, &dash)
+			err = sc.service.DisconnectLibraryPanelsForDashboard(&dash)
 			require.EqualError(t, err, errLibraryPanelHeaderUIDMissing.Error())
 		})
 }

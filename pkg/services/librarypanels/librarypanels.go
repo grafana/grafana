@@ -146,6 +146,7 @@ func (lps *LibraryPanelService) ConnectLibraryPanelsForDashboard(c *models.ReqCo
 	}
 
 	panels := dash.Data.Get("panels").MustArray()
+	var libraryPanels []string
 	for _, panel := range panels {
 		panelAsJSON := simplejson.NewFromAny(panel)
 		libraryPanel := panelAsJSON.Get("libraryPanel")
@@ -158,22 +159,20 @@ func (lps *LibraryPanelService) ConnectLibraryPanelsForDashboard(c *models.ReqCo
 		if len(uid) == 0 {
 			return errLibraryPanelHeaderUIDMissing
 		}
-		err := lps.connectDashboard(c, uid, dash.Id)
-		if err != nil {
-			return err
-		}
+		libraryPanels = append(libraryPanels, uid)
 	}
 
-	return nil
+	return lps.connectLibraryPanelsForDashboard(c, libraryPanels, dash.Id)
 }
 
 // DisconnectLibraryPanelsForDashboard disconnects library panels from a dashboard.
-func (lps *LibraryPanelService) DisconnectLibraryPanelsForDashboard(c *models.ReqContext, dash *models.Dashboard) error {
+func (lps *LibraryPanelService) DisconnectLibraryPanelsForDashboard(dash *models.Dashboard) error {
 	if !lps.IsEnabled() {
 		return nil
 	}
 
 	panels := dash.Data.Get("panels").MustArray()
+	panelCount := int64(0)
 	for _, panel := range panels {
 		panelAsJSON := simplejson.NewFromAny(panel)
 		libraryPanel := panelAsJSON.Get("libraryPanel")
@@ -186,13 +185,10 @@ func (lps *LibraryPanelService) DisconnectLibraryPanelsForDashboard(c *models.Re
 		if len(uid) == 0 {
 			return errLibraryPanelHeaderUIDMissing
 		}
-		err := lps.disconnectDashboard(c, uid, dash.Id)
-		if err != nil {
-			return err
-		}
+		panelCount++
 	}
 
-	return nil
+	return lps.disconnectLibraryPanelsForDashboard(dash.Id, panelCount)
 }
 
 // AddMigration defines database migrations.

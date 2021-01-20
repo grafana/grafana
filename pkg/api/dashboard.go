@@ -219,9 +219,9 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 	}
 
 	if hs.Cfg.IsPanelLibraryEnabled() {
-		err := hs.LibraryPanelService.DisconnectLibraryPanelsForDashboard(c, dash)
+		err := hs.LibraryPanelService.DisconnectLibraryPanelsForDashboard(dash)
 		if err != nil {
-			return response.Error(500, "Failed to disconnect library panels", err)
+			hs.log.Error("Failed to disconnect library panels", "dashboard", dash.Id, "user", c.SignedInUser.UserId, "error", err)
 		}
 	}
 
