@@ -3,6 +3,7 @@ import {
   AlertRulesListResponse,
   AlertRuleCreatePayload,
   AlertRuleTogglePayload,
+  AlertRuleDeletePayload,
   AlertRuleCreateResponse,
 } from './AlertRules.types';
 
@@ -20,5 +21,8 @@ export const AlertRulesService = {
   },
   async toggle(payload: AlertRuleTogglePayload): Promise<void> {
     return getBackendSrv().post(`${BASE_URL}/Toggle`, payload);
+  },
+  async delete(payload: AlertRuleDeletePayload): Promise<{}> {
+    return getBackendSrv().post(`${BASE_URL}/Delete`, payload);
   },
 };
