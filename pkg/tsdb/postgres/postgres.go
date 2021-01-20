@@ -80,7 +80,7 @@ func writeConnectionFile(
 			generatedFilePath = filepath.Join(currentPath, certFileName)
 		}
 
-		if err := ioutil.WriteFile(generatedFilePath, []byte(fileContent), 0600); err != nil {
+		if err := ioutil.WriteFile(generatedFilePath, []byte(fileContent), 0700); err != nil {
 			return err
 		}
 		ds.JsonData.Set(jsonFieldName, generatedFilePath)
