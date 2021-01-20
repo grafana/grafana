@@ -1,7 +1,9 @@
 import React, { InputHTMLAttributes, FunctionComponent } from 'react';
 import { css, cx } from 'emotion';
+import { GrafanaTheme } from '@grafana/data';
 import { InlineFormLabel } from '../FormLabel/FormLabel';
 import { PopoverContent } from '../Tooltip/Tooltip';
+import { useStyles } from '../../themes';
 
 export interface Props extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
@@ -30,19 +32,9 @@ export const FormField: FunctionComponent<Props> = ({
   className,
   ...inputProps
 }) => {
-  const formField = css`
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    text-align: left;
-    position: relative;
-
-    &--grow {
-      flex-grow: 1;
-    }
-  `;
+  const styles = useStyles(getStyles);
   return (
-    <div className={cx(formField, className)}>
+    <div className={cx(styles.formField, className)}>
       <InlineFormLabel width={labelWidth} tooltip={tooltip}>
         {label}
       </InlineFormLabel>
@@ -55,3 +47,16 @@ export const FormField: FunctionComponent<Props> = ({
 
 FormField.displayName = 'FormField';
 FormField.defaultProps = defaultProps;
+
+const getStyles = (theme: GrafanaTheme, grow?: boolean) => {
+  return {
+    formField: css`
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      text-align: left;
+      position: relative;
+      flex-grow: ${grow ? 1 : 0};
+    `,
+  };
+};
