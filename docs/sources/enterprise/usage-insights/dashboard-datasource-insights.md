@@ -20,7 +20,7 @@ To see dashboard usage information, from the top bar, click **Dashboard insights
 
 Dashboard insights displays the following information:
 
-- **Stats:** Shows the daily query count and error count for the last 30 days.
+- **Stats:** Shows the number of daily queries and errors for the past 30 days.
 - **Users & activity:** Shows the daily view count for the last 30 days; last activities on the dashboard and recent users (with a limit of 20).
 
 {{< docs-imagebox img="/img/docs/enterprise/dashboard_insights_stats.png" max-width="400px" class="docs-image--no-shadow" >}}{{< docs-imagebox img="/img/docs/enterprise/dashboard_insights_users.png" max-width="400px" class="docs-image--no-shadow" >}}
@@ -29,7 +29,7 @@ Dashboard insights displays the following information:
 
 > **Note:** Available in Grafana Enterprise v7.3+.
 
-Data source insights give you information about how a data source has been used in the last thirty days.
+Data source insights give you information about how a data source has been used in the past 30 days:
 
 - Queries per day
 - Errors per day

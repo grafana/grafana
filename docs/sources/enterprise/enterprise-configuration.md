@@ -52,13 +52,13 @@ Enable the usage insights export feature.
 
 ### storage
 
-Storage type. Example: `loki`.
+Specify a storage type. Defaults to `loki`.
 
 ## [usage_insights.export.storage.loki]
 
 ### type
 
-Set the communication protocol to use with Loki (can be `grpc` or `http`).
+Set the communication protocol to use with Loki, which is either `grpc` or `http`. Defaults to `grpc`.
 
 ### url
 
@@ -66,7 +66,7 @@ Set the address for writing logs to Loki (format must be host:port).
 
 ### tls
 
-Defaults to true. If true, it establishes a secure connection to Loki.
+Decide whether or not to enable the TLS (Transport Layer Security) protocol when establishing the connection to Loki. Defaults to true.
 
 ## [analytics.summaries]
 

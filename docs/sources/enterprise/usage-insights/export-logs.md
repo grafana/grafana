@@ -10,7 +10,7 @@ weight = 500
 
 > **Note:** Available in Grafana Enterprise v7.4+.
 
-By exporting usage logs to Loki, you can directly query them and create dashboards of the information that matters to you most, such as dashboard errors, most active organizations, or your top-10 most-used queries. Currently, usage logs can only be exported to Loki.
+By exporting usage logs to Loki, you can directly query them and create dashboards of the information that matters to you most, such as dashboard errors, most active organizations, or your top-10 most-used queries.
 
 ## Usage insights logs
 
