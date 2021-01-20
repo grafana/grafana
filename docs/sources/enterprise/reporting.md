@@ -120,7 +120,7 @@ When generating reports, each panel renders separately before being collected in
 
 To modify the panels' clarity you can set a scale factor for the rendered images. A higher scale factor is more legible but will increase the file size of the generated PDF.
 
-It's also possible to specify custom fonts supporting different Unicode scripts. DejaVu that is the default font used for PFD rendering.
+You can also specify custom fonts that support different Unicode scripts. The DejaVu font is the default used for PDF rendering.
 
 These options are available in the [configuration]({{< relref "../administration/configuration.md">}}) file.
 
