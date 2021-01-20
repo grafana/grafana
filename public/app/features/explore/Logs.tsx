@@ -18,7 +18,7 @@ import {
   LinkModel,
   Field,
 } from '@grafana/data';
-import { LegacyForms, LogLabels, ToggleButtonGroup, ToggleButton, LogRows, Button } from '@grafana/ui';
+import { LegacyForms, LogLabels, RadioButtonGroup, LogRows, Button } from '@grafana/ui';
 const { Switch } = LegacyForms;
 import store from 'app/core/store';
 
@@ -52,7 +52,6 @@ interface Props {
   logsSeries?: GraphSeriesXY[];
   dedupedRows?: LogRowModel[];
   visibleRange?: AbsoluteTimeRange;
-
   width: number;
   highlighterExpressions?: string[];
   loading: boolean;
@@ -224,14 +223,15 @@ export class Logs extends PureComponent<Props, State> {
       absoluteRange,
       onChangeTime,
       getFieldLinks,
+      dedupStrategy,
     } = this.props;
+
+    const { showLabels, showTime, wrapLogMessage, logsSortOrder, isFlipping, showDetectedFields } = this.state;
 
     if (!logRows) {
       return null;
     }
 
-    const { showLabels, showTime, wrapLogMessage, logsSortOrder, isFlipping, showDetectedFields } = this.state;
-    const { dedupStrategy } = this.props;
     const hasData = logRows && logRows.length > 0;
     const dedupCount = dedupedRows
       ? dedupedRows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0)
@@ -280,35 +280,31 @@ export class Logs extends PureComponent<Props, State> {
               <Switch label="Time" checked={showTime} onChange={this.onChangeTime} transparent />
               <Switch label="Unique labels" checked={showLabels} onChange={this.onChangeLabels} transparent />
               <Switch label="Wrap lines" checked={wrapLogMessage} onChange={this.onChangewrapLogMessage} transparent />
-              <ToggleButtonGroup label="Dedup" transparent={true}>
-                {Object.keys(LogsDedupStrategy).map((dedupType: string, i) => (
-                  <ToggleButton
-                    key={i}
-                    value={dedupType}
-                    onChange={this.onChangeDedup}
-                    selected={dedupStrategy === dedupType}
-                    // @ts-ignore
-                    tooltip={LogsDedupDescription[dedupType]}
-                  >
-                    {capitalize(dedupType)}
-                  </ToggleButton>
-                ))}
-              </ToggleButtonGroup>
+              <div className="gf-form">
+                <label className="gf-form-label  gf-form-label--transparent">Dedup</label>
+                <RadioButtonGroup
+                  options={Object.keys(LogsDedupStrategy).map((dedupType: LogsDedupStrategy) => ({
+                    label: capitalize(dedupType),
+                    value: dedupType,
+                    description: LogsDedupDescription[dedupType],
+                  }))}
+                  value={dedupStrategy}
+                  onChange={this.onChangeDedup}
+                />
+              </div>
             </div>
-            <button
+            <Button
+              variant="secondary"
               disabled={isFlipping}
               title={logsSortOrder === LogsSortOrder.Ascending ? 'Change to newest first' : 'Change to oldest first'}
               aria-label="Flip results order"
-              className={cx(
-                'gf-form-label gf-form-label--btn',
-                css`
-                  margin-top: 4px;
-                `
-              )}
+              className={css`
+                margin-top: 4px;
+              `}
               onClick={this.onChangeLogsSortOrder}
             >
-              <span className="btn-title">{isFlipping ? 'Flipping...' : 'Flip results order'}</span>
-            </button>
+              <span className="btn-title"> {isFlipping ? 'Flipping...' : 'Flip results order'}</span>
+            </Button>
           </div>
         </div>
 
