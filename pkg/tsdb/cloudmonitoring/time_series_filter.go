@@ -259,6 +259,11 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) handleNonDistributionSe
 	dataField := frame.Fields[1]
 	dataField.Name = metricName
 	dataField.Labels = seriesLabels
+
+	if dataField.Config == nil {
+		dataField.Config = &data.FieldConfig{}
+	}
+	dataField.Config.DisplayNameFromDS = dataField.Name
 }
 
 func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseToAnnotations(queryRes *tsdb.QueryResult, data cloudMonitoringResponse, title string, text string, tags string) error {
