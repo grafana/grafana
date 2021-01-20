@@ -67,7 +67,7 @@ describe('loki result transformer', () => {
 
   describe('lokiStreamResultToDataFrame', () => {
     it('converts streams to series', () => {
-      const data = streamResult.map(stream => ResultTransformer.lokiStreamResultToDataFrame(stream));
+      const data = streamResult.map((stream) => ResultTransformer.lokiStreamResultToDataFrame(stream));
 
       expect(data.length).toBe(2);
       expect(data[0].fields[1].labels!['foo']).toEqual('bar');
@@ -101,7 +101,7 @@ describe('loki result transformer', () => {
         },
       ];
 
-      const data = streamResultWithDuplicateLogs.map(stream => ResultTransformer.lokiStreamResultToDataFrame(stream));
+      const data = streamResultWithDuplicateLogs.map((stream) => ResultTransformer.lokiStreamResultToDataFrame(stream));
 
       expect(data[0].fields[2].values.get(0)).toEqual('65cee200875f58ee1430d8bd2e8b74e7');
       expect(data[0].fields[2].values.get(1)).toEqual('65cee200875f58ee1430d8bd2e8b74e7_1');
@@ -111,7 +111,7 @@ describe('loki result transformer', () => {
     });
 
     it('should append refId to the unique ids if refId is provided', () => {
-      const data = streamResult.map(stream => ResultTransformer.lokiStreamResultToDataFrame(stream, false, 'B'));
+      const data = streamResult.map((stream) => ResultTransformer.lokiStreamResultToDataFrame(stream, false, 'B'));
       expect(data.length).toBe(2);
       expect(data[0].fields[2].values.get(0)).toEqual('2b431b8a98b80b3b2c2f4cd2444ae6cb_B');
       expect(data[1].fields[2].values.get(0)).toEqual('75d73d66cff40f9d1a1f2d5a0bf295d0_B');
@@ -132,9 +132,9 @@ describe('loki result transformer', () => {
       });
 
       expect(ResultTransformer.enhanceDataFrame).toBeCalled();
-      dataFrames.forEach(frame => {
+      dataFrames.forEach((frame) => {
         expect(
-          frame.fields.filter(field => field.name === 'test' && field.type === 'string').length
+          frame.fields.filter((field) => field.name === 'test' && field.type === 'string').length
         ).toBeGreaterThanOrEqual(1);
       });
     });
