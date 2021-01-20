@@ -96,7 +96,7 @@ export function createAlertDefinition(): ThunkResult<void> {
       ...currentAlertDefinition,
       condition: {
         refId: currentAlertDefinition.condition.refId,
-        queriesAndExpressions: queryOptions.queries.map(query => ({
+        queriesAndExpressions: queryOptions.queries.map((query) => ({
           model: {
             expression: query.expr,
             type: query.queryType,

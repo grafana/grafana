@@ -157,7 +157,7 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
 };
 
 export default hot(module)(
-  connectWithCleanUp(mapStateToProps, mapDispatchToProps, state => state.alertDefinition)(NextGenAlertingPage)
+  connectWithCleanUp(mapStateToProps, mapDispatchToProps, (state) => state.alertDefinition)(NextGenAlertingPage)
 );
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({

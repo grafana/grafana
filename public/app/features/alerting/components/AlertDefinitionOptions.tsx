@@ -21,7 +21,7 @@ export const AlertDefinitionOptions: FC<Props> = ({
   queryOptions,
 }) => {
   const styles = useStyles(getStyles);
-  const refIds = useMemo(() => queryOptions.queries.map(q => ({ value: q.refId, label: q.refId })), [
+  const refIds = useMemo(() => queryOptions.queries.map((q) => ({ value: q.refId, label: q.refId })), [
     queryOptions.queries,
   ]);
 
