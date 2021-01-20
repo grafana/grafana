@@ -96,7 +96,6 @@ func writeConnectionFile(
 }
 
 func writeConnectionFiles(ds *models.DataSource, logger log.Logger) error {
-
 	sslMode := strings.TrimSpace(strings.ToLower(ds.JsonData.Get("sslmode").MustString("verify-full")))
 	decrypted := ds.SecureJsonData.Decrypt()
 	tlsCACert := decrypted["tlsCACert"]
