@@ -29,7 +29,7 @@ import { isNumber } from 'lodash';
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
 export interface XYFieldMatchers {
-  x: FieldMatcher;
+  x: FieldMatcher; // first match
   y: FieldMatcher;
 }
 export interface GraphNGProps extends Omit<PlotProps, 'data' | 'config'> {
