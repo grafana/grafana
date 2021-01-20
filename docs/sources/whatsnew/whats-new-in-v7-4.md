@@ -123,7 +123,8 @@ Many thanks to [mtanda](https://github.com/mtanda) this contribution!
 ### Query Editor Help
 
 The feature previously referred to as DataSource Start Pages or Cheat Sheets has been renamed to Query Editor Help, and is now supported in panel query editors (depending on the data source), as well as in Explore.
-
+### Inspecting variables and their dependencies
+The variables list has an additional column indicating whether variables are referenced in queries and panel names or not. The dependencies graph provides an easy way to check variable dependencies. You can click on a variable name within the graph to make updates to the variable as needed. 
 ## Grafana Enterprise features
 
 These features are included in the Grafana Enterprise edition software.
