@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { Button, ClipboardButton, Icon, Spinner, Select, Input, LinkButton, Field, FieldSet } from '@grafana/ui';
+import { Button, ClipboardButton, Icon, Spinner, Select, Input, LinkButton, Field } from '@grafana/ui';
 import { AppEvents, SelectableValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
