@@ -68,14 +68,6 @@ func escape(input string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(input, `\`, `\\`), "'", `\'`)
 }
 
-type sslAuthenticationConfig struct {
-	sslMode         string
-	sslRootCertFile string
-	sslCertFile     string
-	sslKeyFile      string
-	tmpFilesPath    string
-}
-
 func writeConnectionFile(
 	ds *models.DataSource, fileContent string, currentPath string, certFileName string, jsonFieldName string) error {
 	var generatedFilePath string
@@ -116,10 +108,12 @@ func writeConnectionFiles(ds *models.DataSource, logger log.Logger) error {
 		}
 		currentPath = filepath.Join(currentPath, ds.Uid+"generatedSSLCerts")
 		if _, err := os.Stat(currentPath); os.IsNotExist(err) {
-			os.Mkdir(currentPath, 0600)
+			if err = os.Mkdir(currentPath, 0600); err != nil {
+				return err
+			}
 		}
 
-		// Create/Modify/Delete CA Certification
+		// Create/Modify/Delete Certifications
 		err = writeConnectionFile(
 			ds, tlsCACert, currentPath, "ca.crt", "generatedSSLRootCertFile")
 		if err != nil {
@@ -153,8 +147,7 @@ func generateConnectionString(datasource *models.DataSource, logger log.Logger) 
 	isSSLDisabled := sslMode == "disable"
 
 	if sslConfigureMethod == "file-content" {
-		err := writeConnectionFiles(datasource, logger)
-		if err != nil {
+		if err := writeConnectionFiles(datasource, logger); err != nil {
 			return "", err
 		}
 	}
@@ -191,7 +184,6 @@ func generateConnectionString(datasource *models.DataSource, logger log.Logger) 
 	} else {
 		logger.Debug("Postgres SSL is enabled", "sslMode", sslMode)
 
-		// Manage the backward compatibility for certification settings
 		var sslRootCert, sslCert, sslKey string
 		if sslConfigureMethod == "file-content" {
 			sslRootCert = datasource.JsonData.Get("generatedSSLRootCertFile").MustString("")
