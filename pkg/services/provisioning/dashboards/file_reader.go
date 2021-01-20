@@ -137,7 +137,7 @@ func (fr *FileReader) isDatabaseAccessRestricted() bool {
 }
 
 // storeDashboardsInFolder saves dashboards from the filesystem on disk to the folder from config
-func (fr *FileReader) storeDashboardsInFolder(filesFoundOnDisk map[string]os.FileInfo, 
+func (fr *FileReader) storeDashboardsInFolder(filesFoundOnDisk map[string]os.FileInfo,
 	dashboardRefs map[string]*models.DashboardProvisioning, usageTracker *usageTracker) error {
 	folderID, err := getOrCreateFolderID(fr.Cfg, fr.dashboardProvisioningService, fr.Cfg.Folder)
 	if err != nil && !errors.Is(err, ErrFolderNameMissing) {
@@ -269,7 +269,7 @@ func (fr *FileReader) saveDashboard(path string, folderID int64, fileInfo os.Fil
 			return provisioningMetadata, err
 		}
 	} else {
-		fr.log.Warn("Not saving new dashboard due to restricted database access", "provisioner", fr.Cfg.Name, 
+		fr.log.Warn("Not saving new dashboard due to restricted database access", "provisioner", fr.Cfg.Name,
 			"file", path, "folderId", dash.Dashboard.FolderId)
 	}
 
