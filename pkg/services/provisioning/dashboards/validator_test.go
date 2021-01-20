@@ -75,7 +75,7 @@ func TestDuplicatesValidator(t *testing.T) {
 		require.True(t, reader2.isDatabaseAccessRestricted())
 	})
 
-	t.Run("Duplicates validator should restrict write access for only reader with duplicates", func(t *testing.T) {
+	t.Run("Duplicates validator should restrict write access only for readers with duplicates", func(t *testing.T) {
 		cfg1 := &config{
 			Name: "first", Type: "file", OrgID: 1, Folder: "duplicates-validator-folder",
 			Options: map[string]interface{}{"path": twoDashboardsWithUID},

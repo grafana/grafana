@@ -158,7 +158,7 @@ func (fr *FileReader) storeDashboardsInFolder(filesFoundOnDisk map[string]os.Fil
 }
 
 // storeDashboardsInFoldersFromFilesystemStructure saves dashboards from the filesystem on disk to the same folder
-// in grafana as they are in on the filesystem
+// in Grafana as they are in on the filesystem.
 func (fr *FileReader) storeDashboardsInFoldersFromFileStructure(filesFoundOnDisk map[string]os.FileInfo,
 	dashboardRefs map[string]*models.DashboardProvisioning, resolvedPath string, usageTracker *usageTracker) error {
 	for path, fileInfo := range filesFoundOnDisk {
@@ -273,7 +273,7 @@ func (fr *FileReader) saveDashboard(path string, folderID int64, fileInfo os.Fil
 			"file", path, "folderId", dash.Dashboard.FolderId)
 	}
 
-	return provisioningMetadata, err
+	return provisioningMetadata, nil
 }
 
 func getProvisionedDashboardsByPath(service dashboards.DashboardProvisioningService, name string) (

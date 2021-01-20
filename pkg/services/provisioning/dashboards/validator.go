@@ -88,13 +88,15 @@ func (c *duplicateValidator) getDuplicates() *duplicateEntries {
 func (c *duplicateValidator) logWarnings(log log.Logger, duplicates *duplicateEntries) {
 	for uid, usage := range duplicates.UIDs {
 		if usage.Sum > 1 {
-			log.Warn("the same UID is used more than once", "uid", uid, "times", usage.Sum, "providers", keysToSlice(usage.InvolvedReaders))
+			log.Warn("the same UID is used more than once", "uid", uid, "times", usage.Sum, "providers",
+				keysToSlice(usage.InvolvedReaders))
 		}
 	}
 
 	for id, usage := range duplicates.Titles {
 		if usage.Sum > 1 {
-			log.Warn("dashboard title is not unique in folder", "title", id.title, "folderID", id.folderID, "times", usage.Sum, "providers", keysToSlice(usage.InvolvedReaders))
+			log.Warn("dashboard title is not unique in folder", "title", id.title, "folderID", id.folderID, "times", 
+				usage.Sum, "providers", keysToSlice(usage.InvolvedReaders))
 		}
 	}
 }
