@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -78,6 +79,7 @@ func writeConnectionFile(
 		if len(generatedFilePath) == 0 {
 			generatedFilePath = filepath.Join(currentPath, certFileName)
 		}
+
 		if err := ioutil.WriteFile(generatedFilePath, []byte(fileContent), 0600); err != nil {
 			return err
 		}
@@ -94,6 +96,7 @@ func writeConnectionFile(
 }
 
 func writeConnectionFiles(ds *models.DataSource, logger log.Logger) error {
+
 	sslMode := strings.TrimSpace(strings.ToLower(ds.JsonData.Get("sslmode").MustString("verify-full")))
 	decrypted := ds.SecureJsonData.Decrypt()
 	tlsCACert := decrypted["tlsCACert"]
@@ -106,37 +109,51 @@ func writeConnectionFiles(ds *models.DataSource, logger log.Logger) error {
 		if err != nil {
 			return err
 		}
+
+		var mutex = &sync.Mutex{}
+
 		currentPath = filepath.Join(currentPath, ds.Uid+"generatedSSLCerts")
 		if _, err := os.Stat(currentPath); os.IsNotExist(err) {
-			if err = os.Mkdir(currentPath, 0600); err != nil {
+			mutex.Lock()
+			err = os.Mkdir(currentPath, 0600)
+			mutex.Unlock()
+			if err != nil {
 				return err
 			}
 		}
 
 		// Create/Modify/Delete Certifications
+		mutex.Lock()
 		err = writeConnectionFile(
 			ds, tlsCACert, currentPath, "ca.crt", "generatedSSLRootCertFile")
+		mutex.Unlock()
 		if err != nil {
 			return err
 		}
 
+		mutex.Lock()
 		err = writeConnectionFile(
 			ds, tlsClientCert, currentPath, "client.crt", "generatedSSLCertFile")
+		mutex.Unlock()
 		if err != nil {
 			return err
 		}
 
+		mutex.Lock()
 		err = writeConnectionFile(
 			ds, tlsClientKey, currentPath, "client.key", "generatedSSLKeyFile")
+		mutex.Unlock()
 		if err != nil {
 			return err
 		}
 
+		mutex.Lock()
 		if len(tlsCACert) == 0 && len(tlsClientCert) == 0 && len(tlsClientKey) == 0 {
 			if err := os.Remove(currentPath); err != nil {
 				log.Warnf("failed to delete temporary folder generated %v : %v", currentPath, err)
 			}
 		}
+		mutex.Unlock()
 	}
 	return nil
 }
