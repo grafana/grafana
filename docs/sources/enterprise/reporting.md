@@ -118,7 +118,7 @@ You can send reports programmatically with the [send report]({{< relref "../http
 
 When generating reports, each panel renders separately before being collected in a PDF. The per panel rendering timeout and number of concurrently rendered panels can be configured.
 
-To modify the panels' clarity you can set a scale factor for the rendered images. A higher scale factor is more legible but will increase the file size of the generated PDF.
+To make a panel more legible, you can set a scale factor for the rendered images. However, a higher scale factor increases the file size of the generated PDF.
 
 You can also specify custom fonts that support different Unicode scripts. The DejaVu font is the default used for PDF rendering.
 
