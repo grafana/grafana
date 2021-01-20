@@ -32,7 +32,7 @@ This is a configuration for the [trace to logs feature]({{< relref "../explore/i
 - **Data source -** Target data source.
 - **Tags -** The tags that will be used in the Loki query. Default is `'cluster', 'hostname', 'namespace', 'pod'`.
 
-{{< docs-imagebox img="/img/docs/v74/trace-to-logs-settings.png" class="docs-image--no-shadow" caption="Screenshot of the trace to logs settings" >}}
+![Trace to logs settings](/img/docs/explore/trace-to-logs-settings-7-4.png "Screenshot of the trace to logs settings")
 
 ## Query traces
 
