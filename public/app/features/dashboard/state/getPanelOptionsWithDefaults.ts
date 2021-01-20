@@ -67,7 +67,7 @@ function applyFieldConfigDefaults(existingFieldConfig: FieldConfigSource, plugin
   }
 
   // Filter out overrides for properties that cannot be found in registry
-  result.overrides = filterFieldConfigOverrides(result.overrides, prop => {
+  result.overrides = filterFieldConfigOverrides(result.overrides, (prop) => {
     return plugin.fieldConfigRegistry.getIfExists(prop.id) !== undefined;
   });
 
@@ -87,7 +87,7 @@ export function filterFieldConfigOverrides(
   condition: (value: DynamicConfigValue) => boolean
 ): ConfigOverrideRule[] {
   return overrides
-    .map(x => {
+    .map((x) => {
       const properties = x.properties.filter(condition);
 
       return {
@@ -95,7 +95,7 @@ export function filterFieldConfigOverrides(
         properties,
       };
     })
-    .filter(x => x.properties.length > 0);
+    .filter((x) => x.properties.length > 0);
 }
 
 function cleanProperties(obj: any, parentPath: string, fieldConfigRegistry: FieldConfigOptionsRegistry) {
@@ -173,7 +173,7 @@ export function restoreCustomOverrideRules(current: FieldConfigSource, old: Fiel
   for (const override of old.overrides) {
     for (const prop of override.properties) {
       if (isCustomFieldProp(prop)) {
-        const currentOverride = result.overrides.find(o => isEqual(o.matcher, override.matcher));
+        const currentOverride = result.overrides.find((o) => isEqual(o.matcher, override.matcher));
         if (currentOverride) {
           currentOverride.properties.push(prop);
         } else {

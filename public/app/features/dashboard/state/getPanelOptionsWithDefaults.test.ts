@@ -19,7 +19,7 @@ standardEditorsRegistry.setInit(() => mockStandardFieldConfigOptions());
 const pluginA = getPanelPlugin({ id: 'graph' });
 
 pluginA.useFieldConfig({
-  useCustomConfig: builder => {
+  useCustomConfig: (builder) => {
     builder.addBooleanSwitch({
       name: 'Hide lines',
       path: 'hideLines',
@@ -28,7 +28,7 @@ pluginA.useFieldConfig({
   },
 });
 
-pluginA.setPanelOptions(builder => {
+pluginA.setPanelOptions((builder) => {
   builder.addBooleanSwitch({
     name: 'Show thresholds',
     path: 'showThresholds',
@@ -369,7 +369,7 @@ function runScenario(options: ScenarioOptions) {
     options.plugin ??
     getPanelPlugin({ id: 'graph' }).useFieldConfig({
       standardOptions: options.standardOptions,
-      useCustomConfig: builder => {
+      useCustomConfig: (builder) => {
         builder.addNumberInput({
           name: 'Custom prop',
           path: 'customProp',
