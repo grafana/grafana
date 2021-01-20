@@ -14,7 +14,7 @@ export function FieldLink({ link }: FieldLinkProps) {
       rel="noreferrer"
       onClick={
         link.onClick
-          ? event => {
+          ? (event) => {
               if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link.onClick) {
                 event.preventDefault();
                 link.onClick(event);

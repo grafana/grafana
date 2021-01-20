@@ -53,7 +53,7 @@ export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({
         <TextArea
           spellCheck={false}
           value={dashboardJSON}
-          onChange={e => {
+          onChange={(e) => {
             setDashboardJson(e.currentTarget.value);
           }}
           className={styles.json}

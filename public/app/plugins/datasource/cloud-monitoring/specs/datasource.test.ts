@@ -116,7 +116,7 @@ describe('CloudMonitoringDataSource', () => {
 
         const { ds } = getTestcontext({ response });
 
-        await expect(ds.query(options as any)).toEmitValuesWith(received => {
+        await expect(ds.query(options as any)).toEmitValuesWith((received) => {
           const results = received[0];
           expect(results.data.length).toBe(0);
         });

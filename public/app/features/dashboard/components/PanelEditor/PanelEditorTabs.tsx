@@ -53,7 +53,7 @@ export class PanelEditorTabs extends PureComponent<PanelEditorTabsProps> {
   render() {
     const { dashboard, onChangeTab, tabs, panel } = this.props;
     const styles = getPanelEditorTabsStyles();
-    const activeTab = tabs.find(item => item.active)!;
+    const activeTab = tabs.find((item) => item.active)!;
 
     if (tabs.length === 0) {
       return null;
@@ -62,7 +62,7 @@ export class PanelEditorTabs extends PureComponent<PanelEditorTabsProps> {
     return (
       <div className={styles.wrapper}>
         <TabsBar className={styles.tabBar}>
-          {tabs.map(tab => {
+          {tabs.map((tab) => {
             return (
               <Tab
                 key={tab.id}

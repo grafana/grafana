@@ -176,7 +176,7 @@ export function RichHistoryCard(props: Props) {
   };
 
   const onCopyQuery = () => {
-    const queriesToCopy = query.queries.map(q => createQueryText(q, queryDsInstance)).join('\n');
+    const queriesToCopy = query.queries.map((q) => createQueryText(q, queryDsInstance)).join('\n');
     copyStringToClipboard(queriesToCopy);
     appEvents.emit(AppEvents.alertSuccess, ['Query copied to clipboard']);
   };
@@ -236,7 +236,7 @@ export function RichHistoryCard(props: Props) {
       <TextArea
         value={comment}
         placeholder={comment ? undefined : 'An optional description of what the query does.'}
-        onChange={e => setComment(e.currentTarget.value)}
+        onChange={(e) => setComment(e.currentTarget.value)}
         className={styles.textArea}
       />
       <div className={styles.commentButtonRow}>

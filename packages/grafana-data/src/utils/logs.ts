@@ -70,19 +70,19 @@ export function addLogLevelToSeries(series: DataFrame, lineIndex: number): DataF
 
 export const LogsParsers: { [name: string]: LogsParser } = {
   JSON: {
-    buildMatcher: label => new RegExp(`(?:{|,)\\s*"${label}"\\s*:\\s*"?([\\d\\.]+|[^"]*)"?`),
-    getFields: line => {
+    buildMatcher: (label) => new RegExp(`(?:{|,)\\s*"${label}"\\s*:\\s*"?([\\d\\.]+|[^"]*)"?`),
+    getFields: (line) => {
       try {
         const parsed = JSON.parse(line);
-        return Object.keys(parsed).map(key => {
+        return Object.keys(parsed).map((key) => {
           return `"${key}":${JSON.stringify(parsed[key])}`;
         });
       } catch {}
       return [];
     },
-    getLabelFromField: field => (field.match(/^"([^"]+)"\s*:/) || [])[1],
-    getValueFromField: field => (field.match(/:\s*(.*)$/) || [])[1],
-    test: line => {
+    getLabelFromField: (field) => (field.match(/^"([^"]+)"\s*:/) || [])[1],
+    getValueFromField: (field) => (field.match(/:\s*(.*)$/) || [])[1],
+    test: (line) => {
       try {
         return JSON.parse(line);
       } catch (error) {}
@@ -90,28 +90,28 @@ export const LogsParsers: { [name: string]: LogsParser } = {
   },
 
   logfmt: {
-    buildMatcher: label => new RegExp(`(?:^|\\s)${escapeRegExp(label)}=("[^"]*"|\\S+)`),
-    getFields: line => {
+    buildMatcher: (label) => new RegExp(`(?:^|\\s)${escapeRegExp(label)}=("[^"]*"|\\S+)`),
+    getFields: (line) => {
       const fields: string[] = [];
-      line.replace(new RegExp(LOGFMT_REGEXP, 'g'), substring => {
+      line.replace(new RegExp(LOGFMT_REGEXP, 'g'), (substring) => {
         fields.push(substring.trim());
         return '';
       });
       return fields;
     },
-    getLabelFromField: field => (field.match(LOGFMT_REGEXP) || [])[1],
-    getValueFromField: field => (field.match(LOGFMT_REGEXP) || [])[2],
-    test: line => LOGFMT_REGEXP.test(line),
+    getLabelFromField: (field) => (field.match(LOGFMT_REGEXP) || [])[1],
+    getValueFromField: (field) => (field.match(LOGFMT_REGEXP) || [])[2],
+    test: (line) => LOGFMT_REGEXP.test(line),
   },
 };
 
 export function calculateFieldStats(rows: LogRowModel[], extractor: RegExp): LogLabelStatsModel[] {
   // Consider only rows that satisfy the matcher
-  const rowsWithField = rows.filter(row => extractor.test(row.entry));
+  const rowsWithField = rows.filter((row) => extractor.test(row.entry));
   const rowCount = rowsWithField.length;
 
   // Get field value counts for eligible rows
-  const countsByValue = countBy(rowsWithField, r => {
+  const countsByValue = countBy(rowsWithField, (r) => {
     const row: LogRowModel = r;
     const match = row.entry.match(extractor);
 
@@ -122,16 +122,16 @@ export function calculateFieldStats(rows: LogRowModel[], extractor: RegExp): Log
 
 export function calculateLogsLabelStats(rows: LogRowModel[], label: string): LogLabelStatsModel[] {
   // Consider only rows that have the given label
-  const rowsWithLabel = rows.filter(row => row.labels[label] !== undefined);
+  const rowsWithLabel = rows.filter((row) => row.labels[label] !== undefined);
   const rowCount = rowsWithLabel.length;
 
   // Get label value counts for eligible rows
-  const countsByValue = countBy(rowsWithLabel, row => (row as LogRowModel).labels[label]);
+  const countsByValue = countBy(rowsWithLabel, (row) => (row as LogRowModel).labels[label]);
   return getSortedCounts(countsByValue, rowCount);
 }
 
 export function calculateStats(values: any[]): LogLabelStatsModel[] {
-  const nonEmptyValues = values.filter(value => value !== undefined && value !== null);
+  const nonEmptyValues = values.filter((value) => value !== undefined && value !== null);
   const countsByValue = countBy(nonEmptyValues);
   return getSortedCounts(countsByValue, nonEmptyValues.length);
 }

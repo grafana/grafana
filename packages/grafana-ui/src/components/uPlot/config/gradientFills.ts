@@ -12,18 +12,8 @@ export function getOpacityGradientFn(
     const ctx = getCanvasContext();
     const gradient = ctx.createLinearGradient(0, plot.bbox.top, 0, plot.bbox.top + plot.bbox.height);
 
-    gradient.addColorStop(
-      0,
-      tinycolor(color)
-        .setAlpha(opacity)
-        .toRgbString()
-    );
-    gradient.addColorStop(
-      1,
-      tinycolor(color)
-        .setAlpha(0)
-        .toRgbString()
-    );
+    gradient.addColorStop(0, tinycolor(color).setAlpha(opacity).toRgbString());
+    gradient.addColorStop(1, tinycolor(color).setAlpha(0).toRgbString());
 
     return gradient;
   };
@@ -40,28 +30,10 @@ export function getHueGradientFn(
     const color2 = tinycolor(color).spin(15);
 
     if (theme.isDark) {
-      gradient.addColorStop(
-        0,
-        color2
-          .lighten(10)
-          .setAlpha(opacity)
-          .toString()
-      );
-      gradient.addColorStop(
-        1,
-        color1
-          .darken(10)
-          .setAlpha(opacity)
-          .toString()
-      );
+      gradient.addColorStop(0, color2.lighten(10).setAlpha(opacity).toString());
+      gradient.addColorStop(1, color1.darken(10).setAlpha(opacity).toString());
     } else {
-      gradient.addColorStop(
-        0,
-        color2
-          .lighten(10)
-          .setAlpha(opacity)
-          .toString()
-      );
+      gradient.addColorStop(0, color2.lighten(10).setAlpha(opacity).toString());
       gradient.addColorStop(1, color1.setAlpha(opacity).toString());
     }
 
@@ -97,9 +69,7 @@ export function getScaleGradientFn(
     console.log('series.max', series.max);
 
     const getColorWithAlpha = (color: string) => {
-      return tinycolor(getColorForTheme(color, darkTheme))
-        .setAlpha(opacity)
-        .toString();
+      return tinycolor(getColorForTheme(color, darkTheme)).setAlpha(opacity).toString();
     };
 
     const addColorStop = (value: number, color: string) => {

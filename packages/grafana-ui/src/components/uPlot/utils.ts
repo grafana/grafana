@@ -2,12 +2,11 @@ import throttle from 'lodash/throttle';
 import { Options } from 'uplot';
 import { PlotPlugin, PlotProps } from './types';
 
+const LOGGING_ENABLED = false;
 const ALLOWED_FORMAT_STRINGS_REGEX = /\b(YYYY|YY|MMMM|MMM|MM|M|DD|D|WWWW|WWW|HH|H|h|AA|aa|a|mm|m|ss|s|fff)\b/g;
 
-const LOGGING_ENABLED = false;
-
 export function timeFormatToTemplate(f: string) {
-  return f.replace(ALLOWED_FORMAT_STRINGS_REGEX, match => `{${match}}`);
+  return f.replace(ALLOWED_FORMAT_STRINGS_REGEX, (match) => `{${match}}`);
 }
 
 export function buildPlotConfig(props: PlotProps, plugins: Record<string, PlotPlugin>): Options {
@@ -25,11 +24,11 @@ export function buildPlotConfig(props: PlotProps, plugins: Record<string, PlotPl
     legend: {
       show: false,
     },
-    plugins: Object.entries(plugins).map(p => ({
+    plugins: Object.entries(plugins).map((p) => ({
       hooks: p[1].hooks,
     })),
     hooks: {},
-  } as any;
+  } as Options;
 }
 
 export function isPlottingTime(config: Options) {

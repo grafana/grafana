@@ -58,21 +58,21 @@ class AlertListPanel extends PanelCtrl {
 
   sortResult(alerts: any[]) {
     if (this.panel.sortOrder === 3) {
-      return _.sortBy(alerts, a => {
+      return _.sortBy(alerts, (a) => {
         // @ts-ignore
         return alertDef.alertStateSortScore[a.state || a.newState];
       });
     } else if (this.panel.sortOrder === 4) {
-      return _.sortBy(alerts, a => {
+      return _.sortBy(alerts, (a) => {
         return new Date(a.newStateDate || a.time);
       });
     } else if (this.panel.sortOrder === 5) {
-      return _.sortBy(alerts, a => {
+      return _.sortBy(alerts, (a) => {
         return new Date(a.newStateDate || a.time);
       }).reverse();
     }
 
-    const result = _.sortBy(alerts, a => {
+    const result = _.sortBy(alerts, (a) => {
       return (a.name || a.alertName).toLowerCase();
     });
     if (this.panel.sortOrder === 2) {
@@ -133,9 +133,9 @@ class AlertListPanel extends PanelCtrl {
     return promiseToDigest(this.$scope)(
       getBackendSrv()
         .get('/api/annotations', params, `alert-list-get-state-changes-${this.panel.id}`)
-        .then(data => {
+        .then((data) => {
           this.alertHistory = this.sortResult(
-            _.map(data, al => {
+            _.map(data, (al) => {
               al.time = this.dashboard.formatDate(al.time, 'MMM D, YYYY HH:mm:ss');
               al.stateModel = alertDef.getStateDisplayModel(al.newState);
               al.info = alertDef.getAlertAnnotationInfo(al);
@@ -178,13 +178,11 @@ class AlertListPanel extends PanelCtrl {
     return promiseToDigest(this.$scope)(
       getBackendSrv()
         .get('/api/alerts', params, `alert-list-get-current-alert-state-${this.panel.id}`)
-        .then(data => {
+        .then((data) => {
           this.currentAlerts = this.sortResult(
-            _.map(data, al => {
+            _.map(data, (al) => {
               al.stateModel = alertDef.getStateDisplayModel(al.state);
-              al.newStateDateAgo = dateTime(al.newStateDate)
-                .locale('en')
-                .fromNow(true);
+              al.newStateDateAgo = dateTime(al.newStateDate).locale('en').fromNow(true);
               return al;
             })
           );

@@ -131,7 +131,7 @@ const fetchTagValues = (tagText: string): ThunkResult<Promise<string[]>> => {
     if (!Array.isArray(results)) {
       return [];
     }
-    return results.map(value => value.text);
+    return results.map((value) => value.text);
   };
 };
 
@@ -167,7 +167,7 @@ function mapToCurrent(picker: OptionsPickerState): VariableOption | undefined {
   }
 
   if (!multi) {
-    return selectedValues.find(o => o.selected);
+    return selectedValues.find((o) => o.selected);
   }
 
   const texts: string[] = [];
@@ -185,7 +185,7 @@ function mapToCurrent(picker: OptionsPickerState): VariableOption | undefined {
   return {
     value: values,
     text: texts,
-    tags: picker.tags.filter(t => t.selected),
+    tags: picker.tags.filter((t) => t.selected),
     selected: true,
   };
 }

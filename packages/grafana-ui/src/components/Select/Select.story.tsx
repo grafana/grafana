@@ -24,7 +24,7 @@ export default {
 const BEHAVIOUR_GROUP = 'Behaviour props';
 
 const loadAsyncOptions = () => {
-  return new Promise<Array<SelectableValue<string>>>(resolve => {
+  return new Promise<Array<SelectableValue<string>>>((resolve) => {
     setTimeout(() => {
       resolve(generateOptions());
     }, 2000);
@@ -95,7 +95,7 @@ export const Basic = () => {
       <Select
         options={generateOptions()}
         value={value}
-        onChange={v => {
+        onChange={(v) => {
           setValue(v);
         }}
         {...getDynamicProps()}
@@ -114,7 +114,7 @@ export const BasicSelectPlainValue = () => {
       <Select
         options={generateOptions()}
         value={value}
-        onChange={v => {
+        onChange={(v) => {
           setValue(v.value);
         }}
         {...getDynamicProps()}
@@ -146,7 +146,7 @@ export const SelectWithOptionDescriptions = () => {
       <Select
         options={options}
         value={value}
-        onChange={v => {
+        onChange={(v) => {
           setValue(v.value);
         }}
         {...getDynamicProps()}
@@ -166,7 +166,7 @@ export const MultiPlainValue = () => {
       <MultiSelect
         options={generateOptions()}
         value={value}
-        onChange={v => {
+        onChange={(v) => {
           setValue(v.map((v: any) => v.value));
         }}
         {...getDynamicProps()}
@@ -186,7 +186,7 @@ export const MultiSelectWithOptionGroups = () => {
           { label: '2', value: '2', options: [{ label: '5', value: '5' }] },
         ]}
         value={value}
-        onChange={v => {
+        onChange={(v) => {
           setValue(v.map((v: any) => v.value));
         }}
         {...getDynamicProps()}
@@ -203,7 +203,7 @@ export const MultiSelectBasic = () => {
       <MultiSelect
         options={generateOptions()}
         value={value}
-        onChange={v => {
+        onChange={(v) => {
           setValue(v);
         }}
         {...getDynamicProps()}
@@ -221,7 +221,7 @@ export const MultiSelectAsync = () => {
       loadOptions={loadAsyncOptions}
       defaultOptions
       value={value}
-      onChange={v => {
+      onChange={(v) => {
         setValue(v);
       }}
       allowCustomValue
@@ -237,7 +237,7 @@ export const ButtonSelectBasic = () => {
       placeholder="Select all the things..."
       value={value}
       options={generateOptions()}
-      onChange={v => {
+      onChange={(v) => {
         setValue(v);
       }}
       allowCustomValue
@@ -255,7 +255,7 @@ export const BasicSelectAsync = () => {
       loadOptions={loadAsyncOptions}
       defaultOptions
       value={value}
-      onChange={v => {
+      onChange={(v) => {
         setValue(v);
       }}
       {...getDynamicProps()}
@@ -272,7 +272,7 @@ export const AutoMenuPlacement = () => {
         <Select
           options={generateOptions()}
           value={value}
-          onChange={v => {
+          onChange={(v) => {
             setValue(v);
           }}
           {...getDynamicProps()}
@@ -291,11 +291,11 @@ export const CustomValueCreation = () => {
       <Select
         options={[...options, ...customOptions]}
         value={value}
-        onChange={v => {
+        onChange={(v) => {
           setValue(v);
         }}
         allowCustomValue
-        onCreateOption={v => {
+        onCreateOption={(v) => {
           const customValue: SelectableValue<string> = { value: kebabCase(v), label: v };
           setCustomOptions([...customOptions, customValue]);
           setValue(customValue);

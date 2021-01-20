@@ -59,7 +59,7 @@ export class ConcatenateTransformerEditor extends React.PureComponent<Concatenat
             <Select
               className="width-18"
               options={nameModes}
-              value={nameModes.find(v => v.value === frameNameMode)}
+              value={nameModes.find((v) => v.value === frameNameMode)}
               onChange={this.onModeChanged}
             />
           </div>

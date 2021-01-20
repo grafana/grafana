@@ -25,7 +25,7 @@ export const Switch = React.forwardRef<HTMLInputElement, Props>(
           type="checkbox"
           disabled={disabled}
           checked={value}
-          onChange={event => {
+          onChange={(event) => {
             onChange?.(event);
           }}
           id={switchIdRef.current}

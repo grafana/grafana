@@ -53,7 +53,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
   pluginsToPreload: string[] = [];
   featureToggles: FeatureToggles = {
     live: false,
-    expressions: false,
     meta: false,
     ngalert: false,
     panelLibrary: false,

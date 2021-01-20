@@ -14,7 +14,7 @@ export const TagList: FC<Props> = memo(({ tags, onClick, className }) => {
 
   return (
     <span className={cx(styles.wrapper, className)}>
-      {tags.map(tag => (
+      {tags.map((tag) => (
         <Tag key={tag} name={tag} onClick={onClick} className={styles.tag} />
       ))}
     </span>
