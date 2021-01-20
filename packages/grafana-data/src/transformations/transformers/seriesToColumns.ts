@@ -28,9 +28,7 @@ export const seriesToColumnsTransformer: DataTransformerInfo<SeriesToColumnsOpti
         if (data.length > 1) {
           let matcher: FieldMatcher | undefined = undefined;
           if (options.byField) {
-            matcher = fieldMatchers.get(FieldMatcherID.byName).get({
-              name: options.byField,
-            });
+            matcher = fieldMatchers.get(FieldMatcherID.byName).get(options.byField);
           }
           const joined = alignDataFrames(data, matcher);
           if (joined) {

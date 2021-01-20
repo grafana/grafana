@@ -27,9 +27,7 @@ export function pickBestJoinField(data: DataFrame[]): FieldMatcher {
     common = common.filter(v => !names.includes(v));
   }
 
-  return fieldMatchers.get(FieldMatcherID.byName).get({
-    name: common[0],
-  });
+  return fieldMatchers.get(FieldMatcherID.byName).get(common[0]);
 }
 
 /**
