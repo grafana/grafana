@@ -623,6 +623,10 @@ The duration in time a user invitation remains valid before expiring.
 This setting should be expressed as a duration. Examples: 6h (hours), 2d (days), 1w (week).
 Default is `24h` (24 hours). The minimum supported duration is `15m` (15 minutes).
 
+### hidden_users
+
+A comma-separated list of usernames to hide them in the Grafana UI. These users are shown to Grafana admins and to themselves.
+
 <hr>
 
 ## [auth]
