@@ -2,12 +2,21 @@
 title = "Inspect variables"
 keywords = ["grafana", "templating", "documentation", "guide", "template", "variable"]
 aliases = ["/docs/grafana/latest/reference/templating"]
-weight = 100
+weight = 125
 +++
 
 # Inspect variables and their dependencies
 
-The variables page in Grafana can indicate whether a variable is being referenced (or used) in other variables or dashboard.
+The variables page lets you easily identify whether a variable is being referenced (or used) in other variables or dashboard. In addition, you can also add new variables and manage existing variables from this page.
 
 > **Note:** This feature is available in Grafana 7.4 and later versions.
 
+![Variables list](/img/docs/variables-templates/variables-list-7-4.png)
+
+Any variable that is referenced or used has a green check mark next to it, while unreferenced variables have a orange caution icon next to them.
+
+![Variables list](/img/docs/variables-templates/variable-not-referenced-7-4.png)
+
+In addition, all referenced variables have a dependency icon next to the green check mark. You can click on the icon to view the dependency map. The dependency map can be moved and zoomed in or out for ??
+
+![Variables list](/img/docs/variables-templates/dependancy-map-7-4.png)
