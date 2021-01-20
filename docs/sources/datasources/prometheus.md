@@ -29,7 +29,7 @@ To access Prometheus settings, hover your mouse over the **Configuration** (gear
 
 ### Exemplars
 
-> **Note:** This feature is available in Prometheus 2.25+.
+> **Note:** This feature is available in Prometheus 2.25+ and Grafana 7.4+.
 
 The Exemplars configuration allows you to add multiple endpoints to any of your Exemplar label.
 
