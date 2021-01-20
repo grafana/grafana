@@ -26,7 +26,6 @@ import {
 
 import { config } from 'app/core/config';
 import { PanelQueryRunner } from '../query/state/PanelQueryRunner';
-import { loadDataSources } from '../datasources/state/actions';
 
 interface OwnProps {}
 
@@ -43,7 +42,6 @@ interface DispatchProps {
   updateAlertDefinitionUiState: typeof updateAlertDefinitionUiState;
   updateAlertDefinitionOption: typeof updateAlertDefinitionOption;
   loadNotificationTypes: typeof loadNotificationTypes;
-  loadDataSources: typeof loadDataSources;
 }
 
 interface State {}
@@ -55,7 +53,6 @@ class NextGenAlertingPage extends PureComponent<Props, State> {
 
   componentDidMount() {
     this.props.loadNotificationTypes();
-    this.props.loadDataSources();
   }
 
   onChangeAlertOption = (event: FormEvent<HTMLFormElement>) => {
@@ -157,7 +154,6 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   updateAlertDefinitionUiState,
   updateAlertDefinitionOption,
   loadNotificationTypes,
-  loadDataSources,
 };
 
 export default hot(module)(
