@@ -25,6 +25,7 @@ export const UPlotChart: React.FC<PlotProps> = (props) => {
     props.timeZone,
     props.config
   );
+
   const getPlotInstance = useCallback(() => {
     return plotInstance.current;
   }, []);
