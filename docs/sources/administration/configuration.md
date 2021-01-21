@@ -625,7 +625,7 @@ Default is `24h` (24 hours). The minimum supported duration is `15m` (15 minutes
 
 ### hidden_users
 
-A comma-separated list of usernames to hide them in the Grafana UI. These users are shown to Grafana admins and to themselves.
+Set a comma-separated list of usernames to hide the corresponding users in the Grafana UI. They are still visible to Grafana administrators and to themselves.
 
 <hr>
 
