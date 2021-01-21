@@ -135,12 +135,12 @@ concurrent_render_limit = 4
 image_scale_factor = 2
 # Path to the directory containing font files
 fonts_path =
-# Name of the TrueType font file with Regular style, eg. DejaVuSansCondensed.ttf
-font_regular =
-# Name of the TrueType font file with Bold style, eg. DejaVuSansCondensed-Bold.ttf
-font_bold =
-# Name of the TrueType font file with Italic style, eg. DejaVuSansCondensed-Oblique.ttf
-font_italic =
+# Name of the TrueType font file with Regular style
+font_regular = DejaVuSansCondensed.ttf
+# Name of the TrueType font file with Bold style
+font_bold = DejaVuSansCondensed-Bold.ttf
+# Name of the TrueType font file with Italic style
+font_italic = DejaVuSansCondensed-Oblique.ttf
 ```
 
 ## Report time range
