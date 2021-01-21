@@ -8,15 +8,16 @@ import {
 } from '@grafana/data';
 import {
   AxisPlacement,
+  BarAlignment,
   DrawStyle,
   GraphFieldConfig,
   graphFieldOptions,
+  GraphGradientMode,
   LineInterpolation,
   LineStyle,
   PointVisibility,
   ScaleDistribution,
   ScaleDistributionConfig,
-  GraphGradientMode,
 } from '@grafana/ui';
 import { SeriesConfigEditor } from './HideSeriesConfigEditor';
 import { ScaleDistributionEditor } from './ScaleDistributionEditor';
@@ -29,6 +30,7 @@ export const defaultGraphConfig: GraphFieldConfig = {
   lineWidth: 1,
   fillOpacity: 0,
   gradientMode: GraphGradientMode.None,
+  barAlignment: BarAlignment.Center,
 };
 
 export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOptionsArgs<GraphFieldConfig> {
@@ -63,6 +65,15 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
             options: graphFieldOptions.lineInterpolation,
           },
           showIf: (c) => c.drawStyle === DrawStyle.Line,
+        })
+        .addRadio({
+          path: 'barAlignment',
+          name: 'Bar alignment',
+          defaultValue: cfg.barAlignment,
+          settings: {
+            options: graphFieldOptions.barAlignment,
+          },
+          showIf: (c) => c.drawStyle === DrawStyle.Bars,
         })
         .addSliderInput({
           path: 'lineWidth',
