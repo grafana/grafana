@@ -161,11 +161,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *ts
 				dataField := frame.Fields[1]
 				dataField.Name = metricName
 				dataField.Labels = seriesLabels
-
-				if dataField.Config == nil {
-					dataField.Config = &data.FieldConfig{}
-				}
-				dataField.Config.DisplayNameFromDS = dataField.Name
+				setDisplayNameAsFieldName(dataField)
 
 				frames = append(frames, frame)
 				continue
@@ -197,10 +193,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *ts
 						frameName := formatLegendKeys(d.Key, defaultMetricName, nil, additionalLabels, &cloudMonitoringTimeSeriesFilter{ProjectName: timeSeriesQuery.ProjectName, AliasBy: timeSeriesQuery.AliasBy})
 						valueField.Name = frameName
 						valueField.Labels = seriesLabels
-						if valueField.Config == nil {
-							valueField.Config = &data.FieldConfig{}
-						}
-						valueField.Config.DisplayNameFromDS = valueField.Name
+						setDisplayNameAsFieldName(valueField)
 
 						buckets[i] = &data.Frame{
 							Name: frameName,
@@ -228,10 +221,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *ts
 						frameName := formatLegendKeys(d.Key, defaultMetricName, seriesLabels, additionalLabels, &cloudMonitoringTimeSeriesFilter{ProjectName: timeSeriesQuery.ProjectName, AliasBy: timeSeriesQuery.AliasBy})
 						valueField.Name = frameName
 						valueField.Labels = seriesLabels
-						if valueField.Config == nil {
-							valueField.Config = &data.FieldConfig{}
-						}
-						valueField.Config.DisplayNameFromDS = valueField.Name
+						setDisplayNameAsFieldName(valueField)
 
 						buckets[i] = &data.Frame{
 							Name: frameName,

@@ -176,10 +176,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 					frameName := formatLegendKeys(series.Metric.Type, defaultMetricName, nil, additionalLabels, timeSeriesFilter)
 					valueField.Name = frameName
 					valueField.Labels = seriesLabels
-					if valueField.Config == nil {
-						valueField.Config = &data.FieldConfig{}
-					}
-					valueField.Config.DisplayNameFromDS = valueField.Name
+					setDisplayNameAsFieldName(valueField)
 
 					buckets[i] = &data.Frame{
 						Name: frameName,
@@ -205,10 +202,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 					frameName := formatLegendKeys(series.Metric.Type, defaultMetricName, seriesLabels, additionalLabels, timeSeriesFilter)
 					valueField.Name = frameName
 					valueField.Labels = seriesLabels
-					if valueField.Config == nil {
-						valueField.Config = &data.FieldConfig{}
-					}
-					valueField.Config.DisplayNameFromDS = valueField.Name
+					setDisplayNameAsFieldName(valueField)
 
 					buckets[i] = &data.Frame{
 						Name: frameName,
@@ -271,11 +265,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) handleNonDistributionSe
 	dataField := frame.Fields[1]
 	dataField.Name = metricName
 	dataField.Labels = seriesLabels
-
-	if dataField.Config == nil {
-		dataField.Config = &data.FieldConfig{}
-	}
-	dataField.Config.DisplayNameFromDS = dataField.Name
+	setDisplayNameAsFieldName(dataField)
 }
 
 func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseToAnnotations(queryRes *tsdb.QueryResult, data cloudMonitoringResponse, title string, text string, tags string) error {
@@ -374,6 +364,13 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) buildDeepLink() string 
 	accountChooserURL.RawQuery = accountChooserQuery.Encode()
 
 	return accountChooserURL.String()
+}
+
+func setDisplayNameAsFieldName(f *data.Field) {
+	if f.Config == nil {
+		f.Config = &data.FieldConfig{}
+	}
+	f.Config.DisplayNameFromDS = f.Name
 }
 
 func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) getRefID() string {
