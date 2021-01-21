@@ -7,6 +7,7 @@ import {
   InterpolateFunction,
   ScopedVars,
   DataFrame,
+  DataQuery,
   getFieldDisplayValuesProxy,
 } from '@grafana/data';
 import { getLinkSrv } from '../../panel/panellinks/link_srv';
@@ -23,7 +24,7 @@ import { splitOpen } from '../state/main';
 export const getFieldLinksForExplore = (options: {
   field: Field;
   rowIndex: number;
-  splitOpenFn?: typeof splitOpen;
+  splitOpenFn?: (options?: { datasourceUid: string; query: DataQuery; range?: TimeRange } | undefined) => void;
   range: TimeRange;
   vars?: ScopedVars;
   dataFrame?: DataFrame;

@@ -69,8 +69,8 @@ export class LogsContainer extends PureComponent<PropsFromRedux & LogsContainerP
   };
 
   getFieldLinks = (field: Field, rowIndex: number) => {
-    const { splitOpen, range } = this.props;
-    return getFieldLinksForExplore({ field, rowIndex, splitOpenFn: splitOpen, range });
+    const { splitOpen: splitOpenFn, range } = this.props;
+    return getFieldLinksForExplore({ field, rowIndex, splitOpenFn, range });
   };
 
   render() {
