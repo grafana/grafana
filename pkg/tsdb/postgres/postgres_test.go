@@ -99,7 +99,7 @@ func TestGenerateConnectionString(t *testing.T) {
 			password: "password",
 			database: "database",
 			jsonData: `{"sslmode" : "verify-full", "sslRootCertFile" : "i/am/coding/ca.crt",
-			"sslCertFile" : "i/am/coding/client.crt", "sslKeyFile" : "i/am/coding/client.key", "sslconfiguremethod" : "file-path"}`,
+			"sslCertFile" : "i/am/coding/client.crt", "sslKeyFile" : "i/am/coding/client.key", "sslConfigurationMethodd" : "file-path"}`,
 			expConnStr: "user='user' password='password' host='host' dbname='database' sslmode='verify-full' " +
 				"sslrootcert='i/am/coding/ca.crt' sslcert='i/am/coding/client.crt' sslkey='i/am/coding/client.key'",
 		},
@@ -109,7 +109,7 @@ func TestGenerateConnectionString(t *testing.T) {
 			user:           "user",
 			password:       "password",
 			database:       "database",
-			jsonData:       `{"sslmode" : "verify-full", "sslconfiguremethod" : "file-content"}`,
+			jsonData:       `{"sslmode" : "verify-full", "sslConfigurationMethodd" : "file-content"}`,
 			secureJsonData: `{"tlsClientCert" : "I am client certification", "tlsClientKey" : "I am client key", "tlsCACert" : "i am CA certification"}`,
 			expConnStr:     "user='user' password='password' host='host' dbname='database' sslmode='verify-full'",
 			uid:            "xxxxxx",

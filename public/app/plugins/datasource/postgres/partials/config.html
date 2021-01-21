@@ -30,9 +30,9 @@
   <div class="gf-form">
     <label class="gf-form-label width-10">SSL Configure Method</label>
     <div class="gf-form-select-wrapper max-width-15 gf-form-select-wrapper--has-help-icon">
-	  <select class="gf-form-input" ng-model="ctrl.current.jsonData.sslconfiguremethod" 
+	  <select class="gf-form-input" ng-model="ctrl.current.jsonData.sslConfigurationMethodd" 
 	  ng-options="mode for mode in ['file-path', 'file-content']" 
-	  ng-init="ctrl.current.jsonData.sslconfiguremethod"></select>
+	  ng-init="ctrl.current.jsonData.sslConfigurationMethodd"></select>
       <info-popover mode="right-absolute">
         This option determines whether SSL (TLS) certifications will be stored in files or directly read from UI.
       </info-popover>
@@ -51,7 +51,7 @@
   </div>
 
 
-  <div class="gf-form-group" ng-if="ctrl.current.jsonData.sslmode != 'disable' && ctrl.current.jsonData.sslconfiguremethod === 'file-path'">
+  <div class="gf-form-group" ng-if="ctrl.current.jsonData.sslmode != 'disable' && ctrl.current.jsonData.sslConfigurationMethodd === 'file-path'">
 	<div class="gf-form">
 		<h6>TLS Auth Details</h6>
 		<info-popover mode="header">TLS Certs file path are stored in the Grafana database.</info-popover>
@@ -82,7 +82,7 @@
 	</div>
   </div>
   <datasource-tls-auth-settings current="ctrl.current" 
-  ng-if="ctrl.current.jsonData.sslmode != 'disable' && ctrl.current.jsonData.sslconfiguremethod === 'file-content'">
+  ng-if="ctrl.current.jsonData.sslmode != 'disable' && ctrl.current.jsonData.sslConfigurationMethodd === 'file-content'">
   </datasource-tls-auth-settings>
 </div>
 

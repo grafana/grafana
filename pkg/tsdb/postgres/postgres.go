@@ -162,11 +162,11 @@ func writeConnectionFiles(ds *models.DataSource, logger log.Logger) error {
 }
 
 func generateConnectionString(datasource *models.DataSource, logger log.Logger) (string, error) {
-	sslConfigureMethod := strings.TrimSpace(strings.ToLower(datasource.JsonData.Get("sslconfiguremethod").MustString("file-path")))
+	sslConfigurationMethod := strings.TrimSpace(strings.ToLower(datasource.JsonData.Get("sslConfigurationMethod").MustString("file-path")))
 	sslMode := strings.TrimSpace(strings.ToLower(datasource.JsonData.Get("sslmode").MustString("verify-full")))
 	isSSLDisabled := sslMode == "disable"
 
-	if sslConfigureMethod == "file-content" {
+	if sslConfigurationMethod == "file-content" {
 		if err := writeConnectionFiles(datasource, logger); err != nil {
 			return "", err
 		}
@@ -205,7 +205,7 @@ func generateConnectionString(datasource *models.DataSource, logger log.Logger) 
 		logger.Debug("Postgres SSL is enabled", "sslMode", sslMode)
 
 		var sslRootCert, sslCert, sslKey string
-		if sslConfigureMethod == "file-content" {
+		if sslConfigurationMethod == "file-content" {
 			sslRootCert = datasource.JsonData.Get("generatedSSLRootCertFile").MustString("")
 			sslCert = datasource.JsonData.Get("generatedSSLCertFile").MustString("")
 			sslKey = datasource.JsonData.Get("generatedSSLKeyFile").MustString("")
