@@ -1,4 +1,4 @@
-import React, { PropsWithChildren, useCallback } from 'react';
+import React, { FC, PropsWithChildren, useCallback } from 'react';
 import { Portal } from '../Portal/Portal';
 import { cx } from 'emotion';
 import { useTheme } from '../../themes';
@@ -26,7 +26,7 @@ interface RenderApi {
   styles: ReturnType<typeof getModalStyles>;
 }
 
-export function Modal(props: PropsWithChildren<Props>): JSX.Element | null {
+export function Modal(props: PropsWithChildren<Props>): ReturnType<FC<Props>> {
   const { title, children, isOpen = false, className, onDismiss: propsOnDismiss, onClickBackdrop, render } = props;
   const theme = useTheme();
   const styles = getModalStyles(theme);
