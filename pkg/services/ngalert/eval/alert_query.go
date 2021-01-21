@@ -19,10 +19,12 @@ func (d Duration) String() string {
 	return time.Duration(d).String()
 }
 
+// MarshalJSON returns JSON encoding of the Duration
 func (d Duration) MarshalJSON() ([]byte, error) {
 	return json.Marshal(time.Duration(d).Seconds())
 }
 
+// UnmarshalJSON parses the JSON-encoded data and stores nn Duration
 func (d *Duration) UnmarshalJSON(b []byte) error {
 	var v interface{}
 	if err := json.Unmarshal(b, &v); err != nil {
@@ -68,7 +70,7 @@ type AlertQuery struct {
 	// RelativeTimeRange is the relative Start and End of the query as sent by the frontend.
 	RelativeTimeRange RelativeTimeRange `json:"relativeTimeRange"`
 
-	DatasourceUID string `json:"-"`
+	Datasource string `json:"-"`
 
 	// JSON is the raw JSON query and includes the above properties as well as custom properties.
 	Model json.RawMessage `json:"model"`
@@ -96,26 +98,17 @@ func (aq *AlertQuery) setDatasource() error {
 		}
 	}
 
-	dsName, ok := aq.modelProps["datasource"]
+	i, ok := aq.modelProps["datasource"]
 	if !ok {
 		return fmt.Errorf("failed to get datasource from query model")
 	}
 
-	if dsName == expr.DatasourceName {
-		aq.DatasourceUID = expr.DatasourceUID
-		aq.modelProps["datasourceUid"] = expr.DatasourceUID
-		return nil
-	}
-
-	i, ok := aq.modelProps["datasourceUid"]
+	ds, ok := i.(string)
 	if !ok {
-		return fmt.Errorf("failed to get datasourceUid from query model")
+		return fmt.Errorf("failed to cast datasource to string: %v", i)
 	}
-	dsUID, ok := i.(string)
-	if !ok {
-		return fmt.Errorf("failed to cast datasourceUid to string: %v", i)
-	}
-	aq.DatasourceUID = dsUID
+	aq.Datasource = ds
+	aq.modelProps["datasourceUid"] = ds
 	return nil
 }
 
@@ -125,7 +118,7 @@ func (aq *AlertQuery) IsExpression() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	return aq.DatasourceUID == expr.DatasourceUID, nil
+	return aq.Datasource == expr.DatasourceName, nil
 }
 
 // setMaxDatapoints sets the model maxDataPoints if it's missing or invalid
@@ -211,7 +204,7 @@ func (aq *AlertQuery) GetDatasource() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return aq.DatasourceUID, nil
+	return aq.Datasource, nil
 }
 
 func (aq *AlertQuery) getModel() ([]byte, error) {
