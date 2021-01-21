@@ -141,43 +141,51 @@ interface PathBuilders {
   smooth: Series.PathBuilder;
   stepBefore: Series.PathBuilder;
   stepAfter: Series.PathBuilder;
+  barBefore: Series.PathBuilder;
+  barCenter: Series.PathBuilder;
+  barAfter: Series.PathBuilder;
 }
 
-let builders: PathBuilders | undefined = undefined;
+const barWidthFactor = 0.6;
+const barMaxWidth = Infinity;
+
+const pathBuilders: PathBuilders = {
+  linear: uPlot.paths.linear!(),
+  smooth: uPlot.paths.spline!(),
+  stepBefore: uPlot.paths.stepped!({ align: -1 }),
+  stepAfter: uPlot.paths.stepped!({ align: 1 }),
+  barBefore: uPlot.paths.bars!({ align: -1, size: [barWidthFactor, barMaxWidth] }),
+  barCenter: uPlot.paths.bars!({ align: 0, size: [barWidthFactor, barMaxWidth] }),
+  barAfter: uPlot.paths.bars!({ align: 1, size: [barWidthFactor, barMaxWidth] }),
+};
 
 function mapDrawStyleToPathBuilder(
   style: DrawStyle,
   lineInterpolation?: LineInterpolation,
   barAlignment?: BarAlignment
 ): Series.PathBuilder {
-  const barWidthFactor = 0.6;
-  const barMaxWidth = Infinity;
-  if (!builders) {
-    // This should be global static, but Jest initalization was failing so we lazy load to avoid the issue
-    const pathBuilders = uPlot.paths;
-
-    builders = {
-      linear: pathBuilders.linear!(),
-      smooth: pathBuilders.spline!(),
-      stepBefore: pathBuilders.stepped!({ align: -1 }),
-      stepAfter: pathBuilders.stepped!({ align: 1 }),
-    };
-  }
-
   if (style === DrawStyle.Bars) {
-    return uPlot.paths.bars!({ size: [barWidthFactor, barMaxWidth], align: barAlignment });
+    if (barAlignment === BarAlignment.Before) {
+      return pathBuilders.barBefore;
+    }
+    if (barAlignment === BarAlignment.Center) {
+      return pathBuilders.barCenter;
+    }
+    if (barAlignment === BarAlignment.After) {
+      return pathBuilders.barAfter;
+    }
   }
   if (style === DrawStyle.Line) {
     if (lineInterpolation === LineInterpolation.StepBefore) {
-      return builders.stepBefore;
+      return pathBuilders.stepBefore;
     }
     if (lineInterpolation === LineInterpolation.StepAfter) {
-      return builders.stepAfter;
+      return pathBuilders.stepAfter;
     }
     if (lineInterpolation === LineInterpolation.Smooth) {
-      return builders.smooth;
+      return pathBuilders.smooth;
     }
   }
 
-  return builders.linear; // the default
+  return pathBuilders.linear; // the default
 }
