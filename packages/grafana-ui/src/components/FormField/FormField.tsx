@@ -6,8 +6,8 @@ import { PopoverContent } from '../Tooltip/Tooltip';
 import { useStyles } from '../../themes';
 
 export interface Props extends InputHTMLAttributes<HTMLInputElement> {
-  grow?: boolean;
   label: string;
+  grow?: boolean;
   tooltip?: PopoverContent;
   labelWidth?: number;
   // If null no width will be specified not even default one
