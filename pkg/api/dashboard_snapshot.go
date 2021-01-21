@@ -163,6 +163,14 @@ func GetDashboardSnapshot(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to get dashboard data for dashboard snapshot", err)
 	}
 
+	dashboardID := dashboard.Get("id").MustInt64()
+	guardian := guardian.New(dashboardID, c.OrgId, c.SignedInUser)
+	if snapshot.UserId != c.SignedInUser.UserId {
+		if canView, err := guardian.CanView(); err != nil || !canView {
+			return response.Error(404, "Dashboard snapshot not found", err)
+		}
+	}
+
 	dto := dtos.DashboardFullWithMeta{
 		Dashboard: dashboard,
 		Meta: dtos.DashboardMeta{
