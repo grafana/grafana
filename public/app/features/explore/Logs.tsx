@@ -47,12 +47,11 @@ function renderMetaItem(value: any, kind: LogsMetaKind) {
 }
 
 interface Props {
-  logRows?: LogRowModel[];
+  logRows: LogRowModel[];
   logsMeta?: LogsMetaItem[];
   logsSeries?: GraphSeriesXY[];
   dedupedRows?: LogRowModel[];
   visibleRange?: AbsoluteTimeRange;
-
   width: number;
   highlighterExpressions?: string[];
   loading: boolean;
@@ -225,10 +224,6 @@ export class Logs extends PureComponent<Props, State> {
       onChangeTime,
       getFieldLinks,
     } = this.props;
-
-    if (!logRows) {
-      return null;
-    }
 
     const { showLabels, showTime, wrapLogMessage, logsSortOrder, isFlipping, showDetectedFields } = this.state;
     const { dedupStrategy } = this.props;

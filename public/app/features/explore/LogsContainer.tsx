@@ -127,6 +127,10 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
       exploreId,
     } = this.props;
 
+    if (!logRows) {
+      return null;
+    }
+
     return (
       <>
         <LogsCrossFadeTransition visible={isLive}>
@@ -195,16 +199,16 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     absoluteRange,
     dedupStrategy,
   } = item;
-  const dedupedRows = deduplicatedRowsSelector(item);
+  const dedupedRows = deduplicatedRowsSelector(item) || undefined;
   const timeZone = getTimeZone(state.user);
 
   return {
     loading,
     logsHighlighterExpressions,
-    logRows: logsResult && logsResult.rows,
-    logsMeta: logsResult && logsResult.meta,
-    logsSeries: logsResult && logsResult.series,
-    visibleRange: logsResult && logsResult.visibleRange,
+    logRows: logsResult?.rows || undefined,
+    logsMeta: logsResult?.meta || undefined,
+    logsSeries: logsResult?.series || undefined,
+    visibleRange: logsResult?.visibleRange || undefined,
     scanning,
     timeZone,
     dedupStrategy,

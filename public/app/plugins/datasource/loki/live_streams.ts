@@ -59,7 +59,7 @@ export class LiveStreams {
               // Retry every 5s
               return timer(retryInterval);
             }
-            return throwError(`error: ${error.reason}`);
+            return throwError(error);
           })
         )
       ),
