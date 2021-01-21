@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { css, cx } from 'emotion';
+import { css } from 'emotion';
 import { capitalize } from 'lodash';
 
 import {
@@ -17,8 +17,19 @@ import {
   GraphSeriesXY,
   LinkModel,
   Field,
+  GrafanaTheme,
 } from '@grafana/data';
-import { LogLabels, RadioButtonGroup, LogRows, Button, InlineField, InlineFieldRow, InlineSwitch } from '@grafana/ui';
+import {
+  LogLabels,
+  RadioButtonGroup,
+  LogRows,
+  Button,
+  InlineField,
+  InlineFieldRow,
+  InlineSwitch,
+  withTheme,
+  stylesFactory,
+} from '@grafana/ui';
 import store from 'app/core/store';
 import { ExploreGraphPanel } from './ExploreGraphPanel';
 import { MetaInfoText } from './MetaInfoText';
@@ -51,6 +62,7 @@ interface Props {
   dedupedRows?: LogRowModel[];
   visibleRange?: AbsoluteTimeRange;
   width: number;
+  theme: GrafanaTheme;
   highlighterExpressions?: string[];
   loading: boolean;
   absoluteRange: AbsoluteTimeRange;
@@ -79,7 +91,7 @@ interface State {
   showDetectedFields: string[];
 }
 
-export class Logs extends PureComponent<Props, State> {
+export class UnthemedLogs extends PureComponent<Props, State> {
   flipOrderTimer: NodeJS.Timeout;
   cancelFlippingTimer: NodeJS.Timeout;
 
@@ -222,6 +234,7 @@ export class Logs extends PureComponent<Props, State> {
       onChangeTime,
       getFieldLinks,
       dedupStrategy,
+      theme,
     } = this.props;
 
     const { showLabels, showTime, wrapLogMessage, logsSortOrder, isFlipping, showDetectedFields } = this.state;
@@ -254,6 +267,7 @@ export class Logs extends PureComponent<Props, State> {
 
     const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
     const series = logsSeries ? logsSeries : [];
+    const style = getStyles(theme);
 
     return (
       <>
@@ -270,46 +284,42 @@ export class Logs extends PureComponent<Props, State> {
           showLines={false}
           onUpdateTimeRange={onChangeTime}
         />
-        <div className="logs-panel-options">
-          <div className="logs-panel-controls">
-            <InlineFieldRow>
-              <InlineField label="Time" transparent>
-                <InlineSwitch value={showTime} onChange={this.onChangeTime} transparent />
-              </InlineField>
-              <InlineField label="Unique labels" transparent>
-                <InlineSwitch value={showLabels} onChange={this.onChangeTime} transparent />
-              </InlineField>
-              <InlineField label="Wrap lines" transparent>
-                <InlineSwitch value={wrapLogMessage} onChange={this.onChangewrapLogMessage} transparent />
-              </InlineField>
-              <InlineField label="Dedup" transparent>
-                <RadioButtonGroup
-                  options={Object.keys(LogsDedupStrategy).map((dedupType: LogsDedupStrategy) => ({
-                    label: capitalize(dedupType),
-                    value: dedupType,
-                    description: LogsDedupDescription[dedupType],
-                  }))}
-                  value={dedupStrategy}
-                  onChange={this.onChangeDedup}
-                  className={css`
-                    margin: 0 8px;
-                  `}
-                />
-              </InlineField>
-            </InlineFieldRow>
-            <Button
-              variant="secondary"
-              disabled={isFlipping}
-              title={logsSortOrder === LogsSortOrder.Ascending ? 'Change to newest first' : 'Change to oldest first'}
-              aria-label="Flip results order"
-              className={css`
-                margin-top: 4px;
-              `}
-              onClick={this.onChangeLogsSortOrder}
-            >
-              <span className="btn-title"> {isFlipping ? 'Flipping...' : 'Flip results order'}</span>
-            </Button>
-          </div>
+        <div className={style.logOptions}>
+          <InlineFieldRow>
+            <InlineField label="Time" transparent>
+              <InlineSwitch value={showTime} onChange={this.onChangeTime} transparent />
+            </InlineField>
+            <InlineField label="Unique labels" transparent>
+              <InlineSwitch value={showLabels} onChange={this.onChangeTime} transparent />
+            </InlineField>
+            <InlineField label="Wrap lines" transparent>
+              <InlineSwitch value={wrapLogMessage} onChange={this.onChangewrapLogMessage} transparent />
+            </InlineField>
+            <InlineField label="Dedup" transparent>
+              <RadioButtonGroup
+                options={Object.keys(LogsDedupStrategy).map((dedupType: LogsDedupStrategy) => ({
+                  label: capitalize(dedupType),
+                  value: dedupType,
+                  description: LogsDedupDescription[dedupType],
+                }))}
+                value={dedupStrategy}
+                onChange={this.onChangeDedup}
+                className={css`
+                  margin: 0 8px;
+                `}
+              />
+            </InlineField>
+          </InlineFieldRow>
+          <Button
+            variant="secondary"
+            disabled={isFlipping}
+            title={logsSortOrder === LogsSortOrder.Ascending ? 'Change to newest first' : 'Change to oldest first'}
+            aria-label="Flip results order"
+            className={style.flipButton}
+            onClick={this.onChangeLogsSortOrder}
+          >
+            {isFlipping ? 'Flipping...' : 'Flip results order'}
+          </Button>
         </div>
 
         {meta && (
@@ -323,7 +333,7 @@ export class Logs extends PureComponent<Props, State> {
           />
         )}
 
-        {showDetectedFields && showDetectedFields.length > 0 && (
+        {showDetectedFields?.length > 0 && (
           <MetaInfoText
             metaItems={[
               {
@@ -364,7 +374,7 @@ export class Logs extends PureComponent<Props, State> {
         />
 
         {!loading && !hasData && !scanning && (
-          <div className="logs-panel-nodata">
+          <div className={style.noData}>
             No logs found.
             <Button size="xs" variant="link" onClick={this.onClickScan}>
               Scan for older logs
@@ -373,7 +383,7 @@ export class Logs extends PureComponent<Props, State> {
         )}
 
         {scanning && (
-          <div className="logs-panel-nodata">
+          <div className={style.noData}>
             <span>{scanText}</span>
             <Button size="xs" variant="link" onClick={this.onClickStopScan}>
               Stop scan
@@ -384,3 +394,29 @@ export class Logs extends PureComponent<Props, State> {
     );
   }
 }
+
+export const Logs = withTheme(UnthemedLogs);
+
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    noData: css`
+      > * {
+        margin-left: 0.5em;
+      }
+    `,
+    logOptions: css`
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      background-color: ${theme.colors.bg1};
+      padding: ${theme.spacing.sm} ${theme.spacing.md};
+      border-radius: ${theme.border.radius.md};
+      margin: ${theme.spacing.md} 0 ${theme.spacing.sm};
+      border: 1px solid ${theme.colors.panelBorder};
+    `,
+    flipButton: css`
+      margin: ${theme.spacing.xs} 0 0 ${theme.spacing.sm};
+    `,
+  };
+});
