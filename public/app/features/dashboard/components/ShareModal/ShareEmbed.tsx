@@ -1,5 +1,5 @@
 import React, { FormEvent, PureComponent } from 'react';
-import { RadioButtonGroup, Switch, Field, TextArea, Icon, ClipboardButton } from '@grafana/ui';
+import { RadioButtonGroup, Switch, Field, TextArea, ClipboardButton } from '@grafana/ui';
 import { SelectableValue, AppEvents } from '@grafana/data';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { appEvents } from 'app/core/core';
@@ -99,7 +99,7 @@ export class ShareEmbed extends PureComponent<Props, State> {
               <TextArea rows={5} value={iframeHtml} onChange={this.onIframeHtmlChange}></TextArea>
             </Field>
             <ClipboardButton variant="primary" getText={this.getIframeHtml} onClipboardCopy={this.onIframeHtmlCopy}>
-              <Icon name="copy" /> Copy
+              Copy to clipboard
             </ClipboardButton>
           </div>
         </div>
