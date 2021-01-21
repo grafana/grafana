@@ -662,6 +662,51 @@ func getPredictableCSVWave(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.Que
 	return queryRes
 }
 
+func getPredictableCSVWaveV2(query backend.DataQuery, model *simplejson.Json) (*data.Frame, error) {
+	// Process Input
+	var timeStep int64
+
+	options := model.Get("csvWave")
+
+	var err error
+	if timeStep, err = options.Get("timeStep").Int64(); err != nil {
+		return nil, fmt.Errorf("failed to parse timeStep value '%v' into integer: %v", options.Get("timeStep"), err)
+	}
+	rawValues := options.Get("valuesCSV").MustString()
+	rawValues = strings.TrimRight(strings.TrimSpace(rawValues), ",") // Strip Trailing Comma
+	rawValesCSV := strings.Split(rawValues, ",")
+	values := make([]null.Float, len(rawValesCSV))
+	for i, rawValue := range rawValesCSV {
+		val, err := null.FloatFromString(strings.TrimSpace(rawValue), "null")
+		if err != nil {
+			return nil, errutil.Wrapf(err, "failed to parse value '%v' into nullable float", rawValue)
+		}
+		values[i] = val
+	}
+
+	timeStep *= 1000 // Seconds to Milliseconds
+	valuesLen := int64(len(values))
+	getValue := func(mod int64) (null.Float, error) {
+		var i int64
+		for i = 0; i < valuesLen; i++ {
+			if mod == i*timeStep {
+				return values[i], nil
+			}
+		}
+		return null.Float{}, fmt.Errorf("did not get value at point in waveform - should not be here")
+	}
+	fields, err := predictableSeriesV2(query.TimeRange, timeStep, valuesLen, getValue)
+	if err != nil {
+		return nil, err
+	}
+
+	frame := newSeriesForQueryV2(query, model, 0)
+	frame.Fields = fields
+	frame.Fields[1].Labels = parseLabelsV2(model)
+
+	return frame, nil
+}
+
 func predictableSeries(timeRange *tsdb.TimeRange, timeStep, length int64, getValue func(mod int64) (null.Float, error)) (*tsdb.TimeSeriesPoints, error) {
 	points := make(tsdb.TimeSeriesPoints, 0)
 
@@ -682,6 +727,36 @@ func predictableSeries(timeRange *tsdb.TimeRange, timeStep, length int64, getVal
 		timeCursor += timeStep
 	}
 	return &points, nil
+}
+
+func predictableSeriesV2(timeRange backend.TimeRange, timeStep, length int64, getValue func(mod int64) (null.Float, error)) (data.Fields, error) {
+	from := timeRange.From.UnixNano() / int64(time.Millisecond)
+	to := timeRange.To.UnixNano() / int64(time.Millisecond)
+
+	timeCursor := from - (from % timeStep) // Truncate Start
+	wavePeriod := timeStep * length
+	maxPoints := 10000 // Don't return too many points
+
+	timeVec := make([]*time.Time, 0)
+	floatVec := make([]*float64, 0)
+
+	for i := 0; i < maxPoints && timeCursor < to; i++ {
+		val, err := getValue(timeCursor % wavePeriod)
+		if err != nil {
+			return nil, err
+		}
+
+		t := time.Unix(timeCursor/int64(1e+3), (timeCursor%int64(1e+3))*int64(1e+6))
+		timeVec = append(timeVec, &t)
+		floatVec = append(floatVec, &val.Float64)
+
+		timeCursor += timeStep
+	}
+
+	return data.Fields{
+		data.NewField("time", nil, timeVec),
+		data.NewField("value", nil, floatVec),
+	}, nil
 }
 
 func getRandomWalk(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery, index int) *tsdb.TimeSeries {
@@ -993,6 +1068,29 @@ func newSeriesForQuery(query *tsdb.Query, index int) *tsdb.TimeSeries {
 	}
 
 	return &tsdb.TimeSeries{Name: alias}
+}
+
+func newSeriesForQueryV2(query backend.DataQuery, model *simplejson.Json, index int) *data.Frame {
+	alias := model.Get("alias").MustString("")
+	suffix := ""
+
+	if index > 0 {
+		suffix = strconv.Itoa(index)
+	}
+
+	if alias == "" {
+		alias = fmt.Sprintf("%s-series%s", query.RefID, suffix)
+	}
+
+	if alias == "__server_names" && len(serverNames) > index {
+		alias = serverNames[index]
+	}
+
+	if alias == "__house_locations" && len(houseLocations) > index {
+		alias = houseLocations[index]
+	}
+
+	return data.NewFrame(alias)
 }
 
 func fromStringOrNumber(val *simplejson.Json) (null.Float, error) {
