@@ -102,7 +102,7 @@ Grafana 7.4 includes the following enhancements
 - Added support to the terms aggregation for ordering by percentiles and extended stats.
 - Updated date histogram auto interval handling for alert queries.
 
-> **Note:** We have deprecated browser access mode. Iit will be removed in a future release.
+> **Note:** We have deprecated browser access mode. It will be removed in a future release.
 
 ### Azure Monitor updates
 
