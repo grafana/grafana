@@ -115,6 +115,21 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 				assert.Equal(t, ts.URL, fmt.Sprintf("http://%s", externalRequest.Host))
 				assert.Equal(t, "/", externalRequest.URL.EscapedPath())
 			})
+
+		anonymousUserScenario(t, "Should not be able to read a snapshot when calling GET on", "GET",
+			"/api/snapshots/12345", "/api/snapshots/:key", func(sc *scenarioContext) {
+				setUpSnapshotTest(t)
+
+				sc.handlerFunc = GetDashboardSnapshot
+				sc.fakeReqWithParams("GET", sc.url, map[string]string{"key": "12345"}).exec()
+
+				assert.Equal(t, 403, sc.resp.Code)
+
+				respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
+				require.NoError(t, err)
+
+				assert.Equal(t, respJSON.Get("message").MustString(), "Access denied to this snapshot")
+			})
 	})
 
 	t.Run("When user is editor and dashboard has default ACL", func(t *testing.T) {
@@ -166,6 +181,26 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 
 				assert.True(t, strings.HasPrefix(respJSON.Get("message").MustString(), "Snapshot deleted"))
 				assert.Equal(t, 1, respJSON.Get("id").MustInt())
+			})
+
+		loggedInUserScenarioWithRole(t, "Should be able to read a snapshot when calling GET on", "GET",
+			"/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
+				mockSnapshotResult := setUpSnapshotTest(t)
+
+				mockSnapshotResult.UserId = testUserID
+				mockSnapshotResult.External = false
+
+				sc.handlerFunc = GetDashboardSnapshot
+				sc.fakeReqWithParams("GET", sc.url, map[string]string{"key": "12345"}).exec()
+
+				assert.Equal(t, 200, sc.resp.Code)
+				respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
+				require.NoError(t, err)
+
+				dashboard := respJSON.Get("dashboard")
+				id := dashboard.Get("id")
+
+				assert.Equal(t, int64(100), id.MustInt64())
 			})
 	})
 
