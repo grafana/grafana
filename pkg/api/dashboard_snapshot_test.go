@@ -236,7 +236,8 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 
 		loggedInUserScenarioWithRole(t, "Should be able to read a snapshot's unencrypted data when calling GET on",
 			"GET", "/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
-				setUpSnapshotTest(t)
+				mockSnapshotResult := setUpSnapshotTest(t)
+				mockSnapshotResult.UserId = testUserID
 
 				sc.handlerFunc = GetDashboardSnapshot
 				sc.fakeReqWithParams("GET", sc.url, map[string]string{"key": "12345"}).exec()
@@ -274,6 +275,7 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 					Key:                "12345",
 					DashboardEncrypted: encrypted,
 					Expires:            time.Now().Add(time.Duration(1000) * time.Second),
+					UserId:             testUserID,
 				}
 
 				setUpSnapshotTest(t)
