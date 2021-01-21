@@ -1,101 +1,94 @@
-import React, { PureComponent, ReactElement } from 'react';
-import Select from './Select';
+import React, { useState } from 'react';
 import { PopoverContent } from '../../../Tooltip/Tooltip';
-import { Icon } from '../../../Icon/Icon';
-import { IconName } from '../../../../types';
-import { SelectableValue } from '@grafana/data';
-
-interface ButtonComponentProps {
-  label: ReactElement | string | undefined;
-  className: string | undefined;
-  iconClass?: string;
-}
-
-// eslint-disable-next-line react/display-name
-const ButtonComponent = (buttonProps: ButtonComponentProps) => (props: any) => {
-  const { label, className, iconClass } = buttonProps;
-
-  return (
-    <div // changed to div because of FireFox on MacOs issue below
-      ref={props.innerRef}
-      className={`btn navbar-button navbar-button--tight ${className}`}
-      onClick={props.selectProps.menuIsOpen ? props.selectProps.onMenuClose : props.selectProps.onMenuOpen}
-      onBlur={props.selectProps.onMenuClose}
-      tabIndex={0} // necessary to get onBlur to work https://developer.mozilla.org/en-US/docs/Web/HTML/Element/button#Clicking_and_focus
-    >
-      <div className="select-button">
-        {iconClass && <Icon className={'select-button-icon'} name={iconClass as IconName} size="lg" />}
-        <span className="select-button-value">{label ? label : ''}</span>
-        {!props.menuIsOpen && <Icon name="angle-down" style={{ marginBottom: 0 }} size="lg" />}
-        {props.menuIsOpen && <Icon name="angle-up" style={{ marginBottom: 0 }} size="lg" />}
-      </div>
-    </div>
-  );
-};
+import { GrafanaTheme, SelectableValue } from '@grafana/data';
+import { ToolbarButton } from '../../../Button';
+import { ClickOutsideWrapper } from '../../../ClickOutsideWrapper/ClickOutsideWrapper';
+import { css } from 'emotion';
+import { useStyles } from '../../../../themes/ThemeContext';
+import { Menu, MenuItemsGroup } from '../../../Menu/Menu';
 
 export interface Props<T> {
   className: string | undefined;
   options: Array<SelectableValue<T>>;
   value?: SelectableValue<T>;
-  label?: ReactElement | string;
-  iconClass?: string;
-  components?: any;
   maxMenuHeight?: number;
   onChange: (item: SelectableValue<T>) => void;
   tooltipContent?: PopoverContent;
-  isMenuOpen?: boolean;
-  onOpenMenu?: () => void;
-  onCloseMenu?: () => void;
-  tabSelectsValue?: boolean;
-  autoFocus?: boolean;
 }
 
-export class ButtonSelect<T> extends PureComponent<Props<T>> {
-  onChange = (item: SelectableValue<T>) => {
-    const { onChange } = this.props;
-    onChange(item);
+/** @internal */
+export const ButtonSelect = React.memo(<T,>(props: Props<T>) => {
+  const { className, options, value, onChange } = props;
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const styles = useStyles(getStyles);
+
+  const onCloseMenu = () => {
+    setIsOpen(false);
   };
 
-  render() {
-    const {
-      className,
-      options,
-      value,
-      label,
-      iconClass,
-      components,
-      maxMenuHeight,
-      tooltipContent,
-      isMenuOpen,
-      onOpenMenu,
-      onCloseMenu,
-      tabSelectsValue,
-      autoFocus = true,
-    } = this.props;
+  const onToggle = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    event.preventDefault();
+    setIsOpen(!isOpen);
+  };
 
-    const combinedComponents = {
-      ...components,
-      Control: ButtonComponent({ label, className, iconClass }),
-    };
+  const onChangeInternal = (item: SelectableValue<T>) => {
+    onChange(item);
+    setIsOpen(false);
+  };
 
-    return (
-      <Select
-        autoFocus={autoFocus}
-        backspaceRemovesValue={false}
-        isClearable={false}
-        isSearchable={false}
-        options={options}
-        onChange={this.onChange}
-        value={value}
-        isOpen={isMenuOpen}
-        onOpenMenu={onOpenMenu}
-        onCloseMenu={onCloseMenu}
-        maxMenuHeight={maxMenuHeight}
-        components={combinedComponents}
-        className="gf-form-select-box-button-select"
-        tooltipContent={tooltipContent}
-        tabSelectsValue={tabSelectsValue}
-      />
-    );
-  }
-}
+  const menuGroup: MenuItemsGroup = {
+    items: options.map((item) => ({
+      label: (item.label || item.value) as string,
+      onClick: () => onChangeInternal(item),
+      active: item.value === value?.value,
+    })),
+  };
+
+  return (
+    <div className={styles.wrapper}>
+      <ToolbarButton className={className} isOpen={isOpen} onClick={onToggle}>
+        {value?.label || value?.value}
+      </ToolbarButton>
+      {isOpen && (
+        <div className={styles.menuWrapper}>
+          <ClickOutsideWrapper onClick={onCloseMenu} parent={document}>
+            <Menu items={[menuGroup]} />
+          </ClickOutsideWrapper>
+        </div>
+      )}
+    </div>
+    // <Select
+    //   autoFocus={autoFocus}
+    //   backspaceRemovesValue={false}
+    //   isClearable={false}
+    //   isSearchable={false}
+    //   options={options}
+    //   onChange={this.onChange}
+    //   value={value}
+    //   isOpen={isMenuOpen}
+    //   onOpenMenu={onOpenMenu}
+    //   onCloseMenu={onCloseMenu}
+    //   maxMenuHeight={maxMenuHeight}
+    //   components={combinedComponents}
+    //   className="gf-form-select-box-button-select"
+    //   tooltipContent={tooltipContent}
+    //   tabSelectsValue={tabSelectsValue}
+    // />
+  );
+});
+
+ButtonSelect.displayName = 'ButtonSelect';
+
+const getStyles = (theme: GrafanaTheme) => {
+  return {
+    wrapper: css`
+      position: relative;
+      display: flex;
+    `,
+    menuWrapper: css`
+      position: absolute;
+      top: ${theme.spacing.formButtonHeight + 2}px;
+    `,
+  };
+};

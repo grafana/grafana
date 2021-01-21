@@ -112,7 +112,6 @@ export class RefreshPickerBase extends Component<Props> {
           <ButtonSelect
             className={classNames('navbar-button--attached', styles.selectButton, buttonSelectClassName)}
             value={selectedValue}
-            label={selectedValue.label}
             options={options}
             onChange={this.onChangeSelect}
             maxMenuHeight={380}
