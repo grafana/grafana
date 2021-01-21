@@ -928,7 +928,7 @@ func getRandomWalkTableV2(query backend.DataQuery, model *simplejson.Json) *data
 		infoString := info.String()
 
 		vals := []*float64{&val, &min, &max}
-		// // Add some random null values
+		// Add some random null values
 		if withNil && rand.Float64() > 0.8 {
 			for i := range vals {
 				if rand.Float64() > .2 {
