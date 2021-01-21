@@ -112,7 +112,7 @@ func TestGenerateConnectionString(t *testing.T) {
 			jsonData:       `{"sslmode" : "verify-full", "sslConfigurationMethod" : "file-content"}`,
 			secureJsonData: `{"tlsClientCert" : "I am client certification", "tlsClientKey" : "I am client key", "tlsCACert" : "i am CA certification"}`,
 			expConnStr:     "user='user' password='password' host='host' dbname='database' sslmode='verify-full'",
-			uid:            "xxxxxx",
+			uid:            "testData",
 		},
 	}
 	for _, tt := range testCases {

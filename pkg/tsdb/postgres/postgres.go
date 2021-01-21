@@ -104,60 +104,63 @@ func writeConnectionFiles(ds *models.DataSource, logger log.Logger) error {
 	tlsClientCert := decrypted["tlsClientCert"]
 	tlsClientKey := decrypted["tlsClientKey"]
 
-	if sslMode != "disable" {
-		// create folder
-		currentPath, err := os.Getwd()
-		if err != nil {
-			return err
-		}
-
-		var mutex = &sync.Mutex{}
-
-		currentPath = filepath.Join(currentPath, ds.Uid+"generatedSSLCerts")
-		if _, err := os.Stat(currentPath); os.IsNotExist(err) {
-			mutex.Lock()
-			err = os.Mkdir(currentPath, 0600)
-			mutex.Unlock()
-			if err != nil {
-				return err
-			}
-		}
-
-		// Create/Modify/Delete Certifications
-		mutex.Lock()
-		err = writeConnectionFile(
-			ds, tlsCACert, currentPath, "ca.crt", "generatedSSLRootCertFile")
-		mutex.Unlock()
-		if err != nil {
-			return err
-		}
-
-		mutex.Lock()
-		err = writeConnectionFile(
-			ds, tlsClientCert, currentPath, "client.crt", "generatedSSLCertFile")
-		mutex.Unlock()
-		if err != nil {
-			return err
-		}
-
-		mutex.Lock()
-		err = writeConnectionFile(
-			ds, tlsClientKey, currentPath, "client.key", "generatedSSLKeyFile")
-		mutex.Unlock()
-		if err != nil {
-			return err
-		}
-
-		mutex.Lock()
-		if tlsCACert == "" && tlsClientCert == "" && tlsClientKey == "" {
-			if _, err := os.Stat(currentPath); err == nil {
-				if err := os.Remove(currentPath); err != nil {
-					log.Warnf("failed to delete temporary folder generated %v : %v", currentPath, err)
-				}
-			}
-		}
-		mutex.Unlock()
+	if sslMode == "disable" {
+		return nil
 	}
+
+	// create folder
+	currentPath, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
+	var mutex = &sync.Mutex{}
+
+	currentPath = filepath.Join(currentPath, ds.Uid+"generatedSSLCerts")
+	if _, err := os.Stat(currentPath); os.IsNotExist(err) {
+		mutex.Lock()
+		err = os.Mkdir(currentPath, 0600)
+		mutex.Unlock()
+		if err != nil {
+			return err
+		}
+	}
+
+	// Create/Modify/Delete Certifications
+	mutex.Lock()
+	err = writeConnectionFile(
+		ds, tlsCACert, currentPath, "ca.crt", "generatedSSLRootCertFile")
+	mutex.Unlock()
+	if err != nil {
+		return err
+	}
+
+	mutex.Lock()
+	err = writeConnectionFile(
+		ds, tlsClientCert, currentPath, "client.crt", "generatedSSLCertFile")
+	mutex.Unlock()
+	if err != nil {
+		return err
+	}
+
+	mutex.Lock()
+	err = writeConnectionFile(
+		ds, tlsClientKey, currentPath, "client.key", "generatedSSLKeyFile")
+	mutex.Unlock()
+	if err != nil {
+		return err
+	}
+
+	mutex.Lock()
+	if tlsCACert == "" && tlsClientCert == "" && tlsClientKey == "" {
+		if _, err := os.Stat(currentPath); err == nil {
+			if err := os.Remove(currentPath); err != nil {
+				log.Warnf("failed to delete temporary folder generated %v : %v", currentPath, err)
+			}
+		}
+	}
+	mutex.Unlock()
+
 	return nil
 }
 
