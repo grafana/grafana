@@ -316,14 +316,15 @@ export class QueryGroup extends PureComponent<Props, State> {
         )}
         {isAddingMixed && this.renderMixedPicker()}
         {this.isExpressionsSupported(dsSettings) && (
-          <Tooltip content="Experimental feature, queries might break in next version">
+          <Tooltip content="Experimental feature: queries could stop working in next version" placement="right">
             <Button
               icon="plus"
               onClick={this.onAddExpressionClick}
               variant="secondary"
               className={styles.expressionButton}
             >
-              Expression <Icon name="exclamation-triangle" className="muted" size="sm" />
+              <span>Expression&nbsp;</span>
+              <Icon name="exclamation-triangle" className="muted" size="sm" />
             </Button>
           </Tooltip>
         )}
