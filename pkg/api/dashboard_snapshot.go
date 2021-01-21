@@ -162,13 +162,16 @@ func GetDashboardSnapshot(c *models.ReqContext) response.Response {
 	if err != nil {
 		return response.Error(500, "Failed to get dashboard data for dashboard snapshot", err)
 	}
-
 	dashboardID := dashboard.Get("id").MustInt64()
+
 	guardian := guardian.New(dashboardID, c.OrgId, c.SignedInUser)
-	if snapshot.UserId != c.SignedInUser.UserId {
-		if canView, err := guardian.CanView(); err != nil || !canView {
-			return response.Error(404, "Dashboard snapshot not found", err)
-		}
+	canView, err := guardian.CanView()
+	if err != nil {
+		return response.Error(500, "Error while checking permissions for snapshot", err)
+	}
+
+	if !canView && query.Result.UserId != c.SignedInUser.UserId {
+		return response.Error(403, "Access denied to this snapshot", nil)
 	}
 
 	dto := dtos.DashboardFullWithMeta{
