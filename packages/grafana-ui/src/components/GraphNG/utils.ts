@@ -119,7 +119,6 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
 
   // do the actual alignment (outerJoin on the first arrays)
   const alignedData = uPlot.join(valuesFromFrames, nullModes);
-  console.log('AAAA', alignedData);
   if (alignedData!.length !== sourceFields.length) {
     throw new Error('outerJoinValues lost a field?');
   }
