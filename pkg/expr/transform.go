@@ -2,6 +2,7 @@ package expr
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -26,14 +27,14 @@ func init() {
 	transformQueryCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "grafana",
 		Name:      "transform_queries_total",
-		Help:      "The total number of tranform queries",
+		Help:      "The total number of transform queries",
 	}, []string{"status"})
 	prometheus.MustRegister(transformQueryCounter)
 
 	transformQueryHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "grafana",
 		Name:      "transform_queries_duration_seconds",
-		Help:      "Tranform query histogram",
+		Help:      "Transform query histogram",
 		Buckets:   prometheus.ExponentialBuckets(0.0001, 2, 24),
 	}, []string{"status"})
 
@@ -98,8 +99,8 @@ func TransformData(ctx context.Context, req *backend.QueryDataRequest) (r *backe
 	start := time.Now()
 	defer func() {
 		var respStatus string
-		switch err {
-		case nil:
+		switch {
+		case errors.Is(err, nil):
 			respStatus = "success"
 		default:
 			respStatus = "failure"
