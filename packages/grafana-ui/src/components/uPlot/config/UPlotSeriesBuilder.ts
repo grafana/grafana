@@ -9,12 +9,14 @@ import {
   PointVisibility,
   LineInterpolation,
   GraphGradientMode,
+  BarConfig,
+  BarAlignment,
 } from '../config';
 import { PlotConfigBuilder } from '../types';
 import { DataFrameFieldIndex } from '@grafana/data';
 import { getScaleGradientFn, getOpacityGradientFn, getHueGradientFn } from './gradientFills';
 
-export interface SeriesProps extends LineConfig, FillConfig, PointsConfig {
+export interface SeriesProps extends LineConfig, BarConfig, FillConfig, PointsConfig {
   scaleKey: string;
   gradientMode?: GraphGradientMode;
   /** Used when gradientMode is set to Scheme */
@@ -40,6 +42,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       lineInterpolation,
       lineWidth,
       lineStyle,
+      barAlignment,
       showPoints,
       pointColor,
       pointSize,
@@ -66,7 +69,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
         lineConfig.dash = lineStyle.dash ?? [10, 10];
       }
       lineConfig.paths = (self: uPlot, seriesIdx: number, idx0: number, idx1: number) => {
-        let pathsBuilder = mapDrawStyleToPathBuilder(drawStyle, lineInterpolation);
+        let pathsBuilder = mapDrawStyleToPathBuilder(drawStyle, lineInterpolation, barAlignment);
         return pathsBuilder(self, seriesIdx, idx0, idx1);
       };
     }
@@ -146,7 +149,6 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
 }
 
 interface PathBuilders {
-  bars: Series.PathBuilder;
   linear: Series.PathBuilder;
   smooth: Series.PathBuilder;
   stepBefore: Series.PathBuilder;
@@ -158,16 +160,15 @@ let builders: PathBuilders | undefined = undefined;
 function mapDrawStyleToPathBuilder(
   style: DrawStyle,
   lineInterpolation?: LineInterpolation,
-  opts?: any
+  barAlignment?: BarAlignment
 ): Series.PathBuilder {
-  // This should be global static, but Jest initalization was failing so we lazy load to avoid the issue
+  const barWidthFactor = 0.6;
+  const barMaxWidth = Infinity;
   if (!builders) {
+    // This should be global static, but Jest initalization was failing so we lazy load to avoid the issue
     const pathBuilders = uPlot.paths;
-    const barWidthFactor = 0.6;
-    const barMaxWidth = Infinity;
 
     builders = {
-      bars: pathBuilders.bars!({ size: [barWidthFactor, barMaxWidth] }),
       linear: pathBuilders.linear!(),
       smooth: pathBuilders.spline!(),
       stepBefore: pathBuilders.stepped!({ align: -1 }),
@@ -176,7 +177,7 @@ function mapDrawStyleToPathBuilder(
   }
 
   if (style === DrawStyle.Bars) {
-    return builders.bars;
+    return uPlot.paths.bars!({ size: [barWidthFactor, barMaxWidth], align: barAlignment });
   }
   if (style === DrawStyle.Line) {
     if (lineInterpolation === LineInterpolation.StepBefore) {
