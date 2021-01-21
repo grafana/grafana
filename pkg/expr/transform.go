@@ -2,7 +2,6 @@ package expr
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -100,7 +99,7 @@ func TransformData(ctx context.Context, req *backend.QueryDataRequest) (r *backe
 	defer func() {
 		var respStatus string
 		switch {
-		case errors.Is(err, nil):
+		case err == nil:
 			respStatus = "success"
 		default:
 			respStatus = "failure"
