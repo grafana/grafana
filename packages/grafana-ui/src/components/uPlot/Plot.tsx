@@ -90,7 +90,7 @@ function prepareData(data: AlignedFrameWithGapTest): AlignedData {
 }
 
 function initializePlot(data: AlignedData, config: Options, el: HTMLDivElement) {
-  console.log('UPlotChart: init uPlot', false, 'initialized with', data, config);
+  pluginLog('UPlotChart: init uPlot', false, 'initialized with', data, config);
   return new uPlot(config, data, el);
 }
 
