@@ -19,7 +19,7 @@ export class PostgresConfigCtrl {
   constructor($scope: any, datasourceSrv: DatasourceSrv) {
     this.datasourceSrv = datasourceSrv;
     this.current.jsonData.sslmode = this.current.jsonData.sslmode || 'verify-full';
-    this.current.jsonData.sslConfigurationMethodd = this.current.jsonData.sslConfigurationMethodd || 'file-path';
+    this.current.jsonData.sslConfigurationMethod = this.current.jsonData.sslConfigurationMethod || 'file-path';
     this.current.jsonData.postgresVersion = this.current.jsonData.postgresVersion || 903;
     this.showTimescaleDBHelp = false;
     this.autoDetectFeatures();
