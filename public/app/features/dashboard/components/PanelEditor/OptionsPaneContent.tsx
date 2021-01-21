@@ -152,7 +152,7 @@ export const TabsBarContent: React.FC<{
 
     return (
       <Transition in={true} timeout={0} appear={true}>
-        {state => {
+        {(state) => {
           return (
             <div className={styles.searchWrapper}>
               <div style={{ ...defaultStyles, ...transitionStyles[state] }}>
@@ -160,7 +160,7 @@ export const TabsBarContent: React.FC<{
                   className={styles.searchInput}
                   type="text"
                   prefix={<Icon name="search" />}
-                  ref={elem => elem && elem.focus()}
+                  ref={(elem) => elem && elem.focus()}
                   placeholder="Search all options"
                   suffix={
                     <Icon name="times" onClick={() => setSearchMode(false)} className={styles.searchRemoveIcon} />
@@ -176,7 +176,7 @@ export const TabsBarContent: React.FC<{
 
   // Show the appropriate tabs
   let tabs = tabSelections;
-  let active = tabs.find(v => v.value === activeTab)!;
+  let active = tabs.find((v) => v.value === activeTab)!;
 
   // If no field configs hide Fields & Override tab
   if (plugin.fieldConfigRegistry.isEmpty()) {
@@ -191,14 +191,14 @@ export const TabsBarContent: React.FC<{
           <Select
             options={tabs}
             value={active}
-            onChange={v => {
+            onChange={(v) => {
               setActiveTab(v.value!);
             }}
           />
         </div>
       ) : (
         <>
-          {tabs.map(item => (
+          {tabs.map((item) => (
             <Tab
               key={item.value}
               label={item.label!}

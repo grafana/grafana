@@ -28,14 +28,14 @@ export const createCustomVariableAdapter = (): VariableAdapter<CustomVariableMod
     setValueFromUrl: async (variable, urlValue) => {
       await dispatch(setOptionFromUrl(toVariableIdentifier(variable), urlValue));
     },
-    updateOptions: async variable => {
+    updateOptions: async (variable) => {
       await dispatch(updateCustomVariableOptions(toVariableIdentifier(variable)));
     },
-    getSaveModel: variable => {
+    getSaveModel: (variable) => {
       const { index, id, state, global, ...rest } = cloneDeep(variable);
       return rest;
     },
-    getValueForUrl: variable => {
+    getValueForUrl: (variable) => {
       if (isAllVariable(variable)) {
         return ALL_VARIABLE_TEXT;
       }

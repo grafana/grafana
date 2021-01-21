@@ -79,10 +79,10 @@ function getItems(links: LinkModel[]) {
     return acc;
   }, {});
 
-  return Object.keys(groups).map(key => {
+  return Object.keys(groups).map((key) => {
     return {
       label: key,
-      items: groups[key].map(link => ({
+      items: groups[key].map((link) => ({
         label: link.newTitle || link.l.title,
         url: link.l.href,
         onClick: link.l.onClick,
@@ -98,7 +98,7 @@ function NodeHeader(props: { node: NodeDatum; nodes: DataFrame }) {
     <div>
       {fields.title && <Label field={fields.title} index={index} />}
       {fields.subTitle && <Label field={fields.subTitle} index={index} />}
-      {fields.details.map(f => (
+      {fields.details.map((f) => (
         <Label key={f.name} field={f} index={index} />
       ))}
     </div>
@@ -110,7 +110,7 @@ function EdgeHeader(props: { edge: EdgeDatum; edges: DataFrame }) {
   const fields = getEdgeFields(props.edges);
   return (
     <div>
-      {fields.details.map(f => (
+      {fields.details.map((f) => (
         <Label key={f.name} field={f} index={index} />
       ))}
     </div>

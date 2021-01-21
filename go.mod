@@ -23,7 +23,7 @@ require (
 	github.com/cortexproject/cortex v1.4.1-0.20201022071705-85942c5703cf
 	github.com/crewjam/saml v0.4.6-0.20201227203850-bca570abb2ce
 	github.com/davecgh/go-spew v1.1.1
-	github.com/denisenkom/go-mssqldb v0.0.0-20200620013148-b91950f658ec
+	github.com/denisenkom/go-mssqldb v0.0.0-20200910202707-1e08a3fab204
 	github.com/facebookgo/ensure v0.0.0-20160127193407-b4ab57deab51 // indirect
 	github.com/facebookgo/inject v0.0.0-20180706035515-f23751cae28b
 	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect

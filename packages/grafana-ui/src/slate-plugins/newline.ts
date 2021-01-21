@@ -30,10 +30,7 @@ export function NewlinePlugin(): Plugin {
         const currentLineText = startBlock.text;
         const indent = getIndent(currentLineText);
 
-        return editor
-          .splitBlock()
-          .insertText(indent)
-          .focus();
+        return editor.splitBlock().insertText(indent).focus();
       }
 
       return next();

@@ -106,7 +106,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
         case 'ArrowUp':
           event.preventDefault();
           const direction = event.key === 'ArrowDown' ? 1 : -1;
-          return setSuggestionsIndex(index => modulo(index + direction, stateRef.current.suggestions.length));
+          return setSuggestionsIndex((index) => modulo(index + direction, stateRef.current.suggestions.length));
         default:
           return next();
       }

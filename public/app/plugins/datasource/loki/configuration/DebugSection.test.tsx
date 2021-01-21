@@ -66,11 +66,6 @@ describe('DebugSection', () => {
     expect(wrapper.find('table').length).toBe(1);
     // 3 rows + one header
     expect(wrapper.find('tr').length).toBe(4);
-    expect(
-      wrapper
-        .find('tr')
-        .at(1)
-        .contains('http://localhost/trace/1234')
-    ).toBeTruthy();
+    expect(wrapper.find('tr').at(1).contains('http://localhost/trace/1234')).toBeTruthy();
   });
 });

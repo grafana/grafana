@@ -55,7 +55,7 @@ export const ElasticDetails = (props: Props) => {
                   options={indexPatternTypes}
                   onChange={intervalHandler(value, onChange)}
                   value={indexPatternTypes.find(
-                    pattern =>
+                    (pattern) =>
                       pattern.value === (value.jsonData.interval === undefined ? 'none' : value.jsonData.interval)
                   )}
                 />
@@ -82,7 +82,7 @@ export const ElasticDetails = (props: Props) => {
             inputEl={
               <Select
                 options={esVersions}
-                onChange={option => {
+                onChange={(option) => {
                   const maxConcurrentShardRequests = getMaxConcurrenShardRequestOrDefault(
                     value.jsonData.maxConcurrentShardRequests,
                     option.value!
@@ -96,7 +96,7 @@ export const ElasticDetails = (props: Props) => {
                     },
                   });
                 }}
-                value={esVersions.find(version => version.value === value.jsonData.esVersion)}
+                value={esVersions.find((version) => version.value === value.jsonData.esVersion)}
               />
             }
           />
@@ -181,7 +181,7 @@ const intervalHandler = (value: Props['value'], onChange: Props['onChange']) => 
     let newDatabase = '';
 
     if (newInterval !== undefined) {
-      const pattern = indexPatternTypes.find(pattern => pattern.value === newInterval);
+      const pattern = indexPatternTypes.find((pattern) => pattern.value === newInterval);
 
       if (pattern) {
         newDatabase = pattern.example ?? '';

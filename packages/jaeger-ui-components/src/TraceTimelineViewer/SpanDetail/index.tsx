@@ -206,7 +206,7 @@ export default function SpanDetail(props: SpanDetailProps) {
             isOpen={logsState.isOpen}
             openedItems={logsState.openedItems}
             onToggle={() => logsToggle(spanID)}
-            onItemToggle={logItem => logItemToggle(spanID, logItem)}
+            onItemToggle={(logItem) => logItemToggle(spanID, logItem)}
             timestamp={traceStartTime}
           />
         )}
@@ -225,7 +225,7 @@ export default function SpanDetail(props: SpanDetailProps) {
             label="Stack trace"
             data={stackTraces}
             isOpen={isStackTracesOpen}
-            TextComponent={textComponentProps => {
+            TextComponent={(textComponentProps) => {
               let text;
               if (textComponentProps.data?.length > 1) {
                 text = textComponentProps.data

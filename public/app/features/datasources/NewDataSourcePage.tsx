@@ -47,8 +47,8 @@ class NewDataSourcePage extends PureComponent<Props> {
     return (
       <List
         items={plugins}
-        getItemKey={item => item.id.toString()}
-        renderItem={item => (
+        getItemKey={(item) => item.id.toString()}
+        renderItem={(item) => (
           <DataSourceTypeCard
             plugin={item}
             onClick={() => this.onDataSourceTypeClicked(item)}
@@ -68,7 +68,7 @@ class NewDataSourcePage extends PureComponent<Props> {
 
     return (
       <>
-        {categories.map(category => (
+        {categories.map((category) => (
           <div className="add-data-source-category" key={category.id}>
             <div className="add-data-source-category__header">{category.title}</div>
             {this.renderPlugins(category.plugins)}
@@ -126,7 +126,7 @@ interface DataSourceTypeCardProps {
   onLearnMoreClick: (evt: React.SyntheticEvent<HTMLElement>) => void;
 }
 
-const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
+const DataSourceTypeCard: FC<DataSourceTypeCardProps> = (props) => {
   const { plugin, onLearnMoreClick } = props;
   const isPhantom = plugin.module === 'phantom';
   const onClick = !isPhantom && !plugin.unlicensed ? props.onClick : () => {};

@@ -68,7 +68,7 @@ export const VisualizationTabUnconnected = React.forwardRef<HTMLInputElement, Pr
         <Field>
           <Input
             value={searchQuery}
-            onChange={e => setSearchQuery(e.currentTarget.value)}
+            onChange={(e) => setSearchQuery(e.currentTarget.value)}
             onKeyPress={onKeyPress}
             prefix={<Icon name="filter" className={styles.icon} />}
             suffix={suffix}

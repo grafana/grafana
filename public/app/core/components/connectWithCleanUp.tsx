@@ -21,7 +21,7 @@ export const connectWithCleanUp = <
     // @ts-ignore
   )(Component);
 
-  const ConnectedComponentWithCleanUp: FunctionComponent = props => {
+  const ConnectedComponentWithCleanUp: FunctionComponent = (props) => {
     const dispatch = useDispatch();
     useEffect(() => {
       return function cleanUp() {

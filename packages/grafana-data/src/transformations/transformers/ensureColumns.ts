@@ -11,9 +11,9 @@ export const ensureColumnsTransformer: DataTransformerInfo = {
   id: DataTransformerID.ensureColumns,
   name: 'Ensure Columns Transformer',
   description: 'Will check if current data frames is series or columns. If in series it will convert to columns.',
-  operator: (options = {}) => source =>
+  operator: (options = {}) => (source) =>
     source.pipe(
-      mergeMap(data => {
+      mergeMap((data) => {
         // Assume timeseries should first be joined by time
         const timeFieldName = findConsistentTimeFieldName(data);
 

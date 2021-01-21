@@ -14,13 +14,9 @@ export const login = (username = DEFAULT_USERNAME, password = DEFAULT_PASSWORD) 
 
   // Local tests will have insecure credentials
   if (password === DEFAULT_PASSWORD) {
-    e2e.pages.Login.skip()
-      .should('be.visible')
-      .click();
+    e2e.pages.Login.skip().should('be.visible').click();
   }
 
-  e2e()
-    .get('.login-page')
-    .should('not.exist');
+  e2e().get('.login-page').should('not.exist');
   e2e().logToConsole('Logged in with username:', username);
 };

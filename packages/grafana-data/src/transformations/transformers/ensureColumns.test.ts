@@ -43,7 +43,7 @@ describe('ensureColumns transformer', () => {
 
     const data = [seriesA, seriesBC];
 
-    await expect(transformDataFrame([cfg], data)).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], data)).toEmitValuesWith((received) => {
       const filtered = received[0];
       expect(filtered.length).toEqual(1);
 

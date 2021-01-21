@@ -35,7 +35,7 @@ export type Props = OwnProps & DispatchProps;
 const getCopiedPanelPlugins = () => {
   const panels = _.chain(config.panels)
     .filter({ hideFromList: false })
-    .map(item => item)
+    .map((item) => item)
     .value();
   const copiedPanels = [];
 

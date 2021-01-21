@@ -40,7 +40,7 @@ export const AdminListOrgsPages: FC = () => {
           {state.value && (
             <AdminOrgsTable
               orgs={state.value}
-              onDelete={orgId => {
+              onDelete={(orgId) => {
                 deleteOrg(orgId).then(() => fetchOrgs());
               }}
             />

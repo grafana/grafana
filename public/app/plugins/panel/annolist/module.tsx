@@ -5,7 +5,7 @@ import { AnnoListPanel } from './AnnoListPanel';
 import { AnnoOptions } from './types';
 
 export const plugin = new PanelPlugin<AnnoOptions>(AnnoListPanel)
-  .setPanelOptions(builder => {
+  .setPanelOptions((builder) => {
     builder
       .addBooleanSwitch({
         path: 'showUser',

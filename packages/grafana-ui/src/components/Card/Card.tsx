@@ -84,8 +84,8 @@ export const Card: CardInterface = ({
   const theme = useTheme();
   const styles = getCardStyles(theme);
   const [tags, figure, meta, actions, secondaryActions] = ['Tags', 'Figure', 'Meta', 'Actions', 'SecondaryActions'].map(
-    item => {
-      const found = React.Children.toArray(children as React.ReactElement[]).find(child => {
+    (item) => {
+      const found = React.Children.toArray(children as React.ReactElement[]).find((child) => {
         return child?.type && (child.type as any).displayName === item;
       });
 
@@ -315,7 +315,7 @@ interface ActionsProps extends ChildProps {
 
 const BaseActions: FC<ActionsProps> = ({ children, styles, disabled, variant }) => {
   const css = variant === 'primary' ? styles?.actions : styles?.secondaryActions;
-  return <div className={css}>{React.Children.map(children, child => cloneElement(child, { disabled }))}</div>;
+  return <div className={css}>{React.Children.map(children, (child) => cloneElement(child, { disabled }))}</div>;
 };
 
 const Actions: FC<ActionsProps> = ({ children, styles, disabled }) => {

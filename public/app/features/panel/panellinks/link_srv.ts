@@ -84,7 +84,7 @@ const buildLabelPath = (label: string) => {
 export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [
   ...getTemplateSrv()
     .getVariables()
-    .map(variable => ({
+    .map((variable) => ({
       value: variable.name as string,
       label: variable.name,
       origin: VariableOrigin.Template,
@@ -110,10 +110,7 @@ const getFieldVars = (dataFrames: DataFrame[]) => {
     }
   }
 
-  const labels = _.chain(all)
-    .flatten()
-    .uniq()
-    .value();
+  const labels = _.chain(all).flatten().uniq().value();
 
   return [
     {
@@ -122,7 +119,7 @@ const getFieldVars = (dataFrames: DataFrame[]) => {
       documentation: 'Field name of the clicked datapoint (in ms epoch)',
       origin: VariableOrigin.Field,
     },
-    ...labels.map(label => ({
+    ...labels.map((label) => ({
       value: `__field.labels${buildLabelPath(label)}`,
       label: `labels.${label}`,
       documentation: `${label} label value`,
@@ -246,7 +243,7 @@ export const getPanelOptionsVariableSuggestions = (plugin: PanelPlugin, data?: D
     ...dataVariables, // field values
     ...getTemplateSrv()
       .getVariables()
-      .map(variable => ({
+      .map((variable) => ({
         value: variable.name as string,
         label: variable.name,
         origin: VariableOrigin.Template,
