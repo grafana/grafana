@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { oneLineTrim } from 'common-tags';
-import { text, boolean } from '@storybook/addon-knobs';
+import { boolean, text } from '@storybook/addon-knobs';
+import { Icon, Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
+import { css, cx } from 'emotion';
+
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { UseState } from '../../utils/storybook/UseState';
-import { Modal, Icon, TabContent, ModalTabsHeader } from '@grafana/ui';
 import mdx from './Modal.mdx';
 
 const getKnobs = () => {
@@ -87,5 +89,23 @@ export const WithTabs = () => {
         );
       }}
     </UseState>
+  );
+};
+
+export const UsingContentClassName = () => {
+  const { body, visible } = getKnobs();
+  const override = {
+    modalContent: css`
+      background-color: darkorange;
+    `,
+  };
+  return (
+    <Modal
+      title="Using contentClassName to override background"
+      isOpen={visible}
+      contentClassName={cx(override.modalContent)}
+    >
+      {body}
+    </Modal>
   );
 };
