@@ -59,7 +59,7 @@ export function annotationTooltipDirective(
       `;
 
       // Show edit icon only for users with at least Editor role
-      if (event.id && dashboard.meta.canEdit) {
+      if (event.id && dashboard.canAddAnnotations()) {
         header += `
           <span class="pointer graph-annotation__edit-icon" ng-click="onEdit()">
             <i class="fa fa-pencil-square"></i>

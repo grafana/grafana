@@ -180,7 +180,7 @@ class GraphElement {
       return;
     }
 
-    if ((ranges.ctrlKey || ranges.metaKey) && (this.dashboard.meta.canEdit || this.dashboard.meta.canMakeEditable)) {
+    if ((ranges.ctrlKey || ranges.metaKey) && this.dashboard.canAddAnnotations()) {
       // Add annotation
       setTimeout(() => {
         this.eventManager.updateTime(ranges.xaxis);
@@ -201,7 +201,7 @@ class GraphElement {
   ): (() => MenuItemsGroup[]) => {
     return () => {
       // Fixed context menu items
-      const items: MenuItemsGroup[] = this.dashboard?.editable
+      const items: MenuItemsGroup[] = this.dashboard.canAddAnnotations()
         ? [
             {
               items: [
@@ -253,7 +253,7 @@ class GraphElement {
       }
 
       // skip if dashboard is not saved yet (exists in db) or user cannot edit
-      if (!this.dashboard.id || (!this.dashboard.meta.canEdit && !this.dashboard.meta.canMakeEditable)) {
+      if (!this.dashboard.id || !this.dashboard.canAddAnnotations()) {
         return;
       }
 
