@@ -90,7 +90,7 @@ export class TransformationsEditor extends React.PureComponent<TransformationsEd
 
   onChange(transformations: TransformationsEditorTransformation[]) {
     this.setState({ transformations });
-    this.props.panel.setTransformations(transformations.map(t => t.transformation));
+    this.props.panel.setTransformations(transformations.map((t) => t.transformation));
   }
 
   // Transformation uid are stored in a name-X form. name is NOT unique hence we need to parse the ids and increase X
@@ -98,10 +98,10 @@ export class TransformationsEditor extends React.PureComponent<TransformationsEd
   getTransformationNextId = (name: string) => {
     const { transformations } = this.state;
     let nextId = 0;
-    const existingIds = transformations.filter(t => t.id.startsWith(name)).map(t => t.id);
+    const existingIds = transformations.filter((t) => t.id.startsWith(name)).map((t) => t.id);
 
     if (existingIds.length !== 0) {
-      nextId = Math.max(...existingIds.map(i => parseInt(i.match(/\d+/)![0], 10))) + 1;
+      nextId = Math.max(...existingIds.map((i) => parseInt(i.match(/\d+/)![0], 10))) + 1;
     }
 
     return `${name}-${nextId}`;
@@ -138,7 +138,7 @@ export class TransformationsEditor extends React.PureComponent<TransformationsEd
   };
 
   renderTransformationSelector = () => {
-    const availableTransformers = standardTransformersRegistry.list().map(t => {
+    const availableTransformers = standardTransformersRegistry.list().map((t) => {
       return {
         value: t.transformation.id,
         label: t.name,
@@ -188,7 +188,7 @@ export class TransformationsEditor extends React.PureComponent<TransformationsEd
     return (
       <DragDropContext onDragEnd={this.onDragEnd}>
         <Droppable droppableId="transformations-list" direction="vertical">
-          {provided => {
+          {(provided) => {
             return (
               <div ref={provided.innerRef} {...provided.droppableProps}>
                 <TransformationOperationRows
@@ -221,7 +221,7 @@ export class TransformationsEditor extends React.PureComponent<TransformationsEd
           </FeatureInfoBox>
         </Container>
         <VerticalGroup>
-          {standardTransformersRegistry.list().map(t => {
+          {standardTransformersRegistry.list().map((t) => {
             return (
               <TransformationCard
                 key={t.name}
@@ -272,7 +272,7 @@ export class TransformationsEditor extends React.PureComponent<TransformationsEd
   }
 }
 
-const TransformationCard: React.FC<CardProps> = props => {
+const TransformationCard: React.FC<CardProps> = (props) => {
   const theme = useTheme();
   const styles = getTransformationCardStyles(theme);
   return <Card {...props} className={styles.card} />;

@@ -19,9 +19,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme, hidden: boolean) => {
     button: css`
       justify-content: start;
       ${hidden &&
-        css`
-          color: ${theme.colors.textFaint};
-        `}
+      css`
+        color: ${theme.colors.textFaint};
+      `}
     `,
   };
 });

@@ -164,7 +164,7 @@ describe('dataSourceSettingsReducer', () => {
           plugin: {} as GenericDataSourcePlugin,
         })
         .whenActionIsDispatched(initDataSourceSettingsFailed(new Error('Some error')))
-        .thenStatePredicateShouldEqual(resultingState => {
+        .thenStatePredicateShouldEqual((resultingState) => {
           expect(resultingState.plugin).toEqual(null);
           expect(resultingState.loadError).toEqual('Some error');
           return true;

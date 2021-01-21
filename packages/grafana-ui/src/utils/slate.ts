@@ -12,7 +12,7 @@ export const SCHEMA: SchemaProperties = {
 };
 
 export const makeFragment = (text: string, syntax?: string): Document => {
-  const lines = text.split('\n').map(line =>
+  const lines = text.split('\n').map((line) =>
     Block.create({
       type: 'code_line',
       nodes: [Text.create(line)],

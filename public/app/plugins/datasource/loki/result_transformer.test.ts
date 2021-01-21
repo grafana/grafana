@@ -1,5 +1,12 @@
 import { CircularDataFrame, FieldCache, FieldType, MutableDataFrame } from '@grafana/data';
-import { LokiStreamResult, LokiTailResponse, LokiStreamResponse, LokiResultType, TransformerOptions } from './types';
+import {
+  LokiStreamResult,
+  LokiTailResponse,
+  LokiStreamResponse,
+  LokiResultType,
+  TransformerOptions,
+  LokiMatrixResult,
+} from './types';
 import * as ResultTransformer from './result_transformer';
 import { enhanceDataFrame, lokiPointsToTimeseriesPoints } from './result_transformer';
 import { setTemplateSrv } from '@grafana/runtime';
@@ -60,7 +67,7 @@ describe('loki result transformer', () => {
 
   describe('lokiStreamResultToDataFrame', () => {
     it('converts streams to series', () => {
-      const data = streamResult.map(stream => ResultTransformer.lokiStreamResultToDataFrame(stream));
+      const data = streamResult.map((stream) => ResultTransformer.lokiStreamResultToDataFrame(stream));
 
       expect(data.length).toBe(2);
       expect(data[0].fields[1].labels!['foo']).toEqual('bar');
@@ -94,7 +101,7 @@ describe('loki result transformer', () => {
         },
       ];
 
-      const data = streamResultWithDuplicateLogs.map(stream => ResultTransformer.lokiStreamResultToDataFrame(stream));
+      const data = streamResultWithDuplicateLogs.map((stream) => ResultTransformer.lokiStreamResultToDataFrame(stream));
 
       expect(data[0].fields[2].values.get(0)).toEqual('65cee200875f58ee1430d8bd2e8b74e7');
       expect(data[0].fields[2].values.get(1)).toEqual('65cee200875f58ee1430d8bd2e8b74e7_1');
@@ -118,9 +125,9 @@ describe('loki result transformer', () => {
       });
 
       expect(ResultTransformer.enhanceDataFrame).toBeCalled();
-      dataFrames.forEach(frame => {
+      dataFrames.forEach((frame) => {
         expect(
-          frame.fields.filter(field => field.name === 'test' && field.type === 'string').length
+          frame.fields.filter((field) => field.name === 'test' && field.type === 'string').length
         ).toBeGreaterThanOrEqual(1);
       });
     });
@@ -207,6 +214,20 @@ describe('loki result transformer', () => {
         legendFormat: '{{$testLabel}}',
       } as unknown) as TransformerOptions);
       expect(label).toBe('label1');
+    });
+  });
+
+  describe('lokiResultsToTableModel', () => {
+    it('should correctly set the type of the label column to be a string', () => {
+      const lokiResultWithIntLabel = ([
+        { metric: { test: 1 }, value: [1610367143, 10] },
+        { metric: { test: 2 }, value: [1610367144, 20] },
+      ] as unknown) as LokiMatrixResult[];
+
+      const table = ResultTransformer.lokiResultsToTableModel(lokiResultWithIntLabel, 1, 'A', {});
+      expect(table.columns[0].type).toBe('time');
+      expect(table.columns[1].type).toBe('string');
+      expect(table.columns[2].type).toBe('number');
     });
   });
 });

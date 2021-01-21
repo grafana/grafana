@@ -1,5 +1,5 @@
 +++
-title = "Variables types"
+title = "Add variables"
 weight = 140
 +++
 

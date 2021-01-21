@@ -17,7 +17,11 @@ exports[`Render should render component 1`] = `
       >
         panel
       </div>
-      <PluginSignatureBadge />
+      <div
+        className="card-item-badge"
+      >
+        <PluginSignatureBadge />
+      </div>
     </div>
     <div
       className="card-item-body"
@@ -65,7 +69,11 @@ exports[`Render should render has plugin section 1`] = `
       >
         panel
       </div>
-      <PluginSignatureBadge />
+      <div
+        className="card-item-badge"
+      >
+        <PluginSignatureBadge />
+      </div>
       <div
         className="card-item-notice"
       >

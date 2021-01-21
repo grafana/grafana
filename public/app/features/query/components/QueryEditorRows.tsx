@@ -22,7 +22,7 @@ interface Props {
 
 export class QueryEditorRows extends PureComponent<Props> {
   onRemoveQuery = (query: DataQuery) => {
-    this.props.onQueriesChange(this.props.queries.filter(item => item !== query));
+    this.props.onQueriesChange(this.props.queries.filter((item) => item !== query));
   };
 
   onChangeQuery(query: DataQuery, index: number) {
@@ -70,7 +70,7 @@ export class QueryEditorRows extends PureComponent<Props> {
     return (
       <DragDropContext onDragEnd={this.onDragEnd}>
         <Droppable droppableId="transformations-list" direction="vertical">
-          {provided => {
+          {(provided) => {
             return (
               <div ref={provided.innerRef} {...provided.droppableProps}>
                 {queries.map((query, index) => (
@@ -81,7 +81,7 @@ export class QueryEditorRows extends PureComponent<Props> {
                     key={query.refId}
                     data={data}
                     query={query}
-                    onChange={query => this.onChangeQuery(query, index)}
+                    onChange={(query) => this.onChangeQuery(query, index)}
                     onRemoveQuery={this.onRemoveQuery}
                     onAddQuery={this.props.onAddQuery}
                     onRunQuery={this.props.onRunQueries}

@@ -54,7 +54,7 @@ export const InspectContent: React.FC<Props> = ({
 
   // Validate that the active tab is actually valid and allowed
   let activeTab = currentTab;
-  if (!tabs.find(item => item.value === currentTab)) {
+  if (!tabs.find((item) => item.value === currentTab)) {
     activeTab = InspectTab.JSON;
   }
   const title = getTemplateSrv().replace(panel.title, panel.scopedVars, 'text');
@@ -67,7 +67,7 @@ export const InspectContent: React.FC<Props> = ({
           tabs={tabs}
           tab={activeTab}
           data={data}
-          onSelectTab={item => setCurrentTab(item.value || InspectTab.Data)}
+          onSelectTab={(item) => setCurrentTab(item.value || InspectTab.Data)}
         />
       }
       width="50%"

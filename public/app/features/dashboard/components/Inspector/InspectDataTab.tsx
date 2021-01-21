@@ -68,12 +68,12 @@ export class InspectDataTab extends PureComponent<Props, State> {
     }
 
     if (prevProps.data !== this.props.data || prevState.transformId !== this.state.transformId) {
-      const currentTransform = this.state.transformationOptions.find(item => item.value === this.state.transformId);
+      const currentTransform = this.state.transformationOptions.find((item) => item.value === this.state.transformId);
 
       if (currentTransform && currentTransform.transformer.id !== DataTransformerID.noop) {
         const selectedDataFrame = this.state.selectedDataFrame;
         const dataFrameIndex = this.state.dataFrameIndex;
-        const subscription = transformDataFrame([currentTransform.transformer], this.props.data).subscribe(data => {
+        const subscription = transformDataFrame([currentTransform.transformer], this.props.data).subscribe((data) => {
           this.setState({ transformedData: data, selectedDataFrame, dataFrameIndex }, () => subscription.unsubscribe());
         });
         return;

@@ -37,7 +37,7 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
           pluginId="loki"
           current={options.jsonData.tracesToLogs?.datasourceUid}
           noDefault={true}
-          onChange={ds =>
+          onChange={(ds) =>
             updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
               datasourceUid: ds.uid,
               tags: options.jsonData.tracesToLogs?.tags,
@@ -52,7 +52,7 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
         </InlineFormLabel>
         <TagsInput
           tags={options.jsonData.tracesToLogs?.tags}
-          onChange={tags =>
+          onChange={(tags) =>
             updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
               datasourceUid: options.jsonData.tracesToLogs?.datasourceUid,
               tags: tags,

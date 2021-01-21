@@ -76,7 +76,7 @@
   display: inline;
   cursor: pointer;
   white-space: nowrap;
-  font-size: 85%;
+  font-size: 12px;
   text-align: left;
   &.current::before {
     content: 'Current: ';
@@ -105,6 +105,8 @@
   float: left;
   white-space: nowrap;
   padding-left: 10px;
+  display: flex;
+  align-items: center;
 
   &--right-y {
     float: right;
@@ -146,17 +148,12 @@
     float: none;
     display: table-cell;
     white-space: nowrap;
-    padding: 2px 10px;
+    padding: 2px;
     text-align: right;
   }
 
   .graph-legend-icon {
-    width: 5px;
-    padding: 0;
-    top: 0;
-    .fa {
-      top: 4px;
-    }
+    cursor: pointer;
   }
 
   .graph-legend-value {
@@ -164,9 +161,7 @@
   }
 
   .graph-legend-alias {
-    padding-left: 7px;
     text-align: left;
-    width: 95%;
     max-width: 650px;
     text-overflow: ellipsis;
     overflow: hidden;
@@ -196,6 +191,11 @@
     font-size: 85%;
     white-space: nowrap;
   }
+}
+
+.graph-legend-series__table-name {
+  display: flex;
+  align-items: center;
 }
 
 .graph-legend-series-hidden {

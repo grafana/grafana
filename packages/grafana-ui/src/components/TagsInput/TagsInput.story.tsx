@@ -19,14 +19,14 @@ export default {
 };
 
 export const basic = () => {
-  return <TagsInput tags={[]} onChange={tags => action('tags updated')(tags)} />;
+  return <TagsInput tags={[]} onChange={(tags) => action('tags updated')(tags)} />;
 };
 
 export const withMockTags = () => {
   return (
     <UseState initialState={mockTags}>
-      {tags => {
-        return <TagsInput tags={tags} onChange={tags => action('tags updated')(tags)} />;
+      {(tags) => {
+        return <TagsInput tags={tags} onChange={(tags) => action('tags updated')(tags)} />;
       }}
     </UseState>
   );

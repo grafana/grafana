@@ -118,7 +118,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
                 )}
                 {Object.keys(labels)
                   .sort()
-                  .map(key => {
+                  .map((key) => {
                     const value = labels[key];
                     return (
                       <LogDetailsRow
@@ -149,7 +149,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
                     </td>
                   </tr>
                 )}
-                {fields.sort().map(field => {
+                {fields.sort().map((field) => {
                   const { key, value, links, fieldIndex } = field;
                   return (
                     <LogDetailsRow

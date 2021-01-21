@@ -24,11 +24,7 @@ describe('interval actions', () => {
   variableAdapters.setInit(() => [createIntervalVariableAdapter()]);
   describe('when updateIntervalVariableOptions is dispatched', () => {
     it('then correct actions are dispatched', async () => {
-      const interval = intervalBuilder()
-        .withId('0')
-        .withQuery('1s,1m,1h,1d')
-        .withAuto(false)
-        .build();
+      const interval = intervalBuilder().withId('0').withQuery('1s,1m,1h,1d').withAuto(false).build();
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
         .givenRootReducer(getRootReducer())
@@ -51,9 +47,7 @@ describe('interval actions', () => {
     it('then an notifyApp action should be dispatched', async () => {
       const timeSrvMock = ({
         timeRange: jest.fn().mockReturnValue({
-          from: dateTime(new Date())
-            .subtract(1, 'days')
-            .toDate(),
+          from: dateTime(new Date()).subtract(1, 'days').toDate(),
           to: new Date(),
           raw: {
             from: 'now-1d',
@@ -75,7 +69,7 @@ describe('interval actions', () => {
         .whenActionIsDispatched(addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
         .whenAsyncActionIsDispatched(updateOptions(toVariableIdentifier(interval)), true);
 
-      tester.thenDispatchedActionsPredicateShouldEqual(dispatchedActions => {
+      tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
         const expectedNumberOfActions = 4;
         expect(dispatchedActions[0]).toEqual(variableStateFetching(toVariablePayload(interval)));
         expect(dispatchedActions[1]).toEqual(createIntervalOptions(toVariablePayload(interval)));
@@ -106,10 +100,7 @@ describe('interval actions', () => {
   describe('when updateAutoValue is dispatched', () => {
     describe('and auto is false', () => {
       it('then no dependencies are called', async () => {
-        const interval = intervalBuilder()
-          .withId('0')
-          .withAuto(false)
-          .build();
+        const interval = intervalBuilder().withId('0').withAuto(false).build();
 
         const dependencies: UpdateAutoValueDependencies = {
           calculateInterval: jest.fn(),

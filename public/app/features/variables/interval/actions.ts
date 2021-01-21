@@ -9,7 +9,9 @@ import { IntervalVariableModel } from '../types';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from '../../templating/template_srv';
 
-export const updateIntervalVariableOptions = (identifier: VariableIdentifier): ThunkResult<void> => async dispatch => {
+export const updateIntervalVariableOptions = (identifier: VariableIdentifier): ThunkResult<void> => async (
+  dispatch
+) => {
   await dispatch(createIntervalOptions(toVariablePayload(identifier)));
   await dispatch(updateAutoValue(identifier));
   await dispatch(validateVariableSelectionState(identifier));

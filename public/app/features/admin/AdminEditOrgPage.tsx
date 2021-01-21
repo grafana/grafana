@@ -43,7 +43,7 @@ export const AdminEditOrgPage: FC = () => {
 
   useEffect(() => {
     fetchOrg();
-    fetchOrgUsers().then(res => setUsers(res));
+    fetchOrgUsers().then((res) => setUsers(res));
   }, []);
 
   const updateOrgName = async (name: string) => {
@@ -84,7 +84,7 @@ export const AdminEditOrgPage: FC = () => {
                 onRoleChange={(role, orgUser) => {
                   updateOrgUserRole({ ...orgUser, role }, orgId);
                   setUsers(
-                    users.map(user => {
+                    users.map((user) => {
                       if (orgUser.userId === user.userId) {
                         return { ...orgUser, role };
                       }
@@ -93,9 +93,9 @@ export const AdminEditOrgPage: FC = () => {
                   );
                   fetchOrgUsers();
                 }}
-                onRemoveUser={orgUser => {
+                onRemoveUser={(orgUser) => {
                   removeOrgUser(orgUser, orgId);
-                  setUsers(users.filter(user => orgUser.userId !== user.userId));
+                  setUsers(users.filter((user) => orgUser.userId !== user.userId));
                   fetchOrgUsers();
                 }}
               />

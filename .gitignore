@@ -20,6 +20,9 @@ vendor/
 /emails/templates/enterprise_*
 /public/emails/enterprise_*
 
+# Enterprise reporting fonts
+/public/fonts/dejavu
+
 # Enterprise devenv
 /devenv/docker/blocks/grafana-enterprise
 

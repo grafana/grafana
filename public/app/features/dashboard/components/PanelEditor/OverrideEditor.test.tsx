@@ -58,7 +58,47 @@ describe('OverrideEditor', () => {
     expect(selectOptions).toHaveLength(2);
   });
 
-  it('should  not allow override selection that marked as hidden from overrides', () => {
+  it('should be able to handle non registered properties without throwing exceptions', () => {
+    registry.register({
+      id: 'lineStyle',
+      name: 'Line style',
+      path: 'lineStyle',
+      isCustom: true,
+      shouldApply: () => true,
+      process: () => null,
+      override: () => null,
+      editor: () => null,
+      hideFromOverrides: true,
+    });
+
+    render(
+      <OverrideEditor
+        name={'test'}
+        data={[]}
+        override={{
+          matcher: {
+            id: 'byName',
+            options: 'A-series',
+          },
+          properties: [
+            {
+              id: 'lineStyle',
+              value: 'customValue',
+            },
+            {
+              id: 'does.not.exist',
+              value: 'testing',
+            },
+          ],
+        }}
+        registry={registry}
+        onChange={() => {}}
+        onRemove={() => {}}
+      />
+    );
+  });
+
+  it('should not allow override selection that marked as hidden from overrides', () => {
     registry.register({
       id: 'lineStyle',
       name: 'Line style',

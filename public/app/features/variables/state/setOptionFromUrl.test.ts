@@ -27,12 +27,7 @@ describe('when setOptionFromUrl is dispatched with a custom variable (no refresh
     ${null}       | ${true}  | ${[null]}
     ${undefined}  | ${true}  | ${[undefined]}
   `('and urlValue is $urlValue then correct actions are dispatched', async ({ urlValue, expected, isMulti }) => {
-    const custom = customBuilder()
-      .withId('0')
-      .withMulti(isMulti)
-      .withOptions('A', 'B', 'C')
-      .withCurrent('A')
-      .build();
+    const custom = customBuilder().withId('0').withMulti(isMulti).withOptions('A', 'B', 'C').withCurrent('A').build();
 
     const tester = await reduxTester<{ templating: TemplatingState }>()
       .givenRootReducer(getTemplatingRootReducer())

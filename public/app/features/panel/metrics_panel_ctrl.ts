@@ -166,7 +166,7 @@ class MetricsPanelCtrl extends PanelCtrl {
         this.handleDataFrames(data.series);
       } else {
         // Make the results look as if they came directly from a <6.2 datasource request
-        const legacy = data.series.map(v => toLegacyResponseData(v));
+        const legacy = data.series.map((v) => toLegacyResponseData(v));
         this.handleQueryResult({ data: legacy });
       }
 
@@ -211,7 +211,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.loading = false;
 
     if (this.dashboard && this.dashboard.snapshot) {
-      this.panel.snapshotData = data.map(frame => toDataFrameDTO(frame));
+      this.panel.snapshotData = data.map((frame) => toDataFrameDTO(frame));
     }
 
     try {

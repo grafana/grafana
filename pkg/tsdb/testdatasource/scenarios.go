@@ -423,6 +423,12 @@ func init() {
 			return queryRes
 		},
 	})
+
+	registerScenario(&Scenario{
+		Id:   "node_graph",
+		Name: "Node Graph",
+		// Data generated in JS
+	})
 }
 
 // PredictablePulseDesc is the description for the Predictable Pulse scenerio.

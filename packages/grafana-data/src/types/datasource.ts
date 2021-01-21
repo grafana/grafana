@@ -75,9 +75,16 @@ export class DataSourcePlugin<
     return this;
   }
 
-  setExploreStartPage(ExploreStartPage: ComponentType<ExploreStartPageProps>) {
-    this.components.ExploreStartPage = ExploreStartPage;
+  setQueryEditorHelp(QueryEditorHelp: ComponentType<QueryEditorHelpProps>) {
+    this.components.QueryEditorHelp = QueryEditorHelp;
     return this;
+  }
+
+  /**
+   * @deprecated prefer using `setQueryEditorHelp`
+   */
+  setExploreStartPage(ExploreStartPage: ComponentType<QueryEditorHelpProps>) {
+    return this.setQueryEditorHelp(ExploreStartPage);
   }
 
   /*
@@ -99,8 +106,8 @@ export class DataSourcePlugin<
     this.components.QueryCtrl = pluginExports.QueryCtrl;
     this.components.AnnotationsQueryCtrl = pluginExports.AnnotationsQueryCtrl;
     this.components.ExploreQueryField = pluginExports.ExploreQueryField;
-    this.components.ExploreStartPage = pluginExports.ExploreStartPage;
     this.components.QueryEditor = pluginExports.QueryEditor;
+    this.components.QueryEditorHelp = pluginExports.QueryEditorHelp;
     this.components.VariableQueryEditor = pluginExports.VariableQueryEditor;
   }
 }
@@ -140,7 +147,7 @@ export interface DataSourcePluginComponents<
   ExploreQueryField?: ComponentType<ExploreQueryFieldProps<DSType, TQuery, TOptions>>;
   ExploreMetricsQueryField?: ComponentType<ExploreQueryFieldProps<DSType, TQuery, TOptions>>;
   ExploreLogsQueryField?: ComponentType<ExploreQueryFieldProps<DSType, TQuery, TOptions>>;
-  ExploreStartPage?: ComponentType<ExploreStartPageProps>;
+  QueryEditorHelp?: ComponentType<QueryEditorHelpProps>;
   ConfigEditor?: ComponentType<DataSourcePluginOptionsEditorProps<TOptions, TSecureOptions>>;
   MetadataInspector?: ComponentType<MetadataInspectorProps<DSType, TQuery, TOptions>>;
 }
@@ -282,7 +289,7 @@ export abstract class DataSourceApi<
   interpolateVariablesInQueries?(queries: TQuery[], scopedVars: ScopedVars | {}): TQuery[];
 
   /**
-   * An annotation processor allows explict control for how annotations are managed.
+   * An annotation processor allows explicit control for how annotations are managed.
    *
    * It is only necessary to configure an annotation processor if the default behavior is not desirable
    */
@@ -365,7 +372,7 @@ export interface ExploreQueryFieldProps<
   exploreId?: any;
 }
 
-export interface ExploreStartPageProps {
+export interface QueryEditorHelpProps {
   datasource: DataSourceApi;
   onClickExample: (query: DataQuery) => void;
   exploreId?: any;
@@ -431,7 +438,7 @@ export interface DataQuery {
   queryType?: string;
 
   /**
-   * The data topic resuls should be attached to
+   * The data topic results should be attached to
    */
   dataTopic?: DataTopic;
 

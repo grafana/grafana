@@ -132,7 +132,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
         <LogsCrossFadeTransition visible={isLive}>
           <Collapse label="Logs" loading={false} isOpen>
             <LiveTailControls exploreId={exploreId}>
-              {controls => (
+              {(controls) => (
                 <LiveLogsWithTheme
                   logRows={logRows}
                   timeZone={timeZone}

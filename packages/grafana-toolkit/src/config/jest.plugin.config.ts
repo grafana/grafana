@@ -28,7 +28,7 @@ export const jestConfig = (baseDir: string = process.cwd()) => {
   const jestConfigOverrides = (require(path.resolve(baseDir, 'package.json')).jest || {}) as EnabledJestConfigOverrides;
 
   const deniedOverrides = jestConfigOverrides
-    ? Object.keys(jestConfigOverrides).filter(override => allowedJestConfigOverrides.indexOf(override) === -1)
+    ? Object.keys(jestConfigOverrides).filter((override) => allowedJestConfigOverrides.indexOf(override) === -1)
     : [];
 
   if (deniedOverrides.length > 0) {
@@ -50,7 +50,7 @@ export const jestConfig = (baseDir: string = process.cwd()) => {
   const setupFile = getSetupFile(setupFilePath);
   const shimsFile = getSetupFile(shimsFilePath);
 
-  const setupFiles = [setupFile, shimsFile, 'jest-canvas-mock'].filter(f => f);
+  const setupFiles = [setupFile, shimsFile, 'jest-canvas-mock'].filter((f) => f);
   const defaultJestConfig = {
     preset: 'ts-jest',
     verbose: false,

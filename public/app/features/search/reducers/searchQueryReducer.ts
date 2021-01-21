@@ -35,7 +35,7 @@ export const queryReducer = (state: DashboardQuery, action: SearchAction) => {
     case QUERY_CHANGE:
       return { ...state, query: action.payload };
     case REMOVE_TAG:
-      return { ...state, tag: state.tag.filter(t => t !== action.payload) };
+      return { ...state, tag: state.tag.filter((t) => t !== action.payload) };
     case SET_TAGS:
       return { ...state, tag: action.payload };
     case ADD_TAG: {
