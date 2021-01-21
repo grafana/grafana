@@ -89,7 +89,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
         .addRadio({
           path: 'gradientMode',
           name: 'Gradient mode',
-          defaultValue: graphFieldOptions.fillGradient[0],
+          defaultValue: graphFieldOptions.fillGradient[0].value,
           settings: {
             options: graphFieldOptions.fillGradient,
           },
