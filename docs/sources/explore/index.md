@@ -7,17 +7,40 @@ weight = 90
 
 # Explore
 
-Grafana's dashboard UI is all about building dashboards for visualization. Explore strips away all the dashboard and panel options so that you can focus on the query. Iterate until you have a working query and then think about building a dashboard.
+Grafana's dashboard UI is all about building dashboards for visualization. Explore, available in Grafana 6.0+, strips away the dashboard and panel options so that you can focus on the query. It helps you iterate until you have a working query and then think about building a dashboard. 
 
-> Explore is only available in Grafana 6.0 and above.
+If you just want to explore your data and do not want to create a dashboard, then Explore makes this much easier. If your data source supports graph and table data, then Explore shows the results both as a graph and a table. This allows you to see trends in the data and more details at the same time.
 
-For infrastructure monitoring and incident response, you no longer need to switch to other tools to debug what went wrong. Explore allows you to dig deeper into your metrics and logs to find the cause. Grafana's new logging data source, [Loki](https://github.com/grafana/loki) is tightly integrated into Explore and allows you to correlate metrics and logs by viewing them side-by-side. This creates a new debugging workflow where you can:
+During infrastructure monitoring and incident response, Explore allows you to dig deeper into your metrics and logs to find the cause. As a result, you do not need to switch to other tools to debug what went wrong. 
+
+Grafana's logging data source, [Loki](https://github.com/grafana/loki) is tightly integrated into Explore and allows you to correlate metrics and logs by viewing them side-by-side. This creates a new debugging workflow where you can:
 
 1. Receive an alert
 1. Drill down and examine metrics
 1. Drill down again and search logs related to the metric and time interval (and in the future, distributed traces)
 
-If you just want to explore your data and do not want to create a dashboard, then Explore makes this much easier. If your data source supports graph and table data, then Explore shows the results both as a graph and a table. This allows you to see trends in the data and more details at the same time.
+## Navigate between Explore and a dashboard
+
+To help accelerate workflows that involve regularly switching from Explore to a dashboard and vice-versa, we've added the ability to return to the origin dashboard after navigating to Explore from the panel's dropdown.
+
+{{< docs-imagebox img="/img/docs/v64/panel_dropdown.png" class="docs-image--no-shadow" caption="Screenshot of the panel dropdown" >}}
+
+After you've navigated to Explore, you should notice a "Back" button in the Explore toolbar.
+
+{{< docs-imagebox img="/img/docs/v64/explore_toolbar.png" class="docs-image--no-shadow" caption="Screenshot of the explore toolbar" >}}
+
+Simply clicking the button will return you to the origin dashboard, or, if you'd like to bring changes you make in Explore back to the dashboard, simply click
+the arrow next to the button to reveal a "Return to panel with changes" menu item.
+
+{{< docs-imagebox img="/img/docs/v64/explore_return_dropdown.png" class="docs-image--no-shadow" caption="Screenshot of the expanded explore return dropdown" >}}
+
+## Query inspector
+
+To help with debugging queries, Explore allows you to investigate query requests and responses, as well as query statistics, via the Query inspector.
+This functionality is similar to the panel inspector [Stats tab]({{< relref "../panels/inspect-panel.md#inspect-query-performance" >}}) and
+[Query tab]({{< relref "../panels/inspect-panel.md##view-raw-request-and-response-to-data-source" >}}).
+
+{{< docs-imagebox img="/img/docs/v71/query_inspector_explore.png" class="docs-image--no-shadow" caption="Screenshot of the query inspector button in Explore" >}}
 
 ## Start exploring
 
@@ -311,28 +334,3 @@ You can navigate from a span in a trace view directly to logs relevant for that 
 {{< docs-imagebox img="/img/docs/v74/trace-to-logs.png" class="docs-image--no-shadow" caption="Screenshot of the trace view in Explore with new icon next to the spans" >}}
 
 Click the document icon to open a split view in Explore with the configured data source and query relevant logs for the span.
-
-## Navigate between Explore and a dashboard
-
-To help accelerate workflows that involve regularly switching from Explore to a dashboard and vice-versa, we've added the ability to return to the origin dashboard after navigating to Explore from the panel's dropdown.
-
-{{< docs-imagebox img="/img/docs/v64/panel_dropdown.png" class="docs-image--no-shadow" caption="Screenshot of the panel dropdown" >}}
-
-After you've navigated to Explore, you should notice a "Back" button in the Explore toolbar.
-
-{{< docs-imagebox img="/img/docs/v64/explore_toolbar.png" class="docs-image--no-shadow" caption="Screenshot of the explore toolbar" >}}
-
-Simply clicking the button will return you to the origin dashboard, or, if you'd like to bring changes you make in Explore back to the dashboard, simply click
-the arrow next to the button to reveal a "Return to panel with changes" menu item.
-
-{{< docs-imagebox img="/img/docs/v64/explore_return_dropdown.png" class="docs-image--no-shadow" caption="Screenshot of the expanded explore return dropdown" >}}
-
-## Query inspector
-
-To help with debugging queries, Explore allows you to investigate query requests and responses, as well as query statistics, via the Query inspector.
-This functionality is similar to the panel inspector [Stats tab]({{< relref "../panels/inspect-panel.md#inspect-query-performance" >}}) and
-[Query tab]({{< relref "../panels/inspect-panel.md##view-raw-request-and-response-to-data-source" >}}).
-
-{{< docs-imagebox img="/img/docs/v71/query_inspector_explore.png" class="docs-image--no-shadow" caption="Screenshot of the query inspector button in Explore" >}}
-
-
