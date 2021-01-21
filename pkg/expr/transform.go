@@ -11,10 +11,34 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
+
+var (
+	transformQueryCounter   *prometheus.CounterVec
+	transformQueryHistogram *prometheus.HistogramVec
+)
+
+func init() {
+	transformQueryCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "grafana",
+		Name:      "transform_queries_total",
+		Help:      "The total number of tranform queries",
+	}, []string{"status"})
+	prometheus.MustRegister(transformQueryCounter)
+
+	transformQueryHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Namespace: "grafana",
+		Name:      "transform_queries_duration_seconds",
+		Help:      "Tranform query histogram",
+		Buckets:   prometheus.ExponentialBuckets(0.0001, 2, 24),
+	}, []string{"status"})
+
+	prometheus.MustRegister(transformQueryHistogram)
+}
 
 func WrapTransformData(ctx context.Context, query *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	sdkReq := &backend.QueryDataRequest{
@@ -41,6 +65,7 @@ func WrapTransformData(ctx context.Context, query *tsdb.TsdbQuery) (*tsdb.Respon
 			},
 		})
 	}
+
 	pbRes, err := TransformData(ctx, sdkReq)
 	if err != nil {
 		return nil, err
@@ -69,7 +94,20 @@ func WrapTransformData(ctx context.Context, query *tsdb.TsdbQuery) (*tsdb.Respon
 
 // TransformData takes Queries which are either expressions nodes
 // or are datasource requests.
-func TransformData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func TransformData(ctx context.Context, req *backend.QueryDataRequest) (r *backend.QueryDataResponse, err error) {
+	start := time.Now()
+	defer func() {
+		var respStatus string
+		switch err {
+		case nil:
+			respStatus = "success"
+		default:
+			respStatus = "failure"
+		}
+		transformQueryCounter.WithLabelValues(respStatus).Inc()
+		transformQueryHistogram.WithLabelValues(respStatus).Observe(time.Since(start).Seconds())
+	}()
+
 	svc := Service{}
 	// Build the pipeline from the request, checking for ordering issues (e.g. loops)
 	// and parsing graph nodes from the queries.
