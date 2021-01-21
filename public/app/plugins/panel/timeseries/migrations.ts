@@ -231,6 +231,10 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
 
   if (angular.points) {
     graph.showPoints = PointVisibility.Always;
+
+    if (isNumber(angular.pointradius)) {
+      graph.pointSize = 2 + angular.pointradius * 2;
+    }
   } else if (graph.drawStyle !== DrawStyle.Points) {
     graph.showPoints = PointVisibility.Never;
   }
@@ -238,10 +242,6 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
   graph.lineWidth = angular.linewidth;
   if (dash.fill !== 'solid') {
     graph.lineStyle = dash;
-  }
-
-  if (isNumber(angular.pointradius)) {
-    graph.pointSize = 2 + angular.pointradius * 2;
   }
 
   if (hasFillBelowTo) {
