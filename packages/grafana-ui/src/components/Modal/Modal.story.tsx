@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { oneLineTrim } from 'common-tags';
 import { boolean, text } from '@storybook/addon-knobs';
+import { Icon, Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
+import { css, cx } from 'emotion';
+
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { UseState } from '../../utils/storybook/UseState';
-import { Icon, Modal, ModalTabsHeader, TabContent, useTheme } from '@grafana/ui';
 import mdx from './Modal.mdx';
-import { css, cx } from 'emotion';
-import { getModalStyles } from './getModalStyles';
 
 const getKnobs = () => {
   return {
@@ -94,15 +94,17 @@ export const WithTabs = () => {
 
 export const UsingContentClassName = () => {
   const { body, visible } = getKnobs();
-  const theme = useTheme();
-  const contentClassName = cx(
-    getModalStyles(theme).modalContent,
-    css`
-      background-color: fuchsia;
-    `
-  );
+  const override = {
+    modalContent: css`
+      background-color: darkorange;
+    `,
+  };
   return (
-    <Modal title="Using contentClassName to override background" isOpen={visible} contentClassName={contentClassName}>
+    <Modal
+      title="Using contentClassName to override background"
+      isOpen={visible}
+      contentClassName={cx(override.modalContent)}
+    >
       {body}
     </Modal>
   );

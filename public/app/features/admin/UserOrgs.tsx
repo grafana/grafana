@@ -15,7 +15,6 @@ import { GrafanaTheme } from '@grafana/data';
 import { Organization, OrgRole, UserOrg } from 'app/types';
 import { OrgPicker, OrgSelectItem } from 'app/core/components/Select/OrgPicker';
 import { OrgRolePicker } from './OrgRolePicker';
-import { getModalStyles } from '@grafana/ui/src/components/Modal/getModalStyles';
 
 interface Props {
   orgs: UserOrg[];
@@ -181,9 +180,12 @@ const getAddToOrgModalStyles = stylesFactory(() => ({
   buttonRow: css`
     text-align: center;
   `,
+  modalContent: css`
+    overflow: visible;
+  `,
 }));
 
-interface AddToOrgModalProps extends Themeable {
+interface AddToOrgModalProps {
   isOpen: boolean;
   onOrgAdd(orgId: number, role: string): void;
   onDismiss?(): void;
@@ -194,7 +196,7 @@ interface AddToOrgModalState {
   role: OrgRole;
 }
 
-class UnThemedAddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgModalState> {
+export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgModalState> {
   state: AddToOrgModalState = {
     selectedOrg: null,
     role: OrgRole.Admin,
@@ -225,17 +227,10 @@ class UnThemedAddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMo
     const { isOpen } = this.props;
     const { role } = this.state;
     const styles = getAddToOrgModalStyles();
-    const modalStyles = getModalStyles(this.props.theme);
-    const contentClassName = cx(
-      modalStyles.modalContent,
-      css`
-        overflow: visible;
-      `
-    );
     return (
       <Modal
         className={styles.modal}
-        contentClassName={contentClassName}
+        contentClassName={styles.modalContent}
         title="Add to an organization"
         isOpen={isOpen}
         onDismiss={this.onCancel}
@@ -260,5 +255,3 @@ class UnThemedAddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMo
     );
   }
 }
-
-export const AddToOrgModal = withTheme(UnThemedAddToOrgModal);
