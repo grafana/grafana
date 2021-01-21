@@ -364,13 +364,13 @@ export class PanelModel implements DataConfigSource {
   changePlugin(newPlugin: PanelPlugin) {
     const pluginId = newPlugin.meta.id;
     const oldOptions: any = this.getOptionsToRemember();
-    const oldFieldConfig = this.fieldConfig;
+    const prevFieldConfig = this.fieldConfig;
     const oldPluginId = this.type;
     const wasAngular = this.isAngularPlugin();
 
     this.cachedPluginOptions[oldPluginId] = {
       properties: oldOptions,
-      fieldConfig: oldFieldConfig,
+      fieldConfig: prevFieldConfig,
     };
 
     this.clearPropertiesBeforePluginChange();
@@ -378,15 +378,8 @@ export class PanelModel implements DataConfigSource {
 
     // Let panel plugins inspect options from previous panel and keep any that it can use
     if (newPlugin.onPanelTypeChanged) {
-      let oldOptions: any = {};
-
-      if (wasAngular) {
-        oldOptions = { angular: oldOptions };
-      } else if (oldOptions && oldOptions.options) {
-        oldOptions = oldOptions.options;
-      }
-
-      Object.assign(this.options, newPlugin.onPanelTypeChanged(this, oldPluginId, oldOptions, oldFieldConfig));
+      const prevOptions = wasAngular ? { angular: oldOptions } : oldOptions.options;
+      Object.assign(this.options, newPlugin.onPanelTypeChanged(this, oldPluginId, prevOptions, prevFieldConfig));
     }
 
     // switch
