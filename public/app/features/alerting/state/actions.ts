@@ -97,14 +97,24 @@ export function createAlertDefinition(): ThunkResult<void> {
       condition: {
         refId: currentAlertDefinition.condition.refId,
         queriesAndExpressions: queryOptions.queries.map((query) => {
-          const dataSource = getDataSourceSrv().getInstanceSettings(query.datasource);
+          let dataSource: { name: string; uid: string };
+          if (query.datasource === '__expr__') {
+            dataSource = { name: '__expr__', uid: '__expr__' };
+          } else {
+            const dataSourceSetting = getDataSourceSrv().getInstanceSettings(query.datasource);
+
+            dataSource = {
+              name: dataSourceSetting?.name ?? defaultDataSource.name,
+              uid: dataSourceSetting?.uid ?? defaultDataSource.uid,
+            };
+          }
 
           return {
             model: {
-              expression: query.expr,
+              ...query,
               type: query.queryType,
-              datasource: dataSource?.name ?? defaultDataSource.name,
-              datasourceUid: dataSource?.uid ?? defaultDataSource.uid,
+              datasource: dataSource.name,
+              datasourceUid: dataSource.uid,
             },
             refId: query.refId,
             relativeTimeRange: {
@@ -115,7 +125,6 @@ export function createAlertDefinition(): ThunkResult<void> {
         }),
       },
     };
-
     await getBackendSrv().post(`/api/alert-definitions`, alertDefinition);
     appEvents.emit(AppEvents.alertSuccess, ['Alert definition created']);
     dispatch(updateLocation({ path: 'alerting/list' }));
