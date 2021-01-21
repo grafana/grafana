@@ -149,7 +149,7 @@ def release_pipelines(ver_mode='release', trigger=None):
     services = integration_test_services()
     if not trigger:
         trigger = {
-            'ref': ['refs/tags/v*',],
+            'ref': ['refs/tags/v\\d+\\.\\d+\\.\\d+.*',],
         }
 
     should_publish = ver_mode in ('release', 'test-release',)

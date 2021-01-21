@@ -989,7 +989,7 @@ services:
 
 trigger:
   ref:
-  - refs/tags/v*
+  - refs/tags/v\d+\.\d+\.\d+.*
 
 ---
 kind: pipeline
@@ -1035,7 +1035,7 @@ steps:
 
 trigger:
   ref:
-  - refs/tags/v*
+  - refs/tags/v\d+\.\d+\.\d+.*
 
 depends_on:
 - oss-build-release
@@ -1407,7 +1407,7 @@ services:
 
 trigger:
   ref:
-  - refs/tags/v*
+  - refs/tags/v\d+\.\d+\.\d+.*
 
 ---
 kind: pipeline
@@ -1474,7 +1474,7 @@ steps:
 
 trigger:
   ref:
-  - refs/tags/v*
+  - refs/tags/v\d+\.\d+\.\d+.*
 
 depends_on:
 - enterprise-build-release
@@ -1545,7 +1545,7 @@ steps:
 
 trigger:
   ref:
-  - refs/tags/v*
+  - refs/tags/v\d+\.\d+\.\d+.*
 
 depends_on:
 - oss-build-release
@@ -1573,7 +1573,7 @@ steps:
 
 trigger:
   ref:
-  - refs/tags/v*
+  - refs/tags/v\d+\.\d+\.\d+.*
   status:
   - failure
 
@@ -2712,7 +2712,7 @@ services:
 
 trigger:
   ref:
-  - refs/heads/v*
+  - refs/heads/v\d+\.\d+\.x
 
 ---
 kind: pipeline
@@ -2754,7 +2754,7 @@ steps:
 
 trigger:
   ref:
-  - refs/heads/v*
+  - refs/heads/v\d+\.\d+\.x
 
 depends_on:
 - oss-build-release-branch
@@ -3123,7 +3123,7 @@ services:
 
 trigger:
   ref:
-  - refs/heads/v*
+  - refs/heads/v\d+\.\d+\.x
 
 ---
 kind: pipeline
@@ -3186,7 +3186,7 @@ steps:
 
 trigger:
   ref:
-  - refs/heads/v*
+  - refs/heads/v\d+\.\d+\.x
 
 depends_on:
 - enterprise-build-release-branch
@@ -3211,7 +3211,7 @@ steps:
 
 trigger:
   ref:
-  - refs/heads/v*
+  - refs/heads/v\d+\.\d+\.x
   status:
   - failure
 
