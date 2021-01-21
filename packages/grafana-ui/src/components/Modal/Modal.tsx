@@ -1,13 +1,13 @@
-import React from 'react';
+import React, { PropsWithChildren, useCallback } from 'react';
 import { Portal } from '../Portal/Portal';
 import { cx } from 'emotion';
-import { withTheme } from '../../themes';
-import { IconName, Themeable } from '../../types';
+import { useTheme } from '../../themes';
+import { IconName } from '../../types';
 import { getModalStyles } from './getModalStyles';
 import { ModalHeader } from './ModalHeader';
 import { IconButton } from '../IconButton/IconButton';
 
-export interface Props extends Themeable {
+export interface Props {
   icon?: IconName;
   iconTooltip?: string;
   /** Title for the modal or custom header element */
@@ -19,48 +19,51 @@ export interface Props extends Themeable {
 
   /** If not set will call onDismiss if that is set. */
   onClickBackdrop?: () => void;
+  render?: (props: RenderApi) => JSX.Element;
 }
 
-export class UnthemedModal extends React.PureComponent<Props> {
-  onDismiss = () => {
-    if (this.props.onDismiss) {
-      this.props.onDismiss();
+interface RenderApi {
+  styles: ReturnType<typeof getModalStyles>;
+}
+
+export function Modal(props: PropsWithChildren<Props>): JSX.Element | null {
+  const { title, children, isOpen = false, className, onDismiss: propsOnDismiss, onClickBackdrop, render } = props;
+  const theme = useTheme();
+  const styles = getModalStyles(theme);
+  const onDismiss = useCallback(() => {
+    if (propsOnDismiss) {
+      propsOnDismiss();
     }
-  };
+  }, [propsOnDismiss]);
 
-  onClickBackdrop = () => {
-    this.onDismiss();
-  };
-
-  renderDefaultHeader(title: string) {
-    const { icon, iconTooltip } = this.props;
-
-    return <ModalHeader icon={icon} iconTooltip={iconTooltip} title={title} />;
+  if (!isOpen) {
+    return null;
   }
 
-  render() {
-    const { title, isOpen = false, theme, className } = this.props;
-    const styles = getModalStyles(theme);
-
-    if (!isOpen) {
-      return null;
-    }
-
-    return (
-      <Portal>
-        <div className={cx(styles.modal, className)}>
-          <div className={styles.modalHeader}>
-            {typeof title === 'string' ? this.renderDefaultHeader(title) : title}
-            <div className={styles.modalHeaderClose}>
-              <IconButton surface="header" name="times" size="lg" onClick={this.onDismiss} />
-            </div>
+  return (
+    <Portal>
+      <div className={cx(styles.modal, className)}>
+        <div className={styles.modalHeader}>
+          {typeof title === 'string' && <DefaultModalHeader {...props} title={title} />}
+          {typeof title !== 'string' && title}
+          <div className={styles.modalHeaderClose}>
+            <IconButton surface="header" name="times" size="lg" onClick={onDismiss} />
           </div>
-          <div className={styles.modalContent}>{this.props.children}</div>
         </div>
-        <div className={styles.modalBackdrop} onClick={this.props.onClickBackdrop || this.onClickBackdrop} />
-      </Portal>
-    );
-  }
+        {render && render({ styles })}
+        {!render && <div className={styles.modalContent}>{children}</div>}
+      </div>
+      <div className={styles.modalBackdrop} onClick={onClickBackdrop || onDismiss} />
+    </Portal>
+  );
 }
 
-export const Modal = withTheme(UnthemedModal);
+interface DefaultModalHeaderProps {
+  title: string;
+  icon?: IconName;
+  iconTooltip?: string;
+}
+
+function DefaultModalHeader({ icon, iconTooltip, title }: DefaultModalHeaderProps): JSX.Element {
+  return <ModalHeader icon={icon} iconTooltip={iconTooltip} title={title} />;
+}

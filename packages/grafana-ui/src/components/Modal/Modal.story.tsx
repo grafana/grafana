@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { oneLineTrim } from 'common-tags';
-import { text, boolean } from '@storybook/addon-knobs';
+import { boolean, text } from '@storybook/addon-knobs';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { UseState } from '../../utils/storybook/UseState';
-import { Modal, Icon, TabContent, ModalTabsHeader } from '@grafana/ui';
+import { Icon, Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
 import mdx from './Modal.mdx';
+import { css, cx } from 'emotion';
 
 const getKnobs = () => {
   return {
@@ -87,5 +88,25 @@ export const WithTabs = () => {
         );
       }}
     </UseState>
+  );
+};
+
+export const UsingRenderPropToChangeModalContent = () => {
+  const { body, visible } = getKnobs();
+  return (
+    <Modal
+      title="Using render prop to set background color to white and text color to black"
+      isOpen={visible}
+      render={(props) => {
+        const override = cx(
+          props.styles.modalContent,
+          css`
+            background-color: #fff;
+            color: #000;
+          `
+        );
+        return <div className={override}>{body}</div>;
+      }}
+    />
   );
 };
