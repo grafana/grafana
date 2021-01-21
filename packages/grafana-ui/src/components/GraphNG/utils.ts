@@ -118,7 +118,7 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
   }
 
   // do the actual alignment (outerJoin on the first arrays)
-  let { data: alignedData, isGap } = uPlot.join(valuesFromFrames, nullModes);
+  let alignedData = uPlot.join(valuesFromFrames, nullModes);
 
   if (alignedData!.length !== sourceFields.length) {
     throw new Error('outerJoinValues lost a field?');
@@ -144,7 +144,6 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
         };
       }),
     },
-    isGap,
     getDataFrameFieldIndex: (alignedFieldIndex: number) => {
       const index = sourceFieldsRefs[alignedFieldIndex];
       if (!index) {
