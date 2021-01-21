@@ -267,7 +267,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
 
     const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
     const series = logsSeries ? logsSeries : [];
-    const style = getStyles(theme);
+    const styles = getStyles(theme);
 
     return (
       <>
@@ -284,13 +284,13 @@ export class UnthemedLogs extends PureComponent<Props, State> {
           showLines={false}
           onUpdateTimeRange={onChangeTime}
         />
-        <div className={style.logOptions}>
+        <div className={styles.logOptions}>
           <InlineFieldRow>
             <InlineField label="Time" transparent>
               <InlineSwitch value={showTime} onChange={this.onChangeTime} transparent />
             </InlineField>
             <InlineField label="Unique labels" transparent>
-              <InlineSwitch value={showLabels} onChange={this.onChangeTime} transparent />
+              <InlineSwitch value={showLabels} onChange={this.onChangeLabels} transparent />
             </InlineField>
             <InlineField label="Wrap lines" transparent>
               <InlineSwitch value={wrapLogMessage} onChange={this.onChangewrapLogMessage} transparent />
@@ -304,9 +304,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
                 }))}
                 value={dedupStrategy}
                 onChange={this.onChangeDedup}
-                className={css`
-                  margin: 0 8px;
-                `}
+                className={styles.radioButtons}
               />
             </InlineField>
           </InlineFieldRow>
@@ -315,7 +313,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
             disabled={isFlipping}
             title={logsSortOrder === LogsSortOrder.Ascending ? 'Change to newest first' : 'Change to oldest first'}
             aria-label="Flip results order"
-            className={style.flipButton}
+            className={styles.flipButton}
             onClick={this.onChangeLogsSortOrder}
           >
             {isFlipping ? 'Flipping...' : 'Flip results order'}
@@ -374,7 +372,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
         />
 
         {!loading && !hasData && !scanning && (
-          <div className={style.noData}>
+          <div className={styles.noData}>
             No logs found.
             <Button size="xs" variant="link" onClick={this.onClickScan}>
               Scan for older logs
@@ -383,7 +381,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
         )}
 
         {scanning && (
-          <div className={style.noData}>
+          <div className={styles.noData}>
             <span>{scanText}</span>
             <Button size="xs" variant="link" onClick={this.onClickStopScan}>
               Stop scan
@@ -417,6 +415,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     flipButton: css`
       margin: ${theme.spacing.xs} 0 0 ${theme.spacing.sm};
+    `,
+    radioButtons: css`
+      margin: 0 ${theme.spacing.sm};
     `,
   };
 });
