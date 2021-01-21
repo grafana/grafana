@@ -15,16 +15,6 @@ $column-horizontal-spacing: 10px;
   justify-content: space-between;
   align-items: baseline;
   flex-wrap: wrap;
-  .logs-panel-controls-main {
-    display: flex;
-    justify-items: flex-start;
-    align-items: center;
-    flex-wrap: wrap;
-
-    > * {
-      margin-right: $spacer * 2;
-    }
-  }
 }
 
 .logs-panel-nodata {

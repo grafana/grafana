@@ -18,10 +18,8 @@ import {
   LinkModel,
   Field,
 } from '@grafana/data';
-import { LegacyForms, LogLabels, RadioButtonGroup, LogRows, Button } from '@grafana/ui';
-const { Switch } = LegacyForms;
+import { LogLabels, RadioButtonGroup, LogRows, Button, InlineField, InlineFieldRow, InlineSwitch } from '@grafana/ui';
 import store from 'app/core/store';
-
 import { ExploreGraphPanel } from './ExploreGraphPanel';
 import { MetaInfoText } from './MetaInfoText';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
@@ -258,30 +256,33 @@ export class Logs extends PureComponent<Props, State> {
     const series = logsSeries ? logsSeries : [];
 
     return (
-      <div className="logs-panel">
-        <div className="logs-panel-graph">
-          <ExploreGraphPanel
-            series={series}
-            width={width}
-            onHiddenSeriesChanged={this.onToggleLogLevel}
-            loading={loading}
-            absoluteRange={visibleRange || absoluteRange}
-            isStacked={true}
-            showPanel={false}
-            timeZone={timeZone}
-            showBars={true}
-            showLines={false}
-            onUpdateTimeRange={onChangeTime}
-          />
-        </div>
+      <>
+        <ExploreGraphPanel
+          series={series}
+          width={width}
+          onHiddenSeriesChanged={this.onToggleLogLevel}
+          loading={loading}
+          absoluteRange={visibleRange || absoluteRange}
+          isStacked={true}
+          showPanel={false}
+          timeZone={timeZone}
+          showBars={true}
+          showLines={false}
+          onUpdateTimeRange={onChangeTime}
+        />
         <div className="logs-panel-options">
           <div className="logs-panel-controls">
-            <div className="logs-panel-controls-main">
-              <Switch label="Time" checked={showTime} onChange={this.onChangeTime} transparent />
-              <Switch label="Unique labels" checked={showLabels} onChange={this.onChangeLabels} transparent />
-              <Switch label="Wrap lines" checked={wrapLogMessage} onChange={this.onChangewrapLogMessage} transparent />
-              <div className="gf-form">
-                <label className="gf-form-label  gf-form-label--transparent">Dedup</label>
+            <InlineFieldRow>
+              <InlineField label="Time" transparent>
+                <InlineSwitch value={showTime} onChange={this.onChangeTime} transparent />
+              </InlineField>
+              <InlineField label="Unique labels" transparent>
+                <InlineSwitch value={showLabels} onChange={this.onChangeTime} transparent />
+              </InlineField>
+              <InlineField label="Wrap lines" transparent>
+                <InlineSwitch value={wrapLogMessage} onChange={this.onChangewrapLogMessage} transparent />
+              </InlineField>
+              <InlineField label="Dedup" transparent>
                 <RadioButtonGroup
                   options={Object.keys(LogsDedupStrategy).map((dedupType: LogsDedupStrategy) => ({
                     label: capitalize(dedupType),
@@ -290,9 +291,12 @@ export class Logs extends PureComponent<Props, State> {
                   }))}
                   value={dedupStrategy}
                   onChange={this.onChangeDedup}
+                  className={css`
+                    margin: 0 8px;
+                  `}
                 />
-              </div>
-            </div>
+              </InlineField>
+            </InlineFieldRow>
             <Button
               variant="secondary"
               disabled={isFlipping}
@@ -376,7 +380,7 @@ export class Logs extends PureComponent<Props, State> {
             </Button>
           </div>
         )}
-      </div>
+      </>
     );
   }
 }
