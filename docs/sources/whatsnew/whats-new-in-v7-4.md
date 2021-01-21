@@ -14,7 +14,7 @@ This topic includes the release notes for Grafana v7.4 beta. For all details, re
 
 ## Grafana OSS features
 
-These features are included in the Grafana Enterprise edition software.
+These features are included in the Grafana open source software.
 
 ### Beta Time series panel visualization
 
@@ -75,13 +75,13 @@ _Server-side expressions_ is an experimental feature that allows you to manipula
 
 The main use case is for [multi-dimensional](https://grafana.com/docs/grafana/latest/getting-started/timeseries-dimensions/#time-series-dimensions) data sources used with the upcoming next generation alerting, but expressions can be used with backend data sources and visualization as well.
 
-> **Note:** Queries built with this feature may break with minor version upgrades until Grafana 8 is released.
+> **Note:** Queries built with this feature might break with minor version upgrades until Grafana 8 is released. This feature does not work with the current Grafana alerting.
 
 ### Variable support in alert notifications
 
 You can now provide detailed information to alert notification recipients by injecting alert query data into an alert notification. Labels that exist from the evaluation of the alert query can be used in the alert rule name and in the alert notification message fields. The alert label data is injected into the notification fields when the alert is in the alerting state. When there are multiple unique values for the same label, the values are comma-separated.
 
-![Variable support in alert notifications](/img/docs/v74/alert-variable-notifications.png)
+![Variable support in alert notifications](/img/docs/alerting/alert-notification-template-7-4.png)
 
 ### Content security policy support
 
@@ -123,8 +123,17 @@ Many thanks to [mtanda](https://github.com/mtanda) this contribution!
 ### Query Editor Help
 
 The feature previously referred to as DataSource Start Pages or Cheat Sheets has been renamed to Query Editor Help, and is now supported in panel query editors (depending on the data source), as well as in Explore.
-### Inspecting variables and their dependencies
-The variables list has an additional column indicating whether variables are referenced in queries and panel names or not. The dependencies graph provides an easy way to check variable dependencies. You can click on a variable name within the graph to make updates to the variable as needed. 
+
+[Queries]({{< relref "../panels/queries.md" >}}) was updated as a result of this feature.
+
+For more information on adding a query editor help component to your plugin, refer to [Add a query editor help component]({{< relref "../developers/plugins/add-query-editor-help.md" >}}).
+
+### Variable inspector
+
+The variables list has an additional column indicating whether variables are referenced in queries and panel names or not. The dependencies graph provides an easy way to check variable dependencies. You can click on a variable name within the graph to make updates to the variable as needed.
+
+For more information, refer to [Inspect variables and their dependencies]({{< relref "../variables/inspect-variable.md">}}).
+
 ## Grafana Enterprise features
 
 These features are included in the Grafana Enterprise edition software.

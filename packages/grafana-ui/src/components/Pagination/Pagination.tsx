@@ -19,7 +19,7 @@ export const Pagination: React.FC<Props> = ({ currentPage, numberOfPages, onNavi
   return (
     <div className={styles.container}>
       <ol>
-        {pages.map(pageIndex => {
+        {pages.map((pageIndex) => {
           const page = pageIndex + 1;
           const variant: ButtonVariant = page === currentPage ? 'primary' : 'secondary';
 

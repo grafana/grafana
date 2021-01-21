@@ -13,13 +13,7 @@ interface Args {
 }
 function getTestContext({ query = '', variable, datasource }: Args = {}) {
   variable =
-    variable ??
-    queryBuilder()
-      .withId('query')
-      .withName('query')
-      .withQuery(query)
-      .withDatasource('test-data')
-      .build();
+    variable ?? queryBuilder().withId('query').withName('query').withQuery(query).withDatasource('test-data').build();
   const state = {
     templating: {
       variables: {
@@ -138,10 +132,7 @@ describe('upgradeLegacyQueries', () => {
 
   describe('when called with a custom variable', () => {
     it('then it should not dispatch any actions', async () => {
-      const variable = customBuilder()
-        .withId('custom')
-        .withName('custom')
-        .build();
+      const variable = customBuilder().withId('custom').withName('custom').build();
       const { state, identifier, get, getDatasourceSrv } = getTestContext({ variable });
 
       const dispatchedActions = await thunkTester(state)

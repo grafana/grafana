@@ -34,7 +34,7 @@ const PromCheatSheet = (props: QueryEditorHelpProps) => (
         {item.expression ? (
           <div
             className="cheat-sheet-item__example"
-            onClick={e => props.onClickExample({ refId: 'A', expr: item.expression } as DataQuery)}
+            onClick={(e) => props.onClickExample({ refId: 'A', expr: item.expression } as DataQuery)}
           >
             <code>{item.expression}</code>
           </div>

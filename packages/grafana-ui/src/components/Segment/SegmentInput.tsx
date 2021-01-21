@@ -56,7 +56,7 @@ export function SegmentInput<T>({
       autoFocus
       className={cx(`gf-form gf-form-input`, inputWidthStyle)}
       value={value}
-      onChange={item => {
+      onChange={(item) => {
         const { width } = measureText(item.target.value, FONT_SIZE);
         setInputWidth(width);
         setValue(item.target.value);
@@ -65,7 +65,7 @@ export function SegmentInput<T>({
         setExpanded(false);
         onChange(value);
       }}
-      onKeyDown={e => {
+      onKeyDown={(e) => {
         if ([13, 27].includes(e.keyCode)) {
           setExpanded(false);
           onChange(value);

@@ -55,7 +55,7 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
           <item.editor
             item={item}
             value={value}
-            onChange={v => onDefaultValueChange(item.path, v, item.isCustom)}
+            onChange={(v) => onDefaultValueChange(item.path, v, item.isCustom)}
             context={{
               data,
               getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(data, scope),
@@ -69,7 +69,7 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
 
   const GENERAL_OPTIONS_CATEGORY = `${plugin.meta.name} options`;
 
-  const groupedConfigs = groupBy(plugin.fieldConfigRegistry.list(), i => {
+  const groupedConfigs = groupBy(plugin.fieldConfigRegistry.list(), (i) => {
     if (!i.category) {
       return GENERAL_OPTIONS_CATEGORY;
     }
@@ -88,7 +88,7 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
 
         return (
           <OptionsGroup
-            renderTitle={isExpanded => {
+            renderTitle={(isExpanded) => {
               return (
                 <>
                   {groupName} {!isExpanded && groupItemsCounter && <Counter value={groupItemsCounter} />}
@@ -98,7 +98,7 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
             id={`${groupName}/${i}`}
             key={`${groupName}/${i}`}
           >
-            {group.map(c => {
+            {group.map((c) => {
               return renderEditor(c, group.length);
             })}
           </OptionsGroup>
@@ -126,6 +126,6 @@ function countGroupItems(group: FieldConfigPropertyItem[], config: FieldConfigSo
 }
 
 function shouldRenderGroup(group: FieldConfigPropertyItem[]) {
-  const hiddenPropertiesCount = group.filter(i => i.hideFromDefaults).length;
+  const hiddenPropertiesCount = group.filter((i) => i.hideFromDefaults).length;
   return group.length - hiddenPropertiesCount > 0;
 }

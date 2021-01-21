@@ -101,7 +101,7 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
             queries: queries,
           },
         })
-        .pipe(map(res => this.processQueryResult(queries, res)));
+        .pipe(map((res) => this.processQueryResult(queries, res)));
 
       streams.push(stream);
     }
@@ -143,7 +143,7 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
   }
 
   annotationDataTopicTest(target: TestDataQuery, req: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
-    return new Observable<DataQueryResponse>(observer => {
+    return new Observable<DataQueryResponse>((observer) => {
       const events = this.buildFakeAnnotationEvents(req.range, 10);
       const dataFrame = new ArrayDataFrame(events);
       dataFrame.meta = { dataTopic: DataTopic.Annotations };
@@ -203,7 +203,7 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
       getSearchFilterScopedVar({ query, wildcardChar: '*', options: options.scopedVars })
     );
     const children = queryMetricTree(interpolatedQuery);
-    const items = children.map(item => ({ value: item.name, text: item.name }));
+    const items = children.map((item) => ({ value: item.name, text: item.name }));
     const dataFrame = new ArrayDataFrame(items);
 
     return of({ data: [dataFrame] }).pipe(delay(100));
@@ -250,7 +250,7 @@ function runGrafanaAPI(target: TestDataQuery, req: DataQueryRequest<TestDataQuer
   return from(
     getBackendSrv()
       .get(url)
-      .then(res => {
+      .then((res) => {
         const frame = new ArrayDataFrame(res);
         return {
           state: LoadingState.Done,

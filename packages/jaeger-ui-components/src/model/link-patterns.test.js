@@ -27,7 +27,7 @@ describe('processTemplate()', () => {
   it('correctly replaces variables', () => {
     const processedTemplate = processTemplate(
       'this is a test with #{oneVariable}#{anotherVariable} and the same #{oneVariable}',
-      a => a
+      (a) => a
     );
     expect(processedTemplate.parameters).toEqual(['oneVariable', 'anotherVariable']);
     expect(processedTemplate.template({ oneVariable: 'MYFIRSTVAR', anotherVariable: 'SECOND' })).toBe(
@@ -38,7 +38,7 @@ describe('processTemplate()', () => {
   it('correctly uses the encoding function', () => {
     const processedTemplate = processTemplate(
       'this is a test with #{oneVariable}#{anotherVariable} and the same #{oneVariable}',
-      e => `/${e}\\`
+      (e) => `/${e}\\`
     );
     expect(processedTemplate.parameters).toEqual(['oneVariable', 'anotherVariable']);
     expect(processedTemplate.template({ oneVariable: 'MYFIRSTVAR', anotherVariable: 'SECOND' })).toBe(
@@ -64,9 +64,9 @@ describe('processTemplate()', () => {
     expect(() =>
       processTemplate(
         {
-          template: data => `a${data.b}c`,
+          template: (data) => `a${data.b}c`,
         },
-        a => a
+        (a) => a
       )
     ).toThrow();
     expect(() =>
@@ -74,10 +74,10 @@ describe('processTemplate()', () => {
         {
           parameters: ['b'],
         },
-        a => a
+        (a) => a
       )
     ).toThrow();
-    expect(() => processTemplate({}, a => a)).toThrow();
+    expect(() => processTemplate({}, (a) => a)).toThrow();
   });
 });
 

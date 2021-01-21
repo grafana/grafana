@@ -91,13 +91,13 @@ const alertRulesSlice = createSlice({
   name: 'alertRules',
   initialState,
   reducers: {
-    loadAlertRules: state => {
+    loadAlertRules: (state) => {
       return { ...state, isLoading: true };
     },
     loadedAlertRules: (state, action: PayloadAction<AlertRuleDTO[]>): AlertRulesState => {
       const alertRules: AlertRuleDTO[] = action.payload;
 
-      const alertRulesViewModel: AlertRule[] = alertRules.map(rule => {
+      const alertRulesViewModel: AlertRule[] = alertRules.map((rule) => {
         return convertToAlertRule(rule, rule.state);
       });
 
@@ -122,7 +122,7 @@ const notificationChannelSlice = createSlice({
     },
     notificationChannelLoaded: (state, action: PayloadAction<any>): NotificationChannelState => {
       const notificationChannel = action.payload;
-      const selectedType: NotifierDTO = state.notifiers.find(t => t.type === notificationChannel.type)!;
+      const selectedType: NotifierDTO = state.notifiers.find((t) => t.type === notificationChannel.type)!;
       const secureChannelOptions = selectedType.options.filter((o: NotificationChannelOption) => o.secure);
       /*
         If any secure field is in plain text we need to migrate it to use secure field instead.
@@ -200,7 +200,7 @@ function migrateSecureFields(
   const cleanedSettings: { [key: string]: string } = {};
   const secureSettings: { [key: string]: string } = {};
 
-  secureChannelOptions.forEach(option => {
+  secureChannelOptions.forEach((option) => {
     secureSettings[option.propertyName] = notificationChannel.settings[option.propertyName];
     cleanedSettings[option.propertyName] = '';
   });

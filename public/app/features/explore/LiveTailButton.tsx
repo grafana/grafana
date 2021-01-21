@@ -11,12 +11,8 @@ import { ResponsiveButton } from './ResponsiveButton';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const bgColor = selectThemeVariant({ light: theme.palette.gray5, dark: theme.palette.dark1 }, theme.type);
-  const orangeLighter = tinycolor(theme.palette.orangeDark)
-    .lighten(10)
-    .toString();
-  const pulseTextColor = tinycolor(theme.palette.orangeDark)
-    .desaturate(90)
-    .toString();
+  const orangeLighter = tinycolor(theme.palette.orangeDark).lighten(10).toString();
+  const pulseTextColor = tinycolor(theme.palette.orangeDark).desaturate(90).toString();
   return {
     noRightBorderStyle: css`
       label: noRightBorderStyle;

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import uPlot, { AlignedData, AlignedDataWithGapTest, Options } from 'uplot';
+import uPlot, { AlignedData, Options } from 'uplot';
 import { buildPlotContext, PlotContext } from './context';
 import { pluginLog } from './utils';
 import { usePlotConfig } from './hooks';
@@ -14,7 +14,7 @@ import usePrevious from 'react-use/lib/usePrevious';
  * Receives a data frame that is x-axis aligned, as of https://github.com/leeoniya/uPlot/tree/master/docs#data-format
  * Exposes contexts for plugins registration and uPlot instance access
  */
-export const UPlotChart: React.FC<PlotProps> = props => {
+export const UPlotChart: React.FC<PlotProps> = (props) => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const plotInstance = useRef<uPlot>();
   const [isPlotReady, setIsPlotReady] = useState(false);
@@ -85,24 +85,16 @@ export const UPlotChart: React.FC<PlotProps> = props => {
   );
 };
 
-function prepareData(data: AlignedFrameWithGapTest) {
-  return {
-    data: data.frame.fields.map(f => f.values.toArray()) as AlignedData,
-    isGap: data.isGap,
-  };
+function prepareData(data: AlignedFrameWithGapTest): AlignedData {
+  return data.frame.fields.map((f) => f.values.toArray()) as AlignedData;
 }
 
-function initializePlot(data: AlignedDataWithGapTest, config: Options, el: HTMLDivElement) {
-  pluginLog('UPlotChart: init uPlot', false, 'initialized with', data, config);
+function initializePlot(data: AlignedData, config: Options, el: HTMLDivElement) {
+  console.log('UPlotChart: init uPlot', false, 'initialized with', data, config);
   return new uPlot(config, data, el);
 }
 
-function updateData(
-  frame: DataFrame,
-  config: UPlotConfigBuilder,
-  plotInstance?: uPlot,
-  data?: AlignedDataWithGapTest | null
-) {
+function updateData(frame: DataFrame, config: UPlotConfigBuilder, plotInstance?: uPlot, data?: AlignedData | null) {
   if (!plotInstance || !data) {
     return;
   }

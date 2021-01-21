@@ -33,14 +33,16 @@ const filterMatch: Array<SelectableValue<FilterByValueMatch>> = [
   { label: 'Match any', value: FilterByValueMatch.any },
 ];
 
-export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterByValueTransformerOptions>> = props => {
+export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterByValueTransformerOptions>> = (
+  props
+) => {
   const { input, options, onChange } = props;
   const styles = getEditorStyles();
   const fieldsInfo = useFieldsInfo(input);
 
   const onAddFilter = useCallback(() => {
     const frame = input[0];
-    const field = frame.fields.find(f => f.type !== FieldType.time);
+    const field = frame.fields.find((f) => f.type !== FieldType.time);
 
     if (!field) {
       return;
@@ -117,7 +119,7 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
             key={idx}
             filter={filter}
             fieldsInfo={fieldsInfo}
-            onChange={filter => onChangeFilter(filter, idx)}
+            onChange={(filter) => onChangeFilter(filter, idx)}
             onDelete={() => onDeleteFilter(idx)}
           />
         ))}

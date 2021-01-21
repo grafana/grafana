@@ -164,7 +164,7 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
   });
 }
 
-describeInitScenario('Initializing new dashboard', ctx => {
+describeInitScenario('Initializing new dashboard', (ctx) => {
   ctx.setup(() => {
     ctx.storeState.user.orgId = 12;
     ctx.args.routeInfo = DashboardRouteInfo.New;
@@ -197,7 +197,7 @@ describeInitScenario('Initializing new dashboard', ctx => {
   });
 });
 
-describeInitScenario('Initializing home dashboard', ctx => {
+describeInitScenario('Initializing home dashboard', (ctx) => {
   ctx.setup(() => {
     ctx.args.routeInfo = DashboardRouteInfo.Home;
     ctx.backendSrv.get.mockResolvedValue({
@@ -211,7 +211,7 @@ describeInitScenario('Initializing home dashboard', ctx => {
   });
 });
 
-describeInitScenario('Initializing home dashboard cancelled', ctx => {
+describeInitScenario('Initializing home dashboard cancelled', (ctx) => {
   ctx.setup(() => {
     ctx.args.routeInfo = DashboardRouteInfo.Home;
     ctx.backendSrv.get.mockRejectedValue({ cancelled: true });
@@ -222,7 +222,7 @@ describeInitScenario('Initializing home dashboard cancelled', ctx => {
   });
 });
 
-describeInitScenario('Initializing existing dashboard', ctx => {
+describeInitScenario('Initializing existing dashboard', (ctx) => {
   const mockQueries = [
     {
       context: 'explore',
@@ -274,7 +274,7 @@ describeInitScenario('Initializing existing dashboard', ctx => {
   });
 });
 
-describeInitScenario('Initializing previously canceled dashboard initialization', ctx => {
+describeInitScenario('Initializing previously canceled dashboard initialization', (ctx) => {
   ctx.setup(() => {
     ctx.storeState.dashboard.initPhase = DashboardInitPhase.Fetching;
   });
@@ -288,7 +288,7 @@ describeInitScenario('Initializing previously canceled dashboard initialization'
   });
 
   it('Should not send action dashboardInitCompleted', () => {
-    const dashboardInitCompletedAction = ctx.actions.find(a => {
+    const dashboardInitCompletedAction = ctx.actions.find((a) => {
       return a.type === dashboardInitCompleted.type;
     });
     expect(dashboardInitCompletedAction).toBe(undefined);

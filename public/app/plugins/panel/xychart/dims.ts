@@ -92,12 +92,12 @@ function getSimpleFieldMatcher(f: Field): FieldMatcher {
   if (!f) {
     return () => false;
   }
-  return field => f === field;
+  return (field) => f === field;
 }
 
 function getSimpleFieldNotMatcher(f: Field): FieldMatcher {
   if (!f) {
     return () => false;
   }
-  return field => f !== field;
+  return (field) => f !== field;
 }

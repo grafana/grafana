@@ -221,7 +221,7 @@ class GraphElement {
 
       const dataLinks = [
         {
-          items: linksSupplier.getLinks(this.panel.replaceVariables).map<MenuItem>(link => {
+          items: linksSupplier.getLinks(this.panel.replaceVariables).map<MenuItem>((link) => {
             return {
               label: link.title,
               url: link.href,
@@ -336,7 +336,7 @@ class GraphElement {
       return dataIndex;
     }
 
-    const correctIndex = timeField.values.toArray().findIndex(value => value === ts);
+    const correctIndex = timeField.values.toArray().findIndex((value) => value === ts);
     return correctIndex > -1 ? correctIndex : dataIndex;
   }
 
@@ -500,8 +500,8 @@ class GraphElement {
         let bucketSize: number;
 
         if (this.data.length) {
-          let histMin = _.min(_.map(this.data, s => s.stats.min));
-          let histMax = _.max(_.map(this.data, s => s.stats.max));
+          let histMin = _.min(_.map(this.data, (s) => s.stats.min));
+          let histMax = _.max(_.map(this.data, (s) => s.stats.max));
           const ticks = panel.xaxis.buckets || this.panelWidth / 50;
           if (panel.xaxis.min != null) {
             const isInvalidXaxisMin = tickStep(panel.xaxis.min, histMax, ticks) <= 0;
@@ -630,9 +630,9 @@ class GraphElement {
     const sortDesc = panel.legend.sortDesc === true ? -1 : 1;
 
     if (shouldSortBy) {
-      return _.sortBy(series, s => s.stats[sortBy] * sortDesc);
+      return _.sortBy(series, (s) => s.stats[sortBy] * sortDesc);
     } else {
-      return _.sortBy(series, s => s.zindex);
+      return _.sortBy(series, (s) => s.zindex);
     }
   }
 
@@ -704,7 +704,7 @@ class GraphElement {
         }
       }
 
-      ticks = Object.keys(tickValues).map(v => Number(v));
+      ticks = Object.keys(tickValues).map((v) => Number(v));
       min = _.min(ticks)!;
       max = _.max(ticks)!;
 

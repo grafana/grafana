@@ -123,7 +123,7 @@ export class DashboardLoaderSrv {
 
     // Handle async dashboard scripts
     if (_.isFunction(scriptResult)) {
-      return new Promise(resolve => {
+      return new Promise((resolve) => {
         scriptResult((dashboard: any) => {
           this.$timeout(() => {
             resolve({ data: dashboard });

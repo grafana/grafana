@@ -16,7 +16,7 @@ export const WithContextMenu: React.FC<WithContextMenuProps> = ({ children, getC
   return (
     <>
       {children({
-        openMenu: e => {
+        openMenu: (e) => {
           setIsMenuOpen(true);
           setMenuPosition({
             x: e.pageX,

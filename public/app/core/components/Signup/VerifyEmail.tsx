@@ -18,7 +18,7 @@ export const VerifyEmail: FC = () => {
       .then(() => {
         setEmailSent(true);
       })
-      .catch(err => {
+      .catch((err) => {
         const msg = err.data?.message || err;
         appEvents.emit(AppEvents.alertWarning, [msg]);
       });

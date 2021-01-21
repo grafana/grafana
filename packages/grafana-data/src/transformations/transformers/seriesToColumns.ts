@@ -22,9 +22,9 @@ export const seriesToColumnsTransformer: DataTransformerInfo<SeriesToColumnsOpti
   defaultOptions: {
     byField: undefined, // DEFAULT_KEY_FIELD,
   },
-  operator: options => source =>
+  operator: (options) => (source) =>
     source.pipe(
-      map(data => {
+      map((data) => {
         if (data.length > 1) {
           let matcher: FieldMatcher | undefined = undefined;
           if (options.byField) {

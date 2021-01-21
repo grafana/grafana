@@ -2,7 +2,7 @@ import { DataFrame, Field, FieldMatcher, FieldType } from '../../types';
 import { ArrayVector } from '../../vector';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
-import uPlot, { AlignedData } from 'uplot';
+import uPlot, { AlignedData, JoinNullMode } from 'uplot';
 import { getTimeField } from '../../dataframe';
 import { getFieldDisplayName } from '../../field';
 
@@ -25,7 +25,7 @@ export function pickBestJoinField(data: DataFrame[]): FieldMatcher {
         names.push(f.name);
       }
     }
-    common = common.filter(v => !names.includes(v));
+    common = common.filter((v) => !names.includes(v));
   }
 
   return fieldMatchers.get(FieldMatcherID.byName).get(common[0]);
@@ -73,7 +73,10 @@ export function alignDataFrames(data: DataFrame[], joinFieldMatcher?: FieldMatch
     allData.push(a);
   }
 
-  const joined = uPlot.join(allData).data;
+  const joined = uPlot.join(
+    allData,
+    allData.map((v) => v.map((x) => JoinNullMode.Expand)) // will show gaps in the timeseries panel
+  );
   if (!joined) {
     return undefined;
   }
