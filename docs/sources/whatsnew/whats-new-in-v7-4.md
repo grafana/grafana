@@ -14,17 +14,19 @@ This topic includes the release notes for Grafana v7.4 beta. For all details, re
 
 ## Grafana OSS features
 
-These features are included in the Grafana open source software.
+These features are included in the Grafana open source edition.
 
-### Beta Time series panel visualization
+### Time series panel visualization (Beta)
 
-Grafana 7.4 brings the beta version of the next-gen graph visualization. The new graph panel, the _Time series_ visualization, is high-performance visualization based on the uPlot library. This new graph visualization uses the new panel architecture introduced in Grafana 7.0 and integrates with field options, overrides, and transformations.
+Grafana 7.4 adds a beta version of the next-gen graph visualization. The new graph panel, the _Time series_ visualization, is high-performance visualization based on the uPlot library. This new graph visualization uses the new panel architecture introduced in Grafana 7.0 and integrates with field options, overrides, and transformations.
 
 The Time series beta panel implements the majority of the functionalities available in the current Graph panel. Our plan is to have close to full coverage of the features in Grafana 8.0, coming later this year.
 
 Apart from major performance improvements, the new Time series panel implements new features like line interpolation modes, support for more than two Y-axes, soft min and max axis limits, automatic points display based on data density, and gradient fill modes.
 
-### Beta Node graph panel visualization
+{{< figure src="/img/docs/v74/timeseries_panel.png" max-width="900px" caption="Time series panel" >}}
+
+### Node graph panel visualization (Beta)
 
 _Node graph_ is a new panel type that can visualize directed graphs or network in dashboards, but also in Explore. It uses directed force layout to effectively position the nodes so it can help with displaying complex infrastructure maps, hierarchies, or execution diagrams.
 
@@ -40,7 +42,7 @@ The following transformations were added in Grafana 7.4.
 
 The _Sort by_ transformation allows you to sort data before sending it to the visualization.
 
-For more information, refer to [Filter data by value]({{< relref "../panels/transformations/types-options.md#sort-by" >}}) in [Transformation types and options]({{< relref "../panels/transformations/types-options.md" >}}).
+For more information, refer to [Sort by]({{< relref "../panels/transformations/types-options.md#sort-by" >}}) in [Transformation types and options]({{< relref "../panels/transformations/types-options.md" >}}).
 
 #### Filter data by value transform
 
@@ -56,7 +58,7 @@ Grafana graphs now support Prometheus exemplars. They are displayed as diamonds 
 
 > **Note:** Support for exemplars will be added in version Prometheus 2.25+,
 
-![Exemplar example](/img/docs/v74/exemplars.png)
+{{< figure src="/img/docs/v74/exemplars.png" max-width="900px" caption="Exemplar example" >}}
 
 ### Trace to logs
 
@@ -81,7 +83,7 @@ The main use case is for [multi-dimensional](https://grafana.com/docs/grafana/la
 
 You can now provide detailed information to alert notification recipients by injecting alert query data into an alert notification. Labels that exist from the evaluation of the alert query can be used in the alert rule name and in the alert notification message fields. The alert label data is injected into the notification fields when the alert is in the alerting state. When there are multiple unique values for the same label, the values are comma-separated.
 
-![Variable support in alert notifications](/img/docs/alerting/alert-notification-template-7-4.png)
+{{< figure src="/img/docs/alerting/alert-notification-template-7-4.png" max-width="700px" caption="Variable support in alert notifications" >}}
 
 ### Content security policy support
 
@@ -136,7 +138,7 @@ For more information, refer to [Inspect variables and their dependencies]({{< re
 
 ## Grafana Enterprise features
 
-These features are included in the Grafana Enterprise edition software.
+These features are included in the Grafana Enterprise edition.
 
 ### Licensing changes
 
