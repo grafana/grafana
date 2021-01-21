@@ -81,7 +81,7 @@ The main use case is for [multi-dimensional](https://grafana.com/docs/grafana/la
 
 You can now provide detailed information to alert notification recipients by injecting alert query data into an alert notification. Labels that exist from the evaluation of the alert query can be used in the alert rule name and in the alert notification message fields. The alert label data is injected into the notification fields when the alert is in the alerting state. When there are multiple unique values for the same label, the values are comma-separated.
 
-![Variable support in alert notifications](/img/docs/v74/alert-variable-notifications.png)
+![Variable support in alert notifications](/img/docs/alerting/alert-notification-template-7-4.png)
 
 ### Content security policy support
 
