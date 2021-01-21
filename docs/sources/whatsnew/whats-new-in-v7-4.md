@@ -12,6 +12,8 @@ list = false
 
 This topic includes the release notes for Grafana v7.4 beta. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
+Check out the [New Features in 7.4](https://play.grafana.org/d/nP8rcffGk/1-new-features-in-v7-4?orgId=1) dashboard on Grafana Play!
+
 ## Grafana OSS features
 
 These features are included in the Grafana open source edition.
