@@ -197,40 +197,74 @@ func TestTestdataScenariosV2(t *testing.T) {
 			}
 		})
 
-		// t.Run("Should return a table with some nil values", func(t *testing.T) {
-		// 	req := &tsdb.TsdbQuery{
-		// 		TimeRange: tsdb.NewFakeTimeRange("5m", "now", time.Now()),
-		// 		Queries: []*tsdb.Query{
-		// 			{RefId: "A", IntervalMs: 100, MaxDataPoints: 100, Model: simplejson.New()},
-		// 		},
-		// 	}
-		// 	query := req.Queries[0]
-		// 	query.Model.Set("withNil", true)
+		t.Run("Should return a table with some nil values", func(t *testing.T) {
+			timeRange := tsdb.NewFakeTimeRange("5m", "now", time.Now())
 
-		// 	result := scenario.Handler(req.Queries[0], req)
-		// 	table := result.Tables[0]
+			model := simplejson.New()
+			model.Set("withNil", true)
 
-		// 	nil1 := false
-		// 	nil2 := false
-		// 	nil3 := false
+			modelBytes, err := model.MarshalJSON()
+			require.NoError(t, err)
 
-		// 	require.Greater(t, len(table.Rows), 50)
-		// 	for _, row := range table.Rows {
-		// 		if row[1] == nil {
-		// 			nil1 = true
-		// 		}
-		// 		if row[2] == nil {
-		// 			nil2 = true
-		// 		}
-		// 		if row[3] == nil {
-		// 			nil3 = true
-		// 		}
-		// 	}
+			query := backend.DataQuery{
+				RefID: "A",
+				TimeRange: backend.TimeRange{
+					From: timeRange.MustGetFrom(),
+					To:   timeRange.MustGetTo(),
+				},
+				Interval:      100 * time.Millisecond,
+				MaxDataPoints: 100,
+				JSON:          modelBytes,
+			}
 
-		// 	require.True(t, nil1)
-		// 	require.True(t, nil2)
-		// 	require.True(t, nil3)
-		// })
+			req := &backend.QueryDataRequest{
+				PluginContext: backend.PluginContext{},
+				Queries:       []backend.DataQuery{query},
+			}
+
+			resp, err := p.handleRandomWalkTableScenario(context.Background(), req)
+			require.NoError(t, err)
+			require.NotNil(t, resp)
+
+			dResp, exists := resp.Responses[query.RefID]
+			require.True(t, exists)
+			require.NoError(t, dResp.Error)
+
+			require.Len(t, dResp.Frames, 1)
+			frame := dResp.Frames[0]
+			require.Greater(t, frame.Rows(), 50)
+			require.Len(t, frame.Fields, 5)
+			require.Equal(t, "Time", frame.Fields[0].Name)
+			require.Equal(t, "Value", frame.Fields[1].Name)
+			require.Equal(t, "Min", frame.Fields[2].Name)
+			require.Equal(t, "Max", frame.Fields[3].Name)
+			require.Equal(t, "Info", frame.Fields[4].Name)
+
+			valNil := false
+			minNil := false
+			maxNil := false
+
+			for i := 0; i < frame.Rows(); i++ {
+				_, ok := frame.ConcreteAt(1, i)
+				if !ok {
+					valNil = true
+				}
+
+				_, ok = frame.ConcreteAt(2, i)
+				if !ok {
+					minNil = true
+				}
+
+				_, ok = frame.ConcreteAt(3, i)
+				if !ok {
+					maxNil = true
+				}
+			}
+
+			require.True(t, valNil)
+			require.True(t, minNil)
+			require.True(t, maxNil)
+		})
 	})
 }
 

@@ -892,7 +892,7 @@ func getRandomWalkTable(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery) *tsdb.Quer
 func getRandomWalkTableV2(query backend.DataQuery, model *simplejson.Json) *data.Frame {
 	timeWalkerMs := query.TimeRange.From.UnixNano() / int64(time.Millisecond)
 	to := query.TimeRange.To.UnixNano() / int64(time.Millisecond)
-	// withNil := model.Get("withNil").MustBool(false)
+	withNil := model.Get("withNil").MustBool(false)
 	walker := model.Get("startValue").MustFloat64(rand.Float64() * 100)
 	spread := 2.5
 
@@ -926,16 +926,18 @@ func getRandomWalkTableV2(query backend.DataQuery, model *simplejson.Json) *data
 		min := walker - ((rand.Float64() * spread) + 0.01)
 		max := walker + ((rand.Float64() * spread) + 0.01)
 		infoString := info.String()
-		frame.AppendRow(&t, &val, &min, &max, &infoString)
 
+		vals := []*float64{&val, &min, &max}
 		// // Add some random null values
-		// if withNil && rand.Float64() > 0.8 {
-		// 	for i := 1; i < 4; i++ {
-		// 		if rand.Float64() > .2 {
-		// 			row[i] = nil
-		// 		}
-		// 	}
-		// }
+		if withNil && rand.Float64() > 0.8 {
+			for i := range vals {
+				if rand.Float64() > .2 {
+					vals[i] = nil
+				}
+			}
+		}
+
+		frame.AppendRow(&t, vals[0], vals[1], vals[2], &infoString)
 
 		timeWalkerMs += query.Interval.Milliseconds()
 	}
