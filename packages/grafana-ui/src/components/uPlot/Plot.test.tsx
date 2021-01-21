@@ -224,7 +224,6 @@ describe('UPlotChart', () => {
 const createPlotData = (frame: DataFrame): AlignedFrameWithGapTest => {
   return {
     frame,
-    isGap: () => false,
     getDataFrameFieldIndex: () => undefined,
   };
 };
