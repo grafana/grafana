@@ -46,6 +46,7 @@ export enum LineInterpolation {
 export enum ScaleDistribution {
   Linear = 'linear',
   Logarithmic = 'log',
+  Ordinal = 'ordinal',
 }
 
 /**

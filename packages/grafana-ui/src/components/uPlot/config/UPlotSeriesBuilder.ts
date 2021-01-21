@@ -22,7 +22,8 @@ export interface SeriesProps extends LineConfig, FillConfig, PointsConfig {
   /** Used when gradientMode is set to Scheme  */
   colorMode?: FieldColorMode;
   fieldName: string;
-  drawStyle: DrawStyle;
+  drawStyle?: DrawStyle;
+  pathBuilder?: Series.PathBuilder;
   show?: boolean;
   dataFrameFieldIndex?: DataFrameFieldIndex;
   hideInLegend?: boolean;
@@ -33,6 +34,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
   getConfig() {
     const {
       drawStyle,
+      pathBuilder,
       lineInterpolation,
       lineWidth,
       lineStyle,
@@ -46,9 +48,11 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
 
     let lineConfig: Partial<Series> = {};
 
-    if (drawStyle === DrawStyle.Points) {
+    if (pathBuilder != null) {
+      lineConfig.paths = pathBuilder;
+    } else if (drawStyle === DrawStyle.Points) {
       lineConfig.paths = () => null;
-    } else {
+    } else if (drawStyle != null) {
       lineConfig.stroke = this.getLineColor();
       lineConfig.width = lineWidth;
       if (lineStyle && lineStyle.fill !== 'solid') {
