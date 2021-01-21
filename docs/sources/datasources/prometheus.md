@@ -26,23 +26,9 @@ To access Prometheus settings, hover your mouse over the **Configuration** (gear
 | `Scrape interval`         | Set this to the typical scrape and evaluation interval configured in Prometheus. Defaults to 15s.                                                                                                       |
 | `Disable metrics lookup`  | Checking this option will disable the metrics chooser and metric/label support in the query field's autocomplete. This helps if you have performance issues with bigger Prometheus instances.           |
 | `Custom Query Parameters` | Add custom parameters to the Prometheus query URL. For example `timeout`, `partial_response`, `dedup`, or `max_source_resolution`. Multiple parameters should be concatenated together with an '&amp;'. |
-
-### Exemplars
-
-> **Note:** This feature is available in Prometheus 2.25+ and Grafana 7.4+.
-
-The Exemplars configuration allows you to add multiple endpoints to any of your Exemplar label.
-
-You can use this functionality to link to your tracing backend from an Exemplar.
-{{< docs-imagebox img="/img/docs/v74/exemplars-settings.png" class="docs-image--no-shadow" caption="Screenshot of the Exemplars configuration" >}}
-Each Exemplar link config consists of:
-
-- **Label name -** The name of the field in the labels object that should be used.
-- **URL -** If the link is external, then enter the full link URL. You can interpolate the value from the field with `${__value.raw }` macro.
-- **Internal link -** Select if the link is internal or external. In case of internal link, a data source selector allows you to select the target data source. Only tracing data sources are supported.
-
-The link next to the Exemplar's traceID:
-{{< docs-imagebox img="/img/docs/v74/exemplars.png" class="docs-image--no-shadow" caption="Screenshot showing the detail window of an Exemplar" >}}
+| `Label name`              | The name of the field in the labels object that should be used.                                                                                                                                         |
+| `URL`                     | If the link is external, then enter the full link URL. You can interpolate the value from the field with `${__value.raw }` macro.                                                                       |
+| `Internal link`           | Select if the link is internal or external. In case of internal link, a data source selector allows you to select the target data source. Only tracing data sources are supported.                      |
 
 ## Prometheus query editor
 
@@ -59,7 +45,7 @@ Open a graph in edit mode by clicking the title > Edit (or by pressing `e` key w
 | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `Query expression`  | Prometheus query expression, check out the [Prometheus documentation](http://prometheus.io/docs/querying/basics/).                                                                                                                                                                                                                                                                                                                                                                                        |
 | `Legend format`     | Controls the name of the time series, using name or pattern. For example `{{hostname}}` is replaced with the label value for the label `hostname`.                                                                                                                                                                                                                                                                                                                                                        |
-| `Min step`          | An additional lower limit for the [`step` parameter of Prometheus range queries](https://prometheus.io/docs/prometheus/latest/querying/api/#range-queries) and for the `$__interval` and `$__rate_interval` variables. The limit is absolute, it cannot modified by the _Resolution_ setting.                                                                                                                                                                                                                |
+| `Min step`          | An additional lower limit for the [`step` parameter of Prometheus range queries](https://prometheus.io/docs/prometheus/latest/querying/api/#range-queries) and for the `$__interval` and `$__rate_interval` variables. The limit is absolute, it cannot modified by the _Resolution_ setting.                                                                                                                                                                                                             |
 | `Resolution`        | `1/1` sets both the `$__interval` variable and the [`step` parameter of Prometheus range queries](https://prometheus.io/docs/prometheus/latest/querying/api/#range-queries) such that each pixel corresponds to one data point. For better performance, lower resolutions can be picked. `1/2` only retrieves a data point for every other pixel, and `1/10` retrieves one data point per 10 pixels. Note that both _Min time interval_ and _Min step_ limit the final value of `$__interval` and `step`. |
 | `Metric lookup`     | Search for metric names in this input field.                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | `Format as`         | Switch between `Table`, `Time series`, or `Heatmap`. `Table` will only work in the Table panel. `Heatmap` is suitable for displaying metrics of the Histogram type on a Heatmap panel. Under the hood, it converts cumulative histograms to regular ones and sorts series by the bucket bound.                                                                                                                                                                                                            |
@@ -206,7 +192,7 @@ datasources:
 
         # Field with external link.
         - name: traceID
-          url: "http://localhost:3000/explore?orgId=1&left=%5B%22now-1h%22,%22now%22,%22Jaeger%22,%7B%22query%22:%22$${__value.raw}%22%7D%5D"
+          url: 'http://localhost:3000/explore?orgId=1&left=%5B%22now-1h%22,%22now%22,%22Jaeger%22,%7B%22query%22:%22$${__value.raw}%22%7D%5D'
 ```
 
 ## Amazon Managed Service for Prometheus
@@ -218,3 +204,12 @@ The Prometheus data source works with Amazon Managed Service for Prometheus. If 
 To connect the Prometheus data source to Amazon Managed Service for Prometheus using SigV4 authentication, refer to the AWS guide to [Set up Grafana open source or Grafana Enterprise for use with AMP](https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-onboard-query-standalone-grafana.html).
 
 If you are running Grafana in an Amazon EKS cluster, follow the AWS guide to [Query using Grafana running in an Amazon EKS cluster](https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-onboard-query-grafana-7.3.html).
+
+## Exemplars
+
+> **Note:** This feature is available in Prometheus 2.25+ and Grafana 7.4+.
+
+You can use this functionality to link to your tracing backend from an Exemplar.
+
+The link next to the Exemplar's traceID:
+{{< docs-imagebox img="/img/docs/v74/exemplars.png" class="docs-image--no-shadow" caption="Screenshot showing the detail window of an Exemplar" >}}
