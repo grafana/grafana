@@ -16,9 +16,9 @@ This topic includes the release notes for Grafana v7.4 beta. For all details, re
 
 These features are included in the Grafana open source edition.
 
-### Beta Time series panel visualization
+### Time series panel visualization (Beta)
 
-Grafana 7.4 brings the beta version of the next-gen graph visualization. The new graph panel, the _Time series_ visualization, is high-performance visualization based on the uPlot library. This new graph visualization uses the new panel architecture introduced in Grafana 7.0 and integrates with field options, overrides, and transformations.
+Grafana 7.4 adds a beta version of the next-gen graph visualization. The new graph panel, the _Time series_ visualization, is high-performance visualization based on the uPlot library. This new graph visualization uses the new panel architecture introduced in Grafana 7.0 and integrates with field options, overrides, and transformations.
 
 The Time series beta panel implements the majority of the functionalities available in the current Graph panel. Our plan is to have close to full coverage of the features in Grafana 8.0, coming later this year.
 
@@ -26,7 +26,7 @@ Apart from major performance improvements, the new Time series panel implements 
 
 {{< figure src="/img/docs/v74/timeseries_panel.png" max-width="900px" caption="Time series panel" >}}
 
-### Beta Node graph panel visualization
+### Node graph panel visualization (Beta)
 
 _Node graph_ is a new panel type that can visualize directed graphs or network in dashboards, but also in Explore. It uses directed force layout to effectively position the nodes so it can help with displaying complex infrastructure maps, hierarchies, or execution diagrams.
 
