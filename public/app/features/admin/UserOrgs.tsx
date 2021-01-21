@@ -15,6 +15,7 @@ import { GrafanaTheme } from '@grafana/data';
 import { Organization, OrgRole, UserOrg } from 'app/types';
 import { OrgPicker, OrgSelectItem } from 'app/core/components/Select/OrgPicker';
 import { OrgRolePicker } from './OrgRolePicker';
+import { getModalStyles } from '@grafana/ui/src/components/Modal/getModalStyles';
 
 interface Props {
   orgs: UserOrg[];
@@ -182,7 +183,7 @@ const getAddToOrgModalStyles = stylesFactory(() => ({
   `,
 }));
 
-interface AddToOrgModalProps {
+interface AddToOrgModalProps extends Themeable {
   isOpen: boolean;
   onOrgAdd(orgId: number, role: string): void;
   onDismiss?(): void;
@@ -193,7 +194,7 @@ interface AddToOrgModalState {
   role: OrgRole;
 }
 
-export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgModalState> {
+class UnThemedAddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgModalState> {
   state: AddToOrgModalState = {
     selectedOrg: null,
     role: OrgRole.Admin,
@@ -224,42 +225,40 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
     const { isOpen } = this.props;
     const { role } = this.state;
     const styles = getAddToOrgModalStyles();
-
+    const modalStyles = getModalStyles(this.props.theme);
+    const contentClassName = cx(
+      modalStyles.modalContent,
+      css`
+        overflow: visible;
+      `
+    );
     return (
       <Modal
         className={styles.modal}
+        contentClassName={contentClassName}
         title="Add to an organization"
         isOpen={isOpen}
         onDismiss={this.onCancel}
-        render={(props) => {
-          const override = cx(
-            props.styles.modalContent,
-            css`
-              overflow: visible;
-            `
-          );
-          return (
-            <div className={override}>
-              <Field label="Organisation">
-                <OrgPicker onSelected={this.onOrgSelect} />
-              </Field>
-              <Field label="Role">
-                <OrgRolePicker value={role} onChange={this.onOrgRoleChange} />
-              </Field>
-              <Container padding="md">
-                <HorizontalGroup spacing="md" justify="center">
-                  <Button variant="primary" onClick={this.onAddUserToOrg}>
-                    Add to organisation
-                  </Button>
-                  <Button variant="secondary" onClick={this.onCancel}>
-                    Cancel
-                  </Button>
-                </HorizontalGroup>
-              </Container>
-            </div>
-          );
-        }}
-      />
+      >
+        <Field label="Organisation">
+          <OrgPicker onSelected={this.onOrgSelect} />
+        </Field>
+        <Field label="Role">
+          <OrgRolePicker value={role} onChange={this.onOrgRoleChange} />
+        </Field>
+        <Container padding="md">
+          <HorizontalGroup spacing="md" justify="center">
+            <Button variant="primary" onClick={this.onAddUserToOrg}>
+              Add to organisation
+            </Button>
+            <Button variant="secondary" onClick={this.onCancel}>
+              Cancel
+            </Button>
+          </HorizontalGroup>
+        </Container>
+      </Modal>
     );
   }
 }
+
+export const AddToOrgModal = withTheme(UnThemedAddToOrgModal);

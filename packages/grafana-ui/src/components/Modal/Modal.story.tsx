@@ -3,9 +3,10 @@ import { oneLineTrim } from 'common-tags';
 import { boolean, text } from '@storybook/addon-knobs';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { UseState } from '../../utils/storybook/UseState';
-import { Icon, Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
+import { Icon, Modal, ModalTabsHeader, TabContent, useTheme } from '@grafana/ui';
 import mdx from './Modal.mdx';
 import { css, cx } from 'emotion';
+import { getModalStyles } from './getModalStyles';
 
 const getKnobs = () => {
   return {
@@ -91,22 +92,18 @@ export const WithTabs = () => {
   );
 };
 
-export const UsingRenderPropToChangeModalContent = () => {
+export const UsingContentClassName = () => {
   const { body, visible } = getKnobs();
+  const theme = useTheme();
+  const contentClassName = cx(
+    getModalStyles(theme).modalContent,
+    css`
+      background-color: fuchsia;
+    `
+  );
   return (
-    <Modal
-      title="Using render prop to set background color to white and text color to black"
-      isOpen={visible}
-      render={(props) => {
-        const override = cx(
-          props.styles.modalContent,
-          css`
-            background-color: #fff;
-            color: #000;
-          `
-        );
-        return <div className={override}>{body}</div>;
-      }}
-    />
+    <Modal title="Using contentClassName to override background" isOpen={visible} contentClassName={contentClassName}>
+      {body}
+    </Modal>
   );
 };

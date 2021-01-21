@@ -13,21 +13,25 @@ export interface Props {
   /** Title for the modal or custom header element */
   title: string | JSX.Element;
   className?: string;
+  contentClassName?: string;
 
   isOpen?: boolean;
   onDismiss?: () => void;
 
   /** If not set will call onDismiss if that is set. */
   onClickBackdrop?: () => void;
-  render?: (props: RenderApi) => JSX.Element;
-}
-
-interface RenderApi {
-  styles: ReturnType<typeof getModalStyles>;
 }
 
 export function Modal(props: PropsWithChildren<Props>): ReturnType<FC<Props>> {
-  const { title, children, isOpen = false, className, onDismiss: propsOnDismiss, onClickBackdrop, render } = props;
+  const {
+    title,
+    children,
+    isOpen = false,
+    className,
+    contentClassName,
+    onDismiss: propsOnDismiss,
+    onClickBackdrop,
+  } = props;
   const theme = useTheme();
   const styles = getModalStyles(theme);
   const onDismiss = useCallback(() => {
@@ -50,8 +54,7 @@ export function Modal(props: PropsWithChildren<Props>): ReturnType<FC<Props>> {
             <IconButton surface="header" name="times" size="lg" onClick={onDismiss} />
           </div>
         </div>
-        {render && render({ styles })}
-        {!render && <div className={styles.modalContent}>{children}</div>}
+        <div className={cx(styles.modalContent, contentClassName)}>{children}</div>
       </div>
       <div className={styles.modalBackdrop} onClick={onClickBackdrop || onDismiss} />
     </Portal>
