@@ -36,7 +36,6 @@ func TestGenerateConnectionString(t *testing.T) {
 		user           string
 		password       string
 		database       string
-		tlsMode        string
 		expConnStr     string
 		expErr         string
 		jsonData       string
@@ -88,7 +87,7 @@ func TestGenerateConnectionString(t *testing.T) {
 			user:       "user",
 			password:   "password",
 			database:   "database",
-			tlsMode:    "disable",
+			jsonData:   `{"sslmode" : "disable"}`,
 			expConnStr: "user='user' password='password' host='host' dbname='database' sslmode='disable'",
 		},
 		{
@@ -126,9 +125,8 @@ func TestGenerateConnectionString(t *testing.T) {
 			jsonData, err := simplejson.NewJson([]byte(tt.jsonData))
 			require.NoError(t, err, tt.desc)
 
-			if err := json.Unmarshal([]byte(tt.secureJsonData), &securityjsonData); err != nil {
-				panic(err)
-			}
+			err := json.Unmarshal([]byte(tt.secureJsonData), &securityjsonData)
+			require.NoError(t, err)
 
 			ds := &models.DataSource{
 				Url:            tt.host,

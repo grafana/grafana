@@ -69,8 +69,8 @@ func escape(input string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(input, `\`, `\\`), "'", `\'`)
 }
 
-func writeConnectionFile(
-	ds *models.DataSource, fileContent string, currentPath string, certFileName string, jsonFieldName string) error {
+func writeConnectionFile(ds *models.DataSource, fileContent string, currentPath string, certFileName string,
+	jsonFieldName string) error {
 	var generatedFilePath string
 	if tlsjs, ok := ds.JsonData.CheckGet(jsonFieldName); ok {
 		generatedFilePath = tlsjs.MustString("")
