@@ -1,5 +1,6 @@
 import React from 'react';
 import debounce from 'lodash/debounce';
+import { css } from 'emotion';
 import { DataFrame, CSVConfig, readCSV } from '@grafana/data';
 import { Icon } from '../Icon/Icon';
 
@@ -15,6 +16,27 @@ interface State {
   text: string;
   data: DataFrame[];
 }
+
+const getStyles = () => {
+  return {
+    gfTableInputCsv: css`
+      position: relative;
+      textarea {
+        height: 100%;
+        width: 100%;
+      }
+      footer {
+        position: absolute;
+        bottom: 15px;
+        right: 15px;
+        border: 1px solid #222;
+        background: $online;
+        padding: 1px 4px;
+        font-size: 80%;
+      }
+    `,
+  };
+};
 
 /**
  * Expects the container div to have size set and will fill it 100%
@@ -61,8 +83,9 @@ export class TableInputCSV extends React.PureComponent<Props, State> {
   render() {
     const { width, height } = this.props;
     const { data } = this.state;
+    const styles = getStyles();
     return (
-      <div className="gf-table-input-csv">
+      <div className={styles.gfTableInputCsv}>
         <textarea
           style={{ width, height }}
           placeholder="Enter CSV here..."
