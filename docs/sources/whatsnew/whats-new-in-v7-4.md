@@ -12,19 +12,23 @@ list = false
 
 This topic includes the release notes for Grafana v7.4 beta. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
+Check out the [New Features in 7.4](https://play.grafana.org/d/nP8rcffGk/1-new-features-in-v7-4?orgId=1) dashboard on Grafana Play!
+
 ## Grafana OSS features
 
-These features are included in the Grafana Enterprise edition software.
+These features are included in the Grafana open source edition.
 
-### Beta Time series panel visualization
+### Time series panel visualization (Beta)
 
-Grafana 7.4 brings the beta version of the next-gen graph visualization. The new graph panel, the _Time series_ visualization, is high-performance visualization based on the uPlot library. This new graph visualization uses the new panel architecture introduced in Grafana 7.0 and integrates with field options, overrides, and transformations.
+Grafana 7.4 adds a beta version of the next-gen graph visualization. The new graph panel, the _Time series_ visualization, is high-performance visualization based on the uPlot library. This new graph visualization uses the new panel architecture introduced in Grafana 7.0 and integrates with field options, overrides, and transformations.
 
 The Time series beta panel implements the majority of the functionalities available in the current Graph panel. Our plan is to have close to full coverage of the features in Grafana 8.0, coming later this year.
 
 Apart from major performance improvements, the new Time series panel implements new features like line interpolation modes, support for more than two Y-axes, soft min and max axis limits, automatic points display based on data density, and gradient fill modes.
 
-### Beta Node graph panel visualization
+{{< figure src="/img/docs/v74/timeseries_panel.png" max-width="900px" caption="Time series panel" >}}
+
+### Node graph panel visualization (Beta)
 
 _Node graph_ is a new panel type that can visualize directed graphs or network in dashboards, but also in Explore. It uses directed force layout to effectively position the nodes so it can help with displaying complex infrastructure maps, hierarchies, or execution diagrams.
 
@@ -40,7 +44,7 @@ The following transformations were added in Grafana 7.4.
 
 The _Sort by_ transformation allows you to sort data before sending it to the visualization.
 
-For more information, refer to [Filter data by value]({{< relref "../panels/transformations/types-options.md#sort-by" >}}) in [Transformation types and options]({{< relref "../panels/transformations/types-options.md" >}}).
+For more information, refer to [Sort by]({{< relref "../panels/transformations/types-options.md#sort-by" >}}) in [Transformation types and options]({{< relref "../panels/transformations/types-options.md" >}}).
 
 #### Filter data by value transform
 
@@ -56,7 +60,7 @@ Grafana graphs now support Prometheus exemplars. They are displayed as diamonds 
 
 > **Note:** Support for exemplars will be added in version Prometheus 2.25+,
 
-![Exemplar example](/img/docs/v74/exemplars.png)
+{{< figure src="/img/docs/v74/exemplars.png" max-width="900px" caption="Exemplar example" >}}
 
 ### Trace to logs
 
@@ -75,13 +79,13 @@ _Server-side expressions_ is an experimental feature that allows you to manipula
 
 The main use case is for [multi-dimensional](https://grafana.com/docs/grafana/latest/getting-started/timeseries-dimensions/#time-series-dimensions) data sources used with the upcoming next generation alerting, but expressions can be used with backend data sources and visualization as well.
 
-> **Note:** Queries built with this feature may break with minor version upgrades until Grafana 8 is released.
+> **Note:** Queries built with this feature might break with minor version upgrades until Grafana 8 is released. This feature does not work with the current Grafana alerting.
 
 ### Variable support in alert notifications
 
 You can now provide detailed information to alert notification recipients by injecting alert query data into an alert notification. Labels that exist from the evaluation of the alert query can be used in the alert rule name and in the alert notification message fields. The alert label data is injected into the notification fields when the alert is in the alerting state. When there are multiple unique values for the same label, the values are comma-separated.
 
-![Variable support in alert notifications](/img/docs/v74/alert-variable-notifications.png)
+{{< figure src="/img/docs/alerting/alert-notification-template-7-4.png" max-width="700px" caption="Variable support in alert notifications" >}}
 
 ### Content security policy support
 
@@ -105,7 +109,7 @@ Grafana 7.4 includes the following enhancements
 - Added support to the terms aggregation for ordering by percentiles and extended stats.
 - Updated date histogram auto interval handling for alert queries.
 
-> **Note:** We have deprecated browser access mode. Iit will be removed in a future release.
+> **Note:** We have deprecated browser access mode. It will be removed in a future release.
 
 ### Azure Monitor updates
 
@@ -128,11 +132,20 @@ Many thanks to [mtanda](https://github.com/mtanda) this contribution!
 ### Query Editor Help
 
 The feature previously referred to as DataSource Start Pages or Cheat Sheets has been renamed to Query Editor Help, and is now supported in panel query editors (depending on the data source), as well as in Explore.
-### Inspecting variables and their dependencies
-The variables list has an additional column indicating whether variables are referenced in queries and panel names or not. The dependencies graph provides an easy way to check variable dependencies. You can click on a variable name within the graph to make updates to the variable as needed. 
+
+[Queries]({{< relref "../panels/queries.md" >}}) was updated as a result of this feature.
+
+For more information on adding a query editor help component to your plugin, refer to [Add a query editor help component]({{< relref "../developers/plugins/add-query-editor-help.md" >}}).
+
+### Variable inspector
+
+The variables list has an additional column indicating whether variables are referenced in queries and panel names or not. The dependencies graph provides an easy way to check variable dependencies. You can click on a variable name within the graph to make updates to the variable as needed.
+
+For more information, refer to [Inspect variables and their dependencies]({{< relref "../variables/inspect-variable.md">}}).
+
 ## Grafana Enterprise features
 
-These features are included in the Grafana Enterprise edition software.
+These features are included in the Grafana Enterprise edition.
 
 ### Licensing changes
 
