@@ -56,7 +56,7 @@ export function Segment<T>({
       width={width}
       onClickOutside={() => setExpanded(false)}
       allowCustomValue={allowCustomValue}
-      onChange={item => {
+      onChange={(item) => {
         setExpanded(false);
         onChange(item);
       }}
