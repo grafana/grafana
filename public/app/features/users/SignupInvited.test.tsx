@@ -1,9 +1,10 @@
 import React from 'react';
 import * as redux from 'react-redux';
 import { render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+
 import SignupInvitedPage from './SignupInvited';
 import { backendSrv } from '../../core/services/backend_srv';
-import userEvent from '@testing-library/user-event';
 
 jest.mock('app/core/core', () => ({
   contextSrv: {
