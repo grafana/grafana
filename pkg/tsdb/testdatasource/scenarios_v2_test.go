@@ -54,7 +54,7 @@ func TestTestdataScenariosV2(t *testing.T) {
 			frame := dResp.Frames[0]
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, "time", frame.Fields[0].Name)
-			require.Equal(t, "value", frame.Fields[1].Name)
+			require.Equal(t, "A-series", frame.Fields[1].Name)
 			val, ok := frame.Fields[1].ConcreteAt(0)
 			require.True(t, ok)
 			require.Equal(t, 1.234, val)

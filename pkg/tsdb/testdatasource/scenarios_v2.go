@@ -215,11 +215,9 @@ func (p *testDataPlugin) handleCSVMetricValuesScenario(ctx context.Context, req 
 			return resp, nil
 		}
 
-		frame := newSeriesForQueryV2(q, model, 0)
-		frame.Fields = data.Fields{
+		frame := data.NewFrame("",
 			data.NewField("time", nil, []*time.Time{}),
-			data.NewField("value", nil, []*float64{}),
-		}
+			data.NewField(frameNameForQuery(q, model, 0), nil, []*float64{}))
 		startTime := q.TimeRange.From.UnixNano() / int64(time.Millisecond)
 		endTime := q.TimeRange.To.UnixNano() / int64(time.Millisecond)
 		var step int64 = 0
@@ -546,9 +544,9 @@ func getRandomWalkV2(query backend.DataQuery, model *simplejson.Json, index int)
 		timeWalkerMs += query.Interval.Milliseconds()
 	}
 
-	return data.NewFrame(frameNameForQuery(query, model, index),
+	return data.NewFrame("",
 		data.NewField("time", nil, timeVec),
-		data.NewField("value", parseLabelsV2(model), floatVec),
+		data.NewField(frameNameForQuery(query, model, 0), parseLabelsV2(model), floatVec),
 	)
 }
 
