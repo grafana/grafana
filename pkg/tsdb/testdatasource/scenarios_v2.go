@@ -29,6 +29,7 @@ func (p *testDataPlugin) registerScenarioQueryHandlers(mux *datasource.QueryType
 	mux.HandleFunc(string(noDataPointsQuery), p.handleNoDataPointsScenario)
 	mux.HandleFunc(string(exponentialHeatmapBucketDataQuery), p.handleExponentialHeatmapBucketDataScenario)
 	mux.HandleFunc(string(linearHeatmapBucketDataQuery), p.handleLinearHeatmapBucketDataScenario)
+	mux.HandleFunc(string(predictablePulseQuery), p.handlePredictablePulseScenario)
 
 	mux.HandleFunc("", p.handleFallbackScenario)
 }
@@ -184,6 +185,27 @@ func (p *testDataPlugin) handlePredictableCSVWaveScenario(ctx context.Context, r
 
 		respD := resp.Responses[q.RefID]
 		frame, err := getPredictableCSVWaveV2(q, model)
+		if err != nil {
+			continue
+		}
+		respD.Frames = append(respD.Frames, frame)
+		resp.Responses[q.RefID] = respD
+	}
+
+	return resp, nil
+}
+
+func (p *testDataPlugin) handlePredictablePulseScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+
+	for _, q := range req.Queries {
+		model, err := simplejson.NewJson(q.JSON)
+		if err != nil {
+			continue
+		}
+
+		respD := resp.Responses[q.RefID]
+		frame, err := getPredictablePulseV2(q, model)
 		if err != nil {
 			continue
 		}
@@ -436,6 +458,58 @@ func predictableSeriesV2(timeRange backend.TimeRange, timeStep, length int64, ge
 		data.NewField("time", nil, timeVec),
 		data.NewField("value", nil, floatVec),
 	}, nil
+}
+
+func getPredictablePulseV2(query backend.DataQuery, model *simplejson.Json) (*data.Frame, error) {
+	// Process Input
+	var timeStep int64
+	var onCount int64
+	var offCount int64
+	var onValue null.Float
+	var offValue null.Float
+
+	options := model.Get("pulseWave")
+
+	var err error
+	if timeStep, err = options.Get("timeStep").Int64(); err != nil {
+		return nil, fmt.Errorf("failed to parse timeStep value '%v' into integer: %v", options.Get("timeStep"), err)
+	}
+	if onCount, err = options.Get("onCount").Int64(); err != nil {
+		return nil, fmt.Errorf("failed to parse onCount value '%v' into integer: %v", options.Get("onCount"), err)
+	}
+	if offCount, err = options.Get("offCount").Int64(); err != nil {
+		return nil, fmt.Errorf("failed to parse offCount value '%v' into integer: %v", options.Get("offCount"), err)
+	}
+
+	onValue, err = fromStringOrNumber(options.Get("onValue"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse onValue value '%v' into float: %v", options.Get("onValue"), err)
+	}
+	offValue, err = fromStringOrNumber(options.Get("offValue"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse offValue value '%v' into float: %v", options.Get("offValue"), err)
+	}
+
+	timeStep *= 1000                               // Seconds to Milliseconds
+	onFor := func(mod int64) (null.Float, error) { // How many items in the cycle should get the on value
+		var i int64
+		for i = 0; i < onCount; i++ {
+			if mod == i*timeStep {
+				return onValue, nil
+			}
+		}
+		return offValue, nil
+	}
+	fields, err := predictableSeriesV2(query.TimeRange, timeStep, onCount+offCount, onFor)
+	if err != nil {
+		return nil, err
+	}
+
+	frame := newSeriesForQueryV2(query, model, 0)
+	frame.Fields = fields
+	frame.Fields[1].Labels = parseLabelsV2(model)
+
+	return frame, nil
 }
 
 func newSeriesForQueryV2(query backend.DataQuery, model *simplejson.Json, index int) *data.Frame {
