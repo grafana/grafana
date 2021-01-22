@@ -159,7 +159,7 @@ func TestPostgres(t *testing.T) {
 		sqleng.Interpolate = origInterpolate
 	})
 
-	t.Run("Given a table with different native data types", func(t *testing.TR) {
+	t.Run("Given a table with different native data types", func(t *testing.T) {
 		sql := `
 			DROP TABLE IF EXISTS postgres_types;
 			CREATE TABLE postgres_types(
@@ -234,13 +234,13 @@ func TestPostgres(t *testing.T) {
 
 			_, ok := column[10].(time.Time)
 			require.True(t, ok)
-			_, ok := column[11].(time.Time)
+			_, ok = column[11].(time.Time)
 			require.True(t, ok)
-			_, ok := column[12].(time.Time)
+			_, ok = column[12].(time.Time)
 			require.True(t, ok)
-			_, ok := column[13].(time.Time)
+			_, ok = column[13].(time.Time)
 			require.True(t, ok)
-			_, ok := column[14].(time.Time)
+			_, ok = column[14].(time.Time)
 			require.True(t, ok)
 
 			require.Equal(t, "00:15:00", column[15].(string))
@@ -388,7 +388,7 @@ func TestPostgres(t *testing.T) {
 			require.NoError(t, queryResult.Error)
 
 			points := queryResult.Series[0].Points
-			require.Len(points, 7)
+			require.Len(t, points, 7)
 
 			dt := fromStart
 
@@ -441,7 +441,7 @@ func TestPostgres(t *testing.T) {
 			require.NoError(t, queryResult.Error)
 
 			points := queryResult.Series[0].Points
-			require.Equal(t, 1.5, point[3][0].Float64)
+			require.Equal(t, 1.5, points[3][0].Float64)
 		})
 	})
 
@@ -954,7 +954,7 @@ func TestPostgres(t *testing.T) {
 			require.Equal(t, dt.Unix()*1000, columns[0].(int64))
 		})
 
-		t.Run("When doing an annotation query with a time column in epoch second format (t *testing.Tint) should return ms", func() {
+		t.Run("When doing an annotation query with a time column in epoch second format (t *testing.Tint) should return ms", func(t *testing.T) {
 			dt := time.Date(2018, 3, 14, 21, 20, 6, 527e6, time.UTC)
 
 			query := &tsdb.TsdbQuery{
@@ -1063,7 +1063,7 @@ func TestPostgres(t *testing.T) {
 			require.NoError(t, err)
 			queryResult := resp.Results["A"]
 			require.NoError(t, queryResult.Error)
-			require.Len(queryResult.Tables[0].Rows, 1)
+			require.Len(t, queryResult.Tables[0].Rows, 1)
 			columns := queryResult.Tables[0].Rows[0]
 
 			//Should be in milliseconds
