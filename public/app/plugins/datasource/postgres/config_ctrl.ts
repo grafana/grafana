@@ -19,13 +19,13 @@ export class PostgresConfigCtrl {
   constructor($scope: any, datasourceSrv: DatasourceSrv) {
     this.datasourceSrv = datasourceSrv;
     this.current.jsonData.sslmode = this.current.jsonData.sslmode || 'verify-full';
-    this.current.jsonData.sslConfigurationMethod = this.current.jsonData.sslConfigurationMethod || 'file-path';
+    this.current.jsonData.tlsConfigurationMethod = this.current.jsonData.tlsConfigurationMethod || 'file-path';
     this.current.jsonData.postgresVersion = this.current.jsonData.postgresVersion || 903;
     this.showTimescaleDBHelp = false;
     this.autoDetectFeatures();
     this.onPasswordReset = createResetHandler(this, PasswordFieldEnum.Password);
     this.onPasswordChange = createChangeHandler(this, PasswordFieldEnum.Password);
-    this.sslModeMapping();
+    this.tlsModeMapping();
   }
 
   autoDetectFeatures() {
@@ -64,7 +64,7 @@ export class PostgresConfigCtrl {
     this.showTimescaleDBHelp = !this.showTimescaleDBHelp;
   }
 
-  sslModeMapping() {
+  tlsModeMapping() {
     if (this.current.jsonData.sslmode === 'disable') {
       this.current.jsonData.tlsAuth = false;
       this.current.jsonData.tlsAuthWithCACert = false;
