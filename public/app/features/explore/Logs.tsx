@@ -239,10 +239,6 @@ export class UnthemedLogs extends PureComponent<Props, State> {
 
     const { showLabels, showTime, wrapLogMessage, logsSortOrder, isFlipping, showDetectedFields } = this.state;
 
-    if (!logRows) {
-      return null;
-    }
-
     const hasData = logRows && logRows.length > 0;
     const dedupCount = dedupedRows
       ? dedupedRows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0)
