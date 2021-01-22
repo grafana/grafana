@@ -12,7 +12,7 @@ import {
   reduceField,
   TimeRange,
 } from '@grafana/data';
-import { alignDataFrames } from './utils';
+import { joinDataFrames } from './utils';
 import { useTheme } from '../../themes';
 import { UPlotChart } from '../uPlot/Plot';
 import { PlotProps } from '../uPlot/types';
@@ -64,9 +64,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   const theme = useTheme();
   const hasLegend = useRef(legend && legend.displayMode !== LegendDisplayMode.Hidden);
 
-  const alignedFrameWithGapTest = useMemo(() => alignDataFrames(data, fields), [data, fields]);
-  const alignedFrame = alignedFrameWithGapTest?.frame;
-  const getDataFrameFieldIndex = alignedFrameWithGapTest?.getDataFrameFieldIndex;
+  const frame = useMemo(() => joinDataFrames(data, fields), [data, fields]);
 
   const compareFrames = useCallback((a?: DataFrame | null, b?: DataFrame | null) => {
     if (a && b) {
@@ -98,17 +96,17 @@ export const GraphNG: React.FC<GraphNGProps> = ({
     currentTimeRange.current = timeRange;
   }, [timeRange]);
 
-  const configRev = useRevision(alignedFrame, compareFrames);
+  const configRev = useRevision(frame, compareFrames);
 
   const configBuilder = useMemo(() => {
     const builder = new UPlotConfigBuilder();
 
-    if (!alignedFrame) {
+    if (!frame) {
       return builder;
     }
 
     // X is the first field in the aligned frame
-    const xField = alignedFrame.fields[0];
+    const xField = frame.fields[0];
 
     if (xField.type === FieldType.time) {
       builder.addScale({
@@ -141,8 +139,8 @@ export const GraphNG: React.FC<GraphNGProps> = ({
     }
     let indexByName: Map<string, number> | undefined = undefined;
 
-    for (let i = 0; i < alignedFrame.fields.length; i++) {
-      const field = alignedFrame.fields[i];
+    for (let i = 0; i < frame.fields.length; i++) {
+      const field = frame.fields[i];
       const config = field.config as FieldConfig<GraphFieldConfig>;
       const customConfig: GraphFieldConfig = {
         ...defaultConfig,
@@ -182,14 +180,13 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       }
 
       const showPoints = customConfig.drawStyle === DrawStyle.Points ? PointVisibility.Always : customConfig.showPoints;
-      const dataFrameFieldIndex = getDataFrameFieldIndex ? getDataFrameFieldIndex(i) : undefined;
 
       let { fillOpacity } = customConfig;
       if (customConfig.fillBelowTo) {
         if (!indexByName) {
-          indexByName = getNamesToFieldIndex(alignedFrame);
+          indexByName = getNamesToFieldIndex(frame);
         }
-        const t = indexByName.get(getFieldDisplayName(field, alignedFrame));
+        const t = indexByName.get(getFieldDisplayName(field, frame));
         const b = indexByName.get(customConfig.fillBelowTo);
         if (isNumber(b) && isNumber(t)) {
           builder.addBand({
@@ -221,15 +218,15 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         thresholds: config.thresholds,
 
         // The following properties are not used in the uPlot config, but are utilized as transport for legend config
-        dataFrameFieldIndex,
-        fieldName: getFieldDisplayName(field, alignedFrame),
+        dataFrameFieldIndex: field.state?.origin,
+        fieldName: getFieldDisplayName(field, frame),
         hideInLegend: customConfig.hideFrom?.legend,
       });
     }
     return builder;
   }, [configRev, timeZone]);
 
-  if (alignedFrameWithGapTest == null) {
+  if (!frame) {
     return (
       <div className="panel-empty">
         <p>No data found in response</p>
@@ -299,7 +296,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
     <VizLayout width={width} height={height} legend={legendElement}>
       {(vizWidth: number, vizHeight: number) => (
         <UPlotChart
-          data={alignedFrameWithGapTest}
+          data={frame}
           config={configBuilder}
           width={vizWidth}
           height={vizHeight}
