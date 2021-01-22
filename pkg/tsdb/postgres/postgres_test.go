@@ -914,6 +914,10 @@ func TestPostgres(t *testing.T) {
 						RefId: "A",
 					},
 				},
+				TimeRange: &tsdb.TimeRange{
+					From: fmt.Sprintf("%v", fromStart.Add(-20*time.Minute).Unix()*1000),
+					To:   fmt.Sprintf("%v", fromStart.Add(40*time.Minute).Unix()*1000),
+				},
 			}
 
 			resp, err := endpoint.Query(context.Background(), nil, query)
@@ -943,6 +947,10 @@ func TestPostgres(t *testing.T) {
 						}),
 						RefId: "A",
 					},
+				},
+				TimeRange: &tsdb.TimeRange{
+					From: fmt.Sprintf("%v", fromStart.Add(-20*time.Minute).Unix()*1000),
+					To:   fmt.Sprintf("%v", fromStart.Add(40*time.Minute).Unix()*1000),
 				},
 			}
 
@@ -974,6 +982,10 @@ func TestPostgres(t *testing.T) {
 						RefId: "A",
 					},
 				},
+				TimeRange: &tsdb.TimeRange{
+					From: fmt.Sprintf("%v", fromStart.Add(-20*time.Minute).Unix()*1000),
+					To:   fmt.Sprintf("%v", fromStart.Add(40*time.Minute).Unix()*1000),
+				},
 			}
 
 			resp, err := endpoint.Query(context.Background(), nil, query)
@@ -1004,6 +1016,10 @@ func TestPostgres(t *testing.T) {
 						RefId: "A",
 					},
 				},
+				TimeRange: &tsdb.TimeRange{
+					From: fmt.Sprintf("%v", fromStart.Add(-20*time.Minute).Unix()*1000),
+					To:   fmt.Sprintf("%v", fromStart.Add(40*time.Minute).Unix()*1000),
+				},
 			}
 
 			resp, err := endpoint.Query(context.Background(), nil, query)
@@ -1032,6 +1048,10 @@ func TestPostgres(t *testing.T) {
 						RefId: "A",
 					},
 				},
+				TimeRange: &tsdb.TimeRange{
+					From: fmt.Sprintf("%v", fromStart.Add(-20*time.Minute).Unix()*1000),
+					To:   fmt.Sprintf("%v", fromStart.Add(40*time.Minute).Unix()*1000),
+				},
 			}
 
 			resp, err := endpoint.Query(context.Background(), nil, query)
@@ -1059,6 +1079,10 @@ func TestPostgres(t *testing.T) {
 						}),
 						RefId: "A",
 					},
+				},
+				TimeRange: &tsdb.TimeRange{
+					From: fmt.Sprintf("%v", fromStart.Add(-20*time.Minute).Unix()*1000),
+					To:   fmt.Sprintf("%v", fromStart.Add(40*time.Minute).Unix()*1000),
 				},
 			}
 
