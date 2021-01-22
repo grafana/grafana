@@ -34,6 +34,11 @@ func (p *testDataPlugin) registerScenarioQueryHandlers(mux *datasource.QueryType
 	mux.HandleFunc(string(datapointsOutsideRangeQuery), p.handleDatapointsOutsideRangeQueryScenario)
 	mux.HandleFunc(string(manualEntryQuery), p.handleManualEntryScenario)
 	mux.HandleFunc(string(csvMetricValuesQuery), p.handleCSVMetricValuesScenario)
+	mux.HandleFunc(string(streamingClientQuery), p.handleStreamingClientQueryScenario)
+	mux.HandleFunc(string(liveQuery), p.handleGrafanaLiveQueryScenario)
+	mux.HandleFunc(string(grafanaAPIQuery), p.handleGrafanaAPIQueryScenario)
+	mux.HandleFunc(string(arrowQuery), p.handleArrowQueryScenario)
+	mux.HandleFunc(string(annotationsQuery), p.handleAnnotationsQueryScenario)
 
 	mux.HandleFunc("", p.handleFallbackScenario)
 }
@@ -356,6 +361,26 @@ func (p *testDataPlugin) handleServerError500Scenario(ctx context.Context, req *
 }
 
 func (p *testDataPlugin) handleNoDataPointsScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	return backend.NewQueryDataResponse(), nil
+}
+
+func (p *testDataPlugin) handleStreamingClientQueryScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	return backend.NewQueryDataResponse(), nil
+}
+
+func (p *testDataPlugin) handleGrafanaLiveQueryScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	return backend.NewQueryDataResponse(), nil
+}
+
+func (p *testDataPlugin) handleGrafanaAPIQueryScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	return backend.NewQueryDataResponse(), nil
+}
+
+func (p *testDataPlugin) handleArrowQueryScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	return backend.NewQueryDataResponse(), nil
+}
+
+func (p *testDataPlugin) handleAnnotationsQueryScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	return backend.NewQueryDataResponse(), nil
 }
 
