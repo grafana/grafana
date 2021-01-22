@@ -2,7 +2,7 @@ import { ArrayVector, DataFrame, FieldType, toDataFrame } from '@grafana/data';
 import { joinDataFrames, isLikelyAscendingVector } from './utils';
 
 describe('joinDataFrames', () => {
-  describe('aligned frame', () => {
+  describe('joined frame', () => {
     it('should align multiple data frames into one data frame', () => {
       const data: DataFrame[] = [
         toDataFrame({
@@ -27,7 +27,7 @@ describe('joinDataFrames', () => {
             "config": Object {},
             "name": "time",
             "state": Object {
-              "index": undefined,
+              "origin": undefined,
             },
             "type": "time",
             "values": Array [
@@ -42,7 +42,7 @@ describe('joinDataFrames', () => {
             "name": "temperature A",
             "state": Object {
               "displayName": "temperature A",
-              "index": Object {
+              "origin": Object {
                 "fieldIndex": 1,
                 "frameIndex": 0,
               },
@@ -61,7 +61,7 @@ describe('joinDataFrames', () => {
             "name": "temperature B",
             "state": Object {
               "displayName": "temperature B",
-              "index": Object {
+              "origin": Object {
                 "fieldIndex": 1,
                 "frameIndex": 1,
               },
@@ -103,7 +103,7 @@ describe('joinDataFrames', () => {
             "config": Object {},
             "name": "time",
             "state": Object {
-              "index": undefined,
+              "origin": undefined,
             },
             "type": "time",
             "values": Array [
@@ -118,7 +118,7 @@ describe('joinDataFrames', () => {
             "name": "temperature",
             "state": Object {
               "displayName": "temperature",
-              "index": Object {
+              "origin": Object {
                 "fieldIndex": 1,
                 "frameIndex": 0,
               },
@@ -137,7 +137,7 @@ describe('joinDataFrames', () => {
             "name": "temperature B",
             "state": Object {
               "displayName": "temperature B",
-              "index": Object {
+              "origin": Object {
                 "fieldIndex": 1,
                 "frameIndex": 1,
               },
@@ -174,7 +174,7 @@ describe('joinDataFrames', () => {
             "config": Object {},
             "name": "time",
             "state": Object {
-              "index": undefined,
+              "origin": undefined,
             },
             "type": "time",
             "values": Array [
@@ -189,7 +189,7 @@ describe('joinDataFrames', () => {
             "name": "temperature",
             "state": Object {
               "displayName": "temperature",
-              "index": Object {
+              "origin": Object {
                 "fieldIndex": 1,
                 "frameIndex": 0,
               },
@@ -226,7 +226,7 @@ describe('joinDataFrames', () => {
             "config": Object {},
             "name": "time",
             "state": Object {
-              "index": undefined,
+              "origin": undefined,
             },
             "type": "time",
             "values": Array [
@@ -241,7 +241,7 @@ describe('joinDataFrames', () => {
             "name": "temperature",
             "state": Object {
               "displayName": "temperature",
-              "index": Object {
+              "origin": Object {
                 "fieldIndex": 1,
                 "frameIndex": 0,
               },
