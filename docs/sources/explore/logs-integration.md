@@ -1,26 +1,24 @@
 +++
-title = "Logging in Explore"
-description = "Configure logs in Explore"
+title = "Logs in Explore"
+description = "Logs in Explore"
 keywords = ["explore", "logs",]
 aliases = ["/docs/grafana/latest/features/explore/"]
-weight = 5
+weight = 15
 +++
 
-# Logging in Explore 
+# Logs in Explore 
 
-During infrastructure monitoring and incident response, Explore allows you to dig deeper into your metrics and logs to find the cause. As a result, you do not need to switch to other tools to debug what went wrong. 
-
-Grafana's logging data source, [Loki](https://github.com/grafana/loki) is tightly integrated into Explore and allows you to correlate metrics and logs by viewing them side-by-side. This creates a new debugging workflow where you can:
-
-1. Receive an alert
-1. Drill down and examine metrics
-1. Drill down again and search logs related to the metric and time interval (and in the future, distributed traces)
-
-Along with metrics, Explore allows you to investigate your logs with the following data sources:
+Along with metrics, Explore allows you to investigate your logs in the following data sources:
 
 - [Loki](../datasources/loki)
 - [InfluxDB](../datasources/influxdb)
 - [Elasticsearch](../datasources/elasticsearch)
+
+During an infrastructure monitoring and incident response, you can dig deeper into the metrics and logs to find the cause. Explore also allows you to correlate metrics and logs by viewing them side-by-side. This creates a new debugging workflow where you can:
+
+1. Receive an alert
+2. Drill down and examine metrics
+3. Drill down again and search logs related to the metric and time interval (and in the future, distributed traces)
 
 ### Logs visualization
 

@@ -1,12 +1,12 @@
 +++
-title = "Trace integration"
-description = "Configure tracing in Explore"
+title = "Tracing in Explore"
+description = "Tracing in Explore"
 keywords = ["explore", "trace",]
 aliases = ["/docs/grafana/latest/features/explore/"]
-weight = 10
+weight = 20
 +++
 
-# Visualize trace 
+# Tracing in Explore
 
 Explore allows you to visualize traces from tracing data sources. This is only available in Grafana v7.0+.
 

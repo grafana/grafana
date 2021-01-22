@@ -7,46 +7,20 @@ weight = 90
 
 # Explore
 
-Grafana's dashboard UI is all about building dashboards for visualization. Explore, available in Grafana 6.0+, strips away the dashboard and panel options so that you can focus on the query. It helps you iterate until you have a working query and then think about building a dashboard. 
+Grafana's dashboard UI is all about building dashboards for visualization. Explore strips away the dashboard and panel options so that you can focus on the query. It helps you iterate until you have a working query and then think about building a dashboard. 
 
 If you just want to explore your data and do not want to create a dashboard, then Explore makes this much easier. If your data source supports graph and table data, then Explore shows the results both as a graph and a table. This allows you to see trends in the data and more details at the same time.
 
-During infrastructure monitoring and incident response, Explore allows you to dig deeper into your metrics and logs to find the cause. As a result, you do not need to switch to other tools to debug what went wrong. 
+>**Note:** Explore is available in Grafana 6.0 and later versions.
 
-Grafana's logging data source, [Loki](https://github.com/grafana/loki) is tightly integrated into Explore and allows you to correlate metrics and logs by viewing them side-by-side. This creates a new debugging workflow where you can:
+Users with the Viewer role cannot edit and do not have access to Explore. Refer to [Organization roles](https://grafana.com/docs/grafana/latest/permissions/organization_roles/) for more information about what each role has access to.
 
-1. Receive an alert
-1. Drill down and examine metrics
-1. Drill down again and search logs related to the metric and time interval (and in the future, distributed traces)
+To access Explore:
 
-## Navigate between Explore and a dashboard
+1. Click on the Explore icon on the menu bar. An empty Explore tab opens.
+1. Choose your data source from the dropdown in the top left. Prometheus has a custom Explore implementation, the other data sources use their standard query editor.
 
-To help accelerate workflows that involve regularly switching from Explore to a dashboard and vice-versa, we've added the ability to return to the origin dashboard after navigating to Explore from the panel's dropdown.
-
-{{< docs-imagebox img="/img/docs/v64/panel_dropdown.png" class="docs-image--no-shadow" caption="Screenshot of the panel dropdown" >}}
-
-After you've navigated to Explore, you should notice a "Back" button in the Explore toolbar.
-
-{{< docs-imagebox img="/img/docs/v64/explore_toolbar.png" class="docs-image--no-shadow" caption="Screenshot of the explore toolbar" >}}
-
-Simply clicking the button will return you to the origin dashboard, or, if you'd like to bring changes you make in Explore back to the dashboard, simply click
-the arrow next to the button to reveal a "Return to panel with changes" menu item.
-
-{{< docs-imagebox img="/img/docs/v64/explore_return_dropdown.png" class="docs-image--no-shadow" caption="Screenshot of the expanded explore return dropdown" >}}
-
-## Query inspector
-
-To help with debugging queries, Explore allows you to investigate query requests and responses, as well as query statistics, via the Query inspector.
-This functionality is similar to the panel inspector [Stats tab]({{< relref "../panels/inspect-panel.md#inspect-query-performance" >}}) and
-[Query tab]({{< relref "../panels/inspect-panel.md##view-raw-request-and-response-to-data-source" >}}).
-
-{{< docs-imagebox img="/img/docs/v71/query_inspector_explore.png" class="docs-image--no-shadow" caption="Screenshot of the query inspector button in Explore" >}}
-
-## Start exploring
-
-> **Note:** By default, users with the Viewer role cannot edit and do not have access to Explore. Refer to [Organization roles](https://grafana.com/docs/grafana/latest/permissions/organization_roles/) for more information about what each role has access to.
-
-There is an Explore icon on the menu bar to the left. This opens an empty Explore tab.
+The query field is where you can write your query and explore your data. There are three buttons beside the query field, a clear button (X), an add query button (+) and the remove query button (-). Just like the normal query editor, you can add and remove multiple queries.
 
 {{< docs-imagebox img="/img/docs/v65/explore_menu.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore Icon" >}}
 
@@ -68,100 +42,23 @@ In split view, timepickers for both panels can be linked (if you change one, the
 
 You can close the newly created query by clicking on the Close Split button.
 
+## Navigate between Explore and a dashboard
+
+To help accelerate workflows that involve regularly switching from Explore to a dashboard and vice-versa, we've added the ability to return to the origin dashboard after navigating to Explore from the panel's dropdown.
+
+{{< docs-imagebox img="/img/docs/v64/panel_dropdown.png" class="docs-image--no-shadow" caption="Screenshot of the panel dropdown" >}}
+
+After you've navigated to Explore, you should notice a "Back" button in the Explore toolbar.
+
+{{< docs-imagebox img="/img/docs/v64/explore_toolbar.png" class="docs-image--no-shadow" caption="Screenshot of the explore toolbar" >}}
+
+Simply clicking the button will return you to the origin dashboard, or, if you'd like to bring changes you make in Explore back to the dashboard, simply click
+the arrow next to the button to reveal a "Return to panel with changes" menu item.
+
+{{< docs-imagebox img="/img/docs/v64/explore_return_dropdown.png" class="docs-image--no-shadow" caption="Screenshot of the expanded explore return dropdown" >}}
+
 ## Share shortened link
 
 > Share shortened link is only available in Grafana 7.3 and above.
 
 The Share shortened link capability allows you to create smaller and simpler URLs of the format /goto/:uid instead of using longer URLs containing complex query parameters. You can create a shortened link by clicking on the **Share** option in Explore toolbar. Please note that any shortened links that are never used will be automatically deleted after 7 days.
-
-## Query history
-
-Query history is a list of queries that you have used in Explore. The history is local to your browser and is not shared. To open and interact with your history, click the **Query history** button in Explore.
-
-### View query history
-
-Query history lets you view the history of your querying. For each individual query, you can:
-
-- Run a query.
-- Create and/or edit a comment.
-- Copy a query to the clipboard.
-- Copy a shortened link with the query to the clipboard.
-- Star a query.
-
-### Manage favorite queries
-
-All queries that have been starred in the Query history tab are displayed in the Starred. This allows you to access your favorite queries faster and to reuse these queries without typing them from scratch.
-
-### Sort query history
-
-By default, query history shows you the most recent queries. You can sort your history by date or by data source name in ascending or descending order.
-
-1. Click the **Sort queries by** field.
-1. Select one of the following options:
-   - Newest first
-   - Oldest first
-   - Data source A-Z
-   - Data source Z-A
-
-> **Note:** If you are in split mode, then the chosen sorting mode applies only to the active panel.
-
-### Filter query history
-
-Filter query history in Query history and Starred tab by data source name:
-
-1. Click the **Filter queries for specific data source(s)** field.
-1. Select the data source for which you would like to filter your history. You can select multiple data sources.
-
-In **Query history** tab it is also possible to filter queries by date using the slider:
-
-- Use vertical slider to filter queries by date.
-- By dragging top handle, adjust start date.
-- By dragging top handle, adjust end date.
-
-> **Note:** If you are in split mode, filters are applied only to your currently active panel.
-
-### Search in query history
-
-You can search in your history across queries and your comments. Search is possible for queries in the Query history tab and Starred tab.
-
-1. Click the **Search queries** field.
-1. Type the term you are searching for into search field.
-
-### Query history settings
-
-You can customize the query history in the Settings tab. Options are described in the table below.
-
-| Setting                                                       | Default value                           |
-| ------------------------------------------------------------- | --------------------------------------- |
-| Period of time for which Grafana will save your query history | 1 week                                  |
-| Change the default active tab                                 | Query history tab                       |
-| Only show queries for data source currently active in Explore | True                                    |
-| Clear query history                                           | Permanently deletes all stored queries. |
-
-> **Note:** Query history settings are global, and applied to both panels in split mode.
-
-## Prometheus-specific Features
-
-The first version of Explore features a custom querying experience for Prometheus. When a query is executed, it actually executes two queries, a normal Prometheus query for the graph and an Instant Query for the table. An Instant Query returns the last value for each time series which shows a good summary of the data shown in the graph.
-
-### Metrics explorer
-
-On the left side of the query field, click **Metrics** to open the Metric Explorer. This shows a hierarchical menu with metrics grouped by their prefix. For example, all Alertmanager metrics are grouped under the `alertmanager` prefix. This is a good starting point if you just want to explore which metrics are available.
-
-{{< docs-imagebox img="/img/docs/v65/explore_metric_explorer.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore option in the panel menu" >}}
-
-### Query field
-
-The Query field supports autocomplete for metric names, function and works mostly the same way as the standard Prometheus query editor. Press the enter key to execute a query.
-
-The autocomplete menu can be triggered by pressing Ctrl+Space. The Autocomplete menu contains a new History section with a list of recently executed queries.
-
-Suggestions can appear under the query field - click on them to update your query with the suggested change.
-
-- For counters (monotonically increasing metrics), a rate function will be suggested.
-- For buckets, a histogram function will be suggested.
-- For recording rules, possible to expand the rules.
-
-### Table filters
-
-Click on the filter button in the "label" column of a Table panel to add filters to the query expression. You can add filters for multiple queries as well - the filter is added for all the queries.
