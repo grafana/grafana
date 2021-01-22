@@ -1,4 +1,4 @@
-import { DataFrame, Field, FieldMatcher, FieldType, getFieldDisplayName, sortDataFrame } from '@grafana/data';
+import { DataFrame, Field, FieldMatcher, FieldType, getFieldDisplayName } from '@grafana/data';
 import { XYFieldMatchers } from '@grafana/ui/src/components/GraphNG/GraphNG';
 import { XYDimensionConfig } from './types';
 
@@ -47,11 +47,6 @@ export function getXYDimensions(cfg: XYDimensionConfig, data?: DataFrame[]): XYD
       xIndex = i;
       break;
     }
-  }
-
-  // Optionally sort
-  if (cfg.sort) {
-    frame = sortDataFrame(frame, xIndex);
   }
 
   let hasTime = false;

@@ -262,6 +262,10 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         label: seriesConfig.fieldName,
         yAxis: axisPlacement === AxisPlacement.Left ? 1 : 2,
         getDisplayValues: () => {
+          if (!legend.calcs?.length) {
+            return [];
+          }
+
           const fmt = field.display ?? defaultFormatter;
           const fieldCalcs = reduceField({
             field,
