@@ -37,7 +37,11 @@ const (
 	linearHeatmapBucketDataQuery      queryType = "linear_heatmap_bucket_data"
 	noDataPointsQuery                 queryType = "no_data_points"
 	datapointsOutsideRangeQuery       queryType = "datapoints_outside_range"
+	csvMetricValuesQuery              queryType = "csv_metric_values"
 	manualEntryQuery                  queryType = "manual_entry"
+	predictablePulseQuery             queryType = "predictable_pulse"
+	predictableCSVWaveQuery           queryType = "predictable_csv_wave"
+	slowQuery                         queryType = "slow_query"
 	streamingClientQuery              queryType = "streaming_client"
 	liveQuery                         queryType = "live"
 	grafanaAPIQuery                   queryType = "grafana_api"
@@ -137,14 +141,14 @@ func init() {
 	})
 
 	registerScenario(&Scenario{
-		Id:          "predictable_pulse",
+		Id:          string(predictablePulseQuery),
 		Name:        "Predictable Pulse",
 		Handler:     getPredictablePulse,
 		Description: PredictablePulseDesc,
 	})
 
 	registerScenario(&Scenario{
-		Id:      "predictable_csv_wave",
+		Id:      string(predictableCSVWaveQuery),
 		Name:    "Predictable CSV Wave",
 		Handler: getPredictableCSVWave,
 	})
@@ -156,7 +160,7 @@ func init() {
 	})
 
 	registerScenario(&Scenario{
-		Id:          "slow_query",
+		Id:          string(slowQuery),
 		Name:        "Slow Query",
 		StringInput: "5s",
 		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
@@ -234,7 +238,7 @@ func init() {
 	})
 
 	registerScenario(&Scenario{
-		Id:          "csv_metric_values",
+		Id:          string(csvMetricValuesQuery),
 		Name:        "CSV Metric Values",
 		StringInput: "1,20,90,30,5,0",
 		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
