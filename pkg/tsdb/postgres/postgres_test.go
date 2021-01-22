@@ -36,7 +36,7 @@ func TestGenerateConnectionString(t *testing.T) {
 		user           string
 		password       string
 		database       string
-		sslMode        string
+		tlsMode        string
 		expConnStr     string
 		expErr         string
 		jsonData       string
@@ -83,7 +83,7 @@ func TestGenerateConnectionString(t *testing.T) {
 			expConnStr: `user='user' password='p\'\\assword' host='host' dbname='database' sslmode='verify-full'`,
 		},
 		{
-			desc:       "Custom SSL mode disabled",
+			desc:       "Custom TLS mode disabled",
 			host:       "host",
 			user:       "user",
 			password:   "password",
@@ -92,24 +92,24 @@ func TestGenerateConnectionString(t *testing.T) {
 			expConnStr: "user='user' password='password' host='host' dbname='database' sslmode='disable'",
 		},
 		{
-			desc:     "Custom SSL mode verify-full with file path",
+			desc:     "Custom TLS mode verify-full with file path",
 			host:     "host",
 			user:     "user",
 			password: "password",
 			database: "database",
-			jsonData: `{"sslmode" : "verify-full", "sslRootCertFile" : "i/am/coding/ca.crt",
-			"sslCertFile" : "i/am/coding/client.crt", "sslKeyFile" : "i/am/coding/client.key", "sslConfigurationMethod" : "file-path"}`,
+			jsonData: `{"sslmode" : "verify-full", "tlsRootCertFile" : "i/am/coding/ca.crt",
+			"tlsCertFile" : "i/am/coding/client.crt", "tlsKeyFile" : "i/am/coding/client.key", "tlsConfigurationMethod" : "file-path"}`,
 			expConnStr: "user='user' password='password' host='host' dbname='database' sslmode='verify-full' " +
 				"sslrootcert='i/am/coding/ca.crt' sslcert='i/am/coding/client.crt' sslkey='i/am/coding/client.key'",
 		},
 		{
-			desc:           "Custom SSL mode verify-full with input text",
+			desc:           "Custom TLS mode verify-full with input text",
 			host:           "host",
 			user:           "user",
 			password:       "password",
 			database:       "database",
-			jsonData:       `{"sslmode" : "verify-full", "sslConfigurationMethod" : "file-content"}`,
-			secureJsonData: `{"tlsClientCert" : "I am client certification", "tlsClientKey" : "I am client key", "tlsCACert" : "i am CA certification"}`,
+			jsonData:       `{"sslmode" : "verify-full", "tlsConfigurationMethod" : "file-content"}`,
+			secureJsonData: `{"tlsClientCert" : "I am client certification", "tlsClientKey" : "I am client key", "tlsCACert" : "I am CA certification"}`,
 			expConnStr:     "user='user' password='password' host='host' dbname='database' sslmode='verify-full'",
 			uid:            "testData",
 		},
@@ -140,25 +140,25 @@ func TestGenerateConnectionString(t *testing.T) {
 				Uid:            tt.uid,
 			}
 			connStr, err := generateConnectionString(ds, logger)
-			var generatedSSLRootCertFile, generatedSSLCertFile, generatedSSLKeyFile string
-			if ssljs, ok := ds.JsonData.CheckGet("generatedSSLRootCertFile"); ok {
-				generatedSSLRootCertFile = ssljs.MustString("")
+			var generatedTLSRootCertFile, generatedTLSCertFile, generatedTLSKeyFile string
+			if tlsjs, ok := ds.JsonData.CheckGet("generatedTLSRootCertFile"); ok {
+				generatedTLSRootCertFile = tlsjs.MustString("")
 			}
-			if ssljs, ok := ds.JsonData.CheckGet("generatedSSLCertFile"); ok {
-				generatedSSLCertFile = ssljs.MustString("")
+			if tlsjs, ok := ds.JsonData.CheckGet("generatedTLSCertFile"); ok {
+				generatedTLSCertFile = tlsjs.MustString("")
 			}
-			if ssljs, ok := ds.JsonData.CheckGet("generatedSSLKeyFile"); ok {
-				generatedSSLKeyFile = ssljs.MustString("")
+			if tlsjs, ok := ds.JsonData.CheckGet("generatedTLSKeyFile"); ok {
+				generatedTLSKeyFile = tlsjs.MustString("")
 			}
 
-			if generatedSSLRootCertFile != "" {
-				tt.expConnStr += " sslrootcert='" + generatedSSLRootCertFile + "'"
+			if generatedTLSRootCertFile != "" {
+				tt.expConnStr += " sslrootcert='" + generatedTLSRootCertFile + "'"
 			}
-			if generatedSSLCertFile != "" {
-				tt.expConnStr += " sslcert='" + generatedSSLCertFile + "'"
+			if generatedTLSCertFile != "" {
+				tt.expConnStr += " sslcert='" + generatedTLSCertFile + "'"
 			}
-			if generatedSSLKeyFile != "" {
-				tt.expConnStr += " sslkey='" + generatedSSLKeyFile + "'"
+			if generatedTLSKeyFile != "" {
+				tt.expConnStr += " sslkey='" + generatedTLSKeyFile + "'"
 			}
 
 			if tt.expErr == "" {
@@ -186,7 +186,7 @@ func TestPostgres(t *testing.T) {
 	runPostgresTests := false
 	// runPostgresTests := true
 
-	if !(sqlstore.IsTestDbPostgres() || runPostgresTests) {
+	if !sqlstore.IsTestDbPostgres() && !runPostgresTests {
 		t.Skip()
 	}
 
@@ -542,9 +542,9 @@ func TestPostgres(t *testing.T) {
 			ValueTwo            int64 `xorm:"integer 'valueTwo'"`
 		}
 
-		if exist, err := sess.IsTableExist(metric_values{}); err != nil || exist {
+		if exists, err := sess.IsTableExist(metric_values{}); err != nil || exists {
 			require.NoError(t, err)
-			err = sess.DropTable(metric_values{})
+			err := sess.DropTable(metric_values{})
 			require.NoError(t, err)
 		}
 		err := sess.CreateTable(metric_values{})
@@ -1138,9 +1138,7 @@ func InitPostgresTestDB(t *testing.T) *xorm.Engine {
 	testDB := sqlutil.PostgresTestDB()
 	x, err := xorm.NewEngine(testDB.DriverName, strings.Replace(testDB.ConnStr, "dbname=grafanatest",
 		"dbname=grafanadstest", 1))
-	if err != nil {
-		t.Fatalf("Failed to init postgres DB %v", err)
-	}
+	require.NoError(t, err, "Failed to init postgres DB")
 
 	x.DatabaseTZ = time.UTC
 	x.TZLocation = time.UTC

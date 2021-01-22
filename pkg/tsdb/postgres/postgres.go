@@ -72,8 +72,8 @@ func escape(input string) string {
 func writeConnectionFile(
 	ds *models.DataSource, fileContent string, currentPath string, certFileName string, jsonFieldName string) error {
 	var generatedFilePath string
-	if ssljs, ok := ds.JsonData.CheckGet(jsonFieldName); ok {
-		generatedFilePath = ssljs.MustString("")
+	if tlsjs, ok := ds.JsonData.CheckGet(jsonFieldName); ok {
+		generatedFilePath = tlsjs.MustString("")
 	}
 	if fileContent != "" {
 		if generatedFilePath == "" {
@@ -98,13 +98,13 @@ func writeConnectionFile(
 }
 
 func writeConnectionFiles(ds *models.DataSource, logger log.Logger) error {
-	sslMode := strings.TrimSpace(strings.ToLower(ds.JsonData.Get("sslmode").MustString("verify-full")))
+	tlsMode := strings.TrimSpace(strings.ToLower(ds.JsonData.Get("sslmode").MustString("verify-full")))
 	decrypted := ds.SecureJsonData.Decrypt()
 	tlsCACert := decrypted["tlsCACert"]
 	tlsClientCert := decrypted["tlsClientCert"]
 	tlsClientKey := decrypted["tlsClientKey"]
 
-	if sslMode == "disable" {
+	if tlsMode == "disable" {
 		return nil
 	}
 
@@ -116,7 +116,7 @@ func writeConnectionFiles(ds *models.DataSource, logger log.Logger) error {
 
 	var mutex = &sync.Mutex{}
 
-	currentPath = filepath.Join(currentPath, ds.Uid+"generatedSSLCerts")
+	currentPath = filepath.Join(currentPath, ds.Uid+"generatedTLSCerts")
 	if _, err := os.Stat(currentPath); os.IsNotExist(err) {
 		mutex.Lock()
 		err = os.Mkdir(currentPath, 0600)
@@ -129,7 +129,7 @@ func writeConnectionFiles(ds *models.DataSource, logger log.Logger) error {
 	// Create/Modify/Delete Certifications
 	mutex.Lock()
 	err = writeConnectionFile(
-		ds, tlsCACert, currentPath, "ca.crt", "generatedSSLRootCertFile")
+		ds, tlsCACert, currentPath, "ca.crt", "generatedTLSRootCertFile")
 	mutex.Unlock()
 	if err != nil {
 		return err
@@ -137,7 +137,7 @@ func writeConnectionFiles(ds *models.DataSource, logger log.Logger) error {
 
 	mutex.Lock()
 	err = writeConnectionFile(
-		ds, tlsClientCert, currentPath, "client.crt", "generatedSSLCertFile")
+		ds, tlsClientCert, currentPath, "client.crt", "generatedTLSCertFile")
 	mutex.Unlock()
 	if err != nil {
 		return err
@@ -145,7 +145,7 @@ func writeConnectionFiles(ds *models.DataSource, logger log.Logger) error {
 
 	mutex.Lock()
 	err = writeConnectionFile(
-		ds, tlsClientKey, currentPath, "client.key", "generatedSSLKeyFile")
+		ds, tlsClientKey, currentPath, "client.key", "generatedTLSKeyFile")
 	mutex.Unlock()
 	if err != nil {
 		return err
@@ -165,11 +165,11 @@ func writeConnectionFiles(ds *models.DataSource, logger log.Logger) error {
 }
 
 func generateConnectionString(datasource *models.DataSource, logger log.Logger) (string, error) {
-	sslConfigurationMethod := strings.TrimSpace(strings.ToLower(datasource.JsonData.Get("sslConfigurationMethod").MustString("file-path")))
-	sslMode := strings.TrimSpace(strings.ToLower(datasource.JsonData.Get("sslmode").MustString("verify-full")))
-	isSSLDisabled := sslMode == "disable"
+	tlsConfigurationMethod := strings.TrimSpace(strings.ToLower(datasource.JsonData.Get("tlsConfigurationMethod").MustString("file-path")))
+	tlsMode := strings.TrimSpace(strings.ToLower(datasource.JsonData.Get("sslmode").MustString("verify-full")))
+	isTLSDisabled := tlsMode == "disable"
 
-	if sslConfigurationMethod == "file-content" {
+	if tlsConfigurationMethod == "file-content" {
 		if err := writeConnectionFiles(datasource, logger); err != nil {
 			return "", err
 		}
@@ -198,38 +198,38 @@ func generateConnectionString(datasource *models.DataSource, logger log.Logger) 
 
 	connStr := fmt.Sprintf("user='%s' password='%s' host='%s' dbname='%s' sslmode='%s'",
 		escape(datasource.User), escape(datasource.DecryptedPassword()), escape(host), escape(datasource.Database),
-		escape(sslMode))
+		escape(tlsMode))
 	if port > 0 {
 		connStr += fmt.Sprintf(" port=%d", port)
 	}
-	if isSSLDisabled {
-		logger.Debug("Postgres SSL is disabled")
+	if isTLSDisabled {
+		logger.Debug("Postgres TLS is disabled")
 	} else {
-		logger.Debug("Postgres SSL is enabled", "sslMode", sslMode)
+		logger.Debug("Postgres TLS is enabled", "tlsMode", tlsMode)
 
-		var sslRootCert, sslCert, sslKey string
-		if sslConfigurationMethod == "file-content" {
-			sslRootCert = datasource.JsonData.Get("generatedSSLRootCertFile").MustString("")
-			sslCert = datasource.JsonData.Get("generatedSSLCertFile").MustString("")
-			sslKey = datasource.JsonData.Get("generatedSSLKeyFile").MustString("")
+		var tlsRootCert, tlsCert, tlsKey string
+		if tlsConfigurationMethod == "file-content" {
+			tlsRootCert = datasource.JsonData.Get("generatedTLSRootCertFile").MustString("")
+			tlsCert = datasource.JsonData.Get("generatedTLSCertFile").MustString("")
+			tlsKey = datasource.JsonData.Get("generatedTLSKeyFile").MustString("")
 		} else {
-			sslRootCert = datasource.JsonData.Get("sslRootCertFile").MustString("")
-			sslCert = datasource.JsonData.Get("sslCertFile").MustString("")
-			sslKey = datasource.JsonData.Get("sslKeyFile").MustString("")
+			tlsRootCert = datasource.JsonData.Get("tlsRootCertFile").MustString("")
+			tlsCert = datasource.JsonData.Get("tlsCertFile").MustString("")
+			tlsKey = datasource.JsonData.Get("tlsKeyFile").MustString("")
 		}
 
 		// Attach root certificate if provided
-		if sslRootCert != "" {
-			logger.Debug("Setting server root certificate", "sslRootCert", sslRootCert)
-			connStr += fmt.Sprintf(" sslrootcert='%s'", sslRootCert)
+		if tlsRootCert != "" {
+			logger.Debug("Setting server root certificate", "tlsRootCert", tlsRootCert)
+			connStr += fmt.Sprintf(" sslrootcert='%s'", tlsRootCert)
 		}
 
 		// Attach client certificate and key if both are provided
-		if sslCert != "" && sslKey != "" {
-			logger.Debug("Setting SSL client auth", "sslCert", sslCert, "sslKey", sslKey)
-			connStr += fmt.Sprintf(" sslcert='%s' sslkey='%s'", sslCert, sslKey)
-		} else if sslCert != "" || sslKey != "" {
-			return "", fmt.Errorf("SSL client certificate and key must both be specified")
+		if tlsCert != "" && tlsKey != "" {
+			logger.Debug("Setting TLS/SSL client auth", "tlsCert", tlsCert, "tlsKey", tlsKey)
+			connStr += fmt.Sprintf(" sslcert='%s' sslkey='%s'", tlsCert, tlsKey)
+		} else if tlsCert != "" || tlsKey != "" {
+			return "", fmt.Errorf("TLS/SSL client certificate and key must both be specified")
 		}
 	}
 
