@@ -46,7 +46,7 @@ The following guidelines are specific to Grafana documentation. For the most par
 
 ### General
 
-- Use active voice. Avoid passive voice:
+- Use active voice. Avoid passive voice.
   - Active: Grafana displays the heatmap visualization.
   - Passive: The heatmap visualization is displayed.
 - Write directly to the reader:
