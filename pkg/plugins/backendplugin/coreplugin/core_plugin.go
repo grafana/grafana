@@ -11,7 +11,6 @@ import (
 )
 
 // corePlugin represents a plugin that's part of Grafana core.
-// nolint:unused
 type corePlugin struct {
 	pluginID string
 	logger   log.Logger
