@@ -20,8 +20,8 @@ import (
 )
 
 func (p *testDataPlugin) registerScenarioQueryHandlers(mux *datasource.QueryTypeMux) {
-	mux.HandleFunc("random_walk", p.handleRandomWalkScenario)
-	mux.HandleFunc("random_walk_table", p.handleRandomWalkTableScenario)
+	mux.HandleFunc(string(randowWalkQuery), p.handleRandomWalkScenario)
+	mux.HandleFunc(string(randowWalkTableQuery), p.handleRandomWalkTableScenario)
 
 	mux.HandleFunc("", p.handleFallbackScenario)
 }

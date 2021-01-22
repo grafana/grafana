@@ -28,6 +28,28 @@ type Scenario struct {
 	Handler     ScenarioHandler `json:"-"`
 }
 
+type queryType string
+
+const (
+	randowWalkQuery                   queryType = "random_walk"
+	randowWalkTableQuery              queryType = "random_walk_table"
+	exponentialHeatmapBucketDataQuery queryType = "exponential_heatmap_bucket_data"
+	linearHeatmapBucketDataQuery      queryType = "linear_heatmap_bucket_data"
+	noDataPointsQuery                 queryType = "no_data_points"
+	datapointsOutsideRangeQuery       queryType = "datapoints_outside_range"
+	manualEntryQuery                  queryType = "manual_entry"
+	streamingClientQuery              queryType = "streaming_client"
+	liveQuery                         queryType = "live"
+	grafanaAPIQuery                   queryType = "grafana_api"
+	arrowQuery                        queryType = "arrow"
+	annotationsQuery                  queryType = "annotations"
+	tableStaticQuery                  queryType = "table_static"
+	randomWalkWithErrorQuery          queryType = "random_walk_with_error"
+	serverError500Query               queryType = "server_error_500"
+	logsQuery                         queryType = "logs"
+	nodeGraphQuery                    queryType = "node_graph"
+)
+
 var ScenarioRegistry map[string]*Scenario
 
 func init() {
@@ -37,7 +59,7 @@ func init() {
 	logger.Debug("Initializing TestData Scenario")
 
 	registerScenario(&Scenario{
-		Id:   "exponential_heatmap_bucket_data",
+		Id:   string(exponentialHeatmapBucketDataQuery),
 		Name: "Exponential heatmap bucket data",
 
 		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
@@ -69,7 +91,7 @@ func init() {
 	})
 
 	registerScenario(&Scenario{
-		Id:   "linear_heatmap_bucket_data",
+		Id:   string(linearHeatmapBucketDataQuery),
 		Name: "Linear heatmap bucket data",
 
 		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
@@ -98,7 +120,7 @@ func init() {
 	})
 
 	registerScenario(&Scenario{
-		Id:   "random_walk",
+		Id:   string(randowWalkQuery),
 		Name: "Random Walk",
 
 		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
@@ -128,7 +150,7 @@ func init() {
 	})
 
 	registerScenario(&Scenario{
-		Id:      "random_walk_table",
+		Id:      string(randowWalkTableQuery),
 		Name:    "Random Walk Table",
 		Handler: getRandomWalkTable,
 	})
@@ -149,7 +171,7 @@ func init() {
 	})
 
 	registerScenario(&Scenario{
-		Id:   "no_data_points",
+		Id:   string(noDataPointsQuery),
 		Name: "No Data Points",
 		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
 			return tsdb.NewQueryResult()
@@ -157,7 +179,7 @@ func init() {
 	})
 
 	registerScenario(&Scenario{
-		Id:   "datapoints_outside_range",
+		Id:   string(datapointsOutsideRangeQuery),
 		Name: "Datapoints Outside Range",
 		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
 			queryRes := tsdb.NewQueryResult()
@@ -173,7 +195,7 @@ func init() {
 	})
 
 	registerScenario(&Scenario{
-		Id:   "manual_entry",
+		Id:   string(manualEntryQuery),
 		Name: "Manual Entry",
 		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
 			queryRes := tsdb.NewQueryResult()
@@ -255,7 +277,7 @@ func init() {
 	})
 
 	registerScenario(&Scenario{
-		Id:   "streaming_client",
+		Id:   string(streamingClientQuery),
 		Name: "Streaming Client",
 		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
 			// Real work is in javascript client
@@ -264,7 +286,7 @@ func init() {
 	})
 
 	registerScenario(&Scenario{
-		Id:   "live",
+		Id:   string(liveQuery),
 		Name: "Grafana Live",
 		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
 			// Real work is in javascript client
@@ -273,7 +295,7 @@ func init() {
 	})
 
 	registerScenario(&Scenario{
-		Id:   "grafana_api",
+		Id:   string(grafanaAPIQuery),
 		Name: "Grafana API",
 		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
 			// Real work is in javascript client
@@ -282,7 +304,7 @@ func init() {
 	})
 
 	registerScenario(&Scenario{
-		Id:   "arrow",
+		Id:   string(arrowQuery),
 		Name: "Load Apache Arrow Data",
 		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
 			// Real work is in javascript client
@@ -291,7 +313,7 @@ func init() {
 	})
 
 	registerScenario(&Scenario{
-		Id:   "annotations",
+		Id:   string(annotationsQuery),
 		Name: "Annotations",
 		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
 			return tsdb.NewQueryResult()
@@ -299,7 +321,7 @@ func init() {
 	})
 
 	registerScenario(&Scenario{
-		Id:   "table_static",
+		Id:   string(tableStaticQuery),
 		Name: "Table Static",
 
 		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
@@ -327,7 +349,7 @@ func init() {
 	})
 
 	registerScenario(&Scenario{
-		Id:   "random_walk_with_error",
+		Id:   string(randomWalkWithErrorQuery),
 		Name: "Random Walk (with error)",
 
 		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
@@ -339,7 +361,7 @@ func init() {
 	})
 
 	registerScenario(&Scenario{
-		Id:   "server_error_500",
+		Id:   string(serverError500Query),
 		Name: "Server Error (500)",
 
 		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
@@ -348,7 +370,7 @@ func init() {
 	})
 
 	registerScenario(&Scenario{
-		Id:   "logs",
+		Id:   string(logsQuery),
 		Name: "Logs",
 
 		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
@@ -426,7 +448,7 @@ func init() {
 	})
 
 	registerScenario(&Scenario{
-		Id:   "node_graph",
+		Id:   string(nodeGraphQuery),
 		Name: "Node Graph",
 		// Data generated in JS
 	})
