@@ -1,29 +1,10 @@
 .refresh-picker {
   position: relative;
   display: none;
+  margin-left: 10px;
 
   .refresh-picker-buttons {
     display: flex;
-  }
-
-  .navbar-button--border-right-0 {
-    border-right: 0;
-  }
-
-  .gf-form-input--form-dropdown {
-    position: static;
-  }
-
-  .gf-form-select-box__menu {
-    position: absolute;
-    left: 0;
-    width: 100%;
-  }
-
-  &--off {
-    .select-button-value {
-      display: none;
-    }
   }
 
   &--live {
