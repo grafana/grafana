@@ -32,25 +32,25 @@ Audit logs contain the following fields. The fields followed by **\*** are alway
 | `user.name` | string | Name of the Grafana user that made the request. |
 | `user.tokenId` | number | ID of the user authentication token. |
 | `user.apiKeyId` | number | ID of the Grafana API key used to make the request. |
-| `user.isAnonymous`\* | boolean | `true` if an anonymous user made the request, `false` otherwise. |
+| `user.isAnonymous`\* | boolean | If an anonymous user made the request, `true`. Otherwise, `false`. |
 | `action`\* | string | The request action. For example, `create`, `update`, or `manage-permissions`. |
 | `request`\* | object | Information about the HTTP request. |
-| `request.params` | object | Request path parameters. |
-| `request.query` | object | Request query parameters. |
-| `request.body` | string | Request body. |
+| `request.params` | object | Request’s path parameters. |
+| `request.query` | object | Request’s query parameters. |
+| `request.body` | string | Request’s body. |
 | `result`\* | object | Information about the HTTP response. |
-| `result.statusType` | string | `success` if the request action was successful, `failure` otherwise. |
+| `result.statusType` | string | If the request action was successful, `success`. Otherwise, `failure`. |
 | `result.statusCode` | number | HTTP status of the request. |
 | `result.failureMessage` | string | HTTP error message. |
 | `result.body` | string | Response body. |
-| `resources` | array | Information about the resources that the request action impacted. Can be null for non-resource actions like `login` and `logout`. |
+| `resources` | array | Information about the resources that the request action affected. This field can be null for non-resource actions such as `login` or `logout`. |
 | `resources[x].id`\* | number | ID of the resource. |
-| `resources[x].type`\* | string | Type of the resource (logged resources are: `alert`, `alert-notification`, `annotation`, `api-key`, `auth-token`, `dashboard`, `datasource`, `folder`, `org`, `panel`, `playlist`, `report`, `team`, `user`, `version`). |
+| `resources[x].type`\* | string | The type of the resource that was logged: `alert`, `alert-notification`, `annotation`, `api-key`, `auth-token`, `dashboard`, `datasource`, `folder`, `org`, `panel`, `playlist`, `report`, `team`, `user`, or `version`. |
 | `requestUri`\* | string | Request URI. |
 | `ipAddress`\* | string | IP address that the request was made from. |
 | `userAgent`\* | string | Agent through which the request was made. |
 | `grafanaVersion`\* | string | Current version of Grafana when this log is created. |
-| `additionalData` | object | Provide additional information about the request. |
+| `additionalData` | object |  Additional information that can be provided about the request. |
 
 The `additionalData` field can contain the following information:
 | Field name | Action | Description |
@@ -58,7 +58,7 @@ The `additionalData` field can contain the following information:
 | `loginUsername` | `login` | Login used in the Grafana authentication form. |
 | `extUserInfo` | `login` |  User information provided by the external system that was used to log in. |
 | `authTokenCount` | `login` | Number of active authentication tokens for the user that logged in. |
-| `terminationReason` | `logout` | What causes the user to log out (manual logout, token expiration...)  |     
+| `terminationReason` | `logout` | The reason why the user logged out, such as a manual logout or a token expiring.  |     
 
 ### Recorded actions
 
