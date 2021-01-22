@@ -36,7 +36,7 @@ func TestGenerateConnectionString(t *testing.T) {
 		user       string
 		password   string
 		database   string
-		sslMode    string
+		tlsMode    string
 		expConnStr string
 		expErr     string
 	}{
@@ -80,20 +80,20 @@ func TestGenerateConnectionString(t *testing.T) {
 			expConnStr: `user='user' password='p\'\\assword' host='host' dbname='database' sslmode='verify-full'`,
 		},
 		{
-			desc:       "Custom SSL mode",
+			desc:       "Custom TLS/SSL mode",
 			host:       "host",
 			user:       "user",
 			password:   "password",
 			database:   "database",
-			sslMode:    "disable",
+			tlsMode:    "disable",
 			expConnStr: "user='user' password='password' host='host' dbname='database' sslmode='disable'",
 		},
 	}
 	for _, tt := range testCases {
 		t.Run(tt.desc, func(t *testing.T) {
 			data := map[string]interface{}{}
-			if tt.sslMode != "" {
-				data["sslmode"] = tt.sslMode
+			if tt.tlsMode != "" {
+				data["sslmode"] = tt.tlsMode
 			}
 			ds := &models.DataSource{
 				Url:      tt.host,
