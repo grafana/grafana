@@ -17,6 +17,7 @@ import { isDateTime, rangeUtil, GrafanaTheme, dateTimeFormat, timeZoneFormatUser
 import { TimeRange, TimeZone, dateMath } from '@grafana/data';
 import { Themeable } from '../../types';
 import { otherOptions, quickOptions } from './rangeOptions';
+import { ButtonGroup, ToolbarButton } from '../Button';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
@@ -114,28 +115,28 @@ export class UnthemedTimeRangePicker extends PureComponent<TimeRangePickerProps,
     const { isOpen } = this.state;
     const styles = getStyles(theme);
     const hasAbsolute = isDateTime(value.raw.from) || isDateTime(value.raw.to);
-    const syncedTimePicker = timeSyncButton && isSynced;
-    const timePickerIconClass = cx({ ['icon-brand-gradient']: syncedTimePicker });
-    const timePickerButtonClass = cx('btn navbar-button navbar-button--tight', {
-      [`btn--radius-right-0 ${styles.noRightBorderStyle}`]: !!timeSyncButton,
-      [`explore-active-button`]: syncedTimePicker,
-    });
+    // const syncedTimePicker = timeSyncButton && isSynced;
+    // const timePickerIconClass = cx({ ['icon-brand-gradient']: syncedTimePicker });
+    // const timePickerButtonClass = cx('btn navbar-button navbar-button--tight', {
+    //   [`btn--radius-right-0 ${styles.noRightBorderStyle}`]: !!timeSyncButton,
+    //   [`explore-active-button`]: syncedTimePicker,
+    // });
+    // className={cx(styles.clockIcon, timePickerIconClass)}
 
     return (
       <div className={styles.container}>
-        <div className={styles.buttons}>
-          {hasAbsolute && (
-            <button className="btn navbar-button navbar-button--tight" onClick={onMoveBackward}>
-              <Icon name="angle-left" size="lg" />
-            </button>
-          )}
+        <ButtonGroup>
+          {hasAbsolute && <ToolbarButton onClick={onMoveBackward} icon="angle-left" narrow />}
           <div>
             <Tooltip content={<TimePickerTooltip timeRange={value} timeZone={timeZone} />} placement="bottom">
-              <button aria-label="TimePicker Open Button" className={timePickerButtonClass} onClick={this.onOpen}>
-                <Icon name="clock-nine" className={cx(styles.clockIcon, timePickerIconClass)} size="lg" />
+              <ToolbarButton
+                aria-label="TimePicker Open Button"
+                onClick={this.onOpen}
+                icon="clock-nine"
+                isOpen={isOpen}
+              >
                 <TimePickerButtonLabel {...this.props} />
-                <span className={styles.caretIcon}>{<Icon name={isOpen ? 'angle-up' : 'angle-down'} size="lg" />}</span>
-              </button>
+              </ToolbarButton>
             </Tooltip>
             {isOpen && (
               <ClickOutsideWrapper includeButtonPress={false} onClick={this.onClose}>
@@ -156,18 +157,12 @@ export class UnthemedTimeRangePicker extends PureComponent<TimeRangePickerProps,
 
           {timeSyncButton}
 
-          {hasAbsolute && (
-            <button className="btn navbar-button navbar-button--tight" onClick={onMoveForward}>
-              <Icon name="angle-right" size="lg" />
-            </button>
-          )}
+          {hasAbsolute && <ToolbarButton onClick={onMoveForward} icon="angle-right" narrow />}
 
           <Tooltip content={ZoomOutTooltip} placement="bottom">
-            <button className="btn navbar-button navbar-button--zoom" onClick={onZoom}>
-              <Icon name="search-minus" size="lg" />
-            </button>
+            <ToolbarButton onClick={onZoom} icon="search-minus" />
           </Tooltip>
-        </div>
+        </ButtonGroup>
       </div>
     );
   }

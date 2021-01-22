@@ -24,7 +24,7 @@ const getComponentWithState = (initialState: State, props: TimeRangePickerProps)
   <UseState initialState={initialState}>
     {(state, updateValue) => {
       return (
-        <>
+        <div>
           <TimeRangePicker
             {...props}
             timeZone={state.timeZone}
@@ -56,6 +56,9 @@ const getComponentWithState = (initialState: State, props: TimeRangePickerProps)
               action('onZoom fired')();
             }}
           />
+          <br />
+          <br />
+          <br />
           <Button
             onClick={() => {
               updateValue({
@@ -66,7 +69,7 @@ const getComponentWithState = (initialState: State, props: TimeRangePickerProps)
           >
             Clear history
           </Button>
-        </>
+        </div>
       );
     }}
   </UseState>
