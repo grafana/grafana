@@ -1,5 +1,4 @@
 import { ArrayVector, DataFrame, FieldType, toDataFrame } from '@grafana/data';
-import { AlignedFrameWithGapTest } from '../uPlot/types';
 import { alignDataFrames, isLikelyAscendingVector } from './utils';
 
 describe('alignDataFrames', () => {
@@ -22,7 +21,7 @@ describe('alignDataFrames', () => {
 
       const aligned = alignDataFrames(data);
 
-      expect(aligned?.frame.fields).toEqual([
+      expect(aligned?.fields).toEqual([
         {
           config: {},
           state: {},
@@ -71,7 +70,7 @@ describe('alignDataFrames', () => {
 
       const aligned = alignDataFrames(data);
 
-      expect(aligned?.frame.fields).toEqual([
+      expect(aligned?.fields).toEqual([
         {
           config: {},
           state: {},
@@ -115,7 +114,7 @@ describe('alignDataFrames', () => {
 
       const aligned = alignDataFrames(data);
 
-      expect(aligned?.frame.fields).toEqual([
+      expect(aligned?.fields).toEqual([
         {
           config: {},
           state: {},
@@ -149,7 +148,7 @@ describe('alignDataFrames', () => {
 
       const aligned = alignDataFrames(data);
 
-      expect(aligned?.frame.fields).toEqual([
+      expect(aligned?.fields).toEqual([
         {
           config: {},
           state: {},
@@ -172,7 +171,7 @@ describe('alignDataFrames', () => {
   });
 
   describe('getDataFrameFieldIndex', () => {
-    let aligned: AlignedFrameWithGapTest | null;
+    let aligned: DataFrame | null;
 
     beforeAll(() => {
       const data: DataFrame[] = [
@@ -209,7 +208,7 @@ describe('alignDataFrames', () => {
     `('should return correct index for yDim', ({ yDim, index }) => {
       const [frameIndex, fieldIndex] = index;
 
-      expect(aligned?.getDataFrameFieldIndex(yDim)).toEqual({
+      expect(aligned?.fields[yDim].state?.index).toEqual({
         frameIndex,
         fieldIndex,
       });

@@ -162,6 +162,11 @@ export interface FieldState {
    * Useful for assigning color to series by looking up a color in a palette using this index
    */
   seriesIndex?: number;
+
+  /**
+   * Location of this field within the context frames results
+   */
+  index?: DataFrameFieldIndex;
 }
 
 export interface NumericRange {

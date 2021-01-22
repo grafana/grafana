@@ -12,7 +12,6 @@ import {
   sortDataFrame,
   Vector,
 } from '@grafana/data';
-import { AlignedFrameWithGapTest } from '../uPlot/types';
 import uPlot, { AlignedData, JoinNullMode } from 'uplot';
 import { XYFieldMatchers } from './GraphNG';
 
@@ -44,7 +43,7 @@ export function mapDimesions(match: XYFieldMatchers, frame: DataFrame, frames?: 
  *
  * @alpha
  */
-export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): AlignedFrameWithGapTest | null {
+export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): DataFrame | null {
   const valuesFromFrames: AlignedData[] = [];
   const sourceFields: Field[] = [];
   const sourceFieldsRefs: Record<number, DataFrameFieldIndex> = {};
@@ -127,30 +126,25 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
   let seriesIdx = 0;
   // Replace the values from the outer-join field
   return {
-    frame: {
-      length: alignedData![0].length,
-      fields: alignedData!.map((vals, idx) => {
-        let state: FieldState = { ...sourceFields[idx].state };
+    ...frames[0],
+    length: alignedData![0].length,
+    fields: alignedData!.map((vals, idx) => {
+      let state: FieldState = {
+        ...sourceFields[idx].state,
+        index: sourceFieldsRefs[idx],
+      };
 
-        if (sourceFields[idx].type !== FieldType.time) {
-          state.seriesIndex = seriesIdx;
-          seriesIdx++;
-        }
-
-        return {
-          ...sourceFields[idx],
-          state,
-          values: new ArrayVector(vals),
-        };
-      }),
-    },
-    getDataFrameFieldIndex: (alignedFieldIndex: number) => {
-      const index = sourceFieldsRefs[alignedFieldIndex];
-      if (!index) {
-        throw new Error(`Could not find index for ${alignedFieldIndex}`);
+      if (sourceFields[idx].type !== FieldType.time) {
+        state.seriesIndex = seriesIdx;
+        seriesIdx++;
       }
-      return index;
-    },
+
+      return {
+        ...sourceFields[idx],
+        state,
+        values: new ArrayVector(vals),
+      };
+    }),
   };
 }
 

@@ -64,9 +64,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   const theme = useTheme();
   const hasLegend = useRef(legend && legend.displayMode !== LegendDisplayMode.Hidden);
 
-  const alignedFrameWithGapTest = useMemo(() => alignDataFrames(data, fields), [data, fields]);
-  const alignedFrame = alignedFrameWithGapTest?.frame;
-  const getDataFrameFieldIndex = alignedFrameWithGapTest?.getDataFrameFieldIndex;
+  const alignedFrame = useMemo(() => alignDataFrames(data, fields), [data, fields]);
 
   const compareFrames = useCallback((a?: DataFrame | null, b?: DataFrame | null) => {
     if (a && b) {
@@ -182,7 +180,6 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       }
 
       const showPoints = customConfig.drawStyle === DrawStyle.Points ? PointVisibility.Always : customConfig.showPoints;
-      const dataFrameFieldIndex = getDataFrameFieldIndex ? getDataFrameFieldIndex(i) : undefined;
 
       let { fillOpacity } = customConfig;
       if (customConfig.fillBelowTo) {
@@ -221,7 +218,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         thresholds: config.thresholds,
 
         // The following properties are not used in the uPlot config, but are utilized as transport for legend config
-        dataFrameFieldIndex,
+        dataFrameFieldIndex: field.state?.index,
         fieldName: getFieldDisplayName(field, alignedFrame),
         hideInLegend: customConfig.hideFrom?.legend,
       });
@@ -229,7 +226,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
     return builder;
   }, [configRev, timeZone]);
 
-  if (alignedFrameWithGapTest == null) {
+  if (!alignedFrame) {
     return (
       <div className="panel-empty">
         <p>No data found in response</p>
@@ -299,7 +296,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
     <VizLayout width={width} height={height} legend={legendElement}>
       {(vizWidth: number, vizHeight: number) => (
         <UPlotChart
-          data={alignedFrameWithGapTest}
+          data={alignedFrame}
           config={configBuilder}
           width={vizWidth}
           height={vizHeight}
