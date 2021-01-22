@@ -220,10 +220,10 @@ func TestPostgres(t *testing.T) {
 			require.Equal(t, int64(2), column[1].(int64))
 			require.Equal(t, int64(3), column[2].(int64))
 
-			require.Equal(t, int64(4.5), column[3].(float64))
-			require.Equal(t, int64(6.7), column[4].(float64))
-			require.Equal(t, int64(1.1), column[5].(float64))
-			require.Equal(t, int64(1.2), column[6].(float64))
+			require.Equal(t, float64(4.5), column[3].(float64))
+			require.Equal(t, float64(6.7), column[4].(float64))
+			require.Equal(t, float64(1.1), column[5].(float64))
+			require.Equal(t, float64(1.2), column[6].(float64))
 
 			require.Equal(t, "char10    ", column[7].(string))
 			require.Equal(t, "varchar10", column[8].(string))
@@ -309,9 +309,9 @@ func TestPostgres(t *testing.T) {
 			for i := 0; i < 2; i++ {
 				aValue := points[i][0].Float64
 				aTime := time.Unix(int64(points[i][1].Float64)/1000, 0)
-				require.Equal(t, 15, aValue)
+				require.Equal(t, float64(15), aValue)
 				require.Equal(t, dt, aTime)
-				require.Equal(t, 0, aTime.Unix()%300)
+				require.Equal(t, int64(0), aTime.Unix()%300)
 				dt = dt.Add(5 * time.Minute)
 			}
 
@@ -320,7 +320,7 @@ func TestPostgres(t *testing.T) {
 			for i := 2; i < 4; i++ {
 				aValue := points[i][0].Float64
 				aTime := time.Unix(int64(points[i][1].Float64)/1000, 0)
-				require.Equal(t, 20, aValue)
+				require.Equal(t, float64(20), aValue)
 				require.Equal(t, dt, aTime)
 				dt = dt.Add(5 * time.Minute)
 			}
@@ -389,7 +389,7 @@ func TestPostgres(t *testing.T) {
 			for i := 0; i < 2; i++ {
 				aValue := points[i][0].Float64
 				aTime := time.Unix(int64(points[i][1].Float64)/1000, 0)
-				require.Equal(t, 15, aValue)
+				require.Equal(t, float64(15), aValue)
 				require.Equal(t, dt, aTime)
 				dt = dt.Add(5 * time.Minute)
 			}
@@ -403,7 +403,7 @@ func TestPostgres(t *testing.T) {
 			for i := 4; i < 6; i++ {
 				aValue := points[i][0].Float64
 				aTime := time.Unix(int64(points[i][1].Float64)/1000, 0)
-				require.Equal(t, 20, aValue)
+				require.Equal(t, float64(20), aValue)
 				require.Equal(t, dt, aTime)
 				dt = dt.Add(5 * time.Minute)
 			}
@@ -435,7 +435,7 @@ func TestPostgres(t *testing.T) {
 			require.NoError(t, queryResult.Error)
 
 			points := queryResult.Series[0].Points
-			require.Equal(t, 1.5, points[3][0].Float64)
+			require.Equal(t, float64(1.5), points[3][0].Float64)
 		})
 	})
 
@@ -462,9 +462,9 @@ func TestPostgres(t *testing.T) {
 		require.NoError(t, queryResult.Error)
 
 		points := queryResult.Series[0].Points
-		require.Equal(t, 15.0, points[2][0].Float64)
-		require.Equal(t, 15.0, points[3][0].Float64)
-		require.Equal(t, 20.0, points[6][0].Float64)
+		require.Equal(t, float64(15.0), points[2][0].Float64)
+		require.Equal(t, float64(15.0), points[3][0].Float64)
+		require.Equal(t, float64(20.0), points[6][0].Float64)
 	})
 
 	t.Run("Given a table with metrics having multiple values and measurements", func(t *testing.T) {
