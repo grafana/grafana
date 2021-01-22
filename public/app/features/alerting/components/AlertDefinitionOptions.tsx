@@ -33,7 +33,14 @@ export const AlertDefinitionOptions: FC<Props> = ({
           <Input width={25} name="title" value={alertDefinition.title} onChange={onChange} />
         </Field>
         <Field label="Description" description="What does the alert do and why was it created">
-          <TextArea rows={5} width={25} name="description" value={alertDefinition.description} onChange={onChange} />
+          <TextArea
+            rows={5}
+            width={25}
+            name="description"
+            value={alertDefinition.description}
+            onChange={onChange}
+            readOnly={true}
+          />
         </Field>
         <Field label="Evaluate">
           <div className={styles.optionRow}>
