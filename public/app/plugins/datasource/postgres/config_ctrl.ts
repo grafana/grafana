@@ -25,6 +25,7 @@ export class PostgresConfigCtrl {
     this.autoDetectFeatures();
     this.onPasswordReset = createResetHandler(this, PasswordFieldEnum.Password);
     this.onPasswordChange = createChangeHandler(this, PasswordFieldEnum.Password);
+    this.sslModeMapping();
   }
 
   autoDetectFeatures() {
