@@ -26,7 +26,7 @@ To access Prometheus settings, hover your mouse over the **Configuration** (gear
 | `Scrape interval`         | Set this to the typical scrape and evaluation interval configured in Prometheus. Defaults to 15s.                                                                                                       |
 | `Disable metrics lookup`  | Checking this option will disable the metrics chooser and metric/label support in the query field's autocomplete. This helps if you have performance issues with bigger Prometheus instances.           |
 | `Custom Query Parameters` | Add custom parameters to the Prometheus query URL. For example `timeout`, `partial_response`, `dedup`, or `max_source_resolution`. Multiple parameters should be concatenated together with an '&amp;'. |
-| `Label name`              | The name of the field in the labels object that should be used.                                                                                                                                         |
+| `Label name`              | Add the name of the field in the label object.                                                                                                                                         |
 | `URL`                     | If the link is external, then enter the full link URL. You can interpolate the value from the field with `${__value.raw }` macro.                                                                       |
 | `Internal link`           | Select if the link is internal or external. In the case of an internal link, a data source selector allows you to select the target data source. Supports tracing data sources only.                      |
 
