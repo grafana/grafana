@@ -1,9 +1,9 @@
 import { PanelPlugin } from '@grafana/data';
-import { DrawStyle, GraphFieldConfig, LegendDisplayMode } from '@grafana/ui';
+import { DrawStyle, GraphFieldConfig } from '@grafana/ui';
 import { XYChartPanel } from './XYChartPanel';
 import { Options } from './types';
 import { XYDimsEditor } from './XYDimsEditor';
-import { getGraphFieldConfig, defaultGraphConfig } from '../timeseries/config';
+import { getGraphFieldConfig, defaultGraphConfig, addLegendOptions } from '../timeseries/config';
 
 export const plugin = new PanelPlugin<Options, GraphFieldConfig>(XYChartPanel)
   .useFieldConfig(
@@ -32,31 +32,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(XYChartPanel)
             { value: 'none', label: 'Hidden' },
           ],
         },
-      })
-      .addRadio({
-        path: 'legend.displayMode',
-        name: 'Legend mode',
-        description: '',
-        defaultValue: LegendDisplayMode.List,
-        settings: {
-          options: [
-            { value: LegendDisplayMode.List, label: 'List' },
-            { value: LegendDisplayMode.Table, label: 'Table' },
-            { value: LegendDisplayMode.Hidden, label: 'Hidden' },
-          ],
-        },
-      })
-      .addRadio({
-        path: 'legend.placement',
-        name: 'Legend placement',
-        description: '',
-        defaultValue: 'bottom',
-        settings: {
-          options: [
-            { value: 'bottom', label: 'Bottom' },
-            { value: 'right', label: 'Right' },
-          ],
-        },
-        showIf: (c) => c.legend.displayMode !== LegendDisplayMode.Hidden,
       });
+
+    addLegendOptions(builder);
   });
