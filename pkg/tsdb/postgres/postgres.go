@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 
+	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -76,86 +77,70 @@ func writeConnectionFile(ds *models.DataSource, fileContent string, currentPath 
 			generatedFilePath = filepath.Join(currentPath, certFileName)
 		}
 
-		if err := ioutil.WriteFile(generatedFilePath, []byte(fileContent), 0700); err != nil {
+		if err := ioutil.WriteFile(generatedFilePath, []byte(fileContent), 0600); err != nil {
 			return err
 		}
 		ds.JsonData.Set(jsonFieldName, generatedFilePath)
-	} else {
-		if generatedFilePath != "" {
-			if _, err := os.Stat(generatedFilePath); err == nil {
-				if err := os.Remove(generatedFilePath); err != nil {
-					return err
-				}
+		return nil
+	}
+
+	if generatedFilePath != "" {
+		exists, err := fs.Exists(generatedFilePath)
+		if err != nil {
+			return err
+		}
+		if exists {
+			if err := os.Remove(generatedFilePath); err != nil {
+				return err
 			}
 		}
-		ds.JsonData.Set(jsonFieldName, "")
 	}
+	ds.JsonData.Set(jsonFieldName, "")
 	return nil
 }
 
 func writeConnectionFiles(ds *models.DataSource, logger log.Logger) error {
-	tlsMode := strings.TrimSpace(strings.ToLower(ds.JsonData.Get("sslmode").MustString("verify-full")))
 	decrypted := ds.SecureJsonData.Decrypt()
 	tlsCACert := decrypted["tlsCACert"]
 	tlsClientCert := decrypted["tlsClientCert"]
 	tlsClientKey := decrypted["tlsClientKey"]
 
-	if tlsMode == "disable" {
-		return nil
+	if tlsCACert == "" && tlsClientCert == "" && tlsClientKey == "" {
+		log.Debug("No TLS/SSL certificates provided")
 	}
 
-	// create folder
+	// create folder to hold certificates
+
 	currentPath, err := os.Getwd()
 	if err != nil {
 		return err
 	}
 
 	var mutex = &sync.Mutex{}
+	mutex.Lock()
+	defer mutex.Unlock()
 
-	currentPath = filepath.Join(currentPath, ds.Uid+"generatedTLSCerts")
-	if _, err := os.Stat(currentPath); os.IsNotExist(err) {
-		mutex.Lock()
-		err = os.Mkdir(currentPath, 0700)
-		mutex.Unlock()
-		if err != nil {
+	workDir := filepath.Join(currentPath, ds.Uid+"generatedTLSCerts")
+	exists, err := fs.Exists(workDir)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		if err := os.Mkdir(workDir, 0700); err != nil {
 			return err
 		}
 	}
 
-	// Create/Modify/Delete Certifications
-	mutex.Lock()
-	err = writeConnectionFile(
-		ds, tlsCACert, currentPath, "ca.crt", "generatedTLSRootCertFile")
-	mutex.Unlock()
-	if err != nil {
+	// Create/modify/delete certifications
+	if err := writeConnectionFile(ds, tlsCACert, workDir, "ca.crt", "generatedTLSRootCertFile"); err != nil {
 		return err
 	}
-
-	mutex.Lock()
-	err = writeConnectionFile(
-		ds, tlsClientCert, currentPath, "client.crt", "generatedTLSCertFile")
-	mutex.Unlock()
-	if err != nil {
+	if err := writeConnectionFile(ds, tlsClientCert, workDir, "client.crt", "generatedTLSCertFile"); err != nil {
 		return err
 	}
-
-	mutex.Lock()
-	err = writeConnectionFile(
-		ds, tlsClientKey, currentPath, "client.key", "generatedTLSKeyFile")
-	mutex.Unlock()
-	if err != nil {
+	if err := writeConnectionFile(ds, tlsClientKey, workDir, "client.key", "generatedTLSKeyFile"); err != nil {
 		return err
 	}
-
-	mutex.Lock()
-	if tlsCACert == "" && tlsClientCert == "" && tlsClientKey == "" {
-		if _, err := os.Stat(currentPath); err == nil {
-			if err := os.Remove(currentPath); err != nil {
-				log.Warnf("failed to delete temporary folder generated %v : %v", currentPath, err)
-			}
-		}
-	}
-	mutex.Unlock()
 
 	return nil
 }
@@ -165,7 +150,7 @@ func generateConnectionString(datasource *models.DataSource, logger log.Logger) 
 	tlsMode := strings.TrimSpace(strings.ToLower(datasource.JsonData.Get("sslmode").MustString("verify-full")))
 	isTLSDisabled := tlsMode == "disable"
 
-	if tlsConfigurationMethod == "file-content" {
+	if !isTLSDisabled && tlsConfigurationMethod == "file-content" {
 		if err := writeConnectionFiles(datasource, logger); err != nil {
 			return "", err
 		}
