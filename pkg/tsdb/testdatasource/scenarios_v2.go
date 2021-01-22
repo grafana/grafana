@@ -39,6 +39,7 @@ func (p *testDataPlugin) registerScenarioQueryHandlers(mux *datasource.QueryType
 	mux.HandleFunc(string(grafanaAPIQuery), p.handleGrafanaAPIQueryScenario)
 	mux.HandleFunc(string(arrowQuery), p.handleArrowQueryScenario)
 	mux.HandleFunc(string(annotationsQuery), p.handleAnnotationsQueryScenario)
+	mux.HandleFunc(string(tableStaticQuery), p.handleTableStaticQueryScenario)
 
 	mux.HandleFunc("", p.handleFallbackScenario)
 }
@@ -438,6 +439,36 @@ func (p *testDataPlugin) handleLinearHeatmapBucketDataScenario(ctx context.Conte
 
 			respD.Frames = append(respD.Frames, frame)
 		}
+
+		resp.Responses[q.RefID] = respD
+	}
+
+	return resp, nil
+}
+
+func (p *testDataPlugin) handleTableStaticQueryScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+
+	for _, q := range req.Queries {
+		timeWalkerMs := q.TimeRange.From.UnixNano() / int64(time.Millisecond)
+		to := q.TimeRange.To.UnixNano() / int64(time.Millisecond)
+		step := q.Interval.Milliseconds()
+
+		frame := data.NewFrame(q.RefID,
+			data.NewField("Time", nil, []float64{}),
+			data.NewField("Message", nil, []string{}),
+			data.NewField("Description", nil, []string{}),
+			data.NewField("Value", nil, []float64{}),
+		)
+
+		for i := int64(0); i < 10 && timeWalkerMs < to; i++ {
+			frame.AppendRow(float64(timeWalkerMs), "This is a message", "Description", 23.1)
+			timeWalkerMs += step
+		}
+
+		resp := backend.NewQueryDataResponse()
+		respD := resp.Responses[q.RefID]
+		respD.Frames = append(respD.Frames, frame)
 
 		resp.Responses[q.RefID] = respD
 	}
