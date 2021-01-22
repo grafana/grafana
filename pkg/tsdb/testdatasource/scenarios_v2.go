@@ -31,6 +31,7 @@ func (p *testDataPlugin) registerScenarioQueryHandlers(mux *datasource.QueryType
 	mux.HandleFunc(string(exponentialHeatmapBucketDataQuery), p.handleExponentialHeatmapBucketDataScenario)
 	mux.HandleFunc(string(linearHeatmapBucketDataQuery), p.handleLinearHeatmapBucketDataScenario)
 	mux.HandleFunc(string(predictablePulseQuery), p.handlePredictablePulseScenario)
+	mux.HandleFunc(string(datapointsOutsideRangeQuery), p.handleDatapointsOutsideRangeQueryScenario)
 
 	mux.HandleFunc("", p.handleFallbackScenario)
 }
@@ -114,6 +115,30 @@ func (p *testDataPlugin) handleRandomWalkScenario(ctx context.Context, req *back
 			respD.Frames = append(respD.Frames, getRandomWalkV2(q, model, i))
 			resp.Responses[q.RefID] = respD
 		}
+	}
+
+	return resp, nil
+}
+
+func (p *testDataPlugin) handleDatapointsOutsideRangeQueryScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+
+	for _, q := range req.Queries {
+		model, err := simplejson.NewJson(q.JSON)
+		if err != nil {
+			continue
+		}
+
+		frame := newSeriesForQueryV2(q, model, 0)
+		outsideTime := q.TimeRange.From.Add(-1*time.Hour).Unix() * 1000
+		frame.Fields = data.Fields{
+			data.NewField("time", nil, float64(outsideTime)),
+			data.NewField("value", nil, null.FloatFrom(10)),
+		}
+
+		respD := resp.Responses[q.RefID]
+		respD.Frames = append(respD.Frames, frame)
+		resp.Responses[q.RefID] = respD
 	}
 
 	return resp, nil
