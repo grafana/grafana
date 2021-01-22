@@ -53,8 +53,6 @@ const getStyles = (page?: boolean) => {
   };
 };
 
-const styles = getStyles();
-
 interface Props {
   className?: string;
   autoHide?: boolean;
@@ -123,39 +121,35 @@ export class CustomScrollbar extends Component<Props> {
     this.updateScroll();
   }
 
-  renderTrack = (track: 'track-vertical' | 'track-horizontal', hideTrack: boolean | undefined, passedProps: any) => {
+  renderTrack = (styles: any, hideTrack: boolean | undefined, passedProps: any) => {
     if (passedProps.style && hideTrack) {
       passedProps.style.display = 'none';
     }
 
-    return (
-      <div {...passedProps} className={track === 'track-vertical' ? styles.trackVertical : styles.trackHorizontal} />
-    );
+    return <div {...passedProps} className={styles.trackVertical | styles.trackHorizontal} />;
   };
 
-  renderThumb = (thumb: 'thumb-vertical' | 'thumb-horizontal', passedProps: any) => {
-    return (
-      <div {...passedProps} className={thumb === 'thumb-vertical' ? styles.thumbVertical : styles.thumbHorizontal} />
-    );
+  // renderThumb = (thumb: styles.thumbVertical | styles.thumbHorizontal, passedProps: any) => {
+  //   return <div {...passedProps} className={thumb} />;
+  // };
+
+  renderTrackHorizontal = (passedProps: any, styles: any) => {
+    return this.renderTrack(styles.trackHorizontal, this.props.hideHorizontalTrack, passedProps);
   };
 
-  renderTrackHorizontal = (passedProps: any) => {
-    return this.renderTrack('track-horizontal', this.props.hideHorizontalTrack, passedProps);
+  renderTrackVertical = (passedProps: any, styles: any) => {
+    return this.renderTrack(styles.trackVertical, this.props.hideVerticalTrack, passedProps);
   };
 
-  renderTrackVertical = (passedProps: any) => {
-    return this.renderTrack('track-vertical', this.props.hideVerticalTrack, passedProps);
+  renderThumbHorizontal = (passedProps: any, styles: any) => {
+    return <div {...passedProps} className={styles.thumbHorizontal} />;
   };
 
-  renderThumbHorizontal = (passedProps: any) => {
-    return this.renderThumb('thumb-horizontal', passedProps);
+  renderThumbVertical = (passedProps: any, styles: any) => {
+    return <div {...passedProps} className={styles.thumbVertical} />;
   };
 
-  renderThumbVertical = (passedProps: any) => {
-    return this.renderThumb('thumb-vertical', passedProps);
-  };
-
-  renderView = (passedProps: any) => {
+  renderView = (passedProps: any, styles: any) => {
     return <div {...passedProps} className={styles.view} />;
   };
 
@@ -170,6 +164,7 @@ export class CustomScrollbar extends Component<Props> {
       autoHideTimeout,
       hideTracksWhenNotNeeded,
     } = this.props;
+    const styles = getStyles(this.props.page);
 
     return (
       <Scrollbars
@@ -184,11 +179,11 @@ export class CustomScrollbar extends Component<Props> {
         // Before these where set to inherit but that caused problems with cut of legends in firefox
         autoHeightMax={autoHeightMax}
         autoHeightMin={autoHeightMin}
-        renderTrackHorizontal={this.renderTrackHorizontal}
-        renderTrackVertical={this.renderTrackVertical}
-        renderThumbHorizontal={this.renderThumbHorizontal}
-        renderThumbVertical={this.renderThumbVertical}
-        renderView={this.renderView}
+        renderTrackHorizontal={(passedProps: any) => this.renderTrackHorizontal(passedProps, styles)}
+        renderTrackVertical={(passedProps: any) => this.renderTrackVertical(passedProps, styles)}
+        renderThumbHorizontal={(passedProps: any) => this.renderThumbHorizontal(passedProps, styles)}
+        renderThumbVertical={(passedProps: any) => this.renderThumbHorizontal(passedProps, styles)}
+        renderView={(passedProps: any) => this.renderView(passedProps, styles)}
       >
         {children}
       </Scrollbars>
