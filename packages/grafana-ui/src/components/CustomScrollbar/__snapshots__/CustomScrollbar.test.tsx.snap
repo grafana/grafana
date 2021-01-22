@@ -37,7 +37,7 @@ exports[`CustomScrollbar renders correctly 1`] = `
     </p>
   </div>
   <div
-    className="css-hqlowp"
+    className={0}
     style={
       Object {
         "display": "none",
@@ -58,7 +58,7 @@ exports[`CustomScrollbar renders correctly 1`] = `
     />
   </div>
   <div
-    className="css-163rnue"
+    className={0}
     style={
       Object {
         "display": "none",
@@ -68,7 +68,7 @@ exports[`CustomScrollbar renders correctly 1`] = `
     }
   >
     <div
-      className="css-18r3j1z"
+      className="css-1mc5dgq"
       style={
         Object {
           "display": "block",
