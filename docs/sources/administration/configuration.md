@@ -508,6 +508,14 @@ Set to `true` to enable the X-Content-Type-Options response header. The X-Conten
 
 Set to `false` to disable the X-XSS-Protection header, which tells browsers to stop pages from loading when they detect reflected cross-site scripting (XSS) attacks. The default value is `false` until the next minor release, `6.3`.
 
+### content_security_policy
+
+Set to `true` to add the Content-Security-Policy header to your requests. CSP allows to control resources that the user agent can load and helps prevent XSS attacks.
+
+### content_security_policy_template
+
+Set Content Security Policy template used when adding the Content-Security-Policy header to your requests. `$NONCE` in the template includes a random nonce.
+
 <hr />
 
 ## [snapshots]
