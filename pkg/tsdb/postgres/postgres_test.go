@@ -23,7 +23,6 @@ import (
 	"xorm.io/xorm"
 
 	_ "github.com/lib/pq"
-	. "github.com/smartystreets/goconvey/convey"
 )
 
 // Test generateConnectionString.
@@ -135,11 +134,14 @@ func TestPostgres(t *testing.T) {
 	x := InitPostgresTestDB(t)
 
 	origXormEngine := sqleng.NewXormEngine
+	origInterpolate := sqleng.Interpolate
+	t.Cleanup(func() {
+		sqleng.NewXormEngine = origXormEngine
+		sqleng.Interpolate = origInterpolate
+	})
 	sqleng.NewXormEngine = func(d, c string) (*xorm.Engine, error) {
 		return x, nil
 	}
-
-	origInterpolate := sqleng.Interpolate
 	sqleng.Interpolate = func(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string) (string, error) {
 		return sql, nil
 	}
@@ -151,13 +153,8 @@ func TestPostgres(t *testing.T) {
 	require.NoError(t, err)
 
 	sess := x.NewSession()
+	t.Cleanup(sess.Close)
 	fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
-
-	Reset(func() {
-		sess.Close()
-		sqleng.NewXormEngine = origXormEngine
-		sqleng.Interpolate = origInterpolate
-	})
 
 	t.Run("Given a table with different native data types", func(t *testing.T) {
 		sql := `
@@ -332,8 +329,7 @@ func TestPostgres(t *testing.T) {
 		t.Run("When doing a metric query using timeGroup and $__interval", func(t *testing.T) {
 			mockInterpolate := sqleng.Interpolate
 			sqleng.Interpolate = origInterpolate
-
-			Reset(func() {
+			t.Cleanup(func() {
 				sqleng.Interpolate = mockInterpolate
 			})
 
