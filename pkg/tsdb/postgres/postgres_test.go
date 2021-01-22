@@ -333,32 +333,30 @@ func TestPostgres(t *testing.T) {
 				sqleng.Interpolate = mockInterpolate
 			})
 
-			Convey("Should replace $__interval", func() {
-				query := &tsdb.TsdbQuery{
-					Queries: []*tsdb.Query{
-						{
-							DataSource: &models.DataSource{},
-							Model: simplejson.NewFromAny(map[string]interface{}{
-								"rawSql": "SELECT $__timeGroup(time, $__interval) AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
-								"format": "time_series",
-							}),
-							RefId: "A",
-						},
+			query := &tsdb.TsdbQuery{
+				Queries: []*tsdb.Query{
+					{
+						DataSource: &models.DataSource{},
+						Model: simplejson.NewFromAny(map[string]interface{}{
+							"rawSql": "SELECT $__timeGroup(time, $__interval) AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
+							"format": "time_series",
+						}),
+						RefId: "A",
 					},
-					TimeRange: &tsdb.TimeRange{
-						From: fmt.Sprintf("%v", fromStart.Unix()*1000),
-						To:   fmt.Sprintf("%v", fromStart.Add(30*time.Minute).Unix()*1000),
-					},
-				}
+				},
+				TimeRange: &tsdb.TimeRange{
+					From: fmt.Sprintf("%v", fromStart.Unix()*1000),
+					To:   fmt.Sprintf("%v", fromStart.Add(30*time.Minute).Unix()*1000),
+				},
+			}
 
-				resp, err := endpoint.Query(context.Background(), nil, query)
-				require.NoError(t, err)
-				queryResult := resp.Results["A"]
-				require.NoError(t, queryResult.Error)
-				require.Equal(t,
-					"SELECT floor(extract(epoch from time)/60)*60 AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
-					queryResult.Meta.Get(sqleng.MetaKeyExecutedQueryString).MustString())
-			})
+			resp, err := endpoint.Query(context.Background(), nil, query)
+			require.NoError(t, err)
+			queryResult := resp.Results["A"]
+			require.NoError(t, queryResult.Error)
+			require.Equal(t,
+				"SELECT floor(extract(epoch from time)/60)*60 AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
+				queryResult.Meta.Get(sqleng.MetaKeyExecutedQueryString).MustString())
 		})
 
 		t.Run("When doing a metric query using timeGroup with NULL fill enabled", func(t *testing.T) {
@@ -560,159 +558,166 @@ func TestPostgres(t *testing.T) {
 				require.Equal(t, float64(tInitial.UnixNano()/1e6), queryResult.Series[0].Points[0][1].Float64)
 			})
 
-		t.Run("When doing a metric query using epoch (int64 nullable) as time column and value column (int64 nullable,) should return metric with time in milliseconds", func(t *testing.T) {
-			query := &tsdb.TsdbQuery{
-				Queries: []*tsdb.Query{
-					{
-						Model: simplejson.NewFromAny(map[string]interface{}{
-							"rawSql": `SELECT "timeInt64Nullable" as time, "timeInt64Nullable" FROM metric_values ORDER BY time LIMIT 1`,
-							"format": "time_series",
-						}),
-						RefId: "A",
+		t.Run("When doing a metric query using epoch (int64 nullable) as time column and value column (int64 nullable,) should return metric with time in milliseconds",
+			func(t *testing.T) {
+				query := &tsdb.TsdbQuery{
+					Queries: []*tsdb.Query{
+						{
+							Model: simplejson.NewFromAny(map[string]interface{}{
+								"rawSql": `SELECT "timeInt64Nullable" as time, "timeInt64Nullable" FROM metric_values ORDER BY time LIMIT 1`,
+								"format": "time_series",
+							}),
+							RefId: "A",
+						},
 					},
-				},
-			}
+				}
 
-			resp, err := endpoint.Query(context.Background(), nil, query)
-			require.NoError(t, err)
-			queryResult := resp.Results["A"]
-			require.NoError(t, queryResult.Error)
+				resp, err := endpoint.Query(context.Background(), nil, query)
+				require.NoError(t, err)
+				queryResult := resp.Results["A"]
+				require.NoError(t, queryResult.Error)
 
-			require.Len(t, queryResult.Series, 1)
-			require.Equal(t, float64(tInitial.UnixNano()/1e6), queryResult.Series[0].Points[0][1].Float64)
-		})
+				require.Len(t, queryResult.Series, 1)
+				require.Equal(t, float64(tInitial.UnixNano()/1e6), queryResult.Series[0].Points[0][1].Float64)
+			})
 
-		t.Run("When doing a metric query using epoch (float64) as time column and value column (float64), should return metric with time in milliseconds", func(t *testing.T) {
-			query := &tsdb.TsdbQuery{
-				Queries: []*tsdb.Query{
-					{
-						Model: simplejson.NewFromAny(map[string]interface{}{
-							"rawSql": `SELECT "timeFloat64" as time, "timeFloat64" FROM metric_values ORDER BY time LIMIT 1`,
-							"format": "time_series",
-						}),
-						RefId: "A",
+		t.Run("When doing a metric query using epoch (float64) as time column and value column (float64), should return metric with time in milliseconds",
+			func(t *testing.T) {
+				query := &tsdb.TsdbQuery{
+					Queries: []*tsdb.Query{
+						{
+							Model: simplejson.NewFromAny(map[string]interface{}{
+								"rawSql": `SELECT "timeFloat64" as time, "timeFloat64" FROM metric_values ORDER BY time LIMIT 1`,
+								"format": "time_series",
+							}),
+							RefId: "A",
+						},
 					},
-				},
-			}
+				}
 
-			resp, err := endpoint.Query(context.Background(), nil, query)
-			require.NoError(t, err)
-			queryResult := resp.Results["A"]
-			require.NoError(t, queryResult.Error)
+				resp, err := endpoint.Query(context.Background(), nil, query)
+				require.NoError(t, err)
+				queryResult := resp.Results["A"]
+				require.NoError(t, queryResult.Error)
 
-			require.Len(t, queryResult.Series, 1)
-			require.Equal(t, float64(tInitial.UnixNano()/1e6), queryResult.Series[0].Points[0][1].Float64)
-		})
+				require.Len(t, queryResult.Series, 1)
+				require.Equal(t, float64(tInitial.UnixNano()/1e6), queryResult.Series[0].Points[0][1].Float64)
+			})
 
-		t.Run("When doing a metric query using epoch (float64 nullable) as time column and value column (float64 nullable), should return metric with time in milliseconds", func(t *testing.T) {
-			query := &tsdb.TsdbQuery{
-				Queries: []*tsdb.Query{
-					{
-						Model: simplejson.NewFromAny(map[string]interface{}{
-							"rawSql": `SELECT "timeFloat64Nullable" as time, "timeFloat64Nullable" FROM metric_values ORDER BY time LIMIT 1`,
-							"format": "time_series",
-						}),
-						RefId: "A",
+		t.Run("When doing a metric query using epoch (float64 nullable) as time column and value column (float64 nullable), should return metric with time in milliseconds",
+			func(t *testing.T) {
+				query := &tsdb.TsdbQuery{
+					Queries: []*tsdb.Query{
+						{
+							Model: simplejson.NewFromAny(map[string]interface{}{
+								"rawSql": `SELECT "timeFloat64Nullable" as time, "timeFloat64Nullable" FROM metric_values ORDER BY time LIMIT 1`,
+								"format": "time_series",
+							}),
+							RefId: "A",
+						},
 					},
-				},
-			}
+				}
 
-			resp, err := endpoint.Query(context.Background(), nil, query)
-			require.NoError(t, err)
-			queryResult := resp.Results["A"]
-			require.NoError(t, queryResult.Error)
+				resp, err := endpoint.Query(context.Background(), nil, query)
+				require.NoError(t, err)
+				queryResult := resp.Results["A"]
+				require.NoError(t, queryResult.Error)
 
-			require.Len(t, queryResult.Series, 1)
-			require.Equal(t, float64(tInitial.UnixNano()/1e6), queryResult.Series[0].Points[0][1].Float64)
-		})
+				require.Len(t, queryResult.Series, 1)
+				require.Equal(t, float64(tInitial.UnixNano()/1e6), queryResult.Series[0].Points[0][1].Float64)
+			})
 
-		t.Run("When doing a metric query using epoch (int32) as time column and value column (int32), should return metric with time in milliseconds", func(t *testing.T) {
-			query := &tsdb.TsdbQuery{
-				Queries: []*tsdb.Query{
-					{
-						Model: simplejson.NewFromAny(map[string]interface{}{
-							"rawSql": `SELECT "timeInt32" as time, "timeInt32" FROM metric_values ORDER BY time LIMIT 1`,
-							"format": "time_series",
-						}),
-						RefId: "A",
+		t.Run("When doing a metric query using epoch (int32) as time column and value column (int32), should return metric with time in milliseconds",
+			func(t *testing.T) {
+				query := &tsdb.TsdbQuery{
+					Queries: []*tsdb.Query{
+						{
+							Model: simplejson.NewFromAny(map[string]interface{}{
+								"rawSql": `SELECT "timeInt32" as time, "timeInt32" FROM metric_values ORDER BY time LIMIT 1`,
+								"format": "time_series",
+							}),
+							RefId: "A",
+						},
 					},
-				},
-			}
+				}
 
-			resp, err := endpoint.Query(context.Background(), nil, query)
-			require.NoError(t, err)
-			queryResult := resp.Results["A"]
-			require.NoError(t, queryResult.Error)
+				resp, err := endpoint.Query(context.Background(), nil, query)
+				require.NoError(t, err)
+				queryResult := resp.Results["A"]
+				require.NoError(t, queryResult.Error)
 
-			require.Len(t, queryResult.Series, 1)
-			require.Equal(t, float64(tInitial.UnixNano()/1e6), queryResult.Series[0].Points[0][1].Float64)
-		})
+				require.Len(t, queryResult.Series, 1)
+				require.Equal(t, float64(tInitial.UnixNano()/1e6), queryResult.Series[0].Points[0][1].Float64)
+			})
 
-		t.Run("When doing a metric query using epoch (int32 nullable) as time column and value column (int32 nullable), should return metric with time in milliseconds", func(t *testing.T) {
-			query := &tsdb.TsdbQuery{
-				Queries: []*tsdb.Query{
-					{
-						Model: simplejson.NewFromAny(map[string]interface{}{
-							"rawSql": `SELECT "timeInt32Nullable" as time, "timeInt32Nullable" FROM metric_values ORDER BY time LIMIT 1`,
-							"format": "time_series",
-						}),
-						RefId: "A",
+		t.Run("When doing a metric query using epoch (int32 nullable) as time column and value column (int32 nullable), should return metric with time in milliseconds",
+			func(t *testing.T) {
+				query := &tsdb.TsdbQuery{
+					Queries: []*tsdb.Query{
+						{
+							Model: simplejson.NewFromAny(map[string]interface{}{
+								"rawSql": `SELECT "timeInt32Nullable" as time, "timeInt32Nullable" FROM metric_values ORDER BY time LIMIT 1`,
+								"format": "time_series",
+							}),
+							RefId: "A",
+						},
 					},
-				},
-			}
+				}
 
-			resp, err := endpoint.Query(context.Background(), nil, query)
-			require.NoError(t, err)
-			queryResult := resp.Results["A"]
-			require.NoError(t, queryResult.Error)
+				resp, err := endpoint.Query(context.Background(), nil, query)
+				require.NoError(t, err)
+				queryResult := resp.Results["A"]
+				require.NoError(t, queryResult.Error)
 
-			require.Len(t, queryResult.Series, 1)
-			require.Equal(t, float64(tInitial.UnixNano()/1e6), queryResult.Series[0].Points[0][1].Float64)
-		})
+				require.Len(t, queryResult.Series, 1)
+				require.Equal(t, float64(tInitial.UnixNano()/1e6), queryResult.Series[0].Points[0][1].Float64)
+			})
 
-		t.Run("When doing a metric query using epoch (float32) as time column and value column (float32), should return metric with time in milliseconds", func(t *testing.T) {
-			query := &tsdb.TsdbQuery{
-				Queries: []*tsdb.Query{
-					{
-						Model: simplejson.NewFromAny(map[string]interface{}{
-							"rawSql": `SELECT "timeFloat32" as time, "timeFloat32" FROM metric_values ORDER BY time LIMIT 1`,
-							"format": "time_series",
-						}),
-						RefId: "A",
+		t.Run("When doing a metric query using epoch (float32) as time column and value column (float32), should return metric with time in milliseconds",
+			func(t *testing.T) {
+				query := &tsdb.TsdbQuery{
+					Queries: []*tsdb.Query{
+						{
+							Model: simplejson.NewFromAny(map[string]interface{}{
+								"rawSql": `SELECT "timeFloat32" as time, "timeFloat32" FROM metric_values ORDER BY time LIMIT 1`,
+								"format": "time_series",
+							}),
+							RefId: "A",
+						},
 					},
-				},
-			}
+				}
 
-			resp, err := endpoint.Query(context.Background(), nil, query)
-			require.NoError(t, err)
-			queryResult := resp.Results["A"]
-			require.NoError(t, queryResult.Error)
+				resp, err := endpoint.Query(context.Background(), nil, query)
+				require.NoError(t, err)
+				queryResult := resp.Results["A"]
+				require.NoError(t, queryResult.Error)
 
-			require.Len(t, queryResult.Series, 1)
-			require.Equal(t, float64(float32(tInitial.Unix()))*1e3, queryResult.Series[0].Points[0][1].Float64)
-		})
+				require.Len(t, queryResult.Series, 1)
+				require.Equal(t, float64(float32(tInitial.Unix()))*1e3, queryResult.Series[0].Points[0][1].Float64)
+			})
 
-		t.Run("When doing a metric query using epoch (float32 nullable) as time column and value column (float32 nullable), should return metric with time in milliseconds", func(t *testing.T) {
-			query := &tsdb.TsdbQuery{
-				Queries: []*tsdb.Query{
-					{
-						Model: simplejson.NewFromAny(map[string]interface{}{
-							"rawSql": `SELECT "timeFloat32Nullable" as time, "timeFloat32Nullable" FROM metric_values ORDER BY time LIMIT 1`,
-							"format": "time_series",
-						}),
-						RefId: "A",
+		t.Run("When doing a metric query using epoch (float32 nullable) as time column and value column (float32 nullable), should return metric with time in milliseconds",
+			func(t *testing.T) {
+				query := &tsdb.TsdbQuery{
+					Queries: []*tsdb.Query{
+						{
+							Model: simplejson.NewFromAny(map[string]interface{}{
+								"rawSql": `SELECT "timeFloat32Nullable" as time, "timeFloat32Nullable" FROM metric_values ORDER BY time LIMIT 1`,
+								"format": "time_series",
+							}),
+							RefId: "A",
+						},
 					},
-				},
-			}
+				}
 
-			resp, err := endpoint.Query(context.Background(), nil, query)
-			require.NoError(t, err)
-			queryResult := resp.Results["A"]
-			require.NoError(t, queryResult.Error)
+				resp, err := endpoint.Query(context.Background(), nil, query)
+				require.NoError(t, err)
+				queryResult := resp.Results["A"]
+				require.NoError(t, queryResult.Error)
 
-			require.Len(t, queryResult.Series, 1)
-			require.Equal(t, float64(float32(tInitial.Unix()))*1e3, queryResult.Series[0].Points[0][1].Float64)
-		})
+				require.Len(t, queryResult.Series, 1)
+				require.Equal(t, float64(float32(tInitial.Unix()))*1e3, queryResult.Series[0].Points[0][1].Float64)
+			})
 
 		t.Run("When doing a metric query grouping by time and select metric column should return correct series", func(t *testing.T) {
 			query := &tsdb.TsdbQuery{
@@ -805,20 +810,22 @@ func TestPostgres(t *testing.T) {
 			require.NoError(t, err)
 			queryResult := resp.Results["A"]
 			require.NoError(t, queryResult.Error)
-			require.Equal(t, "SELECT time FROM metric_values WHERE time > '2018-03-15T12:55:00Z' OR time < '2018-03-15T12:55:00Z' OR 1 < 1521118500 OR 1521118800 > 1 ORDER BY 1", queryResult.Meta.Get(sqleng.MetaKeyExecutedQueryString).MustString())
+			require.Equal(t,
+				"SELECT time FROM metric_values WHERE time > '2018-03-15T12:55:00Z' OR time < '2018-03-15T12:55:00Z' OR 1 < 1521118500 OR 1521118800 > 1 ORDER BY 1",
+				queryResult.Meta.Get(sqleng.MetaKeyExecutedQueryString).MustString())
 		})
 	})
 
-	Convey("Given a table with event data", func() {
+	t.Run("Given a table with event data", func(t *testing.T) {
 		type event struct {
 			TimeSec     int64
 			Description string
 			Tags        string
 		}
 
-		if exist, err := sess.IsTableExist(event{}); err != nil || exist {
+		if exists, err := sess.IsTableExist(event{}); err != nil || exists {
 			require.NoError(t, err)
-			err = sess.DropTable(event{})
+			err := sess.DropTable(event{})
 			require.NoError(t, err)
 		}
 		err := sess.CreateTable(event{})
@@ -839,7 +846,7 @@ func TestPostgres(t *testing.T) {
 		}
 
 		for _, e := range events {
-			_, err = sess.Insert(e)
+			_, err := sess.Insert(e)
 			require.NoError(t, err)
 		}
 
