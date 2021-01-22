@@ -165,7 +165,6 @@ const getMenuStyles = (theme: GrafanaTheme) => {
     `,
     wrapper: css`
       background: ${wrapperBg};
-      z-index: 1;
       box-shadow: 0 2px 5px 0 ${wrapperShadow};
       display: inline-block;
       border-radius: ${theme.border.radius.sm};

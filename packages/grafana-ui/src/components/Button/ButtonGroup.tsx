@@ -50,7 +50,7 @@ const getStyles = (theme: GrafanaTheme) => ({
       border-radius: 0;
       border-right: 0;
 
-      &:last-child {
+      &:last-of-type {
         border-radius: 0 ${theme.border.radius.sm} ${theme.border.radius.sm} 0;
         border-right: 1px solid ${theme.colors.border2};
       }

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { PopoverContent } from '../../../Tooltip/Tooltip';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import { ToolbarButton } from '../../../Button';
+import { ButtonVariant, ToolbarButton } from '../../../Button';
 import { ClickOutsideWrapper } from '../../../ClickOutsideWrapper/ClickOutsideWrapper';
 import { css } from 'emotion';
 import { useStyles } from '../../../../themes/ThemeContext';
@@ -15,11 +15,12 @@ export interface Props<T> {
   onChange: (item: SelectableValue<T>) => void;
   tooltipContent?: PopoverContent;
   narrow?: boolean;
+  variant?: ButtonVariant;
 }
 
 /** @internal */
 export const ButtonSelect = React.memo(<T,>(props: Props<T>) => {
-  const { className, options, value, onChange, narrow } = props;
+  const { className, options, value, onChange, narrow, variant } = props;
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const styles = useStyles(getStyles);
 
@@ -47,8 +48,8 @@ export const ButtonSelect = React.memo(<T,>(props: Props<T>) => {
   };
 
   return (
-    <div className={styles.wrapper}>
-      <ToolbarButton className={className} isOpen={isOpen} onClick={onToggle} narrow={narrow}>
+    <>
+      <ToolbarButton className={className} isOpen={isOpen} onClick={onToggle} narrow={narrow} variant={variant}>
         {value?.label || value?.value}
       </ToolbarButton>
       {isOpen && (
@@ -58,7 +59,7 @@ export const ButtonSelect = React.memo(<T,>(props: Props<T>) => {
           </ClickOutsideWrapper>
         </div>
       )}
-    </div>
+    </>
   );
 });
 
@@ -72,6 +73,7 @@ const getStyles = (theme: GrafanaTheme) => {
     `,
     menuWrapper: css`
       position: absolute;
+      z-index: ${theme.zIndex.dropdown};
       top: ${theme.spacing.formButtonHeight + 1}px;
       right: 0;
     `,

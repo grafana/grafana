@@ -5,7 +5,7 @@ import { withCenteredStory } from '../../../../utils/storybook/withCenteredStory
 import { UseState } from '../../../../utils/storybook/UseState';
 import { SelectableValue } from '@grafana/data';
 import { ButtonSelect } from './ButtonSelect';
-import { DashboardStoryCanvas } from '../../../../utils/storybook/StoryBackground';
+import { DashboardStoryCanvas } from '../../../../utils/storybook/DashboardStoryCanvas';
 
 export default {
   title: 'Forms/Select/ButtonSelect',
@@ -26,13 +26,13 @@ export const Basic: FC = () => {
       <UseState initialState={value}>
         {(value, updateValue) => {
           return (
-            <div style={{ marginLeft: '100px' }}>
+            <div style={{ marginLeft: '100px', position: 'relative', display: 'flex' }}>
               <ButtonSelect
                 value={value}
                 options={options}
                 onChange={(value) => {
                   action('onChanged fired')(value);
-                  updateValue(value);
+                  updateValue(value as any);
                 }}
                 className="refresh-select"
               />
