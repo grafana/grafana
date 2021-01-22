@@ -1,20 +1,19 @@
-import { FALLBACK_COLOR, FieldColorMode, GrafanaTheme, ThresholdsConfig } from '@grafana/data';
+import { DataFrameFieldIndex, FALLBACK_COLOR, FieldColorMode, GrafanaTheme, ThresholdsConfig } from '@grafana/data';
 import tinycolor from 'tinycolor2';
 import uPlot, { Series } from 'uplot';
 import {
+  BarAlignment,
+  BarConfig,
   DrawStyle,
-  LineConfig,
   FillConfig,
+  GraphGradientMode,
+  LineConfig,
+  LineInterpolation,
   PointsConfig,
   PointVisibility,
-  LineInterpolation,
-  GraphGradientMode,
-  BarConfig,
-  BarAlignment,
 } from '../config';
 import { PlotConfigBuilder } from '../types';
-import { DataFrameFieldIndex } from '@grafana/data';
-import { getScaleGradientFn, getOpacityGradientFn, getHueGradientFn } from './gradientFills';
+import { getHueGradientFn, getOpacityGradientFn, getScaleGradientFn } from './gradientFills';
 
 export interface SeriesProps extends LineConfig, BarConfig, FillConfig, PointsConfig {
   scaleKey: string;
@@ -153,6 +152,9 @@ interface PathBuilders {
   smooth: Series.PathBuilder;
   stepBefore: Series.PathBuilder;
   stepAfter: Series.PathBuilder;
+  bars: Series.PathBuilder;
+  barsAfter: Series.PathBuilder;
+  barsBefore: Series.PathBuilder;
 }
 
 let builders: PathBuilders | undefined = undefined;
@@ -162,22 +164,31 @@ function mapDrawStyleToPathBuilder(
   lineInterpolation?: LineInterpolation,
   barAlignment?: BarAlignment
 ): Series.PathBuilder {
-  const barWidthFactor = 0.6;
-  const barMaxWidth = Infinity;
   if (!builders) {
     // This should be global static, but Jest initalization was failing so we lazy load to avoid the issue
     const pathBuilders = uPlot.paths;
+    const barWidthFactor = 0.6;
+    const barMaxWidth = Infinity;
 
     builders = {
       linear: pathBuilders.linear!(),
       smooth: pathBuilders.spline!(),
       stepBefore: pathBuilders.stepped!({ align: -1 }),
       stepAfter: pathBuilders.stepped!({ align: 1 }),
+      bars: pathBuilders.bars!({ size: [barWidthFactor, barMaxWidth] }),
+      barsBefore: pathBuilders.bars!({ size: [barWidthFactor, barMaxWidth], align: -1 }),
+      barsAfter: pathBuilders.bars!({ size: [barWidthFactor, barMaxWidth], align: 1 }),
     };
   }
 
   if (style === DrawStyle.Bars) {
-    return uPlot.paths.bars!({ size: [barWidthFactor, barMaxWidth], align: barAlignment });
+    if (barAlignment === BarAlignment.After) {
+      return builders.barsAfter;
+    }
+    if (barAlignment === BarAlignment.Before) {
+      return builders.barsBefore;
+    }
+    return builders.bars;
   }
   if (style === DrawStyle.Line) {
     if (lineInterpolation === LineInterpolation.StepBefore) {
