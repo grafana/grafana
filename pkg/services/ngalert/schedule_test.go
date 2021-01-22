@@ -27,7 +27,12 @@ func TestAlertingTicker(t *testing.T) {
 	t.Cleanup(registry.ClearOverrides)
 
 	mockedClock := clock.NewMock()
-	schefCfg := schedulerCfg{c: mockedClock, baseInterval: time.Second, logger: log.New("ngalert.schedule.test"), evalApplied: nil, evaluator: eval.Evaluator{Cfg: ng.Cfg}}
+	schefCfg := schedulerCfg{
+		c:            mockedClock,
+		baseInterval: time.Second,
+		logger:       log.New("ngalert.schedule.test"),
+		evaluator:    eval.Evaluator{Cfg: ng.Cfg},
+	}
 	ng.schedule = newScheduler(schefCfg)
 
 	alerts := make([]*AlertDefinition, 0)

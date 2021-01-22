@@ -21,7 +21,6 @@ type Evaluator struct {
 }
 
 // invalidEvalResultFormatError is an error for invalid format of the alert definition evaluation results.
-
 type invalidEvalResultFormatError struct {
 	refID  string
 	reason string

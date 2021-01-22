@@ -340,7 +340,7 @@ type Cfg struct {
 	AutoAssignOrgId   int
 	AutoAssignOrgRole string
 
-	// Expressions
+	// ExpressionsEnabled specifies whether expressions are enabled.
 	ExpressionsEnabled bool
 }
 
