@@ -214,8 +214,14 @@ export const BarChart: React.FunctionComponent<Props> = ({ width, height, data, 
 
     const FIXED_UNIT = '__fixed';
 
+    builder.setXSeries({
+      // TODO!
+    });
+
+    let seriesIndex = 0;
     for (let i = 1; i < data.fields.length; i++) {
       const field = data.fields[i];
+      field.state!.seriesIndex = seriesIndex++;
       const config = field.config;
       //const customConfig = config.custom;
 
@@ -227,7 +233,9 @@ export const BarChart: React.FunctionComponent<Props> = ({ width, height, data, 
       builder.addSeries({
         scaleKey: i == 0 ? 'x' : 'y',
         lineWidth: 0,
-        lineColor: seriesColor,
+    //    lineColor: '#F00', //seriesColor,
+        fillColor: seriesColor,
+        fillOpacity: 50,
         theme,
         fieldName: field.name,
         pathBuilder: drawBars,
