@@ -38,7 +38,7 @@ export const UPlotChart: React.FC<PlotProps> = (props) => {
 
     // 1. When config is ready and there is no uPlot instance, create new uPlot and return
     if (isConfigReady && !plotInstance.current) {
-      plotInstance.current = initializePlot(prepareData(props.data.frame), currentConfig.current, canvasRef.current);
+      plotInstance.current = initializePlot(prepareData(props.data), currentConfig.current, canvasRef.current);
       setIsPlotReady(true);
       return;
     }
@@ -59,12 +59,12 @@ export const UPlotChart: React.FC<PlotProps> = (props) => {
         pluginLog('uPlot core', false, 'destroying instance');
         plotInstance.current.destroy();
       }
-      plotInstance.current = initializePlot(prepareData(props.data.frame), currentConfig.current, canvasRef.current);
+      plotInstance.current = initializePlot(prepareData(props.data), currentConfig.current, canvasRef.current);
       return;
     }
 
     // 4. Otherwise, assume only data has changed and update uPlot data
-    updateData(props.data.frame, props.config, plotInstance.current, prepareData(props.data.frame));
+    updateData(props.data, props.config, plotInstance.current, prepareData(props.data));
   }, [props, isConfigReady]);
 
   // When component unmounts, clean the existing uPlot instance
@@ -85,7 +85,7 @@ export const UPlotChart: React.FC<PlotProps> = (props) => {
   );
 };
 
-function prepareData(frame: DataFrame) {
+function prepareData(frame: DataFrame): AlignedData {
   return frame.fields.map((f) => f.values.toArray()) as AlignedData;
 }
 
