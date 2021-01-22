@@ -14,7 +14,7 @@ export interface QueryGroupOptions {
   };
 }
 
-interface QueryGroupDataSource {
+export interface QueryGroupDataSource {
   name?: string | null;
   uid?: string;
   default?: boolean;

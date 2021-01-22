@@ -20,6 +20,7 @@ import {
   NotifierDTO,
   ThunkResult,
   QueryGroupOptions,
+  QueryGroupDataSource,
 } from 'app/types';
 import { ExpressionDatasourceID } from '../../expressions/ExpressionDatasource';
 import { ExpressionQuery } from '../../expressions/types';
@@ -105,8 +106,8 @@ export function createAlertDefinition(): ThunkResult<void> {
       condition: {
         refId: currentAlertDefinition.condition.refId,
         queriesAndExpressions: queryOptions.queries.map((query) => {
-          let dataSource: { name: string; uid: string };
-          const isExpression = ExpressionDatasourceID;
+          let dataSource: QueryGroupDataSource;
+          const isExpression = query.datasource === ExpressionDatasourceID;
 
           if (isExpression) {
             dataSource = { name: ExpressionDatasourceID, uid: ExpressionDatasourceID };
