@@ -20,9 +20,13 @@ import (
 )
 
 func (p *testDataPlugin) registerScenarioQueryHandlers(mux *datasource.QueryTypeMux) {
-	mux.HandleFunc(string(randowWalkQuery), p.handleRandomWalkScenario)
+	mux.HandleFunc(string(randomWalkQuery), p.handleRandomWalkScenario)
+	mux.HandleFunc(string(randomWalkSlowQuery), p.handleRandomWalkSlowScenario)
+	mux.HandleFunc(string(randomWalkWithErrorQuery), p.handleRandomWalkWithErrorScenario)
 	mux.HandleFunc(string(randowWalkTableQuery), p.handleRandomWalkTableScenario)
 	mux.HandleFunc(string(predictableCSVWaveQuery), p.handlePredictableCSVWaveScenario)
+	mux.HandleFunc(string(serverError500Query), p.handleServerError500Scenario)
+	mux.HandleFunc(string(noDataPointsQuery), p.handleNoDataPointsScenario)
 
 	mux.HandleFunc("", p.handleFallbackScenario)
 }
@@ -111,6 +115,45 @@ func (p *testDataPlugin) handleRandomWalkScenario(ctx context.Context, req *back
 	return resp, nil
 }
 
+func (p *testDataPlugin) handleRandomWalkWithErrorScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+
+	for _, q := range req.Queries {
+		model, err := simplejson.NewJson(q.JSON)
+		if err != nil {
+			continue
+		}
+
+		respD := resp.Responses[q.RefID]
+		respD.Frames = append(respD.Frames, getRandomWalkV2(q, model, 0))
+		respD.Error = fmt.Errorf("This is an error.  It can include URLs http://grafana.com/")
+		resp.Responses[q.RefID] = respD
+	}
+
+	return resp, nil
+}
+
+func (p *testDataPlugin) handleRandomWalkSlowScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+
+	for _, q := range req.Queries {
+		model, err := simplejson.NewJson(q.JSON)
+		if err != nil {
+			continue
+		}
+
+		stringInput := model.Get("stringInput").MustString()
+		parsedInterval, _ := time.ParseDuration(stringInput)
+		time.Sleep(parsedInterval)
+
+		respD := resp.Responses[q.RefID]
+		respD.Frames = append(respD.Frames, getRandomWalkV2(q, model, 0))
+		resp.Responses[q.RefID] = respD
+	}
+
+	return resp, nil
+}
+
 func (p *testDataPlugin) handleRandomWalkTableScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
@@ -147,6 +190,14 @@ func (p *testDataPlugin) handlePredictableCSVWaveScenario(ctx context.Context, r
 	}
 
 	return resp, nil
+}
+
+func (p *testDataPlugin) handleServerError500Scenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	panic("Test Data Panic!")
+}
+
+func (p *testDataPlugin) handleNoDataPointsScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	return backend.NewQueryDataResponse(), nil
 }
 
 func getRandomWalkV2(query backend.DataQuery, model *simplejson.Json, index int) *data.Frame {

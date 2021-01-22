@@ -31,7 +31,9 @@ type Scenario struct {
 type queryType string
 
 const (
-	randowWalkQuery                   queryType = "random_walk"
+	randomWalkQuery                   queryType = "random_walk"
+	randomWalkSlowQuery               queryType = "slow_query"
+	randomWalkWithErrorQuery          queryType = "random_walk_with_error"
 	randowWalkTableQuery              queryType = "random_walk_table"
 	exponentialHeatmapBucketDataQuery queryType = "exponential_heatmap_bucket_data"
 	linearHeatmapBucketDataQuery      queryType = "linear_heatmap_bucket_data"
@@ -41,14 +43,12 @@ const (
 	manualEntryQuery                  queryType = "manual_entry"
 	predictablePulseQuery             queryType = "predictable_pulse"
 	predictableCSVWaveQuery           queryType = "predictable_csv_wave"
-	slowQuery                         queryType = "slow_query"
 	streamingClientQuery              queryType = "streaming_client"
 	liveQuery                         queryType = "live"
 	grafanaAPIQuery                   queryType = "grafana_api"
 	arrowQuery                        queryType = "arrow"
 	annotationsQuery                  queryType = "annotations"
 	tableStaticQuery                  queryType = "table_static"
-	randomWalkWithErrorQuery          queryType = "random_walk_with_error"
 	serverError500Query               queryType = "server_error_500"
 	logsQuery                         queryType = "logs"
 	nodeGraphQuery                    queryType = "node_graph"
@@ -124,7 +124,7 @@ func init() {
 	})
 
 	registerScenario(&Scenario{
-		Id:   string(randowWalkQuery),
+		Id:   string(randomWalkQuery),
 		Name: "Random Walk",
 
 		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
@@ -160,7 +160,7 @@ func init() {
 	})
 
 	registerScenario(&Scenario{
-		Id:          string(slowQuery),
+		Id:          string(randomWalkSlowQuery),
 		Name:        "Slow Query",
 		StringInput: "5s",
 		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
