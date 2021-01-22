@@ -39,7 +39,8 @@ func (ng *AlertNG) conditionEvalEndpoint(c *models.ReqContext, dto evalAlertCond
 		return response.Error(400, "invalid condition", err)
 	}
 
-	evalResults, err := eval.ConditionEval(&dto.Condition, timeNow())
+	evaluator := eval.Evaluator{Cfg: ng.Cfg}
+	evalResults, err := evaluator.ConditionEval(&dto.Condition, timeNow())
 	if err != nil {
 		return response.Error(400, "Failed to evaluate conditions", err)
 	}
@@ -69,7 +70,8 @@ func (ng *AlertNG) alertDefinitionEvalEndpoint(c *models.ReqContext) response.Re
 		return response.Error(400, "invalid condition", err)
 	}
 
-	evalResults, err := eval.ConditionEval(condition, timeNow())
+	evaluator := eval.Evaluator{Cfg: ng.Cfg}
+	evalResults, err := evaluator.ConditionEval(condition, timeNow())
 	if err != nil {
 		return response.Error(400, "Failed to evaluate alert", err)
 	}
