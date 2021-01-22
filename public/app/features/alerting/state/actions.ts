@@ -13,9 +13,16 @@ import {
   updateAlertDefinition,
   setQueryOptions,
 } from './reducers';
-import { AlertDefinition, AlertDefinitionUiState, AlertRuleDTO, NotifierDTO, ThunkResult } from 'app/types';
-import { QueryGroupOptions } from 'app/types';
+import {
+  AlertDefinition,
+  AlertDefinitionUiState,
+  AlertRuleDTO,
+  NotifierDTO,
+  ThunkResult,
+  QueryGroupOptions,
+} from 'app/types';
 import { ExpressionDatasourceID } from '../../expressions/ExpressionDatasource';
+import { ExpressionQuery } from '../../expressions/types';
 
 export function getAlertRulesAsync(options: { state: string }): ThunkResult<void> {
   return async (dispatch) => {
@@ -99,8 +106,9 @@ export function createAlertDefinition(): ThunkResult<void> {
         refId: currentAlertDefinition.condition.refId,
         queriesAndExpressions: queryOptions.queries.map((query) => {
           let dataSource: { name: string; uid: string };
+          const isExpression = ExpressionDatasourceID;
 
-          if (query.datasource === ExpressionDatasourceID) {
+          if (isExpression) {
             dataSource = { name: ExpressionDatasourceID, uid: ExpressionDatasourceID };
           } else {
             const dataSourceSetting = getDataSourceSrv().getInstanceSettings(query.datasource);
@@ -114,7 +122,7 @@ export function createAlertDefinition(): ThunkResult<void> {
           return {
             model: {
               ...query,
-              type: query.queryType,
+              type: isExpression ? (query as ExpressionQuery).type : query.queryType,
               datasource: dataSource.name,
               datasourceUid: dataSource.uid,
             },
