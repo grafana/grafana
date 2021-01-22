@@ -1,7 +1,7 @@
 import { ArrayVector, DataFrame, FieldType, toDataFrame } from '@grafana/data';
 import { joinDataFrames, isLikelyAscendingVector } from './utils';
 
-describe('alignDataFrames', () => {
+describe('joinDataFrames', () => {
   describe('aligned frame', () => {
     it('should align multiple data frames into one data frame', () => {
       const data: DataFrame[] = [
@@ -95,7 +95,7 @@ describe('alignDataFrames', () => {
         }),
       ];
 
-      const aligned = alignDataFrames(data);
+      const aligned = joinDataFrames(data);
 
       expect(aligned?.fields).toMatchInlineSnapshot(`
         Array [
@@ -166,7 +166,7 @@ describe('alignDataFrames', () => {
         }),
       ];
 
-      const aligned = alignDataFrames(data);
+      const aligned = joinDataFrames(data);
 
       expect(aligned?.fields).toMatchInlineSnapshot(`
         Array [
@@ -218,7 +218,7 @@ describe('alignDataFrames', () => {
         }),
       ];
 
-      const aligned = alignDataFrames(data);
+      const aligned = joinDataFrames(data);
 
       expect(aligned?.fields).toMatchInlineSnapshot(`
         Array [
@@ -286,7 +286,7 @@ describe('alignDataFrames', () => {
         }),
       ];
 
-      aligned = alignDataFrames(data);
+      aligned = joinDataFrames(data);
     });
 
     it.each`

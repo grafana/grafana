@@ -165,6 +165,8 @@ export interface FieldState {
 
   /**
    * Location of this field within the context frames results
+   *
+   * @internal -- we will try to make this unnecessary
    */
   origin?: DataFrameFieldIndex;
 }
@@ -211,7 +213,8 @@ export const TIME_SERIES_METRIC_FIELD_NAME = 'Metric';
 /**
  * Describes where a specific data frame field is located within a
  * dataset of type DataFrame[]
- * @public
+ *
+ * @internal -- we will try to make this unnecessary
  */
 export interface DataFrameFieldIndex {
   frameIndex: number;
