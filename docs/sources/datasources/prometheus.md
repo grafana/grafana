@@ -26,9 +26,9 @@ To access Prometheus settings, hover your mouse over the **Configuration** (gear
 | `Scrape interval`         | Set this to the typical scrape and evaluation interval configured in Prometheus. Defaults to 15s.                                                                                                       |
 | `Disable metrics lookup`  | Checking this option will disable the metrics chooser and metric/label support in the query field's autocomplete. This helps if you have performance issues with bigger Prometheus instances.           |
 | `Custom Query Parameters` | Add custom parameters to the Prometheus query URL. For example `timeout`, `partial_response`, `dedup`, or `max_source_resolution`. Multiple parameters should be concatenated together with an '&amp;'. |
-| `Label name`              | Add the name of the field in the label object.                                                                                                                                         |
+| `Label name`              | Add the name of the field in the label object.                                                                                                                                                          |
 | `URL`                     | If the link is external, then enter the full link URL. You can interpolate the value from the field with `${__value.raw }` macro.                                                                       |
-| `Internal link`           | Select if the link is internal or external. In the case of an internal link, a data source selector allows you to select the target data source. Supports tracing data sources only.                      |
+| `Internal link`           | Select if the link is internal or external. In the case of an internal link, a data source selector allows you to select the target data source. Supports tracing data sources only.                    |
 
 ## Prometheus query editor
 
@@ -209,7 +209,10 @@ If you are running Grafana in an Amazon EKS cluster, follow the AWS guide to [Qu
 
 > **Note:** This feature is available in Prometheus 2.25+ and Grafana 7.4+.
 
-You can use this functionality to link to your tracing backend from an Exemplar.
-
-The link next to the Exemplar's traceID:
+Grafana 7.4 and later versions have the capability to show exemplars data alongside a metric both in Explore and Dashboards.
+Exemplars are a way to associate higher cardinality metadata from a specific event with traditional timeseries data.
 {{< docs-imagebox img="/img/docs/v74/exemplars.png" class="docs-image--no-shadow" caption="Screenshot showing the detail window of an Exemplar" >}}
+
+Configure Exemplars in the data source settings by adding external or internal links.
+{{< docs-imagebox img="/img/docs/v74/exemplars-settings.png" class="docs-image--no-shadow" caption="Screenshot of the Exemplars configuration" >}}
+
