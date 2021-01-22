@@ -15,54 +15,44 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
+var scenarioRegistryV2 map[string]backend.QueryDataHandlerFunc
+
 func (p *testDataPlugin) registerScenarioQueryHandlers(mux *datasource.QueryTypeMux) {
-	mux.HandleFunc(string(randomWalkQuery), p.handleRandomWalkScenario)
-	mux.HandleFunc(string(randomWalkSlowQuery), p.handleRandomWalkSlowScenario)
-	mux.HandleFunc(string(randomWalkWithErrorQuery), p.handleRandomWalkWithErrorScenario)
-	mux.HandleFunc(string(randowWalkTableQuery), p.handleRandomWalkTableScenario)
-	mux.HandleFunc(string(predictableCSVWaveQuery), p.handlePredictableCSVWaveScenario)
-	mux.HandleFunc(string(serverError500Query), p.handleServerError500Scenario)
-	mux.HandleFunc(string(noDataPointsQuery), p.handleNoDataPointsScenario)
-	mux.HandleFunc(string(exponentialHeatmapBucketDataQuery), p.handleExponentialHeatmapBucketDataScenario)
-	mux.HandleFunc(string(linearHeatmapBucketDataQuery), p.handleLinearHeatmapBucketDataScenario)
-	mux.HandleFunc(string(predictablePulseQuery), p.handlePredictablePulseScenario)
-	mux.HandleFunc(string(datapointsOutsideRangeQuery), p.handleDatapointsOutsideRangeQueryScenario)
-	mux.HandleFunc(string(manualEntryQuery), p.handleManualEntryScenario)
-	mux.HandleFunc(string(csvMetricValuesQuery), p.handleCSVMetricValuesScenario)
-	mux.HandleFunc(string(streamingClientQuery), p.handleStreamingClientQueryScenario)
-	mux.HandleFunc(string(liveQuery), p.handleGrafanaLiveQueryScenario)
-	mux.HandleFunc(string(grafanaAPIQuery), p.handleGrafanaAPIQueryScenario)
-	mux.HandleFunc(string(arrowQuery), p.handleArrowQueryScenario)
-	mux.HandleFunc(string(annotationsQuery), p.handleAnnotationsQueryScenario)
-	mux.HandleFunc(string(tableStaticQuery), p.handleTableStaticQueryScenario)
-	mux.HandleFunc(string(logsQuery), p.handleLogsQueryScenario)
+	scenarioRegistryV2 = map[string]backend.QueryDataHandlerFunc{}
+	scenarioRegistryV2[string(randomWalkQuery)] = p.handleRandomWalkScenario
+	scenarioRegistryV2[string(randomWalkSlowQuery)] = p.handleRandomWalkSlowScenario
+	scenarioRegistryV2[string(randomWalkWithErrorQuery)] = p.handleRandomWalkWithErrorScenario
+	scenarioRegistryV2[string(randowWalkTableQuery)] = p.handleRandomWalkTableScenario
+	scenarioRegistryV2[string(predictableCSVWaveQuery)] = p.handlePredictableCSVWaveScenario
+	scenarioRegistryV2[string(serverError500Query)] = p.handleServerError500Scenario
+	scenarioRegistryV2[string(noDataPointsQuery)] = p.handleNoDataPointsScenario
+	scenarioRegistryV2[string(exponentialHeatmapBucketDataQuery)] = p.handleExponentialHeatmapBucketDataScenario
+	scenarioRegistryV2[string(linearHeatmapBucketDataQuery)] = p.handleLinearHeatmapBucketDataScenario
+	scenarioRegistryV2[string(predictablePulseQuery)] = p.handlePredictablePulseScenario
+	scenarioRegistryV2[string(datapointsOutsideRangeQuery)] = p.handleDatapointsOutsideRangeQueryScenario
+	scenarioRegistryV2[string(manualEntryQuery)] = p.handleManualEntryScenario
+	scenarioRegistryV2[string(csvMetricValuesQuery)] = p.handleCSVMetricValuesScenario
+	scenarioRegistryV2[string(streamingClientQuery)] = p.handleStreamingClientQueryScenario
+	scenarioRegistryV2[string(liveQuery)] = p.handleGrafanaLiveQueryScenario
+	scenarioRegistryV2[string(grafanaAPIQuery)] = p.handleGrafanaAPIQueryScenario
+	scenarioRegistryV2[string(arrowQuery)] = p.handleArrowQueryScenario
+	scenarioRegistryV2[string(annotationsQuery)] = p.handleAnnotationsQueryScenario
+	scenarioRegistryV2[string(tableStaticQuery)] = p.handleTableStaticQueryScenario
+	scenarioRegistryV2[string(logsQuery)] = p.handleLogsQueryScenario
+
+	for scenarioID, handler := range scenarioRegistryV2 {
+		mux.HandleFunc(scenarioID, handler)
+	}
 
 	mux.HandleFunc("", p.handleFallbackScenario)
 }
 
 func (p *testDataPlugin) handleFallbackScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
-
-	tsdbQuery := &tsdb.TsdbQuery{
-		TimeRange: tsdb.NewTimeRange(strconv.FormatInt(req.Queries[0].TimeRange.From.UnixNano()/int64(time.Millisecond), 10), strconv.FormatInt(req.Queries[0].TimeRange.To.UnixNano()/int64(time.Millisecond), 10)),
-		Headers:   map[string]string{},
-		Queries:   []*tsdb.Query{},
-	}
-
-	if req.PluginContext.User != nil {
-		tsdbQuery.User = &models.SignedInUser{
-			OrgId:   req.PluginContext.OrgID,
-			Name:    req.PluginContext.User.Name,
-			Login:   req.PluginContext.User.Login,
-			Email:   req.PluginContext.User.Email,
-			OrgRole: models.RoleType(req.PluginContext.User.Role),
-		}
-	}
+	scenarioQueries := map[string][]backend.DataQuery{}
 
 	for _, q := range req.Queries {
 		model, err := simplejson.NewJson(q.JSON)
@@ -70,39 +60,33 @@ func (p *testDataPlugin) handleFallbackScenario(ctx context.Context, req *backen
 			p.logger.Error("Failed to unmarschal query model to JSON", "error", err)
 			continue
 		}
-		tsdbQuery.Queries = append(tsdbQuery.Queries, &tsdb.Query{
-			DataSource:    &models.DataSource{},
-			IntervalMs:    q.Interval.Milliseconds(),
-			MaxDataPoints: q.MaxDataPoints,
-			QueryType:     "",
-			RefId:         q.RefID,
-			Model:         model,
-		})
-	}
 
-	result := &tsdb.Response{}
-	result.Results = make(map[string]*tsdb.QueryResult)
+		scenarioID := model.Get("scenarioId").MustString(string(randomWalkQuery))
+		if _, exist := scenarioRegistryV2[scenarioID]; exist {
+			if _, ok := scenarioQueries[scenarioID]; !ok {
+				scenarioQueries[scenarioID] = []backend.DataQuery{}
+			}
 
-	for _, query := range tsdbQuery.Queries {
-		scenarioId := query.Model.Get("scenarioId").MustString("random_walk")
-		if scenario, exist := ScenarioRegistry[scenarioId]; exist {
-			result.Results[query.RefId] = scenario.Handler(query, tsdbQuery)
-			result.Results[query.RefId].RefId = query.RefId
+			scenarioQueries[scenarioID] = append(scenarioQueries[scenarioID], q)
 		} else {
-			p.logger.Error("Scenario not found", "scenarioId", scenarioId)
+			p.logger.Error("Scenario not found", "scenarioId", scenarioID)
 		}
 	}
 
-	for refID, r := range result.Results {
-		for _, series := range r.Series {
-			frame, err := tsdb.SeriesToFrame(series)
-			frame.RefID = refID
-			if err != nil {
-				return nil, err
+	for scenarioID, queries := range scenarioQueries {
+		if scenarioHandler, exist := scenarioRegistryV2[scenarioID]; exist {
+			sReq := &backend.QueryDataRequest{
+				PluginContext: req.PluginContext,
+				Headers:       req.Headers,
+				Queries:       queries,
 			}
-			respD := resp.Responses[refID]
-			respD.Frames = append(respD.Frames, frame)
-			resp.Responses[refID] = respD
+			if sResp, err := scenarioHandler(ctx, sReq); err != nil {
+				p.logger.Error("Failed to handle scenario", "scenarioId", scenarioID, "error", err)
+			} else {
+				for refID, dr := range sResp.Responses {
+					resp.Responses[refID] = dr
+				}
+			}
 		}
 	}
 
