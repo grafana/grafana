@@ -63,7 +63,7 @@ The following guidelines are specific to Grafana documentation. For the most par
 - Avoid using internal jargon or slang.
 - Do not use two spaces after a period; use one space after a sentence.
 - Remove any extra space characters at the end of a paragraph.
-- Aim for your sentences to be fewer than 25 words; break up long sentences into smaller complete phrases or change the format, such as using a list.
+- Aim for your sentences to be fewer than 25 words. Instead, use smaller complete phrases or change the format, such as using a list.
 - Aim for paragraphs to be three sentences or fewer. Make the text more concise, use more headings, or both.
 
 ### File naming conventions
