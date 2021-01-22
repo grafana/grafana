@@ -203,9 +203,9 @@ func generateConnectionString(datasource *models.DataSource, logger log.Logger) 
 		connStr += fmt.Sprintf(" port=%d", port)
 	}
 	if isTLSDisabled {
-		logger.Debug("Postgres TLS is disabled")
+		logger.Debug("Postgres TLS/SSL is disabled")
 	} else {
-		logger.Debug("Postgres TLS is enabled", "tlsMode", tlsMode)
+		logger.Debug("Postgres TLS/SSL is enabled", "tlsMode", tlsMode)
 
 		var tlsRootCert, tlsCert, tlsKey string
 		if tlsConfigurationMethod == "file-content" {

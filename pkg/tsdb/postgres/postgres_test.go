@@ -88,7 +88,7 @@ func TestGenerateConnectionString(t *testing.T) {
 			user:       "user",
 			password:   "password",
 			database:   "database",
-			jsonData:   `{"sslmode" : "disable"}`,
+			tlsMode:    "disable",
 			expConnStr: "user='user' password='password' host='host' dbname='database' sslmode='disable'",
 		},
 		{
