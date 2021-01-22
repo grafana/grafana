@@ -6,6 +6,7 @@ import { SelectableValue } from '@grafana/data';
 import { useExpandableLabel, SegmentProps } from '.';
 import { useAsyncFn } from 'react-use';
 import { AsyncState } from 'react-use/lib/useAsync';
+import { getStyles } from './styles';
 
 export interface SegmentAsyncProps<T> extends SegmentProps<T>, Omit<HTMLProps<HTMLDivElement>, 'value' | 'onChange'> {
   value?: T | SelectableValue<T>;
@@ -20,6 +21,7 @@ export function SegmentAsync<T>({
   Component,
   className,
   allowCustomValue,
+  disabled,
   placeholder,
   ...rest
 }: React.PropsWithChildren<SegmentAsyncProps<T>>) {
@@ -31,9 +33,18 @@ export function SegmentAsync<T>({
     return (
       <Label
         onClick={fetchOptions}
+        disabled={disabled}
         Component={
           Component || (
-            <a className={cx('gf-form-label', 'query-part', !value && placeholder && 'query-placeholder', className)}>
+            <a
+              className={cx(
+                'gf-form-label',
+                'query-part',
+                !value && placeholder && 'query-placeholder',
+                getStyles<T>({ disabled: disabled }).link,
+                className
+              )}
+            >
               {label || placeholder}
             </a>
           )
@@ -53,7 +64,7 @@ export function SegmentAsync<T>({
       onClickOutside={() => {
         setExpanded(false);
       }}
-      onChange={(item) => {
+      onChange={item => {
         setExpanded(false);
         onChange(item);
       }}
