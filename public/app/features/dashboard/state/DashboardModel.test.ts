@@ -684,4 +684,25 @@ describe('DashboardModel', () => {
       expect(legendsOn.length).toBe(0);
     });
   });
+
+  describe('canAddAnnotations', () => {
+    it.each`
+      canEdit  | canMakeEditable | expected
+      ${false} | ${false}        | ${false}
+      ${false} | ${true}         | ${true}
+      ${true}  | ${false}        | ${true}
+      ${true}  | ${true}         | ${true}
+    `(
+      'when called with canEdit:{$canEdit}, canMakeEditable:{$canMakeEditable} and expected:{$expected}',
+      ({ canEdit, canMakeEditable, expected }) => {
+        const dashboard = new DashboardModel({});
+        dashboard.meta.canEdit = canEdit;
+        dashboard.meta.canMakeEditable = canMakeEditable;
+
+        const result = dashboard.canAddAnnotations();
+
+        expect(result).toBe(expected);
+      }
+    );
+  });
 });
