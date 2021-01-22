@@ -87,12 +87,14 @@ function getSimpleFieldMatcher(f: Field): FieldMatcher {
   if (!f) {
     return () => false;
   }
-  return (field) => f === field;
+  // the field may change if sorted
+  return (field) => f === field || !!(f.state && f.state === field.state);
 }
 
 function getSimpleFieldNotMatcher(f: Field): FieldMatcher {
   if (!f) {
     return () => false;
   }
-  return (field) => f !== field;
+  const m = getSimpleFieldMatcher(f);
+  return (field) => !m(field, undefined as any, undefined as any);
 }
