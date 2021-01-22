@@ -1,6 +1,6 @@
 // Libraries
 import $ from 'jquery';
-import React, { MouseEvent, PureComponent } from 'react';
+import React, { MouseEvent, PureComponent, useCallback, useEffect, useRef, useState } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 
@@ -13,9 +13,10 @@ import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { DashNav } from '../components/DashNav';
 import { DashboardSettings } from '../components/DashboardSettings';
 import { PanelEditor } from '../components/PanelEditor/PanelEditor';
-import { Alert, Button, CustomScrollbar, HorizontalGroup, Spinner, VerticalGroup } from '@grafana/ui';
+import { Alert, Button, CustomScrollbar, HorizontalGroup, Portal, Spinner, useTheme, VerticalGroup } from '@grafana/ui';
 // Redux
 import { initDashboard } from '../state/initDashboard';
+import { closeQuickEdit } from '../state/reducers';
 import { notifyApp, updateLocation } from 'app/core/actions';
 // Types
 import {
@@ -33,6 +34,10 @@ import { SubMenu } from '../components/SubMenu/SubMenu';
 import { cleanUpDashboardAndVariables } from '../state/actions';
 import { cancelVariables } from '../../variables/state/actions';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
+import { PanelFieldOptions } from '../components/PanelEditor/OptionsPaneContent';
+import { FieldConfigSource } from '@grafana/data';
+import { css } from 'emotion';
+import { useClickAway } from 'react-use';
 
 export interface Props {
   urlUid?: string;
@@ -58,6 +63,8 @@ export interface Props {
   inspectTab?: InspectTab;
   isPanelEditorOpen?: boolean;
   cancelVariables: typeof cancelVariables;
+  quickEditPanelId?: string;
+  closeQuickEdit?: typeof closeQuickEdit;
 }
 
 export interface State {
@@ -280,6 +287,31 @@ export class DashboardPage extends PureComponent<Props, State> {
     return inspectPanel;
   }
 
+  renderQuickEdit() {
+    const { dashboard, quickEditPanelId, closeQuickEdit } = this.props;
+    if (!dashboard || !quickEditPanelId) {
+      return null;
+    }
+
+    const quickEditPanel = dashboard.getPanelById(parseInt(quickEditPanelId, 10));
+
+    if (!quickEditPanel) {
+      return null;
+    }
+
+    return (
+      <QuickPanelEdit
+        panel={quickEditPanel}
+        dashboard={dashboard}
+        onClose={() => {
+          if (closeQuickEdit) {
+            closeQuickEdit();
+          }
+        }}
+      />
+    );
+  }
+
   render() {
     const {
       dashboard,
@@ -290,6 +322,8 @@ export class DashboardPage extends PureComponent<Props, State> {
       inspectTab,
       isPanelEditorOpen,
       updateLocation,
+      quickEditPanelId,
+      closeQuickEdit,
     } = this.props;
 
     const { editPanel, viewPanel, scrollTop, updateScrollTop } = this.state;
@@ -338,6 +372,7 @@ export class DashboardPage extends PureComponent<Props, State> {
         {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} defaultTab={inspectTab} />}
         {editPanel && <PanelEditor dashboard={dashboard} sourcePanel={editPanel} />}
         {editview && <DashboardSettings dashboard={dashboard} updateLocation={updateLocation} editview={editview} />}
+        {quickEditPanelId && this.renderQuickEdit()}
       </div>
     );
   }
@@ -359,6 +394,7 @@ export const mapStateToProps = (state: StoreState) => ({
   dashboard: state.dashboard.getModel() as DashboardModel,
   inspectTab: state.location.query.inspectTab,
   isPanelEditorOpen: state.panelEditor.isOpen,
+  quickEditPanelId: state.dashboard.quickEditPanelId,
 });
 
 const mapDispatchToProps = {
@@ -367,6 +403,177 @@ const mapDispatchToProps = {
   notifyApp,
   updateLocation,
   cancelVariables,
+  closeQuickEdit,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DashboardPage));
+
+interface QuickPanelEditProps {
+  onClose: () => void;
+  panel: PanelModel;
+  dashboard: DashboardModel;
+}
+
+const QuickPanelEdit: React.FC<QuickPanelEditProps> = ({ panel, dashboard, onClose }) => {
+  const theme = useTheme();
+  const bbox = document.querySelector(`#panel-${panel.id}`)!.getBoundingClientRect();
+  const ref = useRef<HTMLDivElement>(null);
+
+  const [picking, setPicking] = useState(false);
+
+  useClickAway(ref, () => {
+    if (onClose && !picking) {
+      onClose();
+    }
+  });
+
+  const highlighted = css`
+    &:after {
+      content: '';
+      vertical-align: middle;
+      position: absolute;
+      text-align: center;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(214, 245, 77, 0.1);
+      cursor: pointer;
+      pointer-events: none;
+    }
+  `;
+  const highlightPanel = useCallback((e) => {
+    e.currentTarget.classList.add(highlighted);
+  }, []);
+
+  const deHighlightPanel = useCallback((e) => {
+    e.currentTarget.classList.remove(highlighted);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      const el = document.querySelectorAll('.panel-wrapper')!;
+      if (!el || el.length === 0) {
+        return;
+      }
+
+      el.forEach((e) => {
+        e.classList.remove(highlighted);
+      });
+    };
+  }, []);
+
+  useEffect(() => {
+    const el = document.querySelectorAll('.panel-wrapper')!;
+
+    if (!el || el.length === 0) {
+      return;
+    }
+
+    if (picking) {
+      el.forEach((e) => {
+        e.addEventListener('mouseenter', highlightPanel);
+        e.addEventListener('mouseleave', deHighlightPanel);
+        e.addEventListener('click', deHighlightPanel);
+      });
+    }
+
+    return () => {
+      el!.forEach((e) => {
+        e.removeEventListener('mouseenter', highlightPanel);
+        e.removeEventListener('mouseleave', deHighlightPanel);
+        e.removeEventListener('click', deHighlightPanel);
+      });
+    };
+  }, [picking]);
+
+  const pickSettings = useCallback(
+    (e) => {
+      e.stopPropagation();
+      if (dashboard.meta.focusPanelId === undefined) {
+        return;
+      }
+      const panelToPickFrom = dashboard.getPanelById(dashboard.meta.focusPanelId);
+      if (!panelToPickFrom) {
+        return;
+      }
+      panel.updateFieldConfig(panelToPickFrom.getFieldConfig());
+      setPicking(false);
+    },
+    [dashboard, setPicking, panel]
+  );
+
+  useEffect(() => {
+    if (picking) {
+      document.addEventListener('click', pickSettings);
+    }
+    return () => {
+      document.removeEventListener('click', pickSettings);
+    };
+  }, [picking]);
+
+  return (
+    <Portal>
+      <div
+        ref={ref}
+        className={css`
+          position: absolute;
+          top: ${bbox.y}px;
+          left: ${bbox.x + bbox.width + 10}px;
+          background: ${theme.colors.panelBg};
+          box-shadow: 5px 5px 20px -5px #000000;
+          width: 300px;
+          height: 500px;
+          padding-bottom: 40px;
+        `}
+      >
+        <CustomScrollbar>
+          <PanelFieldOptions
+            panel={panel}
+            plugin={panel.plugin}
+            onFieldConfigChange={(config: FieldConfigSource) => {
+              panel.updateFieldConfig({
+                ...config,
+              });
+            }}
+          />
+        </CustomScrollbar>
+        <div
+          className={css`
+            background: ${theme.colors.panelBorder};
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 40px;
+            width: 100%;
+          `}
+        >
+          <HorizontalGroup justify="flex-end" align={'center'} spacing={'md'}>
+            <Button
+              variant={'link'}
+              size={'sm'}
+              icon={'edit'}
+              onClick={() => {
+                alert('go to edit');
+              }}
+              disabled={picking}
+            >
+              Go to panel edit
+            </Button>
+            <Button
+              variant={'link'}
+              size={'sm'}
+              icon={'brush-alt'}
+              disabled={picking}
+              onClick={() => {
+                setPicking(!picking);
+              }}
+            >
+              Pick settings
+            </Button>
+          </HorizontalGroup>
+        </div>
+      </div>
+    </Portal>
+  );
+};

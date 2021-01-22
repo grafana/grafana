@@ -1,6 +1,6 @@
 import React, { CSSProperties, useCallback, useState } from 'react';
 import Transition from 'react-transition-group/Transition';
-import { FieldConfigSource, GrafanaTheme, PanelPlugin, SelectableValue } from '@grafana/data';
+import { FieldConfigSource, GrafanaTheme, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
 import { DashboardModel, PanelModel } from '../../state';
 import { CustomScrollbar, Icon, Input, Select, stylesFactory, Tab, TabContent, TabsBar, useTheme } from '@grafana/ui';
 import { OverrideFieldConfigEditor } from './OverrideFieldConfigEditor';
@@ -22,6 +22,43 @@ interface Props {
   onPanelConfigChange: (configKey: string, value: any) => void;
 }
 
+interface FieldOptionsEditoProps {
+  plugin: PanelPlugin;
+  panel: PanelModel;
+  onFieldConfigChange: (c: FieldConfigSource) => void;
+}
+
+export const PanelFieldOptions: React.FC<FieldOptionsEditoProps> = ({ panel, plugin, onFieldConfigChange }) => {
+  const { data, hasSeries } = usePanelLatestData(panel, { withTransforms: true, withFieldConfig: false });
+  const fieldConfig = panel.getFieldConfig();
+  if (!fieldConfig || !hasSeries) {
+    return null;
+  }
+
+  return (
+    <DefaultFieldConfigEditor config={fieldConfig} plugin={plugin} onChange={onFieldConfigChange} data={data!.series} />
+  );
+};
+
+const PanelFieldOverridesOptions: React.FC<FieldOptionsEditoProps> = ({ panel, plugin, onFieldConfigChange }) => {
+  const { data, hasSeries } = usePanelLatestData(panel, { withTransforms: true, withFieldConfig: false });
+  const fieldConfig = panel.getFieldConfig();
+
+  if (!fieldConfig || !hasSeries) {
+    return null;
+  }
+
+  return (
+    <OverrideFieldConfigEditor
+      config={fieldConfig}
+      plugin={plugin}
+      onChange={onFieldConfigChange}
+      /* hasSeries makes sure current data is there */
+      data={data!.series}
+    />
+  );
+};
+
 export const OptionsPaneContent: React.FC<Props> = ({
   plugin,
   panel,
@@ -37,48 +74,6 @@ export const OptionsPaneContent: React.FC<Props> = ({
   const [activeTab, setActiveTab] = useState('options');
   const [isSearching, setSearchMode] = useState(false);
   const { data, hasSeries } = usePanelLatestData(panel, { withTransforms: true, withFieldConfig: false });
-
-  const renderFieldOptions = useCallback(
-    (plugin: PanelPlugin) => {
-      const fieldConfig = panel.getFieldConfig();
-
-      if (!fieldConfig || !hasSeries) {
-        return null;
-      }
-
-      return (
-        <DefaultFieldConfigEditor
-          config={fieldConfig}
-          plugin={plugin}
-          onChange={onFieldConfigsChange}
-          /* hasSeries makes sure current data is there */
-          data={data!.series}
-        />
-      );
-    },
-    [data, plugin, panel, onFieldConfigsChange]
-  );
-
-  const renderFieldOverrideOptions = useCallback(
-    (plugin: PanelPlugin) => {
-      const fieldConfig = panel.getFieldConfig();
-
-      if (!fieldConfig || !hasSeries) {
-        return null;
-      }
-
-      return (
-        <OverrideFieldConfigEditor
-          config={fieldConfig}
-          plugin={plugin}
-          onChange={onFieldConfigsChange}
-          /* hasSeries makes sure current data is there */
-          data={data!.series}
-        />
-      );
-    },
-    [data, plugin, panel, onFieldConfigsChange]
-  );
 
   // When the panel has no query only show the main tab
   const showMainTab = activeTab === 'options' || plugin.meta.skipDataQuery;
@@ -113,8 +108,16 @@ export const OptionsPaneContent: React.FC<Props> = ({
                 />
               ) : (
                 <>
-                  {activeTab === 'defaults' && renderFieldOptions(plugin)}
-                  {activeTab === 'overrides' && renderFieldOverrideOptions(plugin)}
+                  {activeTab === 'defaults' && (
+                    <PanelFieldOptions onFieldConfigChange={onFieldConfigsChange} panel={panel} plugin={plugin} />
+                  )}
+                  {activeTab === 'overrides' && (
+                    <PanelFieldOverridesOptions
+                      onFieldConfigChange={onFieldConfigsChange}
+                      panel={panel}
+                      plugin={plugin}
+                    />
+                  )}
                 </>
               )}
             </CustomScrollbar>
