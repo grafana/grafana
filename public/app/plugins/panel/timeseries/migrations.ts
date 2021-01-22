@@ -12,9 +12,9 @@ import {
 } from '@grafana/data';
 import { GraphFieldConfig, LegendDisplayMode } from '@grafana/ui';
 import {
+  GraphGradientMode,
   AxisPlacement,
   DrawStyle,
-  FillGradientMode,
   LineInterpolation,
   LineStyle,
   PointVisibility,
@@ -231,6 +231,10 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
 
   if (angular.points) {
     graph.showPoints = PointVisibility.Always;
+
+    if (isNumber(angular.pointradius)) {
+      graph.pointSize = 2 + angular.pointradius * 2;
+    }
   } else if (graph.drawStyle !== DrawStyle.Points) {
     graph.showPoints = PointVisibility.Never;
   }
@@ -240,10 +244,6 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
     graph.lineStyle = dash;
   }
 
-  if (isNumber(angular.pointradius)) {
-    graph.pointSize = 2 + angular.pointradius * 2;
-  }
-
   if (hasFillBelowTo) {
     graph.fillOpacity = 35; // bands are hardcoded in flot
   } else if (isNumber(angular.fill)) {
@@ -251,7 +251,7 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
   }
 
   if (isNumber(angular.fillGradient) && angular.fillGradient > 0) {
-    graph.fillGradient = FillGradientMode.Opacity;
+    graph.gradientMode = GraphGradientMode.Opacity;
     graph.fillOpacity = angular.fillGradient * 10; // fill is 0-10
   }
 

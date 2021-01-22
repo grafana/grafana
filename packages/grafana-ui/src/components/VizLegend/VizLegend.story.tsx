@@ -44,7 +44,7 @@ const LegendStoryDemo: FC<LegendStoryDemoProps> = ({ displayMode, seriesCount, n
 
   const onSeriesColorChange = (label: string, color: string) => {
     setItems(
-      items.map(item => {
+      items.map((item) => {
         if (item.label === label) {
           return {
             ...item,
@@ -59,7 +59,7 @@ const LegendStoryDemo: FC<LegendStoryDemoProps> = ({ displayMode, seriesCount, n
 
   const onLabelClick = (clickItem: VizLegendItem) => {
     setItems(
-      items.map(item => {
+      items.map((item) => {
         if (item !== clickItem) {
           return {
             ...item,
@@ -169,7 +169,7 @@ function generateLegendItems(
   statsToDisplay?: DisplayValue[]
 ): VizLegendItem[] {
   const alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('');
-  const colors = ['green', 'blue', 'red', 'purple', 'orange', 'dark-green', 'yellow', 'light-blue'].map(c =>
+  const colors = ['green', 'blue', 'red', 'purple', 'orange', 'dark-green', 'yellow', 'light-blue'].map((c) =>
     getColorForTheme(c, theme)
   );
 

@@ -81,7 +81,7 @@ export class PluginSettings extends PureComponent<Props> {
     }
 
     return (
-      <div ref={element => (this.element = element)}>
+      <div ref={(element) => (this.element = element)}>
         {plugin.components.ConfigEditor &&
           React.createElement(plugin.components.ConfigEditor, {
             options: dataSource,

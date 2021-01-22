@@ -69,7 +69,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     const tokens = Prism.tokenize(query, grammar) ?? [];
 
     return !!tokens.find(
-      token =>
+      (token) =>
         typeof token !== 'string' &&
         token.content.toString().toLowerCase() === 'stats' &&
         token.type === 'query-command'
@@ -147,12 +147,12 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     }
 
     const results = await Promise.all(
-      logGroups.map(logGroup => this.datasource.getLogGroupFields({ logGroupName: logGroup }))
+      logGroups.map((logGroup) => this.datasource.getLogGroupFields({ logGroupName: logGroup }))
     );
 
     const fields = [
       ...new Set<string>(
-        results.reduce((acc: string[], cur) => acc.concat(cur.logGroupFields?.map(f => f.name) as string[]), [])
+        results.reduce((acc: string[], cur) => acc.concat(cur.logGroupFields?.map((f) => f.name) as string[]), [])
       ).values(),
     ];
 
@@ -216,7 +216,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     if (queryCommand === 'stats') {
       const typeaheadOutput = this.getStatsAggCompletionItems();
       if (currentTokenIsComma || currentTokenIsAfterCommandAndEmpty) {
-        typeaheadOutput?.suggestions.forEach(group => {
+        typeaheadOutput?.suggestions.forEach((group) => {
           group.skipFilter = true;
         });
       }
@@ -310,7 +310,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
       suggestions: [
         {
           label: 'Fields',
-          items: fields.map(field => ({
+          items: fields.map((field) => ({
             label: field,
             insertText: field.match(/@?[_a-zA-Z]+[_.0-9a-zA-Z]*/) ? undefined : `\`${field}\``,
           })),
@@ -385,7 +385,7 @@ const funcsWithFieldArgs = [
   'isIpInSubnet',
   'isIpv4InSubnet',
   'isIpv6InSubnet',
-].map(funcName => funcName.toLowerCase());
+].map((funcName) => funcName.toLowerCase());
 
 /**
  * Returns true if cursor is currently inside a function parenthesis for example `count(|)` or `count(@mess|)` should

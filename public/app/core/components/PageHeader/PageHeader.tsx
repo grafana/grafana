@@ -13,7 +13,7 @@ const SelectNav = ({ children, customCss }: { children: NavModelItem[]; customCs
     return null;
   }
 
-  const defaultSelectedItem = children.find(navItem => {
+  const defaultSelectedItem = children.find((navItem) => {
     return navItem.active === true;
   });
 

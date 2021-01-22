@@ -168,11 +168,7 @@ export function SuggestionsPlugin({
         // If new-lines, apply suggestion as block
         if (suggestionText.match(/\n/)) {
           const fragment = makeFragment(suggestionText);
-          return editor
-            .deleteBackward(backward)
-            .deleteForward(forward)
-            .insertFragment(fragment)
-            .focus();
+          return editor.deleteBackward(backward).deleteForward(forward).insertFragment(fragment).focus();
         }
 
         state = {
@@ -234,7 +230,7 @@ const handleTypeahead = async (
   const filteredDecorations = decorations
     ? decorations
         .filter(
-          decoration =>
+          (decoration) =>
             decoration!.start.offset <= selectionStartOffset &&
             decoration!.end.offset > selectionStartOffset &&
             decoration!.type === TOKEN_MARK
@@ -247,7 +243,7 @@ const handleTypeahead = async (
     decorations &&
     decorations
       .filter(
-        decoration =>
+        (decoration) =>
           decoration!.end.offset <= selectionStartOffset &&
           decoration!.type === TOKEN_MARK &&
           decoration!.data.get('className').includes('label-key')
@@ -257,10 +253,10 @@ const handleTypeahead = async (
   const labelKey = labelKeyDec && value.focusText.text.slice(labelKeyDec.start.offset, labelKeyDec.end.offset);
 
   const wrapperClasses = filteredDecorations
-    .map(decoration => decoration.data.get('className'))
+    .map((decoration) => decoration.data.get('className'))
     .join(' ')
     .split(' ')
-    .filter(className => className.length);
+    .filter((className) => className.length);
 
   let text = value.focusText.text;
   let prefix = text.slice(0, selection.focus.offset);
@@ -289,7 +285,7 @@ const handleTypeahead = async (
   });
 
   const filteredSuggestions = suggestions
-    .map(group => {
+    .map((group) => {
       if (!group.items) {
         return group;
       }
@@ -298,16 +294,18 @@ const handleTypeahead = async (
       if (prefix) {
         // Filter groups based on prefix
         if (!group.skipFilter) {
-          newGroup.items = newGroup.items.filter(c => (c.filterText || c.label).length >= prefix.length);
+          newGroup.items = newGroup.items.filter((c) => (c.filterText || c.label).length >= prefix.length);
           if (group.prefixMatch) {
-            newGroup.items = newGroup.items.filter(c => (c.filterText || c.label).startsWith(prefix));
+            newGroup.items = newGroup.items.filter((c) => (c.filterText || c.label).startsWith(prefix));
           } else {
-            newGroup.items = newGroup.items.filter(c => (c.filterText || c.label).includes(prefix));
+            newGroup.items = newGroup.items.filter((c) => (c.filterText || c.label).includes(prefix));
           }
         }
 
         // Filter out the already typed value (prefix) unless it inserts custom text not matching the prefix
-        newGroup.items = newGroup.items.filter(c => !(c.insertText === prefix || (c.filterText ?? c.label) === prefix));
+        newGroup.items = newGroup.items.filter(
+          (c) => !(c.insertText === prefix || (c.filterText ?? c.label) === prefix)
+        );
       }
 
       if (!group.skipSort) {
@@ -316,7 +314,7 @@ const handleTypeahead = async (
 
       return newGroup;
     })
-    .filter(gr => gr.items && gr.items.length); // Filter out empty groups
+    .filter((gr) => gr.items && gr.items.length); // Filter out empty groups
 
   onStateChange({
     groupedItems: filteredSuggestions,

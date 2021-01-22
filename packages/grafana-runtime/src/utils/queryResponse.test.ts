@@ -45,7 +45,7 @@ describe('Query Response parser', () => {
       expect(frame.refId).toEqual('GC');
     }
 
-    const norm = frames.map(f => toDataFrameDTO(f));
+    const norm = frames.map((f) => toDataFrameDTO(f));
     expect(norm).toMatchInlineSnapshot(`
       Array [
         Object {
@@ -132,7 +132,7 @@ describe('Query Response parser', () => {
       }
     `);
 
-    const norm = res.data.map(f => toDataFrameDTO(f));
+    const norm = res.data.map((f) => toDataFrameDTO(f));
     expect(norm).toMatchInlineSnapshot(`
       Array [
         Object {

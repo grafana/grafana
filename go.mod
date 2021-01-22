@@ -23,7 +23,7 @@ require (
 	github.com/cortexproject/cortex v1.4.1-0.20201022071705-85942c5703cf
 	github.com/crewjam/saml v0.4.6-0.20201227203850-bca570abb2ce
 	github.com/davecgh/go-spew v1.1.1
-	github.com/denisenkom/go-mssqldb v0.0.0-20200620013148-b91950f658ec
+	github.com/denisenkom/go-mssqldb v0.0.0-20200910202707-1e08a3fab204
 	github.com/facebookgo/ensure v0.0.0-20160127193407-b4ab57deab51 // indirect
 	github.com/facebookgo/inject v0.0.0-20180706035515-f23751cae28b
 	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
@@ -90,7 +90,7 @@ require (
 	google.golang.org/api v0.33.0
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20201022181438-0ff5f38871d5 // indirect
-	google.golang.org/grpc v1.33.1
+	google.golang.org/grpc v1.35.0
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d // indirect
 	gopkg.in/ini.v1 v1.57.0

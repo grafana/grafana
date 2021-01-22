@@ -1,4 +1,4 @@
-module.exports = function() {
+module.exports = function () {
   'use strict';
   return {
     options: {

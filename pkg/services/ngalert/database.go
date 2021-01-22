@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
@@ -26,12 +27,7 @@ func getAlertDefinitionByUID(sess *sqlstore.DBSession, alertDefinitionUID string
 // It returns models.ErrAlertDefinitionNotFound if no alert definition is found for the provided ID.
 func (ng *AlertNG) deleteAlertDefinitionByUID(cmd *deleteAlertDefinitionByUIDCommand) error {
 	return ng.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		res, err := sess.Exec("DELETE FROM alert_definition WHERE uid = ? AND org_id = ?", cmd.UID, cmd.OrgID)
-		if err != nil {
-			return err
-		}
-
-		_, err = res.RowsAffected()
+		_, err := sess.Exec("DELETE FROM alert_definition WHERE uid = ? AND org_id = ?", cmd.UID, cmd.OrgID)
 		if err != nil {
 			return err
 		}
@@ -41,6 +37,10 @@ func (ng *AlertNG) deleteAlertDefinitionByUID(cmd *deleteAlertDefinitionByUIDCom
 			return err
 		}
 
+		_, err = sess.Exec("DELETE FROM alert_instance WHERE def_org_id = ? AND def_uid = ?", cmd.OrgID, cmd.UID)
+		if err != nil {
+			return err
+		}
 		return nil
 	})
 }
@@ -92,6 +92,9 @@ func (ng *AlertNG) saveAlertDefinition(cmd *saveAlertDefinitionCommand) error {
 		}
 
 		if _, err := sess.Insert(alertDefinition); err != nil {
+			if ng.SQLStore.Dialect.IsUniqueConstraintViolation(err) && strings.Contains(err.Error(), "title") {
+				return fmt.Errorf("an alert definition with the title '%s' already exists: %w", cmd.Title, err)
+			}
 			return err
 		}
 
@@ -166,6 +169,9 @@ func (ng *AlertNG) updateAlertDefinition(cmd *updateAlertDefinitionCommand) erro
 
 		_, err = sess.ID(existingAlertDefinition.ID).Update(alertDefinition)
 		if err != nil {
+			if ng.SQLStore.Dialect.IsUniqueConstraintViolation(err) && strings.Contains(err.Error(), "title") {
+				return fmt.Errorf("an alert definition with the title '%s' already exists: %w", cmd.Title, err)
+			}
 			return err
 		}
 

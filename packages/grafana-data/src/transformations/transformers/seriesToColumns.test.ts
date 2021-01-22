@@ -41,62 +41,64 @@ describe('SeriesToColumns Transformer', () => {
       },
     };
 
-    await expect(transformDataFrame([cfg], [everySecondSeries, everyOtherSecondSeries])).toEmitValuesWith(received => {
-      const data = received[0];
-      const filtered = data[0];
-      expect(filtered.fields).toEqual([
-        {
-          name: 'time',
-          state: {
-            displayName: 'time',
+    await expect(transformDataFrame([cfg], [everySecondSeries, everyOtherSecondSeries])).toEmitValuesWith(
+      (received) => {
+        const data = received[0];
+        const filtered = data[0];
+        expect(filtered.fields).toEqual([
+          {
+            name: 'time',
+            state: {
+              displayName: 'time',
+            },
+            type: FieldType.time,
+            values: new ArrayVector([1000, 3000, 4000, 5000, 6000, 7000]),
+            config: {},
+            labels: undefined,
           },
-          type: FieldType.time,
-          values: new ArrayVector([1000, 3000, 4000, 5000, 6000, 7000]),
-          config: {},
-          labels: undefined,
-        },
-        {
-          name: 'temperature',
-          state: {
-            displayName: 'temperature even',
+          {
+            name: 'temperature',
+            state: {
+              displayName: 'temperature even',
+            },
+            type: FieldType.number,
+            values: new ArrayVector([null, 10.3, 10.4, 10.5, 10.6, null]),
+            config: {},
+            labels: { name: 'even' },
           },
-          type: FieldType.number,
-          values: new ArrayVector([null, 10.3, 10.4, 10.5, 10.6, null]),
-          config: {},
-          labels: { name: 'even' },
-        },
-        {
-          name: 'humidity',
-          state: {
-            displayName: 'humidity even',
+          {
+            name: 'humidity',
+            state: {
+              displayName: 'humidity even',
+            },
+            type: FieldType.number,
+            values: new ArrayVector([null, 10000.3, 10000.4, 10000.5, 10000.6, null]),
+            config: {},
+            labels: { name: 'even' },
           },
-          type: FieldType.number,
-          values: new ArrayVector([null, 10000.3, 10000.4, 10000.5, 10000.6, null]),
-          config: {},
-          labels: { name: 'even' },
-        },
-        {
-          name: 'temperature',
-          state: {
-            displayName: 'temperature odd',
+          {
+            name: 'temperature',
+            state: {
+              displayName: 'temperature odd',
+            },
+            type: FieldType.number,
+            values: new ArrayVector([11.1, 11.3, null, 11.5, null, 11.7]),
+            config: {},
+            labels: { name: 'odd' },
           },
-          type: FieldType.number,
-          values: new ArrayVector([11.1, 11.3, null, 11.5, null, 11.7]),
-          config: {},
-          labels: { name: 'odd' },
-        },
-        {
-          name: 'humidity',
-          state: {
-            displayName: 'humidity odd',
+          {
+            name: 'humidity',
+            state: {
+              displayName: 'humidity odd',
+            },
+            type: FieldType.number,
+            values: new ArrayVector([11000.1, 11000.3, null, 11000.5, null, 11000.7]),
+            config: {},
+            labels: { name: 'odd' },
           },
-          type: FieldType.number,
-          values: new ArrayVector([11000.1, 11000.3, null, 11000.5, null, 11000.7]),
-          config: {},
-          labels: { name: 'odd' },
-        },
-      ]);
-    });
+        ]);
+      }
+    );
   });
 
   it('joins by temperature field', async () => {
@@ -107,62 +109,64 @@ describe('SeriesToColumns Transformer', () => {
       },
     };
 
-    await expect(transformDataFrame([cfg], [everySecondSeries, everyOtherSecondSeries])).toEmitValuesWith(received => {
-      const data = received[0];
-      const filtered = data[0];
-      expect(filtered.fields).toEqual([
-        {
-          name: 'temperature',
-          state: {
-            displayName: 'temperature',
+    await expect(transformDataFrame([cfg], [everySecondSeries, everyOtherSecondSeries])).toEmitValuesWith(
+      (received) => {
+        const data = received[0];
+        const filtered = data[0];
+        expect(filtered.fields).toEqual([
+          {
+            name: 'temperature',
+            state: {
+              displayName: 'temperature',
+            },
+            type: FieldType.number,
+            values: new ArrayVector([10.3, 10.4, 10.5, 10.6, 11.1, 11.3, 11.5, 11.7]),
+            config: {},
+            labels: undefined,
           },
-          type: FieldType.number,
-          values: new ArrayVector([10.3, 10.4, 10.5, 10.6, 11.1, 11.3, 11.5, 11.7]),
-          config: {},
-          labels: undefined,
-        },
-        {
-          name: 'time',
-          state: {
-            displayName: 'time even',
+          {
+            name: 'time',
+            state: {
+              displayName: 'time even',
+            },
+            type: FieldType.time,
+            values: new ArrayVector([3000, 4000, 5000, 6000, null, null, null, null]),
+            config: {},
+            labels: { name: 'even' },
           },
-          type: FieldType.time,
-          values: new ArrayVector([3000, 4000, 5000, 6000, null, null, null, null]),
-          config: {},
-          labels: { name: 'even' },
-        },
-        {
-          name: 'humidity',
-          state: {
-            displayName: 'humidity even',
+          {
+            name: 'humidity',
+            state: {
+              displayName: 'humidity even',
+            },
+            type: FieldType.number,
+            values: new ArrayVector([10000.3, 10000.4, 10000.5, 10000.6, null, null, null, null]),
+            config: {},
+            labels: { name: 'even' },
           },
-          type: FieldType.number,
-          values: new ArrayVector([10000.3, 10000.4, 10000.5, 10000.6, null, null, null, null]),
-          config: {},
-          labels: { name: 'even' },
-        },
-        {
-          name: 'time',
-          state: {
-            displayName: 'time odd',
+          {
+            name: 'time',
+            state: {
+              displayName: 'time odd',
+            },
+            type: FieldType.time,
+            values: new ArrayVector([null, null, null, null, 1000, 3000, 5000, 7000]),
+            config: {},
+            labels: { name: 'odd' },
           },
-          type: FieldType.time,
-          values: new ArrayVector([null, null, null, null, 1000, 3000, 5000, 7000]),
-          config: {},
-          labels: { name: 'odd' },
-        },
-        {
-          name: 'humidity',
-          state: {
-            displayName: 'humidity odd',
+          {
+            name: 'humidity',
+            state: {
+              displayName: 'humidity odd',
+            },
+            type: FieldType.number,
+            values: new ArrayVector([null, null, null, null, 11000.1, 11000.3, 11000.5, 11000.7]),
+            config: {},
+            labels: { name: 'odd' },
           },
-          type: FieldType.number,
-          values: new ArrayVector([null, null, null, null, 11000.1, 11000.3, 11000.5, 11000.7]),
-          config: {},
-          labels: { name: 'odd' },
-        },
-      ]);
-    });
+        ]);
+      }
+    );
   });
 
   it('joins by time field in reverse order', async () => {
@@ -177,62 +181,64 @@ describe('SeriesToColumns Transformer', () => {
     everySecondSeries.fields[1].values = new ArrayVector(everySecondSeries.fields[1].values.toArray().reverse());
     everySecondSeries.fields[2].values = new ArrayVector(everySecondSeries.fields[2].values.toArray().reverse());
 
-    await expect(transformDataFrame([cfg], [everySecondSeries, everyOtherSecondSeries])).toEmitValuesWith(received => {
-      const data = received[0];
-      const filtered = data[0];
-      expect(filtered.fields).toEqual([
-        {
-          name: 'time',
-          state: {
-            displayName: 'time',
+    await expect(transformDataFrame([cfg], [everySecondSeries, everyOtherSecondSeries])).toEmitValuesWith(
+      (received) => {
+        const data = received[0];
+        const filtered = data[0];
+        expect(filtered.fields).toEqual([
+          {
+            name: 'time',
+            state: {
+              displayName: 'time',
+            },
+            type: FieldType.time,
+            values: new ArrayVector([1000, 3000, 4000, 5000, 6000, 7000]),
+            config: {},
+            labels: undefined,
           },
-          type: FieldType.time,
-          values: new ArrayVector([1000, 3000, 4000, 5000, 6000, 7000]),
-          config: {},
-          labels: undefined,
-        },
-        {
-          name: 'temperature',
-          state: {
-            displayName: 'temperature even',
+          {
+            name: 'temperature',
+            state: {
+              displayName: 'temperature even',
+            },
+            type: FieldType.number,
+            values: new ArrayVector([null, 10.3, 10.4, 10.5, 10.6, null]),
+            config: {},
+            labels: { name: 'even' },
           },
-          type: FieldType.number,
-          values: new ArrayVector([null, 10.3, 10.4, 10.5, 10.6, null]),
-          config: {},
-          labels: { name: 'even' },
-        },
-        {
-          name: 'humidity',
-          state: {
-            displayName: 'humidity even',
+          {
+            name: 'humidity',
+            state: {
+              displayName: 'humidity even',
+            },
+            type: FieldType.number,
+            values: new ArrayVector([null, 10000.3, 10000.4, 10000.5, 10000.6, null]),
+            config: {},
+            labels: { name: 'even' },
           },
-          type: FieldType.number,
-          values: new ArrayVector([null, 10000.3, 10000.4, 10000.5, 10000.6, null]),
-          config: {},
-          labels: { name: 'even' },
-        },
-        {
-          name: 'temperature',
-          state: {
-            displayName: 'temperature odd',
+          {
+            name: 'temperature',
+            state: {
+              displayName: 'temperature odd',
+            },
+            type: FieldType.number,
+            values: new ArrayVector([11.1, 11.3, null, 11.5, null, 11.7]),
+            config: {},
+            labels: { name: 'odd' },
           },
-          type: FieldType.number,
-          values: new ArrayVector([11.1, 11.3, null, 11.5, null, 11.7]),
-          config: {},
-          labels: { name: 'odd' },
-        },
-        {
-          name: 'humidity',
-          state: {
-            displayName: 'humidity odd',
+          {
+            name: 'humidity',
+            state: {
+              displayName: 'humidity odd',
+            },
+            type: FieldType.number,
+            values: new ArrayVector([11000.1, 11000.3, null, 11000.5, null, 11000.7]),
+            config: {},
+            labels: { name: 'odd' },
           },
-          type: FieldType.number,
-          values: new ArrayVector([11000.1, 11000.3, null, 11000.5, null, 11000.7]),
-          config: {},
-          labels: { name: 'odd' },
-        },
-      ]);
-    });
+        ]);
+      }
+    );
   });
 
   describe('Field names', () => {
@@ -261,7 +267,7 @@ describe('SeriesToColumns Transformer', () => {
       };
 
       await expect(transformDataFrame([cfg], [seriesWithSameFieldAndDataFrameName, seriesB])).toEmitValuesWith(
-        received => {
+        (received) => {
           const data = received[0];
           const filtered = data[0];
           const expected: Field[] = [
@@ -332,7 +338,7 @@ describe('SeriesToColumns Transformer', () => {
       ],
     });
 
-    await expect(transformDataFrame([cfg], [frame1, frame2, frame3])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [frame1, frame2, frame3])).toEmitValuesWith((received) => {
       const data = received[0];
       const filtered = data[0];
       expect(filtered.fields).toEqual([
@@ -385,7 +391,7 @@ describe('SeriesToColumns Transformer', () => {
       ],
     });
 
-    await expect(transformDataFrame([cfg], [frame1, frame2])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [frame1, frame2])).toEmitValuesWith((received) => {
       const data = received[0];
       const filtered = data[0];
       expect(filtered.fields).toEqual([

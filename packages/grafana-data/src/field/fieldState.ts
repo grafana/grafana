@@ -10,7 +10,7 @@ export function getFrameDisplayName(frame: DataFrame, index?: number) {
   }
 
   // Single field with tags
-  const valuesWithLabels = frame.fields.filter(f => f.labels !== undefined);
+  const valuesWithLabels = frame.fields.filter((f) => f.labels !== undefined);
   if (valuesWithLabels.length === 1) {
     return formatLabels(valuesWithLabels[0].labels!);
   }
@@ -18,8 +18,8 @@ export function getFrameDisplayName(frame: DataFrame, index?: number) {
   // list all the
   if (index === undefined) {
     return frame.fields
-      .filter(f => f.type !== FieldType.time)
-      .map(f => getFieldDisplayName(f, frame))
+      .filter((f) => f.type !== FieldType.time)
+      .map((f) => getFieldDisplayName(f, frame))
       .join(', ');
   }
 

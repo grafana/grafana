@@ -3,7 +3,7 @@ import { useAsyncDependency } from '../../utils/useAsyncDependency';
 import { ErrorWithStack, LoadingPlaceholder } from '..';
 import { CodeEditorProps } from './types';
 
-export const CodeEditor: React.FC<CodeEditorProps> = props => {
+export const CodeEditor: React.FC<CodeEditorProps> = (props) => {
   const { loading, error, dependency } = useAsyncDependency(
     import(/* webpackChunkName: "code-editor" */ './CodeEditor')
   );

@@ -12,21 +12,33 @@
 		<input type="text" class="gf-form-input" style="width: 352px" ng-model='ctrl.current.database' placeholder="database name" required></input>
 	</div>
 
-	<div class="gf-form-inline">
+	<div class="gf-form">
+		<label class="gf-form-label width-7">Authentication</label>
+		<div class="gf-form-select-wrapper max-width-15 gf-form-select-wrapper--has-help-icon">
+			<select class="gf-form-input" ng-model="ctrl.current.jsonData.authenticationType" ng-options="mode for mode in ['Windows Authentication', 'SQL Server Authentication']" ng-init="ctrl.current.jsonData.authenticationType" ng-change="ctrl.onAuthenticationTypeChange()"></select>
+			<info-popover mode="right-absolute">
+				<ul>
+					<li><i>SQL Server Authentication</i> This is the default mechanism to connect to MS SQL Server. Enter the SQL Server Authentication login or the Windows Authentication login in the DOMAIN\User format.</li>
+					<li><i>Windows Authentication</i> Windows Integrated Security - single sign on for users who are already logged onto Windows and have enabled this option for MS SQL Server.</li>
+				</ul>
+			</info-popover>
+		</div>
+	</div>
+	<div class="gf-form-inline" ng-show="ctrl.showUserCredentials">
 		<div class="gf-form max-width-15">
 			<span class="gf-form-label width-7">User</span>
 			<input type="text" class="gf-form-input" ng-model='ctrl.current.user' placeholder="user"></input>
 		</div>
-    <div class="gf-form">
-      <secret-form-field
-        isConfigured="ctrl.current.secureJsonFields.password"
-        value="ctrl.current.secureJsonData.password"
-        on-reset="ctrl.onPasswordReset"
-        on-change="ctrl.onPasswordChange"
-        labelWidth="7"
-        inputWidth="7"
-      />
-    </div>
+		<div class="gf-form">
+			<secret-form-field
+				isConfigured="ctrl.current.secureJsonFields.password"
+				value="ctrl.current.secureJsonData.password"
+				on-reset="ctrl.onPasswordReset"
+				on-change="ctrl.onPasswordChange"
+				labelWidth="7"
+				inputWidth="7"
+			/>
+		</div>
 	</div>
 
 	<div class="gf-form">

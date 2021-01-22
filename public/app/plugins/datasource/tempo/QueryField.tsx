@@ -19,7 +19,7 @@ export class TempoQueryField extends React.PureComponent<Props> {
               <input
                 style={{ width: '100%' }}
                 value={query.query || ''}
-                onChange={e =>
+                onChange={(e) =>
                   onChange({
                     ...query,
                     query: e.currentTarget.value,

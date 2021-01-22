@@ -173,7 +173,7 @@ export class TemplateSrv implements BaseTemplateSrv {
     if (!match) {
       return null;
     }
-    const variableName = match.slice(1).find(match => match !== undefined);
+    const variableName = match.slice(1).find((match) => match !== undefined);
     return variableName;
   }
 

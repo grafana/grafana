@@ -137,6 +137,7 @@ export class Sparkline extends PureComponent<Props, State> {
 
       builder.addSeries({
         scaleKey,
+        theme,
         fieldName: getFieldDisplayName(field, data),
         drawStyle: customConfig.drawStyle!,
         lineColor: customConfig.lineColor ?? seriesColor,
@@ -161,7 +162,6 @@ export class Sparkline extends PureComponent<Props, State> {
       <UPlotChart
         data={{
           frame: data,
-          isGap: () => true, // any null is a gap
           getDataFrameFieldIndex: () => undefined,
         }}
         config={configBuilder}
