@@ -3,6 +3,7 @@ import { SelectableValue } from '@grafana/data';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { ButtonSelect } from '../Forms/Legacy/Select/ButtonSelect';
 import { ButtonGroup, ButtonVariant, ToolbarButton } from '../Button';
+import { selectors } from '@grafana/e2e-selectors';
 
 // Default intervals used in the refresh picker component
 export const defaultIntervals = ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d'];
@@ -17,7 +18,6 @@ export interface Props {
   isLive?: boolean;
   text?: string;
   noIntervalPicker?: boolean;
-  'aria-label'?: string;
   width?: string;
   primary?: boolean;
 }
@@ -61,16 +61,7 @@ export class RefreshPicker extends PureComponent<Props> {
   }
 
   render() {
-    const {
-      onRefresh,
-      intervals,
-      tooltip,
-      value,
-      text,
-      isLoading,
-      noIntervalPicker,
-      'aria-label': ariaLabel,
-    } = this.props;
+    const { onRefresh, intervals, tooltip, value, text, isLoading, noIntervalPicker } = this.props;
 
     const options = this.intervalsToOptions(intervals);
     const currentValue = value || '';
@@ -88,9 +79,9 @@ export class RefreshPicker extends PureComponent<Props> {
           <Tooltip placement="bottom" content={tooltip!}>
             <ToolbarButton
               onClick={onRefresh}
-              aria-label={ariaLabel}
               variant={variant}
               icon={isLoading ? 'fa fa-spinner' : 'sync'}
+              aria-label={selectors.components.RefreshPicker.runButton}
             >
               {text}
             </ToolbarButton>

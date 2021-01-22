@@ -26,7 +26,7 @@ export const Basic: FC = () => {
       <UseState initialState={value}>
         {(value, updateValue) => {
           return (
-            <div style={{ marginLeft: '100px', position: 'relative', display: 'flex' }}>
+            <div style={{ marginLeft: '100px', position: 'relative', display: 'inline-block' }}>
               <ButtonSelect
                 value={value}
                 options={options}

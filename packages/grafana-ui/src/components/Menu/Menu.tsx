@@ -136,7 +136,13 @@ const MenuItemComponent: React.FC<MenuItemProps> = React.memo(
 
     return (
       <div className={itemStyle}>
-        <a href={url ? url : undefined} target={target} className={styles.link} onClick={onClick}>
+        <a
+          href={url ? url : undefined}
+          target={target}
+          className={styles.link}
+          onClick={onClick}
+          rel={target === '_blank' ? 'noopener noreferrer' : undefined}
+        >
           {icon && <Icon name={icon} className={styles.icon} />} {label}
         </a>
       </div>
@@ -180,7 +186,7 @@ const getMenuStyles = (theme: GrafanaTheme) => {
     `,
     item: css`
       background: none;
-      padding: 5px 10px;
+      padding: 5px 12px 5px 10px;
       border-left: 2px solid transparent;
       cursor: pointer;
       white-space: nowrap;

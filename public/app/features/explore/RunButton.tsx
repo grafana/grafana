@@ -1,10 +1,9 @@
 import React from 'react';
 import { RefreshPicker, defaultIntervals } from '@grafana/ui';
-import { selectors } from '@grafana/e2e-selectors';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 export type Props = {
-  small?: boolean;
+  isSmall?: boolean;
   loading: boolean;
   isLive: boolean;
   onRun: (loading: boolean) => void;
@@ -14,11 +13,15 @@ export type Props = {
 };
 
 export function RunButton(props: Props) {
-  const { small, loading, onRun, onChangeRefreshInterval, refreshInterval, showDropdown, isLive } = props;
+  const { isSmall, loading, onRun, onChangeRefreshInterval, refreshInterval, showDropdown, isLive } = props;
   const intervals = getTimeSrv().getValidIntervals(defaultIntervals);
   let text: string | undefined;
 
-  if (!isLive && !small) {
+  if (isLive) {
+    return null;
+  }
+
+  if (!isSmall) {
     text = loading ? 'Cancel' : 'Run query';
   }
 
@@ -33,8 +36,6 @@ export function RunButton(props: Props) {
       onRefresh={() => onRun(loading)}
       noIntervalPicker={!showDropdown}
       primary={true}
-      tooltip="Execute query"
-      aria-label={selectors.pages.Explore.General.runButton}
     />
   );
 }
