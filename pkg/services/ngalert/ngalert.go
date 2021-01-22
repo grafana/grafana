@@ -47,7 +47,8 @@ func (ng *AlertNG) Init() error {
 	ng.log = log.New("ngalert")
 
 	ng.registerAPIEndpoints()
-	ng.schedule = newScheduler(clock.New(), baseIntervalSeconds*time.Second, ng.log, nil)
+	schedCfg := schedulerCfg{c: clock.New(), baseInterval: baseIntervalSeconds * time.Second, logger: ng.log, evalApplied: nil, evaluator: eval.Evaluator{Cfg: ng.Cfg}}
+	ng.schedule = newScheduler(schedCfg)
 	return nil
 }
 
