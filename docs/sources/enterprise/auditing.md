@@ -25,7 +25,7 @@ Audit logs contain the following fields. The fields followed by **\*** are alway
 | Field name | Type | Description |
 | ---------- | ---- | ----------- |
 | `timestamp`\* | string | The date and time the request was made, in coordinated universal time (UTC) using the [RFC3339](https://tools.ietf.org/html/rfc3339#section-5.6) format. |
-| `user`\* | object | Information about the user that made the request. At least one of the `UserID` / `ApiKeyID` fields will not be empty if `isAnonymous=false`. |
+| `user`\* | object | Information about the user that made the request. Either one of the `UserID` or `ApiKeyID` fields will contain content if `isAnonymous=false`. |
 | `user.userId` | number | ID of the Grafana user that made the request. |
 | `user.orgId`\* | number | Current organization of the user that made the request. |
 | `user.orgRole` | string | Current role of the user that made the request. |
