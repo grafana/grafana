@@ -33,7 +33,7 @@
     "fuzzy": "^0.1.3",
     "hoist-non-react-statics": "^3.3.2",
     "json-markup": "^1.1.0",
-    "lodash": "^4.17.4",
+    "lodash": "4.17.20",
     "lru-memoize": "^1.1.0",
     "memoize-one": "^5.0.0",
     "moment": "^2.18.1",
