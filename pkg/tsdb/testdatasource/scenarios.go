@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/util/errutil"
 
 	"github.com/grafana/grafana/pkg/components/null"
@@ -752,65 +751,4 @@ func newSeriesForQuery(query *tsdb.Query, index int) *tsdb.TimeSeries {
 	}
 
 	return &tsdb.TimeSeries{Name: alias}
-}
-
-func fromStringOrNumber(val *simplejson.Json) (null.Float, error) {
-	switch v := val.Interface().(type) {
-	case json.Number:
-		fV, err := v.Float64()
-		if err != nil {
-			return null.Float{}, err
-		}
-		return null.FloatFrom(fV), nil
-	case string:
-		return null.FloatFromString(v, "null")
-	default:
-		return null.Float{}, fmt.Errorf("failed to extract value")
-	}
-}
-
-var serverNames = []string{
-	"Backend-ops-01",
-	"Backend-ops-02",
-	"Backend-ops-03",
-	"Backend-ops-04",
-	"Frontend-web-01",
-	"Frontend-web-02",
-	"Frontend-web-03",
-	"Frontend-web-04",
-	"MySQL-01",
-	"MySQL-02",
-	"MySQL-03",
-	"MySQL-04",
-	"Postgres-01",
-	"Postgres-02",
-	"Postgres-03",
-	"Postgres-04",
-	"DB-01",
-	"DB-02",
-	"SAN-01",
-	"SAN-02",
-	"SAN-02",
-	"SAN-04",
-	"Kaftka-01",
-	"Kaftka-02",
-	"Kaftka-03",
-	"Zookeeper-01",
-	"Zookeeper-02",
-	"Zookeeper-03",
-	"Zookeeper-04",
-}
-
-var houseLocations = []string{
-	"Cellar",
-	"Living room",
-	"Porch",
-	"Bedroom",
-	"Guest room",
-	"Kitchen",
-	"Playroom",
-	"Bathroom",
-	"Outside",
-	"Roof",
-	"Terrace",
 }
