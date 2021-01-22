@@ -18,28 +18,21 @@ import (
 )
 
 var (
-	transformQueryCounter   *prometheus.CounterVec
-	transformQueryHistogram *prometheus.HistogramVec
+	expressionsQueryHistogram *prometheus.HistogramVec
 )
 
 func init() {
-	transformQueryCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
+	expressionsQueryHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "grafana",
-		Name:      "transform_queries_total",
-		Help:      "The total number of transform queries",
-	}, []string{"status"})
-	prometheus.MustRegister(transformQueryCounter)
-
-	transformQueryHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Namespace: "grafana",
-		Name:      "transform_queries_duration_seconds",
-		Help:      "Transform query histogram",
-		Buckets:   prometheus.ExponentialBuckets(0.0001, 2, 24),
+		Name:      "expressions_queries_duration_seconds",
+		Help:      "Expressions query histogram",
+		Buckets:   prometheus.ExponentialBuckets(0.001, 4, 9),
 	}, []string{"status"})
 
-	prometheus.MustRegister(transformQueryHistogram)
+	prometheus.MustRegister(expressionsQueryHistogram)
 }
 
+// WrapTransformData creates and executes transform requests
 func (s *Service) WrapTransformData(ctx context.Context, query *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	sdkReq := &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
@@ -103,8 +96,7 @@ func (s *Service) TransformData(ctx context.Context, req *backend.QueryDataReque
 		default:
 			respStatus = "failure"
 		}
-		transformQueryCounter.WithLabelValues(respStatus).Inc()
-		transformQueryHistogram.WithLabelValues(respStatus).Observe(time.Since(start).Seconds())
+		expressionsQueryHistogram.WithLabelValues(respStatus).Observe(time.Since(start).Seconds())
 	}()
 
 	if s.isDisabled() {
