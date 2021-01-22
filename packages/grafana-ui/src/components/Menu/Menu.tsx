@@ -148,11 +148,11 @@ MenuItemComponent.displayName = 'MenuItemComponent';
 const getMenuStyles = (theme: GrafanaTheme) => {
   const linkColor = theme.colors.text;
   const linkColorHover = theme.colors.linkHover;
-  const wrapperBg = theme.colors.bg1;
+  const wrapperBg = theme.colors.formInputBg;
   const wrapperShadow = theme.isDark ? theme.palette.black : theme.palette.gray3;
   const groupLabelColor = theme.colors.textWeak;
   const itemBgHover = styleMixins.hoverColor(theme.colors.bg1, theme);
-  const headerBg = theme.colors.bg1;
+  const headerBg = theme.colors.formInputBg;
   const headerSeparator = theme.colors.border3;
 
   return {

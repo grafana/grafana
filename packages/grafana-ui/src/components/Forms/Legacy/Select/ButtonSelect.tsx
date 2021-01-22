@@ -89,6 +89,7 @@ const getStyles = (theme: GrafanaTheme) => {
     menuWrapper: css`
       position: absolute;
       top: ${theme.spacing.formButtonHeight + 2}px;
+      right: 0;
     `,
   };
 };
