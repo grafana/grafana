@@ -16,10 +16,10 @@ export type Props = {
 export function RunButton(props: Props) {
   const { small, loading, onRun, onChangeRefreshInterval, refreshInterval, showDropdown, isLive } = props;
   const intervals = getTimeSrv().getValidIntervals(defaultIntervals);
-  let text: string | undefined = loading ? 'Cancel' : 'Run query';
+  let text: string | undefined;
 
-  if (small) {
-    text = undefined;
+  if (!isLive && !small) {
+    text = loading ? 'Cancel' : 'Run query';
   }
 
   return (
@@ -32,6 +32,8 @@ export function RunButton(props: Props) {
       isLive={isLive}
       onRefresh={() => onRun(loading)}
       noIntervalPicker={!showDropdown}
+      primary={true}
+      tooltip="Execute query"
       aria-label={selectors.pages.Explore.General.runButton}
     />
   );

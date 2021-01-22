@@ -19,6 +19,7 @@ export interface Props {
   noIntervalPicker?: boolean;
   'aria-label'?: string;
   width?: string;
+  primary?: boolean;
 }
 
 export class RefreshPicker extends PureComponent<Props> {
@@ -53,7 +54,7 @@ export class RefreshPicker extends PureComponent<Props> {
     if (this.props.isLoading) {
       return 'destructive';
     }
-    if (this.props.text) {
+    if (this.props.primary) {
       return 'primary';
     }
     return undefined;
@@ -84,7 +85,7 @@ export class RefreshPicker extends PureComponent<Props> {
     return (
       <div className="refresh-picker">
         <ButtonGroup className="refresh-picker-buttons" noSpacing={true}>
-          <Tooltip placement="top" content={tooltip!}>
+          <Tooltip placement="bottom" content={tooltip!}>
             <ToolbarButton
               onClick={onRefresh}
               aria-label={ariaLabel}
