@@ -5,7 +5,7 @@ import { DataTransformerID } from './ids';
 import { MutableDataFrame } from '../../dataframe';
 import { ArrayVector } from '../../vector';
 import { getFieldDisplayName } from '../../field/fieldState';
-import { alignDataFrames } from './alignDataFrames';
+import { alignDataFrames } from './joinDataFrames';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 
@@ -26,11 +26,11 @@ export const seriesToColumnsTransformer: DataTransformerInfo<SeriesToColumnsOpti
     source.pipe(
       map((data) => {
         if (data.length > 1) {
-          let matcher: FieldMatcher | undefined = undefined;
+          let joinBy: FieldMatcher | undefined = undefined;
           if (options.byField) {
-            matcher = fieldMatchers.get(FieldMatcherID.byName).get(options.byField);
+            joinBy = fieldMatchers.get(FieldMatcherID.byName).get(options.byField);
           }
-          const joined = alignDataFrames(data, matcher);
+          const joined = alignDataFrames({ data, joinBy });
           if (joined) {
             return [joined];
           }
