@@ -29,7 +29,6 @@
     "lodash": "4.17.20",
     "marked": "1.2.2",
     "rxjs": "6.6.3",
-    "uplot": "1.6.3",
     "xss": "1.0.6"
   },
   "devDependencies": {
