@@ -33,6 +33,7 @@ func (p *testDataPlugin) registerScenarioQueryHandlers(mux *datasource.QueryType
 	mux.HandleFunc(string(predictablePulseQuery), p.handlePredictablePulseScenario)
 	mux.HandleFunc(string(datapointsOutsideRangeQuery), p.handleDatapointsOutsideRangeQueryScenario)
 	mux.HandleFunc(string(manualEntryQuery), p.handleManualEntryScenario)
+	mux.HandleFunc(string(csvMetricValuesQuery), p.handleCSVMetricValuesScenario)
 
 	mux.HandleFunc("", p.handleFallbackScenario)
 }
@@ -182,6 +183,61 @@ func (p *testDataPlugin) handleManualEntryScenario(ctx context.Context, req *bac
 				timeVec = append(timeVec, &time)
 				floatVec = append(floatVec, &value)
 			}
+		}
+
+		frame.Fields = data.Fields{
+			data.NewField("time", nil, timeVec),
+			data.NewField("value", nil, floatVec),
+		}
+
+		respD := resp.Responses[q.RefID]
+		respD.Frames = append(respD.Frames, frame)
+		resp.Responses[q.RefID] = respD
+	}
+
+	return resp, nil
+}
+
+func (p *testDataPlugin) handleCSVMetricValuesScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+
+	for _, q := range req.Queries {
+		model, err := simplejson.NewJson(q.JSON)
+		if err != nil {
+			continue
+		}
+
+		stringInput := model.Get("stringInput").MustString()
+		stringInput = strings.ReplaceAll(stringInput, " ", "")
+
+		var values []null.Float
+		for _, strVal := range strings.Split(stringInput, ",") {
+			if strVal == "null" {
+				values = append(values, null.FloatFromPtr(nil))
+			}
+			if val, err := strconv.ParseFloat(strVal, 64); err == nil {
+				values = append(values, null.FloatFrom(val))
+			}
+		}
+
+		if len(values) == 0 {
+			return resp, nil
+		}
+
+		frame := newSeriesForQueryV2(q, model, 0)
+		startTime := q.TimeRange.From.UnixNano() / int64(time.Millisecond)
+		endTime := q.TimeRange.To.UnixNano() / int64(time.Millisecond)
+		var step int64 = 0
+		if len(values) > 1 {
+			step = (endTime - startTime) / int64(len(values)-1)
+		}
+
+		timeVec := make([]*int64, 0)
+		floatVec := make([]*null.Float, 0)
+		for _, val := range values {
+			timeVec = append(timeVec, &startTime)
+			floatVec = append(floatVec, &val)
+			startTime += step
 		}
 
 		frame.Fields = data.Fields{
