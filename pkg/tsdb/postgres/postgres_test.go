@@ -850,7 +850,12 @@ func TestPostgres(t *testing.T) {
 		})
 
 		t.Run("When doing a query with timeFrom,timeTo,unixEpochFrom,unixEpochTo macros", func(t *testing.T) {
+			fakeInterpolate := sqleng.Interpolate
+			t.Cleanup(func() {
+				sqleng.Interpolate = fakeInterpolate
+			})
 			sqleng.Interpolate = origInterpolate
+
 			query := &tsdb.TsdbQuery{
 				TimeRange: tsdb.NewFakeTimeRange("5m", "now", fromStart),
 				Queries: []*tsdb.Query{

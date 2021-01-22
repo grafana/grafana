@@ -119,7 +119,7 @@ func writeConnectionFiles(ds *models.DataSource, logger log.Logger) error {
 	currentPath = filepath.Join(currentPath, ds.Uid+"generatedTLSCerts")
 	if _, err := os.Stat(currentPath); os.IsNotExist(err) {
 		mutex.Lock()
-		err = os.Mkdir(currentPath, 0600)
+		err = os.Mkdir(currentPath, 0700)
 		mutex.Unlock()
 		if err != nil {
 			return err
