@@ -21,35 +21,62 @@ describe('alignDataFrames', () => {
 
       const aligned = alignDataFrames(data);
 
-      expect(aligned?.fields).toEqual([
-        {
-          config: {},
-          state: {},
-          name: 'time',
-          type: FieldType.time,
-          values: new ArrayVector([1000, 2000, 3000, 4000]),
-        },
-        {
-          config: {},
-          state: {
-            displayName: 'temperature A',
-            seriesIndex: 0,
+      expect(aligned?.fields).toMatchInlineSnapshot(`
+        Array [
+          Object {
+            "config": Object {},
+            "name": "time",
+            "state": Object {
+              "index": undefined,
+            },
+            "type": "time",
+            "values": Array [
+              1000,
+              2000,
+              3000,
+              4000,
+            ],
           },
-          name: 'temperature A',
-          type: FieldType.number,
-          values: new ArrayVector([1, 3, 5, 7]),
-        },
-        {
-          config: {},
-          state: {
-            displayName: 'temperature B',
-            seriesIndex: 1,
+          Object {
+            "config": Object {},
+            "name": "temperature A",
+            "state": Object {
+              "displayName": "temperature A",
+              "index": Object {
+                "fieldIndex": 1,
+                "frameIndex": 0,
+              },
+              "seriesIndex": 0,
+            },
+            "type": "number",
+            "values": Array [
+              1,
+              3,
+              5,
+              7,
+            ],
           },
-          name: 'temperature B',
-          type: FieldType.number,
-          values: new ArrayVector([0, 2, 6, 7]),
-        },
-      ]);
+          Object {
+            "config": Object {},
+            "name": "temperature B",
+            "state": Object {
+              "displayName": "temperature B",
+              "index": Object {
+                "fieldIndex": 1,
+                "frameIndex": 1,
+              },
+              "seriesIndex": 1,
+            },
+            "type": "number",
+            "values": Array [
+              0,
+              2,
+              6,
+              7,
+            ],
+          },
+        ]
+      `);
     });
 
     it('should align multiple data frames into one data frame but only keep first time field', () => {
@@ -70,35 +97,62 @@ describe('alignDataFrames', () => {
 
       const aligned = alignDataFrames(data);
 
-      expect(aligned?.fields).toEqual([
-        {
-          config: {},
-          state: {},
-          name: 'time',
-          type: FieldType.time,
-          values: new ArrayVector([1000, 2000, 3000, 4000]),
-        },
-        {
-          config: {},
-          state: {
-            displayName: 'temperature',
-            seriesIndex: 0,
+      expect(aligned?.fields).toMatchInlineSnapshot(`
+        Array [
+          Object {
+            "config": Object {},
+            "name": "time",
+            "state": Object {
+              "index": undefined,
+            },
+            "type": "time",
+            "values": Array [
+              1000,
+              2000,
+              3000,
+              4000,
+            ],
           },
-          name: 'temperature',
-          type: FieldType.number,
-          values: new ArrayVector([1, 3, 5, 7]),
-        },
-        {
-          config: {},
-          state: {
-            displayName: 'temperature B',
-            seriesIndex: 1,
+          Object {
+            "config": Object {},
+            "name": "temperature",
+            "state": Object {
+              "displayName": "temperature",
+              "index": Object {
+                "fieldIndex": 1,
+                "frameIndex": 0,
+              },
+              "seriesIndex": 0,
+            },
+            "type": "number",
+            "values": Array [
+              1,
+              3,
+              5,
+              7,
+            ],
           },
-          name: 'temperature B',
-          type: FieldType.number,
-          values: new ArrayVector([0, 2, 6, 7]),
-        },
-      ]);
+          Object {
+            "config": Object {},
+            "name": "temperature B",
+            "state": Object {
+              "displayName": "temperature B",
+              "index": Object {
+                "fieldIndex": 1,
+                "frameIndex": 1,
+              },
+              "seriesIndex": 1,
+            },
+            "type": "number",
+            "values": Array [
+              0,
+              2,
+              6,
+              7,
+            ],
+          },
+        ]
+      `);
     });
 
     it('should align multiple data frames into one data frame and skip non-numeric fields', () => {
@@ -114,25 +168,43 @@ describe('alignDataFrames', () => {
 
       const aligned = alignDataFrames(data);
 
-      expect(aligned?.fields).toEqual([
-        {
-          config: {},
-          state: {},
-          name: 'time',
-          type: FieldType.time,
-          values: new ArrayVector([1000, 2000, 3000, 4000]),
-        },
-        {
-          config: {},
-          state: {
-            displayName: 'temperature',
-            seriesIndex: 0,
+      expect(aligned?.fields).toMatchInlineSnapshot(`
+        Array [
+          Object {
+            "config": Object {},
+            "name": "time",
+            "state": Object {
+              "index": undefined,
+            },
+            "type": "time",
+            "values": Array [
+              1000,
+              2000,
+              3000,
+              4000,
+            ],
           },
-          name: 'temperature',
-          type: FieldType.number,
-          values: new ArrayVector([1, 3, 5, 7]),
-        },
-      ]);
+          Object {
+            "config": Object {},
+            "name": "temperature",
+            "state": Object {
+              "displayName": "temperature",
+              "index": Object {
+                "fieldIndex": 1,
+                "frameIndex": 0,
+              },
+              "seriesIndex": 0,
+            },
+            "type": "number",
+            "values": Array [
+              1,
+              3,
+              5,
+              7,
+            ],
+          },
+        ]
+      `);
     });
 
     it('should align multiple data frames into one data frame and skip non-numeric fields', () => {
@@ -148,25 +220,43 @@ describe('alignDataFrames', () => {
 
       const aligned = alignDataFrames(data);
 
-      expect(aligned?.fields).toEqual([
-        {
-          config: {},
-          state: {},
-          name: 'time',
-          type: FieldType.time,
-          values: new ArrayVector([1000, 2000, 3000, 4000]),
-        },
-        {
-          config: {},
-          state: {
-            displayName: 'temperature',
-            seriesIndex: 0,
+      expect(aligned?.fields).toMatchInlineSnapshot(`
+        Array [
+          Object {
+            "config": Object {},
+            "name": "time",
+            "state": Object {
+              "index": undefined,
+            },
+            "type": "time",
+            "values": Array [
+              1000,
+              2000,
+              3000,
+              4000,
+            ],
           },
-          name: 'temperature',
-          type: FieldType.number,
-          values: new ArrayVector([1, 3, 5, 7]),
-        },
-      ]);
+          Object {
+            "config": Object {},
+            "name": "temperature",
+            "state": Object {
+              "displayName": "temperature",
+              "index": Object {
+                "fieldIndex": 1,
+                "frameIndex": 0,
+              },
+              "seriesIndex": 0,
+            },
+            "type": "number",
+            "values": Array [
+              1,
+              3,
+              5,
+              7,
+            ],
+          },
+        ]
+      `);
     });
   });
 
