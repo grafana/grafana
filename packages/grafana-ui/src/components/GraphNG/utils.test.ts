@@ -1,5 +1,5 @@
 import { ArrayVector, DataFrame, FieldType, toDataFrame } from '@grafana/data';
-import { alignDataFrames, isLikelyAscendingVector } from './utils';
+import { joinDataFrames, isLikelyAscendingVector } from './utils';
 
 describe('alignDataFrames', () => {
   describe('aligned frame', () => {
@@ -19,9 +19,9 @@ describe('alignDataFrames', () => {
         }),
       ];
 
-      const aligned = alignDataFrames(data);
+      const joined = joinDataFrames(data);
 
-      expect(aligned?.fields).toMatchInlineSnapshot(`
+      expect(joined?.fields).toMatchInlineSnapshot(`
         Array [
           Object {
             "config": Object {},

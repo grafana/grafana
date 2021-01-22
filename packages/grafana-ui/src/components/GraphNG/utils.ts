@@ -43,7 +43,7 @@ export function mapDimesions(match: XYFieldMatchers, frame: DataFrame, frames?: 
  *
  * @alpha
  */
-export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): DataFrame | null {
+export function joinDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): DataFrame | null {
   const valuesFromFrames: AlignedData[] = [];
   const sourceFields: Field[] = [];
   const sourceFieldsRefs: Record<number, DataFrameFieldIndex> = {};
@@ -117,9 +117,9 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
   }
 
   // do the actual alignment (outerJoin on the first arrays)
-  let alignedData = uPlot.join(valuesFromFrames, nullModes);
+  let joinedData = uPlot.join(valuesFromFrames, nullModes);
 
-  if (alignedData!.length !== sourceFields.length) {
+  if (joinedData!.length !== sourceFields.length) {
     throw new Error('outerJoinValues lost a field?');
   }
 
@@ -127,8 +127,8 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
   // Replace the values from the outer-join field
   return {
     ...frames[0],
-    length: alignedData![0].length,
-    fields: alignedData!.map((vals, idx) => {
+    length: joinedData![0].length,
+    fields: joinedData!.map((vals, idx) => {
       let state: FieldState = {
         ...sourceFields[idx].state,
         origin: sourceFieldsRefs[idx],
