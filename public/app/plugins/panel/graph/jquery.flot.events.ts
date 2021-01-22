@@ -294,10 +294,7 @@ export class EventMarkers {
       if ((insidePlot || overlapPlot) && !event.isHidden()) {
         event.visual().draw();
       } else {
-        event
-          .visual()
-          .getObject()
-          .hide();
+        event.visual().getObject().hide();
       }
     });
   }
@@ -436,7 +433,7 @@ export class EventMarkers {
         event: event,
       });
 
-      const mouseenter = function(this: any) {
+      const mouseenter = function (this: any) {
         createAnnotationToolip(marker, $(this).data('event'), that._plot);
       };
 
@@ -535,7 +532,7 @@ export class EventMarkers {
     const regionOffset = right > xmax ? 0 : lineWidth; // only include lineWidth when right line is visible
     regionWidth = regionEnd - regionStart + regionOffset;
 
-    _.each([left, right], position => {
+    _.each([left, right], (position) => {
       // only draw visible region lines
       if (xmin <= position && position < xmax) {
         const line = $('<div class="events_line flot-temp-elem"></div>').css({
@@ -571,7 +568,7 @@ export class EventMarkers {
       event: event,
     });
 
-    const mouseenter = function(this: any) {
+    const mouseenter = function (this: any) {
       createAnnotationToolip(region, $(this).data('event'), that._plot);
     };
 
@@ -646,10 +643,7 @@ export function init(this: any, plot: any) {
 
   plot.hideEvents = () => {
     $.each(eventMarkers._events, (index, event) => {
-      event
-        .visual()
-        .getObject()
-        .hide();
+      event.visual().getObject().hide();
     });
   };
 

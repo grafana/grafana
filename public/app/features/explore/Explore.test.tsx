@@ -16,11 +16,12 @@ const dummyProps: ExploreProps = {
       logs: true,
     },
     components: {
-      ExploreStartPage: {},
+      QueryEditorHelp: {},
     },
   } as DataSourceApi,
   datasourceMissing: false,
   exploreId: ExploreId.left,
+  loading: false,
   initializeExplore: jest.fn(),
   initialized: true,
   modifyQueries: jest.fn(),
@@ -100,6 +101,7 @@ const dummyProps: ExploreProps = {
   showLogs: true,
   showTable: true,
   showTrace: true,
+  showNodeGraph: true,
   splitOpen: (() => {}) as any,
 };
 

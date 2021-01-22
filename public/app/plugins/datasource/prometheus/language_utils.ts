@@ -23,7 +23,7 @@ export function processLabels(labels: Array<{ [key: string]: string }>, withName
   // For processing we are going to use sets as they have significantly better performance than arrays
   // After we process labels, we will convert sets to arrays and return object with label values in arrays
   const valueSet: { [key: string]: Set<string> } = {};
-  labels.forEach(label => {
+  labels.forEach((label) => {
     const { __name__, ...rest } = label;
     if (withName) {
       valueSet['__name__'] = valueSet['__name__'] || new Set();
@@ -32,7 +32,7 @@ export function processLabels(labels: Array<{ [key: string]: string }>, withName
       }
     }
 
-    Object.keys(rest).forEach(key => {
+    Object.keys(rest).forEach((key) => {
       if (!valueSet[key]) {
         valueSet[key] = new Set();
       }
@@ -44,7 +44,7 @@ export function processLabels(labels: Array<{ [key: string]: string }>, withName
 
   // valueArray that we are going to return in the object
   const valueArray: { [key: string]: string[] } = {};
-  limitSuggestions(Object.keys(valueSet)).forEach(key => {
+  limitSuggestions(Object.keys(valueSet)).forEach((key) => {
     valueArray[key] = limitSuggestions(Array.from(valueSet[key]));
   });
 
@@ -111,7 +111,7 @@ export function parseSelector(query: string, cursorOffset = 1): { labelKeys: any
 
   // Build sorted selector
   const labelKeys = Object.keys(labels).sort();
-  const cleanSelector = labelKeys.map(key => `${key}${labels[key].operator}${labels[key].value}`).join(',');
+  const cleanSelector = labelKeys.map((key) => `${key}${labels[key].operator}${labels[key].value}`).join(',');
 
   const selectorString = ['{', cleanSelector, '}'].join('');
 
@@ -128,7 +128,7 @@ export function expandRecordingRules(query: string, mapping: { [name: string]: s
 
   // Regex that matches occurrences of ){ or }{ or ]{ which is a sign of incorrecly added labels.
   const invalidLabelsRegex = /(\)\{|\}\{|\]\{)/;
-  const correctlyExpandedQueryArray = queryArray.map(query => {
+  const correctlyExpandedQueryArray = queryArray.map((query) => {
     return addLabelsToExpression(query, invalidLabelsRegex);
   });
 
@@ -156,7 +156,7 @@ function addLabelsToExpression(expr: string, invalidLabelsRegexp: RegExp) {
   // Loop trough all of the label objects and add them to query.
   // As a starting point we have valid query without the labels.
   let result = exprBeforeRegexMatch;
-  arrayOfLabelObjects.filter(Boolean).forEach(obj => {
+  arrayOfLabelObjects.filter(Boolean).forEach((obj) => {
     // Remove extra set of quotes from obj.value
     const value = obj.value.substr(1, obj.value.length - 2);
     result = addLabelToQuery(result, obj.key, value, obj.operator);

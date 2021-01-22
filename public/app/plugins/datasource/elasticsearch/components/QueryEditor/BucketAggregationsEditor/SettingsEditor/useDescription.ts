@@ -34,7 +34,7 @@ export const useDescription = (bucketAgg: BucketAggregation): string => {
       if (orderByOption) {
         description += orderByOption.label;
       } else {
-        const metric = metrics?.find(m => m.id === convertOrderByToMetricId(orderBy));
+        const metric = metrics?.find((m) => m.id === convertOrderByToMetricId(orderBy));
         if (metric) {
           description += describeMetric(metric);
         } else {

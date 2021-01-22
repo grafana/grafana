@@ -12,11 +12,11 @@ import {
   NotificationChannelOption,
   NotificationChannelState,
   NotifierDTO,
+  QueryGroupOptions,
 } from 'app/types';
 import store from 'app/core/store';
 import { config } from '@grafana/runtime';
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
-import { QueryGroupOptions } from '../../query/components/QueryGroupOptions';
 
 export const ALERT_DEFINITION_UI_STATE_STORAGE_KEY = 'grafana.alerting.alertDefinition.ui';
 const DEFAULT_ALERT_DEFINITION_UI_STATE: AlertDefinitionUiState = { rightPaneSize: 400, topPaneSize: 0.45 };
@@ -54,11 +54,12 @@ const dataConfig = {
 export const initialAlertDefinitionState: AlertDefinitionState = {
   alertDefinition: {
     id: 0,
-    name: '',
+    title: '',
     description: '',
     condition: {} as AlertCondition,
+    interval: 60,
   },
-  queryOptions: { maxDataPoints: 100, dataSource: { name: 'gdev-testdata' }, queries: [] },
+  queryOptions: { maxDataPoints: 100, dataSource: {}, queries: [] },
   queryRunner: new PanelQueryRunner(dataConfig),
   uiState: { ...store.getObject(ALERT_DEFINITION_UI_STATE_STORAGE_KEY, DEFAULT_ALERT_DEFINITION_UI_STATE) },
   data: [],
@@ -91,13 +92,13 @@ const alertRulesSlice = createSlice({
   name: 'alertRules',
   initialState,
   reducers: {
-    loadAlertRules: state => {
+    loadAlertRules: (state) => {
       return { ...state, isLoading: true };
     },
     loadedAlertRules: (state, action: PayloadAction<AlertRuleDTO[]>): AlertRulesState => {
       const alertRules: AlertRuleDTO[] = action.payload;
 
-      const alertRulesViewModel: AlertRule[] = alertRules.map(rule => {
+      const alertRulesViewModel: AlertRule[] = alertRules.map((rule) => {
         return convertToAlertRule(rule, rule.state);
       });
 
@@ -122,7 +123,7 @@ const notificationChannelSlice = createSlice({
     },
     notificationChannelLoaded: (state, action: PayloadAction<any>): NotificationChannelState => {
       const notificationChannel = action.payload;
-      const selectedType: NotifierDTO = state.notifiers.find(t => t.type === notificationChannel.type)!;
+      const selectedType: NotifierDTO = state.notifiers.find((t) => t.type === notificationChannel.type)!;
       const secureChannelOptions = selectedType.options.filter((o: NotificationChannelOption) => o.secure);
       /*
         If any secure field is in plain text we need to migrate it to use secure field instead.
@@ -200,7 +201,7 @@ function migrateSecureFields(
   const cleanedSettings: { [key: string]: string } = {};
   const secureSettings: { [key: string]: string } = {};
 
-  secureChannelOptions.forEach(option => {
+  secureChannelOptions.forEach((option) => {
     secureSettings[option.propertyName] = notificationChannel.settings[option.propertyName];
     cleanedSettings[option.propertyName] = '';
   });

@@ -15,7 +15,7 @@ export const variablesReducer = (
   action: PayloadAction<VariablePayload>
 ): VariablesState => {
   if (cleanVariables.match(action)) {
-    const globalVariables = Object.values(state).filter(v => v.global);
+    const globalVariables = Object.values(state).filter((v) => v.global);
     if (!globalVariables) {
       return initialVariablesState;
     }

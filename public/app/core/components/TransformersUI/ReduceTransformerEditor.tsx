@@ -58,7 +58,7 @@ export const ReduceTransformerEditor: React.FC<TransformerUIProps<ReduceTransfor
           </div>
           <Select
             options={modes}
-            value={modes.find(v => v.value === options.mode) || modes[0]}
+            value={modes.find((v) => v.value === options.mode) || modes[0]}
             onChange={onSelectMode}
             className="flex-grow-1"
           />
@@ -74,7 +74,7 @@ export const ReduceTransformerEditor: React.FC<TransformerUIProps<ReduceTransfor
             placeholder="Choose Stat"
             allowMultiple
             stats={options.reducers || []}
-            onChange={stats => {
+            onChange={(stats) => {
               onChange({
                 ...options,
                 reducers: stats as ReducerID[],

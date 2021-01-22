@@ -69,7 +69,7 @@ describe('PlaylistSrv', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     getMock.mockImplementation(
-      jest.fn(url => {
+      jest.fn((url) => {
         switch (url) {
           case '/api/playlists/1':
             return Promise.resolve({ interval: '1s' });

@@ -30,14 +30,14 @@ export const LegendTableItem: React.FunctionComponent<Props> = ({
           <VizLegendSeriesIcon
             disabled={!onSeriesColorChange}
             color={item.color}
-            onColorChange={color => {
+            onColorChange={(color) => {
               if (onSeriesColorChange) {
                 onSeriesColorChange(item.label, color);
               }
             }}
           />
           <div
-            onClick={event => {
+            onClick={(event) => {
               if (onLabelClick) {
                 onLabelClick(item, event);
               }

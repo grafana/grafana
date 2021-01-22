@@ -27,7 +27,7 @@ export const basic = () => {
           <ButtonSelect
             value={value}
             options={options}
-            onChange={value => {
+            onChange={(value) => {
               action('onChanged fired')(value);
               updateValue(value);
             }}
