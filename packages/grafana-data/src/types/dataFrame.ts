@@ -166,7 +166,7 @@ export interface FieldState {
   /**
    * Location of this field within the context frames results
    */
-  index?: DataFrameFieldIndex;
+  origin?: DataFrameFieldIndex;
 }
 
 export interface NumericRange {

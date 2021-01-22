@@ -131,7 +131,7 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
     fields: alignedData!.map((vals, idx) => {
       let state: FieldState = {
         ...sourceFields[idx].state,
-        index: sourceFieldsRefs[idx],
+        origin: sourceFieldsRefs[idx],
       };
 
       if (sourceFields[idx].type !== FieldType.time) {

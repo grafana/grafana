@@ -298,7 +298,7 @@ describe('alignDataFrames', () => {
     `('should return correct index for yDim', ({ yDim, index }) => {
       const [frameIndex, fieldIndex] = index;
 
-      expect(aligned?.fields[yDim].state?.index).toEqual({
+      expect(aligned?.fields[yDim].state?.origin).toEqual({
         frameIndex,
         fieldIndex,
       });

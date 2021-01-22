@@ -218,7 +218,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         thresholds: config.thresholds,
 
         // The following properties are not used in the uPlot config, but are utilized as transport for legend config
-        dataFrameFieldIndex: field.state?.index,
+        dataFrameFieldIndex: field.state?.origin,
         fieldName: getFieldDisplayName(field, alignedFrame),
         hideInLegend: customConfig.hideFrom?.legend,
       });
