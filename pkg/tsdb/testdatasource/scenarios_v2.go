@@ -40,6 +40,7 @@ func (p *testDataPlugin) registerScenarioQueryHandlers(mux *datasource.QueryType
 	mux.HandleFunc(string(arrowQuery), p.handleArrowQueryScenario)
 	mux.HandleFunc(string(annotationsQuery), p.handleAnnotationsQueryScenario)
 	mux.HandleFunc(string(tableStaticQuery), p.handleTableStaticQueryScenario)
+	mux.HandleFunc(string(logsQuery), p.handleLogsQueryScenario)
 
 	mux.HandleFunc("", p.handleFallbackScenario)
 }
@@ -470,6 +471,87 @@ func (p *testDataPlugin) handleTableStaticQueryScenario(ctx context.Context, req
 		respD := resp.Responses[q.RefID]
 		respD.Frames = append(respD.Frames, frame)
 
+		resp.Responses[q.RefID] = respD
+	}
+
+	return resp, nil
+}
+
+func (p *testDataPlugin) handleLogsQueryScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+
+	for _, q := range req.Queries {
+		from := q.TimeRange.From.UnixNano() / int64(time.Millisecond)
+		to := q.TimeRange.To.UnixNano() / int64(time.Millisecond)
+
+		model, err := simplejson.NewJson(q.JSON)
+		if err != nil {
+			continue
+		}
+
+		lines := model.Get("lines").MustInt64(10)
+		includeLevelColumn := model.Get("levelColumn").MustBool(false)
+
+		logLevelGenerator := newRandomStringProvider([]string{
+			"emerg",
+			"alert",
+			"crit",
+			"critical",
+			"warn",
+			"warning",
+			"err",
+			"eror",
+			"error",
+			"info",
+			"notice",
+			"dbug",
+			"debug",
+			"trace",
+			"",
+		})
+		containerIDGenerator := newRandomStringProvider([]string{
+			"f36a9eaa6d34310686f2b851655212023a216de955cbcc764210cefa71179b1a",
+			"5a354a630364f3742c602f315132e16def594fe68b1e4a195b2fce628e24c97a",
+		})
+		hostnameGenerator := newRandomStringProvider([]string{
+			"srv-001",
+			"srv-002",
+		})
+
+		frame := data.NewFrame(q.RefID,
+			data.NewField("time", nil, []float64{}),
+			data.NewField("message", nil, []string{}),
+			data.NewField("container_id", nil, []string{}),
+			data.NewField("hostname", nil, []string{}),
+		)
+
+		if includeLevelColumn {
+			frame.Fields = append(frame.Fields, data.NewField("level", nil, []string{}))
+		}
+
+		for i := int64(0); i < lines && to > from; i++ {
+			logLevel := logLevelGenerator.Next()
+			timeFormatted := time.Unix(to/1000, 0).Format(time.RFC3339)
+			lvlString := ""
+			if !includeLevelColumn {
+				lvlString = fmt.Sprintf("lvl=%s ", logLevel)
+			}
+
+			message := fmt.Sprintf("t=%s %smsg=\"Request Completed\" logger=context userId=1 orgId=1 uname=admin method=GET path=/api/datasources/proxy/152/api/prom/label status=502 remote_addr=[::1] time_ms=1 size=0 referer=\"http://localhost:3000/explore?left=%%5B%%22now-6h%%22,%%22now%%22,%%22Prometheus%%202.x%%22,%%7B%%7D,%%7B%%22ui%%22:%%5Btrue,true,true,%%22none%%22%%5D%%7D%%5D\"", timeFormatted, lvlString)
+			containerID := containerIDGenerator.Next()
+			hostname := hostnameGenerator.Next()
+
+			if includeLevelColumn {
+				frame.AppendRow(float64(to), message, containerID, hostname, logLevel)
+			} else {
+				frame.AppendRow(float64(to), message, containerID, hostname)
+			}
+
+			to -= q.Interval.Milliseconds()
+		}
+
+		respD := resp.Responses[q.RefID]
+		respD.Frames = append(respD.Frames, frame)
 		resp.Responses[q.RefID] = respD
 	}
 
