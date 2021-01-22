@@ -88,7 +88,7 @@ function getFontAwesomeIconStyles(iconName: string, className?: string): string 
   return cx(
     iconName,
     {
-      ['fa-spin']: iconName === 'fa fa-spinner',
+      'fa-spin': iconName === 'fa fa-spinner',
     },
     className
   );
