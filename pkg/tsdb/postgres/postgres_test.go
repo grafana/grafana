@@ -216,14 +216,14 @@ func TestPostgres(t *testing.T) {
 			require.NoError(t, queryResult.Error)
 
 			column := queryResult.Tables[0].Rows[0]
-			require.Equal(t, 1, column[0].(int64))
-			require.Equal(t, 2, column[1].(int64))
-			require.Equal(t, 3, column[2].(int64))
+			require.Equal(t, int64(1), column[0].(int64))
+			require.Equal(t, int64(2), column[1].(int64))
+			require.Equal(t, int64(3), column[2].(int64))
 
-			require.Equal(t, 4.5, column[3].(float64))
-			require.Equal(t, 6.7, column[4].(float64))
-			require.Equal(t, 1.1, column[5].(float64))
-			require.Equal(t, 1.2, column[6].(float64))
+			require.Equal(t, int64(4.5), column[3].(float64))
+			require.Equal(t, int64(6.7), column[4].(float64))
+			require.Equal(t, int64(1.1), column[5].(float64))
+			require.Equal(t, int64(1.2), column[6].(float64))
 
 			require.Equal(t, "char10    ", column[7].(string))
 			require.Equal(t, "varchar10", column[8].(string))
