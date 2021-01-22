@@ -428,3 +428,26 @@ func parseLabelsV2(model *simplejson.Json) data.Labels {
 
 	return tags
 }
+
+func frameNameForQuery(query backend.DataQuery, model *simplejson.Json, index int) string {
+	name := model.Get("alias").MustString("")
+	suffix := ""
+
+	if index > 0 {
+		suffix = strconv.Itoa(index)
+	}
+
+	if name == "" {
+		name = fmt.Sprintf("%s-series%s", query.RefID, suffix)
+	}
+
+	if name == "__server_names" && len(serverNames) > index {
+		name = serverNames[index]
+	}
+
+	if name == "__house_locations" && len(houseLocations) > index {
+		name = houseLocations[index]
+	}
+
+	return name
+}
