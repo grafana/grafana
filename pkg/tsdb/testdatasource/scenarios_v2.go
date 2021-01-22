@@ -390,28 +390,11 @@ func (p *testDataPlugin) handleExponentialHeatmapBucketDataScenario(ctx context.
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
-		timeWalkerMs := q.TimeRange.From.UnixNano() / int64(time.Millisecond)
-		to := q.TimeRange.To.UnixNano() / int64(time.Millisecond)
-
 		respD := resp.Responses[q.RefID]
-
-		start := 1
-		factor := 2
-		for i := 0; i < 10; i++ {
-			frame := data.NewFrame(strconv.Itoa(start),
-				data.NewField("time", nil, []*time.Time{}),
-				data.NewField("value", nil, []*float64{}))
-			start *= factor
-
-			for j := int64(0); j < 100 && timeWalkerMs < to; j++ {
-				v := float64(rand.Int63n(100))
-				frame.AppendRow(&timeWalkerMs, &v)
-				timeWalkerMs += q.Interval.Milliseconds() * 50
-			}
-
-			respD.Frames = append(respD.Frames, frame)
-		}
-
+		frame := getRandomHeatmapData(q, func(index int) float64 {
+			return math.Exp2(float64(index))
+		})
+		respD.Frames = append(respD.Frames, frame)
 		resp.Responses[q.RefID] = respD
 	}
 
@@ -422,25 +405,11 @@ func (p *testDataPlugin) handleLinearHeatmapBucketDataScenario(ctx context.Conte
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
-		timeWalkerMs := q.TimeRange.From.UnixNano() / int64(time.Millisecond)
-		to := q.TimeRange.To.UnixNano() / int64(time.Millisecond)
-
 		respD := resp.Responses[q.RefID]
-
-		for i := 0; i < 10; i++ {
-			frame := data.NewFrame(strconv.Itoa(i*10),
-				data.NewField("time", nil, []*time.Time{}),
-				data.NewField("value", nil, []*float64{}))
-
-			for j := int64(0); j < 100 && timeWalkerMs < to; j++ {
-				v := float64(rand.Int63n(100))
-				frame.AppendRow(&timeWalkerMs, &v)
-				timeWalkerMs += q.Interval.Milliseconds() * 50
-			}
-
-			respD.Frames = append(respD.Frames, frame)
-		}
-
+		frame := getRandomHeatmapData(q, func(index int) float64 {
+			return float64(index * 10)
+		})
+		respD.Frames = append(respD.Frames, frame)
 		resp.Responses[q.RefID] = respD
 	}
 
@@ -783,6 +752,29 @@ func getPredictablePulseV2(query backend.DataQuery, model *simplejson.Json) (*da
 	frame.Fields[1].Labels = parseLabelsV2(model)
 
 	return frame, nil
+}
+
+func getRandomHeatmapData(query backend.DataQuery, fnBucketGen func(index int) float64) *data.Frame {
+	frame := data.NewFrame("data", data.NewField("time", nil, []*time.Time{}))
+	for i := 0; i < 10; i++ {
+		frame.Fields = append(frame.Fields, data.NewField(strconv.FormatInt(int64(fnBucketGen(i)), 10), nil, []*float64{}))
+	}
+
+	timeWalkerMs := query.TimeRange.From.UnixNano() / int64(time.Millisecond)
+	to := query.TimeRange.To.UnixNano() / int64(time.Millisecond)
+
+	for j := int64(0); j < 100 && timeWalkerMs < to; j++ {
+		t := time.Unix(timeWalkerMs/int64(1e+3), (timeWalkerMs%int64(1e+3))*int64(1e+6))
+		vals := []interface{}{&t}
+		for n := 1; n < len(frame.Fields); n++ {
+			v := float64(rand.Int63n(100))
+			vals = append(vals, &v)
+		}
+		frame.AppendRow(vals...)
+		timeWalkerMs += query.Interval.Milliseconds() * 50
+	}
+
+	return frame
 }
 
 func newSeriesForQueryV2(query backend.DataQuery, model *simplejson.Json, index int) *data.Frame {
