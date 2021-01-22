@@ -4,55 +4,6 @@ import classNames from 'classnames';
 import { css } from 'emotion';
 import Scrollbars from 'react-custom-scrollbars';
 
-const getStyles = (page?: boolean) => {
-  return {
-    customScrollbar: css`
-      display: flex;
-      flex-grow: 1;
-      &:hover {
-        opacity: 0.8;
-        transition: opacity 0.3s ease-in-out;
-      }
-    `,
-    trackVertical: css`
-      border-radius: 3px;
-      width: 8px !important;
-      right: ${page ? 0 : 2}px;
-      bottom: 2px;
-    `,
-    trackHorizontal: css`
-      border-radius: 3px;
-      height: 8px !important;
-      right: 2px;
-      bottom: 2px;
-      left: 2px;
-    `,
-    thumbVertical: css`
-      @include gradient-vertical($scrollbarBackground, $scrollbarBackground2);
-      border-radius: 6px;
-      opacity: 0;
-      &:hover {
-        opacity: 0.8;
-        transition: opacity 0.3s ease-in-out;
-      }
-    `,
-    thumbHorizontal: css`
-      @include gradient-horizontal($scrollbarBackground, $scrollbarBackground2);
-      border-radius: 6px;
-      opacity: 0;
-      &:hover {
-        opacity: 0.8;
-        transition: opacity 0.3s ease-in-out;
-      }
-    `,
-    view: css`
-      display: flex;
-      flex-grow: 1;
-      flex-direction: column;
-    `,
-  };
-};
-
 interface Props {
   className?: string;
   autoHide?: boolean;
@@ -192,3 +143,52 @@ export class CustomScrollbar extends Component<Props> {
 }
 
 export default CustomScrollbar;
+
+const getStyles = (page?: boolean) => {
+  return {
+    customScrollbar: css`
+      display: flex;
+      flex-grow: 1;
+      &:hover {
+        opacity: 0.8;
+        transition: opacity 0.3s ease-in-out;
+      }
+    `,
+    trackVertical: css`
+      border-radius: 3px;
+      width: 8px !important;
+      right: ${page ? 0 : 2}px;
+      bottom: 2px;
+    `,
+    trackHorizontal: css`
+      border-radius: 3px;
+      height: 8px !important;
+      right: 2px;
+      bottom: 2px;
+      left: 2px;
+    `,
+    thumbVertical: css`
+      @include gradient-vertical($scrollbarBackground, $scrollbarBackground2);
+      border-radius: 6px;
+      opacity: 0;
+      &:hover {
+        opacity: 0.8;
+        transition: opacity 0.3s ease-in-out;
+      }
+    `,
+    thumbHorizontal: css`
+      @include gradient-horizontal($scrollbarBackground, $scrollbarBackground2);
+      border-radius: 6px;
+      opacity: 0;
+      &:hover {
+        opacity: 0.8;
+        transition: opacity 0.3s ease-in-out;
+      }
+    `,
+    view: css`
+      display: flex;
+      flex-grow: 1;
+      flex-direction: column;
+    `,
+  };
+};
