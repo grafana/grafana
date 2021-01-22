@@ -4,7 +4,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 export type Props = {
-  splitted: boolean;
+  small?: boolean;
   loading: boolean;
   isLive: boolean;
   onRun: (loading: boolean) => void;
@@ -14,11 +14,11 @@ export type Props = {
 };
 
 export function RunButton(props: Props) {
-  const { splitted, loading, onRun, onChangeRefreshInterval, refreshInterval, showDropdown, isLive } = props;
+  const { small, loading, onRun, onChangeRefreshInterval, refreshInterval, showDropdown, isLive } = props;
   const intervals = getTimeSrv().getValidIntervals(defaultIntervals);
   let text: string | undefined = loading ? 'Cancel' : 'Run query';
 
-  if (splitted) {
+  if (small) {
     text = undefined;
   }
 

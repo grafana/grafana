@@ -77,6 +77,7 @@ const getStyles = (theme: GrafanaTheme) => {
       padding: 0 ${theme.spacing.sm};
       color: ${theme.colors.textWeak};
       border-radius: ${theme.border.radius.sm};
+      line-height: ${theme.height.md - 2}px;
       display: flex;
       align-items: center;
 

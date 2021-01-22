@@ -18,6 +18,7 @@ export interface Props {
   text?: string;
   noIntervalPicker?: boolean;
   'aria-label'?: string;
+  width?: string;
 }
 
 export class RefreshPicker extends PureComponent<Props> {
