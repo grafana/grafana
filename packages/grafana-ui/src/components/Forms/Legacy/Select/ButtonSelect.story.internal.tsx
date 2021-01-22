@@ -26,15 +26,17 @@ export const Basic: FC = () => {
       <UseState initialState={value}>
         {(value, updateValue) => {
           return (
-            <ButtonSelect
-              value={value}
-              options={options}
-              onChange={(value) => {
-                action('onChanged fired')(value);
-                updateValue(value);
-              }}
-              className="refresh-select"
-            />
+            <div style={{ marginLeft: '100px' }}>
+              <ButtonSelect
+                value={value}
+                options={options}
+                onChange={(value) => {
+                  action('onChanged fired')(value);
+                  updateValue(value);
+                }}
+                className="refresh-select"
+              />
+            </div>
           );
         }}
       </UseState>

@@ -8,6 +8,7 @@ import { ButtonSelect } from '../Forms/Legacy/Select/ButtonSelect';
 import memoizeOne from 'memoize-one';
 import { GrafanaTheme } from '@grafana/data';
 import { withTheme } from '../../themes';
+import { ButtonGroup, ToolbarButton } from '../Button';
 
 // Default intervals used in the refresh picker component
 export const defaultIntervals = ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d'];
@@ -82,7 +83,7 @@ export class RefreshPickerBase extends Component<Props> {
   }
 
   render() {
-    const { onRefresh, intervals, tooltip, value, refreshButton, buttonSelectClassName, theme } = this.props;
+    const { onRefresh, intervals, tooltip, value, refreshButton, theme } = this.props;
     const options = this.intervalsToOptions(intervals);
     const currentValue = value || '';
     const selectedValue = options.find((item) => item.value === currentValue) || RefreshPicker.offOption;
@@ -96,27 +97,24 @@ export class RefreshPickerBase extends Component<Props> {
 
     return (
       <div className={cssClasses}>
-        <div className="refresh-picker-buttons">
+        <ButtonGroup className="refresh-picker-buttons" noSpacing={true}>
           {refreshButton ? (
             refreshButton
           ) : (
             <Tooltip placement="top" content={tooltip!}>
-              <button
-                className="btn btn--radius-right-0 navbar-button navbar-button--border-right-0"
-                onClick={onRefresh!}
-              >
+              <ToolbarButton onClick={onRefresh} className="button-group__button">
                 <Icon name="sync" size="lg" />
-              </button>
+              </ToolbarButton>
             </Tooltip>
           )}
           <ButtonSelect
-            className={classNames('navbar-button--attached', styles.selectButton, buttonSelectClassName)}
             value={selectedValue}
             options={options}
-            onChange={this.onChangeSelect}
+            className="button-group__button"
+            onChange={this.onChangeSelect as any}
             maxMenuHeight={380}
           />
-        </div>
+        </ButtonGroup>
       </div>
     );
   }

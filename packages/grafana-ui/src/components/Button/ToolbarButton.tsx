@@ -98,6 +98,6 @@ const getStyles = (theme: GrafanaTheme) => ({
     padding-left: ${theme.spacing.sm};
   `,
   contentWithRightIcon: css`
-    padding-right: ${theme.spacing.sm};
+    padding-right: ${theme.spacing.xs};
   `,
 });

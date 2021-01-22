@@ -8,17 +8,18 @@ import { useStyles } from '../../../../themes/ThemeContext';
 import { Menu, MenuItemsGroup } from '../../../Menu/Menu';
 
 export interface Props<T> {
-  className: string | undefined;
+  className?: string;
   options: Array<SelectableValue<T>>;
   value?: SelectableValue<T>;
   maxMenuHeight?: number;
   onChange: (item: SelectableValue<T>) => void;
   tooltipContent?: PopoverContent;
+  narrow?: boolean;
 }
 
 /** @internal */
 export const ButtonSelect = React.memo(<T,>(props: Props<T>) => {
-  const { className, options, value, onChange } = props;
+  const { className, options, value, onChange, narrow } = props;
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const styles = useStyles(getStyles);
 
@@ -47,7 +48,7 @@ export const ButtonSelect = React.memo(<T,>(props: Props<T>) => {
 
   return (
     <div className={styles.wrapper}>
-      <ToolbarButton className={className} isOpen={isOpen} onClick={onToggle}>
+      <ToolbarButton className={className} isOpen={isOpen} onClick={onToggle} narrow={narrow}>
         {value?.label || value?.value}
       </ToolbarButton>
       {isOpen && (
@@ -58,23 +59,6 @@ export const ButtonSelect = React.memo(<T,>(props: Props<T>) => {
         </div>
       )}
     </div>
-    // <Select
-    //   autoFocus={autoFocus}
-    //   backspaceRemovesValue={false}
-    //   isClearable={false}
-    //   isSearchable={false}
-    //   options={options}
-    //   onChange={this.onChange}
-    //   value={value}
-    //   isOpen={isMenuOpen}
-    //   onOpenMenu={onOpenMenu}
-    //   onCloseMenu={onCloseMenu}
-    //   maxMenuHeight={maxMenuHeight}
-    //   components={combinedComponents}
-    //   className="gf-form-select-box-button-select"
-    //   tooltipContent={tooltipContent}
-    //   tabSelectsValue={tabSelectsValue}
-    // />
   );
 });
 
@@ -84,11 +68,11 @@ const getStyles = (theme: GrafanaTheme) => {
   return {
     wrapper: css`
       position: relative;
-      display: flex;
+      display: inline-flex;
     `,
     menuWrapper: css`
       position: absolute;
-      top: ${theme.spacing.formButtonHeight + 2}px;
+      top: ${theme.spacing.formButtonHeight + 1}px;
       right: 0;
     `,
   };

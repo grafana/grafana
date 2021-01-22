@@ -167,7 +167,6 @@ const getMenuStyles = (theme: GrafanaTheme) => {
       background: ${wrapperBg};
       z-index: 1;
       box-shadow: 0 2px 5px 0 ${wrapperShadow};
-      min-width: 200px;
       display: inline-block;
       border-radius: ${theme.border.radius.sm};
     `,
@@ -185,6 +184,7 @@ const getMenuStyles = (theme: GrafanaTheme) => {
       padding: 5px 10px;
       border-left: 2px solid transparent;
       cursor: pointer;
+      white-space: nowrap;
 
       &:hover {
         background: ${itemBgHover};

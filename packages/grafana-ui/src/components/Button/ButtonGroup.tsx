@@ -1,18 +1,25 @@
 import React, { forwardRef, HTMLAttributes } from 'react';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { useStyles } from '../../themes';
 
 export interface Props extends HTMLAttributes<HTMLDivElement> {
+  className?: string;
   noSpacing?: boolean;
 }
 
-export const ButtonGroup = forwardRef<HTMLDivElement, Props>(({ noSpacing, children, ...rest }, ref) => {
+export const ButtonGroup = forwardRef<HTMLDivElement, Props>(({ noSpacing, className, children, ...rest }, ref) => {
   const styles = useStyles(getStyles);
-  const className = noSpacing ? styles.wrapperNoSpacing : styles.wrapper;
+  const mainClass = cx(
+    {
+      [styles.wrapper]: !noSpacing,
+      [styles.wrapperNoSpacing]: noSpacing,
+    },
+    className
+  );
 
   return (
-    <div ref={ref} className={className} {...rest}>
+    <div ref={ref} className={mainClass} {...rest}>
       {children}
     </div>
   );
@@ -24,6 +31,7 @@ const getStyles = (theme: GrafanaTheme) => ({
   wrapper: css`
     display: flex;
 
+    .button-group__button,
     > a,
     > button {
       margin-left: ${theme.spacing.sm};
@@ -36,6 +44,7 @@ const getStyles = (theme: GrafanaTheme) => ({
   wrapperNoSpacing: css`
     display: flex;
 
+    .button-group__button,
     > a,
     > button {
       border-radius: 0;
