@@ -213,9 +213,9 @@ func generateConnectionString(datasource *models.DataSource, logger log.Logger) 
 			tlsCert = datasource.JsonData.Get("generatedTLSCertFile").MustString("")
 			tlsKey = datasource.JsonData.Get("generatedTLSKeyFile").MustString("")
 		} else {
-			tlsRootCert = datasource.JsonData.Get("tlsRootCertFile").MustString("")
-			tlsCert = datasource.JsonData.Get("tlsCertFile").MustString("")
-			tlsKey = datasource.JsonData.Get("tlsKeyFile").MustString("")
+			tlsRootCert = datasource.JsonData.Get("sslRootCertFile").MustString("")
+			tlsCert = datasource.JsonData.Get("sslCertFile").MustString("")
+			tlsKey = datasource.JsonData.Get("sslKeyFile").MustString("")
 		}
 
 		// Attach root certificate if provided
