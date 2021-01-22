@@ -16,12 +16,18 @@ export type Props = {
 export function RunButton(props: Props) {
   const { splitted, loading, onRun, onChangeRefreshInterval, refreshInterval, showDropdown, isLive } = props;
   const intervals = getTimeSrv().getValidIntervals(defaultIntervals);
+  let text: string | undefined = loading ? 'Cancel' : 'Run query';
+
+  if (splitted) {
+    text = undefined;
+  }
+
   return (
     <RefreshPicker
       onIntervalChanged={onChangeRefreshInterval}
       value={refreshInterval}
       isLoading={loading}
-      text={splitted ? undefined : 'Run query'}
+      text={text}
       intervals={intervals}
       isLive={isLive}
       onRefresh={() => onRun(loading)}

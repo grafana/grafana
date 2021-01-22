@@ -5,6 +5,7 @@ import { UseState } from '../../utils/storybook/UseState';
 import { RefreshPicker } from '@grafana/ui';
 import { StoryExample } from '../../utils/storybook/StoryExample';
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
+import { HorizontalGroup } from '../Layout/Layout';
 
 export default {
   title: 'Pickers and Editors/RefreshPicker',
@@ -27,7 +28,7 @@ export const Examples = () => {
       <UseState initialState={'1h'}>
         {(value, updateValue) => {
           return (
-            <>
+            <HorizontalGroup>
               <StoryExample name="Simple">
                 <RefreshPicker
                   tooltip="Hello world"
@@ -58,7 +59,7 @@ export const Examples = () => {
                   onRefresh={onRefresh}
                 />
               </StoryExample>
-            </>
+            </HorizontalGroup>
           );
         }}
       </UseState>

@@ -86,8 +86,7 @@ export class RefreshPicker extends PureComponent<Props> {
           <Tooltip placement="top" content={tooltip!}>
             <ToolbarButton
               onClick={onRefresh}
-              className="button-group__button"
-              aria-lagbel={ariaLabel}
+              aria-label={ariaLabel}
               variant={variant}
               icon={isLoading ? 'fa fa-spinner' : 'sync'}
             >
