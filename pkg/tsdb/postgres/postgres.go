@@ -24,7 +24,10 @@ func init() {
 	tsdb.RegisterTsdbQueryEndpoint("postgres", newPostgresQueryEndpoint)
 }
 
-func databaseConnection(datasource *models.DataSource, logger log.Logger) (tsdb.TsdbQueryEndpoint, error) {
+func newPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+	logger := log.New("tsdb.postgres")
+	logger.Debug("Creating Postgres query endpoint")
+
 	cnnstr, err := generateConnectionString(datasource, logger)
 	if err != nil {
 		return nil, err
@@ -54,13 +57,6 @@ func databaseConnection(datasource *models.DataSource, logger log.Logger) (tsdb.
 	}
 
 	logger.Debug("Successfully connected to Postgres")
-	return endpoint, err
-}
-
-func newPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-	logger := log.New("tsdb.postgres")
-	logger.Debug("Creating Postgres query endpoint")
-	endpoint, err := databaseConnection(datasource, logger)
 	return endpoint, err
 }
 
