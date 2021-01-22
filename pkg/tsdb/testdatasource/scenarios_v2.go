@@ -252,7 +252,7 @@ func (p *testDataPlugin) handleRandomWalkWithErrorScenario(ctx context.Context, 
 
 		respD := resp.Responses[q.RefID]
 		respD.Frames = append(respD.Frames, getRandomWalkV2(q, model, 0))
-		respD.Error = fmt.Errorf("This is an error.  It can include URLs http://grafana.com/")
+		respD.Error = fmt.Errorf("this is an error and it can include URLs http://grafana.com/")
 		resp.Responses[q.RefID] = respD
 	}
 
