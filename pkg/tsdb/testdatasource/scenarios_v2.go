@@ -22,6 +22,7 @@ import (
 func (p *testDataPlugin) registerScenarioQueryHandlers(mux *datasource.QueryTypeMux) {
 	mux.HandleFunc(string(randowWalkQuery), p.handleRandomWalkScenario)
 	mux.HandleFunc(string(randowWalkTableQuery), p.handleRandomWalkTableScenario)
+	mux.HandleFunc(string(predictableCSVWaveQuery), p.handlePredictableCSVWaveScenario)
 
 	mux.HandleFunc("", p.handleFallbackScenario)
 }
@@ -121,6 +122,27 @@ func (p *testDataPlugin) handleRandomWalkTableScenario(ctx context.Context, req 
 
 		respD := resp.Responses[q.RefID]
 		respD.Frames = append(respD.Frames, getRandomWalkTableV2(q, model))
+		resp.Responses[q.RefID] = respD
+	}
+
+	return resp, nil
+}
+
+func (p *testDataPlugin) handlePredictableCSVWaveScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+
+	for _, q := range req.Queries {
+		model, err := simplejson.NewJson(q.JSON)
+		if err != nil {
+			continue
+		}
+
+		respD := resp.Responses[q.RefID]
+		frame, err := getPredictableCSVWaveV2(q, model)
+		if err != nil {
+			continue
+		}
+		respD.Frames = append(respD.Frames, frame)
 		resp.Responses[q.RefID] = respD
 	}
 
