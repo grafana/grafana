@@ -510,7 +510,7 @@ Set to `false` to disable the X-XSS-Protection header, which tells browsers to s
 
 ### content_security_policy
 
-Set to `true` to add the Content-Security-Policy header to your requests. CSP allows to control resources the user agent is allowed to load and helps prevent XSS attacks.
+Set to `true` to add the Content-Security-Policy header to your requests. CSP allows to control resources that the user agent can load and helps prevent XSS attacks.
 
 ### content_security_policy_template
 
