@@ -15,6 +15,7 @@ import {
 } from './reducers';
 import { AlertDefinition, AlertDefinitionUiState, AlertRuleDTO, NotifierDTO, ThunkResult } from 'app/types';
 import { QueryGroupOptions } from 'app/types';
+import { ExpressionDatasourceID } from '../../expressions/ExpressionDatasource';
 
 export function getAlertRulesAsync(options: { state: string }): ThunkResult<void> {
   return async (dispatch) => {
@@ -98,8 +99,9 @@ export function createAlertDefinition(): ThunkResult<void> {
         refId: currentAlertDefinition.condition.refId,
         queriesAndExpressions: queryOptions.queries.map((query) => {
           let dataSource: { name: string; uid: string };
-          if (query.datasource === '__expr__') {
-            dataSource = { name: '__expr__', uid: '__expr__' };
+
+          if (query.datasource === ExpressionDatasourceID) {
+            dataSource = { name: ExpressionDatasourceID, uid: ExpressionDatasourceID };
           } else {
             const dataSourceSetting = getDataSourceSrv().getInstanceSettings(query.datasource);
 
@@ -125,6 +127,7 @@ export function createAlertDefinition(): ThunkResult<void> {
         }),
       },
     };
+
     await getBackendSrv().post(`/api/alert-definitions`, alertDefinition);
     appEvents.emit(AppEvents.alertSuccess, ['Alert definition created']);
     dispatch(updateLocation({ path: 'alerting/list' }));
