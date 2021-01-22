@@ -2,12 +2,15 @@ package testdatasource
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -182,4 +185,30 @@ func TestTestdataScenariosV2(t *testing.T) {
 			require.True(t, maxNil)
 		})
 	})
+}
+
+func TestParseLabelsV2(t *testing.T) {
+	expectedTags := data.Labels{
+		"job":      "foo",
+		"instance": "bar",
+	}
+
+	tcs := []struct {
+		model map[string]interface{}
+	}{
+		{model: map[string]interface{}{
+			"labels": `{job="foo", instance="bar"}`,
+		}},
+		{model: map[string]interface{}{
+			"labels": `job=foo, instance=bar`,
+		}},
+		{model: map[string]interface{}{
+			"labels": `job = foo,instance = bar`,
+		}},
+	}
+
+	for i, tc := range tcs {
+		model := simplejson.NewFromAny(tc.model)
+		assert.Equal(t, expectedTags, parseLabelsV2(model), fmt.Sprintf("Actual tags in test case %d doesn't match expected tags", i+1))
+	}
 }
