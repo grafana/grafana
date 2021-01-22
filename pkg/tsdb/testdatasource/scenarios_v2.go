@@ -27,7 +27,8 @@ func (p *testDataPlugin) registerScenarioQueryHandlers(mux *datasource.QueryType
 	mux.HandleFunc(string(predictableCSVWaveQuery), p.handlePredictableCSVWaveScenario)
 	mux.HandleFunc(string(serverError500Query), p.handleServerError500Scenario)
 	mux.HandleFunc(string(noDataPointsQuery), p.handleNoDataPointsScenario)
-	mux.HandleFunc(string(exponentialHeatmapBucketDataQuery), p.handleExponentialHeatmapBucketDataQuery)
+	mux.HandleFunc(string(exponentialHeatmapBucketDataQuery), p.handleExponentialHeatmapBucketDataScenario)
+	mux.HandleFunc(string(linearHeatmapBucketDataQuery), p.handleLinearHeatmapBucketDataScenario)
 
 	mux.HandleFunc("", p.handleFallbackScenario)
 }
@@ -201,7 +202,7 @@ func (p *testDataPlugin) handleNoDataPointsScenario(ctx context.Context, req *ba
 	return backend.NewQueryDataResponse(), nil
 }
 
-func (p *testDataPlugin) handleExponentialHeatmapBucketDataQuery(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (p *testDataPlugin) handleExponentialHeatmapBucketDataScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
@@ -217,6 +218,35 @@ func (p *testDataPlugin) handleExponentialHeatmapBucketDataQuery(ctx context.Con
 				data.NewField("time", nil, []*time.Time{}),
 				data.NewField("value", nil, []*float64{}))
 			start *= factor
+
+			for j := int64(0); j < 100 && timeWalkerMs < to; j++ {
+				v := float64(rand.Int63n(100))
+				frame.AppendRow(&timeWalkerMs, &v)
+				timeWalkerMs += q.Interval.Milliseconds() * 50
+			}
+
+			respD.Frames = append(respD.Frames, frame)
+		}
+
+		resp.Responses[q.RefID] = respD
+	}
+
+	return resp, nil
+}
+
+func (p *testDataPlugin) handleLinearHeatmapBucketDataScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+
+	for _, q := range req.Queries {
+		timeWalkerMs := q.TimeRange.From.UnixNano() / int64(time.Millisecond)
+		to := q.TimeRange.To.UnixNano() / int64(time.Millisecond)
+
+		respD := resp.Responses[q.RefID]
+
+		for i := 0; i < 10; i++ {
+			frame := data.NewFrame(strconv.Itoa(i*10),
+				data.NewField("time", nil, []*time.Time{}),
+				data.NewField("value", nil, []*float64{}))
 
 			for j := int64(0); j < 100 && timeWalkerMs < to; j++ {
 				v := float64(rand.Int63n(100))
