@@ -28,7 +28,7 @@ To access Prometheus settings, hover your mouse over the **Configuration** (gear
 | `Custom Query Parameters` | Add custom parameters to the Prometheus query URL. For example `timeout`, `partial_response`, `dedup`, or `max_source_resolution`. Multiple parameters should be concatenated together with an '&amp;'. |
 | `Label name`              | The name of the field in the labels object that should be used.                                                                                                                                         |
 | `URL`                     | If the link is external, then enter the full link URL. You can interpolate the value from the field with `${__value.raw }` macro.                                                                       |
-| `Internal link`           | Select if the link is internal or external. In case of internal link, a data source selector allows you to select the target data source. Only tracing data sources are supported.                      |
+| `Internal link`           | Select if the link is internal or external. In the case of an internal link, a data source selector allows you to select the target data source. Supports tracing data sources only.                      |
 
 ## Prometheus query editor
 
