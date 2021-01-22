@@ -139,10 +139,10 @@ func (p *testDataPlugin) handleDatapointsOutsideRangeQueryScenario(ctx context.C
 		}
 
 		frame := newSeriesForQueryV2(q, model, 0)
-		outsideTime := q.TimeRange.From.Add(-1*time.Hour).Unix() * 1000
+		outsideTime := q.TimeRange.From.Add(-1 * time.Hour)
 		frame.Fields = data.Fields{
-			data.NewField("time", nil, float64(outsideTime)),
-			data.NewField("value", nil, null.FloatFrom(10)),
+			data.NewField("time", nil, []time.Time{outsideTime}),
+			data.NewField("value", nil, []float64{10}),
 		}
 
 		respD := resp.Responses[q.RefID]
@@ -217,13 +217,13 @@ func (p *testDataPlugin) handleCSVMetricValuesScenario(ctx context.Context, req 
 		stringInput := model.Get("stringInput").MustString()
 		stringInput = strings.ReplaceAll(stringInput, " ", "")
 
-		var values []null.Float
+		var values []*float64
 		for _, strVal := range strings.Split(stringInput, ",") {
 			if strVal == "null" {
-				values = append(values, null.FloatFromPtr(nil))
+				values = append(values, nil)
 			}
 			if val, err := strconv.ParseFloat(strVal, 64); err == nil {
-				values = append(values, null.FloatFrom(val))
+				values = append(values, &val)
 			}
 		}
 
@@ -232,6 +232,10 @@ func (p *testDataPlugin) handleCSVMetricValuesScenario(ctx context.Context, req 
 		}
 
 		frame := newSeriesForQueryV2(q, model, 0)
+		frame.Fields = data.Fields{
+			data.NewField("time", nil, []*time.Time{}),
+			data.NewField("value", nil, []*float64{}),
+		}
 		startTime := q.TimeRange.From.UnixNano() / int64(time.Millisecond)
 		endTime := q.TimeRange.To.UnixNano() / int64(time.Millisecond)
 		var step int64 = 0
@@ -239,17 +243,10 @@ func (p *testDataPlugin) handleCSVMetricValuesScenario(ctx context.Context, req 
 			step = (endTime - startTime) / int64(len(values)-1)
 		}
 
-		timeVec := make([]*int64, 0)
-		floatVec := make([]*null.Float, 0)
 		for _, val := range values {
-			timeVec = append(timeVec, &startTime)
-			floatVec = append(floatVec, &val)
+			t := time.Unix(startTime/int64(1e+3), (startTime%int64(1e+3))*int64(1e+6))
+			frame.AppendRow(&t, val)
 			startTime += step
-		}
-
-		frame.Fields = data.Fields{
-			data.NewField("time", nil, timeVec),
-			data.NewField("value", nil, floatVec),
 		}
 
 		respD := resp.Responses[q.RefID]
