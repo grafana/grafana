@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import classNames from 'classnames';
-import { GrafanaTheme, rangeUtil, SelectableValue } from '@grafana/data';
+import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { css } from 'emotion';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { Icon } from '../Icon/Icon';
@@ -69,9 +69,18 @@ export class RefreshPickerBase extends Component<Props> {
   }
 
   render() {
-    const { onRefresh, intervals, tooltip, value, refreshButton, buttonSelectClassName, theme } = this.props;
+    const {
+      onRefresh,
+      intervals,
+      tooltip,
+      value,
+      refreshButton,
+      buttonSelectClassName,
+      theme,
+      hasLiveOption,
+    } = this.props;
     const currentValue = value || '';
-    const options = intervalsToOptions(currentValue, intervals, this.props.hasLiveOption);
+    const options = intervalsToOptions({ intervals, hasLiveOption });
     const option = options.find(({ value }) => value === currentValue);
     const selectedValue = option || RefreshPicker.offOption;
     const styles = getStyles(theme);
@@ -111,22 +120,12 @@ export class RefreshPickerBase extends Component<Props> {
   }
 }
 
-export function intervalsToOptions(
-  currentValue: string,
-  intervals?: string[],
-  hasLiveOption?: boolean
-): Array<SelectableValue<string>> {
+export function intervalsToOptions({
+  intervals = defaultIntervals,
+  hasLiveOption = false,
+}: { intervals?: string[]; hasLiveOption?: boolean } = {}): Array<SelectableValue<string>> {
   const intervalsOrDefault = intervals || defaultIntervals;
   const options = intervalsOrDefault.map((interval) => ({ label: interval, value: interval }));
-  const option = options.find(({ value }) => value === currentValue);
-  if (!option && currentValue.length && rangeUtil.isValidTimeSpan(currentValue)) {
-    // we can't find the option in options but currentValue is allowed which means the user has entered a value in the url that doesn't exist in the RefreshPicker
-    options.unshift({ value: currentValue, label: currentValue });
-  }
-
-  options.sort((a, b) => {
-    return rangeUtil.intervalToMs(a.value ?? '') - rangeUtil.intervalToMs(b.value ?? '');
-  });
 
   if (hasLiveOption) {
     options.unshift(RefreshPicker.liveOption);
