@@ -40,7 +40,7 @@ func init() {
 	prometheus.MustRegister(transformQueryHistogram)
 }
 
-func WrapTransformData(ctx context.Context, query *tsdb.TsdbQuery) (*tsdb.Response, error) {
+func (s *Service) WrapTransformData(ctx context.Context, query *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	sdkReq := &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
 			OrgID: query.User.OrgId,
@@ -65,8 +65,7 @@ func WrapTransformData(ctx context.Context, query *tsdb.TsdbQuery) (*tsdb.Respon
 			},
 		})
 	}
-
-	pbRes, err := TransformData(ctx, sdkReq)
+	pbRes, err := s.TransformData(ctx, sdkReq)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +93,7 @@ func WrapTransformData(ctx context.Context, query *tsdb.TsdbQuery) (*tsdb.Respon
 
 // TransformData takes Queries which are either expressions nodes
 // or are datasource requests.
-func TransformData(ctx context.Context, req *backend.QueryDataRequest) (r *backend.QueryDataResponse, err error) {
+func (s *Service) TransformData(ctx context.Context, req *backend.QueryDataRequest) (r *backend.QueryDataResponse, err error) {
 	start := time.Now()
 	defer func() {
 		var respStatus string
@@ -108,16 +107,19 @@ func TransformData(ctx context.Context, req *backend.QueryDataRequest) (r *backe
 		transformQueryHistogram.WithLabelValues(respStatus).Observe(time.Since(start).Seconds())
 	}()
 
-	svc := Service{}
+	if s.isDisabled() {
+		return nil, status.Error(codes.PermissionDenied, "Expressions are disabled")
+	}
+
 	// Build the pipeline from the request, checking for ordering issues (e.g. loops)
 	// and parsing graph nodes from the queries.
-	pipeline, err := svc.BuildPipeline(req)
+	pipeline, err := s.BuildPipeline(req)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	// Execute the pipeline
-	responses, err := svc.ExecutePipeline(ctx, pipeline)
+	responses, err := s.ExecutePipeline(ctx, pipeline)
 	if err != nil {
 		return nil, status.Error(codes.Unknown, err.Error())
 	}

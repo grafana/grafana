@@ -187,6 +187,11 @@ export abstract class DataSourceApi<
   readonly type: string;
 
   /**
+   *  Set in constructor
+   */
+  readonly uid: string;
+
+  /**
    *  min interval range
    */
   interval?: string;
@@ -196,6 +201,7 @@ export abstract class DataSourceApi<
     this.id = instanceSettings.id;
     this.type = instanceSettings.type;
     this.meta = {} as DataSourcePluginMeta;
+    this.uid = instanceSettings.uid;
   }
 
   /**

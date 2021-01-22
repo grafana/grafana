@@ -383,7 +383,11 @@ function createLabelInfo(labels: { [key: string]: string }, options: TransformOp
 
   const { __name__, ...labelsWithoutName } = labels;
   const labelPart = formatLabels(labelsWithoutName);
-  const title = `${__name__ ?? ''}${labelPart}`;
+  let title = `${__name__ ?? ''}${labelPart}`;
+
+  if (!title) {
+    title = options.query;
+  }
 
   return { name: title, labels: labelsWithoutName };
 }
