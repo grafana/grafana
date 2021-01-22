@@ -117,7 +117,7 @@ interface MenuItemProps {
   label: string;
   icon?: IconName;
   url?: string;
-  target?: string;
+  target?: LinkTarget;
   onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
   className?: string;
   active?: boolean;
