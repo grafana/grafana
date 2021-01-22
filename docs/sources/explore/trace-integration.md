@@ -1,8 +1,9 @@
 +++
 title = "Trace integration"
-keywords = ["explore", "trace", "logs"]
+description = "Configure tracing in Explore"
+keywords = ["explore", "trace",]
 aliases = ["/docs/grafana/latest/features/explore/"]
-weight = 90
+weight = 10
 +++
 
 # Visualize trace 
