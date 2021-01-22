@@ -3,7 +3,7 @@ import uPlot, { AlignedData, Options } from 'uplot';
 import { buildPlotContext, PlotContext } from './context';
 import { pluginLog } from './utils';
 import { usePlotConfig } from './hooks';
-import { AlignedFrameWithGapTest, PlotProps } from './types';
+import { PlotProps } from './types';
 import { DataFrame } from '@grafana/data';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 import usePrevious from 'react-use/lib/usePrevious';
@@ -25,6 +25,7 @@ export const UPlotChart: React.FC<PlotProps> = (props) => {
     props.timeZone,
     props.config
   );
+
   const getPlotInstance = useCallback(() => {
     return plotInstance.current;
   }, []);
@@ -64,7 +65,7 @@ export const UPlotChart: React.FC<PlotProps> = (props) => {
     }
 
     // 4. Otherwise, assume only data has changed and update uPlot data
-    updateData(props.data.frame, props.config, plotInstance.current, prepareData(props.data));
+    updateData(props.data, props.config, plotInstance.current, prepareData(props.data));
   }, [props, isConfigReady]);
 
   // When component unmounts, clean the existing uPlot instance
@@ -85,8 +86,8 @@ export const UPlotChart: React.FC<PlotProps> = (props) => {
   );
 };
 
-function prepareData(data: AlignedFrameWithGapTest): AlignedData {
-  return data.frame.fields.map((f) => f.values.toArray()) as AlignedData;
+function prepareData(frame: DataFrame): AlignedData {
+  return frame.fields.map((f) => f.values.toArray()) as AlignedData;
 }
 
 function initializePlot(data: AlignedData, config: Options, el: HTMLDivElement) {

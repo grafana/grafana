@@ -21,6 +21,7 @@ const dummyProps: ExploreProps = {
   } as DataSourceApi,
   datasourceMissing: false,
   exploreId: ExploreId.left,
+  loading: false,
   initializeExplore: jest.fn(),
   initialized: true,
   modifyQueries: jest.fn(),
