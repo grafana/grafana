@@ -1,6 +1,13 @@
 // Library
 import React, { useCallback, useMemo } from 'react';
-import { compareDataFrameStructures, DataFrame, getFieldColorModeForField, getFieldSeriesColor } from '@grafana/data';
+import {
+  compareDataFrameStructures,
+  DataFrame,
+  DefaultTimeZone,
+  getFieldColorModeForField,
+  getFieldSeriesColor,
+  TimeRange,
+} from '@grafana/data';
 import uPlot, { Scale, Series, Options } from 'uplot';
 import { VizLayout } from '../VizLayout/VizLayout';
 import { distribute, SPACE_BETWEEN } from './distribute';
@@ -374,7 +381,6 @@ export const BarChart: React.FunctionComponent<Props> = ({ width, height, data, 
 
   let alignedFrameWithGapTest: AlignedFrameWithGapTest = {
     frame: data,
-    isGap: () => true,
     getDataFrameFieldIndex: i => ({
       frameIndex: 0,
       fieldIndex: i,
@@ -389,8 +395,9 @@ export const BarChart: React.FunctionComponent<Props> = ({ width, height, data, 
           config={configBuilder}
           width={vizWidth}
           height={vizHeight}
-          {...plotProps}
-        ></UPlotChart>
+          timeRange={({ from: 1, to: 1 } as unknown) as TimeRange} // HACK
+          timeZone={DefaultTimeZone}
+        />
       )}
     </VizLayout>
   );
