@@ -1,6 +1,8 @@
-# Terminology used throughout Grafana code base
+# Grafana technical glossary
 
-This document aims to define and standardize terminology used throughout Grafana source code.
+<!-- Keep terms in alphabetical order: -->
+
+This document defines technical terms used in Grafana.
 
 ## TLS/SSL
 
