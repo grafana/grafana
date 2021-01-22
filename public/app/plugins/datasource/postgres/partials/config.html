@@ -42,7 +42,7 @@
   </div>
 
   <div class="gf-form" ng-if="ctrl.current.jsonData.sslmode != 'disable'">
-    <label class="gf-form-label width-10">TLS/SSL Configuration Method</label>
+    <label class="gf-form-label width-10">TLS/SSL Method</label>
     <div class="gf-form-select-wrapper max-width-15 gf-form-select-wrapper--has-help-icon">
       <select class="gf-form-input" ng-model="ctrl.current.jsonData.tlsConfigurationMethod"
         ng-options="f.id as f.label for f in [{ id: 'file-path', label: 'File system path' }, { id: 'file-content', label: 'Certificate  content' }]"
@@ -50,10 +50,11 @@
       <info-popover mode="right-absolute">
         This option determines how TLS/SSL certifications are configured. Selecting <i>File system path</i> will allow
         you to configure certificates by specifying paths to existing certificates on the local file system where
-        Grafana is running. Be sure that the file is readable by the user executing the Grafana process. Selecting
-        <i>Certificate content</i> will allow you to configure certificates by specifying its content. The content
-        will be stored encrypted in Grafana's database. When connecting to the database the certificates will be
-        written as files to Grafana's configured data path on the local file system.
+        Grafana is running. Be sure that the file is readable by the user executing the Grafana process.<br><br>
+
+        Selecting <i>Certificate content</i> will allow you to configure certificates by specifying its content.
+        The content will be stored encrypted in Grafana's database. When connecting to the database the certificates
+        will be written as files to Grafana's configured data path on the local file system.
       </info-popover>
     </div>
   </div>
