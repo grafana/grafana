@@ -94,12 +94,14 @@ const getStyles = (theme: GrafanaTheme) => {
       label: toolbar-button;
       display: flex;
       align-items: center;
+      label: toolbar-button;
+      background: ${theme.colors.bg1};
+      border: 1px solid ${theme.colors.border2};
       height: ${theme.height.md}px;
       padding: 0 ${theme.spacing.sm};
       border-radius: ${theme.border.radius.sm};
       line-height: ${theme.height.md - 2}px;
       font-weight: ${theme.typography.weight.semibold};
-      border: 1px solid ${theme.colors.border2};
 
       &:focus {
         outline: none;
@@ -123,6 +125,17 @@ const getStyles = (theme: GrafanaTheme) => {
       &:hover {
         color: ${theme.colors.text};
         background: ${styleMixins.hoverColor(theme.colors.bg1, theme)};
+      }
+
+      &[disabled],
+      &:disabled {
+        cursor: not-allowed;
+        opacity: 0.5;
+
+        &:hover {
+          color: ${theme.colors.textWeak};
+          background: ${theme.colors.bg1};
+        }
       }
     `,
     active: css`

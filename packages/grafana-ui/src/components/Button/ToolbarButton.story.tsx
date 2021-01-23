@@ -47,6 +47,13 @@ export const List = () => {
           ))}
         </ToolbarButtonRow>
         <br />
+        disabled
+        <ToolbarButtonRow>
+          <ToolbarButton icon="sync" disabled>
+            Disabled
+          </ToolbarButton>
+        </ToolbarButtonRow>
+        <br />
         Wrapped in noSpacing ButtonGroup
         <ButtonGroup>
           <ToolbarButton icon="clock-nine" tooltip="Time picker">
