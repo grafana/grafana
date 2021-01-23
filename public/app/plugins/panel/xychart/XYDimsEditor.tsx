@@ -1,6 +1,6 @@
-import React, { FC, useCallback, useMemo } from 'react';
+import React, { FC, useMemo } from 'react';
 import { css } from 'emotion';
-import { IconButton, Label, Select, stylesFactory, Switch, useTheme } from '@grafana/ui';
+import { IconButton, Label, Select, stylesFactory, useTheme } from '@grafana/ui';
 import {
   SelectableValue,
   getFrameDisplayName,
@@ -84,13 +84,6 @@ export const XYDimsEditor: FC<StandardEditorProps<XYDimensionConfig, any, Option
     return v;
   }, [dims, context.data, value]);
 
-  const toggleSort = useCallback(() => {
-    onChange({
-      ...value,
-      sort: !value?.sort,
-    });
-  }, [value, onChange]);
-
   const theme = useTheme();
   const styles = getStyles(theme);
 
@@ -118,10 +111,6 @@ export const XYDimsEditor: FC<StandardEditorProps<XYDimensionConfig, any, Option
           });
         }}
       />
-      <div className={styles.sorter}>
-        <Switch value={value?.sort ?? false} onClick={toggleSort} />
-        <div onClick={toggleSort}>&nbsp; Sort field</div>
-      </div>
       <br />
       <Label>Y Fields</Label>
       <div>
