@@ -75,7 +75,7 @@ export class RefreshPicker extends PureComponent<Props> {
 
     return (
       <div className="refresh-picker">
-        <ButtonGroup className="refresh-picker-buttons" noSpacing={true}>
+        <ButtonGroup className="refresh-picker-buttons">
           <Tooltip placement="bottom" content={tooltip!}>
             <ToolbarButton
               onClick={onRefresh}

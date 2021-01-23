@@ -85,46 +85,44 @@ export class UnthemedTimeRangePicker extends PureComponent<TimeRangePickerProps,
     // className={cx(styles.clockIcon, timePickerIconClass)}
 
     return (
-      <div className={styles.container}>
-        <ButtonGroup noSpacing>
-          {hasAbsolute && <ToolbarButton active={isSynced} onClick={onMoveBackward} icon="angle-left" narrow />}
+      <ButtonGroup className={styles.container}>
+        {hasAbsolute && <ToolbarButton active={isSynced} onClick={onMoveBackward} icon="angle-left" narrow />}
 
-          <Tooltip content={<TimePickerTooltip timeRange={value} timeZone={timeZone} />} placement="bottom">
-            <ToolbarButton
-              aria-label="TimePicker Open Button"
-              onClick={this.onOpen}
-              icon="clock-nine"
-              isOpen={isOpen}
-              active={isSynced}
-            >
-              <TimePickerButtonLabel {...this.props} />
-            </ToolbarButton>
-          </Tooltip>
-          {isOpen && (
-            <ClickOutsideWrapper includeButtonPress={false} onClick={this.onClose}>
-              <TimePickerContent
-                timeZone={timeZone}
-                value={value}
-                onChange={this.onChange}
-                otherOptions={otherOptions}
-                quickOptions={quickOptions}
-                history={history}
-                showHistory
-                onChangeTimeZone={onChangeTimeZone}
-                hideQuickRanges={hideQuickRanges}
-              />
-            </ClickOutsideWrapper>
-          )}
+        <Tooltip content={<TimePickerTooltip timeRange={value} timeZone={timeZone} />} placement="bottom">
+          <ToolbarButton
+            aria-label="TimePicker Open Button"
+            onClick={this.onOpen}
+            icon="clock-nine"
+            isOpen={isOpen}
+            active={isSynced}
+          >
+            <TimePickerButtonLabel {...this.props} />
+          </ToolbarButton>
+        </Tooltip>
+        {isOpen && (
+          <ClickOutsideWrapper includeButtonPress={false} onClick={this.onClose}>
+            <TimePickerContent
+              timeZone={timeZone}
+              value={value}
+              onChange={this.onChange}
+              otherOptions={otherOptions}
+              quickOptions={quickOptions}
+              history={history}
+              showHistory
+              onChangeTimeZone={onChangeTimeZone}
+              hideQuickRanges={hideQuickRanges}
+            />
+          </ClickOutsideWrapper>
+        )}
 
-          {timeSyncButton}
+        {timeSyncButton}
 
-          {hasAbsolute && <ToolbarButton onClick={onMoveForward} icon="angle-right" narrow active={isSynced} />}
+        {hasAbsolute && <ToolbarButton onClick={onMoveForward} icon="angle-right" narrow active={isSynced} />}
 
-          <Tooltip content={ZoomOutTooltip} placement="bottom">
-            <ToolbarButton onClick={onZoom} icon="search-minus" active={isSynced} />
-          </Tooltip>
-        </ButtonGroup>
-      </div>
+        <Tooltip content={ZoomOutTooltip} placement="bottom">
+          <ToolbarButton onClick={onZoom} icon="search-minus" active={isSynced} />
+        </Tooltip>
+      </ButtonGroup>
     );
   }
 }
@@ -186,7 +184,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     container: css`
       position: relative;
       display: flex;
-      flex-flow: column nowrap;
       vertical-align: middle;
     `,
     buttons: css`

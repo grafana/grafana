@@ -1,4 +1,4 @@
-import React, { forwardRef, HTMLAttributes } from 'react';
+import React, { forwardRef, ButtonHTMLAttributes } from 'react';
 import { cx, css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { styleMixins, useStyles } from '../../themes';
@@ -7,7 +7,7 @@ import { Tooltip } from '../Tooltip/Tooltip';
 import { Icon } from '../Icon/Icon';
 import { ButtonVariant, getPropertiesForVariant } from './Button';
 
-export interface Props extends HTMLAttributes<HTMLButtonElement> {
+export interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   /** Icon name */
   icon?: IconName;
   /** Tooltip */
@@ -24,13 +24,19 @@ export interface Props extends HTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
   /** Changes border color to orange */
   active?: boolean;
+  /** Hide any children and only show icon */
+  iconOnly?: boolean;
 }
 
 export const ToolbarButton = forwardRef<HTMLButtonElement, Props>(
-  ({ tooltip, icon, className, children, imgSrc, fullWidth, isOpen, narrow, variant, active, ...rest }, ref) => {
+  (
+    { tooltip, icon, className, children, imgSrc, fullWidth, isOpen, narrow, variant, active, iconOnly, ...rest },
+    ref
+  ) => {
     const styles = useStyles(getStyles);
 
     const buttonStyles = cx(
+      'toolbar-button',
       {
         [styles.button]: true,
         [styles.buttonFullWidth]: fullWidth,
@@ -52,7 +58,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, Props>(
       <button ref={ref} className={buttonStyles} {...rest}>
         {icon && <Icon name={icon} size={'lg'} />}
         {imgSrc && <img className={styles.img} src={imgSrc} />}
-        {children && <span className={contentStyles}>{children}</span>}
+        {children && !iconOnly && <span className={contentStyles}>{children}</span>}
         {isOpen === false && <Icon name="angle-down" />}
         {isOpen === true && <Icon name="angle-up" />}
       </button>
@@ -74,6 +80,7 @@ const getStyles = (theme: GrafanaTheme) => {
 
   return {
     button: css`
+      label: toolbar-button;
       background: ${theme.colors.bg1};
       border: 1px solid ${theme.colors.border2};
       height: ${theme.height.md}px;
@@ -81,6 +88,7 @@ const getStyles = (theme: GrafanaTheme) => {
       color: ${theme.colors.textWeak};
       border-radius: ${theme.border.radius.sm};
       line-height: ${theme.height.md - 2}px;
+      font-weight: ${theme.typography.weight.semibold};
       display: flex;
       align-items: center;
 
@@ -91,6 +99,17 @@ const getStyles = (theme: GrafanaTheme) => {
       &:hover {
         color: ${theme.colors.text};
         background: ${styleMixins.hoverColor(theme.colors.bg1, theme)};
+      }
+
+      &[disabled],
+      &:disabled {
+        cursor: not-allowed;
+        opacity: 0.5;
+
+        &:hover {
+          color: ${theme.colors.textWeak};
+          background: ${theme.colors.bg1};
+        }
       }
     `,
     active: css`
@@ -111,6 +130,11 @@ const getStyles = (theme: GrafanaTheme) => {
     `,
     content: css`
       flex-grow: 1;
+      display: none;
+
+      @media only screen and (min-width: ${theme.breakpoints.md}) {
+        display: block;
+      }
     `,
     contentWithIcon: css`
       padding-left: ${theme.spacing.sm};
