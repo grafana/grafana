@@ -217,7 +217,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
               <RunButton
                 refreshInterval={refreshInterval}
                 onChangeRefreshInterval={this.onChangeRefreshInterval}
-                splitted={splitted}
+                isSmall={splitted || showSmallTimePicker}
                 isLive={isLive}
                 loading={loading || (isLive && !isPaused)}
                 onRun={this.onRunQuery}
