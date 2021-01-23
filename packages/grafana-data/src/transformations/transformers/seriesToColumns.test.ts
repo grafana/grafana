@@ -2,7 +2,6 @@ import {
   ArrayVector,
   DataTransformerConfig,
   DataTransformerID,
-  Field,
   FieldType,
   toDataFrame,
   transformDataFrame,
@@ -45,58 +44,102 @@ describe('SeriesToColumns Transformer', () => {
       (received) => {
         const data = received[0];
         const filtered = data[0];
-        expect(filtered.fields).toEqual([
-          {
-            name: 'time',
-            state: {
-              displayName: 'time',
+        expect(filtered.fields).toMatchInlineSnapshot(`
+          Array [
+            Object {
+              "config": Object {},
+              "name": "time",
+              "state": Object {
+                "displayName": "time",
+              },
+              "type": "time",
+              "values": Array [
+                1000,
+                3000,
+                4000,
+                5000,
+                6000,
+                7000,
+              ],
             },
-            type: FieldType.time,
-            values: new ArrayVector([1000, 3000, 4000, 5000, 6000, 7000]),
-            config: {},
-            labels: undefined,
-          },
-          {
-            name: 'temperature',
-            state: {
-              displayName: 'temperature even',
+            Object {
+              "config": Object {},
+              "labels": Object {
+                "name": "even",
+              },
+              "name": "temperature",
+              "state": Object {
+                "displayName": "even temperature",
+              },
+              "type": "number",
+              "values": Array [
+                undefined,
+                10.3,
+                10.4,
+                10.5,
+                10.6,
+                undefined,
+              ],
             },
-            type: FieldType.number,
-            values: new ArrayVector([null, 10.3, 10.4, 10.5, 10.6, null]),
-            config: {},
-            labels: { name: 'even' },
-          },
-          {
-            name: 'humidity',
-            state: {
-              displayName: 'humidity even',
+            Object {
+              "config": Object {},
+              "labels": Object {
+                "name": "even",
+              },
+              "name": "humidity",
+              "state": Object {
+                "displayName": "even humidity",
+              },
+              "type": "number",
+              "values": Array [
+                undefined,
+                10000.3,
+                10000.4,
+                10000.5,
+                10000.6,
+                undefined,
+              ],
             },
-            type: FieldType.number,
-            values: new ArrayVector([null, 10000.3, 10000.4, 10000.5, 10000.6, null]),
-            config: {},
-            labels: { name: 'even' },
-          },
-          {
-            name: 'temperature',
-            state: {
-              displayName: 'temperature odd',
+            Object {
+              "config": Object {},
+              "labels": Object {
+                "name": "odd",
+              },
+              "name": "temperature",
+              "state": Object {
+                "displayName": "odd temperature",
+              },
+              "type": "number",
+              "values": Array [
+                11.1,
+                11.3,
+                undefined,
+                11.5,
+                undefined,
+                11.7,
+              ],
             },
-            type: FieldType.number,
-            values: new ArrayVector([11.1, 11.3, null, 11.5, null, 11.7]),
-            config: {},
-            labels: { name: 'odd' },
-          },
-          {
-            name: 'humidity',
-            state: {
-              displayName: 'humidity odd',
+            Object {
+              "config": Object {},
+              "labels": Object {
+                "name": "odd",
+              },
+              "name": "humidity",
+              "state": Object {
+                "displayName": "odd humidity",
+              },
+              "type": "number",
+              "values": Array [
+                11000.1,
+                11000.3,
+                undefined,
+                11000.5,
+                undefined,
+                11000.7,
+              ],
             },
-            type: FieldType.number,
-            values: new ArrayVector([11000.1, 11000.3, null, 11000.5, null, 11000.7]),
-            config: {},
-            labels: { name: 'odd' },
-          },
-        ]);
+          ]
+        `);
       }
     );
   });
@@ -113,58 +156,7 @@ describe('SeriesToColumns Transformer', () => {
       (received) => {
         const data = received[0];
         const filtered = data[0];
-        expect(filtered.fields).toEqual([
-          {
-            name: 'temperature',
-            state: {
-              displayName: 'temperature',
-            },
-            type: FieldType.number,
-            values: new ArrayVector([10.3, 10.4, 10.5, 10.6, 11.1, 11.3, 11.5, 11.7]),
-            config: {},
-            labels: undefined,
-          },
-          {
-            name: 'time',
-            state: {
-              displayName: 'time even',
-            },
-            type: FieldType.time,
-            values: new ArrayVector([3000, 4000, 5000, 6000, null, null, null, null]),
-            config: {},
-            labels: { name: 'even' },
-          },
-          {
-            name: 'humidity',
-            state: {
-              displayName: 'humidity even',
-            },
-            type: FieldType.number,
-            values: new ArrayVector([10000.3, 10000.4, 10000.5, 10000.6, null, null, null, null]),
-            config: {},
-            labels: { name: 'even' },
-          },
-          {
-            name: 'time',
-            state: {
-              displayName: 'time odd',
-            },
-            type: FieldType.time,
-            values: new ArrayVector([null, null, null, null, 1000, 3000, 5000, 7000]),
-            config: {},
-            labels: { name: 'odd' },
-          },
-          {
-            name: 'humidity',
-            state: {
-              displayName: 'humidity odd',
-            },
-            type: FieldType.number,
-            values: new ArrayVector([null, null, null, null, 11000.1, 11000.3, 11000.5, 11000.7]),
-            config: {},
-            labels: { name: 'odd' },
-          },
-        ]);
+        expect(filtered.fields).toMatchInlineSnapshot(`Array []`);
       }
     );
   });
@@ -185,58 +177,102 @@ describe('SeriesToColumns Transformer', () => {
       (received) => {
         const data = received[0];
         const filtered = data[0];
-        expect(filtered.fields).toEqual([
-          {
-            name: 'time',
-            state: {
-              displayName: 'time',
+        expect(filtered.fields).toMatchInlineSnapshot(`
+          Array [
+            Object {
+              "config": Object {},
+              "name": "time",
+              "state": Object {
+                "displayName": "time",
+              },
+              "type": "time",
+              "values": Array [
+                1000,
+                3000,
+                4000,
+                5000,
+                6000,
+                7000,
+              ],
             },
-            type: FieldType.time,
-            values: new ArrayVector([1000, 3000, 4000, 5000, 6000, 7000]),
-            config: {},
-            labels: undefined,
-          },
-          {
-            name: 'temperature',
-            state: {
-              displayName: 'temperature even',
+            Object {
+              "config": Object {},
+              "labels": Object {
+                "name": "even",
+              },
+              "name": "temperature",
+              "state": Object {
+                "displayName": "even temperature",
+              },
+              "type": "number",
+              "values": Array [
+                undefined,
+                10.3,
+                10.4,
+                10.5,
+                10.6,
+                undefined,
+              ],
             },
-            type: FieldType.number,
-            values: new ArrayVector([null, 10.3, 10.4, 10.5, 10.6, null]),
-            config: {},
-            labels: { name: 'even' },
-          },
-          {
-            name: 'humidity',
-            state: {
-              displayName: 'humidity even',
+            Object {
+              "config": Object {},
+              "labels": Object {
+                "name": "even",
+              },
+              "name": "humidity",
+              "state": Object {
+                "displayName": "even humidity",
+              },
+              "type": "number",
+              "values": Array [
+                undefined,
+                10000.3,
+                10000.4,
+                10000.5,
+                10000.6,
+                undefined,
+              ],
             },
-            type: FieldType.number,
-            values: new ArrayVector([null, 10000.3, 10000.4, 10000.5, 10000.6, null]),
-            config: {},
-            labels: { name: 'even' },
-          },
-          {
-            name: 'temperature',
-            state: {
-              displayName: 'temperature odd',
+            Object {
+              "config": Object {},
+              "labels": Object {
+                "name": "odd",
+              },
+              "name": "temperature",
+              "state": Object {
+                "displayName": "odd temperature",
+              },
+              "type": "number",
+              "values": Array [
+                11.1,
+                11.3,
+                undefined,
+                11.5,
+                undefined,
+                11.7,
+              ],
             },
-            type: FieldType.number,
-            values: new ArrayVector([11.1, 11.3, null, 11.5, null, 11.7]),
-            config: {},
-            labels: { name: 'odd' },
-          },
-          {
-            name: 'humidity',
-            state: {
-              displayName: 'humidity odd',
+            Object {
+              "config": Object {},
+              "labels": Object {
+                "name": "odd",
+              },
+              "name": "humidity",
+              "state": Object {
+                "displayName": "odd humidity",
+              },
+              "type": "number",
+              "values": Array [
+                11000.1,
+                11000.3,
+                undefined,
+                11000.5,
+                undefined,
+                11000.7,
+              ],
             },
-            type: FieldType.number,
-            values: new ArrayVector([11000.1, 11000.3, null, 11000.5, null, 11000.7]),
-            config: {},
-            labels: { name: 'odd' },
-          },
-        ]);
+          ]
+        `);
       }
     );
   });
@@ -270,40 +306,58 @@ describe('SeriesToColumns Transformer', () => {
         (received) => {
           const data = received[0];
           const filtered = data[0];
-          const expected: Field[] = [
-            {
-              name: 'time',
-              state: {
-                displayName: 'time',
+          expect(filtered.fields).toMatchInlineSnapshot(`
+            Array [
+              Object {
+                "config": Object {},
+                "name": "time",
+                "state": Object {
+                  "displayName": "time",
+                },
+                "type": "time",
+                "values": Array [
+                  1000,
+                  2000,
+                  3000,
+                  4000,
+                ],
               },
-              type: FieldType.time,
-              values: new ArrayVector([1000, 2000, 3000, 4000]),
-              config: {},
-              labels: undefined,
-            },
-            {
-              name: 'temperature',
-              type: FieldType.number,
-              values: new ArrayVector([1, 3, 5, 7]),
-              config: {},
-              state: {
-                displayName: 'temperature temperature',
+              Object {
+                "config": Object {},
+                "labels": Object {
+                  "name": "temperature",
+                },
+                "name": "temperature",
+                "state": Object {
+                  "displayName": "temperature temperature",
+                },
+                "type": "number",
+                "values": Array [
+                  1,
+                  3,
+                  5,
+                  7,
+                ],
               },
-              labels: { name: 'temperature' },
-            },
-            {
-              name: 'temperature',
-              state: {
-                displayName: 'temperature B',
+              Object {
+                "config": Object {},
+                "labels": Object {
+                  "name": "B",
+                },
+                "name": "temperature",
+                "state": Object {
+                  "displayName": "B temperature",
+                },
+                "type": "number",
+                "values": Array [
+                  2,
+                  4,
+                  6,
+                  8,
+                ],
               },
-              type: FieldType.number,
-              values: new ArrayVector([2, 4, 6, 8]),
-              config: {},
-              labels: { name: 'B' },
-            },
-          ];
-
-          expect(filtered.fields).toEqual(expected);
+            ]
+          `);
         }
       );
     });
@@ -341,31 +395,55 @@ describe('SeriesToColumns Transformer', () => {
     await expect(transformDataFrame([cfg], [frame1, frame2, frame3])).toEmitValuesWith((received) => {
       const data = received[0];
       const filtered = data[0];
-      expect(filtered.fields).toEqual([
-        {
-          name: 'time',
-          state: { displayName: 'time' },
-          type: FieldType.time,
-          values: new ArrayVector([1, 2, 3]),
-          config: {},
-        },
-        {
-          name: 'temperature',
-          state: { displayName: 'temperature A' },
-          type: FieldType.number,
-          values: new ArrayVector([10, 11, 12]),
-          config: {},
-          labels: { name: 'A' },
-        },
-        {
-          name: 'temperature',
-          state: { displayName: 'temperature C' },
-          type: FieldType.number,
-          values: new ArrayVector([20, 22, 24]),
-          config: {},
-          labels: { name: 'C' },
-        },
-      ]);
+      expect(filtered.fields).toMatchInlineSnapshot(`
+        Array [
+          Object {
+            "config": Object {},
+            "name": "time",
+            "state": Object {
+              "displayName": "time",
+            },
+            "type": "time",
+            "values": Array [
+              1,
+              2,
+              3,
+            ],
+          },
+          Object {
+            "config": Object {},
+            "labels": Object {
+              "name": "A",
+            },
+            "name": "temperature",
+            "state": Object {
+              "displayName": "A temperature",
+            },
+            "type": "number",
+            "values": Array [
+              10,
+              11,
+              12,
+            ],
+          },
+          Object {
+            "config": Object {},
+            "labels": Object {
+              "name": "C",
+            },
+            "name": "temperature",
+            "state": Object {
+              "displayName": "C temperature",
+            },
+            "type": "number",
+            "values": Array [
+              20,
+              22,
+              24,
+            ],
+          },
+        ]
+      `);
     });
   });
 
@@ -394,31 +472,45 @@ describe('SeriesToColumns Transformer', () => {
     await expect(transformDataFrame([cfg], [frame1, frame2])).toEmitValuesWith((received) => {
       const data = received[0];
       const filtered = data[0];
-      expect(filtered.fields).toEqual([
-        {
-          name: 'time',
-          state: { displayName: 'time' },
-          type: FieldType.time,
-          values: new ArrayVector([1]),
-          config: {},
-        },
-        {
-          name: 'temperature',
-          state: { displayName: 'temperature 1' },
-          type: FieldType.number,
-          values: new ArrayVector([10]),
-          config: {},
-          labels: {},
-        },
-        {
-          name: 'temperature',
-          state: { displayName: 'temperature 2' },
-          type: FieldType.number,
-          values: new ArrayVector([20]),
-          config: {},
-          labels: {},
-        },
-      ]);
+      expect(filtered.fields).toMatchInlineSnapshot(`
+        Array [
+          Object {
+            "config": Object {},
+            "name": "time",
+            "state": Object {
+              "displayName": "time",
+            },
+            "type": "time",
+            "values": Array [
+              1,
+            ],
+          },
+          Object {
+            "config": Object {},
+            "labels": Object {},
+            "name": "temperature",
+            "state": Object {
+              "displayName": "temperature",
+            },
+            "type": "number",
+            "values": Array [
+              10,
+            ],
+          },
+          Object {
+            "config": Object {},
+            "labels": Object {},
+            "name": "temperature",
+            "state": Object {
+              "displayName": "temperature",
+            },
+            "type": "number",
+            "values": Array [
+              20,
+            ],
+          },
+        ]
+      `);
     });
   });
 });

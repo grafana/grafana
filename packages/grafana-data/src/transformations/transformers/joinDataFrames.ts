@@ -31,33 +31,34 @@ export function pickBestJoinField(data: DataFrame[]): FieldMatcher {
 }
 
 export interface JoinOptions {
-  data: DataFrame[];
+  frames: DataFrame[];
   joinBy?: FieldMatcher;
+  keep?: FieldMatcher;
 
   /**
    * @internal -- used when we need to keep a reference to the original frame/field index
    */
-  keepOriginIndexes?: boolean;
+  keepOriginIndices?: boolean;
 }
 
 /**
  * This will return a single frame joined by the first matching field.  When a join field is not specified,
  * the default will use the first time field
  */
-export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
-  if (!options.data.length) {
+export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined {
+  if (!options?.frames?.length) {
     return undefined;
   }
-  if (options.data.length < 2) {
-    return options.data[0];
+  if (options.frames.length < 2) {
+    return options.frames[0];
   }
 
   const allData: AlignedData[] = [];
   const originalFields: Field[] = [];
 
-  const joinFieldMatcher = options.joinBy ?? pickBestJoinField(options.data);
-  for (let frameIndex = 0; frameIndex < options.data.length; frameIndex++) {
-    const frame = options.data[frameIndex];
+  const joinFieldMatcher = options.joinBy ?? pickBestJoinField(options.frames);
+  for (let frameIndex = 0; frameIndex < options.frames.length; frameIndex++) {
+    const frame = options.frames[frameIndex];
     if (!frame || !frame.fields?.length) {
       continue; // skip the frame
     }
@@ -66,14 +67,27 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
     let fields: Field[] = [];
     for (let fieldIndex = 0; fieldIndex < frame.fields.length; fieldIndex++) {
       const field = frame.fields[fieldIndex];
-      getFieldDisplayName(field, frame, options.data); // caches the name (with frames) in state
+      getFieldDisplayName(field, frame, options.frames); // cache displayName in state
 
-      if (!join && joinFieldMatcher(field, frame, options.data)) {
+      if (!join && joinFieldMatcher(field, frame, options.frames)) {
         join = field;
       } else {
-        fields.push(field);
+        if (options.keep && !options.keep(field, frame, options.frames)) {
+          continue; // skip field
+        }
+
+        let labels = field.labels ?? {};
+        if (frame.name) {
+          labels = { ...labels, name: frame.name };
+        }
+
+        fields.push({
+          ...field,
+          labels, // add the name label from frame
+        });
       }
-      if (options.keepOriginIndexes) {
+
+      if (options.keepOriginIndices) {
         field.state!.origin = {
           frameIndex,
           fieldIndex,
@@ -106,7 +120,8 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
   }
 
   return {
-    ...options.data[0],
+    // ...options.data[0], // keep name, meta?
+    length: joined[0].length,
     fields: originalFields.map((f, index) => ({
       ...f,
       values: new ArrayVector(joined[index]),

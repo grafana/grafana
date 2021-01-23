@@ -2,7 +2,7 @@ import { toDataFrame } from '../../dataframe/processDataFrame';
 import { FieldType } from '../../types/dataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { calculateFieldTransformer } from './calculateField';
-import { joinDataFrames } from './joinDataFrames';
+import { outerJoinDataFrames } from './joinDataFrames';
 
 describe('align frames', () => {
   beforeAll(() => {
@@ -26,7 +26,7 @@ describe('align frames', () => {
       ],
     });
 
-    const out = joinDataFrames({ data: [series1, series2] })!;
+    const out = outerJoinDataFrames({ frames: [series1, series2] })!;
     expect(
       out.fields.map((f) => ({
         name: f.name,
@@ -94,7 +94,7 @@ describe('align frames', () => {
       ],
     });
 
-    const out = joinDataFrames({ data: [series1, series3] })!;
+    const out = outerJoinDataFrames({ frames: [series1, series3] })!;
     expect(
       out.fields.map((f) => ({
         name: f.name,
@@ -149,7 +149,7 @@ describe('align frames', () => {
       ],
     });
 
-    const out = joinDataFrames({ data: [series1, series3] })!;
+    const out = outerJoinDataFrames({ frames: [series1, series3] })!;
     expect(
       out.fields.map((f) => ({
         name: f.name,
