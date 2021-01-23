@@ -108,7 +108,7 @@ export function LiveTailButton(props: LiveTailButtonProps) {
           icon={!isLive ? 'play' : 'pause'}
           onClick={onClickMain}
         >
-          Live
+          {isPaused ? 'Live' : 'Paused'}
         </ToolbarButton>
       </Tooltip>
 
