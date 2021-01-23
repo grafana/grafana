@@ -1,5 +1,5 @@
 import React, { ComponentProps } from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { UnconnectedReturnToDashboardButton as ReturnToDashboardButton } from './ReturnToDashboardButton';
 import { ExploreId } from 'app/types/explore';
 
