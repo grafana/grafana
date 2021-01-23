@@ -22,10 +22,12 @@ export interface Props extends HTMLAttributes<HTMLButtonElement> {
   narrow?: boolean;
   /** variant */
   variant?: ButtonVariant;
+  /** Changes border color to orange */
+  active?: boolean;
 }
 
 export const ToolbarButton = forwardRef<HTMLButtonElement, Props>(
-  ({ tooltip, icon, className, children, imgSrc, fullWidth, isOpen, narrow, variant, ...rest }, ref) => {
+  ({ tooltip, icon, className, children, imgSrc, fullWidth, isOpen, narrow, variant, active, ...rest }, ref) => {
     const styles = useStyles(getStyles);
 
     const buttonStyles = cx(
@@ -35,6 +37,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, Props>(
         [styles.narrow]: narrow,
         [styles.primaryVariant]: variant === 'primary',
         [styles.destructiveVariant]: variant === 'destructive',
+        [styles.active]: active,
       },
       className
     );
@@ -89,6 +92,11 @@ const getStyles = (theme: GrafanaTheme) => {
         color: ${theme.colors.text};
         background: ${styleMixins.hoverColor(theme.colors.bg1, theme)};
       }
+    `,
+    active: css`
+      color: ${theme.palette.orangeDark};
+      border-color: ${theme.palette.orangeDark};
+      background-color: transparent;
     `,
     narrow: css`
       padding: 0 ${theme.spacing.xs};

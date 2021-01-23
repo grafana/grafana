@@ -26,6 +26,9 @@ export const List = () => {
           <ToolbarButton icon="cloud" isOpen={false}>
             isOpen = false
           </ToolbarButton>
+          <ToolbarButton icon="clock-nine" active>
+            Active
+          </ToolbarButton>
         </ButtonGroup>
         <br />
         Wrapped in noSpacing ButtonGroup

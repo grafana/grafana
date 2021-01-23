@@ -46,11 +46,11 @@ const getStyles = (theme: GrafanaTheme) => ({
     > a,
     > button {
       border-radius: 0;
-      border-right: 0;
+      border-right-width: 0;
 
       &:last-of-type {
         border-radius: 0 ${theme.border.radius.sm} ${theme.border.radius.sm} 0;
-        border-right: 1px solid ${theme.colors.border2};
+        border-right-width: 1px;
       }
 
       &:first-child {

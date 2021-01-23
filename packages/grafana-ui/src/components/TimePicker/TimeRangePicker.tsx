@@ -66,7 +66,7 @@ export class UnthemedTimeRangePicker extends PureComponent<TimeRangePickerProps,
       onZoom,
       timeZone,
       timeSyncButton,
-      //isSynced,
+      isSynced,
       theme,
       history,
       onChangeTimeZone,
@@ -87,10 +87,16 @@ export class UnthemedTimeRangePicker extends PureComponent<TimeRangePickerProps,
     return (
       <div className={styles.container}>
         <ButtonGroup noSpacing>
-          {hasAbsolute && <ToolbarButton onClick={onMoveBackward} icon="angle-left" narrow />}
+          {hasAbsolute && <ToolbarButton active={isSynced} onClick={onMoveBackward} icon="angle-left" narrow />}
 
           <Tooltip content={<TimePickerTooltip timeRange={value} timeZone={timeZone} />} placement="bottom">
-            <ToolbarButton aria-label="TimePicker Open Button" onClick={this.onOpen} icon="clock-nine" isOpen={isOpen}>
+            <ToolbarButton
+              aria-label="TimePicker Open Button"
+              onClick={this.onOpen}
+              icon="clock-nine"
+              isOpen={isOpen}
+              active={isSynced}
+            >
               <TimePickerButtonLabel {...this.props} />
             </ToolbarButton>
           </Tooltip>
@@ -112,10 +118,10 @@ export class UnthemedTimeRangePicker extends PureComponent<TimeRangePickerProps,
 
           {timeSyncButton}
 
-          {hasAbsolute && <ToolbarButton onClick={onMoveForward} icon="angle-right" narrow />}
+          {hasAbsolute && <ToolbarButton onClick={onMoveForward} icon="angle-right" narrow active={isSynced} />}
 
           <Tooltip content={ZoomOutTooltip} placement="bottom">
-            <ToolbarButton onClick={onZoom} icon="search-minus" />
+            <ToolbarButton onClick={onZoom} icon="search-minus" active={isSynced} />
           </Tooltip>
         </ButtonGroup>
       </div>
