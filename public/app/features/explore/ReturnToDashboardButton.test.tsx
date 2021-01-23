@@ -21,21 +21,21 @@ describe('ReturnToDashboardButton', () => {
     render(<ReturnToDashboardButton {...createProps()} />);
     expect(screen.getAllByTestId(/returnButton/i)).toHaveLength(2);
   });
+
   it('should not render any button if originPanelId is not provided', () => {
     render(<ReturnToDashboardButton {...createProps({ originPanelId: undefined })} />);
     expect(screen.queryByTestId(/returnButton/i)).toBeNull();
   });
+
   it('should not render any button if split view', () => {
     render(<ReturnToDashboardButton {...createProps({ splitted: true })} />);
     expect(screen.queryByTestId(/returnButton/i)).toBeNull();
   });
+
   it('should show option to return to dashboard with changes', () => {
     render(<ReturnToDashboardButton {...createProps()} />);
     const returnWithChangesButton = screen.getByTestId('returnButtonWithChanges');
-    const selectButton = returnWithChangesButton.querySelector('.select-button');
-    if (selectButton) {
-      fireEvent.click(selectButton);
-    }
+    returnWithChangesButton.click();
     expect(screen.getAllByText('Return to panel with changes')).toHaveLength(1);
   });
 });

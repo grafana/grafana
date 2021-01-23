@@ -1,8 +1,7 @@
 import React, { FC } from 'react';
-import classNames from 'classnames';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
-import { Icon, Tooltip, LegacyForms } from '@grafana/ui';
+import { Icon, Tooltip, ButtonSelect, ToolbarButton, ButtonGroup } from '@grafana/ui';
 import { DataQuery } from '@grafana/data';
 
 import kbn from '../../core/utils/kbn';
@@ -11,8 +10,6 @@ import { StoreState } from 'app/types';
 import { ExploreId } from 'app/types/explore';
 import { updateLocation } from 'app/core/actions';
 import { setDashboardQueriesToUpdateOnLoad } from '../dashboard/state/reducers';
-
-const { ButtonSelect } = LegacyForms;
 
 interface Props {
   exploreId: ExploreId;
@@ -36,11 +33,6 @@ export const UnconnectedReturnToDashboardButton: FC<Props> = ({
   if (splitted || !withOriginId) {
     return null;
   }
-
-  const panelReturnClasses = classNames('btn', 'navbar-button', {
-    'btn--radius-right-0': withOriginId,
-    'navbar-button navbar-button--border-right-0': withOriginId,
-  });
 
   const cleanQueries = (queries: DataQuery[]) => {
     return queries.map((query: DataQuery & { context?: string }) => {
@@ -74,26 +66,19 @@ export const UnconnectedReturnToDashboardButton: FC<Props> = ({
   };
 
   return (
-    <div className="explore-toolbar-content-item">
+    <ButtonGroup className="explore-toolbar-content-item" noSpacing>
       <Tooltip content={'Return to panel'} placement="bottom">
-        <button
-          data-testid="returnButton"
-          title={'Return to panel'}
-          className={panelReturnClasses}
-          onClick={() => returnToPanel()}
-        >
+        <ToolbarButton data-testid="returnButton" title={'Return to panel'} onClick={() => returnToPanel()}>
           <Icon name="arrow-left" />
-        </button>
+        </ToolbarButton>
       </Tooltip>
-      <div data-testid="returnButtonWithChanges">
-        <ButtonSelect
-          className="navbar-button--attached btn--radius-left-0$"
-          options={[{ label: 'Return to panel with changes', value: '' }]}
-          onChange={() => returnToPanel({ withChanges: true })}
-          maxMenuHeight={380}
-        />
-      </div>
-    </div>
+      <ButtonSelect
+        data-testid="returnButtonWithChanges"
+        options={[{ label: 'Return to panel with changes', value: '' }]}
+        onChange={() => returnToPanel({ withChanges: true })}
+        maxMenuHeight={380}
+      />
+    </ButtonGroup>
   );
 };
 

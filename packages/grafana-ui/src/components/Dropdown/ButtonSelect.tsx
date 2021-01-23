@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
-import { PopoverContent } from '../../../Tooltip/Tooltip';
+import React, { useState, HTMLAttributes } from 'react';
+import { PopoverContent } from '../Tooltip/Tooltip';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import { ButtonVariant, ToolbarButton } from '../../../Button';
-import { ClickOutsideWrapper } from '../../../ClickOutsideWrapper/ClickOutsideWrapper';
+import { ButtonVariant, ToolbarButton } from '../Button';
+import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 import { css } from 'emotion';
-import { useStyles } from '../../../../themes/ThemeContext';
-import { Menu, MenuItemsGroup } from '../../../Menu/Menu';
+import { useStyles } from '../../themes/ThemeContext';
+import { Menu, MenuItemsGroup } from '../Menu/Menu';
 
-export interface Props<T> {
+export interface Props<T> extends HTMLAttributes<HTMLButtonElement> {
   className?: string;
   options: Array<SelectableValue<T>>;
   value?: SelectableValue<T>;
@@ -18,9 +18,12 @@ export interface Props<T> {
   variant?: ButtonVariant;
 }
 
-/** @internal */
+/**
+ * @internal
+ * A temporary component until we have a proper dropdown component
+ */
 export const ButtonSelect = React.memo(<T,>(props: Props<T>) => {
-  const { className, options, value, onChange, narrow, variant } = props;
+  const { className, options, value, onChange, narrow, variant, ...restProps } = props;
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const styles = useStyles(getStyles);
 
@@ -49,7 +52,14 @@ export const ButtonSelect = React.memo(<T,>(props: Props<T>) => {
 
   return (
     <>
-      <ToolbarButton className={className} isOpen={isOpen} onClick={onToggle} narrow={narrow} variant={variant}>
+      <ToolbarButton
+        className={className}
+        isOpen={isOpen}
+        onClick={onToggle}
+        narrow={narrow}
+        variant={variant}
+        {...restProps}
+      >
         {value?.label || value?.value}
       </ToolbarButton>
       {isOpen && (

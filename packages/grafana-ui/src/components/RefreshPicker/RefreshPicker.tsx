@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Tooltip } from '../Tooltip/Tooltip';
-import { ButtonSelect } from '../Forms/Legacy/Select/ButtonSelect';
+import { ButtonSelect } from '../Dropdown/ButtonSelect';
 import { ButtonGroup, ButtonVariant, ToolbarButton } from '../Button';
 import { selectors } from '@grafana/e2e-selectors';
 
