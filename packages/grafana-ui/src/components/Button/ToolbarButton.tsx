@@ -94,24 +94,19 @@ const getStyles = (theme: GrafanaTheme) => {
       label: toolbar-button;
       display: flex;
       align-items: center;
-      label: toolbar-button;
-      background: ${theme.colors.bg1};
-      border: 1px solid ${theme.colors.border2};
       height: ${theme.height.md}px;
       padding: 0 ${theme.spacing.sm};
       border-radius: ${theme.border.radius.sm};
       line-height: ${theme.height.md - 2}px;
       font-weight: ${theme.typography.weight.semibold};
-
+      border: 1px solid ${theme.colors.border2};
       &:focus {
         outline: none;
       }
-
       &[disabled],
       &:disabled {
         cursor: not-allowed;
         opacity: 0.5;
-
         &:hover {
           color: ${theme.colors.textWeak};
           background: ${theme.colors.bg1};
@@ -121,28 +116,15 @@ const getStyles = (theme: GrafanaTheme) => {
     default: css`
       color: ${theme.colors.textWeak};
       background-color: ${theme.colors.bg1};
-
       &:hover {
         color: ${theme.colors.text};
         background: ${styleMixins.hoverColor(theme.colors.bg1, theme)};
-      }
-
-      &[disabled],
-      &:disabled {
-        cursor: not-allowed;
-        opacity: 0.5;
-
-        &:hover {
-          color: ${theme.colors.textWeak};
-          background: ${theme.colors.bg1};
-        }
       }
     `,
     active: css`
       color: ${theme.palette.orangeDark};
       border-color: ${theme.palette.orangeDark};
       background-color: transparent;
-
       &:hover {
         color: ${theme.colors.text};
         background: ${styleMixins.hoverColor(theme.colors.bg1, theme)};
@@ -169,11 +151,6 @@ const getStyles = (theme: GrafanaTheme) => {
     `,
     content: css`
       flex-grow: 1;
-      display: none;
-
-      @media only screen and (min-width: ${theme.breakpoints.md}) {
-        display: block;
-      }
     `,
     contentWithIcon: css`
       padding-left: ${theme.spacing.sm};

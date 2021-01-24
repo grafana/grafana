@@ -97,6 +97,7 @@ export function LiveTailButton(props: LiveTailButtonProps) {
   const theme = useTheme();
   const styles = getStyles(theme);
   const buttonVariant = isLive && !isPaused ? 'active' : 'default';
+
   const onClickMain = isLive ? (isPaused ? resume : pause) : start;
 
   return (

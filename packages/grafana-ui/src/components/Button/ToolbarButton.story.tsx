@@ -54,6 +54,15 @@ export const List = () => {
           </ToolbarButton>
         </ToolbarButtonRow>
         <br />
+        Variants
+        <ToolbarButtonRow>
+          {variants.map((variant) => (
+            <ToolbarButton icon="sync" tooltip="Sync" variant={variant} key={variant}>
+              {variant}
+            </ToolbarButton>
+          ))}
+        </ToolbarButtonRow>
+        <br />
         Wrapped in noSpacing ButtonGroup
         <ButtonGroup>
           <ToolbarButton icon="clock-nine" tooltip="Time picker">
