@@ -13,7 +13,7 @@ export default {
 
 export const List = () => {
   const theme = useTheme();
-  const variants: ToolbarButtonVariant[] = ['default', 'active', 'primary', 'destructive', 'transparent'];
+  const variants: ToolbarButtonVariant[] = ['default', 'active', 'primary', 'destructive'];
 
   return (
     <div style={{ background: theme.colors.dashboardBg, padding: '32px' }}>

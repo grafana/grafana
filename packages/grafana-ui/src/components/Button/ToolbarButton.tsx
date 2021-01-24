@@ -27,7 +27,7 @@ export interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   iconOnly?: boolean;
 }
 
-export type ToolbarButtonVariant = 'default' | 'primary' | 'destructive' | 'transparent' | 'active';
+export type ToolbarButtonVariant = 'default' | 'primary' | 'destructive' | 'active';
 
 export const ToolbarButton = forwardRef<HTMLButtonElement, Props>(
   (
@@ -142,16 +142,6 @@ const getStyles = (theme: GrafanaTheme) => {
     destructive: css`
       border-color: ${destructiveVariant.borderColor};
       ${destructiveVariant.variantStyles}
-    `,
-    transparent: css`
-      background: transparent;
-      border: none;
-      color: ${theme.colors.textWeak};
-
-      &:hover {
-        color: ${theme.colors.text};
-        background: ${styleMixins.hoverColor(theme.colors.bg1, theme)};
-      }
     `,
     narrow: css`
       padding: 0 ${theme.spacing.xs};
