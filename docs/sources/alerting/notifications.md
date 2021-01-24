@@ -71,6 +71,7 @@ Threema | `threema` | yes, external only | no
 VictorOps | `victorops` | yes, external only | no
 [Webhook](#webhook) | `webhook` | yes, external only | yes
 [Zenduty](#zenduty) | `webhook` | yes, external only | yes
+[Wecom](#wecom) | `wecom` | yes, external only | no
 
 ### Email
 
@@ -216,6 +217,14 @@ Alertmanager handles alerts sent by client applications such as Prometheus serve
 ### Sensu Go
 
 [Sensu](https://sensu.io) is a complete solution for monitoring and observability at scale. Sensu Go is designed to give you visibility into everything you care about: traditional server closets, containers, applications, the cloud, and more. Grafana notifications can be sent to Sensu Go as events via the API. This operation requires an API Key. Refer to the [Sensu Go documentation](https://docs.sensu.io/sensu-go/latest/operations/control-access/use-apikeys/#api-key-authentication) for information on creating this key.
+
+### WeCom
+
+In WeCom PC Client:
+
+1. Right Click the group chat that you wanted to add the robot
+2. Click "Add Group Robot", select "New Robot" and give your robot a name. Click "Add Robot"
+3. There should be a Webhook URL in the panel. Click "Copy URL" and paste it in Grafana WeCom setting page and click "finish"
 
 ## Enable images in notifications {#external-image-store}
 
