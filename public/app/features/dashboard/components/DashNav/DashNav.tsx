@@ -8,7 +8,7 @@ import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
 // Components
 import { DashNavButton } from './DashNavButton';
 import { DashNavTimeControls } from './DashNavTimeControls';
-import { Icon, ModalsController } from '@grafana/ui';
+import { ButtonGroup, Icon, ModalsController, ToolbarButton } from '@grafana/ui';
 import { textUtil } from '@grafana/data';
 import { BackButton } from 'app/core/components/BackButton/BackButton';
 // State
@@ -223,23 +223,12 @@ class DashNav extends PureComponent<Props> {
 
     const buttons: ReactNode[] = [];
     if (canEdit) {
-      buttons.push(
-        <DashNavButton
-          classSuffix="save"
-          tooltip="Add panel"
-          icon="panel-add"
-          onClick={onAddPanel}
-          iconType="mono"
-          iconSize="xl"
-          key="button-panel-add"
-        />
-      );
+      buttons.push(<ToolbarButton tooltip="Add panel" icon="panel-add" onClick={onAddPanel} key="button-panel-add" />);
       buttons.push(
         <ModalsController key="button-save">
           {({ showModal, hideModal }) => (
-            <DashNavButton
+            <ToolbarButton
               tooltip="Save dashboard"
-              classSuffix="save"
               icon="save"
               onClick={() => {
                 showModal(SaveDashboardModalProxy, {
@@ -255,10 +244,9 @@ class DashNav extends PureComponent<Props> {
 
     if (snapshotUrl) {
       buttons.push(
-        <DashNavButton
+        <ToolbarButton
           tooltip="Open original dashboard"
-          classSuffix="snapshot-origin"
-          href={textUtil.sanitizeUrl(snapshotUrl)}
+          onClick={() => this.gotoSnapshotOrigin(snapshotUrl)}
           icon="link"
           key="button-snapshot"
         />
@@ -267,18 +255,16 @@ class DashNav extends PureComponent<Props> {
 
     if (showSettings) {
       buttons.push(
-        <DashNavButton
-          tooltip="Dashboard settings"
-          classSuffix="settings"
-          icon="cog"
-          onClick={this.onOpenSettings}
-          key="button-settings"
-        />
+        <ToolbarButton tooltip="Dashboard settings" icon="cog" onClick={this.onOpenSettings} key="button-settings" />
       );
     }
 
     this.addCustomContent(customRightActions, buttons);
     return buttons;
+  }
+
+  gotoSnapshotOrigin(snapshotUrl: string) {
+    window.location.href = textUtil.sanitizeUrl(snapshotUrl);
   }
 
   render() {
@@ -290,32 +276,24 @@ class DashNav extends PureComponent<Props> {
         {this.renderDashboardTitleSearchButton()}
 
         {this.playlistSrv.isPlaying && (
-          <div className="navbar-buttons navbar-buttons--playlist">
-            <DashNavButton
+          <ButtonGroup>
+            <ToolbarButton
               tooltip="Go to previous dashboard"
-              classSuffix="tight"
               icon="step-backward"
               onClick={this.onPlaylistPrev}
+              narrow
             />
-            <DashNavButton
-              tooltip="Stop playlist"
-              classSuffix="tight"
-              icon="square-shape"
-              onClick={this.onPlaylistStop}
-            />
-            <DashNavButton
-              tooltip="Go to next dashboard"
-              classSuffix="tight"
-              icon="forward"
-              onClick={this.onPlaylistNext}
-            />
-          </div>
+            <ToolbarButton icon="square-shape" onClick={this.onPlaylistStop}>
+              Stop playlist
+            </ToolbarButton>
+            <ToolbarButton tooltip="Go to next dashboard" icon="forward" onClick={this.onPlaylistNext} narrow />
+          </ButtonGroup>
         )}
 
         <div className="navbar-buttons navbar-buttons--actions">{this.renderRightActionsButton()}</div>
 
         <div className="navbar-buttons navbar-buttons--tv">
-          <DashNavButton tooltip="Cycle view mode" classSuffix="tv" icon="monitor" onClick={this.onToggleTVMode} />
+          <ToolbarButton tooltip="Cycle view mode" icon="monitor" onClick={this.onToggleTVMode} />
         </div>
 
         {!dashboard.timepicker.hidden && (

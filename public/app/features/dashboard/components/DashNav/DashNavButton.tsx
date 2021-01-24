@@ -18,13 +18,6 @@ interface Props {
   noBorder?: boolean;
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
-  noBorderContainer: css`
-    padding: 0 ${theme.spacing.xs};
-    display: flex;
-  `,
-}));
-
 export const DashNavButton: FunctionComponent<Props> = ({
   icon,
   iconType,
@@ -76,3 +69,10 @@ export const DashNavButton: FunctionComponent<Props> = ({
     </Tooltip>
   );
 };
+
+const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+  noBorderContainer: css`
+    padding: 0 ${theme.spacing.xs};
+    display: flex;
+  `,
+}));

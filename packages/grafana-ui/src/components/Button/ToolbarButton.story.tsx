@@ -1,8 +1,9 @@
 import React from 'react';
-import { ToolbarButton, ButtonGroup, useTheme, VerticalGroup, HorizontalGroup } from '@grafana/ui';
+import { ToolbarButton, ButtonGroup, VerticalGroup, HorizontalGroup } from '@grafana/ui';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { ToolbarButtonRow } from './ToolbarButtonRow';
 import { ToolbarButtonVariant } from './ToolbarButton';
+import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 
 export default {
   title: 'Buttons/ToolbarButton',
@@ -12,11 +13,10 @@ export default {
 };
 
 export const List = () => {
-  const theme = useTheme();
   const variants: ToolbarButtonVariant[] = ['default', 'active', 'primary', 'destructive'];
 
   return (
-    <div style={{ background: theme.colors.dashboardBg, padding: '32px' }}>
+    <DashboardStoryCanvas>
       <VerticalGroup>
         Button states
         <ToolbarButtonRow>
@@ -92,6 +92,6 @@ export const List = () => {
           </ButtonGroup>
         </HorizontalGroup>
       </VerticalGroup>
-    </div>
+    </DashboardStoryCanvas>
   );
 };
