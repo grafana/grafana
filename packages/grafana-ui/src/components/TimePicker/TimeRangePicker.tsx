@@ -76,17 +76,11 @@ export class UnthemedTimeRangePicker extends PureComponent<TimeRangePickerProps,
     const { isOpen } = this.state;
     const styles = getStyles(theme);
     const hasAbsolute = isDateTime(value.raw.from) || isDateTime(value.raw.to);
-    // const syncedTimePicker = timeSyncButton && isSynced;
-    // const timePickerIconClass = cx({ ['icon-brand-gradient']: syncedTimePicker });
-    // const timePickerButtonClass = cx('btn navbar-button navbar-button--tight', {
-    //   [`btn--radius-right-0 ${styles.noRightBorderStyle}`]: !!timeSyncButton,
-    //   [`explore-active-button`]: syncedTimePicker,
-    // });
-    // className={cx(styles.clockIcon, timePickerIconClass)}
+    const variant = isSynced ? 'active' : 'default';
 
     return (
       <ButtonGroup className={styles.container}>
-        {hasAbsolute && <ToolbarButton active={isSynced} onClick={onMoveBackward} icon="angle-left" narrow />}
+        {hasAbsolute && <ToolbarButton variant={variant} onClick={onMoveBackward} icon="angle-left" narrow />}
 
         <Tooltip content={<TimePickerTooltip timeRange={value} timeZone={timeZone} />} placement="bottom">
           <ToolbarButton
@@ -94,7 +88,7 @@ export class UnthemedTimeRangePicker extends PureComponent<TimeRangePickerProps,
             onClick={this.onOpen}
             icon="clock-nine"
             isOpen={isOpen}
-            active={isSynced}
+            variant={variant}
           >
             <TimePickerButtonLabel {...this.props} />
           </ToolbarButton>
@@ -117,10 +111,10 @@ export class UnthemedTimeRangePicker extends PureComponent<TimeRangePickerProps,
 
         {timeSyncButton}
 
-        {hasAbsolute && <ToolbarButton onClick={onMoveForward} icon="angle-right" narrow active={isSynced} />}
+        {hasAbsolute && <ToolbarButton onClick={onMoveForward} icon="angle-right" narrow variant={variant} />}
 
         <Tooltip content={ZoomOutTooltip} placement="bottom">
-          <ToolbarButton onClick={onZoom} icon="search-minus" active={isSynced} />
+          <ToolbarButton onClick={onZoom} icon="search-minus" variant={variant} />
         </Tooltip>
       </ButtonGroup>
     );

@@ -96,6 +96,7 @@ export function LiveTailButton(props: LiveTailButtonProps) {
   const { start, pause, resume, isLive, isPaused, stop, splitted } = props;
   const theme = useTheme();
   const styles = getStyles(theme);
+  const buttonVariant = isLive && !isPaused ? 'active' : 'default';
 
   const onClickMain = isLive ? (isPaused ? resume : pause) : start;
 
@@ -104,7 +105,7 @@ export function LiveTailButton(props: LiveTailButtonProps) {
       <Tooltip content={isLive ? <>Pause the live stream</> : <>Live stream your logs</>} placement="bottom">
         <ToolbarButton
           iconOnly={splitted}
-          active={isLive && !isPaused}
+          variant={buttonVariant}
           icon={!isLive ? 'play' : 'pause'}
           onClick={onClickMain}
         >
@@ -125,7 +126,7 @@ export function LiveTailButton(props: LiveTailButtonProps) {
         }}
       >
         <Tooltip content={<>Stop and exit the live stream</>} placement="bottom">
-          <ToolbarButton active={isLive && !isPaused} onClick={stop} icon="square-shape" />
+          <ToolbarButton variant={buttonVariant} onClick={stop} icon="square-shape" />
         </Tooltip>
       </CSSTransition>
     </ButtonGroup>

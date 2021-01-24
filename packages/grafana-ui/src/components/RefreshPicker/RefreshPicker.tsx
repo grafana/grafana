@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { ButtonSelect } from '../Dropdown/ButtonSelect';
-import { ButtonGroup, ButtonVariant, ToolbarButton } from '../Button';
+import { ButtonGroup, ToolbarButton, ToolbarButtonVariant } from '../Button';
 import { selectors } from '@grafana/e2e-selectors';
 
 // Default intervals used in the refresh picker component
@@ -47,7 +47,7 @@ export class RefreshPicker extends PureComponent<Props> {
     }
   };
 
-  getVariant(): ButtonVariant | undefined {
+  getVariant(): ToolbarButtonVariant {
     if (this.props.isLive) {
       return 'primary';
     }
@@ -57,7 +57,7 @@ export class RefreshPicker extends PureComponent<Props> {
     if (this.props.primary) {
       return 'primary';
     }
-    return undefined;
+    return 'default';
   }
 
   render() {
