@@ -32,7 +32,7 @@ e2e.scenario({
             .labels()
             .should('be.visible')
             .last()
-            .should(element => {
+            .should((element) => {
               timesInUtc[title] = element.text();
             })
         );
@@ -43,18 +43,11 @@ e2e.scenario({
     e2e.components.TimeZonePicker.container()
       .should('be.visible')
       .within(() => {
-        e2e.components.Select.singleValue()
-          .should('be.visible')
-          .should('have.text', fromTimeZone);
+        e2e.components.Select.singleValue().should('be.visible').should('have.text', fromTimeZone);
 
-        e2e.components.Select.input()
-          .should('be.visible')
-          .click();
+        e2e.components.Select.input().should('be.visible').click();
 
-        e2e.components.Select.option()
-          .should('be.visible')
-          .contains(toTimeZone)
-          .click();
+        e2e.components.Select.option().should('be.visible').contains(toTimeZone).click();
       });
 
     e2e.components.BackButton.backArrow().click();
@@ -67,7 +60,7 @@ e2e.scenario({
             .labels()
             .should('be.visible')
             .last()
-            .should(element => {
+            .should((element) => {
               const utc = timesInUtc[title];
               const tz = element.text();
               const isCorrect = isTimeCorrect(utc, tz, offset);
@@ -81,14 +74,9 @@ e2e.scenario({
 const isTimeCorrect = (utc: string, tz: string, offset: number): boolean => {
   const minutes = 1000 * 60;
 
-  const a = Cypress.moment(utc, 'HH:mm')
-    .set('seconds', 0)
-    .set('milliseconds', 0);
+  const a = Cypress.moment(utc, 'HH:mm').set('seconds', 0).set('milliseconds', 0);
 
-  const b = Cypress.moment(tz, 'HH:mm')
-    .set('seconds', 0)
-    .set('milliseconds', 0)
-    .add('hours', offset);
+  const b = Cypress.moment(tz, 'HH:mm').set('seconds', 0).set('milliseconds', 0).add('hours', offset);
 
   return a.diff(b, 'minutes') <= 6 * minutes;
 };

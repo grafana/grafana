@@ -70,13 +70,13 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
       reducer: ReducerID.sum,
     },
   },
-  operator: options => outerSource => {
+  operator: (options) => (outerSource) => {
     const operator =
       options && options.timeSeries !== false ? ensureColumnsTransformer.operator(null) : noopTransformer.operator({});
 
     return outerSource.pipe(
       operator,
-      map(data => {
+      map((data) => {
         const mode = options.mode ?? CalculateFieldMode.ReduceRow;
         let creator: ValuesCreator | undefined = undefined;
 
@@ -91,7 +91,7 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
           return data;
         }
 
-        return data.map(frame => {
+        return data.map((frame) => {
           // delegate field creation to the specific function
           const values = creator!(frame);
           if (!values) {

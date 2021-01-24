@@ -23,7 +23,7 @@ export const usePanelLatestData = (panel: PanelModel, options: GetDataOptions): 
       .getQueryRunner()
       .getData(options)
       .subscribe({
-        next: data => setLatestData(data),
+        next: (data) => setLatestData(data),
       });
 
     return () => {

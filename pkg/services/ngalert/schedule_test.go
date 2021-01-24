@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -26,7 +27,13 @@ func TestAlertingTicker(t *testing.T) {
 	t.Cleanup(registry.ClearOverrides)
 
 	mockedClock := clock.NewMock()
-	ng.schedule = newScheduler(mockedClock, time.Second, log.New("ngalert.schedule.test"), nil)
+	schefCfg := schedulerCfg{
+		c:            mockedClock,
+		baseInterval: time.Second,
+		logger:       log.New("ngalert.schedule.test"),
+		evaluator:    eval.Evaluator{Cfg: ng.Cfg},
+	}
+	ng.schedule = newScheduler(schefCfg)
 
 	alerts := make([]*AlertDefinition, 0)
 
@@ -37,9 +44,14 @@ func TestAlertingTicker(t *testing.T) {
 	alerts = append(alerts, createTestAlertDefinition(t, ng, 1))
 
 	evalAppliedCh := make(chan evalAppliedInfo, len(alerts))
+	stopAppliedCh := make(chan alertDefinitionKey, len(alerts))
 
 	ng.schedule.evalApplied = func(alertDefKey alertDefinitionKey, now time.Time) {
 		evalAppliedCh <- evalAppliedInfo{alertDefKey: alertDefKey, now: now}
+	}
+
+	ng.schedule.stopApplied = func(alertDefKey alertDefinitionKey) {
+		stopAppliedCh <- alertDefKey
 	}
 
 	ctx := context.Background()
@@ -92,6 +104,10 @@ func TestAlertingTicker(t *testing.T) {
 		tick := advanceClock(t, mockedClock)
 		assertEvalRun(t, evalAppliedCh, tick, expectedAlertDefinitionsEvaluated...)
 	})
+	expectedAlertDefinitionsStopped := []alertDefinitionKey{alerts[1].getKey()}
+	t.Run(fmt.Sprintf("on 5th tick alert definitions: %s should be stopped", concatenate(expectedAlertDefinitionsStopped)), func(t *testing.T) {
+		assertStopRun(t, stopAppliedCh, expectedAlertDefinitionsStopped...)
+	})
 
 	expectedAlertDefinitionsEvaluated = []alertDefinitionKey{alerts[0].getKey()}
 	t.Run(fmt.Sprintf("on 6th tick alert definitions: %s should be evaluated", concatenate(expectedAlertDefinitionsEvaluated)), func(t *testing.T) {
@@ -137,6 +153,33 @@ func assertEvalRun(t *testing.T, ch <-chan evalAppliedInfo, tick time.Time, keys
 	}
 }
 
+func assertStopRun(t *testing.T, ch <-chan alertDefinitionKey, keys ...alertDefinitionKey) {
+	timeout := time.After(time.Second)
+
+	expected := make(map[alertDefinitionKey]struct{}, len(keys))
+	for _, k := range keys {
+		expected[k] = struct{}{}
+	}
+
+	for {
+		select {
+		case alertDefKey := <-ch:
+			_, ok := expected[alertDefKey]
+			t.Logf("alert definition: %v stopped", alertDefKey)
+			assert.True(t, ok)
+			delete(expected, alertDefKey)
+			if len(expected) == 0 {
+				return
+			}
+		case <-timeout:
+			if len(expected) == 0 {
+				return
+			}
+			t.Fatal("cycle has expired")
+		}
+	}
+}
+
 func advanceClock(t *testing.T, mockedClock *clock.Mock) time.Time {
 	mockedClock.Add(time.Second)
 	return mockedClock.Now()
@@ -148,5 +191,5 @@ func concatenate(keys []alertDefinitionKey) string {
 	for _, k := range keys {
 		s = append(s, k.String())
 	}
-	return fmt.Sprintf("[%s]", strings.TrimLeft(strings.Join(s, ","), ","))
+	return fmt.Sprintf("[%s]", strings.Join(s, ","))
 }

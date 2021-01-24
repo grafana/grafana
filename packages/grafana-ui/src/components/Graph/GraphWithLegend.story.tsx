@@ -3,8 +3,7 @@ import React from 'react';
 import { select, text } from '@storybook/addon-knobs';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { GraphWithLegend, GraphWithLegendProps } from './GraphWithLegend';
-
-import { LegendPlacement, LegendDisplayMode } from '../Legend/Legend';
+import { LegendPlacement, LegendDisplayMode } from '../VizLegend/types';
 import { GraphSeriesXY, FieldType, ArrayVector, dateTime, FieldColorModeId } from '@grafana/data';
 
 export default {
@@ -110,11 +109,11 @@ const getStoriesKnobs = () => {
 export const graphWithLegend = () => {
   const { legendPlacement, rightAxisSeries, renderLegendAsTable } = getStoriesKnobs();
   const props: GraphWithLegendProps = {
-    series: series.map(s => {
+    series: series.map((s) => {
       if (
         rightAxisSeries
           .split(',')
-          .map(s => s.trim())
+          .map((s) => s.trim())
           .indexOf(s.label.split('-')[0]) > -1
       ) {
         s.yAxis = { index: 2 };

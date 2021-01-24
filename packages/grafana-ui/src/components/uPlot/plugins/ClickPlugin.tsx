@@ -47,7 +47,7 @@ export const ClickPlugin: React.FC<ClickPluginProps> = ({ id, onClick, children 
     const unregister = pluginsApi.registerPlugin({
       id: pluginId,
       hooks: {
-        init: u => {
+        init: (u) => {
           pluginLog(pluginId, false, 'init');
 
           // for naive click&drag check
@@ -83,7 +83,7 @@ export const ClickPlugin: React.FC<ClickPluginProps> = ({ id, onClick, children 
           if (pts.length > 0) {
             pts.forEach((pt, i) => {
               // TODO: remove listeners on unmount
-              pt.addEventListener('click', e => {
+              pt.addEventListener('click', (e) => {
                 const seriesIdx = i + 1;
                 const dataIdx = u.cursor.idx;
 

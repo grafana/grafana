@@ -44,7 +44,7 @@ export class ConfigEditor extends PureComponent<Props> {
     const { options, onOptionsChange } = this.props;
 
     const currentVersion =
-      graphiteVersions.find(item => item.value === options.jsonData.graphiteVersion) ?? graphiteVersions[2];
+      graphiteVersions.find((item) => item.value === options.jsonData.graphiteVersion) ?? graphiteVersions[2];
 
     return (
       <>
@@ -73,7 +73,7 @@ export class ConfigEditor extends PureComponent<Props> {
               <InlineFormLabel tooltip={this.renderTypeHelp}>Type</InlineFormLabel>
               <Select
                 options={graphiteTypes}
-                value={graphiteTypes.find(type => type.value === options.jsonData.graphiteType)}
+                value={graphiteTypes.find((type) => type.value === options.jsonData.graphiteType)}
                 width={8}
                 onChange={onUpdateDatasourceJsonDataOptionSelect(this.props, 'graphiteType')}
               />

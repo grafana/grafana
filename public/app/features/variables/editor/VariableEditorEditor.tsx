@@ -52,7 +52,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
 
   componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<{}>, snapshot?: any): void {
     if (!isEqual(prevProps.editor.errors, this.props.editor.errors)) {
-      Object.values(this.props.editor.errors).forEach(error => {
+      Object.values(this.props.editor.errors).forEach((error) => {
         appEvents.emit(AppEvents.alertWarning, ['Validation', error]);
       });
     }

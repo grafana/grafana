@@ -4,37 +4,38 @@ import (
 	"context"
 	"errors"
 
+	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func (hs *HTTPServer) AdminProvisioningReloadDashboards(c *models.ReqContext) Response {
+func (hs *HTTPServer) AdminProvisioningReloadDashboards(c *models.ReqContext) response.Response {
 	err := hs.ProvisioningService.ProvisionDashboards()
 	if err != nil && !errors.Is(err, context.Canceled) {
-		return Error(500, "", err)
+		return response.Error(500, "", err)
 	}
-	return Success("Dashboards config reloaded")
+	return response.Success("Dashboards config reloaded")
 }
 
-func (hs *HTTPServer) AdminProvisioningReloadDatasources(c *models.ReqContext) Response {
+func (hs *HTTPServer) AdminProvisioningReloadDatasources(c *models.ReqContext) response.Response {
 	err := hs.ProvisioningService.ProvisionDatasources()
 	if err != nil {
-		return Error(500, "", err)
+		return response.Error(500, "", err)
 	}
-	return Success("Datasources config reloaded")
+	return response.Success("Datasources config reloaded")
 }
 
-func (hs *HTTPServer) AdminProvisioningReloadPlugins(c *models.ReqContext) Response {
+func (hs *HTTPServer) AdminProvisioningReloadPlugins(c *models.ReqContext) response.Response {
 	err := hs.ProvisioningService.ProvisionPlugins()
 	if err != nil {
-		return Error(500, "Failed to reload plugins config", err)
+		return response.Error(500, "Failed to reload plugins config", err)
 	}
-	return Success("Plugins config reloaded")
+	return response.Success("Plugins config reloaded")
 }
 
-func (hs *HTTPServer) AdminProvisioningReloadNotifications(c *models.ReqContext) Response {
+func (hs *HTTPServer) AdminProvisioningReloadNotifications(c *models.ReqContext) response.Response {
 	err := hs.ProvisioningService.ProvisionNotifications()
 	if err != nil {
-		return Error(500, "", err)
+		return response.Error(500, "", err)
 	}
-	return Success("Notifications config reloaded")
+	return response.Success("Notifications config reloaded")
 }

@@ -18,8 +18,8 @@ You can sign your plugin as a _public_ or a _private_ plugin. In both cases, you
 
 Plugins signed under the community or commercial signature level are considered _public plugins_. Public plugins are published on [Grafana Plugin](https://grafana.com/plugins). For more information about installing public plugins, refer to [Install Grafana plugins]({{< relref "../../plugins/installation.md" >}}).
 
-1. Request a plugin signature level by sending an email to [plugins@grafana.com](mailto:plugins@grafana.com).
-
+1. Submit your plugin for review by creating a pull request in the [grafana-plugin-repository](https://github.com/grafana/grafana-plugin-repository).
+1. When your plugin is approved, you're granted a [plugin signature level](#plugin-signature-levels). **Without a plugin signature level, you won't be able to sign your plugin**.
 1. Sign the plugin with the API key you just created. Grafana Toolkit creates a [MANIFEST.txt](#plugin-manifest) file in the `dist` directory of your plugin.
 
    ```
@@ -98,3 +98,15 @@ T6scfmuhWC/TOcm83EVoCzIV3R5dOTKHqkjIUg==
 =GdNq
 -----END PGP SIGNATURE-----
 ```
+
+## Troubleshooting issues while signing your plugin
+
+### Why am I getting a "Modified signature" in Grafana?
+
+Due to an issue when signing the plugin on Windows, grafana-toolkit generates an invalid MANIFEST.txt. You can fix this by replacing all double backslashes, `\\`, with a forward slash, `/` in the MANIFEST.txt file. You need to do this every time you sign your plugin.
+
+### Error signing manifest: Field is required: rootUrls
+
+If you're trying to sign a **public** plugin, this means that your plugin doesn't have a plugin signature level assigned to it yet. A Grafana team member will assign a signature level to your plugin once it has been reviewed and approved. For more information, refer to [Sign a public plugin](#sign-a-public-plugin).
+
+If you're trying to sign a **private** plugin, this means that you need to add a `rootUrls` flag to the `plugin:sign` command. The `rootUrls` must match the [root_url]({{< relref "../../administration/configuration.md#root_url" >}}) configuration. For more information, refer to [Sign a private plugin](#sign-a-private-plugin).

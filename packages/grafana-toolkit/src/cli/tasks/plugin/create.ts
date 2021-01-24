@@ -49,8 +49,8 @@ export const getPluginId = (pluginDetails: PluginDetails) =>
 export const getPluginKeywords = (pluginDetails: PluginDetails) =>
   pluginDetails.keywords
     .split(',')
-    .map(k => k.trim())
-    .filter(k => k !== '');
+    .map((k) => k.trim())
+    .filter((k) => k !== '');
 
 export const verifyGitExists = async () => {
   return new Promise((resolve, reject) => {

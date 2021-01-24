@@ -1,4 +1,4 @@
-import { InlineField, Input, Switch } from '@grafana/ui';
+import { InlineField, Input, InlineSwitch } from '@grafana/ui';
 import React, { FunctionComponent, ComponentProps, useState } from 'react';
 import { extendedStats } from '../../../../query_def';
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
@@ -38,7 +38,7 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetri
       {metric.type === 'serial_diff' && (
         <InlineField label="Lag">
           <Input
-            onBlur={e => dispatch(changeMetricSetting(metric, 'lag', parseInt(e.target.value, 10)))}
+            onBlur={(e) => dispatch(changeMetricSetting(metric, 'lag', parseInt(e.target.value, 10)))}
             defaultValue={metric.settings?.lag}
           />
         </InlineField>
@@ -63,7 +63,7 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetri
       {(metric.type === 'raw_data' || metric.type === 'raw_document') && (
         <InlineField label="Size" {...inlineFieldProps}>
           <Input
-            onBlur={e => dispatch(changeMetricSetting(metric, 'size', e.target.value))}
+            onBlur={(e) => dispatch(changeMetricSetting(metric, 'size', e.target.value))}
             defaultValue={metric.settings?.size ?? metricAggregationConfig['raw_data'].defaults.settings?.size}
           />
         </InlineField>
@@ -75,11 +75,11 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetri
 
       {metric.type === 'extended_stats' && (
         <>
-          {extendedStats.map(stat => (
+          {extendedStats.map((stat) => (
             <ExtendedStatSetting
               key={stat.value}
               stat={stat}
-              onChange={checked => dispatch(changeMetricMeta(metric, stat.value, checked))}
+              onChange={(checked) => dispatch(changeMetricMeta(metric, stat.value, checked))}
               value={
                 metric.meta?.[stat.value] !== undefined
                   ? !!metric.meta?.[stat.value]
@@ -95,7 +95,7 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetri
       {metric.type === 'percentiles' && (
         <InlineField label="Percentiles" {...inlineFieldProps}>
           <Input
-            onBlur={e => dispatch(changeMetricSetting(metric, 'percents', e.target.value.split(',').filter(Boolean)))}
+            onBlur={(e) => dispatch(changeMetricSetting(metric, 'percents', e.target.value.split(',').filter(Boolean)))}
             defaultValue={
               metric.settings?.percents || metricAggregationConfig['percentiles'].defaults.settings?.percents
             }
@@ -132,7 +132,11 @@ const ExtendedStatSetting: FunctionComponent<ExtendedStatSettingProps> = ({ stat
 
   return (
     <InlineField label={stat.label} {...inlineFieldProps} key={stat.value}>
-      <Switch id={id} onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.checked)} value={value} />
+      <InlineSwitch
+        id={id}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.checked)}
+        value={value}
+      />
     </InlineField>
   );
 };

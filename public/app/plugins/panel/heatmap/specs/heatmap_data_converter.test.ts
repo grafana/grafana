@@ -88,7 +88,7 @@ describe('calculateBucketSize', () => {
     });
 
     it('should properly calculate bucket size', () => {
-      _.each(ctx.bounds_set, b => {
+      _.each(ctx.bounds_set, (b) => {
         const bucketSize = calculateBucketSize(b.bounds, ctx.logBase);
         expect(bucketSize).toBe(b.size);
       });
@@ -108,7 +108,7 @@ describe('calculateBucketSize', () => {
     });
 
     it('should properly calculate bucket size', () => {
-      _.each(ctx.bounds_set, b => {
+      _.each(ctx.bounds_set, (b) => {
         const bucketSize = calculateBucketSize(b.bounds, ctx.logBase);
         expect(isEqual(bucketSize, b.size)).toBe(true);
       });
@@ -333,10 +333,10 @@ describe('Histogram converter', () => {
       const heatmap = histogramToHeatmap(ctx.series);
       const bucketLabels = _.map(heatmap['1422774000000'].buckets, (b, label) => label);
       const bucketYs = _.map(heatmap['1422774000000'].buckets, 'y');
-      const bucketBottoms = _.map(heatmap['1422774000000'].buckets, b => b.bounds.bottom);
+      const bucketBottoms = _.map(heatmap['1422774000000'].buckets, (b) => b.bounds.bottom);
       const expectedBounds = [0, 1, 2];
 
-      expect(bucketLabels).toEqual(_.map(expectedBounds, b => b.toString()));
+      expect(bucketLabels).toEqual(_.map(expectedBounds, (b) => b.toString()));
       expect(bucketYs).toEqual(expectedBounds);
       expect(bucketBottoms).toEqual(expectedBounds);
     });

@@ -508,6 +508,14 @@ Set to `true` to enable the X-Content-Type-Options response header. The X-Conten
 
 Set to `false` to disable the X-XSS-Protection header, which tells browsers to stop pages from loading when they detect reflected cross-site scripting (XSS) attacks. The default value is `false` until the next minor release, `6.3`.
 
+### content_security_policy
+
+Set to `true` to add the Content-Security-Policy header to your requests. CSP allows to control resources that the user agent can load and helps prevent XSS attacks.
+
+### content_security_policy_template
+
+Set Content Security Policy template used when adding the Content-Security-Policy header to your requests. `$NONCE` in the template includes a random nonce.
+
 <hr />
 
 ## [snapshots]
@@ -1505,3 +1513,8 @@ Set this to `true` to have date formats automatically derived from your browser 
 ### default_timezone
 
 Used as the default time zone for user preferences. Can be either `browser` for the browser local time zone or a time zone name from the IANA Time Zone database, such as `UTC` or `Europe/Amsterdam`.
+
+## [expressions]
+>Note: This is available in Grafana v7.4 and later versions.
+### enabled
+Set this to `false` to disable expressions and hide them in the Grafana UI. Default is `true`.

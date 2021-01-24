@@ -1783,11 +1783,6 @@ Licensed under the MIT license.
             axis.tickDecimals = Math.max(0, maxDec != null ? maxDec : dec);
             axis.tickSize = opts.tickSize || size;
 
-            // grafana addition
-            if (opts.tickDecimals === null || opts.tickDecimals === undefined) {
-              axis.scaledDecimals = axis.tickDecimals + dec;
-            }
-
             // Time mode was moved to a plug-in in 0.8, and since so many people use it
             // we'll add an especially friendly reminder to make sure they included it.
 
@@ -3059,7 +3054,7 @@ Licensed under the MIT license.
             if (!e.cancelable) {
                 return;
             }
-        
+
             if (!eventHolder.is(e.target) && eventHolder.has(e.target).length === 0) {
                 triggerClickHoverEvent("plotleave", e, function (s) { false; });
                 return;
@@ -3080,7 +3075,7 @@ Licensed under the MIT license.
             }
 
             var original = e.originalEvent;
-            
+
             if (original.changedTouches.length === 0) {
                 return e;
             }

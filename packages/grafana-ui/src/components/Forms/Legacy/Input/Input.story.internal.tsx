@@ -31,7 +31,7 @@ const Wrapper = () => {
       },
     ],
   };
-  return <Input value={value} onChange={e => setValue(e.currentTarget.value)} validationEvents={validations} />;
+  return <Input value={value} onChange={(e) => setValue(e.currentTarget.value)} validationEvents={validations} />;
 };
 
 export default {

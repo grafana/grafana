@@ -1,8 +1,8 @@
 {
   "type": "panel",
-  "name": "Timeseries",
+  "name": "Time series",
   "id": "timeseries",
-  "state": "alpha",
+  "state": "beta",
 
   "info": {
     "author": {
@@ -10,8 +10,8 @@
       "url": "https://grafana.com"
     },
     "logos": {
-      "small": "img/icn-graph-panel.svg",
-      "large": "img/icn-graph-panel.svg"
+      "small": "img/icn-timeseries-panel.svg",
+      "large": "img/icn-timeseries-panel.svg"
     }
   }
 }

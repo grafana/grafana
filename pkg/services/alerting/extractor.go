@@ -39,7 +39,7 @@ func (e *DashAlertExtractor) lookupDatasourceID(dsName string) (*models.DataSour
 		return query.Result, nil
 	}
 
-	query := &models.GetDataSourceByNameQuery{Name: dsName, OrgId: e.OrgID}
+	query := &models.GetDataSourceQuery{Name: dsName, OrgId: e.OrgID}
 	if err := bus.Dispatch(query); err != nil {
 		return nil, err
 	}

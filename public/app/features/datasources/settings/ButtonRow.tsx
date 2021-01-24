@@ -18,7 +18,7 @@ const ButtonRow: FC<Props> = ({ isReadOnly, onDelete, onSubmit, onTest }) => {
           type="submit"
           className="btn btn-primary"
           disabled={isReadOnly}
-          onClick={event => onSubmit(event)}
+          onClick={(event) => onSubmit(event)}
           aria-label={selectors.pages.DataSource.saveAndTest}
         >
           Save &amp; Test

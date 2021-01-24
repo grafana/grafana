@@ -217,7 +217,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
               <RunButton
                 refreshInterval={refreshInterval}
                 onChangeRefreshInterval={this.onChangeRefreshInterval}
-                splitted={splitted}
+                isSmall={splitted || showSmallTimePicker}
                 isLive={isLive}
                 loading={loading || (isLive && !isPaused)}
                 onRun={this.onRunQuery}
@@ -229,7 +229,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
             {hasLiveOption && (
               <div className={`explore-toolbar-content-item ${styles.liveTailButtons}`}>
                 <LiveTailControls exploreId={exploreId}>
-                  {controls => (
+                  {(controls) => (
                     <LiveTailButton
                       splitted={splitted}
                       isLive={isLive}

@@ -18,11 +18,7 @@ describe('IndexPattern', () => {
     test('should format date using western arabic numerals regardless of locale', () => {
       setLocale('ar_SA'); // saudi-arabic, formatting for YYYY.MM.DD looks like "٢٠٢٠.٠٩.٠٣"
       const pattern = new IndexPattern('[asd-]YYYY.MM.DD', 'Daily');
-      const expected =
-        'asd-' +
-        toUtc()
-          .locale('en')
-          .format('YYYY.MM.DD');
+      const expected = 'asd-' + toUtc().locale('en').format('YYYY.MM.DD');
       expect(pattern.getIndexForToday()).toBe(expected);
     });
   });

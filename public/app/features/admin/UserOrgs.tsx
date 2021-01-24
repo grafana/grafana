@@ -1,18 +1,18 @@
 import React, { PureComponent } from 'react';
 import { css, cx } from 'emotion';
 import {
-  Modal,
-  Themeable,
-  stylesFactory,
-  withTheme,
-  ConfirmButton,
   Button,
-  HorizontalGroup,
+  ConfirmButton,
   Container,
   Field,
+  HorizontalGroup,
+  Modal,
+  stylesFactory,
+  Themeable,
+  withTheme,
 } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
-import { UserOrg, Organization, OrgRole } from 'app/types';
+import { Organization, OrgRole, UserOrg } from 'app/types';
 import { OrgPicker, OrgSelectItem } from 'app/core/components/Select/OrgPicker';
 import { OrgRolePicker } from './OrgRolePicker';
 
@@ -180,6 +180,9 @@ const getAddToOrgModalStyles = stylesFactory(() => ({
   buttonRow: css`
     text-align: center;
   `,
+  modalContent: css`
+    overflow: visible;
+  `,
 }));
 
 interface AddToOrgModalProps {
@@ -224,9 +227,14 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
     const { isOpen } = this.props;
     const { role } = this.state;
     const styles = getAddToOrgModalStyles();
-
     return (
-      <Modal className={styles.modal} title="Add to an organization" isOpen={isOpen} onDismiss={this.onCancel}>
+      <Modal
+        className={styles.modal}
+        contentClassName={styles.modalContent}
+        title="Add to an organization"
+        isOpen={isOpen}
+        onDismiss={this.onCancel}
+      >
         <Field label="Organisation">
           <OrgPicker onSelected={this.onOrgSelect} />
         </Field>

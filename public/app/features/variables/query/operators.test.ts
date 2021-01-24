@@ -21,13 +21,11 @@ describe('operators', () => {
   describe('validateVariableSelection', () => {
     describe('when called', () => {
       it('then the correct observable should be created', async () => {
-        const variable = queryBuilder()
-          .withId('query')
-          .build();
+        const variable = queryBuilder().withId('query').build();
         const dispatch = jest.fn().mockResolvedValue({});
         const observable = of(undefined).pipe(validateVariableSelection({ variable, dispatch }));
 
-        await expect(observable).toEmitValuesWith(received => {
+        await expect(observable).toEmitValuesWith((received) => {
           expect(received[0]).toEqual({});
           expect(dispatch).toHaveBeenCalledTimes(1);
         });
@@ -38,14 +36,11 @@ describe('operators', () => {
   describe('updateTagsState', () => {
     describe('when called with a variable that uses Tags', () => {
       it('then the correct observable should be created', async () => {
-        const variable = queryBuilder()
-          .withId('query')
-          .withTags(true)
-          .build();
+        const variable = queryBuilder().withId('query').withTags(true).build();
         const dispatch = jest.fn().mockResolvedValue({});
         const observable = of([{ text: 'A text' }]).pipe(updateTagsState({ variable, dispatch }));
 
-        await expect(observable).toEmitValuesWith(received => {
+        await expect(observable).toEmitValuesWith((received) => {
           const value = received[0];
           expect(value).toEqual(undefined);
           expect(dispatch).toHaveBeenCalledTimes(1);
@@ -56,14 +51,11 @@ describe('operators', () => {
 
     describe('when called with a variable that does not use Tags', () => {
       it('then the correct observable should be created', async () => {
-        const variable = queryBuilder()
-          .withId('query')
-          .withTags(false)
-          .build();
+        const variable = queryBuilder().withId('query').withTags(false).build();
         const dispatch = jest.fn().mockResolvedValue({});
         const observable = of([{ text: 'A text' }]).pipe(updateTagsState({ variable, dispatch }));
 
-        await expect(observable).toEmitValuesWith(received => {
+        await expect(observable).toEmitValuesWith((received) => {
           const value = received[0];
           expect(value).toEqual(undefined);
           expect(dispatch).not.toHaveBeenCalled();
@@ -88,7 +80,7 @@ describe('operators', () => {
         const searchFilter = 'A search filter';
         const observable = of(undefined).pipe(runUpdateTagsRequest({ variable, datasource, searchFilter }, timeSrv));
 
-        await expect(observable).toEmitValuesWith(received => {
+        await expect(observable).toEmitValuesWith((received) => {
           const value = received[0];
           const { index, global, ...rest } = initialQueryVariableModelState;
           expect(value).toEqual([{ text: 'A text' }]);
@@ -125,7 +117,7 @@ describe('operators', () => {
         const searchFilter = 'A search filter';
         const observable = of(undefined).pipe(runUpdateTagsRequest({ variable, datasource, searchFilter }, timeSrv));
 
-        await expect(observable).toEmitValuesWith(received => {
+        await expect(observable).toEmitValuesWith((received) => {
           const value = received[0];
           expect(value).toEqual([]);
           expect(timeSrv.timeRange).not.toHaveBeenCalled();
@@ -147,7 +139,7 @@ describe('operators', () => {
         const searchFilter = 'A search filter';
         const observable = of(undefined).pipe(runUpdateTagsRequest({ variable, datasource, searchFilter }, timeSrv));
 
-        await expect(observable).toEmitValuesWith(received => {
+        await expect(observable).toEmitValuesWith((received) => {
           const value = received[0];
           expect(value).toEqual([]);
           expect(timeSrv.timeRange).not.toHaveBeenCalled();
@@ -160,15 +152,13 @@ describe('operators', () => {
   describe('updateOptionsState', () => {
     describe('when called', () => {
       it('then the correct observable should be created', async () => {
-        const variable = queryBuilder()
-          .withId('query')
-          .build();
+        const variable = queryBuilder().withId('query').build();
         const dispatch = jest.fn();
         const getTemplatedRegexFunc = jest.fn().mockReturnValue('getTemplatedRegexFunc result');
 
         const observable = of([{ text: 'A' }]).pipe(updateOptionsState({ variable, dispatch, getTemplatedRegexFunc }));
 
-        await expect(observable).toEmitValuesWith(received => {
+        await expect(observable).toEmitValuesWith((received) => {
           const value = received[0];
           expect(value).toEqual(undefined);
           expect(getTemplatedRegexFunc).toHaveBeenCalledTimes(1);
@@ -255,13 +245,13 @@ describe('operators', () => {
           { text: 'C', value: 'C', expandable: true },
         ],
       },
-    ].map(scenario => {
+    ].map((scenario) => {
       it(`when called with series:${JSON.stringify(scenario.series, null, 0)}`, async () => {
         const { series, expected } = scenario;
         const panelData: any = { series };
         const observable = of(panelData).pipe(toMetricFindValues());
 
-        await expect(observable).toEmitValuesWith(received => {
+        await expect(observable).toEmitValuesWith((received) => {
           const value = received[0];
           expect(value).toEqual(expected);
         });
@@ -277,7 +267,7 @@ describe('operators', () => {
         const panelData: any = { series: [frameWithTimeField] };
         const observable = of(panelData).pipe(toMetricFindValues());
 
-        await expect(observable).toEmitValuesWith(received => {
+        await expect(observable).toEmitValuesWith((received) => {
           const value = received[0];
           expect(value).toEqual(new Error("Couldn't find any field of type string in the results."));
         });

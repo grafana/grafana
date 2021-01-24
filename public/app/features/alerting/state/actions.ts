@@ -1,5 +1,5 @@
-import { AppEvents } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
+import { AppEvents, dateMath } from '@grafana/data';
+import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
 import { updateLocation } from 'app/core/actions';
 import store from 'app/core/store';
@@ -13,11 +13,20 @@ import {
   updateAlertDefinition,
   setQueryOptions,
 } from './reducers';
-import { AlertDefinition, AlertDefinitionUiState, AlertRuleDTO, NotifierDTO, ThunkResult } from 'app/types';
-import { QueryGroupOptions } from '../../query/components/QueryGroupOptions';
+import {
+  AlertDefinition,
+  AlertDefinitionUiState,
+  AlertRuleDTO,
+  NotifierDTO,
+  ThunkResult,
+  QueryGroupOptions,
+  QueryGroupDataSource,
+} from 'app/types';
+import { ExpressionDatasourceID } from '../../expressions/ExpressionDatasource';
+import { ExpressionQuery } from '../../expressions/types';
 
 export function getAlertRulesAsync(options: { state: string }): ThunkResult<void> {
-  return async dispatch => {
+  return async (dispatch) => {
     dispatch(loadAlertRules());
     const rules: AlertRuleDTO[] = await getBackendSrv().get('/api/alerts', options);
     dispatch(loadedAlertRules(rules));
@@ -33,7 +42,7 @@ export function togglePauseAlertRule(id: number, options: { paused: boolean }): 
 }
 
 export function createNotificationChannel(data: any): ThunkResult<void> {
-  return async dispatch => {
+  return async (dispatch) => {
     try {
       await getBackendSrv().post(`/api/alert-notifications`, data);
       appEvents.emit(AppEvents.alertSuccess, ['Notification created']);
@@ -45,7 +54,7 @@ export function createNotificationChannel(data: any): ThunkResult<void> {
 }
 
 export function updateNotificationChannel(data: any): ThunkResult<void> {
-  return async dispatch => {
+  return async (dispatch) => {
     try {
       await getBackendSrv().put(`/api/alert-notifications/${data.id}`, data);
       appEvents.emit(AppEvents.alertSuccess, ['Notification updated']);
@@ -64,7 +73,7 @@ export function testNotificationChannel(data: any): ThunkResult<void> {
 }
 
 export function loadNotificationTypes(): ThunkResult<void> {
-  return async dispatch => {
+  return async (dispatch) => {
     const alertNotifiers: NotifierDTO[] = await getBackendSrv().get(`/api/alert-notifiers`);
 
     const notificationTypes = alertNotifiers.sort((o1, o2) => {
@@ -79,7 +88,7 @@ export function loadNotificationTypes(): ThunkResult<void> {
 }
 
 export function loadNotificationChannel(id: number): ThunkResult<void> {
-  return async dispatch => {
+  return async (dispatch) => {
     await dispatch(loadNotificationTypes());
     const notificationChannel = await getBackendSrv().get(`/api/alert-notifications/${id}`);
     dispatch(notificationChannelLoaded(notificationChannel));
@@ -88,26 +97,46 @@ export function loadNotificationChannel(id: number): ThunkResult<void> {
 
 export function createAlertDefinition(): ThunkResult<void> {
   return async (dispatch, getStore) => {
+    const queryOptions = getStore().alertDefinition.queryOptions;
+    const currentAlertDefinition = getStore().alertDefinition.alertDefinition;
+    const defaultDataSource = await getDataSourceSrv().get(null);
+
     const alertDefinition: AlertDefinition = {
-      ...getStore().alertDefinition.alertDefinition,
+      ...currentAlertDefinition,
       condition: {
-        ref: 'A',
-        queriesAndExpressions: [
-          {
+        refId: currentAlertDefinition.condition.refId,
+        queriesAndExpressions: queryOptions.queries.map((query) => {
+          let dataSource: QueryGroupDataSource;
+          const isExpression = query.datasource === ExpressionDatasourceID;
+
+          if (isExpression) {
+            dataSource = { name: ExpressionDatasourceID, uid: ExpressionDatasourceID };
+          } else {
+            const dataSourceSetting = getDataSourceSrv().getInstanceSettings(query.datasource);
+
+            dataSource = {
+              name: dataSourceSetting?.name ?? defaultDataSource.name,
+              uid: dataSourceSetting?.uid ?? defaultDataSource.uid,
+            };
+          }
+
+          return {
             model: {
-              expression: '2 + 2 > 1',
-              type: 'math',
-              datasource: '__expr__',
+              ...query,
+              type: isExpression ? (query as ExpressionQuery).type : query.queryType,
+              datasource: dataSource.name,
+              datasourceUid: dataSource.uid,
             },
+            refId: query.refId,
             relativeTimeRange: {
               From: 500,
               To: 0,
             },
-            refId: 'A',
-          },
-        ],
+          };
+        }),
       },
     };
+
     await getBackendSrv().post(`/api/alert-definitions`, alertDefinition);
     appEvents.emit(AppEvents.alertSuccess, ['Alert definition created']);
     dispatch(updateLocation({ path: 'alerting/list' }));
@@ -128,13 +157,29 @@ export function updateAlertDefinitionUiState(uiState: Partial<AlertDefinitionUiS
 }
 
 export function updateAlertDefinitionOption(alertDefinition: Partial<AlertDefinition>): ThunkResult<void> {
-  return dispatch => {
+  return (dispatch) => {
     dispatch(updateAlertDefinition(alertDefinition));
   };
 }
 
 export function queryOptionsChange(queryOptions: QueryGroupOptions): ThunkResult<void> {
-  return dispatch => {
+  return (dispatch) => {
     dispatch(setQueryOptions(queryOptions));
+  };
+}
+
+export function onRunQueries(): ThunkResult<void> {
+  return (dispatch, getStore) => {
+    const { queryRunner, queryOptions } = getStore().alertDefinition;
+    const timeRange = { from: 'now-1h', to: 'now' };
+
+    queryRunner.run({
+      timezone: 'browser',
+      timeRange: { from: dateMath.parse(timeRange.from)!, to: dateMath.parse(timeRange.to)!, raw: timeRange },
+      maxDataPoints: queryOptions.maxDataPoints ?? 100,
+      minInterval: queryOptions.minInterval,
+      queries: queryOptions.queries,
+      datasource: queryOptions.dataSource.name!,
+    });
   };
 }

@@ -77,7 +77,7 @@ const NamedColorsGroup: FunctionComponent<NamedColorsGroupProps> = ({
   theme,
   ...otherProps
 }) => {
-  const primaryColor = find(colors, color => !!color.isPrimary);
+  const primaryColor = find(colors, (color) => !!color.isPrimary);
 
   return (
     <div {...otherProps} style={{ display: 'flex', flexDirection: 'column' }}>
@@ -99,7 +99,7 @@ const NamedColorsGroup: FunctionComponent<NamedColorsGroupProps> = ({
         }}
       >
         {colors.map(
-          color =>
+          (color) =>
             !color.isPrimary && (
               <div key={color.name} style={{ marginRight: '4px' }}>
                 <ColorSwatch

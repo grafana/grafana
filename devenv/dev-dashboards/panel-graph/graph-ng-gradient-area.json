@@ -15,7 +15,13 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "links": [],
+  "links": [
+    {
+      "icon": "external link",
+      "tags": ["gdev", "graph-ng"],
+      "type": "dashboards"
+    }
+  ],
   "panels": [
     {
       "datasource": null,
@@ -28,7 +34,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "drawStyle": "line",
-            "fillGradient": 0.5,
+            "gradientMode": "opacity",
             "fillOpacity": 40,
             "lineInterpolation": "linear",
             "lineWidth": 2,
@@ -116,7 +122,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "drawStyle": "bars",
-            "fillGradient": 0.4,
+            "gradientNode": "opacity",
             "fillOpacity": 53,
             "lineInterpolation": "linear",
             "lineWidth": 1,
@@ -205,7 +211,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "drawStyle": "bars",
-            "fillGradient": "opacity",
+            "gradientMode": "opacity",
             "fillOpacity": 100,
             "lineInterpolation": "linear",
             "lineWidth": 0,
@@ -294,7 +300,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "drawStyle": "line",
-            "fillGradient": 0.5,
+            "gradientMode": "opacity",
             "fillOpacity": 20,
             "lineInterpolation": "linear",
             "lineWidth": 1,
@@ -382,7 +388,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "drawStyle": "line",
-            "fillGradient": "hue",
+            "gradientMode": "hue",
             "fillOpacity": 62,
             "lineInterpolation": "smooth",
             "lineWidth": 2,
@@ -471,7 +477,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "drawStyle": "bars",
-            "fillGradient": "hue",
+            "gradientMode": "hue",
             "fillOpacity": 100,
             "lineInterpolation": "smooth",
             "lineWidth": 0,
@@ -552,7 +558,7 @@
   ],
   "schemaVersion": 27,
   "style": "dark",
-  "tags": ["gdev", "panel-tests"],
+  "tags": ["gdev", "panel-tests", "graph-ng"],
   "templating": {
     "list": []
   },

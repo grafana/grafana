@@ -79,7 +79,7 @@ describe('toEmitValues matcher', () => {
     describe('using nested arrays', () => {
       it('should pass with correct message', async () => {
         const observable = interval(10).pipe(
-          map(interval => [{ text: interval.toString(), value: interval }]),
+          map((interval) => [{ text: interval.toString(), value: interval }]),
           take(3)
         );
         await expect(observable).toEmitValues([
@@ -93,7 +93,7 @@ describe('toEmitValues matcher', () => {
     describe('using nested objects', () => {
       it('should pass with correct message', async () => {
         const observable = interval(10).pipe(
-          map(interval => ({ inner: { text: interval.toString(), value: interval } })),
+          map((interval) => ({ inner: { text: interval.toString(), value: interval } })),
           take(3)
         );
         await expect(observable).toEmitValues([
@@ -107,7 +107,7 @@ describe('toEmitValues matcher', () => {
     describe('correct emitted values with throw', () => {
       it('should pass with correct message', async () => {
         const observable = (interval(10).pipe(
-          map(interval => {
+          map((interval) => {
             if (interval > 1) {
               throw 'an error';
             }
@@ -123,7 +123,7 @@ describe('toEmitValues matcher', () => {
     describe('correct emitted values with throwError', () => {
       it('should pass with correct message', async () => {
         const observable = (interval(10).pipe(
-          mergeMap(interval => {
+          mergeMap((interval) => {
             if (interval === 1) {
               return throwError('an error');
             }

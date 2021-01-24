@@ -22,11 +22,28 @@ type LibraryPanel struct {
 	UpdatedBy int64
 }
 
+// libraryPanelDashboard is the model for library panel connections.
+type libraryPanelDashboard struct {
+	ID             int64 `xorm:"pk autoincr 'id'"`
+	LibraryPanelID int64 `xorm:"librarypanel_id"`
+	DashboardID    int64 `xorm:"dashboard_id"`
+
+	Created time.Time
+
+	CreatedBy int64
+}
+
 var (
 	// errLibraryPanelAlreadyExists is an error for when the user tries to add a library panel that already exists.
 	errLibraryPanelAlreadyExists = errors.New("library panel with that name already exists")
 	// errLibraryPanelNotFound is an error for when a library panel can't be found.
 	errLibraryPanelNotFound = errors.New("library panel could not be found")
+	// errLibraryPanelDashboardNotFound is an error for when a library panel connection can't be found.
+	errLibraryPanelDashboardNotFound = errors.New("library panel connection could not be found")
+	// errLibraryPanelHeaderUIDMissing is an error for when a library panel header is missing the uid property.
+	errLibraryPanelHeaderUIDMissing = errors.New("library panel header is missing required property uid")
+	// errLibraryPanelHeaderNameMissing is an error for when a library panel header is missing the name property.
+	errLibraryPanelHeaderNameMissing = errors.New("library panel header is missing required property name")
 )
 
 // Commands

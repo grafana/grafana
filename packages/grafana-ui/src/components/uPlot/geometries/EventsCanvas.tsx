@@ -1,18 +1,18 @@
+import { DataFrame } from '@grafana/data';
 import React, { useMemo } from 'react';
-import { DataFrame, DataFrameView } from '@grafana/data';
 import { usePlotContext } from '../context';
+import { useRefreshAfterGraphRendered } from '../hooks';
 import { Marker } from './Marker';
 import { XYCanvas } from './XYCanvas';
-import { useRefreshAfterGraphRendered } from '../hooks';
 
-interface EventsCanvasProps<T> {
+interface EventsCanvasProps {
   id: string;
   events: DataFrame[];
-  renderEventMarker: (event: T) => React.ReactNode;
-  mapEventToXYCoords: (event: T) => { x: number; y: number } | undefined;
+  renderEventMarker: (dataFrame: DataFrame, index: number) => React.ReactNode;
+  mapEventToXYCoords: (dataFrame: DataFrame, index: number) => { x: number; y: number } | undefined;
 }
 
-export function EventsCanvas<T>({ id, events, renderEventMarker, mapEventToXYCoords }: EventsCanvasProps<T>) {
+export function EventsCanvas({ id, events, renderEventMarker, mapEventToXYCoords }: EventsCanvasProps) {
   const plotCtx = usePlotContext();
   const renderToken = useRefreshAfterGraphRendered(id);
 
@@ -23,17 +23,15 @@ export function EventsCanvas<T>({ id, events, renderEventMarker, mapEventToXYCoo
     }
 
     for (let i = 0; i < events.length; i++) {
-      const view = new DataFrameView<T>(events[i]);
-      for (let j = 0; j < view.length; j++) {
-        const event = view.get(j);
-
-        const coords = mapEventToXYCoords(event);
+      const frame = events[i];
+      for (let j = 0; j < frame.length; j++) {
+        const coords = mapEventToXYCoords(frame, j);
         if (!coords) {
           continue;
         }
         markers.push(
           <Marker {...coords} key={`${id}-marker-${i}-${j}`}>
-            {renderEventMarker(event)}
+            {renderEventMarker(frame, j)}
           </Marker>
         );
       }

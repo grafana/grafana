@@ -8,7 +8,7 @@ export const increasingInterval = (
   { startPeriod = 0, endPeriod = 5000, step = 1000 },
   scheduler: SchedulerLike = asyncScheduler
 ): Observable<number> => {
-  return new Observable<number>(subscriber => {
+  return new Observable<number>((subscriber) => {
     subscriber.add(
       scheduler.schedule(dispatch, startPeriod, { subscriber, counter: 0, period: startPeriod, step, endPeriod })
     );

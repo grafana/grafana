@@ -5,8 +5,8 @@ import { IconName } from '../types';
 /**
  * Delays creating links until we need to open the ContextMenu
  */
-export const linkModelToContextMenuItems: (links: () => LinkModel[]) => MenuItem[] = links => {
-  return links().map(link => {
+export const linkModelToContextMenuItems: (links: () => LinkModel[]) => MenuItem[] = (links) => {
+  return links().map((link) => {
     return {
       label: link.title,
       // TODO: rename to href

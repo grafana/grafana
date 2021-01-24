@@ -15,7 +15,13 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "links": [],
+  "links": [
+    {
+      "icon": "external link",
+      "tags": ["gdev", "graph-ng"],
+      "type": "dashboards"
+    }
+  ],
   "panels": [
     {
       "datasource": "gdev-testdata",
@@ -28,7 +34,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "drawStyle": "line",
-            "fillGradient": 0,
+            "fillGradient": "none",
             "fillOpacity": 0,
             "hideFrom": {
               "graph": false,
@@ -129,7 +135,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "drawStyle": "line",
-            "fillGradient": 0,
+            "fillGradient": "none",
             "fillOpacity": 0,
             "hideFrom": {
               "graph": false,
@@ -239,7 +245,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "drawStyle": "line",
-            "fillGradient": 0,
+            "fillGradient": "none",
             "fillOpacity": 0,
             "hideFrom": {
               "graph": false,
@@ -368,7 +374,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "drawStyle": "line",
-            "fillGradient": 0,
+            "fillGradient": "none",
             "fillOpacity": 0,
             "hideFrom": {
               "graph": false,
@@ -469,7 +475,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "drawStyle": "line",
-            "fillGradient": 0,
+            "fillGradient": "none",
             "fillOpacity": 0,
             "hideFrom": {
               "graph": false,
@@ -579,7 +585,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "drawStyle": "line",
-            "fillGradient": 0,
+            "fillGradient": "none",
             "fillOpacity": 0,
             "hideFrom": {
               "graph": false,
@@ -720,9 +726,7 @@
             "fill": {
               "alpha": 0
             },
-            "fillGradient": {
-              "label": "None"
-            },
+            "fillGradient": "none",
             "fillOpacity": 10,
             "hideFrom": {
               "graph": false,
@@ -883,9 +887,7 @@
             "fill": {
               "alpha": 0
             },
-            "fillGradient": {
-              "label": "None"
-            },
+            "fillGradient": "none",
             "fillOpacity": 10,
             "hideFrom": {
               "graph": false,
@@ -1026,7 +1028,7 @@
   ],
   "schemaVersion": 27,
   "style": "dark",
-  "tags": ["gdev", "panel-tests"],
+  "tags": ["gdev", "panel-tests", "graph-ng"],
   "templating": {
     "list": []
   },

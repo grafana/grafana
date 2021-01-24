@@ -60,14 +60,14 @@ function addMetricsMetadata(metric: string, metadata?: PromMetricsMetadata): Cas
 export function groupMetricsByPrefix(metrics: string[], metadata?: PromMetricsMetadata): CascaderOption[] {
   // Filter out recording rules and insert as first option
   const ruleRegex = /:\w+:/;
-  const ruleNames = metrics.filter(metric => ruleRegex.test(metric));
+  const ruleNames = metrics.filter((metric) => ruleRegex.test(metric));
   const rulesOption = {
     label: 'Recording rules',
     value: RECORDING_RULES_GROUP,
     children: ruleNames
       .slice()
       .sort()
-      .map(name => ({ label: name, value: name })),
+      .map((name) => ({ label: name, value: name })),
   };
 
   const options = ruleNames.length > 0 ? [rulesOption] : [];
@@ -79,7 +79,7 @@ export function groupMetricsByPrefix(metrics: string[], metadata?: PromMetricsMe
     .map(
       (metricsForPrefix: string[], prefix: string): CascaderOption => {
         const prefixIsMetric = metricsForPrefix.length === 1 && metricsForPrefix[0] === prefix;
-        const children = prefixIsMetric ? [] : metricsForPrefix.sort().map(m => addMetricsMetadata(m, metadata));
+        const children = prefixIsMetric ? [] : metricsForPrefix.sort().map((m) => addMetricsMetadata(m, metadata));
         return {
           children,
           label: prefix,
@@ -209,9 +209,9 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     let hint = hints.length > 0 ? hints[0] : null;
 
     // Hint for big disabled lookups
-    if (!hint && !datasource.lookupsDisabled && datasource.languageProvider.lookupsDisabled) {
+    if (!hint && datasource.lookupsDisabled) {
       hint = {
-        label: `Dynamic label lookup is disabled for datasources with more than ${datasource.languageProvider.lookupMetricsThreshold} metrics.`,
+        label: `Labels and metrics lookup was disabled in data source settings.`,
         type: 'INFO',
       };
     }
