@@ -8,8 +8,8 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestWecomNotifier(t *testing.T) {
-	Convey("Wecom notifier tests", t, func() {
+func TestWeComNotifier(t *testing.T) {
+	Convey("WeCom notifier tests", t, func() {
 		Convey("empty settings should return error", func() {
 			json := `{ }`
 			settingsJSON, _ := simplejson.NewJson([]byte(json))
