@@ -151,6 +151,11 @@ const getStyles = (theme: GrafanaTheme) => {
     `,
     content: css`
       flex-grow: 1;
+      display: none;
+
+      @media ${styleMixins.mediaUp(theme.breakpoints.md)} {
+        display: block;
+      }
     `,
     contentWithIcon: css`
       padding-left: ${theme.spacing.sm};
