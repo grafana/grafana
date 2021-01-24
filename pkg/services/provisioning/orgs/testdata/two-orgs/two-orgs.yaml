@@ -3,3 +3,7 @@ orgs:
     name: First Org
   - id: 2
     name: Second Org
+    preferences:
+      homeDashboardId: 0
+      timezone: browser
+      theme: dark

@@ -24,8 +24,15 @@ type deleteOrgConfig struct {
 }
 
 type upsertOrgFromConfig struct {
-	Id   int64
-	Name string
+	Id          int64
+	Name        string
+	Preferences *upsertOrgPreferences
+}
+
+type upsertOrgPreferences struct {
+	HomeDashboardId int64
+	Timezone        string
+	Theme           string
 }
 
 type configsV1 struct {
@@ -41,8 +48,15 @@ type deleteOrgConfigV1 struct {
 }
 
 type upsertOrgFromConfigV1 struct {
-	Id   values.Int64Value  `json:"id" yaml:"id"`
-	Name values.StringValue `json:"name" yaml:"name"`
+	Id          values.Int64Value       `json:"id" yaml:"id"`
+	Name        values.StringValue      `json:"name" yaml:"name"`
+	Preferences *upsertOrgPreferencesV1 `json:"preferences" yaml:"preferences"`
+}
+
+type upsertOrgPreferencesV1 struct {
+	HomeDashboardId values.Int64Value  `json:"homeDashboardId" yaml:"homeDashboardId"`
+	Timezone        values.StringValue `json:"timezone" yaml:"timezone"`
+	Theme           values.StringValue `json:"theme" yaml:"theme"`
 }
 
 func (cfg *configsV1) mapToOrgFromConfig(apiVersion int64) *configs {
@@ -55,10 +69,20 @@ func (cfg *configsV1) mapToOrgFromConfig(apiVersion int64) *configs {
 	}
 
 	for _, org := range cfg.Orgs {
-		r.Orgs = append(r.Orgs, &upsertOrgFromConfig{
+		upsertCfg := &upsertOrgFromConfig{
 			Id:   org.Id.Value(),
 			Name: org.Name.Value(),
-		})
+		}
+
+		if org.Preferences != nil {
+			upsertCfg.Preferences = &upsertOrgPreferences{
+				HomeDashboardId: org.Preferences.HomeDashboardId.Value(),
+				Timezone:        org.Preferences.Timezone.Value(),
+				Theme:           org.Preferences.Theme.Value(),
+			}
+		}
+
+		r.Orgs = append(r.Orgs, upsertCfg)
 	}
 
 	for _, org := range cfg.DeleteOrgs {
@@ -81,5 +105,18 @@ func createUpdateCommand(org *upsertOrgFromConfig) *models.UpdateOrgCommand {
 	return &models.UpdateOrgCommand{
 		OrgId: org.Id,
 		Name:  org.Name,
+	}
+}
+
+func createSavePreferencesCommand(org *upsertOrgFromConfig) *models.SavePreferencesCommand {
+	if org.Preferences == nil {
+		return nil
+	}
+
+	return &models.SavePreferencesCommand{
+		OrgId:           org.Id,
+		HomeDashboardId: org.Preferences.HomeDashboardId,
+		Timezone:        org.Preferences.Timezone,
+		Theme:           org.Preferences.Theme,
 	}
 }

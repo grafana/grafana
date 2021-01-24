@@ -1,5 +1,9 @@
 orgs:
   - id: 2
     name: New Second Org
+    preferences:
+      homeDashboardId: 0
+      timezone: browser
+      theme: dark
 deleteOrgs:
   - id: 4

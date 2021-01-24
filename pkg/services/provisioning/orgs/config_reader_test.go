@@ -28,6 +28,7 @@ func TestOrgAsConfig(t *testing.T) {
 		bus.AddHandler("test", mockInsert)
 		bus.AddHandler("test", mockUpdate)
 		bus.AddHandler("test", mockGet)
+		bus.AddHandler("test", mockSavePreferences)
 
 		Convey("Two configured orgs", func() {
 			Convey("no org in database", func() {
@@ -40,6 +41,7 @@ func TestOrgAsConfig(t *testing.T) {
 				So(len(fakeRepo.deleted), ShouldEqual, 0)
 				So(len(fakeRepo.inserted), ShouldEqual, 2)
 				So(len(fakeRepo.updated), ShouldEqual, 0)
+				So(len(fakeRepo.savedPreferences), ShouldEqual, 1)
 			})
 
 			Convey("One org in database with same ID", func() {
@@ -57,6 +59,7 @@ func TestOrgAsConfig(t *testing.T) {
 					So(len(fakeRepo.deleted), ShouldEqual, 0)
 					So(len(fakeRepo.inserted), ShouldEqual, 1)
 					So(len(fakeRepo.updated), ShouldEqual, 1)
+					So(len(fakeRepo.savedPreferences), ShouldEqual, 1)
 				})
 			})
 		})
@@ -78,6 +81,7 @@ func TestOrgAsConfig(t *testing.T) {
 					So(len(fakeRepo.deleted), ShouldEqual, 2)
 					So(len(fakeRepo.inserted), ShouldEqual, 2)
 					So(len(fakeRepo.updated), ShouldEqual, 0)
+					So(len(fakeRepo.savedPreferences), ShouldEqual, 1)
 				})
 			})
 		})
@@ -101,9 +105,10 @@ func TestOrgAsConfig(t *testing.T) {
 }
 
 type fakeRepository struct {
-	inserted []*models.CreateOrgCommand
-	deleted  []*models.DeleteOrgCommand
-	updated  []*models.UpdateOrgCommand
+	inserted         []*models.CreateOrgCommand
+	deleted          []*models.DeleteOrgCommand
+	updated          []*models.UpdateOrgCommand
+	savedPreferences []*models.SavePreferencesCommand
 
 	loadAll []*models.Org
 }
@@ -132,4 +137,9 @@ func mockGet(cmd *models.GetOrgByIdQuery) error {
 	}
 
 	return models.ErrOrgNotFound
+}
+
+func mockSavePreferences(cmd *models.SavePreferencesCommand) error {
+	fakeRepo.savedPreferences = append(fakeRepo.savedPreferences, cmd)
+	return nil
 }
