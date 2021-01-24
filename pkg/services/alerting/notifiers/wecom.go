@@ -10,8 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
-// WecomNotifier is responsible for sending alert notification to Wecom group robot
-type WecomNotifier struct {
+// WeComNotifier is responsible for sending alert notification to WeCom group robot
+type WeComNotifier struct {
 	NotifierBase
 	Webhook string
 	log     log.Logger
@@ -20,15 +20,15 @@ type WecomNotifier struct {
 func init() {
 	alerting.RegisterNotifier(&alerting.NotifierPlugin{
 		Type:        "wecom",
-		Name:        "Wecom",
-		Description: "Sends notifications using Wecom group robot",
-		Factory:     newWecomNotifier,
+		Name:        "WeCom",
+		Description: "Sends notifications using WeCom group robot",
+		Factory:     newWeComNotifier,
 		Options: []alerting.NotifierOption{
 			{
 				Label:        "Webhook",
 				Element:      alerting.ElementTypeInput,
 				InputType:    alerting.InputTypeText,
-				Placeholder:  "Your Wecom Group Robot Webhook URL",
+				Placeholder:  "Your WeCom Group Robot Webhook URL",
 				PropertyName: "webhook",
 				Required:     true,
 			},
@@ -36,21 +36,21 @@ func init() {
 	})
 }
 
-func newWecomNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
+func newWeComNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
 	webhook := model.Settings.Get("webhook").MustString()
 	if webhook == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find webhook in settings"}
 	}
-	return &WecomNotifier{
+	return &WeComNotifier{
 		NotifierBase: NewNotifierBase(model),
 		Webhook:      model.Settings.Get("webhook").MustString(),
 		log:          log.New("alerting.notifier.wecom"),
 	}, nil
 }
 
-// Notify sends the alert notification to Wecom group robot
-func (w *WecomNotifier) Notify(evalContext *alerting.EvalContext) error {
-	w.log.Info("Sending Wecom Group Robot")
+// Notify sends the alert notification to WeCom group robot
+func (w *WeComNotifier) Notify(evalContext *alerting.EvalContext) error {
+	w.log.Info("Sending WeCom Group Robot")
 
 	content := fmt.Sprintf("%v\n%v\n",
 		evalContext.GetNotificationTitle(),
@@ -84,7 +84,7 @@ func (w *WecomNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
-		w.log.Error("Failed to send Wecom", "error", err)
+		w.log.Error("Failed to send WeCom", "error", err)
 		return err
 	}
 

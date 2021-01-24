@@ -18,7 +18,7 @@ func TestWecomNotifier(t *testing.T) {
 				Type:     "wecom",
 				Settings: settingsJSON,
 			}
-			_, err := newWecomNotifier(model)
+			_, err := newWeComNotifier(model)
 			So(err, ShouldNotBeNil)
 		})
 		Convey("settings should trigger incident", func() {
@@ -29,8 +29,8 @@ func TestWecomNotifier(t *testing.T) {
 				Type:     "wecom",
 				Settings: settingsJSON,
 			}
-			not, err := newWecomNotifier(model)
-			notifier := not.(*WecomNotifier)
+			not, err := newWeComNotifier(model)
+			notifier := not.(*WeComNotifier)
 			So(err, ShouldBeNil)
 			So(notifier.Name, ShouldEqual, "wecom_testing")
 			So(notifier.Type, ShouldEqual, "wecom")
