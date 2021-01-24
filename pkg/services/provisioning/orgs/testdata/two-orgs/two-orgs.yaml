@@ -1,0 +1,5 @@
+orgs:
+  - id: 1
+    name: First Org
+  - id: 2
+    name: Second Org

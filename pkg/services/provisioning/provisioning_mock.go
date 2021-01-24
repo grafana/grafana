@@ -8,6 +8,7 @@ type Calls struct {
 	ProvisionPlugins                    []interface{}
 	ProvisionNotifications              []interface{}
 	ProvisionDashboards                 []interface{}
+	ProvisionOrgs                       []interface{}
 	GetDashboardProvisionerResolvedPath []interface{}
 	GetAllowUIUpdatesFromConfig         []interface{}
 	Run                                 []interface{}
@@ -20,6 +21,7 @@ type ProvisioningServiceMock struct {
 	ProvisionPluginsFunc                    func() error
 	ProvisionNotificationsFunc              func() error
 	ProvisionDashboardsFunc                 func() error
+	ProvisionOrgsFunc                       func() error
 	GetDashboardProvisionerResolvedPathFunc func(name string) string
 	GetAllowUIUpdatesFromConfigFunc         func(name string) bool
 	RunFunc                                 func(ctx context.Context) error
@@ -35,6 +37,14 @@ func (mock *ProvisioningServiceMock) RunInitProvisioners(ctx context.Context) er
 	mock.Calls.RunInitProvisioners = append(mock.Calls.RunInitProvisioners, nil)
 	if mock.RunInitProvisionersFunc != nil {
 		return mock.RunInitProvisionersFunc(ctx)
+	}
+	return nil
+}
+
+func (mock *ProvisioningServiceMock) ProvisionOrgs() error {
+	mock.Calls.ProvisionOrgs = append(mock.Calls.ProvisionOrgs, nil)
+	if mock.ProvisionOrgsFunc != nil {
+		return mock.ProvisionOrgsFunc()
 	}
 	return nil
 }

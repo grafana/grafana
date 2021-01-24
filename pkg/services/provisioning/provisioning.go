@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning/datasources"
 	"github.com/grafana/grafana/pkg/services/provisioning/notifiers"
+	"github.com/grafana/grafana/pkg/services/provisioning/orgs"
 	"github.com/grafana/grafana/pkg/services/provisioning/plugins"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -41,6 +42,7 @@ type ProvisioningService interface {
 	ProvisionPlugins(ctx context.Context) error
 	ProvisionNotifications(ctx context.Context) error
 	ProvisionDashboards(ctx context.Context) error
+	ProvisionOrgs(ctx context.Context) error
 	GetDashboardProvisionerResolvedPath(name string) string
 	GetAllowUIUpdatesFromConfig(name string) bool
 }
@@ -53,6 +55,7 @@ func NewProvisioningServiceImpl() *ProvisioningServiceImpl {
 		provisionNotifiers:      notifiers.Provision,
 		provisionDatasources:    datasources.Provision,
 		provisionPlugins:        plugins.Provision,
+		provisionOrgs:           orgs.Provision,
 	}
 }
 
@@ -62,6 +65,7 @@ func newProvisioningServiceImpl(
 	provisionNotifiers func(context.Context, string, encryption.Internal) error,
 	provisionDatasources func(context.Context, string) error,
 	provisionPlugins func(context.Context, string, plugifaces.Store) error,
+	provisionOrgs func(context.Context, string) error,
 ) *ProvisioningServiceImpl {
 	return &ProvisioningServiceImpl{
 		log:                     log.New("provisioning"),
@@ -69,6 +73,7 @@ func newProvisioningServiceImpl(
 		provisionNotifiers:      provisionNotifiers,
 		provisionDatasources:    provisionDatasources,
 		provisionPlugins:        provisionPlugins,
+		provisionOrgs:           provisionOrgs,
 	}
 }
 
@@ -84,10 +89,16 @@ type ProvisioningServiceImpl struct {
 	provisionNotifiers      func(context.Context, string, encryption.Internal) error
 	provisionDatasources    func(context.Context, string) error
 	provisionPlugins        func(context.Context, string, plugifaces.Store) error
+	provisionOrgs           func(context.Context, string) error
 	mutex                   sync.Mutex
 }
 
 func (ps *ProvisioningServiceImpl) RunInitProvisioners(ctx context.Context) error {
+	err := ps.ProvisionOrgs(ctx)
+	if err != nil {
+		return err
+	}
+
 	err := ps.ProvisionDatasources(ctx)
 	if err != nil {
 		return err
@@ -143,6 +154,12 @@ func (ps *ProvisioningServiceImpl) ProvisionDatasources(ctx context.Context) err
 		return err
 	}
 	return nil
+}
+
+func (ps *provisioningServiceImpl) ProvisionOrgs() error {
+	datasourcePath := filepath.Join(ps.Cfg.ProvisioningPath, "orgs")
+	err := ps.provisionOrgs(datasourcePath)
+	return errutil.Wrap("Org provisioning error", err)
 }
 
 func (ps *ProvisioningServiceImpl) ProvisionPlugins(ctx context.Context) error {

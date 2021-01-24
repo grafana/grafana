@@ -1,0 +1,14 @@
+# # config file version
+apiVersion: 1
+
+# # list of orgs that should be deleted from the database
+#deleteOrgs:
+#- id: 1
+
+# # list of orgs to be insert/updated depending
+# # on what's available in the database
+#orgs:
+#- id: 1
+#  name: First Org.
+#- id: 2
+#  name: Second Org.

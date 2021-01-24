@@ -108,8 +108,9 @@ func isOrgNameTaken(name string, existingId int64, sess *DBSession) (bool, error
 	return false, nil
 }
 
-func createOrg(name string, userID int64, engine *xorm.Engine) (models.Org, error) {
+func createOrg(id int64, name string, userID int64, engine *xorm.Engine) (models.Org, error) {
 	org := models.Org{
+		Id:      id,
 		Name:    name,
 		Created: time.Now(),
 		Updated: time.Now(),
@@ -121,19 +122,29 @@ func createOrg(name string, userID int64, engine *xorm.Engine) (models.Org, erro
 			return models.ErrOrgNameTaken
 		}
 
-		if _, err := sess.Insert(&org); err != nil {
-			return err
+		if org.Id != 0 {
+			if _, err := sess.InsertId(&org); err != nil {
+				return err
+			}
+		} else {
+			if _, err := sess.Insert(&org); err != nil {
+				return err
+			}
 		}
 
-		user := models.OrgUser{
-			OrgId:   org.Id,
-			UserId:  userID,
-			Role:    models.ROLE_ADMIN,
-			Created: time.Now(),
-			Updated: time.Now(),
-		}
+		var err error
 
-		_, err := sess.Insert(&user)
+		if userID != 0 {
+			user := models.OrgUser{
+				OrgId:   org.Id,
+				UserId:  userID,
+				Role:    models.ROLE_ADMIN,
+				Created: time.Now(),
+				Updated: time.Now(),
+			}
+
+			_, err = sess.Insert(&user)
+		}
 
 		sess.publishAfterCommit(&events.OrgCreated{
 			Timestamp: org.Created,
@@ -151,11 +162,11 @@ func createOrg(name string, userID int64, engine *xorm.Engine) (models.Org, erro
 
 // CreateOrgWithMember creates an organization with a certain name and a certain user as member.
 func (ss *SQLStore) CreateOrgWithMember(name string, userID int64) (models.Org, error) {
-	return createOrg(name, userID, ss.engine)
+	return createOrg(0, name, userID, ss.engine)
 }
 
 func CreateOrg(ctx context.Context, cmd *models.CreateOrgCommand) error {
-	org, err := createOrg(cmd.Name, cmd.UserId, x)
+	org, err := createOrg(cmd.Id, cmd.Name, cmd.UserId, x)
 	if err != nil {
 		return err
 	}
