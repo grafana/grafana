@@ -28,7 +28,7 @@ export const XYDimsEditor: FC<StandardEditorProps<XYDimensionConfig, any, Option
   }
 
   const frameNames = useMemo(() => {
-    if (context.data && context.data.length > 0) {
+    if (context?.data?.length) {
       return context.data.map((f, idx) => ({
         value: idx,
         label: getFrameDisplayName(f, idx),
@@ -56,7 +56,7 @@ export const XYDimsEditor: FC<StandardEditorProps<XYDimensionConfig, any, Option
     };
     const frame = context.data ? context.data[value?.frame ?? 0] : undefined;
     if (frame) {
-      const xName = getFieldDisplayName(dims.x, dims.frame, context.data);
+      const xName = dims.x ? getFieldDisplayName(dims.x, dims.frame, context.data) : undefined;
       for (let field of frame.fields) {
         if (isGraphable(field)) {
           const name = getFieldDisplayName(field, frame, context.data);
