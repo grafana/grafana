@@ -1515,6 +1515,6 @@ Set this to `true` to have date formats automatically derived from your browser 
 Used as the default time zone for user preferences. Can be either `browser` for the browser local time zone or a time zone name from the IANA Time Zone database, such as `UTC` or `Europe/Amsterdam`.
 
 ## [expressions]
->Note: This is available in Grafana v7.4 and later versions.
+> **Note:** This feature is available in Grafana v7.4 and later versions.
 ### enabled
 Set this to `false` to disable expressions and hide them in the Grafana UI. Default is `true`.
