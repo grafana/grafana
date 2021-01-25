@@ -13,5 +13,9 @@ func (ng *AlertNG) listAlertInstancesEndpoint(c *models.ReqContext) response.Res
 		return response.Error(500, "Failed to list alert instances", err)
 	}
 
+	if c.QueryBool("asFrame") {
+		return response.JSON(200, listAlertInstancesAsFrame(cmd.Result))
+	}
+
 	return response.JSON(200, cmd.Result)
 }

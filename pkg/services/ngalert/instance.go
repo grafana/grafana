@@ -3,6 +3,8 @@ package ngalert
 import (
 	"fmt"
 	"time"
+
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 // AlertInstance represents a single alert instance.
@@ -71,6 +73,27 @@ type listAlertInstancesQueryResult struct {
 	CurrentState      InstanceStateType `json:"currentState"`
 	CurrentStateSince time.Time         `json:"currentStateSince"`
 	LastEvalTime      time.Time         `json:"lastEvalTime"`
+}
+
+func listAlertInstancesAsFrame(l []*listAlertInstancesQueryResult) *data.Frame {
+	fieldLen := len(l)
+	frame := data.NewFrame("Alert Instances",
+		data.NewField("Definition Title", nil, make([]string, fieldLen)),
+		data.NewField("Labels", nil, make([]string, fieldLen)),
+		data.NewField("CurrentState", nil, make([]string, fieldLen)),
+		data.NewField("CurrentStateSince", nil, make([]time.Time, fieldLen)),
+		data.NewField("LastEvalTime", nil, make([]time.Time, fieldLen)),
+	)
+	for i, inst := range l {
+		labelStr := ""
+		if inst.Labels != nil {
+			labelStr = data.Labels(inst.Labels).String()
+		}
+		frame.SetRow(i, inst.DefinitionTitle, labelStr, string(inst.CurrentState),
+			inst.CurrentStateSince, inst.LastEvalTime,
+		)
+	}
+	return frame
 }
 
 // validateAlertInstance validates that the alert instance contains an alert definition id,
