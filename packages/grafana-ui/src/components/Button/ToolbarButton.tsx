@@ -1,15 +1,16 @@
-import React, { forwardRef, HTMLAttributes } from 'react';
+import React, { forwardRef, ButtonHTMLAttributes } from 'react';
 import { cx, css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { styleMixins, useStyles } from '../../themes';
 import { IconName } from '../../types/icon';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { Icon } from '../Icon/Icon';
-import { ButtonVariant, getPropertiesForVariant } from './Button';
+import { getPropertiesForVariant } from './Button';
+import { isString } from 'lodash';
 
-export interface Props extends HTMLAttributes<HTMLButtonElement> {
+export interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   /** Icon name */
-  icon?: IconName;
+  icon?: IconName | React.ReactNode;
   /** Tooltip */
   tooltip?: string;
   /** For image icons */
@@ -21,21 +22,28 @@ export interface Props extends HTMLAttributes<HTMLButtonElement> {
   /** reduces padding to xs */
   narrow?: boolean;
   /** variant */
-  variant?: ButtonVariant;
+  variant?: ToolbarButtonVariant;
+  /** Hide any children and only show icon */
+  iconOnly?: boolean;
 }
 
+export type ToolbarButtonVariant = 'default' | 'primary' | 'destructive' | 'active';
+
 export const ToolbarButton = forwardRef<HTMLButtonElement, Props>(
-  ({ tooltip, icon, className, children, imgSrc, fullWidth, isOpen, narrow, variant, ...rest }, ref) => {
+  (
+    { tooltip, icon, className, children, imgSrc, fullWidth, isOpen, narrow, variant = 'default', iconOnly, ...rest },
+    ref
+  ) => {
     const styles = useStyles(getStyles);
 
     const buttonStyles = cx(
+      'toolbar-button',
       {
         [styles.button]: true,
         [styles.buttonFullWidth]: fullWidth,
         [styles.narrow]: narrow,
-        [styles.primaryVariant]: variant === 'primary',
-        [styles.destructiveVariant]: variant === 'destructive',
       },
+      (styles as any)[variant],
       className
     );
 
@@ -47,9 +55,9 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, Props>(
 
     const body = (
       <button ref={ref} className={buttonStyles} {...rest}>
-        {icon && <Icon name={icon} size={'lg'} />}
+        {renderIcon(icon)}
         {imgSrc && <img className={styles.img} src={imgSrc} />}
-        {children && <span className={contentStyles}>{children}</span>}
+        {children && !iconOnly && <span className={contentStyles}>{children}</span>}
         {isOpen === false && <Icon name="angle-down" />}
         {isOpen === true && <Icon name="angle-up" />}
       </button>
@@ -65,30 +73,75 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, Props>(
   }
 );
 
+function renderIcon(icon: IconName | React.ReactNode) {
+  if (!icon) {
+    return null;
+  }
+
+  if (isString(icon)) {
+    return <Icon name={icon as IconName} size={'lg'} />;
+  }
+
+  return icon;
+}
+
 const getStyles = (theme: GrafanaTheme) => {
   const primaryVariant = getPropertiesForVariant(theme, 'primary');
   const destructiveVariant = getPropertiesForVariant(theme, 'destructive');
 
   return {
     button: css`
-      background: ${theme.colors.bg1};
-      border: 1px solid ${theme.colors.border2};
-      height: ${theme.height.md}px;
-      padding: 0 ${theme.spacing.sm};
-      color: ${theme.colors.textWeak};
-      border-radius: ${theme.border.radius.sm};
-      line-height: ${theme.height.md - 2}px;
+      label: toolbar-button;
       display: flex;
       align-items: center;
+      height: ${theme.height.md}px;
+      padding: 0 ${theme.spacing.sm};
+      border-radius: ${theme.border.radius.sm};
+      line-height: ${theme.height.md - 2}px;
+      font-weight: ${theme.typography.weight.semibold};
+      border: 1px solid ${theme.colors.border2};
 
       &:focus {
         outline: none;
       }
 
+      &[disabled],
+      &:disabled {
+        cursor: not-allowed;
+        opacity: 0.5;
+
+        &:hover {
+          color: ${theme.colors.textWeak};
+          background: ${theme.colors.bg1};
+        }
+      }
+    `,
+    default: css`
+      color: ${theme.colors.textWeak};
+      background-color: ${theme.colors.bg1};
+
       &:hover {
         color: ${theme.colors.text};
         background: ${styleMixins.hoverColor(theme.colors.bg1, theme)};
       }
+    `,
+    active: css`
+      color: ${theme.palette.orangeDark};
+      border-color: ${theme.palette.orangeDark};
+      background-color: transparent;
+
+      &:hover {
+        color: ${theme.colors.text};
+        background: ${styleMixins.hoverColor(theme.colors.bg1, theme)};
+      }
+    `,
+    primary: css`
+      border-color: ${primaryVariant.borderColor};
+      ${primaryVariant.variantStyles}
+    `,
+    destructive: css`
+      border-color: ${destructiveVariant.borderColor};
+      ${destructiveVariant.variantStyles}
     `,
     narrow: css`
       padding: 0 ${theme.spacing.xs};
@@ -103,20 +156,17 @@ const getStyles = (theme: GrafanaTheme) => {
     `,
     content: css`
       flex-grow: 1;
+      display: none;
+
+      @media only screen and (min-width: ${theme.breakpoints.md}) {
+        display: block;
+      }
     `,
     contentWithIcon: css`
       padding-left: ${theme.spacing.sm};
     `,
     contentWithRightIcon: css`
       padding-right: ${theme.spacing.xs};
-    `,
-    primaryVariant: css`
-      border-color: ${primaryVariant.borderColor};
-      ${primaryVariant.variantStyles}
-    `,
-    destructiveVariant: css`
-      border-color: ${destructiveVariant.borderColor};
-      ${destructiveVariant.variantStyles}
     `,
   };
 };
