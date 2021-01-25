@@ -926,7 +926,7 @@
           "custom": {
             "axisLabel": "",
             "axisPlacement": "auto",
-            "axisSoftMax": 130,
+            "axisSoftMax": 60,
             "axisSoftMin": 0,
             "drawStyle": "line",
             "fillOpacity": 0,
