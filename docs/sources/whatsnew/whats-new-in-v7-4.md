@@ -54,6 +54,10 @@ This transformation is very useful if your data source does not natively filter 
 
 For more information, refer to [Filter data by value]({{< relref "../panels/transformations/types-options.md#filter-data-by-value" >}}) in [Transformation types and options]({{< relref "../panels/transformations/types-options.md" >}}).
 
+### New override option
+
+On the Overrides tab, you can now set properties for fields returned by a specific query.
+
 ### Exemplar support
 
 Grafana graphs now support Prometheus [exemplars]({{< relref "../datasources/prometheus.md#exemplars" >}}). They are displayed as diamonds in the graph visualization.
