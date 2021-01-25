@@ -1,8 +1,10 @@
 import React from 'react';
 import debounce from 'lodash/debounce';
 import { css } from 'emotion';
+import { useStyles } from '../../themes';
 import { DataFrame, CSVConfig, readCSV } from '@grafana/data';
 import { Icon } from '../Icon/Icon';
+import { GrafanaTheme } from '@grafana/data';
 
 interface Props {
   config?: CSVConfig;
@@ -12,31 +14,14 @@ interface Props {
   onSeriesParsed: (data: DataFrame[], text: string) => void;
 }
 
+interface TableInputCSVStyle {
+  TableInputCsv: string;
+}
+
 interface State {
   text: string;
   data: DataFrame[];
 }
-
-const getStyles = () => {
-  return {
-    gfTableInputCsv: css`
-      position: relative;
-      textarea {
-        height: 100%;
-        width: 100%;
-      }
-      footer {
-        position: absolute;
-        bottom: 15px;
-        right: 15px;
-        border: 1px solid #222;
-        background: $online;
-        padding: 1px 4px;
-        font-size: 80%;
-      }
-    `,
-  };
-};
 
 /**
  * Expects the container div to have size set and will fill it 100%
@@ -83,9 +68,9 @@ export class TableInputCSV extends React.PureComponent<Props, State> {
   render() {
     const { width, height } = this.props;
     const { data } = this.state;
-    const styles = getStyles();
+    const styles = useStyles(getStyles);
     return (
-      <div className={styles.gfTableInputCsv}>
+      <div className={styles.TableInputCsv}>
         <textarea
           style={{ width, height }}
           placeholder="Enter CSV here..."
@@ -111,3 +96,24 @@ export class TableInputCSV extends React.PureComponent<Props, State> {
 }
 
 export default TableInputCSV;
+
+const getStyles = (theme: GrafanaTheme): TableInputCSVStyle => {
+  return {
+    TableInputCsv: css`
+      position: relative;
+      textarea {
+        height: 100%;
+        width: 100%;
+      }
+      footer {
+        position: absolute;
+        bottom: 15px;
+        right: 15px;
+        border: 1px solid #222;
+        background: ${theme.palette.online};
+        padding: 1px 4px;
+        font-size: 80%;
+      }
+    `,
+  };
+};
