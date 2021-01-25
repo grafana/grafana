@@ -1,16 +1,14 @@
 // Libaries
 import React, { PureComponent, FC, ReactNode } from 'react';
 import { connect, MapDispatchToProps } from 'react-redux';
-import { css } from 'emotion';
 // Utils & Services
 import { appEvents } from 'app/core/app_events';
 import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
 // Components
 import { DashNavButton } from './DashNavButton';
 import { DashNavTimeControls } from './DashNavTimeControls';
-import { ButtonGroup, Icon, ModalsController, ToolbarButton, PageToolbar } from '@grafana/ui';
+import { ButtonGroup, ModalsController, ToolbarButton, PageToolbar } from '@grafana/ui';
 import { textUtil } from '@grafana/data';
-import { BackButton } from 'app/core/components/BackButton/BackButton';
 // State
 import { updateLocation } from 'app/core/actions';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
@@ -172,57 +170,14 @@ class DashNav extends PureComponent<Props> {
     return buttons;
   }
 
-  renderDashboardTitleSearchButton() {
-    const { dashboard, isFullscreen } = this.props;
-
-    const folderSymbol = css`
-      margin-right: 0 4px;
-    `;
-    const mainIconClassName = css`
-      margin-right: 8px;
-      margin-bottom: 3px;
-    `;
-
-    const folderTitle = dashboard.meta.folderTitle;
-    const haveFolder = (dashboard.meta.folderId ?? 0) > 0;
-
-    return (
-      <>
-        <div>
-          <div className="navbar-page-btn">
-            {!isFullscreen && <Icon name="apps" size="lg" className={mainIconClassName} />}
-            {haveFolder && (
-              <>
-                <a className="navbar-page-btn__folder" onClick={this.onFolderNameClick}>
-                  {folderTitle} <span className={folderSymbol}>/</span>
-                </a>
-              </>
-            )}
-            <a onClick={this.onDashboardNameClick}>{dashboard.title}</a>
-          </div>
-        </div>
-        <div className="navbar-buttons navbar-buttons--actions">{this.renderLeftActionsButton()}</div>
-        <div className="navbar__spacer" />
-      </>
-    );
-  }
-
-  renderBackButton() {
-    return (
-      <div className="navbar-edit">
-        <BackButton surface="dashboard" onClick={this.onClose} />
-      </div>
-    );
-  }
-
   renderRightActionsButton() {
-    const { dashboard, onAddPanel, location, updateTimeZoneForSession } = this.props;
+    const { dashboard, onAddPanel, location, updateTimeZoneForSession, isFullscreen } = this.props;
     const { canEdit, showSettings } = dashboard.meta;
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
 
     const buttons: ReactNode[] = [];
-    if (canEdit) {
+    if (canEdit && !isFullscreen) {
       buttons.push(<ToolbarButton tooltip="Add panel" icon="panel-add" onClick={onAddPanel} key="button-panel-add" />);
       buttons.push(
         <ModalsController key="button-save">
@@ -282,7 +237,7 @@ class DashNav extends PureComponent<Props> {
 
     return (
       <PageToolbar
-        pageIcon="apps"
+        pageIcon={isFullscreen ? undefined : 'apps'}
         title={dashboard.title}
         parent={dashboard.meta.folderTitle}
         onClickTitle={this.onDashboardNameClick}

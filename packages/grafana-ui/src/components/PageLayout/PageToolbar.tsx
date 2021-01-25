@@ -5,6 +5,8 @@ import { useStyles } from '../../themes/ThemeContext';
 import { IconName } from '../../types';
 import { Icon } from '../Icon/Icon';
 import { styleMixins } from '../../themes';
+import { IconButton } from '../IconButton/IconButton';
+import { selectors } from '@grafana/e2e-selectors';
 
 export interface Props {
   pageIcon?: IconName;
@@ -19,13 +21,30 @@ export interface Props {
 
 /** @alpha */
 export const PageToolbar: FC<Props> = React.memo((props) => {
-  const { title, parent, pageIcon, children, onClickTitle, onClickParent, leftItems } = props;
+  const { title, parent, pageIcon, onGoBack, children, onClickTitle, onClickParent, leftItems } = props;
   const styles = useStyles(getStyles);
 
   return (
     <div className={styles.toolbar}>
       <div className={styles.toolbarLeft}>
-        <div className={styles.pageIcon}>{pageIcon && <Icon name={pageIcon} size="lg" />}</div>
+        {pageIcon && !onGoBack && (
+          <div className={styles.pageIcon}>
+            <Icon name={pageIcon} size="lg" />
+          </div>
+        )}
+        {onGoBack && (
+          <div className={styles.goBackButton}>
+            <IconButton
+              name="arrow-left"
+              tooltip="Go back (Esc)"
+              tooltipPlacement="bottom"
+              size="xxl"
+              surface="dashboard"
+              aria-label={selectors.components.BackButton.backArrow}
+              onClick={onGoBack}
+            />
+          </div>
+        )}
         <div className={styles.titleWrapper}>
           {parent && onClickParent && (
             <a onClick={props.onClickParent} className={cx(styles.titleLink, styles.parentLink)}>
@@ -70,22 +89,21 @@ const getStyles = (theme: GrafanaTheme) => {
       padding-left: ${spacing.sm};
       white-space: nowrap;
       text-overflow: ellipsis;
-      overflow: hidden;
-      width: 100%;
+      overflow: hidden;      
   `;
 
   return {
     toolbar: css`
       display: flex;
       background: ${theme.colors.dashboardBg};
-      padding: 0 ${spacing.sm} ${spacing.sm} ${spacing.sm};
+      padding: 0 ${spacing.sm} ${spacing.sm} ${spacing.md};
       justify-content: flex-end;
       flex-wrap: wrap;
     `,
     toolbarLeft: css`
       display: flex;
-      overflow: hidden;
       flex-grow: 1;
+      min-width: 0;
     `,
     spacer: css`
       flex-grow: 1;
@@ -97,9 +115,15 @@ const getStyles = (theme: GrafanaTheme) => {
     `,
     titleWrapper: css`
       display: flex;
-      overflow: hidden;
-      padding-top: ${spacing.sm};
       align-items: center;
+      padding-top: ${spacing.sm};
+      min-width: 0;
+      overflow: hidden;
+    `,
+    goBackButton: css`
+      padding-left: ${spacing.sm};
+      position: relative;
+      top: 8px;
     `,
     parentIcon: css`
       margin: 0 4px;
