@@ -80,9 +80,9 @@ func listAlertInstancesAsFrame(l []*listAlertInstancesQueryResult) *data.Frame {
 	frame := data.NewFrame("Alert Instances",
 		data.NewField("Definition Title", nil, make([]string, fieldLen)),
 		data.NewField("Labels", nil, make([]string, fieldLen)),
-		data.NewField("CurrentState", nil, make([]string, fieldLen)),
-		data.NewField("CurrentStateSince", nil, make([]time.Time, fieldLen)),
-		data.NewField("LastEvalTime", nil, make([]time.Time, fieldLen)),
+		data.NewField("Current State", nil, make([]string, fieldLen)),
+		data.NewField("Current State Since", nil, make([]time.Time, fieldLen)),
+		data.NewField("Last Evaluation Time", nil, make([]time.Time, fieldLen)),
 	)
 	for i, inst := range l {
 		labelStr := ""
