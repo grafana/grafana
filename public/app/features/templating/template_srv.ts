@@ -180,7 +180,7 @@ export class TemplateSrv implements BaseTemplateSrv {
     if (!match) {
       return null;
     }
-    const variableName = match.slice(1).find(match => match !== undefined);
+    const variableName = match.slice(1).find((match) => match !== undefined);
     return variableName;
   }
 
@@ -257,16 +257,16 @@ export class TemplateSrv implements BaseTemplateSrv {
       return target ?? '';
     }
     return this.targetTokens(target, scopedVars, format)
-      .map(t => this.formatValue(t.value, t.format, t.variable, t.text))
+      .map((t) => this.formatValue(t.value, t.format, t.variable, t.text))
       .join('');
   }
 
   replaceToList(target: string, scopedVars?: ScopedVars, format?: string | Function): string[] {
     return TemplateSrv.cartesianProduct(
-      this.targetTokens(target, scopedVars, format).map(t =>
-        (_.isArray(t.value) ? t.value : [t.value]).map(v => this.formatValue(v, t.format, t.variable, t.text))
+      this.targetTokens(target, scopedVars, format).map((t) =>
+        (_.isArray(t.value) ? t.value : [t.value]).map((v) => this.formatValue(v, t.format, t.variable, t.text))
       )
-    ).map(t => t.join(''));
+    ).map((t) => t.join(''));
   }
 
   /**
@@ -275,7 +275,7 @@ export class TemplateSrv implements BaseTemplateSrv {
    */
   // could be replaced by https://github.com/d3/d3-array#cross from d3-array v2.0.0
   private static cartesianProduct(arrays: any[][]): any[][] {
-    return arrays.reduce((res, current) => res.flatMap(r => current.map(c => r.concat([c]))), [[]]);
+    return arrays.reduce((res, current) => res.flatMap((r) => current.map((c) => r.concat([c]))), [[]]);
   }
 
   private targetTokens(target: string, scopedVars?: ScopedVars, format?: string | Function): TargetToken[] {
