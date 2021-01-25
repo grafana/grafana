@@ -26,7 +26,6 @@ const getGraphWithLegendStyles = stylesFactory(({ placement }: GraphWithLegendPr
   wrapper: css`
     display: flex;
     flex-direction: ${placement === 'bottom' ? 'column' : 'row'};
-    height: 100%;
   `,
   graphContainer: css`
     min-height: 65%;
