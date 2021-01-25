@@ -331,7 +331,7 @@ func makeQueryResult(query *search.FindPersistedDashboardsQuery, res []Dashboard
 			}
 
 			if len(query.Sort.MetaName) > 0 {
-				hit.SortMeta = fmt.Sprintf("%d %s", item.SortMeta, query.Sort.MetaName)
+				hit.SortMeta = strings.TrimSpace(fmt.Sprintf("%d %s", item.SortMeta, query.Sort.MetaName))
 			}
 
 			query.Result = append(query.Result, hit)
