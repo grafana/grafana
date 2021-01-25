@@ -46,7 +46,7 @@ export function SegmentInput<T>({
                 'gf-form-label',
                 'query-part',
                 {
-                  ['query-placeholder']: placeholder !== undefined && value === undefined,
+                  ['query-placeholder']: placeholder !== undefined && !value,
                   [styles.disabled]: disabled,
                 },
                 className
