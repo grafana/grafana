@@ -66,24 +66,63 @@ func escape(input string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(input, `\`, `\\`), "'", `\'`)
 }
 
+type certFileType int
+
+const (
+	rootCert = iota
+	clientCert
+	clientKey
+)
+
+func (t certFileType) String() string {
+	switch t {
+	case rootCert:
+		return "root certificate"
+	case clientCert:
+		return "client certificate"
+	case clientKey:
+		return "client key"
+	default:
+		panic(fmt.Sprintf("unrecognized certFileType %d", t))
+	}
+}
+
 // writeCertFile writes a certificate file.
-func writeCertFile(ds *models.DataSource, fileContent string, currentPath string, certFileName string,
-	jsonFieldName string, logger log.Logger) error {
+func writeCertFile(ds *models.DataSource, fileContent, dataDir string, fileType certFileType,
+	logger log.Logger) error {
+	var jsonFieldName string
+	var filename string
+	switch fileType {
+	case rootCert:
+		jsonFieldName = "generatedTLSRootCertFile"
+		filename = "root.crt"
+	case clientCert:
+		jsonFieldName = "generatedTLSCertFile"
+		filename = "client.crt"
+	case clientKey:
+		jsonFieldName = "generatedTLSKeyFile"
+		filename = "client.key"
+	default:
+		panic(fmt.Sprintf("unrecognized certFileType %s", fileType.String()))
+	}
+
+	logger.Debug("Writing cert file", "type", fileType, "jsonFieldName", jsonFieldName)
+
 	var generatedFilePath string
 	if tlsjs, ok := ds.JsonData.CheckGet(jsonFieldName); ok {
 		// Get generated file path from data source
 		generatedFilePath = tlsjs.MustString("")
+		logger.Debug("Got file path from data source", "path", generatedFilePath)
+	} else {
+		logger.Debug("File path not stored in data source")
 	}
 	if fileContent != "" {
 		if generatedFilePath == "" {
-			// Use provided filename
-			generatedFilePath = filepath.Join(currentPath, certFileName)
-			logger.Debug("No file path provided in data source, writing cert file to default path", "path",
-				generatedFilePath)
-		} else {
-			logger.Debug("Writing cert file to path provided in data source", "path", generatedFilePath)
+			// Use standard filename
+			generatedFilePath = filepath.Join(dataDir, filename)
 		}
 
+		logger.Debug("Writing cert file to default path", "path", generatedFilePath)
 		if err := ioutil.WriteFile(generatedFilePath, []byte(fileContent), 0600); err != nil {
 			return err
 		}
@@ -121,7 +160,7 @@ func writeCertFiles(ds *models.DataSource, logger log.Logger) error {
 
 	// create folder to hold certificates
 
-	currentPath, err := os.Getwd()
+	workingDir, err := os.Getwd()
 	if err != nil {
 		return err
 	}
@@ -130,7 +169,9 @@ func writeCertFiles(ds *models.DataSource, logger log.Logger) error {
 	mutex.Lock()
 	defer mutex.Unlock()
 
-	workDir := filepath.Join(currentPath, ds.Uid+"generatedTLSCerts")
+	// XXX: Can we avoid writing files to the current working directory?
+	// Can we use a temporary directory instead, or if that doesn't work, use the server's data directory instead?
+	workDir := filepath.Join(workingDir, ds.Uid+"generatedTLSCerts")
 	exists, err := fs.Exists(workDir)
 	if err != nil {
 		return err
@@ -141,13 +182,13 @@ func writeCertFiles(ds *models.DataSource, logger log.Logger) error {
 		}
 	}
 
-	if err := writeCertFile(ds, tlsRootCert, workDir, "root.crt", "generatedTLSRootCertFile", logger); err != nil {
+	if err := writeCertFile(ds, tlsRootCert, workDir, rootCert, logger); err != nil {
 		return err
 	}
-	if err := writeCertFile(ds, tlsClientCert, workDir, "client.crt", "generatedTLSCertFile", logger); err != nil {
+	if err := writeCertFile(ds, tlsClientCert, workDir, clientCert, logger); err != nil {
 		return err
 	}
-	if err := writeCertFile(ds, tlsClientKey, workDir, "client.key", "generatedTLSKeyFile", logger); err != nil {
+	if err := writeCertFile(ds, tlsClientKey, workDir, clientKey, logger); err != nil {
 		return err
 	}
 
