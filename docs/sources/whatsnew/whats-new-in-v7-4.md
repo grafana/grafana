@@ -12,6 +12,8 @@ list = false
 
 This topic includes the release notes for Grafana v7.4 beta. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
+Check out the [New Features in 7.4](https://play.grafana.org/d/nP8rcffGk/1-new-features-in-v7-4?orgId=1) dashboard on Grafana Play!
+
 ## Grafana OSS features
 
 These features are included in the Grafana open source edition.
@@ -56,7 +58,7 @@ For more information, refer to [Filter data by value]({{< relref "../panels/tran
 
 ### Exemplar support
 
-Grafana graphs now support Prometheus exemplars. They are displayed as diamonds in the graph visualization.
+Grafana graphs now support Prometheus [exemplars]({{< relref "../datasources/prometheus.md#exemplars" >}}). They are displayed as diamonds in the graph visualization.
 
 > **Note:** Support for exemplars will be added in version Prometheus 2.25+,
 

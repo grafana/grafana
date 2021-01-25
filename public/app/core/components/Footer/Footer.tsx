@@ -75,7 +75,7 @@ export const Footer: FC = React.memo(() => {
           {links.map((link) => (
             <li key={link.text}>
               <a href={link.url} target={link.target} rel="noopener">
-                <Icon name={link.icon as IconName} /> {link.text}
+                {link.icon && <Icon name={link.icon as IconName} />} {link.text}
               </a>
             </li>
           ))}
