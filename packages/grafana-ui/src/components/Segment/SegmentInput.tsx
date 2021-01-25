@@ -3,7 +3,9 @@ import { cx, css } from 'emotion';
 import useClickAway from 'react-use/lib/useClickAway';
 import { measureText } from '../../utils/measureText';
 import { useExpandableLabel, SegmentProps } from '.';
-import { getStyles } from './styles';
+import { getSegmentStyles } from './styles';
+import { InlineLabel } from '../Forms/InlineLabel';
+import { useTheme } from '../../themes/ThemeContext';
 
 export interface SegmentInputProps<T> extends SegmentProps<T>, Omit<HTMLProps<HTMLInputElement>, 'value' | 'onChange'> {
   value: string | number;
@@ -34,27 +36,26 @@ export function SegmentInput<T>({
   });
 
   if (!expanded) {
-    const styles = getStyles();
+    const theme = useTheme();
+    const styles = getSegmentStyles(theme);
 
     return (
       <Label
         disabled={disabled}
         Component={
           Component || (
-            <span
+            <InlineLabel
               className={cx(
-                'gf-form-label',
-                'query-part',
-                styles.clickable,
+                styles.segment,
                 {
-                  ['query-placeholder']: placeholder !== undefined && !value,
+                  [styles.queryPlaceholder]: placeholder !== undefined && !value,
                   [styles.disabled]: disabled,
                 },
                 className
               )}
             >
               {initialValue || placeholder}
-            </span>
+            </InlineLabel>
           )
         }
       />

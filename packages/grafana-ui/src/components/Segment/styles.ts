@@ -1,11 +1,18 @@
+import { GrafanaTheme } from '@grafana/data';
 import { css } from 'emotion';
 import { stylesFactory } from '../../themes';
 
-export const getStyles = stylesFactory(() => {
+export const getSegmentStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
-    clickable: css`
+    segment: css`
       cursor: pointer;
+      width: auto;
     `,
+
+    queryPlaceholder: css`
+      color: ${theme.palette.gray2};
+    `,
+
     disabled: css`
       cursor: not-allowed;
       opacity: 0.65;

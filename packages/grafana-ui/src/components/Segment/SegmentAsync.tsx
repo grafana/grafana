@@ -6,7 +6,9 @@ import { SelectableValue } from '@grafana/data';
 import { useExpandableLabel, SegmentProps } from '.';
 import { useAsyncFn } from 'react-use';
 import { AsyncState } from 'react-use/lib/useAsync';
-import { getStyles } from './styles';
+import { getSegmentStyles } from './styles';
+import { InlineLabel } from '../Forms/InlineLabel';
+import { useTheme } from '../../themes/ThemeContext';
 
 export interface SegmentAsyncProps<T> extends SegmentProps<T>, Omit<HTMLProps<HTMLDivElement>, 'value' | 'onChange'> {
   value?: T | SelectableValue<T>;
@@ -30,7 +32,9 @@ export function SegmentAsync<T>({
 
   if (!expanded) {
     const label = _.isObject(value) ? value.label : value;
-    const styles = getStyles();
+    const theme = useTheme();
+    console.log(theme);
+    const styles = getSegmentStyles(theme);
 
     return (
       <Label
@@ -38,20 +42,18 @@ export function SegmentAsync<T>({
         disabled={disabled}
         Component={
           Component || (
-            <span
+            <InlineLabel
               className={cx(
-                'gf-form-label',
-                'query-part',
-                styles.clickable,
+                styles.segment,
                 {
-                  ['query-placeholder']: placeholder !== undefined && !value,
+                  [styles.queryPlaceholder]: placeholder !== undefined && !value,
                   [styles.disabled]: disabled,
                 },
                 className
               )}
             >
               {label || placeholder}
-            </span>
+            </InlineLabel>
           )
         }
       />

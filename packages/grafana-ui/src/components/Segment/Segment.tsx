@@ -3,7 +3,9 @@ import { cx } from 'emotion';
 import _ from 'lodash';
 import { SelectableValue } from '@grafana/data';
 import { SegmentSelect, useExpandableLabel, SegmentProps } from './';
-import { getStyles } from './styles';
+import { getSegmentStyles } from './styles';
+import { InlineLabel } from '../Forms/InlineLabel';
+import { useTheme } from '../../themes/ThemeContext';
 
 export interface SegmentSyncProps<T> extends SegmentProps<T>, Omit<HTMLProps<HTMLDivElement>, 'value' | 'onChange'> {
   value?: T | SelectableValue<T>;
@@ -26,18 +28,19 @@ export function Segment<T>({
 
   if (!expanded) {
     const label = _.isObject(value) ? value.label : value;
-    const styles = getStyles();
+    const theme = useTheme();
+    const styles = getSegmentStyles(theme);
 
     return (
       <Label
         disabled={disabled}
         Component={
           Component || (
-             <InlineLabel
+            <InlineLabel
               className={cx(
-                styles.clickable,
+                styles.segment,
                 {
-                  ['query-placeholder']: placeholder !== undefined && !value,
+                  [styles.queryPlaceholder]: placeholder !== undefined && !value,
                   [styles.disabled]: disabled,
                 },
                 className
@@ -45,8 +48,6 @@ export function Segment<T>({
             >
               {label || placeholder}
             </InlineLabel>
-              {label || placeholder}
-            </span>
           )
         }
       />
