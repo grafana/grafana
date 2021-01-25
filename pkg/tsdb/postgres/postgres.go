@@ -126,6 +126,10 @@ func writeCertFile(ds *models.DataSource, fileContent, dataDir string, fileType 
 		if err := ioutil.WriteFile(generatedFilePath, []byte(fileContent), 0600); err != nil {
 			return err
 		}
+		// Make sure the file has the permissions expected by the Postgresql driver, otherwise it will bail
+		if err := os.Chmod(generatedFilePath, 0600); err != nil {
+			return err
+		}
 		ds.JsonData.Set(jsonFieldName, generatedFilePath)
 		return nil
 	}
