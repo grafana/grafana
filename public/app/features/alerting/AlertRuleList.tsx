@@ -17,8 +17,7 @@ import { AlertDefinitionItem } from './components/AlertDefinitionItem';
 
 export interface Props {
   navModel: NavModel;
-  alertRules: AlertRule[];
-  ngAlertDefinitions: AlertDefinition[];
+  alertRules: Array<AlertRule | AlertDefinition>;
   updateLocation: typeof updateLocation;
   getAlertRulesAsync: typeof getAlertRulesAsync;
   setSearchQuery: typeof setSearchQuery;
@@ -92,7 +91,7 @@ export class AlertRuleList extends PureComponent<Props, any> {
   };
 
   render() {
-    const { navModel, alertRules, ngAlertDefinitions, search, isLoading } = this.props;
+    const { navModel, alertRules, search, isLoading } = this.props;
 
     return (
       <Page navModel={navModel}>
@@ -125,17 +124,25 @@ export class AlertRuleList extends PureComponent<Props, any> {
           </div>
           <section>
             <ol className="alert-rule-list">
-              {alertRules.map((rule) => (
-                <AlertRuleItem
-                  rule={rule}
-                  key={rule.id}
-                  search={search}
-                  onTogglePause={() => this.onTogglePause(rule)}
-                />
-              ))}
-              {ngAlertDefinitions.map((alertDefinition, index) => (
-                <AlertDefinitionItem key={`${alertDefinition.id}-${index}`} alertDefinition={alertDefinition} />
-              ))}
+              {alertRules.map((rule, index) => {
+                if (rule.hasOwnProperty('name')) {
+                  return (
+                    <AlertRuleItem
+                      rule={rule as AlertRule}
+                      key={rule.id}
+                      search={search}
+                      onTogglePause={() => this.onTogglePause(rule as AlertRule)}
+                    />
+                  );
+                }
+                return (
+                  <AlertDefinitionItem
+                    key={`${rule.id}-${index}`}
+                    alertDefinition={rule as AlertDefinition}
+                    search={search}
+                  />
+                );
+              })}
             </ol>
           </section>
         </Page.Contents>
@@ -146,7 +153,7 @@ export class AlertRuleList extends PureComponent<Props, any> {
 
 const mapStateToProps = (state: StoreState) => ({
   navModel: getNavModel(state.navIndex, 'alert-list'),
-  alertRules: getAlertRuleItems(state.alertRules),
+  alertRules: getAlertRuleItems(state),
   stateFilter: state.location.query.state,
   search: getSearchQuery(state.alertRules),
   isLoading: state.alertRules.isLoading,
