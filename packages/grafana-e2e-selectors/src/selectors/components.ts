@@ -89,6 +89,9 @@ export const Components = {
     title: (title: string) => `Tab ${title}`,
     active: () => '[class*="-activeTabStyle"]',
   },
+  RefreshPicker: {
+    runButton: 'RefreshPicker run button',
+  },
   QueryTab: {
     content: 'Query editor tab content',
     queryInspectorButton: 'Query inspector button',

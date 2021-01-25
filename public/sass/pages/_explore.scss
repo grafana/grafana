@@ -105,7 +105,8 @@
 
 .explore-toolbar-content-item {
   display: flex;
-  padding: 2px 2px;
+  padding: 0px 2px;
+  position: relative;
 
   &:first-child {
     padding-left: $dashboard-padding;
