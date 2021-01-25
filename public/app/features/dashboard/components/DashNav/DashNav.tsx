@@ -128,13 +128,17 @@ class DashNav extends PureComponent<Props> {
     return !!this.props.location.query.kiosk;
   }
 
+  isPlaylistRunning() {
+    return this.playlistSrv.isPlaying;
+  }
+
   renderLeftActionsButton() {
     const { dashboard } = this.props;
     const { canStar, canShare, isStarred } = dashboard.meta;
     const buttons: ReactNode[] = [];
 
-    if (this.isInKioskMode()) {
-      return false;
+    if (this.isInKioskMode() || this.isPlaylistRunning()) {
+      return [];
     }
 
     if (canStar) {
@@ -178,6 +182,16 @@ class DashNav extends PureComponent<Props> {
     return buttons;
   }
 
+  renderPlaylistControls() {
+    return (
+      <ButtonGroup>
+        <ToolbarButton tooltip="Go to previous dashboard" icon="backward" onClick={this.onPlaylistPrev} narrow />
+        <ToolbarButton onClick={this.onPlaylistStop}>Stop playlist</ToolbarButton>
+        <ToolbarButton tooltip="Go to next dashboard" icon="forward" onClick={this.onPlaylistNext} narrow />
+      </ButtonGroup>
+    );
+  }
+
   renderRightActionsButton() {
     const { dashboard, onAddPanel, location, updateTimeZoneForSession, isFullscreen } = this.props;
     const { canEdit, showSettings } = dashboard.meta;
@@ -188,6 +202,10 @@ class DashNav extends PureComponent<Props> {
     const timeControls = (
       <DashNavTimeControls dashboard={dashboard} location={location} onChangeTimeZone={updateTimeZoneForSession} />
     );
+
+    if (this.isPlaylistRunning()) {
+      return [this.renderPlaylistControls(), timeControls];
+    }
 
     if (this.isInKioskMode()) {
       return [timeControls, tvButton];
@@ -257,22 +275,8 @@ class DashNav extends PureComponent<Props> {
         onClickTitle={this.onDashboardNameClick}
         onClickParent={this.onFolderNameClick}
         onGoBack={onGoBack}
+        leftItems={this.renderLeftActionsButton()}
       >
-        {this.playlistSrv.isPlaying && (
-          <ButtonGroup>
-            <ToolbarButton
-              tooltip="Go to previous dashboard"
-              icon="step-backward"
-              onClick={this.onPlaylistPrev}
-              narrow
-            />
-            <ToolbarButton icon="square-shape" onClick={this.onPlaylistStop}>
-              Stop playlist
-            </ToolbarButton>
-            <ToolbarButton tooltip="Go to next dashboard" icon="forward" onClick={this.onPlaylistNext} narrow />
-          </ButtonGroup>
-        )}
-
         {this.renderRightActionsButton()}
       </PageToolbar>
     );
