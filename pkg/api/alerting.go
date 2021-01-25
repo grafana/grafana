@@ -91,8 +91,8 @@ func GetAlerts(c *models.ReqContext) response.Response {
 		}
 
 		for _, d := range searchQuery.Result {
-			if d.Type == search.DashHitDB && d.Id > 0 {
-				dashboardIDs = append(dashboardIDs, d.Id)
+			if d.Type == search.DashHitDB && d.ID > 0 {
+				dashboardIDs = append(dashboardIDs, d.ID)
 			}
 		}
 

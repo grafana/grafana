@@ -112,8 +112,8 @@ func TestAlertingAPIEndpoint(t *testing.T) {
 			bus.AddHandler("test", func(query *search.Query) error {
 				searchQuery = query
 				query.Result = search.HitList{
-					&search.Hit{Id: 1},
-					&search.Hit{Id: 2},
+					&search.Hit{ID: 1},
+					&search.Hit{ID: 2},
 				}
 				return nil
 			})
