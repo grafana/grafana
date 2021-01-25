@@ -1,15 +1,12 @@
 import { css } from 'emotion';
 import { stylesFactory } from '../../themes';
-import { SegmentProps } from './types';
 
-export const getStyles = stylesFactory(<T>(props: Pick<SegmentProps<T>, 'disabled'>) => {
+export const getStyles = stylesFactory(() => {
   return {
-    link: props.disabled
-      ? css`
-          cursor: not-allowed;
-          opacity: 0.65;
-          box-shadow: none;
-        `
-      : '',
+    disabled: css`
+      cursor: not-allowed;
+      opacity: 0.65;
+      box-shadow: none;
+    `,
   };
 });

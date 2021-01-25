@@ -34,6 +34,8 @@ export function SegmentInput<T>({
   });
 
   if (!expanded) {
+    const styles = getStyles();
+
     return (
       <Label
         disabled={disabled}
@@ -43,8 +45,10 @@ export function SegmentInput<T>({
               className={cx(
                 'gf-form-label',
                 'query-part',
-                !value && placeholder && 'query-placeholder',
-                getStyles<T>({ disabled: disabled }).link,
+                {
+                  ['query-placeholder']: placeholder !== undefined && value === undefined,
+                  [styles.disabled]: disabled,
+                },
                 className
               )}
             >

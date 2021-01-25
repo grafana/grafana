@@ -30,6 +30,8 @@ export function SegmentAsync<T>({
 
   if (!expanded) {
     const label = _.isObject(value) ? value.label : value;
+    const styles = getStyles();
+
     return (
       <Label
         onClick={fetchOptions}
@@ -40,8 +42,10 @@ export function SegmentAsync<T>({
               className={cx(
                 'gf-form-label',
                 'query-part',
-                !value && placeholder && 'query-placeholder',
-                getStyles<T>({ disabled: disabled }).link,
+                {
+                  ['query-placeholder']: placeholder !== undefined && value === undefined,
+                  [styles.disabled]: disabled,
+                },
                 className
               )}
             >
