@@ -24,25 +24,33 @@ Elasticsearch can be installed on many different operating systems. Refer to the
 
 Alternately you can install Elasticsearch using the resources available in [grafana/grafana](https://github.com/grafana/grafana) GitHub repository. Here you will find a collection of supported data sources, including Elasticsearch, along with test data and preconfigured dashboards for use.
 
-1. Clone the [grafana/grafana](https://github.com/grafana/grafana/tree/master) repository to your local system.
-1. Install Docker or verify that it is installed on your machine.
-1. Within your local `grafana` repository, change directory to [devenv](https://github.com/grafana/grafana/tree/master/devenv).
-   ```
-   cd devenv
-   ```
-1. Run the bash command to setup data sources and dashboards.
-   ```
-   ./setup.sh
-   ```
-1. Restart the Grafana server.
-1. Change directory back to the root directory.
-   ```
-   cd ..
-   ```
-1. Run the make command to create and start Elasticsearch.
-   ```
-    make devenv sources=elastic7
-   ```
+Clone the [grafana/grafana](https://github.com/grafana/grafana/tree/master) repository to your local system.
+Install Docker or verify that it is installed on your machine.
+
+Within your local `grafana` repository, change directory to [devenv](https://github.com/grafana/grafana/tree/master/devenv).
+
+```
+cd devenv
+```
+
+Run the bash command to setup data sources and dashboards.
+
+```
+./setup.sh
+```
+
+Restart the Grafana server.
+Change directory back to the root directory.
+
+```
+cd ..
+```
+
+Run the make command to create and start Elasticsearch.
+
+```
+   make devenv sources=elastic7
+```
 
 This creates and starts Elasticsearch, Filebeat, Metricbeat, Kibana, and a process that sends random data to your new Elasticsearch instance.
 
