@@ -10,7 +10,7 @@ weight = 850
 
 The _Node graph_ can visualize directed graphs or networks. It uses directed force layout to effectively position the nodes so it can help with displaying complex infrastructure maps, hierarchies or execution diagrams.
 
-{{< figure src="/img/docs/v74/node-graph.png" max-width="900px" caption="Node graph" >}}
+![Node graph panel](img/docs/node-graph/node-graph-7-4.png "Node graph")
 
 ## Data requirements
 
