@@ -10,7 +10,7 @@ weight = 850
 
 The _Node graph_ can visualize directed graphs or networks. It uses directed force layout to effectively position the nodes so it can help with displaying complex infrastructure maps, hierarchies or execution diagrams.
 
-![Node graph panel](img/docs/node-graph/node-graph-7-4.png "Node graph")
+![Node graph panel](/img/docs/node-graph/node-graph-7-4.png "Node graph")
 
 ## Data requirements
 
@@ -31,7 +31,7 @@ Usually, nodes show two statistical values inside the node and two identifiers j
 
 For example you can have percentage of errors represented by red portion of the circle. Additional details can be displayed in a context menu when which is displayed when you click on the node. There also can be additional links in the context menu that can target either other parts of Grafana or any external link.
 
-![Node graph navigation](/img/docs/node-graph/node-graph-navigation.gif "Node graph navigation)
+![Node graph navigation](/img/docs/node-graph/node-graph-navigation-7-4.gif "Node graph navigation")
 
 ### Edges
 
