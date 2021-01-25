@@ -41,10 +41,11 @@ export function SegmentInput<T>({
         disabled={disabled}
         Component={
           Component || (
-            <a
+            <span
               className={cx(
                 'gf-form-label',
                 'query-part',
+                styles.clickable,
                 {
                   ['query-placeholder']: placeholder !== undefined && !value,
                   [styles.disabled]: disabled,
@@ -53,7 +54,7 @@ export function SegmentInput<T>({
               )}
             >
               {initialValue || placeholder}
-            </a>
+            </span>
           )
         }
       />

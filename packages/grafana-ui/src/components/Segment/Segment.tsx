@@ -37,6 +37,7 @@ export function Segment<T>({
               className={cx(
                 'gf-form-label',
                 'query-part',
+                styles.clickable,
                 {
                   ['query-placeholder']: placeholder !== undefined && !value,
                   [styles.disabled]: disabled,
