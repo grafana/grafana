@@ -33,8 +33,8 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					err := SearchDashboards(query)
 					So(err, ShouldBeNil)
 					So(len(query.Result), ShouldEqual, 2)
-					So(query.Result[0].Id, ShouldEqual, folder.Id)
-					So(query.Result[1].Id, ShouldEqual, dashInRoot.Id)
+					So(query.Result[0].ID, ShouldEqual, folder.Id)
+					So(query.Result[1].ID, ShouldEqual, dashInRoot.Id)
 				})
 			})
 
@@ -57,7 +57,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					So(err, ShouldBeNil)
 
 					So(len(query.Result), ShouldEqual, 1)
-					So(query.Result[0].Id, ShouldEqual, dashInRoot.Id)
+					So(query.Result[0].ID, ShouldEqual, dashInRoot.Id)
 				})
 
 				Convey("when the user is given permission", func() {
@@ -75,8 +75,8 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						err := SearchDashboards(query)
 						So(err, ShouldBeNil)
 						So(len(query.Result), ShouldEqual, 2)
-						So(query.Result[0].Id, ShouldEqual, folder.Id)
-						So(query.Result[1].Id, ShouldEqual, dashInRoot.Id)
+						So(query.Result[0].ID, ShouldEqual, folder.Id)
+						So(query.Result[1].ID, ShouldEqual, dashInRoot.Id)
 					})
 				})
 
@@ -94,8 +94,8 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						err := SearchDashboards(query)
 						So(err, ShouldBeNil)
 						So(len(query.Result), ShouldEqual, 2)
-						So(query.Result[0].Id, ShouldEqual, folder.Id)
-						So(query.Result[1].Id, ShouldEqual, dashInRoot.Id)
+						So(query.Result[0].ID, ShouldEqual, folder.Id)
+						So(query.Result[1].ID, ShouldEqual, dashInRoot.Id)
 					})
 				})
 			})
@@ -116,7 +116,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					err := SearchDashboards(query)
 					So(err, ShouldBeNil)
 					So(len(query.Result), ShouldEqual, 1)
-					So(query.Result[0].Id, ShouldEqual, dashInRoot.Id)
+					So(query.Result[0].ID, ShouldEqual, dashInRoot.Id)
 				})
 
 				Convey("when the user is given permission to child", func() {
@@ -128,8 +128,8 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						err := SearchDashboards(query)
 						So(err, ShouldBeNil)
 						So(len(query.Result), ShouldEqual, 2)
-						So(query.Result[0].Id, ShouldEqual, childDash.Id)
-						So(query.Result[1].Id, ShouldEqual, dashInRoot.Id)
+						So(query.Result[0].ID, ShouldEqual, childDash.Id)
+						So(query.Result[1].ID, ShouldEqual, dashInRoot.Id)
 					})
 				})
 
@@ -147,9 +147,9 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						err := SearchDashboards(query)
 						So(err, ShouldBeNil)
 						So(len(query.Result), ShouldEqual, 3)
-						So(query.Result[0].Id, ShouldEqual, folder.Id)
-						So(query.Result[1].Id, ShouldEqual, childDash.Id)
-						So(query.Result[2].Id, ShouldEqual, dashInRoot.Id)
+						So(query.Result[0].ID, ShouldEqual, folder.Id)
+						So(query.Result[1].ID, ShouldEqual, childDash.Id)
+						So(query.Result[2].ID, ShouldEqual, dashInRoot.Id)
 					})
 				})
 			})
@@ -171,10 +171,10 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					err := SearchDashboards(query)
 					So(err, ShouldBeNil)
 					So(len(query.Result), ShouldEqual, 4)
-					So(query.Result[0].Id, ShouldEqual, folder1.Id)
-					So(query.Result[1].Id, ShouldEqual, folder2.Id)
-					So(query.Result[2].Id, ShouldEqual, childDash1.Id)
-					So(query.Result[3].Id, ShouldEqual, dashInRoot.Id)
+					So(query.Result[0].ID, ShouldEqual, folder1.Id)
+					So(query.Result[1].ID, ShouldEqual, folder2.Id)
+					So(query.Result[2].ID, ShouldEqual, childDash1.Id)
+					So(query.Result[3].ID, ShouldEqual, dashInRoot.Id)
 				})
 			})
 
@@ -197,7 +197,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						err := SearchDashboards(query)
 						So(err, ShouldBeNil)
 						So(len(query.Result), ShouldEqual, 1)
-						So(query.Result[0].Id, ShouldEqual, dashInRoot.Id)
+						So(query.Result[0].ID, ShouldEqual, dashInRoot.Id)
 					})
 				})
 				Convey("and a dashboard is moved from folder with acl to the folder without an acl", func() {
@@ -212,10 +212,10 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						err := SearchDashboards(query)
 						So(err, ShouldBeNil)
 						So(len(query.Result), ShouldEqual, 4)
-						So(query.Result[0].Id, ShouldEqual, folder2.Id)
-						So(query.Result[1].Id, ShouldEqual, childDash1.Id)
-						So(query.Result[2].Id, ShouldEqual, childDash2.Id)
-						So(query.Result[3].Id, ShouldEqual, dashInRoot.Id)
+						So(query.Result[0].ID, ShouldEqual, folder2.Id)
+						So(query.Result[1].ID, ShouldEqual, childDash1.Id)
+						So(query.Result[2].ID, ShouldEqual, childDash2.Id)
+						So(query.Result[3].ID, ShouldEqual, dashInRoot.Id)
 					})
 				})
 
@@ -236,10 +236,10 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						err := SearchDashboards(query)
 						So(err, ShouldBeNil)
 						So(len(query.Result), ShouldEqual, 4)
-						So(query.Result[0].Id, ShouldEqual, folder2.Id)
-						So(query.Result[1].Id, ShouldEqual, childDash1.Id)
-						So(query.Result[2].Id, ShouldEqual, childDash2.Id)
-						So(query.Result[3].Id, ShouldEqual, dashInRoot.Id)
+						So(query.Result[0].ID, ShouldEqual, folder2.Id)
+						So(query.Result[1].ID, ShouldEqual, childDash1.Id)
+						So(query.Result[2].ID, ShouldEqual, childDash2.Id)
+						So(query.Result[3].ID, ShouldEqual, dashInRoot.Id)
 					})
 				})
 			})
@@ -267,8 +267,8 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					So(err, ShouldBeNil)
 
 					So(len(query.Result), ShouldEqual, 2)
-					So(query.Result[0].Id, ShouldEqual, folder1.Id)
-					So(query.Result[1].Id, ShouldEqual, folder2.Id)
+					So(query.Result[0].ID, ShouldEqual, folder1.Id)
+					So(query.Result[1].ID, ShouldEqual, folder2.Id)
 				})
 
 				Convey("should have write access to all folders and dashboards", func() {
@@ -320,8 +320,8 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					So(err, ShouldBeNil)
 
 					So(len(query.Result), ShouldEqual, 2)
-					So(query.Result[0].Id, ShouldEqual, folder1.Id)
-					So(query.Result[1].Id, ShouldEqual, folder2.Id)
+					So(query.Result[0].ID, ShouldEqual, folder1.Id)
+					So(query.Result[1].ID, ShouldEqual, folder2.Id)
 				})
 
 				Convey("should have edit access to folders with default ACL", func() {
@@ -352,7 +352,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					So(err, ShouldBeNil)
 
 					So(len(query.Result), ShouldEqual, 1)
-					So(query.Result[0].Id, ShouldEqual, folder2.Id)
+					So(query.Result[0].ID, ShouldEqual, folder2.Id)
 				})
 
 				Convey("should have edit permission in folders", func() {
@@ -416,7 +416,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					So(err, ShouldBeNil)
 
 					So(len(query.Result), ShouldEqual, 1)
-					So(query.Result[0].Id, ShouldEqual, folder1.Id)
+					So(query.Result[0].ID, ShouldEqual, folder1.Id)
 				})
 
 				Convey("should not have edit permission in folders", func() {

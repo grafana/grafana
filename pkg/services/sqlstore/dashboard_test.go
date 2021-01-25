@@ -277,7 +277,7 @@ func TestDashboardDataAccess(t *testing.T) {
 				So(len(query.Result), ShouldEqual, 1)
 				hit := query.Result[0]
 				So(hit.Type, ShouldEqual, search.DashHitFolder)
-				So(hit.Url, ShouldEqual, fmt.Sprintf("/dashboards/f/%s/%s", savedFolder.Uid, savedFolder.Slug))
+				So(hit.URL, ShouldEqual, fmt.Sprintf("/dashboards/f/%s/%s", savedFolder.Uid, savedFolder.Slug))
 				So(hit.FolderTitle, ShouldEqual, "")
 			})
 
@@ -337,12 +337,12 @@ func TestDashboardDataAccess(t *testing.T) {
 
 				So(len(query.Result), ShouldEqual, 2)
 				hit := query.Result[0]
-				So(hit.Id, ShouldEqual, savedDash.Id)
-				So(hit.Url, ShouldEqual, fmt.Sprintf("/d/%s/%s", savedDash.Uid, savedDash.Slug))
-				So(hit.FolderId, ShouldEqual, savedFolder.Id)
-				So(hit.FolderUid, ShouldEqual, savedFolder.Uid)
+				So(hit.ID, ShouldEqual, savedDash.Id)
+				So(hit.URL, ShouldEqual, fmt.Sprintf("/d/%s/%s", savedDash.Uid, savedDash.Slug))
+				So(hit.FolderID, ShouldEqual, savedFolder.Id)
+				So(hit.FolderUID, ShouldEqual, savedFolder.Uid)
 				So(hit.FolderTitle, ShouldEqual, savedFolder.Title)
-				So(hit.FolderUrl, ShouldEqual, fmt.Sprintf("/dashboards/f/%s/%s", savedFolder.Uid, savedFolder.Slug))
+				So(hit.FolderURL, ShouldEqual, fmt.Sprintf("/dashboards/f/%s/%s", savedFolder.Uid, savedFolder.Slug))
 			})
 
 			Convey("Should be able to search for dashboard by dashboard ids", func() {
@@ -436,8 +436,8 @@ func TestDashboard_SortingOptions(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Len(t, dashboards, 2)
-		assert.Equal(t, dashA.Id, dashboards[0].Id)
-		assert.Equal(t, dashB.Id, dashboards[1].Id)
+		assert.Equal(t, dashA.Id, dashboards[0].ID)
+		assert.Equal(t, dashB.Id, dashboards[1].ID)
 	})
 }
 
