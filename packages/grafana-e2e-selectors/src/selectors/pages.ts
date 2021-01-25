@@ -129,7 +129,6 @@ export const Pages = {
     General: {
       container: 'Explore',
       graph: 'Explore Graph',
-      runButton: 'Run button',
       table: 'Explore Table',
     },
     Toolbar: {

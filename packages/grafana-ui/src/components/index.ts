@@ -132,7 +132,7 @@ export { FieldConfigItemHeaderTitle } from './FieldConfigs/FieldConfigItemHeader
 // Next-gen forms
 export { Form } from './Forms/Form';
 export { InputControl } from './InputControl';
-export { Button, LinkButton, ButtonVariant, ToolbarButton, ButtonGroup } from './Button';
+export { Button, LinkButton, ButtonVariant, ToolbarButton, ButtonGroup, ToolbarButtonRow } from './Button';
 export { ValuePicker } from './ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
 export { getFormStyles } from './Forms/getFormStyles';
@@ -150,7 +150,6 @@ export { FieldArray } from './Forms/FieldArray';
 
 export { default as resetSelectStyles } from './Select/resetSelectStyles';
 export * from './Select/Select';
-export { ButtonSelect } from './Select/ButtonSelect';
 
 export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';
 export { Badge, BadgeColor, BadgeProps } from './Badge/Badge';
@@ -166,8 +165,10 @@ export { TextArea } from './TextArea/TextArea';
 export { FileUpload } from './FileUpload/FileUpload';
 export { TimeRangeInput } from './TimePicker/TimeRangeInput';
 export { Card, Props as CardProps, ContainerProps, CardInnerProps, getCardStyles } from './Card/Card';
-
 export { FormattedValueDisplay } from './FormattedValueDisplay/FormattedValueDisplay';
+
+export { ButtonSelect } from './Dropdown/ButtonSelect';
+
 // Legacy forms
 
 // Export this until we've figured out a good approach to inline form styles.
@@ -177,7 +178,6 @@ export { InlineFormLabel } from './FormLabel/FormLabel';
 import { Select, AsyncSelect } from './Forms/Legacy/Select/Select';
 import { IndicatorsContainer } from './Forms/Legacy/Select/IndicatorsContainer';
 import { NoOptionsMessage } from './Forms/Legacy/Select/NoOptionsMessage';
-import { ButtonSelect } from './Forms/Legacy/Select/ButtonSelect';
 
 //Input
 import { Input, LegacyInputStatus } from './Forms/Legacy/Input/Input';
@@ -193,7 +193,6 @@ const LegacyForms = {
   AsyncSelect,
   IndicatorsContainer,
   NoOptionsMessage,
-  ButtonSelect,
   Input,
   Switch,
 };
