@@ -10,13 +10,11 @@ weight = 850
 
 The _Node graph_ can visualize directed graphs or networks. It uses directed force layout to effectively position the nodes so it can help with displaying complex infrastructure maps, hierarchies or execution diagrams.
 
-<img class="screenshot" src="/img/docs/v74/node-graph.png">
+{{< figure src="/img/docs/v74/node-graph.png" max-width="900px" caption="Node graph" >}}
 
 ## Data requirements
 
 The Node graph panel requires specific shape of the data to be able to display it's nodes and edges. This means not every data source or query can be visualized in this panel. If you want to use this as a data source developer see the section about data API.  
-
-// TODO: image or gif of node with context menu open
 
 The Node graph visualization consists of _nodes_ and _edges_.
 
@@ -33,15 +31,13 @@ Usually, nodes show two statistical values inside the node and two identifiers j
 
 For example you can have percentage of errors represented by red portion of the circle. Additional details can be displayed in a context menu when which is displayed when you click on the node. There also can be additional links in the context menu that can target either other parts of Grafana or any external link.
 
-// TODO: image or gif of edge with context menu open
+{{< figure src="/img/docs/v74/node-graph-navigation.gif" max-width="900px" caption="Node graph" >}}
 
 ### Edges
 
 Edges can also show statistics when you hover over the edge. Similar to nodes, you can open a context menu with additional details and links by clicking on the edge.
 
-The first data source supporting this visualization is X-Ray data source for it's Service map feature. For more information, refer to the X-Ray documentation.
-
-// Andrej - Add a link to the updated X-Ray documentation when it is merged.
+The first data source supporting this visualization is X-Ray data source for it's Service map feature. For more information, refer to the [X-Ray plugin documentation](https://grafana.com/grafana/plugins/grafana-x-ray-datasource).
 
 ## Navigating the node graph
 
