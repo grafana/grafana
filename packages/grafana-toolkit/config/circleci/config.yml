@@ -59,7 +59,7 @@ executors:
   default_exec: # declares a reusable executor
     docker:
       - image: srclosson/grafana-plugin-ci-alpine:latest
-  e2e_exec: 
+  e2e_exec:
     docker:
       - image: srclosson/grafana-plugin-ci-e2e:latest
 
@@ -178,9 +178,9 @@ jobs:
     executor: default_exec
     steps:
     - run:
-      name: Continue if this plugin has a provisioning path
-      command: |
-        [ -z "${PROVISIONING_REPO_PATH}" ] && circleci-agent step halt
+        name: Continue if this plugin has a provisioning path
+        command: |
+          [ -z "$PROVISIONING_REPO_PATH" ] && circleci-agent step halt
     - checkout
     - add_ssh_keys:
         fingerprints:
@@ -193,7 +193,7 @@ jobs:
         command: |
           mkdir ci # Avoid error if not exists
           mkdir ci/jobs # Avoid error if not exists
-          mkdir ci/jobs/provisioning  
+          mkdir ci/jobs/provisioning
           mv plugin-provisioning/${PROVISIONING_REPO_PATH}/* ci/jobs/provisioning
     - persist_to_workspace:
         root: .
@@ -204,9 +204,9 @@ jobs:
     executor: e2e_exec
     steps:
     - run:
-      name: Continue if this plugin has a provisioning path
-      command: |
-        [ -z "${PROVISIONING_REPO_PATH}" ] && circleci-agent step halt
+        name: Continue if this plugin has a provisioning path
+        command: |
+          [ -z "$PROVISIONING_REPO_PATH" ] && circleci-agent step halt
     - checkout
     - attach_workspace:
         at: .
@@ -228,7 +228,7 @@ jobs:
           ginstall canary
           /opt/grafana/bin/grafana-server -config ci/grafana-test-env/custom.ini -homepath /opt/grafana &
           ## To make sure grafana has started up
-          while ! $(netstat -tulpn | grep 3000 >/dev/null 2>&1); do sleep 1; done 
+          while ! $(netstat -tulpn | grep 3000 >/dev/null 2>&1); do sleep 1; done
           /opt/grafana/bin/grafana-cli --version
     - run:
         name: Copy provisioning files
