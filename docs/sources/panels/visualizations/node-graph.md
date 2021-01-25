@@ -19,7 +19,7 @@ The Node graph panel requires specific shape of the data to be able to display i
 The Node graph visualization consists of _nodes_ and _edges_.
 
 - A _node_ is displayed as a circle. A node might represent an application, a service, or anything else that is relevant from an application perspective.
-- An _edge_ is displayed as a line that connects two nodes. The connection might be a request or execution, or some other relationship between the two nodes.
+- An _edge_ is displayed as a line that connects two nodes. The connection might be a request, an execution, or some other relationship between the two nodes.
 
 Both nodes and edges can have associated metadata or statistics. The data source defines what information and values is shown, so different data sources can show different type of values or not show some values.
 
