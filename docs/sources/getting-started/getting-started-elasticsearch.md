@@ -112,6 +112,9 @@ Otherwise you can select it from the data source picker:
 ![data source picker](/img/docs/getting-started/elasticsearch/datasource-picker-7-4.png)
 
 You can now start editing your query to get data out of your Elasticsearch instance.
+The default query will graph the number of received documents in our index over the specidied period of time:
+
+![Default query](/img/docs/getting-started/elasticsearch/default-query-7-4.png)
 
 ## Next steps
 
