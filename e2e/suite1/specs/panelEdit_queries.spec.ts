@@ -29,7 +29,7 @@ e2e.scenario({
     e2e()
       .route({
         method: 'POST',
-        url: '/api/tsdb/query',
+        url: '/api/ds/query',
       })
       .as('apiPostQuery');
 
