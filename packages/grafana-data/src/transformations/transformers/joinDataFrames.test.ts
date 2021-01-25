@@ -1,8 +1,9 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
 import { FieldType } from '../../types/dataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
+import { ArrayVector } from '../../vector';
 import { calculateFieldTransformer } from './calculateField';
-import { outerJoinDataFrames } from './joinDataFrames';
+import { isLikelyAscendingVector, outerJoinDataFrames } from './joinDataFrames';
 
 describe('align frames', () => {
   beforeAll(() => {
@@ -180,5 +181,32 @@ describe('align frames', () => {
         },
       ]
     `);
+  });
+
+  describe('check ascending data', () => {
+    it('simple ascending', () => {
+      const v = new ArrayVector([1, 2, 3, 4, 5]);
+      expect(isLikelyAscendingVector(v)).toBeTruthy();
+    });
+    it('simple ascending with null', () => {
+      const v = new ArrayVector([null, 2, 3, 4, null]);
+      expect(isLikelyAscendingVector(v)).toBeTruthy();
+    });
+    it('single value', () => {
+      const v = new ArrayVector([null, null, null, 4, null]);
+      expect(isLikelyAscendingVector(v)).toBeTruthy();
+      expect(isLikelyAscendingVector(new ArrayVector([4]))).toBeTruthy();
+      expect(isLikelyAscendingVector(new ArrayVector([]))).toBeTruthy();
+    });
+
+    it('middle values', () => {
+      const v = new ArrayVector([null, null, 5, 4, null]);
+      expect(isLikelyAscendingVector(v)).toBeFalsy();
+    });
+
+    it('decending', () => {
+      expect(isLikelyAscendingVector(new ArrayVector([7, 6, null]))).toBeFalsy();
+      expect(isLikelyAscendingVector(new ArrayVector([7, 8, 6]))).toBeFalsy();
+    });
   });
 });

@@ -1,4 +1,4 @@
-import { DataFrame, Field, FieldMatcher, FieldType } from '../../types';
+import { DataFrame, Field, FieldMatcher, FieldType, Vector } from '../../types';
 import { ArrayVector } from '../../vector';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
@@ -30,10 +30,34 @@ export function pickBestJoinField(data: DataFrame[]): FieldMatcher {
   return fieldMatchers.get(FieldMatcherID.byName).get(common[0]);
 }
 
+/**
+ * @alpha
+ */
 export interface JoinOptions {
+  /**
+   * The input fields
+   */
   frames: DataFrame[];
+
+  /**
+   * The field to join -- frames that do not have this field will be droppped
+   */
   joinBy?: FieldMatcher;
+
+  /**
+   * Optionally filter the non-join fields
+   */
   keep?: FieldMatcher;
+
+  /**
+   * Make sure the results are always sorted with the `joinBy` field
+   */
+  enforceSort?: boolean;
+
+  /**
+   * TODO: keep duplicate values (requires extra processing)
+   */
+  keepDuplicateKeys?: boolean;
 
   /**
    * @internal -- used when we need to keep a reference to the original frame/field index
@@ -50,7 +74,11 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
     return undefined;
   }
   if (options.frames.length < 2) {
-    return options.frames[0];
+    const frame = options.frames[0];
+    if (options.enforceSort) {
+      // TODO: find field and sort
+    }
+    return frame;
   }
 
   const allData: AlignedData[] = [];
@@ -227,4 +255,35 @@ function join(tables: AlignedData[], nullModes: number[][]) {
   }
 
   return data;
+}
+
+// Quick test if the first and last points look to be ascending
+export function isLikelyAscendingVector(data: Vector): boolean {
+  let first: any = undefined;
+
+  for (let idx = 0; idx < data.length; idx++) {
+    const v = data.get(idx);
+    if (v != null) {
+      if (first != null) {
+        if (first > v) {
+          return false; // descending
+        }
+        break;
+      }
+      first = v;
+    }
+  }
+
+  let idx = data.length - 1;
+  while (idx >= 0) {
+    const v = data.get(idx--);
+    if (v != null) {
+      if (first > v) {
+        return false;
+      }
+      return true;
+    }
+  }
+
+  return true; // only one non-null point
 }

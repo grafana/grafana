@@ -5,14 +5,16 @@ import {
   DisplayValue,
   FieldConfig,
   FieldMatcher,
+  FieldMatcherID,
+  fieldMatchers,
   fieldReducers,
   FieldType,
   formattedValueToString,
   getFieldDisplayName,
+  outerJoinDataFrames,
   reduceField,
   TimeRange,
 } from '@grafana/data';
-import { joinDataFrames } from './utils';
 import { useTheme } from '../../themes';
 import { UPlotChart } from '../uPlot/Plot';
 import { PlotProps } from '../uPlot/types';
@@ -64,7 +66,16 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   const theme = useTheme();
   const hasLegend = useRef(legend && legend.displayMode !== LegendDisplayMode.Hidden);
 
-  const frame = useMemo(() => joinDataFrames(data, fields), [data, fields]);
+  const frame = useMemo(() => {
+    // Default to timeseries config
+    if (!fields) {
+      fields = {
+        x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
+        y: fieldMatchers.get(FieldMatcherID.numeric).get({}),
+      };
+    }
+    return outerJoinDataFrames({ frames: data, joinBy: fields.x, keep: fields.y, keepOriginIndices: true });
+  }, [data, fields]);
 
   const compareFrames = useCallback((a?: DataFrame | null, b?: DataFrame | null) => {
     if (a && b) {
