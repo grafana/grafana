@@ -106,7 +106,7 @@ func writeConnectionFiles(ds *models.DataSource, logger log.Logger) error {
 	tlsClientKey := decrypted["tlsClientKey"]
 
 	if tlsCACert == "" && tlsClientCert == "" && tlsClientKey == "" {
-		log.Debug("No TLS/SSL certificates provided")
+		logger.Debug("No TLS/SSL certificates provided")
 	}
 
 	// create folder to hold certificates
