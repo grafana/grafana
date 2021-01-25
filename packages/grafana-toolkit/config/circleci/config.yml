@@ -180,7 +180,7 @@ jobs:
     - run:
         name: Continue if this plugin has a provisioning path
         command: |
-          [ -z "$PROVISIONING_REPO_PATH" ] && circleci-agent step halt
+          [ -z "${PROVISIONING_REPO_PATH}" ] && circleci-agent step halt
     - checkout
     - add_ssh_keys:
         fingerprints:
@@ -206,7 +206,7 @@ jobs:
     - run:
         name: Continue if this plugin has a provisioning path
         command: |
-          [ -z "$PROVISIONING_REPO_PATH" ] && circleci-agent step halt
+          [ -z "${PROVISIONING_REPO_PATH}" ] && circleci-agent step halt
     - checkout
     - attach_workspace:
         at: .
