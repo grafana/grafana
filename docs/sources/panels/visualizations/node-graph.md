@@ -31,7 +31,7 @@ Usually, nodes show two statistical values inside the node and two identifiers j
 
 For example you can have percentage of errors represented by red portion of the circle. Additional details can be displayed in a context menu when which is displayed when you click on the node. There also can be additional links in the context menu that can target either other parts of Grafana or any external link.
 
-{{< figure src="/img/docs/v74/node-graph-navigation.gif" max-width="900px" caption="Node graph" >}}
+![Node graph navigation](/img/docs/node-graph/node-graph-navigation.gif "Node graph navigation)
 
 ### Edges
 
