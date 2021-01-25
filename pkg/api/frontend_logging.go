@@ -42,7 +42,6 @@ type sourceMap struct {
 	pluginId string
 }
 
-// source file url to sourcemap consume
 type sourceMapCacheType struct {
 	cache map[string]*sourceMap
 	sync.Mutex
@@ -100,7 +99,6 @@ func getSourceMap(sourceUrl string) (*sourceMap, error) {
 	if smap, ok := sourceMapCache.cache[sourceUrl]; ok {
 		return smap, nil
 	}
-	frontendLogger.Info("getSourcemapConsumer", "url", sourceUrl)
 	sourceMapLocation, err := guessSourceMapLocation(sourceUrl)
 	if err != nil {
 		return nil, err
@@ -110,21 +108,18 @@ func getSourceMap(sourceUrl string) (*sourceMap, error) {
 		f, err := dir.Open(sourceMapLocation.path)
 		if err != nil {
 			if os.IsNotExist(err) {
-				frontendLogger.Error("smap not exist :shrug:", "file", sourceMapLocation.path)
 				sourceMapCache.cache[sourceUrl] = nil
 				return nil, nil
 			}
-			frontendLogger.Error("failed to open sourcemap file", "file", sourceMapLocation.path)
 			return nil, err
 		}
 		defer func() {
 			if err := f.Close(); err != nil {
-				frontendLogger.Error("Failed to close file", err)
+				frontendLogger.Error("Failed to close source map file.", "err", err)
 			}
 		}()
 		b, err := ioutil.ReadAll(f)
 		if err != nil {
-			frontendLogger.Error("failed to read sourcemap file", "file", sourceMapLocation.path)
 			return nil, err
 		}
 		consumer, err := sourcemap.Parse(sourceUrl+".map", b)
@@ -151,7 +146,6 @@ func resolveSourceLocation(url string, line int, column int) (*sourceLocation, e
 	if smap != nil {
 		file, function, line, col, ok := smap.consumer.Source(line, column)
 		if ok {
-			frontendLogger.Info("got a hit!", "url", url, "file", file)
 			if len(function) == 0 {
 				function = "?"
 			}
@@ -176,7 +170,7 @@ func (value *frontendSentryExceptionValue) FmtStacktrace() string {
 	for _, frame := range value.Stacktrace.Frames {
 		mappedLocation, err := resolveSourceLocation(frame.Filename, frame.Lineno, frame.Colno)
 		if err != nil {
-			frontendLogger.Error("Failed get sourcemap.", err)
+			frontendLogger.Error("Error resolving stack trace frame source location.", "err", err)
 		}
 		if mappedLocation != nil {
 			tag := "core"
