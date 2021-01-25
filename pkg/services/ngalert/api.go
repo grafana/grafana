@@ -21,6 +21,8 @@ func (ng *AlertNG) registerAPIEndpoints() {
 		alertDefinitions.Delete("/:alertDefinitionUID", ng.validateOrgAlertDefinition, routing.Wrap(ng.deleteAlertDefinitionEndpoint))
 		alertDefinitions.Post("/", middleware.ReqSignedIn, binding.Bind(saveAlertDefinitionCommand{}), routing.Wrap(ng.createAlertDefinitionEndpoint))
 		alertDefinitions.Put("/:alertDefinitionUID", ng.validateOrgAlertDefinition, binding.Bind(updateAlertDefinitionCommand{}), routing.Wrap(ng.updateAlertDefinitionEndpoint))
+		alertDefinitions.Post("/pause/:alertDefinitionUID", ng.validateOrgAlertDefinition, routing.Wrap(ng.alertDefinitionPauseEndpoint))
+		alertDefinitions.Post("/unpause/:alertDefinitionUID", ng.validateOrgAlertDefinition, routing.Wrap(ng.alertDefinitionUnpauseEndpoint))
 	})
 
 	ng.RouteRegister.Group("/api/ngalert/", func(schedulerRouter routing.RouteRegister) {
@@ -179,4 +181,34 @@ func (ng *AlertNG) unpauseScheduler() response.Response {
 		return response.Error(500, "Failed to unpause scheduler", err)
 	}
 	return response.JSON(200, util.DynMap{"message": "alert definition scheduler unpaused"})
+}
+
+// alertDefinitionPauseEndpoint handles PUT /api/alert-definitions/pause/:alertDefinitionUID.
+func (ng *AlertNG) alertDefinitionPauseEndpoint(c *models.ReqContext) response.Response {
+	cmd := updateAlertDefinitionPausedCommand{
+		OrgID:  c.SignedInUser.OrgId,
+		UID:    c.Params(":alertDefinitionUID"),
+		Paused: true,
+	}
+
+	err := ng.updateAlertDefinitionPaused(&cmd)
+	if err != nil {
+		return response.Error(500, "Failed to pause alert definition", err)
+	}
+	return response.JSON(200, util.DynMap{"message": "alert definition paused"})
+}
+
+// alertDefinitionUnpauseEndpoint handles PUT /api/alert-definitions/unpause/:alertDefinitionUID.
+func (ng *AlertNG) alertDefinitionUnpauseEndpoint(c *models.ReqContext) response.Response {
+	cmd := updateAlertDefinitionPausedCommand{
+		OrgID:  c.SignedInUser.OrgId,
+		UID:    c.Params(":alertDefinitionUID"),
+		Paused: false,
+	}
+
+	err := ng.updateAlertDefinitionPaused(&cmd)
+	if err != nil {
+		return response.Error(500, "Failed to unpause alert definition", err)
+	}
+	return response.JSON(200, util.DynMap{"message": "alert definition unpaused"})
 }

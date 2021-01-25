@@ -212,7 +212,7 @@ func (ng *AlertNG) getOrgAlertDefinitions(query *listAlertDefinitionsQuery) erro
 func (ng *AlertNG) getAlertDefinitions(query *listAlertDefinitionsQuery) error {
 	return ng.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		alerts := make([]*AlertDefinition, 0)
-		q := "SELECT uid, org_id, interval_seconds, version FROM alert_definition"
+		q := "SELECT uid, org_id, interval_seconds, version, paused FROM alert_definition"
 		if err := sess.SQL(q).Find(&alerts); err != nil {
 			return err
 		}
@@ -221,6 +221,17 @@ func (ng *AlertNG) getAlertDefinitions(query *listAlertDefinitionsQuery) error {
 		return nil
 	})
 }
+
+func (ng *AlertNG) updateAlertDefinitionPaused(cmd *updateAlertDefinitionPausedCommand) error {
+	return ng.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		_, err := sess.Exec(`UPDATE alert_definition SET paused = ? WHERE org_id = ? AND uid = ?`, cmd.Paused, cmd.OrgID, cmd.UID)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+}
+
 func generateNewAlertDefinitionUID(sess *sqlstore.DBSession, orgID int64) (string, error) {
 	for i := 0; i < 3; i++ {
 		uid := util.GenerateShortUID()
