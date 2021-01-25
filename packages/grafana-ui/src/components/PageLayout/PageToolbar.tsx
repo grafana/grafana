@@ -121,7 +121,6 @@ const getStyles = (theme: GrafanaTheme) => {
       overflow: hidden;
     `,
     goBackButton: css`
-      padding-left: ${spacing.sm};
       position: relative;
       top: 8px;
     `,
