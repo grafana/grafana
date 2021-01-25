@@ -180,20 +180,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       vertical-align: middle;
     `,
-    buttons: css`
-      display: flex;
-    `,
-    caretIcon: css`
-      margin-left: ${theme.spacing.xs};
-    `,
-    clockIcon: css`
-      margin-left: ${theme.spacing.xs};
-      margin-right: ${theme.spacing.xs};
-    `,
-    noRightBorderStyle: css`
-      label: noRightBorderStyle;
-      border-right: 0;
-    `,
   };
 });
 

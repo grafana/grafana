@@ -21,7 +21,7 @@ export function TimeSyncButton(props: TimeSyncButtonProps) {
         icon="link"
         variant={isSynced ? 'active' : 'default'}
         aria-label={isSynced ? 'Synced times' : 'Unsynced times'}
-        onClick={() => onClick()}
+        onClick={onClick}
       />
     </Tooltip>
   );
