@@ -98,7 +98,7 @@ You can lock down what can be done in the frontend code. Lock down what can be l
 ### Hide users in UI
 
 You can now use the `hidden_users` configuration setting to hide specific users in the UI. With this feature, users created for automation purpose can never be shown in Grafana UI.
-[Configuration]({{< relref ../administration/configuration.md#hidden_users >}}) has been updated for this feature.
+[Configuration]({{< relref "../administration/configuration.md#hidden_users" >}}) has been updated for this feature.
 
 ### Elasticsearch data source updates
 
