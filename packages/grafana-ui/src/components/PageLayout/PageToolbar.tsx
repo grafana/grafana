@@ -17,67 +17,69 @@ export interface Props {
   onClickParent?: () => void;
   leftItems?: ReactNode[];
   children?: ReactNode;
+  className?: string;
 }
 
 /** @alpha */
-export const PageToolbar: FC<Props> = React.memo((props) => {
-  const { title, parent, pageIcon, onGoBack, children, onClickTitle, onClickParent, leftItems } = props;
-  const styles = useStyles(getStyles);
+export const PageToolbar: FC<Props> = React.memo(
+  ({ title, parent, pageIcon, onGoBack, children, onClickTitle, onClickParent, leftItems, className }) => {
+    const styles = useStyles(getStyles);
 
-  return (
-    <div className={styles.toolbar}>
-      <div className={styles.toolbarLeft}>
-        {pageIcon && !onGoBack && (
-          <div className={styles.pageIcon}>
-            <Icon name={pageIcon} size="lg" />
-          </div>
-        )}
-        {onGoBack && (
-          <div className={styles.goBackButton}>
-            <IconButton
-              name="arrow-left"
-              tooltip="Go back (Esc)"
-              tooltipPlacement="bottom"
-              size="xxl"
-              surface="dashboard"
-              aria-label={selectors.components.BackButton.backArrow}
-              onClick={onGoBack}
-            />
-          </div>
-        )}
-        <div className={styles.titleWrapper}>
-          {parent && onClickParent && (
-            <a onClick={props.onClickParent} className={cx(styles.titleLink, styles.parentLink)}>
-              {parent} <span className={styles.parentIcon}>/</span>
-            </a>
+    return (
+      <div className={cx(styles.toolbar, className)}>
+        <div className={styles.toolbarLeft}>
+          {pageIcon && !onGoBack && (
+            <div className={styles.pageIcon}>
+              <Icon name={pageIcon} size="lg" />
+            </div>
           )}
-          {onClickTitle && (
-            <a onClick={props.onClickTitle} className={styles.titleLink}>
-              {title}
-            </a>
+          {onGoBack && (
+            <div className={styles.goBackButton}>
+              <IconButton
+                name="arrow-left"
+                tooltip="Go back (Esc)"
+                tooltipPlacement="bottom"
+                size="xxl"
+                surface="dashboard"
+                aria-label={selectors.components.BackButton.backArrow}
+                onClick={onGoBack}
+              />
+            </div>
           )}
-          {!onClickTitle && <div className={styles.titleText}>{title}</div>}
+          <div className={styles.titleWrapper}>
+            {parent && onClickParent && (
+              <a onClick={onClickParent} className={cx(styles.titleLink, styles.parentLink)}>
+                {parent} <span className={styles.parentIcon}>/</span>
+              </a>
+            )}
+            {onClickTitle && (
+              <a onClick={onClickTitle} className={styles.titleLink}>
+                {title}
+              </a>
+            )}
+            {!onClickTitle && <div className={styles.titleText}>{title}</div>}
+          </div>
+          {leftItems &&
+            leftItems.map((child, index) => (
+              <div className={styles.leftActionItem} key={index}>
+                {child}
+              </div>
+            ))}
         </div>
-        {leftItems &&
-          leftItems.map((child, index) => (
-            <div className={styles.leftActionItem} key={index}>
-              {child}
-            </div>
-          ))}
+        <div className={styles.spacer}></div>
+        {React.Children.toArray(children)
+          .filter(Boolean)
+          .map((child, index) => {
+            return (
+              <div className={styles.actionWrapper} key={index}>
+                {child}
+              </div>
+            );
+          })}
       </div>
-      <div className={styles.spacer}></div>
-      {React.Children.toArray(children)
-        .filter(Boolean)
-        .map((child, index) => {
-          return (
-            <div className={styles.actionWrapper} key={index}>
-              {child}
-            </div>
-          );
-        })}
-    </div>
-  );
-});
+    );
+  }
+);
 
 PageToolbar.displayName = 'PageToolbar';
 
@@ -96,9 +98,9 @@ const getStyles = (theme: GrafanaTheme) => {
     toolbar: css`
       display: flex;
       background: ${theme.colors.dashboardBg};
-      padding: 0 ${spacing.md} ${spacing.sm} ${spacing.md};
       justify-content: flex-end;
       flex-wrap: wrap;
+      padding: 0 ${spacing.md} ${spacing.sm} ${spacing.md};
     `,
     toolbarLeft: css`
       display: flex;
@@ -109,9 +111,13 @@ const getStyles = (theme: GrafanaTheme) => {
       flex-grow: 1;
     `,
     pageIcon: css`
-      display: flex;
       padding-top: ${spacing.sm};
       align-items: center;
+      display: none;
+
+      @media ${styleMixins.mediaUp(theme.breakpoints.md)} {
+        display: flex;
+      }
     `,
     titleWrapper: css`
       display: flex;
@@ -145,12 +151,16 @@ const getStyles = (theme: GrafanaTheme) => {
       padding-top: ${spacing.sm};
     `,
     leftActionItem: css`
-      display: flex;
+      display: none;
       height: 40px;
       position: relative;
       top: 4px;
       align-items: center;
-      padding-left: ${spacing.md};
+      padding-left: ${spacing.sm};
+
+      @media ${styleMixins.mediaUp(theme.breakpoints.md)} {
+        display: flex;
+      }
     `,
   };
 };
