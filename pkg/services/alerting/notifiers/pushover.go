@@ -193,11 +193,11 @@ func NewPushoverNotifier(model *models.AlertNotification) (alerting.Notifier, er
 	userKey := model.DecryptedValue("userKey", model.Settings.Get("userKey").MustString())
 	APIToken := model.DecryptedValue("apiToken", model.Settings.Get("apiToken").MustString())
 	device := model.Settings.Get("device").MustString()
-	alertingPriority, err := strconv.Atoi(model.Settings.Get("priority").MustString())
+	alertingPriority, err := strconv.Atoi(model.Settings.Get("priority").MustString("0")) // default Normal
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert alerting priority to integer: %w", err)
 	}
-	okPriority, err := strconv.Atoi(model.Settings.Get("okPriority").MustString())
+	okPriority, err := strconv.Atoi(model.Settings.Get("okPriority").MustString("0")) // default Normal
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert OK priority to integer: %w", err)
 	}
