@@ -1,6 +1,6 @@
 // Libraries
 import { cloneDeep, isEmpty, map as lodashMap } from 'lodash';
-import { merge, Observable, of } from 'rxjs';
+import { merge, Observable, of, throwError } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import Prism from 'prismjs';
 
@@ -263,7 +263,10 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
         data: data || [],
         key: `loki-${liveTarget.refId}`,
         state: LoadingState.Streaming,
-      }))
+      })),
+      catchError((err: any) => {
+        return throwError(`Live tailing was stopped due to following error: ${err.reason}`);
+      })
     );
   };
 
