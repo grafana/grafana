@@ -163,6 +163,8 @@ describe('Variables - Add variable', () => {
 
     e2e.components.BackButton.backArrow().should('be.visible').click({ force: true });
 
+    e2e().wait(500);
+
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('a label').should('be.visible');
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A').eq(1).should('be.visible').click();

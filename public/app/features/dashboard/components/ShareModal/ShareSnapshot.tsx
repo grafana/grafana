@@ -1,15 +1,5 @@
 import React, { PureComponent } from 'react';
-import {
-  Button,
-  ClipboardButton,
-  Icon,
-  Spinner,
-  Select,
-  Input,
-  LinkButton,
-  InlineField,
-  InlineFieldRow,
-} from '@grafana/ui';
+import { Button, ClipboardButton, Icon, Spinner, Select, Input, LinkButton, Field } from '@grafana/ui';
 import { AppEvents, SelectableValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
@@ -229,31 +219,26 @@ export class ShareSnapshot extends PureComponent<Props, State> {
             URL. Share wisely.
           </p>
         </div>
-        <InlineFieldRow className="share-modal-options">
-          <InlineField labelWidth={24} label="Snapshot name">
-            <Input width={30} value={snapshotName} onChange={this.onSnapshotNameChange} />
-          </InlineField>
-          <InlineField labelWidth={24} label="Expire">
-            <Select width={30} options={expireOptions} value={selectedExpireOption} onChange={this.onExpireChange} />
-          </InlineField>
-        </InlineFieldRow>
-
-        <p className="share-modal-info-text">
-          You may need to configure the timeout value if it takes a long time to collect your dashboard&apos;s metrics.
-        </p>
-
-        <InlineFieldRow className="share-modal-options">
-          <InlineField labelWidth={24} label="Timeout (seconds)">
-            <Input type="number" width={21} value={timeoutSeconds} onChange={this.onTimeoutChange} />
-          </InlineField>
-        </InlineFieldRow>
+        <Field label="Snapshot name">
+          <Input width={30} value={snapshotName} onChange={this.onSnapshotNameChange} />
+        </Field>
+        <Field label="Expire">
+          <Select width={30} options={expireOptions} value={selectedExpireOption} onChange={this.onExpireChange} />
+        </Field>
+        <Field
+          label="Timeout (seconds)"
+          description="You may need to configure the timeout value if it takes a long time to collect your dashboard's
+            metrics."
+        >
+          <Input type="number" width={21} value={timeoutSeconds} onChange={this.onTimeoutChange} />
+        </Field>
 
         <div className="gf-form-button-row">
-          <Button className="width-10" variant="primary" disabled={isLoading} onClick={this.createSnapshot()}>
+          <Button variant="primary" disabled={isLoading} onClick={this.createSnapshot()}>
             Local Snapshot
           </Button>
           {externalEnabled && (
-            <Button className="width-16" variant="secondary" disabled={isLoading} onClick={this.createSnapshot(true)}>
+            <Button variant="secondary" disabled={isLoading} onClick={this.createSnapshot(true)}>
               {sharingButtonText}
             </Button>
           )}
@@ -309,17 +294,11 @@ export class ShareSnapshot extends PureComponent<Props, State> {
     return (
       <div className="share-modal-body">
         <div className="share-modal-header">
-          {isLoading ? (
-            <div className="share-modal-big-icon">
-              <Spinner inline={true} />
-            </div>
-          ) : (
-            <Icon name="camera" className="share-modal-big-icon" size="xxl" />
-          )}
           <div className="share-modal-content">
             {step === 1 && this.renderStep1()}
             {step === 2 && this.renderStep2()}
             {step === 3 && this.renderStep3()}
+            {isLoading && <Spinner inline={true} />}
           </div>
         </div>
       </div>

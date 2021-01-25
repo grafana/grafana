@@ -150,10 +150,11 @@ export interface AlertDefinition {
   title: string;
   description: string;
   condition: AlertCondition;
+  interval: number;
 }
 
 export interface AlertCondition {
-  ref: string;
+  refId: string;
   queriesAndExpressions: any[];
 }
 

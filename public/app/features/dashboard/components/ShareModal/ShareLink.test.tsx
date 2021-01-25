@@ -156,7 +156,7 @@ describe('ShareModal', () => {
 
     it('should add theme when specified', async () => {
       ctx.wrapper?.setProps({ panel: undefined });
-      ctx.wrapper?.setState({ selectedTheme: { label: 'light', value: 'light' } });
+      ctx.wrapper?.setState({ selectedTheme: 'light' });
 
       await ctx.wrapper?.instance().buildUrl();
       const state = ctx.wrapper?.state();
@@ -175,35 +175,13 @@ describe('ShareModal', () => {
       expect(state?.imageUrl).toContain('?from=1000&to=2000&orgId=1&panelId=1&width=1000&height=500&tz=UTC');
     });
 
-    describe('template variables', () => {
-      beforeEach(() => {
-        templateSrv = initTemplateSrv([
-          { type: 'query', name: 'app', current: { value: 'mupp' } },
-          { type: 'query', name: 'server', current: { value: 'srv-01' } },
-        ]);
-        setTemplateSrv(templateSrv);
-      });
-
-      it('should include template variables in url', async () => {
-        mockLocationHref('http://server/#!/test');
-        ctx.mount();
-        ctx.wrapper?.setState({ includeTemplateVars: true });
-
+    it('should shorten url', () => {
+      mockLocationHref('http://server/#!/test');
+      ctx.mount();
+      ctx.wrapper?.setState({ useShortUrl: true }, async () => {
         await ctx.wrapper?.instance().buildUrl();
         const state = ctx.wrapper?.state();
-        expect(state?.shareUrl).toContain(
-          'http://server/#!/test?from=1000&to=2000&orgId=1&var-app=mupp&var-server=srv-01'
-        );
-      });
-
-      it('should shorten url', () => {
-        mockLocationHref('http://server/#!/test');
-        ctx.mount();
-        ctx.wrapper?.setState({ includeTemplateVars: true, useShortUrl: true }, async () => {
-          await ctx.wrapper?.instance().buildUrl();
-          const state = ctx.wrapper?.state();
-          expect(state?.shareUrl).toContain(`/goto/${mockUid}`);
-        });
+        expect(state?.shareUrl).toContain(`/goto/${mockUid}`);
       });
     });
   });
