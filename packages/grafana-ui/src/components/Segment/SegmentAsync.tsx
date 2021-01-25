@@ -33,7 +33,6 @@ export function SegmentAsync<T>({
   if (!expanded) {
     const label = _.isObject(value) ? value.label : value;
     const theme = useTheme();
-    console.log(theme);
     const styles = getSegmentStyles(theme);
 
     return (
