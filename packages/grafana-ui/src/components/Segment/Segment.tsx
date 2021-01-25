@@ -33,10 +33,8 @@ export function Segment<T>({
         disabled={disabled}
         Component={
           Component || (
-            <span
+             <InlineLabel
               className={cx(
-                'gf-form-label',
-                'query-part',
                 styles.clickable,
                 {
                   ['query-placeholder']: placeholder !== undefined && !value,
@@ -45,6 +43,8 @@ export function Segment<T>({
                 className
               )}
             >
+              {label || placeholder}
+            </InlineLabel>
               {label || placeholder}
             </span>
           )
