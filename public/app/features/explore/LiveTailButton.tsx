@@ -1,27 +1,16 @@
 import React from 'react';
-import classNames from 'classnames';
 import tinycolor from 'tinycolor2';
 import { css } from 'emotion';
 import { CSSTransition } from 'react-transition-group';
-import { useTheme, Tooltip, stylesFactory, selectThemeVariant, Icon } from '@grafana/ui';
+import { useTheme, Tooltip, stylesFactory, selectThemeVariant, ButtonGroup, ToolbarButton } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
-
-//Components
-import { ResponsiveButton } from './ResponsiveButton';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const bgColor = selectThemeVariant({ light: theme.palette.gray5, dark: theme.palette.dark1 }, theme.type);
   const orangeLighter = tinycolor(theme.palette.orangeDark).lighten(10).toString();
   const pulseTextColor = tinycolor(theme.palette.orangeDark).desaturate(90).toString();
+
   return {
-    noRightBorderStyle: css`
-      label: noRightBorderStyle;
-      border-right: 0;
-    `,
-    liveButton: css`
-      label: liveButton;
-      margin: 0;
-    `,
     isLive: css`
       label: isLive;
       border-color: ${theme.palette.orangeDark};
@@ -107,25 +96,25 @@ export function LiveTailButton(props: LiveTailButtonProps) {
   const { start, pause, resume, isLive, isPaused, stop, splitted } = props;
   const theme = useTheme();
   const styles = getStyles(theme);
-
+  const buttonVariant = isLive && !isPaused ? 'active' : 'default';
   const onClickMain = isLive ? (isPaused ? resume : pause) : start;
 
   return (
-    <>
-      <Tooltip content={isLive ? <>Pause the live stream</> : <>Live stream your logs</>} placement="bottom">
-        <ResponsiveButton
-          splitted={splitted}
-          buttonClassName={classNames('btn navbar-button', styles.liveButton, {
-            [`btn--radius-right-0 explore-active-button ${styles.noRightBorderStyle}`]: isLive,
-            [styles.isLive]: isLive && !isPaused,
-            [styles.isPaused]: isLive && isPaused,
-          })}
-          icon={!isLive ? 'play' : 'pause'}
-          iconClassName={isLive ? 'icon-brand-gradient' : undefined}
+    <ButtonGroup>
+      <Tooltip
+        content={isLive && !isPaused ? <>Pause the live stream</> : <>Start live stream your logs</>}
+        placement="bottom"
+      >
+        <ToolbarButton
+          iconOnly={splitted}
+          variant={buttonVariant}
+          icon={!isLive || isPaused ? 'play' : 'pause'}
           onClick={onClickMain}
-          title={'\xa0Live'}
-        />
+        >
+          {isLive && isPaused ? 'Paused' : 'Live'}
+        </ToolbarButton>
       </Tooltip>
+
       <CSSTransition
         mountOnEnter={true}
         unmountOnExit={true}
@@ -138,17 +127,10 @@ export function LiveTailButton(props: LiveTailButtonProps) {
           exitActive: styles.stopButtonExitActive,
         }}
       >
-        <div>
-          <Tooltip content={<>Stop and exit the live stream</>} placement="bottom">
-            <button
-              className={`btn navbar-button navbar-button--attached explore-active-button ${styles.isLive}`}
-              onClick={stop}
-            >
-              <Icon className="icon-brand-gradient" name="square-shape" size="lg" type="mono" />
-            </button>
-          </Tooltip>
-        </div>
+        <Tooltip content={<>Stop and exit the live stream</>} placement="bottom">
+          <ToolbarButton variant={buttonVariant} onClick={stop} icon="square-shape" />
+        </Tooltip>
       </CSSTransition>
-    </>
+    </ButtonGroup>
   );
 }

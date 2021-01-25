@@ -41,7 +41,7 @@ chmod 755 /usr/local/bin/golangci-lint
 # Install code climate
 get_file "https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64" \
     "/usr/local/bin/cc-test-reporter" \
-    "b4138199aa755ebfe171b57cc46910b13258ace5fbc4eaa099c42607cd0bff32"
+    "e1be1930379bd169d3a8e82135cf57216ad52ecfaf520b5804f269721e4dcc3d"
 chmod 755 /usr/local/bin/cc-test-reporter
 
 wget -O /usr/local/bin/grabpl "https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.35/grabpl"
