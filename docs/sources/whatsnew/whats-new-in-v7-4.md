@@ -56,7 +56,7 @@ For more information, refer to [Filter data by value]({{< relref "../panels/tran
 
 ### Exemplar support
 
-Grafana graphs now support Prometheus exemplars. They are displayed as diamonds in the graph visualization.
+Grafana graphs now support Prometheus [exemplars]({{< relref "../datasources/prometheus.md#exemplars" >}}). They are displayed as diamonds in the graph visualization.
 
 > **Note:** Support for exemplars will be added in version Prometheus 2.25+,
 

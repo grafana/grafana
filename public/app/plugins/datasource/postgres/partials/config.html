@@ -4,7 +4,8 @@
 <div class="gf-form-group">
   <div class="gf-form max-width-30">
     <span class="gf-form-label width-10">Host</span>
-    <input type="text" class="gf-form-input" ng-model='ctrl.current.url' placeholder="localhost:5432" bs-typeahead="{{['localhost:5432', 'localhost:5433']}}" required></input>
+    <input type="text" class="gf-form-input" ng-model='ctrl.current.url' placeholder="localhost:5432"
+     bs-typeahead="{{['localhost:5432', 'localhost:5433']}}" required></input>
   </div>
 
   <div class="gf-form max-width-30">
@@ -28,35 +29,40 @@
     </div>
   </div>
   <div class="gf-form">
-    <label class="gf-form-label width-10">SSL Mode</label>
+    <label class="gf-form-label width-10">TLS/SSL Mode</label>
     <div class="gf-form-select-wrapper max-width-15 gf-form-select-wrapper--has-help-icon">
-      <select class="gf-form-input" ng-model="ctrl.current.jsonData.sslmode" ng-options="mode for mode in ['disable', 'require', 'verify-ca', 'verify-full']" ng-init="ctrl.current.jsonData.sslmode"></select>
+      <select class="gf-form-input" ng-model="ctrl.current.jsonData.sslmode"
+        ng-options="mode for mode in ['disable', 'require', 'verify-ca', 'verify-full']"
+        ng-init="ctrl.current.jsonData.sslmode"></select>
       <info-popover mode="right-absolute">
-        This option determines whether or with what priority a secure SSL (TLS) TCP/IP connection will be negotiated with the server.
+        This option determines whether or with what priority a secure TLS/SSL TCP/IP connection will be negotiated with the server.
       </info-popover>
     </div>
   </div>
   <div class="gf-form max-width-30" ng-if="ctrl.current.jsonData.sslmode != 'disable'">
-    <span class="gf-form-label width-10">SSL Root Certificate</span>
-    <input type="text" class="gf-form-input gf-form-input--has-help-icon" ng-model='ctrl.current.jsonData.sslRootCertFile' placeholder="SSL/TLS root cert file"></input>
+    <span class="gf-form-label width-10">TLS/SSL Root Certificate</span>
+    <input type="text" class="gf-form-input gf-form-input--has-help-icon"
+      ng-model='ctrl.current.jsonData.sslRootCertFile' placeholder="TLS/SSL root cert file"></input>
     <info-popover mode="right-absolute">
-      If the selected SSL mode requires a server root certificate, provide the path to the file here.
+      If the selected TLS/SSL mode requires a server root certificate, provide the path to the file here.
       Be sure that the file is readable by the user executing the grafana process.
     </info-popover>
   </div>
   <div class="gf-form max-width-30" ng-if="ctrl.current.jsonData.sslmode != 'disable'">
-    <span class="gf-form-label width-10">SSL Client Certificate</span>
-    <input type="text" class="gf-form-input gf-form-input--has-help-icon" ng-model='ctrl.current.jsonData.sslCertFile' placeholder="SSL/TLS client cert file"></input>
+    <span class="gf-form-label width-10">TLS/SSL Client Certificate</span>
+    <input type="text" class="gf-form-input gf-form-input--has-help-icon" ng-model='ctrl.current.jsonData.sslCertFile'
+    placeholder="TLS/SSL client cert file"></input>
     <info-popover mode="right-absolute">
-      To authenticate with an SSL/TLS client certificate, provide the path to the file here.
+      To authenticate with an TLS/SSL client certificate, provide the path to the file here.
       Be sure that the file is readable by the user executing the grafana process.
     </info-popover>
   </div>
   <div class="gf-form max-width-30" ng-if="ctrl.current.jsonData.sslmode != 'disable'">
-    <span class="gf-form-label width-10">SSL Client Key</span>
-    <input type="text" class="gf-form-input gf-form-input--has-help-icon" ng-model='ctrl.current.jsonData.sslKeyFile' placeholder="SSL/TLS client key file"></input>
+    <span class="gf-form-label width-10">TLS/SSL Client Key</span>
+    <input type="text" class="gf-form-input gf-form-input--has-help-icon" ng-model='ctrl.current.jsonData.sslKeyFile'
+    placeholder="TLS/SSL client key file"></input>
     <info-popover mode="right-absolute">
-      To authenticate with a client SSL/TLS certificate, provide the path to the corresponding key file here.
+      To authenticate with a client TLS/SSL certificate, provide the path to the corresponding key file here.
       Be sure that the file is <i>only</i> readable by the user executing the grafana process.
     </info-popover>
   </div>
@@ -67,7 +73,8 @@
 <div class="gf-form-group">
   <div class="gf-form max-width-15">
     <span class="gf-form-label width-7">Max open</span>
-    <input type="number" min="0" class="gf-form-input gf-form-input--has-help-icon" ng-model="ctrl.current.jsonData.maxOpenConns" placeholder="unlimited"></input>
+    <input type="number" min="0" class="gf-form-input gf-form-input--has-help-icon"
+    ng-model="ctrl.current.jsonData.maxOpenConns" placeholder="unlimited"></input>
     <info-popover mode="right-absolute">
       The maximum number of open connections to the database. If <i>Max idle connections</i> is greater than 0 and the
       <i>Max open connections</i> is less than <i>Max idle connections</i>, then <i>Max idle connections</i> will be
@@ -77,7 +84,8 @@
   </div>
   <div class="gf-form max-width-15">
     <span class="gf-form-label width-7">Max idle</span>
-    <input type="number" min="0" class="gf-form-input gf-form-input--has-help-icon" ng-model="ctrl.current.jsonData.maxIdleConns" placeholder="2"></input>
+    <input type="number" min="0" class="gf-form-input gf-form-input--has-help-icon"
+    ng-model="ctrl.current.jsonData.maxIdleConns" placeholder="2"></input>
     <info-popover mode="right-absolute">
       The maximum number of connections in the idle connection pool. If <i>Max open connections</i> is greater than 0 but
       less than the <i>Max idle connections</i>, then the <i>Max idle connections</i> will be reduced to match the
@@ -86,7 +94,8 @@
   </div>
   <div class="gf-form max-width-15">
     <span class="gf-form-label width-7">Max lifetime</span>
-    <input type="number" min="0" class="gf-form-input gf-form-input--has-help-icon" ng-model="ctrl.current.jsonData.connMaxLifetime" placeholder="14400"></input>
+    <input type="number" min="0" class="gf-form-input gf-form-input--has-help-icon"
+    ng-model="ctrl.current.jsonData.connMaxLifetime" placeholder="14400"></input>
     <info-popover mode="right-absolute">
       The maximum amount of time in seconds a connection may be reused. If set to 0, connections are reused forever.
     </info-popover>
@@ -104,11 +113,13 @@
       </info-popover>
     </span>
     <span class="gf-form-select-wrapper">
-      <select class="gf-form-input gf-size-auto" ng-model="ctrl.current.jsonData.postgresVersion" ng-options="f.value as f.name for f in ctrl.postgresVersions"></select>
+      <select class="gf-form-input gf-size-auto" ng-model="ctrl.current.jsonData.postgresVersion"
+        ng-options="f.value as f.name for f in ctrl.postgresVersions"></select>
     </span>
   </div>
   <div class="gf-form">
-    <gf-form-switch class="gf-form" label="TimescaleDB" label-class="width-9" checked="ctrl.current.jsonData.timescaledb" switch-class="max-width-6"></gf-form-switch>
+    <gf-form-switch class="gf-form" label="TimescaleDB" label-class="width-9"
+      checked="ctrl.current.jsonData.timescaledb" switch-class="max-width-6"></gf-form-switch>
     <label class="gf-form-label query-keyword pointer" ng-click="ctrl.toggleTimescaleDBHelp()">
       Help&nbsp;
       <icon name="'angle-down'" ng-show="ctrl.showTimescaleDBHelp"></icon>
@@ -133,16 +144,16 @@
       </info-popover>
     </div>
   </div>
-<div class="grafana-info-box alert alert-info" ng-show="ctrl.showTimescaleDBHelp">
-  <div class="alert-body">
-    <p>
-      <a href="https://github.com/timescale/timescaledb" class="pointer" target="_blank">TimescaleDB</a> is a time-series database built as a PostgreSQL extension. If enabled, Grafana will use <code>time_bucket</code> in the <code>$__timeGroup</code> macro and display TimescaleDB specific aggregate functions in the query builder.
-    </p>
+  <div class="grafana-info-box alert alert-info" ng-show="ctrl.showTimescaleDBHelp">
+    <div class="alert-body">
+      <p>
+        <a href="https://github.com/timescale/timescaledb" class="pointer" target="_blank">TimescaleDB</a> is a
+        time-series database built as a PostgreSQL extension. If enabled, Grafana will use <code>time_bucket</code> in
+        the <code>$__timeGroup</code> macro and display TimescaleDB specific aggregate functions in the query builder.
+      </p>
+    </div>
   </div>
 </div>
-
-</div>
-
 
 <div class="gf-form-group">
   <div class="grafana-info-box">

@@ -4,7 +4,7 @@ import _ from 'lodash';
 // Types
 import { Field, FieldType } from '../types/dataFrame';
 import { GrafanaTheme } from '../types/theme';
-import { DecimalCount, DecimalInfo, DisplayProcessor, DisplayValue } from '../types/displayValue';
+import { DisplayProcessor, DisplayValue } from '../types/displayValue';
 import { getValueFormat } from '../valueFormats/valueFormats';
 import { getMappedValue } from '../utils/valueMappings';
 import { dateTime } from '../datetime';
@@ -86,8 +86,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
 
     if (!isNaN(numeric)) {
       if (shouldFormat && !_.isBoolean(value)) {
-        const { decimals, scaledDecimals } = getDecimalsForValue(value, config.decimals);
-        const v = formatFunc(numeric, decimals, scaledDecimals, options.timeZone);
+        const v = formatFunc(numeric, config.decimals, null, options.timeZone);
         text = v.text;
         suffix = v.suffix;
         prefix = v.prefix;
@@ -135,53 +134,6 @@ function toNumber(value: any): number {
 
 function toStringProcessor(value: any): DisplayValue {
   return { text: _.toString(value), numeric: toNumber(value) };
-}
-
-function getSignificantDigitCount(n: number) {
-  //remove decimal and make positive
-  n = Math.abs(+String(n).replace('.', ''));
-  if (n === 0) {
-    return 0;
-  }
-
-  // kill the 0s at the end of n
-  while (n !== 0 && n % 10 === 0) {
-    n /= 10;
-  }
-
-  // get number of digits
-  return Math.floor(Math.log(n) / Math.LN10) + 1;
-}
-
-export function getDecimalsForValue(value: number, decimalOverride?: DecimalCount): DecimalInfo {
-  if (_.isNumber(decimalOverride)) {
-    // It's important that scaledDecimals is null here
-    return { decimals: decimalOverride, scaledDecimals: null };
-  }
-
-  if (value === 0) {
-    return { decimals: 0, scaledDecimals: 0 };
-  }
-
-  const digits = getSignificantDigitCount(value);
-  const log10 = Math.floor(Math.log(Math.abs(value)) / Math.LN10);
-  let dec = -log10 + 1;
-  const magn = Math.pow(10, -dec);
-  const norm = value / magn; // norm is between 1.0 and 10.0
-
-  // special case for 2.5, requires an extra decimal
-  if (norm > 2.25) {
-    ++dec;
-  }
-
-  if (value % 1 === 0) {
-    dec = 0;
-  }
-
-  const decimals = Math.max(0, dec);
-  const scaledDecimals = decimals - log10 + digits - 1;
-
-  return { decimals, scaledDecimals };
 }
 
 export function getRawDisplayProcessor(): DisplayProcessor {

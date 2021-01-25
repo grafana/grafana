@@ -1,79 +1,94 @@
-import React, { FC, FormEvent, useState } from 'react';
+import React, { FC, FormEvent, useMemo } from 'react';
 import { css } from 'emotion';
-import { GrafanaTheme } from '@grafana/data';
-import { Field, Input, Tab, TabContent, TabsBar, TextArea, useStyles } from '@grafana/ui';
-import { AlertDefinition, NotificationChannelType } from 'app/types';
+import { GrafanaTheme, SelectableValue } from '@grafana/data';
+import { Field, Input, Select, TextArea, useStyles } from '@grafana/ui';
+import { AlertDefinition, NotificationChannelType, QueryGroupOptions } from 'app/types';
 
 interface Props {
   alertDefinition: AlertDefinition;
   notificationChannelTypes: NotificationChannelType[];
   onChange: (event: FormEvent) => void;
+  onIntervalChange: (interval: SelectableValue<number>) => void;
+  onConditionChange: (refId: SelectableValue<string>) => void;
+  queryOptions: QueryGroupOptions;
 }
 
-enum Tabs {
-  Alert = 'alert',
-  Panel = 'panel',
-}
-
-const tabs = [
-  { id: Tabs.Alert, text: 'Alert definition' },
-  { id: Tabs.Panel, text: 'Panel' },
-];
-
-export const AlertDefinitionOptions: FC<Props> = ({ alertDefinition, onChange }) => {
+export const AlertDefinitionOptions: FC<Props> = ({
+  alertDefinition,
+  onChange,
+  onIntervalChange,
+  onConditionChange,
+  queryOptions,
+}) => {
   const styles = useStyles(getStyles);
-  const [activeTab, setActiveTab] = useState<string>(Tabs.Alert);
+  const refIds = useMemo(() => queryOptions.queries.map((q) => ({ value: q.refId, label: q.refId })), [
+    queryOptions.queries,
+  ]);
 
   return (
-    <div className={styles.container}>
-      <TabsBar>
-        {tabs.map((tab, index) => (
-          <Tab
-            key={`${tab.id}-${index}`}
-            label={tab.text}
-            active={tab.id === activeTab}
-            onChangeTab={() => setActiveTab(tab.id)}
+    <div style={{ paddingTop: '16px' }}>
+      <div className={styles.container}>
+        <h4>Alert definition</h4>
+        <Field label="Title">
+          <Input width={25} name="title" value={alertDefinition.title} onChange={onChange} />
+        </Field>
+        <Field label="Description" description="What does the alert do and why was it created">
+          <TextArea
+            rows={5}
+            width={25}
+            name="description"
+            value={alertDefinition.description}
+            onChange={onChange}
+            readOnly={true}
           />
-        ))}
-      </TabsBar>
-      <TabContent className={styles.tabContent}>
-        {activeTab === Tabs.Alert && (
-          <div>
-            <Field label="Name">
-              <Input width={25} name="name" value={alertDefinition.name} onChange={onChange} />
-            </Field>
-            <Field label="Description" description="What does the alert do and why was it created">
-              <TextArea
-                rows={5}
-                width={25}
-                name="description"
-                value={alertDefinition.description}
-                onChange={onChange}
-              />
-            </Field>
-            <Field label="Evaluate">
-              <span>Every For</span>
-            </Field>
-            <Field label="Conditions">
-              <div></div>
-            </Field>
+        </Field>
+        <Field label="Evaluate">
+          <div className={styles.optionRow}>
+            <span className={styles.optionName}>Every</span>
+            <Select
+              onChange={onIntervalChange}
+              value={alertDefinition.interval}
+              options={[
+                { value: 60, label: '1m' },
+                { value: 300, label: '5m' },
+                { value: 600, label: '10m' },
+              ]}
+              width={10}
+            />
           </div>
-        )}
-        {activeTab === Tabs.Panel && <div>VizPicker</div>}
-      </TabContent>
+        </Field>
+        <Field label="Conditions">
+          <div className={styles.optionRow}>
+            <Select
+              onChange={onConditionChange}
+              value={alertDefinition.condition.refId}
+              options={refIds}
+              noOptionsMessage="No queries added"
+            />
+          </div>
+        </Field>
+      </div>
     </div>
   );
 };
 
 const getStyles = (theme: GrafanaTheme) => {
   return {
-    container: css`
-      margin-top: ${theme.spacing.md};
-      height: 100%;
+    wrapper: css`
+      padding-top: ${theme.spacing.md};
     `,
-    tabContent: css`
-      background: ${theme.colors.panelBg};
-      height: 100%;
+    container: css`
+      padding: ${theme.spacing.md};
+      background-color: ${theme.colors.panelBg};
+    `,
+    optionRow: css`
+      display: flex;
+      align-items: baseline;
+    `,
+    optionName: css`
+      font-size: ${theme.typography.size.md};
+      color: ${theme.colors.formInputText};
+      margin-right: ${theme.spacing.sm};
     `,
   };
 };

@@ -2,9 +2,11 @@
 
 This style guide applies to all documentation created for Grafana products.
 
-For information about how to write technical documentation, we suggest reviewing the content of the [Google Technical Writing courses](https://developers.google.com/tech-writing).
+For information about how to write technical documentation, refer to the following resources:
 
-The [Divio documentation system](https://documentation.divio.com/) site and the [Vue writing principles](https://v3.vuejs.org/guide/contributing/writing-guide.html#principles) are also good resources.
+* [Google Technical Writing courses](https://developers.google.com/tech-writing)
+* [Divio documentation system](https://documentation.divio.com/)
+* [Vue writing principles](https://v3.vuejs.org/guide/contributing/writing-guide.html#principles)
 
 ## Contributing
 
@@ -12,60 +14,61 @@ The *Documentation style guide* is a living document. Add to it whenever a style
 
 ## Published guides
 
-For all items not covered in this guide, refer to the [Microsoft Style Guide](https://docs.microsoft.com/en-us/style-guide/welcome/) and the [Chicago Manual of Style](https://www.chicagomanualofstyle.org/home.html).
+For all items that are not covered in this guide, refer to the [Microsoft Style Guide](https://docs.microsoft.com/en-us/style-guide/welcome/) and the [Chicago Manual of Style](https://www.chicagomanualofstyle.org/home.html).
 
 ## Spelling
 
-The [codespell](https://github.com/codespell-project/codespell) tool is run for every change to catch common misspellings.
+To catch common misspellings, the [codespell](https://github.com/codespell-project/codespell) tool is run for every change.
 
 ## Inclusive language
 
-This section provides guidelines on how to avoid using charged language in documentation.
+Avoid using charged language.
 
 ### Allowing and blocking
 
-Don't use "whitelist" or "blacklist" when referring to allowing or blocking content or traffic.
+When referring to _allowing_ or _blocking_ content or traffic, use a form of _allow_ or _block_:
 
-- When used as a noun, use "allowlist" or "blocklist".
-- When used as a verb, use "allow" or "block"
+- (noun) _allowlist_ or _blocklist_
+- (verb) _allow_ or _block_
 
 Example: _To **allow** outgoing traffic, add the IP to the **allowlist**._
 
-### Leader and follower
+Avoid _whitelist_ or _blacklist_.
 
-Don't use "master" or "slave" to describe relationships between nodes or processes.
+### Primary and secondary
 
-- Use "leader", "main" or "primary," instead of "master."
-- Use "follower" or "secondary," instead of "slave."
+To describe relationships between nodes or processes, there are several options:
 
-### Exceptions
+- Use _primary_, _main_, or _parent_, instead of _master_.
+- Use _secondary_, _replica_, or _child_, instead of _slave_.
 
-When referring to a configuration or settings used by third-party libraries och technologies outside the Grafana project, prefer the original name to avoid confusion.
-
-For example, use "master" when referring to the default Git branch.
+Avoid _master_ or _slave_.
 
 ## Grafana-specific style
 
-The following sections provide general guidelines on topics specific to Grafana documentation. Note that for the most part, these are *guidelines*, not rigid rules. If you have questions, ask in the #docs channel of Grafana Slack.
+The following guidelines are specific to Grafana documentation. For the most part, these are *guidelines* are not rigid rules. If you have questions, ask in the #docs channel of Grafana Slack.
 
 ### General
 
-- Use active voice. Avoid passive voice.
-  - Use active: Grafana displays the heatmap visualization.
-  - Avoid passive: The heatmap visualization is displayed.
-- Write directly to the reader.
+- Use active voice:
+  - Active: Grafana displays the heatmap visualization.
+  - Passive: The heatmap visualization is displayed.
+- Write directly to the reader:
   - Use: "After you create a dashboard, you can add a panel to it."
   - Avoid: "After you create a dashboard, it is possible to add a panel to it."
-- Write in the imperative second person. Examples: You can write a query. Click the panel. Close the window.
-- Write in present tense.
-  - Use: The panel opens. Grafana opens the panel.
-  - Not: The panel will open.
-- Do not use an ampersand (&) as an abbreviation for "and."
+- Write in the imperative second person:
+  - "Click the panel."
+  - "Close the window."
+- Write in present tense:
+  - Use: "The panel opens."
+  - Avoid: "The panel will open."
+- Do not use an ampersand (&) as an abbreviation for _and_.
   - **Exceptions:** If an ampersand is used in the Grafana UI, then match the UI.
-- Avoid using internal slang and jargon in technical documentation.
-- Do not use two spaces after a period. Only add one space after each sentence. Do not add a space at the end of the paragraph.
-- Sentence length should be 25 words or less. If your thought is longer than 25 words, consider breaking up the sentence or changing the format to a list.
-- Paragraphs should be three sentences or fewer. Break up long paragraphs.
+- Avoid using internal jargon or slang.
+- Do not use two spaces after a period; use one space after a sentence.
+- Remove any extra space characters at the end of a paragraph.
+- Aim for your sentences to be fewer than 25 words. Instead, use smaller complete phrases or change the format, such as using a list.
+- Aim for paragraphs to be three sentences or fewer. Make the text more concise, use more headings, or both.
 
 ### File naming conventions
 
