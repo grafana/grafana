@@ -31,14 +31,6 @@ export class RefreshPicker extends PureComponent<Props> {
     super(props);
   }
 
-  intervalsToOptions = (intervals: string[] | undefined): Array<SelectableValue<string>> => {
-    const intervalsOrDefault = intervals || defaultIntervals;
-    const options = intervalsOrDefault.map((interval) => ({ label: interval, value: interval }));
-
-    options.unshift(RefreshPicker.offOption);
-    return options;
-  };
-
   onChangeSelect = (item: SelectableValue<string>) => {
     const { onIntervalChanged } = this.props;
     if (onIntervalChanged) {
@@ -63,11 +55,11 @@ export class RefreshPicker extends PureComponent<Props> {
   render() {
     const { onRefresh, intervals, tooltip, value, text, isLoading, noIntervalPicker } = this.props;
 
-    const options = this.intervalsToOptions(intervals);
     const currentValue = value || '';
     const variant = this.getVariant();
-
-    let selectedValue = options.find((item) => item.value === currentValue) || RefreshPicker.offOption;
+    const options = intervalsToOptions({ intervals });
+    const option = options.find(({ value }) => value === currentValue);
+    let selectedValue = option || RefreshPicker.offOption;
 
     if (selectedValue.label === RefreshPicker.offOption.label) {
       selectedValue = { value: '' };
@@ -99,4 +91,14 @@ export class RefreshPicker extends PureComponent<Props> {
       </div>
     );
   }
+}
+
+export function intervalsToOptions({ intervals = defaultIntervals }: { intervals?: string[] } = {}): Array<
+  SelectableValue<string>
+> {
+  const intervalsOrDefault = intervals || defaultIntervals;
+  const options = intervalsOrDefault.map((interval) => ({ label: interval, value: interval }));
+
+  options.unshift(RefreshPicker.offOption);
+  return options;
 }
