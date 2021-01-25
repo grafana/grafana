@@ -66,15 +66,22 @@ func escape(input string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(input, `\`, `\\`), "'", `\'`)
 }
 
-func writeConnectionFile(ds *models.DataSource, fileContent string, currentPath string, certFileName string,
-	jsonFieldName string) error {
+// writeCertFile writes a certificate file.
+func writeCertFile(ds *models.DataSource, fileContent string, currentPath string, certFileName string,
+	jsonFieldName string, logger log.Logger) error {
 	var generatedFilePath string
 	if tlsjs, ok := ds.JsonData.CheckGet(jsonFieldName); ok {
+		// Get generated file path from data source
 		generatedFilePath = tlsjs.MustString("")
 	}
 	if fileContent != "" {
 		if generatedFilePath == "" {
+			// Use provided filename
 			generatedFilePath = filepath.Join(currentPath, certFileName)
+			logger.Debug("No file path provided in data source, writing cert file to default path", "path",
+				generatedFilePath)
+		} else {
+			logger.Debug("Writing cert file to path provided in data source", "path", generatedFilePath)
 		}
 
 		if err := ioutil.WriteFile(generatedFilePath, []byte(fileContent), 0600); err != nil {
@@ -85,13 +92,14 @@ func writeConnectionFile(ds *models.DataSource, fileContent string, currentPath 
 	}
 
 	if generatedFilePath != "" {
+		logger.Debug("Deleting cert file since no content is provided", "path", generatedFilePath)
 		exists, err := fs.Exists(generatedFilePath)
 		if err != nil {
 			return err
 		}
 		if exists {
 			if err := os.Remove(generatedFilePath); err != nil {
-				return err
+				return fmt.Errorf("failed to remove %q: %w", generatedFilePath, err)
 			}
 		}
 	}
@@ -99,13 +107,15 @@ func writeConnectionFile(ds *models.DataSource, fileContent string, currentPath 
 	return nil
 }
 
-func writeConnectionFiles(ds *models.DataSource, logger log.Logger) error {
+func writeCertFiles(ds *models.DataSource, logger log.Logger) error {
+	logger.Debug("Writing TLS certificate files to disk")
+
 	decrypted := ds.SecureJsonData.Decrypt()
-	tlsCACert := decrypted["tlsCACert"]
+	tlsRootCert := decrypted["tlsCACert"]
 	tlsClientCert := decrypted["tlsClientCert"]
 	tlsClientKey := decrypted["tlsClientKey"]
 
-	if tlsCACert == "" && tlsClientCert == "" && tlsClientKey == "" {
+	if tlsRootCert == "" && tlsClientCert == "" && tlsClientKey == "" {
 		logger.Debug("No TLS/SSL certificates provided")
 	}
 
@@ -131,27 +141,44 @@ func writeConnectionFiles(ds *models.DataSource, logger log.Logger) error {
 		}
 	}
 
-	// Create/modify/delete certifications
-	if err := writeConnectionFile(ds, tlsCACert, workDir, "ca.crt", "generatedTLSRootCertFile"); err != nil {
+	if err := writeCertFile(ds, tlsRootCert, workDir, "root.crt", "generatedTLSRootCertFile", logger); err != nil {
 		return err
 	}
-	if err := writeConnectionFile(ds, tlsClientCert, workDir, "client.crt", "generatedTLSCertFile"); err != nil {
+	if err := writeCertFile(ds, tlsClientCert, workDir, "client.crt", "generatedTLSCertFile", logger); err != nil {
 		return err
 	}
-	if err := writeConnectionFile(ds, tlsClientKey, workDir, "client.key", "generatedTLSKeyFile"); err != nil {
+	if err := writeCertFile(ds, tlsClientKey, workDir, "client.key", "generatedTLSKeyFile", logger); err != nil {
 		return err
 	}
 
 	return nil
 }
 
+// validateCertFilePaths validates configured certificate file paths.
+func validateCertFilePaths(rootCert, clientCert, clientKey string, logger log.Logger) error {
+	for _, fpath := range []string{rootCert, clientCert, clientKey} {
+		if fpath == "" {
+			continue
+		}
+		exists, err := fs.Exists(fpath)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			return fmt.Errorf("certificate file %q doesn't exist", fpath)
+		}
+	}
+	return nil
+}
+
 func generateConnectionString(datasource *models.DataSource, logger log.Logger) (string, error) {
-	tlsConfigurationMethod := strings.TrimSpace(strings.ToLower(datasource.JsonData.Get("tlsConfigurationMethod").MustString("file-path")))
+	tlsConfigurationMethod := strings.TrimSpace(
+		strings.ToLower(datasource.JsonData.Get("tlsConfigurationMethod").MustString("file-path")))
 	tlsMode := strings.TrimSpace(strings.ToLower(datasource.JsonData.Get("sslmode").MustString("verify-full")))
 	isTLSDisabled := tlsMode == "disable"
 
 	if !isTLSDisabled && tlsConfigurationMethod == "file-content" {
-		if err := writeConnectionFiles(datasource, logger); err != nil {
+		if err := writeCertFiles(datasource, logger); err != nil {
 			return "", err
 		}
 	}
@@ -197,6 +224,9 @@ func generateConnectionString(datasource *models.DataSource, logger log.Logger) 
 			tlsRootCert = datasource.JsonData.Get("sslRootCertFile").MustString("")
 			tlsCert = datasource.JsonData.Get("sslCertFile").MustString("")
 			tlsKey = datasource.JsonData.Get("sslKeyFile").MustString("")
+			if err := validateCertFilePaths(tlsRootCert, tlsCert, tlsKey, logger); err != nil {
+				return "", err
+			}
 		}
 
 		// Attach root certificate if provided
