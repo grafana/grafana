@@ -10,7 +10,7 @@ import {
 import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { getBackendSrv, getDataSourceSrv } from '../services';
-import { toDataQueryResponse } from './queryResponse';
+import { toDataQueryResponse, toDataQueryResponseOrdered } from './queryResponse';
 
 const ExpressionDatasourceID = '__expr__';
 
@@ -112,7 +112,7 @@ export class DataSourceWithBackend<
       })
       .pipe(
         map((rsp: any) => {
-          return toDataQueryResponse(rsp);
+          return toDataQueryResponseOrdered(queries as DataQuery[], rsp);
         }),
         catchError((err) => {
           return of(toDataQueryResponse(err));
