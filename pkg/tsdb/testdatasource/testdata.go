@@ -19,16 +19,19 @@ func init() {
 type testDataPlugin struct {
 	BackendPluginManager backendplugin.Manager `inject:""`
 	logger               log.Logger
+	scenarios            map[string]*ScenarioV2
+	queryMux             *datasource.QueryTypeMux
 }
 
 func (p *testDataPlugin) Init() error {
 	p.logger = log.New("tsdb.testdata")
-	queryMux := datasource.NewQueryTypeMux()
-	p.registerScenarioQueryHandlers(queryMux)
+	p.scenarios = map[string]*ScenarioV2{}
+	p.queryMux = datasource.NewQueryTypeMux()
+	p.registerScenarios()
 	resourceMux := http.NewServeMux()
 	p.registerRoutes(resourceMux)
 	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler:    queryMux,
+		QueryDataHandler:    p.queryMux,
 		CallResourceHandler: httpadapter.New(resourceMux),
 	})
 	err := p.BackendPluginManager.Register("testdata", factory)

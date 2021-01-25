@@ -11,45 +11,158 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-var scenarioRegistryV2 map[string]backend.QueryDataHandlerFunc
-
-func (p *testDataPlugin) registerScenarioQueryHandlers(mux *datasource.QueryTypeMux) {
-	scenarioRegistryV2 = map[string]backend.QueryDataHandlerFunc{}
-	scenarioRegistryV2[string(randomWalkQuery)] = p.handleRandomWalkScenario
-	scenarioRegistryV2[string(randomWalkSlowQuery)] = p.handleRandomWalkSlowScenario
-	scenarioRegistryV2[string(randomWalkWithErrorQuery)] = p.handleRandomWalkWithErrorScenario
-	scenarioRegistryV2[string(randowWalkTableQuery)] = p.handleRandomWalkTableScenario
-	scenarioRegistryV2[string(predictableCSVWaveQuery)] = p.handlePredictableCSVWaveScenario
-	scenarioRegistryV2[string(serverError500Query)] = p.handleServerError500Scenario
-	scenarioRegistryV2[string(noDataPointsQuery)] = p.handleNoDataPointsScenario
-	scenarioRegistryV2[string(exponentialHeatmapBucketDataQuery)] = p.handleExponentialHeatmapBucketDataScenario
-	scenarioRegistryV2[string(linearHeatmapBucketDataQuery)] = p.handleLinearHeatmapBucketDataScenario
-	scenarioRegistryV2[string(predictablePulseQuery)] = p.handlePredictablePulseScenario
-	scenarioRegistryV2[string(datapointsOutsideRangeQuery)] = p.handleDatapointsOutsideRangeQueryScenario
-	scenarioRegistryV2[string(manualEntryQuery)] = p.handleManualEntryScenario
-	scenarioRegistryV2[string(csvMetricValuesQuery)] = p.handleCSVMetricValuesScenario
-	scenarioRegistryV2[string(streamingClientQuery)] = p.handleStreamingClientQueryScenario
-	scenarioRegistryV2[string(liveQuery)] = p.handleGrafanaLiveQueryScenario
-	scenarioRegistryV2[string(grafanaAPIQuery)] = p.handleGrafanaAPIQueryScenario
-	scenarioRegistryV2[string(arrowQuery)] = p.handleArrowQueryScenario
-	scenarioRegistryV2[string(annotationsQuery)] = p.handleAnnotationsQueryScenario
-	scenarioRegistryV2[string(tableStaticQuery)] = p.handleTableStaticQueryScenario
-	scenarioRegistryV2[string(logsQuery)] = p.handleLogsQueryScenario
-
-	for scenarioID, handler := range scenarioRegistryV2 {
-		mux.HandleFunc(scenarioID, handler)
-	}
-
-	mux.HandleFunc("", p.handleFallbackScenario)
+type ScenarioV2 struct {
+	ID          string                       `json:"id"`
+	Name        string                       `json:"name"`
+	StringInput string                       `json:"stringOption"`
+	Description string                       `json:"description"`
+	handler     backend.QueryDataHandlerFunc `json:"-"`
 }
 
+func (p *testDataPlugin) registerScenario(scenario *ScenarioV2) {
+	p.scenarios[scenario.ID] = scenario
+	p.queryMux.HandleFunc(scenario.ID, scenario.handler)
+}
+
+func (p *testDataPlugin) registerScenarios() {
+	p.registerScenario(&ScenarioV2{
+		ID:      string(exponentialHeatmapBucketDataQuery),
+		Name:    "Exponential heatmap bucket data",
+		handler: p.handleExponentialHeatmapBucketDataScenario,
+	})
+
+	p.registerScenario(&ScenarioV2{
+		ID:      string(linearHeatmapBucketDataQuery),
+		Name:    "Linear heatmap bucket data",
+		handler: p.handleLinearHeatmapBucketDataScenario,
+	})
+
+	p.registerScenario(&ScenarioV2{
+		ID:      string(randomWalkQuery),
+		Name:    "Random Walk",
+		handler: p.handleRandomWalkScenario,
+	})
+
+	p.registerScenario(&ScenarioV2{
+		ID:          string(predictablePulseQuery),
+		Name:        "Predictable Pulse",
+		handler:     p.handlePredictablePulseScenario,
+		Description: PredictablePulseDesc,
+	})
+
+	p.registerScenario(&ScenarioV2{
+		ID:      string(predictableCSVWaveQuery),
+		Name:    "Predictable CSV Wave",
+		handler: p.handlePredictableCSVWaveScenario,
+	})
+
+	p.registerScenario(&ScenarioV2{
+		ID:      string(randowWalkTableQuery),
+		Name:    "Random Walk Table",
+		handler: p.handleRandomWalkTableScenario,
+	})
+
+	p.registerScenario(&ScenarioV2{
+		ID:          string(randomWalkSlowQuery),
+		Name:        "Slow Query",
+		StringInput: "5s",
+		handler:     p.handleRandomWalkSlowScenario,
+	})
+
+	p.registerScenario(&ScenarioV2{
+		ID:      string(noDataPointsQuery),
+		Name:    "No Data Points",
+		handler: p.handleClientSideScenario,
+	})
+
+	p.registerScenario(&ScenarioV2{
+		ID:      string(datapointsOutsideRangeQuery),
+		Name:    "Datapoints Outside Range",
+		handler: p.handleDatapointsOutsideRangeQueryScenario,
+	})
+
+	p.registerScenario(&ScenarioV2{
+		ID:      string(manualEntryQuery),
+		Name:    "Manual Entry",
+		handler: p.handleManualEntryScenario,
+	})
+
+	p.registerScenario(&ScenarioV2{
+		ID:          string(csvMetricValuesQuery),
+		Name:        "CSV Metric Values",
+		StringInput: "1,20,90,30,5,0",
+		handler:     p.handleCSVMetricValuesScenario,
+	})
+
+	p.registerScenario(&ScenarioV2{
+		ID:      string(streamingClientQuery),
+		Name:    "Streaming Client",
+		handler: p.handleClientSideScenario,
+	})
+
+	p.registerScenario(&ScenarioV2{
+		ID:      string(liveQuery),
+		Name:    "Grafana Live",
+		handler: p.handleClientSideScenario,
+	})
+
+	p.registerScenario(&ScenarioV2{
+		ID:      string(grafanaAPIQuery),
+		Name:    "Grafana API",
+		handler: p.handleClientSideScenario,
+	})
+
+	p.registerScenario(&ScenarioV2{
+		ID:      string(arrowQuery),
+		Name:    "Load Apache Arrow Data",
+		handler: p.handleClientSideScenario,
+	})
+
+	p.registerScenario(&ScenarioV2{
+		ID:      string(annotationsQuery),
+		Name:    "Annotations",
+		handler: p.handleClientSideScenario,
+	})
+
+	p.registerScenario(&ScenarioV2{
+		ID:      string(tableStaticQuery),
+		Name:    "Table Static",
+		handler: p.handleTableStaticQueryScenario,
+	})
+
+	p.registerScenario(&ScenarioV2{
+		ID:      string(randomWalkWithErrorQuery),
+		Name:    "Random Walk (with error)",
+		handler: p.handleRandomWalkWithErrorScenario,
+	})
+
+	p.registerScenario(&ScenarioV2{
+		ID:      string(serverError500Query),
+		Name:    "Server Error (500)",
+		handler: p.handleServerError500Scenario,
+	})
+
+	p.registerScenario(&ScenarioV2{
+		ID:      string(logsQuery),
+		Name:    "Logs",
+		handler: p.handleLogsQueryScenario,
+	})
+
+	p.registerScenario(&ScenarioV2{
+		ID:   string(nodeGraphQuery),
+		Name: "Node Graph",
+	})
+
+	p.queryMux.HandleFunc("", p.handleFallbackScenario)
+}
+
+// handleFallbackScenario handles the scenario where queryType is not set and fallbacks to scenarioId.
 func (p *testDataPlugin) handleFallbackScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 	scenarioQueries := map[string][]backend.DataQuery{}
@@ -62,7 +175,7 @@ func (p *testDataPlugin) handleFallbackScenario(ctx context.Context, req *backen
 		}
 
 		scenarioID := model.Get("scenarioId").MustString(string(randomWalkQuery))
-		if _, exist := scenarioRegistryV2[scenarioID]; exist {
+		if _, exist := p.scenarios[scenarioID]; exist {
 			if _, ok := scenarioQueries[scenarioID]; !ok {
 				scenarioQueries[scenarioID] = []backend.DataQuery{}
 			}
@@ -74,13 +187,13 @@ func (p *testDataPlugin) handleFallbackScenario(ctx context.Context, req *backen
 	}
 
 	for scenarioID, queries := range scenarioQueries {
-		if scenarioHandler, exist := scenarioRegistryV2[scenarioID]; exist {
+		if scenario, exist := p.scenarios[scenarioID]; exist {
 			sReq := &backend.QueryDataRequest{
 				PluginContext: req.PluginContext,
 				Headers:       req.Headers,
 				Queries:       queries,
 			}
-			if sResp, err := scenarioHandler(ctx, sReq); err != nil {
+			if sResp, err := scenario.handler(ctx, sReq); err != nil {
 				p.logger.Error("Failed to handle scenario", "scenarioId", scenarioID, "error", err)
 			} else {
 				for refID, dr := range sResp.Responses {
@@ -341,27 +454,7 @@ func (p *testDataPlugin) handleServerError500Scenario(ctx context.Context, req *
 	panic("Test Data Panic!")
 }
 
-func (p *testDataPlugin) handleNoDataPointsScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	return backend.NewQueryDataResponse(), nil
-}
-
-func (p *testDataPlugin) handleStreamingClientQueryScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	return backend.NewQueryDataResponse(), nil
-}
-
-func (p *testDataPlugin) handleGrafanaLiveQueryScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	return backend.NewQueryDataResponse(), nil
-}
-
-func (p *testDataPlugin) handleGrafanaAPIQueryScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	return backend.NewQueryDataResponse(), nil
-}
-
-func (p *testDataPlugin) handleArrowQueryScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	return backend.NewQueryDataResponse(), nil
-}
-
-func (p *testDataPlugin) handleAnnotationsQueryScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (p *testDataPlugin) handleClientSideScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	return backend.NewQueryDataResponse(), nil
 }
 
