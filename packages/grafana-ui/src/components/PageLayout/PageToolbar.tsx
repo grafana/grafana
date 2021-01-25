@@ -96,7 +96,7 @@ const getStyles = (theme: GrafanaTheme) => {
     toolbar: css`
       display: flex;
       background: ${theme.colors.dashboardBg};
-      padding: 0 ${spacing.sm} ${spacing.sm} ${spacing.md};
+      padding: 0 ${spacing.md} ${spacing.sm} ${spacing.md};
       justify-content: flex-end;
       flex-wrap: wrap;
     `,

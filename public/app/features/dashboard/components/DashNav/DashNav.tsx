@@ -124,11 +124,19 @@ class DashNav extends PureComponent<Props> {
     });
   }
 
+  isInKioskMode() {
+    return !!this.props.location.query.kiosk;
+  }
+
   renderLeftActionsButton() {
     const { dashboard } = this.props;
     const { canStar, canShare, isStarred } = dashboard.meta;
-
     const buttons: ReactNode[] = [];
+
+    if (this.isInKioskMode()) {
+      return false;
+    }
+
     if (canStar) {
       buttons.push(
         <DashNavButton
@@ -175,8 +183,16 @@ class DashNav extends PureComponent<Props> {
     const { canEdit, showSettings } = dashboard.meta;
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
-
     const buttons: ReactNode[] = [];
+    const tvButton = <ToolbarButton tooltip="Cycle view mode" icon="monitor" onClick={this.onToggleTVMode} />;
+    const timeControls = (
+      <DashNavTimeControls dashboard={dashboard} location={location} onChangeTimeZone={updateTimeZoneForSession} />
+    );
+
+    if (this.isInKioskMode()) {
+      return [timeControls, tvButton];
+    }
+
     if (canEdit && !isFullscreen) {
       buttons.push(<ToolbarButton tooltip="Add panel" icon="panel-add" onClick={onAddPanel} key="button-panel-add" />);
       buttons.push(
@@ -217,12 +233,10 @@ class DashNav extends PureComponent<Props> {
     this.addCustomContent(customRightActions, buttons);
 
     if (!dashboard.timepicker.hidden) {
-      buttons.push(
-        <DashNavTimeControls dashboard={dashboard} location={location} onChangeTimeZone={updateTimeZoneForSession} />
-      );
+      buttons.push(timeControls);
     }
 
-    buttons.push(<ToolbarButton tooltip="Cycle view mode" icon="monitor" onClick={this.onToggleTVMode} />);
+    buttons.push(tvButton);
 
     return buttons;
   }
