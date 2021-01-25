@@ -1,5 +1,5 @@
 import React from 'react';
-import { ToolbarButton, ButtonGroup, useTheme, VerticalGroup } from '@grafana/ui';
+import { ToolbarButton, ButtonGroup, useTheme, VerticalGroup, HorizontalGroup } from '@grafana/ui';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 export default {
@@ -41,6 +41,22 @@ export const List = () => {
           <ToolbarButton icon="sync" />
           <ToolbarButton isOpen={false} narrow />
         </ButtonGroup>
+        <br />
+        As primary and destructive variant
+        <HorizontalGroup>
+          <ButtonGroup noSpacing>
+            <ToolbarButton variant="primary" icon="sync">
+              Run query
+            </ToolbarButton>
+            <ToolbarButton isOpen={false} narrow variant="primary" />
+          </ButtonGroup>
+          <ButtonGroup noSpacing>
+            <ToolbarButton variant="destructive" icon="sync">
+              Run query
+            </ToolbarButton>
+            <ToolbarButton isOpen={false} narrow variant="destructive" />
+          </ButtonGroup>
+        </HorizontalGroup>
       </VerticalGroup>
     </div>
   );

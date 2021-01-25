@@ -20,27 +20,6 @@ describe('RefreshPicker', () => {
           { value: '1d', label: '1d' },
         ]);
       });
-
-      describe('but with hasLiveOption', () => {
-        it('then default options should be used', () => {
-          const result = intervalsToOptions({ hasLiveOption: true });
-
-          expect(result).toEqual([
-            { value: '', label: 'Off' },
-            { value: 'LIVE', label: 'Live' },
-            { value: '5s', label: '5s' },
-            { value: '10s', label: '10s' },
-            { value: '30s', label: '30s' },
-            { value: '1m', label: '1m' },
-            { value: '5m', label: '5m' },
-            { value: '15m', label: '15m' },
-            { value: '30m', label: '30m' },
-            { value: '1h', label: '1h' },
-            { value: '2h', label: '2h' },
-            { value: '1d', label: '1d' },
-          ]);
-        });
-      });
     });
 
     describe('when called with intervals', () => {
@@ -54,22 +33,6 @@ describe('RefreshPicker', () => {
           { value: '5s', label: '5s' },
           { value: '10s', label: '10s' },
         ]);
-      });
-
-      describe('and hasLiveOption', () => {
-        it('then the resulting options should be correct', () => {
-          const intervals = ['5s', '10s'];
-          const hasLiveOption = true;
-
-          const result = intervalsToOptions({ intervals, hasLiveOption });
-
-          expect(result).toEqual([
-            { value: '', label: 'Off' },
-            { value: 'LIVE', label: 'Live' },
-            { value: '5s', label: '5s' },
-            { value: '10s', label: '10s' },
-          ]);
-        });
       });
     });
   });

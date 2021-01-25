@@ -4,7 +4,7 @@ import { useAsync } from 'react-use';
 
 // Components
 import { selectors as editorSelectors } from '@grafana/e2e-selectors';
-import { Input, InlineFieldRow, InlineField, Select, TextArea, Switch } from '@grafana/ui';
+import { Input, InlineFieldRow, InlineField, Select, TextArea, InlineSwitch } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { StreamingClientEditor, ManualEntryEditor, RandomWalkEditor } from './components';
 
@@ -205,7 +205,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
             />
           </InlineField>
           <InlineField label="Level" labelWidth={14}>
-            <Switch onChange={onInputChange} name="levelColumn" value={!!query.levelColumn} />
+            <InlineSwitch onChange={onInputChange} name="levelColumn" value={!!query.levelColumn} />
           </InlineField>
         </InlineFieldRow>
       )}
