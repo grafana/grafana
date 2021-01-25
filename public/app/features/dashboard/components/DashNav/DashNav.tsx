@@ -8,7 +8,7 @@ import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
 // Components
 import { DashNavButton } from './DashNavButton';
 import { DashNavTimeControls } from './DashNavTimeControls';
-import { ButtonGroup, Icon, ModalsController, ToolbarButton } from '@grafana/ui';
+import { ButtonGroup, Icon, ModalsController, ToolbarButton, PageToolbar } from '@grafana/ui';
 import { textUtil } from '@grafana/data';
 import { BackButton } from 'app/core/components/BackButton/BackButton';
 // State
@@ -216,7 +216,7 @@ class DashNav extends PureComponent<Props> {
   }
 
   renderRightActionsButton() {
-    const { dashboard, onAddPanel } = this.props;
+    const { dashboard, onAddPanel, location, updateTimeZoneForSession } = this.props;
     const { canEdit, showSettings } = dashboard.meta;
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
@@ -260,6 +260,15 @@ class DashNav extends PureComponent<Props> {
     }
 
     this.addCustomContent(customRightActions, buttons);
+
+    if (!dashboard.timepicker.hidden) {
+      buttons.push(
+        <DashNavTimeControls dashboard={dashboard} location={location} onChangeTimeZone={updateTimeZoneForSession} />
+      );
+    }
+
+    buttons.push(<ToolbarButton tooltip="Cycle view mode" icon="monitor" onClick={this.onToggleTVMode} />);
+
     return buttons;
   }
 
@@ -268,13 +277,18 @@ class DashNav extends PureComponent<Props> {
   }
 
   render() {
-    const { dashboard, location, isFullscreen, updateTimeZoneForSession } = this.props;
+    const { dashboard, isFullscreen } = this.props;
+    const onGoBack = isFullscreen ? this.onClose : undefined;
 
     return (
-      <div className="navbar">
-        {isFullscreen && this.renderBackButton()}
-        {this.renderDashboardTitleSearchButton()}
-
+      <PageToolbar
+        pageIcon="apps"
+        title={dashboard.title}
+        parent={dashboard.meta.folderTitle}
+        onClickTitle={this.onDashboardNameClick}
+        onClickParent={this.onFolderNameClick}
+        onGoBack={onGoBack}
+      >
         {this.playlistSrv.isPlaying && (
           <ButtonGroup>
             <ToolbarButton
@@ -290,22 +304,8 @@ class DashNav extends PureComponent<Props> {
           </ButtonGroup>
         )}
 
-        <div className="navbar-buttons navbar-buttons--actions">{this.renderRightActionsButton()}</div>
-
-        <div className="navbar-buttons navbar-buttons--tv">
-          <ToolbarButton tooltip="Cycle view mode" icon="monitor" onClick={this.onToggleTVMode} />
-        </div>
-
-        {!dashboard.timepicker.hidden && (
-          <div className="navbar-buttons">
-            <DashNavTimeControls
-              dashboard={dashboard}
-              location={location}
-              onChangeTimeZone={updateTimeZoneForSession}
-            />
-          </div>
-        )}
-      </div>
+        {this.renderRightActionsButton()}
+      </PageToolbar>
     );
   }
 }
