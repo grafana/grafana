@@ -88,7 +88,7 @@ export const sortVariableValues = (options: any[], sortOrder: VariableSort) => {
   return options;
 };
 
-const getAllMatches = (str: string, regex: RegExp): any => {
+export const getAllMatches = (str: string, regex: RegExp): any => {
   const results = {};
   let matches;
 
