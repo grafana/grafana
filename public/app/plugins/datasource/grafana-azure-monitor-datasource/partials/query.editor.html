@@ -278,8 +278,8 @@
       <div class="gf-form">
         <label class="gf-form-label query-keyword" ng-click="ctrl.showHelp = !ctrl.showHelp">
           Show Help
-          <icon name="'angle-down'" ng-show="ctrl.showHelp" style="margin-top: 3px;"></icon>
-          <icon name="'angle-right'" ng-hide="ctrl.showHelp" style="margin-top: 3px;"></icon>
+          <icon name="'angle-down'" ng-show="ctrl.showHelp" style="margin-top: 3px"></icon>
+          <icon name="'angle-right'" ng-hide="ctrl.showHelp" style="margin-top: 3px"></icon>
         </label>
       </div>
       <div class="gf-form" ng-show="ctrl.lastQuery">
@@ -405,7 +405,7 @@
         onmouseover="this.style['text-decoration'] = 'line-through';"
         onmouseout="this.style['text-decoration'] = '';"
       >
-        <label class="gf-form-label" style="cursor: pointer;">{{d}} <icon name="'times'"></icon></label>
+        <label class="gf-form-label" style="cursor: pointer">{{d}} <icon name="'times'"></icon></label>
       </div>
       <div>
         <gf-form-dropdown
@@ -501,5 +501,16 @@
 
   <div class="gf-form" ng-show="ctrl.lastQueryError">
     <pre class="gf-form-pre alert alert-error">{{ctrl.lastQueryError}}</pre>
+  </div>
+
+  <div
+    class="gf-form"
+    ng-if="ctrl.target.queryType === 'Application Insights' || ctrl.target.queryType === 'Insights Analytics'"
+  >
+    <p class="gf-form-pre alert alert-info">
+      Insights Analytics and Application Insights will be merged with Logs in an upcomming release. See
+      <a class="text-link" href="https://github.com/grafana/grafana/issues/30184">this issue</a> for more details and
+      migration instructions.
+    </p>
   </div>
 </query-editor-row>
