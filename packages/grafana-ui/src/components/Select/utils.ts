@@ -4,10 +4,7 @@ import { SelectableOptGroup } from './types';
 /**
  * Normalize the value format to SelectableValue[] | []. Only used for single select
  */
-export const cleanValue = (
-  value: any,
-  options: Array<SelectableValue | SelectableOptGroup | SelectableOptGroup[]>
-): SelectableValue[] | [] => {
+export const cleanValue = (value: any, options: Array<SelectableValue | SelectableOptGroup | SelectableOptGroup[]>) => {
   if (Array.isArray(value)) {
     return value.filter(Boolean);
   }
@@ -20,7 +17,7 @@ export const cleanValue = (
       return [selectedValue];
     }
   }
-  return [];
+  return undefined;
 };
 
 /**

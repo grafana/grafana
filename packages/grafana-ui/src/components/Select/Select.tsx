@@ -4,6 +4,7 @@ import { SelectCommonProps, MultiSelectCommonProps, SelectAsyncProps } from './t
 import { SelectBase } from './SelectBase';
 
 export function Select<T>(props: SelectCommonProps<T>) {
+  console.log('pp', props);
   return <SelectBase {...props} />;
 }
 
