@@ -19,13 +19,13 @@ func init() {
 type testDataPlugin struct {
 	BackendPluginManager backendplugin.Manager `inject:""`
 	logger               log.Logger
-	scenarios            map[string]*ScenarioV2
+	scenarios            map[string]*Scenario
 	queryMux             *datasource.QueryTypeMux
 }
 
 func (p *testDataPlugin) Init() error {
 	p.logger = log.New("tsdb.testdata")
-	p.scenarios = map[string]*ScenarioV2{}
+	p.scenarios = map[string]*Scenario{}
 	p.queryMux = datasource.NewQueryTypeMux()
 	p.registerScenarios()
 	resourceMux := http.NewServeMux()
