@@ -122,7 +122,7 @@ const getStyles = (theme: GrafanaTheme) => {
       max-width: 200px;
 
       @media ${styleMixins.mediaUp(theme.breakpoints.md)} {
-        max-width: auto;
+        max-width: unset;
       }
   `;
 
@@ -155,6 +155,7 @@ const getStyles = (theme: GrafanaTheme) => {
       display: flex;
       align-items: center;
       padding-top: ${spacing.sm};
+      padding-right: ${spacing.sm};
       min-width: 0;
       overflow: hidden;
     `,
@@ -186,9 +187,9 @@ const getStyles = (theme: GrafanaTheme) => {
       display: none;
       height: 40px;
       position: relative;
-      top: 4px;
+      top: 5px;
       align-items: center;
-      padding-left: ${spacing.sm};
+      padding-left: ${spacing.xs};
 
       @media ${styleMixins.mediaUp(theme.breakpoints.md)} {
         display: flex;
