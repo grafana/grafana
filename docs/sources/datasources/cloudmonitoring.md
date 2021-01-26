@@ -22,15 +22,15 @@ To access Google Cloud Monitoring settings, hover your mouse over the **Configur
 | `Default`             | Default data source means that it will be pre-selected for new panels.                |
 | `Service Account Key` | Upload or paste in the Service Account Key file for a GCP Project. Refer to [Using a Google Service Account Key File]({{< relref "add-a-data-source.md" >}}) for details.|
 
-## Authentication
+### Authentication
 
 There are two ways to authenticate the Google Cloud Monitoring plugin - either by uploading a Google JWT file, or by automatically retrieving credentials from Google metadata server. The latter option is only available when running Grafana on GCE virtual machine.
 
-### Using a Google Service Account Key File
+#### Using a Google Service Account Key File
 
 To authenticate with the Google Cloud Monitoring API, you need to create a Google Cloud Platform (GCP) Service Account for the Project you want to show data for. A Grafana data source integrates with one GCP Project. If you want to visualize data from multiple GCP Projects then you need to create one data source per GCP Project.
 
-#### Enable APIs
+##### Enable APIs
 
 The following APIs need to be enabled first:
 
@@ -41,7 +41,7 @@ Click on the links above and click the `Enable` button:
 
 {{< docs-imagebox img="/img/docs/v71/cloudmonitoring_enable_api.png" class="docs-image--no-shadow" caption="Enable GCP APIs" >}}
 
-#### Create a GCP Service Account for a Project
+##### Create a GCP Service Account for a Project
 
 1. Navigate to the [APIs and Services Credentials page](https://console.cloud.google.com/apis/credentials).
 1. Click on the `Create credentials` dropdown/button and choose the `Service account key` option.
@@ -371,9 +371,11 @@ In case you want to customize a dashboard, we recommend that you save it under a
 
 Google Cloud Monitoring data source ships with pre-configured dashboards for some of the most popular GCP services. The dashboards are based on similar dashboards in the GCP dashboard samples repository.
 
-![Curated dashboards](/img/docs/google-clooud-monitoring/curated-dashboards-7-4.png)
+![Curated dashboards](/img/docs/google-cloud-monitoring/curated-dashboards-7-4.png)
 
-To import the pre-configured dashboards, go to the configuration page of your Cloud Monitoring data source and click on the `Dashboards` tab.
+To import the pre-configured dashboards
+
+1. Go to the configuration page of your Cloud Monitoring data source and click on the `Dashboards` tab.
 
 1. Click `Import` for the dashboard you would like to use.
 
