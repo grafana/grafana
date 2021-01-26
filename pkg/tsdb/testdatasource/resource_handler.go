@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"sort"
 	"strconv"
 	"time"
 
@@ -16,6 +17,7 @@ import (
 
 func (p *testDataPlugin) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/", p.testGetHandler)
+	mux.HandleFunc("/scenarios", p.getScenariosHandler)
 	mux.HandleFunc("/stream", p.testStreamHandler)
 	mux.Handle("/test", createJSONHandler(p.logger))
 	mux.Handle("/test/json", createJSONHandler(p.logger))
@@ -34,6 +36,37 @@ func (p *testDataPlugin) testGetHandler(rw http.ResponseWriter, req *http.Reques
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
+}
+
+func (p *testDataPlugin) getScenariosHandler(rw http.ResponseWriter, req *http.Request) {
+	result := make([]interface{}, 0)
+
+	scenarioIds := make([]string, 0)
+	for id := range p.scenarios {
+		scenarioIds = append(scenarioIds, id)
+	}
+	sort.Strings(scenarioIds)
+
+	for _, scenarioID := range scenarioIds {
+		scenario := p.scenarios[scenarioID]
+		result = append(result, map[string]interface{}{
+			"id":          scenario.ID,
+			"name":        scenario.Name,
+			"description": scenario.Description,
+			"stringInput": scenario.StringInput,
+		})
+	}
+
+	bytes, err := json.Marshal(&result)
+	if err != nil {
+		p.logger.Error("Failed to marshal response body to JSON", "error", err)
+	}
+
+	rw.Header().Set("Content-Type", "application/json")
+	rw.WriteHeader(http.StatusOK)
+	if _, err := rw.Write(bytes); err != nil {
+		p.logger.Error("Failed to write response", "error", err)
+	}
 }
 
 func (p *testDataPlugin) testStreamHandler(rw http.ResponseWriter, req *http.Request) {

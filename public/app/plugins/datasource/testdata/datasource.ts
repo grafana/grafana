@@ -176,7 +176,7 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
 
   getScenarios(): Promise<Scenario[]> {
     if (!this.scenariosCache) {
-      this.scenariosCache = getBackendSrv().get('/api/tsdb/testdata/scenarios');
+      this.scenariosCache = this.getResource('scenarios');
     }
 
     return this.scenariosCache;
