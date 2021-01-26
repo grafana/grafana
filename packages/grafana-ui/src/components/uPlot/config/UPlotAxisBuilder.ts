@@ -14,6 +14,7 @@ export interface AxisProps {
   placement?: AxisPlacement;
   grid?: boolean;
   formatValue?: (v: any) => string;
+  splits?: Axis.Splits;
   values?: any;
   isTime?: boolean;
   timeZone?: TimeZone;
@@ -38,6 +39,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       placement = AxisPlacement.Auto,
       grid = true,
       formatValue,
+      splits,
       values,
       isTime,
       timeZone,
@@ -64,6 +66,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
         stroke: gridColor,
         width: 1 / devicePixelRatio,
       },
+      splits,
       values: values,
       space: calculateSpace,
     };

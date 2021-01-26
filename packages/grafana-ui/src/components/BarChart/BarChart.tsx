@@ -8,7 +8,7 @@ import {
   getFieldSeriesColor,
   TimeRange,
 } from '@grafana/data';
-import uPlot, { Scale, Series, Options } from 'uplot';
+import uPlot, { Axis, Scale, Series, Options } from 'uplot';
 import { VizLayout } from '../VizLayout/VizLayout';
 import { distribute, SPACE_BETWEEN } from './distribute';
 import { Quadtree, Rect } from './quadtree';
@@ -20,8 +20,7 @@ import { BarChartOptions } from './types';
 import { useRevision } from '../uPlot/hooks';
 import { UPlotChart } from '../uPlot/Plot';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
-import { AlignedFrameWithGapTest } from '../uPlot/types';
-import { AxisPlacement, ScaleDistribution } from '../uPlot/config';
+import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation } from '../uPlot/config';
 import { useTheme } from '../../themes';
 
 export interface Props extends Themeable, BarChartOptions {
@@ -30,44 +29,18 @@ export interface Props extends Themeable, BarChartOptions {
   data: DataFrame;
 }
 
-/* eslint-disable */
-const pxRatio    = devicePixelRatio;
-
-const groupWidth = 0.9;
-const groupDistr = SPACE_BETWEEN;
-
-const barWidth   = 1;
-const barDistr   = SPACE_BETWEEN;
-
-const font       = Math.round(10 * pxRatio) + "px Arial";
-
-function pointWithin(px: number, py: number, rlft: number, rtop: number, rrgt: number, rbtm: number) {
-  return px >= rlft && px <= rrgt && py >= rtop && py <= rbtm;
-}
-
-type WalkTwoCb = null | ((idx: number, offPx: number, dimPx: number) => void);
-
-function walkTwo(yIdx: number, xCount: number, yCount: number, xDim: number, xDraw?: WalkTwoCb, yDraw?: WalkTwoCb) {
-  distribute(xCount, groupWidth, groupDistr, null, (ix, offPct, dimPct) => {
-    let groupOffPx = xDim * offPct;
-    let groupWidPx = xDim * dimPct;
-
-    xDraw && xDraw(ix, groupOffPx, groupWidPx);
-
-    yDraw && distribute(yCount, barWidth, barDistr, yIdx, (iy, offPct, dimPct) => {
-      let barOffPx = groupWidPx * offPct;
-      let barWidPx = groupWidPx * dimPct;
-
-      yDraw(ix, groupOffPx + barOffPx, barWidPx);
-    });
-  });
-}
-/* eslint-enable */
-
 /**
  * @alpha
  */
-export const BarChart: React.FunctionComponent<Props> = ({ width, height, data, orientation, ...plotProps }) => {
+export const BarChart: React.FunctionComponent<Props> = ({
+  width,
+  height,
+  data,
+  orientation,
+  groupWidth,
+  barWidth,
+  ...plotProps
+}) => {
   if (!data || data.fields.length < 2) {
     return <div>Missing data</div>;
   }
@@ -87,12 +60,41 @@ export const BarChart: React.FunctionComponent<Props> = ({ width, height, data, 
   // Updates only when the structure changes
   const configBuilder = useMemo(() => {
     if (!orientation || orientation === VizOrientation.Auto) {
-      orientation = width - height > 0 ? VizOrientation.Horizontal : VizOrientation.Vertical;
+      orientation = width < height ? VizOrientation.Horizontal : VizOrientation.Vertical;
     }
 
     /* eslint-disable */
-    const ori = orientation == VizOrientation.Horizontal ? 0 :  1;
-    const dir = orientation == VizOrientation.Horizontal ? 1 : -1;
+    // bar orientation -> x scale orientation & direction
+    const ori = orientation == VizOrientation.Horizontal ? 1 : 0;
+    const dir = orientation == VizOrientation.Horizontal ? -1 : 1;
+
+    const pxRatio    = devicePixelRatio;
+    const groupDistr = SPACE_BETWEEN;
+    const barDistr   = SPACE_BETWEEN;
+
+    const font       = Math.round(10 * pxRatio) + "px Arial";
+
+    function pointWithin(px: number, py: number, rlft: number, rtop: number, rrgt: number, rbtm: number) {
+      return px >= rlft && px <= rrgt && py >= rtop && py <= rbtm;
+    }
+
+    type WalkTwoCb = null | ((idx: number, offPx: number, dimPx: number) => void);
+
+    function walkTwo(yIdx: number, xCount: number, yCount: number, xDim: number, xDraw?: WalkTwoCb, yDraw?: WalkTwoCb) {
+      distribute(xCount, groupWidth, groupDistr, null, (ix, offPct, dimPct) => {
+        let groupOffPx = xDim * offPct;
+        let groupWidPx = xDim * dimPct;
+
+        xDraw && xDraw(ix, groupOffPx, groupWidPx);
+
+        yDraw && distribute(yCount, barWidth, barDistr, yIdx, (iy, offPct, dimPct) => {
+          let barOffPx = groupWidPx * offPct;
+          let barWidPx = groupWidPx * dimPct;
+
+          yDraw(ix, groupOffPx + barOffPx, barWidPx);
+        });
+      });
+    }
 
     let qt: Quadtree;
 
@@ -108,7 +110,7 @@ export const BarChart: React.FunctionComponent<Props> = ({ width, height, data, 
         const _dir = dir * (ori === 0 ? 1 : -1);
 
         walkTwo(sidx - 1, numGroups, barsPerGroup, xDim, null, (ix, x0, wid) => {
-          let lft = Math.round(xOff + _dir === 1 ? x0 : xDim - x0 - wid);
+          let lft = Math.round(xOff + (_dir === 1 ? x0 : xDim - x0 - wid));
           let barWid = Math.round(wid);
 
           if (dataY[ix] != null) {
@@ -151,7 +153,7 @@ export const BarChart: React.FunctionComponent<Props> = ({ width, height, data, 
         const _dir = dir * (ori === 0 ? 1 : -1);
 
         walkTwo(sidx - 1, numGroups, barsPerGroup, xDim, null, (ix, x0, wid) => {
-          let lft    = Math.round(xOff + _dir === 1 ? x0 : xDim - x0 - wid);
+          let lft    = Math.round(xOff + (_dir === 1 ? x0 : xDim - x0 - wid));
           let barWid = Math.round(wid);
 
           if (dataY[ix] != null) {
@@ -172,7 +174,7 @@ export const BarChart: React.FunctionComponent<Props> = ({ width, height, data, 
       return false;
     }
 
-    const range: Scale.Range = (u, dataMin, dataMax) => {
+    const yRange: Scale.Range = (u, dataMin, dataMax) => {
       // @ts-ignore
       let [min, max] = uPlot.rangeNum(0, dataMax, 0.05, true);
       return [0, max];
@@ -191,28 +193,54 @@ export const BarChart: React.FunctionComponent<Props> = ({ width, height, data, 
       scaleKey: 'x',
       isTime: false,
       distribution: ScaleDistribution.Ordinal,
+      orientation: ori,
+      direction: dir,
     });
 
     builder.addScale({
       scaleKey: 'y',
       isTime: false,
+      orientation: ori == 0 ? 1 : 0,
+      range: yRange,
     });
+
+    const xSplits: Axis.Splits = (u: uPlot, axisIdx: number) => {
+      const dim = ori == 0 ? u.bbox.width : u.bbox.height;
+      const _dir = dir * (ori == 0 ? 1 : -1);
+
+      let splits: number[] = [];
+
+      distribute(u.data[0].length, groupWidth, groupDistr, null, (di, lftPct, widPct) => {
+        let groupLftPx = (dim * lftPct) / pxRatio;
+        let groupWidPx = (dim * widPct) / pxRatio;
+
+        let groupCenterPx = groupLftPx + groupWidPx / 2;
+
+        splits.push(u.posToVal(groupCenterPx, 'x'));
+      });
+
+      return _dir == 1 ? splits : splits.reverse();
+    };
+
+    const xValues: Axis.Values = () => data.fields[0].values.toArray();
 
     builder.addAxis({
       scaleKey: 'x',
       isTime: false,
-      placement: AxisPlacement.Bottom,
+      placement: ori == 0 ? AxisPlacement.Bottom : AxisPlacement.Left,
+      splits: xSplits,
+      values: xValues,
       theme,
     });
 
     builder.addAxis({
       scaleKey: 'y',
       isTime: false,
-      placement: AxisPlacement.Left,
+      placement: ori == 0 ? AxisPlacement.Left : AxisPlacement.Bottom,
       theme,
     });
 
-    const FIXED_UNIT = '__fixed';
+    // const FIXED_UNIT = '__fixed';
 
     builder.setXSeries({
       // TODO!
@@ -222,11 +250,11 @@ export const BarChart: React.FunctionComponent<Props> = ({ width, height, data, 
     for (let i = 1; i < data.fields.length; i++) {
       const field = data.fields[i];
       field.state!.seriesIndex = seriesIndex++;
-      const config = field.config;
+      // const config = field.config;
       //const customConfig = config.custom;
 
-      const scaleKey = config.unit || FIXED_UNIT;
-      const colorMode = getFieldColorModeForField(field);
+      // const scaleKey = config.unit || FIXED_UNIT;
+      // const colorMode = getFieldColorModeForField(field);
       const scaleColor = getFieldSeriesColor(field, theme);
       const seriesColor = scaleColor.color;
 
@@ -241,8 +269,6 @@ export const BarChart: React.FunctionComponent<Props> = ({ width, height, data, 
         pathBuilder: drawBars,
       });
     }
-
-    console.log(builder.getConfig());
 
     /*
     builder.addSeries({
@@ -311,7 +337,7 @@ export const BarChart: React.FunctionComponent<Props> = ({ width, height, data, 
       },
       opts: (u: uPlot, opts: Options) => {
         const yScaleOpts = {
-          range,
+          yRange,
           ori: ori == 0 ? 1 : 0,
         };
 
@@ -342,24 +368,6 @@ export const BarChart: React.FunctionComponent<Props> = ({ width, height, data, 
         }
 
         uPlot.assign(opts.axes![0], {
-          splits: (u: uPlot, axisIdx: number) => {
-            const dim = ori == 0 ? u.bbox.width : u.bbox.height;
-            const _dir = dir * (ori == 0 ? 1 : -1);
-
-            let splits: number[] = [];
-
-            distribute(u.data[0].length, groupWidth, groupDistr, null, (di, lftPct, widPct) => {
-              let groupLftPx = (dim * lftPct) / pxRatio;
-              let groupWidPx = (dim * widPct) / pxRatio;
-
-              let groupCenterPx = groupLftPx + groupWidPx / 2;
-
-              splits.push(u.posToVal(groupCenterPx, 'x'));
-            });
-
-            return _dir == 1 ? splits : splits.reverse();
-          },
-          values:     () => data.fields[0].values,
           gap:        15,
           size:       40,
           labelSize:  20,
@@ -387,19 +395,11 @@ export const BarChart: React.FunctionComponent<Props> = ({ width, height, data, 
     /* eslint-enable */
   }, [data, configRev, orientation, width, height]);
 
-  let alignedFrameWithGapTest: AlignedFrameWithGapTest = {
-    frame: data,
-    getDataFrameFieldIndex: i => ({
-      frameIndex: 0,
-      fieldIndex: i,
-    }),
-  };
-
   return (
     <VizLayout width={width} height={height}>
       {(vizWidth: number, vizHeight: number) => (
         <UPlotChart
-          data={alignedFrameWithGapTest}
+          data={data}
           config={configBuilder}
           width={vizWidth}
           height={vizHeight}

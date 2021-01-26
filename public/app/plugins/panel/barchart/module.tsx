@@ -16,7 +16,7 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
     },
     // TODO: import BarChartFieldConfig
   })
-  .setPanelOptions(builder => {
+  .setPanelOptions((builder) => {
     builder
       .addRadio({
         path: 'orientation',
@@ -37,14 +37,14 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
           options: [
             { value: BarStackingMode.None, label: 'None' },
             { value: BarStackingMode.Standard, label: 'Standard' },
-            { value: BarStackingMode.Percent, label: '100%' },
+            { value: BarStackingMode.Percent, label: 'Percent' },
           ],
         },
         defaultValue: BarStackingMode.None,
       })
       .addRadio({
         path: 'showValue',
-        name: 'Show value',
+        name: 'Show values',
         settings: {
           options: [
             { value: BarValueVisibility.Auto, label: 'Auto' },
@@ -53,5 +53,26 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
           ],
         },
         defaultValue: BarValueVisibility.Auto,
+      })
+      .addSliderInput({
+        path: 'groupWidth',
+        name: 'Group width',
+        defaultValue: 0.7,
+        settings: {
+          min: 0,
+          max: 1,
+          step: 0.01,
+        },
+        showIf: (c) => c.stacking === BarStackingMode.None,
+      })
+      .addSliderInput({
+        path: 'barWidth',
+        name: 'Bar width',
+        defaultValue: 0.97,
+        settings: {
+          min: 0,
+          max: 1,
+          step: 0.01,
+        },
       });
   });

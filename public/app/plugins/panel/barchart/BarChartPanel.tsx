@@ -21,7 +21,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
 
   const barData = useMemo<BarData>(() => {
     const firstFrame = data.series[0];
-    const firstString = firstFrame.fields.find(f => f.type === FieldType.string);
+    const firstString = firstFrame.fields.find((f) => f.type === FieldType.string);
     if (!firstString) {
       return {
         error: 'Panel requires a string field',

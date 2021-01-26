@@ -52,6 +52,22 @@ export enum ScaleDistribution {
 /**
  * @alpha
  */
+export enum ScaleOrientation {
+  Horizontal = 0,
+  Vertical = 1,
+}
+
+/**
+ * @alpha
+ */
+export enum ScaleDirection {
+  Positive = 1,
+  Negative = -1,
+}
+
+/**
+ * @alpha
+ */
 export interface LineStyle {
   fill?: 'solid' | 'dash' | 'dot' | 'square';
   dash?: number[];

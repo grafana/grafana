@@ -5,7 +5,7 @@ import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
 import { AxisPlacement } from '../config';
 import { Cursor, Band } from 'uplot';
 import { defaultsDeep } from 'lodash';
-import uPlot, { Series } from 'uplot';
+import { Series } from 'uplot';
 
 export class UPlotConfigBuilder {
   private series: UPlotSeriesBuilder[] = [];
@@ -70,7 +70,7 @@ export class UPlotConfigBuilder {
 
   /** Add or update the scale with the scale key */
   addScale(props: ScaleProps) {
-    const current = this.scales.find(v => v.props.scaleKey === props.scaleKey);
+    const current = this.scales.find((v) => v.props.scaleKey === props.scaleKey);
     if (current) {
       current.merge(props);
       return;
@@ -84,8 +84,8 @@ export class UPlotConfigBuilder {
 
   getConfig() {
     const config: PlotSeriesConfig = { series: [this.xSeries] };
-    config.axes = this.ensureNonOverlappingAxes(Object.values(this.axes)).map(a => a.getConfig());
-    config.series = [...config.series, ...this.series.map(s => s.getConfig())];
+    config.axes = this.ensureNonOverlappingAxes(Object.values(this.axes)).map((a) => a.getConfig());
+    config.series = [...config.series, ...this.series.map((s) => s.getConfig())];
     config.scales = this.scales.reduce((acc, s) => {
       return { ...acc, ...s.getConfig() };
     }, {});

@@ -57,7 +57,7 @@ export class Quadtree {
     let t = this;
 
     if (t.q != null) {
-      t.quads(o.x, o.y, o.w, o.h, q => {
+      t.quads(o.x, o.y, o.w, o.h, (q) => {
         q.add(o);
       });
     } else {
@@ -71,7 +71,7 @@ export class Quadtree {
         for (let i = 0; i < os.length; i++) {
           let oi = os[i];
 
-          t.quads(oi.x, oi.y, oi.w, oi.h, q => {
+          t.quads(oi.x, oi.y, oi.w, oi.h, (q) => {
             q.add(oi);
           });
         }
@@ -90,7 +90,7 @@ export class Quadtree {
     }
 
     if (t.q != null) {
-      t.quads(x, y, w, h, q => {
+      t.quads(x, y, w, h, (q) => {
         q.get(x, y, w, h, cb);
       });
     }

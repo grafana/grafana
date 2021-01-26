@@ -1,6 +1,6 @@
 import uPlot, { Scale, Range } from 'uplot';
 import { PlotConfigBuilder } from '../types';
-import { ScaleDistribution } from '../config';
+import { ScaleDistribution, ScaleOrientation, ScaleDirection } from '../config';
 
 export interface ScaleProps {
   scaleKey: string;
@@ -9,8 +9,10 @@ export interface ScaleProps {
   max?: number | null;
   softMin?: number | null;
   softMax?: number | null;
-  range?: () => number[]; // min/max
+  range?: Scale.Range;
   distribution?: ScaleDistribution;
+  orientation?: ScaleOrientation;
+  direction?: ScaleDirection;
   log?: number;
 }
 
@@ -21,7 +23,17 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
   }
 
   getConfig() {
-    const { isTime, scaleKey, min: hardMin, max: hardMax, softMin, softMax, range } = this.props;
+    const {
+      isTime,
+      scaleKey,
+      min: hardMin,
+      max: hardMax,
+      softMin,
+      softMax,
+      range,
+      direction,
+      orientation,
+    } = this.props;
     const distribution = !isTime
       ? {
           distr:
@@ -86,6 +98,8 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
         time: isTime,
         auto: !isTime,
         range: range ?? rangeFn,
+        dir: direction,
+        ori: orientation,
         ...distribution,
       },
     };

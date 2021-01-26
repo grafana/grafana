@@ -26,6 +26,8 @@ export interface BarChartOptions {
   orientation: VizOrientation;
   stacking: BarStackingMode;
   showValue: BarValueVisibility;
+  barWidth: number;
+  groupWidth: number;
 }
 
 /**
