@@ -353,6 +353,32 @@ describe('Prometheus Result Transformer', () => {
       expect(result[0].name).toEqual('test{job="testjob"}');
     });
 
+    it('should use query as series name when __name__ is not available and metric is empty', () => {
+      const response = {
+        status: 'success',
+        data: {
+          resultType: 'matrix',
+          result: [
+            {
+              metric: {},
+              values: [[0, '10']],
+            },
+          ],
+        },
+      };
+      const expr = 'histogram_quantile(0.95, sum(rate(tns_request_duration_seconds_bucket[5m])) by (le))';
+      const result = transform({ data: response } as any, {
+        ...options,
+        query: {
+          step: 1,
+          start: 0,
+          end: 2,
+          expr,
+        },
+      });
+      expect(result[0].name).toEqual(expr);
+    });
+
     it('should set frame name to undefined if no __name__ label but there are other labels', () => {
       const response = {
         status: 'success',

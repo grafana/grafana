@@ -119,6 +119,7 @@ const getStyles = (theme: GrafanaTheme) => {
         justify-content: space-between;
         cursor: pointer;
         padding-right: 0;
+        line-height: ${theme.spacing.formInputHeight - 2}px;
         ${getFocusStyle(theme)};
       `
     ),
