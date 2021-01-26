@@ -142,6 +142,7 @@ export interface AlertDefinitionState {
   queryOptions: QueryGroupOptions;
   queryRunner: PanelQueryRunner;
   data: PanelData[];
+  alertDefinitions: AlertDefinition[];
 }
 
 export interface AlertDefinition {
