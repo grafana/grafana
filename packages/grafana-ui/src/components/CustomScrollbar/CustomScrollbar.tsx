@@ -2,9 +2,14 @@ import React, { Component } from 'react';
 import isNil from 'lodash/isNil';
 import classNames from 'classnames';
 import { css } from 'emotion';
+import { GrafanaTheme } from '@grafana/data';
+import { Themeable } from '../../types/theme';
+import { stylesFactory } from '../../themes';
+import { withTheme } from '../../themes/index';
 import Scrollbars from 'react-custom-scrollbars';
 
-interface Props {
+interface Props extends Themeable {
+  theme: GrafanaTheme;
   className?: string;
   autoHide?: boolean;
   autoHideTimeout?: number;
@@ -14,7 +19,7 @@ interface Props {
   hideHorizontalTrack?: boolean;
   hideVerticalTrack?: boolean;
   scrollTop?: number;
-  setScrollTop: (event: any) => void;
+  setScrollTop?: (event: any) => void;
   autoHeightMin?: number | string;
   updateAfterMountMs?: number;
   isPageScrollbar?: boolean;
@@ -32,7 +37,7 @@ interface StylesInterface {
 /**
  * Wraps component into <Scrollbars> component from `react-custom-scrollbars`
  */
-export class CustomScrollbar extends Component<Props> {
+export class UnthemedCustomScrollbar extends Component<Props> {
   static defaultProps: Partial<Props> = {
     autoHide: false,
     autoHideTimeout: 200,
@@ -110,6 +115,7 @@ export class CustomScrollbar extends Component<Props> {
   };
   render() {
     const {
+      theme,
       className,
       children,
       autoHeightMax,
@@ -118,8 +124,9 @@ export class CustomScrollbar extends Component<Props> {
       autoHide,
       autoHideTimeout,
       hideTracksWhenNotNeeded,
+      isPageScrollbar,
     } = this.props;
-    const styles = getStyles(this.props.isPageScrollbar);
+    const styles = getStyles(theme, isPageScrollbar);
 
     return (
       <Scrollbars
@@ -146,53 +153,56 @@ export class CustomScrollbar extends Component<Props> {
   }
 }
 
-export default CustomScrollbar;
+export const CustomScrollbar = withTheme(UnthemedCustomScrollbar);
+CustomScrollbar.displayName = 'CustomScrollbar';
 
-const getStyles = (isPageScrollbar?: boolean): StylesInterface => {
-  return {
-    customScrollbar: css`
-      display: flex;
-      flex-grow: 1;
-      &:hover {
-        opacity: 0.8;
-        transition: opacity 0.3s ease-in-out;
-      }
-    `,
-    trackVertical: css`
-      border-radius: 3px;
-      width: 8px !important;
-      right: ${isPageScrollbar ? 0 : 2}px;
-      bottom: 2px;
-    `,
-    trackHorizontal: css`
-      border-radius: 3px;
-      height: 8px !important;
-      right: 2px;
-      bottom: 2px;
-      left: 2px;
-    `,
-    thumbVertical: css`
-      @include linear-gradient(#404357, #424345);
-      border-radius: 6px;
-      opacity: 0;
-      &:hover {
-        opacity: 0.8;
-        transition: opacity 0.3s ease-in-out;
-      }
-    `,
-    thumbHorizontal: css`
-      @include gradient-horizontal(#404357, #404357);
-      border-radius: 6px;
-      opacity: 0;
-      &:hover {
-        opacity: 0.8;
-        transition: opacity 0.3s ease-in-out;
-      }
-    `,
-    view: css`
-      display: flex;
-      flex-grow: 1;
-      flex-direction: column;
-    `,
-  };
-};
+const getStyles = stylesFactory(
+  (theme: GrafanaTheme, isPageScrollbar?: boolean): StylesInterface => {
+    return {
+      customScrollbar: css`
+        display: flex;
+        flex-grow: 1;
+        &:hover {
+          opacity: 0.8;
+          transition: opacity 0.3s ease-in-out;
+        }
+      `,
+      trackVertical: css`
+        border-radius: 3px;
+        width: 8px !important;
+        right: ${isPageScrollbar ? 0 : 2}px;
+        bottom: 2px;
+      `,
+      trackHorizontal: css`
+        border-radius: 3px;
+        height: 8px !important;
+        right: 2px;
+        bottom: 2px;
+        left: 2px;
+      `,
+      thumbVertical: css`
+        linear-gradient(#404357, ${theme.palette.dark10});
+        border-radius: 6px;
+        opacity: 0;
+        &:hover {
+          opacity: 0.8;
+          transition: opacity 0.3s ease-in-out;
+        }
+      `,
+      thumbHorizontal: css`
+        linear-gradient(#404357, ${theme.palette.dark10});
+        border-radius: 6px;
+        opacity: 0;
+        &:hover {
+          opacity: 0.8;
+          transition: opacity 0.3s ease-in-out;
+        }
+      `,
+      view: css`
+        display: flex;
+        flex-grow: 1;
+        flex-direction: column;
+      `,
+    };
+  }
+);
