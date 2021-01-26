@@ -161,10 +161,6 @@ const getStyles = stylesFactory(
       customScrollbar: css`
         display: flex;
         flex-grow: 1;
-        &:hover {
-          opacity: 0.8;
-          transition: opacity 0.3s ease-in-out;
-        }
       `,
       trackVertical: css`
         border-radius: ${theme.border.radius.md};
