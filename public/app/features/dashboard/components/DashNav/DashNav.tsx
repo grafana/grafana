@@ -276,7 +276,6 @@ class DashNav extends PureComponent<Props> {
         onClickParent={this.onFolderNameClick}
         onGoBack={onGoBack}
         leftItems={this.renderLeftActionsButton()}
-        className="dashboard-toolbar"
       >
         {this.renderRightActionsButton()}
       </PageToolbar>

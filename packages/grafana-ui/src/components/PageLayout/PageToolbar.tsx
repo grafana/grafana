@@ -18,15 +18,42 @@ export interface Props {
   leftItems?: ReactNode[];
   children?: ReactNode;
   className?: string;
+  isFullscreen?: boolean;
 }
 
 /** @alpha */
 export const PageToolbar: FC<Props> = React.memo(
-  ({ title, parent, pageIcon, onGoBack, children, onClickTitle, onClickParent, leftItems, className }) => {
+  ({
+    title,
+    parent,
+    pageIcon,
+    onGoBack,
+    children,
+    onClickTitle,
+    onClickParent,
+    leftItems,
+    isFullscreen,
+    className,
+  }) => {
     const styles = useStyles(getStyles);
 
+    /**
+     * .page-toolbar css class is used for some legacy css view modes (TV/Kiosk) and
+     * media queries for mobile view when toolbar needs left padding to make room
+     * for mobile menu icon. This logic hopefylly can be changed when we move to a full react
+     * app and change how the app side menu & mobile menu is rendered.
+     */
+    const mainStyle = cx(
+      'page-toolbar',
+      styles.toolbar,
+      {
+        ['page-toolbar--fullscreen']: isFullscreen,
+      },
+      className
+    );
+
     return (
-      <div className={cx(styles.toolbar, className)}>
+      <div className={mainStyle}>
         <div className={styles.toolbarLeft}>
           {pageIcon && !onGoBack && (
             <div className={styles.pageIcon}>
@@ -92,6 +119,11 @@ const getStyles = (theme: GrafanaTheme) => {
       white-space: nowrap;
       text-overflow: ellipsis;
       overflow: hidden;      
+      max-width: 200px;
+
+      @media ${styleMixins.mediaUp(theme.breakpoints.md)} {
+        max-width: auto;
+      }
   `;
 
   return {
