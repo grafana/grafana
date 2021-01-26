@@ -104,7 +104,9 @@ type listAlertDefinitionsQuery struct {
 }
 
 type updateAlertDefinitionPausedCommand struct {
-	OrgID  int64  `json:"-"`
-	UID    string `json:"-"`
-	Paused bool   `json:"-"`
+	OrgID  int64    `json:"-"`
+	UIDs   []string `json:"uids"`
+	Paused bool     `json:"-"`
+
+	ResultCount int64
 }

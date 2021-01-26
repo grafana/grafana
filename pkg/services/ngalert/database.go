@@ -224,9 +224,31 @@ func (ng *AlertNG) getAlertDefinitions(query *listAlertDefinitionsQuery) error {
 
 func (ng *AlertNG) updateAlertDefinitionPaused(cmd *updateAlertDefinitionPausedCommand) error {
 	return ng.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		_, err := sess.Exec(`UPDATE alert_definition SET paused = ? WHERE org_id = ? AND uid = ?`, cmd.Paused, cmd.OrgID, cmd.UID)
+		placeHolders := strings.Builder{}
+		const separator = ", "
+		separatorVar := separator
+		params := []interface{}{cmd.Paused, cmd.OrgID}
+		for i, UID := range cmd.UIDs {
+			if i == len(cmd.UIDs)-1 {
+				separatorVar = ""
+			}
+			placeHolders.WriteString(fmt.Sprintf("?%s", separatorVar))
+			params = append(params, UID)
+		}
+		sql := fmt.Sprintf("UPDATE alert_definition SET paused = ? WHERE org_id = ? AND uid IN (%s)", placeHolders.String())
+
+		// prepend sql statement to params
+		var i interface{}
+		params = append(params, i)
+		copy(params[1:], params[0:])
+		params[0] = sql
+
+		res, err := sess.Exec(params...)
 		if err != nil {
 			return err
+		}
+		if cmd.ResultCount, err = res.RowsAffected(); err != nil {
+			ng.log.Debug("failed to get rows affected: %w", err)
 		}
 		return nil
 	})

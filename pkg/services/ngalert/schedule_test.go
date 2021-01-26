@@ -125,7 +125,7 @@ func TestAlertingTicker(t *testing.T) {
 	})
 
 	// pause alert definition
-	err = ng.updateAlertDefinitionPaused(&updateAlertDefinitionPausedCommand{UID: alerts[2].UID, OrgID: alerts[2].OrgID, Paused: true})
+	err = ng.updateAlertDefinitionPaused(&updateAlertDefinitionPausedCommand{UIDs: []string{alerts[2].UID}, OrgID: alerts[2].OrgID, Paused: true})
 	require.NoError(t, err)
 	t.Logf("alert definition: %v paused", alerts[2].getKey())
 
@@ -141,7 +141,7 @@ func TestAlertingTicker(t *testing.T) {
 	})
 
 	// unpause alert definition
-	err = ng.updateAlertDefinitionPaused(&updateAlertDefinitionPausedCommand{UID: alerts[2].UID, OrgID: alerts[2].OrgID, Paused: false})
+	err = ng.updateAlertDefinitionPaused(&updateAlertDefinitionPausedCommand{UIDs: []string{alerts[2].UID}, OrgID: alerts[2].OrgID, Paused: false})
 	require.NoError(t, err)
 	t.Logf("alert definition: %v unpaused", alerts[2].getKey())
 
