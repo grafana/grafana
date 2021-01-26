@@ -9,7 +9,6 @@ import { withTheme } from '../../themes/index';
 import Scrollbars from 'react-custom-scrollbars';
 
 interface Props extends Themeable {
-  theme: GrafanaTheme;
   className?: string;
   autoHide?: boolean;
   autoHideTimeout?: number;
@@ -168,21 +167,21 @@ const getStyles = stylesFactory(
         }
       `,
       trackVertical: css`
-        border-radius: 3px;
-        width: 8px !important;
+        border-radius: ${theme.border.radius.md};
+        width: ${theme.spacing.sm} !important;
         right: ${isPageScrollbar ? 0 : 2}px;
-        bottom: 2px;
+        bottom: ${theme.spacing.xxs};
       `,
       trackHorizontal: css`
-        border-radius: 3px;
-        height: 8px !important;
-        right: 2px;
-        bottom: 2px;
-        left: 2px;
+        border-radius: ${theme.border.radius.md};
+        height: ${theme.spacing.sm} !important;
+        right: ${theme.spacing.xxs};
+        bottom: ${theme.spacing.xxs};
+        left: ${theme.spacing.xxs};
       `,
       thumbVertical: css`
         linear-gradient(#404357, ${theme.palette.dark10});
-        border-radius: 6px;
+        border-radius: ${theme.border.radius.md};
         opacity: 0;
         &:hover {
           opacity: 0.8;
