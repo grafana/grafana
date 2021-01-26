@@ -62,6 +62,7 @@ interface State {
 }
 
 class LiveLogs extends PureComponent<Props, State> {
+  private liveEndDiv: HTMLDivElement | null = null;
   private scrollContainerRef = React.createRef<HTMLTableSectionElement>();
 
   constructor(props: Props) {
@@ -130,10 +131,11 @@ class LiveLogs extends PureComponent<Props, State> {
               );
             })}
             <tr
-              ref={() => {
+              ref={(element) => {
+                this.liveEndDiv = element;
                 // This is triggered on every update so on every new row. It keeps the view scrolled at the bottom by
                 // default.
-                if (!isPaused) {
+                if (this.liveEndDiv && !isPaused) {
                   this.scrollContainerRef.current?.scrollTo(0, this.scrollContainerRef.current.scrollHeight);
                 }
               }}
