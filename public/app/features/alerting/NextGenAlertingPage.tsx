@@ -162,13 +162,10 @@ export default hot(module)(
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   wrapper: css`
-    width: 100%;
+    width: calc(100% - 55px);
     height: 100%;
     position: fixed;
-    z-index: ${theme.zIndex.sidemenu};
     top: 0;
-    left: 0;
-    right: 0;
     bottom: 0;
     background: ${theme.colors.dashboardBg};
     display: flex;
