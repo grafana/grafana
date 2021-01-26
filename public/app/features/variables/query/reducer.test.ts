@@ -218,6 +218,25 @@ describe('queryVariableReducer', () => {
         });
     });
 
+    it('unnamed capture group returns any unnamed match', () => {
+      const regex = '/.*_(\\w+)\\{/gi';
+      const { initialState } = getVariableTestContext(adapter, { includeAll: false, regex });
+      const metrics = [createMetric('instance_counter{someother="atext",something="avalue"}'), createMetric('B')];
+      const update = { results: metrics, templatedRegex: regex };
+      const payload = toVariablePayload({ id: '0', type: 'query' }, update);
+
+      reducerTester<VariablesState>()
+        .givenReducer(queryVariableReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(updateVariableOptions(payload))
+        .thenStateShouldEqual({
+          ...initialState,
+          '0': ({
+            ...initialState[0],
+            options: [{ text: 'counter', value: 'counter', selected: false }],
+          } as unknown) as QueryVariableModel,
+        });
+    });
+
     it('unmatched text capture and unmatched value capture returns empty state', () => {
       const regex = '/somevalue="(?<value>[^"]+)|somelabel="(?<text>[^"]+)/gi';
       const { initialState } = getVariableTestContext(adapter, { includeAll: false, regex });

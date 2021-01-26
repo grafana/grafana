@@ -139,6 +139,7 @@ const metricNamesToVariableValues = (variableRegEx: string, sort: VariableSort, 
         text = matches.groups.text;
         value = text;
       } else if (matches['1']) {
+        text = matches['1'];
         value = matches['1'];
       }
     }
