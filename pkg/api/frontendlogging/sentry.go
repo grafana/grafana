@@ -5,8 +5,11 @@ import (
 	"strings"
 
 	"github.com/getsentry/sentry-go"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/inconshreveable/log15"
 )
+
+var logger = log.New("frontendlogging")
 
 type FrontendSentryExceptionValue struct {
 	Value      string            `json:"value,omitempty"`
@@ -32,12 +35,12 @@ func (value *FrontendSentryExceptionValue) FmtStacktrace() string {
 	for _, frame := range value.Stacktrace.Frames {
 		mappedLocation, err := resolveSourceLocation(frame.Filename, frame.Lineno, frame.Colno)
 		if err != nil {
-			// frontendLogger.Error("Error resolving stack trace frame source location.", "err", err)
+			logger.Error("Error resolving stack trace frame source location.", "err", err)
 		}
 		if mappedLocation != nil {
 			tag := "core"
-			if len(mappedLocation.pluginId) > 0 {
-				tag = mappedLocation.pluginId
+			if len(mappedLocation.pluginID) > 0 {
+				tag = mappedLocation.pluginID
 			}
 			stacktrace += fmt.Sprintf("\n  at %s (%s|%s:%v:%v)", mappedLocation.function, tag, mappedLocation.file, mappedLocation.line, mappedLocation.col)
 		} else {

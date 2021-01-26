@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/getsentry/sentry-go"
+	"github.com/grafana/grafana/pkg/api/frontendlogging"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
@@ -17,7 +18,7 @@ import (
 
 type logScenarioFunc func(c *scenarioContext, logs []*log.Record)
 
-func logSentryEventScenario(t *testing.T, desc string, event frontendSentryEvent, fn logScenarioFunc) {
+func logSentryEventScenario(t *testing.T, desc string, event frontendlogging.FrontendSentryEvent, fn logScenarioFunc) {
 	t.Run(desc, func(t *testing.T) {
 		logs := []*log.Record{}
 		origHandler := frontendLogger.GetHandler()
@@ -60,15 +61,15 @@ func TestFrontendLoggingEndpoint(t *testing.T) {
 			ID:    "45",
 		}
 
-		errorEvent := frontendSentryEvent{
-			&sentry.Event{
+		errorEvent := frontendlogging.FrontendSentryEvent{
+			Event: &sentry.Event{
 				EventID:   "123",
 				Level:     sentry.LevelError,
 				Request:   &request,
 				Timestamp: ts,
 			},
-			&frontendSentryException{
-				Values: []frontendSentryExceptionValue{
+			Exception: &frontendlogging.FrontendSentryException{
+				Values: []frontendlogging.FrontendSentryExceptionValue{
 					{
 						Type:  "UserError",
 						Value: "Please replace user and try again",
@@ -107,8 +108,8 @@ func TestFrontendLoggingEndpoint(t *testing.T) {
 			assert.NotContains(t, logs[0].Ctx, "context")
 		})
 
-		messageEvent := frontendSentryEvent{
-			&sentry.Event{
+		messageEvent := frontendlogging.FrontendSentryEvent{
+			Event: &sentry.Event{
 				EventID:   "123",
 				Level:     sentry.LevelInfo,
 				Request:   &request,
@@ -116,7 +117,7 @@ func TestFrontendLoggingEndpoint(t *testing.T) {
 				Message:   "hello world",
 				User:      user,
 			},
-			nil,
+			Exception: nil,
 		}
 
 		logSentryEventScenario(t, "Should log received message event", messageEvent, func(sc *scenarioContext, logs []*log.Record) {
@@ -135,8 +136,8 @@ func TestFrontendLoggingEndpoint(t *testing.T) {
 			assertContextContains(t, logs[0], "user_id", user.ID)
 		})
 
-		eventWithContext := frontendSentryEvent{
-			&sentry.Event{
+		eventWithContext := frontendlogging.FrontendSentryEvent{
+			Event: &sentry.Event{
 				EventID:   "123",
 				Level:     sentry.LevelInfo,
 				Request:   &request,
@@ -151,7 +152,7 @@ func TestFrontendLoggingEndpoint(t *testing.T) {
 					"bar": "baz",
 				},
 			},
-			nil,
+			Exception: nil,
 		}
 
 		logSentryEventScenario(t, "Should log event context", eventWithContext, func(sc *scenarioContext, logs []*log.Record) {

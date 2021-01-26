@@ -20,18 +20,18 @@ type sourceLocation struct {
 	function string
 	line     int
 	col      int
-	pluginId string
+	pluginID string
 }
 
 type sourceMapLocation struct {
 	dir      string
 	path     string
-	pluginId string
+	pluginID string
 }
 
 type sourceMap struct {
 	consumer *sourcemap.Consumer
-	pluginId string
+	pluginID string
 }
 
 type sourceMapCacheType struct {
@@ -43,8 +43,8 @@ var sourceMapCache = sourceMapCacheType{
 	cache: make(map[string]*sourceMap),
 }
 
-func guessSourceMapLocation(sourceUrl string) (*sourceMapLocation, error) {
-	u, err := url.Parse(sourceUrl)
+func guessSourceMapLocation(sourceURL string) (*sourceMapLocation, error) {
+	u, err := url.Parse(sourceURL)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func guessSourceMapLocation(sourceUrl string) (*sourceMapLocation, error) {
 		return &sourceMapLocation{
 			dir:      setting.StaticRootPath,
 			path:     filepath.Join("build", u.Path[len("/public/build/"):]) + ".map",
-			pluginId: "",
+			pluginID: "",
 		}, nil
 	} else if strings.HasPrefix(u.Path, "/public/plugins/") {
 		for _, route := range plugins.StaticRoutes {
@@ -61,7 +61,7 @@ func guessSourceMapLocation(sourceUrl string) (*sourceMapLocation, error) {
 				return &sourceMapLocation{
 					dir:      route.Directory,
 					path:     u.Path[len(pluginPrefix):] + ".map",
-					pluginId: route.PluginId,
+					pluginID: route.PluginId,
 				}, nil
 			}
 		}
@@ -69,14 +69,14 @@ func guessSourceMapLocation(sourceUrl string) (*sourceMapLocation, error) {
 	return nil, nil
 }
 
-func getSourceMap(sourceUrl string) (*sourceMap, error) {
+func getSourceMap(sourceURL string) (*sourceMap, error) {
 	sourceMapCache.Lock()
 	defer sourceMapCache.Unlock()
 
-	if smap, ok := sourceMapCache.cache[sourceUrl]; ok {
+	if smap, ok := sourceMapCache.cache[sourceURL]; ok {
 		return smap, nil
 	}
-	sourceMapLocation, err := guessSourceMapLocation(sourceUrl)
+	sourceMapLocation, err := guessSourceMapLocation(sourceURL)
 	if err != nil {
 		return nil, err
 	}
@@ -85,33 +85,32 @@ func getSourceMap(sourceUrl string) (*sourceMap, error) {
 		f, err := dir.Open(sourceMapLocation.path)
 		if err != nil {
 			if os.IsNotExist(err) {
-				sourceMapCache.cache[sourceUrl] = nil
+				sourceMapCache.cache[sourceURL] = nil
 				return nil, nil
 			}
 			return nil, err
 		}
 		defer func() {
 			if err := f.Close(); err != nil {
-				// frontendLogger.Error("Failed to close source map file.", "err", err)
+				logger.Error("Failed to close source map file.", "err", err)
 			}
 		}()
 		b, err := ioutil.ReadAll(f)
 		if err != nil {
 			return nil, err
 		}
-		consumer, err := sourcemap.Parse(sourceUrl+".map", b)
+		consumer, err := sourcemap.Parse(sourceURL+".map", b)
 		if err != nil {
 			return nil, err
 		}
 		smap := &sourceMap{
 			consumer: consumer,
-			pluginId: sourceMapLocation.pluginId,
+			pluginID: sourceMapLocation.pluginID,
 		}
-		sourceMapCache.cache[sourceUrl] = smap
+		sourceMapCache.cache[sourceURL] = smap
 		return smap, nil
-	} else {
-		sourceMapCache.cache[sourceUrl] = nil
 	}
+	sourceMapCache.cache[sourceURL] = nil
 	return nil, nil
 }
 
@@ -131,7 +130,7 @@ func resolveSourceLocation(url string, line int, column int) (*sourceLocation, e
 				line:     line,
 				col:      col,
 				function: function,
-				pluginId: smap.pluginId,
+				pluginID: smap.pluginID,
 			}, nil
 		}
 	}
