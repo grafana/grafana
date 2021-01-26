@@ -183,7 +183,7 @@ func (ng *AlertNG) unpauseScheduler() response.Response {
 	return response.JSON(200, util.DynMap{"message": "alert definition scheduler unpaused"})
 }
 
-// alertDefinitionPauseEndpoint handles PUT /api/alert-definitions/pause/:alertDefinitionUID.
+// alertDefinitionPauseEndpoint handles POST /api/alert-definitions/pause/:alertDefinitionUID.
 func (ng *AlertNG) alertDefinitionPauseEndpoint(c *models.ReqContext) response.Response {
 	cmd := updateAlertDefinitionPausedCommand{
 		OrgID:  c.SignedInUser.OrgId,
@@ -198,7 +198,7 @@ func (ng *AlertNG) alertDefinitionPauseEndpoint(c *models.ReqContext) response.R
 	return response.JSON(200, util.DynMap{"message": "alert definition paused"})
 }
 
-// alertDefinitionUnpauseEndpoint handles PUT /api/alert-definitions/unpause/:alertDefinitionUID.
+// alertDefinitionUnpauseEndpoint handles POST /api/alert-definitions/unpause/:alertDefinitionUID.
 func (ng *AlertNG) alertDefinitionUnpauseEndpoint(c *models.ReqContext) response.Response {
 	cmd := updateAlertDefinitionPausedCommand{
 		OrgID:  c.SignedInUser.OrgId,
