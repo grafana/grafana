@@ -57,7 +57,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, Props>(
       <button ref={ref} className={buttonStyles} {...rest}>
         {renderIcon(icon)}
         {imgSrc && <img className={styles.img} src={imgSrc} />}
-        {children && !iconOnly && <span className={contentStyles}>{children}</span>}
+        {children && !iconOnly && <div className={contentStyles}>{children}</div>}
         {isOpen === false && <Icon name="angle-down" />}
         {isOpen === true && <Icon name="angle-up" />}
       </button>

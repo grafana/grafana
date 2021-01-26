@@ -76,7 +76,6 @@ export const UnconnectedReturnToDashboardButton: FC<Props> = ({
         data-testid="returnButtonWithChanges"
         options={[{ label: 'Return to panel with changes', value: '' }]}
         onChange={() => returnToPanel({ withChanges: true })}
-        maxMenuHeight={380}
       />
     </ButtonGroup>
   );

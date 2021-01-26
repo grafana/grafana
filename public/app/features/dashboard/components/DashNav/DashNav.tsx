@@ -184,7 +184,7 @@ class DashNav extends PureComponent<Props> {
 
   renderPlaylistControls() {
     return (
-      <ButtonGroup>
+      <ButtonGroup key="playlist-buttons">
         <ToolbarButton tooltip="Go to previous dashboard" icon="backward" onClick={this.onPlaylistPrev} narrow />
         <ToolbarButton onClick={this.onPlaylistStop}>Stop playlist</ToolbarButton>
         <ToolbarButton tooltip="Go to next dashboard" icon="forward" onClick={this.onPlaylistNext} narrow />
@@ -198,9 +198,16 @@ class DashNav extends PureComponent<Props> {
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
     const buttons: ReactNode[] = [];
-    const tvButton = <ToolbarButton tooltip="Cycle view mode" icon="monitor" onClick={this.onToggleTVMode} />;
+    const tvButton = (
+      <ToolbarButton tooltip="Cycle view mode" icon="monitor" onClick={this.onToggleTVMode} key="tv-button" />
+    );
     const timeControls = (
-      <DashNavTimeControls dashboard={dashboard} location={location} onChangeTimeZone={updateTimeZoneForSession} />
+      <DashNavTimeControls
+        dashboard={dashboard}
+        location={location}
+        onChangeTimeZone={updateTimeZoneForSession}
+        key="time-controls"
+      />
     );
 
     if (this.isPlaylistRunning()) {
@@ -255,7 +262,6 @@ class DashNav extends PureComponent<Props> {
     }
 
     buttons.push(tvButton);
-
     return buttons;
   }
 

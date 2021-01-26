@@ -75,23 +75,22 @@ export const PageToolbar: FC<Props> = React.memo(
           )}
           <div className={styles.titleWrapper}>
             {parent && onClickParent && (
-              <a onClick={onClickParent} className={cx(styles.titleLink, styles.parentLink)}>
+              <button onClick={onClickParent} className={cx(styles.titleLink, styles.parentLink)}>
                 {parent} <span className={styles.parentIcon}>/</span>
-              </a>
+              </button>
             )}
             {onClickTitle && (
-              <a onClick={onClickTitle} className={styles.titleLink}>
+              <button onClick={onClickTitle} className={styles.titleLink}>
                 {title}
-              </a>
+              </button>
             )}
             {!onClickTitle && <div className={styles.titleText}>{title}</div>}
           </div>
-          {leftItems &&
-            leftItems.map((child, index) => (
-              <div className={styles.leftActionItem} key={index}>
-                {child}
-              </div>
-            ))}
+          {leftItems?.map((child, index) => (
+            <div className={styles.leftActionItem} key={index}>
+              {child}
+            </div>
+          ))}
         </div>
         <div className={styles.spacer}></div>
         {React.Children.toArray(children)
@@ -115,13 +114,17 @@ const getStyles = (theme: GrafanaTheme) => {
 
   const titleStyles = `
       font-size: ${typography.size.lg};
-      padding-left: ${spacing.sm};
+      padding-left: ${spacing.sm};      
       white-space: nowrap;
       text-overflow: ellipsis;
       overflow: hidden;      
-      max-width: 200px;
+      max-width: 240px;
 
-      @media ${styleMixins.mediaUp(theme.breakpoints.md)} {
+      // clear default button styles
+      background: none;
+      border: none;      
+      
+      @media ${styleMixins.mediaUp(theme.breakpoints.xl)} {
         max-width: unset;
       }
   `;
@@ -164,7 +167,7 @@ const getStyles = (theme: GrafanaTheme) => {
       top: 8px;
     `,
     parentIcon: css`
-      margin: 0 4px;
+      margin-left: 4px;
     `,
     titleText: css`
       ${titleStyles};
