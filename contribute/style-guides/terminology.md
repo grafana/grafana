@@ -1,4 +1,4 @@
-# Grafana technical glossary
+# Grafana technical terminology
 
 <!-- Keep terms in alphabetical order: -->
 
