@@ -36,6 +36,8 @@ All the information and stats shown in the Node graph beta are driven by the dat
 
 For more details about how to use the X-Ray service map feature, see the [X-Ray plugin documentation](https://grafana.com/grafana/plugins/grafana-x-ray-datasource).
 
+For more information, refer to [Node graph panel]({{< relref "../panels/visualizations/node-graph.md" >}}).
+
 ### New transformations
 
 The following transformations were added in Grafana 7.4.
@@ -54,9 +56,15 @@ This transformation is very useful if your data source does not natively filter 
 
 For more information, refer to [Filter data by value]({{< relref "../panels/transformations/types-options.md#filter-data-by-value" >}}) in [Transformation types and options]({{< relref "../panels/transformations/types-options.md" >}}).
 
+### New override option
+
+On the Overrides tab, you can now set properties for fields returned by a specific query.
+
+For more information, refer to [Add a field override]({{< relref "../panels/field-options/configure-specific-fields.md#add-a-field-override" >}}).
+
 ### Exemplar support
 
-Grafana graphs now support Prometheus exemplars. They are displayed as diamonds in the graph visualization.
+Grafana graphs now support Prometheus [exemplars]({{< relref "../datasources/prometheus.md#exemplars" >}}). They are displayed as diamonds in the graph visualization.
 
 > **Note:** Support for exemplars will be added in version Prometheus 2.25+,
 
@@ -81,9 +89,9 @@ The main use case is for [multi-dimensional](https://grafana.com/docs/grafana/la
 
 > **Note:** Queries built with this feature might break with minor version upgrades until Grafana 8 is released. This feature does not work with the current Grafana alerting.
 
-### Variable support in alert notifications
+### Alert notification query label interpolation
 
-You can now provide detailed information to alert notification recipients by injecting alert query data into an alert notification. Labels that exist from the evaluation of the alert query can be used in the alert rule name and in the alert notification message fields. The alert label data is injected into the notification fields when the alert is in the alerting state. When there are multiple unique values for the same label, the values are comma-separated.
+You can now provide detailed information to alert notification recipients by injecting alert label data as template variables into an alert notification. Labels that exist from the evaluation of the alert query can be used in the alert rule name and in the alert notification message fields using the `${Label}` syntax. The alert label data is automatically injected into the notification fields when the alert is in the alerting state. When there are multiple unique values for the same label, the values are comma-separated.
 
 {{< figure src="/img/docs/alerting/alert-notification-template-7-4.png" max-width="700px" caption="Variable support in alert notifications" >}}
 
@@ -94,6 +102,8 @@ We have added support for [Content Security Policy (CSP)](https://developer.mozi
 CSP support is disabled by default, to enable it you must set `content_security_policy = true` in the Grafana configuration. If enabling it, you should also review, and potentially tweak, the CSP header template, via the configuration setting `content_security_policy_template`.
 
 You can lock down what can be done in the frontend code. Lock down what can be loaded, what JavaScript is executed. Not compatible with some plugins.
+
+[content_security_policy]({{< relref "../administration/configuration.md#content_security_policy" >}}) and [content_security_policy_template]({{< relref "../administration/configuration.md#content_security_policy_template" >}}) were added to [Configuration]({{< relref "../administration/configuration.md" >}}) as a result of this change.
 
 ### Elasticsearch data source updates
 
