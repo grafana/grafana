@@ -6,17 +6,18 @@ import AlertRuleItem from './AlertRuleItem';
 import appEvents from 'app/core/app_events';
 import { updateLocation } from 'app/core/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { AlertRule, CoreEvents, StoreState } from 'app/types';
+import { AlertDefinition, AlertRule, CoreEvents, StoreState } from 'app/types';
 import { getAlertRulesAsync, togglePauseAlertRule } from './state/actions';
 import { getAlertRuleItems, getSearchQuery } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { NavModel, SelectableValue } from '@grafana/data';
 import { setSearchQuery } from './state/reducers';
-import { Button, Select } from '@grafana/ui';
+import { Button, Select, VerticalGroup } from '@grafana/ui';
+import { AlertDefinitionItem } from './components/AlertDefinitionItem';
 
 export interface Props {
   navModel: NavModel;
-  alertRules: AlertRule[];
+  alertRules: Array<AlertRule | AlertDefinition>;
   updateLocation: typeof updateLocation;
   getAlertRulesAsync: typeof getAlertRulesAsync;
   setSearchQuery: typeof setSearchQuery;
@@ -121,18 +122,28 @@ export class AlertRuleList extends PureComponent<Props, any> {
               How to add an alert
             </Button>
           </div>
-          <section>
-            <ol className="alert-rule-list">
-              {alertRules.map((rule) => (
-                <AlertRuleItem
-                  rule={rule}
-                  key={rule.id}
+          <VerticalGroup spacing="none">
+            {alertRules.map((rule, index) => {
+              // Alert definition has "title" as name property.
+              if (rule.hasOwnProperty('name')) {
+                return (
+                  <AlertRuleItem
+                    rule={rule as AlertRule}
+                    key={rule.id}
+                    search={search}
+                    onTogglePause={() => this.onTogglePause(rule as AlertRule)}
+                  />
+                );
+              }
+              return (
+                <AlertDefinitionItem
+                  key={`${rule.id}-${index}`}
+                  alertDefinition={rule as AlertDefinition}
                   search={search}
-                  onTogglePause={() => this.onTogglePause(rule)}
                 />
-              ))}
-            </ol>
-          </section>
+              );
+            })}
+          </VerticalGroup>
         </Page.Contents>
       </Page>
     );
@@ -141,10 +152,11 @@ export class AlertRuleList extends PureComponent<Props, any> {
 
 const mapStateToProps = (state: StoreState) => ({
   navModel: getNavModel(state.navIndex, 'alert-list'),
-  alertRules: getAlertRuleItems(state.alertRules),
+  alertRules: getAlertRuleItems(state),
   stateFilter: state.location.query.state,
   search: getSearchQuery(state.alertRules),
   isLoading: state.alertRules.isLoading,
+  ngAlertDefinitions: state.alertDefinition.alertDefinitions,
 });
 
 const mapDispatchToProps = {
