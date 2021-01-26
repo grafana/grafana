@@ -151,7 +151,7 @@ class DashNav extends PureComponent<Props> {
         <ModalsController key="button-share">
           {({ showModal, hideModal }) => (
             <DashNavButton
-              tooltip="Share dashboard/panel"
+              tooltip="Share dashboard or panel"
               classSuffix="share"
               icon="share-alt"
               iconSize="lg"
