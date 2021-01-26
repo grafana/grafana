@@ -113,7 +113,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
       autoHideTimeout={200}
       hideHorizontalTrack={true}
       hideTracksWhenNotNeeded={false}
-      page={true}
+      scrollbarStickLeft={true}
       setScrollTop={[Function]}
       updateAfterMountMs={500}
     >
@@ -488,7 +488,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
       autoHideTimeout={200}
       hideHorizontalTrack={true}
       hideTracksWhenNotNeeded={false}
-      page={true}
+      scrollbarStickLeft={true}
       setScrollTop={[Function]}
       updateAfterMountMs={500}
     >
