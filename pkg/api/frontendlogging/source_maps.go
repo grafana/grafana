@@ -73,38 +73,44 @@ func getSourceMap(sourceURL string) (*sourceMap, error) {
 	if err != nil {
 		return nil, err
 	}
-	if sourceMapLocation != nil {
-		dir := http.Dir(sourceMapLocation.dir)
-		f, err := dir.Open(sourceMapLocation.path)
-		if err != nil {
-			if os.IsNotExist(err) {
-				sourceMapCache.cache[sourceURL] = nil
-				return nil, nil
-			}
-			return nil, err
-		}
-		defer func() {
-			if err := f.Close(); err != nil {
-				logger.Error("Failed to close source map file.", "err", err)
-			}
-		}()
-		b, err := ioutil.ReadAll(f)
-		if err != nil {
-			return nil, err
-		}
-		consumer, err := sourcemap.Parse(sourceURL+".map", b)
-		if err != nil {
-			return nil, err
-		}
-		smap := &sourceMap{
-			consumer: consumer,
-			pluginID: sourceMapLocation.pluginID,
-		}
-		sourceMapCache.cache[sourceURL] = smap
-		return smap, nil
+	if sourceMapLocation == nil {
+		// Cache nil value for sourceURL, since we want to flag that it wasn't found in the filesystem
+		sourceMapCache.cache[sourceURL] = nil
+		return nil, nil
 	}
-	sourceMapCache.cache[sourceURL] = nil
-	return nil, nil
+	path := sourceMapLocation.path
+	if strings.HasPrefix(path, "/") {
+		path = "/" + path
+	}
+	path = filepath.Clean(path)
+	dir := http.Dir(sourceMapLocation.dir)
+	f, err := dir.Open(sourceMapLocation.path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			sourceMapCache.cache[sourceURL] = nil
+			return nil, nil
+		}
+		return nil, err
+	}
+	defer func() {
+		if err := f.Close(); err != nil {
+			logger.Error("Failed to close source map file.", "err", err)
+		}
+	}()
+	b, err := ioutil.ReadAll(f)
+	if err != nil {
+		return nil, err
+	}
+	consumer, err := sourcemap.Parse(sourceURL+".map", b)
+	if err != nil {
+		return nil, err
+	}
+	smap := &sourceMap{
+		consumer: consumer,
+		pluginID: sourceMapLocation.pluginID,
+	}
+	sourceMapCache.cache[sourceURL] = smap
+	return smap, nil
 }
 
 func resolveSourceLocation(frame sentry.Frame) (*sentry.Frame, error) {
@@ -112,24 +118,25 @@ func resolveSourceLocation(frame sentry.Frame) (*sentry.Frame, error) {
 	if err != nil {
 		return nil, err
 	}
-	if smap != nil {
-		file, function, line, col, ok := smap.consumer.Source(frame.Lineno, frame.Colno)
-		if ok {
-			if len(function) == 0 {
-				function = "?"
-			}
-			module := "core"
-			if len(smap.pluginID) > 0 {
-				module = smap.pluginID
-			}
-			return &sentry.Frame{
-				Filename: file,
-				Lineno:   line,
-				Colno:    col,
-				Function: function,
-				Module:   module,
-			}, nil
-		}
+	if smap == nil {
+		return nil, nil
 	}
-	return nil, nil
+	file, function, line, col, ok := smap.consumer.Source(frame.Lineno, frame.Colno)
+	if !ok {
+		return nil, nil
+	}
+	if len(function) == 0 {
+		function = "?"
+	}
+	module := "core"
+	if len(smap.pluginID) > 0 {
+		module = smap.pluginID
+	}
+	return &sentry.Frame{
+		Filename: file,
+		Lineno:   line,
+		Colno:    col,
+		Function: function,
+		Module:   module,
+	}, nil
 }
