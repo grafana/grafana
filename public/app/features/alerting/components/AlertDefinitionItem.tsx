@@ -1,5 +1,4 @@
 import React, { FC } from 'react';
-import { css } from 'emotion';
 // @ts-ignore
 import Highlighter from 'react-highlight-words';
 import { Card, FeatureBadge, Icon } from '@grafana/ui';
@@ -13,22 +12,16 @@ interface Props {
 
 export const AlertDefinitionItem: FC<Props> = ({ alertDefinition, search }) => {
   return (
-    <li
-      className={css`
-        width: 100%;
-      `}
-    >
-      <Card heading={CardTitle(alertDefinition.title, search)}>
-        <Card.Figure>
-          <Icon size="xl" name="question-circle" className="alert-rule-item__icon" />
-        </Card.Figure>
-        <Card.Meta>
-          <span key="state">
-            <span key="text">{alertDefinition.description}</span>
-          </span>
-        </Card.Meta>
-      </Card>
-    </li>
+    <Card heading={CardTitle(alertDefinition.title, search)}>
+      <Card.Figure>
+        <Icon size="xl" name="question-circle" className="alert-rule-item__icon" />
+      </Card.Figure>
+      <Card.Meta>
+        <span key="state">
+          <span key="text">{alertDefinition.description}</span>
+        </span>
+      </Card.Meta>
+    </Card>
   );
 };
 

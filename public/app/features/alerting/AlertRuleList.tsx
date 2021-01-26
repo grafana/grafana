@@ -12,7 +12,7 @@ import { getAlertRuleItems, getSearchQuery } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { NavModel, SelectableValue } from '@grafana/data';
 import { setSearchQuery } from './state/reducers';
-import { Button, Select } from '@grafana/ui';
+import { Button, Select, VerticalGroup } from '@grafana/ui';
 import { AlertDefinitionItem } from './components/AlertDefinitionItem';
 
 export interface Props {
@@ -122,29 +122,28 @@ export class AlertRuleList extends PureComponent<Props, any> {
               How to add an alert
             </Button>
           </div>
-          <section>
-            <ol className="alert-rule-list">
-              {alertRules.map((rule, index) => {
-                if (rule.hasOwnProperty('name')) {
-                  return (
-                    <AlertRuleItem
-                      rule={rule as AlertRule}
-                      key={rule.id}
-                      search={search}
-                      onTogglePause={() => this.onTogglePause(rule as AlertRule)}
-                    />
-                  );
-                }
+          <VerticalGroup spacing="none">
+            {alertRules.map((rule, index) => {
+              // Alert definition has "title" as name property.
+              if (rule.hasOwnProperty('name')) {
                 return (
-                  <AlertDefinitionItem
-                    key={`${rule.id}-${index}`}
-                    alertDefinition={rule as AlertDefinition}
+                  <AlertRuleItem
+                    rule={rule as AlertRule}
+                    key={rule.id}
                     search={search}
+                    onTogglePause={() => this.onTogglePause(rule as AlertRule)}
                   />
                 );
-              })}
-            </ol>
-          </section>
+              }
+              return (
+                <AlertDefinitionItem
+                  key={`${rule.id}-${index}`}
+                  alertDefinition={rule as AlertDefinition}
+                  search={search}
+                />
+              );
+            })}
+          </VerticalGroup>
         </Page.Contents>
       </Page>
     );
