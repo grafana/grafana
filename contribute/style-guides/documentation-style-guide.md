@@ -157,7 +157,7 @@ Introduce the object as "Kubernetes XX" on the first usage, then just the object
 
 Create the Kubernetes Job and check the logs to retrieve the generated token:
 
-The Job requires the token be submitted as...
+The Job requires the token be submitted as …
 
 ### Links and references
 
