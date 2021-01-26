@@ -11,17 +11,10 @@ import (
 
 	sourcemap "github.com/go-sourcemap/sourcemap"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 )
-
-type sourceLocation struct {
-	file     string
-	function string
-	line     int
-	col      int
-	pluginID string
-}
 
 type sourceMapLocation struct {
 	dir      string
@@ -114,23 +107,27 @@ func getSourceMap(sourceURL string) (*sourceMap, error) {
 	return nil, nil
 }
 
-func resolveSourceLocation(url string, line int, column int) (*sourceLocation, error) {
-	smap, err := getSourceMap(url)
+func resolveSourceLocation(frame sentry.Frame) (*sentry.Frame, error) {
+	smap, err := getSourceMap(frame.Filename)
 	if err != nil {
 		return nil, err
 	}
 	if smap != nil {
-		file, function, line, col, ok := smap.consumer.Source(line, column)
+		file, function, line, col, ok := smap.consumer.Source(frame.Lineno, frame.Colno)
 		if ok {
 			if len(function) == 0 {
 				function = "?"
 			}
-			return &sourceLocation{
-				file:     file,
-				line:     line,
-				col:      col,
-				function: function,
-				pluginID: smap.pluginID,
+			module := "core"
+			if len(smap.pluginID) > 0 {
+				module = smap.pluginID
+			}
+			return &sentry.Frame{
+				Filename: file,
+				Lineno:   line,
+				Colno:    col,
+				Function: function,
+				Module:   module,
 			}, nil
 		}
 	}

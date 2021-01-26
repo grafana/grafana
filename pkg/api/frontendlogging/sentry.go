@@ -30,21 +30,27 @@ func (value *FrontendSentryExceptionValue) FmtMessage() string {
 	return fmt.Sprintf("%s: %s", value.Type, value.Value)
 }
 
+func fmtLine(frame sentry.Frame) string {
+	module := ""
+	if len(frame.Module) > 0 {
+		module = frame.Module + "|"
+	}
+	return fmt.Sprintf("\n  at %s (%s%s:%v:%v)", frame.Function, module, frame.Filename, frame.Lineno, frame.Colno)
+}
+
 func (value *FrontendSentryExceptionValue) FmtStacktrace() string {
 	var stacktrace = value.FmtMessage()
 	for _, frame := range value.Stacktrace.Frames {
-		mappedLocation, err := resolveSourceLocation(frame.Filename, frame.Lineno, frame.Colno)
+		mappedFrame, err := resolveSourceLocation(frame)
 		if err != nil {
 			logger.Error("Error resolving stack trace frame source location.", "err", err)
-		}
-		if mappedLocation != nil {
-			tag := "core"
-			if len(mappedLocation.pluginID) > 0 {
-				tag = mappedLocation.pluginID
-			}
-			stacktrace += fmt.Sprintf("\n  at %s (%s|%s:%v:%v)", mappedLocation.function, tag, mappedLocation.file, mappedLocation.line, mappedLocation.col)
+			stacktrace += fmtLine(frame)
 		} else {
-			stacktrace += fmt.Sprintf("\n  at %s (%s:%v:%v)", frame.Function, frame.Filename, frame.Lineno, frame.Colno)
+			if mappedFrame != nil {
+				stacktrace += fmtLine(*mappedFrame)
+			} else {
+				stacktrace += fmtLine(frame)
+			}
 		}
 	}
 	return stacktrace
