@@ -201,7 +201,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     min-height: 100%;
   `,
   settingsWrapper: css`
-    background: ${theme.palette.gray10};
+    background: ${theme.colors.bg1};
     display: flex;
     min-height: 100%;
     width: 100%;
