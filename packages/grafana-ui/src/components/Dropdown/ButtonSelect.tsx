@@ -1,7 +1,7 @@
 import React, { useState, HTMLAttributes } from 'react';
 import { PopoverContent } from '../Tooltip/Tooltip';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import { ButtonVariant, ToolbarButton } from '../Button';
+import { ToolbarButtonVariant, ToolbarButton } from '../Button';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 import { css } from 'emotion';
 import { useStyles } from '../../themes/ThemeContext';
@@ -15,7 +15,7 @@ export interface Props<T> extends HTMLAttributes<HTMLButtonElement> {
   onChange: (item: SelectableValue<T>) => void;
   tooltipContent?: PopoverContent;
   narrow?: boolean;
-  variant?: ButtonVariant;
+  variant?: ToolbarButtonVariant;
 }
 
 /**

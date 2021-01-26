@@ -1,21 +1,9 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { Collapse } from '@grafana/ui';
 
-import {
-  AbsoluteTimeRange,
-  DataSourceApi,
-  Field,
-  GraphSeriesXY,
-  LogLevel,
-  LogRowModel,
-  LogsDedupStrategy,
-  LogsMetaItem,
-  RawTimeRange,
-  TimeRange,
-  TimeZone,
-} from '@grafana/data';
+import { AbsoluteTimeRange, Field, LogLevel, LogRowModel, LogsDedupStrategy, RawTimeRange } from '@grafana/data';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
@@ -32,38 +20,17 @@ import { LiveTailControls } from './useLiveTailControls';
 import { getFieldLinksForExplore } from './utils/links';
 
 interface LogsContainerProps {
-  datasourceInstance?: DataSourceApi;
   exploreId: ExploreId;
-  loading: boolean;
-
-  logsHighlighterExpressions?: string[];
-  logRows?: LogRowModel[];
-  logsMeta?: LogsMetaItem[];
-  logsSeries?: GraphSeriesXY[];
-  dedupedRows?: LogRowModel[];
-  visibleRange?: AbsoluteTimeRange;
-
+  scanRange?: RawTimeRange;
+  width: number;
+  syncedTimes: boolean;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
   onStartScanning: () => void;
   onStopScanning: () => void;
-  timeZone: TimeZone;
-  scanning?: boolean;
-  scanRange?: RawTimeRange;
-  toggleLogLevelAction: typeof toggleLogLevelAction;
-  changeDedupStrategy: typeof changeDedupStrategy;
-  dedupStrategy: LogsDedupStrategy;
-  width: number;
-  isLive: boolean;
-  updateTimeRange: typeof updateTimeRange;
-  range: TimeRange;
-  syncedTimes: boolean;
-  absoluteRange: AbsoluteTimeRange;
-  isPaused: boolean;
-  splitOpen: typeof splitOpen;
 }
 
-export class LogsContainer extends PureComponent<LogsContainerProps> {
+export class LogsContainer extends PureComponent<PropsFromRedux & LogsContainerProps> {
   onChangeTime = (absoluteRange: AbsoluteTimeRange) => {
     const { exploreId, updateTimeRange } = this.props;
     updateTimeRange({ exploreId, absoluteRange });
@@ -102,7 +69,8 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
   };
 
   getFieldLinks = (field: Field, rowIndex: number) => {
-    return getFieldLinksForExplore({ field, rowIndex, splitOpenFn: this.props.splitOpen, range: this.props.range });
+    const { splitOpen: splitOpenFn, range } = this.props;
+    return getFieldLinksForExplore({ field, rowIndex, splitOpenFn, range });
   };
 
   render() {
@@ -126,6 +94,10 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
       isLive,
       exploreId,
     } = this.props;
+
+    if (!logRows) {
+      return null;
+    }
 
     return (
       <>
@@ -195,16 +167,16 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     absoluteRange,
     dedupStrategy,
   } = item;
-  const dedupedRows = deduplicatedRowsSelector(item);
+  const dedupedRows = deduplicatedRowsSelector(item) || undefined;
   const timeZone = getTimeZone(state.user);
 
   return {
     loading,
     logsHighlighterExpressions,
-    logRows: logsResult && logsResult.rows,
-    logsMeta: logsResult && logsResult.meta,
-    logsSeries: logsResult && logsResult.series,
-    visibleRange: logsResult && logsResult.visibleRange,
+    logRows: logsResult?.rows,
+    logsMeta: logsResult?.meta,
+    logsSeries: logsResult?.series,
+    visibleRange: logsResult?.visibleRange,
     scanning,
     timeZone,
     dedupStrategy,
@@ -224,4 +196,7 @@ const mapDispatchToProps = {
   splitOpen,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(LogsContainer));
+const connector = connect(mapStateToProps, mapDispatchToProps);
+type PropsFromRedux = ConnectedProps<typeof connector>;
+
+export default hot(module)(connector(LogsContainer));
