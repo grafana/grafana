@@ -8,11 +8,9 @@ weight = 200
 
 # Using Google Cloud Monitoring in Grafana
 
-> Officially released in Grafana v6.0.0
-
-> Before Grafana v7.1 this data source was named Google Stackdriver.
-
 Grafana ships with built-in support for Google Cloud Monitoring. Just add it as a data source and you are ready to build dashboards for your Google Cloud Monitoring metrics.
+
+> **Note** Google Cloud Monitoring is supported in Grafana v6.0 and later versions. Before Grafana v7.1, it was referred to as Google Stackdriver.
 
 ## Adding the data source
 
