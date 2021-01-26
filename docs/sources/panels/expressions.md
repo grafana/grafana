@@ -11,9 +11,9 @@ Server-side expressions allow you to manipulate data returned from queries with 
 
 ## Using expressions
 
-The primary use case for expressions is with alerting. Like alerting, processing is done server-side, so expressions can operate without a browser session. However, expressions can be used with backend data sources and visualization as well.
+The primary use case for expressions is for the upcoming next version of Grafana alerting. Like alerting, processing is done server-side, so expressions can operate without a browser session. However, expressions can be used with backend data sources and visualization as well.
 
-\\ KYLE - IIRC, expressions do not work with current alerting. Should we even mention alerting at all? If we do, then we need to make clear which alerting we are talking about. We can either talk about AlertingNG here, or we can remove references to alerting and update this topic when we release AlertingNG.
+> **Note:** Expressions do not work with current Grafana alerting.
 
 Expressions are meant to augment data sources by enabling queries from different data sources to be combined or by providing operations unavailable in a data source.
 
@@ -149,41 +149,3 @@ Resample changes the time stamps in each time series to have a consistent time i
   - **pad** fills with the last know value
   - **backfill** with next known value
   - **fillna** to fill empty sample windows with NaNs
-
-## Using an expression as an AlertingNG condition
-
-// KYLE - See earlier comment about whether we should remove this or not. I am generally in favor of removing content that is not applicable to the release, because otherwise we might confuse our users.
-
-### Basic Threshold Alert
-
-Note: When ready, will require `ngalert` feature toggle. The following isn't available yet, but you can follow the following with a Dashboard's Panel edit.
-
-The most common workflow for a basic alert is:
-
-1. Query a backend data source that returns time series (often multiple series uniquely identified by labels).
-2. Reduce each series with a function like mean.
-3. Compare that the reduced (mean) value of each series to a threshold.
-
-To do this with expressions:
-
-1. Make a data source query with a backend data source like the Azure or Prometheus data source. This will be the variable `A` by default (in the future, plan to add the ability to rename these).
-2. Add an expression, Chose the "Reduce" Operation, and put `A` as the Input field. This by default will have the variable `B`.
-3. Add another expression (this will be variable `C`) and chose the math operation. Enter the formula like `$B > 15`
-
-This will return 0 for false, or 1 for true for each item in the response. So variable `C` becomes the selected condition for alerting.
-
-The following shows an example of the above inside the current Dashboard>Panel Edit UI (This UI will likely change, so this may be out of date). The "eye" icon with expressions does not disable a query, but rather stops expressions from returning the data. This show the combined output of `B` and `C` in the Stat panel (Generally, viewing output of numbers with stat or a table view works best, and for series the graph panel).
-
-![image of above description](./condition_example_a.jpg)
-
-### Two Data source Queries, count of points above threshold
-
-The following compares a time series query from one data source against a threshold, and gets the count of points above that threshold:
-
-![image of what is described below](./condition_example_b.jpg)
-
-1. `A` queries time series data from prometheus, labeled by "device".
-2. `B` queries Azure data explorer for table/number response. The string columns become labels, so the numbers are also labeled by "device".
-3. The `C` expression performs time series Operator number math. Using the `>` operator, the series returned will have a point of 1 for each in point in the series of `A` that is greater than the threshold returned from `B` for the each corresponding device.
-4. The `D` reduction sums all the 1 values of `C` per device, to get the count that were above the threshold from `B`. These are the first two rows shown in the visualization (11 for `device=eth0`, and 0 for `device=lo`)
-5. The `E` expression returns 0, 1 if the count of points (expression `D`) is above above 5. The second two rows of the visualization. Show the results for this, which are `1` (true) for `eth0` and 0 (false) for `lo`. This expression would be the condition for the alert.
