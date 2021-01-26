@@ -5,7 +5,7 @@ import { measureText } from '../../utils/measureText';
 import { useExpandableLabel, SegmentProps } from '.';
 import { getSegmentStyles } from './styles';
 import { InlineLabel } from '../Forms/InlineLabel';
-import { useTheme } from '../../themes/ThemeContext';
+import { useStyles } from '../../themes';
 
 export interface SegmentInputProps<T> extends SegmentProps<T>, Omit<HTMLProps<HTMLInputElement>, 'value' | 'onChange'> {
   value: string | number;
@@ -29,6 +29,7 @@ export function SegmentInput<T>({
   const [value, setValue] = useState<number | string>(initialValue);
   const [inputWidth, setInputWidth] = useState<number>(measureText((initialValue || '').toString(), FONT_SIZE).width);
   const [Label, , expanded, setExpanded] = useExpandableLabel(autofocus);
+  const styles = useStyles(getSegmentStyles);
 
   useClickAway(ref, () => {
     setExpanded(false);
@@ -36,9 +37,6 @@ export function SegmentInput<T>({
   });
 
   if (!expanded) {
-    const theme = useTheme();
-    const styles = getSegmentStyles(theme);
-
     return (
       <Label
         disabled={disabled}

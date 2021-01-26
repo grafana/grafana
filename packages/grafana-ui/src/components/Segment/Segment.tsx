@@ -5,7 +5,7 @@ import { SelectableValue } from '@grafana/data';
 import { SegmentSelect, useExpandableLabel, SegmentProps } from './';
 import { getSegmentStyles } from './styles';
 import { InlineLabel } from '../Forms/InlineLabel';
-import { useTheme } from '../../themes/ThemeContext';
+import { useStyles } from '../../themes';
 
 export interface SegmentSyncProps<T> extends SegmentProps<T>, Omit<HTMLProps<HTMLDivElement>, 'value' | 'onChange'> {
   value?: T | SelectableValue<T>;
@@ -25,11 +25,10 @@ export function Segment<T>({
   ...rest
 }: React.PropsWithChildren<SegmentSyncProps<T>>) {
   const [Label, width, expanded, setExpanded] = useExpandableLabel(false);
+  const styles = useStyles(getSegmentStyles);
 
   if (!expanded) {
     const label = _.isObject(value) ? value.label : value;
-    const theme = useTheme();
-    const styles = getSegmentStyles(theme);
 
     return (
       <Label

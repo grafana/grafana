@@ -8,7 +8,7 @@ import { useAsyncFn } from 'react-use';
 import { AsyncState } from 'react-use/lib/useAsync';
 import { getSegmentStyles } from './styles';
 import { InlineLabel } from '../Forms/InlineLabel';
-import { useTheme } from '../../themes/ThemeContext';
+import { useStyles } from '../../themes';
 
 export interface SegmentAsyncProps<T> extends SegmentProps<T>, Omit<HTMLProps<HTMLDivElement>, 'value' | 'onChange'> {
   value?: T | SelectableValue<T>;
@@ -29,11 +29,10 @@ export function SegmentAsync<T>({
 }: React.PropsWithChildren<SegmentAsyncProps<T>>) {
   const [state, fetchOptions] = useAsyncFn(loadOptions, [loadOptions]);
   const [Label, width, expanded, setExpanded] = useExpandableLabel(false);
+  const styles = useStyles(getSegmentStyles);
 
   if (!expanded) {
     const label = _.isObject(value) ? value.label : value;
-    const theme = useTheme();
-    const styles = getSegmentStyles(theme);
 
     return (
       <Label

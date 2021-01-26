@@ -1,8 +1,7 @@
 import { GrafanaTheme } from '@grafana/data';
 import { css } from 'emotion';
-import { stylesFactory } from '../../themes';
 
-export const getSegmentStyles = stylesFactory((theme: GrafanaTheme) => {
+export const getSegmentStyles = (theme: GrafanaTheme) => {
   return {
     segment: css`
       cursor: pointer;
@@ -19,4 +18,4 @@ export const getSegmentStyles = stylesFactory((theme: GrafanaTheme) => {
       box-shadow: none;
     `,
   };
-});
+};
