@@ -122,14 +122,12 @@ export const BarChart: React.FunctionComponent<Props> = ({
 
             rect(fill, lft, top, barWid, barHgt);
 
-            /*
             let x = ori === 0 ? Math.round(lft - xOff) : 0;
             let y = ori === 0 ? Math.round(top - yOff) : Math.round(lft - xOff);
             let w = ori === 0 ? barWid                 : barHgt;
             let h = ori === 0 ? barHgt                 : barWid;
 
             qt.add({x, y, w, h, sidx: sidx, didx: ix});
-            */
           }
         });
 
@@ -184,6 +182,8 @@ export const BarChart: React.FunctionComponent<Props> = ({
 
     let barMark = document.createElement("div");
     barMark.classList.add("bar-mark");
+    barMark.style.position = "absolute";
+    barMark.style.background = "rgba(255,255,255,0.4)";
 
     const builder = new UPlotConfigBuilder();
 
@@ -261,7 +261,7 @@ export const BarChart: React.FunctionComponent<Props> = ({
       builder.addSeries({
         scaleKey: i == 0 ? 'x' : 'y',
         lineWidth: 0,
-    //    lineColor: '#F00', //seriesColor,
+      //lineColor: '#F00', //seriesColor,
         fillColor: seriesColor,
         fillOpacity: 50,
         theme,
@@ -269,6 +269,49 @@ export const BarChart: React.FunctionComponent<Props> = ({
         pathBuilder: drawBars,
       });
     }
+
+    builder.addHook("init", (u: uPlot) => {
+      u.root.querySelector(".u-over")!.appendChild(barMark);
+    });
+
+    builder.addHook("drawClear", (u: uPlot) => {
+      qt = qt || new Quadtree(0, 0, u.bbox.width, u.bbox.height);
+
+      qt.clear();
+
+      // force-clear the path cache to cause drawBars() to rebuild new quadtree
+      u.series.forEach(s => {
+        // @ts-ignore
+        s._paths = null;
+      });
+    });
+
+    builder.addHook("setCursor", (u: uPlot) => {
+      let found: Rect | null = null;
+      let cx = u.cursor.left! * pxRatio;
+      let cy = u.cursor.top! * pxRatio;
+
+      qt.get(cx, cy, 1, 1, o => {
+        if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
+          found = o;
+        }
+      });
+
+      if (found) {
+        if (found != hovered) {
+          barMark.style.display = "";
+          barMark.style.left    = (found!.x / pxRatio) + "px";
+          barMark.style.top     = (found!.y / pxRatio) + "px";
+          barMark.style.width   = (found!.w / pxRatio) + "px";
+          barMark.style.height  = (found!.h / pxRatio) + "px";
+          hovered = found;
+        }
+      }
+      else if (hovered != null) {
+        hovered = null;
+        barMark.style.display = "none";
+      }
+    });
 
     /*
     builder.addSeries({
@@ -298,41 +341,10 @@ export const BarChart: React.FunctionComponent<Props> = ({
           u.root.querySelector(".u-over")!.appendChild(barMark);
         },
         drawClear: (u: uPlot) => {
-          qt = qt || new Quadtree(0, 0, u.bbox.width, u.bbox.height);
 
-          qt.clear();
-
-          // force-clear the path cache to cause drawBars() to rebuild new quadtree
-          u.series.forEach(s => {
-            // @ts-ignore
-            s._paths = null;
-          });
         },
         setCursor: (u: uPlot) => {
-          let found: Rect | null = null;
-          let cx = u.cursor.left! * pxRatio;
-          let cy = u.cursor.top! * pxRatio;
 
-          qt.get(cx, cy, 1, 1, o => {
-            if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
-              found = o;
-            }
-          });
-
-          if (found) {
-            if (found != hovered) {
-              barMark.style.display = "";
-              barMark.style.left    = (found!.x / pxRatio) + "px";
-              barMark.style.top     = (found!.y / pxRatio) + "px";
-              barMark.style.width   = (found!.w / pxRatio) + "px";
-              barMark.style.height  = (found!.h / pxRatio) + "px";
-              hovered = found;
-            }
-          }
-          else if (hovered != null) {
-            hovered = null;
-            barMark.style.display = "none";
-          }
         }
       },
       opts: (u: uPlot, opts: Options) => {

@@ -3,9 +3,11 @@ import { ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
 import { SeriesProps, UPlotSeriesBuilder } from './UPlotSeriesBuilder';
 import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
 import { AxisPlacement } from '../config';
-import { Cursor, Band } from 'uplot';
+import { Cursor, Band, Hooks } from 'uplot';
 import { defaultsDeep } from 'lodash';
 import { Series } from 'uplot';
+
+type valueof<T> = T[keyof T];
 
 export class UPlotConfigBuilder {
   private series: UPlotSeriesBuilder[] = [];
@@ -16,6 +18,15 @@ export class UPlotConfigBuilder {
   private hasLeftAxis = false;
   private hasBottomAxis = false;
   private xSeries: Series = {};
+  private hooks: Hooks.Arrays = {};
+
+  addHook(type: keyof Hooks.Defs, hook: valueof<Hooks.Defs>) {
+    if (!this.hooks[type]) {
+      this.hooks[type] = [];
+    }
+
+    this.hooks[type]!.push(hook as any);
+  }
 
   addAxis(props: AxisProps) {
     props.placement = props.placement ?? AxisPlacement.Auto;
@@ -89,6 +100,8 @@ export class UPlotConfigBuilder {
     config.scales = this.scales.reduce((acc, s) => {
       return { ...acc, ...s.getConfig() };
     }, {});
+
+    config.hooks = this.hooks;
 
     config.cursor = this.cursor || {};
 
