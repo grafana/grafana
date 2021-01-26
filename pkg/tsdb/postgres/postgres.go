@@ -10,6 +10,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 
@@ -20,12 +21,29 @@ import (
 	"xorm.io/core"
 )
 
+var logger = log.New("tsdb.postgres")
+
 func init() {
-	tsdb.RegisterTsdbQueryEndpoint("postgres", newPostgresQueryEndpoint)
+	registry.Register(&registry.Descriptor{
+		Name:         "PostgresService",
+		InitPriority: registry.Low,
+		Instance:     &PostgresService{},
+	})
 }
 
-func databaseConnection(datasource *models.DataSource, logger log.Logger) (tsdb.TsdbQueryEndpoint, error) {
-	cnnstr, err := generateConnectionString(datasource, logger)
+type PostgresService struct {
+	Cfg *setting.Cfg `inject:""`
+}
+
+func (s *PostgresService) Init() error {
+	tsdb.RegisterTsdbQueryEndpoint("postgres", func(ds *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+		return newPostgresQueryEndpoint(ds, s.Cfg)
+	})
+	return nil
+}
+
+func databaseConnection(datasource *models.DataSource, cfg *setting.Cfg) (tsdb.TsdbQueryEndpoint, error) {
+	cnnstr, err := generateConnectionString(datasource, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -57,10 +75,9 @@ func databaseConnection(datasource *models.DataSource, logger log.Logger) (tsdb.
 	return endpoint, err
 }
 
-func newPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-	logger := log.New("tsdb.postgres")
+func newPostgresQueryEndpoint(datasource *models.DataSource, cfg *setting.Cfg) (tsdb.TsdbQueryEndpoint, error) {
 	logger.Debug("Creating Postgres query endpoint")
-	endpoint, err := databaseConnection(datasource, logger)
+	endpoint, err := databaseConnection(datasource, cfg)
 	return endpoint, err
 }
 
@@ -80,7 +97,7 @@ func writeConnectionFile(ds *models.DataSource, fileContent string, currentPath 
 			generatedFilePath = filepath.Join(currentPath, certFileName)
 		}
 
-		if err := ioutil.WriteFile(generatedFilePath, []byte(fileContent), 0700); err != nil {
+		if err := ioutil.WriteFile(generatedFilePath, []byte(fileContent), 0600); err != nil {
 			return err
 		}
 		ds.JsonData.Set(jsonFieldName, generatedFilePath)
@@ -97,7 +114,7 @@ func writeConnectionFile(ds *models.DataSource, fileContent string, currentPath 
 	return nil
 }
 
-func writeConnectionFiles(ds *models.DataSource, logger log.Logger) error {
+func writeConnectionFiles(ds *models.DataSource, cfg *setting.Cfg) error {
 	tlsMode := strings.TrimSpace(strings.ToLower(ds.JsonData.Get("sslmode").MustString("verify-full")))
 	decrypted := ds.SecureJsonData.Decrypt()
 	tlsCACert := decrypted["tlsCACert"]
@@ -108,12 +125,7 @@ func writeConnectionFiles(ds *models.DataSource, logger log.Logger) error {
 		return nil
 	}
 
-	// create folder
-	currentPath, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-
+	currentPath := cfg.DataPath
 	var mutex = &sync.Mutex{}
 
 	currentPath = filepath.Join(currentPath, ds.Uid+"generatedTLSCerts")
@@ -128,7 +140,7 @@ func writeConnectionFiles(ds *models.DataSource, logger log.Logger) error {
 
 	// Create/Modify/Delete Certifications
 	mutex.Lock()
-	err = writeConnectionFile(
+	err := writeConnectionFile(
 		ds, tlsCACert, currentPath, "ca.crt", "generatedTLSRootCertFile")
 	mutex.Unlock()
 	if err != nil {
@@ -164,13 +176,13 @@ func writeConnectionFiles(ds *models.DataSource, logger log.Logger) error {
 	return nil
 }
 
-func generateConnectionString(datasource *models.DataSource, logger log.Logger) (string, error) {
+func generateConnectionString(datasource *models.DataSource, cfg *setting.Cfg) (string, error) {
 	tlsConfigurationMethod := strings.TrimSpace(strings.ToLower(datasource.JsonData.Get("tlsConfigurationMethod").MustString("file-path")))
 	tlsMode := strings.TrimSpace(strings.ToLower(datasource.JsonData.Get("sslmode").MustString("verify-full")))
 	isTLSDisabled := tlsMode == "disable"
 
 	if tlsConfigurationMethod == "file-content" {
-		if err := writeConnectionFiles(datasource, logger); err != nil {
+		if err := writeConnectionFiles(datasource, cfg); err != nil {
 			return "", err
 		}
 	}
