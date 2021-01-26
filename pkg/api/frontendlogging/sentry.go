@@ -38,10 +38,10 @@ func fmtLine(frame sentry.Frame) string {
 	return fmt.Sprintf("\n  at %s (%s%s:%v:%v)", frame.Function, module, frame.Filename, frame.Lineno, frame.Colno)
 }
 
-func (value *FrontendSentryExceptionValue) FmtStacktrace() string {
+func (value *FrontendSentryExceptionValue) FmtStacktrace(store *SourceMapStore) string {
 	var stacktrace = value.FmtMessage()
 	for _, frame := range value.Stacktrace.Frames {
-		mappedFrame, err := resolveSourceLocation(frame)
+		mappedFrame, err := store.resolveSourceLocation(frame)
 		if err != nil {
 			logger.Error("Error resolving stack trace frame source location.", "err", err)
 			stacktrace += fmtLine(frame)
@@ -56,10 +56,10 @@ func (value *FrontendSentryExceptionValue) FmtStacktrace() string {
 	return stacktrace
 }
 
-func (exception *FrontendSentryException) FmtStacktraces() string {
+func (exception *FrontendSentryException) FmtStacktraces(store *SourceMapStore) string {
 	var stacktraces []string
 	for _, value := range exception.Values {
-		stacktraces = append(stacktraces, value.FmtStacktrace())
+		stacktraces = append(stacktraces, value.FmtStacktrace(store))
 	}
 	return strings.Join(stacktraces, "\n\n")
 }
@@ -76,14 +76,14 @@ func addEventContextToLogContext(rootPrefix string, logCtx log15.Ctx, eventCtx m
 	}
 }
 
-func (event *FrontendSentryEvent) ToLogContext() log15.Ctx {
+func (event *FrontendSentryEvent) ToLogContext(store *SourceMapStore) log15.Ctx {
 	var ctx = make(log15.Ctx)
 	ctx["url"] = event.Request.URL
 	ctx["user_agent"] = event.Request.Headers["User-Agent"]
 	ctx["event_id"] = event.EventID
 	ctx["original_timestamp"] = event.Timestamp
 	if event.Exception != nil {
-		ctx["stacktrace"] = event.Exception.FmtStacktraces()
+		ctx["stacktrace"] = event.Exception.FmtStacktraces(store)
 	}
 	addEventContextToLogContext("context", ctx, event.Contexts)
 	if len(event.User.Email) > 0 {
