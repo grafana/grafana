@@ -88,7 +88,7 @@ const pluginsSlice = createSlice({
     setPanelEditorUIState: (state, action: PayloadAction<Partial<PanelEditorUIState>>) => {
       state.ui = { ...state.ui, ...action.payload };
     },
-    closeCompleted: state => {
+    closeCompleted: (state) => {
       state.isOpen = false;
       state.initDone = false;
     },

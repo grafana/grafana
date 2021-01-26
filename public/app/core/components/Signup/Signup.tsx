@@ -22,7 +22,7 @@ interface ConnectedProps {
   code?: string;
 }
 
-const SignupUnconnected: FC<ConnectedProps> = props => {
+const SignupUnconnected: FC<ConnectedProps> = (props) => {
   const onSubmit = async (formData: SignupDTO) => {
     if (formData.name === '') {
       delete formData.name;
@@ -38,7 +38,7 @@ const SignupUnconnected: FC<ConnectedProps> = props => {
         password: formData.password,
         name: formData.name,
       })
-      .catch(err => {
+      .catch((err) => {
         const msg = err.data?.message || err;
         appEvents.emit(AppEvents.alertWarning, [msg]);
       });
@@ -101,7 +101,7 @@ const SignupUnconnected: FC<ConnectedProps> = props => {
               name="confirm"
               ref={register({
                 required: 'Confirmed password is required',
-                validate: v => v === getValues().password || 'Passwords must match!',
+                validate: (v) => v === getValues().password || 'Passwords must match!',
               })}
             />
           </Field>

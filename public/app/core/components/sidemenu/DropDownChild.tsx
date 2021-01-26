@@ -6,7 +6,7 @@ export interface Props {
   child: any;
 }
 
-const DropDownChild: FC<Props> = props => {
+const DropDownChild: FC<Props> = (props) => {
   const { child } = props;
   const listItemClassName = child.divider ? 'divider' : '';
   const theme = useTheme();

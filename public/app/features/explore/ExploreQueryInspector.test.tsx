@@ -14,7 +14,7 @@ jest.mock('../dashboard/components/Inspector/styles', () => ({
 jest.mock('app/core/services/backend_srv', () => ({
   getBackendSrv: () => ({
     getInspectorStream: () =>
-      new Observable(subscriber => {
+      new Observable((subscriber) => {
         subscriber.next(response());
         subscriber.next(response(true));
       }) as any,

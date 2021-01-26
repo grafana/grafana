@@ -89,6 +89,9 @@ export const Components = {
     title: (title: string) => `Tab ${title}`,
     active: () => '[class*="-activeTabStyle"]',
   },
+  RefreshPicker: {
+    runButton: 'RefreshPicker run button',
+  },
   QueryTab: {
     content: 'Query editor tab content',
     queryInspectorButton: 'Query inspector button',
@@ -127,7 +130,7 @@ export const Components = {
     backArrow: 'Go Back button',
   },
   OptionsGroup: {
-    toggle: (title: string) => `Options group ${title}`,
+    toggle: (title?: string) => (title ? `Options group ${title}` : 'Options group'),
   },
   PluginVisualization: {
     item: (title: string) => `Plugin visualization item ${title}`,

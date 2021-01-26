@@ -22,15 +22,14 @@ export const VizLegendListItem: React.FunctionComponent<Props> = ({ item, onSeri
       <VizLegendSeriesIcon
         disabled={!onSeriesColorChange}
         color={item.color}
-        onColorChange={color => {
+        onColorChange={(color) => {
           if (onSeriesColorChange) {
             onSeriesColorChange(item.label, color);
           }
         }}
-        yAxis={item.yAxis}
       />
       <div
-        onClick={event => {
+        onClick={(event) => {
           if (onLabelClick) {
             onLabelClick(item, event);
           }
@@ -40,7 +39,7 @@ export const VizLegendListItem: React.FunctionComponent<Props> = ({ item, onSeri
         {item.label}
       </div>
 
-      {item.displayValues && <VizLegendStatsList stats={item.displayValues} />}
+      {item.getDisplayValues && <VizLegendStatsList stats={item.getDisplayValues()} />}
     </div>
   );
 };

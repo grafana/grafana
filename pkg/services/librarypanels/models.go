@@ -40,6 +40,10 @@ var (
 	errLibraryPanelNotFound = errors.New("library panel could not be found")
 	// errLibraryPanelDashboardNotFound is an error for when a library panel connection can't be found.
 	errLibraryPanelDashboardNotFound = errors.New("library panel connection could not be found")
+	// errLibraryPanelHeaderUIDMissing is an error for when a library panel header is missing the uid property.
+	errLibraryPanelHeaderUIDMissing = errors.New("library panel header is missing required property uid")
+	// errLibraryPanelHeaderNameMissing is an error for when a library panel header is missing the name property.
+	errLibraryPanelHeaderNameMissing = errors.New("library panel header is missing required property name")
 )
 
 // Commands

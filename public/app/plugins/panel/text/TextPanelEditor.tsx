@@ -21,7 +21,7 @@ export const TextPanelEditor: FC<StandardEditorProps<string, any, TextOptions>> 
     if (!context.getSuggestions) {
       return [];
     }
-    return context.getSuggestions().map(v => variableSuggestionToCodeEditorSuggestion(v));
+    return context.getSuggestions().map((v) => variableSuggestionToCodeEditorSuggestion(v));
   };
 
   return (

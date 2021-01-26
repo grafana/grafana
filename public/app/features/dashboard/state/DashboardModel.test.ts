@@ -673,15 +673,36 @@ describe('DashboardModel', () => {
 
     it('toggleLegendsForAll should toggle all legends on on first execution', () => {
       model.toggleLegendsForAll();
-      const legendsOn = model.panels.filter(panel => panel.legend!.show === true);
+      const legendsOn = model.panels.filter((panel) => panel.legend!.show === true);
       expect(legendsOn.length).toBe(3);
     });
 
     it('toggleLegendsForAll should toggle all legends off on second execution', () => {
       model.toggleLegendsForAll();
       model.toggleLegendsForAll();
-      const legendsOn = model.panels.filter(panel => panel.legend!.show === true);
+      const legendsOn = model.panels.filter((panel) => panel.legend!.show === true);
       expect(legendsOn.length).toBe(0);
     });
+  });
+
+  describe('canAddAnnotations', () => {
+    it.each`
+      canEdit  | canMakeEditable | expected
+      ${false} | ${false}        | ${false}
+      ${false} | ${true}         | ${true}
+      ${true}  | ${false}        | ${true}
+      ${true}  | ${true}         | ${true}
+    `(
+      'when called with canEdit:{$canEdit}, canMakeEditable:{$canMakeEditable} and expected:{$expected}',
+      ({ canEdit, canMakeEditable, expected }) => {
+        const dashboard = new DashboardModel({});
+        dashboard.meta.canEdit = canEdit;
+        dashboard.meta.canMakeEditable = canMakeEditable;
+
+        const result = dashboard.canAddAnnotations();
+
+        expect(result).toBe(expected);
+      }
+    );
   });
 });

@@ -74,16 +74,12 @@ export class InspectJSONTab extends PureComponent<Props, State> {
       if (!series) {
         return { note: 'Missing Response Data' };
       }
-      return this.props.data!.series.map(frame => {
+      return this.props.data!.series.map((frame) => {
         const { table, fields, ...rest } = frame as any; // remove 'table' from arrow response
         return {
           ...rest,
-          fields: frame.fields.map(field => {
-            return chain(field)
-              .omit('values')
-              .omit('state')
-              .omit('display')
-              .value();
+          fields: frame.fields.map((field) => {
+            return chain(field).omit('values').omit('state').omit('display').value();
           }),
         };
       });
@@ -119,7 +115,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
   render() {
     const { dashboard } = this.props;
     const { show, text } = this.state;
-    const selected = options.find(v => v.value === show);
+    const selected = options.find((v) => v.value === show);
     const isPanelJSON = show === ShowContent.PanelJSON;
     const canEdit = dashboard.meta.canEdit;
     const styles = getPanelInspectorStyles();

@@ -10,7 +10,7 @@ e2e.scenario({
   skipScenario: false,
   scenario: () => {
     // @ts-ignore some typing issue
-    e2e().on('uncaught:exception', err => {
+    e2e().on('uncaught:exception', (err) => {
       if (err.stack?.indexOf("TypeError: Cannot read property 'getText' of null") !== -1) {
         // On occasion monaco editor will not have the time to be properly unloaded when we change the tab
         // and then the e2e test fails with the uncaught:exception:
@@ -51,9 +51,7 @@ e2e.scenario({
 
     e2e.flows.openPanelMenuItem(e2e.flows.PanelMenuItems.Edit, PANEL_UNDER_TEST);
 
-    e2e.components.QueryTab.queryInspectorButton()
-      .should('be.visible')
-      .click();
+    e2e.components.QueryTab.queryInspectorButton().should('be.visible').click();
 
     e2e.components.Drawer.General.title(`Inspect: ${PANEL_UNDER_TEST}`)
       .should('be.visible')
@@ -82,25 +80,19 @@ const expectDrawerTabsAndContent = () => {
       e2e.components.PanelInspector.Query.content().should('not.be.visible');
 
       // other tabs should also be visible, click on each to see if we get any console errors
-      e2e.components.Tab.title('Stats')
-        .should('be.visible')
-        .click();
+      e2e.components.Tab.title('Stats').should('be.visible').click();
       e2e.components.PanelInspector.Stats.content().should('be.visible');
       e2e.components.PanelInspector.Data.content().should('not.be.visible');
       e2e.components.PanelInspector.Json.content().should('not.be.visible');
       e2e.components.PanelInspector.Query.content().should('not.be.visible');
 
-      e2e.components.Tab.title('JSON')
-        .should('be.visible')
-        .click();
+      e2e.components.Tab.title('JSON').should('be.visible').click();
       e2e.components.PanelInspector.Json.content().should('be.visible');
       e2e.components.PanelInspector.Data.content().should('not.be.visible');
       e2e.components.PanelInspector.Stats.content().should('not.be.visible');
       e2e.components.PanelInspector.Query.content().should('not.be.visible');
 
-      e2e.components.Tab.title('Query')
-        .should('be.visible')
-        .click();
+      e2e.components.Tab.title('Query').should('be.visible').click();
 
       e2e.components.PanelInspector.Query.content().should('be.visible');
       e2e.components.PanelInspector.Data.content().should('not.be.visible');
@@ -142,10 +134,7 @@ const expectDrawerExpandAndContract = (viewPortWidth: number) => {
 const expectSubMenuScenario = (subMenu: string, tabTitle?: string) => {
   tabTitle = tabTitle ?? subMenu;
   // testing opening inspect drawer from sub menus under Inspect in header menu
-  e2e.components.Panels.Panel.title(PANEL_UNDER_TEST)
-    .scrollIntoView()
-    .should('be.visible')
-    .click();
+  e2e.components.Panels.Panel.title(PANEL_UNDER_TEST).scrollIntoView().should('be.visible').click();
 
   // sub menus are in the DOM but not visible and because there is no hover support in Cypress force click
   // https://github.com/cypress-io/cypress-example-recipes/blob/master/examples/testing-dom__hover-hidden-elements/cypress/integration/hover-hidden-elements-spec.js

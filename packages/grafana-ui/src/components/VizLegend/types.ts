@@ -24,7 +24,8 @@ export interface VizLegendItem {
   color: string;
   yAxis: number;
   disabled?: boolean;
-  displayValues?: DisplayValue[];
+  // displayValues?: DisplayValue[];
+  getDisplayValues?: () => DisplayValue[];
   fieldIndex?: DataFrameFieldIndex;
 }
 
@@ -39,6 +40,7 @@ export type LegendPlacement = 'bottom' | 'right';
 export interface VizLegendOptions {
   displayMode: LegendDisplayMode;
   placement: LegendPlacement;
+  calcs: string[];
 }
 
 export type SeriesOptionChangeHandler<TOption> = (label: string, option: TOption) => void;

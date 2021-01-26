@@ -2,8 +2,7 @@
 
 import { UPlotConfigBuilder } from './UPlotConfigBuilder';
 import { GrafanaTheme } from '@grafana/data';
-import { expect } from '../../../../../../public/test/lib/common';
-import { FillGradientMode, AxisPlacement, DrawStyle, PointVisibility, ScaleDistribution } from '../config';
+import { GraphGradientMode, AxisPlacement, DrawStyle, PointVisibility, ScaleDistribution } from '../config';
 import darkTheme from '../../../themes/dark';
 
 describe('UPlotConfigBuilder', () => {
@@ -325,7 +324,9 @@ describe('UPlotConfigBuilder', () => {
     builder.addSeries({
       drawStyle: DrawStyle.Line,
       scaleKey: 'scale-x',
+      fieldName: 'A-series',
       lineColor: '#0000ff',
+      theme: darkTheme,
     });
 
     expect(builder.getConfig().series[1].fill).toBe(undefined);
@@ -336,8 +337,10 @@ describe('UPlotConfigBuilder', () => {
     builder.addSeries({
       drawStyle: DrawStyle.Line,
       scaleKey: 'scale-x',
+      fieldName: 'A-series',
       lineColor: '#FFAABB',
       fillOpacity: 50,
+      theme: darkTheme,
     });
 
     expect(builder.getConfig().series[1].fill).toBe('rgba(255, 170, 187, 0.5)');
@@ -348,9 +351,11 @@ describe('UPlotConfigBuilder', () => {
     builder.addSeries({
       drawStyle: DrawStyle.Line,
       scaleKey: 'scale-x',
+      fieldName: 'A-series',
       lineColor: '#FFAABB',
       fillOpacity: 50,
       fillColor: '#FF0000',
+      theme: darkTheme,
     });
 
     expect(builder.getConfig().series[1].fill).toBe('#FF0000');
@@ -361,9 +366,11 @@ describe('UPlotConfigBuilder', () => {
     builder.addSeries({
       drawStyle: DrawStyle.Line,
       scaleKey: 'scale-x',
+      fieldName: 'A-series',
       lineColor: '#FFAABB',
       fillOpacity: 50,
-      fillGradient: FillGradientMode.Opacity,
+      gradientMode: GraphGradientMode.Opacity,
+      theme: darkTheme,
     });
 
     expect(builder.getConfig().series[1].fill).toBeInstanceOf(Function);
@@ -374,14 +381,16 @@ describe('UPlotConfigBuilder', () => {
     builder.addSeries({
       drawStyle: DrawStyle.Line,
       scaleKey: 'scale-x',
+      fieldName: 'A-series',
       fillOpacity: 50,
-      fillGradient: FillGradientMode.Opacity,
+      gradientMode: GraphGradientMode.Opacity,
       showPoints: PointVisibility.Auto,
       pointSize: 5,
       pointColor: '#00ff00',
       lineColor: '#0000ff',
       lineWidth: 1,
       spanNulls: false,
+      theme: darkTheme,
     });
 
     expect(builder.getConfig()).toMatchInlineSnapshot(`

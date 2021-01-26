@@ -28,7 +28,7 @@ export function infoPopover() {
         const content = document.createElement('div');
         content.className = 'markdown-html';
 
-        _.each(clone, node => {
+        _.each(clone, (node) => {
           content.appendChild(node);
         });
 

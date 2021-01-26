@@ -114,7 +114,7 @@ describe('<ListView>', () => {
 
       let oldRender;
       let oldInitWrapper;
-      const initWrapperMock = jest.fn(elm => {
+      const initWrapperMock = jest.fn((elm) => {
         if (elm != null) {
           // jsDom requires `defineProperties` instead of just setting the props
           Object.defineProperties(elm, {
@@ -201,7 +201,7 @@ describe('<ListView>', () => {
         expect(eventListeners.scroll).toEqual([instance._onScroll]);
       });
 
-      it('calls _positionList when the document is scrolled', done => {
+      it('calls _positionList when the document is scrolled', (done) => {
         const event = new Event('scroll');
         const fn = jest.spyOn(instance, '_positionList');
         expect(instance._isScrolledOrResized).toBe(false);

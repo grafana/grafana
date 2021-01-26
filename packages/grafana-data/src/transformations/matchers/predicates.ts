@@ -11,7 +11,7 @@ const anyFieldMatcher: FieldMatcherInfo<MatcherConfig[]> = {
   defaultOptions: [], // empty array
 
   get: (options: MatcherConfig[]) => {
-    const children = options.map(option => {
+    const children = options.map((option) => {
       return getFieldMatcher(option);
     });
     return (field: Field, frame: DataFrame, allFrames: DataFrame[]) => {
@@ -45,7 +45,7 @@ const anyFrameMatcher: FrameMatcherInfo<MatcherConfig[]> = {
   defaultOptions: [], // empty array
 
   get: (options: MatcherConfig[]) => {
-    const children = options.map(option => {
+    const children = options.map((option) => {
       return getFrameMatchers(option);
     });
     return (frame: DataFrame) => {
@@ -79,7 +79,7 @@ const allFieldsMatcher: FieldMatcherInfo<MatcherConfig[]> = {
   defaultOptions: [], // empty array
 
   get: (options: MatcherConfig[]) => {
-    const children = options.map(option => {
+    const children = options.map((option) => {
       return getFieldMatcher(option);
     });
     return (field: Field, frame: DataFrame, allFrames: DataFrame[]) => {
@@ -113,7 +113,7 @@ const allFramesMatcher: FrameMatcherInfo<MatcherConfig[]> = {
   defaultOptions: [], // empty array
 
   get: (options: MatcherConfig[]) => {
-    const children = options.map(option => {
+    const children = options.map((option) => {
       return getFrameMatchers(option);
     });
     return (frame: DataFrame) => {

@@ -158,7 +158,7 @@ export function SelectBase<T>({
     // we are selecting the corresponding value from the options
     if (isMulti && value && Array.isArray(value) && !loadOptions) {
       // @ts-ignore
-      selectedValue = value.map(v => findSelectedValue(v.value ?? v, options));
+      selectedValue = value.map((v) => findSelectedValue(v.value ?? v, options));
     } else if (loadOptions) {
       const hasValue = defaultValue || value;
       selectedValue = hasValue ? [hasValue] : [];
@@ -286,7 +286,7 @@ export function SelectBase<T>({
             return (
               <Icon
                 name="times"
-                onMouseDown={e => {
+                onMouseDown={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   clearValue();

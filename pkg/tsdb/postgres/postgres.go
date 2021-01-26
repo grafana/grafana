@@ -62,8 +62,8 @@ func escape(input string) string {
 }
 
 func generateConnectionString(datasource *models.DataSource, logger log.Logger) (string, error) {
-	sslMode := strings.TrimSpace(strings.ToLower(datasource.JsonData.Get("sslmode").MustString("verify-full")))
-	isSSLDisabled := sslMode == "disable"
+	tlsMode := strings.TrimSpace(strings.ToLower(datasource.JsonData.Get("sslmode").MustString("verify-full")))
+	isTLSDisabled := tlsMode == "disable"
 
 	var host string
 	var port int
@@ -88,29 +88,29 @@ func generateConnectionString(datasource *models.DataSource, logger log.Logger) 
 
 	connStr := fmt.Sprintf("user='%s' password='%s' host='%s' dbname='%s' sslmode='%s'",
 		escape(datasource.User), escape(datasource.DecryptedPassword()), escape(host), escape(datasource.Database),
-		escape(sslMode))
+		escape(tlsMode))
 	if port > 0 {
 		connStr += fmt.Sprintf(" port=%d", port)
 	}
-	if isSSLDisabled {
-		logger.Debug("Postgres SSL is disabled")
+	if isTLSDisabled {
+		logger.Debug("Postgres TLS/SSL is disabled")
 	} else {
-		logger.Debug("Postgres SSL is enabled", "sslMode", sslMode)
+		logger.Debug("Postgres TLS/SSL is enabled", "tlsMode", tlsMode)
 
 		// Attach root certificate if provided
-		if sslRootCert := datasource.JsonData.Get("sslRootCertFile").MustString(""); sslRootCert != "" {
-			logger.Debug("Setting server root certificate", "sslRootCert", sslRootCert)
-			connStr += fmt.Sprintf(" sslrootcert='%s'", sslRootCert)
+		if tlsRootCert := datasource.JsonData.Get("sslRootCertFile").MustString(""); tlsRootCert != "" {
+			logger.Debug("Setting server root certificate", "tlsRootCert", tlsRootCert)
+			connStr += fmt.Sprintf(" sslrootcert='%s'", tlsRootCert)
 		}
 
 		// Attach client certificate and key if both are provided
-		sslCert := datasource.JsonData.Get("sslCertFile").MustString("")
-		sslKey := datasource.JsonData.Get("sslKeyFile").MustString("")
-		if sslCert != "" && sslKey != "" {
-			logger.Debug("Setting SSL client auth", "sslCert", sslCert, "sslKey", sslKey)
-			connStr += fmt.Sprintf(" sslcert='%s' sslkey='%s'", sslCert, sslKey)
-		} else if sslCert != "" || sslKey != "" {
-			return "", fmt.Errorf("SSL client certificate and key must both be specified")
+		tlsCert := datasource.JsonData.Get("sslCertFile").MustString("")
+		tlsKey := datasource.JsonData.Get("sslKeyFile").MustString("")
+		if tlsCert != "" && tlsKey != "" {
+			logger.Debug("Setting TLS/SSL client auth", "tlsCert", tlsCert, "tlsKey", tlsKey)
+			connStr += fmt.Sprintf(" sslcert='%s' sslkey='%s'", tlsCert, tlsKey)
+		} else if tlsCert != "" || tlsKey != "" {
+			return "", fmt.Errorf("TLS/SSL client certificate and key must both be specified")
 		}
 	}
 

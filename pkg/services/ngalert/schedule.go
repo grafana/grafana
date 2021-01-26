@@ -39,7 +39,7 @@ func (ng *AlertNG) definitionRoutine(grafanaCtx context.Context, key alertDefini
 						return err
 					}
 					alertDefinition = q.Result
-					ng.schedule.log.Debug("new alert definition version fetched", "key", key, "version", alertDefinition.Version)
+					ng.schedule.log.Debug("new alert definition version fetched", "title", alertDefinition.Title, "key", key, "version", alertDefinition.Version)
 				}
 
 				condition := eval.Condition{
@@ -47,14 +47,20 @@ func (ng *AlertNG) definitionRoutine(grafanaCtx context.Context, key alertDefini
 					OrgID:                 alertDefinition.OrgID,
 					QueriesAndExpressions: alertDefinition.Data,
 				}
-				results, err := eval.ConditionEval(&condition, ctx.now)
+				results, err := ng.schedule.evaluator.ConditionEval(&condition, ctx.now)
 				end = timeNow()
 				if err != nil {
-					ng.schedule.log.Error("failed to evaluate alert definition", "key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "error", err)
+					// consider saving alert instance on error
+					ng.schedule.log.Error("failed to evaluate alert definition", "title", alertDefinition.Title, "key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "error", err)
 					return err
 				}
 				for _, r := range results {
-					ng.schedule.log.Info("alert definition result", "key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "instance", r.Instance, "state", r.State.String())
+					ng.schedule.log.Debug("alert definition result", "title", alertDefinition.Title, "key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "instance", r.Instance, "state", r.State.String())
+					cmd := saveAlertInstanceCommand{DefinitionOrgID: key.orgID, DefinitionUID: key.definitionUID, State: InstanceStateType(r.State.String()), Labels: InstanceLabels(r.Instance), LastEvalTime: ctx.now}
+					err := ng.saveAlertInstance(&cmd)
+					if err != nil {
+						ng.schedule.log.Error("failed saving alert instance", "title", alertDefinition.Title, "key", key, "attempt", attempt, "now", ctx.now, "instance", r.Instance, "state", r.State.String(), "error", err)
+					}
 				}
 				return nil
 			}
@@ -112,19 +118,30 @@ type schedule struct {
 	stopApplied func(alertDefinitionKey)
 
 	log log.Logger
+
+	evaluator eval.Evaluator
+}
+
+type schedulerCfg struct {
+	c            clock.Clock
+	baseInterval time.Duration
+	logger       log.Logger
+	evalApplied  func(alertDefinitionKey, time.Time)
+	evaluator    eval.Evaluator
 }
 
 // newScheduler returns a new schedule.
-func newScheduler(c clock.Clock, baseInterval time.Duration, logger log.Logger, evalApplied func(alertDefinitionKey, time.Time)) *schedule {
-	ticker := alerting.NewTicker(c.Now(), time.Second*0, c, int64(baseInterval.Seconds()))
+func newScheduler(cfg schedulerCfg) *schedule {
+	ticker := alerting.NewTicker(cfg.c.Now(), time.Second*0, cfg.c, int64(cfg.baseInterval.Seconds()))
 	sch := schedule{
 		registry:     alertDefinitionRegistry{alertDefinitionInfo: make(map[alertDefinitionKey]alertDefinitionInfo)},
 		maxAttempts:  maxAttempts,
-		clock:        c,
-		baseInterval: baseInterval,
-		log:          logger,
+		clock:        cfg.c,
+		baseInterval: cfg.baseInterval,
+		log:          cfg.logger,
 		heartbeat:    ticker,
-		evalApplied:  evalApplied,
+		evalApplied:  cfg.evalApplied,
+		evaluator:    cfg.evaluator,
 	}
 	return &sch
 }

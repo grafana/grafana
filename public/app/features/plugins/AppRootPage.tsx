@@ -58,7 +58,7 @@ class AppRootPage extends Component<Props, State> {
     const { pluginId } = this.props;
 
     try {
-      const app = await getPluginSettings(pluginId).then(info => {
+      const app = await getPluginSettings(pluginId).then((info) => {
         const error = getAppPluginPageError(info);
         if (error) {
           appEvents.emit(AppEvents.alertError, [error]);

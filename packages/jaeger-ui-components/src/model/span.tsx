@@ -20,6 +20,6 @@ import { TraceSpan } from '@grafana/data';
  * @returns {TraceSpan|null} The parent span if there is one, null otherwise.
  */
 export function getParent(span: TraceSpan) {
-  const parentRef = span.references ? span.references.find(ref => ref.refType === 'CHILD_OF') : null;
+  const parentRef = span.references ? span.references.find((ref) => ref.refType === 'CHILD_OF') : null;
   return parentRef ? parentRef.span : null;
 }

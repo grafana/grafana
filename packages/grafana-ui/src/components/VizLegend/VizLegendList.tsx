@@ -21,7 +21,7 @@ export const VizLegendList: React.FunctionComponent<Props> = ({
 
   if (!itemRenderer) {
     /* eslint-disable-next-line react/display-name */
-    itemRenderer = item => (
+    itemRenderer = (item) => (
       <VizLegendListItem item={item} onLabelClick={onLabelClick} onSeriesColorChange={onSeriesColorChange} />
     );
   }
@@ -45,14 +45,14 @@ export const VizLegendList: React.FunctionComponent<Props> = ({
         <div className={cx(styles.bottomWrapper, className)}>
           <div className={styles.section}>
             <InlineList
-              items={items.filter(item => item.yAxis === 1)}
+              items={items.filter((item) => item.yAxis === 1)}
               renderItem={renderItem}
               getItemKey={getItemKey}
             />
           </div>
           <div className={cx(styles.section, styles.sectionRight)}>
             <InlineList
-              items={items.filter(item => item.yAxis !== 1)}
+              items={items.filter((item) => item.yAxis !== 1)}
               renderItem={renderItem}
               getItemKey={getItemKey}
             />
@@ -73,14 +73,14 @@ const getStyles = (theme: GrafanaTheme) => ({
     margin-bottom: ${theme.spacing.xs};
   `,
   rightWrapper: css`
-    margin-left: ${theme.spacing.sm};
+    padding-left: ${theme.spacing.sm};
   `,
   bottomWrapper: css`
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
     width: 100%;
-    margin-left: ${theme.spacing.md};
+    padding-left: ${theme.spacing.md};
   `,
   section: css`
     display: flex;

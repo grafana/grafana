@@ -27,6 +27,7 @@ const (
 	DS_CLOUD_MONITORING = "stackdriver"
 	DS_AZURE_MONITOR    = "grafana-azure-monitor-datasource"
 	DS_LOKI             = "loki"
+	DS_ES_OPEN_DISTRO   = "grafana-es-open-distro-datasource"
 )
 
 var (

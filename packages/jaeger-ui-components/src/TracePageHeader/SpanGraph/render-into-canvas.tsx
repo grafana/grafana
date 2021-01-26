@@ -51,9 +51,7 @@ export default function renderIntoCanvas(
     }
     let fillStyle = fillCache.get(serviceName);
     if (!fillStyle) {
-      fillStyle = `rgba(${getFillColor(serviceName)
-        .concat(ITEM_ALPHA)
-        .join()})`;
+      fillStyle = `rgba(${getFillColor(serviceName).concat(ITEM_ALPHA).join()})`;
       fillCache.set(serviceName, fillStyle);
     }
     ctx.fillStyle = fillStyle;

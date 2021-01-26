@@ -101,6 +101,6 @@ export function useChildrenState() {
 }
 
 function shouldDisableCollapse(allSpans: TraceSpan[], hiddenSpansIds: Set<string>) {
-  const allParentSpans = allSpans.filter(s => s.hasChildren);
+  const allParentSpans = allSpans.filter((s) => s.hasChildren);
   return allParentSpans.length === hiddenSpansIds.size;
 }

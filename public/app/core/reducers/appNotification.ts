@@ -21,7 +21,7 @@ const appNotificationsSlice = createSlice({
     }),
     clearAppNotification: (state, action: PayloadAction<string>): AppNotificationsState => ({
       ...state,
-      appNotifications: state.appNotifications.filter(appNotification => appNotification.id !== action.payload),
+      appNotifications: state.appNotifications.filter((appNotification) => appNotification.id !== action.payload),
     }),
   },
 });

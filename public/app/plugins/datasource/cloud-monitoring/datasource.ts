@@ -10,7 +10,7 @@ import {
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
-import { CloudMonitoringOptions, CloudMonitoringQuery, Filter, MetricDescriptor, QueryType } from './types';
+import { CloudMonitoringOptions, CloudMonitoringQuery, Filter, MetricDescriptor, QueryType, EditorMode } from './types';
 import API from './api';
 import { DataSourceWithBackend } from '@grafana/runtime';
 import { CloudMonitoringVariableSupport } from './variables';
@@ -37,11 +37,11 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
   }
 
   getVariables() {
-    return this.templateSrv.getVariables().map(v => `$${v.name}`);
+    return this.templateSrv.getVariables().map((v) => `$${v.name}`);
   }
 
   query(request: DataQueryRequest<CloudMonitoringQuery>): Observable<DataQueryResponse> {
-    request.targets = request.targets.map(t => ({
+    request.targets = request.targets.map((t) => ({
       ...this.migrateQuery(t),
       intervalMs: request.intervalMs,
     }));
@@ -114,6 +114,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
         filters: this.interpolateFilters(metricQuery.filters || [], scopedVars),
         groupBys: this.interpolateGroupBys(metricQuery.groupBys || [], scopedVars),
         view: metricQuery.view || 'FULL',
+        editorMode: metricQuery.editorMode,
       },
       sloQuery: sloQuery && this.interpolateProps(sloQuery, scopedVars),
     };
@@ -156,7 +157,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
         map(({ data }) => {
           return data;
         }),
-        map(response => {
+        map((response) => {
           const result = response.results[refId];
           return result && result.meta ? result.meta.labels : {};
         })
@@ -213,7 +214,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
             ? data.results.getGCEDefaultProject.meta.defaultProject
             : '';
         }),
-        catchError(err => {
+        catchError((err) => {
           return throwError(err.data.error);
         })
       )
@@ -324,13 +325,17 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       return !!selectorName && !!serviceId && !!sloId && !!projectName;
     }
 
+    if (query.queryType && query.queryType === QueryType.METRICS && query.metricQuery.editorMode === EditorMode.MQL) {
+      return !!query.metricQuery.projectName && !!query.metricQuery.query;
+    }
+
     const { metricType } = query.metricQuery;
 
     return !!metricType;
   }
 
   interpolateVariablesInQueries(queries: CloudMonitoringQuery[], scopedVars: ScopedVars): CloudMonitoringQuery[] {
-    return queries.map(query => this.applyTemplateVariables(query, scopedVars) as CloudMonitoringQuery);
+    return queries.map((query) => this.applyTemplateVariables(query, scopedVars) as CloudMonitoringQuery);
   }
 
   interpolateFilters(filters: string[], scopedVars: ScopedVars) {
@@ -357,7 +362,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
 
   interpolateGroupBys(groupBys: string[], scopedVars: {}): string[] {
     let interpolatedGroupBys: string[] = [];
-    (groupBys || []).forEach(gb => {
+    (groupBys || []).forEach((gb) => {
       const interpolated = this.templateSrv.replace(gb, scopedVars || {}, 'csv').split(',');
       if (Array.isArray(interpolated)) {
         interpolatedGroupBys = interpolatedGroupBys.concat(interpolated);
