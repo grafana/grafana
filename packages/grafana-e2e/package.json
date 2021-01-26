@@ -49,7 +49,7 @@
     "@mochajs/json-file-reporter": "^1.2.0",
     "blink-diff": "1.0.13",
     "commander": "5.0.0",
-    "cypress": "^4.12.1",
+    "cypress": "^6.3.0",
     "cypress-file-upload": "^4.0.7",
     "execa": "4.0.0",
     "resolve-as-bin": "2.1.0",
