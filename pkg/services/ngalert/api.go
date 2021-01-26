@@ -194,7 +194,7 @@ func (ng *AlertNG) alertDefinitionPauseEndpoint(c *models.ReqContext, cmd update
 	if err != nil {
 		return response.Error(500, "Failed to pause alert definition", err)
 	}
-	return response.JSON(200, util.DynMap{"message": fmt.Sprintf("%d alert definition paused", cmd.ResultCount)})
+	return response.JSON(200, util.DynMap{"message": fmt.Sprintf("%d alert definitions paused", cmd.ResultCount)})
 }
 
 // alertDefinitionUnpauseEndpoint handles POST /api/alert-definitions/unpause.
@@ -206,5 +206,5 @@ func (ng *AlertNG) alertDefinitionUnpauseEndpoint(c *models.ReqContext, cmd upda
 	if err != nil {
 		return response.Error(500, "Failed to unpause alert definition", err)
 	}
-	return response.JSON(200, util.DynMap{"message": fmt.Sprintf("%d alert definition unpaused", cmd.ResultCount)})
+	return response.JSON(200, util.DynMap{"message": fmt.Sprintf("%d alert definitions unpaused", cmd.ResultCount)})
 }
