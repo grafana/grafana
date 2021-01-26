@@ -13,7 +13,7 @@ interface CascaderProps {
   separator?: string;
   placeholder?: string;
   options: CascaderOption[];
-  /** Changes the value for every selection, including branch nodes */
+  /** Changes the value for every selection, including branch nodes. Defaults to true. */
   changeOnSelect?: boolean;
   onSelect(val: string): void;
   /** Sets the width to a multiple of 8px. Should only be used with inline forms. Setting width of the container is preferred in other cases.*/
