@@ -3,13 +3,14 @@ import { ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
 import { SeriesProps, UPlotSeriesBuilder } from './UPlotSeriesBuilder';
 import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
 import { AxisPlacement } from '../config';
-import { Cursor } from 'uplot';
+import { Cursor, Band } from 'uplot';
 import { defaultsDeep } from 'lodash';
 
 export class UPlotConfigBuilder {
   private series: UPlotSeriesBuilder[] = [];
   private axes: Record<string, UPlotAxisBuilder> = {};
   private scales: UPlotScaleBuilder[] = [];
+  private bands: Band[] = [];
   private cursor: Cursor | undefined;
   private hasLeftAxis = false;
   private hasBottomAxis = false;
@@ -57,9 +58,13 @@ export class UPlotConfigBuilder {
     this.series.push(new UPlotSeriesBuilder(props));
   }
 
+  getSeries() {
+    return this.series;
+  }
+
   /** Add or update the scale with the scale key */
   addScale(props: ScaleProps) {
-    const current = this.scales.find(v => v.props.scaleKey === props.scaleKey);
+    const current = this.scales.find((v) => v.props.scaleKey === props.scaleKey);
     if (current) {
       current.merge(props);
       return;
@@ -67,15 +72,33 @@ export class UPlotConfigBuilder {
     this.scales.push(new UPlotScaleBuilder(props));
   }
 
+  addBand(band: Band) {
+    this.bands.push(band);
+  }
+
   getConfig() {
     const config: PlotSeriesConfig = { series: [{}] };
-    config.axes = this.ensureNonOverlappingAxes(Object.values(this.axes)).map(a => a.getConfig());
-    config.series = [...config.series, ...this.series.map(s => s.getConfig())];
+    config.axes = this.ensureNonOverlappingAxes(Object.values(this.axes)).map((a) => a.getConfig());
+    config.series = [...config.series, ...this.series.map((s) => s.getConfig())];
     config.scales = this.scales.reduce((acc, s) => {
       return { ...acc, ...s.getConfig() };
     }, {});
 
     config.cursor = this.cursor || {};
+
+    // When bands exist, only keep fill when defined
+    if (this.bands?.length) {
+      config.bands = this.bands;
+      const keepFill = new Set<number>();
+      for (const b of config.bands) {
+        keepFill.add(b.series[0]);
+      }
+      for (let i = 1; i < config.series.length; i++) {
+        if (!keepFill.has(i)) {
+          config.series[i].fill = undefined;
+        }
+      }
+    }
 
     const cursorDefaults: Cursor = {
       // prevent client-side zoom from triggering at the end of a selection

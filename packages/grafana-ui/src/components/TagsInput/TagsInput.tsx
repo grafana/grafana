@@ -37,7 +37,7 @@ export class TagsInput extends PureComponent<Props, State> {
     this.setState(
       (prevState: State) => ({
         ...prevState,
-        tags: prevState.tags.filter(tag => tagToRemove !== tag),
+        tags: prevState.tags.filter((tag) => tagToRemove !== tag),
       }),
       () => this.onChange()
     );

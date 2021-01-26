@@ -322,14 +322,14 @@ $json-explorer-url-color: $blue-base;
 
 // Changelog and diff
 // -------------------------
-$diff-label-bg: $gray-7;
+$diff-label-bg: ${theme.colors.bg3};
 $diff-label-fg: $gray-2;
 
 $diff-arrow-color: $dark-2;
-$diff-group-bg: $gray-6;
+$diff-group-bg: ${theme.colors.bg2};
 
-$diff-json-bg: $gray-6;
-$diff-json-fg: $gray-1;
+$diff-json-bg: ${theme.colors.bg2};
+$diff-json-fg: ${theme.colors.text};
 
 $diff-json-added: $blue-shade;
 $diff-json-deleted: $red-shade;

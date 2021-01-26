@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -40,27 +42,46 @@ func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd cre
 	return libraryPanel, err
 }
 
+func connectDashboard(session *sqlstore.DBSession, dialect migrator.Dialect, user *models.SignedInUser, uid string, dashboardID int64) error {
+	panel, err := getLibraryPanel(session, uid, user.OrgId)
+	if err != nil {
+		return err
+	}
+
+	// TODO add check that dashboard exists
+
+	libraryPanelDashboard := libraryPanelDashboard{
+		DashboardID:    dashboardID,
+		LibraryPanelID: panel.ID,
+		Created:        time.Now(),
+		CreatedBy:      user.UserId,
+	}
+	if _, err := session.Insert(&libraryPanelDashboard); err != nil {
+		if dialect.IsUniqueConstraintViolation(err) {
+			return nil
+		}
+		return err
+	}
+	return nil
+}
+
 // connectDashboard adds a connection between a Library Panel and a Dashboard.
 func (lps *LibraryPanelService) connectDashboard(c *models.ReqContext, uid string, dashboardID int64) error {
 	err := lps.SQLStore.WithTransactionalDbSession(context.Background(), func(session *sqlstore.DBSession) error {
-		panel, err := getLibraryPanel(session, uid, c.SignedInUser.OrgId)
-		if err != nil {
-			return err
-		}
+		return connectDashboard(session, lps.SQLStore.Dialect, c.SignedInUser, uid, dashboardID)
+	})
 
-		// TODO add check that dashboard exists
+	return err
+}
 
-		libraryPanelDashboard := libraryPanelDashboard{
-			DashboardID:    dashboardID,
-			LibraryPanelID: panel.ID,
-			Created:        time.Now(),
-			CreatedBy:      c.SignedInUser.UserId,
-		}
-		if _, err := session.Insert(&libraryPanelDashboard); err != nil {
-			if lps.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
-				return nil
+// connectLibraryPanelsForDashboard adds connections for all Library Panels in a Dashboard.
+func (lps *LibraryPanelService) connectLibraryPanelsForDashboard(c *models.ReqContext, uids []string, dashboardID int64) error {
+	err := lps.SQLStore.WithTransactionalDbSession(context.Background(), func(session *sqlstore.DBSession) error {
+		for _, uid := range uids {
+			err := connectDashboard(session, lps.SQLStore.Dialect, c.SignedInUser, uid, dashboardID)
+			if err != nil {
+				return err
 			}
-			return err
 		}
 		return nil
 	})
@@ -104,6 +125,23 @@ func (lps *LibraryPanelService) disconnectDashboard(c *models.ReqContext, uid st
 			return err
 		} else if rowsAffected != 1 {
 			return errLibraryPanelDashboardNotFound
+		}
+
+		return nil
+	})
+}
+
+// disconnectLibraryPanelsForDashboard deletes connections for all Library Panels in a Dashboard.
+func (lps *LibraryPanelService) disconnectLibraryPanelsForDashboard(dashboardID int64, panelCount int64) error {
+	return lps.SQLStore.WithTransactionalDbSession(context.Background(), func(session *sqlstore.DBSession) error {
+		result, err := session.Exec("DELETE FROM library_panel_dashboard WHERE dashboard_id=?", dashboardID)
+		if err != nil {
+			return err
+		}
+		if rowsAffected, err := result.RowsAffected(); err != nil {
+			return err
+		} else if rowsAffected != panelCount {
+			lps.log.Warn("Number of disconnects does not match number of panels", "dashboard", dashboardID, "rowsAffected", rowsAffected, "panelCount", panelCount)
 		}
 
 		return nil
@@ -181,6 +219,33 @@ func (lps *LibraryPanelService) getConnectedDashboards(c *models.ReqContext, uid
 	})
 
 	return connectedDashboardIDs, err
+}
+
+func (lps *LibraryPanelService) getLibraryPanelsForDashboardID(dashboardID int64) (map[string]LibraryPanel, error) {
+	libraryPanelMap := make(map[string]LibraryPanel)
+	err := lps.SQLStore.WithDbSession(context.Background(), func(session *sqlstore.DBSession) error {
+		sql := `SELECT
+				lp.id, lp.org_id, lp.folder_id, lp.uid, lp.name, lp.model, lp.created, lp.created_by, lp.updated, updated_by
+			FROM
+				library_panel_dashboard AS lpd
+			INNER JOIN
+				library_panel AS lp ON lpd.librarypanel_id = lp.id AND lpd.dashboard_id=?`
+
+		var libraryPanels []LibraryPanel
+		sess := session.SQL(sql, dashboardID)
+		err := sess.Find(&libraryPanels)
+		if err != nil {
+			return err
+		}
+
+		for _, panel := range libraryPanels {
+			libraryPanelMap[panel.UID] = panel
+		}
+
+		return nil
+	})
+
+	return libraryPanelMap, err
 }
 
 // patchLibraryPanel updates a Library Panel.

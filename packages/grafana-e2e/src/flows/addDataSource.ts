@@ -53,41 +53,29 @@ export const addDataSource = (config?: Partial<AddDataSourceConfig>) => {
   e2e.pages.DataSource.name().type(name);
 
   if (basicAuth) {
-    e2e()
-      .contains('label', 'Basic auth')
-      .scrollIntoView()
-      .click();
+    e2e().contains('label', 'Basic auth').scrollIntoView().click();
     e2e()
       .contains('.gf-form-group', 'Basic Auth Details')
       .should('be.visible')
       .scrollIntoView()
       .within(() => {
         if (basicAuthUser) {
-          e2e()
-            .get('[placeholder=user]')
-            .type(basicAuthUser);
+          e2e().get('[placeholder=user]').type(basicAuthUser);
         }
         if (basicAuthPassword) {
-          e2e()
-            .get('[placeholder=Password]')
-            .type(basicAuthPassword);
+          e2e().get('[placeholder=Password]').type(basicAuthPassword);
         }
       });
   }
 
   if (skipTlsVerify) {
-    e2e()
-      .contains('label', 'Skip TLS Verify')
-      .scrollIntoView()
-      .click();
+    e2e().contains('label', 'Skip TLS Verify').scrollIntoView().click();
   }
 
   form();
 
   e2e.pages.DataSource.saveAndTest().click();
-  e2e.pages.DataSource.alert()
-    .should('exist')
-    .contains(expectedAlertMessage); // assertion
+  e2e.pages.DataSource.alert().should('exist').contains(expectedAlertMessage); // assertion
 
   e2e().logToConsole('Added data source with name:', name);
 
@@ -105,11 +93,7 @@ export const addDataSource = (config?: Partial<AddDataSourceConfig>) => {
       if (checkHealth) {
         const healthUrl = fromBaseUrl(`/api/datasources/${id}/health`);
         e2e().logToConsole(`Fetching ${healthUrl}`);
-        e2e()
-          .request(healthUrl)
-          .its('body')
-          .should('have.property', 'status')
-          .and('eq', 'OK');
+        e2e().request(healthUrl).its('body').should('have.property', 'status').and('eq', 'OK');
       }
 
       // @todo remove `wrap` when possible

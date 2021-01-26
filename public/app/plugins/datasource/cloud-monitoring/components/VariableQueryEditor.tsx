@@ -72,7 +72,7 @@ export class CloudMonitoringVariableQueryEditor extends PureComponent<Props, Var
     }));
 
     let selectedService = '';
-    if (services.some(s => s.value === getTemplateSrv().replace(this.state.selectedService))) {
+    if (services.some((s) => s.value === getTemplateSrv().replace(this.state.selectedService))) {
       selectedService = this.state.selectedService;
     } else if (services && services.length > 0) {
       selectedService = services[0].value;
@@ -177,7 +177,7 @@ export class CloudMonitoringVariableQueryEditor extends PureComponent<Props, Var
     let result = { labels: this.state.labels, labelKey: this.state.labelKey };
     if (selectedMetricType && selectedQueryType === MetricFindQueryTypes.LabelValues) {
       const labels = await getLabelKeys(this.props.datasource, selectedMetricType, projectName);
-      const labelKey = labels.some(l => l === getTemplateSrv().replace(this.state.labelKey))
+      const labelKey = labels.some((l) => l === getTemplateSrv().replace(this.state.labelKey))
         ? this.state.labelKey
         : labels[0];
       result = { labels, labelKey };
@@ -203,13 +203,13 @@ export class CloudMonitoringVariableQueryEditor extends PureComponent<Props, Var
             <SimpleSelect
               value={this.state.projectName}
               options={this.insertTemplateVariables(this.state.projects)}
-              onValueChange={e => this.onProjectChange(e.target.value)}
+              onValueChange={(e) => this.onProjectChange(e.target.value)}
               label="Project"
             />
             <SimpleSelect
               value={this.state.selectedService}
               options={this.insertTemplateVariables(this.state.services)}
-              onValueChange={e => this.onServiceChange(e.target.value)}
+              onValueChange={(e) => this.onServiceChange(e.target.value)}
               label="Service"
             />
           </>
@@ -222,26 +222,26 @@ export class CloudMonitoringVariableQueryEditor extends PureComponent<Props, Var
             <SimpleSelect
               value={this.state.projectName}
               options={this.insertTemplateVariables(this.state.projects)}
-              onValueChange={e => this.onProjectChange(e.target.value)}
+              onValueChange={(e) => this.onProjectChange(e.target.value)}
               label="Project"
             />
             <SimpleSelect
               value={this.state.selectedService}
               options={this.insertTemplateVariables(this.state.services)}
-              onValueChange={e => this.onServiceChange(e.target.value)}
+              onValueChange={(e) => this.onServiceChange(e.target.value)}
               label="Service"
             />
             <SimpleSelect
               value={this.state.selectedMetricType}
               options={this.insertTemplateVariables(this.state.metricTypes)}
-              onValueChange={e => this.onMetricTypeChange(e.target.value)}
+              onValueChange={(e) => this.onMetricTypeChange(e.target.value)}
               label="Metric Type"
             />
             {queryType === MetricFindQueryTypes.LabelValues && (
               <SimpleSelect
                 value={this.state.labelKey}
-                options={this.insertTemplateVariables(this.state.labels.map(l => ({ value: l, name: l })))}
-                onValueChange={e => this.onLabelKeyChange(e.target.value)}
+                options={this.insertTemplateVariables(this.state.labels.map((l) => ({ value: l, name: l })))}
+                onValueChange={(e) => this.onLabelKeyChange(e.target.value)}
                 label="Label Key"
               />
             )}
@@ -254,13 +254,13 @@ export class CloudMonitoringVariableQueryEditor extends PureComponent<Props, Var
             <SimpleSelect
               value={this.state.selectedService}
               options={this.insertTemplateVariables(this.state.services)}
-              onValueChange={e => this.onServiceChange(e.target.value)}
+              onValueChange={(e) => this.onServiceChange(e.target.value)}
               label="Service"
             />
             <SimpleSelect
               value={this.state.selectedMetricType}
               options={this.insertTemplateVariables(this.state.metricTypes)}
-              onValueChange={e => this.onMetricTypeChange(e.target.value)}
+              onValueChange={(e) => this.onMetricTypeChange(e.target.value)}
               label="Metric Type"
             />
           </>
@@ -271,7 +271,7 @@ export class CloudMonitoringVariableQueryEditor extends PureComponent<Props, Var
             <SimpleSelect
               value={this.state.projectName}
               options={this.insertTemplateVariables(this.state.projects)}
-              onValueChange={e => this.onProjectChange(e.target.value)}
+              onValueChange={(e) => this.onProjectChange(e.target.value)}
               label="Project"
             />
           </>
@@ -283,13 +283,13 @@ export class CloudMonitoringVariableQueryEditor extends PureComponent<Props, Var
             <SimpleSelect
               value={this.state.projectName}
               options={this.insertTemplateVariables(this.state.projects)}
-              onValueChange={e => this.onProjectChange(e.target.value)}
+              onValueChange={(e) => this.onProjectChange(e.target.value)}
               label="Project"
             />
             <SimpleSelect
               value={this.state.selectedSLOService}
               options={this.insertTemplateVariables(this.state.sloServices)}
-              onValueChange={e => {
+              onValueChange={(e) => {
                 this.setState({
                   ...this.state,
                   selectedSLOService: e.target.value,
@@ -323,7 +323,7 @@ export class CloudMonitoringVariableQueryEditor extends PureComponent<Props, Var
         <SimpleSelect
           value={this.state.selectedQueryType}
           options={this.queryTypes}
-          onValueChange={e => this.onQueryTypeChange(e.target.value)}
+          onValueChange={(e) => this.onQueryTypeChange(e.target.value)}
           label="Query Type"
         />
         {this.renderQueryTypeSwitch(this.state.selectedQueryType)}

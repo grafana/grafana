@@ -119,7 +119,7 @@ export class DashboardPage extends PureComponent<Props, State> {
     if (!editPanel && urlEditPanelId) {
       dashboardWatcher.setEditingState(true);
 
-      this.getPanelByIdFromUrlParam(urlEditPanelId, panel => {
+      this.getPanelByIdFromUrlParam(urlEditPanelId, (panel) => {
         // if no edit permission show error
         if (!dashboard.canEditPanel(panel)) {
           this.props.notifyApp(createErrorNotification('Permission to edit panel denied'));
@@ -139,7 +139,7 @@ export class DashboardPage extends PureComponent<Props, State> {
 
     // entering view mode
     if (!viewPanel && urlViewPanelId) {
-      this.getPanelByIdFromUrlParam(urlViewPanelId, panel => {
+      this.getPanelByIdFromUrlParam(urlViewPanelId, (panel) => {
         this.setPanelFullscreenClass(true);
         dashboard.initViewPanel(panel);
         this.setState({

@@ -64,7 +64,7 @@ export class FolderPicker extends PureComponent<Props, State> {
     // TODO: move search to BackendSrv interface
     // @ts-ignore
     const searchHits = (await getBackendSrv().search(params)) as DashboardSearchHit[];
-    const options: Array<SelectableValue<number>> = searchHits.map(hit => ({ label: hit.title, value: hit.id }));
+    const options: Array<SelectableValue<number>> = searchHits.map((hit) => ({ label: hit.title, value: hit.id }));
     if (contextSrv.isEditor && rootName?.toLowerCase().startsWith(query.toLowerCase())) {
       options.unshift({ label: rootName, value: 0 });
     }
@@ -114,7 +114,7 @@ export class FolderPicker extends PureComponent<Props, State> {
     let folder: SelectableValue<number> = { value: -1 };
 
     if (initialFolderId !== undefined && initialFolderId !== null && initialFolderId > -1) {
-      folder = options.find(option => option.value === initialFolderId) || { value: -1 };
+      folder = options.find((option) => option.value === initialFolderId) || { value: -1 };
     } else if (enableReset && initialTitle) {
       folder = resetFolder;
     }

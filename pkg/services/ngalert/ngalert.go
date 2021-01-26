@@ -47,7 +47,13 @@ func (ng *AlertNG) Init() error {
 	ng.log = log.New("ngalert")
 
 	ng.registerAPIEndpoints()
-	ng.schedule = newScheduler(clock.New(), baseIntervalSeconds*time.Second, ng.log, nil)
+	schedCfg := schedulerCfg{
+		c:            clock.New(),
+		baseInterval: baseIntervalSeconds * time.Second,
+		logger:       ng.log,
+		evaluator:    eval.Evaluator{Cfg: ng.Cfg},
+	}
+	ng.schedule = newScheduler(schedCfg)
 	return nil
 }
 
@@ -74,6 +80,8 @@ func (ng *AlertNG) AddMigration(mg *migrator.Migrator) {
 	}
 	addAlertDefinitionMigrations(mg)
 	addAlertDefinitionVersionMigrations(mg)
+	// Create alert_instance table
+	alertInstanceMigration(mg)
 }
 
 // LoadAlertCondition returns a Condition object for the given alertDefinitionID.

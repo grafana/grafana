@@ -93,9 +93,9 @@ export const hideSeriesConfigFactory = (
 };
 
 const createExtendedOverride = (current: SystemConfigOverrideRule, displayName: string): SystemConfigOverrideRule => {
-  const property = current.properties.find(p => p.id === 'custom.hideFrom');
+  const property = current.properties.find((p) => p.id === 'custom.hideFrom');
   const existing = getExistingDisplayNames(current);
-  const index = existing.findIndex(name => name === displayName);
+  const index = existing.findIndex((name) => name === displayName);
 
   if (index < 0) {
     existing.push(displayName);

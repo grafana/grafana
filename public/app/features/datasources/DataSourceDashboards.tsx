@@ -73,7 +73,7 @@ export class DataSourceDashboards extends PureComponent<Props> {
           <DashboardTable
             dashboards={dashboards}
             onImport={(dashboard, overwrite) => this.onImport(dashboard, overwrite)}
-            onRemove={dashboard => this.onRemove(dashboard)}
+            onRemove={(dashboard) => this.onRemove(dashboard)}
           />
         </Page.Contents>
       </Page>

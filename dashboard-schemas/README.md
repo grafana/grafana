@@ -63,9 +63,24 @@ be a base schema for panels. `#Gauge` extends `#panel` with the following:
 
 ## Exporting OpenAPI
 
-[OpenAPI](https://swagger.io/specification/) schemas can be exported from these CUE sources. Use the `cue`
-command as follows, to generate OpenAPI JSON to stdout:
+[OpenAPI](https://www.openapis.org/) schemas can be exported from these CUE
+sources.
+
+### Command Line
+
+While you can use `cue export` to output OpenAPI documents, it does not expand
+references which makes the output unusable.
 
 ```
-cue export --out openapi -o - ./dashboard-schemas/...
+cue export --out openapi -o - ./...
+```
+
+### Using Go
+
+You need to use Go to generate useable OpenAPI schemas. This directory contains
+a Go program that will output just the OpenAPI schemas for one or many Cue
+packages.
+
+```
+go run . <entrypoint> ...
 ```

@@ -80,7 +80,7 @@ export class VariableQueryRunner {
   }
 
   getResponse(identifier: VariableIdentifier): Observable<UpdateOptionsResults> {
-    return this.updateOptionsResults.asObservable().pipe(filter(result => result.identifier === identifier));
+    return this.updateOptionsResults.asObservable().pipe(filter((result) => result.identifier === identifier));
   }
 
   cancelRequest(identifier: VariableIdentifier): void {
@@ -123,8 +123,8 @@ export class VariableQueryRunner {
             const afterUid = getState().templating.transaction.uid;
             return beforeUid === afterUid;
           }),
-          first(data => data.state === LoadingState.Done || data.state === LoadingState.Error),
-          mergeMap(data => {
+          first((data) => data.state === LoadingState.Done || data.state === LoadingState.Error),
+          mergeMap((data) => {
             if (data.state === LoadingState.Error) {
               return throwError(data.error);
             }
@@ -138,7 +138,7 @@ export class VariableQueryRunner {
           validateVariableSelection({ variable, dispatch, searchFilter }),
           takeUntil(
             merge(this.updateOptionsRequests, this.cancelRequests).pipe(
-              filter(args => {
+              filter((args) => {
                 let cancelRequest = false;
 
                 if (args.identifier.id === identifier.id) {
@@ -150,7 +150,7 @@ export class VariableQueryRunner {
               })
             )
           ),
-          catchError(error => {
+          catchError((error) => {
             if (error.cancelled) {
               return of({});
             }

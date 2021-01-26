@@ -31,7 +31,7 @@ describe('MySQLDatasource', () => {
     const variable = { ...initialCustomVariableModelState };
 
     jest.clearAllMocks();
-    fetchMock.mockImplementation(options => of(createFetchResponse(response)));
+    fetchMock.mockImplementation((options) => of(createFetchResponse(response)));
 
     const ds = new MysqlDatasource(instanceSettings, templateSrv, timeSrvMock);
 

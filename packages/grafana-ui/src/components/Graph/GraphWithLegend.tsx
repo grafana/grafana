@@ -26,7 +26,6 @@ const getGraphWithLegendStyles = stylesFactory(({ placement }: GraphWithLegendPr
   wrapper: css`
     display: flex;
     flex-direction: ${placement === 'bottom' ? 'column' : 'row'};
-    height: 100%;
   `,
   graphContainer: css`
     min-height: 65%;
@@ -81,7 +80,7 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
             color: s.color || '',
             disabled: !s.isVisible,
             yAxis: s.yAxis.index,
-            displayValues: s.info || [],
+            getDisplayValues: () => s.info || [],
           },
         ]);
   }, []);

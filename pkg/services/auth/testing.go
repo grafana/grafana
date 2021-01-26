@@ -8,7 +8,7 @@ import (
 )
 
 type FakeUserAuthTokenService struct {
-	CreateTokenProvider         func(ctx context.Context, userId int64, clientIP net.IP, userAgent string) (*models.UserToken, error)
+	CreateTokenProvider         func(ctx context.Context, user *models.User, clientIP net.IP, userAgent string) (*models.UserToken, error)
 	TryRotateTokenProvider      func(ctx context.Context, token *models.UserToken, clientIP net.IP, userAgent string) (bool, error)
 	LookupTokenProvider         func(ctx context.Context, unhashedToken string) (*models.UserToken, error)
 	RevokeTokenProvider         func(ctx context.Context, token *models.UserToken) error
@@ -21,7 +21,7 @@ type FakeUserAuthTokenService struct {
 
 func NewFakeUserAuthTokenService() *FakeUserAuthTokenService {
 	return &FakeUserAuthTokenService{
-		CreateTokenProvider: func(ctx context.Context, userId int64, clientIP net.IP, userAgent string) (*models.UserToken, error) {
+		CreateTokenProvider: func(ctx context.Context, user *models.User, clientIP net.IP, userAgent string) (*models.UserToken, error) {
 			return &models.UserToken{
 				UserId:        0,
 				UnhashedToken: "",
@@ -63,8 +63,8 @@ func (s *FakeUserAuthTokenService) Init() error {
 	return nil
 }
 
-func (s *FakeUserAuthTokenService) CreateToken(ctx context.Context, userId int64, clientIP net.IP, userAgent string) (*models.UserToken, error) {
-	return s.CreateTokenProvider(context.Background(), userId, clientIP, userAgent)
+func (s *FakeUserAuthTokenService) CreateToken(ctx context.Context, user *models.User, clientIP net.IP, userAgent string) (*models.UserToken, error) {
+	return s.CreateTokenProvider(context.Background(), user, clientIP, userAgent)
 }
 
 func (s *FakeUserAuthTokenService) LookupToken(ctx context.Context, unhashedToken string) (*models.UserToken, error) {

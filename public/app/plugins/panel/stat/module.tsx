@@ -6,7 +6,7 @@ import { statPanelChangedHandler } from './StatMigrations';
 
 export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
   .useFieldConfig()
-  .setPanelOptions(builder => {
+  .setPanelOptions((builder) => {
     addStandardDataReduceOptions(builder);
 
     builder.addSelect({

@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -26,7 +27,13 @@ func TestAlertingTicker(t *testing.T) {
 	t.Cleanup(registry.ClearOverrides)
 
 	mockedClock := clock.NewMock()
-	ng.schedule = newScheduler(mockedClock, time.Second, log.New("ngalert.schedule.test"), nil)
+	schefCfg := schedulerCfg{
+		c:            mockedClock,
+		baseInterval: time.Second,
+		logger:       log.New("ngalert.schedule.test"),
+		evaluator:    eval.Evaluator{Cfg: ng.Cfg},
+	}
+	ng.schedule = newScheduler(schefCfg)
 
 	alerts := make([]*AlertDefinition, 0)
 
@@ -184,5 +191,5 @@ func concatenate(keys []alertDefinitionKey) string {
 	for _, k := range keys {
 		s = append(s, k.String())
 	}
-	return fmt.Sprintf("[%s]", strings.TrimLeft(strings.Join(s, ","), ","))
+	return fmt.Sprintf("[%s]", strings.Join(s, ","))
 }

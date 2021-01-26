@@ -24,7 +24,6 @@ export function createFieldConfigRegistry<TFieldConfigOptions>(
 
     for (const customProp of builder.getRegistry().list()) {
       customProp.isCustom = true;
-      customProp.category = [`${pluginName} options`].concat(customProp.category || []);
       // need to do something to make the custom items not conflict with standard ones
       // problem is id (registry index) is used as property path
       // so sort of need a property path on the FieldPropertyEditorItem

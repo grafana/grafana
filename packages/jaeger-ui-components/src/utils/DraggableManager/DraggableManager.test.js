@@ -126,7 +126,7 @@ describe('DraggableManager', () => {
         () => instance.handleMouseMove({ ...baseMouseEvt, type }),
         () => instance.handleMouseLeave({ ...baseMouseEvt, type }),
       ];
-      throwers.forEach(thrower => expect(thrower).toThrow());
+      throwers.forEach((thrower) => expect(thrower).toThrow());
     });
 
     it('does nothing if already dragging', () => {
@@ -170,7 +170,7 @@ describe('DraggableManager', () => {
         },
       ];
 
-      cases.forEach(testCase => {
+      cases.forEach((testCase) => {
         const { type, handler, callback, updateType } = testCase;
         const event = { ...baseMouseEvt, type };
         handler(event);
@@ -288,7 +288,7 @@ describe('DraggableManager', () => {
         },
       ];
 
-      cases.forEach(testCase => {
+      cases.forEach((testCase) => {
         const { type, handler, callback, updateType } = testCase;
         const event = { ...baseMouseEvt, type };
         handler(event);

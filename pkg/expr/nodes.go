@@ -123,13 +123,15 @@ const (
 // DSNode is a DPNode that holds a datasource request.
 type DSNode struct {
 	baseNode
-	query        json.RawMessage
-	datasourceID int64
-	orgID        int64
-	queryType    string
-	timeRange    backend.TimeRange
-	intervalMS   int64
-	maxDP        int64
+	query         json.RawMessage
+	datasourceID  int64
+	datasourceUID string
+
+	orgID      int64
+	queryType  string
+	timeRange  backend.TimeRange
+	intervalMS int64
+	maxDP      int64
 }
 
 // NodeType returns the data pipeline node type.
@@ -157,14 +159,24 @@ func buildDSNode(dp *simple.DirectedGraph, rn *rawNode, orgID int64) (*DSNode, e
 	}
 
 	rawDsID, ok := rn.Query["datasourceId"]
-	if !ok {
-		return nil, fmt.Errorf("no datasourceId in expression data source request for refId %v", rn.RefID)
+	switch ok {
+	case true:
+		floatDsID, ok := rawDsID.(float64)
+		if !ok {
+			return nil, fmt.Errorf("expected datasourceId to be a float64, got type %T for refId %v", rawDsID, rn.RefID)
+		}
+		dsNode.datasourceID = int64(floatDsID)
+	default:
+		rawDsUID, ok := rn.Query["datasourceUid"]
+		if !ok {
+			return nil, fmt.Errorf("neither datasourceId or datasourceUid in expression data source request for refId %v", rn.RefID)
+		}
+		strDsUID, ok := rawDsUID.(string)
+		if !ok {
+			return nil, fmt.Errorf("expected datasourceUid to be a string, got type %T for refId %v", rawDsUID, rn.RefID)
+		}
+		dsNode.datasourceUID = strDsUID
 	}
-	floatDsID, ok := rawDsID.(float64)
-	if !ok {
-		return nil, fmt.Errorf("expected datasourceId to be a float64, got type %T for refId %v", rawDsID, rn.RefID)
-	}
-	dsNode.datasourceID = int64(floatDsID)
 
 	var floatIntervalMS float64
 	if rawIntervalMS := rn.Query["intervalMs"]; ok {
@@ -192,7 +204,8 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Resul
 	pc := backend.PluginContext{
 		OrgID: dn.orgID,
 		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-			ID: dn.datasourceID,
+			ID:  dn.datasourceID,
+			UID: dn.datasourceUID,
 		},
 	}
 
