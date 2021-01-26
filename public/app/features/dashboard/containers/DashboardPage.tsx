@@ -316,7 +316,7 @@ export class DashboardPage extends PureComponent<Props, State> {
             scrollTop={updateScrollTop}
             hideHorizontalTrack={true}
             updateAfterMountMs={500}
-            scrollbarStickLeft={true}
+            isPageScrollbar={true}
           >
             <div className="dashboard-content">
               {initError && this.renderInitFailedState()}

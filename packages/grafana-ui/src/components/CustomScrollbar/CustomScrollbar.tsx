@@ -17,7 +17,7 @@ interface Props {
   setScrollTop: (event: any) => void;
   autoHeightMin?: number | string;
   updateAfterMountMs?: number;
-  scrollbarStickLeft?: boolean;
+  isPageScrollbar?: boolean;
 }
 
 interface StylesInterface {
@@ -119,7 +119,7 @@ export class CustomScrollbar extends Component<Props> {
       autoHideTimeout,
       hideTracksWhenNotNeeded,
     } = this.props;
-    const styles = getStyles(this.props.scrollbarStickLeft);
+    const styles = getStyles(this.props.isPageScrollbar);
 
     return (
       <Scrollbars
@@ -148,7 +148,7 @@ export class CustomScrollbar extends Component<Props> {
 
 export default CustomScrollbar;
 
-const getStyles = (scrollbarStickLeft?: boolean): StylesInterface => {
+const getStyles = (isPageScrollbar?: boolean): StylesInterface => {
   return {
     customScrollbar: css`
       display: flex;
@@ -161,7 +161,7 @@ const getStyles = (scrollbarStickLeft?: boolean): StylesInterface => {
     trackVertical: css`
       border-radius: 3px;
       width: 8px !important;
-      right: ${scrollbarStickLeft ? 0 : 2}px;
+      right: ${isPageScrollbar ? 0 : 2}px;
       bottom: 2px;
     `,
     trackHorizontal: css`
@@ -172,7 +172,7 @@ const getStyles = (scrollbarStickLeft?: boolean): StylesInterface => {
       left: 2px;
     `,
     thumbVertical: css`
-      @include gradient-vertical($scrollbarBackground, $scrollbarBackground2);
+      @include linear-gradient(#404357, #424345);
       border-radius: 6px;
       opacity: 0;
       &:hover {
@@ -181,7 +181,7 @@ const getStyles = (scrollbarStickLeft?: boolean): StylesInterface => {
       }
     `,
     thumbHorizontal: css`
-      @include gradient-horizontal($scrollbarBackground, $scrollbarBackground2);
+      @include gradient-horizontal(#404357, #404357);
       border-radius: 6px;
       opacity: 0;
       &:hover {
