@@ -435,7 +435,6 @@ func init() {
 		Name: "NG Alerting Instance List",
 		// Data fetched via API in JS
 	})
-
 }
 
 // PredictablePulseDesc is the description for the Predictable Pulse scenerio.
