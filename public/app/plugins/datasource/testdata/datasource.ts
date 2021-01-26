@@ -70,6 +70,8 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
         case 'arrow':
           streams.push(runArrowFile(target, options));
           break;
+        case 'ng_alert_instance_list':
+          streams.push(runNGAlertInstances(target, options));
         case 'annotations':
           streams.push(this.annotationDataTopicTest(target, options));
           break;
@@ -252,6 +254,25 @@ function runGrafanaAPI(target: TestDataQuery, req: DataQueryRequest<TestDataQuer
       .get(url)
       .then((res) => {
         const frame = new ArrayDataFrame(res);
+        return {
+          state: LoadingState.Done,
+          data: [frame],
+        };
+      })
+  );
+}
+
+function runNGAlertInstances(
+  target: TestDataQuery,
+  req: DataQueryRequest<TestDataQuery>
+): Observable<DataQueryResponse> {
+  const url = `/api/alert-instances?asFrame=true`;
+  return from(
+    getBackendSrv()
+      .get(url)
+      .then((res) => {
+        const table = base64StringToArrowTable(res);
+        const frame = arrowTableToDataFrame(table);
         return {
           state: LoadingState.Done,
           data: [frame],

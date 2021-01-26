@@ -429,6 +429,13 @@ func init() {
 		Name: "Node Graph",
 		// Data generated in JS
 	})
+
+	registerScenario(&Scenario{
+		Id:   "ng_alert_instance_list",
+		Name: "NG Alerting Instance List",
+		// Data fetched via API in JS
+	})
+
 }
 
 // PredictablePulseDesc is the description for the Predictable Pulse scenerio.
