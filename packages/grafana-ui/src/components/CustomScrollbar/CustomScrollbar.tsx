@@ -108,7 +108,6 @@ export class CustomScrollbar extends Component<Props> {
   renderView = (passedProps: any, styles: StylesInterface) => {
     return <div {...passedProps} className={styles.view} />;
   };
-
   render() {
     const {
       className,
