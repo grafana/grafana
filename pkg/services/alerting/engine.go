@@ -6,16 +6,16 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/ext"
-	tlog "github.com/opentracing/opentracing-go/log"
-
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
+	tlog "github.com/opentracing/opentracing-go/log"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -23,8 +23,9 @@ import (
 // schedules alert evaluations and makes sure notifications
 // are sent.
 type AlertEngine struct {
-	RenderService rendering.Service `inject:""`
-	Bus           bus.Bus           `inject:""`
+	RenderService    rendering.Service             `inject:""`
+	Bus              bus.Bus                       `inject:""`
+	RequestValidator models.PluginRequestValidator `inject:""`
 
 	execQueue     chan *Job
 	ticker        *Ticker
@@ -164,7 +165,7 @@ func (e *AlertEngine) processJob(attemptID int, attemptChan chan int, cancelChan
 	span := opentracing.StartSpan("alert execution")
 	alertCtx = opentracing.ContextWithSpan(alertCtx, span)
 
-	evalContext := NewEvalContext(alertCtx, job.Rule)
+	evalContext := NewEvalContext(alertCtx, job.Rule, e.RequestValidator)
 	evalContext.Ctx = alertCtx
 
 	go func() {

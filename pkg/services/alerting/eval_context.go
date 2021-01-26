@@ -33,19 +33,22 @@ type EvalContext struct {
 	NoDataFound     bool
 	PrevAlertState  models.AlertStateType
 
+	RequestValidator models.PluginRequestValidator
+
 	Ctx context.Context
 }
 
 // NewEvalContext is the EvalContext constructor.
-func NewEvalContext(alertCtx context.Context, rule *Rule) *EvalContext {
+func NewEvalContext(alertCtx context.Context, rule *Rule, requestValidator models.PluginRequestValidator) *EvalContext {
 	return &EvalContext{
-		Ctx:            alertCtx,
-		StartTime:      time.Now(),
-		Rule:           rule,
-		Logs:           make([]*ResultLogEntry, 0),
-		EvalMatches:    make([]*EvalMatch, 0),
-		log:            log.New("alerting.evalContext"),
-		PrevAlertState: rule.State,
+		Ctx:              alertCtx,
+		StartTime:        time.Now(),
+		Rule:             rule,
+		Logs:             make([]*ResultLogEntry, 0),
+		EvalMatches:      make([]*EvalMatch, 0),
+		log:              log.New("alerting.evalContext"),
+		PrevAlertState:   rule.State,
+		RequestValidator: requestValidator,
 	}
 }
 
