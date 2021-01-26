@@ -361,20 +361,21 @@ To import the pre-configured dashboards, go to the configuration page of a Cloud
 
 1. Click `Import` for the dashboard you would like to use.
 
-The datasource of the newly created dashboard panels will be the one selected above. The dashboards have a template variable which is populated with the projects accessible by the configured service account every time the dashboard is loaded. After the dashboard is loaded, you can select the project you prefer from the drop-down list.
+The data source of the newly created dashboard panels will be the one selected above. The dashboards have a template variable that is populated with the projects accessible by the configured service account every time the dashboard is loaded. After the dashboard is loaded, you can select the project you prefer from the drop-down list.
 
-To customize the dashboard, we recommend saving the dashboard under a different name, because otherwise the dashboard will be overwritten when a new version of the dashboard is released.
+In case you want to customize a dashboard, we recommend that you save it under a different name. Otherwise the dashboard will be overwritten when a new version of the dashboard is released.
 
 ## Curated dashboards
 
 >**Note:** Available in Grafana v7.4 and later versions.
 
-Google Cloud Monitoring data source ships with pre-configured dashboards for some of the most popular GCP services. The dashboards are based on similar dashboards in the GCP dashboard samples repository. They are:
+Google Cloud Monitoring data source ships with pre-configured dashboards for some of the most popular GCP services. The dashboards are based on similar dashboards in the GCP dashboard samples repository.
 
+![Curated dashboards](/img/docs/google-clooud-monitoring/curated-dashboards-7-4.png)
 
 To import the pre-configured dashboards, go to the configuration page of your Cloud Monitoring data source and click on the `Dashboards` tab.
 
 1. Click `Import` for the dashboard you would like to use.
 
-To customize the dashboard, we recommend to save the dashboard under a different name.  Otherwise the dashboard will be overwritten when a new version of the dashboard is released.
+In case you want to customize a dashboard, we recommend that you save it under a different name.  Otherwise the dashboard will be overwritten when a new version of the dashboard is released.
 
