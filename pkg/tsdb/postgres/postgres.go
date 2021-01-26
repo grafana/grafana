@@ -10,6 +10,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 
@@ -21,8 +22,25 @@ import (
 	"xorm.io/core"
 )
 
+var logger = log.New("tsdb.postgres")
+
 func init() {
-	tsdb.RegisterTsdbQueryEndpoint("postgres", newPostgresQueryEndpoint)
+	registry.Register(&registry.Descriptor{
+		Name:         "PostgresService",
+		InitPriority: registry.Low,
+		Instance:     &PostgresService{},
+	})
+}
+
+type PostgresService struct {
+	Cfg *setting.Cfg `inject:""`
+}
+
+func (s *PostgresService) Init() error {
+	tsdb.RegisterTsdbQueryEndpoint("postgres", func(ds *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+		return newPostgresQueryEndpoint(ds, s.Cfg)
+	})
+	return nil
 }
 
 func newPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
