@@ -22,6 +22,12 @@
 go.mod @grafana/backend-platform
 go.sum @grafana/backend-platform
 
+#Cloud Datasources backend code
+/pkg/tsdb/cloudwatch @grafana/cloud-datasources
+/pkg/tsdb/azuremonitor @grafana/cloud-datasources
+/pkg/tsdb/cloudmonitoring @grafana/cloud-datasources
+
+
 # Backend code docs
 /contribute/style-guides/backend.md @grafana/backend-platform
 
@@ -48,9 +54,9 @@ lerna.json @grafana/grafana-frontend-platform
 /packages/jaeger-ui-components/ @grafana/observability-squad
 
 # Core datasources
-/public/app/plugins/datasource/cloudwatch @grafana/backend-platform @grafana/observability-squad
+/public/app/plugins/datasource/cloudwatch @grafana/cloud-datasources @grafana/observability-squad
 /public/app/plugins/datasource/elasticsearch @grafana/observability-squad
-/public/app/plugins/datasource/grafana-azure-monitor-datasource @grafana/backend-platform
+/public/app/plugins/datasource/grafana-azure-monitor-datasource @grafana/cloud-datasources
 /public/app/plugins/datasource/graphite @grafana/observability-squad
 /public/app/plugins/datasource/influxdb @grafana/observability-squad
 /public/app/plugins/datasource/jaeger @grafana/observability-squad
@@ -60,7 +66,7 @@ lerna.json @grafana/grafana-frontend-platform
 /public/app/plugins/datasource/opentsdb @grafana/backend-platform
 /public/app/plugins/datasource/postgres @grafana/backend-platform
 /public/app/plugins/datasource/prometheus @grafana/observability-squad
-/public/app/plugins/datasource/cloud-monitoring @grafana/backend-platform
+/public/app/plugins/datasource/cloud-monitoring @grafana/cloud-datasources
 /public/app/plugins/datasource/zipkin @grafana/observability-squad
 
 # Cloud middleware
