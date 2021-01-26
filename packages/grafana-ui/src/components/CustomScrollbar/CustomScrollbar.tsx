@@ -17,7 +17,16 @@ interface Props {
   setScrollTop: (event: any) => void;
   autoHeightMin?: number | string;
   updateAfterMountMs?: number;
-  page?: boolean;
+  scrollbarStickLeft?: boolean;
+}
+
+interface StylesInterface {
+  customScrollbar: string;
+  trackVertical: string;
+  trackHorizontal: string;
+  thumbVertical: string;
+  thumbHorizontal: string;
+  view: string;
 }
 
 /**
@@ -72,35 +81,31 @@ export class CustomScrollbar extends Component<Props> {
     this.updateScroll();
   }
 
-  renderTrack = (styles: any, hideTrack: boolean | undefined, passedProps: any) => {
+  renderTrack = (style: string, hideTrack: boolean | undefined, passedProps: any) => {
     if (passedProps.style && hideTrack) {
       passedProps.style.display = 'none';
     }
 
-    return <div {...passedProps} className={styles.trackVertical | styles.trackHorizontal} />;
+    return <div {...passedProps} className={style} />;
   };
 
-  // renderThumb = (thumb: styles.thumbVertical | styles.thumbHorizontal, passedProps: any) => {
-  //   return <div {...passedProps} className={thumb} />;
-  // };
-
-  renderTrackHorizontal = (passedProps: any, styles: any) => {
+  renderTrackHorizontal = (passedProps: any, styles: StylesInterface) => {
     return this.renderTrack(styles.trackHorizontal, this.props.hideHorizontalTrack, passedProps);
   };
 
-  renderTrackVertical = (passedProps: any, styles: any) => {
+  renderTrackVertical = (passedProps: any, styles: StylesInterface) => {
     return this.renderTrack(styles.trackVertical, this.props.hideVerticalTrack, passedProps);
   };
 
-  renderThumbHorizontal = (passedProps: any, styles: any) => {
+  renderThumbHorizontal = (passedProps: any, styles: StylesInterface) => {
     return <div {...passedProps} className={styles.thumbHorizontal} />;
   };
 
-  renderThumbVertical = (passedProps: any, styles: any) => {
+  renderThumbVertical = (passedProps: any, styles: StylesInterface) => {
     return <div {...passedProps} className={styles.thumbVertical} />;
   };
 
-  renderView = (passedProps: any, styles: any) => {
+  renderView = (passedProps: any, styles: StylesInterface) => {
     return <div {...passedProps} className={styles.view} />;
   };
 
@@ -115,7 +120,7 @@ export class CustomScrollbar extends Component<Props> {
       autoHideTimeout,
       hideTracksWhenNotNeeded,
     } = this.props;
-    const styles = getStyles(this.props.page);
+    const styles = getStyles(this.props.scrollbarStickLeft);
 
     return (
       <Scrollbars
@@ -144,7 +149,7 @@ export class CustomScrollbar extends Component<Props> {
 
 export default CustomScrollbar;
 
-const getStyles = (page?: boolean) => {
+const getStyles = (scrollbarStickLeft?: boolean): StylesInterface => {
   return {
     customScrollbar: css`
       display: flex;
@@ -157,7 +162,7 @@ const getStyles = (page?: boolean) => {
     trackVertical: css`
       border-radius: 3px;
       width: 8px !important;
-      right: ${page ? 0 : 2}px;
+      right: ${scrollbarStickLeft ? 0 : 2}px;
       bottom: 2px;
     `,
     trackHorizontal: css`
