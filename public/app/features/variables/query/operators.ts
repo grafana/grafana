@@ -186,12 +186,11 @@ export function areMetricFindValues(data: any[]): data is MetricFindValue[] {
   }
 
   for (const firstValueKey in firstValue) {
-    if (
-      !firstValue.hasOwnProperty(firstValueKey) ||
-      typeof firstValue[firstValueKey] === 'object' ||
-      typeof firstValue[firstValueKey] === 'function' ||
-      typeof firstValue[firstValueKey] === 'symbol'
-    ) {
+    if (!firstValue.hasOwnProperty(firstValueKey)) {
+      continue;
+    }
+
+    if (typeof firstValue[firstValueKey] !== 'string' && typeof firstValue[firstValueKey] !== 'number') {
       continue;
     }
 

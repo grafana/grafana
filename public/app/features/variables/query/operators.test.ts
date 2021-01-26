@@ -289,6 +289,7 @@ describe('areMetricFindValues', () => {
     ${[{ text: () => {} }]}      | ${false}
     ${[{ text: { foo: 1 } }]}    | ${false}
     ${[{ text: Symbol('foo') }]} | ${false}
+    ${[{ text: true }]}          | ${false}
     ${[]}                        | ${true}
     ${[{ text: '' }]}            | ${true}
     ${[{ Text: '' }]}            | ${true}
@@ -297,9 +298,9 @@ describe('areMetricFindValues', () => {
     ${[{ text: '', value: '' }]} | ${true}
     ${[{ Text: '', Value: '' }]} | ${true}
     ${[{ text: 1 }]}             | ${true}
-    ${[{ Text: false }]}         | ${true}
+    ${[{ Text: 1 }]}             | ${true}
     ${[{ value: 1 }]}            | ${true}
-    ${[{ Value: true }]}         | ${true}
+    ${[{ Value: 1 }]}            | ${true}
     ${[{ text: 1, value: 1 }]}   | ${true}
     ${[{ Text: 1, Value: 1 }]}   | ${true}
   `('when called with values:$values', ({ values, expected }) => {
