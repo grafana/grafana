@@ -5,12 +5,10 @@ import { QueryVariableModel } from '../types';
 import { ThunkDispatch } from '../../../types';
 import { toVariableIdentifier, toVariablePayload } from '../state/types';
 import { validateVariableSelectionState } from '../state/actions';
-import { DataSourceApi, FieldType, getFieldDisplayName, MetricFindValue, PanelData } from '@grafana/data';
+import { DataSourceApi, FieldType, getFieldDisplayName, isDataFrame, MetricFindValue, PanelData } from '@grafana/data';
 import { updateVariableOptions, updateVariableTags } from './reducer';
 import { getTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
 import { getLegacyQueryOptions, getTemplatedRegex } from '../utils';
-
-const metricFindValueProps = ['text', 'Text', 'value', 'Value'];
 
 export function toMetricFindValues(): OperatorFunction<PanelData, MetricFindValue[]> {
   return (source) =>
@@ -183,5 +181,25 @@ export function areMetricFindValues(data: any[]): data is MetricFindValue[] {
   }
 
   const firstValue: any = data[0];
-  return metricFindValueProps.some((prop) => firstValue.hasOwnProperty(prop) && typeof firstValue[prop] === 'string');
+  if (isDataFrame(firstValue)) {
+    return false;
+  }
+
+  for (const firstValueKey in firstValue) {
+    if (!firstValue.hasOwnProperty(firstValueKey)) {
+      continue;
+    }
+
+    if (typeof firstValue[firstValueKey] !== 'string' && typeof firstValue[firstValueKey] !== 'number') {
+      continue;
+    }
+
+    const key = firstValueKey.toLowerCase();
+
+    if (key === 'text' || key === 'value') {
+      return true;
+    }
+  }
+
+  return false;
 }

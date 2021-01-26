@@ -71,7 +71,7 @@ export const Variants: Story<ButtonProps> = ({ children, ...args }) => {
       <div />
       <HorizontalGroup spacing="lg">
         <div>Inside ButtonGroup</div>
-        <ButtonGroup noSpacing>
+        <ButtonGroup>
           <Button icon="sync">Run query</Button>
           <Button icon="angle-down" />
         </ButtonGroup>

@@ -98,9 +98,3 @@ type UserStats struct {
 	Editors int64
 	Viewers int64
 }
-
-type GetUserStatsQuery struct {
-	MustUpdate bool
-	Active     bool
-	Result     UserStats
-}
