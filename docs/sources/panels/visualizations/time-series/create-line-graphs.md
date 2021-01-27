@@ -127,29 +127,29 @@ Display solid line. This is the default setting.
 
 Display a dashed line. When you choose this option, a list appears so that you can select the length and gap (length, gap) for the line dashes.
 
-Dash spacing set to 10,10 (default)
+Dash spacing set to 10, 10 (default)
 
-![Line style dashed 10,10 example](/img/docs/time-series-panel/line-graph-line-style-dashed-10-10-7-4.png)
+![Line style dashed 10, 10 example](/img/docs/time-series-panel/line-graph-line-style-dashed-10-10-7-4.png)
 
-Dash spacing set to 10,30
+Dash spacing set to 10, 30
 
-![Line style dashed 10,30 example](/img/docs/time-series-panel/line-graph-line-style-dashed-10-30-7-4.png)
+![Line style dashed 10, 30 example](/img/docs/time-series-panel/line-graph-line-style-dashed-10-30-7-4.png)
 
-Dash spacing set to 40,10
+Dash spacing set to 40, 10
 
-![Line style dashed 40,10 example](/img/docs/time-series-panel/line-graph-line-style-dashed-40-10-7-4.png)
+![Line style dashed 40, 10 example](/img/docs/time-series-panel/line-graph-line-style-dashed-40-10-7-4.png)
 
 #### Dots
 
 Display dotted lines. When you choose this option, a list appears so that you can select the gap (length = 0, gap) for the dot spacing.
 
-Dot spacing set to 0,10 (default)
+Dot spacing set to 0, 10 (default)
 
-![Line style dots 0,10 example](/img/docs/time-series-panel/line-graph-line-style-dots-0-10-7-4.png)
+![Line style dots 0, 10 example](/img/docs/time-series-panel/line-graph-line-style-dots-0-10-7-4.png)
 
-Dot spacing set to 0,30
+Dot spacing set to 0, 30
 
-![Line style dots 0,30 example](/img/docs/time-series-panel/line-graph-line-style-dots-0-30-7-4.png)
+![Line style dots 0, 30 example](/img/docs/time-series-panel/line-graph-line-style-dots-0-30-7-4.png)
 
 ### Null values
 
@@ -169,7 +169,7 @@ If there is a gap in the series, the line will skip the gap and connect to the n
 
 ### Show points
 
-Choose when the points should be shown on the graph
+Choose when the points should be shown on the graph.
 
 #### Auto
 
@@ -177,21 +177,39 @@ Grafana automatically decides whether or not to show the points depending on the
 
 #### Always
 
-Show the points no matter how dense the data set is.
-
-#### Never
-
-Never show the points.
+Show the points no matter how dense the data set is. This example uses a **Line width** of 1 and 50 data points. If the line width is thicker than the point size, then the line obscures the points.
 
 #### Point size
 
 Set the size of the points, from 1 to 40 pixels in diameter.
 
+Point size set to 4.
+
+![Show points point size 4 example](/img/docs/time-series-panel/line-graph-show-points-4-7-4.png)
+
+Point size set to 10.
+
+![Show points point size 10 example](/img/docs/time-series-panel/line-graph-show-points-10-7-4.png)
+
+#### Never
+
+Never show the points.
+
+![Show points point never example](/img/docs/time-series-panel/line-graph-show-points-never-7-4.png)
+
 ## Fill below to
 
 This option is only available as in the Overrides tab.
 
+Fill the area between two series. On the Overrides tab:
 
+1. Select the fields to fill below.
+1. In **Add override property**, select **Fill below to**.
+1. Select the series that you want the fill to stop at.
+
+A-series filled below to B-series
+
+![Fill below to example](/img/docs/time-series-panel/line-graph-fill-below-to-7-4.png)
 
 ## Line graph examples
 
