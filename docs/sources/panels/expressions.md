@@ -21,7 +21,7 @@ Expressions are meant to augment data sources by enabling queries from different
 
 Expressions work with data source queries that return time series or number data. They also operate on [multiple-dimensional data]({{< relref "../getting-started/timeseries-dimensions.md" >}}). For example, a query that returns multiple series, where each series is identified by labels or tags.
 
-An individual expression takes one or more queries or other expressions as input and adds data to the result. Each individual expression or query is represented by a variable that is a named identifer known as its RefID (e.g., the default letter `A` or `B`).
+An individual expression takes one or more queries or other expressions as input and adds data to the result. Each individual expression or query is represented by a variable that is a named identifier known as its RefID (e.g., the default letter `A` or `B`).
 
 To reference the output of an individual expression or a data source query in another expression, this identifer is used as a variable.
 
