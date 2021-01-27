@@ -10,6 +10,8 @@ weight = 1200
 
 Time series panel is a robust visualization to plot time series data. It can render as a line, a path of dots, or a series of bars. This type of graph is versatile enough to display almost any time-series data.
 
+For Time series panel examples, refer to the Grafana Play dashboard [New Features in v7.4](https://play.grafana.org/d/nP8rcffGk/new-features-in-v7-4?orgId=1).
+
 ## Data and field options
 
 Time series visualizations allow you to apply:
@@ -20,10 +22,10 @@ Time series visualizations allow you to apply:
 
 You can also use field options to create different types of graphs or adjust your axes:
 
-- Create line graphs
-- Create bar graphs
-- Create scatter plot graphs
-- Adjust axis options
+- [Create line graphs]({{< relref "create-line-graphs.md" >}})
+- [Create bar graphs]({{< relref "create-bar-graphs.md" >}})
+- [Create scatter plot graphs]({{< relref "create-scatter-plot-graphs.md" >}})
+- [Change axis display]({{< relref "change-axis-display.md" >}})
 
 ## Display options
 

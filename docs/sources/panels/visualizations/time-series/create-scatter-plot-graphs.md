@@ -1,7 +1,7 @@
 +++
 title = "Create scatter plot graphs"
 keywords = ["grafana", "time series panel", "documentation", "guide", "graph"]
-weight = 200
+weight = 300
 +++
 
 # Create scatter plot graphs
