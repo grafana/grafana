@@ -18,6 +18,7 @@ var plog = log.New("api")
 // registerRoutes registers all API HTTP routes.
 func (hs *HTTPServer) registerRoutes() {
 	reqSignedIn := middleware.ReqSignedIn
+	reqRBACAuthorization := middleware.RBACAuthorization()
 	reqGrafanaAdmin := middleware.ReqGrafanaAdmin
 	reqEditorRole := middleware.ReqEditorRole
 	reqOrgAdmin := middleware.ReqOrgAdmin
@@ -40,7 +41,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 	// authed views
 	r.Get("/", reqSignedIn, hs.Index)
-	r.Get("/profile/", reqSignedIn, hs.Index)
+	r.Get("/profile/", reqRBACAuthorization, hs.Index)
 	r.Get("/profile/password", reqSignedIn, hs.Index)
 	r.Get("/.well-known/change-password", redirectToChangePassword)
 	r.Get("/profile/switch-org/:id", reqSignedIn, hs.ChangeActiveOrgAndRedirectToHome)
@@ -59,7 +60,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/configuration", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin/settings", reqGrafanaAdmin, hs.Index)
-	r.Get("/admin/users", reqGrafanaAdmin, hs.Index)
+	r.Get("/admin/users", reqRBACAuthorization, reqGrafanaAdmin, hs.Index)
 	r.Get("/admin/users/create", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin/users/edit/:id", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin/orgs", reqGrafanaAdmin, hs.Index)
@@ -86,7 +87,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/dashboard-solo/db/:slug", reqSignedIn, redirectFromLegacyDashboardSoloURL, hs.Index)
 	r.Get("/dashboard-solo/script/*", reqSignedIn, hs.Index)
 	r.Get("/import/dashboard", reqSignedIn, hs.Index)
-	r.Get("/dashboards/", reqSignedIn, hs.Index)
+	r.Get("/dashboards/", reqRBACAuthorization, hs.Index)
 	r.Get("/dashboards/*", reqSignedIn, hs.Index)
 	r.Get("/goto/:uid", reqSignedIn, hs.redirectFromShortURL, hs.Index)
 
@@ -126,7 +127,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Group("/api", func(apiRoute routing.RouteRegister) {
 		// user (signed in)
 		apiRoute.Group("/user", func(userRoute routing.RouteRegister) {
-			userRoute.Get("/", routing.Wrap(GetSignedInUser))
+			userRoute.Get("/", reqRBACAuthorization, routing.Wrap(GetSignedInUser))
 			userRoute.Put("/", bind(models.UpdateUserCommand{}), routing.Wrap(UpdateSignedInUser))
 			userRoute.Post("/using/:id", routing.Wrap(UserSetUsingOrg))
 			userRoute.Get("/orgs", routing.Wrap(GetSignedInUserOrgList))
