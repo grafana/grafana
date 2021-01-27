@@ -13,7 +13,7 @@ import { getBackendSrv } from 'app/core/services/backend_srv';
 const saveDashboard = async (saveModel: any, options: SaveDashboardOptions, dashboard: DashboardModel) => {
   let folderId = options.folderId;
   if (folderId === undefined) {
-    folderId = dashboard.meta.folderId || saveModel.folderId;
+    folderId = dashboard.meta.folderId ?? saveModel.folderId;
   }
 
   // Check if there are any new library panels that need to be created first
@@ -23,6 +23,7 @@ const saveDashboard = async (saveModel: any, options: SaveDashboardOptions, dash
       continue;
     } else if (panel.libraryPanel && panel.libraryPanel.uid === undefined) {
       panel.libraryPanel.name = panel.title;
+      console.log('panelPromises before', panelPromises, folderId);
       panelPromises.push(
         getBackendSrv()
           .addLibraryPanel(panel, folderId!)
@@ -37,7 +38,9 @@ const saveDashboard = async (saveModel: any, options: SaveDashboardOptions, dash
             };
           })
       );
+      console.log('panelPromises after', panelPromises);
     } else {
+      console.log('panelPromises update before', panelPromises, folderId);
       // For now, update library panels. Implement "Update panel instances" modal later.
       panelPromises.push(
         getBackendSrv()
@@ -53,9 +56,11 @@ const saveDashboard = async (saveModel: any, options: SaveDashboardOptions, dash
             };
           })
       );
+      console.log('panelPromises update after', panelPromises);
     }
   }
 
+  console.log('panelPromise', panelPromises);
   await Promise.all(panelPromises);
 
   return await saveDashboardApiCall({ ...options, folderId, dashboard: saveModel });

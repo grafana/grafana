@@ -411,11 +411,11 @@ export class BackendSrv implements BackendService {
     return this.get<FolderDTO>(`/api/folders/${uid}`);
   }
 
-  getLibraryPanels(): Promise<LibraryPanel[]> {
+  async getLibraryPanels(): Promise<LibraryPanel[]> {
     return this.get(`/api/library-panels`).then(({ result }) => result);
   }
 
-  addLibraryPanel(panelSaveModel: any, folderId: number): Promise<LibraryPanel> {
+  async addLibraryPanel(panelSaveModel: any, folderId: number): Promise<LibraryPanel> {
     return this.post(`/api/library-panels`, {
       folderId,
       name: panelSaveModel.title,
@@ -423,19 +423,19 @@ export class BackendSrv implements BackendService {
     }).then(({ result }: { result: LibraryPanel }) => result);
   }
 
-  updateLibraryPanel(panelSaveModel: any, folderId: number) {
-    return this.patch(`/api/library-panels/${panelSaveModel.panelLibrary.uid}`, {
+  async updateLibraryPanel(panelSaveModel: any, folderId: number): Promise<LibraryPanel> {
+    return this.patch(`/api/library-panels/${panelSaveModel.libraryPanel.uid}`, {
       folderId,
       name: panelSaveModel.title,
       model: panelSaveModel,
     });
   }
 
-  deleteLibraryPanel(uid: string) {
+  async deleteLibraryPanel(uid: string) {
     return this.delete(`/api/library-panels/${uid}`);
   }
 
-  getOrgUsers(): Promise<OrgUser[]> {
+  async getOrgUsers(): Promise<OrgUser[]> {
     return this.get('/api/org/users');
   }
 }
