@@ -145,11 +145,9 @@ class DashNav extends PureComponent<Props> {
       buttons.push(
         <DashNavButton
           tooltip="Mark as favorite"
-          classSuffix="star"
           icon={isStarred ? 'favorite' : 'star'}
           iconType={isStarred ? 'mono' : 'default'}
           iconSize="lg"
-          noBorder={true}
           onClick={this.onStarDashboard}
           key="button-star"
         />
@@ -162,10 +160,8 @@ class DashNav extends PureComponent<Props> {
           {({ showModal, hideModal }) => (
             <DashNavButton
               tooltip="Share dashboard"
-              classSuffix="share"
               icon="share-alt"
               iconSize="lg"
-              noBorder={true}
               onClick={() => {
                 showModal(ShareModal, {
                   dashboard,

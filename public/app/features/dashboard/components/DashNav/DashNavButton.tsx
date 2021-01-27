@@ -2,71 +2,37 @@
 import React, { FunctionComponent } from 'react';
 import { css } from 'emotion';
 // Components
-import { Tooltip, Icon, IconName, IconType, IconSize, IconButton, useTheme, stylesFactory } from '@grafana/ui';
-import { selectors } from '@grafana/e2e-selectors';
+import { IconName, IconType, IconSize, IconButton, useTheme, stylesFactory } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 
 interface Props {
   icon?: IconName;
   tooltip: string;
-  classSuffix?: string;
   onClick?: () => void;
   href?: string;
   children?: React.ReactNode;
   iconType?: IconType;
   iconSize?: IconSize;
-  noBorder?: boolean;
 }
 
-export const DashNavButton: FunctionComponent<Props> = ({
-  icon,
-  iconType,
-  iconSize,
-  tooltip,
-  classSuffix,
-  onClick,
-  href,
-  children,
-  noBorder,
-}) => {
+export const DashNavButton: FunctionComponent<Props> = ({ icon, iconType, iconSize, tooltip, onClick, children }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
 
-  if (noBorder) {
-    return (
-      <div className={styles.noBorderContainer}>
-        {icon && (
-          <IconButton
-            name={icon}
-            size={iconSize}
-            iconType={iconType}
-            tooltip={tooltip}
-            tooltipPlacement="bottom"
-            onClick={onClick}
-          />
-        )}
-        {children}
-      </div>
-    );
-  }
   return (
-    <Tooltip content={tooltip} placement="bottom">
-      {onClick ? (
-        <button
-          className={`btn navbar-button navbar-button--${classSuffix}`}
+    <div className={styles.noBorderContainer}>
+      {icon && (
+        <IconButton
+          name={icon}
+          size={iconSize}
+          iconType={iconType}
+          tooltip={tooltip}
+          tooltipPlacement="bottom"
           onClick={onClick}
-          aria-label={selectors.components.PageToolbar.item(tooltip)}
-        >
-          {icon && <Icon name={icon} type={iconType} size={iconSize || 'lg'} />}
-          {children}
-        </button>
-      ) : (
-        <a className={`btn navbar-button navbar-button--${classSuffix}`} href={href}>
-          {icon && <Icon name={icon} type={iconType} size="lg" />}
-          {children}
-        </a>
+        />
       )}
-    </Tooltip>
+      {children}
+    </div>
   );
 };
 

@@ -118,9 +118,12 @@ const getStyles = (theme: GrafanaTheme) => {
       line-height: ${theme.height.md - 2}px;
       font-weight: ${theme.typography.weight.semibold};
       border: 1px solid ${theme.colors.border2};
+      white-space: nowrap;
+
       &:focus {
         outline: none;
       }
+
       &[disabled],
       &:disabled {
         cursor: not-allowed;
