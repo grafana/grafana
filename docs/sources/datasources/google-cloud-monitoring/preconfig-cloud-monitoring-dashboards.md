@@ -8,7 +8,7 @@ weight = 10
 
 # Preconfigured dashboards
 
-Google Cloud Monitoring data source ships with [out-of-the-box](#out-of-the-box-dashboards) and [curated](#curated-dashboards) dashboards. See also [Using Google Cloud Monitoring in Grafana]({{< relref "_index.md" >}}) for detailed instructions on how to add and configure the data source.
+Google Cloud Monitoring data source ships with [out-of-the-box](#out-of-the-box-dashboards) and [curated](#curated-dashboards) dashboards. See also [Using Google Cloud Monitoring in Grafana]({{< relref "./_index.md" >}}) for detailed instructions on how to add and configure the data source.
 
 ## Out-of-the-box dashboards
 
