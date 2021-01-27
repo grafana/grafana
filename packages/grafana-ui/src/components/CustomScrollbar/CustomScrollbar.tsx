@@ -159,16 +159,24 @@ const getStyles = stylesFactory(
   (theme: GrafanaTheme, isPageScrollbar?: boolean): StylesInterface => {
     return {
       customScrollbar: css`
+        label: customScrollbar;
         display: flex;
         flex-grow: 1;
+        &:hover {
+          opacity: 0.8;
+          transition: opacity 0.3s ease-in-out;
+        }
       `,
       trackVertical: css`
+        label: trackVertical;
         border-radius: ${theme.border.radius.md};
         width: ${theme.spacing.sm} !important;
+        top: 2px;
         right: ${isPageScrollbar ? 0 : 2}px;
         bottom: ${theme.spacing.xxs};
       `,
       trackHorizontal: css`
+        label: trackHorizontal;
         border-radius: ${theme.border.radius.md};
         height: ${theme.spacing.sm} !important;
         right: ${theme.spacing.xxs};
@@ -176,28 +184,23 @@ const getStyles = stylesFactory(
         left: ${theme.spacing.xxs};
       `,
       thumbVertical: css`
+        label: thumbVertical;
         background-color: ${theme.palette.dark10};
         background-image: linear-gradient(180deg, #404357, ${theme.palette.dark10});
         background-repeat: repeat-x;
         border-radius: ${theme.border.radius.md};
         opacity: 0;
-        &:hover {
-          opacity: 0.8;
-          transition: opacity 0.3s ease-in-out;
-        }
       `,
       thumbHorizontal: css`
+        label: thumbHorizontal;
         background-color: ${theme.palette.dark10};
         background-image: linear-gradient(to right, #404357, ${theme.palette.dark10});
         background-repeat: repeat-x;
         border-radius: 6px;
         opacity: 0;
-        &:hover {
-          opacity: 0.8;
-          transition: opacity 0.3s ease-in-out;
-        }
       `,
       view: css`
+        label: view;
         display: flex;
         flex-grow: 1;
         flex-direction: column;
