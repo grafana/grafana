@@ -169,14 +169,14 @@ const getStyles = (theme: GrafanaTheme) => {
     `,
     content: css`
       flex-grow: 1;
+    `,
+    contentWithIcon: css`
       display: none;
+      padding-left: ${theme.spacing.sm};
 
       @media ${styleMixins.mediaUp(theme.breakpoints.md)} {
         display: block;
       }
-    `,
-    contentWithIcon: css`
-      padding-left: ${theme.spacing.sm};
     `,
     contentWithRightIcon: css`
       padding-right: ${theme.spacing.xs};
