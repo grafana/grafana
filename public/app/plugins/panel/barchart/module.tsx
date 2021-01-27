@@ -2,6 +2,7 @@ import { FieldColorModeId, FieldConfigProperty, PanelPlugin, VizOrientation } fr
 import { BarChartPanel } from './BarChartPanel';
 import { BarChartFieldConfig, BarChartOptions, BarStackingMode, BarValueVisibility } from '@grafana/ui';
 import { addLegendOptions } from '../timeseries/config';
+import { SeriesConfigEditor } from '../timeseries/HideSeriesConfigEditor';
 
 export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarChartPanel)
   .useFieldConfig({
@@ -15,7 +16,25 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
         },
       },
     },
-    // TODO: import BarChartFieldConfig
+    useCustomConfig: (builder) => {
+      builder.addCustomEditor({
+        id: 'hideFrom',
+        name: 'Hide in area',
+        category: ['Series'],
+        path: 'hideFrom',
+        defaultValue: {
+          tooltip: false,
+          graph: false,
+          legend: false,
+        },
+        editor: SeriesConfigEditor,
+        override: SeriesConfigEditor,
+        shouldApply: () => true,
+        hideFromDefaults: true,
+        hideFromOverrides: true,
+        process: (value) => value,
+      });
+    },
   })
   .setPanelOptions((builder) => {
     builder

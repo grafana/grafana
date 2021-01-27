@@ -23,8 +23,7 @@ import { UPlotChart } from '../uPlot/Plot';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { AxisPlacement, ScaleDistribution } from '../uPlot/config';
 import { useTheme } from '../../themes';
-import { GraphNGLegendEvent } from '../GraphNG/types';
-import { mapMouseEventToMode } from '../GraphNG/GraphNG';
+import { GraphNGLegendEvent, GraphNGLegendEventMode } from '../GraphNG/types';
 import { LegendDisplayMode, VizLegendItem } from '../VizLegend/types';
 import { VizLegend } from '../VizLegend/VizLegend';
 
@@ -378,7 +377,7 @@ export const BarChart: React.FunctionComponent<Props> = ({
 
       onLegendClick({
         fieldIndex,
-        mode: mapMouseEventToMode(event),
+        mode: GraphNGLegendEventMode.AppendToSelection,
       });
     },
     [onLegendClick, data]
