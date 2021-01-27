@@ -6,15 +6,7 @@ import { Subscription } from 'rxjs';
 
 import { FieldConfigSource, GrafanaTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import {
-  Button,
-  HorizontalGroup,
-  Icon,
-  PageToolbar,
-  RadioButtonGroup,
-  stylesFactory,
-  ToolbarButton,
-} from '@grafana/ui';
+import { HorizontalGroup, Icon, PageToolbar, RadioButtonGroup, stylesFactory, ToolbarButton } from '@grafana/ui';
 
 import config from 'app/core/config';
 import { appEvents } from 'app/core/core';
@@ -25,7 +17,6 @@ import { DashNavTimeControls } from '../DashNav/DashNavTimeControls';
 import { OptionsPaneContent } from './OptionsPaneContent';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
 import { SubMenuItems } from 'app/features/dashboard/components/SubMenu/SubMenuItems';
-import { BackButton } from 'app/core/components/BackButton/BackButton';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { SaveDashboardModalProxy } from '../SaveDashboard/SaveDashboardModalProxy';
 import { DashboardPanel } from '../../dashgrid/DashboardPanel';
