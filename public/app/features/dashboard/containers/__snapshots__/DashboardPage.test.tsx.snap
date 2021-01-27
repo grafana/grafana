@@ -108,7 +108,6 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
     <CustomScrollbar
       autoHeightMin="100%"
       hideHorizontalTrack={true}
-      isPageScrollbar={true}
       setScrollTop={[Function]}
       updateAfterMountMs={500}
     >
@@ -478,7 +477,6 @@ exports[`DashboardPage When dashboard has editview url state should render setti
     <CustomScrollbar
       autoHeightMin="100%"
       hideHorizontalTrack={true}
-      isPageScrollbar={true}
       setScrollTop={[Function]}
       updateAfterMountMs={500}
     >
