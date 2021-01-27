@@ -179,6 +179,8 @@ const getMenuStyles = (theme: GrafanaTheme) => {
       color: ${linkColor};
       display: flex;
       cursor: pointer;
+      padding: 5px 12px 5px 10px;
+
       &:hover {
         color: ${linkColorHover};
         text-decoration: none;
@@ -186,7 +188,6 @@ const getMenuStyles = (theme: GrafanaTheme) => {
     `,
     item: css`
       background: none;
-      padding: 5px 12px 5px 10px;
       border-left: 2px solid transparent;
       cursor: pointer;
       white-space: nowrap;

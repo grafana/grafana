@@ -7,6 +7,7 @@ import { Tooltip } from '../Tooltip/Tooltip';
 import { Icon } from '../Icon/Icon';
 import { getPropertiesForVariant } from './Button';
 import { isString } from 'lodash';
+import { selectors } from '@grafana/e2e-selectors';
 
 export interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   /** Icon name */
@@ -31,7 +32,20 @@ export type ToolbarButtonVariant = 'default' | 'primary' | 'destructive' | 'acti
 
 export const ToolbarButton = forwardRef<HTMLButtonElement, Props>(
   (
-    { tooltip, icon, className, children, imgSrc, fullWidth, isOpen, narrow, variant = 'default', iconOnly, ...rest },
+    {
+      tooltip,
+      icon,
+      className,
+      children,
+      imgSrc,
+      fullWidth,
+      isOpen,
+      narrow,
+      variant = 'default',
+      iconOnly,
+      'aria-label': ariaLabel,
+      ...rest
+    },
     ref
   ) => {
     const styles = useStyles(getStyles);
@@ -54,10 +68,10 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, Props>(
     });
 
     const body = (
-      <button ref={ref} className={buttonStyles} {...rest}>
+      <button ref={ref} className={buttonStyles} aria-label={getButttonAriaLabel(ariaLabel, tooltip)} {...rest}>
         {renderIcon(icon)}
         {imgSrc && <img className={styles.img} src={imgSrc} />}
-        {children && !iconOnly && <span className={contentStyles}>{children}</span>}
+        {children && !iconOnly && <div className={contentStyles}>{children}</div>}
         {isOpen === false && <Icon name="angle-down" />}
         {isOpen === true && <Icon name="angle-up" />}
       </button>
@@ -72,6 +86,10 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, Props>(
     );
   }
 );
+
+function getButttonAriaLabel(ariaLabel: string | undefined, tooltip: string | undefined) {
+  return ariaLabel ? ariaLabel : tooltip ? selectors.components.PageToolbar.item(tooltip) : undefined;
+}
 
 function renderIcon(icon: IconName | React.ReactNode) {
   if (!icon) {
@@ -100,16 +118,13 @@ const getStyles = (theme: GrafanaTheme) => {
       line-height: ${theme.height.md - 2}px;
       font-weight: ${theme.typography.weight.semibold};
       border: 1px solid ${theme.colors.border2};
-
       &:focus {
         outline: none;
       }
-
       &[disabled],
       &:disabled {
         cursor: not-allowed;
         opacity: 0.5;
-
         &:hover {
           color: ${theme.colors.textWeak};
           background: ${theme.colors.bg1};
@@ -119,7 +134,6 @@ const getStyles = (theme: GrafanaTheme) => {
     default: css`
       color: ${theme.colors.textWeak};
       background-color: ${theme.colors.bg1};
-
       &:hover {
         color: ${theme.colors.text};
         background: ${styleMixins.hoverColor(theme.colors.bg1, theme)};
@@ -129,7 +143,6 @@ const getStyles = (theme: GrafanaTheme) => {
       color: ${theme.palette.orangeDark};
       border-color: ${theme.palette.orangeDark};
       background-color: transparent;
-
       &:hover {
         color: ${theme.colors.text};
         background: ${styleMixins.hoverColor(theme.colors.bg1, theme)};
@@ -156,14 +169,14 @@ const getStyles = (theme: GrafanaTheme) => {
     `,
     content: css`
       flex-grow: 1;
-      display: none;
-
-      @media only screen and (min-width: ${theme.breakpoints.md}) {
-        display: block;
-      }
     `,
     contentWithIcon: css`
+      display: none;
       padding-left: ${theme.spacing.sm};
+
+      @media ${styleMixins.mediaUp(theme.breakpoints.md)} {
+        display: block;
+      }
     `,
     contentWithRightIcon: css`
       padding-right: ${theme.spacing.xs};

@@ -56,8 +56,8 @@ export const Components = {
     },
     OptionsPane: {
       content: 'Panel editor option pane content',
-      close: 'Dashboard navigation bar button Close options pane',
-      open: 'Dashboard navigation bar button Open options pane',
+      close: 'Page toolbar button Close options pane',
+      open: 'Page toolbar button Open options pane',
       select: 'Panel editor option pane select',
       tab: (title: string) => `Panel editor option pane tab ${title}`,
     },
@@ -122,6 +122,10 @@ export const Components = {
       modeLabel: 'Transform mode label',
       calculationsLabel: 'Transform calculations label',
     },
+  },
+  PageToolbar: {
+    container: () => '.page-toolbar',
+    item: (tooltip: string) => `Page toolbar button ${tooltip}`,
   },
   QueryEditorToolbarItem: {
     button: (title: string) => `QueryEditor toolbar item button ${title}`,

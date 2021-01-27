@@ -38,7 +38,7 @@ e2e.scenario({
         );
     }
 
-    e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
+    e2e.components.PageToolbar.item('Dashboard settings').click();
 
     e2e.components.TimeZonePicker.container()
       .should('be.visible')
