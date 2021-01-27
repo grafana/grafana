@@ -234,9 +234,6 @@ $horizontalComponentOffset: 180px;
 $navbarHeight: 52px;
 $navbarBorder: 1px solid $gray-5;
 
-$navbarButtonBackground: $panel-bg;
-$navbar-button-border: $gray-4;
-
 // Sidemenu
 // -------------------------
 $side-menu-bg: ${theme.palette.gray15};

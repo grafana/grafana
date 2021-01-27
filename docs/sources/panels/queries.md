@@ -49,6 +49,7 @@ The Query tab consists of the following elements:
 - Query options
 - Query inspector button
 - Query editor list
+- Expressions
 
 {{< docs-imagebox img="/img/docs/queries/query-editor-7-2.png" class="docs-image--no-shadow" max-width="1000px" >}}
 
@@ -123,3 +124,9 @@ You can:
 | {{< docs-imagebox img="/img/docs/queries/hide-query-icon-7-0.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" >}} | Hide a query. Grafana does not send hidden queries to the data source. |
 | {{< docs-imagebox img="/img/docs/queries/remove-query-icon-7-0.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" >}} | Remove a query. Removing a query permanently deletes it, but sometimes you can recover deleted queries by reverting to previously saved versions of the panel. |
 | {{< docs-imagebox img="/img/docs/queries/query-drag-icon-7-2.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" >}} | Reorder queries. Change the order of queries by clicking and holding the drag icon, then drag queries where desired. The order of results reflects the order of the queries, so you can often adjust your visual results based on query order. |
+
+### Expressions
+
+If your data source supports them, then Grafana displays the **Expression** button and shows any existing expressions in the query editor list.
+
+For more information about expressions, refer to [Expressions]({{< relref "expressions.md" >}}).
