@@ -77,7 +77,7 @@ Use scale divided into equal parts.
 
 ### Logarithmic
 
-Use a logarithmic scale. When this option is chosen a select will appear where you can choose binary (base 2) or common (base 10) logarithmic scale of.
+Use a logarithmic scale. When this option is chosen, a list appears where you can choose binary (base 2) or common (base 10) logarithmic scale.
 
 ## Axis examples
 

@@ -28,6 +28,14 @@ Apart from major performance improvements, the new Time series panel implements 
 
 {{< figure src="/img/docs/v74/timeseries_panel.png" max-width="900px" caption="Time series panel" >}}
 
+The following documentation topics were added for this feature:
+
+- [Time series panel]({{< relref "../panels/visualizations/time-series/_index.md" >}})
+- [Create line graphs]({{< relref "../panels/visualizations/time-series/create-line-graphs.md" >}})
+- [Create bar graphs]({{< relref "../panels/visualizations/time-series/create-bar-graphs.md" >}})
+- [Create scatter plot graphs]({{< relref "../panels/visualizations/time-series/create-scatter-plot-graphs.md" >}})
+- [Change axis display]({{< relref "../panels/visualizations/time-series/change-axis-display.md" >}})
+
 ### Node graph panel visualization (Beta)
 
 _Node graph_ is a new panel type that can visualize directed graphs or network in dashboards, but also in Explore. It uses directed force layout to effectively position the nodes so it can help with displaying complex infrastructure maps, hierarchies, or execution diagrams.
