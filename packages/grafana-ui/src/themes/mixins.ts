@@ -34,6 +34,10 @@ export function listItemSelected(theme: GrafanaTheme): string {
     `;
 }
 
+export function mediaUp(breakpoint: string) {
+  return `only screen and (min-width: ${breakpoint})`;
+}
+
 export const focusCss = (theme: GrafanaTheme) => `
   outline: 2px dotted transparent;
   outline-offset: 2px;

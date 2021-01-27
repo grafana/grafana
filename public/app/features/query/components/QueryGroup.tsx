@@ -337,13 +337,7 @@ export class QueryGroup extends PureComponent<Props, State> {
     const styles = getStyles();
 
     return (
-      <CustomScrollbar
-        autoHeightMin="100%"
-        autoHide={true}
-        updateAfterMountMs={300}
-        scrollTop={scrollTop}
-        setScrollTop={this.setScrollTop}
-      >
+      <CustomScrollbar autoHeightMin="100%" scrollTop={scrollTop} setScrollTop={this.setScrollTop}>
         <div className={styles.innerWrapper}>
           {this.renderTopSection(styles)}
           {dsSettings && (

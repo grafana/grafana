@@ -56,6 +56,12 @@ This transformation is very useful if your data source does not natively filter 
 
 For more information, refer to [Filter data by value]({{< relref "../panels/transformations/types-options.md#filter-data-by-value" >}}) in [Transformation types and options]({{< relref "../panels/transformations/types-options.md" >}}).
 
+### New override option
+
+On the Overrides tab, you can now set properties for fields returned by a specific query.
+
+For more information, refer to [Add a field override]({{< relref "../panels/field-options/configure-specific-fields.md#add-a-field-override" >}}).
+
 ### Exemplar support
 
 Grafana graphs now support Prometheus [exemplars]({{< relref "../datasources/prometheus.md#exemplars" >}}). They are displayed as diamonds in the graph visualization.
@@ -91,6 +97,8 @@ You can now provide detailed information to alert notification recipients by inj
 
 {{< figure src="/img/docs/alerting/alert-notification-template-7-4.png" max-width="700px" caption="Variable support in alert notifications" >}}
 
+For more information, refer to the [alert notification docs]({{< relref "../alerting/notifications.md#notification-templating" >}}).
+
 ### Content security policy support
 
 We have added support for [Content Security Policy (CSP)](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP), a layer of security that helps detect and mitigate certain types of attacks, including Cross Site Scripting (XSS) and data injection attacks.
@@ -98,6 +106,13 @@ We have added support for [Content Security Policy (CSP)](https://developer.mozi
 CSP support is disabled by default, to enable it you must set `content_security_policy = true` in the Grafana configuration. If enabling it, you should also review, and potentially tweak, the CSP header template, via the configuration setting `content_security_policy_template`.
 
 You can lock down what can be done in the frontend code. Lock down what can be loaded, what JavaScript is executed. Not compatible with some plugins.
+
+[content_security_policy]({{< relref "../administration/configuration.md#content_security_policy" >}}) and [content_security_policy_template]({{< relref "../administration/configuration.md#content_security_policy_template" >}}) were added to [Configuration]({{< relref "../administration/configuration.md" >}}) as a result of this change.
+
+### Hide users in UI
+
+You can now use the `hidden_users` configuration setting to hide specific users in the UI. For example, this feature can be used to hide users that are used for automation purposes.
+[Configuration]({{< relref "../administration/configuration.md#hidden_users" >}}) has been updated for this feature.
 
 ### Elasticsearch data source updates
 
