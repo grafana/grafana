@@ -1,12 +1,18 @@
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
-import { queryVariableReducer, sortVariableValues, updateVariableOptions, updateVariableTags } from './reducer';
+import {
+  getAllMatches,
+  queryVariableReducer,
+  sortVariableValues,
+  updateVariableOptions,
+  updateVariableTags,
+} from './reducer';
 import { QueryVariableModel, VariableSort } from '../types';
 import cloneDeep from 'lodash/cloneDeep';
 import { VariablesState } from '../state/variablesReducer';
 import { getVariableTestContext } from '../state/helpers';
 import { toVariablePayload } from '../state/types';
 import { createQueryVariableAdapter } from './adapter';
-import { MetricFindValue } from '@grafana/data';
+import { MetricFindValue, stringToJsRegex } from '@grafana/data';
 
 describe('queryVariableReducer', () => {
   const adapter = createQueryVariableAdapter();
@@ -218,6 +224,25 @@ describe('queryVariableReducer', () => {
         });
     });
 
+    it('unnamed capture group returns any unnamed match', () => {
+      const regex = '/.*_(\\w+)\\{/gi';
+      const { initialState } = getVariableTestContext(adapter, { includeAll: false, regex });
+      const metrics = [createMetric('instance_counter{someother="atext",something="avalue"}'), createMetric('B')];
+      const update = { results: metrics, templatedRegex: regex };
+      const payload = toVariablePayload({ id: '0', type: 'query' }, update);
+
+      reducerTester<VariablesState>()
+        .givenReducer(queryVariableReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(updateVariableOptions(payload))
+        .thenStateShouldEqual({
+          ...initialState,
+          '0': ({
+            ...initialState[0],
+            options: [{ text: 'counter', value: 'counter', selected: false }],
+          } as unknown) as QueryVariableModel,
+        });
+    });
+
     it('unmatched text capture and unmatched value capture returns empty state', () => {
       const regex = '/somevalue="(?<value>[^"]+)|somelabel="(?<text>[^"]+)/gi';
       const { initialState } = getVariableTestContext(adapter, { includeAll: false, regex });
@@ -279,6 +304,41 @@ describe('sortVariableValues', () => {
         expect(result).toEqual(expected);
       }
     );
+  });
+});
+
+describe('getAllMatches', () => {
+  it.each`
+    str                                          | regex               | expected
+    ${'A{somelabel="atext",somevalue="avalue"}'} | ${'/unknown/gi'}    | ${{}}
+    ${'A{somelabel="atext",somevalue="avalue"}'} | ${'/unknown/i'}     | ${{}}
+    ${'A{somelabel="atext",somevalue="avalue"}'} | ${'/some(\\w+)/gi'} | ${{ 0: 'somevalue', 1: 'value', index: 20, input: 'A{somelabel="atext",somevalue="avalue"}' }}
+    ${'A{somelabel="atext",somevalue="avalue"}'} | ${'/some(\\w+)/i'}  | ${{ 0: 'somelabel', 1: 'label', index: 2, input: 'A{somelabel="atext",somevalue="avalue"}' }}
+    ${'A{somelabel="atext",somevalue="avalue"}'} | ${'/somevalue="(?<value>[^"]+)|somelabel="(?<text>[^"]+)/gi'} | ${{
+  0: 'somevalue="avalue',
+  1: 'avalue',
+  2: 'atext',
+  groups: {
+    text: 'atext',
+    value: 'avalue',
+  },
+  index: 20,
+  input: 'A{somelabel="atext",somevalue="avalue"}',
+}}
+    ${'A{somelabel="atext",somevalue="avalue"}'} | ${'/somevalue="(?<value>[^"]+)|somelabel="(?<text>[^"]+)/i'} | ${{
+  0: 'somelabel="atext',
+  1: undefined,
+  2: 'atext',
+  groups: {
+    text: 'atext',
+  },
+  index: 2,
+  input: 'A{somelabel="atext",somevalue="avalue"}',
+}}
+  `('when called with str:{$str}, regex:{$regex} then it should return correct matches', ({ str, regex, expected }) => {
+    const result = getAllMatches(str, stringToJsRegex(regex));
+
+    expect(result).toEqual(expected);
   });
 });
 

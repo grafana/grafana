@@ -105,6 +105,11 @@ You can lock down what can be done in the frontend code. Lock down what can be l
 
 [content_security_policy]({{< relref "../administration/configuration.md#content_security_policy" >}}) and [content_security_policy_template]({{< relref "../administration/configuration.md#content_security_policy_template" >}}) were added to [Configuration]({{< relref "../administration/configuration.md" >}}) as a result of this change.
 
+### Hide users in UI
+
+You can now use the `hidden_users` configuration setting to hide specific users in the UI. For example, this feature can be used to hide users that are used for automation purposes.
+[Configuration]({{< relref "../administration/configuration.md#hidden_users" >}}) has been updated for this feature.
+
 ### Elasticsearch data source updates
 
 Grafana 7.4 includes the following enhancements
