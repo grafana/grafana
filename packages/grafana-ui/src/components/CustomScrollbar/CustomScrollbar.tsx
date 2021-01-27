@@ -37,43 +37,56 @@ export const CustomScrollbar: FC<Props> = ({
   updateAfterMountMs,
   children,
 }) => {
-  const ref = useRef<Scrollbars>(null);
-  const styles = useStyles(getStyles);
-
-  const updateScroll = () => {
-    console.log('updateScroll');
-    if (ref.current && !isNil(scrollTop)) {
-      ref.current.scrollTop(scrollTop);
-    }
-  };
-
-  const updateAfterMount = () => {
-    if (ref && ref.current) {
-      const scrollbar = ref.current as any;
-      if (scrollbar.update) {
-        scrollbar.update();
-      }
-    }
-  };
-
   /** onMount */
   useEffect(() => {
     updateScroll();
 
     // this logic is to make scrollbar visible when content is added body after mount
     if (ref.current === null && updateAfterMountMs) {
-      console.log('scrollbar mount updateAfterMountMs');
       setTimeout(updateAfterMount, updateAfterMountMs);
     }
   });
 
-  const renderTrackHorizontal = useCallback((passedProps: any) => {
-    return renderTrack('track-horizontal', hideHorizontalTrack, passedProps);
-  }, []);
+  const ref = useRef<Scrollbars>(null);
+  const styles = useStyles(getStyles);
 
-  const renderTrackVertical = useCallback((passedProps: any) => {
-    return renderTrack('track-vertical', hideVerticalTrack, passedProps);
-  }, []);
+  const updateScroll = () => {
+    if (ref.current && !isNil(scrollTop)) {
+      ref.current.scrollTop(scrollTop);
+    }
+  };
+
+  const updateAfterMount = () => {
+    if (!ref || !ref.current) {
+      return;
+    }
+    const scrollbar = ref.current as any;
+    if (scrollbar.update) {
+      scrollbar.update();
+    }
+  };
+
+  function renderTrack(className: string, hideTrack: boolean | undefined, passedProps: any) {
+    if (passedProps.style && hideTrack) {
+      passedProps.style.display = 'none';
+    }
+
+    return <div {...passedProps} className={className} />;
+  }
+
+  const renderTrackHorizontal = useCallback(
+    (passedProps: any) => {
+      return renderTrack('track-horizontal', hideHorizontalTrack, passedProps);
+    },
+    [hideHorizontalTrack]
+  );
+
+  const renderTrackVertical = useCallback(
+    (passedProps: any) => {
+      return renderTrack('track-vertical', hideVerticalTrack, passedProps);
+    },
+    [hideVerticalTrack]
+  );
 
   const renderThumbHorizontal = useCallback((passedProps: any) => {
     return <div {...passedProps} className="thumb-horizontal" />;
@@ -110,14 +123,6 @@ export const CustomScrollbar: FC<Props> = ({
     </Scrollbars>
   );
 };
-
-function renderTrack(className: string, hideTrack: boolean | undefined, passedProps: any) {
-  if (passedProps.style && hideTrack) {
-    passedProps.style.display = 'none';
-  }
-
-  return <div {...passedProps} className={className} />;
-}
 
 export default CustomScrollbar;
 
