@@ -23,7 +23,7 @@ Expressions work with data source queries that return time series or number data
 
 An individual expression takes one or more queries or other expressions as input and adds data to the result. Each individual expression or query is represented by a variable that is a named identifier known as its RefID (e.g., the default letter `A` or `B`).
 
-To reference the output of an individual expression or a data source query in another expression, this identifer is used as a variable.
+To reference the output of an individual expression or a data source query in another expression, this identifier is used as a variable.
 
 ## Types of expression
 
