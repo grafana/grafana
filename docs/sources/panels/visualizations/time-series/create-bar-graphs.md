@@ -91,11 +91,11 @@ Show the points no matter how dense the data set is. This example uses a **Line 
 
 Set the size of the points, from 1 to 40 pixels in diameter.
 
-Point size set to 6.
+Point size set to 6:
 
 ![Show points point size 6 example](/img/docs/time-series-panel/bar-graph-show-points-6-7-4.png)
 
-Point size set to 20.
+Point size set to 20:
 
 ![Show points point size 20 example](/img/docs/time-series-panel/bar-graph-show-points-20-7-4.png)
 
