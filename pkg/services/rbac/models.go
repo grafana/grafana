@@ -52,3 +52,10 @@ type getPolicyPermissionsQuery struct {
 
 	Result []Permission
 }
+
+type getTeamPoliciesQuery struct {
+	OrgId  int64 `json:"-"`
+	TeamId int64
+
+	Result []*Policy
+}

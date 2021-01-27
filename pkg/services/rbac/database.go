@@ -70,3 +70,22 @@ func (ac *RBACService) getPolicyPermissions(query *getPolicyPermissionsQuery) er
 		return nil
 	})
 }
+
+func (ac *RBACService) getTeamPolicies(query *getTeamPoliciesQuery) error {
+	return ac.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		query.Result = make([]*Policy, 0)
+		q := `SELECT
+			policy.id,
+			policy.name AS name,
+			policy.description AS description,
+			policy.updated FROM policy AS policy
+			INNER JOIN team_policy ON policy.id = team_policy.policy_id AND team_policy.team_id = ?
+			WHERE policy.org_id = ? `
+
+		if err := sess.SQL(q, query.TeamId, query.OrgId).Find(&query.Result); err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
