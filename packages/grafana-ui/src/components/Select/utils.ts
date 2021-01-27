@@ -6,7 +6,8 @@ import { SelectableOptGroup } from './types';
  */
 export const cleanValue = (value: any, options: Array<SelectableValue | SelectableOptGroup | SelectableOptGroup[]>) => {
   if (Array.isArray(value)) {
-    return value.filter(Boolean);
+    const filtered = value.filter(Boolean);
+    return filtered?.length ? filtered : undefined;
   }
   if (typeof value === 'object' && value !== null) {
     return [value];
