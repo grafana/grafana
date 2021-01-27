@@ -3,7 +3,7 @@ import { hot } from 'react-hot-loader';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { css } from 'emotion';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import { Button, Icon, PageToolbar, stylesFactory, ToolbarButton } from '@grafana/ui';
+import { PageToolbar, stylesFactory, ToolbarButton } from '@grafana/ui';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { connectWithCleanUp } from 'app/core/components/connectWithCleanUp';
 import AlertingQueryEditor from './components/AlertingQueryEditor';
