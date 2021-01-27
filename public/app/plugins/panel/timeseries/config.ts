@@ -259,7 +259,7 @@ export function addLegendOptions(builder: PanelOptionsEditorBuilder<OptionsWithL
       showIf: (c) => c.legend.displayMode !== LegendDisplayMode.Hidden,
     });
 
-  if (!!!excludeCalcs) {
+  if (!excludeCalcs) {
     builder.addCustomEditor<StatsPickerConfigSettings, string[]>({
       id: 'legend.calcs',
       path: 'legend.calcs',
