@@ -2,7 +2,6 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { ApplyFieldOverrideOptions, DataTransformerConfig, dateTime, FieldColorModeId } from '@grafana/data';
 import alertDef from './alertDef';
 import {
-  AlertCondition,
   AlertDefinition,
   AlertDefinitionState,
   AlertDefinitionUiState,
@@ -57,7 +56,8 @@ export const initialAlertDefinitionState: AlertDefinitionState = {
     uid: '',
     title: '',
     description: '',
-    condition: {} as AlertCondition,
+    condition: '',
+    data: [],
     interval: 60,
   },
   queryOptions: { maxDataPoints: 100, dataSource: {}, queries: [] },

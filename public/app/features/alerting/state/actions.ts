@@ -179,37 +179,34 @@ async function buildAlertDefinition(state: AlertDefinitionState) {
 
   return {
     ...currentAlertDefinition,
-    condition: {
-      refId: currentAlertDefinition.condition.refId,
-      queriesAndExpressions: queryOptions.queries.map((query) => {
-        let dataSource: QueryGroupDataSource;
-        const isExpression = query.datasource === ExpressionDatasourceID;
+    data: queryOptions.queries.map((query) => {
+      let dataSource: QueryGroupDataSource;
+      const isExpression = query.datasource === ExpressionDatasourceID;
 
-        if (isExpression) {
-          dataSource = { name: ExpressionDatasourceID, uid: ExpressionDatasourceID };
-        } else {
-          const dataSourceSetting = getDataSourceSrv().getInstanceSettings(query.datasource);
+      if (isExpression) {
+        dataSource = { name: ExpressionDatasourceID, uid: ExpressionDatasourceID };
+      } else {
+        const dataSourceSetting = getDataSourceSrv().getInstanceSettings(query.datasource);
 
-          dataSource = {
-            name: dataSourceSetting?.name ?? defaultDataSource.name,
-            uid: dataSourceSetting?.uid ?? defaultDataSource.uid,
-          };
-        }
-
-        return {
-          model: {
-            ...query,
-            type: isExpression ? (query as ExpressionQuery).type : query.queryType,
-            datasource: dataSource.name,
-            datasourceUid: dataSource.uid,
-          },
-          refId: query.refId,
-          relativeTimeRange: {
-            From: 500,
-            To: 0,
-          },
+        dataSource = {
+          name: dataSourceSetting?.name ?? defaultDataSource.name,
+          uid: dataSourceSetting?.uid ?? defaultDataSource.uid,
         };
-      }),
-    },
+      }
+
+      return {
+        model: {
+          ...query,
+          type: isExpression ? (query as ExpressionQuery).type : query.queryType,
+          datasource: dataSource.name,
+          datasourceUid: dataSource.uid,
+        },
+        refId: query.refId,
+        relativeTimeRange: {
+          From: 500,
+          To: 0,
+        },
+      };
+    }),
   };
 }

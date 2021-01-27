@@ -50,7 +50,7 @@ class NextGenAlertingPage extends PureComponent<Props> {
 
   onConditionChange = (condition: SelectableValue<string>) => {
     this.props.updateAlertDefinitionOption({
-      condition: { ...this.props.alertDefinition.condition, refId: condition.value! },
+      condition: condition.value,
     });
   };
 

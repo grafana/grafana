@@ -150,13 +150,9 @@ export interface AlertDefinition {
   uid: string;
   title: string;
   description: string;
-  condition: AlertCondition;
+  condition: string;
+  data: any[];
   interval: number;
-}
-
-export interface AlertCondition {
-  refId: string;
-  queriesAndExpressions: any[];
 }
 
 export interface AlertDefinitionUiState {
