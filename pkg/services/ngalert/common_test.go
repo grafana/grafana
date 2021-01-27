@@ -57,23 +57,21 @@ func overrideAlertNGInRegistry(cfg *setting.Cfg) AlertNG {
 
 func createTestAlertDefinition(t *testing.T, ng *AlertNG, intervalSeconds int64) *AlertDefinition {
 	cmd := saveAlertDefinitionCommand{
-		OrgID: 1,
-		Title: fmt.Sprintf("an alert definition %d", rand.Intn(1000)),
-		Condition: eval.Condition{
-			RefID: "A",
-			QueriesAndExpressions: []eval.AlertQuery{
-				{
-					Model: json.RawMessage(`{
+		OrgID:     1,
+		Title:     fmt.Sprintf("an alert definition %d", rand.Intn(1000)),
+		Condition: "A",
+		Data: []eval.AlertQuery{
+			{
+				Model: json.RawMessage(`{
 						"datasource": "__expr__",
 						"type":"math",
 						"expression":"2 + 2 > 1"
 					}`),
-					RelativeTimeRange: eval.RelativeTimeRange{
-						From: eval.Duration(5 * time.Hour),
-						To:   eval.Duration(3 * time.Hour),
-					},
-					RefID: "A",
+				RelativeTimeRange: eval.RelativeTimeRange{
+					From: eval.Duration(5 * time.Hour),
+					To:   eval.Duration(3 * time.Hour),
 				},
+				RefID: "A",
 			},
 		},
 		IntervalSeconds: &intervalSeconds,
