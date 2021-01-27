@@ -1,5 +1,4 @@
-import { Table } from 'apache-arrow';
-import { DataQuery, FieldType, grafanaDataFrameToArrowTable, toDataFrame, toDataFrameDTO } from '@grafana/data';
+import { DataQuery, toDataFrameDTO } from '@grafana/data';
 import { toDataQueryResponse } from './queryResponse';
 
 /* eslint-disable */
