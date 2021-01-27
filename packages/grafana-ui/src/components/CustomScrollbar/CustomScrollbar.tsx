@@ -33,20 +33,10 @@ export const CustomScrollbar: FC<Props> = ({
   hideTracksWhenNotNeeded = false,
   hideHorizontalTrack,
   hideVerticalTrack,
-  scrollTop,
   updateAfterMountMs,
+  scrollTop,
   children,
 }) => {
-  /** onMount */
-  useEffect(() => {
-    updateScroll();
-
-    // this logic is to make scrollbar visible when content is added body after mount
-    if (ref.current === null && updateAfterMountMs) {
-      setTimeout(updateAfterMount, updateAfterMountMs);
-    }
-  });
-
   const ref = useRef<Scrollbars>(null);
   const styles = useStyles(getStyles);
 
@@ -56,15 +46,24 @@ export const CustomScrollbar: FC<Props> = ({
     }
   };
 
-  const updateAfterMount = () => {
-    if (!ref || !ref.current) {
-      return;
-    }
-    const scrollbar = ref.current as any;
-    if (scrollbar.update) {
-      scrollbar.update();
-    }
-  };
+  useEffect(() => {
+    updateScroll();
+  });
+
+  /**
+   * Special logic for doing a update a few milliseconds after mount to check for
+   * updated height due to dynamic content
+   */
+  if (updateAfterMountMs) {
+    useEffect(() => {
+      setTimeout(() => {
+        const scrollbar = ref.current as any;
+        if (scrollbar?.update) {
+          scrollbar.update();
+        }
+      }, updateAfterMountMs);
+    }, []);
+  }
 
   function renderTrack(className: string, hideTrack: boolean | undefined, passedProps: any) {
     if (passedProps.style && hideTrack) {
