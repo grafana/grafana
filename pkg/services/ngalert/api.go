@@ -44,8 +44,14 @@ func (ng *AlertNG) conditionEvalEndpoint(c *models.ReqContext, cmd evalAlertCond
 		return response.Error(400, "invalid condition", err)
 	}
 
+	now := cmd.Now
+	if now.IsZero() {
+		now = timeNow()
+	}
+
 	evaluator := eval.Evaluator{Cfg: ng.Cfg}
-	evalResults, err := evaluator.ConditionEval(&evalCond, timeNow())
+
+	evalResults, err := evaluator.ConditionEval(&evalCond, now)
 	if err != nil {
 		return response.Error(400, "Failed to evaluate conditions", err)
 	}
