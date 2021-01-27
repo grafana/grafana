@@ -230,7 +230,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
   };
 }
 
-export function addLegendOptions(builder: PanelOptionsEditorBuilder<OptionsWithLegend>) {
+export function addLegendOptions(builder: PanelOptionsEditorBuilder<OptionsWithLegend>, excludeCalcs?: boolean) {
   builder
     .addRadio({
       path: 'legend.displayMode',
@@ -257,8 +257,10 @@ export function addLegendOptions(builder: PanelOptionsEditorBuilder<OptionsWithL
         ],
       },
       showIf: (c) => c.legend.displayMode !== LegendDisplayMode.Hidden,
-    })
-    .addCustomEditor<StatsPickerConfigSettings, string[]>({
+    });
+
+  if (!!!excludeCalcs) {
+    builder.addCustomEditor<StatsPickerConfigSettings, string[]>({
       id: 'legend.calcs',
       path: 'legend.calcs',
       name: 'Legend calculations',
@@ -270,4 +272,5 @@ export function addLegendOptions(builder: PanelOptionsEditorBuilder<OptionsWithL
       },
       showIf: (currentConfig) => currentConfig.legend.displayMode !== LegendDisplayMode.Hidden,
     });
+  }
 }

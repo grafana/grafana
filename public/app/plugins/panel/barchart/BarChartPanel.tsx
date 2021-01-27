@@ -1,6 +1,8 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { DataFrame, Field, FieldType, PanelProps } from '@grafana/data';
-import { Alert, BarChart, BarChartOptions } from '@grafana/ui';
+import { Alert, BarChart, BarChartOptions, GraphNGLegendEvent } from '@grafana/ui';
+import { changeSeriesColorConfigFactory } from '../timeseries/overrides/colorSeriesConfigFactory';
+import { hideSeriesConfigFactory } from '../timeseries/overrides/hideSeriesConfigFactory';
 import { config } from 'app/core/config';
 
 interface Props extends PanelProps<BarChartOptions> {}
@@ -10,7 +12,15 @@ interface BarData {
   frame?: DataFrame; // first string vs all numbers
 }
 
-export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, width, height }) => {
+export const BarChartPanel: React.FunctionComponent<Props> = ({
+  data,
+  options,
+  width,
+  height,
+  fieldConfig,
+  onChangeTimeRange,
+  onFieldConfigChange,
+}) => {
   if (!data || !data.series?.length) {
     return (
       <div className="panel-empty">
@@ -18,6 +28,20 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
       </div>
     );
   }
+
+  const onLegendClick = useCallback(
+    (event: GraphNGLegendEvent) => {
+      onFieldConfigChange(hideSeriesConfigFactory(event, fieldConfig, data.series));
+    },
+    [fieldConfig, onFieldConfigChange, data.series]
+  );
+
+  const onSeriesColorChange = useCallback(
+    (label: string, color: string) => {
+      onFieldConfigChange(changeSeriesColorConfigFactory(label, color, fieldConfig));
+    },
+    [fieldConfig, onFieldConfigChange]
+  );
 
   const barData = useMemo<BarData>(() => {
     const firstFrame = data.series[0];
@@ -63,5 +87,15 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
     );
   }
 
-  return <BarChart data={barData.frame} width={width} height={height} theme={config.theme} {...options} />;
+  return (
+    <BarChart
+      data={barData.frame}
+      width={width}
+      height={height}
+      theme={config.theme}
+      onLegendClick={onLegendClick}
+      onSeriesColorChange={onSeriesColorChange}
+      {...options}
+    />
+  );
 };

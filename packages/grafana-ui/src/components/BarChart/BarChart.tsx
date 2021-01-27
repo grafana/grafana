@@ -1,6 +1,14 @@
 // Library
-import React, { useCallback, useMemo } from 'react';
-import { compareDataFrameStructures, DataFrame, DefaultTimeZone, getFieldSeriesColor, TimeRange } from '@grafana/data';
+import React, { useCallback, useMemo, useRef } from 'react';
+import {
+  compareDataFrameStructures,
+  DataFrame,
+  DefaultTimeZone,
+  formattedValueToString,
+  getFieldDisplayName,
+  getFieldSeriesColor,
+  TimeRange,
+} from '@grafana/data';
 import uPlot, { Axis, Scale, Series } from 'uplot';
 import { VizLayout } from '../VizLayout/VizLayout';
 import { distribute, SPACE_BETWEEN } from './distribute';
@@ -15,11 +23,17 @@ import { UPlotChart } from '../uPlot/Plot';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { AxisPlacement, ScaleDistribution } from '../uPlot/config';
 import { useTheme } from '../../themes';
+import { GraphNGLegendEvent } from '../GraphNG/types';
+import { mapMouseEventToMode } from '../GraphNG/GraphNG';
+import { LegendDisplayMode, VizLegendItem } from '../VizLegend/types';
+import { VizLegend } from '../VizLegend/VizLegend';
 
 export interface Props extends Themeable, BarChartOptions {
   height: number;
   width: number;
   data: DataFrame;
+  onLegendClick?: (event: GraphNGLegendEvent) => void;
+  onSeriesColorChange?: (label: string, color: string) => void;
 }
 
 /**
@@ -33,6 +47,9 @@ export const BarChart: React.FunctionComponent<Props> = ({
   groupWidth,
   barWidth,
   showValue,
+  legend,
+  onLegendClick,
+  onSeriesColorChange,
   ...plotProps
 }) => {
   if (!data || data.fields.length < 2) {
@@ -147,10 +164,12 @@ export const BarChart: React.FunctionComponent<Props> = ({
 
         const _dir = dir * (ori === 0 ? 1 : -1);
 
+        const disp = data.fields[sidx].display!;
+
         walkTwo(sidx - 1, numGroups, barsPerGroup, xDim, null, (ix, x0, wid) => {
           let lft    = Math.round(xOff + (_dir === 1 ? x0 : xDim - x0 - wid));
           let barWid = Math.round(wid);
-
+          
           if (dataY[ix] != null) {
             let yPos = valToPosY(dataY[ix]!, scaleY, yDim, yOff);
 
@@ -158,7 +177,7 @@ export const BarChart: React.FunctionComponent<Props> = ({
             let y = ori === 0 ? Math.round(yPos)           : Math.round(lft + barWid / 2);
 
             u.ctx.fillText(
-              ""+dataY[ix],
+              formattedValueToString(disp(dataY[ix])),
               x,
               y,
             );
@@ -265,9 +284,13 @@ export const BarChart: React.FunctionComponent<Props> = ({
         fillColor: seriesColor,
         fillOpacity: 50,
         theme,
-        fieldName: field.name,
+        fieldName: getFieldDisplayName(field, data),
         pathBuilder: drawBars,
         pointsBuilder: drawPoints,
+        dataFrameFieldIndex: {
+          fieldIndex: i,
+          frameIndex: 0,
+        },
 
         /*
         lineColor: customConfig.lineColor ?? seriesColor,
@@ -345,8 +368,71 @@ export const BarChart: React.FunctionComponent<Props> = ({
     /* eslint-enable */
   }, [data, configRev, orientation, width, height]);
 
+  const onLabelClick = useCallback(
+    (legend: VizLegendItem, event: React.MouseEvent) => {
+      const { fieldIndex } = legend;
+
+      if (!onLegendClick || !fieldIndex) {
+        return;
+      }
+
+      onLegendClick({
+        fieldIndex,
+        mode: mapMouseEventToMode(event),
+      });
+    },
+    [onLegendClick, data]
+  );
+
+  const hasLegend = useRef(legend && legend.displayMode !== LegendDisplayMode.Hidden);
+
+  const legendItems = configBuilder
+    .getSeries()
+    .map<VizLegendItem | undefined>((s) => {
+      const seriesConfig = s.props;
+      const fieldIndex = seriesConfig.dataFrameFieldIndex;
+      const axisPlacement = configBuilder.getAxisPlacement(s.props.scaleKey);
+
+      if (seriesConfig.hideInLegend || !fieldIndex) {
+        return undefined;
+      }
+
+      // const field = data[fieldIndex.frameIndex]?.fields[fieldIndex.fieldIndex];
+
+      // // Hackish: when the data prop and config builder are not in sync yet
+      // if (!field) {
+      //   return undefined;
+      // }
+
+      return {
+        disabled: !seriesConfig.show ?? false,
+        fieldIndex,
+        color: seriesConfig.fillColor!,
+        label: seriesConfig.fieldName,
+        yAxis: axisPlacement === AxisPlacement.Left ? 1 : 2,
+        getDisplayValues: () => [],
+      };
+    })
+    .filter((i) => i !== undefined) as VizLegendItem[];
+
+  let legendElement: React.ReactElement | undefined;
+
+  if (hasLegend && legendItems.length > 0) {
+    legendElement = (
+      <VizLayout.Legend position={legend.placement} maxHeight="35%" maxWidth="60%">
+        <VizLegend
+          onLabelClick={onLabelClick}
+          placement={legend.placement}
+          items={legendItems}
+          displayMode={legend.displayMode}
+          onSeriesColorChange={onSeriesColorChange}
+        />
+      </VizLayout.Legend>
+    );
+  }
+
   return (
-    <VizLayout width={width} height={height}>
+    <VizLayout width={width} height={height} legend={legendElement}>
       {(vizWidth: number, vizHeight: number) => (
         <UPlotChart
           data={data}

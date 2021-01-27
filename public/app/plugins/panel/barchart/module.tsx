@@ -1,6 +1,7 @@
 import { FieldColorModeId, FieldConfigProperty, PanelPlugin, VizOrientation } from '@grafana/data';
 import { BarChartPanel } from './BarChartPanel';
 import { BarChartFieldConfig, BarChartOptions, BarStackingMode, BarValueVisibility } from '@grafana/ui';
+import { addLegendOptions } from '../timeseries/config';
 
 export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarChartPanel)
   .useFieldConfig({
@@ -75,4 +76,6 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
           step: 0.01,
         },
       });
+
+    addLegendOptions(builder, true);
   });
