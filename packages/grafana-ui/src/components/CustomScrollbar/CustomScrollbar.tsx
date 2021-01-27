@@ -176,7 +176,9 @@ const getStyles = stylesFactory(
         left: ${theme.spacing.xxs};
       `,
       thumbVertical: css`
-        linear-gradient(#404357, ${theme.palette.dark10});
+        background-color: ${theme.palette.dark10};
+        background-image: linear-gradient(180deg, #404357, ${theme.palette.dark10});
+        background-repeat: repeat-x;
         border-radius: ${theme.border.radius.md};
         opacity: 0;
         &:hover {
@@ -185,7 +187,9 @@ const getStyles = stylesFactory(
         }
       `,
       thumbHorizontal: css`
-        linear-gradient(#404357, ${theme.palette.dark10});
+        background-color: ${theme.palette.dark10};
+        background-image: linear-gradient(to right, #404357, ${theme.palette.dark10});
+        background-repeat: repeat-x;
         border-radius: 6px;
         opacity: 0;
         &:hover {
