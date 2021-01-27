@@ -190,10 +190,10 @@ li.sidemenu-org-switcher {
   }
 
   img {
-    width: 30px;
+    width: 26px;
     position: relative;
     top: 5px;
-    left: 4px;
+    left: 8px;
   }
 }
 
@@ -234,11 +234,12 @@ li.sidemenu-org-switcher {
     }
 
     .sidemenu__logo_small_breakpoint {
-      padding: 14px 10px 26px 13px;
+      padding: 13px;
       display: flex;
       flex-direction: row;
       justify-content: space-between;
       align-items: baseline;
+      cursor: pointer;
 
       .fa-bars {
         font-size: 25px;

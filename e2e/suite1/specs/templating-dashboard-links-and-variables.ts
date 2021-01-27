@@ -50,7 +50,7 @@ e2e.scenario({
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('p2').should('be.visible').click();
 
-    e2e.pages.Dashboard.Toolbar.navBar().click();
+    e2e.components.PageToolbar.container().click();
 
     e2e.components.DashboardLinks.dropDown().should('be.visible').click().wait('@tagsTemplatingSearch');
 

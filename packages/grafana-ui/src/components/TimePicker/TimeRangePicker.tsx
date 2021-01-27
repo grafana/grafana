@@ -186,7 +186,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     container: css`
-      display: inline-block;
+      display: flex;
+      align-items: center;
+      white-space: nowrap;
     `,
     utc: css`
       color: ${theme.palette.orange};

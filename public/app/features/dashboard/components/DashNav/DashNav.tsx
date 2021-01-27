@@ -1,16 +1,14 @@
 // Libaries
 import React, { PureComponent, FC, ReactNode } from 'react';
 import { connect, MapDispatchToProps } from 'react-redux';
-import { css } from 'emotion';
 // Utils & Services
 import { appEvents } from 'app/core/app_events';
 import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
 // Components
 import { DashNavButton } from './DashNavButton';
 import { DashNavTimeControls } from './DashNavTimeControls';
-import { Icon, ModalsController } from '@grafana/ui';
+import { ButtonGroup, ModalsController, ToolbarButton, PageToolbar } from '@grafana/ui';
 import { textUtil } from '@grafana/data';
-import { BackButton } from 'app/core/components/BackButton/BackButton';
 // State
 import { updateLocation } from 'app/core/actions';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
@@ -126,11 +124,23 @@ class DashNav extends PureComponent<Props> {
     });
   }
 
+  isInKioskMode() {
+    return !!this.props.location.query.kiosk;
+  }
+
+  isPlaylistRunning() {
+    return this.playlistSrv.isPlaying;
+  }
+
   renderLeftActionsButton() {
     const { dashboard } = this.props;
     const { canStar, canShare, isStarred } = dashboard.meta;
-
     const buttons: ReactNode[] = [];
+
+    if (this.isInKioskMode() || this.isPlaylistRunning()) {
+      return [];
+    }
+
     if (canStar) {
       buttons.push(
         <DashNavButton
@@ -172,74 +182,49 @@ class DashNav extends PureComponent<Props> {
     return buttons;
   }
 
-  renderDashboardTitleSearchButton() {
-    const { dashboard, isFullscreen } = this.props;
-
-    const folderSymbol = css`
-      margin-right: 0 4px;
-    `;
-    const mainIconClassName = css`
-      margin-right: 8px;
-      margin-bottom: 3px;
-    `;
-
-    const folderTitle = dashboard.meta.folderTitle;
-    const haveFolder = (dashboard.meta.folderId ?? 0) > 0;
-
+  renderPlaylistControls() {
     return (
-      <>
-        <div>
-          <div className="navbar-page-btn">
-            {!isFullscreen && <Icon name="apps" size="lg" className={mainIconClassName} />}
-            {haveFolder && (
-              <>
-                <a className="navbar-page-btn__folder" onClick={this.onFolderNameClick}>
-                  {folderTitle} <span className={folderSymbol}>/</span>
-                </a>
-              </>
-            )}
-            <a onClick={this.onDashboardNameClick}>{dashboard.title}</a>
-          </div>
-        </div>
-        <div className="navbar-buttons navbar-buttons--actions">{this.renderLeftActionsButton()}</div>
-        <div className="navbar__spacer" />
-      </>
-    );
-  }
-
-  renderBackButton() {
-    return (
-      <div className="navbar-edit">
-        <BackButton surface="dashboard" onClick={this.onClose} />
-      </div>
+      <ButtonGroup key="playlist-buttons">
+        <ToolbarButton tooltip="Go to previous dashboard" icon="backward" onClick={this.onPlaylistPrev} narrow />
+        <ToolbarButton onClick={this.onPlaylistStop}>Stop playlist</ToolbarButton>
+        <ToolbarButton tooltip="Go to next dashboard" icon="forward" onClick={this.onPlaylistNext} narrow />
+      </ButtonGroup>
     );
   }
 
   renderRightActionsButton() {
-    const { dashboard, onAddPanel } = this.props;
+    const { dashboard, onAddPanel, location, updateTimeZoneForSession, isFullscreen } = this.props;
     const { canEdit, showSettings } = dashboard.meta;
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
-
     const buttons: ReactNode[] = [];
-    if (canEdit) {
-      buttons.push(
-        <DashNavButton
-          classSuffix="save"
-          tooltip="Add panel"
-          icon="panel-add"
-          onClick={onAddPanel}
-          iconType="mono"
-          iconSize="xl"
-          key="button-panel-add"
-        />
-      );
+    const tvButton = (
+      <ToolbarButton tooltip="Cycle view mode" icon="monitor" onClick={this.onToggleTVMode} key="tv-button" />
+    );
+    const timeControls = (
+      <DashNavTimeControls
+        dashboard={dashboard}
+        location={location}
+        onChangeTimeZone={updateTimeZoneForSession}
+        key="time-controls"
+      />
+    );
+
+    if (this.isPlaylistRunning()) {
+      return [this.renderPlaylistControls(), timeControls];
+    }
+
+    if (this.isInKioskMode()) {
+      return [timeControls, tvButton];
+    }
+
+    if (canEdit && !isFullscreen) {
+      buttons.push(<ToolbarButton tooltip="Add panel" icon="panel-add" onClick={onAddPanel} key="button-panel-add" />);
       buttons.push(
         <ModalsController key="button-save">
           {({ showModal, hideModal }) => (
-            <DashNavButton
+            <ToolbarButton
               tooltip="Save dashboard"
-              classSuffix="save"
               icon="save"
               onClick={() => {
                 showModal(SaveDashboardModalProxy, {
@@ -255,10 +240,9 @@ class DashNav extends PureComponent<Props> {
 
     if (snapshotUrl) {
       buttons.push(
-        <DashNavButton
+        <ToolbarButton
           tooltip="Open original dashboard"
-          classSuffix="snapshot-origin"
-          href={textUtil.sanitizeUrl(snapshotUrl)}
+          onClick={() => this.gotoSnapshotOrigin(snapshotUrl)}
           icon="link"
           key="button-snapshot"
         />
@@ -267,67 +251,40 @@ class DashNav extends PureComponent<Props> {
 
     if (showSettings) {
       buttons.push(
-        <DashNavButton
-          tooltip="Dashboard settings"
-          classSuffix="settings"
-          icon="cog"
-          onClick={this.onOpenSettings}
-          key="button-settings"
-        />
+        <ToolbarButton tooltip="Dashboard settings" icon="cog" onClick={this.onOpenSettings} key="button-settings" />
       );
     }
 
     this.addCustomContent(customRightActions, buttons);
+
+    if (!dashboard.timepicker.hidden) {
+      buttons.push(timeControls);
+    }
+
+    buttons.push(tvButton);
     return buttons;
   }
 
+  gotoSnapshotOrigin(snapshotUrl: string) {
+    window.location.href = textUtil.sanitizeUrl(snapshotUrl);
+  }
+
   render() {
-    const { dashboard, location, isFullscreen, updateTimeZoneForSession } = this.props;
+    const { dashboard, isFullscreen } = this.props;
+    const onGoBack = isFullscreen ? this.onClose : undefined;
 
     return (
-      <div className="navbar">
-        {isFullscreen && this.renderBackButton()}
-        {this.renderDashboardTitleSearchButton()}
-
-        {this.playlistSrv.isPlaying && (
-          <div className="navbar-buttons navbar-buttons--playlist">
-            <DashNavButton
-              tooltip="Go to previous dashboard"
-              classSuffix="tight"
-              icon="step-backward"
-              onClick={this.onPlaylistPrev}
-            />
-            <DashNavButton
-              tooltip="Stop playlist"
-              classSuffix="tight"
-              icon="square-shape"
-              onClick={this.onPlaylistStop}
-            />
-            <DashNavButton
-              tooltip="Go to next dashboard"
-              classSuffix="tight"
-              icon="forward"
-              onClick={this.onPlaylistNext}
-            />
-          </div>
-        )}
-
-        <div className="navbar-buttons navbar-buttons--actions">{this.renderRightActionsButton()}</div>
-
-        <div className="navbar-buttons navbar-buttons--tv">
-          <DashNavButton tooltip="Cycle view mode" classSuffix="tv" icon="monitor" onClick={this.onToggleTVMode} />
-        </div>
-
-        {!dashboard.timepicker.hidden && (
-          <div className="navbar-buttons">
-            <DashNavTimeControls
-              dashboard={dashboard}
-              location={location}
-              onChangeTimeZone={updateTimeZoneForSession}
-            />
-          </div>
-        )}
-      </div>
+      <PageToolbar
+        pageIcon={isFullscreen ? undefined : 'apps'}
+        title={dashboard.title}
+        parent={dashboard.meta.folderTitle}
+        onClickTitle={this.onDashboardNameClick}
+        onClickParent={this.onFolderNameClick}
+        onGoBack={onGoBack}
+        leftItems={this.renderLeftActionsButton()}
+      >
+        {this.renderRightActionsButton()}
+      </PageToolbar>
     );
   }
 }
