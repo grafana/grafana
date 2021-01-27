@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/stretchr/testify/assert"
@@ -123,6 +124,8 @@ func TestGenerateConnectionString(t *testing.T) {
 // use to verify that the generated data are visualized as expected, see
 // devenv/README.md for setup instructions.
 func TestPostgres(t *testing.T) {
+	cfg := setting.NewCfg()
+
 	// change to true to run the PostgreSQL tests
 	runPostgresTests := false
 	// runPostgresTests := true
@@ -149,7 +152,7 @@ func TestPostgres(t *testing.T) {
 	endpoint, err := newPostgresQueryEndpoint(&models.DataSource{
 		JsonData:       simplejson.New(),
 		SecureJsonData: securejsondata.SecureJsonData{},
-	})
+	}, cfg)
 	require.NoError(t, err)
 
 	sess := x.NewSession()

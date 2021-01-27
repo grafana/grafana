@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"xorm.io/xorm"
@@ -31,6 +32,8 @@ import (
 // use to verify that the generated data are visualized as expected, see
 // devenv/README.md for setup instructions.
 func TestMySQL(t *testing.T) {
+	cfg := setting.NewCfg()
+
 	// change to true to run the MySQL tests
 	runMySQLTests := false
 	// runMySqlTests := true
@@ -55,7 +58,7 @@ func TestMySQL(t *testing.T) {
 		endpoint, err := newMysqlQueryEndpoint(&models.DataSource{
 			JsonData:       simplejson.New(),
 			SecureJsonData: securejsondata.SecureJsonData{},
-		})
+		}, cfg)
 		So(err, ShouldBeNil)
 
 		sess := x.NewSession()
