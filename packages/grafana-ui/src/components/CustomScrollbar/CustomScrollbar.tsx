@@ -143,7 +143,7 @@ export class UnthemedCustomScrollbar extends Component<Props> {
         renderTrackHorizontal={(passedProps: any) => this.renderTrackHorizontal(passedProps, styles)}
         renderTrackVertical={(passedProps: any) => this.renderTrackVertical(passedProps, styles)}
         renderThumbHorizontal={(passedProps: any) => this.renderThumbHorizontal(passedProps, styles)}
-        renderThumbVertical={(passedProps: any) => this.renderThumbHorizontal(passedProps, styles)}
+        renderThumbVertical={(passedProps: any) => this.renderThumbVertical(passedProps, styles)}
         renderView={(passedProps: any) => this.renderView(passedProps, styles)}
       >
         {children}
