@@ -1,3 +1,4 @@
++++
 title = "Create line graphs"
 keywords = ["grafana", "time series panel", "documentation", "guide", "graph"]
 weight = 100
@@ -112,20 +113,43 @@ Gradient color is generated based on the hue of the line color.
 
 ### Line style
 
-Set the style of the line.
+Set the style of the line. To change the color, use the standard [color scheme](https://grafana.com/docs/grafana/latest/panels/field-options/standard-field-options/#color-scheme) field option.
+
+Line style appearance is influenced by the **Line width** and **Fill opacity** settings. In the screenshots below, **Line width** is set to 3 and **Fill opacity** is set to 20.
 
 #### Solid
 
-Display solid line.
+Display solid line. This is the default setting.
+
+![Line style solid example](/img/docs/time-series-panel/line-graph-line-style-solid-7-4.png)
 
 #### Dash
 
 Display a dashed line. When you choose this option, a list appears so that you can select the length and gap (length, gap) for the line dashes.
 
+Dash spacing set to 10,10 (default)
+
+![Line style dashed 10,10 example](/img/docs/time-series-panel/line-graph-line-style-dashed-10-10-7-4.png)
+
+Dash spacing set to 10,30
+
+![Line style dashed 10,30 example](/img/docs/time-series-panel/line-graph-line-style-dashed-10-30-7-4.png)
+
+Dash spacing set to 40,10
+
+![Line style dashed 40,10 example](/img/docs/time-series-panel/line-graph-line-style-dashed-40-10-7-4.png)
+
 #### Dots
 
 Display dotted lines. When you choose this option, a list appears so that you can select the gap (length = 0, gap) for the dot spacing.
 
+Dot spacing set to 0,10 (default)
+
+![Line style dots 0,10 example](/img/docs/time-series-panel/line-graph-line-style-dots-0-10-7-4.png)
+
+Dot spacing set to 0,30
+
+![Line style dots 0,30 example](/img/docs/time-series-panel/line-graph-line-style-dots-0-30-7-4.png)
 
 ### Null values
 
@@ -135,12 +159,13 @@ Choose how null values (gaps in the data) are displayed on the graph.
 
 If there is a gap in the series, the line in the graph will be broken and show the gap.
 
-
+![Null values gaps example](/img/docs/time-series-panel/line-graph-null-gaps-7-4.png)
 
 #### Connected
 
 If there is a gap in the series, the line will skip the gap and connect to the next non-null value.
 
+![Null values connected example](/img/docs/time-series-panel/line-graph-null-connected-7-4.png)
 
 ### Show points
 
@@ -162,4 +187,30 @@ Never show the points.
 
 Set the size of the points, from 1 to 40 pixels in diameter.
 
+## Fill below to
+
+This option is only available as in the Overrides tab.
+
+
+
 ## Line graph examples
+
+Below are some line graph examples to give you ideas.
+
+### Various line styles
+
+This is a graph with different line styles and colors applied to each series and zero fill.
+
+![Various line styles example](/img/docs/time-series-panel/various-line-styles-7-4.png)
+
+### Interpolation modes examples
+
+DOMINIK - PLEASE NOTE THE SETTINGS YOU USED FOR THE COLORS. LINE THICKNESS? GRADIENTS? OPACITY?
+
+![Interpolation modes example](/img/docs/time-series-panel/interpolation-modes-examples-7-4.png)
+
+### Fill below example
+
+This graph shows three series. The Min and Max series have **Line width** set to 0. Max has a **Fill below to** override set to Value, which fills the area between Max and Value. Value has a **Fill below to** override set to Min, which fills the area between Value and Min.
+
+![Fill below example](/img/docs/time-series-panel/fill-below-to-7-4.png)

@@ -1,6 +1,6 @@
 +++
 title = "Time series panel"
-keywords = ["grafana", "graph panel", "documentation", "guide", "graph"]
+keywords = ["grafana", "graph panel", "time series panel", "documentation", "guide", "graph"]
 weight = 1200
 +++
 
@@ -37,6 +37,8 @@ When you hover your cursor over the graph, Grafana can display tooltips. Choose 
 - **All -** The hover tooltip shows all series in the graph. Grafana highlights the series that you are hovering over in bold in the series list in the tooltip.
 - **Hidden -** Do not display the tooltip when you interact with the graph.
 
+> **Note:** Use an override to hide individual series from the tooltip.
+
 ### Legend mode
 
 Use these settings to refine how the legend appears in your visualization.
@@ -62,11 +64,13 @@ The Time series legend has additional features.
 
 ### Toggle series
 
-Click on the series label in the legend to isolate the series in the visualization. All other series are hidden.
+Click on the series label in the legend to isolate the series in the visualization. All other series are hidden in the visualization. The data of the hidden series is still accessible.
 
 Cmd/Ctrl+click on the series label to hide the clicked series and remove the toggle.
 
 > **Note:** This option is persistent when you save the dashboard.
+
+This creates a system override that hides the other series. You can view this override in the Overrides tab. If you delete the override, then it removes the toggle.
 
 ### Change series color
 
