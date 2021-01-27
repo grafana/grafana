@@ -22,6 +22,7 @@ type LibraryPanel struct {
 	UpdatedBy int64
 }
 
+// LibraryPanelWithMeta is the model used to retrieve library panels with additional meta information.
 type LibraryPanelWithMeta struct {
 	ID       int64  `xorm:"pk autoincr 'id'"`
 	OrgID    int64  `xorm:"org_id"`
@@ -40,7 +41,7 @@ type LibraryPanelWithMeta struct {
 	UpdatedByName string
 }
 
-// LibraryPanel is the frontend DTO for library panels.
+// LibraryPanelDTO is the frontend DTO for library panels.
 type LibraryPanelDTO struct {
 	ID       int64               `json:"id"`
 	OrgID    int64               `json:"orgID"`
@@ -51,7 +52,7 @@ type LibraryPanelDTO struct {
 	Meta     LibraryPanelDTOMeta `json:"meta"`
 }
 
-// LibraryPanel is the meta information for a library panel.
+// LibraryPanelDTOMeta is the meta information for LibraryPanelDTO.
 type LibraryPanelDTOMeta struct {
 	CanEdit bool `json:"canEdit"`
 
