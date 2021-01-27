@@ -197,6 +197,7 @@ type Cfg struct {
 	SocketPath       string
 	RouterLogging    bool
 	Domain           string
+	CDNPath          string
 
 	// build
 	BuildVersion string
@@ -1263,8 +1264,8 @@ func readServerSettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.AppURL = AppUrl
 	cfg.AppSubURL = AppSubUrl
 	cfg.ServeFromSubPath = ServeFromSubPath
-
 	cfg.Protocol = HTTPScheme
+
 	protocolStr := valueAsString(server, "protocol", "http")
 
 	if protocolStr == "https" {
@@ -1297,6 +1298,7 @@ func readServerSettings(iniFile *ini.File, cfg *Cfg) error {
 		return err
 	}
 
+	cfg.CDNPath = valueAsString(server, "cdn_path", "")
 	return nil
 }
 
