@@ -1,8 +1,10 @@
 import { FieldType, locationUtil, toDataFrame, VariableOrigin } from '@grafana/data';
-
+import { setTemplateSrv } from '@grafana/runtime';
 import { getDataFrameVars, LinkSrv } from '../link_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
+import { variableAdapters } from 'app/features/variables/adapters';
+import { createQueryVariableAdapter } from 'app/features/variables/query/adapter';
 import { updateConfig } from '../../../../core/config';
 import { initTemplateSrv } from '../../../../../test/helpers/initTemplateSrv';
 
@@ -42,12 +44,24 @@ describe('linkSrv', () => {
     timeSrv.init(_dashboard);
     timeSrv.setTime({ from: 'now-1h', to: 'now' });
     _dashboard.refresh = false;
-    templateSrv = initTemplateSrv([{ type: 'query', name: 'home', current: { value: '127.0.0.1' } }]);
+    templateSrv = initTemplateSrv([
+      { type: 'query', name: 'home', current: { value: '127.0.0.1' } },
+      { type: 'query', name: 'server1', current: { value: '192.168.0.100' } },
+    ]);
+
+    setTemplateSrv(templateSrv);
+
     linkSrv = new LinkSrv(templateSrv, timeSrv);
   }
 
+  beforeAll(() => {
+    variableAdapters.register(createQueryVariableAdapter());
+  });
+
   beforeEach(() => {
     initLinkSrv();
+
+    jest.resetAllMocks();
   });
 
   describe('getDataLinkUIModel', () => {
@@ -163,6 +177,52 @@ describe('linkSrv', () => {
       expect(linkSrv.getLinkUrl).toBeCalledTimes(1);
       expect(templateSrv.replace).toBeCalledTimes(3);
       expect(link).toStrictEqual({ href: '/graph?home=127.0.0.1', title: 'Visit home', tooltip: 'Visit 127.0.0.1' });
+    });
+  });
+
+  describe('getLinkUrl', () => {
+    it('converts link urls', () => {
+      const linkUrl = linkSrv.getLinkUrl({
+        url: '/graph',
+      });
+      const linkUrlWithVar = linkSrv.getLinkUrl({
+        url: '/graph?home=$home',
+      });
+
+      expect(linkUrl).toBe('/graph');
+      expect(linkUrlWithVar).toBe('/graph?home=127.0.0.1');
+    });
+
+    it('appends current dashboard time range if keepTime is true', () => {
+      const anchorInfoKeepTime = linkSrv.getLinkUrl({
+        keepTime: true,
+        url: '/graph',
+      });
+
+      expect(anchorInfoKeepTime).toBe('/graph?from=now-1h&to=now');
+    });
+
+    it('adds all variables to the url if includeVars is true', () => {
+      const anchorInfoIncludeVars = linkSrv.getLinkUrl({
+        includeVars: true,
+        url: '/graph',
+      });
+
+      expect(anchorInfoIncludeVars).toBe('/graph?var-home=127.0.0.1&var-server1=192.168.0.100');
+    });
+
+    it('respects config disableSanitizeHtml', () => {
+      const anchorInfo = {
+        url: 'javascript:alert(document.domain)',
+      };
+
+      expect(linkSrv.getLinkUrl(anchorInfo)).toBe('about:blank');
+
+      updateConfig({
+        disableSanitizeHtml: true,
+      });
+
+      expect(linkSrv.getLinkUrl(anchorInfo)).toBe('javascript:alert(document.domain)');
     });
   });
 });
