@@ -44,7 +44,7 @@ func (value *FrontendSentryExceptionValue) FmtStacktrace(store *SourceMapStore) 
 		mappedFrame, err := store.resolveSourceLocation(frame)
 		if err != nil {
 			logger.Error("Error resolving stack trace frame source location", "err", err)
-			stacktrace += fmtLine(frame)
+			stacktrace += fmtLine(frame) // even if reading source map fails for unexpected reason, still better to log compiled location than nothing at all
 		} else {
 			if mappedFrame != nil {
 				stacktrace += fmtLine(*mappedFrame)

@@ -57,17 +57,25 @@ func NewSourceMapStore(cfg *setting.Cfg, readSourceMap ReadSourceMapFn) *SourceM
 	}
 }
 
+/* guessSourceMapLocation will attempt to guess location of a source map on fs.
+ * it does not read the source file or make any web requests,
+ * just assumes that a [source filename].map file might exist in the same dir as the source file
+ * and only considers sources coming from grafana core or plugins`
+ */
 func (store *SourceMapStore) guessSourceMapLocation(sourceURL string) (*sourceMapLocation, error) {
 	u, err := url.Parse(sourceURL)
 	if err != nil {
 		return nil, err
 	}
+
+	// determine if source comes from grafana core, look in public build dir
 	if strings.HasPrefix(u.Path, "/public/build/") {
 		return &sourceMapLocation{
 			dir:      store.cfg.StaticRootPath,
 			path:     filepath.Join("build", u.Path[len("/public/build/"):]) + ".map",
 			pluginID: "",
 		}, nil
+		// if source comes from a plugin, look in plugin dir
 	} else if strings.HasPrefix(u.Path, "/public/plugins/") {
 		for _, route := range plugins.StaticRoutes {
 			pluginPrefix := filepath.Join("/public/plugins/", route.PluginId)
@@ -138,6 +146,8 @@ func (store *SourceMapStore) resolveSourceLocation(frame sentry.Frame) (*sentry.
 	if !ok {
 		return nil, nil
 	}
+	// unfortunately in many cases go-sourcemap fails to determine the original function name.
+	// not a big issue as long as file, line and column are correct
 	if len(function) == 0 {
 		function = "?"
 	}
