@@ -229,6 +229,6 @@ DOMINIK - PLEASE NOTE THE SETTINGS YOU USED FOR THE COLORS. LINE THICKNESS? GRAD
 
 ### Fill below example
 
-This graph shows three series. The Min and Max series have **Line width** set to 0. Max has a **Fill below to** override set to Value, which fills the area between Max and Value. Value has a **Fill below to** override set to Min, which fills the area between Value and Min.
+This graph shows three series: Min, Max, and Value. The Min and Max series have **Line width** set to 0. Max has a **Fill below to** override set to Min, which fills the area between Max and Min with the Max line color.
 
 ![Fill below example](/img/docs/time-series-panel/fill-below-to-7-4.png)
