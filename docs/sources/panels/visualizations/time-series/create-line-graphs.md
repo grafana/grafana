@@ -101,7 +101,7 @@ No gradient fill. This is the default setting.
 
 #### Opacity
 
-Transparency of the gradient is calculated based on the values on the y-axis. Opacity of the fill is increasing with the values on the y-axis.
+Transparency of the gradient is calculated based on the values on the y-axis. Opacity of the fill is increasing with the values on the Y-axis.
 
 ![Gradient mode opacity example](/img/docs/time-series-panel/line-graph-gradient-opacity-7-4.png)
 
@@ -179,7 +179,7 @@ Grafana automatically decides whether or not to show the points depending on the
 
 Show the points no matter how dense the data set is. This example uses a **Line width** of 1 and 50 data points. If the line width is thicker than the point size, then the line obscures the points.
 
-#### Point size
+##### Point size
 
 Set the size of the points, from 1 to 40 pixels in diameter.
 
