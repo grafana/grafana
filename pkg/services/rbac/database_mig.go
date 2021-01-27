@@ -1,0 +1,76 @@
+package rbac
+
+import "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+
+func addRBACMigrations(mg *migrator.Migrator) {
+	permissionV1 := migrator.Table{
+		Name: "permission",
+		Columns: []*migrator.Column{
+			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "org_id", Type: migrator.DB_BigInt},
+			{Name: "policy_id", Type: migrator.DB_BigInt},
+			{Name: "resource", Type: migrator.DB_Varchar, Length: 190, Nullable: false},
+			{Name: "resource_type", Type: migrator.DB_Varchar, Length: 190, Nullable: false},
+			{Name: "action", Type: migrator.DB_Varchar, Length: 20, Nullable: false},
+			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
+			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
+		},
+		Indices: []*migrator.Index{
+			{Cols: []string{"org_id"}},
+			{Cols: []string{"policy_id"}},
+		},
+	}
+
+	mg.AddMigration("create permission table", migrator.NewAddTableMigration(permissionV1))
+
+	//-------  indexes ------------------
+	mg.AddMigration("add index permission.org_id", migrator.NewAddIndexMigration(permissionV1, permissionV1.Indices[0]))
+	mg.AddMigration("add unique index permission.policy_id", migrator.NewAddIndexMigration(permissionV1, permissionV1.Indices[1]))
+
+	policyV1 := migrator.Table{
+		Name: "policy",
+		Columns: []*migrator.Column{
+			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "name", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "description", Type: migrator.DB_Text, Nullable: true},
+			{Name: "org_id", Type: migrator.DB_BigInt},
+			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
+			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
+		},
+		Indices: []*migrator.Index{
+			{Cols: []string{"org_id"}},
+			{Cols: []string{"org_id", "name"}, Type: migrator.UniqueIndex},
+		},
+	}
+
+	mg.AddMigration("create policy table", migrator.NewAddTableMigration(policyV1))
+
+	//-------  indexes ------------------
+	mg.AddMigration("add index policy.org_id", migrator.NewAddIndexMigration(policyV1, policyV1.Indices[0]))
+	mg.AddMigration("add unique index policy_org_id_name", migrator.NewAddIndexMigration(policyV1, policyV1.Indices[1]))
+
+	// Or rolePolicy? Role == Team in this case
+	teamPolicyV1 := migrator.Table{
+		Name: "team_policy",
+		Columns: []*migrator.Column{
+			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "org_id", Type: migrator.DB_BigInt},
+			{Name: "team_id", Type: migrator.DB_BigInt},
+			{Name: "policy_id", Type: migrator.DB_BigInt},
+			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
+			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
+		},
+		Indices: []*migrator.Index{
+			{Cols: []string{"org_id"}},
+			{Cols: []string{"org_id", "team_id", "policy_id"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"team_id"}},
+		},
+	}
+
+	mg.AddMigration("create team policy table", migrator.NewAddTableMigration(teamPolicyV1))
+
+	//-------  indexes ------------------
+	mg.AddMigration("add index team_policy.org_id", migrator.NewAddIndexMigration(teamPolicyV1, teamPolicyV1.Indices[0]))
+	mg.AddMigration("add unique index team_policy_org_id_team_id_policy_id", migrator.NewAddIndexMigration(teamPolicyV1, teamPolicyV1.Indices[1]))
+	mg.AddMigration("add index team_policy.team_id", migrator.NewAddIndexMigration(teamPolicyV1, teamPolicyV1.Indices[2]))
+}
