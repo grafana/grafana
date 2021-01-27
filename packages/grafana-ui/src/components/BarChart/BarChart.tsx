@@ -1,14 +1,7 @@
 // Library
 import React, { useCallback, useMemo } from 'react';
-import {
-  compareDataFrameStructures,
-  DataFrame,
-  DefaultTimeZone,
-  getFieldColorModeForField,
-  getFieldSeriesColor,
-  TimeRange,
-} from '@grafana/data';
-import uPlot, { Axis, Scale, Series, Options } from 'uplot';
+import { compareDataFrameStructures, DataFrame, DefaultTimeZone, getFieldSeriesColor, TimeRange } from '@grafana/data';
+import uPlot, { Axis, Scale, Series } from 'uplot';
 import { VizLayout } from '../VizLayout/VizLayout';
 import { distribute, SPACE_BETWEEN } from './distribute';
 import { Quadtree, Rect } from './quadtree';
@@ -16,11 +9,11 @@ import { Quadtree, Rect } from './quadtree';
 // Types
 import { VizOrientation } from '@grafana/data';
 import { Themeable } from '../../types';
-import { BarChartOptions } from './types';
+import { BarChartOptions, BarValueVisibility } from './types';
 import { useRevision } from '../uPlot/hooks';
 import { UPlotChart } from '../uPlot/Plot';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
-import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation } from '../uPlot/config';
+import { AxisPlacement, ScaleDistribution } from '../uPlot/config';
 import { useTheme } from '../../themes';
 
 export interface Props extends Themeable, BarChartOptions {
@@ -39,6 +32,7 @@ export const BarChart: React.FunctionComponent<Props> = ({
   orientation,
   groupWidth,
   barWidth,
+  showValue,
   ...plotProps
 }) => {
   if (!data || data.fields.length < 2) {
@@ -139,8 +133,11 @@ export const BarChart: React.FunctionComponent<Props> = ({
     }
 
     const drawPoints: Series.Points.Show = (u, sidx, i0, i1) => {
+      if (showValue === BarValueVisibility.Never)
+        return false;
+
       u.ctx.font         = font;
-      u.ctx.fillStyle    = "black";
+      u.ctx.fillStyle    = "white";
       u.ctx.textAlign    = ori === 0 ? "center" : "left";
       u.ctx.textBaseline = ori === 0 ? "bottom" : "middle";
 
@@ -185,9 +182,9 @@ export const BarChart: React.FunctionComponent<Props> = ({
     barMark.style.position = "absolute";
     barMark.style.background = "rgba(255,255,255,0.4)";
 
-    const builder = new UPlotConfigBuilder();
+    const xField = data.fields[0];
 
-    // const xField = data.fields[0];
+    const builder = new UPlotConfigBuilder();
 
     builder.addScale({
       scaleKey: 'x',
@@ -222,7 +219,7 @@ export const BarChart: React.FunctionComponent<Props> = ({
       return _dir == 1 ? splits : splits.reverse();
     };
 
-    const xValues: Axis.Values = () => data.fields[0].values.toArray();
+    const xValues: Axis.Values = () => xField.values.toArray();
 
     builder.addAxis({
       scaleKey: 'x',
@@ -230,6 +227,9 @@ export const BarChart: React.FunctionComponent<Props> = ({
       placement: ori == 0 ? AxisPlacement.Bottom : AxisPlacement.Left,
       splits: xSplits,
       values: xValues,
+      grid: false,
+      ticks: false,
+      gap: 15,
       theme,
     });
 
@@ -242,16 +242,17 @@ export const BarChart: React.FunctionComponent<Props> = ({
 
     // const FIXED_UNIT = '__fixed';
 
-    builder.setXSeries({
-      // TODO!
-    });
-
+    // why are the fields' seriesIndex props wrong?
     let seriesIndex = 0;
+
     for (let i = 1; i < data.fields.length; i++) {
       const field = data.fields[i];
+
+      // hack/fix a proper series index
       field.state!.seriesIndex = seriesIndex++;
+
       // const config = field.config;
-      //const customConfig = config.custom;
+      // const customConfig = config.custom;
 
       // const scaleKey = config.unit || FIXED_UNIT;
       // const colorMode = getFieldColorModeForField(field);
@@ -261,12 +262,26 @@ export const BarChart: React.FunctionComponent<Props> = ({
       builder.addSeries({
         scaleKey: i == 0 ? 'x' : 'y',
         lineWidth: 0,
-      //lineColor: '#F00', //seriesColor,
         fillColor: seriesColor,
         fillOpacity: 50,
         theme,
         fieldName: field.name,
         pathBuilder: drawBars,
+        pointsBuilder: drawPoints,
+
+        /*
+        lineColor: customConfig.lineColor ?? seriesColor,
+        lineWidth: customConfig.lineWidth,
+        lineStyle: customConfig.lineStyle,
+        show: !customConfig.hideFrom?.graph,
+        gradientMode: customConfig.gradientMode,
+        thresholds: config.thresholds,
+
+        // The following properties are not used in the uPlot config, but are utilized as transport for legend config
+        dataFrameFieldIndex,
+        fieldName: getFieldDisplayName(field, alignedFrame),
+        hideInLegend: customConfig.hideFrom?.legend,
+        */
       });
     }
 
@@ -279,13 +294,14 @@ export const BarChart: React.FunctionComponent<Props> = ({
 
       qt.clear();
 
-      // force-clear the path cache to cause drawBars() to rebuild new quadtree
+      // force-clear the path cache to force drawBars() to rebuild new quadtree
       u.series.forEach(s => {
         // @ts-ignore
         s._paths = null;
       });
     });
 
+    // handle hover interaction with quadtree probing
     builder.addHook("setCursor", (u: uPlot) => {
       let found: Rect | null = null;
       let cx = u.cursor.left! * pxRatio;
@@ -313,95 +329,17 @@ export const BarChart: React.FunctionComponent<Props> = ({
       }
     });
 
-    /*
-    builder.addSeries({
-      scaleKey: 'y',
-      theme,
-      lineColor: customConfig.lineColor ?? seriesColor,
-      lineWidth: customConfig.lineWidth,
-      lineInterpolation: customConfig.lineInterpolation,
-      lineStyle: customConfig.lineStyle,
-      pointSize: customConfig.pointSize,
-      pointColor: customConfig.pointColor ?? seriesColor,
-      spanNulls: customConfig.spanNulls || false,
-      show: !customConfig.hideFrom?.graph,
-      gradientMode: customConfig.gradientMode,
-      thresholds: config.thresholds,
-
-      // The following properties are not used in the uPlot config, but are utilized as transport for legend config
-      dataFrameFieldIndex,
-      fieldName: getFieldDisplayName(field, alignedFrame),
-      hideInLegend: customConfig.hideFrom?.legend,
+    // hide crosshair cursor & hover points
+    builder.setCursor({
+      x: false,
+      y: false,
+      points: {show: false}
     });
-    */
 
-    let opts = {
-      hooks: {
-        init: (u: uPlot) => {
-          u.root.querySelector(".u-over")!.appendChild(barMark);
-        },
-        drawClear: (u: uPlot) => {
-
-        },
-        setCursor: (u: uPlot) => {
-
-        }
-      },
-      opts: (u: uPlot, opts: Options) => {
-        const yScaleOpts = {
-          yRange,
-          ori: ori == 0 ? 1 : 0,
-        };
-
-        uPlot.assign(opts, {
-          select: {show: false},
-          cursor: {
-            x: false,
-            y: false,
-            points: {show: false}
-          },
-          scales: {
-            x: {
-              time: false,
-              distr: 2,
-              ori,
-              dir,
-            },
-            rend:   yScaleOpts,
-            size:   yScaleOpts,
-            mem:    yScaleOpts,
-            inter:  yScaleOpts,
-            toggle: yScaleOpts,
-          }
-        });
-
-        if (ori == 1) {
-          opts.padding = [0, null, 0, null];
-        }
-
-        uPlot.assign(opts.axes![0], {
-          gap:        15,
-          size:       40,
-          labelSize:  20,
-          grid:       {show: false},
-          ticks:      {show: false},
-
-          side:       ori == 0 ? 2 : 3,
-        });
-
-        opts.series.forEach((s, i) => {
-          if (i > 0) {
-            uPlot.assign(s, {
-              width: 0,
-              paths: drawBars,
-              points: {
-                show: drawPoints
-              }
-            });
-          }
-        });
-      }
-    };
+    // disable selection
+    builder.setSelect({
+      show: false
+    });
 
     return builder;
     /* eslint-enable */

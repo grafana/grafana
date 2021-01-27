@@ -11,8 +11,10 @@ export interface AxisProps {
   label?: string;
   show?: boolean;
   size?: number | null;
+  gap?: number;
   placement?: AxisPlacement;
   grid?: boolean;
+  ticks?: boolean;
   formatValue?: (v: any) => string;
   splits?: Axis.Splits;
   values?: any;
@@ -38,6 +40,8 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       show = true,
       placement = AxisPlacement.Auto,
       grid = true,
+      ticks = true,
+      gap = 0,
       formatValue,
       splits,
       values,
@@ -56,13 +60,14 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       font: `12px 'Roboto'`,
       labelFont: `12px 'Roboto'`,
       size: this.props.size ?? calculateAxisSize,
+      gap,
       grid: {
         show: grid,
         stroke: gridColor,
         width: 1 / devicePixelRatio,
       },
       ticks: {
-        show: true,
+        show: ticks,
         stroke: gridColor,
         width: 1 / devicePixelRatio,
       },
