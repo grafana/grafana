@@ -54,6 +54,7 @@ const dataConfig = {
 export const initialAlertDefinitionState: AlertDefinitionState = {
   alertDefinition: {
     id: 0,
+    uid: '',
     title: '',
     description: '',
     condition: {} as AlertCondition,
@@ -159,7 +160,7 @@ const alertDefinitionSlice = createSlice({
     setAlertDefinition: (state: AlertDefinitionState, action: PayloadAction<any>) => {
       return { ...state, alertDefinition: action.payload };
     },
-    updateAlertDefinition: (state: AlertDefinitionState, action: PayloadAction<Partial<AlertDefinition>>) => {
+    updateAlertDefinitionOptions: (state: AlertDefinitionState, action: PayloadAction<Partial<AlertDefinition>>) => {
       return { ...state, alertDefinition: { ...state.alertDefinition, ...action.payload } };
     },
     setUiState: (state: AlertDefinitionState, action: PayloadAction<AlertDefinitionUiState>) => {
@@ -185,7 +186,13 @@ export const {
   resetSecureField,
 } = notificationChannelSlice.actions;
 
-export const { setUiState, updateAlertDefinition, setQueryOptions, setAlertDefinitions } = alertDefinitionSlice.actions;
+export const {
+  setUiState,
+  updateAlertDefinitionOptions,
+  setQueryOptions,
+  setAlertDefinitions,
+  setAlertDefinition,
+} = alertDefinitionSlice.actions;
 
 export const alertRulesReducer = alertRulesSlice.reducer;
 export const notificationChannelReducer = notificationChannelSlice.reducer;

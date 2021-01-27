@@ -556,13 +556,20 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
           ),
       },
     })
-    .when('/ngalerting', {
+    .when('/alerting/new', {
       template: '<react-container />',
       resolve: {
         component: () =>
-          SafeDynamicImport(
-            import(/* webpackChunkName: "NgAlertingPage"*/ 'app/features/alerting/NextGenAlertingPage')
-          ),
+          SafeDynamicImport(import(/* webpackChunkName: "NgAlertingPage"*/ 'app/features/alerting/NewNGAlert')),
+      },
+      //@ts-ignore
+      pageClass: 'page-alerting',
+    })
+    .when('/alerting/:id/edit', {
+      template: '<react-container />',
+      resolve: {
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "NgAlertingPage"*/ 'app/features/alerting/EditNGAlert')),
       },
       //@ts-ignore
       pageClass: 'page-alerting',

@@ -2,11 +2,10 @@ import React, { FC, FormEvent, useMemo } from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { Field, Input, Select, TextArea, useStyles } from '@grafana/ui';
-import { AlertDefinition, NotificationChannelType, QueryGroupOptions } from 'app/types';
+import { AlertDefinition, QueryGroupOptions } from 'app/types';
 
 interface Props {
   alertDefinition: AlertDefinition;
-  notificationChannelTypes: NotificationChannelType[];
   onChange: (event: FormEvent) => void;
   onIntervalChange: (interval: SelectableValue<number>) => void;
   onConditionChange: (refId: SelectableValue<string>) => void;

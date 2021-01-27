@@ -147,6 +147,7 @@ export interface AlertDefinitionState {
 
 export interface AlertDefinition {
   id: number;
+  uid: string;
   title: string;
   description: string;
   condition: AlertCondition;
