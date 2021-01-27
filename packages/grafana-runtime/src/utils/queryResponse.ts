@@ -34,12 +34,7 @@ export function toDataQueryResponse(res: any, queries?: DataQuery[]): DataQueryR
   const rsp: DataQueryResponse = { data: [], state: LoadingState.Done };
   if (res.data?.results) {
     const results: KeyValue = res.data.results;
-    let refIDs: string[];
-    if (queries) {
-      refIDs = queries.map((q) => q.refId);
-    } else {
-      refIDs = Object.keys(results);
-    }
+    const refIDs = queries ? queries.map((q) => q.refId) : Object.keys(results);
 
     for (const refId of refIDs) {
       const dr = results[refId] as DataResponse;
