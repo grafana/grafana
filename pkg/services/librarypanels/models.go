@@ -22,6 +22,48 @@ type LibraryPanel struct {
 	UpdatedBy int64
 }
 
+type LibraryPanelWithMeta struct {
+	ID       int64  `xorm:"pk autoincr 'id'"`
+	OrgID    int64  `xorm:"org_id"`
+	FolderID int64  `xorm:"folder_id"`
+	UID      string `xorm:"uid"`
+	Name     string
+	Model    json.RawMessage
+
+	Created time.Time
+	Updated time.Time
+
+	CanEdit       bool
+	CreatedBy     int64
+	UpdatedBy     int64
+	CreatedByName string
+	UpdatedByName string
+}
+
+// LibraryPanel is the frontend DTO for library panels.
+type LibraryPanelDTO struct {
+	ID       int64               `json:"id"`
+	OrgID    int64               `json:"orgID"`
+	FolderID int64               `json:"folderId"`
+	UID      string              `json:"uid"`
+	Name     string              `json:"name"`
+	Model    json.RawMessage     `json:"model"`
+	Meta     LibraryPanelDTOMeta `json:"meta"`
+}
+
+// LibraryPanel is the meta information for a library panel.
+type LibraryPanelDTOMeta struct {
+	CanEdit bool `json:"canEdit"`
+
+	Created time.Time `json:"created"`
+	Updated time.Time `json:"updated"`
+
+	CreatedByID   int64  `json:"createdById"`
+	CreatedByName string `json:"createdByName"`
+	UpdatedByID   int64  `json:"updatedById"`
+	UpdatedByName string `json:"updatedByName"`
+}
+
 // libraryPanelDashboard is the model for library panel connections.
 type libraryPanelDashboard struct {
 	ID             int64 `xorm:"pk autoincr 'id'"`
