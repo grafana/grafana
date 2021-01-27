@@ -107,7 +107,7 @@ Never show the points.
 
 ## Bar graph examples
 
-Below are some line graph examples to give you ideas.
+Below are some bar graph examples to give you ideas.
 
 ### Hue gradient
 
