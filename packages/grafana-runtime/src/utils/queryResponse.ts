@@ -25,129 +25,68 @@ interface DataResponse {
 /**
  * Parse the results from /api/ds/query into a DataQueryResponse
  *
- * @public
- */
-export function toDataQueryResponse(res: any): DataQueryResponse {
-  const rsp: DataQueryResponse = { data: [], state: LoadingState.Done };
-  if (res.data?.results) {
-    const results: KeyValue = res.data.results;
-    for (const refId of Object.keys(results)) {
-      const dr = results[refId] as DataResponse;
-      if (dr) {
-        if (dr.error) {
-          if (!rsp.error) {
-            rsp.error = {
-              refId,
-              message: dr.error,
-            };
-            rsp.state = LoadingState.Error;
-          }
-        }
-
-        if (dr.series && dr.series.length) {
-          for (const s of dr.series) {
-            if (!s.refId) {
-              s.refId = refId;
-            }
-            rsp.data.push(toDataFrame(s));
-          }
-        }
-
-        if (dr.tables && dr.tables.length) {
-          for (const s of dr.tables) {
-            if (!s.refId) {
-              s.refId = refId;
-            }
-            rsp.data.push(toDataFrame(s));
-          }
-        }
-
-        if (dr.dataframes) {
-          for (const b64 of dr.dataframes) {
-            try {
-              const t = base64StringToArrowTable(b64);
-              const f = arrowTableToDataFrame(t);
-              if (!f.refId) {
-                f.refId = refId;
-              }
-              rsp.data.push(f);
-            } catch (err) {
-              rsp.state = LoadingState.Error;
-              rsp.error = toDataQueryError(err);
-            }
-          }
-        }
-      }
-    }
-  }
-
-  // When it is not an OK response, make sure the error gets added
-  if (res.status && res.status !== 200) {
-    if (rsp.state !== LoadingState.Error) {
-      rsp.state = LoadingState.Error;
-    }
-    if (!rsp.error) {
-      rsp.error = toDataQueryError(res);
-    }
-  }
-
-  return rsp;
-}
-
-/**
- * Parse the results from /api/ds/query into a DataQueryResponse ordering it by query input RefID's.
+ * @param res - the HTTP response data.
+ * @param queries optional DataQuery array that will order the response based on the order of query refId's.
  *
  * @public
  */
-export function toDataQueryResponseOrdered(queries: DataQuery[], res: any): DataQueryResponse {
+export function toDataQueryResponse(res: any, queries?: DataQuery[]): DataQueryResponse {
   const rsp: DataQueryResponse = { data: [], state: LoadingState.Done };
   if (res.data?.results) {
     const results: KeyValue = res.data.results;
-    for (const q of queries) {
-      const refId = q.refId;
+    let refIDs: string[];
+    if (queries) {
+      refIDs = queries.map((q) => q.refId);
+    } else {
+      refIDs = Object.keys(results);
+    }
+
+    for (const refId of refIDs) {
       const dr = results[refId] as DataResponse;
-      if (dr) {
-        if (dr.error) {
-          if (!rsp.error) {
-            rsp.error = {
-              refId,
-              message: dr.error,
-            };
+      if (!dr) {
+        continue;
+      }
+
+      if (dr.error) {
+        if (!rsp.error) {
+          rsp.error = {
+            refId,
+            message: dr.error,
+          };
+          rsp.state = LoadingState.Error;
+        }
+      }
+
+      if (dr.series && dr.series.length) {
+        for (const s of dr.series) {
+          if (!s.refId) {
+            s.refId = refId;
+          }
+          rsp.data.push(toDataFrame(s));
+        }
+      }
+
+      if (dr.tables && dr.tables.length) {
+        for (const s of dr.tables) {
+          if (!s.refId) {
+            s.refId = refId;
+          }
+          rsp.data.push(toDataFrame(s));
+        }
+      }
+
+      if (dr.dataframes) {
+        for (const b64 of dr.dataframes) {
+          try {
+            const t = base64StringToArrowTable(b64);
+            const f = arrowTableToDataFrame(t);
+            if (!f.refId) {
+              f.refId = refId;
+            }
+            rsp.data.push(f);
+          } catch (err) {
             rsp.state = LoadingState.Error;
-          }
-        }
-
-        if (dr.series && dr.series.length) {
-          for (const s of dr.series) {
-            if (!s.refId) {
-              s.refId = refId;
-            }
-            rsp.data.push(toDataFrame(s));
-          }
-        }
-
-        if (dr.tables && dr.tables.length) {
-          for (const s of dr.tables) {
-            if (!s.refId) {
-              s.refId = refId;
-            }
-            rsp.data.push(toDataFrame(s));
-          }
-        }
-
-        if (dr.dataframes) {
-          for (const b64 of dr.dataframes) {
-            try {
-              const t = base64StringToArrowTable(b64);
-              const f = arrowTableToDataFrame(t);
-              if (!f.refId) {
-                f.refId = refId;
-              }
-              rsp.data.push(f);
-            } catch (err) {
-              rsp.state = LoadingState.Error;
-              rsp.error = toDataQueryError(err);
-            }
+            rsp.error = toDataQueryError(err);
           }
         }
       }
