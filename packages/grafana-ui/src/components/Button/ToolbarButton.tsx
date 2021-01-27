@@ -7,6 +7,7 @@ import { Tooltip } from '../Tooltip/Tooltip';
 import { Icon } from '../Icon/Icon';
 import { getPropertiesForVariant } from './Button';
 import { isString } from 'lodash';
+import { selectors } from '@grafana/e2e-selectors';
 
 export interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   /** Icon name */
@@ -31,7 +32,20 @@ export type ToolbarButtonVariant = 'default' | 'primary' | 'destructive' | 'acti
 
 export const ToolbarButton = forwardRef<HTMLButtonElement, Props>(
   (
-    { tooltip, icon, className, children, imgSrc, fullWidth, isOpen, narrow, variant = 'default', iconOnly, ...rest },
+    {
+      tooltip,
+      icon,
+      className,
+      children,
+      imgSrc,
+      fullWidth,
+      isOpen,
+      narrow,
+      variant = 'default',
+      iconOnly,
+      'aria-label': ariaLabel,
+      ...rest
+    },
     ref
   ) => {
     const styles = useStyles(getStyles);
@@ -54,7 +68,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, Props>(
     });
 
     const body = (
-      <button ref={ref} className={buttonStyles} {...rest}>
+      <button ref={ref} className={buttonStyles} aria-label={getButttonAriaLabel(ariaLabel, tooltip)} {...rest}>
         {renderIcon(icon)}
         {imgSrc && <img className={styles.img} src={imgSrc} />}
         {children && !iconOnly && <div className={contentStyles}>{children}</div>}
@@ -72,6 +86,10 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, Props>(
     );
   }
 );
+
+function getButttonAriaLabel(ariaLabel: string | undefined, tooltip: string | undefined) {
+  return ariaLabel ? ariaLabel : tooltip ? selectors.components.PageToolbar.item(tooltip) : undefined;
+}
 
 function renderIcon(icon: IconName | React.ReactNode) {
   if (!icon) {

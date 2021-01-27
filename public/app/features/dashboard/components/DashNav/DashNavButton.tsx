@@ -55,7 +55,7 @@ export const DashNavButton: FunctionComponent<Props> = ({
         <button
           className={`btn navbar-button navbar-button--${classSuffix}`}
           onClick={onClick}
-          aria-label={selectors.pages.Dashboard.Toolbar.toolbarItems(tooltip)}
+          aria-label={selectors.components.PageToolbar.item(tooltip)}
         >
           {icon && <Icon name={icon} type={iconType} size={iconSize || 'lg'} />}
           {children}
