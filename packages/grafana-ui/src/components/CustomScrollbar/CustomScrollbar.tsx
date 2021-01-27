@@ -1,18 +1,15 @@
-import React, { Component } from 'react';
+import React, { FC, useCallback, useEffect, useRef } from 'react';
 import isNil from 'lodash/isNil';
 import classNames from 'classnames';
 import { css } from 'emotion';
-import { GrafanaTheme } from '@grafana/data';
-import { Themeable } from '../../types/theme';
-import { stylesFactory } from '../../themes';
-import { withTheme } from '../../themes/index';
 import Scrollbars from 'react-custom-scrollbars';
+import { useStyles } from '../../themes';
+import { GrafanaTheme } from '@grafana/data';
 
-interface Props extends Themeable {
+interface Props {
   className?: string;
   autoHide?: boolean;
   autoHideTimeout?: number;
-  autoHideDuration?: number;
   autoHeightMax?: string;
   hideTracksWhenNotNeeded?: boolean;
   hideHorizontalTrack?: boolean;
@@ -21,190 +18,153 @@ interface Props extends Themeable {
   setScrollTop?: (event: any) => void;
   autoHeightMin?: number | string;
   updateAfterMountMs?: number;
-  isPageScrollbar?: boolean;
-}
-
-interface StylesInterface {
-  customScrollbar: string;
-  trackVertical: string;
-  trackHorizontal: string;
-  thumbVertical: string;
-  thumbHorizontal: string;
-  view: string;
 }
 
 /**
  * Wraps component into <Scrollbars> component from `react-custom-scrollbars`
  */
-export class UnthemedCustomScrollbar extends Component<Props> {
-  static defaultProps: Partial<Props> = {
-    autoHide: false,
-    autoHideTimeout: 200,
-    autoHideDuration: 200,
-    setScrollTop: () => {},
-    hideTracksWhenNotNeeded: false,
-    autoHeightMin: '0',
-    autoHeightMax: '100%',
+export const CustomScrollbar: FC<Props> = ({
+  autoHide = false,
+  autoHideTimeout = 200,
+  setScrollTop,
+  className,
+  autoHeightMin = '0',
+  autoHeightMax = '100%',
+  hideTracksWhenNotNeeded = false,
+  hideHorizontalTrack,
+  hideVerticalTrack,
+  scrollTop,
+  updateAfterMountMs,
+  children,
+}) => {
+  const ref = useRef<Scrollbars>(null);
+  const styles = useStyles(getStyles);
+
+  const updateScroll = () => {
+    console.log('updateScroll');
+    if (ref.current && !isNil(scrollTop)) {
+      ref.current.scrollTop(scrollTop);
+    }
   };
 
-  private ref: React.RefObject<Scrollbars>;
-
-  constructor(props: Props) {
-    super(props);
-    this.ref = React.createRef<Scrollbars>();
-  }
-
-  updateScroll() {
-    const ref = this.ref.current;
-    const { scrollTop } = this.props;
-
-    if (ref && !isNil(scrollTop)) {
-      ref.scrollTop(scrollTop);
-    }
-  }
-
-  componentDidMount() {
-    this.updateScroll();
-
-    // this logic is to make scrollbar visible when content is added body after mount
-    if (this.props.updateAfterMountMs) {
-      setTimeout(() => this.updateAfterMount(), this.props.updateAfterMountMs);
-    }
-  }
-
-  updateAfterMount() {
-    if (this.ref && this.ref.current) {
-      const scrollbar = this.ref.current as any;
+  const updateAfterMount = () => {
+    if (ref && ref.current) {
+      const scrollbar = ref.current as any;
       if (scrollbar.update) {
         scrollbar.update();
       }
     }
-  }
+  };
 
-  componentDidUpdate() {
-    this.updateScroll();
-  }
+  /** onMount */
+  useEffect(() => {
+    updateScroll();
 
-  renderTrack = (style: string, hideTrack: boolean | undefined, passedProps: any) => {
-    if (passedProps.style && hideTrack) {
-      passedProps.style.display = 'none';
+    // this logic is to make scrollbar visible when content is added body after mount
+    if (ref.current === null && updateAfterMountMs) {
+      console.log('scrollbar mount updateAfterMountMs');
+      setTimeout(updateAfterMount, updateAfterMountMs);
     }
+  });
 
-    return <div {...passedProps} className={style} />;
-  };
+  const renderTrackHorizontal = useCallback((passedProps: any) => {
+    return renderTrack('track-horizontal', hideHorizontalTrack, passedProps);
+  }, []);
 
-  renderTrackHorizontal = (passedProps: any, styles: StylesInterface) => {
-    return this.renderTrack(styles.trackHorizontal, this.props.hideHorizontalTrack, passedProps);
-  };
+  const renderTrackVertical = useCallback((passedProps: any) => {
+    return renderTrack('track-vertical', hideVerticalTrack, passedProps);
+  }, []);
 
-  renderTrackVertical = (passedProps: any, styles: StylesInterface) => {
-    return this.renderTrack(styles.trackVertical, this.props.hideVerticalTrack, passedProps);
-  };
+  const renderThumbHorizontal = useCallback((passedProps: any) => {
+    return <div {...passedProps} className="thumb-horizontal" />;
+  }, []);
 
-  renderThumbHorizontal = (passedProps: any, styles: StylesInterface) => {
-    return <div {...passedProps} className={styles.thumbHorizontal} />;
-  };
+  const renderThumbVertical = useCallback((passedProps: any) => {
+    return <div {...passedProps} className="thumb-vertical" />;
+  }, []);
 
-  renderThumbVertical = (passedProps: any, styles: StylesInterface) => {
-    return <div {...passedProps} className={styles.thumbVertical} />;
-  };
+  const renderView = useCallback((passedProps: any) => {
+    return <div {...passedProps} className="scrollbar-view" />;
+  }, []);
 
-  renderView = (passedProps: any, styles: StylesInterface) => {
-    return <div {...passedProps} className={styles.view} />;
-  };
-  render() {
-    const {
-      theme,
-      className,
-      children,
-      autoHeightMax,
-      autoHeightMin,
-      setScrollTop,
-      autoHide,
-      autoHideTimeout,
-      hideTracksWhenNotNeeded,
-      isPageScrollbar,
-    } = this.props;
-    const styles = getStyles(theme, isPageScrollbar);
+  return (
+    <Scrollbars
+      ref={ref}
+      className={classNames(styles.customScrollbar, className)}
+      onScroll={setScrollTop}
+      autoHeight={true}
+      autoHide={autoHide}
+      autoHideTimeout={autoHideTimeout}
+      hideTracksWhenNotNeeded={hideTracksWhenNotNeeded}
+      // These autoHeightMin & autoHeightMax options affect firefox and chrome differently.
+      // Before these where set to inherit but that caused problems with cut of legends in firefox
+      autoHeightMax={autoHeightMax}
+      autoHeightMin={autoHeightMin}
+      renderTrackHorizontal={renderTrackHorizontal}
+      renderTrackVertical={renderTrackVertical}
+      renderThumbHorizontal={renderThumbHorizontal}
+      renderThumbVertical={renderThumbVertical}
+      renderView={renderView}
+    >
+      {children}
+    </Scrollbars>
+  );
+};
 
-    return (
-      <Scrollbars
-        ref={this.ref}
-        className={classNames(styles.customScrollbar, className)}
-        onScroll={setScrollTop}
-        autoHeight={true}
-        autoHide={autoHide}
-        autoHideTimeout={autoHideTimeout}
-        hideTracksWhenNotNeeded={hideTracksWhenNotNeeded}
-        // These autoHeightMin & autoHeightMax options affect firefox and chrome differently.
-        // Before these where set to inherit but that caused problems with cut of legends in firefox
-        autoHeightMax={autoHeightMax}
-        autoHeightMin={autoHeightMin}
-        renderTrackHorizontal={(passedProps: any) => this.renderTrackHorizontal(passedProps, styles)}
-        renderTrackVertical={(passedProps: any) => this.renderTrackVertical(passedProps, styles)}
-        renderThumbHorizontal={(passedProps: any) => this.renderThumbHorizontal(passedProps, styles)}
-        renderThumbVertical={(passedProps: any) => this.renderThumbVertical(passedProps, styles)}
-        renderView={(passedProps: any) => this.renderView(passedProps, styles)}
-      >
-        {children}
-      </Scrollbars>
-    );
+function renderTrack(className: string, hideTrack: boolean | undefined, passedProps: any) {
+  if (passedProps.style && hideTrack) {
+    passedProps.style.display = 'none';
   }
+
+  return <div {...passedProps} className={className} />;
 }
 
-export const CustomScrollbar = withTheme(UnthemedCustomScrollbar);
-CustomScrollbar.displayName = 'CustomScrollbar';
+export default CustomScrollbar;
 
-const getStyles = stylesFactory(
-  (theme: GrafanaTheme, isPageScrollbar?: boolean): StylesInterface => {
-    return {
-      customScrollbar: css`
-        label: customScrollbar;
+const getStyles = (theme: GrafanaTheme) => {
+  return {
+    customScrollbar: css`
+      // Fix for Firefox. For some reason sometimes .view container gets a height of its content, but in order to
+      // make scroll working it should fit outer container size (scroll appears only when inner container size is
+      // greater than outer one).
+      display: flex;
+      flex-grow: 1;
+      .scrollbar-view {
         display: flex;
         flex-grow: 1;
-        &:hover {
-          opacity: 0.8;
-          transition: opacity 0.3s ease-in-out;
-        }
-      `,
-      trackVertical: css`
-        label: trackVertical;
+        flex-direction: column;
+      }
+      .track-vertical {
         border-radius: ${theme.border.radius.md};
         width: ${theme.spacing.sm} !important;
-        top: 2px;
-        right: ${isPageScrollbar ? 0 : 2}px;
+        right: 0px;
         bottom: ${theme.spacing.xxs};
-      `,
-      trackHorizontal: css`
-        label: trackHorizontal;
+        top: ${theme.spacing.xxs};
+      }
+      .track-horizontal {
         border-radius: ${theme.border.radius.md};
         height: ${theme.spacing.sm} !important;
         right: ${theme.spacing.xxs};
         bottom: ${theme.spacing.xxs};
         left: ${theme.spacing.xxs};
-      `,
-      thumbVertical: css`
-        label: thumbVertical;
-        background-color: ${theme.palette.dark10};
-        background-image: linear-gradient(180deg, #404357, ${theme.palette.dark10});
-        background-repeat: repeat-x;
+      }
+      .thumb-vertical {
+        background: ${theme.colors.bg3};
         border-radius: ${theme.border.radius.md};
         opacity: 0;
-      `,
-      thumbHorizontal: css`
-        label: thumbHorizontal;
-        background-color: ${theme.palette.dark10};
-        background-image: linear-gradient(to right, #404357, ${theme.palette.dark10});
-        background-repeat: repeat-x;
-        border-radius: 6px;
+      }
+      .thumb-horizontal {
+        background: ${theme.colors.bg3};
+        border-radius: ${theme.border.radius.md};
         opacity: 0;
-      `,
-      view: css`
-        label: view;
-        display: flex;
-        flex-grow: 1;
-        flex-direction: column;
-      `,
-    };
-  }
-);
+      }
+      &:hover {
+        .thumb-vertical,
+        .thumb-horizontal {
+          opacity: 1;
+          transition: opacity 0.3s ease-in-out;
+        }
+      }
+    `,
+  };
+};
