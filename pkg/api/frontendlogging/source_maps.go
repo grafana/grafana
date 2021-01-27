@@ -29,7 +29,7 @@ type sourceMap struct {
 
 type ReadSourceMapFn func(dir string, path string) ([]byte, error)
 
-func ReadSourceMapFromFs(dir string, path string) ([]byte, error) {
+func ReadSourceMapFromFS(dir string, path string) ([]byte, error) {
 	file, err := http.Dir(dir).Open(path)
 	if err != nil {
 		return nil, err
