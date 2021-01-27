@@ -95,6 +95,8 @@ You can now provide detailed information to alert notification recipients by inj
 
 {{< figure src="/img/docs/alerting/alert-notification-template-7-4.png" max-width="700px" caption="Variable support in alert notifications" >}}
 
+For more information, refer to the [alert notification docs]({{< relref "../alerting/notifications.md#notification-templating" >}}).
+
 ### Content security policy support
 
 We have added support for [Content Security Policy (CSP)](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP), a layer of security that helps detect and mitigate certain types of attacks, including Cross Site Scripting (XSS) and data injection attacks.
