@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type AlertStateType string
@@ -216,6 +217,7 @@ type UpdateDashboardAlertsCommand struct {
 	OrgId     int64
 	Dashboard *Dashboard
 	User      *SignedInUser
+	Cfg       *setting.Cfg
 }
 
 type ValidateDashboardAlertsCommand struct {
@@ -223,4 +225,5 @@ type ValidateDashboardAlertsCommand struct {
 	OrgId     int64
 	Dashboard *Dashboard
 	User      *SignedInUser
+	Cfg       *setting.Cfg
 }

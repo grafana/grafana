@@ -17,14 +17,14 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/flux"
 )
 
-type InfluxDBExecutor struct {
+type influxDBExecutor struct {
 	// *models.DataSource
 	QueryParser    *InfluxdbQueryParser
 	ResponseParser *ResponseParser
 }
 
-func NewInfluxDBExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-	return &InfluxDBExecutor{
+func NewInfluxDBExecutor(datasource *models.DataSource, cfg *setting.Cfg) (tsdb.TsdbQueryEndpoint, error) {
+	return &influxDBExecutor{
 		QueryParser:    &InfluxdbQueryParser{},
 		ResponseParser: &ResponseParser{},
 	}, nil
@@ -38,10 +38,10 @@ var ErrInvalidHttpMode error = errors.New("'httpMode' should be either 'GET' or 
 
 func init() {
 	glog = log.New("tsdb.influxdb")
-	tsdb.RegisterTsdbQueryEndpoint("influxdb", NewInfluxDBExecutor)
+	tsdb.RegisterTSDBQueryEndpoint("influxdb", NewInfluxDBExecutor)
 }
 
-func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
+func (e *influxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	glog.Debug("Received a query request", "numQueries", len(tsdbQuery.Queries))
 
 	version := dsInfo.JsonData.Get("version").MustString("")
@@ -108,7 +108,7 @@ func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 	return result, nil
 }
 
-func (e *InfluxDBExecutor) getQuery(dsInfo *models.DataSource, queries []*tsdb.Query, context *tsdb.TsdbQuery) (*Query, error) {
+func (e *influxDBExecutor) getQuery(dsInfo *models.DataSource, queries []*tsdb.Query, context *tsdb.TsdbQuery) (*Query, error) {
 	if len(queries) == 0 {
 		return nil, fmt.Errorf("query request contains no queries")
 	}
@@ -122,7 +122,7 @@ func (e *InfluxDBExecutor) getQuery(dsInfo *models.DataSource, queries []*tsdb.Q
 	return query, nil
 }
 
-func (e *InfluxDBExecutor) createRequest(ctx context.Context, dsInfo *models.DataSource, query string) (*http.Request, error) {
+func (e *influxDBExecutor) createRequest(ctx context.Context, dsInfo *models.DataSource, query string) (*http.Request, error) {
 	u, err := url.Parse(dsInfo.Url)
 	if err != nil {
 		return nil, err

@@ -33,16 +33,18 @@ type DashboardProvisioningService interface {
 }
 
 // NewService factory for creating a new dashboard service
-var NewService = func() DashboardService {
+var NewService = func(cfg *setting.Cfg) DashboardService {
 	return &dashboardServiceImpl{
 		log: log.New("dashboard-service"),
+		cfg: cfg,
 	}
 }
 
 // NewProvisioningService factory for creating a new dashboard provisioning service
-var NewProvisioningService = func() DashboardProvisioningService {
+var NewProvisioningService = func(cfg *setting.Cfg) DashboardProvisioningService {
 	return &dashboardServiceImpl{
 		log: log.New("dashboard-provisioning-service"),
+		cfg: cfg,
 	}
 }
 
@@ -59,6 +61,7 @@ type dashboardServiceImpl struct {
 	orgId int64
 	user  *models.SignedInUser
 	log   log.Logger
+	cfg   *setting.Cfg
 }
 
 func (dr *dashboardServiceImpl) GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error) {
@@ -116,6 +119,7 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 			OrgId:     dto.OrgId,
 			Dashboard: dash,
 			User:      dto.User,
+			Cfg:       dr.cfg,
 		}
 
 		if err := bus.Dispatch(&validateAlertsCmd); err != nil {
@@ -212,6 +216,7 @@ func (dr *dashboardServiceImpl) updateAlerting(cmd *models.SaveDashboardCommand,
 		OrgId:     dto.OrgId,
 		Dashboard: cmd.Result,
 		User:      dto.User,
+		Cfg:       dr.cfg,
 	}
 
 	return bus.Dispatch(&alertCmd)
@@ -386,7 +391,7 @@ func (s *FakeDashboardService) DeleteDashboard(dashboardId int64, orgId int64) e
 }
 
 func MockDashboardService(mock *FakeDashboardService) {
-	NewService = func() DashboardService {
+	NewService = func(cfg *setting.Cfg) DashboardService {
 		return mock
 	}
 }

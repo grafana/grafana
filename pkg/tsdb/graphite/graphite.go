@@ -25,14 +25,14 @@ type GraphiteExecutor struct {
 	HttpClient *http.Client
 }
 
-func NewGraphiteExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+func NewGraphiteExecutor(datasource *models.DataSource, cfg *setting.Cfg) (tsdb.TsdbQueryEndpoint, error) {
 	return &GraphiteExecutor{}, nil
 }
 
 var glog = log.New("tsdb.graphite")
 
 func init() {
-	tsdb.RegisterTsdbQueryEndpoint("graphite", NewGraphiteExecutor)
+	tsdb.RegisterTSDBQueryEndpoint("graphite", NewGraphiteExecutor)
 }
 
 func (e *GraphiteExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {

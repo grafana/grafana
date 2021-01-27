@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/grafana/grafana/pkg/setting"
 
 	"gonum.org/v1/gonum/graph/simple"
 )
@@ -17,6 +18,7 @@ import (
 type baseNode struct {
 	id    int64
 	refID string
+	cfg   *setting.Cfg
 }
 
 type rawNode struct {
@@ -139,7 +141,7 @@ func (dn *DSNode) NodeType() NodeType {
 	return TypeDatasourceNode
 }
 
-func buildDSNode(dp *simple.DirectedGraph, rn *rawNode, orgID int64) (*DSNode, error) {
+func buildDSNode(dp *simple.DirectedGraph, rn *rawNode, orgID int64, cfg *setting.Cfg) (*DSNode, error) {
 	encodedQuery, err := json.Marshal(rn.Query)
 	if err != nil {
 		return nil, err
@@ -149,6 +151,7 @@ func buildDSNode(dp *simple.DirectedGraph, rn *rawNode, orgID int64) (*DSNode, e
 		baseNode: baseNode{
 			id:    dp.NewNode().ID(),
 			refID: rn.RefID,
+			cfg:   cfg,
 		},
 		orgID:      orgID,
 		query:      json.RawMessage(encodedQuery),
@@ -223,7 +226,7 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Resul
 	resp, err := QueryData(ctx, &backend.QueryDataRequest{
 		PluginContext: pc,
 		Queries:       q,
-	})
+	}, dn.cfg)
 
 	if err != nil {
 		return mathexp.Results{}, err

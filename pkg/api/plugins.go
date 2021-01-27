@@ -243,7 +243,7 @@ func GetPluginMarkdown(c *models.ReqContext) response.Response {
 	return resp
 }
 
-func ImportDashboard(c *models.ReqContext, apiCmd dtos.ImportDashboardCommand) response.Response {
+func (hs *HTTPServer) ImportDashboard(c *models.ReqContext, apiCmd dtos.ImportDashboardCommand) response.Response {
 	if apiCmd.PluginId == "" && apiCmd.Dashboard == nil {
 		return response.Error(422, "Dashboard must be set", nil)
 	}
@@ -257,6 +257,7 @@ func ImportDashboard(c *models.ReqContext, apiCmd dtos.ImportDashboardCommand) r
 		Overwrite: apiCmd.Overwrite,
 		FolderId:  apiCmd.FolderId,
 		Dashboard: apiCmd.Dashboard,
+		Cfg:       hs.Cfg,
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {

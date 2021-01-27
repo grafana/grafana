@@ -68,7 +68,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 		})
 	}
 
-	resp, err := tsdb.HandleRequest(c.Req.Context(), ds, request)
+	resp, err := tsdb.HandleRequest(c.Req.Context(), ds, request, hs.Cfg)
 	if err != nil {
 		return response.Error(500, "Metric request error", err)
 	}
@@ -185,7 +185,7 @@ func (hs *HTTPServer) QueryMetrics(c *models.ReqContext, reqDto dtos.MetricReque
 		})
 	}
 
-	resp, err := tsdb.HandleRequest(c.Req.Context(), ds, request)
+	resp, err := tsdb.HandleRequest(c.Req.Context(), ds, request, hs.Cfg)
 	if err != nil {
 		return response.Error(500, "Metric request error", err)
 	}
@@ -242,7 +242,7 @@ func GenerateSQLTestData(c *models.ReqContext) response.Response {
 }
 
 // GET /api/tsdb/testdata/random-walk
-func GetTestDataRandomWalk(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetTestDataRandomWalk(c *models.ReqContext) response.Response {
 	from := c.Query("from")
 	to := c.Query("to")
 	intervalMs := c.QueryInt64("intervalMs")
@@ -260,7 +260,7 @@ func GetTestDataRandomWalk(c *models.ReqContext) response.Response {
 		DataSource: dsInfo,
 	})
 
-	resp, err := tsdb.HandleRequest(context.Background(), dsInfo, request)
+	resp, err := tsdb.HandleRequest(context.Background(), dsInfo, request, hs.Cfg)
 	if err != nil {
 		return response.Error(500, "Metric request error", err)
 	}

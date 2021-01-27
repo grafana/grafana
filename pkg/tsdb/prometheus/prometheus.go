@@ -15,13 +15,14 @@ import (
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/prometheus/client_golang/api"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 )
 
-type PrometheusExecutor struct {
+type prometheusExecutor struct {
 	Transport http.RoundTripper
 }
 
@@ -37,13 +38,13 @@ func (bat basicAuthTransport) RoundTrip(req *http.Request) (*http.Response, erro
 	return bat.Transport.RoundTrip(req)
 }
 
-func NewPrometheusExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+func newPrometheusExecutor(dsInfo *models.DataSource, cfg *setting.Cfg) (tsdb.TsdbQueryEndpoint, error) {
 	transport, err := dsInfo.GetHttpTransport()
 	if err != nil {
 		return nil, err
 	}
 
-	return &PrometheusExecutor{
+	return &prometheusExecutor{
 		Transport: transport,
 	}, nil
 }
@@ -56,12 +57,12 @@ var (
 
 func init() {
 	plog = log.New("tsdb.prometheus")
-	tsdb.RegisterTsdbQueryEndpoint("prometheus", NewPrometheusExecutor)
+	tsdb.RegisterTSDBQueryEndpoint("prometheus", newPrometheusExecutor)
 	legendFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 	intervalCalculator = tsdb.NewIntervalCalculator(&tsdb.IntervalOptions{MinInterval: time.Second * 1})
 }
 
-func (e *PrometheusExecutor) getClient(dsInfo *models.DataSource) (apiv1.API, error) {
+func (e *prometheusExecutor) getClient(dsInfo *models.DataSource) (apiv1.API, error) {
 	cfg := api.Config{
 		Address:      dsInfo.Url,
 		RoundTripper: e.Transport,
@@ -83,7 +84,7 @@ func (e *PrometheusExecutor) getClient(dsInfo *models.DataSource) (apiv1.API, er
 	return apiv1.NewAPI(client), nil
 }
 
-func (e *PrometheusExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
+func (e *prometheusExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	result := &tsdb.Response{
 		Results: map[string]*tsdb.QueryResult{},
 	}

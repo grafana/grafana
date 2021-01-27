@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	. "github.com/smartystreets/goconvey/convey"
@@ -29,6 +30,8 @@ import (
 var serverIP = "localhost"
 
 func TestMSSQL(t *testing.T) {
+	cfg := setting.NewCfg()
+
 	SkipConvey("MSSQL", t, func() {
 		x := InitMSSQLTestDB(t)
 
@@ -42,10 +45,10 @@ func TestMSSQL(t *testing.T) {
 			return sql, nil
 		}
 
-		endpoint, err := newMssqlQueryEndpoint(&models.DataSource{
+		endpoint, err := newMSSQLQueryEndpoint(&models.DataSource{
 			JsonData:       simplejson.New(),
 			SecureJsonData: securejsondata.SecureJsonData{},
-		})
+		}, cfg)
 		So(err, ShouldBeNil)
 
 		sess := x.NewSession()

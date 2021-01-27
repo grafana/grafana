@@ -19,12 +19,12 @@ import (
 )
 
 func init() {
-	tsdb.RegisterTsdbQueryEndpoint("mssql", newMssqlQueryEndpoint)
+	tsdb.RegisterTSDBQueryEndpoint("mssql", newMSSQLQueryEndpoint)
 }
 
 var logger = log.New("tsdb.mssql")
 
-func newMssqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+func newMSSQLQueryEndpoint(datasource *models.DataSource, cfg *setting.Cfg) (tsdb.TsdbQueryEndpoint, error) {
 	cnnstr, err := generateConnectionString(datasource)
 	if err != nil {
 		return nil, err

@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type ruleReader interface {
@@ -16,11 +17,13 @@ type ruleReader interface {
 type defaultRuleReader struct {
 	sync.RWMutex
 	log log.Logger
+	cfg *setting.Cfg
 }
 
-func newRuleReader() *defaultRuleReader {
+func newRuleReader(cfg *setting.Cfg) *defaultRuleReader {
 	ruleReader := &defaultRuleReader{
 		log: log.New("alerting.ruleReader"),
+		cfg: cfg,
 	}
 
 	return ruleReader
@@ -36,7 +39,7 @@ func (arr *defaultRuleReader) fetch() []*Rule {
 
 	res := make([]*Rule, 0)
 	for _, ruleDef := range cmd.Result {
-		if model, err := NewRuleFromDBAlert(ruleDef, false); err != nil {
+		if model, err := NewRuleFromDBAlert(ruleDef, false, arr.cfg); err != nil {
 			arr.log.Error("Could not build alert model for rule", "ruleId", ruleDef.Id, "error", err)
 		} else {
 			res = append(res, model)

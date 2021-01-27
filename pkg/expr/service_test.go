@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/stretchr/testify/require"
 )
@@ -101,11 +102,11 @@ func registerEndPoint(df ...*data.Frame) {
 	me := &mockEndpoint{
 		Frames: df,
 	}
-	endpoint := func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+	endpoint := func(dsInfo *models.DataSource, cfg *setting.Cfg) (tsdb.TsdbQueryEndpoint, error) {
 		return me, nil
 	}
 
-	tsdb.RegisterTsdbQueryEndpoint("test", endpoint)
+	tsdb.RegisterTSDBQueryEndpoint("test", endpoint)
 	bus.AddHandler("test", func(query *models.GetDataSourceQuery) error {
 		query.Result = &models.DataSource{Id: 1, OrgId: 1, Type: "test"}
 		return nil

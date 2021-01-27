@@ -68,7 +68,7 @@ type CloudWatchService struct {
 func (s *CloudWatchService) Init() error {
 	plog.Debug("initing")
 
-	tsdb.RegisterTsdbQueryEndpoint("cloudwatch", func(ds *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+	tsdb.RegisterTSDBQueryEndpoint("cloudwatch", func(ds *models.DataSource, cfg *setting.Cfg) (tsdb.TsdbQueryEndpoint, error) {
 		return newExecutor(s.LogsService), nil
 	})
 

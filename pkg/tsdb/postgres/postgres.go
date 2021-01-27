@@ -17,10 +17,10 @@ import (
 )
 
 func init() {
-	tsdb.RegisterTsdbQueryEndpoint("postgres", newPostgresQueryEndpoint)
+	tsdb.RegisterTSDBQueryEndpoint("postgres", newPostgresQueryEndpoint)
 }
 
-func newPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+func newPostgresQueryEndpoint(datasource *models.DataSource, cfg *setting.Cfg) (tsdb.TsdbQueryEndpoint, error) {
 	logger := log.New("tsdb.postgres")
 	logger.Debug("Creating Postgres query endpoint")
 

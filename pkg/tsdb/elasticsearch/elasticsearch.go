@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
@@ -17,13 +18,13 @@ var (
 )
 
 // NewElasticsearchExecutor creates a new elasticsearch executor
-func NewElasticsearchExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+func NewElasticsearchExecutor(dsInfo *models.DataSource, cfg *setting.Cfg) (tsdb.TsdbQueryEndpoint, error) {
 	return &ElasticsearchExecutor{}, nil
 }
 
 func init() {
 	intervalCalculator = tsdb.NewIntervalCalculator(nil)
-	tsdb.RegisterTsdbQueryEndpoint("elasticsearch", NewElasticsearchExecutor)
+	tsdb.RegisterTSDBQueryEndpoint("elasticsearch", NewElasticsearchExecutor)
 }
 
 // Query handles an elasticsearch datasource request

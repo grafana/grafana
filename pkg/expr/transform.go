@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
@@ -128,7 +129,7 @@ func hiddenRefIDs(queries []backend.DataQuery) (map[string]struct{}, error) {
 
 // QueryData is called used to query datasources that are not expression commands, but are used
 // alongside expressions and/or are the input of an expression command.
-func QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func QueryData(ctx context.Context, req *backend.QueryDataRequest, cfg *setting.Cfg) (*backend.QueryDataResponse, error) {
 	if len(req.Queries) == 0 {
 		return nil, fmt.Errorf("zero queries found in datasource request")
 	}
@@ -169,7 +170,10 @@ func QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.Que
 	}
 
 	// For now take Time Range from first query.
-	timeRange := tsdb.NewTimeRange(strconv.FormatInt(req.Queries[0].TimeRange.From.Unix()*1000, 10), strconv.FormatInt(req.Queries[0].TimeRange.To.Unix()*1000, 10))
+	timeRange := tsdb.NewTimeRange(
+		strconv.FormatInt(req.Queries[0].TimeRange.From.Unix()*1000, 10),
+		strconv.FormatInt(req.Queries[0].TimeRange.To.Unix()*1000, 10),
+	)
 
 	tQ := &tsdb.TsdbQuery{
 		TimeRange: timeRange,
@@ -177,7 +181,7 @@ func QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.Que
 	}
 
 	// Execute the converted queries
-	tsdbRes, err := tsdb.HandleRequest(ctx, getDsInfo.Result, tQ)
+	tsdbRes, err := tsdb.HandleRequest(ctx, getDsInfo.Result, tQ, cfg)
 	if err != nil {
 		return nil, err
 	}

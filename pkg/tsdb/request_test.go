@@ -5,10 +5,13 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
 
 func TestHandleRequest(t *testing.T) {
+	cfg := setting.NewCfg()
+
 	t.Run("Should return query result when handling request for query", func(t *testing.T) {
 		req := &TsdbQuery{
 			Queries: []*Query{
@@ -19,7 +22,7 @@ func TestHandleRequest(t *testing.T) {
 		fakeExecutor := registerFakeExecutor()
 		fakeExecutor.Return("A", TimeSeriesSlice{&TimeSeries{Name: "argh"}})
 
-		res, err := HandleRequest(context.TODO(), &models.DataSource{Id: 1, Type: "test"}, req)
+		res, err := HandleRequest(context.TODO(), &models.DataSource{Id: 1, Type: "test"}, req, cfg)
 		require.NoError(t, err)
 		require.NotEmpty(t, res.Results["A"].Series)
 		require.Equal(t, "argh", res.Results["A"].Series[0].Name)
@@ -37,7 +40,7 @@ func TestHandleRequest(t *testing.T) {
 		fakeExecutor.Return("A", TimeSeriesSlice{&TimeSeries{Name: "argh"}})
 		fakeExecutor.Return("B", TimeSeriesSlice{&TimeSeries{Name: "barg"}})
 
-		res, err := HandleRequest(context.TODO(), &models.DataSource{Id: 1, Type: "test"}, req)
+		res, err := HandleRequest(context.TODO(), &models.DataSource{Id: 1, Type: "test"}, req, cfg)
 		require.NoError(t, err)
 
 		require.Len(t, res.Results, 2)
@@ -52,14 +55,17 @@ func TestHandleRequest(t *testing.T) {
 			},
 		}
 
-		_, err := HandleRequest(context.TODO(), &models.DataSource{Id: 12, Type: "testjughjgjg"}, req)
+		_, err := HandleRequest(context.TODO(), &models.DataSource{Id: 12, Type: "testjughjgjg"}, req, cfg)
 		require.Error(t, err)
 	})
 }
 
-func registerFakeExecutor() *FakeExecutor {
-	executor, _ := NewFakeExecutor(nil)
-	RegisterTsdbQueryEndpoint("test", func(dsInfo *models.DataSource) (TsdbQueryEndpoint, error) {
+func registerFakeExecutor() *fakeExecutor {
+	executor := &fakeExecutor{
+		results:   make(map[string]*QueryResult),
+		resultsFn: make(map[string]ResultsFn),
+	}
+	RegisterTSDBQueryEndpoint("test", func(dsInfo *models.DataSource, cfg *setting.Cfg) (TsdbQueryEndpoint, error) {
 		return executor, nil
 	})
 

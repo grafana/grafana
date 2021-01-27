@@ -24,7 +24,7 @@ import (
 type OpenTsdbExecutor struct {
 }
 
-func NewOpenTsdbExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+func NewOpenTSDBExecutor(datasource *models.DataSource, cfg *setting.Cfg) (tsdb.TsdbQueryEndpoint, error) {
 	return &OpenTsdbExecutor{}, nil
 }
 
@@ -34,7 +34,7 @@ var (
 
 func init() {
 	plog = log.New("tsdb.opentsdb")
-	tsdb.RegisterTsdbQueryEndpoint("opentsdb", NewOpenTsdbExecutor)
+	tsdb.RegisterTSDBQueryEndpoint("opentsdb", NewOpenTSDBExecutor)
 }
 
 func (e *OpenTsdbExecutor) Query(ctx context.Context, dsInfo *models.DataSource, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {

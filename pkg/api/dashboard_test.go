@@ -1205,7 +1205,7 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 		dashboards.MockDashboardService(mock)
 
 		origProvisioningService := dashboards.NewProvisioningService
-		dashboards.NewProvisioningService = func() dashboards.DashboardProvisioningService {
+		dashboards.NewProvisioningService = func(*setting.Cfg) dashboards.DashboardProvisioningService {
 			return mockDashboardProvisioningService{}
 		}
 
@@ -1269,7 +1269,7 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 		})
 
 		origProvisioningService := dashboards.NewProvisioningService
-		dashboards.NewProvisioningService = func() dashboards.DashboardProvisioningService {
+		dashboards.NewProvisioningService = func(*setting.Cfg) dashboards.DashboardProvisioningService {
 			return mockDashboardProvisioningService{}
 		}
 

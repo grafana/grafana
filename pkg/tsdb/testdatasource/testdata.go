@@ -5,26 +5,27 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-type TestDataExecutor struct {
+type testDataExecutor struct {
 	*models.DataSource
 	log log.Logger
 }
 
-func NewTestDataExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-	return &TestDataExecutor{
+func newTestDataExecutor(dsInfo *models.DataSource, cfg *setting.Cfg) (tsdb.TsdbQueryEndpoint, error) {
+	return &testDataExecutor{
 		DataSource: dsInfo,
 		log:        log.New("tsdb.testdata"),
 	}, nil
 }
 
 func init() {
-	tsdb.RegisterTsdbQueryEndpoint("testdata", NewTestDataExecutor)
+	tsdb.RegisterTSDBQueryEndpoint("testdata", newTestDataExecutor)
 }
 
-func (e *TestDataExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
+func (e *testDataExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	result := &tsdb.Response{}
 	result.Results = make(map[string]*tsdb.QueryResult)
 

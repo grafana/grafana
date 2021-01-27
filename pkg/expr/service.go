@@ -33,7 +33,7 @@ func (s *Service) isDisabled() bool {
 
 // BuildPipeline builds a pipeline from a request.
 func (s *Service) BuildPipeline(req *backend.QueryDataRequest) (DataPipeline, error) {
-	return buildPipeline(req)
+	return buildPipeline(req, s.Cfg)
 }
 
 // ExecutePipeline executes an expression pipeline and returns all the results.

@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning/values"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type config struct {
@@ -21,6 +22,7 @@ type config struct {
 	DisableDeletion       bool
 	UpdateIntervalSeconds int64
 	AllowUIUpdates        bool
+	Cfg                   *setting.Cfg
 }
 
 type configV0 struct {
@@ -73,7 +75,7 @@ func createDashboardJSON(data *simplejson.Json, lastModified time.Time, cfg *con
 	return dash, nil
 }
 
-func mapV0ToDashboardsAsConfig(v0 []*configV0) ([]*config, error) {
+func mapV0ToDashboardsAsConfig(v0 []*configV0, cfg *setting.Cfg) ([]*config, error) {
 	var r []*config
 	seen := make(map[string]bool)
 
@@ -94,13 +96,14 @@ func mapV0ToDashboardsAsConfig(v0 []*configV0) ([]*config, error) {
 			DisableDeletion:       v.DisableDeletion,
 			UpdateIntervalSeconds: v.UpdateIntervalSeconds,
 			AllowUIUpdates:        v.AllowUIUpdates,
+			Cfg:                   cfg,
 		})
 	}
 
 	return r, nil
 }
 
-func (dc *configV1) mapToDashboardsAsConfig() ([]*config, error) {
+func (dc *configV1) mapToDashboardsAsConfig(cfg *setting.Cfg) ([]*config, error) {
 	var r []*config
 	seen := make(map[string]bool)
 
@@ -121,6 +124,7 @@ func (dc *configV1) mapToDashboardsAsConfig() ([]*config, error) {
 			DisableDeletion:       v.DisableDeletion.Value(),
 			UpdateIntervalSeconds: v.UpdateIntervalSeconds.Value(),
 			AllowUIUpdates:        v.AllowUIUpdates.Value(),
+			Cfg:                   cfg,
 		})
 	}
 

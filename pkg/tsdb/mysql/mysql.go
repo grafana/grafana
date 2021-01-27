@@ -21,14 +21,14 @@ import (
 )
 
 func init() {
-	tsdb.RegisterTsdbQueryEndpoint("mysql", newMysqlQueryEndpoint)
+	tsdb.RegisterTSDBQueryEndpoint("mysql", newMysqlQueryEndpoint)
 }
 
 func characterEscape(s string, escapeChar string) string {
 	return strings.ReplaceAll(s, escapeChar, url.QueryEscape(escapeChar))
 }
 
-func newMysqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+func newMysqlQueryEndpoint(datasource *models.DataSource, cfg *setting.Cfg) (tsdb.TsdbQueryEndpoint, error) {
 	logger := log.New("tsdb.mysql")
 
 	protocol := "tcp"

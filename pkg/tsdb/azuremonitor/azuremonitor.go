@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
@@ -16,20 +17,20 @@ var (
 	legendKeyFormat *regexp.Regexp
 )
 
-// AzureMonitorExecutor executes queries for the Azure Monitor datasource - all four services
-type AzureMonitorExecutor struct {
+// azureMonitorExecutor executes queries for the Azure Monitor datasource - all four services
+type azureMonitorExecutor struct {
 	httpClient *http.Client
 	dsInfo     *models.DataSource
 }
 
-// NewAzureMonitorExecutor initializes a http client
-func NewAzureMonitorExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+// newAzureMonitorExecutor initializes a http client
+func newAzureMonitorExecutor(dsInfo *models.DataSource, cfg *setting.Cfg) (tsdb.TsdbQueryEndpoint, error) {
 	httpClient, err := dsInfo.GetHttpClient()
 	if err != nil {
 		return nil, err
 	}
 
-	return &AzureMonitorExecutor{
+	return &azureMonitorExecutor{
 		httpClient: httpClient,
 		dsInfo:     dsInfo,
 	}, nil
@@ -37,7 +38,7 @@ func NewAzureMonitorExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint,
 
 func init() {
 	azlog = log.New("tsdb.azuremonitor")
-	tsdb.RegisterTsdbQueryEndpoint("grafana-azure-monitor-datasource", NewAzureMonitorExecutor)
+	tsdb.RegisterTSDBQueryEndpoint("grafana-azure-monitor-datasource", newAzureMonitorExecutor)
 	legendKeyFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 }
 
@@ -45,7 +46,7 @@ func init() {
 // expected by chosen Azure Monitor service (Azure Monitor, App Insights etc.)
 // executes the queries against the API and parses the response into
 // the right format
-func (e *AzureMonitorExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
+func (e *azureMonitorExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	var err error
 
 	var azureMonitorQueries []*tsdb.Query

@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/require"
@@ -37,8 +38,7 @@ func TestQueryCondition(t *testing.T) {
 			ctx.evaluator = `{"type": "gt", "params": [100]}`
 
 			Convey("Can read query condition from json model", func() {
-				_, err := ctx.exec()
-				So(err, ShouldBeNil)
+				ctx.exec(t)
 
 				So(ctx.condition.Query.From, ShouldEqual, "5m")
 				So(ctx.condition.Query.To, ShouldEqual, "now")
@@ -59,9 +59,8 @@ func TestQueryCondition(t *testing.T) {
 			Convey("should fire when avg is above 100", func() {
 				points := newTimeSeriesPointsFromArgs(120, 0)
 				ctx.series = tsdb.TimeSeriesSlice{&tsdb.TimeSeries{Name: "test1", Points: points}}
-				cr, err := ctx.exec()
+				cr := ctx.exec(t)
 
-				So(err, ShouldBeNil)
 				So(cr.Firing, ShouldBeTrue)
 			})
 
@@ -70,18 +69,16 @@ func TestQueryCondition(t *testing.T) {
 					data.NewField("time", nil, []time.Time{time.Now(), time.Now()}),
 					data.NewField("val", nil, []int64{120, 150}),
 				)
-				cr, err := ctx.exec()
+				cr := ctx.exec(t)
 
-				So(err, ShouldBeNil)
 				So(cr.Firing, ShouldBeTrue)
 			})
 
 			Convey("Should not fire when avg is below 100", func() {
 				points := newTimeSeriesPointsFromArgs(90, 0)
 				ctx.series = tsdb.TimeSeriesSlice{&tsdb.TimeSeries{Name: "test1", Points: points}}
-				cr, err := ctx.exec()
+				cr := ctx.exec(t)
 
-				So(err, ShouldBeNil)
 				So(cr.Firing, ShouldBeFalse)
 			})
 
@@ -90,9 +87,8 @@ func TestQueryCondition(t *testing.T) {
 					data.NewField("time", nil, []time.Time{time.Now(), time.Now()}),
 					data.NewField("val", nil, []int64{12, 47}),
 				)
-				cr, err := ctx.exec()
+				cr := ctx.exec(t)
 
-				So(err, ShouldBeNil)
 				So(cr.Firing, ShouldBeFalse)
 			})
 
@@ -101,18 +97,16 @@ func TestQueryCondition(t *testing.T) {
 					&tsdb.TimeSeries{Name: "test1", Points: newTimeSeriesPointsFromArgs(120, 0)},
 					&tsdb.TimeSeries{Name: "test2", Points: newTimeSeriesPointsFromArgs(0, 0)},
 				}
-				cr, err := ctx.exec()
+				cr := ctx.exec(t)
 
-				So(err, ShouldBeNil)
 				So(cr.Firing, ShouldBeTrue)
 			})
 
 			Convey("No series", func() {
 				Convey("Should set NoDataFound when condition is gt", func() {
 					ctx.series = tsdb.TimeSeriesSlice{}
-					cr, err := ctx.exec()
+					cr := ctx.exec(t)
 
-					So(err, ShouldBeNil)
 					So(cr.Firing, ShouldBeFalse)
 					So(cr.NoDataFound, ShouldBeTrue)
 				})
@@ -120,9 +114,8 @@ func TestQueryCondition(t *testing.T) {
 				Convey("Should be firing when condition is no_value", func() {
 					ctx.evaluator = `{"type": "no_value", "params": []}`
 					ctx.series = tsdb.TimeSeriesSlice{}
-					cr, err := ctx.exec()
+					cr := ctx.exec(t)
 
-					So(err, ShouldBeNil)
 					So(cr.Firing, ShouldBeTrue)
 				})
 			})
@@ -133,9 +126,8 @@ func TestQueryCondition(t *testing.T) {
 					ctx.series = tsdb.TimeSeriesSlice{
 						&tsdb.TimeSeries{Name: "test1", Points: newTimeSeriesPointsFromArgs()},
 					}
-					cr, err := ctx.exec()
+					cr := ctx.exec(t)
 
-					So(err, ShouldBeNil)
 					So(cr.Firing, ShouldBeTrue)
 				})
 
@@ -144,9 +136,8 @@ func TestQueryCondition(t *testing.T) {
 						&tsdb.TimeSeries{Name: "test1", Points: newTimeSeriesPointsFromArgs()},
 						&tsdb.TimeSeries{Name: "test2", Points: newTimeSeriesPointsFromArgs()},
 					}
-					cr, err := ctx.exec()
+					cr := ctx.exec(t)
 
-					So(err, ShouldBeNil)
 					So(cr.NoDataFound, ShouldBeTrue)
 				})
 
@@ -155,9 +146,8 @@ func TestQueryCondition(t *testing.T) {
 						&tsdb.TimeSeries{Name: "test1", Points: tsdb.TimeSeriesPoints{tsdb.TimePoint{null.FloatFromPtr(nil), null.FloatFrom(0)}}},
 						&tsdb.TimeSeries{Name: "test2", Points: tsdb.TimeSeriesPoints{tsdb.TimePoint{null.FloatFromPtr(nil), null.FloatFrom(0)}}},
 					}
-					cr, err := ctx.exec()
+					cr := ctx.exec(t)
 
-					So(err, ShouldBeNil)
 					So(cr.NoDataFound, ShouldBeTrue)
 				})
 
@@ -166,9 +156,8 @@ func TestQueryCondition(t *testing.T) {
 						&tsdb.TimeSeries{Name: "test1", Points: newTimeSeriesPointsFromArgs()},
 						&tsdb.TimeSeries{Name: "test2", Points: newTimeSeriesPointsFromArgs(120, 0)},
 					}
-					cr, err := ctx.exec()
+					cr := ctx.exec(t)
 
-					So(err, ShouldBeNil)
 					So(cr.NoDataFound, ShouldBeFalse)
 				})
 			})
@@ -187,7 +176,11 @@ type queryConditionTestContext struct {
 
 type queryConditionScenarioFunc func(c *queryConditionTestContext)
 
-func (ctx *queryConditionTestContext) exec() (*alerting.ConditionResult, error) {
+func (ctx *queryConditionTestContext) exec(t *testing.T) *alerting.ConditionResult {
+	t.Helper()
+
+	cfg := setting.NewCfg()
+
 	jsonModel, err := simplejson.NewJson([]byte(`{
             "type": "query",
             "query":  {
@@ -198,10 +191,10 @@ func (ctx *queryConditionTestContext) exec() (*alerting.ConditionResult, error) 
             "reducer":` + ctx.reducer + `,
             "evaluator":` + ctx.evaluator + `
           }`))
-	So(err, ShouldBeNil)
+	require.NoError(t, err)
 
-	condition, err := newQueryCondition(jsonModel, 0)
-	So(err, ShouldBeNil)
+	condition, err := newQueryCondition(jsonModel, 0, cfg)
+	require.NoError(t, err)
 
 	ctx.condition = condition
 
@@ -215,7 +208,9 @@ func (ctx *queryConditionTestContext) exec() (*alerting.ConditionResult, error) 
 		}
 	}
 
-	condition.HandleRequest = func(context context.Context, dsInfo *models.DataSource, req *tsdb.TsdbQuery) (*tsdb.Response, error) {
+	condition.HandleRequest = func(
+		context context.Context, dsInfo *models.DataSource, req *tsdb.TsdbQuery, cfg *setting.Cfg,
+	) (*tsdb.Response, error) {
 		return &tsdb.Response{
 			Results: map[string]*tsdb.QueryResult{
 				"A": qr,
@@ -223,7 +218,9 @@ func (ctx *queryConditionTestContext) exec() (*alerting.ConditionResult, error) 
 		}, nil
 	}
 
-	return condition.Eval(ctx.result)
+	r, err := condition.Eval(ctx.result)
+	require.NoError(t, err)
+	return r
 }
 
 func queryConditionScenario(desc string, fn queryConditionScenarioFunc) {

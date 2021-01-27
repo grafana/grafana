@@ -128,7 +128,7 @@ func GetAlerts(c *models.ReqContext) response.Response {
 }
 
 // POST /api/alerts/test
-func AlertTest(c *models.ReqContext, dto dtos.AlertTestCommand) response.Response {
+func (hs *HTTPServer) AlertTest(c *models.ReqContext, dto dtos.AlertTestCommand) response.Response {
 	if _, idErr := dto.Dashboard.Get("id").Int64(); idErr != nil {
 		return response.Error(400, "The dashboard needs to be saved at least once before you can test an alert rule", nil)
 	}
@@ -138,6 +138,7 @@ func AlertTest(c *models.ReqContext, dto dtos.AlertTestCommand) response.Respons
 		Dashboard: dto.Dashboard,
 		PanelID:   dto.PanelId,
 		User:      c.SignedInUser,
+		Cfg:       hs.Cfg,
 	}
 
 	if err := bus.Dispatch(&backendCmd); err != nil {

@@ -28,8 +28,8 @@ func init() {
 	registry.Register(&registry.Descriptor{
 		Name: "ProvisioningService",
 		Instance: NewProvisioningServiceImpl(
-			func(path string) (dashboards.DashboardProvisioner, error) {
-				return dashboards.New(path)
+			func(path string, cfg *setting.Cfg) (dashboards.DashboardProvisioner, error) {
+				return dashboards.New(path, cfg)
 			},
 			notifiers.Provision,
 			datasources.Provision,
@@ -134,9 +134,9 @@ func (ps *provisioningServiceImpl) ProvisionNotifications() error {
 
 func (ps *provisioningServiceImpl) ProvisionDashboards() error {
 	dashboardPath := filepath.Join(ps.Cfg.ProvisioningPath, "dashboards")
-	dashProvisioner, err := ps.newDashboardProvisioner(dashboardPath)
+	dashProvisioner, err := ps.newDashboardProvisioner(dashboardPath, ps.Cfg)
 	if err != nil {
-		return errutil.Wrap("Failed to create provisioner", err)
+		return errutil.Wrap("failed to create provisioner", err)
 	}
 
 	ps.mutex.Lock()

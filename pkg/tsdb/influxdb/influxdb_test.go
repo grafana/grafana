@@ -19,7 +19,7 @@ func TestInfluxDBExecutor_createRequest(t *testing.T) {
 		JsonData: simplejson.New(),
 	}
 	query := "SELECT awesomeness FROM somewhere"
-	e := &InfluxDBExecutor{
+	e := &influxDBExecutor{
 		QueryParser:    &InfluxdbQueryParser{},
 		ResponseParser: &ResponseParser{},
 	}

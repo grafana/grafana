@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -396,7 +397,7 @@ func mockDashboardProvisioningService() *fakeDashboardProvisioningService {
 	mock := fakeDashboardProvisioningService{
 		provisioned: map[string][]*models.DashboardProvisioning{},
 	}
-	dashboards.NewProvisioningService = func() dashboards.DashboardProvisioningService {
+	dashboards.NewProvisioningService = func(*setting.Cfg) dashboards.DashboardProvisioningService {
 		return &mock
 	}
 	return &mock

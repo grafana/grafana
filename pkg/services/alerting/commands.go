@@ -11,7 +11,7 @@ func init() {
 }
 
 func validateDashboardAlerts(cmd *models.ValidateDashboardAlertsCommand) error {
-	extractor := NewDashAlertExtractor(cmd.Dashboard, cmd.OrgId, cmd.User)
+	extractor := NewDashAlertExtractor(cmd.Dashboard, cmd.OrgId, cmd.User, cmd.Cfg)
 
 	return extractor.ValidateAlerts()
 }
@@ -23,7 +23,7 @@ func updateDashboardAlerts(cmd *models.UpdateDashboardAlertsCommand) error {
 		DashboardId: cmd.Dashboard.Id,
 	}
 
-	extractor := NewDashAlertExtractor(cmd.Dashboard, cmd.OrgId, cmd.User)
+	extractor := NewDashAlertExtractor(cmd.Dashboard, cmd.OrgId, cmd.User, cmd.Cfg)
 
 	alerts, err := extractor.GetAlerts()
 	if err != nil {

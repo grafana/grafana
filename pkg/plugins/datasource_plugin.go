@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
 	"github.com/grafana/grafana/pkg/plugins/datasource/wrapper"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -60,7 +61,7 @@ func (p *DataSourcePlugin) Load(decoder *json.Decoder, base *PluginBase, backend
 }
 
 func (p *DataSourcePlugin) onLegacyPluginStart(pluginID string, client *grpcplugin.LegacyClient, logger log.Logger) error {
-	tsdb.RegisterTsdbQueryEndpoint(pluginID, func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+	tsdb.RegisterTSDBQueryEndpoint(pluginID, func(dsInfo *models.DataSource, cfg *setting.Cfg) (tsdb.TsdbQueryEndpoint, error) {
 		return wrapper.NewDatasourcePluginWrapper(logger, client.DatasourcePlugin), nil
 	})
 
@@ -69,7 +70,7 @@ func (p *DataSourcePlugin) onLegacyPluginStart(pluginID string, client *grpcplug
 
 func (p *DataSourcePlugin) onPluginStart(pluginID string, client *grpcplugin.Client, logger log.Logger) error {
 	if client.DataPlugin != nil {
-		tsdb.RegisterTsdbQueryEndpoint(pluginID, func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+		tsdb.RegisterTSDBQueryEndpoint(pluginID, func(dsInfo *models.DataSource, cfg *setting.Cfg) (tsdb.TsdbQueryEndpoint, error) {
 			return wrapper.NewDatasourcePluginWrapperV2(logger, p.Id, p.Type, client.DataPlugin), nil
 		})
 	}

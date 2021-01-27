@@ -25,6 +25,7 @@ import (
 type AlertEngine struct {
 	RenderService rendering.Service `inject:""`
 	Bus           bus.Bus           `inject:""`
+	Cfg           *setting.Cfg      `inject:""`
 
 	execQueue     chan *Job
 	ticker        *Ticker
@@ -50,7 +51,7 @@ func (e *AlertEngine) Init() error {
 	e.execQueue = make(chan *Job, 1000)
 	e.scheduler = newScheduler()
 	e.evalHandler = NewEvalHandler()
-	e.ruleReader = newRuleReader()
+	e.ruleReader = newRuleReader(e.Cfg)
 	e.log = log.New("alerting.engine")
 	e.resultHandler = newResultHandler(e.RenderService)
 	return nil

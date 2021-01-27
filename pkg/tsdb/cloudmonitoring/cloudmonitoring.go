@@ -68,8 +68,8 @@ type CloudMonitoringExecutor struct {
 	dsInfo     *models.DataSource
 }
 
-// NewCloudMonitoringExecutor initializes a http client
-func NewCloudMonitoringExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+// newCloudMonitoringExecutor initializes a http client
+func newCloudMonitoringExecutor(dsInfo *models.DataSource, cfg *setting.Cfg) (tsdb.TsdbQueryEndpoint, error) {
 	httpClient, err := dsInfo.GetHttpClient()
 	if err != nil {
 		return nil, err
@@ -83,7 +83,7 @@ func NewCloudMonitoringExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoi
 
 func init() {
 	slog = log.New("tsdb.cloudMonitoring")
-	tsdb.RegisterTsdbQueryEndpoint("stackdriver", NewCloudMonitoringExecutor)
+	tsdb.RegisterTSDBQueryEndpoint("stackdriver", newCloudMonitoringExecutor)
 }
 
 // Query takes in the frontend queries, parses them into the CloudMonitoring query format

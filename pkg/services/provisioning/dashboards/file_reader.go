@@ -56,7 +56,7 @@ func NewDashboardFileReader(cfg *config, log log.Logger) (*FileReader, error) {
 		Cfg:                          cfg,
 		Path:                         path,
 		log:                          log,
-		dashboardProvisioningService: dashboards.NewProvisioningService(),
+		dashboardProvisioningService: dashboards.NewProvisioningService(cfg.Cfg),
 		FoldersFromFilesStructure:    foldersFromFilesStructure,
 	}, nil
 }

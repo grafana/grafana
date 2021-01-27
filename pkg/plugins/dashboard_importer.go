@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var varRegex = regexp.MustCompile(`(\$\{.+?\})`)
@@ -19,11 +20,11 @@ type ImportDashboardCommand struct {
 	Inputs    []ImportDashboardInput
 	Overwrite bool
 	FolderId  int64
-
-	OrgId    int64
-	User     *models.SignedInUser
-	PluginId string
-	Result   *PluginDashboardInfoDTO
+	Cfg       *setting.Cfg
+	OrgId     int64
+	User      *models.SignedInUser
+	PluginId  string
+	Result    *PluginDashboardInfoDTO
 }
 
 type ImportDashboardInput struct {
@@ -83,8 +84,7 @@ func ImportDashboard(cmd *ImportDashboardCommand) error {
 		User:      cmd.User,
 	}
 
-	savedDash, err := dashboards.NewService().ImportDashboard(dto)
-
+	savedDash, err := dashboards.NewService(cmd.Cfg).ImportDashboard(dto)
 	if err != nil {
 		return err
 	}

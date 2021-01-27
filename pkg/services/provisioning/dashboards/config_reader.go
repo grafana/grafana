@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
+	"github.com/grafana/grafana/pkg/setting"
 	"gopkg.in/yaml.v2"
 )
 
@@ -17,8 +18,11 @@ type configReader struct {
 	log  log.Logger
 }
 
-func (cr *configReader) parseConfigs(file os.FileInfo) ([]*config, error) {
-	filename, _ := filepath.Abs(filepath.Join(cr.path, file.Name()))
+func (cr *configReader) parseConfigs(file os.FileInfo, cfg *setting.Cfg) ([]*config, error) {
+	filename, err := filepath.Abs(filepath.Join(cr.path, file.Name()))
+	if err != nil {
+		return nil, err
+	}
 
 	// nolint:gosec
 	// We can ignore the gosec G304 warning on this one because `filename` comes from ps.Cfg.ProvisioningPath
@@ -44,7 +48,7 @@ func (cr *configReader) parseConfigs(file os.FileInfo) ([]*config, error) {
 		}
 
 		if v1 != nil {
-			return v1.mapToDashboardsAsConfig()
+			return v1.mapToDashboardsAsConfig(cfg)
 		}
 	} else {
 		var v0 []*configV0
@@ -55,14 +59,14 @@ func (cr *configReader) parseConfigs(file os.FileInfo) ([]*config, error) {
 
 		if v0 != nil {
 			cr.log.Warn("[Deprecated] the dashboard provisioning config is outdated. please upgrade", "filename", filename)
-			return mapV0ToDashboardsAsConfig(v0)
+			return mapV0ToDashboardsAsConfig(v0, cfg)
 		}
 	}
 
 	return []*config{}, nil
 }
 
-func (cr *configReader) readConfig() ([]*config, error) {
+func (cr *configReader) readConfig(cfg *setting.Cfg) ([]*config, error) {
 	var dashboards []*config
 
 	files, err := ioutil.ReadDir(cr.path)
@@ -76,7 +80,7 @@ func (cr *configReader) readConfig() ([]*config, error) {
 			continue
 		}
 
-		parsedDashboards, err := cr.parseConfigs(file)
+		parsedDashboards, err := cr.parseConfigs(file, cfg)
 		if err != nil {
 			return nil, fmt.Errorf("could not parse provisioning config file: %s error: %v", file.Name(), err)
 		}

@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
@@ -113,7 +114,7 @@ func getTimeDurationStringToSeconds(str string) (int64, error) {
 
 // NewRuleFromDBAlert maps a db version of
 // alert to an in-memory version.
-func NewRuleFromDBAlert(ruleDef *models.Alert, logTranslationFailures bool) (*Rule, error) {
+func NewRuleFromDBAlert(ruleDef *models.Alert, logTranslationFailures bool, cfg *setting.Cfg) (*Rule, error) {
 	model := &Rule{}
 	model.ID = ruleDef.Id
 	model.OrgID = ruleDef.OrgId
@@ -141,11 +142,13 @@ func NewRuleFromDBAlert(ruleDef *models.Alert, logTranslationFailures bool) (*Ru
 			uid, err := translateNotificationIDToUID(id, ruleDef.OrgId)
 			if err != nil {
 				if !errors.Is(err, models.ErrAlertNotificationFailedTranslateUniqueID) {
-					logger.Error("Failed to translate notification id to uid", "error", err.Error(), "dashboardId", model.DashboardID, "alert", model.Name, "panelId", model.PanelID, "notificationId", id)
+					logger.Error("Failed to translate notification id to uid", "error", err.Error(), "dashboardId",
+						model.DashboardID, "alert", model.Name, "panelId", model.PanelID, "notificationId", id)
 				}
 
 				if logTranslationFailures {
-					logger.Warn("Unable to translate notification id to uid", "dashboardId", model.DashboardID, "alert", model.Name, "panelId", model.PanelID, "notificationId", id)
+					logger.Warn("Unable to translate notification id to uid", "dashboardId", model.DashboardID,
+						"alert", model.Name, "panelId", model.PanelID, "notificationId", id)
 				}
 			} else {
 				model.Notifications = append(model.Notifications, uid)
@@ -153,7 +156,12 @@ func NewRuleFromDBAlert(ruleDef *models.Alert, logTranslationFailures bool) (*Ru
 		} else if uid, err := jsonModel.Get("uid").String(); err == nil {
 			model.Notifications = append(model.Notifications, uid)
 		} else {
-			return nil, ValidationError{Reason: "Neither id nor uid is specified in 'notifications' block, " + err.Error(), DashboardID: model.DashboardID, AlertID: model.ID, PanelID: model.PanelID}
+			return nil, ValidationError{
+				Reason:      "Neither id nor uid is specified in 'notifications' block, " + err.Error(),
+				DashboardID: model.DashboardID,
+				AlertID:     model.ID,
+				PanelID:     model.PanelID,
+			}
 		}
 	}
 	model.AlertRuleTags = ruleDef.GetTagsFromSettings()
@@ -163,11 +171,21 @@ func NewRuleFromDBAlert(ruleDef *models.Alert, logTranslationFailures bool) (*Ru
 		conditionType := conditionModel.Get("type").MustString()
 		factory, exist := conditionFactories[conditionType]
 		if !exist {
-			return nil, ValidationError{Reason: "Unknown alert condition: " + conditionType, DashboardID: model.DashboardID, AlertID: model.ID, PanelID: model.PanelID}
+			return nil, ValidationError{
+				Reason:      "Unknown alert condition: " + conditionType,
+				DashboardID: model.DashboardID,
+				AlertID:     model.ID,
+				PanelID:     model.PanelID,
+			}
 		}
-		queryCondition, err := factory(conditionModel, index)
+		queryCondition, err := factory(conditionModel, index, cfg)
 		if err != nil {
-			return nil, ValidationError{Err: err, DashboardID: model.DashboardID, AlertID: model.ID, PanelID: model.PanelID}
+			return nil, ValidationError{
+				Err:         err,
+				DashboardID: model.DashboardID,
+				AlertID:     model.ID,
+				PanelID:     model.PanelID,
+			}
 		}
 		model.Conditions = append(model.Conditions, queryCondition)
 	}
@@ -202,7 +220,7 @@ func getAlertNotificationUIDByIDAndOrgID(notificationID int64, orgID int64) (str
 }
 
 // ConditionFactory is the function signature for creating `Conditions`.
-type ConditionFactory func(model *simplejson.Json, index int) (Condition, error)
+type ConditionFactory func(model *simplejson.Json, index int, cfg *setting.Cfg) (Condition, error)
 
 var conditionFactories = make(map[string]ConditionFactory)
 

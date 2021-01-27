@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -50,8 +51,11 @@ func TestAlertRuleFrequencyParsing(t *testing.T) {
 
 func TestAlertRuleModel(t *testing.T) {
 	sqlstore.InitTestDB(t)
+
+	cfg := setting.NewCfg()
+
 	Convey("Testing alert rule", t, func() {
-		RegisterCondition("test", func(model *simplejson.Json, index int) (Condition, error) {
+		RegisterCondition("test", func(model *simplejson.Json, index int, cfg *setting.Cfg) (Condition, error) {
 			return &FakeCondition{}, nil
 		})
 
@@ -102,7 +106,7 @@ func TestAlertRuleModel(t *testing.T) {
 					Settings: alertJSON,
 				}
 
-				alertRule, err := NewRuleFromDBAlert(alert, false)
+				alertRule, err := NewRuleFromDBAlert(alert, false, cfg)
 				So(err, ShouldBeNil)
 
 				So(len(alertRule.Conditions), ShouldEqual, 1)
@@ -144,7 +148,7 @@ func TestAlertRuleModel(t *testing.T) {
 				Settings: alertJSON,
 			}
 
-			alertRule, err := NewRuleFromDBAlert(alert, false)
+			alertRule, err := NewRuleFromDBAlert(alert, false, cfg)
 			Convey("swallows the error", func() {
 				So(err, ShouldBeNil)
 				So(alertRule.Notifications, ShouldNotContain, "999")
@@ -177,7 +181,7 @@ func TestAlertRuleModel(t *testing.T) {
 				Settings: alertJSON,
 			}
 
-			alertRule, err := NewRuleFromDBAlert(alert, false)
+			alertRule, err := NewRuleFromDBAlert(alert, false, cfg)
 			So(err, ShouldBeNil)
 			So(alertRule.Frequency, ShouldEqual, 60)
 		})
@@ -215,7 +219,7 @@ func TestAlertRuleModel(t *testing.T) {
 				Settings: alertJSON,
 			}
 
-			_, err := NewRuleFromDBAlert(alert, false)
+			_, err := NewRuleFromDBAlert(alert, false, cfg)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldEqual, "alert validation error: Neither id nor uid is specified in 'notifications' block, type assertion to string failed AlertId: 1 PanelId: 1 DashboardId: 1")
 		})

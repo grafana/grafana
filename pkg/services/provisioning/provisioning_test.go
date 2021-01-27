@@ -91,7 +91,7 @@ func setup() *serviceTestStruct {
 	}
 
 	serviceTest.service = NewProvisioningServiceImpl(
-		func(path string) (dashboards.DashboardProvisioner, error) {
+		func(path string, cfg *setting.Cfg) (dashboards.DashboardProvisioner, error) {
 			return serviceTest.mock, nil
 		},
 		nil,

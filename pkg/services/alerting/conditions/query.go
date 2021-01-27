@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 
 	gocontext "context"
@@ -21,8 +22,8 @@ import (
 )
 
 func init() {
-	alerting.RegisterCondition("query", func(model *simplejson.Json, index int) (alerting.Condition, error) {
-		return newQueryCondition(model, index)
+	alerting.RegisterCondition("query", func(model *simplejson.Json, index int, cfg *setting.Cfg) (alerting.Condition, error) {
+		return newQueryCondition(model, index, cfg)
 	})
 }
 
@@ -35,6 +36,7 @@ type QueryCondition struct {
 	Evaluator     AlertEvaluator
 	Operator      string
 	HandleRequest tsdb.HandleRequestFunc
+	Cfg           *setting.Cfg
 }
 
 // AlertQuery contains information about what datasource a query
@@ -159,7 +161,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *
 		})
 	}
 
-	resp, err := c.HandleRequest(context.Ctx, getDsInfo.Result, req)
+	resp, err := c.HandleRequest(context.Ctx, getDsInfo.Result, req, c.Cfg)
 	if err != nil {
 		return nil, toCustomError(err)
 	}
@@ -234,8 +236,10 @@ func (c *QueryCondition) getRequestForAlertRule(datasource *models.DataSource, t
 	return req
 }
 
-func newQueryCondition(model *simplejson.Json, index int) (*QueryCondition, error) {
-	condition := QueryCondition{}
+func newQueryCondition(model *simplejson.Json, index int, cfg *setting.Cfg) (*QueryCondition, error) {
+	condition := QueryCondition{
+		Cfg: cfg,
+	}
 	condition.Index = index
 	condition.HandleRequest = tsdb.HandleRequest
 

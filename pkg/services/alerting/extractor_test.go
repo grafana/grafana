@@ -9,12 +9,15 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestAlertRuleExtraction(t *testing.T) {
+	cfg := setting.NewCfg()
+
 	Convey("Parsing alert rules  from dashboard json", t, func() {
-		RegisterCondition("query", func(model *simplejson.Json, index int) (Condition, error) {
+		RegisterCondition("query", func(model *simplejson.Json, index int, cfg *setting.Cfg) (Condition, error) {
 			return &FakeCondition{}, nil
 		})
 
@@ -69,7 +72,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 				So(getTarget(dashJSON), ShouldEqual, "")
 			})
 
-			extractor := NewDashAlertExtractor(dash, 1, nil)
+			extractor := NewDashAlertExtractor(dash, 1, nil, cfg)
 			_, _ = extractor.GetAlerts()
 
 			Convey("Dashboard json should not be updated after extracting rules", func() {
@@ -82,7 +85,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			dash := models.NewDashboardFromJson(dashJSON)
-			extractor := NewDashAlertExtractor(dash, 1, nil)
+			extractor := NewDashAlertExtractor(dash, 1, nil, cfg)
 
 			alerts, err := extractor.GetAlerts()
 
@@ -150,7 +153,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 			dashJSON, err := simplejson.NewJson(panelWithoutID)
 			So(err, ShouldBeNil)
 			dash := models.NewDashboardFromJson(dashJSON)
-			extractor := NewDashAlertExtractor(dash, 1, nil)
+			extractor := NewDashAlertExtractor(dash, 1, nil, cfg)
 
 			_, err = extractor.GetAlerts()
 
@@ -166,7 +169,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 			dashJSON, err := simplejson.NewJson(panelWithIDZero)
 			So(err, ShouldBeNil)
 			dash := models.NewDashboardFromJson(dashJSON)
-			extractor := NewDashAlertExtractor(dash, 1, nil)
+			extractor := NewDashAlertExtractor(dash, 1, nil, cfg)
 
 			_, err = extractor.GetAlerts()
 
@@ -182,7 +185,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 			dashJSON, err := simplejson.NewJson(panelWithoutSpecifiedDatasource)
 			So(err, ShouldBeNil)
 			dash := models.NewDashboardFromJson(dashJSON)
-			extractor := NewDashAlertExtractor(dash, 1, nil)
+			extractor := NewDashAlertExtractor(dash, 1, nil, cfg)
 
 			alerts, err := extractor.GetAlerts()
 
@@ -204,7 +207,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 			dashJSON, err := simplejson.NewJson(json)
 			So(err, ShouldBeNil)
 			dash := models.NewDashboardFromJson(dashJSON)
-			extractor := NewDashAlertExtractor(dash, 1, nil)
+			extractor := NewDashAlertExtractor(dash, 1, nil, cfg)
 
 			alerts, err := extractor.GetAlerts()
 
@@ -233,7 +236,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 				dashJSON, err := simplejson.NewJson(json)
 				So(err, ShouldBeNil)
 				dash := models.NewDashboardFromJson(dashJSON)
-				extractor := NewDashAlertExtractor(dash, 1, nil)
+				extractor := NewDashAlertExtractor(dash, 1, nil, cfg)
 
 				alerts, err := extractor.GetAlerts()
 
@@ -263,7 +266,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				dash := models.NewDashboardFromJson(dashJSON)
-				extractor := NewDashAlertExtractor(dash, 1, nil)
+				extractor := NewDashAlertExtractor(dash, 1, nil, cfg)
 
 				alerts, err := extractor.GetAlerts()
 
@@ -283,7 +286,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 				dashJSON, err := simplejson.NewJson(json)
 				So(err, ShouldBeNil)
 				dash := models.NewDashboardFromJson(dashJSON)
-				extractor := NewDashAlertExtractor(dash, 1, nil)
+				extractor := NewDashAlertExtractor(dash, 1, nil, cfg)
 
 				err = extractor.ValidateAlerts()
 

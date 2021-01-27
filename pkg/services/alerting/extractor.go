@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // DashAlertExtractor extracts alerts from the dashboard json.
@@ -18,14 +19,16 @@ type DashAlertExtractor struct {
 	Dash  *models.Dashboard
 	OrgID int64
 	log   log.Logger
+	cfg   *setting.Cfg
 }
 
 // NewDashAlertExtractor returns a new DashAlertExtractor.
-func NewDashAlertExtractor(dash *models.Dashboard, orgID int64, user *models.SignedInUser) *DashAlertExtractor {
+func NewDashAlertExtractor(dash *models.Dashboard, orgID int64, user *models.SignedInUser, cfg *setting.Cfg) *DashAlertExtractor {
 	return &DashAlertExtractor{
 		User:  user,
 		Dash:  dash,
 		OrgID: orgID,
+		cfg:   cfg,
 		log:   log.New("alerting.extractor"),
 	}
 }
@@ -67,7 +70,9 @@ func copyJSON(in json.Marshaler) (*simplejson.Json, error) {
 	return simplejson.NewJson(rawJSON)
 }
 
-func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json, validateAlertFunc func(*models.Alert) bool, logTranslationFailures bool) ([]*models.Alert, error) {
+func (e *DashAlertExtractor) getAlertFromPanels(
+	jsonWithPanels *simplejson.Json, validateAlertFunc func(*models.Alert) bool, logTranslationFailures bool,
+) ([]*models.Alert, error) {
 	alerts := make([]*models.Alert, 0)
 
 	for _, panelObj := range jsonWithPanels.Get("panels").MustArray() {
@@ -181,7 +186,7 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 		alert.Settings = jsonAlert
 
 		// validate
-		_, err = NewRuleFromDBAlert(alert, logTranslationFailures)
+		_, err = NewRuleFromDBAlert(alert, logTranslationFailures, e.cfg)
 		if err != nil {
 			return nil, err
 		}
