@@ -1,6 +1,6 @@
 import React, { FC, CSSProperties, ComponentType } from 'react';
 import { useMeasure } from 'react-use';
-import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
+import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 
 /**
  * @beta
