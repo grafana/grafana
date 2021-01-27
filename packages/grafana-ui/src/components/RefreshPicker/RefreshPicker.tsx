@@ -83,7 +83,6 @@ export class RefreshPicker extends PureComponent<Props> {
               value={selectedValue}
               options={options}
               onChange={this.onChangeSelect as any}
-              maxMenuHeight={380}
               variant={variant}
             />
           )}

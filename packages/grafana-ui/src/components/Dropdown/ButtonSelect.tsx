@@ -11,7 +11,6 @@ export interface Props<T> extends HTMLAttributes<HTMLButtonElement> {
   className?: string;
   options: Array<SelectableValue<T>>;
   value?: SelectableValue<T>;
-  maxMenuHeight?: number;
   onChange: (item: SelectableValue<T>) => void;
   tooltipContent?: PopoverContent;
   narrow?: boolean;

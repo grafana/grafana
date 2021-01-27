@@ -45,6 +45,7 @@ export { ModalHeader } from './Modal/ModalHeader';
 export { ModalTabsHeader } from './Modal/ModalTabsHeader';
 export { ModalTabContent } from './Modal/ModalTabContent';
 export { ModalsProvider, ModalRoot, ModalsController } from './Modal/ModalsContext';
+export { PageToolbar } from './PageLayout/PageToolbar';
 
 // Renderless
 export { SetInterval } from './SetInterval/SetInterval';
