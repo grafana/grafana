@@ -1,25 +1,24 @@
 +++
-title = "Sort dashboards using insights data"
-description = "Sort dashboards using insights data"
+title = "Sort dashboards by using insights data"
+description = "Sort dashboards by using insights data"
 keywords = ["grafana", "search", "sort", "enterprise"]
 aliases = ["/docs/grafana/latest/enterprise/usage-insights/improved-search.md"]
 weight = 400
 +++
 
-# Sort dashboards using insights data
+# Sort dashboards by using insights data
 
 > **Note:** Available in Grafana Enterprise v7.0+.
 
-In the search view, you can sort dashboards using these insights data. It helps you find unused or broken dashboards or discover most viewed ones.
+In the search view, you can sort dashboards by using insights data. Doing so helps you find unused or broken dashboards or discover those that are most viewed.
 
-The available sort options are:
+There are several sort options:
 - Errors total
 - Errors 30 days
 - Views total
 - Views 30 days
 
-`Errors 30 days` and `Views 30 days` are based on a calculated sorting index that puts more weight into errors and views that happened on the past day than on the ones that happened on the past 30 days.  
+`Errors 30 days` and `Views 30 days` are based on a calculated sorting index that weighs errors and views that happened within the past day more heavily than those that happened over the past 30 days.
 
 {{< docs-imagebox img="/img/docs/enterprise/improved_search.png" max-width="650px" class="docs-image--no-shadow" >}}
-
 

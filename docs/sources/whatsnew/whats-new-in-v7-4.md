@@ -175,7 +175,7 @@ You can now export usage insights logs to Loki and query them from Grafana. Usag
 
 ### New audit log events
 
-New log out events are logged as when a token expires or is revoked, as well as [SAML Single Logout]({{< relref "../enterprise/saml.md#single-logout" >}}). A `tokenId` field was added to all audit logs to help understand which session was logged out of. [Auditing]({{< relref "../enterprise/auditing.md" >}}) was updated to reflect these changes.
+New log out events are logged based on when a token expires or is revoked, as well as [SAML Single Logout]({{< relref "../enterprise/saml.md#single-logout" >}}). A `tokenId` field was added to all audit logs to help understand which session was logged out of. [Auditing]({{< relref "../enterprise/auditing.md" >}}) was updated to reflect these changes.
 
 Also, a counter for audit log writing actions with status (success / failure) and logger (loki / file / console) labels was added.
 
