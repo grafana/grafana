@@ -105,7 +105,7 @@ export const BarChart: React.FunctionComponent<Props> = ({
       scaleKey: 'y',
       isTime: false,
       orientation: xOri === 0 ? 1 : 0,
-      range: config.yRange,
+      // range: config.yRange,
     });
 
     builder.addAxis({

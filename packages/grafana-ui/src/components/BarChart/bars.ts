@@ -1,4 +1,4 @@
-import uPlot, { Axis, Scale, Series, Cursor, BBox } from 'uplot';
+import uPlot, { Axis, Series, Cursor, BBox } from 'uplot';
 import { Quadtree, Rect, pointWithin } from './quadtree';
 import { distribute, SPACE_BETWEEN } from './distribute';
 
@@ -75,8 +75,6 @@ export function getConfig(ori: 1 | 0, dir: 1 | -1, groupWidth: number, barWidth:
   const drawPoints: Series.Points.Show = formatValue == null ? false : (u, sidx, i0, i1) => {
     u.ctx.font         = font;
     u.ctx.fillStyle    = "white";
-    u.ctx.textAlign    = ori == 0 ? "center" : "left";
-    u.ctx.textBaseline = ori == 0 ? "bottom" : "middle";
 
     uPlot.orient(u, sidx, (series, dataX, dataY, scaleX, scaleY, valToPosX, valToPosY, xOff, yOff, xDim, yDim, moveTo, lineTo, rect) => {
       let numGroups    = dataX.length;
@@ -94,6 +92,9 @@ export function getConfig(ori: 1 | 0, dir: 1 | -1, groupWidth: number, barWidth:
           let x = ori == 0 ? Math.round(lft + barWid/2) : Math.round(yPos);
           let y = ori == 0 ? Math.round(yPos)           : Math.round(lft + barWid / 2);
 
+          u.ctx.textAlign    = ori == 0 ? "center" : dataY[ix]! >= 0 ? "left" : "right";
+          u.ctx.textBaseline = ori == 1 ? "middle" : dataY[ix]! >= 0 ? "bottom" : "top";
+
           u.ctx.fillText(
             formatValue(sidx, dataY[ix]),
             x,
@@ -106,11 +107,13 @@ export function getConfig(ori: 1 | 0, dir: 1 | -1, groupWidth: number, barWidth:
     return false;
   };
 
+/*
   const yRange: Scale.Range = (u, dataMin, dataMax) => {
     // @ts-ignore
     let [min, max] = uPlot.rangeNum(0, dataMax, 0.05, true);
     return [0, max];
   };
+*/
 
   const xSplits: Axis.Splits = (u: uPlot, axisIdx: number) => {
     const dim = ori == 0 ? u.bbox.width : u.bbox.height;
@@ -205,7 +208,7 @@ export function getConfig(ori: 1 | 0, dir: 1 | -1, groupWidth: number, barWidth:
     select,
 
     // scale & axis opts
-    yRange,
+    // yRange,
     xValues,
     xSplits,
 
