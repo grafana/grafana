@@ -118,6 +118,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
     // X is the first field in the aligned frame
     const xField = frame.fields[0];
+    let seriesIndex = 0;
 
     if (xField.type === FieldType.time) {
       builder.addScale({
@@ -161,6 +162,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       if (field === xField || field.type !== FieldType.number) {
         continue;
       }
+      field.state!.seriesIndex = seriesIndex++;
 
       const fmt = field.display ?? defaultFormatter;
       const scaleKey = config.unit || FIXED_UNIT;
