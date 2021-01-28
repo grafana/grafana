@@ -168,7 +168,6 @@ func writeCertFiles(ds *models.DataSource, logger log.Logger) error {
 	if err != nil {
 		return err
 	}
-
 	var mutex = &sync.Mutex{}
 	mutex.Lock()
 	defer mutex.Unlock()
@@ -277,13 +276,13 @@ func generateConnectionString(datasource *models.DataSource, logger log.Logger) 
 		// Attach root certificate if provided
 		if tlsRootCert != "" {
 			logger.Debug("Setting server root certificate", "tlsRootCert", tlsRootCert)
-			connStr += fmt.Sprintf(" sslrootcert='%s'", tlsRootCert)
+			connStr += fmt.Sprintf(" sslrootcert='%s'", escape(tlsRootCert))
 		}
 
 		// Attach client certificate and key if both are provided
 		if tlsCert != "" && tlsKey != "" {
 			logger.Debug("Setting TLS/SSL client auth", "tlsCert", tlsCert, "tlsKey", tlsKey)
-			connStr += fmt.Sprintf(" sslcert='%s' sslkey='%s'", tlsCert, tlsKey)
+			connStr += fmt.Sprintf(" sslcert='%s' sslkey='%s'", escape(tlsCert), escape(tlsKey))
 		} else if tlsCert != "" || tlsKey != "" {
 			return "", fmt.Errorf("TLS/SSL client certificate and key must both be specified")
 		}
