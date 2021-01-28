@@ -81,15 +81,14 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
       frame = {
         ...frame,
         fields: frame.fields.map((f, fieldIndex) => {
-          const copy = { ...f };
-          if (!copy.state) {
-            copy.state = {};
+          if (!f.state) {
+            f.state = {};
           }
-          copy.state.origin = {
+          f.state.origin = {
             frameIndex: 0,
             fieldIndex,
           };
-          return copy;
+          return f;
         }),
       };
     }
