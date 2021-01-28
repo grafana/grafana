@@ -52,7 +52,7 @@ export function toDataQueryResponse(res: any, queries?: DataQuery[]): DataQueryR
         }
       }
 
-      if (dr.series && dr.series.length) {
+      if (dr.series?.length) {
         for (const s of dr.series) {
           if (!s.refId) {
             s.refId = refId;
@@ -61,7 +61,7 @@ export function toDataQueryResponse(res: any, queries?: DataQuery[]): DataQueryR
         }
       }
 
-      if (dr.tables && dr.tables.length) {
+      if (dr.tables?.length) {
         for (const s of dr.tables) {
           if (!s.refId) {
             s.refId = refId;
