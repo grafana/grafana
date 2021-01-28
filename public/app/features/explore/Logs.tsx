@@ -47,7 +47,7 @@ function renderMetaItem(value: any, kind: LogsMetaKind) {
 }
 
 interface Props {
-  logRows?: LogRowModel[];
+  logRows: LogRowModel[];
   logsMeta?: LogsMetaItem[];
   logsSeries?: GraphSeriesXY[];
   dedupedRows?: LogRowModel[];
@@ -224,6 +224,7 @@ export class Logs extends PureComponent<Props, State> {
       absoluteRange,
       onChangeTime,
       getFieldLinks,
+      dedupStrategy,
     } = this.props;
 
     if (!logRows) {
@@ -231,7 +232,6 @@ export class Logs extends PureComponent<Props, State> {
     }
 
     const { showLabels, showTime, wrapLogMessage, logsSortOrder, isFlipping, showDetectedFields } = this.state;
-    const { dedupStrategy } = this.props;
     const hasData = logRows && logRows.length > 0;
     const dedupCount = dedupedRows
       ? dedupedRows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0)
