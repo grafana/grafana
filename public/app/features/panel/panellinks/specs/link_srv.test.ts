@@ -222,7 +222,7 @@ describe('linkSrv', () => {
         disableSanitizeHtml: true,
       });
 
-      expect(linkSrv.getLinkUrl(anchorInfo)).toBe('javascript:alert(document.domain)');
+      expect(linkSrv.getLinkUrl(anchorInfo)).toBe(anchorInfo.url);
     });
   });
 });
