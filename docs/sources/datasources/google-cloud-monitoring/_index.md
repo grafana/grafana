@@ -30,7 +30,7 @@ There are two ways to authenticate the Google Cloud Monitoring plugin - either b
 
 To authenticate with the Google Cloud Monitoring API, you need to create a Google Cloud Platform (GCP) Service Account for the Project you want to show data for. A Grafana data source integrates with one GCP Project. If you want to visualize data from multiple GCP Projects then you need to create one data source per GCP Project.
 
-##### Enable APIs
+#### Enable APIs
 
 The following APIs need to be enabled first:
 
@@ -41,7 +41,7 @@ Click on the links above and click the `Enable` button:
 
 {{< docs-imagebox img="/img/docs/v71/cloudmonitoring_enable_api.png" max-width="450px" class="docs-image--no-shadow" caption="Enable GCP APIs" >}}
 
-##### Create a GCP Service Account for a Project
+#### Create a GCP Service Account for a Project
 
 1. Navigate to the [APIs and Services Credentials page](https://console.cloud.google.com/apis/credentials).
 1. Click on the `Create credentials` dropdown/button and choose the `Service account key` option.
@@ -175,7 +175,7 @@ Example Result: `gce_instance - compute.googleapis.com/instance/cpu/usage_time`
 
 #### Deep linking from Grafana panels to the Metrics Explorer in Google Cloud Console
 
->**Note:** Available in Grafana v7.1 and later versions.
+> **Note:** Available in Grafana v7.1 and later versions.
 
 {{< docs-imagebox img="/img/docs/v71/cloudmonitoring_deep_linking.png" max-width="500px" class="docs-image--right" caption="Google Cloud Monitoring deep linking" >}}
 
@@ -184,7 +184,7 @@ The link navigates the user first to the Google Account Chooser and after succes
 
 ### SLO (Service Level Objective) queries
 
->**Note** Available in Grafana v7.0 and later versions.
+> **Note:** Available in Grafana v7.0 and later versions.
 
 {{< docs-imagebox img="/img/docs/v70/slo-query-builder.png" max-width= "400px" class="docs-image--right" >}}
 
