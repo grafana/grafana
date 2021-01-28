@@ -1,18 +1,15 @@
 import uPlot, { Axis, Scale, Series, Cursor, BBox } from 'uplot';
-import { Quadtree, Rect } from './quadtree';
+import { Quadtree, Rect, pointWithin } from './quadtree';
 import { distribute, SPACE_BETWEEN } from './distribute';
 
 /* eslint-disable */
 
 const pxRatio    = devicePixelRatio;
+
 const groupDistr = SPACE_BETWEEN;
 const barDistr   = SPACE_BETWEEN;
 
 const font = Math.round(10 * pxRatio) + "px Arial";
-
-function pointWithin(px: number, py: number, rlft: number, rtop: number, rrgt: number, rbtm: number) {
-  return px >= rlft && px <= rrgt && py >= rtop && py <= rbtm;
-}
 
 type WalkTwoCb = null | ((idx: number, offPx: number, dimPx: number) => void);
 
@@ -73,7 +70,7 @@ export function getConfig(ori: 1 | 0, dir: 1 | -1, groupWidth: number, barWidth:
         fill
       };
     });
-  }
+  };
 
   const drawPoints: Series.Points.Show = formatValue == null ? false : (u, sidx, i0, i1) => {
     u.ctx.font         = font;
@@ -107,13 +104,13 @@ export function getConfig(ori: 1 | 0, dir: 1 | -1, groupWidth: number, barWidth:
     });
 
     return false;
-  }
+  };
 
   const yRange: Scale.Range = (u, dataMin, dataMax) => {
     // @ts-ignore
     let [min, max] = uPlot.rangeNum(0, dataMax, 0.05, true);
     return [0, max];
-  }
+  };
 
   const xSplits: Axis.Splits = (u: uPlot, axisIdx: number) => {
     const dim = ori == 0 ? u.bbox.width : u.bbox.height;
@@ -147,7 +144,9 @@ export function getConfig(ori: 1 | 0, dir: 1 | -1, groupWidth: number, barWidth:
   const cursor: Cursor = {
     x: false,
     y: false,
-    points: {show: false}
+    points: {
+      show: false
+    }
   };
 
   // disable selection
@@ -165,7 +164,7 @@ export function getConfig(ori: 1 | 0, dir: 1 | -1, groupWidth: number, barWidth:
 
     qt.clear();
 
-    // force-clear the path cache to force drawBars() to rebuild new quadtree
+    // clear the path cache to force drawBars() to rebuild new quadtree
     u.series.forEach(s => {
       // @ts-ignore
       s._paths = null;
@@ -198,7 +197,7 @@ export function getConfig(ori: 1 | 0, dir: 1 | -1, groupWidth: number, barWidth:
       hovered = null;
       barMark.style.display = "none";
     }
-  }
+  };
 
   return {
     // cursor & select opts
