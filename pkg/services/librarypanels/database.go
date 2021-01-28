@@ -5,17 +5,15 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-
-	"github.com/grafana/grafana/pkg/util"
-
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
-
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // createLibraryPanel adds a Library Panel.
-func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd createLibraryPanelCommand) (LibraryPanel, error) {
+func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd createLibraryPanelCommand) (LibraryPanelDTO, error) {
 	libraryPanel := LibraryPanel{
 		OrgID:    c.SignedInUser.OrgId,
 		FolderID: cmd.FolderID,
@@ -39,7 +37,31 @@ func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd cre
 		return nil
 	})
 
-	return libraryPanel, err
+	dto := LibraryPanelDTO{
+		ID:       libraryPanel.ID,
+		OrgID:    libraryPanel.OrgID,
+		FolderID: libraryPanel.FolderID,
+		UID:      libraryPanel.UID,
+		Name:     libraryPanel.Name,
+		Model:    libraryPanel.Model,
+		Meta: LibraryPanelDTOMeta{
+			CanEdit: true,
+			Created: libraryPanel.Created,
+			Updated: libraryPanel.Updated,
+			CreatedBy: LibraryPanelDTOMetaUser{
+				ID:        libraryPanel.CreatedBy,
+				Name:      c.SignedInUser.Login,
+				AvatarUrl: dtos.GetGravatarUrl(c.SignedInUser.Email),
+			},
+			UpdatedBy: LibraryPanelDTOMetaUser{
+				ID:        libraryPanel.UpdatedBy,
+				Name:      c.SignedInUser.Login,
+				AvatarUrl: dtos.GetGravatarUrl(c.SignedInUser.Email),
+			},
+		},
+	}
+
+	return dto, err
 }
 
 func connectDashboard(session *sqlstore.DBSession, dialect migrator.Dialect, user *models.SignedInUser, uid string, dashboardID int64) error {
@@ -148,42 +170,90 @@ func (lps *LibraryPanelService) disconnectLibraryPanelsForDashboard(dashboardID 
 	})
 }
 
-func getLibraryPanel(session *sqlstore.DBSession, uid string, orgID int64) (LibraryPanel, error) {
-	libraryPanels := make([]LibraryPanel, 0)
-	session.Table("library_panel")
-	session.Where("uid=? AND org_id=?", uid, orgID)
-	err := session.Find(&libraryPanels)
+func getLibraryPanel(session *sqlstore.DBSession, uid string, orgID int64) (LibraryPanelWithMeta, error) {
+	libraryPanels := make([]LibraryPanelWithMeta, 0)
+	sql := `SELECT
+				lp.id, lp.org_id, lp.folder_id, lp.uid, lp.name, lp.model, lp.created, lp.created_by, lp.updated, lp.updated_by
+				, 0 AS can_edit
+				, u1.login AS created_by_name
+				, u1.email AS created_by_email
+				, u2.login AS updated_by_name
+				, u2.email AS updated_by_email
+			FROM library_panel AS lp
+			LEFT JOIN user AS u1 ON lp.created_by = u1.id
+			LEFT JOIN user AS u2 ON lp.updated_by = u2.id
+			WHERE lp.uid=? AND lp.org_id=?`
+
+	sess := session.SQL(sql, uid, orgID)
+	err := sess.Find(&libraryPanels)
 	if err != nil {
-		return LibraryPanel{}, err
+		return LibraryPanelWithMeta{}, err
 	}
 	if len(libraryPanels) == 0 {
-		return LibraryPanel{}, errLibraryPanelNotFound
+		return LibraryPanelWithMeta{}, errLibraryPanelNotFound
 	}
 	if len(libraryPanels) > 1 {
-		return LibraryPanel{}, fmt.Errorf("found %d panels, while expecting at most one", len(libraryPanels))
+		return LibraryPanelWithMeta{}, fmt.Errorf("found %d panels, while expecting at most one", len(libraryPanels))
 	}
 
 	return libraryPanels[0], nil
 }
 
 // getLibraryPanel gets a Library Panel.
-func (lps *LibraryPanelService) getLibraryPanel(c *models.ReqContext, uid string) (LibraryPanel, error) {
-	var libraryPanel LibraryPanel
+func (lps *LibraryPanelService) getLibraryPanel(c *models.ReqContext, uid string) (LibraryPanelDTO, error) {
+	var libraryPanel LibraryPanelWithMeta
 	err := lps.SQLStore.WithDbSession(context.Background(), func(session *sqlstore.DBSession) error {
 		var err error
 		libraryPanel, err = getLibraryPanel(session, uid, c.SignedInUser.OrgId)
 		return err
 	})
 
-	return libraryPanel, err
+	dto := LibraryPanelDTO{
+		ID:       libraryPanel.ID,
+		OrgID:    libraryPanel.OrgID,
+		FolderID: libraryPanel.FolderID,
+		UID:      libraryPanel.UID,
+		Name:     libraryPanel.Name,
+		Model:    libraryPanel.Model,
+		Meta: LibraryPanelDTOMeta{
+			CanEdit: true,
+			Created: libraryPanel.Created,
+			Updated: libraryPanel.Updated,
+			CreatedBy: LibraryPanelDTOMetaUser{
+				ID:        libraryPanel.CreatedBy,
+				Name:      libraryPanel.CreatedByName,
+				AvatarUrl: dtos.GetGravatarUrl(libraryPanel.CreatedByEmail),
+			},
+			UpdatedBy: LibraryPanelDTOMetaUser{
+				ID:        libraryPanel.UpdatedBy,
+				Name:      libraryPanel.UpdatedByName,
+				AvatarUrl: dtos.GetGravatarUrl(libraryPanel.UpdatedByEmail),
+			},
+		},
+	}
+
+	return dto, err
 }
 
 // getAllLibraryPanels gets all library panels.
-func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext) ([]LibraryPanel, error) {
+func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext) ([]LibraryPanelDTO, error) {
 	orgID := c.SignedInUser.OrgId
-	libraryPanels := make([]LibraryPanel, 0)
+	libraryPanels := make([]LibraryPanelWithMeta, 0)
 	err := lps.SQLStore.WithDbSession(context.Background(), func(session *sqlstore.DBSession) error {
-		err := session.SQL("SELECT * FROM library_panel WHERE org_id=?", orgID).Find(&libraryPanels)
+		sql := `SELECT
+				lp.id, lp.org_id, lp.folder_id, lp.uid, lp.name, lp.model, lp.created, lp.created_by, lp.updated, lp.updated_by
+				, 0 AS can_edit
+				, u1.login AS created_by_name
+				, u1.email AS created_by_email
+				, u2.login AS updated_by_name
+				, u2.email AS updated_by_email
+			FROM library_panel AS lp
+			LEFT JOIN user AS u1 ON lp.created_by = u1.id
+			LEFT JOIN user AS u2 ON lp.updated_by = u2.id
+			WHERE lp.org_id=?`
+
+		sess := session.SQL(sql, orgID)
+		err := sess.Find(&libraryPanels)
 		if err != nil {
 			return err
 		}
@@ -191,7 +261,34 @@ func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext) ([]Lib
 		return nil
 	})
 
-	return libraryPanels, err
+	retDTOs := make([]LibraryPanelDTO, 0)
+	for _, panel := range libraryPanels {
+		retDTOs = append(retDTOs, LibraryPanelDTO{
+			ID:       panel.ID,
+			OrgID:    panel.OrgID,
+			FolderID: panel.FolderID,
+			UID:      panel.UID,
+			Name:     panel.Name,
+			Model:    panel.Model,
+			Meta: LibraryPanelDTOMeta{
+				CanEdit: true,
+				Created: panel.Created,
+				Updated: panel.Updated,
+				CreatedBy: LibraryPanelDTOMetaUser{
+					ID:        panel.CreatedBy,
+					Name:      panel.CreatedByName,
+					AvatarUrl: dtos.GetGravatarUrl(panel.CreatedByEmail),
+				},
+				UpdatedBy: LibraryPanelDTOMetaUser{
+					ID:        panel.UpdatedBy,
+					Name:      panel.UpdatedByName,
+					AvatarUrl: dtos.GetGravatarUrl(panel.UpdatedByEmail),
+				},
+			},
+		})
+	}
+
+	return retDTOs, err
 }
 
 // getConnectedDashboards gets all dashboards connected to a Library Panel.
@@ -225,7 +322,7 @@ func (lps *LibraryPanelService) getLibraryPanelsForDashboardID(dashboardID int64
 	libraryPanelMap := make(map[string]LibraryPanel)
 	err := lps.SQLStore.WithDbSession(context.Background(), func(session *sqlstore.DBSession) error {
 		sql := `SELECT
-				lp.id, lp.org_id, lp.folder_id, lp.uid, lp.name, lp.model, lp.created, lp.created_by, lp.updated, updated_by
+				lp.id, lp.org_id, lp.folder_id, lp.uid, lp.name, lp.model, lp.created, lp.created_by, lp.updated, lp.updated_by
 			FROM
 				library_panel_dashboard AS lpd
 			INNER JOIN
@@ -249,15 +346,15 @@ func (lps *LibraryPanelService) getLibraryPanelsForDashboardID(dashboardID int64
 }
 
 // patchLibraryPanel updates a Library Panel.
-func (lps *LibraryPanelService) patchLibraryPanel(c *models.ReqContext, cmd patchLibraryPanelCommand, uid string) (LibraryPanel, error) {
-	var libraryPanel LibraryPanel
+func (lps *LibraryPanelService) patchLibraryPanel(c *models.ReqContext, cmd patchLibraryPanelCommand, uid string) (LibraryPanelDTO, error) {
+	var dto LibraryPanelDTO
 	err := lps.SQLStore.WithTransactionalDbSession(context.Background(), func(session *sqlstore.DBSession) error {
 		panelInDB, err := getLibraryPanel(session, uid, c.SignedInUser.OrgId)
 		if err != nil {
 			return err
 		}
 
-		libraryPanel = LibraryPanel{
+		var libraryPanel = LibraryPanel{
 			ID:        panelInDB.ID,
 			OrgID:     c.SignedInUser.OrgId,
 			FolderID:  cmd.FolderID,
@@ -289,8 +386,32 @@ func (lps *LibraryPanelService) patchLibraryPanel(c *models.ReqContext, cmd patc
 			return errLibraryPanelNotFound
 		}
 
+		dto = LibraryPanelDTO{
+			ID:       libraryPanel.ID,
+			OrgID:    libraryPanel.OrgID,
+			FolderID: libraryPanel.FolderID,
+			UID:      libraryPanel.UID,
+			Name:     libraryPanel.Name,
+			Model:    libraryPanel.Model,
+			Meta: LibraryPanelDTOMeta{
+				CanEdit: true,
+				Created: libraryPanel.Created,
+				Updated: libraryPanel.Updated,
+				CreatedBy: LibraryPanelDTOMetaUser{
+					ID:        libraryPanel.CreatedBy,
+					Name:      panelInDB.CreatedByName,
+					AvatarUrl: dtos.GetGravatarUrl(panelInDB.CreatedByEmail),
+				},
+				UpdatedBy: LibraryPanelDTOMetaUser{
+					ID:        libraryPanel.UpdatedBy,
+					Name:      c.SignedInUser.Login,
+					AvatarUrl: dtos.GetGravatarUrl(c.SignedInUser.Email),
+				},
+			},
+		}
+
 		return nil
 	})
 
-	return libraryPanel, err
+	return dto, err
 }
