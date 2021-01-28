@@ -10,6 +10,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 
@@ -22,20 +24,38 @@ import (
 )
 
 func init() {
-	tsdb.RegisterTsdbQueryEndpoint("postgres", newPostgresQueryEndpoint)
+	registry.Register(&registry.Descriptor{
+		Name:         "PostgresService",
+		InitPriority: registry.Low,
+		Instance:     &postgresService{},
+	})
 }
 
-func newPostgresQueryEndpoint(datasource *models.DataSource, cfg *setting.Cfg) (tsdb.TsdbQueryEndpoint, error) {
-	logger := log.New("tsdb.postgres")
-	logger.Debug("Creating Postgres query endpoint")
+type postgresService struct {
+	Cfg *setting.Cfg `inject:""`
 
-	cnnstr, err := generateConnectionString(datasource, logger)
+	mtx    sync.Mutex
+	logger log.Logger
+}
+
+func (s *postgresService) Init() error {
+	s.logger = log.New("tsdb.postgres")
+	tsdb.RegisterTsdbQueryEndpoint("postgres", func(ds *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+		return s.newPostgresQueryEndpoint(ds)
+	})
+	return nil
+}
+
+func (s *postgresService) newPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+	s.logger.Debug("Creating Postgres query endpoint")
+
+	cnnstr, err := s.generateConnectionString(datasource)
 	if err != nil {
 		return nil, err
 	}
 
 	if setting.Env == setting.Dev {
-		logger.Debug("getEngine", "connection", cnnstr)
+		s.logger.Debug("getEngine", "connection", cnnstr)
 	}
 
 	config := sqleng.SqlQueryEndpointConfiguration{
@@ -46,18 +66,19 @@ func newPostgresQueryEndpoint(datasource *models.DataSource, cfg *setting.Cfg) (
 	}
 
 	queryResultTransformer := postgresQueryResultTransformer{
-		log: logger,
+		log: s.logger,
 	}
 
 	timescaledb := datasource.JsonData.Get("timescaledb").MustBool(false)
 
-	endpoint, err := sqleng.NewSqlQueryEndpoint(&config, &queryResultTransformer, newPostgresMacroEngine(timescaledb), logger)
+	endpoint, err := sqleng.NewSqlQueryEndpoint(&config, &queryResultTransformer, newPostgresMacroEngine(timescaledb),
+		s.logger)
 	if err != nil {
-		logger.Debug("Failed connecting to Postgres", "err", err)
+		s.logger.Error("Failed connecting to Postgres", "err", err)
 		return nil, err
 	}
 
-	logger.Debug("Successfully connected to Postgres")
+	s.logger.Debug("Successfully connected to Postgres")
 	return endpoint, err
 }
 
@@ -83,13 +104,12 @@ func (t certFileType) String() string {
 	case clientKey:
 		return "client key"
 	default:
-		panic(fmt.Sprintf("unrecognized certFileType %d", t))
+		panic(fmt.Sprintf("Unrecognized certFileType %d", t))
 	}
 }
 
 // writeCertFile writes a certificate file.
-func writeCertFile(ds *models.DataSource, fileContent, dataDir string, fileType certFileType,
-	logger log.Logger) error {
+func (s *postgresService) writeCertFile(ds *models.DataSource, fileContent, dataDir string, fileType certFileType) error {
 	var jsonFieldName string
 	var filename string
 	switch fileType {
@@ -106,15 +126,15 @@ func writeCertFile(ds *models.DataSource, fileContent, dataDir string, fileType 
 		panic(fmt.Sprintf("unrecognized certFileType %s", fileType.String()))
 	}
 
-	logger.Debug("Writing cert file", "type", fileType, "jsonFieldName", jsonFieldName)
+	s.logger.Debug("Writing cert file", "type", fileType, "jsonFieldName", jsonFieldName)
 
 	var generatedFilePath string
 	if tlsjs, ok := ds.JsonData.CheckGet(jsonFieldName); ok {
 		// Get generated file path from data source
 		generatedFilePath = tlsjs.MustString("")
-		logger.Debug("Got file path from data source", "path", generatedFilePath)
+		s.logger.Debug("Got file path from data source", "path", generatedFilePath)
 	} else {
-		logger.Debug("File path not stored in data source")
+		s.logger.Debug("File path not stored in data source")
 	}
 	if fileContent != "" {
 		if generatedFilePath == "" {
@@ -122,7 +142,7 @@ func writeCertFile(ds *models.DataSource, fileContent, dataDir string, fileType 
 			generatedFilePath = filepath.Join(dataDir, filename)
 		}
 
-		logger.Debug("Writing cert file to default path", "path", generatedFilePath)
+		s.logger.Debug("Writing cert file", "path", generatedFilePath)
 		if err := ioutil.WriteFile(generatedFilePath, []byte(fileContent), 0600); err != nil {
 			return err
 		}
@@ -135,7 +155,7 @@ func writeCertFile(ds *models.DataSource, fileContent, dataDir string, fileType 
 	}
 
 	if generatedFilePath != "" {
-		logger.Debug("Deleting cert file since no content is provided", "path", generatedFilePath)
+		s.logger.Debug("Deleting cert file since no content is provided", "path", generatedFilePath)
 		exists, err := fs.Exists(generatedFilePath)
 		if err != nil {
 			return err
@@ -150,8 +170,8 @@ func writeCertFile(ds *models.DataSource, fileContent, dataDir string, fileType 
 	return nil
 }
 
-func writeCertFiles(ds *models.DataSource, logger log.Logger) error {
-	logger.Debug("Writing TLS certificate files to disk")
+func (s *postgresService) writeCertFiles(ds *models.DataSource) error {
+	s.logger.Debug("Writing TLS certificate files to disk")
 
 	decrypted := ds.SecureJsonData.Decrypt()
 	tlsRootCert := decrypted["tlsCACert"]
@@ -159,39 +179,29 @@ func writeCertFiles(ds *models.DataSource, logger log.Logger) error {
 	tlsClientKey := decrypted["tlsClientKey"]
 
 	if tlsRootCert == "" && tlsClientCert == "" && tlsClientKey == "" {
-		logger.Debug("No TLS/SSL certificates provided")
+		s.logger.Debug("No TLS/SSL certificates provided")
 	}
+	s.mtx.Lock()
+	defer s.mtx.Unlock()
 
-	// create folder to hold certificates
-
-	workingDir, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-	var mutex = &sync.Mutex{}
-	mutex.Lock()
-	defer mutex.Unlock()
-
-	// XXX: Can we avoid writing files to the current working directory?
-	// Can we use a temporary directory instead, or if that doesn't work, use the server's data directory instead?
-	workDir := filepath.Join(workingDir, ds.Uid+"generatedTLSCerts")
+	workDir := filepath.Join(s.Cfg.DataPath, "tls", ds.Uid+"generatedTLSCerts")
 	exists, err := fs.Exists(workDir)
 	if err != nil {
 		return err
 	}
 	if !exists {
-		if err := os.Mkdir(workDir, 0700); err != nil {
+		if err := os.MkdirAll(workDir, 0700); err != nil {
 			return err
 		}
 	}
 
-	if err := writeCertFile(ds, tlsRootCert, workDir, rootCert, logger); err != nil {
+	if err := s.writeCertFile(ds, tlsRootCert, workDir, rootCert); err != nil {
 		return err
 	}
-	if err := writeCertFile(ds, tlsClientCert, workDir, clientCert, logger); err != nil {
+	if err := s.writeCertFile(ds, tlsClientCert, workDir, clientCert); err != nil {
 		return err
 	}
-	if err := writeCertFile(ds, tlsClientKey, workDir, clientKey, logger); err != nil {
+	if err := s.writeCertFile(ds, tlsClientKey, workDir, clientKey); err != nil {
 		return err
 	}
 
@@ -199,7 +209,7 @@ func writeCertFiles(ds *models.DataSource, logger log.Logger) error {
 }
 
 // validateCertFilePaths validates configured certificate file paths.
-func validateCertFilePaths(rootCert, clientCert, clientKey string, logger log.Logger) error {
+func (s *postgresService) validateCertFilePaths(rootCert, clientCert, clientKey string) error {
 	for _, fpath := range []string{rootCert, clientCert, clientKey} {
 		if fpath == "" {
 			continue
@@ -215,14 +225,14 @@ func validateCertFilePaths(rootCert, clientCert, clientKey string, logger log.Lo
 	return nil
 }
 
-func generateConnectionString(datasource *models.DataSource, logger log.Logger) (string, error) {
+func (s *postgresService) generateConnectionString(datasource *models.DataSource) (string, error) {
 	tlsConfigurationMethod := strings.TrimSpace(
 		strings.ToLower(datasource.JsonData.Get("tlsConfigurationMethod").MustString("file-path")))
 	tlsMode := strings.TrimSpace(strings.ToLower(datasource.JsonData.Get("sslmode").MustString("verify-full")))
 	isTLSDisabled := tlsMode == "disable"
 
 	if !isTLSDisabled && tlsConfigurationMethod == "file-content" {
-		if err := writeCertFiles(datasource, logger); err != nil {
+		if err := s.writeCertFiles(datasource); err != nil {
 			return "", err
 		}
 	}
@@ -268,7 +278,7 @@ func generateConnectionString(datasource *models.DataSource, logger log.Logger) 
 			tlsRootCert = datasource.JsonData.Get("sslRootCertFile").MustString("")
 			tlsCert = datasource.JsonData.Get("sslCertFile").MustString("")
 			tlsKey = datasource.JsonData.Get("sslKeyFile").MustString("")
-			if err := validateCertFilePaths(tlsRootCert, tlsCert, tlsKey, logger); err != nil {
+			if err := s.validateCertFilePaths(tlsRootCert, tlsCert, tlsKey); err != nil {
 				return "", err
 			}
 		}
