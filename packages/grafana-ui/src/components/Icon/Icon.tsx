@@ -10,7 +10,7 @@ import * as MonoIcon from './assets';
 import { customIcons } from './custom';
 import { SvgProps } from './assets/types';
 
-const alwaysMonoIcons = ['grafana', 'favorite', 'heart-break', 'heart'];
+const alwaysMonoIcons = ['grafana', 'favorite', 'heart-break', 'heart', 'panel-add'];
 
 export interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
   name: IconName;
@@ -62,7 +62,7 @@ export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
 
     /* Temporary solution to display also font awesome icons */
     if (name?.startsWith('fa fa-')) {
-      return <i className={cx(name, className)} {...divElementProps} style={style} />;
+      return <i className={getFontAwesomeIconStyles(name, className)} {...divElementProps} style={style} />;
     }
 
     const Component = getIconComponent(name, type);
@@ -83,6 +83,16 @@ export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
 );
 
 Icon.displayName = 'Icon';
+
+function getFontAwesomeIconStyles(iconName: string, className?: string): string {
+  return cx(
+    iconName,
+    {
+      'fa-spin': iconName === 'fa fa-spinner',
+    },
+    className
+  );
+}
 
 /* Transform string with px to number and add 2 pxs as path in svg is 2px smaller */
 export const getSvgSize = (size: IconSize) => {

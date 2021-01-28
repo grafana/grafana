@@ -449,7 +449,7 @@ func TestPatchLibraryPanel(t *testing.T) {
 			var result libraryPanelResult
 			err = json.Unmarshal(response.Body(), &result)
 			require.NoError(t, err)
-			existing.Result.UpdatedBy = int64(2)
+			existing.Result.Meta.UpdatedBy.ID = int64(2)
 			if diff := cmp.Diff(existing.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 			}
@@ -1092,16 +1092,13 @@ func TestDisconnectLibraryPanelsForDashboard(t *testing.T) {
 }
 
 type libraryPanel struct {
-	ID        int64                  `json:"id"`
-	OrgID     int64                  `json:"orgId"`
-	FolderID  int64                  `json:"folderId"`
-	UID       string                 `json:"uid"`
-	Name      string                 `json:"name"`
-	Model     map[string]interface{} `json:"model"`
-	Created   time.Time              `json:"created"`
-	Updated   time.Time              `json:"updated"`
-	CreatedBy int64                  `json:"createdBy"`
-	UpdatedBy int64                  `json:"updatedBy"`
+	ID       int64                  `json:"id"`
+	OrgID    int64                  `json:"orgId"`
+	FolderID int64                  `json:"folderId"`
+	UID      string                 `json:"uid"`
+	Name     string                 `json:"name"`
+	Model    map[string]interface{} `json:"model"`
+	Meta     LibraryPanelDTOMeta    `json:"meta"`
 }
 
 type libraryPanelResult struct {

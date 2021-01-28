@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { SelectableValue } from '@grafana/data';
-import { Icon, ButtonSelect, Select, AsyncSelect, MultiSelect, AsyncMultiSelect } from '@grafana/ui';
+import { Icon, Select, AsyncSelect, MultiSelect, AsyncMultiSelect } from '@grafana/ui';
 import { getAvailableIcons, IconName } from '../../types';
 import { select, boolean, number } from '@storybook/addon-knobs';
-import { getIconKnob } from '../../utils/storybook/knobs';
 import kebabCase from 'lodash/kebabCase';
 import { generateOptions } from './mockOptions';
 import mdx from './Select.mdx';
@@ -225,23 +224,6 @@ export const MultiSelectAsync = () => {
         setValue(v);
       }}
       allowCustomValue
-      {...getDynamicProps()}
-    />
-  );
-};
-export const ButtonSelectBasic = () => {
-  const [value, setValue] = useState<SelectableValue<string>>();
-  const icon = getIconKnob();
-  return (
-    <ButtonSelect
-      placeholder="Select all the things..."
-      value={value}
-      options={generateOptions()}
-      onChange={(v) => {
-        setValue(v);
-      }}
-      allowCustomValue
-      icon={icon}
       {...getDynamicProps()}
     />
   );

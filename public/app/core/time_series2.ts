@@ -1,4 +1,3 @@
-import { getFlotTickDecimals } from 'app/core/utils/ticks';
 import _ from 'lodash';
 import { getValueFormat, ValueFormatter, stringToJsRegex, DecimalCount, formattedValueToString } from '@grafana/data';
 
@@ -45,35 +44,13 @@ export function updateLegendValues(data: TimeSeries[], panel: any, height: numbe
 
     // decimal override
     if (_.isNumber(panel.decimals)) {
-      series.updateLegendValues(formatter, panel.decimals, null);
+      series.updateLegendValues(formatter, panel.decimals);
     } else if (_.isNumber(axis.decimals)) {
-      series.updateLegendValues(formatter, axis.decimals + 1, null);
+      series.updateLegendValues(formatter, axis.decimals + 1);
     } else {
-      // auto decimals
-      // legend and tooltip gets one more decimal precision
-      // than graph legend ticks
-      const { datamin, datamax } = getDataMinMax(data);
-      const { tickDecimals, scaledDecimals } = getFlotTickDecimals(datamin, datamax, axis, height);
-      const tickDecimalsPlusOne = (tickDecimals || -1) + 1;
-      series.updateLegendValues(formatter, tickDecimalsPlusOne, scaledDecimals + 2);
+      series.updateLegendValues(formatter, null);
     }
   }
-}
-
-export function getDataMinMax(data: TimeSeries[]) {
-  let datamin = null;
-  let datamax = null;
-
-  for (const series of data) {
-    if (datamax === null || datamax < series.stats.max) {
-      datamax = series.stats.max;
-    }
-    if (datamin === null || datamin > series.stats.min) {
-      datamin = series.stats.min;
-    }
-  }
-
-  return { datamin, datamax };
 }
 
 /**
@@ -99,7 +76,6 @@ export default class TimeSeries {
   allIsNull: boolean;
   allIsZero: boolean;
   decimals: DecimalCount;
-  scaledDecimals: DecimalCount;
   hasMsResolution: boolean;
   isOutsideRange: boolean;
 
@@ -344,17 +320,16 @@ export default class TimeSeries {
     return result;
   }
 
-  updateLegendValues(formater: ValueFormatter, decimals: DecimalCount, scaledDecimals: DecimalCount) {
+  updateLegendValues(formater: ValueFormatter, decimals: DecimalCount) {
     this.valueFormater = formater;
     this.decimals = decimals;
-    this.scaledDecimals = scaledDecimals;
   }
 
   formatValue(value: number | null) {
     if (!_.isFinite(value)) {
       value = null; // Prevent NaN formatting
     }
-    return formattedValueToString(this.valueFormater(value, this.decimals, this.scaledDecimals));
+    return formattedValueToString(this.valueFormater(value, this.decimals));
   }
 
   isMsResolutionNeeded() {
