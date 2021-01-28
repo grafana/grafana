@@ -305,7 +305,7 @@ Example Result: `monitoring.googleapis.com/uptime_check/http_status has this val
 
 ## Configure the data source with provisioning
 
-It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../../administration/provisioning/#datasources" >}})
+You can configure data sources using config files with Grafana's provisioning system. Read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../../administration/provisioning/#datasources" >}})
 
 Here is a provisioning example using the JWT (Service Account key file) authentication type.
 

@@ -15,9 +15,9 @@ The curated dashboards are based on similar dashboards in the GCP dashboard samp
 
 To import the curated dashboards:
 
-1. Go to the configuration page of your Cloud Monitoring data source and click on the `Dashboards` tab.
+1. On the configuration page of your Cloud Monitoring data source, click the **Dashboards** tab.
 
-2. Click `Import` for the dashboard you would like to use.
+1. Click **Import** for the dashboard you would like to use.
 
 The data source of the newly created dashboard panels will be the one selected above. The dashboards have a template variable that is populated with the projects accessible by the configured service account every time the dashboard is loaded. After the dashboard is loaded, you can select the project you prefer from the drop-down list.
 
