@@ -415,6 +415,12 @@ export class BackendSrv implements BackendService {
     return this.get(`/api/library-panels`).then(({ result }) => result);
   }
 
+  async getLibraryPanelConnectedDashboards(libraryPanelUid: string): Promise<number[]> {
+    return this.get(`/api/library-panels/${libraryPanelUid}/dashboards`).then(
+      ({ result }: { result: number[] }) => result
+    );
+  }
+
   async addLibraryPanel(panelSaveModel: any, folderId: number): Promise<LibraryPanel> {
     return this.post(`/api/library-panels`, {
       folderId,
@@ -428,7 +434,7 @@ export class BackendSrv implements BackendService {
       folderId,
       name: panelSaveModel.title,
       model: panelSaveModel,
-    });
+    }).then(({ result }: { result: LibraryPanel }) => result);
   }
 
   async deleteLibraryPanel(uid: string) {

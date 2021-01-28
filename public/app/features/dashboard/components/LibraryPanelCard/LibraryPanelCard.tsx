@@ -8,17 +8,18 @@ export interface LibraryPanelCardProps {
   uid: string;
   model: any;
   title: string;
-  usageCount: number;
+  connectedDashboards: number[];
   varCount: number;
   lastEdited?: string;
   lastAuthor?: string;
+  avatarUrl?: string;
   onClick?: () => void;
   onDelete?: () => void;
 }
 
 export const LibraryPanelCard: React.FC<LibraryPanelCardProps> = ({
   title,
-  usageCount,
+  connectedDashboards,
   varCount,
   lastEdited,
   lastAuthor,
@@ -45,12 +46,10 @@ export const LibraryPanelCard: React.FC<LibraryPanelCardProps> = ({
               <span>{title}</span>
               <div className={cx(styles.panelFigures)} onClick={onClick}>
                 <span>Reusable panel</span>
-                <Icon name="apps" className={cx(styles.detailIcon)}>
-                  {usageCount}
-                </Icon>
-                <Icon name="x" className={cx(styles.detailIcon)}>
-                  {varCount}
-                </Icon>
+                <Icon name="apps" className={cx(styles.detailIcon)} />
+                {connectedDashboards.length}
+                <Icon name="x" className={cx(styles.detailIcon)} />
+                {varCount}
                 <span>
                   Last edited {lastEdited} by {lastAuthor}
                 </span>
@@ -96,7 +95,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       margin-right: 0.5ch;
     `,
     panelCard: css`
-      background: ${theme.colors.cardBackground};
+      background: ${theme.colors.bg2};
     `,
     panelIcon: css`
       margin-right: 13px;

@@ -2,7 +2,7 @@
 import React, { useMemo, useState } from 'react';
 import _ from 'lodash';
 import { LocationUpdate } from '@grafana/runtime';
-import { Button, Icon, IconButton, stylesFactory, useTheme } from '@grafana/ui';
+import { Button, Icon, IconButton, styleMixins, stylesFactory, useTheme } from '@grafana/ui';
 import { connect, MapDispatchToProps } from 'react-redux';
 // Utils
 import config from 'app/core/config';
@@ -16,7 +16,6 @@ import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { css, cx, keyframes } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import tinycolor from 'tinycolor2';
-import { OrgUser } from 'app/types';
 import { LibraryPanelsView } from '../LibraryPanelsView/LibraryPanelsView';
 import { LibraryPanelCardProps } from '../LibraryPanelCard/LibraryPanelCard';
 
@@ -25,7 +24,6 @@ export type PanelPluginInfo = { id: any; defaults: { gridPos: { w: any; h: any }
 export interface OwnProps {
   panel: PanelModel;
   dashboard: DashboardModel;
-  users: OrgUser[];
 }
 
 export interface DispatchProps {
@@ -58,7 +56,7 @@ const getCopiedPanelPlugins = () => {
   return _.sortBy(copiedPanels, 'sort');
 };
 
-export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard, updateLocation, addPanel, users }) => {
+export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard, updateLocation }) => {
   const theme = useTheme();
 
   const onCancelAddPanel = (evt: any) => {
@@ -123,9 +121,16 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard, u
   const onAddLibraryPanel = (libraryPanel: LibraryPanelCardProps) => {
     const { gridPos } = panel;
 
-    const newPanel: any = {
+    const newPanel: PanelModel = {
       ...libraryPanel.model,
       gridPos,
+      libraryPanel: {
+        name: libraryPanel.title,
+        uid: libraryPanel.uid,
+        lastEdited: libraryPanel.lastEdited,
+        lastAuthor: libraryPanel.lastAuthor,
+        avatarURL: libraryPanel.avatarUrl,
+      },
     };
 
     dashboard.addPanel(newPanel);
@@ -147,6 +152,7 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard, u
   const copiedPanelPlugins = useMemo(() => getCopiedPanelPlugins(), []);
 
   const [addPanelView, setAddPanelView] = useState(false);
+
   return (
     <div className={cx('panel-container', styles.wrapper)}>
       <AddPanelWidgetHandle onCancel={onCancelAddPanel} />
@@ -164,22 +170,30 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard, u
         </LibraryPanelsView>
       ) : (
         <div className={styles.actionsWrapper}>
-          <div onClick={() => onCreateNewPanel()}>
-            <Icon name="file-blank" size="xl" />
-            Add an empty panel
+          <div className={styles.actionsRow}>
+            <div onClick={() => onCreateNewPanel()}>
+              <Icon name="file-blank" size="xl" />
+              Add an empty panel
+            </div>
+            <div onClick={onCreateNewRow}>
+              <Icon name="wrap-text" size="xl" />
+              Add a new row
+            </div>
           </div>
-          <div onClick={onCreateNewRow}>
-            <Icon name="wrap-text" size="xl" />
-            Add a new row
-          </div>
-          <div onClick={() => setAddPanelView(true)}>
-            <Icon name="book-open" size="xl" />
-            Add a panel from the panel library
-          </div>
-          {copiedPanelPlugins.length === 1 && (
-            <div onClick={() => onPasteCopiedPanel(copiedPanelPlugins[0])}>
-              <Icon name="clipboard-alt" size="xl" />
-              Paste panel from clipboard
+          {(config.featureToggles.panelLibrary || copiedPanelPlugins.length === 1) && (
+            <div className={styles.actionsRow}>
+              {config.featureToggles.panelLibrary && (
+                <div onClick={() => setAddPanelView(true)}>
+                  <Icon name="book-open" size="xl" />
+                  Add a panel from the panel library
+                </div>
+              )}
+              {copiedPanelPlugins.length === 1 && (
+                <div onClick={() => onPasteCopiedPanel(copiedPanelPlugins[0])}>
+                  <Icon name="clipboard-alt" size="xl" />
+                  Paste panel from clipboard
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -221,21 +235,16 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       box-shadow: 0 0 0 2px black, 0 0 0px 4px #1f60c4;
       animation: ${pulsate} 2s ease infinite;
     `,
-    actionsWrapper: css`
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: 1fr 1fr;
-      gap: 8px 8px;
+    actionsRow: css`
+      display: flex;
+      flex-direction: row;
+      column-gap: 8px;
       height: 100%;
-      margin-left: 15px;
-      margin-right: 24px;
-      margin-top: 39px;
-      margin-bottom: 42px;
 
       > div {
         justify-self: center;
         cursor: pointer;
-        background: ${theme.colors.cardBackground};
+        background: ${theme.colors.bg2};
         border-radius: 2px;
         color: ${theme.colors.text};
         width: 100%;
@@ -246,17 +255,23 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
         text-align: center;
 
         &:hover {
-          background: ${theme.colors.cardBackgroundHover};
+          background: ${styleMixins.hoverColor(theme.colors.bg2, theme)};
         }
 
         &:hover > #book-icon {
           background: linear-gradient(#f05a28 30%, #fbca0a 99%);
         }
-
-        &:nth-child(odd):last-child {
-          grid-column: 1 / span 2;
-        }
       }
+    `,
+    actionsWrapper: css`
+      display: flex;
+      flex-direction: column;
+      row-gap: 8px;
+      height: 100%;
+      margin-left: 15px;
+      margin-right: 24px;
+      margin-top: 39px;
+      margin-bottom: 42px;
     `,
     buttonMargin: css`
       margin-right: 10px;

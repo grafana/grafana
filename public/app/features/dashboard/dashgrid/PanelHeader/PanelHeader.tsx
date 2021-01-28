@@ -13,7 +13,7 @@ import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 import { getPanelMenu } from 'app/features/dashboard/utils/getPanelMenu';
 import { updateLocation } from 'app/core/actions';
-import { css, cx } from 'emotion';
+import { css } from 'emotion';
 
 export interface Props {
   panel: PanelModel;

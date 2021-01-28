@@ -77,7 +77,6 @@ export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
             style={style}
           />
         )}
-        {divElementProps.children}
       </div>
     );
   }

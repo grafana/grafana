@@ -150,6 +150,10 @@ export class PanelModel implements DataConfigSource {
   libraryPanel?: {
     uid?: string;
     name: string;
+    lastEdited?: string;
+    lastAuthor?: string;
+    avatarUrl?: string;
+    connectedDashboards?: number[];
   };
 
   // non persisted

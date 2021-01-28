@@ -9,13 +9,9 @@ import { updateLocation } from 'app/core/reducers/location';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { saveDashboard as saveDashboardApiCall } from 'app/features/manage-dashboards/state/actions';
 import { getBackendSrv } from 'app/core/services/backend_srv';
+import config from 'app/core/config';
 
-const saveDashboard = async (saveModel: any, options: SaveDashboardOptions, dashboard: DashboardModel) => {
-  let folderId = options.folderId;
-  if (folderId === undefined) {
-    folderId = dashboard.meta.folderId ?? saveModel.folderId;
-  }
-
+const saveLibraryPanels = (saveModel: any, folderId: number) => {
   // Check if there are any new library panels that need to be created first
   const panelPromises = [];
   for (const [i, panel] of saveModel.panels.entries()) {
@@ -56,7 +52,18 @@ const saveDashboard = async (saveModel: any, options: SaveDashboardOptions, dash
     }
   }
 
-  await Promise.all(panelPromises);
+  return Promise.all(panelPromises).then(() => saveModel);
+};
+
+const saveDashboard = async (saveModel: any, options: SaveDashboardOptions, dashboard: DashboardModel) => {
+  let folderId = options.folderId;
+  if (folderId === undefined) {
+    folderId = dashboard.meta.folderId ?? saveModel.folderId;
+  }
+
+  if (config.featureToggles.panelLibrary) {
+    await saveLibraryPanels(saveModel, folderId!);
+  }
 
   return await saveDashboardApiCall({ ...options, folderId, dashboard: saveModel });
 };

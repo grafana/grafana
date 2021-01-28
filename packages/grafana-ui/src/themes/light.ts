@@ -127,9 +127,6 @@ const lightTheme: GrafanaTheme = {
     linkHover: textColors.textStrong,
     linkExternal: basicColors.blue85,
     textHeading: basicColors.gray25,
-
-    cardBackground: basicColors.gray97,
-    cardBackgroundHover: basicColors.gray95,
   },
   shadows: {
     listItem: 'none',

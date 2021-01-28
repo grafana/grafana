@@ -26,6 +26,7 @@ import { AddLibraryPanelModal } from '../AddLibraryPanelModal/AddLibraryPanelMod
 import { LibraryPanelsView } from '../LibraryPanelsView/LibraryPanelsView';
 import { LibraryPanelCardProps } from '../LibraryPanelCard/LibraryPanelCard';
 import { PanelQueriesChangedEvent } from 'app/types/events';
+import config from 'app/core/config';
 
 interface Props {
   panel: PanelModel;
@@ -73,8 +74,16 @@ export const PanelOptionsTab: FC<Props> = ({
     }
   };
 
-  const useLibraryPanel = ({ model }: LibraryPanelCardProps) => {
-    panel.restoreModel(model);
+  const useLibraryPanel = ({ model, uid, title, lastEdited, lastAuthor }: LibraryPanelCardProps) => {
+    panel.restoreModel({
+      ...model,
+      libraryPanel: {
+        uid,
+        name: title,
+        lastEdited,
+        lastAuthor,
+      },
+    });
 
     // dummy change for re-render
     onPanelConfigChange('isEditing', true);
@@ -92,10 +101,14 @@ export const PanelOptionsTab: FC<Props> = ({
   if (panel.libraryPanel) {
     elements.push(
       <OptionsGroup title="Reusable panel information" id="Shared Panel Info" key="Shared Panel Info">
-        <p className={cx(styles.libraryPanelInfo)}>
-          Used on 999 dashboards <br />
-          Last edited on 199X-XX-XX by LaurenIpsum
-        </p>
+        {panel.libraryPanel.uid && (
+          <p className={cx(styles.libraryPanelInfo)}>
+            Used on {panel.libraryPanel.connectedDashboards}
+            {panel.libraryPanel.connectedDashboards?.length === 1 ? 'dashboard' : 'dashboards'} <br />
+            Last edited on {dashboard.formatDate(panel.libraryPanel.lastEdited!, 'L')} by
+            <img className="filter-table__avatar" src={panel.libraryPanel.avatarUrl} /> {panel.libraryPanel.lastAuthor}
+          </p>
+        )}
         <Field label="Tags">
           <TagsInput onChange={() => {}} />
         </Field>
@@ -209,41 +222,43 @@ export const PanelOptionsTab: FC<Props> = ({
     </OptionsGroup>
   );
 
-  elements.push(
-    <OptionsGroup
-      renderTitle={(isExpanded) => {
-        return isExpanded && !panel.libraryPanel ? (
-          <div className={cx(styles.panelLibraryTitle)}>
-            <span>Panel library</span>
-            <Button size="sm" onClick={onAddToPanelLibrary}>
-              Add this panel to the panel library
+  if (config.featureToggles.panelLibrary) {
+    elements.push(
+      <OptionsGroup
+        renderTitle={(isExpanded) => {
+          return isExpanded && !panel.libraryPanel ? (
+            <div className={cx(styles.panelLibraryTitle)}>
+              <span>Panel library</span>
+              <Button size="sm" onClick={onAddToPanelLibrary}>
+                Add this panel to the panel library
+              </Button>
+            </div>
+          ) : (
+            'Panel library'
+          );
+        }}
+        id="panel-library"
+        key="panel-library"
+        defaultToClosed
+      >
+        <LibraryPanelsView formatDate={(dateString: string) => dashboard.formatDate(dateString, 'L')}>
+          {(panel) => (
+            <Button variant="secondary" onClick={() => useLibraryPanel(panel)}>
+              Use instead of current panel
             </Button>
-          </div>
-        ) : (
-          'Panel library'
-        );
-      }}
-      id="panel-library"
-      key="panel-library"
-      defaultToClosed
-    >
-      <LibraryPanelsView formatDate={(dateString: string) => dashboard.formatDate(dateString, 'L')}>
-        {(panel) => (
-          <Button variant="secondary" onClick={() => useLibraryPanel(panel)}>
-            Use instead of current panel
-          </Button>
+          )}
+        </LibraryPanelsView>
+        {showingAddPanelModal && (
+          <AddLibraryPanelModal
+            panel={panel}
+            onDismiss={() => setShowingAddPanelModal(false)}
+            initialFolderId={dashboard.meta.folderId}
+            isOpen={showingAddPanelModal}
+          />
         )}
-      </LibraryPanelsView>
-      {showingAddPanelModal && (
-        <AddLibraryPanelModal
-          panel={panel}
-          onDismiss={() => setShowingAddPanelModal(false)}
-          initialFolderId={dashboard.meta.folderId}
-          isOpen={showingAddPanelModal}
-        />
-      )}
-    </OptionsGroup>
-  );
+      </OptionsGroup>
+    );
+  }
 
   return <>{elements}</>;
 };

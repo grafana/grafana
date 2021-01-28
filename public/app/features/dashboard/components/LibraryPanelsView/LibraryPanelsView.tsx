@@ -1,6 +1,6 @@
 import { Icon, Input, Select, Button, useTheme, stylesFactory } from '@grafana/ui';
-import React, { useState } from 'react';
-import { useAsync, useDebounce } from 'react-use';
+import React, { useEffect, useState } from 'react';
+import { useDebounce } from 'react-use';
 import { cx, css } from 'emotion';
 import { LibraryPanelCard, LibraryPanelCardProps } from '../LibraryPanelCard/LibraryPanelCard';
 import { GrafanaTheme } from '@grafana/data';
@@ -23,40 +23,66 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
   const styles = getPanelViewStyles(theme);
   const [searchString, setSearchValue] = useState('');
   // const [modalOpen, setModalOpen] = useState(false);
-  const libraryPanelState = useAsync(async (): Promise<LibraryPanelCardProps[]> => {
-    const [libraryPanels, users] = await Promise.all([
-      getBackendSrv().getLibraryPanels(),
-      getBackendSrv().getOrgUsers(),
-    ]);
 
-    return libraryPanels.map((libraryPanel) => {
-      const lastAuthor = users.find((user) => user.userId === libraryPanel.UpdatedBy);
+  // Deliberately not using useAsync here as we want to be able to update libraryPanels without
+  // making an additional API request (for example when a user deletes a library panel and we want to update the view to reflect that)
+  const [libraryPanels, setLibraryPanels] = useState<LibraryPanelCardProps[] | undefined>(undefined);
+  useEffect(() => {
+    const libPanelsPromise = getBackendSrv()
+      .getLibraryPanels()
+      .then((panels) => {
+        return Promise.all(
+          panels.map((panel) =>
+            getBackendSrv()
+              .getLibraryPanelConnectedDashboards(panel.UID)
+              .then((connected) => {
+                return {
+                  ...panel,
+                  ConnectedDashboards: connected,
+                };
+              })
+          )
+        );
+      });
 
-      return {
-        id: libraryPanel.ID,
-        uid: libraryPanel.UID,
-        title: libraryPanel.Name,
-        usageCount: 48,
-        varCount: 3,
-        lastEdited: libraryPanel.Updated,
-        lastAuthor: lastAuthor?.login,
-        avatarUrl: lastAuthor?.avatarUrl,
-        model: libraryPanel.Model,
-      };
+    Promise.all([libPanelsPromise, getBackendSrv().getOrgUsers()]).then(([panels, users]) => {
+      setLibraryPanels(
+        panels.map((libraryPanel) => {
+          const lastAuthor = users.find((user) => user.userId === libraryPanel.UpdatedBy);
+
+          return {
+            id: libraryPanel.ID,
+            uid: libraryPanel.UID,
+            title: libraryPanel.Name,
+            connectedDashboards: libraryPanel.ConnectedDashboards,
+            varCount: 3,
+            lastEdited: libraryPanel.Updated,
+            lastAuthor: lastAuthor?.login,
+            avatarUrl: lastAuthor?.avatarUrl,
+            model: libraryPanel.Model,
+          };
+        })
+      );
     });
   }, []);
 
-  const [filteredItems, setFilteredItems] = useState(libraryPanelState.value);
+  const [filteredItems, setFilteredItems] = useState(libraryPanels);
   useDebounce(
     () => {
-      setFilteredItems(libraryPanelState.value?.filter((v) => v.title.toLowerCase().includes(searchString)));
+      setFilteredItems(libraryPanels?.filter((v) => v.title.toLowerCase().includes(searchString)));
     },
     300,
-    [searchString, libraryPanelState.value]
+    [searchString, libraryPanels]
   );
 
-  const onDeletePanel = (uid: string) => {
-    getBackendSrv().deleteLibraryPanel(uid);
+  const onDeletePanel = async (uid: string) => {
+    try {
+      await getBackendSrv().deleteLibraryPanel(uid);
+      const panelIndex = libraryPanels!.findIndex((panel) => panel.uid === uid);
+      setLibraryPanels([...libraryPanels!.slice(0, panelIndex), ...libraryPanels!.slice(panelIndex + 1)]);
+    } catch (err) {
+      throw err;
+    }
   };
 
   return (
@@ -73,8 +99,10 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
       </div>
       <div className={cx(styles.panelTitle)}>Popular panels from the panel library</div>
       <div className={cx(styles.libraryPanelList)}>
-        {libraryPanelState.loading ? (
+        {libraryPanels === undefined ? (
           <p>Loading library panels...</p>
+        ) : filteredItems?.length! < 1 ? (
+          <p>No library panels found.</p>
         ) : (
           filteredItems?.map((item, i) => (
             <LibraryPanelCard
