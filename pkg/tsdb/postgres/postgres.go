@@ -92,14 +92,16 @@ func writeConnectionFile(ds *models.DataSource, fileContent string, currentPath 
 	if tlsjs, ok := ds.JsonData.CheckGet(jsonFieldName); ok {
 		generatedFilePath = tlsjs.MustString("")
 	}
+
 	if fileContent != "" {
 		if generatedFilePath == "" {
 			generatedFilePath = filepath.Join(currentPath, certFileName)
 		}
-
-		if err := ioutil.WriteFile(generatedFilePath, []byte(fileContent), 0600); err != nil {
+		err := ioutil.WriteFile(generatedFilePath, []byte(fileContent), os.FileMode(0600))
+		if err != nil {
 			return err
 		}
+
 		ds.JsonData.Set(jsonFieldName, generatedFilePath)
 	} else {
 		if generatedFilePath != "" {
@@ -124,7 +126,6 @@ func writeConnectionFiles(ds *models.DataSource, cfg *setting.Cfg) error {
 	if tlsMode == "disable" {
 		return nil
 	}
-
 	currentPath := cfg.DataPath
 	var mutex = &sync.Mutex{}
 
@@ -233,13 +234,13 @@ func generateConnectionString(datasource *models.DataSource, cfg *setting.Cfg) (
 		// Attach root certificate if provided
 		if tlsRootCert != "" {
 			logger.Debug("Setting server root certificate", "tlsRootCert", tlsRootCert)
-			connStr += fmt.Sprintf(" sslrootcert='%s'", tlsRootCert)
+			connStr += fmt.Sprintf(" sslrootcert='%s'", escape(tlsRootCert))
 		}
 
 		// Attach client certificate and key if both are provided
 		if tlsCert != "" && tlsKey != "" {
 			logger.Debug("Setting TLS/SSL client auth", "tlsCert", tlsCert, "tlsKey", tlsKey)
-			connStr += fmt.Sprintf(" sslcert='%s' sslkey='%s'", tlsCert, tlsKey)
+			connStr += fmt.Sprintf(" sslcert='%s' sslkey='%s'", escape(tlsCert), escape(tlsKey))
 		} else if tlsCert != "" || tlsKey != "" {
 			return "", fmt.Errorf("TLS/SSL client certificate and key must both be specified")
 		}
