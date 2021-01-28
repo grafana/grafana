@@ -16,8 +16,6 @@ import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
 import { getLogRowStyles } from './getLogRowStyles';
 import { stylesFactory } from '../../themes/stylesFactory';
-import { selectThemeVariant } from '../../themes/selectThemeVariant';
-
 import { getAllFields } from './logParser';
 
 //Components
@@ -32,8 +30,7 @@ export interface Props extends Themeable {
   wrapLogMessage: boolean;
   className?: string;
   hasError?: boolean;
-  onMouseEnter?: () => void;
-  onMouseLeave?: () => void;
+
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
   getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
@@ -43,21 +40,20 @@ export interface Props extends Themeable {
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const bgColor = selectThemeVariant({ light: theme.palette.gray7, dark: theme.palette.dark2 }, theme.type);
   return {
-    hoverBackground: css`
-      label: hoverBackground;
-      background-color: ${bgColor};
-    `,
     logsRowLevelDetails: css`
       label: logs-row__level_details;
       &::after {
         top: -3px;
       }
     `,
-    logDetailsDefaultCursor: css`
+    logDetails: css`
       label: logDetailsDefaultCursor;
       cursor: default;
+
+      &:hover {
+        background-color: ${theme.colors.panelBg};
+      }
     `,
   };
 });
@@ -80,8 +76,6 @@ class UnThemedLogDetails extends PureComponent<Props> {
       getRows,
       showDuplicates,
       className,
-      onMouseEnter,
-      onMouseLeave,
       onClickShowDetectedField,
       onClickHideDetectedField,
       showDetectedFields,
@@ -98,11 +92,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
     const levelClassName = cx(!hasError && [style.logsRowLevel, styles.logsRowLevelDetails]);
 
     return (
-      <tr
-        className={cx(className, styles.logDetailsDefaultCursor)}
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-      >
+      <tr className={cx(className, styles.logDetails)}>
         {showDuplicates && <td />}
         <td className={levelClassName} aria-label="Log level" />
         <td colSpan={4}>

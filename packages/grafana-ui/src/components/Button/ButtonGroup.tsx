@@ -1,18 +1,17 @@
 import React, { forwardRef, HTMLAttributes } from 'react';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { useStyles } from '../../themes';
 
 export interface Props extends HTMLAttributes<HTMLDivElement> {
-  noSpacing?: boolean;
+  className?: string;
 }
 
-export const ButtonGroup = forwardRef<HTMLDivElement, Props>(({ noSpacing, children, ...rest }, ref) => {
+export const ButtonGroup = forwardRef<HTMLDivElement, Props>(({ className, children, ...rest }, ref) => {
   const styles = useStyles(getStyles);
-  const className = noSpacing ? styles.wrapperNoSpacing : styles.wrapper;
 
   return (
-    <div ref={ref} className={className} {...rest}>
+    <div ref={ref} className={cx('button-group', styles.wrapper, className)} {...rest}>
       {children}
     </div>
   );
@@ -24,26 +23,17 @@ const getStyles = (theme: GrafanaTheme) => ({
   wrapper: css`
     display: flex;
 
-    > a,
-    > button {
-      margin-left: ${theme.spacing.sm};
-
-      &:first-child {
-        margin-left: 0;
-      }
-    }
-  `,
-  wrapperNoSpacing: css`
-    display: flex;
-
-    > a,
     > button {
       border-radius: 0;
-      border-right: 0;
+      border-right-width: 0;
 
-      &:last-child {
+      &.toolbar-button {
+        margin-left: 0;
+      }
+
+      &:last-of-type {
         border-radius: 0 ${theme.border.radius.sm} ${theme.border.radius.sm} 0;
-        border-right: 1px solid ${theme.colors.border2};
+        border-right-width: 1px;
       }
 
       &:first-child {

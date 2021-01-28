@@ -18,7 +18,6 @@ import (
 func AddCSPHeader(cfg *setting.Cfg, logger log.Logger) macaron.Handler {
 	return func(w http.ResponseWriter, req *http.Request, c *macaron.Context) {
 		if !cfg.CSPEnabled {
-			logger.Debug("Not adding CSP header to response since it's disabled")
 			return
 		}
 
