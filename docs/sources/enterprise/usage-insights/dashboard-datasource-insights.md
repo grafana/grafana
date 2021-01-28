@@ -33,7 +33,7 @@ Data source insights give you information about how a data source has been used 
 
 - Queries per day
 - Errors per day
-- Average load duration per day (ms)
+- Query load time per day (averaged in ms)
  
 Find data source insights:
 1. Go to the Data source list view.
