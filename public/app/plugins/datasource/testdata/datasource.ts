@@ -1,4 +1,3 @@
-import set from 'lodash/set';
 import { from, merge, Observable, of } from 'rxjs';
 import { delay } from 'rxjs/operators';
 
@@ -8,16 +7,13 @@ import {
   arrowTableToDataFrame,
   base64StringToArrowTable,
   DataFrame,
-  DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
   DataTopic,
   LiveChannelScope,
   LoadingState,
-  TableData,
   TimeRange,
-  TimeSeries,
 } from '@grafana/data';
 import { Scenario, TestDataQuery } from './types';
 import {
@@ -33,8 +29,6 @@ import { runStream } from './runStreams';
 import { getSearchFilterScopedVar } from 'app/features/variables/utils';
 import { TestDataVariableSupport } from './variables';
 import { generateRandomNodes, savedNodesResponse } from './nodeGraphUtils';
-
-type TestData = TimeSeries | TableData;
 
 export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
   scenariosCache?: Promise<Scenario[]>;
@@ -93,39 +87,6 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
     }
 
     return merge(...streams);
-  }
-
-  processQueryResult(queries: any, res: any): DataQueryResponse {
-    const data: TestData[] = [];
-    let error: DataQueryError | undefined = undefined;
-
-    for (const query of queries) {
-      const results = res.data.results[query.refId];
-
-      for (const t of results.tables || []) {
-        const table = t as TableData;
-        table.refId = query.refId;
-        table.name = query.alias;
-
-        if (query.scenarioId === 'logs') {
-          set(table, 'meta.preferredVisualisationType', 'logs');
-        }
-
-        data.push(table);
-      }
-
-      for (const series of results.series || []) {
-        data.push({ target: series.name, datapoints: series.points, refId: query.refId, tags: series.tags });
-      }
-
-      if (results.error) {
-        error = {
-          message: results.error,
-        };
-      }
-    }
-
-    return { data, error };
   }
 
   annotationDataTopicTest(target: TestDataQuery, req: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {

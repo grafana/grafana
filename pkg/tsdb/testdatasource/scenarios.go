@@ -588,11 +588,13 @@ func (p *testDataPlugin) handleLogsScenario(ctx context.Context, req *backend.Qu
 		})
 
 		frame := data.NewFrame(q.RefID,
-			data.NewField("time", nil, []float64{}),
+			data.NewField("time", nil, []time.Time{}),
 			data.NewField("message", nil, []string{}),
 			data.NewField("container_id", nil, []string{}),
 			data.NewField("hostname", nil, []string{}),
-		)
+		).SetMeta(&data.FrameMeta{
+			PreferredVisualization: "logs",
+		})
 
 		if includeLevelColumn {
 			frame.Fields = append(frame.Fields, data.NewField("level", nil, []string{}))
@@ -610,10 +612,12 @@ func (p *testDataPlugin) handleLogsScenario(ctx context.Context, req *backend.Qu
 			containerID := containerIDGenerator.Next()
 			hostname := hostnameGenerator.Next()
 
+			t := time.Unix(to/int64(1e+3), (to%int64(1e+3))*int64(1e+6))
+
 			if includeLevelColumn {
-				frame.AppendRow(float64(to), message, containerID, hostname, logLevel)
+				frame.AppendRow(t, message, containerID, hostname, logLevel)
 			} else {
-				frame.AppendRow(float64(to), message, containerID, hostname)
+				frame.AppendRow(t, message, containerID, hostname)
 			}
 
 			to -= q.Interval.Milliseconds()
