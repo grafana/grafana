@@ -13,13 +13,7 @@ export function cardChrome(theme: GrafanaTheme): string {
 }
 
 export function hoverColor(color: string, theme: GrafanaTheme): string {
-  return theme.isDark
-    ? tinycolor(color)
-        .brighten(2)
-        .toString()
-    : tinycolor(color)
-        .darken(2)
-        .toString();
+  return theme.isDark ? tinycolor(color).brighten(2).toString() : tinycolor(color).darken(2).toString();
 }
 
 export function listItem(theme: GrafanaTheme): string {
@@ -38,6 +32,10 @@ export function listItemSelected(theme: GrafanaTheme): string {
        background: ${hoverColor(theme.colors.bg2, theme)};
        color: ${theme.colors.textStrong};
     `;
+}
+
+export function mediaUp(breakpoint: string) {
+  return `only screen and (min-width: ${breakpoint})`;
 }
 
 export const focusCss = (theme: GrafanaTheme) => `

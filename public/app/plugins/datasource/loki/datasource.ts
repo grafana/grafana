@@ -1,6 +1,6 @@
 // Libraries
 import { cloneDeep, isEmpty, map as lodashMap } from 'lodash';
-import { merge, Observable, of } from 'rxjs';
+import { merge, Observable, of, throwError } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import Prism from 'prismjs';
 
@@ -24,13 +24,17 @@ import {
   QueryResultMeta,
   ScopedVars,
   TimeRange,
-  CoreApp,
 } from '@grafana/data';
 import { getTemplateSrv, TemplateSrv, BackendSrvRequest, FetchError, getBackendSrv } from '@grafana/runtime';
 import { addLabelToQuery } from 'app/plugins/datasource/prometheus/add_label_to_query';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { convertToWebSocketUrl } from 'app/core/utils/explore';
-import { lokiResultsToTableModel, lokiStreamResultToDataFrame, processRangeQueryResponse } from './result_transformer';
+import {
+  lokiResultsToTableModel,
+  lokiStreamResultToDataFrame,
+  lokiStreamsToDataFrames,
+  processRangeQueryResponse,
+} from './result_transformer';
 import { getHighlighterExpressionsFromQuery } from './query_utils';
 
 import {
@@ -92,19 +96,18 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   query(options: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {
     const subQueries: Array<Observable<DataQueryResponse>> = [];
     const filteredTargets = options.targets
-      .filter(target => target.expr && !target.hide)
-      .map(target => ({
+      .filter((target) => target.expr && !target.hide)
+      .map((target) => ({
         ...target,
         expr: this.templateSrv.replace(target.expr, options.scopedVars, this.interpolateQueryExpr),
       }));
 
     for (const target of filteredTargets) {
-      // In explore we want to show result of metrics instant query in a table under the graph panel to mimic behaviour of prometheus.
-      // We don't want to do that in dashboards though as user would have to pick the correct data frame.
-      if (options.app === CoreApp.Explore && isMetricsQuery(target.expr)) {
+      if (target.instant) {
         subQueries.push(this.runInstantQuery(target, options, filteredTargets.length));
+      } else {
+        subQueries.push(this.runRangeQuery(target, options, filteredTargets.length));
       }
-      subQueries.push(this.runRangeQuery(target, options, filteredTargets.length));
     }
 
     // No valid targets, return the empty result to save a round trip.
@@ -124,12 +127,14 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     responseListLength: number
   ): Observable<DataQueryResponse> => {
     const timeNs = this.getTime(options.range.to, true);
+    const queryLimit = isMetricsQuery(target.expr) ? options.maxDataPoints : target.maxLines;
     const query = {
       query: target.expr,
       time: `${timeNs + (1e9 - (timeNs % 1e9))}`,
-      limit: Math.min(options.maxDataPoints || Infinity, this.maxLines),
+      limit: Math.min(queryLimit || Infinity, this.maxLines),
     };
-    /** Show results of Loki instant queries only in table */
+
+    /** Used only for results of metrics instant queries */
     const meta: QueryResultMeta = {
       preferredVisualisationType: 'table',
     };
@@ -138,7 +143,14 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       map((response: { data: LokiResponse }) => {
         if (response.data.data.resultType === LokiResultType.Stream) {
           return {
-            data: [],
+            data: response.data
+              ? lokiStreamsToDataFrames(
+                  response.data as LokiStreamResponse,
+                  target,
+                  query.limit,
+                  this.instanceSettings.jsonData
+                )
+              : [],
             key: `${target.refId}_instant`,
           };
         }
@@ -159,9 +171,10 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       const startNs = this.getTime(options.range.from, false);
       const endNs = this.getTime(options.range.to, true);
       const rangeMs = Math.ceil((endNs - startNs) / 1e6);
-      const step = Math.ceil(
-        this.adjustInterval((options as DataQueryRequest<LokiQuery>).intervalMs || 1000, rangeMs) / 1000
-      );
+      const adjustedInterval =
+        this.adjustInterval((options as DataQueryRequest<LokiQuery>).intervalMs || 1000, rangeMs) / 1000;
+      // We want to ceil to 3 decimal places
+      const step = Math.ceil(adjustedInterval * 1000) / 1000;
       const alignedTimes = {
         start: startNs - (startNs % 1e9),
         end: endNs + (1e9 - (endNs % 1e9)),
@@ -246,18 +259,21 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     const liveTarget = this.createLiveTarget(target, maxDataPoints);
 
     return this.streams.getStream(liveTarget).pipe(
-      map(data => ({
-        data,
+      map((data) => ({
+        data: data || [],
         key: `loki-${liveTarget.refId}`,
         state: LoadingState.Streaming,
-      }))
+      })),
+      catchError((err: any) => {
+        return throwError(`Live tailing was stopped due to following error: ${err.reason}`);
+      })
     );
   };
 
   interpolateVariablesInQueries(queries: LokiQuery[], scopedVars: ScopedVars): LokiQuery[] {
     let expandedQueries = queries;
     if (queries && queries.length) {
-      expandedQueries = queries.map(query => ({
+      expandedQueries = queries.map((query) => ({
         ...query,
         datasource: this.name,
         expr: this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr),
@@ -387,7 +403,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
         }),
         switchMap((res: { data: LokiStreamResponse; status: number }) =>
           of({
-            data: res.data ? res.data.data.result.map(stream => lokiStreamResultToDataFrame(stream, reverse)) : [],
+            data: res.data ? res.data.data.result.map((stream) => lokiStreamResultToDataFrame(stream, reverse)) : [],
           })
         )
       )
@@ -396,7 +412,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
 
   prepareLogRowContextQueryTarget = (row: LogRowModel, limit: number, direction: 'BACKWARD' | 'FORWARD') => {
     const query = Object.keys(row.labels)
-      .map(label => `${label}="${row.labels[label].replace(/\\/g, '\\\\')}"`) // escape backslashes in label as users can't escape them by themselves
+      .map((label) => `${label}="${row.labels[label].replace(/\\/g, '\\\\')}"`) // escape backslashes in label as users can't escape them by themselves
       .join(',');
 
     const contextTimeBuffer = 2 * 60 * 60 * 1000; // 2h buffer
@@ -438,7 +454,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     const start = `${startMs}000000`; // API expects nanoseconds
     return this._request(`${LOKI_ENDPOINT}/label`, { start })
       .pipe(
-        map(res => {
+        map((res) => {
           const values: any[] = res?.data?.data || res?.data?.values || [];
           const testResult =
             values.length > 0
@@ -492,7 +508,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       }
       const view = new DataFrameView<{ ts: string; line: string }>(frame);
 
-      view.forEach(row => {
+      view.forEach((row) => {
         annotations.push({
           time: new Date(row.ts).valueOf(),
           text: row.line,
@@ -520,7 +536,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   processError(err: FetchError, target: LokiQuery) {
     let error = cloneDeep(err);
     if (err.data.message.includes('escape') && target.expr.includes('\\')) {
-      error.data.message = `Error: ${err.data.message}. Make sure that all special characters are escaped with \\. For more information on escaping of special characters visit LogQL documentation at https://github.com/grafana/loki/blob/master/docs/logql.md.`;
+      error.data.message = `Error: ${err.data.message}. Make sure that all special characters are escaped with \\. For more information on escaping of special characters visit LogQL documentation at https://grafana.com/docs/loki/latest/logql/.`;
     }
     return error;
   }
@@ -531,7 +547,8 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     if (interval !== 0 && range / interval > 11000) {
       interval = Math.ceil(range / 11000);
     }
-    return Math.max(interval, 1000);
+    // The min interval is set to 1ms
+    return Math.max(interval, 1);
   }
 }
 
@@ -555,7 +572,7 @@ export function lokiSpecialRegexEscape(value: any) {
  */
 function isMetricsQuery(query: string): boolean {
   const tokens = Prism.tokenize(query, syntax);
-  return tokens.some(t => {
+  return tokens.some((t) => {
     // Not sure in which cases it can be string maybe if nothing matched which means it should not be a function
     return typeof t !== 'string' && t.type === 'function';
   });

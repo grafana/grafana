@@ -20,9 +20,10 @@ import { Plugin, Node } from 'slate';
 import { DOMUtil } from '@grafana/ui';
 import { ExploreQueryFieldProps, AbsoluteTimeRange } from '@grafana/data';
 import { LokiQuery, LokiOptions } from '../types';
-import { Grammar } from 'prismjs';
+import { LanguageMap, languages as prismLanguages } from 'prismjs';
 import LokiLanguageProvider, { LokiHistoryItem } from '../language_provider';
 import LokiDatasource from '../datasource';
+import LokiOptionFields from './LokiOptionFields';
 
 function getChooserText(hasSyntax: boolean, hasLogLabels: boolean) {
   if (!hasSyntax) {
@@ -63,13 +64,13 @@ function willApplySuggestion(suggestion: string, { typeaheadContext, typeaheadTe
 
 export interface LokiQueryFieldFormProps extends ExploreQueryFieldProps<LokiDatasource, LokiQuery, LokiOptions> {
   history: LokiHistoryItem[];
-  syntax: Grammar | null;
   logLabelOptions: CascaderOption[];
-  syntaxLoaded: boolean;
+  labelsLoaded: boolean;
   absoluteRange: AbsoluteTimeRange;
   onLoadOptions: (selectedOptions: CascaderOption[]) => void;
   onLabelsRefresh?: () => void;
   ExtraFieldElement?: ReactNode;
+  runOnBlur?: boolean;
 }
 
 export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormProps> {
@@ -80,10 +81,13 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
 
     this.plugins = [
       BracesPlugin(),
-      SlatePrism({
-        onlyIn: (node: Node) => node.object === 'block' && node.type === 'code_block',
-        getSyntax: (node: Node) => 'promql',
-      }),
+      SlatePrism(
+        {
+          onlyIn: (node: Node) => node.object === 'block' && node.type === 'code_block',
+          getSyntax: (node: Node) => 'logql',
+        },
+        { ...(prismLanguages as LanguageMap), logql: this.props.datasource.languageProvider.getSyntax() }
+      ),
     ];
   }
 
@@ -135,33 +139,35 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
     const {
       ExtraFieldElement,
       query,
-      syntaxLoaded,
+      labelsLoaded,
       logLabelOptions,
       onLoadOptions,
       onLabelsRefresh,
       datasource,
+      runOnBlur,
     } = this.props;
+
     const lokiLanguageProvider = datasource.languageProvider as LokiLanguageProvider;
     const cleanText = datasource.languageProvider ? lokiLanguageProvider.cleanText : undefined;
     const hasLogLabels = logLabelOptions && logLabelOptions.length > 0;
-    const chooserText = getChooserText(syntaxLoaded, hasLogLabels);
-    const buttonDisabled = !(syntaxLoaded && hasLogLabels);
+    const chooserText = getChooserText(labelsLoaded, hasLogLabels);
+    const buttonDisabled = !(labelsLoaded && hasLogLabels);
 
     return (
       <>
         <div className="gf-form-inline gf-form-inline--xs-view-flex-column flex-grow-1">
-          <div className="gf-form flex-shrink-0">
+          <div className="gf-form flex-shrink-0 min-width-5">
             <ButtonCascader
               options={logLabelOptions || []}
               disabled={buttonDisabled}
               onChange={this.onChangeLogLabels}
               loadData={onLoadOptions}
-              onPopupVisibleChange={isVisible => isVisible && onLabelsRefresh && onLabelsRefresh()}
+              onPopupVisibleChange={(isVisible) => isVisible && onLabelsRefresh && onLabelsRefresh()}
             >
               {chooserText}
             </ButtonCascader>
           </div>
-          <div className="gf-form gf-form--grow flex-shrink-1 min-width-15 explore-input-margin">
+          <div className="gf-form gf-form--grow flex-shrink-1 min-width-15">
             <QueryField
               additionalPlugins={this.plugins}
               cleanText={cleanText}
@@ -173,11 +179,18 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
               onRunQuery={this.props.onRunQuery}
               placeholder="Enter a Loki query (run with Shift+Enter)"
               portalOrigin="loki"
-              syntaxLoaded={syntaxLoaded}
             />
           </div>
-          {ExtraFieldElement}
         </div>
+        <LokiOptionFields
+          queryType={query.instant ? 'instant' : 'range'}
+          lineLimitValue={query?.maxLines?.toString() || ''}
+          query={query}
+          onRunQuery={this.props.onRunQuery}
+          onChange={this.props.onChange}
+          runOnBlur={runOnBlur}
+        />
+        {ExtraFieldElement}
       </>
     );
   }

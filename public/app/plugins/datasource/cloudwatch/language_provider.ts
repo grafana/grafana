@@ -3,22 +3,22 @@ import _ from 'lodash';
 
 // Services & Utils
 import syntax, {
-  QUERY_COMMANDS,
   AGGREGATION_FUNCTIONS_STATS,
-  STRING_FUNCTIONS,
-  DATETIME_FUNCTIONS,
-  IP_FUNCTIONS,
   BOOLEAN_FUNCTIONS,
-  NUMERIC_OPERATORS,
+  DATETIME_FUNCTIONS,
   FIELD_AND_FILTER_FUNCTIONS,
+  IP_FUNCTIONS,
+  NUMERIC_OPERATORS,
+  QUERY_COMMANDS,
+  STRING_FUNCTIONS,
 } from './syntax';
 
 // Types
-import { CloudWatchQuery } from './types';
-import { AbsoluteTimeRange, LanguageProvider, HistoryItem } from '@grafana/data';
+import { CloudWatchQuery, TSDBResponse } from './types';
+import { AbsoluteTimeRange, HistoryItem, LanguageProvider } from '@grafana/data';
 
 import { CloudWatchDatasource } from './datasource';
-import { TypeaheadInput, TypeaheadOutput, Token } from '@grafana/ui';
+import { Token, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
 import Prism, { Grammar } from 'prismjs';
 
 export type CloudWatchHistoryItem = HistoryItem<CloudWatchQuery>;
@@ -49,8 +49,8 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     return syntax;
   }
 
-  request = (url: string, params?: any): Promise<{ data: { data: string[] } }> => {
-    return this.datasource.awsRequest(url, params);
+  request = (url: string, params?: any): Promise<TSDBResponse> => {
+    return this.datasource.awsRequest(url, params).toPromise();
   };
 
   start = () => {
@@ -69,7 +69,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     const tokens = Prism.tokenize(query, grammar) ?? [];
 
     return !!tokens.find(
-      token =>
+      (token) =>
         typeof token !== 'string' &&
         token.content.toString().toLowerCase() === 'stats' &&
         token.type === 'query-command'
@@ -147,12 +147,12 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     }
 
     const results = await Promise.all(
-      logGroups.map(logGroup => this.datasource.getLogGroupFields({ logGroupName: logGroup }))
+      logGroups.map((logGroup) => this.datasource.getLogGroupFields({ logGroupName: logGroup }))
     );
 
     const fields = [
       ...new Set<string>(
-        results.reduce((acc: string[], cur) => acc.concat(cur.logGroupFields?.map(f => f.name) as string[]), [])
+        results.reduce((acc: string[], cur) => acc.concat(cur.logGroupFields?.map((f) => f.name) as string[]), [])
       ).values(),
     ];
 
@@ -216,7 +216,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     if (queryCommand === 'stats') {
       const typeaheadOutput = this.getStatsAggCompletionItems();
       if (currentTokenIsComma || currentTokenIsAfterCommandAndEmpty) {
-        typeaheadOutput?.suggestions.forEach(group => {
+        typeaheadOutput?.suggestions.forEach((group) => {
           group.skipFilter = true;
         });
       }
@@ -310,7 +310,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
       suggestions: [
         {
           label: 'Fields',
-          items: fields.map(field => ({
+          items: fields.map((field) => ({
             label: field,
             insertText: field.match(/@?[_a-zA-Z]+[_.0-9a-zA-Z]*/) ? undefined : `\`${field}\``,
           })),
@@ -385,7 +385,7 @@ const funcsWithFieldArgs = [
   'isIpInSubnet',
   'isIpv4InSubnet',
   'isIpv6InSubnet',
-].map(funcName => funcName.toLowerCase());
+].map((funcName) => funcName.toLowerCase());
 
 /**
  * Returns true if cursor is currently inside a function parenthesis for example `count(|)` or `count(@mess|)` should

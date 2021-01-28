@@ -26,7 +26,7 @@ export class PlaylistSearchCtrl {
     const prom: any = {};
 
     prom.promise = promiseToDigest(this.$scope)(
-      backendSrv.search(this.query).then(result => {
+      backendSrv.search(this.query).then((result) => {
         return {
           dashboardResult: result,
           tagResult: [],

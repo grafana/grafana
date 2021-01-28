@@ -24,11 +24,6 @@ import { LokiAnnotationsQueryEditor } from '../plugins/datasource/loki/component
 import { HelpModal } from './components/help/HelpModal';
 import { Footer } from './components/Footer/Footer';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import {
-  SaveDashboardAsButtonConnected,
-  SaveDashboardButtonConnected,
-} from '../features/dashboard/components/SaveDashboard/SaveDashboardButton';
-import { VariableEditorContainer } from '../features/variables/editor/VariableEditorContainer';
 import { SearchField, SearchResults, SearchResultsFilter, SearchWrapper } from '../features/search';
 import { TimePickerSettings } from 'app/features/dashboard/components/DashboardSettings/TimePickerSettings';
 
@@ -190,17 +185,6 @@ export function registerAngularDirectives() {
     ['onLoad', { watchDepth: 'reference', wrapApply: true }],
     ['onChange', { watchDepth: 'reference', wrapApply: true }],
   ]);
-  react2AngularDirective('saveDashboardButton', SaveDashboardButtonConnected, [
-    ['getDashboard', { watchDepth: 'reference', wrapApply: true }],
-    ['onSaveSuccess', { watchDepth: 'reference', wrapApply: true }],
-    ['dashboard', { watchDepth: 'reference', wrapApply: true }],
-  ]);
-  react2AngularDirective('saveDashboardAsButton', SaveDashboardAsButtonConnected, [
-    'variant',
-    ['getDashboard', { watchDepth: 'reference', wrapApply: true }],
-    ['onSaveSuccess', { watchDepth: 'reference', wrapApply: true }],
-  ]);
-  react2AngularDirective('variableEditorContainer', VariableEditorContainer, []);
   react2AngularDirective('timePickerSettings', TimePickerSettings, [
     'renderCount',
     'refreshIntervals',

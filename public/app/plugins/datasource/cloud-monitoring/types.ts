@@ -26,6 +26,17 @@ export enum MetricFindQueryTypes {
   SLO = 'slo',
 }
 
+export interface CloudMonitoringVariableQuery extends DataQuery {
+  selectedQueryType: string;
+  selectedService: string;
+  selectedMetricType: string;
+  selectedSLOService: string;
+  labelKey: string;
+  projects: Array<{ value: string; name: string }>;
+  sloServices: Array<{ value: string; name: string }>;
+  projectName: string;
+}
+
 export interface VariableQueryData {
   selectedQueryType: string;
   metricDescriptors: MetricDescriptor[];
@@ -47,12 +58,18 @@ export enum QueryType {
   SLO = 'slo',
 }
 
+export enum EditorMode {
+  Visual = 'visual',
+  MQL = 'mql',
+}
+
 export const queryTypes = [
   { label: 'Metrics', value: QueryType.METRICS },
   { label: 'Service Level Objectives (SLO)', value: QueryType.SLO },
 ];
 
 export interface MetricQuery {
+  editorMode: EditorMode;
   projectName: string;
   unit?: string;
   metricType: string;
@@ -65,6 +82,7 @@ export interface MetricQuery {
   metricKind?: string;
   valueType?: string;
   view?: string;
+  query: string;
 }
 
 export interface SLOQuery {
@@ -83,6 +101,8 @@ export interface CloudMonitoringQuery extends DataQuery {
   queryType: QueryType;
   metricQuery: MetricQuery;
   sloQuery?: SLOQuery;
+  intervalMs: number;
+  type: string;
 }
 
 export interface CloudMonitoringOptions extends DataSourceJsonData {

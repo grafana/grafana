@@ -8,13 +8,16 @@ interface AnnotationsEditorPluginProps {
   onAnnotationCreate: () => void;
 }
 
+/**
+ * @alpha
+ */
 export const AnnotationsEditorPlugin: React.FC<AnnotationsEditorPluginProps> = ({ onAnnotationCreate }) => {
   const pluginId = 'AnnotationsEditorPlugin';
 
   return (
     <SelectionPlugin
       id={pluginId}
-      onSelect={selection => {
+      onSelect={(selection) => {
         console.log(selection);
       }}
       lazy

@@ -21,7 +21,7 @@ export default {
   },
 };
 
-const IconWrapper: React.FC<{ name: IconName }> = ({ name }) => {
+const IconWrapper = ({ name }: { name: IconName }) => {
   const theme = useTheme();
   const borderColor = selectThemeVariant(
     {
@@ -90,8 +90,8 @@ export const IconsOverview = () => {
         `}
       >
         {icons
-          .filter(val => val.includes(filter))
-          .map(i => {
+          .filter((val) => val.includes(filter))
+          .map((i) => {
             return <IconWrapper name={i} key={i} />;
           })}
       </div>

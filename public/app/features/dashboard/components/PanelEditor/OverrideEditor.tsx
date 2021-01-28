@@ -6,19 +6,10 @@ import {
   FieldConfigOptionsRegistry,
   FieldConfigProperty,
   GrafanaTheme,
+  isSystemOverride as isSystemOverrideGuard,
   VariableSuggestionsScope,
 } from '@grafana/data';
-import {
-  Field,
-  fieldMatchersUI,
-  HorizontalGroup,
-  Icon,
-  IconButton,
-  Label,
-  stylesFactory,
-  useTheme,
-  ValuePicker,
-} from '@grafana/ui';
+import { Field, fieldMatchersUI, HorizontalGroup, Icon, IconButton, Label, useStyles, ValuePicker } from '@grafana/ui';
 import { DynamicConfigValueEditor } from './DynamicConfigValueEditor';
 
 import { getDataLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
@@ -48,9 +39,9 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
   onRemove,
   registry,
 }) => {
-  const theme = useTheme();
   const matcherUi = fieldMatchersUI.get(override.matcher.id);
-  const styles = getStyles(theme);
+  const styles = useStyles(getStyles);
+  const properties = override.properties.map((p) => registry.getIfExists(p.id)).filter((prop) => !!prop);
 
   const matcherLabel = <Label>{matcherUi.name}</Label>;
 
@@ -97,17 +88,25 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
     [override, onChange]
   );
 
-  let configPropertiesOptions = registry.list().map(item => {
-    return {
-      label: item.name,
-      value: item.id,
-      description: item.description,
-    };
-  });
+  let configPropertiesOptions = registry
+    .list()
+    .filter((o) => !o.hideFromOverrides)
+    .map((item) => {
+      let label = item.name;
+      if (item.category && item.category.length > 1) {
+        label = [...item.category!.slice(1), item.name].join(' > ');
+      }
+      return {
+        label,
+        value: item.id,
+        description: item.description,
+      };
+    });
 
   const renderOverrideTitle = (isExpanded: boolean) => {
-    const overriddenProperites = override.properties.map(p => registry.get(p.id).name).join(', ');
+    const propertyNames = properties.map((p) => p?.name).join(', ');
     const matcherOptions = matcherUi.optionsToLabel(override.matcher.options);
+
     return (
       <div>
         <HorizontalGroup justify="space-between">
@@ -119,15 +118,17 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
             <div className={styles.options} title={matcherOptions}>
               {matcherUi.name} <Icon name="angle-right" /> {matcherOptions}
             </div>
-            <div className={styles.options} title={overriddenProperites}>
+            <div className={styles.options} title={propertyNames}>
               Properties overridden <Icon name="angle-right" />
-              {overriddenProperites}
+              {propertyNames}
             </div>
           </div>
         )}
       </div>
     );
   };
+
+  const isSystemOverride = isSystemOverrideGuard(override);
 
   return (
     <OptionsGroup renderTitle={renderOverrideTitle} id={name} key={name}>
@@ -136,7 +137,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
           matcher={matcherUi.matcher}
           data={data}
           options={override.matcher.options}
-          onChange={option => onMatcherConfigChange(option)}
+          onChange={(option) => onMatcherConfigChange(option)}
         />
       </Field>
 
@@ -145,8 +146,9 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
           const item = registry.getIfExists(p.id);
 
           if (!item) {
-            return <div>Unknown property: {p.id}</div>;
+            return null;
           }
+
           const isCollapsible =
             Array.isArray(p.value) || COLLECTION_STANDARD_PROPERTIES.includes(p.id as FieldConfigProperty);
 
@@ -154,7 +156,8 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
             <DynamicConfigValueEditor
               key={`${p.id}/${j}`}
               isCollapsible={isCollapsible}
-              onChange={value => onDynamicConfigValueChange(j, value)}
+              isSystemOverride={isSystemOverride}
+              onChange={(value) => onDynamicConfigValueChange(j, value)}
               onRemove={() => onDynamicConfigValueRemove(j)}
               property={p}
               registry={registry}
@@ -165,14 +168,14 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
             />
           );
         })}
-        {override.matcher.options && (
+        {!isSystemOverride && override.matcher.options && (
           <div className={styles.propertyPickerWrapper}>
             <ValuePicker
               label="Add override property"
               variant="secondary"
               icon="plus"
               options={configPropertiesOptions}
-              onChange={o => {
+              onChange={(o) => {
                 onDynamicConfigValueAdd(o.value!);
               }}
               isFullWidth={false}
@@ -184,7 +187,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme) => {
   return {
     matcherUi: css`
       padding: ${theme.spacing.sm};
@@ -201,5 +204,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       overflow: hidden;
       padding-right: ${theme.spacing.xl};
     `,
+    unknownLabel: css`
+      margin-bottom: 0;
+    `,
   };
-});
+};

@@ -1,3 +1,4 @@
+import { Grammar } from 'prismjs';
 import { CompletionItem } from '@grafana/ui';
 
 export const RATE_RANGES: CompletionItem[] = [
@@ -376,7 +377,7 @@ export const FUNCTIONS = [
   },
 ];
 
-const tokenizer = {
+const tokenizer: Grammar = {
   comment: {
     pattern: /#.*/,
   },
@@ -392,7 +393,7 @@ const tokenizer = {
     },
   },
   'context-labels': {
-    pattern: /\{[^}]*(?=})/,
+    pattern: /\{[^}]*(?=}?)/,
     greedy: true,
     inside: {
       comment: {
@@ -411,7 +412,7 @@ const tokenizer = {
       punctuation: /[{]/,
     },
   },
-  function: new RegExp(`\\b(?:${FUNCTIONS.map(f => f.label).join('|')})(?=\\s*\\()`, 'i'),
+  function: new RegExp(`\\b(?:${FUNCTIONS.map((f) => f.label).join('|')})(?=\\s*\\()`, 'i'),
   'context-range': [
     {
       pattern: /\[[^\]]*(?=])/, // [1m]

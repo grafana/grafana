@@ -1,5 +1,6 @@
 import { PromMetricsMetadata } from './types';
 import { addLabelToQuery } from './add_label_to_query';
+import { SUGGESTIONS_LIMIT } from './language_provider';
 
 export const RATE_RANGES = ['1m', '5m', '10m', '30m', '1h'];
 
@@ -19,30 +20,39 @@ export const processHistogramLabels = (labels: string[]) => {
 };
 
 export function processLabels(labels: Array<{ [key: string]: string }>, withName = false) {
-  const values: { [key: string]: string[] } = {};
-  labels.forEach(l => {
-    const { __name__, ...rest } = l;
+  // For processing we are going to use sets as they have significantly better performance than arrays
+  // After we process labels, we will convert sets to arrays and return object with label values in arrays
+  const valueSet: { [key: string]: Set<string> } = {};
+  labels.forEach((label) => {
+    const { __name__, ...rest } = label;
     if (withName) {
-      values['__name__'] = values['__name__'] || [];
-      if (!values['__name__'].includes(__name__)) {
-        values['__name__'].push(__name__);
+      valueSet['__name__'] = valueSet['__name__'] || new Set();
+      if (!valueSet['__name__'].has(__name__)) {
+        valueSet['__name__'].add(__name__);
       }
     }
 
-    Object.keys(rest).forEach(key => {
-      if (!values[key]) {
-        values[key] = [];
+    Object.keys(rest).forEach((key) => {
+      if (!valueSet[key]) {
+        valueSet[key] = new Set();
       }
-      if (!values[key].includes(rest[key])) {
-        values[key].push(rest[key]);
+      if (!valueSet[key].has(rest[key])) {
+        valueSet[key].add(rest[key]);
       }
     });
   });
-  return { values, keys: Object.keys(values) };
+
+  // valueArray that we are going to return in the object
+  const valueArray: { [key: string]: string[] } = {};
+  limitSuggestions(Object.keys(valueSet)).forEach((key) => {
+    valueArray[key] = limitSuggestions(Array.from(valueSet[key]));
+  });
+
+  return { values: valueArray, keys: Object.keys(valueArray) };
 }
 
 // const cleanSelectorRegexp = /\{(\w+="[^"\n]*?")(,\w+="[^"\n]*?")*\}/;
-export const selectorRegexp = /\{[^}]*?\}/;
+export const selectorRegexp = /\{[^}]*?(\}|$)/;
 export const labelRegexp = /\b(\w+)(!?=~?)("[^"\n]*?")/g;
 export function parseSelector(query: string, cursorOffset = 1): { labelKeys: any[]; selector: string } {
   if (!query.match(selectorRegexp)) {
@@ -101,7 +111,7 @@ export function parseSelector(query: string, cursorOffset = 1): { labelKeys: any
 
   // Build sorted selector
   const labelKeys = Object.keys(labels).sort();
-  const cleanSelector = labelKeys.map(key => `${key}${labels[key].operator}${labels[key].value}`).join(',');
+  const cleanSelector = labelKeys.map((key) => `${key}${labels[key].operator}${labels[key].value}`).join(',');
 
   const selectorString = ['{', cleanSelector, '}'].join('');
 
@@ -118,7 +128,7 @@ export function expandRecordingRules(query: string, mapping: { [name: string]: s
 
   // Regex that matches occurrences of ){ or }{ or ]{ which is a sign of incorrecly added labels.
   const invalidLabelsRegex = /(\)\{|\}\{|\]\{)/;
-  const correctlyExpandedQueryArray = queryArray.map(query => {
+  const correctlyExpandedQueryArray = queryArray.map((query) => {
     return addLabelsToExpression(query, invalidLabelsRegex);
   });
 
@@ -146,7 +156,7 @@ function addLabelsToExpression(expr: string, invalidLabelsRegexp: RegExp) {
   // Loop trough all of the label objects and add them to query.
   // As a starting point we have valid query without the labels.
   let result = exprBeforeRegexMatch;
-  arrayOfLabelObjects.filter(Boolean).forEach(obj => {
+  arrayOfLabelObjects.filter(Boolean).forEach((obj) => {
     // Remove extra set of quotes from obj.value
     const value = obj.value.substr(1, obj.value.length - 2);
     result = addLabelToQuery(result, obj.key, value, obj.operator);
@@ -184,4 +194,20 @@ export function fixSummariesMetadata(metadata: PromMetricsMetadata): PromMetrics
     }
   }
   return { ...metadata, ...summaryMetadata };
+}
+
+export function roundMsToMin(milliseconds: number): number {
+  return roundSecToMin(milliseconds / 1000);
+}
+
+export function roundSecToMin(seconds: number): number {
+  return Math.floor(seconds / 60);
+}
+
+export function limitSuggestions(items: string[]) {
+  return items.slice(0, SUGGESTIONS_LIMIT);
+}
+
+export function addLimitInfo(items: any[] | undefined): string {
+  return items && items.length >= SUGGESTIONS_LIMIT ? `, limited to the first ${SUGGESTIONS_LIMIT} received items` : '';
 }

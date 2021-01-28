@@ -1,4 +1,6 @@
-import { SelectableValue } from '@grafana/data';
+import { PanelData, SelectableValue } from '@grafana/data';
+import { PanelQueryRunner } from '../features/query/state/PanelQueryRunner';
+import { QueryGroupOptions } from './query';
 
 export interface AlertRuleDTO {
   id: number;
@@ -40,6 +42,7 @@ export type NotifierType =
   | 'hipchat'
   | 'email'
   | 'sensu'
+  | 'sensugo'
   | 'googlechat'
   | 'threema'
   | 'teams'
@@ -131,4 +134,31 @@ export interface AlertNotification {
   name: string;
   id: number;
   type: string;
+}
+
+export interface AlertDefinitionState {
+  uiState: AlertDefinitionUiState;
+  alertDefinition: AlertDefinition;
+  queryOptions: QueryGroupOptions;
+  queryRunner: PanelQueryRunner;
+  data: PanelData[];
+  alertDefinitions: AlertDefinition[];
+}
+
+export interface AlertDefinition {
+  id: number;
+  title: string;
+  description: string;
+  condition: AlertCondition;
+  interval: number;
+}
+
+export interface AlertCondition {
+  refId: string;
+  queriesAndExpressions: any[];
+}
+
+export interface AlertDefinitionUiState {
+  rightPaneSize: number;
+  topPaneSize: number;
 }

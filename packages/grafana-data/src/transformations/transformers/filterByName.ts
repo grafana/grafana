@@ -19,7 +19,7 @@ export const filterFieldsByNameTransformer: DataTransformerInfo<FilterFieldsByNa
    * Return a modified copy of the series.  If the transform is not or should not
    * be applied, just return the input series
    */
-  operator: options => source =>
+  operator: (options) => (source) =>
     source.pipe(
       filterFieldsTransformer.operator({
         include: getMatcherConfig(options.include),
@@ -40,7 +40,7 @@ const getMatcherConfig = (options?: RegexpOrNamesMatcherOptions): MatcherConfig 
   }
 
   if (!pattern) {
-    return { id: FieldMatcherID.byNames, options: names };
+    return { id: FieldMatcherID.byNames, options: { names } };
   }
 
   if (!Array.isArray(names) || names.length === 0) {

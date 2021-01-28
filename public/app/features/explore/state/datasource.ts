@@ -41,6 +41,7 @@ export function changeDatasource(
   return async (dispatch, getState) => {
     const orgId = getState().user.orgId;
     const { history, instance } = await loadAndInitDatasource(orgId, datasourceName);
+    const currentDataSourceInstance = getState().explore[exploreId].datasourceInstance;
 
     dispatch(
       updateDatasourceInstanceAction({
@@ -51,7 +52,6 @@ export function changeDatasource(
     );
 
     const queries = getState().explore[exploreId].queries;
-    const currentDataSourceInstance = getState().explore[exploreId].datasourceInstance;
 
     if (options?.importQueries) {
       await dispatch(importQueries(exploreId, queries, currentDataSourceInstance, instance));

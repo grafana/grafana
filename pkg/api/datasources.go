@@ -2,12 +2,14 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sort"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -18,11 +20,11 @@ import (
 
 var datasourcesLogger = log.New("datasources")
 
-func GetDataSources(c *models.ReqContext) Response {
-	query := models.GetDataSourcesQuery{OrgId: c.OrgId}
+func (hs *HTTPServer) GetDataSources(c *models.ReqContext) response.Response {
+	query := models.GetDataSourcesQuery{OrgId: c.OrgId, DataSourceLimit: hs.Cfg.DataSourceLimit}
 
 	if err := bus.Dispatch(&query); err != nil {
-		return Error(500, "Failed to query datasources", err)
+		return response.Error(500, "Failed to query datasources", err)
 	}
 
 	result := make(dtos.DataSourceList, 0)
@@ -30,6 +32,7 @@ func GetDataSources(c *models.ReqContext) Response {
 		dsItem := dtos.DataSourceListItemDTO{
 			OrgId:     ds.OrgId,
 			Id:        ds.Id,
+			UID:       ds.Uid,
 			Name:      ds.Name,
 			Url:       ds.Url,
 			Type:      ds.Type,
@@ -54,98 +57,146 @@ func GetDataSources(c *models.ReqContext) Response {
 
 	sort.Sort(result)
 
-	return JSON(200, &result)
+	return response.JSON(200, &result)
 }
 
-func GetDataSourceById(c *models.ReqContext) Response {
-	query := models.GetDataSourceByIdQuery{
+func GetDataSourceById(c *models.ReqContext) response.Response {
+	query := models.GetDataSourceQuery{
 		Id:    c.ParamsInt64(":id"),
 		OrgId: c.OrgId,
 	}
 
 	if err := bus.Dispatch(&query); err != nil {
-		if err == models.ErrDataSourceNotFound {
-			return Error(404, "Data source not found", nil)
+		if errors.Is(err, models.ErrDataSourceNotFound) {
+			return response.Error(404, "Data source not found", nil)
 		}
-		return Error(500, "Failed to query datasources", err)
+		return response.Error(500, "Failed to query datasources", err)
 	}
 
 	ds := query.Result
 	dtos := convertModelToDtos(ds)
 
-	return JSON(200, &dtos)
+	return response.JSON(200, &dtos)
 }
 
-func DeleteDataSourceById(c *models.ReqContext) Response {
+func DeleteDataSourceById(c *models.ReqContext) response.Response {
 	id := c.ParamsInt64(":id")
 
 	if id <= 0 {
-		return Error(400, "Missing valid datasource id", nil)
+		return response.Error(400, "Missing valid datasource id", nil)
 	}
 
 	ds, err := getRawDataSourceById(id, c.OrgId)
 	if err != nil {
-		return Error(400, "Failed to delete datasource", nil)
+		if errors.Is(err, models.ErrDataSourceNotFound) {
+			return response.Error(404, "Data source not found", nil)
+		}
+		return response.Error(400, "Failed to delete datasource", nil)
 	}
 
 	if ds.ReadOnly {
-		return Error(403, "Cannot delete read-only data source", nil)
+		return response.Error(403, "Cannot delete read-only data source", nil)
 	}
 
-	cmd := &models.DeleteDataSourceByIdCommand{Id: id, OrgId: c.OrgId}
+	cmd := &models.DeleteDataSourceCommand{ID: id, OrgID: c.OrgId}
 
 	err = bus.Dispatch(cmd)
 	if err != nil {
-		return Error(500, "Failed to delete datasource", err)
+		return response.Error(500, "Failed to delete datasource", err)
 	}
 
-	return Success("Data source deleted")
+	return response.Success("Data source deleted")
 }
 
-func DeleteDataSourceByName(c *models.ReqContext) Response {
+// GET /api/datasources/uid/:uid
+func GetDataSourceByUID(c *models.ReqContext) response.Response {
+	ds, err := getRawDataSourceByUID(c.Params(":uid"), c.OrgId)
+
+	if err != nil {
+		if errors.Is(err, models.ErrDataSourceNotFound) {
+			return response.Error(404, "Data source not found", nil)
+		}
+		return response.Error(500, "Failed to query datasources", err)
+	}
+
+	dtos := convertModelToDtos(ds)
+	return response.JSON(200, &dtos)
+}
+
+// DELETE /api/datasources/uid/:uid
+func DeleteDataSourceByUID(c *models.ReqContext) response.Response {
+	uid := c.Params(":uid")
+
+	if uid == "" {
+		return response.Error(400, "Missing datasource uid", nil)
+	}
+
+	ds, err := getRawDataSourceByUID(uid, c.OrgId)
+	if err != nil {
+		if errors.Is(err, models.ErrDataSourceNotFound) {
+			return response.Error(404, "Data source not found", nil)
+		}
+		return response.Error(400, "Failed to delete datasource", nil)
+	}
+
+	if ds.ReadOnly {
+		return response.Error(403, "Cannot delete read-only data source", nil)
+	}
+
+	cmd := &models.DeleteDataSourceCommand{UID: uid, OrgID: c.OrgId}
+
+	err = bus.Dispatch(cmd)
+	if err != nil {
+		return response.Error(500, "Failed to delete datasource", err)
+	}
+
+	return response.Success("Data source deleted")
+}
+
+func DeleteDataSourceByName(c *models.ReqContext) response.Response {
 	name := c.Params(":name")
 
 	if name == "" {
-		return Error(400, "Missing valid datasource name", nil)
+		return response.Error(400, "Missing valid datasource name", nil)
 	}
 
-	getCmd := &models.GetDataSourceByNameQuery{Name: name, OrgId: c.OrgId}
+	getCmd := &models.GetDataSourceQuery{Name: name, OrgId: c.OrgId}
 	if err := bus.Dispatch(getCmd); err != nil {
-		if err == models.ErrDataSourceNotFound {
-			return Error(404, "Data source not found", nil)
+		if errors.Is(err, models.ErrDataSourceNotFound) {
+			return response.Error(404, "Data source not found", nil)
 		}
-		return Error(500, "Failed to delete datasource", err)
+		return response.Error(500, "Failed to delete datasource", err)
 	}
 
 	if getCmd.Result.ReadOnly {
-		return Error(403, "Cannot delete read-only data source", nil)
+		return response.Error(403, "Cannot delete read-only data source", nil)
 	}
 
-	cmd := &models.DeleteDataSourceByNameCommand{Name: name, OrgId: c.OrgId}
+	cmd := &models.DeleteDataSourceCommand{Name: name, OrgID: c.OrgId}
 	err := bus.Dispatch(cmd)
 	if err != nil {
-		return Error(500, "Failed to delete datasource", err)
+		return response.Error(500, "Failed to delete datasource", err)
 	}
 
-	return JSON(200, util.DynMap{
+	return response.JSON(200, util.DynMap{
 		"message": "Data source deleted",
 		"id":      getCmd.Result.Id,
 	})
 }
 
-func validateURL(tp string, u string) Response {
+func validateURL(tp string, u string) response.Response {
 	if u != "" {
 		if _, err := datasource.ValidateURL(tp, u); err != nil {
 			datasourcesLogger.Error("Received invalid data source URL as part of data source command",
 				"url", u)
-			return Error(400, fmt.Sprintf("Validation error, invalid URL: %q", u), err)
+			return response.Error(400, fmt.Sprintf("Validation error, invalid URL: %q", u), err)
 		}
 	}
 
 	return nil
 }
 
-func AddDataSource(c *models.ReqContext, cmd models.AddDataSourceCommand) Response {
+func AddDataSource(c *models.ReqContext, cmd models.AddDataSourceCommand) response.Response {
 	datasourcesLogger.Debug("Received command to add data source", "url", cmd.Url)
 	cmd.OrgId = c.OrgId
 	if resp := validateURL(cmd.Type, cmd.Url); resp != nil {
@@ -153,15 +204,15 @@ func AddDataSource(c *models.ReqContext, cmd models.AddDataSourceCommand) Respon
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		if err == models.ErrDataSourceNameExists || err == models.ErrDataSourceUidExists {
-			return Error(409, err.Error(), err)
+		if errors.Is(err, models.ErrDataSourceNameExists) || errors.Is(err, models.ErrDataSourceUidExists) {
+			return response.Error(409, err.Error(), err)
 		}
 
-		return Error(500, "Failed to add datasource", err)
+		return response.Error(500, "Failed to add datasource", err)
 	}
 
 	ds := convertModelToDtos(cmd.Result)
-	return JSON(200, util.DynMap{
+	return response.JSON(200, util.DynMap{
 		"message":    "Datasource added",
 		"id":         cmd.Result.Id,
 		"name":       cmd.Result.Name,
@@ -169,7 +220,7 @@ func AddDataSource(c *models.ReqContext, cmd models.AddDataSourceCommand) Respon
 	})
 }
 
-func UpdateDataSource(c *models.ReqContext, cmd models.UpdateDataSourceCommand) Response {
+func UpdateDataSource(c *models.ReqContext, cmd models.UpdateDataSourceCommand) response.Response {
 	datasourcesLogger.Debug("Received command to update data source", "url", cmd.Url)
 	cmd.OrgId = c.OrgId
 	cmd.Id = c.ParamsInt64(":id")
@@ -179,32 +230,32 @@ func UpdateDataSource(c *models.ReqContext, cmd models.UpdateDataSourceCommand) 
 
 	err := fillWithSecureJSONData(&cmd)
 	if err != nil {
-		return Error(500, "Failed to update datasource", err)
+		return response.Error(500, "Failed to update datasource", err)
 	}
 
 	err = bus.Dispatch(&cmd)
 	if err != nil {
-		if err == models.ErrDataSourceUpdatingOldVersion {
-			return Error(500, "Failed to update datasource. Reload new version and try again", err)
+		if errors.Is(err, models.ErrDataSourceUpdatingOldVersion) {
+			return response.Error(500, "Failed to update datasource. Reload new version and try again", err)
 		}
-		return Error(500, "Failed to update datasource", err)
+		return response.Error(500, "Failed to update datasource", err)
 	}
 
-	query := models.GetDataSourceByIdQuery{
+	query := models.GetDataSourceQuery{
 		Id:    cmd.Id,
 		OrgId: c.OrgId,
 	}
 
 	if err := bus.Dispatch(&query); err != nil {
-		if err == models.ErrDataSourceNotFound {
-			return Error(404, "Data source not found", nil)
+		if errors.Is(err, models.ErrDataSourceNotFound) {
+			return response.Error(404, "Data source not found", nil)
 		}
-		return Error(500, "Failed to query datasources", err)
+		return response.Error(500, "Failed to query datasources", err)
 	}
 
 	dtos := convertModelToDtos(query.Result)
 
-	return JSON(200, util.DynMap{
+	return response.JSON(200, util.DynMap{
 		"message":    "Datasource updated",
 		"id":         cmd.Id,
 		"name":       cmd.Name,
@@ -237,7 +288,7 @@ func fillWithSecureJSONData(cmd *models.UpdateDataSourceCommand) error {
 }
 
 func getRawDataSourceById(id int64, orgID int64) (*models.DataSource, error) {
-	query := models.GetDataSourceByIdQuery{
+	query := models.GetDataSourceQuery{
 		Id:    id,
 		OrgId: orgID,
 	}
@@ -249,30 +300,43 @@ func getRawDataSourceById(id int64, orgID int64) (*models.DataSource, error) {
 	return query.Result, nil
 }
 
-// Get /api/datasources/name/:name
-func GetDataSourceByName(c *models.ReqContext) Response {
-	query := models.GetDataSourceByNameQuery{Name: c.Params(":name"), OrgId: c.OrgId}
+func getRawDataSourceByUID(uid string, orgID int64) (*models.DataSource, error) {
+	query := models.GetDataSourceQuery{
+		Uid:   uid,
+		OrgId: orgID,
+	}
 
 	if err := bus.Dispatch(&query); err != nil {
-		if err == models.ErrDataSourceNotFound {
-			return Error(404, "Data source not found", nil)
+		return nil, err
+	}
+
+	return query.Result, nil
+}
+
+// Get /api/datasources/name/:name
+func GetDataSourceByName(c *models.ReqContext) response.Response {
+	query := models.GetDataSourceQuery{Name: c.Params(":name"), OrgId: c.OrgId}
+
+	if err := bus.Dispatch(&query); err != nil {
+		if errors.Is(err, models.ErrDataSourceNotFound) {
+			return response.Error(404, "Data source not found", nil)
 		}
-		return Error(500, "Failed to query datasources", err)
+		return response.Error(500, "Failed to query datasources", err)
 	}
 
 	dtos := convertModelToDtos(query.Result)
-	return JSON(200, &dtos)
+	return response.JSON(200, &dtos)
 }
 
 // Get /api/datasources/id/:name
-func GetDataSourceIdByName(c *models.ReqContext) Response {
-	query := models.GetDataSourceByNameQuery{Name: c.Params(":name"), OrgId: c.OrgId}
+func GetDataSourceIdByName(c *models.ReqContext) response.Response {
+	query := models.GetDataSourceQuery{Name: c.Params(":name"), OrgId: c.OrgId}
 
 	if err := bus.Dispatch(&query); err != nil {
-		if err == models.ErrDataSourceNotFound {
-			return Error(404, "Data source not found", nil)
+		if errors.Is(err, models.ErrDataSourceNotFound) {
+			return response.Error(404, "Data source not found", nil)
 		}
-		return Error(500, "Failed to query datasources", err)
+		return response.Error(500, "Failed to query datasources", err)
 	}
 
 	ds := query.Result
@@ -280,7 +344,7 @@ func GetDataSourceIdByName(c *models.ReqContext) Response {
 		Id: ds.Id,
 	}
 
-	return JSON(200, &dtos)
+	return response.JSON(200, &dtos)
 }
 
 // /api/datasources/:id/resources/*
@@ -288,7 +352,7 @@ func (hs *HTTPServer) CallDatasourceResource(c *models.ReqContext) {
 	datasourceID := c.ParamsInt64(":id")
 	ds, err := hs.DatasourceCache.GetDatasource(datasourceID, c.SignedInUser, c.SkipCache)
 	if err != nil {
-		if err == models.ErrDataSourceAccessDenied {
+		if errors.Is(err, models.ErrDataSourceAccessDenied) {
 			c.JsonApiErr(403, "Access denied to datasource", err)
 			return
 		}
@@ -320,6 +384,7 @@ func (hs *HTTPServer) CallDatasourceResource(c *models.ReqContext) {
 func convertModelToDtos(ds *models.DataSource) dtos.DataSource {
 	dto := dtos.DataSource{
 		Id:                ds.Id,
+		UID:               ds.Uid,
 		OrgId:             ds.OrgId,
 		Name:              ds.Name,
 		Url:               ds.Url,
@@ -350,25 +415,25 @@ func convertModelToDtos(ds *models.DataSource) dtos.DataSource {
 
 // CheckDatasourceHealth sends a health check request to the plugin datasource
 // /api/datasource/:id/health
-func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) Response {
+func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) response.Response {
 	datasourceID := c.ParamsInt64("id")
 
 	ds, err := hs.DatasourceCache.GetDatasource(datasourceID, c.SignedInUser, c.SkipCache)
 	if err != nil {
-		if err == models.ErrDataSourceAccessDenied {
-			return Error(403, "Access denied to datasource", err)
+		if errors.Is(err, models.ErrDataSourceAccessDenied) {
+			return response.Error(403, "Access denied to datasource", err)
 		}
-		return Error(500, "Unable to load datasource metadata", err)
+		return response.Error(500, "Unable to load datasource metadata", err)
 	}
 
 	plugin, ok := hs.PluginManager.GetDatasource(ds.Type)
 	if !ok {
-		return Error(500, "Unable to find datasource plugin", err)
+		return response.Error(500, "Unable to find datasource plugin", err)
 	}
 
 	dsInstanceSettings, err := wrapper.ModelToInstanceSettings(ds)
 	if err != nil {
-		return Error(500, "Unable to get datasource model", err)
+		return response.Error(500, "Unable to get datasource model", err)
 	}
 	pCtx := backend.PluginContext{
 		User:                       wrapper.BackendUserFromSignedInUser(c.SignedInUser),
@@ -392,15 +457,15 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) Response {
 		var jsonDetails map[string]interface{}
 		err = json.Unmarshal(resp.JSONDetails, &jsonDetails)
 		if err != nil {
-			return Error(500, "Failed to unmarshal detailed response from backend plugin", err)
+			return response.Error(500, "Failed to unmarshal detailed response from backend plugin", err)
 		}
 
 		payload["details"] = jsonDetails
 	}
 
 	if resp.Status != backend.HealthStatusOk {
-		return JSON(503, payload)
+		return response.JSON(503, payload)
 	}
 
-	return JSON(200, payload)
+	return response.JSON(200, payload)
 }

@@ -2,18 +2,15 @@
 title = "What's New in Grafana v7.3"
 description = "Feature and improvement highlights for Grafana v7.3"
 keywords = ["grafana", "new", "documentation", "7.3", "release notes"]
-type = "docs"
 aliases = ["/docs/grafana/latest/guides/whats-new-in-v7-3/"]
-[menu.docs]
-name = "Version 7.3"
-identifier = "v7.3"
-parent = "whatsnew"
-weight = -17
+weight = -30
+[_build]
+list = false
 +++
 
 # What's new in Grafana v7.3
 
-This topic includes the release notes for Grafana v7.3. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
+This topic includes the release notes for Grafana v7.3. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) or the [Patch release notes](#patch-release-notes).
 
 The main highlights are:
 
@@ -37,26 +34,26 @@ Another new feature that can be seen in the image above is the new image cell di
 
 {{< figure src="/img/docs/v73/color_scheme_dropdown.png" max-width="450px" caption="Color scheme" class="pull-right" >}}
 
-A new standard field [color scheme]({{< relref "../panels/field-options/standard-field-options.md#color-scheme" >}}) option has been added. This new option will provide a unified way for all new panels to specify how colors should be assigned. 
+A new standard field [color scheme]({{< relref "../panels/field-options/standard-field-options.md#color-scheme" >}}) option has been added. This new option will provide a unified way for all new panels to specify how colors should be assigned.
 
-* **Single color**: Specify a single color, useful in an override rule. 
-* **From thresholds**: Informs Grafana to take the color from the matching threshold. 
-* **Classic palette**: Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations. 
-* **Green-Yellow-Red (by value)**: This is a continuous color scheme where Grafana will interpolate a color based on the value being displayed and the field  min & max values.  
-* **Blue-Yellow-Red (by value)**: Same as above but different colors.
-* **Blues (by value)**: Same as above but color scheme go from panel background to blue. 
+- **Single color**: Specifies a single color. Useful in an override rule.
+- **From thresholds**: Informs Grafana to take color from the matching threshold.
+- **Classic palette**: Assigns a color by looking up a color in a palette by series index. Useful for Graphs and pie charts, and other categorical data visualizations in Grafana.
+- **Green-Yellow-Red (by value)**: A continuous color scheme where Grafana will interpolate a color based on the value assigned to the green, yellow, and red components. The value must be within the min & max limits.
+- **Blue-Yellow-Red (by value)**: Same as above but different colors.
+- **Blues (by value)**: Same as above but color scheme go from panel background to blue.
 
 <div class="clearfix"></div>
 
-As you can see this adds new continuous color schemes where Grafana will interpolate colors. A great use of these new color schemes is the table panel where you can color the background and get a heatmap like effect. 
+As you can see this adds new continuous color schemes where Grafana will interpolate colors. A great use of these new color schemes is the table panel where you can color the background and get a heatmap like effect.
 
 {{< figure src="/img/docs/v73/table_color_scheme.png" max-width="900px" caption="table color scheme" >}}
 
-Another thing to highlight is that all these new color schemes are theme aware and adapt to the current theme. For example here is how the new monochrome color scheme look like in the light theme: 
+Another thing to highlight is that all these new color schemes are theme aware and adapt to the current theme. For example here is how the new monochrome color scheme look like in the light theme:
 
 {{< figure src="/img/docs/v73/table_color_scheme_mono_light.png" max-width="900px" caption="table color monochrome scheme" >}}
 
-As this new option is a standard field option it works in every panel. Here is another example from the [Bar Gauge]({{< relref "../panels/visualizations/bar-gauge-panel.md" >}}) panel. 
+As this new option is a standard field option it works in every panel. Here is another example from the [Bar Gauge]({{< relref "../panels/visualizations/bar-gauge-panel.md" >}}) panel.
 
 {{< figure src="/img/docs/v73/bar_gauge_gradient_color_scheme.png" max-width="900px" caption="bar gauge color scheme" >}}
 
@@ -122,7 +119,7 @@ Example of a login event:
   "userAgent": "Chrome/86.0.4240.111",
   "grafanaVersion": "7.3.0"
 }
-``` 
+```
 
 For more details, see the [Auditing docs]({{<relref "../enterprise/auditing.md">}}).
 
@@ -138,11 +135,11 @@ Insights:
 
 ### SAML single logout
 
-SAML’s single logout (SLO) capability allows users to log out from all applications associated with the current identity provider (IdP) session established via SAML SSO. For more information, refer to the [docs]({{<relref "../enterprise/saml/#single-logout">}}). 
+SAML’s single logout (SLO) capability allows users to log out from all applications associated with the current identity provider (IdP) session established via SAML SSO. For more information, refer to the [docs]({{<relref "../enterprise/saml/#single-logout">}}).
 
 ### SAML IdP-initiated single sign on
 
-IdP-initiated single sign on (SSO) allows the user to log in directly from the SAML identity provider (IdP). It is disabled by default for security reasons. For more information, refer to the [docs]({{<relref "../enterprise/saml/#idp-initiated-single-sign-on-sso">}}). 
+IdP-initiated single sign on (SSO) allows the user to log in directly from the SAML identity provider (IdP). It is disabled by default for security reasons. For more information, refer to the [docs]({{<relref "../enterprise/saml/#idp-initiated-single-sign-on-sso">}}).
 
 ## Upgrading
 
@@ -152,4 +149,13 @@ See [upgrade notes]({{< relref "../installation/upgrading.md" >}}).
 
 Check out [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) for a complete list of new features, changes, and bug fixes.
 
-<!-- BEGIN Optimal Workshop Intercept Snippet --><div id='owInviteSnippet' style='position:fixed;right:20px;bottom:20px;width:280px;padding:20px;margin:0;border-radius:6px;background:#1857B8;color:#F7F8FA;text-align:left;z-index:2200000000;opacity:0;transition:opacity 500ms;-webkit-transition:opacity 500ms;display:none;'><div id='owInviteMessage' style='padding:0;margin:0 0 20px 0;font-size:16px;'>Got a spare two and a half minutes to help us improve the docs?</div><a id='owInviteOk' href='https://Grafana.optimalworkshop.com/questions/grafana-docs?tag=docs&utm_medium=intercept' onclick='this.parentNode.style.display="none";' target='_blank' style='color:#F7FAFF;font-size:16px;font-weight:bold;text-decoration:underline;'>Yes, I&#x27;ll help</a><a id='owInviteCancel' href='javascript:void(0)' onclick='this.parentNode.style.display="none";' style='color:#F7F8FA;font-size:14px;text-decoration:underline;float:right;'>Close</a></div><script>var owOnload=function(){if(-1==document.cookie.indexOf('ow-intercept-quiz-4ior230e')){var o=new XMLHttpRequest;o.onloadend=function(){try{var o=document.getElementById('owInviteSnippet');var date=new Date();date.setMonth(date.getMonth()+1);this.response&&JSON.parse(this.response).active===!0&&(document.cookie='ow-intercept-quiz-4ior230e=Done;path=/;expires='+date.toUTCString()+';',setTimeout(function(){o.style.display='block',o.style.opacity=1},2e3))}catch(e){}},o.open('POST','https://app.optimalworkshop.com/survey_status/questions/4ior230e/active'),o.send()}};if(window.addEventListener){window.addEventListener('load',function(){owOnload();});}else if(window.attachEvent){window.attachEvent('onload',function(){owOnload();});}</script><!-- END Optimal Workshop snippet -->
+## Patch release notes
+
+- [Grafana 7.3.0 release notes]({{< relref "../release-notes/release-notes-7-3-0.md" >}})
+- [Grafana 7.3.1 release notes]({{< relref "../release-notes/release-notes-7-3-1.md" >}})
+- [Grafana 7.3.2 release notes]({{< relref "../release-notes/release-notes-7-3-2.md" >}})
+- [Grafana 7.3.3 release notes]({{< relref "../release-notes/release-notes-7-3-3.md" >}})
+- [Grafana 7.3.4 release notes]({{< relref "../release-notes/release-notes-7-3-4.md" >}})
+- [Grafana 7.3.5 release notes]({{< relref "../release-notes/release-notes-7-3-5.md" >}})
+- [Grafana 7.3.6 release notes]({{< relref "../release-notes/release-notes-7-3-6.md" >}})
+- [Grafana 7.3.7 release notes]({{< relref "../release-notes/release-notes-7-3-7.md" >}})

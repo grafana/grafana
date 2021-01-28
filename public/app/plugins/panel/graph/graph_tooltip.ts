@@ -58,7 +58,7 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
     $tooltip.html(innerHtml).place_tt(pos.pageX + 20, pos.pageY);
   };
 
-  this.getMultiSeriesPlotHoverInfo = function(seriesList: any[], pos: { x: number }) {
+  this.getMultiSeriesPlotHoverInfo = function (seriesList: any[], pos: { x: number }) {
     let value, i, series, hoverIndex, hoverDistance, pointTime, yaxis;
     // 3 sub-arrays, 1st for hidden series, 2nd for left yaxis, 3rd for right yaxis.
     let results: any = [[], [], []];
@@ -102,17 +102,11 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
         minTime = pointTime;
       }
 
-      if (series.stack) {
-        if (panel.tooltip.value_type === 'individual') {
-          value = series.data[hoverIndex][1];
-        } else if (!series.stack) {
-          value = series.data[hoverIndex][1];
-        } else {
-          lastValue += series.data[hoverIndex][1];
-          value = lastValue;
-        }
-      } else {
-        value = series.data[hoverIndex][1];
+      value = series.data[hoverIndex][1];
+
+      if (series.stack && value !== null && panel.tooltip.value_type !== 'individual') {
+        lastValue += value;
+        value = lastValue;
       }
 
       // Highlighting multiple Points depending on the plot type

@@ -27,9 +27,9 @@ import { ExploreId, QueryOptions } from 'app/types/explore';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { notifyApp } from '../../../core/actions';
-import { preProcessPanelData, runRequest } from '../../dashboard/state/runRequest';
+import { preProcessPanelData, runRequest } from '../../query/state/runRequest';
 import {
-  decorateWithGraphLogsTraceAndTable,
+  decorateWithFrameTypeMetadata,
   decorateWithGraphResult,
   decorateWithLogsResult,
   decorateWithTableResult,
@@ -209,7 +209,7 @@ export function changeQuery(
  * Clear all queries and results.
  */
 export function clearQueries(exploreId: ExploreId): ThunkResult<void> {
-  return dispatch => {
+  return (dispatch) => {
     dispatch(scanStopAction({ exploreId }));
     dispatch(clearQueriesAction({ exploreId }));
     dispatch(stateSave());
@@ -220,7 +220,7 @@ export function clearQueries(exploreId: ExploreId): ThunkResult<void> {
  * Cancel running queries
  */
 export function cancelQueries(exploreId: ExploreId): ThunkResult<void> {
-  return dispatch => {
+  return (dispatch) => {
     dispatch(scanStopAction({ exploreId }));
     dispatch(cancelQueriesAction({ exploreId }));
     dispatch(stateSave());
@@ -241,7 +241,7 @@ export const importQueries = (
   sourceDataSource: DataSourceApi | undefined | null,
   targetDataSource: DataSourceApi
 ): ThunkResult<void> => {
-  return async dispatch => {
+  return async (dispatch) => {
     if (!sourceDataSource) {
       // explore not initialized
       dispatch(queriesImportedAction({ exploreId, queries }));
@@ -280,7 +280,7 @@ export function modifyQueries(
   modifier: any,
   index?: number
 ): ThunkResult<void> {
-  return dispatch => {
+  return (dispatch) => {
     dispatch(modifyQueriesAction({ exploreId, modification, index, modifier }));
     if (!modification.preventSubmit) {
       dispatch(runQueries(exploreId));
@@ -341,7 +341,7 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
       liveStreaming: live,
     };
 
-    const datasourceName = exploreItemState.requestedDatasourceName;
+    const datasourceName = datasourceInstance.name;
     const timeZone = getTimeZone(getState().user);
     const transaction = buildQueryTransaction(queries, queryOptions, range, scanning, timeZone);
 
@@ -355,13 +355,13 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
         // actually can see what is happening.
         live ? throttleTime(500) : identity,
         map((data: PanelData) => preProcessPanelData(data, queryResponse)),
-        map(decorateWithGraphLogsTraceAndTable),
+        map(decorateWithFrameTypeMetadata),
         map(decorateWithGraphResult),
         map(decorateWithLogsResult({ absoluteRange, refreshInterval })),
         mergeMap(decorateWithTableResult)
       )
       .subscribe(
-        data => {
+        (data) => {
           if (!data.error && firstResponse) {
             // Side-effect: Saving history in localstorage
             const nextHistory = updateHistory(history, datasourceId, queries);
@@ -397,7 +397,7 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
             }
           }
         },
-        error => {
+        (error) => {
           dispatch(notifyApp(createErrorNotification('Query processing error', error)));
           dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Error }));
           console.error(error);
@@ -476,7 +476,6 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     return {
       ...state,
       queries: nextQueries,
-      queryKeys: getQueryKeys(nextQueries, state.datasourceInstance),
     };
   }
 
@@ -541,7 +540,7 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     }
 
     // removes a query under a given index and reassigns query keys and refIds to keep everything in order
-    const queriesAfterRemoval: DataQuery[] = [...queries.slice(0, index), ...queries.slice(index + 1)].map(query => {
+    const queriesAfterRemoval: DataQuery[] = [...queries.slice(0, index), ...queries.slice(index + 1)].map((query) => {
       return { ...query, refId: '' };
     });
 
@@ -551,13 +550,11 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
       nextQueries.push(generateNewKeyAndAddRefIdIfMissing(query, nextQueries, i));
     });
 
-    const nextQueryKeys: string[] = nextQueries.map(query => query.key!);
-
     return {
       ...state,
       queries: nextQueries,
       logsHighlighterExpressions: undefined,
-      queryKeys: nextQueryKeys,
+      queryKeys: getQueryKeys(nextQueries, state.datasourceInstance),
     };
   }
 
@@ -640,7 +637,17 @@ export const processQueryResponse = (
   action: PayloadAction<QueryEndedPayload>
 ): ExploreItemState => {
   const { response } = action.payload;
-  const { request, state: loadingState, series, error, graphResult, logsResult, tableResult, traceFrames } = response;
+  const {
+    request,
+    state: loadingState,
+    series,
+    error,
+    graphResult,
+    logsResult,
+    tableResult,
+    traceFrames,
+    nodeGraphFrames,
+  } = response;
 
   if (error) {
     if (error.type === DataQueryErrorType.Timeout) {
@@ -658,7 +665,7 @@ export const processQueryResponse = (
 
     return {
       ...state,
-      loading: false,
+      loading: loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming,
       queryResponse: response,
       graphResult: null,
       tableResult: null,
@@ -674,7 +681,7 @@ export const processQueryResponse = (
 
   // Send legacy data to Angular editors
   if (state.datasourceInstance?.components?.QueryCtrl) {
-    const legacy = series.map(v => toLegacyResponseData(v));
+    const legacy = series.map((v) => toLegacyResponseData(v));
 
     state.eventBridge.emit(PanelEvents.dataReceived, legacy);
   }
@@ -691,5 +698,6 @@ export const processQueryResponse = (
     showMetrics: !!graphResult,
     showTable: !!tableResult,
     showTrace: !!traceFrames.length,
+    showNodeGraph: !!nodeGraphFrames.length,
   };
 };

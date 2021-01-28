@@ -1,13 +1,14 @@
 import React, { PureComponent } from 'react';
 import appEvents from 'app/core/app_events';
 import { CoreEvents } from 'app/types';
-import { MetricQueryEditor, QueryTypeSelector, SLOQueryEditor, Help } from './';
-import { CloudMonitoringQuery, MetricQuery, QueryType, SLOQuery } from '../types';
+import { ExploreQueryFieldProps, SelectableValue } from '@grafana/data';
+import { Segment } from '@grafana/ui';
+import { Help, MetricQueryEditor, SLOQueryEditor } from './';
+import { CloudMonitoringQuery, MetricQuery, QueryType, SLOQuery, queryTypes, EditorMode } from '../types';
 import { defaultQuery } from './MetricQueryEditor';
 import { defaultQuery as defaultSLOQuery } from './SLOQueryEditor';
-import { toOption, formatCloudMonitoringError } from '../functions';
+import { formatCloudMonitoringError, toOption } from '../functions';
 import CloudMonitoringDatasource from '../datasource';
-import { ExploreQueryFieldProps } from '@grafana/data';
 
 export type Props = ExploreQueryFieldProps<CloudMonitoringDatasource, CloudMonitoringQuery>;
 
@@ -21,7 +22,7 @@ export class QueryEditor extends PureComponent<Props, State> {
   async UNSAFE_componentWillMount() {
     const { datasource, query } = this.props;
 
-    // Unfortunately, migrations like this need to go componentWillMount. As soon as there's
+    // Unfortunately, migrations like this need to go UNSAFE_componentWillMount. As soon as there's
     // migration hook for this module.ts, we can do the migrations there instead.
     if (!this.props.query.hasOwnProperty('metricQuery')) {
       const { hide, refId, datasource, key, queryType, maxLines, metric, ...metricQuery } = this.props.query as any;
@@ -71,26 +72,56 @@ export class QueryEditor extends PureComponent<Props, State> {
     const variableOptionGroup = {
       label: 'Template Variables',
       expanded: false,
-      options: datasource.variables.map(toOption),
+      options: datasource.getVariables().map(toOption),
     };
 
     return (
       <>
-        <QueryTypeSelector
-          value={queryType}
-          templateVariableOptions={variableOptionGroup.options}
-          onChange={(queryType: QueryType) => {
-            onChange({ ...query, sloQuery, queryType });
-            onRunQuery();
-          }}
-        ></QueryTypeSelector>
+        <div className="gf-form-inline">
+          <label className="gf-form-label query-keyword width-9">Query Type</label>
+          <Segment
+            value={[...queryTypes, ...variableOptionGroup.options].find((qt) => qt.value === queryType)}
+            options={[
+              ...queryTypes,
+              {
+                label: 'Template Variables',
+                options: variableOptionGroup.options,
+              },
+            ]}
+            onChange={({ value }: SelectableValue<QueryType>) => {
+              onChange({ ...query, sloQuery, queryType: value! });
+              onRunQuery();
+            }}
+          />
+
+          {query.queryType !== QueryType.SLO && (
+            <button
+              className="gf-form-label "
+              onClick={() =>
+                this.onQueryChange('metricQuery', {
+                  ...metricQuery,
+                  editorMode: metricQuery.editorMode === EditorMode.MQL ? EditorMode.Visual : EditorMode.MQL,
+                })
+              }
+            >
+              <span className="query-keyword">{'<>'}</span>&nbsp;&nbsp;
+              {metricQuery.editorMode === EditorMode.MQL ? 'Switch to builder' : 'Edit MQL'}
+            </button>
+          )}
+
+          <div className="gf-form gf-form--grow">
+            <label className="gf-form-label gf-form-label--grow"></label>
+          </div>
+        </div>
 
         {queryType === QueryType.METRICS && (
           <MetricQueryEditor
             refId={query.refId}
             variableOptionGroup={variableOptionGroup}
             usedAlignmentPeriod={usedAlignmentPeriod}
-            onChange={(query: MetricQuery) => this.onQueryChange('metricQuery', query)}
+            onChange={(metricQuery: MetricQuery) => {
+              this.props.onChange({ ...this.props.query, metricQuery });
+            }}
             onRunQuery={onRunQuery}
             datasource={datasource}
             query={metricQuery}
@@ -107,6 +138,7 @@ export class QueryEditor extends PureComponent<Props, State> {
             query={sloQuery}
           ></SLOQueryEditor>
         )}
+
         <Help
           rawQuery={decodeURIComponent(meta?.executedQueryString ?? '')}
           lastQueryError={this.state.lastQueryError}

@@ -29,7 +29,7 @@ export const Tooltip: FC<TooltipProps> = React.memo(({ children, theme, ...contr
         };
         return (
           <>
-            {tooltipTriggerRef.current && (
+            {tooltipTriggerRef.current && controllerProps.content && (
               <Popover
                 {...payloadProps}
                 onMouseEnter={showPopper}
@@ -53,3 +53,5 @@ export const Tooltip: FC<TooltipProps> = React.memo(({ children, theme, ...contr
     </PopoverController>
   );
 });
+
+Tooltip.displayName = 'Tooltip';

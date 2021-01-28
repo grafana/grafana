@@ -25,7 +25,8 @@ export interface StatPanelOptions extends SingleStatBaseOptions {
 export function addStandardDataReduceOptions(
   builder: PanelOptionsEditorBuilder<SingleStatBaseOptions>,
   includeOrientation = true,
-  includeFieldMatcher = true
+  includeFieldMatcher = true,
+  includeTextSizes = true
 ) {
   builder.addRadio({
     path: 'reduceOptions.values',
@@ -50,7 +51,7 @@ export function addStandardDataReduceOptions(
       min: 1,
       max: 5000,
     },
-    showIf: options => options.reduceOptions.values === true,
+    showIf: (options) => options.reduceOptions.values === true,
   });
 
   builder.addCustomEditor({
@@ -59,9 +60,9 @@ export function addStandardDataReduceOptions(
     name: 'Calculation',
     description: 'Choose a reducer function / calculation',
     editor: standardEditorsRegistry.get('stats-picker').editor as any,
-    defaultValue: [ReducerID.mean],
+    defaultValue: [ReducerID.lastNotNull],
     // Hides it when all values mode is on
-    showIf: currentConfig => currentConfig.reduceOptions.values === false,
+    showIf: (currentConfig) => currentConfig.reduceOptions.values === false,
   });
 
   if (includeFieldMatcher) {
@@ -106,6 +107,34 @@ export function addStandardDataReduceOptions(
         ],
       },
       defaultValue: 'auto',
+    });
+  }
+
+  if (includeTextSizes) {
+    builder.addNumberInput({
+      path: 'text.titleSize',
+      category: ['Text size'],
+      name: 'Title',
+      settings: {
+        placeholder: 'Auto',
+        integer: false,
+        min: 1,
+        max: 200,
+      },
+      defaultValue: undefined,
+    });
+
+    builder.addNumberInput({
+      path: 'text.valueSize',
+      category: ['Text size'],
+      name: 'Value',
+      settings: {
+        placeholder: 'Auto',
+        integer: false,
+        min: 1,
+        max: 200,
+      },
+      defaultValue: undefined,
     });
   }
 }

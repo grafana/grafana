@@ -33,13 +33,15 @@ describe('PanelPlugin', () => {
       });
 
       panel.useFieldConfig({
-        useCustomConfig: builder => {
+        useCustomConfig: (builder) => {
           builder.addCustomEditor({
             id: 'custom',
             path: 'custom',
             name: 'Custom',
             description: 'Custom field config property description',
+            // eslint-disable-next-line react/display-name
             editor: () => <div>Editor</div>,
+            // eslint-disable-next-line react/display-name
             override: () => <div>Editor</div>,
             process: identityOverrideProcessor,
             settings: {},
@@ -56,12 +58,13 @@ describe('PanelPlugin', () => {
         return <div>Panel</div>;
       });
 
-      panel.setPanelOptions(builder => {
+      panel.setPanelOptions((builder) => {
         builder.addCustomEditor({
           id: 'option',
           path: 'option',
           name: 'Option editor',
           description: 'Option editor description',
+          // eslint-disable-next-line react/display-name
           editor: () => <div>Editor</div>,
           settings: {},
         });
@@ -79,7 +82,7 @@ describe('PanelPlugin', () => {
           return <div>Panel</div>;
         });
 
-        panel.setPanelOptions(builder => {
+        panel.setPanelOptions((builder) => {
           builder
             .addNumberInput({
               path: 'numericOption',
@@ -97,6 +100,7 @@ describe('PanelPlugin', () => {
               path: 'customOption',
               name: 'Option editor',
               description: 'Option editor description',
+              // eslint-disable-next-line react/display-name
               editor: () => <div>Editor</div>,
               settings: {},
               defaultValue: { value: 'Custom default value' },
@@ -116,7 +120,7 @@ describe('PanelPlugin', () => {
           return <div>Panel</div>;
         });
 
-        panel.setPanelOptions(builder => {
+        panel.setPanelOptions((builder) => {
           builder.addNumberInput({
             path: 'numericOption.nested',
             name: 'Option editor',
@@ -140,7 +144,7 @@ describe('PanelPlugin', () => {
         });
 
         panel.useFieldConfig({
-          useCustomConfig: builder => {
+          useCustomConfig: (builder) => {
             builder
               .addNumberInput({
                 path: 'numericOption',
@@ -158,7 +162,9 @@ describe('PanelPlugin', () => {
                 path: 'customOption',
                 name: 'Option editor',
                 description: 'Option editor description',
+                // eslint-disable-next-line react/display-name
                 editor: () => <div>Editor</div>,
+                // eslint-disable-next-line react/display-name
                 override: () => <div>Override editor</div>,
                 process: identityOverrideProcessor,
                 shouldApply: () => true,
@@ -182,7 +188,7 @@ describe('PanelPlugin', () => {
         });
 
         panel.useFieldConfig({
-          useCustomConfig: builder => {
+          useCustomConfig: (builder) => {
             builder.addNumberInput({
               path: 'numericOption.nested',
               name: 'Option editor',

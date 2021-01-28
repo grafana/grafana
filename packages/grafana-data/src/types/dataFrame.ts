@@ -35,6 +35,25 @@ export interface FieldConfig<TOptions extends object = any> {
   displayNameFromDS?: string;
 
   /**
+   * Human readable field metadata
+   */
+  description?: string;
+
+  /**
+   * An explict path to the field in the datasource.  When the frame meta includes a path,
+   * This will default to `${frame.meta.path}/${field.name}
+   *
+   * When defined, this value can be used as an identifier within the datasource scope, and
+   * may be used to update the results
+   */
+  path?: string;
+
+  /**
+   * True if data source can write a value to the path.  Auth/authz are supported separately
+   */
+  writeable?: boolean;
+
+  /**
    * True if data source field supports ad-hoc filters
    */
   filterable?: boolean;
@@ -127,6 +146,13 @@ export interface FieldState {
   calcs?: FieldCalcs;
 
   /**
+   * The numeric range for values in this field.  This value will respect the min/max
+   * set in field config, or when set to `auto` this will have the min/max for all data
+   * in the response
+   */
+  range?: NumericRange;
+
+  /**
    * Appropriate values for templating
    */
   scopedVars?: ScopedVars;
@@ -136,6 +162,19 @@ export interface FieldState {
    * Useful for assigning color to series by looking up a color in a palette using this index
    */
   seriesIndex?: number;
+
+  /**
+   * Location of this field within the context frames results
+   *
+   * @internal -- we will try to make this unnecessary
+   */
+  origin?: DataFrameFieldIndex;
+}
+
+export interface NumericRange {
+  min?: number | null;
+  max?: number | null;
+  delta: number;
 }
 
 export interface DataFrame extends QueryResultBase {
@@ -170,3 +209,14 @@ export interface FieldCalcs extends Record<string, any> {}
 export const TIME_SERIES_VALUE_FIELD_NAME = 'Value';
 export const TIME_SERIES_TIME_FIELD_NAME = 'Time';
 export const TIME_SERIES_METRIC_FIELD_NAME = 'Metric';
+
+/**
+ * Describes where a specific data frame field is located within a
+ * dataset of type DataFrame[]
+ *
+ * @internal -- we will try to make this unnecessary
+ */
+export interface DataFrameFieldIndex {
+  frameIndex: number;
+  fieldIndex: number;
+}

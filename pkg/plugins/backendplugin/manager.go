@@ -33,7 +33,7 @@ var (
 )
 
 func init() {
-	registry.RegisterService(&manager{})
+	registry.RegisterServiceWithPriority(&manager{}, registry.MediumHigh)
 }
 
 // Manager manages backend plugins.
@@ -98,8 +98,13 @@ func (m *manager) Register(pluginID string, factory PluginFactoryFunc) error {
 		hostEnv = append(
 			hostEnv,
 			fmt.Sprintf("GF_ENTERPRISE_LICENSE_PATH=%s", m.Cfg.EnterpriseLicensePath),
-			fmt.Sprintf("GF_ENTERPRISE_LICENSE_TEXT=%s", m.License.TokenRaw()),
 		)
+
+		if envProvider, ok := m.License.(models.LicenseEnvironment); ok {
+			for k, v := range envProvider.Environment() {
+				hostEnv = append(hostEnv, fmt.Sprintf("%s=%s", k, v))
+			}
+		}
 	}
 
 	env := pluginSettings.ToEnv("GF_PLUGIN", hostEnv)
@@ -209,7 +214,7 @@ func (m *manager) CheckHealth(ctx context.Context, pluginContext backend.PluginC
 			return nil, err
 		}
 
-		return nil, errutil.Wrap("Failed to check plugin health", ErrHealthCheckFailed)
+		return nil, errutil.Wrap("failed to check plugin health", ErrHealthCheckFailed)
 	}
 
 	return resp, nil
@@ -257,6 +262,11 @@ func (m *manager) callResourceInternal(w http.ResponseWriter, req *http.Request,
 		childCtx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		stream := newCallResourceResponseStream(childCtx)
+		defer func() {
+			if err := stream.Close(); err != nil {
+				m.logger.Warn("Failed to close stream", "err", err)
+			}
+		}()
 		var wg sync.WaitGroup
 		wg.Add(1)
 		var flushStreamErr error
@@ -265,12 +275,15 @@ func (m *manager) callResourceInternal(w http.ResponseWriter, req *http.Request,
 			wg.Done()
 		}()
 
-		innerErr := p.CallResource(req.Context(), crReq, stream)
-		stream.Close()
-		if innerErr != nil {
-			return innerErr
+		if err := p.CallResource(req.Context(), crReq, stream); err != nil {
+			return err
 		}
+		if err := stream.Close(); err != nil {
+			return err
+		}
+
 		wg.Wait()
+
 		return flushStreamErr
 	})
 }
@@ -313,7 +326,7 @@ func flushStream(plugin Plugin, stream CallResourceClientResponseStream, w http.
 
 	for {
 		resp, err := stream.Recv()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			if processedStreams == 0 {
 				return errors.New("received empty resource response")
 			}
@@ -343,6 +356,8 @@ func flushStream(plugin Plugin, stream CallResourceClientResponseStream, w http.
 				}
 
 				for _, v := range values {
+					// TODO: Figure out if we should use Set here instead
+					// nolint:gocritic
 					w.Header().Add(k, v)
 				}
 			}

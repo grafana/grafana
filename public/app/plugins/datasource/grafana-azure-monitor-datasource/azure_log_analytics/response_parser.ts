@@ -58,7 +58,7 @@ export default class ResponseParser {
       throw new Error('No datetime column found in the result. The Time Series format requires a time column.');
     }
 
-    _.forEach(rows, row => {
+    _.forEach(rows, (row) => {
       const epoch = ResponseParser.dateTimeToEpoch(row[timeIndex]);
       const metricName = metricIndex > -1 ? row[metricIndex] : columns[valueIndex].name;
       const bucket = ResponseParser.findOrCreateBucket(data, metricName);
@@ -75,7 +75,7 @@ export default class ResponseParser {
   parseTableResult(query: { refId: string; query: string }, columns: any[], rows: any[]): AzureLogsTableData {
     const tableResult: AzureLogsTableData = {
       type: 'table',
-      columns: _.map(columns, col => {
+      columns: _.map(columns, (col) => {
         return { text: col.name, type: col.type };
       }),
       rows: rows,
@@ -92,8 +92,8 @@ export default class ResponseParser {
     const queryResult = this.parseQueryResult();
 
     const variables: AzureLogsVariable[] = [];
-    _.forEach(queryResult, result => {
-      _.forEach(_.flattenDeep(result.rows), row => {
+    _.forEach(queryResult, (result) => {
+      _.forEach(_.flattenDeep(result.rows), (row) => {
         variables.push({
           text: row,
           value: row,
@@ -109,7 +109,7 @@ export default class ResponseParser {
 
     const list: AnnotationEvent[] = [];
 
-    _.forEach(queryResult, result => {
+    _.forEach(queryResult, (result) => {
       let timeIndex = -1;
       let textIndex = -1;
       let tagsIndex = -1;
@@ -128,7 +128,7 @@ export default class ResponseParser {
         }
       }
 
-      _.forEach(result.rows, row => {
+      _.forEach(result.rows, (row) => {
         list.push({
           annotation: options.annotation,
           time: Math.floor(ResponseParser.dateTimeToEpoch(row[timeIndex])),

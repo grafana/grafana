@@ -1,5 +1,5 @@
 import { AnyAction } from 'redux';
-import _ from 'lodash';
+import isEqual from 'lodash/isEqual';
 
 import { DEFAULT_RANGE, getQueryKeys, parseUrlState } from 'app/core/utils/explore';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
@@ -12,22 +12,28 @@ import { createAction, PayloadAction } from '@reduxjs/toolkit';
 import {
   EventBusExtended,
   DataQuery,
+  ExploreUrlState,
   LogLevel,
   LogsDedupStrategy,
   TimeRange,
   HistoryItem,
   DataSourceApi,
-  ExploreUrlState,
 } from '@grafana/data';
-import { ensureQueries, generateNewKeyAndAddRefIdIfMissing, getTimeRangeFromUrl } from 'app/core/utils/explore';
-import { getRichHistory } from 'app/core/utils/richHistory';
+import {
+  clearQueryKeys,
+  ensureQueries,
+  generateNewKeyAndAddRefIdIfMissing,
+  getTimeRangeFromUrl,
+} from 'app/core/utils/explore';
 // Types
 import { ThunkResult } from 'app/types';
 import { getTimeZone } from 'app/features/profile/state/selectors';
-import { getUrlStateFromPaneState, richHistoryUpdatedAction } from './main';
 import { runQueries, setQueriesAction } from './query';
 import { updateTime } from './time';
-import { getExploreDatasources } from './selectors';
+import { toRawTimeRange } from '../utils/time';
+import { getDataSourceSrv } from '@grafana/runtime';
+import { getRichHistory } from '../../../core/utils/richHistory';
+import { richHistoryUpdatedAction } from './main';
 
 //
 // Actions and Payloads
@@ -126,7 +132,7 @@ export function initializeExplore(
   originPanelId?: number | null
 ): ThunkResult<void> {
   return async (dispatch, getState) => {
-    const exploreDatasources = getExploreDatasources();
+    const exploreDatasources = getDataSourceSrv().getList();
     let instance = undefined;
     let history: HistoryItem[] = [];
 
@@ -233,8 +239,14 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
   }
 
   if (highlightLogsExpressionAction.match(action)) {
-    const { expressions } = action.payload;
-    return { ...state, logsHighlighterExpressions: expressions };
+    const { expressions: newExpressions } = action.payload;
+    const { logsHighlighterExpressions: currentExpressions } = state;
+
+    return {
+      ...state,
+      // Prevents re-renders. As logsHighlighterExpressions [] comes from datasource, we cannot control if it returns new array or not.
+      logsHighlighterExpressions: isEqual(newExpressions, currentExpressions) ? currentExpressions : newExpressions,
+    };
   }
 
   if (changeDedupStrategyAction.match(action)) {
@@ -247,6 +259,7 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
 
   if (initializeExploreAction.match(action)) {
     const { containerWidth, eventBridge, queries, range, originPanelId, datasourceInstance, history } = action.payload;
+
     return {
       ...state,
       containerWidth,
@@ -254,7 +267,7 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
       range,
       queries,
       initialized: true,
-      queryKeys: getQueryKeys(queries, state.datasourceInstance),
+      queryKeys: getQueryKeys(queries, datasourceInstance),
       originPanelId,
       datasourceInstance,
       history,
@@ -275,6 +288,17 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
   return state;
 };
 
+function getUrlStateFromPaneState(pane: ExploreItemState): ExploreUrlState {
+  return {
+    // It can happen that if we are in a split and initial load also runs queries we can be here before the second pane
+    // is initialized so datasourceInstance will be still undefined.
+    // TODO: this probably isn't good case we are saving an url based on this we should not save empty datasource.
+    datasource: pane.datasourceInstance?.name || '',
+    queries: pane.queries.map(clearQueryKeys),
+    range: toRawTimeRange(pane.range),
+  };
+}
+
 /**
  * Compare 2 explore urls and return a map of what changed. Used to update the local state with all the
  * side effects needed.
@@ -287,9 +311,9 @@ export const urlDiff = (
   queries: boolean;
   range: boolean;
 } => {
-  const datasource = !_.isEqual(currentUrlState?.datasource, oldUrlState?.datasource);
-  const queries = !_.isEqual(currentUrlState?.queries, oldUrlState?.queries);
-  const range = !_.isEqual(currentUrlState?.range || DEFAULT_RANGE, oldUrlState?.range || DEFAULT_RANGE);
+  const datasource = !isEqual(currentUrlState?.datasource, oldUrlState?.datasource);
+  const queries = !isEqual(currentUrlState?.queries, oldUrlState?.queries);
+  const range = !isEqual(currentUrlState?.range || DEFAULT_RANGE, oldUrlState?.range || DEFAULT_RANGE);
 
   return {
     datasource,

@@ -22,7 +22,7 @@ const ThemeableStory: React.FunctionComponent<{ handleSassThemeChange: SassTheme
 export const renderComponentWithTheme = (component: React.ComponentType<any>, props: any) => {
   return (
     <ThemeContext.Consumer>
-      {theme => {
+      {(theme) => {
         return React.createElement(component, {
           ...props,
           theme,
@@ -32,6 +32,7 @@ export const renderComponentWithTheme = (component: React.ComponentType<any>, pr
   );
 };
 
+// eslint-disable-next-line react/display-name
 export const withTheme = (handleSassThemeChange: SassThemeChangeHandler) => (story: RenderFunction) => (
   <ThemeableStory handleSassThemeChange={handleSassThemeChange}>{story()}</ThemeableStory>
 );

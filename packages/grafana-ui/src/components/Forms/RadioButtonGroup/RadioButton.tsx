@@ -11,6 +11,7 @@ export interface RadioButtonProps {
   size?: RadioButtonSize;
   disabled?: boolean;
   name?: string;
+  description?: string;
   active: boolean;
   id: string;
   onChange: () => void;
@@ -18,13 +19,7 @@ export interface RadioButtonProps {
 }
 
 const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButtonSize, fullWidth?: boolean) => {
-  const { fontSize, height, padding } = getPropertiesForButtonSize({
-    theme,
-    size,
-    hasIcon: false,
-    hasText: true,
-    variant: 'secondary',
-  });
+  const { fontSize, height, padding } = getPropertiesForButtonSize(size, theme);
 
   const c = theme.palette;
   const textColor = theme.colors.textSemiWeak;
@@ -73,16 +68,15 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
       // Deduct border from line-height for perfect vertical centering on windows and linux
       line-height: ${height - 2}px;
       color: ${textColor};
-      padding: ${padding};
+      padding: 0 ${padding}px;
       margin-left: -1px;
       border-radius: ${theme.border.radius.sm};
       border: ${border};
       background: ${bg};
       cursor: pointer;
       z-index: 1;
-      flex-grow: ${fullWidth ? 1 : 0};
+      flex: ${fullWidth ? `1 0 0` : 'none'};
       text-align: center;
-
       user-select: none;
 
       &:hover {
@@ -102,6 +96,7 @@ export const RadioButton: React.FC<RadioButtonProps> = ({
   onChange,
   id,
   name = undefined,
+  description,
   fullWidth,
 }) => {
   const theme = useTheme();
@@ -118,7 +113,7 @@ export const RadioButton: React.FC<RadioButtonProps> = ({
         checked={active}
         name={name}
       />
-      <label className={cx(styles.radioLabel)} htmlFor={id}>
+      <label className={cx(styles.radioLabel)} htmlFor={id} title={description}>
         {children}
       </label>
     </>

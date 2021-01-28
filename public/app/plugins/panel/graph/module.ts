@@ -11,7 +11,7 @@ import { DataProcessor } from './data_processor';
 import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
-import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest';
+import { getProcessedDataFrames } from 'app/features/query/state/runRequest';
 import { DataFrame, FieldConfigProperty, getColorForTheme, PanelEvents, PanelPlugin } from '@grafana/data';
 
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
@@ -381,7 +381,7 @@ export class GraphCtrl extends MetricsPanelCtrl {
   getTimeZone = () => this.dashboard.getTimezone();
 
   getDataFrameByRefId = (refId: string) => {
-    return this.dataList.filter(dataFrame => dataFrame.refId === refId)[0];
+    return this.dataList.filter((dataFrame) => dataFrame.refId === refId)[0];
   };
 }
 

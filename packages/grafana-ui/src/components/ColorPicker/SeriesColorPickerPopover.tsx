@@ -10,33 +10,33 @@ export interface SeriesColorPickerPopoverProps extends ColorPickerProps, Popover
   onToggleAxis?: () => void;
 }
 
-export const SeriesColorPickerPopover: FunctionComponent<SeriesColorPickerPopoverProps> = props => {
+export const SeriesColorPickerPopover: FunctionComponent<SeriesColorPickerPopoverProps> = (props) => {
   const { yaxis, onToggleAxis, color, ...colorPickerProps } = props;
-  return (
-    <ColorPickerPopover
-      {...colorPickerProps}
-      color={color || '#000000'}
-      customPickers={{
+
+  const customPickers = onToggleAxis
+    ? {
         yaxis: {
           name: 'Y-Axis',
-          tabComponent: () => (
-            <Switch
-              key="yaxisSwitch"
-              label="Use right y-axis"
-              className="ColorPicker__axisSwitch"
-              labelClass="ColorPicker__axisSwitchLabel"
-              checked={yaxis === 2}
-              onChange={() => {
-                if (onToggleAxis) {
-                  onToggleAxis();
-                }
-              }}
-            />
-          ),
+          tabComponent() {
+            return (
+              <Switch
+                key="yaxisSwitch"
+                label="Use right y-axis"
+                className="ColorPicker__axisSwitch"
+                labelClass="ColorPicker__axisSwitchLabel"
+                checked={yaxis === 2}
+                onChange={() => {
+                  if (onToggleAxis) {
+                    onToggleAxis();
+                  }
+                }}
+              />
+            );
+          },
         },
-      }}
-    />
-  );
+      }
+    : undefined;
+  return <ColorPickerPopover {...colorPickerProps} color={color || '#000000'} customPickers={customPickers} />;
 };
 
 interface AxisSelectorProps {

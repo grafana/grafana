@@ -152,7 +152,7 @@ export const DefaultValues = () => {
       {renderForm(defaultValues[defaultsIdx])}
       <Button
         onClick={() => {
-          setDefaultsIdx(s => (s + 1) % 2);
+          setDefaultsIdx((s) => (s + 1) % 2);
         }}
         variant="secondary"
       >
@@ -197,7 +197,7 @@ export const AsyncValidation = () => {
 
 const validateAsync = (shouldPass: boolean) => async () => {
   try {
-    await new Promise<ValidateResult>((resolve, reject) => {
+    await new Promise<ValidateResult | void>((resolve, reject) => {
       setTimeout(() => {
         if (shouldPass) {
           resolve();

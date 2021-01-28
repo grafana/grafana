@@ -1,9 +1,6 @@
 +++
 title = "Install plugins"
-type = "docs"
-aliases = ["/docs/plugins/installation/"]
-[menu.docs]
-parent = "plugins"
+aliases = ["/docs/grafana/latest/plugins/installation/"]
 weight = 1
 +++
 

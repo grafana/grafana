@@ -16,7 +16,6 @@ import {
   initDashboardTemplating,
   initVariablesTransaction,
   processVariables,
-  setOptionFromUrl,
   validateVariableSelectionState,
 } from './actions';
 import {
@@ -59,8 +58,10 @@ import {
 import { initialState } from '../pickers/OptionsPicker/reducer';
 import { cleanVariables } from './variablesReducer';
 import { expect } from '../../../../test/lib/common';
-import { VariableRefresh } from '../types';
+import { ConstantVariableModel, VariableRefresh } from '../types';
 import { updateVariableOptions } from '../query/reducer';
+import { setVariableQueryRunner, VariableQueryRunner } from '../query/VariableQueryRunner';
+import { setDataSourceSrv } from '@grafana/runtime';
 
 variableAdapters.setInit(() => [
   createQueryVariableAdapter(),
@@ -82,12 +83,10 @@ jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   }),
 }));
 
-jest.mock('app/features/plugins/datasource_srv', () => ({
-  getDatasourceSrv: jest.fn(() => ({
-    get: getDatasource,
-    getMetricSources,
-  })),
-}));
+setDataSourceSrv({
+  get: getDatasource,
+  getList: getMetricSources,
+} as any);
 
 describe('shared actions', () => {
   describe('when initDashboardTemplating is dispatched', () => {
@@ -102,7 +101,7 @@ describe('shared actions', () => {
       reduxTester<{ templating: TemplatingState }>()
         .givenRootReducer(getTemplatingRootReducer())
         .whenActionIsDispatched(initDashboardTemplating(list))
-        .thenDispatchedActionsPredicateShouldEqual(dispatchedActions => {
+        .thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
           expect(dispatchedActions.length).toEqual(8);
           expect(dispatchedActions[0]).toEqual(
             addVariable(toVariablePayload(query, { global: false, index: 0, model: query }))
@@ -154,7 +153,7 @@ describe('shared actions', () => {
         .whenActionIsDispatched(initDashboardTemplating(list))
         .whenAsyncActionIsDispatched(processVariables(), true);
 
-      await tester.thenDispatchedActionsPredicateShouldEqual(dispatchedActions => {
+      await tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
         expect(dispatchedActions.length).toEqual(4);
 
         expect(dispatchedActions[0]).toEqual(
@@ -179,6 +178,7 @@ describe('shared actions', () => {
 
     // Fix for https://github.com/grafana/grafana/issues/28791
     it('fix for https://github.com/grafana/grafana/issues/28791', async () => {
+      setVariableQueryRunner(new VariableQueryRunner());
       const stats = queryBuilder()
         .withId('stats')
         .withName('stats')
@@ -203,7 +203,6 @@ describe('shared actions', () => {
       const query = { orgId: '1', 'var-stats': 'response', 'var-substats': ALL_VARIABLE_TEXT };
       const tester = await reduxTester<{ templating: TemplatingState; location: { query: UrlQueryMap } }>({
         preloadedState: { templating: ({} as unknown) as TemplatingState, location: { query } },
-        debug: true,
       })
         .givenRootReducer(getTemplatingAndLocationRootReducer())
         .whenActionIsDispatched(variablesInitTransaction({ uid: '' }))
@@ -241,46 +240,6 @@ describe('shared actions', () => {
     });
   });
 
-  describe('when setOptionFromUrl is dispatched with a custom variable (no refresh property)', () => {
-    it.each`
-      urlValue      | isMulti  | expected
-      ${'B'}        | ${false} | ${'B'}
-      ${['B']}      | ${false} | ${'B'}
-      ${'X'}        | ${false} | ${'X'}
-      ${''}         | ${false} | ${''}
-      ${null}       | ${false} | ${null}
-      ${undefined}  | ${false} | ${undefined}
-      ${'B'}        | ${true}  | ${['B']}
-      ${['B']}      | ${true}  | ${['B']}
-      ${'X'}        | ${true}  | ${['X']}
-      ${''}         | ${true}  | ${['']}
-      ${['A', 'B']} | ${true}  | ${['A', 'B']}
-      ${null}       | ${true}  | ${[null]}
-      ${undefined}  | ${true}  | ${[undefined]}
-    `('and urlValue is $urlValue then correct actions are dispatched', async ({ urlValue, expected, isMulti }) => {
-      const custom = customBuilder()
-        .withId('0')
-        .withMulti(isMulti)
-        .withOptions('A', 'B', 'C')
-        .withCurrent('A')
-        .build();
-
-      const tester = await reduxTester<{ templating: TemplatingState }>()
-        .givenRootReducer(getTemplatingRootReducer())
-        .whenActionIsDispatched(addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
-        .whenAsyncActionIsDispatched(setOptionFromUrl(toVariableIdentifier(custom), urlValue), true);
-
-      await tester.thenDispatchedActionsShouldEqual(
-        setCurrentVariableValue(
-          toVariablePayload(
-            { type: 'custom', id: '0' },
-            { option: { text: expected, value: expected, selected: false } }
-          )
-        )
-      );
-    });
-  });
-
   describe('when validateVariableSelectionState is dispatched with a custom variable (no dependencies)', () => {
     describe('and not multivalue', () => {
       it.each`
@@ -295,11 +254,7 @@ describe('shared actions', () => {
         let custom;
 
         if (!withOptions) {
-          custom = customBuilder()
-            .withId('0')
-            .withCurrent(withCurrent)
-            .withoutOptions()
-            .build();
+          custom = customBuilder().withId('0').withCurrent(withCurrent).withoutOptions().build();
         } else {
           custom = customBuilder()
             .withId('0')
@@ -316,7 +271,7 @@ describe('shared actions', () => {
             true
           );
 
-        await tester.thenDispatchedActionsPredicateShouldEqual(dispatchedActions => {
+        await tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
           const expectedActions: AnyAction[] = !withOptions
             ? []
             : [
@@ -348,12 +303,7 @@ describe('shared actions', () => {
           let custom;
 
           if (!withOptions) {
-            custom = customBuilder()
-              .withId('0')
-              .withMulti()
-              .withCurrent(withCurrent)
-              .withoutOptions()
-              .build();
+            custom = customBuilder().withId('0').withMulti().withCurrent(withCurrent).withoutOptions().build();
           } else {
             custom = customBuilder()
               .withId('0')
@@ -371,7 +321,7 @@ describe('shared actions', () => {
               true
             );
 
-          await tester.thenDispatchedActionsPredicateShouldEqual(dispatchedActions => {
+          await tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
             const expectedActions: AnyAction[] = !withOptions
               ? []
               : [
@@ -393,14 +343,8 @@ describe('shared actions', () => {
   describe('changeVariableName', () => {
     describe('when changeVariableName is dispatched with the same name', () => {
       it('then the correct actions are dispatched', () => {
-        const textbox = textboxBuilder()
-          .withId('textbox')
-          .withName('textbox')
-          .build();
-        const constant = constantBuilder()
-          .withId('constant')
-          .withName('constant')
-          .build();
+        const textbox = textboxBuilder().withId('textbox').withName('textbox').build();
+        const constant = constantBuilder().withId('constant').withName('constant').build();
 
         reduxTester<{ templating: TemplatingState }>()
           .givenRootReducer(getTemplatingRootReducer())
@@ -416,14 +360,8 @@ describe('shared actions', () => {
     });
     describe('when changeVariableName is dispatched with an unique name', () => {
       it('then the correct actions are dispatched', () => {
-        const textbox = textboxBuilder()
-          .withId('textbox')
-          .withName('textbox')
-          .build();
-        const constant = constantBuilder()
-          .withId('constant')
-          .withName('constant')
-          .build();
+        const textbox = textboxBuilder().withId('textbox').withName('textbox').build();
+        const constant = constantBuilder().withId('constant').withName('constant').build();
 
         reduxTester<{ templating: TemplatingState }>()
           .givenRootReducer(getTemplatingRootReducer())
@@ -439,7 +377,15 @@ describe('shared actions', () => {
               data: {
                 global: false,
                 index: 1,
-                model: { ...constant, name: 'constant1', id: 'constant1', global: false, index: 1 },
+                model: {
+                  ...constant,
+                  name: 'constant1',
+                  id: 'constant1',
+                  global: false,
+                  index: 1,
+                  current: { selected: true, text: '', value: '' },
+                  options: [{ selected: true, text: '', value: '' }],
+                } as ConstantVariableModel,
               },
             }),
             changeVariableNameSucceeded({ type: 'constant', id: 'constant1', data: { newName: 'constant1' } }),
@@ -451,14 +397,8 @@ describe('shared actions', () => {
 
     describe('when changeVariableName is dispatched with an unique name for a new variable', () => {
       it('then the correct actions are dispatched', () => {
-        const textbox = textboxBuilder()
-          .withId('textbox')
-          .withName('textbox')
-          .build();
-        const constant = constantBuilder()
-          .withId(NEW_VARIABLE_ID)
-          .withName('constant')
-          .build();
+        const textbox = textboxBuilder().withId('textbox').withName('textbox').build();
+        const constant = constantBuilder().withId(NEW_VARIABLE_ID).withName('constant').build();
 
         reduxTester<{ templating: TemplatingState }>()
           .givenRootReducer(getTemplatingRootReducer())
@@ -468,21 +408,34 @@ describe('shared actions', () => {
           )
           .whenActionIsDispatched(changeVariableName(toVariableIdentifier(constant), 'constant1'), true)
           .thenDispatchedActionsShouldEqual(
-            changeVariableNameSucceeded({ type: 'constant', id: NEW_VARIABLE_ID, data: { newName: 'constant1' } })
+            addVariable({
+              type: 'constant',
+              id: 'constant1',
+              data: {
+                global: false,
+                index: 1,
+                model: {
+                  ...constant,
+                  name: 'constant1',
+                  id: 'constant1',
+                  global: false,
+                  index: 1,
+                  current: { selected: true, text: '', value: '' },
+                  options: [{ selected: true, text: '', value: '' }],
+                } as ConstantVariableModel,
+              },
+            }),
+            changeVariableNameSucceeded({ type: 'constant', id: 'constant1', data: { newName: 'constant1' } }),
+            setIdInEditor({ id: 'constant1' }),
+            removeVariable({ type: 'constant', id: NEW_VARIABLE_ID, data: { reIndex: false } })
           );
       });
     });
 
     describe('when changeVariableName is dispatched with __newName', () => {
       it('then the correct actions are dispatched', () => {
-        const textbox = textboxBuilder()
-          .withId('textbox')
-          .withName('textbox')
-          .build();
-        const constant = constantBuilder()
-          .withId('constant')
-          .withName('constant')
-          .build();
+        const textbox = textboxBuilder().withId('textbox').withName('textbox').build();
+        const constant = constantBuilder().withId('constant').withName('constant').build();
 
         reduxTester<{ templating: TemplatingState }>()
           .givenRootReducer(getTemplatingRootReducer())
@@ -502,14 +455,8 @@ describe('shared actions', () => {
 
     describe('when changeVariableName is dispatched with illegal characters', () => {
       it('then the correct actions are dispatched', () => {
-        const textbox = textboxBuilder()
-          .withId('textbox')
-          .withName('textbox')
-          .build();
-        const constant = constantBuilder()
-          .withId('constant')
-          .withName('constant')
-          .build();
+        const textbox = textboxBuilder().withId('textbox').withName('textbox').build();
+        const constant = constantBuilder().withId('constant').withName('constant').build();
 
         reduxTester<{ templating: TemplatingState }>()
           .givenRootReducer(getTemplatingRootReducer())
@@ -529,14 +476,8 @@ describe('shared actions', () => {
 
     describe('when changeVariableName is dispatched with a name that is already used', () => {
       it('then the correct actions are dispatched', () => {
-        const textbox = textboxBuilder()
-          .withId('textbox')
-          .withName('textbox')
-          .build();
-        const constant = constantBuilder()
-          .withId('constant')
-          .withName('constant')
-          .build();
+        const textbox = textboxBuilder().withId('textbox').withName('textbox').build();
+        const constant = constantBuilder().withId('constant').withName('constant').build();
 
         reduxTester<{ templating: TemplatingState }>()
           .givenRootReducer(getTemplatingRootReducer())
@@ -558,11 +499,7 @@ describe('shared actions', () => {
   describe('changeVariableMultiValue', () => {
     describe('when changeVariableMultiValue is dispatched for variable with multi enabled', () => {
       it('then correct actions are dispatched', () => {
-        const custom = customBuilder()
-          .withId('custom')
-          .withMulti(true)
-          .withCurrent(['A'], ['A'])
-          .build();
+        const custom = customBuilder().withId('custom').withMulti(true).withCurrent(['A'], ['A']).build();
 
         reduxTester<{ templating: TemplatingState }>()
           .givenRootReducer(getTemplatingRootReducer())
@@ -591,11 +528,7 @@ describe('shared actions', () => {
 
     describe('when changeVariableMultiValue is dispatched for variable with multi disabled', () => {
       it('then correct actions are dispatched', () => {
-        const custom = customBuilder()
-          .withId('custom')
-          .withMulti(false)
-          .withCurrent(['A'], ['A'])
-          .build();
+        const custom = customBuilder().withId('custom').withMulti(false).withCurrent(['A'], ['A']).build();
 
         reduxTester<{ templating: TemplatingState }>()
           .givenRootReducer(getTemplatingRootReducer())
@@ -629,10 +562,7 @@ describe('shared actions', () => {
       dashboard: DashboardState;
       location: LocationState;
     };
-    const constant = constantBuilder()
-      .withId('constant')
-      .withName('constant')
-      .build();
+    const constant = constantBuilder().withId('constant').withName('constant').build();
     const templating: any = { list: [constant] };
     const uid = 'uid';
     const dashboard: any = { title: 'Some dash', uid, templating };
@@ -643,7 +573,7 @@ describe('shared actions', () => {
           .givenRootReducer(getRootReducer())
           .whenAsyncActionIsDispatched(initVariablesTransaction(uid, dashboard));
 
-        tester.thenDispatchedActionsPredicateShouldEqual(dispatchedActions => {
+        tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
           expect(dispatchedActions[0]).toEqual(variablesInitTransaction({ uid }));
           expect(dispatchedActions[1].type).toEqual(addVariable.type);
           expect(dispatchedActions[1].payload.id).toEqual('__dashboard');
@@ -680,7 +610,7 @@ describe('shared actions', () => {
           .givenRootReducer(getRootReducer())
           .whenAsyncActionIsDispatched(initVariablesTransaction(uid, dashboard));
 
-        tester.thenDispatchedActionsPredicateShouldEqual(dispatchedActions => {
+        tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
           expect(dispatchedActions[0]).toEqual(cleanVariables());
           expect(dispatchedActions[1]).toEqual(variablesClearTransaction());
           expect(dispatchedActions[2]).toEqual(variablesInitTransaction({ uid }));

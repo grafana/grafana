@@ -99,30 +99,37 @@ func (provider *accessTokenProvider) getAccessToken(data templateData) (string, 
 		}
 	}
 
-	urlInterpolated, err := InterpolateString(provider.route.TokenAuth.Url, data)
+	urlInterpolated, err := interpolateString(provider.route.TokenAuth.Url, data)
 	if err != nil {
 		return "", err
 	}
 
 	params := make(url.Values)
 	for key, value := range provider.route.TokenAuth.Params {
-		interpolatedParam, err := InterpolateString(value, data)
+		interpolatedParam, err := interpolateString(value, data)
 		if err != nil {
 			return "", err
 		}
 		params.Add(key, interpolatedParam)
 	}
 
-	getTokenReq, _ := http.NewRequest("POST", urlInterpolated, bytes.NewBufferString(params.Encode()))
-	getTokenReq.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	getTokenReq.Header.Add("Content-Length", strconv.Itoa(len(params.Encode())))
+	getTokenReq, err := http.NewRequest("POST", urlInterpolated, bytes.NewBufferString(params.Encode()))
+	if err != nil {
+		return "", err
+	}
+	getTokenReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	getTokenReq.Header.Set("Content-Length", strconv.Itoa(len(params.Encode())))
 
 	resp, err := client.Do(getTokenReq)
 	if err != nil {
 		return "", err
 	}
 
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			logger.Warn("Failed to close response body", "err", err)
+		}
+	}()
 
 	var token jwtToken
 	if err := json.NewDecoder(resp.Body).Decode(&token); err != nil {
@@ -147,7 +154,7 @@ func (provider *accessTokenProvider) getJwtAccessToken(ctx context.Context, data
 	conf := &jwt.Config{}
 
 	if val, ok := provider.route.JwtTokenAuth.Params["client_email"]; ok {
-		interpolatedVal, err := InterpolateString(val, data)
+		interpolatedVal, err := interpolateString(val, data)
 		if err != nil {
 			return "", err
 		}
@@ -155,7 +162,7 @@ func (provider *accessTokenProvider) getJwtAccessToken(ctx context.Context, data
 	}
 
 	if val, ok := provider.route.JwtTokenAuth.Params["private_key"]; ok {
-		interpolatedVal, err := InterpolateString(val, data)
+		interpolatedVal, err := interpolateString(val, data)
 		if err != nil {
 			return "", err
 		}
@@ -163,7 +170,7 @@ func (provider *accessTokenProvider) getJwtAccessToken(ctx context.Context, data
 	}
 
 	if val, ok := provider.route.JwtTokenAuth.Params["token_uri"]; ok {
-		interpolatedVal, err := InterpolateString(val, data)
+		interpolatedVal, err := interpolateString(val, data)
 		if err != nil {
 			return "", err
 		}
@@ -184,6 +191,8 @@ func (provider *accessTokenProvider) getJwtAccessToken(ctx context.Context, data
 	return token.AccessToken, nil
 }
 
+// getTokenSource gets a token source.
+// Stubbable by tests.
 var getTokenSource = func(conf *jwt.Config, ctx context.Context) (*oauth2.Token, error) {
 	tokenSrc := conf.TokenSource(ctx)
 	token, err := tokenSrc.Token()

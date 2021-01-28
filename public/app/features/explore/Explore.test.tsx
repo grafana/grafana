@@ -16,11 +16,12 @@ const dummyProps: ExploreProps = {
       logs: true,
     },
     components: {
-      ExploreStartPage: {},
+      QueryEditorHelp: {},
     },
   } as DataSourceApi,
   datasourceMissing: false,
   exploreId: ExploreId.left,
+  loading: false,
   initializeExplore: jest.fn(),
   initialized: true,
   modifyQueries: jest.fn(),
@@ -49,7 +50,6 @@ const dummyProps: ExploreProps = {
   syncedTimes: false,
   updateTimeRange: jest.fn(),
   graphResult: [],
-  loading: false,
   absoluteRange: {
     from: 0,
     to: 0,
@@ -95,6 +95,7 @@ const dummyProps: ExploreProps = {
   showLogs: true,
   showTable: true,
   showTrace: true,
+  showNodeGraph: true,
   splitOpen: (() => {}) as any,
   urlQuery: '',
 };

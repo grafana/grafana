@@ -1,12 +1,14 @@
-import React, { SyntheticEvent } from 'react';
-import { EventsWithValidation, InlineFormLabel, regexValidation, LegacyForms } from '@grafana/ui';
-const { Select, Input, FormField, Switch } = LegacyForms;
 import {
-  SelectableValue,
-  onUpdateDatasourceJsonDataOptionChecked,
   DataSourcePluginOptionsEditorProps,
+  onUpdateDatasourceJsonDataOptionChecked,
+  SelectableValue,
+  updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
+import { EventsWithValidation, InlineFormLabel, LegacyForms, regexValidation } from '@grafana/ui';
+import React, { SyntheticEvent } from 'react';
 import { PromOptions } from '../types';
+import { ExemplarsSettings } from './ExemplarsSettings';
+const { Select, Input, FormField, Switch } = LegacyForms;
 
 const httpOptions = [
   { value: 'GET', label: 'GET' },
@@ -68,7 +70,7 @@ export const PromSettings = (props: Props) => {
           </InlineFormLabel>
           <Select
             options={httpOptions}
-            value={httpOptions.find(o => o.value === options.jsonData.httpMethod)}
+            value={httpOptions.find((o) => o.value === options.jsonData.httpMethod)}
             onChange={onChangeHandler('httpMethod', options, onOptionsChange)}
             width={7}
           />
@@ -90,7 +92,7 @@ export const PromSettings = (props: Props) => {
             <FormField
               label="Custom query parameters"
               labelWidth={14}
-              tooltip="Add Custom parameters to Prometheus or Thanos queries."
+              tooltip="Add Custom parameters to all Prometheus or Thanos queries."
               inputEl={
                 <Input
                   className="width-25"
@@ -104,6 +106,16 @@ export const PromSettings = (props: Props) => {
           </div>
         </div>
       </div>
+      <ExemplarsSettings
+        options={options.jsonData.exemplarTraceIdDestinations}
+        onChange={(exemplarOptions) =>
+          updateDatasourcePluginJsonDataOption(
+            { onOptionsChange, options },
+            'exemplarTraceIdDestinations',
+            exemplarOptions
+          )
+        }
+      />
     </>
   );
 };

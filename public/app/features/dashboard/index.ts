@@ -9,7 +9,7 @@ import './components/DashNav';
 import './components/VersionHistory';
 import './components/DashboardSettings';
 
-import DashboardPermissions from './components/DashboardPermissions/DashboardPermissions';
+import { DashboardPermissions } from './components/DashboardPermissions/DashboardPermissions';
 // angular wrappers
 import { react2AngularDirective } from 'app/core/utils/react2angular';
 

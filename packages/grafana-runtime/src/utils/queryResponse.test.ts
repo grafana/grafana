@@ -37,7 +37,7 @@ const emptyResults = {
 
 /* eslint-enable */
 
-describe('GEL Utils', () => {
+describe('Query Response parser', () => {
   test('should parse output with dataframe', () => {
     const res = toDataQueryResponse(resp);
     const frames = res.data;
@@ -45,7 +45,7 @@ describe('GEL Utils', () => {
       expect(frame.refId).toEqual('GC');
     }
 
-    const norm = frames.map(f => toDataFrameDTO(f));
+    const norm = frames.map((f) => toDataFrameDTO(f));
     expect(norm).toMatchInlineSnapshot(`
       Array [
         Object {
@@ -132,7 +132,7 @@ describe('GEL Utils', () => {
       }
     `);
 
-    const norm = res.data.map(f => toDataFrameDTO(f));
+    const norm = res.data.map((f) => toDataFrameDTO(f));
     expect(norm).toMatchInlineSnapshot(`
       Array [
         Object {

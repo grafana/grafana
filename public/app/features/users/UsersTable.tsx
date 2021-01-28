@@ -10,7 +10,7 @@ export interface Props {
   onRemoveUser: (user: OrgUser) => void;
 }
 
-const UsersTable: FC<Props> = props => {
+const UsersTable: FC<Props> = (props) => {
   const { users, onRoleChange, onRemoveUser } = props;
 
   const [showRemoveModal, setShowRemoveModal] = useState<string | boolean>(false);
@@ -53,7 +53,7 @@ const UsersTable: FC<Props> = props => {
               <td className="width-1">{user.lastSeenAtAge}</td>
 
               <td className="width-8">
-                <OrgRolePicker value={user.role} onChange={newRole => onRoleChange(newRole, user)} />
+                <OrgRolePicker value={user.role} onChange={(newRole) => onRoleChange(newRole, user)} />
               </td>
 
               <td>

@@ -41,8 +41,9 @@ export const DashboardListPage: FC<Props> = memo(({ navModel, uid, url }) => {
     </Page>
   );
 });
+DashboardListPage.displayName = 'DashboardListPage';
 
-const mapStateToProps: MapStateToProps<Props, {}, StoreState> = state => {
+const mapStateToProps: MapStateToProps<Props, {}, StoreState> = (state) => {
   return {
     navModel: getNavModel(state.navIndex, 'manage-dashboards'),
     uid: getRouteParams(state.location).uid as string | undefined,

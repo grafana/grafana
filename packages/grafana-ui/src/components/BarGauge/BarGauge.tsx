@@ -14,6 +14,7 @@ import {
   getFieldColorMode,
   getColorForTheme,
   FALLBACK_COLOR,
+  TextDisplayOptions,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -42,6 +43,7 @@ export interface Props extends Themeable {
   display?: DisplayProcessor;
   value: DisplayValue;
   orientation: VizOrientation;
+  text?: TextDisplayOptions;
   itemSpacing?: number;
   lcdCellWidth?: number;
   displayMode: BarGaugeDisplayMode;
@@ -143,23 +145,15 @@ export class BarGauge extends PureComponent<Props> {
       // if we are past real value the cell is not "on"
       if (value === null || (positionValue !== null && positionValue > value.numeric)) {
         return {
-          background: tinycolor(color)
-            .setAlpha(0.18)
-            .toRgbString(),
+          background: tinycolor(color).setAlpha(0.18).toRgbString(),
           border: 'transparent',
           isLit: false,
         };
       } else {
         return {
-          background: tinycolor(color)
-            .setAlpha(0.95)
-            .toRgbString(),
-          backgroundShade: tinycolor(color)
-            .setAlpha(0.55)
-            .toRgbString(),
-          border: tinycolor(color)
-            .setAlpha(0.9)
-            .toRgbString(),
+          background: tinycolor(color).setAlpha(0.95).toRgbString(),
+          backgroundShade: tinycolor(color).setAlpha(0.55).toRgbString(),
+          border: tinycolor(color).setAlpha(0.9).toRgbString(),
           isLit: true,
         };
       }
@@ -172,7 +166,7 @@ export class BarGauge extends PureComponent<Props> {
   }
 
   renderRetroBars(): ReactNode {
-    const { field, value, itemSpacing, alignmentFactors, orientation, lcdCellWidth } = this.props;
+    const { field, value, itemSpacing, alignmentFactors, orientation, lcdCellWidth, text } = this.props;
     const {
       valueHeight,
       valueWidth,
@@ -193,7 +187,7 @@ export class BarGauge extends PureComponent<Props> {
     const valueColor = getValueColor(this.props);
 
     const valueToBaseSizeOn = alignmentFactors ? alignmentFactors : value;
-    const valueStyles = getValueStyles(valueToBaseSizeOn, valueColor, valueWidth, valueHeight, orientation);
+    const valueStyles = getValueStyles(valueToBaseSizeOn, valueColor, valueWidth, valueHeight, orientation, text);
 
     const containerStyles: CSSProperties = {
       width: `${wrapperWidth}px`,
@@ -270,7 +264,7 @@ function isVertical(orientation: VizOrientation) {
 }
 
 function calculateTitleDimensions(props: Props): TitleDimensions {
-  const { height, width, alignmentFactors, orientation } = props;
+  const { height, width, alignmentFactors, orientation, text } = props;
   const title = alignmentFactors ? alignmentFactors.title : props.value.title;
 
   if (!title) {
@@ -278,16 +272,26 @@ function calculateTitleDimensions(props: Props): TitleDimensions {
   }
 
   if (isVertical(orientation)) {
+    const fontSize = text?.titleSize ?? 14;
     return {
-      fontSize: 14,
+      fontSize: fontSize,
       width: width,
-      height: 14 * TITLE_LINE_HEIGHT,
+      height: fontSize * TITLE_LINE_HEIGHT,
       placement: 'below',
     };
   }
 
   // if height above 40 put text to above bar
   if (height > 40) {
+    if (text?.titleSize) {
+      return {
+        fontSize: text?.titleSize,
+        width: 0,
+        height: text.titleSize * TITLE_LINE_HEIGHT,
+        placement: 'above',
+      };
+    }
+
     const maxTitleHeightRatio = 0.45;
     const titleHeight = Math.max(Math.min(height * maxTitleHeightRatio, MAX_VALUE_HEIGHT), 17);
 
@@ -306,7 +310,7 @@ function calculateTitleDimensions(props: Props): TitleDimensions {
   const textSize = measureText(title, titleFontSize);
 
   return {
-    fontSize: titleFontSize,
+    fontSize: text?.titleSize ?? titleFontSize,
     height: 0,
     width: textSize.width + 15,
     placement: 'left',
@@ -370,7 +374,7 @@ interface BarAndValueDimensions {
 }
 
 function calculateBarAndValueDimensions(props: Props): BarAndValueDimensions {
-  const { height, width, orientation } = props;
+  const { height, width, orientation, text } = props;
   const titleDim = calculateTitleDimensions(props);
 
   let maxBarHeight = 0;
@@ -381,14 +385,23 @@ function calculateBarAndValueDimensions(props: Props): BarAndValueDimensions {
   let wrapperHeight = 0;
 
   if (isVertical(orientation)) {
-    valueHeight = Math.min(Math.max(height * 0.1, MIN_VALUE_HEIGHT), MAX_VALUE_HEIGHT);
+    if (text?.valueSize) {
+      valueHeight = text.valueSize * VALUE_LINE_HEIGHT;
+    } else {
+      valueHeight = Math.min(Math.max(height * 0.1, MIN_VALUE_HEIGHT), MAX_VALUE_HEIGHT);
+    }
     valueWidth = width;
     maxBarHeight = height - (titleDim.height + valueHeight);
     maxBarWidth = width;
     wrapperWidth = width;
     wrapperHeight = height - titleDim.height;
   } else {
-    valueHeight = height - titleDim.height;
+    if (text?.valueSize) {
+      valueHeight = text.valueSize * VALUE_LINE_HEIGHT;
+    } else {
+      valueHeight = height - titleDim.height;
+    }
+
     valueWidth = Math.max(Math.min(width * 0.2, MAX_VALUE_WIDTH), MIN_VALUE_WIDTH);
     maxBarHeight = height - titleDim.height;
     maxBarWidth = width - valueWidth - titleDim.width;
@@ -420,14 +433,14 @@ export function getValuePercent(value: number, minValue: number, maxValue: numbe
  * Only exported to for unit test
  */
 export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles {
-  const { displayMode, field, value, alignmentFactors, orientation, theme } = props;
+  const { displayMode, field, value, alignmentFactors, orientation, theme, text } = props;
   const { valueWidth, valueHeight, maxBarHeight, maxBarWidth } = calculateBarAndValueDimensions(props);
 
   const valuePercent = getValuePercent(value.numeric, field.min!, field.max!);
   const valueColor = getValueColor(props);
 
   const valueToBaseSizeOn = alignmentFactors ? alignmentFactors : value;
-  const valueStyles = getValueStyles(valueToBaseSizeOn, valueColor, valueWidth, valueHeight, orientation);
+  const valueStyles = getValueStyles(valueToBaseSizeOn, valueColor, valueWidth, valueHeight, orientation, text);
 
   const isBasic = displayMode === 'basic';
   const wrapperStyles: CSSProperties = {
@@ -465,9 +478,7 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
 
     if (isBasic) {
       // Basic styles
-      barStyles.background = `${tinycolor(valueColor)
-        .setAlpha(0.35)
-        .toRgbString()}`;
+      barStyles.background = `${tinycolor(valueColor).setAlpha(0.35).toRgbString()}`;
 
       barStyles.borderTop = `2px solid ${valueColor}`;
     } else {
@@ -491,9 +502,7 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
 
     if (isBasic) {
       // Basic styles
-      barStyles.background = `${tinycolor(valueColor)
-        .setAlpha(0.35)
-        .toRgbString()}`;
+      barStyles.background = `${tinycolor(valueColor).setAlpha(0.35).toRgbString()}`;
       barStyles.borderRight = `2px solid ${valueColor}`;
     } else {
       // Gradient styles
@@ -546,7 +555,7 @@ export function getBarGradient(props: Props, maxSize: number): string {
   }
 
   if (mode.isContinuous && mode.colors) {
-    const scheme = mode.colors.map(item => getColorForTheme(item, theme));
+    const scheme = mode.colors.map((item) => getColorForTheme(item, theme));
     for (let i = 0; i < scheme.length; i++) {
       const color = scheme[i];
 
@@ -581,7 +590,8 @@ function getValueStyles(
   color: string,
   width: number,
   height: number,
-  orientation: VizOrientation
+  orientation: VizOrientation,
+  text?: TextDisplayOptions
 ): CSSProperties {
   const styles: CSSProperties = {
     color,
@@ -597,15 +607,12 @@ function getValueStyles(
   const formattedValueString = formattedValueToString(value);
 
   if (isVertical(orientation)) {
-    styles.fontSize = calculateFontSize(formattedValueString, textWidth, height, VALUE_LINE_HEIGHT);
+    styles.fontSize = text?.valueSize ?? calculateFontSize(formattedValueString, textWidth, height, VALUE_LINE_HEIGHT);
     styles.justifyContent = `center`;
   } else {
-    styles.fontSize = calculateFontSize(
-      formattedValueString,
-      textWidth - VALUE_LEFT_PADDING * 2,
-      height,
-      VALUE_LINE_HEIGHT
-    );
+    styles.fontSize =
+      text?.valueSize ??
+      calculateFontSize(formattedValueString, textWidth - VALUE_LEFT_PADDING * 2, height, VALUE_LINE_HEIGHT);
     styles.justifyContent = `flex-end`;
     styles.paddingLeft = `${VALUE_LEFT_PADDING}px`;
     styles.paddingRight = `${VALUE_LEFT_PADDING}px`;

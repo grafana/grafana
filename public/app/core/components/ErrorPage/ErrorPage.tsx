@@ -64,7 +64,7 @@ export class ErrorPage extends PureComponent<Props> {
                       </p>
                       <p>
                         If the error persists, seek help on the{' '}
-                        <a href="https://community.grafana.com" target="_blank" className="error-link">
+                        <a href="https://community.grafana.com" target="_blank" rel="noreferrer" className="error-link">
                           community site
                         </a>
                         .
@@ -81,7 +81,7 @@ export class ErrorPage extends PureComponent<Props> {
   }
 }
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => {
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state) => {
   return {
     navModel: getNavModel(state.navIndex, 'not-found'),
   };

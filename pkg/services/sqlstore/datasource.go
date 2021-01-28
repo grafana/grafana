@@ -18,48 +18,70 @@ import (
 
 func init() {
 	bus.AddHandler("sql", GetDataSources)
-	bus.AddHandler("sql", GetAllDataSources)
+	bus.AddHandler("sql", GetDataSource)
 	bus.AddHandler("sql", AddDataSource)
-	bus.AddHandler("sql", DeleteDataSourceById)
-	bus.AddHandler("sql", DeleteDataSourceByName)
+	bus.AddHandler("sql", DeleteDataSource)
 	bus.AddHandler("sql", UpdateDataSource)
-	bus.AddHandler("sql", GetDataSourceById)
-	bus.AddHandler("sql", GetDataSourceByName)
+	bus.AddHandler("sql", GetDefaultDataSource)
 }
 
-func getDataSourceByID(id, orgID int64, engine *xorm.Engine) (*models.DataSource, error) {
-	metrics.MDBDataSourceQueryByID.Inc()
+// GetDataSource returns a datasource by org_id and either uid (preferred), id, or name.
+// Zero values (0, or "") should be used for the parameters that will not be queried.
+func (ss *SQLStore) GetDataSource(uid string, id int64, name string, orgID int64) (*models.DataSource, error) {
+	query := &models.GetDataSourceQuery{
+		Id:    id,
+		Uid:   uid,
+		Name:  name,
+		OrgId: orgID,
+	}
 
-	datasource := models.DataSource{OrgId: orgID, Id: id}
-	has, err := engine.Get(&datasource)
-	if err != nil {
-		sqlog.Error("Failed getting data source", "err", err, "id", id, "orgId", orgID)
+	if err := GetDataSource(query); err != nil {
 		return nil, err
 	}
-	if !has {
-		sqlog.Debug("Failed to find data source", "id", id, "orgId", orgID)
-		return nil, models.ErrDataSourceNotFound
+
+	return query.Result, nil
+}
+
+// GetDataSource adds a datasource to the query model by querying by org_id as well as
+// either uid (preferred), id, or name and is added to the bus.
+func GetDataSource(query *models.GetDataSourceQuery) error {
+	metrics.MDBDataSourceQueryByID.Inc()
+	if query.OrgId == 0 || (query.Id == 0 && len(query.Name) == 0 && len(query.Uid) == 0) {
+		return models.ErrDataSourceIdentifierNotSet
 	}
 
-	return &datasource, nil
-}
-
-func (ss *SqlStore) GetDataSourceByID(id, orgID int64) (*models.DataSource, error) {
-	return getDataSourceByID(id, orgID, ss.engine)
-}
-
-func GetDataSourceById(query *models.GetDataSourceByIdQuery) error {
-	ds, err := getDataSourceByID(query.Id, query.OrgId, x)
-	query.Result = ds
-
-	return err
-}
-
-func GetDataSourceByName(query *models.GetDataSourceByNameQuery) error {
-	datasource := models.DataSource{OrgId: query.OrgId, Name: query.Name}
+	datasource := models.DataSource{Name: query.Name, OrgId: query.OrgId, Id: query.Id, Uid: query.Uid}
 	has, err := x.Get(&datasource)
 
-	if !has {
+	if err != nil {
+		sqlog.Error("Failed getting data source", "err", err, "uid", query.Uid, "id", query.Id, "name", query.Name, "orgId", query.OrgId)
+		return err
+	} else if !has {
+		return models.ErrDataSourceNotFound
+	}
+
+	query.Result = &datasource
+	return nil
+}
+
+func GetDataSources(query *models.GetDataSourcesQuery) error {
+	var sess *xorm.Session
+	if query.DataSourceLimit <= 0 {
+		sess = x.Where("org_id=?", query.OrgId).Asc("name")
+	} else {
+		sess = x.Limit(query.DataSourceLimit, 0).Where("org_id=?", query.OrgId).Asc("name")
+	}
+	query.Result = make([]*models.DataSource, 0)
+	return sess.Find(&query.Result)
+}
+
+// GetDefaultDataSource is used to get the default datasource of organization
+func GetDefaultDataSource(query *models.GetDefaultDataSourceQuery) error {
+	datasource := models.DataSource{}
+
+	exists, err := x.Where("org_id=? AND is_default=?", query.OrgId, true).Get(&datasource)
+
+	if !exists {
 		return models.ErrDataSourceNotFound
 	}
 
@@ -67,36 +89,49 @@ func GetDataSourceByName(query *models.GetDataSourceByNameQuery) error {
 	return err
 }
 
-func GetDataSources(query *models.GetDataSourcesQuery) error {
-	sess := x.Limit(5000, 0).Where("org_id=?", query.OrgId).Asc("name")
+// DeleteDataSource deletes a datasource by org_id and either uid (preferred), id, or name.
+// Zero values (0, or "") should be used for the parameters that will not be queried.
+func (ss *SQLStore) DeleteDataSource(uid string, id int64, name string, orgID int64) (int64, error) {
+	cmd := &models.DeleteDataSourceCommand{
+		ID:    id,
+		UID:   uid,
+		Name:  name,
+		OrgID: orgID,
+	}
 
-	query.Result = make([]*models.DataSource, 0)
-	return sess.Find(&query.Result)
+	if err := DeleteDataSource(cmd); err != nil {
+		return 0, err
+	}
+
+	return cmd.DeletedDatasourcesCount, nil
 }
 
-func GetAllDataSources(query *models.GetAllDataSourcesQuery) error {
-	sess := x.Limit(5000, 0).Asc("name")
+// DeleteDataSource removes a datasource by org_id as well as either uid (preferred), id, or name
+// and is added to the bus.
+func DeleteDataSource(cmd *models.DeleteDataSourceCommand) error {
+	params := make([]interface{}, 0)
 
-	query.Result = make([]*models.DataSource, 0)
-	return sess.Find(&query.Result)
-}
+	makeQuery := func(sql string, p ...interface{}) {
+		params = append(params, sql)
+		params = append(params, p...)
+	}
 
-func DeleteDataSourceById(cmd *models.DeleteDataSourceByIdCommand) error {
+	switch {
+	case cmd.OrgID == 0:
+		return models.ErrDataSourceIdentifierNotSet
+	case cmd.UID != "":
+		makeQuery("DELETE FROM data_source WHERE uid=? and org_id=?", cmd.UID, cmd.OrgID)
+	case cmd.ID != 0:
+		makeQuery("DELETE FROM data_source WHERE id=? and org_id=?", cmd.ID, cmd.OrgID)
+	case cmd.Name != "":
+		makeQuery("DELETE FROM data_source WHERE name=? and org_id=?", cmd.Name, cmd.OrgID)
+	default:
+		return models.ErrDataSourceIdentifierNotSet
+	}
+
 	return inTransaction(func(sess *DBSession) error {
-		var rawSql = "DELETE FROM data_source WHERE id=? and org_id=?"
-		result, err := sess.Exec(rawSql, cmd.Id, cmd.OrgId)
-		affected, _ := result.RowsAffected()
-		cmd.DeletedDatasourcesCount = affected
-		return err
-	})
-}
-
-func DeleteDataSourceByName(cmd *models.DeleteDataSourceByNameCommand) error {
-	return inTransaction(func(sess *DBSession) error {
-		var rawSql = "DELETE FROM data_source WHERE name=? and org_id=?"
-		result, err := sess.Exec(rawSql, cmd.Name, cmd.OrgId)
-		affected, _ := result.RowsAffected()
-		cmd.DeletedDatasourcesCount = affected
+		result, err := sess.Exec(params...)
+		cmd.DeletedDatasourcesCount, _ = result.RowsAffected()
 		return err
 	})
 }
@@ -163,8 +198,8 @@ func AddDataSource(cmd *models.AddDataSourceCommand) error {
 func updateIsDefaultFlag(ds *models.DataSource, sess *DBSession) error {
 	// Handle is default flag
 	if ds.IsDefault {
-		rawSql := "UPDATE data_source SET is_default=? WHERE org_id=? AND id <> ?"
-		if _, err := sess.Exec(rawSql, false, ds.OrgId, ds.Id); err != nil {
+		rawSQL := "UPDATE data_source SET is_default=? WHERE org_id=? AND id <> ?"
+		if _, err := sess.Exec(rawSQL, false, ds.OrgId, ds.Id); err != nil {
 			return err
 		}
 	}
@@ -208,6 +243,7 @@ func UpdateDataSource(cmd *models.UpdateDataSourceCommand) error {
 		// plain text fields to SecureJsonData.
 		sess.MustCols("password")
 		sess.MustCols("basic_auth_password")
+		sess.MustCols("user")
 
 		var updateSession *xorm.Session
 		if cmd.Version != 0 {

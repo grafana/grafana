@@ -1,27 +1,25 @@
-// Libraries
 import _ from 'lodash';
-// Utils
-import coreModule from 'app/core/core_module';
-// Types
+import { ILocationService, ITimeoutService } from 'angular';
 import {
   dateMath,
-  DefaultTimeRange,
-  TimeRange,
-  RawTimeRange,
-  toUtc,
   dateTime,
+  getDefaultTimeRange,
   isDateTime,
   rangeUtil,
+  RawTimeRange,
+  TimeRange,
+  toUtc,
 } from '@grafana/data';
-import { ITimeoutService, ILocationService } from 'angular';
+
+import coreModule from 'app/core/core_module';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { DashboardModel } from '../state/DashboardModel';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { getZoomedTimeRange, getShiftedTimeRange } from 'app/core/utils/timePicker';
+import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
 import { appEvents } from '../../../core/core';
 import { CoreEvents } from '../../../types';
-
 import { config } from 'app/core/config';
+import { getRefreshFromUrl } from '../utils/getRefreshFromUrl';
 
 export class TimeSrv {
   time: any;
@@ -41,7 +39,7 @@ export class TimeSrv {
     private contextSrv: ContextSrv
   ) {
     // default time
-    this.time = DefaultTimeRange.raw;
+    this.time = getDefaultTimeRange().raw;
 
     appEvents.on(CoreEvents.zoomOut, this.zoomOut.bind(this));
     appEvents.on(CoreEvents.shiftTime, this.shiftTime.bind(this));
@@ -78,7 +76,7 @@ export class TimeSrv {
       return intervals;
     }
 
-    return intervals.filter(str => str !== '').filter(this.contextSrv.isAllowedInterval);
+    return intervals.filter((str) => str !== '').filter(this.contextSrv.isAllowedInterval);
   }
 
   private parseTime() {
@@ -151,13 +149,13 @@ export class TimeSrv {
       this.dashboard.refresh = false;
     }
     // but if refresh explicitly set then use that
-    if (params.refresh) {
-      if (!this.contextSrv.isAllowedInterval(params.refresh)) {
-        this.refresh = config.minRefreshInterval;
-      } else {
-        this.refresh = params.refresh || this.refresh;
-      }
-    }
+    this.refresh = getRefreshFromUrl({
+      params,
+      currentRefresh: this.refresh,
+      refreshIntervals: this.dashboard?.timepicker?.refresh_intervals,
+      isAllowedIntervalFn: this.contextSrv.isAllowedInterval,
+      minRefreshInterval: config.minRefreshInterval,
+    });
   }
 
   private routeUpdated() {

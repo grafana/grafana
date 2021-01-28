@@ -19,9 +19,9 @@ export const seriesToColumnsTransformer: DataTransformerInfo<SeriesToColumnsOpti
   defaultOptions: {
     byField: DEFAULT_KEY_FIELD,
   },
-  operator: options => source =>
+  operator: (options) => (source) =>
     source.pipe(
-      map(data => {
+      map((data) => {
         return outerJoinDataFrames(data, options);
       })
     ),

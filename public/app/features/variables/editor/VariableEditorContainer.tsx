@@ -2,11 +2,10 @@ import React, { MouseEvent, PureComponent } from 'react';
 import { Icon } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { NEW_VARIABLE_ID, toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
+import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
 import { StoreState } from '../../../types';
 import { VariableEditorEditor } from './VariableEditorEditor';
-import { MapDispatchToProps, MapStateToProps } from 'react-redux';
-import { connectWithStore } from '../../../core/utils/connectWithReduxStore';
+import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
 import { getEditorVariables } from '../state/selectors';
 import { VariableModel } from '../types';
 import { switchToEditMode, switchToListMode, switchToNewMode } from './actions';
@@ -67,7 +66,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
   };
 
   render() {
-    const variableToEdit = this.props.variables.find(s => s.id === this.props.idInEditor) ?? null;
+    const variableToEdit = this.props.variables.find((s) => s.id === this.props.idInEditor) ?? null;
     return (
       <div>
         <div className="page-action-bar">
@@ -78,16 +77,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
             >
               Variables
             </a>
-            {this.props.idInEditor === NEW_VARIABLE_ID && (
-              <span>
-                <Icon
-                  name="angle-right"
-                  aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.modeLabelNew}
-                />
-                New
-              </span>
-            )}
-            {this.props.idInEditor && this.props.idInEditor !== NEW_VARIABLE_ID && (
+            {this.props.idInEditor && (
               <span>
                 <Icon
                   name="angle-right"
@@ -134,7 +124,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
   }
 }
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => ({
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state) => ({
   variables: getEditorVariables(state),
   idInEditor: state.templating.editor.id,
   dashboard: state.dashboard.getModel(),
@@ -149,8 +139,4 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   switchToListMode,
 };
 
-export const VariableEditorContainer = connectWithStore(
-  VariableEditorContainerUnconnected,
-  mapStateToProps,
-  mapDispatchToProps
-);
+export const VariableEditorContainer = connect(mapStateToProps, mapDispatchToProps)(VariableEditorContainerUnconnected);

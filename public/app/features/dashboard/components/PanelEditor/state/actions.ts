@@ -8,10 +8,10 @@ import {
   updateEditorInitState,
 } from './reducers';
 import { cleanUpEditPanel, panelModelAndPluginReady } from '../../../state/reducers';
-import store from '../../../../../core/store';
+import store from 'app/core/store';
 
 export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardModel): ThunkResult<void> {
-  return dispatch => {
+  return (dispatch) => {
     const panel = dashboard.initEditPanel(sourcePanel);
 
     dispatch(

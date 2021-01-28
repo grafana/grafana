@@ -130,7 +130,7 @@ export class FluxQueryEditor extends PureComponent<Props> {
     ];
 
     const templateSrv = getTemplateSrv();
-    templateSrv.getVariables().forEach(variable => {
+    templateSrv.getVariables().forEach((variable) => {
       const label = '${' + variable.name + '}';
       let val = templateSrv.replace(label);
       if (val === label) {
@@ -188,7 +188,7 @@ export class FluxQueryEditor extends PureComponent<Props> {
             icon="external-link-alt"
             variant="secondary"
             target="blank"
-            href="https://docs.influxdata.com/flux/latest/introduction/getting-started/"
+            href="https://docs.influxdata.com/influxdb/latest/query-data/get-started/"
           >
             Flux language syntax
           </LinkButton>

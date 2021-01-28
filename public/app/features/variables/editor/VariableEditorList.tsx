@@ -92,13 +92,18 @@ export class VariableEditorList extends PureComponent<Props> {
                 <tbody>
                   {this.props.variables.map((state, index) => {
                     const variable = state as QueryVariableModel;
+                    const definition = variable.definition
+                      ? variable.definition
+                      : typeof variable.query === 'string'
+                      ? variable.query
+                      : '';
                     const usages = getVariableUsages(variable.id, this.props.variables, this.props.dashboard);
                     const passed = usages > 0 || isAdHoc(variable);
                     return (
                       <tr key={`${variable.name}-${index}`}>
                         <td style={{ width: '1%' }}>
                           <span
-                            onClick={event => this.onEditClick(event, toVariableIdentifier(variable))}
+                            onClick={(event) => this.onEditClick(event, toVariableIdentifier(variable))}
                             className="pointer template-variable"
                             aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowNameFields(
                               variable.name
@@ -109,13 +114,13 @@ export class VariableEditorList extends PureComponent<Props> {
                         </td>
                         <td
                           style={{ maxWidth: '200px' }}
-                          onClick={event => this.onEditClick(event, toVariableIdentifier(variable))}
+                          onClick={(event) => this.onEditClick(event, toVariableIdentifier(variable))}
                           className="pointer max-width"
                           aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowDefinitionFields(
                             variable.name
                           )}
                         >
-                          {variable.definition ? variable.definition : variable.query}
+                          {definition}
                         </td>
 
                         <td style={{ width: '1%' }}>
@@ -133,7 +138,7 @@ export class VariableEditorList extends PureComponent<Props> {
                         <td style={{ width: '1%' }}>
                           {index > 0 && (
                             <IconButton
-                              onClick={event => this.onChangeVariableOrder(event, variable, MoveType.up)}
+                              onClick={(event) => this.onChangeVariableOrder(event, variable, MoveType.up)}
                               name="arrow-up"
                               title="Move variable up"
                               aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowArrowUpButtons(
@@ -146,7 +151,7 @@ export class VariableEditorList extends PureComponent<Props> {
                         <td style={{ width: '1%' }}>
                           {index < this.props.variables.length - 1 && (
                             <IconButton
-                              onClick={event => this.onChangeVariableOrder(event, variable, MoveType.down)}
+                              onClick={(event) => this.onChangeVariableOrder(event, variable, MoveType.down)}
                               name="arrow-down"
                               title="Move variable down"
                               aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowArrowDownButtons(
@@ -158,7 +163,7 @@ export class VariableEditorList extends PureComponent<Props> {
 
                         <td style={{ width: '1%' }}>
                           <IconButton
-                            onClick={event => this.onDuplicateVariable(event, toVariableIdentifier(variable))}
+                            onClick={(event) => this.onDuplicateVariable(event, toVariableIdentifier(variable))}
                             name="copy"
                             title="Duplicate variable"
                             aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowDuplicateButtons(
@@ -169,7 +174,7 @@ export class VariableEditorList extends PureComponent<Props> {
 
                         <td style={{ width: '1%' }}>
                           <IconButton
-                            onClick={event => this.onRemoveVariable(event, toVariableIdentifier(variable))}
+                            onClick={(event) => this.onRemoveVariable(event, toVariableIdentifier(variable))}
                             name="trash-alt"
                             title="Remove variable"
                             aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowRemoveButtons(

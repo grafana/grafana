@@ -23,6 +23,7 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
         width={width}
         height={height}
         field={field}
+        text={options.text}
         showThresholdLabels={options.showThresholdLabels}
         showThresholdMarkers={options.showThresholdMarkers}
         theme={config.theme}
@@ -39,7 +40,7 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
     if (hasLinks && getLinks) {
       return (
         <DataLinksContextMenu links={getLinks}>
-          {api => {
+          {(api) => {
             return this.renderComponent(valueProps, api);
           }}
         </DataLinksContextMenu>
@@ -57,7 +58,6 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
       replaceVariables,
       theme: config.theme,
       data: data.series,
-      autoMinMax: true,
       timeZone,
     });
   };

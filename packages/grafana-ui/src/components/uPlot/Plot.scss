@@ -8,3 +8,12 @@
 .u-select {
   background: rgba(120, 120, 130, 0.2);
 }
+
+.u-cursor-x {
+  border-right: 1px dashed rgba(120, 120, 130, 0.5);
+}
+
+.u-cursor-y {
+  width: 100%;
+  border-bottom: 1px dashed rgba(120, 120, 130, 0.5);
+}

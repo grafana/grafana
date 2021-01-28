@@ -2,9 +2,6 @@
 title = "Internal Grafana metrics"
 description = "Internal metrics exposed by Grafana"
 keywords = ["grafana", "metrics", "internal metrics"]
-type = "docs"
-[menu.docs]
-parent = "admin"
 weight = 8
 +++
 
@@ -29,7 +26,7 @@ When enabled, Grafana exposes a number of metrics, including:
 
 These instructions assume you have already added Prometheus as a data source in Grafana.
 
-1. Enable Prometheus to scrape metrics from Grafana. In your configuration file (`grafana.ini` or `custom.ini` depending on your operating system) remove the semicolon to enable the following configuration options: 
+1. Enable Prometheus to scrape metrics from Grafana. In your configuration file (`grafana.ini` or `custom.ini` depending on your operating system) remove the semicolon to enable the following configuration options:
 
    ```
    # Metrics available at HTTP API Url /metrics
@@ -57,7 +54,7 @@ These instructions assume you have already added Prometheus as a data source in 
 
       scrape_interval: 15s
       scrape_timeout: 5s
-  
+
       static_configs:
         - targets: ['localhost:3000']
    ```
@@ -70,7 +67,7 @@ These instructions assume you have already added Prometheus as a data source in 
 
 These instructions assume you have already added Graphite as a data source in Grafana.
 
-1. Enable sending metrics to Graphite. In your configuration file (`grafana.ini` or `custom.ini` depending on your operating system) remove the semicolon to enable the following configuration options: 
+1. Enable sending metrics to Graphite. In your configuration file (`grafana.ini` or `custom.ini` depending on your operating system) remove the semicolon to enable the following configuration options:
 
    ```
    # Metrics available at HTTP API Url /metrics

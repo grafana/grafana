@@ -43,6 +43,5 @@ export const setGrafanaLiveSrv = (instance: GrafanaLiveSrv) => {
  * server side events and streams
  *
  * @alpha -- experimental
- * @public
  */
 export const getGrafanaLiveSrv = (): GrafanaLiveSrv => singletonInstance;

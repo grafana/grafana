@@ -13,6 +13,8 @@ export interface Props extends Omit<FieldProps, 'css' | 'horizontal' | 'descript
   labelWidth?: number | 'auto';
   /** Make the field's child to fill the width of the row. Equivalent to setting `flex-grow:1` on the field */
   grow?: boolean;
+  /** Make field's background transparent */
+  transparent?: boolean;
 }
 
 export const InlineField: FC<Props> = ({
@@ -25,6 +27,7 @@ export const InlineField: FC<Props> = ({
   disabled,
   className,
   grow,
+  transparent,
   ...htmlProps
 }) => {
   const theme = useTheme();
@@ -37,7 +40,7 @@ export const InlineField: FC<Props> = ({
   }
   const labelElement =
     typeof label === 'string' ? (
-      <InlineLabel width={labelWidth} tooltip={tooltip} htmlFor={inputId}>
+      <InlineLabel width={labelWidth} tooltip={tooltip} htmlFor={inputId} transparent={transparent}>
         {label}
       </InlineLabel>
     ) : (
@@ -59,19 +62,11 @@ const getStyles = (theme: GrafanaTheme, grow?: boolean) => {
     container: css`
       display: flex;
       flex-direction: row;
-      align-items: center;
+      align-items: flex-start;
       text-align: left;
       position: relative;
       flex: ${grow ? 1 : 0} 0 auto;
       margin: 0 ${theme.spacing.xs} ${theme.spacing.xs} 0;
-    `,
-    wrapper: css`
-      display: flex;
-      width: 100%;
-    `,
-
-    fillContainer: css`
-      flex-grow: 1;
     `,
   };
 };

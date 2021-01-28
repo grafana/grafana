@@ -2,85 +2,87 @@ import { PanelModel } from './PanelModel';
 import { getPanelPlugin } from '../../plugins/__mocks__/pluginMocks';
 import {
   FieldConfigProperty,
-  identityOverrideProcessor,
   PanelProps,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
   PanelData,
-  DataSourceInstanceSettings,
-  FieldColorModeId,
-  FieldColorConfigSettings,
+  DataLinkBuiltInVars,
+  VariableModel,
 } from '@grafana/data';
 import { ComponentClass } from 'react';
-import { PanelQueryRunner } from './PanelQueryRunner';
-import { setDataSourceSrv } from '@grafana/runtime';
+import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
+import { setTimeSrv } from '../services/TimeSrv';
+import { TemplateSrv } from '../../templating/template_srv';
+import { setTemplateSrv } from '@grafana/runtime';
+import { variableAdapters } from '../../variables/adapters';
+import { createQueryVariableAdapter } from '../../variables/query/adapter';
+import { mockStandardFieldConfigOptions } from '../../../../test/helpers/fieldConfig';
 
-class TablePanelCtrl {}
+standardFieldConfigEditorRegistry.setInit(() => mockStandardFieldConfigOptions());
+standardEditorsRegistry.setInit(() => mockStandardFieldConfigOptions());
 
-export const mockStandardProperties = () => {
-  const unit = {
-    id: 'unit',
-    path: 'unit',
-    name: 'Unit',
-    description: 'Value units',
-    // @ts-ignore
-    editor: () => null,
-    // @ts-ignore
-    override: () => null,
-    process: identityOverrideProcessor,
-    shouldApply: () => true,
-  };
+setTimeSrv({
+  timeRangeForUrl: () => ({
+    from: 1607687293000,
+    to: 1607687293100,
+  }),
+} as any);
 
-  const decimals = {
-    id: 'decimals',
-    path: 'decimals',
-    name: 'Decimals',
-    description: 'Number of decimal to be shown for a value',
+setTemplateSrv(
+  new TemplateSrv({
     // @ts-ignore
-    editor: () => null,
+    getVariables: () => {
+      return variablesMock;
+    },
     // @ts-ignore
-    override: () => null,
-    process: identityOverrideProcessor,
-    shouldApply: () => true,
-  };
+    getVariableWithName: (name: string) => {
+      return variablesMock.filter((v) => v.name === name)[0];
+    },
+  })
+);
 
-  const boolean = {
-    id: 'boolean',
-    path: 'boolean',
-    name: 'Boolean',
-    description: '',
-    // @ts-ignore
-    editor: () => null,
-    // @ts-ignore
-    override: () => null,
-    process: identityOverrideProcessor,
-    shouldApply: () => true,
-  };
-
-  const fieldColor = {
-    id: 'color',
-    path: 'color',
-    name: 'color',
-    description: '',
-    // @ts-ignore
-    editor: () => null,
-    // @ts-ignore
-    override: () => null,
-    process: identityOverrideProcessor,
-    shouldApply: () => true,
-  };
-
-  return [unit, decimals, boolean, fieldColor];
-};
-
-standardFieldConfigEditorRegistry.setInit(() => mockStandardProperties());
-standardEditorsRegistry.setInit(() => mockStandardProperties());
+variableAdapters.setInit(() => [createQueryVariableAdapter()]);
 
 describe('PanelModel', () => {
   describe('when creating new panel model', () => {
     let model: any;
     let modelJson: any;
     let persistedOptionsMock;
+
+    const tablePlugin = getPanelPlugin(
+      {
+        id: 'table',
+      },
+      (null as unknown) as ComponentClass<PanelProps>, // react
+      {} // angular
+    );
+
+    tablePlugin.setPanelOptions((builder) => {
+      builder.addBooleanSwitch({
+        name: 'Show thresholds',
+        path: 'showThresholds',
+        defaultValue: true,
+        description: '',
+      });
+    });
+
+    tablePlugin.useFieldConfig({
+      standardOptions: {
+        [FieldConfigProperty.Unit]: {
+          defaultValue: 'flop',
+        },
+        [FieldConfigProperty.Decimals]: {
+          defaultValue: 2,
+        },
+      },
+      useCustomConfig: (builder) => {
+        builder.addBooleanSwitch({
+          name: 'CustomProp',
+          path: 'customProp',
+          defaultValue: false,
+        });
+      },
+    });
 
     beforeEach(() => {
       persistedOptionsMock = {
@@ -143,35 +145,7 @@ describe('PanelModel', () => {
       };
 
       model = new PanelModel(modelJson);
-
-      const panelPlugin = getPanelPlugin(
-        {
-          id: 'table',
-        },
-        (null as unknown) as ComponentClass<PanelProps>, // react
-        TablePanelCtrl // angular
-      );
-
-      panelPlugin.setPanelOptions(builder => {
-        builder.addBooleanSwitch({
-          name: 'Show thresholds',
-          path: 'showThresholds',
-          defaultValue: true,
-          description: '',
-        });
-      });
-
-      panelPlugin.useFieldConfig({
-        standardOptions: {
-          [FieldConfigProperty.Unit]: {
-            defaultValue: 'flop',
-          },
-          [FieldConfigProperty.Decimals]: {
-            defaultValue: 2,
-          },
-        },
-      });
-      model.pluginLoaded(panelPlugin);
+      model.pluginLoaded(tablePlugin);
     });
 
     it('should apply defaults', () => {
@@ -192,11 +166,6 @@ describe('PanelModel', () => {
     });
 
     it('should apply field config defaults', () => {
-      setDataSourceSrv({
-        getDataSourceSettingsByUid(uid: string): DataSourceInstanceSettings | undefined {
-          return undefined;
-        },
-      } as any);
       // default unit is overriden by model
       expect(model.getFieldOverrideOptions().fieldConfig.defaults.unit).toBe('mpg');
       // default decimals are aplied
@@ -247,6 +216,16 @@ describe('PanelModel', () => {
         expect(out).toBe('hello AAA');
       });
 
+      it('should interpolate $__url_time_range variable', () => {
+        const out = model.replaceVariables(`/d/1?$${DataLinkBuiltInVars.keepTime}`);
+        expect(out).toBe('/d/1?from=1607687293000&to=1607687293100');
+      });
+
+      it('should interpolate $__all_variables variable', () => {
+        const out = model.replaceVariables(`/d/1?$${DataLinkBuiltInVars.includeVars}`);
+        expect(out).toBe('/d/1?var-test1=val1&var-test2=val2');
+      });
+
       it('should prefer the local variable value', () => {
         const extra = { aaa: { text: '???', value: 'XXX' } };
         const out = model.replaceVariables('hello $aaa and $bbb', extra);
@@ -266,9 +245,16 @@ describe('PanelModel', () => {
               },
             },
           },
+          useCustomConfig: (builder) => {
+            builder.addNumberInput({
+              path: 'customProp',
+              name: 'customProp',
+              defaultValue: 100,
+            });
+          },
         });
 
-        newPlugin.setPanelOptions(builder => {
+        newPlugin.setPanelOptions((builder) => {
           builder.addBooleanSwitch({
             name: 'Show thresholds labels',
             path: 'showThresholdLabels',
@@ -278,6 +264,25 @@ describe('PanelModel', () => {
         });
 
         model.editSourceId = 1001;
+        model.fieldConfig.defaults.decimals = 3;
+        model.fieldConfig.defaults.custom = {
+          customProp: true,
+        };
+        model.fieldConfig.overrides = [
+          {
+            matcher: { id: 'byName', options: 'D-series' },
+            properties: [
+              {
+                id: 'custom.customProp',
+                value: false,
+              },
+              {
+                id: 'decimals',
+                value: 0,
+              },
+            ],
+          },
+        ];
         model.changePlugin(newPlugin);
         model.alert = { id: 2 };
       });
@@ -294,6 +299,21 @@ describe('PanelModel', () => {
         expect(model.interval).toBe('5m');
       });
 
+      it('should preseve standard field config', () => {
+        expect(model.fieldConfig.defaults.decimals).toEqual(3);
+      });
+
+      it('should clear custom field config and apply new defaults', () => {
+        expect(model.fieldConfig.defaults.custom).toEqual({
+          customProp: 100,
+        });
+      });
+
+      it('should remove overrides with custom props', () => {
+        expect(model.fieldConfig.overrides.length).toEqual(1);
+        expect(model.fieldConfig.overrides[0].properties[0].id).toEqual('decimals');
+      });
+
       it('should apply next panel option defaults', () => {
         expect(model.getOptions().showThresholdLabels).toBeFalsy();
         expect(model.getOptions().showThresholds).toBeUndefined();
@@ -304,73 +324,18 @@ describe('PanelModel', () => {
       });
 
       it('should restore table properties when changing back', () => {
-        model.changePlugin(getPanelPlugin({ id: 'table' }));
+        model.changePlugin(tablePlugin);
         expect(model.showColumns).toBe(true);
+      });
+
+      it('should restore custom field config to what it was and preseve standard options', () => {
+        model.changePlugin(tablePlugin);
+        expect(model.fieldConfig.defaults.custom.customProp).toBe(true);
       });
 
       it('should remove alert rule when changing type that does not support it', () => {
         model.changePlugin(getPanelPlugin({ id: 'table' }));
         expect(model.alert).toBe(undefined);
-      });
-    });
-
-    describe('when changing panel type to one that does not support by value color mode', () => {
-      beforeEach(() => {
-        model.fieldConfig.defaults.color = { mode: FieldColorModeId.Thresholds };
-
-        const newPlugin = getPanelPlugin({ id: 'graph' });
-        newPlugin.useFieldConfig({
-          standardOptions: {
-            [FieldConfigProperty.Color]: {
-              settings: {
-                byValueSupport: false,
-              },
-            },
-          },
-        });
-
-        model.editSourceId = 1001;
-        model.changePlugin(newPlugin);
-        model.alert = { id: 2 };
-      });
-
-      it('should change color mode', () => {
-        expect(model.fieldConfig.defaults.color.mode).toBe(FieldColorModeId.PaletteClassic);
-      });
-    });
-
-    describe('when changing panel type from one not supporting by value color mode to one that supports it', () => {
-      const prepareModel = (colorOptions?: FieldColorConfigSettings) => {
-        const newModel = new PanelModel(modelJson);
-        newModel.fieldConfig.defaults.color = { mode: FieldColorModeId.PaletteClassic };
-
-        const newPlugin = getPanelPlugin({ id: 'graph' });
-        newPlugin.useFieldConfig({
-          standardOptions: {
-            [FieldConfigProperty.Color]: {
-              settings: {
-                byValueSupport: true,
-                ...colorOptions,
-              },
-            },
-          },
-        });
-
-        newModel.editSourceId = 1001;
-        newModel.changePlugin(newPlugin);
-        newModel.alert = { id: 2 };
-        return newModel;
-      };
-
-      it('should keep supported mode', () => {
-        const testModel = prepareModel();
-
-        expect(testModel.fieldConfig.defaults.color!.mode).toBe(FieldColorModeId.PaletteClassic);
-      });
-
-      it('should change to thresholds mode when it prefers to', () => {
-        const testModel = prepareModel({ preferThresholdsMode: true });
-        expect(testModel.fieldConfig.defaults.color!.mode).toBe(FieldColorModeId.Thresholds);
       });
     });
 
@@ -475,3 +440,28 @@ describe('PanelModel', () => {
     });
   });
 });
+
+const variablesMock = [
+  {
+    type: 'query',
+    name: 'test1',
+    label: 'Test1',
+    hide: false,
+    current: { value: 'val1' },
+    skipUrlSync: false,
+    getValueForUrl: function () {
+      return 'val1';
+    },
+  } as VariableModel,
+  {
+    type: 'query',
+    name: 'test2',
+    label: 'Test2',
+    hide: false,
+    current: { value: 'val2' },
+    skipUrlSync: false,
+    getValueForUrl: function () {
+      return 'val2';
+    },
+  } as VariableModel,
+];

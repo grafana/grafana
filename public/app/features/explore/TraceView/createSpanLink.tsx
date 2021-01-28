@@ -1,66 +1,75 @@
-import React from 'react';
-import { config, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
 import { DataLink, dateTime, Field, mapInternalLinkToExplore, TimeRange, TraceSpan } from '@grafana/data';
-import { LokiQuery } from '../../../plugins/datasource/loki/types';
+import { getTemplateSrv } from '@grafana/runtime';
 import { Icon } from '@grafana/ui';
+import { SplitOpen } from 'app/types/explore';
+import { TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import React from 'react';
+import { LokiQuery } from '../../../plugins/datasource/loki/types';
 
 /**
  * This is a factory for the link creator. It returns the function mainly so it can return undefined in which case
  * the trace view won't create any links and to capture the datasource and split function making it easier to memoize
  * with useMemo.
  */
-export function createSpanLinkFactory(splitOpenFn: (options: { datasourceUid: string; query: any }) => void) {
-  if (!config.featureToggles.traceToLogs) {
+export function createSpanLinkFactory(splitOpenFn: SplitOpen, traceToLogsOptions?: TraceToLogsOptions) {
+  // We should return if dataSourceUid is undefined otherwise getInstanceSettings would return testDataSource.
+  if (!traceToLogsOptions?.datasourceUid) {
     return undefined;
   }
 
-  // Right now just hardcoded for first loki DS we can find
-  const lokiDs = getDataSourceSrv()
-    .getExternal()
-    .find(ds => ds.meta.id === 'loki');
+  const dataSourceSettings = getDatasourceSrv().getInstanceSettings(traceToLogsOptions.datasourceUid);
 
-  if (!lokiDs) {
+  if (!dataSourceSettings) {
     return undefined;
   }
 
-  return function(span: TraceSpan): { href: string; onClick?: (event: any) => void; content: React.ReactNode } {
+  return function (span: TraceSpan): { href: string; onClick?: (event: any) => void; content: React.ReactNode } {
     // This is reusing existing code from derived fields which may not be ideal match so some data is a bit faked at
     // the moment. Issue is that the trace itself isn't clearly mapped to dataFrame (right now it's just a json blob
     // inside a single field) so the dataLinks as config of that dataFrame abstraction breaks down a bit and we do
     // it manually here instead of leaving it for the data source to supply the config.
 
     const dataLink: DataLink<LokiQuery> = {
-      title: lokiDs.name,
+      title: dataSourceSettings.name,
       url: '',
       internal: {
-        datasourceUid: lokiDs.uid,
+        datasourceUid: dataSourceSettings.uid,
+        datasourceName: dataSourceSettings.name,
         query: {
-          expr: getLokiQueryFromSpan(span),
+          expr: getLokiQueryFromSpan(span, traceToLogsOptions.tags),
           refId: '',
         },
       },
     };
-    const link = mapInternalLinkToExplore(dataLink, {}, getTimeRangeFromSpan(span), {} as Field, {
+
+    const link = mapInternalLinkToExplore({
+      link: dataLink,
+      internalLink: dataLink.internal!,
+      scopedVars: {},
+      range: getTimeRangeFromSpan(span),
+      field: {} as Field,
       onClickFn: splitOpenFn,
       replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
-      getDataSourceSettingsByUid: getDataSourceSrv().getDataSourceSettingsByUid.bind(getDataSourceSrv()),
     });
+
     return {
       href: link.href,
       onClick: link.onClick,
-      content: <Icon name="file-alt" title="Show logs" />,
+      content: <Icon name="gf-logs" title="Explore the logs for this in split view" />,
     };
   };
 }
 
 /**
- * Right now this is just hardcoded and later will probably be part of some user configuration.
+ * Default keys to use when there are no configured tags.
  */
-const allowedKeys = ['cluster', 'hostname', 'namespace', 'pod'];
+const defaultKeys = ['cluster', 'hostname', 'namespace', 'pod'];
 
-function getLokiQueryFromSpan(span: TraceSpan): string {
-  const tags = span.process.tags.reduce((acc, tag) => {
-    if (allowedKeys.includes(tag.key)) {
+function getLokiQueryFromSpan(span: TraceSpan, keys?: string[]): string {
+  const keysToCheck = keys?.length ? keys : defaultKeys;
+  const tags = [...span.process.tags, ...span.tags].reduce((acc, tag) => {
+    if (keysToCheck.includes(tag.key)) {
       acc.push(`${tag.key}="${tag.value}"`);
     }
     return acc;

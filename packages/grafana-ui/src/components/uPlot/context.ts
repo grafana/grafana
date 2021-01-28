@@ -1,5 +1,5 @@
 import React, { useCallback, useContext } from 'react';
-import uPlot from 'uplot';
+import uPlot, { Series } from 'uplot';
 import { PlotPlugin } from './types';
 import { DataFrame, Field, FieldConfig } from '@grafana/data';
 
@@ -16,36 +16,14 @@ interface PlotCanvasContextType {
   };
 }
 
-interface PlotConfigContextType {
-  addSeries: (
-    series: uPlot.Series
-  ) => {
-    removeSeries: () => void;
-    updateSeries: () => void;
-  };
-  addScale: (
-    scaleKey: string,
-    scale: uPlot.Scale
-  ) => {
-    removeScale: () => void;
-    updateScale: () => void;
-  };
-  addAxis: (
-    axis: uPlot.Axis
-  ) => {
-    removeAxis: () => void;
-    updateAxis: () => void;
-  };
-}
-
 interface PlotPluginsContextType {
   registerPlugin: (plugin: PlotPlugin) => () => void;
 }
 
-interface PlotContextType extends PlotConfigContextType, PlotPluginsContextType {
+interface PlotContextType extends PlotPluginsContextType {
   isPlotReady: boolean;
-  getPlotInstance: () => uPlot;
-  getSeries: () => uPlot.Series[];
+  getPlotInstance: () => uPlot | undefined;
+  getSeries: () => Series[];
   getCanvas: () => PlotCanvasContextType;
   canvasRef: any;
   data: DataFrame;
@@ -74,19 +52,6 @@ export const usePlotPluginContext = (): PlotPluginsContextType => {
 };
 
 // Exposes API for building uPlot config
-export const usePlotConfigContext = (): PlotConfigContextType => {
-  const ctx = usePlotContext();
-
-  if (!ctx) {
-    throwWhenNoContext('usePlotConfigContext');
-  }
-
-  return {
-    addSeries: ctx!.addSeries,
-    addAxis: ctx!.addAxis,
-    addScale: ctx!.addScale,
-  };
-};
 
 interface PlotDataAPI {
   /** Data frame passed to graph, x-axis aligned */
@@ -166,30 +131,29 @@ export const buildPlotContext = (
   canvasRef: any,
   data: DataFrame,
   registerPlugin: any,
-  addSeries: any,
-  addAxis: any,
-  addScale: any,
-  getPlotInstance: () => uPlot
+  getPlotInstance: () => uPlot | undefined
 ): PlotContextType => {
   return {
     isPlotReady,
     canvasRef,
     data,
     registerPlugin,
-    addSeries,
-    addAxis,
-    addScale,
     getPlotInstance,
-    getSeries: () => getPlotInstance().series,
-    getCanvas: () => ({
-      width: getPlotInstance().width,
-      height: getPlotInstance().height,
-      plot: {
-        width: getPlotInstance().bbox.width / window.devicePixelRatio,
-        height: getPlotInstance().bbox.height / window.devicePixelRatio,
-        top: getPlotInstance().bbox.top / window.devicePixelRatio,
-        left: getPlotInstance().bbox.left / window.devicePixelRatio,
-      },
-    }),
+    getSeries: () => getPlotInstance()!.series,
+    getCanvas: () => {
+      const plotInstance = getPlotInstance()!;
+      const bbox = plotInstance.bbox;
+      const pxRatio = window.devicePixelRatio;
+      return {
+        width: plotInstance.width,
+        height: plotInstance.height,
+        plot: {
+          width: bbox.width / pxRatio,
+          height: bbox.height / pxRatio,
+          top: bbox.top / pxRatio,
+          left: bbox.left / pxRatio,
+        },
+      };
+    },
   };
 };

@@ -119,7 +119,7 @@ export class DashboardPage extends PureComponent<Props, State> {
     if (!editPanel && urlEditPanelId) {
       dashboardWatcher.setEditingState(true);
 
-      this.getPanelByIdFromUrlParam(urlEditPanelId, panel => {
+      this.getPanelByIdFromUrlParam(urlEditPanelId, (panel) => {
         // if no edit permission show error
         if (!dashboard.canEditPanel(panel)) {
           this.props.notifyApp(createErrorNotification('Permission to edit panel denied'));
@@ -139,7 +139,7 @@ export class DashboardPage extends PureComponent<Props, State> {
 
     // entering view mode
     if (!viewPanel && urlViewPanelId) {
-      this.getPanelByIdFromUrlParam(urlViewPanelId, panel => {
+      this.getPanelByIdFromUrlParam(urlViewPanelId, (panel) => {
         this.setPanelFullscreenClass(true);
         dashboard.initViewPanel(panel);
         this.setState({
@@ -257,11 +257,9 @@ export class DashboardPage extends PureComponent<Props, State> {
 
     return (
       <div className="dashboard-loading">
-        <Alert
-          severity={AppNotificationSeverity.Error}
-          title={initError.message}
-          children={getMessageFromError(initError.error)}
-        />
+        <Alert severity={AppNotificationSeverity.Error} title={initError.message}>
+          {getMessageFromError(initError.error)}
+        </Alert>
       </div>
     );
   }
@@ -318,11 +316,12 @@ export class DashboardPage extends PureComponent<Props, State> {
             scrollTop={updateScrollTop}
             hideHorizontalTrack={true}
             updateAfterMountMs={500}
-            className="custom-scrollbar--page"
           >
             <div className="dashboard-content">
               {initError && this.renderInitFailedState()}
-              {!editPanel && <SubMenu dashboard={dashboard} links={dashboard.links} />}
+              {!editPanel && (
+                <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
+              )}
 
               <DashboardGrid
                 dashboard={dashboard}
@@ -337,7 +336,7 @@ export class DashboardPage extends PureComponent<Props, State> {
 
         {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} defaultTab={inspectTab} />}
         {editPanel && <PanelEditor dashboard={dashboard} sourcePanel={editPanel} />}
-        {editview && <DashboardSettings dashboard={dashboard} updateLocation={updateLocation} />}
+        {editview && <DashboardSettings dashboard={dashboard} updateLocation={updateLocation} editview={editview} />}
       </div>
     );
   }

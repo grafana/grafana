@@ -55,8 +55,8 @@ var engineCache = engineCacheType{
 
 var sqlIntervalCalculator = tsdb.NewIntervalCalculator(nil)
 
-//nolint:gocritic
 // NewXormEngine is an xorm.Engine factory, that can be stubbed by tests.
+//nolint:gocritic
 var NewXormEngine = func(driverName string, connectionString string) (*xorm.Engine, error) {
 	return xorm.NewEngine(driverName, connectionString)
 }
@@ -173,8 +173,11 @@ func (e *sqlQueryEndpoint) Query(ctx context.Context, dsInfo *models.DataSource,
 				queryResult.Error = e.queryResultTransformer.TransformQueryError(err)
 				return
 			}
-
-			defer rows.Close()
+			defer func() {
+				if err := rows.Close(); err != nil {
+					e.log.Warn("Failed to close rows", "err", err)
+				}
+			}()
 
 			format := query.Model.Get("format").MustString("time_series")
 

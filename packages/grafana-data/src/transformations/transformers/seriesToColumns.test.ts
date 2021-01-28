@@ -9,7 +9,6 @@ import {
 } from '@grafana/data';
 import { SeriesToColumnsOptions, seriesToColumnsTransformer } from './seriesToColumns';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
-import { observableTester } from '../../utils/tests/observableTester';
 
 describe('SeriesToColumns Transformer', () => {
   beforeAll(() => {
@@ -34,7 +33,7 @@ describe('SeriesToColumns Transformer', () => {
     ],
   });
 
-  it('joins by time field', done => {
+  it('joins by time field', async () => {
     const cfg: DataTransformerConfig<SeriesToColumnsOptions> = {
       id: DataTransformerID.seriesToColumns,
       options: {
@@ -42,9 +41,9 @@ describe('SeriesToColumns Transformer', () => {
       },
     };
 
-    observableTester().subscribeAndExpectOnNext({
-      observable: transformDataFrame([cfg], [everySecondSeries, everyOtherSecondSeries]),
-      expect: data => {
+    await expect(transformDataFrame([cfg], [everySecondSeries, everyOtherSecondSeries])).toEmitValuesWith(
+      (received) => {
+        const data = received[0];
         const filtered = data[0];
         expect(filtered.fields).toEqual([
           {
@@ -98,12 +97,11 @@ describe('SeriesToColumns Transformer', () => {
             labels: { name: 'odd' },
           },
         ]);
-      },
-      done,
-    });
+      }
+    );
   });
 
-  it('joins by temperature field', done => {
+  it('joins by temperature field', async () => {
     const cfg: DataTransformerConfig<SeriesToColumnsOptions> = {
       id: DataTransformerID.seriesToColumns,
       options: {
@@ -111,9 +109,9 @@ describe('SeriesToColumns Transformer', () => {
       },
     };
 
-    observableTester().subscribeAndExpectOnNext({
-      observable: transformDataFrame([cfg], [everySecondSeries, everyOtherSecondSeries]),
-      expect: data => {
+    await expect(transformDataFrame([cfg], [everySecondSeries, everyOtherSecondSeries])).toEmitValuesWith(
+      (received) => {
+        const data = received[0];
         const filtered = data[0];
         expect(filtered.fields).toEqual([
           {
@@ -167,12 +165,11 @@ describe('SeriesToColumns Transformer', () => {
             labels: { name: 'odd' },
           },
         ]);
-      },
-      done,
-    });
+      }
+    );
   });
 
-  it('joins by time field in reverse order', done => {
+  it('joins by time field in reverse order', async () => {
     const cfg: DataTransformerConfig<SeriesToColumnsOptions> = {
       id: DataTransformerID.seriesToColumns,
       options: {
@@ -184,9 +181,9 @@ describe('SeriesToColumns Transformer', () => {
     everySecondSeries.fields[1].values = new ArrayVector(everySecondSeries.fields[1].values.toArray().reverse());
     everySecondSeries.fields[2].values = new ArrayVector(everySecondSeries.fields[2].values.toArray().reverse());
 
-    observableTester().subscribeAndExpectOnNext({
-      observable: transformDataFrame([cfg], [everySecondSeries, everyOtherSecondSeries]),
-      expect: data => {
+    await expect(transformDataFrame([cfg], [everySecondSeries, everyOtherSecondSeries])).toEmitValuesWith(
+      (received) => {
+        const data = received[0];
         const filtered = data[0];
         expect(filtered.fields).toEqual([
           {
@@ -240,9 +237,8 @@ describe('SeriesToColumns Transformer', () => {
             labels: { name: 'odd' },
           },
         ]);
-      },
-      done,
-    });
+      }
+    );
   });
 
   describe('Field names', () => {
@@ -262,7 +258,7 @@ describe('SeriesToColumns Transformer', () => {
       ],
     });
 
-    it('when dataframe and field share the same name then use the field name', done => {
+    it('when dataframe and field share the same name then use the field name', async () => {
       const cfg: DataTransformerConfig<SeriesToColumnsOptions> = {
         id: DataTransformerID.seriesToColumns,
         options: {
@@ -270,9 +266,9 @@ describe('SeriesToColumns Transformer', () => {
         },
       };
 
-      observableTester().subscribeAndExpectOnNext({
-        observable: transformDataFrame([cfg], [seriesWithSameFieldAndDataFrameName, seriesB]),
-        expect: data => {
+      await expect(transformDataFrame([cfg], [seriesWithSameFieldAndDataFrameName, seriesB])).toEmitValuesWith(
+        (received) => {
+          const data = received[0];
           const filtered = data[0];
           const expected: Field[] = [
             {
@@ -308,13 +304,12 @@ describe('SeriesToColumns Transformer', () => {
           ];
 
           expect(filtered.fields).toEqual(expected);
-        },
-        done,
-      });
+        }
+      );
     });
   });
 
-  it('joins if fields are missing', done => {
+  it('joins if fields are missing', async () => {
     const cfg: DataTransformerConfig<SeriesToColumnsOptions> = {
       id: DataTransformerID.seriesToColumns,
       options: {
@@ -343,41 +338,38 @@ describe('SeriesToColumns Transformer', () => {
       ],
     });
 
-    observableTester().subscribeAndExpectOnNext({
-      observable: transformDataFrame([cfg], [frame1, frame2, frame3]),
-      expect: data => {
-        const filtered = data[0];
-        expect(filtered.fields).toEqual([
-          {
-            name: 'time',
-            state: { displayName: 'time' },
-            type: FieldType.time,
-            values: new ArrayVector([1, 2, 3]),
-            config: {},
-          },
-          {
-            name: 'temperature',
-            state: { displayName: 'temperature A' },
-            type: FieldType.number,
-            values: new ArrayVector([10, 11, 12]),
-            config: {},
-            labels: { name: 'A' },
-          },
-          {
-            name: 'temperature',
-            state: { displayName: 'temperature C' },
-            type: FieldType.number,
-            values: new ArrayVector([20, 22, 24]),
-            config: {},
-            labels: { name: 'C' },
-          },
-        ]);
-      },
-      done,
+    await expect(transformDataFrame([cfg], [frame1, frame2, frame3])).toEmitValuesWith((received) => {
+      const data = received[0];
+      const filtered = data[0];
+      expect(filtered.fields).toEqual([
+        {
+          name: 'time',
+          state: { displayName: 'time' },
+          type: FieldType.time,
+          values: new ArrayVector([1, 2, 3]),
+          config: {},
+        },
+        {
+          name: 'temperature',
+          state: { displayName: 'temperature A' },
+          type: FieldType.number,
+          values: new ArrayVector([10, 11, 12]),
+          config: {},
+          labels: { name: 'A' },
+        },
+        {
+          name: 'temperature',
+          state: { displayName: 'temperature C' },
+          type: FieldType.number,
+          values: new ArrayVector([20, 22, 24]),
+          config: {},
+          labels: { name: 'C' },
+        },
+      ]);
     });
   });
 
-  it('handles duplicate field name', done => {
+  it('handles duplicate field name', async () => {
     const cfg: DataTransformerConfig<SeriesToColumnsOptions> = {
       id: DataTransformerID.seriesToColumns,
       options: {
@@ -399,37 +391,34 @@ describe('SeriesToColumns Transformer', () => {
       ],
     });
 
-    observableTester().subscribeAndExpectOnNext({
-      observable: transformDataFrame([cfg], [frame1, frame2]),
-      expect: data => {
-        const filtered = data[0];
-        expect(filtered.fields).toEqual([
-          {
-            name: 'time',
-            state: { displayName: 'time' },
-            type: FieldType.time,
-            values: new ArrayVector([1]),
-            config: {},
-          },
-          {
-            name: 'temperature',
-            state: { displayName: 'temperature 1' },
-            type: FieldType.number,
-            values: new ArrayVector([10]),
-            config: {},
-            labels: {},
-          },
-          {
-            name: 'temperature',
-            state: { displayName: 'temperature 2' },
-            type: FieldType.number,
-            values: new ArrayVector([20]),
-            config: {},
-            labels: {},
-          },
-        ]);
-      },
-      done,
+    await expect(transformDataFrame([cfg], [frame1, frame2])).toEmitValuesWith((received) => {
+      const data = received[0];
+      const filtered = data[0];
+      expect(filtered.fields).toEqual([
+        {
+          name: 'time',
+          state: { displayName: 'time' },
+          type: FieldType.time,
+          values: new ArrayVector([1]),
+          config: {},
+        },
+        {
+          name: 'temperature',
+          state: { displayName: 'temperature 1' },
+          type: FieldType.number,
+          values: new ArrayVector([10]),
+          config: {},
+          labels: {},
+        },
+        {
+          name: 'temperature',
+          state: { displayName: 'temperature 2' },
+          type: FieldType.number,
+          values: new ArrayVector([20]),
+          config: {},
+          labels: {},
+        },
+      ]);
     });
   });
 });

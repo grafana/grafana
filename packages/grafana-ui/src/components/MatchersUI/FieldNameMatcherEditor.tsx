@@ -3,7 +3,7 @@ import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
 import { FieldMatcherID, fieldMatchers, getFieldDisplayName, SelectableValue, DataFrame } from '@grafana/data';
 import { Select } from '../Select/Select';
 
-export const FieldNameMatcherEditor = memo<MatcherUIProps<string>>(props => {
+export const FieldNameMatcherEditor = memo<MatcherUIProps<string>>((props) => {
   const { data, options, onChange: onChangeFromProps } = props;
   const names = useFieldDisplayNames(data);
   const selectOptions = useSelectOptions(names);
@@ -18,9 +18,10 @@ export const FieldNameMatcherEditor = memo<MatcherUIProps<string>>(props => {
     [names, onChangeFromProps]
   );
 
-  const selectedOption = selectOptions.find(v => v.value === options);
+  const selectedOption = selectOptions.find((v) => v.value === options);
   return <Select value={selectedOption} options={selectOptions} onChange={onChange} />;
 });
+FieldNameMatcherEditor.displayName = 'FieldNameMatcherEditor';
 
 export const fieldNameMatcherItem: FieldMatcherUIRegistryItem<string> = {
   id: FieldMatcherID.byName,
@@ -28,7 +29,7 @@ export const fieldNameMatcherItem: FieldMatcherUIRegistryItem<string> = {
   matcher: fieldMatchers.get(FieldMatcherID.byName),
   name: 'Fields with name',
   description: 'Set properties for a specific field',
-  optionsToLabel: options => options,
+  optionsToLabel: (options) => options,
 };
 
 const useFieldDisplayNames = (data: DataFrame[]): Set<string> => {
@@ -47,7 +48,7 @@ const useFieldDisplayNames = (data: DataFrame[]): Set<string> => {
 
 const useSelectOptions = (displayNames: Set<string>): Array<SelectableValue<string>> => {
   return useMemo(() => {
-    return Array.from(displayNames).map(n => ({
+    return Array.from(displayNames).map((n) => ({
       value: n,
       label: n,
     }));

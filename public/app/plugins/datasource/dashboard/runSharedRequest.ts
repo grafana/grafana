@@ -1,8 +1,15 @@
 import { Observable } from 'rxjs';
-import { QueryRunnerOptions } from 'app/features/dashboard/state/PanelQueryRunner';
+import { QueryRunnerOptions } from 'app/features/query/state/PanelQueryRunner';
 import { DashboardQuery, SHARED_DASHBODARD_QUERY } from './types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { LoadingState, DefaultTimeRange, DataQuery, PanelData, DataSourceApi, DataQueryRequest } from '@grafana/data';
+import {
+  DataQuery,
+  DataQueryRequest,
+  DataSourceApi,
+  getDefaultTimeRange,
+  LoadingState,
+  PanelData,
+} from '@grafana/data';
 
 export function isSharedDashboardQuery(datasource: string | DataSourceApi | null) {
   if (!datasource) {
@@ -17,7 +24,7 @@ export function isSharedDashboardQuery(datasource: string | DataSourceApi | null
 }
 
 export function runSharedRequest(options: QueryRunnerOptions): Observable<PanelData> {
-  return new Observable<PanelData>(subscriber => {
+  return new Observable<PanelData>((subscriber) => {
     const dashboard = getDashboardSrv().getCurrent();
     const listenToPanelId = getPanelIdFromQuery(options.queries);
 
@@ -72,6 +79,6 @@ function getQueryError(msg: string): PanelData {
     series: [],
     request: {} as DataQueryRequest,
     error: { message: msg },
-    timeRange: DefaultTimeRange,
+    timeRange: getDefaultTimeRange(),
   };
 }

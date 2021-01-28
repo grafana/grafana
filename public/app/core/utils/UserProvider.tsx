@@ -73,7 +73,7 @@ export class UserProvider extends PureComponent<Props, State> {
     },
   };
 
-  componentWillMount() {
+  UNSAFE_componentWillMount() {
     if (this.props.userId) {
       this.loadUser();
     }
@@ -172,7 +172,7 @@ export class UserProvider extends PureComponent<Props, State> {
     await getBackendSrv()
       .put('/api/user', payload)
       .then(this.loadUser)
-      .catch(e => console.error(e))
+      .catch((e) => console.error(e))
       .finally(() => {
         this.setState({ loadingStates: { ...this.state.loadingStates, updateUserProfile: false } });
       });

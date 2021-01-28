@@ -124,6 +124,11 @@ export function splitOpen<T extends DataQuery = any>(options?: {
       rightState.tableResult = null;
       rightState.queryKeys = [];
       urlState.queries = [];
+      rightState.showLogs = false;
+      rightState.showMetrics = false;
+      rightState.showNodeGraph = false;
+      rightState.showTrace = false;
+      rightState.showTable = false;
       if (options.range) {
         urlState.range = options.range.raw;
         // This is super hacky. In traces to logs we want to create a link but also internally open split window.
@@ -147,7 +152,7 @@ export function splitOpen<T extends DataQuery = any>(options?: {
         } as DataQuery,
       ];
 
-      const dataSourceSettings = getDatasourceSrv().getDataSourceSettingsByUid(options.datasourceUid);
+      const dataSourceSettings = getDatasourceSrv().getInstanceSettings(options.datasourceUid);
 
       await dispatch(changeDatasource(ExploreId.right, dataSourceSettings!.name));
       await dispatch(setQueriesAction({ exploreId: ExploreId.right, queries }));
@@ -165,7 +170,7 @@ export function splitOpen<T extends DataQuery = any>(options?: {
  * Close the split view and save URL state.
  */
 export function splitClose(itemId: ExploreId): ThunkResult<void> {
-  return dispatch => {
+  return (dispatch) => {
     dispatch(splitCloseAction({ itemId }));
     dispatch(stateSave());
   };
@@ -182,7 +187,7 @@ export const navigateToExplore = (
   panel: PanelModel,
   dependencies: NavigateToExploreDependencies
 ): ThunkResult<void> => {
-  return async dispatch => {
+  return async (dispatch) => {
     const { getDataSourceSrv, getTimeSrv, getExploreUrl, openInNewWindow } = dependencies;
     const datasourceSrv = getDataSourceSrv();
     const datasource = await datasourceSrv.get(panel.datasource);

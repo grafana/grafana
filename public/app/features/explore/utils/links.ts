@@ -1,7 +1,17 @@
-import { Field, LinkModel, TimeRange, mapInternalLinkToExplore } from '@grafana/data';
+import { useCallback } from 'react';
+import {
+  Field,
+  LinkModel,
+  TimeRange,
+  mapInternalLinkToExplore,
+  InterpolateFunction,
+  ScopedVars,
+  DataFrame,
+  getFieldDisplayValuesProxy,
+} from '@grafana/data';
+import { config, getTemplateSrv } from '@grafana/runtime';
+import { SplitOpen } from 'app/types/explore';
 import { getLinkSrv } from '../../panel/panellinks/link_srv';
-import { getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
-import { splitOpen } from '../state/main';
 
 /**
  * Get links from the field of a dataframe and in addition check if there is associated
@@ -10,13 +20,16 @@ import { splitOpen } from '../state/main';
  * appropriately. This is for example used for transition from log with traceId to trace datasource to show that
  * trace.
  */
-export const getFieldLinksForExplore = (
-  field: Field,
-  rowIndex: number,
-  splitOpenFn: typeof splitOpen,
-  range: TimeRange
-): Array<LinkModel<Field>> => {
-  const scopedVars: any = {};
+export const getFieldLinksForExplore = (options: {
+  field: Field;
+  rowIndex: number;
+  splitOpenFn?: SplitOpen;
+  range: TimeRange;
+  vars?: ScopedVars;
+  dataFrame?: DataFrame;
+}): Array<LinkModel<Field>> => {
+  const { field, vars, splitOpenFn, range, rowIndex, dataFrame } = options;
+  const scopedVars: any = { ...(vars || {}) };
   scopedVars['__value'] = {
     value: {
       raw: field.values.get(rowIndex),
@@ -24,19 +37,40 @@ export const getFieldLinksForExplore = (
     text: 'Raw value',
   };
 
+  // If we have a dataFrame we can allow referencing other columns and their values in the interpolation.
+  if (dataFrame) {
+    scopedVars['__data'] = {
+      value: {
+        name: dataFrame.name,
+        refId: dataFrame.refId,
+        fields: getFieldDisplayValuesProxy(dataFrame, rowIndex, {
+          theme: config.theme,
+        }),
+      },
+      text: 'Data',
+    };
+  }
+
   return field.config.links
-    ? field.config.links.map(link => {
+    ? field.config.links.map((link) => {
         if (!link.internal) {
-          const linkModel = getLinkSrv().getDataLinkUIModel(link, scopedVars, field);
+          const replace: InterpolateFunction = (value, vars) =>
+            getTemplateSrv().replace(value, { ...vars, ...scopedVars });
+
+          const linkModel = getLinkSrv().getDataLinkUIModel(link, replace, field);
           if (!linkModel.title) {
             linkModel.title = getTitleFromHref(linkModel.href);
           }
           return linkModel;
         } else {
-          return mapInternalLinkToExplore(link, scopedVars, range, field, {
+          return mapInternalLinkToExplore({
+            link,
+            internalLink: link.internal,
+            scopedVars: scopedVars,
+            range,
+            field,
             onClickFn: splitOpenFn,
             replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
-            getDataSourceSettingsByUid: getDataSourceSrv().getDataSourceSettingsByUid.bind(getDataSourceSrv()),
           });
         }
       })
@@ -58,4 +92,30 @@ function getTitleFromHref(href: string): string {
     title = href;
   }
   return title;
+}
+
+/**
+ * Hook that returns a function that can be used to retrieve all the links for a row. This returns all the links from
+ * all the fields so is useful for visualisation where the whole row is represented as single clickable item like a
+ * service map.
+ */
+export function useLinks(range: TimeRange, splitOpenFn?: SplitOpen) {
+  return useCallback(
+    (dataFrame: DataFrame, rowIndex: number) => {
+      return dataFrame.fields.flatMap((f) => {
+        if (f.config?.links && f.config?.links.length) {
+          return getFieldLinksForExplore({
+            field: f,
+            rowIndex: rowIndex,
+            range,
+            dataFrame,
+            splitOpenFn,
+          });
+        } else {
+          return [];
+        }
+      });
+    },
+    [range, splitOpenFn]
+  );
 }

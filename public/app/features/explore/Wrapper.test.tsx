@@ -29,7 +29,9 @@ type Mock = jest.Mock;
 jest.mock('react-virtualized-auto-sizer', () => {
   return {
     __esModule: true,
-    default: (props: any) => <div>{props.children({ width: 1000 })}</div>,
+    default(props: any) {
+      return <div>{props.children({ width: 1000 })}</div>;
+    },
   };
 });
 
@@ -72,6 +74,12 @@ describe('Wrapper', () => {
     expect(store.getState().location.query).toEqual({
       orgId: '1',
       ...query,
+    });
+
+    expect(store.getState().explore.richHistory[0]).toMatchObject({
+      datasourceId: '1',
+      datasourceName: 'loki',
+      queries: [{ expr: '{ label="value"}' }],
     });
 
     // We called the data source query method once
@@ -125,13 +133,19 @@ describe('Wrapper', () => {
   });
 
   it('handles changing the datasource manually', async () => {
-    const { datasources } = setup();
+    const query = { left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]) };
+    const { datasources } = setup({ query });
+    (datasources.loki.query as Mock).mockReturnValueOnce(makeLogsQueryResponse());
     // Wait for rendering the editor
     await screen.findByText(/Editor/i);
     await changeDatasource('elastic');
 
     await screen.findByText('elastic Editor input:');
     expect(datasources.elastic.query).not.toBeCalled();
+    expect(store.getState().location.query).toEqual({
+      orgId: '1',
+      left: JSON.stringify(['now-1h', 'now', 'elastic', {}]),
+    });
   });
 
   it('opens the split pane', async () => {
@@ -214,17 +228,22 @@ function setup(options?: SetupOptions): { datasources: { [name: string]: DataSou
   window.localStorage.clear();
 
   // Create this here so any mocks are recreated on setup and don't retain state
-  const defaultDatasources: DatasourceSetup[] = [makeDatasourceSetup(), makeDatasourceSetup({ name: 'elastic' })];
+  const defaultDatasources: DatasourceSetup[] = [
+    makeDatasourceSetup(),
+    makeDatasourceSetup({ name: 'elastic', id: 2 }),
+  ];
 
   const dsSettings = options?.datasources || defaultDatasources;
 
   setDataSourceSrv({
-    getExternal(): DataSourceInstanceSettings[] {
-      return dsSettings.map(d => d.settings);
+    getList(): DataSourceInstanceSettings[] {
+      return dsSettings.map((d) => d.settings);
     },
-
+    getInstanceSettings(name: string) {
+      return dsSettings.map((d) => d.settings).find((x) => x.name === name);
+    },
     get(name?: string | null, scopedVars?: ScopedVars): Promise<DataSourceApi> {
-      return Promise.resolve((name ? dsSettings.find(d => d.api.name === name) : dsSettings[0])!.api);
+      return Promise.resolve((name ? dsSettings.find((d) => d.api.name === name) : dsSettings[0])!.api);
     },
   } as any);
 
@@ -254,21 +273,21 @@ function setup(options?: SetupOptions): { datasources: { [name: string]: DataSou
       <Wrapper />
     </Provider>
   );
-  return { datasources: fromPairs(dsSettings.map(d => [d.api.name, d.api])), store };
+  return { datasources: fromPairs(dsSettings.map((d) => [d.api.name, d.api])), store };
 }
 
-function makeDatasourceSetup({ name = 'loki' }: { name?: string } = {}): DatasourceSetup {
+function makeDatasourceSetup({ name = 'loki', id = 1 }: { name?: string; id?: number } = {}): DatasourceSetup {
   const meta: any = {
     info: {
       logos: {
         small: '',
       },
     },
-    id: '1',
+    id: id.toString(),
   };
   return {
     settings: {
-      id: 1,
+      id,
       uid: name,
       type: 'logs',
       name,
@@ -277,11 +296,13 @@ function makeDatasourceSetup({ name = 'loki' }: { name?: string } = {}): Datasou
     },
     api: {
       components: {
-        QueryEditor: (props: QueryEditorProps<LokiDatasource, LokiQuery>) => (
-          <div>
-            {name} Editor input: {props.query.expr}
-          </div>
-        ),
+        QueryEditor(props: QueryEditorProps<LokiDatasource, LokiQuery>) {
+          return (
+            <div>
+              {name} Editor input: {props.query.expr}
+            </div>
+          );
+        },
       },
       name: name,
       query: jest.fn(),

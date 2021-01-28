@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func (ss *SqlStore) addUserQueryAndCommandHandlers() {
+func (ss *SQLStore) addUserQueryAndCommandHandlers() {
 	ss.Bus.AddHandler(ss.GetSignedInUserWithCache)
 
 	bus.AddHandler("sql", GetUserById)
@@ -55,6 +55,140 @@ func getOrgIdForNewUser(sess *DBSession, cmd *models.CreateUserCommand) (int64, 
 	}
 
 	return getOrCreateOrg(sess, orgName)
+}
+
+type userCreationArgs struct {
+	Login          string
+	Email          string
+	Name           string
+	Company        string
+	Password       string
+	IsAdmin        bool
+	IsDisabled     bool
+	EmailVerified  bool
+	OrgID          int64
+	OrgName        string
+	DefaultOrgRole string
+}
+
+func (ss *SQLStore) getOrgIDForNewUser(sess *DBSession, args userCreationArgs) (int64, error) {
+	if ss.Cfg.AutoAssignOrg && args.OrgID != 0 {
+		if err := verifyExistingOrg(sess, args.OrgID); err != nil {
+			return -1, err
+		}
+		return args.OrgID, nil
+	}
+
+	orgName := args.OrgName
+	if orgName == "" {
+		orgName = util.StringsFallback2(args.Email, args.Login)
+	}
+
+	return ss.getOrCreateOrg(sess, orgName)
+}
+
+// createUser creates a user in the database.
+func (ss *SQLStore) createUser(ctx context.Context, args userCreationArgs, skipOrgSetup bool) (models.User, error) {
+	var user models.User
+	if err := inTransactionWithRetryCtx(ctx, ss.engine, func(sess *DBSession) error {
+		var orgID int64 = -1
+		if !skipOrgSetup {
+			var err error
+			orgID, err = ss.getOrgIDForNewUser(sess, args)
+			if err != nil {
+				return err
+			}
+		}
+
+		if args.Email == "" {
+			args.Email = args.Login
+		}
+
+		exists, err := sess.Where("email=? OR login=?", args.Email, args.Login).Get(&models.User{})
+		if err != nil {
+			return err
+		}
+		if exists {
+			return models.ErrUserAlreadyExists
+		}
+
+		// create user
+		user = models.User{
+			Email:         args.Email,
+			Name:          args.Name,
+			Login:         args.Login,
+			Company:       args.Company,
+			IsAdmin:       args.IsAdmin,
+			IsDisabled:    args.IsDisabled,
+			OrgId:         orgID,
+			EmailVerified: args.EmailVerified,
+			Created:       time.Now(),
+			Updated:       time.Now(),
+			LastSeenAt:    time.Now().AddDate(-10, 0, 0),
+		}
+
+		salt, err := util.GetRandomString(10)
+		if err != nil {
+			return err
+		}
+		user.Salt = salt
+		rands, err := util.GetRandomString(10)
+		if err != nil {
+			return err
+		}
+		user.Rands = rands
+
+		if len(args.Password) > 0 {
+			encodedPassword, err := util.EncodePassword(args.Password, user.Salt)
+			if err != nil {
+				return err
+			}
+			user.Password = encodedPassword
+		}
+
+		sess.UseBool("is_admin")
+
+		if _, err := sess.Insert(&user); err != nil {
+			return err
+		}
+
+		sess.publishAfterCommit(&events.UserCreated{
+			Timestamp: user.Created,
+			Id:        user.Id,
+			Name:      user.Name,
+			Login:     user.Login,
+			Email:     user.Email,
+		})
+
+		// create org user link
+		if !skipOrgSetup {
+			orgUser := models.OrgUser{
+				OrgId:   orgID,
+				UserId:  user.Id,
+				Role:    models.ROLE_ADMIN,
+				Created: time.Now(),
+				Updated: time.Now(),
+			}
+
+			if ss.Cfg.AutoAssignOrg && !user.IsAdmin {
+				if len(args.DefaultOrgRole) > 0 {
+					orgUser.Role = models.RoleType(args.DefaultOrgRole)
+				} else {
+					orgUser.Role = models.RoleType(ss.Cfg.AutoAssignOrgRole)
+				}
+			}
+
+			if _, err = sess.Insert(&orgUser); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}, 0); err != nil {
+		return user, err
+	}
+
+	return user, nil
 }
 
 func CreateUser(ctx context.Context, cmd *models.CreateUserCommand) error {
@@ -360,7 +494,7 @@ func newSignedInUserCacheKey(orgID, userID int64) string {
 	return fmt.Sprintf("signed-in-user-%d-%d", userID, orgID)
 }
 
-func (ss *SqlStore) GetSignedInUserWithCache(query *models.GetSignedInUserQuery) error {
+func (ss *SQLStore) GetSignedInUserWithCache(query *models.GetSignedInUserQuery) error {
 	cacheKey := newSignedInUserCacheKey(query.OrgId, query.UserId)
 	if cached, found := ss.CacheService.Get(cacheKey); found {
 		query.Result = cached.(*models.SignedInUser)
@@ -383,7 +517,7 @@ func GetSignedInUser(query *models.GetSignedInUserQuery) error {
 		orgId = strconv.FormatInt(query.OrgId, 10)
 	}
 
-	var rawSql = `SELECT
+	var rawSQL = `SELECT
 		u.id             as user_id,
 		u.is_admin       as is_grafana_admin,
 		u.email          as email,
@@ -402,11 +536,11 @@ func GetSignedInUser(query *models.GetSignedInUserQuery) error {
 	sess := x.Table("user")
 	switch {
 	case query.UserId > 0:
-		sess.SQL(rawSql+"WHERE u.id=?", query.UserId)
+		sess.SQL(rawSQL+"WHERE u.id=?", query.UserId)
 	case query.Login != "":
-		sess.SQL(rawSql+"WHERE u.login=?", query.Login)
+		sess.SQL(rawSQL+"WHERE u.login=?", query.Login)
 	case query.Email != "":
-		sess.SQL(rawSql+"WHERE u.email=?", query.Email)
+		sess.SQL(rawSQL+"WHERE u.email=?", query.Email)
 	}
 
 	var user models.SignedInUser

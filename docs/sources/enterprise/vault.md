@@ -2,9 +2,6 @@
 title = "Vault"
 description = ""
 keywords = ["grafana", "vault", "configuration"]
-type = "docs"
-[menu.docs]
-parent = "enterprise"
 weight = 700
 +++
 
@@ -76,7 +73,7 @@ authorized user. Grafana supports a subset of these which are most likely to be 
 #### Key/Value
 
 Grafana supports Vault's [K/V version 2](https://www.vaultproject.io/docs/secrets/kv/kv-v2) storage engine which
-is used to store and retrieve arbitrary secrets as `kv`. 
+is used to store and retrieve arbitrary secrets as `kv`.
 
 ```ini
 $__vault{kv:secret/grafana/smtp:username}

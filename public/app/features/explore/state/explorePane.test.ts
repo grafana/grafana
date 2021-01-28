@@ -1,5 +1,5 @@
 import { PayloadAction } from '@reduxjs/toolkit';
-import { DataQuery, DefaultTimeZone, ExploreUrlState, LogsDedupStrategy, toUtc, EventBusExtended } from '@grafana/data';
+import { DataQuery, DefaultTimeZone, EventBusExtended, ExploreUrlState, LogsDedupStrategy, toUtc } from '@grafana/data';
 import { ExploreId, ExploreItemState, ExploreUpdateState } from 'app/types';
 import { thunkTester } from 'test/core/thunk/thunkTester';
 import {
@@ -10,26 +10,9 @@ import {
   refreshExplore,
 } from './explorePane';
 import { setQueriesAction } from './query';
-import * as DatasourceSrv from 'app/features/plugins/datasource_srv';
-import { makeExplorePaneState } from './utils';
+import { makeExplorePaneState, makeInitialUpdateState } from './utils';
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
-
-jest.mock('app/features/plugins/datasource_srv');
-const getDatasourceSrvMock = (DatasourceSrv.getDatasourceSrv as any) as jest.Mock<DatasourceSrv.DatasourceSrv>;
-
-beforeEach(() => {
-  getDatasourceSrvMock.mockClear();
-  getDatasourceSrvMock.mockImplementation(
-    () =>
-      ({
-        getExternal: jest.fn().mockReturnValue([]),
-        get: jest.fn().mockReturnValue({
-          testDatasource: jest.fn(),
-          init: jest.fn(),
-        }),
-      } as any)
-  );
-});
+import { setDataSourceSrv } from '@grafana/runtime';
 
 jest.mock('../../dashboard/services/TimeSrv', () => ({
   getTimeSrv: jest.fn().mockReturnValue({
@@ -46,6 +29,21 @@ const testRange = {
     to: t,
   },
 };
+
+setDataSourceSrv({
+  getList() {
+    return [];
+  },
+  getInstanceSettings(name: string) {
+    return { name: 'hello' };
+  },
+  get() {
+    return Promise.resolve({
+      testDatasource: jest.fn(),
+      init: jest.fn(),
+    });
+  },
+} as any);
 
 const setup = (updateOverides?: Partial<ExploreUpdateState>) => {
   const exploreId = ExploreId.left;
@@ -99,7 +97,7 @@ describe('refreshExplore', () => {
           .givenThunk(refreshExplore)
           .whenThunkIsDispatched(exploreId);
 
-        const initializeExplore = dispatchedActions.find(action => action.type === initializeExploreAction.type);
+        const initializeExplore = dispatchedActions.find((action) => action.type === initializeExploreAction.type);
         const { type, payload } = initializeExplore as PayloadAction<InitializeExplorePayload>;
 
         expect(type).toEqual(initializeExploreAction.type);
@@ -153,7 +151,7 @@ describe('Explore pane reducer', () => {
             changeDedupStrategyAction({ exploreId: ExploreId.left, dedupStrategy: LogsDedupStrategy.exact })
           )
           .thenStateShouldEqual({
-            ...makeExplorePaneState(),
+            ...initialState,
             dedupStrategy: LogsDedupStrategy.exact,
           });
       });

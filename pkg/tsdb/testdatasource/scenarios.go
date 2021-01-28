@@ -237,7 +237,10 @@ func init() {
 			series := newSeriesForQuery(query, 0)
 			startTime := context.TimeRange.GetFromAsMsEpoch()
 			endTime := context.TimeRange.GetToAsMsEpoch()
-			step := (endTime - startTime) / int64(len(values)-1)
+			var step int64 = 0
+			if len(values) > 1 {
+				step = (endTime - startTime) / int64(len(values)-1)
+			}
 
 			for _, val := range values {
 				series.Points = append(series.Points, tsdb.TimePoint{val, null.FloatFrom(float64(startTime))})
@@ -419,6 +422,12 @@ func init() {
 			queryRes.Tables = append(queryRes.Tables, &table)
 			return queryRes
 		},
+	})
+
+	registerScenario(&Scenario{
+		Id:   "node_graph",
+		Name: "Node Graph",
+		// Data generated in JS
 	})
 }
 

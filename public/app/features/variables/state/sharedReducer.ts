@@ -4,7 +4,7 @@ import { default as lodashDefaults } from 'lodash/defaults';
 
 import { LoadingState, VariableType } from '@grafana/data';
 import { VariableModel, VariableOption, VariableWithOptions } from '../types';
-import { AddVariable, getInstanceState, NEW_VARIABLE_ID, VariablePayload } from './types';
+import { AddVariable, getInstanceState, VariablePayload } from './types';
 import { variableAdapters } from '../adapters';
 import { changeVariableNameSucceeded } from '../editor/reducer';
 import { initialVariablesState, VariablesState } from './variablesReducer';
@@ -16,8 +16,11 @@ const sharedReducerSlice = createSlice({
   reducers: {
     addVariable: (state: VariablesState, action: PayloadAction<VariablePayload<AddVariable>>) => {
       const id = action.payload.id ?? action.payload.data.model.name; // for testing purposes we can call this with an id
-      const initialState = cloneDeep(variableAdapters.get(action.payload.type).initialState);
-      const model = cloneDeep(action.payload.data.model);
+      const adapter = variableAdapters.get(action.payload.type);
+      const initialState = cloneDeep(adapter.initialState);
+      const model = adapter.beforeAdding
+        ? adapter.beforeAdding(action.payload.data.model)
+        : cloneDeep(action.payload.data.model);
 
       const variable = {
         ...lodashDefaults({}, model, initialState),
@@ -84,9 +87,9 @@ const sharedReducerSlice = createSlice({
       state: VariablesState,
       action: PayloadAction<VariablePayload<{ fromIndex: number; toIndex: number }>>
     ) => {
-      const variables = Object.values(state).map(s => s);
-      const fromVariable = variables.find(v => v.index === action.payload.data.fromIndex);
-      const toVariable = variables.find(v => v.index === action.payload.data.toIndex);
+      const variables = Object.values(state).map((s) => s);
+      const fromVariable = variables.find((v) => v.index === action.payload.data.fromIndex);
+      const toVariable = variables.find((v) => v.index === action.payload.data.toIndex);
 
       if (fromVariable) {
         state[fromVariable.id].index = action.payload.data.toIndex;
@@ -95,16 +98,6 @@ const sharedReducerSlice = createSlice({
       if (toVariable) {
         state[toVariable.id].index = action.payload.data.fromIndex;
       }
-    },
-    storeNewVariable: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
-      const id = action.payload.id;
-      const emptyVariable = cloneDeep<VariableModel>(state[NEW_VARIABLE_ID]);
-      state[id] = {
-        ...cloneDeep(variableAdapters.get(action.payload.type).initialState),
-        ...emptyVariable,
-        id,
-        index: emptyVariable.index,
-      };
     },
     changeVariableType: (state: VariablesState, action: PayloadAction<VariablePayload<{ newType: VariableType }>>) => {
       const { id } = action.payload;
@@ -130,7 +123,7 @@ const sharedReducerSlice = createSlice({
       const current = { ...action.payload.data.option };
 
       instanceState.current = current;
-      instanceState.options = instanceState.options.map(option => {
+      instanceState.options = instanceState.options.map((option) => {
         let selected = false;
         if (Array.isArray(current.value)) {
           for (let index = 0; index < current.value.length; index++) {
@@ -153,7 +146,7 @@ const sharedReducerSlice = createSlice({
           return all;
         }, {});
 
-        instanceState.tags = instanceState.tags.map(t => {
+        instanceState.tags = instanceState.tags.map((t) => {
           const text = t.text.toString();
           t.selected = selected[text];
           return t;
@@ -168,7 +161,7 @@ const sharedReducerSlice = createSlice({
       (instanceState as Record<string, any>)[action.payload.data.propName] = action.payload.data.propValue;
     },
   },
-  extraReducers: builder =>
+  extraReducers: (builder) =>
     builder.addCase(changeVariableNameSucceeded, (state, action) => {
       const instanceState = getInstanceState(state, action.payload.id);
       instanceState.name = action.payload.data.newName;
@@ -182,7 +175,6 @@ export const {
   addVariable,
   changeVariableProp,
   changeVariableOrder,
-  storeNewVariable,
   duplicateVariable,
   setCurrentVariableValue,
   changeVariableType,

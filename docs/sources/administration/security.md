@@ -2,12 +2,7 @@
 title = "Security"
 description = "Security Docs"
 keywords = ["grafana", "security", "documentation"]
-type = "docs"
 aliases = ["/docs/grafana/latest/installation/security/"]
-[menu.docs]
-name = "Security"
-identifier = "security"
-parent = "admin"
 weight = 500
 +++
 
@@ -23,7 +18,7 @@ You can configure Grafana to only allow certain IP addresses or hostnames to be 
 
 ## Firewall rules
 
-Configure a firewall to restrict Grafana from making network requests to sensitive internal web services. 
+Configure a firewall to restrict Grafana from making network requests to sensitive internal web services.
 
 There are many firewall tools available, refer to the documentation for your specific security tool. For example, Linux users can use [iptables](https://en.wikipedia.org/wiki/Iptables).
 

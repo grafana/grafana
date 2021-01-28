@@ -68,7 +68,7 @@ export class AppConfigCtrlWrapper extends PureComponent<Props, State> {
 
     return (
       <div>
-        <div ref={element => (this.element = element)} />
+        <div ref={(element) => (this.element = element)} />
         <br />
         <br />
         {model && (
@@ -115,7 +115,7 @@ export class AppConfigCtrlWrapper extends PureComponent<Props, State> {
         return getBackendSrv().post(`/api/plugins/${pluginId}/settings`, updateCmd);
       })
       .then(this.postUpdateHook)
-      .then(res => {
+      .then((res) => {
         window.location.href = window.location.href;
       });
   };

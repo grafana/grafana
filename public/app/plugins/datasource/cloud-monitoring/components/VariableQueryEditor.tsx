@@ -1,10 +1,26 @@
 import React, { PureComponent } from 'react';
-import { VariableQueryProps } from 'app/types/plugins';
 import { SimpleSelect } from './';
 import { extractServicesFromMetricDescriptors, getLabelKeys, getMetricTypes } from '../functions';
-import { MetricFindQueryTypes, VariableQueryData } from '../types';
+import {
+  CloudMonitoringOptions,
+  CloudMonitoringQuery,
+  CloudMonitoringVariableQuery,
+  MetricDescriptor,
+  MetricFindQueryTypes,
+  VariableQueryData,
+} from '../types';
+import CloudMonitoringDatasource from '../datasource';
+import { getTemplateSrv } from '@grafana/runtime';
+import { QueryEditorProps } from '@grafana/data';
 
-export class CloudMonitoringVariableQueryEditor extends PureComponent<VariableQueryProps, VariableQueryData> {
+export type Props = QueryEditorProps<
+  CloudMonitoringDatasource,
+  CloudMonitoringQuery,
+  CloudMonitoringOptions,
+  CloudMonitoringVariableQuery
+>;
+
+export class CloudMonitoringVariableQueryEditor extends PureComponent<Props, VariableQueryData> {
   queryTypes: Array<{ value: string; name: string }> = [
     { value: MetricFindQueryTypes.Projects, name: 'Projects' },
     { value: MetricFindQueryTypes.Services, name: 'Services' },
@@ -36,7 +52,7 @@ export class CloudMonitoringVariableQueryEditor extends PureComponent<VariableQu
     loading: true,
   };
 
-  constructor(props: VariableQueryProps) {
+  constructor(props: Props) {
     super(props);
     this.state = Object.assign(
       this.defaults,
@@ -46,7 +62,7 @@ export class CloudMonitoringVariableQueryEditor extends PureComponent<VariableQu
   }
 
   async componentDidMount() {
-    const projects = await this.props.datasource.getProjects();
+    const projects = (await this.props.datasource.getProjects()) as MetricDescriptor[];
     const metricDescriptors = await this.props.datasource.getMetricTypes(
       this.props.query.projectName || this.props.datasource.getDefaultProject()
     );
@@ -56,7 +72,7 @@ export class CloudMonitoringVariableQueryEditor extends PureComponent<VariableQu
     }));
 
     let selectedService = '';
-    if (services.some(s => s.value === this.props.templateSrv.replace(this.state.selectedService))) {
+    if (services.some((s) => s.value === getTemplateSrv().replace(this.state.selectedService))) {
       selectedService = this.state.selectedService;
     } else if (services && services.length > 0) {
       selectedService = services[0].value;
@@ -65,8 +81,8 @@ export class CloudMonitoringVariableQueryEditor extends PureComponent<VariableQu
     const { metricTypes, selectedMetricType } = getMetricTypes(
       metricDescriptors,
       this.state.selectedMetricType,
-      this.props.templateSrv.replace(this.state.selectedMetricType),
-      this.props.templateSrv.replace(selectedService)
+      getTemplateSrv().replace(this.state.selectedMetricType),
+      getTemplateSrv().replace(selectedService)
     );
 
     const sloServices = await this.props.datasource.getSLOServices(this.state.projectName);
@@ -87,8 +103,7 @@ export class CloudMonitoringVariableQueryEditor extends PureComponent<VariableQu
 
   onPropsChange = () => {
     const { metricDescriptors, labels, metricTypes, services, ...queryModel } = this.state;
-    const query = this.queryTypes.find(q => q.value === this.state.selectedQueryType)!;
-    this.props.onChange(queryModel, `Google Cloud Monitoring - ${query.name}`);
+    this.props.onChange({ ...queryModel, refId: 'CloudMonitoringVariableQueryEditor-VariableQuery' });
   };
 
   async onQueryTypeChange(queryType: string) {
@@ -106,8 +121,8 @@ export class CloudMonitoringVariableQueryEditor extends PureComponent<VariableQu
     const { metricTypes, selectedMetricType } = getMetricTypes(
       metricDescriptors,
       this.state.selectedMetricType,
-      this.props.templateSrv.replace(this.state.selectedMetricType),
-      this.props.templateSrv.replace(this.state.selectedService)
+      getTemplateSrv().replace(this.state.selectedMetricType),
+      getTemplateSrv().replace(this.state.selectedService)
     );
 
     const sloServices = await this.props.datasource.getSLOServices(projectName);
@@ -126,8 +141,8 @@ export class CloudMonitoringVariableQueryEditor extends PureComponent<VariableQu
     const { metricTypes, selectedMetricType } = getMetricTypes(
       this.state.metricDescriptors,
       this.state.selectedMetricType,
-      this.props.templateSrv.replace(this.state.selectedMetricType),
-      this.props.templateSrv.replace(service)
+      getTemplateSrv().replace(this.state.selectedMetricType),
+      getTemplateSrv().replace(service)
     );
     const state: any = {
       selectedService: service,
@@ -150,7 +165,7 @@ export class CloudMonitoringVariableQueryEditor extends PureComponent<VariableQu
     this.setState({ labelKey }, () => this.onPropsChange());
   }
 
-  componentDidUpdate(prevProps: Readonly<VariableQueryProps>, prevState: Readonly<VariableQueryData>) {
+  componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<VariableQueryData>) {
     const selecQueryTypeChanged = prevState.selectedQueryType !== this.state.selectedQueryType;
     const selectSLOServiceChanged = this.state.selectedSLOService !== prevState.selectedSLOService;
     if (selecQueryTypeChanged || selectSLOServiceChanged) {
@@ -162,7 +177,7 @@ export class CloudMonitoringVariableQueryEditor extends PureComponent<VariableQu
     let result = { labels: this.state.labels, labelKey: this.state.labelKey };
     if (selectedMetricType && selectedQueryType === MetricFindQueryTypes.LabelValues) {
       const labels = await getLabelKeys(this.props.datasource, selectedMetricType, projectName);
-      const labelKey = labels.some(l => l === this.props.templateSrv.replace(this.state.labelKey))
+      const labelKey = labels.some((l) => l === getTemplateSrv().replace(this.state.labelKey))
         ? this.state.labelKey
         : labels[0];
       result = { labels, labelKey };
@@ -171,10 +186,12 @@ export class CloudMonitoringVariableQueryEditor extends PureComponent<VariableQu
   }
 
   insertTemplateVariables(options: any) {
-    const templateVariables = this.props.templateSrv.getVariables().map((v: any) => ({
-      name: `$${v.name}`,
-      value: `$${v.name}`,
-    }));
+    const templateVariables = getTemplateSrv()
+      .getVariables()
+      .map((v: any) => ({
+        name: `$${v.name}`,
+        value: `$${v.name}`,
+      }));
     return [...templateVariables, ...options];
   }
 
@@ -186,13 +203,13 @@ export class CloudMonitoringVariableQueryEditor extends PureComponent<VariableQu
             <SimpleSelect
               value={this.state.projectName}
               options={this.insertTemplateVariables(this.state.projects)}
-              onValueChange={e => this.onProjectChange(e.target.value)}
+              onValueChange={(e) => this.onProjectChange(e.target.value)}
               label="Project"
             />
             <SimpleSelect
               value={this.state.selectedService}
               options={this.insertTemplateVariables(this.state.services)}
-              onValueChange={e => this.onServiceChange(e.target.value)}
+              onValueChange={(e) => this.onServiceChange(e.target.value)}
               label="Service"
             />
           </>
@@ -205,26 +222,26 @@ export class CloudMonitoringVariableQueryEditor extends PureComponent<VariableQu
             <SimpleSelect
               value={this.state.projectName}
               options={this.insertTemplateVariables(this.state.projects)}
-              onValueChange={e => this.onProjectChange(e.target.value)}
+              onValueChange={(e) => this.onProjectChange(e.target.value)}
               label="Project"
             />
             <SimpleSelect
               value={this.state.selectedService}
               options={this.insertTemplateVariables(this.state.services)}
-              onValueChange={e => this.onServiceChange(e.target.value)}
+              onValueChange={(e) => this.onServiceChange(e.target.value)}
               label="Service"
             />
             <SimpleSelect
               value={this.state.selectedMetricType}
               options={this.insertTemplateVariables(this.state.metricTypes)}
-              onValueChange={e => this.onMetricTypeChange(e.target.value)}
+              onValueChange={(e) => this.onMetricTypeChange(e.target.value)}
               label="Metric Type"
             />
             {queryType === MetricFindQueryTypes.LabelValues && (
               <SimpleSelect
                 value={this.state.labelKey}
-                options={this.insertTemplateVariables(this.state.labels.map(l => ({ value: l, name: l })))}
-                onValueChange={e => this.onLabelKeyChange(e.target.value)}
+                options={this.insertTemplateVariables(this.state.labels.map((l) => ({ value: l, name: l })))}
+                onValueChange={(e) => this.onLabelKeyChange(e.target.value)}
                 label="Label Key"
               />
             )}
@@ -237,13 +254,13 @@ export class CloudMonitoringVariableQueryEditor extends PureComponent<VariableQu
             <SimpleSelect
               value={this.state.selectedService}
               options={this.insertTemplateVariables(this.state.services)}
-              onValueChange={e => this.onServiceChange(e.target.value)}
+              onValueChange={(e) => this.onServiceChange(e.target.value)}
               label="Service"
             />
             <SimpleSelect
               value={this.state.selectedMetricType}
               options={this.insertTemplateVariables(this.state.metricTypes)}
-              onValueChange={e => this.onMetricTypeChange(e.target.value)}
+              onValueChange={(e) => this.onMetricTypeChange(e.target.value)}
               label="Metric Type"
             />
           </>
@@ -254,7 +271,7 @@ export class CloudMonitoringVariableQueryEditor extends PureComponent<VariableQu
             <SimpleSelect
               value={this.state.projectName}
               options={this.insertTemplateVariables(this.state.projects)}
-              onValueChange={e => this.onProjectChange(e.target.value)}
+              onValueChange={(e) => this.onProjectChange(e.target.value)}
               label="Project"
             />
           </>
@@ -266,13 +283,13 @@ export class CloudMonitoringVariableQueryEditor extends PureComponent<VariableQu
             <SimpleSelect
               value={this.state.projectName}
               options={this.insertTemplateVariables(this.state.projects)}
-              onValueChange={e => this.onProjectChange(e.target.value)}
+              onValueChange={(e) => this.onProjectChange(e.target.value)}
               label="Project"
             />
             <SimpleSelect
               value={this.state.selectedSLOService}
               options={this.insertTemplateVariables(this.state.sloServices)}
-              onValueChange={e => {
+              onValueChange={(e) => {
                 this.setState({
                   ...this.state,
                   selectedSLOService: e.target.value,
@@ -306,7 +323,7 @@ export class CloudMonitoringVariableQueryEditor extends PureComponent<VariableQu
         <SimpleSelect
           value={this.state.selectedQueryType}
           options={this.queryTypes}
-          onValueChange={e => this.onQueryTypeChange(e.target.value)}
+          onValueChange={(e) => this.onQueryTypeChange(e.target.value)}
           label="Query Type"
         />
         {this.renderQueryTypeSwitch(this.state.selectedQueryType)}

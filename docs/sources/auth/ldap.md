@@ -2,12 +2,7 @@
 title = "LDAP Authentication"
 description = "Grafana LDAP Authentication Guide "
 keywords = ["grafana", "configuration", "documentation", "ldap", "active directory"]
-type = "docs"
 aliases = ["/docs/grafana/latest/installation/ldap/"]
-[menu.docs]
-name = "LDAP"
-identifier = "ldap"
-parent = "authentication"
 weight = 300
 +++
 
@@ -54,9 +49,9 @@ See [configuration examples](#configuration-examples) for more information.
 host = "127.0.0.1"
 # Default port is 389 or 636 if use_ssl = true
 port = 389
-# Set to true if LDAP server supports TLS
+# Set to true if LDAP server should use an encrypted TLS connection (either with STARTTLS or LDAPS)
 use_ssl = false
-# Set to true if connect LDAP server with STARTTLS pattern (create connection in insecure, then upgrade to secure connection with TLS)
+# If set to true, use LDAP with STARTTLS instead of LDAPS
 start_tls = false
 # set to true if you want to skip SSL cert validation
 ssl_skip_verify = false
@@ -85,9 +80,6 @@ search_base_dns = ["dc=grafana,dc=org"]
 
 # Specify names of the LDAP attributes your LDAP uses
 [servers.attributes]
-name = "givenName"
-surname = "sn"
-username = "cn"
 member_of = "memberOf"
 email =  "email"
 ```
@@ -105,7 +97,7 @@ bind_password = "${LDAP_ADMIN_PASSWORD}"
 > Only available in Grafana v6.4+
 
 Grafana has an LDAP debug view built-in which allows you to test your LDAP configuration directly within Grafana. At the moment of writing, only Grafana admins can use the LDAP debug view.
- 
+
 Within this view, you'll be able to see which LDAP servers are currently reachable and test your current configuration.
 
 {{< docs-imagebox img="/img/docs/ldap_debug.png" class="docs-image--no-shadow" max-width="600px" >}}
@@ -243,9 +235,6 @@ search_filter = "(cn=%s)"
 search_base_dns = ["dc=grafana,dc=org"]
 
 [servers.attributes]
-name = "givenName"
-surname = "sn"
-username = "cn"
 member_of = "memberOf"
 email =  "email"
 
@@ -272,9 +261,6 @@ search_filter = "(cn=%s)"
 search_base_dns = ["ou=users,dc=grafana,dc=org"]
 
 [servers.attributes]
-name = "givenName"
-surname = "sn"
-username = "cn"
 member_of = "memberOf"
 email =  "email"
 
@@ -298,9 +284,6 @@ search_filter = "(cn=%s)"
 search_base_dns = ["ou=users,dc=grafana,dc=org"]
 
 [servers.attributes]
-name = "givenName"
-surname = "sn"
-username = "cn"
 member_of = "memberOf"
 email =  "email"
 
@@ -336,9 +319,6 @@ search_filter = "(sAMAccountName=%s)"
 search_base_dns = ["dc=corp,dc=local"]
 
 [servers.attributes]
-name = "givenName"
-surname = "sn"
-username = "sAMAccountName"
 member_of = "memberOf"
 email =  "mail"
 

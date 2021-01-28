@@ -1,31 +1,180 @@
-import { DataFrame, FieldType, getTimeField, outerJoinDataFrames, sortDataFrame } from '@grafana/data';
+import {
+  DataFrame,
+  ArrayVector,
+  NullValueMode,
+  getFieldDisplayName,
+  Field,
+  fieldMatchers,
+  FieldMatcherID,
+  FieldType,
+  FieldState,
+  DataFrameFieldIndex,
+  sortDataFrame,
+  Vector,
+} from '@grafana/data';
+import uPlot, { AlignedData, JoinNullMode } from 'uplot';
+import { XYFieldMatchers } from './GraphNG';
 
-// very time oriented for now
-export const alignAndSortDataFramesByFieldName = (data: DataFrame[], fieldName: string): DataFrame | null => {
-  if (!data.length) {
+// the results ofter passing though data
+export interface XYDimensionFields {
+  x: Field; // independent axis (cause)
+  y: Field[]; // dependent axis (effect)
+}
+
+export function mapDimesions(match: XYFieldMatchers, frame: DataFrame, frames?: DataFrame[]): XYDimensionFields {
+  let x: Field | undefined;
+  const y: Field[] = [];
+
+  for (const field of frame.fields) {
+    if (!x && match.x(field, frame, frames ?? [])) {
+      x = field;
+    }
+    if (match.y(field, frame, frames ?? [])) {
+      y.push(field);
+    }
+  }
+  return { x: x as Field, y };
+}
+
+/**
+ * Returns a single DataFrame with:
+ * - A shared time column
+ * - only numeric fields
+ *
+ * @alpha
+ */
+export function joinDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): DataFrame | null {
+  const valuesFromFrames: AlignedData[] = [];
+  const sourceFields: Field[] = [];
+  const sourceFieldsRefs: Record<number, DataFrameFieldIndex> = {};
+  const nullModes: JoinNullMode[][] = [];
+
+  // Default to timeseries config
+  if (!fields) {
+    fields = {
+      x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
+      y: fieldMatchers.get(FieldMatcherID.numeric).get({}),
+    };
+  }
+
+  for (let frameIndex = 0; frameIndex < frames.length; frameIndex++) {
+    let frame = frames[frameIndex];
+    let dims = mapDimesions(fields, frame, frames);
+
+    if (!(dims.x && dims.y.length)) {
+      continue; // no numeric and no time fields
+    }
+
+    // Quick check that x is ascending order
+    if (!isLikelyAscendingVector(dims.x.values)) {
+      const xIndex = frame.fields.indexOf(dims.x);
+      frame = sortDataFrame(frame, xIndex);
+      dims = mapDimesions(fields, frame, frames);
+    }
+
+    let nullModesFrame: JoinNullMode[] = [0];
+
+    // Add the first X axis
+    if (!sourceFields.length) {
+      sourceFields.push(dims.x);
+    }
+
+    const alignedData: AlignedData = [
+      dims.x.values.toArray(), // The x axis (time)
+    ];
+
+    for (let fieldIndex = 0; fieldIndex < frame.fields.length; fieldIndex++) {
+      const field = frame.fields[fieldIndex];
+
+      if (!fields.y(field, frame, frames)) {
+        continue;
+      }
+
+      let values = field.values.toArray();
+      let joinNullMode = field.config.custom?.spanNulls ? 0 : 2;
+
+      if (field.config.nullValueMode === NullValueMode.AsZero) {
+        values = values.map((v) => (v === null ? 0 : v));
+        joinNullMode = 0;
+      }
+
+      sourceFieldsRefs[sourceFields.length] = { frameIndex, fieldIndex };
+
+      alignedData.push(values);
+      nullModesFrame.push(joinNullMode);
+
+      // This will cache an appropriate field name in the field state
+      getFieldDisplayName(field, frame, frames);
+      sourceFields.push(field);
+    }
+
+    valuesFromFrames.push(alignedData);
+    nullModes.push(nullModesFrame);
+  }
+
+  if (valuesFromFrames.length === 0) {
     return null;
   }
 
-  // normalize time field names
-  // in each frame find first time field and rename it to unified name
-  for (let i = 0; i < data.length; i++) {
-    const series = data[i];
-    for (let j = 0; j < series.fields.length; j++) {
-      const field = series.fields[j];
-      if (field.type === FieldType.time) {
-        field.name = fieldName;
+  // do the actual alignment (outerJoin on the first arrays)
+  let joinedData = uPlot.join(valuesFromFrames, nullModes);
+
+  if (joinedData!.length !== sourceFields.length) {
+    throw new Error('outerJoinValues lost a field?');
+  }
+
+  let seriesIdx = 0;
+  // Replace the values from the outer-join field
+  return {
+    ...frames[0],
+    length: joinedData![0].length,
+    fields: joinedData!.map((vals, idx) => {
+      let state: FieldState = {
+        ...sourceFields[idx].state,
+        origin: sourceFieldsRefs[idx],
+      };
+
+      if (sourceFields[idx].type !== FieldType.time) {
+        state.seriesIndex = seriesIdx;
+        seriesIdx++;
+      }
+
+      return {
+        ...sourceFields[idx],
+        state,
+        values: new ArrayVector(vals),
+      };
+    }),
+  };
+}
+
+// Quick test if the first and last points look to be ascending
+export function isLikelyAscendingVector(data: Vector): boolean {
+  let first: any = undefined;
+
+  for (let idx = 0; idx < data.length; idx++) {
+    const v = data.get(idx);
+    if (v != null) {
+      if (first != null) {
+        if (first > v) {
+          return false; // descending
+        }
         break;
       }
+      first = v;
     }
   }
 
-  const dataFramesToPlot = data.filter(frame => {
-    let { timeIndex } = getTimeField(frame);
-    // filter out series without time index or if the time column is the only one (i.e. after transformations)
-    // won't live long as we gona move out from assuming x === time
-    return timeIndex !== undefined ? frame.fields.length > 1 : false;
-  });
+  let idx = data.length - 1;
+  while (idx >= 0) {
+    const v = data.get(idx--);
+    if (v != null) {
+      if (first > v) {
+        return false;
+      }
+      return true;
+    }
+  }
 
-  const aligned = outerJoinDataFrames(dataFramesToPlot, { byField: fieldName })[0];
-  return sortDataFrame(aligned, getTimeField(aligned).timeIndex!);
-};
+  return true; // only one non-null point
+}
