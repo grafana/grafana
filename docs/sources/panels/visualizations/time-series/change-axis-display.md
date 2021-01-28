@@ -57,6 +57,8 @@ If you have more than one Y-axis, then you can give assign different labels in t
 
 Set a fixed width of the axis. By default, Grafana dynamically calculates the width of an axis.
 
+By setting the width of the axis, data whose axes types are different can share the same display proportions. This makes it easier to compare more than one graph’s worth of data because the axes are not shifted or stretched within visual proximity of each other.
+
 ## Soft min and soft max
 
 Set a **Soft min** or **soft max** option for better control of Y-axis limits. By default, Grafana sets the range for the Y-axis automatically based on the dataset.
