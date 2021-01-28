@@ -1,24 +1,24 @@
 +++
-title = "Create bar graphs"
+title = "Graph time series as bars"
 keywords = ["grafana", "time series panel", "documentation", "guide", "graph"]
 weight = 200
 +++
 
-# Create bar graphs
+# Graph time series as bars
 
 > **Note:** This is a beta feature. Time series panel is going to replace the Graph panel in the future releases.
 
-This section explains how to use Time series field options to create a bar graph and illustrates what the options do.
+This section explains how to use Time series field options to visualize time series data as bars and illustrates what the options do.
 
-## Create a bar graph
+## Create the panel
 
 1. [Add a panel](https://grafana.com/docs/grafana/latest/panels/add-a-panel/). Select the [Time series]({{< relref "_index.md" >}}) visualization.
 1. In the [Panel editor](https://grafana.com/docs/grafana/latest/panels/panel-editor/), click the **Field** tab.
 1. In Style, click **Bars**.
 
-## Style the bar graph
+## Style the bars
 
-Use the following field settings to refine your bar graph.
+Use the following field settings to refine your visualization.
 
 For more information about applying these options, refer to:
 

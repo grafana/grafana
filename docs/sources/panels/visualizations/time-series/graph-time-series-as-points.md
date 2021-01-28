@@ -1,24 +1,24 @@
 +++
-title = "Create scatter plot graphs"
+title = "Graph time series as points"
 keywords = ["grafana", "time series panel", "documentation", "guide", "graph"]
 weight = 300
 +++
 
-# Create scatter plot graphs
+# Graph time series as points
 
 > **Note:** This is a beta feature. Time series panel is going to replace the Graph panel in the future releases.
 
-This section explains how to use Time series field options to create a scatter plot graph and illustrates what the options do.
+This section explains how to use Time series field options to visualize time series data as points and illustrates what the options do.
 
-## Create a scatter plot graph
+## Create the panel
 
 1. [Add a panel](https://grafana.com/docs/grafana/latest/panels/add-a-panel/). Select the [Time series]({{< relref "_index.md" >}}) visualization.
 1. In the [Panel editor](https://grafana.com/docs/grafana/latest/panels/panel-editor/), click the **Field** tab.
 1. In Style, click **Points**.
 
-## Style the scatter plot graph
+## Style the points
 
-Use the following field settings to refine your scatter plot graph.
+Use the following field settings to refine your visualization.
 
 For more information about applying these options, refer to:
 
@@ -26,10 +26,6 @@ For more information about applying these options, refer to:
 - [Configure specific fields]({{< relref "../../field-options/configure-specific-fields.md" >}})
 
 Some field options will not affect the visualization until you click outside of the field option box you are editing or press Enter.
-
-## Style your scatter plot graph
-
-Use the following setting to refine your bar graph.
 
 ### Point size
 

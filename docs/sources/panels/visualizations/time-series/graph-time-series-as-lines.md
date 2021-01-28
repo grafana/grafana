@@ -18,7 +18,7 @@ This section explains how to use Time series field options to visualize time ser
 
 ## Style the lines
 
-Use the following field settings to refine your line graph.
+Use the following field settings to refine your visualization.
 
 For more information about applying these options, refer to:
 
