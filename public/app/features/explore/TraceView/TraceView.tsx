@@ -94,7 +94,7 @@ export function TraceView(props: Props) {
     props.splitOpenFn,
     traceToLogsOptions,
   ]);
-  const scrollElement = document.getElementsByClassName('scroll-canvas')[0];
+  const scrollElement = document.getElementsByClassName('scrollbar-view')[0];
 
   if (!traceProp) {
     return null;
