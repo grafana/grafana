@@ -9,6 +9,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
+// timeNow makes it possible to test usage of time
+var timeNow = time.Now
+
 func (ac *RBACService) GetPolicies(query *ListPoliciesQuery) error {
 	return ac.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		policies := make([]*Policy, 0)
@@ -46,6 +49,8 @@ func (ac *RBACService) CreatePolicy(cmd *CreatePolicyCommand) error {
 			OrgId:       cmd.OrgId,
 			Name:        cmd.Name,
 			Description: cmd.Description,
+			Created:     timeNow(),
+			Updated:     timeNow(),
 		}
 
 		if _, err := sess.Insert(policy); err != nil {
@@ -91,6 +96,8 @@ func (ac *RBACService) CreatePermission(cmd *CreatePermissionCommand) error {
 			Resource:     cmd.Resource,
 			ResourceType: cmd.ResourceType,
 			Action:       cmd.Action,
+			Created:      timeNow(),
+			Updated:      timeNow(),
 		}
 
 		if _, err := sess.Insert(permission); err != nil {
@@ -115,7 +122,7 @@ func (ac *RBACService) DeletePermission(cmd *DeletePermissionCommand) error {
 
 func (ac *RBACService) GetTeamPolicies(query *GetTeamPoliciesQuery) error {
 	return ac.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		query.Result = make([]*Policy, 0)
+		query.Result = make([]*PolicyDTO, 0)
 		q := `SELECT
 			policy.id,
 			policy.name AS name,
@@ -152,8 +159,8 @@ func (ac *RBACService) AddTeamPolicy(cmd *AddTeamPolicyCommand) error {
 			OrgId:    cmd.OrgId,
 			TeamId:   cmd.TeamId,
 			PolicyId: cmd.PolicyId,
-			Created:  time.Now(),
-			Updated:  time.Now(),
+			Created:  timeNow(),
+			Updated:  timeNow(),
 		}
 
 		_, err := sess.Insert(teamPolicy)
@@ -185,7 +192,7 @@ func (ac *RBACService) RemoveTeamPolicy(cmd *RemoveTeamPolicyCommand) error {
 	})
 }
 
-func getPolicyById(sess *sqlstore.DBSession, policyId int64, orgId int64) (*Policy, error) {
+func getPolicyById(sess *sqlstore.DBSession, policyId int64, orgId int64) (*PolicyDTO, error) {
 	policy := Policy{OrgId: orgId, Id: policyId}
 	has, err := sess.Get(&policy)
 	if !has {
@@ -194,12 +201,23 @@ func getPolicyById(sess *sqlstore.DBSession, policyId int64, orgId int64) (*Poli
 	if err != nil {
 		return nil, err
 	}
-	return &policy, nil
+
+	policyDTO := PolicyDTO{
+		Id:          policyId,
+		OrgId:       policy.OrgId,
+		Name:        policy.Name,
+		Description: policy.Description,
+		Permissions: nil,
+		Created:     policy.Created,
+		Updated:     policy.Updated,
+	}
+
+	return &policyDTO, nil
 }
 
 func getPolicyPermissions(sess *sqlstore.DBSession, policyId int64) ([]Permission, error) {
 	permissions := make([]Permission, 0)
-	q := "SELECT id, resource, resource_type, action FROM permission WHERE policy_id = ?"
+	q := "SELECT id, policy_id, org_id, resource, resource_type, action, updated, created FROM permission WHERE policy_id = ?"
 	if err := sess.SQL(q, policyId).Find(&permissions); err != nil {
 		return nil, err
 	}

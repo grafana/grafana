@@ -5,6 +5,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -25,4 +26,8 @@ func (ac *RBACService) Init() error {
 	ac.log = log.New("rbac")
 
 	return nil
+}
+
+func (ac *RBACService) AddMigration(mg *migrator.Migrator) {
+	addRBACMigrations(mg)
 }

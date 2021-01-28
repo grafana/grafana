@@ -18,6 +18,16 @@ type Policy struct {
 	OrgId       int64
 	Name        string
 	Description string
+
+	Updated time.Time
+	Created time.Time
+}
+
+type PolicyDTO struct {
+	Id          int64
+	OrgId       int64
+	Name        string
+	Description string
 	Permissions []Permission
 
 	Updated time.Time
@@ -57,7 +67,7 @@ type GetPolicyQuery struct {
 	OrgId    int64 `json:"-"`
 	PolicyId int64
 
-	Result *Policy
+	Result *PolicyDTO
 }
 
 type GetPolicyPermissionsQuery struct {
@@ -71,7 +81,7 @@ type GetTeamPoliciesQuery struct {
 	OrgId  int64 `json:"-"`
 	TeamId int64
 
-	Result []*Policy
+	Result []*PolicyDTO
 }
 
 type CreatePermissionCommand struct {
