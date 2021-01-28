@@ -293,14 +293,13 @@ func (p *testDataPlugin) handleManualEntryScenario(ctx context.Context, req *bac
 		startTime := q.TimeRange.From.UnixNano() / int64(time.Millisecond)
 		endTime := q.TimeRange.To.UnixNano() / int64(time.Millisecond)
 
-		timeVec := make([]*int64, 0)
+		timeVec := make([]*time.Time, 0)
 		floatVec := make([]*float64, 0)
 
 		for _, val := range points {
 			pointValues := val.([]interface{})
 
 			var value float64
-			var time int64
 
 			if valueFloat, err := strconv.ParseFloat(string(pointValues[0].(json.Number)), 64); err == nil {
 				value = valueFloat
@@ -310,10 +309,10 @@ func (p *testDataPlugin) handleManualEntryScenario(ctx context.Context, req *bac
 			if err != nil {
 				continue
 			}
-			time = timeInt
+			t := time.Unix(timeInt/int64(1e+3), (timeInt%int64(1e+3))*int64(1e+6))
 
-			if time >= startTime && time <= endTime {
-				timeVec = append(timeVec, &time)
+			if timeInt >= startTime && timeInt <= endTime {
+				timeVec = append(timeVec, &t)
 				floatVec = append(floatVec, &value)
 			}
 		}
