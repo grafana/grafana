@@ -1,13 +1,12 @@
 import React from 'react';
 import debounce from 'lodash/debounce';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import { DataFrame, CSVConfig, readCSV } from '@grafana/data';
 import { Icon } from '../Icon/Icon';
 import { GrafanaTheme } from '@grafana/data';
 import { Themeable } from '../../types/theme';
 import { stylesFactory } from '../../themes';
 import { withTheme } from '../../themes/index';
-import classNames from 'classnames';
 
 interface Props extends Themeable {
   config?: CSVConfig;
@@ -81,7 +80,7 @@ export class UnThemedTableInputCSV extends React.PureComponent<Props, State> {
           placeholder="Enter CSV here..."
           value={this.state.text}
           onChange={this.onTextChange}
-          className={classNames(styles.textarea, 'gf-form-input')}
+          className={cx(styles.textarea, 'gf-form-input')}
         />
         {data && (
           <footer className={styles.footer}>
