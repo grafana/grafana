@@ -21,7 +21,7 @@ import { BarChartOptions, BarValueVisibility } from './types';
 import { useRevision } from '../uPlot/hooks';
 import { UPlotChart } from '../uPlot/Plot';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
-import { AxisPlacement, GraphGradientMode, ScaleDistribution } from '../uPlot/config';
+import { AxisPlacement, ScaleDistribution } from '../uPlot/config';
 import { useTheme } from '../../themes';
 import { GraphNGLegendEvent, GraphNGLegendEventMode } from '../GraphNG/types';
 import { LegendDisplayMode, VizLegendItem } from '../VizLegend/types';
