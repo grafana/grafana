@@ -200,7 +200,7 @@
   "dependencies": {
     "@grafana/slate-react": "0.22.9-grafana",
     "@popperjs/core": "2.5.4",
-    "@reduxjs/toolkit": "1.3.4",
+    "@reduxjs/toolkit": "1.5.0",
     "@sentry/browser": "5.25.0",
     "@sentry/types": "5.24.2",
     "@sentry/utils": "5.24.2",

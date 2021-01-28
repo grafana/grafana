@@ -315,7 +315,7 @@ export class QueryGroup extends PureComponent<Props, State> {
           </Button>
         )}
         {isAddingMixed && this.renderMixedPicker()}
-        {this.isExpressionsSupported(dsSettings) && (
+        {config.expressionsEnabled && this.isExpressionsSupported(dsSettings) && (
           <Tooltip content="Experimental feature: queries could stop working in next version" placement="right">
             <Button
               icon="plus"
@@ -337,13 +337,7 @@ export class QueryGroup extends PureComponent<Props, State> {
     const styles = getStyles();
 
     return (
-      <CustomScrollbar
-        autoHeightMin="100%"
-        autoHide={true}
-        updateAfterMountMs={300}
-        scrollTop={scrollTop}
-        setScrollTop={this.setScrollTop}
-      >
+      <CustomScrollbar autoHeightMin="100%" scrollTop={scrollTop} setScrollTop={this.setScrollTop}>
         <div className={styles.innerWrapper}>
           {this.renderTopSection(styles)}
           {dsSettings && (

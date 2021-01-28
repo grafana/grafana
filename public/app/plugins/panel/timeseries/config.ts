@@ -3,7 +3,10 @@ import {
   FieldConfigProperty,
   FieldType,
   identityOverrideProcessor,
+  PanelOptionsEditorBuilder,
   SetFieldConfigOptionsArgs,
+  standardEditorsRegistry,
+  StatsPickerConfigSettings,
   stringOverrideProcessor,
 } from '@grafana/data';
 import {
@@ -17,11 +20,13 @@ import {
   ScaleDistribution,
   ScaleDistributionConfig,
   GraphGradientMode,
+  LegendDisplayMode,
 } from '@grafana/ui';
 import { SeriesConfigEditor } from './HideSeriesConfigEditor';
 import { ScaleDistributionEditor } from './ScaleDistributionEditor';
 import { LineStyleEditor } from './LineStyleEditor';
 import { FillBellowToEditor } from './FillBelowToEditor';
+import { OptionsWithLegend } from './types';
 
 export const defaultGraphConfig: GraphFieldConfig = {
   drawStyle: DrawStyle.Line,
@@ -223,4 +228,46 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
         });
     },
   };
+}
+
+export function addLegendOptions(builder: PanelOptionsEditorBuilder<OptionsWithLegend>) {
+  builder
+    .addRadio({
+      path: 'legend.displayMode',
+      name: 'Legend mode',
+      description: '',
+      defaultValue: LegendDisplayMode.List,
+      settings: {
+        options: [
+          { value: LegendDisplayMode.List, label: 'List' },
+          { value: LegendDisplayMode.Table, label: 'Table' },
+          { value: LegendDisplayMode.Hidden, label: 'Hidden' },
+        ],
+      },
+    })
+    .addRadio({
+      path: 'legend.placement',
+      name: 'Legend placement',
+      description: '',
+      defaultValue: 'bottom',
+      settings: {
+        options: [
+          { value: 'bottom', label: 'Bottom' },
+          { value: 'right', label: 'Right' },
+        ],
+      },
+      showIf: (c) => c.legend.displayMode !== LegendDisplayMode.Hidden,
+    })
+    .addCustomEditor<StatsPickerConfigSettings, string[]>({
+      id: 'legend.calcs',
+      path: 'legend.calcs',
+      name: 'Legend calculations',
+      description: 'Choose a reducer functions / calculations to include in legend',
+      editor: standardEditorsRegistry.get('stats-picker').editor as any,
+      defaultValue: [],
+      settings: {
+        allowMultiple: true,
+      },
+      showIf: (currentConfig) => currentConfig.legend.displayMode !== LegendDisplayMode.Hidden,
+    });
 }

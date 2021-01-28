@@ -966,6 +966,8 @@ steps:
   commands:
   - ./scripts/build/release-packages.sh ${DRONE_TAG}
   environment:
+    GITHUB_PACKAGE_TOKEN:
+      from_secret: github_package_token
     NPM_TOKEN:
       from_secret: npm_token
   depends_on:
@@ -1842,6 +1844,8 @@ steps:
 - name: release-npm-packages
   image: grafana/build-container:1.3.1
   environment:
+    GITHUB_PACKAGE_TOKEN:
+      from_secret: github_package_token
     NPM_TOKEN:
       from_secret: npm_token
   depends_on:
