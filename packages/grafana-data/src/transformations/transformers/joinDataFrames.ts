@@ -2,7 +2,7 @@ import { DataFrame, Field, FieldMatcher, FieldType, Vector } from '../../types';
 import { ArrayVector } from '../../vector';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
-import { getTimeField } from '../../dataframe';
+import { getTimeField, sortDataFrame } from '../../dataframe';
 import { getFieldDisplayName } from '../../field';
 
 export function pickBestJoinField(data: DataFrame[]): FieldMatcher {
@@ -55,11 +55,6 @@ export interface JoinOptions {
   enforceSort?: boolean;
 
   /**
-   * TODO: keep duplicate values (requires extra processing)
-   */
-  keepDuplicateKeys?: boolean;
-
-  /**
    * @internal -- used when we need to keep a reference to the original frame/field index
    */
   keepOriginIndices?: boolean;
@@ -73,23 +68,29 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
   if (!options?.frames?.length) {
     return undefined;
   }
+  const joinFieldMatcher = options.joinBy ?? pickBestJoinField(options.frames);
+
   if (options.frames.length < 2) {
     const frame = options.frames[0];
     if (options.enforceSort) {
-      // TODO: find field and sort
+      const joinIndex = frame.fields.findIndex((f) => joinFieldMatcher(f, frame, options.frames));
+      if (joinIndex >= 0) {
+        return sortDataFrame(frame, joinIndex);
+      }
     }
     return frame;
   }
 
+  const nullModes: JoinNullMode[][] = [];
   const allData: AlignedData[] = [];
   const originalFields: Field[] = [];
 
-  const joinFieldMatcher = options.joinBy ?? pickBestJoinField(options.frames);
   for (let frameIndex = 0; frameIndex < options.frames.length; frameIndex++) {
     const frame = options.frames[frameIndex];
     if (!frame || !frame.fields?.length) {
       continue; // skip the frame
     }
+    const nullModesFrame: JoinNullMode[] = [NULL_IGNORE];
 
     let join: Field | undefined = undefined;
     let fields: Field[] = [];
@@ -103,6 +104,9 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
         if (options.keep && !options.keep(field, frame, options.frames)) {
           continue; // skip field
         }
+
+        // Support the standard graph span nulls field config
+        nullModesFrame.push(field.config.custom?.spanNulls ? NULL_IGNORE : NULL_EXPAND);
 
         let labels = field.labels ?? {};
         if (frame.name) {
@@ -130,6 +134,7 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
     if (originalFields.length < 1) {
       originalFields.push(join); // first join field
     }
+    nullModes.push(nullModesFrame);
 
     const a: AlignedData = [join.values.toArray()]; //
     for (const field of fields) {
@@ -139,10 +144,7 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
     allData.push(a);
   }
 
-  const joined = join(
-    allData,
-    allData.map((v) => v.map((x) => NULL_EXPAND)) // will show gaps in the timeseries panel
-  );
+  const joined = join(allData, nullModes);
   if (!joined) {
     return undefined;
   }
@@ -168,12 +170,14 @@ type AlignedData = [number[], ...Array<Array<number | null>>];
 
 // nullModes
 const NULL_IGNORE = 0; // all nulls are ignored, converted to undefined (e.g. spanGaps: true)
-const NULL_GAP = 1; // nulls are retained, alignment artifacts = undefined values (default)
+const NULL_RETAIN = 1; // nulls are retained, alignment artifacts = undefined values (default)
 const NULL_EXPAND = 2; // nulls are expanded to include adjacent alignment artifacts (undefined values)
+
+type JoinNullMode = number; // NULL_IGNORE | NULL_RETAIN | NULL_EXPAND;
 
 // mark all filler nulls as explicit when adjacent to existing explicit nulls (minesweeper)
 function nullExpand(yVals: Array<number | null>, nullIdxs: number[], alignedLen: number) {
-  for (let i = 0, xi, lastNullIdx = Number.NEGATIVE_INFINITY; i < nullIdxs.length; i++) {
+  for (let i = 0, xi, lastNullIdx = -1; i < nullIdxs.length; i++) {
     let nullIdx = nullIdxs[i];
 
     if (nullIdx > lastNullIdx) {
@@ -227,7 +231,7 @@ function join(tables: AlignedData[], nullModes: number[][]) {
 
       let yVals = Array(alignedLen).fill(undefined);
 
-      let nullMode = nullModes ? nullModes[ti][si] : NULL_GAP;
+      let nullMode = nullModes ? nullModes[ti][si] : NULL_RETAIN;
 
       let nullIdxs = [];
 

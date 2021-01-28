@@ -79,7 +79,7 @@ describe('align frames', () => {
     `);
   });
 
-  it('unsorted input', () => {
+  it('unsorted input keep indexes', () => {
     //----------
     const series1 = toDataFrame({
       fields: [
@@ -95,7 +95,73 @@ describe('align frames', () => {
       ],
     });
 
-    const out = outerJoinDataFrames({ frames: [series1, series3] })!;
+    const out = outerJoinDataFrames({ frames: [series1, series3], keepOriginIndices: true })!;
+    expect(
+      out.fields.map((f) => ({
+        name: f.name,
+        values: f.values.toArray(),
+        state: f.state,
+      }))
+    ).toMatchInlineSnapshot(`
+      Array [
+        Object {
+          "name": "TheTime",
+          "state": Object {
+            "displayName": "TheTime",
+            "origin": Object {
+              "fieldIndex": 0,
+              "frameIndex": 0,
+            },
+          },
+          "values": Array [
+            1000,
+            1500,
+            2000,
+          ],
+        },
+        Object {
+          "name": "A1",
+          "state": Object {
+            "displayName": "A1",
+            "origin": Object {
+              "fieldIndex": 1,
+              "frameIndex": 0,
+            },
+          },
+          "values": Array [
+            1,
+            15,
+            2,
+          ],
+        },
+        Object {
+          "name": "A2",
+          "state": Object {
+            "displayName": "A2",
+            "origin": Object {
+              "fieldIndex": 1,
+              "frameIndex": 1,
+            },
+          },
+          "values": Array [
+            1,
+            undefined,
+            2,
+          ],
+        },
+      ]
+    `);
+  });
+
+  it('sort single frame', () => {
+    const series1 = toDataFrame({
+      fields: [
+        { name: 'TheTime', type: FieldType.time, values: [6000, 2000, 1500] },
+        { name: 'A1', type: FieldType.number, values: [1, 22, 15] },
+      ],
+    });
+
+    const out = outerJoinDataFrames({ frames: [series1], enforceSort: true, keepOriginIndices: true })!;
     expect(
       out.fields.map((f) => ({
         name: f.name,
@@ -106,25 +172,17 @@ describe('align frames', () => {
         Object {
           "name": "TheTime",
           "values": Array [
-            1000,
             1500,
             2000,
+            6000,
           ],
         },
         Object {
           "name": "A1",
           "values": Array [
-            1,
             15,
-            2,
-          ],
-        },
-        Object {
-          "name": "A2",
-          "values": Array [
+            22,
             1,
-            undefined,
-            2,
           ],
         },
       ]
