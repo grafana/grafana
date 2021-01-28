@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { TableInputCSV } from './TableInputCSV';
-import { Meta } from '@storybook/react/types-6-0';
+import { Meta } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
 import { DataFrame } from '@grafana/data';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';

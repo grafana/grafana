@@ -7,6 +7,7 @@ import { GrafanaTheme } from '@grafana/data';
 import { Themeable } from '../../types/theme';
 import { stylesFactory } from '../../themes';
 import { withTheme } from '../../themes/index';
+import classNames from 'classnames';
 
 interface Props extends Themeable {
   config?: CSVConfig;
@@ -18,6 +19,8 @@ interface Props extends Themeable {
 
 interface TableInputCSVStyle {
   tableInputCsv: string;
+  textarea: string;
+  footer: string;
 }
 
 interface State {
@@ -78,10 +81,10 @@ export class UnThemedTableInputCSV extends React.PureComponent<Props, State> {
           placeholder="Enter CSV here..."
           value={this.state.text}
           onChange={this.onTextChange}
-          className="gf-form-input"
+          className={classNames(styles.textarea, 'gf-form-input')}
         />
         {data && (
-          <footer>
+          <footer className={styles.footer}>
             {data.map((frame, index) => {
               return (
                 <span key={index}>
@@ -105,19 +108,19 @@ const getStyles = stylesFactory(
     return {
       tableInputCsv: css`
         position: relative;
-        textarea {
-          height: 100%;
-          width: 100%;
-        }
-        footer {
-          position: absolute;
-          bottom: 15px;
-          right: 15px;
-          border: 1px solid #222;
-          background: ${theme.palette.online};
-          padding: 1px ${theme.spacing.xs};
-          font-size: 80%;
-        }
+      `,
+      textarea: css`
+        height: 100%;
+        width: 100%;
+      `,
+      footer: css`
+        position: absolute;
+        bottom: 15px;
+        right: 15px;
+        border: 1px solid #222;
+        background: ${theme.palette.online};
+        padding: 1px ${theme.spacing.xs};
+        font-size: 80%;
       `,
     };
   }
