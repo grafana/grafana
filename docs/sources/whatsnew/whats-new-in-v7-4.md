@@ -31,9 +31,9 @@ Apart from major performance improvements, the new Time series panel implements 
 The following documentation topics were added for this feature:
 
 - [Time series panel]({{< relref "../panels/visualizations/time-series/_index.md" >}})
-- [Create line graphs]({{< relref "../panels/visualizations/time-series/create-line-graphs.md" >}})
-- [Create bar graphs]({{< relref "../panels/visualizations/time-series/create-bar-graphs.md" >}})
-- [Create scatter plot graphs]({{< relref "../panels/visualizations/time-series/create-scatter-plot-graphs.md" >}})
+- [Graph time series as lines]({{< relref "../panels/visualizations/time-series/graph-time-series-as-lines.md" >}})
+- [Graph time series as bars]({{< relref "../panels/visualizations/time-series/graph-time-series-as-bars.md" >}})
+- [Graph time series as points]({{< relref "../panels/visualizations/time-series/graph-time-series-as-points" >}})
 - [Change axis display]({{< relref "../panels/visualizations/time-series/change-axis-display.md" >}})
 
 ### Node graph panel visualization (Beta)
