@@ -22,9 +22,9 @@ import { AngularPanelOptions } from './AngularPanelOptions';
 import { VisualizationTab } from './VisualizationTab';
 import { OptionsGroup } from './OptionsGroup';
 import { RepeatRowSelect } from '../RepeatRowSelect/RepeatRowSelect';
-import { AddLibraryPanelModal } from '../AddLibraryPanelModal/AddLibraryPanelModal';
-import { LibraryPanelsView } from '../LibraryPanelsView/LibraryPanelsView';
-import { LibraryPanelCardProps } from '../LibraryPanelCard/LibraryPanelCard';
+import { AddLibraryPanelModal } from '../../../library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal';
+import { LibraryPanelsView } from '../../../library-panels/components/LibraryPanelsView/LibraryPanelsView';
+import { LibraryPanelCardProps } from '../../../library-panels/components/LibraryPanelCard/LibraryPanelCard';
 import { PanelQueriesChangedEvent } from 'app/types/events';
 import config from 'app/core/config';
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button, Field, Input, Modal } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { PanelModel } from '../../state';
+import { PanelModel } from '../../../dashboard/state';
 import { css, cx } from 'emotion';
 
 interface Props {

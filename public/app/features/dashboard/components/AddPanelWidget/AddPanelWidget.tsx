@@ -16,8 +16,8 @@ import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { css, cx, keyframes } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import tinycolor from 'tinycolor2';
-import { LibraryPanelsView } from '../LibraryPanelsView/LibraryPanelsView';
-import { LibraryPanelCardProps } from '../LibraryPanelCard/LibraryPanelCard';
+import { LibraryPanelsView } from '../../../library-panels/components/LibraryPanelsView/LibraryPanelsView';
+import { LibraryPanelCardProps } from '../../../library-panels/components/LibraryPanelCard/LibraryPanelCard';
 
 export type PanelPluginInfo = { id: any; defaults: { gridPos: { w: any; h: any }; title: any } };
 

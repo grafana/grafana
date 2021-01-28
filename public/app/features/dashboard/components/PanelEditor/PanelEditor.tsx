@@ -37,7 +37,7 @@ import { CoreEvents, StoreState } from 'app/types';
 import { DisplayMode, displayModes, PanelEditorTab } from './types';
 import { DashboardModel, PanelModel } from '../../state';
 import { PanelOptionsChangedEvent } from 'app/types/events';
-import { UnlinkModal } from '../UnlinkModal/UnlinkModal';
+import { UnlinkModal } from '../../../library-panels/components/UnlinkModal/UnlinkModal';
 
 interface OwnProps {
   dashboard: DashboardModel;

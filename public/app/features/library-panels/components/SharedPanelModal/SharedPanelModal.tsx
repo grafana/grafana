@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button, Input, Modal, stylesFactory, TextArea, useTheme } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
-import { css, cx } from 'emotion';
+import { css } from 'emotion';
 
 interface Dashboard {
   name: string;
