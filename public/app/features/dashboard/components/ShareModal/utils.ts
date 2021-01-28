@@ -22,8 +22,6 @@ export function buildParams(useCurrentTimeRange: boolean, selectedTheme?: string
 
   if (panel && !params.editPanel) {
     params.viewPanel = panel.id;
-  } else {
-    delete params.viewPanel;
   }
 
   return params;
