@@ -22,9 +22,9 @@ Time series visualizations allow you to apply:
 
 You can also use field options to create different types of graphs or adjust your axes:
 
-- [Create line graphs]({{< relref "create-line-graphs.md" >}})
-- [Create bar graphs]({{< relref "create-bar-graphs.md" >}})
-- [Create scatter plot graphs]({{< relref "create-scatter-plot-graphs.md" >}})
+- [Graph time series as lines]({{< relref "graph-time-series-as-lines.md" >}})
+- [Graph time series as bars]({{< relref "graph-time-series-as-bars.md" >}})
+- [Graph time series as points]({{< relref "graph-time-series-as-points.md" >}})
 - [Change axis display]({{< relref "change-axis-display.md" >}})
 
 ## Display options
