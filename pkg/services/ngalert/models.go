@@ -76,7 +76,7 @@ type saveAlertDefinitionCommand struct {
 	OrgID           int64             `json:"-"`
 	Condition       string            `json:"condition"`
 	Data            []eval.AlertQuery `json:"data"`
-	IntervalSeconds *int64            `json:"interval_seconds"`
+	IntervalSeconds *int64            `json:"intervalSeconds"`
 
 	Result *AlertDefinition
 }
@@ -87,7 +87,7 @@ type updateAlertDefinitionCommand struct {
 	OrgID           int64             `json:"-"`
 	Condition       string            `json:"condition"`
 	Data            []eval.AlertQuery `json:"data"`
-	IntervalSeconds *int64            `json:"interval_seconds"`
+	IntervalSeconds *int64            `json:"intervalSeconds"`
 	UID             string            `json:"-"`
 
 	Result *AlertDefinition
