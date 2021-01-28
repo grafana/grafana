@@ -107,11 +107,7 @@ func (store *SourceMapStore) getSourceMap(sourceURL string) (*sourceMap, error) 
 		store.cache[sourceURL] = nil
 		return nil, nil
 	}
-	path := sourceMapLocation.path
-	if strings.HasPrefix(path, "/") {
-		path = "/" + path
-	}
-	path = filepath.Clean(path)
+	path := strings.ReplaceAll(sourceMapLocation.path, "../", "") // just in case
 	b, err := store.readSourceMap(sourceMapLocation.dir, path)
 	if err != nil {
 		if os.IsNotExist(err) {

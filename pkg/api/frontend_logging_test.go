@@ -246,6 +246,12 @@ func TestFrontendLoggingEndpoint(t *testing.T) {
 									Lineno:   3,
 									Colno:    10,
 								},
+								{
+									Function: "fake",
+									Filename: "http://localhost:3000/public/build/../../secrets.txt", // path will be sanitized
+									Lineno:   3,
+									Colno:    10,
+								},
 							},
 						},
 					},
@@ -261,8 +267,9 @@ func TestFrontendLoggingEndpoint(t *testing.T) {
   at ? (telepathic|webpack:///./some_source.ts:3:2)
   at explode (http://localhost:3000/public/build/error.js:3:10)
   at wat (http://localhost:3000/public/build/bar.js:3:10)
-  at nope (http://localhost:3000/baz.js:3:10)`)
-			assert.Len(t, sourceMapReads, 4)
+  at nope (http://localhost:3000/baz.js:3:10)
+  at fake (http://localhost:3000/public/build/../../secrets.txt:3:10)`)
+			assert.Len(t, sourceMapReads, 5)
 			assert.Equal(t, "/staticroot", sourceMapReads[0].dir)
 			assert.Equal(t, "build/moo/foo.js.map", sourceMapReads[0].path)
 			assert.Equal(t, "/usr/local/telepathic-panel", sourceMapReads[1].dir)
@@ -271,6 +278,8 @@ func TestFrontendLoggingEndpoint(t *testing.T) {
 			assert.Equal(t, "build/error.js.map", sourceMapReads[2].path)
 			assert.Equal(t, "/staticroot", sourceMapReads[3].dir)
 			assert.Equal(t, "build/bar.js.map", sourceMapReads[3].path)
+			assert.Equal(t, "/staticroot", sourceMapReads[4].dir)
+			assert.Equal(t, "secrets.txt.map", sourceMapReads[4].path)
 		})
 	})
 }
