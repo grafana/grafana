@@ -14,6 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/alertmanager/client"
+	"github.com/prometheus/client_golang/api"
 )
 
 const (
@@ -36,6 +38,7 @@ type AlertNG struct {
 	SQLStore        *sqlstore.SQLStore       `inject:""`
 	log             log.Logger
 	schedule        *schedule
+	amClient        client.AlertAPI
 }
 
 func init() {
@@ -54,6 +57,16 @@ func (ng *AlertNG) Init() error {
 		evaluator:    eval.Evaluator{Cfg: ng.Cfg},
 	}
 	ng.schedule = newScheduler(schedCfg)
+
+	c, err := api.NewClient(api.Config{
+		Address: "http://localhost:9093",
+	})
+	if err != nil {
+		ng.log.Error("alertmanager client error creation", err)
+	}
+
+	ng.amClient = client.NewAlertAPI(c)
+
 	return nil
 }
 

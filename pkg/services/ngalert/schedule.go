@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/prometheus/alertmanager/client"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -54,6 +55,9 @@ func (ng *AlertNG) definitionRoutine(grafanaCtx context.Context, key alertDefini
 					ng.schedule.log.Error("failed to evaluate alert definition", "title", alertDefinition.Title, "key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "error", err)
 					return err
 				}
+
+				amAlerts := make([]client.Alert, 0)
+
 				for _, r := range results {
 					ng.schedule.log.Debug("alert definition result", "title", alertDefinition.Title, "key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "instance", r.Instance, "state", r.State.String())
 					cmd := saveAlertInstanceCommand{DefinitionOrgID: key.orgID, DefinitionUID: key.definitionUID, State: InstanceStateType(r.State.String()), Labels: InstanceLabels(r.Instance), LastEvalTime: ctx.now}
@@ -61,6 +65,24 @@ func (ng *AlertNG) definitionRoutine(grafanaCtx context.Context, key alertDefini
 					if err != nil {
 						ng.schedule.log.Error("failed saving alert instance", "title", alertDefinition.Title, "key", key, "attempt", attempt, "now", ctx.now, "instance", r.Instance, "state", r.State.String(), "error", err)
 					}
+
+					// Alert Manager stuff
+					labels := make(client.LabelSet)
+					labels["alertname"] = client.LabelValue(alertDefinition.Title)
+					for k, v := range r.Instance {
+						labels[client.LabelName(k)] = client.LabelValue(v)
+					}
+
+					if InstanceStateType(r.State.String()) != InstanceStateNormal {
+						amAlerts = append(amAlerts, client.Alert{
+							Labels: labels,
+						})
+					}
+
+				}
+				err = ng.amClient.Push(grafanaCtx, amAlerts...)
+				if err != nil {
+					ng.log.Error("error saving alert instances to alert manager", "error", err)
 				}
 				return nil
 			}
