@@ -52,6 +52,8 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
 
     if (pathBuilder != null) {
       lineConfig.paths = pathBuilder;
+      lineConfig.stroke = this.getLineColor();
+      lineConfig.width = lineWidth;
     } else if (drawStyle === DrawStyle.Points) {
       lineConfig.paths = () => null;
     } else if (drawStyle != null) {

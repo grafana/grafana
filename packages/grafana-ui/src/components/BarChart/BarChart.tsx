@@ -21,7 +21,7 @@ import { BarChartOptions, BarValueVisibility } from './types';
 import { useRevision } from '../uPlot/hooks';
 import { UPlotChart } from '../uPlot/Plot';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
-import { AxisPlacement, ScaleDistribution } from '../uPlot/config';
+import { AxisPlacement, GraphGradientMode, ScaleDistribution } from '../uPlot/config';
 import { useTheme } from '../../themes';
 import { GraphNGLegendEvent, GraphNGLegendEventMode } from '../GraphNG/types';
 import { LegendDisplayMode, VizLegendItem } from '../VizLegend/types';
@@ -159,9 +159,9 @@ export const BarChart: React.FunctionComponent<Props> = ({
 
       builder.addSeries({
         scaleKey: i === 0 ? 'x' : 'y',
-        lineWidth: 0,
-        fillColor: seriesColor,
-        fillOpacity: 50,
+        lineWidth: 1,
+        lineColor: seriesColor,
+        fillOpacity: 80,
         theme,
         fieldName: getFieldDisplayName(field, data),
         pathBuilder: config.drawBars,
@@ -229,7 +229,7 @@ export const BarChart: React.FunctionComponent<Props> = ({
       return {
         disabled: !seriesConfig.show ?? false,
         fieldIndex,
-        color: seriesConfig.fillColor!,
+        color: seriesConfig.lineColor!,
         label: seriesConfig.fieldName,
         yAxis: axisPlacement === AxisPlacement.Left ? 1 : 2,
         getDisplayValues: () => [],
