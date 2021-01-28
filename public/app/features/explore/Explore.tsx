@@ -272,6 +272,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   refreshExplore = (prevUrlQuery: string) => {
     const { exploreId, urlQuery } = this.props;
 
+    // Update state from url only if it changed and only if the change wasn't initialised by redux to prevent any loops
     if (urlQuery !== prevUrlQuery && urlQuery !== lastSavedUrl[exploreId]) {
       this.props.refreshExplore(exploreId, urlQuery);
     }

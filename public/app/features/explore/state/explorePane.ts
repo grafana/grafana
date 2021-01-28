@@ -161,22 +161,23 @@ export function initializeExplore(
 }
 
 /**
- * Reacts to changes in URL state that we need to sync back to our redux state. Checks the internal update variable
- * to see which parts change and need to be synced.
+ * Reacts to changes in URL state that we need to sync back to our redux state. Computes diff of newUrlQuery vs current
+ * state and runs update actions for relevant parts.
  */
-export function refreshExplore(exploreId: ExploreId, urlQuery: string): ThunkResult<void> {
+export function refreshExplore(exploreId: ExploreId, newUrlQuery: string): ThunkResult<void> {
   return (dispatch, getState) => {
     const itemState = getState().explore[exploreId];
     if (!itemState.initialized) {
       return;
     }
 
-    const urlState = parseUrlState(urlQuery);
-    const update = urlDiff(urlState, getUrlStateFromPaneState(itemState));
+    // Get diff of what should be updated
+    const newUrlState = parseUrlState(newUrlQuery);
+    const update = urlDiff(newUrlState, getUrlStateFromPaneState(itemState));
 
     const { containerWidth, eventBridge } = itemState;
 
-    const { datasource, queries, range: urlRange, originPanelId } = urlState;
+    const { datasource, queries, range: urlRange, originPanelId } = newUrlState;
     const refreshQueries: DataQuery[] = [];
 
     for (let index = 0; index < queries.length; index++) {
@@ -187,7 +188,8 @@ export function refreshExplore(exploreId: ExploreId, urlQuery: string): ThunkRes
     const timeZone = getTimeZone(getState().user);
     const range = getTimeRangeFromUrl(urlRange, timeZone);
 
-    // need to refresh datasource
+    // commit changes based on the diff of new url vs old url
+
     if (update.datasource) {
       const initialQueries = ensureQueries(queries);
       dispatch(
@@ -200,7 +202,6 @@ export function refreshExplore(exploreId: ExploreId, urlQuery: string): ThunkRes
       dispatch(updateTime({ exploreId, rawRange: range.raw }));
     }
 
-    // need to refresh queries
     if (update.queries) {
       dispatch(setQueriesAction({ exploreId, queries: refreshQueries }));
     }

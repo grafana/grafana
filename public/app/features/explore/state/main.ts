@@ -63,6 +63,9 @@ export const resetExploreAction = createAction<ResetExplorePayload>('explore/res
 // Action creators
 //
 
+/**
+ * Just to init the split state.
+ */
 export const initMain = (): ThunkResult<void> => {
   return (dispatch, getState) => {
     const query = getState().location.query;
