@@ -214,30 +214,6 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 		assert.Equal(t, "Ok", bodyStr)
 	})
 
-	t.Run("Should use SigV4 in middleware chain if configured in JsonData", func(t *testing.T) {
-		clearDSProxyCache(t)
-
-		origEnabled := setting.SigV4AuthEnabled
-		setting.SigV4AuthEnabled = true
-		t.Cleanup(func() { setting.SigV4AuthEnabled = origEnabled })
-
-		json, err := simplejson.NewJson([]byte(`{ "sigV4Auth": true }`))
-		require.NoError(t, err)
-
-		ds := DataSource{
-			JsonData: json,
-		}
-
-		tr, err := ds.GetHttpTransport()
-		require.NoError(t, err)
-
-		m1, ok := tr.next.(*SigV4Middleware)
-		require.True(t, ok)
-
-		_, ok = m1.Next.(*http.Transport)
-		require.True(t, ok)
-	})
-
 	t.Run("Should not include SigV4 middleware if not configured in JsonData", func(t *testing.T) {
 		clearDSProxyCache(t)
 

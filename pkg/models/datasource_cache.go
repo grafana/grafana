@@ -329,6 +329,6 @@ func awsServiceNamespace(dsType string) string {
 	case DS_PROMETHEUS:
 		return "aps"
 	default:
-		panic(fmt.Sprintf("Unsupported datasource %s", dsType))
+		panic(fmt.Sprintf("Unsupported datasource %q", dsType))
 	}
 }
