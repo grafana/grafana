@@ -1,22 +1,22 @@
 +++
-title = "Create line graphs"
+title = "Graph time series as lines"
 keywords = ["grafana", "time series panel", "documentation", "guide", "graph"]
 weight = 100
 +++
 
-# Create line graphs
+# Graph time series as lines
 
 > **Note:** This is a beta feature. Time series panel is going to replace the Graph panel in the future releases.
 
-This section explains how to use Time series field options to create a line graph and illustrates what the options do.
+This section explains how to use Time series field options to visualize time series data as lines and illustrates what the options do.
 
-## Create a line graph
+## Create the panel
 
 1. [Add a panel](https://grafana.com/docs/grafana/latest/panels/add-a-panel/). Select the [Time series]({{< relref "_index.md" >}}) visualization.
 1. In the [Panel editor](https://grafana.com/docs/grafana/latest/panels/panel-editor/), click the **Field** tab.
 1. In Style, click **Lines**.
 
-## Style the line graph
+## Style the lines
 
 Use the following field settings to refine your line graph.
 
