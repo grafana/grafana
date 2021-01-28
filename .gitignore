@@ -72,7 +72,6 @@ profile.cov
 /pkg/cmd/grafana-server/grafana-server
 /pkg/cmd/grafana-server/debug
 /pkg/extensions/*
-/pkg/tsdb/postgres/*generatedTLSCerts
 !/pkg/extensions/main.go
 /public/app/extensions
 debug.test

@@ -10,10 +10,12 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 
+	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -21,35 +23,39 @@ import (
 	"xorm.io/core"
 )
 
-var logger = log.New("tsdb.postgres")
-
 func init() {
 	registry.Register(&registry.Descriptor{
 		Name:         "PostgresService",
 		InitPriority: registry.Low,
-		Instance:     &PostgresService{},
+		Instance:     &postgresService{},
 	})
 }
 
-type PostgresService struct {
+type postgresService struct {
 	Cfg *setting.Cfg `inject:""`
+
+	mtx    sync.Mutex
+	logger log.Logger
 }
 
-func (s *PostgresService) Init() error {
+func (s *postgresService) Init() error {
+	s.logger = log.New("tsdb.postgres")
 	tsdb.RegisterTsdbQueryEndpoint("postgres", func(ds *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-		return newPostgresQueryEndpoint(ds, s.Cfg)
+		return s.newPostgresQueryEndpoint(ds)
 	})
 	return nil
 }
 
-func databaseConnection(datasource *models.DataSource, cfg *setting.Cfg) (tsdb.TsdbQueryEndpoint, error) {
-	cnnstr, err := generateConnectionString(datasource, cfg)
+func (s *postgresService) newPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+	s.logger.Debug("Creating Postgres query endpoint")
+
+	cnnstr, err := s.generateConnectionString(datasource)
 	if err != nil {
 		return nil, err
 	}
 
 	if setting.Env == setting.Dev {
-		logger.Debug("getEngine", "connection", cnnstr)
+		s.logger.Debug("getEngine", "connection", cnnstr)
 	}
 
 	config := sqleng.SqlQueryEndpointConfiguration{
@@ -60,24 +66,19 @@ func databaseConnection(datasource *models.DataSource, cfg *setting.Cfg) (tsdb.T
 	}
 
 	queryResultTransformer := postgresQueryResultTransformer{
-		log: logger,
+		log: s.logger,
 	}
 
 	timescaledb := datasource.JsonData.Get("timescaledb").MustBool(false)
 
-	endpoint, err := sqleng.NewSqlQueryEndpoint(&config, &queryResultTransformer, newPostgresMacroEngine(timescaledb), logger)
+	endpoint, err := sqleng.NewSqlQueryEndpoint(&config, &queryResultTransformer, newPostgresMacroEngine(timescaledb),
+		s.logger)
 	if err != nil {
-		logger.Debug("Failed connecting to Postgres", "err", err)
+		s.logger.Error("Failed connecting to Postgres", "err", err)
 		return nil, err
 	}
 
-	logger.Debug("Successfully connected to Postgres")
-	return endpoint, err
-}
-
-func newPostgresQueryEndpoint(datasource *models.DataSource, cfg *setting.Cfg) (tsdb.TsdbQueryEndpoint, error) {
-	logger.Debug("Creating Postgres query endpoint")
-	endpoint, err := databaseConnection(datasource, cfg)
+	s.logger.Debug("Successfully connected to Postgres")
 	return endpoint, err
 }
 
@@ -86,104 +87,152 @@ func escape(input string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(input, `\`, `\\`), "'", `\'`)
 }
 
-func writeConnectionFile(ds *models.DataSource, fileContent string, currentPath string, certFileName string,
-	jsonFieldName string) error {
-	var generatedFilePath string
-	if tlsjs, ok := ds.JsonData.CheckGet(jsonFieldName); ok {
-		generatedFilePath = tlsjs.MustString("")
+type certFileType int
+
+const (
+	rootCert = iota
+	clientCert
+	clientKey
+)
+
+func (t certFileType) String() string {
+	switch t {
+	case rootCert:
+		return "root certificate"
+	case clientCert:
+		return "client certificate"
+	case clientKey:
+		return "client key"
+	default:
+		panic(fmt.Sprintf("Unrecognized certFileType %d", t))
+	}
+}
+
+// writeCertFile writes a certificate file.
+func (s *postgresService) writeCertFile(ds *models.DataSource, fileContent, dataDir string, fileType certFileType) error {
+	var jsonFieldName string
+	var filename string
+	switch fileType {
+	case rootCert:
+		jsonFieldName = "generatedTLSRootCertFile"
+		filename = "root.crt"
+	case clientCert:
+		jsonFieldName = "generatedTLSCertFile"
+		filename = "client.crt"
+	case clientKey:
+		jsonFieldName = "generatedTLSKeyFile"
+		filename = "client.key"
+	default:
+		panic(fmt.Sprintf("unrecognized certFileType %s", fileType.String()))
 	}
 
+	s.logger.Debug("Writing cert file", "type", fileType, "jsonFieldName", jsonFieldName)
+
+	var generatedFilePath string
+	if tlsjs, ok := ds.JsonData.CheckGet(jsonFieldName); ok {
+		// Get generated file path from data source
+		generatedFilePath = tlsjs.MustString("")
+		s.logger.Debug("Got file path from data source", "path", generatedFilePath)
+	} else {
+		s.logger.Debug("File path not stored in data source")
+	}
 	if fileContent != "" {
 		if generatedFilePath == "" {
-			generatedFilePath = filepath.Join(currentPath, certFileName)
+			// Use standard filename
+			generatedFilePath = filepath.Join(dataDir, filename)
 		}
-		err := ioutil.WriteFile(generatedFilePath, []byte(fileContent), os.FileMode(0600))
+
+		s.logger.Debug("Writing cert file", "path", generatedFilePath)
+		if err := ioutil.WriteFile(generatedFilePath, []byte(fileContent), 0600); err != nil {
+			return err
+		}
+		// Make sure the file has the permissions expected by the Postgresql driver, otherwise it will bail
+		if err := os.Chmod(generatedFilePath, 0600); err != nil {
+			return err
+		}
+		ds.JsonData.Set(jsonFieldName, generatedFilePath)
+		return nil
+	}
+
+	if generatedFilePath != "" {
+		s.logger.Debug("Deleting cert file since no content is provided", "path", generatedFilePath)
+		exists, err := fs.Exists(generatedFilePath)
 		if err != nil {
 			return err
 		}
-
-		ds.JsonData.Set(jsonFieldName, generatedFilePath)
-	} else {
-		if generatedFilePath != "" {
-			if _, err := os.Stat(generatedFilePath); err == nil {
-				if err := os.Remove(generatedFilePath); err != nil {
-					return err
-				}
+		if exists {
+			if err := os.Remove(generatedFilePath); err != nil {
+				return fmt.Errorf("failed to remove %q: %w", generatedFilePath, err)
 			}
 		}
-		ds.JsonData.Set(jsonFieldName, "")
 	}
+	ds.JsonData.Set(jsonFieldName, "")
 	return nil
 }
 
-func writeConnectionFiles(ds *models.DataSource, cfg *setting.Cfg) error {
-	tlsMode := strings.TrimSpace(strings.ToLower(ds.JsonData.Get("sslmode").MustString("verify-full")))
+func (s *postgresService) writeCertFiles(ds *models.DataSource) error {
+	s.logger.Debug("Writing TLS certificate files to disk")
+
 	decrypted := ds.SecureJsonData.Decrypt()
-	tlsCACert := decrypted["tlsCACert"]
+	tlsRootCert := decrypted["tlsCACert"]
 	tlsClientCert := decrypted["tlsClientCert"]
 	tlsClientKey := decrypted["tlsClientKey"]
 
-	if tlsMode == "disable" {
-		return nil
+	if tlsRootCert == "" && tlsClientCert == "" && tlsClientKey == "" {
+		s.logger.Debug("No TLS/SSL certificates provided")
 	}
-	currentPath := cfg.DataPath
-	var mutex = &sync.Mutex{}
+	s.mtx.Lock()
+	defer s.mtx.Unlock()
 
-	currentPath = filepath.Join(currentPath, ds.Uid+"generatedTLSCerts")
-	if _, err := os.Stat(currentPath); os.IsNotExist(err) {
-		mutex.Lock()
-		err = os.Mkdir(currentPath, 0700)
-		mutex.Unlock()
-		if err != nil {
+	workDir := filepath.Join(s.Cfg.DataPath, "tls", ds.Uid+"generatedTLSCerts")
+	exists, err := fs.Exists(workDir)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		if err := os.MkdirAll(workDir, 0700); err != nil {
 			return err
 		}
 	}
 
-	// Create/Modify/Delete Certifications
-	mutex.Lock()
-	err := writeConnectionFile(
-		ds, tlsCACert, currentPath, "ca.crt", "generatedTLSRootCertFile")
-	mutex.Unlock()
-	if err != nil {
+	if err := s.writeCertFile(ds, tlsRootCert, workDir, rootCert); err != nil {
 		return err
 	}
-
-	mutex.Lock()
-	err = writeConnectionFile(
-		ds, tlsClientCert, currentPath, "client.crt", "generatedTLSCertFile")
-	mutex.Unlock()
-	if err != nil {
+	if err := s.writeCertFile(ds, tlsClientCert, workDir, clientCert); err != nil {
 		return err
 	}
-
-	mutex.Lock()
-	err = writeConnectionFile(
-		ds, tlsClientKey, currentPath, "client.key", "generatedTLSKeyFile")
-	mutex.Unlock()
-	if err != nil {
+	if err := s.writeCertFile(ds, tlsClientKey, workDir, clientKey); err != nil {
 		return err
 	}
-
-	mutex.Lock()
-	if tlsCACert == "" && tlsClientCert == "" && tlsClientKey == "" {
-		if _, err := os.Stat(currentPath); err == nil {
-			if err := os.Remove(currentPath); err != nil {
-				log.Warnf("failed to delete temporary folder generated %v : %v", currentPath, err)
-			}
-		}
-	}
-	mutex.Unlock()
 
 	return nil
 }
 
-func generateConnectionString(datasource *models.DataSource, cfg *setting.Cfg) (string, error) {
-	tlsConfigurationMethod := strings.TrimSpace(strings.ToLower(datasource.JsonData.Get("tlsConfigurationMethod").MustString("file-path")))
+// validateCertFilePaths validates configured certificate file paths.
+func (s *postgresService) validateCertFilePaths(rootCert, clientCert, clientKey string) error {
+	for _, fpath := range []string{rootCert, clientCert, clientKey} {
+		if fpath == "" {
+			continue
+		}
+		exists, err := fs.Exists(fpath)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			return fmt.Errorf("certificate file %q doesn't exist", fpath)
+		}
+	}
+	return nil
+}
+
+func (s *postgresService) generateConnectionString(datasource *models.DataSource) (string, error) {
+	tlsConfigurationMethod := strings.TrimSpace(
+		strings.ToLower(datasource.JsonData.Get("tlsConfigurationMethod").MustString("file-path")))
 	tlsMode := strings.TrimSpace(strings.ToLower(datasource.JsonData.Get("sslmode").MustString("verify-full")))
 	isTLSDisabled := tlsMode == "disable"
 
-	if tlsConfigurationMethod == "file-content" {
-		if err := writeConnectionFiles(datasource, cfg); err != nil {
+	if !isTLSDisabled && tlsConfigurationMethod == "file-content" {
+		if err := s.writeCertFiles(datasource); err != nil {
 			return "", err
 		}
 	}
@@ -229,6 +278,9 @@ func generateConnectionString(datasource *models.DataSource, cfg *setting.Cfg) (
 			tlsRootCert = datasource.JsonData.Get("sslRootCertFile").MustString("")
 			tlsCert = datasource.JsonData.Get("sslCertFile").MustString("")
 			tlsKey = datasource.JsonData.Get("sslKeyFile").MustString("")
+			if err := s.validateCertFilePaths(tlsRootCert, tlsCert, tlsKey); err != nil {
+				return "", err
+			}
 		}
 
 		// Attach root certificate if provided

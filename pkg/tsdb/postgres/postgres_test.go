@@ -7,13 +7,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
-	"os"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
@@ -29,6 +29,8 @@ import (
 
 // Test generateConnectionString.
 func TestGenerateConnectionString(t *testing.T) {
+	logger := log.New("tsdb.postgres")
+
 	testCases := []struct {
 		desc           string
 		host           string
@@ -112,7 +114,6 @@ func TestGenerateConnectionString(t *testing.T) {
 			uid:            "testData",
 		},
 	}
-
 	for _, tt := range testCases {
 		t.Run(tt.desc, func(t *testing.T) {
 			if tt.jsonData == "" {
@@ -125,7 +126,7 @@ func TestGenerateConnectionString(t *testing.T) {
 			jsonData, err := simplejson.NewJson([]byte(tt.jsonData))
 			require.NoError(t, err, tt.desc)
 
-			err = json.Unmarshal([]byte(tt.secureJsonData), &securityjsonData)
+			err := json.Unmarshal([]byte(tt.secureJsonData), &securityjsonData)
 			require.NoError(t, err)
 
 			ds := &models.DataSource{
@@ -138,11 +139,8 @@ func TestGenerateConnectionString(t *testing.T) {
 				Uid:            tt.uid,
 			}
 
-			path, err := os.Getwd()
-			require.NoError(t, err)
-			cfg := setting.Cfg{DataPath: path}
-
-			connStr, err := generateConnectionString(ds, &cfg)
+			cfg := setting.Cfg{DataPath: t.TempDir()}
+			connStr, err := generateConnectionString(ds, &cfg, logger)
 			var generatedTLSRootCertFile, generatedTLSCertFile, generatedTLSKeyFile string
 			if tlsjs, ok := ds.JsonData.CheckGet("generatedTLSRootCertFile"); ok {
 				generatedTLSRootCertFile = tlsjs.MustString("")
@@ -208,10 +206,7 @@ func TestPostgres(t *testing.T) {
 		return sql, nil
 	}
 
-	path, err := os.Getwd()
-	require.NoError(t, err)
-	cfg := setting.Cfg{DataPath: path}
-
+	cfg := setting.Cfg{DataPath: t.TempDir()}
 	endpoint, err := newPostgresQueryEndpoint(&models.DataSource{
 		JsonData:       simplejson.New(),
 		SecureJsonData: securejsondata.SecureJsonData{},
