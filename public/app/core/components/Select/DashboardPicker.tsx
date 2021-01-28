@@ -21,7 +21,7 @@ const getDashboards = (query = '') => {
       id: item.id,
       uid: item.uid,
       value: item.id,
-      label: `${item.folderTitle ? item.folderTitle : 'General'}/${item.title}`,
+      label: `${item?.folderTitle ?? 'General'}/${item.title}`,
     }));
   });
 };
