@@ -18,6 +18,6 @@ The usage insights feature collects a number of aggregated data and stores them 
 These aggregated data give you access to several features:
 - [Dashboard and data source insights]({{< relref "dashboard-datasource-insights.md" >}})
 - [Presence indicator]({{< relref "presence-indicator.md" >}})
-- [Improved dashboard search]({{< relref "improved-search.md" >}})
+- [Sort dashboards using insights data]({{< relref "improved-search.md" >}})
 
 This feature also generates detailed logs that can be exported to Loki. Refer to [Export logs of usage insights]({{< relref "export-logs.md" >}}).
