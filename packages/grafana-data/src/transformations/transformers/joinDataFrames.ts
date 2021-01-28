@@ -50,7 +50,9 @@ export interface JoinOptions {
   keep?: FieldMatcher;
 
   /**
-   * Make sure the results are always sorted with the `joinBy` field
+   * When the result is a single frame, this will to a quick check to see if the values are sorted,
+   * and sort if necessary.  If the first/last values are in order the whole vector is assumed to be
+   * sorted
    */
   enforceSort?: boolean;
 
@@ -65,17 +67,19 @@ export interface JoinOptions {
  * the default will use the first time field
  */
 export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined {
-  if (!options?.frames?.length) {
+  if (!options.frames?.length) {
     return undefined;
   }
   const joinFieldMatcher = options.joinBy ?? pickBestJoinField(options.frames);
 
-  if (options.frames.length < 2) {
+  if (options.frames.length === 1) {
     const frame = options.frames[0];
     if (options.enforceSort) {
       const joinIndex = frame.fields.findIndex((f) => joinFieldMatcher(f, frame, options.frames));
       if (joinIndex >= 0) {
-        return sortDataFrame(frame, joinIndex);
+        if (!isLikelyAscendingVector(frame.fields[joinIndex].values)) {
+          return sortDataFrame(frame, joinIndex);
+        }
       }
     }
     return frame;
@@ -196,11 +200,7 @@ function nullExpand(yVals: Array<number | null>, nullIdxs: number[], alignedLen:
 
 // nullModes is a tables-matched array indicating how to treat nulls in each series
 function join(tables: AlignedData[], nullModes: number[][]) {
-  if (tables.length === 1) {
-    return tables[0];
-  }
-
-  let xVals = new Set<number>();
+  const xVals = new Set<number>();
 
   for (let ti = 0; ti < tables.length; ti++) {
     let t = tables[ti];
@@ -262,6 +262,7 @@ function join(tables: AlignedData[], nullModes: number[][]) {
 }
 
 // Quick test if the first and last points look to be ascending
+// Only exported for tests
 export function isLikelyAscendingVector(data: Vector): boolean {
   let first: any = undefined;
 
