@@ -90,7 +90,7 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
     if (!frame || !frame.fields?.length) {
       continue; // skip the frame
     }
-    const nullModesFrame: JoinNullMode[] = [NULL_IGNORE];
+    const nullModesFrame: JoinNullMode[] = [NULL_REMOVE];
 
     let join: Field | undefined = undefined;
     let fields: Field[] = [];
@@ -106,7 +106,7 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
         }
 
         // Support the standard graph span nulls field config
-        nullModesFrame.push(field.config.custom?.spanNulls ? NULL_IGNORE : NULL_EXPAND);
+        nullModesFrame.push(field.config.custom?.spanNulls ? NULL_REMOVE : NULL_EXPAND);
 
         let labels = field.labels ?? {};
         if (frame.name) {
@@ -169,13 +169,13 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
 type AlignedData = [number[], ...Array<Array<number | null>>];
 
 // nullModes
-const NULL_IGNORE = 0; // all nulls are ignored, converted to undefined (e.g. spanGaps: true)
-const NULL_RETAIN = 1; // nulls are retained, alignment artifacts = undefined values (default)
-const NULL_EXPAND = 2; // nulls are expanded to include adjacent alignment artifacts (undefined values)
+const NULL_REMOVE = 0; // nulls are converted to undefined (e.g. for spanGaps: true)
+const NULL_RETAIN = 1; // nulls are retained, with alignment artifacts set to undefined (default)
+const NULL_EXPAND = 2; // nulls are expanded to include any adjacent alignment artifacts
 
 type JoinNullMode = number; // NULL_IGNORE | NULL_RETAIN | NULL_EXPAND;
 
-// mark all filler nulls as explicit when adjacent to existing explicit nulls (minesweeper)
+// sets undefined values to nulls when adjacent to existing nulls (minesweeper)
 function nullExpand(yVals: Array<number | null>, nullIdxs: number[], alignedLen: number) {
   for (let i = 0, xi, lastNullIdx = -1; i < nullIdxs.length; i++) {
     let nullIdx = nullIdxs[i];
@@ -240,7 +240,7 @@ function join(tables: AlignedData[], nullModes: number[][]) {
         let alignedIdx = xIdxs.get(xs[i]);
 
         if (yVal == null) {
-          if (nullMode !== NULL_IGNORE) {
+          if (nullMode !== NULL_REMOVE) {
             yVals[alignedIdx] = yVal;
 
             if (nullMode === NULL_EXPAND) {
