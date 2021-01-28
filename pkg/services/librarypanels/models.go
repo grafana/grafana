@@ -22,6 +22,56 @@ type LibraryPanel struct {
 	UpdatedBy int64
 }
 
+// LibraryPanelWithMeta is the model used to retrieve library panels with additional meta information.
+type LibraryPanelWithMeta struct {
+	ID       int64  `xorm:"pk autoincr 'id'"`
+	OrgID    int64  `xorm:"org_id"`
+	FolderID int64  `xorm:"folder_id"`
+	UID      string `xorm:"uid"`
+	Name     string
+	Model    json.RawMessage
+
+	Created time.Time
+	Updated time.Time
+
+	CanEdit        bool
+	CreatedBy      int64
+	UpdatedBy      int64
+	CreatedByName  string
+	CreatedByEmail string
+	UpdatedByName  string
+	UpdatedByEmail string
+}
+
+// LibraryPanelDTO is the frontend DTO for library panels.
+type LibraryPanelDTO struct {
+	ID       int64               `json:"id"`
+	OrgID    int64               `json:"orgId"`
+	FolderID int64               `json:"folderId"`
+	UID      string              `json:"uid"`
+	Name     string              `json:"name"`
+	Model    json.RawMessage     `json:"model"`
+	Meta     LibraryPanelDTOMeta `json:"meta"`
+}
+
+// LibraryPanelDTOMeta is the meta information for LibraryPanelDTO.
+type LibraryPanelDTOMeta struct {
+	CanEdit bool `json:"canEdit"`
+
+	Created time.Time `json:"created"`
+	Updated time.Time `json:"updated"`
+
+	CreatedBy LibraryPanelDTOMetaUser `json:"createdBy"`
+	UpdatedBy LibraryPanelDTOMetaUser `json:"updatedBy"`
+}
+
+// LibraryPanelDTOMetaUser is the meta information for user that creates/changes the library panel.
+type LibraryPanelDTOMetaUser struct {
+	ID        int64  `json:"id"`
+	Name      string `json:"name"`
+	AvatarUrl string `json:"avatarUrl"`
+}
+
 // libraryPanelDashboard is the model for library panel connections.
 type libraryPanelDashboard struct {
 	ID             int64 `xorm:"pk autoincr 'id'"`
