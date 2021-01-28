@@ -24,9 +24,9 @@ var (
 func init() {
 	expressionsQueryHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "grafana",
-		Name:      "expressions_queries_duration_seconds",
+		Name:      "expressions_queries_duration_milliseconds",
 		Help:      "Expressions query histogram",
-		Buckets:   prometheus.ExponentialBuckets(0.001, 4, 9),
+		Buckets:   prometheus.ExponentialBuckets(1, 4, 10),
 	}, []string{"status"})
 
 	prometheus.MustRegister(expressionsQueryHistogram)
@@ -89,6 +89,10 @@ func (s *Service) WrapTransformData(ctx context.Context, query *tsdb.TsdbQuery) 
 func (s *Service) TransformData(ctx context.Context, req *backend.QueryDataRequest) (r *backend.QueryDataResponse, err error) {
 	start := time.Now()
 	defer func() {
+		if s.isDisabled() {
+			return
+		}
+
 		var respStatus string
 		switch {
 		case err == nil:
@@ -96,7 +100,7 @@ func (s *Service) TransformData(ctx context.Context, req *backend.QueryDataReque
 		default:
 			respStatus = "failure"
 		}
-		expressionsQueryHistogram.WithLabelValues(respStatus).Observe(time.Since(start).Seconds())
+		expressionsQueryHistogram.WithLabelValues(respStatus).Observe(float64(time.Since(start).Milliseconds()))
 	}()
 
 	if s.isDisabled() {
