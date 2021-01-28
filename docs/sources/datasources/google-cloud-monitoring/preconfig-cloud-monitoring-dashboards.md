@@ -1,5 +1,5 @@
 +++
-title = "Preconfigred dashboards"
+title = "Preconfigured dashboards"
 description = "Guide for using Google Cloud Monitoring in Grafana"
 keywords = ["grafana", "stackdriver", "google", "guide", "cloud", "monitoring"]
 aliases = ["/docs/grafana/latest/features/datasources/stackdriver", "/docs/grafana/latest/features/datasources/cloudmonitoring/"]
