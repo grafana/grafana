@@ -10,7 +10,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -241,7 +240,7 @@ func (s *postgresService) generateConnectionString(datasource *models.DataSource
 	var port int
 	if strings.HasPrefix(datasource.Url, "/") {
 		host = datasource.Url
-		logger.Debug("Generating connection string with Unix socket specifier", "socket", host)
+		s.logger.Debug("Generating connection string with Unix socket specifier", "socket", host)
 	} else {
 		sp := strings.SplitN(datasource.Url, ":", 2)
 		host = sp[0]
@@ -252,9 +251,9 @@ func (s *postgresService) generateConnectionString(datasource *models.DataSource
 				return "", errutil.Wrapf(err, "invalid port in host specifier %q", sp[1])
 			}
 
-			logger.Debug("Generating connection string with network host/port pair", "host", host, "port", port)
+			s.logger.Debug("Generating connection string with network host/port pair", "host", host, "port", port)
 		} else {
-			logger.Debug("Generating connection string with network host", "host", host)
+			s.logger.Debug("Generating connection string with network host", "host", host)
 		}
 	}
 
@@ -265,9 +264,9 @@ func (s *postgresService) generateConnectionString(datasource *models.DataSource
 		connStr += fmt.Sprintf(" port=%d", port)
 	}
 	if isTLSDisabled {
-		logger.Debug("Postgres TLS/SSL is disabled")
+		s.logger.Debug("Postgres TLS/SSL is disabled")
 	} else {
-		logger.Debug("Postgres TLS/SSL is enabled", "tlsMode", tlsMode)
+		s.logger.Debug("Postgres TLS/SSL is enabled", "tlsMode", tlsMode)
 
 		var tlsRootCert, tlsCert, tlsKey string
 		if tlsConfigurationMethod == "file-content" {
@@ -285,20 +284,20 @@ func (s *postgresService) generateConnectionString(datasource *models.DataSource
 
 		// Attach root certificate if provided
 		if tlsRootCert != "" {
-			logger.Debug("Setting server root certificate", "tlsRootCert", tlsRootCert)
+			s.logger.Debug("Setting server root certificate", "tlsRootCert", tlsRootCert)
 			connStr += fmt.Sprintf(" sslrootcert='%s'", escape(tlsRootCert))
 		}
 
 		// Attach client certificate and key if both are provided
 		if tlsCert != "" && tlsKey != "" {
-			logger.Debug("Setting TLS/SSL client auth", "tlsCert", tlsCert, "tlsKey", tlsKey)
+			s.logger.Debug("Setting TLS/SSL client auth", "tlsCert", tlsCert, "tlsKey", tlsKey)
 			connStr += fmt.Sprintf(" sslcert='%s' sslkey='%s'", escape(tlsCert), escape(tlsKey))
 		} else if tlsCert != "" || tlsKey != "" {
 			return "", fmt.Errorf("TLS/SSL client certificate and key must both be specified")
 		}
 	}
 
-	logger.Debug("Generated Postgres connection string successfully")
+	s.logger.Debug("Generated Postgres connection string successfully")
 	return connStr, nil
 }
 
