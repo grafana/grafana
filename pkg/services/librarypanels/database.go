@@ -5,13 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-
-	"github.com/grafana/grafana/pkg/util"
-
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
-
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // createLibraryPanel adds a Library Panel.
@@ -47,13 +45,19 @@ func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd cre
 		Name:     libraryPanel.Name,
 		Model:    libraryPanel.Model,
 		Meta: LibraryPanelDTOMeta{
-			CanEdit:       true,
-			Created:       libraryPanel.Created,
-			Updated:       libraryPanel.Updated,
-			CreatedByID:   libraryPanel.CreatedBy,
-			UpdatedByID:   libraryPanel.UpdatedBy,
-			CreatedByName: c.SignedInUser.Login,
-			UpdatedByName: c.SignedInUser.Login,
+			CanEdit: true,
+			Created: libraryPanel.Created,
+			Updated: libraryPanel.Updated,
+			CreatedBy: LibraryPanelDTOMetaUser{
+				ID:        libraryPanel.CreatedBy,
+				Name:      c.SignedInUser.Login,
+				AvatarUrl: dtos.GetGravatarUrl(c.SignedInUser.Email),
+			},
+			UpdatedBy: LibraryPanelDTOMetaUser{
+				ID:        libraryPanel.UpdatedBy,
+				Name:      c.SignedInUser.Login,
+				AvatarUrl: dtos.GetGravatarUrl(c.SignedInUser.Email),
+			},
 		},
 	}
 
@@ -170,13 +174,15 @@ func getLibraryPanel(session *sqlstore.DBSession, uid string, orgID int64) (Libr
 	libraryPanels := make([]LibraryPanelWithMeta, 0)
 	sql := `SELECT
 				lp.id, lp.org_id, lp.folder_id, lp.uid, lp.name, lp.model, lp.created, lp.created_by, lp.updated, lp.updated_by
-				, 0 as can_edit
-				, (SELECT u.login from user u where u.id = lp.created_by and u.org_id = lp.org_id) as created_by_name
-				, (SELECT u.login from user u where u.id = lp.updated_by and u.org_id = lp.org_id) as updated_by_name
-			FROM
-				library_panel AS lp
-			WHERE
-				lp.uid=? AND lp.org_id=?`
+				, 0 AS can_edit
+				, u1.login AS created_by_name
+				, u1.email AS created_by_email
+				, u2.login AS updated_by_name
+				, u2.email AS updated_by_email
+			FROM library_panel AS lp
+			LEFT JOIN user AS u1 ON lp.created_by = u1.id
+			LEFT JOIN user AS u2 ON lp.updated_by = u2.id
+			WHERE lp.uid=? AND lp.org_id=?`
 
 	sess := session.SQL(sql, uid, orgID)
 	err := sess.Find(&libraryPanels)
@@ -210,13 +216,19 @@ func (lps *LibraryPanelService) getLibraryPanel(c *models.ReqContext, uid string
 		Name:     libraryPanel.Name,
 		Model:    libraryPanel.Model,
 		Meta: LibraryPanelDTOMeta{
-			CanEdit:       true,
-			Created:       libraryPanel.Created,
-			Updated:       libraryPanel.Updated,
-			CreatedByID:   libraryPanel.CreatedBy,
-			CreatedByName: libraryPanel.CreatedByName,
-			UpdatedByID:   libraryPanel.UpdatedBy,
-			UpdatedByName: libraryPanel.UpdatedByName,
+			CanEdit: true,
+			Created: libraryPanel.Created,
+			Updated: libraryPanel.Updated,
+			CreatedBy: LibraryPanelDTOMetaUser{
+				ID:        libraryPanel.CreatedBy,
+				Name:      libraryPanel.CreatedByName,
+				AvatarUrl: dtos.GetGravatarUrl(libraryPanel.CreatedByEmail),
+			},
+			UpdatedBy: LibraryPanelDTOMetaUser{
+				ID:        libraryPanel.UpdatedBy,
+				Name:      libraryPanel.UpdatedByName,
+				AvatarUrl: dtos.GetGravatarUrl(libraryPanel.UpdatedByEmail),
+			},
 		},
 	}
 
@@ -230,13 +242,15 @@ func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext) ([]Lib
 	err := lps.SQLStore.WithDbSession(context.Background(), func(session *sqlstore.DBSession) error {
 		sql := `SELECT
 				lp.id, lp.org_id, lp.folder_id, lp.uid, lp.name, lp.model, lp.created, lp.created_by, lp.updated, lp.updated_by
-				, 0 as can_edit
-				, (SELECT u.login from user u where u.id = lp.created_by and u.org_id = lp.org_id) as created_by_name
-				, (SELECT u.login from user u where u.id = lp.updated_by and u.org_id = lp.org_id) as updated_by_name
-			FROM
-				library_panel AS lp
-			WHERE
-				lp.org_id=?`
+				, 0 AS can_edit
+				, u1.login AS created_by_name
+				, u1.email AS created_by_email
+				, u2.login AS updated_by_name
+				, u2.email AS updated_by_email
+			FROM library_panel AS lp
+			LEFT JOIN user AS u1 ON lp.created_by = u1.id
+			LEFT JOIN user AS u2 ON lp.updated_by = u2.id
+			WHERE lp.org_id=?`
 
 		sess := session.SQL(sql, orgID)
 		err := sess.Find(&libraryPanels)
@@ -247,9 +261,9 @@ func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext) ([]Lib
 		return nil
 	})
 
-	dtos := make([]LibraryPanelDTO, 0)
+	retDTOs := make([]LibraryPanelDTO, 0)
 	for _, panel := range libraryPanels {
-		dtos = append(dtos, LibraryPanelDTO{
+		retDTOs = append(retDTOs, LibraryPanelDTO{
 			ID:       panel.ID,
 			OrgID:    panel.OrgID,
 			FolderID: panel.FolderID,
@@ -257,18 +271,24 @@ func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext) ([]Lib
 			Name:     panel.Name,
 			Model:    panel.Model,
 			Meta: LibraryPanelDTOMeta{
-				CanEdit:       true,
-				Created:       panel.Created,
-				Updated:       panel.Updated,
-				CreatedByID:   panel.CreatedBy,
-				CreatedByName: panel.CreatedByName,
-				UpdatedByID:   panel.UpdatedBy,
-				UpdatedByName: panel.UpdatedByName,
+				CanEdit: true,
+				Created: panel.Created,
+				Updated: panel.Updated,
+				CreatedBy: LibraryPanelDTOMetaUser{
+					ID:        panel.CreatedBy,
+					Name:      panel.CreatedByName,
+					AvatarUrl: dtos.GetGravatarUrl(panel.CreatedByEmail),
+				},
+				UpdatedBy: LibraryPanelDTOMetaUser{
+					ID:        panel.UpdatedBy,
+					Name:      panel.UpdatedByName,
+					AvatarUrl: dtos.GetGravatarUrl(panel.UpdatedByEmail),
+				},
 			},
 		})
 	}
 
-	return dtos, err
+	return retDTOs, err
 }
 
 // getConnectedDashboards gets all dashboards connected to a Library Panel.
@@ -374,13 +394,19 @@ func (lps *LibraryPanelService) patchLibraryPanel(c *models.ReqContext, cmd patc
 			Name:     libraryPanel.Name,
 			Model:    libraryPanel.Model,
 			Meta: LibraryPanelDTOMeta{
-				CanEdit:       true,
-				Created:       libraryPanel.Created,
-				Updated:       libraryPanel.Updated,
-				CreatedByID:   libraryPanel.CreatedBy,
-				UpdatedByID:   libraryPanel.UpdatedBy,
-				CreatedByName: panelInDB.CreatedByName,
-				UpdatedByName: c.SignedInUser.Login,
+				CanEdit: true,
+				Created: libraryPanel.Created,
+				Updated: libraryPanel.Updated,
+				CreatedBy: LibraryPanelDTOMetaUser{
+					ID:        libraryPanel.CreatedBy,
+					Name:      panelInDB.CreatedByName,
+					AvatarUrl: dtos.GetGravatarUrl(panelInDB.CreatedByEmail),
+				},
+				UpdatedBy: LibraryPanelDTOMetaUser{
+					ID:        libraryPanel.UpdatedBy,
+					Name:      c.SignedInUser.Login,
+					AvatarUrl: dtos.GetGravatarUrl(c.SignedInUser.Email),
+				},
 			},
 		}
 

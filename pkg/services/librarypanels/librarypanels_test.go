@@ -449,7 +449,7 @@ func TestPatchLibraryPanel(t *testing.T) {
 			var result libraryPanelResult
 			err = json.Unmarshal(response.Body(), &result)
 			require.NoError(t, err)
-			existing.Result.Meta.UpdatedByID = int64(2)
+			existing.Result.Meta.UpdatedBy.ID = int64(2)
 			if diff := cmp.Diff(existing.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 			}
