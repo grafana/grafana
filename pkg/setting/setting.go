@@ -768,7 +768,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	provisioning := valueAsString(iniFile.Section("paths"), "provisioning", "")
 	cfg.ProvisioningPath = makeAbsolute(provisioning, HomePath)
 
-	if err := readServerSettings(iniFile, cfg); err != nil {
+	if err := cfg.readServerSettings(iniFile); err != nil {
 		return err
 	}
 
@@ -1252,7 +1252,7 @@ func readSnapshotsSettings(cfg *Cfg, iniFile *ini.File) error {
 	return nil
 }
 
-func readServerSettings(iniFile *ini.File, cfg *Cfg) error {
+func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 	server := iniFile.Section("server")
 	var err error
 	AppUrl, AppSubUrl, err = parseAppUrlAndSubUrl(server)
@@ -1298,7 +1298,13 @@ func readServerSettings(iniFile *ini.File, cfg *Cfg) error {
 		return err
 	}
 
-	cfg.CDNPath = valueAsString(server, "cdn_path", "")
+	cdnPath := valueAsString(server, "cdn_path", "")
+	if cdnPath != "" {
+		cdnUrl, _ := url.Parse(cdnPath)
+		cdnUrl.Path = path.Join(cdnUrl.Path, cfg.BuildVersion)
+		cfg.CDNPath = cdnUrl.String()
+	}
+
 	return nil
 }
 

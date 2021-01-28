@@ -389,3 +389,14 @@ func TestAuthDurationSettings(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, maxLifetimeDurationTest, cfg.LoginMaxLifetime)
 }
+
+func TestServiceSettings(t *testing.T) {
+	f := ini.Empty()
+	cfg := NewCfg()
+	cfg.BuildVersion = "v7.5.0-11124pre"
+	sec, _ := f.NewSection("server")
+	sec.NewKey("cdn_path", "http://cdn.grafana.com")
+	err := cfg.readServerSettings(f)
+	require.NoError(t, err)
+	require.Equal(t, cfg.CDNPath, "http://cdn.grafana.com/v7.5.0-11124pre")
+}
