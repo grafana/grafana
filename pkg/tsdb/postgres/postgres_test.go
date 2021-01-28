@@ -29,7 +29,8 @@ import (
 
 // Test generateConnectionString.
 func TestGenerateConnectionString(t *testing.T) {
-	logger := log.New("tsdb.postgres")
+	cfg := setting.NewCfg()
+	cfg.DataPath = t.TempDir()
 
 	testCases := []struct {
 		desc           string
@@ -116,6 +117,11 @@ func TestGenerateConnectionString(t *testing.T) {
 	}
 	for _, tt := range testCases {
 		t.Run(tt.desc, func(t *testing.T) {
+			svc := postgresService{
+				Cfg:    cfg,
+				logger: log.New("tsdb.postgres"),
+			}
+
 			if tt.jsonData == "" {
 				tt.jsonData = `{}`
 			}
@@ -126,7 +132,7 @@ func TestGenerateConnectionString(t *testing.T) {
 			jsonData, err := simplejson.NewJson([]byte(tt.jsonData))
 			require.NoError(t, err, tt.desc)
 
-			err := json.Unmarshal([]byte(tt.secureJsonData), &securityjsonData)
+			err = json.Unmarshal([]byte(tt.secureJsonData), &securityjsonData)
 			require.NoError(t, err)
 
 			ds := &models.DataSource{
@@ -139,8 +145,7 @@ func TestGenerateConnectionString(t *testing.T) {
 				Uid:            tt.uid,
 			}
 
-			cfg := setting.Cfg{DataPath: t.TempDir()}
-			connStr, err := generateConnectionString(ds, &cfg, logger)
+			connStr, err := svc.generateConnectionString(ds)
 			var generatedTLSRootCertFile, generatedTLSCertFile, generatedTLSKeyFile string
 			if tlsjs, ok := ds.JsonData.CheckGet("generatedTLSRootCertFile"); ok {
 				generatedTLSRootCertFile = tlsjs.MustString("")
@@ -206,11 +211,17 @@ func TestPostgres(t *testing.T) {
 		return sql, nil
 	}
 
-	cfg := setting.Cfg{DataPath: t.TempDir()}
-	endpoint, err := newPostgresQueryEndpoint(&models.DataSource{
+	cfg := setting.NewCfg()
+	cfg.DataPath = t.TempDir()
+	svc := postgresService{
+		Cfg:    cfg,
+		logger: log.New("tsdb.postgres"),
+	}
+
+	endpoint, err := svc.newPostgresQueryEndpoint(&models.DataSource{
 		JsonData:       simplejson.New(),
 		SecureJsonData: securejsondata.SecureJsonData{},
-	}, &cfg)
+	})
 	require.NoError(t, err)
 
 	sess := x.NewSession()
