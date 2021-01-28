@@ -34,18 +34,39 @@ export function toDataQueryResponse(res: any, queries?: DataQuery[]): DataQueryR
   const rsp: DataQueryResponse = { data: [], state: LoadingState.Done };
   if (res.data?.results) {
     const results: KeyValue = res.data.results;
-    const refIDs = queries ? queries.map((q) => q.refId) : Object.keys(results);
+    const resultIDs = Object.keys(results);
+    const refIDs = queries ? queries.map((q) => q.refId) : resultIDs;
+    const usedResultIDs = new Set<string>(resultIDs);
+    const data: DataResponse[] = [];
 
     for (const refId of refIDs) {
       const dr = results[refId] as DataResponse;
       if (!dr) {
         continue;
       }
+      dr.refId = refId;
+      usedResultIDs.delete(refId);
+      data.push(dr);
+    }
 
+    // Add any refIds that do not match the query targets
+    if (usedResultIDs.size) {
+      for (const refId of usedResultIDs) {
+        const dr = results[refId] as DataResponse;
+        if (!dr) {
+          continue;
+        }
+        dr.refId = refId;
+        usedResultIDs.delete(refId);
+        data.push(dr);
+      }
+    }
+
+    for (const dr of data) {
       if (dr.error) {
         if (!rsp.error) {
           rsp.error = {
-            refId,
+            refId: dr.refId,
             message: dr.error,
           };
           rsp.state = LoadingState.Error;
@@ -55,7 +76,7 @@ export function toDataQueryResponse(res: any, queries?: DataQuery[]): DataQueryR
       if (dr.series?.length) {
         for (const s of dr.series) {
           if (!s.refId) {
-            s.refId = refId;
+            s.refId = dr.refId;
           }
           rsp.data.push(toDataFrame(s));
         }
@@ -64,7 +85,7 @@ export function toDataQueryResponse(res: any, queries?: DataQuery[]): DataQueryR
       if (dr.tables?.length) {
         for (const s of dr.tables) {
           if (!s.refId) {
-            s.refId = refId;
+            s.refId = dr.refId;
           }
           rsp.data.push(toDataFrame(s));
         }
@@ -76,7 +97,7 @@ export function toDataQueryResponse(res: any, queries?: DataQuery[]): DataQueryR
             const t = base64StringToArrowTable(b64);
             const f = arrowTableToDataFrame(t);
             if (!f.refId) {
-              f.refId = refId;
+              f.refId = dr.refId;
             }
             rsp.data.push(f);
           } catch (err) {

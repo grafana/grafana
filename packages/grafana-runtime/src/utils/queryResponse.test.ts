@@ -1,4 +1,4 @@
-import { DataQuery, toDataFrameDTO } from '@grafana/data';
+import { DataQuery, toDataFrameDTO, DataFrame } from '@grafana/data';
 import { toDataQueryResponse } from './queryResponse';
 
 /* eslint-disable */
@@ -219,6 +219,35 @@ describe('Query Response parser', () => {
   test('processEmptyResults', () => {
     const frames = toDataQueryResponse(emptyResults).data;
     expect(frames.length).toEqual(0);
+  });
+
+  test('keeps query order', () => {
+    const resp = {
+      data: {
+        results: {
+          X: {
+            series: [
+              { name: 'Requests/s', points: [[13.594958983547151, 1611839862951]], tables: null, dataframes: null },
+            ],
+          },
+          B: {
+            series: [
+              { name: 'Requests/s', points: [[13.594958983547151, 1611839862951]], tables: null, dataframes: null },
+            ],
+          },
+          A: {
+            series: [
+              { name: 'Requests/s', points: [[13.594958983547151, 1611839862951]], tables: null, dataframes: null },
+            ],
+          },
+        },
+      },
+    };
+
+    const queries: DataQuery[] = [{ refId: 'A' }, { refId: 'B' }];
+
+    const ids = (toDataQueryResponse(resp, queries).data as DataFrame[]).map((f) => f.refId);
+    expect(ids).toEqual(['A', 'B', 'X']);
   });
 
   test('resultWithError', () => {
