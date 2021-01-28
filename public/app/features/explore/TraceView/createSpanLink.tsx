@@ -1,6 +1,7 @@
 import { DataLink, dateTime, Field, mapInternalLinkToExplore, TimeRange, TraceSpan } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Icon } from '@grafana/ui';
+import { SplitOpen } from 'app/types/explore';
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import React from 'react';
@@ -11,10 +12,7 @@ import { LokiQuery } from '../../../plugins/datasource/loki/types';
  * the trace view won't create any links and to capture the datasource and split function making it easier to memoize
  * with useMemo.
  */
-export function createSpanLinkFactory(
-  splitOpenFn: (options: { datasourceUid: string; query: any }) => void,
-  traceToLogsOptions?: TraceToLogsOptions
-) {
+export function createSpanLinkFactory(splitOpenFn: SplitOpen, traceToLogsOptions?: TraceToLogsOptions) {
   // We should return if dataSourceUid is undefined otherwise getInstanceSettings would return testDataSource.
   if (!traceToLogsOptions?.datasourceUid) {
     return undefined;

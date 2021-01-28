@@ -1,9 +1,9 @@
 import React, { PureComponent } from 'react';
-import { cx } from 'emotion';
+import { css, cx } from 'emotion';
 import { selectors } from '@grafana/e2e-selectors';
-import { Button, CustomScrollbar, Icon, IconName } from '@grafana/ui';
+import { Button, CustomScrollbar, Icon, IconName, PageToolbar, stylesFactory } from '@grafana/ui';
+import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
-import { BackButton } from 'app/core/components/BackButton/BackButton';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { updateLocation } from 'app/core/actions';
 import { DashboardModel } from '../../state/DashboardModel';
@@ -15,10 +15,18 @@ import { AnnotationsSettings } from './AnnotationsSettings';
 import { LinksSettings } from './LinksSettings';
 import { VersionsSettings } from './VersionsSettings';
 import { JsonEditorSettings } from './JsonEditorSettings';
+import { GrafanaTheme } from '@grafana/data';
 export interface Props {
   dashboard: DashboardModel;
   updateLocation: typeof updateLocation;
   editview: string;
+}
+
+export interface SettingsPage {
+  id: string;
+  title: string;
+  icon: IconName;
+  render: () => React.ReactNode;
 }
 
 export class DashboardSettings extends PureComponent<Props> {
@@ -137,57 +145,55 @@ export class DashboardSettings extends PureComponent<Props> {
   render() {
     const { dashboard, editview } = this.props;
     const folderTitle = dashboard.meta.folderTitle;
-    const haveFolder = (dashboard.meta.folderId ?? 0) > 0;
     const pages = this.getPages();
     const currentPage = pages.find((page) => page.id === editview) ?? pages[0];
     const canSaveAs = contextSrv.hasEditPermissionInFolders;
     const canSave = dashboard.meta.canSave;
+    const styles = getStyles(config.theme);
 
     return (
       <div className="dashboard-settings">
-        <div className="navbar navbar--edit">
-          <div className="navbar-edit">
-            <BackButton surface="panel" onClick={this.onClose} />
-          </div>
-          <div className="navbar-page-btn">
-            {haveFolder && <div className="navbar-page-btn__folder">{folderTitle} / </div>}
-            <span>{dashboard.title} / Settings</span>
-          </div>
-        </div>
-        <div className="dashboard-settings__body">
-          <aside className="dashboard-settings__aside">
-            {pages.map((page) => (
-              <a
-                className={cx('dashboard-settings__nav-item', { active: page.id === editview })}
-                aria-label={selectors.pages.Dashboard.Settings.General.sectionItems(page.title)}
-                onClick={() => this.onChangePage(page.id)}
-                key={page.id}
-              >
-                <Icon name={page.icon} style={{ marginRight: '4px' }} />
-                {page.title}
-              </a>
-            ))}
-            <div className="dashboard-settings__aside-actions">
-              {canSave && <SaveDashboardButton dashboard={dashboard} onSaveSuccess={this.onPostSave} />}
-              {canSaveAs && (
-                <SaveDashboardAsButton dashboard={dashboard} onSaveSuccess={this.onPostSave} variant="secondary" />
-              )}
-            </div>
-          </aside>
-          <div className="dashboard-settings__scroll">
-            <CustomScrollbar autoHeightMin="100%">
+        <PageToolbar title={`${dashboard.title} / Settings`} parent={folderTitle} onGoBack={this.onClose} />
+        <CustomScrollbar>
+          <div className={styles.scrollInner}>
+            <div className={styles.settingsWrapper}>
+              <aside className="dashboard-settings__aside">
+                {pages.map((page) => (
+                  <a
+                    className={cx('dashboard-settings__nav-item', { active: page.id === editview })}
+                    aria-label={selectors.pages.Dashboard.Settings.General.sectionItems(page.title)}
+                    onClick={() => this.onChangePage(page.id)}
+                    key={page.id}
+                  >
+                    <Icon name={page.icon} style={{ marginRight: '4px' }} />
+                    {page.title}
+                  </a>
+                ))}
+                <div className="dashboard-settings__aside-actions">
+                  {canSave && <SaveDashboardButton dashboard={dashboard} onSaveSuccess={this.onPostSave} />}
+                  {canSaveAs && (
+                    <SaveDashboardAsButton dashboard={dashboard} onSaveSuccess={this.onPostSave} variant="secondary" />
+                  )}
+                </div>
+              </aside>
               <div className="dashboard-settings__content">{currentPage.render()}</div>
-            </CustomScrollbar>
+            </div>
           </div>
-        </div>
+        </CustomScrollbar>
       </div>
     );
   }
 }
 
-export interface SettingsPage {
-  id: string;
-  title: string;
-  icon: IconName;
-  render: () => React.ReactNode;
-}
+const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+  scrollInner: css`
+    min-width: 100%;
+    min-height: 100%;
+  `,
+  settingsWrapper: css`
+    background: ${theme.colors.bg1};
+    display: flex;
+    min-height: 100%;
+    width: 100%;
+  `,
+}));
