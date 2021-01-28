@@ -11,8 +11,6 @@ weight = 10
 Google Cloud Monitoring data source ships with pre-configured dashboards for some of the most popular GCP services. These curated dashboards are based on similar dashboards in the GCP dashboard samples repository. See also, [Using Google Cloud Monitoring in Grafana]({{< relref "./_index.md" >}}) for detailed instructions on how to add and configure the Google Cloud Monitoring data source.
 ## Curated dashboards
 
-The curated dashboards are based on similar dashboards in the GCP dashboard samples repository.
-
 To import the curated dashboards:
 
 1. On the configuration page of your Cloud Monitoring data source, click the **Dashboards** tab.
