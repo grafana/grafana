@@ -1,5 +1,5 @@
 // Library
-import { getConfig } from './bars';
+import { BarsOptions, getConfig } from './bars';
 
 import React, { useCallback, useMemo, useRef } from 'react';
 import {
@@ -82,7 +82,20 @@ export const BarChart: React.FunctionComponent<Props> = ({
         ? (seriesIdx: number, value: any) => formattedValueToString(data.fields[seriesIdx].display!(value))
         : undefined;
 
-    const config = getConfig(xOri, xDir, groupWidth, barWidth, formatValue);
+    const opts: BarsOptions = {
+      xOri,
+      xDir,
+      groupWidth,
+      barWidth,
+      formatValue,
+      onHover: (seriesIdx: number, valueIdx: number) => {
+        console.log('hover', { seriesIdx, valueIdx });
+      },
+      onLeave: (seriesIdx: number, valueIdx: number) => {
+        console.log('leave', { seriesIdx, valueIdx });
+      },
+    };
+    const config = getConfig(opts);
 
     const builder = new UPlotConfigBuilder();
 

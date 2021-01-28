@@ -29,7 +29,27 @@ function walkTwo(groupWidth: number, barWidth: number, yIdx: number, xCount: num
   });
 }
 
-export function getConfig(ori: 1 | 0, dir: 1 | -1, groupWidth: number, barWidth: number, formatValue?: (seriesIdx: number, value: any) => string) {
+export interface BarsOptions {
+  xOri: 1 | 0;
+  xDir: 1 | -1;
+  groupWidth: number;
+  barWidth: number;
+  formatValue?: (seriesIdx: number, value: any) => string;
+  onHover?: (seriesIdx: number, valueIdx: any) => void;
+  onLeave?: (seriesIdx: number, valueIdx: any) => void;
+}
+
+export function getConfig(opts: BarsOptions) {
+  const {
+    xOri: ori,
+    xDir: dir,
+    groupWidth,
+    barWidth,
+    formatValue,
+    onHover,
+    onLeave,
+  } = opts;
+
   let qt: Quadtree;
 
   const drawBars: Series.PathBuilder = (u, sidx, i0, i1) => {
@@ -194,9 +214,17 @@ export function getConfig(ori: 1 | 0, dir: 1 | -1, groupWidth: number, barWidth:
         barMark.style.width   = (found!.w / pxRatio) + "px";
         barMark.style.height  = (found!.h / pxRatio) + "px";
         hovered = found;
+
+        if (onHover != null) {
+          onHover(hovered!.sidx, hovered!.didx);
+        }
       }
     }
     else if (hovered != null) {
+      if (onLeave != null) {
+        onLeave(hovered!.sidx, hovered!.didx);
+      }
+
       hovered = null;
       barMark.style.display = "none";
     }
