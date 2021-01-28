@@ -2,30 +2,38 @@ import uPlot, { Axis, Series, Cursor, BBox } from 'uplot';
 import { Quadtree, Rect, pointWithin } from './quadtree';
 import { distribute, SPACE_BETWEEN } from './distribute';
 
-/* eslint-disable */
-
-const pxRatio    = devicePixelRatio;
+const pxRatio = devicePixelRatio;
 
 const groupDistr = SPACE_BETWEEN;
-const barDistr   = SPACE_BETWEEN;
+const barDistr = SPACE_BETWEEN;
 
-const font = Math.round(10 * pxRatio) + "px Arial";
+const font = Math.round(10 * pxRatio) + 'px Arial';
 
 type WalkTwoCb = null | ((idx: number, offPx: number, dimPx: number) => void);
 
-function walkTwo(groupWidth: number, barWidth: number, yIdx: number, xCount: number, yCount: number, xDim: number, xDraw?: WalkTwoCb, yDraw?: WalkTwoCb) {
+function walkTwo(
+  groupWidth: number,
+  barWidth: number,
+  yIdx: number,
+  xCount: number,
+  yCount: number,
+  xDim: number,
+  xDraw?: WalkTwoCb,
+  yDraw?: WalkTwoCb
+) {
   distribute(xCount, groupWidth, groupDistr, null, (ix, offPct, dimPct) => {
     let groupOffPx = xDim * offPct;
     let groupWidPx = xDim * dimPct;
 
     xDraw && xDraw(ix, groupOffPx, groupWidPx);
 
-    yDraw && distribute(yCount, barWidth, barDistr, yIdx, (iy, offPct, dimPct) => {
-      let barOffPx = groupWidPx * offPct;
-      let barWidPx = groupWidPx * dimPct;
+    yDraw &&
+      distribute(yCount, barWidth, barDistr, yIdx, (iy, offPct, dimPct) => {
+        let barOffPx = groupWidPx * offPct;
+        let barWidPx = groupWidPx * dimPct;
 
-      yDraw(ix, groupOffPx + barOffPx, barWidPx);
-    });
+        yDraw(ix, groupOffPx + barOffPx, barWidPx);
+      });
   });
 }
 
@@ -40,94 +48,116 @@ export interface BarsOptions {
 }
 
 export function getConfig(opts: BarsOptions) {
-  const {
-    xOri: ori,
-    xDir: dir,
-    groupWidth,
-    barWidth,
-    formatValue,
-    onHover,
-    onLeave,
-  } = opts;
+  const { xOri: ori, xDir: dir, groupWidth, barWidth, formatValue, onHover, onLeave } = opts;
 
   let qt: Quadtree;
 
   const drawBars: Series.PathBuilder = (u, sidx, i0, i1) => {
-    return uPlot.orient(u, sidx, (series, dataX, dataY, scaleX, scaleY, valToPosX, valToPosY, xOff, yOff, xDim, yDim, moveTo, lineTo, rect) => {
-      const fill = new Path2D();
+    return uPlot.orient(
+      u,
+      sidx,
+      (series, dataX, dataY, scaleX, scaleY, valToPosX, valToPosY, xOff, yOff, xDim, yDim, moveTo, lineTo, rect) => {
+        const fill = new Path2D();
 
-      let numGroups    = dataX.length;
-      let barsPerGroup = u.series.length - 1;
+        let numGroups = dataX.length;
+        let barsPerGroup = u.series.length - 1;
 
-      let y0Pos = valToPosY(0, scaleY, yDim, yOff);
+        let y0Pos = valToPosY(0, scaleY, yDim, yOff);
 
-      const _dir = dir * (ori == 0 ? 1 : -1);
+        const _dir = dir * (ori === 0 ? 1 : -1);
 
-      walkTwo(groupWidth, barWidth, sidx - 1, numGroups, barsPerGroup, xDim, null, (ix, x0, wid) => {
-        let lft = Math.round(xOff + (_dir == 1 ? x0 : xDim - x0 - wid));
-        let barWid = Math.round(wid);
+        walkTwo(groupWidth, barWidth, sidx - 1, numGroups, barsPerGroup, xDim, null, (ix, x0, wid) => {
+          let lft = Math.round(xOff + (_dir === 1 ? x0 : xDim - x0 - wid));
+          let barWid = Math.round(wid);
 
-        if (dataY[ix] != null) {
-          let yPos = valToPosY(dataY[ix]!, scaleY, yDim, yOff);
+          if (dataY[ix] != null) {
+            let yPos = valToPosY(dataY[ix]!, scaleY, yDim, yOff);
 
-          let btm = Math.round(Math.max(yPos, y0Pos));
-          let top = Math.round(Math.min(yPos, y0Pos));
-          let barHgt = btm - top;
+            let btm = Math.round(Math.max(yPos, y0Pos));
+            let top = Math.round(Math.min(yPos, y0Pos));
+            let barHgt = btm - top;
 
-          rect(fill, lft, top, barWid, barHgt);
+            rect(fill, lft, top, barWid, barHgt);
 
-          let x = ori == 0 ? Math.round(lft - xOff) : 0;
-          let y = ori == 0 ? Math.round(top - yOff) : Math.round(lft - xOff);
-          let w = ori == 0 ? barWid                 : barHgt;
-          let h = ori == 0 ? barHgt                 : barWid;
+            let x = ori === 0 ? Math.round(lft - xOff) : 0;
+            let y = ori === 0 ? Math.round(top - yOff) : Math.round(lft - xOff);
+            let w = ori === 0 ? barWid : barHgt;
+            let h = ori === 0 ? barHgt : barWid;
 
-          qt.add({x, y, w, h, sidx: sidx, didx: ix});
-        }
-      });
+            qt.add({ x, y, w, h, sidx: sidx, didx: ix });
+          }
+        });
 
-      return {
-        stroke: fill,
-        fill
-      };
-    });
+        return {
+          stroke: fill,
+          fill,
+        };
+      }
+    );
   };
 
-  const drawPoints: Series.Points.Show = formatValue == null ? false : (u, sidx, i0, i1) => {
-    u.ctx.font         = font;
-    u.ctx.fillStyle    = "white";
+  const drawPoints: Series.Points.Show =
+    formatValue == null
+      ? false
+      : (u, sidx, i0, i1) => {
+          u.ctx.font = font;
+          u.ctx.fillStyle = 'white';
 
-    uPlot.orient(u, sidx, (series, dataX, dataY, scaleX, scaleY, valToPosX, valToPosY, xOff, yOff, xDim, yDim, moveTo, lineTo, rect) => {
-      let numGroups    = dataX.length;
-      let barsPerGroup = u.series.length - 1;
+          uPlot.orient(
+            u,
+            sidx,
+            (
+              series,
+              dataX,
+              dataY,
+              scaleX,
+              scaleY,
+              valToPosX,
+              valToPosY,
+              xOff,
+              yOff,
+              xDim,
+              yDim,
+              moveTo,
+              lineTo,
+              rect
+            ) => {
+              let numGroups = dataX.length;
+              let barsPerGroup = u.series.length - 1;
 
-      const _dir = dir * (ori == 0 ? 1 : -1);
+              const _dir = dir * (ori === 0 ? 1 : -1);
 
-      walkTwo(groupWidth, barWidth, sidx - 1, numGroups, barsPerGroup, xDim, null, (ix, x0, wid) => {
-        let lft    = Math.round(xOff + (_dir == 1 ? x0 : xDim - x0 - wid));
-        let barWid = Math.round(wid);
+              walkTwo(groupWidth, barWidth, sidx - 1, numGroups, barsPerGroup, xDim, null, (ix, x0, wid) => {
+                let lft = Math.round(xOff + (_dir === 1 ? x0 : xDim - x0 - wid));
+                let barWid = Math.round(wid);
 
-        if (dataY[ix] != null) {
-          let yPos = valToPosY(dataY[ix]!, scaleY, yDim, yOff);
+                if (dataY[ix] != null) {
+                  let yPos = valToPosY(dataY[ix]!, scaleY, yDim, yOff);
 
-          let x = ori == 0 ? Math.round(lft + barWid/2) : Math.round(yPos);
-          let y = ori == 0 ? Math.round(yPos)           : Math.round(lft + barWid / 2);
+                  // prettier-ignore-start
+                  /* eslint-disable */
+                  let x = ori === 0 ? Math.round(lft + barWid / 2) : Math.round(yPos);
+                  let y = ori === 0 ? Math.round(yPos)             : Math.round(lft + barWid / 2);
 
-          u.ctx.textAlign    = ori == 0 ? "center" : dataY[ix]! >= 0 ? "left" : "right";
-          u.ctx.textBaseline = ori == 1 ? "middle" : dataY[ix]! >= 0 ? "bottom" : "top";
+                  u.ctx.textAlign    = ori === 0 ? 'center' : dataY[ix]! >= 0 ? 'left' : 'right';
+                  u.ctx.textBaseline = ori === 1 ? 'middle' : dataY[ix]! >= 0 ? 'bottom' : 'top';
+                  /* eslint-enable */
+                  // prettier-ignore-end
 
-          u.ctx.fillText(
-            formatValue(sidx, dataY[ix]),
-            x,
-            y,
+                  u.ctx.fillText(
+                    formatValue(sidx, dataY[ix]),
+                    x, // X
+                    y
+                  );
+                }
+              });
+            }
           );
-        }
-      });
-    });
 
-    return false;
-  };
+          return false;
+        };
 
-/*
+  /*
   const yRange: Scale.Range = (u, dataMin, dataMax) => {
     // @ts-ignore
     let [min, max] = uPlot.rangeNum(0, dataMax, 0.05, true);
@@ -136,8 +166,8 @@ export function getConfig(opts: BarsOptions) {
 */
 
   const xSplits: Axis.Splits = (u: uPlot, axisIdx: number) => {
-    const dim = ori == 0 ? u.bbox.width : u.bbox.height;
-    const _dir = dir * (ori == 0 ? 1 : -1);
+    const dim = ori === 0 ? u.bbox.width : u.bbox.height;
+    const _dir = dir * (ori === 0 ? 1 : -1);
 
     let splits: number[] = [];
 
@@ -150,7 +180,7 @@ export function getConfig(opts: BarsOptions) {
       splits.push(u.posToVal(groupCenterPx, 'x'));
     });
 
-    return _dir == 1 ? splits : splits.reverse();
+    return _dir === 1 ? splits : splits.reverse();
   };
 
   // @ts-ignore
@@ -158,28 +188,28 @@ export function getConfig(opts: BarsOptions) {
 
   let hovered: Rect | null = null;
 
-  let barMark = document.createElement("div");
-  barMark.classList.add("bar-mark");
-  barMark.style.position = "absolute";
-  barMark.style.background = "rgba(255,255,255,0.4)";
+  let barMark = document.createElement('div');
+  barMark.classList.add('bar-mark');
+  barMark.style.position = 'absolute';
+  barMark.style.background = 'rgba(255,255,255,0.4)';
 
   // hide crosshair cursor & hover points
   const cursor: Cursor = {
     x: false,
     y: false,
     points: {
-      show: false
-    }
+      show: false,
+    },
   };
 
   // disable selection
   // uPlot types do not export the Select interface prior to 1.6.4
   const select: Partial<BBox> = {
-    show: false
+    show: false,
   };
 
   const init = (u: uPlot) => {
-    u.root.querySelector(".u-over")!.appendChild(barMark);
+    u.root.querySelector('.u-over')!.appendChild(barMark);
   };
 
   const drawClear = (u: uPlot) => {
@@ -188,7 +218,7 @@ export function getConfig(opts: BarsOptions) {
     qt.clear();
 
     // clear the path cache to force drawBars() to rebuild new quadtree
-    u.series.forEach(s => {
+    u.series.forEach((s) => {
       // @ts-ignore
       s._paths = null;
     });
@@ -200,33 +230,36 @@ export function getConfig(opts: BarsOptions) {
     let cx = u.cursor.left! * pxRatio;
     let cy = u.cursor.top! * pxRatio;
 
-    qt.get(cx, cy, 1, 1, o => {
+    qt.get(cx, cy, 1, 1, (o) => {
       if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
         found = o;
       }
     });
 
     if (found) {
-      if (found != hovered) {
-        barMark.style.display = "";
-        barMark.style.left    = (found!.x / pxRatio) + "px";
-        barMark.style.top     = (found!.y / pxRatio) + "px";
-        barMark.style.width   = (found!.w / pxRatio) + "px";
-        barMark.style.height  = (found!.h / pxRatio) + "px";
+      if (found !== hovered) {
+        // prettier-ignore-start
+        /* eslint-disable */
+        barMark.style.display = '';
+        barMark.style.left   = found!.x / pxRatio + 'px';
+        barMark.style.top    = found!.y / pxRatio + 'px';
+        barMark.style.width  = found!.w / pxRatio + 'px';
+        barMark.style.height = found!.h / pxRatio + 'px';
         hovered = found;
+        /* eslint-enable */
+        // prettier-ignore-end
 
         if (onHover != null) {
           onHover(hovered!.sidx, hovered!.didx);
         }
       }
-    }
-    else if (hovered != null) {
+    } else if (hovered != null) {
       if (onLeave != null) {
         onLeave(hovered!.sidx, hovered!.didx);
       }
 
       hovered = null;
-      barMark.style.display = "none";
+      barMark.style.display = 'none';
     }
   };
 
