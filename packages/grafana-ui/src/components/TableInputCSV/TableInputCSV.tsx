@@ -1,12 +1,14 @@
 import React from 'react';
 import debounce from 'lodash/debounce';
 import { css } from 'emotion';
-import { useStyles } from '../../themes';
 import { DataFrame, CSVConfig, readCSV } from '@grafana/data';
 import { Icon } from '../Icon/Icon';
 import { GrafanaTheme } from '@grafana/data';
+import { Themeable } from '../../types/theme';
+import { stylesFactory } from '../../themes';
+import { withTheme } from '../../themes/index';
 
-interface Props {
+interface Props extends Themeable {
   config?: CSVConfig;
   text: string;
   width: string | number;
@@ -26,7 +28,7 @@ interface State {
 /**
  * Expects the container div to have size set and will fill it 100%
  */
-export class TableInputCSV extends React.PureComponent<Props, State> {
+export class unThemedTableInputCSV extends React.PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
@@ -66,9 +68,9 @@ export class TableInputCSV extends React.PureComponent<Props, State> {
   };
 
   render() {
-    const { width, height } = this.props;
+    const { width, height, theme } = this.props;
     const { data } = this.state;
-    const styles = useStyles(getStyles);
+    const styles = getStyles(theme);
     return (
       <div className={styles.TableInputCsv}>
         <textarea
@@ -95,25 +97,28 @@ export class TableInputCSV extends React.PureComponent<Props, State> {
   }
 }
 
-export default TableInputCSV;
+export const TableInputCSV = withTheme(unThemedTableInputCSV);
+TableInputCSV.displayName = 'TableInputCSV';
 
-const getStyles = (theme: GrafanaTheme): TableInputCSVStyle => {
-  return {
-    TableInputCsv: css`
-      position: relative;
-      textarea {
-        height: 100%;
-        width: 100%;
-      }
-      footer {
-        position: absolute;
-        bottom: 15px;
-        right: 15px;
-        border: 1px solid #222;
-        background: ${theme.palette.online};
-        padding: 1px 4px;
-        font-size: 80%;
-      }
-    `,
-  };
-};
+const getStyles = stylesFactory(
+  (theme: GrafanaTheme): TableInputCSVStyle => {
+    return {
+      TableInputCsv: css`
+        position: relative;
+        textarea {
+          height: 100%;
+          width: 100%;
+        }
+        footer {
+          position: absolute;
+          bottom: 15px;
+          right: 15px;
+          border: 1px solid #222;
+          background: ${theme.palette.online};
+          padding: 1px 4px;
+          font-size: 80%;
+        }
+      `,
+    };
+  }
+);
