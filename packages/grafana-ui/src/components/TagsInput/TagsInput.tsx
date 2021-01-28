@@ -6,8 +6,8 @@ import { Input } from '../Forms/Legacy/Input/Input';
 import { TagItem } from './TagItem';
 
 interface Props {
+  placeholder?: string;
   tags?: string[];
-  width?: number;
 
   onChange: (tags: string[]) => void;
 }
@@ -80,6 +80,7 @@ export class TagsInput extends PureComponent<Props, State> {
   };
 
   render() {
+    const { placeholder = 'Add name' } = this.props;
     const { tags, newTag } = this.state;
 
     const getStyles = stylesFactory(() => ({
@@ -104,7 +105,7 @@ export class TagsInput extends PureComponent<Props, State> {
             `
           )}
         >
-          <Input placeholder="Add Name" onChange={this.onNameChange} value={newTag} onKeyUp={this.onKeyboardAdd} />
+          <Input placeholder={placeholder} onChange={this.onNameChange} value={newTag} onKeyUp={this.onKeyboardAdd} />
           <Button className={getStyles().addButtonStyle} onClick={this.onAdd} variant="secondary" size="md">
             Add
           </Button>
