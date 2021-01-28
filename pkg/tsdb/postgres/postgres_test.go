@@ -31,7 +31,9 @@ import (
 func TestGenerateConnectionString(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.DataPath = t.TempDir()
-
+	validateCertFilePaths = func(rootCert, clientCert, clientKey string) error {
+		return nil
+	}
 	testCases := []struct {
 		desc           string
 		host           string
@@ -158,13 +160,13 @@ func TestGenerateConnectionString(t *testing.T) {
 			}
 
 			if generatedTLSRootCertFile != "" {
-				tt.expConnStr += " sslrootcert='" + generatedTLSRootCertFile + "'"
+				tt.expConnStr += " sslrootcert='" + escape(generatedTLSRootCertFile) + "'"
 			}
 			if generatedTLSCertFile != "" {
-				tt.expConnStr += " sslcert='" + generatedTLSCertFile + "'"
+				tt.expConnStr += " sslcert='" + escape(generatedTLSCertFile) + "'"
 			}
 			if generatedTLSKeyFile != "" {
-				tt.expConnStr += " sslkey='" + generatedTLSKeyFile + "'"
+				tt.expConnStr += " sslkey='" + escape(generatedTLSKeyFile) + "'"
 			}
 
 			if tt.expErr == "" {

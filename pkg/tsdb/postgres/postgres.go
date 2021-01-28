@@ -208,7 +208,7 @@ func (s *postgresService) writeCertFiles(ds *models.DataSource) error {
 }
 
 // validateCertFilePaths validates configured certificate file paths.
-func (s *postgresService) validateCertFilePaths(rootCert, clientCert, clientKey string) error {
+var validateCertFilePaths = func(rootCert, clientCert, clientKey string) error {
 	for _, fpath := range []string{rootCert, clientCert, clientKey} {
 		if fpath == "" {
 			continue
@@ -277,7 +277,7 @@ func (s *postgresService) generateConnectionString(datasource *models.DataSource
 			tlsRootCert = datasource.JsonData.Get("sslRootCertFile").MustString("")
 			tlsCert = datasource.JsonData.Get("sslCertFile").MustString("")
 			tlsKey = datasource.JsonData.Get("sslKeyFile").MustString("")
-			if err := s.validateCertFilePaths(tlsRootCert, tlsCert, tlsKey); err != nil {
+			if err := validateCertFilePaths(tlsRootCert, tlsCert, tlsKey); err != nil {
 				return "", err
 			}
 		}
