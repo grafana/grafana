@@ -135,11 +135,11 @@ concurrent_render_limit = 4
 image_scale_factor = 2
 # Path to the directory containing font files
 fonts_path =
-# Name of the TrueType font file with Regular style
+# Name of the TrueType font file with regular style
 font_regular = DejaVuSansCondensed.ttf
-# Name of the TrueType font file with Bold style
+# Name of the TrueType font file with bold style
 font_bold = DejaVuSansCondensed-Bold.ttf
-# Name of the TrueType font file with Italic style
+# Name of the TrueType font file with italic style
 font_italic = DejaVuSansCondensed-Oblique.ttf
 ```
 

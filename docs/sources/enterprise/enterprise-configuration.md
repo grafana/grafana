@@ -127,15 +127,15 @@ Path to the directory containing font files.
 
 ### font_regular
 
-Name of the TrueType font file with Regular style.
+Name of the TrueType font file with regular style.
 
 ### font_bold
 
-Name of the TrueType font file with Bold style.
+Name of the TrueType font file with bold style.
 
 ### font_italic
 
-Name of the TrueType font file with Italic style.
+Name of the TrueType font file with italic style.
 
 ## [auditing]
 
