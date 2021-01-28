@@ -13,21 +13,21 @@ export type Each = (idx: number, offPct: number, dimPct: number) => void;
 export function distribute(numItems: number, sizeFactor: number, justify: number, onlyIdx: number | null, each: Each) {
   let space = 1 - sizeFactor;
 
-  // prettier-ignore-start
   /* eslint-disable */
+  // prettier-ignore
   let gap = (
     justify == SPACE_BETWEEN ? space / (numItems - 1) :
     justify == SPACE_AROUND  ? space / (numItems  )   :
     justify == SPACE_EVENLY  ? space / (numItems + 1) : 0
   );
 
+  // prettier-ignore
   let offs = (
     justify == SPACE_BETWEEN ? 0       :
     justify == SPACE_AROUND  ? gap / 2 :
     justify == SPACE_EVENLY  ? gap     : 0
   );
   /* eslint-enable */
-  // prettier-ignore-end
 
   let iwid = sizeFactor / numItems;
   let _iwid = roundDec(iwid, 6);

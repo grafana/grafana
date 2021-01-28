@@ -131,10 +131,10 @@ export function getConfig(opts: BarsOptions) {
                 let lft = Math.round(xOff + (_dir === 1 ? x0 : xDim - x0 - wid));
                 let barWid = Math.round(wid);
 
+                // prettier-ignore
                 if (dataY[ix] != null) {
                   let yPos = valToPosY(dataY[ix]!, scaleY, yDim, yOff);
 
-                  // prettier-ignore-start
                   /* eslint-disable */
                   let x = ori === 0 ? Math.round(lft + barWid / 2) : Math.round(yPos);
                   let y = ori === 0 ? Math.round(yPos)             : Math.round(lft + barWid / 2);
@@ -142,11 +142,10 @@ export function getConfig(opts: BarsOptions) {
                   u.ctx.textAlign    = ori === 0 ? 'center' : dataY[ix]! >= 0 ? 'left' : 'right';
                   u.ctx.textBaseline = ori === 1 ? 'middle' : dataY[ix]! >= 0 ? 'bottom' : 'top';
                   /* eslint-enable */
-                  // prettier-ignore-end
 
                   u.ctx.fillText(
                     formatValue(sidx, dataY[ix]),
-                    x, // X
+                    x, //
                     y
                   );
                 }
@@ -237,8 +236,8 @@ export function getConfig(opts: BarsOptions) {
     });
 
     if (found) {
+      // prettier-ignore
       if (found !== hovered) {
-        // prettier-ignore-start
         /* eslint-disable */
         barMark.style.display = '';
         barMark.style.left   = found!.x / pxRatio + 'px';
@@ -247,7 +246,6 @@ export function getConfig(opts: BarsOptions) {
         barMark.style.height = found!.h / pxRatio + 'px';
         hovered = found;
         /* eslint-enable */
-        // prettier-ignore-end
 
         if (onHover != null) {
           onHover(hovered!.sidx, hovered!.didx);
