@@ -9,6 +9,9 @@ import panelArtDark from './panelArt_dark.svg';
 import panelArtLight from './panelArt_light.svg';
 import { stylesFactory, useTheme } from '../../themes';
 import { getColorsFromSeverity } from '../../utils/colors';
+import { useLocalStorage } from 'react-use';
+
+const FEATUREINFOBOX_PERSISTENCE_ID_PREFIX = 'grafana-ui.components.InfoBox.';
 
 export interface InfoBoxProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'title'> {
   children: React.ReactNode;
@@ -24,6 +27,8 @@ export interface InfoBoxProps extends Omit<React.HTMLAttributes<HTMLDivElement>,
   severity?: AlertVariant;
   /** Call back to be performed when box is dismissed */
   onDismiss?: () => void;
+  /** If dismissPersistenceId is set, the info box will be peristently dismissed when the user dismisses the infobox.*/
+  dismissPersistenceId?: string;
 }
 
 /**
@@ -31,17 +36,52 @@ export interface InfoBoxProps extends Omit<React.HTMLAttributes<HTMLDivElement>,
  */
 export const InfoBox = React.memo(
   React.forwardRef<HTMLDivElement, InfoBoxProps>(
-    ({ title, className, children, branded, url, urlTitle, onDismiss, severity = 'info', ...otherProps }, ref) => {
+    (
+      {
+        title,
+        className,
+        children,
+        branded,
+        url,
+        urlTitle,
+        onDismiss,
+        dismissPersistenceId,
+        severity = 'info',
+        ...otherProps
+      },
+      ref
+    ) => {
       const theme = useTheme();
       const styles = getInfoBoxStyles(theme, severity);
       const wrapperClassName = branded ? cx(styles.wrapperBranded, className) : cx(styles.wrapper, className);
+
+      let dismiss;
+
+      if (dismissPersistenceId) {
+        const persistanceId = FEATUREINFOBOX_PERSISTENCE_ID_PREFIX.concat(dismissPersistenceId);
+
+        const [dismissed, setDismissed] = useLocalStorage(persistanceId, { isDismissed: false });
+
+        dismiss = () => {
+          setDismissed({ isDismissed: true });
+          if (onDismiss) {
+            onDismiss();
+          }
+        };
+
+        if (dismissed.isDismissed) {
+          return null;
+        }
+      } else {
+        dismiss = onDismiss;
+      }
 
       return (
         <div className={wrapperClassName} {...otherProps} ref={ref}>
           <div>
             <HorizontalGroup justify={'space-between'} align={'flex-start'}>
               <div>{typeof title === 'string' ? <h4>{title}</h4> : title}</div>
-              {onDismiss && <IconButton name={'times'} onClick={onDismiss} />}
+              {dismiss && <IconButton name={'times'} onClick={dismiss} />}
             </HorizontalGroup>
           </div>
           <div>{children}</div>

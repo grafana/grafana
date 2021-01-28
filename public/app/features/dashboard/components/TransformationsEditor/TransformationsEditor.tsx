@@ -6,9 +6,11 @@ import {
   CustomScrollbar,
   FeatureInfoBox,
   stylesFactory,
+  Themeable,
   useTheme,
   ValuePicker,
   VerticalGroup,
+  withTheme,
 } from '@grafana/ui';
 import {
   DataFrame,
@@ -30,8 +32,9 @@ import { TransformationOperationRows } from './TransformationOperationRows';
 import { TransformationsEditorTransformation } from './types';
 import { PanelNotSupported } from '../PanelEditor/PanelNotSupported';
 import { AppNotificationSeverity } from '../../../../types';
+import theme from '@grafana/ui/src/themes/default';
 
-interface TransformationsEditorProps {
+interface TransformationsEditorProps extends Themeable {
   panel: PanelModel;
 }
 
@@ -40,7 +43,7 @@ interface State {
   transformations: TransformationsEditorTransformation[];
 }
 
-export class TransformationsEditor extends React.PureComponent<TransformationsEditorProps, State> {
+class UnThemedTransformationsEditor extends React.PureComponent<TransformationsEditorProps, State> {
   subscription?: Unsubscribable;
 
   constructor(props: TransformationsEditorProps) {
@@ -208,9 +211,16 @@ export class TransformationsEditor extends React.PureComponent<TransformationsEd
 
   renderNoAddedTransformsState() {
     return (
-      <VerticalGroup spacing={'lg'}>
+      <>
         <Container grow={1}>
-          <FeatureInfoBox title="Transformations" url={getDocsLink(DocsId.Transformations)}>
+          <FeatureInfoBox
+            title="Transformations"
+            className={css`
+              margin-bottom: ${theme.spacing.lg};
+            `}
+            dismissPersistenceId="transformationsFeaturesInfoBox"
+            url={getDocsLink(DocsId.Transformations)}
+          >
             <p>
               Transformations allow you to join, calculate, re-order, hide and rename your query results before being
               visualized. <br />
@@ -236,7 +246,7 @@ export class TransformationsEditor extends React.PureComponent<TransformationsEd
             );
           })}
         </VerticalGroup>
-      </VerticalGroup>
+      </>
     );
   }
 
@@ -299,3 +309,5 @@ const getTransformationCardStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
   };
 });
+
+export const TransformationsEditor = withTheme(UnThemedTransformationsEditor);
