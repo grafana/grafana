@@ -15,7 +15,7 @@ import (
 func (ng *AlertNG) registerAPIEndpoints() {
 	ng.RouteRegister.Group("/api/alert-definitions", func(alertDefinitions routing.RouteRegister) {
 		alertDefinitions.Get("", middleware.ReqSignedIn, routing.Wrap(ng.listAlertDefinitions))
-		alertDefinitions.Get("/eval/:alertDefinitionUID", ng.validateOrgAlertDefinition, routing.Wrap(ng.alertDefinitionEvalEndpoint))
+		alertDefinitions.Post("/eval/:alertDefinitionUID", ng.validateOrgAlertDefinition, routing.Wrap(ng.alertDefinitionEvalEndpoint))
 		alertDefinitions.Post("/eval", middleware.ReqSignedIn, binding.Bind(evalAlertConditionCommand{}), routing.Wrap(ng.conditionEvalEndpoint))
 		alertDefinitions.Get("/:alertDefinitionUID", ng.validateOrgAlertDefinition, routing.Wrap(ng.getAlertDefinitionEndpoint))
 		alertDefinitions.Delete("/:alertDefinitionUID", ng.validateOrgAlertDefinition, routing.Wrap(ng.deleteAlertDefinitionEndpoint))
@@ -34,13 +34,24 @@ func (ng *AlertNG) registerAPIEndpoints() {
 }
 
 // conditionEvalEndpoint handles POST /api/alert-definitions/eval.
-func (ng *AlertNG) conditionEvalEndpoint(c *models.ReqContext, dto evalAlertConditionCommand) response.Response {
-	if err := ng.validateCondition(dto.Condition, c.SignedInUser, c.SkipCache); err != nil {
+func (ng *AlertNG) conditionEvalEndpoint(c *models.ReqContext, cmd evalAlertConditionCommand) response.Response {
+	evalCond := eval.Condition{
+		RefID:                 cmd.Condition,
+		OrgID:                 c.SignedInUser.OrgId,
+		QueriesAndExpressions: cmd.Data,
+	}
+	if err := ng.validateCondition(evalCond, c.SignedInUser, c.SkipCache); err != nil {
 		return response.Error(400, "invalid condition", err)
 	}
 
+	now := cmd.Now
+	if now.IsZero() {
+		now = timeNow()
+	}
+
 	evaluator := eval.Evaluator{Cfg: ng.Cfg}
-	evalResults, err := evaluator.ConditionEval(&dto.Condition, timeNow())
+
+	evalResults, err := evaluator.ConditionEval(&evalCond, now)
 	if err != nil {
 		return response.Error(400, "Failed to evaluate conditions", err)
 	}
@@ -57,7 +68,7 @@ func (ng *AlertNG) conditionEvalEndpoint(c *models.ReqContext, dto evalAlertCond
 	})
 }
 
-// alertDefinitionEvalEndpoint handles GET /api/alert-definitions/eval/:alertDefinitionUID.
+// alertDefinitionEvalEndpoint handles POST /api/alert-definitions/eval/:alertDefinitionUID.
 func (ng *AlertNG) alertDefinitionEvalEndpoint(c *models.ReqContext) response.Response {
 	alertDefinitionUID := c.Params(":alertDefinitionUID")
 
@@ -128,7 +139,12 @@ func (ng *AlertNG) updateAlertDefinitionEndpoint(c *models.ReqContext, cmd updat
 	cmd.UID = c.Params(":alertDefinitionUID")
 	cmd.OrgID = c.SignedInUser.OrgId
 
-	if err := ng.validateCondition(cmd.Condition, c.SignedInUser, c.SkipCache); err != nil {
+	evalCond := eval.Condition{
+		RefID:                 cmd.Condition,
+		OrgID:                 c.SignedInUser.OrgId,
+		QueriesAndExpressions: cmd.Data,
+	}
+	if err := ng.validateCondition(evalCond, c.SignedInUser, c.SkipCache); err != nil {
 		return response.Error(400, "invalid condition", err)
 	}
 
@@ -143,7 +159,12 @@ func (ng *AlertNG) updateAlertDefinitionEndpoint(c *models.ReqContext, cmd updat
 func (ng *AlertNG) createAlertDefinitionEndpoint(c *models.ReqContext, cmd saveAlertDefinitionCommand) response.Response {
 	cmd.OrgID = c.SignedInUser.OrgId
 
-	if err := ng.validateCondition(cmd.Condition, c.SignedInUser, c.SkipCache); err != nil {
+	evalCond := eval.Condition{
+		RefID:                 cmd.Condition,
+		OrgID:                 c.SignedInUser.OrgId,
+		QueriesAndExpressions: cmd.Data,
+	}
+	if err := ng.validateCondition(evalCond, c.SignedInUser, c.SkipCache); err != nil {
 		return response.Error(400, "invalid condition", err)
 	}
 
