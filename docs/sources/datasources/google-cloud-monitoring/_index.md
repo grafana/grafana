@@ -342,4 +342,3 @@ datasources:
     jsonData:
       authenticationType: gce
 ```
-
