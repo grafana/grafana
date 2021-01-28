@@ -10,7 +10,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -267,7 +266,7 @@ func (s *postgresService) generateConnectionString(datasource *models.DataSource
 	if isTLSDisabled {
 		logger.Debug("Postgres TLS/SSL is disabled")
 	} else {
-		logger.Debug("Postgres TLS/SSL is enabled", "tlsMode", tlsMode)
+		s.logger.Debug("Postgres TLS/SSL is enabled", "tlsMode", tlsMode)
 
 		var tlsRootCert, tlsCert, tlsKey string
 		if tlsConfigurationMethod == "file-content" {
@@ -285,7 +284,7 @@ func (s *postgresService) generateConnectionString(datasource *models.DataSource
 
 		// Attach root certificate if provided
 		if tlsRootCert != "" {
-			logger.Debug("Setting server root certificate", "tlsRootCert", tlsRootCert)
+			s.logger.Debug("Setting server root certificate", "tlsRootCert", tlsRootCert)
 			connStr += fmt.Sprintf(" sslrootcert='%s'", escape(tlsRootCert))
 		}
 
