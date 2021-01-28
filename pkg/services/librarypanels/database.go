@@ -113,13 +113,20 @@ func (lps *LibraryPanelService) connectLibraryPanelsForDashboard(c *models.ReqCo
 
 // deleteLibraryPanel deletes a Library Panel.
 func (lps *LibraryPanelService) deleteLibraryPanel(c *models.ReqContext, uid string) error {
-	orgID := c.SignedInUser.OrgId
 	return lps.SQLStore.WithTransactionalDbSession(context.Background(), func(session *sqlstore.DBSession) error {
-		result, err := session.Exec("DELETE FROM library_panel WHERE uid=? and org_id=?", uid, orgID)
+		panel, err := getLibraryPanel(session, uid, c.SignedInUser.OrgId)
 		if err != nil {
 			return err
 		}
 
+		if _, err := session.Exec("DELETE FROM library_panel_dashboard WHERE librarypanel_id=?", panel.ID); err != nil {
+			return err
+		}
+
+		result, err := session.Exec("DELETE FROM library_panel WHERE id=?", panel.ID)
+		if err != nil {
+			return err
+		}
 		if rowsAffected, err := result.RowsAffected(); err != nil {
 			return err
 		} else if rowsAffected != 1 {

@@ -650,7 +650,7 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 			require.EqualError(t, err, errLibraryPanelHeaderUIDMissing.Error())
 		})
 
-	testScenario(t, "When an admin tries to load a dashboard with a library panel that is not connected, it should fail",
+	testScenario(t, "When an admin tries to load a dashboard with a library panel that is not connected, it should set correct JSON and continue",
 		func(t *testing.T, sc scenarioContext) {
 			command := getCreateCommand(1, "Text - Library Panel1")
 			response := sc.service.createHandler(sc.reqContext, command)
@@ -692,7 +692,38 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 			}
 
 			err = sc.service.LoadLibraryPanelsForDashboard(&dash)
-			require.EqualError(t, err, fmt.Errorf("found connection to library panel %q that isn't in database", existing.Result.UID).Error())
+			require.NoError(t, err)
+			expectedJSON := map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id": int64(1),
+						"gridPos": map[string]interface{}{
+							"h": 6,
+							"w": 6,
+							"x": 0,
+							"y": 0,
+						},
+					},
+					map[string]interface{}{
+						"id": int64(2),
+						"gridPos": map[string]interface{}{
+							"h": 6,
+							"w": 6,
+							"x": 6,
+							"y": 0,
+						},
+						"libraryPanel": map[string]interface{}{
+							"uid":  existing.Result.UID,
+							"name": existing.Result.Name,
+						},
+						"type": fmt.Sprintf("Name: \"%s\", UID: \"%s\"", existing.Result.Name, existing.Result.UID),
+					},
+				},
+			}
+			expected := simplejson.NewFromAny(expectedJSON)
+			if diff := cmp.Diff(expected.Interface(), dash.Data.Interface(), getCompareOptions()...); diff != "" {
+				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+			}
 		})
 }
 
