@@ -3,6 +3,8 @@ import { ApplyFieldOverrideOptions, DataTransformerConfig, dateTime, FieldColorM
 import alertDef from './alertDef';
 import {
   AlertDefinition,
+  AlertDefinitionDTO,
+  AlertDefinitionQueryModel,
   AlertDefinitionState,
   AlertDefinitionUiState,
   AlertRule,
@@ -58,7 +60,7 @@ export const initialAlertDefinitionState: AlertDefinitionState = {
     description: '',
     condition: '',
     data: [],
-    interval: 60,
+    intervalSeconds: 60,
   },
   queryOptions: { maxDataPoints: 100, dataSource: {}, queries: [] },
   queryRunner: new PanelQueryRunner(dataConfig),
@@ -157,8 +159,23 @@ const alertDefinitionSlice = createSlice({
   name: 'alertDefinition',
   initialState: initialAlertDefinitionState,
   reducers: {
-    setAlertDefinition: (state: AlertDefinitionState, action: PayloadAction<any>) => {
-      return { ...state, alertDefinition: action.payload };
+    setAlertDefinition: (state: AlertDefinitionState, action: PayloadAction<AlertDefinitionDTO>) => {
+      return {
+        ...state,
+        alertDefinition: {
+          title: action.payload.title,
+          id: action.payload.id,
+          uid: action.payload.uid,
+          condition: action.payload.condition,
+          intervalSeconds: action.payload.intervalSeconds,
+          data: action.payload.data,
+          description: '',
+        },
+        queryOptions: {
+          ...state.queryOptions,
+          queries: action.payload.data.map((q: AlertDefinitionQueryModel) => ({ ...q.model })),
+        },
+      };
     },
     updateAlertDefinitionOptions: (state: AlertDefinitionState, action: PayloadAction<Partial<AlertDefinition>>) => {
       return { ...state, alertDefinition: { ...state.alertDefinition, ...action.payload } };

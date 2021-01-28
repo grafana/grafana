@@ -44,7 +44,7 @@ class NextGenAlertingPage extends PureComponent<Props> {
 
   onChangeInterval = (interval: SelectableValue<number>) => {
     this.props.updateAlertDefinitionOption({
-      interval: interval.value,
+      intervalSeconds: interval.value,
     });
   };
 

@@ -106,7 +106,7 @@ export function loadNotificationChannel(id: number): ThunkResult<void> {
 
 export function getAlertDefinition(id: string): ThunkResult<void> {
   return async (dispatch) => {
-    const alertDefinition = getBackendSrv().get(`/api/alert-definitions/${id}`);
+    const alertDefinition = await getBackendSrv().get(`/api/alert-definitions/${id}`);
     dispatch(setAlertDefinition(alertDefinition));
   };
 }

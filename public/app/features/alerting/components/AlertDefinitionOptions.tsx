@@ -4,6 +4,12 @@ import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { Field, Input, Select, TextArea, useStyles } from '@grafana/ui';
 import { AlertDefinition, QueryGroupOptions } from 'app/types';
 
+const intervalOptions: Array<SelectableValue<number>> = [
+  { value: 60, label: '1m' },
+  { value: 300, label: '5m' },
+  { value: 600, label: '10m' },
+];
+
 interface Props {
   alertDefinition: AlertDefinition;
   onChange: (event: FormEvent) => void;
@@ -46,12 +52,8 @@ export const AlertDefinitionOptions: FC<Props> = ({
             <span className={styles.optionName}>Every</span>
             <Select
               onChange={onIntervalChange}
-              value={alertDefinition.interval}
-              options={[
-                { value: 60, label: '1m' },
-                { value: 300, label: '5m' },
-                { value: 600, label: '10m' },
-              ]}
+              value={intervalOptions.find((i) => i.value === alertDefinition.intervalSeconds)}
+              options={intervalOptions}
               width={10}
             />
           </div>
@@ -60,7 +62,7 @@ export const AlertDefinitionOptions: FC<Props> = ({
           <div className={styles.optionRow}>
             <Select
               onChange={onConditionChange}
-              value={alertDefinition.condition}
+              value={refIds.find((r) => r.value === alertDefinition.condition)}
               options={refIds}
               noOptionsMessage="No queries added"
             />
