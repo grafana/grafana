@@ -1,12 +1,17 @@
 FROM debian:testing-20210111-slim
 
-ARG GOVERSION=1.15.7
+# Use ARG so as not to persist environment variable in image
+ARG GOVERSION=1.15.7 \
+  GO_CHECKSUM=0d142143794721bb63ce6c8a6180c4062bcf8ef4715e7d6d6609f3a8282629b3 \
+  DEBIAN_FRONTEND=noninteractive
 
 ENV PATH=/usr/local/go/bin:$PATH \
     GOPATH=/go
 
 RUN apt update && apt install -yq curl git make
-RUN curl -fL https://storage.googleapis.com/golang/go${GOVERSION}.linux-amd64.tar.gz | tar -xz -C /usr/local
+RUN curl -fLO https://storage.googleapis.com/golang/go${GOVERSION}.linux-amd64.tar.gz && \
+      echo "${GO_CHECKSUM} go${GOVERSION}.linux-amd64.tar.gz" | sha256sum --check --strict --status && \
+      tar -xzf go${GOVERSION}.linux-amd64.tar.gz -C /usr/local
 
 RUN git clone https://github.com/aptly-dev/aptly $GOPATH/src/github.com/aptly-dev/aptly
 RUN cd $GOPATH/src/github.com/aptly-dev/aptly && \
@@ -16,8 +21,10 @@ RUN cd $GOPATH/src/github.com/aptly-dev/aptly && \
 
 FROM debian:testing-20210111-slim
 
-ARG GOOGLE_SDK_VERSION=325.0.0
-ARG GOOGLE_SDK_CHECKSUM=374f960c9f384f88b6fc190b268ceac5dcad777301390107af63782bfb5ecbc7
+# Use ARG so as not to persist environment variable in image
+ARG DEBIAN_FRONTEND=noninteractive \
+  GOOGLE_SDK_VERSION=325.0.0 \
+  GOOGLE_SDK_CHECKSUM=374f960c9f384f88b6fc190b268ceac5dcad777301390107af63782bfb5ecbc7
 
 RUN apt update && apt install -yq curl python3-pip && pip3 install -U awscli crcmod && \
     curl -fLO https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${GOOGLE_SDK_VERSION}-linux-x86_64.tar.gz && \
