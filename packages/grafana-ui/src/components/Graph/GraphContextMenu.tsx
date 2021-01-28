@@ -13,7 +13,7 @@ import {
 import { useTheme } from '../../themes';
 import { HorizontalGroup } from '../Layout/Layout';
 import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
-import { SeriesIcon } from '../Legend/SeriesIcon';
+import { SeriesIcon } from '../VizLegend/SeriesIcon';
 import { css } from 'emotion';
 
 export type ContextDimensions<T extends Dimensions = any> = { [key in keyof T]: [number, number | undefined] | null };
@@ -38,9 +38,9 @@ export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({
 
   //  Do not render items that do not have label specified
   const itemsToRender = items
-    ? items.map(group => ({
+    ? items.map((group) => ({
         ...group,
-        items: group.items.filter(item => item.label),
+        items: group.items.filter((item) => item.label),
       }))
     : [];
 

@@ -35,7 +35,7 @@ export const colorModes: any = {
 };
 
 export function getColorModes() {
-  return _.map(Object.keys(colorModes), key => {
+  return _.map(Object.keys(colorModes), (key) => {
     return {
       key,
       value: colorModes[key].title,

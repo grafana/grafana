@@ -121,7 +121,12 @@ export type IconName =
   | 'sort-amount-down'
   | 'cloud'
   | 'draggabledots'
-  | 'folder-upload';
+  | 'folder-upload'
+  | 'gf-interpolation-linear'
+  | 'gf-interpolation-smooth'
+  | 'gf-interpolation-step-before'
+  | 'gf-interpolation-step-after'
+  | 'gf-logs';
 
 export const getAvailableIcons = (): IconName[] => [
   'fa fa-spinner',
@@ -241,4 +246,9 @@ export const getAvailableIcons = (): IconName[] => [
   'cloud',
   'draggabledots',
   'folder-upload',
+  'gf-interpolation-linear',
+  'gf-interpolation-smooth',
+  'gf-interpolation-step-before',
+  'gf-interpolation-step-after',
+  'gf-logs',
 ];

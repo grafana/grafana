@@ -228,7 +228,7 @@ func (ctx *queryConditionTestContext) exec() (*alerting.ConditionResult, error) 
 
 func queryConditionScenario(desc string, fn queryConditionScenarioFunc) {
 	Convey(desc, func() {
-		bus.AddHandler("test", func(query *models.GetDataSourceByIdQuery) error {
+		bus.AddHandler("test", func(query *models.GetDataSourceQuery) error {
 			query.Result = &models.DataSource{Id: 1, Type: "graphite"}
 			return nil
 		})

@@ -4,6 +4,10 @@
   "plugins": [
     "no-only-tests"
   ],
+  "rules": {
+    "no-only-tests/no-only-tests": "error",
+    "react/prop-types": "off"
+  },
   "overrides": [
     {
       "files": [
@@ -13,9 +17,7 @@
       ],
       "rules": {
         "react-hooks/rules-of-hooks": "off",
-        "react-hooks/exhaustive-deps": "off",
-        "react/prop-types": "off",
-        "no-only-tests/no-only-tests": "error"
+        "react-hooks/exhaustive-deps": "off"
       }
     }
   ]

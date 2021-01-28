@@ -23,15 +23,15 @@ export const AlignmentPeriods: FC<Props> = ({
   perSeriesAligner,
   usedAlignmentPeriod,
 }) => {
-  const alignment = alignOptions.find(ap => ap.value === templateSrv.replace(perSeriesAligner));
+  const alignment = alignOptions.find((ap) => ap.value === templateSrv.replace(perSeriesAligner));
   const formatAlignmentText = usedAlignmentPeriod
     ? `${rangeUtil.secondsToHms(usedAlignmentPeriod)} interval (${alignment ? alignment.text : ''})`
     : '';
-  const options = alignmentPeriods.map(ap => ({
+  const options = alignmentPeriods.map((ap) => ({
     ...ap,
     label: ap.text,
   }));
-  const visibleOptions = options.filter(ap => !ap.hidden);
+  const visibleOptions = options.filter((ap) => !ap.hidden);
 
   return (
     <>
@@ -39,7 +39,7 @@ export const AlignmentPeriods: FC<Props> = ({
         <label className="gf-form-label query-keyword width-9">Alignment Period</label>
         <Segment
           onChange={({ value }) => onChange(value!)}
-          value={[...options, ...templateVariableOptions].find(s => s.value === alignmentPeriod)}
+          value={[...options, ...templateVariableOptions].find((s) => s.value === alignmentPeriod)}
           options={[
             {
               label: 'Template Variables',

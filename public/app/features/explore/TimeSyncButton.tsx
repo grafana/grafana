@@ -1,6 +1,5 @@
 import React from 'react';
-import classNames from 'classnames';
-import { Tooltip, Icon } from '@grafana/ui';
+import { Tooltip, ToolbarButton } from '@grafana/ui';
 
 interface TimeSyncButtonProps {
   isSynced: boolean;
@@ -18,15 +17,12 @@ export function TimeSyncButton(props: TimeSyncButtonProps) {
 
   return (
     <Tooltip content={syncTimesTooltip} placement="bottom">
-      <button
-        className={classNames('btn navbar-button navbar-button--attached', {
-          [`explore-active-button`]: isSynced,
-        })}
+      <ToolbarButton
+        icon="link"
+        variant={isSynced ? 'active' : 'default'}
         aria-label={isSynced ? 'Synced times' : 'Unsynced times'}
-        onClick={() => onClick()}
-      >
-        <Icon name="link" className={isSynced ? 'icon-brand-gradient' : ''} size="lg" />
-      </button>
+        onClick={onClick}
+      />
     </Tooltip>
   );
 }

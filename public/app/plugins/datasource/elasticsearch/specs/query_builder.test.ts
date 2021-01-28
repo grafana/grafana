@@ -10,7 +10,7 @@ describe('ElasticQueryBuilder', () => {
 
   const allBuilders = [builder, builder5x, builder56, builder6x, builder7x];
 
-  allBuilders.forEach(builder => {
+  allBuilders.forEach((builder) => {
     describe(`version ${builder.esVersion}`, () => {
       it('should return query with defaults', () => {
         const query = builder.build({
@@ -22,6 +22,22 @@ describe('ElasticQueryBuilder', () => {
 
         expect(query.query.bool.filter[0].range['@timestamp'].gte).toBe('$timeFrom');
         expect(query.aggs['1'].date_histogram.extended_bounds.min).toBe('$timeFrom');
+      });
+
+      it('should clean settings from null values', () => {
+        const query = builder.build({
+          refId: 'A',
+          // The following `missing: null as any` is because previous versions of the DS where
+          // storing null in the query model when inputting an empty string,
+          // which were then removed in the query builder.
+          // The new version doesn't store empty strings at all. This tests ensures backward compatinility.
+          metrics: [{ type: 'avg', id: '0', settings: { missing: null as any, script: '1' } }],
+          timeField: '@timestamp',
+          bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '1' }],
+        });
+
+        expect(query.aggs['1'].aggs['0'].avg.missing).not.toBeDefined();
+        expect(query.aggs['1'].aggs['0'].avg.script).toBeDefined();
       });
 
       it('with multiple bucket aggs', () => {
@@ -109,6 +125,84 @@ describe('ElasticQueryBuilder', () => {
 
         expect(firstLevel.aggs['5'].avg.field).toBe('@value');
         expect(secondLevel.aggs['5'].avg.field).toBe('@value');
+      });
+
+      it('with term agg and order by count agg', () => {
+        const query = builder.build(
+          {
+            refId: 'A',
+            metrics: [
+              { type: 'count', id: '1' },
+              { type: 'avg', field: '@value', id: '5' },
+            ],
+            bucketAggs: [
+              {
+                type: 'terms',
+                field: '@host',
+                settings: { size: '5', order: 'asc', orderBy: '1' },
+                id: '2',
+              },
+              { type: 'date_histogram', field: '@timestamp', id: '3' },
+            ],
+          },
+          100,
+          '1000'
+        );
+
+        expect(query.aggs['2'].terms.order._count).toEqual('asc');
+        expect(query.aggs['2'].aggs).not.toHaveProperty('1');
+      });
+
+      it('with term agg and order by extended_stats agg', () => {
+        const query = builder.build(
+          {
+            refId: 'A',
+            metrics: [{ type: 'extended_stats', id: '1', field: '@value', meta: { std_deviation: true } }],
+            bucketAggs: [
+              {
+                type: 'terms',
+                field: '@host',
+                settings: { size: '5', order: 'asc', orderBy: '1[std_deviation]' },
+                id: '2',
+              },
+              { type: 'date_histogram', field: '@timestamp', id: '3' },
+            ],
+          },
+          100,
+          '1000'
+        );
+
+        const firstLevel = query.aggs['2'];
+        const secondLevel = firstLevel.aggs['3'];
+
+        expect(firstLevel.aggs['1'].extended_stats.field).toBe('@value');
+        expect(secondLevel.aggs['1'].extended_stats.field).toBe('@value');
+      });
+
+      it('with term agg and order by percentiles agg', () => {
+        const query = builder.build(
+          {
+            refId: 'A',
+            metrics: [{ type: 'percentiles', id: '1', field: '@value', settings: { percents: ['95', '99'] } }],
+            bucketAggs: [
+              {
+                type: 'terms',
+                field: '@host',
+                settings: { size: '5', order: 'asc', orderBy: '1[95.0]' },
+                id: '2',
+              },
+              { type: 'date_histogram', field: '@timestamp', id: '3' },
+            ],
+          },
+          100,
+          '1000'
+        );
+
+        const firstLevel = query.aggs['2'];
+        const secondLevel = firstLevel.aggs['3'];
+
+        expect(firstLevel.aggs['1'].percentiles.field).toBe('@value');
+        expect(secondLevel.aggs['1'].percentiles.field).toBe('@value');
       });
 
       it('with term agg and valid min_doc_count', () => {
@@ -385,6 +479,35 @@ describe('ElasticQueryBuilder', () => {
         expect(firstLevel.aggs['2']).not.toBe(undefined);
         expect(firstLevel.aggs['2'].derivative).not.toBe(undefined);
         expect(firstLevel.aggs['2'].derivative.buckets_path).toBe('_count');
+      });
+
+      it('with serial_diff', () => {
+        const query = builder.build({
+          refId: 'A',
+          metrics: [
+            {
+              id: '3',
+              type: 'max',
+              field: '@value',
+            },
+            {
+              id: '2',
+              type: 'serial_diff',
+              field: '3',
+              settings: {
+                lag: 5,
+              },
+            },
+          ],
+          bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '3' }],
+        });
+
+        const firstLevel = query.aggs['3'];
+
+        expect(firstLevel.aggs['2']).not.toBe(undefined);
+        expect(firstLevel.aggs['2'].serial_diff).not.toBe(undefined);
+        expect(firstLevel.aggs['2'].serial_diff.buckets_path).toBe('3');
+        expect(firstLevel.aggs['2'].serial_diff.lag).toBe(5);
       });
 
       it('with bucket_script', () => {

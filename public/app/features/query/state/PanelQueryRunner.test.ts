@@ -140,7 +140,7 @@ describe('PanelQueryRunner', () => {
     jest.clearAllMocks();
   });
 
-  describeQueryRunnerScenario('simple scenario', ctx => {
+  describeQueryRunnerScenario('simple scenario', (ctx) => {
     it('should set requestId on request', async () => {
       expect(ctx.queryCalledWith?.requestId).toBe('Q100');
     });
@@ -156,7 +156,7 @@ describe('PanelQueryRunner', () => {
     });
   });
 
-  describeQueryRunnerScenario('with maxDataPoints', ctx => {
+  describeQueryRunnerScenario('with maxDataPoints', (ctx) => {
     ctx.setup(() => {
       ctx.maxDataPoints = 200;
     });
@@ -179,7 +179,7 @@ describe('PanelQueryRunner', () => {
     });
   });
 
-  describeQueryRunnerScenario('with no panel min interval but datasource min interval', ctx => {
+  describeQueryRunnerScenario('with no panel min interval but datasource min interval', (ctx) => {
     ctx.setup(() => {
       ctx.maxDataPoints = 20000;
       ctx.dsInterval = '15s';
@@ -190,7 +190,7 @@ describe('PanelQueryRunner', () => {
     });
   });
 
-  describeQueryRunnerScenario('with panel min interval and data source min interval', ctx => {
+  describeQueryRunnerScenario('with panel min interval and data source min interval', (ctx) => {
     ctx.setup(() => {
       ctx.maxDataPoints = 20000;
       ctx.dsInterval = '15s';
@@ -202,7 +202,7 @@ describe('PanelQueryRunner', () => {
     });
   });
 
-  describeQueryRunnerScenario('with maxDataPoints', ctx => {
+  describeQueryRunnerScenario('with maxDataPoints', (ctx) => {
     ctx.setup(() => {
       ctx.maxDataPoints = 10;
     });
@@ -218,7 +218,7 @@ describe('PanelQueryRunner', () => {
 
   describeQueryRunnerScenario(
     'field overrides',
-    ctx => {
+    (ctx) => {
       it('should apply when field override options are set', async () => {
         ctx.runner.getData({ withTransforms: true, withFieldConfig: true }).subscribe({
           next: (data: PanelData) => {
@@ -237,7 +237,7 @@ describe('PanelQueryRunner', () => {
           // @ts-ignore
           overrides: [],
         },
-        replaceVariables: v => v,
+        replaceVariables: (v) => v,
         theme: {} as GrafanaTheme,
       }),
       getTransformations: () => undefined,
@@ -246,7 +246,7 @@ describe('PanelQueryRunner', () => {
 
   describeQueryRunnerScenario(
     'transformations',
-    ctx => {
+    (ctx) => {
       it('should apply when transformations are set', async () => {
         const spy = jest.spyOn(grafanaData, 'transformDataFrame');
         spy.mockClear();
@@ -269,7 +269,7 @@ describe('PanelQueryRunner', () => {
 
   describeQueryRunnerScenario(
     'getData',
-    ctx => {
+    (ctx) => {
       it('should not apply transformations when transform option is false', async () => {
         const spy = jest.spyOn(grafanaData, 'transformDataFrame');
         spy.mockClear();
@@ -301,7 +301,7 @@ describe('PanelQueryRunner', () => {
           // @ts-ignore
           overrides: [],
         },
-        replaceVariables: v => v,
+        replaceVariables: (v) => v,
         theme: {} as GrafanaTheme,
       }),
       // @ts-ignore
@@ -311,7 +311,7 @@ describe('PanelQueryRunner', () => {
 
   describeQueryRunnerScenario(
     'getData',
-    ctx => {
+    (ctx) => {
       it('should not apply transformations when transform option is false', async () => {
         const spy = jest.spyOn(grafanaData, 'transformDataFrame');
         spy.mockClear();
@@ -343,7 +343,7 @@ describe('PanelQueryRunner', () => {
           // @ts-ignore
           overrides: [],
         },
-        replaceVariables: v => v,
+        replaceVariables: (v) => v,
         theme: {} as GrafanaTheme,
       }),
       // @ts-ignore

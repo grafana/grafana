@@ -6,31 +6,34 @@ import {
   Field,
   fieldMatchers,
   FieldMatcherID,
+  FieldType,
+  FieldState,
+  DataFrameFieldIndex,
+  sortDataFrame,
+  Vector,
 } from '@grafana/data';
-import { AlignedFrameWithGapTest } from '../uPlot/types';
 import uPlot, { AlignedData, JoinNullMode } from 'uplot';
 import { XYFieldMatchers } from './GraphNG';
 
 // the results ofter passing though data
 export interface XYDimensionFields {
-  x: Field[];
-  y: Field[];
+  x: Field; // independent axis (cause)
+  y: Field[]; // dependent axis (effect)
 }
 
 export function mapDimesions(match: XYFieldMatchers, frame: DataFrame, frames?: DataFrame[]): XYDimensionFields {
-  const out: XYDimensionFields = {
-    x: [],
-    y: [],
-  };
+  let x: Field | undefined;
+  const y: Field[] = [];
+
   for (const field of frame.fields) {
-    if (match.x(field, frame, frames ?? [])) {
-      out.x.push(field);
+    if (!x && match.x(field, frame, frames ?? [])) {
+      x = field;
     }
     if (match.y(field, frame, frames ?? [])) {
-      out.y.push(field);
+      y.push(field);
     }
   }
-  return out;
+  return { x: x as Field, y };
 }
 
 /**
@@ -40,9 +43,10 @@ export function mapDimesions(match: XYFieldMatchers, frame: DataFrame, frames?: 
  *
  * @alpha
  */
-export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): AlignedFrameWithGapTest | null {
+export function joinDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): DataFrame | null {
   const valuesFromFrames: AlignedData[] = [];
   const sourceFields: Field[] = [];
+  const sourceFieldsRefs: Record<number, DataFrameFieldIndex> = {};
   const nullModes: JoinNullMode[][] = [];
 
   // Default to timeseries config
@@ -53,38 +57,48 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
     };
   }
 
-  for (const frame of frames) {
-    const dims = mapDimesions(fields, frame, frames);
+  for (let frameIndex = 0; frameIndex < frames.length; frameIndex++) {
+    let frame = frames[frameIndex];
+    let dims = mapDimesions(fields, frame, frames);
 
-    if (!(dims.x.length && dims.y.length)) {
-      continue; // both x and y matched something!
+    if (!(dims.x && dims.y.length)) {
+      continue; // no numeric and no time fields
     }
 
-    if (dims.x.length > 1) {
-      throw new Error('Only a single x field is supported');
+    // Quick check that x is ascending order
+    if (!isLikelyAscendingVector(dims.x.values)) {
+      const xIndex = frame.fields.indexOf(dims.x);
+      frame = sortDataFrame(frame, xIndex);
+      dims = mapDimesions(fields, frame, frames);
     }
 
-    let nullModesFrame: JoinNullMode[] = [];
+    let nullModesFrame: JoinNullMode[] = [0];
 
     // Add the first X axis
     if (!sourceFields.length) {
-      sourceFields.push(dims.x[0]);
-      nullModesFrame.push(0);
+      sourceFields.push(dims.x);
     }
 
     const alignedData: AlignedData = [
-      dims.x[0].values.toArray(), // The x axis (time)
+      dims.x.values.toArray(), // The x axis (time)
     ];
 
-    // Add the Y values
-    for (const field of dims.y) {
+    for (let fieldIndex = 0; fieldIndex < frame.fields.length; fieldIndex++) {
+      const field = frame.fields[fieldIndex];
+
+      if (!fields.y(field, frame, frames)) {
+        continue;
+      }
+
       let values = field.values.toArray();
-      let joinNullMode = field.config.custom.spanNulls ? 0 : 2;
+      let joinNullMode = field.config.custom?.spanNulls ? 0 : 2;
 
       if (field.config.nullValueMode === NullValueMode.AsZero) {
-        values = values.map(v => (v === null ? 0 : v));
+        values = values.map((v) => (v === null ? 0 : v));
         joinNullMode = 0;
       }
+
+      sourceFieldsRefs[sourceFields.length] = { frameIndex, fieldIndex };
 
       alignedData.push(values);
       nullModesFrame.push(joinNullMode);
@@ -103,21 +117,64 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
   }
 
   // do the actual alignment (outerJoin on the first arrays)
-  let { data: alignedData, isGap } = uPlot.join(valuesFromFrames, nullModes);
+  let joinedData = uPlot.join(valuesFromFrames, nullModes);
 
-  if (alignedData!.length !== sourceFields.length) {
+  if (joinedData!.length !== sourceFields.length) {
     throw new Error('outerJoinValues lost a field?');
   }
 
+  let seriesIdx = 0;
   // Replace the values from the outer-join field
   return {
-    frame: {
-      length: alignedData![0].length,
-      fields: alignedData!.map((vals, idx) => ({
+    ...frames[0],
+    length: joinedData![0].length,
+    fields: joinedData!.map((vals, idx) => {
+      let state: FieldState = {
+        ...sourceFields[idx].state,
+        origin: sourceFieldsRefs[idx],
+      };
+
+      if (sourceFields[idx].type !== FieldType.time) {
+        state.seriesIndex = seriesIdx;
+        seriesIdx++;
+      }
+
+      return {
         ...sourceFields[idx],
+        state,
         values: new ArrayVector(vals),
-      })),
-    },
-    isGap,
+      };
+    }),
   };
+}
+
+// Quick test if the first and last points look to be ascending
+export function isLikelyAscendingVector(data: Vector): boolean {
+  let first: any = undefined;
+
+  for (let idx = 0; idx < data.length; idx++) {
+    const v = data.get(idx);
+    if (v != null) {
+      if (first != null) {
+        if (first > v) {
+          return false; // descending
+        }
+        break;
+      }
+      first = v;
+    }
+  }
+
+  let idx = data.length - 1;
+  while (idx >= 0) {
+    const v = data.get(idx--);
+    if (v != null) {
+      if (first > v) {
+        return false;
+      }
+      return true;
+    }
+  }
+
+  return true; // only one non-null point
 }

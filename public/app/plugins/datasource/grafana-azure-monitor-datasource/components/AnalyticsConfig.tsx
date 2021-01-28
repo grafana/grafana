@@ -136,7 +136,7 @@ export class AnalyticsConfig extends PureComponent<Props, State> {
 
     return (
       <>
-        <h3 className="page-heading">Azure Log Analytics API Details</h3>
+        <h3 className="page-heading">Azure Monitor Logs Details</h3>
         <Switch
           label="Same details as Azure Monitor API"
           checked={jsonData.azureLogAnalyticsSameAs ?? false}
@@ -177,7 +177,7 @@ export class AnalyticsConfig extends PureComponent<Props, State> {
               </InlineFormLabel>
               <div className="width-25">
                 <Select
-                  value={workspaces.find(workspace => workspace.value === jsonData.logAnalyticsDefaultWorkspace)}
+                  value={workspaces.find((workspace) => workspace.value === jsonData.logAnalyticsDefaultWorkspace)}
                   options={workspaces}
                   defaultValue={jsonData.logAnalyticsDefaultWorkspace}
                   onChange={this.onWorkspaceSelectChange}

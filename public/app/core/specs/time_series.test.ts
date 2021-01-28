@@ -430,25 +430,11 @@ describe('TimeSeries', () => {
       };
     });
 
-    it('should set decimals based on Y axis (expect calculated decimals = 1)', () => {
+    it('should set decimals to null if no decimals set', () => {
       const data = [series];
       // Expect ticks with this data will have decimals = 1
       updateLegendValues(data, panel, height);
-      expect(data[0].decimals).toBe(2);
-    });
-
-    it('should set decimals based on Y axis to 0 if calculated decimals = 0)', () => {
-      testData.datapoints = [
-        [10, 2],
-        [0, 3],
-        [100, 4],
-        [80, 5],
-      ];
-      series = new TimeSeries(testData);
-      series.getFlotPairs();
-      const data = [series];
-      updateLegendValues(data, panel, height);
-      expect(data[0].decimals).toBe(0);
+      expect(data[0].decimals).toBe(null);
     });
 
     it('should set decimals to Y axis decimals + 1', () => {

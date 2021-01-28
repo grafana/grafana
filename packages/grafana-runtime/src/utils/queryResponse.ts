@@ -134,9 +134,9 @@ export function frameToMetricFindValue(frame: DataFrame): MetricFindValue[] {
   }
 
   const values: MetricFindValue[] = [];
-  let field = frame.fields.find(f => f.type === FieldType.string);
+  let field = frame.fields.find((f) => f.type === FieldType.string);
   if (!field) {
-    field = frame.fields.find(f => f.type !== FieldType.time);
+    field = frame.fields.find((f) => f.type !== FieldType.time);
   }
   if (field) {
     for (let i = 0; i < field.values.length; i++) {

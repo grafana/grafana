@@ -2,7 +2,7 @@
 title = "License Expiration"
 description = ""
 keywords = ["grafana", "licensing"]
-weight = 8
+weight = 120
 +++
 
 # License expiration
@@ -29,7 +29,7 @@ If your license has expired most of Grafana keeps working as normal. Some enterp
 
 ## If your license expires
 
-If your Grafana Enterprise license expires, the following functionality affected as follows.
+If your Grafana Enterprise license expires, you can expect the following changes in feature behavior.
 
 ### Data source permissions
 
@@ -47,7 +47,7 @@ SAML authentication is not affected by an expired license.
 ### Reporting
 
 - You're unable to configure new reports or generate previews.
-- Scheduled reports are not generated or sent.
+- Existing reports continue to be sent.
 
 ### Enterprise plugins
 

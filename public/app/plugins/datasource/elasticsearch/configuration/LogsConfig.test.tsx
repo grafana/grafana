@@ -18,10 +18,7 @@ describe('ElasticDetails', () => {
   it('should pass correct data to onChange', () => {
     const onChangeMock = jest.fn();
     const wrapper = mount(<LogsConfig onChange={onChangeMock} value={createDefaultConfigOptions().jsonData} />);
-    const inputEl = wrapper
-      .find(FormField)
-      .at(0)
-      .find('input');
+    const inputEl = wrapper.find(FormField).at(0).find('input');
     (inputEl.getDOMNode() as any).value = 'test_field';
     inputEl.simulate('change');
     expect(onChangeMock.mock.calls[0][0].logMessageField).toBe('test_field');

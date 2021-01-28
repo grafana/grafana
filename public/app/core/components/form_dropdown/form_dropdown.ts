@@ -47,7 +47,9 @@ export class FormDropdownCtrl {
 
     // listen to model changes
     $scope.$watch('ctrl.model', this.modelChanged.bind(this));
+  }
 
+  $onInit() {
     if (this.labelMode) {
       this.cssClasses = 'gf-form-label ' + this.cssClass;
     } else {
@@ -70,7 +72,7 @@ export class FormDropdownCtrl {
     // modify typeahead lookup
     // this = typeahead
     const typeahead = this.inputElement.data('typeahead');
-    typeahead.lookup = function() {
+    typeahead.lookup = function () {
       this.query = this.$element.val() || '';
       this.source(this.query, this.process.bind(this));
     };
@@ -79,14 +81,14 @@ export class FormDropdownCtrl {
       typeahead.lookup = _.debounce(typeahead.lookup, 500, { leading: true });
     }
 
-    this.linkElement.keydown(evt => {
+    this.linkElement.keydown((evt) => {
       // trigger typeahead on down arrow or enter key
       if (evt.keyCode === 40 || evt.keyCode === 13) {
         this.linkElement.click();
       }
     });
 
-    this.inputElement.keydown(evt => {
+    this.inputElement.keydown((evt) => {
       if (evt.keyCode === 13) {
         setTimeout(() => {
           this.inputElement.blur();

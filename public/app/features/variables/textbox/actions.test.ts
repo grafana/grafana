@@ -22,12 +22,7 @@ describe('textbox actions', () => {
         selected: false,
       };
 
-      const variable = textboxBuilder()
-        .withId('textbox')
-        .withName('textbox')
-        .withCurrent('A')
-        .withQuery('A')
-        .build();
+      const variable = textboxBuilder().withId('textbox').withName('textbox').withCurrent('A').withQuery('A').build();
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
         .givenRootReducer(getRootReducer())
@@ -45,12 +40,7 @@ describe('textbox actions', () => {
   describe('when setTextBoxVariableOptionsFromUrl is dispatched', () => {
     it('then correct actions are dispatched', async () => {
       const urlValue = 'bB';
-      const variable = textboxBuilder()
-        .withId('textbox')
-        .withName('textbox')
-        .withCurrent('A')
-        .withQuery('A')
-        .build();
+      const variable = textboxBuilder().withId('textbox').withName('textbox').withCurrent('A').withQuery('A').build();
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
         .givenRootReducer(getRootReducer())

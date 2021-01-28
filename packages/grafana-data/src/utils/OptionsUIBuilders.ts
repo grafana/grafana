@@ -33,7 +33,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
       override: standardEditorsRegistry.get('number').editor as any,
       editor: standardEditorsRegistry.get('number').editor as any,
       process: numberOverrideProcessor,
-      shouldApply: config.shouldApply ? config.shouldApply : field => field.type === FieldType.number,
+      shouldApply: config.shouldApply ? config.shouldApply : (field) => field.type === FieldType.number,
       settings: config.settings || {},
     });
   }
@@ -45,7 +45,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
       override: standardEditorsRegistry.get('slider').editor as any,
       editor: standardEditorsRegistry.get('slider').editor as any,
       process: numberOverrideProcessor,
-      shouldApply: config.shouldApply ? config.shouldApply : field => field.type === FieldType.number,
+      shouldApply: config.shouldApply ? config.shouldApply : (field) => field.type === FieldType.number,
       settings: config.settings || {},
     });
   }
@@ -57,7 +57,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
       override: standardEditorsRegistry.get('text').editor as any,
       editor: standardEditorsRegistry.get('text').editor as any,
       process: stringOverrideProcessor,
-      shouldApply: config.shouldApply ? config.shouldApply : field => field.type === FieldType.string,
+      shouldApply: config.shouldApply ? config.shouldApply : (field) => field.type === FieldType.string,
       settings: config.settings || {},
     });
   }

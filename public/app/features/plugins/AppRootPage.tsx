@@ -50,11 +50,15 @@ class AppRootPage extends Component<Props, State> {
     };
   }
 
+  shouldComponentUpdate(nextProps: Props) {
+    return nextProps.path.startsWith('/a/');
+  }
+
   async componentDidMount() {
     const { pluginId } = this.props;
 
     try {
-      const app = await getPluginSettings(pluginId).then(info => {
+      const app = await getPluginSettings(pluginId).then((info) => {
         const error = getAppPluginPageError(info);
         if (error) {
           appEvents.emit(AppEvents.alertError, [error]);
