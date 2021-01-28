@@ -6,8 +6,10 @@ import (
 )
 
 var (
-	// errPolicyNotFound is an error for an unknown alert definition.
-	errPolicyNotFound = fmt.Errorf("could not find policy")
+	errPolicyNotFound         = fmt.Errorf("could not find policy")
+	errTeamPolicyAlreadyAdded = fmt.Errorf("policy is already added to this team")
+	errTeamMemberNotFound     = fmt.Errorf("team policy not found")
+	errTeamNotFound           = fmt.Errorf("team not found")
 )
 
 // Policy is the model for Policy in RBAC.
@@ -17,8 +19,9 @@ type Policy struct {
 	Name        string
 	Description string
 	Permissions []Permission
-	Updated     time.Time
-	Created     time.Time
+
+	Updated time.Time
+	Created time.Time
 }
 
 // Policy is the model for Permission in RBAC.
@@ -29,33 +32,84 @@ type Permission struct {
 	Resource     string
 	ResourceType string
 	Action       string
-	Updated      time.Time
-	Created      time.Time
+
+	Updated time.Time
+	Created time.Time
 }
 
-type listPoliciesQuery struct {
+type TeamPolicy struct {
+	Id       int64
+	OrgId    int64
+	PolicyId int64
+	TeamId   int64
+
+	Updated time.Time
+	Created time.Time
+}
+
+type ListPoliciesQuery struct {
 	OrgId int64 `json:"-"`
 
 	Result []*Policy
 }
 
-type getPolicyQuery struct {
+type GetPolicyQuery struct {
 	OrgId    int64 `json:"-"`
 	PolicyId int64
 
 	Result *Policy
 }
 
-type getPolicyPermissionsQuery struct {
+type GetPolicyPermissionsQuery struct {
 	OrgId    int64 `json:"-"`
 	PolicyId int64
 
 	Result []Permission
 }
 
-type getTeamPoliciesQuery struct {
+type GetTeamPoliciesQuery struct {
 	OrgId  int64 `json:"-"`
 	TeamId int64
 
 	Result []*Policy
+}
+
+type CreatePermissionCommand struct {
+	OrgId        int64
+	PolicyId     int64
+	Resource     string
+	ResourceType string
+	Action       string
+
+	Result *Permission
+}
+
+type DeletePermissionCommand struct {
+	Id    int64
+	OrgId int64
+}
+
+type CreatePolicyCommand struct {
+	OrgId       int64
+	Name        string
+	Description string
+
+	Result *Policy
+}
+
+type DeletePolicyCommand struct {
+	Id    int64
+	OrgId int64
+}
+
+type AddTeamPolicyCommand struct {
+	OrgId    int64
+	PolicyId int64
+	TeamId   int64
+}
+
+type RemoveTeamPolicyCommand struct {
+	OrgId    int64
+	PolicyId int64
+	TeamId   int64
 }
