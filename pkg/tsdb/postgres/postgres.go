@@ -291,7 +291,7 @@ func (s *postgresService) generateConnectionString(datasource *models.DataSource
 
 		// Attach client certificate and key if both are provided
 		if tlsCert != "" && tlsKey != "" {
-			logger.Debug("Setting TLS/SSL client auth", "tlsCert", tlsCert, "tlsKey", tlsKey)
+			s.logger.Debug("Setting TLS/SSL client auth", "tlsCert", tlsCert, "tlsKey", tlsKey)
 			connStr += fmt.Sprintf(" sslcert='%s' sslkey='%s'", escape(tlsCert), escape(tlsKey))
 		} else if tlsCert != "" || tlsKey != "" {
 			return "", fmt.Errorf("TLS/SSL client certificate and key must both be specified")
