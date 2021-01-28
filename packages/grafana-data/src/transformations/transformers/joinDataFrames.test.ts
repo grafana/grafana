@@ -95,7 +95,7 @@ describe('align frames', () => {
       ],
     });
 
-    const out = outerJoinDataFrames({ frames: [series1, series3], keepOriginIndices: true })!;
+    let out = outerJoinDataFrames({ frames: [series1, series3], keepOriginIndices: true })!;
     expect(
       out.fields.map((f) => ({
         name: f.name,
@@ -148,6 +148,38 @@ describe('align frames', () => {
             undefined,
             2,
           ],
+        },
+      ]
+    `);
+
+    // Fast path still adds origin indecies
+    out = outerJoinDataFrames({ frames: [series1], keepOriginIndices: true })!;
+    expect(
+      out.fields.map((f) => ({
+        name: f.name,
+        state: f.state,
+      }))
+    ).toMatchInlineSnapshot(`
+      Array [
+        Object {
+          "name": "TheTime",
+          "state": Object {
+            "displayName": "TheTime",
+            "origin": Object {
+              "fieldIndex": 0,
+              "frameIndex": 0,
+            },
+          },
+        },
+        Object {
+          "name": "A1",
+          "state": Object {
+            "displayName": "A1",
+            "origin": Object {
+              "fieldIndex": 1,
+              "frameIndex": 0,
+            },
+          },
         },
       ]
     `);

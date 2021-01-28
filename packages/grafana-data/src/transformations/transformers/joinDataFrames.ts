@@ -76,7 +76,23 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
   }
 
   if (options.frames.length === 1) {
-    const frame = options.frames[0];
+    let frame = options.frames[0];
+    if (options.keepOriginIndices) {
+      frame = {
+        ...frame,
+        fields: frame.fields.map((f, fieldIndex) => {
+          const copy = { ...f };
+          if (!copy.state) {
+            copy.state = {};
+          }
+          copy.state.origin = {
+            frameIndex: 0,
+            fieldIndex,
+          };
+          return copy;
+        }),
+      };
+    }
     if (options.enforceSort) {
       const joinFieldMatcher = getJoinMatcher(options);
       const joinIndex = frame.fields.findIndex((f) => joinFieldMatcher(f, frame, options.frames));
