@@ -1,6 +1,5 @@
 import React, { FC } from 'react';
-import { debounce } from 'lodash';
-import { useAsyncFn } from 'react-use';
+import debounce from 'debounce-promise';
 import { SelectableValue } from '@grafana/data';
 import { AsyncSelect } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -9,7 +8,7 @@ import { DashboardDTO } from 'app/types';
 
 export interface Props {
   onSelected: (dashboard: DashboardDTO) => void;
-  currentDashboard?: SelectableValue<number>;
+  currentDashboard?: SelectableValue;
   width?: number;
   isClearable?: boolean;
   invalid?: boolean;
@@ -20,8 +19,9 @@ const getDashboards = (query = '') => {
   return backendSrv.search({ type: 'dash-db', query }).then((result: DashboardSearchHit[]) => {
     return result.map((item: DashboardSearchHit) => ({
       id: item.id,
+      uid: item.uid,
       value: item.id,
-      label: `${item.folderTitle ? item.folderTitle : 'General'}/${item.title}`,
+      label: `${item?.folderTitle ?? 'General'}/${item.title}`,
     }));
   });
 };
@@ -34,20 +34,14 @@ export const DashboardPicker: FC<Props> = ({
   invalid,
   disabled,
 }) => {
-  const debouncedSearch = debounce(getDashboards, 300, {
-    leading: true,
-    trailing: true,
-  });
-
-  const [state, searchDashboards] = useAsyncFn(debouncedSearch, []);
+  const debouncedSearch = debounce(getDashboards, 300);
 
   return (
     <AsyncSelect
       width={width}
-      isLoading={state.loading}
       isClearable={isClearable}
       defaultOptions={true}
-      loadOptions={searchDashboards}
+      loadOptions={debouncedSearch}
       onChange={onSelected}
       placeholder="Select dashboard"
       noOptionsMessage="No dashboards found"
