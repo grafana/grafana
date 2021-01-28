@@ -135,7 +135,7 @@ export function getConfig(opts: BarsOptions) {
                 if (dataY[ix] != null) {
                   let yPos = valToPosY(dataY[ix]!, scaleY, yDim, yOff);
 
-                  /* eslint-disable */
+                  /* eslint-disable no-multi-spaces */
                   let x = ori === 0 ? Math.round(lft + barWid / 2) : Math.round(yPos);
                   let y = ori === 0 ? Math.round(yPos)             : Math.round(lft + barWid / 2);
 
@@ -238,7 +238,7 @@ export function getConfig(opts: BarsOptions) {
     if (found) {
       // prettier-ignore
       if (found !== hovered) {
-        /* eslint-disable */
+        /* eslint-disable no-multi-spaces */
         barMark.style.display = '';
         barMark.style.left   = found!.x / pxRatio + 'px';
         barMark.style.top    = found!.y / pxRatio + 'px';
