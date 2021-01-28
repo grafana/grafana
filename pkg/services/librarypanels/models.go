@@ -46,7 +46,7 @@ type LibraryPanelWithMeta struct {
 // LibraryPanelDTO is the frontend DTO for library panels.
 type LibraryPanelDTO struct {
 	ID       int64               `json:"id"`
-	OrgID    int64               `json:"orgID"`
+	OrgID    int64               `json:"orgId"`
 	FolderID int64               `json:"folderId"`
 	UID      string              `json:"uid"`
 	Name     string              `json:"name"`
