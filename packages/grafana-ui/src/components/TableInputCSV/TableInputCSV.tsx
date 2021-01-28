@@ -17,7 +17,7 @@ interface Props extends Themeable {
 }
 
 interface TableInputCSVStyle {
-  TableInputCsv: string;
+  tableInputCsv: string;
 }
 
 interface State {
@@ -28,7 +28,7 @@ interface State {
 /**
  * Expects the container div to have size set and will fill it 100%
  */
-export class unThemedTableInputCSV extends React.PureComponent<Props, State> {
+export class UnThemedTableInputCSV extends React.PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
@@ -72,7 +72,7 @@ export class unThemedTableInputCSV extends React.PureComponent<Props, State> {
     const { data } = this.state;
     const styles = getStyles(theme);
     return (
-      <div className={styles.TableInputCsv}>
+      <div className={styles.tableInputCsv}>
         <textarea
           style={{ width, height }}
           placeholder="Enter CSV here..."
@@ -97,13 +97,13 @@ export class unThemedTableInputCSV extends React.PureComponent<Props, State> {
   }
 }
 
-export const TableInputCSV = withTheme(unThemedTableInputCSV);
+export const TableInputCSV = withTheme(UnThemedTableInputCSV);
 TableInputCSV.displayName = 'TableInputCSV';
 
 const getStyles = stylesFactory(
   (theme: GrafanaTheme): TableInputCSVStyle => {
     return {
-      TableInputCsv: css`
+      tableInputCsv: css`
         position: relative;
         textarea {
           height: 100%;
@@ -115,7 +115,7 @@ const getStyles = stylesFactory(
           right: 15px;
           border: 1px solid #222;
           background: ${theme.palette.online};
-          padding: 1px 4px;
+          padding: 1px ${theme.spacing.xs};
           font-size: 80%;
         }
       `,
