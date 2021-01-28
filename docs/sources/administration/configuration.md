@@ -202,15 +202,14 @@ Or redirect port 80 to the Grafana port using:
 $ sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 3000
 ```
 
-Another way is put a webserver like Nginx or Apache in front of Grafana and have them proxy requests to Grafana.
+Another way is to put a web server like Nginx or Apache in front of Grafana and have them proxy requests to Grafana.
 
 ### domain
 
-This setting is only used in as a part of the `root_url` setting (see below). Important if you use GitHub or Google OAuth.
 
 ### enforce_domain
 
-Redirect to correct domain if host header does not match domain. Prevents DNS rebinding attacks. Default is `false`.
+Redirect to correct domain if the host header does not match the domain. Prevents DNS rebinding attacks. Default is `false`.
 
 ### root_url
 
@@ -292,7 +291,9 @@ The database user's password (not applicable for `sqlite3`). If the password con
 ### url
 
 Use either URL or the other fields below to configure the database
-Example: `mysql://user:secret@host:port/database`
+Example: `mysql://user:secret@
+
+:port/database`
 
 ### max_idle_conn
 
