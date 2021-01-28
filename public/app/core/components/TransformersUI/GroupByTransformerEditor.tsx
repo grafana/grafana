@@ -5,7 +5,7 @@ import {
   ReducerID,
   SelectableValue,
   standardTransformers,
-  TransformerRegistyItem,
+  TransformerRegistryItem,
   TransformerUIProps,
 } from '@grafana/data';
 import { getAllFieldNamesFromDataFrames } from './OrganizeFieldsTransformerEditor';
@@ -136,7 +136,7 @@ const getStyling = stylesFactory(() => {
   };
 });
 
-export const groupByTransformRegistryItem: TransformerRegistyItem<GroupByTransformerOptions> = {
+export const groupByTransformRegistryItem: TransformerRegistryItem<GroupByTransformerOptions> = {
   id: DataTransformerID.groupBy,
   editor: GroupByTransformerEditor,
   transformation: standardTransformers.groupByTransformer,

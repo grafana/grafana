@@ -3,7 +3,7 @@ import { css } from 'emotion';
 import {
   DataTransformerID,
   standardTransformers,
-  TransformerRegistyItem,
+  TransformerRegistryItem,
   TransformerUIProps,
   getFieldDisplayName,
   DataFrame,
@@ -133,7 +133,7 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
   );
 };
 
-export const filterByValueTransformRegistryItem: TransformerRegistyItem<FilterByValueTransformerOptions> = {
+export const filterByValueTransformRegistryItem: TransformerRegistryItem<FilterByValueTransformerOptions> = {
   id: DataTransformerID.filterByValue,
   editor: FilterByValueTransformerEditor,
   transformation: standardTransformers.filterByValueTransformer,

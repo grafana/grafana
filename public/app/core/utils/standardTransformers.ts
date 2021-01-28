@@ -1,4 +1,4 @@
-import { TransformerRegistyItem } from '@grafana/data';
+import { TransformerRegistryItem } from '@grafana/data';
 import { reduceTransformRegistryItem } from '../components/TransformersUI/ReduceTransformerEditor';
 import { filterFieldsByNameTransformRegistryItem } from '../components/TransformersUI/FilterByNameTransformerEditor';
 import { filterFramesByRefIdTransformRegistryItem } from '../components/TransformersUI/FilterByRefIdTransformerEditor';
@@ -14,7 +14,7 @@ import { seriesToRowsTransformerRegistryItem } from '../components/TransformersU
 import { concatenateTransformRegistryItem } from '../components/TransformersUI/ConcatenateTransformerEditor';
 import { renameByRegexTransformRegistryItem } from '../components/TransformersUI/RenameByRegexTransformer';
 
-export const getStandardTransformers = (): Array<TransformerRegistyItem<any>> => {
+export const getStandardTransformers = (): Array<TransformerRegistryItem<any>> => {
   return [
     reduceTransformRegistryItem,
     filterFieldsByNameTransformRegistryItem,

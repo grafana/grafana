@@ -3,7 +3,7 @@ import {
   DataTransformerID,
   KeyValue,
   standardTransformers,
-  TransformerRegistyItem,
+  TransformerRegistryItem,
   TransformerUIProps,
 } from '@grafana/data';
 import { HorizontalGroup, FilterPill } from '@grafana/ui';
@@ -129,7 +129,7 @@ export class FilterByRefIdTransformerEditor extends React.PureComponent<
   }
 }
 
-export const filterFramesByRefIdTransformRegistryItem: TransformerRegistyItem<FilterFramesByRefIdTransformerOptions> = {
+export const filterFramesByRefIdTransformRegistryItem: TransformerRegistryItem<FilterFramesByRefIdTransformerOptions> = {
   id: DataTransformerID.filterByRefId,
   editor: FilterByRefIdTransformerEditor,
   transformation: standardTransformers.filterFramesByRefIdTransformer,

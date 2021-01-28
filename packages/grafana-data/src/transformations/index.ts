@@ -5,7 +5,7 @@ export { standardTransformers } from './transformers';
 export * from './fieldReducer';
 export { transformDataFrame } from './transformDataFrame';
 export {
-  TransformerRegistyItem,
+  TransformerRegistryItem,
   TransformerUIProps,
   standardTransformersRegistry,
 } from './standardTransformersRegistry';

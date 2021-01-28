@@ -5,7 +5,7 @@ import {
   ReducerID,
   SelectableValue,
   standardTransformers,
-  TransformerRegistyItem,
+  TransformerRegistryItem,
   TransformerUIProps,
 } from '@grafana/data';
 
@@ -99,7 +99,7 @@ export const ReduceTransformerEditor: React.FC<TransformerUIProps<ReduceTransfor
   );
 };
 
-export const reduceTransformRegistryItem: TransformerRegistyItem<ReduceTransformerOptions> = {
+export const reduceTransformRegistryItem: TransformerRegistryItem<ReduceTransformerOptions> = {
   id: DataTransformerID.reduce,
   editor: ReduceTransformerEditor,
   transformation: standardTransformers.reduceTransformer,
