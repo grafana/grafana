@@ -62,6 +62,10 @@ export interface JoinOptions {
   keepOriginIndices?: boolean;
 }
 
+function getJoinMatcher(options: JoinOptions): FieldMatcher {
+  return options.joinBy ?? pickBestJoinField(options.frames);
+}
+
 /**
  * This will return a single frame joined by the first matching field.  When a join field is not specified,
  * the default will use the first time field
@@ -70,11 +74,11 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
   if (!options.frames?.length) {
     return undefined;
   }
-  const joinFieldMatcher = options.joinBy ?? pickBestJoinField(options.frames);
 
   if (options.frames.length === 1) {
     const frame = options.frames[0];
     if (options.enforceSort) {
+      const joinFieldMatcher = getJoinMatcher(options);
       const joinIndex = frame.fields.findIndex((f) => joinFieldMatcher(f, frame, options.frames));
       if (joinIndex >= 0) {
         if (!isLikelyAscendingVector(frame.fields[joinIndex].values)) {
@@ -88,6 +92,7 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
   const nullModes: JoinNullMode[][] = [];
   const allData: AlignedData[] = [];
   const originalFields: Field[] = [];
+  const joinFieldMatcher = getJoinMatcher(options);
 
   for (let frameIndex = 0; frameIndex < options.frames.length; frameIndex++) {
     const frame = options.frames[frameIndex];
@@ -135,7 +140,7 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
       continue; // skip the frame
     }
 
-    if (originalFields.length < 1) {
+    if (originalFields.length === 0) {
       originalFields.push(join); // first join field
     }
     nullModes.push(nullModesFrame);
@@ -149,10 +154,6 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
   }
 
   const joined = join(allData, nullModes);
-  if (!joined) {
-    return undefined;
-  }
-
   return {
     // ...options.data[0], // keep name, meta?
     length: joined[0].length,
