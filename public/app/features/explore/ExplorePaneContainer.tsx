@@ -28,6 +28,10 @@ interface Props extends PropsFromRedux {
   split: boolean;
 }
 
+/**
+ * This component is responsible for handling initialization of an Explore pane and triggering synchronization
+ * of state based on URL changes and preventing any infinite loops.
+ */
 export class ExplorePaneContainerUnconnected extends React.PureComponent<Props & ConnectedProps<typeof connector>> {
   el: any;
   exploreEvents: EventBusExtended;

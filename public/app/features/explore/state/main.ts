@@ -2,17 +2,16 @@ import { AnyAction } from 'redux';
 import { DataSourceSrv } from '@grafana/runtime';
 import { serializeStateToUrlParam } from '@grafana/data';
 
-import { stopQueryState, GetExploreUrlArguments, clearQueryKeys } from 'app/core/utils/explore';
+import { stopQueryState, GetExploreUrlArguments } from 'app/core/utils/explore';
 import { ExploreId, ExploreItemState, ExploreState } from 'app/types/explore';
 import { updateLocation } from '../../../core/actions';
 import { paneReducer } from './explorePane';
 import { createAction } from '@reduxjs/toolkit';
-import { makeExplorePaneState } from './utils';
-import { DataQuery, ExploreUrlState, TimeRange, UrlQueryMap } from '@grafana/data';
+import { getUrlStateFromPaneState, makeExplorePaneState } from './utils';
+import { DataQuery, TimeRange, UrlQueryMap } from '@grafana/data';
 import { ThunkResult } from '../../../types';
 import { TimeSrv } from '../../dashboard/services/TimeSrv';
 import { PanelModel } from 'app/features/dashboard/state';
-import { toRawTimeRange } from '../utils/time';
 
 //
 // Actions and Payloads
@@ -71,7 +70,6 @@ export const stateSave = (): ThunkResult<void> => {
 
     lastSavedUrl.right = urlStates.right;
     lastSavedUrl.left = urlStates.left;
-    // dispatch(updateLocation({ query: urlStates, partial: split && !right.initialized }));
     dispatch(updateLocation({ query: urlStates }));
   };
 };
@@ -263,14 +261,3 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
 export default {
   explore: exploreReducer,
 };
-
-export function getUrlStateFromPaneState(pane: ExploreItemState): ExploreUrlState {
-  return {
-    // It can happen that if we are in a split and initial load also runs queries we can be here before the second pane
-    // is initialized so datasourceInstance will be still undefined.
-    // TODO: this probably isn't good case we are saving an url based on this we should not save empty datasource.
-    datasource: pane.datasourceInstance?.name || '',
-    queries: pane.queries.map(clearQueryKeys),
-    range: toRawTimeRange(pane.range),
-  };
-}

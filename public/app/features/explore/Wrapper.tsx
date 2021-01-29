@@ -52,7 +52,9 @@ export class Wrapper extends Component<WrapperProps> {
 }
 
 const mapStateToProps = (state: StoreState) => {
-  // const split = isSplit(state);
+  // Here we use ULR to say if we should split or not which is different than in other places. Reason is if we change
+  // the URL first there is no internal state saying we should split. So this triggers render of ExplorePaneContainer
+  // and initialisation of each pane state.
   const isUrlSplit = Boolean(state.location.query[ExploreId.left] && state.location.query[ExploreId.right]);
   return { split: isUrlSplit };
 };

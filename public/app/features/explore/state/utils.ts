@@ -1,6 +1,7 @@
 import {
   DataSourceApi,
   EventBusExtended,
+  ExploreUrlState,
   getDefaultTimeRange,
   HistoryItem,
   LoadingState,
@@ -11,7 +12,8 @@ import {
 import { ExploreItemState } from 'app/types/explore';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import store from '../../../core/store';
-import { lastUsedDatasourceKeyForOrgId } from '../../../core/utils/explore';
+import { clearQueryKeys, lastUsedDatasourceKeyForOrgId } from '../../../core/utils/explore';
+import { toRawTimeRange } from '../utils/time';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -77,4 +79,14 @@ export async function loadAndInitDatasource(
 
   store.set(lastUsedDatasourceKeyForOrgId(orgId), instance.name);
   return { history, instance };
+}
+
+export function getUrlStateFromPaneState(pane: ExploreItemState): ExploreUrlState {
+  return {
+    // datasourceInstance should not be undefined anymore here but in case there is some path for it to be undefined
+    // lets just fallback instead of crashing.
+    datasource: pane.datasourceInstance?.name || '',
+    queries: pane.queries.map(clearQueryKeys),
+    range: toRawTimeRange(pane.range),
+  };
 }
