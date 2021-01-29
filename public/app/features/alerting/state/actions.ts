@@ -125,7 +125,10 @@ export function updateAlertDefinition(): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const alertDefinition = await buildAlertDefinition(getStore().alertDefinition);
 
-    const updatedAlertDefinition = await getBackendSrv().put(`/api/alert-definitions`, alertDefinition);
+    const updatedAlertDefinition = await getBackendSrv().put(
+      `/api/alert-definitions/${alertDefinition.uid}`,
+      alertDefinition
+    );
     appEvents.emit(AppEvents.alertSuccess, ['Alert definition updated']);
     dispatch(setAlertDefinition(updatedAlertDefinition));
   };
