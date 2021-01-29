@@ -37,6 +37,9 @@ function walkTwo(
   });
 }
 
+/**
+ * @internal
+ */
 export interface BarsOptions {
   xOri: 1 | 0;
   xDir: 1 | -1;
@@ -47,6 +50,9 @@ export interface BarsOptions {
   onLeave?: (seriesIdx: number, valueIdx: any) => void;
 }
 
+/**
+ * @internal
+ */
 export function getConfig(opts: BarsOptions) {
   const { xOri: ori, xDir: dir, groupWidth, barWidth, formatValue, onHover, onLeave } = opts;
 

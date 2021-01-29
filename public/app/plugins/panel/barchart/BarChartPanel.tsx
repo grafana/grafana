@@ -12,6 +12,9 @@ interface BarData {
   frame?: DataFrame; // first string vs all numbers
 }
 
+/**
+ * @alpha
+ */
 export const BarChartPanel: React.FunctionComponent<Props> = ({
   data,
   options,

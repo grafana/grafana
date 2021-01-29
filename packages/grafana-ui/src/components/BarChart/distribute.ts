@@ -10,6 +10,9 @@ const coord = (i: number, offs: number, iwid: number, gap: number) => roundDec(o
 
 export type Each = (idx: number, offPct: number, dimPct: number) => void;
 
+/**
+ * @internal
+ */
 export function distribute(numItems: number, sizeFactor: number, justify: number, onlyIdx: number | null, each: Each) {
   let space = 1 - sizeFactor;
 
