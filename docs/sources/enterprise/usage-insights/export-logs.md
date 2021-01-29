@@ -14,7 +14,7 @@ By exporting usage logs to Loki, you can directly query them and create dashboar
 
 ## Usage insights logs
 
-Usage insights logs are JSON objects that represent certain user activities:
+Usage insights logs are JSON objects that represent certain user activities, such as:
 - A user opens a dashboard.
 - A query is sent to a data source.
 
