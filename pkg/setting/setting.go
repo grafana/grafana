@@ -1319,7 +1319,6 @@ func (cfg *Cfg) GetContentDeliveryURL(edition string) string {
 		}
 		url.Path = path.Join(url.Path, strings.ToLower(edition), preReleaseFolder, cfg.BuildVersion)
 		return url.String()
-
 	}
 
 	return ""
