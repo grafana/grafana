@@ -22,5 +22,19 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(TimeSeriesPanel
         ],
       },
     });
+
     addLegendOptions(builder);
+
+    builder.addBooleanSwitch({
+      path: 'graph.stack',
+      name: 'Stack series',
+      defaultValue: false,
+    });
+
+    // builder.addBooleanSwitch({
+    //   path: 'graph.stackPercent',
+    //   name: 'User percent stacking',
+    //   defaultValue: false,
+    //   showIf: (o) => o.graph.stack,
+    // });
   });

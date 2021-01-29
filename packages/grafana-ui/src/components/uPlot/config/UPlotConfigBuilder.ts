@@ -15,6 +15,8 @@ export class UPlotConfigBuilder {
   private hasLeftAxis = false;
   private hasBottomAxis = false;
 
+  constructor(private isStacked = false) {}
+
   addAxis(props: AxisProps) {
     props.placement = props.placement ?? AxisPlacement.Auto;
 
@@ -89,13 +91,15 @@ export class UPlotConfigBuilder {
     // When bands exist, only keep fill when defined
     if (this.bands?.length) {
       config.bands = this.bands;
-      const keepFill = new Set<number>();
-      for (const b of config.bands) {
-        keepFill.add(b.series[0]);
-      }
-      for (let i = 1; i < config.series.length; i++) {
-        if (!keepFill.has(i)) {
-          config.series[i].fill = undefined;
+      if (!this.isStacked) {
+        const keepFill = new Set<number>();
+        for (const b of config.bands) {
+          keepFill.add(b.series[0]);
+        }
+        for (let i = 1; i < config.series.length; i++) {
+          if (!keepFill.has(i)) {
+            config.series[i].fill = undefined;
+          }
         }
       }
     }

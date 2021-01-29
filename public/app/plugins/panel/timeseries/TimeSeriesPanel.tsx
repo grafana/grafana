@@ -49,6 +49,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
       width={width}
       height={height}
       legend={options.legend}
+      stacking={{ enable: options.graph.stack, isPercent: options.graph.stackPercent }}
       onLegendClick={onLegendClick}
       onSeriesColorChange={onSeriesColorChange}
     >

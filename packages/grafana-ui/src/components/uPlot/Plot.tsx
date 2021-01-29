@@ -4,7 +4,6 @@ import { buildPlotContext, PlotContext } from './context';
 import { pluginLog } from './utils';
 import { usePlotConfig } from './hooks';
 import { PlotProps } from './types';
-import { DataFrame } from '@grafana/data';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 import usePrevious from 'react-use/lib/usePrevious';
 
@@ -39,7 +38,7 @@ export const UPlotChart: React.FC<PlotProps> = (props) => {
 
     // 1. When config is ready and there is no uPlot instance, create new uPlot and return
     if (isConfigReady && !plotInstance.current) {
-      plotInstance.current = initializePlot(prepareData(props.data), currentConfig.current, canvasRef.current);
+      plotInstance.current = initializePlot(props.data, currentConfig.current, canvasRef.current);
       setIsPlotReady(true);
       return;
     }
@@ -60,12 +59,12 @@ export const UPlotChart: React.FC<PlotProps> = (props) => {
         pluginLog('uPlot core', false, 'destroying instance');
         plotInstance.current.destroy();
       }
-      plotInstance.current = initializePlot(prepareData(props.data), currentConfig.current, canvasRef.current);
+      plotInstance.current = initializePlot(props.data, currentConfig.current, canvasRef.current);
       return;
     }
 
     // 4. Otherwise, assume only data has changed and update uPlot data
-    updateData(props.data, props.config, plotInstance.current, prepareData(props.data));
+    updateData(props.config, props.data, plotInstance.current);
   }, [props, isConfigReady]);
 
   // When component unmounts, clean the existing uPlot instance
@@ -73,8 +72,8 @@ export const UPlotChart: React.FC<PlotProps> = (props) => {
 
   // Memoize plot context
   const plotCtx = useMemo(() => {
-    return buildPlotContext(isPlotReady, canvasRef, props.data, registerPlugin, getPlotInstance);
-  }, [plotInstance, canvasRef, props.data, registerPlugin, getPlotInstance, isPlotReady]);
+    return buildPlotContext(isPlotReady, canvasRef, props.dataFrame, registerPlugin, getPlotInstance);
+  }, [plotInstance, canvasRef, props.dataFrame, registerPlugin, getPlotInstance, isPlotReady]);
 
   return (
     <PlotContext.Provider value={plotCtx}>
@@ -86,16 +85,12 @@ export const UPlotChart: React.FC<PlotProps> = (props) => {
   );
 };
 
-function prepareData(frame: DataFrame): AlignedData {
-  return frame.fields.map((f) => f.values.toArray()) as AlignedData;
-}
-
-function initializePlot(data: AlignedData, config: Options, el: HTMLDivElement) {
+function initializePlot(data: AlignedData | null, config: Options, el: HTMLDivElement) {
   pluginLog('UPlotChart: init uPlot', false, 'initialized with', data, config);
   return new uPlot(config, data, el);
 }
 
-function updateData(frame: DataFrame, config: UPlotConfigBuilder, plotInstance?: uPlot, data?: AlignedData | null) {
+function updateData(config: UPlotConfigBuilder, data?: AlignedData | null, plotInstance?: uPlot) {
   if (!plotInstance || !data) {
     return;
   }

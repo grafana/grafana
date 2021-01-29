@@ -1,7 +1,8 @@
 import { VizLegendOptions, GraphTooltipOptions } from '@grafana/ui';
 
 export interface GraphOptions {
-  // nothing for now
+  stack: boolean;
+  stackPercent: boolean;
 }
 
 export interface OptionsWithLegend {

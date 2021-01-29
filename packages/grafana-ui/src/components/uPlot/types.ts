@@ -1,5 +1,5 @@
 import React from 'react';
-import uPlot, { Options, Hooks } from 'uplot';
+import uPlot, { Options, Hooks, AlignedData } from 'uplot';
 import { DataFrame, TimeRange, TimeZone } from '@grafana/data';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 
@@ -16,7 +16,9 @@ export interface PlotPluginProps {
 }
 
 export interface PlotProps {
-  data: DataFrame;
+  data: AlignedData | null;
+  // TODO: left temporarily for Tooltip to work, to be removed
+  dataFrame: DataFrame;
   timeRange: TimeRange;
   timeZone: TimeZone;
   width: number;

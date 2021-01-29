@@ -52,7 +52,6 @@ export const usePlotPluginContext = (): PlotPluginsContextType => {
 };
 
 // Exposes API for building uPlot config
-
 interface PlotDataAPI {
   /** Data frame passed to graph, x-axis aligned */
   data: DataFrame;

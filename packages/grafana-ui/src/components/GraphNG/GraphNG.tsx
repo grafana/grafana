@@ -25,8 +25,10 @@ import { VizLegend } from '../VizLegend/VizLegend';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { useRevision } from '../uPlot/hooks';
 import { getFieldColorModeForField, getFieldSeriesColor } from '@grafana/data';
-import { GraphNGLegendEvent, GraphNGLegendEventMode } from './types';
+import { GraphNGLegendEvent, StackingOptions } from './types';
 import { isNumber } from 'lodash';
+import { getNamesToFieldIndex, mapMouseEventToMode, preparePlotData } from './utils';
+import { AlignedData } from 'uplot';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
@@ -34,8 +36,10 @@ export interface XYFieldMatchers {
   x: FieldMatcher; // first match
   y: FieldMatcher;
 }
-export interface GraphNGProps extends Omit<PlotProps, 'data' | 'config'> {
+
+export interface GraphNGProps extends Omit<PlotProps, 'data' | 'config' | 'dataFrame'> {
   data: DataFrame[];
+  stacking: StackingOptions;
   legend: VizLegendOptions;
   fields?: XYFieldMatchers; // default will assume timeseries data
   onLegendClick?: (event: GraphNGLegendEvent) => void;
@@ -57,6 +61,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   width,
   height,
   legend,
+  stacking,
   timeRange,
   timeZone,
   onLegendClick,
@@ -76,6 +81,13 @@ export const GraphNG: React.FC<GraphNGProps> = ({
     }
     return outerJoinDataFrames({ frames: data, joinBy: fields.x, keep: fields.y, keepOriginIndices: true });
   }, [data, fields]);
+
+  const plotData = useMemo(() => {
+    if (!frame) {
+      return null;
+    }
+    return preparePlotData(frame, stacking) as AlignedData;
+  }, [frame, stacking]);
 
   const compareFrames = useCallback((a?: DataFrame | null, b?: DataFrame | null) => {
     if (a && b) {
@@ -110,7 +122,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   const configRev = useRevision(frame, compareFrames);
 
   const configBuilder = useMemo(() => {
-    const builder = new UPlotConfigBuilder();
+    const builder = new UPlotConfigBuilder(stacking.enable);
 
     if (!frame) {
       return builder;
@@ -236,8 +248,23 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         hideInLegend: customConfig.hideFrom?.legend,
       });
     }
+
+    if (stacking.enable) {
+      const series = [{}].concat(builder.getSeries());
+      for (let i = 1; i < series.length; i++) {
+        builder.addBand({
+          series: [
+            series.findIndex((_, j) => {
+              return j > i;
+            }),
+            i,
+          ],
+          fill: null as any,
+        });
+      }
+    }
     return builder;
-  }, [configRev, timeZone]);
+  }, [configRev, timeZone, stacking]);
 
   if (!frame) {
     return (
@@ -313,7 +340,8 @@ export const GraphNG: React.FC<GraphNGProps> = ({
     <VizLayout width={width} height={height} legend={legendElement}>
       {(vizWidth: number, vizHeight: number) => (
         <UPlotChart
-          data={frame}
+          data={plotData}
+          dataFrame={frame}
           config={configBuilder}
           width={vizWidth}
           height={vizHeight}
@@ -327,18 +355,3 @@ export const GraphNG: React.FC<GraphNGProps> = ({
     </VizLayout>
   );
 };
-
-const mapMouseEventToMode = (event: React.MouseEvent): GraphNGLegendEventMode => {
-  if (event.ctrlKey || event.metaKey || event.shiftKey) {
-    return GraphNGLegendEventMode.AppendToSelection;
-  }
-  return GraphNGLegendEventMode.ToggleSelection;
-};
-
-function getNamesToFieldIndex(frame: DataFrame): Map<string, number> {
-  const names = new Map<string, number>();
-  for (let i = 0; i < frame.fields.length; i++) {
-    names.set(getFieldDisplayName(frame.fields[i], frame), i);
-  }
-  return names;
-}
