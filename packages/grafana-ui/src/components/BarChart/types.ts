@@ -48,4 +48,5 @@ export const defaultBarChartFieldConfig: BarChartFieldConfig = {
   lineWidth: 1,
   fillOpacity: 80,
   gradientMode: GraphGradientMode.None,
+  axisSoftMin: 0,
 };

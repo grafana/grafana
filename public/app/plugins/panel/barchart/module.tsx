@@ -55,7 +55,7 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
           },
         });
 
-      addAxisConfig(builder, true);
+      addAxisConfig(builder, cfg, true);
       addHideFrom(builder);
     },
   })

@@ -155,7 +155,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           showIf: (c) => c.showPoints !== PointVisibility.Never || c.drawStyle === DrawStyle.Points,
         });
 
-      addAxisConfig(builder);
+      addAxisConfig(builder, cfg);
       addHideFrom(builder);
     },
   };
@@ -181,7 +181,11 @@ export function addHideFrom(builder: FieldConfigEditorBuilder<AxisConfig>) {
   });
 }
 
-export function addAxisConfig(builder: FieldConfigEditorBuilder<AxisConfig>, hideScale?: boolean) {
+export function addAxisConfig(
+  builder: FieldConfigEditorBuilder<AxisConfig>,
+  defaultConfig: AxisConfig,
+  hideScale?: boolean
+) {
   builder
     .addRadio({
       path: 'axisPlacement',
@@ -216,6 +220,7 @@ export function addAxisConfig(builder: FieldConfigEditorBuilder<AxisConfig>, hid
     .addNumberInput({
       path: 'axisSoftMin',
       name: 'Soft min',
+      defaultValue: defaultConfig.axisSoftMin,
       category: ['Axis'],
       settings: {
         placeholder: 'See: Standard options > Min',
@@ -224,6 +229,7 @@ export function addAxisConfig(builder: FieldConfigEditorBuilder<AxisConfig>, hid
     .addNumberInput({
       path: 'axisSoftMax',
       name: 'Soft max',
+      defaultValue: defaultConfig.axisSoftMax,
       category: ['Axis'],
       settings: {
         placeholder: 'See: Standard options > Max',
