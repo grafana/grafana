@@ -160,7 +160,6 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
                 onChange={(cookies) =>
                   onSettingsChange({ jsonData: { ...dataSourceConfig.jsonData, keepCookies: cookies } })
                 }
-                width={20}
               />
             </div>
           )}
