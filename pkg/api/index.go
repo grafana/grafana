@@ -428,7 +428,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		NavTree:                 navTree,
 		Sentry:                  &hs.Cfg.Sentry,
 		Nonce:                   c.RequestNonce,
-		CDNPath:                 hs.Cfg.CDNPath,
+		CDNPath:                 hs.Cfg.GetFullCDNPath((hs.License.Edition())),
 	}
 
 	if setting.DisableGravatar {

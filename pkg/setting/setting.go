@@ -1298,14 +1298,21 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 		return err
 	}
 
-	cdnPath := valueAsString(server, "cdn_path", "")
-	if cdnPath != "" {
-		cdnUrl, _ := url.Parse(cdnPath)
-		cdnUrl.Path = path.Join(cdnUrl.Path, cfg.BuildVersion)
-		cfg.CDNPath = cdnUrl.String()
+	cfg.CDNPath = valueAsString(server, "cdn_path", "")
+	return nil
+}
+
+// Returns full CDN Path with BuildVersion and edition added
+func (cfg *Cfg) GetFullCDNPath(edition string) string {
+	if cfg.CDNPath != "" {
+		cdnUrl, err := url.Parse(cfg.CDNPath)
+		if err == nil {
+			cdnUrl.Path = path.Join(cdnUrl.Path, strings.ToLower(edition), cfg.BuildVersion)
+			return cdnUrl.String()
+		}
 	}
 
-	return nil
+	return ""
 }
 
 func (cfg *Cfg) readDataSourcesSettings() {

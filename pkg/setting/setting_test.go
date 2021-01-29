@@ -391,13 +391,9 @@ func TestAuthDurationSettings(t *testing.T) {
 }
 
 func TestServiceSettings(t *testing.T) {
-	f := ini.Empty()
 	cfg := NewCfg()
 	cfg.BuildVersion = "v7.5.0-11124pre"
-	sec, err := f.NewSection("server")
-	require.NoError(t, err)
-	sec.NewKey("cdn_path", "http://cdn.grafana.com")
-	err = cfg.readServerSettings(f)
-	require.NoError(t, err)
-	require.Equal(t, cfg.CDNPath, "http://cdn.grafana.com/v7.5.0-11124pre")
+	cfg.CDNPath = "http://cdn.grafana.com"
+	require.Equal(t, "http://cdn.grafana.com/oss/v7.5.0-11124pre", cfg.GetFullCDNPath("oss"))
+	require.Equal(t, "http://cdn.grafana.com/enterprise/v7.5.0-11124pre", cfg.GetFullCDNPath("Enterprise"))
 }
