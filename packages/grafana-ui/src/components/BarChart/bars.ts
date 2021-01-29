@@ -79,7 +79,7 @@ export function getConfig(opts: BarsOptions) {
 
             rect(fill, lft, top, barWid, barHgt);
 
-            let x = ori === 0 ? Math.round(lft - xOff) : 0;
+            let x = ori === 0 ? Math.round(lft - xOff) : Math.round(top - yOff);
             let y = ori === 0 ? Math.round(top - yOff) : Math.round(lft - xOff);
             let w = ori === 0 ? barWid : barHgt;
             let h = ori === 0 ? barHgt : barWid;
