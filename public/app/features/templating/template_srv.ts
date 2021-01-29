@@ -5,8 +5,8 @@ import { variableRegex } from '../variables/utils';
 import { isAdHoc } from '../variables/guard';
 import { VariableModel } from '../variables/types';
 import { setTemplateSrv, TemplateSrv as BaseTemplateSrv } from '@grafana/runtime';
-import { formatRegistry, FormatOptions } from './formatRegistry';
-import { ALL_VARIABLE_TEXT } from '../variables/state/types';
+import { FormatOptions, formatRegistry } from './formatRegistry';
+import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../variables/state/types';
 
 interface FieldAccessorCache {
   [key: string]: (obj: any) => any;
@@ -282,7 +282,7 @@ export class TemplateSrv implements BaseTemplateSrv {
         value = this.getAllValue(variable);
         text = ALL_VARIABLE_TEXT;
         // skip formatting of custom all values
-        if (variable.allValue) {
+        if (variable.allValue && fmt !== 'text') {
           return this.replace(value);
         }
       }
@@ -302,7 +302,7 @@ export class TemplateSrv implements BaseTemplateSrv {
   }
 
   isAllValue(value: any) {
-    return value === '$__all' || (Array.isArray(value) && value[0] === '$__all');
+    return value === ALL_VARIABLE_VALUE || (Array.isArray(value) && value[0] === ALL_VARIABLE_VALUE);
   }
 
   replaceWithText(target: string, scopedVars?: ScopedVars) {
