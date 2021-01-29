@@ -82,6 +82,13 @@ export const BarChart: React.FunctionComponent<Props> = ({
         ? (seriesIdx: number, value: any) => formattedValueToString(data.fields[seriesIdx].display!(value))
         : undefined;
 
+    /*
+      if (data.fields.length === 2) {
+        groupWidth = barWidth;
+        barWidth = 1;
+      }
+    */
+
     const opts: BarsOptions = {
       xOri,
       xDir,

@@ -153,12 +153,12 @@ export function getConfig(opts: BarsOptions) {
         };
 
   /*
-  const yRange: Scale.Range = (u, dataMin, dataMax) => {
-    // @ts-ignore
-    let [min, max] = uPlot.rangeNum(0, dataMax, 0.05, true);
-    return [0, max];
-  };
-*/
+    const yRange: Scale.Range = (u, dataMin, dataMax) => {
+      // @ts-ignore
+      let [min, max] = uPlot.rangeNum(0, dataMax, 0.05, true);
+      return [0, max];
+    };
+  */
 
   const xSplits: Axis.Splits = (u: uPlot, axisIdx: number) => {
     const dim = ori === 0 ? u.bbox.width : u.bbox.height;
@@ -204,7 +204,9 @@ export function getConfig(opts: BarsOptions) {
   };
 
   const init = (u: uPlot) => {
-    u.root.querySelector('.u-over')!.appendChild(barMark);
+    let over = u.root.querySelector('.u-over')! as HTMLElement;
+    over.style.overflow = 'hidden';
+    over.appendChild(barMark);
   };
 
   const drawClear = (u: uPlot) => {
