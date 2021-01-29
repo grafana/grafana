@@ -26,7 +26,7 @@ interface DataResponse {
  * Parse the results from /api/ds/query into a DataQueryResponse
  *
  * @param res - the HTTP response data.
- * @param queries optional DataQuery array that will order the response based on the order of query refId's.
+ * @param queries - optional DataQuery array that will order the response based on the order of query refId's.
  *
  * @public
  */
