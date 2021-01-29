@@ -1,42 +1,34 @@
 import React from 'react';
-import { color, number, select, text } from '@storybook/addon-knobs';
-import { BigValue, BigValueColorMode, BigValueGraphMode, BigValueJustifyMode, BigValueTextMode } from './BigValue';
+import { Story } from '@storybook/react';
+import { ArrayVector, FieldSparkline, FieldType } from '@grafana/data';
+import {
+  BigValue,
+  BigValueColorMode,
+  BigValueGraphMode,
+  BigValueJustifyMode,
+  BigValueTextMode,
+  Props,
+} from './BigValue';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import mdx from './BigValue.mdx';
 import { useTheme } from '../../themes';
-import { ArrayVector, FieldSparkline, FieldType } from '@grafana/data';
-
-const getKnobs = () => {
-  return {
-    value: text('value', '$5022'),
-    title: text('title', 'Total Earnings'),
-    colorMode: select('Color mode', [BigValueColorMode.Value, BigValueColorMode.Background], BigValueColorMode.Value),
-    graphMode: select('Graph mode', [BigValueGraphMode.Area, BigValueGraphMode.None], BigValueGraphMode.Area),
-    justifyMode: select('Justify', [BigValueJustifyMode.Auto, BigValueJustifyMode.Center], BigValueJustifyMode.Auto),
-    width: number('Width', 400, { range: true, max: 800, min: 200 }),
-    height: number('Height', 300, { range: true, max: 800, min: 200 }),
-    color: color('Value color', 'red'),
-    textMode: select(
-      'Text mode',
-      [BigValueTextMode.Auto, BigValueTextMode.Name, BigValueTextMode.ValueAndName, BigValueTextMode.None],
-      BigValueTextMode.Auto
-    ),
-  };
-};
 
 export default {
   title: 'Visualizations/BigValue',
   component: BigValue,
   decorators: [withCenteredStory],
+  argTypes: {},
   parameters: {
     docs: {
       page: mdx,
     },
+    knobs: {
+      disable: true,
+    },
   },
 };
 
-export const Basic = () => {
-  const { value, title, colorMode, graphMode, height, width, color, textMode, justifyMode } = getKnobs();
+export const Basic: Story<Props> = (args) => {
   const theme = useTheme();
   const sparkline: FieldSparkline = {
     y: {
@@ -50,19 +42,34 @@ export const Basic = () => {
   return (
     <BigValue
       theme={theme}
-      width={width}
-      height={height}
-      colorMode={colorMode}
-      graphMode={graphMode}
-      textMode={textMode}
-      justifyMode={justifyMode}
+      width={args.width}
+      height={args.height}
+      colorMode={args.colorMode}
+      graphMode={args.graphMode}
+      textMode={args.textMode}
+      justifyMode={args.justifyMode}
       value={{
-        text: value,
+        text: args.value.text,
         numeric: 5022,
-        color: color,
-        title,
+        color: args.value.color,
+        title: args.value.title,
       }}
-      sparkline={graphMode === BigValueGraphMode.None ? undefined : sparkline}
+      sparkline={args.graphMode === BigValueGraphMode.None ? undefined : sparkline}
     />
   );
+};
+
+Basic.args = {
+  value: {
+    text: '$5022',
+    numeric: 5022,
+    title: 'Total Earnings',
+    color: 'red',
+  },
+  width: 400,
+  height: 300,
+  colorMode: BigValueColorMode.Value,
+  graphMode: BigValueGraphMode.Area,
+  justifyMode: BigValueJustifyMode.Auto,
+  textMode: BigValueTextMode.Auto,
 };
