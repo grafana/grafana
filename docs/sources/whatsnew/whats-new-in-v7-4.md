@@ -139,9 +139,17 @@ Unlike the visual query builder, MQL allows you to control the time range and pe
 
 MQL uses a set of operations and functions. Operations are linked together using the common pipe mechanism, where the output of one operation becomes the input to the next. Linking operations makes it possible to build up complex queries incrementally.
 
-Once query type Metrics is selected in the Cloud Monitoring query editor, you can toggle between the editor modes for visual query builder and MQL.
+Once query type Metrics is selected in the Cloud Monitoring query editor, you can toggle between the editor modes for visual query builder and MQL. For more information, refer to the [Google Cloud Monitoring docs]({{<relref "../datasources/google-cloud-monitoring/_index.md/#out-of-the-box-dashboards">}}).
 
 Many thanks to [mtanda](https://github.com/mtanda) this contribution!
+
+## Curated dashboards for Google Cloud Monitoring
+
+Google Cloud Monitoring data source ships with pre-configured dashboards for some of the most popular GCP services. These curated dashboards are based on similar dashboards in the GCP dashboard samples repository. In this release, we have expanded the set of pre-configured dashboards.
+
+{{< docs-imagebox img="/img/docs/google-cloud-monitoring/curated-dashboards-7-4.png" max-width= "650px" >}}
+
+If you want to customize a dashboard, we recommend that you save it under a different name.  Otherwise the dashboard will be overwritten when a new version of the dashboard is released. For more information, refer to the [Google Cloud Monitoring docs]({{<relref "../datasources/google-cloud-monitoring/_index.md/#out-of-the-box-dashboards">}}).
 
 ### Query Editor Help
 
