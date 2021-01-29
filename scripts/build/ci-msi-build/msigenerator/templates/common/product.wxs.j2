@@ -12,6 +12,8 @@
       InstallerVersion="200"
       Compressed="yes"
       Comments="Windows Installer Package"/>
+    <MajorUpgrade
+      DowngradeErrorMessage="A newer version of Grafana is already installed. Uninstall the current version to install this older version. Setup will now exit."/>
 
     <Media Id="1" Cabinet="product.cab" EmbedCab="yes"/>
 
@@ -24,6 +26,9 @@
     <Property Id="ARPPRODUCTICON" Value="icon.ico" />
     <Property Id="ARPHELPLINK" Value="https://www.grafana.com" />
     <Property Id="ARPURLINFOABOUT" Value="https://www.grafana.com" />
+
+    <SetProperty Id="ARPINSTALLLOCATION" Value="[ApplicationFolder]"
+          After="CostFinalize" />
 
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramFiles64Folder">
@@ -50,7 +55,5 @@
     <Property Id="WIXUI_INSTALLDIR" Value="INSTALLDIR" />
 		<UIRef Id="WixUI_FeatureTree"/>
 
-    <MajorUpgrade
-      DowngradeErrorMessage="A newer version of Grafana is already installed. Uninstall the current version to install this older version. Setup will now exit."/>
   </Product>
 </Wix>
