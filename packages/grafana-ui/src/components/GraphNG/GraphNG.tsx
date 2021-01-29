@@ -157,18 +157,18 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       const scaleColor = getFieldSeriesColor(field, theme);
       const seriesColor = scaleColor.color;
 
-      if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
-        // The builder will manage unique scaleKeys and combine where appropriate
-        builder.addScale({
-          scaleKey,
-          distribution: customConfig.scaleDistribution?.type,
-          log: customConfig.scaleDistribution?.log,
-          min: field.config.min,
-          max: field.config.max,
-          softMin: customConfig.axisSoftMin,
-          softMax: customConfig.axisSoftMax,
-        });
+      // The builder will manage unique scaleKeys and combine where appropriate
+      builder.addScale({
+        scaleKey,
+        distribution: customConfig.scaleDistribution?.type,
+        log: customConfig.scaleDistribution?.log,
+        min: field.config.min,
+        max: field.config.max,
+        softMin: customConfig.axisSoftMin,
+        softMax: customConfig.axisSoftMax,
+      });
 
+      if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
         builder.addAxis({
           scaleKey,
           label: customConfig.axisLabel,
