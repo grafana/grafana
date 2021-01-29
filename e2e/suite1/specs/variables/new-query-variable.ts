@@ -105,11 +105,7 @@ describe('Variables - Add variable', () => {
 
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('a label').should('be.visible');
 
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A')
-      .should('be.visible')
-      .eq(1)
-      .should('be.visible')
-      .click();
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A').eq(1).should('be.visible').click();
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
       .should('be.visible')
