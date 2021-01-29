@@ -1,4 +1,4 @@
-import React, { FC, PropsWithChildren, useCallback } from 'react';
+import React, { FC, PropsWithChildren, useCallback, useEffect } from 'react';
 import { Portal } from '../Portal/Portal';
 import { cx } from 'emotion';
 import { useTheme } from '../../themes';
@@ -39,6 +39,23 @@ export function Modal(props: PropsWithChildren<Props>): ReturnType<FC<Props>> {
       propsOnDismiss();
     }
   }, [propsOnDismiss]);
+
+  const onEscKey = (ev: KeyboardEvent): void => {
+    if (ev.key === 'Esc' || ev.key === 'Escape') {
+      onDismiss();
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      document.addEventListener('keydown', onEscKey, false);
+    } else {
+      document.removeEventListener('keydown', onEscKey, false);
+    }
+    return () => {
+      document.removeEventListener('keydown', onEscKey, false);
+    };
+  }, [isOpen]);
 
   if (!isOpen) {
     return null;
