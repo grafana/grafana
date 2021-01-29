@@ -45,13 +45,14 @@ Add a team to your Grafana organization.
 
 Add an existing user account to a team.
 
-1. Hover your cursor over the **Configuration** (gear) icon in the side menu.
-1. Click **Teams**. Grafana displays the team list.
+{{< docs/list >}}
+{{< docs/shared "manage-users/view-server-user-list.md" >}}
 1. Click the name of the team that you want to add users to.
 1. Click **Add member**.
 1. In the **Add team member** list, click the user account that you want to add to the team. You can also type in the field to filter the list.
 1. Click **Add to team**.
 1. Repeat the process to add more team members.
+{{< /docs/list >}}
 
 ![Add team member](/img/docs/manage-users/add-team-member-7-3.png)
 
@@ -59,20 +60,22 @@ Add an existing user account to a team.
 
 Remove a user account from the team.
 
-1. Hover your cursor over the **Configuration** (gear) icon in the side menu.
-1. Click **Teams**. Grafana displays the team list.
+{{< docs/list >}}
+{{< docs/shared "manage-users/view-server-user-list.md" >}}
 1. Click the name of the team that you want to remove users from.
 1. Click the red **X** next to the name of the user that you want to remove from the team and then click **Delete**.
+{{< /docs/list >}}
 
 ## Set team member permissions
 
 Change team member permission levels.
 
-1. Hover your cursor over the **Configuration** (gear) icon in the side menu.
-1. Click **Teams**. Grafana displays the team list.
+{{< docs/list >}}
+{{< docs/shared "manage-users/view-server-user-list.md" >}}
 1. Click the name of the team in which you want to change user permissions.
 1. In the team member list, find and click the user account that you want to change. You can use the search field to filter the list if necessary.
 1. Click the **Permission** list, and then click the new user permission level.
+{{< /docs/list >}}
 
 ![Change team member permissions](/img/docs/manage-users/change-team-permissions-7-3.png)
 
@@ -80,6 +83,7 @@ Change team member permission levels.
 
 Permanently delete the team and all special permissions assigned to it.
 
-1. Hover your cursor over the **Configuration** (gear) icon in the side menu.
-1. Click **Teams**. Grafana displays the team list.
+{{< docs/list >}}
+{{< docs/shared "manage-users/view-server-user-list.md" >}}
 1. Click the red **X** next to the team that you want to delete and then click **Delete**.
+{{< /docs/list >}}

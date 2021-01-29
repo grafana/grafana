@@ -84,7 +84,7 @@ Create a new user account at the server level.
   1. Click **Create user**.
 {{< /docs/list >}}
 
-The user can change all this information after they log in. For instructions, refer to [Edit your Grafana profile]({{< relref "../../administration/preferences.md#edit-your-grafana-profile" >}}) and [Change your password]({{< relref "../../administration/change-your-password.md" >}}).
+The user can change all this information after they log in. For instructions, refer to [Grafana user account profile]({{< relref "../user-admin/user-profile.md" >}}) and [Change your password]({{< relref "../user-admin/change-your-password.md" >}}).
 
 ## Edit a user account
 

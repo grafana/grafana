@@ -1,9 +1,9 @@
 +++
-title = "Manage organization users"
+title = "Org admin tasks"
 weight = 200
 +++
 
-# Manage users as an Organization Admin
+# Manage users as an Org Admin
 
 An _organization_ is a group of users on a Grafana server. Each user can belong to more than one organization. Every member of the organization has a _role_ in that organization that grants them a certain level of permissions. For more information, refer to [Organization roles]({{< relref "../../permissions/organization_roles.md" >}}).
 
