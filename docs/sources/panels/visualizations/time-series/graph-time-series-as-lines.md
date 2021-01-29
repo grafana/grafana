@@ -223,7 +223,6 @@ This is a graph with different line styles and colors applied to each series and
 
 ### Interpolation modes examples
 
-DOMINIK - PLEASE NOTE THE SETTINGS YOU USED FOR THE COLORS. LINE THICKNESS? GRADIENTS? OPACITY?
 
 ![Interpolation modes example](/img/docs/time-series-panel/interpolation-modes-examples-7-4.png)
 
