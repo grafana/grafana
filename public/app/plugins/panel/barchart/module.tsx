@@ -7,8 +7,7 @@ import {
   BarValueVisibility,
   graphFieldOptions,
 } from '@grafana/ui';
-import { addLegendOptions } from '../timeseries/config';
-import { SeriesConfigEditor } from '../timeseries/HideSeriesConfigEditor';
+import { addAxisConfig, addHideFrom, addLegendOptions } from '../timeseries/config';
 import { defaultBarChartFieldConfig } from '@grafana/ui/src/components/BarChart/types';
 
 export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarChartPanel)
@@ -54,25 +53,10 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
           settings: {
             options: graphFieldOptions.fillGradient,
           },
-          showIf: () => false, // <<< Hide from the UI for now
-        })
-        .addCustomEditor({
-          id: 'hideFrom',
-          name: 'Hide in area',
-          category: ['Series'],
-          path: 'hideFrom',
-          defaultValue: {
-            tooltip: false,
-            graph: false,
-            legend: false,
-          },
-          editor: SeriesConfigEditor,
-          override: SeriesConfigEditor,
-          shouldApply: () => true,
-          hideFromDefaults: true,
-          hideFromOverrides: true,
-          process: (value) => value,
         });
+
+      addAxisConfig(builder, true);
+      addHideFrom(builder);
     },
   })
   .setPanelOptions((builder) => {
@@ -100,6 +84,7 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
           ],
         },
         defaultValue: BarStackingMode.None,
+        showIf: () => false, // <<< Hide from the UI for now
       })
       .addRadio({
         path: 'showValue',
@@ -122,7 +107,7 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
           max: 1,
           step: 0.01,
         },
-        showIf: (c) => c.stacking === BarStackingMode.None,
+        showIf: (c) => c.stacking === BarStackingMode.None, // OR there is only 1 number
       })
       .addSliderInput({
         path: 'barWidth',
@@ -135,5 +120,5 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
         },
       });
 
-    addLegendOptions(builder, true);
+    addLegendOptions(builder);
   });

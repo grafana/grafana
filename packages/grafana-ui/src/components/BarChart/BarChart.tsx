@@ -1,6 +1,3 @@
-// Library
-import { BarsOptions, getConfig } from './bars';
-
 import React, { useCallback, useMemo, useRef } from 'react';
 import {
   compareDataFrameStructures,
@@ -9,24 +6,32 @@ import {
   formattedValueToString,
   getFieldDisplayName,
   getFieldSeriesColor,
+  getFieldColorModeForField,
   TimeRange,
+  VizOrientation,
+  fieldReducers,
+  reduceField,
+  DisplayValue,
 } from '@grafana/data';
 
 import { VizLayout } from '../VizLayout/VizLayout';
-
-// Types
-import { VizOrientation } from '@grafana/data';
 import { Themeable } from '../../types';
-import { BarChartFieldConfig, BarChartOptions, BarValueVisibility, defaultBarChartFieldConfig } from './types';
 import { useRevision } from '../uPlot/hooks';
 import { UPlotChart } from '../uPlot/Plot';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { AxisPlacement, ScaleDistribution } from '../uPlot/config';
 import { useTheme } from '../../themes';
 import { GraphNGLegendEvent, GraphNGLegendEventMode } from '../GraphNG/types';
+import { FIXED_UNIT } from '../GraphNG/GraphNG';
 import { LegendDisplayMode, VizLegendItem } from '../VizLegend/types';
 import { VizLegend } from '../VizLegend/VizLegend';
 
+import { BarChartFieldConfig, BarChartOptions, BarValueVisibility, defaultBarChartFieldConfig } from './types';
+import { BarsOptions, getConfig } from './bars';
+
+/**
+ * @alpha
+ */
 export interface Props extends Themeable, BarChartOptions {
   height: number;
   width: number;
@@ -82,12 +87,11 @@ export const BarChart: React.FunctionComponent<Props> = ({
         ? (seriesIdx: number, value: any) => formattedValueToString(data.fields[seriesIdx].display!(value))
         : undefined;
 
-    /*
-      if (data.fields.length === 2) {
-        groupWidth = barWidth;
-        barWidth = 1;
-      }
-    */
+    // Use bar width when only one field
+    if (data.fields.length === 2) {
+      groupWidth = barWidth;
+      barWidth = 1;
+    }
 
     const opts: BarsOptions = {
       xOri,
@@ -121,13 +125,6 @@ export const BarChart: React.FunctionComponent<Props> = ({
       direction: xDir,
     });
 
-    builder.addScale({
-      scaleKey: 'y',
-      isTime: false,
-      orientation: xOri === 0 ? 1 : 0,
-      // range: config.yRange,
-    });
-
     builder.addAxis({
       scaleKey: 'x',
       isTime: false,
@@ -140,17 +137,9 @@ export const BarChart: React.FunctionComponent<Props> = ({
       theme,
     });
 
-    builder.addAxis({
-      scaleKey: 'y',
-      isTime: false,
-      placement: xOri === 0 ? AxisPlacement.Left : AxisPlacement.Bottom,
-      theme,
-    });
-
-    // const FIXED_UNIT = '__fixed';
-
     let seriesIndex = 0;
 
+    // iterate the y values
     for (let i = 1; i < data.fields.length; i++) {
       const field = data.fields[i];
 
@@ -158,24 +147,20 @@ export const BarChart: React.FunctionComponent<Props> = ({
 
       const customConfig: BarChartFieldConfig = { ...defaultBarChartFieldConfig, ...field.config.custom };
 
-      // const scaleKey = config.unit || FIXED_UNIT;
-      // const colorMode = getFieldColorModeForField(field);
+      const scaleKey = field.config.unit || FIXED_UNIT;
+      const colorMode = getFieldColorModeForField(field);
       const scaleColor = getFieldSeriesColor(field, theme);
       const seriesColor = scaleColor.color;
 
       builder.addSeries({
-        scaleKey: i === 0 ? 'x' : 'y',
+        scaleKey,
         lineWidth: customConfig.lineWidth,
         lineColor: seriesColor,
         fillOpacity: customConfig.fillOpacity,
         theme,
-        fieldName: getFieldDisplayName(field, data),
+        colorMode,
         pathBuilder: config.drawBars,
         pointsBuilder: config.drawPoints,
-        dataFrameFieldIndex: {
-          fieldIndex: i,
-          frameIndex: 0,
-        },
         show: !customConfig.hideFrom?.graph,
         gradientMode: customConfig.gradientMode,
         thresholds: field.config.thresholds,
@@ -184,13 +169,50 @@ export const BarChart: React.FunctionComponent<Props> = ({
           lineColor: customConfig.lineColor ?? seriesColor,
           lineWidth: customConfig.lineWidth,
           lineStyle: customConfig.lineStyle,
+          */
 
-          // The following properties are not used in the uPlot config, but are utilized as transport for legend config
-          dataFrameFieldIndex,
-          fieldName: getFieldDisplayName(field, alignedFrame),
-          hideInLegend: customConfig.hideFrom?.legend,
-        */
+        // The following properties are not used in the uPlot config, but are utilized as transport for legend config
+        dataFrameFieldIndex: {
+          fieldIndex: i,
+          frameIndex: 0,
+        },
+        fieldName: getFieldDisplayName(field, data),
+        hideInLegend: customConfig.hideFrom?.legend,
       });
+
+      // The builder will manage unique scaleKeys and combine where appropriate
+      builder.addScale({
+        scaleKey,
+        min: field.config.min,
+        max: field.config.max,
+        softMin: customConfig.axisSoftMin,
+        softMax: customConfig.axisSoftMax,
+        orientation: xOri === 0 ? 1 : 0,
+      });
+
+      if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
+        let placement = customConfig.axisPlacement;
+        if (!placement || placement === AxisPlacement.Auto) {
+          placement = AxisPlacement.Left;
+        }
+        if (xOri === 1) {
+          if (placement === AxisPlacement.Left) {
+            placement = AxisPlacement.Bottom;
+          }
+          if (placement === AxisPlacement.Right) {
+            placement = AxisPlacement.Top;
+          }
+        }
+
+        builder.addAxis({
+          scaleKey,
+          label: customConfig.axisLabel,
+          size: customConfig.axisWidth,
+          placement,
+          formatValue: (v) => formattedValueToString(field.display!(v)),
+          theme,
+        });
+      }
     }
 
     return builder;
@@ -219,26 +241,38 @@ export const BarChart: React.FunctionComponent<Props> = ({
     .map<VizLegendItem | undefined>((s) => {
       const seriesConfig = s.props;
       const fieldIndex = seriesConfig.dataFrameFieldIndex;
-      const axisPlacement = configBuilder.getAxisPlacement(s.props.scaleKey);
-
       if (seriesConfig.hideInLegend || !fieldIndex) {
         return undefined;
       }
 
-      // const field = data[fieldIndex.frameIndex]?.fields[fieldIndex.fieldIndex];
-
-      // // Hackish: when the data prop and config builder are not in sync yet
-      // if (!field) {
-      //   return undefined;
-      // }
+      const field = data.fields[fieldIndex.fieldIndex];
+      if (!field) {
+        return undefined;
+      }
 
       return {
         disabled: !seriesConfig.show ?? false,
         fieldIndex,
         color: seriesConfig.lineColor!,
         label: seriesConfig.fieldName,
-        yAxis: axisPlacement === AxisPlacement.Left ? 1 : 2,
-        getDisplayValues: () => [],
+        yAxis: 1,
+        getDisplayValues: () => {
+          if (!legend.calcs?.length) {
+            return [];
+          }
+
+          const fieldCalcs = reduceField({
+            field,
+            reducers: legend.calcs,
+          });
+
+          return legend.calcs.map<DisplayValue>((reducer) => {
+            return {
+              ...field.display!(fieldCalcs[reducer]),
+              title: fieldReducers.get(reducer).name,
+            };
+          });
+        },
       };
     })
     .filter((i) => i !== undefined) as VizLegendItem[];

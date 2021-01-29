@@ -4,10 +4,16 @@ const MAX_LEVELS = 4;
 export type Quads = [Quadtree, Quadtree, Quadtree, Quadtree];
 export type Rect = { x: number; y: number; w: number; h: number; [_: string]: any };
 
+/**
+ * @internal
+ */
 export function pointWithin(px: number, py: number, rlft: number, rtop: number, rrgt: number, rbtm: number) {
   return px >= rlft && px <= rrgt && py >= rtop && py <= rbtm;
 }
 
+/**
+ * @internal
+ */
 export class Quadtree {
   o: Rect[];
   q: Quads | null;

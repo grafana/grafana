@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import { DataFrame, Field, FieldType, PanelProps } from '@grafana/data';
-import { Alert, BarChart, BarChartOptions, GraphNGLegendEvent } from '@grafana/ui';
+import { BarChart, BarChartOptions, GraphNGLegendEvent } from '@grafana/ui';
 import { changeSeriesColorConfigFactory } from '../timeseries/overrides/colorSeriesConfigFactory';
 import { hideSeriesConfigFactory } from '../timeseries/overrides/hideSeriesConfigFactory';
 import { config } from 'app/core/config';
@@ -18,7 +18,6 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
   width,
   height,
   fieldConfig,
-  onChangeTimeRange,
   onFieldConfigChange,
 }) => {
   if (!data || !data.series?.length) {
@@ -48,7 +47,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
     const firstString = firstFrame.fields.find((f) => f.type === FieldType.string);
     if (!firstString) {
       return {
-        error: 'Panel requires a string field',
+        error: 'Bar charts requires a string field',
       };
     }
     const fields: Field[] = [firstString];
@@ -73,16 +72,16 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
 
   if (barData.error) {
     return (
-      <div>
-        <Alert title={barData.error} severity="warning" />
+      <div className="panel-empty">
+        <p>{barData.error}</p>
       </div>
     );
   }
 
   if (!barData.frame) {
     return (
-      <div>
-        <Alert title="missing data" severity="error" />
+      <div className="panel-empty">
+        <p>No data found in response</p>
       </div>
     );
   }

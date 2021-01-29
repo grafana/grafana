@@ -146,10 +146,16 @@ export interface HideSeriesConfig {
 /**
  * @alpha
  */
-export interface GraphFieldConfig extends LineConfig, FillConfig, PointsConfig, AxisConfig {
+export interface HideableFieldConfig {
+  hideFrom?: HideSeriesConfig;
+}
+
+/**
+ * @alpha
+ */
+export interface GraphFieldConfig extends LineConfig, FillConfig, PointsConfig, AxisConfig, HideableFieldConfig {
   drawStyle?: DrawStyle;
   gradientMode?: GraphGradientMode;
-  hideFrom?: HideSeriesConfig;
 }
 
 /**
