@@ -30,7 +30,7 @@ func TestAlertInstanceOperations(t *testing.T) {
 			State:           InstanceStateFiring,
 			Labels:          InstanceLabels{"test": "testValue"},
 		}
-		err := ng.saveAlertInstance(saveCmd)
+		err := ng.definitionStore.saveAlertInstance(saveCmd)
 		require.NoError(t, err)
 
 		getCmd := &getAlertInstanceQuery{
@@ -39,7 +39,7 @@ func TestAlertInstanceOperations(t *testing.T) {
 			Labels:          InstanceLabels{"test": "testValue"},
 		}
 
-		err = ng.getAlertInstance(getCmd)
+		err = ng.definitionStore.getAlertInstance(getCmd)
 		require.NoError(t, err)
 
 		require.Equal(t, saveCmd.Labels, getCmd.Result.Labels)
@@ -53,7 +53,7 @@ func TestAlertInstanceOperations(t *testing.T) {
 			DefinitionUID:   alertDefinition2.UID,
 			State:           InstanceStateNormal,
 		}
-		err := ng.saveAlertInstance(saveCmd)
+		err := ng.definitionStore.saveAlertInstance(saveCmd)
 		require.NoError(t, err)
 
 		getCmd := &getAlertInstanceQuery{
@@ -61,7 +61,7 @@ func TestAlertInstanceOperations(t *testing.T) {
 			DefinitionUID:   saveCmd.DefinitionUID,
 		}
 
-		err = ng.getAlertInstance(getCmd)
+		err = ng.definitionStore.getAlertInstance(getCmd)
 		require.NoError(t, err)
 
 		require.Equal(t, alertDefinition2.OrgID, getCmd.Result.DefinitionOrgID)
@@ -77,7 +77,7 @@ func TestAlertInstanceOperations(t *testing.T) {
 			Labels:          InstanceLabels{"test": "testValue"},
 		}
 
-		err := ng.saveAlertInstance(saveCmdOne)
+		err := ng.definitionStore.saveAlertInstance(saveCmdOne)
 		require.NoError(t, err)
 
 		saveCmdTwo := &saveAlertInstanceCommand{
@@ -86,7 +86,7 @@ func TestAlertInstanceOperations(t *testing.T) {
 			State:           InstanceStateFiring,
 			Labels:          InstanceLabels{"test": "meow"},
 		}
-		err = ng.saveAlertInstance(saveCmdTwo)
+		err = ng.definitionStore.saveAlertInstance(saveCmdTwo)
 		require.NoError(t, err)
 
 		listCommand := &listAlertInstancesQuery{
@@ -94,7 +94,7 @@ func TestAlertInstanceOperations(t *testing.T) {
 			DefinitionUID:   saveCmdOne.DefinitionUID,
 		}
 
-		err = ng.listAlertInstances(listCommand)
+		err = ng.definitionStore.listAlertInstances(listCommand)
 		require.NoError(t, err)
 
 		require.Len(t, listCommand.Result, 2)
@@ -105,7 +105,7 @@ func TestAlertInstanceOperations(t *testing.T) {
 			DefinitionOrgID: orgID,
 		}
 
-		err := ng.listAlertInstances(listCommand)
+		err := ng.definitionStore.listAlertInstances(listCommand)
 		require.NoError(t, err)
 
 		require.Len(t, listCommand.Result, 4)
@@ -117,7 +117,7 @@ func TestAlertInstanceOperations(t *testing.T) {
 			State:           InstanceStateNormal,
 		}
 
-		err := ng.listAlertInstances(listCommand)
+		err := ng.definitionStore.listAlertInstances(listCommand)
 		require.NoError(t, err)
 
 		require.Len(t, listCommand.Result, 1)
@@ -131,7 +131,7 @@ func TestAlertInstanceOperations(t *testing.T) {
 			Labels:          InstanceLabels{"test": "testValue"},
 		}
 
-		err := ng.saveAlertInstance(saveCmdOne)
+		err := ng.definitionStore.saveAlertInstance(saveCmdOne)
 		require.NoError(t, err)
 
 		saveCmdTwo := &saveAlertInstanceCommand{
@@ -140,7 +140,7 @@ func TestAlertInstanceOperations(t *testing.T) {
 			State:           InstanceStateNormal,
 			Labels:          InstanceLabels{"test": "testValue"},
 		}
-		err = ng.saveAlertInstance(saveCmdTwo)
+		err = ng.definitionStore.saveAlertInstance(saveCmdTwo)
 		require.NoError(t, err)
 
 		listCommand := &listAlertInstancesQuery{
@@ -148,7 +148,7 @@ func TestAlertInstanceOperations(t *testing.T) {
 			DefinitionUID:   alertDefinition4.UID,
 		}
 
-		err = ng.listAlertInstances(listCommand)
+		err = ng.definitionStore.listAlertInstances(listCommand)
 		require.NoError(t, err)
 
 		require.Len(t, listCommand.Result, 1)

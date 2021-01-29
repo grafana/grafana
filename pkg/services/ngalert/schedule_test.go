@@ -56,7 +56,7 @@ func TestAlertingTicker(t *testing.T) {
 
 	ctx := context.Background()
 	go func() {
-		err := ng.alertingTicker(ctx)
+		err := ng.schedule.Ticker(ctx)
 		require.NoError(t, err)
 	}()
 	runtime.Gosched()
@@ -69,7 +69,7 @@ func TestAlertingTicker(t *testing.T) {
 
 	// change alert definition interval to three seconds
 	var threeSecInterval int64 = 3
-	err := ng.updateAlertDefinition(&updateAlertDefinitionCommand{
+	err := ng.definitionStore.updateAlertDefinition(&updateAlertDefinitionCommand{
 		UID:             alerts[0].UID,
 		IntervalSeconds: &threeSecInterval,
 		OrgID:           alerts[0].OrgID,
@@ -95,7 +95,7 @@ func TestAlertingTicker(t *testing.T) {
 		assertEvalRun(t, evalAppliedCh, tick, expectedAlertDefinitionsEvaluated...)
 	})
 
-	err = ng.deleteAlertDefinitionByUID(&deleteAlertDefinitionByUIDCommand{UID: alerts[1].UID, OrgID: alerts[1].OrgID})
+	err = ng.definitionStore.deleteAlertDefinitionByUID(&deleteAlertDefinitionByUIDCommand{UID: alerts[1].UID, OrgID: alerts[1].OrgID})
 	require.NoError(t, err)
 	t.Logf("alert definition: %v deleted", alerts[1].getKey())
 

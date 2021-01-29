@@ -9,7 +9,7 @@ import (
 func (ng *AlertNG) listAlertInstancesEndpoint(c *models.ReqContext) response.Response {
 	cmd := listAlertInstancesQuery{DefinitionOrgID: c.SignedInUser.OrgId}
 
-	if err := ng.listAlertInstances(&cmd); err != nil {
+	if err := ng.instanceStore.listAlertInstances(&cmd); err != nil {
 		return response.Error(500, "Failed to list alert instances", err)
 	}
 

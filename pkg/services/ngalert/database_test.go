@@ -97,7 +97,7 @@ func TestCreatingAlertDefinition(t *testing.T) {
 			if tc.inputIntervalSeconds != nil {
 				q.IntervalSeconds = tc.inputIntervalSeconds
 			}
-			err := ng.saveAlertDefinition(&q)
+			err := ng.definitionStore.saveAlertDefinition(&q)
 			switch {
 			case tc.expectedError != nil:
 				require.Error(t, err)
@@ -138,10 +138,10 @@ func TestCreatingConflictionAlertDefinition(t *testing.T) {
 			},
 		}
 
-		err := ng.saveAlertDefinition(&q)
+		err := ng.definitionStore.saveAlertDefinition(&q)
 		require.NoError(t, err)
 
-		err = ng.saveAlertDefinition(&q)
+		err = ng.definitionStore.saveAlertDefinition(&q)
 		require.Error(t, err)
 		assert.True(t, ng.SQLStore.Dialect.IsUniqueConstraintViolation(err))
 	})
@@ -178,7 +178,7 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 			},
 		}
 
-		err := ng.updateAlertDefinition(&q)
+		err := ng.definitionStore.updateAlertDefinition(&q)
 		require.NoError(t, err)
 	})
 
@@ -281,7 +281,7 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 					q.OrgID = tc.inputOrgID
 				}
 				q.Title = tc.inputTitle
-				err := ng.updateAlertDefinition(&q)
+				err := ng.definitionStore.updateAlertDefinition(&q)
 				switch {
 				case tc.expectedError != nil:
 					require.Error(t, err)
@@ -356,7 +356,7 @@ func TestUpdatingConflictingAlertDefinition(t *testing.T) {
 			},
 		}
 
-		err := ng.updateAlertDefinition(&q)
+		err := ng.definitionStore.updateAlertDefinition(&q)
 		require.Error(t, err)
 		assert.True(t, ng.SQLStore.Dialect.IsUniqueConstraintViolation(err))
 	})
@@ -372,7 +372,7 @@ func TestDeletingAlertDefinition(t *testing.T) {
 			OrgID: 1,
 		}
 
-		err := ng.deleteAlertDefinitionByUID(&q)
+		err := ng.definitionStore.deleteAlertDefinitionByUID(&q)
 		require.NoError(t, err)
 	})
 
@@ -394,21 +394,21 @@ func TestDeletingAlertDefinition(t *testing.T) {
 			State:           InstanceStateFiring,
 			Labels:          InstanceLabels{"test": "testValue"},
 		}
-		err := ng.saveAlertInstance(saveCmd)
+		err := ng.definitionStore.saveAlertInstance(saveCmd)
 		require.NoError(t, err)
 		listCommand := &listAlertInstancesQuery{
 			DefinitionOrgID: alertDefinition.OrgID,
 			DefinitionUID:   alertDefinition.UID,
 		}
-		err = ng.listAlertInstances(listCommand)
+		err = ng.definitionStore.listAlertInstances(listCommand)
 		require.NoError(t, err)
 		require.Len(t, listCommand.Result, 1)
 
-		err = ng.deleteAlertDefinitionByUID(&q)
+		err = ng.definitionStore.deleteAlertDefinitionByUID(&q)
 		require.NoError(t, err)
 
 		// assert that alert instance is deleted
-		err = ng.listAlertInstances(listCommand)
+		err = ng.definitionStore.listAlertInstances(listCommand)
 		require.NoError(t, err)
 
 		require.Len(t, listCommand.Result, 0)

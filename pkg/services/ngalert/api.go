@@ -104,7 +104,7 @@ func (ng *AlertNG) getAlertDefinitionEndpoint(c *models.ReqContext) response.Res
 		OrgID: c.SignedInUser.OrgId,
 	}
 
-	if err := ng.getAlertDefinitionByUID(&query); err != nil {
+	if err := ng.definitionStore.getAlertDefinitionByUID(&query); err != nil {
 		return response.Error(500, "Failed to get alert definition", err)
 	}
 
@@ -120,7 +120,7 @@ func (ng *AlertNG) deleteAlertDefinitionEndpoint(c *models.ReqContext) response.
 		OrgID: c.SignedInUser.OrgId,
 	}
 
-	if err := ng.deleteAlertDefinitionByUID(&cmd); err != nil {
+	if err := ng.definitionStore.deleteAlertDefinitionByUID(&cmd); err != nil {
 		return response.Error(500, "Failed to delete alert definition", err)
 	}
 
@@ -136,7 +136,7 @@ func (ng *AlertNG) updateAlertDefinitionEndpoint(c *models.ReqContext, cmd updat
 		return response.Error(400, "invalid condition", err)
 	}
 
-	if err := ng.updateAlertDefinition(&cmd); err != nil {
+	if err := ng.definitionStore.updateAlertDefinition(&cmd); err != nil {
 		return response.Error(500, "Failed to update alert definition", err)
 	}
 
@@ -151,7 +151,7 @@ func (ng *AlertNG) createAlertDefinitionEndpoint(c *models.ReqContext, cmd saveA
 		return response.Error(400, "invalid condition", err)
 	}
 
-	if err := ng.saveAlertDefinition(&cmd); err != nil {
+	if err := ng.definitionStore.saveAlertDefinition(&cmd); err != nil {
 		return response.Error(500, "Failed to create alert definition", err)
 	}
 
@@ -162,7 +162,7 @@ func (ng *AlertNG) createAlertDefinitionEndpoint(c *models.ReqContext, cmd saveA
 func (ng *AlertNG) listAlertDefinitions(c *models.ReqContext) response.Response {
 	query := listAlertDefinitionsQuery{OrgID: c.SignedInUser.OrgId}
 
-	if err := ng.getOrgAlertDefinitions(&query); err != nil {
+	if err := ng.definitionStore.getOrgAlertDefinitions(&query); err != nil {
 		return response.Error(500, "Failed to list alert definitions", err)
 	}
 
@@ -170,7 +170,7 @@ func (ng *AlertNG) listAlertDefinitions(c *models.ReqContext) response.Response 
 }
 
 func (ng *AlertNG) pauseScheduler() response.Response {
-	err := ng.schedule.pause()
+	err := ng.schedule.Pause()
 	if err != nil {
 		return response.Error(500, "Failed to pause scheduler", err)
 	}
@@ -178,7 +178,7 @@ func (ng *AlertNG) pauseScheduler() response.Response {
 }
 
 func (ng *AlertNG) unpauseScheduler() response.Response {
-	err := ng.schedule.unpause()
+	err := ng.schedule.Unpause()
 	if err != nil {
 		return response.Error(500, "Failed to unpause scheduler", err)
 	}
