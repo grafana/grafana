@@ -1,4 +1,11 @@
-import { FieldColorModeId, FieldConfigProperty, PanelPlugin, VizOrientation } from '@grafana/data';
+import {
+  DataFrame,
+  FieldColorModeId,
+  FieldConfigProperty,
+  FieldType,
+  PanelPlugin,
+  VizOrientation,
+} from '@grafana/data';
 import { BarChartPanel } from './BarChartPanel';
 import {
   BarChartFieldConfig,
@@ -107,7 +114,12 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
           max: 1,
           step: 0.01,
         },
-        showIf: (c) => c.stacking === BarStackingMode.None, // OR there is only 1 number
+        showIf: (c, data) => {
+          if (c.stacking && c.stacking !== BarStackingMode.None) {
+            return false;
+          }
+          return countNumberFields(data) !== 1;
+        },
       })
       .addSliderInput({
         path: 'barWidth',
@@ -122,3 +134,17 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
 
     addLegendOptions(builder);
   });
+
+function countNumberFields(data?: DataFrame[]): number {
+  let count = 0;
+  if (data) {
+    for (const frame of data) {
+      for (const field of frame.fields) {
+        if (field.type === FieldType.number) {
+          count++;
+        }
+      }
+    }
+  }
+  return count;
+}
