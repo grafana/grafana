@@ -111,6 +111,5 @@ Below are some bar graph examples to give you ideas.
 
 ### Hue gradient
 
-DOMINIK - PLEASE NOTE THE SETTINGS YOU USED FOR THE COLORS. LINE THICKNESS? GRADIENTS? OPACITY?
 
 ![Bars with hue gradient example](/img/docs/time-series-panel/bars-with-hue-gradient-7-4.png)
