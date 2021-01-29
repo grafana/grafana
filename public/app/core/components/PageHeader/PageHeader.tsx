@@ -13,7 +13,7 @@ const SelectNav = ({ children, customCss }: { children: NavModelItem[]; customCs
     return null;
   }
 
-  const defaultSelectedItem = children.find(navItem => {
+  const defaultSelectedItem = children.find((navItem) => {
     return navItem.active === true;
   });
 
@@ -121,7 +121,7 @@ export default class PageHeader extends React.Component<Props, any> {
       <div className="page-header__inner">
         <span className="page-header__logo">
           {main.icon && <Icon name={main.icon as IconName} size="xxxl" className={iconClassName} />}
-          {main.img && <img className="page-header__img" src={main.img} />}
+          {main.img && <img className="page-header__img" src={main.img} alt={`logo of ${main.text}`} />}
         </span>
 
         <div className="page-header__info-block">

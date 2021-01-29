@@ -29,6 +29,6 @@ export const MetricPicker: FunctionComponent<Props> = ({ options, onChange, clas
     options={toOptions(options)}
     onChange={onChange}
     placeholder="Select Metric"
-    value={!!value ? toOption(options.find(option => option.id === value)!) : null}
+    value={!!value ? toOption(options.find((option) => option.id === value)!) : null}
   />
 );

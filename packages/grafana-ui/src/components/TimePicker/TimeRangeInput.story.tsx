@@ -32,14 +32,14 @@ const getComponentWithState = (initialState: State, props: TimeRangeInputProps) 
           {...props}
           value={state.value}
           timeZone={state.timeZone}
-          onChange={value => {
+          onChange={(value) => {
             action('onChange fired')(value);
             updateValue({
               ...state,
               value,
             });
           }}
-          onChangeTimeZone={timeZone => {
+          onChangeTimeZone={(timeZone) => {
             action('onChangeTimeZone fired')(timeZone);
             updateValue({
               ...state,
@@ -52,7 +52,7 @@ const getComponentWithState = (initialState: State, props: TimeRangeInputProps) 
   </UseState>
 );
 
-export const Relative: Story<TimeRangeInputProps> = props => {
+export const Relative: Story<TimeRangeInputProps> = (props) => {
   const to = dateTime();
   const from = to.subtract(6, 'h');
 
@@ -72,7 +72,7 @@ export const Relative: Story<TimeRangeInputProps> = props => {
   );
 };
 
-export const Absolute: Story<TimeRangeInputProps> = props => {
+export const Absolute: Story<TimeRangeInputProps> = (props) => {
   const to = dateTime();
   const from = to.subtract(6, 'h');
 

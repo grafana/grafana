@@ -78,7 +78,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
     } else if (isTime) {
       config.values = formatTime;
     } else if (formatValue) {
-      config.values = (u: uPlot, vals: any[]) => vals.map(v => formatValue(v));
+      config.values = (u: uPlot, vals: any[]) => vals.map((v) => formatValue(v));
     }
 
     // store timezone
@@ -147,7 +147,7 @@ function formatTime(self: uPlot, splits: number[], axisIdx: number, foundSpace: 
     format = systemDateFormats.interval.month;
   }
 
-  return splits.map(v => dateTimeFormat(v, { format, timeZone }));
+  return splits.map((v) => dateTimeFormat(v, { format, timeZone }));
 }
 
 export function getUPlotSideFromAxis(axis: AxisPlacement) {

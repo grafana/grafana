@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // DatasourceName is the string constant used as the datasource name in requests
@@ -20,6 +21,14 @@ const DatasourceUID = "-100"
 
 // Service is service representation for expression handling.
 type Service struct {
+	Cfg *setting.Cfg
+}
+
+func (s *Service) isDisabled() bool {
+	if s.Cfg == nil {
+		return true
+	}
+	return !s.Cfg.ExpressionsEnabled
 }
 
 // BuildPipeline builds a pipeline from a request.

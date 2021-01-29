@@ -33,7 +33,7 @@ describe('PanelPlugin', () => {
       });
 
       panel.useFieldConfig({
-        useCustomConfig: builder => {
+        useCustomConfig: (builder) => {
           builder.addCustomEditor({
             id: 'custom',
             path: 'custom',
@@ -58,7 +58,7 @@ describe('PanelPlugin', () => {
         return <div>Panel</div>;
       });
 
-      panel.setPanelOptions(builder => {
+      panel.setPanelOptions((builder) => {
         builder.addCustomEditor({
           id: 'option',
           path: 'option',
@@ -82,7 +82,7 @@ describe('PanelPlugin', () => {
           return <div>Panel</div>;
         });
 
-        panel.setPanelOptions(builder => {
+        panel.setPanelOptions((builder) => {
           builder
             .addNumberInput({
               path: 'numericOption',
@@ -120,7 +120,7 @@ describe('PanelPlugin', () => {
           return <div>Panel</div>;
         });
 
-        panel.setPanelOptions(builder => {
+        panel.setPanelOptions((builder) => {
           builder.addNumberInput({
             path: 'numericOption.nested',
             name: 'Option editor',
@@ -144,7 +144,7 @@ describe('PanelPlugin', () => {
         });
 
         panel.useFieldConfig({
-          useCustomConfig: builder => {
+          useCustomConfig: (builder) => {
             builder
               .addNumberInput({
                 path: 'numericOption',
@@ -188,7 +188,7 @@ describe('PanelPlugin', () => {
         });
 
         panel.useFieldConfig({
-          useCustomConfig: builder => {
+          useCustomConfig: (builder) => {
             builder.addNumberInput({
               path: 'numericOption.nested',
               name: 'Option editor',

@@ -1279,7 +1279,7 @@ describe('ElasticResponse', () => {
       const result = new ElasticResponse(targets, response).getLogs();
       expect(result.data.length).toBe(2);
       const logResults = result.data[0] as MutableDataFrame;
-      const fields = logResults.fields.map(f => {
+      const fields = logResults.fields.map((f) => {
         return {
           name: f.name,
           type: f.type,

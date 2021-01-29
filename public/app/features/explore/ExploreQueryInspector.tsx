@@ -96,7 +96,7 @@ export function ExploreQueryInspector(props: Props) {
   useEffectOnce(() => {
     const inspectorStreamSub = getBackendSrv()
       .getInspectorStream()
-      .subscribe(resp => {
+      .subscribe((resp) => {
         const strippedResponse = stripPropsFromResponse(resp);
         if (strippedResponse) {
           setResponse(strippedResponse);

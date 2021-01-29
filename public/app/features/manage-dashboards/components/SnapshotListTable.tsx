@@ -17,7 +17,7 @@ export const SnapshotListTable: FC<Props> = ({ url }) => {
       .then((result: Snapshot[]) => {
         const absUrl = window.location.href;
         const baseUrl = absUrl.replace(url, '');
-        const snapshots = result.map(snapshot => ({
+        const snapshots = result.map((snapshot) => ({
           ...snapshot,
           url: snapshot.externalUrl || `${baseUrl}/dashboard/snapshot/${snapshot.key}`,
         }));
@@ -27,7 +27,7 @@ export const SnapshotListTable: FC<Props> = ({ url }) => {
 
   const doRemoveSnapshot = useCallback(
     async (snapshot: Snapshot) => {
-      const filteredSnapshots = snapshots.filter(ss => ss.key !== snapshot.key);
+      const filteredSnapshots = snapshots.filter((ss) => ss.key !== snapshot.key);
       setSnapshots(filteredSnapshots);
       await getBackendSrv()
         .delete(`/api/snapshots/${snapshot.key}`)
@@ -59,7 +59,7 @@ export const SnapshotListTable: FC<Props> = ({ url }) => {
           </tr>
         </thead>
         <tbody>
-          {snapshots.map(snapshot => {
+          {snapshots.map((snapshot) => {
             return (
               <tr key={snapshot.key}>
                 <td>

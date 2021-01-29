@@ -168,7 +168,7 @@ export class FieldColorSchemeMode implements FieldColorMode {
       return this.colorCache;
     }
 
-    this.colorCache = this.colors.map(c => getColorForTheme(c, theme));
+    this.colorCache = this.colors.map((c) => getColorForTheme(c, theme));
     return this.colorCache;
   }
 

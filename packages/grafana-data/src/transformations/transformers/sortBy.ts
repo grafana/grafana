@@ -30,9 +30,9 @@ export const sortByTransformer: DataTransformerInfo<SortByTransformerOptions> = 
    * Return a modified copy of the series.  If the transform is not or should not
    * be applied, just return the input series
    */
-  operator: options => source =>
+  operator: (options) => (source) =>
     source.pipe(
-      map(data => {
+      map((data) => {
         if (!Array.isArray(data) || data.length === 0 || !options?.sort?.length) {
           return data;
         }
@@ -42,7 +42,7 @@ export const sortByTransformer: DataTransformerInfo<SortByTransformerOptions> = 
 };
 
 export function sortDataFrames(data: DataFrame[], sort: SortByField[]): DataFrame[] {
-  return data.map(frame => {
+  return data.map((frame) => {
     const s = attachFieldIndex(frame, sort);
     if (s.length && s[0].index != null) {
       return sortDataFrame(frame, s[0].index, s[0].desc);
@@ -52,14 +52,14 @@ export function sortDataFrames(data: DataFrame[], sort: SortByField[]): DataFram
 }
 
 function attachFieldIndex(frame: DataFrame, sort: SortByField[]): SortByField[] {
-  return sort.map(s => {
+  return sort.map((s) => {
     if (s.index != null) {
       // null or undefined
       return s;
     }
     return {
       ...s,
-      index: frame.fields.findIndex(f => s.field === getFieldDisplayName(f, frame)),
+      index: frame.fields.findIndex((f) => s.field === getFieldDisplayName(f, frame)),
     };
   });
 }

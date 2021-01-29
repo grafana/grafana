@@ -104,7 +104,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   };
 
   toggleFieldsStats() {
-    this.setState(state => {
+    this.setState((state) => {
       return {
         showFieldsStats: !state.showFieldsStats,
       };
@@ -154,7 +154,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
         <td className={cx(styles.wordBreakAll, wrapLogMessage && styles.wrapLine)}>
           {parsedValue}
           {links &&
-            links.map(link => {
+            links.map((link) => {
               return (
                 <>
                   &nbsp;

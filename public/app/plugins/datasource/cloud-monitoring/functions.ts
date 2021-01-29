@@ -34,7 +34,7 @@ export const getMetricTypes = (
 export const getAlignmentOptionsByMetric = (metricValueType: string, metricKind: string) => {
   return !metricValueType
     ? []
-    : alignOptions.filter(i => {
+    : alignOptions.filter((i) => {
         return (
           i.valueTypes.indexOf(metricValueType as ValueTypes) !== -1 &&
           i.metricKinds.indexOf(metricKind as MetricKind) !== -1
@@ -45,7 +45,7 @@ export const getAlignmentOptionsByMetric = (metricValueType: string, metricKind:
 export const getAggregationOptionsByMetric = (valueType: ValueTypes, metricKind: MetricKind) => {
   return !metricKind
     ? []
-    : aggOptions.filter(i => {
+    : aggOptions.filter((i) => {
         return i.valueTypes.indexOf(valueType) !== -1 && i.metricKinds.indexOf(metricKind) !== -1;
       });
 };
@@ -64,7 +64,7 @@ export const getAlignmentPickerData = (
   { valueType, metricKind, perSeriesAligner }: Partial<MetricQuery>,
   templateSrv: TemplateSrv
 ) => {
-  const alignOptions = getAlignmentOptionsByMetric(valueType!, metricKind!).map(option => ({
+  const alignOptions = getAlignmentOptionsByMetric(valueType!, metricKind!).map((option) => ({
     ...option,
     label: option.text,
   }));

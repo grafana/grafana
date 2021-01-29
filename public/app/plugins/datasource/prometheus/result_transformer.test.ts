@@ -353,6 +353,32 @@ describe('Prometheus Result Transformer', () => {
       expect(result[0].name).toEqual('test{job="testjob"}');
     });
 
+    it('should use query as series name when __name__ is not available and metric is empty', () => {
+      const response = {
+        status: 'success',
+        data: {
+          resultType: 'matrix',
+          result: [
+            {
+              metric: {},
+              values: [[0, '10']],
+            },
+          ],
+        },
+      };
+      const expr = 'histogram_quantile(0.95, sum(rate(tns_request_duration_seconds_bucket[5m])) by (le))';
+      const result = transform({ data: response } as any, {
+        ...options,
+        query: {
+          step: 1,
+          start: 0,
+          end: 2,
+          expr,
+        },
+      });
+      expect(result[0].name).toEqual(expr);
+    });
+
     it('should set frame name to undefined if no __name__ label but there are other labels', () => {
       const response = {
         status: 'success',
@@ -531,7 +557,7 @@ describe('Prometheus Result Transformer', () => {
           exemplarTraceIdDestinations: [{ name: 'traceID', url: 'http://localhost' }],
         });
 
-        expect(result[0].fields.some(f => f.config.links?.length)).toBe(true);
+        expect(result[0].fields.some((f) => f.config.links?.length)).toBe(true);
       });
 
       it('should be added to the field if found with internal link', () => {
@@ -540,13 +566,13 @@ describe('Prometheus Result Transformer', () => {
           exemplarTraceIdDestinations: [{ name: 'traceID', datasourceUid: 'jaeger' }],
         });
 
-        expect(result[0].fields.some(f => f.config.links?.length)).toBe(true);
+        expect(result[0].fields.some((f) => f.config.links?.length)).toBe(true);
       });
 
       it('should not add link if exemplarTraceIdDestinations is not configured', () => {
         const result = transform({ data: exemplarsResponse } as any, options);
 
-        expect(result[0].fields.some(f => f.config.links?.length)).toBe(false);
+        expect(result[0].fields.some((f) => f.config.links?.length)).toBe(false);
       });
     });
   });

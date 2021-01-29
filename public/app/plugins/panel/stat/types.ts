@@ -51,7 +51,7 @@ export function addStandardDataReduceOptions(
       min: 1,
       max: 5000,
     },
-    showIf: options => options.reduceOptions.values === true,
+    showIf: (options) => options.reduceOptions.values === true,
   });
 
   builder.addCustomEditor({
@@ -62,7 +62,7 @@ export function addStandardDataReduceOptions(
     editor: standardEditorsRegistry.get('stats-picker').editor as any,
     defaultValue: [ReducerID.lastNotNull],
     // Hides it when all values mode is on
-    showIf: currentConfig => currentConfig.reduceOptions.values === false,
+    showIf: (currentConfig) => currentConfig.reduceOptions.values === false,
   });
 
   if (includeFieldMatcher) {

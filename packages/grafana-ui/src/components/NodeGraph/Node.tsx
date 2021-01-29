@@ -32,9 +32,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
-    background-color: ${tinycolor(theme.colors.bodyBg)
-      .setAlpha(0.6)
-      .toHex8String()};
+    background-color: ${tinycolor(theme.colors.bodyBg).setAlpha(0.6).toHex8String()};
   `,
 }));
 
@@ -61,7 +59,7 @@ export const Node = memo(function Node(props: {
       onMouseLeave={() => {
         onMouseLeave(node.id);
       }}
-      onClick={event => {
+      onClick={(event) => {
         onClick(event, node);
       }}
       aria-label={`Node: ${node.title}`}
@@ -93,7 +91,7 @@ export const Node = memo(function Node(props: {
  */
 function ResponseTypeCircle(props: { node: NodeDatum }) {
   const { node } = props;
-  const fullStat = node.arcSections.find(s => s.value === 1);
+  const fullStat = node.arcSections.find((s) => s.value === 1);
   const theme = useTheme();
 
   if (fullStat) {
@@ -110,7 +108,7 @@ function ResponseTypeCircle(props: { node: NodeDatum }) {
     );
   }
 
-  const nonZero = node.arcSections.filter(s => s.value !== 0);
+  const nonZero = node.arcSections.filter((s) => s.value !== 0);
 
   const { elements } = nonZero.reduce(
     (acc, section) => {

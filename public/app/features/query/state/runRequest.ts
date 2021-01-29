@@ -140,7 +140,7 @@ export function runRequest(
       return state.panelData;
     }),
     // handle errors
-    catchError(err => {
+    catchError((err) => {
       console.error('runRequest.catchError', err);
       return of({
         ...state.panelData,

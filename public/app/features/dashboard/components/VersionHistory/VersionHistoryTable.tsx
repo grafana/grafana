@@ -29,7 +29,7 @@ export const VersionHistoryTable: React.FC<VersionsTableProps> = ({ versions, on
                 display: inline;
               `}
               checked={version.checked}
-              onChange={ev => onCheck(ev, version.id)}
+              onChange={(ev) => onCheck(ev, version.id)}
             />
           </td>
           <td>{version.version}</td>

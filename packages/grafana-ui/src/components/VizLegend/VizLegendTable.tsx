@@ -21,9 +21,9 @@ export const VizLegendTable: FC<VizLegendTableProps> = ({
   const styles = useStyles(getStyles);
 
   const columns = items
-    .map(item => {
+    .map((item) => {
       if (item.getDisplayValues) {
-        return item.getDisplayValues().map(i => i.title);
+        return item.getDisplayValues().map((i) => i.title);
       }
       return [];
     })
@@ -31,16 +31,16 @@ export const VizLegendTable: FC<VizLegendTableProps> = ({
       (acc, current) => {
         return union(
           acc,
-          current.filter(item => !!item)
+          current.filter((item) => !!item)
         );
       },
       ['']
     ) as string[];
 
   const sortedItems = sortKey
-    ? sortBy(items, item => {
+    ? sortBy(items, (item) => {
         if (item.getDisplayValues) {
-          const stat = item.getDisplayValues().filter(stat => stat.title === sortKey)[0];
+          const stat = item.getDisplayValues().filter((stat) => stat.title === sortKey)[0];
           return stat && stat.numeric;
         }
         return undefined;
@@ -63,7 +63,7 @@ export const VizLegendTable: FC<VizLegendTableProps> = ({
     <table className={cx(styles.table, className)}>
       <thead>
         <tr>
-          {columns.map(columnHeader => {
+          {columns.map((columnHeader) => {
             return (
               <th
                 key={columnHeader}

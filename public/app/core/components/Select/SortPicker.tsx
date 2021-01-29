@@ -27,7 +27,7 @@ export const SortPicker: FC<Props> = ({ onChange, value, placeholder }) => {
     <Select
       width={25}
       onChange={onChange}
-      value={options?.filter(opt => opt.value === value)}
+      value={options?.filter((opt) => opt.value === value)}
       options={options}
       placeholder={placeholder ?? `Sort (Default ${DEFAULT_SORT.label})`}
       prefix={<Icon name="sort-amount-down" />}

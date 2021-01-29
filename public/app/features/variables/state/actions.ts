@@ -211,7 +211,7 @@ export const processVariableDependencies = async (variable: VariableModel, state
     return;
   }
 
-  await new Promise<void>(resolve => {
+  await new Promise<void>((resolve) => {
     const unsubscribe = store.subscribe(() => {
       if (!isWaitingForDependencies(dependencies, store.getState())) {
         unsubscribe();
@@ -227,8 +227,8 @@ const isWaitingForDependencies = (dependencies: VariableModel[], state: StoreSta
   }
 
   const variables = getVariables(state);
-  const notCompletedDependencies = dependencies.filter(d =>
-    variables.some(v => v.id === d.id && (v.state === LoadingState.NotStarted || v.state === LoadingState.Loading))
+  const notCompletedDependencies = dependencies.filter((d) =>
+    variables.some((v) => v.id === d.id && (v.state === LoadingState.NotStarted || v.state === LoadingState.Loading))
   );
 
   return notCompletedDependencies.length > 0;
@@ -292,7 +292,7 @@ export const setOptionFromUrl = (
       throw new Error(`Couldn't find variable with name: ${variable.name}`);
     }
     // Simple case. Value in url matches existing options text or value.
-    let option = variableFromState.options.find(op => {
+    let option = variableFromState.options.find((op) => {
       return op.text === urlValue || op.value === urlValue;
     });
 
@@ -310,7 +310,7 @@ export const setOptionFromUrl = (
         // Multiple values in the url. We construct text as a list of texts from all matched options.
         const urlValueArray = urlValue as string[];
         defaultText = urlValueArray.reduce((acc: string[], item: string) => {
-          const foundOption = variableFromState.options.find(o => o.value === item);
+          const foundOption = variableFromState.options.find((o) => o.value === item);
           if (!foundOption) {
             // @ts-ignore according to strict null errors this can never happen
             // TODO: investigate this further or refactor code
@@ -384,8 +384,8 @@ export const validateVariableSelectionState = (
       }
 
       const option: VariableOption = {
-        value: selected.map(v => v.value) as string[],
-        text: selected.map(v => v.text) as string[],
+        value: selected.map((v) => v.value) as string[],
+        text: selected.map((v) => v.text) as string[],
         selected: true,
       };
       return setValue(variableInState, option);
@@ -395,14 +395,14 @@ export const validateVariableSelectionState = (
 
     // 1. find the current value
     const text = getCurrentText(variableInState);
-    option = variableInState.options?.find(v => v.text === text);
+    option = variableInState.options?.find((v) => v.text === text);
     if (option) {
       return setValue(variableInState, option);
     }
 
     // 2. find the default value
     if (defaultValue) {
-      option = variableInState.options?.find(v => v.text === defaultValue);
+      option = variableInState.options?.find((v) => v.text === defaultValue);
       if (option) {
         return setValue(variableInState, option);
       }
@@ -426,7 +426,7 @@ export const setOptionAsCurrent = (
   current: VariableOption,
   emitChanges: boolean
 ): ThunkResult<Promise<void>> => {
-  return async dispatch => {
+  return async (dispatch) => {
     dispatch(setCurrentVariableValue(toVariablePayload(identifier, { option: current })));
     return await dispatch(variableUpdated(identifier, emitChanges));
   };
@@ -435,12 +435,12 @@ export const setOptionAsCurrent = (
 const createGraph = (variables: VariableModel[]) => {
   const g = new Graph();
 
-  variables.forEach(v => {
+  variables.forEach((v) => {
     g.createNode(v.name);
   });
 
-  variables.forEach(v1 => {
-    variables.forEach(v2 => {
+  variables.forEach((v1) => {
+    variables.forEach((v2) => {
       if (v1 === v2) {
         return;
       }
@@ -477,8 +477,8 @@ export const variableUpdated = (
     const node = g.getNode(variableInState.name);
     let promises: Array<Promise<any>> = [];
     if (node) {
-      promises = node.getOptimizedInputEdges().map(e => {
-        const variable = variables.find(v => v.name === e.inputNode.name);
+      promises = node.getOptimizedInputEdges().map((e) => {
+        const variable = variables.find((v) => v.name === e.inputNode.name);
         if (!variable) {
           return Promise.resolve();
         }
@@ -507,7 +507,7 @@ export const onTimeRangeUpdated = (
   dependencies: OnTimeRangeUpdatedDependencies = { templateSrv: getTemplateSrv() }
 ): ThunkResult<Promise<void>> => async (dispatch, getState) => {
   dependencies.templateSrv.updateTimeRange(timeRange);
-  const variablesThatNeedRefresh = getVariables(getState()).filter(variable => {
+  const variablesThatNeedRefresh = getVariables(getState()).filter((variable) => {
     if (variable.hasOwnProperty('refresh') && variable.hasOwnProperty('options')) {
       const variableWithRefresh = (variable as unknown) as QueryVariableModel;
       return variableWithRefresh.refresh === VariableRefresh.onTimeRangeChanged;
@@ -574,7 +574,7 @@ const getQueryWithVariables = (getState: () => StoreState): UrlQueryMap => {
   const queryParams = getState().location.query;
 
   const queryParamsNew = Object.keys(queryParams)
-    .filter(key => key.indexOf('var-') === -1)
+    .filter((key) => key.indexOf('var-') === -1)
     .reduce((obj, key) => {
       obj[key] = queryParams[key];
       return obj;
@@ -619,7 +619,7 @@ export const initVariablesTransaction = (dashboardUid: string, dashboard: Dashbo
   }
 };
 
-export const cleanUpVariables = (): ThunkResult<void> => dispatch => {
+export const cleanUpVariables = (): ThunkResult<void> => (dispatch) => {
   dispatch(cleanVariables());
   dispatch(variablesClearTransaction());
 };
@@ -627,7 +627,7 @@ export const cleanUpVariables = (): ThunkResult<void> => dispatch => {
 type CancelVariablesDependencies = { getBackendSrv: typeof getBackendSrv };
 export const cancelVariables = (
   dependencies: CancelVariablesDependencies = { getBackendSrv: getBackendSrv }
-): ThunkResult<void> => dispatch => {
+): ThunkResult<void> => (dispatch) => {
   dependencies.getBackendSrv().cancelAllInFlightRequests();
   dispatch(cleanUpVariables());
 };
@@ -678,7 +678,7 @@ export function upgradeLegacyQueries(
   identifier: VariableIdentifier,
   getDatasourceSrvFunc: typeof getDatasourceSrv = getDatasourceSrv
 ): ThunkResult<void> {
-  return async function(dispatch, getState) {
+  return async function (dispatch, getState) {
     const variable = getVariable<QueryVariableModel>(identifier.id, getState());
 
     if (!isQuery(variable)) {

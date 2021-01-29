@@ -7,20 +7,23 @@ weight = 300
 
 Grafana comes with the following transformations:
 
-- [Reduce](#reduce)
-- [Filter data by name](#filter-data-by-name)
-- [Filter data by query](#filter-data-by-query)
-- [Filter data by value](#filter-data-by-value)
-- [Organize fields](#organize-fields)
-- [Outer join](#join-by-field-outer-join)
-- [Series to rows](#series-to-rows)
-- [Add field from calculation](#add-field-from-calculation)
-- [Labels to fields](#labels-to-fields)
-- [Concatenate fields](#concatenate-fields)
-- [Sort by](#sort-by)
-- [Group by](#group-by)
-- [Merge](#merge)
-- [Rename by regex](#rename-by-regex)
+- [Transformation types and options](#transformation-types-and-options)
+  - [Reduce](#reduce)
+  - [Merge](#merge)
+  - [Filter data by name](#filter-data-by-name)
+  - [Filter data by query](#filter-data-by-query)
+  - [Organize fields](#organize-fields)
+  - [Join by field (outer join)](#join-by-field-outer-join)
+  - [Add field from calculation](#add-field-from-calculation)
+  - [Labels to fields](#labels-to-fields)
+    - [Value field name](#value-field-name)
+    - [Merging behavior](#merging-behavior)
+  - [Sort by](#sort-by)
+  - [Group by](#group-by)
+  - [Concatenate fields](#concatenate-fields)
+  - [Series to rows](#series-to-rows)
+  - [Filter data by value](#filter-data-by-value)
+  - [Rename by regex](#rename-by-regex)
 
 Keep reading for detailed descriptions of each type of transformation and the options available for each, as well as suggestions on how to use them.
 
@@ -373,20 +376,23 @@ Here is the result after applying the Series to rows transformation.
 
 This transformation allows you to filter your data directly in Grafana and remove some data points from your query result. You have the option to include or exclude data that match one or more conditions you define. The conditions are applied on a selected field.
 
-The available conditions are:
+This transformation is very useful if your data source does not natively filter by values. You might also use this to narrow values to display if you are using a shared query.
 
-- **Regex**: match a regex expression
-- **Is Null**: match if the value is null
-- **Is Not Null**: match if the value is not null
-- **Equal**: match if the value is equal to the specified value
-- **Different**: match if the value is different than the specified value
-- **Greater**\*: match if the value is greater than the specified value
-- **Lower**\*: match if the value is lower than the specified value
-- **Greater or equal**\*: match if the value is greater or equal
-- **Lower or equal**\*: match if the value is lower or equal
-- **Range**\*: match a range between a specified minimum and maximum, min and max included
+The available conditions for all fields are:
 
-\* Those conditions are only available for number fields.
+- **Regex:** Match a regex expression
+- **Is Null:** Match if the value is null
+- **Is Not Null:** Match if the value is not null
+- **Equal:** Match if the value is equal to the specified value
+- **Different:** match if the value is different than the specified value
+
+The available conditions for number fields are:
+
+- **Greater:** Match if the value is greater than the specified value
+- **Lower:** Match if the value is lower than the specified value
+- **Greater or equal:** Match if the value is greater or equal
+- **Lower or equal:** Match if the value is lower or equal
+- **Range:** Match a range between a specified minimum and maximum, min and max included
 
 Consider the following data set:
 

@@ -45,7 +45,7 @@ interface Props extends Themeable {
 
 export const UnThemedLogLabels: FunctionComponent<Props> = ({ labels, theme }) => {
   const styles = getStyles(theme);
-  const displayLabels = Object.keys(labels).filter(label => !label.startsWith('_') && !HIDDEN_LABELS.includes(label));
+  const displayLabels = Object.keys(labels).filter((label) => !label.startsWith('_') && !HIDDEN_LABELS.includes(label));
 
   if (displayLabels.length === 0) {
     return (
@@ -57,7 +57,7 @@ export const UnThemedLogLabels: FunctionComponent<Props> = ({ labels, theme }) =
 
   return (
     <span className={cx([styles.logsLabels])}>
-      {displayLabels.sort().map(label => {
+      {displayLabels.sort().map((label) => {
         const value = labels[label];
         if (!value) {
           return;

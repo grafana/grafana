@@ -17,7 +17,7 @@ interface State {
 const idValidationEvents: ValidationEvents = {
   [EventsWithValidation.onBlur]: [
     {
-      rule: value => new RegExp(/^$|^[a-z][a-zA-Z0-9_]*$/).test(value),
+      rule: (value) => new RegExp(/^$|^[a-z][a-zA-Z0-9_]*$/).test(value),
       errorMessage: 'Invalid format. Only alphanumeric characters and underscores are allowed',
     },
   ],

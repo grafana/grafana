@@ -65,6 +65,7 @@ export function ExploreGraphNGPanel({
         drawStyle: DrawStyle.Line,
         fillOpacity: 0,
         pointSize: 5,
+        spanNulls: true,
       },
     },
     overrides: [],
@@ -86,7 +87,7 @@ export function ExploreGraphNGPanel({
       fieldConfig,
       data,
       timeZone,
-      replaceVariables: value => value, // We don't need proper replace here as it is only used in getLinks and we use getFieldLinks
+      replaceVariables: (value) => value, // We don't need proper replace here as it is only used in getLinks and we use getFieldLinks
       theme,
       fieldConfigRegistry: registry,
     });

@@ -133,7 +133,7 @@ export function splitOpen<T extends DataQuery = any>(options?: {
  * Close the split view and save URL state.
  */
 export function splitClose(itemId: ExploreId): ThunkResult<void> {
-  return dispatch => {
+  return (dispatch) => {
     dispatch(splitCloseAction({ itemId }));
     dispatch(stateSave());
   };
@@ -150,7 +150,7 @@ export const navigateToExplore = (
   panel: PanelModel,
   dependencies: NavigateToExploreDependencies
 ): ThunkResult<void> => {
-  return async dispatch => {
+  return async (dispatch) => {
     const { getDataSourceSrv, getTimeSrv, getExploreUrl, openInNewWindow } = dependencies;
     const datasourceSrv = getDataSourceSrv();
     const datasource = await datasourceSrv.get(panel.datasource);

@@ -34,7 +34,7 @@ const dashOptions: Array<SelectableValue<string>> = [
   '50, 10',
   '5, 10',
   '30, 3, 3',
-].map(txt => ({
+].map((txt) => ({
   label: txt,
   value: txt,
 }));
@@ -45,7 +45,7 @@ const dotOptions: Array<SelectableValue<string>> = [
   '0, 30',
   '0, 40',
   '0, 3, 3',
-].map(txt => ({
+].map((txt) => ({
   label: txt,
   value: txt,
 }));
@@ -57,7 +57,7 @@ export const LineStyleEditor: React.FC<FieldOverrideEditorProps<LineStyle, any>>
       return options[0];
     }
     const str = value.dash?.join(', ');
-    const val = options.find(o => o.value === str);
+    const val = options.find((o) => o.value === str);
     if (!val) {
       return {
         label: str,
@@ -72,7 +72,7 @@ export const LineStyleEditor: React.FC<FieldOverrideEditorProps<LineStyle, any>>
       <RadioButtonGroup
         value={value?.fill || 'solid'}
         options={lineFillOptions}
-        onChange={v => {
+        onChange={(v) => {
           onChange({
             ...value,
             fill: v!,
@@ -86,13 +86,13 @@ export const LineStyleEditor: React.FC<FieldOverrideEditorProps<LineStyle, any>>
             options={options}
             value={current}
             width={20}
-            onChange={v => {
+            onChange={(v) => {
               onChange({
                 ...value,
                 dash: parseText(v.value ?? ''),
               });
             }}
-            formatCreateLabel={t => `Segments: ${parseText(t).join(', ')}`}
+            formatCreateLabel={(t) => `Segments: ${parseText(t).join(', ')}`}
           />
           <div>
             &nbsp;

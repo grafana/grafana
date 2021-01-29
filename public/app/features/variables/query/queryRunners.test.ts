@@ -43,7 +43,7 @@ describe('QueryRunners', () => {
       const observable = runner.runRequest(runnerArgs, request);
 
       it('then it should return correct observable', async () => {
-        await expect(observable).toEmitValuesWith(received => {
+        await expect(observable).toEmitValuesWith((received) => {
           const value = received[0];
           expect(value).toEqual({
             series: [{ text: 'A', value: 'A' }],
@@ -78,7 +78,7 @@ describe('QueryRunners', () => {
       const observable = runner.runRequest(runnerArgs, request);
 
       it('then it should return correct observable', async () => {
-        await expect(observable).toEmitValuesWith(received => {
+        await expect(observable).toEmitValuesWith((received) => {
           const values = received[0];
           expect(values).toEqual({
             series: [{ text: 'A', value: 'A' }],
@@ -150,7 +150,7 @@ describe('QueryRunners', () => {
       const observable = runner.runRequest(runnerArgs, request);
 
       it('then it should return correct observable', async () => {
-        await expect(observable).toEmitValuesWith(received => {
+        await expect(observable).toEmitValuesWith((received) => {
           const value = received[0];
           expect(value).toEqual({});
         });
@@ -169,7 +169,7 @@ describe('QueryRunners', () => {
       const observable = runner.runRequest(runnerArgs, request);
 
       it('then it should return correct observable', async () => {
-        await expect(observable).toEmitValuesWith(received => {
+        await expect(observable).toEmitValuesWith((received) => {
           const value = received[0];
           expect(value).toEqual({});
         });
@@ -217,7 +217,7 @@ describe('QueryRunners', () => {
       const observable = runner.runRequest(runnerArgs, request);
 
       it('then it should return correct observable', async () => {
-        await expect(observable).toEmitValuesWith(received => {
+        await expect(observable).toEmitValuesWith((received) => {
           const value = received[0];
           expect(value).toEqual({});
         });
@@ -265,7 +265,7 @@ describe('QueryRunners', () => {
       const observable = runner.runRequest(runnerArgs, request);
 
       it('then it should return correct observable', async () => {
-        await expect(observable).toEmitValuesWith(received => {
+        await expect(observable).toEmitValuesWith((received) => {
           const value = received[0];
           expect(value).toEqual({});
         });

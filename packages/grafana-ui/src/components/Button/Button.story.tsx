@@ -36,9 +36,9 @@ export const Variants: Story<ButtonProps> = ({ children, ...args }) => {
   return (
     <VerticalGroup>
       <HorizontalGroup spacing="lg">
-        {variants.map(variant => (
+        {variants.map((variant) => (
           <VerticalGroup spacing="lg" key={variant}>
-            {sizes.map(size => (
+            {sizes.map((size) => (
               <Button variant={variant} size={size} key={size}>
                 {variant} {size}
               </Button>
@@ -71,7 +71,7 @@ export const Variants: Story<ButtonProps> = ({ children, ...args }) => {
       <div />
       <HorizontalGroup spacing="lg">
         <div>Inside ButtonGroup</div>
-        <ButtonGroup noSpacing>
+        <ButtonGroup>
           <Button icon="sync">Run query</Button>
           <Button icon="angle-down" />
         </ButtonGroup>

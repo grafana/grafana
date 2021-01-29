@@ -14,7 +14,7 @@ export default {
 
 export const Controlled = () => {
   const [checked, setChecked] = useState(false);
-  const onChange = useCallback(e => setChecked(e.currentTarget.checked), [setChecked]);
+  const onChange = useCallback((e) => setChecked(e.currentTarget.checked), [setChecked]);
   return (
     <Checkbox
       value={checked}

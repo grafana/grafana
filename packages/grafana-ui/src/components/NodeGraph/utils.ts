@@ -52,7 +52,7 @@ export function getEdgeFields(edges: DataFrame) {
 }
 
 function findFieldsByPrefix(frame: DataFrame, prefix: string) {
-  return frame.fields.filter(f => f.name.match(new RegExp('^' + prefix)));
+  return frame.fields.filter((f) => f.name.match(new RegExp('^' + prefix)));
 }
 
 export enum DataFrameFieldNames {
@@ -90,7 +90,7 @@ export function processNodes(nodes?: DataFrame, edges?: DataFrame): { nodes: Nod
         incoming: 0,
         mainStat: nodeFields.mainStat ? statToString(nodeFields.mainStat, index) : '',
         secondaryStat: nodeFields.secondaryStat ? statToString(nodeFields.secondaryStat, index) : '',
-        arcSections: nodeFields.arc.map(f => {
+        arcSections: nodeFields.arc.map((f) => {
           return {
             value: f.values.get(index),
             color: f.config.color?.fixedColor || '',
@@ -206,7 +206,7 @@ function nodesFrame() {
 
   return new MutableDataFrame({
     name: 'nodes',
-    fields: Object.keys(fields).map(key => ({
+    fields: Object.keys(fields).map((key) => ({
       ...fields[key],
       name: key,
     })),
@@ -245,7 +245,7 @@ function edgesFrame() {
 
   return new MutableDataFrame({
     name: 'edges',
-    fields: Object.keys(fields).map(key => ({
+    fields: Object.keys(fields).map((key) => ({
       ...fields[key],
       name: key,
     })),

@@ -162,7 +162,7 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
               disabled={buttonDisabled}
               onChange={this.onChangeLogLabels}
               loadData={onLoadOptions}
-              onPopupVisibleChange={isVisible => isVisible && onLabelsRefresh && onLabelsRefresh()}
+              onPopupVisibleChange={(isVisible) => isVisible && onLabelsRefresh && onLabelsRefresh()}
             >
               {chooserText}
             </ButtonCascader>

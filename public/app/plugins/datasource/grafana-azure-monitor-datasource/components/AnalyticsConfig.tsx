@@ -177,7 +177,7 @@ export class AnalyticsConfig extends PureComponent<Props, State> {
               </InlineFormLabel>
               <div className="width-25">
                 <Select
-                  value={workspaces.find(workspace => workspace.value === jsonData.logAnalyticsDefaultWorkspace)}
+                  value={workspaces.find((workspace) => workspace.value === jsonData.logAnalyticsDefaultWorkspace)}
                   options={workspaces}
                   defaultValue={jsonData.logAnalyticsDefaultWorkspace}
                   onChange={this.onWorkspaceSelectChange}

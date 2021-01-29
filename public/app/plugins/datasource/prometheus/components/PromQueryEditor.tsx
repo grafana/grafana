@@ -50,9 +50,9 @@ export class PromQueryEditor extends PureComponent<Props, State> {
       interval: query.interval,
       legendFormat: query.legendFormat,
       // Select options
-      formatOption: FORMAT_OPTIONS.find(option => option.value === query.format) || FORMAT_OPTIONS[0],
+      formatOption: FORMAT_OPTIONS.find((option) => option.value === query.format) || FORMAT_OPTIONS[0],
       intervalFactorOption:
-        INTERVAL_FACTOR_OPTIONS.find(option => option.value === query.intervalFactor) || INTERVAL_FACTOR_OPTIONS[0],
+        INTERVAL_FACTOR_OPTIONS.find((option) => option.value === query.intervalFactor) || INTERVAL_FACTOR_OPTIONS[0],
       // Switch options
       instant: Boolean(query.instant),
     };

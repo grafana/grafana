@@ -70,7 +70,7 @@ export const getGraphSeriesModel = (
         let statsDisplayValues: DisplayValue[] = [];
 
         if (legendOptions.stats) {
-          statsDisplayValues = legendOptions.stats.map<DisplayValue>(stat => {
+          statsDisplayValues = legendOptions.stats.map<DisplayValue>((stat) => {
             const statDisplayValue = displayProcessor(seriesStats[stat]);
 
             return {

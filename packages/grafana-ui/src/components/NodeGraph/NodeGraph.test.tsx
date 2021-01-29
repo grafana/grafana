@@ -55,10 +55,10 @@ describe('NodeGraph', () => {
     render(
       <NodeGraph
         dataFrames={[makeNodesDataFrame(2), makeEdgesDataFrame([[0, 1]])]}
-        getLinks={dataFrame => {
+        getLinks={(dataFrame) => {
           return [
             {
-              title: dataFrame.fields.find(f => f.name === 'source') ? 'Edge traces' : 'Node traces',
+              title: dataFrame.fields.find((f) => f.name === 'source') ? 'Edge traces' : 'Node traces',
               href: '',
               origin: null,
               target: '_self',

@@ -147,6 +147,14 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	// make sure db version is in sync with json model version
 	dash.Data.Set("version", dash.Version)
 
+	if hs.Cfg.IsPanelLibraryEnabled() {
+		// load library panels JSON for this dashboard
+		err = hs.LibraryPanelService.LoadLibraryPanelsForDashboard(dash)
+		if err != nil {
+			return response.Error(500, "Error while loading library panels", err)
+		}
+	}
+
 	dto := dtos.DashboardFullWithMeta{
 		Dashboard: dash.Data,
 		Meta:      meta,
@@ -181,7 +189,7 @@ func getDashboardHelper(orgID int64, slug string, id int64, uid string) (*models
 	return query.Result, nil
 }
 
-func DeleteDashboardBySlug(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) DeleteDashboardBySlug(c *models.ReqContext) response.Response {
 	query := models.GetDashboardsBySlugQuery{OrgId: c.OrgId, Slug: c.Params(":slug")}
 
 	if err := bus.Dispatch(&query); err != nil {
@@ -192,14 +200,14 @@ func DeleteDashboardBySlug(c *models.ReqContext) response.Response {
 		return response.JSON(412, util.DynMap{"status": "multiple-slugs-exists", "message": models.ErrDashboardsWithSameSlugExists.Error()})
 	}
 
-	return deleteDashboard(c)
+	return hs.deleteDashboard(c)
 }
 
-func DeleteDashboardByUID(c *models.ReqContext) response.Response {
-	return deleteDashboard(c)
+func (hs *HTTPServer) DeleteDashboardByUID(c *models.ReqContext) response.Response {
+	return hs.deleteDashboard(c)
 }
 
-func deleteDashboard(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 	dash, rsp := getDashboardHelper(c.OrgId, c.Params(":slug"), 0, c.Params(":uid"))
 	if rsp != nil {
 		return rsp
@@ -208,6 +216,14 @@ func deleteDashboard(c *models.ReqContext) response.Response {
 	guardian := guardian.New(dash.Id, c.OrgId, c.SignedInUser)
 	if canSave, err := guardian.CanSave(); err != nil || !canSave {
 		return dashboardGuardianResponse(err)
+	}
+
+	if hs.Cfg.IsPanelLibraryEnabled() {
+		// disconnect all library panels for this dashboard
+		err := hs.LibraryPanelService.DisconnectLibraryPanelsForDashboard(dash)
+		if err != nil {
+			hs.log.Error("Failed to disconnect library panels", "dashboard", dash.Id, "user", c.SignedInUser.UserId, "error", err)
+		}
 	}
 
 	err := dashboards.NewService().DeleteDashboard(dash.Id, c.OrgId)
@@ -256,6 +272,14 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		allowUiUpdate = hs.ProvisioningService.GetAllowUIUpdatesFromConfig(provisioningData.Name)
 	}
 
+	if hs.Cfg.IsPanelLibraryEnabled() {
+		// clean up all unnecessary library panels JSON properties so we store a minimum JSON
+		err = hs.LibraryPanelService.CleanLibraryPanelsForDashboard(dash)
+		if err != nil {
+			return response.Error(500, "Error while cleaning library panels", err)
+		}
+	}
+
 	dashItem := &dashboards.SaveDashboardDTO{
 		Dashboard: dash,
 		Message:   cmd.Message,
@@ -285,6 +309,14 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		)
 		if err != nil {
 			hs.log.Warn("unable to broadcast save event", "uid", dashboard.Uid, "error", err)
+		}
+	}
+
+	if hs.Cfg.IsPanelLibraryEnabled() {
+		// connect library panels for this dashboard after the dashboard is stored and has an ID
+		err = hs.LibraryPanelService.ConnectLibraryPanelsForDashboard(c, dashboard)
+		if err != nil {
+			return response.Error(500, "Error while connecting library panels", err)
 		}
 	}
 

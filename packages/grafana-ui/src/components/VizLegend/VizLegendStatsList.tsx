@@ -22,7 +22,7 @@ export const VizLegendStatsList: React.FunctionComponent<{ stats: DisplayValue[]
   if (stats.length === 0) {
     return null;
   }
-  return <InlineList items={stats} renderItem={stat => <VizLegendItemStat stat={stat} />} />;
+  return <InlineList items={stats} renderItem={(stat) => <VizLegendItemStat stat={stat} />} />;
 };
 
 VizLegendStatsList.displayName = 'VizLegendStatsList';

@@ -14,7 +14,7 @@ export interface SelectionOptionsEditorProps<Model extends VariableWithMultiSupp
   onMultiChanged: (identifier: VariableIdentifier, value: boolean) => void;
 }
 
-export const SelectionOptionsEditor: FunctionComponent<SelectionOptionsEditorProps> = props => {
+export const SelectionOptionsEditor: FunctionComponent<SelectionOptionsEditorProps> = (props) => {
   const onMultiChanged = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       props.onMultiChanged(toVariableIdentifier(props.variable), event.target.checked);

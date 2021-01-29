@@ -75,7 +75,7 @@ export const SeriesTable: React.FC<SeriesTableProps> = ({ timestamp, series }) =
           {timestamp}
         </div>
       )}
-      {series.map(s => {
+      {series.map((s) => {
         return <SeriesTableRow isActive={s.isActive} label={s.label} color={s.color} value={s.value} key={s.label} />;
       })}
     </>

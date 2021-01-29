@@ -31,13 +31,13 @@ export const createSystemVariableAdapter = (): VariableAdapter<SystemVariable<an
     setValueFromUrl: async (variable, urlValue) => {
       return;
     },
-    updateOptions: async variable => {
+    updateOptions: async (variable) => {
       return;
     },
-    getSaveModel: variable => {
+    getSaveModel: (variable) => {
       return {};
     },
-    getValueForUrl: variable => {
+    getValueForUrl: (variable) => {
       return '';
     },
   };

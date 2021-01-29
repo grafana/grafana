@@ -6,7 +6,7 @@ import _ from 'lodash';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { ErrorBoundaryAlert, HorizontalGroup } from '@grafana/ui';
+import { ErrorBoundaryAlert, HorizontalGroup, InfoBox } from '@grafana/ui';
 import {
   DataQuery,
   DataSourceApi,
@@ -48,6 +48,7 @@ interface State {
   hasTextEditMode: boolean;
   data?: PanelData;
   isOpen?: boolean;
+  showingHelp: boolean;
 }
 
 export class QueryEditorRow extends PureComponent<Props, State> {
@@ -60,6 +61,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     hasTextEditMode: false,
     data: undefined,
     isOpen: true,
+    showingHelp: false,
   };
 
   componentDidMount() {
@@ -177,7 +179,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     const { datasource, data } = this.state;
 
     if (datasource?.components?.QueryCtrl) {
-      return <div ref={element => (this.element = element)} />;
+      return <div ref={(element) => (this.element = element)} />;
     }
 
     if (datasource?.components?.QueryEditor) {
@@ -226,6 +228,20 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     this.props.onRunQuery();
   };
 
+  onToggleHelp = () => {
+    this.setState((state) => ({
+      showingHelp: !state.showingHelp,
+    }));
+  };
+
+  onClickExample = (query: DataQuery) => {
+    this.props.onChange({
+      ...query,
+      refId: this.props.query.refId,
+    });
+    this.onToggleHelp();
+  };
+
   renderCollapsedText(): string | null {
     const { datasource } = this.state;
     if (datasource?.getQueryDisplayText) {
@@ -240,16 +256,21 @@ export class QueryEditorRow extends PureComponent<Props, State> {
 
   renderActions = (props: QueryOperationRowRenderProps) => {
     const { query } = this.props;
-    const { hasTextEditMode } = this.state;
+    const { hasTextEditMode, datasource } = this.state;
     const isDisabled = query.hide;
+
+    const hasEditorHelp = datasource?.components?.QueryEditorHelp;
 
     return (
       <HorizontalGroup width="auto">
+        {hasEditorHelp && (
+          <QueryOperationAction title="Toggle data source help" icon="question-circle" onClick={this.onToggleHelp} />
+        )}
         {hasTextEditMode && (
           <QueryOperationAction
             title="Toggle text edit mode"
             icon="pen"
-            onClick={e => {
+            onClick={(e) => {
               this.onToggleEditMode(e, props);
             }}
           />
@@ -277,7 +298,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
         inMixedMode={dsSettings.meta.mixed}
         dataSourceName={datasource!.name}
         disabled={isDisabled}
-        onClick={e => this.onToggleEditMode(e, props)}
+        onClick={(e) => this.onToggleEditMode(e, props)}
         onChange={onChange}
         collapsedText={!props.isOpen ? this.renderCollapsedText() : null}
       />
@@ -286,7 +307,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
 
   render() {
     const { query, id, index } = this.props;
-    const { datasource } = this.state;
+    const { datasource, showingHelp } = this.state;
     const isDisabled = query.hide;
 
     const rowClasses = classNames('query-editor-row', {
@@ -299,6 +320,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     }
 
     const editor = this.renderPluginEditor();
+    const DatasourceCheatsheet = datasource.components?.QueryEditorHelp;
 
     return (
       <div aria-label={selectors.components.QueryEditorRows.rows}>
@@ -311,7 +333,17 @@ export class QueryEditorRow extends PureComponent<Props, State> {
           onOpen={this.onOpen}
         >
           <div className={rowClasses}>
-            <ErrorBoundaryAlert>{editor}</ErrorBoundaryAlert>
+            <ErrorBoundaryAlert>
+              {showingHelp && DatasourceCheatsheet && (
+                <InfoBox onDismiss={this.onToggleHelp}>
+                  <DatasourceCheatsheet
+                    onClickExample={(query) => this.onClickExample(query)}
+                    datasource={datasource}
+                  />
+                </InfoBox>
+              )}
+              {editor}
+            </ErrorBoundaryAlert>
           </div>
         </QueryOperationRow>
       </div>
@@ -331,7 +363,7 @@ function notifyAngularQueryEditorsOfData(scope: AngularQueryComponentScope, data
   globalLastPanelDataCache = data;
 
   if (data.state === LoadingState.Done) {
-    const legacy = data.series.map(v => toLegacyResponseData(v));
+    const legacy = data.series.map((v) => toLegacyResponseData(v));
     scope.events.emit(PanelEvents.dataReceived, legacy);
   } else if (data.state === LoadingState.Error) {
     scope.events.emit(PanelEvents.dataError, data.error);
@@ -359,7 +391,7 @@ export interface AngularQueryComponentScope {
  * Get a version of the PanelData limited to the query we are looking at
  */
 export function filterPanelDataToQuery(data: PanelData, refId: string): PanelData | undefined {
-  const series = data.series.filter(series => series.refId === refId);
+  const series = data.series.filter((series) => series.refId === refId);
 
   // No matching series
   if (!series.length) {

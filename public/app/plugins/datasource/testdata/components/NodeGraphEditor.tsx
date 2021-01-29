@@ -12,12 +12,12 @@ export function NodeGraphEditor({ query, onChange }: Props) {
     <InlineFieldRow>
       <InlineField label="Data type" labelWidth={14}>
         <Select<NodesQuery['type']>
-          options={options.map(o => ({
+          options={options.map((o) => ({
             label: o,
             value: o,
           }))}
-          value={options.find(item => item === type)}
-          onChange={value => onChange({ ...query.nodes, type: value.value! })}
+          value={options.find((item) => item === type)}
+          onChange={(value) => onChange({ ...query.nodes, type: value.value! })}
           width={32}
         />
       </InlineField>
@@ -28,7 +28,7 @@ export function NodeGraphEditor({ query, onChange }: Props) {
             name="count"
             value={query.nodes?.count}
             width={32}
-            onChange={e =>
+            onChange={(e) =>
               onChange({ ...query.nodes, count: e.currentTarget.value ? parseInt(e.currentTarget.value, 10) : 0 })
             }
             placeholder="10"

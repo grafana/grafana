@@ -96,8 +96,8 @@ function createOrderByOptionsForExtendedStats(metric: ExtendedStats): OrderByOpt
   }
   const metaKeys = Object.keys(metric.meta) as ExtendedStatMetaType[];
   return metaKeys
-    .filter(key => metric.meta?.[key])
-    .map(key => {
+    .filter((key) => metric.meta?.[key])
+    .map((key) => {
       let method = key as string;
       // The bucket path for std_deviation_bounds.lower and std_deviation_bounds.upper
       // is accessed via std_lower and std_upper, respectively.
@@ -118,7 +118,7 @@ function createOrderByOptionsForPercentiles(metric: Percentiles): OrderByOption[
   if (!metric.settings?.percents) {
     return [];
   }
-  return metric.settings.percents.map(percent => {
+  return metric.settings.percents.map((percent) => {
     // The bucket path for percentile numbers is appended with a `.0` if the number is whole
     // otherwise you have to use the actual value.
     const percentString = /^\d+\.\d+/.test(`${percent}`) ? percent : `${percent}.0`;
@@ -130,7 +130,7 @@ function createOrderByOptionsForPercentiles(metric: Percentiles): OrderByOption[
  * This creates all the valid order by options based on the metrics
  */
 export const createOrderByOptionsFromMetrics = (metrics: MetricAggregation[] = []): OrderByOption[] => {
-  const metricOptions = metrics.flatMap(metric => {
+  const metricOptions = metrics.flatMap((metric) => {
     if (metric.type === 'extended_stats') {
       return createOrderByOptionsForExtendedStats(metric);
     } else if (metric.type === 'percentiles') {

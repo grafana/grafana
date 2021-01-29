@@ -51,7 +51,7 @@ export class SettingsCtrl {
       return;
     }
 
-    const alerts = _.sumBy(this.dashboard.panels, panel => {
+    const alerts = _.sumBy(this.dashboard.panels, (panel) => {
       return panel.alert ? 1 : 0;
     });
 
@@ -90,7 +90,7 @@ export class SettingsCtrl {
   };
 
   onRefreshIntervalChange = (intervals: string[]) => {
-    this.dashboard.timepicker.refresh_intervals = intervals.filter(i => i.trim() !== '');
+    this.dashboard.timepicker.refresh_intervals = intervals.filter((i) => i.trim() !== '');
     this.renderCount++;
   };
 

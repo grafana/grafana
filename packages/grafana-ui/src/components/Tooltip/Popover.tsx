@@ -47,7 +47,7 @@ class Popover extends PureComponent<Props> {
     return (
       <Manager>
         <Transition in={show} timeout={100} mountOnEnter={true} unmountOnExit={true}>
-          {transitionState => {
+          {(transitionState) => {
             return (
               <Portal>
                 <ReactPopper

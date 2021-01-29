@@ -52,7 +52,7 @@ export class QueryEditor extends PureComponent<Props> {
   renderMeasurementsQuery() {
     let { channel, measurements } = this.props.query;
     const channels: Array<SelectableValue<string>> = [];
-    let currentChannel = channels.find(c => c.value === channel);
+    let currentChannel = channels.find((c) => c.value === channel);
     if (channel && !currentChannel) {
       currentChannel = {
         value: channel,
@@ -123,7 +123,7 @@ export class QueryEditor extends PureComponent<Props> {
             <InlineField label="Measurement" grow={true} labelWidth={labelWidth}>
               <Select
                 options={names}
-                value={names.find(v => v.value === measurements?.name) || names[0]}
+                value={names.find((v) => v.value === measurements?.name) || names[0]}
                 onChange={this.onMeasurementNameChanged}
                 allowCustomValue={true}
                 backspaceRemovesValue={true}
@@ -155,7 +155,7 @@ export class QueryEditor extends PureComponent<Props> {
           <InlineField label="Query type" grow={true} labelWidth={labelWidth}>
             <Select
               options={this.queryTypes}
-              value={this.queryTypes.find(v => v.value === query.queryType) || this.queryTypes[0]}
+              value={this.queryTypes.find((v) => v.value === query.queryType) || this.queryTypes[0]}
               onChange={this.onQueryTypeChange}
             />
           </InlineField>

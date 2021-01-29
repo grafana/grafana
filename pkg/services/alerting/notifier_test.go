@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/setting"
-
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/stretchr/testify/require"
@@ -18,17 +18,18 @@ import (
 )
 
 func TestNotificationService(t *testing.T) {
-	testRule := &Rule{
-		ID:            1,
-		DashboardID:   1,
-		PanelID:       1,
-		OrgID:         1,
-		Name:          "Test",
-		Message:       "Something is bad",
-		State:         models.AlertStateAlerting,
-		Notifications: []string{"1"},
-	}
+	testRule := &Rule{Name: "Test", Message: "Something is bad"}
 	evalCtx := NewEvalContext(context.Background(), testRule)
+
+	testRuleTemplated := &Rule{Name: "Test latency ${quantile}", Message: "Something is bad on instance ${instance}"}
+	evalCtxWithMatch := NewEvalContext(context.Background(), testRuleTemplated)
+	evalCtxWithMatch.EvalMatches = []*EvalMatch{{
+		Tags: map[string]string{
+			"instance": "localhost:3000",
+			"quantile": "0.99",
+		},
+	}}
+	evalCtxWithoutMatch := NewEvalContext(context.Background(), testRuleTemplated)
 
 	notificationServiceScenario(t, "Given alert rule with upload image enabled should render and upload image and send notification",
 		evalCtx, true, func(sc *scenarioContext) {
@@ -121,6 +122,32 @@ func TestNotificationService(t *testing.T) {
 			require.Equalf(sc.t, 1, sc.renderCount, "expected render to be called, but wasn't")
 			require.Equalf(sc.t, 0, sc.imageUploadCount, "expected image not to be uploaded, but it was")
 			require.Truef(sc.t, evalCtx.Ctx.Value(notificationSent{}).(bool), "expected notification to be sent, but wasn't")
+		})
+
+	notificationServiceScenario(t, "Given matched alert rule with templated notification fields",
+		evalCtxWithMatch, true, func(sc *scenarioContext) {
+			err := sc.notificationService.SendIfNeeded(evalCtxWithMatch)
+			require.NoError(sc.t, err)
+
+			ctx := evalCtxWithMatch
+			require.Equalf(sc.t, 1, sc.renderCount, "expected render to be called, but wasn't")
+			require.Equalf(sc.t, 1, sc.imageUploadCount, "expected image to be uploaded, but wasn't")
+			require.Truef(sc.t, ctx.Ctx.Value(notificationSent{}).(bool), "expected notification to be sent, but wasn't")
+			assert.Equal(t, "Test latency 0.99", ctx.Rule.Name)
+			assert.Equal(t, "Something is bad on instance localhost:3000", ctx.Rule.Message)
+		})
+
+	notificationServiceScenario(t, "Given unmatched alert rule with templated notification fields",
+		evalCtxWithoutMatch, true, func(sc *scenarioContext) {
+			err := sc.notificationService.SendIfNeeded(evalCtxWithMatch)
+			require.NoError(sc.t, err)
+
+			ctx := evalCtxWithMatch
+			require.Equalf(sc.t, 1, sc.renderCount, "expected render to be called, but wasn't")
+			require.Equalf(sc.t, 1, sc.imageUploadCount, "expected image to be uploaded, but wasn't")
+			require.Truef(sc.t, ctx.Ctx.Value(notificationSent{}).(bool), "expected notification to be sent, but wasn't")
+			assert.Equal(t, evalCtxWithoutMatch.Rule.Name, ctx.Rule.Name)
+			assert.Equal(t, evalCtxWithoutMatch.Rule.Message, ctx.Rule.Message)
 		})
 }
 

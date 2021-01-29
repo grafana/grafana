@@ -23,7 +23,7 @@ export default {
   },
 };
 
-export const Simple: Story<MenuProps> = args => (
+export const Simple: Story<MenuProps> = (args) => (
   <div>
     <Menu {...args} />
   </div>

@@ -41,8 +41,8 @@ export function useLayout(
     }
 
     // d3 just modifies the nodes directly, so lets make sure we don't leak that outside
-    const rawNodesCopy = rawNodes.map(n => ({ ...n }));
-    const rawEdgesCopy = rawEdges.map(e => ({ ...e }));
+    const rawNodesCopy = rawNodes.map((n) => ({ ...n }));
+    const rawEdgesCopy = rawEdges.map((e) => ({ ...e }));
 
     // Start withs some hardcoded positions so it starts laid out from left to right
     let { roots, secondLevelRoots } = initializePositions(rawNodesCopy, rawEdgesCopy);
@@ -117,10 +117,10 @@ function initializePositions(
     };
   }, {} as Record<string, EdgeDatum[]>);
 
-  let roots = nodes.filter(n => n.incoming === 0);
+  let roots = nodes.filter((n) => n.incoming === 0);
 
   let secondLevelRoots = roots.reduce<NodeDatum[]>(
-    (acc, r) => [...acc, ...(edgesMap[r.id] ? edgesMap[r.id].map(e => nodesMap[e.target as number]) : [])],
+    (acc, r) => [...acc, ...(edgesMap[r.id] ? edgesMap[r.id].map((e) => nodesMap[e.target as number]) : [])],
     []
   );
 
@@ -147,7 +147,7 @@ function initializePositions(
         // Move to next Y position for next node
         y += nodeYSpacing;
         if (edgesMap[node.id]) {
-          nextGraphLevel.push(...edgesMap[node.id].map(edge => nodesMap[edge.target as number]));
+          nextGraphLevel.push(...edgesMap[node.id].map((edge) => nodesMap[edge.target as number]));
         }
       }
 

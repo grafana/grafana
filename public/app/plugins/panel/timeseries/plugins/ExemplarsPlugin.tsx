@@ -22,8 +22,8 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, tim
   const mapExemplarToXYCoords = useCallback(
     (dataFrame: DataFrame, index: number) => {
       const plotInstance = plotCtx.getPlotInstance();
-      const time = dataFrame.fields.find(f => f.name === TIME_SERIES_TIME_FIELD_NAME);
-      const value = dataFrame.fields.find(f => f.name === TIME_SERIES_VALUE_FIELD_NAME);
+      const time = dataFrame.fields.find((f) => f.name === TIME_SERIES_TIME_FIELD_NAME);
+      const value = dataFrame.fields.find((f) => f.name === TIME_SERIES_VALUE_FIELD_NAME);
 
       if (!time || !value || !plotCtx.isPlotReady || !plotInstance) {
         return undefined;
@@ -31,7 +31,7 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, tim
 
       // Filter x, y scales out
       const yScale =
-        Object.keys(plotInstance.scales).find(scale => !['x', 'y'].some(key => key === scale)) ?? FIXED_UNIT;
+        Object.keys(plotInstance.scales).find((scale) => !['x', 'y'].some((key) => key === scale)) ?? FIXED_UNIT;
 
       const yMin = plotInstance.scales[yScale].min;
       const yMax = plotInstance.scales[yScale].max;

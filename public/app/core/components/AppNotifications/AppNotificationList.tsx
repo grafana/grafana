@@ -22,9 +22,9 @@ export class AppNotificationList extends PureComponent<Props> {
   componentDidMount() {
     const { notifyApp } = this.props;
 
-    appEvents.on(AppEvents.alertWarning, payload => notifyApp(createWarningNotification(...payload)));
-    appEvents.on(AppEvents.alertSuccess, payload => notifyApp(createSuccessNotification(...payload)));
-    appEvents.on(AppEvents.alertError, payload => notifyApp(createErrorNotification(...payload)));
+    appEvents.on(AppEvents.alertWarning, (payload) => notifyApp(createWarningNotification(...payload)));
+    appEvents.on(AppEvents.alertSuccess, (payload) => notifyApp(createSuccessNotification(...payload)));
+    appEvents.on(AppEvents.alertError, (payload) => notifyApp(createErrorNotification(...payload)));
   }
 
   onClearAppNotification = (id: string) => {
@@ -41,7 +41,7 @@ export class AppNotificationList extends PureComponent<Props> {
             <AppNotificationItem
               key={`${appNotification.id}-${index}`}
               appNotification={appNotification}
-              onClearNotification={id => this.onClearAppNotification(id)}
+              onClearNotification={(id) => this.onClearAppNotification(id)}
             />
           );
         })}

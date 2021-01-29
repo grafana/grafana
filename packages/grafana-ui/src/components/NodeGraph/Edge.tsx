@@ -27,7 +27,7 @@ export const Edge = memo(function Edge(props: Props) {
 
   return (
     <g
-      onClick={event => onClick(event, edge)}
+      onClick={(event) => onClick(event, edge)}
       style={{ cursor: 'pointer' }}
       aria-label={`Edge from: ${(edge.source as NodeDatum).id} to: ${(edge.target as NodeDatum).id}`}
     >

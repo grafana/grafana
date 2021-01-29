@@ -22,7 +22,7 @@ export class EventBusSrv implements EventBus, LegacyEmitter {
   }
 
   getStream<T extends BusEvent>(eventType: BusEventType<T>): Observable<T> {
-    return new Observable<T>(observer => {
+    return new Observable<T>((observer) => {
       const handler = (event: T) => {
         observer.next(event);
       };

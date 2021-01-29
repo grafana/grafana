@@ -19,7 +19,7 @@ export const FilterPill: React.FC<FilterPillProps> = ({ label, selected, onClick
     <div className={styles.wrapper} onClick={onClick}>
       <IconButton
         name={icon}
-        onClick={e => {
+        onClick={(e) => {
           e.stopPropagation();
           onClick(e);
         }}

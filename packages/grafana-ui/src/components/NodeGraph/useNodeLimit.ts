@@ -26,7 +26,7 @@ export function useNodeLimit(
 
     const nodesMap = nodes.reduce((acc, node) => ({ ...acc, [node.id]: node }), {} as Record<string, NodeDatum>);
 
-    let roots = nodes.filter(n => n.incoming === 0);
+    let roots = nodes.filter((n) => n.incoming === 0);
     const newNodes: Record<string, NodeDatum> = {};
     const stack = [...roots];
 
@@ -43,7 +43,7 @@ export function useNodeLimit(
       }
     }
 
-    const newEdges = edges.filter(e => newNodes[e.source as string] && newNodes[e.target as string]);
+    const newEdges = edges.filter((e) => newNodes[e.source as string] && newNodes[e.target as string]);
 
     return { nodes: Object.values(newNodes), edges: newEdges };
   }, [edges, nodes]);

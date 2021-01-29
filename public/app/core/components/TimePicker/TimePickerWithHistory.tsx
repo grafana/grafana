@@ -7,7 +7,7 @@ const LOCAL_STORAGE_KEY = 'grafana.dashboard.timepicker.history';
 
 interface Props extends Omit<TimeRangePickerProps, 'history' | 'theme'> {}
 
-export const TimePickerWithHistory: React.FC<Props> = props => {
+export const TimePickerWithHistory: React.FC<Props> = (props) => {
   return (
     <LocalStorageValueProvider<TimeRange[]> storageKey={LOCAL_STORAGE_KEY} defaultValue={[]}>
       {(values, onSaveToStore) => {
@@ -15,7 +15,7 @@ export const TimePickerWithHistory: React.FC<Props> = props => {
           <TimeRangePicker
             {...props}
             history={convertIfJson(values)}
-            onChange={value => {
+            onChange={(value) => {
               onAppendToHistory(value, values, onSaveToStore);
               props.onChange(value);
             }}
@@ -27,7 +27,7 @@ export const TimePickerWithHistory: React.FC<Props> = props => {
 };
 
 function convertIfJson(history: TimeRange[]): TimeRange[] {
-  return history.map(time => {
+  return history.map((time) => {
     if (isDateTime(time.from)) {
       return time;
     }

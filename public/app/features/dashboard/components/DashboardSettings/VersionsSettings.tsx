@@ -58,19 +58,19 @@ export class VersionsSettings extends PureComponent<Props, State> {
     this.setState({ isAppending: append });
     historySrv
       .getHistoryList(this.props.dashboard, { limit: this.limit, start: this.start })
-      .then(res => {
+      .then((res) => {
         this.setState({
           isLoading: false,
           versions: [...this.state.versions, ...this.decorateVersions(res)],
         });
         this.start += this.limit;
       })
-      .catch(err => console.log(err))
+      .catch((err) => console.log(err))
       .finally(() => this.setState({ isAppending: false }));
   };
 
   getDiff = (diff: string) => {
-    const selectedVersions = this.state.versions.filter(version => version.checked);
+    const selectedVersions = this.state.versions.filter((version) => version.checked);
     const [newInfo, baseInfo] = selectedVersions;
     const isNewLatest = newInfo.version === this.props.dashboard.version;
 
@@ -117,7 +117,7 @@ export class VersionsSettings extends PureComponent<Props, State> {
   };
 
   decorateVersions = (versions: RevisionsModel[]) =>
-    versions.map(version => ({
+    versions.map((version) => ({
       ...version,
       createdDateString: this.props.dashboard.formatDate(version.created),
       ageString: this.props.dashboard.getRelativeTime(version.created),
@@ -125,12 +125,12 @@ export class VersionsSettings extends PureComponent<Props, State> {
     }));
 
   isLastPage() {
-    return this.state.versions.find(rev => rev.version === 1);
+    return this.state.versions.find((rev) => rev.version === 1);
   }
 
   onCheck = (ev: React.FormEvent<HTMLInputElement>, versionId: number) => {
     this.setState({
-      versions: this.state.versions.map(version =>
+      versions: this.state.versions.map((version) =>
         version.id === versionId ? { ...version, checked: ev.currentTarget.checked } : version
       ),
     });
@@ -142,14 +142,14 @@ export class VersionsSettings extends PureComponent<Props, State> {
       delta: { basic: '', json: '' },
       isNewLatest: false,
       newInfo: undefined,
-      versions: this.state.versions.map(version => ({ ...version, checked: false })),
+      versions: this.state.versions.map((version) => ({ ...version, checked: false })),
       viewMode: 'list',
     });
   };
 
   render() {
     const { versions, viewMode, baseInfo, newInfo, isNewLatest, isLoading, delta } = this.state;
-    const canCompare = versions.filter(version => version.checked).length !== 2;
+    const canCompare = versions.filter((version) => version.checked).length !== 2;
     const showButtons = versions.length > 1;
     const hasMore = versions.length >= this.limit;
 

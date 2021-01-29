@@ -77,7 +77,7 @@ export class FilterByRefIdTransformerEditor extends React.PureComponent<
 
       this.setState({
         options,
-        selected: selected.map(s => s.refId),
+        selected: selected.map((s) => s.refId),
       });
     } else {
       this.setState({ options: allNames, selected: [] });
@@ -87,7 +87,7 @@ export class FilterByRefIdTransformerEditor extends React.PureComponent<
   onFieldToggle = (fieldName: string) => {
     const { selected } = this.state;
     if (selected.indexOf(fieldName) > -1) {
-      this.onChange(selected.filter(s => s !== fieldName));
+      this.onChange(selected.filter((s) => s !== fieldName));
     } else {
       this.onChange([...selected, fieldName]);
     }

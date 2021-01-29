@@ -10,7 +10,7 @@ export interface SeriesColorPickerPopoverProps extends ColorPickerProps, Popover
   onToggleAxis?: () => void;
 }
 
-export const SeriesColorPickerPopover: FunctionComponent<SeriesColorPickerPopoverProps> = props => {
+export const SeriesColorPickerPopover: FunctionComponent<SeriesColorPickerPopoverProps> = (props) => {
   const { yaxis, onToggleAxis, color, ...colorPickerProps } = props;
 
   const customPickers = onToggleAxis

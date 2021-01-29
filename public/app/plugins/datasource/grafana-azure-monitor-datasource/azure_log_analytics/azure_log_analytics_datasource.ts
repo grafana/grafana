@@ -236,10 +236,10 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
       const promises = this.doQueries(queries);
 
       return Promise.all(promises)
-        .then(results => {
+        .then((results) => {
           return new ResponseParser(results).parseToVariables();
         })
-        .catch(err => {
+        .catch((err) => {
           if (
             err.error &&
             err.error.data &&
@@ -285,7 +285,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
       return value;
     }
 
-    const quotedValues = _.map(value, val => {
+    const quotedValues = _.map(value, (val) => {
       if (typeof value === 'number') {
         return value;
       }
@@ -317,14 +317,14 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
 
     const promises = this.doQueries(queries);
 
-    return Promise.all(promises).then(results => {
+    return Promise.all(promises).then((results) => {
       const annotations = new ResponseParser(results).transformToAnnotations(options);
       return annotations;
     });
   }
 
   doQueries(queries: any[]) {
-    return _.map(queries, query => {
+    return _.map(queries, (query) => {
       return this.doRequest(query.url)
         .then((result: any) => {
           return {

@@ -24,7 +24,7 @@ describe('Labels as Columns', () => {
       ],
     });
 
-    await expect(transformDataFrame([cfg], [source])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [source])).toEmitValuesWith((received) => {
       const data = received[0];
       const result = toDataFrameDTO(data[0]);
 
@@ -67,7 +67,7 @@ describe('Labels as Columns', () => {
       ],
     });
 
-    await expect(transformDataFrame([cfg], [source])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [source])).toEmitValuesWith((received) => {
       const data = received[0];
       const result = toDataFrameDTO(data[0]);
 
@@ -108,7 +108,7 @@ describe('Labels as Columns', () => {
       ],
     });
 
-    await expect(transformDataFrame([cfg], [oneValueOneLabelA, oneValueOneLabelB])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [oneValueOneLabelA, oneValueOneLabelB])).toEmitValuesWith((received) => {
       const data = received[0];
       const result = toDataFrameDTO(data[0]);
 

@@ -241,7 +241,7 @@ export class ConfigEditor extends PureComponent<Props> {
               </InlineFormLabel>
               <Select
                 className="width-10"
-                value={httpModes.find(httpMode => httpMode.value === options.jsonData.httpMode)}
+                value={httpModes.find((httpMode) => httpMode.value === options.jsonData.httpMode)}
                 options={httpModes}
                 defaultValue={options.jsonData.httpMode}
                 onChange={onUpdateDatasourceJsonDataOptionSelect(this.props, 'httpMode')}

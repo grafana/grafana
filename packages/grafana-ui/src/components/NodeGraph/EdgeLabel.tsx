@@ -17,9 +17,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
 
     background: css`
-      fill: ${tinycolor(inverseTheme.colors.bodyBg)
-        .setAlpha(0.8)
-        .toHex8String()};
+      fill: ${tinycolor(inverseTheme.colors.bodyBg).setAlpha(0.8).toHex8String()};
     `,
 
     text: css`

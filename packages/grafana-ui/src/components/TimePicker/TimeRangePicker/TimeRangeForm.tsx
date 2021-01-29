@@ -31,7 +31,7 @@ interface InputState {
 
 const errorMessage = 'Please enter a past date or "now"';
 
-export const TimeRangeForm: React.FC<Props> = props => {
+export const TimeRangeForm: React.FC<Props> = (props) => {
   const { value, isFullscreen = false, timeZone, onApply: onApplyFromProps, isReversed } = props;
 
   const [from, setFrom] = useState<InputState>(valueToState(value.raw.from, false, timeZone));
@@ -91,9 +91,9 @@ export const TimeRangeForm: React.FC<Props> = props => {
     <>
       <Field label="From" invalid={from.invalid} error={errorMessage}>
         <Input
-          onClick={event => event.stopPropagation()}
+          onClick={(event) => event.stopPropagation()}
           onFocus={onFocus}
-          onChange={event => setFrom(eventToState(event, false, timeZone))}
+          onChange={(event) => setFrom(eventToState(event, false, timeZone))}
           addonAfter={icon}
           aria-label="TimePicker from field"
           value={from.value}
@@ -101,9 +101,9 @@ export const TimeRangeForm: React.FC<Props> = props => {
       </Field>
       <Field label="To" invalid={to.invalid} error={errorMessage}>
         <Input
-          onClick={event => event.stopPropagation()}
+          onClick={(event) => event.stopPropagation()}
           onFocus={onFocus}
-          onChange={event => setTo(eventToState(event, true, timeZone))}
+          onChange={(event) => setTo(eventToState(event, true, timeZone))}
           addonAfter={icon}
           aria-label="TimePicker to field"
           value={to.value}

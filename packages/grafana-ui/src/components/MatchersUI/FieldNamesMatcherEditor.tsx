@@ -11,7 +11,7 @@ import {
 import { MultiSelect } from '../Select/Select';
 import { Input } from '../Input/Input';
 
-export const FieldNamesMatcherEditor = memo<MatcherUIProps<ByNamesMatcherOptions>>(props => {
+export const FieldNamesMatcherEditor = memo<MatcherUIProps<ByNamesMatcherOptions>>((props) => {
   const { data, options, onChange: onChangeFromProps } = props;
   const { readOnly, prefix } = options;
   const names = useFieldDisplayNames(data);
@@ -52,7 +52,7 @@ export const fieldNamesMatcherItem: FieldMatcherUIRegistryItem<ByNamesMatcherOpt
   matcher: fieldMatchers.get(FieldMatcherID.byNames),
   name: 'Fields with name',
   description: 'Set properties for a specific field',
-  optionsToLabel: options => (options.names ?? []).join(', '),
+  optionsToLabel: (options) => (options.names ?? []).join(', '),
   excludeFromPicker: true,
 };
 
@@ -72,7 +72,7 @@ const useFieldDisplayNames = (data: DataFrame[]): Set<string> => {
 
 const useSelectOptions = (displayNames: Set<string>): Array<SelectableValue<string>> => {
   return useMemo(() => {
-    return Array.from(displayNames).map(n => ({
+    return Array.from(displayNames).map((n) => ({
       value: n,
       label: n,
     }));

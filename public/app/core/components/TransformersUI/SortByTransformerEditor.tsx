@@ -12,7 +12,7 @@ export const SortByTransformerEditor: React.FC<TransformerUIProps<SortByTransfor
 }) => {
   const fieldNames = useMemo(
     () =>
-      getAllFieldNamesFromDataFrames(input).map(n => ({
+      getAllFieldNamesFromDataFrames(input).map((n) => ({
         value: n,
         label: n,
       })),
@@ -37,9 +37,9 @@ export const SortByTransformerEditor: React.FC<TransformerUIProps<SortByTransfor
             <InlineField label="Field" labelWidth={10} grow={true}>
               <Select
                 options={fieldNames}
-                value={fieldNames.find(v => v.value === s.field)}
+                value={fieldNames.find((v) => v.value === s.field)}
                 placeholder="Select field"
-                onChange={v => {
+                onChange={(v) => {
                   onSortChange(index, { ...s, field: v.value! });
                 }}
               />

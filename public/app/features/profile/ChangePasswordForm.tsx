@@ -36,8 +36,8 @@ export const ChangePasswordForm: FC<Props> = ({ onChangePassword, isSaving }) =>
                   ref={register({
                     required: 'New password is required',
                     validate: {
-                      confirm: v => v === getValues().confirmNew || 'Passwords must match',
-                      old: v => v !== getValues().oldPassword || `New password can't be the same as the old one.`,
+                      confirm: (v) => v === getValues().confirmNew || 'Passwords must match',
+                      old: (v) => v !== getValues().oldPassword || `New password can't be the same as the old one.`,
                     },
                   })}
                 />
@@ -49,7 +49,7 @@ export const ChangePasswordForm: FC<Props> = ({ onChangePassword, isSaving }) =>
                   name="confirmNew"
                   ref={register({
                     required: 'New password confirmation is required',
-                    validate: v => v === getValues().newPassword || 'Passwords must match',
+                    validate: (v) => v === getValues().newPassword || 'Passwords must match',
                   })}
                 />
               </Field>

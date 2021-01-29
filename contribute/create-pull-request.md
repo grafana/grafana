@@ -43,6 +43,10 @@ Pull requests for Redux contributions must:
 - Not contain code that mutates state in reducers or thunks.
 - Not contain code that accesses the reducers state slice directly. Instead, the code should use state selectors to access state.
 
+### Backend-specific guidelines
+
+Please refer to the [backend style guidelines](/contribute/style-guides/backend.md).
+
 ## Code review
 
 Once you've created a pull request, the next step is to have someone review your change. A review is a learning opportunity for both the reviewer and the author of the pull request.
@@ -93,3 +97,11 @@ The Grafana team _squashes_ all commits into one when we accept a pull request. 
 We use the pull request title when we generate change logs for releases. As such, we strive to make the title as informative as possible.
 
 Make sure that the title for your pull request uses the same format as the subject line in the commit message.
+
+## Configuration changes
+
+If your PR includes configuration changes, all of the following files must be changed correspondingly:
+
+* conf/defaults.ini
+* conf/sample.ini
+* docs/sources/administration/configuration.md 

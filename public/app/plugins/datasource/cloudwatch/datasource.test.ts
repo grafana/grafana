@@ -17,7 +17,7 @@ describe('datasource', () => {
         ],
       } as any);
 
-      await expect(observable).toEmitValuesWith(received => {
+      await expect(observable).toEmitValuesWith((received) => {
         const response = received[0];
         expect(response.error?.message).toBe('Log group is required');
       });
@@ -34,7 +34,7 @@ describe('datasource', () => {
         ],
       } as any);
 
-      await expect(observable).toEmitValuesWith(received => {
+      await expect(observable).toEmitValuesWith((received) => {
         const response = received[0];
         expect(response.data).toEqual([]);
       });
@@ -62,7 +62,7 @@ describe('datasource', () => {
         { from: dateTime(), to: dateTime() } as any
       );
 
-      await expect(observable).toEmitValuesWith(received => {
+      await expect(observable).toEmitValuesWith((received) => {
         const response = received[0];
         expect(response.data.length).toEqual(2);
       });

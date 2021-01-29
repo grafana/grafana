@@ -599,7 +599,7 @@ describe('logSeriesToLogsModel', () => {
       hasUniqueLabels: false,
       meta: [
         { label: 'Limit', value: '1000 (0 returned)', kind: 1 },
-        { label: 'Total bytes processed', value: '97  kB', kind: 1 },
+        { label: 'Total bytes processed', value: '97.0  kB', kind: 1 },
       ],
       rows: [],
     };

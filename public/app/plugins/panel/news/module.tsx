@@ -4,7 +4,7 @@ import { NewsPanel } from './NewsPanel';
 import { NewsOptions } from './types';
 import { DEFAULT_FEED_URL, PROXY_PREFIX } from './constants';
 
-export const plugin = new PanelPlugin<NewsOptions>(NewsPanel).setPanelOptions(builder => {
+export const plugin = new PanelPlugin<NewsOptions>(NewsPanel).setPanelOptions((builder) => {
   builder
     .addTextInput({
       path: 'feedUrl',

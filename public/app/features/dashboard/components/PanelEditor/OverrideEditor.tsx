@@ -41,7 +41,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
 }) => {
   const matcherUi = fieldMatchersUI.get(override.matcher.id);
   const styles = useStyles(getStyles);
-  const properties = override.properties.map(p => registry.getIfExists(p.id)).filter(prop => !!prop);
+  const properties = override.properties.map((p) => registry.getIfExists(p.id)).filter((prop) => !!prop);
 
   const matcherLabel = <Label>{matcherUi.name}</Label>;
 
@@ -90,8 +90,8 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
 
   let configPropertiesOptions = registry
     .list()
-    .filter(o => !o.hideFromOverrides)
-    .map(item => {
+    .filter((o) => !o.hideFromOverrides)
+    .map((item) => {
       let label = item.name;
       if (item.category && item.category.length > 1) {
         label = [...item.category!.slice(1), item.name].join(' > ');
@@ -104,7 +104,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
     });
 
   const renderOverrideTitle = (isExpanded: boolean) => {
-    const propertyNames = properties.map(p => p?.name).join(', ');
+    const propertyNames = properties.map((p) => p?.name).join(', ');
     const matcherOptions = matcherUi.optionsToLabel(override.matcher.options);
 
     return (
@@ -137,7 +137,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
           matcher={matcherUi.matcher}
           data={data}
           options={override.matcher.options}
-          onChange={option => onMatcherConfigChange(option)}
+          onChange={(option) => onMatcherConfigChange(option)}
         />
       </Field>
 
@@ -157,7 +157,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
               key={`${p.id}/${j}`}
               isCollapsible={isCollapsible}
               isSystemOverride={isSystemOverride}
-              onChange={value => onDynamicConfigValueChange(j, value)}
+              onChange={(value) => onDynamicConfigValueChange(j, value)}
               onRemove={() => onDynamicConfigValueRemove(j)}
               property={p}
               registry={registry}
@@ -175,7 +175,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
               variant="secondary"
               icon="plus"
               options={configPropertiesOptions}
-              onChange={o => {
+              onChange={(o) => {
                 onDynamicConfigValueAdd(o.value!);
               }}
               isFullWidth={false}

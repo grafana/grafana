@@ -103,7 +103,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
 
   return (
     <div
-      ref={r => {
+      ref={(r) => {
         measureRef(r);
         (zoomRef as MutableRefObject<HTMLElement | null>).current = r;
       }}
@@ -174,7 +174,7 @@ interface NodesProps {
 const Nodes = memo(function Nodes(props: NodesProps) {
   return (
     <>
-      {props.nodes.map(n => (
+      {props.nodes.map((n) => (
         <Node
           key={n.id}
           node={n}
@@ -199,7 +199,7 @@ interface EdgesProps {
 const Edges = memo(function Edges(props: EdgesProps) {
   return (
     <>
-      {props.edges.map(e => (
+      {props.edges.map((e) => (
         <Edge
           key={e.id}
           edge={e}

@@ -110,6 +110,7 @@ export interface ExploreProps {
   originPanelId: number;
   addQueryRow: typeof addQueryRow;
   theme: GrafanaTheme;
+  loading: boolean;
   showMetrics: boolean;
   showTable: boolean;
   showLogs: boolean;
@@ -255,7 +256,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   };
 
   toggleShowRichHistory = () => {
-    this.setState(state => {
+    this.setState((state) => {
       return {
         openDrawer: state.openDrawer === ExploreDrawer.RichHistory ? undefined : ExploreDrawer.RichHistory,
       };
@@ -263,7 +264,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   };
 
   toggleShowQueryInspector = () => {
-    this.setState(state => {
+    this.setState((state) => {
       return {
         openDrawer: state.openDrawer === ExploreDrawer.QueryInspector ? undefined : ExploreDrawer.QueryInspector,
       };
@@ -287,8 +288,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   }
 
   renderGraphPanel(width: number) {
-    const { graphResult, absoluteRange, timeZone, splitOpen, queryResponse } = this.props;
-    const isLoading = queryResponse.state === LoadingState.Loading;
+    const { graphResult, absoluteRange, timeZone, splitOpen, queryResponse, loading } = this.props;
     return (
       <ExploreGraphNGPanel
         data={graphResult!}
@@ -298,7 +298,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         onUpdateTimeRange={this.onUpdateTimeRange}
         annotations={queryResponse.annotations}
         splitOpenFn={splitOpen}
-        isLoading={isLoading}
+        isLoading={loading}
       />
     );
   }
@@ -346,12 +346,12 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     //  processing pipeline which ends up populating redux state with proper data. As we move towards more dataFrame
     //  oriented API it seems like a better direction to move such processing into to visualisations and do minimal
     //  and lazy processing here. Needs bigger refactor so keeping nodeGraph and Traces as they are for now.
-    return frames.filter(frame => frame.meta?.preferredVisualisationType === 'nodeGraph');
+    return frames.filter((frame) => frame.meta?.preferredVisualisationType === 'nodeGraph');
   });
 
   renderTraceViewPanel() {
     const { queryResponse, splitOpen } = this.props;
-    const dataFrames = queryResponse.series.filter(series => series.meta?.preferredVisualisationType === 'trace');
+    const dataFrames = queryResponse.series.filter((series) => series.meta?.preferredVisualisationType === 'trace');
 
     return (
       // We expect only one trace at the moment to be in the dataframe
@@ -382,8 +382,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     const { openDrawer } = this.state;
     const exploreClass = split ? 'explore explore-split' : 'explore';
     const styles = getStyles(theme);
-    const StartPage = datasourceInstance?.components?.ExploreStartPage;
-    const showStartPage = !queryResponse || queryResponse.state === LoadingState.NotStarted;
+    const showPanels = queryResponse && queryResponse.state !== LoadingState.NotStarted;
 
     // gets an error without a refID, so non-query-row-related error, like a connection error
     const queryErrors =
@@ -423,16 +422,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                 return (
                   <main className={cx(styles.exploreMain)} style={{ width }}>
                     <ErrorBoundaryAlert>
-                      {showStartPage && StartPage && (
-                        <div className={'grafana-info-box grafana-info-box--max-lg'}>
-                          <StartPage
-                            onClickExample={this.onClickExample}
-                            datasource={datasourceInstance}
-                            exploreId={exploreId}
-                          />
-                        </div>
-                      )}
-                      {!showStartPage && (
+                      {showPanels && (
                         <>
                           {showMetrics && graphResult && this.renderGraphPanel(width)}
                           {showTable && this.renderTablePanel(width)}
@@ -492,6 +482,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     absoluteRange,
     queryResponse,
     showNodeGraph,
+    loading,
   } = item;
 
   const { datasource, queries, range: urlRange, originPanelId } = (urlState || {}) as ExploreUrlState;
@@ -524,6 +515,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     showTable,
     showTrace,
     showNodeGraph,
+    loading,
   };
 }
 

@@ -7,7 +7,7 @@ interface Props {
   plugin: PluginMeta;
 }
 
-const PluginListItem: FC<Props> = props => {
+const PluginListItem: FC<Props> = (props) => {
   const { plugin } = props;
 
   return (

@@ -204,7 +204,6 @@ func TestAlertQuery(t *testing.T) {
 				err = json.Unmarshal(blob, &model)
 				require.NoError(t, err)
 
-				fmt.Printf(">>>>>>> %+v %+v\n", tc.alertQuery, model)
 				i, ok := model["datasource"]
 				require.True(t, ok)
 				datasource, ok := i.(string)
