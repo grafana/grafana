@@ -54,6 +54,7 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
           settings: {
             options: graphFieldOptions.fillGradient,
           },
+          showIf: () => false, // <<< Hide from the UI for now
         })
         .addCustomEditor({
           id: 'hideFrom',

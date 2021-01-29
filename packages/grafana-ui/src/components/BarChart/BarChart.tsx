@@ -169,7 +169,7 @@ export const BarChart: React.FunctionComponent<Props> = ({
           fieldIndex: i,
           frameIndex: 0,
         },
-        show: customConfig.hideFrom?.graph,
+        show: !customConfig.hideFrom?.graph,
         gradientMode: customConfig.gradientMode,
         thresholds: field.config.thresholds,
 
