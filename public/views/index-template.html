@@ -24,7 +24,7 @@
 
     <link
       rel="preload"
-      href="public/fonts/roboto/RxZJdnzeo3R5zSexge8UUVtXRa8TVwTICgirnJhmVJw.woff2"
+      href="[[.ContentDeliveryURL]]/public/fonts/roboto/RxZJdnzeo3R5zSexge8UUVtXRa8TVwTICgirnJhmVJw.woff2"
       as="font"
       crossorigin
     />
@@ -32,7 +32,6 @@
     <link rel="icon" type="image/png" href="[[.FavIcon]]" />
     <link rel="apple-touch-icon" sizes="180x180" href="[[.AppleTouchIcon]]" />
     <link rel="mask-icon" href="[[.ContentDeliveryURL]]/public/img/grafana_mask_icon.svg" color="#F05A28" />
-
     <link rel="stylesheet" href="[[.ContentDeliveryURL]]/public/build/grafana.[[ .Theme ]].<%= webpack.hash %>.css" />
 
     <script nonce="[[.Nonce]]">
@@ -243,55 +242,59 @@
     </script>
 
     [[if .GoogleTagManagerId]]
-    <!-- Google Tag Manager -->
-    <script nonce="[[.Nonce]]">
-      dataLayer = [
-        {
-          IsSignedIn: '[[.User.IsSignedIn]]',
-          Email: '[[.User.Email]]',
-          Name: '[[.User.Name]]',
-          UserId: '[[.User.Id]]',
-          OrgId: '[[.User.OrgId]]',
-          OrgName: '[[.User.OrgName]]',
-        },
-      ];
-    </script>
-    <noscript>
-      <iframe
-        src="//www.googletagmanager.com/ns.html?id=[[.GoogleTagManagerId]]"
-        height="0"
-        width="0"
-        style="display: none; visibility: hidden"
-      ></iframe>
-    </noscript>
-    <script nonce="[[.Nonce]]">
-      (function (w, d, s, l, i) {
-        w[l] = w[l] || [];
-        w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
-        var f = d.getElementsByTagName(s)[0],
-          j = d.createElement(s),
-          dl = l != 'dataLayer' ? '&l=' + l : '';
-        j.async = true;
-        j.src = '//www.googletagmanager.com/gtm.js?id=' + i + dl;
-        f.parentNode.insertBefore(j, f);
-      })(window, document, 'script', 'dataLayer', '[[.GoogleTagManagerId]]');
-    </script>
-    <!-- End Google Tag Manager -->
-    [[end]] <% for (key in htmlWebpackPlugin.files.chunks) { %><% if (htmlWebpackPlugin.files.jsIntegrity) { %>
-    <script
-      nonce="[[.Nonce]]"
-      src="[[.ContentDeliveryURL]]/<%= htmlWebpackPlugin.files.chunks[key].entry %>"
-      type="text/javascript"
-      integrity="<%= htmlWebpackPlugin.files.jsIntegrity[htmlWebpackPlugin.files.js.indexOf(htmlWebpackPlugin.files.chunks[key].entry)] %>"
-      crossorigin="<%= webpackConfig.output.crossOriginLoading %>"
-    ></script>
-    <% } else { %>
-    <script
-      nonce="[[.Nonce]]"
-      src="[[.ContentDeliveryURL]]/<%= htmlWebpackPlugin.files.chunks[key].entry %>"
-      type="text/javascript"
-    ></script>
-    <% } %><% } %>
+      <!-- Google Tag Manager -->
+      <script nonce="[[.Nonce]]">
+        dataLayer = [
+          {
+            IsSignedIn: '[[.User.IsSignedIn]]',
+            Email: '[[.User.Email]]',
+            Name: '[[.User.Name]]',
+            UserId: '[[.User.Id]]',
+            OrgId: '[[.User.OrgId]]',
+            OrgName: '[[.User.OrgName]]',
+          },
+        ];
+      </script>
+      <noscript>
+        <iframe
+          src="//www.googletagmanager.com/ns.html?id=[[.GoogleTagManagerId]]"
+          height="0"
+          width="0"
+          style="display: none; visibility: hidden"
+        ></iframe>
+      </noscript>
+      <script nonce="[[.Nonce]]">
+        (function (w, d, s, l, i) {
+          w[l] = w[l] || [];
+          w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
+          var f = d.getElementsByTagName(s)[0],
+            j = d.createElement(s),
+            dl = l != 'dataLayer' ? '&l=' + l : '';
+          j.async = true;
+          j.src = '//www.googletagmanager.com/gtm.js?id=' + i + dl;
+          f.parentNode.insertBefore(j, f);
+        })(window, document, 'script', 'dataLayer', '[[.GoogleTagManagerId]]');
+      </script>
+      <!-- End Google Tag Manager -->
+    [[end]] 
+
+    <% for (key in htmlWebpackPlugin.files.chunks) { %>
+      <% if (htmlWebpackPlugin.files.jsIntegrity) { %>
+        <script
+          nonce="[[.Nonce]]"
+          src="[[.ContentDeliveryURL]]/<%= htmlWebpackPlugin.files.chunks[key].entry %>"
+          type="text/javascript"
+          integrity="<%= htmlWebpackPlugin.files.jsIntegrity[htmlWebpackPlugin.files.js.indexOf(htmlWebpackPlugin.files.chunks[key].entry)] %>"
+          crossorigin="<%= webpackConfig.output.crossOriginLoading %>">
+        </script>
+      <% } else { %>
+        <script
+          nonce="[[.Nonce]]"
+          src="[[.ContentDeliveryURL]]/<%= htmlWebpackPlugin.files.chunks[key].entry %>"
+          type="text/javascript">
+        </script>
+      <% } %>
+    <% } %>
     <script nonce="[[.Nonce]]">
       performance.mark('js done blocking');
     </script>
