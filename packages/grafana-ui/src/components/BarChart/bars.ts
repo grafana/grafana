@@ -143,11 +143,7 @@ export function getConfig(opts: BarsOptions) {
                   u.ctx.textBaseline = ori === 1 ? 'middle' : dataY[ix]! >= 0 ? 'bottom' : 'top';
                   /* eslint-enable */
 
-                  u.ctx.fillText(
-                    formatValue(sidx, dataY[ix]),
-                    x, //
-                    y
-                  );
+                  u.ctx.fillText(formatValue(sidx, dataY[ix]), x, y);
                 }
               });
             }

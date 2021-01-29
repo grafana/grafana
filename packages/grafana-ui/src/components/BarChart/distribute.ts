@@ -21,6 +21,10 @@ export function distribute(numItems: number, sizeFactor: number, justify: number
     justify === SPACE_EVENLY  ? space / (numItems + 1) : 0
   );
 
+  if (isNaN(gap) || gap == Infinity) {
+    gap = 0;
+  }
+
   // prettier-ignore
   let offs = (
     justify === SPACE_BETWEEN ? 0       :
