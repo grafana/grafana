@@ -50,5 +50,7 @@
     <Property Id="WIXUI_INSTALLDIR" Value="INSTALLDIR" />
 		<UIRef Id="WixUI_FeatureTree"/>
 
-   </Product>
+    <MajorUpgrade
+      DowngradeErrorMessage="A newer version of Grafana is already installed. Uninstall the current version to install this older version. Setup will now exit."/>
+  </Product>
 </Wix>
