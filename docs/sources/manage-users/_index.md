@@ -30,15 +30,26 @@ Members of organizations have permissions based on their _role_ in the organizat
 
 Organization Admins are user accounts that are assigned the Admin role for an organization. They can manage their users and teams in their organization.
 
+Organization Admins can:
+- [Manage users]({{< relref "org-admin/_index.md" >}})
+- [Manage teams]({{< relref "manage-teams/index.md" >}}) 
+
 ## Teams
 
 Teams are groups of users that are all members of the same organization. Teams allow you to grant permissions for a group of users. Teams are most often used to manage [permissions for folders and dashboards]({{< relref "../permissions/dashboard_folder_permissions.md" >}}). Enterprise users might use them to apply [data source permissions]({{< relref "../enterprise/datasource_permissions.md" >}}).
 
 Teams are mostly managed by Organization Admins, but if the Grafana server setting [editors_can_admin]({{< relref "../administration/configuration.md#editors_can_admin" >}}) is applied, then users assigned the Team Admin role can also manage teams in their organization and users assigned to their teams.
 
+Team Admins can [Manage teams]({{< relref "manage-teams/index.md" >}}).
+
 ## Users
 
 Users are named accounts in Grafana with granted permissions to access resources throughout Grafana. All users can manage their own user accounts to a certain extent.
+
+Users can:
+- [View and edit user profile](user-admin/user-profile.md)
+- [Change password](user-admin/change-your-password.md)
+- [Switch organizations](user-admin/switch-org.md)
 
 ## Learn more
 
