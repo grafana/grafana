@@ -65,6 +65,7 @@ export function ExploreGraphNGPanel({
         drawStyle: DrawStyle.Line,
         fillOpacity: 0,
         pointSize: 5,
+        spanNulls: true,
       },
     },
     overrides: [],

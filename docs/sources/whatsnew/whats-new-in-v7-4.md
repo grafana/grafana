@@ -85,15 +85,19 @@ The following topics were updated as a result of this feature:
 
 _Server-side expressions_ is an experimental feature that allows you to manipulate data returned from backend data source queries. Expressions allow you to manipulate data with math and other operations when the data source is a backend data source or a **--Mixed--** data source.
 
-The main use case is for [multi-dimensional](https://grafana.com/docs/grafana/latest/getting-started/timeseries-dimensions/#time-series-dimensions) data sources used with the upcoming next generation alerting, but expressions can be used with backend data sources and visualization as well.
+The main use case is for [multi-dimensional]({{< relref "../getting-started/timeseries-dimensions.md" >}}) data sources used with the upcoming next generation alerting, but expressions can be used with backend data sources and visualization as well.
 
 > **Note:** Queries built with this feature might break with minor version upgrades until Grafana 8 is released. This feature does not work with the current Grafana alerting.
+
+For more information, refer to [Expressions]({{< relref "../panels/expressions.md" >}}). [Queries]({{< relref "../panels/queries.md" >}}) was also updated as a result of this feature.
 
 ### Alert notification query label interpolation
 
 You can now provide detailed information to alert notification recipients by injecting alert label data as template variables into an alert notification. Labels that exist from the evaluation of the alert query can be used in the alert rule name and in the alert notification message fields using the `${Label}` syntax. The alert label data is automatically injected into the notification fields when the alert is in the alerting state. When there are multiple unique values for the same label, the values are comma-separated.
 
 {{< figure src="/img/docs/alerting/alert-notification-template-7-4.png" max-width="700px" caption="Variable support in alert notifications" >}}
+
+For more information, refer to the [alert notification docs]({{< relref "../alerting/notifications.md#notification-templating" >}}).
 
 ### Content security policy support
 
@@ -104,6 +108,11 @@ CSP support is disabled by default, to enable it you must set `content_security_
 You can lock down what can be done in the frontend code. Lock down what can be loaded, what JavaScript is executed. Not compatible with some plugins.
 
 [content_security_policy]({{< relref "../administration/configuration.md#content_security_policy" >}}) and [content_security_policy_template]({{< relref "../administration/configuration.md#content_security_policy_template" >}}) were added to [Configuration]({{< relref "../administration/configuration.md" >}}) as a result of this change.
+
+### Hide users in UI
+
+You can now use the `hidden_users` configuration setting to hide specific users in the UI. For example, this feature can be used to hide users that are used for automation purposes.
+[Configuration]({{< relref "../administration/configuration.md#hidden_users" >}}) has been updated for this feature.
 
 ### Elasticsearch data source updates
 
@@ -130,9 +139,17 @@ Unlike the visual query builder, MQL allows you to control the time range and pe
 
 MQL uses a set of operations and functions. Operations are linked together using the common pipe mechanism, where the output of one operation becomes the input to the next. Linking operations makes it possible to build up complex queries incrementally.
 
-Once query type Metrics is selected in the Cloud Monitoring query editor, you can toggle between the editor modes for visual query builder and MQL.
+Once query type Metrics is selected in the Cloud Monitoring query editor, you can toggle between the editor modes for visual query builder and MQL. For more information, refer to the [Google Cloud Monitoring docs]({{<relref "../datasources/google-cloud-monitoring/_index.md/#out-of-the-box-dashboards">}}).
 
 Many thanks to [mtanda](https://github.com/mtanda) this contribution!
+
+## Curated dashboards for Google Cloud Monitoring
+
+Google Cloud Monitoring data source ships with pre-configured dashboards for some of the most popular GCP services. These curated dashboards are based on similar dashboards in the GCP dashboard samples repository. In this release, we have expanded the set of pre-configured dashboards.
+
+{{< docs-imagebox img="/img/docs/google-cloud-monitoring/curated-dashboards-7-4.png" max-width= "650px" >}}
+
+If you want to customize a dashboard, we recommend that you save it under a different name.  Otherwise the dashboard will be overwritten when a new version of the dashboard is released. For more information, refer to the [Google Cloud Monitoring docs]({{<relref "../datasources/google-cloud-monitoring/_index.md/#out-of-the-box-dashboards">}}).
 
 ### Query Editor Help
 

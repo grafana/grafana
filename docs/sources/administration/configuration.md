@@ -631,6 +631,10 @@ The duration in time a user invitation remains valid before expiring.
 This setting should be expressed as a duration. Examples: 6h (hours), 2d (days), 1w (week).
 Default is `24h` (24 hours). The minimum supported duration is `15m` (15 minutes).
 
+### hidden_users
+
+This is a comma-separated list of usernames. Users specified here are hidden in the Grafana UI. They are still visible to Grafana administrators and to themselves.
+
 <hr>
 
 ## [auth]
@@ -1515,6 +1519,6 @@ Set this to `true` to have date formats automatically derived from your browser 
 Used as the default time zone for user preferences. Can be either `browser` for the browser local time zone or a time zone name from the IANA Time Zone database, such as `UTC` or `Europe/Amsterdam`.
 
 ## [expressions]
->Note: This is available in Grafana v7.4 and later versions.
+> **Note:** This feature is available in Grafana v7.4 and later versions.
 ### enabled
 Set this to `false` to disable expressions and hide them in the Grafana UI. Default is `true`.

@@ -31,7 +31,7 @@ export class Wrapper extends Component<WrapperProps> {
 
     return (
       <div className="page-scrollbar-wrapper">
-        <CustomScrollbar autoHeightMin={'100%'} autoHeightMax={''} className="custom-scrollbar--page">
+        <CustomScrollbar autoHeightMin={'100%'}>
           <div className="explore-wrapper">
             <ErrorBoundaryAlert style="page">
               <Explore exploreId={ExploreId.left} />
