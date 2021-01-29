@@ -42,7 +42,3 @@ Point size set to 20:
 Point size set to 35:
 
 ![Show points point size 35 example](/img/docs/time-series-panel/points-graph-show-points-35-7-4.png)
-
-## Scatter plot graph examples
-
-Some scatter plot examples can give you ideas.
