@@ -32,13 +32,14 @@ See the complete list of teams in your Grafana organization.
 
 Add a team to your Grafana organization.
 
-1. Hover your cursor over the **Configuration** (gear) icon in the side menu.
-1. Click **Teams**. Grafana displays the team list.
+{{< docs/list >}}
+{{< docs/shared "manage-users/view-server-user-list.md" >}}
 1. Click **New Team**.
 1. Enter team information:
    - **Name -** Enter the name of the new team.
    - **Email -** (Optional) Enter the team email.
 1. Click **Create**.
+{{< /docs/list >}}
 
 ## Add a team member
 
