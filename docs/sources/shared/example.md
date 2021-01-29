@@ -6,7 +6,7 @@ Use test.md to experiment and test formats and syntax.
 
 ## Standalone text
 
-When you have a chunk of text or steps that stand alone, not part of an ordered or unordered list.
+When you have a chunk of text or steps that stand alone, not part of an ordered or unordered list. This includes headings, paragraphs, full lists, and combinations of those content types.
 
 The syntax to invoke this file would be the following, minus the backslash:
 
@@ -16,8 +16,7 @@ The syntax to invoke this file would be the following, minus the backslash:
 
 ## Part of a list
 
-When you have steps that you want to use in more than one numbered list. This format does not work well for unordered lists, but it does work.
-
+When you have steps that you want to use in more than one numbered list. This format does not work as well for unordered lists, but it does work.
 
 ### Ordered list
 
