@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -26,7 +27,13 @@ func TestAlertingTicker(t *testing.T) {
 	t.Cleanup(registry.ClearOverrides)
 
 	mockedClock := clock.NewMock()
-	ng.schedule = newScheduler(mockedClock, time.Second, log.New("ngalert.schedule.test"), nil)
+	schefCfg := schedulerCfg{
+		c:            mockedClock,
+		baseInterval: time.Second,
+		logger:       log.New("ngalert.schedule.test"),
+		evaluator:    eval.Evaluator{Cfg: ng.Cfg},
+	}
+	ng.schedule = newScheduler(schefCfg)
 
 	alerts := make([]*AlertDefinition, 0)
 
@@ -113,6 +120,33 @@ func TestAlertingTicker(t *testing.T) {
 
 	expectedAlertDefinitionsEvaluated = []alertDefinitionKey{alerts[2].getKey()}
 	t.Run(fmt.Sprintf("on 7th tick alert definitions: %s should be evaluated", concatenate(expectedAlertDefinitionsEvaluated)), func(t *testing.T) {
+		tick := advanceClock(t, mockedClock)
+		assertEvalRun(t, evalAppliedCh, tick, expectedAlertDefinitionsEvaluated...)
+	})
+
+	// pause alert definition
+	err = ng.updateAlertDefinitionPaused(&updateAlertDefinitionPausedCommand{UIDs: []string{alerts[2].UID}, OrgID: alerts[2].OrgID, Paused: true})
+	require.NoError(t, err)
+	t.Logf("alert definition: %v paused", alerts[2].getKey())
+
+	expectedAlertDefinitionsEvaluated = []alertDefinitionKey{}
+	t.Run(fmt.Sprintf("on 8th tick alert definitions: %s should be evaluated", concatenate(expectedAlertDefinitionsEvaluated)), func(t *testing.T) {
+		tick := advanceClock(t, mockedClock)
+		assertEvalRun(t, evalAppliedCh, tick, expectedAlertDefinitionsEvaluated...)
+	})
+
+	expectedAlertDefinitionsStopped = []alertDefinitionKey{alerts[2].getKey()}
+	t.Run(fmt.Sprintf("on 8th tick alert definitions: %s should be stopped", concatenate(expectedAlertDefinitionsStopped)), func(t *testing.T) {
+		assertStopRun(t, stopAppliedCh, expectedAlertDefinitionsStopped...)
+	})
+
+	// unpause alert definition
+	err = ng.updateAlertDefinitionPaused(&updateAlertDefinitionPausedCommand{UIDs: []string{alerts[2].UID}, OrgID: alerts[2].OrgID, Paused: false})
+	require.NoError(t, err)
+	t.Logf("alert definition: %v unpaused", alerts[2].getKey())
+
+	expectedAlertDefinitionsEvaluated = []alertDefinitionKey{alerts[0].getKey(), alerts[2].getKey()}
+	t.Run(fmt.Sprintf("on 9th tick alert definitions: %s should be evaluated", concatenate(expectedAlertDefinitionsEvaluated)), func(t *testing.T) {
 		tick := advanceClock(t, mockedClock)
 		assertEvalRun(t, evalAppliedCh, tick, expectedAlertDefinitionsEvaluated...)
 	})

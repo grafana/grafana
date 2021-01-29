@@ -11,4 +11,4 @@ export {
 } from './standardTransformersRegistry';
 export { RegexpOrNamesMatcherOptions, ByNamesMatcherOptions, ByNamesMatcherMode } from './matchers/nameMatcher';
 export { RenameByRegexTransformerOptions } from './transformers/renameByRegex';
-export { outerJoinDataFrames } from './transformers/seriesToColumns';
+export { outerJoinDataFrames } from './transformers/joinDataFrames';

@@ -20,22 +20,8 @@
 
 .explore-active-button {
   box-shadow: $btn-active-box-shadow;
-  border: 1px solid $orange-dark;
-  background-image: none;
-  background-color: transparent;
+  border: 1px solid $orange-dark !important;
   color: $orange-dark !important;
-
-  &:focus {
-    background-color: transparent;
-  }
-
-  i {
-    text-shadow: none;
-    background: linear-gradient(180deg, #f05a28 30%, #fbca0a 100%);
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    -moz-text-fill-color: transparent;
-  }
 }
 
 .explore-ds-picker {
@@ -119,7 +105,8 @@
 
 .explore-toolbar-content-item {
   display: flex;
-  padding: 2px 2px;
+  padding: 0px 2px;
+  position: relative;
 
   &:first-child {
     padding-left: $dashboard-padding;
@@ -127,33 +114,7 @@
   }
 }
 
-@media only screen and (max-width: 1545px) {
-  .explore-toolbar.splitted {
-    .timepicker-rangestring {
-      display: none;
-    }
-  }
-}
-
-@media only screen and (max-width: 1400px) {
-  .explore-toolbar.splitted {
-    .explore-toolbar-content-item {
-      .navbar-button {
-        span {
-          display: none;
-        }
-      }
-    }
-  }
-}
-
 @media only screen and (max-width: 1070px) {
-  .timepicker {
-    .timepicker-rangestring {
-      display: none;
-    }
-  }
-
   .explore-toolbar-content {
     justify-content: flex-start;
   }
@@ -165,45 +126,12 @@
   }
 }
 
-@media only screen and (max-width: 897px) {
-  .explore-toolbar {
-    .explore-toolbar-content-item {
-      .navbar-button span {
-        display: none;
-      }
-    }
-  }
-}
-
 @media only screen and (max-width: 810px) {
   .explore-toolbar {
     .explore-toolbar-content-item {
       &:first-child {
         padding-left: 2px;
         margin: 0 12px 0 16px;
-      }
-    }
-  }
-}
-
-.explore-icon-align {
-  .navbar-button {
-    i {
-      position: relative;
-      top: -1px;
-
-      @media only screen and (max-width: 1320px) {
-        margin: 0 -3px;
-      }
-    }
-  }
-}
-
-.explore-toolbar.splitted {
-  .explore-icon-align {
-    .navbar-button {
-      i {
-        margin: 0 -3px;
       }
     }
   }

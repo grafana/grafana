@@ -2,13 +2,14 @@ import throttle from 'lodash/throttle';
 import { Options } from 'uplot';
 import { PlotPlugin, PlotProps } from './types';
 
+const LOGGING_ENABLED = false;
 const ALLOWED_FORMAT_STRINGS_REGEX = /\b(YYYY|YY|MMMM|MMM|MM|M|DD|D|WWWW|WWW|HH|H|h|AA|aa|a|mm|m|ss|s|fff)\b/g;
 
-export const timeFormatToTemplate = (f: string) => {
+export function timeFormatToTemplate(f: string) {
   return f.replace(ALLOWED_FORMAT_STRINGS_REGEX, (match) => `{${match}}`);
-};
+}
 
-export const buildPlotConfig = (props: PlotProps, plugins: Record<string, PlotPlugin>): Options => {
+export function buildPlotConfig(props: PlotProps, plugins: Record<string, PlotPlugin>): Options {
   return {
     width: props.width,
     height: props.height,
@@ -27,10 +28,10 @@ export const buildPlotConfig = (props: PlotProps, plugins: Record<string, PlotPl
       hooks: p[1].hooks,
     })),
     hooks: {},
-  } as any;
-};
+  } as Options;
+}
 
-export const isPlottingTime = (config: Options) => {
+export function isPlottingTime(config: Options) {
   let isTimeSeries = false;
 
   if (!config.scales) {
@@ -46,17 +47,17 @@ export const isPlottingTime = (config: Options) => {
   }
 
   return isTimeSeries;
-};
+}
 
 // Dev helpers
 export const throttledLog = throttle((...t: any[]) => {
   console.log(...t);
 }, 500);
 
-export const pluginLog = (id: string, throttle = false, ...t: any[]) => {
-  if (process.env.NODE_ENV === 'production') {
+export function pluginLog(id: string, throttle = false, ...t: any[]) {
+  if (process.env.NODE_ENV === 'production' || !LOGGING_ENABLED) {
     return;
   }
   const fn = throttle ? throttledLog : console.log;
   fn(`[Plugin: ${id}]: `, ...t);
-};
+}

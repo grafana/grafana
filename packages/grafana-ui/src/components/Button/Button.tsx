@@ -171,7 +171,7 @@ function getButtonVariantStyles(from: string, to: string, textColor: string, the
   `;
 }
 
-function getPropertiesForVariant(theme: GrafanaTheme, variant: ButtonVariant) {
+export function getPropertiesForVariant(theme: GrafanaTheme, variant: ButtonVariant) {
   switch (variant) {
     case 'secondary':
       const from = theme.isLight ? theme.palette.gray7 : theme.palette.gray15;

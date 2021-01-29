@@ -22,10 +22,9 @@ import {
   RowContextOptions,
 } from './LogRowContextProvider';
 import { Themeable } from '../../types/theme';
-import { withTheme } from '../../themes/index';
+import { styleMixins, withTheme } from '../../themes/index';
 import { getLogRowStyles } from './getLogRowStyles';
 import { stylesFactory } from '../../themes/stylesFactory';
-import { selectThemeVariant } from '../../themes/selectThemeVariant';
 
 //Components
 import { LogDetails } from './LogDetails';
@@ -58,11 +57,9 @@ interface Props extends Themeable {
 interface State {
   showContext: boolean;
   showDetails: boolean;
-  hasHoverBackground: boolean;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const bgColor = selectThemeVariant({ light: theme.palette.gray7, dark: theme.palette.dark2 }, theme.type);
   return {
     topVerticalAlign: css`
       label: topVerticalAlign;
@@ -70,9 +67,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       margin-top: -${theme.spacing.xs};
       margin-left: -${theme.spacing.xxs};
     `,
-    hoverBackground: css`
-      label: hoverBackground;
-      background-color: ${bgColor};
+    detailsOpen: css`
+      &:hover {
+        background-color: ${styleMixins.hoverColor(theme.colors.panelBg, theme)};
+      }
     `,
     errorLogRow: css`
       label: erroredLogRow;
@@ -91,7 +89,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   state: State = {
     showContext: false,
     showDetails: false,
-    hasHoverBackground: false,
   };
 
   toggleContext = () => {
@@ -100,26 +97,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
         showContext: !state.showContext,
       };
     });
-  };
-
-  /**
-   * We are using onMouse events to change background of Log Details Table to hover-state-background when hovered over Log
-   * Row and vice versa, when context is not open. This can't be done with css because we use 2 separate table rows without common parent element.
-   */
-  addHoverBackground = () => {
-    if (!this.state.showContext) {
-      this.setState({
-        hasHoverBackground: true,
-      });
-    }
-  };
-
-  clearHoverBackground = () => {
-    if (!this.state.showContext) {
-      this.setState({
-        hasHoverBackground: false,
-      });
-    }
   };
 
   toggleDetails = () => {
@@ -163,12 +140,11 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       theme,
       getFieldLinks,
     } = this.props;
-    const { showDetails, showContext, hasHoverBackground } = this.state;
+    const { showDetails, showContext } = this.state;
     const style = getLogRowStyles(theme, row.logLevel);
     const styles = getStyles(theme);
     const { errorMessage, hasError } = checkLogsError(row);
     const logRowBackground = cx(style.logsRow, {
-      [styles.hoverBackground]: hasHoverBackground,
       [styles.errorLogRow]: hasError,
     });
 
@@ -224,8 +200,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
         {this.state.showDetails && (
           <LogDetails
             className={logRowBackground}
-            onMouseEnter={this.addHoverBackground}
-            onMouseLeave={this.clearHoverBackground}
             showDuplicates={showDuplicates}
             getFieldLinks={getFieldLinks}
             onClickFilterLabel={onClickFilterLabel}

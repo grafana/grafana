@@ -91,6 +91,7 @@ const getFullScreenStyles = stylesFactory((theme: GrafanaTheme, hideQuickRanges?
       display: flex;
       flex-direction: column;
       justify-content: flex-end;
+      padding-top: ${theme.spacing.sm};
     `,
   };
 });

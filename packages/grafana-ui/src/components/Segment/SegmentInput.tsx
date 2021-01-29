@@ -3,6 +3,9 @@ import { cx, css } from 'emotion';
 import useClickAway from 'react-use/lib/useClickAway';
 import { measureText } from '../../utils/measureText';
 import { useExpandableLabel, SegmentProps } from '.';
+import { getSegmentStyles } from './styles';
+import { InlineLabel } from '../Forms/InlineLabel';
+import { useStyles } from '../../themes';
 
 export interface SegmentInputProps<T> extends SegmentProps<T>, Omit<HTMLProps<HTMLInputElement>, 'value' | 'onChange'> {
   value: string | number;
@@ -18,6 +21,7 @@ export function SegmentInput<T>({
   Component,
   className,
   placeholder,
+  disabled,
   autofocus = false,
   ...rest
 }: React.PropsWithChildren<SegmentInputProps<T>>) {
@@ -25,6 +29,7 @@ export function SegmentInput<T>({
   const [value, setValue] = useState<number | string>(initialValue);
   const [inputWidth, setInputWidth] = useState<number>(measureText((initialValue || '').toString(), FONT_SIZE).width);
   const [Label, , expanded, setExpanded] = useExpandableLabel(autofocus);
+  const styles = useStyles(getSegmentStyles);
 
   useClickAway(ref, () => {
     setExpanded(false);
@@ -34,11 +39,21 @@ export function SegmentInput<T>({
   if (!expanded) {
     return (
       <Label
+        disabled={disabled}
         Component={
           Component || (
-            <a className={cx('gf-form-label', 'query-part', !value && placeholder && 'query-placeholder', className)}>
+            <InlineLabel
+              className={cx(
+                styles.segment,
+                {
+                  [styles.queryPlaceholder]: placeholder !== undefined && !value,
+                  [styles.disabled]: disabled,
+                },
+                className
+              )}
+            >
               {initialValue || placeholder}
-            </a>
+            </InlineLabel>
           )
         }
       />

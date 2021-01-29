@@ -16,7 +16,8 @@ import { deprecationWarning } from '../utils';
 import { FieldConfigOptionsRegistry } from '../field';
 import { createFieldConfigRegistry } from './registryFactories';
 
-type StandardOptionConfig = {
+/** @beta */
+export type StandardOptionConfig = {
   defaultValue?: any;
   settings?: any;
 };
@@ -130,6 +131,7 @@ export class PanelPlugin<
         set(result, editor.id, editor.defaultValue);
       }
     }
+
     return result;
   }
 
@@ -138,6 +140,10 @@ export class PanelPlugin<
     configDefaults.custom = {} as TFieldConfigOptions;
 
     for (const option of this.fieldConfigRegistry.list()) {
+      if (option.defaultValue === undefined) {
+        continue;
+      }
+
       set(configDefaults, option.id, option.defaultValue);
     }
 

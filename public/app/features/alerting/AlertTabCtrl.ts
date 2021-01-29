@@ -390,6 +390,7 @@ export class AlertTabCtrl {
       case 'action': {
         conditionModel.source.reducer.type = evt.action.value;
         conditionModel.reducerPart = alertDef.createReducerPart(conditionModel.source.reducer);
+        this.evaluatorParamsChanged();
         break;
       }
       case 'get-part-actions': {

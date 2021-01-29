@@ -1,8 +1,8 @@
 import React from 'react';
-import { boolean } from '@storybook/addon-knobs';
 import { action } from '@storybook/addon-actions';
+import { Story } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { Card } from './Card';
+import { Card, Props } from './Card';
 import mdx from './Card.mdx';
 import { Button } from '../Button';
 import { IconButton } from '../IconButton/IconButton';
@@ -18,17 +18,20 @@ export default {
     docs: {
       page: mdx,
     },
+    knobs: {
+      disable: true,
+    },
+  },
+  argTypes: {
+    heading: { control: { disable: true } },
+    description: { control: { disable: true } },
+    href: { control: { disable: true } },
+    tooltip: { control: { disable: true } },
+    onClick: { control: { disable: true } },
   },
 };
 
-const getKnobs = () => {
-  const disabled = boolean('Disabled', false, 'Style props');
-
-  return { disabled };
-};
-
-export const Basic = () => {
-  const { disabled } = getKnobs();
+export const Basic: Story<Props> = ({ disabled }) => {
   return (
     <Card
       heading="Filter by name"
@@ -38,8 +41,7 @@ export const Basic = () => {
   );
 };
 
-export const AsLink = () => {
-  const { disabled } = getKnobs();
+export const AsLink: Story<Props> = ({ disabled }) => {
   return (
     <Card
       href="https://grafana.com"
@@ -50,8 +52,7 @@ export const AsLink = () => {
   );
 };
 
-export const WithTooltip = () => {
-  const { disabled } = getKnobs();
+export const WithTooltip: Story<Props> = ({ disabled }) => {
   return (
     <Card
       heading="Reduce"
@@ -62,8 +63,7 @@ export const WithTooltip = () => {
   );
 };
 
-export const WithTags = () => {
-  const { disabled } = getKnobs();
+export const WithTags: Story<Props> = ({ disabled }) => {
   return (
     <Card heading="Elasticsearch – Custom Templated Query" disabled={disabled}>
       <Card.Meta>Elastic Search</Card.Meta>
@@ -74,8 +74,7 @@ export const WithTags = () => {
   );
 };
 
-export const WithMedia = () => {
-  const { disabled } = getKnobs();
+export const WithMedia: Story<Props> = ({ disabled }) => {
   return (
     <Card href="https://ops-us-east4.grafana.net/api/prom" heading="1-ops-tools1-fallback" disabled={disabled}>
       <Card.Meta>
@@ -90,8 +89,7 @@ export const WithMedia = () => {
     </Card>
   );
 };
-export const WithActions = () => {
-  const { disabled } = getKnobs();
+export const WithActions: Story<Props> = ({ disabled }) => {
   return (
     <Card heading="1-ops-tools1-fallback" disabled={disabled}>
       <Card.Meta>
@@ -119,9 +117,7 @@ export const WithActions = () => {
   );
 };
 
-export const Full = () => {
-  const { disabled } = getKnobs();
-
+export const Full: Story<Props> = ({ disabled }) => {
   return (
     <Card
       heading="Card title"

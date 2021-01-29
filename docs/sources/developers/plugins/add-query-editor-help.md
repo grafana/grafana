@@ -1,4 +1,8 @@
-## Add a query editor help component
++++
+title = "Add query editor help"
++++
+
+# Add a query editor help component
 
 By adding a help component to your plugin, you can for example create "cheat sheets" with commonly used queries. When the user clicks on one of the examples, it automatically updates the query editor. It's a great way to increase productivity for your users.
 

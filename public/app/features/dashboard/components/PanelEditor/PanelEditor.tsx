@@ -6,7 +6,7 @@ import { Subscription } from 'rxjs';
 
 import { FieldConfigSource, GrafanaTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Button, HorizontalGroup, Icon, RadioButtonGroup, stylesFactory } from '@grafana/ui';
+import { HorizontalGroup, PageToolbar, RadioButtonGroup, stylesFactory, ToolbarButton } from '@grafana/ui';
 
 import config from 'app/core/config';
 import { appEvents } from 'app/core/core';
@@ -15,10 +15,7 @@ import { calculatePanelSize } from './utils';
 import { PanelEditorTabs } from './PanelEditorTabs';
 import { DashNavTimeControls } from '../DashNav/DashNavTimeControls';
 import { OptionsPaneContent } from './OptionsPaneContent';
-import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
 import { SubMenuItems } from 'app/features/dashboard/components/SubMenu/SubMenuItems';
-import { BackButton } from 'app/core/components/BackButton/BackButton';
-import { PageToolbar } from 'app/core/components/PageToolbar/PageToolbar';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { SaveDashboardModalProxy } from '../SaveDashboard/SaveDashboardModalProxy';
 import { DashboardPanel } from '../../dashgrid/DashboardPanel';
@@ -237,13 +234,9 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
               onChangeTimeZone={updateTimeZoneForSession}
             />
             {!uiState.isPanelOptionsVisible && (
-              <DashNavButton
-                onClick={this.onTogglePanelOptions}
-                tooltip="Open options pane"
-                classSuffix="close-options"
-              >
-                <Icon name="angle-left" /> <span style={{ paddingLeft: '6px' }}>Show options</span>
-              </DashNavButton>
+              <ToolbarButton onClick={this.onTogglePanelOptions} tooltip="Open options pane" icon="angle-left">
+                Show options
+              </ToolbarButton>
             )}
           </HorizontalGroup>
         </HorizontalGroup>
@@ -253,22 +246,26 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
   renderEditorActions() {
     return [
-      <Button
+      <ToolbarButton
         icon="cog"
         onClick={this.onOpenDashboardSettings}
-        variant="secondary"
         title="Open dashboard settings"
         key="settings"
       />,
-      <Button onClick={this.onDiscard} variant="secondary" title="Undo all changes" key="discard">
+      <ToolbarButton onClick={this.onDiscard} title="Undo all changes" key="discard">
         Discard
-      </Button>,
-      <Button onClick={this.onSaveDashboard} variant="secondary" title="Apply changes and save dashboard" key="save">
+      </ToolbarButton>,
+      <ToolbarButton onClick={this.onSaveDashboard} title="Apply changes and save dashboard" key="save">
         Save
-      </Button>,
-      <Button onClick={this.onPanelExit} title="Apply changes and go back to dashboard" key="apply">
+      </ToolbarButton>,
+      <ToolbarButton
+        onClick={this.onPanelExit}
+        variant="primary"
+        title="Apply changes and go back to dashboard"
+        key="apply"
+      >
         Apply
-      </Button>,
+      </ToolbarButton>,
     ];
   }
 
@@ -308,11 +305,9 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
     return (
       <div className={styles.wrapper} aria-label={selectors.components.PanelEditor.General.content}>
-        <PageToolbar
-          title={`${dashboard.title} / Edit Panel`}
-          titlePrefix={<BackButton onClick={this.onPanelExit} surface="panel" />}
-          actions={this.renderEditorActions()}
-        />
+        <PageToolbar title={`${dashboard.title} / Edit Panel`} onGoBack={this.onPanelExit}>
+          {this.renderEditorActions()}
+        </PageToolbar>
         <div className={styles.verticalSplitPanesWrapper}>
           <SplitPaneWrapper
             leftPaneComponents={this.renderPanelAndEditor(styles)}

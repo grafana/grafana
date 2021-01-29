@@ -339,6 +339,9 @@ type Cfg struct {
 	AutoAssignOrg     bool
 	AutoAssignOrgId   int
 	AutoAssignOrgRole string
+
+	// ExpressionsEnabled specifies whether expressions are enabled.
+	ExpressionsEnabled bool
 }
 
 // IsLiveEnabled returns if grafana live should be enabled
@@ -480,6 +483,11 @@ func (cfg *Cfg) readAnnotationSettings() {
 	cfg.AlertingAnnotationCleanupSetting = newAnnotationCleanupSettings(alertingSection, "max_annotation_age")
 	cfg.DashboardAnnotationCleanupSettings = newAnnotationCleanupSettings(dashboardAnnotation, "max_age")
 	cfg.APIAnnotationCleanupSettings = newAnnotationCleanupSettings(apiIAnnotation, "max_age")
+}
+
+func (cfg *Cfg) readExpressionsSettings() {
+	expressions := cfg.Raw.Section("expressions")
+	cfg.ExpressionsEnabled = expressions.Key("enabled").MustBool(true)
 }
 
 type AnnotationCleanupSettings struct {
@@ -850,6 +858,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.readSmtpSettings()
 	cfg.readQuotaSettings()
 	cfg.readAnnotationSettings()
+	cfg.readExpressionsSettings()
 	if err := cfg.readGrafanaEnvironmentMetrics(); err != nil {
 		return err
 	}

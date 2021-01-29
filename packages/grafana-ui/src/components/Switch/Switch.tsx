@@ -7,6 +7,8 @@ import { focusCss } from '../../themes/mixins';
 
 export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'value'> {
   value?: boolean;
+  /** Make switch's background and border transparent */
+  transparent?: boolean;
 }
 
 export const Switch = React.forwardRef<HTMLInputElement, Props>(
@@ -40,9 +42,9 @@ export const Switch = React.forwardRef<HTMLInputElement, Props>(
 
 Switch.displayName = 'Switch';
 
-export const InlineSwitch = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
+export const InlineSwitch = React.forwardRef<HTMLInputElement, Props>(({ transparent, ...props }, ref) => {
   const theme = useTheme();
-  const styles = getSwitchStyles(theme);
+  const styles = getSwitchStyles(theme, transparent);
 
   return (
     <div className={styles.inlineContainer}>
@@ -53,7 +55,7 @@ export const InlineSwitch = React.forwardRef<HTMLInputElement, Props>((props, re
 
 InlineSwitch.displayName = 'Switch';
 
-const getSwitchStyles = stylesFactory((theme: GrafanaTheme) => {
+const getSwitchStyles = stylesFactory((theme: GrafanaTheme, transparent?: boolean) => {
   return {
     switch: css`
       width: 32px;
@@ -120,8 +122,8 @@ const getSwitchStyles = stylesFactory((theme: GrafanaTheme) => {
       height: ${theme.spacing.formInputHeight}px;
       display: flex;
       align-items: center;
-      background: ${theme.colors.formInputBg};
-      border: 1px solid ${theme.colors.formInputBorder};
+      background: ${transparent ? 'transparent' : theme.colors.formInputBg};
+      border: 1px solid ${transparent ? 'transparent' : theme.colors.formInputBorder};
       border-radius: ${theme.border.radius.md};
     `,
   };

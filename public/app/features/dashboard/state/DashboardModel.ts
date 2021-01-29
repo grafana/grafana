@@ -1016,6 +1016,10 @@ export class DashboardModel {
     return this.getVariablesFromState();
   };
 
+  canAddAnnotations() {
+    return this.meta.canEdit || this.meta.canMakeEditable;
+  }
+
   private getPanelRepeatVariable(panel: PanelModel) {
     return this.getVariablesFromState().find((variable) => variable.name === panel.repeat);
   }

@@ -8,7 +8,7 @@ export const smokeTestScenario = {
   skipScenario: false,
   scenario: () => {
     e2e.flows.openDashboard();
-    e2e.pages.Dashboard.Toolbar.toolbarItems('Add panel').click();
+    e2e.components.PageToolbar.item('Add panel').click();
     e2e.pages.AddDashboard.addNewPanel().click();
 
     e2e.components.DataSource.TestData.QueryTab.scenarioSelectContainer()

@@ -1,7 +1,9 @@
 import { dateTime, TimeRange } from '@grafana/data';
 import { initTemplateSrv } from '../../../test/helpers/initTemplateSrv';
+import { silenceConsoleOutput } from '../../../test/core/utils/silenceConsoleOutput';
 
 describe('templateSrv', () => {
+  silenceConsoleOutput();
   let _templateSrv: any;
 
   describe('init', () => {
@@ -251,6 +253,11 @@ describe('templateSrv', () => {
     it('should replace ${test:glob} with formatted all value', () => {
       const target = _templateSrv.replace('this.${test:glob}.filters', {});
       expect(target).toBe('this.*.filters');
+    });
+
+    it('should replace ${test:text} with "all" value', () => {
+      const target = _templateSrv.replace('this.${test:text}.filters', {});
+      expect(target).toBe('this.All.filters');
     });
 
     it('should not escape custom all value', () => {
@@ -524,6 +531,13 @@ describe('templateSrv', () => {
           current: { value: '$__all', text: '' },
           options: [{ value: '$__all' }, { value: 'db1', text: 'Database 1' }, { value: 'db2', text: 'Database 2' }],
         },
+        {
+          type: 'custom',
+          name: 'custom_all_value',
+          allValue: 'CUSTOM_ALL',
+          current: { value: '$__all', text: '' },
+          options: [{ value: '$__all' }, { value: 'A-Value', text: 'This A' }, { value: 'B-Value', text: 'This B' }],
+        },
       ]);
       _templateSrv.updateIndex();
     });
@@ -541,6 +555,11 @@ describe('templateSrv', () => {
     it('should replace $__all with All', () => {
       const target = _templateSrv.replaceWithText('Db: $databases');
       expect(target).toBe('Db: All');
+    });
+
+    it('should replace $__all with All for values with custom all', () => {
+      const target = _templateSrv.replaceWithText('Custom: $custom_all_value');
+      expect(target).toBe('Custom: All');
     });
   });
 

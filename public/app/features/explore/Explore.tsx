@@ -110,6 +110,7 @@ export interface ExploreProps {
   originPanelId: number;
   addQueryRow: typeof addQueryRow;
   theme: GrafanaTheme;
+  loading: boolean;
   showMetrics: boolean;
   showTable: boolean;
   showLogs: boolean;
@@ -287,8 +288,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   }
 
   renderGraphPanel(width: number) {
-    const { graphResult, absoluteRange, timeZone, splitOpen, queryResponse } = this.props;
-    const isLoading = queryResponse.state === LoadingState.Loading;
+    const { graphResult, absoluteRange, timeZone, splitOpen, queryResponse, loading } = this.props;
     return (
       <ExploreGraphNGPanel
         data={graphResult!}
@@ -298,7 +298,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         onUpdateTimeRange={this.onUpdateTimeRange}
         annotations={queryResponse.annotations}
         splitOpenFn={splitOpen}
-        isLoading={isLoading}
+        isLoading={loading}
       />
     );
   }
@@ -482,6 +482,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     absoluteRange,
     queryResponse,
     showNodeGraph,
+    loading,
   } = item;
 
   const { datasource, queries, range: urlRange, originPanelId } = (urlState || {}) as ExploreUrlState;
@@ -514,6 +515,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     showTable,
     showTrace,
     showNodeGraph,
+    loading,
   };
 }
 

@@ -54,14 +54,16 @@ const dataConfig = {
 export const initialAlertDefinitionState: AlertDefinitionState = {
   alertDefinition: {
     id: 0,
-    name: '',
+    title: '',
     description: '',
     condition: {} as AlertCondition,
+    interval: 60,
   },
-  queryOptions: { maxDataPoints: 100, dataSource: { name: 'gdev-testdata' }, queries: [] },
+  queryOptions: { maxDataPoints: 100, dataSource: {}, queries: [] },
   queryRunner: new PanelQueryRunner(dataConfig),
   uiState: { ...store.getObject(ALERT_DEFINITION_UI_STATE_STORAGE_KEY, DEFAULT_ALERT_DEFINITION_UI_STATE) },
   data: [],
+  alertDefinitions: [] as AlertDefinition[],
 };
 
 function convertToAlertRule(dto: AlertRuleDTO, state: string): AlertRule {
@@ -169,6 +171,9 @@ const alertDefinitionSlice = createSlice({
         queryOptions: action.payload,
       };
     },
+    setAlertDefinitions: (state: AlertDefinitionState, action: PayloadAction<AlertDefinition[]>) => {
+      return { ...state, alertDefinitions: action.payload };
+    },
   },
 });
 
@@ -180,7 +185,7 @@ export const {
   resetSecureField,
 } = notificationChannelSlice.actions;
 
-export const { setUiState, updateAlertDefinition, setQueryOptions } = alertDefinitionSlice.actions;
+export const { setUiState, updateAlertDefinition, setQueryOptions, setAlertDefinitions } = alertDefinitionSlice.actions;
 
 export const alertRulesReducer = alertRulesSlice.reducer;
 export const notificationChannelReducer = notificationChannelSlice.reducer;

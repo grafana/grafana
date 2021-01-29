@@ -150,7 +150,7 @@ export function SelectBase<T>({
   let ReactSelectComponent: ReactSelect | Creatable = ReactSelect;
   const creatableProps: any = {};
   let asyncSelectProps: any = {};
-  let selectedValue = [];
+  let selectedValue;
   if (isMulti && loadOptions) {
     selectedValue = value as any;
   } else {
@@ -207,7 +207,7 @@ export function SelectBase<T>({
     renderControl,
     showAllSelectedWhenOpen,
     tabSelectsValue,
-    value: isMulti ? selectedValue : selectedValue[0],
+    value: isMulti ? selectedValue : selectedValue?.[0],
   };
 
   if (allowCustomValue) {
