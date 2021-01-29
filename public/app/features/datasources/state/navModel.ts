@@ -134,7 +134,7 @@ export function getDataSourceLoadingNav(pageName: string): NavModel {
 
 function hasDashboards(includes: PluginInclude[]): boolean {
   return (
-    includes.find(include => {
+    includes.find((include) => {
       return include.type === 'dashboard';
     }) !== undefined
   );

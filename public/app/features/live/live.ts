@@ -17,9 +17,7 @@ export const sessionId =
   '/' +
   Date.now().toString(16) +
   '/' +
-  Math.random()
-    .toString(36)
-    .substring(2, 15);
+  Math.random().toString(36).substring(2, 15);
 
 export class CentrifugeSrv implements GrafanaLiveSrv {
   readonly open = new Map<string, CentrifugeLiveChannel>();
@@ -39,7 +37,7 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
     });
     this.centrifuge.connect(); // do connection
     this.connectionState = new BehaviorSubject<boolean>(this.centrifuge.isConnected());
-    this.connectionBlocker = new Promise<void>(resolve => {
+    this.connectionBlocker = new Promise<void>((resolve) => {
       if (this.centrifuge.isConnected()) {
         return resolve();
       }
@@ -103,7 +101,7 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
     this.open.set(id, channel);
 
     // Initialize the channel in the background
-    this.initChannel(scope, channel).catch(err => {
+    this.initChannel(scope, channel).catch((err) => {
       channel?.shutdownWithError(err);
       this.open.delete(id);
     });

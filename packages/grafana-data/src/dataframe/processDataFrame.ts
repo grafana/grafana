@@ -27,7 +27,7 @@ import { fieldIndexComparer } from '../field/fieldComparers';
 import { vectorToArray } from '../vector/vectorToArray';
 
 function convertTableToDataFrame(table: TableData): DataFrame {
-  const fields = table.columns.map(c => {
+  const fields = table.columns.map((c) => {
     // TODO: should be Column but type does not exists there so not sure whats up here.
     const { text, type, ...disp } = c as any;
     return {
@@ -257,7 +257,7 @@ export const guessFieldTypes = (series: DataFrame, guessDefined = false): DataFr
       // Something is missing a type, return a modified copy
       return {
         ...series,
-        fields: series.fields.map(field => {
+        fields: series.fields.map((field) => {
           if (field.type && field.type !== FieldType.other && !guessDefined) {
             return field;
           }
@@ -368,7 +368,7 @@ export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData =
   }
 
   return {
-    columns: fields.map(f => {
+    columns: fields.map((f) => {
       const { name, config } = f;
       if (config) {
         // keep unit etc
@@ -402,7 +402,7 @@ export function sortDataFrame(data: DataFrame, sortIndex?: number, reverse = fal
 
   return {
     ...data,
-    fields: data.fields.map(f => {
+    fields: data.fields.map((f) => {
       return {
         ...f,
         values: new SortedVector(f.values, index),
@@ -417,7 +417,7 @@ export function sortDataFrame(data: DataFrame, sortIndex?: number, reverse = fal
 export function reverseDataFrame(data: DataFrame): DataFrame {
   return {
     ...data,
-    fields: data.fields.map(f => {
+    fields: data.fields.map((f) => {
       const copy = [...f.values.toArray()];
       copy.reverse();
       return {
@@ -443,7 +443,7 @@ export function getDataFrameRow(data: DataFrame, row: number): any[] {
  * Returns a copy that does not include functions
  */
 export function toDataFrameDTO(data: DataFrame): DataFrameDTO {
-  const fields: FieldDTO[] = data.fields.map(f => {
+  const fields: FieldDTO[] = data.fields.map((f) => {
     let values = f.values.toArray();
     // The byte buffers serialize like objects
     if (values instanceof Float64Array) {

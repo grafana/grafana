@@ -34,6 +34,8 @@ type Dialect interface {
 
 	IndexCheckSQL(tableName, indexName string) (string, []interface{})
 	ColumnCheckSQL(tableName, columnName string) (string, []interface{})
+	// UpsertSQL returns the upsert sql statement for a dialect
+	UpsertSQL(tableName string, keyCols, updateCols []string) string
 
 	ColString(*Column) string
 	ColStringNoPk(*Column) string
@@ -280,4 +282,9 @@ func (b *BaseDialect) NoOpSQL() string {
 
 func (b *BaseDialect) TruncateDBTables() error {
 	return nil
+}
+
+//UpsertSQL returns empty string
+func (b *BaseDialect) UpsertSQL(tableName string, keyCols, updateCols []string) string {
+	return ""
 }

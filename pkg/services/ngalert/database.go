@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
@@ -26,12 +27,7 @@ func getAlertDefinitionByUID(sess *sqlstore.DBSession, alertDefinitionUID string
 // It returns models.ErrAlertDefinitionNotFound if no alert definition is found for the provided ID.
 func (ng *AlertNG) deleteAlertDefinitionByUID(cmd *deleteAlertDefinitionByUIDCommand) error {
 	return ng.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		res, err := sess.Exec("DELETE FROM alert_definition WHERE uid = ? AND org_id = ?", cmd.UID, cmd.OrgID)
-		if err != nil {
-			return err
-		}
-
-		_, err = res.RowsAffected()
+		_, err := sess.Exec("DELETE FROM alert_definition WHERE uid = ? AND org_id = ?", cmd.UID, cmd.OrgID)
 		if err != nil {
 			return err
 		}
@@ -41,6 +37,10 @@ func (ng *AlertNG) deleteAlertDefinitionByUID(cmd *deleteAlertDefinitionByUIDCom
 			return err
 		}
 
+		_, err = sess.Exec("DELETE FROM alert_instance WHERE def_org_id = ? AND def_uid = ?", cmd.OrgID, cmd.UID)
+		if err != nil {
+			return err
+		}
 		return nil
 	})
 }
@@ -92,6 +92,9 @@ func (ng *AlertNG) saveAlertDefinition(cmd *saveAlertDefinitionCommand) error {
 		}
 
 		if _, err := sess.Insert(alertDefinition); err != nil {
+			if ng.SQLStore.Dialect.IsUniqueConstraintViolation(err) && strings.Contains(err.Error(), "title") {
+				return fmt.Errorf("an alert definition with the title '%s' already exists: %w", cmd.Title, err)
+			}
 			return err
 		}
 
@@ -166,6 +169,9 @@ func (ng *AlertNG) updateAlertDefinition(cmd *updateAlertDefinitionCommand) erro
 
 		_, err = sess.ID(existingAlertDefinition.ID).Update(alertDefinition)
 		if err != nil {
+			if ng.SQLStore.Dialect.IsUniqueConstraintViolation(err) && strings.Contains(err.Error(), "title") {
+				return fmt.Errorf("an alert definition with the title '%s' already exists: %w", cmd.Title, err)
+			}
 			return err
 		}
 
@@ -206,7 +212,7 @@ func (ng *AlertNG) getOrgAlertDefinitions(query *listAlertDefinitionsQuery) erro
 func (ng *AlertNG) getAlertDefinitions(query *listAlertDefinitionsQuery) error {
 	return ng.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		alerts := make([]*AlertDefinition, 0)
-		q := "SELECT uid, org_id, interval_seconds, version FROM alert_definition"
+		q := "SELECT uid, org_id, interval_seconds, version, paused FROM alert_definition"
 		if err := sess.SQL(q).Find(&alerts); err != nil {
 			return err
 		}
@@ -215,6 +221,39 @@ func (ng *AlertNG) getAlertDefinitions(query *listAlertDefinitionsQuery) error {
 		return nil
 	})
 }
+
+func (ng *AlertNG) updateAlertDefinitionPaused(cmd *updateAlertDefinitionPausedCommand) error {
+	return ng.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		placeHolders := strings.Builder{}
+		const separator = ", "
+		separatorVar := separator
+		params := []interface{}{cmd.Paused, cmd.OrgID}
+		for i, UID := range cmd.UIDs {
+			if i == len(cmd.UIDs)-1 {
+				separatorVar = ""
+			}
+			placeHolders.WriteString(fmt.Sprintf("?%s", separatorVar))
+			params = append(params, UID)
+		}
+		sql := fmt.Sprintf("UPDATE alert_definition SET paused = ? WHERE org_id = ? AND uid IN (%s)", placeHolders.String())
+
+		// prepend sql statement to params
+		var i interface{}
+		params = append(params, i)
+		copy(params[1:], params[0:])
+		params[0] = sql
+
+		res, err := sess.Exec(params...)
+		if err != nil {
+			return err
+		}
+		if cmd.ResultCount, err = res.RowsAffected(); err != nil {
+			ng.log.Debug("failed to get rows affected: %w", err)
+		}
+		return nil
+	})
+}
+
 func generateNewAlertDefinitionUID(sess *sqlstore.DBSession, orgID int64) (string, error) {
 	for i := 0; i < 3; i++ {
 		uid := util.GenerateShortUID()

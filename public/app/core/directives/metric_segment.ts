@@ -87,7 +87,7 @@ export function metricSegment($compile: any, $sce: any, templateSrv: TemplateSrv
         $scope.$apply(() => {
           $scope.getOptions({ $query: query }).then((altSegments: any) => {
             $scope.altSegments = altSegments;
-            options = _.map($scope.altSegments, alt => {
+            options = _.map($scope.altSegments, (alt) => {
               return _.escape(alt.value);
             });
 
@@ -117,7 +117,7 @@ export function metricSegment($compile: any, $sce: any, templateSrv: TemplateSrv
         return value;
       };
 
-      $scope.matcher = function(item: string) {
+      $scope.matcher = function (item: string) {
         if (linkMode) {
           return false;
         }
@@ -145,7 +145,7 @@ export function metricSegment($compile: any, $sce: any, templateSrv: TemplateSrv
       });
 
       const typeahead = $input.data('typeahead');
-      typeahead.lookup = function() {
+      typeahead.lookup = function () {
         this.query = this.$element.val() || '';
         const items = this.source(this.query, $.proxy(this.process, this));
         return items ? this.process(items) : items;
@@ -155,7 +155,7 @@ export function metricSegment($compile: any, $sce: any, templateSrv: TemplateSrv
         typeahead.lookup = _.debounce(typeahead.lookup, 500, { leading: true });
       }
 
-      $button.keydown(evt => {
+      $button.keydown((evt) => {
         // trigger typeahead on down arrow or enter key
         if (evt.keyCode === 40 || evt.keyCode === 13) {
           $button.click();
@@ -218,14 +218,14 @@ export function metricSegmentModel(uiSegmentSrv: any) {
           if ($scope.options) {
             cachedOptions = $scope.options;
             return Promise.resolve(
-              _.map($scope.options, option => {
+              _.map($scope.options, (option) => {
                 return { value: option.text };
               })
             );
           } else {
             return $scope.getOptions().then((options: any) => {
               cachedOptions = options;
-              return _.map(options, option => {
+              return _.map(options, (option) => {
                 if (option.html) {
                   return option;
                 }

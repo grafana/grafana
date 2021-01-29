@@ -34,24 +34,9 @@ describe('RichHistory', () => {
 
   it('should render correct lebels of tabs in tab bar', () => {
     const wrapper = setup();
-    expect(
-      wrapper
-        .find(Tab)
-        .at(0)
-        .text()
-    ).toEqual('Query history');
-    expect(
-      wrapper
-        .find(Tab)
-        .at(1)
-        .text()
-    ).toEqual('Starred');
-    expect(
-      wrapper
-        .find(Tab)
-        .at(2)
-        .text()
-    ).toEqual('Settings');
+    expect(wrapper.find(Tab).at(0).text()).toEqual('Query history');
+    expect(wrapper.find(Tab).at(1).text()).toEqual('Starred');
+    expect(wrapper.find(Tab).at(2).text()).toEqual('Settings');
   });
 
   it('should correctly render query history tab as active tab', () => {

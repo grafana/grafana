@@ -33,7 +33,7 @@ This section describes the fields you fill out to create an alert.
 
 ### Rule
 
-- **Name -** Enter a descriptive name. The name will be displayed in the Alert Rules list.
+- **Name -** Enter a descriptive name. The name will be displayed in the Alert Rules list. This field supports [templating]({{< relref "./add-notification-template.md" >}}).
 - **Evaluate every -** Specify how often the scheduler should evaluate the alert rule. This is referred to as the _evaluation interval_.
 - **For -** Specify how long the query needs to violate the configured thresholds before the alert notification triggers.
 
@@ -117,7 +117,7 @@ The actual notifications are configured and shared between multiple alerts. Read
 [Alert notifications]({{< relref "notifications.md" >}}) for information on how to configure and set up notifications.
 
 - **Send to -** Select an alert notification channel if you have one set up.
-- **Message -** Enter a text message to be sent on the notification channel. Some alert notifiers support transforming the text to HTML or other rich formats.
+- **Message -** Enter a text message to be sent on the notification channel. Some alert notifiers support transforming the text to HTML or other rich formats. This field supports [templating]({{< relref "./add-notification-template.md" >}}).
 - **Tags -** Specify a list of tags (key/value) to be included in the notification. It is only supported by [some notifiers]({{< relref "notifications/#all-supported-notifiers" >}}).
 
 ## Alert state history and annotations

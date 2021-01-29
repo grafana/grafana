@@ -1,8 +1,8 @@
 import React, { PureComponent } from 'react';
 import { QueryGroup } from 'app/features/query/components/QueryGroup';
-import { QueryGroupOptions } from 'app/features/query/components/QueryGroupOptions';
 import { PanelModel } from '../../state';
 import { getLocationSrv } from '@grafana/runtime';
+import { QueryGroupOptions } from 'app/types';
 
 interface Props {
   panel: PanelModel;

@@ -16,34 +16,19 @@ describe('<LogMessageAnsi />', () => {
     const wrapper = shallow(<LogMessageAnsi value={value} />);
 
     expect(wrapper.find('span')).toHaveLength(1);
-    expect(
-      wrapper
-        .find('span')
-        .first()
-        .prop('style')
-    ).toMatchObject(
+    expect(wrapper.find('span').first().prop('style')).toMatchObject(
       expect.objectContaining({
         color: expect.any(String),
       })
     );
-    expect(
-      wrapper
-        .find('span')
-        .first()
-        .text()
-    ).toBe('ipsum');
+    expect(wrapper.find('span').first().text()).toBe('ipsum');
   });
   it('renders string with ANSI codes with correctly converted css classnames', () => {
     const value = 'Lorem [1;32mIpsum';
     const wrapper = shallow(<LogMessageAnsi value={value} />);
 
     expect(wrapper.find('span')).toHaveLength(1);
-    expect(
-      wrapper
-        .find('span')
-        .first()
-        .prop('style')
-    ).toMatchObject(
+    expect(wrapper.find('span').first().prop('style')).toMatchObject(
       expect.objectContaining({
         fontWeight: expect.any(String),
       })

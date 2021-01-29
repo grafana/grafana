@@ -13,7 +13,7 @@ const toOption = (value: any) => ({ label: value, value: value });
 const options = ['Option1', 'Option2', 'OptionWithLooongLabel', 'Option4'].map(toOption);
 
 const loadOptions = (options: any): Promise<Array<SelectableValue<string>>> =>
-  new Promise(res => setTimeout(() => res(options), 2000));
+  new Promise((res) => setTimeout(() => res(options), 2000));
 
 const SegmentFrame = ({ loadOptions, children }: any) => (
   <>
@@ -24,7 +24,7 @@ const SegmentFrame = ({ loadOptions, children }: any) => (
       {children}
       <SegmentAsync
         Component={AddButton}
-        onChange={value => action('New value added')(value)}
+        onChange={(value) => action('New value added')(value)}
         loadOptions={() => loadOptions(options)}
       />
     </div>
@@ -38,7 +38,7 @@ export const ArrayOptions = () => {
       <SegmentAsync
         value={value}
         loadOptions={() => loadOptions(options)}
-        onChange={item => {
+        onChange={(item) => {
           setValue(item);
           action('Segment value changed')(item.value);
         }}
@@ -80,7 +80,7 @@ export const GroupedArrayOptions = () => {
       <SegmentAsync
         value={value}
         loadOptions={() => loadOptions(groupedOptions)}
-        onChange={item => {
+        onChange={(item) => {
           setValue(item);
           action('Segment value changed')(item.value);
         }}
@@ -97,7 +97,7 @@ export const CustomOptionsAllowed = () => {
         allowCustomValue
         value={value}
         loadOptions={() => loadOptions(options)}
-        onChange={item => {
+        onChange={(item) => {
           setValue(item);
           action('Segment value changed')(item.value);
         }}
@@ -133,7 +133,7 @@ export const HtmlAttributes = () => {
         id="segment-async"
         value={value}
         loadOptions={() => loadOptions(options)}
-        onChange={item => {
+        onChange={(item) => {
           setValue(item);
           action('Segment value changed')(item.value);
         }}

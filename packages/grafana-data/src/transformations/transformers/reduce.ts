@@ -35,9 +35,9 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
    * Return a modified copy of the series.  If the transform is not or should not
    * be applied, just return the input series
    */
-  operator: options => source =>
+  operator: (options) => (source) =>
     source.pipe(
-      map(data => {
+      map((data) => {
         if (!options?.reducers?.length) {
           return data; // nothing selected
         }
@@ -69,7 +69,7 @@ export function reduceSeriesToRows(
   reducerId: ReducerID[]
 ): DataFrame | undefined {
   const calculators = fieldReducers.list(reducerId);
-  const reducers = calculators.map(c => c.id);
+  const reducers = calculators.map((c) => c.id);
   const processed: DataFrame[] = [];
 
   for (const series of data) {
@@ -173,7 +173,7 @@ export function mergeResults(data: DataFrame[]): DataFrame | undefined {
  */
 export function reduceFields(data: DataFrame[], matcher: FieldMatcher, reducerId: ReducerID[]): DataFrame[] {
   const calculators = fieldReducers.list(reducerId);
-  const reducers = calculators.map(c => c.id);
+  const reducers = calculators.map((c) => c.id);
   const processed: DataFrame[] = [];
 
   for (const series of data) {

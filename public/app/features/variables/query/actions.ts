@@ -29,9 +29,7 @@ export const updateQueryVariableOptions = (
       await new Promise((resolve, reject) => {
         const subscription: Subscription = new Subscription();
         const observer = variableQueryObserver(resolve, reject, subscription);
-        const responseSubscription = getVariableQueryRunner()
-          .getResponse(identifier)
-          .subscribe(observer);
+        const responseSubscription = getVariableQueryRunner().getResponse(identifier).subscribe(observer);
         subscription.add(responseSubscription);
 
         getVariableQueryRunner().queueRequest({ identifier, datasource, searchFilter });

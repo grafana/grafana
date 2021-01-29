@@ -39,6 +39,15 @@ describe('Graph Migrations', () => {
     panel.options = graphPanelChangedHandler(panel, 'graph', old);
     expect(panel).toMatchSnapshot();
   });
+
+  it('legend', () => {
+    const old: any = {
+      angular: legend,
+    };
+    const panel = {} as PanelModel;
+    panel.options = graphPanelChangedHandler(panel, 'graph', old);
+    expect(panel).toMatchSnapshot();
+  });
 });
 
 const stairscase = {
@@ -241,6 +250,100 @@ const stepedColordLine = {
     show: true,
     total: false,
     values: false,
+  },
+  lines: true,
+  linewidth: 5,
+  maxDataPoints: 20,
+  nullPointMode: 'null',
+  options: {
+    alertThreshold: true,
+  },
+  pluginVersion: '7.4.0-pre',
+  pointradius: 2,
+  renderer: 'flot',
+  seriesOverrides: [],
+  spaceLength: 10,
+  steppedLine: true,
+  thresholds: [],
+  timeRegions: [],
+  title: 'Panel Title',
+  tooltip: {
+    shared: true,
+    sort: 0,
+    value_type: 'individual',
+  },
+  type: 'graph',
+  xaxis: {
+    buckets: null,
+    mode: 'time',
+    name: null,
+    show: true,
+    values: [],
+  },
+  yaxes: [
+    {
+      $$hashKey: 'object:38',
+      format: 'short',
+      label: null,
+      logBase: 1,
+      max: null,
+      min: null,
+      show: true,
+    },
+    {
+      $$hashKey: 'object:39',
+      format: 'short',
+      label: null,
+      logBase: 1,
+      max: null,
+      min: null,
+      show: true,
+    },
+  ],
+  yaxis: {
+    align: false,
+    alignLevel: null,
+  },
+  bars: false,
+  dashes: false,
+  fillGradient: 0,
+  hiddenSeries: false,
+  percentage: false,
+  points: false,
+  stack: false,
+  timeFrom: null,
+  timeShift: null,
+  datasource: null,
+};
+
+const legend = {
+  aliasColors: {
+    'A-series': 'red',
+  },
+  dashLength: 10,
+  fieldConfig: {
+    defaults: {
+      custom: {},
+    },
+    overrides: [],
+  },
+  fill: 5,
+  gridPos: {
+    h: 9,
+    w: 12,
+    x: 0,
+    y: 0,
+  },
+  id: 2,
+  legend: {
+    avg: true,
+    current: true,
+    max: false,
+    min: false,
+    show: true,
+    total: true,
+    values: true,
+    alignAsTable: true,
   },
   lines: true,
   linewidth: 5,

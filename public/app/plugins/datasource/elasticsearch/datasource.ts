@@ -122,11 +122,11 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     return getBackendSrv()
       .fetch<any>(options)
       .pipe(
-        map(results => {
+        map((results) => {
           results.data.$$config = results.config;
           return results.data;
         }),
-        catchError(err => {
+        catchError((err) => {
           if (err.data && err.data.error) {
             return throwError({
               message: 'Elasticsearch error: ' + err.data.error.reason,
@@ -157,7 +157,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       indexList = [this.indexPattern.getIndexForToday()];
     }
 
-    const indexUrlList = indexList.map(index => index + url);
+    const indexUrlList = indexList.map((index) => index + url);
 
     return this.requestAllIndices(indexUrlList);
   }
@@ -168,17 +168,17 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
 
     return generate(
       0,
-      i => i < Math.min(listLen, maxTraversals),
-      i => i + 1
+      (i) => i < Math.min(listLen, maxTraversals),
+      (i) => i + 1
     ).pipe(
-      mergeMap(index => {
+      mergeMap((index) => {
         // catch all errors and emit an object with an err property to simplify checks later in the pipeline
-        return this.request('GET', indexList[listLen - index - 1]).pipe(catchError(err => of({ err })));
+        return this.request('GET', indexList[listLen - index - 1]).pipe(catchError((err) => of({ err })));
       }),
-      skipWhile(resp => resp.err && resp.err.status === 404), // skip all requests that fail because missing Elastic index
+      skipWhile((resp) => resp.err && resp.err.status === 404), // skip all requests that fail because missing Elastic index
       throwIfEmpty(() => 'Could not find an available index for this time range.'), // when i === Math.min(listLen, maxTraversals) generate will complete but without emitting any values which means we didn't find a valid index
       first(), // take the first value that isn't skipped
-      map(resp => {
+      map((resp) => {
         if (resp.err) {
           throw resp.err; // if there is some other error except 404 then we must throw it
         }
@@ -264,7 +264,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
 
     return this.post('_msearch', payload)
       .pipe(
-        map(res => {
+        map((res) => {
           const list = [];
           const hits = res.responses[0].hits.hits;
 
@@ -345,7 +345,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   interpolateVariablesInQueries(queries: ElasticsearchQuery[], scopedVars: ScopedVars): ElasticsearchQuery[] {
     let expandedQueries = queries;
     if (queries && queries.length > 0) {
-      expandedQueries = queries.map(query => {
+      expandedQueries = queries.map((query) => {
         const expandedQuery = {
           ...query,
           datasource: this.name,
@@ -369,14 +369,14 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     // validate that the index exist and has date field
     return this.getFields('date')
       .pipe(
-        mergeMap(dateFields => {
+        mergeMap((dateFields) => {
           const timeField: any = _.find(dateFields, { text: this.timeField });
           if (!timeField) {
             return of({ status: 'error', message: 'No date field named ' + this.timeField + ' found' });
           }
           return of({ status: 'success', message: 'Index OK. Time field name OK.' });
         }),
-        catchError(err => {
+        catchError((err) => {
           console.error(err);
           if (err.message) {
             return of({ status: 'error', message: err.message });
@@ -463,7 +463,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   }
 
   getLogRowContext = async (row: LogRowModel, options?: RowContextOptions): Promise<{ data: DataFrame[] }> => {
-    const sortField = row.dataFrame.fields.find(f => f.name === 'sort');
+    const sortField = row.dataFrame.fields.find((f) => f.name === 'sort');
     const searchAfter = sortField?.values.get(row.rowIndex) || [row.timeEpochMs];
     const sort = options?.direction === 'FORWARD' ? 'asc' : 'desc';
 
@@ -578,10 +578,10 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     const url = this.getMultiSearchUrl();
 
     return this.post(url, payload).pipe(
-      map(res => {
+      map((res) => {
         const er = new ElasticResponse(sentTargets, res);
 
-        if (sentTargets.some(target => target.isLogsQuery)) {
+        if (sentTargets.some((target) => target.isLogsQuery)) {
           const response = er.getLogs(this.logMessageField, this.logLevelField);
           for (const dataFrame of response.data) {
             enhanceDataFrame(dataFrame, this.dataLinks);
@@ -602,7 +602,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   getFields(type?: string, range?: TimeRange): Observable<MetricFindValue[]> {
     const configuredEsVersion = this.esVersion;
     return this.get('/_mapping', range).pipe(
-      map(result => {
+      map((result) => {
         const typeMap: any = {
           float: 'number',
           double: 'number',
@@ -681,7 +681,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
         }
 
         // transform to array
-        return _.map(fields, value => {
+        return _.map(fields, (value) => {
           return value;
         });
       })
@@ -700,13 +700,13 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     const url = this.getMultiSearchUrl();
 
     return this.post(url, esQuery).pipe(
-      map(res => {
+      map((res) => {
         if (!res.responses[0].aggregations) {
           return [];
         }
 
         const buckets = res.responses[0].aggregations['1'].buckets;
-        return _.map(buckets, bucket => {
+        return _.map(buckets, (bucket) => {
           return {
             text: bucket.key_as_string || bucket.key,
             value: bucket.key,
@@ -779,7 +779,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     if (obj === null || obj === undefined) {
       return true;
     }
-    if (['string', 'number', 'boolean'].some(type => type === typeof true)) {
+    if (['string', 'number', 'boolean'].some((type) => type === typeof true)) {
       return true;
     }
 
@@ -825,7 +825,7 @@ export function enhanceDataFrame(dataFrame: DataFrame, dataLinks: DataLinkConfig
   }
 
   for (const field of dataFrame.fields) {
-    const dataLinkConfig = dataLinks.find(dataLink => field.name && field.name.match(dataLink.field));
+    const dataLinkConfig = dataLinks.find((dataLink) => field.name && field.name.match(dataLink.field));
 
     if (!dataLinkConfig) {
       continue;

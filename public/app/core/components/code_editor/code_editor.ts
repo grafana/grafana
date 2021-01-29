@@ -111,7 +111,7 @@ async function link(scope: any, elem: any, attrs: any) {
   }
 
   // Event handlers
-  editorSession.on('change', e => {
+  editorSession.on('change', (e) => {
     scope.$apply(() => {
       const newValue = codeEditor.getValue();
       scope.content = newValue;

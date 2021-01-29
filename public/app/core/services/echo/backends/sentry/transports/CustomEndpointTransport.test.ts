@@ -57,7 +57,7 @@ describe('CustomEndpointTransport', () => {
     expect(fetchSpy).toHaveBeenCalledTimes(1);
 
     // wait out the retry-after and call again - great success
-    await new Promise(resolve => setTimeout(() => resolve(null), 1001));
+    await new Promise((resolve) => setTimeout(() => resolve(null), 1001));
     await expect(transport.sendEvent(event)).resolves.toBeTruthy();
     expect(fetchSpy).toHaveBeenCalledTimes(2);
   });

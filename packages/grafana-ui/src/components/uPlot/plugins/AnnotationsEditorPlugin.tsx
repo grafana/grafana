@@ -17,7 +17,7 @@ export const AnnotationsEditorPlugin: React.FC<AnnotationsEditorPluginProps> = (
   return (
     <SelectionPlugin
       id={pluginId}
-      onSelect={selection => {
+      onSelect={(selection) => {
         console.log(selection);
       }}
       lazy

@@ -7,7 +7,7 @@ import React from 'react';
 import { TagsInput } from '@grafana/ui';
 
 export const plugin = new PanelPlugin<DashListOptions>(DashList)
-  .setPanelOptions(builder => {
+  .setPanelOptions((builder) => {
     builder
       .addBooleanSwitch({
         path: 'showStarred',
@@ -74,7 +74,7 @@ export const plugin = new PanelPlugin<DashListOptions>(DashList)
     const previousVersion = parseFloat(panel.pluginVersion || '6.1');
     if (previousVersion < 6.3) {
       const oldProps = ['starred', 'recent', 'search', 'headings', 'limit', 'query', 'folderId'];
-      oldProps.forEach(prop => delete panel[prop]);
+      oldProps.forEach((prop) => delete panel[prop]);
     }
 
     return newOptions;

@@ -50,7 +50,7 @@ const parseMessage = memoizeOne((rowEntry): FieldDef[] => {
   }
   // Use parser to highlight detected fields
   const detectedFields = parser.getFields(rowEntry);
-  const fields = detectedFields.map(field => {
+  const fields = detectedFields.map((field) => {
     const key = parser.getLabelFromField(field);
     const value = parser.getValueFromField(field);
     return { key, value };
@@ -70,13 +70,13 @@ const getDerivedFields = memoizeOne(
         )
         // Filter out fields without values. For example in elastic the fields are parsed from the document which can
         // have different structure per row and so the dataframe is pretty sparse.
-        .filter(field => {
+        .filter((field) => {
           const value = field.values.get(row.rowIndex);
           // Not sure exactly what will be the empty value here. And we want to keep 0 as some values can be non
           // string.
           return value !== null && value !== undefined;
         })
-        .map(field => {
+        .map((field) => {
           const links = getFieldLinks ? getFieldLinks(field, row.rowIndex) : [];
           return {
             key: field.name,

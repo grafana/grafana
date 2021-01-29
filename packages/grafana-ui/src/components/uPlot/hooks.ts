@@ -30,7 +30,7 @@ export const usePlotPlugins = () => {
      * If any other plugin will try to register, the previously scheduled call will be canceled
      * and arePluginsReady will be deferred to next animation frame.
      */
-    cancellationToken.current = window.requestAnimationFrame(function() {
+    cancellationToken.current = window.requestAnimationFrame(function () {
       if (isMounted.current) {
         setPluginsReady(true);
       }
@@ -41,7 +41,7 @@ export const usePlotPlugins = () => {
     (plugin: PlotPlugin) => {
       pluginLog(plugin.id, false, 'register');
 
-      setPlugins(plugs => {
+      setPlugins((plugs) => {
         if (plugs.hasOwnProperty(plugin.id)) {
           throw new Error(`${plugin.id} that is already registered`);
         }
@@ -54,7 +54,7 @@ export const usePlotPlugins = () => {
       checkPluginsReady();
 
       return () => {
-        setPlugins(p => {
+        setPlugins((p) => {
           pluginLog(plugin.id, false, 'unregister');
           delete p[plugin.id];
           return {
@@ -134,7 +134,7 @@ export const usePlotConfig = (width: number, height: number, timeZone: TimeZone,
       width,
       height,
       ms: 1,
-      plugins: Object.entries(plugins).map(p => ({
+      plugins: Object.entries(plugins).map((p) => ({
         hooks: p[1].hooks,
       })),
       tzDate,
@@ -166,7 +166,7 @@ export const useRefreshAfterGraphRendered = (pluginId: string) => {
       hooks: {
         // refresh events when uPlot draws
         draw: () => {
-          setRenderToken(c => c + 1);
+          setRenderToken((c) => c + 1);
           return;
         },
       },
@@ -188,7 +188,7 @@ export function useRevision<T>(dep?: T | null, cmp?: (prev?: T | null, next?: T 
   useLayoutEffect(() => {
     const hasChange = !comparator(prevDep, dep);
     if (hasChange) {
-      setRev(r => r + 1);
+      setRev((r) => r + 1);
     }
   }, [dep]);
 

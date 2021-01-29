@@ -53,11 +53,11 @@ export class IntervalVariableEditor extends PureComponent<Props> {
 
   render() {
     const { variable } = this.props;
-    const stepOptions = [1, 2, 3, 4, 5, 10, 20, 30, 40, 50, 100, 200, 300, 400, 500].map(count => ({
+    const stepOptions = [1, 2, 3, 4, 5, 10, 20, 30, 40, 50, 100, 200, 300, 400, 500].map((count) => ({
       label: `${count}`,
       value: count,
     }));
-    const stepValue = stepOptions.find(o => o.value === variable.auto_count) ?? stepOptions[0];
+    const stepValue = stepOptions.find((o) => o.value === variable.auto_count) ?? stepOptions[0];
 
     return (
       <VerticalGroup spacing="xs">

@@ -121,11 +121,14 @@ _Do not_ use image shortcodes at this time.
 Include images in a document using the following syntax:
 
 ```
-![Alt text](link to image, starting with /img/docs/ if it is to an internal image)
+![Alt text](link to image, starting with /img/docs/ if it is to an internal image "Title of image in sentence case")
 ```
 
+> **Note:** Alt text does not appear when the user hovers the mouse over the image, but title text does.
+
 **Examples:** 
-- \!\[Grafana Logo](/link/to/grafanalogo/logo.png)
+
+- \!\[Grafana logo](/link/to/grafanalogo/logo.png)
 - \!\[Example](/img/docs/folder_name/alert_test_rule.png)
 
 This follows the format of "!", alt text wrapped in "[]" and the link URL wrapped in "()".

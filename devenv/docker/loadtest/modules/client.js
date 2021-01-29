@@ -196,11 +196,11 @@ export class BearerAuthClient extends BaseClient {
   beforeRequest(params) {
     params = params || {};
     params.headers = params.headers || {};
-    params.headers['Authorization']  = `Bearer ${this.token}`;
+    params.headers['Authorization'] = `Bearer ${this.token}`;
   }
 }
 
-export const createClient = url => {
+export const createClient = (url) => {
   return new GrafanaClient(new BaseClient(url, ''));
 };
 
@@ -210,4 +210,4 @@ export const createBasicAuthClient = (url, username, password) => {
 
 export const createBearerAuthClient = (url, token) => {
   return new GrafanaClient(new BearerAuthClient(url, '', token));
-}
+};

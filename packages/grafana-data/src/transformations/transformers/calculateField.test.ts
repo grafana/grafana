@@ -38,7 +38,7 @@ describe('calculateField transformer w/ timeseries', () => {
       },
     };
 
-    await expect(transformDataFrame([cfg], [seriesA, seriesBC])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [seriesA, seriesBC])).toEmitValuesWith((received) => {
       const data = received[0];
       const filtered = data[0];
       const rows = new DataFrameView(filtered).toArray();
@@ -75,7 +75,7 @@ describe('calculateField transformer w/ timeseries', () => {
       },
     };
 
-    await expect(transformDataFrame([cfg], [seriesA, seriesBC])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [seriesA, seriesBC])).toEmitValuesWith((received) => {
       const data = received[0];
       const filtered = data[0];
       const rows = new DataFrameView(filtered).toArray();
@@ -105,7 +105,7 @@ describe('calculateField transformer w/ timeseries', () => {
       },
     };
 
-    await expect(transformDataFrame([cfg], [seriesBC])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [seriesBC])).toEmitValuesWith((received) => {
       const data = received[0];
       const filtered = data[0];
       const rows = new DataFrameView(filtered).toArray();
@@ -136,7 +136,7 @@ describe('calculateField transformer w/ timeseries', () => {
       },
     };
 
-    await expect(transformDataFrame([cfg], [seriesBC])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [seriesBC])).toEmitValuesWith((received) => {
       const data = received[0];
       const filtered = data[0];
       const rows = new DataFrameView(filtered).toArray();
@@ -167,7 +167,7 @@ describe('calculateField transformer w/ timeseries', () => {
       },
     };
 
-    await expect(transformDataFrame([cfg], [seriesBC])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [seriesBC])).toEmitValuesWith((received) => {
       const data = received[0];
       const filtered = data[0];
       const rows = new DataFrameView(filtered).toArray();

@@ -177,7 +177,7 @@ describe('when onTimeRangeUpdated is dispatched', () => {
         .givenRootReducer(getRootReducer())
         .whenAsyncActionIsDispatched(onTimeRangeUpdated(range, dependencies), true);
 
-      tester.thenDispatchedActionsPredicateShouldEqual(dispatchedActions => {
+      tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
         expect(dispatchedActions[0]).toEqual(
           variableStateFetching(toVariablePayload({ type: 'interval', id: 'interval-0' }))
         );

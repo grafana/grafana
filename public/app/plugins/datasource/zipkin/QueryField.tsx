@@ -42,7 +42,7 @@ export const QueryField = ({ query, onChange, onRunQuery, datasource }: Props) =
               <input
                 style={{ width: '100%' }}
                 value={query.query || ''}
-                onChange={e =>
+                onChange={(e) =>
                   onChange({
                     ...query,
                     query: e.currentTarget.value,
@@ -65,7 +65,7 @@ export function useServices(datasource: ZipkinDatasource): AsyncState<CascaderOp
     try {
       const services: string[] | null = await datasource.metadataRequest(url);
       if (services) {
-        return services.sort().map(service => ({
+        return services.sort().map((service) => ({
           label: service,
           value: service,
           isLeaf: false,
@@ -108,7 +108,7 @@ export function useLoadOptions(datasource: ZipkinDatasource) {
         // TODO: check if this is some issue of version used or something else
         const response: string[] = await datasource.metadataRequest(url, { serviceName: service });
         if (isMounted()) {
-          setAllOptions(state => {
+          setAllOptions((state) => {
             const spanOptions = fromPairs(response.map((span: string) => [span, undefined]));
             return {
               ...state,
@@ -138,15 +138,15 @@ export function useLoadOptions(datasource: ZipkinDatasource) {
         if (isMounted()) {
           const newTraces = traces.length
             ? fromPairs(
-                traces.map(trace => {
-                  const rootSpan = trace.find(span => !span.parentId)!;
+                traces.map((trace) => {
+                  const rootSpan = trace.find((span) => !span.parentId)!;
 
                   return [`${rootSpan.name} [${Math.floor(rootSpan.duration / 1000)} ms]`, rootSpan.traceId];
                 })
               )
             : noTracesOptions;
 
-          setAllOptions(state => {
+          setAllOptions((state) => {
             const spans = state[serviceName];
             return {
               ...state,
@@ -189,19 +189,19 @@ function useMapToCascaderOptions(services: AsyncState<CascaderOption[]>, allOpti
     let cascaderOptions: CascaderOption[] = [];
 
     if (services.value && services.value.length) {
-      cascaderOptions = services.value.map(services => {
+      cascaderOptions = services.value.map((services) => {
         return {
           ...services,
           children:
             allOptions[services.value] &&
-            Object.keys(allOptions[services.value]).map(spanName => {
+            Object.keys(allOptions[services.value]).map((spanName) => {
               return {
                 label: spanName,
                 value: spanName,
                 isLeaf: false,
                 children:
                   allOptions[services.value][spanName] &&
-                  Object.keys(allOptions[services.value][spanName]).map(traceName => {
+                  Object.keys(allOptions[services.value][spanName]).map((traceName) => {
                     return {
                       label: traceName,
                       value: allOptions[services.value][spanName][traceName],

@@ -37,7 +37,7 @@ The Grafana Stackdriver plugin comes with support for automatic unit detection. 
 The data source is still in the `beta` phase, meaning it's currently in active development and is still missing one important feature - templating queries.
 Please try it out, but be aware of that it might be subject to changes and possible bugs. We would love to hear your feedback.
 
-Please read [Using Google Stackdriver in Grafana]({{< relref "../datasources/cloudmonitoring/" >}}) for more detailed information on how to get started and use it.
+Refer to [Using Google Stackdriver in Grafana]({{< relref "../datasources/google-cloud-monitoring/_index.md" >}}) for more detailed information on how to get started and use it.
 
 ## TV and Kiosk Mode
 

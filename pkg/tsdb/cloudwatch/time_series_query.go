@@ -97,7 +97,17 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 			}
 
 			cloudwatchResponses = append(cloudwatchResponses, responses...)
-			res := e.transformQueryResponsesToQueryResult(cloudwatchResponses)
+			res, err := e.transformQueryResponsesToQueryResult(cloudwatchResponses, requestQueries, startTime, endTime)
+			if err != nil {
+				for _, query := range requestQueries {
+					resultChan <- &tsdb.QueryResult{
+						RefId: query.RefId,
+						Error: err,
+					}
+				}
+				return nil
+			}
+
 			for _, queryRes := range res {
 				resultChan <- queryRes
 			}

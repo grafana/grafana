@@ -52,7 +52,7 @@ function soloPanelPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
     let setupFn: () => void;
 
     const ctx: ScenarioContext = {
-      setup: fn => {
+      setup: (fn) => {
         setupFn = fn;
       },
       setDashboard: (overrides?: any, metaOverrides?: any) => {
@@ -97,7 +97,7 @@ function soloPanelPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
 }
 
 describe('SoloPanelPage', () => {
-  soloPanelPageScenario('Given initial state', ctx => {
+  soloPanelPageScenario('Given initial state', (ctx) => {
     ctx.setup(() => {
       ctx.mount();
     });
@@ -107,7 +107,7 @@ describe('SoloPanelPage', () => {
     });
   });
 
-  soloPanelPageScenario('Dashboard init completed ', ctx => {
+  soloPanelPageScenario('Dashboard init completed ', (ctx) => {
     ctx.setup(() => {
       ctx.mount();
       ctx.setDashboard();
@@ -123,7 +123,7 @@ describe('SoloPanelPage', () => {
     });
   });
 
-  soloPanelPageScenario('When user navigates to other SoloPanelPage', ctx => {
+  soloPanelPageScenario('When user navigates to other SoloPanelPage', (ctx) => {
     ctx.setup(() => {
       ctx.mount();
       ctx.setDashboard({ uid: 1, panels: [{ id: 1, type: 'graph', title: 'Panel 1' }] });

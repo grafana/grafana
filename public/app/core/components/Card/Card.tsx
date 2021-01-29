@@ -30,7 +30,7 @@ export const Card: React.FC<CardProps> = ({
       <div className="add-data-source-item-text-wrapper">
         <span className="add-data-source-item-text">{title}</span>
         {description && <span className="add-data-source-item-desc">{description}</span>}
-        {labels && <div>{labels}</div>}
+        {labels && <div className="add-data-source-item-badge">{labels}</div>}
       </div>
       {actions && <div className="add-data-source-item-actions">{actions}</div>}
     </div>

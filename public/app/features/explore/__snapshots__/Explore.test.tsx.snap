@@ -37,9 +37,7 @@ exports[`Explore should render component 1`] = `
         richHistoryButtonActive={false}
       />
     </div>
-    <ErrorContainer
-      queryError={Object {}}
-    />
+    <ErrorContainer />
     <AutoSizer
       disableHeight={true}
       disableWidth={false}

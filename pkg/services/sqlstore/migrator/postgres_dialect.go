@@ -215,3 +215,40 @@ func (db *PostgresDialect) PostInsertId(table string, sess *xorm.Session) error 
 	}
 	return nil
 }
+
+// UpsertSQL returns the upsert sql statement for PostgreSQL dialect
+func (db *PostgresDialect) UpsertSQL(tableName string, keyCols, updateCols []string) string {
+	columnsStr := strings.Builder{}
+	onConflictStr := strings.Builder{}
+	colPlaceHoldersStr := strings.Builder{}
+	setStr := strings.Builder{}
+
+	const separator = ", "
+	separatorVar := separator
+	for i, c := range updateCols {
+		if i == len(updateCols)-1 {
+			separatorVar = ""
+		}
+
+		columnsStr.WriteString(fmt.Sprintf("%s%s", db.Quote(c), separatorVar))
+		colPlaceHoldersStr.WriteString(fmt.Sprintf("?%s", separatorVar))
+		setStr.WriteString(fmt.Sprintf("%s=excluded.%s%s", db.Quote(c), db.Quote(c), separatorVar))
+	}
+
+	separatorVar = separator
+	for i, c := range keyCols {
+		if i == len(keyCols)-1 {
+			separatorVar = ""
+		}
+		onConflictStr.WriteString(fmt.Sprintf("%s%s", db.Quote(c), separatorVar))
+	}
+
+	s := fmt.Sprintf(`INSERT INTO %s (%s) VALUES (%s) ON CONFLICT(%s) DO UPDATE SET %s`,
+		tableName,
+		columnsStr.String(),
+		colPlaceHoldersStr.String(),
+		onConflictStr.String(),
+		setStr.String(),
+	)
+	return s
+}

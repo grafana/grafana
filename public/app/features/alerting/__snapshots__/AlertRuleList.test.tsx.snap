@@ -80,54 +80,52 @@ exports[`Render should render alert rules 1`] = `
         How to add an alert
       </Button>
     </div>
-    <section>
-      <ol
-        className="alert-rule-list"
-      >
-        <AlertRuleItem
-          key="1"
-          onTogglePause={[Function]}
-          rule={
-            Object {
-              "dashboardId": 7,
-              "dashboardSlug": "alerting-with-testdata",
-              "dashboardUid": "ggHbN42mk",
-              "evalData": Object {},
-              "evalDate": "0001-01-01T00:00:00Z",
-              "executionError": "",
-              "id": 1,
-              "name": "TestData - Always OK",
-              "newStateDate": "2018-09-04T10:01:01+02:00",
-              "panelId": 3,
-              "state": "ok",
-              "url": "/d/ggHbN42mk/alerting-with-testdata",
-            }
+    <VerticalGroup
+      spacing="none"
+    >
+      <AlertRuleItem
+        key="1"
+        onTogglePause={[Function]}
+        rule={
+          Object {
+            "dashboardId": 7,
+            "dashboardSlug": "alerting-with-testdata",
+            "dashboardUid": "ggHbN42mk",
+            "evalData": Object {},
+            "evalDate": "0001-01-01T00:00:00Z",
+            "executionError": "",
+            "id": 1,
+            "name": "TestData - Always OK",
+            "newStateDate": "2018-09-04T10:01:01+02:00",
+            "panelId": 3,
+            "state": "ok",
+            "url": "/d/ggHbN42mk/alerting-with-testdata",
           }
-          search=""
-        />
-        <AlertRuleItem
-          key="3"
-          onTogglePause={[Function]}
-          rule={
-            Object {
-              "dashboardId": 7,
-              "dashboardSlug": "alerting-with-testdata",
-              "dashboardUid": "ggHbN42mk",
-              "evalData": Object {},
-              "evalDate": "0001-01-01T00:00:00Z",
-              "executionError": "error",
-              "id": 3,
-              "name": "TestData - ok",
-              "newStateDate": "2018-09-04T10:01:01+02:00",
-              "panelId": 3,
-              "state": "ok",
-              "url": "/d/ggHbN42mk/alerting-with-testdata",
-            }
+        }
+        search=""
+      />
+      <AlertRuleItem
+        key="3"
+        onTogglePause={[Function]}
+        rule={
+          Object {
+            "dashboardId": 7,
+            "dashboardSlug": "alerting-with-testdata",
+            "dashboardUid": "ggHbN42mk",
+            "evalData": Object {},
+            "evalDate": "0001-01-01T00:00:00Z",
+            "executionError": "error",
+            "id": 3,
+            "name": "TestData - ok",
+            "newStateDate": "2018-09-04T10:01:01+02:00",
+            "panelId": 3,
+            "state": "ok",
+            "url": "/d/ggHbN42mk/alerting-with-testdata",
           }
-          search=""
-        />
-      </ol>
-    </section>
+        }
+        search=""
+      />
+    </VerticalGroup>
   </PageContents>
 </Page>
 `;
@@ -212,11 +210,9 @@ exports[`Render should render component 1`] = `
         How to add an alert
       </Button>
     </div>
-    <section>
-      <ol
-        className="alert-rule-list"
-      />
-    </section>
+    <VerticalGroup
+      spacing="none"
+    />
   </PageContents>
 </Page>
 `;

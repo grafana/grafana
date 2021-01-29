@@ -56,7 +56,7 @@ const fetchFilterKeys = async (datasource: string): Promise<Array<SelectableValu
   }
 
   const metrics = await ds.getTagKeys();
-  return metrics.map(m => ({ label: m.text, value: m.text }));
+  return metrics.map((m) => ({ label: m.text, value: m.text }));
 };
 
 const fetchFilterKeysWithRemove = async (datasource: string): Promise<Array<SelectableValue<string>>> => {

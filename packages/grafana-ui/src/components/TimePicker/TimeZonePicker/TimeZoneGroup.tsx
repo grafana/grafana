@@ -9,7 +9,7 @@ interface Props {
 
 const stopPropagation = (event: React.MouseEvent) => event.stopPropagation();
 
-export const TimeZoneGroup: React.FC<PropsWithChildren<Props>> = props => {
+export const TimeZoneGroup: React.FC<PropsWithChildren<Props>> = (props) => {
   const theme = useTheme();
   const { children, label } = props;
   const styles = getStyles(theme);

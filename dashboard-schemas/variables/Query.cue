@@ -20,7 +20,7 @@ package variables
 	// * 4 - Numerical (desc).
 	// * 5 - Alphabetical (case-insensitive, asc).
 	// * 6 - Alphabetical (case-insensitive, desc).
-	sort:            int & >=0 & <=6 | *0
+	sort:            int >= 0 <= 6 | *0
 	tagValuesQuery?: string
 	tags:            [...string] | *[]
 	tagsQuery?:      string

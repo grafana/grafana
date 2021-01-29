@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	jsoniter "github.com/json-iterator/go"
 )
 
 // TsdbQuery contains all information about a query request.
@@ -263,5 +264,9 @@ func (df *dataFrames) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 
-	return json.Marshal(encoded)
+	// Use a configuration that's compatible with the standard library
+	// to minimize the risk of introducing bugs. This will make sure
+	// that map keys is ordered.
+	jsonCfg := jsoniter.ConfigCompatibleWithStandardLibrary
+	return jsonCfg.Marshal(encoded)
 }

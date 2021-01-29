@@ -60,7 +60,3 @@ func (l *OSSLicensingService) Init() error {
 func (*OSSLicensingService) HasValidLicense() bool {
 	return false
 }
-
-func (*OSSLicensingService) TokenRaw() string {
-	return ""
-}

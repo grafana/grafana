@@ -25,6 +25,6 @@ export class GeneralSettings extends PureComponent<Props> {
   }
 
   render() {
-    return <div ref={ref => (this.element = ref)} />;
+    return <div ref={(ref) => (this.element = ref)} />;
   }
 }

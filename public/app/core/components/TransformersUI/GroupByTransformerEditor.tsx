@@ -101,7 +101,7 @@ export const GroupByFieldConfiguration: React.FC<FieldProps> = ({ fieldName, con
             placeholder="Select Stats"
             allowMultiple
             stats={config.aggregations}
-            onChange={stats => {
+            onChange={(stats) => {
               onConfigChange({ ...config, aggregations: stats as ReducerID[] });
             }}
           />
