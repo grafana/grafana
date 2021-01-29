@@ -26,10 +26,6 @@ export enum ExploreId {
  */
 export interface ExploreState {
   /**
-   * True if split view is active.
-   */
-  split: boolean;
-  /**
    * True if time interval for panels are synced. Only possible with split mode.
    */
   syncedTimes: boolean;
@@ -40,7 +36,7 @@ export interface ExploreState {
   /**
    * Explore state of the right area in split view.
    */
-  right: ExploreItemState;
+  right?: ExploreItemState;
   /**
    * History of all queries
    */

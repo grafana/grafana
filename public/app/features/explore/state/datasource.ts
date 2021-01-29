@@ -41,7 +41,7 @@ export function changeDatasource(
   return async (dispatch, getState) => {
     const orgId = getState().user.orgId;
     const { history, instance } = await loadAndInitDatasource(orgId, datasourceName);
-    const currentDataSourceInstance = getState().explore[exploreId].datasourceInstance;
+    const currentDataSourceInstance = getState().explore[exploreId]!.datasourceInstance;
 
     dispatch(
       updateDatasourceInstanceAction({
@@ -51,13 +51,13 @@ export function changeDatasource(
       })
     );
 
-    const queries = getState().explore[exploreId].queries;
+    const queries = getState().explore[exploreId]!.queries;
 
     if (options?.importQueries) {
       await dispatch(importQueries(exploreId, queries, currentDataSourceInstance, instance));
     }
 
-    if (getState().explore[exploreId].isLive) {
+    if (getState().explore[exploreId]!.isLive) {
       dispatch(changeRefreshInterval(exploreId, RefreshPicker.offOption.value));
     }
 

@@ -134,7 +134,7 @@ describe('Wrapper', () => {
 
   it('handles changing the datasource manually', async () => {
     const query = { left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]) };
-    const { datasources } = setup({ query });
+    const { datasources, store } = setup({ query });
     (datasources.loki.query as Mock).mockReturnValueOnce(makeLogsQueryResponse());
     // Wait for rendering the editor
     await screen.findByText(/Editor/i);
@@ -148,15 +148,15 @@ describe('Wrapper', () => {
     });
   });
 
-  it('opens the split pane', async () => {
-    const { datasources } = setup();
+  it('opens the split pane when split button is clicked', async () => {
+    setup();
     // Wait for rendering the editor
     const splitButton = await screen.findByText(/split/i);
     fireEvent.click(splitButton);
-    const editors = await screen.findAllByText('loki Editor input:');
-
-    expect(editors.length).toBe(2);
-    expect(datasources.loki.query).not.toBeCalled();
+    await waitFor(() => {
+      const editors = screen.getAllByText('loki Editor input:');
+      expect(editors.length).toBe(2);
+    });
   });
 
   it('inits with two panes if specified in url', async () => {
@@ -214,6 +214,28 @@ describe('Wrapper', () => {
       const logsPanels = screen.queryAllByTitle(/Close split pane/i);
       expect(logsPanels.length).toBe(0);
     });
+  });
+
+  it('handles url change to split view', async () => {
+    const query = {
+      left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]),
+    };
+    const { datasources, store } = setup({ query });
+    (datasources.loki.query as Mock).mockReturnValue(makeLogsQueryResponse());
+
+    store.dispatch(
+      updateLocation({
+        path: '/explore',
+        query: {
+          left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]),
+          right: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]),
+        },
+      })
+    );
+
+    // Editor renders the new query
+    const editors = await screen.findAllByText(`loki Editor input: { label="value"}`);
+    expect(editors.length).toBe(2);
   });
 });
 

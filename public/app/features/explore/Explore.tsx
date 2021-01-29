@@ -15,37 +15,24 @@ import {
   LoadingState,
   PanelData,
   RawTimeRange,
-  TimeRange,
   TimeZone,
-  ExploreUrlState,
   LogsModel,
-  EventBusExtended,
-  EventBusSrv,
   TraceViewData,
   DataFrame,
 } from '@grafana/data';
 
-import store from 'app/core/store';
 import LogsContainer from './LogsContainer';
 import QueryRows from './QueryRows';
 import TableContainer from './TableContainer';
 import RichHistoryContainer from './RichHistory/RichHistoryContainer';
 import ExploreQueryInspector from './ExploreQueryInspector';
-import { lastSavedUrl, splitOpen } from './state/main';
-import { changeSize, initializeExplore, refreshExplore } from './state/explorePane';
+import { splitOpen } from './state/main';
+import { changeSize } from './state/explorePane';
 import { updateTimeRange } from './state/time';
 import { scanStopAction, addQueryRow, modifyQueries, setQueries, scanStart } from './state/query';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
-import {
-  DEFAULT_RANGE,
-  ensureQueries,
-  getFirstNonQueryRowSpecificError,
-  getTimeRange,
-  getTimeRangeFromUrl,
-  lastUsedDatasourceKeyForOrgId,
-  parseUrlState,
-} from 'app/core/utils/explore';
+import { getFirstNonQueryRowSpecificError } from 'app/core/utils/explore';
 import { ExploreToolbar } from './ExploreToolbar';
 import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
 import { getTimeZone } from '../profile/state/selectors';
@@ -84,20 +71,13 @@ export interface ExploreProps {
   datasourceInstance: DataSourceApi | null;
   datasourceMissing: boolean;
   exploreId: ExploreId;
-  initializeExplore: typeof initializeExplore;
-  initialized: boolean;
   modifyQueries: typeof modifyQueries;
-  refreshExplore: typeof refreshExplore;
   scanning?: boolean;
   scanRange?: RawTimeRange;
   scanStart: typeof scanStart;
   scanStopAction: typeof scanStopAction;
   setQueries: typeof setQueries;
-  split: boolean;
   queryKeys: string[];
-  initialDatasource: string;
-  initialQueries: DataQuery[];
-  initialRange: TimeRange;
   isLive: boolean;
   syncedTimes: boolean;
   updateTimeRange: typeof updateTimeRange;
@@ -117,7 +97,6 @@ export interface ExploreProps {
   showTrace: boolean;
   showNodeGraph: boolean;
   splitOpen: typeof splitOpen;
-  urlQuery: string;
 }
 
 enum ExploreDrawer {
@@ -154,46 +133,12 @@ interface ExploreState {
  * `format`, to indicate eventual transformations by the datasources' result transformers.
  */
 export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
-  el: any;
-  exploreEvents: EventBusExtended;
-
   constructor(props: ExploreProps) {
     super(props);
-    this.exploreEvents = new EventBusSrv();
     this.state = {
       openDrawer: undefined,
     };
   }
-
-  componentDidMount() {
-    const { initialized, exploreId, initialDatasource, initialQueries, initialRange, originPanelId } = this.props;
-    const width = this.el ? this.el.offsetWidth : 0;
-
-    // initialize the whole explore first time we mount and if browser history contains a change in datasource
-    if (!initialized) {
-      this.props.initializeExplore(
-        exploreId,
-        initialDatasource,
-        initialQueries,
-        initialRange,
-        width,
-        this.exploreEvents,
-        originPanelId
-      );
-    }
-  }
-
-  componentWillUnmount() {
-    this.exploreEvents.removeAllListeners();
-  }
-
-  componentDidUpdate(prevProps: ExploreProps) {
-    this.refreshExplore(prevProps.urlQuery);
-  }
-
-  getRef = (el: any) => {
-    this.el = el;
-  };
 
   onChangeTime = (rawRange: RawTimeRange) => {
     const { updateTimeRange, exploreId } = this.props;
@@ -270,15 +215,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         openDrawer: state.openDrawer === ExploreDrawer.QueryInspector ? undefined : ExploreDrawer.QueryInspector,
       };
     });
-  };
-
-  refreshExplore = (prevUrlQuery: string) => {
-    const { exploreId, urlQuery } = this.props;
-
-    // Update state from url only if it changed and only if the change wasn't initialised by redux to prevent any loops
-    if (urlQuery !== prevUrlQuery && urlQuery !== lastSavedUrl[exploreId]) {
-      this.props.refreshExplore(exploreId, urlQuery);
-    }
   };
 
   renderEmptyState() {
@@ -369,7 +305,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       datasourceInstance,
       datasourceMissing,
       exploreId,
-      split,
       queryKeys,
       graphResult,
       queryResponse,
@@ -382,7 +317,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       showNodeGraph,
     } = this.props;
     const { openDrawer } = this.state;
-    const exploreClass = split ? 'explore explore-split' : 'explore';
     const styles = getStyles(theme);
     const showPanels = queryResponse && queryResponse.state !== LoadingState.NotStarted;
 
@@ -395,13 +329,13 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     const showQueryInspector = openDrawer === ExploreDrawer.QueryInspector;
 
     return (
-      <div className={exploreClass} ref={this.getRef} aria-label={selectors.pages.Explore.General.container}>
+      <>
         <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} />
         {datasourceMissing ? this.renderEmptyState() : null}
         {datasourceInstance && (
           <div className="explore-container">
             <div className={cx('panel-container', styles.queryContainer)}>
-              <QueryRows exploreEvents={this.exploreEvents} exploreId={exploreId} queryKeys={queryKeys} />
+              <QueryRows exploreId={exploreId} queryKeys={queryKeys} />
               <SecondaryActions
                 addQueryRowButtonDisabled={isLive}
                 // We cannot show multiple traces at the same time right now so we do not show add query button.
@@ -454,26 +388,19 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
             </AutoSizer>
           </div>
         )}
-      </div>
+      </>
     );
   }
 }
 
-const ensureQueriesMemoized = memoizeOne(ensureQueries);
-const getTimeRangeFromUrlMemoized = memoizeOne(getTimeRangeFromUrl);
-
 function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partial<ExploreProps> {
   const explore = state.explore;
-  const urlQuery = state.location.query[exploreId] as string;
-  const urlState = parseUrlState(urlQuery);
-  const split = explore.split;
   const { syncedTimes } = explore;
-  const item: ExploreItemState = explore[exploreId];
+  const item: ExploreItemState = explore[exploreId]!;
   const timeZone = getTimeZone(state.user);
   const {
     datasourceInstance,
     datasourceMissing,
-    initialized,
     queryKeys,
     isLive,
     graphResult,
@@ -488,28 +415,15 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     loading,
   } = item;
 
-  const { datasource, queries, range: urlRange, originPanelId } = (urlState || {}) as ExploreUrlState;
-  const initialDatasource = datasource || store.get(lastUsedDatasourceKeyForOrgId(state.user.orgId));
-  const initialQueries: DataQuery[] = ensureQueriesMemoized(queries);
-  const initialRange = urlRange
-    ? getTimeRangeFromUrlMemoized(urlRange, timeZone)
-    : getTimeRange(timeZone, DEFAULT_RANGE);
-
   return {
     datasourceInstance,
     datasourceMissing,
-    initialized,
-    split,
     queryKeys,
-    initialDatasource,
-    initialQueries,
-    initialRange,
     isLive,
     graphResult,
     logsResult: logsResult ?? undefined,
     absoluteRange,
     queryResponse,
-    originPanelId,
     syncedTimes,
     timeZone,
     showLogs,
@@ -518,15 +432,12 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     showTrace,
     showNodeGraph,
     loading,
-    urlQuery,
   };
 }
 
 const mapDispatchToProps: Partial<ExploreProps> = {
   changeSize,
-  initializeExplore,
   modifyQueries,
-  refreshExplore,
   scanStart,
   scanStopAction,
   setQueries,

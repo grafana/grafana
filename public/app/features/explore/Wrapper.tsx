@@ -6,15 +6,14 @@ import { StoreState } from 'app/types';
 import { ExploreId } from 'app/types/explore';
 
 import { CustomScrollbar, ErrorBoundaryAlert } from '@grafana/ui';
-import { initMain, lastSavedUrl, resetExploreAction, richHistoryUpdatedAction } from './state/main';
-import Explore from './Explore';
+import { lastSavedUrl, resetExploreAction, richHistoryUpdatedAction } from './state/main';
 import { getRichHistory } from '../../core/utils/richHistory';
+import { ExplorePaneContainer } from './ExplorePaneContainer';
 
 interface WrapperProps {
   split: boolean;
   resetExploreAction: typeof resetExploreAction;
   richHistoryUpdatedAction: typeof richHistoryUpdatedAction;
-  initMain: typeof initMain;
 }
 
 export class Wrapper extends Component<WrapperProps> {
@@ -23,7 +22,6 @@ export class Wrapper extends Component<WrapperProps> {
   }
 
   componentDidMount() {
-    this.props.initMain();
     lastSavedUrl.left = undefined;
     lastSavedUrl.right = undefined;
 
@@ -39,11 +37,11 @@ export class Wrapper extends Component<WrapperProps> {
         <CustomScrollbar autoHeightMin={'100%'}>
           <div className="explore-wrapper">
             <ErrorBoundaryAlert style="page">
-              <Explore exploreId={ExploreId.left} />
+              <ExplorePaneContainer split={split} exploreId={ExploreId.left} />
             </ErrorBoundaryAlert>
             {split && (
               <ErrorBoundaryAlert style="page">
-                <Explore exploreId={ExploreId.right} />
+                <ExplorePaneContainer split={split} exploreId={ExploreId.right} />
               </ErrorBoundaryAlert>
             )}
           </div>
@@ -54,14 +52,14 @@ export class Wrapper extends Component<WrapperProps> {
 }
 
 const mapStateToProps = (state: StoreState) => {
-  const { split } = state.explore;
-  return { split };
+  // const split = isSplit(state);
+  const isUrlSplit = Boolean(state.location.query[ExploreId.left] && state.location.query[ExploreId.right]);
+  return { split: isUrlSplit };
 };
 
 const mapDispatchToProps = {
   resetExploreAction,
   richHistoryUpdatedAction,
-  initMain,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(Wrapper));

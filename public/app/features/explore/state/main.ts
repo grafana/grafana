@@ -2,7 +2,7 @@ import { AnyAction } from 'redux';
 import { DataSourceSrv } from '@grafana/runtime';
 import { serializeStateToUrlParam } from '@grafana/data';
 
-import { stopQueryState, parseUrlState, GetExploreUrlArguments, clearQueryKeys } from 'app/core/utils/explore';
+import { stopQueryState, GetExploreUrlArguments, clearQueryKeys } from 'app/core/utils/explore';
 import { ExploreId, ExploreItemState, ExploreState } from 'app/types/explore';
 import { updateLocation } from '../../../core/actions';
 import { paneReducer } from './explorePane';
@@ -10,9 +10,6 @@ import { createAction } from '@reduxjs/toolkit';
 import { makeExplorePaneState } from './utils';
 import { DataQuery, ExploreUrlState, TimeRange, UrlQueryMap } from '@grafana/data';
 import { ThunkResult } from '../../../types';
-import { getDatasourceSrv } from '../../plugins/datasource_srv';
-import { changeDatasource } from './datasource';
-import { runQueries, setQueriesAction } from './query';
 import { TimeSrv } from '../../dashboard/services/TimeSrv';
 import { PanelModel } from 'app/features/dashboard/state';
 import { toRawTimeRange } from '../utils/time';
@@ -20,11 +17,6 @@ import { toRawTimeRange } from '../utils/time';
 //
 // Actions and Payloads
 //
-
-export interface InitMainPayload {
-  split: boolean;
-}
-export const initMainAction = createAction<InitMainPayload>('explore/initMain');
 
 /**
  * Close the split view and save URL state.
@@ -64,32 +56,23 @@ export const resetExploreAction = createAction<ResetExplorePayload>('explore/res
 //
 
 /**
- * Just to init the split state.
- */
-export const initMain = (): ThunkResult<void> => {
-  return (dispatch, getState) => {
-    const query = getState().location.query;
-    dispatch(initMainAction({ split: Boolean(query[ExploreId.left] && query[ExploreId.right]) }));
-  };
-};
-
-/**
  * Save local redux state back to the URL. Should be called when there is some change that should affect the URL.
  * Not all of the redux state is reflected in URL though.
  */
 export const stateSave = (): ThunkResult<void> => {
   return (dispatch, getState) => {
-    const { left, right, split } = getState().explore;
+    const { left, right } = getState().explore;
     const orgId = getState().user.orgId.toString();
     const urlStates: { [index: string]: string } = { orgId };
     urlStates.left = serializeStateToUrlParam(getUrlStateFromPaneState(left), true);
-    if (split && right.initialized) {
+    if (right) {
       urlStates.right = serializeStateToUrlParam(getUrlStateFromPaneState(right), true);
     }
 
     lastSavedUrl.right = urlStates.right;
     lastSavedUrl.left = urlStates.left;
-    dispatch(updateLocation({ query: urlStates, partial: split && !right.initialized }));
+    // dispatch(updateLocation({ query: urlStates, partial: split && !right.initialized }));
+    dispatch(updateLocation({ query: urlStates }));
   };
 };
 
@@ -113,24 +96,20 @@ export function splitOpen<T extends DataQuery = any>(options?: {
     const leftState: ExploreItemState = getState().explore[ExploreId.left];
     const rightState: ExploreItemState = {
       ...leftState,
+      initialized: false,
     };
-    const queryState = getState().location.query[ExploreId.left] as string;
-    const urlState = parseUrlState(queryState);
 
     if (options) {
-      rightState.queries = [];
       rightState.graphResult = null;
       rightState.logsResult = null;
       rightState.tableResult = null;
       rightState.queryKeys = [];
-      urlState.queries = [];
       rightState.showLogs = false;
       rightState.showMetrics = false;
       rightState.showNodeGraph = false;
       rightState.showTrace = false;
       rightState.showTable = false;
       if (options.range) {
-        urlState.range = options.range.raw;
         // This is super hacky. In traces to logs we want to create a link but also internally open split window.
         // We use the same range object but the raw part is treated differently because it's parsed differently during
         // init depending on whether we open split or new window.
@@ -143,20 +122,14 @@ export function splitOpen<T extends DataQuery = any>(options?: {
         };
       }
 
-      dispatch(splitOpenAction({ itemState: rightState }));
-
-      const queries = [
+      rightState.queries = [
         {
           ...options.query,
           refId: 'A',
         } as DataQuery,
       ];
 
-      const dataSourceSettings = getDatasourceSrv().getInstanceSettings(options.datasourceUid);
-
-      await dispatch(changeDatasource(ExploreId.right, dataSourceSettings!.name));
-      await dispatch(setQueriesAction({ exploreId: ExploreId.right, queries }));
-      await dispatch(runQueries(ExploreId.right));
+      dispatch(splitOpenAction({ itemState: rightState }));
     } else {
       rightState.queries = leftState.queries.slice();
       dispatch(splitOpenAction({ itemState: rightState }));
@@ -214,10 +187,9 @@ export const navigateToExplore = (
  */
 const initialExploreItemState = makeExplorePaneState();
 export const initialExploreState: ExploreState = {
-  split: false,
   syncedTimes: false,
   left: initialExploreItemState,
-  right: initialExploreItemState,
+  right: undefined,
   richHistory: [],
 };
 
@@ -226,24 +198,20 @@ export const initialExploreState: ExploreState = {
  * Actions that have an `exploreId` get routed to the ExploreItemReducer.
  */
 export const exploreReducer = (state = initialExploreState, action: AnyAction): ExploreState => {
-  if (initMainAction.match(action)) {
-    return { ...state, split: action.payload.split };
-  }
   if (splitCloseAction.match(action)) {
     const { itemId } = action.payload as SplitCloseActionPayload;
     const targetSplit = {
-      left: itemId === ExploreId.left ? state.right : state.left,
-      right: initialExploreState.right,
+      left: itemId === ExploreId.left ? state.right! : state.left,
+      right: undefined,
     };
     return {
       ...state,
       ...targetSplit,
-      split: false,
     };
   }
 
   if (splitOpenAction.match(action)) {
-    return { ...state, split: true, right: { ...action.payload.itemState } };
+    return { ...state, right: { ...action.payload.itemState } };
   }
 
   if (syncTimesAction.match(action)) {
@@ -262,7 +230,9 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     const leftState = state[ExploreId.left];
     const rightState = state[ExploreId.right];
     stopQueryState(leftState.querySubscription);
-    stopQueryState(rightState.querySubscription);
+    if (rightState) {
+      stopQueryState(rightState.querySubscription);
+    }
 
     if (payload.force || !Number.isInteger(state.left.originPanelId)) {
       return initialExploreState;

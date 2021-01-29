@@ -22,10 +22,7 @@ const dummyProps: ExploreProps = {
   datasourceMissing: false,
   exploreId: ExploreId.left,
   loading: false,
-  initializeExplore: jest.fn(),
-  initialized: true,
   modifyQueries: jest.fn(),
-  refreshExplore: jest.fn(),
   scanning: false,
   scanRange: {
     from: '0',
@@ -34,18 +31,7 @@ const dummyProps: ExploreProps = {
   scanStart: jest.fn(),
   scanStopAction: scanStopAction,
   setQueries: jest.fn(),
-  split: false,
   queryKeys: [],
-  initialDatasource: 'test',
-  initialQueries: [],
-  initialRange: {
-    from: toUtc('2019-01-01 10:00:00'),
-    to: toUtc('2019-01-01 16:00:00'),
-    raw: {
-      from: 'now-6h',
-      to: 'now',
-    },
-  },
   isLive: false,
   syncedTimes: false,
   updateTimeRange: jest.fn(),
@@ -97,7 +83,6 @@ const dummyProps: ExploreProps = {
   showTrace: true,
   showNodeGraph: true,
   splitOpen: (() => {}) as any,
-  urlQuery: '',
 };
 
 const setupErrors = (hasRefId?: boolean) => {

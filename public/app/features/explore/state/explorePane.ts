@@ -171,8 +171,8 @@ export function initializeExplore(
  * state and runs update actions for relevant parts.
  */
 export function refreshExplore(exploreId: ExploreId, newUrlQuery: string): ThunkResult<void> {
-  return (dispatch, getState) => {
-    const itemState = getState().explore[exploreId];
+  return async (dispatch, getState) => {
+    const itemState = getState().explore[exploreId]!;
     if (!itemState.initialized) {
       return;
     }
@@ -198,7 +198,7 @@ export function refreshExplore(exploreId: ExploreId, newUrlQuery: string): Thunk
 
     if (update.datasource) {
       const initialQueries = ensureQueries(queries);
-      dispatch(
+      await dispatch(
         initializeExplore(exploreId, datasource, initialQueries, range, containerWidth, eventBridge, originPanelId)
       );
       return;
