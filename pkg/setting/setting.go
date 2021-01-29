@@ -1309,8 +1309,8 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 	return nil
 }
 
-// Returns full CDN Path with BuildVersion and edition added
-func (cfg *Cfg) GetFullCDNURL(edition string) string {
+// GetContentDeliveryURL returns full content delivery URL with /<edition>/<version> added to URL
+func (cfg *Cfg) GetContentDeliveryURL(edition string) string {
 	if cfg.CDNRootURL != nil {
 		url := *cfg.CDNRootURL
 		preReleaseFolder := ""

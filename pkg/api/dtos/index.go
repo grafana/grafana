@@ -25,7 +25,7 @@ type IndexViewData struct {
 	AppleTouchIcon          template.URL
 	AppTitle                string
 	Sentry                  *setting.Sentry
-	CDNPath                 string
+	ContentDeliveryURL      string
 	// Nonce is a cryptographic identifier for use with Content Security Policy.
 	Nonce string
 }
