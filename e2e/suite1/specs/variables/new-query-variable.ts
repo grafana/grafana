@@ -3,8 +3,7 @@ import { e2e } from '@grafana/e2e';
 const PAGE_UNDER_TEST = '-Y-tnEDWk';
 
 describe('Variables - Add variable', () => {
-  // TODO: fix flakiness https://github.com/grafana/grafana/pull/30644
-  it.skip('query variable should be default and default fields should be correct', () => {
+  it('query variable should be default and default fields should be correct', () => {
     e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?editview=templating` });
 
