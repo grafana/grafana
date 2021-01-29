@@ -11,8 +11,8 @@ export interface ScaleProps {
   softMax?: number | null;
   range?: Scale.Range;
   distribution?: ScaleDistribution;
-  orientation?: ScaleOrientation;
-  direction?: ScaleDirection;
+  orientation: ScaleOrientation;
+  direction: ScaleDirection;
   log?: number;
 }
 

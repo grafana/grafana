@@ -60,9 +60,12 @@ export enum ScaleOrientation {
 /**
  * @alpha
  */
+
 export enum ScaleDirection {
-  Positive = 1,
-  Negative = -1,
+  Up = 1,
+  Right = 1,
+  Down = -1,
+  Left = -1,
 }
 
 /**

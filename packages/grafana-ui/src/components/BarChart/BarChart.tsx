@@ -19,7 +19,7 @@ import { Themeable } from '../../types';
 import { useRevision } from '../uPlot/hooks';
 import { UPlotChart } from '../uPlot/Plot';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
-import { AxisPlacement, ScaleDistribution } from '../uPlot/config';
+import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation } from '../uPlot/config';
 import { useTheme } from '../../themes';
 import { GraphNGLegendEvent, GraphNGLegendEventMode } from '../GraphNG/types';
 import { FIXED_UNIT } from '../GraphNG/GraphNG';
@@ -79,8 +79,19 @@ export const BarChart: React.FunctionComponent<Props> = ({
     }
 
     // bar orientation -> x scale orientation & direction
-    const xOri = orientation === VizOrientation.Horizontal ? 1 : 0;
-    const xDir = orientation === VizOrientation.Horizontal ? -1 : 1;
+    let xOri: ScaleOrientation, xDir: ScaleDirection, yOri: ScaleOrientation, yDir: ScaleDirection;
+
+    if (orientation === VizOrientation.Vertical) {
+      xOri = ScaleOrientation.Horizontal;
+      xDir = ScaleDirection.Right;
+      yOri = ScaleOrientation.Vertical;
+      yDir = ScaleDirection.Up;
+    } else {
+      xOri = ScaleOrientation.Vertical;
+      xDir = ScaleDirection.Down;
+      yOri = ScaleOrientation.Horizontal;
+      yDir = ScaleDirection.Right;
+    }
 
     const formatValue =
       showValue !== BarValueVisibility.Never
@@ -187,7 +198,8 @@ export const BarChart: React.FunctionComponent<Props> = ({
         max: field.config.max,
         softMin: customConfig.axisSoftMin,
         softMax: customConfig.axisSoftMax,
-        orientation: xOri === 0 ? 1 : 0,
+        orientation: yOri,
+        direction: yDir,
       });
 
       if (customConfig.axisPlacement !== AxisPlacement.Hidden) {

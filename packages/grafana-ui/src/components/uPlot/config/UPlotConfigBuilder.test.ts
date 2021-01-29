@@ -2,7 +2,15 @@
 
 import { UPlotConfigBuilder } from './UPlotConfigBuilder';
 import { GrafanaTheme } from '@grafana/data';
-import { GraphGradientMode, AxisPlacement, DrawStyle, PointVisibility, ScaleDistribution } from '../config';
+import {
+  GraphGradientMode,
+  AxisPlacement,
+  DrawStyle,
+  PointVisibility,
+  ScaleDistribution,
+  ScaleOrientation,
+  ScaleDirection,
+} from '../config';
 import darkTheme from '../../../themes/dark';
 
 describe('UPlotConfigBuilder', () => {
@@ -43,11 +51,15 @@ describe('UPlotConfigBuilder', () => {
 
       builder.addScale({
         scaleKey: 'scale-x',
+        orientation: ScaleOrientation.Horizontal,
+        direction: ScaleDirection.Right,
         isTime: true,
       });
 
       builder.addScale({
         scaleKey: 'scale-y',
+        orientation: ScaleOrientation.Vertical,
+        direction: ScaleDirection.Up,
         isTime: false,
       });
 
@@ -72,17 +84,17 @@ describe('UPlotConfigBuilder', () => {
           "scales": Object {
             "scale-x": Object {
               "auto": false,
-              "dir": undefined,
-              "ori": undefined,
+              "dir": 1,
+              "ori": 0,
               "range": [Function],
               "time": true,
             },
             "scale-y": Object {
               "auto": true,
-              "dir": undefined,
+              "dir": 1,
               "distr": 1,
               "log": undefined,
-              "ori": undefined,
+              "ori": 1,
               "range": [Function],
               "time": false,
             },
@@ -100,11 +112,15 @@ describe('UPlotConfigBuilder', () => {
 
       builder.addScale({
         scaleKey: 'scale-x',
+        orientation: ScaleOrientation.Horizontal,
+        direction: ScaleDirection.Right,
         isTime: true,
       });
 
       builder.addScale({
         scaleKey: 'scale-x',
+        orientation: ScaleOrientation.Horizontal,
+        direction: ScaleDirection.Right,
         isTime: false,
       });
 
@@ -117,6 +133,8 @@ describe('UPlotConfigBuilder', () => {
 
         builder.addScale({
           scaleKey: 'scale-y',
+          orientation: ScaleOrientation.Vertical,
+          direction: ScaleDirection.Up,
           isTime: false,
           distribution: ScaleDistribution.Linear,
         });
@@ -141,10 +159,10 @@ describe('UPlotConfigBuilder', () => {
             "scales": Object {
               "scale-y": Object {
                 "auto": true,
-                "dir": undefined,
+                "dir": 1,
                 "distr": 1,
                 "log": undefined,
-                "ori": undefined,
+                "ori": 1,
                 "range": [Function],
                 "time": false,
               },
@@ -162,6 +180,8 @@ describe('UPlotConfigBuilder', () => {
 
           builder.addScale({
             scaleKey: 'scale-y',
+            orientation: ScaleOrientation.Vertical,
+            direction: ScaleDirection.Up,
             isTime: false,
             distribution: ScaleDistribution.Linear,
           });
@@ -187,10 +207,10 @@ describe('UPlotConfigBuilder', () => {
               "scales": Object {
                 "scale-y": Object {
                   "auto": true,
-                  "dir": undefined,
+                  "dir": 1,
                   "distr": 1,
                   "log": undefined,
-                  "ori": undefined,
+                  "ori": 1,
                   "range": [Function],
                   "time": false,
                 },
@@ -208,6 +228,8 @@ describe('UPlotConfigBuilder', () => {
 
           builder.addScale({
             scaleKey: 'scale-y',
+            orientation: ScaleOrientation.Vertical,
+            direction: ScaleDirection.Up,
             isTime: false,
             distribution: ScaleDistribution.Linear,
             log: 10,
@@ -234,10 +256,10 @@ describe('UPlotConfigBuilder', () => {
               "scales": Object {
                 "scale-y": Object {
                   "auto": true,
-                  "dir": undefined,
+                  "dir": 1,
                   "distr": 1,
                   "log": undefined,
-                  "ori": undefined,
+                  "ori": 1,
                   "range": [Function],
                   "time": false,
                 },
