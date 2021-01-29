@@ -18,7 +18,14 @@ import {
 import { useTheme } from '../../themes';
 import { UPlotChart } from '../uPlot/Plot';
 import { PlotProps } from '../uPlot/types';
-import { AxisPlacement, DrawStyle, GraphFieldConfig, PointVisibility } from '../uPlot/config';
+import {
+  AxisPlacement,
+  DrawStyle,
+  GraphFieldConfig,
+  PointVisibility,
+  ScaleDirection,
+  ScaleOrientation,
+} from '../uPlot/config';
 import { VizLayout } from '../VizLayout/VizLayout';
 import { LegendDisplayMode, VizLegendItem, VizLegendOptions } from '../VizLegend/types';
 import { VizLegend } from '../VizLegend/VizLegend';
@@ -123,6 +130,8 @@ export const GraphNG: React.FC<GraphNGProps> = ({
     if (xField.type === FieldType.time) {
       builder.addScale({
         scaleKey: 'x',
+        orientation: ScaleOrientation.Horizontal,
+        direction: ScaleDirection.Right,
         isTime: true,
         range: () => {
           const r = currentTimeRange.current!;
@@ -141,6 +150,8 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       // Not time!
       builder.addScale({
         scaleKey: 'x',
+        orientation: ScaleOrientation.Horizontal,
+        direction: ScaleDirection.Right,
       });
 
       builder.addAxis({
@@ -170,18 +181,20 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       const scaleColor = getFieldSeriesColor(field, theme);
       const seriesColor = scaleColor.color;
 
-      if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
-        // The builder will manage unique scaleKeys and combine where appropriate
-        builder.addScale({
-          scaleKey,
-          distribution: customConfig.scaleDistribution?.type,
-          log: customConfig.scaleDistribution?.log,
-          min: field.config.min,
-          max: field.config.max,
-          softMin: customConfig.axisSoftMin,
-          softMax: customConfig.axisSoftMax,
-        });
+      // The builder will manage unique scaleKeys and combine where appropriate
+      builder.addScale({
+        scaleKey,
+        orientation: ScaleOrientation.Vertical,
+        direction: ScaleDirection.Up,
+        distribution: customConfig.scaleDistribution?.type,
+        log: customConfig.scaleDistribution?.log,
+        min: field.config.min,
+        max: field.config.max,
+        softMin: customConfig.axisSoftMin,
+        softMax: customConfig.axisSoftMax,
+      });
 
+      if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
         builder.addAxis({
           scaleKey,
           label: customConfig.axisLabel,
