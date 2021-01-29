@@ -390,10 +390,27 @@ func TestAuthDurationSettings(t *testing.T) {
 	require.Equal(t, maxLifetimeDurationTest, cfg.LoginMaxLifetime)
 }
 
-func TestServiceSettings(t *testing.T) {
+func TestGetCDNPath(t *testing.T) {
+	cfg := NewCfg()
+	cfg.BuildVersion = "v7.5.0-11124"
+	cfg.CDNPath = "http://cdn.grafana.com"
+	require.Equal(t, "http://cdn.grafana.com/oss/v7.5.0-11124", cfg.GetFullCDNPath("oss"))
+	require.Equal(t, "http://cdn.grafana.com/enterprise/v7.5.0-11124", cfg.GetFullCDNPath("Enterprise"))
+}
+
+func TestGetCDNPathWithPreReleaseVersion(t *testing.T) {
 	cfg := NewCfg()
 	cfg.BuildVersion = "v7.5.0-11124pre"
 	cfg.CDNPath = "http://cdn.grafana.com"
-	require.Equal(t, "http://cdn.grafana.com/oss/v7.5.0-11124pre", cfg.GetFullCDNPath("oss"))
-	require.Equal(t, "http://cdn.grafana.com/enterprise/v7.5.0-11124pre", cfg.GetFullCDNPath("Enterprise"))
+	require.Equal(t, "http://cdn.grafana.com/oss/master/v7.5.0-11124pre", cfg.GetFullCDNPath("oss"))
+	require.Equal(t, "http://cdn.grafana.com/enterprise/master/v7.5.0-11124pre", cfg.GetFullCDNPath("Enterprise"))
+}
+
+// Adding a case for this in case we switch to proper semver version strings
+func TestGetCDNPathWithAlphaVersion(t *testing.T) {
+	cfg := NewCfg()
+	cfg.BuildVersion = "v7.5.0-alpha.11124"
+	cfg.CDNPath = "http://cdn.grafana.com"
+	require.Equal(t, "http://cdn.grafana.com/oss/master/v7.5.0-alpha.11124", cfg.GetFullCDNPath("oss"))
+	require.Equal(t, "http://cdn.grafana.com/enterprise/master/v7.5.0-alpha.11124", cfg.GetFullCDNPath("Enterprise"))
 }

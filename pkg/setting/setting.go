@@ -1307,7 +1307,11 @@ func (cfg *Cfg) GetFullCDNPath(edition string) string {
 	if cfg.CDNPath != "" {
 		cdnUrl, err := url.Parse(cfg.CDNPath)
 		if err == nil {
-			cdnUrl.Path = path.Join(cdnUrl.Path, strings.ToLower(edition), cfg.BuildVersion)
+			preReleaseFolder := ""
+			if strings.Contains(cfg.BuildVersion, "pre") || strings.Contains(cfg.BuildVersion, "alpha") {
+				preReleaseFolder = "master"
+			}
+			cdnUrl.Path = path.Join(cdnUrl.Path, strings.ToLower(edition), preReleaseFolder, cfg.BuildVersion)
 			return cdnUrl.String()
 		}
 	}
