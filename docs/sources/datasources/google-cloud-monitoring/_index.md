@@ -1,34 +1,26 @@
 +++
-title = "Cloud Monitoring"
+title = "Google Cloud Monitoring"
 description = "Guide for using Google Cloud Monitoring in Grafana"
 keywords = ["grafana", "stackdriver", "google", "guide", "cloud", "monitoring"]
-aliases = ["/docs/grafana/latest/features/datasources/stackdriver", "/docs/grafana/latest/features/datasources/cloudmonitoring/"]
+aliases = ["/docs/grafana/latest/features/datasources/stackdriver", "/docs/grafana/latest/datasources/cloudmonitoring/", "/docs/grafana/latest/features/datasources/cloudmonitoring/"]
 weight = 200
 +++
 
 # Using Google Cloud Monitoring in Grafana
 
-> Officially released in Grafana v6.0.0
+Grafana ships with built-in support for Google Cloud Monitoring. Just add it as a data source and you are ready to build dashboards for your Google Cloud Monitoring metrics.  Refer to [Add a data source]({{< relref "../add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
 
-> Before Grafana v7.1 this data source was named Google Stackdriver.
+> **Note** Before Grafana v7.1, Google Cloud Monitoring was referred to as Google Stackdriver.
 
-Grafana ships with built-in support for Google Cloud Monitoring. Just add it as a data source and you are ready to build dashboards for your Google Cloud Monitoring metrics.
+## Google Cloud Monitoring settings
 
-## Adding the data source
-
-1. Open the side menu by clicking the Grafana icon in the top header.
-1. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
-1. Click the `+ Add data source` button in the top header.
-1. Select `Google Cloud Monitoring` from the _Type_ dropdown.
-1. Upload or paste in the Service Account Key file. See below for steps on how to create a Service Account Key file.
-
-> **Note:** If you're not seeing the `Data Sources` link in your side menu, then your current user account does not have the `Admin` role for the current organization.
+To access Google Cloud Monitoring settings, hover your mouse over the **Configuration** (gear) icon, then click **Data Sources**, and then click the Google Cloud Monitoring data source.
 
 | Name                  | Description                                                                           |
 | --------------------- | ------------------------------------------------------------------------------------- |
 | `Name`                | The data source name. This is how you refer to the data source in panels and queries. |
 | `Default`             | Default data source means that it will be pre-selected for new panels.                |
-| `Service Account Key` | Service Account Key File for a GCP Project. Instructions below on how to create it.   |
+| `Service Account Key` | Upload or paste in the Service Account Key file for a GCP Project. Refer to [Using a Google Service Account Key File](#using-a-google-service-account-key-file) for details.|
 
 ## Authentication
 
@@ -47,31 +39,31 @@ The following APIs need to be enabled first:
 
 Click on the links above and click the `Enable` button:
 
-{{< docs-imagebox img="/img/docs/v71/cloudmonitoring_enable_api.png" class="docs-image--no-shadow" caption="Enable GCP APIs" >}}
+{{< docs-imagebox img="/img/docs/v71/cloudmonitoring_enable_api.png" max-width="450px" class="docs-image--no-shadow" caption="Enable GCP APIs" >}}
 
 #### Create a GCP Service Account for a Project
 
 1. Navigate to the [APIs and Services Credentials page](https://console.cloud.google.com/apis/credentials).
 1. Click on the `Create credentials` dropdown/button and choose the `Service account key` option.
 
-   {{< docs-imagebox img="/img/docs/v71/cloudmonitoring_create_service_account_button.png" class="docs-image--no-shadow" caption="Create service account button" >}}
+   {{< docs-imagebox img="/img/docs/v71/cloudmonitoring_create_service_account_button.png" max-width="500px" class="docs-image--no-shadow" caption="Create service account button" >}}
 
 1. On the `Create service account key` page, choose key type `JSON`. Then in the `Service Account` dropdown, choose the `New service account` option:
 
-   {{< docs-imagebox img="/img/docs/v71/cloudmonitoring_create_service_account_key.png" class="docs-image--no-shadow" caption="Create service account key" >}}
+   {{< docs-imagebox img="/img/docs/v71/cloudmonitoring_create_service_account_key.png" max-width="500px" class="docs-image--no-shadow" caption="Create service account key" >}}
 
 1. Some new fields will appear. Fill in a name for the service account in the `Service account name` field and then choose the `Monitoring Viewer` role from the `Role` dropdown:
 
-   {{< docs-imagebox img="/img/docs/v71/cloudmonitoring_service_account_choose_role.png" class="docs-image--no-shadow" caption="Choose role" >}}
+   {{< docs-imagebox img="/img/docs/v71/cloudmonitoring_service_account_choose_role.png" max-width="600px" class="docs-image--no-shadow" caption="Choose role" >}}
 
 1. Click the Create button. A JSON key file will be created and downloaded to your computer. Store this file in a secure place as it allows access to your Google Cloud Monitoring data.
 1. Upload it to Grafana on the data source Configuration page. You can either upload the file or paste in the contents of the file.
 
-   {{< docs-imagebox img="/img/docs/v71/cloudmonitoring_grafana_upload_key.png" class="docs-image--no-shadow" caption="Upload service key file to Grafana" >}}
+   {{< docs-imagebox img="/img/docs/v71/cloudmonitoring_grafana_upload_key.png" max-width="550px" class="docs-image--no-shadow" caption="Upload service key file to Grafana" >}}
 
 1. The file contents will be encrypted and saved in the Grafana database. Don't forget to save after uploading the file!
 
-   {{< docs-imagebox img="/img/docs/v71/cloudmonitoring_grafana_key_uploaded.png" class="docs-image--no-shadow" caption="Service key file is uploaded to Grafana" >}}
+   {{< docs-imagebox img="/img/docs/v71/cloudmonitoring_grafana_key_uploaded.png" max-width="600px" class="docs-image--no-shadow" caption="Service key file is uploaded to Grafana" >}}
 
 ### Using GCE Default Service Account
 
@@ -181,9 +173,18 @@ Example Alias By: `{{resource.type}} - {{metric.type}}`
 
 Example Result: `gce_instance - compute.googleapis.com/instance/cpu/usage_time`
 
+#### Deep linking from Grafana panels to the Metrics Explorer in Google Cloud Console
+
+> **Note:** Available in Grafana v7.1 and later versions.
+
+{{< docs-imagebox img="/img/docs/v71/cloudmonitoring_deep_linking.png" max-width="500px" class="docs-image--right" caption="Google Cloud Monitoring deep linking" >}}
+
+Click on a time series in the panel to see a context menu with a link to View in Metrics Explorer in Google Cloud Console. Clicking that link opens the Metrics Explorer in the Google Cloud Console and runs the query from the Grafana panel there.
+The link navigates the user first to the Google Account Chooser and after successfully selecting an account, the user is redirected to the Metrics Explorer. The provided link is valid for any account, but it only displays the query if your account has access to the GCP project specified in the query.
+
 ### SLO (Service Level Objective) queries
 
-> Only available in Grafana v7.0+
+> **Note:** Available in Grafana v7.0 and later versions.
 
 {{< docs-imagebox img="/img/docs/v70/slo-query-builder.png" max-width= "400px" class="docs-image--right" >}}
 
@@ -224,7 +225,7 @@ SLO queries use the same [alignment period functionality as metric queries]({{< 
 
 ### MQL (Monitoring Query Language) queries
 
-> **Note:** Only available in Grafana v7.4+.
+> **Note:** Available in Grafana v7.4 and later versions.
 
 The MQL query builder in the Google Cloud Monitoring data source allows you to display MQL results in time series format. To get an understanding of the basic concepts in MQL, refer to [Introduction to Monitoring Query Language](https://cloud.google.com/monitoring/mql).
 
@@ -249,7 +250,7 @@ Instead of hard-coding things like server, application and sensor name in your m
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data
 being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../variables/_index.md" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../../variables/_index.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query Variable
@@ -282,7 +283,7 @@ Why two ways? The first syntax is easier to read and write but does not allow yo
 
 {{< docs-imagebox img="/img/docs/v71/cloudmonitoring_annotations_query_editor.png" max-width= "400px" class="docs-image--right" >}}
 
-[Annotations]({{< relref "../dashboards/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation
+[Annotations]({{< relref "../../dashboards/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation
 queries via the Dashboard menu / Annotations view. Annotation rendering is expensive so it is important to limit the number of rows returned. There is no support for showing Google Cloud Monitoring annotations and events yet but it works well with [custom metrics](https://cloud.google.com/monitoring/custom-metrics/) in Google Cloud Monitoring.
 
 With the query editor for annotations, you can select a metric and filters. The `Title` and `Text` fields support templating and can use data returned from the query. For example, the Title field could have the following text:
@@ -304,7 +305,7 @@ Example Result: `monitoring.googleapis.com/uptime_check/http_status has this val
 
 ## Configure the data source with provisioning
 
-It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../administration/provisioning/#datasources" >}})
+You can configure data sources using config files with Grafana's provisioning system. Read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../../administration/provisioning/#datasources" >}})
 
 Here is a provisioning example using the JWT (Service Account key file) authentication type.
 
@@ -341,35 +342,3 @@ datasources:
     jsonData:
       authenticationType: gce
 ```
-
-## Deep linking from Grafana panels to the Metrics Explorer in Google Cloud Console
-
-Only available in Grafana v7.1+.
-
-{{< docs-imagebox img="/img/docs/v71/cloudmonitoring_deep_linking.png" max-width="500px" class="docs-image--right" caption="Google Cloud Monitoring deep linking" >}}
-
-> **Note:** This feature is only available for Metric queries.
-
-Click on a time series in the panel to see a context menu with a link to View in Metrics Explorer in Google Cloud Console. Clicking that link opens the Metrics Explorer in the Google Cloud Console and runs the query from the Grafana panel there.
-The link navigates the user first to the Google Account Chooser and after successfully selecting an account, the user is redirected to the Metrics Explorer. The provided link is valid for any account, but it only displays the query if your account has access to the GCP project specified in the query.
-
-## Out-of-the-box dashboards
-
-> Only available in Grafana v7.3+.
-
-The updated Cloud Monitoring data source ships with pre-configured dashboards for five of the most popular GCP services:
-
-1. BigQuery
-1. Cloud Load Balancing
-1. Cloud SQL
-1. Google Compute Engine `GCE`
-1. Google Kubernetes Engine `GKE`
-
-To import the pre-configured dashboards, go to the configuration page of a Cloud monitoring data source and click on the `Dashboards` tab. Click `Import` for the dashboard you would like to use.
-The datasource of the newly created dashboard panels will be the one selected above.
-
-The dashboards have a template variable which is populated with the projects accessible by the configured service account every time the dashboard is loaded. After the dashboard is loaded, you can select the project you prefer from the drop-down list.
-
-To customize the dashboard, we recommend saving the dashboard under a different name, because otherwise the dashboard will be overwritten when a new version of the dashboard is released.
-
-{{< docs-imagebox img="/img/docs/v73/cloud-monitoring-dashboard-import.png" caption="Cloud Monitoring dashboard import" >}}
