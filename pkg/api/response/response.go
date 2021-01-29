@@ -102,7 +102,7 @@ func (r StreamingResponse) WriteTo(ctx *models.ReqContext) {
 		header[k] = v
 	}
 	ctx.Resp.WriteHeader(r.status)
-	enc := jsoniter.NewEncoder(ctx.Resp)
+	enc := jsoniter.ConfigCompatibleWithStandardLibrary.NewEncoder(ctx.Resp)
 	if err := enc.Encode(r.body); err != nil {
 		ctx.Logger.Error("Error writing to response", "err", err)
 	}

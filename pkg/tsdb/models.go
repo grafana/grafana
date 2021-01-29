@@ -264,5 +264,5 @@ func (df *dataFrames) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 
-	return jsoniter.Marshal(encoded)
+	return jsoniter.ConfigCompatibleWithStandardLibrary.Marshal(encoded)
 }
