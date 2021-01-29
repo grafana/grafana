@@ -17,7 +17,7 @@ import { VizLayout } from '../VizLayout/VizLayout';
 // Types
 import { VizOrientation } from '@grafana/data';
 import { Themeable } from '../../types';
-import { BarChartOptions, BarValueVisibility } from './types';
+import { BarChartFieldConfig, BarChartOptions, BarValueVisibility, defaultBarChartFieldConfig } from './types';
 import { useRevision } from '../uPlot/hooks';
 import { UPlotChart } from '../uPlot/Plot';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
@@ -149,8 +149,7 @@ export const BarChart: React.FunctionComponent<Props> = ({
 
       field.state!.seriesIndex = seriesIndex++;
 
-      // const config = field.config;
-      // const customConfig = config.custom;
+      const customConfig: BarChartFieldConfig = { ...defaultBarChartFieldConfig, ...field.config.custom };
 
       // const scaleKey = config.unit || FIXED_UNIT;
       // const colorMode = getFieldColorModeForField(field);
@@ -159,9 +158,9 @@ export const BarChart: React.FunctionComponent<Props> = ({
 
       builder.addSeries({
         scaleKey: i === 0 ? 'x' : 'y',
-        lineWidth: 1,
+        lineWidth: customConfig.lineWidth,
         lineColor: seriesColor,
-        fillOpacity: 80,
+        fillOpacity: customConfig.fillOpacity,
         theme,
         fieldName: getFieldDisplayName(field, data),
         pathBuilder: config.drawBars,
@@ -170,14 +169,14 @@ export const BarChart: React.FunctionComponent<Props> = ({
           fieldIndex: i,
           frameIndex: 0,
         },
+        show: customConfig.hideFrom?.graph,
+        gradientMode: customConfig.gradientMode,
+        thresholds: field.config.thresholds,
 
         /*
           lineColor: customConfig.lineColor ?? seriesColor,
           lineWidth: customConfig.lineWidth,
           lineStyle: customConfig.lineStyle,
-          show: !customConfig.hideFrom?.graph,
-          gradientMode: customConfig.gradientMode,
-          thresholds: config.thresholds,
 
           // The following properties are not used in the uPlot config, but are utilized as transport for legend config
           dataFrameFieldIndex,

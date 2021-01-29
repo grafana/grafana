@@ -1,5 +1,5 @@
 import { VizOrientation } from '@grafana/data';
-import { AxisConfig } from '../uPlot/config';
+import { AxisConfig, GraphGradientMode, HideSeriesConfig } from '../uPlot/config';
 import { VizLegendOptions } from '../VizLegend/types';
 
 /**
@@ -38,4 +38,11 @@ export interface BarChartOptions {
 export interface BarChartFieldConfig extends AxisConfig {
   lineWidth?: number; // 0
   fillOpacity?: number; // 100
+  gradientMode?: GraphGradientMode;
+  hideFrom?: HideSeriesConfig;
 }
+
+export const defaultBarChartFieldConfig: BarChartFieldConfig = {
+  lineWidth: 1,
+  fillOpacity: 80,
+};

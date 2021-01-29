@@ -1,8 +1,15 @@
 import { FieldColorModeId, FieldConfigProperty, PanelPlugin, VizOrientation } from '@grafana/data';
 import { BarChartPanel } from './BarChartPanel';
-import { BarChartFieldConfig, BarChartOptions, BarStackingMode, BarValueVisibility } from '@grafana/ui';
+import {
+  BarChartFieldConfig,
+  BarChartOptions,
+  BarStackingMode,
+  BarValueVisibility,
+  graphFieldOptions,
+} from '@grafana/ui';
 import { addLegendOptions } from '../timeseries/config';
 import { SeriesConfigEditor } from '../timeseries/HideSeriesConfigEditor';
+import { defaultBarChartFieldConfig } from '@grafana/ui/src/components/BarChart/types';
 
 export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarChartPanel)
   .useFieldConfig({
@@ -17,23 +24,54 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
       },
     },
     useCustomConfig: (builder) => {
-      builder.addCustomEditor({
-        id: 'hideFrom',
-        name: 'Hide in area',
-        category: ['Series'],
-        path: 'hideFrom',
-        defaultValue: {
-          tooltip: false,
-          graph: false,
-          legend: false,
-        },
-        editor: SeriesConfigEditor,
-        override: SeriesConfigEditor,
-        shouldApply: () => true,
-        hideFromDefaults: true,
-        hideFromOverrides: true,
-        process: (value) => value,
-      });
+      const cfg = defaultBarChartFieldConfig;
+
+      builder
+        .addSliderInput({
+          path: 'lineWidth',
+          name: 'Line width',
+          defaultValue: cfg.lineWidth,
+          settings: {
+            min: 0,
+            max: 10,
+            step: 1,
+          },
+        })
+        .addSliderInput({
+          path: 'fillOpacity',
+          name: 'Fill opacity',
+          defaultValue: cfg.fillOpacity,
+          settings: {
+            min: 0,
+            max: 100,
+            step: 1,
+          },
+        })
+        .addRadio({
+          path: 'gradientMode',
+          name: 'Gradient mode',
+          defaultValue: graphFieldOptions.fillGradient[0].value,
+          settings: {
+            options: graphFieldOptions.fillGradient,
+          },
+        })
+        .addCustomEditor({
+          id: 'hideFrom',
+          name: 'Hide in area',
+          category: ['Series'],
+          path: 'hideFrom',
+          defaultValue: {
+            tooltip: false,
+            graph: false,
+            legend: false,
+          },
+          editor: SeriesConfigEditor,
+          override: SeriesConfigEditor,
+          shouldApply: () => true,
+          hideFromDefaults: true,
+          hideFromOverrides: true,
+          process: (value) => value,
+        });
     },
   })
   .setPanelOptions((builder) => {
