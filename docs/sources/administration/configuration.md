@@ -261,7 +261,7 @@ Path where the socket should be created when `protocol=socket`. Make sure that G
 
 ### cdn_url
 
-> **Note**: Only available in v7.4+
+> **Note**: Available in Grafana v7.4 and later versions.
 
 Specify a full HTTP URL address to the root of your Grafana CDN assets. Grafana will add edition and version paths.
 
