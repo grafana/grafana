@@ -2,6 +2,7 @@ package setting
 
 import (
 	"bufio"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -391,26 +392,33 @@ func TestAuthDurationSettings(t *testing.T) {
 }
 
 func TestGetCDNPath(t *testing.T) {
+	var err error
 	cfg := NewCfg()
 	cfg.BuildVersion = "v7.5.0-11124"
-	cfg.CDNPath = "http://cdn.grafana.com"
-	require.Equal(t, "http://cdn.grafana.com/oss/v7.5.0-11124", cfg.GetFullCDNPath("oss"))
-	require.Equal(t, "http://cdn.grafana.com/enterprise/v7.5.0-11124", cfg.GetFullCDNPath("Enterprise"))
+	cfg.CDNRootURL, err = url.Parse("http://cdn.grafana.com")
+	require.NoError(t, err)
+
+	require.Equal(t, "http://cdn.grafana.com/oss/v7.5.0-11124", cfg.GetFullCDNURL("oss"))
+	require.Equal(t, "http://cdn.grafana.com/enterprise/v7.5.0-11124", cfg.GetFullCDNURL("Enterprise"))
 }
 
-func TestGetCDNPathWithPreReleaseVersion(t *testing.T) {
+func TestGetCDNPathWithPreReleaseVersionAndSubPath(t *testing.T) {
+	var err error
 	cfg := NewCfg()
 	cfg.BuildVersion = "v7.5.0-11124pre"
-	cfg.CDNPath = "http://cdn.grafana.com"
-	require.Equal(t, "http://cdn.grafana.com/oss/master/v7.5.0-11124pre", cfg.GetFullCDNPath("oss"))
-	require.Equal(t, "http://cdn.grafana.com/enterprise/master/v7.5.0-11124pre", cfg.GetFullCDNPath("Enterprise"))
+	cfg.CDNRootURL, err = url.Parse("http://cdn.grafana.com/sub")
+	require.NoError(t, err)
+	require.Equal(t, "http://cdn.grafana.com/sub/oss/master/v7.5.0-11124pre", cfg.GetFullCDNURL("oss"))
+	require.Equal(t, "http://cdn.grafana.com/sub/enterprise/master/v7.5.0-11124pre", cfg.GetFullCDNURL("Enterprise"))
 }
 
 // Adding a case for this in case we switch to proper semver version strings
 func TestGetCDNPathWithAlphaVersion(t *testing.T) {
+	var err error
 	cfg := NewCfg()
 	cfg.BuildVersion = "v7.5.0-alpha.11124"
-	cfg.CDNPath = "http://cdn.grafana.com"
-	require.Equal(t, "http://cdn.grafana.com/oss/master/v7.5.0-alpha.11124", cfg.GetFullCDNPath("oss"))
-	require.Equal(t, "http://cdn.grafana.com/enterprise/master/v7.5.0-alpha.11124", cfg.GetFullCDNPath("Enterprise"))
+	cfg.CDNRootURL, err = url.Parse("http://cdn.grafana.com")
+	require.NoError(t, err)
+	require.Equal(t, "http://cdn.grafana.com/oss/master/v7.5.0-alpha.11124", cfg.GetFullCDNURL("oss"))
+	require.Equal(t, "http://cdn.grafana.com/enterprise/master/v7.5.0-alpha.11124", cfg.GetFullCDNURL("Enterprise"))
 }

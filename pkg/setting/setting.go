@@ -197,7 +197,7 @@ type Cfg struct {
 	SocketPath       string
 	RouterLogging    bool
 	Domain           string
-	CDNPath          string
+	CDNRootURL       *url.URL
 
 	// build
 	BuildVersion string
@@ -1298,22 +1298,28 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 		return err
 	}
 
-	cfg.CDNPath = valueAsString(server, "cdn_path", "")
+	cdnURL := valueAsString(server, "cdn_url", "")
+	if cdnURL != "" {
+		cfg.CDNRootURL, err = url.Parse(cdnURL)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
 // Returns full CDN Path with BuildVersion and edition added
-func (cfg *Cfg) GetFullCDNPath(edition string) string {
-	if cfg.CDNPath != "" {
-		cdnUrl, err := url.Parse(cfg.CDNPath)
-		if err == nil {
-			preReleaseFolder := ""
-			if strings.Contains(cfg.BuildVersion, "pre") || strings.Contains(cfg.BuildVersion, "alpha") {
-				preReleaseFolder = "master"
-			}
-			cdnUrl.Path = path.Join(cdnUrl.Path, strings.ToLower(edition), preReleaseFolder, cfg.BuildVersion)
-			return cdnUrl.String()
+func (cfg *Cfg) GetFullCDNURL(edition string) string {
+	if cfg.CDNRootURL != nil {
+		url := *cfg.CDNRootURL
+		preReleaseFolder := ""
+		if strings.Contains(cfg.BuildVersion, "pre") || strings.Contains(cfg.BuildVersion, "alpha") {
+			preReleaseFolder = "master"
 		}
+		url.Path = path.Join(url.Path, strings.ToLower(edition), preReleaseFolder, cfg.BuildVersion)
+		return url.String()
+
 	}
 
 	return ""

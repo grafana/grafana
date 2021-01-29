@@ -259,6 +259,15 @@ Path to the certificate key file (if `protocol` is set to `https` or `h2`).
 
 Path where the socket should be created when `protocol=socket`. Make sure that Grafana has appropriate permissions before you change this setting.
 
+### cdn_url
+
+> **Note**: Only available in v7.4+
+
+Specify a full http url address to the root of your Grafana CDN assets. Grafana will add edition and version paths.
+
+For example, given a cdn url like `https://cdn.myserver.com` grafana will try to load a javascript file from
+`http://cdn.myserver.com/oss/v7.4.0/public/build/app.<hash>.js`.
+
 <hr />
 
 ## [database]
