@@ -104,19 +104,21 @@ Edit information on an existing user account, including the user name, email, us
 
 Users can change their own passwords, but Server Admins can change user passwords as well.
 
-1. [View the user account list](#view-the-user-account-list).
-1. Click the user account that you want to edit. If necessary, use the search field to find the account.
+{{< docs/list >}}
+{{< docs/shared "manage-users/view-server-user-list-search.md" >}}
 1. In the User information section, click **Edit** next to the **Password** field.
 1. Enter the new value and then click **Save**. Grafana requires a value at least four characters long in this field.
+{{< /docs/list >}}
 
 ### Delete a user account
 
 Permanently remove a user account from the server.
 
-1. [View the user account list](#view-the-user-account-list).
-1. Click the user account that you want to edit. If necessary, use the search field to find the account.
+{{< docs/list >}}
+{{< docs/shared "manage-users/view-server-user-list-search.md" >}}
 1. Click **Delete User**.
 1. Click **Delete user** to confirm the action.
+{{< /docs/list >}}
 
 ### Enable or disable a user account
 
@@ -126,28 +128,31 @@ Temporarily turn on or off account access, but do not remove the account from th
 
 Prevent a user from logging in with this account, but do not delete the account. You might disable an account if a colleague goes on sabbatical.
 
-1. [View the user account list](#view-the-user-account-list).
-1. Click the user account that you want to edit. If necessary, use the search field to find the account.
+{{< docs/list >}}
+{{< docs/shared "manage-users/view-server-user-list-search.md" >}}
 1. Click **Disable User**.
 1. Click **Disable user** to confirm the action.
+{{< /docs/list >}}
 
 #### Enable a user account
 
 Reactivate a disabled user account.
 
-1. [View the user account list](#view-the-user-account-list).
-1. Click the user account that you want to edit. If necessary, use the search field to find the account.
+{{< docs/list >}}
+{{< docs/shared "manage-users/view-server-user-list-search.md" >}}
 1. Click **Enable User**.
+{{< /docs/list >}}
 
 ## Add/remove Grafana Admin flag
 
 Give or remove the Grafana Server Admin role from a user account.
 
-1. [View the user account list](#view-the-user-account-list).
-1. Click the user account that you want to edit. If necessary, use the search field to find the account.
+{{< docs/list >}}
+{{< docs/shared "manage-users/view-server-user-list-search.md" >}}
 1. In the Permissions section, click **Change**.
 1. Click **Yes** or **No**, depending on whether or not you want this user account to have the Grafana Server Admin role.
 1. Click **Change**.
+{{< /docs/list >}}
 
 The next time this user logs in, their permissions will be updated.
 
@@ -155,39 +160,42 @@ The next time this user logs in, their permissions will be updated.
 
 Add a user account to an existing organization. User accounts can belong to multiple organizations, but each user account must belong to at least one organization.
 
-1. [View the user account list](#view-the-user-account-list).
-1. Click the user account that you want to edit. If necessary, use the search field to find the account.
+{{< docs/list >}}
+{{< docs/shared "manage-users/view-server-user-list-search.md" >}}
 1. In the Organisations section, click **Add user to organisation**.
-1. In the **Add to an organization** window:
-   1. Select the **Organisation** that you are adding the user to.
-   1. Select the **Role** that the user should have in the organization.
-   1. Click **Add to organisation**.
+1. In the **Add to an organization** window, select the **Organisation** that you are adding the user to.
+1. Select the **Role** that the user should have in the organization.
+1. Click **Add to organisation**.
+{{< /docs/list >}}
 
 ## Remove a user from an organization
 
 Remove a user account from an organization that it is currently assigned to.
 
-1. [View the user account list](#view-the-user-account-list).
-1. Click the user account that you want to edit. If necessary, use the search field to find the account.
+{{< docs/list >}}
+{{< docs/shared "manage-users/view-server-user-list-search.md" >}}
 1. In the Organisations section, click **Remove from organisation** next to the organization that you want to remove the user from.
 1. Click **Confirm removal**.
+{{< /docs/list >}}
 
 ## Change organization role
 
 Change the organization role assigned to a user account.
 
-1. [View the user account list](#view-the-user-account-list).
-1. Click the user account that you want to edit. If necessary, use the search field to find the account.
+{{< docs/list >}}
+{{< docs/shared "manage-users/view-server-user-list-search.md" >}}
 1. In the Organisations section, click **Change role** next to the organization that you want to change the user role for.
 1. Select the new role and then click **Save**.
+{{< /docs/list >}}
 
 ## View and manage user sessions
 
 See when a user last logged in and information about how they logged in. You can also force the account to log out of Grafana.
 
-1. [View the user account list](#view-the-user-account-list).
-1. Click the user account that you want to edit. If necessary, use the search field to find the account.
+{{< docs/list >}}
+{{< docs/shared "manage-users/view-server-user-list-search.md" >}}
 1. Scroll down to the Sessions section to view sessions associated with this user account.
+{{< /docs/list >}}
 
 ## Force a user to log out of Grafana
 
@@ -197,18 +205,20 @@ If you suspect a user account is compromised or is no longer authorized to acces
 
 Log the user account out of one specific device that is logged in to Grafana.
 
-1. [View the user account list](#view-the-user-account-list).
-1. Click the user account that you want to edit. If necessary, use the search field to find the account.
+{{< docs/list >}}
+{{< docs/shared "manage-users/view-server-user-list-search.md" >}}
 1. Scroll down to the Sessions section.
 1. Click **Force logout** next to the session entry that you want logged out of Grafana.
 1. Click **Confirm logout**.
+{{< /docs/list >}}
 
 ### Force logout of all devices
 
 Log the user account out of all devices that are logged in to Grafana.
 
-1. [View the user account list](#view-the-user-account-list).
-1. Click the user account that you want to edit. If necessary, use the search field to find the account.
+{{< docs/list >}}
+{{< docs/shared "manage-users/view-server-user-list-search.md" >}}
 1. Scroll down to the Sessions section.
 1. Click **Force logout from all devices**.
 1. Click **Force logout**.
+{{< /docs/list >}}
