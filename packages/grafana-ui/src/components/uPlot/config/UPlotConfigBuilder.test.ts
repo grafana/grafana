@@ -26,7 +26,9 @@ describe('UPlotConfigBuilder', () => {
               "width": [Function],
             },
           },
+          "hooks": Object {},
           "scales": Object {},
+          "select": undefined,
           "series": Array [
             Object {},
           ],
