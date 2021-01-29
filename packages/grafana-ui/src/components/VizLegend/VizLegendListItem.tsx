@@ -14,6 +14,9 @@ export interface Props {
   onSeriesColorChange?: SeriesColorChangeHandler;
 }
 
+/**
+ * @internal
+ */
 export const VizLegendListItem: React.FunctionComponent<Props> = ({ item, onSeriesColorChange, onLabelClick }) => {
   const styles = useStyles(getStyles);
 
