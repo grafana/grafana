@@ -17,12 +17,6 @@ interface Props extends Themeable {
   onSeriesParsed: (data: DataFrame[], text: string) => void;
 }
 
-interface TableInputCSVStyle {
-  tableInputCsv: string;
-  textarea: string;
-  footer: string;
-}
-
 interface State {
   text: string;
   data: DataFrame[];
@@ -102,6 +96,12 @@ export class UnThemedTableInputCSV extends React.PureComponent<Props, State> {
 
 export const TableInputCSV = withTheme(UnThemedTableInputCSV);
 TableInputCSV.displayName = 'TableInputCSV';
+
+interface TableInputCSVStyle {
+  tableInputCsv: string;
+  textarea: string;
+  footer: string;
+}
 
 const getStyles = stylesFactory(
   (theme: GrafanaTheme): TableInputCSVStyle => {
