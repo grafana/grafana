@@ -18,8 +18,7 @@ Teams members are assigned one of two permissions:
 
 See the complete list of teams in your Grafana organization.
 
-1. Hover your cursor over the **Configuration** (gear) icon in the side menu.
-1. Click **Teams**. Grafana displays the team list.
+{{< docs/shared "manage-users/view-team-list.md" >}}
 
 ### Org Admin view
 
