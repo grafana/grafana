@@ -66,20 +66,26 @@ describe('UPlotConfigBuilder', () => {
               "width": [Function],
             },
           },
+          "hooks": Object {},
           "scales": Object {
             "scale-x": Object {
               "auto": false,
+              "dir": undefined,
+              "ori": undefined,
               "range": [Function],
               "time": true,
             },
             "scale-y": Object {
               "auto": true,
+              "dir": undefined,
               "distr": 1,
               "log": undefined,
+              "ori": undefined,
               "range": [Function],
               "time": false,
             },
           },
+          "select": undefined,
           "series": Array [
             Object {},
           ],
@@ -129,15 +135,19 @@ describe('UPlotConfigBuilder', () => {
                 "width": [Function],
               },
             },
+            "hooks": Object {},
             "scales": Object {
               "scale-y": Object {
                 "auto": true,
+                "dir": undefined,
                 "distr": 1,
                 "log": undefined,
+                "ori": undefined,
                 "range": [Function],
                 "time": false,
               },
             },
+            "select": undefined,
             "series": Array [
               Object {},
             ],
@@ -171,15 +181,19 @@ describe('UPlotConfigBuilder', () => {
                   "width": [Function],
                 },
               },
+              "hooks": Object {},
               "scales": Object {
                 "scale-y": Object {
                   "auto": true,
+                  "dir": undefined,
                   "distr": 1,
                   "log": undefined,
+                  "ori": undefined,
                   "range": [Function],
                   "time": false,
                 },
               },
+              "select": undefined,
               "series": Array [
                 Object {},
               ],
@@ -214,15 +228,19 @@ describe('UPlotConfigBuilder', () => {
                   "width": [Function],
                 },
               },
+              "hooks": Object {},
               "scales": Object {
                 "scale-y": Object {
                   "auto": true,
+                  "dir": undefined,
                   "distr": 1,
                   "log": undefined,
+                  "ori": undefined,
                   "range": [Function],
                   "time": false,
                 },
               },
+              "select": undefined,
               "series": Array [
                 Object {},
               ],
@@ -254,6 +272,7 @@ describe('UPlotConfigBuilder', () => {
         "axes": Array [
           Object {
             "font": "12px 'Roboto'",
+            "gap": 5,
             "grid": Object {
               "show": false,
               "stroke": "#ffffff",
@@ -267,6 +286,7 @@ describe('UPlotConfigBuilder', () => {
             "side": 2,
             "size": [Function],
             "space": [Function],
+            "splits": undefined,
             "stroke": "gray",
             "ticks": Object {
               "show": true,
@@ -291,7 +311,9 @@ describe('UPlotConfigBuilder', () => {
             "width": [Function],
           },
         },
+        "hooks": Object {},
         "scales": Object {},
+        "select": undefined,
         "series": Array [
           Object {},
         ],
@@ -410,7 +432,9 @@ describe('UPlotConfigBuilder', () => {
             "width": [Function],
           },
         },
+        "hooks": Object {},
         "scales": Object {},
+        "select": undefined,
         "series": Array [
           Object {},
           Object {

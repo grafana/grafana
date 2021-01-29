@@ -41,7 +41,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       placement = AxisPlacement.Auto,
       grid = true,
       ticks = true,
-      gap = 0,
+      gap = 5,
       formatValue,
       splits,
       values,
