@@ -111,5 +111,4 @@ Below are some bar graph examples to give you ideas.
 
 ### Hue gradient
 
-
 ![Bars with hue gradient example](/img/docs/time-series-panel/bars-with-hue-gradient-7-4.png)
