@@ -64,11 +64,13 @@ For more information, refer to [Add a field override]({{< relref "../panels/fiel
 
 ### Exemplar support
 
-Grafana graphs now support Prometheus [exemplars]({{< relref "../datasources/prometheus.md#exemplars" >}}). They are displayed as diamonds in the graph visualization.
+Grafana graphs now support Prometheus _exemplars_. They are displayed as diamonds in the graph visualization.
 
-> **Note:** Support for exemplars will be added in version Prometheus 2.25+,
+> **Note:** Support for exemplars will be added in version Prometheus 2.25+.
 
 {{< figure src="/img/docs/v74/exemplars.png" max-width="900px" caption="Exemplar example" >}}
+
+For more information, refer to [Exemplars]({{< relref "../datasources/prometheus.md#exemplars" >}}).
 
 ### Trace to logs
 
@@ -112,6 +114,7 @@ You can lock down what can be done in the frontend code. Lock down what can be l
 ### Hide users in UI
 
 You can now use the `hidden_users` configuration setting to hide specific users in the UI. For example, this feature can be used to hide users that are used for automation purposes.
+
 [Configuration]({{< relref "../administration/configuration.md#hidden_users" >}}) has been updated for this feature.
 
 ### Elasticsearch data source updates
@@ -141,7 +144,7 @@ Unlike the visual query builder, MQL allows you to control the time range and pe
 
 MQL uses a set of operations and functions. Operations are linked together using the common pipe mechanism, where the output of one operation becomes the input to the next. Linking operations makes it possible to build up complex queries incrementally.
 
-Once query type Metrics is selected in the Cloud Monitoring query editor, you can toggle between the editor modes for visual query builder and MQL. For more information, refer to the [Google Cloud Monitoring docs]({{<relref "../datasources/google-cloud-monitoring/_index.md/#out-of-the-box-dashboards">}}).
+Once query type Metrics is selected in the Cloud Monitoring query editor, you can toggle between the editor modes for visual query builder and MQL. For more information, refer to the [Google Cloud Monitoring docs]({{< relref "../datasources/google-cloud-monitoring/_index.md#out-of-the-box-dashboards" >}}).
 
 Many thanks to [mtanda](https://github.com/mtanda) this contribution!
 
@@ -151,7 +154,9 @@ Google Cloud Monitoring data source ships with pre-configured dashboards for som
 
 {{< docs-imagebox img="/img/docs/google-cloud-monitoring/curated-dashboards-7-4.png" max-width= "650px" >}}
 
-If you want to customize a dashboard, we recommend that you save it under a different name.  Otherwise the dashboard will be overwritten when a new version of the dashboard is released. For more information, refer to the [Google Cloud Monitoring docs]({{<relref "../datasources/google-cloud-monitoring/_index.md/#out-of-the-box-dashboards">}}).
+If you want to customize a dashboard, we recommend that you save it under a different name.  Otherwise the dashboard will be overwritten when a new version of the dashboard is released.
+
+For more information, refer to the [Google Cloud Monitoring docs]({{< relref "../datasources/google-cloud-monitoring/_index.md/#out-of-the-box-dashboards" >}}).
 
 ### Query Editor Help
 
@@ -181,19 +186,27 @@ Grafana Enterprise license tokens update automatically on a daily basis, which m
 
 ### Export usage insights to Loki
 
-You can now export usage insights logs to Loki and query them from Grafana. Usage insights logs include dashboard visits, data source views, queries and errors, and more. See [Export logs of usage insights]({{< relref "../enterprise/usage-insights/export-logs.md" >}}) for more information.
+You can now export usage insights logs to Loki and query them from Grafana. Usage insights logs include dashboard visits, data source views, queries and errors, and more.
+
+For more information, refer to [Export logs of usage insights]({{< relref "../enterprise/usage-insights/export-logs.md" >}}).
 
 ### New audit log events
 
-New log out events are logged based on when a token expires or is revoked, as well as [SAML Single Logout]({{< relref "../enterprise/saml.md#single-logout" >}}). A `tokenId` field was added to all audit logs to help understand which session was logged out of. [Auditing]({{< relref "../enterprise/auditing.md" >}}) was updated to reflect these changes.
+New log out events are logged based on when a token expires or is revoked, as well as [SAML Single Logout]({{< relref "../enterprise/saml.md#single-logout" >}}). A `tokenId` field was added to all audit logs to help understand which session was logged out of.
 
 Also, a counter for audit log writing actions with status (success / failure) and logger (loki / file / console) labels was added.
+
+[Auditing]({{< relref "../enterprise/auditing.md" >}}) was updated to reflect these changes.
 
 ### Reports support Unicode
 
 You can now select a font, other than the default, for Unicode-based scripts. As a result, an automatically generated PDF of a dashboard, which contains for example Chinese or Cyrillic text, can display them. Because the size of a report increases as additional fonts are added, this feature is not on by default.
 
+[Reporting]({{< relref "../enterprise/reporting.md#rendering-configuration" >}}) was updated as a result of this change.
+
 ## Breaking changes
+
+The following Grafana 7.4 changes might break previous functionality.
 
 ### Plugin compatibility
 
