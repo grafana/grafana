@@ -20,7 +20,7 @@ describe('Variables - Set options from ui', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('A').should('be.visible').click();
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('B').should('be.visible').click();
 
-    e2e.pages.Dashboard.Toolbar.navBar().click();
+    e2e.components.PageToolbar.container().click();
 
     e2e().wait('@query');
 
@@ -77,7 +77,7 @@ describe('Variables - Set options from ui', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A').should('be.visible').click();
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('B').should('be.visible').click();
 
-    e2e.pages.Dashboard.Toolbar.navBar().click();
+    e2e.components.PageToolbar.container().click();
 
     e2e().wait('@query');
     e2e().wait(500);
@@ -132,7 +132,7 @@ describe('Variables - Set options from ui', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A + B').should('be.visible').click();
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('A').should('be.visible').click();
 
-    e2e.pages.Dashboard.Toolbar.navBar().click();
+    e2e.components.PageToolbar.container().click();
 
     e2e().wait('@query');
     e2e().wait(500);

@@ -160,10 +160,7 @@ export class Sparkline extends PureComponent<Props, State> {
 
     return (
       <UPlotChart
-        data={{
-          frame: data,
-          getDataFrameFieldIndex: () => undefined,
-        }}
+        data={data}
         config={configBuilder}
         width={width}
         height={height}

@@ -1,6 +1,6 @@
 import React from 'react';
 import uPlot, { Options, Hooks } from 'uplot';
-import { DataFrame, DataFrameFieldIndex, TimeRange, TimeZone } from '@grafana/data';
+import { DataFrame, TimeRange, TimeZone } from '@grafana/data';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 
 export type PlotSeriesConfig = Pick<Options, 'series' | 'scales' | 'axes' | 'cursor' | 'bands'>;
@@ -16,7 +16,7 @@ export interface PlotPluginProps {
 }
 
 export interface PlotProps {
-  data: AlignedFrameWithGapTest;
+  data: DataFrame;
   timeRange: TimeRange;
   timeZone: TimeZone;
   width: number;
@@ -28,9 +28,4 @@ export interface PlotProps {
 export abstract class PlotConfigBuilder<P, T> {
   constructor(public props: P) {}
   abstract getConfig(): T;
-}
-
-export interface AlignedFrameWithGapTest {
-  frame: DataFrame;
-  getDataFrameFieldIndex: (alignedFieldIndex: number) => DataFrameFieldIndex | undefined;
 }

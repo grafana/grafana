@@ -8,7 +8,7 @@ e2e.scenario({
   skipScenario: false,
   scenario: () => {
     e2e.flows.openDashboard({ uid: '5SdHCadmz' });
-    e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
+    e2e.components.PageToolbar.item('Dashboard settings').click();
 
     e2e.components.FolderPicker.container()
       .should('be.visible')
