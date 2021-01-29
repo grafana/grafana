@@ -18,18 +18,20 @@ import (
 )
 
 var (
-	expressionsQueryHistogram *prometheus.HistogramVec
+	expressionsQuerySummary *prometheus.SummaryVec
 )
 
 func init() {
-	expressionsQueryHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Namespace: "grafana",
-		Name:      "expressions_queries_duration_milliseconds",
-		Help:      "Expressions query histogram",
-		Buckets:   prometheus.ExponentialBuckets(1, 4, 10),
-	}, []string{"status"})
+	expressionsQuerySummary = prometheus.NewSummaryVec(
+		prometheus.SummaryOpts{
+			Name:       "expressions_queries_duration_milliseconds",
+			Help:       "Expressions query summary",
+			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
+		},
+		[]string{"respStatus"},
+	)
 
-	prometheus.MustRegister(expressionsQueryHistogram)
+	prometheus.MustRegister(expressionsQuerySummary)
 }
 
 // WrapTransformData creates and executes transform requests
@@ -100,7 +102,8 @@ func (s *Service) TransformData(ctx context.Context, req *backend.QueryDataReque
 		default:
 			respStatus = "failure"
 		}
-		expressionsQueryHistogram.WithLabelValues(respStatus).Observe(float64(time.Since(start).Milliseconds()))
+		duration := float64(time.Since(start).Nanoseconds()) / float64(time.Millisecond)
+		expressionsQuerySummary.WithLabelValues(respStatus).Observe(duration)
 	}()
 
 	if s.isDisabled() {
