@@ -179,12 +179,13 @@ Grafana Enterprise license tokens update automatically on a daily basis, which m
 
 ### Export usage insights to Loki
 
-You can now export usage insights logs to Loki and query them from Grafana. Usage insights logs include dashboard visits, data source views, queries and errors, and more.
+You can now export usage insights logs to Loki and query them from Grafana. Usage insights logs include dashboard visits, data source views, queries and errors, and more. See [Export logs of usage insights]({{< relref "../enterprise/usage-insights/export-logs.md" >}}) for more information.
 
 ### New audit log events
 
-A counter for audit log writing actions with status (success / failure) and logger (loki / file / console) labels was added.
-A `sessionId` field to all auditing logs was added because it is useful to understand which session was logged out of.
+New log out events are logged based on when a token expires or is revoked, as well as [SAML Single Logout]({{< relref "../enterprise/saml.md#single-logout" >}}). A `tokenId` field was added to all audit logs to help understand which session was logged out of. [Auditing]({{< relref "../enterprise/auditing.md" >}}) was updated to reflect these changes.
+
+Also, a counter for audit log writing actions with status (success / failure) and logger (loki / file / console) labels was added.
 
 ### Reports support Unicode
 

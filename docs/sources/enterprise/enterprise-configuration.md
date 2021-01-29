@@ -69,19 +69,31 @@ Set to complete URL to override Apple/iOS icon.
 
 List the link IDs to use here. Grafana will look for matching link configurations, the link IDs should be space-separated and contain no whitespace.
 
-## [meta_analytics]
+## [usage_insights.export]
 
-### max_file_age
+By [exporting usage logs]({{< relref "export-logs.md" >}}), you can directly query them and create dashboards of the information that matters to you most, such as dashboard errors, most active organizations, or your top-10 most-used queries.
 
-Max age for data files before they get deleted.
+### enabled
 
-### max_data_directory_size
+Enable the usage insights export feature.
 
-Max size in megabytes of the data files directory before files get deleted.
+### storage
 
-### data_path
+Specify a storage type. Defaults to `loki`.
 
-The directory where events will be stored in.
+## [usage_insights.export.storage.loki]
+
+### type
+
+Set the communication protocol to use with Loki, which is either `grpc` or `http`. Defaults to `grpc`.
+
+### url
+
+Set the address for writing logs to Loki (format must be host:port).
+
+### tls
+
+Decide whether or not to enable the TLS (Transport Layer Security) protocol when establishing the connection to Loki. Defaults to true.
 
 ## [analytics.summaries]
 
