@@ -71,6 +71,8 @@ List the link IDs to use here. Grafana will look for matching link configuration
 
 ## [usage_insights.export]
 
+By [exporting usage logs]({{< relref "export-logs.md" >}}), you can directly query them and create dashboards of the information that matters to you most, such as dashboard errors, most active organizations, or your top-10 most-used queries.
+
 ### enabled
 
 Enable the usage insights export feature.
