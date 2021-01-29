@@ -125,6 +125,8 @@ Grafana 7.4 includes the following enhancements
 
 > **Note:** We have deprecated browser access mode. It will be removed in a future release.
 
+For more information, refer to the [Elasticsearch docs]({{<relref "../datasources/elasticsearch.md">}}).
+
 ### Azure Monitor updates
 
 The Azure Monitor query type was renamed to Metrics and Azure Logs Analytics was renamed to Logs to match the service names in Azure and align the concepts with the rest of Grafana.
