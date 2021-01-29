@@ -14,59 +14,6 @@
 
 import React from 'react';
 
-export type TooltipPlacement =
-  | 'top'
-  | 'left'
-  | 'right'
-  | 'bottom'
-  | 'topLeft'
-  | 'topRight'
-  | 'bottomLeft'
-  | 'bottomRight'
-  | 'leftTop'
-  | 'leftBottom'
-  | 'rightTop'
-  | 'rightBottom';
-export type PopoverProps = {
-  content?: React.ReactNode;
-  arrowPointAtCenter?: boolean;
-  overlayClassName?: string;
-  placement?: TooltipPlacement;
-  children?: React.ReactNode;
-};
-
-export const UIPopover: React.ComponentType<PopoverProps> = function UIPopover(props: PopoverProps) {
-  return (
-    <GetElementsContext>
-      {(elements: Elements) => {
-        return <elements.Popover {...props} />;
-      }}
-    </GetElementsContext>
-  );
-};
-
-type RenderFunction = () => React.ReactNode;
-export type TooltipProps = {
-  title?: React.ReactNode | RenderFunction;
-  getPopupContainer?: (triggerNode: Element) => HTMLElement;
-  overlayClassName?: string;
-  children?: React.ReactNode;
-  placement?: TooltipPlacement;
-  mouseLeaveDelay?: number;
-  arrowPointAtCenter?: boolean;
-  onVisibleChange?: (visible: boolean) => void;
-};
-
-export const UITooltip: React.ComponentType<TooltipProps> = function UITooltip(props: TooltipProps) {
-  return (
-    <GetElementsContext>
-      {(elements: Elements) => {
-        return <elements.Tooltip {...props} />;
-      }}
-    </GetElementsContext>
-  );
-};
-
 export type IconProps = {
   type: string;
   className?: string;
@@ -199,8 +146,6 @@ export const UIInputGroup = function UIInputGroup(props: InputGroupProps) {
 };
 
 export type Elements = {
-  Popover: React.ComponentType<PopoverProps>;
-  Tooltip: React.ComponentType<TooltipProps>;
   Icon: React.ComponentType<IconProps>;
   Dropdown: React.ComponentType<DropdownProps>;
   Menu: React.ComponentType<MenuProps>;

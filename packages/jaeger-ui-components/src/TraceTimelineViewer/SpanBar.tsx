@@ -23,8 +23,8 @@ import AccordianLogs from './SpanDetail/AccordianLogs';
 import { ViewedBoundsFunctionType } from './utils';
 import { TNil } from '../types';
 import { TraceSpan } from '@grafana/data';
-import { UIPopover } from '../uiElementsContext';
 import { createStyle } from '../Theme';
+import { Tooltip } from '@grafana/ui';
 
 const getStyles = createStyle(() => {
   return {
@@ -161,7 +161,7 @@ function SpanBar(props: TInnerProps) {
     <div
       className={cx(styles.wrapper, className)}
       onClick={onClick}
-      onMouseOut={setShortLabel}
+      onMouseLeave={setShortLabel}
       onMouseOver={setLongLabel}
       aria-hidden
       data-test-id="SpanBar--wrapper"
@@ -181,17 +181,15 @@ function SpanBar(props: TInnerProps) {
       </div>
       <div>
         {Object.keys(logGroups).map((positionKey) => (
-          <UIPopover
+          <Tooltip
             key={positionKey}
-            arrowPointAtCenter
-            overlayClassName={styles.logHint}
-            placement="topLeft"
+            placement="auto"
             content={
               <AccordianLogs interactive={false} isOpen logs={logGroups[positionKey]} timestamp={traceStartTime} />
             }
           >
             <div className={styles.logMarker} style={{ left: positionKey }} />
-          </UIPopover>
+          </Tooltip>
         ))}
       </div>
       {rpc && (

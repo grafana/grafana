@@ -14,7 +14,7 @@
 
 import React from 'react';
 import { mount } from 'enzyme';
-import UIElementsContext, { UIPopover } from '../uiElementsContext';
+import { Tooltip } from '@grafana/ui';
 
 import SpanBar from './SpanBar';
 
@@ -44,7 +44,7 @@ describe('<SpanBar>', () => {
       viewEnd: 0.75,
       color: '#000',
     },
-    tracestartTime: 0,
+    traceStartTime: 0,
     span: {
       logs: [
         {
@@ -73,28 +73,20 @@ describe('<SpanBar>', () => {
   };
 
   it('renders without exploding', () => {
-    const wrapper = mount(
-      <UIElementsContext.Provider value={{ Popover: () => '' }}>
-        <SpanBar {...props} />
-      </UIElementsContext.Provider>
-    );
+    const wrapper = mount(<SpanBar {...props} />);
     expect(wrapper).toBeDefined();
-    const { onMouseOver, onMouseOut } = wrapper.find('[data-test-id="SpanBar--wrapper"]').props();
+    const { onMouseLeave, onMouseOver } = wrapper.find('[data-test-id="SpanBar--wrapper"]').props();
     const labelElm = wrapper.find('[data-test-id="SpanBar--label"]');
     expect(labelElm.text()).toBe(shortLabel);
     onMouseOver();
     expect(labelElm.text()).toBe(longLabel);
-    onMouseOut();
+    onMouseLeave();
     expect(labelElm.text()).toBe(shortLabel);
   });
 
   it('log markers count', () => {
     // 3 log entries, two grouped together with the same timestamp
-    const wrapper = mount(
-      <UIElementsContext.Provider value={{ Popover: () => '' }}>
-        <SpanBar {...props} />
-      </UIElementsContext.Provider>
-    );
-    expect(wrapper.find(UIPopover).length).toEqual(2);
+    const wrapper = mount(<SpanBar {...props} />);
+    expect(wrapper.find(Tooltip).length).toEqual(2);
   });
 });
