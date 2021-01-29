@@ -45,6 +45,6 @@ Point size set to 35:
 
 ## Scatter plot graph examples
 
-Below are some scatter plot examples to give you ideas.
+Some scatter plot examples can give you ideas.
 
 DOMINIK OR TORKEL - GOT ANY EXAMPLES?
