@@ -56,6 +56,7 @@ Discord | `discord` | yes | no
 [Email](#email) | `email` | yes | no
 [Google Hangouts Chat](#google-hangouts-chat) | `googlechat` | yes, external only | no
 Hipchat | `hipchat` | yes, external only | no
+Jira | `jira` | yes, external only | yes
 [Kafka](#kafka) | `kafka` | yes, external only | no
 Line | `line` | yes, external only | no
 Microsoft Teams | `teams` | yes, external only | no
