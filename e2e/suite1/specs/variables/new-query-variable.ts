@@ -99,7 +99,7 @@ describe('Variables - Add variable', () => {
 
     e2e.pages.Dashboard.Settings.Variables.Edit.General.submitButton().should('be.visible').click();
 
-    e2e().wait(1000);
+    e2e().wait(1500);
 
     e2e.components.BackButton.backArrow().should('be.visible').click({ force: true });
 
@@ -167,7 +167,7 @@ describe('Variables - Add variable', () => {
 
     e2e.components.BackButton.backArrow().should('be.visible').click({ force: true });
 
-    e2e().wait(1000);
+    e2e().wait(1500);
 
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('a label').should('be.visible');
 
