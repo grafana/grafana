@@ -49,9 +49,9 @@ MSI_GENERATOR_VERSION = '1.0.0'
 #############################
 WIX_HOME = '/home/xclient/wix'
 WINE_CMD = '/usr/bin/wine64'  # or just wine for 32bit
-CANDLE = '{} {}/candle.exe'.format(WINE_CMD, WIX_HOME)
-LIGHT = '{} {}/light.exe'.format(WINE_CMD, WIX_HOME)
-HEAT = '{} {}/heat.exe'.format(WINE_CMD, WIX_HOME)
+CANDLE = '{}/candle.exe'.format(WIX_HOME)
+LIGHT = '{}/light.exe'.format(WIX_HOME)
+HEAT = '{}/heat.exe'.format(WIX_HOME)
 NSSM_VERSION = '2.24'
 DIST_LOCATION = '/tmp/dist'
 #############################
@@ -149,19 +149,27 @@ def build_msi(zip_file, extracted_name, PRODUCT_VERSION, grafana_hash, config, f
     # -cg - component group to be referenced in main wxs file
     # -fr - directory ref to be used in main wxs file
     try:
-        cmd = '''
-          {} dir {} \
-          -platform x64 \
-          -sw5150 \
-          -srd \
-          -cg {} \
-          -gg \
-          -sfrag \
-          -dr {} \
-          -template fragment \
-          -out {}'''.strip().format(HEAT, target_dir_name, cgname, cgdir, outfile)
-        print(cmd)
-        os.system(cmd)
+        result = subprocess.run([
+            WINE_CMD,
+            HEAT,
+            'dir',
+            target_dir_name,
+            '-platform', 
+            'x64',
+            '-sw5150',
+            '-srd',
+            '-cg',
+            cgname,
+            '-gg',
+            '-sfrag',
+            '-dr',
+            cgdir,
+            '-template',
+            'fragment',
+            '-out',
+            outfile
+        ], stdout=subprocess.PIPE)
+        print(result.stdout)
     except Exception as ex:
         print(ex)
 
@@ -186,34 +194,63 @@ def build_msi(zip_file, extracted_name, PRODUCT_VERSION, grafana_hash, config, f
     os.chdir('/tmp/scratch')
     try:
         filename = 'grafana-service.wxs'
-        cmd = '{} -ext WixFirewallExtension -ext WixUtilExtension -v -arch x64 {}'.format(
-            CANDLE, filename)
-        print(cmd)
-        os.system(cmd)
+        result = subprocess.run([
+            WINE_CMD,
+            CANDLE,
+            '-ext',
+            'WixFirewallExtension',
+            '-ext',
+            'WixUtilExtension',
+            '-v',
+            '-arch x64',
+            filename
+        ], stdout=subprocess.PIPE)
+        print(result.stdout)
         shutil.copy2('grafana-service.wixobj', target_dir_name)
         #
         filename = 'grafana-firewall.wxs'
-        cmd = '{} -ext WixFirewallExtension -ext WixUtilExtension -v -arch x64 {}'.format(
+        result = subprocess.run([
+            WINE_CMD,
             CANDLE,
-            filename)
-        print(cmd)
-        os.system(cmd)
+            '-ext',
+            'WixFirewallExtension',
+            '-ext',
+            'WixUtilExtension',
+            '-v',
+            '-arch x64',
+            filename
+        ], stdout=subprocess.PIPE)
+        print(result.stdout)
         shutil.copy2('grafana-firewall.wixobj', target_dir_name)
         #
         filename = 'grafana-oss.wxs'
-        cmd = '{} -ext WixFirewallExtension -ext WixUtilExtension -v -arch x64 {}'.format(
+        result = subprocess.run([
+            WINE_CMD,
             CANDLE,
-            filename)
-        print(cmd)
-        os.system(cmd)
+            '-ext',
+            'WixFirewallExtension',
+            '-ext',
+            'WixUtilExtension',
+            '-v',
+            '-arch x64',
+            filename
+        ], stdout=subprocess.PIPE)
+        print(result.stdout)
         shutil.copy2('grafana-oss.wixobj', target_dir_name)
         #
         filename = 'product.wxs'
-        cmd = '{} -ext WixFirewallExtension -ext WixUtilExtension -v -arch x64 {}'.format(
+        result = subprocess.run([
+            WINE_CMD,
             CANDLE,
-            filename)
-        print(cmd)
-        os.system(cmd)
+            '-ext',
+            'WixFirewallExtension',
+            '-ext',
+            'WixUtilExtension',
+            '-v',
+            '-arch x64',
+            filename
+        ], stdout=subprocess.PIPE)
+        print(result.stdout)
         shutil.copy2('product.wixobj', target_dir_name)
     except Exception as ex:
         print(ex)
@@ -225,8 +262,8 @@ def build_msi(zip_file, extracted_name, PRODUCT_VERSION, grafana_hash, config, f
     os.system('cp -pr nssm/nssm-2.24 .')
     try:
         result = subprocess.run([
-            '/usr/bin/wine64',
-            '/home/xclient/wix/light.exe',
+            WINE_CMD,
+            LIGHT,
             '-cultures:en-US',
             '-ext',
             'WixUIExtension.dll',
