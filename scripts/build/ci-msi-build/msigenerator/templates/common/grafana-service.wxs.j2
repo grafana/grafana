@@ -4,7 +4,7 @@
 
   <Fragment>
     <ComponentGroup Id="GrafanaServiceX64">
-      <Component Id="nssm_component" Guid="*" Permanent="yes" Directory="INSTALLDIR">
+      <Component Id="nssm_component" Guid="*" Directory="INSTALLDIR">
         <File Id="nssm" KeyPath="yes" Source="SourceDir\nssm-{{ nssm_version }}\win64\nssm.exe"/>
 
         <ServiceInstall Id="ServiceInstall"
