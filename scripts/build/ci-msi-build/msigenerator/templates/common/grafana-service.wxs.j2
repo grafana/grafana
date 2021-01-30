@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
-     xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
+  xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
 
   <Fragment>
     <ComponentGroup Id="GrafanaServiceX64">
-      <Component Id="nssm_component" Guid="*" Directory="INSTALLDIR">
-        <File Id="nssm" KeyPath="yes" Source="SourceDir\nssm-{{ nssm_version }}\win64\nssm.exe" />
+      <Component Id="nssm_component" Guid="*" Permanent="yes" Directory="INSTALLDIR">
+        <File Id="nssm" KeyPath="yes" Source="SourceDir\nssm-{{ nssm_version }}\win64\nssm.exe"/>
 
         <ServiceInstall Id="ServiceInstall"
           Account="LocalSystem"
@@ -36,7 +36,7 @@
             <RegistryValue Name="AppEnvironmentExtra" Type="multiString">
               <MultiStringValue>LOG_LEVEL=DEBUG</MultiStringValue>
             </RegistryValue>
-         
+
             <RegistryValue Name="AppStdout" Value="[LOGDIR]grafana-service.log" Type="expandable" />
             <RegistryValue Name="AppStderr" Value="[LOGDIR]grafana-service.log" Type="expandable" />
             <RegistryValue Name="AppRotateFiles" Value="1" Type="integer" />

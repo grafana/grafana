@@ -12,10 +12,11 @@
       InstallerVersion="200"
       Compressed="yes"
       Comments="Windows Installer Package"/>
+
+    <MediaTemplate EmbedCab="yes" />
+
     <MajorUpgrade
       DowngradeErrorMessage="A newer version of Grafana is already installed. Uninstall the current version to install this older version. Setup will now exit."/>
-
-    <Media Id="1" Cabinet="product.cab" EmbedCab="yes"/>
 
     <Icon Id="icon.ico" SourceFile="grafana_icon.ico"/>
 
