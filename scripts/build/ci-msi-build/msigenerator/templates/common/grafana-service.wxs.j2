@@ -3,8 +3,8 @@
   xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
 
   <Fragment>
-    <ComponentGroup Id="GrafanaServiceX64">
-      <Component Id="nssm_component" Guid="*" Directory="INSTALLDIR">
+    <ComponentGroup Id="GrafanaServiceX64" Directory="GrafanaServiceX64Dir">
+      <Component Id="nssm_component" Guid="*">
         <File Id="nssm" KeyPath="yes" Source="SourceDir\nssm-{{ nssm_version }}\win64\nssm.exe"/>
 
         <ServiceInstall Id="ServiceInstall"

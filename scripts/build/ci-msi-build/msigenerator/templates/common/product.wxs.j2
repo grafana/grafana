@@ -18,10 +18,6 @@
     <MajorUpgrade
       DowngradeErrorMessage="A newer version of Grafana is already installed. Uninstall the current version to install this older version. Setup will now exit."/>
 
-    <InstallExecuteSequence>
-      <DeleteServices>REMOVE ~= "ALL" AND (NOT UPGRADINGPRODUCTCODE)</DeleteServices>
-    </InstallExecuteSequence>
-
     <Icon Id="icon.ico" SourceFile="grafana_icon.ico"/>
 
     <WixVariable Id="WixUILicenseRtf" Value="{{config.license}}" />
@@ -40,7 +36,10 @@
         <Directory Id="INSTALLDIR" Name="GrafanaLabs">
           {% for feature in features %}
             {% for component_group in feature.component_groups %}
-              <Directory Id="{{component_group.directory}}"/>
+              <Directory
+                Id="{{component_group.directory}}"
+                {% if component_group.dirname|length %} Name="{{component_group.dirname}}-{{config.grafana_version}}" {% endif %}
+                />
             {% endfor %}
           {% endfor %}
         </Directory>
