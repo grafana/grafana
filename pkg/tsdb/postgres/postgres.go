@@ -53,7 +53,7 @@ func (s *postgresService) newPostgresQueryEndpoint(datasource *models.DataSource
 		return nil, err
 	}
 
-	if setting.Env == setting.Dev {
+	if s.Cfg.Env == setting.Dev {
 		s.logger.Debug("getEngine", "connection", cnnstr)
 	}
 
