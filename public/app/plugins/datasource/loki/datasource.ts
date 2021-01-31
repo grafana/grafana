@@ -288,8 +288,8 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return query.expr;
   }
 
-  getTimeRangeParams(range?: AbsoluteTimeRange) {
-    const timeRange = range || this.timeSrv.timeRange();
+  getTimeRangeParams() {
+    const timeRange = this.timeSrv.timeRange();
     return { from: timeRange.from.valueOf() * NS_IN_MS, to: timeRange.to.valueOf() * NS_IN_MS };
   }
 

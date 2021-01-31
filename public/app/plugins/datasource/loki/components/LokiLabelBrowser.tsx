@@ -11,7 +11,7 @@ import {
   withTheme,
 } from '@grafana/ui';
 import LokiLanguageProvider from '../language_provider';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import store from 'app/core/store';
 import { FixedSizeList } from 'react-window';
 
@@ -70,7 +70,7 @@ export function buildSelector(labels: SelectableLabel[]): string {
   const selectedLabels = [];
   for (const label of labels) {
     if (label.selected && label.values && label.values.length > 0) {
-      const selectedValues = label.values.filter(value => value.selected).map(value => value.name);
+      const selectedValues = label.values.filter((value) => value.selected).map((value) => value.name);
       if (selectedValues.length > 1) {
         selectedLabels.push(`${label.name}=~"${selectedValues.join('|')}"`);
       } else if (selectedValues.length === 1) {
@@ -86,7 +86,7 @@ export function facetLabels(
   possibleLabels: Record<string, string[]>,
   lastFacetted?: string
 ): SelectableLabel[] {
-  return labels.map(label => {
+  return labels.map((label) => {
     const possibleValues = possibleLabels[label.name];
     if (possibleValues) {
       let existingValues: FacettableValue[];
@@ -96,10 +96,10 @@ export function facetLabels(
       } else {
         // Keep selection in other facets
         const selectedValues: Set<string> = new Set(
-          label.values?.filter(value => value.selected).map(value => value.name) || []
+          label.values?.filter((value) => value.selected).map((value) => value.name) || []
         );
         // Values for this label have not been requested yet, let's use the facetted ones as the initial values
-        existingValues = possibleValues.map(value => ({ name: value, selected: selectedValues.has(value) }));
+        existingValues = possibleValues.map((value) => ({ name: value, selected: selectedValues.has(value) }));
       }
       return { ...label, loading: false, values: existingValues, facets: existingValues.length };
     }
@@ -135,14 +135,28 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     & + & {
       margin: ${theme.spacing.md} 0;
     }
+    position: relative;
   `,
   selector: css`
     font-family: ${theme.typography.fontFamily.monospace};
     margin-bottom: ${theme.spacing.sm};
   `,
   status: css`
-    padding: ${theme.spacing.sm};
+    padding: ${theme.spacing.xs};
     color: ${theme.colors.textWeak};
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    /* using absolute positioning because flex interferes with ellipsis */
+    position: absolute;
+    width: 50%;
+    right: 0;
+    text-align: right;
+    transition: opacity 100ms linear;
+    opacity: 0;
+  `,
+  statusShowing: css`
+    opacity: 1;
   `,
   error: css`
     color: ${theme.palette.brandDanger};
@@ -155,8 +169,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     margin-right: ${theme.spacing.sm};
   `,
   valueListWrapper: css`
-    padding: ${theme.spacing.xs};
-    border-left: 1px solid ${theme.colors.border1};
+    padding: ${theme.spacing.sm};
+    & + & {
+      border-left: 1px solid ${theme.colors.border2};
+    }
   `,
   valueListArea: css`
     display: flex;
@@ -188,8 +204,8 @@ export class LokiLabelBrowserPopover extends React.Component<BrowserProps, Brows
   };
 
   onClickClear = () => {
-    this.setState(state => {
-      const labels: SelectableLabel[] = state.labels.map(label => ({
+    this.setState((state) => {
+      const labels: SelectableLabel[] = state.labels.map((label) => ({
         ...label,
         values: undefined,
         selected: false,
@@ -203,7 +219,7 @@ export class LokiLabelBrowserPopover extends React.Component<BrowserProps, Brows
   };
 
   onClickLabel = (name: string, value: string | undefined, event: React.MouseEvent<HTMLElement>) => {
-    const label = this.state.labels.find(l => l.name === name);
+    const label = this.state.labels.find((l) => l.name === name);
     if (!label) {
       return;
     }
@@ -212,11 +228,11 @@ export class LokiLabelBrowserPopover extends React.Component<BrowserProps, Brows
     let nextValue: Partial<SelectableLabel> = { selected };
     if (label.values && !selected) {
       // Deselect all values if label was deselected
-      const values = label.values.map(value => ({ ...value, selected: false }));
+      const values = label.values.map((value) => ({ ...value, selected: false }));
       nextValue = { ...nextValue, facets: 0, values };
     }
     this.updateLabelState(name, nextValue, '', () => {
-      const selectedLabels = this.state.labels.filter(label => label.selected).map(label => label.name);
+      const selectedLabels = this.state.labels.filter((label) => label.selected).map((label) => label.name);
       store.setObject(LAST_USED_LABELS_KEY, selectedLabels);
       if (selected) {
         // Refetch values for newly selected label...
@@ -231,12 +247,12 @@ export class LokiLabelBrowserPopover extends React.Component<BrowserProps, Brows
   };
 
   onClickValue = (name: string, value: string | undefined, event: React.MouseEvent<HTMLElement>) => {
-    const label = this.state.labels.find(l => l.name === name);
+    const label = this.state.labels.find((l) => l.name === name);
     if (!label || !label.values) {
       return;
     }
     // Toggling value for selected label, leaving other values intact
-    const values = label.values.map(v => ({ ...v, selected: v.name === value ? !v.selected : v.selected }));
+    const values = label.values.map((v) => ({ ...v, selected: v.name === value ? !v.selected : v.selected }));
     this.updateLabelState(name, { values }, '', () => this.doFacetting(name));
   };
 
@@ -246,14 +262,16 @@ export class LokiLabelBrowserPopover extends React.Component<BrowserProps, Brows
   };
 
   updateLabelState(name: string, updatedFields: Partial<SelectableLabel>, status = '', cb?: () => void) {
-    this.setState(state => {
-      const labels: SelectableLabel[] = state.labels.map(label => {
+    this.setState((state) => {
+      const labels: SelectableLabel[] = state.labels.map((label) => {
         if (label.name === name) {
           return { ...label, ...updatedFields };
         }
         return label;
       });
-      return { labels, status };
+      // New status overrides errors
+      const error = status ? '' : state.error;
+      return { labels, status, error };
     }, cb);
   }
 
@@ -264,10 +282,9 @@ export class LokiLabelBrowserPopover extends React.Component<BrowserProps, Brows
       languageProvider.start().then(() => {
         let rawLabels: string[] = languageProvider.getLabelKeys();
         if (rawLabels.length > MAX_LABEL_COUNT) {
+          const error = `Too many labels found (showing only ${MAX_LABEL_COUNT} of ${rawLabels.length})`;
           rawLabels = rawLabels.slice(0, MAX_LABEL_COUNT);
-          this.setState({
-            error: `Too many labels found (showing only ${MAX_LABEL_COUNT} of ${rawLabels.length})`,
-          });
+          this.setState({ error });
         }
         // Auto-select all labels if label list is small enough
         const labels: SelectableLabel[] = rawLabels.map((label, i, arr) => ({
@@ -277,7 +294,7 @@ export class LokiLabelBrowserPopover extends React.Component<BrowserProps, Brows
         }));
         // Pre-fetch values for selected labels
         this.setState({ labels }, () => {
-          this.state.labels.forEach(label => {
+          this.state.labels.forEach((label) => {
             if (label.selected) {
               this.fetchValues(label.name);
             }
@@ -291,12 +308,12 @@ export class LokiLabelBrowserPopover extends React.Component<BrowserProps, Brows
     const selector = buildSelector(this.state.labels);
     if (selector === EMPTY_SELECTOR) {
       // Clear up facetting
-      const labels: SelectableLabel[] = this.state.labels.map(label => {
+      const labels: SelectableLabel[] = this.state.labels.map((label) => {
         return { ...label, facets: 0, values: undefined, hidden: false };
       });
       this.setState({ labels }, () => {
         // Get fresh set of values
-        this.state.labels.forEach(label => label.selected && this.fetchValues(label.name));
+        this.state.labels.forEach((label) => label.selected && this.fetchValues(label.name));
       });
     } else {
       // Do facetting
@@ -310,12 +327,11 @@ export class LokiLabelBrowserPopover extends React.Component<BrowserProps, Brows
     try {
       let rawValues = await languageProvider.getLabelValues(name);
       if (rawValues.length > MAX_VALUE_COUNT) {
+        const error = `Too many values for ${name} (showing only ${MAX_VALUE_COUNT} of ${rawValues.length})`;
         rawValues = rawValues.slice(0, MAX_VALUE_COUNT);
-        this.setState({
-          error: `Too many values for ${name} (showing only ${MAX_VALUE_COUNT} of ${rawValues.length})`,
-        });
+        this.setState({ error });
       }
-      const values: FacettableValue[] = rawValues.map(value => ({ name: value }));
+      const values: FacettableValue[] = rawValues.map((value) => ({ name: value }));
       this.updateLabelState(name, { values, loading: false }, '');
     } catch (error) {
       console.error(error);
@@ -360,14 +376,14 @@ export class LokiLabelBrowserPopover extends React.Component<BrowserProps, Brows
     }
     const styles = getStyles(theme);
     let matcher: RegExp;
-    let selectedLabels = labels.filter(label => label.selected && label.values);
+    let selectedLabels = labels.filter((label) => label.selected && label.values);
     if (searchTerm) {
       // TODO extract from render() and debounce
       try {
         matcher = new RegExp(searchTerm.split('').join('.*'), 'i');
-        selectedLabels = selectedLabels.map(label => ({
+        selectedLabels = selectedLabels.map((label) => ({
           ...label,
-          values: label.values?.filter(value => value.selected || matcher.test(value.name)),
+          values: label.values?.filter((value) => value.selected || matcher.test(value.name)),
         }));
       } catch (error) {}
     }
@@ -380,7 +396,7 @@ export class LokiLabelBrowserPopover extends React.Component<BrowserProps, Brows
             1. Select labels to search in
           </Label>
           <div className={styles.list}>
-            {labels.map(label => (
+            {labels.map((label) => (
               <LokiLabel
                 key={label.name}
                 name={label.name}
@@ -401,7 +417,7 @@ export class LokiLabelBrowserPopover extends React.Component<BrowserProps, Brows
             <Input onChange={this.onChangeSearch} aria-label="Filter expression for values" value={searchTerm} />
           </div>
           <div className={styles.valueListArea}>
-            {selectedLabels.map(label => (
+            {selectedLabels.map((label) => (
               <div role="list" key={label.name} className={styles.valueListWrapper}>
                 <div className={styles.valueTitle} aria-label={`Values for ${label.name}`}>
                   <LokiLabel
@@ -417,7 +433,7 @@ export class LokiLabelBrowserPopover extends React.Component<BrowserProps, Brows
                   height={200}
                   itemCount={label.values?.length || 0}
                   itemSize={25}
-                  itemKey={i => (label.values as FacettableValue[])[i].name}
+                  itemKey={(i) => (label.values as FacettableValue[])[i].name}
                   width={200}
                   className={styles.valueList}
                 >
@@ -463,7 +479,7 @@ export class LokiLabelBrowserPopover extends React.Component<BrowserProps, Brows
             <Button aria-label="Selector clear button" variant="secondary" onClick={this.onClickClear}>
               Clear labels
             </Button>
-            <div className={styles.status}>
+            <div className={cx(styles.status, (status || error) && styles.statusShowing)}>
               <span className={error ? styles.error : ''}>{error || status}</span>
             </div>
           </HorizontalGroup>

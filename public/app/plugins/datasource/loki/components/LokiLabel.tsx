@@ -8,7 +8,7 @@ import Highlighter from 'react-highlight-words';
 /**
  * @public
  */
-export type OnLabelClick = (name: string, value: string | undefined, event: React.MouseEvent<HTMLElement>) => any;
+export type OnLabelClick = (name: string, value: string | undefined, event: React.MouseEvent<HTMLElement>) => void;
 
 export interface Props extends Omit<HTMLAttributes<HTMLElement>, 'onClick'> {
   name: string;
@@ -67,7 +67,7 @@ const getLabelStyles = (theme: GrafanaTheme) => ({
     cursor: pointer;
     font-size: ${theme.typography.size.sm};
     line-height: ${theme.typography.lineHeight.xs};
-    border: 1px solid ${theme.colors.border1};
+    border: 1px solid ${theme.colors.border2};
     vertical-align: baseline;
     color: ${theme.colors.text};
     white-space: nowrap;
