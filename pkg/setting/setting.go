@@ -1310,14 +1310,16 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 }
 
 // GetContentDeliveryURL returns full content delivery URL with /<edition>/<version> added to URL
-func (cfg *Cfg) GetContentDeliveryURL(edition string) string {
+func (cfg *Cfg) GetContentDeliveryURL(prefix string) string {
 	if cfg.CDNRootURL != nil {
 		url := *cfg.CDNRootURL
 		preReleaseFolder := ""
+
 		if strings.Contains(cfg.BuildVersion, "pre") || strings.Contains(cfg.BuildVersion, "alpha") {
-			preReleaseFolder = "master"
+			preReleaseFolder = "pre-releases"
 		}
-		url.Path = path.Join(url.Path, strings.ToLower(edition), preReleaseFolder, cfg.BuildVersion)
+
+		url.Path = path.Join(url.Path, prefix, preReleaseFolder, cfg.BuildVersion)
 		return url.String()
 	}
 
