@@ -22,6 +22,8 @@ import (
 	"xorm.io/core"
 )
 
+var validateCertFunc = validateCertFilePaths
+
 func init() {
 	registry.Register(&registry.Descriptor{
 		Name:         "PostgresService",
@@ -208,7 +210,7 @@ func (s *postgresService) writeCertFiles(ds *models.DataSource) error {
 }
 
 // validateCertFilePaths validates configured certificate file paths.
-var validateCertFilePaths = func(rootCert, clientCert, clientKey string) error {
+func validateCertFilePaths(rootCert, clientCert, clientKey string) error {
 	for _, fpath := range []string{rootCert, clientCert, clientKey} {
 		if fpath == "" {
 			continue
@@ -277,7 +279,7 @@ func (s *postgresService) generateConnectionString(datasource *models.DataSource
 			tlsRootCert = datasource.JsonData.Get("sslRootCertFile").MustString("")
 			tlsCert = datasource.JsonData.Get("sslCertFile").MustString("")
 			tlsKey = datasource.JsonData.Get("sslKeyFile").MustString("")
-			if err := validateCertFilePaths(tlsRootCert, tlsCert, tlsKey); err != nil {
+			if err := validatecert(tlsRootCert, tlsCert, tlsKey); err != nil {
 				return "", err
 			}
 		}

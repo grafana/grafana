@@ -31,9 +31,9 @@ import (
 func TestGenerateConnectionString(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.DataPath = t.TempDir()
-	validateCertFilePaths = func(rootCert, clientCert, clientKey string) error {
-		return nil
-	}
+
+	mockValidateCertFilePaths()
+	t.Cleanup(resetValidateCertFilePaths)
 	testCases := []struct {
 		desc           string
 		host           string
@@ -1179,4 +1179,14 @@ func genTimeRangeByInterval(from time.Time, duration time.Duration, interval tim
 	}
 
 	return timeRange
+}
+
+func mockValidateCertFilePaths() {
+	validateCertFunc = func(rootCert, clientCert, clientKey string) error {
+		return nil
+	}
+}
+
+func resetValidateCertFilePaths() {
+	validateCertFunc = validateCertFilePaths
 }
