@@ -57,13 +57,17 @@ export default class ResponseParser {
       };
     }
 
-    const metricData: any = _.find(result.data.value, (o) => {
+    const metricData = _.find(result.data.value, (o) => {
       return _.get(o, 'name.value') === metricName;
     });
 
     return {
-      primaryAggType: metricData.primaryAggregationType,
-      supportedAggTypes: metricData.supportedAggregationTypes || defaultAggTypes,
+      // TODO: type metricData so we don't have to cast
+      primaryAggType: metricData.primaryAggregationType as string,
+
+      // TODO: type metricData so we don't have to cast
+      supportedAggTypes: (metricData.supportedAggregationTypes as string[]) || defaultAggTypes,
+
       supportedTimeGrains: ResponseParser.parseTimeGrains(metricData.metricAvailabilities || []),
       dimensions: ResponseParser.parseDimensions(metricData),
     };
