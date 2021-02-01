@@ -46,7 +46,7 @@ require (
 	github.com/grafana/grafana-plugin-sdk-go v0.83.0
 	github.com/grafana/loki v1.6.2-0.20201026154740-6978ee5d7387
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.1
-	github.com/hashicorp/go-hclog v0.14.1
+	github.com/hashicorp/go-hclog v0.15.0
 	github.com/hashicorp/go-plugin v1.4.0
 	github.com/hashicorp/go-version v1.2.1
 	github.com/inconshreveable/log15 v0.0.0-20180818164646-67afb5ed74ec
@@ -92,7 +92,7 @@ require (
 	google.golang.org/grpc v1.35.0
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d // indirect
-	gopkg.in/ini.v1 v1.57.0
+	gopkg.in/ini.v1 v1.62.0
 	gopkg.in/ldap.v3 v3.0.2
 	gopkg.in/macaron.v1 v1.4.0
 	gopkg.in/mail.v2 v2.3.1
