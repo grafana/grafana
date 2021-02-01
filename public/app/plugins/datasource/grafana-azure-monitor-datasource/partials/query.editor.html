@@ -518,4 +518,15 @@
       for more details.
     </p>
   </div>
+
+  <!-- Partial migration to React -->
+  <div ng-if="ctrl.target.queryType === 'Azure Monitor'">
+    <azure-monitor-query-editor
+      query="ctrl.target"
+      datasource="ctrl.datasource"
+      replace-template-variable="ctrl.replace"
+      on-query-change="ctrl.handleNewQuery"
+    >
+    </azure-monitor-query-editor>
+  </div>
 </query-editor-row>

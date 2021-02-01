@@ -76,6 +76,7 @@ export interface ApplicationInsightsQuery {
   metricName: string;
   timeGrainUnit: string;
   timeGrain: string;
+  // timeGrainCount: string;
   allowedTimeGrainsMs: number[];
   aggregation: string;
   dimension: string[]; // Was string before 7.1
