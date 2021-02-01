@@ -9,7 +9,7 @@ import { getBackendSrv } from 'app/core/services/backend_srv';
 interface LibraryPanelViewProps {
   className?: string;
   onCreateNewPanel?: () => void;
-  children: (panel: LibraryPanelCardProps, i: number) => React.ReactNode;
+  children: (panel: LibraryPanelCardProps, i: number) => JSX.Element | JSX.Element[];
   formatDate?: (dateString: string) => string;
 }
 
