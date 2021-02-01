@@ -156,6 +156,15 @@ export interface HideableFieldConfig {
 /**
  * @alpha
  */
+export enum StackingMode {
+  None = 'none',
+  Standard = 'standard',
+  Percent = 'percent',
+}
+
+/**
+ * @alpha
+ */
 export interface GraphFieldConfig extends LineConfig, FillConfig, PointsConfig, AxisConfig, HideableFieldConfig {
   drawStyle?: DrawStyle;
   gradientMode?: GraphGradientMode;

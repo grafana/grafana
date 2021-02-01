@@ -2,8 +2,8 @@ import { PlotConfig } from '../types';
 import { ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
 import { SeriesProps, UPlotSeriesBuilder } from './UPlotSeriesBuilder';
 import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
-import { AxisPlacement } from '../config';
-import { Cursor, Band, Hooks, BBox } from 'uplot';
+import { AxisPlacement, StackingMode } from '../config';
+import { Band, BBox, Cursor, Hooks } from 'uplot';
 import { defaultsDeep } from 'lodash';
 
 type valueof<T> = T[keyof T];
@@ -28,7 +28,9 @@ export class UPlotConfigBuilder {
     this.hooks[type]!.push(hook as any);
   }
 
-  constructor(private isStacked = false) {}
+  constructor(private stacking = StackingMode.None) {
+    console.log(stacking);
+  }
 
   addAxis(props: AxisProps) {
     props.placement = props.placement ?? AxisPlacement.Auto;
@@ -115,7 +117,7 @@ export class UPlotConfigBuilder {
     // When bands exist, only keep fill when defined
     if (this.bands?.length) {
       config.bands = this.bands;
-      if (!this.isStacked) {
+      if (this.stacking === StackingMode.None) {
         const keepFill = new Set<number>();
         for (const b of config.bands) {
           keepFill.add(b.series[0]);

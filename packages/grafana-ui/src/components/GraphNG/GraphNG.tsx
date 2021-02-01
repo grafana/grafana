@@ -10,7 +10,9 @@ import {
   fieldReducers,
   FieldType,
   formattedValueToString,
+  getFieldColorModeForField,
   getFieldDisplayName,
+  getFieldSeriesColor,
   outerJoinDataFrames,
   reduceField,
   TimeRange,
@@ -25,14 +27,14 @@ import {
   PointVisibility,
   ScaleDirection,
   ScaleOrientation,
+  StackingMode,
 } from '../uPlot/config';
 import { VizLayout } from '../VizLayout/VizLayout';
 import { LegendDisplayMode, VizLegendItem, VizLegendOptions } from '../VizLegend/types';
 import { VizLegend } from '../VizLegend/VizLegend';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { useRevision } from '../uPlot/hooks';
-import { getFieldColorModeForField, getFieldSeriesColor } from '@grafana/data';
-import { GraphNGLegendEvent, StackingOptions } from './types';
+import { GraphNGLegendEvent } from './types';
 import { isNumber } from 'lodash';
 import { getNamesToFieldIndex, mapMouseEventToMode, preparePlotData } from './utils';
 import { AlignedData } from 'uplot';
@@ -46,7 +48,7 @@ export interface XYFieldMatchers {
 
 export interface GraphNGProps extends Omit<PlotProps, 'data' | 'config' | 'dataFrame'> {
   data: DataFrame[];
-  stacking: StackingOptions;
+  stacking: StackingMode;
   legend: VizLegendOptions;
   fields?: XYFieldMatchers; // default will assume timeseries data
   onLegendClick?: (event: GraphNGLegendEvent) => void;
@@ -129,7 +131,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   const configRev = useRevision(frame, compareFrames);
 
   const configBuilder = useMemo(() => {
-    const builder = new UPlotConfigBuilder(stacking.enable);
+    const builder = new UPlotConfigBuilder(stacking);
 
     if (!frame) {
       return builder;
@@ -262,7 +264,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       });
     }
 
-    if (stacking.enable) {
+    if (stacking !== StackingMode.None) {
       const series = [{}].concat(builder.getSeries());
       for (let i = 1; i < series.length; i++) {
         builder.addBand({

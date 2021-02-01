@@ -1,6 +1,7 @@
 import React from 'react';
 import { DataFrame, getFieldDisplayName } from '@grafana/data';
-import { GraphNGLegendEventMode, StackingOptions } from './types';
+import { GraphNGLegendEventMode } from './types';
+import { StackingMode } from '../uPlot/config';
 
 export function mapMouseEventToMode(event: React.MouseEvent): GraphNGLegendEventMode {
   if (event.ctrlKey || event.metaKey || event.shiftKey) {
@@ -17,8 +18,8 @@ export function getNamesToFieldIndex(frame: DataFrame): Map<string, number> {
   return names;
 }
 
-export function preparePlotData(frame: DataFrame, stacking: StackingOptions = { enable: false, isPercent: false }) {
-  if (!stacking.enable) {
+export function preparePlotData(frame: DataFrame, stacking: StackingMode) {
+  if (stacking === StackingMode.None) {
     return frame.fields.map((f) => f.values.toArray());
   }
 

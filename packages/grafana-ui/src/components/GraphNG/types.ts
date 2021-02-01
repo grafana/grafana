@@ -18,11 +18,3 @@ export interface GraphNGLegendEvent {
   fieldIndex: DataFrameFieldIndex;
   mode: GraphNGLegendEventMode;
 }
-
-/**
- * @alpha
- */
-export interface StackingOptions {
-  enable: boolean;
-  isPercent: boolean;
-}

@@ -10,15 +10,17 @@ import {
   NullValueMode,
   PanelModel,
 } from '@grafana/data';
-import { GraphFieldConfig, LegendDisplayMode } from '@grafana/ui';
 import {
-  GraphGradientMode,
+  GraphFieldConfig,
+  LegendDisplayMode,
+  StackingMode,
   AxisPlacement,
   DrawStyle,
+  GraphGradientMode,
   LineInterpolation,
   LineStyle,
   PointVisibility,
-} from '@grafana/ui/src/components/uPlot/config';
+} from '@grafana/ui';
 import { Options } from './types';
 import omitBy from 'lodash/omitBy';
 import isNil from 'lodash/isNil';
@@ -269,7 +271,6 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
   y1.nullValueMode = angular.nullPointMode as NullValueMode;
 
   const options: Options = {
-    graph: {},
     legend: {
       displayMode: LegendDisplayMode.List,
       placement: 'bottom',
@@ -278,6 +279,7 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
     tooltipOptions: {
       mode: 'single',
     },
+    stacking: StackingMode.None,
   };
 
   // Legend config migration

@@ -1,5 +1,6 @@
 import { preparePlotData } from './utils';
 import { FieldType, MutableDataFrame } from '@grafana/data';
+import { StackingMode } from '../BarChart/types';
 
 describe('preparePlotData', () => {
   const df = new MutableDataFrame({
@@ -12,7 +13,7 @@ describe('preparePlotData', () => {
   });
 
   it('creates array from DataFrame', () => {
-    expect(preparePlotData(df)).toMatchInlineSnapshot(`
+    expect(preparePlotData(df, StackingMode.None)).toMatchInlineSnapshot(`
       Array [
         Array [
           9997,
@@ -39,7 +40,7 @@ describe('preparePlotData', () => {
   });
 
   it('creates stacked data', () => {
-    expect(preparePlotData(df, { enable: true, isPercent: false })).toMatchInlineSnapshot(`
+    expect(preparePlotData(df, StackingMode.Standard)).toMatchInlineSnapshot(`
       Array [
         Array [
           9997,

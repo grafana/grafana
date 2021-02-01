@@ -1,15 +1,10 @@
-import { VizLegendOptions, GraphTooltipOptions } from '@grafana/ui';
-
-export interface GraphOptions {
-  stack: boolean;
-  stackPercent: boolean;
-}
+import { VizLegendOptions, GraphTooltipOptions, StackingMode } from '@grafana/ui';
 
 export interface OptionsWithLegend {
   legend: VizLegendOptions;
 }
 
 export interface Options extends OptionsWithLegend {
-  graph: GraphOptions;
   tooltipOptions: GraphTooltipOptions;
+  stacking: StackingMode;
 }
