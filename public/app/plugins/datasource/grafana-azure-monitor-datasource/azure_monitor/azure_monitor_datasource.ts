@@ -224,7 +224,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       .then((result: AzureMonitorMetricDefinitionsResponse) => {
         return ResponseParser.parseResponseValues(result, 'type', 'type');
       })
-      .then((result: any) => {
+      .then((result) => {
         return filter(result, (t) => {
           for (let i = 0; i < this.supportedMetricNamespaces.length; i++) {
             if (t.value.toLowerCase() === this.supportedMetricNamespaces[i].toLowerCase()) {
@@ -235,7 +235,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
           return false;
         });
       })
-      .then((result: any) => {
+      .then((result) => {
         let shouldHardcodeBlobStorage = false;
         for (let i = 0; i < result.length; i++) {
           if (result[i].value === 'Microsoft.Storage/storageAccounts') {
@@ -340,7 +340,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       this.apiVersion
     );
 
-    return this.doRequest(url).then((result: any) => {
+    return this.doRequest(url).then((result) => {
       return ResponseParser.parseMetadata(result, metricName);
     });
   }
