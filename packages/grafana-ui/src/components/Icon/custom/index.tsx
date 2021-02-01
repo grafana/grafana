@@ -81,11 +81,67 @@ const IconNotFound: FC<SvgProps> = ({ size, ...rest }) => {
   return <svg width={size} height={size} {...rest} />;
 };
 
+const BarAlignmentAfter: FC<SvgProps> = ({ size, ...rest }) => {
+  return (
+    <svg width={'16px'} height={size} viewBox="0 0 16 19" version="1.1" xmlns="http://www.w3.org/2000/svg" {...rest}>
+      <g id="Page-1">
+        <g id="Group" transform="translate(0.500000, 0.000000)">
+          <circle id="Oval" cx="2.67" cy="2.67" r="2.67" />
+          <polygon id="Path" points="13.42 18.08 13.42 3.42 3.06 3.42 3.06 1.92 14.92 1.92 14.92 18.08" />
+          <polygon id="Path" points="1.92 18.08 1.92 16.58 1.92 2.67 3.42 2.67 3.42 18.08" />
+        </g>
+      </g>
+    </svg>
+  );
+};
+
+const BarAlignmentBefore: FC<SvgProps> = ({ size, ...rest }) => {
+  return (
+    <svg width={'16px'} height={size} viewBox="0 0 16 19" version="1.1" xmlns="http://www.w3.org/2000/svg" {...rest}>
+      <g id="Page-1">
+        <g
+          id="Group"
+          transform="translate(8.000000, 9.500000) scale(-1, 1) translate(-8.000000, -9.500000) translate(0.500000, 0.000000)"
+        >
+          <circle id="Oval" cx="2.67" cy="2.67" r="2.67" />
+          <polygon id="Path" points="13.42 18.08 13.42 3.42 3.06 3.42 3.06 1.92 14.92 1.92 14.92 18.08" />
+          <polygon id="Path" points="1.92 18.08 1.92 16.58 1.92 2.67 3.42 2.67 3.42 18.08" />
+        </g>
+      </g>
+    </svg>
+  );
+};
+
+const BarAlignmentCenter: FC<SvgProps> = ({ size, ...rest }) => {
+  return (
+    <svg width="16px" height={size} viewBox="0 0 16 19" version="1.1" xmlns="http://www.w3.org/2000/svg" {...rest}>
+      <g id="Page-1">
+        <g id="Group" transform="translate(2.500000, 0.000000)">
+          <circle id="Oval" cx="6.67" cy="2.67" r="2.67" />
+          <g id="Group-2" transform="translate(0.000000, 2.000000)">
+            <polygon
+              id="Path"
+              points="11.5 16.16 11.5 1.5 1.84741111e-13 1.5 1.84741111e-13 1.77635684e-14 13 1.77635684e-14 13 16.16"
+            />
+            <polygon
+              id="Path"
+              points="2.27373675e-13 16.16 2.27373675e-13 14.66 2.32286412e-13 0.75 1.5 0.75 1.5 16.16"
+            />
+          </g>
+        </g>
+      </g>
+    </svg>
+  );
+};
+
 export const customIcons: Record<string, ComponentType<SvgProps>> = {
   'gf-interpolation-linear': InterpolationLinear,
   'gf-interpolation-smooth': InterpolationSmooth,
   'gf-interpolation-step-before': InterpolationStepBefore,
   'gf-interpolation-step-after': InterpolationStepAfter,
   'gf-logs': Logs,
+  'gf-bar-alignment-after': BarAlignmentAfter,
+  'gf-bar-alignment-before': BarAlignmentBefore,
+  'gf-bar-alignment-center': BarAlignmentCenter,
   notFoundDummy: IconNotFound,
 };
