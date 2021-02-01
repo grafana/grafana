@@ -1,6 +1,6 @@
 import React from 'react';
 import { Story } from '@storybook/react';
-import { ArrayVector, FieldSparkline, FieldType } from '@grafana/data';
+import { ArrayVector, FieldType } from '@grafana/data';
 import {
   BigValue,
   BigValueColorMode,
@@ -17,7 +17,28 @@ export default {
   title: 'Visualizations/BigValue',
   component: BigValue,
   decorators: [withCenteredStory],
-  argTypes: {},
+  argTypes: {
+    justifyMode: { control: { type: 'radio', options: [BigValueJustifyMode.Auto, BigValueJustifyMode.Center] } },
+    textMode: {
+      control: {
+        type: 'radio',
+        options: [
+          BigValueTextMode.Auto,
+          BigValueTextMode.Name,
+          BigValueTextMode.None,
+          BigValueTextMode.Value,
+          BigValueTextMode.ValueAndName,
+        ],
+      },
+    },
+    value: { control: { type: 'object' } },
+    sparkline: { control: { type: 'object' } },
+    className: { control: { disable: true } },
+    theme: { control: { disable: true } },
+    count: { control: { disable: true } },
+    alignmentFactors: { control: { disable: true } },
+    text: { control: { disable: true } },
+  },
   parameters: {
     docs: {
       page: mdx,
@@ -30,14 +51,6 @@ export default {
 
 export const Basic: Story<Props> = (args) => {
   const theme = useTheme();
-  const sparkline: FieldSparkline = {
-    y: {
-      name: '',
-      values: new ArrayVector([1, 2, 3, 4, 3]),
-      type: FieldType.number,
-      config: {},
-    },
-  };
 
   return (
     <BigValue
@@ -54,7 +67,7 @@ export const Basic: Story<Props> = (args) => {
         color: args.value.color,
         title: args.value.title,
       }}
-      sparkline={args.graphMode === BigValueGraphMode.None ? undefined : sparkline}
+      sparkline={args.graphMode === BigValueGraphMode.None ? undefined : args.sparkline}
     />
   );
 };
@@ -71,5 +84,13 @@ Basic.args = {
   colorMode: BigValueColorMode.Value,
   graphMode: BigValueGraphMode.Area,
   justifyMode: BigValueJustifyMode.Auto,
-  textMode: BigValueTextMode.Auto,
+  textMode: BigValueTextMode.ValueAndName,
+  sparkline: {
+    y: {
+      name: '',
+      values: new ArrayVector([1, 2, 3, 4, 3]),
+      type: FieldType.number,
+      config: {},
+    },
+  },
 };
