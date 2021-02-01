@@ -6,6 +6,7 @@ import {
   CustomScrollbar,
   stylesFactory,
   Themeable,
+  DismissableFeatureInfoBox,
   useTheme,
   ValuePicker,
   VerticalGroup,
@@ -31,7 +32,6 @@ import { TransformationOperationRows } from './TransformationOperationRows';
 import { TransformationsEditorTransformation } from './types';
 import { PanelNotSupported } from '../PanelEditor/PanelNotSupported';
 import { AppNotificationSeverity } from '../../../../types';
-import { DismissableFeatureInfoBox } from '@grafana/ui/src/components/InfoBox/DismissableFeatureInfoBox';
 
 interface TransformationsEditorProps extends Themeable {
   panel: PanelModel;
