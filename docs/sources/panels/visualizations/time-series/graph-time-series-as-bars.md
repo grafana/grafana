@@ -27,6 +27,22 @@ For more information about applying these options, refer to:
 
 Some field options will not affect the visualization until you click outside of the field option box you are editing or press Enter.
 
+### Bar alignment
+
+Set the position of the bar relative to a data point.
+
+#### Before
+
+Point is placed on the trailing corner of the bar.
+
+#### Center
+
+Point is placed in the center of the graph.
+
+#### After
+
+Point is placed on the leading corner of the bar.
+
 ### Line width
 
 Set the thickness of the lines bar outlines, from 0 to 10 pixels. **Fill opacity** is set to 10 in the examples below.
