@@ -24,11 +24,11 @@ const saveLibraryPanels = (saveModel: any, folderId: number) => {
           .addLibraryPanel(panel, folderId!)
           .then((returnedPanel) => {
             saveModel.panels[i] = {
-              id: returnedPanel.Model.id,
-              gridPos: returnedPanel.Model.gridPos,
+              id: returnedPanel.model.id,
+              gridPos: returnedPanel.model.gridPos,
               libraryPanel: {
-                uid: returnedPanel.UID,
-                name: returnedPanel.Name,
+                uid: returnedPanel.uid,
+                name: returnedPanel.name,
               },
             };
           })
@@ -40,11 +40,11 @@ const saveLibraryPanels = (saveModel: any, folderId: number) => {
           .updateLibraryPanel(panel, folderId!)
           .then((returnedPanel) => {
             saveModel.panels[i] = {
-              id: returnedPanel.Model.id,
-              gridPos: returnedPanel.Model.gridPos,
+              id: returnedPanel.model.id,
+              gridPos: returnedPanel.model.gridPos,
               libraryPanel: {
-                uid: returnedPanel.UID,
-                name: returnedPanel.Name,
+                uid: returnedPanel.uid,
+                name: returnedPanel.name,
               },
             };
           })

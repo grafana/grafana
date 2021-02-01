@@ -102,7 +102,12 @@ func (r StreamingResponse) WriteTo(ctx *models.ReqContext) {
 		header[k] = v
 	}
 	ctx.Resp.WriteHeader(r.status)
-	enc := jsoniter.NewEncoder(ctx.Resp)
+
+	// Use a configuration that's compatible with the standard library
+	// to minimize the risk of introducing bugs. This will make sure
+	// that map keys is ordered.
+	jsonCfg := jsoniter.ConfigCompatibleWithStandardLibrary
+	enc := jsonCfg.NewEncoder(ctx.Resp)
 	if err := enc.Encode(r.body); err != nil {
 		ctx.Logger.Error("Error writing to response", "err", err)
 	}

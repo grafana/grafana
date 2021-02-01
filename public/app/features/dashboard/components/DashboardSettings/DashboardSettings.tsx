@@ -1,10 +1,9 @@
 import React, { PureComponent } from 'react';
 import { css, cx } from 'emotion';
 import { selectors } from '@grafana/e2e-selectors';
-import { Button, CustomScrollbar, Icon, IconName, stylesFactory } from '@grafana/ui';
+import { Button, CustomScrollbar, Icon, IconName, PageToolbar, stylesFactory } from '@grafana/ui';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
-import { BackButton } from 'app/core/components/BackButton/BackButton';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { updateLocation } from 'app/core/actions';
 import { DashboardModel } from '../../state/DashboardModel';
@@ -146,7 +145,6 @@ export class DashboardSettings extends PureComponent<Props> {
   render() {
     const { dashboard, editview } = this.props;
     const folderTitle = dashboard.meta.folderTitle;
-    const haveFolder = (dashboard.meta.folderId ?? 0) > 0;
     const pages = this.getPages();
     const currentPage = pages.find((page) => page.id === editview) ?? pages[0];
     const canSaveAs = contextSrv.hasEditPermissionInFolders;
@@ -155,15 +153,7 @@ export class DashboardSettings extends PureComponent<Props> {
 
     return (
       <div className="dashboard-settings">
-        <div className="navbar navbar--edit">
-          <div className="navbar-edit">
-            <BackButton surface="panel" onClick={this.onClose} />
-          </div>
-          <div className="navbar-page-btn">
-            {haveFolder && <div className="navbar-page-btn__folder">{folderTitle} / </div>}
-            <span>{dashboard.title} / Settings</span>
-          </div>
-        </div>
+        <PageToolbar title={`${dashboard.title} / Settings`} parent={folderTitle} onGoBack={this.onClose} />
         <CustomScrollbar>
           <div className={styles.scrollInner}>
             <div className={styles.settingsWrapper}>

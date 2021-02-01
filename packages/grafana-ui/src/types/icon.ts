@@ -73,6 +73,7 @@ export type IconName =
   | 'gf-interpolation-smooth'
   | 'gf-interpolation-step-after'
   | 'gf-interpolation-step-before'
+  | 'gf-logs'
   | 'grafana'
   | 'graph-bar'
   | 'heart-break'
@@ -204,6 +205,7 @@ export const getAvailableIcons = (): IconName[] => [
   'gf-interpolation-smooth',
   'gf-interpolation-step-after',
   'gf-interpolation-step-before',
+  'gf-logs',
   'grafana',
   'graph-bar',
   'heart-break',

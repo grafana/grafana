@@ -10,7 +10,7 @@ import * as MonoIcon from './assets';
 import { customIcons } from './custom';
 import { SvgProps } from './assets/types';
 
-const alwaysMonoIcons = ['grafana', 'favorite', 'heart-break', 'heart'];
+const alwaysMonoIcons = ['grafana', 'favorite', 'heart-break', 'heart', 'panel-add'];
 
 export interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
   name: IconName;

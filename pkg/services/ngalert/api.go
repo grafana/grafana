@@ -1,6 +1,8 @@
 package ngalert
 
 import (
+	"fmt"
+
 	"github.com/go-macaron/binding"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -21,6 +23,8 @@ func (ng *AlertNG) registerAPIEndpoints() {
 		alertDefinitions.Delete("/:alertDefinitionUID", ng.validateOrgAlertDefinition, routing.Wrap(ng.deleteAlertDefinitionEndpoint))
 		alertDefinitions.Post("/", middleware.ReqSignedIn, binding.Bind(saveAlertDefinitionCommand{}), routing.Wrap(ng.createAlertDefinitionEndpoint))
 		alertDefinitions.Put("/:alertDefinitionUID", ng.validateOrgAlertDefinition, binding.Bind(updateAlertDefinitionCommand{}), routing.Wrap(ng.updateAlertDefinitionEndpoint))
+		alertDefinitions.Post("/pause", ng.validateOrgAlertDefinition, binding.Bind(updateAlertDefinitionPausedCommand{}), routing.Wrap(ng.alertDefinitionPauseEndpoint))
+		alertDefinitions.Post("/unpause", ng.validateOrgAlertDefinition, binding.Bind(updateAlertDefinitionPausedCommand{}), routing.Wrap(ng.alertDefinitionUnpauseEndpoint))
 	})
 
 	ng.RouteRegister.Group("/api/ngalert/", func(schedulerRouter routing.RouteRegister) {
@@ -179,4 +183,28 @@ func (ng *AlertNG) unpauseScheduler() response.Response {
 		return response.Error(500, "Failed to unpause scheduler", err)
 	}
 	return response.JSON(200, util.DynMap{"message": "alert definition scheduler unpaused"})
+}
+
+// alertDefinitionPauseEndpoint handles POST /api/alert-definitions/pause.
+func (ng *AlertNG) alertDefinitionPauseEndpoint(c *models.ReqContext, cmd updateAlertDefinitionPausedCommand) response.Response {
+	cmd.OrgID = c.SignedInUser.OrgId
+	cmd.Paused = true
+
+	err := ng.updateAlertDefinitionPaused(&cmd)
+	if err != nil {
+		return response.Error(500, "Failed to pause alert definition", err)
+	}
+	return response.JSON(200, util.DynMap{"message": fmt.Sprintf("%d alert definitions paused", cmd.ResultCount)})
+}
+
+// alertDefinitionUnpauseEndpoint handles POST /api/alert-definitions/unpause.
+func (ng *AlertNG) alertDefinitionUnpauseEndpoint(c *models.ReqContext, cmd updateAlertDefinitionPausedCommand) response.Response {
+	cmd.OrgID = c.SignedInUser.OrgId
+	cmd.Paused = false
+
+	err := ng.updateAlertDefinitionPaused(&cmd)
+	if err != nil {
+		return response.Error(500, "Failed to unpause alert definition", err)
+	}
+	return response.JSON(200, util.DynMap{"message": fmt.Sprintf("%d alert definitions unpaused", cmd.ResultCount)})
 }

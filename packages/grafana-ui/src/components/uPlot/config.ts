@@ -46,6 +46,26 @@ export enum LineInterpolation {
 export enum ScaleDistribution {
   Linear = 'linear',
   Logarithmic = 'log',
+  Ordinal = 'ordinal',
+}
+
+/**
+ * @alpha
+ */
+export enum ScaleOrientation {
+  Horizontal = 0,
+  Vertical = 1,
+}
+
+/**
+ * @alpha
+ */
+
+export enum ScaleDirection {
+  Up = 1,
+  Right = 1,
+  Down = -1,
+  Left = -1,
 }
 
 /**
@@ -129,10 +149,16 @@ export interface HideSeriesConfig {
 /**
  * @alpha
  */
-export interface GraphFieldConfig extends LineConfig, FillConfig, PointsConfig, AxisConfig {
+export interface HideableFieldConfig {
+  hideFrom?: HideSeriesConfig;
+}
+
+/**
+ * @alpha
+ */
+export interface GraphFieldConfig extends LineConfig, FillConfig, PointsConfig, AxisConfig, HideableFieldConfig {
   drawStyle?: DrawStyle;
   gradientMode?: GraphGradientMode;
-  hideFrom?: HideSeriesConfig;
 }
 
 /**

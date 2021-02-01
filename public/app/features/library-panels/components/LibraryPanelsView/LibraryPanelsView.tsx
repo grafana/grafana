@@ -34,7 +34,7 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
         return Promise.all(
           panels.map((panel) =>
             getBackendSrv()
-              .getLibraryPanelConnectedDashboards(panel.UID)
+              .getLibraryPanelConnectedDashboards(panel.uid)
               .then((connected) => {
                 return {
                   ...panel,
@@ -45,21 +45,19 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
         );
       });
 
-    Promise.all([libPanelsPromise, getBackendSrv().getOrgUsers()]).then(([panels, users]) => {
+    libPanelsPromise.then((panels) => {
       setLibraryPanels(
         panels.map((libraryPanel) => {
-          const lastAuthor = users.find((user) => user.userId === libraryPanel.UpdatedBy);
-
           return {
-            id: libraryPanel.ID,
-            uid: libraryPanel.UID,
-            title: libraryPanel.Name,
+            id: libraryPanel.id,
+            uid: libraryPanel.uid,
+            title: libraryPanel.name,
             connectedDashboards: libraryPanel.ConnectedDashboards,
             varCount: 3,
-            lastEdited: libraryPanel.Updated,
-            lastAuthor: lastAuthor?.login,
-            avatarUrl: lastAuthor?.avatarUrl,
-            model: libraryPanel.Model,
+            lastEdited: libraryPanel.meta.updated,
+            lastAuthor: libraryPanel.meta.updatedBy.name,
+            avatarUrl: libraryPanel.meta.updatedBy.avatarUrl,
+            model: libraryPanel.model,
           };
         })
       );

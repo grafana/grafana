@@ -6,6 +6,7 @@ import { styleMixins, useStyles } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { IconName } from '../../types';
 
+/** @internal */
 export interface MenuItem {
   /** Label of the menu item */
   label: string;
@@ -23,6 +24,7 @@ export interface MenuItem {
   active?: boolean;
 }
 
+/** @internal */
 export interface MenuItemsGroup {
   /** Label for the menu items group */
   label?: string;
@@ -30,6 +32,7 @@ export interface MenuItemsGroup {
   items: MenuItem[];
 }
 
+/** @internal */
 export interface MenuProps extends React.HTMLAttributes<HTMLDivElement> {
   /** React element rendered at the top of the menu */
   header?: React.ReactNode;
@@ -39,7 +42,7 @@ export interface MenuProps extends React.HTMLAttributes<HTMLDivElement> {
   onClose?: () => void;
 }
 
-/** @alpha */
+/** @internal */
 export const Menu = React.forwardRef<HTMLDivElement, MenuProps>(({ header, items, onClose, ...otherProps }, ref) => {
   const styles = useStyles(getMenuStyles);
   const onClick = useCallback(() => {
@@ -179,6 +182,8 @@ const getMenuStyles = (theme: GrafanaTheme) => {
       color: ${linkColor};
       display: flex;
       cursor: pointer;
+      padding: 5px 12px 5px 10px;
+
       &:hover {
         color: ${linkColorHover};
         text-decoration: none;
@@ -186,7 +191,6 @@ const getMenuStyles = (theme: GrafanaTheme) => {
     `,
     item: css`
       background: none;
-      padding: 5px 12px 5px 10px;
       border-left: 2px solid transparent;
       cursor: pointer;
       white-space: nowrap;

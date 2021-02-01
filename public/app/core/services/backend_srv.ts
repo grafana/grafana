@@ -20,16 +20,27 @@ import { FetchQueueWorker } from './FetchQueueWorker';
 const CANCEL_ALL_REQUESTS_REQUEST_ID = 'cancel_all_requests_request_id';
 
 export interface LibraryPanel {
-  ID: number;
-  OrgID: number;
-  FolderID: number;
-  UID: string;
-  Name: string;
-  Model: any;
-  Created: string;
-  Updated: string;
-  CreatedBy: number;
-  UpdatedBy: number;
+  id: number;
+  orgId: number;
+  folderId: number;
+  uid: string;
+  name: string;
+  model: any;
+  meta: {
+    canEdit: boolean;
+    created: string;
+    updated: string;
+    createdBy: {
+      id: number;
+      name: string;
+      avatarUrl: string;
+    };
+    updatedBy: {
+      id: number;
+      name: string;
+      avatarUrl: string;
+    };
+  };
 }
 
 export interface BackendSrvDependencies {

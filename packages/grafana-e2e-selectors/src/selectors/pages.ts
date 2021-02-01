@@ -34,10 +34,6 @@ export const Pages = {
   },
   Dashboard: {
     url: (uid: string) => `/d/${uid}`,
-    Toolbar: {
-      toolbarItems: (button: string) => `Dashboard navigation bar button ${button}`,
-      navBar: () => '.navbar',
-    },
     SubMenu: {
       submenuItem: 'Dashboard template variables submenu item',
       submenuItemLabels: (item: string) => `Dashboard template variables submenu Label ${item}`,

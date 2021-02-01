@@ -185,7 +185,7 @@ function copyExistingDashboard() {
 }
 
 function saveDashboard(saveVariables: boolean) {
-  e2e.pages.Dashboard.Toolbar.toolbarItems('Save dashboard').should('be.visible').click();
+  e2e.components.PageToolbar.item('Save dashboard').should('be.visible').click();
 
   if (saveVariables) {
     e2e.pages.SaveDashboardModal.saveVariables().should('exist').click({ force: true });
@@ -212,7 +212,7 @@ function validateTextboxAndMarkup(value: string) {
 }
 
 function validateVariable(value: string) {
-  e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').should('be.visible').click();
+  e2e.components.PageToolbar.item('Dashboard settings').should('be.visible').click();
 
   e2e.pages.Dashboard.Settings.General.sectionItems('Variables').should('be.visible').click();
 
@@ -245,7 +245,7 @@ function changeTextBoxInput() {
 }
 
 function changeQueryInput() {
-  e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').should('be.visible').click();
+  e2e.components.PageToolbar.item('Dashboard settings').should('be.visible').click();
 
   e2e.pages.Dashboard.Settings.General.sectionItems('Variables').should('be.visible').click();
 

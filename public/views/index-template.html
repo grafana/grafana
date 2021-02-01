@@ -3,16 +3,15 @@
   <head>
     <script nonce="[[.Nonce]]">
       // https://github.com/GoogleChromeLabs/tti-polyfill
-      !(function() {
+      !(function () {
         if ('PerformanceLongTaskTiming' in window) {
           var g = (window.__tti = { e: [] });
-          g.o = new PerformanceObserver(function(l) {
+          g.o = new PerformanceObserver(function (l) {
             g.e = g.e.concat(l.getEntries());
           });
           g.o.observe({ entryTypes: ['longtask'] });
         }
       })();
-
     </script>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
@@ -25,16 +24,15 @@
 
     <link
       rel="preload"
-      href="public/fonts/roboto/RxZJdnzeo3R5zSexge8UUVtXRa8TVwTICgirnJhmVJw.woff2"
+      href="[[.ContentDeliveryURL]]/public/fonts/roboto/RxZJdnzeo3R5zSexge8UUVtXRa8TVwTICgirnJhmVJw.woff2"
       as="font"
       crossorigin
     />
 
     <link rel="icon" type="image/png" href="[[.FavIcon]]" />
     <link rel="apple-touch-icon" sizes="180x180" href="[[.AppleTouchIcon]]" />
-    <link rel="mask-icon" href="public/img/grafana_mask_icon.svg" color="#F05A28" />
-
-    <link rel="stylesheet" href="public/build/grafana.[[ .Theme ]].<%= webpack.hash %>.css" />
+    <link rel="mask-icon" href="[[.ContentDeliveryURL]]/public/img/grafana_mask_icon.svg" color="#F05A28" />
+    <link rel="stylesheet" href="[[.ContentDeliveryURL]]/public/build/grafana.[[ .Theme ]].<%= webpack.hash %>.css" />
 
     <script nonce="[[.Nonce]]">
       performance.mark('css done blocking');
@@ -199,14 +197,17 @@
         </p>
         <p>
           1. This could be caused by your reverse proxy settings.<br /><br />
-          2. If you host grafana under subpath make sure your grafana.ini root_url setting includes subpath. If not using a reverse proxy make sure to set serve_from_sub_path to true.<br />
+          2. If you host grafana under subpath make sure your grafana.ini root_url setting includes subpath. If not
+          using a reverse proxy make sure to set serve_from_sub_path to true.<br />
           <br />
           3. If you have a local dev build make sure you build frontend using: yarn start, yarn start:hot, or yarn
           build<br />
           <br />
           4. Sometimes restarting grafana-server can help<br />
           <br />
-          5. You might be using a non-supported browser. To make sure read the documentation on <a href="https://grafana.com/docs/grafana/latest/installation/requirements/#supported-web-browsers">supported browsers</a>.
+          5. Check if you are using a non-supported browser. For more information, refer to the list of <a 
+            href="https://grafana.com/docs/grafana/latest/installation/requirements/#supported-web-browsers">
+            supported browsers</a>.
         </p>
       </div>
     </div>
@@ -217,7 +218,7 @@
       <search-wrapper></search-wrapper>
 
       <div class="main-view">
-				<div ng-view class="scroll-canvas"></div>
+        <div ng-view class="scroll-canvas"></div>
       </div>
     </grafana-app>
 
@@ -235,57 +236,64 @@
             preloader[0].className = "preloader preloader--done";
           }
         };
+
+        window.public_cdn_path = '[[.ContentDeliveryURL]]/public/build/';
     </script>
 
     [[if .GoogleTagManagerId]]
-    <!-- Google Tag Manager -->
-    <script nonce="[[.Nonce]]">
-      dataLayer = [
-        {
-          IsSignedIn: '[[.User.IsSignedIn]]',
-          Email: '[[.User.Email]]',
-          Name: '[[.User.Name]]',
-          UserId: '[[.User.Id]]',
-          OrgId: '[[.User.OrgId]]',
-          OrgName: '[[.User.OrgName]]',
-        },
-      ];
-    </script>
-    <noscript>
-      <iframe
-        src="//www.googletagmanager.com/ns.html?id=[[.GoogleTagManagerId]]"
-        height="0"
-        width="0"
-        style="display:none;visibility:hidden"
-      ></iframe>
-    </noscript>
-    <script nonce="[[.Nonce]]">
-      (function(w, d, s, l, i) {
-        w[l] = w[l] || [];
-        w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
-        var f = d.getElementsByTagName(s)[0],
-          j = d.createElement(s),
-          dl = l != 'dataLayer' ? '&l=' + l : '';
-        j.async = true;
-        j.src = '//www.googletagmanager.com/gtm.js?id=' + i + dl;
-        f.parentNode.insertBefore(j, f);
-      })(window, document, 'script', 'dataLayer', '[[.GoogleTagManagerId]]');
-    </script>
-    <!-- End Google Tag Manager -->
-    [[end]]
+      <!-- Google Tag Manager -->
+      <script nonce="[[.Nonce]]">
+        dataLayer = [
+          {
+            IsSignedIn: '[[.User.IsSignedIn]]',
+            Email: '[[.User.Email]]',
+            Name: '[[.User.Name]]',
+            UserId: '[[.User.Id]]',
+            OrgId: '[[.User.OrgId]]',
+            OrgName: '[[.User.OrgName]]',
+          },
+        ];
+      </script>
+      <noscript>
+        <iframe
+          src="//www.googletagmanager.com/ns.html?id=[[.GoogleTagManagerId]]"
+          height="0"
+          width="0"
+          style="display: none; visibility: hidden"
+        ></iframe>
+      </noscript>
+      <script nonce="[[.Nonce]]">
+        (function (w, d, s, l, i) {
+          w[l] = w[l] || [];
+          w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
+          var f = d.getElementsByTagName(s)[0],
+            j = d.createElement(s),
+            dl = l != 'dataLayer' ? '&l=' + l : '';
+          j.async = true;
+          j.src = '//www.googletagmanager.com/gtm.js?id=' + i + dl;
+          f.parentNode.insertBefore(j, f);
+        })(window, document, 'script', 'dataLayer', '[[.GoogleTagManagerId]]');
+      </script>
+      <!-- End Google Tag Manager -->
+    [[end]] 
 
-    <%
-    for (key in htmlWebpackPlugin.files.chunks) { %><%
-      if (htmlWebpackPlugin.files.jsIntegrity) { %>
-    <script nonce="[[.Nonce]]"
-      src="<%= htmlWebpackPlugin.files.chunks[key].entry %>"
-      type="text/javascript"
-      integrity="<%= htmlWebpackPlugin.files.jsIntegrity[htmlWebpackPlugin.files.js.indexOf(htmlWebpackPlugin.files.chunks[key].entry)] %>"
-      crossorigin="<%= webpackConfig.output.crossOriginLoading %>"></script><%
-      } else { %>
-    <script nonce="[[.Nonce]]" src="<%= htmlWebpackPlugin.files.chunks[key].entry %>" type="text/javascript"></script><%
-      } %><%
-    } %>
+    <% for (key in htmlWebpackPlugin.files.chunks) { %>
+      <% if (htmlWebpackPlugin.files.jsIntegrity) { %>
+        <script
+          nonce="[[.Nonce]]"
+          src="[[.ContentDeliveryURL]]/<%= htmlWebpackPlugin.files.chunks[key].entry %>"
+          type="text/javascript"
+          integrity="<%= htmlWebpackPlugin.files.jsIntegrity[htmlWebpackPlugin.files.js.indexOf(htmlWebpackPlugin.files.chunks[key].entry)] %>"
+          crossorigin="<%= webpackConfig.output.crossOriginLoading %>">
+        </script>
+      <% } else { %>
+        <script
+          nonce="[[.Nonce]]"
+          src="[[.ContentDeliveryURL]]/<%= htmlWebpackPlugin.files.chunks[key].entry %>"
+          type="text/javascript">
+        </script>
+      <% } %>
+    <% } %>
     <script nonce="[[.Nonce]]">
       performance.mark('js done blocking');
     </script>

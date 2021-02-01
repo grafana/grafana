@@ -2,12 +2,22 @@ import React, { CSSProperties, useCallback, useState } from 'react';
 import Transition from 'react-transition-group/Transition';
 import { FieldConfigSource, GrafanaTheme, PanelPlugin, SelectableValue } from '@grafana/data';
 import { DashboardModel, PanelModel } from '../../state';
-import { CustomScrollbar, Icon, Input, Select, stylesFactory, Tab, TabContent, TabsBar, useTheme } from '@grafana/ui';
+import {
+  CustomScrollbar,
+  Icon,
+  Input,
+  Select,
+  stylesFactory,
+  Tab,
+  TabContent,
+  TabsBar,
+  ToolbarButton,
+  useTheme,
+} from '@grafana/ui';
 import { OverrideFieldConfigEditor } from './OverrideFieldConfigEditor';
 import { DefaultFieldConfigEditor } from './DefaultFieldConfigEditor';
 import { css } from 'emotion';
 import { PanelOptionsTab } from './PanelOptionsTab';
-import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
 import { usePanelLatestData } from './usePanelLatestData';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -213,13 +223,7 @@ export const TabsBarContent: React.FC<{
         </>
       )}
       <div className={styles.tabsButton}>
-        <DashNavButton
-          icon="angle-right"
-          tooltip="Close options pane"
-          classSuffix="close-options"
-          onClick={onClose}
-          iconSize="lg"
-        />
+        <ToolbarButton icon="angle-right" tooltip="Close options pane" onClick={onClose} />
       </div>
     </>
   );
