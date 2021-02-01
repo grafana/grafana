@@ -22,17 +22,16 @@ To access Explore:
 
 1. Click on the Explore icon on the menu bar.
    
-   {{< docs-imagebox img="/img/docs/explore/access-explore-7-4.png" class="docs-image--no-shadow" max-width= "650px" caption="Screenshot of the new Explore Icon" >}}
+   {{< docs-imagebox img="/img/docs/explore/access-explore-7-4.png" max-width= "650px" caption="Screenshot of the new Explore Icon" >}}
    
    An empty Explore tab opens.
-2. Choose your data source from the dropdown in the top left. [Prometheus](https://grafana.com/oss/prometheus/) has a custom Explore implementation, the other data sources use their standard query editor.
-3. In the query field, write your query to explore your data. There are three buttons beside the query field, a clear button (X), an add query button (+) and the remove query button (-). Just like the normal query editor, you can add and remove multiple queries.
 
-{{< docs-imagebox img="/img/docs/explore/access-explore-7-4.png" class="docs-image--no-shadow" max-width= "650px" caption="Screenshot of the new Explore Icon" >}}
+   Alternately to start with an existing query in a panel, choose the Explore option from the Panel menu. This opens an Explore tab with the query from the panel and allows you to tweak or iterate in the query outside of your dashboard.
 
-To start with an existing query in a panel, choose the Explore option from the Panel menu. This opens an Explore tab with the query from the panel and allows you to tweak or iterate in the query outside of your dashboard.
+{{< docs-imagebox img="/img/docs/explore/panel_dropdown-7-4.png" class="docs-image--no-shadow" max-width= "650px" caption="Screenshot of the new Explore option in the panel menu" >}}
 
-{{< docs-imagebox img="/img/docs/explore/explore_panel_menu.png" class="docs-image--no-shadow" max-width= "650px" caption="Screenshot of the new Explore option in the panel menu" >}}
+1. Choose your data source from the dropdown in the top left. [Prometheus](https://grafana.com/oss/prometheus/) has a custom Explore implementation, the other data sources use their standard query editor.
+1. In the query field, write your query to explore your data. There are three buttons beside the query field, a clear button (X), an add query button (+) and the remove query button (-). Just like the normal query editor, you can add and remove multiple queries.
 
 ## Split and compare
 
@@ -44,7 +43,7 @@ To open the split view:
    
 It is possible to select another data source for the new query which for example, allows you to compare the same query for two different servers or to compare the staging environment to the production environment.
 
-{{< docs-imagebox img="/img/docs/v65/explore_split.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore option in the panel menu" >}}
+{{< docs-imagebox img="/img/docs/explore/explore_split-7-4.png" max-width= "950px" caption="Screenshot of the new Explore option in the panel menu" >}}
 
 In split view, timepickers for both panels can be linked (if you change one, the other gets changed as well) by clicking on one of the time-sync buttons attached to the timepickers. Linking of timepickers helps with keeping the start and the end times of the split view queries in sync. It ensures that you’re looking at the same time interval in both split panels.
 
@@ -54,14 +53,9 @@ To close the newly created query, click on the Close Split button.
 
 To help accelerate workflows that involve regularly switching from Explore to a dashboard and vice-versa, Grafana provides you with the ability to return to the origin dashboard after navigating to Explore from the panel's dropdown.
 
-After you've navigated to Explore, you should notice a "Back" button in the Explore toolbar.
+After you've navigated to Explore, you should notice a "Back" button in the Explore toolbar. Simply click it to return to the origin dashboard. To bring changes you make in Explore back to the dashboard, click the arrow next to the button to reveal a "Return to panel with changes" menu item.
 
-{{< docs-imagebox img="/img/docs/explore/explore_toolbar.png" class="docs-image--no-shadow" caption="Screenshot of the explore toolbar" >}}
-
-Simply clicking the button will return you to the origin dashboard, or, if you'd like to bring changes you make in Explore back to the dashboard, simply click
-the arrow next to the button to reveal a "Return to panel with changes" menu item.
-
-{{< docs-imagebox img="/img/docs/explore/explore_return_dropdown.png" class="docs-image--no-shadow" max-width= "400px" caption="Screenshot of the expanded explore return dropdown" >}}
+{{< docs-imagebox img="/img/docs/explore/explore_return_dropdown-7-4.png" class="docs-image--no-shadow" max-width= "400px" caption="Screenshot of the expanded explore return dropdown" >}}
 
 ## Share shortened link
 
