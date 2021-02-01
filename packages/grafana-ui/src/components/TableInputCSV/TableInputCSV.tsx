@@ -97,31 +97,23 @@ export class UnThemedTableInputCSV extends React.PureComponent<Props, State> {
 export const TableInputCSV = withTheme(UnThemedTableInputCSV);
 TableInputCSV.displayName = 'TableInputCSV';
 
-interface TableInputCSVStyle {
-  tableInputCsv: string;
-  textarea: string;
-  footer: string;
-}
-
-const getStyles = stylesFactory(
-  (theme: GrafanaTheme): TableInputCSVStyle => {
-    return {
-      tableInputCsv: css`
-        position: relative;
-      `,
-      textarea: css`
-        height: 100%;
-        width: 100%;
-      `,
-      footer: css`
-        position: absolute;
-        bottom: 15px;
-        right: 15px;
-        border: 1px solid #222;
-        background: ${theme.palette.online};
-        padding: 1px ${theme.spacing.xs};
-        font-size: 80%;
-      `,
-    };
-  }
-);
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    tableInputCsv: css`
+      position: relative;
+    `,
+    textarea: css`
+      height: 100%;
+      width: 100%;
+    `,
+    footer: css`
+      position: absolute;
+      bottom: 15px;
+      right: 15px;
+      border: 1px solid #222;
+      background: ${theme.palette.online};
+      padding: 1px ${theme.spacing.xs};
+      font-size: 80%;
+    `,
+  };
+});
