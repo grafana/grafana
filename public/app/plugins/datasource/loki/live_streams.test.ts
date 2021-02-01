@@ -48,7 +48,7 @@ describe('Live Stream Tests', () => {
         expect(last).toEqual({
           ts: '2019-08-28T20:50:40.118Z',
           tsNs: '1567025440118944705',
-          id: '8c50d09800ce8dda69a2ff25405c9f65',
+          id: '8c50d09800ce8dda69a2ff25405c9f65_A',
           line: 'Kittens',
           labels: { filename: '/var/log/sntpc.log' },
         });

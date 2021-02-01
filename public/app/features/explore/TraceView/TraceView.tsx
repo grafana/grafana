@@ -20,12 +20,13 @@ import { TraceViewData, Trace, TraceSpan, TraceKeyValuePair, TraceLink } from '@
 import { createSpanLinkFactory } from './createSpanLink';
 import { useSelector } from 'react-redux';
 import { StoreState } from 'app/types';
+import { SplitOpen } from 'app/types/explore';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { TraceToLogsData } from 'app/core/components/TraceToLogsSettings';
 
 type Props = {
   trace?: TraceViewData;
-  splitOpenFn: (options: { datasourceUid: string; query: any }) => void;
+  splitOpenFn: SplitOpen;
 };
 
 export function TraceView(props: Props) {

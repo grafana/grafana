@@ -55,6 +55,7 @@ import * as gettingStartedPanel from 'app/plugins/panel/gettingstarted/module';
 import * as gaugePanel from 'app/plugins/panel/gauge/module';
 import * as pieChartPanel from 'app/plugins/panel/piechart/module';
 import * as barGaugePanel from 'app/plugins/panel/bargauge/module';
+import * as barChartPanel from 'app/plugins/panel/barchart/module';
 import * as logsPanel from 'app/plugins/panel/logs/module';
 import * as newsPanel from 'app/plugins/panel/news/module';
 import * as livePanel from 'app/plugins/panel/live/module';
@@ -101,6 +102,7 @@ const builtInPlugins: any = {
   'app/plugins/panel/gauge/module': gaugePanel,
   'app/plugins/panel/piechart/module': pieChartPanel,
   'app/plugins/panel/bargauge/module': barGaugePanel,
+  'app/plugins/panel/barchart/module': barChartPanel,
   'app/plugins/panel/logs/module': logsPanel,
   'app/plugins/panel/welcome/module': welcomeBanner,
   'app/plugins/panel/nodeGraph/module': nodeGraph,

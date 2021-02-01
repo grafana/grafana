@@ -61,7 +61,7 @@ export function lokiStreamResultToDataFrame(stream: LokiStreamResult, reverse?: 
     times.add(new Date(parseInt(ts.substr(0, ts.length - 6), 10)).toISOString());
     timesNs.add(ts);
     lines.add(line);
-    uids.add(createUid(ts, labelsString, line, usedUids));
+    uids.add(createUid(ts, labelsString, line, usedUids, refId));
   }
 
   return constructDataFrame(times, timesNs, lines, uids, labels, reverse, refId);
@@ -148,12 +148,12 @@ export function appendResponseToBufferedData(response: LokiTailResponse, data: M
       tsNsField.values.add(ts);
       lineField.values.add(line);
       labelsField.values.add(unique);
-      idField.values.add(createUid(ts, allLabelsString, line, usedUids));
+      idField.values.add(createUid(ts, allLabelsString, line, usedUids, data.refId));
     }
   }
 }
 
-function createUid(ts: string, labelsString: string, line: string, usedUids: any): string {
+function createUid(ts: string, labelsString: string, line: string, usedUids: any, refId?: string): string {
   // Generate id as hashed nanosecond timestamp, labels and line (this does not have to be unique)
   let id = md5(`${ts}_${labelsString}_${line}`);
 
@@ -170,6 +170,9 @@ function createUid(ts: string, labelsString: string, line: string, usedUids: any
     usedUids[id] = 0;
   }
   // Return unique id
+  if (refId) {
+    return `${id}_${refId}`;
+  }
   return id;
 }
 
@@ -354,7 +357,7 @@ export function lokiStreamsToDataFrames(
   };
 
   const series: DataFrame[] = data.map((stream) => {
-    const dataFrame = lokiStreamResultToDataFrame(stream, reverse);
+    const dataFrame = lokiStreamResultToDataFrame(stream, reverse, target.refId);
     enhanceDataFrame(dataFrame, config);
 
     if (meta.custom && dataFrame.fields.some((f) => f.labels && Object.keys(f.labels).some((l) => l === '__error__'))) {

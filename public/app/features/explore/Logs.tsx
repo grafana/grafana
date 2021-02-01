@@ -56,7 +56,7 @@ function renderMetaItem(value: any, kind: LogsMetaKind) {
 }
 
 interface Props {
-  logRows?: LogRowModel[];
+  logRows: LogRowModel[];
   logsMeta?: LogsMetaItem[];
   logsSeries?: GraphSeriesXY[];
   dedupedRows?: LogRowModel[];

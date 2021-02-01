@@ -126,9 +126,11 @@ func (e *cloudWatchExecutor) transformQueryResponsesToQueryResult(cloudwatchResp
 				continue
 			}
 
-			frame.Fields[1].SetConfig(&data.FieldConfig{
-				Links: createDataLinks(link),
-			})
+			if frame.Fields[1].Config == nil {
+				frame.Fields[1].Config = &data.FieldConfig{}
+			}
+
+			frame.Fields[1].Config.Links = createDataLinks(link)
 		}
 
 		queryResult.Dataframes = tsdb.NewDecodedDataFrames(frames)
