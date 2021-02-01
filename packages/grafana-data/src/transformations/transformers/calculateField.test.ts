@@ -21,6 +21,7 @@ const seriesBC = toDataFrame({
     { name: 'B', type: FieldType.number, values: [2, 200] },
     { name: 'C', type: FieldType.number, values: [3, 300] },
     { name: 'D', type: FieldType.string, values: ['first', 'second'] },
+    { name: 'E', type: FieldType.boolean, values: [true, false] },
   ],
 });
 
@@ -129,7 +130,7 @@ describe('calculateField transformer w/ timeseries', () => {
         mode: CalculateFieldMode.BinaryOperation,
         binary: {
           left: 'B',
-          operation: BinaryOperationID.Add,
+          operator: BinaryOperationID.Add,
           right: 'C',
         },
         replaceFields: true,
@@ -160,7 +161,7 @@ describe('calculateField transformer w/ timeseries', () => {
         mode: CalculateFieldMode.BinaryOperation,
         binary: {
           left: 'B',
-          operation: BinaryOperationID.Add,
+          operator: BinaryOperationID.Add,
           right: '2',
         },
         replaceFields: true,
@@ -181,6 +182,39 @@ describe('calculateField transformer w/ timeseries', () => {
           TheTime: 2000,
         },
       ]);
+    });
+  });
+
+  it('boolean field', async () => {
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: {
+        mode: CalculateFieldMode.BinaryOperation,
+        binary: {
+          left: 'E',
+          operator: BinaryOperationID.Multiply,
+          right: '1',
+        },
+        replaceFields: true,
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [seriesBC])).toEmitValuesWith((received) => {
+      const data = received[0];
+      const filtered = data[0];
+      const rows = new DataFrameView(filtered).toArray();
+      expect(rows).toMatchInlineSnapshot(`
+        Array [
+          Object {
+            "E * 1": 1,
+            "TheTime": 1000,
+          },
+          Object {
+            "E * 1": 0,
+            "TheTime": 2000,
+          },
+        ]
+      `);
     });
   });
 });
