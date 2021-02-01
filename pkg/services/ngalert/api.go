@@ -9,41 +9,52 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func (ng *AlertNG) registerAPIEndpoints() {
-	ng.RouteRegister.Group("/api/alert-definitions", func(alertDefinitions routing.RouteRegister) {
-		alertDefinitions.Get("", middleware.ReqSignedIn, routing.Wrap(ng.listAlertDefinitions))
-		alertDefinitions.Get("/eval/:alertDefinitionUID", ng.validateOrgAlertDefinition, routing.Wrap(ng.alertDefinitionEvalEndpoint))
-		alertDefinitions.Post("/eval", middleware.ReqSignedIn, binding.Bind(evalAlertConditionCommand{}), routing.Wrap(ng.conditionEvalEndpoint))
-		alertDefinitions.Get("/:alertDefinitionUID", ng.validateOrgAlertDefinition, routing.Wrap(ng.getAlertDefinitionEndpoint))
-		alertDefinitions.Delete("/:alertDefinitionUID", ng.validateOrgAlertDefinition, routing.Wrap(ng.deleteAlertDefinitionEndpoint))
-		alertDefinitions.Post("/", middleware.ReqSignedIn, binding.Bind(saveAlertDefinitionCommand{}), routing.Wrap(ng.createAlertDefinitionEndpoint))
-		alertDefinitions.Put("/:alertDefinitionUID", ng.validateOrgAlertDefinition, binding.Bind(updateAlertDefinitionCommand{}), routing.Wrap(ng.updateAlertDefinitionEndpoint))
-		alertDefinitions.Post("/pause", ng.validateOrgAlertDefinition, binding.Bind(updateAlertDefinitionPausedCommand{}), routing.Wrap(ng.alertDefinitionPauseEndpoint))
-		alertDefinitions.Post("/unpause", ng.validateOrgAlertDefinition, binding.Bind(updateAlertDefinitionPausedCommand{}), routing.Wrap(ng.alertDefinitionUnpauseEndpoint))
+type apiImpl struct {
+	Cfg             *setting.Cfg             `inject:""`
+	DatasourceCache datasources.CacheService `inject:""`
+	RouteRegister   routing.RouteRegister    `inject:""`
+	DefinitionStore definitionStore          `inject:""`
+	InstanceStore   instanceStore            `inject:""`
+	Schedule        scheduleService          `inject:""`
+}
+
+func (api *apiImpl) registerAPIEndpoints() {
+	api.RouteRegister.Group("/api/alert-definitions", func(alertDefinitions routing.RouteRegister) {
+		alertDefinitions.Get("", middleware.ReqSignedIn, routing.Wrap(api.listAlertDefinitions))
+		alertDefinitions.Get("/eval/:alertDefinitionUID", api.validateOrgAlertDefinition, routing.Wrap(api.alertDefinitionEvalEndpoint))
+		alertDefinitions.Post("/eval", middleware.ReqSignedIn, binding.Bind(evalAlertConditionCommand{}), routing.Wrap(api.conditionEvalEndpoint))
+		alertDefinitions.Get("/:alertDefinitionUID", api.validateOrgAlertDefinition, routing.Wrap(api.getAlertDefinitionEndpoint))
+		alertDefinitions.Delete("/:alertDefinitionUID", api.validateOrgAlertDefinition, routing.Wrap(api.deleteAlertDefinitionEndpoint))
+		alertDefinitions.Post("/", middleware.ReqEditorRole, binding.Bind(saveAlertDefinitionCommand{}), routing.Wrap(api.createAlertDefinitionEndpoint))
+		alertDefinitions.Put("/:alertDefinitionUID", api.validateOrgAlertDefinition, binding.Bind(updateAlertDefinitionCommand{}), routing.Wrap(api.updateAlertDefinitionEndpoint))
+		alertDefinitions.Post("/pause", middleware.ReqEditorRole, binding.Bind(updateAlertDefinitionPausedCommand{}), routing.Wrap(api.alertDefinitionPauseEndpoint))
+		alertDefinitions.Post("/unpause", middleware.ReqEditorRole, binding.Bind(updateAlertDefinitionPausedCommand{}), routing.Wrap(api.alertDefinitionUnpauseEndpoint))
 	})
 
-	ng.RouteRegister.Group("/api/ngalert/", func(schedulerRouter routing.RouteRegister) {
-		schedulerRouter.Post("/pause", routing.Wrap(ng.pauseScheduler))
-		schedulerRouter.Post("/unpause", routing.Wrap(ng.unpauseScheduler))
+	api.RouteRegister.Group("/api/ngalert/", func(schedulerRouter routing.RouteRegister) {
+		schedulerRouter.Post("/pause", routing.Wrap(api.pauseScheduler))
+		schedulerRouter.Post("/unpause", routing.Wrap(api.unpauseScheduler))
 	}, middleware.ReqOrgAdmin)
 
-	ng.RouteRegister.Group("/api/alert-instances", func(alertInstances routing.RouteRegister) {
-		alertInstances.Get("", middleware.ReqSignedIn, routing.Wrap(ng.listAlertInstancesEndpoint))
+	api.RouteRegister.Group("/api/alert-instances", func(alertInstances routing.RouteRegister) {
+		alertInstances.Get("", middleware.ReqSignedIn, routing.Wrap(api.listAlertInstancesEndpoint))
 	})
 }
 
 // conditionEvalEndpoint handles POST /api/alert-definitions/eval.
-func (ng *AlertNG) conditionEvalEndpoint(c *models.ReqContext, dto evalAlertConditionCommand) response.Response {
-	if err := ng.validateCondition(dto.Condition, c.SignedInUser, c.SkipCache); err != nil {
+func (api *apiImpl) conditionEvalEndpoint(c *models.ReqContext, dto evalAlertConditionCommand) response.Response {
+	if err := api.validateCondition(dto.Condition, c.SignedInUser, c.SkipCache); err != nil {
 		return response.Error(400, "invalid condition", err)
 	}
 
-	evaluator := eval.Evaluator{Cfg: ng.Cfg}
+	evaluator := eval.Evaluator{Cfg: api.Cfg}
 	evalResults, err := evaluator.ConditionEval(&dto.Condition, timeNow())
 	if err != nil {
 		return response.Error(400, "Failed to evaluate conditions", err)
@@ -62,19 +73,19 @@ func (ng *AlertNG) conditionEvalEndpoint(c *models.ReqContext, dto evalAlertCond
 }
 
 // alertDefinitionEvalEndpoint handles GET /api/alert-definitions/eval/:alertDefinitionUID.
-func (ng *AlertNG) alertDefinitionEvalEndpoint(c *models.ReqContext) response.Response {
+func (api *apiImpl) alertDefinitionEvalEndpoint(c *models.ReqContext) response.Response {
 	alertDefinitionUID := c.Params(":alertDefinitionUID")
 
-	condition, err := ng.LoadAlertCondition(alertDefinitionUID, c.SignedInUser.OrgId)
+	condition, err := api.LoadAlertCondition(alertDefinitionUID, c.SignedInUser.OrgId)
 	if err != nil {
 		return response.Error(400, "Failed to load alert definition conditions", err)
 	}
 
-	if err := ng.validateCondition(*condition, c.SignedInUser, c.SkipCache); err != nil {
+	if err := api.validateCondition(*condition, c.SignedInUser, c.SkipCache); err != nil {
 		return response.Error(400, "invalid condition", err)
 	}
 
-	evaluator := eval.Evaluator{Cfg: ng.Cfg}
+	evaluator := eval.Evaluator{Cfg: api.Cfg}
 	evalResults, err := evaluator.ConditionEval(condition, timeNow())
 	if err != nil {
 		return response.Error(400, "Failed to evaluate alert", err)
@@ -96,7 +107,7 @@ func (ng *AlertNG) alertDefinitionEvalEndpoint(c *models.ReqContext) response.Re
 }
 
 // getAlertDefinitionEndpoint handles GET /api/alert-definitions/:alertDefinitionUID.
-func (ng *AlertNG) getAlertDefinitionEndpoint(c *models.ReqContext) response.Response {
+func (api *apiImpl) getAlertDefinitionEndpoint(c *models.ReqContext) response.Response {
 	alertDefinitionUID := c.Params(":alertDefinitionUID")
 
 	query := getAlertDefinitionByUIDQuery{
@@ -104,7 +115,7 @@ func (ng *AlertNG) getAlertDefinitionEndpoint(c *models.ReqContext) response.Res
 		OrgID: c.SignedInUser.OrgId,
 	}
 
-	if err := ng.definitionStore.getAlertDefinitionByUID(&query); err != nil {
+	if err := api.DefinitionStore.getAlertDefinitionByUID(&query); err != nil {
 		return response.Error(500, "Failed to get alert definition", err)
 	}
 
@@ -112,7 +123,7 @@ func (ng *AlertNG) getAlertDefinitionEndpoint(c *models.ReqContext) response.Res
 }
 
 // deleteAlertDefinitionEndpoint handles DELETE /api/alert-definitions/:alertDefinitionUID.
-func (ng *AlertNG) deleteAlertDefinitionEndpoint(c *models.ReqContext) response.Response {
+func (api *apiImpl) deleteAlertDefinitionEndpoint(c *models.ReqContext) response.Response {
 	alertDefinitionUID := c.Params(":alertDefinitionUID")
 
 	cmd := deleteAlertDefinitionByUIDCommand{
@@ -120,7 +131,7 @@ func (ng *AlertNG) deleteAlertDefinitionEndpoint(c *models.ReqContext) response.
 		OrgID: c.SignedInUser.OrgId,
 	}
 
-	if err := ng.definitionStore.deleteAlertDefinitionByUID(&cmd); err != nil {
+	if err := api.DefinitionStore.deleteAlertDefinitionByUID(&cmd); err != nil {
 		return response.Error(500, "Failed to delete alert definition", err)
 	}
 
@@ -128,15 +139,15 @@ func (ng *AlertNG) deleteAlertDefinitionEndpoint(c *models.ReqContext) response.
 }
 
 // updateAlertDefinitionEndpoint handles PUT /api/alert-definitions/:alertDefinitionUID.
-func (ng *AlertNG) updateAlertDefinitionEndpoint(c *models.ReqContext, cmd updateAlertDefinitionCommand) response.Response {
+func (api *apiImpl) updateAlertDefinitionEndpoint(c *models.ReqContext, cmd updateAlertDefinitionCommand) response.Response {
 	cmd.UID = c.Params(":alertDefinitionUID")
 	cmd.OrgID = c.SignedInUser.OrgId
 
-	if err := ng.validateCondition(cmd.Condition, c.SignedInUser, c.SkipCache); err != nil {
+	if err := api.validateCondition(cmd.Condition, c.SignedInUser, c.SkipCache); err != nil {
 		return response.Error(400, "invalid condition", err)
 	}
 
-	if err := ng.definitionStore.updateAlertDefinition(&cmd); err != nil {
+	if err := api.DefinitionStore.updateAlertDefinition(&cmd); err != nil {
 		return response.Error(500, "Failed to update alert definition", err)
 	}
 
@@ -144,14 +155,14 @@ func (ng *AlertNG) updateAlertDefinitionEndpoint(c *models.ReqContext, cmd updat
 }
 
 // createAlertDefinitionEndpoint handles POST /api/alert-definitions.
-func (ng *AlertNG) createAlertDefinitionEndpoint(c *models.ReqContext, cmd saveAlertDefinitionCommand) response.Response {
+func (api *apiImpl) createAlertDefinitionEndpoint(c *models.ReqContext, cmd saveAlertDefinitionCommand) response.Response {
 	cmd.OrgID = c.SignedInUser.OrgId
 
-	if err := ng.validateCondition(cmd.Condition, c.SignedInUser, c.SkipCache); err != nil {
+	if err := api.validateCondition(cmd.Condition, c.SignedInUser, c.SkipCache); err != nil {
 		return response.Error(400, "invalid condition", err)
 	}
 
-	if err := ng.definitionStore.saveAlertDefinition(&cmd); err != nil {
+	if err := api.DefinitionStore.saveAlertDefinition(&cmd); err != nil {
 		return response.Error(500, "Failed to create alert definition", err)
 	}
 
@@ -159,26 +170,26 @@ func (ng *AlertNG) createAlertDefinitionEndpoint(c *models.ReqContext, cmd saveA
 }
 
 // listAlertDefinitions handles GET /api/alert-definitions.
-func (ng *AlertNG) listAlertDefinitions(c *models.ReqContext) response.Response {
+func (api *apiImpl) listAlertDefinitions(c *models.ReqContext) response.Response {
 	query := listAlertDefinitionsQuery{OrgID: c.SignedInUser.OrgId}
 
-	if err := ng.definitionStore.getOrgAlertDefinitions(&query); err != nil {
+	if err := api.DefinitionStore.getOrgAlertDefinitions(&query); err != nil {
 		return response.Error(500, "Failed to list alert definitions", err)
 	}
 
 	return response.JSON(200, util.DynMap{"results": query.Result})
 }
 
-func (ng *AlertNG) pauseScheduler() response.Response {
-	err := ng.schedule.Pause()
+func (api *apiImpl) pauseScheduler() response.Response {
+	err := api.Schedule.Pause()
 	if err != nil {
 		return response.Error(500, "Failed to pause scheduler", err)
 	}
 	return response.JSON(200, util.DynMap{"message": "alert definition scheduler paused"})
 }
 
-func (ng *AlertNG) unpauseScheduler() response.Response {
-	err := ng.schedule.Unpause()
+func (api *apiImpl) unpauseScheduler() response.Response {
+	err := api.Schedule.Unpause()
 	if err != nil {
 		return response.Error(500, "Failed to unpause scheduler", err)
 	}
@@ -186,11 +197,11 @@ func (ng *AlertNG) unpauseScheduler() response.Response {
 }
 
 // alertDefinitionPauseEndpoint handles POST /api/alert-definitions/pause.
-func (ng *AlertNG) alertDefinitionPauseEndpoint(c *models.ReqContext, cmd updateAlertDefinitionPausedCommand) response.Response {
+func (api *apiImpl) alertDefinitionPauseEndpoint(c *models.ReqContext, cmd updateAlertDefinitionPausedCommand) response.Response {
 	cmd.OrgID = c.SignedInUser.OrgId
 	cmd.Paused = true
 
-	err := ng.updateAlertDefinitionPaused(&cmd)
+	err := api.DefinitionStore.updateAlertDefinitionPaused(&cmd)
 	if err != nil {
 		return response.Error(500, "Failed to pause alert definition", err)
 	}
@@ -198,11 +209,11 @@ func (ng *AlertNG) alertDefinitionPauseEndpoint(c *models.ReqContext, cmd update
 }
 
 // alertDefinitionUnpauseEndpoint handles POST /api/alert-definitions/unpause.
-func (ng *AlertNG) alertDefinitionUnpauseEndpoint(c *models.ReqContext, cmd updateAlertDefinitionPausedCommand) response.Response {
+func (api *apiImpl) alertDefinitionUnpauseEndpoint(c *models.ReqContext, cmd updateAlertDefinitionPausedCommand) response.Response {
 	cmd.OrgID = c.SignedInUser.OrgId
 	cmd.Paused = false
 
-	err := ng.updateAlertDefinitionPaused(&cmd)
+	err := api.DefinitionStore.updateAlertDefinitionPaused(&cmd)
 	if err != nil {
 		return response.Error(500, "Failed to unpause alert definition", err)
 	}

@@ -22,6 +22,7 @@ type definitionStore interface {
 	listAlertInstances(cmd *listAlertInstancesQuery) error
 	saveAlertInstance(cmd *saveAlertInstanceCommand) error
 	validateAlertDefinition(*AlertDefinition, bool) error
+	updateAlertDefinitionPaused(*updateAlertDefinitionPausedCommand) error
 }
 
 type storeImpl struct {
@@ -243,8 +244,8 @@ func (st storeImpl) getAlertDefinitions(query *listAlertDefinitionsQuery) error 
 	})
 }
 
-func (ng *AlertNG) updateAlertDefinitionPaused(cmd *updateAlertDefinitionPausedCommand) error {
-	return ng.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+func (st storeImpl) updateAlertDefinitionPaused(cmd *updateAlertDefinitionPausedCommand) error {
+	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		placeHolders := strings.Builder{}
 		const separator = ", "
 		separatorVar := separator
@@ -268,8 +269,8 @@ func (ng *AlertNG) updateAlertDefinitionPaused(cmd *updateAlertDefinitionPausedC
 		if err != nil {
 			return err
 		}
-		if cmd.ResultCount, err = res.RowsAffected(); err != nil {
-			ng.log.Debug("failed to get rows affected: %w", err)
+		if resultCount, err := res.RowsAffected(); err == nil {
+			cmd.ResultCount = resultCount
 		}
 		return nil
 	})

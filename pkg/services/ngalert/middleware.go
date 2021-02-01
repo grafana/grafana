@@ -4,17 +4,18 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func (ng *AlertNG) validateOrgAlertDefinition(c *models.ReqContext) {
-	uid := c.ParamsEscape(":alertDefinitionUID")
-	query := getAlertDefinitionByUIDQuery{UID: uid, OrgID: c.SignedInUser.OrgId}
+func (api *apiImpl) validateOrgAlertDefinition(c *models.ReqContext) {
+	uid := c.Params(":alertDefinitionUID")
 
-	if err := ng.definitionStore.getAlertDefinitionByUID(&query); err != nil {
-		c.JsonApiErr(404, "Alert definition not found", nil)
+	if uid == "" {
+		c.JsonApiErr(403, "Permission denied", nil)
 		return
 	}
 
-	if c.OrgId != query.Result.OrgID {
-		c.JsonApiErr(403, "You are not allowed to edit/view alert definition", nil)
+	query := getAlertDefinitionByUIDQuery{UID: uid, OrgID: c.SignedInUser.OrgId}
+
+	if err := api.DefinitionStore.getAlertDefinitionByUID(&query); err != nil {
+		c.JsonApiErr(404, "Alert definition not found", nil)
 		return
 	}
 }

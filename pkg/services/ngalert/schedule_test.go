@@ -26,17 +26,7 @@ func TestAlertingTicker(t *testing.T) {
 	ng := setupTestEnv(t)
 	t.Cleanup(registry.ClearOverrides)
 
-	mockedClock := clock.NewMock()
-	schefCfg := schedulerCfg{
-		c:            mockedClock,
-		baseInterval: time.Second,
-		logger:       log.New("ngalert.schedule.test"),
-		evaluator:    eval.Evaluator{Cfg: ng.Cfg},
-	}
-	ng.schedule = newScheduler(schefCfg)
-
 	alerts := make([]*AlertDefinition, 0)
-
 	// create alert definition with zero interval (should never run)
 	alerts = append(alerts, createTestAlertDefinition(t, ng, 0))
 
@@ -46,13 +36,24 @@ func TestAlertingTicker(t *testing.T) {
 	evalAppliedCh := make(chan evalAppliedInfo, len(alerts))
 	stopAppliedCh := make(chan alertDefinitionKey, len(alerts))
 
-	ng.schedule.evalApplied = func(alertDefKey alertDefinitionKey, now time.Time) {
-		evalAppliedCh <- evalAppliedInfo{alertDefKey: alertDefKey, now: now}
+	mockedClock := clock.NewMock()
+	baseInterval := time.Second
+	store := storeImpl{baseInterval: baseInterval, SQLStore: ng.SQLStore}
+	schefCfg := schedulerCfg{
+		c:               mockedClock,
+		baseInterval:    baseInterval,
+		logger:          log.New("ngalert.schedule.test"),
+		evaluator:       eval.Evaluator{Cfg: ng.Cfg},
+		definitionStore: store,
+		instanceStore:   store,
+		evalApplied: func(alertDefKey alertDefinitionKey, now time.Time) {
+			evalAppliedCh <- evalAppliedInfo{alertDefKey: alertDefKey, now: now}
+		},
+		stopApplied: func(alertDefKey alertDefinitionKey) {
+			stopAppliedCh <- alertDefKey
+		},
 	}
-
-	ng.schedule.stopApplied = func(alertDefKey alertDefinitionKey) {
-		stopAppliedCh <- alertDefKey
-	}
+	ng.schedule = newScheduler(schefCfg)
 
 	ctx := context.Background()
 	go func() {

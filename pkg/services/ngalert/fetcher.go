@@ -6,7 +6,7 @@ import (
 
 func (sch *schedule) fetchAllDetails(now time.Time) []*AlertDefinition {
 	q := listAlertDefinitionsQuery{}
-	err := sch.definitionStore.getAlertDefinitions(&q)
+	err := sch.DefinitionStore.getAlertDefinitions(&q)
 	if err != nil {
 		sch.log.Error("failed to fetch alert definitions", "now", now, "err", err)
 		return nil

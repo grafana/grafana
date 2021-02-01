@@ -2,7 +2,6 @@ package ngalert
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -18,8 +17,8 @@ type scheduleService interface {
 	Ticker(context.Context) error
 	Pause() error
 	Unpause() error
-	// EvalApplied(alertDefinitionKey, time.Time) error
-	// StopApplied(alertDefinitionKey) error
+	EvalApplied(alertDefinitionKey, time.Time)
+	StopApplied(alertDefinitionKey)
 }
 
 func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key alertDefinitionKey, evalCh <-chan *evalContext, stopCh <-chan struct{}) error {
@@ -42,7 +41,7 @@ func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key alertDefi
 				// fetch latest alert definition version
 				if alertDefinition == nil || alertDefinition.Version < ctx.version {
 					q := getAlertDefinitionByUIDQuery{OrgID: key.orgID, UID: key.definitionUID}
-					err := sch.definitionStore.getAlertDefinitionByUID(&q)
+					err := sch.DefinitionStore.getAlertDefinitionByUID(&q)
 					if err != nil {
 						sch.log.Error("failed to fetch alert definition", "key", key)
 						return err
@@ -66,7 +65,7 @@ func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key alertDefi
 				for _, r := range results {
 					sch.log.Debug("alert definition result", "title", alertDefinition.Title, "key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "instance", r.Instance, "state", r.State.String())
 					cmd := saveAlertInstanceCommand{DefinitionOrgID: key.orgID, DefinitionUID: key.definitionUID, State: InstanceStateType(r.State.String()), Labels: InstanceLabels(r.Instance), LastEvalTime: ctx.now}
-					err := sch.instanceStore.saveAlertInstance(&cmd)
+					err := sch.InstanceStore.saveAlertInstance(&cmd)
 					if err != nil {
 						sch.log.Error("failed saving alert instance", "title", alertDefinition.Title, "key", key, "attempt", attempt, "now", ctx.now, "instance", r.Instance, "state", r.State.String(), "error", err)
 					}
@@ -78,11 +77,7 @@ func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key alertDefi
 				evalRunning = true
 				defer func() {
 					evalRunning = false
-					/*
-						if sch.evalApplied != nil {
-							sch.evalApplied(key, ctx.now)
-						}
-					*/
+					sch.EvalApplied(key, ctx.now)
 				}()
 
 				for attempt = 0; attempt < sch.maxAttempts; attempt++ {
@@ -93,11 +88,7 @@ func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key alertDefi
 				}
 			}()
 		case <-stopCh:
-			/*
-				if sch.stopApplied != nil {
-					sch.stopApplied(key)
-				}
-			*/
+			sch.StopApplied(key)
 			sch.log.Debug("stopping alert definition routine", "key", key)
 			// interrupt evaluation if it's running
 			return nil
@@ -120,34 +111,33 @@ type schedule struct {
 
 	heartbeat *alerting.Ticker
 
-	/*
-		// evalApplied is only used for tests: test code can set it to non-nil
-		// function, and then it'll be called from the event loop whenever the
-		// message from evalApplied is handled.
-		evalApplied func(alertDefinitionKey, time.Time)
+	// evalApplied is only used for tests: test code can set it to non-nil
+	// function, and then it'll be called from the event loop whenever the
+	// message from evalApplied is handled.
+	evalApplied func(alertDefinitionKey, time.Time)
 
-		// stopApplied is only used for tests: test code can set it to non-nil
-		// function, and then it'll be called from the event loop whenever the
-		// message from stopApplied is handled.
-		stopApplied func(alertDefinitionKey)
-	*/
+	// stopApplied is only used for tests: test code can set it to non-nil
+	// function, and then it'll be called from the event loop whenever the
+	// message from stopApplied is handled.
+	stopApplied func(alertDefinitionKey)
 
 	log log.Logger
 
 	evaluator eval.Evaluator
 
-	definitionStore definitionStore
-	instanceStore   instanceStore
+	DefinitionStore definitionStore `inject:""`
+	InstanceStore   instanceStore   `inject:""`
 }
 
 type schedulerCfg struct {
 	c            clock.Clock
 	baseInterval time.Duration
 	logger       log.Logger
-	// evalApplied     func(alertDefinitionKey, time.Time)
-	evaluator       eval.Evaluator
-	definitionStore definitionStore
-	instanceStore   instanceStore
+	evalApplied  func(alertDefinitionKey, time.Time)
+	stopApplied  func(alertDefinitionKey)
+	evaluator    eval.Evaluator
+	// definitionStore definitionStore
+	// instanceStore   instanceStore
 }
 
 // newScheduler returns a new schedule.
@@ -160,16 +150,29 @@ func newScheduler(cfg schedulerCfg) *schedule {
 		baseInterval: cfg.baseInterval,
 		log:          cfg.logger,
 		heartbeat:    ticker,
-		// evalApplied:  cfg.evalApplied,
-		evaluator:       cfg.evaluator,
-		definitionStore: cfg.definitionStore,
-		instanceStore:   cfg.instanceStore,
+		evalApplied:  cfg.evalApplied,
+		stopApplied:  cfg.stopApplied,
+		evaluator:    cfg.evaluator,
+		// definitionStore: cfg.definitionStore,
+		// instanceStore:   cfg.instanceStore,
 	}
 	return &sch
 }
 
-func (sch *schedule) EvalApplied(alertDefKey alertDefinitionKey, now time.Time) error {
-	return errors.New("EvalApplied not implemented")
+func (sch *schedule) EvalApplied(alertDefKey alertDefinitionKey, now time.Time) {
+	if sch.evalApplied == nil {
+		return
+	}
+
+	sch.evalApplied(alertDefKey, now)
+}
+
+func (sch *schedule) StopApplied(alertDefKey alertDefinitionKey) {
+	if sch.stopApplied == nil {
+		return
+	}
+
+	sch.stopApplied(alertDefKey)
 }
 
 func (sch *schedule) Pause() error {
