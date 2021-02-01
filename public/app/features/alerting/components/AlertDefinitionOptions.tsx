@@ -1,7 +1,7 @@
 import React, { FC, FormEvent, useMemo } from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import { Field, Input, Select, TextArea, useStyles } from '@grafana/ui';
+import { Field, Input, Select, Tab, TabContent, TabsBar, TextArea, useStyles } from '@grafana/ui';
 import { AlertDefinition, NotificationChannelType, QueryGroupOptions } from 'app/types';
 
 interface Props {
@@ -26,9 +26,11 @@ export const AlertDefinitionOptions: FC<Props> = ({
   ]);
 
   return (
-    <div style={{ paddingTop: '16px' }}>
-      <div className={styles.container}>
-        <h4>Alert definition</h4>
+    <div className={styles.wrapper}>
+      <TabsBar>
+        <Tab label="Alert definition" active={true} />
+      </TabsBar>
+      <TabContent className={styles.container}>
         <Field label="Title">
           <Input width={25} name="title" value={alertDefinition.title} onChange={onChange} />
         </Field>
@@ -67,7 +69,7 @@ export const AlertDefinitionOptions: FC<Props> = ({
             />
           </div>
         </Field>
-      </div>
+      </TabContent>
     </div>
   );
 };
@@ -76,10 +78,13 @@ const getStyles = (theme: GrafanaTheme) => {
   return {
     wrapper: css`
       padding-top: ${theme.spacing.md};
+      height: 100%;
     `,
     container: css`
       padding: ${theme.spacing.md};
       background-color: ${theme.colors.panelBg};
+      height: 100%;
+      border-left: 1px solid ${theme.colors.border1};
     `,
     optionRow: css`
       display: flex;

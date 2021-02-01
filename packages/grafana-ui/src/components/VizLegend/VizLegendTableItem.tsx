@@ -15,6 +15,9 @@ export interface Props {
   onSeriesColorChange?: SeriesColorChangeHandler;
 }
 
+/**
+ * @internal
+ */
 export const LegendTableItem: React.FunctionComponent<Props> = ({
   item,
   onSeriesColorChange,

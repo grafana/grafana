@@ -1,6 +1,7 @@
 package testdatasource
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -9,583 +10,641 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/util/errutil"
-
-	"github.com/grafana/grafana/pkg/components/null"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-type ScenarioHandler func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult
+const (
+	randomWalkQuery                   queryType = "random_walk"
+	randomWalkSlowQuery               queryType = "slow_query"
+	randomWalkWithErrorQuery          queryType = "random_walk_with_error"
+	randomWalkTableQuery              queryType = "random_walk_table"
+	exponentialHeatmapBucketDataQuery queryType = "exponential_heatmap_bucket_data"
+	linearHeatmapBucketDataQuery      queryType = "linear_heatmap_bucket_data"
+	noDataPointsQuery                 queryType = "no_data_points"
+	datapointsOutsideRangeQuery       queryType = "datapoints_outside_range"
+	csvMetricValuesQuery              queryType = "csv_metric_values"
+	manualEntryQuery                  queryType = "manual_entry"
+	predictablePulseQuery             queryType = "predictable_pulse"
+	predictableCSVWaveQuery           queryType = "predictable_csv_wave"
+	streamingClientQuery              queryType = "streaming_client"
+	liveQuery                         queryType = "live"
+	grafanaAPIQuery                   queryType = "grafana_api"
+	arrowQuery                        queryType = "arrow"
+	annotationsQuery                  queryType = "annotations"
+	tableStaticQuery                  queryType = "table_static"
+	serverError500Query               queryType = "server_error_500"
+	logsQuery                         queryType = "logs"
+	nodeGraphQuery                    queryType = "node_graph"
+)
+
+type queryType string
 
 type Scenario struct {
-	Id          string          `json:"id"`
-	Name        string          `json:"name"`
-	StringInput string          `json:"stringOption"`
-	Description string          `json:"description"`
-	Handler     ScenarioHandler `json:"-"`
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	StringInput string `json:"stringInput"`
+	Description string `json:"description"`
+	handler     backend.QueryDataHandlerFunc
 }
 
-var ScenarioRegistry map[string]*Scenario
-
-func init() {
-	ScenarioRegistry = make(map[string]*Scenario)
-	logger := log.New("tsdb.testdata")
-
-	logger.Debug("Initializing TestData Scenario")
-
-	registerScenario(&Scenario{
-		Id:   "exponential_heatmap_bucket_data",
-		Name: "Exponential heatmap bucket data",
-
-		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
-			to := context.TimeRange.GetToAsMsEpoch()
-
-			var series []*tsdb.TimeSeries
-			start := 1
-			factor := 2
-			for i := 0; i < 10; i++ {
-				timeWalkerMs := context.TimeRange.GetFromAsMsEpoch()
-				ts := &tsdb.TimeSeries{Name: strconv.Itoa(start)}
-				start *= factor
-
-				points := make(tsdb.TimeSeriesPoints, 0)
-				for j := int64(0); j < 100 && timeWalkerMs < to; j++ {
-					v := float64(rand.Int63n(100))
-					points = append(points, tsdb.NewTimePoint(null.FloatFrom(v), float64(timeWalkerMs)))
-					timeWalkerMs += query.IntervalMs * 50
-				}
-
-				ts.Points = points
-				series = append(series, ts)
-			}
-
-			queryRes := tsdb.NewQueryResult()
-			queryRes.Series = append(queryRes.Series, series...)
-			return queryRes
-		},
-	})
-
-	registerScenario(&Scenario{
-		Id:   "linear_heatmap_bucket_data",
-		Name: "Linear heatmap bucket data",
-
-		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
-			to := context.TimeRange.GetToAsMsEpoch()
-
-			var series []*tsdb.TimeSeries
-			for i := 0; i < 10; i++ {
-				timeWalkerMs := context.TimeRange.GetFromAsMsEpoch()
-				ts := &tsdb.TimeSeries{Name: strconv.Itoa(i * 10)}
-
-				points := make(tsdb.TimeSeriesPoints, 0)
-				for j := int64(0); j < 100 && timeWalkerMs < to; j++ {
-					v := float64(rand.Int63n(100))
-					points = append(points, tsdb.NewTimePoint(null.FloatFrom(v), float64(timeWalkerMs)))
-					timeWalkerMs += query.IntervalMs * 50
-				}
-
-				ts.Points = points
-				series = append(series, ts)
-			}
-
-			queryRes := tsdb.NewQueryResult()
-			queryRes.Series = append(queryRes.Series, series...)
-			return queryRes
-		},
-	})
-
-	registerScenario(&Scenario{
-		Id:   "random_walk",
-		Name: "Random Walk",
-
-		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
-			queryRes := tsdb.NewQueryResult()
-
-			seriesCount := query.Model.Get("seriesCount").MustInt(1)
-
-			for i := 0; i < seriesCount; i++ {
-				queryRes.Series = append(queryRes.Series, getRandomWalk(query, context, i))
-			}
-
-			return queryRes
-		},
-	})
-
-	registerScenario(&Scenario{
-		Id:          "predictable_pulse",
-		Name:        "Predictable Pulse",
-		Handler:     getPredictablePulse,
-		Description: PredictablePulseDesc,
-	})
-
-	registerScenario(&Scenario{
-		Id:      "predictable_csv_wave",
-		Name:    "Predictable CSV Wave",
-		Handler: getPredictableCSVWave,
-	})
-
-	registerScenario(&Scenario{
-		Id:      "random_walk_table",
-		Name:    "Random Walk Table",
-		Handler: getRandomWalkTable,
-	})
-
-	registerScenario(&Scenario{
-		Id:          "slow_query",
-		Name:        "Slow Query",
-		StringInput: "5s",
-		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
-			stringInput := query.Model.Get("stringInput").MustString()
-			parsedInterval, _ := time.ParseDuration(stringInput)
-			time.Sleep(parsedInterval)
-
-			queryRes := tsdb.NewQueryResult()
-			queryRes.Series = append(queryRes.Series, getRandomWalk(query, context, 0))
-			return queryRes
-		},
-	})
-
-	registerScenario(&Scenario{
-		Id:   "no_data_points",
-		Name: "No Data Points",
-		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
-			return tsdb.NewQueryResult()
-		},
-	})
-
-	registerScenario(&Scenario{
-		Id:   "datapoints_outside_range",
-		Name: "Datapoints Outside Range",
-		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
-			queryRes := tsdb.NewQueryResult()
-
-			series := newSeriesForQuery(query, 0)
-			outsideTime := context.TimeRange.MustGetFrom().Add(-1*time.Hour).Unix() * 1000
-
-			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(10), float64(outsideTime)))
-			queryRes.Series = append(queryRes.Series, series)
-
-			return queryRes
-		},
-	})
-
-	registerScenario(&Scenario{
-		Id:   "manual_entry",
-		Name: "Manual Entry",
-		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
-			queryRes := tsdb.NewQueryResult()
-
-			points := query.Model.Get("points").MustArray()
-
-			series := newSeriesForQuery(query, 0)
-			startTime := context.TimeRange.GetFromAsMsEpoch()
-			endTime := context.TimeRange.GetToAsMsEpoch()
-
-			for _, val := range points {
-				pointValues := val.([]interface{})
-
-				var value null.Float
-				var time int64
-
-				if valueFloat, err := strconv.ParseFloat(string(pointValues[0].(json.Number)), 64); err == nil {
-					value = null.FloatFrom(valueFloat)
-				}
-
-				timeInt, err := strconv.ParseInt(string(pointValues[1].(json.Number)), 10, 64)
-				if err != nil {
-					continue
-				}
-				time = timeInt
-
-				if time >= startTime && time <= endTime {
-					series.Points = append(series.Points, tsdb.NewTimePoint(value, float64(time)))
-				}
-			}
-
-			queryRes.Series = append(queryRes.Series, series)
-
-			return queryRes
-		},
-	})
-
-	registerScenario(&Scenario{
-		Id:          "csv_metric_values",
-		Name:        "CSV Metric Values",
-		StringInput: "1,20,90,30,5,0",
-		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
-			queryRes := tsdb.NewQueryResult()
-
-			stringInput := query.Model.Get("stringInput").MustString()
-			stringInput = strings.ReplaceAll(stringInput, " ", "")
-
-			values := []null.Float{}
-			for _, strVal := range strings.Split(stringInput, ",") {
-				if strVal == "null" {
-					values = append(values, null.FloatFromPtr(nil))
-				}
-				if val, err := strconv.ParseFloat(strVal, 64); err == nil {
-					values = append(values, null.FloatFrom(val))
-				}
-			}
-
-			if len(values) == 0 {
-				return queryRes
-			}
-
-			series := newSeriesForQuery(query, 0)
-			startTime := context.TimeRange.GetFromAsMsEpoch()
-			endTime := context.TimeRange.GetToAsMsEpoch()
-			var step int64 = 0
-			if len(values) > 1 {
-				step = (endTime - startTime) / int64(len(values)-1)
-			}
-
-			for _, val := range values {
-				series.Points = append(series.Points, tsdb.TimePoint{val, null.FloatFrom(float64(startTime))})
-				startTime += step
-			}
-
-			queryRes.Series = append(queryRes.Series, series)
-
-			return queryRes
-		},
-	})
-
-	registerScenario(&Scenario{
-		Id:   "streaming_client",
-		Name: "Streaming Client",
-		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
-			// Real work is in javascript client
-			return tsdb.NewQueryResult()
-		},
-	})
-
-	registerScenario(&Scenario{
-		Id:   "live",
-		Name: "Grafana Live",
-		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
-			// Real work is in javascript client
-			return tsdb.NewQueryResult()
-		},
-	})
-
-	registerScenario(&Scenario{
-		Id:   "grafana_api",
-		Name: "Grafana API",
-		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
-			// Real work is in javascript client
-			return tsdb.NewQueryResult()
-		},
-	})
-
-	registerScenario(&Scenario{
-		Id:   "arrow",
-		Name: "Load Apache Arrow Data",
-		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
-			// Real work is in javascript client
-			return tsdb.NewQueryResult()
-		},
-	})
-
-	registerScenario(&Scenario{
-		Id:   "annotations",
-		Name: "Annotations",
-		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
-			return tsdb.NewQueryResult()
-		},
-	})
-
-	registerScenario(&Scenario{
-		Id:   "table_static",
-		Name: "Table Static",
-
-		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
-			timeWalkerMs := context.TimeRange.GetFromAsMsEpoch()
-			to := context.TimeRange.GetToAsMsEpoch()
-
-			table := tsdb.Table{
-				Columns: []tsdb.TableColumn{
-					{Text: "Time"},
-					{Text: "Message"},
-					{Text: "Description"},
-					{Text: "Value"},
-				},
-				Rows: []tsdb.RowValues{},
-			}
-			for i := int64(0); i < 10 && timeWalkerMs < to; i++ {
-				table.Rows = append(table.Rows, tsdb.RowValues{float64(timeWalkerMs), "This is a message", "Description", 23.1})
-				timeWalkerMs += query.IntervalMs
-			}
-
-			queryRes := tsdb.NewQueryResult()
-			queryRes.Tables = append(queryRes.Tables, &table)
-			return queryRes
-		},
-	})
-
-	registerScenario(&Scenario{
-		Id:   "random_walk_with_error",
-		Name: "Random Walk (with error)",
-
-		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
-			queryRes := tsdb.NewQueryResult()
-			queryRes.Series = append(queryRes.Series, getRandomWalk(query, context, 0))
-			queryRes.ErrorString = "This is an error.  It can include URLs http://grafana.com/"
-			return queryRes
-		},
-	})
-
-	registerScenario(&Scenario{
-		Id:   "server_error_500",
-		Name: "Server Error (500)",
-
-		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
-			panic("Test Data Panic!")
-		},
-	})
-
-	registerScenario(&Scenario{
-		Id:   "logs",
-		Name: "Logs",
-
-		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
-			from := context.TimeRange.GetFromAsMsEpoch()
-			to := context.TimeRange.GetToAsMsEpoch()
-			lines := query.Model.Get("lines").MustInt64(10)
-			includeLevelColumn := query.Model.Get("levelColumn").MustBool(false)
-
-			logLevelGenerator := newRandomStringProvider([]string{
-				"emerg",
-				"alert",
-				"crit",
-				"critical",
-				"warn",
-				"warning",
-				"err",
-				"eror",
-				"error",
-				"info",
-				"notice",
-				"dbug",
-				"debug",
-				"trace",
-				"",
-			})
-			containerIDGenerator := newRandomStringProvider([]string{
-				"f36a9eaa6d34310686f2b851655212023a216de955cbcc764210cefa71179b1a",
-				"5a354a630364f3742c602f315132e16def594fe68b1e4a195b2fce628e24c97a",
-			})
-			hostnameGenerator := newRandomStringProvider([]string{
-				"srv-001",
-				"srv-002",
-			})
-
-			table := tsdb.Table{
-				Columns: []tsdb.TableColumn{
-					{Text: "time"},
-					{Text: "message"},
-					{Text: "container_id"},
-					{Text: "hostname"},
-				},
-				Rows: []tsdb.RowValues{},
-			}
-
-			if includeLevelColumn {
-				table.Columns = append(table.Columns, tsdb.TableColumn{Text: "level"})
-			}
-
-			for i := int64(0); i < lines && to > from; i++ {
-				row := tsdb.RowValues{float64(to)}
-
-				logLevel := logLevelGenerator.Next()
-				timeFormatted := time.Unix(to/1000, 0).Format(time.RFC3339)
-				lvlString := ""
-				if !includeLevelColumn {
-					lvlString = fmt.Sprintf("lvl=%s ", logLevel)
-				}
-
-				row = append(row, fmt.Sprintf("t=%s %smsg=\"Request Completed\" logger=context userId=1 orgId=1 uname=admin method=GET path=/api/datasources/proxy/152/api/prom/label status=502 remote_addr=[::1] time_ms=1 size=0 referer=\"http://localhost:3000/explore?left=%%5B%%22now-6h%%22,%%22now%%22,%%22Prometheus%%202.x%%22,%%7B%%7D,%%7B%%22ui%%22:%%5Btrue,true,true,%%22none%%22%%5D%%7D%%5D\"", timeFormatted, lvlString))
-				row = append(row, containerIDGenerator.Next())
-				row = append(row, hostnameGenerator.Next())
-
-				if includeLevelColumn {
-					row = append(row, logLevel)
-				}
-
-				table.Rows = append(table.Rows, row)
-				to -= query.IntervalMs
-			}
-
-			queryRes := tsdb.NewQueryResult()
-			queryRes.Tables = append(queryRes.Tables, &table)
-			return queryRes
-		},
-	})
-
-	registerScenario(&Scenario{
-		Id:   "node_graph",
-		Name: "Node Graph",
-		// Data generated in JS
-	})
+func (p *testDataPlugin) registerScenario(scenario *Scenario) {
+	p.scenarios[scenario.ID] = scenario
+	p.queryMux.HandleFunc(scenario.ID, scenario.handler)
 }
 
-// PredictablePulseDesc is the description for the Predictable Pulse scenerio.
-const PredictablePulseDesc = `Predictable Pulse returns a pulse wave where there is a datapoint every timeStepSeconds.
+func (p *testDataPlugin) registerScenarios() {
+	p.registerScenario(&Scenario{
+		ID:      string(exponentialHeatmapBucketDataQuery),
+		Name:    "Exponential heatmap bucket data",
+		handler: p.handleExponentialHeatmapBucketDataScenario,
+	})
+
+	p.registerScenario(&Scenario{
+		ID:      string(linearHeatmapBucketDataQuery),
+		Name:    "Linear heatmap bucket data",
+		handler: p.handleLinearHeatmapBucketDataScenario,
+	})
+
+	p.registerScenario(&Scenario{
+		ID:      string(randomWalkQuery),
+		Name:    "Random Walk",
+		handler: p.handleRandomWalkScenario,
+	})
+
+	p.registerScenario(&Scenario{
+		ID:      string(predictablePulseQuery),
+		Name:    "Predictable Pulse",
+		handler: p.handlePredictablePulseScenario,
+		Description: `Predictable Pulse returns a pulse wave where there is a datapoint every timeStepSeconds.
 The wave cycles at timeStepSeconds*(onCount+offCount).
 The cycle of the wave is based off of absolute time (from the epoch) which makes it predictable.
-Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means times will all end in :00 seconds).`
+Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means times will all end in :00 seconds).`,
+	})
 
-func getPredictablePulse(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
-	queryRes := tsdb.NewQueryResult()
+	p.registerScenario(&Scenario{
+		ID:      string(predictableCSVWaveQuery),
+		Name:    "Predictable CSV Wave",
+		handler: p.handlePredictableCSVWaveScenario,
+	})
 
-	// Process Input
-	var timeStep int64
-	var onCount int64
-	var offCount int64
-	var onValue null.Float
-	var offValue null.Float
+	p.registerScenario(&Scenario{
+		ID:      string(randomWalkTableQuery),
+		Name:    "Random Walk Table",
+		handler: p.handleRandomWalkTableScenario,
+	})
 
-	options := query.Model.Get("pulseWave")
+	p.registerScenario(&Scenario{
+		ID:          string(randomWalkSlowQuery),
+		Name:        "Slow Query",
+		StringInput: "5s",
+		handler:     p.handleRandomWalkSlowScenario,
+	})
 
-	var err error
-	if timeStep, err = options.Get("timeStep").Int64(); err != nil {
-		queryRes.Error = fmt.Errorf("failed to parse timeStep value '%v' into integer: %v", options.Get("timeStep"), err)
-		return queryRes
+	p.registerScenario(&Scenario{
+		ID:      string(noDataPointsQuery),
+		Name:    "No Data Points",
+		handler: p.handleClientSideScenario,
+	})
+
+	p.registerScenario(&Scenario{
+		ID:      string(datapointsOutsideRangeQuery),
+		Name:    "Datapoints Outside Range",
+		handler: p.handleDatapointsOutsideRangeScenario,
+	})
+
+	p.registerScenario(&Scenario{
+		ID:      string(manualEntryQuery),
+		Name:    "Manual Entry",
+		handler: p.handleManualEntryScenario,
+	})
+
+	p.registerScenario(&Scenario{
+		ID:          string(csvMetricValuesQuery),
+		Name:        "CSV Metric Values",
+		StringInput: "1,20,90,30,5,0",
+		handler:     p.handleCSVMetricValuesScenario,
+	})
+
+	p.registerScenario(&Scenario{
+		ID:      string(streamingClientQuery),
+		Name:    "Streaming Client",
+		handler: p.handleClientSideScenario,
+	})
+
+	p.registerScenario(&Scenario{
+		ID:      string(liveQuery),
+		Name:    "Grafana Live",
+		handler: p.handleClientSideScenario,
+	})
+
+	p.registerScenario(&Scenario{
+		ID:      string(grafanaAPIQuery),
+		Name:    "Grafana API",
+		handler: p.handleClientSideScenario,
+	})
+
+	p.registerScenario(&Scenario{
+		ID:      string(arrowQuery),
+		Name:    "Load Apache Arrow Data",
+		handler: p.handleClientSideScenario,
+	})
+
+	p.registerScenario(&Scenario{
+		ID:      string(annotationsQuery),
+		Name:    "Annotations",
+		handler: p.handleClientSideScenario,
+	})
+
+	p.registerScenario(&Scenario{
+		ID:      string(tableStaticQuery),
+		Name:    "Table Static",
+		handler: p.handleTableStaticScenario,
+	})
+
+	p.registerScenario(&Scenario{
+		ID:      string(randomWalkWithErrorQuery),
+		Name:    "Random Walk (with error)",
+		handler: p.handleRandomWalkWithErrorScenario,
+	})
+
+	p.registerScenario(&Scenario{
+		ID:      string(serverError500Query),
+		Name:    "Server Error (500)",
+		handler: p.handleServerError500Scenario,
+	})
+
+	p.registerScenario(&Scenario{
+		ID:      string(logsQuery),
+		Name:    "Logs",
+		handler: p.handleLogsScenario,
+	})
+
+	p.registerScenario(&Scenario{
+		ID:   string(nodeGraphQuery),
+		Name: "Node Graph",
+	})
+
+	p.queryMux.HandleFunc("", p.handleFallbackScenario)
+}
+
+// handleFallbackScenario handles the scenario where queryType is not set and fallbacks to scenarioId.
+func (p *testDataPlugin) handleFallbackScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	scenarioQueries := map[string][]backend.DataQuery{}
+
+	for _, q := range req.Queries {
+		model, err := simplejson.NewJson(q.JSON)
+		if err != nil {
+			p.logger.Error("Failed to unmarshal query model to JSON", "error", err)
+			continue
+		}
+
+		scenarioID := model.Get("scenarioId").MustString(string(randomWalkQuery))
+		if _, exist := p.scenarios[scenarioID]; exist {
+			if _, ok := scenarioQueries[scenarioID]; !ok {
+				scenarioQueries[scenarioID] = []backend.DataQuery{}
+			}
+
+			scenarioQueries[scenarioID] = append(scenarioQueries[scenarioID], q)
+		} else {
+			p.logger.Error("Scenario not found", "scenarioId", scenarioID)
+		}
 	}
-	if onCount, err = options.Get("onCount").Int64(); err != nil {
-		queryRes.Error = fmt.Errorf("failed to parse onCount value '%v' into integer: %v", options.Get("onCount"), err)
-		return queryRes
-	}
-	if offCount, err = options.Get("offCount").Int64(); err != nil {
-		queryRes.Error = fmt.Errorf("failed to parse offCount value '%v' into integer: %v", options.Get("offCount"), err)
-		return queryRes
-	}
 
-	onValue, err = fromStringOrNumber(options.Get("onValue"))
-	if err != nil {
-		queryRes.Error = fmt.Errorf("failed to parse onValue value '%v' into float: %v", options.Get("onValue"), err)
-		return queryRes
-	}
-	offValue, err = fromStringOrNumber(options.Get("offValue"))
-	if err != nil {
-		queryRes.Error = fmt.Errorf("failed to parse offValue value '%v' into float: %v", options.Get("offValue"), err)
-		return queryRes
-	}
-
-	timeStep *= 1000                               // Seconds to Milliseconds
-	onFor := func(mod int64) (null.Float, error) { // How many items in the cycle should get the on value
-		var i int64
-		for i = 0; i < onCount; i++ {
-			if mod == i*timeStep {
-				return onValue, nil
+	resp := backend.NewQueryDataResponse()
+	for scenarioID, queries := range scenarioQueries {
+		if scenario, exist := p.scenarios[scenarioID]; exist {
+			sReq := &backend.QueryDataRequest{
+				PluginContext: req.PluginContext,
+				Headers:       req.Headers,
+				Queries:       queries,
+			}
+			if sResp, err := scenario.handler(ctx, sReq); err != nil {
+				p.logger.Error("Failed to handle scenario", "scenarioId", scenarioID, "error", err)
+			} else {
+				for refID, dr := range sResp.Responses {
+					resp.Responses[refID] = dr
+				}
 			}
 		}
-		return offValue, nil
-	}
-	points, err := predictableSeries(context.TimeRange, timeStep, onCount+offCount, onFor)
-	if err != nil {
-		queryRes.Error = err
-		return queryRes
 	}
 
-	series := newSeriesForQuery(query, 0)
-	series.Points = *points
-	series.Tags = parseLabels(query)
-
-	queryRes.Series = append(queryRes.Series, series)
-	return queryRes
+	return resp, nil
 }
 
-func getPredictableCSVWave(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
-	queryRes := tsdb.NewQueryResult()
+func (p *testDataPlugin) handleRandomWalkScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
 
-	// Process Input
-	var timeStep int64
-
-	options := query.Model.Get("csvWave")
-
-	var err error
-	if timeStep, err = options.Get("timeStep").Int64(); err != nil {
-		queryRes.Error = fmt.Errorf("failed to parse timeStep value '%v' into integer: %v", options.Get("timeStep"), err)
-		return queryRes
-	}
-	rawValues := options.Get("valuesCSV").MustString()
-	rawValues = strings.TrimRight(strings.TrimSpace(rawValues), ",") // Strip Trailing Comma
-	rawValesCSV := strings.Split(rawValues, ",")
-	values := make([]null.Float, len(rawValesCSV))
-	for i, rawValue := range rawValesCSV {
-		val, err := null.FloatFromString(strings.TrimSpace(rawValue), "null")
+	for _, q := range req.Queries {
+		model, err := simplejson.NewJson(q.JSON)
 		if err != nil {
-			queryRes.Error = errutil.Wrapf(err, "failed to parse value '%v' into nullable float", rawValue)
-			return queryRes
+			continue
 		}
-		values[i] = val
+		seriesCount := model.Get("seriesCount").MustInt(1)
+
+		for i := 0; i < seriesCount; i++ {
+			respD := resp.Responses[q.RefID]
+			respD.Frames = append(respD.Frames, randomWalk(q, model, i))
+			resp.Responses[q.RefID] = respD
+		}
 	}
 
-	timeStep *= 1000 // Seconds to Milliseconds
-	valuesLen := int64(len(values))
-	getValue := func(mod int64) (null.Float, error) {
-		var i int64
-		for i = 0; i < valuesLen; i++ {
-			if mod == i*timeStep {
-				return values[i], nil
+	return resp, nil
+}
+
+func (p *testDataPlugin) handleDatapointsOutsideRangeScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+
+	for _, q := range req.Queries {
+		model, err := simplejson.NewJson(q.JSON)
+		if err != nil {
+			continue
+		}
+
+		frame := newSeriesForQuery(q, model, 0)
+		outsideTime := q.TimeRange.From.Add(-1 * time.Hour)
+		frame.Fields = data.Fields{
+			data.NewField("time", nil, []time.Time{outsideTime}),
+			data.NewField("value", nil, []float64{10}),
+		}
+
+		respD := resp.Responses[q.RefID]
+		respD.Frames = append(respD.Frames, frame)
+		resp.Responses[q.RefID] = respD
+	}
+
+	return resp, nil
+}
+
+func (p *testDataPlugin) handleManualEntryScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+
+	for _, q := range req.Queries {
+		model, err := simplejson.NewJson(q.JSON)
+		if err != nil {
+			continue
+		}
+		points := model.Get("points").MustArray()
+
+		frame := newSeriesForQuery(q, model, 0)
+		startTime := q.TimeRange.From.UnixNano() / int64(time.Millisecond)
+		endTime := q.TimeRange.To.UnixNano() / int64(time.Millisecond)
+
+		timeVec := make([]*time.Time, 0)
+		floatVec := make([]*float64, 0)
+
+		for _, val := range points {
+			pointValues := val.([]interface{})
+
+			var value float64
+
+			if valueFloat, err := strconv.ParseFloat(string(pointValues[0].(json.Number)), 64); err == nil {
+				value = valueFloat
+			}
+
+			timeInt, err := strconv.ParseInt(string(pointValues[1].(json.Number)), 10, 64)
+			if err != nil {
+				continue
+			}
+			t := time.Unix(timeInt/int64(1e+3), (timeInt%int64(1e+3))*int64(1e+6))
+
+			if timeInt >= startTime && timeInt <= endTime {
+				timeVec = append(timeVec, &t)
+				floatVec = append(floatVec, &value)
 			}
 		}
-		return null.Float{}, fmt.Errorf("did not get value at point in waveform - should not be here")
-	}
-	points, err := predictableSeries(context.TimeRange, timeStep, valuesLen, getValue)
-	if err != nil {
-		queryRes.Error = err
-		return queryRes
-	}
 
-	series := newSeriesForQuery(query, 0)
-	series.Points = *points
-	series.Tags = parseLabels(query)
-
-	queryRes.Series = append(queryRes.Series, series)
-	return queryRes
-}
-
-func predictableSeries(timeRange *tsdb.TimeRange, timeStep, length int64, getValue func(mod int64) (null.Float, error)) (*tsdb.TimeSeriesPoints, error) {
-	points := make(tsdb.TimeSeriesPoints, 0)
-
-	from := timeRange.GetFromAsMsEpoch()
-	to := timeRange.GetToAsMsEpoch()
-
-	timeCursor := from - (from % timeStep) // Truncate Start
-	wavePeriod := timeStep * length
-	maxPoints := 10000 // Don't return too many points
-
-	for i := 0; i < maxPoints && timeCursor < to; i++ {
-		val, err := getValue(timeCursor % wavePeriod)
-		if err != nil {
-			return &points, err
+		frame.Fields = data.Fields{
+			data.NewField("time", nil, timeVec),
+			data.NewField("value", nil, floatVec),
 		}
-		point := tsdb.NewTimePoint(val, float64(timeCursor))
-		points = append(points, point)
-		timeCursor += timeStep
+
+		respD := resp.Responses[q.RefID]
+		respD.Frames = append(respD.Frames, frame)
+		resp.Responses[q.RefID] = respD
 	}
-	return &points, nil
+
+	return resp, nil
 }
 
-func getRandomWalk(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery, index int) *tsdb.TimeSeries {
-	timeWalkerMs := tsdbQuery.TimeRange.GetFromAsMsEpoch()
-	to := tsdbQuery.TimeRange.GetToAsMsEpoch()
-	series := newSeriesForQuery(query, index)
+func (p *testDataPlugin) handleCSVMetricValuesScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
 
-	startValue := query.Model.Get("startValue").MustFloat64(rand.Float64() * 100)
-	spread := query.Model.Get("spread").MustFloat64(1)
-	noise := query.Model.Get("noise").MustFloat64(0)
+	for _, q := range req.Queries {
+		model, err := simplejson.NewJson(q.JSON)
+		if err != nil {
+			continue
+		}
 
-	min, err := query.Model.Get("min").Float64()
+		stringInput := model.Get("stringInput").MustString()
+		stringInput = strings.ReplaceAll(stringInput, " ", "")
+
+		var values []*float64
+		for _, strVal := range strings.Split(stringInput, ",") {
+			if strVal == "null" {
+				values = append(values, nil)
+			}
+			if val, err := strconv.ParseFloat(strVal, 64); err == nil {
+				values = append(values, &val)
+			}
+		}
+
+		if len(values) == 0 {
+			return resp, nil
+		}
+
+		frame := data.NewFrame("",
+			data.NewField("time", nil, []*time.Time{}),
+			data.NewField(frameNameForQuery(q, model, 0), nil, []*float64{}))
+		startTime := q.TimeRange.From.UnixNano() / int64(time.Millisecond)
+		endTime := q.TimeRange.To.UnixNano() / int64(time.Millisecond)
+		var step int64 = 0
+		if len(values) > 1 {
+			step = (endTime - startTime) / int64(len(values)-1)
+		}
+
+		for _, val := range values {
+			t := time.Unix(startTime/int64(1e+3), (startTime%int64(1e+3))*int64(1e+6))
+			frame.AppendRow(&t, val)
+			startTime += step
+		}
+
+		respD := resp.Responses[q.RefID]
+		respD.Frames = append(respD.Frames, frame)
+		resp.Responses[q.RefID] = respD
+	}
+
+	return resp, nil
+}
+
+func (p *testDataPlugin) handleRandomWalkWithErrorScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+
+	for _, q := range req.Queries {
+		model, err := simplejson.NewJson(q.JSON)
+		if err != nil {
+			continue
+		}
+
+		respD := resp.Responses[q.RefID]
+		respD.Frames = append(respD.Frames, randomWalk(q, model, 0))
+		respD.Error = fmt.Errorf("this is an error and it can include URLs http://grafana.com/")
+		resp.Responses[q.RefID] = respD
+	}
+
+	return resp, nil
+}
+
+func (p *testDataPlugin) handleRandomWalkSlowScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+
+	for _, q := range req.Queries {
+		model, err := simplejson.NewJson(q.JSON)
+		if err != nil {
+			continue
+		}
+
+		stringInput := model.Get("stringInput").MustString()
+		parsedInterval, _ := time.ParseDuration(stringInput)
+		time.Sleep(parsedInterval)
+
+		respD := resp.Responses[q.RefID]
+		respD.Frames = append(respD.Frames, randomWalk(q, model, 0))
+		resp.Responses[q.RefID] = respD
+	}
+
+	return resp, nil
+}
+
+func (p *testDataPlugin) handleRandomWalkTableScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+
+	for _, q := range req.Queries {
+		model, err := simplejson.NewJson(q.JSON)
+		if err != nil {
+			continue
+		}
+
+		respD := resp.Responses[q.RefID]
+		respD.Frames = append(respD.Frames, randomWalkTable(q, model))
+		resp.Responses[q.RefID] = respD
+	}
+
+	return resp, nil
+}
+
+func (p *testDataPlugin) handlePredictableCSVWaveScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+
+	for _, q := range req.Queries {
+		model, err := simplejson.NewJson(q.JSON)
+		if err != nil {
+			continue
+		}
+
+		respD := resp.Responses[q.RefID]
+		frame, err := predictableCSVWave(q, model)
+		if err != nil {
+			continue
+		}
+		respD.Frames = append(respD.Frames, frame)
+		resp.Responses[q.RefID] = respD
+	}
+
+	return resp, nil
+}
+
+func (p *testDataPlugin) handlePredictablePulseScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+
+	for _, q := range req.Queries {
+		model, err := simplejson.NewJson(q.JSON)
+		if err != nil {
+			continue
+		}
+
+		respD := resp.Responses[q.RefID]
+		frame, err := predictablePulse(q, model)
+		if err != nil {
+			continue
+		}
+		respD.Frames = append(respD.Frames, frame)
+		resp.Responses[q.RefID] = respD
+	}
+
+	return resp, nil
+}
+
+func (p *testDataPlugin) handleServerError500Scenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	panic("Test Data Panic!")
+}
+
+func (p *testDataPlugin) handleClientSideScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	return backend.NewQueryDataResponse(), nil
+}
+
+func (p *testDataPlugin) handleExponentialHeatmapBucketDataScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+
+	for _, q := range req.Queries {
+		respD := resp.Responses[q.RefID]
+		frame := randomHeatmapData(q, func(index int) float64 {
+			return math.Exp2(float64(index))
+		})
+		respD.Frames = append(respD.Frames, frame)
+		resp.Responses[q.RefID] = respD
+	}
+
+	return resp, nil
+}
+
+func (p *testDataPlugin) handleLinearHeatmapBucketDataScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+
+	for _, q := range req.Queries {
+		respD := resp.Responses[q.RefID]
+		frame := randomHeatmapData(q, func(index int) float64 {
+			return float64(index * 10)
+		})
+		respD.Frames = append(respD.Frames, frame)
+		resp.Responses[q.RefID] = respD
+	}
+
+	return resp, nil
+}
+
+func (p *testDataPlugin) handleTableStaticScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+
+	for _, q := range req.Queries {
+		timeWalkerMs := q.TimeRange.From.UnixNano() / int64(time.Millisecond)
+		to := q.TimeRange.To.UnixNano() / int64(time.Millisecond)
+		step := q.Interval.Milliseconds()
+
+		frame := data.NewFrame(q.RefID,
+			data.NewField("Time", nil, []time.Time{}),
+			data.NewField("Message", nil, []string{}),
+			data.NewField("Description", nil, []string{}),
+			data.NewField("Value", nil, []float64{}),
+		)
+
+		for i := int64(0); i < 10 && timeWalkerMs < to; i++ {
+			t := time.Unix(timeWalkerMs/int64(1e+3), (timeWalkerMs%int64(1e+3))*int64(1e+6))
+			frame.AppendRow(t, "This is a message", "Description", 23.1)
+			timeWalkerMs += step
+		}
+
+		respD := resp.Responses[q.RefID]
+		respD.Frames = append(respD.Frames, frame)
+		resp.Responses[q.RefID] = respD
+	}
+
+	return resp, nil
+}
+
+func (p *testDataPlugin) handleLogsScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+
+	for _, q := range req.Queries {
+		from := q.TimeRange.From.UnixNano() / int64(time.Millisecond)
+		to := q.TimeRange.To.UnixNano() / int64(time.Millisecond)
+
+		model, err := simplejson.NewJson(q.JSON)
+		if err != nil {
+			continue
+		}
+
+		lines := model.Get("lines").MustInt64(10)
+		includeLevelColumn := model.Get("levelColumn").MustBool(false)
+
+		logLevelGenerator := newRandomStringProvider([]string{
+			"emerg",
+			"alert",
+			"crit",
+			"critical",
+			"warn",
+			"warning",
+			"err",
+			"eror",
+			"error",
+			"info",
+			"notice",
+			"dbug",
+			"debug",
+			"trace",
+			"",
+		})
+		containerIDGenerator := newRandomStringProvider([]string{
+			"f36a9eaa6d34310686f2b851655212023a216de955cbcc764210cefa71179b1a",
+			"5a354a630364f3742c602f315132e16def594fe68b1e4a195b2fce628e24c97a",
+		})
+		hostnameGenerator := newRandomStringProvider([]string{
+			"srv-001",
+			"srv-002",
+		})
+
+		frame := data.NewFrame(q.RefID,
+			data.NewField("time", nil, []time.Time{}),
+			data.NewField("message", nil, []string{}),
+			data.NewField("container_id", nil, []string{}),
+			data.NewField("hostname", nil, []string{}),
+		).SetMeta(&data.FrameMeta{
+			PreferredVisualization: "logs",
+		})
+
+		if includeLevelColumn {
+			frame.Fields = append(frame.Fields, data.NewField("level", nil, []string{}))
+		}
+
+		for i := int64(0); i < lines && to > from; i++ {
+			logLevel := logLevelGenerator.Next()
+			timeFormatted := time.Unix(to/1000, 0).Format(time.RFC3339)
+			lvlString := ""
+			if !includeLevelColumn {
+				lvlString = fmt.Sprintf("lvl=%s ", logLevel)
+			}
+
+			message := fmt.Sprintf("t=%s %smsg=\"Request Completed\" logger=context userId=1 orgId=1 uname=admin method=GET path=/api/datasources/proxy/152/api/prom/label status=502 remote_addr=[::1] time_ms=1 size=0 referer=\"http://localhost:3000/explore?left=%%5B%%22now-6h%%22,%%22now%%22,%%22Prometheus%%202.x%%22,%%7B%%7D,%%7B%%22ui%%22:%%5Btrue,true,true,%%22none%%22%%5D%%7D%%5D\"", timeFormatted, lvlString)
+			containerID := containerIDGenerator.Next()
+			hostname := hostnameGenerator.Next()
+
+			t := time.Unix(to/int64(1e+3), (to%int64(1e+3))*int64(1e+6))
+
+			if includeLevelColumn {
+				frame.AppendRow(t, message, containerID, hostname, logLevel)
+			} else {
+				frame.AppendRow(t, message, containerID, hostname)
+			}
+
+			to -= q.Interval.Milliseconds()
+		}
+
+		respD := resp.Responses[q.RefID]
+		respD.Frames = append(respD.Frames, frame)
+		resp.Responses[q.RefID] = respD
+	}
+
+	return resp, nil
+}
+
+func randomWalk(query backend.DataQuery, model *simplejson.Json, index int) *data.Frame {
+	timeWalkerMs := query.TimeRange.From.UnixNano() / int64(time.Millisecond)
+	to := query.TimeRange.To.UnixNano() / int64(time.Millisecond)
+	startValue := model.Get("startValue").MustFloat64(rand.Float64() * 100)
+	spread := model.Get("spread").MustFloat64(1)
+	noise := model.Get("noise").MustFloat64(0)
+
+	min, err := model.Get("min").Float64()
 	hasMin := err == nil
-	max, err := query.Model.Get("max").Float64()
+	max, err := model.Get("max").Float64()
 	hasMax := err == nil
 
-	points := make(tsdb.TimeSeriesPoints, 0)
+	timeVec := make([]*time.Time, 0)
+	floatVec := make([]*float64, 0)
+
 	walker := startValue
 
 	for i := int64(0); i < 10000 && timeWalkerMs < to; i++ {
@@ -601,66 +660,35 @@ func getRandomWalk(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery, index int) *tsd
 			walker = max
 		}
 
-		points = append(points, tsdb.NewTimePoint(null.FloatFrom(nextValue), float64(timeWalkerMs)))
+		t := time.Unix(timeWalkerMs/int64(1e+3), (timeWalkerMs%int64(1e+3))*int64(1e+6))
+		timeVec = append(timeVec, &t)
+		floatVec = append(floatVec, &nextValue)
 
 		walker += (rand.Float64() - 0.5) * spread
-		timeWalkerMs += query.IntervalMs
+		timeWalkerMs += query.Interval.Milliseconds()
 	}
 
-	series.Points = points
-	series.Tags = parseLabels(query)
-	return series
+	return data.NewFrame("",
+		data.NewField("time", nil, timeVec),
+		data.NewField(frameNameForQuery(query, model, 0), parseLabels(model), floatVec),
+	)
 }
 
-/**
- * Looks for a labels request and adds them as tags
- *
- * '{job="foo", instance="bar"} => {job: "foo", instance: "bar"}`
- */
-func parseLabels(query *tsdb.Query) map[string]string {
-	tags := map[string]string{}
-
-	labelText := query.Model.Get("labels").MustString("")
-	if labelText == "" {
-		return map[string]string{}
-	}
-
-	text := strings.Trim(labelText, `{}`)
-	if len(text) < 2 {
-		return tags
-	}
-
-	tags = make(map[string]string)
-
-	for _, keyval := range strings.Split(text, ",") {
-		idx := strings.Index(keyval, "=")
-		key := strings.TrimSpace(keyval[:idx])
-		val := strings.TrimSpace(keyval[idx+1:])
-		val = strings.Trim(val, "\"")
-		tags[key] = val
-	}
-
-	return tags
-}
-
-func getRandomWalkTable(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery) *tsdb.QueryResult {
-	timeWalkerMs := tsdbQuery.TimeRange.GetFromAsMsEpoch()
-	to := tsdbQuery.TimeRange.GetToAsMsEpoch()
-
-	table := tsdb.Table{
-		Columns: []tsdb.TableColumn{
-			{Text: "Time"},
-			{Text: "Value"},
-			{Text: "Min"},
-			{Text: "Max"},
-			{Text: "Info"},
-		},
-		Rows: []tsdb.RowValues{},
-	}
-
-	withNil := query.Model.Get("withNil").MustBool(false)
-	walker := query.Model.Get("startValue").MustFloat64(rand.Float64() * 100)
+func randomWalkTable(query backend.DataQuery, model *simplejson.Json) *data.Frame {
+	timeWalkerMs := query.TimeRange.From.UnixNano() / int64(time.Millisecond)
+	to := query.TimeRange.To.UnixNano() / int64(time.Millisecond)
+	withNil := model.Get("withNil").MustBool(false)
+	walker := model.Get("startValue").MustFloat64(rand.Float64() * 100)
 	spread := 2.5
+
+	frame := data.NewFrame(query.RefID,
+		data.NewField("Time", nil, []*time.Time{}),
+		data.NewField("Value", nil, []*float64{}),
+		data.NewField("Min", nil, []*float64{}),
+		data.NewField("Max", nil, []*float64{}),
+		data.NewField("Info", nil, []*string{}),
+	)
+
 	var info strings.Builder
 
 	for i := int64(0); i < query.MaxDataPoints && timeWalkerMs < to; i++ {
@@ -676,37 +704,181 @@ func getRandomWalkTable(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery) *tsdb.Quer
 		if math.Abs(delta) > .4 {
 			info.WriteString(" fast")
 		}
-		row := tsdb.RowValues{
-			float64(timeWalkerMs),
-			walker,
-			walker - ((rand.Float64() * spread) + 0.01), // Min
-			walker + ((rand.Float64() * spread) + 0.01), // Max
-			info.String(),
-		}
 
+		t := time.Unix(timeWalkerMs/int64(1e+3), (timeWalkerMs%int64(1e+3))*int64(1e+6))
+		val := walker
+		min := walker - ((rand.Float64() * spread) + 0.01)
+		max := walker + ((rand.Float64() * spread) + 0.01)
+		infoString := info.String()
+
+		vals := []*float64{&val, &min, &max}
 		// Add some random null values
 		if withNil && rand.Float64() > 0.8 {
-			for i := 1; i < 4; i++ {
+			for i := range vals {
 				if rand.Float64() > .2 {
-					row[i] = nil
+					vals[i] = nil
 				}
 			}
 		}
 
-		table.Rows = append(table.Rows, row)
-		timeWalkerMs += query.IntervalMs
+		frame.AppendRow(&t, vals[0], vals[1], vals[2], &infoString)
+
+		timeWalkerMs += query.Interval.Milliseconds()
 	}
-	queryRes := tsdb.NewQueryResult()
-	queryRes.Tables = append(queryRes.Tables, &table)
-	return queryRes
+
+	return frame
 }
 
-func registerScenario(scenario *Scenario) {
-	ScenarioRegistry[scenario.Id] = scenario
+func predictableCSVWave(query backend.DataQuery, model *simplejson.Json) (*data.Frame, error) {
+	options := model.Get("csvWave")
+
+	var timeStep int64
+	var err error
+	if timeStep, err = options.Get("timeStep").Int64(); err != nil {
+		return nil, fmt.Errorf("failed to parse timeStep value '%v' into integer: %v", options.Get("timeStep"), err)
+	}
+	rawValues := options.Get("valuesCSV").MustString()
+	rawValues = strings.TrimRight(strings.TrimSpace(rawValues), ",") // Strip Trailing Comma
+	rawValesCSV := strings.Split(rawValues, ",")
+	values := make([]null.Float, len(rawValesCSV))
+	for i, rawValue := range rawValesCSV {
+		val, err := null.FloatFromString(strings.TrimSpace(rawValue), "null")
+		if err != nil {
+			return nil, errutil.Wrapf(err, "failed to parse value '%v' into nullable float", rawValue)
+		}
+		values[i] = val
+	}
+
+	timeStep *= 1000 // Seconds to Milliseconds
+	valuesLen := int64(len(values))
+	getValue := func(mod int64) (null.Float, error) {
+		var i int64
+		for i = 0; i < valuesLen; i++ {
+			if mod == i*timeStep {
+				return values[i], nil
+			}
+		}
+		return null.Float{}, fmt.Errorf("did not get value at point in waveform - should not be here")
+	}
+	fields, err := predictableSeries(query.TimeRange, timeStep, valuesLen, getValue)
+	if err != nil {
+		return nil, err
+	}
+
+	frame := newSeriesForQuery(query, model, 0)
+	frame.Fields = fields
+	frame.Fields[1].Labels = parseLabels(model)
+
+	return frame, nil
 }
 
-func newSeriesForQuery(query *tsdb.Query, index int) *tsdb.TimeSeries {
-	alias := query.Model.Get("alias").MustString("")
+func predictableSeries(timeRange backend.TimeRange, timeStep, length int64, getValue func(mod int64) (null.Float, error)) (data.Fields, error) {
+	from := timeRange.From.UnixNano() / int64(time.Millisecond)
+	to := timeRange.To.UnixNano() / int64(time.Millisecond)
+
+	timeCursor := from - (from % timeStep) // Truncate Start
+	wavePeriod := timeStep * length
+	maxPoints := 10000 // Don't return too many points
+
+	timeVec := make([]*time.Time, 0)
+	floatVec := make([]*float64, 0)
+
+	for i := 0; i < maxPoints && timeCursor < to; i++ {
+		val, err := getValue(timeCursor % wavePeriod)
+		if err != nil {
+			return nil, err
+		}
+
+		t := time.Unix(timeCursor/int64(1e+3), (timeCursor%int64(1e+3))*int64(1e+6))
+		timeVec = append(timeVec, &t)
+		floatVec = append(floatVec, &val.Float64)
+
+		timeCursor += timeStep
+	}
+
+	return data.Fields{
+		data.NewField("time", nil, timeVec),
+		data.NewField("value", nil, floatVec),
+	}, nil
+}
+
+func predictablePulse(query backend.DataQuery, model *simplejson.Json) (*data.Frame, error) {
+	// Process Input
+	var timeStep int64
+	var onCount int64
+	var offCount int64
+	var onValue null.Float
+	var offValue null.Float
+
+	options := model.Get("pulseWave")
+
+	var err error
+	if timeStep, err = options.Get("timeStep").Int64(); err != nil {
+		return nil, fmt.Errorf("failed to parse timeStep value '%v' into integer: %v", options.Get("timeStep"), err)
+	}
+	if onCount, err = options.Get("onCount").Int64(); err != nil {
+		return nil, fmt.Errorf("failed to parse onCount value '%v' into integer: %v", options.Get("onCount"), err)
+	}
+	if offCount, err = options.Get("offCount").Int64(); err != nil {
+		return nil, fmt.Errorf("failed to parse offCount value '%v' into integer: %v", options.Get("offCount"), err)
+	}
+
+	onValue, err = fromStringOrNumber(options.Get("onValue"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse onValue value '%v' into float: %v", options.Get("onValue"), err)
+	}
+	offValue, err = fromStringOrNumber(options.Get("offValue"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse offValue value '%v' into float: %v", options.Get("offValue"), err)
+	}
+
+	timeStep *= 1000                               // Seconds to Milliseconds
+	onFor := func(mod int64) (null.Float, error) { // How many items in the cycle should get the on value
+		var i int64
+		for i = 0; i < onCount; i++ {
+			if mod == i*timeStep {
+				return onValue, nil
+			}
+		}
+		return offValue, nil
+	}
+	fields, err := predictableSeries(query.TimeRange, timeStep, onCount+offCount, onFor)
+	if err != nil {
+		return nil, err
+	}
+
+	frame := newSeriesForQuery(query, model, 0)
+	frame.Fields = fields
+	frame.Fields[1].Labels = parseLabels(model)
+
+	return frame, nil
+}
+
+func randomHeatmapData(query backend.DataQuery, fnBucketGen func(index int) float64) *data.Frame {
+	frame := data.NewFrame("data", data.NewField("time", nil, []*time.Time{}))
+	for i := 0; i < 10; i++ {
+		frame.Fields = append(frame.Fields, data.NewField(strconv.FormatInt(int64(fnBucketGen(i)), 10), nil, []*float64{}))
+	}
+
+	timeWalkerMs := query.TimeRange.From.UnixNano() / int64(time.Millisecond)
+	to := query.TimeRange.To.UnixNano() / int64(time.Millisecond)
+
+	for j := int64(0); j < 100 && timeWalkerMs < to; j++ {
+		t := time.Unix(timeWalkerMs/int64(1e+3), (timeWalkerMs%int64(1e+3))*int64(1e+6))
+		vals := []interface{}{&t}
+		for n := 1; n < len(frame.Fields); n++ {
+			v := float64(rand.Int63n(100))
+			vals = append(vals, &v)
+		}
+		frame.AppendRow(vals...)
+		timeWalkerMs += query.Interval.Milliseconds() * 50
+	}
+
+	return frame
+}
+
+func newSeriesForQuery(query backend.DataQuery, model *simplejson.Json, index int) *data.Frame {
+	alias := model.Get("alias").MustString("")
 	suffix := ""
 
 	if index > 0 {
@@ -714,7 +886,7 @@ func newSeriesForQuery(query *tsdb.Query, index int) *tsdb.TimeSeries {
 	}
 
 	if alias == "" {
-		alias = fmt.Sprintf("%s-series%s", query.RefId, suffix)
+		alias = fmt.Sprintf("%s-series%s", query.RefID, suffix)
 	}
 
 	if alias == "__server_names" && len(serverNames) > index {
@@ -725,7 +897,61 @@ func newSeriesForQuery(query *tsdb.Query, index int) *tsdb.TimeSeries {
 		alias = houseLocations[index]
 	}
 
-	return &tsdb.TimeSeries{Name: alias}
+	return data.NewFrame(alias)
+}
+
+/**
+ * Looks for a labels request and adds them as tags
+ *
+ * '{job="foo", instance="bar"} => {job: "foo", instance: "bar"}`
+ */
+func parseLabels(model *simplejson.Json) data.Labels {
+	tags := data.Labels{}
+
+	labelText := model.Get("labels").MustString("")
+	if labelText == "" {
+		return data.Labels{}
+	}
+
+	text := strings.Trim(labelText, `{}`)
+	if len(text) < 2 {
+		return tags
+	}
+
+	tags = make(data.Labels)
+
+	for _, keyval := range strings.Split(text, ",") {
+		idx := strings.Index(keyval, "=")
+		key := strings.TrimSpace(keyval[:idx])
+		val := strings.TrimSpace(keyval[idx+1:])
+		val = strings.Trim(val, "\"")
+		tags[key] = val
+	}
+
+	return tags
+}
+
+func frameNameForQuery(query backend.DataQuery, model *simplejson.Json, index int) string {
+	name := model.Get("alias").MustString("")
+	suffix := ""
+
+	if index > 0 {
+		suffix = strconv.Itoa(index)
+	}
+
+	if name == "" {
+		name = fmt.Sprintf("%s-series%s", query.RefID, suffix)
+	}
+
+	if name == "__server_names" && len(serverNames) > index {
+		name = serverNames[index]
+	}
+
+	if name == "__house_locations" && len(houseLocations) > index {
+		name = houseLocations[index]
+	}
+
+	return name
 }
 
 func fromStringOrNumber(val *simplejson.Json) (null.Float, error) {
