@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { Button, TooltipPlugin, GraphNG, GraphNGLegendEvent } from '@grafana/ui';
+import { Button, GraphNG, GraphNGLegendEvent, StackingMode, TooltipPlugin } from '@grafana/ui';
 import { PanelProps } from '@grafana/data';
 import { Options } from './types';
 import { hideSeriesConfigFactory } from '../timeseries/overrides/hideSeriesConfigFactory';
@@ -52,6 +52,7 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
   return (
     <GraphNG
       data={frames}
+      stacking={StackingMode.None}
       fields={dims.fields}
       timeRange={timeRange}
       timeZone={timeZone}

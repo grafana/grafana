@@ -28,9 +28,7 @@ export class UPlotConfigBuilder {
     this.hooks[type]!.push(hook as any);
   }
 
-  constructor(private stacking = StackingMode.None) {
-    console.log(stacking);
-  }
+  constructor(private stacking = StackingMode.None) {}
 
   addAxis(props: AxisProps) {
     props.placement = props.placement ?? AxisPlacement.Auto;

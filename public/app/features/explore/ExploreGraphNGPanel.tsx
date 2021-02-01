@@ -17,6 +17,7 @@ import {
   GraphNGLegendEvent,
   Icon,
   LegendDisplayMode,
+  StackingMode,
   TooltipPlugin,
   useStyles,
   useTheme,
@@ -122,6 +123,7 @@ export function ExploreGraphNGPanel({
       <Collapse label="Graph" loading={isLoading} isOpen>
         <GraphNG
           data={seriesToShow}
+          stacking={StackingMode.None}
           width={width}
           height={400}
           timeRange={timeRange}

@@ -36,8 +36,8 @@ import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { useRevision } from '../uPlot/hooks';
 import { GraphNGLegendEvent } from './types';
 import { isNumber } from 'lodash';
-import { getNamesToFieldIndex, mapMouseEventToMode, preparePlotData } from './utils';
-import { AlignedData } from 'uplot';
+import { getNamesToFieldIndex, mapMouseEventToMode } from './utils';
+import { preparePlotData } from '../uPlot/utils';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
@@ -95,7 +95,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
     if (!frame) {
       return null;
     }
-    return preparePlotData(frame, stacking) as AlignedData;
+    return preparePlotData(frame, stacking);
   }, [frame, stacking]);
 
   const compareFrames = useCallback((a?: DataFrame | null, b?: DataFrame | null) => {

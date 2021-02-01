@@ -21,6 +21,7 @@ import {
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { UPlotChart } from '../uPlot/Plot';
 import { Themeable } from '../../types';
+import { preparePlotData } from '../uPlot/utils';
 
 export interface Props extends Themeable {
   width: number;
@@ -172,10 +173,10 @@ export class Sparkline extends PureComponent<Props, State> {
   render() {
     const { data, configBuilder } = this.state;
     const { width, height, sparkline } = this.props;
-
     return (
       <UPlotChart
-        data={data}
+        data={preparePlotData(data)}
+        dataFrame={data}
         config={configBuilder}
         width={width}
         height={height}

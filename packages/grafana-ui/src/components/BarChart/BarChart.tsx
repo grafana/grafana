@@ -28,6 +28,7 @@ import { VizLegend } from '../VizLegend/VizLegend';
 
 import { BarChartFieldConfig, BarChartOptions, BarValueVisibility, defaultBarChartFieldConfig } from './types';
 import { BarsOptions, getConfig } from './bars';
+import { preparePlotData } from '../uPlot/utils';
 
 /**
  * @alpha
@@ -305,11 +306,14 @@ export const BarChart: React.FunctionComponent<Props> = ({
     );
   }
 
+  const plotData = preparePlotData(data);
+
   return (
     <VizLayout width={width} height={height} legend={legendElement}>
       {(vizWidth: number, vizHeight: number) => (
         <UPlotChart
-          data={data}
+          data={plotData}
+          dataFrame={data}
           config={configBuilder}
           width={vizWidth}
           height={vizHeight}
