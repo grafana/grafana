@@ -29,19 +29,31 @@ Some field options will not affect the visualization until you click outside of 
 
 ### Bar alignment
 
-Set the position of the bar relative to a data point.
+Set the position of the bar relative to a data point. In the examples below, **Show points** is set to **Always** to make it easier to see the difference this setting makes. The points do not change; the bars change in relationship to the points.
 
 #### Before
 
-Point is placed on the trailing corner of the bar.
+![Bar alignment before icon](/img/docs/time-series-panel/bar-alignment-icon-before-7-4.png)
+
+The bar is drawn before the point. The point is placed on the trailing corner of the bar.
+
+![Bar alignment before example](/img/docs/time-series-panel/bar-alignment-before-7-4.png)
 
 #### Center
 
-Point is placed in the center of the graph.
+![Bar alignment center icon](/img/docs/time-series-panel/bar-alignment-icon-center-7-4.png)
+
+The bar is drawn around the point. The point is placed in the center of the bar. This is the default.
+
+![Bar alignment center](/img/docs/time-series-panel/bar-alignment-center-7-4.png)
 
 #### After
 
-Point is placed on the leading corner of the bar.
+![Bar alignment after icon](/img/docs/time-series-panel/bar-alignment-icon-after-7-4.png)
+
+The bar is drawn after the point. The point is placed on the leading corner of the bar.
+
+![Bar alignment after](/img/docs/time-series-panel/bar-alignment-after-7-4.png)
 
 ### Line width
 
