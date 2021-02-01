@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useTheme, Icon, IconButton, stylesFactory, TagList, ConfirmModal } from '@grafana/ui';
-import { css, cx } from 'emotion';
+import { Icon, IconButton, stylesFactory, TagList, ConfirmModal, Tooltip, useStyles } from '@grafana/ui';
+import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 
 export interface LibraryPanelCardProps {
@@ -27,8 +27,7 @@ export const LibraryPanelCard: React.FC<LibraryPanelCardProps> = ({
   onClick,
   onDelete,
 }) => {
-  const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = useStyles(getStyles);
   const [showDeletionModal, setShowDeletionModal] = useState(false);
 
   const onDeletePanel = () => {
@@ -38,31 +37,41 @@ export const LibraryPanelCard: React.FC<LibraryPanelCardProps> = ({
 
   return (
     <>
-      <div className={cx(styles.panelCard)}>
-        <div className={cx(styles.cardHeader)}>
-          <Icon className={cx(styles.panelIcon)} name="book-open" />
-          <div className={cx(styles.wrapper)}>
-            <div className={cx(styles.panelDetails)}>
+      <div className={styles.panelCard}>
+        <div className={styles.cardHeader}>
+          <Icon className={styles.panelIcon} name="book-open" />
+          <div className={styles.wrapper}>
+            <div className={styles.panelDetails}>
               <span>{title}</span>
-              <div className={cx(styles.panelFigures)} onClick={onClick}>
+              <div className={styles.panelFigures} onClick={onClick}>
                 <span>Reusable panel</span>
-                <Icon name="apps" className={cx(styles.detailIcon)} />
-                {connectedDashboards.length}
-                <Icon name="x" className={cx(styles.detailIcon)} />
-                {varCount}
+                <Tooltip content="Connected dashboards" placement="bottom">
+                  <div className={styles.tooltip}>
+                    <Icon name="apps" className={styles.detailIcon} />
+                    {connectedDashboards.length}
+                  </div>
+                </Tooltip>
+
+                <Tooltip content="Variables used" placement="bottom">
+                  <div className={styles.tooltip}>
+                    <Icon name="x" className={styles.detailIcon} />
+                    {varCount}
+                  </div>
+                </Tooltip>
+
                 <span>
                   Last edited {lastEdited} by {lastAuthor}
                 </span>
               </div>
             </div>
             <div>
-              <TagList className={cx(styles.tagList)} tags={['associated panel tag']} />
+              <TagList className={styles.tagList} tags={['associated panel tag']} />
             </div>
           </div>
         </div>
-        <div className={cx(styles.cardControls)}>
+        <div className={styles.cardControls}>
           {children}
-          <div className={cx(styles.secondaryActions)}>
+          <div className={styles.secondaryActions}>
             <IconButton name="clipboard-alt" tooltip="Copy panel" tooltipPlacement="bottom" />
             <IconButton
               name="trash-alt"
@@ -91,6 +100,9 @@ export const LibraryPanelCard: React.FC<LibraryPanelCardProps> = ({
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
+    tooltip: css`
+      display: inline;
+    `,
     detailIcon: css`
       margin-right: 0.5ch;
     `,
@@ -98,7 +110,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       background: ${theme.colors.bg2};
     `,
     panelIcon: css`
-      margin-right: 13px;
+      margin-right: ${theme.spacing.md};
     `,
     panelDetails: css`
       display: flex;
@@ -107,15 +119,15 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     cardHeader: css`
       display: flex;
-      padding: 10px;
+      padding: ${theme.spacing.sm};
     `,
     cardControls: css`
-      margin-top: 11px;
-      margin-bottom: 11px;
-      margin-left: 16px;
-      margin-right: 16px;
-      padding-top: 11px;
-      padding-left: 22px;
+      margin-top: ${theme.spacing.sm};
+      margin-bottom: ${theme.spacing.sm};
+      margin-left: ${theme.spacing.md};
+      margin-right: ${theme.spacing.md};
+      padding-top: ${theme.spacing.sm};
+      padding-left: ${theme.spacing.lg};
       border-top: 1px solid #343b40;
       display: flex;
     `,
@@ -126,7 +138,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       margin-left: auto;
       align-items: center;
-      gap: 12px;
+      gap: ${theme.spacing.sm};
     `,
     panelFigures: css`
       font-size: ${theme.typography.size.sm};
@@ -142,21 +154,21 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       margin-left: auto;
     `,
     buttonMargin: css`
-      margin-right: 10px;
+      margin-right: ${theme.spacing.sm};
     `,
     wrapper: css`
       display: flex;
       justify-content: space-between;
       width: 100%;
       flex-wrap: wrap;
-      row-gap: 10px;
+      row-gap: ${theme.spacing.sm};
     `,
     grower: css`
       flex-grow: 3;
     `,
     modalButtonWrapper: css`
       display: flex;
-      gap: 10px;
+      gap: ${theme.spacing.sm};
     `,
   };
 });

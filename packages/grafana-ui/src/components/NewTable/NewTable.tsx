@@ -70,7 +70,7 @@ export const NewTable: FC<Props> = (props: Props) => {
   return (
     <table className={cx(styles.dataTable, props.tableClass)}>
       <thead>
-        <tr className={cx(styles.rowHeader)}>
+        <tr className={styles.rowHeader}>
           {props.headers.map((header, i) => (
             <th
               scope="col"

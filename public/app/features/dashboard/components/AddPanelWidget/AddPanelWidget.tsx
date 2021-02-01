@@ -2,7 +2,7 @@
 import React, { useMemo, useState } from 'react';
 import _ from 'lodash';
 import { LocationUpdate } from '@grafana/runtime';
-import { Button, Icon, IconButton, styleMixins, stylesFactory, useTheme } from '@grafana/ui';
+import { Button, Icon, IconButton, styleMixins, stylesFactory, useStyles, useTheme } from '@grafana/ui';
 import { connect, MapDispatchToProps } from 'react-redux';
 // Utils
 import config from 'app/core/config';
@@ -57,8 +57,6 @@ const getCopiedPanelPlugins = () => {
 };
 
 export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard, updateLocation }) => {
-  const theme = useTheme();
-
   const onCancelAddPanel = (evt: any) => {
     evt.preventDefault();
     dashboard.removePanel(panel);
@@ -148,7 +146,7 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard, u
     dashboard.removePanel(panel);
   };
 
-  const styles = getStyles(theme);
+  const styles = useStyles(getStyles);
   const copiedPanelPlugins = useMemo(() => getCopiedPanelPlugins(), []);
 
   const [addPanelView, setAddPanelView] = useState(false);
@@ -158,12 +156,12 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard, u
       <AddPanelWidgetHandle onCancel={onCancelAddPanel} />
       {addPanelView ? (
         <LibraryPanelsView
-          className={cx(styles.libraryPanelsWrapper)}
+          className={styles.libraryPanelsWrapper}
           onCreateNewPanel={() => onCreateNewPanel(true)}
           formatDate={(dateString: string) => dashboard.formatDate(dateString, 'L')}
         >
           {(panel) => (
-            <Button className={cx(styles.buttonMargin)} variant="secondary" onClick={() => onAddLibraryPanel(panel)}>
+            <Button className={styles.buttonMargin} variant="secondary" onClick={() => onAddLibraryPanel(panel)}>
               Add library panel
             </Button>
           )}
@@ -238,14 +236,14 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     actionsRow: css`
       display: flex;
       flex-direction: row;
-      column-gap: 8px;
+      column-gap: ${theme.spacing.sm};
       height: 100%;
 
       > div {
         justify-self: center;
         cursor: pointer;
         background: ${theme.colors.bg2};
-        border-radius: 2px;
+        border-radius: ${theme.border.radius.sm};
         color: ${theme.colors.text};
         width: 100%;
         display: flex;
@@ -266,20 +264,20 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     actionsWrapper: css`
       display: flex;
       flex-direction: column;
-      row-gap: 8px;
+      row-gap: ${theme.spacing.sm};
       height: 100%;
-      margin-left: 15px;
-      margin-right: 24px;
-      margin-top: 39px;
-      margin-bottom: 42px;
+      margin-left: ${theme.spacing.md};
+      margin-right: ${theme.spacing.lg};
+      margin-top: ${theme.spacing.base * 5}px;
+      margin-bottom: ${theme.spacing.base * 5}px;
     `,
     buttonMargin: css`
-      margin-right: 10px;
+      margin-right: ${theme.spacing.sm};
     `,
     libraryPanelsWrapper: css`
-      padding-left: 32px;
-      padding-right: 25px;
-      padding-top: 40px;
+      padding-left: ${theme.spacing.xl};
+      padding-right: ${theme.spacing.lg};
+      padding-top: ${theme.spacing.base * 5}px;
     `,
   };
 });
@@ -291,7 +289,7 @@ const getAddPanelWigetHandleStyles = stylesFactory((theme: GrafanaTheme) => {
       cursor: grab;
       top: 0;
       left: 0;
-      height: 26px;
+      height: ${theme.height.sm}px;
       padding: 0 ${theme.spacing.xs};
       width: 100%;
       display: flex;

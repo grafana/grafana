@@ -1,4 +1,4 @@
-import { Icon, Input, Select, Button, useTheme, stylesFactory } from '@grafana/ui';
+import { Icon, Input, Select, Button, stylesFactory, useStyles } from '@grafana/ui';
 import React, { useEffect, useState } from 'react';
 import { useDebounce } from 'react-use';
 import { cx, css } from 'emotion';
@@ -19,8 +19,7 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
   onCreateNewPanel,
   formatDate,
 }) => {
-  const theme = useTheme();
-  const styles = getPanelViewStyles(theme);
+  const styles = useStyles(getPanelViewStyles);
   const [searchString, setSearchValue] = useState('');
   // const [modalOpen, setModalOpen] = useState(false);
 
@@ -85,9 +84,9 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
 
   return (
     <div className={cx(styles.container, className)}>
-      <div className={cx(styles.searchHeader)}>
+      <div className={styles.searchHeader}>
         <Input
-          className={cx(styles.searchInput)}
+          className={styles.searchInput}
           placeholder="Search the panel library"
           prefix={<Icon name="search" />}
           value={searchString}
@@ -95,8 +94,8 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
         ></Input>
         <Select placeholder="Filter by" onChange={() => {}} width={35} />
       </div>
-      <div className={cx(styles.panelTitle)}>Popular panels from the panel library</div>
-      <div className={cx(styles.libraryPanelList)}>
+      <div className={styles.panelTitle}>Popular panels from the panel library</div>
+      <div className={styles.libraryPanelList}>
         {libraryPanels === undefined ? (
           <p>Loading library panels...</p>
         ) : filteredItems?.length! < 1 ? (
@@ -116,7 +115,7 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
         )}
       </div>
       {onCreateNewPanel && (
-        <Button icon="plus" className={cx(styles.newPanelButton)} onClick={onCreateNewPanel}>
+        <Button icon="plus" className={styles.newPanelButton} onClick={onCreateNewPanel}>
           Create a new reusable panel
         </Button>
       )}

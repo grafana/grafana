@@ -1,6 +1,6 @@
-import { Button, Modal, NewTable } from '@grafana/ui';
+import { Button, Modal, NewTable, useStyles } from '@grafana/ui';
 import React, { FC } from 'react';
-import { css, cx } from 'emotion';
+import { css } from 'emotion';
 
 interface TemplateVar {
   name: string;
@@ -14,21 +14,21 @@ interface Props {
 }
 
 export const VarImportModal: FC<Props> = ({ vars, onDismiss, isOpen }) => {
-  const styles = getStyles();
+  const styles = useStyles(getStyles);
 
   return (
     <Modal icon="x" title="Template variables will be imported" onDismiss={onDismiss} isOpen={isOpen}>
-      <p className={cx(styles.p)}>This reusable panel expects the following {vars.length} template variables:</p>
+      <p className={styles.p}>This reusable panel expects the following {vars.length} template variables:</p>
       <NewTable
         headers={[
           { name: 'Variable', sortable: false },
           { name: 'Definition', sortable: false },
         ]}
         rows={vars.map(({ name, definition }) => [name, definition])}
-        tableClass={cx(styles.table)}
+        tableClass={styles.table}
       />
-      <p className={cx(styles.p)}>Grafana will import them into your dashboard. Do you wish to proceed?</p>
-      <div className={cx(styles.buttons)}>
+      <p className={styles.p}>Grafana will import them into your dashboard. Do you wish to proceed?</p>
+      <div className={styles.buttons}>
         <Button>Import template variables and add panel</Button>
         <Button variant="secondary" onClick={onDismiss}>
           Cancel

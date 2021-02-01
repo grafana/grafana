@@ -1,5 +1,5 @@
 import React, { FC, useCallback, useMemo, useRef, useState } from 'react';
-import { css, cx } from 'emotion';
+import { css } from 'emotion';
 import { DashboardModel, PanelModel } from '../../state';
 import { GrafanaTheme, PanelData, PanelPlugin } from '@grafana/data';
 import {
@@ -14,7 +14,7 @@ import {
   Switch,
   TagsInput,
   TextArea,
-  useTheme,
+  useStyles,
 } from '@grafana/ui';
 import { getPanelLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
 import { PanelOptionsEditor } from './PanelOptionsEditor';
@@ -50,9 +50,8 @@ export const PanelOptionsTab: FC<Props> = ({
   onPanelConfigChange,
   onPanelOptionsChanged,
 }) => {
-  const theme = useTheme();
-  const styles = getStyles(theme);
-  const [showingAddPanelModal, setShowingAddPanelModal] = useState<boolean>(false);
+  const styles = useStyles(getStyles);
+  const [showingAddPanelModal, setShowingAddPanelModal] = useState(false);
   const visTabInputRef = useRef<HTMLInputElement>(null);
   const linkVariablesSuggestions = useMemo(() => getPanelLinksVariableSuggestions(), []);
   const onRepeatRowSelectChange = useCallback((value: string | null) => onPanelConfigChange('repeat', value), [
@@ -98,11 +97,11 @@ export const PanelOptionsTab: FC<Props> = ({
     setShowingAddPanelModal(true);
   };
 
-  if (panel.libraryPanel) {
+  if (config.featureToggles.panelLibrary && panel.libraryPanel) {
     elements.push(
       <OptionsGroup title="Reusable panel information" id="Shared Panel Info" key="Shared Panel Info">
         {panel.libraryPanel.uid && (
-          <p className={cx(styles.libraryPanelInfo)}>
+          <p className={styles.libraryPanelInfo}>
             Used on {panel.libraryPanel.connectedDashboards}
             {panel.libraryPanel.connectedDashboards?.length === 1 ? 'dashboard' : 'dashboards'} <br />
             Last edited on {dashboard.formatDate(panel.libraryPanel.lastEdited!, 'L')} by
@@ -227,7 +226,7 @@ export const PanelOptionsTab: FC<Props> = ({
       <OptionsGroup
         renderTitle={(isExpanded) => {
           return isExpanded && !panel.libraryPanel ? (
-            <div className={cx(styles.panelLibraryTitle)}>
+            <div className={styles.panelLibraryTitle}>
               <span>Panel library</span>
               <Button size="sm" onClick={onAddToPanelLibrary}>
                 Add this panel to the panel library
