@@ -1,6 +1,6 @@
 import uPlot, { Scale, Range } from 'uplot';
 import { PlotConfigBuilder } from '../types';
-import { ScaleDistribution } from '../config';
+import { ScaleDistribution, ScaleOrientation, ScaleDirection } from '../config';
 
 export interface ScaleProps {
   scaleKey: string;
@@ -9,8 +9,10 @@ export interface ScaleProps {
   max?: number | null;
   softMin?: number | null;
   softMax?: number | null;
-  range?: () => number[]; // min/max
+  range?: Scale.Range;
   distribution?: ScaleDistribution;
+  orientation: ScaleOrientation;
+  direction: ScaleDirection;
   log?: number;
 }
 
@@ -21,10 +23,25 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
   }
 
   getConfig() {
-    const { isTime, scaleKey, min: hardMin, max: hardMax, softMin, softMax, range } = this.props;
+    const {
+      isTime,
+      scaleKey,
+      min: hardMin,
+      max: hardMax,
+      softMin,
+      softMax,
+      range,
+      direction,
+      orientation,
+    } = this.props;
     const distribution = !isTime
       ? {
-          distr: this.props.distribution === ScaleDistribution.Logarithmic ? 3 : 1,
+          distr:
+            this.props.distribution === ScaleDistribution.Logarithmic
+              ? 3
+              : this.props.distribution === ScaleDistribution.Ordinal
+              ? 2
+              : 1,
           log: this.props.distribution === ScaleDistribution.Logarithmic ? this.props.log || 2 : undefined,
         }
       : {};
@@ -57,7 +74,7 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
       let hardMinOnly = softMin == null && hardMin != null;
       let hardMaxOnly = softMax == null && hardMax != null;
 
-      if (scale.distr === 1) {
+      if (scale.distr === 1 || scale.distr === 2) {
         // @ts-ignore here we may use hardMin / hardMax to make sure any extra padding is computed from a more accurate delta
         minMax = uPlot.rangeNum(hardMinOnly ? hardMin : dataMin, hardMaxOnly ? hardMax : dataMax, rangeConfig);
       } else if (scale.distr === 3) {
@@ -81,6 +98,8 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
         time: isTime,
         auto: !isTime,
         range: range ?? rangeFn,
+        dir: direction,
+        ori: orientation,
         ...distribution,
       },
     };

@@ -207,5 +207,7 @@ export * from './uPlot/plugins';
 export { useRefreshAfterGraphRendered } from './uPlot/hooks';
 export { usePlotContext, usePlotData, usePlotPluginContext } from './uPlot/context';
 export { GraphNG, FIXED_UNIT } from './GraphNG/GraphNG';
+export { BarChart } from './BarChart/BarChart';
+export { BarChartOptions, BarStackingMode, BarValueVisibility, BarChartFieldConfig } from './BarChart/types';
 export { GraphNGLegendEvent, GraphNGLegendEventMode } from './GraphNG/types';
 export * from './NodeGraph';

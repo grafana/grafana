@@ -56,7 +56,7 @@ export function createSpanLinkFactory(splitOpenFn: SplitOpen, traceToLogsOptions
     return {
       href: link.href,
       onClick: link.onClick,
-      content: <Icon name="file-alt" title="Show logs" />,
+      content: <Icon name="gf-logs" title="Explore the logs for this in split view" />,
     };
   };
 }

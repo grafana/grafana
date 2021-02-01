@@ -1,6 +1,5 @@
-import set from 'lodash/set';
 import { from, merge, Observable, of } from 'rxjs';
-import { delay, map } from 'rxjs/operators';
+import { delay } from 'rxjs/operators';
 
 import {
   AnnotationEvent,
@@ -8,20 +7,17 @@ import {
   arrowTableToDataFrame,
   base64StringToArrowTable,
   DataFrame,
-  DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
-  DataSourceApi,
   DataSourceInstanceSettings,
   DataTopic,
   LiveChannelScope,
   LoadingState,
-  TableData,
   TimeRange,
-  TimeSeries,
 } from '@grafana/data';
 import { Scenario, TestDataQuery } from './types';
 import {
+  DataSourceWithBackend,
   getBackendSrv,
   getLiveMeasurementsObserver,
   getTemplateSrv,
@@ -34,9 +30,7 @@ import { getSearchFilterScopedVar } from 'app/features/variables/utils';
 import { TestDataVariableSupport } from './variables';
 import { generateRandomNodes, savedNodesResponse } from './nodeGraphUtils';
 
-type TestData = TimeSeries | TableData;
-
-export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
+export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
   scenariosCache?: Promise<Scenario[]>;
 
   constructor(
@@ -48,7 +42,7 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
   }
 
   query(options: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
-    const queries: any[] = [];
+    const backendQueries: TestDataQuery[] = [];
     const streams: Array<Observable<DataQueryResponse>> = [];
 
     // Start streams and prepare queries
@@ -80,66 +74,19 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
           streams.push(this.nodesQuery(target, options));
           break;
         default:
-          queries.push({
-            ...target,
-            intervalMs: options.intervalMs,
-            maxDataPoints: options.maxDataPoints,
-            datasourceId: this.id,
-            alias: this.templateSrv.replace(target.alias || '', options.scopedVars),
-          });
+          backendQueries.push(target);
       }
     }
 
-    if (queries.length) {
-      const stream = getBackendSrv()
-        .fetch({
-          method: 'POST',
-          url: '/api/tsdb/query',
-          data: {
-            from: options.range.from.valueOf().toString(),
-            to: options.range.to.valueOf().toString(),
-            queries: queries,
-          },
-        })
-        .pipe(map((res) => this.processQueryResult(queries, res)));
-
-      streams.push(stream);
+    if (backendQueries.length) {
+      const backendOpts = {
+        ...options,
+        targets: backendQueries,
+      };
+      streams.push(super.query(backendOpts));
     }
 
     return merge(...streams);
-  }
-
-  processQueryResult(queries: any, res: any): DataQueryResponse {
-    const data: TestData[] = [];
-    let error: DataQueryError | undefined = undefined;
-
-    for (const query of queries) {
-      const results = res.data.results[query.refId];
-
-      for (const t of results.tables || []) {
-        const table = t as TableData;
-        table.refId = query.refId;
-        table.name = query.alias;
-
-        if (query.scenarioId === 'logs') {
-          set(table, 'meta.preferredVisualisationType', 'logs');
-        }
-
-        data.push(table);
-      }
-
-      for (const series of results.series || []) {
-        data.push({ target: series.name, datapoints: series.points, refId: query.refId, tags: series.tags });
-      }
-
-      if (results.error) {
-        error = {
-          message: results.error,
-        };
-      }
-    }
-
-    return { data, error };
   }
 
   annotationDataTopicTest(target: TestDataQuery, req: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
@@ -190,7 +137,7 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
 
   getScenarios(): Promise<Scenario[]> {
     if (!this.scenariosCache) {
-      this.scenariosCache = getBackendSrv().get('/api/tsdb/testdata/scenarios');
+      this.scenariosCache = this.getResource('scenarios');
     }
 
     return this.scenariosCache;

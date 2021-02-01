@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"errors"
-	"sort"
 
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/models"
@@ -13,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb"
-	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -202,36 +200,6 @@ func (hs *HTTPServer) QueryMetrics(c *models.ReqContext, reqDto dtos.MetricReque
 	return response.JSON(statusCode, &resp)
 }
 
-// GET /api/tsdb/testdata/scenarios
-func GetTestDataScenarios(c *models.ReqContext) response.Response {
-	result := make([]interface{}, 0)
-
-	scenarioIds := make([]string, 0)
-	for id := range testdatasource.ScenarioRegistry {
-		scenarioIds = append(scenarioIds, id)
-	}
-	sort.Strings(scenarioIds)
-
-	for _, scenarioId := range scenarioIds {
-		scenario := testdatasource.ScenarioRegistry[scenarioId]
-		result = append(result, map[string]interface{}{
-			"id":          scenario.Id,
-			"name":        scenario.Name,
-			"description": scenario.Description,
-			"stringInput": scenario.StringInput,
-		})
-	}
-
-	return response.JSON(200, &result)
-}
-
-// GenerateError generates a index out of range error
-func GenerateError(c *models.ReqContext) response.Response {
-	var array []string
-	// nolint: govet
-	return response.JSON(200, array[20])
-}
-
 // GET /api/tsdb/testdata/gensql
 func GenerateSQLTestData(c *models.ReqContext) response.Response {
 	if err := bus.Dispatch(&models.InsertSQLTestDataCommand{}); err != nil {
@@ -250,7 +218,10 @@ func GetTestDataRandomWalk(c *models.ReqContext) response.Response {
 	timeRange := tsdb.NewTimeRange(from, to)
 	request := &tsdb.TsdbQuery{TimeRange: timeRange}
 
-	dsInfo := &models.DataSource{Type: "testdata"}
+	dsInfo := &models.DataSource{
+		Type:     "testdata",
+		JsonData: simplejson.New(),
+	}
 	request.Queries = append(request.Queries, &tsdb.Query{
 		RefId:      "A",
 		IntervalMs: intervalMs,

@@ -1,16 +1,25 @@
-import { toDataFrameDTO } from '@grafana/data';
-
+import { DataQuery, toDataFrameDTO, DataFrame } from '@grafana/data';
 import { toDataQueryResponse } from './queryResponse';
 
 /* eslint-disable */
 const resp = {
   data: {
     results: {
-      GC: {
+      A: {
+        refId: 'A',
+        series: null,
+        tables: null,
         dataframes: [
-          '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',
+          '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',
         ],
-        frames: null as any,
+      },
+      B: {
+        refId: 'B',
+        series: null,
+        tables: null,
+        dataframes: [
+          'QVJST1cxAAD/////cAEAABAAAAAAAAoADgAMAAsABAAKAAAAFAAAAAAAAAEDAAoADAAAAAgABAAKAAAACAAAAFAAAAACAAAAKAAAAAQAAAAg////CAAAAAwAAAABAAAAQgAAAAUAAAByZWZJZAAAAED///8IAAAADAAAAAAAAAAAAAAABAAAAG5hbWUAAAAAAgAAAHwAAAAEAAAAnv///xQAAABAAAAAQAAAAAAAAwFAAAAAAQAAAAQAAACM////CAAAABQAAAAIAAAAQi1zZXJpZXMAAAAABAAAAG5hbWUAAAAAAAAAAIb///8AAAIACAAAAEItc2VyaWVzAAASABgAFAATABIADAAAAAgABAASAAAAFAAAAEQAAABMAAAAAAAKAUwAAAABAAAADAAAAAgADAAIAAQACAAAAAgAAAAQAAAABAAAAHRpbWUAAAAABAAAAG5hbWUAAAAAAAAAAAAABgAIAAYABgAAAAAAAwAEAAAAdGltZQAAAAAAAAAA/////7gAAAAUAAAAAAAAAAwAFgAUABMADAAEAAwAAABgAAAAAAAAABQAAAAAAAADAwAKABgADAAIAAQACgAAABQAAABYAAAABgAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAAAAAAAAAAMAAAAAAAAAAAAAAAAAAAADAAAAAAAAAAMAAAAAAAAAAAAAAAAgAAAAYAAAAAAAAAAAAAAAAAAAAGAAAAAAAAAAAAAAAAAAAAQMC/OcElXhZAOAEFxCVeFkCwQtDGJV4WQCiEm8klXhZAoMVmzCVeFkAYBzLPJV4WAAAAAAAA8D8AAAAAAAA0QAAAAAAAgFZAAAAAAAAAPkAAAAAAAAAUQAAAAAAAAAAAEAAAAAwAFAASAAwACAAEAAwAAAAQAAAALAAAADgAAAAAAAMAAQAAAIABAAAAAAAAwAAAAAAAAABgAAAAAAAAAAAAAAAAAAAAAAAKAAwAAAAIAAQACgAAAAgAAABQAAAAAgAAACgAAAAEAAAAIP///wgAAAAMAAAAAQAAAEIAAAAFAAAAcmVmSWQAAABA////CAAAAAwAAAAAAAAAAAAAAAQAAABuYW1lAAAAAAIAAAB8AAAABAAAAJ7///8UAAAAQAAAAEAAAAAAAAMBQAAAAAEAAAAEAAAAjP///wgAAAAUAAAACAAAAEItc2VyaWVzAAAAAAQAAABuYW1lAAAAAAAAAACG////AAACAAgAAABCLXNlcmllcwAAEgAYABQAEwASAAwAAAAIAAQAEgAAABQAAABEAAAATAAAAAAACgFMAAAAAQAAAAwAAAAIAAwACAAEAAgAAAAIAAAAEAAAAAQAAAB0aW1lAAAAAAQAAABuYW1lAAAAAAAAAAAAAAYACAAGAAYAAAAAAAMABAAAAHRpbWUAAAAAmAEAAEFSUk9XMQ==',
+        ],
       },
     },
   },
@@ -41,9 +50,9 @@ describe('Query Response parser', () => {
   test('should parse output with dataframe', () => {
     const res = toDataQueryResponse(resp);
     const frames = res.data;
-    for (const frame of frames) {
-      expect(frame.refId).toEqual('GC');
-    }
+    expect(frames).toHaveLength(2);
+    expect(frames[0].refId).toEqual('A');
+    expect(frames[1].refId).toEqual('B');
 
     const norm = frames.map((f) => toDataFrameDTO(f));
     expect(norm).toMatchInlineSnapshot(`
@@ -53,49 +62,155 @@ describe('Query Response parser', () => {
             Object {
               "config": Object {},
               "labels": undefined,
-              "name": "Time",
+              "name": "time",
               "type": "time",
               "values": Array [
-                1569334575000,
-                1569334580000,
-                1569334585000,
-                1569334590000,
-                1569334595000,
-                1569334600000,
-                1569334605000,
-                1569334610000,
-                1569334615000,
-                1569334620000,
-                1569334625000,
-                1569334630000,
-                1569334635000,
+                1611767228473,
+                1611767240473,
+                1611767252473,
+                1611767264473,
+                1611767276473,
+                1611767288473,
               ],
             },
             Object {
               "config": Object {},
               "labels": undefined,
-              "name": "",
+              "name": "A-series",
               "type": "number",
               "values": Array [
-                3,
-                3,
-                3,
+                1,
+                20,
+                90,
+                30,
                 5,
-                5,
-                5,
-                3,
-                3,
-                3,
-                5,
-                5,
-                5,
-                3,
+                0,
               ],
             },
           ],
           "meta": undefined,
           "name": undefined,
-          "refId": "GC",
+          "refId": "A",
+        },
+        Object {
+          "fields": Array [
+            Object {
+              "config": Object {},
+              "labels": undefined,
+              "name": "time",
+              "type": "time",
+              "values": Array [
+                1611767228473,
+                1611767240473,
+                1611767252473,
+                1611767264473,
+                1611767276473,
+                1611767288473,
+              ],
+            },
+            Object {
+              "config": Object {},
+              "labels": undefined,
+              "name": "B-series",
+              "type": "number",
+              "values": Array [
+                1,
+                20,
+                90,
+                30,
+                5,
+                0,
+              ],
+            },
+          ],
+          "meta": undefined,
+          "name": undefined,
+          "refId": "B",
+        },
+      ]
+    `);
+  });
+
+  test('should parse output with dataframe in order of queries', () => {
+    const queries: DataQuery[] = [{ refId: 'B' }, { refId: 'A' }];
+    const res = toDataQueryResponse(resp, queries);
+    const frames = res.data;
+    expect(frames).toHaveLength(2);
+    expect(frames[0].refId).toEqual('B');
+    expect(frames[1].refId).toEqual('A');
+
+    const norm = frames.map((f) => toDataFrameDTO(f));
+    expect(norm).toMatchInlineSnapshot(`
+      Array [
+        Object {
+          "fields": Array [
+            Object {
+              "config": Object {},
+              "labels": undefined,
+              "name": "time",
+              "type": "time",
+              "values": Array [
+                1611767228473,
+                1611767240473,
+                1611767252473,
+                1611767264473,
+                1611767276473,
+                1611767288473,
+              ],
+            },
+            Object {
+              "config": Object {},
+              "labels": undefined,
+              "name": "B-series",
+              "type": "number",
+              "values": Array [
+                1,
+                20,
+                90,
+                30,
+                5,
+                0,
+              ],
+            },
+          ],
+          "meta": undefined,
+          "name": undefined,
+          "refId": "B",
+        },
+        Object {
+          "fields": Array [
+            Object {
+              "config": Object {},
+              "labels": undefined,
+              "name": "time",
+              "type": "time",
+              "values": Array [
+                1611767228473,
+                1611767240473,
+                1611767252473,
+                1611767264473,
+                1611767276473,
+                1611767288473,
+              ],
+            },
+            Object {
+              "config": Object {},
+              "labels": undefined,
+              "name": "A-series",
+              "type": "number",
+              "values": Array [
+                1,
+                20,
+                90,
+                30,
+                5,
+                0,
+              ],
+            },
+          ],
+          "meta": undefined,
+          "name": undefined,
+          "refId": "A",
         },
       ]
     `);
@@ -104,6 +219,35 @@ describe('Query Response parser', () => {
   test('processEmptyResults', () => {
     const frames = toDataQueryResponse(emptyResults).data;
     expect(frames.length).toEqual(0);
+  });
+
+  test('keeps query order', () => {
+    const resp = {
+      data: {
+        results: {
+          X: {
+            series: [
+              { name: 'Requests/s', points: [[13.594958983547151, 1611839862951]], tables: null, dataframes: null },
+            ],
+          },
+          B: {
+            series: [
+              { name: 'Requests/s', points: [[13.594958983547151, 1611839862951]], tables: null, dataframes: null },
+            ],
+          },
+          A: {
+            series: [
+              { name: 'Requests/s', points: [[13.594958983547151, 1611839862951]], tables: null, dataframes: null },
+            ],
+          },
+        },
+      },
+    };
+
+    const queries: DataQuery[] = [{ refId: 'A' }, { refId: 'B' }];
+
+    const ids = (toDataQueryResponse(resp, queries).data as DataFrame[]).map((f) => f.refId);
+    expect(ids).toEqual(['A', 'B', 'X']);
   });
 
   test('resultWithError', () => {
