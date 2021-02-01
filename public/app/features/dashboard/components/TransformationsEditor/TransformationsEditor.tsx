@@ -4,7 +4,6 @@ import {
   Button,
   Container,
   CustomScrollbar,
-  FeatureInfoBox,
   stylesFactory,
   Themeable,
   useTheme,
@@ -32,7 +31,7 @@ import { TransformationOperationRows } from './TransformationOperationRows';
 import { TransformationsEditorTransformation } from './types';
 import { PanelNotSupported } from '../PanelEditor/PanelNotSupported';
 import { AppNotificationSeverity } from '../../../../types';
-import theme from '@grafana/ui/src/themes/default';
+import { DismissableFeatureInfoBox } from '@grafana/ui/src/components/InfoBox/DismissableFeatureInfoBox';
 
 interface TransformationsEditorProps extends Themeable {
   panel: PanelModel;
@@ -213,12 +212,12 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
     return (
       <>
         <Container grow={1}>
-          <FeatureInfoBox
+          <DismissableFeatureInfoBox
             title="Transformations"
             className={css`
-              margin-bottom: ${theme.spacing.lg};
+              margin-bottom: ${this.props.theme.spacing.lg};
             `}
-            dismissPersistenceId="transformationsFeaturesInfoBox"
+            persistenceId="transformationsFeaturesInfoBox"
             url={getDocsLink(DocsId.Transformations)}
           >
             <p>
@@ -228,7 +227,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
               supports time series. <br />
               It can help to switch to Table visualization to understand what a transformation is doing. <br />
             </p>
-          </FeatureInfoBox>
+          </DismissableFeatureInfoBox>
         </Container>
         <VerticalGroup>
           {standardTransformersRegistry.list().map((t) => {

@@ -3,6 +3,9 @@ import { number, select, text } from '@storybook/addon-knobs';
 import { FeatureState } from '@grafana/data';
 import { InfoBox, FeatureInfoBox } from '@grafana/ui';
 import mdx from './InfoBox.mdx';
+import { DismissableFeatureInfoBox, FEATUREINFOBOX_PERSISTENCE_ID_PREFIX } from './DismissableFeatureInfoBox';
+import { Button } from '../Button';
+import { css } from 'emotion';
 
 export default {
   title: 'Layout/InfoBox',
@@ -74,6 +77,47 @@ export const featureInfoBox = () => {
         series. <br />
         It can help to switch to Table visualisation to understand what a transformation is doing.
       </FeatureInfoBox>
+    </div>
+  );
+};
+
+export const dismissableFeatureInfoBox = () => {
+  const { containerWidth, severity, title, url } = getKnobs();
+
+  const id = 'storybook-example-id';
+
+  const onResetClick = () => {
+    localStorage.removeItem(FEATUREINFOBOX_PERSISTENCE_ID_PREFIX.concat(id));
+    location.reload();
+  };
+
+  return (
+    <div>
+      <div style={{ width: containerWidth }}>
+        <DismissableFeatureInfoBox
+          persistenceId={id}
+          title={title}
+          severity={severity}
+          url={url}
+          featureState={FeatureState.beta}
+          onDismiss={() => {
+            alert('onDismiss clicked');
+          }}
+        >
+          Transformations allow you to join, calculate, re-order, hide and rename your query results before being
+          visualized. <br />
+          Many transforms are not suitable if you&apos;re using the Graph visualisation as it currently only supports
+          time series. <br />
+          It can help to switch to Table visualisation to understand what a transformation is doing.
+        </DismissableFeatureInfoBox>
+      </div>
+      <div
+        className={css`
+          margin-top: 24px;
+        `}
+      >
+        <Button onClick={onResetClick}>Reset DismissableFeatureInfoBox</Button>
+      </div>
     </div>
   );
 };
