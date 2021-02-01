@@ -15,6 +15,7 @@ require (
 	cloud.google.com/go/storage v1.12.0
 	github.com/BurntSushi/toml v0.3.1
 	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f
+	github.com/alibaba/pouch v0.0.0-20200907055328-bc5839e3c493
 	github.com/aws/aws-sdk-go v1.36.31
 	github.com/beevik/etree v1.1.0
 	github.com/benbjohnson/clock v0.0.0-20161215174838-7dc76406b6d3
@@ -60,7 +61,6 @@ require (
 	github.com/magefile/mage v1.10.0
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mattn/go-sqlite3 v1.14.6
-	github.com/neverlee/keymutex v0.0.0-20171121013845-f593aa834bf9
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.9.1

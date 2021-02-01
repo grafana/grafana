@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/alibaba/pouch/pkg/kmutex"
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -123,6 +124,7 @@ func TestGenerateConnectionString(t *testing.T) {
 			svc := postgresService{
 				Cfg:    cfg,
 				logger: log.New("tsdb.postgres"),
+				mtx:    kmutex.New(),
 			}
 
 			if tt.jsonData == "" {

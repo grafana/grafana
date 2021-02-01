@@ -13,12 +13,12 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 
+	"github.com/alibaba/pouch/pkg/kmutex"
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
-	"github.com/neverlee/keymutex"
 	"xorm.io/core"
 )
 
@@ -35,13 +35,13 @@ func init() {
 type postgresService struct {
 	Cfg *setting.Cfg `inject:""`
 
-	mtx    *keymutex.KeyMutex
+	mtx    *kmutex.KMutex
 	logger log.Logger
 }
 
 func (s *postgresService) Init() error {
 	s.logger = log.New("tsdb.postgres")
-	s.mtx = keymutex.New(50)
+	s.mtx = kmutex.New()
 	tsdb.RegisterTsdbQueryEndpoint("postgres", func(ds *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 		return s.newPostgresQueryEndpoint(ds)
 	})
