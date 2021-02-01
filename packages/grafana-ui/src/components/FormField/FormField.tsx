@@ -7,7 +7,6 @@ import { useStyles } from '../../themes';
 
 export interface Props extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
-  grow?: boolean;
   tooltip?: PopoverContent;
   labelWidth?: number;
   // If null no width will be specified not even default one
@@ -31,7 +30,6 @@ export const FormField: FunctionComponent<Props> = ({
   inputWidth,
   inputEl,
   className,
-  grow,
   ...inputProps
 }) => {
   const styles = useStyles(getStyles);
@@ -50,7 +48,7 @@ export const FormField: FunctionComponent<Props> = ({
 FormField.displayName = 'FormField';
 FormField.defaultProps = defaultProps;
 
-const getStyles = (theme: GrafanaTheme, grow?: boolean) => {
+const getStyles = (theme: GrafanaTheme) => {
   return {
     formField: css`
       display: flex;
@@ -58,7 +56,6 @@ const getStyles = (theme: GrafanaTheme, grow?: boolean) => {
       align-items: flex-start;
       text-align: left;
       position: relative;
-      flex-grow: ${grow ? 1 : 0};
     `,
   };
 };
