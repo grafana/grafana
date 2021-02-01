@@ -3,6 +3,7 @@ package rbac
 import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -30,4 +31,10 @@ func (ac *RBACService) Init() error {
 
 func (ac *RBACService) AddMigration(mg *migrator.Migrator) {
 	addRBACMigrations(mg)
+}
+
+func (ac *RBACService) Evaluate(c *models.ReqContext) *EvaluationResult {
+	return &EvaluationResult{
+		HasAccess: false,
+	}
 }

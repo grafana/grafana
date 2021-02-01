@@ -73,4 +73,28 @@ func addRBACMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("add index team_policy.org_id", migrator.NewAddIndexMigration(teamPolicyV1, teamPolicyV1.Indices[0]))
 	mg.AddMigration("add unique index team_policy_org_id_team_id_policy_id", migrator.NewAddIndexMigration(teamPolicyV1, teamPolicyV1.Indices[1]))
 	mg.AddMigration("add index team_policy.team_id", migrator.NewAddIndexMigration(teamPolicyV1, teamPolicyV1.Indices[2]))
+
+	userPolicyV1 := migrator.Table{
+		Name: "user_policy",
+		Columns: []*migrator.Column{
+			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "org_id", Type: migrator.DB_BigInt},
+			{Name: "user_id", Type: migrator.DB_BigInt},
+			{Name: "policy_id", Type: migrator.DB_BigInt},
+			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
+			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
+		},
+		Indices: []*migrator.Index{
+			{Cols: []string{"org_id"}},
+			{Cols: []string{"org_id", "user_id", "policy_id"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"user_id"}},
+		},
+	}
+
+	mg.AddMigration("create user policy table", migrator.NewAddTableMigration(userPolicyV1))
+
+	//-------  indexes ------------------
+	mg.AddMigration("add index user_policy.org_id", migrator.NewAddIndexMigration(userPolicyV1, userPolicyV1.Indices[0]))
+	mg.AddMigration("add unique index user_policy_org_id_user_id_policy_id", migrator.NewAddIndexMigration(userPolicyV1, userPolicyV1.Indices[1]))
+	mg.AddMigration("add index user_policy.user_id", migrator.NewAddIndexMigration(userPolicyV1, userPolicyV1.Indices[2]))
 }

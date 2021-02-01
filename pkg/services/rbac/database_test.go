@@ -6,25 +6,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-func setupTestEnv(t *testing.T) *RBACService {
-	cfg := setting.NewCfg()
-
-	ac := overrideRBACInRegistry(cfg)
-
-	sqlStore := sqlstore.InitTestDB(t)
-	ac.SQLStore = sqlStore
-
-	err := ac.Init()
-	require.NoError(t, err)
-	return &ac
-}
 
 func overrideRBACInRegistry(cfg *setting.Cfg) RBACService {
 	ac := RBACService{
@@ -148,6 +136,72 @@ func TestCreatingPolicy(t *testing.T) {
 					assert.Equal(t, tc.permissions[i].action, p.Action)
 				}
 			}
+		})
+	}
+}
+
+type userPolicyTestCase struct {
+	desc     string
+	userName string
+	policies []policyTestCase
+
+	expectedError  error
+	expectedAccess bool
+}
+
+func TestUserPolicy(t *testing.T) {
+	mockTimeNow()
+	defer resetTimeNow()
+
+	testCases := []userPolicyTestCase{
+		{
+			desc:     "should successfuly create user with policy",
+			userName: "testuser",
+			policies: []policyTestCase{
+				{
+					name: "CreateUser", permissions: []struct {
+						resource string
+						action   string
+					}{
+						{resource: "/api/admin/users", action: "post"},
+						{resource: "/api/report", action: "get"},
+					},
+				},
+			},
+			expectedError:  nil,
+			expectedAccess: false,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			ac := setupTestEnv(t)
+			t.Cleanup(registry.ClearOverrides)
+
+			createUserWithPolicy(t, tc.userName, tc.policies)
+
+			userQuery := models.GetUserByLoginQuery{
+				LoginOrEmail: tc.userName,
+			}
+			err := sqlstore.GetUserByLogin(&userQuery)
+			require.NoError(t, err)
+
+			userPoliciesQuery := GetUserPoliciesQuery{
+				OrgId:  1,
+				UserId: userQuery.Result.Id,
+			}
+
+			err = ac.GetUserPolicies(&userPoliciesQuery)
+			require.NoError(t, err)
+			assert.Equal(t, len(tc.policies), len(userPoliciesQuery.Result))
+
+			userPermissionsQuery := GetUserPermissionsQuery{
+				OrgId:  1,
+				UserId: userQuery.Result.Id,
+			}
+
+			err = ac.GetUserPermissions(&userPermissionsQuery)
+			require.NoError(t, err)
+			assert.Equal(t, len(tc.policies[0].permissions), len(userPermissionsQuery.Result))
 		})
 	}
 }

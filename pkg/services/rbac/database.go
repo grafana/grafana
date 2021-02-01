@@ -139,6 +139,61 @@ func (ac *RBACService) GetTeamPolicies(query *GetTeamPoliciesQuery) error {
 	})
 }
 
+func (ac *RBACService) GetUserPolicies(query *GetUserPoliciesQuery) error {
+	return ac.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		query.Result = make([]*PolicyDTO, 0)
+		sess.Table("user_policy")
+		sess.Join("INNER", "policy", "user_policy.policy_id=policy.id")
+
+		if query.OrgId != 0 {
+			sess.Where("user_policy.org_id=?", query.OrgId)
+		}
+		if query.UserId != 0 {
+			sess.Where("user_policy.user_id=?", query.UserId)
+		}
+
+		sess.Cols(
+			"user_policy.org_id",
+			"user_policy.policy_id",
+			"user_policy.user_id",
+			"policy.id",
+			"policy.name",
+			"policy.description",
+			"policy.created",
+			"policy.updated",
+		)
+
+		err := sess.Find(&query.Result)
+		return err
+	})
+}
+
+func (ac *RBACService) GetUserPermissions(query *GetUserPermissionsQuery) error {
+	return ac.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		policiesQuery := GetUserPoliciesQuery{
+			OrgId:  query.OrgId,
+			UserId: query.UserId,
+		}
+		err := ac.GetUserPolicies(&policiesQuery)
+		if err != nil {
+			return err
+		}
+
+		userPermissions := make([]Permission, 0)
+
+		for _, policy := range policiesQuery.Result {
+			permissions, err := getPolicyPermissions(sess, policy.Id)
+			if err != nil {
+				return err
+			}
+			userPermissions = append(userPermissions, permissions...)
+		}
+
+		query.Result = userPermissions
+		return nil
+	})
+}
+
 func (ac *RBACService) AddTeamPolicy(cmd *AddTeamPolicyCommand) error {
 	return ac.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		if res, err := sess.Query("SELECT 1 from team_policy WHERE org_id=? and team_id=? and policy_id=?", cmd.OrgId, cmd.TeamId, cmd.PolicyId); err != nil {
@@ -185,7 +240,52 @@ func (ac *RBACService) RemoveTeamPolicy(cmd *RemoveTeamPolicyCommand) error {
 		}
 		rows, err := res.RowsAffected()
 		if rows == 0 {
-			return errTeamMemberNotFound
+			return errTeamPolicyNotFound
+		}
+
+		return err
+	})
+}
+
+func (ac *RBACService) AddUserPolicy(cmd *AddUserPolicyCommand) error {
+	return ac.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		if res, err := sess.Query("SELECT 1 from user_policy WHERE org_id=? and user_id=? and policy_id=?", cmd.OrgId, cmd.UserId, cmd.PolicyId); err != nil {
+			return err
+		} else if len(res) == 1 {
+			return errUserPolicyAlreadyAdded
+		}
+
+		if _, err := policyExists(cmd.OrgId, cmd.PolicyId, sess); err != nil {
+			return err
+		}
+
+		userPolicy := &UserPolicy{
+			OrgId:    cmd.OrgId,
+			UserId:   cmd.UserId,
+			PolicyId: cmd.PolicyId,
+			Created:  timeNow(),
+			Updated:  timeNow(),
+		}
+
+		_, err := sess.Insert(userPolicy)
+		return err
+	})
+}
+
+func (ac *RBACService) RemoveUserPolicy(cmd *RemoveUserPolicyCommand) error {
+	return ac.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		if _, err := policyExists(cmd.OrgId, cmd.PolicyId, sess); err != nil {
+			return err
+		}
+
+		q := "DELETE FROM user_policy WHERE org_id=? and user_id=? and policy_id=?"
+		res, err := sess.Exec(q, cmd.OrgId, cmd.UserId, cmd.PolicyId)
+		if err != nil {
+			return err
+		}
+		rows, err := res.RowsAffected()
+		if rows == 0 {
+			return errUserPolicyNotFound
 		}
 
 		return err

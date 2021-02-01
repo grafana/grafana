@@ -8,7 +8,9 @@ import (
 var (
 	errPolicyNotFound         = fmt.Errorf("could not find policy")
 	errTeamPolicyAlreadyAdded = fmt.Errorf("policy is already added to this team")
-	errTeamMemberNotFound     = fmt.Errorf("team policy not found")
+	errUserPolicyAlreadyAdded = fmt.Errorf("policy is already added to this user")
+	errTeamPolicyNotFound     = fmt.Errorf("team policy not found")
+	errUserPolicyNotFound     = fmt.Errorf("user policy not found")
 	errTeamNotFound           = fmt.Errorf("team not found")
 )
 
@@ -57,6 +59,16 @@ type TeamPolicy struct {
 	Created time.Time
 }
 
+type UserPolicy struct {
+	Id       int64
+	OrgId    int64
+	PolicyId int64
+	UserId   int64
+
+	Updated time.Time
+	Created time.Time
+}
+
 type ListPoliciesQuery struct {
 	OrgId int64 `json:"-"`
 
@@ -82,6 +94,20 @@ type GetTeamPoliciesQuery struct {
 	TeamId int64
 
 	Result []*PolicyDTO
+}
+
+type GetUserPoliciesQuery struct {
+	OrgId  int64 `json:"-"`
+	UserId int64
+
+	Result []*PolicyDTO
+}
+
+type GetUserPermissionsQuery struct {
+	OrgId  int64 `json:"-"`
+	UserId int64
+
+	Result []Permission
 }
 
 type CreatePermissionCommand struct {
@@ -122,4 +148,21 @@ type RemoveTeamPolicyCommand struct {
 	OrgId    int64
 	PolicyId int64
 	TeamId   int64
+}
+
+type AddUserPolicyCommand struct {
+	OrgId    int64
+	PolicyId int64
+	UserId   int64
+}
+
+type RemoveUserPolicyCommand struct {
+	OrgId    int64
+	PolicyId int64
+	UserId   int64
+}
+
+type EvaluationResult struct {
+	HasAccess bool
+	Meta      interface{}
 }
