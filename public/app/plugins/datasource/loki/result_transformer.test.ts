@@ -109,6 +109,13 @@ describe('loki result transformer', () => {
       expect(data[0].fields[2].values.get(3)).toEqual('65cee200875f58ee1430d8bd2e8b74e7_2');
       expect(data[1].fields[2].values.get(0)).not.toEqual('65cee200875f58ee1430d8bd2e8b74e7_3');
     });
+
+    it('should append refId to the unique ids if refId is provided', () => {
+      const data = streamResult.map((stream) => ResultTransformer.lokiStreamResultToDataFrame(stream, false, 'B'));
+      expect(data.length).toBe(2);
+      expect(data[0].fields[2].values.get(0)).toEqual('2b431b8a98b80b3b2c2f4cd2444ae6cb_B');
+      expect(data[1].fields[2].values.get(0)).toEqual('75d73d66cff40f9d1a1f2d5a0bf295d0_B');
+    });
   });
 
   describe('lokiStreamsToDataFrames', () => {
@@ -196,14 +203,15 @@ describe('loki result transformer', () => {
       data.addField({ name: 'line', type: FieldType.string }).labels = { job: 'grafana' };
       data.addField({ name: 'labels', type: FieldType.other });
       data.addField({ name: 'id', type: FieldType.string });
+      data.refId = 'C';
 
       ResultTransformer.appendResponseToBufferedData(tailResponse, data);
-      expect(data.get(0).id).toEqual('870e4d105741bdfc2c67904ee480d4f3');
-      expect(data.get(1).id).toEqual('870e4d105741bdfc2c67904ee480d4f3_1');
-      expect(data.get(2).id).toEqual('707e4ec2b842f389dbb993438505856d');
-      expect(data.get(3).id).toEqual('78f044015a58fad3e257a855b167d85e');
-      expect(data.get(4).id).toEqual('870e4d105741bdfc2c67904ee480d4f3_2');
-      expect(data.get(5).id).toEqual('707e4ec2b842f389dbb993438505856d_1');
+      expect(data.get(0).id).toEqual('870e4d105741bdfc2c67904ee480d4f3_C');
+      expect(data.get(1).id).toEqual('870e4d105741bdfc2c67904ee480d4f3_1_C');
+      expect(data.get(2).id).toEqual('707e4ec2b842f389dbb993438505856d_C');
+      expect(data.get(3).id).toEqual('78f044015a58fad3e257a855b167d85e_C');
+      expect(data.get(4).id).toEqual('870e4d105741bdfc2c67904ee480d4f3_2_C');
+      expect(data.get(5).id).toEqual('707e4ec2b842f389dbb993438505856d_1_C');
     });
   });
 
