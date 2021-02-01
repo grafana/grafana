@@ -133,6 +133,22 @@ Maximum number of concurrent calls to the rendering service.
 
 Scale factor for rendering images. Value `2` is enough for monitor resolutions, `4` would be better for printed material. Setting a higher value affects performance and memory.
 
+### fonts_path
+
+Path to the directory containing font files.
+
+### font_regular
+
+Name of the TrueType font file with regular style.
+
+### font_bold
+
+Name of the TrueType font file with bold style.
+
+### font_italic
+
+Name of the TrueType font file with italic style.
+
 ## [auditing]
 
 [Auditing]({{< relref "auditing.md" >}}) allows you to track important changes to your Grafana instance. By default, audit logs are logged to file but the auditing feature also supports sending logs directly to Loki.

@@ -18,6 +18,9 @@ const VizLegendItemStat: React.FunctionComponent<{ stat: DisplayValue }> = ({ st
 
 VizLegendItemStat.displayName = 'VizLegendItemStat';
 
+/**
+ * @internal
+ */
 export const VizLegendStatsList: React.FunctionComponent<{ stats: DisplayValue[] }> = ({ stats }) => {
   if (stats.length === 0) {
     return null;

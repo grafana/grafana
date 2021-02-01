@@ -3,7 +3,8 @@ import uPlot, { Options, Hooks } from 'uplot';
 import { DataFrame, TimeRange, TimeZone } from '@grafana/data';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 
-export type PlotSeriesConfig = Pick<Options, 'series' | 'scales' | 'axes' | 'cursor' | 'bands'>;
+export type PlotConfig = Pick<Options, 'series' | 'scales' | 'axes' | 'cursor' | 'bands' | 'hooks' | 'select'>;
+
 export type PlotPlugin = {
   id: string;
   /** can mutate provided opts as necessary */
