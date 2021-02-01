@@ -6,8 +6,7 @@ import { Icon } from '../Icon/Icon';
 import { GrafanaTheme } from '@grafana/data';
 import { Themeable } from '../../types/theme';
 import { TextArea } from '../TextArea/TextArea';
-import { stylesFactory } from '../../themes';
-import { withTheme } from '../../themes/index';
+import { stylesFactory, withTheme } from '../../themes';
 
 interface Props extends Themeable {
   config?: CSVConfig;
