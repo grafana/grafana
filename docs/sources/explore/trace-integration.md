@@ -8,7 +8,7 @@ weight = 20
 
 # Tracing in Explore
 
-Explore allows you to visualize traces from tracing data sources. This is only available in Grafana v7.0+.
+Explore allows you to visualize traces from tracing data sources. This is available in Grafana v7.0+.
 
 Supported data sources are:
 
