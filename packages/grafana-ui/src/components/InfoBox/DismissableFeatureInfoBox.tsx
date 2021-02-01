@@ -10,6 +10,7 @@ interface DismissableFeatureInfoBoxProps extends FeatureInfoBoxProps {
 }
 
 /**
+  @internal
   Wraps FeatureInfoBox and perists if a user has dismissed the box in local storage.
  */
 export const DismissableFeatureInfoBox = React.memo(
