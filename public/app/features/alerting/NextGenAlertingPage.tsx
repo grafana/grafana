@@ -1,11 +1,12 @@
 import React, { FormEvent, PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
-import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
+import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { css } from 'emotion';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { Button, Icon, stylesFactory } from '@grafana/ui';
 import { PageToolbar } from 'app/core/components/PageToolbar/PageToolbar';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
+import { connectWithCleanUp } from 'app/core/components/connectWithCleanUp';
 import AlertingQueryEditor from './components/AlertingQueryEditor';
 import { AlertDefinitionOptions } from './components/AlertDefinitionOptions';
 import { AlertingQueryPreview } from './components/AlertingQueryPreview';
@@ -15,7 +16,13 @@ import {
   updateAlertDefinitionUiState,
   loadNotificationTypes,
 } from './state/actions';
-import { AlertDefinition, AlertDefinitionUiState, NotificationChannelType, StoreState } from '../../types';
+import {
+  AlertDefinition,
+  AlertDefinitionUiState,
+  NotificationChannelType,
+  QueryGroupOptions,
+  StoreState,
+} from '../../types';
 
 import { config } from 'app/core/config';
 import { PanelQueryRunner } from '../query/state/PanelQueryRunner';
@@ -27,6 +34,7 @@ interface ConnectedProps {
   uiState: AlertDefinitionUiState;
   notificationChannelTypes: NotificationChannelType[];
   queryRunner: PanelQueryRunner;
+  queryOptions: QueryGroupOptions;
 }
 
 interface DispatchProps {
@@ -49,6 +57,18 @@ class NextGenAlertingPage extends PureComponent<Props, State> {
 
   onChangeAlertOption = (event: FormEvent<HTMLFormElement>) => {
     this.props.updateAlertDefinitionOption({ [event.currentTarget.name]: event.currentTarget.value });
+  };
+
+  onChangeInterval = (interval: SelectableValue<number>) => {
+    this.props.updateAlertDefinitionOption({
+      interval: interval.value,
+    });
+  };
+
+  onConditionChange = (condition: SelectableValue<string>) => {
+    this.props.updateAlertDefinitionOption({
+      condition: { ...this.props.alertDefinition.condition, refId: condition.value! },
+    });
   };
 
   onSaveAlert = () => {
@@ -82,6 +102,7 @@ class NextGenAlertingPage extends PureComponent<Props, State> {
       uiState,
       updateAlertDefinitionUiState,
       queryRunner,
+      queryOptions,
     } = this.props;
     const styles = getStyles(config.theme);
 
@@ -106,6 +127,9 @@ class NextGenAlertingPage extends PureComponent<Props, State> {
                 alertDefinition={alertDefinition}
                 onChange={this.onChangeAlertOption}
                 notificationChannelTypes={notificationChannelTypes}
+                onIntervalChange={this.onChangeInterval}
+                onConditionChange={this.onConditionChange}
+                queryOptions={queryOptions}
               />
             }
           />
@@ -119,6 +143,7 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
   return {
     uiState: state.alertDefinition.uiState,
     alertDefinition: state.alertDefinition.alertDefinition,
+    queryOptions: state.alertDefinition.queryOptions,
     notificationChannelTypes: state.notificationChannel.notificationChannelTypes,
     queryRunner: state.alertDefinition.queryRunner,
   };
@@ -131,7 +156,9 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   loadNotificationTypes,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(NextGenAlertingPage));
+export default hot(module)(
+  connectWithCleanUp(mapStateToProps, mapDispatchToProps, (state) => state.alertDefinition)(NextGenAlertingPage)
+);
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   wrapper: css`
