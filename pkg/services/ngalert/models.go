@@ -21,6 +21,7 @@ type AlertDefinition struct {
 	IntervalSeconds int64             `json:"intervalSeconds"`
 	Version         int64             `json:"version"`
 	UID             string            `xorm:"uid" json:"uid"`
+	Paused          bool              `json:"paused"`
 }
 
 type alertDefinitionKey struct {
@@ -103,4 +104,12 @@ type listAlertDefinitionsQuery struct {
 	OrgID int64 `json:"-"`
 
 	Result []*AlertDefinition
+}
+
+type updateAlertDefinitionPausedCommand struct {
+	OrgID  int64    `json:"-"`
+	UIDs   []string `json:"uids"`
+	Paused bool     `json:"-"`
+
+	ResultCount int64
 }

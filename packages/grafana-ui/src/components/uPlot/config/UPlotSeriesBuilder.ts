@@ -22,7 +22,9 @@ export interface SeriesProps extends LineConfig, FillConfig, PointsConfig {
   /** Used when gradientMode is set to Scheme  */
   colorMode?: FieldColorMode;
   fieldName: string;
-  drawStyle: DrawStyle;
+  drawStyle?: DrawStyle;
+  pathBuilder?: Series.PathBuilder;
+  pointsBuilder?: Series.Points.Show;
   show?: boolean;
   dataFrameFieldIndex?: DataFrameFieldIndex;
   hideInLegend?: boolean;
@@ -33,6 +35,8 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
   getConfig() {
     const {
       drawStyle,
+      pathBuilder,
+      pointsBuilder,
       lineInterpolation,
       lineWidth,
       lineStyle,
@@ -46,9 +50,13 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
 
     let lineConfig: Partial<Series> = {};
 
-    if (drawStyle === DrawStyle.Points) {
+    if (pathBuilder != null) {
+      lineConfig.paths = pathBuilder;
+      lineConfig.stroke = this.getLineColor();
+      lineConfig.width = lineWidth;
+    } else if (drawStyle === DrawStyle.Points) {
       lineConfig.paths = () => null;
-    } else {
+    } else if (drawStyle != null) {
       lineConfig.stroke = this.getLineColor();
       lineConfig.width = lineWidth;
       if (lineStyle && lineStyle.fill !== 'solid') {
@@ -71,18 +79,22 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       },
     };
 
-    // we cannot set points.show property above (even to undefined) as that will clear uPlot's default auto behavior
-    if (drawStyle === DrawStyle.Points) {
-      pointsConfig.points!.show = true;
+    if (pointsBuilder != null) {
+      pointsConfig.points!.show = pointsBuilder;
     } else {
-      if (showPoints === PointVisibility.Auto) {
-        if (drawStyle === DrawStyle.Bars) {
-          pointsConfig.points!.show = false;
-        }
-      } else if (showPoints === PointVisibility.Never) {
-        pointsConfig.points!.show = false;
-      } else if (showPoints === PointVisibility.Always) {
+      // we cannot set points.show property above (even to undefined) as that will clear uPlot's default auto behavior
+      if (drawStyle === DrawStyle.Points) {
         pointsConfig.points!.show = true;
+      } else {
+        if (showPoints === PointVisibility.Auto) {
+          if (drawStyle === DrawStyle.Bars) {
+            pointsConfig.points!.show = false;
+          }
+        } else if (showPoints === PointVisibility.Never) {
+          pointsConfig.points!.show = false;
+        } else if (showPoints === PointVisibility.Always) {
+          pointsConfig.points!.show = true;
+        }
       }
     }
 

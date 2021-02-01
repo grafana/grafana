@@ -403,6 +403,10 @@ func (t *testLicensingService) StateInfo() string {
 	return ""
 }
 
+func (t *testLicensingService) ContentDeliveryPrefix() string {
+	return ""
+}
+
 func (t *testLicensingService) LicenseURL(user *models.SignedInUser) string {
 	return ""
 }

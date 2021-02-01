@@ -3,9 +3,8 @@ import { hot } from 'react-hot-loader';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { css } from 'emotion';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import { Button, Icon, stylesFactory } from '@grafana/ui';
+import { PageToolbar, stylesFactory, ToolbarButton } from '@grafana/ui';
 import { config } from 'app/core/config';
-import { PageToolbar } from 'app/core/components/PageToolbar/PageToolbar';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import AlertingQueryEditor from './components/AlertingQueryEditor';
 import { AlertDefinitionOptions } from './components/AlertDefinitionOptions';
@@ -64,15 +63,15 @@ class NextGenAlertingPage extends PureComponent<Props> {
 
   renderToolbarActions() {
     return [
-      <Button variant="destructive" key="discard" onClick={this.onDiscard}>
+      <ToolbarButton variant="destructive" key="discard" onClick={this.onDiscard}>
         Discard
-      </Button>,
-      <Button variant="secondary" key="test" onClick={this.onTest}>
+      </ToolbarButton>,
+      <ToolbarButton key="test" onClick={this.onTest}>
         Test
-      </Button>,
-      <Button variant="primary" key="save" onClick={this.onSaveAlert}>
+      </ToolbarButton>,
+      <ToolbarButton variant="primary" key="save" onClick={this.onSaveAlert}>
         Save
-      </Button>,
+      </ToolbarButton>,
     ];
   }
 
@@ -82,12 +81,9 @@ class NextGenAlertingPage extends PureComponent<Props> {
 
     return (
       <div className={styles.wrapper}>
-        <PageToolbar
-          title="Alert editor"
-          titlePrefix={<Icon name="bell" size="lg" />}
-          actions={this.renderToolbarActions()}
-          titlePadding="sm"
-        />
+        <PageToolbar title="Alert editor" pageIcon="bell">
+          {this.renderToolbarActions()}
+        </PageToolbar>
         <div className={styles.splitPanesWrapper}>
           <SplitPaneWrapper
             leftPaneComponents={[

@@ -18,7 +18,7 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
 
   const renderEditor = useCallback(
     (item: FieldConfigPropertyItem, categoryItemCount: number) => {
-      if (item.isCustom && item.showIf && !item.showIf(config.defaults.custom)) {
+      if (item.isCustom && item.showIf && !item.showIf(config.defaults.custom, data)) {
         return null;
       }
 
