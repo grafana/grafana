@@ -43,6 +43,15 @@ export enum LineInterpolation {
 /**
  * @alpha
  */
+export enum BarAlignment {
+  Before = -1,
+  Center = 0,
+  After = 1,
+}
+
+/**
+ * @alpha
+ */
 export enum ScaleDistribution {
   Linear = 'linear',
   Logarithmic = 'log',
@@ -85,6 +94,13 @@ export interface LineConfig {
   lineInterpolation?: LineInterpolation;
   lineStyle?: LineStyle;
   spanNulls?: boolean;
+}
+
+/**
+ * @alpha
+ */
+export interface BarConfig {
+  barAlignment?: BarAlignment;
 }
 
 /**
@@ -165,7 +181,13 @@ export enum StackingMode {
 /**
  * @alpha
  */
-export interface GraphFieldConfig extends LineConfig, FillConfig, PointsConfig, AxisConfig, HideableFieldConfig {
+export interface GraphFieldConfig
+  extends LineConfig,
+    FillConfig,
+    PointsConfig,
+    AxisConfig,
+    BarConfig,
+    HideableFieldConfig {
   drawStyle?: DrawStyle;
   gradientMode?: GraphGradientMode;
 }
@@ -186,6 +208,12 @@ export const graphFieldOptions = {
     { description: 'Step before', value: LineInterpolation.StepBefore, icon: 'gf-interpolation-step-before' },
     { description: 'Step after', value: LineInterpolation.StepAfter, icon: 'gf-interpolation-step-after' },
   ] as Array<SelectableValue<LineInterpolation>>,
+
+  barAlignment: [
+    { description: 'Before', value: BarAlignment.Before, icon: 'gf-bar-alignment-before' },
+    { description: 'Center', value: BarAlignment.Center, icon: 'gf-bar-alignment-center' },
+    { description: 'After', value: BarAlignment.After, icon: 'gf-bar-alignment-after' },
+  ] as Array<SelectableValue<BarAlignment>>,
 
   showPoints: [
     { label: 'Auto', value: PointVisibility.Auto, description: 'Show points when the density is low' },

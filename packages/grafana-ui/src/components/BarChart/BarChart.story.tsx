@@ -6,7 +6,8 @@ import { LegendDisplayMode } from '../VizLegend/types';
 import { prepDataForStorybook } from '../../utils/storybook/data';
 import { useTheme } from '../../themes';
 import { select } from '@storybook/addon-knobs';
-import { BarChartOptions, StackingMode, BarValueVisibility } from './types';
+import { BarChartOptions, BarValueVisibility } from './types';
+import { StackingMode } from '../uPlot/config';
 
 export default {
   title: 'Visualizations/BarChart',

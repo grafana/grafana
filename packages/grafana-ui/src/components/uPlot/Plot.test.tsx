@@ -6,6 +6,7 @@ import { GraphFieldConfig, DrawStyle } from '../uPlot/config';
 import uPlot from 'uplot';
 import createMockRaf from 'mock-raf';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
+import { preparePlotData } from './utils';
 
 const mockRaf = createMockRaf();
 const setDataMock = jest.fn();
@@ -51,7 +52,7 @@ const mockData = () => {
     raw: { from: '1602673200000', to: '1602680400000' },
   };
 
-  return { data, timeRange, config: new UPlotConfigBuilder() };
+  return { dataFrame: data, data: preparePlotData(data), timeRange, config: new UPlotConfigBuilder() };
 };
 
 describe('UPlotChart', () => {
@@ -67,11 +68,12 @@ describe('UPlotChart', () => {
   });
 
   it('destroys uPlot instance when component unmounts', () => {
-    const { data, timeRange, config } = mockData();
+    const { data, dataFrame, timeRange, config } = mockData();
 
     const { unmount } = render(
       <UPlotChart
         data={data} // mock
+        dataFrame={dataFrame} // mock
         config={config}
         timeRange={timeRange}
         timeZone={'browser'}
@@ -92,11 +94,12 @@ describe('UPlotChart', () => {
 
   describe('data update', () => {
     it('skips uPlot reinitialization when there are no field config changes', () => {
-      const { data, timeRange, config } = mockData();
+      const { data, dataFrame, timeRange, config } = mockData();
 
       const { rerender } = render(
         <UPlotChart
           data={data} // mock
+          dataFrame={dataFrame} // mock
           config={config}
           timeRange={timeRange}
           timeZone={'browser'}
@@ -112,11 +115,12 @@ describe('UPlotChart', () => {
 
       expect(uPlot).toBeCalledTimes(1);
 
-      data.fields[1].values.set(0, 1);
+      dataFrame.fields[1].values.set(0, 1);
 
       rerender(
         <UPlotChart
-          data={data} // changed
+          data={preparePlotData(dataFrame)} // changed
+          dataFrame={dataFrame} // mock
           config={config}
           timeRange={timeRange}
           timeZone={'browser'}
@@ -131,10 +135,18 @@ describe('UPlotChart', () => {
 
   describe('config update', () => {
     it('skips uPlot intialization for width and height equal 0', async () => {
-      const { data, timeRange, config } = mockData();
+      const { data, dataFrame, timeRange, config } = mockData();
 
       const { queryAllByTestId } = render(
-        <UPlotChart data={data} config={config} timeRange={timeRange} timeZone={'browser'} width={0} height={0} />
+        <UPlotChart
+          data={data}
+          dataFrame={dataFrame}
+          config={config}
+          timeRange={timeRange}
+          timeZone={'browser'}
+          width={0}
+          height={0}
+        />
       );
 
       expect(queryAllByTestId('uplot-main-div')).toHaveLength(1);
@@ -142,11 +154,12 @@ describe('UPlotChart', () => {
     });
 
     it('reinitializes uPlot when config changes', () => {
-      const { data, timeRange, config } = mockData();
+      const { data, dataFrame, timeRange, config } = mockData();
 
       const { rerender } = render(
         <UPlotChart
-          data={data} // frame
+          data={data}
+          dataFrame={dataFrame}
           config={config}
           timeRange={timeRange}
           timeZone={'browser'}
@@ -165,6 +178,7 @@ describe('UPlotChart', () => {
       rerender(
         <UPlotChart
           data={data}
+          dataFrame={dataFrame}
           config={new UPlotConfigBuilder()}
           timeRange={timeRange}
           timeZone={'browser'}
@@ -178,11 +192,12 @@ describe('UPlotChart', () => {
     });
 
     it('skips uPlot reinitialization when only dimensions change', () => {
-      const { data, timeRange, config } = mockData();
+      const { data, dataFrame, timeRange, config } = mockData();
 
       const { rerender } = render(
         <UPlotChart
-          data={data} // frame
+          data={data}
+          dataFrame={dataFrame}
           config={config}
           timeRange={timeRange}
           timeZone={'browser'}
@@ -198,7 +213,8 @@ describe('UPlotChart', () => {
 
       rerender(
         <UPlotChart
-          data={data} // frame
+          data={data}
+          dataFrame={dataFrame}
           config={new UPlotConfigBuilder()}
           timeRange={timeRange}
           timeZone={'browser'}

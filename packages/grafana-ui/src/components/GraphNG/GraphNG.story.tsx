@@ -7,6 +7,7 @@ import { LegendDisplayMode } from '../VizLegend/types';
 import { prepDataForStorybook } from '../../utils/storybook/data';
 import { useTheme } from '../../themes';
 import { text, select } from '@storybook/addon-knobs';
+import { StackingMode } from '..';
 
 export default {
   title: 'Visualizations/GraphNG',
@@ -65,6 +66,7 @@ export const Lines: React.FC = () => {
       }}
       legend={{ displayMode: LegendDisplayMode.List, placement: legendPlacement, calcs: [] }}
       timeZone="browser"
+      stacking={StackingMode.None}
     />
   );
 };
