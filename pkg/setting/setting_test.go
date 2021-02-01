@@ -2,6 +2,7 @@ package setting
 
 import (
 	"bufio"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -388,4 +389,36 @@ func TestAuthDurationSettings(t *testing.T) {
 	err = readAuthSettings(f, cfg)
 	require.NoError(t, err)
 	require.Equal(t, maxLifetimeDurationTest, cfg.LoginMaxLifetime)
+}
+
+func TestGetCDNPath(t *testing.T) {
+	var err error
+	cfg := NewCfg()
+	cfg.BuildVersion = "v7.5.0-11124"
+	cfg.CDNRootURL, err = url.Parse("http://cdn.grafana.com")
+	require.NoError(t, err)
+
+	require.Equal(t, "http://cdn.grafana.com/grafana-oss/v7.5.0-11124", cfg.GetContentDeliveryURL("grafana-oss"))
+	require.Equal(t, "http://cdn.grafana.com/grafana/v7.5.0-11124", cfg.GetContentDeliveryURL("grafana"))
+}
+
+func TestGetCDNPathWithPreReleaseVersionAndSubPath(t *testing.T) {
+	var err error
+	cfg := NewCfg()
+	cfg.BuildVersion = "v7.5.0-11124pre"
+	cfg.CDNRootURL, err = url.Parse("http://cdn.grafana.com/sub")
+	require.NoError(t, err)
+	require.Equal(t, "http://cdn.grafana.com/sub/grafana-oss/pre-releases/v7.5.0-11124pre", cfg.GetContentDeliveryURL("grafana-oss"))
+	require.Equal(t, "http://cdn.grafana.com/sub/grafana/pre-releases/v7.5.0-11124pre", cfg.GetContentDeliveryURL("grafana"))
+}
+
+// Adding a case for this in case we switch to proper semver version strings
+func TestGetCDNPathWithAlphaVersion(t *testing.T) {
+	var err error
+	cfg := NewCfg()
+	cfg.BuildVersion = "v7.5.0-alpha.11124"
+	cfg.CDNRootURL, err = url.Parse("http://cdn.grafana.com")
+	require.NoError(t, err)
+	require.Equal(t, "http://cdn.grafana.com/grafana-oss/pre-releases/v7.5.0-alpha.11124", cfg.GetContentDeliveryURL("grafana-oss"))
+	require.Equal(t, "http://cdn.grafana.com/grafana/pre-releases/v7.5.0-alpha.11124", cfg.GetContentDeliveryURL("grafana"))
 }
