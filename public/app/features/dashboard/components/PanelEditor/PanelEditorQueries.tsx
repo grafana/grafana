@@ -49,13 +49,21 @@ export class PanelEditorQueries extends PureComponent<Props, State> {
   onOptionsChange = (options: QueryGroupOptions) => {
     const { panel } = this.props;
 
-    panel.datasource = options.dataSource.default ? null : options.dataSource.name!;
+    const newDataSourceName = options.dataSource.default ? null : options.dataSource.name!;
+    const dataSourceChanged = newDataSourceName !== panel.datasource;
+
+    panel.datasource = newDataSourceName;
     panel.targets = options.queries;
     panel.timeFrom = options.timeRange?.from;
     panel.timeShift = options.timeRange?.shift;
     panel.hideTimeOverride = options.timeRange?.hide;
     panel.interval = options.minInterval;
     panel.maxDataPoints = options.maxDataPoints;
+
+    if (dataSourceChanged) {
+      // trigger queries when changing data source
+      setTimeout(this.onRunQueries, 10);
+    }
 
     this.setState({ options: options });
   };

@@ -4,11 +4,13 @@ import {
   Button,
   Container,
   CustomScrollbar,
-  FeatureInfoBox,
   stylesFactory,
+  Themeable,
+  DismissableFeatureInfoBox,
   useTheme,
   ValuePicker,
   VerticalGroup,
+  withTheme,
 } from '@grafana/ui';
 import {
   DataFrame,
@@ -31,7 +33,7 @@ import { TransformationsEditorTransformation } from './types';
 import { PanelNotSupported } from '../PanelEditor/PanelNotSupported';
 import { AppNotificationSeverity } from '../../../../types';
 
-interface TransformationsEditorProps {
+interface TransformationsEditorProps extends Themeable {
   panel: PanelModel;
 }
 
@@ -40,7 +42,7 @@ interface State {
   transformations: TransformationsEditorTransformation[];
 }
 
-export class TransformationsEditor extends React.PureComponent<TransformationsEditorProps, State> {
+class UnThemedTransformationsEditor extends React.PureComponent<TransformationsEditorProps, State> {
   subscription?: Unsubscribable;
 
   constructor(props: TransformationsEditorProps) {
@@ -208,9 +210,16 @@ export class TransformationsEditor extends React.PureComponent<TransformationsEd
 
   renderNoAddedTransformsState() {
     return (
-      <VerticalGroup spacing={'lg'}>
+      <>
         <Container grow={1}>
-          <FeatureInfoBox title="Transformations" url={getDocsLink(DocsId.Transformations)}>
+          <DismissableFeatureInfoBox
+            title="Transformations"
+            className={css`
+              margin-bottom: ${this.props.theme.spacing.lg};
+            `}
+            persistenceId="transformationsFeaturesInfoBox"
+            url={getDocsLink(DocsId.Transformations)}
+          >
             <p>
               Transformations allow you to join, calculate, re-order, hide and rename your query results before being
               visualized. <br />
@@ -218,7 +227,7 @@ export class TransformationsEditor extends React.PureComponent<TransformationsEd
               supports time series. <br />
               It can help to switch to Table visualization to understand what a transformation is doing. <br />
             </p>
-          </FeatureInfoBox>
+          </DismissableFeatureInfoBox>
         </Container>
         <VerticalGroup>
           {standardTransformersRegistry.list().map((t) => {
@@ -236,7 +245,7 @@ export class TransformationsEditor extends React.PureComponent<TransformationsEd
             );
           })}
         </VerticalGroup>
-      </VerticalGroup>
+      </>
     );
   }
 
@@ -299,3 +308,5 @@ const getTransformationCardStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
   };
 });
+
+export const TransformationsEditor = withTheme(UnThemedTransformationsEditor);

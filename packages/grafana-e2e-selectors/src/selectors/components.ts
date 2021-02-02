@@ -160,6 +160,9 @@ export const Components = {
   TimeZonePicker: {
     container: 'Time zone picker select container',
   },
+  TraceViewer: {
+    spanBar: () => '[data-test-id="SpanBar--wrapper"]',
+  },
   QueryField: { container: 'Query field' },
   ValuePicker: {
     button: 'Value picker add button',

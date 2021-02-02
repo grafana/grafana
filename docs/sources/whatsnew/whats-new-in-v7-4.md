@@ -86,7 +86,7 @@ You can now navigate from a span in a trace view directly to logs relevant for t
 
 The following topics were updated as a result of this feature:
 
-- [Explore]({{< relref "../explore/index.md#trace-to-logs" >}})
+- [Explore]({{< relref "../explore/trace-integration.md" >}})
 - [Jaeger]({{< relref "../datasources/jaeger.md#trace-to-logs" >}})
 - [Tempo]({{< relref "../datasources/tempo.md#trace-to-logs" >}})
 - [Zipkin]({{< relref "../datasources/zipkin.md#trace-to-logs" >}})

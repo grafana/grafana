@@ -469,6 +469,7 @@ describe('UPlotConfigBuilder', () => {
               "size": 5,
               "stroke": "#00ff00",
             },
+            "pxAlign": undefined,
             "scale": "scale-x",
             "show": true,
             "spanGaps": false,

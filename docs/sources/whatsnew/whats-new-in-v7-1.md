@@ -34,7 +34,7 @@ Support for Flux and Influx v2 has been added. The InfluxData blog post, [How to
 
 ## Query history search
 
-In Grafana v 7.1 we are introducing search functionality in Query history. You can search across queries and your comments. It is especially useful in combination with a time filter and data source filter. Read more about [Query history here]({{< relref "../explore/index.md#query-history" >}}).
+In Grafana v 7.1 we are introducing search functionality in Query history. You can search across queries and your comments. It is especially useful in combination with a time filter and data source filter. Read more about [Query history here]({{< relref "../explore/_index.md#query-history" >}}).
 
 {{< docs-imagebox img="/img/docs/v71/query_history_search.gif" max-width="800px" caption="Query history search" >}}
 

@@ -104,6 +104,22 @@ func (lps *LibraryPanelService) LoadLibraryPanelsForDashboard(dash *models.Dashb
 		elem.Set("libraryPanel", map[string]interface{}{
 			"uid":  libraryPanelInDB.UID,
 			"name": libraryPanelInDB.Name,
+			"meta": map[string]interface{}{
+				"canEdit":             libraryPanelInDB.Meta.CanEdit,
+				"connectedDashboards": libraryPanelInDB.Meta.ConnectedDashboards,
+				"created":             libraryPanelInDB.Meta.Created,
+				"updated":             libraryPanelInDB.Meta.Updated,
+				"createdBy": map[string]interface{}{
+					"id":        libraryPanelInDB.Meta.CreatedBy.ID,
+					"name":      libraryPanelInDB.Meta.CreatedBy.Name,
+					"avatarUrl": libraryPanelInDB.Meta.CreatedBy.AvatarUrl,
+				},
+				"updatedBy": map[string]interface{}{
+					"id":        libraryPanelInDB.Meta.UpdatedBy.ID,
+					"name":      libraryPanelInDB.Meta.UpdatedBy.Name,
+					"avatarUrl": libraryPanelInDB.Meta.UpdatedBy.AvatarUrl,
+				},
+			},
 		})
 	}
 
