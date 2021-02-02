@@ -13,11 +13,11 @@ Along with metrics, Explore allows you to investigate your logs in the following
 - [InfluxDB]({{< relref "../datasources/influxdb.md" >}})
 - [Loki]({{< relref "../datasources/loki.md" >}})
 
-During an infrastructure monitoring and incident response, you can dig deeper into the metrics and logs to find the cause. Explore also allows you to correlate metrics and logs by viewing them side-by-side. This creates a new debugging workflow where you can:
+During an infrastructure monitoring and incident response, you can dig deeper into the metrics and logs to find the cause. Explore also allows you to correlate metrics and logs by viewing them side-by-side. This creates a new debugging workflow:
 
-1. Receive an alert
-2. Drill down and examine metrics
-3. Drill down again and search logs related to the metric and time interval (and in the future, distributed traces)
+1. Receive an alert.
+1. Drill down and examine metrics.
+1. Drill down again and search logs related to the metric and time interval (and in the future, distributed traces).
 
 ### Logs visualization
 
