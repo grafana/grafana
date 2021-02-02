@@ -224,6 +224,9 @@ func (ng *AlertNG) getAlertDefinitions(query *listAlertDefinitionsQuery) error {
 
 func (ng *AlertNG) updateAlertDefinitionPaused(cmd *updateAlertDefinitionPausedCommand) error {
 	return ng.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		if len(cmd.UIDs) == 0 {
+			return nil
+		}
 		placeHolders := strings.Builder{}
 		const separator = ", "
 		separatorVar := separator

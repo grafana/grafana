@@ -17,14 +17,14 @@ import (
 func (ng *AlertNG) registerAPIEndpoints() {
 	ng.RouteRegister.Group("/api/alert-definitions", func(alertDefinitions routing.RouteRegister) {
 		alertDefinitions.Get("", middleware.ReqSignedIn, routing.Wrap(ng.listAlertDefinitions))
-		alertDefinitions.Get("/eval/:alertDefinitionUID", ng.validateOrgAlertDefinition, routing.Wrap(ng.alertDefinitionEvalEndpoint))
+		alertDefinitions.Get("/eval/:alertDefinitionUID", middleware.ReqSignedIn, ng.validateOrgAlertDefinition, routing.Wrap(ng.alertDefinitionEvalEndpoint))
 		alertDefinitions.Post("/eval", middleware.ReqSignedIn, binding.Bind(evalAlertConditionCommand{}), routing.Wrap(ng.conditionEvalEndpoint))
-		alertDefinitions.Get("/:alertDefinitionUID", ng.validateOrgAlertDefinition, routing.Wrap(ng.getAlertDefinitionEndpoint))
-		alertDefinitions.Delete("/:alertDefinitionUID", ng.validateOrgAlertDefinition, routing.Wrap(ng.deleteAlertDefinitionEndpoint))
-		alertDefinitions.Post("/", middleware.ReqSignedIn, binding.Bind(saveAlertDefinitionCommand{}), routing.Wrap(ng.createAlertDefinitionEndpoint))
-		alertDefinitions.Put("/:alertDefinitionUID", ng.validateOrgAlertDefinition, binding.Bind(updateAlertDefinitionCommand{}), routing.Wrap(ng.updateAlertDefinitionEndpoint))
-		alertDefinitions.Post("/pause", ng.validateOrgAlertDefinition, binding.Bind(updateAlertDefinitionPausedCommand{}), routing.Wrap(ng.alertDefinitionPauseEndpoint))
-		alertDefinitions.Post("/unpause", ng.validateOrgAlertDefinition, binding.Bind(updateAlertDefinitionPausedCommand{}), routing.Wrap(ng.alertDefinitionUnpauseEndpoint))
+		alertDefinitions.Get("/:alertDefinitionUID", middleware.ReqSignedIn, ng.validateOrgAlertDefinition, routing.Wrap(ng.getAlertDefinitionEndpoint))
+		alertDefinitions.Delete("/:alertDefinitionUID", middleware.ReqEditorRole, ng.validateOrgAlertDefinition, routing.Wrap(ng.deleteAlertDefinitionEndpoint))
+		alertDefinitions.Post("/", middleware.ReqEditorRole, binding.Bind(saveAlertDefinitionCommand{}), routing.Wrap(ng.createAlertDefinitionEndpoint))
+		alertDefinitions.Put("/:alertDefinitionUID", middleware.ReqEditorRole, ng.validateOrgAlertDefinition, binding.Bind(updateAlertDefinitionCommand{}), routing.Wrap(ng.updateAlertDefinitionEndpoint))
+		alertDefinitions.Post("/pause", middleware.ReqEditorRole, binding.Bind(updateAlertDefinitionPausedCommand{}), routing.Wrap(ng.alertDefinitionPauseEndpoint))
+		alertDefinitions.Post("/unpause", middleware.ReqEditorRole, binding.Bind(updateAlertDefinitionPausedCommand{}), routing.Wrap(ng.alertDefinitionUnpauseEndpoint))
 	})
 
 	ng.RouteRegister.Group("/api/ngalert/", func(schedulerRouter routing.RouteRegister) {
