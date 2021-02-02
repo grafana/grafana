@@ -23,7 +23,7 @@ export interface PlotProps {
   width: number;
   height: number;
   config: UPlotConfigBuilder;
-  children?: React.ReactElement[];
+  children?: React.ReactNode;
 }
 
 export abstract class PlotConfigBuilder<P, T> {
