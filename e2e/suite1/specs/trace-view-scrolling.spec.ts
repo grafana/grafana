@@ -1,12 +1,8 @@
 import { e2e } from '@grafana/e2e';
 
-e2e.scenario({
-  describeName: 'Trace view',
-  itName: 'Can lazy load big traces',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: false,
-  scenario: () => {
+describe('Trace view', () => {
+  it('Can lazy load big traces', () => {
+    e2e.flows.login('admin', 'admin');
     e2e().intercept('GET', '/api/datasources/proxy/29/api/traces/long-trace', {
       fixture: 'long-trace-response.json',
     });
@@ -25,10 +21,10 @@ e2e.scenario({
 
     e2e.components.RefreshPicker.runButton().should('be.visible').click();
 
-    e2e().get('[data-test-id="SpanBar--wrapper"]').should('have.length', 100);
-    e2e().get('.scrollbar-view').scrollTo('center');
+    e2e.components.TraceViewer.spanBar().should('have.length', 100);
+    e2e.pages.Explore.General.scrollBar().scrollTo('center');
 
     // After scrolling we should have 140 spans instead of the first 100
-    e2e().get('[data-test-id="SpanBar--wrapper"]').should('have.length', 140);
-  },
+    e2e.components.TraceViewer.spanBar().should('have.length', 140);
+  });
 });
