@@ -206,15 +206,19 @@ export const Table: FC<Props> = memo((props: Props) => {
               })}
             </div>
           )}
-          <FixedSizeList
-            height={height - headerHeight}
-            itemCount={rows.length}
-            itemSize={tableStyles.rowHeight}
-            width={'100%'}
-            style={{ overflow: 'hidden auto' }}
-          >
-            {RenderRow}
-          </FixedSizeList>
+          {rows.length > 0 ? (
+            <FixedSizeList
+              height={height - headerHeight}
+              itemCount={rows.length}
+              itemSize={tableStyles.rowHeight}
+              width={'100%'}
+              style={{ overflow: 'hidden auto' }}
+            >
+              {RenderRow}
+            </FixedSizeList>
+          ) : (
+            <div>No data</div>
+          )}
         </div>
       </CustomScrollbar>
     </div>
