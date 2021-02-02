@@ -43,7 +43,7 @@ To open the split view:
    
 It is possible to select another data source for the new query which for example, allows you to compare the same query for two different servers or to compare the staging environment to the production environment.
 
-{{< docs-imagebox img="/img/docs/explore/explore_split-7-4.png" max-width= "950px" caption="Screenshot of the new Explore option in the panel menu" >}}
+{{< docs-imagebox img="/img/docs/explore/explore_split-7-4.png" max-width= "950px" caption="Screenshot of Explore option in the panel menu" >}}
 
 In split view, timepickers for both panels can be linked (if you change one, the other gets changed as well) by clicking on one of the time-sync buttons attached to the timepickers. Linking of timepickers helps with keeping the start and the end times of the split view queries in sync. It ensures that you’re looking at the same time interval in both split panels.
 
