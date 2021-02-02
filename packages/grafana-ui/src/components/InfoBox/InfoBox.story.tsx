@@ -75,8 +75,9 @@ const DismissableTemplate: Story<DismissableFeatureInfoBoxProps> = (args) => {
         className={css`
           margin-top: 24px;
         `}
-      ></div>
-      <Button onClick={onResetClick}>Reset DismissableFeatureInfoBox</Button>
+      >
+        <Button onClick={onResetClick}>Reset DismissableFeatureInfoBox</Button>
+      </div>
     </div>
   );
 };
