@@ -1,5 +1,6 @@
 import { cloneDeep } from 'lodash';
 import {
+  cleanPickerState,
   hideOptions,
   initialState as optionsPickerInitialState,
   moveOptionsHighlight,
@@ -939,6 +940,24 @@ describe('optionsPickerReducer', () => {
           multi: false,
           queryValue: '',
         });
+    });
+  });
+
+  describe('when cleanPickerState is dispatched', () => {
+    it('then state should be correct', () => {
+      const { initialState } = getVariableTestContext({
+        highlightIndex: 19,
+        multi: true,
+        id: 'some id',
+        options: [{ text: 'A', value: 'A', selected: true }],
+        queryValue: 'a query value',
+        selectedValues: [{ text: 'A', value: 'A', selected: true }],
+      });
+
+      reducerTester<OptionsPickerState>()
+        .givenReducer(optionsPickerReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(cleanPickerState())
+        .thenStateShouldEqual({ ...optionsPickerInitialState });
     });
   });
 });

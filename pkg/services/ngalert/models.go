@@ -12,15 +12,29 @@ var errAlertDefinitionFailedGenerateUniqueUID = errors.New("failed to generate a
 
 // AlertDefinition is the model for alert definitions in Alerting NG.
 type AlertDefinition struct {
-	ID              int64 `xorm:"pk autoincr 'id'"`
-	OrgID           int64 `xorm:"org_id"`
-	Title           string
-	Condition       string
-	Data            []eval.AlertQuery
-	Updated         time.Time
-	IntervalSeconds int64
-	Version         int64
-	UID             string `xorm:"uid"`
+	ID              int64             `xorm:"pk autoincr 'id'" json:"id"`
+	OrgID           int64             `xorm:"org_id" json:"orgId"`
+	Title           string            `json:"title"`
+	Condition       string            `json:"condition"`
+	Data            []eval.AlertQuery `json:"data"`
+	Updated         time.Time         `json:"updated"`
+	IntervalSeconds int64             `json:"intervalSeconds"`
+	Version         int64             `json:"version"`
+	UID             string            `xorm:"uid" json:"uid"`
+	Paused          bool              `json:"paused"`
+}
+
+type alertDefinitionKey struct {
+	orgID         int64
+	definitionUID string
+}
+
+func (k alertDefinitionKey) String() string {
+	return fmt.Sprintf("{orgID: %d, definitionUID: %s}", k.orgID, k.definitionUID)
+}
+
+func (alertDefinition *AlertDefinition) getKey() alertDefinitionKey {
+	return alertDefinitionKey{orgID: alertDefinition.OrgID, definitionUID: alertDefinition.UID}
 }
 
 // AlertDefinitionVersion is the model for alert definition versions in Alerting NG.
@@ -44,19 +58,17 @@ var (
 	errAlertDefinitionNotFound = fmt.Errorf("could not find alert definition")
 )
 
-// getAlertDefinitionByIDQuery is the query for retrieving/deleting an alert definition by ID.
-type getAlertDefinitionByIDQuery struct {
-	ID    int64
+// getAlertDefinitionByUIDQuery is the query for retrieving/deleting an alert definition by UID and organisation ID.
+type getAlertDefinitionByUIDQuery struct {
+	UID   string
 	OrgID int64
 
 	Result *AlertDefinition
 }
 
-type deleteAlertDefinitionByIDCommand struct {
-	ID    int64
+type deleteAlertDefinitionByUIDCommand struct {
+	UID   string
 	OrgID int64
-
-	RowsAffected int64
 }
 
 // saveAlertDefinitionCommand is the query for saving a new alert definition.
@@ -71,15 +83,13 @@ type saveAlertDefinitionCommand struct {
 
 // updateAlertDefinitionCommand is the query for updating an existing alert definition.
 type updateAlertDefinitionCommand struct {
-	ID              int64          `json:"-"`
 	Title           string         `json:"title"`
 	OrgID           int64          `json:"-"`
 	Condition       eval.Condition `json:"condition"`
 	IntervalSeconds *int64         `json:"interval_seconds"`
 	UID             string         `json:"-"`
 
-	RowsAffected int64
-	Result       *AlertDefinition
+	Result *AlertDefinition
 }
 
 type evalAlertConditionCommand struct {
@@ -91,4 +101,12 @@ type listAlertDefinitionsQuery struct {
 	OrgID int64 `json:"-"`
 
 	Result []*AlertDefinition
+}
+
+type updateAlertDefinitionPausedCommand struct {
+	OrgID  int64    `json:"-"`
+	UIDs   []string `json:"uids"`
+	Paused bool     `json:"-"`
+
+	ResultCount int64
 }

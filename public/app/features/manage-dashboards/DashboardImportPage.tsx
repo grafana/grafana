@@ -147,7 +147,7 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, Props> = {
 export const DashboardImportPage = connectWithCleanUp(
   mapStateToProps,
   mapDispatchToProps,
-  state => state.importDashboard
+  (state) => state.importDashboard
 )(DashboardImportUnConnected);
 export default DashboardImportPage;
 DashboardImportPage.displayName = 'DashboardImport';

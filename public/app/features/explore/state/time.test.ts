@@ -10,7 +10,7 @@ describe('Explore item reducer', () => {
     it("should result in 'streaming' state, when live-tailing is active", () => {
       const initialState = makeExplorePaneState();
       const expectedState = {
-        ...makeExplorePaneState(),
+        ...initialState,
         refreshInterval: 'LIVE',
         isLive: true,
         loading: true,
@@ -19,7 +19,7 @@ describe('Explore item reducer', () => {
           rows: [] as any[],
         },
         queryResponse: {
-          ...makeExplorePaneState().queryResponse,
+          ...initialState.queryResponse,
           state: LoadingState.Streaming,
         },
       };
@@ -32,14 +32,14 @@ describe('Explore item reducer', () => {
     it("should result in 'done' state, when live-tailing is stopped", () => {
       const initialState = makeExplorePaneState();
       const expectedState = {
-        ...makeExplorePaneState(),
+        ...initialState,
         refreshInterval: '',
         logsResult: {
           hasUniqueLabels: false,
           rows: [] as any[],
         },
         queryResponse: {
-          ...makeExplorePaneState().queryResponse,
+          ...initialState.queryResponse,
           state: LoadingState.Done,
         },
       };

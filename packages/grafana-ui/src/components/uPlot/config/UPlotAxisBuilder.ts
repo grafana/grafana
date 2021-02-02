@@ -11,9 +11,12 @@ export interface AxisProps {
   label?: string;
   show?: boolean;
   size?: number | null;
+  gap?: number;
   placement?: AxisPlacement;
   grid?: boolean;
+  ticks?: boolean;
   formatValue?: (v: any) => string;
+  splits?: Axis.Splits;
   values?: any;
   isTime?: boolean;
   timeZone?: TimeZone;
@@ -37,7 +40,10 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       show = true,
       placement = AxisPlacement.Auto,
       grid = true,
+      ticks = true,
+      gap = 5,
       formatValue,
+      splits,
       values,
       isTime,
       timeZone,
@@ -54,16 +60,18 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       font: `12px 'Roboto'`,
       labelFont: `12px 'Roboto'`,
       size: this.props.size ?? calculateAxisSize,
+      gap,
       grid: {
         show: grid,
         stroke: gridColor,
         width: 1 / devicePixelRatio,
       },
       ticks: {
-        show: true,
+        show: ticks,
         stroke: gridColor,
         width: 1 / devicePixelRatio,
       },
+      splits,
       values: values,
       space: calculateSpace,
     };
@@ -78,7 +86,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
     } else if (isTime) {
       config.values = formatTime;
     } else if (formatValue) {
-      config.values = (u: uPlot, vals: any[]) => vals.map(v => formatValue(v));
+      config.values = (u: uPlot, vals: any[]) => vals.map((v) => formatValue(v));
     }
 
     // store timezone
@@ -147,7 +155,7 @@ function formatTime(self: uPlot, splits: number[], axisIdx: number, foundSpace: 
     format = systemDateFormats.interval.month;
   }
 
-  return splits.map(v => dateTimeFormat(v, { format, timeZone }));
+  return splits.map((v) => dateTimeFormat(v, { format, timeZone }));
 }
 
 export function getUPlotSideFromAxis(axis: AxisPlacement) {

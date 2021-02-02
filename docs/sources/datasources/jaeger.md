@@ -15,24 +15,25 @@ Just add it as a data source and you are ready to query your traces in [Explore]
 
 To access Jaeger settings, click the **Configuration** (gear) icon, then click **Data Sources** > **Jaeger**.
 
-| Name         | Description                                                                                                                           |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `Name`       | The data source name. This is how you refer to the data source in panels, queries, and Explore.                                       |
-| `Default`    | Data source will be pre-selected for new panels.                                                                                      |
-| `URL`        | The URL of the Jaeger instance, for example, `http://localhost:16686`                                                                 |
-| `Access`     | Server (default) = URL needs to be accessible from the Grafana backend/server. Browser = URL needs to be accessible from the browser. |
-| `Basic Auth` | Enable basic authentication to the Jaeger data source.                                                                                |
-| `User`       | User name for basic authentication.                                                                                                   |
-| `Password`   | Password for basic authentication.                                                                                                    |
+| Name         | Description                                                            |
+| ------------ | ---------------------------------------------------------------------- |
+| `Name`       | The data source name in panels, queries, and Explore.                  |
+| `Default`    | The pre-selected data source for a new panel.                          |
+| `URL`        | The URL of the Jaeger instance. For example, `http://localhost:16686`. |
+| `Basic Auth` | Enable basic authentication for the Jaeger data source.                |
+| `User`       | Specify a user name for basic authentication.                          |
+| `Password`   | Specify a password for basic authentication.                           |
 
 ### Trace to logs
 
-{{< docs-imagebox img="/img/docs/v74/trace-to-logs-settings.png" class="docs-image--no-shadow" caption="Screenshot of the trace to logs settings" >}}
+> **Note:** This feature is available in Grafana 7.4+.
 
 This is a configuration for the [trace to logs feature]({{< relref "../explore/index.md#trace-to-logs" >}}). Select target data source (at this moment limited to Loki data sources) and select which tags will be used in the logs query.
 
 - **Data source -** Target data source.
 - **Tags -** The tags that will be used in the Loki query. Default is `'cluster', 'hostname', 'namespace', 'pod'`.
+
+![Trace to logs settings](/img/docs/explore/trace-to-logs-settings-7-4.png "Screenshot of the trace to logs settings")
 
 ## Query traces
 

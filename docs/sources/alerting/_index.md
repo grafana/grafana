@@ -1,7 +1,7 @@
 +++
 title = "Alerts"
 aliases = ["/docs/grafana/latest/alerting/rules/", "/docs/grafana/latest/alerting/metrics/"]
-weight = 100
+weight = 110
 +++
 
 # Alerts overview

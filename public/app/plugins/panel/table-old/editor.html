@@ -1,4 +1,22 @@
 <div class="gf-form-group">
+  <div class="grafana-info-box">
+    <h5>Table migration</h5>
+    <p>
+      This panel is deprecated. Please migrate to the new Table panel.
+    </p>
+    <p>
+      <button class="btn btn-primary" ng-click="ctrl.migrateToPanel('table')">
+        Migrate to Table panel
+      </button>
+    </p>
+    <p><b>NOTE:</b> Sorting is not persisted after migration.</p>
+    <p ng-if="ctrl.panelHasRowColorMode">
+      <b>NOTE:</b> Row color mode is no longer supported and will fallback to cell color mode.
+    </p>
+    <p ng-if="ctrl.panelHasLinks">
+      <b>NOTE:</b> Links that specify cell values will need to be updated manually after migration.
+    </p>
+  </div>
   <h5 class="section-heading">Data</h5>
   <div class="gf-form gf-form--grow">
     <label class="gf-form-label width-8">Table Transform</label>

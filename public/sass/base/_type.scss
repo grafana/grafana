@@ -313,7 +313,12 @@ address {
 
 a.external-link {
   color: $external-link-color;
-  text-decoration: underline;
+  text-decoration: normal;
+
+  &:hover {
+    color: $external-link-color;
+    text-decoration: underline;
+  }
 }
 
 .link {
@@ -359,10 +364,12 @@ a.external-link {
   }
 
   a {
-    text-decoration: underline;
     color: $external-link-color;
+    text-decoration: none;
+
     &:hover {
-      color: lighten($external-link-color, 10%);
+      color: $external-link-color;
+      text-decoration: underline;
     }
   }
 

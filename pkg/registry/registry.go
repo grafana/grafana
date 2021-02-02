@@ -47,6 +47,18 @@ func Register(descriptor *Descriptor) {
 	services = append(services, descriptor)
 }
 
+// GetService gets the registered service descriptor with a certain name.
+// If none is found, nil is returned.
+func GetService(name string) *Descriptor {
+	for _, svc := range services {
+		if svc.Name == name {
+			return svc
+		}
+	}
+
+	return nil
+}
+
 func GetServices() []*Descriptor {
 	slice := getServicesWithOverrides()
 

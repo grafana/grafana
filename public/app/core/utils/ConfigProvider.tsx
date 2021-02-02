@@ -22,7 +22,7 @@ export const getCurrentTheme = () => getTheme(getCurrentThemeName());
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   return (
     <ConfigConsumer>
-      {config => {
+      {(config) => {
         return <ThemeContext.Provider value={getCurrentTheme()}>{children}</ThemeContext.Provider>;
       }}
     </ConfigConsumer>

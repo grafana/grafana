@@ -106,7 +106,7 @@ export default class ElasticsearchLanguageProvider extends LanguageProvider {
 
   importQueries(queries: DataQuery[], datasourceType: string): ElasticsearchQuery[] {
     if (datasourceType === 'prometheus' || datasourceType === 'loki') {
-      return queries.map(query => {
+      return queries.map((query) => {
         let prometheusQuery: PromQuery = query as PromQuery;
         const expr = getElasticsearchQuery(extractPrometheusLabels(prometheusQuery.expr));
         return {
@@ -116,7 +116,7 @@ export default class ElasticsearchLanguageProvider extends LanguageProvider {
         };
       });
     }
-    return queries.map(query => {
+    return queries.map((query) => {
       return {
         isLogsQuery: true,
         query: '',

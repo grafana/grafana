@@ -59,7 +59,7 @@ export class TeamMembers extends PureComponent<Props, State> {
 
     return (
       <td>
-        {labels.map(label => (
+        {labels.map((label) => (
           <TagBadge key={label} label={label} removeIcon={false} count={0} onClick={() => {}} />
         ))}
       </td>
@@ -129,7 +129,7 @@ export class TeamMembers extends PureComponent<Props, State> {
             </thead>
             <tbody>
               {members &&
-                members.map(member => (
+                members.map((member) => (
                   <TeamMemberRow
                     key={member.userId}
                     member={member}

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/getsentry/sentry-go"
+	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/inconshreveable/log15"
@@ -77,7 +78,7 @@ func (event *frontendSentryEvent) ToLogContext() log15.Ctx {
 	return ctx
 }
 
-func (hs *HTTPServer) logFrontendMessage(c *models.ReqContext, event frontendSentryEvent) Response {
+func (hs *HTTPServer) logFrontendMessage(c *models.ReqContext, event frontendSentryEvent) response.Response {
 	var msg = "unknown"
 
 	if len(event.Message) > 0 {
@@ -99,5 +100,5 @@ func (hs *HTTPServer) logFrontendMessage(c *models.ReqContext, event frontendSen
 		frontendLogger.Info(msg, ctx)
 	}
 
-	return Success("ok")
+	return response.Success("ok")
 }

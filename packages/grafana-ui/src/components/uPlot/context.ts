@@ -1,6 +1,6 @@
 import React, { useCallback, useContext } from 'react';
 import uPlot, { Series } from 'uplot';
-import { PlotPlugin, AlignedFrameWithGapTest } from './types';
+import { PlotPlugin } from './types';
 import { DataFrame, Field, FieldConfig } from '@grafana/data';
 
 interface PlotCanvasContextType {
@@ -26,7 +26,7 @@ interface PlotContextType extends PlotPluginsContextType {
   getSeries: () => Series[];
   getCanvas: () => PlotCanvasContextType;
   canvasRef: any;
-  data: AlignedFrameWithGapTest;
+  data: DataFrame;
 }
 
 export const PlotContext = React.createContext<PlotContextType>({} as PlotContextType);
@@ -76,7 +76,7 @@ export const usePlotData = (): PlotDataAPI => {
       if (!ctx) {
         throwWhenNoContext('usePlotData');
       }
-      return ctx!.data.frame.fields[idx];
+      return ctx!.data.fields[idx];
     },
     [ctx]
   );
@@ -109,7 +109,7 @@ export const usePlotData = (): PlotDataAPI => {
     }
     // by uPlot convention x-axis is always first field
     // this may change when we introduce non-time x-axis and multiple x-axes (https://leeoniya.github.io/uPlot/demos/time-periods.html)
-    return ctx!.data.frame.fields.slice(1);
+    return ctx!.data.fields.slice(1);
   }, [ctx]);
 
   if (!ctx) {
@@ -117,7 +117,7 @@ export const usePlotData = (): PlotDataAPI => {
   }
 
   return {
-    data: ctx.data.frame,
+    data: ctx.data,
     getField,
     getFieldValue,
     getFieldConfig,
@@ -129,7 +129,7 @@ export const usePlotData = (): PlotDataAPI => {
 export const buildPlotContext = (
   isPlotReady: boolean,
   canvasRef: any,
-  data: AlignedFrameWithGapTest,
+  data: DataFrame,
   registerPlugin: any,
   getPlotInstance: () => uPlot | undefined
 ): PlotContextType => {

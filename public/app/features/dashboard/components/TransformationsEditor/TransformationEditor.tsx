@@ -36,11 +36,11 @@ export const TransformationEditor = ({
   const config = useMemo(() => configs[index], [configs, index]);
 
   useEffect(() => {
-    const inputTransforms = configs.slice(0, index).map(t => t.transformation);
-    const outputTransforms = configs.slice(index, index + 1).map(t => t.transformation);
+    const inputTransforms = configs.slice(0, index).map((t) => t.transformation);
+    const outputTransforms = configs.slice(index, index + 1).map((t) => t.transformation);
     const inputSubscription = transformDataFrame(inputTransforms, data).subscribe(setInput);
     const outputSubscription = transformDataFrame(inputTransforms, data)
-      .pipe(mergeMap(before => transformDataFrame(outputTransforms, before)))
+      .pipe(mergeMap((before) => transformDataFrame(outputTransforms, before)))
       .subscribe(setOutput);
 
     return function unsubscribe() {

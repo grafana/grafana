@@ -5,7 +5,7 @@ exports[`Render should disable log analytics credentials form 1`] = `
   <h3
     className="page-heading"
   >
-    Azure Log Analytics API Details
+    Azure Monitor Logs Details
   </h3>
   <Switch
     checked={false}
@@ -101,7 +101,7 @@ exports[`Render should enable azure log analytics load workspaces button 1`] = `
   <h3
     className="page-heading"
   >
-    Azure Log Analytics API Details
+    Azure Monitor Logs Details
   </h3>
   <Switch
     checked={false}
@@ -197,7 +197,7 @@ exports[`Render should render component 1`] = `
   <h3
     className="page-heading"
   >
-    Azure Log Analytics API Details
+    Azure Monitor Logs Details
   </h3>
   <Switch
     checked={false}

@@ -47,7 +47,13 @@ func (ng *AlertNG) Init() error {
 	ng.log = log.New("ngalert")
 
 	ng.registerAPIEndpoints()
-	ng.schedule = newScheduler(clock.New(), baseIntervalSeconds*time.Second, ng.log, nil)
+	schedCfg := schedulerCfg{
+		c:            clock.New(),
+		baseInterval: baseIntervalSeconds * time.Second,
+		logger:       ng.log,
+		evaluator:    eval.Evaluator{Cfg: ng.Cfg},
+	}
+	ng.schedule = newScheduler(schedCfg)
 	return nil
 }
 
@@ -74,15 +80,17 @@ func (ng *AlertNG) AddMigration(mg *migrator.Migrator) {
 	}
 	addAlertDefinitionMigrations(mg)
 	addAlertDefinitionVersionMigrations(mg)
+	// Create alert_instance table
+	alertInstanceMigration(mg)
 }
 
 // LoadAlertCondition returns a Condition object for the given alertDefinitionID.
-func (ng *AlertNG) LoadAlertCondition(alertDefinitionID int64) (*eval.Condition, error) {
-	getAlertDefinitionByIDQuery := getAlertDefinitionByIDQuery{ID: alertDefinitionID}
-	if err := ng.getAlertDefinitionByID(&getAlertDefinitionByIDQuery); err != nil {
+func (ng *AlertNG) LoadAlertCondition(alertDefinitionUID string, orgID int64) (*eval.Condition, error) {
+	q := getAlertDefinitionByUIDQuery{UID: alertDefinitionUID, OrgID: orgID}
+	if err := ng.getAlertDefinitionByUID(&q); err != nil {
 		return nil, err
 	}
-	alertDefinition := getAlertDefinitionByIDQuery.Result
+	alertDefinition := q.Result
 
 	err := ng.validateAlertDefinition(alertDefinition, true)
 	if err != nil {

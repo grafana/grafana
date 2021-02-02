@@ -151,10 +151,10 @@ export class ConfigEditor extends PureComponent<Props, State> {
               </InlineFormLabel>
               <Select
                 className="width-30"
-                value={authProviderOptions.find(authProvider => authProvider.value === options.jsonData.authType)}
+                value={authProviderOptions.find((authProvider) => authProvider.value === options.jsonData.authType)}
                 options={authProviderOptions}
                 defaultValue={options.jsonData.authType}
-                onChange={option => {
+                onChange={(option) => {
                   onUpdateDatasourceJsonDataOptionSelect(this.props, 'authType')(option);
                 }}
               />
@@ -294,7 +294,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
               </InlineFormLabel>
               <Select
                 className="width-30"
-                value={regions.find(region => region.value === options.jsonData.defaultRegion)}
+                value={regions.find((region) => region.value === options.jsonData.defaultRegion)}
                 options={regions}
                 defaultValue={options.jsonData.defaultRegion}
                 onChange={onUpdateDatasourceJsonDataOptionSelect(this.props, 'defaultRegion')}

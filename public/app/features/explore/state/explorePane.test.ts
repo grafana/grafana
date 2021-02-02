@@ -1,5 +1,5 @@
 import { PayloadAction } from '@reduxjs/toolkit';
-import { DataQuery, DefaultTimeZone, ExploreUrlState, LogsDedupStrategy, toUtc, EventBusExtended } from '@grafana/data';
+import { DataQuery, DefaultTimeZone, EventBusExtended, ExploreUrlState, LogsDedupStrategy, toUtc } from '@grafana/data';
 import { ExploreId, ExploreItemState, ExploreUpdateState } from 'app/types';
 import { thunkTester } from 'test/core/thunk/thunkTester';
 import {
@@ -100,7 +100,7 @@ describe('refreshExplore', () => {
           .givenThunk(refreshExplore)
           .whenThunkIsDispatched(exploreId);
 
-        const initializeExplore = dispatchedActions.find(action => action.type === initializeExploreAction.type);
+        const initializeExplore = dispatchedActions.find((action) => action.type === initializeExploreAction.type);
         const { type, payload } = initializeExplore as PayloadAction<InitializeExplorePayload>;
 
         expect(type).toEqual(initializeExploreAction.type);
@@ -154,7 +154,7 @@ describe('Explore pane reducer', () => {
             changeDedupStrategyAction({ exploreId: ExploreId.left, dedupStrategy: LogsDedupStrategy.exact })
           )
           .thenStateShouldEqual({
-            ...makeExplorePaneState(),
+            ...initialState,
             dedupStrategy: LogsDedupStrategy.exact,
           });
       });

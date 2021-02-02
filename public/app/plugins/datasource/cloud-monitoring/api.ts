@@ -44,7 +44,7 @@ export default class Api {
         method: 'GET',
       })
       .pipe(
-        map(response => {
+        map((response) => {
           const responsePropName = path.match(/([^\/]*)\/*$/)![1];
           let res = [];
           if (response && response.data && response.data[responsePropName]) {
@@ -57,7 +57,7 @@ export default class Api {
 
           return res;
         }),
-        catchError(error => {
+        catchError((error) => {
           appEvents.emit(CoreEvents.dsRequestError, {
             error: { data: { error: formatCloudMonitoringError(error) } },
           });

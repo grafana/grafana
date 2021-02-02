@@ -15,15 +15,15 @@ import { updateLocation } from 'app/core/actions';
 import { DashboardModel, PanelModel } from '../state';
 import { PANEL_BORDER } from 'app/core/constants';
 import {
-  LoadingState,
   AbsoluteTimeRange,
-  DefaultTimeRange,
-  toUtc,
-  toDataFrameDTO,
+  FieldConfigSource,
+  getDefaultTimeRange,
+  LoadingState,
   PanelData,
   PanelPlugin,
-  FieldConfigSource,
   PanelPluginMeta,
+  toDataFrameDTO,
+  toUtc,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
@@ -65,7 +65,7 @@ export class PanelChrome extends Component<Props, State> {
       data: {
         state: LoadingState.NotStarted,
         series: [],
-        timeRange: DefaultTimeRange,
+        timeRange: getDefaultTimeRange(),
       },
     };
   }
@@ -97,7 +97,7 @@ export class PanelChrome extends Component<Props, State> {
         .getQueryRunner()
         .getData({ withTransforms: true, withFieldConfig: true })
         .subscribe({
-          next: data => this.onDataUpdate(data),
+          next: (data) => this.onDataUpdate(data),
         })
     );
   }
@@ -140,6 +140,7 @@ export class PanelChrome extends Component<Props, State> {
     if (!this.props.isInView) {
       // Ignore events when not visible.
       // The call will be repeated when the panel comes into view
+      this.setState({ refreshWhenInView: true });
       return;
     }
 
@@ -165,7 +166,7 @@ export class PanelChrome extends Component<Props, State> {
       case LoadingState.Done:
         // If we are doing a snapshot save data in panel model
         if (this.props.dashboard.snapshot) {
-          this.props.panel.snapshotData = data.series.map(frame => toDataFrameDTO(frame));
+          this.props.panel.snapshotData = data.series.map((frame) => toDataFrameDTO(frame));
         }
         if (isFirstLoad) {
           isFirstLoad = false;

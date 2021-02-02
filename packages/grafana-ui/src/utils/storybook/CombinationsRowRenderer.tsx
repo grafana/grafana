@@ -5,7 +5,7 @@ import { Themeable } from '../../types';
 import { selectThemeVariant } from '../../themes/selectThemeVariant';
 import prettyFormat from 'pretty-format';
 
-const detailsRenderer: (combinationProps: any) => JSX.Element = props => {
+const detailsRenderer: (combinationProps: any) => JSX.Element = (props) => {
   const listStyle = css`
     padding: 0;
     margin: 0;

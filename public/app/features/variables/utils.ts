@@ -56,7 +56,7 @@ export function containsVariable(...args: any[]) {
   const matches = variableString.match(variableRegex);
   const isMatchingVariable =
     matches !== null
-      ? matches.find(match => {
+      ? matches.find((match) => {
           const varMatch = variableRegexExec(match);
           return varMatch !== null && varMatch.indexOf(variableName) > -1;
         })
@@ -151,7 +151,7 @@ export function getVariableRefresh(variable: VariableModel): VariableRefresh {
 export function getVariableTypes(): Array<{ label: string; value: VariableType }> {
   return variableAdapters
     .list()
-    .filter(v => v.id !== 'system')
+    .filter((v) => v.id !== 'system')
     .map(({ id, name }) => ({
       label: name,
       value: id,

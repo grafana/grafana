@@ -13,6 +13,8 @@ export interface Props extends Omit<FieldProps, 'css' | 'horizontal' | 'descript
   labelWidth?: number | 'auto';
   /** Make the field's child to fill the width of the row. Equivalent to setting `flex-grow:1` on the field */
   grow?: boolean;
+  /** Make field's background transparent */
+  transparent?: boolean;
 }
 
 export const InlineField: FC<Props> = ({
@@ -25,6 +27,7 @@ export const InlineField: FC<Props> = ({
   disabled,
   className,
   grow,
+  transparent,
   ...htmlProps
 }) => {
   const theme = useTheme();
@@ -37,7 +40,7 @@ export const InlineField: FC<Props> = ({
   }
   const labelElement =
     typeof label === 'string' ? (
-      <InlineLabel width={labelWidth} tooltip={tooltip} htmlFor={inputId}>
+      <InlineLabel width={labelWidth} tooltip={tooltip} htmlFor={inputId} transparent={transparent}>
         {label}
       </InlineLabel>
     ) : (

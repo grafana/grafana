@@ -80,6 +80,6 @@ func createTestAlertDefinition(t *testing.T, ng *AlertNG, intervalSeconds int64)
 	}
 	err := ng.saveAlertDefinition(&cmd)
 	require.NoError(t, err)
-	t.Logf("alert definition: %d with interval: %d created", cmd.Result.ID, intervalSeconds)
+	t.Logf("alert definition: %v with interval: %d created", cmd.Result.getKey(), intervalSeconds)
 	return cmd.Result
 }

@@ -81,7 +81,7 @@ export class DataSourcesListPage extends PureComponent<Props> {
               dataSourcesCount > 0 && [
                 <OrgActionBar
                   searchQuery={searchQuery}
-                  setSearchQuery={query => setDataSourcesSearchQuery(query)}
+                  setSearchQuery={(query) => setDataSourcesSearchQuery(query)}
                   linkButton={linkButton}
                   key="action-bar"
                 />,

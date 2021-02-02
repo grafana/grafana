@@ -22,6 +22,9 @@
 go.mod @grafana/backend-platform
 go.sum @grafana/backend-platform
 
+# Backend code docs
+/contribute/style-guides/backend.md @grafana/backend-platform
+
 /e2e @grafana/grafana-frontend-platform
 /packages @grafana/grafana-frontend-platform
 /plugins-bundled @grafana/grafana-frontend-platform

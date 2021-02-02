@@ -21,7 +21,7 @@ export function getFieldDisplayValuesProxy(
   return new Proxy({} as Record<string, DisplayValue>, {
     get: (obj: any, key: string) => {
       // 1. Match the name
-      let field = frame.fields.find(f => key === f.name);
+      let field = frame.fields.find((f) => key === f.name);
       if (!field) {
         // 2. Match the array index
         const k = toNumber(key);
@@ -29,7 +29,7 @@ export function getFieldDisplayValuesProxy(
       }
       if (!field) {
         // 3. Match the title
-        field = frame.fields.find(f => key === f.config.displayName);
+        field = frame.fields.find((f) => key === f.config.displayName);
       }
       if (!field) {
         return undefined;

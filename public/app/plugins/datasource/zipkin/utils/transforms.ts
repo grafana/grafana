@@ -27,7 +27,7 @@ function transformSpan(span: ZipkinSpan): TraceSpanData {
     spanID: span.id,
     traceID: span.traceId,
     warnings: null as any,
-    tags: Object.keys(span.tags || {}).map(key => {
+    tags: Object.keys(span.tags || {}).map((key) => {
       // If tag is error we remap it to simple boolean so that the Jaeger ui will show an error icon.
       return {
         key,

@@ -31,7 +31,7 @@ describe('InputDatasource', () => {
         targets: [{ refId: 'Z' }],
       });
 
-      return ds.query(options).then(rsp => {
+      return ds.query(options).then((rsp) => {
         expect(rsp.data.length).toBe(1);
 
         const series: DataFrame = rsp.data[0];

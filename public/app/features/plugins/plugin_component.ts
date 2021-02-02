@@ -79,7 +79,7 @@ function pluginDirectiveLoader(
     };
 
     const panelInfo = config.panels[scope.panel.type];
-    return importPanelPlugin(panelInfo.id).then(panelPlugin => {
+    return importPanelPlugin(panelInfo.id).then((panelPlugin) => {
       const PanelCtrl = panelPlugin.angularPanelCtrl;
       componentInfo.Component = PanelCtrl;
 
@@ -130,7 +130,7 @@ function pluginDirectiveLoader(
         const baseUrl = scope.ctrl.currentDatasource.meta.baseUrl;
         const pluginId = scope.ctrl.currentDatasource.meta.id;
 
-        return importDataSourcePlugin(scope.ctrl.currentDatasource.meta).then(dsPlugin => {
+        return importDataSourcePlugin(scope.ctrl.currentDatasource.meta).then((dsPlugin) => {
           return {
             baseUrl,
             name: 'annotations-query-ctrl-' + pluginId,
@@ -147,7 +147,7 @@ function pluginDirectiveLoader(
       case 'datasource-config-ctrl': {
         const dsMeta = scope.ctrl.datasourceMeta;
         const angularUrl = $location.url();
-        return importDataSourcePlugin(dsMeta).then(dsPlugin => {
+        return importDataSourcePlugin(dsMeta).then((dsPlugin) => {
           scope.$watch(
             'ctrl.current',
             () => {
@@ -175,7 +175,7 @@ function pluginDirectiveLoader(
       // AppConfigCtrl
       case 'app-config-ctrl': {
         const model = scope.ctrl.model;
-        return importAppPlugin(model).then(appPlugin => {
+        return importAppPlugin(model).then((appPlugin) => {
           return {
             baseUrl: model.baseUrl,
             name: 'app-config-' + model.id,
@@ -188,7 +188,7 @@ function pluginDirectiveLoader(
       // App Page
       case 'app-page': {
         const appModel = scope.ctrl.appModel;
-        return importAppPlugin(appModel).then(appPlugin => {
+        return importAppPlugin(appModel).then((appPlugin) => {
           if (!appPlugin.angularPages) {
             throw new Error('Plugin has no page components');
           }

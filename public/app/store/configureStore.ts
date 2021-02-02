@@ -16,7 +16,7 @@ export function addRootReducer(reducers: any) {
 
 export function configureStore() {
   const logger = createLogger({
-    predicate: getState => {
+    predicate: (getState) => {
       return getState().application.logActions;
     },
   });

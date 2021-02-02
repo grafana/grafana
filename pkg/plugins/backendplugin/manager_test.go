@@ -403,6 +403,10 @@ func (t *testLicensingService) StateInfo() string {
 	return ""
 }
 
+func (t *testLicensingService) ContentDeliveryPrefix() string {
+	return ""
+}
+
 func (t *testLicensingService) LicenseURL(user *models.SignedInUser) string {
 	return ""
 }
@@ -411,6 +415,6 @@ func (t *testLicensingService) HasValidLicense() bool {
 	return false
 }
 
-func (t *testLicensingService) TokenRaw() string {
-	return t.tokenRaw
+func (t *testLicensingService) Environment() map[string]string {
+	return map[string]string{"GF_ENTERPRISE_LICENSE_TEXT": t.tokenRaw}
 }

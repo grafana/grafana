@@ -39,6 +39,7 @@ export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: b
     });
     return;
   }
+
   dashboard.removePanel(panel);
 };
 

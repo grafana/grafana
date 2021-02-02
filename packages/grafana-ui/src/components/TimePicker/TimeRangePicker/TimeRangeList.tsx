@@ -36,7 +36,7 @@ interface Props {
   timeZone?: TimeZone;
 }
 
-export const TimeRangeList: React.FC<Props> = props => {
+export const TimeRangeList: React.FC<Props> = (props) => {
   const styles = getStyles();
   const { title, options, placeholderEmpty } = props;
 
@@ -69,7 +69,7 @@ const Options: React.FC<Props> = ({ options, value, onSelect, timeZone }) => {
             key={keyForOption(option, index)}
             value={option}
             selected={isEqual(option, value)}
-            onSelect={option => onSelect(mapOptionToTimeRange(option, timeZone))}
+            onSelect={(option) => onSelect(mapOptionToTimeRange(option, timeZone))}
           />
         ))}
       </div>

@@ -16,7 +16,7 @@ export class Analytics {
     const ga = ((window as any).ga =
       (window as any).ga ||
       // this had the equivalent of `eslint-disable-next-line prefer-arrow/prefer-arrow-functions`
-      function() {
+      function () {
         (ga.q = ga.q || []).push(arguments);
       });
     ga.l = +new Date();

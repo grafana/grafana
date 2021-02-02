@@ -9,6 +9,28 @@ export interface RegexpOrNamesMatcherOptions {
   names?: string[];
 }
 
+/**
+ * Mode to be able to toggle if the names matcher should match fields in provided
+ * list or all except provided names.
+ * @public
+ */
+export enum ByNamesMatcherMode {
+  exclude = 'exclude',
+  include = 'include',
+}
+
+/**
+ * Options to instruct the by names matcher to either match all fields in given list
+ * or all except the fields in the list.
+ * @public
+ */
+export interface ByNamesMatcherOptions {
+  mode?: ByNamesMatcherMode;
+  names?: string[];
+  readOnly?: boolean;
+  prefix?: string;
+}
+
 // General Field matcher
 const fieldNameMatcher: FieldMatcherInfo<string> = {
   id: FieldMatcherID.byName,
@@ -27,22 +49,34 @@ const fieldNameMatcher: FieldMatcherInfo<string> = {
   },
 };
 
-const multipleFieldNamesMatcher: FieldMatcherInfo<string[]> = {
+const multipleFieldNamesMatcher: FieldMatcherInfo<ByNamesMatcherOptions> = {
   id: FieldMatcherID.byNames,
   name: 'Field Names',
   description: 'match any of the given the field names',
-  defaultOptions: [],
+  defaultOptions: {
+    mode: ByNamesMatcherMode.include,
+    names: [],
+  },
 
-  get: (names: string[]): FieldMatcher => {
+  get: (options: ByNamesMatcherOptions): FieldMatcher => {
+    const { names, mode = ByNamesMatcherMode.include } = options;
     const uniqueNames = new Set<string>(names ?? []);
 
     return (field: Field, frame: DataFrame, allFrames: DataFrame[]) => {
+      if (mode === ByNamesMatcherMode.exclude) {
+        return !uniqueNames.has(getFieldDisplayName(field, frame, allFrames));
+      }
       return uniqueNames.has(getFieldDisplayName(field, frame, allFrames));
     };
   },
 
-  getOptionsDisplayText: (names: string[]): string => {
-    return `Field names: ${names.join(', ')}`;
+  getOptionsDisplayText: (options: ByNamesMatcherOptions): string => {
+    const { names, mode } = options;
+    const displayText = (names ?? []).join(', ');
+    if (mode === ByNamesMatcherMode.exclude) {
+      return `All except: ${displayText}`;
+    }
+    return `All of: ${displayText}`;
   },
 };
 
@@ -99,7 +133,10 @@ const regexpOrMultipleNamesMatcher: FieldMatcherInfo<RegexpOrNamesMatcherOptions
 
   get: (options: RegexpOrNamesMatcherOptions): FieldMatcher => {
     const regexpMatcher = regexpFieldNameMatcher.get(options?.pattern || '');
-    const namesMatcher = multipleFieldNamesMatcher.get(options?.names ?? []);
+    const namesMatcher = multipleFieldNamesMatcher.get({
+      mode: ByNamesMatcherMode.include,
+      names: options?.names ?? [],
+    });
 
     return (field: Field, frame: DataFrame, allFrames: DataFrame[]) => {
       return namesMatcher(field, frame, allFrames) || regexpMatcher(field, frame, allFrames);

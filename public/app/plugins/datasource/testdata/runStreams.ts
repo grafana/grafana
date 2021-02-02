@@ -41,7 +41,7 @@ export function runSignalStream(
   query: StreamingQuery,
   req: DataQueryRequest<TestDataQuery>
 ): Observable<DataQueryResponse> {
-  return new Observable<DataQueryResponse>(subscriber => {
+  return new Observable<DataQueryResponse>((subscriber) => {
     const streamId = `signal-${req.panelId}-${target.refId}`;
     const maxDataPoints = req.maxDataPoints || 1000;
 
@@ -119,7 +119,7 @@ export function runLogsStream(
   query: StreamingQuery,
   req: DataQueryRequest<TestDataQuery>
 ): Observable<DataQueryResponse> {
-  return new Observable<DataQueryResponse>(subscriber => {
+  return new Observable<DataQueryResponse>((subscriber) => {
     const streamId = `logs-${req.panelId}-${target.refId}`;
     const maxDataPoints = req.maxDataPoints || 1000;
 
@@ -164,7 +164,7 @@ export function runFetchStream(
   query: StreamingQuery,
   req: DataQueryRequest<TestDataQuery>
 ): Observable<DataQueryResponse> {
-  return new Observable<DataQueryResponse>(subscriber => {
+  return new Observable<DataQueryResponse>((subscriber) => {
     const streamId = `fetch-${req.panelId}-${target.refId}`;
     const maxDataPoints = req.maxDataPoints || 1000;
 
@@ -223,7 +223,7 @@ export function runFetchStream(
       throw new Error('query.url is not defined');
     }
 
-    fetch(new Request(query.url)).then(response => {
+    fetch(new Request(query.url)).then((response) => {
       if (response.body) {
         reader = response.body.getReader();
         reader.read().then(processChunk);

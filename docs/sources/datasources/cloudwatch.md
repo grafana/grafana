@@ -292,13 +292,13 @@ Note that the actual filtering takes place on Amazon's servers, not in Grafana.
 Filters syntax:
 
 ```javascript
-{ filter_name1: [ filter_value1 ], filter_name2: [ filter_value2 ] }
+{ "filter_name1": [ "filter_value1" ], "filter_name2": [ "filter_value2" ] }
 ```
 
 Example `ec2_instance_attribute()` query
 
 ```javascript
-ec2_instance_attribute(us - east - 1, InstanceId, { 'tag:Environment': ['production'] });
+ec2_instance_attribute(us-east-1, InstanceId, { "tag:Environment": ["production"] });
 ```
 
 ### Selecting attributes
@@ -339,7 +339,7 @@ Tags can be selected by prepending the tag name with `Tags.`
 Example `ec2_instance_attribute()` query
 
 ```javascript
-ec2_instance_attribute(us - east - 1, Tags.Name, { 'tag:Team': ['sysops'] });
+ec2_instance_attribute(us-east-1, Tags.Name, { "tag:Team": ["sysops"] });
 ```
 
 ## Using json format template variables

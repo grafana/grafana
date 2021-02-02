@@ -10,7 +10,7 @@ export interface Props {
   onChange: (value: string) => void;
 }
 
-export const FilterInput: FC<Props> = props => (
+export const FilterInput: FC<Props> = (props) => (
   <Input
     // Replaces the usage of ref
     autoFocus
@@ -18,7 +18,7 @@ export const FilterInput: FC<Props> = props => (
     width={40}
     type="text"
     value={props.value ? unEscapeStringFromRegex(props.value) : ''}
-    onChange={event => props.onChange(escapeStringForRegex(event.currentTarget.value))}
+    onChange={(event) => props.onChange(escapeStringForRegex(event.currentTarget.value))}
     placeholder={props.placeholder ?? ''}
   />
 );

@@ -31,7 +31,7 @@ export class FetchQueue {
     // This will create an implicit live subscription for as long as this class lives.
     // But as FetchQueue is used by the singleton backendSrv that also lives for as long as Grafana app lives
     // I think this ok. We could add some disposable pattern later if the need arises.
-    this.queue.subscribe(entry => {
+    this.queue.subscribe((entry) => {
       const { id, state, options } = entry;
 
       if (!this.state[id]) {
@@ -65,8 +65,8 @@ export class FetchQueue {
   getUpdates = (): Observable<FetchQueueUpdate> => this.updates.asObservable();
 
   private getUpdate = (state: QueueState): FetchQueueUpdate => {
-    const noOfInProgress = Object.keys(state).filter(key => state[key].state === FetchStatus.InProgress).length;
-    const noOfPending = Object.keys(state).filter(key => state[key].state === FetchStatus.Pending).length;
+    const noOfInProgress = Object.keys(state).filter((key) => state[key].state === FetchStatus.InProgress).length;
+    const noOfPending = Object.keys(state).filter((key) => state[key].state === FetchStatus.Pending).length;
 
     return { noOfPending, noOfInProgress, state };
   };

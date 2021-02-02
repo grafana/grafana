@@ -203,7 +203,7 @@ export function TemplateSrvStub(this: any) {
   this.highlightVariablesAsHtml = (str: string) => {
     return str;
   };
-  this.setGrafanaVariable = function(name: string, value: string) {
+  this.setGrafanaVariable = function (name: string, value: string) {
     this.data[name] = value;
   };
 }

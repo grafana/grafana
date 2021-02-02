@@ -259,6 +259,15 @@ Path to the certificate key file (if `protocol` is set to `https` or `h2`).
 
 Path where the socket should be created when `protocol=socket`. Make sure that Grafana has appropriate permissions before you change this setting.
 
+### cdn_url
+
+> **Note**: Available in Grafana v7.4 and later versions.
+
+Specify a full HTTP URL address to the root of your Grafana CDN assets. Grafana will add edition and version paths.
+
+For example, given a cdn url like `https://cdn.myserver.com` grafana will try to load a javascript file from
+`http://cdn.myserver.com/grafana-oss/v7.4.0/public/build/app.<hash>.js`.
+
 <hr />
 
 ## [database]
@@ -508,6 +517,14 @@ Set to `true` to enable the X-Content-Type-Options response header. The X-Conten
 
 Set to `false` to disable the X-XSS-Protection header, which tells browsers to stop pages from loading when they detect reflected cross-site scripting (XSS) attacks. The default value is `false` until the next minor release, `6.3`.
 
+### content_security_policy
+
+Set to `true` to add the Content-Security-Policy header to your requests. CSP allows to control resources that the user agent can load and helps prevent XSS attacks.
+
+### content_security_policy_template
+
+Set Content Security Policy template used when adding the Content-Security-Policy header to your requests. `$NONCE` in the template includes a random nonce.
+
 <hr />
 
 ## [snapshots]
@@ -622,6 +639,10 @@ Default is `false`.
 The duration in time a user invitation remains valid before expiring.
 This setting should be expressed as a duration. Examples: 6h (hours), 2d (days), 1w (week).
 Default is `24h` (24 hours). The minimum supported duration is `15m` (15 minutes).
+
+### hidden_users
+
+This is a comma-separated list of usernames. Users specified here are hidden in the Grafana UI. They are still visible to Grafana administrators and to themselves.
 
 <hr>
 
@@ -1505,3 +1526,8 @@ Set this to `true` to have date formats automatically derived from your browser 
 ### default_timezone
 
 Used as the default time zone for user preferences. Can be either `browser` for the browser local time zone or a time zone name from the IANA Time Zone database, such as `UTC` or `Europe/Amsterdam`.
+
+## [expressions]
+> **Note:** This feature is available in Grafana v7.4 and later versions.
+### enabled
+Set this to `false` to disable expressions and hide them in the Grafana UI. Default is `true`.

@@ -1,4 +1,4 @@
-import { applyFieldOverrides, DefaultTimeRange, LoadingState, PanelData } from '@grafana/data';
+import { applyFieldOverrides, getDefaultTimeRange, LoadingState, PanelData } from '@grafana/data';
 import { config } from 'app/core/config';
 import { DashboardModel, PanelModel } from '../state';
 import { getProcessedDataFrames } from '../../query/state/runRequest';
@@ -7,7 +7,7 @@ export function loadSnapshotData(panel: PanelModel, dashboard: DashboardModel): 
   const data = getProcessedDataFrames(panel.snapshotData);
 
   return {
-    timeRange: DefaultTimeRange,
+    timeRange: getDefaultTimeRange(),
     state: LoadingState.Done,
     series: applyFieldOverrides({
       data,

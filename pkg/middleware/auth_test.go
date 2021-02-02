@@ -57,14 +57,12 @@ func TestMiddlewareAuth(t *testing.T) {
 
 		middlewareScenario(t, "ReqSignIn true and request with same org provided in query string", func(
 			t *testing.T, sc *scenarioContext) {
-			bus.AddHandler("test", func(query *models.GetOrgByNameQuery) error {
-				query.Result = &models.Org{Id: orgID, Name: "test"}
-				return nil
-			})
+			org, err := sc.sqlStore.CreateOrgWithMember(sc.cfg.AnonymousOrgName, 1)
+			require.NoError(t, err)
 
 			sc.m.Get("/secure", reqSignIn, sc.defaultHandler)
 
-			sc.fakeReq("GET", fmt.Sprintf("/secure?orgId=%d", orgID)).exec()
+			sc.fakeReq("GET", fmt.Sprintf("/secure?orgId=%d", org.Id)).exec()
 
 			assert.Equal(t, 200, sc.resp.Code)
 		}, configure)
