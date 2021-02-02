@@ -4,6 +4,8 @@ import { Portal } from '../Portal/Portal';
 import { Dimensions, TimeZone } from '@grafana/data';
 import { FlotPosition } from '../Graph/types';
 import { TooltipContainer } from './TooltipContainer';
+import { useStyles } from '../../themes';
+import { GrafanaTheme } from '@grafana/data';
 
 export type TooltipMode = 'single' | 'multi' | 'none';
 
@@ -46,18 +48,10 @@ export interface TooltipProps {
 }
 
 export const Tooltip: React.FC<TooltipProps> = ({ content, position, offset }) => {
+  const styles = useStyles(getStyles);
   if (position) {
     return (
-      <Portal
-        className={css`
-          position: absolute;
-          top: 0;
-          left: 0;
-          pointer-events: none;
-          width: 100%;
-          height: 100%;
-        `}
-      >
+      <Portal className={styles.portal}>
         <TooltipContainer position={position} offset={offset || { x: 0, y: 0 }}>
           {content}
         </TooltipContainer>
@@ -68,3 +62,16 @@ export const Tooltip: React.FC<TooltipProps> = ({ content, position, offset }) =
 };
 
 Tooltip.displayName = 'ChartTooltip';
+
+const getStyles = (theme: GrafanaTheme) => {
+  return {
+    portal: css`
+      position: absolute;
+      top: ${theme.breakpoints.xs};
+      left: ${theme.breakpoints.xs};
+      pointer-events: none;
+      width: 100%;
+      height: 100%;
+    `,
+  };
+};
