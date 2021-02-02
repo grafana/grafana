@@ -67,8 +67,8 @@ const getStyles = (theme: GrafanaTheme) => {
   return {
     portal: css`
       position: absolute;
-      top: ${theme.breakpoints.xs};
-      left: ${theme.breakpoints.xs};
+      top: 0;
+      left: 0;
       pointer-events: none;
       width: 100%;
       height: 100%;
