@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { DashboardModel } from '../../state/DashboardModel';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
@@ -10,8 +10,6 @@ interface Props {
   dashboard: DashboardModel;
 }
 
-type Whatever = keyof DashboardModel;
-
 const GRAPH_TOOLTIP_OPTIONS = [
   { value: 0, label: 'Default' },
   { value: 1, label: 'Shared crosshair' },
@@ -19,6 +17,7 @@ const GRAPH_TOOLTIP_OPTIONS = [
 ];
 
 export const GeneralSettings: React.FC<Props> = ({ dashboard }) => {
+  const [renderCounter, setRenderCounter] = useState(0);
   const onFolderChange = (folder: { id: number; title: string }) => {
     dashboard.meta.folderId = folder.id;
     dashboard.meta.folderTitle = folder.title;
@@ -31,6 +30,7 @@ export const GeneralSettings: React.FC<Props> = ({ dashboard }) => {
 
   const onTooltipChange = (graphTooltip: SelectableValue<number>) => {
     dashboard.graphTooltip = graphTooltip.value;
+    setRenderCounter(renderCounter + 1);
   };
 
   const onRefreshIntervalChange = (intervals: string[]) => {
@@ -47,6 +47,7 @@ export const GeneralSettings: React.FC<Props> = ({ dashboard }) => {
 
   const onTimeZoneChange = (timeZone: TimeZone) => {
     dashboard.timezone = timeZone;
+    setRenderCounter(renderCounter + 1);
   };
 
   return (
