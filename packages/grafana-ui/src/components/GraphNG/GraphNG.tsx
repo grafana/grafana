@@ -14,10 +14,10 @@ import {
   outerJoinDataFrames,
   reduceField,
   TimeRange,
+  TimeZone,
 } from '@grafana/data';
 import { useTheme } from '../../themes';
 import { UPlotChart } from '../uPlot/Plot';
-import { PlotProps } from '../uPlot/types';
 import {
   AxisPlacement,
   DrawStyle,
@@ -41,12 +41,18 @@ export interface XYFieldMatchers {
   x: FieldMatcher; // first match
   y: FieldMatcher;
 }
-export interface GraphNGProps extends Omit<PlotProps, 'data' | 'config'> {
+
+export interface GraphNGProps {
+  width: number;
+  height: number;
   data: DataFrame[];
+  timeRange: TimeRange;
   legend: VizLegendOptions;
+  timeZone: TimeZone;
   fields?: XYFieldMatchers; // default will assume timeseries data
   onLegendClick?: (event: GraphNGLegendEvent) => void;
   onSeriesColorChange?: (label: string, color: string) => void;
+  children?: React.ReactNode;
 }
 
 const defaultConfig: GraphFieldConfig = {
