@@ -24,7 +24,7 @@ Server Admins can:
 
 Organizations are groups of users on a server. Users can belong to one or more organizations, but each user must belong to at least one organization.
 
-Data sources, plugins, and dashboards are associated with organizations. This means that you could have a server with two organizations, one with a Prometheus data source and another with an InfluxDB data source. Each organization would have separate data and dashboards.
+Data sources, plugins, and dashboards are associated with organizations. This means that you can have a server with two organizations, one with a Prometheus data source and another with an InfluxDB data source. Each organization has separate data and dashboards.
 
 Members of organizations have permissions based on their _role_ in the organization. For more information, refer to [Organization roles]({{< relref "../permissions/organization_roles.md" >}}).
 
