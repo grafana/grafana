@@ -9,6 +9,9 @@ import { VizLegendListItem } from './VizLegendListItem';
 
 export interface Props extends VizLegendBaseProps {}
 
+/**
+ * @internal
+ */
 export const VizLegendList: React.FunctionComponent<Props> = ({
   items,
   itemRenderer,

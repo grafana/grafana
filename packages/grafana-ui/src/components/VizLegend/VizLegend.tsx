@@ -3,6 +3,9 @@ import { LegendProps, LegendDisplayMode } from './types';
 import { VizLegendTable } from './VizLegendTable';
 import { VizLegendList } from './VizLegendList';
 
+/**
+ * @public
+ */
 export const VizLegend: React.FunctionComponent<LegendProps> = ({
   items,
   displayMode,

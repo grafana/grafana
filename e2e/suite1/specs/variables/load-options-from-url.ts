@@ -10,7 +10,7 @@ describe('Variables - Load options from Url', () => {
     e2e()
       .route({
         method: 'POST',
-        url: '/api/tsdb/query',
+        url: '/api/ds/query',
       })
       .as('query');
 
@@ -63,7 +63,7 @@ describe('Variables - Load options from Url', () => {
     e2e()
       .route({
         method: 'POST',
-        url: '/api/tsdb/query',
+        url: '/api/ds/query',
       })
       .as('query');
 
@@ -127,7 +127,7 @@ describe('Variables - Load options from Url', () => {
     e2e()
       .route({
         method: 'POST',
-        url: '/api/tsdb/query',
+        url: '/api/ds/query',
       })
       .as('query');
 

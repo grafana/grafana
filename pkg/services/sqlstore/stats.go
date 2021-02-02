@@ -14,7 +14,6 @@ func init() {
 	bus.AddHandler("sql", GetDataSourceStats)
 	bus.AddHandler("sql", GetDataSourceAccessStats)
 	bus.AddHandler("sql", GetAdminStats)
-	bus.AddHandlerCtx("sql", GetUserStats)
 	bus.AddHandlerCtx("sql", GetAlertNotifiersUsageStats)
 	bus.AddHandlerCtx("sql", GetSystemUserCountStats)
 }
@@ -183,21 +182,6 @@ func GetSystemUserCountStats(ctx context.Context, query *models.GetSystemUserCou
 
 		return nil
 	})
-}
-
-func GetUserStats(ctx context.Context, query *models.GetUserStatsQuery) error {
-	err := updateUserRoleCountsIfNecessary(ctx, query.MustUpdate)
-	if err != nil {
-		return err
-	}
-
-	if query.Active {
-		query.Result = userStatsCache.active
-	} else {
-		query.Result = userStatsCache.total
-	}
-
-	return nil
 }
 
 func updateUserRoleCountsIfNecessary(ctx context.Context, forced bool) error {

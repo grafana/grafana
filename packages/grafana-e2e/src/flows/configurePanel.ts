@@ -99,7 +99,7 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
         e2e.components.Panels.Panel.title(panelTitle).click();
         e2e.components.Panels.Panel.headerItems('Edit').click();
       } else {
-        e2e.pages.Dashboard.Toolbar.toolbarItems('Add panel').click();
+        e2e.components.PageToolbar.item('Add panel').click();
         e2e.pages.AddDashboard.addNewPanel().click();
       }
     }

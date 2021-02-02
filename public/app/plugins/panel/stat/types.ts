@@ -11,6 +11,7 @@ import {
   FieldOverrideContext,
   getFieldDisplayName,
   escapeStringForRegex,
+  VizOrientation,
 } from '@grafana/data';
 import { PanelOptionsEditorBuilder } from '@grafana/data';
 
@@ -101,12 +102,12 @@ export function addStandardDataReduceOptions(
       description: 'Stacking direction in case of multiple series or fields',
       settings: {
         options: [
-          { value: 'auto', label: 'Auto' },
-          { value: 'horizontal', label: 'Horizontal' },
-          { value: 'vertical', label: 'Vertical' },
+          { value: VizOrientation.Auto, label: 'Auto' },
+          { value: VizOrientation.Horizontal, label: 'Horizontal' },
+          { value: VizOrientation.Vertical, label: 'Vertical' },
         ],
       },
-      defaultValue: 'auto',
+      defaultValue: VizOrientation.Auto,
     });
   }
 

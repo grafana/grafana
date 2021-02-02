@@ -142,7 +142,8 @@
       },
       "id": 3,
       "libraryPanel": {
-        "uid": "MAnX2ifMk"
+        "uid": "MAnX2ifMk",
+        "name": "React Table"
       }
     },
     {
@@ -154,7 +155,8 @@
       },
       "id": 2,
       "libraryPanel": {
-        "uid": "g1sNpCaMz"
+        "uid": "g1sNpCaMz",
+        "name": "React Gauge"
       }
     }
   ],

@@ -13,6 +13,8 @@ interface CascaderProps {
   separator?: string;
   placeholder?: string;
   options: CascaderOption[];
+  /** Changes the value for every selection, including branch nodes. Defaults to true. */
+  changeOnSelect?: boolean;
   onSelect(val: string): void;
   /** Sets the width to a multiple of 8px. Should only be used with inline forms. Setting width of the container is preferred in other cases.*/
   width?: number;
@@ -68,6 +70,8 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
       activeLabel,
     };
   }
+
+  static defaultProps = { changeOnSelect: true };
 
   flattenOptions = (options: CascaderOption[], optionPath: CascaderOption[] = []) => {
     let selectOptions: Array<SelectableValue<string[]>> = [];
@@ -174,7 +178,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
   };
 
   render() {
-    const { allowCustomValue, placeholder, width } = this.props;
+    const { allowCustomValue, placeholder, width, changeOnSelect } = this.props;
     const { focusCascade, isSearching, searchableOptions, rcValue, activeLabel } = this.state;
 
     return (
@@ -195,7 +199,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
           <RCCascader
             onChange={onChangeCascader(this.onChange)}
             options={this.props.options}
-            changeOnSelect
+            changeOnSelect={changeOnSelect}
             value={rcValue.value}
             fieldNames={{ label: 'label', value: 'value', children: 'items' }}
             expandIcon={null}

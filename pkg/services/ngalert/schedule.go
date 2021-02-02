@@ -185,6 +185,10 @@ func (ng *AlertNG) alertingTicker(grafanaCtx context.Context) error {
 			}
 			readyToRun := make([]readyToRunItem, 0)
 			for _, item := range alertDefinitions {
+				if item.Paused {
+					continue
+				}
+
 				key := item.getKey()
 				itemVersion := item.Version
 				newRoutine := !ng.schedule.registry.exists(key)
