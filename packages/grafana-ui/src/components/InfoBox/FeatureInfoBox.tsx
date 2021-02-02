@@ -1,19 +1,18 @@
 import React from 'react';
 import { InfoBox, InfoBoxProps } from './InfoBox';
 import { FeatureState, GrafanaTheme } from '@grafana/data';
-import { stylesFactory, useTheme } from '../../themes';
+import { stylesFactory, useStyles } from '../../themes';
 import { Badge, BadgeProps } from '../Badge/Badge';
 import { css } from 'emotion';
 
-interface FeatureInfoBoxProps extends Omit<InfoBoxProps, 'branded' | 'title' | 'urlTitle'> {
+export interface FeatureInfoBoxProps extends Omit<InfoBoxProps, 'branded' | 'title' | 'urlTitle'> {
   title: string;
   featureState?: FeatureState;
 }
 
 export const FeatureInfoBox = React.memo(
   React.forwardRef<HTMLDivElement, FeatureInfoBoxProps>(({ title, featureState, ...otherProps }, ref) => {
-    const theme = useTheme();
-    const styles = getFeatureInfoBoxStyles(theme);
+    const styles = useStyles(getFeatureInfoBoxStyles);
 
     const titleEl = featureState ? (
       <>
@@ -25,7 +24,7 @@ export const FeatureInfoBox = React.memo(
     ) : (
       <h3>{title}</h3>
     );
-    return <InfoBox branded title={titleEl} urlTitle="Read documentation" {...otherProps} />;
+    return <InfoBox branded title={titleEl} urlTitle="Read documentation" ref={ref} {...otherProps} />;
   })
 );
 FeatureInfoBox.displayName = 'FeatureInfoBox';
