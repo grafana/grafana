@@ -1094,7 +1094,7 @@ Configures max number of API annotations that Grafana keeps. Default value is 0,
 
 ## [explore]
 
-For more information about this feature, refer to [Explore]({{< relref "../explore/index.md" >}}).
+For more information about this feature, refer to [Explore]({{< relref "../explore/_index.md" >}}).
 
 ### enabled
 
