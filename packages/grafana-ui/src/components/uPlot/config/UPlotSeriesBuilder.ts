@@ -17,6 +17,7 @@ import { getHueGradientFn, getOpacityGradientFn, getScaleGradientFn } from './gr
 
 export interface SeriesProps extends LineConfig, BarConfig, FillConfig, PointsConfig {
   scaleKey: string;
+  pxAlign?: boolean;
   gradientMode?: GraphGradientMode;
   /** Used when gradientMode is set to Scheme */
   thresholds?: ThresholdsConfig;
@@ -46,6 +47,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       pointColor,
       pointSize,
       scaleKey,
+      pxAlign,
       spanNulls,
       show = true,
     } = this.props;
@@ -103,6 +105,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
     return {
       scale: scaleKey,
       spanGaps: spanNulls,
+      pxAlign,
       show,
       fill: this.getFill(),
       ...lineConfig,
