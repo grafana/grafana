@@ -62,7 +62,7 @@ Microsoft Teams | `teams` | yes, external only | no
 OpsGenie | `opsgenie` | yes, external only | yes
 [Pagerduty](#pagerduty) | `pagerduty` | yes, external only | yes
 Prometheus Alertmanager | `prometheus-alertmanager` | yes, external only | yes
-Pushover | `pushover` | yes | no
+[Pushover](#pushover) | `pushover` | yes | no
 Sensu | `sensu` | yes, external only | no
 [Sensu Go](#sensu-go) | `sensugo` | yes, external only | no
 [Slack](#slack) | `slack` | yes | no
@@ -130,6 +130,23 @@ Move any existing rules using `custom_details.myMetric` to `custom_details.queri
 This behavior will become the default in a future version of Grafana.
 
 > Using `dedup_key` tag will override Grafana generated `dedup_key` with a custom key.
+
+### Pushover
+
+To set up Pushover, all you have to do is to provide a User key and an API token. You can follow [What is Pushover and how do I use it](https://support.pushover.net/i7-what-is-pushover-and-how-do-i-use-it) on how to generate them.
+
+
+Setting | Description
+---------- | -----------
+API Token | Application token
+User key(s) | A comma-separated list of User keys
+Device(s) | A comma-separated list of devices
+Priority | The priority alerting nottifications are sent
+OK priority | The priority OK nottifications are sent; if not set OK notifications will be sent with the priotiry set for alerting notifications 
+Retry | How often (in seconds) the Pushover servers will send the same notification to the user. (minimun 30 seconds)
+Expire | How many seconds your notification will continue to be retried for (maximum 86400 seconds)
+Alerting sound | The sound for alerting notifications
+OK sound | The sound for OK notifications
 ### Webhook
 
 The webhook notification is a simple way to send information about a state change over HTTP to a custom endpoint.

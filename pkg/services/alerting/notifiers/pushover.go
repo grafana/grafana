@@ -159,6 +159,7 @@ func init() {
 				PropertyName:  "okPriority",
 			},
 			{
+				Description:  "How often (in seconds) the Pushover servers will send the same alerting or OK notification to the user.",
 				Label:        "Retry (Only used for Emergency Priority)",
 				Element:      alerting.ElementTypeInput,
 				InputType:    alerting.InputTypeText,
@@ -166,6 +167,7 @@ func init() {
 				PropertyName: "retry",
 			},
 			{
+				Description:  "How many seconds the alerting or OK notification will continue to be retried.",
 				Label:        "Expire (Only used for Emergency Priority)",
 				Element:      alerting.ElementTypeInput,
 				InputType:    alerting.InputTypeText,
