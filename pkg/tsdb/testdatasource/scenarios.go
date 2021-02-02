@@ -189,7 +189,7 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 	})
 
 	p.registerScenario(&Scenario{
-		Id:   "ng_alert_instance_list",
+		ID:   "ng_alert_instance_list",
 		Name: "NG Alerting Instance List",
 		// Data fetched via API in JS
 	})
@@ -421,6 +421,8 @@ func (p *testDataPlugin) handleRandomWalkSlowScenario(ctx context.Context, req *
 		respD.Frames = append(respD.Frames, randomWalk(q, model, 0))
 		resp.Responses[q.RefID] = respD
 	}
+
+	return resp, nil
 }
 
 func (p *testDataPlugin) handleRandomWalkTableScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
