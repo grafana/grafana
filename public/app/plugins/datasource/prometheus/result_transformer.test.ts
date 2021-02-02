@@ -1,4 +1,4 @@
-import { DataFrame } from '@grafana/data';
+import { DataFrame, FieldType } from '@grafana/data';
 import { transform } from './result_transformer';
 
 jest.mock('@grafana/runtime', () => ({
@@ -101,15 +101,20 @@ describe('Prometheus Result Transformer', () => {
         1443454531000,
       ]);
       expect(result[0].fields[0].name).toBe('Time');
+      expect(result[0].fields[0].type).toBe(FieldType.time);
       expect(result[0].fields[1].values.toArray()).toEqual(['test', 'test', 'test2', 'test2']);
       expect(result[0].fields[1].name).toBe('__name__');
       expect(result[0].fields[1].config.filterable).toBe(true);
+      expect(result[0].fields[1].type).toBe(FieldType.string);
       expect(result[0].fields[2].values.toArray()).toEqual(['', '', 'localhost:8080', 'localhost:8080']);
       expect(result[0].fields[2].name).toBe('instance');
+      expect(result[0].fields[2].type).toBe(FieldType.string);
       expect(result[0].fields[3].values.toArray()).toEqual(['testjob', 'testjob', 'otherjob', 'otherjob']);
       expect(result[0].fields[3].name).toBe('job');
+      expect(result[0].fields[3].type).toBe(FieldType.string);
       expect(result[0].fields[4].values.toArray()).toEqual([3846, 3848, 3847, 3849]);
       expect(result[0].fields[4].name).toEqual('Value');
+      expect(result[0].fields[4].type).toBe(FieldType.number);
       expect(result[0].refId).toBe('A');
     });
 
@@ -168,6 +173,7 @@ describe('Prometheus Result Transformer', () => {
       };
       const result = transform({ data: response } as any, { ...options, target: { format: 'table' } });
       expect(result[0].fields[1].values.toArray()).toEqual([102]);
+      expect(result[0].fields[1].type).toEqual(FieldType.number);
     });
   });
 

@@ -259,6 +259,15 @@ Path to the certificate key file (if `protocol` is set to `https` or `h2`).
 
 Path where the socket should be created when `protocol=socket`. Make sure that Grafana has appropriate permissions before you change this setting.
 
+### cdn_url
+
+> **Note**: Available in Grafana v7.4 and later versions.
+
+Specify a full HTTP URL address to the root of your Grafana CDN assets. Grafana will add edition and version paths.
+
+For example, given a cdn url like `https://cdn.myserver.com` grafana will try to load a javascript file from
+`http://cdn.myserver.com/grafana-oss/v7.4.0/public/build/app.<hash>.js`.
+
 <hr />
 
 ## [database]
@@ -630,6 +639,10 @@ Default is `false`.
 The duration in time a user invitation remains valid before expiring.
 This setting should be expressed as a duration. Examples: 6h (hours), 2d (days), 1w (week).
 Default is `24h` (24 hours). The minimum supported duration is `15m` (15 minutes).
+
+### hidden_users
+
+This is a comma-separated list of usernames. Users specified here are hidden in the Grafana UI. They are still visible to Grafana administrators and to themselves.
 
 <hr>
 
@@ -1081,7 +1094,7 @@ Configures max number of API annotations that Grafana keeps. Default value is 0,
 
 ## [explore]
 
-For more information about this feature, refer to [Explore]({{< relref "../explore/index.md" >}}).
+For more information about this feature, refer to [Explore]({{< relref "../explore/_index.md" >}}).
 
 ### enabled
 
@@ -1515,6 +1528,6 @@ Set this to `true` to have date formats automatically derived from your browser 
 Used as the default time zone for user preferences. Can be either `browser` for the browser local time zone or a time zone name from the IANA Time Zone database, such as `UTC` or `Europe/Amsterdam`.
 
 ## [expressions]
->Note: This is available in Grafana v7.4 and later versions.
+> **Note:** This feature is available in Grafana v7.4 and later versions.
 ### enabled
 Set this to `false` to disable expressions and hide them in the Grafana UI. Default is `true`.

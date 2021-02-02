@@ -47,7 +47,7 @@ With Grafana Enterprise, you get access to new features, including:
 - [Reporting]({{< relref "reporting.md" >}}) to generate a PDF report from any dashboard and set up a schedule to have it emailed to whoever you choose.
 - [Export dashboard as PDF]({{< relref "export-pdf.md" >}})
 - [White labeling]({{< relref "white-labeling.md" >}}) to customize Grafana from the brand and logo to the footer links.
-- [Usage insights]({{< relref "usage-insights.md" >}}) to understand how your Grafana instance is used.
+- [Usage insights]({{< relref "usage-insights/_index.md" >}}) to understand how your Grafana instance is used.
 - [Vault integration]({{< relref "vault.md" >}}) to manage your configuration or provisioning secrets with Vault.
 - [Auditing]({{< relref "auditing.md" >}}) tracks important changes to your Grafana instance to help you manage and mitigate suspicious activity and meet compliance requirements.
 

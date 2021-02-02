@@ -71,7 +71,16 @@ func (lps *LibraryPanelService) LoadLibraryPanelsForDashboard(dash *models.Dashb
 
 		libraryPanelInDB, ok := libraryPanels[uid]
 		if !ok {
-			return fmt.Errorf("found connection to library panel %q that isn't in database", uid)
+			name := libraryPanel.Get("name").MustString()
+			elem := dash.Data.Get("panels").GetIndex(i)
+			elem.Set("gridPos", panelAsJSON.Get("gridPos").MustMap())
+			elem.Set("id", panelAsJSON.Get("id").MustInt64())
+			elem.Set("type", fmt.Sprintf("Name: \"%s\", UID: \"%s\"", name, uid))
+			elem.Set("libraryPanel", map[string]interface{}{
+				"uid":  uid,
+				"name": name,
+			})
+			continue
 		}
 
 		// we have a match between what is stored in db and in dashboard json
@@ -95,6 +104,22 @@ func (lps *LibraryPanelService) LoadLibraryPanelsForDashboard(dash *models.Dashb
 		elem.Set("libraryPanel", map[string]interface{}{
 			"uid":  libraryPanelInDB.UID,
 			"name": libraryPanelInDB.Name,
+			"meta": map[string]interface{}{
+				"canEdit":             libraryPanelInDB.Meta.CanEdit,
+				"connectedDashboards": libraryPanelInDB.Meta.ConnectedDashboards,
+				"created":             libraryPanelInDB.Meta.Created,
+				"updated":             libraryPanelInDB.Meta.Updated,
+				"createdBy": map[string]interface{}{
+					"id":        libraryPanelInDB.Meta.CreatedBy.ID,
+					"name":      libraryPanelInDB.Meta.CreatedBy.Name,
+					"avatarUrl": libraryPanelInDB.Meta.CreatedBy.AvatarUrl,
+				},
+				"updatedBy": map[string]interface{}{
+					"id":        libraryPanelInDB.Meta.UpdatedBy.ID,
+					"name":      libraryPanelInDB.Meta.UpdatedBy.Name,
+					"avatarUrl": libraryPanelInDB.Meta.UpdatedBy.AvatarUrl,
+				},
+			},
 		})
 	}
 

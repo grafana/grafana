@@ -15,7 +15,6 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 973,
   "links": [],
   "panels": [
     {
@@ -408,23 +407,11 @@
       "datasource": "gdev-testdata",
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
+          "color": {},
           "custom": {},
-          "mappings": [],
           "thresholds": {
-            "mode": "percentage",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "orange",
-                "value": 40
-              }
-            ]
+            "mode": "absolute",
+            "steps": []
           }
         },
         "overrides": []
@@ -438,7 +425,7 @@
       "id": 25,
       "links": [],
       "options": {
-        "content": "## Interpolation modes\n\nThe new time series panel brings a new interpolation mode\nwhere you can choose between.\n* Linear\n* Smooth\n* Step after         \n* Step before (same as old graph panels staircase option)",
+        "content": "## Interpolation modes\n\nThe new time series panel brings a new interpolation mode\nwhere you can choose between.\n* Linear\n* Smooth\n* Step before\n* Step after (same as old staircase option)",
         "mode": "markdown"
       },
       "pluginVersion": "7.4.0-beta1",
@@ -499,7 +486,6 @@
             "spanNulls": true
           },
           "mappings": [],
-          "nullValueMode": "null",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -602,7 +588,6 @@
           "mappings": [],
           "max": 30,
           "min": 0,
-          "nullValueMode": "null",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -706,7 +691,6 @@
           "mappings": [],
           "max": 30,
           "min": 0,
-          "nullValueMode": "null",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -810,7 +794,6 @@
             "spanNulls": true
           },
           "mappings": [],
-          "nullValueMode": "null",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -885,23 +868,11 @@
       "datasource": "gdev-testdata",
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
+          "color": {},
           "custom": {},
-          "mappings": [],
           "thresholds": {
-            "mode": "percentage",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "orange",
-                "value": 40
-              }
-            ]
+            "mode": "absolute",
+            "steps": []
           }
         },
         "overrides": []
@@ -955,7 +926,7 @@
           "custom": {
             "axisLabel": "",
             "axisPlacement": "auto",
-            "axisSoftMax": 130,
+            "axisSoftMax": 60,
             "axisSoftMin": 0,
             "drawStyle": "line",
             "fillOpacity": 0,
@@ -994,12 +965,12 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Temperature C"
+              "options": "Temperature"
             },
             "properties": [
               {
                 "id": "unit",
-                "value": "degree"
+                "value": "celsius"
               },
               {
                 "id": "custom.axisPlacement",
@@ -1010,12 +981,12 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Temperature F"
+              "options": "Pressure"
             },
             "properties": [
               {
                 "id": "unit",
-                "value": "fahrenheit"
+                "value": "pressurekpa"
               },
               {
                 "id": "custom.axisPlacement",
@@ -1064,7 +1035,7 @@
       "pluginVersion": "7.4.0-beta1",
       "targets": [
         {
-          "alias": "Temperature C",
+          "alias": "Temperature",
           "csvWave": {
             "timeStep": 60,
             "valuesCSV": "0,0,2,2,1,1"
@@ -1090,7 +1061,7 @@
           "stringInput": "20,25,30,18,35,20,30,25"
         },
         {
-          "alias": "Temperature F",
+          "alias": "Pressure",
           "csvWave": {
             "timeStep": 60,
             "valuesCSV": "0,0,2,2,1,1"
@@ -1114,7 +1085,7 @@
             "spread": 3.5,
             "type": "signal"
           },
-          "stringInput": "68,77,86,64.4,95,68,86,77"
+          "stringInput": "320,230,120,180,400,340,50,270"
         },
         {
           "alias": "Energy",
@@ -1124,6 +1095,8 @@
           },
           "hide": false,
           "lines": 10,
+          "max": 300,
+          "min": 100,
           "noise": 10,
           "points": [],
           "pulseWave": {
@@ -1135,7 +1108,8 @@
           },
           "refId": "C",
           "scenarioId": "random_walk",
-          "spread": 10,
+          "spread": 100,
+          "startValue": 0,
           "stream": {
             "bands": 1,
             "noise": 2.2,
@@ -1154,23 +1128,11 @@
       "datasource": "gdev-testdata",
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
+          "color": {},
           "custom": {},
-          "mappings": [],
           "thresholds": {
-            "mode": "percentage",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "orange",
-                "value": 40
-              }
-            ]
+            "mode": "absolute",
+            "steps": []
           }
         },
         "overrides": []
@@ -1663,7 +1625,7 @@
           "stringInput": "1,20,90,30,5,0"
         }
       ],
-      "title": "Bars with fill gradient",
+      "title": "Bars with opacity gradient",
       "type": "timeseries"
     },
     {
@@ -1797,23 +1759,11 @@
       "datasource": "gdev-testdata",
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
+          "color": {},
           "custom": {},
-          "mappings": [],
           "thresholds": {
-            "mode": "percentage",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "orange",
-                "value": 40
-              }
-            ]
+            "mode": "absolute",
+            "steps": []
           }
         },
         "overrides": []
@@ -1986,23 +1936,11 @@
       "datasource": "gdev-testdata",
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
+          "color": {},
           "custom": {},
-          "mappings": [],
           "thresholds": {
-            "mode": "percentage",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "orange",
-                "value": 40
-              }
-            ]
+            "mode": "absolute",
+            "steps": []
           }
         },
         "overrides": []
@@ -2077,7 +2015,6 @@
             "spanNulls": true
           },
           "mappings": [],
-          "nullValueMode": "null",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -2184,23 +2121,11 @@
       "datasource": "gdev-testdata",
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
+          "color": {},
           "custom": {},
-          "mappings": [],
           "thresholds": {
-            "mode": "percentage",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "orange",
-                "value": 40
-              }
-            ]
+            "mode": "absolute",
+            "steps": []
           }
         },
         "overrides": []
@@ -2231,11 +2156,12 @@
       "type": "text"
     }
   ],
-  "refresh": "",
+  "refresh": false,
   "schemaVersion": 27,
   "style": "dark",
   "tags": [
-    "gdev", "demo"
+    "gdev",
+    "demo"
   ],
   "templating": {
     "list": []

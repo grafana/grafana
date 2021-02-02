@@ -1,28 +1,32 @@
-import { FALLBACK_COLOR, FieldColorMode, GrafanaTheme, ThresholdsConfig } from '@grafana/data';
+import { DataFrameFieldIndex, FALLBACK_COLOR, FieldColorMode, GrafanaTheme, ThresholdsConfig } from '@grafana/data';
 import tinycolor from 'tinycolor2';
 import uPlot, { Series } from 'uplot';
 import {
+  BarAlignment,
+  BarConfig,
   DrawStyle,
-  LineConfig,
   FillConfig,
+  GraphGradientMode,
+  LineConfig,
+  LineInterpolation,
   PointsConfig,
   PointVisibility,
-  LineInterpolation,
-  GraphGradientMode,
 } from '../config';
 import { PlotConfigBuilder } from '../types';
-import { DataFrameFieldIndex } from '@grafana/data';
-import { getScaleGradientFn, getOpacityGradientFn, getHueGradientFn } from './gradientFills';
+import { getHueGradientFn, getOpacityGradientFn, getScaleGradientFn } from './gradientFills';
 
-export interface SeriesProps extends LineConfig, FillConfig, PointsConfig {
+export interface SeriesProps extends LineConfig, BarConfig, FillConfig, PointsConfig {
   scaleKey: string;
+  pxAlign?: boolean;
   gradientMode?: GraphGradientMode;
   /** Used when gradientMode is set to Scheme */
   thresholds?: ThresholdsConfig;
   /** Used when gradientMode is set to Scheme  */
   colorMode?: FieldColorMode;
   fieldName: string;
-  drawStyle: DrawStyle;
+  drawStyle?: DrawStyle;
+  pathBuilder?: Series.PathBuilder;
+  pointsBuilder?: Series.Points.Show;
   show?: boolean;
   dataFrameFieldIndex?: DataFrameFieldIndex;
   hideInLegend?: boolean;
@@ -33,22 +37,30 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
   getConfig() {
     const {
       drawStyle,
+      pathBuilder,
+      pointsBuilder,
       lineInterpolation,
       lineWidth,
       lineStyle,
+      barAlignment,
       showPoints,
       pointColor,
       pointSize,
       scaleKey,
+      pxAlign,
       spanNulls,
       show = true,
     } = this.props;
 
     let lineConfig: Partial<Series> = {};
 
-    if (drawStyle === DrawStyle.Points) {
+    if (pathBuilder != null) {
+      lineConfig.paths = pathBuilder;
+      lineConfig.stroke = this.getLineColor();
+      lineConfig.width = lineWidth;
+    } else if (drawStyle === DrawStyle.Points) {
       lineConfig.paths = () => null;
-    } else {
+    } else if (drawStyle != null) {
       lineConfig.stroke = this.getLineColor();
       lineConfig.width = lineWidth;
       if (lineStyle && lineStyle.fill !== 'solid') {
@@ -58,7 +70,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
         lineConfig.dash = lineStyle.dash ?? [10, 10];
       }
       lineConfig.paths = (self: uPlot, seriesIdx: number, idx0: number, idx1: number) => {
-        let pathsBuilder = mapDrawStyleToPathBuilder(drawStyle, lineInterpolation);
+        let pathsBuilder = mapDrawStyleToPathBuilder(drawStyle, lineInterpolation, barAlignment);
         return pathsBuilder(self, seriesIdx, idx0, idx1);
       };
     }
@@ -71,24 +83,29 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       },
     };
 
-    // we cannot set points.show property above (even to undefined) as that will clear uPlot's default auto behavior
-    if (drawStyle === DrawStyle.Points) {
-      pointsConfig.points!.show = true;
+    if (pointsBuilder != null) {
+      pointsConfig.points!.show = pointsBuilder;
     } else {
-      if (showPoints === PointVisibility.Auto) {
-        if (drawStyle === DrawStyle.Bars) {
-          pointsConfig.points!.show = false;
-        }
-      } else if (showPoints === PointVisibility.Never) {
-        pointsConfig.points!.show = false;
-      } else if (showPoints === PointVisibility.Always) {
+      // we cannot set points.show property above (even to undefined) as that will clear uPlot's default auto behavior
+      if (drawStyle === DrawStyle.Points) {
         pointsConfig.points!.show = true;
+      } else {
+        if (showPoints === PointVisibility.Auto) {
+          if (drawStyle === DrawStyle.Bars) {
+            pointsConfig.points!.show = false;
+          }
+        } else if (showPoints === PointVisibility.Never) {
+          pointsConfig.points!.show = false;
+        } else if (showPoints === PointVisibility.Always) {
+          pointsConfig.points!.show = true;
+        }
       }
     }
 
     return {
       scale: scaleKey,
       spanGaps: spanNulls,
+      pxAlign,
       show,
       fill: this.getFill(),
       ...lineConfig,
@@ -134,11 +151,13 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
 }
 
 interface PathBuilders {
-  bars: Series.PathBuilder;
   linear: Series.PathBuilder;
   smooth: Series.PathBuilder;
   stepBefore: Series.PathBuilder;
   stepAfter: Series.PathBuilder;
+  bars: Series.PathBuilder;
+  barsAfter: Series.PathBuilder;
+  barsBefore: Series.PathBuilder;
 }
 
 let builders: PathBuilders | undefined = undefined;
@@ -146,24 +165,32 @@ let builders: PathBuilders | undefined = undefined;
 function mapDrawStyleToPathBuilder(
   style: DrawStyle,
   lineInterpolation?: LineInterpolation,
-  opts?: any
+  barAlignment?: BarAlignment
 ): Series.PathBuilder {
-  // This should be global static, but Jest initalization was failing so we lazy load to avoid the issue
   if (!builders) {
+    // This should be global static, but Jest initalization was failing so we lazy load to avoid the issue
     const pathBuilders = uPlot.paths;
     const barWidthFactor = 0.6;
     const barMaxWidth = Infinity;
 
     builders = {
-      bars: pathBuilders.bars!({ size: [barWidthFactor, barMaxWidth] }),
       linear: pathBuilders.linear!(),
       smooth: pathBuilders.spline!(),
       stepBefore: pathBuilders.stepped!({ align: -1 }),
       stepAfter: pathBuilders.stepped!({ align: 1 }),
+      bars: pathBuilders.bars!({ size: [barWidthFactor, barMaxWidth] }),
+      barsBefore: pathBuilders.bars!({ size: [barWidthFactor, barMaxWidth], align: -1 }),
+      barsAfter: pathBuilders.bars!({ size: [barWidthFactor, barMaxWidth], align: 1 }),
     };
   }
 
   if (style === DrawStyle.Bars) {
+    if (barAlignment === BarAlignment.After) {
+      return builders.barsAfter;
+    }
+    if (barAlignment === BarAlignment.Before) {
+      return builders.barsBefore;
+    }
     return builders.bars;
   }
   if (style === DrawStyle.Line) {

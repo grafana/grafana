@@ -5,18 +5,27 @@ import {
   DisplayValue,
   FieldConfig,
   FieldMatcher,
+  FieldMatcherID,
+  fieldMatchers,
   fieldReducers,
   FieldType,
   formattedValueToString,
   getFieldDisplayName,
+  outerJoinDataFrames,
   reduceField,
   TimeRange,
+  TimeZone,
 } from '@grafana/data';
-import { joinDataFrames } from './utils';
 import { useTheme } from '../../themes';
 import { UPlotChart } from '../uPlot/Plot';
-import { PlotProps } from '../uPlot/types';
-import { AxisPlacement, DrawStyle, GraphFieldConfig, PointVisibility } from '../uPlot/config';
+import {
+  AxisPlacement,
+  DrawStyle,
+  GraphFieldConfig,
+  PointVisibility,
+  ScaleDirection,
+  ScaleOrientation,
+} from '../uPlot/config';
 import { VizLayout } from '../VizLayout/VizLayout';
 import { LegendDisplayMode, VizLegendItem, VizLegendOptions } from '../VizLegend/types';
 import { VizLegend } from '../VizLegend/VizLegend';
@@ -32,12 +41,18 @@ export interface XYFieldMatchers {
   x: FieldMatcher; // first match
   y: FieldMatcher;
 }
-export interface GraphNGProps extends Omit<PlotProps, 'data' | 'config'> {
+
+export interface GraphNGProps {
+  width: number;
+  height: number;
   data: DataFrame[];
+  timeRange: TimeRange;
   legend: VizLegendOptions;
+  timeZone: TimeZone;
   fields?: XYFieldMatchers; // default will assume timeseries data
   onLegendClick?: (event: GraphNGLegendEvent) => void;
   onSeriesColorChange?: (label: string, color: string) => void;
+  children?: React.ReactNode;
 }
 
 const defaultConfig: GraphFieldConfig = {
@@ -64,7 +79,16 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   const theme = useTheme();
   const hasLegend = useRef(legend && legend.displayMode !== LegendDisplayMode.Hidden);
 
-  const frame = useMemo(() => joinDataFrames(data, fields), [data, fields]);
+  const frame = useMemo(() => {
+    // Default to timeseries config
+    if (!fields) {
+      fields = {
+        x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
+        y: fieldMatchers.get(FieldMatcherID.numeric).get({}),
+      };
+    }
+    return outerJoinDataFrames({ frames: data, joinBy: fields.x, keep: fields.y, keepOriginIndices: true });
+  }, [data, fields]);
 
   const compareFrames = useCallback((a?: DataFrame | null, b?: DataFrame | null) => {
     if (a && b) {
@@ -107,10 +131,13 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
     // X is the first field in the aligned frame
     const xField = frame.fields[0];
+    let seriesIndex = 0;
 
     if (xField.type === FieldType.time) {
       builder.addScale({
         scaleKey: 'x',
+        orientation: ScaleOrientation.Horizontal,
+        direction: ScaleDirection.Right,
         isTime: true,
         range: () => {
           const r = currentTimeRange.current!;
@@ -129,6 +156,8 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       // Not time!
       builder.addScale({
         scaleKey: 'x',
+        orientation: ScaleOrientation.Horizontal,
+        direction: ScaleDirection.Right,
       });
 
       builder.addAxis({
@@ -150,6 +179,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       if (field === xField || field.type !== FieldType.number) {
         continue;
       }
+      field.state!.seriesIndex = seriesIndex++;
 
       const fmt = field.display ?? defaultFormatter;
       const scaleKey = config.unit || FIXED_UNIT;
@@ -157,18 +187,20 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       const scaleColor = getFieldSeriesColor(field, theme);
       const seriesColor = scaleColor.color;
 
-      if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
-        // The builder will manage unique scaleKeys and combine where appropriate
-        builder.addScale({
-          scaleKey,
-          distribution: customConfig.scaleDistribution?.type,
-          log: customConfig.scaleDistribution?.log,
-          min: field.config.min,
-          max: field.config.max,
-          softMin: customConfig.axisSoftMin,
-          softMax: customConfig.axisSoftMax,
-        });
+      // The builder will manage unique scaleKeys and combine where appropriate
+      builder.addScale({
+        scaleKey,
+        orientation: ScaleOrientation.Vertical,
+        direction: ScaleDirection.Up,
+        distribution: customConfig.scaleDistribution?.type,
+        log: customConfig.scaleDistribution?.log,
+        min: field.config.min,
+        max: field.config.max,
+        softMin: customConfig.axisSoftMin,
+        softMax: customConfig.axisSoftMax,
+      });
 
+      if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
         builder.addAxis({
           scaleKey,
           label: customConfig.axisLabel,
@@ -210,6 +242,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         lineWidth: customConfig.lineWidth,
         lineInterpolation: customConfig.lineInterpolation,
         lineStyle: customConfig.lineStyle,
+        barAlignment: customConfig.barAlignment,
         pointSize: customConfig.pointSize,
         pointColor: customConfig.pointColor ?? seriesColor,
         spanNulls: customConfig.spanNulls || false,

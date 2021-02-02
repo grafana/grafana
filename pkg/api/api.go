@@ -350,7 +350,6 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// metrics
 		apiRoute.Post("/tsdb/query", bind(dtos.MetricRequest{}), routing.Wrap(hs.QueryMetrics))
-		apiRoute.Get("/tsdb/testdata/scenarios", routing.Wrap(GetTestDataScenarios))
 		apiRoute.Get("/tsdb/testdata/gensql", reqGrafanaAdmin, routing.Wrap(GenerateSQLTestData))
 		apiRoute.Get("/tsdb/testdata/random-walk", routing.Wrap(GetTestDataRandomWalk))
 
@@ -394,9 +393,6 @@ func (hs *HTTPServer) registerRoutes() {
 			annotationsRoute.Patch("/:annotationId", bind(dtos.PatchAnnotationsCmd{}), routing.Wrap(PatchAnnotation))
 			annotationsRoute.Post("/graphite", reqEditorRole, bind(dtos.PostGraphiteAnnotationsCmd{}), routing.Wrap(PostGraphiteAnnotation))
 		})
-
-		// error test
-		r.Get("/metrics/error", routing.Wrap(GenerateError))
 
 		// short urls
 		apiRoute.Post("/short-urls", bind(dtos.CreateShortURLCmd{}), routing.Wrap(hs.createShortURL))

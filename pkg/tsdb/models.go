@@ -264,5 +264,9 @@ func (df *dataFrames) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 
-	return jsoniter.Marshal(encoded)
+	// Use a configuration that's compatible with the standard library
+	// to minimize the risk of introducing bugs. This will make sure
+	// that map keys is ordered.
+	jsonCfg := jsoniter.ConfigCompatibleWithStandardLibrary
+	return jsonCfg.Marshal(encoded)
 }

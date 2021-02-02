@@ -123,6 +123,33 @@ func TestAlertingTicker(t *testing.T) {
 		tick := advanceClock(t, mockedClock)
 		assertEvalRun(t, evalAppliedCh, tick, expectedAlertDefinitionsEvaluated...)
 	})
+
+	// pause alert definition
+	err = ng.updateAlertDefinitionPaused(&updateAlertDefinitionPausedCommand{UIDs: []string{alerts[2].UID}, OrgID: alerts[2].OrgID, Paused: true})
+	require.NoError(t, err)
+	t.Logf("alert definition: %v paused", alerts[2].getKey())
+
+	expectedAlertDefinitionsEvaluated = []alertDefinitionKey{}
+	t.Run(fmt.Sprintf("on 8th tick alert definitions: %s should be evaluated", concatenate(expectedAlertDefinitionsEvaluated)), func(t *testing.T) {
+		tick := advanceClock(t, mockedClock)
+		assertEvalRun(t, evalAppliedCh, tick, expectedAlertDefinitionsEvaluated...)
+	})
+
+	expectedAlertDefinitionsStopped = []alertDefinitionKey{alerts[2].getKey()}
+	t.Run(fmt.Sprintf("on 8th tick alert definitions: %s should be stopped", concatenate(expectedAlertDefinitionsStopped)), func(t *testing.T) {
+		assertStopRun(t, stopAppliedCh, expectedAlertDefinitionsStopped...)
+	})
+
+	// unpause alert definition
+	err = ng.updateAlertDefinitionPaused(&updateAlertDefinitionPausedCommand{UIDs: []string{alerts[2].UID}, OrgID: alerts[2].OrgID, Paused: false})
+	require.NoError(t, err)
+	t.Logf("alert definition: %v unpaused", alerts[2].getKey())
+
+	expectedAlertDefinitionsEvaluated = []alertDefinitionKey{alerts[0].getKey(), alerts[2].getKey()}
+	t.Run(fmt.Sprintf("on 9th tick alert definitions: %s should be evaluated", concatenate(expectedAlertDefinitionsEvaluated)), func(t *testing.T) {
+		tick := advanceClock(t, mockedClock)
+		assertEvalRun(t, evalAppliedCh, tick, expectedAlertDefinitionsEvaluated...)
+	})
 }
 
 func assertEvalRun(t *testing.T, ch <-chan evalAppliedInfo, tick time.Time, keys ...alertDefinitionKey) {

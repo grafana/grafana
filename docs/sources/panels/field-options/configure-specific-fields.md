@@ -20,9 +20,10 @@ You can override as many field options as you want to.
 1. Click the **Overrides** tab.
 1. Click **Add an override for**.
 1. Select which fields an override rule will be applied to:
-   - **Fields with name -** Allows you to select a field from the list of all available fields. Properties you add to a rule with this selector are only applied to this single field.
-   - **Fields with name matching regex -** Allows you to specify fields to override with a regular expression. Properties you add to a rule with this selector are applied to all fields where the field name match the regex.
-   - **Fields with type -** Allows you to select fields by type, such as string, numeric, and so on. Properties you add to a rule with this selector are applied to all fields that match the selected type.
+   - **Fields with name -** Select a field from the list of all available fields. Properties you add to a rule with this selector are only applied to this single field.
+   - **Fields with name matching regex -** Specify fields to override with a regular expression. Properties you add to a rule with this selector are applied to all fields where the field name match the regex.
+   - **Fields with type -** Select fields by type, such as string, numeric, and so on. Properties you add to a rule with this selector are applied to all fields that match the selected type.
+   - **Fields returned by query -** Select all fields returned by a specific query, such as A, B, or C. Properties you add to a rule with this selector are applied to all fields returned by the selected query.
 1. Click **Add override property**.
 1. Select the field option that you want to apply.
    - [Standard field options]({{< relref "standard-field-options.md" >}}), which apply to all panel visualizations that allow transformations.

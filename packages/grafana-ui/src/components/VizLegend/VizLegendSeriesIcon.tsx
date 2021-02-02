@@ -8,6 +8,9 @@ interface Props {
   onColorChange: (color: string) => void;
 }
 
+/**
+ * @internal
+ */
 export const VizLegendSeriesIcon: React.FunctionComponent<Props> = ({ disabled, color, onColorChange }) => {
   return disabled ? (
     <SeriesIcon color={color} />

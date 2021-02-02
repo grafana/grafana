@@ -2,20 +2,19 @@
   <div class="grafana-info-box">
     <h4>Google Cloud Monitoring Authentication</h4>
     <p>
-      There are two ways to authenticate the Google Cloud Monitoring plugin - either by uploading a Service Account key file, or by
+      There are two ways to authenticate the Google Cloud Monitoring plugin - either by uploading a Service Account key file or by
       automatically retrieving credentials from the Google metadata server. The latter option is only available when
       running Grafana on a GCE virtual machine.
     </p>
 
     <h5>Uploading a Service Account Key File</h5>
     <p>
-      First you need to create a Google Cloud Platform (GCP) Service Account for the Project you want to show data for.
-      A Grafana datasource integrates with one GCP Project. If you want to visualize data from multiple GCP Projects
-      then you need to create one datasource per GCP Project.
+      There are two ways to authenticate the Google Cloud Monitoring plugin. You can upload a Service Account key file or automatically retrieve 
+      credentials from the Google metadata server. The latter option is only available when running Grafana on a GCE virtual machine.
     </p>
     <p>
       The <strong>Monitoring Viewer</strong> role provides all the permissions that Grafana needs. The following API
-      needs to be enabled on GCP for the datasource to work:
+      needs to be enabled on GCP for the data source to work:
       <a
         class="external-link"
         target="_blank"
@@ -34,7 +33,7 @@
 
     <p>
       Detailed instructions on how to create a Service Account can be found
-      <a class="external-link" target="_blank" href="https://grafana.com/docs/grafana/latest/datasources/cloudmonitoring/"
+      <a class="external-link" target="_blank" href="https://grafana.com/docs/grafana/latest/datasources/google-cloud-monitoring/_index.md"
         >in the documentation.</a
       >
     </p>
