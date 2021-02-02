@@ -40,7 +40,7 @@ export function Modal(props: PropsWithChildren<Props>): ReturnType<FC<Props>> {
     }
   }, [propsOnDismiss]);
 
-  const onEscKey = (ev: KeyboardEvent): void => {
+  const onEscKey = (ev: KeyboardEvent) => {
     if (ev.key === 'Esc' || ev.key === 'Escape') {
       onDismiss();
     }
