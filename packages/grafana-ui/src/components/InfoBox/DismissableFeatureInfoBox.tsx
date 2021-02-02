@@ -4,7 +4,7 @@ import { FeatureInfoBox, FeatureInfoBoxProps } from './FeatureInfoBox';
 
 export const FEATUREINFOBOX_PERSISTENCE_ID_PREFIX = 'grafana-ui.components.InfoBox.FeatureInfoBox';
 
-interface DismissableFeatureInfoBoxProps extends FeatureInfoBoxProps {
+export interface DismissableFeatureInfoBoxProps extends FeatureInfoBoxProps {
   /** Unique id under which this instance will be persisted. */
   persistenceId: string;
 }
