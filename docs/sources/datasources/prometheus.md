@@ -214,5 +214,5 @@ Exemplars are a way to associate higher cardinality metadata from a specific eve
 {{< docs-imagebox img="/img/docs/v74/exemplars.png" class="docs-image--no-shadow" caption="Screenshot showing the detail window of an Exemplar" >}}
 
 Configure Exemplars in the data source settings by adding external or internal links.
-{{< docs-imagebox img="/img/docs/v74/exemplars-settings.png" class="docs-image--no-shadow" caption="Screenshot of the Exemplars configuration" >}}
+{{< docs-imagebox img="/img/docs/v74/exemplars-setting.png" class="docs-image--no-shadow" caption="Screenshot of the Exemplars configuration" >}}
 
