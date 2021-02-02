@@ -23,7 +23,7 @@ e2e.scenario({
 
     e2e.components.QueryField.container().should('be.visible').type('long-trace');
 
-    e2e.components.RefreshPicker.runButton().click();
+    e2e.components.RefreshPicker.runButton().should('be.visible').click();
 
     e2e().get('[data-test-id="SpanBar--wrapper"]').should('have.length', 100);
     e2e().get('.scrollbar-view').scrollTo('center');
