@@ -36,7 +36,7 @@ Organization Admins can:
 
 ## Teams
 
-Teams are groups of users that are all members of the same organization. Teams allow you to grant permissions for a group of users. Teams are most often used to manage [permissions for folders and dashboards]({{< relref "../permissions/dashboard_folder_permissions.md" >}}). Enterprise users might use them to apply [data source permissions]({{< relref "../enterprise/datasource_permissions.md" >}}).
+Teams are groups of users within the same organization. Teams allow you to grant permissions for a group of users. They are most often used to manage [permissions for folders and dashboards]({{< relref "../permissions/dashboard_folder_permissions.md" >}}). Enterprise users might use them to apply [data source permissions]({{< relref "../enterprise/datasource_permissions.md" >}}).
 
 Teams are mostly managed by Organization Admins, but if the Grafana server setting [editors_can_admin]({{< relref "../administration/configuration.md#editors_can_admin" >}}) is applied, then users assigned the Team Admin role can also manage teams in their organization and users assigned to their teams.
 
