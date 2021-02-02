@@ -1,16 +1,16 @@
 import {
-  MutableDataFrame,
-  DataSourceApi,
-  DataSourceInstanceSettings,
+  DataQuery,
   DataQueryRequest,
   DataQueryResponse,
-  DataQuery,
+  DataSourceApi,
+  DataSourceInstanceSettings,
   FieldType,
+  MutableDataFrame,
 } from '@grafana/data';
-import { from, Observable, of } from 'rxjs';
-import { serializeParams } from '../../../core/utils/fetch';
-import { getBackendSrv, BackendSrvRequest } from '@grafana/runtime';
+import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
+import { of } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { serializeParams } from '../../../core/utils/fetch';
 import { apiPrefix } from './constants';
 import { ZipkinSpan } from './types';
 import { transformResponse } from './utils/transforms';
@@ -24,7 +24,7 @@ export class ZipkinDatasource extends DataSourceApi<ZipkinQuery> {
     super(instanceSettings);
   }
 
-  query(options: DataQueryRequest<ZipkinQuery>): Observable<DataQueryResponse> {
+  query(options: DataQueryRequest<ZipkinQuery>) {
     const traceId = options.targets[0]?.query;
     if (traceId) {
       return this.request<ZipkinSpan[]>(`${apiPrefix}/trace/${encodeURIComponent(traceId)}`).pipe(
@@ -35,31 +35,29 @@ export class ZipkinDatasource extends DataSourceApi<ZipkinQuery> {
     }
   }
 
-  async metadataRequest(url: string, params?: Record<string, any>): Promise<any> {
+  async metadataRequest(url: string, params?: Record<string, any>) {
     const res = await this.request(url, params, { hideFromInspector: true }).toPromise();
     return res.data;
   }
 
-  async testDatasource(): Promise<any> {
+  async testDatasource() {
     await this.metadataRequest(`${apiPrefix}/services`);
-    return true;
+    return { status: 'success', message: 'Data source is working' };
   }
 
   getQueryDisplayText(query: ZipkinQuery) {
     return query.query;
   }
 
-  private request<T = any>(apiUrl: string, data?: any, options?: Partial<BackendSrvRequest>): Observable<{ data: T }> {
-    // Hack for proxying metadata requests
-    const baseUrl = `/api/datasources/proxy/${this.instanceSettings.id}`;
+  private request<T = any>(apiUrl: string, data?: any, options?: Partial<BackendSrvRequest>) {
     const params = data ? serializeParams(data) : '';
-    const url = `${baseUrl}${apiUrl}${params.length ? `?${params}` : ''}`;
+    const url = `${this.instanceSettings.url}${apiUrl}${params.length ? `?${params}` : ''}`;
     const req = {
       ...options,
       url,
     };
 
-    return from(getBackendSrv().datasourceRequest(req));
+    return getBackendSrv().fetch<T>(req);
   }
 }
 
