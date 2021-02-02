@@ -7,3 +7,5 @@ public/vendor/
 vendor/
 data/
 e2e/tmp
+public/build/
+devenv/

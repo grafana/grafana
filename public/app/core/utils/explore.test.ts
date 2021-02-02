@@ -204,7 +204,7 @@ describe('getExploreUrl', () => {
   } as unknown) as GetExploreUrlArguments;
 
   it('should omit legendFormat in explore url', () => {
-    expect(getExploreUrl(args).then(data => expect(data).not.toMatch(/legendFormat1/g)));
+    expect(getExploreUrl(args).then((data) => expect(data).not.toMatch(/legendFormat1/g)));
   });
 });
 
@@ -300,12 +300,8 @@ describe('getTimeRangeFromUrl', () => {
 
   it('should parse epoch strings', () => {
     const range = {
-      from: dateTime('2020-10-22T10:00:00Z')
-        .valueOf()
-        .toString(),
-      to: dateTime('2020-10-22T11:00:00Z')
-        .valueOf()
-        .toString(),
+      from: dateTime('2020-10-22T10:00:00Z').valueOf().toString(),
+      to: dateTime('2020-10-22T11:00:00Z').valueOf().toString(),
     };
     const result = getTimeRangeFromUrl(range, 'browser');
     expect(result.from.valueOf()).toEqual(dateTime('2020-10-22T10:00:00Z').valueOf());

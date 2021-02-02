@@ -189,8 +189,8 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
         <BasicSettings
           dataSourceName={dataSource.name}
           isDefault={dataSource.isDefault}
-          onDefaultChange={state => setIsDefault(state)}
-          onNameChange={name => setDataSourceName(name)}
+          onDefaultChange={(state) => setIsDefault(state)}
+          onNameChange={(name) => setDataSourceName(name)}
         />
 
         {plugin && (
@@ -213,10 +213,10 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
         </div>
 
         <ButtonRow
-          onSubmit={event => this.onSubmit(event)}
+          onSubmit={(event) => this.onSubmit(event)}
           isReadOnly={this.isReadOnly()}
           onDelete={this.onDelete}
-          onTest={event => this.onTest(event)}
+          onTest={(event) => this.onTest(event)}
         />
       </form>
     );
@@ -274,5 +274,5 @@ const mapDispatchToProps = {
 };
 
 export default hot(module)(
-  connectWithCleanUp(mapStateToProps, mapDispatchToProps, state => state.dataSourceSettings)(DataSourceSettingsPage)
+  connectWithCleanUp(mapStateToProps, mapDispatchToProps, (state) => state.dataSourceSettings)(DataSourceSettingsPage)
 );

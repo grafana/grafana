@@ -170,7 +170,7 @@ describe('CloudWatchLogsQueryField', () => {
             },
             describeLogGroups(params: DescribeLogGroupsRequest) {
               const theLogGroups = allLogGroups
-                .filter(logGroupName => logGroupName.startsWith(params.logGroupNamePrefix ?? ''))
+                .filter((logGroupName) => logGroupName.startsWith(params.logGroupNamePrefix ?? ''))
                 .slice(0, Math.max(params.limit ?? 50, 50));
               return Promise.resolve(theLogGroups);
             },
@@ -184,7 +184,7 @@ describe('CloudWatchLogsQueryField', () => {
 
     const initialAvailableGroups = allLogGroups
       .slice(0, 50)
-      .map(logGroupName => ({ value: logGroupName, label: logGroupName }));
+      .map((logGroupName) => ({ value: logGroupName, label: logGroupName }));
     wrapper.setState({
       availableLogGroups: initialAvailableGroups,
     });
@@ -192,19 +192,19 @@ describe('CloudWatchLogsQueryField', () => {
     await wrapper.instance().onLogGroupSearch('Water', 'default', { action: 'input-change' });
 
     let nextAvailableGroups = (wrapper.state('availableLogGroups') as Array<SelectableValue<string>>).map(
-      logGroup => logGroup.value
+      (logGroup) => logGroup.value
     );
     expect(nextAvailableGroups).toEqual(
-      initialAvailableGroups.map(logGroup => logGroup.value).concat(['WaterGroup', 'WaterGroup2', 'WaterGroup3'])
+      initialAvailableGroups.map((logGroup) => logGroup.value).concat(['WaterGroup', 'WaterGroup2', 'WaterGroup3'])
     );
 
     await wrapper.instance().onLogGroupSearch('Velv', 'default', { action: 'input-change' });
     nextAvailableGroups = (wrapper.state('availableLogGroups') as Array<SelectableValue<string>>).map(
-      logGroup => logGroup.value
+      (logGroup) => logGroup.value
     );
     expect(nextAvailableGroups).toEqual(
       initialAvailableGroups
-        .map(logGroup => logGroup.value)
+        .map((logGroup) => logGroup.value)
         .concat(['WaterGroup', 'WaterGroup2', 'WaterGroup3', 'VelvetGroup', 'VelvetGroup2', 'VelvetGroup3'])
     );
   });

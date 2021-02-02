@@ -123,7 +123,7 @@ export const ContextMenuView: React.FC<ContextMenuProps> = ({
 
         if (linksSupplier) {
           items.push({
-            items: linksSupplier.getLinks(replaceVariables).map<MenuItem>(link => {
+            items: linksSupplier.getLinks(replaceVariables).map<MenuItem>((link) => {
               return {
                 label: link.title,
                 url: link.href,

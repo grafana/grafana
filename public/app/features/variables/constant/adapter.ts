@@ -27,17 +27,17 @@ export const createConstantVariableAdapter = (): VariableAdapter<ConstantVariabl
     setValueFromUrl: async (variable, urlValue) => {
       await dispatch(setOptionFromUrl(toVariableIdentifier(variable), urlValue));
     },
-    updateOptions: async variable => {
+    updateOptions: async (variable) => {
       await dispatch(updateConstantVariableOptions(toVariableIdentifier(variable)));
     },
-    getSaveModel: variable => {
+    getSaveModel: (variable) => {
       const { index, id, state, global, current, options, ...rest } = cloneDeep(variable);
       return rest;
     },
-    getValueForUrl: variable => {
+    getValueForUrl: (variable) => {
       return variable.current.value;
     },
-    beforeAdding: model => {
+    beforeAdding: (model) => {
       const { current, options, query, ...rest } = cloneDeep(model);
       const option = { selected: true, text: query, value: query };
 

@@ -94,11 +94,7 @@ describe('adhoc actions', () => {
         .givenRootReducer(getRootReducer())
         .whenAsyncActionIsDispatched(applyFilterFromTable(options), true);
 
-      const variable = adHocBuilder()
-        .withId('Filters')
-        .withName('Filters')
-        .withDatasource(options.datasource)
-        .build();
+      const variable = adHocBuilder().withId('Filters').withName('Filters').withDatasource(options.datasource).build();
 
       const expectedQuery = { 'var-Filters': ['filter-key|=|filter-value'] };
       const expectedFilter = { key: 'filter-key', value: 'filter-value', operator: '=', condition: '' };
@@ -157,11 +153,7 @@ describe('adhoc actions', () => {
         .withDatasource('elasticsearch')
         .build();
 
-      const variable = adHocBuilder()
-        .withId('Filters')
-        .withName('Filters')
-        .withDatasource(options.datasource)
-        .build();
+      const variable = adHocBuilder().withId('Filters').withName('Filters').withDatasource(options.datasource).build();
 
       const tester = await reduxTester<ReducersUsedInContext>()
         .givenRootReducer(getRootReducer())
@@ -409,11 +401,7 @@ describe('adhoc actions', () => {
     it('then correct actions are dispatched', async () => {
       const datasource = 'mysql';
       const loadingText = 'Adhoc filters are applied automatically to all queries that target this datasource';
-      const variable = adHocBuilder()
-        .withId('Filters')
-        .withName('Filters')
-        .withDatasource('influxdb')
-        .build();
+      const variable = adHocBuilder().withId('Filters').withName('Filters').withDatasource('influxdb').build();
 
       getDatasource.mockRestore();
       getDatasource.mockResolvedValue(null);
@@ -439,11 +427,7 @@ describe('adhoc actions', () => {
     it('then correct actions are dispatched', async () => {
       const datasource = 'elasticsearch';
       const loadingText = 'Adhoc filters are applied automatically to all queries that target this datasource';
-      const variable = adHocBuilder()
-        .withId('Filters')
-        .withName('Filters')
-        .withDatasource('influxdb')
-        .build();
+      const variable = adHocBuilder().withId('Filters').withName('Filters').withDatasource('influxdb').build();
 
       getDatasource.mockRestore();
       getDatasource.mockResolvedValue({

@@ -58,7 +58,7 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
     if (hasLinks && getLinks) {
       return (
         <DataLinksContextMenu links={getLinks}>
-          {api => {
+          {(api) => {
             return this.renderComponent(valueProps, api);
           }}
         </DataLinksContextMenu>

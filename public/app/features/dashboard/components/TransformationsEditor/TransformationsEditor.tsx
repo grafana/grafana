@@ -4,11 +4,13 @@ import {
   Button,
   Container,
   CustomScrollbar,
-  FeatureInfoBox,
   stylesFactory,
+  Themeable,
+  DismissableFeatureInfoBox,
   useTheme,
   ValuePicker,
   VerticalGroup,
+  withTheme,
 } from '@grafana/ui';
 import {
   DataFrame,
@@ -31,7 +33,7 @@ import { TransformationsEditorTransformation } from './types';
 import { PanelNotSupported } from '../PanelEditor/PanelNotSupported';
 import { AppNotificationSeverity } from '../../../../types';
 
-interface TransformationsEditorProps {
+interface TransformationsEditorProps extends Themeable {
   panel: PanelModel;
 }
 
@@ -40,7 +42,7 @@ interface State {
   transformations: TransformationsEditorTransformation[];
 }
 
-export class TransformationsEditor extends React.PureComponent<TransformationsEditorProps, State> {
+class UnThemedTransformationsEditor extends React.PureComponent<TransformationsEditorProps, State> {
   subscription?: Unsubscribable;
 
   constructor(props: TransformationsEditorProps) {
@@ -90,7 +92,7 @@ export class TransformationsEditor extends React.PureComponent<TransformationsEd
 
   onChange(transformations: TransformationsEditorTransformation[]) {
     this.setState({ transformations });
-    this.props.panel.setTransformations(transformations.map(t => t.transformation));
+    this.props.panel.setTransformations(transformations.map((t) => t.transformation));
   }
 
   // Transformation uid are stored in a name-X form. name is NOT unique hence we need to parse the ids and increase X
@@ -98,10 +100,10 @@ export class TransformationsEditor extends React.PureComponent<TransformationsEd
   getTransformationNextId = (name: string) => {
     const { transformations } = this.state;
     let nextId = 0;
-    const existingIds = transformations.filter(t => t.id.startsWith(name)).map(t => t.id);
+    const existingIds = transformations.filter((t) => t.id.startsWith(name)).map((t) => t.id);
 
     if (existingIds.length !== 0) {
-      nextId = Math.max(...existingIds.map(i => parseInt(i.match(/\d+/)![0], 10))) + 1;
+      nextId = Math.max(...existingIds.map((i) => parseInt(i.match(/\d+/)![0], 10))) + 1;
     }
 
     return `${name}-${nextId}`;
@@ -138,7 +140,7 @@ export class TransformationsEditor extends React.PureComponent<TransformationsEd
   };
 
   renderTransformationSelector = () => {
-    const availableTransformers = standardTransformersRegistry.list().map(t => {
+    const availableTransformers = standardTransformersRegistry.list().map((t) => {
       return {
         value: t.transformation.id,
         label: t.name,
@@ -188,7 +190,7 @@ export class TransformationsEditor extends React.PureComponent<TransformationsEd
     return (
       <DragDropContext onDragEnd={this.onDragEnd}>
         <Droppable droppableId="transformations-list" direction="vertical">
-          {provided => {
+          {(provided) => {
             return (
               <div ref={provided.innerRef} {...provided.droppableProps}>
                 <TransformationOperationRows
@@ -208,9 +210,16 @@ export class TransformationsEditor extends React.PureComponent<TransformationsEd
 
   renderNoAddedTransformsState() {
     return (
-      <VerticalGroup spacing={'lg'}>
+      <>
         <Container grow={1}>
-          <FeatureInfoBox title="Transformations" url={getDocsLink(DocsId.Transformations)}>
+          <DismissableFeatureInfoBox
+            title="Transformations"
+            className={css`
+              margin-bottom: ${this.props.theme.spacing.lg};
+            `}
+            persistenceId="transformationsFeaturesInfoBox"
+            url={getDocsLink(DocsId.Transformations)}
+          >
             <p>
               Transformations allow you to join, calculate, re-order, hide and rename your query results before being
               visualized. <br />
@@ -218,10 +227,10 @@ export class TransformationsEditor extends React.PureComponent<TransformationsEd
               supports time series. <br />
               It can help to switch to Table visualization to understand what a transformation is doing. <br />
             </p>
-          </FeatureInfoBox>
+          </DismissableFeatureInfoBox>
         </Container>
         <VerticalGroup>
-          {standardTransformersRegistry.list().map(t => {
+          {standardTransformersRegistry.list().map((t) => {
             return (
               <TransformationCard
                 key={t.name}
@@ -236,7 +245,7 @@ export class TransformationsEditor extends React.PureComponent<TransformationsEd
             );
           })}
         </VerticalGroup>
-      </VerticalGroup>
+      </>
     );
   }
 
@@ -272,7 +281,7 @@ export class TransformationsEditor extends React.PureComponent<TransformationsEd
   }
 }
 
-const TransformationCard: React.FC<CardProps> = props => {
+const TransformationCard: React.FC<CardProps> = (props) => {
   const theme = useTheme();
   const styles = getTransformationCardStyles(theme);
   return <Card {...props} className={styles.card} />;
@@ -299,3 +308,5 @@ const getTransformationCardStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
   };
 });
+
+export const TransformationsEditor = withTheme(UnThemedTransformationsEditor);

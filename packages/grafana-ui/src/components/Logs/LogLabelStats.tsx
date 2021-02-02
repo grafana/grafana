@@ -66,14 +66,14 @@ class UnThemedLogLabelStats extends PureComponent<Props> {
     const { label, rowCount, stats, value, theme, isLabel } = this.props;
     const style = getStyles(theme);
     const topRows = stats.slice(0, STATS_ROW_LIMIT);
-    let activeRow = topRows.find(row => row.value === value);
+    let activeRow = topRows.find((row) => row.value === value);
     let otherRows = stats.slice(STATS_ROW_LIMIT);
     const insertActiveRow = !activeRow;
 
     // Remove active row from other to show extra
     if (insertActiveRow) {
-      activeRow = otherRows.find(row => row.value === value);
-      otherRows = otherRows.filter(row => row.value !== value);
+      activeRow = otherRows.find((row) => row.value === value);
+      otherRows = otherRows.filter((row) => row.value !== value);
     }
 
     const otherCount = otherRows.reduce((sum, row) => sum + row.count, 0);
@@ -89,7 +89,7 @@ class UnThemedLogLabelStats extends PureComponent<Props> {
           </div>
         </div>
         <div className={style.logsStatsBody}>
-          {topRows.map(stat => (
+          {topRows.map((stat) => (
             <LogLabelStatsRow key={stat.value} {...stat} active={stat.value === value} />
           ))}
           {insertActiveRow && activeRow && <LogLabelStatsRow key={activeRow.value} {...activeRow} active />}

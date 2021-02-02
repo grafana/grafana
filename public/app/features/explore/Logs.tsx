@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { css, cx } from 'emotion';
+import { css } from 'emotion';
 import { capitalize } from 'lodash';
 
 import {
@@ -17,11 +17,20 @@ import {
   GraphSeriesXY,
   LinkModel,
   Field,
+  GrafanaTheme,
 } from '@grafana/data';
-import { LegacyForms, LogLabels, ToggleButtonGroup, ToggleButton, LogRows, Button } from '@grafana/ui';
-const { Switch } = LegacyForms;
+import {
+  LogLabels,
+  RadioButtonGroup,
+  LogRows,
+  Button,
+  InlineField,
+  InlineFieldRow,
+  InlineSwitch,
+  withTheme,
+  stylesFactory,
+} from '@grafana/ui';
 import store from 'app/core/store';
-
 import { ExploreGraphPanel } from './ExploreGraphPanel';
 import { MetaInfoText } from './MetaInfoText';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
@@ -47,13 +56,13 @@ function renderMetaItem(value: any, kind: LogsMetaKind) {
 }
 
 interface Props {
-  logRows?: LogRowModel[];
+  logRows: LogRowModel[];
   logsMeta?: LogsMetaItem[];
   logsSeries?: GraphSeriesXY[];
   dedupedRows?: LogRowModel[];
   visibleRange?: AbsoluteTimeRange;
-
   width: number;
+  theme: GrafanaTheme;
   highlighterExpressions?: string[];
   loading: boolean;
   absoluteRange: AbsoluteTimeRange;
@@ -82,7 +91,7 @@ interface State {
   showDetectedFields: string[];
 }
 
-export class Logs extends PureComponent<Props, State> {
+export class UnthemedLogs extends PureComponent<Props, State> {
   flipOrderTimer: NodeJS.Timeout;
   cancelFlippingTimer: NodeJS.Timeout;
 
@@ -104,7 +113,7 @@ export class Logs extends PureComponent<Props, State> {
     this.setState({ isFlipping: true });
     // we are using setTimeout here to make sure that disabled button is rendered before the rendering of reordered logs
     this.flipOrderTimer = setTimeout(() => {
-      this.setState(prevState => {
+      this.setState((prevState) => {
         if (prevState.logsSortOrder === null || prevState.logsSortOrder === LogsSortOrder.Descending) {
           return { logsSortOrder: LogsSortOrder.Ascending };
         }
@@ -156,7 +165,7 @@ export class Logs extends PureComponent<Props, State> {
   };
 
   onToggleLogLevel = (hiddenRawLevels: string[]) => {
-    const hiddenLogLevels: LogLevel[] = hiddenRawLevels.map(level => LogLevel[level as LogLevel]);
+    const hiddenLogLevels: LogLevel[] = hiddenRawLevels.map((level) => LogLevel[level as LogLevel]);
     this.props.onToggleLogLevel(hiddenLogLevels);
   };
 
@@ -178,7 +187,7 @@ export class Logs extends PureComponent<Props, State> {
     const index = this.state.showDetectedFields.indexOf(key);
 
     if (index === -1) {
-      this.setState(state => {
+      this.setState((state) => {
         return {
           showDetectedFields: state.showDetectedFields.concat(key),
         };
@@ -189,16 +198,16 @@ export class Logs extends PureComponent<Props, State> {
   hideDetectedField = (key: string) => {
     const index = this.state.showDetectedFields.indexOf(key);
     if (index > -1) {
-      this.setState(state => {
+      this.setState((state) => {
         return {
-          showDetectedFields: state.showDetectedFields.filter(k => key !== k),
+          showDetectedFields: state.showDetectedFields.filter((k) => key !== k),
         };
       });
     }
   };
 
   clearDetectedFields = () => {
-    this.setState(state => {
+    this.setState((state) => {
       return {
         showDetectedFields: [],
       };
@@ -224,14 +233,12 @@ export class Logs extends PureComponent<Props, State> {
       absoluteRange,
       onChangeTime,
       getFieldLinks,
+      dedupStrategy,
+      theme,
     } = this.props;
 
-    if (!logRows) {
-      return null;
-    }
-
     const { showLabels, showTime, wrapLogMessage, logsSortOrder, isFlipping, showDetectedFields } = this.state;
-    const { dedupStrategy } = this.props;
+
     const hasData = logRows && logRows.length > 0;
     const dedupCount = dedupedRows
       ? dedupedRows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0)
@@ -246,7 +253,7 @@ export class Logs extends PureComponent<Props, State> {
       });
     }
 
-    if (logRows.some(r => r.entry.length > MAX_CHARACTERS)) {
+    if (logRows.some((r) => r.entry.length > MAX_CHARACTERS)) {
       meta.push({
         label: 'Info',
         value: 'Logs with more than 100,000 characters could not be parsed and highlighted',
@@ -256,65 +263,62 @@ export class Logs extends PureComponent<Props, State> {
 
     const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
     const series = logsSeries ? logsSeries : [];
+    const styles = getStyles(theme);
 
     return (
-      <div className="logs-panel">
-        <div className="logs-panel-graph">
-          <ExploreGraphPanel
-            series={series}
-            width={width}
-            onHiddenSeriesChanged={this.onToggleLogLevel}
-            loading={loading}
-            absoluteRange={visibleRange || absoluteRange}
-            isStacked={true}
-            showPanel={false}
-            timeZone={timeZone}
-            showBars={true}
-            showLines={false}
-            onUpdateTimeRange={onChangeTime}
-          />
-        </div>
-        <div className="logs-panel-options">
-          <div className="logs-panel-controls">
-            <div className="logs-panel-controls-main">
-              <Switch label="Time" checked={showTime} onChange={this.onChangeTime} transparent />
-              <Switch label="Unique labels" checked={showLabels} onChange={this.onChangeLabels} transparent />
-              <Switch label="Wrap lines" checked={wrapLogMessage} onChange={this.onChangewrapLogMessage} transparent />
-              <ToggleButtonGroup label="Dedup" transparent={true}>
-                {Object.keys(LogsDedupStrategy).map((dedupType: string, i) => (
-                  <ToggleButton
-                    key={i}
-                    value={dedupType}
-                    onChange={this.onChangeDedup}
-                    selected={dedupStrategy === dedupType}
-                    // @ts-ignore
-                    tooltip={LogsDedupDescription[dedupType]}
-                  >
-                    {capitalize(dedupType)}
-                  </ToggleButton>
-                ))}
-              </ToggleButtonGroup>
-            </div>
-            <button
-              disabled={isFlipping}
-              title={logsSortOrder === LogsSortOrder.Ascending ? 'Change to newest first' : 'Change to oldest first'}
-              aria-label="Flip results order"
-              className={cx(
-                'gf-form-label gf-form-label--btn',
-                css`
-                  margin-top: 4px;
-                `
-              )}
-              onClick={this.onChangeLogsSortOrder}
-            >
-              <span className="btn-title">{isFlipping ? 'Flipping...' : 'Flip results order'}</span>
-            </button>
-          </div>
+      <>
+        <ExploreGraphPanel
+          series={series}
+          width={width}
+          onHiddenSeriesChanged={this.onToggleLogLevel}
+          loading={loading}
+          absoluteRange={visibleRange || absoluteRange}
+          isStacked={true}
+          showPanel={false}
+          timeZone={timeZone}
+          showBars={true}
+          showLines={false}
+          onUpdateTimeRange={onChangeTime}
+        />
+        <div className={styles.logOptions}>
+          <InlineFieldRow>
+            <InlineField label="Time" transparent>
+              <InlineSwitch value={showTime} onChange={this.onChangeTime} transparent />
+            </InlineField>
+            <InlineField label="Unique labels" transparent>
+              <InlineSwitch value={showLabels} onChange={this.onChangeLabels} transparent />
+            </InlineField>
+            <InlineField label="Wrap lines" transparent>
+              <InlineSwitch value={wrapLogMessage} onChange={this.onChangewrapLogMessage} transparent />
+            </InlineField>
+            <InlineField label="Dedup" transparent>
+              <RadioButtonGroup
+                options={Object.keys(LogsDedupStrategy).map((dedupType: LogsDedupStrategy) => ({
+                  label: capitalize(dedupType),
+                  value: dedupType,
+                  description: LogsDedupDescription[dedupType],
+                }))}
+                value={dedupStrategy}
+                onChange={this.onChangeDedup}
+                className={styles.radioButtons}
+              />
+            </InlineField>
+          </InlineFieldRow>
+          <Button
+            variant="secondary"
+            disabled={isFlipping}
+            title={logsSortOrder === LogsSortOrder.Ascending ? 'Change to newest first' : 'Change to oldest first'}
+            aria-label="Flip results order"
+            className={styles.flipButton}
+            onClick={this.onChangeLogsSortOrder}
+          >
+            {isFlipping ? 'Flipping...' : 'Flip results order'}
+          </Button>
         </div>
 
         {meta && (
           <MetaInfoText
-            metaItems={meta.map(item => {
+            metaItems={meta.map((item) => {
               return {
                 label: item.label,
                 value: renderMetaItem(item.value, item.kind),
@@ -323,7 +327,7 @@ export class Logs extends PureComponent<Props, State> {
           />
         )}
 
-        {showDetectedFields && showDetectedFields.length > 0 && (
+        {showDetectedFields?.length > 0 && (
           <MetaInfoText
             metaItems={[
               {
@@ -364,7 +368,7 @@ export class Logs extends PureComponent<Props, State> {
         />
 
         {!loading && !hasData && !scanning && (
-          <div className="logs-panel-nodata">
+          <div className={styles.noData}>
             No logs found.
             <Button size="xs" variant="link" onClick={this.onClickScan}>
               Scan for older logs
@@ -373,14 +377,43 @@ export class Logs extends PureComponent<Props, State> {
         )}
 
         {scanning && (
-          <div className="logs-panel-nodata">
+          <div className={styles.noData}>
             <span>{scanText}</span>
             <Button size="xs" variant="link" onClick={this.onClickStopScan}>
               Stop scan
             </Button>
           </div>
         )}
-      </div>
+      </>
     );
   }
 }
+
+export const Logs = withTheme(UnthemedLogs);
+
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    noData: css`
+      > * {
+        margin-left: 0.5em;
+      }
+    `,
+    logOptions: css`
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      background-color: ${theme.colors.bg1};
+      padding: ${theme.spacing.sm} ${theme.spacing.md};
+      border-radius: ${theme.border.radius.md};
+      margin: ${theme.spacing.md} 0 ${theme.spacing.sm};
+      border: 1px solid ${theme.colors.panelBorder};
+    `,
+    flipButton: css`
+      margin: ${theme.spacing.xs} 0 0 ${theme.spacing.sm};
+    `,
+    radioButtons: css`
+      margin: 0 ${theme.spacing.sm};
+    `,
+  };
+});

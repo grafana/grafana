@@ -22,7 +22,7 @@ export const DashboardLinks: FC<Props> = ({ dashboard, links }) => {
   }
 
   // Emulate forceUpdate (https://reactjs.org/docs/hooks-faq.html#is-there-something-like-forceupdate)
-  const [, forceUpdate] = useReducer(x => x + 1, 0);
+  const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
   useEffectOnce(() => {
     dashboard.on(CoreEvents.timeRangeUpdated, forceUpdate);

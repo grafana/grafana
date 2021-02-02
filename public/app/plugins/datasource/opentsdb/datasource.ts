@@ -52,7 +52,7 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
     const end = this.convertToTSDBTime(options.range.raw.to, true, options.timezone);
     const qs: any[] = [];
 
-    _.each(options.targets, target => {
+    _.each(options.targets, (target) => {
       if (!target.metric) {
         return;
       }
@@ -67,9 +67,9 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
     }
 
     const groupByTags: any = {};
-    _.each(queries, query => {
+    _.each(queries, (query) => {
       if (query.filters && query.filters.length > 0) {
-        _.each(query.filters, val => {
+        _.each(query.filters, (val) => {
           groupByTags[val.tagk] = true;
         });
       } else {
@@ -79,12 +79,12 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
       }
     });
 
-    options.targets = _.filter(options.targets, query => {
+    options.targets = _.filter(options.targets, (query) => {
       return query.hide !== true;
     });
 
     return this.performTimeSeriesQuery(queries, start, end).pipe(
-      map(response => {
+      map((response) => {
         const metricToTargetMapping = this.mapMetricsToTargets(response.data, options, this.tsdbVersion);
         const result = _.map(response.data, (metricData: any, index: number) => {
           index = metricToTargetMapping[index];
@@ -118,14 +118,14 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
 
     return this.performTimeSeriesQuery(queries, start, end)
       .pipe(
-        map(results => {
+        map((results) => {
           if (results.data[0]) {
             let annotationObject = results.data[0].annotations;
             if (options.annotation.isGlobal) {
               annotationObject = results.data[0].globalAnnotations;
             }
             if (annotationObject) {
-              _.each(annotationObject, annotation => {
+              _.each(annotationObject, (annotation) => {
                 const event = {
                   text: annotation.description,
                   time: Math.floor(annotation.startTime) * 1000,
@@ -198,7 +198,7 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
 
   _saveTagKeys(metricData: { tags: {}; aggregateTags: any; metric: string | number }) {
     const tagKeys = Object.keys(metricData.tags);
-    _.each(metricData.aggregateTags, tag => {
+    _.each(metricData.aggregateTags, (tag) => {
       tagKeys.push(tag);
     });
 
@@ -234,7 +234,7 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
       map((result: any) => {
         result = result.data.results;
         const tagvs: any[] = [];
-        _.each(result, r => {
+        _.each(result, (r) => {
           if (tagvs.indexOf(r.tags[key]) === -1) {
             tagvs.push(r.tags[key]);
           }
@@ -253,7 +253,7 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
       map((result: any) => {
         result = result.data.results;
         const tagks: any[] = [];
-        _.each(result, r => {
+        _.each(result, (r) => {
           _.each(r.tags, (tagv, tagk) => {
             if (tagks.indexOf(tagk) === -1) {
               tagks.push(tagk);
@@ -302,7 +302,7 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
     }
 
     const responseTransform = (result: any) => {
-      return _.map(result, value => {
+      return _.map(result, (value) => {
         return { text: value };
       });
     };
@@ -315,16 +315,12 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
 
     const metricsQuery = interpolated.match(metricsRegex);
     if (metricsQuery) {
-      return this._performSuggestQuery(metricsQuery[1], 'metrics')
-        .pipe(map(responseTransform))
-        .toPromise();
+      return this._performSuggestQuery(metricsQuery[1], 'metrics').pipe(map(responseTransform)).toPromise();
     }
 
     const tagNamesQuery = interpolated.match(tagNamesRegex);
     if (tagNamesQuery) {
-      return this._performMetricKeyLookup(tagNamesQuery[1])
-        .pipe(map(responseTransform))
-        .toPromise();
+      return this._performMetricKeyLookup(tagNamesQuery[1]).pipe(map(responseTransform)).toPromise();
     }
 
     const tagValuesQuery = interpolated.match(tagValuesRegex);
@@ -336,16 +332,12 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
 
     const tagNamesSuggestQuery = interpolated.match(tagNamesSuggestRegex);
     if (tagNamesSuggestQuery) {
-      return this._performSuggestQuery(tagNamesSuggestQuery[1], 'tagk')
-        .pipe(map(responseTransform))
-        .toPromise();
+      return this._performSuggestQuery(tagNamesSuggestQuery[1], 'tagk').pipe(map(responseTransform)).toPromise();
     }
 
     const tagValuesSuggestQuery = interpolated.match(tagValuesSuggestRegex);
     if (tagValuesSuggestQuery) {
-      return this._performSuggestQuery(tagValuesSuggestQuery[1], 'tagv')
-        .pipe(map(responseTransform))
-        .toPromise();
+      return this._performSuggestQuery(tagValuesSuggestQuery[1], 'tagv').pipe(map(responseTransform)).toPromise();
     }
 
     return Promise.resolve([]);
@@ -432,7 +424,7 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
     const tagData: any[] = [];
 
     if (!_.isEmpty(md.tags)) {
-      _.each(_.toPairs(md.tags), tag => {
+      _.each(_.toPairs(md.tags), (tag) => {
         if (_.has(groupByTags, tag[0])) {
           tagData.push(tag[0] + '=' + tag[1]);
         }
@@ -523,11 +515,11 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
 
   mapMetricsToTargets(metrics: any, options: any, tsdbVersion: number) {
     let interpolatedTagValue, arrTagV;
-    return _.map(metrics, metricData => {
+    return _.map(metrics, (metricData) => {
       if (tsdbVersion === 3) {
         return metricData.query.index;
       } else {
-        return _.findIndex(options.targets as any[], target => {
+        return _.findIndex(options.targets as any[], (target) => {
           if (target.filters && target.filters.length > 0) {
             return target.metric === metricData.metric;
           } else {
@@ -550,7 +542,7 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
       return queries;
     }
 
-    return queries.map(query => ({
+    return queries.map((query) => ({
       ...query,
       metric: this.templateSrv.replace(query.metric, scopedVars),
     }));

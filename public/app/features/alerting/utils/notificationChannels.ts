@@ -23,7 +23,7 @@ export const defaultValues: NotificationChannelDTO = {
 
 export const mapChannelsToSelectableValue = memoizeOne(
   (notificationChannels: NotificationChannelType[], includeDescription: boolean): Array<SelectableValue<string>> => {
-    return notificationChannels.map(channel => {
+    return notificationChannels.map((channel) => {
       if (includeDescription) {
         return {
           value: channel.value,

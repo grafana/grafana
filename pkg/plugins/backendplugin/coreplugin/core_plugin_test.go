@@ -19,7 +19,7 @@ func TestCorePlugin(t *testing.T) {
 		require.NotNil(t, p)
 		require.NoError(t, p.Start(context.Background()))
 		require.NoError(t, p.Stop(context.Background()))
-		require.False(t, p.IsManaged())
+		require.True(t, p.IsManaged())
 		require.False(t, p.Exited())
 
 		_, err = p.CollectMetrics(context.Background())
@@ -50,7 +50,7 @@ func TestCorePlugin(t *testing.T) {
 		require.NotNil(t, p)
 		require.NoError(t, p.Start(context.Background()))
 		require.NoError(t, p.Stop(context.Background()))
-		require.False(t, p.IsManaged())
+		require.True(t, p.IsManaged())
 		require.False(t, p.Exited())
 
 		_, err = p.CollectMetrics(context.Background())

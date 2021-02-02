@@ -43,16 +43,45 @@ export enum LineInterpolation {
 /**
  * @alpha
  */
+export enum BarAlignment {
+  Before = -1,
+  Center = 0,
+  After = 1,
+}
+
+/**
+ * @alpha
+ */
 export enum ScaleDistribution {
   Linear = 'linear',
   Logarithmic = 'log',
+  Ordinal = 'ordinal',
+}
+
+/**
+ * @alpha
+ */
+export enum ScaleOrientation {
+  Horizontal = 0,
+  Vertical = 1,
+}
+
+/**
+ * @alpha
+ */
+
+export enum ScaleDirection {
+  Up = 1,
+  Right = 1,
+  Down = -1,
+  Left = -1,
 }
 
 /**
  * @alpha
  */
 export interface LineStyle {
-  fill?: 'solid' | 'dash' | 'dot' | 'square'; // cap = 'butt' | 'round' | 'square'
+  fill?: 'solid' | 'dash' | 'dot' | 'square';
   dash?: number[];
 }
 
@@ -70,19 +99,27 @@ export interface LineConfig {
 /**
  * @alpha
  */
-export interface FillConfig {
-  fillColor?: string;
-  fillOpacity?: number;
-  fillGradient?: FillGradientMode;
+export interface BarConfig {
+  barAlignment?: BarAlignment;
 }
 
 /**
  * @alpha
  */
-export enum FillGradientMode {
+export interface FillConfig {
+  fillColor?: string;
+  fillOpacity?: number;
+  fillBelowTo?: string; // name of the field
+}
+
+/**
+ * @alpha
+ */
+export enum GraphGradientMode {
   None = 'none',
   Opacity = 'opacity',
   Hue = 'hue',
+  Scheme = 'scheme',
 }
 
 /**
@@ -111,6 +148,8 @@ export interface AxisConfig {
   axisPlacement?: AxisPlacement;
   axisLabel?: string;
   axisWidth?: number; // pixels ideally auto?
+  axisSoftMin?: number;
+  axisSoftMax?: number;
   scaleDistribution?: ScaleDistributionConfig;
 }
 
@@ -126,9 +165,22 @@ export interface HideSeriesConfig {
 /**
  * @alpha
  */
-export interface GraphFieldConfig extends LineConfig, FillConfig, PointsConfig, AxisConfig {
-  drawStyle?: DrawStyle;
+export interface HideableFieldConfig {
   hideFrom?: HideSeriesConfig;
+}
+
+/**
+ * @alpha
+ */
+export interface GraphFieldConfig
+  extends LineConfig,
+    FillConfig,
+    PointsConfig,
+    AxisConfig,
+    BarConfig,
+    HideableFieldConfig {
+  drawStyle?: DrawStyle;
+  gradientMode?: GraphGradientMode;
 }
 
 /**
@@ -142,11 +194,17 @@ export const graphFieldOptions = {
   ] as Array<SelectableValue<DrawStyle>>,
 
   lineInterpolation: [
-    { label: 'Linear', value: LineInterpolation.Linear },
-    { label: 'Smooth', value: LineInterpolation.Smooth },
-    { label: 'Step Before', value: LineInterpolation.StepBefore },
-    { label: 'Step After', value: LineInterpolation.StepAfter },
+    { description: 'Linear', value: LineInterpolation.Linear, icon: 'gf-interpolation-linear' },
+    { description: 'Smooth', value: LineInterpolation.Smooth, icon: 'gf-interpolation-smooth' },
+    { description: 'Step before', value: LineInterpolation.StepBefore, icon: 'gf-interpolation-step-before' },
+    { description: 'Step after', value: LineInterpolation.StepAfter, icon: 'gf-interpolation-step-after' },
   ] as Array<SelectableValue<LineInterpolation>>,
+
+  barAlignment: [
+    { description: 'Before', value: BarAlignment.Before, icon: 'gf-bar-alignment-before' },
+    { description: 'Center', value: BarAlignment.Center, icon: 'gf-bar-alignment-center' },
+    { description: 'After', value: BarAlignment.After, icon: 'gf-bar-alignment-after' },
+  ] as Array<SelectableValue<BarAlignment>>,
 
   showPoints: [
     { label: 'Auto', value: PointVisibility.Auto, description: 'Show points when the density is low' },
@@ -162,8 +220,9 @@ export const graphFieldOptions = {
   ] as Array<SelectableValue<AxisPlacement>>,
 
   fillGradient: [
-    { label: 'None', value: FillGradientMode.None },
-    { label: 'Opacity', value: FillGradientMode.Opacity },
-    { label: 'Hue', value: FillGradientMode.Hue },
-  ] as Array<SelectableValue<FillGradientMode>>,
+    { label: 'None', value: GraphGradientMode.None },
+    { label: 'Opacity', value: GraphGradientMode.Opacity },
+    { label: 'Hue', value: GraphGradientMode.Hue },
+    //  { label: 'Color scheme', value: GraphGradientMode.Scheme },
+  ] as Array<SelectableValue<GraphGradientMode>>,
 };

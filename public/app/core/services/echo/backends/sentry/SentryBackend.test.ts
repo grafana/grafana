@@ -80,7 +80,7 @@ describe('SentryEchoBackend', () => {
       meta: ({} as unknown) as EchoMeta,
     };
     backend.addEvent(event);
-    backend.transports.forEach(transport => {
+    backend.transports.forEach((transport) => {
       expect(transport.sendEvent).toHaveBeenCalledTimes(1);
       expect(transport.sendEvent).toHaveBeenCalledWith(event.payload);
     });

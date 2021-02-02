@@ -110,8 +110,8 @@ func TestDataAccess(t *testing.T) {
 			err := UpdateDataSource(&cmd)
 			require.NoError(t, err)
 
-			query := models.GetDataSourceByIdQuery{Id: ds.Id}
-			err = GetDataSourceById(&query)
+			query := models.GetDataSourceQuery{Id: ds.Id, OrgId: 10}
+			err = GetDataSource(&query)
 			require.NoError(t, err)
 			require.Equal(t, ds.Uid, query.Result.Uid)
 		})
@@ -180,7 +180,7 @@ func TestDataAccess(t *testing.T) {
 			InitTestDB(t)
 			ds := initDatasource()
 
-			err := DeleteDataSourceById(&models.DeleteDataSourceByIdCommand{Id: ds.Id, OrgId: ds.OrgId})
+			err := DeleteDataSource(&models.DeleteDataSourceCommand{ID: ds.Id, OrgID: ds.OrgId})
 			require.NoError(t, err)
 
 			query := models.GetDataSourcesQuery{OrgId: 10}
@@ -194,7 +194,7 @@ func TestDataAccess(t *testing.T) {
 			InitTestDB(t)
 			ds := initDatasource()
 
-			err := DeleteDataSourceById(&models.DeleteDataSourceByIdCommand{Id: ds.Id, OrgId: 123123})
+			err := DeleteDataSource(&models.DeleteDataSourceCommand{ID: ds.Id, OrgID: 123123})
 			require.NoError(t, err)
 			query := models.GetDataSourcesQuery{OrgId: 10}
 			err = GetDataSources(&query)
@@ -209,7 +209,7 @@ func TestDataAccess(t *testing.T) {
 		ds := initDatasource()
 		query := models.GetDataSourcesQuery{OrgId: 10}
 
-		err := DeleteDataSourceByName(&models.DeleteDataSourceByNameCommand{Name: ds.Name, OrgId: ds.OrgId})
+		err := DeleteDataSource(&models.DeleteDataSourceCommand{Name: ds.Name, OrgID: ds.OrgId})
 		require.NoError(t, err)
 
 		err = GetDataSources(&query)

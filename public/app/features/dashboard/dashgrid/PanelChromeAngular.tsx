@@ -247,7 +247,7 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
           alertState={alertState}
         />
         <div className={panelContentClassNames}>
-          <div ref={element => (this.element = element)} className="panel-height-helper" />
+          <div ref={(element) => (this.element = element)} className="panel-height-helper" />
         </div>
       </div>
     );

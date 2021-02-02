@@ -133,13 +133,13 @@ export class ExpressionQueryEditor extends PureComponent<Props, State> {
 
   render() {
     const { query, queries } = this.props;
-    const selected = gelTypes.find(o => o.value === query.type);
-    const reducer = reducerTypes.find(o => o.value === query.reducer);
-    const downsampler = downsamplingTypes.find(o => o.value === query.downsampler);
-    const upsampler = upsamplingTypes.find(o => o.value === query.upsampler);
+    const selected = gelTypes.find((o) => o.value === query.type);
+    const reducer = reducerTypes.find((o) => o.value === query.reducer);
+    const downsampler = downsamplingTypes.find((o) => o.value === query.downsampler);
+    const upsampler = upsamplingTypes.find((o) => o.value === query.upsampler);
     const labelWidth = 14;
 
-    const refIds = queries!.filter(q => query.refId !== q.refId).map(q => ({ value: q.refId, label: q.refId }));
+    const refIds = queries!.filter((q) => query.refId !== q.refId).map((q) => ({ value: q.refId, label: q.refId }));
 
     return (
       <div>

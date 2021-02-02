@@ -28,9 +28,11 @@ import { expandRecordingRules } from './language_utils';
 import { getQueryHints } from './query_hints';
 import { getOriginalMetricName, renderTemplate, transform } from './result_transformer';
 import {
+  ExemplarTraceIdDestination,
   isFetchErrorResponse,
   PromDataErrorResponse,
   PromDataSuccessResponse,
+  PromExemplarData,
   PromMatrixData,
   PromOptions,
   PromQuery,
@@ -56,6 +58,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   queryTimeout: string;
   httpMethod: string;
   languageProvider: PrometheusLanguageProvider;
+  exemplarTraceIdDestinations: ExemplarTraceIdDestination[] | undefined;
   lookupsDisabled: boolean;
   customQueryParameters: any;
 
@@ -75,6 +78,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     this.queryTimeout = instanceSettings.jsonData.queryTimeout;
     this.httpMethod = instanceSettings.jsonData.httpMethod || 'GET';
     this.directUrl = instanceSettings.jsonData.directUrl;
+    this.exemplarTraceIdDestinations = instanceSettings.jsonData.exemplarTraceIdDestinations;
     this.ruleMappings = {};
     this.languageProvider = new PrometheusLanguageProvider(this);
     this.lookupsDisabled = instanceSettings.jsonData.disableMetricsLookup ?? false;
@@ -153,7 +157,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       return prometheusSpecialRegexEscape(value);
     }
 
-    const escapedValues = value.map(val => prometheusSpecialRegexEscape(val));
+    const escapedValues = value.map((val) => prometheusSpecialRegexEscape(val));
 
     if (escapedValues.length === 1) {
       return escapedValues[0];
@@ -194,6 +198,17 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         rangeTarget.instant = false;
         instantTarget.range = true;
 
+        // Create exemplar query
+        if (target.exemplar) {
+          const exemplarTarget = cloneDeep(target);
+          exemplarTarget.instant = false;
+          exemplarTarget.requestId += '_exemplar';
+          instantTarget.exemplar = false;
+          rangeTarget.exemplar = false;
+          queries.push(this.createQuery(exemplarTarget, options, start, end));
+          activeTargets.push(exemplarTarget);
+        }
+
         // Add both targets to activeTargets and queries arrays
         activeTargets.push(instantTarget, rangeTarget);
         queries.push(
@@ -207,6 +222,13 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         queries.push(this.createQuery(instantTarget, options, start, end));
         activeTargets.push(instantTarget);
       } else {
+        if (target.exemplar) {
+          const exemplarTarget = cloneDeep(target);
+          exemplarTarget.requestId += '_exemplar';
+          target.exemplar = false;
+          queries.push(this.createQuery(exemplarTarget, options, start, end));
+          activeTargets.push(exemplarTarget);
+        }
         queries.push(this.createQuery(target, options, start, end));
         activeTargets.push(target);
       }
@@ -240,7 +262,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
   private exploreQuery(queries: PromQueryRequest[], activeTargets: PromQuery[], end: number) {
     let runningQueriesCount = queries.length;
-    const mixedQueries = activeTargets.some(t => t.range) && activeTargets.some(t => t.instant);
+    const mixedQueries = activeTargets.some((t) => t.range) && activeTargets.some((t) => t.instant);
 
     const subQueries = queries.map((query, index) => {
       const target = activeTargets[index];
@@ -251,7 +273,13 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         tap(() => runningQueriesCount--),
         filter((response: any) => (response.cancelled ? false : true)),
         map((response: any) => {
-          const data = transform(response, { query, target, responseListLength: queries.length, mixedQueries });
+          const data = transform(response, {
+            query,
+            target,
+            responseListLength: queries.length,
+            mixedQueries,
+            exemplarTraceIdDestinations: this.exemplarTraceIdDestinations,
+          });
           return {
             data,
             key: query.requestId,
@@ -262,6 +290,10 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
       if (query.instant) {
         return this.performInstantQuery(query, end).pipe(filterAndMapResponse);
+      }
+
+      if (query.exemplar) {
+        return this.getExemplars(query).pipe(filterAndMapResponse);
       }
 
       return this.performTimeSeriesQuery(query, query.start, query.end).pipe(filterAndMapResponse);
@@ -283,7 +315,13 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       const filterAndMapResponse = pipe(
         filter((response: any) => (response.cancelled ? false : true)),
         map((response: any) => {
-          const data = transform(response, { query, target, responseListLength: queries.length, scopedVars });
+          const data = transform(response, {
+            query,
+            target,
+            responseListLength: queries.length,
+            scopedVars,
+            exemplarTraceIdDestinations: this.exemplarTraceIdDestinations,
+          });
           return data;
         })
       );
@@ -292,11 +330,15 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         return this.performInstantQuery(query, end).pipe(filterAndMapResponse);
       }
 
+      if (query.exemplar) {
+        return this.getExemplars(query).pipe(filterAndMapResponse);
+      }
+
       return this.performTimeSeriesQuery(query, query.start, query.end).pipe(filterAndMapResponse);
     });
 
     return forkJoin(observables).pipe(
-      map(results => {
+      map((results) => {
         const data = results.reduce((result, current) => {
           return [...result, ...current];
         }, []);
@@ -313,6 +355,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     const query: PromQueryRequest = {
       hinting: target.hinting,
       instant: target.instant,
+      exemplar: target.exemplar,
       step: 0,
       expr: '',
       requestId: target.requestId,
@@ -562,7 +605,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
     const step = Math.floor(query.step ?? 15) * 1000;
 
-    response?.data?.data?.result?.forEach(series => {
+    response?.data?.data?.result?.forEach((series) => {
       const tags = Object.entries(series.metric)
         .filter(([k]) => splitKeys.includes(k))
         .map(([_k, v]: [string, string]) => v);
@@ -579,8 +622,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         value[0] = timestampValue;
       });
 
-      const activeValues = series.values.filter(value => parseFloat(value[1]) >= 1);
-      const activeValuesTimestamps = activeValues.map(value => value[0]);
+      const activeValues = series.values.filter((value) => parseFloat(value[1]) >= 1);
+      const activeValuesTimestamps = activeValues.map((value) => value[0]);
 
       // Instead of creating singular annotation for each active event we group events into region if they are less
       // then `step` apart.
@@ -619,6 +662,15 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     return eventList;
   }
 
+  getExemplars(query: PromQueryRequest) {
+    const url = '/api/v1/query_exemplars';
+    return this._request<PromDataSuccessResponse<PromExemplarData>>(
+      url,
+      { query: query.expr, start: query.start.toString(), end: query.end.toString() },
+      { requestId: query.requestId, headers: query.headers }
+    );
+  }
+
   async getTagKeys() {
     const result = await this.metadataRequest('/api/v1/labels');
     return result?.data?.data?.map((value: any) => ({ text: value })) ?? [];
@@ -641,7 +693,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   interpolateVariablesInQueries(queries: PromQuery[], scopedVars: ScopedVars): PromQuery[] {
     let expandedQueries = queries;
     if (queries && queries.length) {
-      expandedQueries = queries.map(query => {
+      expandedQueries = queries.map((query) => {
         const expandedQuery = {
           ...query,
           datasource: this.name,

@@ -1,7 +1,8 @@
 import kbn from 'app/core/utils/kbn';
-import { Registry, RegistryItem, VariableModel, textUtil, dateTime } from '@grafana/data';
-import { map, isArray, replace } from 'lodash';
+import { dateTime, Registry, RegistryItem, textUtil, VariableModel } from '@grafana/data';
+import { isArray, map, replace } from 'lodash';
 import { formatVariableLabel } from '../variables/shared/formatVariable';
+import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../variables/state/types';
 
 export interface FormatOptions {
   value: any;
@@ -163,7 +164,7 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
         // escape single quotes by pairing them
         const regExp = new RegExp(`'`, 'g');
         if (isArray(value)) {
-          return map(value, v => `'${replace(v, regExp, "''")}'`).join(',');
+          return map(value, (v) => `'${replace(v, regExp, "''")}'`).join(',');
         }
         return `'${replace(value, regExp, "''")}'`;
       },
@@ -204,7 +205,7 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
       description: 'Format variables in their text representation. Example in multi variable scenario A + B + C.',
       formatter: (options, variable) => {
         if (typeof options.text === 'string') {
-          return options.text;
+          return options.value === ALL_VARIABLE_VALUE ? ALL_VARIABLE_TEXT : options.text;
         }
 
         const current = (variable as any)?.current;
@@ -231,13 +232,7 @@ function luceneEscape(value: string) {
  * unicode handling uses UTF-8 as in ECMA-262.
  */
 function encodeURIComponentStrict(str: string) {
-  return encodeURIComponent(str).replace(/[!'()*]/g, c => {
-    return (
-      '%' +
-      c
-        .charCodeAt(0)
-        .toString(16)
-        .toUpperCase()
-    );
+  return encodeURIComponent(str).replace(/[!'()*]/g, (c) => {
+    return '%' + c.charCodeAt(0).toString(16).toUpperCase();
   });
 }

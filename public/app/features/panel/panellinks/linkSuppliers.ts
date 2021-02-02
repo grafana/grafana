@@ -147,7 +147,7 @@ export const getPanelLinksSupplier = (panel: PanelModel): LinkModelSupplier<Pane
 
   return {
     getLinks: () => {
-      return links.map(link => {
+      return links.map((link) => {
         return getLinkSrv().getDataLinkUIModel(link, panel.replaceVariables, panel);
       });
     },

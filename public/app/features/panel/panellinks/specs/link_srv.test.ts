@@ -56,7 +56,7 @@ describe('linkSrv', () => {
             title: 'White space',
             url: 'www.google.com?query=some query',
           },
-          v => v,
+          (v) => v,
           {}
         ).href
       ).toEqual('www.google.com?query=some query');
@@ -69,7 +69,7 @@ describe('linkSrv', () => {
             title: 'New line',
             url: 'www.google.com?query=some\nquery',
           },
-          v => v,
+          (v) => v,
           {}
         ).href
       ).toEqual('www.google.com?query=somequery');
@@ -94,7 +94,7 @@ describe('linkSrv', () => {
             title: 'Any title',
             url,
           },
-          v => v,
+          (v) => v,
           {}
         ).href;
 
@@ -130,7 +130,7 @@ describe('linkSrv', () => {
             title: 'Any title',
             url,
           },
-          v => v,
+          (v) => v,
           {}
         ).href;
 

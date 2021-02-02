@@ -48,8 +48,8 @@ export class PieChart extends PureComponent<Props> {
       return;
     }
 
-    const data = values.map(datapoint => datapoint.numeric);
-    const names = values.map(datapoint => formattedValueToString(datapoint));
+    const data = values.map((datapoint) => datapoint.numeric);
+    const names = values.map((datapoint) => formattedValueToString(datapoint));
     const colors = values.map((p, idx) => {
       if (p.color) {
         return p.color;
@@ -76,10 +76,7 @@ export class PieChart extends PureComponent<Props> {
 
     const pieChart = pie();
 
-    const customArc = arc()
-      .outerRadius(outerRadius)
-      .innerRadius(innerRadius)
-      .padAngle(0);
+    const customArc = arc().outerRadius(outerRadius).innerRadius(innerRadius).padAngle(0);
 
     svg
       .selectAll('path')
@@ -112,21 +109,21 @@ export class PieChart extends PureComponent<Props> {
       return (
         <div className="piechart-panel">
           <div
-            ref={element => (this.containerElement = element)}
+            ref={(element) => (this.containerElement = element)}
             className="piechart-container"
             style={{
               height: `${height * 0.9}px`,
               width: `${Math.min(width, height * 1.3)}px`,
             }}
           >
-            <svg ref={element => (this.svgElement = element)} />
+            <svg ref={(element) => (this.svgElement = element)} />
           </div>
-          <div className="piechart-tooltip" ref={element => (this.tooltipElement = element)}>
+          <div className="piechart-tooltip" ref={(element) => (this.tooltipElement = element)}>
             <div className="piechart-tooltip-time">
               <div
                 id="tooltip-value"
                 className="piechart-tooltip-value"
-                ref={element => (this.tooltipValueElement = element)}
+                ref={(element) => (this.tooltipValueElement = element)}
               />
             </div>
           </div>

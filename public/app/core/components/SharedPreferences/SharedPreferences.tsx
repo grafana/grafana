@@ -71,7 +71,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
       items: [],
     };
 
-    if (prefs.homeDashboardId > 0 && !dashboards.find(d => d.id === prefs.homeDashboardId)) {
+    if (prefs.homeDashboardId > 0 && !dashboards.find((d) => d.id === prefs.homeDashboardId)) {
       const missing = await backendSrv.search({ dashboardIds: [prefs.homeDashboardId] });
       if (missing && missing.length > 0) {
         dashboards.push(missing[0]);
@@ -131,7 +131,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
               <Field label="UI Theme">
                 <RadioButtonGroup
                   options={themes}
-                  value={themes.find(item => item.value === theme)?.value}
+                  value={themes.find((item) => item.value === theme)?.value}
                   onChange={this.onThemeChanged}
                 />
               </Field>
@@ -147,8 +147,8 @@ export class SharedPreferences extends PureComponent<Props, State> {
                 }
               >
                 <Select
-                  value={dashboards.find(dashboard => dashboard.id === homeDashboardId)}
-                  getOptionValue={i => i.id}
+                  value={dashboards.find((dashboard) => dashboard.id === homeDashboardId)}
+                  getOptionValue={(i) => i.id}
                   getOptionLabel={this.getFullDashName}
                   onChange={(dashboard: DashboardSearchHit) => this.onHomeDashboardChanged(dashboard.id)}
                   options={dashboards}

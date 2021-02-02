@@ -114,7 +114,7 @@ export default class AppInsightsDatasource extends DataSourceWithBackend<AzureMo
         allowedTimeGrainsMs: item.allowedTimeGrainsMs,
         metricName: templateSrv.replace(item.metricName, scopedVars),
         aggregation: templateSrv.replace(item.aggregation, scopedVars),
-        dimension: item.dimension.map(d => templateSrv.replace(d, scopedVars)),
+        dimension: item.dimension.map((d) => templateSrv.replace(d, scopedVars)),
         dimensionFilter: templateSrv.replace(item.dimensionFilter, scopedVars),
         alias: item.alias,
         format: target.format,

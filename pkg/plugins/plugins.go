@@ -204,11 +204,11 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 	// 1st pass: Scan plugins, also mapping plugins to their respective directories
 	if err := util.Walk(pluginDir, true, true, scanner.walker); err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			pm.log.Debug("Couldn't scan directory since it doesn't exist", "pluginDir", pluginDir)
+			pm.log.Debug("Couldn't scan directory since it doesn't exist", "pluginDir", pluginDir, "err", err)
 			return nil
 		}
 		if errors.Is(err, os.ErrPermission) {
-			pm.log.Debug("Couldn't scan directory due to lack of permissions", "pluginDir", pluginDir)
+			pm.log.Debug("Couldn't scan directory due to lack of permissions", "pluginDir", pluginDir, "err", err)
 			return nil
 		}
 		if pluginDir != "data/plugins" {
@@ -320,7 +320,7 @@ func (s *PluginScanner) walker(currentPath string, f os.FileInfo, err error) err
 	// example https://github.com/raintank/worldping-app/tree/master/dist/grafana-worldmap-panel worldmap panel plugin
 	// is embedded in worldping app.
 	if err != nil {
-		return err
+		return fmt.Errorf("filepath.Walk reported an error for %q: %w", currentPath, err)
 	}
 
 	if f.Name() == "node_modules" || f.Name() == "Chromium.app" {

@@ -24,9 +24,7 @@ export class IndexPattern {
 
   getIndexForToday() {
     if (this.interval) {
-      return toUtc()
-        .locale(this.dateLocale)
-        .format(this.pattern);
+      return toUtc().locale(this.dateLocale).format(this.pattern);
     } else {
       return this.pattern;
     }

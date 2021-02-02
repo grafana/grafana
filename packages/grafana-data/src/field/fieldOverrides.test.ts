@@ -244,7 +244,7 @@ describe('applyFieldOverrides', () => {
         overrides: [],
       },
       fieldConfigRegistry: customFieldRegistry,
-      replaceVariables: v => v,
+      replaceVariables: (v) => v,
       theme: getTestTheme(),
     })[0];
 
