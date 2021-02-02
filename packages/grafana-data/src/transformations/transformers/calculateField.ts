@@ -7,7 +7,7 @@ import { getFieldMatcher } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 import { RowVector } from '../../vector/RowVector';
 import { ArrayVector, BinaryOperationVector, ConstantVector } from '../../vector';
-import { FunctionalVector } from '../../vector/FunctionalVector';
+import { AsNumberVector } from '../../vector/AsNumberVector';
 import { getTimeField } from '../../dataframe/processDataFrame';
 import defaults from 'lodash/defaults';
 import { BinaryOperationID, binaryOperators } from '../../utils/binaryOperators';
@@ -189,7 +189,7 @@ function findFieldValuesWithNameOrConstant(frame: DataFrame, name: string, allFr
   for (const f of frame.fields) {
     if (name === getFieldDisplayName(f, frame, allFrames)) {
       if (f.type === FieldType.boolean) {
-        return new BooleanAsNumberVector(f.values);
+        return new AsNumberVector(f.values);
       }
       return f.values;
     }
@@ -235,18 +235,4 @@ export function getNameFromOptions(options: CalculateFieldTransformerOptions) {
   }
 
   return 'math';
-}
-
-export class BooleanAsNumberVector extends FunctionalVector<number> {
-  constructor(private field: Vector) {
-    super();
-  }
-
-  get length() {
-    return this.field.length;
-  }
-
-  get(index: number) {
-    return this.field.get(index) ? 1 : 0;
-  }
 }
