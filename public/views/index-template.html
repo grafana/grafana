@@ -24,15 +24,15 @@
 
     <link
       rel="preload"
-      href="[[.ContentDeliveryURL]]/public/fonts/roboto/RxZJdnzeo3R5zSexge8UUVtXRa8TVwTICgirnJhmVJw.woff2"
+      href="[[.ContentDeliveryURL]]public/fonts/roboto/RxZJdnzeo3R5zSexge8UUVtXRa8TVwTICgirnJhmVJw.woff2"
       as="font"
       crossorigin
     />
 
     <link rel="icon" type="image/png" href="[[.FavIcon]]" />
     <link rel="apple-touch-icon" sizes="180x180" href="[[.AppleTouchIcon]]" />
-    <link rel="mask-icon" href="[[.ContentDeliveryURL]]/public/img/grafana_mask_icon.svg" color="#F05A28" />
-    <link rel="stylesheet" href="[[.ContentDeliveryURL]]/public/build/grafana.[[ .Theme ]].<%= webpack.hash %>.css" />
+    <link rel="mask-icon" href="[[.ContentDeliveryURL]]public/img/grafana_mask_icon.svg" color="#F05A28" />
+    <link rel="stylesheet" href="[[.ContentDeliveryURL]]public/build/grafana.[[ .Theme ]].<%= webpack.hash %>.css" />
 
     <script nonce="[[.Nonce]]">
       performance.mark('css done blocking');
@@ -236,8 +236,9 @@
             preloader[0].className = "preloader preloader--done";
           }
         };
-
-        window.public_cdn_path = '[[.ContentDeliveryURL]]/public/build/';
+        [[if .ContentDeliveryURL]]    
+          window.public_cdn_path = '[[.ContentDeliveryURL]]public/build/';
+        [[end]]
     </script>
 
     [[if .GoogleTagManagerId]]
@@ -281,7 +282,7 @@
       <% if (htmlWebpackPlugin.files.jsIntegrity) { %>
         <script
           nonce="[[.Nonce]]"
-          src="[[.ContentDeliveryURL]]/<%= htmlWebpackPlugin.files.chunks[key].entry %>"
+          src="[[.ContentDeliveryURL]]<%= htmlWebpackPlugin.files.chunks[key].entry %>"
           type="text/javascript"
           integrity="<%= htmlWebpackPlugin.files.jsIntegrity[htmlWebpackPlugin.files.js.indexOf(htmlWebpackPlugin.files.chunks[key].entry)] %>"
           crossorigin="<%= webpackConfig.output.crossOriginLoading %>">
@@ -289,7 +290,7 @@
       <% } else { %>
         <script
           nonce="[[.Nonce]]"
-          src="[[.ContentDeliveryURL]]/<%= htmlWebpackPlugin.files.chunks[key].entry %>"
+          src="[[.ContentDeliveryURL]]<%= htmlWebpackPlugin.files.chunks[key].entry %>"
           type="text/javascript">
         </script>
       <% } %>
