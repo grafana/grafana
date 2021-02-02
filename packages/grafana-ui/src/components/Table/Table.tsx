@@ -217,7 +217,9 @@ export const Table: FC<Props> = memo((props: Props) => {
               {RenderRow}
             </FixedSizeList>
           ) : (
-            <div>No data</div>
+            <div style={{ height: height - headerHeight }} className={tableStyles.noData}>
+              No data to show
+            </div>
           )}
         </div>
       </CustomScrollbar>
