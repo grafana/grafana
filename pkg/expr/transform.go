@@ -11,11 +11,30 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
+var (
+	expressionsQuerySummary *prometheus.SummaryVec
+)
+
+func init() {
+	expressionsQuerySummary = prometheus.NewSummaryVec(
+		prometheus.SummaryOpts{
+			Name:       "expressions_queries_duration_milliseconds",
+			Help:       "Expressions query summary",
+			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
+		},
+		[]string{"status"},
+	)
+
+	prometheus.MustRegister(expressionsQuerySummary)
+}
+
+// WrapTransformData creates and executes transform requests
 func (s *Service) WrapTransformData(ctx context.Context, query *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	sdkReq := &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
@@ -69,10 +88,23 @@ func (s *Service) WrapTransformData(ctx context.Context, query *tsdb.TsdbQuery) 
 
 // TransformData takes Queries which are either expressions nodes
 // or are datasource requests.
-func (s *Service) TransformData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (s *Service) TransformData(ctx context.Context, req *backend.QueryDataRequest) (r *backend.QueryDataResponse, err error) {
 	if s.isDisabled() {
 		return nil, status.Error(codes.PermissionDenied, "Expressions are disabled")
 	}
+
+	start := time.Now()
+	defer func() {
+		var respStatus string
+		switch {
+		case err == nil:
+			respStatus = "success"
+		default:
+			respStatus = "failure"
+		}
+		duration := float64(time.Since(start).Nanoseconds()) / float64(time.Millisecond)
+		expressionsQuerySummary.WithLabelValues(respStatus).Observe(duration)
+	}()
 
 	// Build the pipeline from the request, checking for ordering issues (e.g. loops)
 	// and parsing graph nodes from the queries.
