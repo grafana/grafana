@@ -1320,7 +1320,7 @@ func (cfg *Cfg) GetContentDeliveryURL(prefix string) string {
 		}
 
 		url.Path = path.Join(url.Path, prefix, preReleaseFolder, cfg.BuildVersion)
-		return url.String()
+		return url.String() + "/"
 	}
 
 	return ""
