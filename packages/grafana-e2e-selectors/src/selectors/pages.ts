@@ -131,6 +131,7 @@ export const Pages = {
       graph: 'Explore Graph',
       runButton: 'Run button',
       table: 'Explore Table',
+      scrollBar: () => '.scrollbar-view',
     },
     Toolbar: {
       navBar: () => '.explore-toolbar',
