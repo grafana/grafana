@@ -1,11 +1,10 @@
 +++
-title = "Query Management"
+title = "Query management"
 keywords = ["explore", "loki", "logs"]
-aliases = ["/docs/grafana/latest/features/explore/"]
 weight = 10
 +++
 
-# Query Management in Explore
+# Query management in Explore
 
 To help with debugging queries, Explore allows you to investigate query requests and responses, as well as query statistics, via the Query inspector.
 This functionality is similar to the panel inspector [Stats tab]({{< relref "../panels/inspect-panel.md#inspect-query-performance" >}}) and

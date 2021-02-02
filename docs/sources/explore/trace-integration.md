@@ -2,7 +2,6 @@
 title = "Tracing in Explore"
 description = "Tracing in Explore"
 keywords = ["explore", "trace",]
-aliases = ["/docs/grafana/latest/features/explore/"]
 weight = 20
 +++
 
@@ -13,9 +12,9 @@ Explore allows you to visualize traces from tracing data sources. This is availa
 Supported data sources are:
 
 - [Jaeger]({{< relref "../datasources/jaeger.md" >}})
-- [Zipkin]({{< relref "../datasources/zipkin.md" >}})
 - [Tempo]({{< relref "../datasources/tempo.md" >}})
 - [X-Ray](https://grafana.com/grafana/plugins/grafana-x-ray-datasource)
+- [Zipkin]({{< relref "../datasources/zipkin.md" >}})
 
 For information on how to configure queries for the data sources listed above, refer to the documentation for specific data source.
 
@@ -60,7 +59,7 @@ Clicking anywhere on the span row shows span details.
 
 ##### Trace to logs
 
-> Trace to logs is available in Grafana 7.4+.
+> **Note:** Available in Grafana 7.4 and later versions.
 
 You can navigate from a span in a trace view directly to logs relevant for that span. This is available for Tempo, Jaeger and Zipkin data source at this moment.  their relevant documentation for instruction how to configure this feature.
 

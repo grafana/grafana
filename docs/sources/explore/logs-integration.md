@@ -2,7 +2,6 @@
 title = "Logs in Explore"
 description = "Logs in Explore"
 keywords = ["explore", "logs",]
-aliases = ["/docs/grafana/latest/features/explore/"]
 weight = 15
 +++
 
@@ -10,9 +9,9 @@ weight = 15
 
 Along with metrics, Explore allows you to investigate your logs in the following data sources:
 
-- [Loki](../datasources/loki)
-- [InfluxDB](../datasources/influxdb)
-- [Elasticsearch](../datasources/elasticsearch)
+- [Elasticsearch]({{< relref "../datasources/elasticsearch.md" >}})
+- [InfluxDB]({{< relref "../datasources/influxdb.md" >}})
+- [Loki]({{< relref "../datasources/loki.md" >}})
 
 During an infrastructure monitoring and incident response, you can dig deeper into the metrics and logs to find the cause. Explore also allows you to correlate metrics and logs by viewing them side-by-side. This creates a new debugging workflow where you can:
 
@@ -85,7 +84,7 @@ Each log row has an extendable area with its labels and detected fields, for mor
 
 ### Toggle detected fields
 
-> **Note:** This feature is only available in Grafana 7.2+.
+> **Note:** Available in Grafana 7.2 and later versions.
 
 If your logs are structured in `json` or `logfmt`, then you can show or hide detected fields. Expand a log line and then click the eye icon to show or hide fields.
 
@@ -95,7 +94,7 @@ If your logs are structured in `json` or `logfmt`, then you can show or hide det
 
 As mentioned, one of the log integrations is for the new open source log aggregation system from Grafana Labs - [Loki](https://github.com/grafana/loki). Loki is designed to be very cost effective, as it does not index the contents of the logs, but rather a set of labels for each log stream. The logs from Loki are queried in a similar way to querying with label selectors in Prometheus. It uses labels to group log streams which can be made to match up with your Prometheus labels. For more information about Grafana Loki, refer to [Grafana Loki](https://github.com/grafana/loki) or the Grafana Labs hosted variant: [Grafana Cloud Logs](https://grafana.com/loki).
 
-See [Loki's data source documentation](../datasources/loki) on how to query for log data.
+For more information, refer to Loki's data source documentation]({{< relref "../datasources/loki.md" >}}) on how to query for log data.
 
 #### Switch from metrics to logs
 
