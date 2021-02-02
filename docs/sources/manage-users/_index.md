@@ -7,7 +7,7 @@ weight = 50
 
 Grafana offers several options for grouping users. Each level has different tools for managing user accounts and different tasks that they can perform.
 
-One of the most important user management tasks is assigning roles, which govern what [permissions]({{< relref "../permissions/_index.md" >}}) a user has. The correct permissions ensure that users only have access to only the resources they need.
+One of the most important user management tasks is assigning roles, which govern what [permissions]({{< relref "../permissions/_index.md" >}}) a user has. The correct permissions ensure that users have access to only the resources they need.
 
 ## Server
 
