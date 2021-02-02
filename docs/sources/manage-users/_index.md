@@ -44,7 +44,7 @@ Team Admins can [Manage teams]({{< relref "manage-teams/index.md" >}}).
 
 ## Users
 
-Users are named accounts in Grafana with granted permissions to access resources throughout Grafana. All users can manage their own user accounts to a certain extent.
+Users are named accounts in Grafana with granted permissions to access resources throughout Grafana. All users can manage their own accounts to a limited extent.
 
 Users can:
 - [View and edit user profile](user-admin/user-profile.md)
