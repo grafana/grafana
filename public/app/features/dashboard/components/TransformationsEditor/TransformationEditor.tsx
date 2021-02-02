@@ -7,7 +7,7 @@ import {
   DataTransformerConfig,
   GrafanaTheme,
   transformDataFrame,
-  TransformerRegistyItem,
+  TransformerRegistryItem,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -17,7 +17,7 @@ interface TransformationEditorProps {
   debugMode?: boolean;
   index: number;
   data: DataFrame[];
-  uiConfig: TransformerRegistyItem<any>;
+  uiConfig: TransformerRegistryItem<any>;
   configs: TransformationsEditorTransformation[];
   onChange: (index: number, config: DataTransformerConfig) => void;
 }
