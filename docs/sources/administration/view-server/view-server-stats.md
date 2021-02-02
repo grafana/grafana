@@ -1,14 +1,14 @@
 +++
 title = "View server stats"
 keywords = ["grafana", "server", "statistics"]
-weight = 1150
+weight = 400
 +++
 
 # View Grafana server stats
 
 If you are a Grafana server admin, then you can view useful statistics about your Grafana server in the Stats tab.
 
-> **Note:** Only Grafana server admins can access the **Server Admin** menu. For more information about about admin permissions, refer to [Grafana server admin]({{< relref "../permissions/_index.md" >}}).
+> **Note:** Only Grafana server admins can access the **Server Admin** menu. For more information about about admin permissions, refer to [Grafana server admin]({{< relref "../../permissions/_index.md" >}}).
 
 ## View server stats
 
