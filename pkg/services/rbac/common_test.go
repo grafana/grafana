@@ -27,8 +27,8 @@ func setupTestEnv(t *testing.T) *RBACService {
 type policyTestCase struct {
 	name        string
 	permissions []struct {
-		resource string
-		action   string
+		permission string
+		scope      string
 	}
 }
 
@@ -57,10 +57,10 @@ func createUserWithPolicy(t *testing.T, user string, policies []policyTestCase) 
 
 		for _, perm := range p.permissions {
 			permCmd := CreatePermissionCommand{
-				OrgId:    1,
-				PolicyId: policyId,
-				Resource: perm.resource,
-				Action:   perm.action,
+				OrgId:      1,
+				PolicyId:   policyId,
+				Permission: perm.permission,
+				Scope:      perm.scope,
 			}
 
 			err := ac.CreatePermission(&permCmd)

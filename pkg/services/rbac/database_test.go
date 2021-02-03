@@ -59,8 +59,8 @@ func TestCreatingPolicy(t *testing.T) {
 		desc        string
 		inputName   string
 		permissions []struct {
-			resource string
-			action   string
+			permission string
+			scope      string
 		}
 
 		expectedError   error
@@ -76,11 +76,11 @@ func TestCreatingPolicy(t *testing.T) {
 			desc:      "should successfuly create policy with permissions",
 			inputName: "a name",
 			permissions: []struct {
-				resource string
-				action   string
+				permission string
+				scope      string
 			}{
-				{resource: "/api/admin/users", action: "post"},
-				{resource: "/api/report", action: "get"},
+				{scope: "/api/admin/users", permission: "post"},
+				{scope: "/api/report", permission: "get"},
 			},
 			expectedUpdated: time.Unix(3, 0).UTC(),
 		},
@@ -106,10 +106,10 @@ func TestCreatingPolicy(t *testing.T) {
 			if tc.permissions != nil {
 				for _, p := range tc.permissions {
 					permCmd := CreatePermissionCommand{
-						OrgId:    1,
-						PolicyId: policyId,
-						Resource: p.resource,
-						Action:   p.action,
+						OrgId:      1,
+						PolicyId:   policyId,
+						Permission: p.permission,
+						Scope:      p.scope,
 					}
 
 					err := ac.CreatePermission(&permCmd)
@@ -132,8 +132,8 @@ func TestCreatingPolicy(t *testing.T) {
 			} else {
 				assert.Equal(t, len(tc.permissions), len(policy.Permissions))
 				for i, p := range policy.Permissions {
-					assert.Equal(t, tc.permissions[i].resource, p.Resource)
-					assert.Equal(t, tc.permissions[i].action, p.Action)
+					assert.Equal(t, tc.permissions[i].permission, p.Permission)
+					assert.Equal(t, tc.permissions[i].scope, p.Scope)
 				}
 			}
 		})
@@ -160,11 +160,11 @@ func TestUserPolicy(t *testing.T) {
 			policies: []policyTestCase{
 				{
 					name: "CreateUser", permissions: []struct {
-						resource string
-						action   string
+						permission string
+						scope      string
 					}{
-						{resource: "/api/admin/users", action: "post"},
-						{resource: "/api/report", action: "get"},
+						{scope: "/api/admin/users", permission: "post"},
+						{scope: "/api/report", permission: "get"},
 					},
 				},
 			},

@@ -38,12 +38,11 @@ type PolicyDTO struct {
 
 // Policy is the model for Permission in RBAC.
 type Permission struct {
-	Id           int64
-	OrgId        int64
-	PolicyId     int64
-	Resource     string
-	ResourceType string
-	Action       string
+	Id         int64
+	OrgId      int64
+	PolicyId   int64
+	Permission string
+	Scope      string
 
 	Updated time.Time
 	Created time.Time
@@ -111,11 +110,10 @@ type GetUserPermissionsQuery struct {
 }
 
 type CreatePermissionCommand struct {
-	OrgId        int64
-	PolicyId     int64
-	Resource     string
-	ResourceType string
-	Action       string
+	OrgId      int64
+	PolicyId   int64
+	Permission string
+	Scope      string
 
 	Result *Permission
 }

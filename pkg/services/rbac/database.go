@@ -91,13 +91,12 @@ func (ac *RBACService) GetPolicyPermissions(query *GetPolicyPermissionsQuery) er
 func (ac *RBACService) CreatePermission(cmd *CreatePermissionCommand) error {
 	return ac.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		permission := &Permission{
-			OrgId:        cmd.OrgId,
-			PolicyId:     cmd.PolicyId,
-			Resource:     cmd.Resource,
-			ResourceType: cmd.ResourceType,
-			Action:       cmd.Action,
-			Created:      timeNow(),
-			Updated:      timeNow(),
+			OrgId:      cmd.OrgId,
+			PolicyId:   cmd.PolicyId,
+			Permission: cmd.Permission,
+			Scope:      cmd.Scope,
+			Created:    timeNow(),
+			Updated:    timeNow(),
 		}
 
 		if _, err := sess.Insert(permission); err != nil {
@@ -170,6 +169,7 @@ func (ac *RBACService) GetUserPolicies(query *GetUserPoliciesQuery) error {
 
 func (ac *RBACService) GetUserPermissions(query *GetUserPermissionsQuery) error {
 	return ac.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		// TODO: user JOIN on permission table
 		policiesQuery := GetUserPoliciesQuery{
 			OrgId:  query.OrgId,
 			UserId: query.UserId,
@@ -317,7 +317,7 @@ func getPolicyById(sess *sqlstore.DBSession, policyId int64, orgId int64) (*Poli
 
 func getPolicyPermissions(sess *sqlstore.DBSession, policyId int64) ([]Permission, error) {
 	permissions := make([]Permission, 0)
-	q := "SELECT id, policy_id, org_id, resource, resource_type, action, updated, created FROM permission WHERE policy_id = ?"
+	q := "SELECT id, policy_id, org_id, permission, scope, updated, created FROM permission WHERE policy_id = ?"
 	if err := sess.SQL(q, policyId).Find(&permissions); err != nil {
 		return nil, err
 	}

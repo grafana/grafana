@@ -34,11 +34,11 @@ func TestEvaluatingPermissions(t *testing.T) {
 			policies: []policyTestCase{
 				{
 					name: "CreateUser", permissions: []struct {
-						resource string
-						action   string
+						permission string
+						scope      string
 					}{
-						{resource: "/api/admin/users", action: "post"},
-						{resource: "/api/report", action: "get"},
+						{scope: "/api/admin/users", permission: "post"},
+						{scope: "/api/report", permission: "get"},
 					},
 				},
 			},
