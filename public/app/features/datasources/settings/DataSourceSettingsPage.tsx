@@ -23,7 +23,7 @@ import { getRouteParamsId } from 'app/core/selectors/location';
 // Types
 import { CoreEvents, StoreState } from 'app/types/';
 import { DataSourcePluginMeta, DataSourceSettings, NavModel, UrlQueryMap } from '@grafana/data';
-import { Alert } from '@grafana/ui';
+import { Alert, DismissableFeatureInfoBox, FeatureInfoBox } from '@grafana/ui';
 import { getDataSourceLoadingNav } from '../state/navModel';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
 import { dataSourceLoaded, setDataSourceName, setIsDefault } from '../state/reducers';
@@ -185,6 +185,11 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
             </label>
           </div>
         )}
+
+        <DismissableFeatureInfoBox title="Configure your Prometheus data source" persistenceId="cloud">
+          Or leave it to Grafana Labs, and get a scalable Prometheus (with Loki) with the free-forever Grafana Cloud
+          plan.
+        </DismissableFeatureInfoBox>
 
         <BasicSettings
           dataSourceName={dataSource.name}
