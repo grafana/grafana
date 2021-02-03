@@ -13,7 +13,7 @@ interface Props {
 
 export const PreviewInstancesTab: FC<Props> = ({ instances, isTested, height, styles, width }) => {
   console.log(instances);
-  if (true) {
+  if (!isTested) {
     return (
       <div className={styles.noQueries}>
         <h4 className={styles.noQueriesHeader}>You haven’t tested your alert yet.</h4>
@@ -22,5 +22,5 @@ export const PreviewInstancesTab: FC<Props> = ({ instances, isTested, height, st
       </div>
     );
   }
-  // return <Table data={instances[0]} height={height} width={width} />;
+  return <Table data={instances[0]} height={height} width={width} />;
 };
