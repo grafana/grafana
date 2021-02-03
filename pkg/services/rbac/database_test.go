@@ -106,7 +106,6 @@ func TestCreatingPolicy(t *testing.T) {
 			if tc.permissions != nil {
 				for _, p := range tc.permissions {
 					permCmd := CreatePermissionCommand{
-						OrgId:      1,
 						PolicyId:   policyId,
 						Permission: p.permission,
 						Scope:      p.scope,

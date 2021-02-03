@@ -39,7 +39,6 @@ type PolicyDTO struct {
 // Policy is the model for Permission in RBAC.
 type Permission struct {
 	Id         int64
-	OrgId      int64
 	PolicyId   int64
 	Permission string
 	Scope      string
@@ -82,7 +81,6 @@ type GetPolicyQuery struct {
 }
 
 type GetPolicyPermissionsQuery struct {
-	OrgId    int64 `json:"-"`
 	PolicyId int64
 
 	Result []Permission
@@ -110,7 +108,6 @@ type GetUserPermissionsQuery struct {
 }
 
 type CreatePermissionCommand struct {
-	OrgId      int64
 	PolicyId   int64
 	Permission string
 	Scope      string
@@ -119,8 +116,7 @@ type CreatePermissionCommand struct {
 }
 
 type DeletePermissionCommand struct {
-	Id    int64
-	OrgId int64
+	Id int64
 }
 
 type CreatePolicyCommand struct {

@@ -57,7 +57,6 @@ func createUserWithPolicy(t *testing.T, user string, policies []policyTestCase) 
 
 		for _, perm := range p.permissions {
 			permCmd := CreatePermissionCommand{
-				OrgId:      1,
 				PolicyId:   policyId,
 				Permission: perm.permission,
 				Scope:      perm.scope,

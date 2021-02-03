@@ -7,7 +7,6 @@ func addRBACMigrations(mg *migrator.Migrator) {
 		Name: "permission",
 		Columns: []*migrator.Column{
 			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-			{Name: "org_id", Type: migrator.DB_BigInt},
 			{Name: "policy_id", Type: migrator.DB_BigInt},
 			{Name: "permission", Type: migrator.DB_Varchar, Length: 190, Nullable: false},
 			{Name: "scope", Type: migrator.DB_Varchar, Length: 190, Nullable: false},
@@ -15,7 +14,6 @@ func addRBACMigrations(mg *migrator.Migrator) {
 			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
 		},
 		Indices: []*migrator.Index{
-			{Cols: []string{"org_id"}},
 			{Cols: []string{"policy_id"}},
 		},
 	}
@@ -23,8 +21,7 @@ func addRBACMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("create permission table", migrator.NewAddTableMigration(permissionV1))
 
 	//-------  indexes ------------------
-	mg.AddMigration("add index permission.org_id", migrator.NewAddIndexMigration(permissionV1, permissionV1.Indices[0]))
-	mg.AddMigration("add unique index permission.policy_id", migrator.NewAddIndexMigration(permissionV1, permissionV1.Indices[1]))
+	mg.AddMigration("add unique index permission.policy_id", migrator.NewAddIndexMigration(permissionV1, permissionV1.Indices[0]))
 
 	policyV1 := migrator.Table{
 		Name: "policy",
