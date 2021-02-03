@@ -10,10 +10,9 @@ const ResourceGroupsField: React.FC<MetricsQueryEditorFieldProps> = ({
   onChange,
 }) => {
   const [options, setOptions] = useState<Options>([]);
-  const azureMonitorIsConfigured = datasource.azureMonitorDatasource.isConfigured();
 
   useEffect(() => {
-    if (!azureMonitorIsConfigured) {
+    if (!subscriptionId) {
       return;
     }
 
@@ -24,7 +23,7 @@ const ResourceGroupsField: React.FC<MetricsQueryEditorFieldProps> = ({
         // TODO: handle error
         console.error(err);
       });
-  }, [azureMonitorIsConfigured, subscriptionId]);
+  }, [subscriptionId]);
 
   return (
     <InlineField label="Resource Group" labelWidth={16}>

@@ -16,12 +16,11 @@ export function useMetricsMetadata(
   onQueryChange: (newQuery: AzureMonitorQuery) => void
 ) {
   const [metricMetadata, setMetricMetadata] = useState<MetricMetadata>();
-  const azureMonitorIsConfigured = datasource.azureMonitorDatasource.isConfigured();
 
   useEffect(() => {
     if (
       !(
-        azureMonitorIsConfigured &&
+        subscriptionId &&
         query.azureMonitor.resourceGroup &&
         query.azureMonitor.metricDefinition &&
         query.azureMonitor.resourceName &&
@@ -34,12 +33,12 @@ export function useMetricsMetadata(
 
     datasource
       .getMetricMetadata(
-        datasource.replace(subscriptionId),
-        datasource.replace(query.azureMonitor.resourceGroup),
-        datasource.replace(query.azureMonitor.metricDefinition),
-        datasource.replace(query.azureMonitor.resourceName),
-        datasource.replace(query.azureMonitor.metricNamespace),
-        datasource.replace(query.azureMonitor.metricName)
+        subscriptionId,
+        query.azureMonitor.resourceGroup,
+        query.azureMonitor.metricDefinition,
+        query.azureMonitor.resourceName,
+        query.azureMonitor.metricNamespace,
+        query.azureMonitor.metricName
       )
       .then((metadata) => {
         onQueryChange({

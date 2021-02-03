@@ -5,12 +5,11 @@ import { findOption, MetricsQueryEditorFieldProps, Options, toOption } from '../
 
 const MetricName: React.FC<MetricsQueryEditorFieldProps> = ({ query, datasource, subscriptionId, onChange }) => {
   const [options, setOptions] = useState<Options>([]);
-  const azureMonitorIsConfigured = datasource.azureMonitorDatasource.isConfigured();
 
   useEffect(() => {
     if (
       !(
-        azureMonitorIsConfigured &&
+        subscriptionId &&
         query.azureMonitor.resourceGroup &&
         query.azureMonitor.metricDefinition &&
         query.azureMonitor.resourceName &&

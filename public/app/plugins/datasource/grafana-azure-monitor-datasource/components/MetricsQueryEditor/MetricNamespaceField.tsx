@@ -10,10 +10,9 @@ const MetricNamespaceField: React.FC<MetricsQueryEditorFieldProps> = ({
   onChange,
 }) => {
   const [options, setOptions] = useState<Options>([]);
-  const azureMonitorIsConfigured = datasource.azureMonitorDatasource.isConfigured();
 
   useEffect(() => {
-    if (!(azureMonitorIsConfigured && query.azureMonitor.resourceGroup, query.azureMonitor.metricDefinition)) {
+    if (!(subscriptionId && query.azureMonitor.resourceGroup, query.azureMonitor.metricDefinition)) {
       return;
     }
 
