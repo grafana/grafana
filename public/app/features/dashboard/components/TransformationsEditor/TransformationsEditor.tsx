@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ChangeEvent } from 'react';
 import {
   Alert,
   Button,
@@ -11,6 +11,8 @@ import {
   ValuePicker,
   VerticalGroup,
   withTheme,
+  Input,
+  IconButton,
 } from '@grafana/ui';
 import {
   DataFrame,
@@ -40,6 +42,7 @@ interface TransformationsEditorProps extends Themeable {
 interface State {
   data: DataFrame[];
   transformations: TransformationsEditorTransformation[];
+  search?: string;
 }
 
 class UnThemedTransformationsEditor extends React.PureComponent<TransformationsEditorProps, State> {
@@ -58,6 +61,10 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
       data: [],
     };
   }
+
+  onSearchChange = (event: ChangeEvent<HTMLInputElement>) => {
+    this.setState({ search: event.target.value });
+  };
 
   buildTransformationIds(transformations: DataTransformerConfig[]) {
     const transformationCounters: Record<string, number> = {};
@@ -113,6 +120,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
     const { transformations } = this.state;
 
     const nextId = this.getTransformationNextId(selectable.value!);
+    this.setState({ search: undefined });
     this.onChange([
       ...transformations,
       {
@@ -209,6 +217,31 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
   };
 
   renderNoAddedTransformsState() {
+    const { search } = this.state;
+    let suffix: React.ReactNode | undefined = undefined;
+    let xforms = standardTransformersRegistry.list();
+    if (search) {
+      const lower = search.toLowerCase();
+      const filtered = xforms.filter((t) => {
+        const txt = (t.name + t.description).toLowerCase();
+        return !txt.indexOf(lower);
+      });
+      suffix = (
+        <>
+          {filtered.length} / {xforms.length} &nbsp;&nbsp;
+          <IconButton
+            name="times"
+            surface="header"
+            onClick={() => {
+              this.setState({ search: undefined });
+            }}
+          />
+        </>
+      );
+
+      xforms = filtered;
+    }
+
     return (
       <>
         <Container grow={1}>
@@ -230,7 +263,9 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
           </DismissableFeatureInfoBox>
         </Container>
         <VerticalGroup>
-          {standardTransformersRegistry.list().map((t) => {
+          <Input value={search ?? ''} placeholder="Transformations" onChange={this.onSearchChange} suffix={suffix} />
+
+          {xforms.map((t) => {
             return (
               <TransformationCard
                 key={t.name}
