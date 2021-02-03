@@ -1,8 +1,17 @@
 import React from 'react';
-import { number, select, text } from '@storybook/addon-knobs';
 import { FeatureState } from '@grafana/data';
 import { InfoBox, FeatureInfoBox } from '@grafana/ui';
 import mdx from './InfoBox.mdx';
+import {
+  DismissableFeatureInfoBox,
+  DismissableFeatureInfoBoxProps,
+  FEATUREINFOBOX_PERSISTENCE_ID_PREFIX,
+} from './DismissableFeatureInfoBox';
+import { Button } from '../Button';
+import { css } from 'emotion';
+import { Story } from '@storybook/react';
+import { FeatureInfoBoxProps } from './FeatureInfoBox';
+import { InfoBoxProps } from './InfoBox';
 
 export default {
   title: 'Layout/InfoBox',
@@ -13,67 +22,64 @@ export default {
       page: mdx,
     },
   },
+  argTypes: {
+    onDismiss: { action: 'Dismissed' },
+    featureState: {
+      control: { type: 'select', options: ['alpha', 'beta', undefined] },
+    },
+    children: {
+      table: {
+        disable: true,
+      },
+    },
+  },
 };
 
-const getKnobs = () => {
-  const containerWidth = number('Container width', 800, {
-    range: true,
-    min: 100,
-    max: 1500,
-    step: 100,
-  });
+const defaultProps: DismissableFeatureInfoBoxProps = {
+  title: 'A title',
+  severity: 'info',
+  url: 'http://www.grafana.com',
+  persistenceId: 'storybook-feature-info-box-persist',
+  featureState: FeatureState.beta,
 
-  const title = text('Title', 'User permission');
-  const url = text('Url', 'http://docs.grafana.org/features/datasources/mysql/');
-  const severity = select('Severity', ['success', 'warning', 'error', 'info'], 'info');
-
-  return { containerWidth, severity, title, url };
+  children: (
+    <p>
+      The database user should only be granted SELECT permissions on the specified database &amp; tables you want to
+      query. Grafana does not validate that queries are safe so queries can contain any SQL statement. For example,
+      statements like <code>USE otherdb;</code> and <code>DROP TABLE user;</code> would be executed. To protect against
+      this we <strong>Highly</strong> recommend you create a specific MySQL user with restricted permissions.
+    </p>
+  ),
 };
 
-export const basic = () => {
-  const { containerWidth, severity, title, url } = getKnobs();
+const InfoBoxTemplate: Story<InfoBoxProps> = (args) => <InfoBox {...args} />;
+export const infoBox = InfoBoxTemplate.bind({});
+infoBox.args = defaultProps;
+
+const FeatureInfoBoxTemplate: Story<FeatureInfoBoxProps> = (args) => <FeatureInfoBox {...args}></FeatureInfoBox>;
+export const featureInfoBox = FeatureInfoBoxTemplate.bind({});
+featureInfoBox.args = defaultProps;
+
+const DismissableTemplate: Story<DismissableFeatureInfoBoxProps> = (args) => {
+  const onResetClick = () => {
+    localStorage.removeItem(FEATUREINFOBOX_PERSISTENCE_ID_PREFIX.concat(args.persistenceId));
+    location.reload();
+  };
 
   return (
-    <div style={{ width: containerWidth }}>
-      <InfoBox
-        title={title}
-        url={url}
-        severity={severity}
-        onDismiss={() => {
-          alert('onDismiss clicked');
-        }}
+    <div>
+      <div>
+        <DismissableFeatureInfoBox {...args} />
+      </div>
+      <div
+        className={css`
+          margin-top: 24px;
+        `}
       >
-        <p>
-          The database user should only be granted SELECT permissions on the specified database &amp; tables you want to
-          query. Grafana does not validate that queries are safe so queries can contain any SQL statement. For example,
-          statements like <code>USE otherdb;</code> and <code>DROP TABLE user;</code> would be executed. To protect
-          against this we <strong>Highly</strong> recommend you create a specific MySQL user with restricted
-          permissions.
-        </p>
-      </InfoBox>
+        <Button onClick={onResetClick}>Reset DismissableFeatureInfoBox</Button>
+      </div>
     </div>
   );
 };
-
-export const featureInfoBox = () => {
-  const { containerWidth } = getKnobs();
-
-  return (
-    <div style={{ width: containerWidth }}>
-      <FeatureInfoBox
-        title="Transformations"
-        url={'http://www.grafana.com'}
-        featureState={FeatureState.beta}
-        onDismiss={() => {
-          alert('onDismiss clicked');
-        }}
-      >
-        Transformations allow you to join, calculate, re-order, hide and rename your query results before being
-        visualized. <br />
-        Many transforms are not suitable if you&apos;re using the Graph visualisation as it currently only supports time
-        series. <br />
-        It can help to switch to Table visualisation to understand what a transformation is doing.
-      </FeatureInfoBox>
-    </div>
-  );
-};
+export const dismissableFeatureInfoBox = DismissableTemplate.bind({});
+dismissableFeatureInfoBox.args = defaultProps;
