@@ -14,6 +14,7 @@ export interface Props {
   title: string | JSX.Element;
   className?: string;
   contentClassName?: string;
+  closeOnEscape?: boolean;
 
   isOpen?: boolean;
   onDismiss?: () => void;
@@ -27,6 +28,7 @@ export function Modal(props: PropsWithChildren<Props>): ReturnType<FC<Props>> {
     title,
     children,
     isOpen = false,
+    closeOnEscape = true,
     className,
     contentClassName,
     onDismiss: propsOnDismiss,
@@ -47,7 +49,7 @@ export function Modal(props: PropsWithChildren<Props>): ReturnType<FC<Props>> {
   };
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && closeOnEscape) {
       document.addEventListener('keydown', onEscKey, false);
     } else {
       document.removeEventListener('keydown', onEscKey, false);
@@ -55,7 +57,7 @@ export function Modal(props: PropsWithChildren<Props>): ReturnType<FC<Props>> {
     return () => {
       document.removeEventListener('keydown', onEscKey, false);
     };
-  }, [isOpen]);
+  }, [closeOnEscape, isOpen]);
 
   if (!isOpen) {
     return null;
