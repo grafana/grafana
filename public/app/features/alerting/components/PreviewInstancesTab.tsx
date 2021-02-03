@@ -1,16 +1,19 @@
 import React, { FC } from 'react';
-import { PanelData } from '@grafana/data';
-import { Button } from '@grafana/ui';
+import { DataFrame } from '@grafana/data';
+import { Button, Table } from '@grafana/ui';
 import { PreviewStyles } from './AlertingQueryPreview';
 
 interface Props {
-  data: PanelData;
+  instances: DataFrame[];
   isTested: boolean;
   styles: PreviewStyles;
+  width: number;
+  height: number;
 }
 
-export const PreviewInstancesTab: FC<Props> = ({ data, isTested, styles }) => {
-  if (!isTested) {
+export const PreviewInstancesTab: FC<Props> = ({ instances, isTested, height, styles, width }) => {
+  console.log(instances);
+  if (true) {
     return (
       <div className={styles.noQueries}>
         <h4 className={styles.noQueriesHeader}>You haven’t tested your alert yet.</h4>
@@ -19,5 +22,5 @@ export const PreviewInstancesTab: FC<Props> = ({ data, isTested, styles }) => {
       </div>
     );
   }
-  return <div>Instances</div>;
+  // return <Table data={instances[0]} height={height} width={width} />;
 };

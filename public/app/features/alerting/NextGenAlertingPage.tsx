@@ -2,7 +2,7 @@ import React, { FormEvent, PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { css } from 'emotion';
-import { GrafanaTheme, SelectableValue } from '@grafana/data';
+import { DataFrame, GrafanaTheme, SelectableValue } from '@grafana/data';
 import { PageToolbar, stylesFactory, ToolbarButton } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
@@ -14,6 +14,7 @@ import {
   createAlertDefinition,
   updateAlertDefinitionUiState,
   updateAlertDefinition,
+  evaluateAlertDefinition,
 } from './state/actions';
 import { AlertDefinition, AlertDefinitionUiState, QueryGroupOptions, StoreState } from '../../types';
 import { PanelQueryRunner } from '../query/state/PanelQueryRunner';
@@ -27,11 +28,13 @@ interface ConnectedProps {
   uiState: AlertDefinitionUiState;
   queryRunner: PanelQueryRunner;
   queryOptions: QueryGroupOptions;
+  instances: DataFrame[];
 }
 
 interface DispatchProps {
   updateAlertDefinitionUiState: typeof updateAlertDefinitionUiState;
   updateAlertDefinitionOption: typeof updateAlertDefinitionOption;
+  evaluateAlertDefinition: typeof evaluateAlertDefinition;
 }
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
@@ -59,7 +62,9 @@ class NextGenAlertingPage extends PureComponent<Props> {
 
   onDiscard = () => {};
 
-  onTest = () => {};
+  onTest = () => {
+    this.props.evaluateAlertDefinition();
+  };
 
   renderToolbarActions() {
     return [
@@ -76,7 +81,7 @@ class NextGenAlertingPage extends PureComponent<Props> {
   }
 
   render() {
-    const { alertDefinition, uiState, updateAlertDefinitionUiState, queryRunner, queryOptions } = this.props;
+    const { alertDefinition, instances, uiState, updateAlertDefinitionUiState, queryRunner, queryOptions } = this.props;
     const styles = getStyles(config.theme);
 
     return (
@@ -87,7 +92,12 @@ class NextGenAlertingPage extends PureComponent<Props> {
         <div className={styles.splitPanesWrapper}>
           <SplitPaneWrapper
             leftPaneComponents={[
-              <AlertingQueryPreview key="queryPreview" queryRunner={queryRunner} />,
+              <AlertingQueryPreview
+                key="queryPreview"
+                queryRunner={queryRunner}
+                instances={instances}
+                queries={queryOptions.queries}
+              />,
               <AlertingQueryEditor key="queryEditor" />,
             ]}
             uiState={uiState}
@@ -113,12 +123,14 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
     uiState: state.alertDefinition.uiState,
     queryOptions: state.alertDefinition.queryOptions,
     queryRunner: state.alertDefinition.queryRunner,
+    instances: state.alertDefinition.instances,
   };
 };
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   updateAlertDefinitionUiState,
   updateAlertDefinitionOption,
+  evaluateAlertDefinition,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(NextGenAlertingPage));

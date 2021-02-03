@@ -1,4 +1,10 @@
-import { AppEvents, dateMath } from '@grafana/data';
+import {
+  AppEvents,
+  applyFieldOverrides,
+  arrowTableToDataFrame,
+  base64StringToArrowTable,
+  dateMath,
+} from '@grafana/data';
 import { config, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
 import { updateLocation } from 'app/core/actions';
@@ -14,6 +20,7 @@ import {
   setQueryOptions,
   setAlertDefinitions,
   setAlertDefinition,
+  setInstanceData,
 } from './reducers';
 import {
   AlertDefinition,
@@ -172,6 +179,33 @@ export function onRunQueries(): ThunkResult<void> {
       queries: queryOptions.queries,
       datasource: queryOptions.dataSource.name!,
     });
+  };
+}
+
+export function evaluateAlertDefinition(): ThunkResult<void> {
+  return async (dispatch, getStore) => {
+    const { alertDefinition } = getStore().alertDefinition;
+
+    const response: { instances: [] } = await getBackendSrv().post(
+      `/api/alert-definitions/eval/${alertDefinition.uid}`
+    );
+    const dataFrames = response.instances.map((instance) => {
+      const table = base64StringToArrowTable(instance);
+      return arrowTableToDataFrame(table);
+    });
+
+    const overriddenDataFrames = applyFieldOverrides({
+      data: dataFrames,
+      fieldConfig: {
+        defaults: {},
+        overrides: [],
+      },
+      replaceVariables: (value: any) => value,
+      theme: config.theme,
+    });
+
+    dispatch(setInstanceData(overriddenDataFrames));
+    appEvents.emit(AppEvents.alertSuccess, ['Alert definition tested successfully']);
   };
 }
 

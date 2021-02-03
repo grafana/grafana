@@ -22,6 +22,7 @@ export const PreviewQueryTab: FC<Props> = ({ data, height, width }) => {
   const padding = 16;
 
   if (data.series.length > 1) {
+    console.log(data.series);
     return (
       <div className={styles.wrapper}>
         <div style={{ height: height - theme.spacing.formInputHeight - 16 }}>

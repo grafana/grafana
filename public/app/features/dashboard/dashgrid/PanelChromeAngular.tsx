@@ -89,7 +89,6 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
 
     this.subs.add(panel.events.subscribe(RenderEvent, this.onPanelRenderEvent));
   }
-
   onPanelRenderEvent = (payload?: any) => {
     const { alertState } = this.state;
 

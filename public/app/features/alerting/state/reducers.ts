@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { ApplyFieldOverrideOptions, DataTransformerConfig, dateTime, FieldColorModeId } from '@grafana/data';
+import { ApplyFieldOverrideOptions, DataFrame, DataTransformerConfig, dateTime, FieldColorModeId } from '@grafana/data';
 import alertDef from './alertDef';
 import {
   AlertDefinition,
@@ -67,6 +67,7 @@ export const initialAlertDefinitionState: AlertDefinitionState = {
   uiState: { ...store.getObject(ALERT_DEFINITION_UI_STATE_STORAGE_KEY, DEFAULT_ALERT_DEFINITION_UI_STATE) },
   data: [],
   alertDefinitions: [] as AlertDefinition[],
+  instances: [] as DataFrame[],
 };
 
 function convertToAlertRule(dto: AlertRuleDTO, state: string): AlertRule {
@@ -192,6 +193,9 @@ const alertDefinitionSlice = createSlice({
     setAlertDefinitions: (state: AlertDefinitionState, action: PayloadAction<AlertDefinition[]>) => {
       return { ...state, alertDefinitions: action.payload };
     },
+    setInstanceData: (state: AlertDefinitionState, action: PayloadAction<DataFrame[]>) => {
+      return { ...state, instances: action.payload };
+    },
   },
 });
 
@@ -209,6 +213,7 @@ export const {
   setQueryOptions,
   setAlertDefinitions,
   setAlertDefinition,
+  setInstanceData,
 } = alertDefinitionSlice.actions;
 
 export const alertRulesReducer = alertRulesSlice.reducer;
