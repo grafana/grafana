@@ -7,7 +7,7 @@ weight = 750
 
 # Restart Grafana
 
-Users often need to restart the Grafana service after they have made configuration changes. This topic provides detailed instructions on how to restart the service on supported operating systems.
+Users often need to restart Grafana after they have made configuration changes. This topic provides detailed instructions on how to restart Grafana supported operating systems.
 
 - [Windows](#windows)
 - [MacOS](#macos)
@@ -24,18 +24,25 @@ To restart Grafana:
 
 ## macOS
 
-To restart Grafana that was installed using standalone macOS binaries:
+Restart methods differ depending on whether you installed Grafana using Homebrew or as standalone macOS binaries.
 
-1. Open a terminal and go to the directory where you copied the install setup files. 
+### Restart Grafana using Homebrew
+
+Use the [Homebrew](http://brew.sh/) restart command:
+
+```bash
+brew services restart grafana`
+```
+### Restart standalone macOS binaries
+
+To restart Grafana:
+
+1. Open a terminal and go to the directory where you copied the install setup files.
 1. Run the command:
 
 ```bash
 ./bin/grafana-server web
 ```
-
-If you installed Grafana using [Homebrew](http://brew.sh/), use rge restart command:
-
-`brew services restart grafana`
 ## Linux
 
 Restart methods differ depending on whether your Linux system uses `systemd` or `init.d`.
@@ -82,7 +89,7 @@ sudo update-rc.d grafana-server defaults
 ```
 ## Docker
 
-To restart the Grafana service, use the `docker restart` command. For example:
+To restart the Grafana service, use the `docker restart` command.
 
 `docker restart grafana`
 
@@ -101,7 +108,8 @@ grafana:
     - TERM=linux
     - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-piechart-panel,grafana-polystat-panel
 ```
-Start the server using this command:
+
+Start the Grafana server:
 
 `docker-compose up`
 
