@@ -2,6 +2,7 @@ package conditions
 
 import (
 	"context"
+	"github.com/grafana/grafana/pkg/services/validations"
 	"math"
 	"testing"
 	"time"
@@ -235,7 +236,8 @@ func queryConditionScenario(desc string, fn queryConditionScenarioFunc) {
 
 		ctx := &queryConditionTestContext{}
 		ctx.result = &alerting.EvalContext{
-			Rule: &alerting.Rule{},
+			Rule:             &alerting.Rule{},
+			RequestValidator: &validations.OSSPluginRequestValidator{},
 		}
 
 		fn(ctx)

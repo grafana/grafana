@@ -2,6 +2,7 @@ package notifiers
 
 import (
 	"context"
+	"github.com/grafana/grafana/pkg/services/validations"
 	"strings"
 	"testing"
 
@@ -75,7 +76,7 @@ func TestGenPushoverBody(t *testing.T) {
 				evalContext := alerting.NewEvalContext(context.Background(),
 					&alerting.Rule{
 						State: models.AlertStateAlerting,
-					})
+					}, &validations.OSSPluginRequestValidator{})
 				_, pushoverBody, err := notifier.genPushoverBody(evalContext, "", "")
 
 				So(err, ShouldBeNil)
@@ -86,7 +87,7 @@ func TestGenPushoverBody(t *testing.T) {
 				evalContext := alerting.NewEvalContext(context.Background(),
 					&alerting.Rule{
 						State: models.AlertStateOK,
-					})
+					}, &validations.OSSPluginRequestValidator{})
 				_, pushoverBody, err := notifier.genPushoverBody(evalContext, "", "")
 
 				So(err, ShouldBeNil)

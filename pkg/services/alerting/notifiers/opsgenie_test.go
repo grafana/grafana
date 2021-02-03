@@ -2,6 +2,7 @@ package notifiers
 
 import (
 	"context"
+	"github.com/grafana/grafana/pkg/services/validations"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -78,7 +79,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 					Message:       "someMessage",
 					State:         models.AlertStateAlerting,
 					AlertRuleTags: tagPairs,
-				})
+				}, &validations.OSSPluginRequestValidator{})
 				evalContext.IsTestRun = true
 
 				receivedTags := make([]string, 0)

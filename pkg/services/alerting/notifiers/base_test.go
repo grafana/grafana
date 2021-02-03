@@ -2,6 +2,7 @@ package notifiers
 
 import (
 	"context"
+	"github.com/grafana/grafana/pkg/services/validations"
 	"testing"
 	"time"
 
@@ -169,7 +170,7 @@ func TestShouldSendAlertNotification(t *testing.T) {
 	for _, tc := range tcs {
 		evalContext := alerting.NewEvalContext(context.Background(), &alerting.Rule{
 			State: tc.prevState,
-		})
+		}, &validations.OSSPluginRequestValidator{})
 
 		if tc.state == nil {
 			tc.state = &models.AlertNotificationState{}

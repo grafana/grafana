@@ -2,6 +2,7 @@ package notifiers
 
 import (
 	"context"
+	"github.com/grafana/grafana/pkg/services/validations"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -48,7 +49,7 @@ func TestDingDingNotifier(t *testing.T) {
 					&alerting.Rule{
 						State:   models.AlertStateAlerting,
 						Message: `{host="localhost"}`,
-					})
+					}, &validations.OSSPluginRequestValidator{})
 				_, err = notifier.genBody(evalContext, "")
 				So(err, ShouldBeNil)
 			})

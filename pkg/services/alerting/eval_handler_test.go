@@ -2,6 +2,7 @@ package alerting
 
 import (
 	"context"
+	"github.com/grafana/grafana/pkg/services/validations"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -27,7 +28,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 				Conditions: []Condition{&conditionStub{
 					firing: true,
 				}},
-			})
+			}, &validations.OSSPluginRequestValidator{})
 
 			handler.Eval(context)
 			So(context.Firing, ShouldEqual, true)
@@ -37,7 +38,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 		Convey("Show return triggered with single passing condition2", func() {
 			context := NewEvalContext(context.TODO(), &Rule{
 				Conditions: []Condition{&conditionStub{firing: true, operator: "and"}},
-			})
+			}, &validations.OSSPluginRequestValidator{})
 
 			handler.Eval(context)
 			So(context.Firing, ShouldEqual, true)
@@ -50,7 +51,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 					&conditionStub{firing: true, operator: "and", matches: []*EvalMatch{{}, {}}},
 					&conditionStub{firing: false, operator: "and"},
 				},
-			})
+			}, &validations.OSSPluginRequestValidator{})
 
 			handler.Eval(context)
 			So(context.Firing, ShouldEqual, false)
@@ -63,7 +64,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 					&conditionStub{firing: true, operator: "and"},
 					&conditionStub{firing: false, operator: "or"},
 				},
-			})
+			}, &validations.OSSPluginRequestValidator{})
 
 			handler.Eval(context)
 			So(context.Firing, ShouldEqual, true)
@@ -76,7 +77,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 					&conditionStub{firing: true, operator: "and"},
 					&conditionStub{firing: false, operator: "and"},
 				},
-			})
+			}, &validations.OSSPluginRequestValidator{})
 
 			handler.Eval(context)
 			So(context.Firing, ShouldEqual, false)
@@ -90,7 +91,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 					&conditionStub{firing: true, operator: "and"},
 					&conditionStub{firing: false, operator: "or"},
 				},
-			})
+			}, &validations.OSSPluginRequestValidator{})
 
 			handler.Eval(context)
 			So(context.Firing, ShouldEqual, true)
@@ -104,7 +105,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 					&conditionStub{firing: false, operator: "and"},
 					&conditionStub{firing: false, operator: "or"},
 				},
-			})
+			}, &validations.OSSPluginRequestValidator{})
 
 			handler.Eval(context)
 			So(context.Firing, ShouldEqual, false)
@@ -118,7 +119,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 					&conditionStub{firing: false, operator: "and"},
 					&conditionStub{firing: true, operator: "and"},
 				},
-			})
+			}, &validations.OSSPluginRequestValidator{})
 
 			handler.Eval(context)
 			So(context.Firing, ShouldEqual, false)
@@ -132,7 +133,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 					&conditionStub{firing: false, operator: "or"},
 					&conditionStub{firing: true, operator: "or"},
 				},
-			})
+			}, &validations.OSSPluginRequestValidator{})
 
 			handler.Eval(context)
 			So(context.Firing, ShouldEqual, true)
@@ -146,7 +147,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 					&conditionStub{firing: false, operator: "or"},
 					&conditionStub{firing: false, operator: "or"},
 				},
-			})
+			}, &validations.OSSPluginRequestValidator{})
 
 			handler.Eval(context)
 			So(context.Firing, ShouldEqual, false)
@@ -161,7 +162,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 					&conditionStub{operator: "or", noData: false},
 					&conditionStub{operator: "or", noData: false},
 				},
-			})
+			}, &validations.OSSPluginRequestValidator{})
 
 			handler.Eval(context)
 			So(context.NoDataFound, ShouldBeFalse)
@@ -172,7 +173,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 				Conditions: []Condition{
 					&conditionStub{operator: "and", noData: true},
 				},
-			})
+			}, &validations.OSSPluginRequestValidator{})
 
 			handler.Eval(context)
 			So(context.Firing, ShouldEqual, false)
@@ -185,7 +186,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 					&conditionStub{operator: "and", noData: true},
 					&conditionStub{operator: "and", noData: false},
 				},
-			})
+			}, &validations.OSSPluginRequestValidator{})
 
 			handler.Eval(context)
 			So(context.NoDataFound, ShouldBeFalse)
@@ -197,7 +198,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 					&conditionStub{operator: "or", noData: true},
 					&conditionStub{operator: "or", noData: false},
 				},
-			})
+			}, &validations.OSSPluginRequestValidator{})
 
 			handler.Eval(context)
 			So(context.NoDataFound, ShouldBeTrue)
