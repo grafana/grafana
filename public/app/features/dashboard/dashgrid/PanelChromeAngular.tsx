@@ -93,7 +93,7 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
   onPanelRenderEvent = (event: RenderEvent) => {
     const { alertState } = this.state;
     // graph sends these old render events with payloads
-    const payload = (event as any).payload;
+    const payload = event.payload;
 
     if (payload && payload.alertState && this.props.panel.alert) {
       this.setState({ alertState: payload.alertState });
