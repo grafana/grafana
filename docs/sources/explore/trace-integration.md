@@ -63,6 +63,6 @@ Clicking anywhere on the span row shows span details.
 
 You can navigate from a span in a trace view directly to logs relevant for that span. This is available for Tempo, Jaeger and Zipkin data source at this moment.  their relevant documentation for instruction how to configure this feature.
 
-{{< docs-imagebox img="/img/docs/v74/trace-to-logs.png" class="docs-image--no-shadow" max-width= "600px"  caption="Screenshot of the trace view in Explore with new icon next to the spans" >}}
+{{< docs-imagebox img="/img/docs/explore/trace-to-log-7-4.png" class="docs-image--no-shadow" max-width= "600px"  caption="Screenshot of the trace view in Explore with icon next to the spans" >}}
 
 Click the document icon to open a split view in Explore with the configured data source and query relevant logs for the span.
