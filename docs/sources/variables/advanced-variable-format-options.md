@@ -149,3 +149,13 @@ servers = ["test1", "test2"]
 String to interpolate: '${servers:text}'
 Interpolation result: "test1 + test2"
 ```
+
+## Query Parameters
+
+Formats single- and multi-valued variables into their query parameter representation like `var-foo=value1&var-foo=value2`.
+
+```bash
+servers = ["test1", "test2"]
+String to interpolate: '${servers:queryparam}'
+Interpolation result: "var-servers=test1&var-servers=test2"
+```
