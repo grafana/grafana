@@ -1,6 +1,6 @@
 +++
 title = "Restart Grafana"
-description = "Installation guide for Grafana"
+description = "Instructions for restarting Grafana"
 keywords = ["grafana", "restart", "documentation"]
 weight = 750
 +++
@@ -11,7 +11,7 @@ Users often need to restart the Grafana service after they have made configurati
 
 - [Windows](#windows)
 - [MacOS](#macos)
-- [Linux](linux)
+- [Linux](#linux)
 - [Docker](#docker)
 
 ## Windows
@@ -19,21 +19,26 @@ Users often need to restart the Grafana service after they have made configurati
 To restart Grafana:
 
 1. Open the Services app.
-2. Right-click on the **Grafana** service.
-3. In the context menu, click **Restart**.
+1. Right-click on the **Grafana** service.
+1. In the context menu, click **Restart**.
 
 ## macOS
 
-To restart Grafana, go to the directory where you copied the install setup files. Then run the command:
+To restart Grafana that was installed using standalone macOS binaries:
+
+1. Open a terminal and go to the directory where you copied the install setup files. 
+1. Run the command:
 
 ```bash
 ./bin/grafana-server web
 ```
 
+If you installed Grafana using [Homebrew](http://brew.sh/), use rge restart command:
 
+`brew services restart grafana`
 ## Linux
 
-These instructions are applicable for restarting Grafana installed on Debian or Ubuntu, as well as on the RPM-based Linux systems (CentOS, Fedora, OpenSuse, Red Hat).
+Restart methods differ depending on whether your Linux system uses `systemd` or `init.d`.
 
 ### Restart the server with systemd
 
@@ -77,15 +82,13 @@ sudo update-rc.d grafana-server defaults
 ```
 ## Docker
 
-To restart the Grafana service, use the `docker run` command. For example:
+To restart the Grafana service, use the `docker restart` command. For example:
 
-`docker run -d -p 3000:3000 --name grafana grafana/grafana:latest`
+`docker restart grafana`
 
-This will restart the Grafana service and run it in the background.
+Alternately, you can use the `docker compose restart` command to restart Grafana. For more information, refer to [docker compose documentation](https://docs.docker.com/compose/).
 
-Alternately, you can use the `docker compose` command to restart Grafana. For more information, refer to [docker compose documentation](https://docs.docker.com/compose/).
-
-### An example of using docker compose
+### Docker compose example
 
 Configure your `docker-compose.yml` file. For example:
 
@@ -98,9 +101,12 @@ grafana:
     - TERM=linux
     - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-piechart-panel,grafana-polystat-panel
 ```
-Run the command:
+Start the server using this command:
 
 `docker-compose up`
 
-Grafana along with the three plugins specified in the YAML file are up and running.
+This starts the Grafana server along with the three plugins specified in the YAML file.
 
+To restart the running container, use this command:
+
+`docker-compose restart grafana`
