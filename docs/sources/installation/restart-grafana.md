@@ -31,7 +31,7 @@ Restart methods differ depending on whether you installed Grafana using Homebrew
 Use the [Homebrew](http://brew.sh/) restart command:
 
 ```bash
-brew services restart grafana`
+brew services restart grafana
 ```
 ### Restart standalone macOS binaries
 
@@ -68,19 +68,27 @@ sudo systemctl enable grafana-server.service
 
 To restart the service, run the following command:
 
-`sudo service grafana-server restart`
+```bash
+sudo service grafana-server restart
+```
 
 or
 
-`sudo /etc/init.d/grafana-server restart`
+```bash
+sudo /etc/init.d/grafana-server restart
+```
 
 Verify the status:
 
-`sudo service grafana-server status`
+```bash
+sudo service grafana-server status
+```
 
 or
 
-`sudo /etc/init.d/grafana-server status`
+```bash
+sudo /etc/init.d/grafana-server status
+```
 
 Alternately, you can configure the Grafana server to restart at boot:
 
