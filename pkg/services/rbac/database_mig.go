@@ -96,4 +96,25 @@ func addRBACMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("add index user_policy.org_id", migrator.NewAddIndexMigration(userPolicyV1, userPolicyV1.Indices[0]))
 	mg.AddMigration("add unique index user_policy_org_id_user_id_policy_id", migrator.NewAddIndexMigration(userPolicyV1, userPolicyV1.Indices[1]))
 	mg.AddMigration("add index user_policy.user_id", migrator.NewAddIndexMigration(userPolicyV1, userPolicyV1.Indices[2]))
+
+	builtinRolePolicyV1 := migrator.Table{
+		Name: "builtin_role_policy",
+		Columns: []*migrator.Column{
+			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "role", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "policy_id", Type: migrator.DB_BigInt},
+			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
+			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
+		},
+		Indices: []*migrator.Index{
+			{Cols: []string{"policy_id"}},
+			{Cols: []string{"name"}},
+		},
+	}
+
+	mg.AddMigration("create builtin role policy table", migrator.NewAddTableMigration(builtinRolePolicyV1))
+
+	//-------  indexes ------------------
+	mg.AddMigration("add index builtin_role_policy.policy_id", migrator.NewAddIndexMigration(builtinRolePolicyV1, builtinRolePolicyV1.Indices[0]))
+	mg.AddMigration("add index builtin_role_policy.name", migrator.NewAddIndexMigration(builtinRolePolicyV1, builtinRolePolicyV1.Indices[1]))
 }
