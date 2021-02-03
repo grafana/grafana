@@ -56,7 +56,7 @@ export const DashboardLinks: FC<Props> = ({ dashboard, links }) => {
 
         return (
           <div key={key} className="gf-form" aria-label={selectors.components.DashboardLinks.container}>
-            {link.tooltip ? <Tooltip content={link.tooltip}>{linkElement}</Tooltip> : linkElement}
+            {link.tooltip ? <Tooltip content={linkInfo.tooltip}>{linkElement}</Tooltip> : linkElement}
           </div>
         );
       })}
