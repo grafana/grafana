@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/validations"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -235,7 +237,8 @@ func queryConditionScenario(desc string, fn queryConditionScenarioFunc) {
 
 		ctx := &queryConditionTestContext{}
 		ctx.result = &alerting.EvalContext{
-			Rule: &alerting.Rule{},
+			Rule:             &alerting.Rule{},
+			RequestValidator: &validations.OSSPluginRequestValidator{},
 		}
 
 		fn(ctx)
