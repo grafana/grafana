@@ -4,6 +4,7 @@ import { Portal } from '../Portal/Portal';
 import { Dimensions, TimeZone } from '@grafana/data';
 import { FlotPosition } from '../Graph/types';
 import { TooltipContainer } from './TooltipContainer';
+import { useStyles } from '../../themes';
 
 export type TooltipMode = 'single' | 'multi' | 'none';
 
@@ -46,7 +47,7 @@ export interface TooltipProps {
 }
 
 export const Tooltip: React.FC<TooltipProps> = ({ content, position, offset }) => {
-  const styles = getStyles();
+  const styles = useStyles(getStyles);
   if (position) {
     return (
       <Portal className={styles.portal}>
