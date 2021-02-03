@@ -176,7 +176,7 @@ func (ac *RBACService) GetUserPermissions(query *GetUserPermissionsQuery) error 
 			permission.scope,
 			permission.updated,
 			permission.created
-				FROM permission AS permission
+				FROM permission
 				LEFT JOIN policy ON policy.id = permission.policy_id
 				LEFT JOIN user_policy ON policy.id = user_policy.policy_id
 					AND user_policy.user_id = ?
