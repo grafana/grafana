@@ -22,10 +22,11 @@ export const AlertDefinitionItem: FC<Props> = ({ alertDefinition, search }) => {
         </span>
       </Card.Meta>
       <Card.Actions>
-        <div />
-        <LinkButton key="edit" variant="secondary" href={`/alerting/${alertDefinition.uid}/edit`} icon="cog">
-          Edit alert
-        </LinkButton>
+        {[
+          <LinkButton key="edit" variant="secondary" href={`/alerting/${alertDefinition.uid}/edit`} icon="cog">
+            Edit alert
+          </LinkButton>,
+        ]}
       </Card.Actions>
     </Card>
   );
