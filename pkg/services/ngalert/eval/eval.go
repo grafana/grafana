@@ -5,6 +5,7 @@ package eval
 import (
 	"context"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/grafana/grafana/pkg/setting"
@@ -209,12 +210,44 @@ func evaluateExecutionResult(results *ExecutionResults) (Results, error) {
 // This may be temporary, as there might be a fair amount we want to display in the frontend, and it might not make sense to store that in data.Frame.
 // For the first pass, I would expect a Frame with a single row, and a column for each instance with a boolean value.
 func (evalResults Results) AsDataFrame() data.Frame {
-	fields := make([]*data.Field, 0)
+	uniqLabelKeys := make(map[string]struct{})
 	for _, evalResult := range evalResults {
-		fields = append(fields, data.NewField("", evalResult.Instance, []bool{evalResult.State != Normal}))
+		for k := range evalResult.Instance {
+			uniqLabelKeys[k] = struct{}{}
+		}
 	}
-	f := data.NewFrame("", fields...)
-	return *f
+
+	labelsKeys := make([]string, 0, len(uniqLabelKeys))
+	for k := range uniqLabelKeys {
+		labelsKeys = append(labelsKeys, k)
+	}
+
+	labelsKeys = sort.StringSlice(labelsKeys)
+
+	frame := data.NewFrame("test instances")
+
+	for _, labelKey := range labelsKeys {
+		frame.Fields = append(frame.Fields, data.NewField(labelKey, nil, make([]string, len(evalResults))))
+	}
+
+	frame.Fields = append(frame.Fields, data.NewField("Alerting", nil, make([]bool, len(evalResults))))
+
+	for i, evalResult := range evalResults {
+		for j, lKey := range labelsKeys {
+			if evalResult.Instance != nil {
+				frame.Set(j, i, evalResult.Instance[lKey])
+			}
+		}
+		frame.Set(len(labelsKeys), i, evalResult.State != Normal)
+	}
+
+	// fields := make([]*data.Field, 0)
+	// for _, evalResult := range evalResults {
+	// 	fields = append(fields, data.NewField("", evalResult.Instance, []bool{evalResult.State != Normal}))
+	// }
+	// f := data.NewFrame("", fields...)
+	// return *f
+	return *frame
 }
 
 // ConditionEval executes conditions and evaluates the result.
