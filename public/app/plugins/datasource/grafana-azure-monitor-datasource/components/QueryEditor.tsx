@@ -6,23 +6,16 @@ import MetricsQueryEditor from './MetricsQueryEditor';
 interface BaseQueryEditorProps {
   query: AzureMonitorQuery;
   datasource: Datasource;
-  replaceTemplateVariable: (variable: string) => string;
-  onQueryChange: (newQuery: AzureMonitorQuery) => void;
+  onChange: (newQuery: AzureMonitorQuery) => void;
 }
 
-const QueryEditor: React.FC<BaseQueryEditorProps> = ({ query, datasource, replaceTemplateVariable, onQueryChange }) => {
+const QueryEditor: React.FC<BaseQueryEditorProps> = ({ query, datasource, onChange }) => {
   const subscriptionId = query.subscription || datasource.azureMonitorDatasource.subscriptionId;
 
   return (
     <div>
       <hr />
-      <EditorForQueryType
-        subscriptionId={subscriptionId}
-        query={query}
-        datasource={datasource}
-        replaceTemplateVariable={replaceTemplateVariable}
-        onQueryChange={onQueryChange}
-      />
+      <EditorForQueryType subscriptionId={subscriptionId} query={query} datasource={datasource} onChange={onChange} />
     </div>
   );
 };
@@ -31,23 +24,11 @@ interface EditorForQueryTypeProps extends BaseQueryEditorProps {
   subscriptionId: string;
 }
 
-const EditorForQueryType: React.FC<EditorForQueryTypeProps> = ({
-  subscriptionId,
-  query,
-  datasource,
-  replaceTemplateVariable,
-  onQueryChange,
-}) => {
+const EditorForQueryType: React.FC<EditorForQueryTypeProps> = ({ subscriptionId, query, datasource, onChange }) => {
   switch (query.queryType) {
     case AzureQueryType.AzureMonitor:
       return (
-        <MetricsQueryEditor
-          subscriptionId={subscriptionId}
-          query={query}
-          datasource={datasource}
-          replaceTemplateVariable={replaceTemplateVariable}
-          onQueryChange={onQueryChange}
-        />
+        <MetricsQueryEditor subscriptionId={subscriptionId} query={query} datasource={datasource} onChange={onChange} />
       );
   }
 

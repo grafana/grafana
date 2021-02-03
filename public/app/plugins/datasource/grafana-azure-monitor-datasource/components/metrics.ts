@@ -13,7 +13,6 @@ export function useMetricsMetadata(
   datasource: Datasource,
   query: AzureMonitorQuery,
   subscriptionId: string,
-  replaceTemplateVariable: (variable: string) => string,
   onQueryChange: (newQuery: AzureMonitorQuery) => void
 ) {
   const [metricMetadata, setMetricMetadata] = useState<MetricMetadata>();
@@ -35,12 +34,12 @@ export function useMetricsMetadata(
 
     datasource
       .getMetricMetadata(
-        replaceTemplateVariable(subscriptionId),
-        replaceTemplateVariable(query.azureMonitor.resourceGroup),
-        replaceTemplateVariable(query.azureMonitor.metricDefinition),
-        replaceTemplateVariable(query.azureMonitor.resourceName),
-        replaceTemplateVariable(query.azureMonitor.metricNamespace),
-        replaceTemplateVariable(query.azureMonitor.metricName)
+        datasource.replace(subscriptionId),
+        datasource.replace(query.azureMonitor.resourceGroup),
+        datasource.replace(query.azureMonitor.metricDefinition),
+        datasource.replace(query.azureMonitor.resourceName),
+        datasource.replace(query.azureMonitor.metricNamespace),
+        datasource.replace(query.azureMonitor.metricName)
       )
       .then((metadata) => {
         onQueryChange({

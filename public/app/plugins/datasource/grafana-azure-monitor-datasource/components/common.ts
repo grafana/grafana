@@ -11,7 +11,6 @@ export interface MetricsQueryEditorFieldProps {
   query: AzureMonitorQuery;
   datasource: Datasource;
   subscriptionId: string;
-  replaceTemplateVariable: (variable: string) => string;
 
   onChange: <K extends keyof AzureMonitorQuery['azureMonitor']>(
     key: K,

@@ -13,7 +13,7 @@ import {
   ScopedVars,
 } from '@grafana/data';
 import { forkJoin, Observable, of } from 'rxjs';
-import { DataSourceWithBackend } from '@grafana/runtime';
+import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 import InsightsAnalyticsDatasource from './insights_analytics/insights_analytics_datasource';
 import { migrateMetricsDimensionFilters } from './query_ctrl';
 import { map } from 'rxjs/operators';
@@ -270,5 +270,11 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     return queries.map(
       (query) => this.pseudoDatasource[query.queryType].applyTemplateVariables(query, scopedVars) as AzureMonitorQuery
     );
+  }
+
+  replace(variable: string) {
+    const templateSrv = getTemplateSrv();
+    // TODO: we need scopedVars
+    return templateSrv.replace(variable);
   }
 }

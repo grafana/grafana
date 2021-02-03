@@ -7,7 +7,6 @@ const ResourceGroupsField: React.FC<MetricsQueryEditorFieldProps> = ({
   query,
   datasource,
   subscriptionId,
-  replaceTemplateVariable,
   onChange,
 }) => {
   const [options, setOptions] = useState<Options>([]);
@@ -19,7 +18,7 @@ const ResourceGroupsField: React.FC<MetricsQueryEditorFieldProps> = ({
     }
 
     datasource
-      .getResourceGroups(replaceTemplateVariable(subscriptionId))
+      .getResourceGroups(datasource.replace(subscriptionId))
       .then((results) => setOptions(results.map(toOption)))
       .catch((err) => {
         // TODO: handle error

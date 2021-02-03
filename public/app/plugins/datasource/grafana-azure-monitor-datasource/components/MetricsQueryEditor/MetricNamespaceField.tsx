@@ -7,7 +7,6 @@ const MetricNamespaceField: React.FC<MetricsQueryEditorFieldProps> = ({
   query,
   datasource,
   subscriptionId,
-  replaceTemplateVariable,
   onChange,
 }) => {
   const [options, setOptions] = useState<Options>([]);
@@ -20,10 +19,10 @@ const MetricNamespaceField: React.FC<MetricsQueryEditorFieldProps> = ({
 
     datasource
       .getMetricNamespaces(
-        replaceTemplateVariable(subscriptionId),
-        replaceTemplateVariable(query.azureMonitor.resourceGroup),
-        replaceTemplateVariable(query.azureMonitor.metricDefinition),
-        replaceTemplateVariable(query.azureMonitor.resourceName)
+        datasource.replace(subscriptionId),
+        datasource.replace(query.azureMonitor.resourceGroup),
+        datasource.replace(query.azureMonitor.metricDefinition),
+        datasource.replace(query.azureMonitor.resourceName)
       )
       .then((results) => setOptions(results.map(toOption)))
       .catch((err) => {

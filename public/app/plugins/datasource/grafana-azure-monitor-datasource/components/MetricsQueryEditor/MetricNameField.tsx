@@ -3,13 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { InlineField, Select } from '@grafana/ui';
 import { findOption, MetricsQueryEditorFieldProps, Options, toOption } from '../common';
 
-const MetricName: React.FC<MetricsQueryEditorFieldProps> = ({
-  query,
-  datasource,
-  subscriptionId,
-  replaceTemplateVariable,
-  onChange,
-}) => {
+const MetricName: React.FC<MetricsQueryEditorFieldProps> = ({ query, datasource, subscriptionId, onChange }) => {
   const [options, setOptions] = useState<Options>([]);
   const azureMonitorIsConfigured = datasource.azureMonitorDatasource.isConfigured();
 
@@ -28,11 +22,11 @@ const MetricName: React.FC<MetricsQueryEditorFieldProps> = ({
 
     datasource
       .getMetricNames(
-        replaceTemplateVariable(subscriptionId),
-        replaceTemplateVariable(query.azureMonitor.resourceGroup),
-        replaceTemplateVariable(query.azureMonitor.metricDefinition),
-        replaceTemplateVariable(query.azureMonitor.resourceName),
-        replaceTemplateVariable(query.azureMonitor.metricNamespace)
+        datasource.replace(subscriptionId),
+        datasource.replace(query.azureMonitor.resourceGroup),
+        datasource.replace(query.azureMonitor.metricDefinition),
+        datasource.replace(query.azureMonitor.resourceName),
+        datasource.replace(query.azureMonitor.metricNamespace)
       )
       .then((results) => setOptions(results.map(toOption)))
       .catch((err) => {
