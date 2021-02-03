@@ -5,6 +5,7 @@ import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { TimePickerSettings } from './TimePickerSettings';
 import { TimeZone } from '@grafana/data';
 import { Select } from '@grafana/ui';
+import { DeleteDashboardButton } from '../DeleteDashboard/DeleteDashboardButton';
 
 interface Props {
   dashboard: DashboardModel;
@@ -99,14 +100,7 @@ export const GeneralSettings: React.FC<Props> = ({ dashboard }) => {
         <Select onChange={onTooltipChange} options={GRAPH_TOOLTIP_OPTIONS} width={40} value={dashboard.graphTooltip} />
       </div>
       <div className="gf-form-button-row">
-        <button
-          className="btn btn-danger"
-          ng-click="ctrl.deleteDashboard()"
-          ng-show="ctrl.canDelete"
-          aria-label="Dashboard settings page delete dashboard button"
-        >
-          Delete Dashboard
-        </button>
+        {dashboard.meta.canSave && <DeleteDashboardButton dashboard={dashboard} />}
       </div>
     </>
   );
