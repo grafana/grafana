@@ -309,6 +309,23 @@ def publish_storybook_step(edition, ver_mode):
         'commands': commands,
     }
 
+def upload_cdn(edition):  
+    return {
+        'name': 'upload-cdn-assets',
+        'image': publish_image,
+        'depends_on': [
+            'package',            
+        ],
+        'environment': {
+            'GCP_KEY': {
+                'from_secret': 'gcp_key',
+            },
+        },
+        'commands': [
+             './bin/grabpl upload-cdn --edition {} --bucket "grafana-static-assets"'.format(edition),
+        ],
+    }
+
 def build_backend_step(edition, ver_mode, variants=None, is_downstream=False):
     variants_str = ''
     if variants:
