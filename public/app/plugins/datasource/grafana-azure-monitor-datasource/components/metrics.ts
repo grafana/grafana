@@ -3,7 +3,7 @@ import Datasource from '../datasource';
 import { AzureMonitorQuery } from '../types';
 import { convertTimeGrainsToMs } from './common';
 
-interface MetricMetadata {
+export interface MetricMetadata {
   aggOptions: string[];
   timeGrains: Array<{ text: string; value: string }>;
   dimensions: Array<{ text: string; value: string }>;

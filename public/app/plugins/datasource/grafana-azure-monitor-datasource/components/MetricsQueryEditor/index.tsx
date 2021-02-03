@@ -3,15 +3,16 @@ import React from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Button, InlineField, Select } from '@grafana/ui';
 
-import Datasource from '../datasource';
-import { AzureMonitorQuery } from '../types';
-import MetricNamespaceField from './MetricsQueryEditor/MetricNamespaceField';
-import NamespaceField from './MetricsQueryEditor/NamespaceField';
-import ResourceGroupsField from './MetricsQueryEditor/ResourceGroupsField';
-import ResourceNameField from './MetricsQueryEditor/ResourceNameField';
-import MetricNameField from './MetricsQueryEditor/MetricNameField';
-import AggregationField from './MetricsQueryEditor/AggregationField';
-import { useMetricsMetadata } from './metrics';
+import Datasource from '../../datasource';
+import { AzureMonitorQuery } from '../../types';
+import MetricNamespaceField from './MetricNamespaceField';
+import NamespaceField from './NamespaceField';
+import ResourceGroupsField from './ResourceGroupsField';
+import ResourceNameField from './ResourceNameField';
+import MetricNameField from './MetricNameField';
+import AggregationField from './AggregationField';
+import { useMetricsMetadata } from '../metrics';
+import TimeGrainField from './TimeGrainField';
 
 interface MetricsQueryEditorProps {
   query: AzureMonitorQuery;
@@ -36,7 +37,7 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
   const metricsMetadata = useMetricsMetadata(datasource, query, subscriptionId, replaceTemplateVariable, onQueryChange);
 
   // Single dynamic onChange function might be a bit unwieldly. Let's see how it goes.
-  // This type magic ensures its only ever called with key/value pairs of the azureMonitor object
+  // This type magic ensures its only ever called with valid key/value pairs of the azureMonitor object
   function onFieldChange<Key extends keyof AzureMonitorQuery['azureMonitor']>(
     field: Key,
     { value }: SelectableValue<AzureMonitorQuery['azureMonitor'][Key]>
@@ -108,19 +109,14 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
         aggregationOptions={metricsMetadata?.aggOptions ?? []}
       />
 
-      <InlineField label="Aggregation" labelWidth={labelWidth}>
-        <Select value={opt(query.azureMonitor.aggregation)} onChange={noop} options={[]} />
-      </InlineField>
-
-      <InlineField label="Time Grain" labelWidth={labelWidth}>
-        <Select value={opt(query.azureMonitor.timeGrain)} onChange={noop} options={[]} />
-      </InlineField>
-
-      <InlineField label="Dimension" labelWidth={labelWidth}>
-        <Button variant="secondary" size="md">
-          Add
-        </Button>
-      </InlineField>
+      <TimeGrainField
+        query={query}
+        datasource={datasource}
+        subscriptionId={subscriptionId}
+        onChange={onFieldChange}
+        replaceTemplateVariable={replaceTemplateVariable}
+        timeGrainOptions={metricsMetadata?.timeGrains ?? []}
+      />
     </>
   );
 };
