@@ -1,0 +1,21 @@
++++
+title = "Change the Grafana timezone"
+description = "How to change your Grafana timezone"
+keywords = ["grafana", "configuration", "documentation", "home"]
+weight = 400
++++
+
+# Change the Grafana timezone setting
+
+By default, Grafana uses the timezone in your web browser. However, you can override this setting at the server, organization, team, or individual user level. The lowest level takes precedence, overriding all others.
+
+## Set server timezone
+
+
+## Set organization timezone
+
+
+## Set team timezone
+
+
+## Set your timezone

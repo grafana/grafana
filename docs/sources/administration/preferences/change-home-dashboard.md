@@ -3,7 +3,7 @@ title = "Change the default home dashboard"
 description = "How to replace the default home dashboard"
 keywords = ["grafana", "configuration", "documentation", "home"]
 aliases = ["/docs/grafana/latest/administration/change-home-dashboard/"]
-weight = 100
+weight = 300
 +++
 
 # Change the default home dashboard
