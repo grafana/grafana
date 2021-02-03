@@ -224,7 +224,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
       const lower = search.toLowerCase();
       const filtered = xforms.filter((t) => {
         const txt = (t.name + t.description).toLowerCase();
-        return !txt.indexOf(lower);
+        return txt.indexOf(lower) >= 0;
       });
       suffix = (
         <>
