@@ -2,9 +2,10 @@ package notifiers
 
 import (
 	"context"
-	"github.com/grafana/grafana/pkg/services/validations"
 	"testing"
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/validations"
 
 	"github.com/stretchr/testify/assert"
 

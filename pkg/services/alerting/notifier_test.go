@@ -2,9 +2,10 @@ package alerting
 
 import (
 	"context"
-	"github.com/grafana/grafana/pkg/services/validations"
 	"testing"
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/validations"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/rendering"

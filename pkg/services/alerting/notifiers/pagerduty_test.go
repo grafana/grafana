@@ -2,9 +2,10 @@ package notifiers
 
 import (
 	"context"
-	"github.com/grafana/grafana/pkg/services/validations"
 	"strings"
 	"testing"
+
+	"github.com/grafana/grafana/pkg/services/validations"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana/pkg/components/null"

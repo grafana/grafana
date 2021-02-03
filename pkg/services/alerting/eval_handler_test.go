@@ -2,8 +2,9 @@ package alerting
 
 import (
 	"context"
-	"github.com/grafana/grafana/pkg/services/validations"
 	"testing"
+
+	"github.com/grafana/grafana/pkg/services/validations"
 
 	. "github.com/smartystreets/goconvey/convey"
 )

@@ -2,10 +2,11 @@ package conditions
 
 import (
 	"context"
-	"github.com/grafana/grafana/pkg/services/validations"
 	"math"
 	"testing"
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/validations"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
