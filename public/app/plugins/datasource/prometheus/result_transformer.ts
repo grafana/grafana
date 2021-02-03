@@ -165,8 +165,9 @@ function getDataLinks(options: ExemplarTraceIdDestination): DataLink[] {
 
   if (options.url) {
     dataLinks.push({
-      title: 'Open link',
+      title: `Go to ${options.url}`,
       url: options.url,
+      targetBlank: true,
     });
   }
   return dataLinks;

@@ -78,17 +78,10 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({ timeZone, dataFr
                     const links = field.config.links?.length ? getFieldLinks(field, index) : undefined;
                     return (
                       <tr key={i}>
-                        <td>{field.name}</td>
+                        <td valign="top">{field.name}</td>
                         <td className={styles.valueWrapper}>
-                          {field.type === FieldType.time ? timeFormatter(value) : value}{' '}
-                          {links &&
-                            links.map((link, i) => {
-                              return (
-                                <div key={i} className={styles.link}>
-                                  <FieldLink link={link} />
-                                </div>
-                              );
-                            })}
+                          {field.type === FieldType.time ? timeFormatter(value) : value}
+                          {links && <FieldLink links={links} />}
                         </td>
                       </tr>
                     );
@@ -179,7 +172,12 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme) => {
     valueWrapper: css`
       display: flex;
       flex-direction: row;
-      align-items: center;
+      flex-wrap: wrap;
+      column-gap: ${theme.spacing.sm};
+
+      > * {
+        flex: 1 1 150px;
+      }
     `,
     tooltip: css`
       background: none;
@@ -202,9 +200,6 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme) => {
     body: css`
       padding: ${theme.spacing.sm};
       font-weight: ${theme.typography.weight.semibold};
-    `,
-    link: css`
-      margin: 0 ${theme.spacing.sm};
     `,
     marble,
     activeMarble,
