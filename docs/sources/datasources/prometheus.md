@@ -157,7 +157,7 @@ The step option is useful to limit the number of events returned from your query
 
 Grafana exposes metrics for Prometheus on the `/metrics` endpoint. We also bundle a dashboard within Grafana so you can get started viewing your metrics faster. You can import the bundled dashboard by going to the data source edit page and click the dashboard tab. There you can find a dashboard for Grafana and one for Prometheus. Import and start viewing all the metrics!
 
-For detailed instructions, refer to [Internal Grafana metrics]({{< relref "../administration/metrics.md">}}).
+For detailed instructions, refer to [Internal Grafana metrics]({{< relref "../administration/view-server/internal-metrics.md">}}).
 
 ## Prometheus API
 
@@ -215,4 +215,3 @@ Exemplars are a way to associate higher cardinality metadata from a specific eve
 
 Configure Exemplars in the data source settings by adding external or internal links.
 {{< docs-imagebox img="/img/docs/v74/exemplars-setting.png" class="docs-image--no-shadow" caption="Screenshot of the Exemplars configuration" >}}
-
