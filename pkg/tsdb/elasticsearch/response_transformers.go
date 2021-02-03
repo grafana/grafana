@@ -26,21 +26,21 @@ const (
 	geohashGridType = "geohash_grid"
 )
 
-type responseParser struct {
+type timeSeriesQueryResponseTransformer struct {
 	Responses []*es.SearchResponse
 	Targets   []*Query
 	DebugInfo *es.SearchDebugInfo
 }
 
-var newResponseParser = func(responses []*es.SearchResponse, targets []*Query, debugInfo *es.SearchDebugInfo) *responseParser {
-	return &responseParser{
+var newTimeSeriesQueryResponseTransformer = func(responses []*es.SearchResponse, targets []*Query, debugInfo *es.SearchDebugInfo) *timeSeriesQueryResponseTransformer {
+	return &timeSeriesQueryResponseTransformer{
 		Responses: responses,
 		Targets:   targets,
 		DebugInfo: debugInfo,
 	}
 }
 
-func (rp *responseParser) getTimeSeries() (*tsdb.Response, error) {
+func (rp *timeSeriesQueryResponseTransformer) transform() (*tsdb.Response, error) {
 	result := &tsdb.Response{}
 	result.Results = make(map[string]*tsdb.QueryResult)
 
@@ -85,7 +85,7 @@ func (rp *responseParser) getTimeSeries() (*tsdb.Response, error) {
 	return result, nil
 }
 
-func (rp *responseParser) processBuckets(aggs map[string]interface{}, target *Query, series *tsdb.TimeSeriesSlice, table *tsdb.Table, props map[string]string, depth int) error {
+func (rp *timeSeriesQueryResponseTransformer) processBuckets(aggs map[string]interface{}, target *Query, series *tsdb.TimeSeriesSlice, table *tsdb.Table, props map[string]string, depth int) error {
 	var err error
 	maxDepth := len(target.BucketAggs) - 1
 
@@ -162,7 +162,7 @@ func (rp *responseParser) processBuckets(aggs map[string]interface{}, target *Qu
 	return nil
 }
 
-func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, series *tsdb.TimeSeriesSlice, props map[string]string) error {
+func (rp *timeSeriesQueryResponseTransformer) processMetrics(esAgg *simplejson.Json, target *Query, series *tsdb.TimeSeriesSlice, props map[string]string) error {
 	for _, metric := range target.Metrics {
 		if metric.Hide {
 			continue
@@ -290,7 +290,7 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 	return nil
 }
 
-func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef *BucketAgg, target *Query, table *tsdb.Table, props map[string]string) error {
+func (rp *timeSeriesQueryResponseTransformer) processAggregationDocs(esAgg *simplejson.Json, aggDef *BucketAgg, target *Query, table *tsdb.Table, props map[string]string) error {
 	propKeys := make([]string, 0)
 	for k := range props {
 		propKeys = append(propKeys, k)
@@ -390,7 +390,7 @@ func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef 
 	return nil
 }
 
-func (rp *responseParser) trimDatapoints(series *tsdb.TimeSeriesSlice, target *Query) {
+func (rp *timeSeriesQueryResponseTransformer) trimDatapoints(series *tsdb.TimeSeriesSlice, target *Query) {
 	var histogram *BucketAgg
 	for _, bucketAgg := range target.BucketAggs {
 		if bucketAgg.Type == dateHistType {
@@ -415,7 +415,7 @@ func (rp *responseParser) trimDatapoints(series *tsdb.TimeSeriesSlice, target *Q
 	}
 }
 
-func (rp *responseParser) nameSeries(seriesList *tsdb.TimeSeriesSlice, target *Query) {
+func (rp *timeSeriesQueryResponseTransformer) nameSeries(seriesList *tsdb.TimeSeriesSlice, target *Query) {
 	set := make(map[string]string)
 	for _, v := range *seriesList {
 		if metricType, exists := v.Tags["metric"]; exists {
@@ -432,7 +432,7 @@ func (rp *responseParser) nameSeries(seriesList *tsdb.TimeSeriesSlice, target *Q
 
 var aliasPatternRegex = regexp.MustCompile(`\{\{([\s\S]+?)\}\}`)
 
-func (rp *responseParser) getSeriesName(series *tsdb.TimeSeries, target *Query, metricTypeCount int) string {
+func (rp *timeSeriesQueryResponseTransformer) getSeriesName(series *tsdb.TimeSeries, target *Query, metricTypeCount int) string {
 	metricType := series.Tags["metric"]
 	metricName := rp.getMetricName(metricType)
 	delete(series.Tags, "metric")
@@ -524,7 +524,7 @@ func (rp *responseParser) getSeriesName(series *tsdb.TimeSeries, target *Query, 
 	return strings.TrimSpace(name) + " " + metricName
 }
 
-func (rp *responseParser) getMetricName(metric string) string {
+func (rp *timeSeriesQueryResponseTransformer) getMetricName(metric string) string {
 	if text, ok := metricAggType[metric]; ok {
 		return text
 	}

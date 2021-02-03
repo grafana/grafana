@@ -54,8 +54,8 @@ func (e *timeSeriesQuery) execute() (*tsdb.Response, error) {
 		return nil, err
 	}
 
-	rp := newResponseParser(res.Responses, queries, res.DebugInfo)
-	return rp.getTimeSeries()
+	rt := newTimeSeriesQueryResponseTransformer(res.Responses, queries, res.DebugInfo)
+	return rt.transform()
 }
 
 func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilder, from, to string,
