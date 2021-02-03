@@ -157,6 +157,13 @@ export const getTableStyles = stylesFactory((theme: GrafanaTheme) => {
       cursor: pointer;
       padding: 0 ${theme.spacing.xxs};
     `,
+    noData: css`
+      align-items: center;
+      display: flex;
+      height: 100%;
+      justify-content: center;
+      width: 100%;
+    `,
   };
 });
 
