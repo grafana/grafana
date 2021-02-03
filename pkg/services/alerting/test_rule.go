@@ -51,7 +51,7 @@ func handleAlertTestCommand(cmd *AlertTestCommand) error {
 func testAlertRule(rule *Rule) *EvalContext {
 	handler := NewEvalHandler()
 
-	context := NewEvalContext(context.Background(), rule)
+	context := NewEvalContext(context.Background(), rule, fakeRequestValidator{})
 	context.IsTestRun = true
 	context.IsDebug = true
 
