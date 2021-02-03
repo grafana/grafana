@@ -108,7 +108,7 @@ func addRBACMigrations(mg *migrator.Migrator) {
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"policy_id"}},
-			{Cols: []string{"name"}},
+			{Cols: []string{"role"}},
 		},
 	}
 
