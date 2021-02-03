@@ -1,4 +1,4 @@
-grabpl_version = '0.5.35'
+grabpl_version = '0.5.37'
 build_image = 'grafana/build-container:1.3.1'
 publish_image = 'grafana/grafana-ci-deploy:1.3.0'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
@@ -309,12 +309,12 @@ def publish_storybook_step(edition, ver_mode):
         'commands': commands,
     }
 
-def upload_cdn(edition):  
+def upload_cdn(edition):
     return {
         'name': 'upload-cdn-assets',
         'image': publish_image,
         'depends_on': [
-            'package',            
+            'package',
         ],
         'environment': {
             'GCP_KEY': {
