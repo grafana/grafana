@@ -18,7 +18,7 @@ var plog = log.New("api")
 // registerRoutes registers all API HTTP routes.
 func (hs *HTTPServer) registerRoutes() {
 	reqSignedIn := middleware.ReqSignedIn
-	reqRBACAuthorization := middleware.RBACAuthorization(hs.RBACService)
+	reqRBACAuthorization := middleware.Authorization(hs.AccessControl)
 	reqGrafanaAdmin := middleware.ReqGrafanaAdmin
 	reqEditorRole := middleware.ReqEditorRole
 	reqOrgAdmin := middleware.ReqOrgAdmin

@@ -33,8 +33,6 @@ func (ac *RBACService) AddMigration(mg *migrator.Migrator) {
 	addRBACMigrations(mg)
 }
 
-func (ac *RBACService) Evaluate(c *models.ReqContext) *EvaluationResult {
-	return &EvaluationResult{
-		HasAccess: false,
-	}
+func (ac *RBACService) Evaluate(ctx *models.ReqContext, user *models.User, permission string, scope ...string) (bool, error) {
+	return true, nil
 }

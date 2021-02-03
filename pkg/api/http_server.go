@@ -13,7 +13,6 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana/pkg/services/live"
-	"github.com/grafana/grafana/pkg/services/rbac"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -82,7 +81,7 @@ type HTTPServer struct {
 	ContextHandler       *contexthandler.ContextHandler     `inject:""`
 	SQLStore             *sqlstore.SQLStore                 `inject:""`
 	LibraryPanelService  *librarypanels.LibraryPanelService `inject:""`
-	RBACService          *rbac.RBACService                  `inject:""`
+	AccessControl        models.AccessControl               `inject:""`
 	Listener             net.Listener
 }
 
