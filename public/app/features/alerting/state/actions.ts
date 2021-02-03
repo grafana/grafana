@@ -187,9 +187,7 @@ export function evaluateAlertDefinition(): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const { alertDefinition } = getStore().alertDefinition;
 
-    const response: { instances: [] } = await getBackendSrv().post(
-      `/api/alert-definitions/eval/${alertDefinition.uid}`
-    );
+    const response: { instances: [] } = await getBackendSrv().get(`/api/alert-definitions/eval/${alertDefinition.uid}`);
     const dataFrames = response.instances.map((instance) => {
       const table = base64StringToArrowTable(instance);
       return arrowTableToDataFrame(table);
