@@ -165,8 +165,10 @@ export const BarChart: React.FunctionComponent<Props> = ({
 
       builder.addSeries({
         scaleKey,
+        pxAlign: false,
         lineWidth: customConfig.lineWidth,
         lineColor: seriesColor,
+        //lineStyle: customConfig.lineStyle,
         fillOpacity: customConfig.fillOpacity,
         theme,
         colorMode,
@@ -175,12 +177,6 @@ export const BarChart: React.FunctionComponent<Props> = ({
         show: !customConfig.hideFrom?.graph,
         gradientMode: customConfig.gradientMode,
         thresholds: field.config.thresholds,
-
-        /*
-          lineColor: customConfig.lineColor ?? seriesColor,
-          lineWidth: customConfig.lineWidth,
-          lineStyle: customConfig.lineStyle,
-          */
 
         // The following properties are not used in the uPlot config, but are utilized as transport for legend config
         dataFrameFieldIndex: {

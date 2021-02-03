@@ -45,6 +45,7 @@ import { changeVariableName } from '../editor/actions';
 import {
   changeVariableNameFailed,
   changeVariableNameSucceeded,
+  cleanEditorState,
   initialVariableEditorState,
   setIdInEditor,
 } from '../editor/reducer';
@@ -55,7 +56,7 @@ import {
   variablesCompleteTransaction,
   variablesInitTransaction,
 } from './transactionReducer';
-import { initialState } from '../pickers/OptionsPicker/reducer';
+import { cleanPickerState, initialState } from '../pickers/OptionsPicker/reducer';
 import { cleanVariables } from './variablesReducer';
 import { expect } from '../../../../test/lib/common';
 import { ConstantVariableModel, VariableRefresh } from '../types';
@@ -612,21 +613,23 @@ describe('shared actions', () => {
 
         tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
           expect(dispatchedActions[0]).toEqual(cleanVariables());
-          expect(dispatchedActions[1]).toEqual(variablesClearTransaction());
-          expect(dispatchedActions[2]).toEqual(variablesInitTransaction({ uid }));
-          expect(dispatchedActions[3].type).toEqual(addVariable.type);
-          expect(dispatchedActions[3].payload.id).toEqual('__dashboard');
-          expect(dispatchedActions[4].type).toEqual(addVariable.type);
-          expect(dispatchedActions[4].payload.id).toEqual('__org');
+          expect(dispatchedActions[1]).toEqual(cleanEditorState());
+          expect(dispatchedActions[2]).toEqual(cleanPickerState());
+          expect(dispatchedActions[3]).toEqual(variablesClearTransaction());
+          expect(dispatchedActions[4]).toEqual(variablesInitTransaction({ uid }));
           expect(dispatchedActions[5].type).toEqual(addVariable.type);
-          expect(dispatchedActions[5].payload.id).toEqual('__user');
-          expect(dispatchedActions[6]).toEqual(
+          expect(dispatchedActions[5].payload.id).toEqual('__dashboard');
+          expect(dispatchedActions[6].type).toEqual(addVariable.type);
+          expect(dispatchedActions[6].payload.id).toEqual('__org');
+          expect(dispatchedActions[7].type).toEqual(addVariable.type);
+          expect(dispatchedActions[7].payload.id).toEqual('__user');
+          expect(dispatchedActions[8]).toEqual(
             addVariable(toVariablePayload(constant, { global: false, index: 0, model: constant }))
           );
-          expect(dispatchedActions[7]).toEqual(variableStateNotStarted(toVariablePayload(constant)));
-          expect(dispatchedActions[8]).toEqual(variableStateCompleted(toVariablePayload(constant)));
-          expect(dispatchedActions[9]).toEqual(variablesCompleteTransaction({ uid }));
-          return dispatchedActions.length === 10;
+          expect(dispatchedActions[9]).toEqual(variableStateNotStarted(toVariablePayload(constant)));
+          expect(dispatchedActions[10]).toEqual(variableStateCompleted(toVariablePayload(constant)));
+          expect(dispatchedActions[11]).toEqual(variablesCompleteTransaction({ uid }));
+          return dispatchedActions.length === 12;
         });
       });
     });
@@ -638,7 +641,12 @@ describe('shared actions', () => {
         reduxTester<{ templating: TemplatingState }>()
           .givenRootReducer(getTemplatingRootReducer())
           .whenActionIsDispatched(cleanUpVariables())
-          .thenDispatchedActionsShouldEqual(cleanVariables(), variablesClearTransaction());
+          .thenDispatchedActionsShouldEqual(
+            cleanVariables(),
+            cleanEditorState(),
+            cleanPickerState(),
+            variablesClearTransaction()
+          );
       });
     });
   });
@@ -654,7 +662,12 @@ describe('shared actions', () => {
         reduxTester<{ templating: TemplatingState }>()
           .givenRootReducer(getTemplatingRootReducer())
           .whenActionIsDispatched(cancelVariables({ getBackendSrv: () => backendSrvMock }))
-          .thenDispatchedActionsShouldEqual(cleanVariables(), variablesClearTransaction());
+          .thenDispatchedActionsShouldEqual(
+            cleanVariables(),
+            cleanEditorState(),
+            cleanPickerState(),
+            variablesClearTransaction()
+          );
 
         expect(cancelAllInFlightRequestsMock).toHaveBeenCalledTimes(1);
       });

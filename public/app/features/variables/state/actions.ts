@@ -55,6 +55,8 @@ import isEqual from 'lodash/isEqual';
 import { getCurrentText, getVariableRefresh } from '../utils';
 import { store } from 'app/store/store';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
+import { cleanEditorState } from '../editor/reducer';
+import { cleanPickerState } from '../pickers/OptionsPicker/reducer';
 
 // process flow queryVariable
 // thunk => processVariables
@@ -621,6 +623,8 @@ export const initVariablesTransaction = (dashboardUid: string, dashboard: Dashbo
 
 export const cleanUpVariables = (): ThunkResult<void> => (dispatch) => {
   dispatch(cleanVariables());
+  dispatch(cleanEditorState());
+  dispatch(cleanPickerState());
   dispatch(variablesClearTransaction());
 };
 

@@ -560,7 +560,9 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       template: '<react-container />',
       resolve: {
         component: () =>
-          SafeDynamicImport(import(/* webpackChunkName: "NgAlertingPage"*/ 'app/features/alerting/NewNGAlert')),
+          SafeDynamicImport(
+            import(/* webpackChunkName: "NgAlertingPage"*/ 'app/features/alerting/NextGenAlertingPage')
+          ),
       },
       //@ts-ignore
       pageClass: 'page-alerting',
@@ -569,7 +571,9 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       template: '<react-container />',
       resolve: {
         component: () =>
-          SafeDynamicImport(import(/* webpackChunkName: "NgAlertingPage"*/ 'app/features/alerting/EditNGAlert')),
+          SafeDynamicImport(
+            import(/* webpackChunkName: "NgAlertingPage"*/ 'app/features/alerting/NextGenAlertingPage')
+          ),
       },
       //@ts-ignore
       pageClass: 'page-alerting',

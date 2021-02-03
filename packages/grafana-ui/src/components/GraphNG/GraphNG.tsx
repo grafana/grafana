@@ -242,6 +242,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         lineWidth: customConfig.lineWidth,
         lineInterpolation: customConfig.lineInterpolation,
         lineStyle: customConfig.lineStyle,
+        barAlignment: customConfig.barAlignment,
         pointSize: customConfig.pointSize,
         pointColor: customConfig.pointColor ?? seriesColor,
         spanNulls: customConfig.spanNulls || false,
