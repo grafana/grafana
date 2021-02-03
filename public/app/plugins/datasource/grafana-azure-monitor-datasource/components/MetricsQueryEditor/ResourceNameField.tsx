@@ -13,11 +13,7 @@ const ResourceNameField: React.FC<MetricsQueryEditorFieldProps> = ({ query, data
     }
 
     datasource
-      .getResourceNames(
-        datasource.replace(subscriptionId),
-        datasource.replace(query.azureMonitor.resourceGroup),
-        datasource.replace(query.azureMonitor.metricDefinition)
-      )
+      .getResourceNames(subscriptionId, query.azureMonitor.resourceGroup, query.azureMonitor.metricDefinition)
       .then((results) => setOptions(results.map(toOption)))
       .catch((err) => {
         // TODO: handle error

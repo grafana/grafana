@@ -13,7 +13,7 @@ const NamespaceField: React.FC<MetricsQueryEditorFieldProps> = ({ query, datasou
     }
 
     datasource
-      .getMetricDefinitions(datasource.replace(subscriptionId), datasource.replace(query.azureMonitor.resourceGroup))
+      .getMetricDefinitions(subscriptionId, query.azureMonitor.resourceGroup)
       .then((results) => setOptions(results.map(toOption)))
       .catch((err) => {
         // TODO: handle error

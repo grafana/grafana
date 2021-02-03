@@ -22,11 +22,11 @@ const MetricName: React.FC<MetricsQueryEditorFieldProps> = ({ query, datasource,
 
     datasource
       .getMetricNames(
-        datasource.replace(subscriptionId),
-        datasource.replace(query.azureMonitor.resourceGroup),
-        datasource.replace(query.azureMonitor.metricDefinition),
-        datasource.replace(query.azureMonitor.resourceName),
-        datasource.replace(query.azureMonitor.metricNamespace)
+        subscriptionId,
+        query.azureMonitor.resourceGroup,
+        query.azureMonitor.metricDefinition,
+        query.azureMonitor.resourceName,
+        query.azureMonitor.metricNamespace
       )
       .then((results) => setOptions(results.map(toOption)))
       .catch((err) => {

@@ -19,10 +19,10 @@ const MetricNamespaceField: React.FC<MetricsQueryEditorFieldProps> = ({
 
     datasource
       .getMetricNamespaces(
-        datasource.replace(subscriptionId),
-        datasource.replace(query.azureMonitor.resourceGroup),
-        datasource.replace(query.azureMonitor.metricDefinition),
-        datasource.replace(query.azureMonitor.resourceName)
+        subscriptionId,
+        query.azureMonitor.resourceGroup,
+        query.azureMonitor.metricDefinition,
+        query.azureMonitor.resourceName
       )
       .then((results) => setOptions(results.map(toOption)))
       .catch((err) => {

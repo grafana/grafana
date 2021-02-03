@@ -190,15 +190,22 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
 
   /* Azure Monitor REST API methods */
   getResourceGroups(subscriptionId: string) {
-    return this.azureMonitorDatasource.getResourceGroups(subscriptionId);
+    return this.azureMonitorDatasource.getResourceGroups(this.replaceTemplateVariable(subscriptionId));
   }
 
   getMetricDefinitions(subscriptionId: string, resourceGroup: string) {
-    return this.azureMonitorDatasource.getMetricDefinitions(subscriptionId, resourceGroup);
+    return this.azureMonitorDatasource.getMetricDefinitions(
+      this.replaceTemplateVariable(subscriptionId),
+      this.replaceTemplateVariable(resourceGroup)
+    );
   }
 
   getResourceNames(subscriptionId: string, resourceGroup: string, metricDefinition: string) {
-    return this.azureMonitorDatasource.getResourceNames(subscriptionId, resourceGroup, metricDefinition);
+    return this.azureMonitorDatasource.getResourceNames(
+      this.replaceTemplateVariable(subscriptionId),
+      this.replaceTemplateVariable(resourceGroup),
+      this.replaceTemplateVariable(metricDefinition)
+    );
   }
 
   getMetricNames(
@@ -209,20 +216,20 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     metricNamespace: string
   ) {
     return this.azureMonitorDatasource.getMetricNames(
-      subscriptionId,
-      resourceGroup,
-      metricDefinition,
-      resourceName,
-      metricNamespace
+      this.replaceTemplateVariable(subscriptionId),
+      this.replaceTemplateVariable(resourceGroup),
+      this.replaceTemplateVariable(metricDefinition),
+      this.replaceTemplateVariable(resourceName),
+      this.replaceTemplateVariable(metricNamespace)
     );
   }
 
   getMetricNamespaces(subscriptionId: string, resourceGroup: string, metricDefinition: string, resourceName: string) {
     return this.azureMonitorDatasource.getMetricNamespaces(
-      subscriptionId,
-      resourceGroup,
-      metricDefinition,
-      resourceName
+      this.replaceTemplateVariable(subscriptionId),
+      this.replaceTemplateVariable(resourceGroup),
+      this.replaceTemplateVariable(metricDefinition),
+      this.replaceTemplateVariable(resourceName)
     );
   }
 
@@ -235,12 +242,12 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     metricName: string
   ) {
     return this.azureMonitorDatasource.getMetricMetadata(
-      subscriptionId,
-      resourceGroup,
-      metricDefinition,
-      resourceName,
-      metricNamespace,
-      metricName
+      this.replaceTemplateVariable(subscriptionId),
+      this.replaceTemplateVariable(resourceGroup),
+      this.replaceTemplateVariable(metricDefinition),
+      this.replaceTemplateVariable(resourceName),
+      this.replaceTemplateVariable(metricNamespace),
+      this.replaceTemplateVariable(metricName)
     );
   }
 
@@ -272,7 +279,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     );
   }
 
-  replace(variable: string) {
+  replaceTemplateVariable(variable: string) {
     const templateSrv = getTemplateSrv();
     // TODO: we need scopedVars
     return templateSrv.replace(variable);
