@@ -345,6 +345,37 @@ describe('ElasticDatasource', function (this: any) {
       });
     });
 
+    it('should properly throw an error with just a message', async () => {
+      const response: FetchResponse = {
+        data: {
+          error: 'Bad Request',
+          message: 'Authentication to data source failed',
+        },
+        status: 400,
+        url: 'http://localhost:3000/api/tsdb/query',
+        config: { url: 'http://localhost:3000/api/tsdb/query' },
+        type: 'basic',
+        statusText: 'Bad Request',
+        redirected: false,
+        headers: ({} as unknown) as Headers,
+        ok: false,
+      };
+
+      const { ds } = getTestContext({
+        mockImplementation: () => throwError(response),
+      });
+
+      const errObject = {
+        error: 'Bad Request',
+        message: 'Elasticsearch error: Authentication to data source failed',
+      };
+
+      await expect(ds.query(query)).toEmitValuesWith((received) => {
+        expect(received.length).toBe(1);
+        expect(received[0]).toEqual(errObject);
+      });
+    });
+
     it('should properly throw an unknown error', async () => {
       const { ds } = getTestContext({
         jsonData: { interval: 'Daily', esVersion: 7 },

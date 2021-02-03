@@ -421,13 +421,17 @@ The following sections detail the supported settings and secure settings for eac
 
 #### Alert notification `pushover`
 
-| Name     | Secure setting |
-| -------- | -------------- |
-| apiToken | yes            |
-| userKey  | yes            |
-| device   |                |
-| retry    |                |
-| expire   |                |
+| Name       | Secure setting |
+| --------   | -------------- |
+| apiToken   | yes            |
+| userKey    | yes            |
+| device     |                |
+| priority   |                |
+| okPriority |                |
+| retry      |                |
+| expire     |                |
+| sound      |                |
+| okSound    |                |
 
 #### Alert notification `slack`
 
