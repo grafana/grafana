@@ -98,6 +98,9 @@ const isNullValueMap = (mapping: ValueMap): boolean => {
 
 // Ref https://stackoverflow.com/a/42356340
 export function isNumeric(num: any) {
-  num = '' + num;
-  return !isNaN(num as number) && !isNaN(parseFloat(num));
+  if (num === true) {
+    return false;
+  }
+
+  return Boolean(Number(num));
 }
