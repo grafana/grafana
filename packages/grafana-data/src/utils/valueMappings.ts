@@ -96,7 +96,7 @@ const isNullValueMap = (mapping: ValueMap): boolean => {
   return mapping.value.toLowerCase() === 'null';
 };
 
-// Ref
+// Ref https://stackoverflow.com/a/42356340
 export function isNumeric(num: any) {
   num = '' + num;
   return !isNaN(num as number) && !isNaN(parseFloat(num));
