@@ -45,7 +45,8 @@ export const CloudInfoBox: FC<Props> = ({ dataSource }) => {
       branded={false}
     >
       <div className={styles.text}>
-        Or sign up for the{' '}
+        Or skip the effort and get {mainDS} (and {extraDS}) as fully managed, scalable and hosted data sources from
+        Grafana Labs with the{' '}
         <a
           className="external-link"
           href={`https://grafana.com/signup/cloud/connect-account?src=grafana-oss&cnt=${dataSource.type}-settings`}
@@ -54,7 +55,7 @@ export const CloudInfoBox: FC<Props> = ({ dataSource }) => {
         >
           free-forever Grafana Cloud plan
         </a>
-        , and get {mainDS} (and {extraDS}) as fully managed, scalable and hosted data sources from Grafana Labs.
+        . The free plan includes 10k active metrics and 50gb storage.
       </div>
     </DismissableFeatureInfoBox>
   );
