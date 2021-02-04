@@ -6,6 +6,7 @@ import { useTheme } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { IconName } from '../../types/icon';
 import { getColorsFromSeverity } from '../../utils/colors';
+import tinycolor from 'tinycolor2';
 
 export type AlertVariant = 'success' | 'warning' | 'error' | 'info';
 
@@ -73,22 +74,31 @@ Alert.displayName = 'Alert';
 const getStyles = (theme: GrafanaTheme, severity: AlertVariant, outline: boolean) => {
   const { white } = theme.palette;
   const severityColors = getColorsFromSeverity(severity, theme);
-  const background = css`
-    background: linear-gradient(90deg, ${severityColors[0]}, ${severityColors[0]});
-  `;
+  let borderColor = '';
+  let bgColor = '';
+  let textColor = theme.colors.text;
+
+  if (theme.isDark) {
+    bgColor = tinycolor(severityColors[0]).setAlpha(0.3).toString();
+    borderColor = tinycolor(severityColors[0]).darken(0).toString();
+  } else {
+    bgColor = tinycolor(severityColors[0]).setAlpha(0.3).toString();
+    borderColor = tinycolor(severityColors[0]).lighten(0).toString();
+  }
 
   return {
     alert: css`
+      flex-grow: 1;
       padding: 15px 20px;
       margin-bottom: ${theme.spacing.xs};
       position: relative;
-      color: ${white};
-      text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+      color: ${textColor};
       border-radius: ${theme.border.radius.md};
       display: flex;
       flex-direction: row;
       align-items: center;
-      ${background}
+      background: ${bgColor};
+      border: 1px solid ${borderColor};
     `,
     icon: css`
       padding: 0 ${theme.spacing.md} 0 0;
