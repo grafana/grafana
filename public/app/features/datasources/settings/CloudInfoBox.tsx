@@ -1,5 +1,5 @@
 import { DataSourceSettings, GrafanaTheme } from '@grafana/data';
-import { DismissableFeatureInfoBox, Icon, useStyles } from '@grafana/ui';
+import { DismissableFeatureInfoBox, useStyles } from '@grafana/ui';
 import { css } from 'emotion';
 import React, { FC } from 'react';
 import { config } from 'app/core/config';
