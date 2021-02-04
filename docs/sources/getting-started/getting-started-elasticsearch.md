@@ -91,7 +91,7 @@ Click **Save & Test**. The following message opens, confirming that Grafana is a
 
 ![Elasticsearch confirmation message](/img/docs/getting-started/elasticsearch/confirmation-7-4.png)
 
-## Step 3. Create your first Elasticsearch backed dashboard
+## Step 3. Create your first Elasticsearch-backed dashboard
 
 1. In the Grafana side menu, hover your cursor over the **Create** (plus) icon and then click **Dashboard**.
 1. Click the **Add new panel** button.
