@@ -1,11 +1,12 @@
 import React, { FC } from 'react';
 import { ReplaySubject } from 'rxjs';
+import { Provider } from 'react-redux';
+import configureMockStore from 'redux-mock-store';
 import { act, render, screen } from '@testing-library/react';
 import { getDefaultTimeRange, LoadingState, PanelData, PanelPlugin, PanelProps } from '@grafana/data';
 
 import { PanelChrome, Props } from './PanelChrome';
 import { DashboardModel, PanelModel } from '../state';
-import { updateLocation } from '../../../core/actions';
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import { setTimeSrv, TimeSrv } from '../services/TimeSrv';
 
@@ -16,6 +17,8 @@ jest.mock('app/core/profiler', () => ({
 }));
 
 function setupTestContext(options: Partial<Props>) {
+  const mockStore = configureMockStore<any, any>();
+  const store = mockStore({ dashboard: { panels: [] } });
   const subject: ReplaySubject<PanelData> = new ReplaySubject<PanelData>();
   const panelQueryRunner = ({
     getData: () => subject,
@@ -48,19 +51,22 @@ function setupTestContext(options: Partial<Props>) {
     isInView: false,
     width: 100,
     height: 100,
-    updateLocation: (jest.fn() as unknown) as typeof updateLocation,
   };
 
   const props = { ...defaults, ...options };
-  const { rerender } = render(<PanelChrome {...props} />);
+  const { rerender } = render(
+    <Provider store={store}>
+      <PanelChrome {...props} />
+    </Provider>
+  );
 
-  return { rerender, props, subject };
+  return { rerender, props, subject, store };
 }
 
 describe('PanelChrome', () => {
   describe('when the user scrolls by a panel so fast that it starts loading data but scrolls out of view', () => {
     it('then it should load the panel successfully when scrolled into view again', () => {
-      const { rerender, props, subject } = setupTestContext({});
+      const { rerender, props, subject, store } = setupTestContext({});
 
       expect(screen.queryByText(/plugin panel to render/i)).not.toBeInTheDocument();
 
@@ -70,7 +76,11 @@ describe('PanelChrome', () => {
       });
 
       const newProps = { ...props, isInView: true };
-      rerender(<PanelChrome {...newProps} />);
+      rerender(
+        <Provider store={store}>
+          <PanelChrome {...newProps} />
+        </Provider>
+      );
 
       expect(screen.getByText(/plugin panel to render/i)).toBeInTheDocument();
     });
