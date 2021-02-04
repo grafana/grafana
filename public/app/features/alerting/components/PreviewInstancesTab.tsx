@@ -9,15 +9,16 @@ interface Props {
   styles: PreviewStyles;
   width: number;
   height: number;
+  onTest: () => void;
 }
 
-export const PreviewInstancesTab: FC<Props> = ({ instances, isTested, height, styles, width }) => {
+export const PreviewInstancesTab: FC<Props> = ({ instances, isTested, onTest, height, styles, width }) => {
   if (!isTested) {
     return (
       <div className={styles.noQueries}>
         <h4 className={styles.noQueriesHeader}>You haven’t tested your alert yet.</h4>
         <div>In order to see your instances, you need to test your alert first.</div>
-        <Button>Test alert now</Button>
+        <Button onClick={onTest}>Test alert now</Button>
       </div>
     );
   }

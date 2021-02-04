@@ -22,9 +22,10 @@ interface Props {
   queryRunner: PanelQueryRunner;
   getInstances: () => DataFrame[];
   queries: DataQuery[];
+  onTest: () => void;
 }
 
-export const AlertingQueryPreview: FC<Props> = ({ getInstances, queryRunner, queries }) => {
+export const AlertingQueryPreview: FC<Props> = ({ getInstances, onTest, queryRunner, queries }) => {
   const [activeTab, setActiveTab] = useState<string>(Tabs.Query);
   const styles = useStyles(getStyles);
 
@@ -64,6 +65,7 @@ export const AlertingQueryPreview: FC<Props> = ({ getInstances, queryRunner, que
                       styles={styles}
                       width={width}
                       height={height}
+                      onTest={onTest}
                     />
                   );
 

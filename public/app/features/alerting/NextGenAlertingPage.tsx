@@ -125,6 +125,7 @@ class NextGenAlertingPage extends PureComponent<Props> {
                 queryRunner={queryRunner}
                 getInstances={getInstances}
                 queries={queryOptions.queries}
+                onTest={this.onTest}
               />,
               <AlertingQueryEditor key="queryEditor" />,
             ]}
