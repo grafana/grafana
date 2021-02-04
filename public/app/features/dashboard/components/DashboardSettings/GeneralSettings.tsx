@@ -19,6 +19,7 @@ const GRAPH_TOOLTIP_OPTIONS = [
 
 export const GeneralSettings: React.FC<Props> = ({ dashboard }) => {
   const [renderCounter, setRenderCounter] = useState(0);
+
   const onFolderChange = (folder: { id: number; title: string }) => {
     dashboard.meta.folderId = folder.id;
     dashboard.meta.folderTitle = folder.title;
@@ -26,7 +27,7 @@ export const GeneralSettings: React.FC<Props> = ({ dashboard }) => {
   };
 
   const onBlur = (event: React.FocusEvent<HTMLInputElement>) => {
-    dashboard[event.currentTarget.name] = event.currentTarget.value;
+    dashboard[event.currentTarget.name as 'title' | 'description'] = event.currentTarget.value;
   };
 
   const onTooltipChange = (graphTooltip: SelectableValue<number>) => {
