@@ -1,0 +1,40 @@
+  influxdb:
+    image: quay.io/influxdb/influxdb:v2.0.3
+    container_name: influxdb2
+    ports:
+      - '8086:8086'
+    environment:
+      INFLUXDB_REPORTING_DISABLED: 'true'
+    volumes:
+      - ./docker/blocks/influxdb2/influxdb.conf:/etc/influxdb/influxdb.conf
+
+  # Use the influx cli to set up an influxdb instance.
+  influxdb_cli:
+    links:
+      - influxdb
+    image: quay.io/influxdb/influxdb:v2.0.3
+    # Use these same configurations parameters in your telegraf configuration, mytelegraf.conf.
+    entrypoint: influx setup --bucket mybucket -t mytoken -o myorg --username=grafana --password=grafana12345 --host=http://influxdb:8086 -f
+      # Wait for the influxd service in the influxdb container has fully bootstrapped before trying to setup an influxdb instance with the influxdb_cli service.
+    restart: on-failure:10
+    depends_on:
+      - influxdb
+
+  fake-influxdb-data:
+    image: grafana/fake-data-gen
+    links:
+      - influxdb
+    environment:
+      FD_DATASOURCE: influxdb
+      FD_PORT: 8086
+
+  telegraf:
+    image: telegraf
+    links:
+      - influxdb
+    depends_on:
+      - influxdb_cli
+    volumes:
+      - ./docker/blocks/influxdb2/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+      - /var/log:/var/log
+      - ../data/log:/var/log/grafana

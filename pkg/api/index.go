@@ -196,16 +196,6 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		})
 	}
 
-	if hs.Cfg.IsNgAlertEnabled() {
-		navTree = append(navTree, &dtos.NavLink{
-			Text:     "NgAlerting",
-			Id:       "ngalerting",
-			SubTitle: "Next generation alerting",
-			Icon:     "bell",
-			Url:      setting.AppSubUrl + "/ngalerting",
-		})
-	}
-
 	if c.IsSignedIn {
 		navTree = append(navTree, getProfileNode(c))
 	}

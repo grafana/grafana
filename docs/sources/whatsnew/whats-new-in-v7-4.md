@@ -1,8 +1,7 @@
 +++
 title = "What's New in Grafana v7.4"
-description = "Feature and improvement highlights for Grafana v7.3"
-keywords = ["grafana", "new", "documentation", "7.3", "release notes"]
-aliases = ["/docs/grafana/latest/guides/whats-new-in-v7-3/"]
+description = "Feature and improvement highlights for Grafana v7.4"
+keywords = ["grafana", "new", "documentation", "7.4", "release notes"]
 weight = -31
 [_build]
 list = false
@@ -86,7 +85,7 @@ You can now navigate from a span in a trace view directly to logs relevant for t
 
 The following topics were updated as a result of this feature:
 
-- [Explore]({{< relref "../explore/index.md#trace-to-logs" >}})
+- [Explore]({{< relref "../explore/trace-integration.md" >}})
 - [Jaeger]({{< relref "../datasources/jaeger.md#trace-to-logs" >}})
 - [Tempo]({{< relref "../datasources/tempo.md#trace-to-logs" >}})
 - [Zipkin]({{< relref "../datasources/zipkin.md#trace-to-logs" >}})
