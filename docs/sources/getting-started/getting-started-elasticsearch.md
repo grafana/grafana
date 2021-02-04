@@ -1,6 +1,6 @@
 +++
 title = "With Grafana and Elasticsearch"
-description = "Guide for getting started with Grafana"
+description = "Guide for getting started with Grafana and Elasticsearch"
 keywords = ["grafana", "intro", "guide", "started", "Elastic", "Elasticsearch"]
 weight = 400
 +++
