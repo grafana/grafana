@@ -2,7 +2,6 @@
 title = "With Grafana and Elasticsearch"
 description = "Guide for getting started with Grafana"
 keywords = ["grafana", "intro", "guide", "started", "Elastic", "Elasticsearch"]
-aliases = ["/docs/grafana/latest/guides/gettingstarted","/docs/grafana/latest/guides/getting_started"]
 weight = 400
 +++
 
@@ -10,58 +9,54 @@ weight = 400
 
 Elasticsearch is a popular open source search and analytics engine for which Grafana provides out-of-the-box support. This topic walks you through the steps to create your first Elasticsearch backed dashboard in grafana to display any kind of data stored in your Elasticsearch database.
 
-## Step 1. Install Grafana and build your first dashboard
+> **Note:** Before you begin, use the instructions in [Getting started with Grafana]({{< relref "getting-started.md" >}}) to install Grafana and build your first dashboard.
 
-Use the instructions in [Getting started with Grafana]({{< relref "getting-started.md" >}}) to:
-
-- Install Grafana.
-- Log in to Grafana.
-- Create your first dashboard.
-
-## Step 2. Download and install Elasticsearch
+## Step 1. Download and install Elasticsearch
 
 Elasticsearch can be installed on many different operating systems. Refer to the [Installing Elasticsearch](https://www.elastic.co/guide/en/elasticsearch/reference/current/install-elasticsearch.html) for a complete list of all available options.
 
 Alternately you can install Elasticsearch using the resources available in [grafana/grafana](https://github.com/grafana/grafana) GitHub repository. Here you will find a collection of supported data sources, including Elasticsearch, along with test data and preconfigured dashboards for use.
 
-Clone the [grafana/grafana](https://github.com/grafana/grafana/tree/master) repository to your local system.
-Install Docker or verify that it is installed on your machine.
+1. Clone the [grafana/grafana](https://github.com/grafana/grafana/tree/master) repository to your local system.
+1. Install Docker or verify that it is installed on your machine.
 
-Within your local `grafana` repository, change directory to [devenv](https://github.com/grafana/grafana/tree/master/devenv).
+1. Within your local `grafana` repository, change directory to [devenv](https://github.com/grafana/grafana/tree/master/devenv).
 
-```
-cd devenv
-```
+   ```
+   cd devenv
+   ```
 
-Run the bash command to setup data sources and dashboards.
+1. Run the bash command to setup data sources and dashboards.
 
-```
-./setup.sh
-```
+   ```
+   ./setup.sh
+   ```
 
-Restart the Grafana server.
-Change directory back to the root directory.
+1. Restart the Grafana server.
+1. Change directory back to the root directory.
 
-```
-cd ..
-```
+   ```
+   cd ..
+   ```
 
-Run the make command to create and start Elasticsearch.
+1. Run the make command to create and start Elasticsearch.
 
-```
+   ```
    make devenv sources=elastic7
-```
+   ```
 
 This creates and starts Elasticsearch, Filebeat, Metricbeat, Kibana, and a process that sends random data to your new Elasticsearch instance.
 
 > **Note**: Filebeat, Metricbeat, and Kibana are outside the scope of this topic.
 
-## Step 3. Configure and add the Elasticsearch data source
+## Step 2. Configure and add the Elasticsearch data source
 
 Once you have your Elasticsearch instance up and running and some process pushing data to it, you can configure your data source within Grafana.
 
 For more information on how to add a datasource, refer to [Add a data source](/docs/grafana/latest/datasources/add-a-data-source/).
 Check also out [Using Elasticsearch in Grafana](/docs/grafana/latest/datasources/elasticsearch/) for a more detailed list of all available configuration options for Elasticsearch.
+
+> **Note**: We'll assume you used the instructions from Grafana's devenv for simplicity, if this is not the case you may have to adapt the values in the tables below to match your use-case.
 
 To add the Elasticsearch data source:
 
@@ -69,8 +64,6 @@ To add the Elasticsearch data source:
 1. Select the **Elasticsearch** option.
 1. Click **Add data source** in the top right header to open the configuration page.
 1. Enter the information specified in the tables below, then click **Save & Test**.
-
-> **Note**: We'll assume you used the instructions from Grafana's devenv for simplicity, if this is not the case you may have to adapt the values in the tables below to match your use-case.
 
 ### General Settings
 
@@ -94,11 +87,11 @@ To add the Elasticsearch data source:
 | `Time field name` | The name of the field that identiefies the timestamp of your documents.    | `@timestamp`           |
 | `Version`         | The Elasticsearch version you are running.                                 | `7.0+`                 |
 
-Once you click **Save & Test** the following message will appear, confirming that Grafana is able to communicate with your Elasticsearch instance:
+Click **Save & Test**. The following message opens, confirming that Grafana is able to communicate with your Elasticsearch instance:
 
 ![Elasticsearch confirmation message](/img/docs/getting-started/elasticsearch/confirmation-7-4.png)
 
-## Step 4. Create your first Elasticsearch backed dashboard
+## Step 3. Create your first Elasticsearch backed dashboard
 
 1. In the Grafana side menu, hover your cursor over the **Create** (plus) icon and then click **Dashboard**.
 1. Click the **Add new panel** button.
