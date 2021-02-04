@@ -65,7 +65,7 @@ export const CloudInfoBox: FC<Props> = ({ dataSource }) => {
 const getStyles = (theme: GrafanaTheme) => {
   return {
     box: css`
-      margin: 0 0 24px 0;
+      margin: 0 0 ${theme.spacing.lg} 0;
     `,
     text: css`
       color: ${theme.colors.textSemiWeak};
