@@ -3,6 +3,7 @@ import { css } from 'emotion';
 import sumBy from 'lodash/sumBy';
 import { Modal, HorizontalGroup, Button } from '@grafana/ui';
 import { DashboardModel } from '../../state';
+import { useDashboardDelete } from './useDashboardDelete';
 
 type DeleteDashboardModalProps = {
   hideModal: () => void;
@@ -14,6 +15,7 @@ export const DeleteDashboardModal: React.FC<DeleteDashboardModalProps> = ({ hide
     return panel.alert ? 1 : 0;
   });
   const isProvisioned = dashboard.meta.provisioned;
+  const { onRestoreDashboard } = useDashboardDelete(dashboard.uid);
 
   if (isProvisioned) {
     return (
@@ -45,7 +47,7 @@ export const DeleteDashboardModal: React.FC<DeleteDashboardModalProps> = ({ hide
             for more information about provisioning.
           </i>
           <br />
-          File path: ${dashboard.meta.provisionedExternalId}
+          File path: {dashboard.meta.provisionedExternalId}
         </p>
         <HorizontalGroup justify="center">
           <Button variant="secondary" onClick={hideModal}>
@@ -70,7 +72,7 @@ export const DeleteDashboardModal: React.FC<DeleteDashboardModalProps> = ({ hide
       <p>Do you want to delete this dashboard?</p>
       <p>This dashboard contains ${totalAlerts} alerts. Deleting this dashboard will also delete those alerts</p>
       <HorizontalGroup justify="center">
-        <Button variant="destructive" type="button" onClick={() => console.log('yes')}>
+        <Button variant="destructive" type="button" onClick={onRestoreDashboard}>
           Delete
         </Button>
         <Button variant="secondary" onClick={hideModal}>
@@ -94,7 +96,7 @@ export const DeleteDashboardModal: React.FC<DeleteDashboardModalProps> = ({ hide
       <p>Do you want to delete this dashboard?</p>
       <p>{dashboard.title}</p>
       <HorizontalGroup justify="center">
-        <Button variant="destructive" type="button" onClick={() => console.log('yes')}>
+        <Button variant="destructive" type="button" onClick={onRestoreDashboard}>
           Delete
         </Button>
         <Button variant="secondary" onClick={hideModal}>
