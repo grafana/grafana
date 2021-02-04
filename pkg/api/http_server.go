@@ -12,6 +12,8 @@ import (
 	"path/filepath"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/middleware/authorization"
+
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/shorturls"
@@ -81,7 +83,7 @@ type HTTPServer struct {
 	ContextHandler       *contexthandler.ContextHandler     `inject:""`
 	SQLStore             *sqlstore.SQLStore                 `inject:""`
 	LibraryPanelService  *librarypanels.LibraryPanelService `inject:""`
-	AccessControl        models.AccessControl               `inject:""`
+	AccessControl        authorization.AccessControl        `inject:""`
 	Listener             net.Listener
 }
 

@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/middleware/authorization"
 	"github.com/grafana/grafana/pkg/models"
 )
 
@@ -18,7 +19,7 @@ var plog = log.New("api")
 // registerRoutes registers all API HTTP routes.
 func (hs *HTTPServer) registerRoutes() {
 	reqSignedIn := middleware.ReqSignedIn
-	reqRBACAuthorization := middleware.Authorization(hs.AccessControl)
+	authorize := authorization.Middleware(hs.AccessControl)
 	reqGrafanaAdmin := middleware.ReqGrafanaAdmin
 	reqEditorRole := middleware.ReqEditorRole
 	reqOrgAdmin := middleware.ReqOrgAdmin
@@ -41,7 +42,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 	// authed views
 	r.Get("/", reqSignedIn, hs.Index)
-	r.Get("/profile/", reqRBACAuthorization, hs.Index)
+	r.Get("/profile/", reqSignedIn, hs.Index)
 	r.Get("/profile/password", reqSignedIn, hs.Index)
 	r.Get("/.well-known/change-password", redirectToChangePassword)
 	r.Get("/profile/switch-org/:id", reqSignedIn, hs.ChangeActiveOrgAndRedirectToHome)
@@ -60,7 +61,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/configuration", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin/settings", reqGrafanaAdmin, hs.Index)
-	r.Get("/admin/users", reqRBACAuthorization, reqGrafanaAdmin, hs.Index)
+	r.Get("/admin/users", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin/users/create", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin/users/edit/:id", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin/orgs", reqGrafanaAdmin, hs.Index)
@@ -87,7 +88,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/dashboard-solo/db/:slug", reqSignedIn, redirectFromLegacyDashboardSoloURL, hs.Index)
 	r.Get("/dashboard-solo/script/*", reqSignedIn, hs.Index)
 	r.Get("/import/dashboard", reqSignedIn, hs.Index)
-	r.Get("/dashboards/", reqRBACAuthorization, hs.Index)
+	r.Get("/dashboards/", reqSignedIn, hs.Index)
 	r.Get("/dashboards/*", reqSignedIn, hs.Index)
 	r.Get("/goto/:uid", reqSignedIn, hs.redirectFromShortURL, hs.Index)
 
@@ -127,11 +128,11 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Group("/api", func(apiRoute routing.RouteRegister) {
 		// user (signed in)
 		apiRoute.Group("/user", func(userRoute routing.RouteRegister) {
-			userRoute.Get("/", reqRBACAuthorization, routing.Wrap(GetSignedInUser))
-			userRoute.Put("/", bind(models.UpdateUserCommand{}), routing.Wrap(UpdateSignedInUser))
+			userRoute.Get("/", authorize("users.view", "users:self"), routing.Wrap(GetSignedInUser))
+			userRoute.Put("/", authorize("users.edit", "users:self"), bind(models.UpdateUserCommand{}), routing.Wrap(UpdateSignedInUser))
 			userRoute.Post("/using/:id", routing.Wrap(UserSetUsingOrg))
 			userRoute.Get("/orgs", routing.Wrap(GetSignedInUserOrgList))
-			userRoute.Get("/teams", routing.Wrap(GetSignedInUserTeamList))
+			userRoute.Get("/teams", authorize("users.view", "users:self"), routing.Wrap(GetSignedInUserTeamList))
 
 			userRoute.Post("/stars/dashboard/:id", routing.Wrap(StarDashboard))
 			userRoute.Delete("/stars/dashboard/:id", routing.Wrap(UnstarDashboard))
@@ -142,11 +143,11 @@ func (hs *HTTPServer) registerRoutes() {
 			// For dev purpose
 			userRoute.Get("/helpflags/clear", routing.Wrap(ClearHelpFlags))
 
-			userRoute.Get("/preferences", routing.Wrap(GetUserPreferences))
-			userRoute.Put("/preferences", bind(dtos.UpdatePrefsCmd{}), routing.Wrap(UpdateUserPreferences))
+			userRoute.Get("/preferences", authorize("users.view", "users:self"), routing.Wrap(GetUserPreferences))
+			userRoute.Put("/preferences", authorize("users.edit", "users:self"), bind(dtos.UpdatePrefsCmd{}), routing.Wrap(UpdateUserPreferences))
 
-			userRoute.Get("/auth-tokens", routing.Wrap(hs.GetUserAuthTokens))
-			userRoute.Post("/revoke-auth-token", bind(models.RevokeAuthTokenCmd{}), routing.Wrap(hs.RevokeUserAuthToken))
+			userRoute.Get("/auth-tokens", authorize("users:tokens.list", "users:self"), routing.Wrap(hs.GetUserAuthTokens))
+			userRoute.Post("/revoke-auth-token", authorize("users:tokens.delete", "users:self"), bind(models.RevokeAuthTokenCmd{}), routing.Wrap(hs.RevokeUserAuthToken))
 		})
 
 		// users (admin permission required)
