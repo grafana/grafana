@@ -113,4 +113,4 @@ The default query will graph the number of received documents in our index over 
 
 Now that you have your Elasticsearch powered Grafana dashboard you can start [exploring](/docs/grafana/latest/explore/) different ways of querying your Elasticsearch index to get the most out of your data.
 
-For more information, refer to [Elasticsearch aggregations](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations.html), [metricbeat](https://www.elastic.co/beats/metricbeat) and [filebeat](https://www.elastic.co/beats/filebeat) on [Elastic's website](https://www.elastic.co).
+For more information, refer to [Elasticsearch aggregations](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations.html), [Metricbeat](https://www.elastic.co/beats/metricbeat) and [Filebeat](https://www.elastic.co/beats/filebeat) on [Elastic's website](https://www.elastic.co).
