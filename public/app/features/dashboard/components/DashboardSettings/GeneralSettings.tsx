@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { SelectableValue } from '@grafana/data';
-import { DashboardModel } from '../../state/DashboardModel';
+import { SelectableValue, TimeZone } from '@grafana/data';
+import { Select, Switch, TagsInput, InlineField, Input } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { TimePickerSettings } from './TimePickerSettings';
-import { TimeZone } from '@grafana/data';
-import { Select, Switch, TagsInput } from '@grafana/ui';
+import { DashboardModel } from '../../state/DashboardModel';
 import { DeleteDashboardButton } from '../DeleteDashboard/DeleteDashboardButton';
+import { TimePickerSettings } from './TimePickerSettings';
 
 interface Props {
   dashboard: DashboardModel;
@@ -66,30 +65,15 @@ export const GeneralSettings: React.FC<Props> = ({ dashboard }) => {
     <>
       <h3 className="dashboard-settings__header">General</h3>
       <div className="gf-form-group">
-        <div className="gf-form">
-          <label className="gf-form-label width-7">Name</label>
-          <input
-            name="title"
-            onBlur={onBlur}
-            type="text"
-            className="gf-form-input width-30"
-            defaultValue={dashboard.title}
-          />
-        </div>
-        <div className="gf-form">
-          <label className="gf-form-label width-7">Description</label>
-          <input
-            name="description"
-            onBlur={onBlur}
-            type="text"
-            className="gf-form-input width-30"
-            defaultValue={dashboard.description}
-          ></input>
-        </div>
-        <div className="gf-form">
-          <label className="gf-form-label width-7">Tags</label>
+        <InlineField label="Name" labelWidth={14}>
+          <Input name="title" onBlur={onBlur} defaultValue={dashboard.title} width={60} />
+        </InlineField>
+        <InlineField label="Description" labelWidth={14}>
+          <Input name="title" onBlur={onBlur} defaultValue={dashboard.description} width={60} />
+        </InlineField>
+        <InlineField label="Tags" labelWidth={14}>
           <TagsInput tags={dashboard.tags} onChange={onTagsChange} />
-        </div>
+        </InlineField>
         <FolderPicker
           initialTitle={dashboard.meta.folderTitle}
           initialFolderId={dashboard.meta.folderId}
@@ -97,10 +81,9 @@ export const GeneralSettings: React.FC<Props> = ({ dashboard }) => {
           enableCreateNew={true}
           dashboardId={dashboard.id}
         />
-        <div className="gf-form">
-          <label className="gf-form-label width-7">Editable</label>
+        <InlineField label="Editable" labelWidth={14}>
           <Switch value={dashboard.editable} onChange={onEditableChange} />
-        </div>
+        </InlineField>
       </div>
       <TimePickerSettings
         onTimeZoneChange={onTimeZoneChange}
@@ -115,8 +98,14 @@ export const GeneralSettings: React.FC<Props> = ({ dashboard }) => {
 
       <h5 className="section-heading">Panel Options</h5>
       <div className="gf-form">
-        <label className="gf-form-label width-7">Graph Tooltip</label>
-        <Select onChange={onTooltipChange} options={GRAPH_TOOLTIP_OPTIONS} width={40} value={dashboard.graphTooltip} />
+        <InlineField label="Graph Tooltip" labelWidth={14}>
+          <Select
+            onChange={onTooltipChange}
+            options={GRAPH_TOOLTIP_OPTIONS}
+            width={40}
+            value={dashboard.graphTooltip}
+          />
+        </InlineField>
       </div>
       <div className="gf-form-button-row">
         {dashboard.meta.canSave && <DeleteDashboardButton dashboard={dashboard} />}
