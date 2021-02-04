@@ -1,24 +1,22 @@
-import React, { useMemo } from 'react';
+import React from 'react';
+import { Select } from '@grafana/ui';
 
-import { InlineField, Select } from '@grafana/ui';
-import { findOption, MetricsQueryEditorFieldProps, toOption } from '../common';
-import { MetricMetadata } from '../metrics';
+import { Field } from '../Field';
+import { Option, findOption, MetricsQueryEditorFieldProps } from '../common';
 
 interface TimeGrainFieldProps extends MetricsQueryEditorFieldProps {
-  timeGrainOptions: MetricMetadata['timeGrains'];
+  timeGrainOptions: Option[];
 }
 
 const TimeGrainField: React.FC<TimeGrainFieldProps> = ({ query, onChange, timeGrainOptions }) => {
-  const options = useMemo(() => timeGrainOptions.map(toOption), [timeGrainOptions]);
-
   return (
-    <InlineField label="Time Grain" labelWidth={16}>
+    <Field label="Time Grain" labelWidth={16}>
       <Select
-        value={findOption(options, query.azureMonitor.timeGrain)}
-        onChange={(v) => onChange('timeGrain', v)}
-        options={options}
+        value={findOption(timeGrainOptions, query.azureMonitor.timeGrain)}
+        onChange={(v) => v.value && onChange('timeGrain', v.value)}
+        options={timeGrainOptions}
       />
-    </InlineField>
+    </Field>
   );
 };
 

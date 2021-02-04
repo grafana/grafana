@@ -1,6 +1,5 @@
 import React from 'react';
 
-import { SelectableValue } from '@grafana/data';
 import { InlineField, Select } from '@grafana/ui';
 
 import Datasource from '../../datasource';
@@ -13,6 +12,7 @@ import MetricNameField from './MetricNameField';
 import AggregationField from './AggregationField';
 import { useMetricsMetadata } from '../metrics';
 import TimeGrainField from './TimeGrainField';
+import DimensionFields from './DimensionFields';
 
 interface MetricsQueryEditorProps {
   query: AzureMonitorQuery;
@@ -33,18 +33,17 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({ query, datasour
   // This type magic ensures its only ever called with valid key/value pairs of the azureMonitor object
   function onFieldChange<Key extends keyof AzureMonitorQuery['azureMonitor']>(
     field: Key,
-    { value }: SelectableValue<AzureMonitorQuery['azureMonitor'][Key]>
+    value: AzureMonitorQuery['azureMonitor'][Key]
   ) {
-    // TODO: investigate empty values. Do they still need to be set?
+    console.log('onFieldChange', { field, value });
     // TODO: when fields change, we actually need to unset all the "lower" fields that depend on this as well
-    value &&
-      onChange({
-        ...query,
-        azureMonitor: {
-          ...query.azureMonitor,
-          [field]: value,
-        },
-      });
+    onChange({
+      ...query,
+      azureMonitor: {
+        ...query.azureMonitor,
+        [field]: value,
+      },
+    });
   }
 
   return (
@@ -92,6 +91,14 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({ query, datasour
         subscriptionId={subscriptionId}
         onChange={onFieldChange}
         timeGrainOptions={metricsMetadata?.timeGrains ?? []}
+      />
+
+      <DimensionFields
+        query={query}
+        datasource={datasource}
+        subscriptionId={subscriptionId}
+        onChange={onFieldChange}
+        dimensionOptions={metricsMetadata?.dimensions ?? []}
       />
     </>
   );

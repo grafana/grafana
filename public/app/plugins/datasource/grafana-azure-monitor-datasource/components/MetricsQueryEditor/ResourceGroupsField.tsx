@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
+import { Select } from '@grafana/ui';
 
-import { InlineField, Select } from '@grafana/ui';
-import { findOption, MetricsQueryEditorFieldProps, Options, toOption } from '../common';
+import { Field } from '../Field';
+import { findOption, MetricsQueryEditorFieldProps, Option, toOption } from '../common';
 
 const ResourceGroupsField: React.FC<MetricsQueryEditorFieldProps> = ({
   query,
@@ -9,7 +10,7 @@ const ResourceGroupsField: React.FC<MetricsQueryEditorFieldProps> = ({
   subscriptionId,
   onChange,
 }) => {
-  const [options, setOptions] = useState<Options>([]);
+  const [options, setOptions] = useState<Option[]>([]);
 
   useEffect(() => {
     if (!subscriptionId) {
@@ -26,13 +27,13 @@ const ResourceGroupsField: React.FC<MetricsQueryEditorFieldProps> = ({
   }, [subscriptionId]);
 
   return (
-    <InlineField label="Resource Group" labelWidth={16}>
+    <Field label="Resource Group" labelWidth={16}>
       <Select
         value={findOption(options, query.azureMonitor.resourceGroup)}
-        onChange={(v) => onChange('resourceGroup', v)}
+        onChange={(v) => v.value && onChange('resourceGroup', v.value)}
         options={options}
       />
-    </InlineField>
+    </Field>
   );
 };
 

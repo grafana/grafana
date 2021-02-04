@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import Datasource from '../datasource';
 import { AzureMonitorQuery } from '../types';
-import { convertTimeGrainsToMs } from './common';
+import { convertTimeGrainsToMs, toOption } from './common';
 
 export interface MetricMetadata {
-  aggOptions: string[];
-  timeGrains: Array<{ text: string; value: string }>;
-  dimensions: Array<{ text: string; value: string }>;
+  aggOptions: Array<{ label: string; value: string }>;
+  timeGrains: Array<{ label: string; value: string }>;
+  dimensions: Array<{ label: string; value: string }>;
 }
 
 export function useMetricsMetadata(
@@ -51,10 +51,17 @@ export function useMetricsMetadata(
           },
         });
 
+        // TODO: Move the aggregationTypes and timeGrain defaults into `getMetricMetadata`
+
+        const aggregations = (metadata.supportedAggTypes || [metadata.primaryAggType]).map((v) => ({
+          label: v,
+          value: v,
+        }));
+
         setMetricMetadata({
-          aggOptions: metadata.supportedAggTypes || [metadata.primaryAggType],
-          timeGrains: [{ text: 'auto', value: 'auto' }].concat(metadata.supportedTimeGrains),
-          dimensions: metadata.dimensions,
+          aggOptions: aggregations,
+          timeGrains: [{ text: 'auto', value: 'auto' }].concat(metadata.supportedTimeGrains).map(toOption),
+          dimensions: metadata.dimensions.map(toOption),
         });
       })
       .catch((err) => {

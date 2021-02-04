@@ -1,23 +1,22 @@
 import React from 'react';
+import { Select } from '@grafana/ui';
 
-import { InlineField, Select } from '@grafana/ui';
-import { findOption, MetricsQueryEditorFieldProps } from '../common';
+import { Field } from '../Field';
+import { Option, findOption, MetricsQueryEditorFieldProps } from '../common';
 
 interface AggregationFieldProps extends MetricsQueryEditorFieldProps {
-  aggregationOptions: string[];
+  aggregationOptions: Option[];
 }
 
 const AggregationField: React.FC<AggregationFieldProps> = ({ query, onChange, aggregationOptions }) => {
-  const options = aggregationOptions.map((v) => ({ value: v, label: v }));
-
   return (
-    <InlineField label="Aggregation" labelWidth={16}>
+    <Field label="Aggregation" labelWidth={16}>
       <Select
-        value={findOption(options, query.azureMonitor.aggregation)}
-        onChange={(v) => onChange('aggregation', v)}
-        options={options}
+        value={findOption(aggregationOptions, query.azureMonitor.aggregation)}
+        onChange={(v) => v.value && onChange('aggregation', v.value)}
+        options={aggregationOptions}
       />
-    </InlineField>
+    </Field>
   );
 };
 

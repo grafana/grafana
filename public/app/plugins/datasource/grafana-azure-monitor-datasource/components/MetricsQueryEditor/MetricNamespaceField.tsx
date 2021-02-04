@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
+import { Select } from '@grafana/ui';
 
-import { InlineField, Select } from '@grafana/ui';
-import { findOption, MetricsQueryEditorFieldProps, Options, toOption } from '../common';
+import { Field } from '../Field';
+import { findOption, MetricsQueryEditorFieldProps, Option, toOption } from '../common';
 
 const MetricNamespaceField: React.FC<MetricsQueryEditorFieldProps> = ({
   query,
@@ -9,7 +10,7 @@ const MetricNamespaceField: React.FC<MetricsQueryEditorFieldProps> = ({
   subscriptionId,
   onChange,
 }) => {
-  const [options, setOptions] = useState<Options>([]);
+  const [options, setOptions] = useState<Option[]>([]);
 
   useEffect(() => {
     if (!(subscriptionId && query.azureMonitor.resourceGroup, query.azureMonitor.metricDefinition)) {
@@ -36,13 +37,13 @@ const MetricNamespaceField: React.FC<MetricsQueryEditorFieldProps> = ({
   ]);
 
   return (
-    <InlineField label="Metric Namespace" labelWidth={16}>
+    <Field label="Metric Namespace" labelWidth={16}>
       <Select
         value={findOption(options, query.azureMonitor.metricNamespace)}
-        onChange={(v) => onChange('metricNamespace', v)}
+        onChange={(v) => v.value && onChange('metricNamespace', v.value)}
         options={options}
       />
-    </InlineField>
+    </Field>
   );
 };
 
