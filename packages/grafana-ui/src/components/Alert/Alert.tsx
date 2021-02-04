@@ -77,13 +77,16 @@ const getStyles = (theme: GrafanaTheme, severity: AlertVariant, outline: boolean
   let borderColor = '';
   let bgColor = '';
   let textColor = theme.colors.text;
+  const sourceColor = severityColors[0];
 
   if (theme.isDark) {
-    bgColor = tinycolor(severityColors[0]).setAlpha(0.2).toString();
-    borderColor = tinycolor(severityColors[0]).darken(0).toString();
+    bgColor = tinycolor(sourceColor).setAlpha(0.1).toString();
+    borderColor = tinycolor(sourceColor).darken(20).toString();
+    textColor = tinycolor(sourceColor).lighten(30).toString();
   } else {
-    bgColor = tinycolor(severityColors[0]).setAlpha(0.2).toString();
-    borderColor = tinycolor(severityColors[0]).lighten(0).toString();
+    bgColor = tinycolor(sourceColor).setAlpha(0.1).toString();
+    borderColor = tinycolor(sourceColor).lighten(20).toString();
+    textColor = tinycolor(sourceColor).darken(30).toString();
   }
 
   return {
@@ -107,9 +110,7 @@ const getStyles = (theme: GrafanaTheme, severity: AlertVariant, outline: boolean
       justify-content: center;
       width: 35px;
     `,
-    title: css`
-      font-weight: ${theme.typography.weight.semibold};
-    `,
+    title: css``,
     body: css`
       flex-grow: 1;
       margin: 0 ${theme.spacing.md} 0 0;
@@ -125,7 +126,7 @@ const getStyles = (theme: GrafanaTheme, severity: AlertVariant, outline: boolean
       background: none;
       display: flex;
       align-items: center;
-      border: ${outline ? `1px solid ${white}` : 'none'};
+      border: ${outline ? `1px solid ${textColor}` : 'none'};
       border-radius: ${theme.border.radius.sm};
     `,
   };
