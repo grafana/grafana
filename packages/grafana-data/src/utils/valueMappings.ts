@@ -21,9 +21,10 @@ const addValueToTextMappingText = (
     valueAsNumber = parseFloat(value as string);
     valueToTextMappingAsNumber = parseFloat(valueToTextMapping.value as string);
 
-    if (valueAsNumber !== valueToTextMappingAsNumber) {
-      return allValueMappings;
+    if (valueAsNumber === valueToTextMappingAsNumber) {
+      return allValueMappings.concat(valueToTextMapping);
     }
+    return allValueMappings;
   }
 
   if (value === valueToTextMapping.value) {
