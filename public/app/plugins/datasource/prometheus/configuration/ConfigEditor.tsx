@@ -1,5 +1,5 @@
 import React from 'react';
-import { DataSourceHttpSettings, FeatureInfoBox } from '@grafana/ui';
+import { DataSourceHttpSettings } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { PromSettings } from './PromSettings';
 import { PromOptions } from '../types';
