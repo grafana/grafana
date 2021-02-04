@@ -1,5 +1,5 @@
 import { AppEvents, dateMath } from '@grafana/data';
-import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
+import { config, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
 import { updateLocation } from 'app/core/actions';
 import store from 'app/core/store';
@@ -12,6 +12,7 @@ import {
   ALERT_DEFINITION_UI_STATE_STORAGE_KEY,
   updateAlertDefinition,
   setQueryOptions,
+  setAlertDefinitions,
 } from './reducers';
 import {
   AlertDefinition,
@@ -29,6 +30,12 @@ export function getAlertRulesAsync(options: { state: string }): ThunkResult<void
   return async (dispatch) => {
     dispatch(loadAlertRules());
     const rules: AlertRuleDTO[] = await getBackendSrv().get('/api/alerts', options);
+
+    if (config.featureToggles.ngalert) {
+      const ngAlertDefinitions = await getBackendSrv().get('/api/alert-definitions');
+      dispatch(setAlertDefinitions(ngAlertDefinitions.results));
+    }
+
     dispatch(loadedAlertRules(rules));
   };
 }
