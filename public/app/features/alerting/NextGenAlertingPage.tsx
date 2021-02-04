@@ -17,6 +17,7 @@ import {
   updateAlertDefinition,
   evaluateAlertDefinition,
   getAlertDefinition,
+  evaluateNotSavedAlertDefinition,
 } from './state/actions';
 import { getRouteParamsId } from 'app/core/selectors/location';
 import { AlertDefinition, AlertDefinitionUiState, QueryGroupOptions, StoreState } from '../../types';
@@ -42,6 +43,7 @@ interface DispatchProps {
   getAlertDefinition: typeof getAlertDefinition;
   updateAlertDefinition: typeof updateAlertDefinition;
   createAlertDefinition: typeof createAlertDefinition;
+  evaluateNotSavedAlertDefinition: typeof evaluateNotSavedAlertDefinition;
 }
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
@@ -84,7 +86,12 @@ class NextGenAlertingPage extends PureComponent<Props> {
   onDiscard = () => {};
 
   onTest = () => {
-    this.props.evaluateAlertDefinition();
+    const { alertDefinition, evaluateAlertDefinition, evaluateNotSavedAlertDefinition } = this.props;
+    if (alertDefinition.uid) {
+      evaluateAlertDefinition();
+    } else {
+      evaluateNotSavedAlertDefinition();
+    }
   };
 
   renderToolbarActions() {
@@ -167,6 +174,7 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   updateAlertDefinition,
   createAlertDefinition,
   getAlertDefinition,
+  evaluateNotSavedAlertDefinition,
 };
 
 export default hot(module)(

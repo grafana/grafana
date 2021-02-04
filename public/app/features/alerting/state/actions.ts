@@ -3,6 +3,7 @@ import {
   applyFieldOverrides,
   arrowTableToDataFrame,
   base64StringToArrowTable,
+  DataSourceApi,
   dateMath,
 } from '@grafana/data';
 import { config, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
@@ -187,22 +188,26 @@ export function evaluateAlertDefinition(): ThunkResult<void> {
     const { alertDefinition } = getStore().alertDefinition;
 
     const response: { instances: [] } = await getBackendSrv().get(`/api/alert-definitions/eval/${alertDefinition.uid}`);
-    const dataFrames = response.instances.map((instance) => {
-      const table = base64StringToArrowTable(instance);
-      return arrowTableToDataFrame(table);
+
+    const handledResponse = handleBase64Response(response.instances);
+
+    dispatch(setInstanceData(handledResponse));
+    appEvents.emit(AppEvents.alertSuccess, ['Alert definition tested successfully']);
+  };
+}
+
+export function evaluateNotSavedAlertDefinition(): ThunkResult<void> {
+  return async (dispatch, getStore) => {
+    const { alertDefinition, queryOptions } = getStore().alertDefinition;
+    const defaultDataSource = await getDataSourceSrv().get(null);
+
+    const response: { instances: [] } = await getBackendSrv().post('/api/alert-definitions/eval', {
+      condition: alertDefinition.condition,
+      data: buildDataQueryModel(queryOptions, defaultDataSource),
     });
 
-    const overrides = applyFieldOverrides({
-      data: dataFrames,
-      fieldConfig: {
-        defaults: {},
-        overrides: [],
-      },
-      replaceVariables: (value: any) => value,
-      theme: config.theme,
-    });
-
-    dispatch(setInstanceData(overrides));
+    const handledResponse = handleBase64Response(response.instances);
+    dispatch(setInstanceData(handledResponse));
     appEvents.emit(AppEvents.alertSuccess, ['Alert definition tested successfully']);
   };
 }
@@ -214,34 +219,55 @@ async function buildAlertDefinition(state: AlertDefinitionState) {
 
   return {
     ...currentAlertDefinition,
-    data: queryOptions.queries.map((query) => {
-      let dataSource: QueryGroupDataSource;
-      const isExpression = query.datasource === ExpressionDatasourceID;
-
-      if (isExpression) {
-        dataSource = { name: ExpressionDatasourceID, uid: ExpressionDatasourceID };
-      } else {
-        const dataSourceSetting = getDataSourceSrv().getInstanceSettings(query.datasource);
-
-        dataSource = {
-          name: dataSourceSetting?.name ?? defaultDataSource.name,
-          uid: dataSourceSetting?.uid ?? defaultDataSource.uid,
-        };
-      }
-
-      return {
-        model: {
-          ...query,
-          type: isExpression ? (query as ExpressionQuery).type : query.queryType,
-          datasource: dataSource.name,
-          datasourceUid: dataSource.uid,
-        },
-        refId: query.refId,
-        relativeTimeRange: {
-          From: 500,
-          To: 0,
-        },
-      };
-    }),
+    data: buildDataQueryModel(queryOptions, defaultDataSource),
   };
+}
+
+function handleBase64Response(frames: any[]) {
+  const dataFrames = frames.map((instance) => {
+    const table = base64StringToArrowTable(instance);
+    return arrowTableToDataFrame(table);
+  });
+
+  return applyFieldOverrides({
+    data: dataFrames,
+    fieldConfig: {
+      defaults: {},
+      overrides: [],
+    },
+    replaceVariables: (value: any) => value,
+    theme: config.theme,
+  });
+}
+
+function buildDataQueryModel(queryOptions: QueryGroupOptions, defaultDataSource: DataSourceApi) {
+  return queryOptions.queries.map((query) => {
+    let dataSource: QueryGroupDataSource;
+    const isExpression = query.datasource === ExpressionDatasourceID;
+
+    if (isExpression) {
+      dataSource = { name: ExpressionDatasourceID, uid: ExpressionDatasourceID };
+    } else {
+      const dataSourceSetting = getDataSourceSrv().getInstanceSettings(query.datasource);
+
+      dataSource = {
+        name: dataSourceSetting?.name ?? defaultDataSource.name,
+        uid: dataSourceSetting?.uid ?? defaultDataSource.uid,
+      };
+    }
+
+    return {
+      model: {
+        ...query,
+        type: isExpression ? (query as ExpressionQuery).type : query.queryType,
+        datasource: dataSource.name,
+        datasourceUid: dataSource.uid,
+      },
+      refId: query.refId,
+      relativeTimeRange: {
+        From: 500,
+        To: 0,
+      },
+    };
+  });
 }
