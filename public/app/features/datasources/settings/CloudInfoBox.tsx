@@ -52,10 +52,11 @@ export const CloudInfoBox: FC<Props> = ({ dataSource }) => {
           href={`https://grafana.com/signup/cloud/connect-account?src=grafana-oss&cnt=${dataSource.type}-settings`}
           target="_blank"
           rel="noreferrer"
+          title="The free plan includes 10k active metrics and 50gb storage."
         >
           free-forever Grafana Cloud plan
         </a>
-        . The free plan includes 10k active metrics and 50gb storage.
+        .
       </div>
     </DismissableFeatureInfoBox>
   );
