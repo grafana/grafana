@@ -7,6 +7,9 @@ import { getColorForTheme } from '@grafana/data';
 import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
 
 import { withTheme } from '../../themes/ThemeContext';
+import { css } from 'emotion';
+import { GrafanaTheme } from '@grafana/data';
+import { stylesFactory } from '../../themes';
 import { ColorPickerTrigger } from './ColorPickerTrigger';
 
 /**
@@ -40,6 +43,7 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
 
     render() {
       const { theme, children } = this.props;
+      const styles = getStyles(theme);
       const popoverElement = React.createElement(popover, {
         ...omit(this.props, 'children'),
         onChange: this.onColorChange,
@@ -54,7 +58,7 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
                   <Popover
                     {...popperProps}
                     referenceElement={this.pickerTriggerRef.current}
-                    wrapperClassName="ColorPicker"
+                    wrapperClassName={styles.colorPicker}
                     onMouseLeave={hidePopper}
                     onMouseEnter={showPopper}
                   />
@@ -88,3 +92,32 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
 
 export const ColorPicker = withTheme(colorPickerFactory(ColorPickerPopover, 'ColorPicker'));
 export const SeriesColorPicker = withTheme(colorPickerFactory(SeriesColorPickerPopover, 'SeriesColorPicker'));
+
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    colorPicker: css`
+      position: absolute;
+      z-index: ${theme.zIndex.tooltip};
+      color: ${theme.colors.text};
+      max-width: 400px;
+      font-size: ${theme.typography.size.sm};
+      // !important because these styles are also provided to popper via .popper classes from Tooltip component
+      // hope to get rid of those soon
+      padding: 15px !important;
+      & [data-placement^='top'] {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+      }
+      & [data-placement^='bottom'] {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+      }
+      & [data-placement^='left'] {
+        padding-top: 0 !important;
+      }
+      & [data-placement^='right'] {
+        padding-top: 0 !important;
+      }
+    `,
+  };
+});
