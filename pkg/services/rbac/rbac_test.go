@@ -51,7 +51,7 @@ func TestEvaluatingPermissions(t *testing.T) {
 			ac := setupTestEnv(t)
 			t.Cleanup(registry.ClearOverrides)
 
-			createUserWithPolicy(t, tc.userName, tc.policies)
+			createUserWithPolicy(t, ac, tc.userName, tc.policies)
 
 			userQuery := models.GetUserByLoginQuery{
 				LoginOrEmail: tc.userName,

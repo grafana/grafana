@@ -176,7 +176,7 @@ func TestUserPolicy(t *testing.T) {
 			ac := setupTestEnv(t)
 			t.Cleanup(registry.ClearOverrides)
 
-			createUserWithPolicy(t, tc.userName, tc.policies)
+			createUserWithPolicy(t, ac, tc.userName, tc.policies)
 
 			userQuery := models.GetUserByLoginQuery{
 				LoginOrEmail: tc.userName,
@@ -201,6 +201,86 @@ func TestUserPolicy(t *testing.T) {
 			err = ac.GetUserPermissions(&userPermissionsQuery)
 			require.NoError(t, err)
 			assert.Equal(t, len(tc.policies[0].permissions), len(userPermissionsQuery.Result))
+		})
+	}
+}
+
+type userTeamPolicyTestCase struct {
+	desc         string
+	userName     string
+	teamName     string
+	userPolicies []policyTestCase
+	teamPolicies []policyTestCase
+
+	expectedError  error
+	expectedAccess bool
+}
+
+func TestUserTeamPolicy(t *testing.T) {
+	mockTimeNow()
+	defer resetTimeNow()
+
+	testCases := []userTeamPolicyTestCase{
+		{
+			desc:     "should successfuly get user policy assigned to team",
+			userName: "testuser",
+			teamName: "team1",
+			userPolicies: []policyTestCase{
+				{
+					name: "CreateUser", permissions: []struct {
+						permission string
+						scope      string
+					}{
+						{scope: "/api/admin/users", permission: "post"},
+						{scope: "/api/report", permission: "get"},
+					},
+				},
+			},
+			teamPolicies: []policyTestCase{
+				{
+					name: "CreateDataSource", permissions: []struct {
+						permission string
+						scope      string
+					}{
+						{scope: "/api/datasources", permission: "put"},
+					},
+				},
+			},
+			expectedError:  nil,
+			expectedAccess: false,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			ac := setupTestEnv(t)
+			t.Cleanup(registry.ClearOverrides)
+
+			createUserWithPolicy(t, ac, tc.userName, tc.userPolicies)
+			createTeamWithPolicy(t, ac, tc.teamName, tc.teamPolicies)
+
+			userQuery := models.GetUserByLoginQuery{
+				LoginOrEmail: tc.userName,
+			}
+			err := sqlstore.GetUserByLogin(&userQuery)
+			require.NoError(t, err)
+
+			userPoliciesQuery := GetUserPoliciesQuery{
+				OrgId:  1,
+				UserId: userQuery.Result.Id,
+			}
+
+			err = ac.GetUserPolicies(&userPoliciesQuery)
+			require.NoError(t, err)
+			assert.Equal(t, len(tc.userPolicies)+len(tc.teamPolicies), len(userPoliciesQuery.Result))
+
+			userPermissionsQuery := GetUserPermissionsQuery{
+				OrgId:  1,
+				UserId: userQuery.Result.Id,
+			}
+
+			err = ac.GetUserPermissions(&userPermissionsQuery)
+			require.NoError(t, err)
+			assert.Equal(t, len(tc.userPolicies[0].permissions), len(userPermissionsQuery.Result))
 		})
 	}
 }
