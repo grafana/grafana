@@ -12,7 +12,6 @@ interface Props {
 }
 
 export const PreviewInstancesTab: FC<Props> = ({ instances, isTested, height, styles, width }) => {
-  console.log(instances);
   if (!isTested) {
     return (
       <div className={styles.noQueries}>

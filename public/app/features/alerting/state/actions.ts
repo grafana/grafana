@@ -34,7 +34,6 @@ import {
 } from 'app/types';
 import { ExpressionDatasourceID } from '../../expressions/ExpressionDatasource';
 import { ExpressionQuery } from '../../expressions/types';
-import { getProcessedDataFrames } from '../../query/state/runRequest';
 
 export function getAlertRulesAsync(options: { state: string }): ThunkResult<void> {
   return async (dispatch) => {
@@ -192,8 +191,6 @@ export function evaluateAlertDefinition(): ThunkResult<void> {
       const table = base64StringToArrowTable(instance);
       return arrowTableToDataFrame(table);
     });
-
-    // const foo = getProcessedDataFrames(dataFrames);
 
     const overrides = applyFieldOverrides({
       data: dataFrames,

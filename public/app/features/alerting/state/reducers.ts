@@ -67,7 +67,7 @@ export const initialAlertDefinitionState: AlertDefinitionState = {
   uiState: { ...store.getObject(ALERT_DEFINITION_UI_STATE_STORAGE_KEY, DEFAULT_ALERT_DEFINITION_UI_STATE) },
   data: [],
   alertDefinitions: [] as AlertDefinition[],
-  instances: [] as DataFrame[],
+  getInstances: () => [] as DataFrame[],
 };
 
 function convertToAlertRule(dto: AlertRuleDTO, state: string): AlertRule {
@@ -194,7 +194,7 @@ const alertDefinitionSlice = createSlice({
       return { ...state, alertDefinitions: action.payload };
     },
     setInstanceData: (state: AlertDefinitionState, action: PayloadAction<DataFrame[]>) => {
-      return { ...state, instances: action.payload };
+      return { ...state, getInstances: () => action.payload };
     },
   },
 });

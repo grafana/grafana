@@ -20,16 +20,17 @@ const tabs = [
 
 interface Props {
   queryRunner: PanelQueryRunner;
-  instances: DataFrame[];
+  getInstances: () => DataFrame[];
   queries: DataQuery[];
 }
 
-export const AlertingQueryPreview: FC<Props> = ({ instances, queryRunner, queries }) => {
+export const AlertingQueryPreview: FC<Props> = ({ getInstances, queryRunner, queries }) => {
   const [activeTab, setActiveTab] = useState<string>(Tabs.Query);
   const styles = useStyles(getStyles);
 
   const observable = useMemo(() => queryRunner.getData({ withFieldConfig: true, withTransforms: true }), []);
   const data = useObservable(observable);
+  const instances = getInstances();
 
   return (
     <div className={styles.wrapper}>

@@ -144,7 +144,7 @@ export interface AlertDefinitionState {
   queryRunner: PanelQueryRunner;
   data: PanelData[];
   alertDefinitions: AlertDefinition[];
-  instances: DataFrame[];
+  getInstances: () => DataFrame[];
 }
 
 export interface AlertDefinition {

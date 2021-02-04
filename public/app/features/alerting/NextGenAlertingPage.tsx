@@ -30,7 +30,7 @@ interface ConnectedProps {
   uiState: AlertDefinitionUiState;
   queryRunner: PanelQueryRunner;
   queryOptions: QueryGroupOptions;
-  instances: DataFrame[];
+  getInstances: () => DataFrame[];
   alertDefinition: AlertDefinition;
   pageId: string;
 }
@@ -102,7 +102,14 @@ class NextGenAlertingPage extends PureComponent<Props> {
   }
 
   render() {
-    const { alertDefinition, instances, uiState, updateAlertDefinitionUiState, queryRunner, queryOptions } = this.props;
+    const {
+      alertDefinition,
+      getInstances,
+      uiState,
+      updateAlertDefinitionUiState,
+      queryRunner,
+      queryOptions,
+    } = this.props;
     const styles = getStyles(config.theme);
 
     return (
@@ -116,7 +123,7 @@ class NextGenAlertingPage extends PureComponent<Props> {
               <AlertingQueryPreview
                 key="queryPreview"
                 queryRunner={queryRunner}
-                instances={instances}
+                getInstances={getInstances}
                 queries={queryOptions.queries}
               />,
               <AlertingQueryEditor key="queryEditor" />,
@@ -146,7 +153,7 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
     uiState: state.alertDefinition.uiState,
     queryOptions: state.alertDefinition.queryOptions,
     queryRunner: state.alertDefinition.queryRunner,
-    instances: state.alertDefinition.instances,
+    getInstances: state.alertDefinition.getInstances,
     alertDefinition: state.alertDefinition.alertDefinition,
     pageId: (pageId as string) ?? '',
   };
