@@ -1,154 +1,40 @@
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
-import { DataLink, LoadingState, PanelData, PanelMenuItem, QueryResultMetaNotice } from '@grafana/data';
-import { AngularComponent, config } from '@grafana/runtime';
-import { ClickOutsideWrapper, Icon, IconName, Tooltip, stylesFactory } from '@grafana/ui';
-import { selectors } from '@grafana/e2e-selectors';
+import { DataLink, PanelData } from '@grafana/data';
+import { Icon } from '@grafana/ui';
 
 import PanelHeaderCorner from './PanelHeaderCorner';
-import { PanelHeaderMenu } from './PanelHeaderMenu';
 
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
-import { getPanelMenu } from 'app/features/dashboard/utils/getPanelMenu';
-import { updateLocation } from 'app/core/actions';
-import { css } from 'emotion';
+import { PanelHeaderNotices } from './PanelHeaderNotices';
+import { PanelHeaderMenuTrigger } from './PanelHeaderMenuTrigger';
+import { PanelHeaderLoadingIndicator } from './PanelHeaderLoadingIndicator';
+import { PanelHeaderMenuWrapper } from './PanelHeaderMenuWrapper';
+import { selectors } from '@grafana/e2e-selectors';
 
 export interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
   title?: string;
   description?: string;
-  angularComponent?: AngularComponent | null;
   links?: DataLink[];
   error?: string;
   alertState?: string;
   isViewing: boolean;
   isEditing: boolean;
   data: PanelData;
-  updateLocation: typeof updateLocation;
+  renderCounter?: number;
 }
 
-interface ClickCoordinates {
-  x: number;
-  y: number;
-}
-
-interface State {
-  panelMenuOpen: boolean;
-  menuItems: PanelMenuItem[];
-}
-
-export class PanelHeader extends PureComponent<Props, State> {
-  clickCoordinates: ClickCoordinates = { x: 0, y: 0 };
-
-  state: State = {
-    panelMenuOpen: false,
-    menuItems: [],
-  };
-
-  eventToClickCoordinates = (event: React.MouseEvent<HTMLDivElement>) => {
-    return {
-      x: Math.floor(event.clientX),
-      y: Math.floor(event.clientY),
-    };
-  };
-
-  onMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
-    this.clickCoordinates = this.eventToClickCoordinates(event);
-  };
-
-  isClick = (clickCoordinates: ClickCoordinates) => {
-    return clickCoordinates.x === this.clickCoordinates.x && clickCoordinates.y === this.clickCoordinates.y;
-  };
-
-  onMenuToggle = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (!this.isClick(this.eventToClickCoordinates(event))) {
-      return;
-    }
-
-    event.stopPropagation();
-
-    const { dashboard, panel, angularComponent } = this.props;
-    const menuItems = getPanelMenu(dashboard, panel, angularComponent);
-
-    this.setState({
-      panelMenuOpen: !this.state.panelMenuOpen,
-      menuItems,
-    });
-  };
-
-  closeMenu = () => {
-    this.setState({
-      panelMenuOpen: false,
-    });
-  };
-
+export class PanelHeader extends PureComponent<Props> {
   onCancelQuery = () => {
     this.props.panel.getQueryRunner().cancelQuery();
   };
 
-  renderLoadingState(state: LoadingState): JSX.Element | null {
-    if (state === LoadingState.Loading) {
-      return (
-        <div className="panel-loading" onClick={this.onCancelQuery}>
-          <Tooltip content="Cancel query">
-            <Icon className="panel-loading__spinner spin-clockwise" name="sync" />
-          </Tooltip>
-        </div>
-      );
-    }
-
-    if (state === LoadingState.Streaming) {
-      const styles = getStyles();
-
-      return (
-        <div className="panel-loading" onClick={this.onCancelQuery}>
-          <div title="Streaming (click to stop)" className={styles.streamIndicator} />
-        </div>
-      );
-    }
-
-    return null;
-  }
-
-  openInspect = (e: React.SyntheticEvent, tab: string) => {
-    const { updateLocation, panel } = this.props;
-
-    e.stopPropagation();
-
-    updateLocation({
-      query: { inspect: panel.id, inspectTab: tab },
-      partial: true,
-    });
-  };
-
-  // This will show one icon for each severity
-  renderNotice = (notice: QueryResultMetaNotice) => {
-    let iconName: IconName = 'info-circle';
-    if (notice.severity === 'error' || notice.severity === 'warning') {
-      iconName = 'exclamation-triangle';
-    }
-
-    return (
-      <Tooltip content={notice.text} key={notice.severity}>
-        {notice.inspect ? (
-          <div className="panel-info-notice pointer" onClick={(e) => this.openInspect(e, notice.inspect!)}>
-            <Icon name={iconName} style={{ marginRight: '8px' }} />
-          </div>
-        ) : (
-          <a className="panel-info-notice" href={notice.link} target="_blank" rel="noreferrer">
-            <Icon name={iconName} style={{ marginRight: '8px' }} />
-          </a>
-        )}
-      </Tooltip>
-    );
-  };
-
   render() {
-    const { panel, error, isViewing, isEditing, data, alertState } = this.props;
-    const { menuItems } = this.state;
+    const { panel, error, isViewing, isEditing, data, alertState, dashboard } = this.props;
     const title = panel.replaceVariables(panel.title, {}, 'text');
 
     const panelHeaderClass = classNames({
@@ -156,20 +42,9 @@ export class PanelHeader extends PureComponent<Props, State> {
       'grid-drag-handle': !(isViewing || isEditing),
     });
 
-    // dedupe on severity
-    const notices: Record<string, QueryResultMetaNotice> = {};
-
-    for (const series of data.series) {
-      if (series.meta && series.meta.notices) {
-        for (const notice of series.meta.notices) {
-          notices[notice.severity] = notice;
-        }
-      }
-    }
-
     return (
       <>
-        {this.renderLoadingState(data.state)}
+        <PanelHeaderLoadingIndicator state={data.state} onClick={this.onCancelQuery} />
         <div className={panelHeaderClass}>
           <PanelHeaderCorner
             panel={panel}
@@ -179,56 +54,38 @@ export class PanelHeader extends PureComponent<Props, State> {
             links={getPanelLinksSupplier(panel)}
             error={error}
           />
-          <div
-            className="panel-title-container"
-            onClick={this.onMenuToggle}
-            onMouseDown={this.onMouseDown}
-            aria-label={selectors.components.Panels.Panel.title(title)}
-          >
-            <div className="panel-title">
-              {Object.values(notices).map(this.renderNotice)}
-              {alertState && (
-                <Icon
-                  name={alertState === 'alerting' ? 'heart-break' : 'heart'}
-                  className="icon-gf panel-alert-icon"
-                  style={{ marginRight: '4px' }}
-                  size="sm"
-                />
-              )}
-              <span className="panel-title-text">{title}</span>
-              <Icon name="angle-down" className="panel-menu-toggle" />
-              {this.state.panelMenuOpen && (
-                <ClickOutsideWrapper onClick={this.closeMenu} parent={document}>
-                  <PanelHeaderMenu items={menuItems} />
-                </ClickOutsideWrapper>
-              )}
-              {data.request && data.request.timeInfo && (
-                <span className="panel-time-info">
-                  <Icon name="clock-nine" size="sm" /> {data.request.timeInfo}
-                </span>
-              )}
-            </div>
-          </div>
+          <PanelHeaderMenuTrigger aria-label={selectors.components.Panels.Panel.title(title)}>
+            {({ closeMenu, panelMenuOpen }) => {
+              return (
+                <div className="panel-title">
+                  <PanelHeaderNotices frames={data.series} panelId={panel.id} />
+                  {alertState ? (
+                    <Icon
+                      name={alertState === 'alerting' ? 'heart-break' : 'heart'}
+                      className="icon-gf panel-alert-icon"
+                      style={{ marginRight: '4px' }}
+                      size="sm"
+                    />
+                  ) : null}
+                  <span className="panel-title-text">{title}</span>
+                  <Icon name="angle-down" className="panel-menu-toggle" />
+                  <PanelHeaderMenuWrapper
+                    panel={panel}
+                    dashboard={dashboard}
+                    show={panelMenuOpen}
+                    onClose={closeMenu}
+                  />
+                  {data.request && data.request.timeInfo && (
+                    <span className="panel-time-info">
+                      <Icon name="clock-nine" size="sm" /> {data.request.timeInfo}
+                    </span>
+                  )}
+                </div>
+              );
+            }}
+          </PanelHeaderMenuTrigger>
         </div>
       </>
     );
   }
 }
-
-/*
- * Styles
- */
-export const getStyles = stylesFactory(() => {
-  return {
-    streamIndicator: css`
-      width: 10px;
-      height: 10px;
-      background: ${config.theme.colors.textFaint};
-      box-shadow: 0 0 2px ${config.theme.colors.textFaint};
-      border-radius: 50%;
-      position: relative;
-      top: 6px;
-      right: 1px;
-    `,
-  };
-});
