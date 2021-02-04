@@ -4,7 +4,7 @@ import { DashboardModel } from '../../state/DashboardModel';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { TimePickerSettings } from './TimePickerSettings';
 import { TimeZone } from '@grafana/data';
-import { Select } from '@grafana/ui';
+import { Select, Switch, TagsInput } from '@grafana/ui';
 import { DeleteDashboardButton } from '../DeleteDashboard/DeleteDashboardButton';
 
 interface Props {
@@ -44,10 +44,20 @@ export const GeneralSettings: React.FC<Props> = ({ dashboard }) => {
 
   const onHideTimePickerChange = (hide: boolean) => {
     dashboard.timepicker.hidden = hide;
+    setRenderCounter(renderCounter + 1);
   };
 
   const onTimeZoneChange = (timeZone: TimeZone) => {
     dashboard.timezone = timeZone;
+    setRenderCounter(renderCounter + 1);
+  };
+
+  const onTagsChange = (tags: string[]) => {
+    dashboard.tags = tags;
+  };
+
+  const onEditableChange = (ev: React.FormEvent<HTMLInputElement>) => {
+    dashboard.editable = ev.currentTarget.checked;
     setRenderCounter(renderCounter + 1);
   };
 
@@ -75,6 +85,10 @@ export const GeneralSettings: React.FC<Props> = ({ dashboard }) => {
             defaultValue={dashboard.description}
           ></input>
         </div>
+        <div className="gf-form">
+          <label className="gf-form-label width-7">Tags</label>
+          <TagsInput tags={dashboard.tags} onChange={onTagsChange} />
+        </div>
         <FolderPicker
           initialTitle={dashboard.meta.folderTitle}
           initialFolderId={dashboard.meta.folderId}
@@ -82,6 +96,10 @@ export const GeneralSettings: React.FC<Props> = ({ dashboard }) => {
           enableCreateNew={true}
           dashboardId={dashboard.id}
         />
+        <div className="gf-form">
+          <label className="gf-form-label width-7">Editable</label>
+          <Switch value={dashboard.editable} onChange={onEditableChange} />
+        </div>
       </div>
       <TimePickerSettings
         onTimeZoneChange={onTimeZoneChange}
