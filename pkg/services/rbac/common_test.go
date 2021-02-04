@@ -25,10 +25,12 @@ func setupTestEnv(t *testing.T) *RBACService {
 
 type policyTestCase struct {
 	name        string
-	permissions []struct {
-		permission string
-		scope      string
-	}
+	permissions []permissionTestCase
+}
+
+type permissionTestCase struct {
+	permission string
+	scope      string
 }
 
 func createUserWithPolicy(t *testing.T, ac *RBACService, user string, policies []policyTestCase) {

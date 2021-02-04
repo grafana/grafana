@@ -158,10 +158,7 @@ func TestUserPolicy(t *testing.T) {
 			userName: "testuser",
 			policies: []policyTestCase{
 				{
-					name: "CreateUser", permissions: []struct {
-						permission string
-						scope      string
-					}{
+					name: "CreateUser", permissions: []permissionTestCase{
 						{scope: "/api/admin/users", permission: "post"},
 						{scope: "/api/report", permission: "get"},
 					},
@@ -227,10 +224,7 @@ func TestUserTeamPolicy(t *testing.T) {
 			teamName: "team1",
 			userPolicies: []policyTestCase{
 				{
-					name: "CreateUser", permissions: []struct {
-						permission string
-						scope      string
-					}{
+					name: "CreateUser", permissions: []permissionTestCase{
 						{scope: "/api/admin/users", permission: "post"},
 						{scope: "/api/report", permission: "get"},
 					},
@@ -238,10 +232,7 @@ func TestUserTeamPolicy(t *testing.T) {
 			},
 			teamPolicies: []policyTestCase{
 				{
-					name: "CreateDataSource", permissions: []struct {
-						permission string
-						scope      string
-					}{
+					name: "CreateDataSource", permissions: []permissionTestCase{
 						{scope: "/api/datasources", permission: "put"},
 					},
 				},
@@ -264,23 +255,33 @@ func TestUserTeamPolicy(t *testing.T) {
 			err := sqlstore.GetUserByLogin(&userQuery)
 			require.NoError(t, err)
 
-			userPoliciesQuery := GetUserPoliciesQuery{
-				OrgId:  1,
-				UserId: userQuery.Result.Id,
-			}
+			// userPoliciesQuery := GetUserPoliciesQuery{
+			// 	OrgId:  1,
+			// 	UserId: userQuery.Result.Id,
+			// }
 
-			err = ac.GetUserPolicies(&userPoliciesQuery)
-			require.NoError(t, err)
-			assert.Equal(t, len(tc.userPolicies)+len(tc.teamPolicies), len(userPoliciesQuery.Result))
+			// err = ac.GetUserPolicies(&userPoliciesQuery)
+			// require.NoError(t, err)
+			// assert.Equal(t, len(tc.userPolicies)+len(tc.teamPolicies), len(userPoliciesQuery.Result))
 
 			userPermissionsQuery := GetUserPermissionsQuery{
 				OrgId:  1,
 				UserId: userQuery.Result.Id,
 			}
 
+			expectedPermissions := []permissionTestCase{}
+			for _, p := range tc.userPolicies {
+				expectedPermissions = append(expectedPermissions, p.permissions...)
+			}
+			for _, p := range tc.teamPolicies {
+				expectedPermissions = append(expectedPermissions, p.permissions...)
+			}
+
 			err = ac.GetUserPermissions(&userPermissionsQuery)
 			require.NoError(t, err)
-			assert.Equal(t, len(tc.userPolicies[0].permissions), len(userPermissionsQuery.Result))
+			assert.Equal(t, len(expectedPermissions), len(userPermissionsQuery.Result))
+			assert.Contains(t, expectedPermissions, permissionTestCase{scope: "/api/datasources", permission: "put"})
+			assert.NotContains(t, expectedPermissions, permissionTestCase{scope: "/api/restricted", permission: "post"})
 		})
 	}
 }

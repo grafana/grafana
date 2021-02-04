@@ -33,10 +33,7 @@ func TestEvaluatingPermissions(t *testing.T) {
 			userName: "testuser",
 			policies: []policyTestCase{
 				{
-					name: "CreateUser", permissions: []struct {
-						permission string
-						scope      string
-					}{
+					name: "CreateUser", permissions: []permissionTestCase{
 						{scope: "/api/admin/users", permission: "post"},
 						{scope: "/api/report", permission: "get"},
 					},

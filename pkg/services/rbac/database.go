@@ -178,11 +178,14 @@ func (ac *RBACService) GetUserPermissions(query *GetUserPermissionsQuery) error 
 			permission.created
 				FROM permission
 				LEFT JOIN policy ON policy.id = permission.policy_id
-				LEFT JOIN user_policy ON policy.id = user_policy.policy_id
-					AND user_policy.user_id = ?
+				LEFT JOIN user_policy AS up ON policy.id = up.policy_id
+					AND up.user_id = ?
+				LEFT JOIN team_member as tm ON tm.user_id = ?
+				LEFT JOIN team_policy as tp ON policy.id = tp.policy_id
+					AND tp.team_id = tm.team_id
 				WHERE policy.org_id = ? `
 
-		if err := sess.SQL(q, query.UserId, query.OrgId).Find(&query.Result); err != nil {
+		if err := sess.SQL(q, query.UserId, query.UserId, query.OrgId).Find(&query.Result); err != nil {
 			return err
 		}
 
