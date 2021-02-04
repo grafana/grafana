@@ -92,20 +92,25 @@ describe('Format value with value mappings', () => {
     });
 
     it.each`
-      value           | expected
-      ${'2/0/12'}     | ${{ id: 1, text: 'mapped value 1', type: MappingType.ValueToText, value: '2/0/12' }}
-      ${'2/1/12'}     | ${undefined}
-      ${'2:0'}        | ${{ id: 3, text: 'mapped value 3', type: MappingType.ValueToText, value: '2:0' }}
-      ${'2:1'}        | ${undefined}
-      ${'20whatever'} | ${{ id: 2, text: 'mapped value 2', type: MappingType.ValueToText, value: '20whatever' }}
-      ${'20whateve'}  | ${undefined}
-      ${'20'}         | ${undefined}
-      ${'00020.4'}    | ${undefined}
+      value            | expected
+      ${'2/0/12'}      | ${{ id: 1, text: 'mapped value 1', type: MappingType.ValueToText, value: '2/0/12' }}
+      ${'2/1/12'}      | ${undefined}
+      ${'2:0'}         | ${{ id: 3, text: 'mapped value 3', type: MappingType.ValueToText, value: '2:0' }}
+      ${'2:1'}         | ${undefined}
+      ${'20whatever'}  | ${{ id: 2, text: 'mapped value 2', type: MappingType.ValueToText, value: '20whatever' }}
+      ${'20whateve'}   | ${undefined}
+      ${'20'}          | ${undefined}
+      ${'00020.4'}     | ${undefined}
+      ${'192.168.1.1'} | ${{ id: 4, text: 'mapped value ip', type: MappingType.ValueToText, value: '192.168.1.1' }}
+      ${'192'}         | ${undefined}
+      ${'192.168'}     | ${undefined}
+      ${'192.168.1'}   | ${undefined}
     `('numeric-like text mapping, value:${value', ({ value, expected }) => {
       const valueMappings: ValueMapping[] = [
         { id: 1, text: 'mapped value 1', type: MappingType.ValueToText, value: '2/0/12' },
         { id: 2, text: 'mapped value 2', type: MappingType.ValueToText, value: '20whatever' },
         { id: 3, text: 'mapped value 3', type: MappingType.ValueToText, value: '2:0' },
+        { id: 4, text: 'mapped value ip', type: MappingType.ValueToText, value: '192.168.1.1' },
       ];
       expect(getMappedValue(valueMappings, value)).toEqual(expected);
     });
