@@ -79,10 +79,10 @@ const getStyles = (theme: GrafanaTheme, severity: AlertVariant, outline: boolean
   let textColor = theme.colors.text;
 
   if (theme.isDark) {
-    bgColor = tinycolor(severityColors[0]).setAlpha(0.3).toString();
+    bgColor = tinycolor(severityColors[0]).setAlpha(0.2).toString();
     borderColor = tinycolor(severityColors[0]).darken(0).toString();
   } else {
-    bgColor = tinycolor(severityColors[0]).setAlpha(0.3).toString();
+    bgColor = tinycolor(severityColors[0]).setAlpha(0.2).toString();
     borderColor = tinycolor(severityColors[0]).lighten(0).toString();
   }
 
@@ -93,7 +93,7 @@ const getStyles = (theme: GrafanaTheme, severity: AlertVariant, outline: boolean
       margin-bottom: ${theme.spacing.xs};
       position: relative;
       color: ${textColor};
-      border-radius: ${theme.border.radius.md};
+      border-radius: ${theme.border.radius.sm};
       display: flex;
       flex-direction: row;
       align-items: center;
