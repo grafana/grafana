@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { ButtonSelect } from '../Dropdown/ButtonSelect';
-import { ButtonGroup, ButtonVariant, ToolbarButton } from '../Button';
+import { ButtonGroup, ToolbarButton, ToolbarButtonVariant } from '../Button';
 import { selectors } from '@grafana/e2e-selectors';
 
 // Default intervals used in the refresh picker component
@@ -31,14 +31,6 @@ export class RefreshPicker extends PureComponent<Props> {
     super(props);
   }
 
-  intervalsToOptions = (intervals: string[] | undefined): Array<SelectableValue<string>> => {
-    const intervalsOrDefault = intervals || defaultIntervals;
-    const options = intervalsOrDefault.map((interval) => ({ label: interval, value: interval }));
-
-    options.unshift(RefreshPicker.offOption);
-    return options;
-  };
-
   onChangeSelect = (item: SelectableValue<string>) => {
     const { onIntervalChanged } = this.props;
     if (onIntervalChanged) {
@@ -47,7 +39,7 @@ export class RefreshPicker extends PureComponent<Props> {
     }
   };
 
-  getVariant(): ButtonVariant | undefined {
+  getVariant(): ToolbarButtonVariant {
     if (this.props.isLive) {
       return 'primary';
     }
@@ -57,17 +49,17 @@ export class RefreshPicker extends PureComponent<Props> {
     if (this.props.primary) {
       return 'primary';
     }
-    return undefined;
+    return 'default';
   }
 
   render() {
     const { onRefresh, intervals, tooltip, value, text, isLoading, noIntervalPicker } = this.props;
 
-    const options = this.intervalsToOptions(intervals);
     const currentValue = value || '';
     const variant = this.getVariant();
-
-    let selectedValue = options.find((item) => item.value === currentValue) || RefreshPicker.offOption;
+    const options = intervalsToOptions({ intervals });
+    const option = options.find(({ value }) => value === currentValue);
+    let selectedValue = option || RefreshPicker.offOption;
 
     if (selectedValue.label === RefreshPicker.offOption.label) {
       selectedValue = { value: '' };
@@ -75,7 +67,7 @@ export class RefreshPicker extends PureComponent<Props> {
 
     return (
       <div className="refresh-picker">
-        <ButtonGroup className="refresh-picker-buttons" noSpacing={true}>
+        <ButtonGroup className="refresh-picker-buttons">
           <Tooltip placement="bottom" content={tooltip!}>
             <ToolbarButton
               onClick={onRefresh}
@@ -91,7 +83,6 @@ export class RefreshPicker extends PureComponent<Props> {
               value={selectedValue}
               options={options}
               onChange={this.onChangeSelect as any}
-              maxMenuHeight={380}
               variant={variant}
             />
           )}
@@ -99,4 +90,14 @@ export class RefreshPicker extends PureComponent<Props> {
       </div>
     );
   }
+}
+
+export function intervalsToOptions({ intervals = defaultIntervals }: { intervals?: string[] } = {}): Array<
+  SelectableValue<string>
+> {
+  const intervalsOrDefault = intervals || defaultIntervals;
+  const options = intervalsOrDefault.map((interval) => ({ label: interval, value: interval }));
+
+  options.unshift(RefreshPicker.offOption);
+  return options;
 }

@@ -140,6 +140,7 @@ export class PanelChrome extends Component<Props, State> {
     if (!this.props.isInView) {
       // Ignore events when not visible.
       // The call will be repeated when the panel comes into view
+      this.setState({ refreshWhenInView: true });
       return;
     }
 

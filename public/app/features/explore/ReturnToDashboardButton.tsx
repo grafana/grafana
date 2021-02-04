@@ -66,7 +66,7 @@ export const UnconnectedReturnToDashboardButton: FC<Props> = ({
   };
 
   return (
-    <ButtonGroup className="explore-toolbar-content-item" noSpacing>
+    <ButtonGroup>
       <Tooltip content={'Return to panel'} placement="bottom">
         <ToolbarButton data-testid="returnButton" title={'Return to panel'} onClick={() => returnToPanel()}>
           <Icon name="arrow-left" />
@@ -76,7 +76,6 @@ export const UnconnectedReturnToDashboardButton: FC<Props> = ({
         data-testid="returnButtonWithChanges"
         options={[{ label: 'Return to panel with changes', value: '' }]}
         onChange={() => returnToPanel({ withChanges: true })}
-        maxMenuHeight={380}
       />
     </ButtonGroup>
   );

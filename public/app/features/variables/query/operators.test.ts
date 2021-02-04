@@ -277,10 +277,19 @@ describe('operators', () => {
 });
 
 describe('areMetricFindValues', () => {
+  const frame = toDataFrame({
+    fields: [{ name: 'text', type: FieldType.number, values: [1] }],
+  });
+
   it.each`
     values                       | expected
     ${null}                      | ${false}
     ${undefined}                 | ${false}
+    ${[frame]}                   | ${false}
+    ${[{ text: () => {} }]}      | ${false}
+    ${[{ text: { foo: 1 } }]}    | ${false}
+    ${[{ text: Symbol('foo') }]} | ${false}
+    ${[{ text: true }]}          | ${false}
     ${[]}                        | ${true}
     ${[{ text: '' }]}            | ${true}
     ${[{ Text: '' }]}            | ${true}
@@ -288,6 +297,12 @@ describe('areMetricFindValues', () => {
     ${[{ Value: '' }]}           | ${true}
     ${[{ text: '', value: '' }]} | ${true}
     ${[{ Text: '', Value: '' }]} | ${true}
+    ${[{ text: 1 }]}             | ${true}
+    ${[{ Text: 1 }]}             | ${true}
+    ${[{ value: 1 }]}            | ${true}
+    ${[{ Value: 1 }]}            | ${true}
+    ${[{ text: 1, value: 1 }]}   | ${true}
+    ${[{ Text: 1, Value: 1 }]}   | ${true}
   `('when called with values:$values', ({ values, expected }) => {
     expect(areMetricFindValues(values)).toBe(expected);
   });

@@ -17,3 +17,5 @@ This section discusses the hardware and software requirements as well as the pro
 - [Install on Windows]({{< relref "windows" >}})
 - [Run Docker image]({{< relref "docker" >}})
 
+Refer to [Upgrade Grafana]({{< relref "upgrading.md" >}}) topic. If you need to restart Grafana, refer to the [Restart Grafana]({{< relref "Restart-grafana.md" >}})
+topic for detailed information.

@@ -147,6 +147,18 @@ The first letter of the name of an integration is always capitalized, even if th
 - Etcd Integration
 - I installed an integration on my local Grafana.
 
+#### Kubernetes objects
+
+Capitalize Kubernetes objects such as Job, Pod, and StatefulSet when it is clear you are specifically talking about them and not generic jobs, pods, or whatever.
+
+Introduce the object as "Kubernetes XX" on the first usage, then just the object in subsequent uses.
+
+**Example:**
+
+Create the Kubernetes Job and check the logs to retrieve the generated token:
+
+The Job requires the token be submitted as …
+
 ### Links and references
 
 When referencing another document, use "Refer to" rather than alternatives such as "See" or "Check out."
@@ -290,6 +302,13 @@ When referencing the Prometheus data source exporters, always use "node_exporter
 
 **Correct:** node_exporter, windows_exporter
 **Incorrect:** Node Exporter, node exporter, Windows Exporter, Windows exporter, windows exporter.
+
+#### web server
+
+Two words, not one.
+
+**Correct:** webserver
+**Incorrect:** web server
 
 ### MS SQL Server
 Always use "MS SQL" when referring to MS SQL Server application.

@@ -1,7 +1,6 @@
 import React, { useCallback } from 'react';
 // @ts-ignore
 import Highlighter from 'react-highlight-words';
-import { css } from 'emotion';
 import { Icon, IconName, Button, LinkButton, Card } from '@grafana/ui';
 import { AlertRule } from '../../types';
 
@@ -26,39 +25,33 @@ const AlertRuleItem = ({ rule, search, onTogglePause }: Props) => {
   );
 
   return (
-    <li
-      className={css`
-        width: 100%;
-      `}
-    >
-      <Card heading={<a href={ruleUrl}>{renderText(rule.name)}</a>}>
-        <Card.Figure>
-          <Icon size="xl" name={rule.stateIcon as IconName} className={`alert-rule-item__icon ${rule.stateClass}`} />
-        </Card.Figure>
-        <Card.Meta>
-          <span key="state">
-            <span key="text" className={`${rule.stateClass}`}>
-              {renderText(rule.stateText)}{' '}
-            </span>
-            for {rule.stateAge}
+    <Card heading={<a href={ruleUrl}>{renderText(rule.name)}</a>}>
+      <Card.Figure>
+        <Icon size="xl" name={rule.stateIcon as IconName} className={`alert-rule-item__icon ${rule.stateClass}`} />
+      </Card.Figure>
+      <Card.Meta>
+        <span key="state">
+          <span key="text" className={`${rule.stateClass}`}>
+            {renderText(rule.stateText)}{' '}
           </span>
-          {rule.info ? renderText(rule.info) : null}
-        </Card.Meta>
-        <Card.Actions>
-          <Button
-            key="play"
-            variant="secondary"
-            icon={rule.state === 'paused' ? 'play' : 'pause'}
-            onClick={onTogglePause}
-          >
-            {rule.state === 'paused' ? 'Resume' : 'Pause'}
-          </Button>
-          <LinkButton key="edit" variant="secondary" href={ruleUrl} icon="cog">
-            Edit alert
-          </LinkButton>
-        </Card.Actions>
-      </Card>
-    </li>
+          for {rule.stateAge}
+        </span>
+        {rule.info ? renderText(rule.info) : null}
+      </Card.Meta>
+      <Card.Actions>
+        <Button
+          key="play"
+          variant="secondary"
+          icon={rule.state === 'paused' ? 'play' : 'pause'}
+          onClick={onTogglePause}
+        >
+          {rule.state === 'paused' ? 'Resume' : 'Pause'}
+        </Button>
+        <LinkButton key="edit" variant="secondary" href={ruleUrl} icon="cog">
+          Edit alert
+        </LinkButton>
+      </Card.Actions>
+    </Card>
   );
 };
 
