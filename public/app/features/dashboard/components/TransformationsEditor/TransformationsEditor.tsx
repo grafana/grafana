@@ -42,7 +42,7 @@ interface TransformationsEditorProps extends Themeable {
 interface State {
   data: DataFrame[];
   transformations: TransformationsEditorTransformation[];
-  search?: string;
+  search: string;
 }
 
 class UnThemedTransformationsEditor extends React.PureComponent<TransformationsEditorProps, State> {
@@ -59,6 +59,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
         id: ids[i],
       })),
       data: [],
+      search: '',
     };
   }
 
@@ -120,7 +121,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
     const { transformations } = this.state;
 
     const nextId = this.getTransformationNextId(selectable.value!);
-    this.setState({ search: undefined });
+    this.setState({ search: '' });
     this.onChange([
       ...transformations,
       {
@@ -218,7 +219,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
 
   renderNoAddedTransformsState() {
     const { search } = this.state;
-    let suffix: React.ReactNode | undefined = undefined;
+    let suffix: React.ReactNode = null;
     let xforms = standardTransformersRegistry.list();
     if (search) {
       const lower = search.toLowerCase();
@@ -233,7 +234,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
             name="times"
             surface="header"
             onClick={() => {
-              this.setState({ search: undefined });
+              this.setState({ search: '' });
             }}
           />
         </>

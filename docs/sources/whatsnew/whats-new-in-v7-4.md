@@ -191,6 +191,8 @@ After the number of Viewers or Editors has reached its license limit, only Admin
 
 Grafana Enterprise license tokens update automatically on a daily basis, which means you no longer need to manually update your license, and the process for adding additional users to a license is smoother than it was before.
 
+Refer to [Licensing restrictions](../enterprise/license-restrictions.md) for more information.
+
 ### Export usage insights to Loki
 
 You can now export usage insights logs to Loki and query them from Grafana. Usage insights logs include dashboard visits, data source views, queries and errors, and more.
