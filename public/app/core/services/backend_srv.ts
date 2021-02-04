@@ -39,6 +39,7 @@ export class BackendSrv implements BackendService {
     appEvents: appEvents,
     contextSrv: contextSrv,
     logout: () => {
+      contextSrv.setLoggedOut();
       window.location.reload();
     },
   };

@@ -19,7 +19,7 @@ export const SelectionOptionsEditor: FunctionComponent<SelectionOptionsEditorPro
     (event: React.ChangeEvent<HTMLInputElement>) => {
       props.onMultiChanged(toVariableIdentifier(props.variable), event.target.checked);
     },
-    [props.onMultiChanged]
+    [props.onMultiChanged, props.variable]
   );
 
   const onIncludeAllChanged = useCallback(

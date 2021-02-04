@@ -1,4 +1,5 @@
 import React, { ChangeEvent, PureComponent } from 'react';
+import { css } from 'emotion';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { InlineField, InlineFieldRow, VerticalGroup } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
@@ -197,7 +198,14 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
               </InlineField>
               <QueryVariableRefreshSelect onChange={this.onRefreshChange} refresh={this.props.variable.refresh} />
             </InlineFieldRow>
-            <div style={{ flexDirection: 'column' }}>{this.renderQueryEditor()}</div>
+            <div
+              className={css`
+                flex-direction: column;
+                width: 100%;
+              `}
+            >
+              {this.renderQueryEditor()}
+            </div>
             <VariableTextField
               value={this.state.regex ?? this.props.variable.regex}
               name="Regex"

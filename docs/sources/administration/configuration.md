@@ -3,7 +3,7 @@ title = "Configuration"
 description = "Configuration documentation"
 keywords = ["grafana", "configuration", "documentation"]
 aliases = ["/docs/grafana/latest/installation/configuration/"]
-weight = 300
+weight = 150
 +++
 
 # Configuration
@@ -12,7 +12,7 @@ Grafana has a number of configuration options that you can specify in a `.ini` c
 
 > **Note:** You must restart Grafana for any configuration changes to take effect.
 
-To see all settings currently applied to the Grafana server, refer to [View server settings]({{< relref "view-server-settings.md" >}}).
+To see all settings currently applied to the Grafana server, refer to [View server settings]({{< relref "view-server/view-server-settings.md" >}}).
 
 ## Config file locations
 
@@ -1094,7 +1094,7 @@ Configures max number of API annotations that Grafana keeps. Default value is 0,
 
 ## [explore]
 
-For more information about this feature, refer to [Explore]({{< relref "../explore/index.md" >}}).
+For more information about this feature, refer to [Explore]({{< relref "../explore/_index.md" >}}).
 
 ### enabled
 
@@ -1102,7 +1102,7 @@ Enable or disable the Explore section. Default is `enabled`.
 
 ## [metrics]
 
-For detailed instructions, refer to [Internal Grafana metrics]({{< relref "metrics.md" >}}).
+For detailed instructions, refer to [Internal Grafana metrics]({{< relref "view-server/internal-metrics.md" >}}).
 
 ### enabled
 

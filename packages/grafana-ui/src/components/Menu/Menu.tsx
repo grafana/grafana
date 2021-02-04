@@ -6,6 +6,7 @@ import { styleMixins, useStyles } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { IconName } from '../../types';
 
+/** @internal */
 export interface MenuItem {
   /** Label of the menu item */
   label: string;
@@ -23,6 +24,7 @@ export interface MenuItem {
   active?: boolean;
 }
 
+/** @internal */
 export interface MenuItemsGroup {
   /** Label for the menu items group */
   label?: string;
@@ -30,6 +32,7 @@ export interface MenuItemsGroup {
   items: MenuItem[];
 }
 
+/** @internal */
 export interface MenuProps extends React.HTMLAttributes<HTMLDivElement> {
   /** React element rendered at the top of the menu */
   header?: React.ReactNode;
@@ -39,7 +42,7 @@ export interface MenuProps extends React.HTMLAttributes<HTMLDivElement> {
   onClose?: () => void;
 }
 
-/** @alpha */
+/** @internal */
 export const Menu = React.forwardRef<HTMLDivElement, MenuProps>(({ header, items, onClose, ...otherProps }, ref) => {
   const styles = useStyles(getMenuStyles);
   const onClick = useCallback(() => {
