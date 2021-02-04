@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"net/http"
 
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/models"
@@ -19,7 +20,7 @@ import (
 // POST /api/ds/query   DataSource query w/ expressions
 func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricRequest) response.Response {
 	if len(reqDTO.Queries) == 0 {
-		return response.Error(400, "No queries found in query", nil)
+		return response.Error(http.StatusBadRequest, "No queries found in query", nil)
 	}
 
 	request := &tsdb.TsdbQuery{
@@ -43,7 +44,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 		datasourceID, err := query.Get("datasourceId").Int64()
 		if err != nil {
 			hs.log.Debug("Can't process query since it's missing data source ID")
-			return response.Error(400, "Query missing data source ID", nil)
+			return response.Error(http.StatusBadRequest, "Query missing data source ID", nil)
 		}
 
 		// For mixed datasource case, each data source is sent in a single request.
@@ -66,17 +67,22 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 		})
 	}
 
-	resp, err := tsdb.HandleRequest(c.Req.Context(), ds, request)
+	err := hs.PluginRequestValidator.Validate(ds.Url, nil)
 	if err != nil {
-		return response.Error(500, "Metric request error", err)
+		return response.Error(http.StatusForbidden, "Access denied", err)
 	}
 
-	statusCode := 200
+	resp, err := tsdb.HandleRequest(c.Req.Context(), ds, request)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Metric request error", err)
+	}
+
+	statusCode := http.StatusOK
 	for _, res := range resp.Results {
 		if res.Error != nil {
 			res.ErrorString = res.Error.Error()
 			resp.Message = res.ErrorString
-			statusCode = 400
+			statusCode = http.StatusBadRequest
 		}
 	}
 
@@ -154,17 +160,22 @@ func (hs *HTTPServer) QueryMetrics(c *models.ReqContext, reqDto dtos.MetricReque
 	timeRange := tsdb.NewTimeRange(reqDto.From, reqDto.To)
 
 	if len(reqDto.Queries) == 0 {
-		return response.Error(400, "No queries found in query", nil)
+		return response.Error(http.StatusBadRequest, "No queries found in query", nil)
 	}
 
 	datasourceId, err := reqDto.Queries[0].Get("datasourceId").Int64()
 	if err != nil {
-		return response.Error(400, "Query missing datasourceId", nil)
+		return response.Error(http.StatusBadRequest, "Query missing datasourceId", nil)
 	}
 
 	ds, err := hs.DatasourceCache.GetDatasource(datasourceId, c.SignedInUser, c.SkipCache)
 	if err != nil {
 		return hs.handleGetDataSourceError(err, datasourceId)
+	}
+
+	err = hs.PluginRequestValidator.Validate(ds.Url, nil)
+	if err != nil {
+		return response.Error(http.StatusForbidden, "Access denied", err)
 	}
 
 	request := &tsdb.TsdbQuery{
@@ -185,15 +196,15 @@ func (hs *HTTPServer) QueryMetrics(c *models.ReqContext, reqDto dtos.MetricReque
 
 	resp, err := tsdb.HandleRequest(c.Req.Context(), ds, request)
 	if err != nil {
-		return response.Error(500, "Metric request error", err)
+		return response.Error(http.StatusInternalServerError, "Metric request error", err)
 	}
 
-	statusCode := 200
+	statusCode := http.StatusOK
 	for _, res := range resp.Results {
 		if res.Error != nil {
 			res.ErrorString = res.Error.Error()
 			resp.Message = res.ErrorString
-			statusCode = 400
+			statusCode = http.StatusBadRequest
 		}
 	}
 

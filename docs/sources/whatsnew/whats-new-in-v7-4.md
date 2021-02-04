@@ -1,8 +1,7 @@
 +++
 title = "What's New in Grafana v7.4"
-description = "Feature and improvement highlights for Grafana v7.3"
-keywords = ["grafana", "new", "documentation", "7.3", "release notes"]
-aliases = ["/docs/grafana/latest/guides/whats-new-in-v7-3/"]
+description = "Feature and improvement highlights for Grafana v7.4"
+keywords = ["grafana", "new", "documentation", "7.4", "release notes"]
 weight = -31
 [_build]
 list = false
@@ -86,7 +85,7 @@ You can now navigate from a span in a trace view directly to logs relevant for t
 
 The following topics were updated as a result of this feature:
 
-- [Explore]({{< relref "../explore/index.md#trace-to-logs" >}})
+- [Explore]({{< relref "../explore/trace-integration.md" >}})
 - [Jaeger]({{< relref "../datasources/jaeger.md#trace-to-logs" >}})
 - [Tempo]({{< relref "../datasources/tempo.md#trace-to-logs" >}})
 - [Zipkin]({{< relref "../datasources/zipkin.md#trace-to-logs" >}})
@@ -191,6 +190,8 @@ When determining a user’s role for billing purposes, a user who has the abilit
 After the number of Viewers or Editors has reached its license limit, only Admins will see a banner in Grafana indicating that the license limit has been reached. Previously, all users saw the banner.
 
 Grafana Enterprise license tokens update automatically on a daily basis, which means you no longer need to manually update your license, and the process for adding additional users to a license is smoother than it was before.
+
+Refer to [Licensing restrictions](../enterprise/license-restrictions.md) for more information.
 
 ### Export usage insights to Loki
 

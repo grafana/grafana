@@ -76,8 +76,8 @@ func (ng *AlertNG) saveAlertDefinition(cmd *saveAlertDefinitionCommand) error {
 		alertDefinition := &AlertDefinition{
 			OrgID:           cmd.OrgID,
 			Title:           cmd.Title,
-			Condition:       cmd.Condition.RefID,
-			Data:            cmd.Condition.QueriesAndExpressions,
+			Condition:       cmd.Condition,
+			Data:            cmd.Data,
 			IntervalSeconds: intervalSeconds,
 			Version:         initialVersion,
 			UID:             uid,
@@ -133,11 +133,11 @@ func (ng *AlertNG) updateAlertDefinition(cmd *updateAlertDefinitionCommand) erro
 		if title == "" {
 			title = existingAlertDefinition.Title
 		}
-		condition := cmd.Condition.RefID
+		condition := cmd.Condition
 		if condition == "" {
 			condition = existingAlertDefinition.Condition
 		}
-		data := cmd.Condition.QueriesAndExpressions
+		data := cmd.Data
 		if data == nil {
 			data = existingAlertDefinition.Data
 		}
@@ -224,6 +224,9 @@ func (ng *AlertNG) getAlertDefinitions(query *listAlertDefinitionsQuery) error {
 
 func (ng *AlertNG) updateAlertDefinitionPaused(cmd *updateAlertDefinitionPausedCommand) error {
 	return ng.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		if len(cmd.UIDs) == 0 {
+			return nil
+		}
 		placeHolders := strings.Builder{}
 		const separator = ", "
 		separatorVar := separator
