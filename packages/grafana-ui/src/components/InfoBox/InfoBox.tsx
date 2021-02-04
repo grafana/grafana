@@ -9,7 +9,6 @@ import panelArtDark from './panelArt_dark.svg';
 import panelArtLight from './panelArt_light.svg';
 import { stylesFactory, useTheme } from '../../themes';
 import { getColorsFromSeverity } from '../../utils/colors';
-import tinycolor from 'tinycolor2';
 
 export interface InfoBoxProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'title'> {
   children: React.ReactNode;
@@ -58,77 +57,63 @@ export const InfoBox = React.memo(
 );
 InfoBox.displayName = 'InfoBox';
 
-const getInfoBoxStyles = stylesFactory((theme: GrafanaTheme, severity: AlertVariant) => {
-  const severityColors = getColorsFromSeverity(severity, theme);
-  let borderColor = '';
-  let bgColor = '';
+const getInfoBoxStyles = stylesFactory((theme: GrafanaTheme, severity: AlertVariant) => ({
+  wrapper: css`
+    position: relative;
+    padding: ${theme.spacing.md};
+    background-color: ${theme.colors.bg2};
+    border-top: 3px solid ${getColorsFromSeverity(severity, theme)[0]};
+    margin-bottom: ${theme.spacing.md};
+    flex-grow: 1;
+    color: ${theme.colors.textSemiWeak};
 
-  if (theme.isDark) {
-    bgColor = tinycolor(severityColors[0]).setAlpha(0.1).toString();
-    borderColor = tinycolor(severityColors[0]).darken(0).toString();
-  } else {
-    bgColor = tinycolor(severityColors[0]).setAlpha(0.3).toString();
-    borderColor = tinycolor(severityColors[0]).lighten(0).toString();
-  }
-
-  return {
-    wrapper: css`
-      position: relative;
-      padding: ${theme.spacing.md};
-      background-color: ${bgColor};
-      border: 1px solid ${borderColor};
-      margin-bottom: ${theme.spacing.md};
-      flex-grow: 1;
-      color: ${theme.colors.text};
-
-      code {
-        @include font-family-monospace();
-        font-size: ${theme.typography.size.sm};
-        background-color: ${theme.colors.bg1};
-        color: ${theme.colors.text};
-        border: 1px solid ${theme.colors.border2};
-        border-radius: 4px;
-      }
-
-      p:last-child {
-        margin-bottom: 0;
-      }
-
-      &--max-lg {
-        max-width: ${theme.breakpoints.lg};
-      }
-    `,
-    wrapperBranded: css`
-      padding: ${theme.spacing.md};
-      border-radius: ${theme.border.radius.md};
-      position: relative;
-      box-shadow: 0 0 30px 10px rgba(0, 0, 0, ${theme.isLight ? 0.05 : 0.2});
-      z-index: 0;
-
-      &:before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-image: url(${theme.isLight ? panelArtLight : panelArtDark});
-        border-radius: ${theme.border.radius.md};
-        background-position: 50% 50%;
-        background-size: cover;
-        filter: saturate(80%);
-        z-index: -1;
-      }
-
-      p:last-child {
-        margin-bottom: 0;
-      }
-    `,
-    docsLink: css`
-      display: inline-block;
-      margin-top: ${theme.spacing.md};
+    code {
+      @include font-family-monospace();
       font-size: ${theme.typography.size.sm};
-      color: ${theme.colors.textSemiWeak};
-    `,
-  };
-});
+      background-color: ${theme.colors.bg1};
+      color: ${theme.colors.text};
+      border: 1px solid ${theme.colors.border2};
+      border-radius: 4px;
+    }
+
+    p:last-child {
+      margin-bottom: 0;
+    }
+
+    &--max-lg {
+      max-width: ${theme.breakpoints.lg};
+    }
+  `,
+  wrapperBranded: css`
+    padding: ${theme.spacing.md};
+    border-radius: ${theme.border.radius.md};
+    position: relative;
+    box-shadow: 0 0 30px 10px rgba(0, 0, 0, ${theme.isLight ? 0.05 : 0.2});
+    z-index: 0;
+
+    &:before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url(${theme.isLight ? panelArtLight : panelArtDark});
+      border-radius: ${theme.border.radius.md};
+      background-position: 50% 50%;
+      background-size: cover;
+      filter: saturate(80%);
+      z-index: -1;
+    }
+
+    p:last-child {
+      margin-bottom: 0;
+    }
+  `,
+  docsLink: css`
+    display: inline-block;
+    margin-top: ${theme.spacing.md};
+    font-size: ${theme.typography.size.sm};
+    color: ${theme.colors.textSemiWeak};
+  `,
+}));

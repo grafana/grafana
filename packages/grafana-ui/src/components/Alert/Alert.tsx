@@ -6,7 +6,6 @@ import { useTheme } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { IconName } from '../../types/icon';
 import { getColorsFromSeverity } from '../../utils/colors';
-import tinycolor from 'tinycolor2';
 
 export type AlertVariant = 'success' | 'warning' | 'error' | 'info';
 
@@ -74,20 +73,9 @@ Alert.displayName = 'Alert';
 const getStyles = (theme: GrafanaTheme, severity: AlertVariant, outline: boolean) => {
   const { white } = theme.palette;
   const severityColors = getColorsFromSeverity(severity, theme);
-  let borderColor = '';
-  let bgColor = '';
-  let textColor = theme.colors.text;
-  const sourceColor = severityColors[0];
-
-  if (theme.isDark) {
-    bgColor = tinycolor(sourceColor).setAlpha(0.1).toString();
-    borderColor = tinycolor(sourceColor).darken(20).toString();
-    textColor = tinycolor(sourceColor).lighten(30).toString();
-  } else {
-    bgColor = tinycolor(sourceColor).setAlpha(0.1).toString();
-    borderColor = tinycolor(sourceColor).lighten(20).toString();
-    textColor = tinycolor(sourceColor).darken(30).toString();
-  }
+  const background = css`
+    background: linear-gradient(90deg, ${severityColors[0]}, ${severityColors[0]});
+  `;
 
   return {
     alert: css`
@@ -95,13 +83,13 @@ const getStyles = (theme: GrafanaTheme, severity: AlertVariant, outline: boolean
       padding: 15px 20px;
       margin-bottom: ${theme.spacing.xs};
       position: relative;
-      color: ${textColor};
-      border-radius: ${theme.border.radius.sm};
+      color: ${white};
+      text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+      border-radius: ${theme.border.radius.md};
       display: flex;
       flex-direction: row;
       align-items: center;
-      background: ${bgColor};
-      border: 1px solid ${borderColor};
+      ${background}
     `,
     icon: css`
       padding: 0 ${theme.spacing.md} 0 0;
@@ -110,7 +98,9 @@ const getStyles = (theme: GrafanaTheme, severity: AlertVariant, outline: boolean
       justify-content: center;
       width: 35px;
     `,
-    title: css``,
+    title: css`
+      font-weight: ${theme.typography.weight.semibold};
+    `,
     body: css`
       flex-grow: 1;
       margin: 0 ${theme.spacing.md} 0 0;
@@ -126,7 +116,7 @@ const getStyles = (theme: GrafanaTheme, severity: AlertVariant, outline: boolean
       background: none;
       display: flex;
       align-items: center;
-      border: ${outline ? `1px solid ${textColor}` : 'none'};
+      border: ${outline ? `1px solid ${white}` : 'none'};
       border-radius: ${theme.border.radius.sm};
     `,
   };
