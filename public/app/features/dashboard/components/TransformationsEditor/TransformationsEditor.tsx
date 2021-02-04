@@ -275,6 +275,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
         {showPicker ? (
           <VerticalGroup>
             <Input
+              aria-label={selectors.components.Transforms.searchInput}
               value={search ?? ''}
               autoFocus={!noTransforms}
               placeholder="Add transformation"
