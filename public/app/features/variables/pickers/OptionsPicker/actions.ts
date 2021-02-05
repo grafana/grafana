@@ -72,7 +72,7 @@ export const filterOrSearchOptions = (searchQuery = ''): ThunkResult<void> => {
   };
 };
 
-const setVariable = async (updated: any) => {
+const setVariable = async (updated: VariableWithMultiSupport) => {
   const adapter = variableAdapters.get(updated.type);
   await adapter.setValue(updated, updated.current, true);
   return;
