@@ -2,8 +2,7 @@
   "type": "panel",
   "name": "Bar chart",
   "id": "barchart",
-
-  "state": "alpha",
+  "state": "beta",
 
   "info": {
     "author": {
