@@ -38,9 +38,10 @@ export function addLabelToQuery(
     const insideSelector = isPositionInsideChars(query, offset, '{', '}');
     // Handle "sum by (key) (metric)"
     const previousWordIsKeyWord = previousWord && keywords.split('|').indexOf(previousWord) > -1;
-
-    // check for colon as as "word boundary" symbol
+    // Check for colon as as "word boundary" symbol
     const isColonBounded = word.endsWith(':');
+    // Check for words that startt with " which means that they are not metrics
+    const startsWithQuote = query[offset - 1] === '"';
 
     previousWord = word;
 
@@ -52,6 +53,7 @@ export function addLabelToQuery(
       !insideSelector &&
       !isColonBounded &&
       !previousWordIsKeyWord &&
+      !startsWithQuote &&
       builtInWords.indexOf(word) === -1
     ) {
       return `${word}{}`;
