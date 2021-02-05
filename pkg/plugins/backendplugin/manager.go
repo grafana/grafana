@@ -51,12 +51,13 @@ type Manager interface {
 }
 
 type manager struct {
-	Cfg            *setting.Cfg     `inject:""`
-	License        models.Licensing `inject:""`
-	pluginsMu      sync.RWMutex
-	plugins        map[string]Plugin
-	logger         log.Logger
-	pluginSettings map[string]pluginSettings
+	Cfg                    *setting.Cfg                  `inject:""`
+	License                models.Licensing              `inject:""`
+	PluginRequestValidator models.PluginRequestValidator `inject:""`
+	pluginsMu              sync.RWMutex
+	plugins                map[string]Plugin
+	logger                 log.Logger
+	pluginSettings         map[string]pluginSettings
 }
 
 func (m *manager) Init() error {
@@ -195,6 +196,19 @@ func (m *manager) CollectMetrics(ctx context.Context, pluginID string) (*backend
 
 // CheckHealth checks the health of a registered backend plugin.
 func (m *manager) CheckHealth(ctx context.Context, pluginContext backend.PluginContext) (*backend.CheckHealthResult, error) {
+	var dsURL string
+	if pluginContext.DataSourceInstanceSettings != nil {
+		dsURL = pluginContext.DataSourceInstanceSettings.URL
+	}
+
+	err := m.PluginRequestValidator.Validate(dsURL, nil)
+	if err != nil {
+		return &backend.CheckHealthResult{
+			Status:  http.StatusForbidden,
+			Message: "Access denied",
+		}, nil
+	}
+
 	m.pluginsMu.RLock()
 	p, registered := m.plugins[pluginContext.PluginID]
 	m.pluginsMu.RUnlock()
@@ -204,7 +218,7 @@ func (m *manager) CheckHealth(ctx context.Context, pluginContext backend.PluginC
 	}
 
 	var resp *backend.CheckHealthResult
-	err := instrumentCheckHealthRequest(p.PluginID(), func() (innerErr error) {
+	err = instrumentCheckHealthRequest(p.PluginID(), func() (innerErr error) {
 		resp, innerErr = p.CheckHealth(ctx, &backend.CheckHealthRequest{PluginContext: pluginContext})
 		return
 	})
@@ -289,6 +303,17 @@ func (m *manager) callResourceInternal(w http.ResponseWriter, req *http.Request,
 
 // CallResource calls a plugin resource.
 func (m *manager) CallResource(pCtx backend.PluginContext, reqCtx *models.ReqContext, path string) {
+	var dsURL string
+	if pCtx.DataSourceInstanceSettings != nil {
+		dsURL = pCtx.DataSourceInstanceSettings.URL
+	}
+
+	err := m.PluginRequestValidator.Validate(dsURL, reqCtx.Req.Request)
+	if err != nil {
+		reqCtx.JsonApiErr(http.StatusForbidden, "Access denied", err)
+		return
+	}
+
 	clonedReq := reqCtx.Req.Clone(reqCtx.Req.Context())
 	rawURL := path
 	if clonedReq.URL.RawQuery != "" {

@@ -10,9 +10,10 @@ import {
   setNotificationChannels,
   setUiState,
   ALERT_DEFINITION_UI_STATE_STORAGE_KEY,
-  updateAlertDefinition,
+  updateAlertDefinitionOptions,
   setQueryOptions,
   setAlertDefinitions,
+  setAlertDefinition,
 } from './reducers';
 import {
   AlertDefinition,
@@ -22,6 +23,7 @@ import {
   ThunkResult,
   QueryGroupOptions,
   QueryGroupDataSource,
+  AlertDefinitionState,
 } from 'app/types';
 import { ExpressionDatasourceID } from '../../expressions/ExpressionDatasource';
 import { ExpressionQuery } from '../../expressions/types';
@@ -102,51 +104,33 @@ export function loadNotificationChannel(id: number): ThunkResult<void> {
   };
 }
 
+export function getAlertDefinition(id: string): ThunkResult<void> {
+  return async (dispatch) => {
+    const alertDefinition = await getBackendSrv().get(`/api/alert-definitions/${id}`);
+    dispatch(setAlertDefinition(alertDefinition));
+  };
+}
+
 export function createAlertDefinition(): ThunkResult<void> {
   return async (dispatch, getStore) => {
-    const queryOptions = getStore().alertDefinition.queryOptions;
-    const currentAlertDefinition = getStore().alertDefinition.alertDefinition;
-    const defaultDataSource = await getDataSourceSrv().get(null);
-
-    const alertDefinition: AlertDefinition = {
-      ...currentAlertDefinition,
-      condition: {
-        refId: currentAlertDefinition.condition.refId,
-        queriesAndExpressions: queryOptions.queries.map((query) => {
-          let dataSource: QueryGroupDataSource;
-          const isExpression = query.datasource === ExpressionDatasourceID;
-
-          if (isExpression) {
-            dataSource = { name: ExpressionDatasourceID, uid: ExpressionDatasourceID };
-          } else {
-            const dataSourceSetting = getDataSourceSrv().getInstanceSettings(query.datasource);
-
-            dataSource = {
-              name: dataSourceSetting?.name ?? defaultDataSource.name,
-              uid: dataSourceSetting?.uid ?? defaultDataSource.uid,
-            };
-          }
-
-          return {
-            model: {
-              ...query,
-              type: isExpression ? (query as ExpressionQuery).type : query.queryType,
-              datasource: dataSource.name,
-              datasourceUid: dataSource.uid,
-            },
-            refId: query.refId,
-            relativeTimeRange: {
-              From: 500,
-              To: 0,
-            },
-          };
-        }),
-      },
-    };
+    const alertDefinition = await buildAlertDefinition(getStore().alertDefinition);
 
     await getBackendSrv().post(`/api/alert-definitions`, alertDefinition);
     appEvents.emit(AppEvents.alertSuccess, ['Alert definition created']);
     dispatch(updateLocation({ path: 'alerting/list' }));
+  };
+}
+
+export function updateAlertDefinition(): ThunkResult<void> {
+  return async (dispatch, getStore) => {
+    const alertDefinition = await buildAlertDefinition(getStore().alertDefinition);
+
+    const updatedAlertDefinition = await getBackendSrv().put(
+      `/api/alert-definitions/${alertDefinition.uid}`,
+      alertDefinition
+    );
+    appEvents.emit(AppEvents.alertSuccess, ['Alert definition updated']);
+    dispatch(setAlertDefinition(updatedAlertDefinition));
   };
 }
 
@@ -165,7 +149,7 @@ export function updateAlertDefinitionUiState(uiState: Partial<AlertDefinitionUiS
 
 export function updateAlertDefinitionOption(alertDefinition: Partial<AlertDefinition>): ThunkResult<void> {
   return (dispatch) => {
-    dispatch(updateAlertDefinition(alertDefinition));
+    dispatch(updateAlertDefinitionOptions(alertDefinition));
   };
 }
 
@@ -188,5 +172,44 @@ export function onRunQueries(): ThunkResult<void> {
       queries: queryOptions.queries,
       datasource: queryOptions.dataSource.name!,
     });
+  };
+}
+
+async function buildAlertDefinition(state: AlertDefinitionState) {
+  const queryOptions = state.queryOptions;
+  const currentAlertDefinition = state.alertDefinition;
+  const defaultDataSource = await getDataSourceSrv().get(null);
+
+  return {
+    ...currentAlertDefinition,
+    data: queryOptions.queries.map((query) => {
+      let dataSource: QueryGroupDataSource;
+      const isExpression = query.datasource === ExpressionDatasourceID;
+
+      if (isExpression) {
+        dataSource = { name: ExpressionDatasourceID, uid: ExpressionDatasourceID };
+      } else {
+        const dataSourceSetting = getDataSourceSrv().getInstanceSettings(query.datasource);
+
+        dataSource = {
+          name: dataSourceSetting?.name ?? defaultDataSource.name,
+          uid: dataSourceSetting?.uid ?? defaultDataSource.uid,
+        };
+      }
+
+      return {
+        model: {
+          ...query,
+          type: isExpression ? (query as ExpressionQuery).type : query.queryType,
+          datasource: dataSource.name,
+          datasourceUid: dataSource.uid,
+        },
+        refId: query.refId,
+        relativeTimeRange: {
+          From: 500,
+          To: 0,
+        },
+      };
+    }),
   };
 }

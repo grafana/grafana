@@ -134,8 +134,10 @@ export let sortedColors = sortColorsByHue(colors);
 export function getColorsFromSeverity(severity: AlertVariant, theme: GrafanaTheme): [string, string] {
   switch (severity) {
     case 'error':
-    case 'warning':
       return [theme.palette.redBase, theme.palette.redShade];
+    case 'warning':
+      return [theme.palette.queryOrange, theme.palette.orange];
+    case 'info':
     case 'info':
       return [theme.palette.blue80, theme.palette.blue77];
     case 'success':

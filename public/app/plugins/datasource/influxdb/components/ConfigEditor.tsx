@@ -8,7 +8,7 @@ import {
   onUpdateDatasourceJsonDataOptionSelect,
   onUpdateDatasourceSecureJsonDataOption,
 } from '@grafana/data';
-import { DataSourceHttpSettings, InlineFormLabel, LegacyForms } from '@grafana/ui';
+import { DataSourceHttpSettings, InfoBox, InlineFormLabel, LegacyForms } from '@grafana/ui';
 const { Select, Input, SecretFormField } = LegacyForms;
 import { InfluxOptions, InfluxSecureJsonData, InfluxVersion } from '../types';
 
@@ -62,28 +62,19 @@ export class ConfigEditor extends PureComponent<Props> {
       delete copy.user;
       delete copy.database;
     }
+
     onOptionsChange(copy);
   };
 
-  onUpdateInflux2xURL = (e: React.SyntheticEvent<HTMLInputElement>) => {
-    const { options, onOptionsChange } = this.props;
-    onOptionsChange({
-      ...options,
-      url: e.currentTarget.value,
-      access: 'proxy',
-      basicAuth: true,
-    });
-  };
-
   renderInflux2x() {
-    const { options } = this.props;
+    const { options, onOptionsChange } = this.props;
     const { secureJsonFields } = options;
     const secureJsonData = (options.secureJsonData || {}) as InfluxSecureJsonData;
 
     return (
       <div>
         <div className="gf-form-group">
-          <div className="width-30 grafana-info-box">
+          <InfoBox>
             <h5>Support for flux in Grafana is currently in beta</h5>
             <p>
               Please report any issues to: <br />
@@ -91,29 +82,18 @@ export class ConfigEditor extends PureComponent<Props> {
                 https://github.com/grafana/grafana/issues
               </a>
             </p>
-          </div>
+          </InfoBox>
         </div>
         <br />
 
-        <h3 className="page-heading">Connection</h3>
-        <div className="gf-form-inline">
-          <div className="gf-form">
-            <InlineFormLabel
-              className="width-10"
-              tooltip="This URL needs to be accessible from the grafana backend/server."
-            >
-              URL
-            </InlineFormLabel>
-            <div className="width-20">
-              <Input
-                className="width-20"
-                value={options.url || ''}
-                placeholder="http://localhost:9999"
-                onChange={this.onUpdateInflux2xURL}
-              />
-            </div>
-          </div>
-        </div>
+        <DataSourceHttpSettings
+          showAccessOptions={false}
+          dataSourceConfig={options}
+          defaultUrl="http://localhost:8086"
+          onChange={onOptionsChange}
+        />
+
+        <h3 className="page-heading">InfluxDB Details</h3>
         <div className="gf-form-inline">
           <div className="gf-form">
             <InlineFormLabel className="width-10">Organization</InlineFormLabel>
@@ -251,7 +231,7 @@ export class ConfigEditor extends PureComponent<Props> {
         </div>
 
         <div className="gf-form-group">
-          <div className="grafana-info-box">
+          <InfoBox>
             <h5>Database Access</h5>
             <p>
               Setting the database for this datasource does not deny access to other databases. The InfluxDB query
@@ -262,7 +242,7 @@ export class ConfigEditor extends PureComponent<Props> {
               <br />
               To support data isolation and security, make sure appropriate permissions are configured in InfluxDB.
             </p>
-          </div>
+          </InfoBox>
         </div>
         <div className="gf-form-group">
           <div className="gf-form-inline">

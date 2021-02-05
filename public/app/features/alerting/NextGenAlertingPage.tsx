@@ -4,6 +4,7 @@ import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { css } from 'emotion';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { PageToolbar, stylesFactory, ToolbarButton } from '@grafana/ui';
+import { config } from 'app/core/config';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { connectWithCleanUp } from 'app/core/components/connectWithCleanUp';
 import AlertingQueryEditor from './components/AlertingQueryEditor';
@@ -13,45 +14,42 @@ import {
   updateAlertDefinitionOption,
   createAlertDefinition,
   updateAlertDefinitionUiState,
-  loadNotificationTypes,
+  updateAlertDefinition,
+  getAlertDefinition,
 } from './state/actions';
-import {
-  AlertDefinition,
-  AlertDefinitionUiState,
-  NotificationChannelType,
-  QueryGroupOptions,
-  StoreState,
-} from '../../types';
-
-import { config } from 'app/core/config';
+import { getRouteParamsId } from 'app/core/selectors/location';
+import { AlertDefinition, AlertDefinitionUiState, QueryGroupOptions, StoreState } from '../../types';
 import { PanelQueryRunner } from '../query/state/PanelQueryRunner';
 
-interface OwnProps {}
+interface OwnProps {
+  saveDefinition: typeof createAlertDefinition | typeof updateAlertDefinition;
+}
 
 interface ConnectedProps {
-  alertDefinition: AlertDefinition;
   uiState: AlertDefinitionUiState;
-  notificationChannelTypes: NotificationChannelType[];
   queryRunner: PanelQueryRunner;
   queryOptions: QueryGroupOptions;
+  alertDefinition: AlertDefinition;
+  pageId: string;
 }
 
 interface DispatchProps {
-  createAlertDefinition: typeof createAlertDefinition;
   updateAlertDefinitionUiState: typeof updateAlertDefinitionUiState;
   updateAlertDefinitionOption: typeof updateAlertDefinitionOption;
-  loadNotificationTypes: typeof loadNotificationTypes;
+  getAlertDefinition: typeof getAlertDefinition;
+  updateAlertDefinition: typeof updateAlertDefinition;
+  createAlertDefinition: typeof createAlertDefinition;
 }
-
-interface State {}
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
-class NextGenAlertingPage extends PureComponent<Props, State> {
-  state = { dataSources: [] };
-
+class NextGenAlertingPage extends PureComponent<Props> {
   componentDidMount() {
-    this.props.loadNotificationTypes();
+    const { getAlertDefinition, pageId } = this.props;
+
+    if (pageId) {
+      getAlertDefinition(pageId);
+    }
   }
 
   onChangeAlertOption = (event: FormEvent<HTMLFormElement>) => {
@@ -60,20 +58,24 @@ class NextGenAlertingPage extends PureComponent<Props, State> {
 
   onChangeInterval = (interval: SelectableValue<number>) => {
     this.props.updateAlertDefinitionOption({
-      interval: interval.value,
+      intervalSeconds: interval.value,
     });
   };
 
   onConditionChange = (condition: SelectableValue<string>) => {
     this.props.updateAlertDefinitionOption({
-      condition: { ...this.props.alertDefinition.condition, refId: condition.value! },
+      condition: condition.value,
     });
   };
 
   onSaveAlert = () => {
-    const { createAlertDefinition } = this.props;
+    const { alertDefinition, createAlertDefinition, updateAlertDefinition } = this.props;
 
-    createAlertDefinition();
+    if (alertDefinition.uid) {
+      updateAlertDefinition();
+    } else {
+      createAlertDefinition();
+    }
   };
 
   onDiscard = () => {};
@@ -95,14 +97,7 @@ class NextGenAlertingPage extends PureComponent<Props, State> {
   }
 
   render() {
-    const {
-      alertDefinition,
-      notificationChannelTypes,
-      uiState,
-      updateAlertDefinitionUiState,
-      queryRunner,
-      queryOptions,
-    } = this.props;
+    const { alertDefinition, uiState, updateAlertDefinitionUiState, queryRunner, queryOptions } = this.props;
     const styles = getStyles(config.theme);
 
     return (
@@ -122,7 +117,6 @@ class NextGenAlertingPage extends PureComponent<Props, State> {
               <AlertDefinitionOptions
                 alertDefinition={alertDefinition}
                 onChange={this.onChangeAlertOption}
-                notificationChannelTypes={notificationChannelTypes}
                 onIntervalChange={this.onChangeInterval}
                 onConditionChange={this.onConditionChange}
                 queryOptions={queryOptions}
@@ -136,20 +130,23 @@ class NextGenAlertingPage extends PureComponent<Props, State> {
 }
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state) => {
+  const pageId = getRouteParamsId(state.location);
+
   return {
     uiState: state.alertDefinition.uiState,
-    alertDefinition: state.alertDefinition.alertDefinition,
     queryOptions: state.alertDefinition.queryOptions,
-    notificationChannelTypes: state.notificationChannel.notificationChannelTypes,
     queryRunner: state.alertDefinition.queryRunner,
+    alertDefinition: state.alertDefinition.alertDefinition,
+    pageId: (pageId as string) ?? '',
   };
 };
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
-  createAlertDefinition,
   updateAlertDefinitionUiState,
   updateAlertDefinitionOption,
-  loadNotificationTypes,
+  updateAlertDefinition,
+  createAlertDefinition,
+  getAlertDefinition,
 };
 
 export default hot(module)(
