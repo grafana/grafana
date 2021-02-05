@@ -163,6 +163,8 @@ const alertDefinitionSlice = createSlice({
   initialState: initialAlertDefinitionState,
   reducers: {
     setAlertDefinition: (state: AlertDefinitionState, action: PayloadAction<AlertDefinitionDTO>) => {
+      const currentOptions = state.getQueryOptions();
+
       return {
         ...state,
         alertDefinition: {
@@ -175,7 +177,7 @@ const alertDefinitionSlice = createSlice({
           description: '',
         },
         getQueryOptions: () => ({
-          ...state.getQueryOptions(),
+          ...currentOptions,
           queries: action.payload.data.map((q: AlertDefinitionQueryModel) => ({ ...q.model })),
         }),
       };
