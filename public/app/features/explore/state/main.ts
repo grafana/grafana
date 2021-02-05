@@ -1,14 +1,13 @@
 import { AnyAction } from 'redux';
-import { DataSourceSrv } from '@grafana/runtime';
-import { serializeStateToUrlParam } from '@grafana/data';
+import { DataSourceSrv, getDataSourceSrv } from '@grafana/runtime';
+import { DataQuery, ExploreUrlState, serializeStateToUrlParam, TimeRange, UrlQueryMap } from '@grafana/data';
 
-import { stopQueryState, GetExploreUrlArguments } from 'app/core/utils/explore';
+import { GetExploreUrlArguments, stopQueryState } from 'app/core/utils/explore';
 import { ExploreId, ExploreItemState, ExploreState } from 'app/types/explore';
 import { updateLocation } from '../../../core/actions';
 import { paneReducer } from './explorePane';
 import { createAction } from '@reduxjs/toolkit';
 import { getUrlStateFromPaneState, makeExplorePaneState } from './utils';
-import { DataQuery, TimeRange, UrlQueryMap } from '@grafana/data';
 import { ThunkResult } from '../../../types';
 import { TimeSrv } from '../../dashboard/services/TimeSrv';
 import { PanelModel } from 'app/features/dashboard/state';
@@ -16,24 +15,6 @@ import { PanelModel } from 'app/features/dashboard/state';
 //
 // Actions and Payloads
 //
-
-/**
- * Close the split view and save URL state.
- */
-export interface SplitCloseActionPayload {
-  itemId: ExploreId;
-}
-export const splitCloseAction = createAction<SplitCloseActionPayload>('explore/splitClose');
-
-/**
- * Open the split view and copy the left state to be the right state.
- * The right state is automatically initialized.
- * The copy keeps all query modifications but wipes the query results.
- */
-export interface SplitOpenPayload {
-  itemState: ExploreItemState;
-}
-export const splitOpenAction = createAction<SplitOpenPayload>('explore/splitOpen');
 
 export interface SyncTimesPayload {
   syncedTimes: boolean;
@@ -50,6 +31,25 @@ export interface ResetExplorePayload {
 }
 export const resetExploreAction = createAction<ResetExplorePayload>('explore/resetExplore');
 
+/**
+ * Close the split view and save URL state.
+ */
+export interface SplitCloseActionPayload {
+  itemId: ExploreId;
+}
+export const splitCloseAction = createAction<SplitCloseActionPayload>('explore/splitClose');
+
+/**
+ * Cleans up a pane state. Could seem like this should be in explorePane.ts actions but in case we area closing
+ * left pane we need to move right state to the left.
+ * Also this may seem redundant as we have splitClose actions which clears up state but that action is not called on
+ * URL change.
+ */
+export interface CleanupPanePayload {
+  exploreId: ExploreId;
+}
+export const cleanupPaneAction = createAction<CleanupPanePayload>('explore/cleanupPane');
+
 //
 // Action creators
 //
@@ -58,7 +58,7 @@ export const resetExploreAction = createAction<ResetExplorePayload>('explore/res
  * Save local redux state back to the URL. Should be called when there is some change that should affect the URL.
  * Not all of the redux state is reflected in URL though.
  */
-export const stateSave = (): ThunkResult<void> => {
+export const stateSave = (options?: { replace?: boolean }): ThunkResult<void> => {
   return (dispatch, getState) => {
     const { left, right } = getState().explore;
     const orgId = getState().user.orgId.toString();
@@ -70,7 +70,7 @@ export const stateSave = (): ThunkResult<void> => {
 
     lastSavedUrl.right = urlStates.right;
     lastSavedUrl.left = urlStates.left;
-    dispatch(updateLocation({ query: urlStates }));
+    dispatch(updateLocation({ query: urlStates, replace: options?.replace }));
   };
 };
 
@@ -78,10 +78,9 @@ export const stateSave = (): ThunkResult<void> => {
 export const lastSavedUrl: UrlQueryMap = {};
 
 /**
- * Open the split view and the right state is automatically initialized.
- * If options are specified it initializes that pane with the datasource and query from options.
- * Otherwise it copies the left state to be the right state. The copy keeps all query modifications but wipes the query
- * results.
+ * Opens a new right split pane by navigating to appropriate URL. It either copies existing state of the left pane
+ * or uses values from options arg. This does only navigation each pane is then responsible for initialization from
+ * the URL.
  */
 export function splitOpen<T extends DataQuery = any>(options?: {
   datasourceUid: string;
@@ -90,58 +89,31 @@ export function splitOpen<T extends DataQuery = any>(options?: {
   range?: TimeRange;
 }): ThunkResult<void> {
   return async (dispatch, getState) => {
-    // Clone left state to become the right state
     const leftState: ExploreItemState = getState().explore[ExploreId.left];
-    const rightState: ExploreItemState = {
-      ...leftState,
-      initialized: false,
-    };
+    const leftUrlState = getUrlStateFromPaneState(leftState);
+    let rightUrlState: ExploreUrlState = leftUrlState;
 
     if (options) {
-      rightState.graphResult = null;
-      rightState.logsResult = null;
-      rightState.tableResult = null;
-      rightState.queryKeys = [];
-      rightState.showLogs = false;
-      rightState.showMetrics = false;
-      rightState.showNodeGraph = false;
-      rightState.showTrace = false;
-      rightState.showTable = false;
-      if (options.range) {
-        // This is super hacky. In traces to logs we want to create a link but also internally open split window.
-        // We use the same range object but the raw part is treated differently because it's parsed differently during
-        // init depending on whether we open split or new window.
-        rightState.range = {
-          ...options.range,
-          raw: {
-            from: options.range.from.utc().toISOString(),
-            to: options.range.to.utc().toISOString(),
-          },
-        };
-      }
-
-      rightState.queries = [
-        {
-          ...options.query,
-          refId: 'A',
-        } as DataQuery,
-      ];
-
-      dispatch(splitOpenAction({ itemState: rightState }));
-    } else {
-      rightState.queries = leftState.queries.slice();
-      dispatch(splitOpenAction({ itemState: rightState }));
+      const datasourceName = getDataSourceSrv().getInstanceSettings(options.datasourceUid)?.name || '';
+      rightUrlState = {
+        datasource: datasourceName,
+        queries: [options.query],
+        range: options.range || leftState.range,
+      };
     }
 
-    dispatch(stateSave());
+    const urlState = serializeStateToUrlParam(rightUrlState, true);
+    dispatch(updateLocation({ query: { right: urlState }, partial: true }));
   };
 }
 
 /**
- * Close the split view and save URL state.
+ * Close the split view and save URL state. We need to update the state here because when closing we cannot just
+ * update the URL and let the components handle it because if we swap panes from right to left it is not easily apparent
+ * from the URL.
  */
 export function splitClose(itemId: ExploreId): ThunkResult<void> {
-  return (dispatch) => {
+  return (dispatch, getState) => {
     dispatch(splitCloseAction({ itemId }));
     dispatch(stateSave());
   };
@@ -208,8 +180,20 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     };
   }
 
-  if (splitOpenAction.match(action)) {
-    return { ...state, right: { ...action.payload.itemState } };
+  if (cleanupPaneAction.match(action)) {
+    const { exploreId } = action.payload as CleanupPanePayload;
+    if (exploreId === ExploreId.left) {
+      return {
+        ...state,
+        [ExploreId.left]: state[ExploreId.right]!,
+        [ExploreId.right]: undefined,
+      };
+    } else {
+      return {
+        ...state,
+        [ExploreId.right]: undefined,
+      };
+    }
   }
 
   if (syncTimesAction.match(action)) {

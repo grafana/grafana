@@ -291,7 +291,7 @@ export function modifyQueries(
 /**
  * Main action to run queries and dispatches sub-actions based on which result viewers are active
  */
-export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
+export const runQueries = (exploreId: ExploreId, options?: { replaceUrl?: boolean }): ThunkResult<void> => {
   return (dispatch, getState) => {
     dispatch(updateTime({ exploreId }));
 
@@ -313,7 +313,7 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
 
     if (!hasNonEmptyQuery(queries)) {
       dispatch(clearQueriesAction({ exploreId }));
-      dispatch(stateSave()); // Remember to save to state and update location
+      dispatch(stateSave({ replace: options?.replaceUrl })); // Remember to save to state and update location
       return;
     }
 
@@ -378,7 +378,7 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
             dispatch(richHistoryUpdatedAction({ richHistory: nextRichHistory }));
 
             // We save queries to the URL here so that only successfully run queries change the URL.
-            dispatch(stateSave());
+            dispatch(stateSave({ replace: options?.replaceUrl }));
           }
 
           firstResponse = false;

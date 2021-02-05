@@ -23,6 +23,7 @@ import { LokiQuery } from '../../plugins/datasource/loki/types';
 import { fromPairs } from 'lodash';
 import { EnhancedStore } from '@reduxjs/toolkit';
 import userEvent from '@testing-library/user-event';
+import { splitOpen } from './state/main';
 
 type Mock = jest.Mock;
 
@@ -222,20 +223,42 @@ describe('Wrapper', () => {
     };
     const { datasources, store } = setup({ query });
     (datasources.loki.query as Mock).mockReturnValue(makeLogsQueryResponse());
+    (datasources.elastic.query as Mock).mockReturnValue(makeLogsQueryResponse());
 
     store.dispatch(
       updateLocation({
         path: '/explore',
         query: {
           left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]),
-          right: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]),
+          right: JSON.stringify(['now-1h', 'now', 'elastic', { expr: 'error' }]),
         },
       })
     );
 
     // Editor renders the new query
-    const editors = await screen.findAllByText(`loki Editor input: { label="value"}`);
-    expect(editors.length).toBe(2);
+    await screen.findByText(`loki Editor input: { label="value"}`);
+    await screen.findByText(`elastic Editor input: error`);
+  });
+
+  it('handles opening split with split open func', async () => {
+    const query = {
+      left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]),
+    };
+    const { datasources, store } = setup({ query });
+    (datasources.loki.query as Mock).mockReturnValue(makeLogsQueryResponse());
+    (datasources.elastic.query as Mock).mockReturnValue(makeLogsQueryResponse());
+
+    // This is mainly to wait for render so that the left pane state is initialized as that is needed for splitOpen
+    // to work
+    await screen.findByText(`loki Editor input: { label="value"}`);
+
+    store.dispatch(
+      splitOpen<any>({ datasourceUid: 'elastic', query: { expr: 'error' } }) as any
+    );
+
+    // Editor renders the new query
+    await screen.findByText(`elastic Editor input: error`);
+    await screen.findByText(`loki Editor input: { label="value"}`);
   });
 });
 

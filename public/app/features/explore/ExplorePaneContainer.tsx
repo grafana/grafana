@@ -7,7 +7,7 @@ import { withTheme } from '@grafana/ui';
 import { DataQuery, ExploreUrlState, EventBusExtended, EventBusSrv } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import store from 'app/core/store';
-import { lastSavedUrl } from './state/main';
+import { lastSavedUrl, cleanupPaneAction } from './state/main';
 import { initializeExplore, refreshExplore } from './state/explorePane';
 import { ExploreId } from 'app/types/explore';
 import { StoreState } from 'app/types';
@@ -64,6 +64,7 @@ export class ExplorePaneContainerUnconnected extends React.PureComponent<Props &
 
   componentWillUnmount() {
     this.exploreEvents.removeAllListeners();
+    this.props.cleanupPaneAction({ exploreId: this.props.exploreId });
   }
 
   componentDidUpdate(prevProps: Props) {
@@ -121,6 +122,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreI
 const mapDispatchToProps = {
   initializeExplore,
   refreshExplore,
+  cleanupPaneAction,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
