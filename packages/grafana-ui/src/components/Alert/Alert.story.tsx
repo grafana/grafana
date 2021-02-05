@@ -21,7 +21,7 @@ const severities: AlertVariant[] = ['error', 'warning', 'info', 'success'];
 export const Examples = () => {
   return (
     <VerticalGroup>
-      <StoryExample name="With button content">
+      <StoryExample name="With buttonContent and children">
         <Alert
           title="Some very important message"
           severity="error"
