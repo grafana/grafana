@@ -138,7 +138,6 @@ const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps> = ({
   canLoadMoreRows,
   onLoadMoreContext,
 }) => {
-  console.log(rows);
   const theme = useContext(ThemeContext);
   const { commonStyles, logs } = getLogRowContextStyles(theme);
   const [scrollTop, setScrollTop] = useState(0);
