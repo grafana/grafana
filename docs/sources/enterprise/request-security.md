@@ -34,6 +34,7 @@ If there are at least one host or IP on the allow-list any request to hosts or I
 ### Example
 
 ```toml
+[security.egress]
 # a list of hostnames or IP adresses separated by spaces for which outgoing requests will be blocked
 host_deny_list = supersecret.internal 192.168.1.10
 # a list of hostnames or IP adresses separated by spaces for which requests will be allowed, all other requests will be blocked
@@ -48,6 +49,7 @@ It's possible to set a list of cookies or headers that will be dropped from outg
 Example:
 
 ```toml
+[security.egress]
 # a list of headers that will be stripped from outgoing datasource and alerting requests
 header_drop_list = user
 # a list of cookies that will be stripped from outgoing datasource requests (case sensitive)
