@@ -7,8 +7,8 @@ import {
   FieldType,
   MutableDataFrame,
 } from '@grafana/data';
-import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
-import { of } from 'rxjs';
+import { BackendSrvRequest, FetchResponse, getBackendSrv } from '@grafana/runtime';
+import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { serializeParams } from '../../../core/utils/fetch';
 import { apiPrefix } from './constants';
@@ -24,7 +24,7 @@ export class ZipkinDatasource extends DataSourceApi<ZipkinQuery> {
     super(instanceSettings);
   }
 
-  query(options: DataQueryRequest<ZipkinQuery>) {
+  query(options: DataQueryRequest<ZipkinQuery>): Observable<DataQueryResponse> {
     const traceId = options.targets[0]?.query;
     if (traceId) {
       return this.request<ZipkinSpan[]>(`${apiPrefix}/trace/${encodeURIComponent(traceId)}`).pipe(
@@ -35,21 +35,25 @@ export class ZipkinDatasource extends DataSourceApi<ZipkinQuery> {
     }
   }
 
-  async metadataRequest(url: string, params?: Record<string, any>) {
+  async metadataRequest(url: string, params?: Record<string, any>): Promise<any> {
     const res = await this.request(url, params, { hideFromInspector: true }).toPromise();
     return res.data;
   }
 
-  async testDatasource() {
+  async testDatasource(): Promise<{ status: string; message: string }> {
     await this.metadataRequest(`${apiPrefix}/services`);
     return { status: 'success', message: 'Data source is working' };
   }
 
-  getQueryDisplayText(query: ZipkinQuery) {
+  getQueryDisplayText(query: ZipkinQuery): string {
     return query.query;
   }
 
-  private request<T = any>(apiUrl: string, data?: any, options?: Partial<BackendSrvRequest>) {
+  private request<T = any>(
+    apiUrl: string,
+    data?: any,
+    options?: Partial<BackendSrvRequest>
+  ): Observable<FetchResponse<T>> {
     const params = data ? serializeParams(data) : '';
     const url = `${this.instanceSettings.url}${apiUrl}${params.length ? `?${params}` : ''}`;
     const req = {
