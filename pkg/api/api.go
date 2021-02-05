@@ -128,11 +128,11 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Group("/api", func(apiRoute routing.RouteRegister) {
 		// user (signed in)
 		apiRoute.Group("/user", func(userRoute routing.RouteRegister) {
-			userRoute.Get("/", authorize("users.view", "users:self"), routing.Wrap(GetSignedInUser))
-			userRoute.Put("/", authorize("users.edit", "users:self"), bind(models.UpdateUserCommand{}), routing.Wrap(UpdateSignedInUser))
-			userRoute.Post("/using/:id", routing.Wrap(UserSetUsingOrg))
-			userRoute.Get("/orgs", routing.Wrap(GetSignedInUserOrgList))
-			userRoute.Get("/teams", authorize("users.view", "users:self"), routing.Wrap(GetSignedInUserTeamList))
+			userRoute.Get("/", authorize("users:read", "users:self"), routing.Wrap(GetSignedInUser))
+			userRoute.Put("/", authorize("users.userinfo:write", "users:self"), bind(models.UpdateUserCommand{}), routing.Wrap(UpdateSignedInUser))
+			userRoute.Post("/using/:id", authorize("orgs:switch", `orgs:{{index . ":id"}}`), routing.Wrap(UserSetUsingOrg))
+			userRoute.Get("/orgs", authorize("orgs:list"), routing.Wrap(GetSignedInUserOrgList))
+			userRoute.Get("/teams", authorize("users.teams:read", "users:self"), routing.Wrap(GetSignedInUserTeamList))
 
 			userRoute.Post("/stars/dashboard/:id", routing.Wrap(StarDashboard))
 			userRoute.Delete("/stars/dashboard/:id", routing.Wrap(UnstarDashboard))
@@ -143,11 +143,11 @@ func (hs *HTTPServer) registerRoutes() {
 			// For dev purpose
 			userRoute.Get("/helpflags/clear", routing.Wrap(ClearHelpFlags))
 
-			userRoute.Get("/preferences", authorize("users.view", "users:self"), routing.Wrap(GetUserPreferences))
-			userRoute.Put("/preferences", authorize("users.edit", "users:self"), bind(dtos.UpdatePrefsCmd{}), routing.Wrap(UpdateUserPreferences))
+			userRoute.Get("/preferences", authorize("users:read", "users:self"), routing.Wrap(GetUserPreferences))
+			userRoute.Put("/preferences", authorize("users:write", "users:self"), bind(dtos.UpdatePrefsCmd{}), routing.Wrap(UpdateUserPreferences))
 
-			userRoute.Get("/auth-tokens", authorize("users:tokens.list", "users:self"), routing.Wrap(hs.GetUserAuthTokens))
-			userRoute.Post("/revoke-auth-token", authorize("users:tokens.delete", "users:self"), bind(models.RevokeAuthTokenCmd{}), routing.Wrap(hs.RevokeUserAuthToken))
+			userRoute.Get("/auth-tokens", authorize("users.tokens:list", "users:self"), routing.Wrap(hs.GetUserAuthTokens))
+			userRoute.Post("/revoke-auth-token", authorize("users.tokens:delete", "users:self"), bind(models.RevokeAuthTokenCmd{}), routing.Wrap(hs.RevokeUserAuthToken))
 		})
 
 		// users (admin permission required)

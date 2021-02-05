@@ -1,6 +1,13 @@
 package authorization
 
 import (
+	"bytes"
+	"context"
+	"net/http"
+	"text/template"
+
+	"github.com/gobwas/glob"
+
 	"github.com/grafana/grafana/pkg/registry"
 	macaron "gopkg.in/macaron.v1"
 
@@ -9,21 +16,35 @@ import (
 
 type AccessControl interface {
 	// Evaluate evaluates access to the given resource
-	Evaluate(ctx *models.ReqContext, user *models.SignedInUser, permission string, scope ...string) (bool, error)
+	Evaluate(ctx context.Context, user *models.SignedInUser, permission string, scope ...string) (bool, error)
 }
 
 func Middleware(ac AccessControl) func(string, ...string) macaron.Handler {
 	return func(permission string, scopes ...string) macaron.Handler {
 		return func(c *models.ReqContext) {
-			hasAccess, err := ac.Evaluate(c, c.SignedInUser, permission, scopes...)
+			for i, scope := range scopes {
+				var buf bytes.Buffer
+
+				tmpl, err := template.New("scope").Parse(scope)
+				if err != nil {
+					c.JsonApiErr(http.StatusInternalServerError, "Internal server error", err)
+				}
+				err = tmpl.Execute(&buf, c.AllParams())
+				if err != nil {
+					c.JsonApiErr(http.StatusInternalServerError, "Internal server error", err)
+				}
+				scopes[i] = buf.String()
+			}
+
+			hasAccess, err := ac.Evaluate(context.TODO(), c.SignedInUser, permission, scopes...)
 			if err != nil {
 				c.Logger.Error("Error from access control system", "error", err)
-				c.JsonApiErr(401, "Unauthorized", nil)
+				c.JsonApiErr(http.StatusForbidden, "Forbidden", nil)
 				return
 			}
 			if !hasAccess {
-				c.Logger.Info("Access denied", "error", err, "permission", permission, "scopes", scopes)
-				c.JsonApiErr(401, "Unauthorized", nil)
+				c.Logger.Info("Access denied", "error", err, "userID", c.UserId, "permission", permission, "scopes", scopes)
+				c.JsonApiErr(http.StatusForbidden, "Forbidden", nil)
 				return
 			}
 		}
@@ -38,22 +59,33 @@ func init() {
 }
 
 var permissionMappings = map[string]struct {
-	Scopes map[string]struct{}
+	Scopes []string
 	Role   models.RoleType
 }{
-	"users.view": {
-		Scopes: map[string]struct{}{"users:self": {}},
+	"users:read": {
+		Scopes: []string{"users:self"},
 		Role:   models.ROLE_VIEWER,
 	},
-	"users:tokens.list": {
-		Scopes: map[string]struct{}{"users:self": {}},
+	"users.tokens:list": {
+		Scopes: []string{"users:self"},
+		Role:   models.ROLE_VIEWER,
+	},
+	"users.teams:read": {
+		Scopes: []string{"users:*"},
+		Role:   models.ROLE_VIEWER,
+	},
+	"orgs:list": {
+		Role: models.ROLE_VIEWER,
+	},
+	"orgs:switch": {
+		Scopes: []string{"orgs:*"},
 		Role:   models.ROLE_VIEWER,
 	},
 }
 
 type FakeAccessControl struct{}
 
-func (f FakeAccessControl) Evaluate(ctx *models.ReqContext, user *models.SignedInUser, permission string, scopes ...string) (bool, error) {
+func (f FakeAccessControl) Evaluate(ctx context.Context, user *models.SignedInUser, permission string, scopes ...string) (bool, error) {
 	if user == nil {
 		return false, nil
 	}
@@ -63,14 +95,27 @@ func (f FakeAccessControl) Evaluate(ctx *models.ReqContext, user *models.SignedI
 		return false, nil
 	}
 
-	for _, scope := range scopes {
-		if _, exists := m.Scopes[scope]; !exists {
-			return false, nil
-		}
-	}
-
 	if !user.OrgRole.Includes(m.Role) {
 		return false, nil
+	}
+
+	for _, scope := range scopes {
+		var match bool
+		for _, s := range m.Scopes {
+			rule, err := glob.Compile(s, ':', '/')
+			if err != nil {
+				return false, err
+			}
+
+			match = rule.Match(scope)
+			if match {
+				break
+			}
+		}
+
+		if !match {
+			return false, nil
+		}
 	}
 
 	return true, nil
