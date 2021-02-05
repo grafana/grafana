@@ -11,13 +11,13 @@ import AlertingQueryEditor from './components/AlertingQueryEditor';
 import { AlertDefinitionOptions } from './components/AlertDefinitionOptions';
 import { AlertingQueryPreview } from './components/AlertingQueryPreview';
 import {
-  updateAlertDefinitionOption,
   createAlertDefinition,
-  updateAlertDefinitionUiState,
-  updateAlertDefinition,
   evaluateAlertDefinition,
-  getAlertDefinition,
   evaluateNotSavedAlertDefinition,
+  getAlertDefinition,
+  updateAlertDefinition,
+  updateAlertDefinitionOption,
+  updateAlertDefinitionUiState,
 } from './state/actions';
 import { getRouteParamsId } from 'app/core/selectors/location';
 import { AlertDefinition, AlertDefinitionUiState, QueryGroupOptions, StoreState } from '../../types';
@@ -57,8 +57,9 @@ class NextGenAlertingPage extends PureComponent<Props> {
     }
   }
 
-  onChangeAlertOption = (event: FormEvent<HTMLFormElement>) => {
-    this.props.updateAlertDefinitionOption({ [event.currentTarget.name]: event.currentTarget.value });
+  onChangeAlertOption = (event: FormEvent<HTMLElement>) => {
+    const formEvent = event as FormEvent<HTMLFormElement>;
+    this.props.updateAlertDefinitionOption({ [formEvent.currentTarget.name]: formEvent.currentTarget.value });
   };
 
   onChangeInterval = (interval: SelectableValue<number>) => {
