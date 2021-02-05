@@ -5,7 +5,6 @@ import { Labels } from '@grafana/data';
 import { stylesFactory } from '../../themes';
 import { Themeable } from '../../types/theme';
 import { GrafanaTheme } from '@grafana/data';
-import { selectThemeVariant } from '../../themes/selectThemeVariant';
 import { withTheme } from '../../themes/ThemeContext';
 
 // Levels are already encoded in color, filename is a Loki-ism
@@ -22,7 +21,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       label: logs-label;
       display: flex;
       padding: 0 2px;
-      background-color: ${selectThemeVariant({ light: theme.palette.gray5, dark: theme.palette.dark6 }, theme.type)};
+      background-color: ${theme.colors.bg2};
       border-radius: ${theme.border.radius};
       margin: 1px 4px 0 0;
       text-overflow: ellipsis;

@@ -7,7 +7,6 @@ import { LogRowModel, findHighlightChunksInText, GrafanaTheme } from '@grafana/d
 // @ts-ignore
 import Highlighter from 'react-highlight-words';
 import { LogRowContextQueryErrors, HasMoreContextRows, LogRowContextRows } from './LogRowContextProvider';
-import { selectThemeVariant } from '../../index';
 import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
 import { getLogRowStyles } from './getLogRowStyles';
@@ -34,13 +33,7 @@ interface Props extends Themeable {
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const outlineColor = selectThemeVariant(
-    {
-      light: theme.palette.white,
-      dark: theme.palette.black,
-    },
-    theme.type
-  );
+  const outlineColor = tinycolor(theme.colors.dashboardBg).setAlpha(0.7).toRgbString();
 
   return {
     positionRelative: css`
@@ -50,10 +43,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     rowWithContext: css`
       label: rowWithContext;
       z-index: 1;
-      outline: 9999px solid
-        ${tinycolor(outlineColor as tinycolor.ColorInput)
-          .setAlpha(0.7)
-          .toRgbString()};
+      outline: 9999px solid ${outlineColor};
     `,
     horizontalScroll: css`
       label: verticalScroll;
