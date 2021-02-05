@@ -255,15 +255,15 @@ func getPanelSort(id string) int {
 		sort = 1
 	case "graph":
 		sort = 2
-	case "stat":
-		sort = 3
-	case "gauge":
-		sort = 4
-	case "barchart":
-		sort = 5
-	case "bargauge":
-		sort = 6
 	case "table":
+		sort = 3
+	case "stat":
+		sort = 4
+	case "gauge":
+		sort = 5
+	case "barchart":
+		sort = 6
+	case "bargauge":
 		sort = 7
 	case "singlestat":
 		sort = 8
