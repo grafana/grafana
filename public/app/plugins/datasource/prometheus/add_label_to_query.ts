@@ -40,8 +40,9 @@ export function addLabelToQuery(
     const previousWordIsKeyWord = previousWord && keywords.split('|').indexOf(previousWord) > -1;
     // Check for colon as as "word boundary" symbol
     const isColonBounded = word.endsWith(':');
-    // Check for words that startt with " which means that they are not metrics
+    // Check for words that start with " which means that they are not metrics
     const startsWithQuote = query[offset - 1] === '"';
+    const isTemplateVariable = query[offset - 1] === '$';
 
     previousWord = word;
 
@@ -54,6 +55,7 @@ export function addLabelToQuery(
       !isColonBounded &&
       !previousWordIsKeyWord &&
       !startsWithQuote &&
+      !isTemplateVariable &&
       builtInWords.indexOf(word) === -1
     ) {
       return `${word}{}`;
