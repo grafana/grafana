@@ -1,5 +1,5 @@
 +++
-title = "License Expiration"
+title = "License expiration"
 description = ""
 keywords = ["grafana", "licensing"]
 weight = 120
@@ -7,7 +7,7 @@ weight = 120
 
 # License expiration
 
-If your license has expired most of Grafana keeps working as normal. Some enterprise functionality stops or runs with reduced functionality and Grafana displays a banner informing the users that Grafana is running on an expired license. Your Grafana admin needs to upload a new license file to restore full functionality.
+If your license has expired, most of Grafana keeps working as normal. Some enterprise functionality stops or runs with reduced functionality and Grafana displays a banner informing the users that Grafana is running on an expired license. Your Grafana admin needs to upload a new license file to restore full functionality.
 
 > Replace your license as soon as possible. Running Grafana Enterprise with an expired license is unsupported and can lead to unexpected consequences.
 

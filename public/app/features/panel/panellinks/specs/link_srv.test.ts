@@ -1,9 +1,12 @@
 import { FieldType, locationUtil, toDataFrame, VariableOrigin } from '@grafana/data';
-
+import { setTemplateSrv } from '@grafana/runtime';
 import { getDataFrameVars, LinkSrv } from '../link_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
+import { variableAdapters } from 'app/features/variables/adapters';
+import { createQueryVariableAdapter } from 'app/features/variables/query/adapter';
 import { updateConfig } from '../../../../core/config';
+import { initTemplateSrv } from '../../../../../test/helpers/initTemplateSrv';
 
 jest.mock('app/core/core', () => ({
   appEvents: {
@@ -13,6 +16,7 @@ jest.mock('app/core/core', () => ({
 
 describe('linkSrv', () => {
   let linkSrv: LinkSrv;
+  let templateSrv: TemplateSrv;
 
   function initLinkSrv() {
     const rootScope = {
@@ -40,103 +44,186 @@ describe('linkSrv', () => {
     timeSrv.init(_dashboard);
     timeSrv.setTime({ from: 'now-1h', to: 'now' });
     _dashboard.refresh = false;
+    templateSrv = initTemplateSrv([
+      { type: 'query', name: 'home', current: { value: '127.0.0.1' } },
+      { type: 'query', name: 'server1', current: { value: '192.168.0.100' } },
+    ]);
 
-    linkSrv = new LinkSrv(new TemplateSrv(), timeSrv);
+    setTemplateSrv(templateSrv);
+
+    linkSrv = new LinkSrv(templateSrv, timeSrv);
   }
+
+  beforeAll(() => {
+    variableAdapters.register(createQueryVariableAdapter());
+  });
 
   beforeEach(() => {
     initLinkSrv();
+
+    jest.resetAllMocks();
   });
 
-  describe('built in variables', () => {
-    it('should not trim white space from data links', () => {
-      expect(
-        linkSrv.getDataLinkUIModel(
-          {
-            title: 'White space',
-            url: 'www.google.com?query=some query',
-          },
-          (v) => v,
-          {}
-        ).href
-      ).toEqual('www.google.com?query=some query');
+  describe('getDataLinkUIModel', () => {
+    describe('built in variables', () => {
+      it('should not trim white space from data links', () => {
+        expect(
+          linkSrv.getDataLinkUIModel(
+            {
+              title: 'White space',
+              url: 'www.google.com?query=some query',
+            },
+            (v) => v,
+            {}
+          ).href
+        ).toEqual('www.google.com?query=some query');
+      });
+
+      it('should remove new lines from data link', () => {
+        expect(
+          linkSrv.getDataLinkUIModel(
+            {
+              title: 'New line',
+              url: 'www.google.com?query=some\nquery',
+            },
+            (v) => v,
+            {}
+          ).href
+        ).toEqual('www.google.com?query=somequery');
+      });
     });
 
-    it('should remove new lines from data link', () => {
-      expect(
-        linkSrv.getDataLinkUIModel(
-          {
-            title: 'New line',
-            url: 'www.google.com?query=some\nquery',
-          },
-          (v) => v,
-          {}
-        ).href
-      ).toEqual('www.google.com?query=somequery');
+    describe('sanitization', () => {
+      const url = "javascript:alert('broken!);";
+      it.each`
+        disableSanitizeHtml | expected
+        ${true}             | ${url}
+        ${false}            | ${'about:blank'}
+      `(
+        "when disable disableSanitizeHtml set to '$disableSanitizeHtml' then result should be '$expected'",
+        ({ disableSanitizeHtml, expected }) => {
+          updateConfig({
+            disableSanitizeHtml,
+          });
+
+          const link = linkSrv.getDataLinkUIModel(
+            {
+              title: 'Any title',
+              url,
+            },
+            (v) => v,
+            {}
+          ).href;
+
+          expect(link).toBe(expected);
+        }
+      );
+    });
+
+    describe('Building links with root_url set', () => {
+      it.each`
+        url                 | appSubUrl     | expected
+        ${'/d/XXX'}         | ${'/grafana'} | ${'/grafana/d/XXX'}
+        ${'/grafana/d/XXX'} | ${'/grafana'} | ${'/grafana/d/XXX'}
+        ${'d/whatever'}     | ${'/grafana'} | ${'d/whatever'}
+        ${'/d/XXX'}         | ${''}         | ${'/d/XXX'}
+        ${'/grafana/d/XXX'} | ${''}         | ${'/grafana/d/XXX'}
+        ${'d/whatever'}     | ${''}         | ${'d/whatever'}
+      `(
+        "when link '$url' and config.appSubUrl set to '$appSubUrl' then result should be '$expected'",
+        ({ url, appSubUrl, expected }) => {
+          locationUtil.initialize({
+            getConfig: () => {
+              return { appSubUrl } as any;
+            },
+            // @ts-ignore
+            buildParamsFromVariables: () => {},
+            // @ts-ignore
+            getTimeRangeForUrl: () => {},
+          });
+
+          const link = linkSrv.getDataLinkUIModel(
+            {
+              title: 'Any title',
+              url,
+            },
+            (v) => v,
+            {}
+          ).href;
+
+          expect(link).toBe(expected);
+        }
+      );
     });
   });
 
-  describe('sanitization', () => {
-    const url = "javascript:alert('broken!);";
-    it.each`
-      disableSanitizeHtml | expected
-      ${true}             | ${url}
-      ${false}            | ${'about:blank'}
-    `(
-      "when disable disableSanitizeHtml set to '$disableSanitizeHtml' then result should be '$expected'",
-      ({ disableSanitizeHtml, expected }) => {
-        updateConfig({
-          disableSanitizeHtml,
-        });
+  describe('getAnchorInfo', () => {
+    it('returns variable values for variable names in link.href and link.tooltip', () => {
+      jest.spyOn(linkSrv, 'getLinkUrl');
+      jest.spyOn(templateSrv, 'replace');
 
-        const link = linkSrv.getDataLinkUIModel(
-          {
-            title: 'Any title',
-            url,
-          },
-          (v) => v,
-          {}
-        ).href;
+      expect(linkSrv.getLinkUrl).toBeCalledTimes(0);
+      expect(templateSrv.replace).toBeCalledTimes(0);
 
-        expect(link).toBe(expected);
-      }
-    );
+      const link = linkSrv.getAnchorInfo({
+        type: 'link',
+        icon: 'dashboard',
+        tags: [],
+        url: '/graph?home=$home',
+        title: 'Visit home',
+        tooltip: 'Visit ${home:raw}',
+      });
+
+      expect(linkSrv.getLinkUrl).toBeCalledTimes(1);
+      expect(templateSrv.replace).toBeCalledTimes(3);
+      expect(link).toStrictEqual({ href: '/graph?home=127.0.0.1', title: 'Visit home', tooltip: 'Visit 127.0.0.1' });
+    });
   });
 
-  describe('Building links with root_url set', () => {
-    it.each`
-      url                 | appSubUrl     | expected
-      ${'/d/XXX'}         | ${'/grafana'} | ${'/grafana/d/XXX'}
-      ${'/grafana/d/XXX'} | ${'/grafana'} | ${'/grafana/d/XXX'}
-      ${'d/whatever'}     | ${'/grafana'} | ${'d/whatever'}
-      ${'/d/XXX'}         | ${''}         | ${'/d/XXX'}
-      ${'/grafana/d/XXX'} | ${''}         | ${'/grafana/d/XXX'}
-      ${'d/whatever'}     | ${''}         | ${'d/whatever'}
-    `(
-      "when link '$url' and config.appSubUrl set to '$appSubUrl' then result should be '$expected'",
-      ({ url, appSubUrl, expected }) => {
-        locationUtil.initialize({
-          getConfig: () => {
-            return { appSubUrl } as any;
-          },
-          // @ts-ignore
-          buildParamsFromVariables: () => {},
-          // @ts-ignore
-          getTimeRangeForUrl: () => {},
-        });
+  describe('getLinkUrl', () => {
+    it('converts link urls', () => {
+      const linkUrl = linkSrv.getLinkUrl({
+        url: '/graph',
+      });
+      const linkUrlWithVar = linkSrv.getLinkUrl({
+        url: '/graph?home=$home',
+      });
 
-        const link = linkSrv.getDataLinkUIModel(
-          {
-            title: 'Any title',
-            url,
-          },
-          (v) => v,
-          {}
-        ).href;
+      expect(linkUrl).toBe('/graph');
+      expect(linkUrlWithVar).toBe('/graph?home=127.0.0.1');
+    });
 
-        expect(link).toBe(expected);
-      }
-    );
+    it('appends current dashboard time range if keepTime is true', () => {
+      const anchorInfoKeepTime = linkSrv.getLinkUrl({
+        keepTime: true,
+        url: '/graph',
+      });
+
+      expect(anchorInfoKeepTime).toBe('/graph?from=now-1h&to=now');
+    });
+
+    it('adds all variables to the url if includeVars is true', () => {
+      const anchorInfoIncludeVars = linkSrv.getLinkUrl({
+        includeVars: true,
+        url: '/graph',
+      });
+
+      expect(anchorInfoIncludeVars).toBe('/graph?var-home=127.0.0.1&var-server1=192.168.0.100');
+    });
+
+    it('respects config disableSanitizeHtml', () => {
+      const anchorInfo = {
+        url: 'javascript:alert(document.domain)',
+      };
+
+      expect(linkSrv.getLinkUrl(anchorInfo)).toBe('about:blank');
+
+      updateConfig({
+        disableSanitizeHtml: true,
+      });
+
+      expect(linkSrv.getLinkUrl(anchorInfo)).toBe(anchorInfo.url);
+    });
   });
 });
 
