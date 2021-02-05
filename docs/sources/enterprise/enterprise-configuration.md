@@ -304,3 +304,23 @@ Time until expiration for tokens which are renewed. Should have a value higher t
 ### lease_renewal_increment
 
 New duration for renewed tokens. Vault may be configured to ignore this value and impose a stricter limit.
+
+## [security.egress]
+
+> **Note:** Available in Grafana Enterprise v7.4+.
+
+### host_deny_list
+
+A list of hostnames or IP addresses separated by spaces for which requests will be blocked.
+
+### host_allow_list
+
+A list of hostnames or IP addresses separated by spaces for which requests will be allowed, all other requests will be blocked.
+
+### header_drop_list
+
+A list of headers that will be stripped from outgoing datasource and alerting requests.
+
+### cookie_drop_list =
+
+A list of cookies that will be stripped from outgoing datasource and alerting requests.

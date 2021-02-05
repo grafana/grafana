@@ -50,6 +50,7 @@ With Grafana Enterprise, you get access to new features, including:
 - [Usage insights]({{< relref "usage-insights/_index.md" >}}) to understand how your Grafana instance is used.
 - [Vault integration]({{< relref "vault.md" >}}) to manage your configuration or provisioning secrets with Vault.
 - [Auditing]({{< relref "auditing.md" >}}) tracks important changes to your Grafana instance to help you manage and mitigate suspicious activity and meet compliance requirements.
+- [Request security]({{< relref "request-security.md" >}}) makes it possible to restrict outgoing request from the Grafana server
 
 ## Enterprise plugins
 
