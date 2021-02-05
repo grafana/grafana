@@ -78,9 +78,9 @@ export function transform(
     prometheusResult.forEach((exemplarData) => {
       const data = exemplarData.exemplars.map((exemplar) => {
         return {
-          [TIME_SERIES_TIME_FIELD_NAME]: exemplar.scrapeTimestamp,
-          [TIME_SERIES_VALUE_FIELD_NAME]: exemplar.exemplar.value,
-          ...exemplar.exemplar.labels,
+          [TIME_SERIES_TIME_FIELD_NAME]: exemplar.timestamp,
+          [TIME_SERIES_VALUE_FIELD_NAME]: exemplar.value,
+          ...exemplar.labels,
           ...exemplarData.seriesLabels,
         };
       });
@@ -299,10 +299,13 @@ function transformMetricDataToTable(md: MatrixOrVectorResult[], options: Transfo
   const metricFields = Object.keys(md.reduce((acc, series) => ({ ...acc, ...series.metric }), {}))
     .sort()
     .map((label) => {
+      // Labels have string field type, otherwise table tries to figure out the type which can result in unexpected results
+      // Only "le" label has a number field type
+      const numberField = label === 'le';
       return {
         name: label,
         config: { filterable: true },
-        type: FieldType.other,
+        type: numberField ? FieldType.number : FieldType.string,
         values: new ArrayVector(),
       };
     });

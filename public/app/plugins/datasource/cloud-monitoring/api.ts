@@ -45,7 +45,7 @@ export default class Api {
       })
       .pipe(
         map((response) => {
-          const responsePropName = path.match(/([^\/]*)\/*$/)![1];
+          const responsePropName = path.match(/([^\/]*)\/*$/)![1].split('?')[0];
           let res = [];
           if (response && response.data && response.data[responsePropName]) {
             res = response.data[responsePropName].map(responseMap);

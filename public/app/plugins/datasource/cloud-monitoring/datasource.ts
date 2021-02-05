@@ -256,7 +256,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
   }
 
   async getSLOServices(projectName: string): Promise<Array<SelectableValue<string>>> {
-    return this.api.get(`${this.templateSrv.replace(projectName)}/services`, {
+    return this.api.get(`${this.templateSrv.replace(projectName)}/services?pageSize=1000`, {
       responseMap: ({ name }: { name: string }) => ({
         value: name.match(/([^\/]*)\/*$/)![1],
         label: name.match(/([^\/]*)\/*$/)![1],

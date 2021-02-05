@@ -55,12 +55,10 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
       <TooltipPlugin mode={options.tooltipOptions.mode} timeZone={timeZone} />
       <ZoomPlugin onZoom={onChangeTimeRange} />
       <ContextMenuPlugin timeZone={timeZone} replaceVariables={replaceVariables} />
-      {data.annotations ? (
+      {data.annotations && (
         <ExemplarsPlugin exemplars={data.annotations} timeZone={timeZone} getFieldLinks={getFieldLinks} />
-      ) : (
-        <></>
       )}
-      {data.annotations ? <AnnotationsPlugin annotations={data.annotations} timeZone={timeZone} /> : <></>}
+      {data.annotations && <AnnotationsPlugin annotations={data.annotations} timeZone={timeZone} />}
     </GraphNG>
   );
 };
