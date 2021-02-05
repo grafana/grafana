@@ -180,13 +180,12 @@ steps:
 
 - name: build-docker-images
   image: grafana/drone-grafana-docker:0.3.2
-  commands:
-  - ls bin/*
   settings:
     archs: amd64
     dry_run: true
     edition: oss
   depends_on:
+  - initialize
   - copy-packages-for-docker
 
 - name: postgres-integration-tests
@@ -464,8 +463,6 @@ steps:
 
 - name: build-docker-images
   image: grafana/drone-grafana-docker:0.3.2
-  commands:
-  - ls bin/*
   settings:
     edition: oss
     password:
@@ -473,12 +470,11 @@ steps:
     username:
       from_secret: docker_user
   depends_on:
+  - initialize
   - copy-packages-for-docker
 
 - name: build-docker-images-ubuntu
   image: grafana/drone-grafana-docker:0.3.2
-  commands:
-  - ls bin/*
   settings:
     edition: oss
     password:
@@ -487,6 +483,7 @@ steps:
     username:
       from_secret: docker_user
   depends_on:
+  - initialize
   - copy-packages-for-docker
 
 - name: postgres-integration-tests
@@ -896,8 +893,6 @@ steps:
 
 - name: build-docker-images
   image: grafana/drone-grafana-docker:0.3.2
-  commands:
-  - ls bin/*
   settings:
     edition: oss
     password:
@@ -905,12 +900,11 @@ steps:
     username:
       from_secret: docker_user
   depends_on:
+  - initialize
   - copy-packages-for-docker
 
 - name: build-docker-images-ubuntu
   image: grafana/drone-grafana-docker:0.3.2
-  commands:
-  - ls bin/*
   settings:
     edition: oss
     password:
@@ -919,6 +913,7 @@ steps:
     username:
       from_secret: docker_user
   depends_on:
+  - initialize
   - copy-packages-for-docker
 
 - name: postgres-integration-tests
@@ -1291,8 +1286,6 @@ steps:
 
 - name: build-docker-images
   image: grafana/drone-grafana-docker:0.3.2
-  commands:
-  - ls bin/*
   settings:
     edition: enterprise
     password:
@@ -1300,12 +1293,11 @@ steps:
     username:
       from_secret: docker_user
   depends_on:
+  - initialize
   - copy-packages-for-docker
 
 - name: build-docker-images-ubuntu
   image: grafana/drone-grafana-docker:0.3.2
-  commands:
-  - ls bin/*
   settings:
     edition: enterprise
     password:
@@ -1314,6 +1306,7 @@ steps:
     username:
       from_secret: docker_user
   depends_on:
+  - initialize
   - copy-packages-for-docker
 
 - name: postgres-integration-tests
@@ -1793,23 +1786,21 @@ steps:
 
 - name: build-docker-images
   image: grafana/drone-grafana-docker:0.3.2
-  commands:
-  - ls bin/*
   settings:
     dry_run: true
     edition: oss
   depends_on:
+  - initialize
   - copy-packages-for-docker
 
 - name: build-docker-images-ubuntu
   image: grafana/drone-grafana-docker:0.3.2
-  commands:
-  - ls bin/*
   settings:
     dry_run: true
     edition: oss
     ubuntu: true
   depends_on:
+  - initialize
   - copy-packages-for-docker
 
 - name: postgres-integration-tests
@@ -2177,23 +2168,21 @@ steps:
 
 - name: build-docker-images
   image: grafana/drone-grafana-docker:0.3.2
-  commands:
-  - ls bin/*
   settings:
     dry_run: true
     edition: enterprise
   depends_on:
+  - initialize
   - copy-packages-for-docker
 
 - name: build-docker-images-ubuntu
   image: grafana/drone-grafana-docker:0.3.2
-  commands:
-  - ls bin/*
   settings:
     dry_run: true
     edition: enterprise
     ubuntu: true
   depends_on:
+  - initialize
   - copy-packages-for-docker
 
 - name: postgres-integration-tests
@@ -2669,23 +2658,21 @@ steps:
 
 - name: build-docker-images
   image: grafana/drone-grafana-docker:0.3.2
-  commands:
-  - ls bin/*
   settings:
     dry_run: true
     edition: oss
   depends_on:
+  - initialize
   - copy-packages-for-docker
 
 - name: build-docker-images-ubuntu
   image: grafana/drone-grafana-docker:0.3.2
-  commands:
-  - ls bin/*
   settings:
     dry_run: true
     edition: oss
     ubuntu: true
   depends_on:
+  - initialize
   - copy-packages-for-docker
 
 - name: postgres-integration-tests
@@ -3031,23 +3018,21 @@ steps:
 
 - name: build-docker-images
   image: grafana/drone-grafana-docker:0.3.2
-  commands:
-  - ls bin/*
   settings:
     dry_run: true
     edition: enterprise
   depends_on:
+  - initialize
   - copy-packages-for-docker
 
 - name: build-docker-images-ubuntu
   image: grafana/drone-grafana-docker:0.3.2
-  commands:
-  - ls bin/*
   settings:
     dry_run: true
     edition: enterprise
     ubuntu: true
   depends_on:
+  - initialize
   - copy-packages-for-docker
 
 - name: postgres-integration-tests
