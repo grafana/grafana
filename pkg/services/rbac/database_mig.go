@@ -54,6 +54,7 @@ func addRBACMigrations(mg *migrator.Migrator) {
 			{Name: "team_id", Type: migrator.DB_BigInt},
 			{Name: "policy_id", Type: migrator.DB_BigInt},
 			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
+			// TODO: looks like we dont't really need this field since policy assignment only can be created or removed
 			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
 		},
 		Indices: []*migrator.Index{
@@ -78,6 +79,7 @@ func addRBACMigrations(mg *migrator.Migrator) {
 			{Name: "user_id", Type: migrator.DB_BigInt},
 			{Name: "policy_id", Type: migrator.DB_BigInt},
 			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
+			// TODO: looks like we dont't really need this field since policy assignment only can be created or removed
 			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
 		},
 		Indices: []*migrator.Index{

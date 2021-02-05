@@ -6,12 +6,13 @@ import (
 )
 
 var (
-	errPolicyNotFound         = fmt.Errorf("could not find policy")
+	errPolicyNotFound         = fmt.Errorf("policy not found")
 	errTeamPolicyAlreadyAdded = fmt.Errorf("policy is already added to this team")
 	errUserPolicyAlreadyAdded = fmt.Errorf("policy is already added to this user")
 	errTeamPolicyNotFound     = fmt.Errorf("team policy not found")
 	errUserPolicyNotFound     = fmt.Errorf("user policy not found")
 	errTeamNotFound           = fmt.Errorf("team not found")
+	errPermissionNotFound     = fmt.Errorf("permission not found")
 )
 
 // Policy is the model for Policy in RBAC.
@@ -115,12 +116,28 @@ type CreatePermissionCommand struct {
 	Result *Permission
 }
 
+type UpdatePermissionCommand struct {
+	Id         int64
+	Permission string
+	Scope      string
+
+	Result *Permission
+}
+
 type DeletePermissionCommand struct {
 	Id int64
 }
 
 type CreatePolicyCommand struct {
 	OrgId       int64
+	Name        string
+	Description string
+
+	Result *Policy
+}
+
+type UpdatePolicyCommand struct {
+	Id          int64
 	Name        string
 	Description string
 

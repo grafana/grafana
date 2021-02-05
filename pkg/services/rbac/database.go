@@ -65,9 +65,38 @@ func (ac *RBACService) CreatePolicy(cmd *CreatePolicyCommand) error {
 	})
 }
 
+func (ac *RBACService) UpdatePolicy(cmd *UpdatePolicyCommand) error {
+	return ac.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		policy := &Policy{
+			Name:        cmd.Name,
+			Description: cmd.Description,
+			Updated:     timeNow(),
+		}
+
+		affectedRows, err := sess.ID(cmd.Id).Update(policy)
+
+		if err != nil {
+			return err
+		}
+
+		if affectedRows == 0 {
+			return errPolicyNotFound
+		}
+
+		cmd.Result = policy
+		return nil
+	})
+}
+
 func (ac *RBACService) DeletePolicy(cmd *DeletePolicyCommand) error {
 	return ac.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		_, err := sess.Exec("DELETE FROM policy WHERE id = ? AND org_id = ?", cmd.Id, cmd.OrgId)
+		// Delete policy's permissions
+		_, err := sess.Exec("DELETE FROM permission WHERE policy_id = ?", cmd.Id)
+		if err != nil {
+			return err
+		}
+
+		_, err = sess.Exec("DELETE FROM policy WHERE id = ? AND org_id = ?", cmd.Id, cmd.OrgId)
 		if err != nil {
 			return err
 		}
@@ -100,6 +129,29 @@ func (ac *RBACService) CreatePermission(cmd *CreatePermissionCommand) error {
 
 		if _, err := sess.Insert(permission); err != nil {
 			return err
+		}
+
+		cmd.Result = permission
+		return nil
+	})
+}
+
+func (ac *RBACService) UpdatePermission(cmd *UpdatePermissionCommand) error {
+	return ac.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		permission := &Permission{
+			Permission: cmd.Permission,
+			Scope:      cmd.Scope,
+			Updated:    timeNow(),
+		}
+
+		affectedRows, err := sess.ID(cmd.Id).Update(permission)
+
+		if err != nil {
+			return err
+		}
+
+		if affectedRows == 0 {
+			return errPermissionNotFound
 		}
 
 		cmd.Result = permission

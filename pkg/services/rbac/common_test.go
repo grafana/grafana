@@ -33,6 +33,29 @@ type permissionTestCase struct {
 	scope      string
 }
 
+func createPolicy(t *testing.T, ac *RBACService, p policyTestCase) int64 {
+	createPolicyCmd := CreatePolicyCommand{
+		OrgId: 1,
+		Name:  p.name,
+	}
+	err := ac.CreatePolicy(&createPolicyCmd)
+	require.NoError(t, err)
+	policyId := createPolicyCmd.Result.Id
+
+	for _, perm := range p.permissions {
+		permCmd := CreatePermissionCommand{
+			PolicyId:   policyId,
+			Permission: perm.permission,
+			Scope:      perm.scope,
+		}
+
+		err := ac.CreatePermission(&permCmd)
+		require.NoError(t, err)
+	}
+
+	return policyId
+}
+
 func createUserWithPolicy(t *testing.T, ac *RBACService, user string, policies []policyTestCase) {
 	createUserCmd := models.CreateUserCommand{
 		Email: user + "@test.com",

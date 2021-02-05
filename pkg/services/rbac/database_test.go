@@ -57,30 +57,29 @@ func TestCreatingPolicy(t *testing.T) {
 
 	testCases := []struct {
 		desc        string
+		policy      policyTestCase
 		inputName   string
-		permissions []struct {
-			permission string
-			scope      string
-		}
+		permissions []permissionTestCase
 
 		expectedError   error
 		expectedUpdated time.Time
 	}{
 		{
-			desc:            "should successfuly create simple policy",
-			inputName:       "a name",
-			permissions:     nil,
+			desc: "should successfuly create simple policy",
+			policy: policyTestCase{
+				name:        "a name",
+				permissions: nil,
+			},
 			expectedUpdated: time.Unix(1, 0).UTC(),
 		},
 		{
-			desc:      "should successfuly create policy with permissions",
-			inputName: "a name",
-			permissions: []struct {
-				permission string
-				scope      string
-			}{
-				{scope: "/api/admin/users", permission: "post"},
-				{scope: "/api/report", permission: "get"},
+			desc: "should successfuly create policy with permissions",
+			policy: policyTestCase{
+				name: "a name",
+				permissions: []permissionTestCase{
+					{scope: "/api/admin/users", permission: "post"},
+					{scope: "/api/report", permission: "get"},
+				},
 			},
 			expectedUpdated: time.Unix(3, 0).UTC(),
 		},
@@ -90,49 +89,123 @@ func TestCreatingPolicy(t *testing.T) {
 			ac := setupTestEnv(t)
 			t.Cleanup(registry.ClearOverrides)
 
-			cmd := CreatePolicyCommand{
-				OrgId: 1,
-				Name:  tc.inputName,
-			}
-
-			err := ac.CreatePolicy(&cmd)
-			if tc.expectedError != nil {
-				require.Error(t, err)
-				return
-			}
-
-			policyId := cmd.Result.Id
-
-			if tc.permissions != nil {
-				for _, p := range tc.permissions {
-					permCmd := CreatePermissionCommand{
-						PolicyId:   policyId,
-						Permission: p.permission,
-						Scope:      p.scope,
-					}
-
-					err := ac.CreatePermission(&permCmd)
-					require.NoError(t, err)
-				}
-			}
+			policyId := createPolicy(t, ac, tc.policy)
 
 			q := GetPolicyQuery{
 				OrgId:    1,
 				PolicyId: policyId,
 			}
 
-			err = ac.GetPolicy(&q)
+			err := ac.GetPolicy(&q)
 			policy := q.Result
 
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedUpdated, policy.Updated)
-			if tc.permissions == nil {
+			if tc.policy.permissions == nil {
 				assert.Empty(t, policy.Permissions)
 			} else {
-				assert.Equal(t, len(tc.permissions), len(policy.Permissions))
+				assert.Equal(t, len(tc.policy.permissions), len(policy.Permissions))
 				for i, p := range policy.Permissions {
-					assert.Equal(t, tc.permissions[i].permission, p.Permission)
-					assert.Equal(t, tc.permissions[i].scope, p.Scope)
+					assert.Equal(t, tc.policy.permissions[i].permission, p.Permission)
+					assert.Equal(t, tc.policy.permissions[i].scope, p.Scope)
+				}
+			}
+		})
+	}
+}
+
+func TestUpdatingPolicy(t *testing.T) {
+	mockTimeNow()
+	defer resetTimeNow()
+
+	testCases := []struct {
+		desc      string
+		policy    policyTestCase
+		newPolicy policyTestCase
+
+		expectedError   error
+		expectedUpdated time.Time
+	}{
+		{
+			desc: "should successfuly update policy name",
+			policy: policyTestCase{
+				name: "a name",
+			},
+			newPolicy: policyTestCase{
+				name: "a different name",
+			},
+			expectedUpdated: time.Unix(1, 0).UTC(),
+		},
+		{
+			desc: "should successfuly create policy with permissions",
+			policy: policyTestCase{
+				name: "a name",
+				permissions: []permissionTestCase{
+					{scope: "/api/admin/users", permission: "post"},
+					{scope: "/api/report", permission: "get"},
+				},
+			},
+			newPolicy: policyTestCase{
+				name: "a different name",
+				permissions: []permissionTestCase{
+					{scope: "/api/admin/users", permission: "put"},
+					{scope: "/api/report", permission: "post"},
+				},
+			},
+			expectedUpdated: time.Unix(3, 0).UTC(),
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			ac := setupTestEnv(t)
+			t.Cleanup(registry.ClearOverrides)
+
+			policyId := createPolicy(t, ac, tc.policy)
+
+			updatePolicyCmd := UpdatePolicyCommand{
+				Id:   policyId,
+				Name: tc.newPolicy.name,
+			}
+
+			err := ac.UpdatePolicy(&updatePolicyCmd)
+			require.NoError(t, err)
+
+			if tc.newPolicy.permissions != nil {
+				// Update permissions
+				getPermissionsQuery := GetPolicyPermissionsQuery{
+					PolicyId: policyId,
+				}
+				err := ac.GetPolicyPermissions(&getPermissionsQuery)
+				require.NoError(t, err)
+				perm := getPermissionsQuery.Result
+				for _, reqP := range tc.newPolicy.permissions {
+					for _, p := range perm {
+						if reqP.scope == p.Scope {
+							if reqP.permission != p.Permission {
+								updatePermCmd := UpdatePermissionCommand{
+									Id:         p.Id,
+									Permission: reqP.permission,
+								}
+								err = ac.UpdatePermission(&updatePermCmd)
+								require.NoError(t, err)
+							}
+						}
+					}
+				}
+
+				// Check updated
+				getUpdatedPermissionsQuery := GetPolicyPermissionsQuery{
+					PolicyId: policyId,
+				}
+				err = ac.GetPolicyPermissions(&getUpdatedPermissionsQuery)
+				require.NoError(t, err)
+				perm = getUpdatedPermissionsQuery.Result
+				for _, reqP := range tc.newPolicy.permissions {
+					for _, p := range perm {
+						if reqP.scope == p.Scope {
+							require.Equal(t, reqP.permission, p.Permission)
+						}
+					}
 				}
 			}
 		})
