@@ -8,7 +8,7 @@ import {
   systemDateFormats,
   TimeZone,
 } from '@grafana/data';
-import { FieldLink, Portal, TooltipContainer, useStyles } from '@grafana/ui';
+import { FieldLinkList, Portal, TooltipContainer, useStyles } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import React, { useCallback, useRef, useState } from 'react';
 
@@ -81,7 +81,7 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({ timeZone, dataFr
                         <td valign="top">{field.name}</td>
                         <td className={styles.valueWrapper}>
                           {field.type === FieldType.time ? timeFormatter(value) : value}
-                          {links && <FieldLink links={links} />}
+                          {links && <FieldLinkList links={links} />}
                         </td>
                       </tr>
                     );

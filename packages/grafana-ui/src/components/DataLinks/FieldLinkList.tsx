@@ -9,7 +9,10 @@ type Props = {
   links: Array<LinkModel<Field>>;
 };
 
-export function FieldLink({ links }: Props) {
+/**
+ * @internal
+ */
+export function FieldLinkList({ links }: Props) {
   const styles = useStyles(getStyles);
 
   if (links.length === 1) {
@@ -25,7 +28,7 @@ export function FieldLink({ links }: Props) {
         return <DataLinkButton key={i} link={link} />;
       })}
       <div className={styles.wrapper}>
-        <p className={styles.externalLinksText}>External links</p>
+        <p className={styles.externalLinksHeading}>External links</p>
         {externalLinks.map((link, i) => (
           <a key={i} href={link.href} target={link.target} className={styles.externalLink}>
             <Icon name="external-link-alt" />
@@ -42,20 +45,24 @@ const getStyles = (theme: GrafanaTheme) => ({
     flex-basis: 150px;
     width: 100px;
   `,
-  externalLinksText: css`
+  externalLinksHeading: css`
     color: ${theme.colors.textWeak};
     font-weight: ${theme.typography.weight.regular};
     font-size: ${theme.typography.size.sm};
     margin: 0;
   `,
   externalLink: css`
-    color: ${theme.colors.text};
+    color: ${theme.colors.linkExternal};
     font-weight: ${theme.typography.weight.regular};
     display: block;
     margin-top: ${theme.spacing.sm};
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+
+    &:hover {
+      text-decoration: underline;
+    }
 
     div {
       margin-right: ${theme.spacing.sm};

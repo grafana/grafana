@@ -7,6 +7,9 @@ type DataLinkButtonProps = {
   buttonProps?: ButtonProps;
 };
 
+/**
+ * @internal
+ */
 export function DataLinkButton({ link, buttonProps }: DataLinkButtonProps) {
   return (
     <a
