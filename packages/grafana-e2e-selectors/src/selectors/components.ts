@@ -122,6 +122,7 @@ export const Components = {
       modeLabel: 'Transform mode label',
       calculationsLabel: 'Transform calculations label',
     },
+    searchInput: 'search transformations',
   },
   PageToolbar: {
     container: () => '.page-toolbar',

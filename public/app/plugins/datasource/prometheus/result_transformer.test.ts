@@ -492,13 +492,9 @@ describe('Prometheus Result Transformer', () => {
         seriesLabels: { __name__: 'test' },
         exemplars: [
           {
-            scrapeTimestamp: 1610449069957,
-            exemplar: {
-              labels: { traceID: '5020b5bc45117f07' },
-              value: 0.002074123,
-              timestamp: 1610449054960,
-              hasTimestamp: true,
-            },
+            timestamp: 1610449069957,
+            labels: { traceID: '5020b5bc45117f07' },
+            value: 0.002074123,
           },
         ],
       },
@@ -521,28 +517,20 @@ describe('Prometheus Result Transformer', () => {
           {
             exemplars: [
               {
-                scrapeTimestamp: 1610449070000,
-                exemplar: {
-                  value: 5,
-                },
+                timestamp: 1610449070000,
+                value: 5,
               },
               {
-                scrapeTimestamp: 1610449070000,
-                exemplar: {
-                  value: 1,
-                },
+                timestamp: 1610449070000,
+                value: 1,
               },
               {
-                scrapeTimestamp: 1610449070500,
-                exemplar: {
-                  value: 13,
-                },
+                timestamp: 1610449070500,
+                value: 13,
               },
               {
-                scrapeTimestamp: 1610449070300,
-                exemplar: {
-                  value: 20,
-                },
+                timestamp: 1610449070300,
+                value: 20,
               },
             ],
           },

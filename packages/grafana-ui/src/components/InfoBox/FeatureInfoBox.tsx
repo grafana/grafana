@@ -5,7 +5,7 @@ import { stylesFactory, useStyles } from '../../themes';
 import { Badge, BadgeProps } from '../Badge/Badge';
 import { css } from 'emotion';
 
-export interface FeatureInfoBoxProps extends Omit<InfoBoxProps, 'branded' | 'title' | 'urlTitle'> {
+export interface FeatureInfoBoxProps extends Omit<InfoBoxProps, 'title' | 'urlTitle'> {
   title: string;
   featureState?: FeatureState;
 }

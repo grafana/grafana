@@ -20,4 +20,4 @@ This topic explains how you can use alert query labels in alert notifications.
 1. Refer to the alert query labels in the alert rule name and/or alert notification message field by using the `${Label}` syntax.    
 1. Click **Save** in the upper right corner to save the alert rule and the dashboard.
 
-![Alerting notification template](/img/docs/alerting/notification_template.png)
+![Alerting notification template](/img/docs/alerting/alert-notification-template-7-4.png)

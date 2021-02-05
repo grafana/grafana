@@ -1,6 +1,15 @@
 import { dateTime, TimeRange } from '@grafana/data';
 import { initTemplateSrv } from '../../../test/helpers/initTemplateSrv';
 import { silenceConsoleOutput } from '../../../test/core/utils/silenceConsoleOutput';
+import { VariableAdapter, variableAdapters } from '../variables/adapters';
+import { createQueryVariableAdapter } from '../variables/query/adapter';
+import { createAdHocVariableAdapter } from '../variables/adhoc/adapter';
+import { VariableModel } from '../variables/types';
+
+variableAdapters.setInit(() => [
+  (createQueryVariableAdapter() as unknown) as VariableAdapter<VariableModel>,
+  (createAdHocVariableAdapter() as unknown) as VariableAdapter<VariableModel>,
+]);
 
 describe('templateSrv', () => {
   silenceConsoleOutput();
@@ -225,6 +234,11 @@ describe('templateSrv', () => {
       const target = _templateSrv.replace('${test:pipe},$test', {}, 'glob');
       expect(target).toBe('value1|value2,{value1,value2}');
     });
+
+    it('should replace ${test:queryparam} with correct query parameter', () => {
+      const target = _templateSrv.replace('${test:queryparam}', {});
+      expect(target).toBe('var-test=All');
+    });
   });
 
   describe('variable with all option and custom value', () => {
@@ -263,6 +277,11 @@ describe('templateSrv', () => {
     it('should not escape custom all value', () => {
       const target = _templateSrv.replace('this.$test', {}, 'regex');
       expect(target).toBe('this.*');
+    });
+
+    it('should replace ${test:queryparam} with correct query parameter', () => {
+      const target = _templateSrv.replace('${test:queryparam}', {});
+      expect(target).toBe('var-test=All');
     });
   });
 
@@ -638,6 +657,45 @@ describe('templateSrv', () => {
       });
 
       expect(passedValue).toBe('hello');
+    });
+  });
+
+  describe('queryparam', () => {
+    beforeEach(() => {
+      _templateSrv = initTemplateSrv([
+        {
+          type: 'query',
+          name: 'single',
+          current: { value: 'value1' },
+          options: [{ value: 'value1' }, { value: 'value2' }],
+        },
+        {
+          type: 'query',
+          name: 'multi',
+          current: { value: ['value1', 'value2'] },
+          options: [{ value: 'value1' }, { value: 'value2' }],
+        },
+      ]);
+    });
+
+    it('query variable with single value with queryparam format should return correct queryparam', () => {
+      const target = _templateSrv.replace('${single:queryparam}', {});
+      expect(target).toBe('var-single=value1');
+    });
+
+    it('query variable with single value and queryparam format should return correct queryparam', () => {
+      const target = _templateSrv.replace('${single}', {}, 'queryparam');
+      expect(target).toBe('var-single=value1');
+    });
+
+    it('query variable with multi value with queryparam format should return correct queryparam', () => {
+      const target = _templateSrv.replace('${multi:queryparam}', {});
+      expect(target).toBe('var-multi=value1&var-multi=value2');
+    });
+
+    it('query variable with multi value and queryparam format should return correct queryparam', () => {
+      const target = _templateSrv.replace('${multi}', {}, 'queryparam');
+      expect(target).toBe('var-multi=value1&var-multi=value2');
     });
   });
 });
