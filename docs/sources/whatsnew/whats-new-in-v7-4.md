@@ -3,6 +3,7 @@ title = "What's New in Grafana v7.4"
 description = "Feature and improvement highlights for Grafana v7.4"
 keywords = ["grafana", "new", "documentation", "7.4", "release notes"]
 weight = -31
+aliases = ["/docs/grafana/latest/guides/whats-new-in-v7-4/"]
 [_build]
 list = false
 +++
@@ -161,7 +162,7 @@ Google Cloud Monitoring data source ships with pre-configured dashboards for som
 
 {{< docs-imagebox img="/img/docs/google-cloud-monitoring/curated-dashboards-7-4.png" max-width= "650px" >}}
 
-If you want to customize a dashboard, we recommend that you save it under a different name.  Otherwise the dashboard will be overwritten when a new version of the dashboard is released.
+If you want to customize a dashboard, we recommend that you save it under a different name. Otherwise the dashboard will be overwritten when a new version of the dashboard is released.
 
 For more information, refer to the [Google Cloud Monitoring docs]({{< relref "../datasources/google-cloud-monitoring/_index.md/#out-of-the-box-dashboards" >}}).
 
