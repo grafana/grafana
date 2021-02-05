@@ -152,13 +152,14 @@ func (ac *RBACService) GetUserPolicies(query *GetUserPoliciesQuery) error {
 			policy.updated
 				FROM policy
 				LEFT JOIN user_policy AS up ON policy.id = up.policy_id
+					AND up.user_id = ?
 				LEFT JOIN team_member as tm ON tm.user_id = ?
 				LEFT JOIN team_policy as tp ON policy.id = tp.policy_id
 					AND tp.team_id = tm.team_id
 				WHERE policy.org_id = ?
 		`
 
-		err := sess.SQL(q, query.UserId, query.OrgId).Find(&query.Result)
+		err := sess.SQL(q, query.UserId, query.UserId, query.OrgId).Find(&query.Result)
 		return err
 	})
 }
@@ -175,7 +176,7 @@ func (ac *RBACService) GetUserPermissions(query *GetUserPermissionsQuery) error 
 			permission.updated,
 			permission.created
 				FROM permission
-				LEFT JOIN policy ON policy.id = permission.policy_id
+				INNER JOIN policy ON policy.id = permission.policy_id
 				LEFT JOIN user_policy AS up ON policy.id = up.policy_id
 					AND up.user_id = ?
 				LEFT JOIN team_member as tm ON tm.user_id = ?
