@@ -1,4 +1,44 @@
 
+<!-- 7.4.0 START -->
+
+# 7.4.0 (2021-02-04)
+
+### Features and enhancements
+
+* **CDN**: Adds support for serving assets over a CDN. [#30691](https://github.com/grafana/grafana/pull/30691), [@torkelo](https://github.com/torkelo)
+* **DashboardLinks**: Support variable expression in to tooltip - Issue #30409. [#30569](https://github.com/grafana/grafana/pull/30569), [@huynhsamha](https://github.com/huynhsamha)
+* **Explore**: Set Explore's GraphNG to be connected. [#30707](https://github.com/grafana/grafana/pull/30707), [@ivanahuckova](https://github.com/ivanahuckova)
+* **InfluxDB**: Add http configuration when selecting InfluxDB v2 flavor. [#30827](https://github.com/grafana/grafana/pull/30827), [@aocenas](https://github.com/aocenas)
+* **InfluxDB**: Show all datapoints for dynamically windowed flux query. [#30688](https://github.com/grafana/grafana/pull/30688), [@davkal](https://github.com/davkal)
+* **Loki**: Improve live tailing errors. [#30517](https://github.com/grafana/grafana/pull/30517), [@ivanahuckova](https://github.com/ivanahuckova)
+
+### Bug fixes
+
+* **Admin**: Fixes so form values are filled in from backend. [#30544](https://github.com/grafana/grafana/pull/30544), [@hugohaggmark](https://github.com/hugohaggmark)
+* **Admin**: Fixes so whole org drop down is visible when adding users to org. [#30481](https://github.com/grafana/grafana/pull/30481), [@hugohaggmark](https://github.com/hugohaggmark)
+* **Alerting**: Hides threshold handle for percentual thresholds. [#30431](https://github.com/grafana/grafana/pull/30431), [@hugohaggmark](https://github.com/hugohaggmark)
+* **CloudWatch**: Prevent field config from being overwritten. [#30437](https://github.com/grafana/grafana/pull/30437), [@sunker](https://github.com/sunker)
+* **Decimals**: Big Improvements to auto decimals and fixes to auto decimals bug found in 7.4-beta1. [#30519](https://github.com/grafana/grafana/pull/30519), [@torkelo](https://github.com/torkelo)
+* **Explore**: Fix jumpy live tailing. [#30650](https://github.com/grafana/grafana/pull/30650), [@ivanahuckova](https://github.com/ivanahuckova)
+* **Explore**: Fix loading visualisation on the top of the new time series panel. [#30553](https://github.com/grafana/grafana/pull/30553), [@ivanahuckova](https://github.com/ivanahuckova)
+* **Footer**: Fixes layout issue in footer. [#30443](https://github.com/grafana/grafana/pull/30443), [@torkelo](https://github.com/torkelo)
+* **Graph**: Fixes so only users with correct permissions can add annotations. [#30419](https://github.com/grafana/grafana/pull/30419), [@hugohaggmark](https://github.com/hugohaggmark)
+* **Mobile**: Fixes issue scrolling on mobile in chrome. [#30746](https://github.com/grafana/grafana/pull/30746), [@torkelo](https://github.com/torkelo)
+* **PanelEdit**: Trigger refresh when changing data source. [#30744](https://github.com/grafana/grafana/pull/30744), [@torkelo](https://github.com/torkelo)
+* **Panels**: Fixes so panels are refreshed when scrolling past them fast. [#30784](https://github.com/grafana/grafana/pull/30784), [@hugohaggmark](https://github.com/hugohaggmark)
+* **Prometheus**: Fix show query instead of Value if no __name__ and metric. [#30511](https://github.com/grafana/grafana/pull/30511), [@zoltanbedi](https://github.com/zoltanbedi)
+* **TimeSeriesPanel**: Fixes default value for Gradient mode. [#30484](https://github.com/grafana/grafana/pull/30484), [@torkelo](https://github.com/torkelo)
+* **Variables**: Clears drop down state when leaving dashboard. [#30810](https://github.com/grafana/grafana/pull/30810), [@hugohaggmark](https://github.com/hugohaggmark)
+* **Variables**: Fixes display value when using capture groups in regex. [#30636](https://github.com/grafana/grafana/pull/30636), [@hugohaggmark](https://github.com/hugohaggmark)
+* **Variables**: Fixes so queries work for numbers values too. [#30602](https://github.com/grafana/grafana/pull/30602), [@hugohaggmark](https://github.com/hugohaggmark)
+* **Variables**: Fixes so text format will show All instead of custom all value. [#30730](https://github.com/grafana/grafana/pull/30730), [@hugohaggmark](https://github.com/hugohaggmark)
+
+### Plugin development fixes & changes
+
+* **Plugins**: Fix failing plugin builds because of wrong internal import. [#30439](https://github.com/grafana/grafana/pull/30439), [@aocenas](https://github.com/aocenas)
+
+<!-- 7.4.0 END -->
+
 <!-- 7.4.0-beta1 START -->
 
 # 7.4.0-beta1 (2021-01-20)

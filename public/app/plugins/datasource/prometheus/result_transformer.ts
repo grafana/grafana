@@ -78,9 +78,9 @@ export function transform(
     prometheusResult.forEach((exemplarData) => {
       const data = exemplarData.exemplars.map((exemplar) => {
         return {
-          [TIME_SERIES_TIME_FIELD_NAME]: exemplar.scrapeTimestamp,
-          [TIME_SERIES_VALUE_FIELD_NAME]: exemplar.exemplar.value,
-          ...exemplar.exemplar.labels,
+          [TIME_SERIES_TIME_FIELD_NAME]: exemplar.timestamp,
+          [TIME_SERIES_VALUE_FIELD_NAME]: exemplar.value,
+          ...exemplar.labels,
           ...exemplarData.seriesLabels,
         };
       });

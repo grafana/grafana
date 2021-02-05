@@ -79,6 +79,7 @@ const getStyles = (theme: GrafanaTheme, severity: AlertVariant, outline: boolean
 
   return {
     alert: css`
+      flex-grow: 1;
       padding: 15px 20px;
       margin-bottom: ${theme.spacing.xs};
       position: relative;
