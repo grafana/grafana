@@ -6,7 +6,7 @@ import { Themeable } from '../../types/theme';
 import { warnAboutColorPickerPropsDeprecation } from './warnAboutColorPickerPropsDeprecation';
 import { getColorForTheme } from '@grafana/data';
 import { css, cx } from 'emotion';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme, GrafanaThemeType } from '@grafana/data';
 import { stylesFactory, withTheme } from '../../themes';
 
 export type ColorPickerChangeHandler = (color: string) => void;
@@ -121,7 +121,7 @@ class UnThemedColorPickerPopover<T extends CustomPickersDescriptor> extends Reac
       <div
         className={cx(
           styles.colorPickerPopover,
-          theme.type === 'light' ? styles.colorPickerPopoverLight : styles.colorPickerPopoverDark
+          theme.type === GrafanaThemeType.Light ? styles.colorPickerPopoverLight : styles.colorPickerPopoverDark
         )}
       >
         <div className={styles.colorPickerPopoverTabs}>

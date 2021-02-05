@@ -3,9 +3,8 @@ import React, { FunctionComponent } from 'react';
 import { ColorPickerPopover, ColorPickerProps } from './ColorPickerPopover';
 import { PopoverContentProps } from '../Tooltip/Tooltip';
 import { Switch } from '../Forms/Legacy/Switch/Switch';
-import { withTheme } from '../../themes/ThemeContext';
 import { css } from 'emotion';
-import { useStyles } from '../../themes';
+import { withTheme, useStyles } from '../../themes';
 
 export interface SeriesColorPickerPopoverProps extends ColorPickerProps, PopoverContentProps {
   yaxis?: number;
