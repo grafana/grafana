@@ -11,6 +11,7 @@ import { getAlertRulesAsync, togglePauseAlertRule } from './state/actions';
 import { getAlertRuleItems, getSearchQuery } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { NavModel, SelectableValue } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { setSearchQuery } from './state/reducers';
 import { Button, LinkButton, Select, VerticalGroup } from '@grafana/ui';
 import { AlertDefinitionItem } from './components/AlertDefinitionItem';
@@ -118,9 +119,11 @@ export class AlertRuleList extends PureComponent<Props, any> {
               </div>
             </div>
             <div className="page-action-bar__spacer" />
-            <LinkButton variant="primary" href="alerting/new">
-              Add NG Alert
-            </LinkButton>
+            {config.featureToggles.ngalert && (
+              <LinkButton variant="primary" href="alerting/new">
+                Add NG Alert
+              </LinkButton>
+            )}
             <Button variant="secondary" onClick={this.onOpenHowTo}>
               How to add an alert
             </Button>
