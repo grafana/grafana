@@ -763,6 +763,9 @@ def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publis
     return {
         'name': 'build-docker-images' + sfx,
         'image': grafana_docker_image,
+        'commands': [            
+            'ls bin/*',
+        ],
         'depends_on': [
             'copy-packages-for-docker',
         ],
