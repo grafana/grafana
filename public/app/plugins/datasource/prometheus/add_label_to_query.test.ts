@@ -74,8 +74,26 @@ describe('addLabelToQuery()', () => {
     expect(addLabelToQuery('{job="grafana"} |= "foo-bar"', 'filename', 'test.txt', undefined, true)).toBe(
       '{filename="test.txt",job="grafana"} |= "foo-bar"'
     );
-    expect(addLabelToQuery('{job="grafana"} |= "foo-bar"', 'filename', 'test.txt')).toBe(
-      '{filename="test.txt",job="grafana"} |= "foo{filename="test.txt"}-bar"'
+  });
+
+  it('should add labels to metrics with logical operators', () => {
+    expect(addLabelToQuery('go_info or grafana_info', 'bar', 'baz')).toBe(
+      'go_info{bar="baz"} or grafana_info{bar="baz"}'
+    );
+    expect(addLabelToQuery('go_info and grafana_info', 'bar', 'baz')).toBe(
+      'go_info{bar="baz"} and grafana_info{bar="baz"}'
+    );
+  });
+
+  it('should not add ad-hoc filter to template variables', () => {
+    expect(addLabelToQuery('sum(rate({job="grafana"}[2m])) by (valueName $variable)', 'bar', 'baz')).toBe(
+      'sum(rate({bar="baz",job="grafana"}[2m])) by (valueName $variable)'
+    );
+  });
+
+  it('should not add ad-hoc filter to range', () => {
+    expect(addLabelToQuery('avg(rate((my_metric{instance="foo"} > 0)[3h:])) by (device)', 'bar', 'baz')).toBe(
+      'avg(rate((my_metric{bar="baz",instance="foo"} > 0)[3h:])) by (device)'
     );
   });
 });

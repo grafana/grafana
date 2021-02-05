@@ -1,10 +1,12 @@
 import _ from 'lodash';
 
-const keywords = 'by|without|on|ignoring|group_left|group_right|bool|or|and|unless';
+const keywords = 'by|without|on|ignoring|group_left|group_right|bool';
+const logicalOperators = 'or|and|unless';
 
 // Duplicate from mode-prometheus.js, which can't be used in tests due to global ace not being loaded.
 const builtInWords = [
   keywords,
+  logicalOperators,
   'count|count_values|min|max|avg|sum|stddev|stdvar|bottomk|topk|quantile',
   'true|false|null|__name__|job',
   'abs|absent|ceil|changes|clamp_max|clamp_min|count_scalar|day_of_month|day_of_week|days_in_month|delta|deriv',
@@ -43,6 +45,7 @@ export function addLabelToQuery(
     // Check for words that start with " which means that they are not metrics
     const startsWithQuote = query[offset - 1] === '"';
     const isTemplateVariable = query[offset - 1] === '$';
+    const isTimeUnit = ['s', 'm', 'h', 'd', 'w'].includes(word) && Boolean(Number(query[offset - 1]));
 
     previousWord = word;
 
@@ -56,6 +59,7 @@ export function addLabelToQuery(
       !previousWordIsKeyWord &&
       !startsWithQuote &&
       !isTemplateVariable &&
+      !isTimeUnit &&
       builtInWords.indexOf(word) === -1
     ) {
       return `${word}{}`;
