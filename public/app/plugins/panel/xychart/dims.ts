@@ -1,6 +1,8 @@
 import { DataFrame, Field, FieldMatcher, FieldType, getFieldDisplayName } from '@grafana/data';
-import { XYFieldMatchers } from '@grafana/ui/src/components/GraphNG/GraphNG';
 import { XYDimensionConfig } from './types';
+
+// TODO: fix import
+import { XYFieldMatchers } from '@grafana/ui/src/components/GraphNG/types';
 
 export enum DimensionError {
   NoData,
