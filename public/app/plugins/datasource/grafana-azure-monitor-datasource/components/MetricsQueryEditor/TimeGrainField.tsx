@@ -15,6 +15,7 @@ const TimeGrainField: React.FC<TimeGrainFieldProps> = ({ query, onChange, timeGr
         value={findOption(timeGrainOptions, query.azureMonitor.timeGrain)}
         onChange={(v) => v.value && onChange('timeGrain', v.value)}
         options={timeGrainOptions}
+        width={38}
       />
     </Field>
   );

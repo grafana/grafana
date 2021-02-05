@@ -48,7 +48,7 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({ query, datasour
   return (
     <>
       <InlineField label="Subscription" labelWidth={labelWidth}>
-        <Select value={opt(query.subscription)} onChange={noop} options={[]} />
+        <Select value={opt(query.subscription)} onChange={noop} options={[]} width={38} />
       </InlineField>
 
       <ResourceGroupsField
@@ -67,6 +67,7 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({ query, datasour
         onChange={onFieldChange}
       />
 
+      {/* TODO: Can we hide this field if there's only one option, and its the same as the namespace? */}
       <MetricNamespaceField
         query={query}
         datasource={datasource}

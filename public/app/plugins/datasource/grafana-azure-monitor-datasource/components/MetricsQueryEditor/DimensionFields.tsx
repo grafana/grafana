@@ -54,6 +54,7 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ query, dimensionOptio
               value={findOption(dimensionOptions, filter.dimension)}
               options={dimensionOptions}
               onChange={(v) => onFieldChange(index, 'dimension', v.value ?? '')}
+              width={38}
             />
             <InlineLabel aria-label="equals">==</InlineLabel>
             <Input placeholder="" value={filter.filter} onChange={(ev) => onFilterInputChange(index, ev)} />

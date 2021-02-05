@@ -42,6 +42,7 @@ const MetricNamespaceField: React.FC<MetricsQueryEditorFieldProps> = ({
         value={findOption(options, query.azureMonitor.metricNamespace)}
         onChange={(v) => v.value && onChange('metricNamespace', v.value)}
         options={options}
+        width={38}
       />
     </Field>
   );

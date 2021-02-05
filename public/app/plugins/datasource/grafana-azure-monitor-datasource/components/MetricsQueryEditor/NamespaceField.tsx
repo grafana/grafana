@@ -27,6 +27,7 @@ const NamespaceField: React.FC<MetricsQueryEditorFieldProps> = ({ query, datasou
         value={findOption(options, query.azureMonitor.metricDefinition)}
         onChange={(v) => v.value && onChange('metricDefinition', v.value)}
         options={options}
+        width={38}
       />
     </Field>
   );

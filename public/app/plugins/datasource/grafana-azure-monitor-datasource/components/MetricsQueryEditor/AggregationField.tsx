@@ -15,6 +15,7 @@ const AggregationField: React.FC<AggregationFieldProps> = ({ query, onChange, ag
         value={findOption(aggregationOptions, query.azureMonitor.aggregation)}
         onChange={(v) => v.value && onChange('aggregation', v.value)}
         options={aggregationOptions}
+        width={38}
       />
     </Field>
   );

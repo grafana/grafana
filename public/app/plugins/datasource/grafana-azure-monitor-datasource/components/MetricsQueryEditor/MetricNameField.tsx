@@ -47,6 +47,7 @@ const MetricName: React.FC<MetricsQueryEditorFieldProps> = ({ query, datasource,
         value={findOption(options, query.azureMonitor.metricName)}
         onChange={(v) => v.value && onChange('metricName', v.value)}
         options={options}
+        width={38}
       />
     </Field>
   );

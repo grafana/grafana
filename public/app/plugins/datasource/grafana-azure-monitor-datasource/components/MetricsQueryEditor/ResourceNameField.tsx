@@ -27,6 +27,7 @@ const ResourceNameField: React.FC<MetricsQueryEditorFieldProps> = ({ query, data
         value={findOption(options, query.azureMonitor.resourceName)}
         onChange={(v) => v.value && onChange('resourceName', v.value)}
         options={options}
+        width={38}
       />
     </Field>
   );

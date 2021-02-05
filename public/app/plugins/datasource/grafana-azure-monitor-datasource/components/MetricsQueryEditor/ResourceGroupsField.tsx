@@ -32,6 +32,7 @@ const ResourceGroupsField: React.FC<MetricsQueryEditorFieldProps> = ({
         value={findOption(options, query.azureMonitor.resourceGroup)}
         onChange={(v) => v.value && onChange('resourceGroup', v.value)}
         options={options}
+        width={38}
       />
     </Field>
   );
