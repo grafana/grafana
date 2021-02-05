@@ -106,6 +106,7 @@ export class PanelPlugin<
   onPanelMigration?: PanelMigrationHandler<TOptions>;
   onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
   noPadding?: boolean;
+  editBanner?: ComponentType | null;
 
   /**
    * Legacy angular ctrl.  If this exists it will be used instead of the panel
@@ -191,6 +192,14 @@ export class PanelPlugin<
   setEditor(editor: ComponentClass<PanelEditorProps<TOptions>>) {
     deprecationWarning('PanelPlugin', 'setEditor', 'setPanelOptions');
     this.editor = editor;
+    return this;
+  }
+
+  /**
+   * Add a component to the top of the panel editor
+   */
+  setEditBanner(editBanner: ComponentType) {
+    this.editBanner = editBanner;
     return this;
   }
 

@@ -8,10 +8,11 @@ import { css } from 'emotion';
 export interface FeatureInfoBoxProps extends Omit<InfoBoxProps, 'title' | 'urlTitle'> {
   title: string;
   featureState?: FeatureState;
+  urlTitle?: string;
 }
 
 export const FeatureInfoBox = React.memo(
-  React.forwardRef<HTMLDivElement, FeatureInfoBoxProps>(({ title, featureState, ...otherProps }, ref) => {
+  React.forwardRef<HTMLDivElement, FeatureInfoBoxProps>(({ title, featureState, urlTitle, ...otherProps }, ref) => {
     const styles = useStyles(getFeatureInfoBoxStyles);
 
     const titleEl = featureState ? (
@@ -24,7 +25,7 @@ export const FeatureInfoBox = React.memo(
     ) : (
       <h3>{title}</h3>
     );
-    return <InfoBox branded title={titleEl} urlTitle="Read documentation" ref={ref} {...otherProps} />;
+    return <InfoBox branded title={titleEl} urlTitle={urlTitle ?? 'Read documentation'} ref={ref} {...otherProps} />;
   })
 );
 FeatureInfoBox.displayName = 'FeatureInfoBox';
