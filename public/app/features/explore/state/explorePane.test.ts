@@ -111,7 +111,7 @@ describe('refreshExplore', () => {
     expect(store.getState().explore[ExploreId.left].datasourceInstance?.name).toBe('newDs');
   });
 
-  it('should change change and run new queries from the url', async () => {
+  it('should change and run new queries from the URL', async () => {
     const { store, datasources } = setup();
     datasources.someDs.query.mockReturnValueOnce(of({}));
     await store.dispatch(
