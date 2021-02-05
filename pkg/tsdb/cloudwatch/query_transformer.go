@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
@@ -135,6 +137,89 @@ func (e *cloudWatchExecutor) transformQueryResponsesToQueryResult(cloudwatchResp
 
 		queryResult.Dataframes = tsdb.NewDecodedDataFrames(frames)
 		results[refID] = queryResult
+	}
+
+	return results, nil
+}
+
+func (e *cloudWatchExecutor) transformQueryResponsesToQueryResultV2(cloudwatchResponses []*cloudwatchResponse, requestQueries []*requestQuery, startTime time.Time, endTime time.Time) (map[string]*backend.DataResponse, error) {
+	responsesByRefID := make(map[string][]*cloudwatchResponse)
+	refIDs := sort.StringSlice{}
+	for _, res := range cloudwatchResponses {
+		refIDs = append(refIDs, res.RefId)
+		responsesByRefID[res.RefId] = append(responsesByRefID[res.RefId], res)
+	}
+	// Ensure stable results
+	refIDs.Sort()
+
+	results := make(map[string]*backend.DataResponse)
+	for _, refID := range refIDs {
+		responses := responsesByRefID[refID]
+		queryResult := backend.DataResponse{}
+		frames := make(data.Frames, 0, len(responses))
+
+		requestExceededMaxLimit := false
+		partialData := false
+		var executedQueries []executedQuery
+
+		for _, response := range responses {
+			frames = append(frames, response.DataFrames...)
+			requestExceededMaxLimit = requestExceededMaxLimit || response.RequestExceededMaxLimit
+			partialData = partialData || response.PartialData
+			executedQueries = append(executedQueries, executedQuery{
+				Expression: response.Expression,
+				ID:         response.Id,
+				Period:     response.Period,
+			})
+		}
+
+		sort.Slice(frames, func(i, j int) bool {
+			return frames[i].Name < frames[j].Name
+		})
+
+		if requestExceededMaxLimit {
+			queryResult.Error = fmt.Errorf("cloudwatch GetMetricData error: Maximum number of allowed metrics exceeded. Your search may have been limited")
+		}
+		if partialData {
+			queryResult.Error = fmt.Errorf("cloudwatch GetMetricData error: Too many datapoints requested - your search has been limited. Please try to reduce the time range")
+		}
+
+		eq, err := json.Marshal(executedQueries)
+		if err != nil {
+			return nil, fmt.Errorf("could not marshal executedString struct: %w", err)
+		}
+
+		link, err := buildDeepLink(refID, requestQueries, executedQueries, startTime, endTime)
+		if err != nil {
+			return nil, fmt.Errorf("could not build deep link: %w", err)
+		}
+
+		createDataLinks := func(link string) []data.DataLink {
+			return []data.DataLink{{
+				Title:       "View in CloudWatch console",
+				TargetBlank: true,
+				URL:         link,
+			}}
+		}
+
+		for _, frame := range frames {
+			frame.Meta = &data.FrameMeta{
+				ExecutedQueryString: string(eq),
+			}
+
+			if link == "" || len(frame.Fields) < 2 {
+				continue
+			}
+
+			if frame.Fields[1].Config == nil {
+				frame.Fields[1].Config = &data.FieldConfig{}
+			}
+
+			frame.Fields[1].Config.Links = createDataLinks(link)
+		}
+
+		queryResult.Frames = frames
+		results[refID] = &queryResult
 	}
 
 	return results, nil

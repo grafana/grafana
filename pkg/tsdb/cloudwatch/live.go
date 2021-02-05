@@ -15,11 +15,11 @@ import (
 	"github.com/aws/aws-sdk-go/service/servicequotas/servicequotasiface"
 	"github.com/centrifugal/centrifuge"
 	"github.com/google/uuid"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/util/retryer"
 	"golang.org/x/sync/errgroup"
 )
@@ -108,23 +108,24 @@ func (r *logQueryRunner) publishResults(channelName string) error {
 
 // executeLiveLogQuery executes a CloudWatch Logs query with live updates over WebSocket.
 // A WebSocket channel is created, which goroutines send responses over.
-func (e *cloudWatchExecutor) executeLiveLogQuery(ctx context.Context, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
+func (e *cloudWatchExecutor) executeLiveLogQueryV2(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	responseChannelName := uuid.New().String()
-	responseChannel := make(chan *tsdb.Response)
+	responseChannel := make(chan *backend.QueryDataResponse)
 	if err := e.logsService.AddResponseChannel("plugin/cloudwatch/"+responseChannelName, responseChannel); err != nil {
 		close(responseChannel)
 		return nil, err
 	}
 
-	go e.sendLiveQueriesToChannel(queryContext, responseChannel)
+	go e.sendLiveQueriesToChannelV2(req, responseChannel)
 
-	response := &tsdb.Response{
-		Results: map[string]*tsdb.QueryResult{
+	response := &backend.QueryDataResponse{
+		Responses: backend.Responses{
 			"A": {
-				RefId: "A",
-				Meta: simplejson.NewFromAny(map[string]interface{}{
-					"channelName": responseChannelName,
-				}),
+				Frames: data.Frames{data.NewFrame("A").SetMeta(&data.FrameMeta{
+					Custom: map[string]interface{}{
+						"channelName": responseChannelName,
+					},
+				})},
 			},
 		},
 	}
@@ -132,17 +133,17 @@ func (e *cloudWatchExecutor) executeLiveLogQuery(ctx context.Context, queryConte
 	return response, nil
 }
 
-func (e *cloudWatchExecutor) sendLiveQueriesToChannel(queryContext *tsdb.TsdbQuery, responseChannel chan *tsdb.Response) {
+func (e *cloudWatchExecutor) sendLiveQueriesToChannelV2(req *backend.QueryDataRequest, responseChannel chan *backend.QueryDataResponse) {
 	defer close(responseChannel)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
 	defer cancel()
 	eg, ectx := errgroup.WithContext(ctx)
 
-	for _, query := range queryContext.Queries {
+	for _, query := range req.Queries {
 		query := query
 		eg.Go(func() error {
-			return e.startLiveQuery(ectx, responseChannel, query, queryContext.TimeRange)
+			return e.startLiveQueryV2(ectx, responseChannel, query, query.TimeRange)
 		})
 	}
 
@@ -208,10 +209,14 @@ func (e *cloudWatchExecutor) fetchConcurrentQueriesQuota(region string) int {
 	return defaultConcurrentQueries
 }
 
-func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel chan *tsdb.Response, query *tsdb.Query, timeRange *tsdb.TimeRange) error {
+func (e *cloudWatchExecutor) startLiveQueryV2(ctx context.Context, responseChannel chan *backend.QueryDataResponse, query backend.DataQuery, timeRange backend.TimeRange) error {
+	model, err := simplejson.NewJson(query.JSON)
+	if err != nil {
+		return err
+	}
+
 	defaultRegion := e.DataSource.JsonData.Get("defaultRegion").MustString()
-	parameters := query.Model
-	region := parameters.Get("region").MustString(defaultRegion)
+	region := model.Get("region").MustString(defaultRegion)
 	logsClient, err := e.getCWLogsClient(region)
 	if err != nil {
 		return err
@@ -226,7 +231,7 @@ func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel
 	queue <- true
 	defer func() { <-queue }()
 
-	startQueryOutput, err := e.executeStartQuery(ctx, logsClient, parameters, timeRange)
+	startQueryOutput, err := e.executeStartQueryV2(ctx, logsClient, model, timeRange)
 	if err != nil {
 		return err
 	}
@@ -250,8 +255,8 @@ func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel
 			return retryer.FuncError, err
 		}
 
-		dataFrame.Name = query.RefId
-		dataFrame.RefID = query.RefId
+		dataFrame.Name = query.RefID
+		dataFrame.RefID = query.RefID
 		var dataFrames data.Frames
 
 		// When a query of the form "stats ... by ..." is made, we want to return
@@ -261,7 +266,7 @@ func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel
 		// Because of this, if the frontend sees that a "stats ... by ..." query is being made
 		// the "statsGroups" parameter is sent along with the query to the backend so that we
 		// can correctly group the CloudWatch logs response.
-		statsGroups := parameters.Get("statsGroups").MustStringArray()
+		statsGroups := model.Get("statsGroups").MustStringArray()
 		if len(statsGroups) > 0 && len(dataFrame.Fields) > 0 {
 			groupedFrames, err := groupResults(dataFrame, statsGroups)
 			if err != nil {
@@ -281,11 +286,10 @@ func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel
 			dataFrames = data.Frames{dataFrame}
 		}
 
-		responseChannel <- &tsdb.Response{
-			Results: map[string]*tsdb.QueryResult{
-				query.RefId: {
-					RefId:      query.RefId,
-					Dataframes: tsdb.NewDecodedDataFrames(dataFrames),
+		responseChannel <- &backend.QueryDataResponse{
+			Responses: backend.Responses{
+				query.RefID: {
+					Frames: dataFrames,
 				},
 			},
 		}

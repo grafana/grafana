@@ -32,7 +32,9 @@ import {
   LogRowModel,
   rangeUtil,
   ScopedVars,
+  TableData,
   TimeRange,
+  toLegacyResponseData,
 } from '@grafana/data';
 
 import { notifyApp } from 'app/core/actions';
@@ -65,7 +67,7 @@ import { AwsUrl, encodeUrl } from './aws_url';
 import { increasingInterval } from './utils/rxjs/increasingInterval';
 import config from 'app/core/config';
 
-const TSDB_QUERY_ENDPOINT = '/api/tsdb/query';
+const TSDB_QUERY_ENDPOINT = '/api/ds/query';
 
 // Constants also defined in tsdb/cloudwatch/cloudwatch.go
 const LOG_IDENTIFIER_INTERNAL = '__log__grafana_internal__';
@@ -590,6 +592,17 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     }));
   }
 
+  transformSuggestDataFromDataframes(suggestData: TSDBResponse): Array<{ text: any; label: any; value: any }> {
+    const frames = toDataQueryResponse({ data: suggestData }).data as DataFrame[];
+    const table = toLegacyResponseData(frames[0]) as TableData;
+
+    return table.rows.map(([text, value]) => ({
+      text,
+      value,
+      label: value,
+    }));
+  }
+
   doMetricQueryRequest(subtype: string, parameters: any): Promise<Array<{ text: any; label: any; value: any }>> {
     const range = this.timeSrv.timeRange();
     return this.awsRequest(TSDB_QUERY_ENDPOINT, {
@@ -609,7 +622,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     })
       .pipe(
         map((r) => {
-          return this.transformSuggestDataFromTable(r);
+          return this.transformSuggestDataFromDataframes(r);
         })
       )
       .toPromise();

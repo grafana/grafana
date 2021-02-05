@@ -2,6 +2,7 @@ package cloudwatch
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
@@ -9,6 +10,10 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awsutil"
@@ -274,6 +279,41 @@ func (e *cloudWatchExecutor) executeMetricFindQuery(ctx context.Context, queryCo
 	return result, nil
 }
 
+func (e *cloudWatchExecutor) executeMetricFindQueryV2(ctx context.Context, model *simplejson.Json, query backend.DataQuery) (*backend.QueryDataResponse, error) {
+	subType := model.Get("subtype").MustString()
+
+	var data []suggestData
+	var err error
+	switch subType {
+	case "regions":
+		data, err = e.handleGetRegions(ctx, nil, nil)
+	case "namespaces":
+		data, err = e.handleGetNamespaces(ctx, nil, nil)
+	case "metrics":
+		data, err = e.handleGetMetrics(ctx, model, nil)
+	case "dimension_keys":
+		data, err = e.handleGetDimensions(ctx, model, nil)
+	case "dimension_values":
+		data, err = e.handleGetDimensionValues(ctx, model, nil)
+	case "ebs_volume_ids":
+		data, err = e.handleGetEbsVolumeIds(ctx, model, nil)
+	case "ec2_instance_attribute":
+		data, err = e.handleGetEc2InstanceAttribute(ctx, model, nil)
+	case "resource_arns":
+		data, err = e.handleGetResourceArns(ctx, model, nil)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	resp := backend.NewQueryDataResponse()
+	respD := resp.Responses[query.RefID]
+	respD.Frames = append(respD.Frames, transformToTableV2(data))
+	resp.Responses[query.RefID] = respD
+
+	return resp, nil
+}
+
 func transformToTable(data []suggestData, result *tsdb.QueryResult) {
 	table := &tsdb.Table{
 		Columns: []tsdb.TableColumn{
@@ -296,6 +336,24 @@ func transformToTable(data []suggestData, result *tsdb.QueryResult) {
 	}
 	result.Tables = append(result.Tables, table)
 	result.Meta.Set("rowCount", len(data))
+}
+
+func transformToTableV2(d []suggestData) *data.Frame {
+	frame := data.NewFrame("",
+		data.NewField("text", nil, []string{}),
+		data.NewField("value", nil, []string{}))
+
+	for _, r := range d {
+		frame.AppendRow(r.Text, r.Value)
+	}
+
+	frame.Meta = &data.FrameMeta{
+		Custom: map[string]interface{}{
+			"rowCount": len(d),
+		},
+	}
+
+	return frame
 }
 
 func parseMultiSelectValue(input string) []string {
@@ -365,10 +423,27 @@ func (e *cloudWatchExecutor) handleGetNamespaces(ctx context.Context, parameters
 	for key := range metricsMap {
 		keys = append(keys, key)
 	}
-	customNamespaces := e.DataSource.JsonData.Get("customMetricsNamespaces").MustString()
-	if customNamespaces != "" {
-		keys = append(keys, strings.Split(customNamespaces, ",")...)
+
+	if e.DataSource != nil {
+		customNamespaces := e.DataSource.JsonData.Get("customMetricsNamespaces").MustString()
+		if customNamespaces != "" {
+			keys = append(keys, strings.Split(customNamespaces, ",")...)
+		}
+	} else {
+		var jsonData map[string]interface{}
+
+		err := json.Unmarshal(e.dsInstanceSettings.JSONData, &jsonData)
+		if err != nil {
+			return nil, err
+		}
+
+		sjs := simplejson.NewFromAny(jsonData)
+		customNamespaces := sjs.Get("customMetricsNamespaces").MustString()
+		if customNamespaces != "" {
+			keys = append(keys, strings.Split(customNamespaces, ",")...)
+		}
 	}
+
 	sort.Strings(keys)
 
 	result := make([]suggestData, 0)
