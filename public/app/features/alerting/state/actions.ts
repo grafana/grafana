@@ -188,7 +188,9 @@ export function evaluateAlertDefinition(): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const { alertDefinition } = getStore().alertDefinition;
 
-    const response: { instances: [] } = await getBackendSrv().get(`/api/alert-definitions/eval/${alertDefinition.uid}`);
+    const response: { instances: string[] } = await getBackendSrv().get(
+      `/api/alert-definitions/eval/${alertDefinition.uid}`
+    );
 
     const handledResponse = handleBase64Response(response.instances);
 
@@ -202,7 +204,7 @@ export function evaluateNotSavedAlertDefinition(): ThunkResult<void> {
     const { alertDefinition, getQueryOptions } = getStore().alertDefinition;
     const defaultDataSource = await getDataSourceSrv().get(null);
 
-    const response: { instances: [] } = await getBackendSrv().post('/api/alert-definitions/eval', {
+    const response: { instances: string[] } = await getBackendSrv().post('/api/alert-definitions/eval', {
       condition: alertDefinition.condition,
       data: buildDataQueryModel(getQueryOptions(), defaultDataSource),
     });
@@ -224,7 +226,7 @@ async function buildAlertDefinition(state: AlertDefinitionState) {
   };
 }
 
-function handleBase64Response(frames: any[]) {
+function handleBase64Response(frames: string[]) {
   const dataFrames = frames.map((instance) => {
     const table = base64StringToArrowTable(instance);
     return arrowTableToDataFrame(table);
