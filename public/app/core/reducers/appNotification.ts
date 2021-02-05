@@ -15,10 +15,23 @@ const appNotificationsSlice = createSlice({
   name: 'appNotifications',
   initialState,
   reducers: {
-    notifyApp: (state, action: PayloadAction<AppNotification>): AppNotificationsState => ({
-      ...state,
-      appNotifications: state.appNotifications.concat([action.payload]),
-    }),
+    notifyApp: (state, action: PayloadAction<AppNotification>) => {
+      const newAlert = action.payload;
+
+      for (const existingAlert of state.appNotifications) {
+        if (
+          newAlert.icon === existingAlert.icon &&
+          newAlert.severity === existingAlert.severity &&
+          newAlert.text === existingAlert.text &&
+          newAlert.title === existingAlert.title &&
+          newAlert.component === existingAlert.component
+        ) {
+          return;
+        }
+      }
+
+      state.appNotifications.push(newAlert);
+    },
     clearAppNotification: (state, action: PayloadAction<string>): AppNotificationsState => ({
       ...state,
       appNotifications: state.appNotifications.filter((appNotification) => appNotification.id !== action.payload),
