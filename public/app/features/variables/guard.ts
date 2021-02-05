@@ -11,6 +11,7 @@ import {
   QueryEditorProps,
   StandardVariableQuery,
   StandardVariableSupport,
+  VariableModel,
   VariableSupportType,
 } from '@grafana/data';
 
@@ -18,7 +19,6 @@ import {
   AdHocVariableModel,
   ConstantVariableModel,
   QueryVariableModel,
-  VariableModel,
   VariableQueryEditorType,
   VariableWithMultiSupport,
   VariableWithOptions,
