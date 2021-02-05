@@ -107,6 +107,11 @@ describe('addLabelToQuery()', () => {
       'max by (org_id, org_name, id, name, type) (grafanacloud_instance_info{bar="baz",type=~"prometheus|graphite|graphite-shared"}) * on(id) group_right(org_id, org_name, type, name) sum by (id) (grafanacloud_instance_created_date{bar="baz"}) * 1000'
     );
   });
+  it('should not add ad-hoc filter to labels in label list provided with the group modifier', () => {
+    expect(addLabelToQuery('rate(http_server_requests_seconds_count[${__range_s}s])', 'bar', 'baz')).toBe(
+      'rate(http_server_requests_seconds_count{bar="baz"}[${__range_s}s])'
+    );
+  });
 });
 
 describe('addLabelToSelector()', () => {

@@ -1,6 +1,6 @@
 import _ from 'lodash';
 
-const keywords = 'by|without|on|ignoring|group_left|group_right|bool|offset';
+const keywords = 'by|without|on|ignoring|group_left|group_right|bool';
 const logicalOperators = 'or|and|unless';
 
 // Duplicate from mode-prometheus.js, which can't be used in tests due to global ace not being loaded.
@@ -17,9 +17,12 @@ const builtInWords = [
   .join('|')
   .split('|');
 
-// We want to extract metrics names and all possible keywods
+// We want to extract all keywods and
 const metricsAndKeywordsRegexp = /([A-Za-z:][\w:]*)\b(?![\]{=!",])/g;
-const selectorRegexp = /{([^{]*)}/g;
+// Safari currently doesn't support negative lookbehind. When it does, we should refactor this.
+// We are creating 2 matching groups. (\$) is for the Grafana's variables such as ${__rate_s}. We want to ignore
+// ${__rate_s} and not add variable to it.
+const selectorRegexp = /(\$)?{([^{]*)}/g;
 
 export function addLabelToQuery(
   query: string,
@@ -76,11 +79,19 @@ export function addLabelToQuery(
 
   while (match) {
     const prefix = query.slice(lastIndex, match.index);
-    const selector = match[1];
-    const selectorWithLabel = addLabelToSelector(selector, key, transformedValue, operator);
-    lastIndex = match.index + match[1].length + 2;
+    lastIndex = match.index + match[2].length + 2;
     suffix = query.slice(match.index + match[0].length);
-    parts.push(prefix, selectorWithLabel);
+    // If we matched 1st group, we know it is Grafana's variable and we don't want to add labels
+    if (match[1]) {
+      parts.push(prefix);
+      parts.push(match[0]);
+    } else {
+      // If we didn't match first group, we are inside selector and we want to add labels
+      const selector = match[2];
+      const selectorWithLabel = addLabelToSelector(selector, key, transformedValue, operator);
+      parts.push(prefix, selectorWithLabel);
+    }
+
     match = selectorRegexp.exec(query);
   }
 
