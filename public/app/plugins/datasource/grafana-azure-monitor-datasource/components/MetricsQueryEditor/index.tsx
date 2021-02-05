@@ -35,7 +35,6 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({ query, datasour
     field: Key,
     value: AzureMonitorQuery['azureMonitor'][Key]
   ) {
-    console.log('onFieldChange', { field, value });
     // TODO: when fields change, we actually need to unset all the "lower" fields that depend on this as well
     onChange({
       ...query,

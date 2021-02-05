@@ -3,6 +3,7 @@ import { Button, Select, Input, HorizontalGroup, VerticalGroup, InlineLabel } fr
 
 import { MultipleFields } from '../Field';
 import { findOption, MetricsQueryEditorFieldProps, Option } from '../common';
+import { AzureMetricDimension } from '../../types';
 
 interface DimensionFieldsProps extends MetricsQueryEditorFieldProps {
   dimensionOptions: Option[];
@@ -20,14 +21,28 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ query, dimensionOptio
     ]);
   }, [query.azureMonitor.dimensionFilters]);
 
-  const removeFilter = useCallback(
-    (index) => {
-      const newFilters = [...query.azureMonitor.dimensionFilters];
-      newFilters.splice(index, 1);
-      onChange('dimensionFilters', newFilters);
-    },
-    [query.azureMonitor.dimensionFilters]
-  );
+  const removeFilter = (index: number) => {
+    const newFilters = [...query.azureMonitor.dimensionFilters];
+    newFilters.splice(index, 1);
+    onChange('dimensionFilters', newFilters);
+  };
+
+  const onFieldChange = <Key extends keyof AzureMetricDimension>(
+    filterIndex: number,
+    fieldName: Key,
+    value: AzureMetricDimension[Key]
+  ) => {
+    const newFilters = [...query.azureMonitor.dimensionFilters];
+    const newFilter = newFilters[filterIndex];
+    newFilter[fieldName] = value;
+    onChange('dimensionFilters', newFilters);
+  };
+
+  const onFilterInputChange = (index: number, ev: React.FormEvent) => {
+    if (ev.target instanceof HTMLInputElement) {
+      onFieldChange(index, 'filter', ev.target.value);
+    }
+  };
 
   return (
     <MultipleFields label="Dimension" labelWidth={16}>
@@ -38,11 +53,17 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ query, dimensionOptio
               placeholder="Field"
               value={findOption(dimensionOptions, filter.dimension)}
               options={dimensionOptions}
-              onChange={() => {}}
+              onChange={(v) => onFieldChange(index, 'dimension', v.value ?? '')}
             />
             <InlineLabel aria-label="equals">==</InlineLabel>
-            <Input placeholder="" value={filter.filter} />
-            <Button variant="secondary" size="md" icon="trash-alt" aria-label="Remove" onClick={removeFilter}></Button>
+            <Input placeholder="" value={filter.filter} onChange={(ev) => onFilterInputChange(index, ev)} />
+            <Button
+              variant="secondary"
+              size="md"
+              icon="trash-alt"
+              aria-label="Remove"
+              onClick={() => removeFilter(index)}
+            ></Button>
           </HorizontalGroup>
         ))}
 
