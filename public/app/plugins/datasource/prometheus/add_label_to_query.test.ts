@@ -77,39 +77,40 @@ describe('addLabelToQuery()', () => {
   });
 
   it('should add labels to metrics with logical operators', () => {
-    expect(addLabelToQuery('go_info or grafana_info', 'bar', 'baz')).toBe(
-      'go_info{bar="baz"} or grafana_info{bar="baz"}'
-    );
-    expect(addLabelToQuery('go_info and grafana_info', 'bar', 'baz')).toBe(
-      'go_info{bar="baz"} and grafana_info{bar="baz"}'
-    );
+    expect(addLabelToQuery('foo_info or bar_info', 'bar', 'baz')).toBe('foo_info{bar="baz"} or bar_info{bar="baz"}');
+    expect(addLabelToQuery('foo_info and bar_info', 'bar', 'baz')).toBe('foo_info{bar="baz"} and bar_info{bar="baz"}');
   });
 
   it('should not add ad-hoc filter to template variables', () => {
-    expect(addLabelToQuery('sum(rate({job="grafana"}[2m])) by (valueName $variable)', 'bar', 'baz')).toBe(
-      'sum(rate({bar="baz",job="grafana"}[2m])) by (valueName $variable)'
+    expect(addLabelToQuery('sum(rate({job="foo"}[2m])) by (value $variable)', 'bar', 'baz')).toBe(
+      'sum(rate({bar="baz",job="foo"}[2m])) by (value $variable)'
     );
   });
 
   it('should not add ad-hoc filter to range', () => {
-    expect(addLabelToQuery('avg(rate((my_metric{instance="foo"} > 0)[3h:])) by (device)', 'bar', 'baz')).toBe(
-      'avg(rate((my_metric{bar="baz",instance="foo"} > 0)[3h:])) by (device)'
+    expect(addLabelToQuery('avg(rate((my_metric{job="foo"} > 0)[3h:])) by (label)', 'bar', 'baz')).toBe(
+      'avg(rate((my_metric{bar="baz",job="foo"} > 0)[3h:])) by (label)'
     );
   });
   it('should not add ad-hoc filter to labels in label list provided with the group modifier', () => {
     expect(
       addLabelToQuery(
-        'max by (org_id, org_name, id, name, type) (grafanacloud_instance_info{type=~"prometheus|graphite|graphite-shared"}) * on(id) group_right(org_id, org_name, type, name) sum by (id) (grafanacloud_instance_created_date) * 1000',
+        'max by (id, name, type) (my_metric{type=~"foo|bar|baz-test"}) * on(id) group_right(id, type, name) sum by (id) (my_metric) * 1000',
         'bar',
         'baz'
       )
     ).toBe(
-      'max by (org_id, org_name, id, name, type) (grafanacloud_instance_info{bar="baz",type=~"prometheus|graphite|graphite-shared"}) * on(id) group_right(org_id, org_name, type, name) sum by (id) (grafanacloud_instance_created_date{bar="baz"}) * 1000'
+      'max by (id, name, type) (my_metric{bar="baz",type=~"foo|bar|baz-test"}) * on(id) group_right(id, type, name) sum by (id) (my_metric{bar="baz"}) * 1000'
     );
   });
   it('should not add ad-hoc filter to labels in label list provided with the group modifier', () => {
-    expect(addLabelToQuery('rate(http_server_requests_seconds_count[${__range_s}s])', 'bar', 'baz')).toBe(
-      'rate(http_server_requests_seconds_count{bar="baz"}[${__range_s}s])'
+    expect(addLabelToQuery('rate(my_metric[${__range_s}s])', 'bar', 'baz')).toBe(
+      'rate(my_metric{bar="baz"}[${__range_s}s])'
+    );
+  });
+  it('should not add ad-hoc filter to labels to math operations', () => {
+    expect(addLabelToQuery('count(my_metric{job!="foo"} < (5*1024*1024*1024) or vector(0)) - 1', 'bar', 'baz')).toBe(
+      'count(my_metric{bar="baz",job!="foo"} < (5*1024*1024*1024) or vector(0)) - 1'
     );
   });
 });
