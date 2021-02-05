@@ -58,7 +58,7 @@ const getLogRowContextStyles = (theme: GrafanaTheme) => {
       width: calc(100% + 20px);
       left: -10px;
       height: 250px;
-      z-index: 2;
+      z-index: 3;
       overflow: hidden;
       background: ${theme.colors.bodyBg};
       background: linear-gradient(180deg, ${gradientTop} 0%, ${gradientBottom} 104.25%);
@@ -138,6 +138,7 @@ const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps> = ({
   canLoadMoreRows,
   onLoadMoreContext,
 }) => {
+  console.log(rows);
   const theme = useContext(ThemeContext);
   const { commonStyles, logs } = getLogRowContextStyles(theme);
   const [scrollTop, setScrollTop] = useState(0);
