@@ -513,4 +513,79 @@ describe('SeriesToColumns Transformer', () => {
       `);
     });
   });
+  it('joins by ID', async () => {
+    const cfg: DataTransformerConfig<SeriesToColumnsOptions> = {
+      id: DataTransformerID.seriesToColumns,
+      options: {
+        byField: 'id',
+      },
+    };
+
+    const frameA = toDataFrame({
+      fields: [
+        { name: 'f0', type: FieldType.string, values: ['a', 'b', 'c'] },
+        { name: 'id', type: FieldType.number, values: [1, 2, 3] },
+      ],
+    });
+
+    const frameB = toDataFrame({
+      fields: [
+        { name: 'f1', type: FieldType.string, values: ['x', 'y', 'z'] },
+        { name: 'id', type: FieldType.number, values: [1, 4, 3] },
+      ],
+    });
+
+    await expect(transformDataFrame([cfg], [frameA, frameB])).toEmitValuesWith((received) => {
+      const data = received[0];
+      const filtered = data[0];
+      expect(filtered.fields).toMatchInlineSnapshot(`
+        Array [
+          Object {
+            "config": Object {},
+            "name": "id",
+            "state": Object {
+              "displayName": "id",
+            },
+            "type": "number",
+            "values": Array [
+              1,
+              2,
+              3,
+              4,
+            ],
+          },
+          Object {
+            "config": Object {},
+            "labels": Object {},
+            "name": "f0",
+            "state": Object {
+              "displayName": "f0",
+            },
+            "type": "string",
+            "values": Array [
+              "a",
+              "b",
+              "c",
+              undefined,
+            ],
+          },
+          Object {
+            "config": Object {},
+            "labels": Object {},
+            "name": "f1",
+            "state": Object {
+              "displayName": "f1",
+            },
+            "type": "string",
+            "values": Array [
+              "x",
+              undefined,
+              "z",
+              "y",
+            ],
+          },
+        ]
+      `);
+    });
+  });
 });
