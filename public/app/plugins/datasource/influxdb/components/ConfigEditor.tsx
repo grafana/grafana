@@ -8,7 +8,7 @@ import {
   onUpdateDatasourceJsonDataOptionSelect,
   onUpdateDatasourceSecureJsonDataOption,
 } from '@grafana/data';
-import { DataSourceHttpSettings, InlineFormLabel, LegacyForms } from '@grafana/ui';
+import { DataSourceHttpSettings, InfoBox, InlineFormLabel, LegacyForms } from '@grafana/ui';
 const { Select, Input, SecretFormField } = LegacyForms;
 import { InfluxOptions, InfluxSecureJsonData, InfluxVersion } from '../types';
 
@@ -74,7 +74,7 @@ export class ConfigEditor extends PureComponent<Props> {
     return (
       <div>
         <div className="gf-form-group">
-          <div className="width-30 grafana-info-box">
+          <InfoBox>
             <h5>Support for flux in Grafana is currently in beta</h5>
             <p>
               Please report any issues to: <br />
@@ -82,7 +82,7 @@ export class ConfigEditor extends PureComponent<Props> {
                 https://github.com/grafana/grafana/issues
               </a>
             </p>
-          </div>
+          </InfoBox>
         </div>
         <br />
 
@@ -231,7 +231,7 @@ export class ConfigEditor extends PureComponent<Props> {
         </div>
 
         <div className="gf-form-group">
-          <div className="grafana-info-box">
+          <InfoBox>
             <h5>Database Access</h5>
             <p>
               Setting the database for this datasource does not deny access to other databases. The InfluxDB query
@@ -242,7 +242,7 @@ export class ConfigEditor extends PureComponent<Props> {
               <br />
               To support data isolation and security, make sure appropriate permissions are configured in InfluxDB.
             </p>
-          </div>
+          </InfoBox>
         </div>
         <div className="gf-form-group">
           <div className="gf-form-inline">

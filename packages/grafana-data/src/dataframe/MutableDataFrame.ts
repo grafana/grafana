@@ -11,7 +11,7 @@ export type MutableField<T = any> = Field<T, MutableVector<T>>;
 
 type MutableVectorCreator = (buffer?: any[]) => MutableVector;
 
-export const MISSING_VALUE: any = null;
+export const MISSING_VALUE: any = undefined; // Treated as connected in new graph panel
 
 export class MutableDataFrame<T = any> extends FunctionalVector<T> implements DataFrame, MutableVector<T> {
   name?: string;
