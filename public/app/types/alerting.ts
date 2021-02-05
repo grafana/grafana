@@ -140,11 +140,11 @@ export interface AlertNotification {
 export interface AlertDefinitionState {
   uiState: AlertDefinitionUiState;
   alertDefinition: AlertDefinition;
-  queryOptions: QueryGroupOptions;
   queryRunner: PanelQueryRunner;
   data: PanelData[];
   alertDefinitions: AlertDefinition[];
   getInstances: () => DataFrame[];
+  getQueryOptions: () => QueryGroupOptions;
 }
 
 export interface AlertDefinition {

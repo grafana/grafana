@@ -30,7 +30,7 @@ interface OwnProps {
 interface ConnectedProps {
   uiState: AlertDefinitionUiState;
   queryRunner: PanelQueryRunner;
-  queryOptions: QueryGroupOptions;
+  getQueryOptions: () => QueryGroupOptions;
   getInstances: () => DataFrame[];
   alertDefinition: AlertDefinition;
   pageId: string;
@@ -115,9 +115,11 @@ class NextGenAlertingPage extends PureComponent<Props> {
       uiState,
       updateAlertDefinitionUiState,
       queryRunner,
-      queryOptions,
+      getQueryOptions,
     } = this.props;
+
     const styles = getStyles(config.theme);
+    const queryOptions = getQueryOptions();
 
     return (
       <div className={styles.wrapper}>
@@ -159,7 +161,7 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
 
   return {
     uiState: state.alertDefinition.uiState,
-    queryOptions: state.alertDefinition.queryOptions,
+    getQueryOptions: state.alertDefinition.getQueryOptions,
     queryRunner: state.alertDefinition.queryRunner,
     getInstances: state.alertDefinition.getInstances,
     alertDefinition: state.alertDefinition.alertDefinition,

@@ -62,12 +62,14 @@ export const initialAlertDefinitionState: AlertDefinitionState = {
     data: [],
     intervalSeconds: 60,
   },
-  queryOptions: { maxDataPoints: 100, dataSource: { name: '-- Mixed --' }, queries: [] },
   queryRunner: new PanelQueryRunner(dataConfig),
   uiState: { ...store.getObject(ALERT_DEFINITION_UI_STATE_STORAGE_KEY, DEFAULT_ALERT_DEFINITION_UI_STATE) },
   data: [],
   alertDefinitions: [] as AlertDefinition[],
+  /* These are functions as they are mutated later on and redux toolkit will Object.freeze state so
+   * we need to store these using functions instead */
   getInstances: () => [] as DataFrame[],
+  getQueryOptions: () => ({ maxDataPoints: 100, dataSource: { name: '-- Mixed --' }, queries: [] }),
 };
 
 function convertToAlertRule(dto: AlertRuleDTO, state: string): AlertRule {
@@ -172,10 +174,10 @@ const alertDefinitionSlice = createSlice({
           data: action.payload.data,
           description: '',
         },
-        queryOptions: {
-          ...state.queryOptions,
+        getQueryOptions: () => ({
+          ...state.getQueryOptions(),
           queries: action.payload.data.map((q: AlertDefinitionQueryModel) => ({ ...q.model })),
-        },
+        }),
       };
     },
     updateAlertDefinitionOptions: (state: AlertDefinitionState, action: PayloadAction<Partial<AlertDefinition>>) => {
@@ -187,7 +189,7 @@ const alertDefinitionSlice = createSlice({
     setQueryOptions: (state: AlertDefinitionState, action: PayloadAction<QueryGroupOptions>) => {
       return {
         ...state,
-        queryOptions: action.payload,
+        getQueryOptions: () => action.payload,
       };
     },
     setAlertDefinitions: (state: AlertDefinitionState, action: PayloadAction<AlertDefinition[]>) => {

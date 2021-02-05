@@ -169,8 +169,9 @@ export function queryOptionsChange(queryOptions: QueryGroupOptions): ThunkResult
 
 export function onRunQueries(): ThunkResult<void> {
   return (dispatch, getStore) => {
-    const { queryRunner, queryOptions } = getStore().alertDefinition;
+    const { queryRunner, getQueryOptions } = getStore().alertDefinition;
     const timeRange = { from: 'now-1h', to: 'now' };
+    const queryOptions = getQueryOptions();
 
     queryRunner.run({
       timezone: 'browser',
@@ -198,12 +199,12 @@ export function evaluateAlertDefinition(): ThunkResult<void> {
 
 export function evaluateNotSavedAlertDefinition(): ThunkResult<void> {
   return async (dispatch, getStore) => {
-    const { alertDefinition, queryOptions } = getStore().alertDefinition;
+    const { alertDefinition, getQueryOptions } = getStore().alertDefinition;
     const defaultDataSource = await getDataSourceSrv().get(null);
 
     const response: { instances: [] } = await getBackendSrv().post('/api/alert-definitions/eval', {
       condition: alertDefinition.condition,
-      data: buildDataQueryModel(queryOptions, defaultDataSource),
+      data: buildDataQueryModel(getQueryOptions(), defaultDataSource),
     });
 
     const handledResponse = handleBase64Response(response.instances);
@@ -213,7 +214,7 @@ export function evaluateNotSavedAlertDefinition(): ThunkResult<void> {
 }
 
 async function buildAlertDefinition(state: AlertDefinitionState) {
-  const queryOptions = state.queryOptions;
+  const queryOptions = state.getQueryOptions();
   const currentAlertDefinition = state.alertDefinition;
   const defaultDataSource = await getDataSourceSrv().get(null);
 

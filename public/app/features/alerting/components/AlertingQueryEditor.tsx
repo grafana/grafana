@@ -64,7 +64,7 @@ export class AlertingQueryEditor extends PureComponent<Props> {
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state) => {
   return {
-    queryOptions: state.alertDefinition.queryOptions,
+    queryOptions: state.alertDefinition.getQueryOptions(),
     queryRunner: state.alertDefinition.queryRunner,
   };
 };
