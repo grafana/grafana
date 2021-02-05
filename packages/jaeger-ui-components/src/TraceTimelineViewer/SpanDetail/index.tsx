@@ -268,7 +268,7 @@ export default function SpanDetail(props: SpanDetailProps) {
           <CopyIcon
             copyText={deepLinkCopyText}
             icon="link"
-            placement="right-end"
+            placement="topRight"
             tooltipTitle="Copy deep link to this span"
           />
         </small>

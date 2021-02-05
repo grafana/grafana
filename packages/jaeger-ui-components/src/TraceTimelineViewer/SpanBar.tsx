@@ -24,7 +24,7 @@ import { ViewedBoundsFunctionType } from './utils';
 import { TNil } from '../types';
 import { TraceSpan } from '@grafana/data';
 import { createStyle } from '../Theme';
-import { Tooltip } from '@grafana/ui';
+import { UIPopover } from '../uiElementsContext';
 
 const getStyles = createStyle(() => {
   return {
@@ -181,15 +181,15 @@ function SpanBar(props: TInnerProps) {
       </div>
       <div>
         {Object.keys(logGroups).map((positionKey) => (
-          <Tooltip
+          <UIPopover
             key={positionKey}
-            placement="auto"
+            placement="topLeft"
             content={
               <AccordianLogs interactive={false} isOpen logs={logGroups[positionKey]} timestamp={traceStartTime} />
             }
           >
             <div className={styles.logMarker} style={{ left: positionKey }} />
-          </Tooltip>
+          </UIPopover>
         ))}
       </div>
       {rpc && (

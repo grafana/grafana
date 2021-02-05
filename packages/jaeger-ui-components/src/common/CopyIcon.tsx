@@ -17,10 +17,8 @@ import { css } from 'emotion';
 import cx from 'classnames';
 import copy from 'copy-to-clipboard';
 
-import { UIButton } from '../uiElementsContext';
+import { UITooltip, TooltipPlacement, UIButton } from '../uiElementsContext';
 import { createStyle } from '../Theme';
-import { Tooltip } from '@grafana/ui';
-import { TooltipPlacement } from '@grafana/ui/src/components/Tooltip/PopoverController';
 
 const getStyles = createStyle(() => {
   return {
@@ -50,7 +48,7 @@ type PropsType = {
 type StateType = {
   hasCopied: boolean;
 };
-// TODO(Zoltan): This component is not working properly right now. Decide what to do with it.
+
 export default class CopyIcon extends React.PureComponent<PropsType, StateType> {
   static defaultProps: Partial<PropsType> = {
     className: undefined,
@@ -80,10 +78,12 @@ export default class CopyIcon extends React.PureComponent<PropsType, StateType> 
   render() {
     const styles = getStyles();
     return (
-      <Tooltip
-        // onVisibleChange={this.handleTooltipVisibilityChange}
+      <UITooltip
+        arrowPointAtCenter
+        mouseLeaveDelay={0.5}
+        onVisibleChange={this.handleTooltipVisibilityChange}
         placement={this.props.placement}
-        content={this.state.hasCopied ? 'Copied' : this.props.tooltipTitle}
+        title={this.state.hasCopied ? 'Copied' : this.props.tooltipTitle}
       >
         <UIButton
           className={cx(styles.CopyIcon, this.props.className)}
@@ -91,7 +91,7 @@ export default class CopyIcon extends React.PureComponent<PropsType, StateType> 
           icon={this.props.icon}
           onClick={this.handleClick}
         />
-      </Tooltip>
+      </UITooltip>
     );
   }
 }

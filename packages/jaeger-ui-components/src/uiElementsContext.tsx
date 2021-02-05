@@ -12,7 +12,59 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from 'react';
+import React, { ReactElement } from 'react';
+
+export type TooltipPlacement =
+  | 'top'
+  | 'left'
+  | 'right'
+  | 'bottom'
+  | 'topLeft'
+  | 'topRight'
+  | 'bottomLeft'
+  | 'bottomRight'
+  | 'leftTop'
+  | 'leftBottom'
+  | 'rightTop'
+  | 'rightBottom';
+export type PopoverProps = {
+  children: ReactElement;
+  content: ReactElement;
+  arrowPointAtCenter?: boolean;
+  overlayClassName?: string;
+  placement?: TooltipPlacement;
+};
+
+export const UIPopover: React.ComponentType<PopoverProps> = function UIPopover(props: PopoverProps) {
+  return (
+    <GetElementsContext>
+      {(elements: Elements) => {
+        return <elements.Popover {...props} />;
+      }}
+    </GetElementsContext>
+  );
+};
+
+export type TooltipProps = {
+  title: string | ReactElement;
+  getPopupContainer?: (triggerNode: Element) => HTMLElement;
+  overlayClassName?: string;
+  children: ReactElement;
+  placement?: TooltipPlacement;
+  mouseLeaveDelay?: number;
+  arrowPointAtCenter?: boolean;
+  onVisibleChange?: (visible: boolean) => void;
+};
+
+export const UITooltip: React.ComponentType<TooltipProps> = function UITooltip(props: TooltipProps) {
+  return (
+    <GetElementsContext>
+      {(elements: Elements) => {
+        return <elements.Tooltip {...props} />;
+      }}
+    </GetElementsContext>
+  );
+};
 
 export type IconProps = {
   type: string;
@@ -146,6 +198,8 @@ export const UIInputGroup = function UIInputGroup(props: InputGroupProps) {
 };
 
 export type Elements = {
+  Popover: React.ComponentType<PopoverProps>;
+  Tooltip: React.ComponentType<TooltipProps>;
   Icon: React.ComponentType<IconProps>;
   Dropdown: React.ComponentType<DropdownProps>;
   Menu: React.ComponentType<MenuProps>;

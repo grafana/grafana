@@ -19,8 +19,7 @@ import ReferencesButton, { getStyles } from './ReferencesButton';
 import transformTraceData from '../model/transform-trace-data';
 import traceGenerator from '../demo/trace-generators';
 import ReferenceLink from '../url/ReferenceLink';
-import { UIDropdown, UIMenuItem } from '../uiElementsContext';
-import { Tooltip } from '@grafana/ui';
+import { UIDropdown, UIMenuItem, UITooltip } from '../uiElementsContext';
 
 describe(ReferencesButton, () => {
   const trace = transformTraceData(traceGenerator.trace({ numberOfSpans: 10 }));
@@ -52,7 +51,7 @@ describe(ReferencesButton, () => {
     const wrapper = shallow(<ReferencesButton {...props} />);
     const dropdown = wrapper.find(UIDropdown);
     const refLink = wrapper.find(ReferenceLink);
-    const tooltip = wrapper.find(Tooltip);
+    const tooltip = wrapper.find(UITooltip);
     const styles = getStyles();
 
     expect(dropdown.length).toBe(0);

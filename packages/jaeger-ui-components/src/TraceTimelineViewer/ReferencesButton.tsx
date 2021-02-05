@@ -16,11 +16,10 @@ import React from 'react';
 import { css } from 'emotion';
 import NewWindowIcon from '../common/NewWindowIcon';
 import { TraceSpanReference } from '@grafana/data';
-import { UIDropdown, UIMenuItem, UIMenu } from '../uiElementsContext';
+import { UITooltip, UIDropdown, UIMenuItem, UIMenu, TooltipPlacement } from '../uiElementsContext';
 
 import ReferenceLink from '../url/ReferenceLink';
 import { createStyle } from '../Theme';
-import { Tooltip } from '@grafana/ui';
 
 export const getStyles = createStyle(() => {
   return {
@@ -80,26 +79,27 @@ export default class ReferencesButton extends React.PureComponent<TReferencesBut
     const tooltipProps = {
       arrowPointAtCenter: true,
       mouseLeaveDelay: 0.5,
-      content: tooltipText,
+      placement: 'bottom' as TooltipPlacement,
+      title: tooltipText,
       overlayClassName: styles.tooltip,
     };
 
     if (references.length > 1) {
       return (
-        <Tooltip {...tooltipProps}>
+        <UITooltip {...tooltipProps}>
           <UIDropdown overlay={this.referencesList(references)} placement="bottomRight" trigger={['click']}>
             <a className={styles.MultiParent}>{children}</a>
           </UIDropdown>
-        </Tooltip>
+        </UITooltip>
       );
     }
     const ref = references[0];
     return (
-      <Tooltip {...tooltipProps}>
+      <UITooltip {...tooltipProps}>
         <ReferenceLink reference={ref} focusSpan={focusSpan} className={styles.MultiParent}>
           {children}
         </ReferenceLink>
-      </Tooltip>
+      </UITooltip>
     );
   }
 }
