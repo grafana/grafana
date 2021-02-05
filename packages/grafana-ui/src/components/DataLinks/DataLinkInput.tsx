@@ -1,9 +1,9 @@
-import React, { useState, useMemo, useContext, useRef, RefObject, memo, useEffect } from 'react';
+import React, { memo, RefObject, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import usePrevious from 'react-use/lib/usePrevious';
 import { DataLinkSuggestions } from './DataLinkSuggestions';
-import { ThemeContext, makeValue } from '../../index';
+import { makeValue, ThemeContext } from '../../index';
 import { SelectionReference } from './SelectionReference';
-import { Portal, getFormStyles } from '../index';
+import { getFormStyles, Portal } from '../index';
 
 // @ts-ignore
 import Prism, { Grammar, LanguageMap } from 'prismjs';
@@ -16,7 +16,7 @@ import { css, cx } from 'emotion';
 import { SlatePrism } from '../../slate-plugins';
 import { SCHEMA } from '../../utils/slate';
 import { stylesFactory } from '../../themes';
-import { GrafanaTheme, VariableSuggestion, VariableOrigin, DataLinkBuiltInVars } from '@grafana/data';
+import { DataLinkBuiltInVars, GrafanaTheme, VariableOrigin, VariableSuggestion } from '@grafana/data';
 
 const modulo = (a: number, n: number) => a - n * Math.floor(a / n);
 
@@ -130,7 +130,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
       if (item.origin !== VariableOrigin.Template || item.value === DataLinkBuiltInVars.includeVars) {
         editor.insertText(`${includeDollarSign ? '$' : ''}\{${item.value}}`);
       } else {
-        editor.insertText(`var-${item.value}=$\{${item.value}}`);
+        editor.insertText(`\${${item.value}:queryparam}`);
       }
 
       setLinkUrl(editor.value);

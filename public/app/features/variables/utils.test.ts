@@ -3,23 +3,42 @@ import { VariableRefresh } from './types';
 
 describe('isAllVariable', () => {
   it.each`
-    variable                                    | expected
-    ${null}                                     | ${false}
-    ${undefined}                                | ${false}
-    ${{}}                                       | ${false}
-    ${{ current: {} }}                          | ${false}
-    ${{ current: { text: '' } }}                | ${false}
-    ${{ current: { text: null } }}              | ${false}
-    ${{ current: { text: undefined } }}         | ${false}
-    ${{ current: { text: 'Alll' } }}            | ${false}
-    ${{ current: { text: 'All' } }}             | ${true}
-    ${{ current: { text: [] } }}                | ${false}
-    ${{ current: { text: [null] } }}            | ${false}
-    ${{ current: { text: [undefined] } }}       | ${false}
-    ${{ current: { text: ['Alll'] } }}          | ${false}
-    ${{ current: { text: ['Alll', 'All'] } }}   | ${false}
-    ${{ current: { text: ['All'] } }}           | ${true}
-    ${{ current: { text: { prop1: 'test' } } }} | ${false}
+    variable                                         | expected
+    ${null}                                          | ${false}
+    ${undefined}                                     | ${false}
+    ${{}}                                            | ${false}
+    ${{ current: {} }}                               | ${false}
+    ${{ current: { text: '' } }}                     | ${false}
+    ${{ current: { text: null } }}                   | ${false}
+    ${{ current: { text: undefined } }}              | ${false}
+    ${{ current: { text: 'Alll' } }}                 | ${false}
+    ${{ current: { text: 'All' } }}                  | ${true}
+    ${{ current: { text: [] } }}                     | ${false}
+    ${{ current: { text: [null] } }}                 | ${false}
+    ${{ current: { text: [undefined] } }}            | ${false}
+    ${{ current: { text: ['Alll'] } }}               | ${false}
+    ${{ current: { text: ['Alll', 'All'] } }}        | ${false}
+    ${{ current: { text: ['All'] } }}                | ${true}
+    ${{ current: { text: ['All', 'Alll'] } }}        | ${true}
+    ${{ current: { text: { prop1: 'test' } } }}      | ${false}
+    ${{ current: { value: '' } }}                    | ${false}
+    ${{ current: { value: null } }}                  | ${false}
+    ${{ current: { value: undefined } }}             | ${false}
+    ${{ current: { value: '$__alll' } }}             | ${false}
+    ${{ current: { value: '$__all' } }}              | ${true}
+    ${{ current: { value: [] } }}                    | ${false}
+    ${{ current: { value: [null] } }}                | ${false}
+    ${{ current: { value: [undefined] } }}           | ${false}
+    ${{ current: { value: ['$__alll'] } }}           | ${false}
+    ${{ current: { value: ['$__alll', '$__all'] } }} | ${false}
+    ${{ current: { value: ['$__all'] } }}            | ${true}
+    ${{ current: { value: ['$__all', '$__alll'] } }} | ${true}
+    ${{ current: { value: { prop1: 'test' } } }}     | ${false}
+    ${{ current: { value: '', text: '' } }}          | ${false}
+    ${{ current: { value: '', text: 'All' } }}       | ${true}
+    ${{ current: { value: '$__all', text: '' } }}    | ${true}
+    ${{ current: { value: '', text: ['All'] } }}     | ${true}
+    ${{ current: { value: ['$__all'], text: '' } }}  | ${true}
   `("when called with params: 'variable': '$variable' then result should be '$expected'", ({ variable, expected }) => {
     expect(isAllVariable(variable)).toEqual(expected);
   });
