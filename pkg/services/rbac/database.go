@@ -140,28 +140,25 @@ func (ac *RBACService) GetTeamPolicies(query *GetTeamPoliciesQuery) error {
 func (ac *RBACService) GetUserPolicies(query *GetUserPoliciesQuery) error {
 	return ac.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		query.Result = make([]*PolicyDTO, 0)
-		sess.Table("user_policy")
-		sess.Join("INNER", "policy", "user_policy.policy_id=policy.id")
+		// TODO: optimize this
+		q := `SELECT
+			up.policy_id,
+			up.user_id,
+			policy.id,
+			policy.org_id,
+			policy.name,
+			policy.description,
+			policy.created,
+			policy.updated
+				FROM policy
+				LEFT JOIN user_policy AS up ON policy.id = up.policy_id
+				LEFT JOIN team_member as tm ON tm.user_id = ?
+				LEFT JOIN team_policy as tp ON policy.id = tp.policy_id
+					AND tp.team_id = tm.team_id
+				WHERE policy.org_id = ?
+		`
 
-		if query.OrgId != 0 {
-			sess.Where("user_policy.org_id=?", query.OrgId)
-		}
-		if query.UserId != 0 {
-			sess.Where("user_policy.user_id=?", query.UserId)
-		}
-
-		sess.Cols(
-			"user_policy.org_id",
-			"user_policy.policy_id",
-			"user_policy.user_id",
-			"policy.id",
-			"policy.name",
-			"policy.description",
-			"policy.created",
-			"policy.updated",
-		)
-
-		err := sess.Find(&query.Result)
+		err := sess.SQL(q, query.UserId, query.OrgId).Find(&query.Result)
 		return err
 	})
 }
@@ -169,6 +166,7 @@ func (ac *RBACService) GetUserPolicies(query *GetUserPoliciesQuery) error {
 func (ac *RBACService) GetUserPermissions(query *GetUserPermissionsQuery) error {
 	return ac.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		query.Result = make([]Permission, 0)
+		// TODO: optimize this
 		q := `SELECT
 			permission.id,
 			permission.policy_id,
