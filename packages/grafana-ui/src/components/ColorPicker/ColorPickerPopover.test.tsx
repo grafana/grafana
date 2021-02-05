@@ -3,7 +3,7 @@ import { mount, ReactWrapper } from 'enzyme';
 import { ColorPickerPopover } from './ColorPickerPopover';
 import { ColorSwatch } from './NamedColorsGroup';
 import flatten from 'lodash/flatten';
-import { GrafanaThemeType, getNamedColorPalette, getColorFromHexRgbOrName } from '@grafana/data';
+import { getNamedColorPalette, getColorFromHexRgbOrName } from '@grafana/data';
 
 const allColors = flatten(Array.from(getNamedColorPalette().values()));
 
@@ -47,7 +47,7 @@ describe('ColorPickerPopover', () => {
       basicBlueSwatch.simulate('click');
 
       expect(onChangeSpy).toBeCalledTimes(1);
-      expect(onChangeSpy).toBeCalledWith(getColorFromHexRgbOrName('green', GrafanaThemeType.Dark));
+      expect(onChangeSpy).toBeCalledWith(getColorFromHexRgbOrName('green'));
     });
 
     it('should pass color name to onChange prop when named colors enabled', () => {
