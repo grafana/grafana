@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { SelectableValue, TimeZone } from '@grafana/data';
 import { Select, Switch, TagsInput, InlineField, Input } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { DashboardModel } from '../../state/DashboardModel';
 import { DeleteDashboardButton } from '../DeleteDashboard/DeleteDashboardButton';
@@ -63,7 +64,9 @@ export const GeneralSettings: React.FC<Props> = ({ dashboard }) => {
 
   return (
     <>
-      <h3 className="dashboard-settings__header">General</h3>
+      <h3 className="dashboard-settings__header" aria-label={selectors.pages.Dashboard.Settings.General.title}>
+        General
+      </h3>
       <div className="gf-form-group">
         <InlineField label="Name" labelWidth={14}>
           <Input name="title" onBlur={onBlur} defaultValue={dashboard.title} width={60} />
