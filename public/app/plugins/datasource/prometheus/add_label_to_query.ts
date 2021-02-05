@@ -1,6 +1,6 @@
 import _ from 'lodash';
 
-const keywords = 'by|without|on|ignoring|group_left|group_right|bool';
+const keywords = 'by|without|on|ignoring|group_left|group_right|bool|offset';
 const logicalOperators = 'or|and|unless';
 
 // Duplicate from mode-prometheus.js, which can't be used in tests due to global ace not being loaded.
@@ -17,7 +17,8 @@ const builtInWords = [
   .join('|')
   .split('|');
 
-const metricNameRegexp = /([A-Za-z:][\w:]*)\b(?![\(\]{=!",])/g;
+// We want to extract metrics names and all possible keywods
+const metricsAndKeywordsRegexp = /([A-Za-z:][\w:]*)\b(?![\]{=!",])/g;
 const selectorRegexp = /{([^{]*)}/g;
 
 export function addLabelToQuery(
@@ -36,7 +37,7 @@ export function addLabelToQuery(
 
   // Add empty selectors to bare metric names
   let previousWord: string;
-  query = query.replace(metricNameRegexp, (match, word, offset) => {
+  query = query.replace(metricsAndKeywordsRegexp, (match, word, offset) => {
     const insideSelector = isPositionInsideChars(query, offset, '{', '}');
     // Handle "sum by (key) (metric)"
     const previousWordIsKeyWord = previousWord && keywords.split('|').indexOf(previousWord) > -1;

@@ -96,6 +96,17 @@ describe('addLabelToQuery()', () => {
       'avg(rate((my_metric{bar="baz",instance="foo"} > 0)[3h:])) by (device)'
     );
   });
+  it('should not add ad-hoc filter to labels in label list provided with the group modifier', () => {
+    expect(
+      addLabelToQuery(
+        'max by (org_id, org_name, id, name, type) (grafanacloud_instance_info{type=~"prometheus|graphite|graphite-shared"}) * on(id) group_right(org_id, org_name, type, name) sum by (id) (grafanacloud_instance_created_date) * 1000',
+        'bar',
+        'baz'
+      )
+    ).toBe(
+      'max by (org_id, org_name, id, name, type) (grafanacloud_instance_info{bar="baz",type=~"prometheus|graphite|graphite-shared"}) * on(id) group_right(org_id, org_name, type, name) sum by (id) (grafanacloud_instance_created_date{bar="baz"}) * 1000'
+    );
+  });
 });
 
 describe('addLabelToSelector()', () => {
