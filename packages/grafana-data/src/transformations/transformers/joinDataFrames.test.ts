@@ -2,6 +2,8 @@ import { toDataFrame } from '../../dataframe/processDataFrame';
 import { FieldType } from '../../types/dataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { ArrayVector } from '../../vector';
+import { getFieldMatcher } from '../matchers';
+import { FieldMatcherID } from '../matchers/ids';
 import { calculateFieldTransformer } from './calculateField';
 import { isLikelyAscendingVector, outerJoinDataFrames } from './joinDataFrames';
 
@@ -215,6 +217,67 @@ describe('align frames', () => {
             15,
             22,
             1,
+          ],
+        },
+      ]
+    `);
+  });
+
+  it('will join by a numeric ID', () => {
+    //----------
+    const frameA = toDataFrame({
+      fields: [
+        { name: 'f0', type: FieldType.string, values: ['a', 'b', 'c'] },
+        { name: 'id', type: FieldType.number, values: [1, 2, 3] },
+      ],
+    });
+
+    const frameB = toDataFrame({
+      fields: [
+        { name: 'f1', type: FieldType.string, values: ['x', 'y', 'z'] },
+        { name: 'id', type: FieldType.number, values: [1, 4, 3] },
+      ],
+    });
+
+    const out = outerJoinDataFrames({
+      joinBy: getFieldMatcher({
+        id: FieldMatcherID.byName,
+        options: 'id',
+      }),
+      frames: [frameA, frameB],
+    })!;
+    expect(
+      out.fields.map((f) => ({
+        name: f.name,
+        values: f.values.toArray(),
+      }))
+    ).toMatchInlineSnapshot(`
+      Array [
+        Object {
+          "name": "id",
+          "values": Array [
+            1,
+            2,
+            3,
+            4,
+          ],
+        },
+        Object {
+          "name": "f0",
+          "values": Array [
+            "a",
+            "b",
+            "c",
+            undefined,
+          ],
+        },
+        Object {
+          "name": "f1",
+          "values": Array [
+            "x",
+            undefined,
+            "z",
+            "y",
           ],
         },
       ]
