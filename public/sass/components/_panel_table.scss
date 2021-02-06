@@ -19,6 +19,8 @@
   text-align: center;
   font-size: 90%;
   line-height: 2px;
+  background-color: #f1f1f1;
+  border-radius: 1px;
 
   ul {
     position: relative;
@@ -44,6 +46,7 @@
     &.active {
       font-weight: bold;
       color: $blue;
+      text-decoration: underline;
     }
   }
 }
