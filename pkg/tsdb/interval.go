@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 	"time"
-	"strconv"
 	"regexp"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -87,19 +86,12 @@ func GetIntervalFrom(dsInfo *models.DataSource, queryModel *simplejson.Json, def
 	if err != nil {
 		return time.Duration(0), err
 	}
-	parsedInterval := time.Duration(0)
 	if isPureNum {
-		i, err := strconv.Atoi(interval)
-		if err != nil {
-			return time.Duration(0), err
-		}
-		parsedInterval = time.Duration(i)
-	} else {
-		parsedIntervalDuration, err := time.ParseDuration(interval)
-		if err != nil {
-			return time.Duration(0), err
-		}
-		parsedInterval = parsedIntervalDuration
+		interval += "s"
+	}
+	parsedInterval, err := time.ParseDuration(interval)
+	if err != nil {
+		return time.Duration(0), err
 	}
 
 	return parsedInterval, nil
