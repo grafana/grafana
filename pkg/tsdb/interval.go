@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+	"strconv"
+	"regex"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
@@ -81,9 +83,19 @@ func GetIntervalFrom(dsInfo *models.DataSource, queryModel *simplejson.Json, def
 	}
 
 	interval = strings.Replace(strings.Replace(interval, "<", "", 1), ">", "", 1)
-	parsedInterval, err := time.ParseDuration(interval)
-	if err != nil {
-		return time.Duration(0), err
+	isPureNum, err := regex.MatchString(`\d+`, interval)
+	parsedInterval := time.Duration(0)
+	if isPureNum {
+		i, err := strconv.Atoi(interval)
+		if err != nil {
+			return time.Duration(0), err
+		}
+		parsedInterval = time.Duration(i)
+	} else {
+		parsedInterval, err := time.ParseDuration(interval)
+		if err != nil {
+			return time.Duration(0), err
+		}
 	}
 
 	return parsedInterval, nil
