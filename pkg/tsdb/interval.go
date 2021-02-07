@@ -2,9 +2,9 @@ package tsdb
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
-	"regexp"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
