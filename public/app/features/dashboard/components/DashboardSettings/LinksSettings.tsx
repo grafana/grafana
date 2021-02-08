@@ -1,30 +1,27 @@
-import React, { PureComponent } from 'react';
+import React from 'react';
 import { DashboardModel } from '../../state/DashboardModel';
-import { AngularComponent, getAngularLoader } from '@grafana/runtime';
+import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 
 interface Props {
   dashboard: DashboardModel;
 }
 
-export class LinksSettings extends PureComponent<Props> {
-  element?: HTMLElement | null;
-  angularCmp?: AngularComponent;
-
-  componentDidMount() {
-    const loader = getAngularLoader();
-
-    const template = '<dash-links-editor dashboard="dashboard" />';
-    const scopeProps = { dashboard: this.props.dashboard };
-    this.angularCmp = loader.load(this.element, scopeProps, template);
-  }
-
-  componentWillUnmount() {
-    if (this.angularCmp) {
-      this.angularCmp.destroy();
-    }
-  }
-
-  render() {
-    return <div ref={(ref) => (this.element = ref)} />;
-  }
-}
+export const LinksSettings = ({ dashboard }: Props) => {
+  const setupNew = () => console.log('setting up new link');
+  return (
+    <>
+      <h3 className="dashboard-settings__header">Dashboard Links</h3>
+      <EmptyListCTA
+        onClick={setupNew}
+        title="There are no dashboard links added yet"
+        buttonIcon="link"
+        buttonTitle="Add Dashboard Link"
+        infoBoxTitle="What are Dashboard Links?"
+        infoBox={{
+          __html:
+            '<p>Dashboard Links allow you to place links to other dashboards and web sites directly below the dashboard header.</p>',
+        }}
+      />
+    </>
+  );
+};
