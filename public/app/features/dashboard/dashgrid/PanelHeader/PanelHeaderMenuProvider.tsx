@@ -6,14 +6,14 @@ import { DashboardModel, PanelModel } from '../../state';
 import { StoreState } from '../../../../types';
 import { getPanelMenu } from '../../utils/getPanelMenu';
 
-interface Api {
+interface PanelHeaderMenuProviderApi {
   items: PanelMenuItem[];
 }
 
 interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
-  children: (props: Api) => ReactElement;
+  children: (props: PanelHeaderMenuProviderApi) => ReactElement;
 }
 
 export const PanelHeaderMenuProvider: FC<Props> = ({ panel, dashboard, children }) => {

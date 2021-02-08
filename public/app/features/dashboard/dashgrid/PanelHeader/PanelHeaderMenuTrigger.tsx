@@ -1,9 +1,5 @@
 import React, { FC, HTMLAttributes, MouseEvent, ReactElement, useCallback, useState } from 'react';
-
-interface ClickCoordinates {
-  x: number;
-  y: number;
-}
+import { CartesianCoords2D } from '@grafana/data';
 
 interface PanelHeaderMenuTriggerApi {
   panelMenuOpen: boolean;
@@ -15,7 +11,7 @@ interface Props extends HTMLAttributes<HTMLDivElement> {
 }
 
 export const PanelHeaderMenuTrigger: FC<Props> = ({ children, ...divProps }) => {
-  const [clickCoordinates, setClickCoordinates] = useState<ClickCoordinates>({ x: 0, y: 0 });
+  const [clickCoordinates, setClickCoordinates] = useState<CartesianCoords2D>({ x: 0, y: 0 });
   const [panelMenuOpen, setPanelMenuOpen] = useState<boolean>(false);
   const onMenuToggle = useCallback(
     (event: MouseEvent<HTMLDivElement>) => {
@@ -43,11 +39,11 @@ export const PanelHeaderMenuTrigger: FC<Props> = ({ children, ...divProps }) => 
   );
 };
 
-function isClick(current: ClickCoordinates, clicked: ClickCoordinates): boolean {
+function isClick(current: CartesianCoords2D, clicked: CartesianCoords2D): boolean {
   return clicked.x === current.x && clicked.y === current.y;
 }
 
-function eventToClickCoordinates(event: MouseEvent<HTMLDivElement>): ClickCoordinates {
+function eventToClickCoordinates(event: MouseEvent<HTMLDivElement>): CartesianCoords2D {
   return {
     x: Math.floor(event.clientX),
     y: Math.floor(event.clientY),

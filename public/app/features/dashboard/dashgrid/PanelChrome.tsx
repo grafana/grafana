@@ -323,7 +323,7 @@ export class PanelChrome extends Component<Props, State> {
 
   render() {
     const { dashboard, panel, isViewing, isEditing, width, height } = this.props;
-    const { errorMessage, data, renderCounter } = this.state;
+    const { errorMessage, data } = this.state;
     const { transparent } = panel;
 
     const containerClassNames = classNames({
@@ -345,7 +345,6 @@ export class PanelChrome extends Component<Props, State> {
           isEditing={isEditing}
           isViewing={isViewing}
           data={data}
-          renderCounter={renderCounter}
         />
         <ErrorBoundary>
           {({ error }) => {
