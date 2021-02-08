@@ -10,6 +10,9 @@ replace github.com/denisenkom/go-mssqldb => github.com/denisenkom/go-mssqldb v0.
 // It's also present on grafana/loki's go.mod so we'll need till it gets updated.
 replace k8s.io/client-go => k8s.io/client-go v0.18.8
 
+// Temporary directive to use latest commit of https://github.com/grafana/grafana-plugin-sdk-go/pull/252.
+replace github.com/grafana/grafana-plugin-sdk-go => github.com/grafana/grafana-plugin-sdk-go v0.86.1-0.20210206112234-808f7e650ff5
+
 require (
 	cloud.google.com/go v0.70.0 // indirect
 	cloud.google.com/go/storage v1.12.0
@@ -59,7 +62,7 @@ require (
 	github.com/jung-kurt/gofpdf v1.10.1
 	github.com/lib/pq v1.9.0
 	github.com/linkedin/goavro/v2 v2.9.7
-	github.com/magefile/mage v1.10.0
+	github.com/magefile/mage v1.11.0
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mattn/go-sqlite3 v1.14.6
 	github.com/opentracing/opentracing-go v1.2.0
