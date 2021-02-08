@@ -227,7 +227,7 @@ export function toDuration(size: number, decimals: DecimalCount, timeScale: Inte
   let decrementDecimals = false;
   let decimalsCount = 0;
 
-  if (decimals !== null || decimals !== undefined) {
+  if (decimals !== null && decimals !== undefined) {
     decimalsCount = decimals as number;
   }
 
