@@ -1,7 +1,5 @@
 import React from 'react';
 
-import { InlineField, Select } from '@grafana/ui';
-
 import Datasource from '../../datasource';
 import { AzureMonitorQuery } from '../../types';
 import MetricNamespaceField from './MetricNamespaceField';
@@ -13,6 +11,7 @@ import AggregationField from './AggregationField';
 import { useMetricsMetadata } from '../metrics';
 import TimeGrainField from './TimeGrainField';
 import DimensionFields from './DimensionFields';
+import SubscriptionField from '../SubscriptionField';
 
 interface MetricsQueryEditorProps {
   query: AzureMonitorQuery;
@@ -20,11 +19,6 @@ interface MetricsQueryEditorProps {
   subscriptionId: string;
   onChange: (newQuery: AzureMonitorQuery) => void;
 }
-
-const noop = (...args: any) => console.log(...args);
-const opt = (value: string) => ({ value, label: value });
-
-const labelWidth = 16;
 
 const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({ query, datasource, subscriptionId, onChange }) => {
   const metricsMetadata = useMetricsMetadata(datasource, query, subscriptionId, onChange);
@@ -47,9 +41,13 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({ query, datasour
 
   return (
     <>
-      <InlineField label="Subscription" labelWidth={labelWidth}>
-        <Select value={opt(query.subscription)} onChange={noop} options={[]} width={38} />
-      </InlineField>
+      <SubscriptionField
+        query={query}
+        datasource={datasource}
+        subscriptionId={subscriptionId}
+        onChange={onFieldChange}
+        onQueryChange={() => {}} // TODO
+      />
 
       <ResourceGroupsField
         query={query}

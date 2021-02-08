@@ -20,6 +20,13 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   url: string;
   baseUrl: string;
   applicationId: string;
+
+  /**
+   * @deprecated
+   * TODO: not sure what this is, its old and is migrated?
+   * */
+  logAnalyticsSubscriptionId: string;
+
   azureMonitorUrl: string;
   defaultOrFirstWorkspace: string;
   subscriptionId: string;
