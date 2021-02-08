@@ -77,8 +77,7 @@ func TestGetIntervalFrom(t *testing.T) {
 		expected        time.Duration
 	}{
 		{"45s", nil, `{"interval": "45s"}`, time.Second * 15, time.Second * 45},
-		{"EmptyInterval", nil, `{"interval": ""}`, time.Second * 15, time.Second * 1},
-		{"45", nil, `{"interval": "45"}`, time.Second * 15, time.Second * 50},
+		{"45", nil, `{"interval": "45"}`, time.Second * 15, time.Second * 45},
 		{"2m", nil, `{"interval": "2m"}`, time.Second * 15, time.Minute * 2},
 	}
 
