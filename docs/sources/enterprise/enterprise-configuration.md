@@ -319,7 +319,7 @@ A list of hostnames or IP addresses separated by spaces for which requests are a
 
 ### header_drop_list
 
-A list of headers that will be stripped from outgoing datasource and alerting requests.
+A list of headers that are stripped from the outgoing data source and alerting requests.
 
 ### cookie_drop_list =
 
