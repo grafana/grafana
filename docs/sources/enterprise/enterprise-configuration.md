@@ -315,7 +315,7 @@ A list of hostnames or IP addresses separated by spaces for which requests are b
 
 ### host_allow_list
 
-A list of hostnames or IP addresses separated by spaces for which requests will be allowed, all other requests will be blocked.
+A list of hostnames or IP addresses separated by spaces for which requests are allowed. All other requests are blocked.
 
 ### header_drop_list
 
