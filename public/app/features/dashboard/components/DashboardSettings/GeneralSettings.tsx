@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { SelectableValue, TimeZone } from '@grafana/data';
-import { Select, Switch, TagsInput, InlineField, Input } from '@grafana/ui';
+import { Select, InlineSwitch, TagsInput, InlineField, Input } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { DashboardModel } from '../../state/DashboardModel';
@@ -85,7 +85,7 @@ export const GeneralSettings: React.FC<Props> = ({ dashboard }) => {
           dashboardId={dashboard.id}
         />
         <InlineField label="Editable" labelWidth={14}>
-          <Switch value={dashboard.editable} onChange={onEditableChange} />
+          <InlineSwitch value={dashboard.editable} onChange={onEditableChange} />
         </InlineField>
       </div>
       <TimePickerSettings

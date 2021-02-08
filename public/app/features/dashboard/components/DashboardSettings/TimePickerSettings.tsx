@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { InlineField, Input, Switch, TimeZonePicker, Tooltip } from '@grafana/ui';
+import { InlineField, Input, InlineSwitch, TimeZonePicker, Tooltip } from '@grafana/ui';
 import { rangeUtil, TimeZone } from '@grafana/data';
 import isEmpty from 'lodash/isEmpty';
 import { selectors } from '@grafana/e2e-selectors';
@@ -86,7 +86,7 @@ export class TimePickerSettings extends PureComponent<Props, State> {
 
           <div className="gf-form">
             <InlineField labelWidth={14} label="Hide time picker">
-              <Switch value={!!this.props.timePickerHidden} onChange={this.onHideTimePickerChange} />
+              <InlineSwitch value={!!this.props.timePickerHidden} onChange={this.onHideTimePickerChange} />
             </InlineField>
           </div>
         </div>
