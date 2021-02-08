@@ -2,13 +2,6 @@ import React from 'react';
 import { FeatureState } from '@grafana/data';
 import { InfoBox, FeatureInfoBox } from '@grafana/ui';
 import mdx from './InfoBox.mdx';
-import {
-  DismissableFeatureInfoBox,
-  DismissableFeatureInfoBoxProps,
-  FEATUREINFOBOX_PERSISTENCE_ID_PREFIX,
-} from './DismissableFeatureInfoBox';
-import { Button } from '../Button';
-import { css } from 'emotion';
 import { Story } from '@storybook/react';
 import { FeatureInfoBoxProps } from './FeatureInfoBox';
 import { InfoBoxProps } from './InfoBox';
@@ -35,11 +28,10 @@ export default {
   },
 };
 
-const defaultProps: DismissableFeatureInfoBoxProps = {
+const defaultProps: FeatureInfoBoxProps = {
   title: 'A title',
   severity: 'info',
   url: 'http://www.grafana.com',
-  persistenceId: 'storybook-feature-info-box-persist',
   featureState: FeatureState.beta,
 
   children: (
@@ -59,27 +51,3 @@ infoBox.args = defaultProps;
 const FeatureInfoBoxTemplate: Story<FeatureInfoBoxProps> = (args) => <FeatureInfoBox {...args}></FeatureInfoBox>;
 export const featureInfoBox = FeatureInfoBoxTemplate.bind({});
 featureInfoBox.args = defaultProps;
-
-const DismissableTemplate: Story<DismissableFeatureInfoBoxProps> = (args) => {
-  const onResetClick = () => {
-    localStorage.removeItem(FEATUREINFOBOX_PERSISTENCE_ID_PREFIX.concat(args.persistenceId));
-    location.reload();
-  };
-
-  return (
-    <div>
-      <div>
-        <DismissableFeatureInfoBox {...args} />
-      </div>
-      <div
-        className={css`
-          margin-top: 24px;
-        `}
-      >
-        <Button onClick={onResetClick}>Reset DismissableFeatureInfoBox</Button>
-      </div>
-    </div>
-  );
-};
-export const dismissableFeatureInfoBox = DismissableTemplate.bind({});
-dismissableFeatureInfoBox.args = defaultProps;

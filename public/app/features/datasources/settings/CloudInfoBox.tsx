@@ -1,9 +1,12 @@
 import { DataSourceSettings, GrafanaTheme } from '@grafana/data';
-import { DismissableFeatureInfoBox, useStyles } from '@grafana/ui';
+import { FeatureInfoBox, useStyles } from '@grafana/ui';
 import { css } from 'emotion';
 import React, { FC } from 'react';
 import { config } from 'app/core/config';
 import { GrafanaEdition } from '@grafana/data/src/types/config';
+import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
+
+const LOCAL_STORAGE_KEY = 'datasources.settings.cloudInfoBox.isDismissed';
 
 export interface Props {
   dataSource: DataSourceSettings;
@@ -38,27 +41,38 @@ export const CloudInfoBox: FC<Props> = ({ dataSource }) => {
   }
 
   return (
-    <DismissableFeatureInfoBox
-      title={`Configure your ${mainDS} data source below`}
-      persistenceId="data-source-settings-cloud-info-box"
-      className={styles.box}
-      branded={false}
-    >
-      <div className={styles.text}>
-        Or skip the effort and get {mainDS} (and {extraDS}) as fully managed, scalable and hosted data sources from
-        Grafana Labs with the{' '}
-        <a
-          className="external-link"
-          href={`https://grafana.com/signup/cloud/connect-account?src=grafana-oss&cnt=${dataSource.type}-settings`}
-          target="_blank"
-          rel="noreferrer"
-          title="The free plan includes 10k active metrics and 50gb storage."
-        >
-          free-forever Grafana Cloud plan
-        </a>
-        .
-      </div>
-    </DismissableFeatureInfoBox>
+    <LocalStorageValueProvider<boolean> storageKey={LOCAL_STORAGE_KEY} defaultValue={false}>
+      {(isDismissed, onDismiss) => {
+        if (isDismissed) {
+          return null;
+        }
+        return (
+          <FeatureInfoBox
+            title={`Configure your ${mainDS} data source below`}
+            className={styles.box}
+            branded={false}
+            onDismiss={() => {
+              onDismiss(true);
+            }}
+          >
+            <div className={styles.text}>
+              Or skip the effort and get {mainDS} (and {extraDS}) as fully managed, scalable and hosted data sources
+              from Grafana Labs with the{' '}
+              <a
+                className="external-link"
+                href={`https://grafana.com/signup/cloud/connect-account?src=grafana-oss&cnt=${dataSource.type}-settings`}
+                target="_blank"
+                rel="noreferrer"
+                title="The free plan includes 10k active metrics and 50gb storage."
+              >
+                free-forever Grafana Cloud plan
+              </a>
+              .
+            </div>
+          </FeatureInfoBox>
+        );
+      }}
+    </LocalStorageValueProvider>
   );
 };
 
