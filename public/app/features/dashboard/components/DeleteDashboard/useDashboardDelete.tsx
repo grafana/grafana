@@ -10,7 +10,7 @@ import { deleteDashboard } from 'app/features/manage-dashboards/state/actions';
 export const useDashboardDelete = (uid: string) => {
   const dashboard = useSelector((state: StoreState) => state.dashboard.getModel());
   const dispatch = useDispatch();
-  const [state, onRestoreDashboard] = useAsyncFn(async () => await deleteDashboard(uid, false), []);
+  const [state, onRestoreDashboard] = useAsyncFn(async () => deleteDashboard(uid, false), []);
   useEffect(() => {
     if (state.value) {
       dispatch(
