@@ -176,11 +176,11 @@ Array [
       ],
       Array [
         0.3,
-        1612769338132,
+        1609466400000,
       ],
     ],
     "fieldIndex": 0,
-    "hasMsResolution": true,
+    "hasMsResolution": false,
     "id": "series with time as strings v1",
     "label": "series with time as strings v1",
     "legend": true,
@@ -272,7 +272,7 @@ Array [
       ],
       Array [
         0.3,
-        1612769338139,
+        1609466400000,
       ],
     ],
     "fieldIndex": 1,

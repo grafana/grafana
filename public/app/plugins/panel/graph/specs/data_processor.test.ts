@@ -50,8 +50,8 @@ describe('Graph DataProcessor', () => {
           { name: 'v1', values: [0.1, 0.2, 0.3] }, // first
           {
             name: 'time',
-            values: ['2021-01-01T01:00:00.000Z', 'Fri, 01 Jan 2021 01:00:00 GMT'],
-          }, // Time is last column
+            values: ['2021-01-01T01:00:00.000Z', 'Fri, 01 Jan 2021 01:00:00 GMT', '2021-01-01T02:00:00.000Z'], // Time is last column
+          },
         ],
       },
     ]);
