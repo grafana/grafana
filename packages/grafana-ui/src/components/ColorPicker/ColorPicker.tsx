@@ -3,11 +3,10 @@ import omit from 'lodash/omit';
 import { PopoverController } from '../Tooltip/PopoverController';
 import { Popover } from '../Tooltip/Popover';
 import { ColorPickerPopover, ColorPickerProps, ColorPickerChangeHandler } from './ColorPickerPopover';
-import { getColorForTheme } from '@grafana/data';
+import { getColorForTheme, GrafanaTheme } from '@grafana/data';
 import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
 
 import { css } from 'emotion';
-import { GrafanaTheme } from '@grafana/data';
 import { withTheme, stylesFactory } from '../../themes';
 import { ColorPickerTrigger } from './ColorPickerTrigger';
 

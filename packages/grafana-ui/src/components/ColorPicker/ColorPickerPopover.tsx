@@ -4,9 +4,8 @@ import { PopoverContentProps } from '../Tooltip/Tooltip';
 import SpectrumPalette from './SpectrumPalette';
 import { Themeable } from '../../types/theme';
 import { warnAboutColorPickerPropsDeprecation } from './warnAboutColorPickerPropsDeprecation';
-import { getColorForTheme } from '@grafana/data';
 import { css, cx } from 'emotion';
-import { GrafanaTheme, GrafanaThemeType } from '@grafana/data';
+import { GrafanaTheme, GrafanaThemeType, getColorForTheme } from '@grafana/data';
 import { stylesFactory, withTheme } from '../../themes';
 
 export type ColorPickerChangeHandler = (color: string) => void;
