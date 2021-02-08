@@ -84,7 +84,7 @@ func TestGetIntervalFrom(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			js, _ := NewJson([]byte(tc.queryMode))
+			js, _ := simplejson.NewJson([]byte(tc.queryMode))
 			actual, err := GetIntervalFrom(tc.dsInfo, js, tc.defaultInterval)
 			assert.Nil(t, err)
 			assert.Equal(t, tc.expected, actual)
