@@ -29,8 +29,8 @@ import { VizOrientation } from '@grafana/data';
 import { Themeable } from '../../types';
 
 const MIN_VALUE_HEIGHT = 18;
-const MAX_VALUE_HEIGHT = 50;
-const MIN_VALUE_WIDTH = 50;
+const MAX_VALUE_HEIGHT = 80;
+const MIN_VALUE_WIDTH = 100;
 const MAX_VALUE_WIDTH = 150;
 const TITLE_LINE_HEIGHT = 1.5;
 const VALUE_LINE_HEIGHT = 1;
@@ -396,12 +396,7 @@ function calculateBarAndValueDimensions(props: Props): BarAndValueDimensions {
     wrapperWidth = width;
     wrapperHeight = height - titleDim.height;
   } else {
-    if (text?.valueSize) {
-      valueHeight = text.valueSize * VALUE_LINE_HEIGHT;
-    } else {
-      valueHeight = height - titleDim.height;
-    }
-
+    valueHeight = height - titleDim.height;
     valueWidth = Math.max(Math.min(width * 0.2, MAX_VALUE_WIDTH), MIN_VALUE_WIDTH);
     maxBarHeight = height - titleDim.height;
     maxBarWidth = width - valueWidth - titleDim.width;
