@@ -92,7 +92,9 @@ export interface SLOQuery {
   aliasBy?: string;
   selectorName: string;
   serviceId: string;
+  serviceName: string;
   sloId: string;
+  sloName: string;
   goal?: number;
 }
 
