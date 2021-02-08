@@ -25,7 +25,7 @@ It is possible to limit requests based on a hostname, an IP address, or both.
 
 ### Deny list
 
-Any request to a host or IP on the deny-list will be blocked.
+Any request to a hostname or IP address on the deny-list is denied.
 
 ### Allow list
 
