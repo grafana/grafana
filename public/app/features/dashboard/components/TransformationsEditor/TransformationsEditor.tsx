@@ -6,7 +6,7 @@ import {
   CustomScrollbar,
   stylesFactory,
   Themeable,
-  DismissableFeatureInfoBox,
+  FeatureInfoBox,
   useTheme,
   VerticalGroup,
   withTheme,
@@ -33,6 +33,7 @@ import { TransformationOperationRows } from './TransformationOperationRows';
 import { TransformationsEditorTransformation } from './types';
 import { PanelNotSupported } from '../PanelEditor/PanelNotSupported';
 import { AppNotificationSeverity } from '../../../../types';
+import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
 
 interface TransformationsEditorProps extends Themeable {
   panel: PanelModel;
@@ -254,22 +255,37 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
       <>
         {noTransforms && (
           <Container grow={1}>
-            <DismissableFeatureInfoBox
-              title="Transformations"
-              className={css`
-                margin-bottom: ${this.props.theme.spacing.lg};
-              `}
-              persistenceId="transformationsFeaturesInfoBox"
-              url={getDocsLink(DocsId.Transformations)}
+            <LocalStorageValueProvider<boolean>
+              storageKey={'dashboard.components.TransformationEditor.featureInfoBox.isDismissed'}
+              defaultValue={false}
             >
-              <p>
-                Transformations allow you to join, calculate, re-order, hide and rename your query results before being
-                visualized. <br />
-                Many transforms are not suitable if you&apos;re using the Graph visualization as it currently only
-                supports time series. <br />
-                It can help to switch to Table visualization to understand what a transformation is doing. <br />
-              </p>
-            </DismissableFeatureInfoBox>
+              {(isDismissed, onDismiss) => {
+                if (isDismissed) {
+                  return null;
+                }
+
+                return (
+                  <FeatureInfoBox
+                    title="Transformations"
+                    className={css`
+                      margin-bottom: ${this.props.theme.spacing.lg};
+                    `}
+                    onDismiss={() => {
+                      onDismiss(true);
+                    }}
+                    url={getDocsLink(DocsId.Transformations)}
+                  >
+                    <p>
+                      Transformations allow you to join, calculate, re-order, hide and rename your query results before
+                      being visualized. <br />
+                      Many transforms are not suitable if you&apos;re using the Graph visualization as it currently only
+                      supports time series. <br />
+                      It can help to switch to Table visualization to understand what a transformation is doing. <br />
+                    </p>
+                  </FeatureInfoBox>
+                );
+              }}
+            </LocalStorageValueProvider>
           </Container>
         )}
         {showPicker ? (
