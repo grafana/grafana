@@ -323,4 +323,4 @@ A list of headers that are stripped from the outgoing data source and alerting r
 
 ### cookie_drop_list =
 
-A list of cookies that will be stripped from outgoing datasource and alerting requests.
+A list of cookies that are stripped from the outgoing data source and alerting requests.
