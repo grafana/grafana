@@ -1,4 +1,4 @@
-import { PanelPlugin, LogsSortOrder } from '@grafana/data';
+import { PanelPlugin, LogsSortOrder, LogsDedupStrategy, LogsDedupDescription } from '@grafana/data';
 import { Options } from './types';
 import { LogsPanel } from './LogsPanel';
 
@@ -33,5 +33,31 @@ export const plugin = new PanelPlugin<Options>(LogsPanel).setPanelOptions((build
         ],
       },
       defaultValue: LogsSortOrder.Descending,
+    })
+    .addRadio({
+      path: 'dedupStrategy',
+      name: 'Deduplication',
+      description: '',
+      settings: {
+        options: [
+          { value: LogsDedupStrategy.none, label: 'None', description: LogsDedupDescription[LogsDedupStrategy.none] },
+          {
+            value: LogsDedupStrategy.exact,
+            label: 'Exact',
+            description: LogsDedupDescription[LogsDedupStrategy.exact],
+          },
+          {
+            value: LogsDedupStrategy.numbers,
+            label: 'Numbers',
+            description: LogsDedupDescription[LogsDedupStrategy.numbers],
+          },
+          {
+            value: LogsDedupStrategy.signature,
+            label: 'Signature',
+            description: LogsDedupDescription[LogsDedupStrategy.signature],
+          },
+        ],
+      },
+      defaultValue: LogsDedupStrategy.none,
     });
 });
