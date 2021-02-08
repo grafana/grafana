@@ -6,6 +6,8 @@ import { config } from 'app/core/config';
 import { GrafanaEdition } from '@grafana/data/src/types/config';
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
 
+const LOCAL_STORAGE_KEY = 'datasources.settings.cloudInfoBox.isDismissed';
+
 export interface Props {
   dataSource: DataSourceSettings;
 }
@@ -39,7 +41,7 @@ export const CloudInfoBox: FC<Props> = ({ dataSource }) => {
   }
 
   return (
-    <LocalStorageValueProvider<boolean> storageKey="datasources.settings.cloudInfoBox.isDismissed" defaultValue={false}>
+    <LocalStorageValueProvider<boolean> storageKey={LOCAL_STORAGE_KEY} defaultValue={false}>
       {(isDismissed, onDismiss) => {
         if (isDismissed) {
           return null;

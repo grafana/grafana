@@ -35,6 +35,8 @@ import { PanelNotSupported } from '../PanelEditor/PanelNotSupported';
 import { AppNotificationSeverity } from '../../../../types';
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
 
+const LOCAL_STORAGE_KEY = 'dashboard.components.TransformationEditor.featureInfoBox.isDismissed';
+
 interface TransformationsEditorProps extends Themeable {
   panel: PanelModel;
 }
@@ -255,10 +257,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
       <>
         {noTransforms && (
           <Container grow={1}>
-            <LocalStorageValueProvider<boolean>
-              storageKey={'dashboard.components.TransformationEditor.featureInfoBox.isDismissed'}
-              defaultValue={false}
-            >
+            <LocalStorageValueProvider<boolean> storageKey={LOCAL_STORAGE_KEY} defaultValue={false}>
               {(isDismissed, onDismiss) => {
                 if (isDismissed) {
                   return null;
