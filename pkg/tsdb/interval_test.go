@@ -72,19 +72,20 @@ func TestGetIntervalFrom(t *testing.T) {
 	testCases := []struct {
 		name            string
 		dsInfo          *models.DataSource
-		queryModel      *simplejson.Json
+		queryModel      string
 		defaultInterval time.Duration
 		expected        time.Duration
 	}{
-		{"45s", nil, &simplejson.NewFromAny{"interval": "45s"}, time.Second * 15, time.Second * 45},
-		{"EmptyInterval", nil, &simplejson.NewFromAny{"interval": ""}, time.Second * 15, time.Second * 1},
-		{"45", nil, &simplejson.NewFromAny{"interval": "45"}, time.Second * 15, time.Second * 50},
-		{"2m", nil, &simplejson.NewFromAny{"interval": "2m"}, time.Second * 15, time.Minute * 2},
+		{"45s", nil, `{"interval": "45s"}`, time.Second * 15, time.Second * 45},
+		{"EmptyInterval", nil, `{"interval": ""}`, time.Second * 15, time.Second * 1},
+		{"45", nil, `{"interval": "45"}`, time.Second * 15, time.Second * 50},
+		{"2m", nil, `{"interval": "2m"}`, time.Second * 15, time.Minute * 2},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			actual, err := GetIntervalFrom(tc.dsInfo, tc.QueryModel, tc.defaultInterval)
+			js, _ := NewJson([]byte(tc.queryMode)
+			actual, err := GetIntervalFrom(tc.dsInfo, js, tc.defaultInterval)
 			assert.Nil(t, err)
 			assert.Equal(t, tc.expected, actual)
 		})
