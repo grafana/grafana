@@ -71,7 +71,7 @@ export const MetricEditor: FunctionComponent<Props> = ({ value }) => {
 
   const previousMetrics = query.metrics!.slice(
     0,
-    query.metrics!.findIndex(m => m.id === value.id)
+    query.metrics!.findIndex((m) => m.id === value.id)
   );
 
   // TODO: This could be common with the one in BucketAggregationEditor
@@ -92,7 +92,7 @@ export const MetricEditor: FunctionComponent<Props> = ({ value }) => {
         <Segment
           className={cx(styles.color, segmentStyles)}
           options={getTypeOptions(previousMetrics, datasource.esVersion)}
-          onChange={e => dispatch(changeMetricType(value.id, e.value!))}
+          onChange={(e) => dispatch(changeMetricType(value.id, e.value!))}
           value={toOption(value)}
         />
 
@@ -100,7 +100,7 @@ export const MetricEditor: FunctionComponent<Props> = ({ value }) => {
           <SegmentAsync
             className={cx(styles.color, segmentStyles)}
             loadOptions={getFields}
-            onChange={e => dispatch(changeMetricField(value.id, e.value!))}
+            onChange={(e) => dispatch(changeMetricField(value.id, e.value!))}
             placeholder="Select Field"
             value={value.field}
           />
@@ -109,7 +109,7 @@ export const MetricEditor: FunctionComponent<Props> = ({ value }) => {
         {isPipelineAggregation(value) && !isPipelineAggregationWithMultipleBucketPaths(value) && (
           <MetricPicker
             className={cx(styles.color, segmentStyles)}
-            onChange={e => dispatch(changeMetricField(value.id, e.value?.id!))}
+            onChange={(e) => dispatch(changeMetricField(value.id, e.value?.id!))}
             options={previousMetrics}
             value={value.field}
           />

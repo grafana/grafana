@@ -13,7 +13,7 @@ function getRelativeURLPath(url: string) {
   return path.startsWith('/') ? path.substring(1, path.length) : path;
 }
 
-export const createShortLink = memoizeOne(async function(path: string) {
+export const createShortLink = memoizeOne(async function (path: string) {
   try {
     const shortLink = await getBackendSrv().post(`/api/short-urls`, {
       path: getRelativeURLPath(path),

@@ -13,7 +13,7 @@ describe('dataSourceVariableReducer', () => {
   const adapter = createDataSourceVariableAdapter();
   describe('when createDataSourceOptions is dispatched', () => {
     const plugins = getMockPlugins(3);
-    const sources: DataSourceSelectItem[] = plugins.map(p => ({
+    const sources: DataSourceSelectItem[] = plugins.map((p) => ({
       name: p.name,
       value: `${p.name} value`,
       meta: p,
@@ -26,22 +26,10 @@ describe('dataSourceVariableReducer', () => {
       ${'not-found-plugin'} | ${undefined}                    | ${false}   | ${[{ text: 'No data sources found', value: '', selected: false }]}
       ${sources[1].meta.id} | ${/.*(pretty cool plugin-1).*/} | ${false}   | ${[{ text: 'pretty cool plugin-1', value: 'pretty cool plugin-1', selected: false }]}
       ${sources[1].meta.id} | ${/.*(pretty cool plugin-2).*/} | ${false}   | ${[{ text: 'No data sources found', value: '', selected: false }]}
-      ${sources[1].meta.id} | ${undefined} | ${true} | ${[
-  { text: 'All', value: '$__all', selected: false },
-  { text: 'pretty cool plugin-1', value: 'pretty cool plugin-1', selected: false },
-]}
-      ${'not-found-plugin'} | ${undefined} | ${true} | ${[
-  { text: 'All', value: '$__all', selected: false },
-  { text: 'No data sources found', value: '', selected: false },
-]}
-      ${sources[1].meta.id} | ${/.*(pretty cool plugin-1).*/} | ${true} | ${[
-  { text: 'All', value: '$__all', selected: false },
-  { text: 'pretty cool plugin-1', value: 'pretty cool plugin-1', selected: false },
-]}
-      ${sources[1].meta.id} | ${/.*(pretty cool plugin-2).*/} | ${true} | ${[
-  { text: 'All', value: '$__all', selected: false },
-  { text: 'No data sources found', value: '', selected: false },
-]}
+      ${sources[1].meta.id} | ${undefined}                    | ${true}    | ${[{ text: 'All', value: '$__all', selected: false }, { text: 'pretty cool plugin-1', value: 'pretty cool plugin-1', selected: false }]}
+      ${'not-found-plugin'} | ${undefined}                    | ${true}    | ${[{ text: 'All', value: '$__all', selected: false }, { text: 'No data sources found', value: '', selected: false }]}
+      ${sources[1].meta.id} | ${/.*(pretty cool plugin-1).*/} | ${true}    | ${[{ text: 'All', value: '$__all', selected: false }, { text: 'pretty cool plugin-1', value: 'pretty cool plugin-1', selected: false }]}
+      ${sources[1].meta.id} | ${/.*(pretty cool plugin-2).*/} | ${true}    | ${[{ text: 'All', value: '$__all', selected: false }, { text: 'No data sources found', value: '', selected: false }]}
     `(
       "when called with query: '$query' and regex: '$regex' and includeAll: '$includeAll' then state should be correct",
       ({ query, regex, includeAll, expected }) => {

@@ -1,7 +1,7 @@
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { StyleProps } from '../Button';
 import { focusCss } from '../../themes/mixins';
+import { ComponentSize } from '../../types/size';
 
 export const getFocusStyle = (theme: GrafanaTheme) => css`
   &:focus {
@@ -86,30 +86,29 @@ export const inputSizesPixels = (size: string) => {
   }
 };
 
-export const getPropertiesForButtonSize = (props: StyleProps) => {
-  const { hasText, hasIcon, size } = props;
-  const { spacing, typography, height } = props.theme;
+export function getPropertiesForButtonSize(size: ComponentSize, theme: GrafanaTheme) {
+  const { typography, height, spacing } = theme;
 
   switch (size) {
     case 'sm':
       return {
-        padding: `0 ${spacing.sm}`,
+        padding: spacing.base,
         fontSize: typography.size.sm,
         height: height.sm,
       };
 
     case 'lg':
       return {
-        padding: `0 ${hasText ? spacing.lg : spacing.md} 0 ${hasIcon ? spacing.md : spacing.lg}`,
+        padding: spacing.base * 3,
         fontSize: typography.size.lg,
         height: height.lg,
       };
     case 'md':
     default:
       return {
-        padding: `0 ${hasText ? spacing.md : spacing.sm} 0 ${hasIcon ? spacing.sm : spacing.md}`,
+        padding: spacing.base * 2,
         fontSize: typography.size.md,
         height: height.md,
       };
   }
-};
+}

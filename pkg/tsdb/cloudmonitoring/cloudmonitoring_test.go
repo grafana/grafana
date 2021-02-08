@@ -40,8 +40,9 @@ func TestCloudMonitoring(t *testing.T) {
 			}
 
 			Convey("and query has no aggregation set", func() {
-				queries, err := executor.buildQueries(tsdbQuery)
+				qes, err := executor.buildQueryExecutors(tsdbQuery)
 				So(err, ShouldBeNil)
+				queries := getCloudMonitoringQueriesFromInterface(qes)
 
 				So(len(queries), ShouldEqual, 1)
 				So(queries[0].RefID, ShouldEqual, "A")
@@ -55,13 +56,10 @@ func TestCloudMonitoring(t *testing.T) {
 				So(queries[0].AliasBy, ShouldEqual, "testalias")
 
 				Convey("and generated deep link has correct parameters", func() {
-					dl := queries[0].buildDeepLink()
-					So(dl, ShouldBeEmpty) // no resource type found
-
 					// assign resource type to query parameters to be included in the deep link filter
 					// in the actual workflow this information comes from the response of the Monitoring API
 					queries[0].Params.Set("resourceType", "a/resource/type")
-					dl = queries[0].buildDeepLink()
+					dl := queries[0].buildDeepLink()
 
 					expectedTimeSelection := map[string]string{
 						"timeRange": "custom",
@@ -82,8 +80,9 @@ func TestCloudMonitoring(t *testing.T) {
 					"filters":    []interface{}{"key", "=", "value", "AND", "key2", "=", "value2", "AND", "resource.type", "=", "another/resource/type"},
 				})
 
-				queries, err := executor.buildQueries(tsdbQuery)
+				qes, err := executor.buildQueryExecutors(tsdbQuery)
 				So(err, ShouldBeNil)
+				queries := getCloudMonitoringQueriesFromInterface(qes)
 				So(len(queries), ShouldEqual, 1)
 				So(queries[0].Params["filter"][0], ShouldEqual, `metric.type="a/metric/type" key="value" key2="value2" resource.type="another/resource/type"`)
 
@@ -114,8 +113,9 @@ func TestCloudMonitoring(t *testing.T) {
 						"filters":         []interface{}{"key", "=", "value", "AND", "key2", "=", "value2"},
 					})
 
-					queries, err := executor.buildQueries(tsdbQuery)
+					qes, err := executor.buildQueryExecutors(tsdbQuery)
 					So(err, ShouldBeNil)
+					queries := getCloudMonitoringQueriesFromInterface(qes)
 					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+1000s`)
 
 					Convey("and generated deep link has correct parameters", func() {
@@ -142,8 +142,9 @@ func TestCloudMonitoring(t *testing.T) {
 						"filters":         []interface{}{"key", "=", "value", "AND", "key2", "=", "value2"},
 					})
 
-					queries, err := executor.buildQueries(tsdbQuery)
+					qes, err := executor.buildQueryExecutors(tsdbQuery)
 					So(err, ShouldBeNil)
+					queries := getCloudMonitoringQueriesFromInterface(qes)
 					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+60s`)
 
 					Convey("and generated deep link has correct parameters", func() {
@@ -174,8 +175,9 @@ func TestCloudMonitoring(t *testing.T) {
 						"alignmentPeriod": "cloud-monitoring-auto",
 					})
 
-					queries, err := executor.buildQueries(tsdbQuery)
+					qes, err := executor.buildQueryExecutors(tsdbQuery)
 					So(err, ShouldBeNil)
+					queries := getCloudMonitoringQueriesFromInterface(qes)
 					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+60s`)
 				})
 
@@ -187,8 +189,9 @@ func TestCloudMonitoring(t *testing.T) {
 						"alignmentPeriod": "cloud-monitoring-auto",
 					})
 
-					queries, err := executor.buildQueries(tsdbQuery)
+					qes, err := executor.buildQueryExecutors(tsdbQuery)
 					So(err, ShouldBeNil)
+					queries := getCloudMonitoringQueriesFromInterface(qes)
 					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+60s`)
 				})
 
@@ -200,8 +203,9 @@ func TestCloudMonitoring(t *testing.T) {
 						"alignmentPeriod": "cloud-monitoring-auto",
 					})
 
-					queries, err := executor.buildQueries(tsdbQuery)
+					qes, err := executor.buildQueryExecutors(tsdbQuery)
 					So(err, ShouldBeNil)
+					queries := getCloudMonitoringQueriesFromInterface(qes)
 					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+300s`)
 				})
 
@@ -213,8 +217,9 @@ func TestCloudMonitoring(t *testing.T) {
 						"alignmentPeriod": "cloud-monitoring-auto",
 					})
 
-					queries, err := executor.buildQueries(tsdbQuery)
+					qes, err := executor.buildQueryExecutors(tsdbQuery)
 					So(err, ShouldBeNil)
+					queries := getCloudMonitoringQueriesFromInterface(qes)
 					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+3600s`)
 				})
 			})
@@ -228,8 +233,9 @@ func TestCloudMonitoring(t *testing.T) {
 						"alignmentPeriod": "stackdriver-auto",
 					})
 
-					queries, err := executor.buildQueries(tsdbQuery)
+					qes, err := executor.buildQueryExecutors(tsdbQuery)
 					So(err, ShouldBeNil)
+					queries := getCloudMonitoringQueriesFromInterface(qes)
 					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+60s`)
 
 					Convey("and generated deep link has correct parameters", func() {
@@ -258,8 +264,9 @@ func TestCloudMonitoring(t *testing.T) {
 						"alignmentPeriod": "stackdriver-auto",
 					})
 
-					queries, err := executor.buildQueries(tsdbQuery)
+					qes, err := executor.buildQueryExecutors(tsdbQuery)
 					So(err, ShouldBeNil)
+					queries := getCloudMonitoringQueriesFromInterface(qes)
 					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+60s`)
 
 					Convey("and generated deep link has correct parameters", func() {
@@ -288,8 +295,9 @@ func TestCloudMonitoring(t *testing.T) {
 						"alignmentPeriod": "stackdriver-auto",
 					})
 
-					queries, err := executor.buildQueries(tsdbQuery)
+					qes, err := executor.buildQueryExecutors(tsdbQuery)
 					So(err, ShouldBeNil)
+					queries := getCloudMonitoringQueriesFromInterface(qes)
 					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+300s`)
 
 					Convey("and generated deep link has correct parameters", func() {
@@ -318,8 +326,9 @@ func TestCloudMonitoring(t *testing.T) {
 						"alignmentPeriod": "stackdriver-auto",
 					})
 
-					queries, err := executor.buildQueries(tsdbQuery)
+					qes, err := executor.buildQueryExecutors(tsdbQuery)
 					So(err, ShouldBeNil)
+					queries := getCloudMonitoringQueriesFromInterface(qes)
 					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+3600s`)
 
 					Convey("and generated deep link has correct parameters", func() {
@@ -348,8 +357,9 @@ func TestCloudMonitoring(t *testing.T) {
 						"alignmentPeriod": "+600s",
 					})
 
-					queries, err := executor.buildQueries(tsdbQuery)
+					qes, err := executor.buildQueryExecutors(tsdbQuery)
 					So(err, ShouldBeNil)
+					queries := getCloudMonitoringQueriesFromInterface(qes)
 					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+600s`)
 
 					Convey("and generated deep link has correct parameters", func() {
@@ -378,8 +388,9 @@ func TestCloudMonitoring(t *testing.T) {
 					"view":               "FULL",
 				})
 
-				queries, err := executor.buildQueries(tsdbQuery)
+				qes, err := executor.buildQueryExecutors(tsdbQuery)
 				So(err, ShouldBeNil)
+				queries := getCloudMonitoringQueriesFromInterface(qes)
 
 				So(len(queries), ShouldEqual, 1)
 				So(queries[0].RefID, ShouldEqual, "A")
@@ -422,8 +433,9 @@ func TestCloudMonitoring(t *testing.T) {
 					"view":               "FULL",
 				})
 
-				queries, err := executor.buildQueries(tsdbQuery)
+				qes, err := executor.buildQueryExecutors(tsdbQuery)
 				So(err, ShouldBeNil)
+				queries := getCloudMonitoringQueriesFromInterface(qes)
 
 				So(len(queries), ShouldEqual, 1)
 				So(queries[0].RefID, ShouldEqual, "A")
@@ -484,8 +496,9 @@ func TestCloudMonitoring(t *testing.T) {
 			}
 
 			Convey("and query type is metrics", func() {
-				queries, err := executor.buildQueries(tsdbQuery)
+				qes, err := executor.buildQueryExecutors(tsdbQuery)
 				So(err, ShouldBeNil)
+				queries := getCloudMonitoringQueriesFromInterface(qes)
 
 				So(len(queries), ShouldEqual, 1)
 				So(queries[0].RefID, ShouldEqual, "A")
@@ -520,6 +533,34 @@ func TestCloudMonitoring(t *testing.T) {
 					}
 					verifyDeepLink(dl, expectedTimeSelection, expectedTimeSeriesFilter)
 				})
+
+				Convey("and editor mode is MQL", func() {
+					tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
+						"queryType": metricQueryType,
+						"metricQuery": map[string]interface{}{
+							"editorMode":  mqlEditorMode,
+							"projectName": "test-proj",
+							"query":       "test-query",
+							"aliasBy":     "test-alias",
+						},
+						"sloQuery": map[string]interface{}{},
+					})
+
+					qes, err := executor.buildQueryExecutors(tsdbQuery)
+					So(err, ShouldBeNil)
+					queries := make([]*cloudMonitoringTimeSeriesQuery, 0)
+					for _, qi := range qes {
+						q, ok := qi.(*cloudMonitoringTimeSeriesQuery)
+						So(ok, ShouldBeTrue)
+						queries = append(queries, q)
+					}
+
+					So(len(queries), ShouldEqual, 1)
+					So(queries[0].RefID, ShouldEqual, "A")
+					So(queries[0].ProjectName, ShouldEqual, "test-proj")
+					So(queries[0].Query, ShouldEqual, "test-query")
+					So(queries[0].AliasBy, ShouldEqual, "test-alias")
+				})
 			})
 
 			Convey("and query type is SLOs", func() {
@@ -537,8 +578,9 @@ func TestCloudMonitoring(t *testing.T) {
 					},
 				})
 
-				queries, err := executor.buildQueries(tsdbQuery)
+				qes, err := executor.buildQueryExecutors(tsdbQuery)
 				So(err, ShouldBeNil)
+				queries := getCloudMonitoringQueriesFromInterface(qes)
 
 				So(len(queries), ShouldEqual, 1)
 				So(queries[0].RefID, ShouldEqual, "A")
@@ -565,8 +607,9 @@ func TestCloudMonitoring(t *testing.T) {
 						},
 					})
 
-					queries, err := executor.buildQueries(tsdbQuery)
+					qes, err := executor.buildQueryExecutors(tsdbQuery)
 					So(err, ShouldBeNil)
+					queries := getCloudMonitoringQueriesFromInterface(qes)
 					So(queries[0].Params["aggregation.perSeriesAligner"][0], ShouldEqual, "ALIGN_NEXT_OLDER")
 
 					Convey("and empty deep link", func() {
@@ -584,8 +627,8 @@ func TestCloudMonitoring(t *testing.T) {
 				So(len(data.TimeSeries), ShouldEqual, 1)
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-				query := &cloudMonitoringQuery{}
-				err = executor.parseResponse(res, data, query)
+				query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}}
+				err = query.parseResponse(res, data, "")
 				So(err, ShouldBeNil)
 				frames, _ := res.Dataframes.Decoded()
 				So(len(frames), ShouldEqual, 1)
@@ -610,8 +653,8 @@ func TestCloudMonitoring(t *testing.T) {
 				So(len(data.TimeSeries), ShouldEqual, 3)
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-				query := &cloudMonitoringQuery{}
-				err = executor.parseResponse(res, data, query)
+				query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}}
+				err = query.parseResponse(res, data, "")
 				So(err, ShouldBeNil)
 				frames, _ := res.Dataframes.Decoded()
 
@@ -653,8 +696,8 @@ func TestCloudMonitoring(t *testing.T) {
 				So(len(data.TimeSeries), ShouldEqual, 3)
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-				query := &cloudMonitoringQuery{GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}}
-				err = executor.parseResponse(res, data, query)
+				query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}, GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}}
+				err = query.parseResponse(res, data, "")
 				So(err, ShouldBeNil)
 				frames, _ := res.Dataframes.Decoded()
 				Convey("Should add instance name and zone labels to metric name", func() {
@@ -673,8 +716,8 @@ func TestCloudMonitoring(t *testing.T) {
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
 
 				Convey("and the alias pattern is for metric type, a metric label and a resource label", func() {
-					query := &cloudMonitoringQuery{AliasBy: "{{metric.type}} - {{metric.label.instance_name}} - {{resource.label.zone}}", GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}}
-					err = executor.parseResponse(res, data, query)
+					query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}, AliasBy: "{{metric.type}} - {{metric.label.instance_name}} - {{resource.label.zone}}", GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}}
+					err = query.parseResponse(res, data, "")
 					So(err, ShouldBeNil)
 					frames, _ := res.Dataframes.Decoded()
 					Convey("Should use alias by formatting and only show instance name", func() {
@@ -686,8 +729,8 @@ func TestCloudMonitoring(t *testing.T) {
 				})
 
 				Convey("and the alias pattern is for metric name", func() {
-					query := &cloudMonitoringQuery{AliasBy: "metric {{metric.name}} service {{metric.service}}", GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}}
-					err = executor.parseResponse(res, data, query)
+					query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}, AliasBy: "metric {{metric.name}} service {{metric.service}}", GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}}
+					err = query.parseResponse(res, data, "")
 					So(err, ShouldBeNil)
 					frames, _ := res.Dataframes.Decoded()
 					Convey("Should use alias by formatting and only show instance name", func() {
@@ -705,8 +748,8 @@ func TestCloudMonitoring(t *testing.T) {
 				So(len(data.TimeSeries), ShouldEqual, 1)
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-				query := &cloudMonitoringQuery{AliasBy: "{{bucket}}"}
-				err = executor.parseResponse(res, data, query)
+				query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}, AliasBy: "{{bucket}}"}
+				err = query.parseResponse(res, data, "")
 				So(err, ShouldBeNil)
 				frames, _ := res.Dataframes.Decoded()
 				So(len(frames), ShouldEqual, 11)
@@ -752,8 +795,8 @@ func TestCloudMonitoring(t *testing.T) {
 				So(len(data.TimeSeries), ShouldEqual, 1)
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-				query := &cloudMonitoringQuery{AliasBy: "{{bucket}}"}
-				err = executor.parseResponse(res, data, query)
+				query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}, AliasBy: "{{bucket}}"}
+				err = query.parseResponse(res, data, "")
 				So(err, ShouldBeNil)
 				frames, _ := res.Dataframes.Decoded()
 				So(len(frames), ShouldEqual, 33)
@@ -792,8 +835,8 @@ func TestCloudMonitoring(t *testing.T) {
 				So(len(data.TimeSeries), ShouldEqual, 3)
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-				query := &cloudMonitoringQuery{AliasBy: "{{bucket}}"}
-				err = executor.parseResponse(res, data, query)
+				query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}, AliasBy: "{{bucket}}"}
+				err = query.parseResponse(res, data, "")
 				labels := res.Meta.Get("labels").Interface().(map[string][]string)
 				So(err, ShouldBeNil)
 				frames, _ := res.Dataframes.Decoded()
@@ -831,8 +874,8 @@ func TestCloudMonitoring(t *testing.T) {
 
 				Convey("and systemlabel contains key with array of string", func() {
 					res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-					query := &cloudMonitoringQuery{AliasBy: "{{metadata.system_labels.test}}"}
-					err = executor.parseResponse(res, data, query)
+					query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}, AliasBy: "{{metadata.system_labels.test}}"}
+					err = query.parseResponse(res, data, "")
 					So(err, ShouldBeNil)
 					frames, _ := res.Dataframes.Decoded()
 					So(len(frames), ShouldEqual, 3)
@@ -844,8 +887,8 @@ func TestCloudMonitoring(t *testing.T) {
 
 				Convey("and systemlabel contains key with array of string2", func() {
 					res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-					query := &cloudMonitoringQuery{AliasBy: "{{metadata.system_labels.test2}}"}
-					err = executor.parseResponse(res, data, query)
+					query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}, AliasBy: "{{metadata.system_labels.test2}}"}
+					err = query.parseResponse(res, data, "")
 					So(err, ShouldBeNil)
 					frames, _ := res.Dataframes.Decoded()
 					So(len(frames), ShouldEqual, 3)
@@ -860,14 +903,15 @@ func TestCloudMonitoring(t *testing.T) {
 
 				Convey("and alias by is expanded", func() {
 					res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-					query := &cloudMonitoringQuery{
+					query := &cloudMonitoringTimeSeriesFilter{
+						Params:      url.Values{},
 						ProjectName: "test-proj",
 						Selector:    "select_slo_compliance",
 						Service:     "test-service",
 						Slo:         "test-slo",
 						AliasBy:     "{{project}} - {{service}} - {{slo}} - {{selector}}",
 					}
-					err = executor.parseResponse(res, data, query)
+					err = query.parseResponse(res, data, "")
 					frames, _ := res.Dataframes.Decoded()
 					So(err, ShouldBeNil)
 					So(frames[0].Fields[1].Name, ShouldEqual, "test-proj - test-service - test-slo - select_slo_compliance")
@@ -881,13 +925,14 @@ func TestCloudMonitoring(t *testing.T) {
 
 				Convey("and alias by is expanded", func() {
 					res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-					query := &cloudMonitoringQuery{
+					query := &cloudMonitoringTimeSeriesFilter{
+						Params:      url.Values{},
 						ProjectName: "test-proj",
 						Selector:    "select_slo_compliance",
 						Service:     "test-service",
 						Slo:         "test-slo",
 					}
-					err = executor.parseResponse(res, data, query)
+					err = query.parseResponse(res, data, "")
 					frames, _ := res.Dataframes.Decoded()
 					So(err, ShouldBeNil)
 					So(frames[0].Fields[1].Name, ShouldEqual, "select_slo_compliance(\"projects/test-proj/services/test-service/serviceLevelObjectives/test-slo\")")
@@ -897,18 +942,20 @@ func TestCloudMonitoring(t *testing.T) {
 		Convey("Parse cloud monitoring unit", func() {
 			Convey("when there is only one query", func() {
 				Convey("and cloud monitoring unit does not have a corresponding grafana unit", func() {
-					queries := []*cloudMonitoringQuery{
-						{ProjectName: "test-proj", Selector: "select_slo_compliance", Service: "test-service",
-							Slo: "test-slo", Unit: "megaseconds"}}
-					unit := executor.resolvePanelUnitFromQueries(queries)
+					executors := []cloudMonitoringQueryExecutor{
+						&cloudMonitoringTimeSeriesFilter{Params: url.Values{}, ProjectName: "test-proj", Selector: "select_slo_compliance", Service: "test-service",
+							Slo: "test-slo", Unit: "megaseconds"},
+					}
+					unit := executor.resolvePanelUnitFromQueries(executors)
 					So(unit, ShouldEqual, "")
 				})
 
 				Convey("and cloud monitoring unit has a corresponding grafana unit", func() {
 					for key, element := range cloudMonitoringUnitMappings {
-						queries := []*cloudMonitoringQuery{
-							{ProjectName: "test-proj", Selector: "select_slo_compliance", Service: "test-service",
-								Slo: "test-slo", Unit: key}}
+						queries := []cloudMonitoringQueryExecutor{
+							&cloudMonitoringTimeSeriesFilter{Params: url.Values{}, ProjectName: "test-proj", Selector: "select_slo_compliance", Service: "test-service",
+								Slo: "test-slo", Unit: key},
+						}
 						unit := executor.resolvePanelUnitFromQueries(queries)
 						So(unit, ShouldEqual, element)
 					}
@@ -918,10 +965,10 @@ func TestCloudMonitoring(t *testing.T) {
 			Convey("when there are more than one query", func() {
 				Convey("and all target units are the same", func() {
 					for key, element := range cloudMonitoringUnitMappings {
-						queries := []*cloudMonitoringQuery{
-							{ProjectName: "test-proj", Selector: "select_slo_compliance", Service: "test-service1",
+						queries := []cloudMonitoringQueryExecutor{
+							&cloudMonitoringTimeSeriesFilter{Params: url.Values{}, ProjectName: "test-proj", Selector: "select_slo_compliance", Service: "test-service1",
 								Slo: "test-slo", Unit: key},
-							{ProjectName: "test-proj", Selector: "select_slo_compliance", Service: "test-service2",
+							&cloudMonitoringTimeSeriesFilter{Params: url.Values{}, ProjectName: "test-proj", Selector: "select_slo_compliance", Service: "test-service2",
 								Slo: "test-slo", Unit: key},
 						}
 						unit := executor.resolvePanelUnitFromQueries(queries)
@@ -930,10 +977,10 @@ func TestCloudMonitoring(t *testing.T) {
 				})
 
 				Convey("and all target units are the same but does not have grafana mappings", func() {
-					queries := []*cloudMonitoringQuery{
-						{ProjectName: "test-proj", Selector: "select_slo_compliance", Service: "test-service1",
+					queries := []cloudMonitoringQueryExecutor{
+						&cloudMonitoringTimeSeriesFilter{Params: url.Values{}, ProjectName: "test-proj", Selector: "select_slo_compliance", Service: "test-service1",
 							Slo: "test-slo", Unit: "megaseconds"},
-						{ProjectName: "test-proj", Selector: "select_slo_compliance", Service: "test-service2",
+						&cloudMonitoringTimeSeriesFilter{Params: url.Values{}, ProjectName: "test-proj", Selector: "select_slo_compliance", Service: "test-service2",
 							Slo: "test-slo", Unit: "megaseconds"},
 					}
 					unit := executor.resolvePanelUnitFromQueries(queries)
@@ -941,14 +988,39 @@ func TestCloudMonitoring(t *testing.T) {
 				})
 
 				Convey("and all target units are not the same", func() {
-					queries := []*cloudMonitoringQuery{
-						{ProjectName: "test-proj", Selector: "select_slo_compliance", Service: "test-service1",
+					queries := []cloudMonitoringQueryExecutor{
+						&cloudMonitoringTimeSeriesFilter{Params: url.Values{}, ProjectName: "test-proj", Selector: "select_slo_compliance", Service: "test-service1",
 							Slo: "test-slo", Unit: "bit"},
-						{ProjectName: "test-proj", Selector: "select_slo_compliance", Service: "test-service2",
+						&cloudMonitoringTimeSeriesFilter{Params: url.Values{}, ProjectName: "test-proj", Selector: "select_slo_compliance", Service: "test-service2",
 							Slo: "test-slo", Unit: "min"},
 					}
 					unit := executor.resolvePanelUnitFromQueries(queries)
 					So(unit, ShouldEqual, "")
+				})
+			})
+
+			Convey("when data from query returns MQL and alias by is defined", func() {
+				data, err := loadTestFile("./test-data/7-series-response-mql.json")
+				So(err, ShouldBeNil)
+				So(len(data.TimeSeries), ShouldEqual, 0)
+				So(len(data.TimeSeriesData), ShouldEqual, 1)
+
+				Convey("and alias by is expanded", func() {
+					fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
+					res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
+					query := &cloudMonitoringTimeSeriesQuery{
+						ProjectName: "test-proj",
+						Query:       "test-query",
+						AliasBy:     "{{project}} - {{resource.label.zone}} - {{resource.label.instance_id}}",
+						timeRange: &tsdb.TimeRange{
+							From: fmt.Sprintf("%v", fromStart.Unix()*1000),
+							To:   fmt.Sprintf("%v", fromStart.Add(34*time.Minute).Unix()*1000),
+						},
+					}
+					err = query.parseResponse(res, data, "")
+					So(err, ShouldBeNil)
+					frames, _ := res.Dataframes.Decoded()
+					So(frames[0].Fields[1].Name, ShouldEqual, "test-proj - asia-northeast1-c - 6724404429462225363")
 				})
 			})
 		})
@@ -1057,6 +1129,16 @@ func loadTestFile(path string) (cloudMonitoringResponse, error) {
 	}
 	err = json.Unmarshal(jsonBody, &data)
 	return data, err
+}
+
+func getCloudMonitoringQueriesFromInterface(qes []cloudMonitoringQueryExecutor) []*cloudMonitoringTimeSeriesFilter {
+	queries := make([]*cloudMonitoringTimeSeriesFilter, 0)
+	for _, qi := range qes {
+		q, ok := qi.(*cloudMonitoringTimeSeriesFilter)
+		So(ok, ShouldBeTrue)
+		queries = append(queries, q)
+	}
+	return queries
 }
 
 func verifyDeepLink(dl string, expectedTimeSelection map[string]string, expectedTimeSeriesFilter map[string]interface{}) {

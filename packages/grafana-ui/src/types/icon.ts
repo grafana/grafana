@@ -125,7 +125,8 @@ export type IconName =
   | 'gf-interpolation-linear'
   | 'gf-interpolation-smooth'
   | 'gf-interpolation-step-before'
-  | 'gf-interpolation-step-after';
+  | 'gf-interpolation-step-after'
+  | 'gf-logs';
 
 export const getAvailableIcons = (): IconName[] => [
   'fa fa-spinner',
@@ -249,4 +250,5 @@ export const getAvailableIcons = (): IconName[] => [
   'gf-interpolation-smooth',
   'gf-interpolation-step-before',
   'gf-interpolation-step-after',
+  'gf-logs',
 ];

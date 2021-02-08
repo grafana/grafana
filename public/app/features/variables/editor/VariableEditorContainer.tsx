@@ -66,7 +66,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
   };
 
   render() {
-    const variableToEdit = this.props.variables.find(s => s.id === this.props.idInEditor) ?? null;
+    const variableToEdit = this.props.variables.find((s) => s.id === this.props.idInEditor) ?? null;
     return (
       <div>
         <div className="page-action-bar">
@@ -124,7 +124,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
   }
 }
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => ({
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state) => ({
   variables: getEditorVariables(state),
   idInEditor: state.templating.editor.id,
   dashboard: state.dashboard.getModel(),

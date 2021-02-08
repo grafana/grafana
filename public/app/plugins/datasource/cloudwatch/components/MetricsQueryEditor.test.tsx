@@ -108,12 +108,7 @@ describe('QueryEditor', () => {
         props.query.region = (null as unknown) as string;
         const wrapper = mount(<MetricsQueryEditor {...props} />);
         expect(
-          wrapper
-            .find('.gf-form-inline')
-            .first()
-            .find('.gf-form-label.query-part')
-            .first()
-            .text()
+          wrapper.find('.gf-form-inline').first().find('Segment').find('InlineLabel').find('label').text()
         ).toEqual('default');
       });
     });

@@ -26,7 +26,7 @@ export const MoveToFolderModal: FC<Props> = ({ results, onMoveItems, isOpen, onD
     if (folder && selectedDashboards.length) {
       const folderTitle = folder.title ?? 'General';
 
-      moveDashboards(selectedDashboards.map(d => d.uid) as string[], folder).then((result: any) => {
+      moveDashboards(selectedDashboards.map((d) => d.uid) as string[], folder).then((result: any) => {
         if (result.successCount > 0) {
           const ending = result.successCount === 1 ? '' : 's';
           const header = `Dashboard${ending} Moved`;
@@ -59,7 +59,7 @@ export const MoveToFolderModal: FC<Props> = ({ results, onMoveItems, isOpen, onD
             Move the {selectedDashboards.length} selected dashboard{selectedDashboards.length === 1 ? '' : 's'} to the
             following folder:
           </p>
-          <FolderPicker onChange={f => setFolder(f as FolderInfo)} useNewForms />
+          <FolderPicker onChange={(f) => setFolder(f as FolderInfo)} useNewForms />
         </div>
 
         <HorizontalGroup justify="center">

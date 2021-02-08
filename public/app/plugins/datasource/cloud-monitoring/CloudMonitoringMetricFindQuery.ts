@@ -66,7 +66,7 @@ export default class CloudMonitoringMetricFindQuery {
   async handleServiceQuery({ projectName }: CloudMonitoringVariableQuery) {
     const metricDescriptors = await this.datasource.getMetricTypes(projectName);
     const services: any[] = extractServicesFromMetricDescriptors(metricDescriptors);
-    return services.map(s => ({
+    return services.map((s) => ({
       text: s.serviceShortName,
       value: s.service,
       expandable: true,

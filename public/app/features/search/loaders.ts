@@ -36,7 +36,7 @@ export const loadFolderPage = (uid: string, activeChildId: string) => {
     },
   };
 
-  return backendSrv.getFolderByUid(uid).then(folder => {
+  return backendSrv.getFolderByUid(uid).then((folder) => {
     const folderTitle = folder.title;
     const folderUrl = folder.url;
     navModel.main.text = folderTitle;

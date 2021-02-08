@@ -19,7 +19,7 @@ export class InputDatasource extends DataSourceApi<InputQuery, InputOptions> {
     super(instanceSettings);
 
     if (instanceSettings.jsonData.data) {
-      this.data = instanceSettings.jsonData.data.map(v => toDataFrame(v));
+      this.data = instanceSettings.jsonData.data.map((v) => toDataFrame(v));
     }
   }
 
@@ -56,7 +56,7 @@ export class InputDatasource extends DataSourceApi<InputQuery, InputOptions> {
       }
       let data = this.data;
       if (query.data) {
-        data = query.data.map(v => toDataFrame(v));
+        data = query.data.map((v) => toDataFrame(v));
       }
       for (let i = 0; i < data.length; i++) {
         results.push({

@@ -106,7 +106,7 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
       };
 
       this.getPresence = () => {
-        return this.subscription!.presence().then(v => {
+        return this.subscription!.presence().then((v) => {
           return {
             users: Object.keys(v.presence),
           };

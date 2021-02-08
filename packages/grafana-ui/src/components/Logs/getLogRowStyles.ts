@@ -1,15 +1,12 @@
 import { css } from 'emotion';
 import { LogLevel } from '@grafana/data';
-
 import { GrafanaTheme } from '@grafana/data';
-import { selectThemeVariant } from '../../themes/selectThemeVariant';
-import { stylesFactory } from '../../themes';
+import { styleMixins, stylesFactory } from '../../themes';
 
 export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: LogLevel) => {
-  let logColor = selectThemeVariant({ light: theme.palette.gray5, dark: theme.palette.gray2 }, theme.type);
-  const borderColor = selectThemeVariant({ light: theme.palette.gray5, dark: theme.palette.gray2 }, theme.type);
-  const bgColor = selectThemeVariant({ light: theme.palette.gray5, dark: theme.palette.dark4 }, theme.type);
-  const hoverBgColor = selectThemeVariant({ light: theme.palette.gray7, dark: theme.palette.dark2 }, theme.type);
+  let logColor = theme.isLight ? theme.palette.gray5 : theme.palette.gray2;
+  const hoverBgColor = styleMixins.hoverColor(theme.colors.panelBg, theme);
+
   const context = css`
     label: context;
     visibility: hidden;
@@ -70,6 +67,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       width: 100%;
       cursor: pointer;
       vertical-align: top;
+
       &:hover {
         .${context} {
           visibility: visible;
@@ -81,6 +79,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
           }
         }
       }
+
       td:last-child {
         width: 100%;
       }
@@ -145,7 +144,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
     //Log details specific CSS
     logDetailsContainer: css`
       label: logs-row-details-table;
-      border: 1px solid ${borderColor};
+      border: 1px solid ${theme.colors.border2};
       padding: 0 ${theme.spacing.sm} ${theme.spacing.sm};
       border-radius: 3px;
       margin: 20px 8px 20px 16px;
@@ -183,8 +182,9 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       position: relative;
       vertical-align: middle;
       cursor: default;
+
       &:hover {
-        background-color: ${bgColor};
+        background-color: ${hoverBgColor};
       }
     `,
   };

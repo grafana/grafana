@@ -32,7 +32,7 @@ export const basic = () => {
                 <ToggleButton
                   key={`${option.value}-${index}`}
                   value={option.value}
-                  onChange={newValue => {
+                  onChange={(newValue) => {
                     action('on change')(newValue);
                     updateValue({ value: newValue });
                   }}

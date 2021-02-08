@@ -52,14 +52,14 @@ export class AnnotationsSrv {
 
   getAnnotations(options: AnnotationQueryOptions) {
     return Promise.all([this.getGlobalAnnotations(options), this.getAlertStates(options)])
-      .then(results => {
+      .then((results) => {
         // combine the annotations and flatten results
         let annotations: AnnotationEvent[] = flattenDeep(results[0]);
         // when in edit mode we need to use this function to get the saved id
         let panelFilterId = options.panel.getSavedId();
 
         // filter out annotations that do not belong to requesting panel
-        annotations = annotations.filter(item => {
+        annotations = annotations.filter((item) => {
           // if event has panel id and query is of type dashboard then panel and requesting panel id must match
           if (item.panelId && item.source.type === 'dashboard') {
             return item.panelId === panelFilterId;
@@ -77,7 +77,7 @@ export class AnnotationsSrv {
           alertState: alertState,
         };
       })
-      .catch(err => {
+      .catch((err) => {
         if (err.cancelled) {
           return [];
         }
@@ -157,11 +157,11 @@ export class AnnotationsSrv {
             // Note: future annotatoin lifecycle will use observables directly
             return executeAnnotationQuery(options, datasource, annotation)
               .toPromise()
-              .then(res => {
+              .then((res) => {
                 return res.events ?? [];
               });
           })
-          .then(results => {
+          .then((results) => {
             // store response in annotation object if this is a snapshot call
             if (dashboard.snapshot) {
               annotation.snapshotData = cloneDeep(results);
@@ -264,12 +264,12 @@ export function executeAnnotationQuery(
   };
 
   return runRequest(datasource, queryRequest).pipe(
-    mergeMap(panelData => {
+    mergeMap((panelData) => {
       if (!panelData.series) {
         return of({ panelData, events: [] });
       }
 
-      return processor.processEvents!(annotation, panelData.series).pipe(map(events => ({ panelData, events })));
+      return processor.processEvents!(annotation, panelData.series).pipe(map((events) => ({ panelData, events })));
     })
   );
 }

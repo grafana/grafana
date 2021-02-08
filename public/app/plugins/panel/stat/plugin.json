@@ -2,7 +2,6 @@
   "type": "panel",
   "name": "Stat",
   "id": "stat",
-  "state": "beta",
 
   "info": {
     "description": "Singlestat Panel for Grafana",

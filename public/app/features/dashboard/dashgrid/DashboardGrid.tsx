@@ -228,7 +228,7 @@ export class DashboardGrid extends PureComponent<Props> {
       panel.isInView = this.isInView(panel);
 
       panelElements.push(
-        <div key={id} className={panelClasses} id={'panel-' + id} ref={elem => elem && (this.panelRef[id] = elem)}>
+        <div key={id} className={panelClasses} id={'panel-' + id} ref={(elem) => elem && (this.panelRef[id] = elem)}>
           {this.renderPanel(panel)}
         </div>
       );

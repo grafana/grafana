@@ -1,12 +1,14 @@
 import { VizLegendOptions, GraphTooltipOptions } from '@grafana/ui';
 
 export interface GraphOptions {
-  // Redraw as time passes
-  realTimeUpdates?: boolean;
+  // nothing for now
 }
 
-export interface Options {
-  graph: GraphOptions;
+export interface OptionsWithLegend {
   legend: VizLegendOptions;
+}
+
+export interface Options extends OptionsWithLegend {
+  graph: GraphOptions;
   tooltipOptions: GraphTooltipOptions;
 }

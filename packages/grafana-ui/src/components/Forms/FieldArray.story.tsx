@@ -21,7 +21,7 @@ export const simple = () => {
     people: [{ firstName: 'Janis', lastName: 'Joplin' }],
   };
   return (
-    <Form onSubmit={values => console.log(values)} defaultValues={defaultValues}>
+    <Form onSubmit={(values) => console.log(values)} defaultValues={defaultValues}>
       {({ control, register }) => (
         <div>
           <FieldArray control={control} name="people">

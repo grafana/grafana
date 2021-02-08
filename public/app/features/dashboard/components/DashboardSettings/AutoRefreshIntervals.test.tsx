@@ -11,7 +11,7 @@ const setupTestContext = (options: Partial<Props>) => {
     renderCount: 0,
     refreshIntervals: ['1s', '5s', '10s'],
     onRefreshIntervalChange: jest.fn(),
-    getIntervalsFunc: intervals => intervals,
+    getIntervalsFunc: (intervals) => intervals,
     validateIntervalsFunc: () => null,
   };
 
@@ -76,10 +76,7 @@ describe('AutoRefreshIntervals', () => {
 
   describe('when input loses focus and previous intervals were invalid', () => {
     it('then onRefreshIntervalChange should be called', () => {
-      const validateIntervalsFunc = jest
-        .fn()
-        .mockReturnValueOnce('Not valid')
-        .mockReturnValue(null);
+      const validateIntervalsFunc = jest.fn().mockReturnValueOnce('Not valid').mockReturnValue(null);
       const { props } = setupTestContext({ validateIntervalsFunc });
 
       userEvent.type(screen.getByRole('textbox'), ',30q');

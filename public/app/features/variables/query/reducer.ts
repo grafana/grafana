@@ -63,7 +63,7 @@ export const sortVariableValues = (options: any[], sortOrder: VariableSort) => {
   if (sortType === 1) {
     options = _.sortBy(options, 'text');
   } else if (sortType === 2) {
-    options = _.sortBy(options, opt => {
+    options = _.sortBy(options, (opt) => {
       if (!opt.text) {
         return -1;
       }
@@ -76,7 +76,7 @@ export const sortVariableValues = (options: any[], sortOrder: VariableSort) => {
       }
     });
   } else if (sortType === 3) {
-    options = _.sortBy(options, opt => {
+    options = _.sortBy(options, (opt) => {
       return _.toLower(opt.text);
     });
   }
@@ -88,7 +88,7 @@ export const sortVariableValues = (options: any[], sortOrder: VariableSort) => {
   return options;
 };
 
-const getAllMatches = (str: string, regex: RegExp): any => {
+export const getAllMatches = (str: string, regex: RegExp): any => {
   const results = {};
   let matches;
 
@@ -139,6 +139,7 @@ const metricNamesToVariableValues = (variableRegEx: string, sort: VariableSort, 
         text = matches.groups.text;
         value = text;
       } else if (matches['1']) {
+        text = matches['1'];
         value = matches['1'];
       }
     }

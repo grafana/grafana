@@ -20,10 +20,10 @@ export class AppPageCtrl {
 
     promiseToDigest($rootScope)(
       Promise.resolve(getPluginSettings(this.pluginId))
-        .then(settings => {
+        .then((settings) => {
           this.initPage(settings);
         })
-        .catch(err => {
+        .catch((err) => {
           this.$rootScope.appEvent(AppEvents.alertError, ['Unknown Plugin']);
           this.navModel = this.navModelSrv.getNotFoundNav();
         })

@@ -134,7 +134,7 @@ export class PanelHeader extends PureComponent<Props, State> {
     return (
       <Tooltip content={notice.text} key={notice.severity}>
         {notice.inspect ? (
-          <div className="panel-info-notice pointer" onClick={e => this.openInspect(e, notice.inspect!)}>
+          <div className="panel-info-notice pointer" onClick={(e) => this.openInspect(e, notice.inspect!)}>
             <Icon name={iconName} style={{ marginRight: '8px' }} />
           </div>
         ) : (

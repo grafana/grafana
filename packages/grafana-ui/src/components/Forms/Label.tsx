@@ -38,12 +38,8 @@ export const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
     categories: css`
       label: Label-categories;
       color: ${theme.isLight
-        ? tinycolor(theme.colors.formLabel)
-            .lighten(10)
-            .toHexString()
-        : tinycolor(theme.colors.formLabel)
-            .darken(10)
-            .toHexString()};
+        ? tinycolor(theme.colors.formLabel).lighten(10).toHexString()
+        : tinycolor(theme.colors.formLabel).darken(10).toHexString()};
       display: inline-flex;
       align-items: center;
     `,

@@ -39,7 +39,7 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
     match: FilterByValueMatch.any,
   },
 
-  operator: options => source => {
+  operator: (options) => (source) => {
     const filters = options.filters;
     const matchAll = options.match === FilterByValueMatch.all;
     const include = options.type === FilterByValueType.include;
@@ -49,7 +49,7 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
     }
 
     return source.pipe(
-      map(data => {
+      map((data) => {
         if (!Array.isArray(data) || data.length === 0) {
           return data;
         }
@@ -137,7 +137,7 @@ const createFilterValueMatchers = (
 ): Array<(index: number, frame: DataFrame, data: DataFrame[]) => boolean> => {
   const noop = () => false;
 
-  return filters.map(filter => {
+  return filters.map((filter) => {
     const fieldIndex = fieldIndexByName[filter.fieldName] ?? -1;
 
     if (fieldIndex < 0) {

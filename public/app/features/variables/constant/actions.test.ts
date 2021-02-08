@@ -40,7 +40,7 @@ describe('constant actions', () => {
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenAsyncActionIsDispatched(updateConstantVariableOptions(toVariablePayload(variable)), true);
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
+      tester.thenDispatchedActionsPredicateShouldEqual((actions) => {
         const [createAction, setCurrentAction] = actions;
         const expectedNumberOfActions = 2;
 

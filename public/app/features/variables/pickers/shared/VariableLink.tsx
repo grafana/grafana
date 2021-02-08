@@ -56,7 +56,7 @@ const VariableLinkText: FC<Pick<Props, 'tags' | 'text'>> = ({ tags, text }) => {
   return (
     <span className={styles.textAndTags}>
       {text}
-      {tags.map(tag => {
+      {tags.map((tag) => {
         const { color, borderColor } = getTagColorsFromName(tag.text.toString());
         return (
           <span key={`${tag.text}`}>

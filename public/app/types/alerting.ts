@@ -1,6 +1,7 @@
-import { PanelData, SelectableValue } from '@grafana/data';
+import { DataQuery, PanelData, SelectableValue, TimeRange } from '@grafana/data';
 import { PanelQueryRunner } from '../features/query/state/PanelQueryRunner';
-import { QueryGroupOptions } from '../features/query/components/QueryGroupOptions';
+import { QueryGroupOptions } from './query';
+import { ExpressionQuery } from '../features/expressions/types';
 
 export interface AlertRuleDTO {
   id: number;
@@ -142,18 +143,30 @@ export interface AlertDefinitionState {
   queryOptions: QueryGroupOptions;
   queryRunner: PanelQueryRunner;
   data: PanelData[];
+  alertDefinitions: AlertDefinition[];
 }
 
 export interface AlertDefinition {
   id: number;
-  name: string;
+  uid: string;
+  title: string;
   description: string;
-  condition: AlertCondition;
+  condition: string;
+  data: any[];
+  intervalSeconds: number;
 }
 
-export interface AlertCondition {
-  ref: string;
-  queriesAndExpressions: any[];
+export interface AlertDefinitionDTO extends AlertDefinition {
+  queryType: string;
+  refId: string;
+  relativeTimeRange: TimeRange;
+  orgId: number;
+  updated: string;
+  version: number;
+}
+
+export interface AlertDefinitionQueryModel {
+  model: DataQuery | ExpressionQuery;
 }
 
 export interface AlertDefinitionUiState {

@@ -47,7 +47,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     super(instanceSettings);
 
     this.type = 'influxdb';
-    this.urls = (instanceSettings.url ?? '').split(',').map(url => {
+    this.urls = (instanceSettings.url ?? '').split(',').map((url) => {
       return url.trim();
     });
 
@@ -118,7 +118,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
     let i, y;
 
-    let allQueries = _.map(targets, target => {
+    let allQueries = _.map(targets, (target) => {
       if (target.hide) {
         return '';
       }
@@ -261,7 +261,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
     let expandedQueries = queries;
     if (queries && queries.length > 0) {
-      expandedQueries = queries.map(query => {
+      expandedQueries = queries.map((query) => {
         const expandedQuery = {
           ...query,
           datasource: this.name,
@@ -274,7 +274,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         }
 
         if (query.tags) {
-          expandedQuery.tags = query.tags.map(tag => {
+          expandedQuery.tags = query.tags.map((tag) => {
             return {
               ...tag,
               value: this.templateSrv.replace(tag.value, undefined, 'regex'),
@@ -299,7 +299,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
           targets: [target],
         } as DataQueryRequest)
         .toPromise()
-        .then(rsp => {
+        .then((rsp) => {
           if (rsp.data?.length) {
             return frameToMetricFindValue(rsp.data[0]);
           }
@@ -311,7 +311,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
     return this._seriesQuery(interpolated, options)
       .toPromise()
-      .then(resp => {
+      .then((resp) => {
         return this.responseParser.parse(query, resp);
       });
   }
@@ -485,7 +485,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
           }
           return data;
         }),
-        catchError(err => {
+        catchError((err) => {
           if (err.cancelled) {
             return of(err);
           }

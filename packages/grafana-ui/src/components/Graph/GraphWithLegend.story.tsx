@@ -109,11 +109,11 @@ const getStoriesKnobs = () => {
 export const graphWithLegend = () => {
   const { legendPlacement, rightAxisSeries, renderLegendAsTable } = getStoriesKnobs();
   const props: GraphWithLegendProps = {
-    series: series.map(s => {
+    series: series.map((s) => {
       if (
         rightAxisSeries
           .split(',')
-          .map(s => s.trim())
+          .map((s) => s.trim())
           .indexOf(s.label.split('-')[0]) > -1
       ) {
         s.yAxis = { index: 2 };

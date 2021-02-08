@@ -1296,7 +1296,7 @@ describe('ElasticResponse', () => {
         preferredVisualisationType: 'logs',
       });
 
-      const fields = logResults.fields.map(f => {
+      const fields = logResults.fields.map((f) => {
         return {
           name: f.name,
           type: f.type,

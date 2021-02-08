@@ -1,11 +1,12 @@
 import React, { FormEvent, PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
-import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
+import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { css } from 'emotion';
-import { GrafanaTheme } from '@grafana/data';
-import { Button, Icon, stylesFactory } from '@grafana/ui';
-import { PageToolbar } from 'app/core/components/PageToolbar/PageToolbar';
+import { GrafanaTheme, SelectableValue } from '@grafana/data';
+import { PageToolbar, stylesFactory, ToolbarButton } from '@grafana/ui';
+import { config } from 'app/core/config';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
+import { connectWithCleanUp } from 'app/core/components/connectWithCleanUp';
 import AlertingQueryEditor from './components/AlertingQueryEditor';
 import { AlertDefinitionOptions } from './components/AlertDefinitionOptions';
 import { AlertingQueryPreview } from './components/AlertingQueryPreview';
@@ -13,48 +14,68 @@ import {
   updateAlertDefinitionOption,
   createAlertDefinition,
   updateAlertDefinitionUiState,
-  loadNotificationTypes,
+  updateAlertDefinition,
+  getAlertDefinition,
 } from './state/actions';
-import { AlertDefinition, AlertDefinitionUiState, NotificationChannelType, StoreState } from '../../types';
-
-import { config } from 'app/core/config';
+import { getRouteParamsId } from 'app/core/selectors/location';
+import { AlertDefinition, AlertDefinitionUiState, QueryGroupOptions, StoreState } from '../../types';
 import { PanelQueryRunner } from '../query/state/PanelQueryRunner';
 
-interface OwnProps {}
+interface OwnProps {
+  saveDefinition: typeof createAlertDefinition | typeof updateAlertDefinition;
+}
 
 interface ConnectedProps {
-  alertDefinition: AlertDefinition;
   uiState: AlertDefinitionUiState;
-  notificationChannelTypes: NotificationChannelType[];
   queryRunner: PanelQueryRunner;
+  queryOptions: QueryGroupOptions;
+  alertDefinition: AlertDefinition;
+  pageId: string;
 }
 
 interface DispatchProps {
-  createAlertDefinition: typeof createAlertDefinition;
   updateAlertDefinitionUiState: typeof updateAlertDefinitionUiState;
   updateAlertDefinitionOption: typeof updateAlertDefinitionOption;
-  loadNotificationTypes: typeof loadNotificationTypes;
+  getAlertDefinition: typeof getAlertDefinition;
+  updateAlertDefinition: typeof updateAlertDefinition;
+  createAlertDefinition: typeof createAlertDefinition;
 }
-
-interface State {}
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
-class NextGenAlertingPage extends PureComponent<Props, State> {
-  state = { dataSources: [] };
-
+class NextGenAlertingPage extends PureComponent<Props> {
   componentDidMount() {
-    this.props.loadNotificationTypes();
+    const { getAlertDefinition, pageId } = this.props;
+
+    if (pageId) {
+      getAlertDefinition(pageId);
+    }
   }
 
   onChangeAlertOption = (event: FormEvent<HTMLFormElement>) => {
     this.props.updateAlertDefinitionOption({ [event.currentTarget.name]: event.currentTarget.value });
   };
 
-  onSaveAlert = () => {
-    const { createAlertDefinition } = this.props;
+  onChangeInterval = (interval: SelectableValue<number>) => {
+    this.props.updateAlertDefinitionOption({
+      intervalSeconds: interval.value,
+    });
+  };
 
-    createAlertDefinition();
+  onConditionChange = (condition: SelectableValue<string>) => {
+    this.props.updateAlertDefinitionOption({
+      condition: condition.value,
+    });
+  };
+
+  onSaveAlert = () => {
+    const { alertDefinition, createAlertDefinition, updateAlertDefinition } = this.props;
+
+    if (alertDefinition.uid) {
+      updateAlertDefinition();
+    } else {
+      createAlertDefinition();
+    }
   };
 
   onDiscard = () => {};
@@ -63,36 +84,27 @@ class NextGenAlertingPage extends PureComponent<Props, State> {
 
   renderToolbarActions() {
     return [
-      <Button variant="destructive" key="discard" onClick={this.onDiscard}>
+      <ToolbarButton variant="destructive" key="discard" onClick={this.onDiscard}>
         Discard
-      </Button>,
-      <Button variant="secondary" key="test" onClick={this.onTest}>
+      </ToolbarButton>,
+      <ToolbarButton key="test" onClick={this.onTest}>
         Test
-      </Button>,
-      <Button variant="primary" key="save" onClick={this.onSaveAlert}>
+      </ToolbarButton>,
+      <ToolbarButton variant="primary" key="save" onClick={this.onSaveAlert}>
         Save
-      </Button>,
+      </ToolbarButton>,
     ];
   }
 
   render() {
-    const {
-      alertDefinition,
-      notificationChannelTypes,
-      uiState,
-      updateAlertDefinitionUiState,
-      queryRunner,
-    } = this.props;
+    const { alertDefinition, uiState, updateAlertDefinitionUiState, queryRunner, queryOptions } = this.props;
     const styles = getStyles(config.theme);
 
     return (
       <div className={styles.wrapper}>
-        <PageToolbar
-          title="Alert editor"
-          titlePrefix={<Icon name="bell" size="lg" />}
-          actions={this.renderToolbarActions()}
-          titlePadding="sm"
-        />
+        <PageToolbar title="Alert editor" pageIcon="bell">
+          {this.renderToolbarActions()}
+        </PageToolbar>
         <div className={styles.splitPanesWrapper}>
           <SplitPaneWrapper
             leftPaneComponents={[
@@ -105,7 +117,9 @@ class NextGenAlertingPage extends PureComponent<Props, State> {
               <AlertDefinitionOptions
                 alertDefinition={alertDefinition}
                 onChange={this.onChangeAlertOption}
-                notificationChannelTypes={notificationChannelTypes}
+                onIntervalChange={this.onChangeInterval}
+                onConditionChange={this.onConditionChange}
+                queryOptions={queryOptions}
               />
             }
           />
@@ -115,33 +129,36 @@ class NextGenAlertingPage extends PureComponent<Props, State> {
   }
 }
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => {
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state) => {
+  const pageId = getRouteParamsId(state.location);
+
   return {
     uiState: state.alertDefinition.uiState,
-    alertDefinition: state.alertDefinition.alertDefinition,
-    notificationChannelTypes: state.notificationChannel.notificationChannelTypes,
+    queryOptions: state.alertDefinition.queryOptions,
     queryRunner: state.alertDefinition.queryRunner,
+    alertDefinition: state.alertDefinition.alertDefinition,
+    pageId: (pageId as string) ?? '',
   };
 };
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
-  createAlertDefinition,
   updateAlertDefinitionUiState,
   updateAlertDefinitionOption,
-  loadNotificationTypes,
+  updateAlertDefinition,
+  createAlertDefinition,
+  getAlertDefinition,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(NextGenAlertingPage));
+export default hot(module)(
+  connectWithCleanUp(mapStateToProps, mapDispatchToProps, (state) => state.alertDefinition)(NextGenAlertingPage)
+);
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   wrapper: css`
-    width: 100%;
+    width: calc(100% - 55px);
     height: 100%;
     position: fixed;
-    z-index: ${theme.zIndex.sidemenu};
     top: 0;
-    left: 0;
-    right: 0;
     bottom: 0;
     background: ${theme.colors.dashboardBg};
     display: flex;

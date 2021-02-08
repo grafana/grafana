@@ -68,7 +68,7 @@ function getTestContext({
   fetchMock.mockImplementation(mockImplementation ?? defaultMock);
 
   const templateSrv: any = {
-    replace: jest.fn(text => {
+    replace: jest.fn((text) => {
       if (text.startsWith('$')) {
         return `resolvedVariable`;
       } else {
@@ -89,7 +89,7 @@ function getTestContext({
     };
   });
 
-  timeSrv.setTime = jest.fn(time => {
+  timeSrv.setTime = jest.fn((time) => {
     timeSrv.time = time;
   });
 
@@ -109,7 +109,7 @@ function getTestContext({
   return { timeSrv, ds, fetchMock };
 }
 
-describe('ElasticDatasource', function(this: any) {
+describe('ElasticDatasource', function (this: any) {
   describe('When testing datasource with index pattern', () => {
     it('should translate index pattern to current day', () => {
       const { ds, fetchMock } = getTestContext({ jsonData: { interval: 'Daily', esVersion: 2 } });
@@ -153,7 +153,7 @@ describe('ElasticDatasource', function(this: any) {
       const { ds, fetchMock } = getTestContext({ jsonData: { interval: 'Daily', esVersion: 2 }, data });
 
       let result: any = {};
-      await expect(ds.query(query)).toEmitValuesWith(received => {
+      await expect(ds.query(query)).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
         expect(received[0]).toEqual({
           data: [
@@ -237,7 +237,7 @@ describe('ElasticDatasource', function(this: any) {
       const queryBuilderSpy = jest.spyOn(ds.queryBuilder, 'getLogsQuery');
       let response: any = {};
 
-      await expect(ds.query(query)).toEmitValuesWith(received => {
+      await expect(ds.query(query)).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
         response = received[0];
       });
@@ -276,7 +276,7 @@ describe('ElasticDatasource', function(this: any) {
 
       const { ds, fetchMock } = getTestContext({ jsonData: { esVersion: 2 }, data, database: 'test' });
 
-      await expect(ds.query(query)).toEmitValuesWith(received => {
+      await expect(ds.query(query)).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
         expect(received[0]).toEqual({ data: [] });
       });
@@ -339,7 +339,38 @@ describe('ElasticDatasource', function(this: any) {
         },
       };
 
-      await expect(ds.query(query)).toEmitValuesWith(received => {
+      await expect(ds.query(query)).toEmitValuesWith((received) => {
+        expect(received.length).toBe(1);
+        expect(received[0]).toEqual(errObject);
+      });
+    });
+
+    it('should properly throw an error with just a message', async () => {
+      const response: FetchResponse = {
+        data: {
+          error: 'Bad Request',
+          message: 'Authentication to data source failed',
+        },
+        status: 400,
+        url: 'http://localhost:3000/api/tsdb/query',
+        config: { url: 'http://localhost:3000/api/tsdb/query' },
+        type: 'basic',
+        statusText: 'Bad Request',
+        redirected: false,
+        headers: ({} as unknown) as Headers,
+        ok: false,
+      };
+
+      const { ds } = getTestContext({
+        mockImplementation: () => throwError(response),
+      });
+
+      const errObject = {
+        error: 'Bad Request',
+        message: 'Elasticsearch error: Authentication to data source failed',
+      };
+
+      await expect(ds.query(query)).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
         expect(received[0]).toEqual(errObject);
       });
@@ -367,7 +398,7 @@ describe('ElasticDatasource', function(this: any) {
         },
       };
 
-      await expect(ds.query(query)).toEmitValuesWith(received => {
+      await expect(ds.query(query)).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
         expect(received[0]).toEqual(errObject);
       });
@@ -425,7 +456,7 @@ describe('ElasticDatasource', function(this: any) {
     it('should return nested fields', async () => {
       const { ds } = getTestContext({ data, jsonData: { esVersion: 50 }, database: 'metricbeat' });
 
-      await expect(ds.getFields()).toEmitValuesWith(received => {
+      await expect(ds.getFields()).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
         const fieldObjects = received[0];
         const fields = _.map(fieldObjects, 'text');
@@ -448,7 +479,7 @@ describe('ElasticDatasource', function(this: any) {
     it('should return number fields', async () => {
       const { ds } = getTestContext({ data, jsonData: { esVersion: 50 }, database: 'metricbeat' });
 
-      await expect(ds.getFields('number')).toEmitValuesWith(received => {
+      await expect(ds.getFields('number')).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
         const fieldObjects = received[0];
         const fields = _.map(fieldObjects, 'text');
@@ -460,7 +491,7 @@ describe('ElasticDatasource', function(this: any) {
     it('should return date fields', async () => {
       const { ds } = getTestContext({ data, jsonData: { esVersion: 50 }, database: 'metricbeat' });
 
-      await expect(ds.getFields('date')).toEmitValuesWith(received => {
+      await expect(ds.getFields('date')).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
         const fieldObjects = received[0];
         const fields = _.map(fieldObjects, 'text');
@@ -503,19 +534,15 @@ describe('ElasticDatasource', function(this: any) {
     };
 
     it('should return fields of the newest available index', async () => {
-      const twoDaysBefore = toUtc()
-        .subtract(2, 'day')
-        .format('YYYY.MM.DD');
-      const threeDaysBefore = toUtc()
-        .subtract(3, 'day')
-        .format('YYYY.MM.DD');
+      const twoDaysBefore = toUtc().subtract(2, 'day').format('YYYY.MM.DD');
+      const threeDaysBefore = toUtc().subtract(3, 'day').format('YYYY.MM.DD');
       const baseUrl = `${ELASTICSEARCH_MOCK_URL}/asd-${twoDaysBefore}/_mapping`;
       const alternateUrl = `${ELASTICSEARCH_MOCK_URL}/asd-${threeDaysBefore}/_mapping`;
 
       const { ds, timeSrv } = getTestContext({
         from: 'now-2w',
         jsonData: { interval: 'Daily', esVersion: 50 },
-        mockImplementation: options => {
+        mockImplementation: (options) => {
           if (options.url === baseUrl) {
             return of(createFetchResponse(basicResponse));
           } else if (options.url === alternateUrl) {
@@ -527,7 +554,7 @@ describe('ElasticDatasource', function(this: any) {
 
       const range = timeSrv.timeRange();
 
-      await expect(ds.getFields(undefined, range)).toEmitValuesWith(received => {
+      await expect(ds.getFields(undefined, range)).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
         const fieldObjects = received[0];
         const fields = _.map(fieldObjects, 'text');
@@ -536,14 +563,12 @@ describe('ElasticDatasource', function(this: any) {
     });
 
     it('should not retry when ES is down', async () => {
-      const twoDaysBefore = toUtc()
-        .subtract(2, 'day')
-        .format('YYYY.MM.DD');
+      const twoDaysBefore = toUtc().subtract(2, 'day').format('YYYY.MM.DD');
 
       const { ds, timeSrv, fetchMock } = getTestContext({
         from: 'now-2w',
         jsonData: { interval: 'Daily', esVersion: 50 },
-        mockImplementation: options => {
+        mockImplementation: (options) => {
           if (options.url === `${ELASTICSEARCH_MOCK_URL}/asd-${twoDaysBefore}/_mapping`) {
             return of(createFetchResponse(basicResponse));
           }
@@ -553,7 +578,7 @@ describe('ElasticDatasource', function(this: any) {
 
       const range = timeSrv.timeRange();
 
-      await expect(ds.getFields(undefined, range)).toEmitValuesWith(received => {
+      await expect(ds.getFields(undefined, range)).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
         expect(received[0]).toStrictEqual({ status: 500 });
         expect(fetchMock).toBeCalledTimes(1);
@@ -564,13 +589,13 @@ describe('ElasticDatasource', function(this: any) {
       const { ds, timeSrv, fetchMock } = getTestContext({
         from: 'now-2w',
         jsonData: { interval: 'Daily', esVersion: 50 },
-        mockImplementation: options => {
+        mockImplementation: (options) => {
           return throwError({ status: 404 });
         },
       });
       const range = timeSrv.timeRange();
 
-      await expect(ds.getFields(undefined, range)).toEmitValuesWith(received => {
+      await expect(ds.getFields(undefined, range)).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
         expect(received[0]).toStrictEqual('Could not find an available index for this time range.');
         expect(fetchMock).toBeCalledTimes(7);
@@ -665,7 +690,7 @@ describe('ElasticDatasource', function(this: any) {
     it('should return nested fields', async () => {
       const { ds } = getTestContext({ data, database: 'genuine.es7._mapping.response', jsonData: { esVersion: 70 } });
 
-      await expect(ds.getFields()).toEmitValuesWith(received => {
+      await expect(ds.getFields()).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
 
         const fieldObjects = received[0];
@@ -692,7 +717,7 @@ describe('ElasticDatasource', function(this: any) {
     it('should return number fields', async () => {
       const { ds } = getTestContext({ data, database: 'genuine.es7._mapping.response', jsonData: { esVersion: 70 } });
 
-      await expect(ds.getFields('number')).toEmitValuesWith(received => {
+      await expect(ds.getFields('number')).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
 
         const fieldObjects = received[0];
@@ -711,7 +736,7 @@ describe('ElasticDatasource', function(this: any) {
     it('should return date fields', async () => {
       const { ds } = getTestContext({ data, database: 'genuine.es7._mapping.response', jsonData: { esVersion: 70 } });
 
-      await expect(ds.getFields('date')).toEmitValuesWith(received => {
+      await expect(ds.getFields('date')).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
 
         const fieldObjects = received[0];
@@ -737,7 +762,7 @@ describe('ElasticDatasource', function(this: any) {
 
       const { ds, fetchMock } = getTestContext({ jsonData: { esVersion: 5 }, data, database: 'test' });
 
-      await expect(ds.query(query)).toEmitValuesWith(received => {
+      await expect(ds.query(query)).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
         expect(received[0]).toEqual({ data: [] });
       });
@@ -829,7 +854,7 @@ describe('ElasticDatasource', function(this: any) {
       const postMock = jest.fn((url: string, data: any) => of(createFetchResponse({ responses: [] })));
       ds['post'] = postMock;
 
-      await expect(ds.query(createElasticQuery())).toEmitValuesWith(received => {
+      await expect(ds.query(createElasticQuery())).toEmitValuesWith((received) => {
         expect(postMock).toHaveBeenCalledTimes(1);
 
         const query = postMock.mock.calls[0][1];

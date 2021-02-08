@@ -50,13 +50,13 @@ interface LdapConnectionErrorProps {
 }
 
 export const LdapErrorBox: FC<LdapConnectionErrorProps> = ({ ldapConnectionInfo }) => {
-  const hasError = ldapConnectionInfo.some(info => info.error);
+  const hasError = ldapConnectionInfo.some((info) => info.error);
   if (!hasError) {
     return null;
   }
 
   const connectionErrors: LdapServerInfo[] = [];
-  ldapConnectionInfo.forEach(info => {
+  ldapConnectionInfo.forEach((info) => {
     if (info.error) {
       connectionErrors.push(info);
     }

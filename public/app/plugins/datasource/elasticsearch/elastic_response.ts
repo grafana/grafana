@@ -268,7 +268,7 @@ export class ElasticResponse {
       return metricDef.label;
     }
 
-    const extendedStat = queryDef.extendedStats.find(e => e.value === metric);
+    const extendedStat = queryDef.extendedStats.find((e) => e.value === metric);
     if (extendedStat) {
       return extendedStat.label;
     }
@@ -425,7 +425,7 @@ export class ElasticResponse {
   }
 
   getTimeSeries() {
-    if (this.targets.some(target => target.metrics?.some(metric => metric.type === 'raw_data'))) {
+    if (this.targets.some((target) => target.metrics?.some((metric) => metric.type === 'raw_data'))) {
       return this.processResponseToDataFrames(false);
     }
     return this.processResponseToSeries();
@@ -476,13 +476,13 @@ export class ElasticResponse {
               const globalHighlightWordRegex = new RegExp(HIGHLIGHT_TAGS_EXP, 'g');
               const highlightWordRegex = new RegExp(HIGHLIGHT_TAGS_EXP);
               const newSearchWords = Object.keys(doc.highlight)
-                .flatMap(key => {
+                .flatMap((key) => {
                   return doc.highlight[key].flatMap((line: string) => {
                     const matchedPhrases = line.match(globalHighlightWordRegex);
                     if (!matchedPhrases) {
                       return [];
                     }
-                    return matchedPhrases.map(part => {
+                    return matchedPhrases.map((part) => {
                       const matches = part.match(highlightWordRegex);
                       return (matches && matches[1]) || null;
                     });
@@ -669,7 +669,7 @@ const createEmptyDataFrame = (
     };
   }
 
-  const fieldNames = series.fields.map(field => field.name);
+  const fieldNames = series.fields.map((field) => field.name);
 
   for (const propName of propNames) {
     // Do not duplicate fields. This can mean that we will shadow some fields.

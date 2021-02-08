@@ -36,7 +36,7 @@ export const SlideDown: FC<Props> = ({ children, in: inProp, maxHeight = default
 
   return (
     <Transition in={inProp} timeout={defaultDuration}>
-      {state => (
+      {(state) => (
         <div
           style={{
             ...style,

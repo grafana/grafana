@@ -19,7 +19,7 @@ export const BasicInput = () => {
     <SegmentFrame>
       <SegmentInput
         value={value}
-        onChange={text => {
+        onChange={(text) => {
           setValue(text as string);
           action('Segment value changed')(text);
         }}
@@ -40,7 +40,7 @@ export const BasicInputWithPlaceholder = () => {
       <SegmentInput
         placeholder="add text"
         value={value}
-        onChange={text => {
+        onChange={(text) => {
           setValue(text as string);
           action('Segment value changed')(text);
         }}
@@ -57,7 +57,7 @@ export const BasicInputWithHtmlAttributes = () => {
         data-testid="segment-input-test"
         id="segment-input"
         value={value}
-        onChange={text => {
+        onChange={(text) => {
           setValue(text as string);
           action('Segment value changed')(text);
         }}
@@ -73,7 +73,7 @@ const InputComponent = ({ initialValue }: any) => {
       placeholder="add text"
       autofocus
       value={value}
-      onChange={text => {
+      onChange={(text) => {
         setValue(text as string);
         action('Segment value changed')(text);
       }}

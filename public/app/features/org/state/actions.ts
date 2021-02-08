@@ -8,7 +8,7 @@ type OrganizationDependencies = { getBackendSrv: typeof getBackendSrv };
 export function loadOrganization(
   dependencies: OrganizationDependencies = { getBackendSrv: getBackendSrv }
 ): ThunkResult<any> {
-  return async dispatch => {
+  return async (dispatch) => {
     const organizationResponse = await dependencies.getBackendSrv().get('/api/org');
     dispatch(organizationLoaded(organizationResponse));
 

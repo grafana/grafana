@@ -53,7 +53,7 @@ export const Simple = () => {
   );
 };
 
-export const Counter: Story<CounterProps> = args => {
+export const Counter: Story<CounterProps> = (args) => {
   return <TabCounter {...args} />;
 };
 

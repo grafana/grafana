@@ -80,7 +80,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
       IndentationPlugin(),
       ClipboardPlugin(),
       ...(props.additionalPlugins || []),
-    ].filter(p => p);
+    ].filter((p) => p);
 
     this.state = {
       suggestions: [],
@@ -200,7 +200,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
       <div className={wrapperClassName}>
         <div className="slate-query-field" aria-label={selectors.components.QueryField.container}>
           <Editor
-            ref={editor => (this.editor = editor!)}
+            ref={(editor) => (this.editor = editor!)}
             schema={SCHEMA}
             autoCorrect={false}
             readOnly={this.props.disabled}

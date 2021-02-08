@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -373,7 +375,7 @@ func updateDashboardPermissionScenario(t *testing.T, ctx updatePermissionContext
 
 		sc := setupScenarioContext(t, ctx.url)
 
-		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
+		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			sc.context.OrgId = testOrgID
 			sc.context.UserId = testUserID

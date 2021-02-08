@@ -32,7 +32,7 @@ export const createQueryVariableAdapter = (): VariableAdapter<QueryVariableModel
     updateOptions: async (variable, searchFilter) => {
       await dispatch(updateQueryVariableOptions(toVariableIdentifier(variable), searchFilter));
     },
-    getSaveModel: variable => {
+    getSaveModel: (variable) => {
       const { index, id, state, global, queryValue, ...rest } = cloneDeep(variable);
       // remove options
       if (variable.refresh !== VariableRefresh.never) {
@@ -41,7 +41,7 @@ export const createQueryVariableAdapter = (): VariableAdapter<QueryVariableModel
 
       return rest;
     },
-    getValueForUrl: variable => {
+    getValueForUrl: (variable) => {
       if (isAllVariable(variable)) {
         return ALL_VARIABLE_TEXT;
       }

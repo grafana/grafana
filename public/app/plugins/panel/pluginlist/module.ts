@@ -58,7 +58,7 @@ class PluginListCtrl extends PanelCtrl {
     promiseToDigest(this.$scope)(
       getBackendSrv()
         .get('api/plugins', { embedded: 0, core: 0 })
-        .then(plugins => {
+        .then((plugins) => {
           this.pluginList = plugins;
           this.viewModel[0].list = _.filter(plugins, { type: 'app' });
           this.viewModel[1].list = _.filter(plugins, { type: 'panel' });
