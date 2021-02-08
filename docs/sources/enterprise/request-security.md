@@ -35,9 +35,9 @@ If there are at least one host or IP on the allow-list any request to hosts or I
 
 ```toml
 [security.egress]
-# a list of hostnames or IP adresses separated by spaces for which outgoing requests will be blocked
+# a list of hostnames or IP addresses separated by spaces for which outgoing requests will be blocked
 host_deny_list = supersecret.internal 192.168.1.10
-# a list of hostnames or IP adresses separated by spaces for which requests will be allowed, all other requests will be blocked
+# a list of hostnames or IP addresses separated by spaces for which requests will be allowed, all other requests will be blocked
 host_allow_list = prometheus.internal
 
 ```
