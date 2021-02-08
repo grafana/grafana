@@ -76,8 +76,8 @@ func (ng *AlertNG) saveAlertDefinition(cmd *saveAlertDefinitionCommand) error {
 		alertDefinition := &AlertDefinition{
 			OrgID:           cmd.OrgID,
 			Title:           cmd.Title,
-			Condition:       cmd.Condition.RefID,
-			Data:            cmd.Condition.QueriesAndExpressions,
+			Condition:       cmd.Condition,
+			Data:            cmd.Data,
 			IntervalSeconds: intervalSeconds,
 			Version:         initialVersion,
 			UID:             uid,
@@ -133,11 +133,11 @@ func (ng *AlertNG) updateAlertDefinition(cmd *updateAlertDefinitionCommand) erro
 		if title == "" {
 			title = existingAlertDefinition.Title
 		}
-		condition := cmd.Condition.RefID
+		condition := cmd.Condition
 		if condition == "" {
 			condition = existingAlertDefinition.Condition
 		}
-		data := cmd.Condition.QueriesAndExpressions
+		data := cmd.Data
 		if data == nil {
 			data = existingAlertDefinition.Data
 		}
@@ -212,7 +212,7 @@ func (ng *AlertNG) getOrgAlertDefinitions(query *listAlertDefinitionsQuery) erro
 func (ng *AlertNG) getAlertDefinitions(query *listAlertDefinitionsQuery) error {
 	return ng.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		alerts := make([]*AlertDefinition, 0)
-		q := "SELECT uid, org_id, interval_seconds, version FROM alert_definition"
+		q := "SELECT uid, org_id, interval_seconds, version, paused FROM alert_definition"
 		if err := sess.SQL(q).Find(&alerts); err != nil {
 			return err
 		}
@@ -221,6 +221,42 @@ func (ng *AlertNG) getAlertDefinitions(query *listAlertDefinitionsQuery) error {
 		return nil
 	})
 }
+
+func (ng *AlertNG) updateAlertDefinitionPaused(cmd *updateAlertDefinitionPausedCommand) error {
+	return ng.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		if len(cmd.UIDs) == 0 {
+			return nil
+		}
+		placeHolders := strings.Builder{}
+		const separator = ", "
+		separatorVar := separator
+		params := []interface{}{cmd.Paused, cmd.OrgID}
+		for i, UID := range cmd.UIDs {
+			if i == len(cmd.UIDs)-1 {
+				separatorVar = ""
+			}
+			placeHolders.WriteString(fmt.Sprintf("?%s", separatorVar))
+			params = append(params, UID)
+		}
+		sql := fmt.Sprintf("UPDATE alert_definition SET paused = ? WHERE org_id = ? AND uid IN (%s)", placeHolders.String())
+
+		// prepend sql statement to params
+		var i interface{}
+		params = append(params, i)
+		copy(params[1:], params[0:])
+		params[0] = sql
+
+		res, err := sess.Exec(params...)
+		if err != nil {
+			return err
+		}
+		if cmd.ResultCount, err = res.RowsAffected(); err != nil {
+			ng.log.Debug("failed to get rows affected: %w", err)
+		}
+		return nil
+	})
+}
+
 func generateNewAlertDefinitionUID(sess *sqlstore.DBSession, orgID int64) (string, error) {
 	for i := 0; i < 3; i++ {
 		uid := util.GenerateShortUID()

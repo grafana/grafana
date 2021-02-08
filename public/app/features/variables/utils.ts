@@ -2,7 +2,7 @@ import isString from 'lodash/isString';
 import { ScopedVars, VariableType } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
-import { ALL_VARIABLE_TEXT } from './state/types';
+import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from './state/types';
 import { QueryVariableModel, VariableModel, VariableRefresh } from './types';
 import { getTimeSrv } from '../dashboard/services/TimeSrv';
 import { variableAdapters } from './adapters';
@@ -74,15 +74,29 @@ export const isAllVariable = (variable: any): boolean => {
     return false;
   }
 
-  if (!variable.current.text) {
-    return false;
+  if (variable.current.value) {
+    const isArray = Array.isArray(variable.current.value);
+    if (isArray && variable.current.value.length && variable.current.value[0] === ALL_VARIABLE_VALUE) {
+      return true;
+    }
+
+    if (!isArray && variable.current.value === ALL_VARIABLE_VALUE) {
+      return true;
+    }
   }
 
-  if (Array.isArray(variable.current.text)) {
-    return variable.current.text.length ? variable.current.text[0] === ALL_VARIABLE_TEXT : false;
+  if (variable.current.text) {
+    const isArray = Array.isArray(variable.current.text);
+    if (isArray && variable.current.text.length && variable.current.text[0] === ALL_VARIABLE_TEXT) {
+      return true;
+    }
+
+    if (!isArray && variable.current.text === ALL_VARIABLE_TEXT) {
+      return true;
+    }
   }
 
-  return variable.current.text === ALL_VARIABLE_TEXT;
+  return false;
 };
 
 export const getCurrentText = (variable: any): string => {

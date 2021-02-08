@@ -1,16 +1,3 @@
-.navbar-buttons--zoom {
-  display: none;
-}
-
-.navbar-page-btn {
-  max-width: 200px;
-}
-
-.navbar-buttons--tv,
-.navbar-buttons--actions {
-  display: none;
-}
-
 // Media queries
 // ---------------------
 
@@ -19,36 +6,5 @@
   input[type='number'],
   textarea {
     font-size: 16px;
-  }
-}
-
-@include media-breakpoint-up(sm) {
-  .navbar-page-btn {
-    max-width: 250px;
-  }
-}
-
-@include media-breakpoint-up(md) {
-  .navbar-buttons--tv,
-  .navbar-buttons--actions {
-    display: flex;
-  }
-  .navbar-page-btn {
-    max-width: 325px;
-  }
-}
-
-@include media-breakpoint-up(lg) {
-  .navbar-buttons--zoom {
-    display: flex;
-  }
-  .navbar-page-btn {
-    max-width: 450px;
-  }
-}
-
-@include media-breakpoint-up(xl) {
-  .navbar-page-btn {
-    max-width: 600px;
   }
 }

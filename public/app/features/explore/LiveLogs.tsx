@@ -15,7 +15,7 @@ const getStyles = (theme: GrafanaTheme) => ({
     display: flex;
     flex-flow: column nowrap;
     height: 60vh;
-    overflow-y: auto;
+    overflow-y: scroll;
     :first-child {
       margin-top: auto !important;
     }
@@ -64,32 +64,12 @@ interface State {
 class LiveLogs extends PureComponent<Props, State> {
   private liveEndDiv: HTMLDivElement | null = null;
   private scrollContainerRef = React.createRef<HTMLTableSectionElement>();
-  private lastScrollPos: number | null = null;
 
   constructor(props: Props) {
     super(props);
     this.state = {
       logRowsToRender: props.logRows,
     };
-  }
-
-  componentDidUpdate(prevProps: Props) {
-    if (!prevProps.isPaused && this.props.isPaused) {
-      // So we paused the view and we changed the content size, but we want to keep the relative offset from the bottom.
-      if (this.lastScrollPos && this.scrollContainerRef.current) {
-        // There is last scroll pos from when user scrolled up a bit so go to that position.
-        const { clientHeight, scrollHeight } = this.scrollContainerRef.current;
-        const scrollTop = scrollHeight - (this.lastScrollPos + clientHeight);
-        this.scrollContainerRef.current.scrollTo(0, scrollTop);
-        this.lastScrollPos = null;
-      } else {
-        // We do not have any position to jump to su the assumption is user just clicked pause. We can just scroll
-        // to the bottom.
-        if (this.liveEndDiv) {
-          this.liveEndDiv.scrollIntoView(false);
-        }
-      }
-    }
   }
 
   static getDerivedStateFromProps(nextProps: Props, state: State) {
@@ -116,7 +96,6 @@ class LiveLogs extends PureComponent<Props, State> {
     const distanceFromBottom = scrollHeight - (scrollTop + clientHeight);
     if (distanceFromBottom >= 5 && !isPaused) {
       onPause();
-      this.lastScrollPos = distanceFromBottom;
     }
   };
 
@@ -157,7 +136,7 @@ class LiveLogs extends PureComponent<Props, State> {
                 // This is triggered on every update so on every new row. It keeps the view scrolled at the bottom by
                 // default.
                 if (this.liveEndDiv && !isPaused) {
-                  this.liveEndDiv.scrollIntoView(false);
+                  this.scrollContainerRef.current?.scrollTo(0, this.scrollContainerRef.current.scrollHeight);
                 }
               }}
             />

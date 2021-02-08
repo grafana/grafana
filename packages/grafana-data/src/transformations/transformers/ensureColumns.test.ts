@@ -49,52 +49,82 @@ describe('ensureColumns transformer', () => {
 
       const frame = filtered[0];
       expect(frame.fields.length).toEqual(5);
-      expect(filtered[0]).toEqual(
-        toDataFrame({
-          fields: [
-            {
-              name: 'TheTime',
-              type: 'time',
-              config: {},
-              values: [1000, 2000],
-              labels: undefined,
+      expect(filtered[0]).toMatchInlineSnapshot(`
+        Object {
+          "fields": Array [
+            Object {
+              "config": Object {},
+              "name": "TheTime",
+              "state": Object {
+                "displayName": "TheTime",
+              },
+              "type": "time",
+              "values": Array [
+                1000,
+                2000,
+              ],
             },
-            {
-              name: 'A',
-              type: 'number',
-              config: {},
-              values: [1, 100],
-              labels: {},
+            Object {
+              "config": Object {},
+              "labels": Object {},
+              "name": "A",
+              "state": Object {
+                "displayName": "A",
+              },
+              "type": "number",
+              "values": Array [
+                1,
+                100,
+              ],
             },
-            {
-              name: 'B',
-              type: 'number',
-              config: {},
-              values: [2, 200],
-              labels: {},
+            Object {
+              "config": Object {},
+              "labels": Object {},
+              "name": "B",
+              "state": Object {
+                "displayName": "B",
+              },
+              "type": "number",
+              "values": Array [
+                2,
+                200,
+              ],
             },
-            {
-              name: 'C',
-              type: 'number',
-              config: {},
-              values: [3, 300],
-              labels: {},
+            Object {
+              "config": Object {},
+              "labels": Object {},
+              "name": "C",
+              "state": Object {
+                "displayName": "C",
+              },
+              "type": "number",
+              "values": Array [
+                3,
+                300,
+              ],
             },
-            {
-              name: 'D',
-              type: 'string',
-              config: {},
-              values: ['first', 'second'],
-              labels: {},
+            Object {
+              "config": Object {},
+              "labels": Object {},
+              "name": "D",
+              "state": Object {
+                "displayName": "D",
+              },
+              "type": "string",
+              "values": Array [
+                "first",
+                "second",
+              ],
             },
           ],
-          meta: {
-            transformations: ['ensureColumns'],
+          "length": 2,
+          "meta": Object {
+            "transformations": Array [
+              "ensureColumns",
+            ],
           },
-          name: undefined,
-          refId: undefined,
-        })
-      );
+        }
+      `);
     });
   });
 

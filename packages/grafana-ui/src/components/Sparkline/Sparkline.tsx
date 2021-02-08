@@ -10,7 +10,14 @@ import {
   FieldConfig,
   getFieldDisplayName,
 } from '@grafana/data';
-import { AxisPlacement, DrawStyle, GraphFieldConfig, PointVisibility } from '../uPlot/config';
+import {
+  AxisPlacement,
+  DrawStyle,
+  GraphFieldConfig,
+  PointVisibility,
+  ScaleDirection,
+  ScaleOrientation,
+} from '../uPlot/config';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { UPlotChart } from '../uPlot/Plot';
 import { Themeable } from '../../types';
@@ -91,6 +98,8 @@ export class Sparkline extends PureComponent<Props, State> {
     const xField = data.fields[0];
     builder.addScale({
       scaleKey: 'x',
+      orientation: ScaleOrientation.Horizontal,
+      direction: ScaleDirection.Right,
       isTime: false, //xField.type === FieldType.time,
       range: () => {
         const { sparkline } = this.props;
@@ -124,7 +133,13 @@ export class Sparkline extends PureComponent<Props, State> {
       }
 
       const scaleKey = config.unit || '__fixed';
-      builder.addScale({ scaleKey, min: field.config.min, max: field.config.max });
+      builder.addScale({
+        scaleKey,
+        orientation: ScaleOrientation.Vertical,
+        direction: ScaleDirection.Up,
+        min: field.config.min,
+        max: field.config.max,
+      });
       builder.addAxis({
         scaleKey,
         theme,

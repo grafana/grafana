@@ -59,7 +59,7 @@ export const addDashboard = (config?: Partial<AddDashboardConfig>) => {
   e2e.pages.AddDashboard.visit();
 
   if (annotations.length > 0 || variables.length > 0) {
-    e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
+    e2e.components.PageToolbar.item('Dashboard settings').click();
     addAnnotations(annotations);
 
     fullConfig.variables = addVariables(variables);
@@ -69,7 +69,7 @@ export const addDashboard = (config?: Partial<AddDashboardConfig>) => {
 
   setDashboardTimeRange(timeRange);
 
-  e2e.pages.Dashboard.Toolbar.toolbarItems('Save dashboard').click();
+  e2e.components.PageToolbar.item('Save dashboard').click();
   e2e.pages.SaveDashboardAsModal.newName().clear().type(title);
   e2e.pages.SaveDashboardAsModal.save().click();
   e2e.flows.assertSuccessNotification();

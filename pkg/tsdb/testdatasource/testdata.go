@@ -1,42 +1,42 @@
 package testdatasource
 
 import (
-	"context"
+	"net/http"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
+	"github.com/grafana/grafana/pkg/registry"
 )
 
-type TestDataExecutor struct {
-	*models.DataSource
-	log log.Logger
-}
-
-func NewTestDataExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-	return &TestDataExecutor{
-		DataSource: dsInfo,
-		log:        log.New("tsdb.testdata"),
-	}, nil
-}
-
 func init() {
-	tsdb.RegisterTsdbQueryEndpoint("testdata", NewTestDataExecutor)
+	registry.RegisterService(&testDataPlugin{})
 }
 
-func (e *TestDataExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	result := &tsdb.Response{}
-	result.Results = make(map[string]*tsdb.QueryResult)
+type testDataPlugin struct {
+	BackendPluginManager backendplugin.Manager `inject:""`
+	logger               log.Logger
+	scenarios            map[string]*Scenario
+	queryMux             *datasource.QueryTypeMux
+}
 
-	for _, query := range tsdbQuery.Queries {
-		scenarioId := query.Model.Get("scenarioId").MustString("random_walk")
-		if scenario, exist := ScenarioRegistry[scenarioId]; exist {
-			result.Results[query.RefId] = scenario.Handler(query, tsdbQuery)
-			result.Results[query.RefId].RefId = query.RefId
-		} else {
-			e.log.Error("Scenario not found", "scenarioId", scenarioId)
-		}
+func (p *testDataPlugin) Init() error {
+	p.logger = log.New("tsdb.testdata")
+	p.scenarios = map[string]*Scenario{}
+	p.queryMux = datasource.NewQueryTypeMux()
+	p.registerScenarios()
+	resourceMux := http.NewServeMux()
+	p.registerRoutes(resourceMux)
+	factory := coreplugin.New(backend.ServeOpts{
+		QueryDataHandler:    p.queryMux,
+		CallResourceHandler: httpadapter.New(resourceMux),
+	})
+	err := p.BackendPluginManager.Register("testdata", factory)
+	if err != nil {
+		p.logger.Error("Failed to register plugin", "error", err)
 	}
-
-	return result, nil
+	return nil
 }
