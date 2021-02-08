@@ -48,7 +48,10 @@ describe('Graph DataProcessor', () => {
         name: 'series with time as strings',
         fields: [
           { name: 'v1', values: [0.1, 0.2, 0.3] }, // first
-          { name: 'time', values: ['2021-01-01', '2021-01-02', '2021-01-03'] }, // Time is last column
+          {
+            name: 'time',
+            values: ['2021-01-01T01:00:00.000Z', 'Fri, 01 Jan 2021 01:00:00 GMT'],
+          }, // Time is last column
         ],
       },
     ]);

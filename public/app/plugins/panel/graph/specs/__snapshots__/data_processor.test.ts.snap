@@ -168,19 +168,19 @@ Array [
     "datapoints": Array [
       Array [
         0.1,
-        1609477200000,
+        1609462800000,
       ],
       Array [
         0.2,
-        1609563600000,
+        1609462800000,
       ],
       Array [
         0.3,
-        1609650000000,
+        1612769338132,
       ],
     ],
     "fieldIndex": 0,
-    "hasMsResolution": false,
+    "hasMsResolution": true,
     "id": "series with time as strings v1",
     "label": "series with time as strings v1",
     "legend": true,
@@ -264,15 +264,15 @@ Array [
       ],
       Array [
         0.1,
-        1609477200000,
+        1609462800000,
       ],
       Array [
         0.2,
-        1609563600000,
+        1609462800000,
       ],
       Array [
         0.3,
-        1609650000000,
+        1612769338139,
       ],
     ],
     "fieldIndex": 1,
