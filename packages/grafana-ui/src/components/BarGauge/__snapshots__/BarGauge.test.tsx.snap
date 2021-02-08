@@ -29,13 +29,13 @@ exports[`BarGauge Render with basic options should render 1`] = `
           "alignItems": "center",
           "color": "#73BF69",
           "display": "flex",
-          "fontSize": 140,
+          "fontSize": 280,
           "height": "300px",
           "justifyContent": "flex-end",
           "lineHeight": 1,
           "paddingLeft": "10px",
           "paddingRight": "10px",
-          "width": "60px",
+          "width": "100px",
         }
       }
       value={
@@ -74,7 +74,7 @@ exports[`BarGauge Render with basic options should render 1`] = `
           "height": "300px",
           "position": "relative",
           "transition": "width 1s",
-          "width": "60px",
+          "width": "50px",
           "zIndex": 1,
         }
       }
