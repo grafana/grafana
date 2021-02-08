@@ -6,7 +6,6 @@ import Prism from 'prismjs';
 
 // Types
 import {
-  AbsoluteTimeRange,
   AnnotationEvent,
   AnnotationQueryRequest,
   DataFrame,
