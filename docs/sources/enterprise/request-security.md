@@ -17,7 +17,7 @@ Example:
 
 This can be used to limit access to internal systems that the server Grafana runs on can access but that users of Grafana should not be able to access. This feature does not affect traffic from the Grafana users browser.
 
-Note: While request security works with backend plugins, it is possible to create a backend plugin that bypasses this security.
+Note: Although request security works with backend plugins, it is possible to create a backend plugin that bypasses this security.
 
 ## IP and hostname blocking
 
