@@ -21,7 +21,7 @@ Note: Although request security works with backend plugins, it is possible to cr
 
 ## IP and hostname blocking
 
-It's possible to limit requests based on hostname and/or ip addresses in two ways.
+It is possible to limit requests based on a hostname, an IP address, or both.
 
 ### Deny list
 
