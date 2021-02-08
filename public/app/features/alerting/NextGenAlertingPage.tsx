@@ -15,6 +15,7 @@ import {
   evaluateAlertDefinition,
   evaluateNotSavedAlertDefinition,
   getAlertDefinition,
+  onRunQueries,
   updateAlertDefinition,
   updateAlertDefinitionOption,
   updateAlertDefinitionUiState,
@@ -44,6 +45,7 @@ interface DispatchProps {
   updateAlertDefinition: typeof updateAlertDefinition;
   createAlertDefinition: typeof createAlertDefinition;
   evaluateNotSavedAlertDefinition: typeof evaluateNotSavedAlertDefinition;
+  onRunQueries: typeof onRunQueries;
 }
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
@@ -117,6 +119,7 @@ class NextGenAlertingPage extends PureComponent<Props> {
       updateAlertDefinitionUiState,
       queryRunner,
       getQueryOptions,
+      onRunQueries,
     } = this.props;
 
     const styles = getStyles(config.theme);
@@ -136,6 +139,7 @@ class NextGenAlertingPage extends PureComponent<Props> {
                 getInstances={getInstances}
                 queries={queryOptions.queries}
                 onTest={this.onTest}
+                onRunQueries={onRunQueries}
               />,
               <AlertingQueryEditor key="queryEditor" />,
             ]}
@@ -178,6 +182,7 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   createAlertDefinition,
   getAlertDefinition,
   evaluateNotSavedAlertDefinition,
+  onRunQueries,
 };
 
 export default hot(module)(

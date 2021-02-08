@@ -3,7 +3,7 @@ import { useObservable } from 'react-use';
 import { css } from 'emotion';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { DataFrame, DataQuery, GrafanaTheme } from '@grafana/data';
-import { TabsBar, TabContent, Tab, useStyles, Icon } from '@grafana/ui';
+import { TabsBar, TabContent, Tab, useStyles, Icon, Button } from '@grafana/ui';
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import { PreviewQueryTab } from './PreviewQueryTab';
 import { PreviewInstancesTab } from './PreviewInstancesTab';
@@ -23,9 +23,10 @@ interface Props {
   getInstances: () => DataFrame[];
   queries: DataQuery[];
   onTest: () => void;
+  onRunQueries: () => void;
 }
 
-export const AlertingQueryPreview: FC<Props> = ({ getInstances, onTest, queryRunner, queries }) => {
+export const AlertingQueryPreview: FC<Props> = ({ getInstances, onRunQueries, onTest, queryRunner, queries }) => {
   const [activeTab, setActiveTab] = useState<string>(Tabs.Query);
   const styles = useStyles(getStyles);
 
@@ -74,7 +75,12 @@ export const AlertingQueryPreview: FC<Props> = ({ getInstances, onTest, queryRun
                   if (data) {
                     return <PreviewQueryTab data={data} width={width} height={height} />;
                   }
-                  return <div>No data</div>;
+                  return (
+                    <div className={styles.noQueries}>
+                      <h4 className={styles.noQueriesHeader}>Run queries to view data.</h4>
+                      <Button onClick={onRunQueries}>Run queries</Button>
+                    </div>
+                  );
               }
             }}
           </AutoSizer>
