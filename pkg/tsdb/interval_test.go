@@ -65,3 +65,24 @@ func TestFormatDuration(t *testing.T) {
 		})
 	}
 }
+
+func TestGetIntervalFrom(t *testing.T) {
+	testCases := []struct {
+		name            string
+		dsInfo          *models.DataSource
+		queryModel      *simplejson.Json
+		defaultInterval time.Duration
+		expected        (time.Duration, error)
+	}{
+		{"45s", nil, &simplejson.NewFromAny{"interval": "45s"}, time.Second * 15, time.Second * 45},
+		{"EmptyInterval", nil, &simplejson.NewFromAny{"interval": ""}, time.Second * 15, time.Second * 1},
+		{"45", nil, &simplejson.NewFromAny{"interval": "45"}, time.Second * 15, time.Second * 50},
+		{"2m", nil, &simplejson.NewFromAny{"interval": "2m"}, time.Second * 15, time.Minute * 2},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expected, GetIntervalFrom(tc.dsInfo, tc.QueryModel, tc.defaultInterval))
+		})
+	}
+}
