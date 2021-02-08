@@ -194,24 +194,21 @@ func (ac *RBACService) GetUserPolicies(query *GetUserPoliciesQuery) error {
 		query.Result = make([]*PolicyDTO, 0)
 		// TODO: optimize this
 		q := `SELECT
-			up.policy_id,
-			up.user_id,
 			policy.id,
 			policy.org_id,
 			policy.name,
 			policy.description,
 			policy.created,
-			policy.updated
+			policy.updated,
+			up.user_id
 				FROM policy
 				LEFT JOIN user_policy AS up ON policy.id = up.policy_id
-					AND up.user_id = ?
-				LEFT JOIN team_member as tm ON tm.user_id = ?
 				LEFT JOIN team_policy as tp ON policy.id = tp.policy_id
-					AND tp.team_id = tm.team_id
-				WHERE policy.org_id = ?
-		`
+				LEFT JOIN team_member as tm ON tm.team_id = tp.team_id
+					AND tm.user_id = ?
+				WHERE policy.org_id = ? `
 
-		err := sess.SQL(q, query.UserId, query.UserId, query.OrgId).Find(&query.Result)
+		err := sess.SQL(q, query.UserId, query.OrgId).Find(&query.Result)
 		return err
 	})
 }
@@ -230,13 +227,12 @@ func (ac *RBACService) GetUserPermissions(query *GetUserPermissionsQuery) error 
 				FROM permission
 				INNER JOIN policy ON policy.id = permission.policy_id
 				LEFT JOIN user_policy AS up ON policy.id = up.policy_id
-					AND up.user_id = ?
-				LEFT JOIN team_member as tm ON tm.user_id = ?
 				LEFT JOIN team_policy as tp ON policy.id = tp.policy_id
-					AND tp.team_id = tm.team_id
+				LEFT JOIN team_member as tm ON tm.team_id = tp.team_id
+					AND tm.user_id = ?
 				WHERE policy.org_id = ? `
 
-		if err := sess.SQL(q, query.UserId, query.UserId, query.OrgId).Find(&query.Result); err != nil {
+		if err := sess.SQL(q, query.UserId, query.OrgId).Find(&query.Result); err != nil {
 			return err
 		}
 

@@ -229,6 +229,19 @@ func TestUserPolicy(t *testing.T) {
 
 	testCases := []userPolicyTestCase{
 		{
+			desc:     "should successfuly get user policies",
+			userName: "testuser",
+			teamName: "team1",
+			userPolicies: []policyTestCase{
+				{
+					name: "CreateUser", permissions: []permissionTestCase{},
+				},
+			},
+			teamPolicies:   nil,
+			expectedError:  nil,
+			expectedAccess: false,
+		},
+		{
 			desc:     "should successfuly get user and team policies",
 			userName: "testuser",
 			teamName: "team1",
@@ -240,6 +253,25 @@ func TestUserPolicy(t *testing.T) {
 			teamPolicies: []policyTestCase{
 				{
 					name: "CreateDataSource", permissions: []permissionTestCase{},
+				},
+				{
+					name: "EditDataSource", permissions: []permissionTestCase{},
+				},
+			},
+			expectedError:  nil,
+			expectedAccess: false,
+		},
+		{
+			desc:         "should successfuly get user and team policies if user has no policies",
+			userName:     "testuser",
+			teamName:     "team1",
+			userPolicies: nil,
+			teamPolicies: []policyTestCase{
+				{
+					name: "CreateDataSource", permissions: []permissionTestCase{},
+				},
+				{
+					name: "EditDataSource", permissions: []permissionTestCase{},
 				},
 			},
 			expectedError:  nil,
@@ -258,6 +290,24 @@ func TestUserPolicy(t *testing.T) {
 				LoginOrEmail: tc.userName,
 			}
 			err := sqlstore.GetUserByLogin(&userQuery)
+			require.NoError(t, err)
+			userId := userQuery.Result.Id
+
+			teamQuery := models.SearchTeamsQuery{
+				OrgId: 1,
+				Name:  tc.teamName,
+			}
+			err = sqlstore.SearchTeams(&teamQuery)
+			require.NoError(t, err)
+			require.Len(t, teamQuery.Result.Teams, 1)
+			teamId := teamQuery.Result.Teams[0].Id
+
+			addTeamMemberCmd := models.AddTeamMemberCommand{
+				OrgId:  1,
+				UserId: userId,
+				TeamId: teamId,
+			}
+			err = sqlstore.AddTeamMember(&addTeamMemberCmd)
 			require.NoError(t, err)
 
 			userPoliciesQuery := GetUserPoliciesQuery{
@@ -324,11 +374,37 @@ func TestUserPermissions(t *testing.T) {
 			}
 			err := sqlstore.GetUserByLogin(&userQuery)
 			require.NoError(t, err)
+			userId := userQuery.Result.Id
+
+			teamQuery := models.SearchTeamsQuery{
+				OrgId: 1,
+				Name:  tc.teamName,
+			}
+			err = sqlstore.SearchTeams(&teamQuery)
+			require.NoError(t, err)
+			require.Len(t, teamQuery.Result.Teams, 1)
+			teamId := teamQuery.Result.Teams[0].Id
+
+			addTeamMemberCmd := models.AddTeamMemberCommand{
+				OrgId:  1,
+				UserId: userId,
+				TeamId: teamId,
+			}
+			err = sqlstore.AddTeamMember(&addTeamMemberCmd)
+			require.NoError(t, err)
 
 			userPermissionsQuery := GetUserPermissionsQuery{
 				OrgId:  1,
-				UserId: userQuery.Result.Id,
+				UserId: userId,
 			}
+
+			getUserTeamsQuery := models.GetTeamsByUserQuery{
+				OrgId:  1,
+				UserId: userId,
+			}
+			err = sqlstore.GetTeamsByUser(&getUserTeamsQuery)
+			require.NoError(t, err)
+			require.Len(t, getUserTeamsQuery.Result, 1)
 
 			expectedPermissions := []permissionTestCase{}
 			for _, p := range tc.userPolicies {
