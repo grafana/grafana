@@ -72,9 +72,9 @@ export const GeneralSettings: React.FC<Props> = ({ dashboard }) => {
           <Input name="title" onBlur={onBlur} defaultValue={dashboard.title} width={60} />
         </InlineField>
         <InlineField label="Description" labelWidth={14}>
-          <Input name="title" onBlur={onBlur} defaultValue={dashboard.description} width={60} />
+          <Input name="description" onBlur={onBlur} defaultValue={dashboard.description} width={60} />
         </InlineField>
-        <InlineField label="Tags" labelWidth={14}>
+        <InlineField label="Tags" tooltip="Press enter to add a tag" labelWidth={14}>
           <TagsInput tags={dashboard.tags} onChange={onTagsChange} />
         </InlineField>
         <FolderPicker
@@ -84,7 +84,11 @@ export const GeneralSettings: React.FC<Props> = ({ dashboard }) => {
           enableCreateNew={true}
           dashboardId={dashboard.id}
         />
-        <InlineField label="Editable" labelWidth={14}>
+        <InlineField
+          label="Editable"
+          tooltip="Uncheck, then save and reload to disable all dashboard editing"
+          labelWidth={14}
+        >
           <InlineSwitch value={dashboard.editable} onChange={onEditableChange} />
         </InlineField>
       </div>
