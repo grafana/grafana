@@ -90,7 +90,11 @@ function prepareData(frame: DataFrame): AlignedData {
   return frame.fields.map((f) => {
     if (f.type === FieldType.time) {
       if (f.values.length > 0 && typeof f.values.get(0) === 'string') {
-        return f.values.toArray().map((v) => dateTime(v).valueOf());
+        const timestamps = [];
+        for (let i = 0; i < f.values.length; i++) {
+          timestamps.push(dateTime(f.values.get(i)).valueOf());
+        }
+        return timestamps;
       }
       return f.values.toArray();
     }
