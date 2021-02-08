@@ -27,9 +27,10 @@ interface DisplayProcessorOptions {
 // Reasonable units for time
 const timeFormats: KeyValue<boolean> = {
   dateTimeAsIso: true,
-  dateTimeAsIsoSmart: true,
+  dateTimeAsIsoNoDateIfToday: true,
   dateTimeAsUS: true,
-  dateTimeAsUSSmart: true,
+  dateTimeAsUSNoDateIfToday: true,
+  dateTimeAsLocal: true,
   dateTimeFromNow: true,
 };
 
