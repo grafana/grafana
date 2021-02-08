@@ -311,7 +311,7 @@ New duration for renewed tokens. Vault may be configured to ignore this value an
 
 ### host_deny_list
 
-A list of hostnames or IP addresses separated by spaces for which requests will be blocked.
+A list of hostnames or IP addresses separated by spaces for which requests are blocked.
 
 ### host_allow_list
 
