@@ -1,5 +1,5 @@
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
-import { Input, Tooltip, defaultIntervals } from '@grafana/ui';
+import { Input, defaultIntervals, Field } from '@grafana/ui';
 
 import { getTimeSrv } from '../../services/TimeSrv';
 
@@ -56,16 +56,19 @@ export const AutoRefreshIntervals: FC<Props> = ({
   );
 
   return (
-    <div className="gf-form">
-      <label className="gf-form-label width-7">Auto-refresh</label>
-      {invalidIntervalsMessage ? (
-        <Tooltip placement="right" content={invalidIntervalsMessage}>
-          <Input width={60} invalid value={intervalsString} onChange={onIntervalsChange} onBlur={onIntervalsBlur} />
-        </Tooltip>
-      ) : (
-        <Input width={60} value={intervalsString} onChange={onIntervalsChange} onBlur={onIntervalsBlur} />
-      )}
-    </div>
+    <Field
+      label="Auto refresh"
+      description="Define the auto refresh intervals that should be available in the auto refresh dropdown"
+      error={invalidIntervalsMessage}
+      invalid={!!invalidIntervalsMessage}
+    >
+      <Input
+        invalid={!!invalidIntervalsMessage}
+        value={intervalsString}
+        onChange={onIntervalsChange}
+        onBlur={onIntervalsBlur}
+      />
+    </Field>
   );
 };
 

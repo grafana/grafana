@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { SelectableValue, TimeZone } from '@grafana/data';
-import { Select, InlineSwitch, TagsInput, InlineField, Input } from '@grafana/ui';
+import { Select, TagsInput, Input, Field, CollapsableSection, RadioButtonGroup } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { DashboardModel } from '../../state/DashboardModel';
@@ -57,41 +57,50 @@ export const GeneralSettings: React.FC<Props> = ({ dashboard }) => {
     dashboard.tags = tags;
   };
 
-  const onEditableChange = (ev: React.FormEvent<HTMLInputElement>) => {
-    dashboard.editable = ev.currentTarget.checked;
+  const onEditableChange = (value: boolean) => {
+    dashboard.editable = value;
     setRenderCounter(renderCounter + 1);
   };
 
+  const editableOptions = [
+    { label: 'Editable', value: true },
+    { label: 'Read-only', value: false },
+  ];
+
   return (
-    <>
+    <div style={{ maxWidth: '600px' }}>
       <h3 className="dashboard-settings__header" aria-label={selectors.pages.Dashboard.Settings.General.title}>
         General
       </h3>
       <div className="gf-form-group">
-        <InlineField label="Name" labelWidth={14}>
-          <Input name="title" onBlur={onBlur} defaultValue={dashboard.title} width={60} />
-        </InlineField>
-        <InlineField label="Description" labelWidth={14}>
-          <Input name="description" onBlur={onBlur} defaultValue={dashboard.description} width={60} />
-        </InlineField>
-        <InlineField label="Tags" tooltip="Press enter to add a tag" labelWidth={14}>
+        <Field label="Name">
+          <Input name="title" onBlur={onBlur} defaultValue={dashboard.title} />
+        </Field>
+        <Field label="Description">
+          <Input name="description" onBlur={onBlur} defaultValue={dashboard.description} />
+        </Field>
+        <Field label="Tags" description="Press enter to add a tag">
           <TagsInput tags={dashboard.tags} onChange={onTagsChange} />
-        </InlineField>
-        <FolderPicker
-          initialTitle={dashboard.meta.folderTitle}
-          initialFolderId={dashboard.meta.folderId}
-          onChange={onFolderChange}
-          enableCreateNew={true}
-          dashboardId={dashboard.id}
-        />
-        <InlineField
+        </Field>
+        <Field label="Folder">
+          <FolderPicker
+            useNewForms={true}
+            initialTitle={dashboard.meta.folderTitle}
+            initialFolderId={dashboard.meta.folderId}
+            onChange={onFolderChange}
+            enableCreateNew={true}
+            dashboardId={dashboard.id}
+          />
+        </Field>
+
+        <Field
           label="Editable"
-          tooltip="Uncheck, then save and reload to disable all dashboard editing"
-          labelWidth={14}
+          description="Set to read-only to disable all editing. Reload the dashboard for changes to take effect"
         >
-          <InlineSwitch value={dashboard.editable} onChange={onEditableChange} />
-        </InlineField>
+          <RadioButtonGroup value={dashboard.editable} options={editableOptions} onChange={onEditableChange} />
+        </Field>
       </div>
+
       <TimePickerSettings
         onTimeZoneChange={onTimeZoneChange}
         onRefreshIntervalChange={onRefreshIntervalChange}
@@ -103,20 +112,23 @@ export const GeneralSettings: React.FC<Props> = ({ dashboard }) => {
         timezone={dashboard.timezone}
       />
 
-      <h5 className="section-heading">Panel Options</h5>
-      <div className="gf-form">
-        <InlineField label="Graph Tooltip" labelWidth={14}>
+      <CollapsableSection label="Panel options" isOpen={true}>
+        <Field
+          label="Graph tooltip"
+          description="Controls tooltip and hover highlight behavior across different panels"
+        >
           <Select
             onChange={onTooltipChange}
             options={GRAPH_TOOLTIP_OPTIONS}
             width={40}
             value={dashboard.graphTooltip}
           />
-        </InlineField>
-      </div>
+        </Field>
+      </CollapsableSection>
+
       <div className="gf-form-button-row">
         {dashboard.meta.canSave && <DeleteDashboardButton dashboard={dashboard} />}
       </div>
-    </>
+    </div>
   );
 };
