@@ -1323,7 +1323,7 @@ func (cfg *Cfg) GetContentDeliveryURL(prefix string) string {
 		return url.String() + "/"
 	}
 
-	return "public"
+	return ""
 }
 
 func (cfg *Cfg) readDataSourcesSettings() {

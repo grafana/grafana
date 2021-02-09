@@ -404,7 +404,7 @@ func TestGetCDNPath(t *testing.T) {
 
 func TestGetContentDeliveryURLWhenNoCDNRootURLIsSet(t *testing.T) {
 	cfg := NewCfg()
-	require.Equal(t, "public", cfg.GetContentDeliveryURL("grafana-oss"))
+	require.Equal(t, "", cfg.GetContentDeliveryURL("grafana-oss"))
 }
 
 func TestGetCDNPathWithPreReleaseVersionAndSubPath(t *testing.T) {
