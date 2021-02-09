@@ -51,7 +51,6 @@ export function getPanelMenu(
 
   const onMakeReusable = (event: React.MouseEvent<any>) => {
     event.preventDefault();
-    console.log(panel);
     appEvents.emit(CoreEvents.showModalReact, {
       component: AddLibraryPanelModal,
       props: {

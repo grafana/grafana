@@ -37,11 +37,6 @@ interface Props {
   onPanelOptionsChanged: (options: any) => void;
 }
 
-// const addLibraryPanel = (panel: PanelModel) => () => {
-//   const backendSrv = getBackendSrv();
-//   backendSrv.addLibraryPanel(panel, 0).then(res => console.log(res));
-// };
-
 export const PanelOptionsTab: FC<Props> = ({
   panel,
   plugin,
