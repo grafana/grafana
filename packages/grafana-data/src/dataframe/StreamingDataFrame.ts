@@ -1,7 +1,7 @@
 import { Field, DataFrame, FieldType } from '../types/dataFrame';
 import { QueryResultMeta } from '../types';
 import { ArrayVector } from '../vector';
-import { DataFrameJSON, applyFieldValueReplacements } from './DataFrameJSON';
+import { DataFrameJSON, decodeFieldValueEntities } from './DataFrameJSON';
 
 export interface StreamingFrameOptions {
   maxLength?: number; // 1000
@@ -61,32 +61,35 @@ export class StreamingDataFrame implements DataFrame {
     }
 
     if (msg.data) {
-      if (msg.replaced) {
-        for (let i = 0; i < msg.replaced.length; i++) {
-          const r = msg.replaced[i];
-          if (r) {
-            applyFieldValueReplacements(r, msg.data[i]);
+      const data = msg.data;
+      const { values, entities } = data;
+
+      if (entities) {
+        entities.forEach((ents, i) => {
+          if (ents) {
+            decodeFieldValueEntities(ents, values[i]);
             // TODO: append replacements to field
           }
-        }
+        });
       }
 
-      for (let i = 0; i < this.fields.length; i++) {
-        this.fields[i].values.buffer.push(...msg.data[i]);
-      }
+      this.fields.forEach((f, i) => {
+        f.values.buffer.push(...values[i]);
+      });
 
       // Shorten the array less frequently than we append
       const elapsed = Date.now() - this.lastUpdateTime;
+
       if (elapsed > 5000) {
         if (this.options.maxSeconds && this.timeFieldIndex >= 0) {
           // TODO -- check time length
         }
         if (this.options.maxLength) {
           const delta = this.length - this.options.maxLength;
+
           if (delta > 0) {
             this.fields.forEach((f) => {
-              const b = f.values.buffer.slice(delta);
-              f.values.buffer = b;
+              f.values.buffer = f.values.buffer.slice(delta);
             });
           }
         }

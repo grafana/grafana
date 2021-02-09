@@ -12,16 +12,18 @@ describe('DataFrame JSON', () => {
             { name: 'value', type: FieldType.number },
           ],
         },
-        data: [
-          [100, 200, 300],
-          ['a', 'b', 'c'],
-          [1, 2, 3],
-        ],
-        replaced: [
-          {}, // nothing to replace, but keeps the index
-          { NaN: [1], Inf: [2] },
-          { NegInf: [2] },
-        ],
+        data: {
+          values: [
+            [100, 200, 300],
+            ['a', 'b', 'c'],
+            [1, 2, 3],
+          ],
+          entities: [
+            null, // nothing to replace, but keeps the index
+            { NaN: [1], Inf: [2] },
+            { NegInf: [2] },
+          ],
+        },
       };
 
       const frame = dataFrameFromJSON(json);
@@ -30,8 +32,8 @@ describe('DataFrame JSON', () => {
           "fields": Array [
             Object {
               "config": Object {},
+              "entities": Object {},
               "name": "time",
-              "replaced": Object {},
               "type": "time",
               "values": Array [
                 100,
@@ -41,8 +43,7 @@ describe('DataFrame JSON', () => {
             },
             Object {
               "config": Object {},
-              "name": "name",
-              "replaced": Object {
+              "entities": Object {
                 "Inf": Array [
                   2,
                 ],
@@ -50,6 +51,7 @@ describe('DataFrame JSON', () => {
                   1,
                 ],
               },
+              "name": "name",
               "type": "string",
               "values": Array [
                 "a",
@@ -59,12 +61,12 @@ describe('DataFrame JSON', () => {
             },
             Object {
               "config": Object {},
-              "name": "value",
-              "replaced": Object {
+              "entities": Object {
                 "NegInf": Array [
                   2,
                 ],
               },
+              "name": "value",
               "type": "number",
               "values": Array [
                 1,

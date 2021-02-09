@@ -14,16 +14,43 @@ export interface DataFrameJSON {
   schema?: DataFrameSchema;
 
   /**
-   * The data is a columnar store that matches fields defined by schema.
+   * The field data
    */
-  data?: any[][];
+  data?: DataFrameData;
+}
+
+/**
+ * @alpha
+ */
+export interface DataFrameData {
+  /**
+   * A columnar store that matches fields defined by schema.
+   */
+  values: any[][];
 
   /**
-   * Since JSON can not encode some important numeric constants, these
-   * replacements are applied after reading JSON over-the-wire.  This addition allows
-   * us to represent values for NaN, Inf, -Inf, and undefined
+   * Since JSON cannot encode NaN, Inf, -Inf, and undefined, these entities
+   * are decoded after JSON.parse() using this struct
    */
-  replaced?: FieldValueReplacements[];
+  entities?: Array<FieldValueEntityLookup | null>;
+
+  /**
+   * Holds value bases per field so we can encode numbers from fixed points
+   * e.g. [1612900958, 1612900959, 1612900960] -> 1612900958 + [0, 1, 2]
+   */
+  bases?: number[][];
+
+  /**
+   * Holds value multipliers per field so we can encode large numbers concisely
+   * e.g. [4900000000, 35000000000] -> 1e9 + [35, 4.9]
+   */
+  factors?: number[][];
+
+  /**
+   * Holds enums per field so we can encode recurring values as ints
+   * e.g. ["foo", "foo", "baz", "foo"] -> ["foo", "baz"] + [0,0,1,0]
+   */
+  enums?: number[][];
 }
 
 /**
@@ -66,34 +93,32 @@ export interface FieldSchema {
 }
 
 /**
- * Since JSON does not support encoding some numeric types, we need to replace them on load.
- * While some system solve this by encoding everythign as strings, this approach lets is
- * efficiently communicate which values needed special encoding.
- *
- * @alpha
+ * Since JSON cannot encode NaN, Inf, -Inf, and undefined, the locations
+ * of these entities in field value arrays are stored here for restoration
+ * after JSON.parse()
  */
-export interface FieldValueReplacements {
+export interface FieldValueEntityLookup {
   NaN?: number[];
   Undef?: number[]; // Missing because of absense or join
   Inf?: number[];
   NegInf?: number[];
 }
 
-const replacements: Record<keyof FieldValueReplacements, any> = {
+const ENTITY_MAP: Record<keyof FieldValueEntityLookup, any> = {
   Inf: Infinity,
   NegInf: -Infinity,
   Undef: undefined,
   NaN: NaN,
 };
 
-export function applyFieldValueReplacements(replaced: FieldValueReplacements, col: any[]) {
-  if (!replaced || !col) {
+export function decodeFieldValueEntities(lookup: FieldValueEntityLookup, values: any[]) {
+  if (!lookup || !values) {
     return;
   }
-  for (const key in replaced) {
-    const val = replacements[key as keyof FieldValueReplacements];
-    for (const idx of replaced[key as keyof FieldValueReplacements]!) {
-      col[idx] = val;
+  for (const key in lookup) {
+    const repl = ENTITY_MAP[key as keyof FieldValueEntityLookup];
+    for (const idx of lookup[key as keyof FieldValueEntityLookup]!) {
+      values[idx] = repl;
     }
   }
 }
@@ -108,46 +133,51 @@ function guessFieldType(name: string, values: any[]): FieldType {
 }
 
 /**
- * NOTE: data in the original array will be replaced with values from the DataFrameReplacements property
+ * NOTE: dto.data.values will be mutated and decoded/inflated using entities,bases,factors,enums
  *
  * @alpha
  */
 export function dataFrameFromJSON(dto: DataFrameJSON): DataFrame {
-  const { schema, replaced, data } = dto;
+  const { schema, data } = dto;
+
   if (!schema || !schema.fields) {
     throw new Error('JSON needs a fields definition');
   }
 
   // Find the longest field length
-  let length = 0;
-  if (data) {
-    for (const f of data) {
-      let flen = f.length;
-      if (flen && flen > length) {
-        length = flen;
-      }
-    }
-  }
+  const length = data ? data.values.reduce((max, vals) => Math.max(max, vals.length), 0) : 0;
 
   const fields = schema.fields.map((f, index) => {
-    let r: FieldValueReplacements = {};
-    let buffer = data ? data[index] : [];
-    buffer.length = length; // will pad with undefined
-    if (data && replaced && replaced[index]) {
-      r = replaced[index];
-      applyFieldValueReplacements(r, buffer);
+    let buffer = data ? data.values[index] : [];
+    let origLen = buffer.length;
+
+    if (origLen !== length) {
+      buffer.length = length;
+      // avoid sparse arrays
+      buffer.fill(undefined, origLen);
     }
+
+    let entities: FieldValueEntityLookup | undefined | null;
+
+    if ((entities = data && data.entities && data.entities[index])) {
+      decodeFieldValueEntities(entities, buffer);
+    }
+
+    // TODO: expand arrays further using bases,factors,enums
+
     return {
       ...f,
-      replaced: r,
       type: f.type ?? guessFieldType(f.name, buffer),
       config: f.config ?? {},
       values: new ArrayVector(buffer),
+      // the presence of this prop is an optimization signal & lookup for consumers
+      entities: entities ?? {},
     };
   });
+
   return {
     ...schema,
     fields,
-    length: fields[0].values.length,
+    length,
   };
 }

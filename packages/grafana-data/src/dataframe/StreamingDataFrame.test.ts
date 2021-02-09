@@ -13,11 +13,13 @@ describe('Streaming JSON', () => {
             { name: 'value', type: FieldType.number },
           ],
         },
-        data: [
-          [100, 200, 300],
-          ['a', 'b', 'c'],
-          [1, 2, 3],
-        ],
+        data: {
+          values: [
+            [100, 200, 300],
+            ['a', 'b', 'c'],
+            [1, 2, 3],
+          ],
+        },
       };
 
       const stream = new StreamingDataFrame(dataFrameFromJSON(json));
@@ -51,7 +53,9 @@ describe('Streaming JSON', () => {
       `);
 
       stream.update({
-        data: [[400], ['d'], [4]],
+        data: {
+          values: [[400], ['d'], [4]],
+        },
       });
 
       expect(stream.fields.map((f) => ({ name: f.name, value: f.values.buffer }))).toMatchInlineSnapshot(`
