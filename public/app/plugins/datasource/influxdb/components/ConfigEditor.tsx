@@ -7,6 +7,7 @@ import {
   onUpdateDatasourceJsonDataOption,
   onUpdateDatasourceJsonDataOptionSelect,
   onUpdateDatasourceSecureJsonDataOption,
+  updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { DataSourceHttpSettings, InfoBox, InlineFormLabel, LegacyForms } from '@grafana/ui';
 const { Select, Input, SecretFormField } = LegacyForms;
@@ -31,15 +32,18 @@ const versions = [
 ] as Array<SelectableValue<InfluxVersion>>;
 
 export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions>;
+type State = {
+  maxSeries: string | undefined;
+};
 
-export class ConfigEditor extends PureComponent<Props> {
+export class ConfigEditor extends PureComponent<Props, State> {
   state = {
-    maxSeries: 0,
+    maxSeries: '',
   };
 
   constructor(props: Props) {
     super(props);
-    this.state.maxSeries = props.options.jsonData.maxSeries || 1000;
+    this.state.maxSeries = props.options.jsonData.maxSeries?.toString() || '';
   }
 
   // 1x
@@ -290,13 +294,14 @@ export class ConfigEditor extends PureComponent<Props> {
           <div className="gf-form-inline">
             <div className="gf-form">
               <InlineFormLabel
-                tooltip="Max number of series that will be returned from the data source query."
+                tooltip="Max number of series that will be returned from the data source query. Defaults to 1000."
                 className="width-10"
               >
                 Max series
               </InlineFormLabel>
               <div className="width-20">
                 <Input
+                  placeholder="1000"
                   type="number"
                   className="width-20"
                   value={this.state.maxSeries}
@@ -305,9 +310,11 @@ export class ConfigEditor extends PureComponent<Props> {
                     // any influence over saving so this seems to be only way to do this.
                     this.setState({ maxSeries: event.currentTarget.value });
                     const val = parseInt(event.currentTarget.value, 10);
-                    if (Number.isFinite(val)) {
-                      onUpdateDatasourceJsonDataOption(this.props, 'maxSeries');
-                    }
+                    updateDatasourcePluginJsonDataOption(
+                      this.props,
+                      'maxSeries',
+                      Number.isFinite(val) ? val : undefined
+                    );
                   }}
                 />
               </div>
