@@ -1,8 +1,8 @@
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { LabelsToFieldsOptions, labelsToFieldsTransformer } from './labelsToFields';
-import { DataTransformerConfig, FieldDTO, FieldType } from '../../types';
+import { DataTransformerConfig, FieldType } from '../../types';
 import { DataTransformerID } from './ids';
-import { toDataFrame, toDataFrameDTO } from '../../dataframe';
+import { toDataFrame, toDataFrameDTO, FieldDTO } from '../../dataframe';
 import { transformDataFrame } from '../transformDataFrame';
 
 describe('Labels as Columns', () => {

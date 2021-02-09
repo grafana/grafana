@@ -1,8 +1,9 @@
 import { Field, FieldType, DataFrame } from '../types/dataFrame';
 import { vectorToArray } from '../vector/vectorToArray';
 import { Vector, QueryResultMeta } from '../types';
-import { guessFieldTypeFromNameAndValue, toDataFrameDTO } from './processDataFrame';
+import { guessFieldTypeFromNameAndValue } from './processDataFrame';
 import { FunctionalVector } from '../vector/FunctionalVector';
+import { toDataFrameDTO } from './DataFrameDTO';
 
 export type ValueConverter<T = any> = (val: any) => T;
 
