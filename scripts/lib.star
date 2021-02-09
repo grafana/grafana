@@ -762,9 +762,8 @@ def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publis
         settings['archs'] = ','.join(archs)
     return {
         'name': 'build-docker-images' + sfx,
-        'image': grafana_docker_image,        
+        'image': grafana_docker_image,
         'depends_on': [
-            'initialize',
             'copy-packages-for-docker',
         ],
         'settings': settings,
