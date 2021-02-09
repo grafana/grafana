@@ -79,9 +79,11 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({ timeZone, dataFr
                     return (
                       <tr key={i}>
                         <td valign="top">{field.name}</td>
-                        <td className={styles.valueWrapper}>
-                          {field.type === FieldType.time ? timeFormatter(value) : value}
-                          {links && <FieldLinkList links={links} />}
+                        <td>
+                          <div className={styles.valueWrapper}>
+                            {field.type === FieldType.time ? timeFormatter(value) : value}
+                            {links && <FieldLinkList links={links} />}
+                          </div>
                         </td>
                       </tr>
                     );
