@@ -10,7 +10,6 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
   data,
   timeZone,
   options: { showLabels, showTime, wrapLogMessage, sortOrder, dedupStrategy },
-  width,
 }) => {
   if (!data) {
     return (
