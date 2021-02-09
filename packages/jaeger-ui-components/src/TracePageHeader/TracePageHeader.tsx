@@ -34,6 +34,7 @@ import { getTraceLinks } from '../model/link-patterns';
 import ExternalLinks from '../common/ExternalLinks';
 import { createStyle } from '../Theme';
 import { uTxMuted } from '../uberUtilityStyles';
+// eslint-disable-next-line no-duplicate-imports
 import { useMemo } from 'react';
 
 const getStyles = createStyle((theme: Theme) => {

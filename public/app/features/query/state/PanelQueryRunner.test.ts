@@ -9,6 +9,7 @@ jest.mock('@grafana/data', () => ({
 import { PanelQueryRunner } from './PanelQueryRunner';
 // Importing this way to be able to spy on grafana/data
 import * as grafanaData from '@grafana/data';
+// eslint-disable-next-line no-duplicate-imports
 import {
   DataConfigSource,
   DataQueryRequest,

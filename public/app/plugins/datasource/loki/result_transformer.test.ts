@@ -8,6 +8,7 @@ import {
   LokiMatrixResult,
 } from './types';
 import * as ResultTransformer from './result_transformer';
+// eslint-disable-next-line no-duplicate-imports
 import { enhanceDataFrame, lokiPointsToTimeseriesPoints } from './result_transformer';
 import { setTemplateSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
