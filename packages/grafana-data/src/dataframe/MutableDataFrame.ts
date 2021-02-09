@@ -1,6 +1,7 @@
-import { Field, DataFrame, DataFrameDTO, FieldDTO, FieldType } from '../types/dataFrame';
+import { Field, DataFrame, FieldType } from '../types/dataFrame';
 import { QueryResultMeta } from '../types/data';
-import { guessFieldTypeFromValue, guessFieldTypeForField, toDataFrameDTO } from './processDataFrame';
+import { guessFieldTypeFromValue, guessFieldTypeForField } from './processDataFrame';
+import { DataFrameDTO, FieldDTO, toDataFrameDTO } from './DataFrameDTO';
 import isString from 'lodash/isString';
 import { makeFieldParser } from '../utils/fieldParser';
 import { MutableVector, Vector } from '../types/vector';
@@ -69,7 +70,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
     return this.addField({
       name: name || '', // Will be filled in
       type: guessFieldTypeFromValue(value),
-    });
+    } as any);
   }
 
   addField(f: Field | FieldDTO, startLength?: number): MutableField {
@@ -164,7 +165,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
       this.addField({
         name: `Field ${i + 1}`,
         type: guessFieldTypeFromValue(row[i]),
-      });
+      } as any);
     }
 
     // The first line may change the field types
