@@ -21,7 +21,6 @@ import { SortedVector } from '../vector/SortedVector';
 import { ArrayDataFrame } from './ArrayDataFrame';
 import { getFieldDisplayName } from '../field/fieldState';
 import { fieldIndexComparer } from '../field/fieldComparers';
-import { vectorToArray } from '../vector/vectorToArray';
 import { dataFrameFromDTO, DataFrameDTO } from './DataFrameDTO';
 
 function convertTableToDataFrame(table: TableData): DataFrame {
