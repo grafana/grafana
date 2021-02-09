@@ -29,7 +29,7 @@ Any request to a hostname or IP address on the deny-list is denied.
 
 ### Allow list
 
-If there are at least one host or IP on the allow-list any request to hosts or IP:s not on the allow-list will be blocked.
+The allow list is only activated if there is at least one hostname or IP address on it. Furthermore, any request to a hostname or IP address that is not on the allow list is denied.
 
 ### Example
 
