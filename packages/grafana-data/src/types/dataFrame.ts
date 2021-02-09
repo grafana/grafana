@@ -185,25 +185,6 @@ export interface DataFrame extends QueryResultBase {
   length: number;
 }
 
-/**
- * Like a field, but properties are optional and values may be a simple array
- */
-export interface FieldDTO<T = any> {
-  name: string; // The column name
-  type?: FieldType;
-  config?: FieldConfig;
-  values?: Vector<T> | T[]; // toJSON will always be T[], input could be either
-  labels?: Labels;
-}
-
-/**
- * Like a DataFrame, but fields may be a FieldDTO
- */
-export interface DataFrameDTO extends QueryResultBase {
-  name?: string;
-  fields: Array<FieldDTO | Field>;
-}
-
 export interface FieldCalcs extends Record<string, any> {}
 
 export const TIME_SERIES_VALUE_FIELD_NAME = 'Value';

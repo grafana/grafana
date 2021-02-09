@@ -12,19 +12,17 @@ import {
   Column,
   GraphSeriesXY,
   TimeSeriesValue,
-  FieldDTO,
-  DataFrameDTO,
   TIME_SERIES_VALUE_FIELD_NAME,
   TIME_SERIES_TIME_FIELD_NAME,
 } from '../types/index';
 import { isDateTime } from '../datetime/moment_wrapper';
 import { ArrayVector } from '../vector/ArrayVector';
-import { MutableDataFrame } from './MutableDataFrame';
 import { SortedVector } from '../vector/SortedVector';
 import { ArrayDataFrame } from './ArrayDataFrame';
 import { getFieldDisplayName } from '../field/fieldState';
 import { fieldIndexComparer } from '../field/fieldComparers';
 import { vectorToArray } from '../vector/vectorToArray';
+import { dataFrameFromDTO, DataFrameDTO } from './DataFrameDTO';
 
 function convertTableToDataFrame(table: TableData): DataFrame {
   const fields = table.columns.map((c) => {
@@ -289,7 +287,7 @@ export function toDataFrame(data: any): DataFrame {
     }
 
     // This will convert the array values into Vectors
-    return new MutableDataFrame(data as DataFrameDTO);
+    return dataFrameFromDTO(data as DataFrameDTO);
   }
 
   // Handle legacy docs/json type
@@ -437,33 +435,6 @@ export function getDataFrameRow(data: DataFrame, row: number): any[] {
     values.push(field.values.get(row));
   }
   return values;
-}
-
-/**
- * Returns a copy that does not include functions
- */
-export function toDataFrameDTO(data: DataFrame): DataFrameDTO {
-  const fields: FieldDTO[] = data.fields.map((f) => {
-    let values = f.values.toArray();
-    // The byte buffers serialize like objects
-    if (values instanceof Float64Array) {
-      values = vectorToArray(f.values);
-    }
-    return {
-      name: f.name,
-      type: f.type,
-      config: f.config,
-      values,
-      labels: f.labels,
-    };
-  });
-
-  return {
-    fields,
-    refId: data.refId,
-    meta: data.meta,
-    name: data.name,
-  };
 }
 
 export const getTimeField = (series: DataFrame): { timeField?: Field; timeIndex?: number } => {
