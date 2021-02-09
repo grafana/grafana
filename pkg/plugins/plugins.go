@@ -533,7 +533,7 @@ func collectPluginFilesWithin(rootDir string) ([]string, error) {
 			if err != nil {
 				return err
 			}
-			files = append(files, file)
+			files = append(files, filepath.ToSlash(file))
 		}
 		return nil
 	})
