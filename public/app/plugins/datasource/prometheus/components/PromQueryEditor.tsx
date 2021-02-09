@@ -92,10 +92,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
 
   onRunQuery = () => {
     const { query } = this;
-    // Change of query.hide happes outside of this component and is just passed as prop,
-    // so we have to update it when running queries
-    const { hide } = this.props.query;
-    this.props.onChange({ ...query, hide });
+    this.props.onChange({ ...this.props.query, ...query });
     this.props.onRunQuery();
   };
 
