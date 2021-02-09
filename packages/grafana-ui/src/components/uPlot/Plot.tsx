@@ -4,7 +4,7 @@ import { buildPlotContext, PlotContext } from './context';
 import { pluginLog } from './utils';
 import { usePlotConfig } from './hooks';
 import { PlotProps } from './types';
-import { DataFrame } from '@grafana/data';
+import { DataFrame, dateTime, FieldType } from '@grafana/data';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 import usePrevious from 'react-use/lib/usePrevious';
 
@@ -87,7 +87,20 @@ export const UPlotChart: React.FC<PlotProps> = (props) => {
 };
 
 function prepareData(frame: DataFrame): AlignedData {
-  return frame.fields.map((f) => f.values.toArray()) as AlignedData;
+  return frame.fields.map((f) => {
+    if (f.type === FieldType.time) {
+      if (f.values.length > 0 && typeof f.values.get(0) === 'string') {
+        const timestamps = [];
+        for (let i = 0; i < f.values.length; i++) {
+          timestamps.push(dateTime(f.values.get(i)).valueOf());
+        }
+        return timestamps;
+      }
+      return f.values.toArray();
+    }
+
+    return f.values.toArray();
+  }) as AlignedData;
 }
 
 function initializePlot(data: AlignedData, config: Options, el: HTMLDivElement) {
