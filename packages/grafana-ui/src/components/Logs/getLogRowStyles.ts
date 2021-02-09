@@ -69,7 +69,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       vertical-align: top;
 
       &:hover {
-        .${context} {
+        .log-row-context {
           visibility: visible;
           z-index: 1;
           margin-left: 10px;
