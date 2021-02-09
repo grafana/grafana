@@ -30,7 +30,7 @@ import { Themeable } from '../../types';
 
 const MIN_VALUE_HEIGHT = 18;
 const MAX_VALUE_HEIGHT = 80;
-const MIN_VALUE_WIDTH = 100;
+const MIN_VALUE_WIDTH = 50;
 const MAX_VALUE_WIDTH = 150;
 const TITLE_LINE_HEIGHT = 1.5;
 const VALUE_LINE_HEIGHT = 1;
@@ -374,8 +374,10 @@ interface BarAndValueDimensions {
 }
 
 function calculateBarAndValueDimensions(props: Props): BarAndValueDimensions {
-  const { height, width, orientation, text } = props;
+  const { height, width, orientation, text, alignmentFactors } = props;
   const titleDim = calculateTitleDimensions(props);
+  const value = alignmentFactors ?? props.value;
+  const valueString = formattedValueToString(value);
 
   let maxBarHeight = 0;
   let maxBarWidth = 0;
@@ -384,12 +386,18 @@ function calculateBarAndValueDimensions(props: Props): BarAndValueDimensions {
   let wrapperWidth = 0;
   let wrapperHeight = 0;
 
+  // measure text with title font size or min 14px
+  const fontSizeToMeasureWith = text?.valueSize ?? Math.max(titleDim.fontSize, 12);
+  const realTextSize = measureText(valueString, fontSizeToMeasureWith);
+  const realValueWidth = realTextSize.width + VALUE_LEFT_PADDING * 2;
+
   if (isVertical(orientation)) {
     if (text?.valueSize) {
       valueHeight = text.valueSize * VALUE_LINE_HEIGHT;
     } else {
       valueHeight = Math.min(Math.max(height * 0.1, MIN_VALUE_HEIGHT), MAX_VALUE_HEIGHT);
     }
+
     valueWidth = width;
     maxBarHeight = height - (titleDim.height + valueHeight);
     maxBarWidth = width;
@@ -397,7 +405,8 @@ function calculateBarAndValueDimensions(props: Props): BarAndValueDimensions {
     wrapperHeight = height - titleDim.height;
   } else {
     valueHeight = height - titleDim.height;
-    valueWidth = Math.max(Math.min(width * 0.2, MAX_VALUE_WIDTH), MIN_VALUE_WIDTH);
+    valueWidth = Math.max(Math.min(width * 0.2, MAX_VALUE_WIDTH), realValueWidth);
+
     maxBarHeight = height - titleDim.height;
     maxBarWidth = width - valueWidth - titleDim.width;
 
@@ -474,7 +483,6 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
     if (isBasic) {
       // Basic styles
       barStyles.background = `${tinycolor(valueColor).setAlpha(0.35).toRgbString()}`;
-
       barStyles.borderTop = `2px solid ${valueColor}`;
     } else {
       // Gradient styles
@@ -494,6 +502,7 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
 
     // shift empty region back to fill gaps due to border radius
     emptyBar.left = '-3px';
+    emptyBar.width = `${maxBarWidth - barWidth}px`;
 
     if (isBasic) {
       // Basic styles
