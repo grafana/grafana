@@ -1,7 +1,6 @@
 import _ from 'lodash';
 import { Observable, of, throwError } from 'rxjs';
 import {
-  ArrayVector,
   CoreApp,
   DataQueryRequest,
   DataSourceInstanceSettings,
@@ -900,11 +899,11 @@ describe('enhanceDataFrame', () => {
       fields: [
         {
           name: 'urlField',
-          values: new ArrayVector([]),
+          values: [],
         },
         {
           name: 'traceField',
-          values: new ArrayVector([]),
+          values: [],
         },
       ],
     });
