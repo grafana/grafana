@@ -3,6 +3,7 @@ package flux
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -39,7 +40,13 @@ func Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQ
 			continue
 		}
 
-		res := executeQuery(ctx, *qm, r, 50)
+		// Same default should be set in the frontend but we are not doing migration so old DS may have this undefined
+		maxSeries, err := strconv.Atoi(dsInfo.JsonData.Get("maxSeries").MustString())
+		if err != nil {
+			maxSeries = 1000
+		}
+		glog.Debug("Max series", "val", maxSeries)
+		res := executeQuery(ctx, *qm, r, maxSeries)
 
 		tRes.Results[query.RefId] = backendDataResponseToTSDBResponse(&res, query.RefId)
 	}
