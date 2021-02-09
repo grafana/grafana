@@ -98,7 +98,7 @@ def get_steps(edition, ver_mode):
         build_docker_images_step(edition=edition, ver_mode=ver_mode, publish=should_publish),
         build_docker_images_step(edition=edition, ver_mode=ver_mode, ubuntu=True, publish=should_publish),
         postgres_integration_tests_step(),
-        mysql_integration_tests_step(),        
+        mysql_integration_tests_step(),
     ])
 
     if should_upload:
