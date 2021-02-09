@@ -44,7 +44,7 @@ require (
 	github.com/gosimple/slug v1.9.0
 	github.com/grafana/grafana-aws-sdk v0.0.0-20210112151715-f082803d987a
 	github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
-	github.com/grafana/grafana-plugin-sdk-go v0.83.0
+	github.com/grafana/grafana-plugin-sdk-go v0.86.0
 	github.com/grafana/loki v1.6.2-0.20201026154740-6978ee5d7387
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/hashicorp/go-hclog v0.15.0
@@ -58,7 +58,7 @@ require (
 	github.com/jung-kurt/gofpdf v1.10.1
 	github.com/lib/pq v1.9.0
 	github.com/linkedin/goavro/v2 v2.9.7
-	github.com/magefile/mage v1.10.0
+	github.com/magefile/mage v1.11.0
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mattn/go-sqlite3 v1.14.6
 	github.com/opentracing/opentracing-go v1.2.0
