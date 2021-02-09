@@ -4,7 +4,6 @@ import { Input, Tooltip, defaultIntervals } from '@grafana/ui';
 import { getTimeSrv } from '../../services/TimeSrv';
 
 export interface Props {
-  renderCount: number; // hack to make sure Angular changes are propagated properly, please remove when DashboardSettings are migrated to React
   refreshIntervals: string[];
   onRefreshIntervalChange: (interval: string[]) => void;
   getIntervalsFunc?: typeof getValidIntervals;
@@ -12,7 +11,6 @@ export interface Props {
 }
 
 export const AutoRefreshIntervals: FC<Props> = ({
-  renderCount,
   refreshIntervals,
   onRefreshIntervalChange,
   getIntervalsFunc = getValidIntervals,
@@ -24,7 +22,7 @@ export const AutoRefreshIntervals: FC<Props> = ({
   useEffect(() => {
     const intervals = getIntervalsFunc(refreshIntervals ?? defaultIntervals);
     setIntervals(intervals);
-  }, [renderCount, refreshIntervals]);
+  }, [refreshIntervals]);
 
   const intervalsString = useMemo(() => {
     if (!Array.isArray(intervals)) {

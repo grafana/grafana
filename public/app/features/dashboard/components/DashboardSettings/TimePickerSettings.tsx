@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { InlineField, Input, Switch, TimeZonePicker, Tooltip } from '@grafana/ui';
+import { InlineField, Input, InlineSwitch, TimeZonePicker, Tooltip } from '@grafana/ui';
 import { rangeUtil, TimeZone } from '@grafana/data';
 import isEmpty from 'lodash/isEmpty';
 import { selectors } from '@grafana/e2e-selectors';
@@ -10,7 +10,6 @@ interface Props {
   onRefreshIntervalChange: (interval: string[]) => void;
   onNowDelayChange: (nowDelay: string) => void;
   onHideTimePickerChange: (hide: boolean) => void;
-  renderCount: number; // hack to make sure Angular changes are propagated properly, please remove when DashboardSettings are migrated to React
   refreshIntervals: string[];
   timePickerHidden: boolean;
   nowDelay: string;
@@ -66,7 +65,6 @@ export class TimePickerSettings extends PureComponent<Props, State> {
             />
           </div>
           <AutoRefreshIntervals
-            renderCount={this.props.renderCount}
             refreshIntervals={this.props.refreshIntervals}
             onRefreshIntervalChange={this.props.onRefreshIntervalChange}
           />
@@ -88,7 +86,7 @@ export class TimePickerSettings extends PureComponent<Props, State> {
 
           <div className="gf-form">
             <InlineField labelWidth={14} label="Hide time picker">
-              <Switch value={!!this.props.timePickerHidden} onChange={this.onHideTimePickerChange} />
+              <InlineSwitch value={!!this.props.timePickerHidden} onChange={this.onHideTimePickerChange} />
             </InlineField>
           </div>
         </div>
