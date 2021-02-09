@@ -2,8 +2,8 @@ import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { SettingsEditor } from '.';
 import { ElasticsearchProvider } from '../../ElasticsearchQueryContext';
-import { ElasticDatasource } from 'app/plugins/datasource/elasticsearch/datasource';
-import { ElasticsearchQuery } from 'app/plugins/datasource/elasticsearch/types';
+import { ElasticDatasource } from '../../../../datasource';
+import { ElasticsearchQuery } from '../../../../types';
 
 describe('Settings Editor', () => {
   describe('Raw Data', () => {
