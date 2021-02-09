@@ -2,10 +2,17 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { DataLinksListItem, DataLinksListItemProps } from './DataLinksListItem';
 
+const baseLink = {
+  url: '',
+  title: '',
+  onBuildUrl: jest.fn(),
+  onClick: jest.fn(),
+};
+
 function setupTestContext(options: Partial<DataLinksListItemProps>) {
   const defaults: DataLinksListItemProps = {
     index: 0,
-    link: { url: '', title: '', onBuildUrl: jest.fn(), onClick: jest.fn() },
+    link: baseLink,
     data: [],
     onChange: jest.fn(),
     onEdit: jest.fn(),
@@ -23,10 +30,8 @@ describe('DataLinksListItem', () => {
   describe('when link has title', () => {
     it('then the link title should be visible', () => {
       const link = {
-        url: 'http://localhost:3000',
+        ...baseLink,
         title: 'Some Data Link Title',
-        onBuildUrl: jest.fn(),
-        onClick: jest.fn(),
       };
       setupTestContext({ link });
 
@@ -37,10 +42,8 @@ describe('DataLinksListItem', () => {
   describe('when link has url', () => {
     it('then the link url should be visible', () => {
       const link = {
+        ...baseLink,
         url: 'http://localhost:3000',
-        title: 'Some Data Link Title',
-        onBuildUrl: jest.fn(),
-        onClick: jest.fn(),
       };
       setupTestContext({ link });
 
@@ -52,10 +55,8 @@ describe('DataLinksListItem', () => {
   describe('when link is missing title', () => {
     it('then the link title should be replaced by [Data link title not provided]', () => {
       const link = {
-        url: 'http://localhost:3000',
+        ...baseLink,
         title: (undefined as unknown) as string,
-        onBuildUrl: jest.fn(),
-        onClick: jest.fn(),
       };
       setupTestContext({ link });
 
@@ -66,10 +67,8 @@ describe('DataLinksListItem', () => {
   describe('when link is missing url', () => {
     it('then the link url should be replaced by [Data link url not provided]', () => {
       const link = {
+        ...baseLink,
         url: (undefined as unknown) as string,
-        title: (undefined as unknown) as string,
-        onBuildUrl: jest.fn(),
-        onClick: jest.fn(),
       };
       setupTestContext({ link });
 
@@ -81,10 +80,8 @@ describe('DataLinksListItem', () => {
   describe('when link title is empty', () => {
     it('then the link title should be replaced by [Data link title not provided]', () => {
       const link = {
-        url: 'http://localhost:3000',
+        ...baseLink,
         title: '             ',
-        onBuildUrl: jest.fn(),
-        onClick: jest.fn(),
       };
       setupTestContext({ link });
 
@@ -95,10 +92,8 @@ describe('DataLinksListItem', () => {
   describe('when link url is empty', () => {
     it('then the link url should be replaced by [Data link url not provided]', () => {
       const link = {
+        ...baseLink,
         url: '             ',
-        title: '             ',
-        onBuildUrl: jest.fn(),
-        onClick: jest.fn(),
       };
       setupTestContext({ link });
 
