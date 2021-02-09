@@ -21,6 +21,7 @@ type AlertDefinition struct {
 	IntervalSeconds int64             `json:"intervalSeconds"`
 	Version         int64             `json:"version"`
 	UID             string            `xorm:"uid" json:"uid"`
+	Paused          bool              `json:"paused"`
 }
 
 type alertDefinitionKey struct {
@@ -72,32 +73,43 @@ type deleteAlertDefinitionByUIDCommand struct {
 
 // saveAlertDefinitionCommand is the query for saving a new alert definition.
 type saveAlertDefinitionCommand struct {
-	Title           string         `json:"title"`
-	OrgID           int64          `json:"-"`
-	Condition       eval.Condition `json:"condition"`
-	IntervalSeconds *int64         `json:"interval_seconds"`
+	Title           string            `json:"title"`
+	OrgID           int64             `json:"-"`
+	Condition       string            `json:"condition"`
+	Data            []eval.AlertQuery `json:"data"`
+	IntervalSeconds *int64            `json:"intervalSeconds"`
 
 	Result *AlertDefinition
 }
 
 // updateAlertDefinitionCommand is the query for updating an existing alert definition.
 type updateAlertDefinitionCommand struct {
-	Title           string         `json:"title"`
-	OrgID           int64          `json:"-"`
-	Condition       eval.Condition `json:"condition"`
-	IntervalSeconds *int64         `json:"interval_seconds"`
-	UID             string         `json:"-"`
+	Title           string            `json:"title"`
+	OrgID           int64             `json:"-"`
+	Condition       string            `json:"condition"`
+	Data            []eval.AlertQuery `json:"data"`
+	IntervalSeconds *int64            `json:"intervalSeconds"`
+	UID             string            `json:"-"`
 
 	Result *AlertDefinition
 }
 
 type evalAlertConditionCommand struct {
-	Condition eval.Condition `json:"condition"`
-	Now       time.Time      `json:"now"`
+	Condition string            `json:"condition"`
+	Data      []eval.AlertQuery `json:"data"`
+	Now       time.Time         `json:"now"`
 }
 
 type listAlertDefinitionsQuery struct {
 	OrgID int64 `json:"-"`
 
 	Result []*AlertDefinition
+}
+
+type updateAlertDefinitionPausedCommand struct {
+	OrgID  int64    `json:"-"`
+	UIDs   []string `json:"uids"`
+	Paused bool     `json:"-"`
+
+	ResultCount int64
 }

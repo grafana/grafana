@@ -114,33 +114,7 @@
   }
 }
 
-@media only screen and (max-width: 1545px) {
-  .explore-toolbar.splitted {
-    .timepicker-rangestring {
-      display: none;
-    }
-  }
-}
-
-@media only screen and (max-width: 1400px) {
-  .explore-toolbar.splitted {
-    .explore-toolbar-content-item {
-      .navbar-button {
-        span {
-          display: none;
-        }
-      }
-    }
-  }
-}
-
 @media only screen and (max-width: 1070px) {
-  .timepicker {
-    .timepicker-rangestring {
-      display: none;
-    }
-  }
-
   .explore-toolbar-content {
     justify-content: flex-start;
   }
@@ -152,45 +126,12 @@
   }
 }
 
-@media only screen and (max-width: 897px) {
-  .explore-toolbar {
-    .explore-toolbar-content-item {
-      .navbar-button span {
-        display: none;
-      }
-    }
-  }
-}
-
 @media only screen and (max-width: 810px) {
   .explore-toolbar {
     .explore-toolbar-content-item {
       &:first-child {
         padding-left: 2px;
         margin: 0 12px 0 16px;
-      }
-    }
-  }
-}
-
-.explore-icon-align {
-  .navbar-button {
-    i {
-      position: relative;
-      top: -1px;
-
-      @media only screen and (max-width: 1320px) {
-        margin: 0 -3px;
-      }
-    }
-  }
-}
-
-.explore-toolbar.splitted {
-  .explore-icon-align {
-    .navbar-button {
-      i {
-        margin: 0 -3px;
       }
     }
   }

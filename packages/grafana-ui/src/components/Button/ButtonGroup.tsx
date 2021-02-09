@@ -5,21 +5,13 @@ import { useStyles } from '../../themes';
 
 export interface Props extends HTMLAttributes<HTMLDivElement> {
   className?: string;
-  noSpacing?: boolean;
 }
 
-export const ButtonGroup = forwardRef<HTMLDivElement, Props>(({ noSpacing, className, children, ...rest }, ref) => {
+export const ButtonGroup = forwardRef<HTMLDivElement, Props>(({ className, children, ...rest }, ref) => {
   const styles = useStyles(getStyles);
-  const mainClass = cx(
-    {
-      [styles.wrapper]: !noSpacing,
-      [styles.wrapperNoSpacing]: noSpacing,
-    },
-    className
-  );
 
   return (
-    <div ref={ref} className={mainClass} {...rest}>
+    <div ref={ref} className={cx('button-group', styles.wrapper, className)} {...rest}>
       {children}
     </div>
   );
@@ -31,26 +23,17 @@ const getStyles = (theme: GrafanaTheme) => ({
   wrapper: css`
     display: flex;
 
-    > a,
-    > button {
-      margin-left: ${theme.spacing.sm};
-
-      &:first-child {
-        margin-left: 0;
-      }
-    }
-  `,
-  wrapperNoSpacing: css`
-    display: flex;
-
-    > a,
     > button {
       border-radius: 0;
-      border-right: 0;
+      border-right-width: 0;
+
+      &.toolbar-button {
+        margin-left: 0;
+      }
 
       &:last-of-type {
         border-radius: 0 ${theme.border.radius.sm} ${theme.border.radius.sm} 0;
-        border-right: 1px solid ${theme.colors.border2};
+        border-right-width: 1px;
       }
 
       &:first-child {

@@ -60,7 +60,7 @@ export const PanelOptionsEditor: React.FC<PanelOptionsEditorProps<any>> = ({
       {Object.keys(optionEditors).map((c, i) => {
         const optionsToShow = optionEditors[c]
           .map((e, j) => {
-            if (e.showIf && !e.showIf(options)) {
+            if (e.showIf && !e.showIf(options, data)) {
               return null;
             }
 

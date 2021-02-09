@@ -4,7 +4,6 @@ import React, { useContext } from 'react';
 import Highlighter from 'react-highlight-words';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { selectThemeVariant } from '../../themes/selectThemeVariant';
 import { CompletionItem, CompletionItemKind } from '../../types/completion';
 import { ThemeContext } from '../../themes/ThemeContext';
 
@@ -38,7 +37,7 @@ const getStyles = (theme: GrafanaTheme) => ({
 
   typeaheadItemSelected: css`
     label: type-ahead-item-selected;
-    background-color: ${selectThemeVariant({ light: theme.palette.gray6, dark: theme.palette.dark9 }, theme.type)};
+    background-color: ${theme.colors.bg2};
   `,
 
   typeaheadItemMatch: css`

@@ -33,7 +33,7 @@ const quickDelete = (uid: string) => {
 
 const uiDelete = (uid: string, title: string) => {
   e2e.pages.Dashboard.visit(uid);
-  e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
+  e2e.components.PageToolbar.item('Dashboard settings').click();
   e2e.pages.Dashboard.Settings.General.deleteDashBoard().click();
   e2e.pages.ConfirmModal.delete().click();
   e2e.flows.assertSuccessNotification();

@@ -112,7 +112,7 @@ export class DataSourceWithBackend<
       })
       .pipe(
         map((rsp: any) => {
-          return toDataQueryResponse(rsp);
+          return toDataQueryResponse(rsp, queries as DataQuery[]);
         }),
         catchError((err) => {
           return of(toDataQueryResponse(err));

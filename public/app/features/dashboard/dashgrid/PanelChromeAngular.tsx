@@ -14,7 +14,6 @@ import config from 'app/core/config';
 import { DashboardModel, PanelModel } from '../state';
 import { StoreState } from 'app/types';
 import { getDefaultTimeRange, LoadingState, PanelData, PanelPlugin } from '@grafana/data';
-import { updateLocation } from 'app/core/actions';
 import { PANEL_BORDER } from 'app/core/constants';
 import { selectors } from '@grafana/e2e-selectors';
 import { RenderEvent } from 'app/types/events';
@@ -36,7 +35,6 @@ interface ConnectedProps {
 
 interface DispatchProps {
   setPanelAngularComponent: typeof setPanelAngularComponent;
-  updateLocation: typeof updateLocation;
 }
 
 export type Props = OwnProps & ConnectedProps & DispatchProps;
@@ -90,8 +88,10 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
     this.subs.add(panel.events.subscribe(RenderEvent, this.onPanelRenderEvent));
   }
 
-  onPanelRenderEvent = (payload?: any) => {
+  onPanelRenderEvent = (event: RenderEvent) => {
     const { alertState } = this.state;
+    // graph sends these old render events with payloads
+    const payload = event.payload;
 
     if (payload && payload.alertState && this.props.panel.alert) {
       this.setState({ alertState: payload.alertState });
@@ -212,7 +212,7 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, panel, isViewing, isEditing, plugin, angularComponent, updateLocation } = this.props;
+    const { dashboard, panel, isViewing, isEditing, plugin } = this.props;
     const { errorMessage, data, alertState } = this.state;
     const { transparent } = panel;
 
@@ -237,13 +237,11 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
           dashboard={dashboard}
           title={panel.title}
           description={panel.description}
-          angularComponent={angularComponent}
           links={panel.links}
           error={errorMessage}
           isViewing={isViewing}
           isEditing={isEditing}
           data={data}
-          updateLocation={updateLocation}
           alertState={alertState}
         />
         <div className={panelContentClassNames}>
@@ -260,6 +258,6 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
   };
 };
 
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { setPanelAngularComponent, updateLocation };
+const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { setPanelAngularComponent };
 
 export const PanelChromeAngular = connect(mapStateToProps, mapDispatchToProps)(PanelChromeAngularUnconnected);

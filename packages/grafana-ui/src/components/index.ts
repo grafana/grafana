@@ -45,6 +45,7 @@ export { ModalHeader } from './Modal/ModalHeader';
 export { ModalTabsHeader } from './Modal/ModalTabsHeader';
 export { ModalTabContent } from './Modal/ModalTabContent';
 export { ModalsProvider, ModalRoot, ModalsController } from './Modal/ModalsContext';
+export { PageToolbar } from './PageLayout/PageToolbar';
 
 // Renderless
 export { SetInterval } from './SetInterval/SetInterval';
@@ -127,12 +128,11 @@ export { StringArrayEditor } from './OptionsUI/strings';
 export { NumberValueEditor } from './OptionsUI/number';
 export { SliderValueEditor } from './OptionsUI/slider';
 export { SelectValueEditor } from './OptionsUI/select';
-export { FieldConfigItemHeaderTitle } from './FieldConfigs/FieldConfigItemHeaderTitle';
 
 // Next-gen forms
 export { Form } from './Forms/Form';
 export { InputControl } from './InputControl';
-export { Button, LinkButton, ButtonVariant, ToolbarButton, ButtonGroup } from './Button';
+export { Button, LinkButton, ButtonVariant, ToolbarButton, ButtonGroup, ToolbarButtonRow } from './Button';
 export { ValuePicker } from './ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
 export { getFormStyles } from './Forms/getFormStyles';
@@ -206,5 +206,7 @@ export * from './uPlot/plugins';
 export { useRefreshAfterGraphRendered } from './uPlot/hooks';
 export { usePlotContext, usePlotData, usePlotPluginContext } from './uPlot/context';
 export { GraphNG, FIXED_UNIT } from './GraphNG/GraphNG';
+export { BarChart } from './BarChart/BarChart';
+export { BarChartOptions, BarStackingMode, BarValueVisibility, BarChartFieldConfig } from './BarChart/types';
 export { GraphNGLegendEvent, GraphNGLegendEventMode } from './GraphNG/types';
 export * from './NodeGraph';

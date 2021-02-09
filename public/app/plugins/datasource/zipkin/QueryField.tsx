@@ -1,13 +1,14 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import { ZipkinDatasource, ZipkinQuery } from './datasource';
 import { AppEvents, ExploreQueryFieldProps } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { ButtonCascader, CascaderOption } from '@grafana/ui';
+import { fromPairs } from 'lodash';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useAsyncFn, useMount, useMountedState } from 'react-use';
+import { AsyncState } from 'react-use/lib/useAsyncFn';
 import { appEvents } from '../../../core/core';
 import { apiPrefix } from './constants';
+import { ZipkinDatasource, ZipkinQuery } from './datasource';
 import { ZipkinSpan } from './types';
-import { fromPairs } from 'lodash';
-import { AsyncState } from 'react-use/lib/useAsyncFn';
 
 type Props = ExploreQueryFieldProps<ZipkinDatasource, ZipkinQuery>;
 
@@ -37,8 +38,8 @@ export const QueryField = ({ query, onChange, onRunQuery, datasource }: Props) =
           </ButtonCascader>
         </div>
         <div className="gf-form gf-form--grow flex-shrink-1">
-          <div className={'slate-query-field__wrapper'}>
-            <div className="slate-query-field">
+          <div className="slate-query-field__wrapper">
+            <div className="slate-query-field" aria-label={selectors.components.QueryField.container}>
               <input
                 style={{ width: '100%' }}
                 value={query.query || ''}

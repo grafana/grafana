@@ -25,6 +25,10 @@ brew install node@14
 npm install -g yarn
 ```
 
+### Windows
+
+If you are running Grafana on Windows 10, we recommend installing the Windows Subsystem for Linux (WSL). For installation instructions, refer to the [Microsoft WSL Installation Guide](https://docs.microsoft.com/en-us/windows/wsl/install-win10).
+
 ## Download Grafana
 
 We recommend using the Git command-line interface to download the source code for the Grafana project:
@@ -79,7 +83,7 @@ When you log in for the first time, Grafana asks you to change your password.
 The Grafana backend includes SQLite which requires GCC to compile. So in order to compile Grafana on Windows you need to install GCC. We recommend [TDM-GCC](http://tdm-gcc.tdragon.net/download). Eventually, if you use [Scoop](https://scoop.sh), you can install GCC through that.
 
 You can simply build the back-end as follows: `go run build.go build`. The Grafana binaries will be in bin\\windows-amd64.
-Alternately, if you wish to use the `make` command, install [Make for Windows](http://gnuwin32.sourceforge.net/packages/make.htm) and use it in a Unix shell (f.ex. Git Bash). 
+Alternately, if you wish to use the `make` command, install [Make for Windows](http://gnuwin32.sourceforge.net/packages/make.htm) and use it in a Unix shell (f.ex. Git Bash).
 
 ## Test Grafana
 
@@ -102,6 +106,7 @@ go test -v ./pkg/...
 ```
 
 #### On Windows
+
 Running the backend tests on Windows currently needs some tweaking, so use the build.go script:
 
 ```
