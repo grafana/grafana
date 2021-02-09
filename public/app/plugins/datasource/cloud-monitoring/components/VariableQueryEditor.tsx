@@ -4,7 +4,7 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { QueryEditorProps } from '@grafana/data';
 
 import { VariableQueryField } from './';
-import { extractServicesFromMetricDescriptors, getLabelKeys, getMetricTypes, toOption } from '../functions';
+import { extractServicesFromMetricDescriptors, getLabelKeys, getMetricTypes } from '../functions';
 import {
   CloudMonitoringOptions,
   CloudMonitoringQuery,
