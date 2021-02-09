@@ -10,8 +10,8 @@ describe('dataFrameView', () => {
       { name: 'value', type: FieldType.number, values: [1, 2, null] },
     ],
     replace: [
-      { field: 1, value: DataFrameReplacementValue.Undefined, rows: [2] },
-      { field: 2, value: DataFrameReplacementValue.NaN, rows: [2] },
+      { field: 1, value: DataFrameReplacementValue.Undefined, index: [2] },
+      { field: 2, value: DataFrameReplacementValue.NaN, index: [2] },
     ],
   };
   const frame = dataFrameFromDTO(dto);

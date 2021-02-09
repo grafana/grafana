@@ -21,7 +21,7 @@ export enum DataFrameReplacementValue {
 export interface DataFrameReplacement {
   value: DataFrameReplacementValue;
   field: number;
-  rows: number[];
+  index: number[];
 }
 
 /**
@@ -84,7 +84,7 @@ function applyReplacements(msg: DataFrameDTO) {
   for (const r of msg.replace) {
     const val = getReplacementValue(r.value);
     const col = msg.fields[r.field].values;
-    for (const idx of r.rows) {
+    for (const idx of r.index) {
       col[idx] = val;
     }
   }
@@ -106,12 +106,19 @@ function guessFieldType(idx: number, dto: DataFrameDTO): FieldType {
  */
 export function dataFrameFromDTO(dto: DataFrameDTO): DataFrame {
   applyReplacements(dto);
+  let length = 0;
+  for (const f of dto.fields) {
+    let flen = f.values?.length;
+    if (flen && flen > length) {
+      length = flen;
+    }
+  }
 
   const fields = dto.fields.map((f, index) => ({
     ...f,
     type: f.type ?? guessFieldType(index, dto),
     config: f.config ?? {},
-    values: new ArrayVector(dto.fields[index].values),
+    values: new ArrayVector(dto.fields[index].values).setLength(length),
   }));
   return {
     refId: dto.refId,

@@ -73,7 +73,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
     } as any);
   }
 
-  addField(f: Field | FieldDTO, startLength?: number): MutableField {
+  addField(f: Field | Partial<FieldDTO>, startLength?: number): MutableField {
     let buffer: any[] | undefined = undefined;
 
     if (f.values) {
