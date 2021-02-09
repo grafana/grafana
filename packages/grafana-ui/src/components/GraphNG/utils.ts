@@ -1,6 +1,7 @@
 import { GraphNGLegendEventMode } from './types';
 import {
   DataFrame,
+  dateTime,
   FieldConfig,
   FieldType,
   formattedValueToString,
@@ -50,9 +51,9 @@ export function preparePlotData(frame: DataFrame): AlignedData {
 
 export function preparePlotConfigBuilder(
   frame: DataFrame,
-  timeRange: TimeRange,
-  timeZone: TimeZone,
-  theme: GrafanaTheme
+  theme: GrafanaTheme,
+  getTimeRange: () => TimeRange,
+  getTimeZone: () => TimeZone
 ): UPlotConfigBuilder {
   const builder = new UPlotConfigBuilder();
 
@@ -67,7 +68,7 @@ export function preparePlotConfigBuilder(
       direction: ScaleDirection.Right,
       isTime: true,
       range: () => {
-        const r = timeRange;
+        const r = getTimeRange();
         return [r.from.valueOf(), r.to.valueOf()];
       },
     });
@@ -76,7 +77,7 @@ export function preparePlotConfigBuilder(
       scaleKey: 'x',
       isTime: true,
       placement: AxisPlacement.Bottom,
-      timeZone,
+      timeZone: getTimeZone(),
       theme,
     });
   } else {
@@ -194,8 +195,4 @@ export function getNamesToFieldIndex(frame: DataFrame): Map<string, number> {
     names.set(getFieldDisplayName(frame.fields[i], frame), i);
   }
   return names;
-}
-
-export function isRangeEqual(range1: TimeRange, range2: TimeRange) {
-  return range1.raw.from === range2.raw.from && range1.raw.to === range2.raw.to;
 }

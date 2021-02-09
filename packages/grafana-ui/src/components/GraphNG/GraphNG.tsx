@@ -15,7 +15,7 @@ import { Themeable } from '../../types';
 import { AlignedData } from 'uplot';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { XYFieldMatchers } from './types';
-import { isRangeEqual, mapMouseEventToMode, preparePlotConfigBuilder, preparePlotData } from './utils';
+import { mapMouseEventToMode, preparePlotConfigBuilder, preparePlotData } from './utils';
 
 export const FIXED_UNIT = '__fixed';
 
@@ -44,22 +44,8 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
     this.state = {} as GraphNGState;
   }
 
-  onLegendLabelClick(legend: VizLegendItem, event: React.MouseEvent) {
-    const { onLegendClick } = this.props;
-    const { fieldIndex } = legend;
-
-    if (!onLegendClick || !fieldIndex) {
-      return;
-    }
-
-    onLegendClick({
-      fieldIndex,
-      mode: mapMouseEventToMode(event),
-    });
-  }
-
   componentDidMount() {
-    const { timeRange, timeZone, theme } = this.props;
+    const { theme } = this.props;
 
     const frame = this.preparePlotFrame();
 
@@ -67,10 +53,46 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
       return;
     }
     this.setState({
-      config: preparePlotConfigBuilder(frame, timeRange, timeZone, theme),
+      config: preparePlotConfigBuilder(frame, theme, this.getTimeRange, this.getTimeZone),
       data: preparePlotData(frame),
       dataFrame: frame,
     });
+  }
+
+  componentDidUpdate(prevProps: GraphNGProps) {
+    const { data, theme } = this.props;
+
+    // detection of props changes that influence the config.
+    // I.e. stacking option change, time zone,
+    let shouldConfigUpdate = false;
+    let stateUpdate = {} as GraphNGState;
+
+    if (this.state.config === undefined || this.props.timeZone !== prevProps.timeZone) {
+      shouldConfigUpdate = true;
+    }
+
+    if (this.props.data !== prevProps.data) {
+      const frame = this.preparePlotFrame();
+      if (!frame) {
+        return;
+      }
+
+      stateUpdate = {
+        data: preparePlotData(frame),
+        dataFrame: frame, /// temporary to make tooltip work
+      } as GraphNGState;
+
+      const hasStructureChanged = !compareArrayValues(data, prevProps.data, compareDataFrameStructures);
+
+      if (shouldConfigUpdate || (frame && hasStructureChanged)) {
+        const builder = preparePlotConfigBuilder(frame, theme, this.getTimeRange, this.getTimeZone);
+        stateUpdate = { ...stateUpdate, config: builder };
+      }
+    }
+
+    if (Object.keys(stateUpdate).length > 0) {
+      this.setState(stateUpdate);
+    }
   }
 
   preparePlotFrame() {
@@ -92,40 +114,26 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
     });
   }
 
-  componentDidUpdate(prevProps: GraphNGProps) {
-    const { data, theme } = this.props;
+  getTimeRange = () => {
+    return this.props.timeRange;
+  };
 
-    // detection of props changes that influence the config.
-    // I.e. stacking option change, time range,
-    let shouldConfigUpdate = false;
-    let stateUpdate = {} as GraphNGState;
+  getTimeZone = () => {
+    return this.props.timeZone;
+  };
 
-    if (this.state.config === undefined || !isRangeEqual(this.props.timeRange, prevProps.timeRange)) {
-      shouldConfigUpdate = true;
+  onLegendLabelClick(legend: VizLegendItem, event: React.MouseEvent) {
+    const { onLegendClick } = this.props;
+    const { fieldIndex } = legend;
+
+    if (!onLegendClick || !fieldIndex) {
+      return;
     }
 
-    if (this.props.data !== prevProps.data) {
-      const frame = this.preparePlotFrame();
-      if (!frame) {
-        return;
-      }
-
-      stateUpdate = {
-        data: preparePlotData(frame),
-        dataFrame: frame, /// temporary to make tooltip work
-      } as GraphNGState;
-
-      const hasStructureChanged = !compareArrayValues(data, prevProps.data, compareDataFrameStructures);
-
-      if (shouldConfigUpdate || (frame && hasStructureChanged)) {
-        const builder = preparePlotConfigBuilder(frame, this.props.timeRange, this.props.timeZone, theme);
-        stateUpdate = { ...stateUpdate, config: builder };
-      }
-    }
-
-    if (Object.keys(stateUpdate).length > 0) {
-      this.setState(stateUpdate);
-    }
+    onLegendClick({
+      fieldIndex,
+      mode: mapMouseEventToMode(event),
+    });
   }
 
   renderLegend() {
