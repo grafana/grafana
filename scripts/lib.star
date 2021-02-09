@@ -320,7 +320,7 @@ def upload_cdn(edition):
             'GCP_GRAFANA_UPLOAD_KEY': {
                 'from_secret': 'gcp_key',
             },
-        },         
+        },
         'commands': [
              './bin/grabpl upload-cdn --edition {} --bucket "grafana-static-assets"'.format(edition),
         ],
