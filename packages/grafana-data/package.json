@@ -27,7 +27,7 @@
     "apache-arrow": "0.16.0",
     "eventemitter3": "4.0.7",
     "lodash": "4.17.20",
-    "marked": "1.2.2",
+    "marked": "2.0.0",
     "rxjs": "6.6.3",
     "xss": "1.0.6"
   },
