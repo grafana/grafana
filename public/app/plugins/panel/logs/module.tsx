@@ -23,18 +23,6 @@ export const plugin = new PanelPlugin<Options>(LogsPanel).setPanelOptions((build
       defaultValue: false,
     })
     .addRadio({
-      path: 'sortOrder',
-      name: 'Order',
-      description: '',
-      settings: {
-        options: [
-          { value: LogsSortOrder.Descending, label: 'Descending' },
-          { value: LogsSortOrder.Ascending, label: 'Ascending' },
-        ],
-      },
-      defaultValue: LogsSortOrder.Descending,
-    })
-    .addRadio({
       path: 'dedupStrategy',
       name: 'Deduplication',
       description: '',
@@ -59,5 +47,17 @@ export const plugin = new PanelPlugin<Options>(LogsPanel).setPanelOptions((build
         ],
       },
       defaultValue: LogsDedupStrategy.none,
+    })
+    .addRadio({
+      path: 'sortOrder',
+      name: 'Order',
+      description: '',
+      settings: {
+        options: [
+          { value: LogsSortOrder.Descending, label: 'Descending' },
+          { value: LogsSortOrder.Ascending, label: 'Ascending' },
+        ],
+      },
+      defaultValue: LogsSortOrder.Descending,
     });
 });
