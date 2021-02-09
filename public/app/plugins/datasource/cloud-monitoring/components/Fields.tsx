@@ -28,7 +28,7 @@ export const QueryInlineField: FunctionComponent<Props> = ({ ...props }) => {
   );
 };
 
-interface FieldProps {
+interface VariableQueryFieldProps {
   onChange: (value: string) => void;
   options: SelectableValue[];
   value: string;
@@ -36,7 +36,7 @@ interface FieldProps {
   allowCustomValue?: boolean;
 }
 
-export const VariableQueryField: FunctionComponent<FieldProps> = ({
+export const VariableQueryField: FunctionComponent<VariableQueryFieldProps> = ({
   label,
   onChange,
   value,

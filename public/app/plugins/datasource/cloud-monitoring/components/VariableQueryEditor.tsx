@@ -194,7 +194,12 @@ export class CloudMonitoringVariableQueryEditor extends PureComponent<Props, Var
     const variableOptionGroup = {
       label: 'Template Variables',
       expanded: false,
-      options: this.props.datasource.getVariables().map(toOption),
+      options: getTemplateSrv()
+        .getVariables()
+        .map((v: any) => ({
+          name: `$${v.name}`,
+          label: `$${v.name}`,
+        })),
     };
 
     switch (queryType) {
