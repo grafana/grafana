@@ -197,7 +197,7 @@ export class CloudMonitoringVariableQueryEditor extends PureComponent<Props, Var
       options: getTemplateSrv()
         .getVariables()
         .map((v: any) => ({
-          name: `$${v.name}`,
+          value: `$${v.name}`,
           label: `$${v.name}`,
         })),
     };
