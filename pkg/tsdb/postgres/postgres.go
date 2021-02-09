@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
@@ -15,7 +16,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
@@ -23,6 +23,11 @@ import (
 )
 
 var validateCertFunc = validateCertFilePaths
+
+type datasourceCacheManager struct {
+	locker *locker
+	cache  sync.Map
+}
 
 func init() {
 	registry.Register(&registry.Descriptor{
@@ -33,15 +38,14 @@ func init() {
 }
 
 type postgresService struct {
-	Cfg *setting.Cfg `inject:""`
-
-	mtx    middleware.Kmutex
-	logger log.Logger
+	Cfg             *setting.Cfg `inject:""`
+	logger          log.Logger
+	dsCacheInstance datasourceCacheManager
 }
 
 func (s *postgresService) Init() error {
 	s.logger = log.New("tsdb.postgres")
-	s.mtx = middleware.NewKmutex()
+	s.dsCacheInstance = datasourceCacheManager{locker: newLocker()}
 	tsdb.RegisterTsdbQueryEndpoint("postgres", func(ds *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 		return s.newPostgresQueryEndpoint(ds)
 	})
@@ -110,9 +114,7 @@ func (t certFileType) String() string {
 	}
 }
 
-// writeCertFile writes a certificate file.
-func (s *postgresService) writeCertFile(
-	ds *models.DataSource, fileContent, dataDir string, fileType certFileType) (string, error) {
+func getFileName(dataDir string, fileType certFileType) string {
 	var filename string
 	switch fileType {
 	case rootCert:
@@ -125,30 +127,36 @@ func (s *postgresService) writeCertFile(
 		panic(fmt.Sprintf("unrecognized certFileType %s", fileType.String()))
 	}
 	generatedFilePath := filepath.Join(dataDir, filename)
+	return generatedFilePath
+}
+
+// writeCertFile writes a certificate file.
+func (s *postgresService) writeCertFile(
+	ds *models.DataSource, fileContent, generatedFilePath string) error {
 	fileContent = strings.TrimSpace(fileContent)
 	if fileContent != "" {
 		s.logger.Debug("Writing cert file", "path", generatedFilePath)
 		if err := ioutil.WriteFile(generatedFilePath, []byte(fileContent), 0600); err != nil {
-			return generatedFilePath, err
+			return err
 		}
 		// Make sure the file has the permissions expected by the Postgresql driver, otherwise it will bail
 		if err := os.Chmod(generatedFilePath, 0600); err != nil {
-			return generatedFilePath, err
+			return err
 		}
-		return generatedFilePath, nil
+		return nil
 	}
 
 	s.logger.Debug("Deleting cert file since no content is provided", "path", generatedFilePath)
 	exists, err := fs.Exists(generatedFilePath)
 	if err != nil {
-		return generatedFilePath, err
+		return err
 	}
 	if exists {
 		if err := os.Remove(generatedFilePath); err != nil {
-			return generatedFilePath, fmt.Errorf("failed to remove %q: %w", generatedFilePath, err)
+			return fmt.Errorf("failed to remove %q: %w", generatedFilePath, err)
 		}
 	}
-	return "", nil
+	return nil
 }
 
 func (s *postgresService) writeCertFiles(ds *models.DataSource) (string, string, string, error) {
@@ -163,10 +171,34 @@ func (s *postgresService) writeCertFiles(ds *models.DataSource) (string, string,
 		s.logger.Debug("No TLS/SSL certificates provided")
 	}
 
-	s.mtx.Lock(strconv.Itoa(int(ds.Id)))
-	defer s.mtx.Unlock(strconv.Itoa(int(ds.Id)))
-
+	// Calculate all files path
 	workDir := filepath.Join(s.Cfg.DataPath, "tls", ds.Uid+"generatedTLSCerts")
+	tlsRootCertPath = getFileName(workDir, rootCert)
+	tlsClientCertPath = getFileName(workDir, clientCert)
+	tlsKeyPath = getFileName(workDir, clientKey)
+
+	// Find datasource in the cache, if found, skip writing files
+	cacheKey := strconv.Itoa(int(ds.Id))
+	s.dsCacheInstance.locker.RLock(cacheKey)
+	item, ok := s.dsCacheInstance.cache.Load(cacheKey)
+	s.dsCacheInstance.locker.RUnlock(cacheKey)
+	if ok {
+		if item.(int) == ds.Version {
+			return tlsRootCertPath, tlsClientCertPath, tlsKeyPath, nil
+		}
+	}
+
+	s.dsCacheInstance.locker.Lock(cacheKey)
+	defer s.dsCacheInstance.locker.Unlock(cacheKey)
+
+	item, ok = s.dsCacheInstance.cache.Load(cacheKey)
+	if ok {
+		if item.(int) == ds.Version {
+			return tlsRootCertPath, tlsClientCertPath, tlsKeyPath, nil
+		}
+	}
+
+	// Write certification directory and files
 	exists, err := fs.Exists(workDir)
 	if err != nil {
 		return tlsRootCertPath, tlsClientCertPath, tlsKeyPath, err
@@ -177,16 +209,18 @@ func (s *postgresService) writeCertFiles(ds *models.DataSource) (string, string,
 		}
 	}
 
-	if tlsRootCertPath, err = s.writeCertFile(ds, tlsRootCert, workDir, rootCert); err != nil {
+	if err = s.writeCertFile(ds, tlsRootCert, tlsRootCertPath); err != nil {
 		return tlsRootCertPath, tlsClientCertPath, tlsKeyPath, err
 	}
-	if tlsClientCertPath, err = s.writeCertFile(ds, tlsClientCert, workDir, clientCert); err != nil {
+	if err = s.writeCertFile(ds, tlsClientCert, tlsClientCertPath); err != nil {
 		return tlsRootCertPath, tlsClientCertPath, tlsKeyPath, err
 	}
-	if tlsKeyPath, err = s.writeCertFile(ds, tlsClientKey, workDir, clientKey); err != nil {
+	if err = s.writeCertFile(ds, tlsClientKey, tlsKeyPath); err != nil {
 		return tlsRootCertPath, tlsClientCertPath, tlsKeyPath, err
 	}
 
+	// Update datasource cache
+	s.dsCacheInstance.cache.Store(cacheKey, ds.Version)
 	return tlsRootCertPath, tlsClientCertPath, tlsKeyPath, nil
 }
 
@@ -245,7 +279,6 @@ func (s *postgresService) generateConnectionString(datasource *models.DataSource
 		s.logger.Debug("Postgres TLS/SSL is disabled")
 	} else {
 		s.logger.Debug("Postgres TLS/SSL is enabled", "tlsMode", tlsMode)
-
 		var tlsRootCert, tlsCert, tlsKey string
 		if tlsConfigurationMethod == "file-content" {
 			if tlsRootCert, tlsCert, tlsKey, err = s.writeCertFiles(datasource); err != nil {

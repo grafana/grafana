@@ -12,7 +12,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/alibaba/pouch/pkg/kmutex"
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -122,9 +121,9 @@ func TestGenerateConnectionString(t *testing.T) {
 	for _, tt := range testCases {
 		t.Run(tt.desc, func(t *testing.T) {
 			svc := postgresService{
-				Cfg:    cfg,
-				logger: log.New("tsdb.postgres"),
-				mtx:    kmutex.New(),
+				Cfg:             cfg,
+				logger:          log.New("tsdb.postgres"),
+				dsCacheInstance: datasourceCacheManager{locker: newLocker()},
 			}
 
 			if tt.jsonData == "" {
@@ -154,7 +153,7 @@ func TestGenerateConnectionString(t *testing.T) {
 
 			if tt.expErr == "" {
 				require.NoError(t, err, tt.desc)
-				assert.Regexp(t, regexp.MustCompile(tt.expConnStr), connStr, tt.desc)
+				assert.Regexp(t, regexp.MustCompile(tt.expConnStr), connStr)
 			} else {
 				require.Error(t, err, tt.desc)
 				assert.True(t, strings.HasPrefix(err.Error(), tt.expErr),
@@ -199,8 +198,9 @@ func TestPostgres(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.DataPath = t.TempDir()
 	svc := postgresService{
-		Cfg:    cfg,
-		logger: log.New("tsdb.postgres"),
+		Cfg:             cfg,
+		logger:          log.New("tsdb.postgres"),
+		dsCacheInstance: datasourceCacheManager{locker: newLocker()},
 	}
 
 	endpoint, err := svc.newPostgresQueryEndpoint(&models.DataSource{
