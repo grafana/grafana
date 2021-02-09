@@ -29,8 +29,7 @@ import { VizOrientation } from '@grafana/data';
 import { Themeable } from '../../types';
 
 const MIN_VALUE_HEIGHT = 18;
-const MAX_VALUE_HEIGHT = 80;
-const MIN_VALUE_WIDTH = 50;
+const MAX_VALUE_HEIGHT = 50;
 const MAX_VALUE_WIDTH = 150;
 const TITLE_LINE_HEIGHT = 1.5;
 const VALUE_LINE_HEIGHT = 1;
