@@ -8,10 +8,21 @@ import { guessFieldTypeFromNameAndValue } from './processDataFrame';
  * @alpha
  */
 export interface DataFrameJSON {
+  /**
+   * The schema defines the field type and configuration.
+   */
   schema?: DataFrameSchema;
 
+  /**
+   * The data is a columnar store that matches fields defined by schema.
+   */
   data?: any[][];
 
+  /**
+   * Since JSON can not encode some important numeric constants, these
+   * replacements are applied after reading JSON over-the-wire.  This addition allows
+   * us to represent values for NaN, Inf, -Inf, and undefined
+   */
   replaced?: FieldValueReplacements[];
 }
 
