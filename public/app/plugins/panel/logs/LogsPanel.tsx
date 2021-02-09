@@ -1,6 +1,6 @@
 import React from 'react';
 import { LogRows, CustomScrollbar } from '@grafana/ui';
-import { LogsDedupStrategy, PanelProps } from '@grafana/data';
+import { PanelProps } from '@grafana/data';
 import { Options } from './types';
 import { dataFrameToLogsModel, dedupLogRows } from 'app/core/logs_model';
 
