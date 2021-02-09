@@ -8,7 +8,7 @@ import appEvents from 'app/core/app_events';
 import { updateLocation } from 'app/core/reducers/location';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { saveDashboard as saveDashboardApiCall } from 'app/features/manage-dashboards/state/actions';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { getLibrarySrv } from 'app/core/services/library_srv';
 import config from 'app/core/config';
 
 const saveLibraryPanels = (saveModel: any, folderId: number) => {
@@ -20,7 +20,7 @@ const saveLibraryPanels = (saveModel: any, folderId: number) => {
     } else if (panel.libraryPanel && panel.libraryPanel.uid === undefined) {
       panel.libraryPanel.name = panel.title;
       panelPromises.push(
-        getBackendSrv()
+        getLibrarySrv()
           .addLibraryPanel(panel, folderId!)
           .then((returnedPanel) => {
             saveModel.panels[i] = {
@@ -36,7 +36,7 @@ const saveLibraryPanels = (saveModel: any, folderId: number) => {
     } else {
       // For now, update library panels. Implement "Update panel instances" modal later.
       panelPromises.push(
-        getBackendSrv()
+        getLibrarySrv()
           .updateLibraryPanel(panel, folderId!)
           .then((returnedPanel) => {
             saveModel.panels[i] = {

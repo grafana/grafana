@@ -4,7 +4,7 @@ import { useDebounce } from 'react-use';
 import { cx, css } from 'emotion';
 import { LibraryPanelCard, LibraryPanelCardProps } from '../LibraryPanelCard/LibraryPanelCard';
 import { GrafanaTheme } from '@grafana/data';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { getLibrarySrv } from 'app/core/services/library_srv';
 
 interface LibraryPanelViewProps {
   className?: string;
@@ -20,19 +20,19 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
   formatDate,
 }) => {
   const styles = useStyles(getPanelViewStyles);
-  const [searchString, setSearchValue] = useState('');
+  const [searchString, setSearchString] = useState('');
   // const [modalOpen, setModalOpen] = useState(false);
 
   // Deliberately not using useAsync here as we want to be able to update libraryPanels without
   // making an additional API request (for example when a user deletes a library panel and we want to update the view to reflect that)
   const [libraryPanels, setLibraryPanels] = useState<LibraryPanelCardProps[] | undefined>(undefined);
   useEffect(() => {
-    const libPanelsPromise = getBackendSrv()
+    const libPanelsPromise = getLibrarySrv()
       .getLibraryPanels()
       .then((panels) => {
         return Promise.all(
           panels.map((panel) =>
-            getBackendSrv()
+            getLibrarySrv()
               .getLibraryPanelConnectedDashboards(panel.uid)
               .then((connected) => {
                 return {
@@ -66,7 +66,7 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
   const [filteredItems, setFilteredItems] = useState(libraryPanels);
   useDebounce(
     () => {
-      setFilteredItems(libraryPanels?.filter((v) => v.title.toLowerCase().includes(searchString)));
+      setFilteredItems(libraryPanels?.filter((v) => v.title.toLowerCase().includes(searchString.toLowerCase())));
     },
     300,
     [searchString, libraryPanels]
@@ -74,7 +74,7 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
 
   const onDeletePanel = async (uid: string) => {
     try {
-      await getBackendSrv().deleteLibraryPanel(uid);
+      await getLibrarySrv().deleteLibraryPanel(uid);
       const panelIndex = libraryPanels!.findIndex((panel) => panel.uid === uid);
       setLibraryPanels([...libraryPanels!.slice(0, panelIndex), ...libraryPanels!.slice(panelIndex + 1)]);
     } catch (err) {
@@ -90,7 +90,7 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
           placeholder="Search the panel library"
           prefix={<Icon name="search" />}
           value={searchString}
-          onChange={(e) => setSearchValue(e.currentTarget.value.toLowerCase())}
+          onChange={(e) => setSearchString(e.currentTarget.value)}
         ></Input>
         <Select placeholder="Filter by" onChange={() => {}} width={35} />
       </div>

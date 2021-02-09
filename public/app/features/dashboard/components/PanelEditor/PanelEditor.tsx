@@ -35,6 +35,8 @@ import { DisplayMode, displayModes, PanelEditorTab } from './types';
 import { DashboardModel, PanelModel } from '../../state';
 import { PanelOptionsChangedEvent } from 'app/types/events';
 import { UnlinkModal } from '../../../library-panels/components/UnlinkModal/UnlinkModal';
+import { SaveLibraryPanelModal } from 'app/features/library-panels/components/SaveLibraryPanelModal/SaveLibraryPanelModal';
+import { getLibrarySrv } from 'app/core/services/library_srv';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -118,6 +120,28 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
       component: SaveDashboardModalProxy,
       props: { dashboard: this.props.dashboard },
     });
+  };
+
+  onSavePanel = () => {
+    const panelId = this.props.panel.libraryPanel?.uid;
+    if (!panelId) {
+      // New library panel, no need to display modal
+      return;
+    }
+
+    getLibrarySrv()
+      .getLibraryPanelConnectedDashboards(panelId)
+      .then((dashes) => {
+        appEvents.emit(CoreEvents.showModalReact, {
+          component: SaveLibraryPanelModal,
+          props: {
+            panel: this.props.panel,
+            folderId: this.props.dashboard.meta.folderId,
+            isOpen: true,
+            connectedDashboards: dashes,
+          },
+        });
+      });
   };
 
   onChangeTab = (tab: PanelEditorTab) => {
@@ -269,9 +293,15 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
       <ToolbarButton onClick={this.onDiscard} title="Undo all changes" key="discard">
         Discard
       </ToolbarButton>,
-      <ToolbarButton onClick={this.onSaveDashboard} title="Apply changes and save dashboard" key="save">
-        Save
-      </ToolbarButton>,
+      this.props.panel.libraryPanel ? (
+        <ToolbarButton onClick={this.onSavePanel} title="Apply changes and save library panel" key="save-panel">
+          Save Panel
+        </ToolbarButton>
+      ) : (
+        <ToolbarButton onClick={this.onSaveDashboard} title="Apply changes and save dashboard" key="save">
+          Save
+        </ToolbarButton>
+      ),
       <ToolbarButton
         onClick={this.onPanelExit}
         variant="primary"

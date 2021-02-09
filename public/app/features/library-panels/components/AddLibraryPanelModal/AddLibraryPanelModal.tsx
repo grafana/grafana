@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button, Field, Input, Modal, useStyles } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { PanelModel } from '../../../dashboard/state';
 import { css } from 'emotion';
+import { usePanelSave } from '../../utils/usePanelSave';
 
 interface Props {
   onDismiss: () => void;
@@ -11,20 +12,30 @@ interface Props {
   initialFolderId?: number;
 }
 
-export const AddLibraryPanelModal: React.FC<Props> = ({ isOpen = false, ...props }) => {
+export const AddLibraryPanelModal: React.FC<Props> = ({ isOpen = false, panel, initialFolderId, ...props }) => {
   const styles = useStyles(getStyles);
+  const [folderId, setFolderId] = useState(initialFolderId);
+  const [panelTitle, setPanelTitle] = useState(panel.title);
+  const { saveLibraryPanel } = usePanelSave();
 
   return (
     <Modal title="Add this panel to the panel library" isOpen={isOpen} onDismiss={props.onDismiss}>
       <Field label="Please set a name for the new reusable panel:">
-        <Input name="name" defaultValue={props.panel.title} />
+        <Input name="name" value={panelTitle} onChange={(e) => setPanelTitle(e.currentTarget.value)} />
       </Field>
       <Field label="Your reusable panel will be saved in:">
-        <FolderPicker onChange={() => {}} initialFolderId={props.initialFolderId} />
+        <FolderPicker onChange={({ id }) => setFolderId(id)} initialFolderId={initialFolderId} />
       </Field>
 
       <div className={styles.buttons}>
-        <Button>Add panel to the panel library</Button>
+        <Button
+          onClick={() => {
+            panel.title = panelTitle;
+            saveLibraryPanel(panel, folderId!).then(() => props.onDismiss());
+          }}
+        >
+          Add panel to the panel library
+        </Button>
         <Button variant="secondary" onClick={props.onDismiss}>
           Cancel
         </Button>

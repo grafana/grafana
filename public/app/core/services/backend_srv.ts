@@ -19,30 +19,6 @@ import { FetchQueueWorker } from './FetchQueueWorker';
 
 const CANCEL_ALL_REQUESTS_REQUEST_ID = 'cancel_all_requests_request_id';
 
-export interface LibraryPanel {
-  id: number;
-  orgId: number;
-  folderId: number;
-  uid: string;
-  name: string;
-  model: any;
-  meta: {
-    canEdit: boolean;
-    created: string;
-    updated: string;
-    createdBy: {
-      id: number;
-      name: string;
-      avatarUrl: string;
-    };
-    updatedBy: {
-      id: number;
-      name: string;
-      avatarUrl: string;
-    };
-  };
-}
-
 export interface BackendSrvDependencies {
   fromFetch: (input: string | Request, init?: RequestInit) => Observable<Response>;
   appEvents: typeof appEvents;
@@ -420,36 +396,6 @@ export class BackendSrv implements BackendService {
 
   getFolderByUid(uid: string) {
     return this.get<FolderDTO>(`/api/folders/${uid}`);
-  }
-
-  async getLibraryPanels(): Promise<LibraryPanel[]> {
-    return this.get(`/api/library-panels`).then(({ result }) => result);
-  }
-
-  async getLibraryPanelConnectedDashboards(libraryPanelUid: string): Promise<number[]> {
-    return this.get(`/api/library-panels/${libraryPanelUid}/dashboards`).then(
-      ({ result }: { result: number[] }) => result
-    );
-  }
-
-  async addLibraryPanel(panelSaveModel: any, folderId: number): Promise<LibraryPanel> {
-    return this.post(`/api/library-panels`, {
-      folderId,
-      name: panelSaveModel.title,
-      model: panelSaveModel,
-    }).then(({ result }: { result: LibraryPanel }) => result);
-  }
-
-  async updateLibraryPanel(panelSaveModel: any, folderId: number): Promise<LibraryPanel> {
-    return this.patch(`/api/library-panels/${panelSaveModel.libraryPanel.uid}`, {
-      folderId,
-      name: panelSaveModel.title,
-      model: panelSaveModel,
-    }).then(({ result }: { result: LibraryPanel }) => result);
-  }
-
-  async deleteLibraryPanel(uid: string) {
-    return this.delete(`/api/library-panels/${uid}`);
   }
 
   async getOrgUsers(): Promise<OrgUser[]> {

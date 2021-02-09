@@ -11,6 +11,9 @@ import { getExploreUrl } from '../../../core/utils/explore';
 import { getTimeSrv } from '../services/TimeSrv';
 import { PanelCtrl } from '../../panel/panel_ctrl';
 import config from 'app/core/config';
+import { appEvents } from 'app/core/core';
+import { CoreEvents } from 'app/types';
+import { AddLibraryPanelModal } from 'app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal';
 
 export function getPanelMenu(
   dashboard: DashboardModel,
@@ -44,6 +47,19 @@ export function getPanelMenu(
   const onSharePanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
     sharePanel(dashboard, panel);
+  };
+
+  const onMakeReusable = (event: React.MouseEvent<any>) => {
+    event.preventDefault();
+    console.log(panel);
+    appEvents.emit(CoreEvents.showModalReact, {
+      component: AddLibraryPanelModal,
+      props: {
+        panel,
+        initialFolderId: dashboard.meta.folderId,
+        isOpen: true,
+      },
+    });
   };
 
   const onInspectPanel = (tab?: string) => {
@@ -108,6 +124,15 @@ export function getPanelMenu(
     onClick: onSharePanel,
     shortcut: 'p s',
   });
+
+  if (config.featureToggles.panelLibrary && !panel.libraryPanel) {
+    menu.push({
+      text: 'Make reusable',
+      iconClassName: 'reusable-panel',
+      onClick: onMakeReusable,
+      shortcut: 'r',
+    });
+  }
 
   if (contextSrv.hasAccessToExplore() && !(panel.plugin && panel.plugin.meta.skipDataQuery)) {
     menu.push({

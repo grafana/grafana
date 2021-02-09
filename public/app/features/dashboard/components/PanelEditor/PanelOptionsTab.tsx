@@ -105,7 +105,16 @@ export const PanelOptionsTab: FC<Props> = ({
             Used on {panel.libraryPanel.connectedDashboards}
             {panel.libraryPanel.connectedDashboards?.length === 1 ? 'dashboard' : 'dashboards'} <br />
             Last edited on {dashboard.formatDate(panel.libraryPanel.lastEdited!, 'L')} by
-            <img className="filter-table__avatar" src={panel.libraryPanel.avatarUrl} /> {panel.libraryPanel.lastAuthor}
+            {panel.libraryPanel.avatarUrl && (
+              <img
+                width="22"
+                height="22"
+                className={styles.userAvatar}
+                src={panel.libraryPanel.avatarUrl}
+                alt={`Avatar for ${panel.libraryPanel.lastAuthor}`}
+              />
+            )}
+            {panel.libraryPanel.lastAuthor}
           </p>
         )}
         <Field label="Tags">
@@ -271,6 +280,14 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     panelLibraryTitle: css`
       display: flex;
       gap: 10px;
+    `,
+    userAvatar: css`
+      border-radius: 50%;
+      box-sizing: content-box;
+      width: 22px;
+      height: 22px;
+      padding-left: ${theme.spacing.sm};
+      padding-right: ${theme.spacing.sm};
     `,
   };
 });
