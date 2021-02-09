@@ -70,7 +70,7 @@ a function is selected, it will be added and your focus will be in the text box 
 
 Some functions like aliasByNode support an optional second argument. To add an argument, hover your mouse over the first argument and then click the `+` symbol that appears. To remove the second optional parameter, click on it and leave it blank and the editor will remove it.
 
-To learn more, refer to [Graphite functions](https://graphite.readthedocs.io/en/latest/functions.html).
+To learn more, refer to [Graphite's documentation on functions](https://graphite.readthedocs.io/en/latest/functions.html).
 
 ### Sort labels
 
