@@ -310,11 +310,15 @@ def publish_storybook_step(edition, ver_mode):
     }
 
 def upload_cdn(edition):
+    sfx = ''
+    if edition == 'enterprise2':
+        sfx = '-{}'.format(edition)
+
     return {
-        'name': 'upload-cdn-assets',
+        'name': 'upload-cdn-assets' + sfx,
         'image': publish_image,
         'depends_on': [
-            'package',
+            'package' + sfx,
         ],
         'environment': {
             'GCP_GRAFANA_UPLOAD_KEY': {
