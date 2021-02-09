@@ -70,7 +70,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
     return this.addField({
       name: name || '', // Will be filled in
       type: guessFieldTypeFromValue(value),
-    } as any);
+    });
   }
 
   addField(f: Field | Partial<FieldDTO>, startLength?: number): MutableField {
@@ -165,7 +165,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
       this.addField({
         name: `Field ${i + 1}`,
         type: guessFieldTypeFromValue(row[i]),
-      } as any);
+      });
     }
 
     // The first line may change the field types

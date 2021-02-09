@@ -16,11 +16,6 @@ export class ArrayVector<T = any> extends FunctionalVector<T> implements Mutable
     return this.buffer.length;
   }
 
-  setLength(len: number): ArrayVector<T> {
-    this.buffer.length = len;
-    return this;
-  }
-
   add(value: T) {
     this.buffer.push(value);
   }
