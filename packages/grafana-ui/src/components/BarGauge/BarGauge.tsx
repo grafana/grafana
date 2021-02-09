@@ -372,7 +372,11 @@ interface BarAndValueDimensions {
   wrapperWidth: number;
 }
 
-function calculateBarAndValueDimensions(props: Props): BarAndValueDimensions {
+/**
+ * @internal
+ * Only exported for unit tests
+ **/
+export function calculateBarAndValueDimensions(props: Props): BarAndValueDimensions {
   const { height, width, orientation, text, alignmentFactors } = props;
   const titleDim = calculateTitleDimensions(props);
   const value = alignmentFactors ?? props.value;
