@@ -289,7 +289,12 @@ export class ConfigEditor extends PureComponent<Props> {
           {options.jsonData.version === InfluxVersion.Flux ? this.renderInflux2x() : this.renderInflux1x()}
           <div className="gf-form-inline">
             <div className="gf-form">
-              <InlineFormLabel className="width-10">Max series</InlineFormLabel>
+              <InlineFormLabel
+                tooltip="Max number of series that will be returned from the data source query."
+                className="width-10"
+              >
+                Max series
+              </InlineFormLabel>
               <div className="width-20">
                 <Input
                   type="number"

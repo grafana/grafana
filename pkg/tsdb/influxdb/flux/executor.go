@@ -85,7 +85,9 @@ func readDataFrames(result *api.QueryTableResult, maxPoints int, maxSeries int) 
 		}
 	}
 
-	// Attach any errors (may be null)
-	dr.Error = result.Err()
+	// Pass result error only if not nil so we do not overwrite any other errors
+	if result.Err() != nil {
+		dr.Error = result.Err()
+	}
 	return dr
 }
