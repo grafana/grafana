@@ -37,7 +37,7 @@ module.exports = {
     path: path.resolve(__dirname, '../../public/build'),
     filename: '[name].[hash].js',
     // Keep publicPath relative for host.com/grafana/ deployments
-    publicPath: 'public/build/',
+    publicPath: 'build/',
   },
   resolve: {
     extensions: ['.ts', '.tsx', '.es6', '.js', '.json', '.svg'],
