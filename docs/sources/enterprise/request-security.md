@@ -21,7 +21,7 @@ This can be used to limit access to internal systems that the server Grafana run
 
 ## IP and hostname blocking
 
-It is possible to limit requests based on a hostname, an IP address, or both.
+You can limit requests based on a hostname, an IP address, or both.
 
 ### Deny list
 
