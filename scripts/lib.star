@@ -317,7 +317,7 @@ def upload_cdn(edition):
             'package',
         ],
         'environment': {
-            'GCP_KEY': {
+            'GCP_GRAFANA_UPLOAD_KEY': {
                 'from_secret': 'gcp_key',
             },
         },

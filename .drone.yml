@@ -544,7 +544,7 @@ steps:
   commands:
   - ./bin/grabpl upload-cdn --edition oss --bucket "grafana-static-assets"
   environment:
-    GCP_KEY:
+    GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
   depends_on:
   - package
