@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { SelectableValue, TimeZone } from '@grafana/data';
-import { Select, TagsInput, Input, Field, Switch, CollapsableSection } from '@grafana/ui';
+import { Select, TagsInput, Input, Field, Switch, CollapsableSection, RadioButtonGroup } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { DashboardModel } from '../../state/DashboardModel';
@@ -57,10 +57,15 @@ export const GeneralSettings: React.FC<Props> = ({ dashboard }) => {
     dashboard.tags = tags;
   };
 
-  const onEditableChange = (ev: React.FormEvent<HTMLInputElement>) => {
-    dashboard.editable = ev.currentTarget.checked;
+  const onEditableChange = (value: boolean) => {
+    dashboard.editable = value;
     setRenderCounter(renderCounter + 1);
   };
+
+  const editableOptions = [
+    { label: 'Editable', value: true },
+    { label: 'Read-only', value: false },
+  ];
 
   return (
     <div style={{ maxWidth: '600px' }}>
@@ -88,8 +93,11 @@ export const GeneralSettings: React.FC<Props> = ({ dashboard }) => {
           />
         </Field>
 
-        <Field label="Editable" description="Uncheck, then save and reload to disable all dashboard editing">
-          <Switch value={dashboard.editable} onChange={onEditableChange} />
+        <Field
+          label="Editable"
+          description="Set to read-only to disable all editing. Reload the dashboard for changes to take effect"
+        >
+          <RadioButtonGroup value={dashboard.editable} options={editableOptions} onChange={onEditableChange} />
         </Field>
       </div>
 
