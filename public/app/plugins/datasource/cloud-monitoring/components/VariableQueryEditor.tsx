@@ -150,7 +150,7 @@ export class CloudMonitoringVariableQueryEditor extends PureComponent<Props, Var
       selectedMetricType,
       ...(await this.getLabels(selectedMetricType, this.state.projectName)),
     };
-    this.setState(state);
+    this.setState(state, () => this.onPropsChange());
   }
 
   async onMetricTypeChange(metricType: string) {
@@ -158,7 +158,7 @@ export class CloudMonitoringVariableQueryEditor extends PureComponent<Props, Var
       selectedMetricType: metricType,
       ...(await this.getLabels(metricType, this.state.projectName)),
     };
-    this.setState(state);
+    this.setState(state, () => this.onPropsChange());
   }
 
   onLabelKeyChange(labelKey: string) {
