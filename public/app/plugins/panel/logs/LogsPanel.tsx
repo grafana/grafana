@@ -21,13 +21,13 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
   }
 
   const newResults = data ? dataFrameToLogsModel(data.series, data.request?.intervalMs, timeZone) : null;
-  const deduplicatedRows =
-    dedupStrategy === LogsDedupStrategy.none ? undefined : dedupLogRows(newResults?.rows || [], dedupStrategy);
+  const logRows = newResults?.rows || [];
+  const deduplicatedRows = dedupLogRows(logRows, dedupStrategy);
 
   return (
     <CustomScrollbar autoHide>
       <LogRows
-        logRows={newResults?.rows || []}
+        logRows={logRows}
         deduplicatedRows={deduplicatedRows}
         dedupStrategy={dedupStrategy}
         highlighterExpressions={[]}
