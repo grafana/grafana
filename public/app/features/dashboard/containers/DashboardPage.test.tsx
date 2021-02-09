@@ -7,7 +7,7 @@ import { DashboardInitPhase, DashboardRouteInfo } from 'app/types';
 import { notifyApp, updateLocation } from 'app/core/actions';
 import { cleanUpDashboardAndVariables } from '../state/actions';
 
-jest.mock('app/features/dashboard/components/DashboardSettings/SettingsCtrl', () => ({}));
+jest.mock('app/features/dashboard/components/DashboardSettings/GeneralSettings', () => ({}));
 
 interface ScenarioContext {
   cleanUpDashboardAndVariablesMock: typeof cleanUpDashboardAndVariables;
