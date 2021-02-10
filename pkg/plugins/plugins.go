@@ -32,11 +32,7 @@ var (
 	PluginTypes  map[string]interface{}
 	Renderer     *RendererPlugin
 
-	GrafanaLatestVersion string
-	GrafanaHasUpdate     bool
-	plog                 log.Logger
-
-	pluginScanningErrors map[string]*PluginError
+	plog log.Logger
 )
 
 type unsignedPluginConditionFunc = func(plugin *PluginBase) bool
@@ -61,6 +57,9 @@ type PluginManager struct {
 	// AllowUnsignedPluginsCondition changes the policy for allowing unsigned plugins. Signature validation only runs when plugins are starting
 	// and running plugins will not be terminated if they violate the new policy.
 	AllowUnsignedPluginsCondition unsignedPluginConditionFunc
+	GrafanaLatestVersion          string
+	GrafanaHasUpdate              bool
+	pluginScanningErrors          map[string]PluginError
 }
 
 func init() {
@@ -82,11 +81,11 @@ func (pm *PluginManager) Init() error {
 		"app":        AppPlugin{},
 		"renderer":   RendererPlugin{},
 	}
-	pluginScanningErrors = map[string]*PluginError{}
+	pm.pluginScanningErrors = map[string]PluginError{}
 
 	pm.log.Info("Starting plugin search")
 
-	plugDir := filepath.Join(setting.StaticRootPath, "app/plugins")
+	plugDir := filepath.Join(pm.Cfg.StaticRootPath, "app/plugins")
 	pm.log.Debug("Scanning core plugin directory", "dir", plugDir)
 	if err := pm.scan(plugDir, false); err != nil {
 		return errutil.Wrapf(err, "failed to scan core plugin directory '%s'", plugDir)
@@ -105,21 +104,21 @@ func (pm *PluginManager) Init() error {
 	}
 
 	// check if plugins dir exists
-	exists, err = fs.Exists(setting.PluginsPath)
+	exists, err = fs.Exists(pm.Cfg.PluginsPath)
 	if err != nil {
 		return err
 	}
 	if !exists {
-		if err = os.MkdirAll(setting.PluginsPath, os.ModePerm); err != nil {
-			pm.log.Error("failed to create external plugins directory", "dir", setting.PluginsPath, "error", err)
+		if err = os.MkdirAll(pm.Cfg.PluginsPath, os.ModePerm); err != nil {
+			pm.log.Error("failed to create external plugins directory", "dir", pm.Cfg.PluginsPath, "error", err)
 		} else {
-			pm.log.Info("External plugins directory created", "directory", setting.PluginsPath)
+			pm.log.Info("External plugins directory created", "directory", pm.Cfg.PluginsPath)
 		}
 	} else {
-		pm.log.Debug("Scanning external plugins directory", "dir", setting.PluginsPath)
-		if err := pm.scan(setting.PluginsPath, true); err != nil {
+		pm.log.Debug("Scanning external plugins directory", "dir", pm.Cfg.PluginsPath)
+		if err := pm.scan(pm.Cfg.PluginsPath, true); err != nil {
 			return errutil.Wrapf(err, "failed to scan external plugins directory '%s'",
-				setting.PluginsPath)
+				pm.Cfg.PluginsPath)
 		}
 	}
 
@@ -241,7 +240,7 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 		if signingError != nil {
 			pm.log.Debug("Failed to validate plugin signature. Will skip loading", "id", plugin.Id,
 				"signature", plugin.Signature, "status", signingError.ErrorCode)
-			pluginScanningErrors[plugin.Id] = signingError
+			pm.pluginScanningErrors[plugin.Id] = *signingError
 			continue
 		}
 
@@ -255,7 +254,7 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 		jsonFPath := filepath.Join(plugin.PluginDir, "plugin.json")
 
 		// External plugins need a module.js file for SystemJS to load
-		if !strings.HasPrefix(jsonFPath, setting.StaticRootPath) && !scanner.IsBackendOnlyPlugin(plugin.Type) {
+		if !strings.HasPrefix(jsonFPath, pm.Cfg.StaticRootPath) && !scanner.IsBackendOnlyPlugin(plugin.Type) {
 			module := filepath.Join(plugin.PluginDir, "module.js")
 			exists, err := fs.Exists(module)
 			if err != nil {
@@ -460,7 +459,7 @@ func (s *PluginScanner) allowUnsigned(plugin *PluginBase) bool {
 		return s.allowUnsignedPluginsCondition(plugin)
 	}
 
-	if setting.Env == setting.Dev {
+	if s.cfg.Env == setting.Dev {
 		return true
 	}
 
@@ -473,9 +472,10 @@ func (s *PluginScanner) allowUnsigned(plugin *PluginBase) bool {
 	return false
 }
 
-func ScanningErrors() []PluginError {
+// ScanningErrors returns plugin scanning errors encountered.
+func (pm *PluginManager) ScanningErrors() []PluginError {
 	scanningErrs := make([]PluginError, 0)
-	for id, e := range pluginScanningErrors {
+	for id, e := range pm.pluginScanningErrors {
 		scanningErrs = append(scanningErrs, PluginError{
 			ErrorCode: e.ErrorCode,
 			PluginID:  id,

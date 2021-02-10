@@ -112,17 +112,16 @@ func (pm *PluginManager) checkForUpdates() {
 	}
 
 	if strings.Contains(setting.BuildVersion, "-") {
-		GrafanaLatestVersion = githubLatest.Testing
-		GrafanaHasUpdate = !strings.HasPrefix(setting.BuildVersion, githubLatest.Testing)
+		pm.GrafanaLatestVersion = githubLatest.Testing
+		pm.GrafanaHasUpdate = !strings.HasPrefix(setting.BuildVersion, githubLatest.Testing)
 	} else {
-		GrafanaLatestVersion = githubLatest.Stable
-		GrafanaHasUpdate = githubLatest.Stable != setting.BuildVersion
+		pm.GrafanaLatestVersion = githubLatest.Stable
+		pm.GrafanaHasUpdate = githubLatest.Stable != setting.BuildVersion
 	}
 
 	currVersion, err1 := version.NewVersion(setting.BuildVersion)
-	latestVersion, err2 := version.NewVersion(GrafanaLatestVersion)
-
+	latestVersion, err2 := version.NewVersion(pm.GrafanaLatestVersion)
 	if err1 == nil && err2 == nil {
-		GrafanaHasUpdate = currVersion.LessThan(latestVersion)
+		pm.GrafanaHasUpdate = currVersion.LessThan(latestVersion)
 	}
 }
