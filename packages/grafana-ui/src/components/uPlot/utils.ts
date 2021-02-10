@@ -2,7 +2,7 @@ import throttle from 'lodash/throttle';
 import { Options } from 'uplot';
 import { PlotPlugin, PlotProps } from './types';
 
-const LOGGING_ENABLED = false;
+const LOGGING_ENABLED = true;
 const ALLOWED_FORMAT_STRINGS_REGEX = /\b(YYYY|YY|MMMM|MMM|MM|M|DD|D|WWWW|WWW|HH|H|h|AA|aa|a|mm|m|ss|s|fff)\b/g;
 
 export function timeFormatToTemplate(f: string) {

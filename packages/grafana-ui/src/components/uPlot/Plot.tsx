@@ -18,12 +18,7 @@ export const UPlotChart: React.FC<PlotProps> = (props) => {
   const plotInstance = useRef<uPlot>();
   const [isPlotReady, setIsPlotReady] = useState(false);
   const prevProps = usePrevious(props);
-  const { isConfigReady, currentConfig, registerPlugin } = usePlotConfig(
-    props.width,
-    props.height,
-    props.timeZone,
-    props.config
-  );
+  const { isConfigReady, currentConfig, registerPlugin } = usePlotConfig(props.width, props.height, props.config);
 
   const getPlotInstance = useCallback(() => {
     return plotInstance.current;
@@ -53,8 +48,8 @@ export const UPlotChart: React.FC<PlotProps> = (props) => {
       return;
     }
 
-    // 3. When config or timezone has changed, re-initialize plot
-    if (isConfigReady && (props.config !== prevProps.config || props.timeZone !== prevProps.timeZone)) {
+    // 3. When config has changed re-initialize plot
+    if (isConfigReady && props.config !== prevProps.config) {
       if (plotInstance.current) {
         pluginLog('uPlot core', false, 'destroying instance');
         plotInstance.current.destroy();
@@ -72,8 +67,8 @@ export const UPlotChart: React.FC<PlotProps> = (props) => {
 
   // Memoize plot context
   const plotCtx = useMemo(() => {
-    return buildPlotContext(isPlotReady, canvasRef, props.dataFrame, registerPlugin, getPlotInstance);
-  }, [plotInstance, canvasRef, props.dataFrame, registerPlugin, getPlotInstance, isPlotReady]);
+    return buildPlotContext(isPlotReady, canvasRef, props.data, registerPlugin, getPlotInstance);
+  }, [plotInstance, canvasRef, props.data, registerPlugin, getPlotInstance, isPlotReady]);
 
   return (
     <PlotContext.Provider value={plotCtx}>

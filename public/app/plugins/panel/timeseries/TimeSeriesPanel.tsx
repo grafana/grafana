@@ -52,9 +52,9 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
       onLegendClick={onLegendClick}
       onSeriesColorChange={onSeriesColorChange}
     >
-      <TooltipPlugin mode={options.tooltipOptions.mode} timeZone={timeZone} />
       <ZoomPlugin onZoom={onChangeTimeRange} />
-      <ContextMenuPlugin timeZone={timeZone} replaceVariables={replaceVariables} />
+      <TooltipPlugin data={data.series} mode={options.tooltipOptions.mode} timeZone={timeZone} />
+      <ContextMenuPlugin data={data.series} timeZone={timeZone} replaceVariables={replaceVariables} />
       {data.annotations && (
         <ExemplarsPlugin exemplars={data.annotations} timeZone={timeZone} getFieldLinks={getFieldLinks} />
       )}

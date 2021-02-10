@@ -23,7 +23,7 @@ export function isGraphable(field: Field) {
   return field.type === FieldType.number;
 }
 
-export function getXYDimensions(cfg: XYDimensionConfig, data?: DataFrame[]): XYDimensions {
+export function getXYDimensions(cfg?: XYDimensionConfig, data?: DataFrame[]): XYDimensions {
   if (!data || !data.length) {
     return { error: DimensionError.NoData } as XYDimensions;
   }

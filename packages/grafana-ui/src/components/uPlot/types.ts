@@ -1,9 +1,12 @@
 import React from 'react';
 import uPlot, { Options, Hooks, AlignedData } from 'uplot';
-import { DataFrame, TimeRange, TimeZone } from '@grafana/data';
+import { TimeRange } from '@grafana/data';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 
-export type PlotConfig = Pick<Options, 'series' | 'scales' | 'axes' | 'cursor' | 'bands' | 'hooks' | 'select'>;
+export type PlotConfig = Pick<
+  Options,
+  'series' | 'scales' | 'axes' | 'cursor' | 'bands' | 'hooks' | 'select' | 'tzDate'
+>;
 
 export type PlotPlugin = {
   id: string;
@@ -18,13 +21,10 @@ export interface PlotPluginProps {
 
 export interface PlotProps {
   data: AlignedData;
-  // TODO: left temporarily for Tooltip to work, to be removed
-  dataFrame: DataFrame;
-  timeRange: TimeRange;
-  timeZone: TimeZone;
   width: number;
   height: number;
   config: UPlotConfigBuilder;
+  timeRange: TimeRange;
   children?: React.ReactNode;
 }
 

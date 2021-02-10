@@ -1,4 +1,4 @@
-import { GraphNGLegendEventMode } from './types';
+import { GraphNGLegendEventMode, XYFieldMatchers } from './types';
 import {
   DataFrame,
   dateTime,
@@ -9,6 +9,7 @@ import {
   getFieldDisplayName,
   getFieldSeriesColor,
   GrafanaTheme,
+  outerJoinDataFrames,
   TimeRange,
   TimeZone,
 } from '@grafana/data';
@@ -30,6 +31,15 @@ export function mapMouseEventToMode(event: React.MouseEvent): GraphNGLegendEvent
     return GraphNGLegendEventMode.AppendToSelection;
   }
   return GraphNGLegendEventMode.ToggleSelection;
+}
+
+export function preparePlotFrame(data: DataFrame[], dimFields: XYFieldMatchers) {
+  return outerJoinDataFrames({
+    frames: data,
+    joinBy: dimFields.x,
+    keep: dimFields.y,
+    keepOriginIndices: true,
+  });
 }
 
 export function preparePlotData(frame: DataFrame): AlignedData {
@@ -55,7 +65,7 @@ export function preparePlotConfigBuilder(
   getTimeRange: () => TimeRange,
   getTimeZone: () => TimeZone
 ): UPlotConfigBuilder {
-  const builder = new UPlotConfigBuilder();
+  const builder = new UPlotConfigBuilder(getTimeZone);
 
   // X is the first field in the aligned frame
   const xField = frame.fields[0];
