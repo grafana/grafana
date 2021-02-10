@@ -8,6 +8,7 @@ import {
 } from '@grafana/data';
 import { SeriesToColumnsOptions, seriesToColumnsTransformer } from './seriesToColumns';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
+import { getFieldDisplayName } from '../../field';
 
 describe('SeriesToColumns Transformer', () => {
   beforeAll(() => {
@@ -472,6 +473,9 @@ describe('SeriesToColumns Transformer', () => {
     await expect(transformDataFrame([cfg], [frame1, frame2])).toEmitValuesWith((received) => {
       const data = received[0];
       const filtered = data[0];
+      expect(getFieldDisplayName(filtered.fields[1], filtered)).toEqual('temperature');
+      expect(getFieldDisplayName(filtered.fields[2], filtered)).toEqual('temperature 2');
+
       expect(filtered.fields).toMatchInlineSnapshot(`
         Array [
           Object {
@@ -502,7 +506,7 @@ describe('SeriesToColumns Transformer', () => {
             "labels": Object {},
             "name": "temperature",
             "state": Object {
-              "displayName": "temperature",
+              "displayName": "temperature 2",
             },
             "type": "number",
             "values": Array [
