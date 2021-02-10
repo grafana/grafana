@@ -9,7 +9,7 @@ import {
   onUpdateDatasourceSecureJsonDataOption,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
-import { DataSourceHttpSettings, InfoBox, InlineFormLabel, LegacyForms } from '@grafana/ui';
+import { DataSourceHttpSettings, InfoBox, InlineField, InlineFormLabel, LegacyForms } from '@grafana/ui';
 const { Select, Input, SecretFormField } = LegacyForms;
 import { InfluxOptions, InfluxSecureJsonData, InfluxVersion } from '../types';
 
@@ -292,33 +292,25 @@ export class ConfigEditor extends PureComponent<Props, State> {
           </div>
           {options.jsonData.version === InfluxVersion.Flux ? this.renderInflux2x() : this.renderInflux1x()}
           <div className="gf-form-inline">
-            <div className="gf-form">
-              <InlineFormLabel
-                tooltip="Limit the number of series/tables that Grafana will process. Lower this number to prevent abuse, and increase it if you have lots of small time series and not all are shown. Defaults to 1000."
+            <InlineField
+              labelWidth={20}
+              label="Max series"
+              tooltip="Limit the number of series/tables that Grafana will process. Lower this number to prevent abuse, and increase it if you have lots of small time series and not all are shown. Defaults to 1000."
+            >
+              <Input
+                placeholder="1000"
+                type="number"
                 className="width-10"
-              >
-                Max series
-              </InlineFormLabel>
-              <div className="width-20">
-                <Input
-                  placeholder="1000"
-                  type="number"
-                  className="width-20"
-                  value={this.state.maxSeries}
-                  onChange={(event) => {
-                    // We duplicate this state so that we allow to write freely inside the input. We don't have
-                    // any influence over saving so this seems to be only way to do this.
-                    this.setState({ maxSeries: event.currentTarget.value });
-                    const val = parseInt(event.currentTarget.value, 10);
-                    updateDatasourcePluginJsonDataOption(
-                      this.props,
-                      'maxSeries',
-                      Number.isFinite(val) ? val : undefined
-                    );
-                  }}
-                />
-              </div>
-            </div>
+                value={this.state.maxSeries}
+                onChange={(event) => {
+                  // We duplicate this state so that we allow to write freely inside the input. We don't have
+                  // any influence over saving so this seems to be only way to do this.
+                  this.setState({ maxSeries: event.currentTarget.value });
+                  const val = parseInt(event.currentTarget.value, 10);
+                  updateDatasourcePluginJsonDataOption(this.props, 'maxSeries', Number.isFinite(val) ? val : undefined);
+                }}
+              />
+            </InlineField>
           </div>
         </div>
       </>
