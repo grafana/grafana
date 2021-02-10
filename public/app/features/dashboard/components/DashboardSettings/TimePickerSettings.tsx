@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { InlineField, Input, InlineSwitch, TimeZonePicker, Tooltip } from '@grafana/ui';
+import { Input, TimeZonePicker, Field, Switch, CollapsableSection } from '@grafana/ui';
 import { rangeUtil, TimeZone } from '@grafana/data';
 import isEmpty from 'lodash/isEmpty';
 import { selectors } from '@grafana/e2e-selectors';
@@ -52,45 +52,34 @@ export class TimePickerSettings extends PureComponent<Props, State> {
 
   render() {
     return (
-      <div className="editor-row">
-        <h5 className="section-heading">Time Options</h5>
-        <div className="gf-form-group">
-          <div className="gf-form" aria-label={selectors.components.TimeZonePicker.container}>
-            <label className="gf-form-label width-7">Timezone</label>
-            <TimeZonePicker
-              includeInternal={true}
-              value={this.props.timezone}
-              onChange={this.onTimeZoneChange}
-              width={40}
-            />
-          </div>
-          <AutoRefreshIntervals
-            refreshIntervals={this.props.refreshIntervals}
-            onRefreshIntervalChange={this.props.onRefreshIntervalChange}
+      <CollapsableSection label="Time options" isOpen={true}>
+        <Field label="Timezone" aria-label={selectors.components.TimeZonePicker.container}>
+          <TimeZonePicker
+            includeInternal={true}
+            value={this.props.timezone}
+            onChange={this.onTimeZoneChange}
+            width={40}
           />
-          <div className="gf-form">
-            <span className="gf-form-label width-7">Now delay now-</span>
-            <Tooltip
-              placement="right"
-              content={'Enter 1m to ignore the last minute (because it can contain incomplete metrics)'}
-            >
-              <Input
-                width={60}
-                invalid={!this.state.isNowDelayValid}
-                placeholder="0m"
-                onChange={this.onNowDelayChange}
-                defaultValue={this.props.nowDelay}
-              />
-            </Tooltip>
-          </div>
-
-          <div className="gf-form">
-            <InlineField labelWidth={14} label="Hide time picker">
-              <InlineSwitch value={!!this.props.timePickerHidden} onChange={this.onHideTimePickerChange} />
-            </InlineField>
-          </div>
-        </div>
-      </div>
+        </Field>
+        <AutoRefreshIntervals
+          refreshIntervals={this.props.refreshIntervals}
+          onRefreshIntervalChange={this.props.onRefreshIntervalChange}
+        />
+        <Field
+          label="Now delay now"
+          description="Enter 1m to ignore the last minute (because it can contain incomplete metrics)"
+        >
+          <Input
+            invalid={!this.state.isNowDelayValid}
+            placeholder="0m"
+            onChange={this.onNowDelayChange}
+            defaultValue={this.props.nowDelay}
+          />
+        </Field>
+        <Field label="Hide time picker">
+          <Switch value={!!this.props.timePickerHidden} onChange={this.onHideTimePickerChange} />
+        </Field>
+      </CollapsableSection>
     );
   }
 }
