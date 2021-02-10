@@ -7,6 +7,20 @@ windows_image = 'mcr.microsoft.com/windows:1809'
 dockerize_version = '0.6.1'
 wix_image = 'grafana/ci-wix:0.1.1'
 test_release_ver = 'v7.3.0-test'
+windows_build_image = 'grafana/ci-build-windows:0.1.6'
+
+def test_backend_cmds(windows=False):
+    if windows:
+        cmd = r'.\grabpl'
+    else:
+        cmd = './bin/grabpl'
+
+    return [
+        # First execute non-integration tests in parallel, since it should be safe
+        '{} test-backend'.format(cmd),
+        # Then execute integration tests in serial
+        '{} integration-tests'.format(cmd),
+    ]
 
 def pipeline(
     name, edition, trigger, steps, ver_mode, services=[], platform='linux', depends_on=[],
@@ -466,16 +480,9 @@ def test_backend_step(edition):
         'image': build_image,
         'depends_on': [
             'initialize',
-            'lint-backend' + sfx,
+            'lint-backend',
         ],
-        'commands': [
-            # First make sure that there are no tests with FocusConvey
-            '[ $(grep FocusConvey -R pkg | wc -l) -eq "0" ] || exit 1',
-            # Then execute non-integration tests in parallel, since it should be safe
-            './bin/grabpl test-backend --edition {}'.format(edition),
-            # Then execute integration tests in serial
-            './bin/grabpl integration-tests --edition {}'.format(edition),
-        ],
+        'commands': test_backend_cmds(),
     }
 
 def test_frontend_step():
@@ -951,11 +958,18 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
     else:
         source_commit = ' $$env:SOURCE_COMMIT'
 
-    init_cmds = []
     sfx = ''
-    if edition in ('enterprise', 'enterprise2'):
-        sfx = '-{}'.format(edition)
-    else:
+    if edition == 'enterprise':
+        sfx = '-enterprise'
+    init_cmds = [
+        # Work around Git being configured to convert to Windows line endings by default
+        'git config --system core.autocrlf false',
+        'git reset --hard',
+        'git config -l',
+        'dos2unix pkg/plugins/testdata/behind-feature-flag/gel/plugin.json',
+        'git status',
+    ]
+    if edition != 'enterprise':
         init_cmds.extend([
             '$$ProgressPreference = "SilentlyContinue"',
             'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/windows/grabpl.exe -OutFile grabpl.exe'.format(grabpl_version),
@@ -966,6 +980,12 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             'name': 'initialize',
             'image': wix_image,
             'commands': init_cmds,
+        },
+        {
+            'name': 'test-backend',
+            'image': windows_build_image,
+            'commands': test_backend_cmds(windows=True),
+            'depends_on': ['initialize',],
         },
     ]
     if (ver_mode == 'master' and (edition not in ('enterprise', 'enterprise2') or is_downstream)) or ver_mode in (

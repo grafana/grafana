@@ -61,9 +61,8 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.3.2
   commands:
-  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition oss
-  - ./bin/grabpl integration-tests --edition oss
+  - ./bin/grabpl test-backend
+  - ./bin/grabpl integration-tests
   depends_on:
   - initialize
   - lint-backend
@@ -315,9 +314,8 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.3.2
   commands:
-  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition oss
-  - ./bin/grabpl integration-tests --edition oss
+  - ./bin/grabpl test-backend
+  - ./bin/grabpl integration-tests
   depends_on:
   - initialize
   - lint-backend
@@ -590,9 +588,22 @@ steps:
 - name: initialize
   image: grafana/ci-wix:0.1.1
   commands:
+  - git config --system core.autocrlf false
+  - git reset --hard
+  - git config -l
+  - dos2unix pkg/plugins/testdata/behind-feature-flag/gel/plugin.json
+  - git status
   - $$ProgressPreference = "SilentlyContinue"
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.38/windows/grabpl.exe -OutFile grabpl.exe
   - .\grabpl.exe verify-drone
+
+- name: test-backend
+  image: grafana/ci-build-windows:0.1.6
+  commands:
+  - .\grabpl test-backend
+  - .\grabpl integration-tests
+  depends_on:
+  - initialize
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
@@ -771,9 +782,8 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.3.2
   commands:
-  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition oss
-  - ./bin/grabpl integration-tests --edition oss
+  - ./bin/grabpl test-backend
+  - ./bin/grabpl integration-tests
   depends_on:
   - initialize
   - lint-backend
@@ -1032,9 +1042,22 @@ steps:
 - name: initialize
   image: grafana/ci-wix:0.1.1
   commands:
+  - git config --system core.autocrlf false
+  - git reset --hard
+  - git config -l
+  - dos2unix pkg/plugins/testdata/behind-feature-flag/gel/plugin.json
+  - git status
   - $$ProgressPreference = "SilentlyContinue"
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.38/windows/grabpl.exe -OutFile grabpl.exe
   - .\grabpl.exe verify-drone
+
+- name: test-backend
+  image: grafana/ci-build-windows:0.1.6
+  commands:
+  - .\grabpl test-backend
+  - .\grabpl integration-tests
+  depends_on:
+  - initialize
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
@@ -1147,9 +1170,8 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.3.2
   commands:
-  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition enterprise
-  - ./bin/grabpl integration-tests --edition enterprise
+  - ./bin/grabpl test-backend
+  - ./bin/grabpl integration-tests
   depends_on:
   - initialize
   - lint-backend
@@ -1206,12 +1228,11 @@ steps:
 - name: test-backend-enterprise2
   image: grafana/build-container:1.3.2
   commands:
-  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition enterprise2
-  - ./bin/grabpl integration-tests --edition enterprise2
+  - ./bin/grabpl test-backend
+  - ./bin/grabpl integration-tests
   depends_on:
   - initialize
-  - lint-backend-enterprise2
+  - lint-backend
 
 - name: build-backend-enterprise2
   image: grafana/build-container:1.3.2
@@ -1485,6 +1506,11 @@ steps:
 - name: initialize
   image: grafana/ci-wix:0.1.1
   commands:
+  - git config --system core.autocrlf false
+  - git reset --hard
+  - git config -l
+  - dos2unix pkg/plugins/testdata/behind-feature-flag/gel/plugin.json
+  - git status
   - cp -r grafana-enterprise C:\App\grafana-enterprise
   - rm -r -force grafana-enterprise
   - cp grabpl.exe C:\App\grabpl.exe
@@ -1494,6 +1520,14 @@ steps:
   - .\grabpl.exe verify-drone
   depends_on:
   - clone
+
+- name: test-backend
+  image: grafana/ci-build-windows:0.1.6
+  commands:
+  - .\grabpl test-backend
+  - .\grabpl integration-tests
+  depends_on:
+  - initialize
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
@@ -1690,9 +1724,8 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.3.2
   commands:
-  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition oss
-  - ./bin/grabpl integration-tests --edition oss
+  - ./bin/grabpl test-backend
+  - ./bin/grabpl integration-tests
   depends_on:
   - initialize
   - lint-backend
@@ -1940,9 +1973,22 @@ steps:
 - name: initialize
   image: grafana/ci-wix:0.1.1
   commands:
+  - git config --system core.autocrlf false
+  - git reset --hard
+  - git config -l
+  - dos2unix pkg/plugins/testdata/behind-feature-flag/gel/plugin.json
+  - git status
   - $$ProgressPreference = "SilentlyContinue"
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.38/windows/grabpl.exe -OutFile grabpl.exe
   - .\grabpl.exe verify-drone
+
+- name: test-backend
+  image: grafana/ci-build-windows:0.1.6
+  commands:
+  - .\grabpl test-backend
+  - .\grabpl integration-tests
+  depends_on:
+  - initialize
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
@@ -2055,9 +2101,8 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.3.2
   commands:
-  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition enterprise
-  - ./bin/grabpl integration-tests --edition enterprise
+  - ./bin/grabpl test-backend
+  - ./bin/grabpl integration-tests
   depends_on:
   - initialize
   - lint-backend
@@ -2114,12 +2159,11 @@ steps:
 - name: test-backend-enterprise2
   image: grafana/build-container:1.3.2
   commands:
-  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition enterprise2
-  - ./bin/grabpl integration-tests --edition enterprise2
+  - ./bin/grabpl test-backend
+  - ./bin/grabpl integration-tests
   depends_on:
   - initialize
-  - lint-backend-enterprise2
+  - lint-backend
 
 - name: build-backend-enterprise2
   image: grafana/build-container:1.3.2
@@ -2387,6 +2431,11 @@ steps:
 - name: initialize
   image: grafana/ci-wix:0.1.1
   commands:
+  - git config --system core.autocrlf false
+  - git reset --hard
+  - git config -l
+  - dos2unix pkg/plugins/testdata/behind-feature-flag/gel/plugin.json
+  - git status
   - cp -r grafana-enterprise C:\App\grafana-enterprise
   - rm -r -force grafana-enterprise
   - cp grabpl.exe C:\App\grabpl.exe
@@ -2396,6 +2445,14 @@ steps:
   - .\grabpl.exe verify-drone
   depends_on:
   - clone
+
+- name: test-backend
+  image: grafana/ci-build-windows:0.1.6
+  commands:
+  - .\grabpl test-backend
+  - .\grabpl integration-tests
+  depends_on:
+  - initialize
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
@@ -2591,9 +2648,8 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.3.2
   commands:
-  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition oss
-  - ./bin/grabpl integration-tests --edition oss
+  - ./bin/grabpl test-backend
+  - ./bin/grabpl integration-tests
   depends_on:
   - initialize
   - lint-backend
@@ -2817,9 +2873,22 @@ steps:
 - name: initialize
   image: grafana/ci-wix:0.1.1
   commands:
+  - git config --system core.autocrlf false
+  - git reset --hard
+  - git config -l
+  - dos2unix pkg/plugins/testdata/behind-feature-flag/gel/plugin.json
+  - git status
   - $$ProgressPreference = "SilentlyContinue"
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.38/windows/grabpl.exe -OutFile grabpl.exe
   - .\grabpl.exe verify-drone
+
+- name: test-backend
+  image: grafana/ci-build-windows:0.1.6
+  commands:
+  - .\grabpl test-backend
+  - .\grabpl integration-tests
+  depends_on:
+  - initialize
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
@@ -2927,9 +2996,8 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.3.2
   commands:
-  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition enterprise
-  - ./bin/grabpl integration-tests --edition enterprise
+  - ./bin/grabpl test-backend
+  - ./bin/grabpl integration-tests
   depends_on:
   - initialize
   - lint-backend
@@ -2983,12 +3051,11 @@ steps:
 - name: test-backend-enterprise2
   image: grafana/build-container:1.3.2
   commands:
-  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition enterprise2
-  - ./bin/grabpl integration-tests --edition enterprise2
+  - ./bin/grabpl test-backend
+  - ./bin/grabpl integration-tests
   depends_on:
   - initialize
-  - lint-backend-enterprise2
+  - lint-backend
 
 - name: build-backend-enterprise2
   image: grafana/build-container:1.3.2
@@ -3263,6 +3330,11 @@ steps:
 - name: initialize
   image: grafana/ci-wix:0.1.1
   commands:
+  - git config --system core.autocrlf false
+  - git reset --hard
+  - git config -l
+  - dos2unix pkg/plugins/testdata/behind-feature-flag/gel/plugin.json
+  - git status
   - cp -r grafana-enterprise C:\App\grafana-enterprise
   - rm -r -force grafana-enterprise
   - cp grabpl.exe C:\App\grabpl.exe
@@ -3272,6 +3344,14 @@ steps:
   - .\grabpl.exe verify-drone
   depends_on:
   - clone
+
+- name: test-backend
+  image: grafana/ci-build-windows:0.1.6
+  commands:
+  - .\grabpl test-backend
+  - .\grabpl integration-tests
+  depends_on:
+  - initialize
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
