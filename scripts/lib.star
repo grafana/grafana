@@ -743,9 +743,9 @@ def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publis
     if ver_mode == 'test-release':
         publish = False
 
-    ubuntuSfx = ''
+    ubuntu_sfx = ''
     if ubuntu:
-        ubuntuSfx = '-ubuntu'      
+        ubuntu_sfx = '-ubuntu'      
 
     settings = {
         'dry_run': not publish,
@@ -763,7 +763,7 @@ def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publis
     if archs:
         settings['archs'] = ','.join(archs)
     return {
-        'name': 'build-docker-images' + ubuntuSfx,
+        'name': 'build-docker-images' + ubuntu_sfx,
         'image': grafana_docker_image,
         'depends_on': [
             'copy-packages-for-docker',
