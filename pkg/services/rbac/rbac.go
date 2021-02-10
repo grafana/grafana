@@ -1,6 +1,8 @@
 package rbac
 
 import (
+	"context"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -33,6 +35,47 @@ func (ac *RBACService) AddMigration(mg *migrator.Migrator) {
 	addRBACMigrations(mg)
 }
 
-func (ac *RBACService) Evaluate(ctx *models.ReqContext, user *models.User, permission string, scope ...string) (bool, error) {
+func (ac *RBACService) Evaluate(ctx context.Context, user *models.SignedInUser, permission string, scope ...string) (bool, error) {
+	q := GetUserPoliciesQuery{
+		OrgId:  user.OrgId,
+		UserId: user.UserId,
+	}
+
+	//TODO: Send context to `GetUserPolicies` so the SQL query can be cancelled.
+	err := ac.GetUserPolicies(&q)
+	if err != nil {
+		return false, err
+	}
+
+	ok, dbScope := extractPermission(q.Result, permission)
+	if !ok {
+		return false, nil
+	}
+
+	for _, s := range scope {
+		if _, exists := dbScope[s]; !exists {
+			return false, nil
+		}
+	}
+
 	return true, nil
+}
+
+func extractPermission(policies []*PolicyDTO, permission string) (bool, map[string]struct{}) {
+	scopes := map[string]struct{}{}
+	ok := false
+
+	for _, policy := range policies {
+		if policy == nil {
+			continue
+		}
+		for _, p := range policy.Permissions {
+			if p.Permission == permission {
+				ok = true
+				scopes[p.Scope] = struct{}{}
+			}
+		}
+	}
+
+	return ok, scopes
 }
