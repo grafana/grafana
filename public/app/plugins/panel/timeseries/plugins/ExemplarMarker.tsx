@@ -1,20 +1,40 @@
-import React, { useCallback, useRef, useState } from 'react';
-import { GrafanaTheme } from '@grafana/data';
-import { HorizontalGroup, Portal, Tag, TooltipContainer, useStyles } from '@grafana/ui';
+import {
+  DataFrame,
+  dateTimeFormat,
+  Field,
+  FieldType,
+  GrafanaTheme,
+  LinkModel,
+  systemDateFormats,
+  TimeZone,
+} from '@grafana/data';
+import { FieldLink, Portal, TooltipContainer, useStyles } from '@grafana/ui';
 import { css, cx } from 'emotion';
+import React, { useCallback, useRef, useState } from 'react';
 
 interface ExemplarMarkerProps {
-  time: string;
-  text: string;
-  tags: string[];
+  timeZone: TimeZone;
+  dataFrame: DataFrame;
+  index: number;
+  getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
 }
 
-export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({ time, text, tags }) => {
+export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({ timeZone, dataFrame, index, getFieldLinks }) => {
   const styles = useStyles(getExemplarMarkerStyles);
   const [isOpen, setIsOpen] = useState(false);
   const markerRef = useRef<HTMLDivElement>(null);
   const annotationPopoverRef = useRef<HTMLDivElement>(null);
   const popoverRenderTimeout = useRef<NodeJS.Timer>();
+
+  const timeFormatter = useCallback(
+    (value: number) => {
+      return dateTimeFormat(value, {
+        format: systemDateFormats.fullDate,
+        timeZone,
+      });
+    },
+    [timeZone]
+  );
 
   const onMouseEnter = useCallback(() => {
     if (popoverRenderTimeout.current) {
@@ -47,23 +67,40 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({ time, text, tags
       >
         <div ref={annotationPopoverRef} className={styles.wrapper}>
           <div className={styles.header}>
-            {/*<span className={styles.title}>{exemplar.title}</span>*/}
-            {time && <span className={styles.time}>{time}</span>}
+            <span className={styles.title}>Exemplar</span>
           </div>
           <div className={styles.body}>
-            {text && <div dangerouslySetInnerHTML={{ __html: text }} />}
-            <>
-              <HorizontalGroup spacing="xs" wrap>
-                {tags?.map((t, i) => (
-                  <Tag name={t} key={`${t}-${i}`} />
-                ))}
-              </HorizontalGroup>
-            </>
+            <div>
+              <table className={styles.exemplarsTable}>
+                <tbody>
+                  {dataFrame.fields.map((field, i) => {
+                    const value = field.values.get(index);
+                    const links = field.config.links?.length ? getFieldLinks(field, index) : undefined;
+                    return (
+                      <tr key={i}>
+                        <td>{field.name}</td>
+                        <td className={styles.valueWrapper}>
+                          {field.type === FieldType.time ? timeFormatter(value) : value}{' '}
+                          {links &&
+                            links.map((link, i) => {
+                              return (
+                                <div key={i} className={styles.link}>
+                                  <FieldLink link={link} />
+                                </div>
+                              );
+                            })}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </TooltipContainer>
     );
-  }, [time, tags, text]);
+  }, [dataFrame.fields, getFieldLinks, index, onMouseEnter, onMouseLeave, styles, timeFormatter]);
 
   return (
     <>
@@ -83,6 +120,7 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme) => {
   const shadowColor = theme.isDark ? theme.palette.black : theme.palette.white;
   const marbleFill = theme.isDark ? theme.palette.gray3 : theme.palette.gray1;
   const marbleFillHover = theme.isDark ? theme.palette.blue85 : theme.palette.blue77;
+  const tableBgOdd = theme.isDark ? theme.palette.dark3 : theme.palette.gray6;
 
   const marble = css`
     display: block;
@@ -120,10 +158,29 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme) => {
       background: ${bg};
       border: 1px solid ${headerBg};
       border-radius: ${theme.border.radius.md};
-      max-width: 400px;
       box-shadow: 0 0 20px ${shadowColor};
     `,
+    exemplarsTable: css`
+      width: 100%;
 
+      tr td {
+        padding: 5px 10px;
+        white-space: nowrap;
+        border-bottom: 4px solid ${theme.colors.panelBg};
+      }
+
+      tr {
+        background-color: ${theme.colors.bg1};
+        &:nth-child(even) {
+          background-color: ${tableBgOdd};
+        }
+      }
+    `,
+    valueWrapper: css`
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+    `,
     tooltip: css`
       background: none;
       padding: 0;
@@ -142,17 +199,12 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme) => {
       text-overflow: ellipsis;
       flex-grow: 1;
     `,
-    time: css`
-      color: ${theme.colors.textWeak};
-      font-style: italic;
-      font-weight: normal;
-      display: inline-block;
-      position: relative;
-      top: 1px;
-    `,
     body: css`
       padding: ${theme.spacing.sm};
       font-weight: ${theme.typography.weight.semibold};
+    `,
+    link: css`
+      margin: 0 ${theme.spacing.sm};
     `,
     marble,
     activeMarble,

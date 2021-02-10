@@ -16,7 +16,7 @@ const REFRESH_OPTIONS = [
 ];
 
 export function QueryVariableRefreshSelect({ onChange, refresh }: PropsWithChildren<Props>) {
-  const value = useMemo(() => REFRESH_OPTIONS.find(o => o.value === refresh) ?? REFRESH_OPTIONS[0], [refresh]);
+  const value = useMemo(() => REFRESH_OPTIONS.find((o) => o.value === refresh) ?? REFRESH_OPTIONS[0], [refresh]);
 
   return (
     <VariableSelectField

@@ -21,7 +21,7 @@ export interface FieldProps extends HTMLAttributes<HTMLDivElement> {
   /** Indicates if field is required */
   required?: boolean;
   /** Error message to display */
-  error?: string;
+  error?: string | null;
   /** Indicates horizontal layout of the field */
   horizontal?: boolean;
   className?: string;
@@ -66,7 +66,7 @@ export const Field: React.FC<FieldProps> = ({
   const styles = getFieldStyles(theme);
 
   // Get the first, and only, child to retrieve form input's id
-  const child = React.Children.map(children, c => c)[0];
+  const child = React.Children.map(children, (c) => c)[0];
 
   if (child) {
     // Retrieve input's id to apply on the label for correct click interaction

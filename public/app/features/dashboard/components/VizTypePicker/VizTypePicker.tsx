@@ -17,8 +17,8 @@ export function getAllPanelPluginMeta(): PanelPluginMeta[] {
   const allPanels = config.panels;
 
   return Object.keys(allPanels)
-    .filter(key => allPanels[key]['hideFromList'] === false)
-    .map(key => allPanels[key])
+    .filter((key) => allPanels[key]['hideFromList'] === false)
+    .map((key) => allPanels[key])
     .sort((a: PanelPluginMeta, b: PanelPluginMeta) => a.sort - b.sort);
 }
 
@@ -28,7 +28,7 @@ export function filterPluginList(
   current: PanelPluginMeta
 ): PanelPluginMeta[] {
   if (!searchQuery.length) {
-    return pluginsList.filter(p => {
+    return pluginsList.filter((p) => {
       if (p.state === PluginState.deprecated) {
         return current.id === p.id;
       }
@@ -82,7 +82,7 @@ export const VizTypePicker: React.FC<Props> = ({ searchQuery, onTypeChange, curr
 
   const filteredPluginList = getFilteredPluginList();
   const hasResults = filteredPluginList.length > 0;
-  const renderList = filteredPluginList.concat(pluginsList.filter(p => filteredPluginList.indexOf(p) === -1));
+  const renderList = filteredPluginList.concat(pluginsList.filter((p) => filteredPluginList.indexOf(p) === -1));
 
   return (
     <div className={styles.grid}>

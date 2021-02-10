@@ -91,7 +91,7 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   changeFilter,
 };
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => ({});
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state) => ({});
 
 export const AdHocPicker = connect(mapStateToProps, mapDispatchToProps)(AdHocPickerUnconnected);
 AdHocPicker.displayName = 'AdHocPicker';

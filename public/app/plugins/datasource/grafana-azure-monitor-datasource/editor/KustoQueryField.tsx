@@ -170,19 +170,19 @@ export default class KustoQueryField extends QueryField {
       let results = 0;
       prefix = prefix.toLowerCase();
       const filteredSuggestions = suggestionGroups
-        .map(group => {
+        .map((group) => {
           if (group.items && prefix && !group.skipFilter) {
-            group.items = group.items.filter(c => c.text.length >= prefix.length);
+            group.items = group.items.filter((c) => c.text.length >= prefix.length);
             if (group.prefixMatch) {
-              group.items = group.items.filter(c => c.text.toLowerCase().indexOf(prefix) === 0);
+              group.items = group.items.filter((c) => c.text.toLowerCase().indexOf(prefix) === 0);
             } else {
-              group.items = group.items.filter(c => c.text.toLowerCase().indexOf(prefix) > -1);
+              group.items = group.items.filter((c) => c.text.toLowerCase().indexOf(prefix) > -1);
             }
           }
           results += group.items.length;
           return group;
         })
-        .filter(group => group.items.length > 0);
+        .filter((group) => group.items.length > 0);
 
       // console.log('onTypeahead', selection.anchorNode, wrapperClasses, text, offset, prefix, typeaheadContext);
       // console.log('onTypeahead', prefix, typeaheadContext, force);
@@ -227,12 +227,7 @@ export default class KustoQueryField extends QueryField {
     const forward = midWord ? suffixLength + offset : 0;
 
     this.resetTypeahead(() =>
-      editor
-        .deleteBackward(backward)
-        .deleteForward(forward)
-        .insertText(suggestionText)
-        .moveForward(move)
-        .focus()
+      editor.deleteBackward(backward).deleteForward(forward).insertText(suggestionText).moveForward(move).focus()
     );
 
     return editor;

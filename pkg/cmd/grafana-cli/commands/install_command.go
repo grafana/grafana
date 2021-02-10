@@ -222,27 +222,33 @@ func removeGitBuildFromName(pluginName, filename string) string {
 
 const permissionsDeniedMessage = "could not create %q, permission denied, make sure you have write access to plugin dir"
 
-func extractFiles(archiveFile string, pluginName string, filePath string, allowSymlinks bool) error {
-	logger.Debugf("Extracting archive %v to %v...\n", archiveFile, filePath)
+func extractFiles(archiveFile string, pluginName string, dstDir string, allowSymlinks bool) error {
+	var err error
+	dstDir, err = filepath.Abs(dstDir)
+	if err != nil {
+		return err
+	}
+	logger.Debugf("Extracting archive %q to %q...\n", archiveFile, dstDir)
 
 	r, err := zip.OpenReader(archiveFile)
 	if err != nil {
 		return err
 	}
 	for _, zf := range r.File {
-		newFileName := removeGitBuildFromName(pluginName, zf.Name)
-		if !isPathSafe(newFileName, filepath.Join(filePath, pluginName)) {
-			return fmt.Errorf("filepath: %q tries to write outside of plugin directory: %q, this can be a security risk",
-				zf.Name, filepath.Join(filePath, pluginName))
+		if filepath.IsAbs(zf.Name) || strings.HasPrefix(zf.Name, ".."+string(filepath.Separator)) {
+			return fmt.Errorf(
+				"archive member %q tries to write outside of plugin directory: %q, this can be a security risk",
+				zf.Name, dstDir)
 		}
-		newFile := filepath.Join(filePath, newFileName)
+
+		dstPath := filepath.Clean(filepath.Join(dstDir, removeGitBuildFromName(pluginName, zf.Name)))
 
 		if zf.FileInfo().IsDir() {
 			// We can ignore gosec G304 here since it makes sense to give all users read access
 			// nolint:gosec
-			if err := os.MkdirAll(newFile, 0755); err != nil {
+			if err := os.MkdirAll(dstPath, 0755); err != nil {
 				if os.IsPermission(err) {
-					return fmt.Errorf(permissionsDeniedMessage, newFile)
+					return fmt.Errorf(permissionsDeniedMessage, dstPath)
 				}
 
 				return err
@@ -254,7 +260,7 @@ func extractFiles(archiveFile string, pluginName string, filePath string, allowS
 		// Create needed directories to extract file
 		// We can ignore gosec G304 here since it makes sense to give all users read access
 		// nolint:gosec
-		if err := os.MkdirAll(filepath.Dir(newFile), 0755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(dstPath), 0755); err != nil {
 			return errutil.Wrap("failed to create directory to extract plugin files", err)
 		}
 
@@ -263,14 +269,14 @@ func extractFiles(archiveFile string, pluginName string, filePath string, allowS
 				logger.Warnf("%v: plugin archive contains a symlink, which is not allowed. Skipping \n", zf.Name)
 				continue
 			}
-			if err := extractSymlink(zf, newFile); err != nil {
+			if err := extractSymlink(zf, dstPath); err != nil {
 				logger.Errorf("Failed to extract symlink: %v \n", err)
 				continue
 			}
 			continue
 		}
 
-		if err := extractFile(zf, newFile); err != nil {
+		if err := extractFile(zf, dstPath); err != nil {
 			return errutil.Wrap("failed to extract file", err)
 		}
 	}
@@ -336,12 +342,4 @@ func extractFile(file *zip.File, filePath string) (err error) {
 
 	_, err = io.Copy(dst, src)
 	return err
-}
-
-// isPathSafe checks if the filePath does not resolve outside of destination. This is used to prevent
-// https://snyk.io/research/zip-slip-vulnerability
-// Based on https://github.com/mholt/archiver/pull/65/files#diff-635e4219ee55ef011b2b32bba065606bR109
-func isPathSafe(filePath string, destination string) bool {
-	destpath := filepath.Join(destination, filePath)
-	return strings.HasPrefix(destpath, destination)
 }

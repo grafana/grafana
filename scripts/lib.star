@@ -1,6 +1,6 @@
-grabpl_version = '0.5.32'
-build_image = 'grafana/build-container:1.3.1'
-publish_image = 'grafana/grafana-ci-deploy:1.2.7'
+grabpl_version = '0.5.38'
+build_image = 'grafana/build-container:1.3.2'
+publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
 alpine_image = 'alpine:3.12'
 windows_image = 'mcr.microsoft.com/windows:1809'
@@ -307,6 +307,27 @@ def publish_storybook_step(edition, ver_mode):
             },
         },
         'commands': commands,
+    }
+
+def upload_cdn(edition):
+    sfx = ''
+    if edition == 'enterprise2':
+        sfx = '-{}'.format(edition)
+
+    return {
+        'name': 'upload-cdn-assets' + sfx,
+        'image': publish_image,
+        'depends_on': [
+            'package' + sfx,
+        ],
+        'environment': {
+            'GCP_GRAFANA_UPLOAD_KEY': {
+                'from_secret': 'gcp_key',
+            },
+        },
+        'commands': [
+             './bin/grabpl upload-cdn --edition {} --bucket "grafana-static-assets"'.format(edition),
+        ],
     }
 
 def build_backend_step(edition, ver_mode, variants=None, is_downstream=False):

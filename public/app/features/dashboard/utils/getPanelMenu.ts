@@ -197,7 +197,7 @@ export function getPanelMenu(
     });
   }
 
-  if (dashboard.canEditPanel(panel) && !panel.isEditing) {
+  if (dashboard.canEditPanel(panel) && !panel.isEditing && !panel.isViewing) {
     menu.push({ type: 'divider', text: '' });
 
     menu.push({

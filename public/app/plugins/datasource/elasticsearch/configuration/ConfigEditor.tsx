@@ -48,7 +48,7 @@ export const ConfigEditor = (props: Props) => {
 
       <LogsConfig
         value={options.jsonData}
-        onChange={newValue =>
+        onChange={(newValue) =>
           onOptionsChange({
             ...options,
             jsonData: newValue,
@@ -58,7 +58,7 @@ export const ConfigEditor = (props: Props) => {
 
       <DataLinks
         value={options.jsonData.dataLinks}
-        onChange={newValue => {
+        onChange={(newValue) => {
           onOptionsChange({
             ...options,
             jsonData: {

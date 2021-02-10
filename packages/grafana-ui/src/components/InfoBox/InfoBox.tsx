@@ -34,7 +34,7 @@ export const InfoBox = React.memo(
     ({ title, className, children, branded, url, urlTitle, onDismiss, severity = 'info', ...otherProps }, ref) => {
       const theme = useTheme();
       const styles = getInfoBoxStyles(theme, severity);
-      const wrapperClassName = branded ? cx(styles.wrapperBranded, className) : cx(styles.wrapper, className);
+      const wrapperClassName = cx(branded ? styles.wrapperBranded : styles.wrapper, className);
 
       return (
         <div className={wrapperClassName} {...otherProps} ref={ref}>

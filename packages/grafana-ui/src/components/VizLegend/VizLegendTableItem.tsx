@@ -15,6 +15,9 @@ export interface Props {
   onSeriesColorChange?: SeriesColorChangeHandler;
 }
 
+/**
+ * @internal
+ */
 export const LegendTableItem: React.FunctionComponent<Props> = ({
   item,
   onSeriesColorChange,
@@ -30,15 +33,14 @@ export const LegendTableItem: React.FunctionComponent<Props> = ({
           <VizLegendSeriesIcon
             disabled={!onSeriesColorChange}
             color={item.color}
-            onColorChange={color => {
+            onColorChange={(color) => {
               if (onSeriesColorChange) {
                 onSeriesColorChange(item.label, color);
               }
             }}
-            yAxis={item.yAxis}
           />
           <div
-            onClick={event => {
+            onClick={(event) => {
               if (onLabelClick) {
                 onLabelClick(item, event);
               }
@@ -49,8 +51,8 @@ export const LegendTableItem: React.FunctionComponent<Props> = ({
           </div>
         </span>
       </td>
-      {item.displayValues &&
-        item.displayValues.map((stat, index) => {
+      {item.getDisplayValues &&
+        item.getDisplayValues().map((stat, index) => {
           return (
             <td className={styles.value} key={`${stat.title}-${index}`}>
               {formattedValueToString(stat)}

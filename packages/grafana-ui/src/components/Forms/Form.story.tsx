@@ -152,7 +152,7 @@ export const DefaultValues = () => {
       {renderForm(defaultValues[defaultsIdx])}
       <Button
         onClick={() => {
-          setDefaultsIdx(s => (s + 1) % 2);
+          setDefaultsIdx((s) => (s + 1) % 2);
         }}
         variant="secondary"
       >

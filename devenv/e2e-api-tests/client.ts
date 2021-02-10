@@ -20,7 +20,7 @@ export function getAdminClient() {
 
 let client = getAdminClient();
 
-client.callAs = function(user) {
+client.callAs = function (user) {
   return getClient({
     username: user.login,
     password: 'password',

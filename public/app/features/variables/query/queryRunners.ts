@@ -53,7 +53,7 @@ export class QueryRunners {
   }
 
   getRunnerForDatasource(datasource: DataSourceApi): QueryRunner {
-    const runner = this.runners.find(runner => runner.canRun(datasource));
+    const runner = this.runners.find((runner) => runner.canRun(datasource));
     if (runner) {
       return runner;
     }
@@ -85,7 +85,7 @@ class LegacyQueryRunner implements QueryRunner {
     const queryOptions: any = getLegacyQueryOptions(variable, searchFilter, timeSrv);
 
     return from(datasource.metricFindQuery(variable.query, queryOptions)).pipe(
-      mergeMap(values => {
+      mergeMap((values) => {
         if (!values || !values.length) {
           return getEmptyMetricFindValueObservable();
         }

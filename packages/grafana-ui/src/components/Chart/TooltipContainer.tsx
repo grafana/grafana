@@ -11,23 +11,6 @@ interface TooltipContainerProps extends HTMLAttributes<HTMLDivElement> {
   children?: JSX.Element;
 }
 
-export const getTooltipContainerStyles = stylesFactory((theme: GrafanaTheme) => {
-  const bgColor = theme.colors.bg2;
-  return {
-    wrapper: css`
-      overflow: hidden;
-      background: ${bgColor};
-      /* max-width is set up based on .grafana-tooltip class that's used in dashboard */
-      max-width: 800px;
-      padding: ${theme.spacing.sm};
-      opacity: 0.9;
-      border-radius: ${theme.border.radius.sm};
-      z-index: ${theme.zIndex.tooltip};
-      border: 1px solid ${theme.colors.border2};
-    `,
-  };
-});
-
 export const TooltipContainer: React.FC<TooltipContainerProps> = ({
   position: { x: positionX, y: positionY },
   offset: { x: offsetX, y: offsetY },
@@ -86,3 +69,17 @@ export const TooltipContainer: React.FC<TooltipContainerProps> = ({
 };
 
 TooltipContainer.displayName = 'TooltipContainer';
+
+const getTooltipContainerStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    wrapper: css`
+      overflow: hidden;
+      background: ${theme.colors.bg2};
+      /* max-width is set up based on .grafana-tooltip class that's used in dashboard */
+      max-width: 800px;
+      padding: ${theme.spacing.sm};
+      border-radius: ${theme.border.radius.sm};
+      z-index: ${theme.zIndex.tooltip};
+    `,
+  };
+});

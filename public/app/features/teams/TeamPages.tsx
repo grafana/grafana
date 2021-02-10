@@ -83,8 +83,8 @@ export class TeamPages extends PureComponent<Props, State> {
   hideTabsFromNonTeamAdmin = (navModel: NavModel, isSignedInUserTeamAdmin: boolean) => {
     if (!isSignedInUserTeamAdmin && navModel.main && navModel.main.children) {
       navModel.main.children
-        .filter(navItem => !this.textsAreEqual(navItem.text, PageTypes.Members))
-        .map(navItem => {
+        .filter((navItem) => !this.textsAreEqual(navItem.text, PageTypes.Members))
+        .map((navItem) => {
           navItem.hideFromTabs = true;
         });
     }

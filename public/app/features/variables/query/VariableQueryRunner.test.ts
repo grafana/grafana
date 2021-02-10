@@ -23,7 +23,7 @@ function expectOnResults(args: {
   const { runner, identifier, done, expect: expectCallback } = args;
   const results: UpdateOptionsResults[] = [];
   const subscription = runner.getResponse(identifier).subscribe({
-    next: value => {
+    next: (value) => {
       results.push(value);
       if (value.state === LoadingState.Done || value.state === LoadingState.Error) {
         try {
@@ -40,11 +40,7 @@ function expectOnResults(args: {
 }
 
 function getTestContext(variable?: QueryVariableModel) {
-  variable =
-    variable ??
-    queryBuilder()
-      .withId('query')
-      .build();
+  variable = variable ?? queryBuilder().withId('query').build();
   const getTimeSrv = jest.fn().mockReturnValue({
     timeRange: jest.fn().mockReturnValue(getDefaultTimeRange()),
   });
@@ -103,7 +99,7 @@ function getTestContext(variable?: QueryVariableModel) {
 
 describe('VariableQueryRunner', () => {
   describe('happy case', () => {
-    it('then it should work as expected', done => {
+    it('then it should work as expected', (done) => {
       const {
         identifier,
         runner,
@@ -118,7 +114,7 @@ describe('VariableQueryRunner', () => {
       expectOnResults({
         identifier,
         runner,
-        expect: results => {
+        expect: (results) => {
           // verify that the observable works as expected
           expect(results).toEqual([
             { state: LoadingState.Loading, identifier },
@@ -151,12 +147,8 @@ describe('VariableQueryRunner', () => {
   });
 
   describe('tags case', () => {
-    it('then it should work as expected', done => {
-      const variable = queryBuilder()
-        .withId('query')
-        .withTags(true)
-        .withTagsQuery('A tags query')
-        .build();
+    it('then it should work as expected', (done) => {
+      const variable = queryBuilder().withId('query').withTags(true).withTagsQuery('A tags query').build();
       const {
         identifier,
         runner,
@@ -171,7 +163,7 @@ describe('VariableQueryRunner', () => {
       expectOnResults({
         identifier,
         runner,
-        expect: results => {
+        expect: (results) => {
           // verify that the observable works as expected
           expect(results).toEqual([
             { state: LoadingState.Loading, identifier },
@@ -206,7 +198,7 @@ describe('VariableQueryRunner', () => {
 
   describe('error cases', () => {
     describe('queryRunners.getRunnerForDatasource throws', () => {
-      it('then it should work as expected', done => {
+      it('then it should work as expected', (done) => {
         const {
           identifier,
           runner,
@@ -225,7 +217,7 @@ describe('VariableQueryRunner', () => {
         expectOnResults({
           identifier,
           runner,
-          expect: results => {
+          expect: (results) => {
             // verify that the observable works as expected
             expect(results).toEqual([
               { state: LoadingState.Loading, identifier },
@@ -249,7 +241,7 @@ describe('VariableQueryRunner', () => {
     });
 
     describe('runRequest throws', () => {
-      it('then it should work as expected', done => {
+      it('then it should work as expected', (done) => {
         const {
           identifier,
           runner,
@@ -266,7 +258,7 @@ describe('VariableQueryRunner', () => {
         expectOnResults({
           identifier,
           runner,
-          expect: results => {
+          expect: (results) => {
             // verify that the observable works as expected
             expect(results).toEqual([
               { state: LoadingState.Loading, identifier },
@@ -290,12 +282,8 @@ describe('VariableQueryRunner', () => {
     });
 
     describe('metricFindQuery throws', () => {
-      it('then it should work as expected', done => {
-        const variable = queryBuilder()
-          .withId('query')
-          .withTags(true)
-          .withTagsQuery('A tags query')
-          .build();
+      it('then it should work as expected', (done) => {
+        const variable = queryBuilder().withId('query').withTags(true).withTagsQuery('A tags query').build();
         const {
           identifier,
           runner,
@@ -312,7 +300,7 @@ describe('VariableQueryRunner', () => {
         expectOnResults({
           identifier,
           runner,
-          expect: results => {
+          expect: (results) => {
             // verify that the observable works as expected
             expect(results).toEqual([
               { state: LoadingState.Loading, identifier },
@@ -338,7 +326,7 @@ describe('VariableQueryRunner', () => {
 
   describe('cancellation cases', () => {
     describe('long running request is cancelled', () => {
-      it('then it should work as expected', done => {
+      it('then it should work as expected', (done) => {
         const { identifier, datasource, runner, queryRunner } = getTestContext();
 
         queryRunner.runRequest = jest
@@ -348,7 +336,7 @@ describe('VariableQueryRunner', () => {
         expectOnResults({
           identifier,
           runner,
-          expect: results => {
+          expect: (results) => {
             // verify that the observable works as expected
             expect(results).toEqual([
               { state: LoadingState.Loading, identifier },
@@ -365,7 +353,7 @@ describe('VariableQueryRunner', () => {
     });
 
     describe('an identical request is triggered before first request is finished', () => {
-      it('then it should work as expected', done => {
+      it('then it should work as expected', (done) => {
         const { identifier, datasource, runner, queryRunner } = getTestContext();
 
         queryRunner.runRequest = jest
@@ -376,7 +364,7 @@ describe('VariableQueryRunner', () => {
         expectOnResults({
           identifier,
           runner,
-          expect: results => {
+          expect: (results) => {
             // verify that the observable works as expected
             expect(results).toEqual([
               { state: LoadingState.Loading, identifier },

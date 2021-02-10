@@ -15,6 +15,6 @@
 import { TraceSpan } from '@grafana/data';
 
 export function getTraceName(spans: TraceSpan[]): string {
-  const span = spans.filter(sp => !sp.references || !sp.references.length)[0];
+  const span = spans.filter((sp) => !sp.references || !sp.references.length)[0];
   return span ? `${span.process.serviceName}: ${span.operationName}` : '';
 }

@@ -2,8 +2,9 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { ApplyFieldOverrideOptions, DataTransformerConfig, dateTime, FieldColorModeId } from '@grafana/data';
 import alertDef from './alertDef';
 import {
-  AlertCondition,
   AlertDefinition,
+  AlertDefinitionDTO,
+  AlertDefinitionQueryModel,
   AlertDefinitionState,
   AlertDefinitionUiState,
   AlertRule,
@@ -12,11 +13,11 @@ import {
   NotificationChannelOption,
   NotificationChannelState,
   NotifierDTO,
+  QueryGroupOptions,
 } from 'app/types';
 import store from 'app/core/store';
 import { config } from '@grafana/runtime';
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
-import { QueryGroupOptions } from '../../query/components/QueryGroupOptions';
 
 export const ALERT_DEFINITION_UI_STATE_STORAGE_KEY = 'grafana.alerting.alertDefinition.ui';
 const DEFAULT_ALERT_DEFINITION_UI_STATE: AlertDefinitionUiState = { rightPaneSize: 400, topPaneSize: 0.45 };
@@ -54,14 +55,18 @@ const dataConfig = {
 export const initialAlertDefinitionState: AlertDefinitionState = {
   alertDefinition: {
     id: 0,
-    name: '',
+    uid: '',
+    title: '',
     description: '',
-    condition: {} as AlertCondition,
+    condition: '',
+    data: [],
+    intervalSeconds: 60,
   },
-  queryOptions: { maxDataPoints: 100, dataSource: { name: 'gdev-testdata' }, queries: [] },
+  queryOptions: { maxDataPoints: 100, dataSource: { name: '-- Mixed --' }, queries: [] },
   queryRunner: new PanelQueryRunner(dataConfig),
   uiState: { ...store.getObject(ALERT_DEFINITION_UI_STATE_STORAGE_KEY, DEFAULT_ALERT_DEFINITION_UI_STATE) },
   data: [],
+  alertDefinitions: [] as AlertDefinition[],
 };
 
 function convertToAlertRule(dto: AlertRuleDTO, state: string): AlertRule {
@@ -91,13 +96,13 @@ const alertRulesSlice = createSlice({
   name: 'alertRules',
   initialState,
   reducers: {
-    loadAlertRules: state => {
+    loadAlertRules: (state) => {
       return { ...state, isLoading: true };
     },
     loadedAlertRules: (state, action: PayloadAction<AlertRuleDTO[]>): AlertRulesState => {
       const alertRules: AlertRuleDTO[] = action.payload;
 
-      const alertRulesViewModel: AlertRule[] = alertRules.map(rule => {
+      const alertRulesViewModel: AlertRule[] = alertRules.map((rule) => {
         return convertToAlertRule(rule, rule.state);
       });
 
@@ -122,7 +127,7 @@ const notificationChannelSlice = createSlice({
     },
     notificationChannelLoaded: (state, action: PayloadAction<any>): NotificationChannelState => {
       const notificationChannel = action.payload;
-      const selectedType: NotifierDTO = state.notifiers.find(t => t.type === notificationChannel.type)!;
+      const selectedType: NotifierDTO = state.notifiers.find((t) => t.type === notificationChannel.type)!;
       const secureChannelOptions = selectedType.options.filter((o: NotificationChannelOption) => o.secure);
       /*
         If any secure field is in plain text we need to migrate it to use secure field instead.
@@ -154,10 +159,25 @@ const alertDefinitionSlice = createSlice({
   name: 'alertDefinition',
   initialState: initialAlertDefinitionState,
   reducers: {
-    setAlertDefinition: (state: AlertDefinitionState, action: PayloadAction<any>) => {
-      return { ...state, alertDefinition: action.payload };
+    setAlertDefinition: (state: AlertDefinitionState, action: PayloadAction<AlertDefinitionDTO>) => {
+      return {
+        ...state,
+        alertDefinition: {
+          title: action.payload.title,
+          id: action.payload.id,
+          uid: action.payload.uid,
+          condition: action.payload.condition,
+          intervalSeconds: action.payload.intervalSeconds,
+          data: action.payload.data,
+          description: '',
+        },
+        queryOptions: {
+          ...state.queryOptions,
+          queries: action.payload.data.map((q: AlertDefinitionQueryModel) => ({ ...q.model })),
+        },
+      };
     },
-    updateAlertDefinition: (state: AlertDefinitionState, action: PayloadAction<Partial<AlertDefinition>>) => {
+    updateAlertDefinitionOptions: (state: AlertDefinitionState, action: PayloadAction<Partial<AlertDefinition>>) => {
       return { ...state, alertDefinition: { ...state.alertDefinition, ...action.payload } };
     },
     setUiState: (state: AlertDefinitionState, action: PayloadAction<AlertDefinitionUiState>) => {
@@ -168,6 +188,9 @@ const alertDefinitionSlice = createSlice({
         ...state,
         queryOptions: action.payload,
       };
+    },
+    setAlertDefinitions: (state: AlertDefinitionState, action: PayloadAction<AlertDefinition[]>) => {
+      return { ...state, alertDefinitions: action.payload };
     },
   },
 });
@@ -180,7 +203,13 @@ export const {
   resetSecureField,
 } = notificationChannelSlice.actions;
 
-export const { setUiState, updateAlertDefinition, setQueryOptions } = alertDefinitionSlice.actions;
+export const {
+  setUiState,
+  updateAlertDefinitionOptions,
+  setQueryOptions,
+  setAlertDefinitions,
+  setAlertDefinition,
+} = alertDefinitionSlice.actions;
 
 export const alertRulesReducer = alertRulesSlice.reducer;
 export const notificationChannelReducer = notificationChannelSlice.reducer;
@@ -200,7 +229,7 @@ function migrateSecureFields(
   const cleanedSettings: { [key: string]: string } = {};
   const secureSettings: { [key: string]: string } = {};
 
-  secureChannelOptions.forEach(option => {
+  secureChannelOptions.forEach((option) => {
     secureSettings[option.propertyName] = notificationChannel.settings[option.propertyName];
     cleanedSettings[option.propertyName] = '';
   });

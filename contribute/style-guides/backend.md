@@ -89,3 +89,12 @@ for context.
 ### Unique columns
 
 If a column, or column combination, should be unique, add a corresponding uniqueness constraint through a migration.
+
+## JSON
+
+The simplejson package is used a lot throughout the backend codebase, but it's legacy, so if at all possible
+avoid using it in new code. Use [json-iterator](https://github.com/json-iterator/go) instead, which is a more performant 
+drop-in alternative to the standard [encoding/json](https://golang.org/pkg/encoding/json/) package. While encoding/json
+is a fine choice, profiling shows that json-iterator may be 3-4 times more efficient for encoding. We haven't profiled
+its parsing performance yet, but according to json-iterator's own benchmarks, it appears even more superior in this
+department.

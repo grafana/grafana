@@ -1,7 +1,8 @@
-import { Props } from '@storybook/addon-docs/blocks';
-import { TabsBar } from './TabsBar';
+import { ArgsTable } from '@storybook/addon-docs/blocks';
+import { Counter } from "./Counter";
+import { Tab } from './Tab'
 
-# TabBar
+# TabsBar
 
 A composition component for rendering a TabBar with Tabs for navigation.
 
@@ -9,4 +10,12 @@ It has two modes - navigation and onClick. Navigation renders it as a simple `<a
 
 **Warning!** Using `href` and `onChangeTab` at the same time may have unintended consequences.
 
-<Props of={TabsBar} />
+# Tab
+
+<ArgsTable of={Tab}/>
+
+# Counter
+
+A count indicator displayed alongside tabs and showing numeric values.
+
+<ArgsTable of={Counter} />

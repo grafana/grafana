@@ -130,7 +130,7 @@ export class FluxQueryEditor extends PureComponent<Props> {
     ];
 
     const templateSrv = getTemplateSrv();
-    templateSrv.getVariables().forEach(variable => {
+    templateSrv.getVariables().forEach((variable) => {
       const label = '${' + variable.name + '}';
       let val = templateSrv.replace(label);
       if (val === label) {

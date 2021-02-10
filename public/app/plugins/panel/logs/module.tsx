@@ -2,7 +2,7 @@ import { PanelPlugin, LogsSortOrder } from '@grafana/data';
 import { Options } from './types';
 import { LogsPanel } from './LogsPanel';
 
-export const plugin = new PanelPlugin<Options>(LogsPanel).setPanelOptions(builder => {
+export const plugin = new PanelPlugin<Options>(LogsPanel).setPanelOptions((builder) => {
   builder
     .addBooleanSwitch({
       path: 'showTime',

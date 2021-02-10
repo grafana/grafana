@@ -114,7 +114,7 @@ export interface ExtendedStats extends MetricAggregationWithField, MetricAggrega
   };
 }
 
-interface Percentiles extends MetricAggregationWithField, MetricAggregationWithInlineScript {
+export interface Percentiles extends MetricAggregationWithField, MetricAggregationWithInlineScript {
   type: 'percentiles';
   settings?: {
     percents?: string[];

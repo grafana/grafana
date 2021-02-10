@@ -53,7 +53,7 @@ export const SelectionPlugin: React.FC<SelectionPluginProps> = ({ onSelect, onDi
     plotCtx.registerPlugin({
       id: pluginId,
       hooks: {
-        setSelect: u => {
+        setSelect: (u) => {
           const min = u.posToVal(u.select.left, 'x');
           const max = u.posToVal(u.select.left + u.select.width, 'x');
 

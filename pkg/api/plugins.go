@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -61,7 +62,7 @@ func (hs *HTTPServer) getPluginContext(pluginID string, user *models.SignedInUse
 	}, nil
 }
 
-func (hs *HTTPServer) GetPluginList(c *models.ReqContext) Response {
+func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 	typeFilter := c.Query("type")
 	enabledFilter := c.Query("enabled")
 	embeddedFilter := c.Query("embedded")
@@ -75,7 +76,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) Response {
 	pluginSettingsMap, err := plugins.GetPluginSettings(c.OrgId)
 
 	if err != nil {
-		return Error(500, "Failed to get list of plugins", err)
+		return response.Error(500, "Failed to get list of plugins", err)
 	}
 
 	result := make(dtos.PluginList, 0)
@@ -139,15 +140,15 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) Response {
 	}
 
 	sort.Sort(result)
-	return JSON(200, result)
+	return response.JSON(200, result)
 }
 
-func GetPluginSettingByID(c *models.ReqContext) Response {
+func GetPluginSettingByID(c *models.ReqContext) response.Response {
 	pluginID := c.Params(":pluginId")
 
 	def, exists := plugins.Plugins[pluginID]
 	if !exists {
-		return Error(404, "Plugin not found, no installed plugin with that id", nil)
+		return response.Error(404, "Plugin not found, no installed plugin with that id", nil)
 	}
 
 	dto := &dtos.PluginSetting{
@@ -171,7 +172,7 @@ func GetPluginSettingByID(c *models.ReqContext) Response {
 	query := models.GetPluginSettingByIdQuery{PluginId: pluginID, OrgId: c.OrgId}
 	if err := bus.Dispatch(&query); err != nil {
 		if !errors.Is(err, models.ErrPluginSettingNotFound) {
-			return Error(500, "Failed to get login settings", nil)
+			return response.Error(500, "Failed to get login settings", nil)
 		}
 	} else {
 		dto.Enabled = query.Result.Enabled
@@ -179,43 +180,43 @@ func GetPluginSettingByID(c *models.ReqContext) Response {
 		dto.JsonData = query.Result.JsonData
 	}
 
-	return JSON(200, dto)
+	return response.JSON(200, dto)
 }
 
-func UpdatePluginSetting(c *models.ReqContext, cmd models.UpdatePluginSettingCmd) Response {
+func UpdatePluginSetting(c *models.ReqContext, cmd models.UpdatePluginSettingCmd) response.Response {
 	pluginID := c.Params(":pluginId")
 
 	cmd.OrgId = c.OrgId
 	cmd.PluginId = pluginID
 
 	if _, ok := plugins.Apps[cmd.PluginId]; !ok {
-		return Error(404, "Plugin not installed.", nil)
+		return response.Error(404, "Plugin not installed.", nil)
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		return Error(500, "Failed to update plugin setting", err)
+		return response.Error(500, "Failed to update plugin setting", err)
 	}
 
-	return Success("Plugin settings updated")
+	return response.Success("Plugin settings updated")
 }
 
-func GetPluginDashboards(c *models.ReqContext) Response {
+func GetPluginDashboards(c *models.ReqContext) response.Response {
 	pluginID := c.Params(":pluginId")
 
 	list, err := plugins.GetPluginDashboards(c.OrgId, pluginID)
 	if err != nil {
 		var notFound plugins.PluginNotFoundError
 		if errors.As(err, &notFound) {
-			return Error(404, notFound.Error(), nil)
+			return response.Error(404, notFound.Error(), nil)
 		}
 
-		return Error(500, "Failed to get plugin dashboards", err)
+		return response.Error(500, "Failed to get plugin dashboards", err)
 	}
 
-	return JSON(200, list)
+	return response.JSON(200, list)
 }
 
-func GetPluginMarkdown(c *models.ReqContext) Response {
+func GetPluginMarkdown(c *models.ReqContext) response.Response {
 	pluginID := c.Params(":pluginId")
 	name := c.Params(":name")
 
@@ -223,28 +224,28 @@ func GetPluginMarkdown(c *models.ReqContext) Response {
 	if err != nil {
 		var notFound plugins.PluginNotFoundError
 		if errors.As(err, &notFound) {
-			return Error(404, notFound.Error(), nil)
+			return response.Error(404, notFound.Error(), nil)
 		}
 
-		return Error(500, "Could not get markdown file", err)
+		return response.Error(500, "Could not get markdown file", err)
 	}
 
 	// fallback try readme
 	if len(content) == 0 {
 		content, err = plugins.GetPluginMarkdown(pluginID, "readme")
 		if err != nil {
-			return Error(501, "Could not get markdown file", err)
+			return response.Error(501, "Could not get markdown file", err)
 		}
 	}
 
-	resp := Respond(200, content)
+	resp := response.Respond(200, content)
 	resp.Header("Content-Type", "text/plain; charset=utf-8")
 	return resp
 }
 
-func ImportDashboard(c *models.ReqContext, apiCmd dtos.ImportDashboardCommand) Response {
+func ImportDashboard(c *models.ReqContext, apiCmd dtos.ImportDashboardCommand) response.Response {
 	if apiCmd.PluginId == "" && apiCmd.Dashboard == nil {
-		return Error(422, "Dashboard must be set", nil)
+		return response.Error(422, "Dashboard must be set", nil)
 	}
 
 	cmd := plugins.ImportDashboardCommand{
@@ -262,17 +263,17 @@ func ImportDashboard(c *models.ReqContext, apiCmd dtos.ImportDashboardCommand) R
 		return dashboardSaveErrorToApiResponse(err)
 	}
 
-	return JSON(200, cmd.Result)
+	return response.JSON(200, cmd.Result)
 }
 
 // CollectPluginMetrics collect metrics from a plugin.
 //
 // /api/plugins/:pluginId/metrics
-func (hs *HTTPServer) CollectPluginMetrics(c *models.ReqContext) Response {
+func (hs *HTTPServer) CollectPluginMetrics(c *models.ReqContext) response.Response {
 	pluginID := c.Params("pluginId")
 	plugin, exists := plugins.Plugins[pluginID]
 	if !exists {
-		return Error(404, "Plugin not found", nil)
+		return response.Error(404, "Plugin not found", nil)
 	}
 
 	resp, err := hs.BackendPluginManager.CollectMetrics(c.Req.Context(), plugin.Id)
@@ -283,25 +284,21 @@ func (hs *HTTPServer) CollectPluginMetrics(c *models.ReqContext) Response {
 	headers := make(http.Header)
 	headers.Set("Content-Type", "text/plain")
 
-	return &NormalResponse{
-		header: headers,
-		body:   resp.PrometheusMetrics,
-		status: http.StatusOK,
-	}
+	return response.CreateNormalResponse(headers, resp.PrometheusMetrics, http.StatusOK)
 }
 
 // CheckHealth returns the health of a plugin.
 // /api/plugins/:pluginId/health
-func (hs *HTTPServer) CheckHealth(c *models.ReqContext) Response {
+func (hs *HTTPServer) CheckHealth(c *models.ReqContext) response.Response {
 	pluginID := c.Params("pluginId")
 
 	pCtx, err := hs.getPluginContext(pluginID, c.SignedInUser)
 	if err != nil {
 		if errors.Is(err, ErrPluginNotFound) {
-			return Error(404, "Plugin not found", nil)
+			return response.Error(404, "Plugin not found", nil)
 		}
 
-		return Error(500, "Failed to get plugin settings", err)
+		return response.Error(500, "Failed to get plugin settings", err)
 	}
 
 	resp, err := hs.BackendPluginManager.CheckHealth(c.Req.Context(), pCtx)
@@ -319,17 +316,17 @@ func (hs *HTTPServer) CheckHealth(c *models.ReqContext) Response {
 		var jsonDetails map[string]interface{}
 		err = json.Unmarshal(resp.JSONDetails, &jsonDetails)
 		if err != nil {
-			return Error(500, "Failed to unmarshal detailed response from backend plugin", err)
+			return response.Error(500, "Failed to unmarshal detailed response from backend plugin", err)
 		}
 
 		payload["details"] = jsonDetails
 	}
 
 	if resp.Status != backend.HealthStatusOk {
-		return JSON(503, payload)
+		return response.JSON(503, payload)
 	}
 
-	return JSON(200, payload)
+	return response.JSON(200, payload)
 }
 
 // CallResource passes a resource call from a plugin to the backend plugin.
@@ -370,26 +367,26 @@ func (hs *HTTPServer) getCachedPluginSettings(pluginID string, user *models.Sign
 	return query.Result, nil
 }
 
-func (hs *HTTPServer) GetPluginErrorsList(c *models.ReqContext) Response {
-	return JSON(200, plugins.ScanningErrors())
+func (hs *HTTPServer) GetPluginErrorsList(c *models.ReqContext) response.Response {
+	return response.JSON(200, plugins.ScanningErrors())
 }
 
-func translatePluginRequestErrorToAPIError(err error) Response {
+func translatePluginRequestErrorToAPIError(err error) response.Response {
 	if errors.Is(err, backendplugin.ErrPluginNotRegistered) {
-		return Error(404, "Plugin not found", err)
+		return response.Error(404, "Plugin not found", err)
 	}
 
 	if errors.Is(err, backendplugin.ErrMethodNotImplemented) {
-		return Error(404, "Not found", err)
+		return response.Error(404, "Not found", err)
 	}
 
 	if errors.Is(err, backendplugin.ErrHealthCheckFailed) {
-		return Error(500, "Plugin health check failed", err)
+		return response.Error(500, "Plugin health check failed", err)
 	}
 
 	if errors.Is(err, backendplugin.ErrPluginUnavailable) {
-		return Error(503, "Plugin unavailable", err)
+		return response.Error(503, "Plugin unavailable", err)
 	}
 
-	return Error(500, "Plugin request failed", err)
+	return response.Error(500, "Plugin request failed", err)
 }

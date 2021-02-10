@@ -87,7 +87,7 @@ export function References(props: ReferenceItemProps) {
   return (
     <div className={cx(styles.ReferencesList)}>
       <ul className={styles.list}>
-        {data.map(reference => {
+        {data.map((reference) => {
           return (
             <li className={styles.item} key={`${reference.spanID}`}>
               <ReferenceLink reference={reference} focusSpan={focusSpan}>

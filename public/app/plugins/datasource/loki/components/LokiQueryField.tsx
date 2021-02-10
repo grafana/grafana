@@ -8,7 +8,7 @@ type LokiQueryFieldProps = Omit<
   'labelsLoaded' | 'onLoadOptions' | 'onLabelsRefresh' | 'logLabelOptions' | 'absoluteRange'
 >;
 
-export const LokiQueryField: FunctionComponent<LokiQueryFieldProps> = props => {
+export const LokiQueryField: FunctionComponent<LokiQueryFieldProps> = (props) => {
   const { datasource, range, ...otherProps } = props;
   const absoluteTimeRange = { from: range!.from!.valueOf(), to: range!.to!.valueOf() }; // Range here is never optional
 

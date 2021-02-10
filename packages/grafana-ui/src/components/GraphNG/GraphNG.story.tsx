@@ -63,8 +63,8 @@ export const Lines: React.FC = () => {
           to: dateTime(1546380000000),
         },
       }}
-      legend={{ displayMode: LegendDisplayMode.List, placement: legendPlacement }}
+      legend={{ displayMode: LegendDisplayMode.List, placement: legendPlacement, calcs: [] }}
       timeZone="browser"
-    ></GraphNG>
+    />
   );
 };

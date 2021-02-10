@@ -138,7 +138,7 @@ function getRandomWalk(request: DataQueryRequest): Observable<DataQueryResponse>
       map((rsp: any) => {
         return toDataQueryResponse(rsp);
       }),
-      catchError(err => {
+      catchError((err) => {
         return of(toDataQueryResponse(err));
       })
     );

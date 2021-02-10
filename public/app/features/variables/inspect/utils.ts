@@ -29,7 +29,7 @@ export const createDependencyNodes = (variables: VariableModel[]): GraphNode[] =
 };
 
 export const filterNodesWithDependencies = (nodes: GraphNode[], edges: GraphEdge[]): GraphNode[] => {
-  return nodes.filter(node => edges.some(edge => edge.from === node.id || edge.to === node.id));
+  return nodes.filter((node) => edges.some((edge) => edge.from === node.id || edge.to === node.id));
 };
 
 export const createDependencyEdges = (variables: VariableModel[]): GraphEdge[] => {
@@ -53,7 +53,7 @@ export const createDependencyEdges = (variables: VariableModel[]): GraphEdge[] =
 };
 
 export const toVisNetworkNodes = (nodes: GraphNode[]): any[] => {
-  const nodesWithStyle: any[] = nodes.map(node => ({
+  const nodesWithStyle: any[] = nodes.map((node) => ({
     ...node,
     shape: 'box',
   }));
@@ -61,7 +61,7 @@ export const toVisNetworkNodes = (nodes: GraphNode[]): any[] => {
 };
 
 export const toVisNetworkEdges = (edges: GraphEdge[]): any[] => {
-  const edgesWithStyle: any[] = edges.map(edge => ({ ...edge, arrows: 'to', dashes: true }));
+  const edgesWithStyle: any[] = edges.map((edge) => ({ ...edge, arrows: 'to', dashes: true }));
   return new vis.DataSet(edgesWithStyle);
 };
 
@@ -91,12 +91,12 @@ export const getUnknownVariableStrings = (variables: VariableModel[], model: any
 
     const variableName = match.slice(1);
 
-    if (variables.some(variable => variable.id === variableName)) {
+    if (variables.some((variable) => variable.id === variableName)) {
       // ignore defined variables
       continue;
     }
 
-    if (unknownVariableNames.find(name => name === variableName)) {
+    if (unknownVariableNames.find((name) => name === variableName)) {
       continue;
     }
 
@@ -255,7 +255,7 @@ export const getVariableUsages = (
   dashboard: DashboardModel | null
 ): number => {
   const { usages } = createUsagesNetwork(variables, dashboard);
-  const usage = usages.find(usage => usage.variable.id === variableId);
+  const usage = usages.find((usage) => usage.variable.id === variableId);
   if (!usage) {
     return 0;
   }

@@ -205,12 +205,12 @@ const tokenizer: Grammar = {
         alias: 'operator',
       },
       'pipe-operations': {
-        pattern: new RegExp(`${[...PIPE_PARSERS, ...PIPE_OPERATORS].map(f => f.label).join('|')}`, 'i'),
+        pattern: new RegExp(`${[...PIPE_PARSERS, ...PIPE_OPERATORS].map((f) => f.label).join('|')}`, 'i'),
         alias: 'keyword',
       },
     },
   },
-  function: new RegExp(`\\b(?:${FUNCTIONS.map(f => f.label).join('|')})(?=\\s*\\()`, 'i'),
+  function: new RegExp(`\\b(?:${FUNCTIONS.map((f) => f.label).join('|')})(?=\\s*\\()`, 'i'),
   'context-range': [
     {
       pattern: /\[[^\]]*(?=\])/, // [1m]

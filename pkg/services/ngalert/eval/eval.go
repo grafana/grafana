@@ -7,12 +7,18 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/setting"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/expr"
 )
 
 const alertingEvaluationTimeout = 30 * time.Second
+
+type Evaluator struct {
+	Cfg *setting.Cfg
+}
 
 // invalidEvalResultFormatError is an error for invalid format of the alert definition evaluation results.
 type invalidEvalResultFormatError struct {
@@ -87,7 +93,8 @@ func (c Condition) IsValid() bool {
 
 // AlertExecCtx is the context provided for executing an alert condition.
 type AlertExecCtx struct {
-	OrgID int64
+	OrgID              int64
+	ExpressionsEnabled bool
 
 	Ctx context.Context
 }
@@ -133,7 +140,8 @@ func (c *Condition) execute(ctx AlertExecCtx, now time.Time) (*ExecutionResults,
 		})
 	}
 
-	pbRes, err := expr.TransformData(ctx.Ctx, queryDataReq)
+	exprService := expr.Service{Cfg: &setting.Cfg{ExpressionsEnabled: ctx.ExpressionsEnabled}}
+	pbRes, err := exprService.TransformData(ctx.Ctx, queryDataReq)
 	if err != nil {
 		return &result, err
 	}
@@ -210,11 +218,11 @@ func (evalResults Results) AsDataFrame() data.Frame {
 }
 
 // ConditionEval executes conditions and evaluates the result.
-func ConditionEval(condition *Condition, now time.Time) (Results, error) {
+func (e *Evaluator) ConditionEval(condition *Condition, now time.Time) (Results, error) {
 	alertCtx, cancelFn := context.WithTimeout(context.Background(), alertingEvaluationTimeout)
 	defer cancelFn()
 
-	alertExecCtx := AlertExecCtx{OrgID: condition.OrgID, Ctx: alertCtx}
+	alertExecCtx := AlertExecCtx{OrgID: condition.OrgID, Ctx: alertCtx, ExpressionsEnabled: e.Cfg.ExpressionsEnabled}
 
 	execResult, err := condition.execute(alertExecCtx, now)
 	if err != nil {

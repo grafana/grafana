@@ -371,7 +371,7 @@ export class TableRenderer {
 
   render_values() {
     const rows = [];
-    const visibleColumns = this.table.columns.filter(column => !column.hidden);
+    const visibleColumns = this.table.columns.filter((column) => !column.hidden);
 
     for (let y = 0; y < this.table.rows.length; y++) {
       const row = this.table.rows[y];

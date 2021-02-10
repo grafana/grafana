@@ -10,7 +10,6 @@ import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { profiler } from 'app/core/profiler';
 import config from 'app/core/config';
-import { updateLocation } from 'app/core/actions';
 // Types
 import { DashboardModel, PanelModel } from '../state';
 import { PANEL_BORDER } from 'app/core/constants';
@@ -40,7 +39,6 @@ export interface Props {
   isInView: boolean;
   width: number;
   height: number;
-  updateLocation: typeof updateLocation;
 }
 
 export interface State {
@@ -97,7 +95,7 @@ export class PanelChrome extends Component<Props, State> {
         .getQueryRunner()
         .getData({ withTransforms: true, withFieldConfig: true })
         .subscribe({
-          next: data => this.onDataUpdate(data),
+          next: (data) => this.onDataUpdate(data),
         })
     );
   }
@@ -140,6 +138,7 @@ export class PanelChrome extends Component<Props, State> {
     if (!this.props.isInView) {
       // Ignore events when not visible.
       // The call will be repeated when the panel comes into view
+      this.setState({ refreshWhenInView: true });
       return;
     }
 
@@ -165,7 +164,7 @@ export class PanelChrome extends Component<Props, State> {
       case LoadingState.Done:
         // If we are doing a snapshot save data in panel model
         if (this.props.dashboard.snapshot) {
-          this.props.panel.snapshotData = data.series.map(frame => toDataFrameDTO(frame));
+          this.props.panel.snapshotData = data.series.map((frame) => toDataFrameDTO(frame));
         }
         if (isFirstLoad) {
           isFirstLoad = false;
@@ -323,7 +322,7 @@ export class PanelChrome extends Component<Props, State> {
   }
 
   render() {
-    const { dashboard, panel, isViewing, isEditing, width, height, updateLocation } = this.props;
+    const { dashboard, panel, isViewing, isEditing, width, height } = this.props;
     const { errorMessage, data } = this.state;
     const { transparent } = panel;
 
@@ -346,7 +345,6 @@ export class PanelChrome extends Component<Props, State> {
           isEditing={isEditing}
           isViewing={isViewing}
           data={data}
-          updateLocation={updateLocation}
         />
         <ErrorBoundary>
           {({ error }) => {
