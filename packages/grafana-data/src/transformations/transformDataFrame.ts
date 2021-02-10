@@ -1,6 +1,6 @@
 import { MonoTypeOperatorFunction, Observable, of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
-import { cleanDuplicateFieldNames } from '../field';
+import { cleanDuplicateFieldNames } from '../field/fieldState';
 
 import { DataFrame, DataTransformerConfig } from '../types';
 import { standardTransformersRegistry, TransformerRegistryItem } from './standardTransformersRegistry';
