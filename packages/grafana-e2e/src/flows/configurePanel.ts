@@ -189,7 +189,7 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
     }
 
     // Avoid annotations flakiness
-    e2e().get('.refresh-picker-buttons .btn').first().click();
+    e2e.components.RefreshPicker.runButton().should('be.visible').click();
 
     e2e().wait('@chartData');
 
