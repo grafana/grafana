@@ -67,7 +67,6 @@ var (
 
 	// Paths
 	HomePath       string
-	PluginsPath    string
 	CustomInitPath = "conf/custom.ini"
 
 	// HTTP server options
@@ -215,6 +214,7 @@ type Cfg struct {
 	ProvisioningPath   string
 	DataPath           string
 	LogsPath           string
+	PluginsPath        string
 	BundledPluginsPath string
 
 	// SMTP email settings
@@ -765,7 +765,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.Env = Env
 	InstanceName = valueAsString(iniFile.Section(""), "instance_name", "unknown_instance_name")
 	plugins := valueAsString(iniFile.Section("paths"), "plugins", "")
-	PluginsPath = makeAbsolute(plugins, HomePath)
+	cfg.PluginsPath = makeAbsolute(plugins, HomePath)
 	cfg.BundledPluginsPath = makeAbsolute("plugins-bundled", HomePath)
 	provisioning := valueAsString(iniFile.Section("paths"), "provisioning", "")
 	cfg.ProvisioningPath = makeAbsolute(provisioning, HomePath)
@@ -969,7 +969,7 @@ func (cfg *Cfg) LogConfigSources() {
 	cfg.Logger.Info("Path Home", "path", HomePath)
 	cfg.Logger.Info("Path Data", "path", cfg.DataPath)
 	cfg.Logger.Info("Path Logs", "path", cfg.LogsPath)
-	cfg.Logger.Info("Path Plugins", "path", PluginsPath)
+	cfg.Logger.Info("Path Plugins", "path", cfg.PluginsPath)
 	cfg.Logger.Info("Path Provisioning", "path", cfg.ProvisioningPath)
 	cfg.Logger.Info("App mode " + cfg.Env)
 }
