@@ -25,7 +25,7 @@ You can limit requests based on a hostname, an IP address, or both.
 
 ### Deny list
 
-Any request to a hostname or IP address on the deny-list is denied.
+Grafana blocks any request to a hostname or IP address on the deny list.
 
 ### Allow list
 
