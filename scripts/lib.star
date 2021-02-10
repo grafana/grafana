@@ -310,15 +310,11 @@ def publish_storybook_step(edition, ver_mode):
     }
 
 def upload_cdn(edition):
-    sfx = ''
-    if edition == 'enterprise2':
-        sfx = '-{}'.format(edition)
-
     return {
-        'name': 'upload-cdn-assets' + sfx,
+        'name': 'upload-cdn-assets' + edition_sfx(edition),
         'image': publish_image,
         'depends_on': [
-            'package' + sfx,
+            'package' + edition_sfx(edition),
         ],
         'environment': {
             'GCP_GRAFANA_UPLOAD_KEY': {
@@ -747,14 +743,16 @@ def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publis
     if ver_mode == 'test-release':
         publish = False
 
-    sfx = ''
+    ubuntuSfx = ''
     if ubuntu:
-        sfx = '-ubuntu'
+        ubuntuSfx = '-ubuntu'      
+
     settings = {
         'dry_run': not publish,
         'edition': edition,
         'ubuntu': ubuntu,
     }
+
     if publish:
         settings['username'] = {
             'from_secret': 'docker_user',
@@ -765,11 +763,11 @@ def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publis
     if archs:
         settings['archs'] = ','.join(archs)
     return {
-        'name': 'build-docker-images' + sfx,
+        'name': 'build-docker-images' + ubuntuSfx,
         'image': grafana_docker_image,
         'depends_on': [
             'copy-packages-for-docker',
-            'upload-cdn-assets' + sfx,
+            'upload-cdn-assets' + edition_sfx(edition),
         ],
         'settings': settings,
     }
@@ -862,15 +860,16 @@ def deploy_to_kubernetes_step(edition, is_downstream=False):
         ],
     }
 
+def edition_sfx(edition):      
+    if edition == 'enterprise2':
+        return '-{}'.format(edition)
+    return ''
+
 def upload_packages_step(edition, ver_mode, is_downstream=False):
     if ver_mode == 'master' and edition in ('enterprise', 'enterprise2') and not is_downstream:
         return None
-
-    sfx = ''
-    packages_bucket = ''
-    if edition == 'enterprise2':
-        sfx = '-{}'.format(edition)
-        packages_bucket = ' --packages-bucket grafana-downloads' + sfx
+    
+    packages_bucket = ' --packages-bucket grafana-downloads' + edition_sfx(edition)
 
     if ver_mode == 'test-release':
         cmd = './bin/grabpl upload-packages --edition {} '.format(edition) + \
@@ -879,11 +878,11 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
         cmd = './bin/grabpl upload-packages --edition {}{}'.format(edition, packages_bucket)
 
     return {
-        'name': 'upload-packages' + sfx,
+        'name': 'upload-packages' + edition_sfx(edition),
         'image': publish_image,
         'depends_on': [
-            'package' + sfx,
-            'end-to-end-tests' + sfx,
+            'package' + edition_sfx(edition),
+            'end-to-end-tests' + edition_sfx(edition),
             'mysql-integration-tests',
             'postgres-integration-tests',
         ],
