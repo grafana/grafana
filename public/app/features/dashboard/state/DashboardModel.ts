@@ -34,7 +34,7 @@ export interface CloneOptions {
   message?: string;
 }
 
-type DashboardLinkType = 'link' | 'dashboards';
+export type DashboardLinkType = 'link' | 'dashboards';
 
 export interface DashboardLink {
   icon: string;
@@ -46,6 +46,8 @@ export interface DashboardLink {
   tags: any[];
   searchHits?: any[];
   targetBlank: boolean;
+  keepTime: boolean;
+  includeVars: boolean;
 }
 
 export class DashboardModel {
