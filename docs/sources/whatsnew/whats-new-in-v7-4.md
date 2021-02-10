@@ -192,7 +192,7 @@ After the number of Viewers or Editors has reached its license limit, only Admin
 
 Grafana Enterprise license tokens update automatically on a daily basis, which means you no longer need to manually update your license, and the process for adding additional users to a license is smoother than it was before.
 
-Refer to [Licensing restrictions](../enterprise/license-restrictions.md) for more information.
+Refer to [Licensing restrictions]({{< relref "../enterprise/license-restrictions.md" >}}) for more information.
 
 ### Export usage insights to Loki
 
