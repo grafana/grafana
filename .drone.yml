@@ -898,7 +898,6 @@ steps:
       from_secret: docker_user
   depends_on:
   - copy-packages-for-docker
-  - upload-cdn-assets
 
 - name: build-docker-images-ubuntu
   image: grafana/drone-grafana-docker:0.3.2
@@ -911,7 +910,6 @@ steps:
       from_secret: docker_user
   depends_on:
   - copy-packages-for-docker
-  - upload-cdn-assets
 
 - name: postgres-integration-tests
   image: grafana/build-container:1.3.2
@@ -1301,7 +1299,6 @@ steps:
       from_secret: docker_user
   depends_on:
   - copy-packages-for-docker
-  - upload-cdn-assets
 
 - name: build-docker-images-ubuntu
   image: grafana/drone-grafana-docker:0.3.2
@@ -1314,7 +1311,6 @@ steps:
       from_secret: docker_user
   depends_on:
   - copy-packages-for-docker
-  - upload-cdn-assets
 
 - name: postgres-integration-tests
   image: grafana/build-container:1.3.2
