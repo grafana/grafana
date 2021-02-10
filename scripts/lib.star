@@ -205,12 +205,9 @@ def enterprise_downstream_step(edition):
         },
     }
 
-def lint_backend_step(edition):
-    sfx = ''
-    if edition == 'enterprise2':
-        sfx = '-{}'.format(edition)
+def lint_backend_step(edition):    
     return {
-        'name': 'lint-backend' + sfx,
+        'name': 'lint-backend' + enterprise2_sfx(edition),
         'image': build_image,
         'environment': {
             # We need CGO because of go-sqlite3
@@ -310,15 +307,11 @@ def publish_storybook_step(edition, ver_mode):
     }
 
 def upload_cdn(edition):
-    sfx = ''
-    if edition == 'enterprise2':
-        sfx = '-{}'.format(edition)
-
     return {
-        'name': 'upload-cdn-assets' + sfx,
+        'name': 'upload-cdn-assets' + enterprise2_sfx(edition),
         'image': publish_image,
         'depends_on': [
-            'package' + sfx,
+            'package' + enterprise2_sfx(edition),
         ],
         'environment': {
             'GCP_GRAFANA_UPLOAD_KEY': {
@@ -334,10 +327,6 @@ def build_backend_step(edition, ver_mode, variants=None, is_downstream=False):
     variants_str = ''
     if variants:
         variants_str = ' --variants {}'.format(','.join(variants))
-
-    sfx = ''
-    if edition == 'enterprise2':
-        sfx = '-{}'.format(edition)
 
     # TODO: Convert number of jobs to percentage
     if ver_mode == 'release':
@@ -375,12 +364,12 @@ def build_backend_step(edition, ver_mode, variants=None, is_downstream=False):
         ]
 
     return {
-        'name': 'build-backend' + sfx,
+        'name': 'build-backend' + enterprise2_sfx(edition),
         'image': build_image,
         'depends_on': [
             'initialize',
-            'lint-backend' + sfx,
-            'test-backend' + sfx,
+            'lint-backend' + enterprise2_sfx(edition),
+            'test-backend' + enterprise2_sfx(edition),
         ],
         'environment': env,
         'commands': cmds,
@@ -456,17 +445,13 @@ def build_plugins_step(edition, sign=False):
         ],
     }
 
-def test_backend_step(edition):
-    sfx = ''
-    if edition == 'enterprise2':
-        sfx = '-{}'.format(edition)
-
+def test_backend_step(edition):    
     return {
-        'name': 'test-backend' + sfx,
+        'name': 'test-backend' + enterprise2_sfx(edition),
         'image': build_image,
         'depends_on': [
             'initialize',
-            'lint-backend' + sfx,
+            'lint-backend' + enterprise2_sfx(edition),
         ],
         'commands': [
             # First make sure that there are no tests with FocusConvey
@@ -595,11 +580,7 @@ def gen_version_step(ver_mode, include_enterprise2=False, is_downstream=False):
 def package_step(edition, ver_mode, variants=None, is_downstream=False):
     variants_str = ''
     if variants:
-        variants_str = ' --variants {}'.format(','.join(variants))
-
-    sfx = ''
-    if edition == 'enterprise2':
-        sfx = '-{}'.format(edition)
+        variants_str = ' --variants {}'.format(','.join(variants))    
 
     if ver_mode in ('master', 'release', 'test-release', 'release-branch'):
         sign_args = ' --sign'
@@ -652,7 +633,7 @@ def package_step(edition, ver_mode, variants=None, is_downstream=False):
         ]
 
     return {
-        'name': 'package' + sfx,
+        'name': 'package' + enterprise2_sfx(edition),
         'image': build_image,
         'depends_on': [
             # This step should have all the dependencies required for packaging, and should generate
@@ -663,12 +644,10 @@ def package_step(edition, ver_mode, variants=None, is_downstream=False):
         'commands': cmds,
     }
 
-def e2e_tests_server_step(edition, port=3001):
-    sfx = ''
+def e2e_tests_server_step(edition, port=3001):    
     package_file_pfx = ''
-    if edition == 'enterprise2':
-        sfx = '-{}'.format(edition)
-        package_file_pfx = 'grafana' + sfx
+    if edition == 'enterprise2':        
+        package_file_pfx = 'grafana' + enterprise2_sfx(edition)
     elif edition == 'enterprise':
         package_file_pfx = 'grafana-' + edition
 
@@ -680,11 +659,11 @@ def e2e_tests_server_step(edition, port=3001):
         environment['RUNDIR'] = 'e2e/tmp-{}'.format(package_file_pfx)
 
     return {
-        'name': 'end-to-end-tests-server' + sfx,
+        'name': 'end-to-end-tests-server' + enterprise2_sfx(edition),
         'image': build_image,
         'detach': True,
         'depends_on': [
-            'package' + sfx,
+            'package' + enterprise2_sfx(edition),
         ],
         'environment': environment,
         'commands': [
@@ -693,18 +672,14 @@ def e2e_tests_server_step(edition, port=3001):
     }
 
 def e2e_tests_step(edition, port=3001):
-    sfx = ''
-    if edition == 'enterprise2':
-        sfx = '-{}'.format(edition)
-
     return {
-        'name': 'end-to-end-tests' + sfx,
+        'name': 'end-to-end-tests' + enterprise2_sfx(edition),
         'image': 'grafana/ci-e2e:12.19.0-1',
         'depends_on': [
-            'end-to-end-tests-server' + sfx,
+            'end-to-end-tests-server' + enterprise2_sfx(edition),
         ],
         'environment': {
-            'HOST': 'end-to-end-tests-server' + sfx,
+            'HOST': 'end-to-end-tests-server' + enterprise2_sfx(edition),
         },
         'commands': [
             # Have to re-install Cypress since it insists on searching for its binary beneath /root/.cache,
@@ -747,14 +722,16 @@ def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publis
     if ver_mode == 'test-release':
         publish = False
 
-    sfx = ''
+    ubuntu_sfx = ''
     if ubuntu:
-        sfx = '-ubuntu'
+        ubuntu_sfx = '-ubuntu'      
+
     settings = {
         'dry_run': not publish,
         'edition': edition,
         'ubuntu': ubuntu,
-    }
+    }    
+
     if publish:
         settings['username'] = {
             'from_secret': 'docker_user',
@@ -765,11 +742,9 @@ def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publis
     if archs:
         settings['archs'] = ','.join(archs)
     return {
-        'name': 'build-docker-images' + sfx,
+        'name': 'build-docker-images' + ubuntu_sfx,
         'image': grafana_docker_image,
-        'depends_on': [
-            'copy-packages-for-docker',
-        ],
+        'depends_on': ['copy-packages-for-docker'],
         'settings': settings,
     }
 
@@ -861,15 +836,16 @@ def deploy_to_kubernetes_step(edition, is_downstream=False):
         ],
     }
 
+def enterprise2_sfx(edition):      
+    if edition == 'enterprise2':
+        return '-{}'.format(edition)
+    return ''
+
 def upload_packages_step(edition, ver_mode, is_downstream=False):
     if ver_mode == 'master' and edition in ('enterprise', 'enterprise2') and not is_downstream:
         return None
-
-    sfx = ''
-    packages_bucket = ''
-    if edition == 'enterprise2':
-        sfx = '-{}'.format(edition)
-        packages_bucket = ' --packages-bucket grafana-downloads' + sfx
+    
+    packages_bucket = ' --packages-bucket grafana-downloads' + enterprise2_sfx(edition)
 
     if ver_mode == 'test-release':
         cmd = './bin/grabpl upload-packages --edition {} '.format(edition) + \
@@ -878,11 +854,11 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
         cmd = './bin/grabpl upload-packages --edition {}{}'.format(edition, packages_bucket)
 
     return {
-        'name': 'upload-packages' + sfx,
+        'name': 'upload-packages' + enterprise2_sfx(edition),
         'image': publish_image,
         'depends_on': [
-            'package' + sfx,
-            'end-to-end-tests' + sfx,
+            'package' + enterprise2_sfx(edition),
+            'end-to-end-tests' + enterprise2_sfx(edition),
             'mysql-integration-tests',
             'postgres-integration-tests',
         ],
