@@ -1,12 +1,13 @@
 import React, { FormEvent, PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
-import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { css } from 'emotion';
-import { DataFrame, GrafanaTheme, SelectableValue } from '@grafana/data';
+import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { PageToolbar, stylesFactory, ToolbarButton } from '@grafana/ui';
+
 import { config } from 'app/core/config';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
-import AlertingQueryEditor from './components/AlertingQueryEditor';
+import { AlertingQueryEditor } from './components/AlertingQueryEditor';
 import { AlertDefinitionOptions } from './components/AlertDefinitionOptions';
 import { AlertingQueryPreview } from './components/AlertingQueryPreview';
 import {
@@ -21,37 +22,42 @@ import {
   updateAlertDefinitionUiState,
 } from './state/actions';
 import { getRouteParamsId } from 'app/core/selectors/location';
-import { AlertDefinition, AlertDefinitionUiState, QueryGroupOptions, StoreState } from '../../types';
-import { PanelQueryRunner } from '../query/state/PanelQueryRunner';
+import { StoreState } from 'app/types';
+
+function mapStateToProps(state: StoreState) {
+  const pageId = getRouteParamsId(state.location);
+
+  return {
+    uiState: state.alertDefinition.uiState,
+    getQueryOptions: state.alertDefinition.getQueryOptions,
+    queryRunner: state.alertDefinition.queryRunner,
+    getInstances: state.alertDefinition.getInstances,
+    alertDefinition: state.alertDefinition.alertDefinition,
+    pageId: (pageId as string) ?? '',
+  };
+}
+
+const mapDispatchToProps = {
+  updateAlertDefinitionUiState,
+  updateAlertDefinitionOption,
+  evaluateAlertDefinition,
+  updateAlertDefinition,
+  createAlertDefinition,
+  getAlertDefinition,
+  evaluateNotSavedAlertDefinition,
+  onRunQueries,
+  cleanUpDefinitionState,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
 
 interface OwnProps {
   saveDefinition: typeof createAlertDefinition | typeof updateAlertDefinition;
 }
 
-interface ConnectedProps {
-  uiState: AlertDefinitionUiState;
-  queryRunner?: PanelQueryRunner;
-  getQueryOptions: () => QueryGroupOptions;
-  getInstances: () => DataFrame[];
-  alertDefinition: AlertDefinition;
-  pageId: string;
-}
+type Props = OwnProps & ConnectedProps<typeof connector>;
 
-interface DispatchProps {
-  updateAlertDefinitionUiState: typeof updateAlertDefinitionUiState;
-  updateAlertDefinitionOption: typeof updateAlertDefinitionOption;
-  evaluateAlertDefinition: typeof evaluateAlertDefinition;
-  getAlertDefinition: typeof getAlertDefinition;
-  updateAlertDefinition: typeof updateAlertDefinition;
-  createAlertDefinition: typeof createAlertDefinition;
-  evaluateNotSavedAlertDefinition: typeof evaluateNotSavedAlertDefinition;
-  onRunQueries: typeof onRunQueries;
-  cleanUpDefinitionState: typeof cleanUpDefinitionState;
-}
-
-type Props = OwnProps & ConnectedProps & DispatchProps;
-
-class NextGenAlertingPage extends PureComponent<Props> {
+class NextGenAlertingPageUnconnected extends PureComponent<Props> {
   componentDidMount() {
     const { getAlertDefinition, pageId } = this.props;
 
@@ -166,32 +172,7 @@ class NextGenAlertingPage extends PureComponent<Props> {
   }
 }
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state) => {
-  const pageId = getRouteParamsId(state.location);
-
-  return {
-    uiState: state.alertDefinition.uiState,
-    getQueryOptions: state.alertDefinition.getQueryOptions,
-    queryRunner: state.alertDefinition.queryRunner,
-    getInstances: state.alertDefinition.getInstances,
-    alertDefinition: state.alertDefinition.alertDefinition,
-    pageId: (pageId as string) ?? '',
-  };
-};
-
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
-  updateAlertDefinitionUiState,
-  updateAlertDefinitionOption,
-  evaluateAlertDefinition,
-  updateAlertDefinition,
-  createAlertDefinition,
-  getAlertDefinition,
-  evaluateNotSavedAlertDefinition,
-  onRunQueries,
-  cleanUpDefinitionState,
-};
-
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(NextGenAlertingPage));
+export default hot(module)(connector(NextGenAlertingPageUnconnected));
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   wrapper: css`

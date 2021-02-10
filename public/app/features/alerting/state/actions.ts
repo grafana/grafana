@@ -219,7 +219,7 @@ export function evaluateNotSavedAlertDefinition(): ThunkResult<void> {
 
 export function cleanUpDefinitionState(): ThunkResult<void> {
   return (dispatch) => {
-    dispatch(cleanUpState());
+    dispatch(cleanUpState(undefined));
   };
 }
 
