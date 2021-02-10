@@ -1,6 +1,6 @@
 import { configure } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
-import 'jquery';
+import $ from 'jquery';
 import 'mutationobserver-shim';
 
 const global = window as any;
