@@ -9,6 +9,8 @@ import ttiPolyfill from 'tti-polyfill';
 
 import 'file-saver';
 import 'jquery';
+import _ from 'lodash';
+import angular from 'angular';
 import 'angular-route';
 import 'angular-sanitize';
 import 'angular-bindonce';
@@ -17,10 +19,8 @@ import 'react-dom';
 
 import 'vendor/bootstrap/bootstrap';
 import 'vendor/angular-other/angular-strap';
-import angular from 'angular';
 import config from 'app/core/config';
 // @ts-ignore ignoring this for now, otherwise we would have to extend _ interface with move
-import _ from 'lodash';
 import {
   AppEvents,
   setLocale,
