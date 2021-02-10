@@ -307,7 +307,9 @@ New duration for renewed tokens. Vault may be configured to ignore this value an
 
 ## [security.egress]
 
-> **Note:** Available in Grafana Enterprise v7.4+.
+> **Note:** Available in Grafana Enterprise v7.4 and later versions.
+
+Security egress makes it possible to control outgoing traffic from the Grafana server.
 
 ### host_deny_list
 
@@ -321,6 +323,6 @@ A list of hostnames or IP addresses separated by spaces for which requests are a
 
 A list of headers that are stripped from the outgoing data source and alerting requests.
 
-### cookie_drop_list =
+### cookie_drop_list
 
 A list of cookies that are stripped from the outgoing data source and alerting requests.
