@@ -44,6 +44,7 @@ const getStyles = (theme: GrafanaTheme) => ({
   wrapper: css`
     flex-basis: 150px;
     width: 100px;
+    margin-top: ${theme.spacing.sm};
   `,
   externalLinksHeading: css`
     color: ${theme.colors.textWeak};
@@ -55,7 +56,6 @@ const getStyles = (theme: GrafanaTheme) => ({
     color: ${theme.colors.linkExternal};
     font-weight: ${theme.typography.weight.regular};
     display: block;
-    margin-top: ${theme.spacing.sm};
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

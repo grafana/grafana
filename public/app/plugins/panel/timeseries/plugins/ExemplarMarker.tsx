@@ -81,7 +81,7 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({ timeZone, dataFr
                         <td valign="top">{field.name}</td>
                         <td>
                           <div className={styles.valueWrapper}>
-                            {field.type === FieldType.time ? timeFormatter(value) : value}
+                            <span>{field.type === FieldType.time ? timeFormatter(value) : value}</span>
                             {links && <FieldLinkList links={links} />}
                           </div>
                         </td>
@@ -177,8 +177,13 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme) => {
       flex-wrap: wrap;
       column-gap: ${theme.spacing.sm};
 
+      > span {
+        flex-grow: 0;
+      }
+
       > * {
-        flex: 1 1 150px;
+        flex: 1 1;
+        align-self: center;
       }
     `,
     tooltip: css`
