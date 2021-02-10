@@ -26,6 +26,7 @@ import {
   TimeRange,
   TimeZone,
   transformDataFrame,
+  cleanDuplicateFieldNames,
 } from '@grafana/data';
 
 export interface QueryRunnerOptions<
@@ -115,7 +116,9 @@ export class PanelQueryRunner {
             return of(data);
           }
 
-          return transformDataFrame(transformations, data.series).pipe(map((series) => ({ ...data, series })));
+          return transformDataFrame(transformations, data.series).pipe(
+            map((series) => ({ ...data, series: cleanDuplicateFieldNames(series) }))
+          );
         })
       );
   };

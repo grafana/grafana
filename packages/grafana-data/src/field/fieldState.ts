@@ -47,6 +47,30 @@ export function getFieldDisplayName(field: Field, frame?: DataFrame, allFrames?:
 }
 
 /**
+ * Will keep the first occurance of all names, but clear any cached duplicate names
+ *
+ * This will trigger re-calculating the displayName when it is requested.
+ *
+ * NOTE: the field state may be modified
+ */
+export function cleanDuplicateFieldNames(frames: DataFrame[]): DataFrame[] {
+  for (const frame of frames) {
+    const names = new Set<string>();
+    for (const field of frame.fields) {
+      const name = field.state?.displayName;
+      if (name) {
+        if (names.has(name)) {
+          field.state!.displayName = undefined;
+        } else {
+          names.add(name);
+        }
+      }
+    }
+  }
+  return frames;
+}
+
+/**
  * Get an appropriate display name. If the 'displayName' field config is set, use that
  */
 function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: DataFrame[]): string {
@@ -133,7 +157,7 @@ function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: 
   return displayName;
 }
 
-function getUniqueFieldName(field: Field, frame?: DataFrame) {
+function getUniqueFieldName(field: Field, frame?: DataFrame): string {
   let dupeCount = 0;
   let foundSelf = false;
 
