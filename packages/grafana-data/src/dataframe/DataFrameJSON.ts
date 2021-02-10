@@ -38,19 +38,19 @@ export interface DataFrameData {
    * Holds value bases per field so we can encode numbers from fixed points
    * e.g. [1612900958, 1612900959, 1612900960] -> 1612900958 + [0, 1, 2]
    */
-  bases?: number[][];
+  bases?: number[];
 
   /**
    * Holds value multipliers per field so we can encode large numbers concisely
    * e.g. [4900000000, 35000000000] -> 1e9 + [35, 4.9]
    */
-  factors?: number[][];
+  factors?: number[];
 
   /**
    * Holds enums per field so we can encode recurring values as ints
    * e.g. ["foo", "foo", "baz", "foo"] -> ["foo", "baz"] + [0,0,1,0]
    */
-  enums?: number[][];
+  enums?: any[][];
 }
 
 /**
