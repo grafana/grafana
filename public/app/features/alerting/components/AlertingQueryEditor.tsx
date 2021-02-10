@@ -13,7 +13,7 @@ interface OwnProps {}
 
 interface ConnectedProps {
   queryOptions: QueryGroupOptions;
-  queryRunner: PanelQueryRunner;
+  queryRunner?: PanelQueryRunner;
 }
 interface DispatchProps {
   queryOptionsChange: typeof queryOptionsChange;
@@ -51,7 +51,7 @@ export class AlertingQueryEditor extends PureComponent<Props> {
             />
           </div>
           <QueryGroup
-            queryRunner={queryRunner}
+            queryRunner={queryRunner!} // if the queryRunner is undefined here somethings very wrong so it's ok to throw an unhandled error
             options={queryOptions}
             onRunQueries={this.onRunQueries}
             onOptionsChange={this.onQueryOptionsChange}

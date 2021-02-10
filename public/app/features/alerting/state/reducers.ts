@@ -165,40 +165,47 @@ const alertDefinitionSlice = createSlice({
     setAlertDefinition: (state: AlertDefinitionState, action: PayloadAction<AlertDefinitionDTO>) => {
       const currentOptions = state.getQueryOptions();
 
-      return {
-        ...state,
-        alertDefinition: {
-          title: action.payload.title,
-          id: action.payload.id,
-          uid: action.payload.uid,
-          condition: action.payload.condition,
-          intervalSeconds: action.payload.intervalSeconds,
-          data: action.payload.data,
-          description: '',
-        },
-        getQueryOptions: () => ({
-          ...currentOptions,
-          queries: action.payload.data.map((q: AlertDefinitionQueryModel) => ({ ...q.model })),
-        }),
-      };
+      state.alertDefinition.title = action.payload.title;
+      state.alertDefinition.id = action.payload.id;
+      state.alertDefinition.uid = action.payload.uid;
+      state.alertDefinition.condition = action.payload.condition;
+      state.alertDefinition.intervalSeconds = action.payload.intervalSeconds;
+      state.alertDefinition.data = action.payload.data;
+      state.alertDefinition.description = action.payload.description;
+      state.getQueryOptions = () => ({
+        ...currentOptions,
+        queries: action.payload.data.map((q: AlertDefinitionQueryModel) => ({ ...q.model })),
+      });
     },
     updateAlertDefinitionOptions: (state: AlertDefinitionState, action: PayloadAction<Partial<AlertDefinition>>) => {
-      return { ...state, alertDefinition: { ...state.alertDefinition, ...action.payload } };
+      state.alertDefinition = { ...state.alertDefinition, ...action.payload };
     },
     setUiState: (state: AlertDefinitionState, action: PayloadAction<AlertDefinitionUiState>) => {
-      return { ...state, uiState: { ...state.uiState, ...action.payload } };
+      state.uiState = { ...state.uiState, ...action.payload };
     },
     setQueryOptions: (state: AlertDefinitionState, action: PayloadAction<QueryGroupOptions>) => {
-      return {
-        ...state,
-        getQueryOptions: () => action.payload,
-      };
+      state.getQueryOptions = () => action.payload;
     },
     setAlertDefinitions: (state: AlertDefinitionState, action: PayloadAction<AlertDefinition[]>) => {
-      return { ...state, alertDefinitions: action.payload };
+      state.alertDefinitions = action.payload;
     },
     setInstanceData: (state: AlertDefinitionState, action: PayloadAction<DataFrame[]>) => {
-      return { ...state, getInstances: () => action.payload };
+      state.getInstances = () => action.payload;
+    },
+    cleanUpState: (state: AlertDefinitionState, action: PayloadAction<undefined>) => {
+      if (state.queryRunner) {
+        state.queryRunner.destroy();
+        state.queryRunner = undefined;
+        delete state.queryRunner;
+        state.queryRunner = new PanelQueryRunner(dataConfig);
+      }
+
+      state.alertDefinitions = initialAlertDefinitionState.alertDefinitions;
+      state.alertDefinition = initialAlertDefinitionState.alertDefinition;
+      state.data = initialAlertDefinitionState.data;
+      state.getInstances = initialAlertDefinitionState.getInstances;
+      state.getQueryOptions = initialAlertDefinitionState.getQueryOptions;
+      state.uiState = initialAlertDefinitionState.uiState;
     },
   },
 });
@@ -218,6 +225,7 @@ export const {
   setAlertDefinitions,
   setAlertDefinition,
   setInstanceData,
+  cleanUpState,
 } = alertDefinitionSlice.actions;
 
 export const alertRulesReducer = alertRulesSlice.reducer;

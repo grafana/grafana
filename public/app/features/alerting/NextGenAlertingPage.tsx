@@ -1,16 +1,16 @@
 import React, { FormEvent, PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
-import { MapDispatchToProps, MapStateToProps } from 'react-redux';
+import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { css } from 'emotion';
 import { DataFrame, GrafanaTheme, SelectableValue } from '@grafana/data';
 import { PageToolbar, stylesFactory, ToolbarButton } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
-import { connectWithCleanUp } from 'app/core/components/connectWithCleanUp';
 import AlertingQueryEditor from './components/AlertingQueryEditor';
 import { AlertDefinitionOptions } from './components/AlertDefinitionOptions';
 import { AlertingQueryPreview } from './components/AlertingQueryPreview';
 import {
+  cleanUpDefinitionState,
   createAlertDefinition,
   evaluateAlertDefinition,
   evaluateNotSavedAlertDefinition,
@@ -30,7 +30,7 @@ interface OwnProps {
 
 interface ConnectedProps {
   uiState: AlertDefinitionUiState;
-  queryRunner: PanelQueryRunner;
+  queryRunner?: PanelQueryRunner;
   getQueryOptions: () => QueryGroupOptions;
   getInstances: () => DataFrame[];
   alertDefinition: AlertDefinition;
@@ -46,6 +46,7 @@ interface DispatchProps {
   createAlertDefinition: typeof createAlertDefinition;
   evaluateNotSavedAlertDefinition: typeof evaluateNotSavedAlertDefinition;
   onRunQueries: typeof onRunQueries;
+  cleanUpDefinitionState: typeof cleanUpDefinitionState;
 }
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
@@ -57,6 +58,10 @@ class NextGenAlertingPage extends PureComponent<Props> {
     if (pageId) {
       getAlertDefinition(pageId);
     }
+  }
+
+  componentWillUnmount() {
+    this.props.cleanUpDefinitionState();
   }
 
   onChangeAlertOption = (event: FormEvent<HTMLElement>) => {
@@ -135,7 +140,7 @@ class NextGenAlertingPage extends PureComponent<Props> {
             leftPaneComponents={[
               <AlertingQueryPreview
                 key="queryPreview"
-                queryRunner={queryRunner}
+                queryRunner={queryRunner!} // if the queryRunner is undefined here somethings very wrong so it's ok to throw an unhandled error
                 getInstances={getInstances}
                 queries={queryOptions.queries}
                 onTest={this.onTest}
@@ -183,11 +188,10 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   getAlertDefinition,
   evaluateNotSavedAlertDefinition,
   onRunQueries,
+  cleanUpDefinitionState,
 };
 
-export default hot(module)(
-  connectWithCleanUp(mapStateToProps, mapDispatchToProps, (state) => state.alertDefinition)(NextGenAlertingPage)
-);
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(NextGenAlertingPage));
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   wrapper: css`

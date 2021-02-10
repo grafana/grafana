@@ -11,27 +11,28 @@ import { appEvents } from 'app/core/core';
 import { updateLocation } from 'app/core/actions';
 import store from 'app/core/store';
 import {
-  notificationChannelLoaded,
+  ALERT_DEFINITION_UI_STATE_STORAGE_KEY,
+  cleanUpState,
   loadAlertRules,
   loadedAlertRules,
-  setNotificationChannels,
-  setUiState,
-  ALERT_DEFINITION_UI_STATE_STORAGE_KEY,
-  updateAlertDefinitionOptions,
-  setQueryOptions,
-  setAlertDefinitions,
+  notificationChannelLoaded,
   setAlertDefinition,
+  setAlertDefinitions,
   setInstanceData,
+  setNotificationChannels,
+  setQueryOptions,
+  setUiState,
+  updateAlertDefinitionOptions,
 } from './reducers';
 import {
   AlertDefinition,
+  AlertDefinitionState,
   AlertDefinitionUiState,
   AlertRuleDTO,
   NotifierDTO,
-  ThunkResult,
-  QueryGroupOptions,
   QueryGroupDataSource,
-  AlertDefinitionState,
+  QueryGroupOptions,
+  ThunkResult,
 } from 'app/types';
 import { ExpressionDatasourceID } from '../../expressions/ExpressionDatasource';
 import { ExpressionQuery } from '../../expressions/types';
@@ -173,7 +174,8 @@ export function onRunQueries(): ThunkResult<void> {
     const timeRange = { from: 'now-1h', to: 'now' };
     const queryOptions = getQueryOptions();
 
-    queryRunner.run({
+    queryRunner!.run({
+      // if the queryRunner is undefined here somethings very wrong so it's ok to throw an unhandled error
       timezone: 'browser',
       timeRange: { from: dateMath.parse(timeRange.from)!, to: dateMath.parse(timeRange.to)!, raw: timeRange },
       maxDataPoints: queryOptions.maxDataPoints ?? 100,
@@ -212,6 +214,12 @@ export function evaluateNotSavedAlertDefinition(): ThunkResult<void> {
     const handledResponse = handleBase64Response(response.instances);
     dispatch(setInstanceData(handledResponse));
     appEvents.emit(AppEvents.alertSuccess, ['Alert definition tested successfully']);
+  };
+}
+
+export function cleanUpDefinitionState(): ThunkResult<void> {
+  return (dispatch) => {
+    dispatch(cleanUpState());
   };
 }
 
