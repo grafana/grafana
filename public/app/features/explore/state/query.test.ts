@@ -10,15 +10,7 @@ import {
 } from './query';
 import { ExploreId, ExploreItemState } from 'app/types';
 import { interval, of } from 'rxjs';
-import {
-  ArrayVector,
-  DataQueryResponse,
-  DefaultTimeZone,
-  EventBusExtended,
-  MutableDataFrame,
-  RawTimeRange,
-  toUtc,
-} from '@grafana/data';
+import { ArrayVector, DataQueryResponse, DefaultTimeZone, MutableDataFrame, RawTimeRange, toUtc } from '@grafana/data';
 import { thunkTester } from 'test/core/thunk/thunkTester';
 import { makeExplorePaneState } from './utils';
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
