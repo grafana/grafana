@@ -821,7 +821,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	GoogleAnalyticsId = analytics.Key("google_analytics_ua_id").String()
 	GoogleTagManagerId = analytics.Key("google_tag_manager_id").String()
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
-	ReportingDistributor = analytics.Key("reporting_distributor").MustString("grafana_labs")
+	ReportingDistributor = analytics.Key("reporting_distributor").MustString("grafana-labs")
 	if len(ReportingDistributor) >= 100 {
 		ReportingDistributor = ReportingDistributor[:100]
 	}
