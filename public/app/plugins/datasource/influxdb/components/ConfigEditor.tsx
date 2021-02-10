@@ -269,7 +269,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
         {options.jsonData.version === InfluxVersion.Flux && (
           <InfoBox>
-            <h5>Support for flux in Grafana is currently in beta</h5>
+            <h5>Support for Flux in Grafana is currently in beta</h5>
             <p>
               Please report any issues to: <br />
               <a href="https://github.com/grafana/grafana/issues/new/choose">
