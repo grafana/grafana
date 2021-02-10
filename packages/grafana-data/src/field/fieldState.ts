@@ -52,15 +52,24 @@ export function getFieldDisplayName(field: Field, frame?: DataFrame, allFrames?:
  * NOTE: the field state may be modified
  */
 export function cleanDuplicateFieldNames(frames: DataFrame[]): DataFrame[] {
+  const names = new Map<string, number>();
   for (const frame of frames) {
-    const names = new Set<string>();
+    names.clear();
     for (const field of frame.fields) {
-      const name = field.state?.displayName;
+      const name = field.state?.displayName ?? field.config.displayName;
       if (name) {
-        if (names.has(name)) {
-          field.state!.displayName = undefined;
+        const count = names.get(name);
+        if (count) {
+          // Modify display for duplicate configurations
+          if (field.config.displayName) {
+            field.state = field.state ?? {};
+            field.state!.displayName = `${field.config.displayName} ${count + 1}`;
+            names.set(name, count + 1);
+          } else {
+            field.state!.displayName = undefined;
+          }
         } else {
-          names.add(name);
+          names.set(name, 1);
         }
       }
     }
@@ -72,7 +81,7 @@ export function cleanDuplicateFieldNames(frames: DataFrame[]): DataFrame[] {
  * Get an appropriate display name. If the 'displayName' field config is set, use that
  */
 function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: DataFrame[]): string {
-  const hasConfigTitle = field.config?.displayName && field.config?.displayName.length;
+  const hasConfigTitle = !!field.config?.displayName;
 
   let displayName = hasConfigTitle ? field.config!.displayName! : field.name;
 

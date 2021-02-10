@@ -26,7 +26,6 @@ import {
   TimeRange,
   TimeZone,
   transformDataFrame,
-  cleanDuplicateFieldNames,
 } from '@grafana/data';
 
 export interface QueryRunnerOptions<
