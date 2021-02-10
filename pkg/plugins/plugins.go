@@ -85,7 +85,7 @@ func (pm *PluginManager) Init() error {
 
 	pm.log.Info("Starting plugin search")
 
-	plugDir := filepath.Join(setting.StaticRootPath, "app/plugins")
+	plugDir := filepath.Join(pm.Cfg.StaticRootPath, "app/plugins")
 	pm.log.Debug("Scanning core plugin directory", "dir", plugDir)
 	if err := pm.scan(plugDir, false); err != nil {
 		return errutil.Wrapf(err, "failed to scan core plugin directory '%s'", plugDir)
@@ -104,21 +104,21 @@ func (pm *PluginManager) Init() error {
 	}
 
 	// check if plugins dir exists
-	exists, err = fs.Exists(setting.PluginsPath)
+	exists, err = fs.Exists(pm.Cfg.PluginsPath)
 	if err != nil {
 		return err
 	}
 	if !exists {
-		if err = os.MkdirAll(setting.PluginsPath, os.ModePerm); err != nil {
-			pm.log.Error("failed to create external plugins directory", "dir", setting.PluginsPath, "error", err)
+		if err = os.MkdirAll(pm.Cfg.PluginsPath, os.ModePerm); err != nil {
+			pm.log.Error("failed to create external plugins directory", "dir", pm.Cfg.PluginsPath, "error", err)
 		} else {
-			pm.log.Info("External plugins directory created", "directory", setting.PluginsPath)
+			pm.log.Info("External plugins directory created", "directory", pm.Cfg.PluginsPath)
 		}
 	} else {
-		pm.log.Debug("Scanning external plugins directory", "dir", setting.PluginsPath)
-		if err := pm.scan(setting.PluginsPath, true); err != nil {
+		pm.log.Debug("Scanning external plugins directory", "dir", pm.Cfg.PluginsPath)
+		if err := pm.scan(pm.Cfg.PluginsPath, true); err != nil {
 			return errutil.Wrapf(err, "failed to scan external plugins directory '%s'",
-				setting.PluginsPath)
+				pm.Cfg.PluginsPath)
 		}
 	}
 
@@ -254,7 +254,7 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 		jsonFPath := filepath.Join(plugin.PluginDir, "plugin.json")
 
 		// External plugins need a module.js file for SystemJS to load
-		if !strings.HasPrefix(jsonFPath, setting.StaticRootPath) && !scanner.IsBackendOnlyPlugin(plugin.Type) {
+		if !strings.HasPrefix(jsonFPath, pm.Cfg.StaticRootPath) && !scanner.IsBackendOnlyPlugin(plugin.Type) {
 			module := filepath.Join(plugin.PluginDir, "module.js")
 			exists, err := fs.Exists(module)
 			if err != nil {
@@ -459,7 +459,7 @@ func (s *PluginScanner) allowUnsigned(plugin *PluginBase) bool {
 		return s.allowUnsignedPluginsCondition(plugin)
 	}
 
-	if setting.Env == setting.Dev {
+	if s.cfg.Env == setting.Dev {
 		return true
 	}
 
