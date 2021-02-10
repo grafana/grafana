@@ -294,7 +294,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
           <div className="gf-form-inline">
             <div className="gf-form">
               <InlineFormLabel
-                tooltip="Max number of series that will be returned from the data source query. Defaults to 1000."
+                tooltip="Limit the number of series/tables that Grafana will process. Lower this number to prevent abuse, and increase it if you have lots of small time series and not all are shown. Defaults to 1000."
                 className="width-10"
               >
                 Max series
