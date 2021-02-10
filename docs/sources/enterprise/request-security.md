@@ -44,7 +44,7 @@ host_allow_list = prometheus.internal
 
 ## Drop headers and cookies
 
-It is possible to set a list of cookies or headers that are to be dropped from outgoing requests.
+You can set a list of cookies or headers that are to be dropped from outgoing requests.
 
 Example:
 
