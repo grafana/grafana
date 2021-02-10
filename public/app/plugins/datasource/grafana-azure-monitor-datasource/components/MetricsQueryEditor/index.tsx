@@ -2,16 +2,18 @@ import React from 'react';
 
 import Datasource from '../../datasource';
 import { AzureMonitorQuery } from '../../types';
+import { useMetricsMetadata } from '../metrics';
+import SubscriptionField from '../SubscriptionField';
 import MetricNamespaceField from './MetricNamespaceField';
 import NamespaceField from './NamespaceField';
 import ResourceGroupsField from './ResourceGroupsField';
 import ResourceNameField from './ResourceNameField';
 import MetricNameField from './MetricNameField';
 import AggregationField from './AggregationField';
-import { useMetricsMetadata } from '../metrics';
 import TimeGrainField from './TimeGrainField';
 import DimensionFields from './DimensionFields';
-import SubscriptionField from '../SubscriptionField';
+import TopField from './TopField';
+import LegendFormatField from './LegendFormatField';
 
 interface MetricsQueryEditorProps {
   query: AzureMonitorQuery;
@@ -23,46 +25,29 @@ interface MetricsQueryEditorProps {
 const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({ query, datasource, subscriptionId, onChange }) => {
   const metricsMetadata = useMetricsMetadata(datasource, query, subscriptionId, onChange);
 
-  // Single dynamic onChange function might be a bit unwieldly. Let's see how it goes.
-  // This type magic ensures its only ever called with valid key/value pairs of the azureMonitor object
-  function onFieldChange<Key extends keyof AzureMonitorQuery['azureMonitor']>(
-    field: Key,
-    value: AzureMonitorQuery['azureMonitor'][Key]
-  ) {
-    // TODO: when fields change, we actually need to unset all the "lower" fields that depend on this as well
-    onChange({
-      ...query,
-      azureMonitor: {
-        ...query.azureMonitor,
-        [field]: value,
-      },
-    });
-  }
-
   return (
     <>
       <SubscriptionField
         query={query}
         datasource={datasource}
         subscriptionId={subscriptionId}
-        onChange={onFieldChange}
-        onQueryChange={() => {}} // TODO
+        onQueryChange={onChange}
       />
 
       <ResourceGroupsField
         query={query}
         datasource={datasource}
         subscriptionId={subscriptionId}
-        onChange={onFieldChange}
+        onQueryChange={onChange}
       />
 
-      <NamespaceField query={query} datasource={datasource} subscriptionId={subscriptionId} onChange={onFieldChange} />
+      <NamespaceField query={query} datasource={datasource} subscriptionId={subscriptionId} onQueryChange={onChange} />
 
       <ResourceNameField
         query={query}
         datasource={datasource}
         subscriptionId={subscriptionId}
-        onChange={onFieldChange}
+        onQueryChange={onChange}
       />
 
       {/* TODO: Can we hide this field if there's only one option, and its the same as the namespace? */}
@@ -70,16 +55,16 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({ query, datasour
         query={query}
         datasource={datasource}
         subscriptionId={subscriptionId}
-        onChange={onFieldChange}
+        onQueryChange={onChange}
       />
 
-      <MetricNameField query={query} datasource={datasource} subscriptionId={subscriptionId} onChange={onFieldChange} />
+      <MetricNameField query={query} datasource={datasource} subscriptionId={subscriptionId} onQueryChange={onChange} />
 
       <AggregationField
         query={query}
         datasource={datasource}
         subscriptionId={subscriptionId}
-        onChange={onFieldChange}
+        onQueryChange={onChange}
         aggregationOptions={metricsMetadata?.aggOptions ?? []}
       />
 
@@ -87,7 +72,7 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({ query, datasour
         query={query}
         datasource={datasource}
         subscriptionId={subscriptionId}
-        onChange={onFieldChange}
+        onQueryChange={onChange}
         timeGrainOptions={metricsMetadata?.timeGrains ?? []}
       />
 
@@ -95,8 +80,17 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({ query, datasour
         query={query}
         datasource={datasource}
         subscriptionId={subscriptionId}
-        onChange={onFieldChange}
+        onQueryChange={onChange}
         dimensionOptions={metricsMetadata?.dimensions ?? []}
+      />
+
+      <TopField query={query} datasource={datasource} subscriptionId={subscriptionId} onQueryChange={onChange} />
+
+      <LegendFormatField
+        query={query}
+        datasource={datasource}
+        subscriptionId={subscriptionId}
+        onQueryChange={onChange}
       />
     </>
   );

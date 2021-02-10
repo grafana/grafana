@@ -1,19 +1,22 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Select } from '@grafana/ui';
+import { SelectableValue } from '@grafana/data';
 
 import { Field } from '../Field';
-import { findOption, MetricsQueryEditorFieldProps, Option, toOption } from '../common';
+import { findOption, toOption } from '../common';
+import { AzureQueryEditorFieldProps, Option } from '../../types';
 
-const ResourceGroupsField: React.FC<MetricsQueryEditorFieldProps> = ({
+const ResourceGroupsField: React.FC<AzureQueryEditorFieldProps> = ({
   query,
   datasource,
   subscriptionId,
-  onChange,
+  onQueryChange,
 }) => {
   const [options, setOptions] = useState<Option[]>([]);
 
   useEffect(() => {
     if (!subscriptionId) {
+      options.length > 0 && setOptions([]);
       return;
     }
 
@@ -26,11 +29,35 @@ const ResourceGroupsField: React.FC<MetricsQueryEditorFieldProps> = ({
       });
   }, [subscriptionId]);
 
+  const handleChange = useCallback(
+    (change: SelectableValue<string>) => {
+      if (!change.value) {
+        return;
+      }
+
+      onQueryChange({
+        ...query,
+        azureMonitor: {
+          ...query.azureMonitor,
+          resourceGroup: change.value,
+          metricDefinition: 'select',
+          resourceName: 'select',
+          metricNamespace: 'select',
+          metricName: 'select',
+          aggregation: '',
+          timeGrain: '',
+          dimensionFilters: [],
+        },
+      });
+    },
+    [query]
+  );
+
   return (
-    <Field label="Resource Group" labelWidth={16}>
+    <Field label="Resource Group">
       <Select
         value={findOption(options, query.azureMonitor.resourceGroup)}
-        onChange={(v) => v.value && onChange('resourceGroup', v.value)}
+        onChange={handleChange}
         options={options}
         width={38}
       />

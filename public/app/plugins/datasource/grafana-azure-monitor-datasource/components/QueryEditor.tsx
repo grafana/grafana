@@ -15,9 +15,7 @@ const QueryEditor: React.FC<BaseQueryEditorProps> = ({ query, datasource, onChan
 
   return (
     <div>
-      <hr />
       <QueryTypeField query={query} onQueryChange={onChange} />
-
       <EditorForQueryType subscriptionId={subscriptionId} query={query} datasource={datasource} onChange={onChange} />
     </div>
   );

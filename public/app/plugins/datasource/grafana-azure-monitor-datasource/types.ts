@@ -1,4 +1,5 @@
 import { DataQuery, DataSourceJsonData, DataSourceSettings, TableData } from '@grafana/data';
+import Datasource from './datasource';
 
 export type AzureDataSourceSettings = DataSourceSettings<AzureDataSourceJsonData, AzureDataSourceSecureJsonData>;
 
@@ -153,4 +154,14 @@ export interface AzureLogsTableData extends TableData {
 export interface AzureLogsTableColumn {
   text: string;
   type: string;
+}
+
+export type Option = { label: string; value: string };
+
+export interface AzureQueryEditorFieldProps {
+  query: AzureMonitorQuery;
+  datasource: Datasource;
+  subscriptionId: string;
+
+  onQueryChange: (newQuery: AzureMonitorQuery) => void;
 }

@@ -50,6 +50,8 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
   }
 
   query(options: DataQueryRequest<AzureMonitorQuery>): Observable<DataQueryResponse> {
+    console.log('datasource query');
+
     const byType: Record<AzureQueryType, DataQueryRequest<AzureMonitorQuery>> = ({} as unknown) as Record<
       AzureQueryType,
       DataQueryRequest<AzureMonitorQuery>

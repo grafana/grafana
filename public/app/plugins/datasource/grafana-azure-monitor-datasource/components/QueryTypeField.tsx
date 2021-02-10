@@ -31,7 +31,12 @@ const QueryTypeField: React.FC<QueryTypeFieldProps> = ({ query, onQueryChange })
 
   return (
     <Field label="Service">
-      <Select value={findOption(QUERY_TYPES, query.queryType)} options={QUERY_TYPES} onChange={handleChange} />
+      <Select
+        value={findOption(QUERY_TYPES, query.queryType)}
+        options={QUERY_TYPES}
+        onChange={handleChange}
+        width={38}
+      />
     </Field>
   );
 };

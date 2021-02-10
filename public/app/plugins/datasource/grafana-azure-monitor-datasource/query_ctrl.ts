@@ -29,6 +29,9 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     { id: AzureQueryType.InsightsAnalytics, label: 'Insights Analytics' },
   ];
 
+  // Query types that have been migrated to React
+  reactQueryEditors = [AzureQueryType.AzureMonitor];
+
   // target: AzureMonitorQuery;
 
   target: {
@@ -693,11 +696,13 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
    */
   handleNewQuery = (newQuery: AzureMonitorQuery) => {
     console.log('angular got a new query', newQuery);
-    const { appInsights } = newQuery;
+    // const { appInsights } = newQuery;
 
-    // TODO: resolve this appInsights: any issue
-    // The type of appInsights is a bit inconsistent...
-    this.target = { ...newQuery, appInsights: appInsights as any };
+    // // TODO: resolve this appInsights: any issue
+    // // The type of appInsights is a bit inconsistent...
+    // this.target = { ...newQuery, appInsights: appInsights as any };
+    Object.assign(this.target, newQuery);
+    this.refresh();
   };
 }
 

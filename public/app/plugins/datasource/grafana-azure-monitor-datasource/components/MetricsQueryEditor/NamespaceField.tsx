@@ -1,14 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Select } from '@grafana/ui';
+import { SelectableValue } from '@grafana/data';
 
 import { Field } from '../Field';
-import { findOption, MetricsQueryEditorFieldProps, Option, toOption } from '../common';
+import { findOption, toOption } from '../common';
+import { AzureQueryEditorFieldProps, Option } from '../../types';
 
-const NamespaceField: React.FC<MetricsQueryEditorFieldProps> = ({ query, datasource, subscriptionId, onChange }) => {
+const NamespaceField: React.FC<AzureQueryEditorFieldProps> = ({ query, datasource, subscriptionId, onQueryChange }) => {
   const [options, setOptions] = useState<Option[]>([]);
 
   useEffect(() => {
     if (!(subscriptionId && query.azureMonitor.resourceGroup)) {
+      options.length > 0 && setOptions([]);
       return;
     }
 
@@ -21,11 +24,35 @@ const NamespaceField: React.FC<MetricsQueryEditorFieldProps> = ({ query, datasou
       });
   }, [subscriptionId, query.azureMonitor.resourceGroup]);
 
+  const handleChange = useCallback(
+    (change: SelectableValue<string>) => {
+      if (!change.value) {
+        return;
+      }
+
+      onQueryChange({
+        ...query,
+        azureMonitor: {
+          ...query.azureMonitor,
+          metricDefinition: change.value,
+          resourceName: 'select',
+          metricNamespace: 'select',
+          metricName: 'select',
+          aggregation: '',
+          timeGrain: '',
+          dimensionFilters: [],
+        },
+      });
+    },
+    [query]
+  );
+
   return (
-    <Field label="Namespace" labelWidth={16}>
+    <Field label="Namespace">
+      {/* It's expected that the label reads Namespace but the property is metricDefinition */}
       <Select
         value={findOption(options, query.azureMonitor.metricDefinition)}
-        onChange={(v) => v.value && onChange('metricDefinition', v.value)}
+        onChange={handleChange}
         options={options}
         width={38}
       />

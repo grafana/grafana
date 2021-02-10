@@ -3,7 +3,7 @@ import React from 'react';
 import { Props as InlineFieldProps } from '@grafana/ui/src/components/Forms/InlineField';
 import { css } from 'emotion';
 
-const DEFAULT_LABEL_WIDTH = 16;
+const DEFAULT_LABEL_WIDTH = 18;
 
 interface FieldProps extends InlineFieldProps {}
 

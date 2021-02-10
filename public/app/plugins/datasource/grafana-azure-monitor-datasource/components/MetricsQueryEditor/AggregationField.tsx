@@ -1,19 +1,38 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Select } from '@grafana/ui';
 
 import { Field } from '../Field';
-import { Option, findOption, MetricsQueryEditorFieldProps } from '../common';
+import { findOption } from '../common';
+import { SelectableValue } from '@grafana/data';
+import { AzureQueryEditorFieldProps, Option } from '../../types';
 
-interface AggregationFieldProps extends MetricsQueryEditorFieldProps {
+interface AggregationFieldProps extends AzureQueryEditorFieldProps {
   aggregationOptions: Option[];
 }
 
-const AggregationField: React.FC<AggregationFieldProps> = ({ query, onChange, aggregationOptions }) => {
+const AggregationField: React.FC<AggregationFieldProps> = ({ query, onQueryChange, aggregationOptions }) => {
+  const handleChange = useCallback(
+    (change: SelectableValue<string>) => {
+      if (!change.value) {
+        return;
+      }
+
+      onQueryChange({
+        ...query,
+        azureMonitor: {
+          ...query.azureMonitor,
+          aggregation: change.value,
+        },
+      });
+    },
+    [query]
+  );
+
   return (
-    <Field label="Aggregation" labelWidth={16}>
+    <Field label="Aggregation">
       <Select
         value={findOption(aggregationOptions, query.azureMonitor.aggregation)}
-        onChange={(v) => v.value && onChange('aggregation', v.value)}
+        onChange={handleChange}
         options={aggregationOptions}
         width={38}
       />

@@ -2,16 +2,27 @@ import React, { useCallback } from 'react';
 import { Button, Select, Input, HorizontalGroup, VerticalGroup, InlineLabel } from '@grafana/ui';
 
 import { MultipleFields } from '../Field';
-import { findOption, MetricsQueryEditorFieldProps, Option } from '../common';
+import { findOption } from '../common';
 import { AzureMetricDimension } from '../../types';
+import { AzureQueryEditorFieldProps, Option } from '../../types';
 
-interface DimensionFieldsProps extends MetricsQueryEditorFieldProps {
+interface DimensionFieldsProps extends AzureQueryEditorFieldProps {
   dimensionOptions: Option[];
 }
 
-const DimensionFields: React.FC<DimensionFieldsProps> = ({ query, dimensionOptions, onChange }) => {
+const DimensionFields: React.FC<DimensionFieldsProps> = ({ query, dimensionOptions, onQueryChange }) => {
+  const setDimensionFilters = (newFilters: AzureMetricDimension[]) => {
+    onQueryChange({
+      ...query,
+      azureMonitor: {
+        ...query.azureMonitor,
+        dimensionFilters: newFilters,
+      },
+    });
+  };
+
   const addFilter = useCallback(() => {
-    onChange('dimensionFilters', [
+    setDimensionFilters([
       ...query.azureMonitor.dimensionFilters,
       {
         dimension: '',
@@ -24,7 +35,7 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ query, dimensionOptio
   const removeFilter = (index: number) => {
     const newFilters = [...query.azureMonitor.dimensionFilters];
     newFilters.splice(index, 1);
-    onChange('dimensionFilters', newFilters);
+    setDimensionFilters(newFilters);
   };
 
   const onFieldChange = <Key extends keyof AzureMetricDimension>(
@@ -35,7 +46,7 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ query, dimensionOptio
     const newFilters = [...query.azureMonitor.dimensionFilters];
     const newFilter = newFilters[filterIndex];
     newFilter[fieldName] = value;
-    onChange('dimensionFilters', newFilters);
+    setDimensionFilters(newFilters);
   };
 
   const onFilterInputChange = (index: number, ev: React.FormEvent) => {
@@ -45,7 +56,7 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ query, dimensionOptio
   };
 
   return (
-    <MultipleFields label="Dimension" labelWidth={16}>
+    <MultipleFields label="Dimension">
       <VerticalGroup spacing="xs">
         {query.azureMonitor.dimensionFilters.map((filter, index) => (
           <HorizontalGroup key={index} spacing="xs">

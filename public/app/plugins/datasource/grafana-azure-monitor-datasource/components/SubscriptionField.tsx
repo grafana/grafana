@@ -1,14 +1,16 @@
+import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
-import React, { useEffect, useState } from 'react';
-import { AzureMonitorQuery } from '../types';
-import { Option, MetricsQueryEditorFieldProps, toOption, findOption } from './common';
+import React, { useCallback, useEffect, useState } from 'react';
+import { AzureMonitorQuery, AzureQueryType } from '../types';
+import { toOption, findOption } from './common';
 import { Field } from './Field';
+import { AzureQueryEditorFieldProps, Option } from '../types';
 
-interface SubscriptionFieldProps extends MetricsQueryEditorFieldProps {
+interface SubscriptionFieldProps extends AzureQueryEditorFieldProps {
   onQueryChange: (newQuery: AzureMonitorQuery) => void;
 }
 
-const SubscriptionField: React.FC<SubscriptionFieldProps> = ({ datasource, onChange, query }) => {
+const SubscriptionField: React.FC<SubscriptionFieldProps> = ({ datasource, onQueryChange, query }) => {
   const [subscriptions, setSubscriptions] = useState<Option[]>([]);
 
   useEffect(() => {
@@ -23,6 +25,7 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({ datasource, onCha
       const newSubscriptions = results.map(toOption);
       setSubscriptions(newSubscriptions);
 
+      // TODO: how much of this is needed?
       // let newSubscription: string;
 
       // if (!query.subscription && query.queryType === 'Azure Monitor') {
@@ -37,11 +40,40 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({ datasource, onCha
     });
   }, []);
 
+  const handleChange = useCallback(
+    (change: SelectableValue<string>) => {
+      if (!change.value) {
+        return;
+      }
+
+      let newQuery: AzureMonitorQuery = {
+        ...query,
+        subscription: change.value,
+      };
+
+      if (query.queryType === AzureQueryType.AzureMonitor) {
+        newQuery.azureMonitor = {
+          ...newQuery.azureMonitor,
+          resourceGroup: 'select',
+          metricDefinition: 'select',
+          resourceName: 'select',
+          metricName: 'select',
+          aggregation: '',
+          timeGrain: '',
+          dimensionFilters: [],
+        };
+      }
+
+      onQueryChange(newQuery);
+    },
+    [query]
+  );
+
   return (
-    <Field label="Subscription" labelWidth={16}>
+    <Field label="Subscription">
       <Select
         value={findOption(subscriptions, query.subscription)}
-        onChange={(v) => v.value && onChange('resourceName', v.value)}
+        onChange={handleChange}
         options={subscriptions.map((v) => ({ ...v, description: v.value }))}
         width={38}
       />
