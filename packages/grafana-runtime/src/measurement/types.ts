@@ -1,4 +1,4 @@
-import { DataFrame, DataFrameJSON, StreamingDataFrame } from '@grafana/data';
+import { DataFrame, DataFrameJSON } from '@grafana/data';
 
 /**
  * List of Measurements sent in a batch
