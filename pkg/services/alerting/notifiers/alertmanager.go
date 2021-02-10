@@ -190,8 +190,7 @@ func (am *AlertmanagerNotifier) Notify(evalContext *alerting.EvalContext) error 
 
 	// This happens when every dispatch return error
 	if errCnt == len(am.URL) {
-		am.log.Error("Failed to send alert for all urls")
-		return fmt.Errorf("failed to send alert for all urls")
+		return fmt.Errorf("failed to send alert to alertmanager")
 	}
 
 	return nil
