@@ -769,6 +769,7 @@ def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publis
         'image': grafana_docker_image,
         'depends_on': [
             'copy-packages-for-docker',
+            'upload-cdn-assets' + sfx,
         ],
         'settings': settings,
     }
