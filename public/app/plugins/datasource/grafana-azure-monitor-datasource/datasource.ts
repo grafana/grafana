@@ -2,6 +2,7 @@ import _ from 'lodash';
 import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
 import AppInsightsDatasource from './app_insights/app_insights_datasource';
 import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
+import AzureResourceLogAnalyticsDatasource from './azure_log_analytics_resource/azure_log_analytics_datasource';
 import { AzureDataSourceJsonData, AzureMonitorQuery, AzureQueryType, InsightsAnalyticsQuery } from './types';
 import {
   DataFrame,
@@ -22,6 +23,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
   azureMonitorDatasource: AzureMonitorDatasource;
   appInsightsDatasource: AppInsightsDatasource;
   azureLogAnalyticsDatasource: AzureLogAnalyticsDatasource;
+  azureResourceLogAnalyticsDatasource: AzureResourceLogAnalyticsDatasource;
   insightsAnalyticsDatasource: InsightsAnalyticsDatasource;
 
   pseudoDatasource: Record<AzureQueryType, DataSourceWithBackend>;
@@ -32,6 +34,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     this.azureMonitorDatasource = new AzureMonitorDatasource(instanceSettings);
     this.appInsightsDatasource = new AppInsightsDatasource(instanceSettings);
     this.azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(instanceSettings);
+    this.azureResourceLogAnalyticsDatasource = new AzureResourceLogAnalyticsDatasource(instanceSettings);
     this.insightsAnalyticsDatasource = new InsightsAnalyticsDatasource(instanceSettings);
 
     const pseudoDatasource: any = {};
@@ -39,6 +42,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     pseudoDatasource[AzureQueryType.AzureMonitor] = this.azureMonitorDatasource;
     pseudoDatasource[AzureQueryType.InsightsAnalytics] = this.insightsAnalyticsDatasource;
     pseudoDatasource[AzureQueryType.LogAnalytics] = this.azureLogAnalyticsDatasource;
+    pseudoDatasource[AzureQueryType.ResourceLogAnalytics] = this.azureResourceLogAnalyticsDatasource;
     this.pseudoDatasource = pseudoDatasource;
 
     const optionsKey: any = {};
@@ -46,6 +50,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     optionsKey[AzureQueryType.AzureMonitor] = 'azureMonitor';
     optionsKey[AzureQueryType.InsightsAnalytics] = 'insightsAnalytics';
     optionsKey[AzureQueryType.LogAnalytics] = 'azureLogAnalytics';
+    optionsKey[AzureQueryType.ResourceLogAnalytics] = 'azureResourceLogAnalytics';
     this.optionsKey = optionsKey;
   }
 

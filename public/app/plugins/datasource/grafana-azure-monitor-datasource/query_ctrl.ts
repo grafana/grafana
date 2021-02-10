@@ -24,7 +24,8 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   queryQueryTypeOptions = [
     { id: AzureQueryType.ApplicationInsights, label: 'Application Insights' },
     { id: AzureQueryType.AzureMonitor, label: 'Metrics' },
-    { id: AzureQueryType.LogAnalytics, label: 'Logs' },
+    { id: AzureQueryType.LogAnalytics, label: 'Logs - Workspace' },
+    { id: AzureQueryType.ResourceLogAnalytics, label: 'Logs - Resource' },
     { id: AzureQueryType.InsightsAnalytics, label: 'Insights Analytics' },
   ];
 
@@ -92,6 +93,10 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       workspace:
         this.datasource && this.datasource.azureLogAnalyticsDatasource
           ? this.datasource.azureLogAnalyticsDatasource.defaultOrFirstWorkspace
+          : '',
+      resource:
+        this.datasource && this.datasource.azureLogAnalyticsDatasource
+          ? this.datasource.azureLogAnalyticsDatasource.defaultOrFirstResource
           : '',
     },
     appInsights: {
@@ -287,6 +292,9 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     if (this.target.queryType === 'Azure Log Analytics') {
       return this.getWorkspaces();
     }
+    // if (this.target.queryType === 'Azure Resource Log Analytics') {
+    //   return this.getResources();
+    // }
   }
 
   getSubscriptions() {
@@ -564,6 +572,28 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
         return this.workspaces;
       })
       .catch(this.handleQueryCtrlError.bind(this));
+  };
+
+  getResources = () => {
+    return [{}];
+    // return this.datasource.azureResourceLogAnalyticsDatasource
+    //   .getResources(this.target.subscription)
+    //   .then((list: any[]) => {
+    //     this.workspaces = list;
+
+    //     if (list.length > 0 && !this.target.azureLogAnalytics.workspace) {
+    //       if (this.datasource.azureResourceLogAnalyticsDatasource.defaultOrFirstResource) {
+    //         this.target.azureLogAnalytics.workspace = this.datasource.azureResourceLogAnalyticsDatasource.defaultOrFirstResource;
+    //       }
+
+    //       if (!this.target.azureLogAnalytics.workspace) {
+    //         this.target.azureLogAnalytics.workspace = list[0].value;
+    //       }
+    //     }
+
+    //     return this.workspaces;
+    //   })
+    //   .catch(this.handleQueryCtrlError.bind(this));
   };
 
   getAzureLogAnalyticsSchema = () => {

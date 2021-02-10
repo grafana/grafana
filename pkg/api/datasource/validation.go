@@ -50,6 +50,7 @@ func ValidateURL(typeName, urlStr string) (*url.URL, error) {
 
 		// Make sure the URL starts with a protocol specifier, so parsing is unambiguous
 		if !reURL.MatchString(urlStr) {
+			logger.Debug(urlStr)
 			logger.Debug(
 				"Data source URL doesn't specify protocol, so prepending it with http:// in order to make it unambiguous",
 				"type", typeName, "url", urlStr)

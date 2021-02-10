@@ -7,6 +7,7 @@ export enum AzureQueryType {
   ApplicationInsights = 'Application Insights',
   InsightsAnalytics = 'Insights Analytics',
   LogAnalytics = 'Azure Log Analytics',
+  ResourceLogAnalytics = 'Azure Resource Log Analytics',
 }
 
 export interface AzureMonitorQuery extends DataQuery {
@@ -34,6 +35,7 @@ export interface AzureDataSourceJsonData extends DataSourceJsonData {
   logAnalyticsClientId?: string;
   azureLogAnalyticsSameAs?: boolean;
   logAnalyticsDefaultWorkspace?: string;
+  logAnalyticsDefaultResource?: string;
 
   // App Insights
   appInsightsAppId?: string;

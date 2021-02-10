@@ -45,6 +45,21 @@
       "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
     },
     {
+      "path": "azuremonitor",
+      "method": "POST",
+      "url": "https://management.azure.com",
+      "tokenAuth": {
+        "url": "https://login.microsoftonline.com/{{.JsonData.tenantId}}/oauth2/token",
+        "params": {
+          "grant_type": "client_credentials",
+          "client_id": "{{.JsonData.clientId}}",
+          "client_secret": "{{.SecureJsonData.clientSecret}}",
+          "resource": "https://management.azure.com/"
+        }
+      },
+      "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
+    },
+    {
       "path": "govazuremonitor",
       "method": "GET",
       "url": "https://management.usgovcloudapi.net",
@@ -151,6 +166,24 @@
         }
       },
       "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
+    },
+    {
+      "path": "loganalyticsresourceazure",
+      "method": "GET",
+      "url": "https://api.loganalytics.io/v1/workspaces",
+      "tokenAuth": {
+        "url": "https://login.microsoftonline.com/{{.JsonData.logAnalyticsTenantId}}/oauth2/token",
+        "params": {
+          "grant_type": "client_credentials",
+          "client_id": "{{.JsonData.logAnalyticsClientId}}",
+          "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret}}",
+          "resource": "https://api.loganalytics.io"
+        }
+      },
+      "headers": [
+        { "name": "x-ms-app", "content": "Grafana" },
+        { "name": "Cache-Control", "content": "public, max-age=60" }
+      ]
     },
     {
       "path": "loganalyticsazure",
