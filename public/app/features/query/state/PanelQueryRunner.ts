@@ -116,9 +116,7 @@ export class PanelQueryRunner {
             return of(data);
           }
 
-          return transformDataFrame(transformations, data.series).pipe(
-            map((series) => ({ ...data, series: cleanDuplicateFieldNames(series) }))
-          );
+          return transformDataFrame(transformations, data.series).pipe(map((series) => ({ ...data, series })));
         })
       );
   };

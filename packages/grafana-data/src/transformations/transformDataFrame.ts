@@ -1,5 +1,6 @@
 import { MonoTypeOperatorFunction, Observable, of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
+import { cleanDuplicateFieldNames } from '../field';
 
 import { DataFrame, DataTransformerConfig } from '../types';
 import { standardTransformersRegistry, TransformerRegistryItem } from './standardTransformersRegistry';
@@ -62,6 +63,8 @@ export function transformDataFrame(options: DataTransformerConfig[], data: DataF
     const config = options[index];
     operators.push(getOperator(config));
   }
+
+  operators.push((d) => d.pipe(map((data) => cleanDuplicateFieldNames(data))));
 
   // @ts-ignore TypeScript has a hard time understanding this construct
   return stream.pipe.apply(stream, operators);
