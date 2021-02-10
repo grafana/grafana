@@ -753,6 +753,11 @@ def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publis
         'ubuntu': ubuntu,
     }
 
+    dependencies = ['copy-packages-for-docker']
+
+    if ver_mode == "release":
+        dependencies.append('upload-cdn-assets' + edition_sfx(edition))
+
     if publish:
         settings['username'] = {
             'from_secret': 'docker_user',
@@ -765,10 +770,7 @@ def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publis
     return {
         'name': 'build-docker-images' + ubuntu_sfx,
         'image': grafana_docker_image,
-        'depends_on': [
-            'copy-packages-for-docker',
-            'upload-cdn-assets' + edition_sfx(edition),
-        ],
+        'depends_on': dependencies,
         'settings': settings,
     }
 
