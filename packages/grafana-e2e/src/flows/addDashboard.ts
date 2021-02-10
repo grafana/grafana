@@ -66,9 +66,7 @@ export const addDashboard = (config?: Partial<AddDashboardConfig>) => {
     e2e.components.BackButton.backArrow().should('be.visible').click({ force: true });
   }
 
-  if (timeRange) {
-    setDashboardTimeRange(timeRange);
-  }
+  setDashboardTimeRange(timeRange);
 
   e2e.components.PageToolbar.item('Save dashboard').click();
   e2e.pages.SaveDashboardAsModal.newName().clear().type(title);
@@ -153,7 +151,7 @@ const addVariable = (config: PartialAddVariableConfig, isFirst: boolean): AddVar
     e2e.pages.Dashboard.Settings.Variables.List.newButton().click();
   }
 
-  const { constantValue, dataSource, hide, label, name, query, regex, type } = fullConfig;
+  const { constantValue, dataSource, label, name, query, regex, type } = fullConfig;
 
   // This field is key to many reactive changes
   if (type !== VARIABLE_TYPE_QUERY) {
@@ -161,16 +159,6 @@ const addVariable = (config: PartialAddVariableConfig, isFirst: boolean): AddVar
       .should('be.visible')
       .within(() => {
         e2e.components.Select.singleValue().should('have.text', 'Query').click().type(`${type}{enter}`);
-      });
-  }
-
-  // Hide only does not show up for VARIABLE_TYPE_CONSTANT
-  // Hide can be '', so we are explicitly checking for undefined
-  if (type !== VARIABLE_TYPE_CONSTANT && hide !== undefined) {
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.generalHideSelect()
-      .should('be.visible')
-      .within(() => {
-        e2e.components.Select.input().should('have.text', '').type(`${hide}{enter}`);
       });
   }
 
