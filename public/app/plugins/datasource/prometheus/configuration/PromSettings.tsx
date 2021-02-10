@@ -8,6 +8,12 @@ import { EventsWithValidation, InlineFormLabel, LegacyForms, regexValidation } f
 import React, { SyntheticEvent } from 'react';
 import { PromOptions } from '../types';
 import { ExemplarsSettings } from './ExemplarsSettings';
+import { PROMETHEUS, THANOS } from '../datasource';
+
+export const DOWNSAMPLE_RAW = 0;
+export const DOWNSAMPLE_5M = 60 * 5;
+export const DOWNSAMPLE_1H = 60 * 60;
+
 const { Select, Input, FormField, Switch } = LegacyForms;
 
 const httpOptions = [
@@ -15,11 +21,21 @@ const httpOptions = [
   { value: 'POST', label: 'POST' },
 ];
 
+const flavourOptions = [
+  { value: PROMETHEUS, label: PROMETHEUS },
+  { value: THANOS, label: THANOS },
+];
+
 type Props = Pick<DataSourcePluginOptionsEditorProps<PromOptions>, 'options' | 'onOptionsChange'>;
 
 export const PromSettings = (props: Props) => {
   const { options, onOptionsChange } = props;
-
+  let retentionPolicies: { [index: string]: any } = {};
+  if (options.jsonData.retentionPolicies === '' || options.jsonData.retentionPolicies === undefined) {
+    retentionPolicies[DOWNSAMPLE_RAW.toString(10)] = '0d';
+  } else {
+    retentionPolicies = JSON.parse(options.jsonData.retentionPolicies);
+  }
   return (
     <>
       <div className="gf-form-group">
@@ -105,6 +121,17 @@ export const PromSettings = (props: Props) => {
             />
           </div>
         </div>
+        <div className="gf-form">
+          <InlineFormLabel width={14} tooltip="Datasource backend.">
+            Flavour
+          </InlineFormLabel>
+          <Select
+            options={flavourOptions}
+            value={flavourOptions.find(o => o.value === options.jsonData.flavour)}
+            onChange={onChangeHandler('flavour', options, onOptionsChange)}
+            width={7}
+          />
+        </div>
       </div>
       <ExemplarsSettings
         options={options.jsonData.exemplarTraceIdDestinations}
@@ -116,6 +143,85 @@ export const PromSettings = (props: Props) => {
           )
         }
       />
+      {options.jsonData.flavour === THANOS && (
+        <>
+          <h3 className="page-heading">Thanos downsampling and retention</h3>
+          <div className="gf-form-group">
+            <div className="gf-form-inline">
+              <div className="gf-form max-width-30">
+                <FormField
+                  label="Retention for raw data"
+                  labelWidth={14}
+                  tooltip="Raw data retention. 0 for unlimited."
+                  inputEl={
+                    <Input
+                      className="width-25"
+                      value={retentionPolicies[DOWNSAMPLE_RAW.toString(10)] || '0d'}
+                      onChange={onRetentionChangeHandler(
+                        DOWNSAMPLE_RAW.toString(10),
+                        options,
+                        onOptionsChange,
+                        retentionPolicies
+                      )}
+                      validationEvents={promSettingsValidationEvents}
+                      spellCheck={false}
+                      placeholder="0"
+                    />
+                  }
+                />
+              </div>
+            </div>
+            <div className="gf-form-inline">
+              <div className="gf-form max-width-30">
+                <FormField
+                  label="Retention for 5m resolution"
+                  labelWidth={14}
+                  tooltip="Thanos 5m downsampled data retention. 0 for unlimited."
+                  inputEl={
+                    <Input
+                      className="width-25"
+                      value={retentionPolicies[DOWNSAMPLE_5M.toString(10)] || '0d'}
+                      onChange={onRetentionChangeHandler(
+                        DOWNSAMPLE_5M.toString(10),
+                        options,
+                        onOptionsChange,
+                        retentionPolicies
+                      )}
+                      validationEvents={promSettingsValidationEvents}
+                      spellCheck={false}
+                      placeholder="0"
+                    />
+                  }
+                />
+              </div>
+            </div>
+            <div className="gf-form-inline">
+              <div className="gf-form max-width-30">
+                <FormField
+                  label="Retention for 1h resolution"
+                  labelWidth={14}
+                  tooltip="Thanos 1h downsampled data retention. 0 for unlimited."
+                  inputEl={
+                    <Input
+                      className="width-25"
+                      value={retentionPolicies[DOWNSAMPLE_1H.toString(10)] || '0d'}
+                      onChange={onRetentionChangeHandler(
+                        DOWNSAMPLE_1H.toString(10),
+                        options,
+                        onOptionsChange,
+                        retentionPolicies
+                      )}
+                      validationEvents={promSettingsValidationEvents}
+                      spellCheck={false}
+                      placeholder="0"
+                    />
+                  }
+                />
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </>
   );
 };
@@ -151,6 +257,22 @@ const onChangeHandler = (
     jsonData: {
       ...options.jsonData,
       [key]: getValueFromEventItem(eventItem),
+    },
+  });
+};
+
+const onRetentionChangeHandler = (
+  key: string,
+  options: Props['options'],
+  onOptionsChange: Props['onOptionsChange'],
+  policies: { [index: string]: string }
+) => (eventItem: SyntheticEvent<HTMLInputElement> | SelectableValue<string>) => {
+  policies[key] = eventItem.target.value;
+  onOptionsChange({
+    ...options,
+    jsonData: {
+      ...options.jsonData,
+      ['retentionPolicies']: JSON.stringify(policies),
     },
   });
 };

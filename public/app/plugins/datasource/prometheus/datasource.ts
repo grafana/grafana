@@ -45,6 +45,9 @@ import PrometheusMetricFindQuery from './metric_find_query';
 
 export const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
 
+export const PROMETHEUS = 'Prometheus';
+export const THANOS = 'Thanos';
+
 export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> {
   type: string;
   editorSrc: string;
@@ -55,6 +58,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   withCredentials: any;
   metricsNameCache = new LRU<string, string[]>(10);
   interval: string;
+  flavour: string;
+  retentionPolicies: Array<{ [level: number]: number }>;
   queryTimeout: string;
   httpMethod: string;
   languageProvider: PrometheusLanguageProvider;
@@ -77,14 +82,15 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     this.interval = instanceSettings.jsonData.timeInterval || '15s';
     this.queryTimeout = instanceSettings.jsonData.queryTimeout;
     this.httpMethod = instanceSettings.jsonData.httpMethod || 'GET';
+    this.flavour = instanceSettings.jsonData.flavour || PROMETHEUS;
     this.directUrl = instanceSettings.jsonData.directUrl;
     this.exemplarTraceIdDestinations = instanceSettings.jsonData.exemplarTraceIdDestinations;
     this.ruleMappings = {};
     this.languageProvider = new PrometheusLanguageProvider(this);
     this.lookupsDisabled = instanceSettings.jsonData.disableMetricsLookup ?? false;
     this.customQueryParameters = new URLSearchParams(instanceSettings.jsonData.customQueryParameters);
-
     this.variables = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
+    this.retentionPolicies = this.prepareRetentionPolicies(this.flavour, instanceSettings.jsonData.retentionPolicies);
   }
 
   init = () => {
@@ -240,6 +246,25 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     };
   };
 
+  private prepareRetentionPolicies(flavour: string, s: string) {
+    if (flavour !== THANOS || s === '' || s === undefined) {
+      return [];
+    }
+    let j = JSON.parse(s);
+    let level;
+    let rp: Array<{ [level: number]: number }> = [];
+    for (level in j) {
+      let d = prometheusParseDuration(j[level]);
+      if (d >= 0) {
+        rp.push([parseInt(level, 10), d]);
+      }
+    }
+    rp = rp.sort((a, b) => {
+      return a[0] - b[0];
+    });
+    return rp;
+  }
+
   query(options: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
     const start = this.getPrometheusTime(options.range.from, false);
     const end = this.getPrometheusTime(options.range.to, true);
@@ -383,7 +408,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     let scopedVars = {
       ...options.scopedVars,
       ...this.getRangeScopedVars(options.range),
-      ...this.getRateIntervalScopedVariable(adjustedInterval, scrapeInterval),
+      ...this.getRateIntervalScopedVariable(adjustedInterval, scrapeInterval, start),
     };
     // If the interval was adjusted, make a shallow copy of scopedVars with updated interval vars
     if (interval !== adjustedInterval) {
@@ -391,7 +416,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       scopedVars = Object.assign({}, options.scopedVars, {
         __interval: { text: interval + 's', value: interval + 's' },
         __interval_ms: { text: interval * 1000, value: interval * 1000 },
-        ...this.getRateIntervalScopedVariable(interval, scrapeInterval),
+        ...this.getRateIntervalScopedVariable(interval, scrapeInterval, start),
         ...this.getRangeScopedVars(options.range),
       });
     }
@@ -423,13 +448,27 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     return query;
   }
 
-  getRateIntervalScopedVariable(interval: number, scrapeInterval: number) {
+  getRateIntervalScopedVariable(interval: number, scrapeInterval: number, start: number) {
     // Fall back to the default scrape interval of 15s if scrapeInterval is 0 for some reason.
     if (scrapeInterval === 0) {
       scrapeInterval = 15;
     }
-    const rateInterval = Math.max(interval + scrapeInterval, 4 * scrapeInterval);
+    const downsampledInterval = this.getDownsampledInterval(start);
+    const rateInterval = Math.max(interval + scrapeInterval, 4 * scrapeInterval, 2 * downsampledInterval);
     return { __rate_interval: { text: rateInterval + 's', value: rateInterval + 's' } };
+  }
+
+  getDownsampledInterval(start: number): number {
+    let downsampledInterval = 0;
+    const now = Date.now();
+    start = start * 1000;
+
+    for (let i = 1; i < this.retentionPolicies.length; i++) {
+      if (start < now - this.retentionPolicies[i - 1][1]) {
+        downsampledInterval = this.retentionPolicies[i][0];
+      }
+    }
+    return downsampledInterval;
   }
 
   adjustInterval(interval: number, minInterval: number, range: number, intervalFactor: number) {
@@ -496,6 +535,11 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       if (data[key] == null) {
         data[key] = value;
       }
+    }
+
+    const downsampledInterval = this.getDownsampledInterval(time);
+    if (downsampledInterval > 0) {
+      data['max_source_resolution'] = downsampledInterval + 's';
     }
 
     return this._request<PromDataSuccessResponse<PromVectorData | PromScalarData>>(url, data, {
@@ -823,4 +867,28 @@ export function prometheusRegularEscape(value: any) {
 
 export function prometheusSpecialRegexEscape(value: any) {
   return typeof value === 'string' ? value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&') : value;
+}
+
+let promTimeFactors: { [index: string]: number } = {
+  ms: 1,
+  s: 1000,
+  m: 1000 * 60,
+  h: 1000 * 60 * 60,
+  d: 1000 * 60 * 60 * 24,
+  w: 1000 * 60 * 60 * 24 * 7,
+  y: 1000 * 60 * 60 * 24 * 365,
+};
+let durationPartRE = new RegExp('([0-9]+)(ms|s|m|h|d|w|y)', 'g');
+let durationRE = new RegExp('^(([0-9]+)(ms|s|m|h|d|w|y))+$');
+
+export function prometheusParseDuration(s: string) {
+  if (durationRE.exec(s) === null) {
+    return -1;
+  }
+  let m: RegExpExecArray | null;
+  let duration = 0;
+  while ((m = durationPartRE.exec(s)) !== null) {
+    duration += parseInt(m[1], 10) * promTimeFactors[m[2]];
+  }
+  return duration;
 }

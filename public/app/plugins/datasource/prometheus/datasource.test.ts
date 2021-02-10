@@ -17,6 +17,7 @@ import {
   PrometheusDatasource,
   prometheusRegularEscape,
   prometheusSpecialRegexEscape,
+  THANOS,
 } from './datasource';
 import { PromOptions, PromQuery } from './types';
 import { VariableHide } from '../../../features/variables/types';
@@ -1587,6 +1588,112 @@ describe('PrometheusDatasource', () => {
       ds.createQuery({ ...target, interval: '$int' }, { interval: '15s' } as any, 0, 300);
       expect(templateSrvStub.replace.mock.calls).toHaveLength(3);
       templateSrvStub.replace = jest.fn((a: string) => a);
+    });
+  });
+});
+
+describe('PrometheusDatasource for Thanos', () => {
+  const instanceSettings = ({
+    url: 'proxied',
+    directUrl: 'direct',
+    user: 'test',
+    password: 'mupp',
+    jsonData: {
+      flavour: THANOS,
+      retentionPolicies: { DOWNSAMPLE_RAW: '1d', DOWNSAMPLE_5M: '1w', DOWNSAMPLE_1H: '0d' }.toString(),
+    },
+  } as unknown) as DataSourceInstanceSettings<PromOptions>;
+
+  let ds: PrometheusDatasource;
+  beforeEach(() => {
+    ds = new PrometheusDatasource(instanceSettings);
+  });
+
+  describe('The __rate_interval variable', () => {
+    const target = { expr: 'rate(process_cpu_seconds_total[$__rate_interval])', refId: 'A' };
+
+    beforeEach(() => {
+      (templateSrv.replace as any).mockClear();
+    });
+    it('should be interval + scrape interval if min step set to 1m, interval is 5m and start set to point with raw resolution available', () => {
+      // For a 7d graph, $__interval is 5m
+      const dateNow = Date.now.bind(global.Date);
+      global.Date.now = jest.fn(() => 10080);
+      ds.createQuery({ ...target, interval: '1m' }, { interval: '5m' } as any, 0, 10080);
+      expect((templateSrv.replace as any).mock.calls[2][1]['__rate_interval'].value).toBe('360s');
+      global.Date.now = dateNow;
+    });
+    it('should be 2*5m if min step set to 1m, interval is 5m and start set to point with 5m+ resolution available', () => {
+      // For a 7d graph, $__interval is 5m
+      const dateNow = Date.now.bind(global.Date);
+      global.Date.now = jest.fn(() => 2 * 24 * 3600);
+      ds.createQuery({ ...target, interval: '1m' }, { interval: '5m' } as any, 0, 10080);
+      expect((templateSrv.replace as any).mock.calls[2][1]['__rate_interval'].value).toBe('600s');
+      global.Date.now = dateNow;
+    });
+    it('should be 2*1h if min step set to 1m, interval is 5m and start set to point with only 1h resolution available', () => {
+      // For a 7d graph, $__interval is 5m
+      const dateNow = Date.now.bind(global.Date);
+      global.Date.now = jest.fn(() => 10 * 24 * 3600);
+      ds.createQuery({ ...target, interval: '1m' }, { interval: '5m' } as any, 0, 10080);
+      expect((templateSrv.replace as any).mock.calls[2][1]['__rate_interval'].value).toBe('7200s');
+      global.Date.now = dateNow;
+    });
+  });
+
+  describe('When querying prometheus with one target, instant = true', () => {
+    const query = {
+      range: { from: time({ seconds: 63 }), to: time({ seconds: 123 }) },
+      targets: [{ expr: 'test{job="testjob"}', format: 'time_series', instant: true }],
+      interval: '60s',
+    };
+
+    beforeEach(async () => {
+      const response = {
+        status: 'success',
+        data: {
+          data: {
+            resultType: 'vector',
+            result: [
+              {
+                metric: { __name__: 'test', job: 'testjob' },
+                value: [123, '3846'],
+              },
+            ],
+          },
+        },
+      };
+
+      fetchMock.mockImplementation(() => of(response));
+      ds.query(query as any).subscribe((data: any) => {});
+    });
+
+    it('and with raw resolution available should generate the correct query', () => {
+      const dateNow = Date.now.bind(global.Date);
+      global.Date.now = jest.fn(() => 123);
+      const urlExpected = `proxied/api/v1/query?query=${encodeURIComponent('test{job="testjob"}')}&time=123`;
+      const res = fetchMock.mock.calls[0][0];
+      expect(res.method).toBe('GET');
+      expect(res.url).toBe(urlExpected);
+      global.Date.now = dateNow;
+    });
+    it('and with 5m resolution available should generate the correct query with max_source_resolution set', () => {
+      const dateNow = Date.now.bind(global.Date);
+      global.Date.now = jest.fn(() => 2 * 24 * 3600);
+      const urlExpected = `proxied/api/v1/query?query=${encodeURIComponent('test{job="testjob"}')}&time=123&max_source_resolution=300s`;
+      const res = fetchMock.mock.calls[0][0];
+      expect(res.method).toBe('GET');
+      expect(res.url).toBe(urlExpected);
+      global.Date.now = dateNow;
+    });
+    it('and with 1h resolution available should generate the correct query with max_source_resolution set', () => {
+      const dateNow = Date.now.bind(global.Date);
+      global.Date.now = jest.fn(() => 10 * 24 * 3600);
+      const urlExpected = `proxied/api/v1/query?query=${encodeURIComponent('test{job="testjob"}')}&time=123&max_source_resolution=3600s`;
+      const res = fetchMock.mock.calls[0][0];
+      expect(res.method).toBe('GET');
+      expect(res.url).toBe(urlExpected);
+      global.Date.now = dateNow;
     });
   });
 });
