@@ -12,8 +12,7 @@
     {
       "files": [
         "packages/grafana-ui/**/*/!(*.story).{ts,tsx}",
-        "packages/jaeger-ui-components/**/*.{ts,tsx,js}",
-        "public/app/**/*.{ts,tsx}"
+        "packages/jaeger-ui-components/**/*.{ts,tsx,js}"
       ],
       "rules": {
         "react-hooks/rules-of-hooks": "off",

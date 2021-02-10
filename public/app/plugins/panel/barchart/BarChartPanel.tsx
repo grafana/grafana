@@ -23,14 +23,6 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
   fieldConfig,
   onFieldConfigChange,
 }) => {
-  if (!data || !data.series?.length) {
-    return (
-      <div className="panel-empty">
-        <p>No data found in response</p>
-      </div>
-    );
-  }
-
   const onLegendClick = useCallback(
     (event: GraphNGLegendEvent) => {
       onFieldConfigChange(hideSeriesConfigFactory(event, fieldConfig, data.series));
@@ -71,7 +63,15 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
         fields, // filtered to to the values we have
       },
     };
-  }, [width, height, options, data]);
+  }, [data]);
+
+  if (!data || !data.series?.length) {
+    return (
+      <div className="panel-empty">
+        <p>No data found in response</p>
+      </div>
+    );
+  }
 
   if (barData.error) {
     return (

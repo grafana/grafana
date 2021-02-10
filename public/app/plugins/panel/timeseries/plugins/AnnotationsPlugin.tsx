@@ -89,7 +89,7 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
     return () => {
       unregister();
     };
-  }, []);
+  }, [plotCtx, theme.palette.red]);
 
   const mapAnnotationToXYCoords = useCallback(
     (frame: DataFrame, index: number) => {
@@ -105,7 +105,7 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
         y: plotInstance.bbox.height / window.devicePixelRatio + 4,
       };
     },
-    [plotCtx.getPlotInstance]
+    [plotCtx]
   );
 
   const renderMarker = useCallback(

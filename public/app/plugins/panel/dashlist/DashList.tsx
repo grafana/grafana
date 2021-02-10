@@ -82,15 +82,7 @@ export function DashList(props: PanelProps<DashListOptions>) {
     fetchDashboards(props.options).then((dashes) => {
       setDashboards(dashes);
     });
-  }, [
-    props.options.showSearch,
-    props.options.showStarred,
-    props.options.showRecentlyViewed,
-    props.options.maxItems,
-    props.options.query,
-    props.options.tags,
-    props.options.folderId,
-  ]);
+  }, [props.options]);
 
   const toggleDashboardStar = async (e: React.SyntheticEvent, dash: Dashboard) => {
     e.preventDefault();

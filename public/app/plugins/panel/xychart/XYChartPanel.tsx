@@ -19,19 +19,6 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
   onFieldConfigChange,
 }) => {
   const dims = useMemo(() => getXYDimensions(options.dims, data.series), [options.dims, data.series]);
-  if (dims.error) {
-    return (
-      <div>
-        <div>ERROR: {dims.error}</div>
-        {dims.hasData && (
-          <div>
-            <Button onClick={() => alert('TODO, switch vis')}>Show as Table</Button>
-            {dims.hasTime && <Button onClick={() => alert('TODO, switch vis')}>Show as Time series</Button>}
-          </div>
-        )}
-      </div>
-    );
-  }
 
   const frames = useMemo(() => [dims.frame], [dims]);
 
@@ -48,6 +35,20 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
     },
     [fieldConfig, onFieldConfigChange]
   );
+
+  if (dims.error) {
+    return (
+      <div>
+        <div>ERROR: {dims.error}</div>
+        {dims.hasData && (
+          <div>
+            <Button onClick={() => alert('TODO, switch vis')}>Show as Table</Button>
+            {dims.hasTime && <Button onClick={() => alert('TODO, switch vis')}>Show as Time series</Button>}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <GraphNG
