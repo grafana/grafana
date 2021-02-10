@@ -87,8 +87,8 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
   // TODO we should be able to allow multiple dataframes for both edges and nodes, could be issue with node ids which in
   //  that case should be unique or figure a way to link edges and nodes dataframes together.
   const processed = useMemo(() => processNodes(nodesDataFrames[0], edgesDataFrames[0]), [
-    nodesDataFrames[0],
-    edgesDataFrames[0],
+    edgesDataFrames,
+    nodesDataFrames,
   ]);
 
   const { nodes: rawNodes, edges: rawEdges } = useNodeLimit(processed.nodes, processed.edges, nodeCountLimit);
