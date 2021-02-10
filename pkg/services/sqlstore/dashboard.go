@@ -330,7 +330,7 @@ func makeQueryResult(query *search.FindPersistedDashboardsQuery, res []Dashboard
 				hit.FolderURL = models.GetFolderUrl(item.FolderUID, item.FolderSlug)
 			}
 
-			if len(query.Sort.MetaName) > 0 {
+			if query.Sort.MetaName != "" {
 				hit.SortMeta = strings.TrimSpace(fmt.Sprintf("%d %s", item.SortMeta, query.Sort.MetaName))
 			}
 
