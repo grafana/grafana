@@ -17,21 +17,26 @@ import (
 )
 
 func TestPluginManager_Init(t *testing.T) {
+	staticRootPath, err := filepath.Abs("../../public/")
+	require.NoError(t, err)
+
+	origRootPath := setting.StaticRootPath
 	origRaw := setting.Raw
 	origEnv := setting.Env
 	t.Cleanup(func() {
+		setting.StaticRootPath = origRootPath
 		setting.Raw = origRaw
 		setting.Env = origEnv
 	})
+	setting.StaticRootPath = staticRootPath
 	setting.Raw = ini.Empty()
 	setting.Env = setting.Prod
-
-	staticRootPath, err := filepath.Abs("../../public/")
-	require.NoError(t, err)
 
 	t.Run("Base case", func(t *testing.T) {
 		pm := &PluginManager{
 			Cfg: &setting.Cfg{
+				Raw:            ini.Empty(),
+				Env:            setting.Prod,
 				StaticRootPath: staticRootPath,
 				PluginSettings: setting.PluginSettings{
 					"nginx-app": map[string]string{
