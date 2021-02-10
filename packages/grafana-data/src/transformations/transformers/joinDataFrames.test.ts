@@ -31,12 +31,16 @@ describe('align frames', () => {
     expect(
       out.fields.map((f) => ({
         name: f.name,
+        state: f.state,
         values: f.values.toArray(),
       }))
     ).toMatchInlineSnapshot(`
       Array [
         Object {
           "name": "TheTime",
+          "state": Object {
+            "displayName": "TheTime",
+          },
           "values": Array [
             1000,
             1500,
@@ -45,6 +49,9 @@ describe('align frames', () => {
         },
         Object {
           "name": "A",
+          "state": Object {
+            "displayName": "A 1",
+          },
           "values": Array [
             1,
             undefined,
@@ -53,6 +60,9 @@ describe('align frames', () => {
         },
         Object {
           "name": "A",
+          "state": Object {
+            "displayName": "A 2",
+          },
           "values": Array [
             2,
             20,
@@ -61,6 +71,9 @@ describe('align frames', () => {
         },
         Object {
           "name": "B",
+          "state": Object {
+            "displayName": "B",
+          },
           "values": Array [
             3,
             30,
@@ -69,6 +82,9 @@ describe('align frames', () => {
         },
         Object {
           "name": "C",
+          "state": Object {
+            "displayName": "C",
+          },
           "values": Array [
             "first",
             "second",

@@ -123,7 +123,7 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
     let fields: Field[] = [];
     for (let fieldIndex = 0; fieldIndex < frame.fields.length; fieldIndex++) {
       const field = frame.fields[fieldIndex];
-      getFieldDisplayName(field, frame, options.frames); // cache displayName in state
+      field.state = field.state || {};
 
       if (!join && joinFieldMatcher(field, frame, options.frames)) {
         join = field;
@@ -172,7 +172,8 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
   }
 
   const joined = join(allData, nullModes);
-  return {
+
+  const frame = {
     // ...options.data[0], // keep name, meta?
     length: joined[0].length,
     fields: originalFields.map((f, index) => ({
@@ -180,6 +181,12 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
       values: new ArrayVector(joined[index]),
     })),
   };
+
+  for (const field of frame.fields) {
+    getFieldDisplayName(field, frame);
+  }
+
+  return frame;
 }
 
 //--------------------------------------------------------------------------------
