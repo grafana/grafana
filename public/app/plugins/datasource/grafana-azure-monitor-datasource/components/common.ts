@@ -1,5 +1,6 @@
 import { rangeUtil } from '@grafana/data';
 import TimegrainConverter from '../time_grain_converter';
+import { Option } from '../types';
 
 // Defaults to returning a fallback option so the UI still shows the value while the API is loading
 export const findOption = (options: Option[], value: string) =>
