@@ -32,11 +32,7 @@ var (
 	PluginTypes  map[string]interface{}
 	Renderer     *RendererPlugin
 
-	GrafanaLatestVersion string
-	GrafanaHasUpdate     bool
-	plog                 log.Logger
-
-	pluginScanningErrors map[string]*PluginError
+	plog log.Logger
 )
 
 type unsignedPluginConditionFunc = func(plugin *PluginBase) bool
@@ -61,6 +57,9 @@ type PluginManager struct {
 	// AllowUnsignedPluginsCondition changes the policy for allowing unsigned plugins. Signature validation only runs when plugins are starting
 	// and running plugins will not be terminated if they violate the new policy.
 	AllowUnsignedPluginsCondition unsignedPluginConditionFunc
+	GrafanaLatestVersion          string
+	GrafanaHasUpdate              bool
+	pluginScanningErrors          map[string]PluginError
 }
 
 func init() {
@@ -82,7 +81,7 @@ func (pm *PluginManager) Init() error {
 		"app":        AppPlugin{},
 		"renderer":   RendererPlugin{},
 	}
-	pluginScanningErrors = map[string]*PluginError{}
+	pm.pluginScanningErrors = map[string]PluginError{}
 
 	pm.log.Info("Starting plugin search")
 
@@ -241,7 +240,7 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 		if signingError != nil {
 			pm.log.Debug("Failed to validate plugin signature. Will skip loading", "id", plugin.Id,
 				"signature", plugin.Signature, "status", signingError.ErrorCode)
-			pluginScanningErrors[plugin.Id] = signingError
+			pm.pluginScanningErrors[plugin.Id] = *signingError
 			continue
 		}
 
@@ -473,9 +472,10 @@ func (s *PluginScanner) allowUnsigned(plugin *PluginBase) bool {
 	return false
 }
 
-func ScanningErrors() []PluginError {
+// ScanningErrors returns plugin scanning errors encountered.
+func (pm *PluginManager) ScanningErrors() []PluginError {
 	scanningErrs := make([]PluginError, 0)
-	for id, e := range pluginScanningErrors {
+	for id, e := range pm.pluginScanningErrors {
 		scanningErrs = append(scanningErrs, PluginError{
 			ErrorCode: e.ErrorCode,
 			PluginID:  id,
