@@ -1,14 +1,15 @@
 import React, { PureComponent } from 'react';
+import { AlignedData } from 'uplot';
 import {
   compareDataFrameStructures,
-  DefaultTimeZone,
-  FieldSparkline,
-  IndexVector,
   DataFrame,
+  DefaultTimeZone,
+  FieldConfig,
+  FieldSparkline,
   FieldType,
   getFieldColorModeForField,
-  FieldConfig,
   getFieldDisplayName,
+  IndexVector,
 } from '@grafana/data';
 import {
   AxisPlacement,
@@ -21,6 +22,7 @@ import {
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { UPlotChart } from '../uPlot/Plot';
 import { Themeable } from '../../types';
+import { preparePlotData } from '../GraphNG/utils';
 
 export interface Props extends Themeable {
   width: number;
@@ -30,7 +32,8 @@ export interface Props extends Themeable {
 }
 
 interface State {
-  data: DataFrame;
+  data: AlignedData;
+  alignedDataFrame: DataFrame;
   configBuilder: UPlotConfigBuilder;
 }
 
@@ -44,21 +47,24 @@ export class Sparkline extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
-    const data = this.prepareData(props);
+    const alignedDataFrame = this.prepareData(props);
+    const data = preparePlotData(alignedDataFrame);
+
     this.state = {
       data,
-      configBuilder: this.prepareConfig(data, props),
+      alignedDataFrame,
+      configBuilder: this.prepareConfig(alignedDataFrame, props),
     };
   }
 
   componentDidUpdate(oldProps: Props) {
     if (oldProps.sparkline !== this.props.sparkline) {
       const data = this.prepareData(this.props);
-      if (!compareDataFrameStructures(this.state.data, data)) {
+      if (!compareDataFrameStructures(this.state.alignedDataFrame, data)) {
         const configBuilder = this.prepareConfig(data, this.props);
-        this.setState({ data, configBuilder });
+        this.setState({ alignedDataFrame: data, data: preparePlotData(data), configBuilder });
       } else {
-        this.setState({ data });
+        this.setState({ alignedDataFrame: data });
       }
     }
   }
@@ -84,9 +90,9 @@ export class Sparkline extends PureComponent<Props, State> {
     };
   }
 
-  prepareConfig(data: DataFrame, props: Props) {
+  prepareConfig(data: DataFrame) {
     const { theme } = this.props;
-    const builder = new UPlotConfigBuilder();
+    const builder = new UPlotConfigBuilder(() => DefaultTimeZone);
 
     builder.setCursor({
       show: true,
@@ -174,14 +180,7 @@ export class Sparkline extends PureComponent<Props, State> {
     const { width, height, sparkline } = this.props;
 
     return (
-      <UPlotChart
-        data={data}
-        config={configBuilder}
-        width={width}
-        height={height}
-        timeRange={sparkline.timeRange!}
-        timeZone={DefaultTimeZone}
-      />
+      <UPlotChart data={data} config={configBuilder} width={width} height={height} timeRange={sparkline.timeRange!} />
     );
   }
 }

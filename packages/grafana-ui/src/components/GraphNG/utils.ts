@@ -17,8 +17,15 @@ import {
   TimeZone,
 } from '@grafana/data';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
-import { AxisPlacement, DrawStyle, GraphFieldConfig, PointVisibility, ScaleDirection, ScaleOrientation } from '..';
 import { FIXED_UNIT } from './GraphNG';
+import {
+  AxisPlacement,
+  DrawStyle,
+  GraphFieldConfig,
+  PointVisibility,
+  ScaleDirection,
+  ScaleOrientation,
+} from '../uPlot/config';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 const defaultConfig: GraphFieldConfig = {
