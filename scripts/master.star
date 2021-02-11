@@ -80,7 +80,7 @@ def get_steps(edition, is_downstream=False):
         release_canary_npm_packages_step(edition),
         upload_packages_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
         deploy_to_kubernetes_step(edition=edition, is_downstream=is_downstream),
-        upload_cdn(edition)
+        upload_cdn(edition=edition)
     ])
 
     if include_enterprise2:
@@ -90,6 +90,7 @@ def get_steps(edition, is_downstream=False):
             e2e_tests_server_step(edition=edition2, port=3002),
             e2e_tests_step(edition=edition2, port=3002),
             upload_packages_step(edition=edition2, ver_mode=ver_mode, is_downstream=is_downstream),
+            upload_cdn(edition=edition2)
         ])
 
     windows_steps = get_windows_steps(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream)

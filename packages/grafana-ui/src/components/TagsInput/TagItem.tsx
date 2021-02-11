@@ -25,7 +25,7 @@ const getStyles = stylesFactory(({ theme, name }: { theme: GrafanaTheme; name: s
       white-space: nowrap;
       text-shadow: none;
       font-weight: 500;
-      line-height: 14px;
+      font-size: ${theme.typography.size.sm};
       display: flex;
       align-items: center;
     `,
@@ -43,7 +43,7 @@ export const TagItem: FC<Props> = ({ name, onRemove }) => {
   return (
     <div className={styles.itemStyle}>
       <span className={styles.nameStyle}>{name}</span>
-      <Icon name="times" onClick={() => onRemove(name)} />
+      <Icon className="pointer" name="times" onClick={() => onRemove(name)} />
     </div>
   );
 };

@@ -37,7 +37,7 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
     },
     // new FieldColorSchemeMode({
     //   id: FieldColorModeId.PaletteSaturated,
-    //   name: 'By series / Saturated palette',
+    //   name: 'Saturated palette',
     //   //description: 'Assigns color based on series or field index',
     //   isContinuous: false,
     //   isByValue: false,
@@ -45,7 +45,7 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
     //     'blue',
     //     'red',
     //     'green',
-    //     'yellow',
+    //     'orange',
     //     'purple',
     //     'orange',
     //     'dark-blue',

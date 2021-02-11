@@ -10,6 +10,8 @@ import {
   TypeaheadOutput,
   QueryField,
   BracesPlugin,
+  DOMUtil,
+  SuggestionsState,
 } from '@grafana/ui';
 
 import { LanguageMap, languages as prismLanguages } from 'prismjs';
@@ -26,7 +28,6 @@ import {
   HistoryItem,
   TimeRange,
 } from '@grafana/data';
-import { DOMUtil, SuggestionsState } from '@grafana/ui';
 import { PrometheusDatasource } from '../datasource';
 
 const HISTOGRAM_GROUP = '__histograms__';

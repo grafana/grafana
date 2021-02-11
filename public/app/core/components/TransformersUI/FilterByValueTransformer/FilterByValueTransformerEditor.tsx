@@ -139,7 +139,7 @@ export const filterByValueTransformRegistryItem: TransformerRegistryItem<FilterB
   transformation: standardTransformers.filterByValueTransformer,
   name: standardTransformers.filterByValueTransformer.name,
   description:
-    'Removes rows of the query results using user definied filters. This is useful if you can not filter your data in the data source.',
+    'Removes rows of the query results using user-defined filters. This is useful if you can not filter your data in the data source.',
 };
 
 const getEditorStyles = stylesFactory(() => ({

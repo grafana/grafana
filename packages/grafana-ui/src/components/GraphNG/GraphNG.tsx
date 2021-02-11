@@ -15,6 +15,8 @@ import {
   reduceField,
   TimeRange,
   TimeZone,
+  getFieldColorModeForField,
+  getFieldSeriesColor,
 } from '@grafana/data';
 import { useTheme } from '../../themes';
 import { UPlotChart } from '../uPlot/Plot';
@@ -31,7 +33,6 @@ import { LegendDisplayMode, VizLegendItem, VizLegendOptions } from '../VizLegend
 import { VizLegend } from '../VizLegend/VizLegend';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { useRevision } from '../uPlot/hooks';
-import { getFieldColorModeForField, getFieldSeriesColor } from '@grafana/data';
 import { GraphNGLegendEvent, GraphNGLegendEventMode } from './types';
 import { isNumber } from 'lodash';
 
