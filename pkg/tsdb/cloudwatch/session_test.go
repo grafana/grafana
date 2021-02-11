@@ -1,8 +1,11 @@
 package cloudwatch
 
 import (
+	"encoding/json"
 	"reflect"
 	"testing"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/client"
@@ -57,12 +60,18 @@ func TestNewSession_AssumeRole(t *testing.T) {
 
 		const roleARN = "test"
 
-		e := newExecutor(nil)
+		e := newExecutor(nil, nil)
 		e.DataSource = fakeDataSource(fakeDataSourceCfg{
 			assumeRoleARN: roleARN,
 		})
 
-		sess, err := e.newSession(defaultRegion)
+		pluginCtx := backend.PluginContext{
+			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+				JSONData: json.RawMessage(`{ "assumeRoleARN" : "test" }`),
+			},
+		}
+
+		sess, err := e.newSession(defaultRegion, pluginCtx)
 		require.NoError(t, err)
 		require.NotNil(t, sess)
 
@@ -84,13 +93,19 @@ func TestNewSession_AssumeRole(t *testing.T) {
 		const roleARN = "test"
 		const externalID = "external"
 
-		e := newExecutor(nil)
+		e := newExecutor(nil, nil)
 		e.DataSource = fakeDataSource(fakeDataSourceCfg{
 			assumeRoleARN: roleARN,
 			externalID:    externalID,
 		})
 
-		sess, err := e.newSession(defaultRegion)
+		pluginCtx := backend.PluginContext{
+			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+				JSONData: json.RawMessage(`{ "assumeRoleArn" : "test", "externalId" : "external" }`),
+			},
+		}
+
+		sess, err := e.newSession(defaultRegion, pluginCtx)
 		require.NoError(t, err)
 		require.NotNil(t, sess)
 

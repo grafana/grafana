@@ -22,7 +22,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -240,67 +239,28 @@ var dimensionsMap = map[string][]string{
 
 var regionCache sync.Map
 
-func (e *cloudWatchExecutor) executeMetricFindQuery(ctx context.Context, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	firstQuery := queryContext.Queries[0]
-
-	parameters := firstQuery.Model
-	subType := firstQuery.Model.Get("subtype").MustString()
-	var data []suggestData
-	var err error
-	switch subType {
-	case "regions":
-		data, err = e.handleGetRegions(ctx, parameters, queryContext)
-	case "namespaces":
-		data, err = e.handleGetNamespaces(ctx, parameters, queryContext)
-	case "metrics":
-		data, err = e.handleGetMetrics(ctx, parameters, queryContext)
-	case "dimension_keys":
-		data, err = e.handleGetDimensions(ctx, parameters, queryContext)
-	case "dimension_values":
-		data, err = e.handleGetDimensionValues(ctx, parameters, queryContext)
-	case "ebs_volume_ids":
-		data, err = e.handleGetEbsVolumeIds(ctx, parameters, queryContext)
-	case "ec2_instance_attribute":
-		data, err = e.handleGetEc2InstanceAttribute(ctx, parameters, queryContext)
-	case "resource_arns":
-		data, err = e.handleGetResourceArns(ctx, parameters, queryContext)
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: firstQuery.RefId}
-	transformToTable(data, queryResult)
-	result := &tsdb.Response{
-		Results: map[string]*tsdb.QueryResult{
-			firstQuery.RefId: queryResult,
-		},
-	}
-	return result, nil
-}
-
-func (e *cloudWatchExecutor) executeMetricFindQueryV2(ctx context.Context, model *simplejson.Json, query backend.DataQuery) (*backend.QueryDataResponse, error) {
+func (e *cloudWatchExecutor) executeMetricFindQuery(ctx context.Context, model *simplejson.Json, query backend.DataQuery, pluginCtx backend.PluginContext) (*backend.QueryDataResponse, error) {
 	subType := model.Get("subtype").MustString()
 
 	var data []suggestData
 	var err error
 	switch subType {
 	case "regions":
-		data, err = e.handleGetRegions(ctx, nil, nil)
+		data, err = e.handleGetRegions(ctx, nil, pluginCtx)
 	case "namespaces":
-		data, err = e.handleGetNamespaces(ctx, nil, nil)
+		data, err = e.handleGetNamespaces(ctx, nil, pluginCtx)
 	case "metrics":
-		data, err = e.handleGetMetrics(ctx, model, nil)
+		data, err = e.handleGetMetrics(ctx, model, pluginCtx)
 	case "dimension_keys":
-		data, err = e.handleGetDimensions(ctx, model, nil)
+		data, err = e.handleGetDimensions(ctx, model, pluginCtx)
 	case "dimension_values":
-		data, err = e.handleGetDimensionValues(ctx, model, nil)
+		data, err = e.handleGetDimensionValues(ctx, model, pluginCtx)
 	case "ebs_volume_ids":
-		data, err = e.handleGetEbsVolumeIds(ctx, model, nil)
+		data, err = e.handleGetEbsVolumeIds(ctx, model, pluginCtx)
 	case "ec2_instance_attribute":
-		data, err = e.handleGetEc2InstanceAttribute(ctx, model, nil)
+		data, err = e.handleGetEc2InstanceAttribute(ctx, model, pluginCtx)
 	case "resource_arns":
-		data, err = e.handleGetResourceArns(ctx, model, nil)
+		data, err = e.handleGetResourceArns(ctx, model, pluginCtx)
 	}
 	if err != nil {
 		return nil, err
@@ -308,37 +268,13 @@ func (e *cloudWatchExecutor) executeMetricFindQueryV2(ctx context.Context, model
 
 	resp := backend.NewQueryDataResponse()
 	respD := resp.Responses[query.RefID]
-	respD.Frames = append(respD.Frames, transformToTableV2(data))
+	respD.Frames = append(respD.Frames, transformToTable(data))
 	resp.Responses[query.RefID] = respD
 
 	return resp, nil
 }
 
-func transformToTable(data []suggestData, result *tsdb.QueryResult) {
-	table := &tsdb.Table{
-		Columns: []tsdb.TableColumn{
-			{
-				Text: "text",
-			},
-			{
-				Text: "value",
-			},
-		},
-		Rows: make([]tsdb.RowValues, 0),
-	}
-
-	for _, r := range data {
-		values := []interface{}{
-			r.Text,
-			r.Value,
-		}
-		table.Rows = append(table.Rows, values)
-	}
-	result.Tables = append(result.Tables, table)
-	result.Meta.Set("rowCount", len(data))
-}
-
-func transformToTableV2(d []suggestData) *data.Frame {
+func transformToTable(d []suggestData) *data.Frame {
 	frame := data.NewFrame("",
 		data.NewField("text", nil, []string{}),
 		data.NewField("value", nil, []string{}))
@@ -373,8 +309,8 @@ func parseMultiSelectValue(input string) []string {
 // Whenever this list is updated, the frontend list should also be updated.
 // Please update the region list in public/app/plugins/datasource/cloudwatch/partials/config.html
 func (e *cloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *simplejson.Json,
-	queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
-	dsInfo := e.getDSInfo(defaultRegion)
+	pluginCtx backend.PluginContext) ([]suggestData, error) {
+	dsInfo := e.getDSInfo(pluginCtx)
 	profile := dsInfo.Profile
 	if cache, ok := regionCache.Load(profile); ok {
 		if cache2, ok2 := cache.([]suggestData); ok2 {
@@ -382,7 +318,7 @@ func (e *cloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *s
 		}
 	}
 
-	client, err := e.getEC2Client(defaultRegion)
+	client, err := e.getEC2Client(defaultRegion, pluginCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -418,8 +354,8 @@ func (e *cloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *s
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) handleGetNamespaces(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
-	keys := []string{}
+func (e *cloudWatchExecutor) handleGetNamespaces(ctx context.Context, parameters *simplejson.Json, pluginCtx backend.PluginContext) ([]suggestData, error) {
+	var keys []string
 	for key := range metricsMap {
 		keys = append(keys, key)
 	}
@@ -454,7 +390,7 @@ func (e *cloudWatchExecutor) handleGetNamespaces(ctx context.Context, parameters
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) handleGetMetrics(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetMetrics(ctx context.Context, parameters *simplejson.Json, pluginCtx backend.PluginContext) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	namespace := parameters.Get("namespace").MustString()
 
@@ -466,7 +402,7 @@ func (e *cloudWatchExecutor) handleGetMetrics(ctx context.Context, parameters *s
 		}
 	} else {
 		var err error
-		if namespaceMetrics, err = e.getMetricsForCustomMetrics(region, namespace); err != nil {
+		if namespaceMetrics, err = e.getMetricsForCustomMetrics(region, namespace, pluginCtx); err != nil {
 			return nil, errutil.Wrap("unable to call AWS API", err)
 		}
 	}
@@ -480,7 +416,7 @@ func (e *cloudWatchExecutor) handleGetMetrics(ctx context.Context, parameters *s
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters *simplejson.Json, pluginCtx backend.PluginContext) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	namespace := parameters.Get("namespace").MustString()
 
@@ -492,7 +428,7 @@ func (e *cloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters
 		}
 	} else {
 		var err error
-		if dimensionValues, err = e.getDimensionsForCustomMetrics(region, namespace); err != nil {
+		if dimensionValues, err = e.getDimensionsForCustomMetrics(region, namespace, pluginCtx); err != nil {
 			return nil, errutil.Wrap("unable to call AWS API", err)
 		}
 	}
@@ -506,7 +442,7 @@ func (e *cloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) handleGetDimensionValues(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetDimensionValues(ctx context.Context, parameters *simplejson.Json, pluginCtx backend.PluginContext) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	namespace := parameters.Get("namespace").MustString()
 	metricName := parameters.Get("metricName").MustString()
@@ -530,7 +466,7 @@ func (e *cloudWatchExecutor) handleGetDimensionValues(ctx context.Context, param
 		}
 	}
 
-	metrics, err := e.cloudwatchListMetrics(region, namespace, metricName, dimensions)
+	metrics, err := e.cloudwatchListMetrics(region, namespace, metricName, dimensions, pluginCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -558,12 +494,12 @@ func (e *cloudWatchExecutor) handleGetDimensionValues(ctx context.Context, param
 }
 
 func (e *cloudWatchExecutor) handleGetEbsVolumeIds(ctx context.Context, parameters *simplejson.Json,
-	queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+	pluginCtx backend.PluginContext) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	instanceId := parameters.Get("instanceId").MustString()
 
 	instanceIds := aws.StringSlice(parseMultiSelectValue(instanceId))
-	instances, err := e.ec2DescribeInstances(region, nil, instanceIds)
+	instances, err := e.ec2DescribeInstances(region, nil, instanceIds, pluginCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -581,7 +517,7 @@ func (e *cloudWatchExecutor) handleGetEbsVolumeIds(ctx context.Context, paramete
 }
 
 func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, parameters *simplejson.Json,
-	queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+	pluginCtx backend.PluginContext) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	attributeName := parameters.Get("attributeName").MustString()
 	filterJson := parameters.Get("filters").MustMap()
@@ -602,7 +538,7 @@ func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 		}
 	}
 
-	instances, err := e.ec2DescribeInstances(region, filters, nil)
+	instances, err := e.ec2DescribeInstances(region, filters, nil, pluginCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -661,7 +597,7 @@ func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 }
 
 func (e *cloudWatchExecutor) handleGetResourceArns(ctx context.Context, parameters *simplejson.Json,
-	queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+	pluginCtx backend.PluginContext) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	resourceType := parameters.Get("resourceType").MustString()
 	filterJson := parameters.Get("tags").MustMap()
@@ -685,7 +621,7 @@ func (e *cloudWatchExecutor) handleGetResourceArns(ctx context.Context, paramete
 	var resourceTypes []*string
 	resourceTypes = append(resourceTypes, &resourceType)
 
-	resources, err := e.resourceGroupsGetResources(region, filters, resourceTypes)
+	resources, err := e.resourceGroupsGetResources(region, filters, resourceTypes, pluginCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -700,8 +636,8 @@ func (e *cloudWatchExecutor) handleGetResourceArns(ctx context.Context, paramete
 }
 
 func (e *cloudWatchExecutor) cloudwatchListMetrics(region string, namespace string, metricName string,
-	dimensions []*cloudwatch.DimensionFilter) (*cloudwatch.ListMetricsOutput, error) {
-	svc, err := e.getCWClient(region)
+	dimensions []*cloudwatch.DimensionFilter, pluginCtx backend.PluginContext) (*cloudwatch.ListMetricsOutput, error) {
+	svc, err := e.getCWClient(region, pluginCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -731,13 +667,13 @@ func (e *cloudWatchExecutor) cloudwatchListMetrics(region string, namespace stri
 	return &resp, nil
 }
 
-func (e *cloudWatchExecutor) ec2DescribeInstances(region string, filters []*ec2.Filter, instanceIds []*string) (*ec2.DescribeInstancesOutput, error) {
+func (e *cloudWatchExecutor) ec2DescribeInstances(region string, filters []*ec2.Filter, instanceIds []*string, pluginCtx backend.PluginContext) (*ec2.DescribeInstancesOutput, error) {
 	params := &ec2.DescribeInstancesInput{
 		Filters:     filters,
 		InstanceIds: instanceIds,
 	}
 
-	client, err := e.getEC2Client(region)
+	client, err := e.getEC2Client(region, pluginCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -754,13 +690,13 @@ func (e *cloudWatchExecutor) ec2DescribeInstances(region string, filters []*ec2.
 }
 
 func (e *cloudWatchExecutor) resourceGroupsGetResources(region string, filters []*resourcegroupstaggingapi.TagFilter,
-	resourceTypes []*string) (*resourcegroupstaggingapi.GetResourcesOutput, error) {
+	resourceTypes []*string, pluginCtx backend.PluginContext) (*resourcegroupstaggingapi.GetResourcesOutput, error) {
 	params := &resourcegroupstaggingapi.GetResourcesInput{
 		ResourceTypeFilters: resourceTypes,
 		TagFilters:          filters,
 	}
 
-	client, err := e.getRGTAClient(region)
+	client, err := e.getRGTAClient(region, pluginCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -777,8 +713,8 @@ func (e *cloudWatchExecutor) resourceGroupsGetResources(region string, filters [
 	return &resp, nil
 }
 
-func (e *cloudWatchExecutor) getAllMetrics(region, namespace string) (cloudwatch.ListMetricsOutput, error) {
-	client, err := e.getCWClient(region)
+func (e *cloudWatchExecutor) getAllMetrics(region, namespace string, pluginCtx backend.PluginContext) (cloudwatch.ListMetricsOutput, error) {
+	client, err := e.getCWClient(region, pluginCtx)
 	if err != nil {
 		return cloudwatch.ListMetricsOutput{}, err
 	}
@@ -807,12 +743,12 @@ func (e *cloudWatchExecutor) getAllMetrics(region, namespace string) (cloudwatch
 
 var metricsCacheLock sync.Mutex
 
-func (e *cloudWatchExecutor) getMetricsForCustomMetrics(region, namespace string) ([]string, error) {
+func (e *cloudWatchExecutor) getMetricsForCustomMetrics(region, namespace string, pluginCtx backend.PluginContext) ([]string, error) {
 	plog.Debug("Getting metrics for custom metrics", "region", region, "namespace", namespace)
 	metricsCacheLock.Lock()
 	defer metricsCacheLock.Unlock()
 
-	dsInfo := e.getDSInfo(region)
+	dsInfo := e.getDSInfo(pluginCtx)
 
 	if _, ok := customMetricsMetricsMap[dsInfo.Profile]; !ok {
 		customMetricsMetricsMap[dsInfo.Profile] = make(map[string]map[string]*customMetricsCache)
@@ -828,7 +764,7 @@ func (e *cloudWatchExecutor) getMetricsForCustomMetrics(region, namespace string
 	if customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][namespace].Expire.After(time.Now()) {
 		return customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache, nil
 	}
-	result, err := e.getAllMetrics(region, namespace)
+	result, err := e.getAllMetrics(region, namespace, pluginCtx)
 	if err != nil {
 		return []string{}, err
 	}
@@ -849,11 +785,11 @@ func (e *cloudWatchExecutor) getMetricsForCustomMetrics(region, namespace string
 
 var dimensionsCacheLock sync.Mutex
 
-func (e *cloudWatchExecutor) getDimensionsForCustomMetrics(region, namespace string) ([]string, error) {
+func (e *cloudWatchExecutor) getDimensionsForCustomMetrics(region, namespace string, pluginCtx backend.PluginContext) ([]string, error) {
 	dimensionsCacheLock.Lock()
 	defer dimensionsCacheLock.Unlock()
 
-	dsInfo := e.getDSInfo(region)
+	dsInfo := e.getDSInfo(pluginCtx)
 
 	if _, ok := customMetricsDimensionsMap[dsInfo.Profile]; !ok {
 		customMetricsDimensionsMap[dsInfo.Profile] = make(map[string]map[string]*customMetricsCache)
@@ -869,7 +805,7 @@ func (e *cloudWatchExecutor) getDimensionsForCustomMetrics(region, namespace str
 	if customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][namespace].Expire.After(time.Now()) {
 		return customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache, nil
 	}
-	result, err := e.getAllMetrics(region, namespace)
+	result, err := e.getAllMetrics(region, namespace, pluginCtx)
 	if err != nil {
 		return []string{}, err
 	}

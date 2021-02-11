@@ -11,7 +11,7 @@ import (
 )
 
 func TestQueryTransformer(t *testing.T) {
-	executor := newExecutor(nil)
+	executor := newExecutor(nil, nil)
 	t.Run("One cloudwatchQuery is generated when its request query has one stat", func(t *testing.T) {
 		requestQueries := []*requestQuery{
 			{

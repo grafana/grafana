@@ -12,35 +12,10 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 // Parses the json queries and returns a requestQuery. The requestQuery has a 1 to 1 mapping to a query editor row
-func (e *cloudWatchExecutor) parseQueries(queryContext *tsdb.TsdbQuery, startTime time.Time, endTime time.Time) (map[string][]*requestQuery, error) {
-	requestQueries := make(map[string][]*requestQuery)
-	for i, query := range queryContext.Queries {
-		queryType := query.Model.Get("type").MustString()
-		if queryType != "timeSeriesQuery" && queryType != "" {
-			continue
-		}
-
-		refID := query.RefId
-		query, err := parseRequestQuery(queryContext.Queries[i].Model, refID, startTime, endTime)
-		if err != nil {
-			return nil, &queryError{err: err, RefID: refID}
-		}
-
-		if _, exist := requestQueries[query.Region]; !exist {
-			requestQueries[query.Region] = make([]*requestQuery, 0)
-		}
-		requestQueries[query.Region] = append(requestQueries[query.Region], query)
-	}
-
-	return requestQueries, nil
-}
-
-// Parses the json queries and returns a requestQuery. The requestQuery has a 1 to 1 mapping to a query editor row
-func (e *cloudWatchExecutor) parseQueriesV2(req *backend.QueryDataRequest, startTime time.Time, endTime time.Time) (map[string][]*requestQuery, error) {
+func (e *cloudWatchExecutor) parseQueries(req *backend.QueryDataRequest, startTime time.Time, endTime time.Time) (map[string][]*requestQuery, error) {
 	requestQueries := make(map[string][]*requestQuery)
 	for _, query := range req.Queries {
 		model, err := simplejson.NewJson(query.JSON)

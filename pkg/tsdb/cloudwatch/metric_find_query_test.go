@@ -2,7 +2,13 @@ package cloudwatch
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/client"
@@ -44,47 +50,54 @@ func TestQuery_Metrics(t *testing.T) {
 				},
 			},
 		}
-		executor := newExecutor(nil)
-		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
-			Queries: []*tsdb.Query{
+
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return datasourceInfo{}, nil
+		})
+
+		executor := newExecutor(nil, im)
+		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			},
+			Queries: []backend.DataQuery{
 				{
-					Model: simplejson.NewFromAny(map[string]interface{}{
+					JSON: json.RawMessage(`{
 						"type":      "metricFindQuery",
 						"subtype":   "metrics",
 						"region":    "us-east-1",
 						"namespace": "custom",
-					}),
+					}`),
 				},
 			},
 		})
 		require.NoError(t, err)
 
-		assert.Equal(t, &tsdb.Response{
-			Results: map[string]*tsdb.QueryResult{
-				"": {
-					Meta: simplejson.NewFromAny(map[string]interface{}{
-						"rowCount": 1,
-					}),
-					Tables: []*tsdb.Table{
-						{
-							Columns: []tsdb.TableColumn{
-								{
-									Text: "text",
-								},
-								{
-									Text: "value",
-								},
-							},
-							Rows: []tsdb.RowValues{
-								{
-									"Test_MetricName",
-									"Test_MetricName",
-								},
-							},
-						},
-					},
-				},
+		assert.Equal(t, &backend.QueryDataResponse{Responses: backend.Responses{
+			"": {
+				//Meta: simplejson.NewFromAny(map[string]interface{}{
+				//	"rowCount": 1,
+				//}),
+				//Tables: []*tsdb.Table{
+				//	{
+				//		Columns: []tsdb.TableColumn{
+				//			{
+				//				Text: "text",
+				//			},
+				//			{
+				//				Text: "value",
+				//			},
+				//		},
+				//		Rows: []tsdb.RowValues{
+				//			{
+				//				"Test_MetricName",
+				//				"Test_MetricName",
+				//			},
+				//		},
+				//	},
+				//},
 			},
+		},
 		}, resp)
 	})
 
@@ -101,16 +114,16 @@ func TestQuery_Metrics(t *testing.T) {
 				},
 			},
 		}
-		executor := newExecutor(nil)
-		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
-			Queries: []*tsdb.Query{
+		executor := newExecutor(nil, nil)
+		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			Queries: []backend.DataQuery{
 				{
-					Model: simplejson.NewFromAny(map[string]interface{}{
+					JSON: json.RawMessage(`{
 						"type":      "metricFindQuery",
 						"subtype":   "dimension_keys",
 						"region":    "us-east-1",
 						"namespace": "custom",
-					}),
+					}`),
 				},
 			},
 		})
@@ -163,22 +176,22 @@ func TestQuery_Regions(t *testing.T) {
 		cli = fakeEC2Client{
 			regions: []string{regionName},
 		}
-		executor := newExecutor(nil)
-		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
-			Queries: []*tsdb.Query{
+		executor := newExecutor(nil, nil)
+		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			Queries: []backend.DataQuery{
 				{
-					Model: simplejson.NewFromAny(map[string]interface{}{
+					JSON: json.RawMessage(`{
 						"type":      "metricFindQuery",
 						"subtype":   "regions",
 						"region":    "us-east-1",
-						"namespace": "custom",
-					}),
+						"namespace": "custom"
+					}`),
 				},
 			},
 		})
 		require.NoError(t, err)
 
-		rows := []tsdb.RowValues{}
+		var rows []tsdb.RowValues
 		for _, region := range knownRegions {
 			rows = append(rows, []interface{}{
 				region,
@@ -245,19 +258,19 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 				},
 			},
 		}
-		executor := newExecutor(nil)
-		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
-			Queries: []*tsdb.Query{
+		executor := newExecutor(nil, nil)
+		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			Queries: []backend.DataQuery{
 				{
-					Model: simplejson.NewFromAny(map[string]interface{}{
+					JSON: json.RawMessage(`{
 						"type":          "metricFindQuery",
 						"subtype":       "ec2_instance_attribute",
 						"region":        "us-east-1",
 						"attributeName": "InstanceId",
-						"filters": map[string]interface{}{
-							"tag:Environment": []string{"production"},
-						},
-					}),
+						"filters": {
+							"tag:Environment": ["production"]
+						}
+					}`),
 				},
 			},
 		})
@@ -306,8 +319,6 @@ func TestQuery_EBSVolumeIDs(t *testing.T) {
 	}
 
 	t.Run("", func(t *testing.T) {
-		const instanceIDs = "{i-1, i-2, i-3}"
-
 		cli = fakeEC2Client{
 			reservations: []*ec2.Reservation{
 				{
@@ -348,16 +359,16 @@ func TestQuery_EBSVolumeIDs(t *testing.T) {
 				},
 			},
 		}
-		executor := newExecutor(nil)
-		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
-			Queries: []*tsdb.Query{
+		executor := newExecutor(nil, nil)
+		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			Queries: []backend.DataQuery{
 				{
-					Model: simplejson.NewFromAny(map[string]interface{}{
+					JSON: json.RawMessage(`{
 						"type":       "metricFindQuery",
 						"subtype":    "ebs_volume_ids",
 						"region":     "us-east-1",
-						"instanceId": instanceIDs,
-					}),
+						"instanceId": instanceIDs
+					}`),
 				},
 			},
 		})
@@ -448,19 +459,19 @@ func TestQuery_ResourceARNs(t *testing.T) {
 				},
 			},
 		}
-		executor := newExecutor(nil)
-		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
-			Queries: []*tsdb.Query{
+		executor := newExecutor(nil, nil)
+		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			Queries: []backend.DataQuery{
 				{
-					Model: simplejson.NewFromAny(map[string]interface{}{
+					JSON: json.RawMessage(`{
 						"type":         "metricFindQuery",
 						"subtype":      "resource_arns",
 						"region":       "us-east-1",
 						"resourceType": "ec2:instance",
-						"tags": map[string]interface{}{
-							"Environment": []string{"production"},
-						},
-					}),
+						"tags": {
+							"Environment": ["production"]
+						}
+					}`),
 				},
 			},
 		})

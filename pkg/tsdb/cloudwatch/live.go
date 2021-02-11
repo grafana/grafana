@@ -108,7 +108,7 @@ func (r *logQueryRunner) publishResults(channelName string) error {
 
 // executeLiveLogQuery executes a CloudWatch Logs query with live updates over WebSocket.
 // A WebSocket channel is created, which goroutines send responses over.
-func (e *cloudWatchExecutor) executeLiveLogQueryV2(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (e *cloudWatchExecutor) executeLiveLogQuery(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	responseChannelName := uuid.New().String()
 	responseChannel := make(chan *backend.QueryDataResponse)
 	if err := e.logsService.AddResponseChannel("plugin/cloudwatch/"+responseChannelName, responseChannel); err != nil {
@@ -116,7 +116,7 @@ func (e *cloudWatchExecutor) executeLiveLogQueryV2(ctx context.Context, req *bac
 		return nil, err
 	}
 
-	go e.sendLiveQueriesToChannelV2(req, responseChannel)
+	go e.sendLiveQueriesToChannel(req, responseChannel)
 
 	response := &backend.QueryDataResponse{
 		Responses: backend.Responses{
@@ -133,7 +133,7 @@ func (e *cloudWatchExecutor) executeLiveLogQueryV2(ctx context.Context, req *bac
 	return response, nil
 }
 
-func (e *cloudWatchExecutor) sendLiveQueriesToChannelV2(req *backend.QueryDataRequest, responseChannel chan *backend.QueryDataResponse) {
+func (e *cloudWatchExecutor) sendLiveQueriesToChannel(req *backend.QueryDataRequest, responseChannel chan *backend.QueryDataResponse) {
 	defer close(responseChannel)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
@@ -143,7 +143,7 @@ func (e *cloudWatchExecutor) sendLiveQueriesToChannelV2(req *backend.QueryDataRe
 	for _, query := range req.Queries {
 		query := query
 		eg.Go(func() error {
-			return e.startLiveQueryV2(ectx, responseChannel, query, query.TimeRange)
+			return e.startLiveQuery(ectx, responseChannel, query, query.TimeRange, req.PluginContext)
 		})
 	}
 
@@ -152,7 +152,7 @@ func (e *cloudWatchExecutor) sendLiveQueriesToChannelV2(req *backend.QueryDataRe
 	}
 }
 
-func (e *cloudWatchExecutor) getQueue(queueKey string) (chan bool, error) {
+func (e *cloudWatchExecutor) getQueue(queueKey string, pluginCtx backend.PluginContext) (chan bool, error) {
 	e.logsService.queueLock.Lock()
 	defer e.logsService.queueLock.Unlock()
 
@@ -160,7 +160,7 @@ func (e *cloudWatchExecutor) getQueue(queueKey string) (chan bool, error) {
 		return queue, nil
 	}
 
-	concurrentQueriesQuota := e.fetchConcurrentQueriesQuota(queueKey)
+	concurrentQueriesQuota := e.fetchConcurrentQueriesQuota(queueKey, pluginCtx)
 
 	queueChannel := make(chan bool, concurrentQueriesQuota)
 	e.logsService.queues[queueKey] = queueChannel
@@ -168,8 +168,8 @@ func (e *cloudWatchExecutor) getQueue(queueKey string) (chan bool, error) {
 	return queueChannel, nil
 }
 
-func (e *cloudWatchExecutor) fetchConcurrentQueriesQuota(region string) int {
-	sess, err := e.newSession(region)
+func (e *cloudWatchExecutor) fetchConcurrentQueriesQuota(region string, pluginCtx backend.PluginContext) int {
+	sess, err := e.newSession(region, pluginCtx)
 	if err != nil {
 		plog.Warn("Could not get service quota client")
 		return defaultConcurrentQueries
@@ -209,7 +209,7 @@ func (e *cloudWatchExecutor) fetchConcurrentQueriesQuota(region string) int {
 	return defaultConcurrentQueries
 }
 
-func (e *cloudWatchExecutor) startLiveQueryV2(ctx context.Context, responseChannel chan *backend.QueryDataResponse, query backend.DataQuery, timeRange backend.TimeRange) error {
+func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel chan *backend.QueryDataResponse, query backend.DataQuery, timeRange backend.TimeRange, pluginCtx backend.PluginContext) error {
 	model, err := simplejson.NewJson(query.JSON)
 	if err != nil {
 		return err
@@ -217,12 +217,12 @@ func (e *cloudWatchExecutor) startLiveQueryV2(ctx context.Context, responseChann
 
 	defaultRegion := e.DataSource.JsonData.Get("defaultRegion").MustString()
 	region := model.Get("region").MustString(defaultRegion)
-	logsClient, err := e.getCWLogsClient(region)
+	logsClient, err := e.getCWLogsClient(region, pluginCtx)
 	if err != nil {
 		return err
 	}
 
-	queue, err := e.getQueue(fmt.Sprintf("%s-%d", region, e.DataSource.Id))
+	queue, err := e.getQueue(fmt.Sprintf("%s-%d", region, e.DataSource.Id), pluginCtx)
 	if err != nil {
 		return err
 	}
@@ -231,7 +231,7 @@ func (e *cloudWatchExecutor) startLiveQueryV2(ctx context.Context, responseChann
 	queue <- true
 	defer func() { <-queue }()
 
-	startQueryOutput, err := e.executeStartQueryV2(ctx, logsClient, model, timeRange)
+	startQueryOutput, err := e.executeStartQuery(ctx, logsClient, model, timeRange)
 	if err != nil {
 		return err
 	}
