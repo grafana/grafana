@@ -24,7 +24,7 @@ import { UPlotChart } from '../uPlot/Plot';
 import { Themeable } from '../../types';
 import { preparePlotData } from '../GraphNG/utils';
 
-export interface Props extends Themeable {
+export interface SparklineProps extends Themeable {
   width: number;
   height: number;
   config?: FieldConfig<GraphFieldConfig>;
@@ -34,7 +34,7 @@ export interface Props extends Themeable {
 interface State {
   data: AlignedData;
   alignedDataFrame: DataFrame;
-  configBuilder: UPlotConfigBuilder;
+  configBuilder?: UPlotConfigBuilder;
 }
 
 const defaultConfig: GraphFieldConfig = {
@@ -43,11 +43,11 @@ const defaultConfig: GraphFieldConfig = {
   axisPlacement: AxisPlacement.Hidden,
 };
 
-export class Sparkline extends PureComponent<Props, State> {
-  constructor(props: Props) {
+export class Sparkline extends PureComponent<SparklineProps, State> {
+  constructor(props: SparklineProps) {
     super(props);
 
-    const alignedDataFrame = this.prepareData(props);
+    const alignedDataFrame = prepareData(props.sparkline, props.config);
     const data = preparePlotData(alignedDataFrame);
 
     this.state = {
@@ -57,37 +57,36 @@ export class Sparkline extends PureComponent<Props, State> {
     };
   }
 
-  componentDidUpdate(oldProps: Props) {
-    if (oldProps.sparkline !== this.props.sparkline) {
-      const data = this.prepareData(this.props);
-      if (!compareDataFrameStructures(this.state.alignedDataFrame, data)) {
-        const configBuilder = this.prepareConfig(data);
-        this.setState({ alignedDataFrame: data, data: preparePlotData(data), configBuilder });
-      } else {
-        this.setState({ alignedDataFrame: data });
-      }
+  static getDerivedStateFromProps(props: SparklineProps, state: State) {
+    const frame = prepareData(props.sparkline, props.config);
+    if (!frame) {
+      return { ...state };
     }
-  }
-
-  prepareData(props: Props): DataFrame {
-    const { sparkline } = props;
-    const length = sparkline.y.values.length;
-    const yFieldConfig = {
-      ...sparkline.y.config,
-      ...this.props.config,
-    };
 
     return {
-      refId: 'sparkline',
-      fields: [
-        sparkline.x ?? IndexVector.newField(length),
-        {
-          ...sparkline.y,
-          config: yFieldConfig,
-        },
-      ],
-      length,
+      ...state,
+      data: preparePlotData(frame),
+      alignedDataFrame: frame,
     };
+  }
+
+  componentDidUpdate(prevProps: SparklineProps, prevState: State) {
+    const { alignedDataFrame } = this.state;
+    let stateUpdate = {};
+
+    if (prevProps.sparkline !== this.props.sparkline) {
+      if (!alignedDataFrame) {
+        return;
+      }
+      const hasStructureChanged = !compareDataFrameStructures(this.state.alignedDataFrame, prevState.alignedDataFrame);
+      if (hasStructureChanged) {
+        const configBuilder = this.prepareConfig(alignedDataFrame);
+        stateUpdate = { configBuilder };
+      }
+    }
+    if (Object.keys(stateUpdate).length > 0) {
+      this.setState(stateUpdate);
+    }
   }
 
   prepareConfig(data: DataFrame) {
@@ -183,4 +182,24 @@ export class Sparkline extends PureComponent<Props, State> {
       <UPlotChart data={data} config={configBuilder} width={width} height={height} timeRange={sparkline.timeRange!} />
     );
   }
+}
+
+function prepareData(sparkline: FieldSparkline, config?: FieldConfig<GraphFieldConfig>): DataFrame {
+  const length = sparkline.y.values.length;
+  const yFieldConfig = {
+    ...sparkline.y.config,
+    ...config,
+  };
+
+  return {
+    refId: 'sparkline',
+    fields: [
+      sparkline.x ?? IndexVector.newField(length),
+      {
+        ...sparkline.y,
+        config: yFieldConfig,
+      },
+    ],
+    length,
+  };
 }
