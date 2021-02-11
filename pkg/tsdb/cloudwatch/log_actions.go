@@ -76,7 +76,7 @@ func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, req *backend
 	close(resultChan)
 
 	for result := range resultChan {
-		for refID, response := range result { // needs refactoring
+		for refID, response := range result {
 			respD := resp.Responses[refID]
 			respD.Frames = response.Frames
 			resp.Responses[refID] = respD

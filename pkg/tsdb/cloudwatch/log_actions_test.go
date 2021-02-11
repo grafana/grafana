@@ -7,15 +7,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-
-	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/stretchr/testify/assert"
@@ -122,11 +120,12 @@ func TestQuery_DescribeLogGroups(t *testing.T) {
 			Queries: []backend.DataQuery{
 				{
 					JSON: json.RawMessage(`{
-					"type":    "logAction",
-					"subtype": "DescribeLogGroups",
-					"limit": 50,
-					"region": "default",
-					"logGroupNamePrefix": "g"}`),
+						"type":    "logAction",
+						"subtype": "DescribeLogGroups",
+						"limit": 50,
+						"region": "default",
+						"logGroupNamePrefix": "g"
+					}`),
 				},
 			},
 		})
@@ -203,7 +202,8 @@ func TestQuery_GetLogGroupFields(t *testing.T) {
 					"type":    "logAction",
 					"subtype": "GetLogGroupFields",
 					"logGroupName": "group_a",
-					"limit": 50}`),
+					"limit": 50
+				}`),
 			},
 		},
 	})
@@ -283,11 +283,12 @@ func TestQuery_StartQuery(t *testing.T) {
 				{
 					TimeRange: timeRange,
 					JSON: json.RawMessage(`{
-					"type":    "logAction",
-					"subtype": "StartQuery",
-					"limit": 50,
-					"region": "default",
-					"queryString": "fields @message"}`),
+						"type":    "logAction",
+						"subtype": "StartQuery",
+						"limit": 50,
+						"region": "default",
+						"queryString": "fields @message"
+					}`),
 				},
 			},
 		})
@@ -336,11 +337,12 @@ func TestQuery_StartQuery(t *testing.T) {
 					RefID:     refID,
 					TimeRange: timeRange,
 					JSON: json.RawMessage(`{
-					"type":    "logAction",
-					"subtype": "StartQuery",
-					"limit": 50,
-					"region": "default",
-					"queryString": "fields @message"}`),
+						"type":    "logAction",
+						"subtype": "StartQuery",
+						"limit": 50,
+						"region": "default",
+						"queryString": "fields @message"
+					}`),
 				},
 			},
 		})
@@ -417,7 +419,8 @@ func TestQuery_StopQuery(t *testing.T) {
 				JSON: json.RawMessage(`{
 					"type":    "logAction",
 					"subtype": "StopQuery",
-					"queryId": "abcd-efgh-ijkl-mnop"}`),
+					"queryId": "abcd-efgh-ijkl-mnop"
+				}`),
 			},
 		},
 	})
@@ -509,7 +512,8 @@ func TestQuery_GetQueryResults(t *testing.T) {
 				JSON: json.RawMessage(`{
 					"type":    "logAction",
 					"subtype": "GetQueryResults",
-					"queryId": "abcd-efgh-ijkl-mnop"}`),
+					"queryId": "abcd-efgh-ijkl-mnop"
+				}`),
 			},
 		},
 	})

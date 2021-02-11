@@ -67,7 +67,7 @@ import { AwsUrl, encodeUrl } from './aws_url';
 import { increasingInterval } from './utils/rxjs/increasingInterval';
 import config from 'app/core/config';
 
-const TSDB_QUERY_ENDPOINT = '/api/ds/query';
+const DS_QUERY_ENDPOINT = '/api/ds/query';
 
 // Constants also defined in tsdb/cloudwatch/cloudwatch.go
 const LOG_IDENTIFIER_INTERNAL = '__log__grafana_internal__';
@@ -186,7 +186,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
       queries: queryParams,
     };
 
-    return this.awsRequest(TSDB_QUERY_ENDPOINT, requestParams).pipe(
+    return this.awsRequest(DS_QUERY_ENDPOINT, requestParams).pipe(
       mergeMap((response: TSDBResponse) => {
         const channelName: string = response.results['A'].meta.channelName;
         const channel = getGrafanaLiveSrv().getChannel({
@@ -545,7 +545,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
   }
 
   performTimeSeriesQuery(request: MetricRequest, { from, to }: TimeRange): Observable<any> {
-    return this.awsRequest(TSDB_QUERY_ENDPOINT, request).pipe(
+    return this.awsRequest(DS_QUERY_ENDPOINT, request).pipe(
       map((res) => {
         const dataframes: DataFrame[] = toDataQueryResponse({ data: res }).data;
         if (!dataframes || dataframes.length <= 0) {
@@ -605,7 +605,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
 
   doMetricQueryRequest(subtype: string, parameters: any): Promise<Array<{ text: any; label: any; value: any }>> {
     const range = this.timeSrv.timeRange();
-    return this.awsRequest(TSDB_QUERY_ENDPOINT, {
+    return this.awsRequest(DS_QUERY_ENDPOINT, {
       from: range.from.valueOf().toString(),
       to: range.to.valueOf().toString(),
       queries: [
@@ -669,7 +669,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
 
     const resultsToDataFrames = (val: any): DataFrame[] => toDataQueryResponse(val).data || [];
 
-    return this.awsRequest(TSDB_QUERY_ENDPOINT, requestParams).pipe(
+    return this.awsRequest(DS_QUERY_ENDPOINT, requestParams).pipe(
       map((response) => resultsToDataFrames({ data: response })),
       catchError((err) => {
         if (err.data?.error) {
@@ -854,7 +854,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
       alarmNamePrefix: annotation.alarmNamePrefix || '',
     };
 
-    return this.awsRequest(TSDB_QUERY_ENDPOINT, {
+    return this.awsRequest(DS_QUERY_ENDPOINT, {
       from: options.range.from.valueOf().toString(),
       to: options.range.to.valueOf().toString(),
       queries: [

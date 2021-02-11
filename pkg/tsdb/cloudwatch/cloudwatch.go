@@ -420,7 +420,6 @@ func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, req *back
 
 		model.Set("queryId", *result.QueryId)
 
-		// Get query results
 		getQueryResultsOutput, err := e.alertQuery(ctx, logsClient, q, model)
 		if err != nil {
 			return nil, err
@@ -431,22 +430,21 @@ func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, req *back
 			return nil, err
 		}
 
+		var frames []*data.Frame
+
 		statsGroups := model.Get("statsGroups").MustStringArray()
 		if len(statsGroups) > 0 && len(dataframe.Fields) > 0 {
-			groupedFrames, err := groupResults(dataframe, statsGroups)
+			frames, err = groupResults(dataframe, statsGroups)
 			if err != nil {
 				return nil, err
 			}
-
-			respD := resp.Responses[q.RefID] // "A"?
-			respD.Frames = groupedFrames
-			resp.Responses[q.RefID] = respD
 		} else {
-			//?
-			respD := resp.Responses[q.RefID] // "A"?
-			respD.Frames = data.Frames{dataframe}
-			resp.Responses[q.RefID] = respD
+			frames = data.Frames{dataframe}
 		}
+
+		respD := resp.Responses["A"]
+		respD.Frames = frames
+		resp.Responses["A"] = respD
 	}
 
 	return resp, nil

@@ -246,9 +246,9 @@ func (e *cloudWatchExecutor) executeMetricFindQuery(ctx context.Context, model *
 	var err error
 	switch subType {
 	case "regions":
-		data, err = e.handleGetRegions(ctx, nil, pluginCtx)
+		data, err = e.handleGetRegions(ctx, model, pluginCtx)
 	case "namespaces":
-		data, err = e.handleGetNamespaces(ctx, nil, pluginCtx)
+		data, err = e.handleGetNamespaces(ctx, model, pluginCtx)
 	case "metrics":
 		data, err = e.handleGetMetrics(ctx, model, pluginCtx)
 	case "dimension_keys":

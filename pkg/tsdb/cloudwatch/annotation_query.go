@@ -52,7 +52,7 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, model *
 		alarmNames = filterAlarms(resp, namespace, metricName, dimensions, statistics, period)
 	} else {
 		if region == "" || namespace == "" || metricName == "" || len(statistics) == 0 {
-			return result, errors.New("invalid annotations query") // return nil for result?
+			return result, errors.New("invalid annotations query")
 		}
 
 		var qd []*cloudwatch.Dimension
@@ -115,7 +115,7 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, model *
 	return result, err
 }
 
-func transformAnnotationToTable(d []map[string]string, query backend.DataQuery) *data.Frame {
+func transformAnnotationToTable(annotations []map[string]string, query backend.DataQuery) *data.Frame {
 	frame := data.NewFrame(query.RefID,
 		data.NewField("time", nil, []string{}),
 		data.NewField("title", nil, []string{}),
@@ -123,13 +123,13 @@ func transformAnnotationToTable(d []map[string]string, query backend.DataQuery) 
 		data.NewField("text", nil, []string{}),
 	)
 
-	for _, r := range d {
-		frame.AppendRow(r["time"], r["title"], r["tags"], r["text"])
+	for _, a := range annotations {
+		frame.AppendRow(a["time"], a["title"], a["tags"], a["text"])
 	}
 
 	frame.Meta = &data.FrameMeta{
 		Custom: map[string]interface{}{
-			"rowCount": len(d),
+			"rowCount": len(annotations),
 		},
 	}
 
