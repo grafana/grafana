@@ -149,7 +149,7 @@ export class PanelModel implements DataConfigSource {
   links?: DataLink[];
   transparent: boolean;
 
-  libraryPanel?: { uid: undefined; name: string } | Omit<LibraryPanelDTO, 'model'>;
+  libraryPanel?: { uid: undefined; name: string } | Pick<LibraryPanelDTO, 'uid' | 'name' | 'meta'>;
 
   // non persisted
   isViewing: boolean;

@@ -16,10 +16,8 @@ import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { css, cx, keyframes } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import tinycolor from 'tinycolor2';
-import {
-  LibraryPanelInfo,
-  LibraryPanelsView,
-} from '../../../library-panels/components/LibraryPanelsView/LibraryPanelsView';
+import { LibraryPanelsView } from '../../../library-panels/components/LibraryPanelsView/LibraryPanelsView';
+import { LibraryPanelDTO } from 'app/core/services/library_srv';
 
 export type PanelPluginInfo = { id: any; defaults: { gridPos: { w: any; h: any }; title: any } };
 
@@ -118,13 +116,13 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard, u
     dashboard.removePanel(panel);
   };
 
-  const onAddLibraryPanel = (panelInfo: LibraryPanelInfo) => {
+  const onAddLibraryPanel = (panelInfo: LibraryPanelDTO) => {
     const { gridPos } = panel;
 
     const newPanel: PanelModel = {
       ...panelInfo.model,
       gridPos,
-      libraryPanel: _.omit(panelInfo, 'model'),
+      libraryPanel: _.pick(panelInfo, 'name', 'uid', 'meta'),
     };
 
     dashboard.addPanel(newPanel);

@@ -1,6 +1,6 @@
 import React, { FC, useCallback, useMemo, useRef, useState } from 'react';
 import { css } from 'emotion';
-import omit from 'lodash/omit';
+import pick from 'lodash/pick';
 import { DashboardModel, PanelModel } from '../../state';
 import { GrafanaTheme, PanelData, PanelPlugin } from '@grafana/data';
 import {
@@ -23,12 +23,10 @@ import { VisualizationTab } from './VisualizationTab';
 import { OptionsGroup } from './OptionsGroup';
 import { RepeatRowSelect } from '../RepeatRowSelect/RepeatRowSelect';
 import { AddLibraryPanelModal } from '../../../library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal';
-import {
-  LibraryPanelInfo,
-  LibraryPanelsView,
-} from '../../../library-panels/components/LibraryPanelsView/LibraryPanelsView';
+import { LibraryPanelsView } from '../../../library-panels/components/LibraryPanelsView/LibraryPanelsView';
 import { PanelQueriesChangedEvent } from 'app/types/events';
 import config from 'app/core/config';
+import { LibraryPanelDTO } from 'app/core/services/library_srv';
 
 interface Props {
   panel: PanelModel;
@@ -70,10 +68,10 @@ export const PanelOptionsTab: FC<Props> = ({
     }
   };
 
-  const useLibraryPanel = (panelInfo: LibraryPanelInfo) => {
+  const useLibraryPanel = (panelInfo: LibraryPanelDTO) => {
     panel.restoreModel({
       ...panelInfo.model,
-      libraryPanel: omit(panelInfo, 'model'),
+      libraryPanel: pick(panelInfo, 'uid', 'name', 'meta'),
     });
 
     // dummy change for re-render

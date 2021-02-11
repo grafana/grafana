@@ -1,20 +1,20 @@
 import React, { useState } from 'react';
 import { Icon, IconButton, stylesFactory, ConfirmModal, Tooltip, useStyles, Card } from '@grafana/ui';
 import { css } from 'emotion';
-import omit from 'lodash/omit';
+import pick from 'lodash/pick';
 import { GrafanaTheme } from '@grafana/data';
 import { copyPanel } from 'app/features/dashboard/utils/panel';
-import { LibraryPanelInfo } from '../LibraryPanelsView/LibraryPanelsView';
+import { LibraryPanelDTO } from 'app/core/services/library_srv';
 
 export interface LibraryPanelCardProps {
-  panelInfo: LibraryPanelInfo;
+  libraryPanel: LibraryPanelDTO;
   onClick?: () => void;
   onDelete?: () => void;
   formatDate?: (dateString: string) => string;
 }
 
 export const LibraryPanelCard: React.FC<LibraryPanelCardProps & { children: JSX.Element | JSX.Element[] }> = ({
-  panelInfo,
+  libraryPanel,
   children,
   onDelete,
   formatDate,
@@ -29,7 +29,7 @@ export const LibraryPanelCard: React.FC<LibraryPanelCardProps & { children: JSX.
 
   return (
     <>
-      <Card heading={panelInfo.name}>
+      <Card heading={libraryPanel.name}>
         <Card.Figure>
           <Icon className={styles.panelIcon} name="book-open" />
         </Card.Figure>
@@ -38,7 +38,7 @@ export const LibraryPanelCard: React.FC<LibraryPanelCardProps & { children: JSX.
           <Tooltip content="Connected dashboards" placement="bottom">
             <div className={styles.tooltip}>
               <Icon name="apps" className={styles.detailIcon} />
-              {panelInfo.connectedDashboards.length}
+              {libraryPanel.meta.connectedDashboards}
             </div>
           </Tooltip>
 
@@ -53,8 +53,8 @@ export const LibraryPanelCard: React.FC<LibraryPanelCardProps & { children: JSX.
           </Tooltip> */}
 
           <span>
-            Last edited {formatDate?.(panelInfo.meta.updated ?? '') ?? panelInfo.meta.updated} by{' '}
-            {panelInfo.meta.updatedBy.name}
+            Last edited {formatDate?.(libraryPanel.meta.updated ?? '') ?? libraryPanel.meta.updated} by{' '}
+            {libraryPanel.meta.updatedBy.name}
           </span>
         </Card.Meta>
         {/*
@@ -68,7 +68,9 @@ export const LibraryPanelCard: React.FC<LibraryPanelCardProps & { children: JSX.
             name="clipboard-alt"
             tooltip="Copy panel"
             tooltipPlacement="bottom"
-            onClick={() => copyPanel({ ...panelInfo.model, libraryPanel: omit(panelInfo, 'model') })}
+            onClick={() =>
+              copyPanel({ ...libraryPanel.model, libraryPanel: pick(libraryPanel, 'uid', 'name', 'meta') })
+            }
           />
           <IconButton
             name="trash-alt"

@@ -6,12 +6,10 @@ import { LibraryPanelCard } from '../LibraryPanelCard/LibraryPanelCard';
 import { GrafanaTheme } from '@grafana/data';
 import { getLibrarySrv, LibraryPanelDTO } from 'app/core/services/library_srv';
 
-// Temporary type until LibraryPanelDTO contains connected dashboards info.
-export type LibraryPanelInfo = LibraryPanelDTO & { connectedDashboards: number[] };
 interface LibraryPanelViewProps {
   className?: string;
   onCreateNewPanel?: () => void;
-  children: (panel: LibraryPanelInfo, i: number) => JSX.Element | JSX.Element[];
+  children: (panel: LibraryPanelDTO, i: number) => JSX.Element | JSX.Element[];
   formatDate?: (dateString: string) => string;
 }
 
@@ -27,28 +25,13 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
 
   // Deliberately not using useAsync here as we want to be able to update libraryPanels without
   // making an additional API request (for example when a user deletes a library panel and we want to update the view to reflect that)
-  const [libraryPanels, setLibraryPanels] = useState<LibraryPanelInfo[] | undefined>(undefined);
+  const [libraryPanels, setLibraryPanels] = useState<LibraryPanelDTO[] | undefined>(undefined);
   useEffect(() => {
-    const libPanelsPromise = getLibrarySrv()
+    getLibrarySrv()
       .getLibraryPanels()
       .then((panels) => {
-        return Promise.all(
-          panels.map((panel) =>
-            getLibrarySrv()
-              .getLibraryPanelConnectedDashboards(panel.uid)
-              .then((connected) => {
-                return {
-                  ...panel,
-                  connectedDashboards: connected,
-                };
-              })
-          )
-        );
+        setLibraryPanels(panels);
       });
-
-    libPanelsPromise.then((panels) => {
-      setLibraryPanels(panels);
-    });
   }, []);
 
   const [filteredItems, setFilteredItems] = useState(libraryPanels);
@@ -92,9 +75,10 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
           filteredItems?.map((item, i) => (
             <LibraryPanelCard
               key={`shared-panel=${i}`}
-              panelInfo={item}
+              libraryPanel={item}
               // onClick={() => setModalOpen(true)}
               onDelete={() => onDeletePanel(item.uid)}
+              formatDate={formatDate}
             >
               {children(item, i)}
             </LibraryPanelCard>
