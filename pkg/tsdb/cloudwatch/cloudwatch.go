@@ -344,54 +344,43 @@ func (e *cloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwat
 func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	e.dsInstanceSettings = req.PluginContext.DataSourceInstanceSettings
 
-	resp := backend.NewQueryDataResponse()
+	/*
+		Unlike many other data sources,	with Cloudwatch Logs query requests don't receive the results as the response to the query, but rather
+		an ID is first returned. Following this, a client is expected to send requests along with the ID until the status of the query is complete,
+		receiving (possibly partial) results each time. For queries made via dashboards and Explore, the logic of making these repeated queries is handled on
+		the frontend, but because alerts are executed on the backend the logic needs to be reimplemented here.
+	*/
+	q := req.Queries[0]
+	model, err := simplejson.NewJson(q.JSON)
+	if err != nil {
+		return nil, err
+	}
+	_, fromAlert := req.Headers["FromAlert"]
+	isLogAlertQuery := fromAlert && model.Get("queryMode").MustString("") == "Logs"
 
-	var err error
-	for _, q := range req.Queries {
-		model, err := simplejson.NewJson(q.JSON)
-		if err != nil {
-			continue
-		}
-
-		/*
-			Unlike many other data sources,	with Cloudwatch Logs query requests don't receive the results as the response to the query, but rather
-			an ID is first returned. Following this, a client is expected to send requests along with the ID until the status of the query is complete,
-			receiving (possibly partial) results each time. For queries made via dashboards and Explore, the logic of making these repeated queries is handled on
-			the frontend, but because alerts are executed on the backend the logic needs to be reimplemented here.
-		*/
-		_, fromAlert := req.Headers["FromAlert"]
-		isLogAlertQuery := fromAlert && model.Get("queryMode").MustString("") == "Logs"
-
-		if isLogAlertQuery {
-			return e.executeLogAlertQuery(ctx, req)
-		}
-
-		queryType := model.Get("type").MustString("")
-
-		var result *backend.QueryDataResponse // backend.Responses{}?
-		switch queryType {
-		case "metricFindQuery":
-			result, _ = e.executeMetricFindQuery(ctx, model, q, req.PluginContext)
-		case "annotationQuery":
-			result, _ = e.executeAnnotationQuery(ctx, model, q, req.PluginContext)
-		case "logAction":
-			result, _ = e.executeLogActions(ctx, req)
-		case "liveLogAction":
-			result, _ = e.executeLiveLogQuery(ctx, req)
-		case "timeSeriesQuery":
-			fallthrough
-		default:
-			result, _ = e.executeTimeSeriesQuery(ctx, req)
-		}
-
-		if result != nil {
-			for k, v := range result.Responses { // refactor?
-				resp.Responses[k] = v
-			}
-		}
+	if isLogAlertQuery {
+		return e.executeLogAlertQuery(ctx, req)
 	}
 
-	return resp, err // fix err
+	queryType := model.Get("type").MustString("")
+
+	var result *backend.QueryDataResponse
+	switch queryType {
+	case "metricFindQuery":
+		result, err = e.executeMetricFindQuery(ctx, model, q, req.PluginContext)
+	case "annotationQuery":
+		result, err = e.executeAnnotationQuery(ctx, model, q, req.PluginContext)
+	case "logAction":
+		result, err = e.executeLogActions(ctx, req)
+	case "liveLogAction":
+		result, err = e.executeLiveLogQuery(ctx, req)
+	case "timeSeriesQuery":
+		fallthrough
+	default:
+		result, err = e.executeTimeSeriesQuery(ctx, req)
+	}
+
+	return result, err
 }
 
 func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {

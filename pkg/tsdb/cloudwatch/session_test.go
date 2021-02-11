@@ -1,9 +1,11 @@
 package cloudwatch
 
 import (
-	"encoding/json"
 	"reflect"
 	"testing"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
@@ -65,10 +67,14 @@ func TestNewSession_AssumeRole(t *testing.T) {
 			assumeRoleARN: roleARN,
 		})
 
+		e.im = datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return datasourceInfo{
+				AssumeRoleARN: roleARN,
+			}, nil
+		})
+
 		pluginCtx := backend.PluginContext{
-			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				JSONData: json.RawMessage(`{ "assumeRoleARN" : "test" }`),
-			},
+			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
 		}
 
 		sess, err := e.newSession(defaultRegion, pluginCtx)
@@ -98,11 +104,15 @@ func TestNewSession_AssumeRole(t *testing.T) {
 			assumeRoleARN: roleARN,
 			externalID:    externalID,
 		})
+		e.im = datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return datasourceInfo{
+				AssumeRoleARN: roleARN,
+				ExternalID:    externalID,
+			}, nil
+		})
 
 		pluginCtx := backend.PluginContext{
-			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				JSONData: json.RawMessage(`{ "assumeRoleArn" : "test", "externalId" : "external" }`),
-			},
+			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
 		}
 
 		sess, err := e.newSession(defaultRegion, pluginCtx)

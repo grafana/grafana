@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/client"
@@ -19,8 +19,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -66,36 +64,27 @@ func TestQuery_Metrics(t *testing.T) {
 						"type":      "metricFindQuery",
 						"subtype":   "metrics",
 						"region":    "us-east-1",
-						"namespace": "custom",
+						"namespace": "custom"
 					}`),
 				},
 			},
 		})
 		require.NoError(t, err)
 
+		expFrame := data.NewFrame(
+			"",
+			data.NewField("text", nil, []string{"Test_MetricName"}),
+			data.NewField("value", nil, []string{"Test_MetricName"}),
+		)
+		expFrame.Meta = &data.FrameMeta{
+			Custom: map[string]interface{}{
+				"rowCount": 1,
+			},
+		}
+
 		assert.Equal(t, &backend.QueryDataResponse{Responses: backend.Responses{
 			"": {
-				//Meta: simplejson.NewFromAny(map[string]interface{}{
-				//	"rowCount": 1,
-				//}),
-				//Tables: []*tsdb.Table{
-				//	{
-				//		Columns: []tsdb.TableColumn{
-				//			{
-				//				Text: "text",
-				//			},
-				//			{
-				//				Text: "value",
-				//			},
-				//		},
-				//		Rows: []tsdb.RowValues{
-				//			{
-				//				"Test_MetricName",
-				//				"Test_MetricName",
-				//			},
-				//		},
-				//	},
-				//},
+				Frames: data.Frames{expFrame},
 			},
 		},
 		}, resp)
@@ -114,47 +103,44 @@ func TestQuery_Metrics(t *testing.T) {
 				},
 			},
 		}
-		executor := newExecutor(nil, nil)
+
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return datasourceInfo{}, nil
+		})
+
+		executor := newExecutor(nil, im)
 		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			},
 			Queries: []backend.DataQuery{
 				{
 					JSON: json.RawMessage(`{
 						"type":      "metricFindQuery",
 						"subtype":   "dimension_keys",
 						"region":    "us-east-1",
-						"namespace": "custom",
+						"namespace": "custom"
 					}`),
 				},
 			},
 		})
 		require.NoError(t, err)
 
-		assert.Equal(t, &tsdb.Response{
-			Results: map[string]*tsdb.QueryResult{
-				"": {
-					Meta: simplejson.NewFromAny(map[string]interface{}{
-						"rowCount": 1,
-					}),
-					Tables: []*tsdb.Table{
-						{
-							Columns: []tsdb.TableColumn{
-								{
-									Text: "text",
-								},
-								{
-									Text: "value",
-								},
-							},
-							Rows: []tsdb.RowValues{
-								{
-									"Test_DimensionName",
-									"Test_DimensionName",
-								},
-							},
-						},
-					},
-				},
+		expFrame := data.NewFrame(
+			"",
+			data.NewField("text", nil, []string{"Test_DimensionName"}),
+			data.NewField("value", nil, []string{"Test_DimensionName"}),
+		)
+		expFrame.Meta = &data.FrameMeta{
+			Custom: map[string]interface{}{
+				"rowCount": 1,
 			},
+		}
+		assert.Equal(t, &backend.QueryDataResponse{Responses: backend.Responses{
+			"": {
+				Frames: data.Frames{expFrame},
+			},
+		},
 		}, resp)
 	})
 }
@@ -176,8 +162,16 @@ func TestQuery_Regions(t *testing.T) {
 		cli = fakeEC2Client{
 			regions: []string{regionName},
 		}
-		executor := newExecutor(nil, nil)
+
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return datasourceInfo{}, nil
+		})
+
+		executor := newExecutor(nil, im)
 		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			},
 			Queries: []backend.DataQuery{
 				{
 					JSON: json.RawMessage(`{
@@ -191,7 +185,7 @@ func TestQuery_Regions(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		var rows []tsdb.RowValues
+		var rows []interface{}
 		for _, region := range knownRegions {
 			rows = append(rows, []interface{}{
 				region,
@@ -202,27 +196,24 @@ func TestQuery_Regions(t *testing.T) {
 			regionName,
 			regionName,
 		})
-		assert.Equal(t, &tsdb.Response{
-			Results: map[string]*tsdb.QueryResult{
-				"": {
-					Meta: simplejson.NewFromAny(map[string]interface{}{
-						"rowCount": len(knownRegions) + 1,
-					}),
-					Tables: []*tsdb.Table{
-						{
-							Columns: []tsdb.TableColumn{
-								{
-									Text: "text",
-								},
-								{
-									Text: "value",
-								},
-							},
-							Rows: rows,
-						},
-					},
-				},
+
+		expRegions := append(knownRegions, regionName)
+		expFrame := data.NewFrame(
+			"",
+			data.NewField("text", nil, expRegions),
+			data.NewField("value", nil, expRegions),
+		)
+		expFrame.Meta = &data.FrameMeta{
+			Custom: map[string]interface{}{
+				"rowCount": len(knownRegions) + 1,
 			},
+		}
+
+		assert.Equal(t, &backend.QueryDataResponse{Responses: backend.Responses{
+			"": {
+				Frames: data.Frames{expFrame},
+			},
+		},
 		}, resp)
 	})
 }
@@ -258,8 +249,16 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 				},
 			},
 		}
-		executor := newExecutor(nil, nil)
+
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return datasourceInfo{}, nil
+		})
+
+		executor := newExecutor(nil, im)
 		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			},
 			Queries: []backend.DataQuery{
 				{
 					JSON: json.RawMessage(`{
@@ -276,32 +275,22 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		assert.Equal(t, &tsdb.Response{
-			Results: map[string]*tsdb.QueryResult{
-				"": {
-					Meta: simplejson.NewFromAny(map[string]interface{}{
-						"rowCount": 1,
-					}),
-					Tables: []*tsdb.Table{
-						{
-							Columns: []tsdb.TableColumn{
-								{
-									Text: "text",
-								},
-								{
-									Text: "value",
-								},
-							},
-							Rows: []tsdb.RowValues{
-								{
-									instanceID,
-									instanceID,
-								},
-							},
-						},
-					},
-				},
+		expFrame := data.NewFrame(
+			"",
+			data.NewField("text", nil, []string{instanceID}),
+			data.NewField("value", nil, []string{instanceID}),
+		)
+		expFrame.Meta = &data.FrameMeta{
+			Custom: map[string]interface{}{
+				"rowCount": 1,
 			},
+		}
+
+		assert.Equal(t, &backend.QueryDataResponse{Responses: backend.Responses{
+			"": {
+				Frames: data.Frames{expFrame},
+			},
+		},
 		}, resp)
 	})
 }
@@ -359,67 +348,46 @@ func TestQuery_EBSVolumeIDs(t *testing.T) {
 				},
 			},
 		}
-		executor := newExecutor(nil, nil)
+
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return datasourceInfo{}, nil
+		})
+
+		executor := newExecutor(nil, im)
 		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			},
 			Queries: []backend.DataQuery{
 				{
 					JSON: json.RawMessage(`{
 						"type":       "metricFindQuery",
 						"subtype":    "ebs_volume_ids",
 						"region":     "us-east-1",
-						"instanceId": instanceIDs
+						"instanceId": "{i-1, i-2, i-3}"
 					}`),
 				},
 			},
 		})
 		require.NoError(t, err)
 
-		assert.Equal(t, &tsdb.Response{
-			Results: map[string]*tsdb.QueryResult{
-				"": {
-					Meta: simplejson.NewFromAny(map[string]interface{}{
-						"rowCount": 6,
-					}),
-					Tables: []*tsdb.Table{
-						{
-							Columns: []tsdb.TableColumn{
-								{
-									Text: "text",
-								},
-								{
-									Text: "value",
-								},
-							},
-							Rows: []tsdb.RowValues{
-								{
-									"vol-1-1",
-									"vol-1-1",
-								},
-								{
-									"vol-1-2",
-									"vol-1-2",
-								},
-								{
-									"vol-2-1",
-									"vol-2-1",
-								},
-								{
-									"vol-2-2",
-									"vol-2-2",
-								},
-								{
-									"vol-3-1",
-									"vol-3-1",
-								},
-								{
-									"vol-3-2",
-									"vol-3-2",
-								},
-							},
-						},
-					},
-				},
+		expValues := []string{"vol-1-1", "vol-1-2", "vol-2-1", "vol-2-2", "vol-3-1", "vol-3-2"}
+		expFrame := data.NewFrame(
+			"",
+			data.NewField("text", nil, expValues),
+			data.NewField("value", nil, expValues),
+		)
+		expFrame.Meta = &data.FrameMeta{
+			Custom: map[string]interface{}{
+				"rowCount": 6,
 			},
+		}
+
+		assert.Equal(t, &backend.QueryDataResponse{Responses: backend.Responses{
+			"": {
+				Frames: data.Frames{expFrame},
+			},
+		},
 		}, resp)
 	})
 }
@@ -459,8 +427,16 @@ func TestQuery_ResourceARNs(t *testing.T) {
 				},
 			},
 		}
-		executor := newExecutor(nil, nil)
+
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return datasourceInfo{}, nil
+		})
+
+		executor := newExecutor(nil, im)
 		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			},
 			Queries: []backend.DataQuery{
 				{
 					JSON: json.RawMessage(`{
@@ -477,36 +453,26 @@ func TestQuery_ResourceARNs(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		assert.Equal(t, &tsdb.Response{
-			Results: map[string]*tsdb.QueryResult{
-				"": {
-					Meta: simplejson.NewFromAny(map[string]interface{}{
-						"rowCount": 2,
-					}),
-					Tables: []*tsdb.Table{
-						{
-							Columns: []tsdb.TableColumn{
-								{
-									Text: "text",
-								},
-								{
-									Text: "value",
-								},
-							},
-							Rows: []tsdb.RowValues{
-								{
-									"arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567",
-									"arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567",
-								},
-								{
-									"arn:aws:ec2:us-east-1:123456789012:instance/i-76543210987654321",
-									"arn:aws:ec2:us-east-1:123456789012:instance/i-76543210987654321",
-								},
-							},
-						},
-					},
-				},
+		expValues := []string{
+			"arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567",
+			"arn:aws:ec2:us-east-1:123456789012:instance/i-76543210987654321",
+		}
+		expFrame := data.NewFrame(
+			"",
+			data.NewField("text", nil, expValues),
+			data.NewField("value", nil, expValues),
+		)
+		expFrame.Meta = &data.FrameMeta{
+			Custom: map[string]interface{}{
+				"rowCount": 2,
 			},
+		}
+
+		assert.Equal(t, &backend.QueryDataResponse{Responses: backend.Responses{
+			"": {
+				Frames: data.Frames{expFrame},
+			},
+		},
 		}, resp)
 	})
 }
