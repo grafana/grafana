@@ -3,7 +3,7 @@ import React, { PureComponent } from 'react';
 
 // Components
 import { LegacyForms, InlineFormLabel } from '@grafana/ui';
-const { Select, FormField } = LegacyForms;
+const { Select } = LegacyForms;
 
 // Types
 import { PanelEditorProps } from '@grafana/data';
