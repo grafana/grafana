@@ -9,7 +9,9 @@ export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
     standardOptions: {
       [FieldConfigProperty.Color]: {
         settings: {
+          byValueSupport: false,
           bySeriesSupport: true,
+          preferThresholdsMode: false,
         },
         defaultValue: {
           mode: FieldColorModeId.PaletteClassic,
