@@ -3,7 +3,6 @@ import { ArrayVector } from '../../vector';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 import { getTimeField, sortDataFrame } from '../../dataframe';
-import { getFieldDisplayName } from '../../field';
 
 export function pickBestJoinField(data: DataFrame[]): FieldMatcher {
   const { timeField } = getTimeField(data[0]);
@@ -114,16 +113,18 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
 
   for (let frameIndex = 0; frameIndex < options.frames.length; frameIndex++) {
     const frame = options.frames[frameIndex];
+
     if (!frame || !frame.fields?.length) {
       continue; // skip the frame
     }
-    const nullModesFrame: JoinNullMode[] = [NULL_REMOVE];
 
+    const nullModesFrame: JoinNullMode[] = [NULL_REMOVE];
     let join: Field | undefined = undefined;
     let fields: Field[] = [];
+
     for (let fieldIndex = 0; fieldIndex < frame.fields.length; fieldIndex++) {
       const field = frame.fields[fieldIndex];
-      getFieldDisplayName(field, frame, options.frames); // cache displayName in state
+      field.state = field.state || {};
 
       if (!join && joinFieldMatcher(field, frame, options.frames)) {
         join = field;
@@ -147,7 +148,7 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
       }
 
       if (options.keepOriginIndices) {
-        field.state!.origin = {
+        field.state.origin = {
           frameIndex,
           fieldIndex,
         };
@@ -161,13 +162,17 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
     if (originalFields.length === 0) {
       originalFields.push(join); // first join field
     }
-    nullModes.push(nullModesFrame);
 
+    nullModes.push(nullModesFrame);
     const a: AlignedData = [join.values.toArray()]; //
+
     for (const field of fields) {
       a.push(field.values.toArray());
       originalFields.push(field);
+      // clear field displayName state
+      delete field.state?.displayName;
     }
+
     allData.push(a);
   }
 
