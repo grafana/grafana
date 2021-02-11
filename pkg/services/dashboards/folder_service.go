@@ -46,8 +46,8 @@ func (dr *dashboardServiceImpl) GetFolders(limit int64) ([]*models.Folder, error
 
 	for _, hit := range searchQuery.Result {
 		folders = append(folders, &models.Folder{
-			Id:    hit.Id,
-			Uid:   hit.Uid,
+			Id:    hit.ID,
+			Uid:   hit.UID,
 			Title: hit.Title,
 		})
 	}
