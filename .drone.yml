@@ -529,7 +529,7 @@ steps:
 - name: upload-packages
   image: grafana/grafana-ci-deploy:1.3.1
   commands:
-  - ./bin/grabpl upload-packages --edition oss
+  - ./bin/grabpl upload-packages --edition oss --packages-bucket grafana-downloads
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
@@ -957,7 +957,7 @@ steps:
 - name: upload-packages
   image: grafana/grafana-ci-deploy:1.3.1
   commands:
-  - ./bin/grabpl upload-packages --edition oss
+  - ./bin/grabpl upload-packages --edition oss --packages-bucket grafana-downloads
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
@@ -1358,7 +1358,7 @@ steps:
 - name: upload-packages
   image: grafana/grafana-ci-deploy:1.3.1
   commands:
-  - ./bin/grabpl upload-packages --edition enterprise
+  - ./bin/grabpl upload-packages --edition enterprise --packages-bucket grafana-downloads
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
@@ -2768,7 +2768,7 @@ steps:
 - name: upload-packages
   image: grafana/grafana-ci-deploy:1.3.1
   commands:
-  - ./bin/grabpl upload-packages --edition oss
+  - ./bin/grabpl upload-packages --edition oss --packages-bucket grafana-downloads
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
@@ -3136,7 +3136,7 @@ steps:
 - name: upload-packages
   image: grafana/grafana-ci-deploy:1.3.1
   commands:
-  - ./bin/grabpl upload-packages --edition enterprise
+  - ./bin/grabpl upload-packages --edition enterprise --packages-bucket grafana-downloads
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key

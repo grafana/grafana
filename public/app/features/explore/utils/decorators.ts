@@ -21,20 +21,6 @@ import { ExplorePanelData } from '../../../types';
  * Observable pipeline, it decorates the existing panelData to pass the results to later processing stages.
  */
 export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData => {
-  if (data.error) {
-    return {
-      ...data,
-      graphFrames: [],
-      tableFrames: [],
-      logsFrames: [],
-      traceFrames: [],
-      nodeGraphFrames: [],
-      graphResult: null,
-      tableResult: null,
-      logsResult: null,
-    };
-  }
-
   const graphFrames: DataFrame[] = [];
   const tableFrames: DataFrame[] = [];
   const logsFrames: DataFrame[] = [];
@@ -83,7 +69,7 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
 };
 
 export const decorateWithGraphResult = (data: ExplorePanelData): ExplorePanelData => {
-  if (data.error || !data.graphFrames.length) {
+  if (!data.graphFrames.length) {
     return { ...data, graphResult: null };
   }
 
@@ -96,10 +82,6 @@ export const decorateWithGraphResult = (data: ExplorePanelData): ExplorePanelDat
  * multiple results and so this should be used with mergeMap or similar to unbox the internal observable.
  */
 export const decorateWithTableResult = (data: ExplorePanelData): Observable<ExplorePanelData> => {
-  if (data.error) {
-    return of({ ...data, tableResult: null });
-  }
-
   if (data.tableFrames.length === 0) {
     return of({ ...data, tableResult: null });
   }
@@ -149,10 +131,6 @@ export const decorateWithTableResult = (data: ExplorePanelData): Observable<Expl
 export const decorateWithLogsResult = (
   options: { absoluteRange?: AbsoluteTimeRange; refreshInterval?: string } = {}
 ) => (data: ExplorePanelData): ExplorePanelData => {
-  if (data.error) {
-    return { ...data, logsResult: null };
-  }
-
   if (data.logsFrames.length === 0) {
     return { ...data, logsResult: null };
   }

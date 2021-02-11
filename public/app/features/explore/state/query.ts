@@ -664,16 +664,6 @@ export const processQueryResponse = (
 
     // For Angular editors
     state.eventBridge.emit(PanelEvents.dataError, error);
-
-    return {
-      ...state,
-      loading: loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming,
-      queryResponse: response,
-      graphResult: null,
-      tableResult: null,
-      logsResult: null,
-      update: makeInitialUpdateState(),
-    };
   }
 
   if (!request) {

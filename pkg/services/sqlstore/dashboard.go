@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -203,16 +204,17 @@ func GetDashboard(query *models.GetDashboardQuery) error {
 }
 
 type DashboardSearchProjection struct {
-	Id          int64
-	Uid         string
+	ID          int64  `xorm:"id"`
+	UID         string `xorm:"uid"`
 	Title       string
 	Slug        string
 	Term        string
 	IsFolder    bool
-	FolderId    int64
-	FolderUid   string
+	FolderID    int64  `xorm:"folder_id"`
+	FolderUID   string `xorm:"folder_uid"`
 	FolderSlug  string
 	FolderTitle string
+	SortMeta    int64
 }
 
 func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error) {
@@ -226,7 +228,9 @@ func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSear
 		},
 	}
 
-	filters = append(filters, query.Filters...)
+	for _, filter := range query.Sort.Filter {
+		filters = append(filters, filter)
+	}
 
 	if query.OrgId != 0 {
 		filters = append(filters, searchstore.OrgFilter{OrgId: query.OrgId})
@@ -307,27 +311,31 @@ func makeQueryResult(query *search.FindPersistedDashboardsQuery, res []Dashboard
 	hits := make(map[int64]*search.Hit)
 
 	for _, item := range res {
-		hit, exists := hits[item.Id]
+		hit, exists := hits[item.ID]
 		if !exists {
 			hit = &search.Hit{
-				Id:          item.Id,
-				Uid:         item.Uid,
+				ID:          item.ID,
+				UID:         item.UID,
 				Title:       item.Title,
-				Uri:         "db/" + item.Slug,
-				Url:         models.GetDashboardFolderUrl(item.IsFolder, item.Uid, item.Slug),
+				URI:         "db/" + item.Slug,
+				URL:         models.GetDashboardFolderUrl(item.IsFolder, item.UID, item.Slug),
 				Type:        getHitType(item),
-				FolderId:    item.FolderId,
-				FolderUid:   item.FolderUid,
+				FolderID:    item.FolderID,
+				FolderUID:   item.FolderUID,
 				FolderTitle: item.FolderTitle,
 				Tags:        []string{},
 			}
 
-			if item.FolderId > 0 {
-				hit.FolderUrl = models.GetFolderUrl(item.FolderUid, item.FolderSlug)
+			if item.FolderID > 0 {
+				hit.FolderURL = models.GetFolderUrl(item.FolderUID, item.FolderSlug)
+			}
+
+			if query.Sort.MetaName != "" {
+				hit.SortMeta = strings.TrimSpace(fmt.Sprintf("%d %s", item.SortMeta, query.Sort.MetaName))
 			}
 
 			query.Result = append(query.Result, hit)
-			hits[item.Id] = hit
+			hits[item.ID] = hit
 		}
 		if len(item.Term) > 0 {
 			hit.Tags = append(hit.Tags, item.Term)
