@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import _ from 'lodash';
-import { Button, Icon, Tag, TagsInput, Select, InlineField, Input, InlineSwitch } from '@grafana/ui';
+import { css } from 'emotion';
+import { CollapsableSection, Button, Icon, Tag, TagsInput, Select, Field, Input, Switch, useTheme } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { DashboardLink, DashboardModel } from '../../state/DashboardModel';
@@ -41,6 +42,10 @@ const LINK_ICON_OPTIONS = Object.entries(LINK_ICON_MAP).map(([key, value]) => ({
 export const LinksSettings: React.FC<Props> = ({ dashboard }) => {
   const [mode, setMode] = useState<'list' | 'new' | 'edit'>('list');
   const [link, setLink] = useState<DashboardLink>(NEW_LINK);
+  const [editLinkIdx, seteditLinkIdx] = useState(0);
+  // @ts-ignore
+  const [renderCount, setRenderCount] = useState(0);
+  const theme = useTheme();
 
   const backToList = () => {
     setMode('list');
@@ -49,44 +54,48 @@ export const LinksSettings: React.FC<Props> = ({ dashboard }) => {
     setLink(NEW_LINK);
     setMode('new');
   };
-  const editLink = (link: DashboardLink) => {
+  const editLink = (link: DashboardLink, idx: number) => {
     setLink(link);
+    seteditLinkIdx(idx);
     setMode('edit');
   };
   const moveLink = (idx: number, direction: number) => {
     // @ts-ignore
     _.move(dashboard.links, idx, idx + direction);
+    setRenderCount((renderCount) => renderCount + 1);
   };
   const duplicateLink = (link: DashboardLink, idx: number) => {
     dashboard.links.splice(idx, 0, link);
     dashboard.updateSubmenuVisibility();
+    setRenderCount((renderCount) => renderCount + 1);
   };
   const addLink = () => {
     dashboard.links = [...dashboard.links, link];
-    backToList();
     dashboard.updateSubmenuVisibility();
+    backToList();
   };
   const updateLink = () => {
-    // TODO: update the link!
-    // dashboard.links = _.cloneDeep(dashboard.links);
+    dashboard.links.splice(editLinkIdx, 1, link);
     backToList();
   };
   const deleteLink = (link: DashboardLink, idx: number) => {
     dashboard.links.splice(idx, 1);
     dashboard.updateSubmenuVisibility();
+    setRenderCount((renderCount) => renderCount + 1);
   };
 
   const onTagsChange = (tags: any[]) => {
-    console.log(tags);
+    setLink((link) => ({ ...link, tags: tags }));
   };
-  const onTypeChange = (value: SelectableValue) => {
-    console.log(value);
+  const onTypeChange = (selectedItem: SelectableValue) => {
+    setLink((link) => ({ ...link, type: selectedItem.value }));
   };
-  const onIconChange = (value: SelectableValue) => {
-    console.log(value);
+  const onIconChange = (selectedItem: SelectableValue) => {
+    setLink((link) => ({ ...link, icon: selectedItem.value }));
   };
   const onChange = (ev: React.FocusEvent<HTMLInputElement>) => {
-    setLink((link) => ({ ...link, [ev.currentTarget.name]: ev.currentTarget.value }));
+    const target = ev.currentTarget;
+    setLink((link) => ({ ...link, [target.name]: target.value }));
   };
 
   if (mode === 'list') {
@@ -117,14 +126,28 @@ export const LinksSettings: React.FC<Props> = ({ dashboard }) => {
             <tbody>
               {dashboard.links.map((link, idx) => (
                 <tr key={idx}>
-                  <td className="pointer" onClick={() => editLink(link)}>
+                  <td className="pointer" onClick={() => editLink(link, idx)}>
                     <Icon name="external-link-alt" />
                     {link.type}
                   </td>
                   <td>
                     {link.title && <div>{link.title}</div>}
                     {!link.title && link.url ? <div>{link.url}</div> : null}
-                    {!link.title && link.tags ? link.tags.map((tag) => <Tag name={tag} key={tag} />) : null}
+                    {!link.title && link.tags
+                      ? link.tags.map((tag, idx) => (
+                          <Tag
+                            name={tag}
+                            key={tag}
+                            className={
+                              idx !== 0
+                                ? css`
+                                    margin-left: ${theme.spacing.xs};
+                                  `
+                                : ''
+                            }
+                          />
+                        ))
+                      : null}
                   </td>
                   <td style={{ width: '1%' }}>
                     {idx !== 0 && <Icon name="arrow-up" onClick={() => moveLink(idx, -1)} />}
@@ -150,60 +173,63 @@ export const LinksSettings: React.FC<Props> = ({ dashboard }) => {
   return (
     <>
       <LinkSettingsHeader onNavClick={backToList} onBtnClick={setupNew} mode={mode} />
-      <div className="gf-form">
-        <InlineField label="Type">
+      <div
+        className={css`
+          max-width: 600px;
+        `}
+      >
+        <Field label="Type">
           <Select value={link.type} options={LINK_TYPE_OPTIONS} onChange={onTypeChange} />
-        </InlineField>
+        </Field>
 
         {link.type === 'dashboards' && (
           <>
-            <InlineField label="With tags">
+            <Field label="With tags">
               <TagsInput tags={link.tags} placeholder="add tags" onChange={onTagsChange} />
-            </InlineField>
-            <InlineField label="As dropdown">
-              <InlineSwitch name="asDropdown" value={link.asDropdown} onChange={onChange} />
-            </InlineField>
+            </Field>
+            <Field label="As dropdown">
+              <Switch name="asDropdown" value={link.asDropdown} onChange={onChange} />
+            </Field>
             {link.asDropdown && (
-              <InlineField label="Title">
+              <Field label="Title">
                 <Input name="title" value={link.title} onChange={onChange} />
-              </InlineField>
+              </Field>
             )}
           </>
         )}
         {link.type === 'link' && (
           <>
-            <InlineField label="Url">
+            <Field label="Url">
               <Input name="url" value={link.url} onChange={onChange} />
-            </InlineField>
+            </Field>
 
-            <InlineField label="Title">
+            <Field label="Title">
               <Input name="title" value={link.title} onChange={onChange} />
-            </InlineField>
+            </Field>
 
-            <InlineField label="Tooltip">
+            <Field label="Tooltip">
               <Input name="tooltip" value={link.tooltip} onChange={onChange} placeholder="Open dashboard" />
-            </InlineField>
+            </Field>
 
-            <InlineField label="Icon">
+            <Field label="Icon">
               <Select options={LINK_ICON_OPTIONS} onChange={onIconChange} />
-            </InlineField>
+            </Field>
           </>
         )}
+        <CollapsableSection label="Include" isOpen={true}>
+          <Field label="Time range">
+            <Switch name="keepTime" value={link.keepTime} onChange={onChange} />
+          </Field>
+          <Field label="Variable values">
+            <Switch name="includeVars" value={link.includeVars} onChange={onChange} />
+          </Field>
+          <Field label="Open in new tab">
+            <Switch name="targetBlank" value={link.targetBlank} onChange={onChange} />
+          </Field>
+        </CollapsableSection>
+        {mode === 'new' && <Button onClick={addLink}>Add</Button>}
+        {mode === 'edit' && <Button onClick={updateLink}>Update</Button>}
       </div>
-      <div className="gf-form-group">
-        <h5 className="section-heading">Include</h5>
-        <InlineField label="Time range">
-          <InlineSwitch name="keepTime" value={link.keepTime} onChange={onChange} />
-        </InlineField>
-        <InlineField label="Variable values">
-          <InlineSwitch name="includeVars" value={link.includeVars} onChange={onChange} />
-        </InlineField>
-        <InlineField label="Open in new tab">
-          <InlineSwitch name="targetBlank" value={link.targetBlank} onChange={onChange} />
-        </InlineField>
-      </div>
-      {mode === 'new' && <Button onClick={addLink}>Add</Button>}
-      {mode === 'edit' && <Button onClick={updateLink}>Update</Button>}
     </>
   );
 };
