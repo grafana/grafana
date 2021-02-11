@@ -28,7 +28,7 @@ export const Dimensions: FunctionComponent<Props> = ({ dimensions, loadValues, l
     if (!isEqual(completeDimensions, dimensions)) {
       onChange(completeDimensions);
     }
-  }, [data]);
+  }, [data, dimensions, onChange]);
 
   const excludeUsedKeys = (options: SelectableStrings) => {
     return options.filter(({ value }) => !Object.keys(data).includes(value!));

@@ -26,6 +26,7 @@ export const ConfigEditor = (props: Props) => {
         logLevelField: options.jsonData.logLevelField || '',
       },
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

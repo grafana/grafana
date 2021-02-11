@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable react-hooks/rules-of-hooks */
 import { useState, useEffect } from 'react';
 import { isEqual } from 'lodash';
 import { AbsoluteTimeRange } from '@grafana/data';

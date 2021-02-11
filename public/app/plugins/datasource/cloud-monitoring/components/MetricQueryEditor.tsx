@@ -56,9 +56,9 @@ function Editor({
     if (query && query.projectName && query.metricType) {
       datasource
         .getLabels(query.metricType, refId, query.projectName, query.groupBys)
-        .then((labels) => setState({ ...state, labels }));
+        .then((labels) => setState((prevState) => ({ ...prevState, labels })));
     }
-  }, [query.projectName, query.groupBys, query.metricType]);
+  }, [query.projectName, query.groupBys, query.metricType, query, datasource, refId]);
 
   const onChange = (metricQuery: MetricQuery) => {
     onQueryChange({ ...query, ...metricQuery });

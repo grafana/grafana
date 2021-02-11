@@ -51,7 +51,7 @@ const PromLink: FC<Props> = ({ panelData, query, datasource }) => {
 
       setHref(getExternalLink());
     }
-  }, [panelData]);
+  }, [datasource, panelData, query]);
 
   return (
     <a href={href} target="_blank" rel="noopener noreferrer">

@@ -69,7 +69,7 @@ const useAggregationOptionsByMetric = ({ metricDescriptor }: Props): Array<Selec
       ...a,
       label: a.text,
     }));
-  }, [metricDescriptor?.metricKind, metricDescriptor?.valueType]);
+  }, [metricDescriptor]);
 };
 
 const useSelectedFromOptions = (aggOptions: Array<SelectableValue<string>>, props: Props) => {
