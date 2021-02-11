@@ -12,7 +12,7 @@ import {
   ReducerID,
   SelectableValue,
   standardTransformers,
-  TransformerRegistyItem,
+  TransformerRegistryItem,
   TransformerUIProps,
 } from '@grafana/data';
 import { FilterPill, HorizontalGroup, Input, LegacyForms, Select, StatsPicker } from '@grafana/ui';
@@ -38,6 +38,8 @@ const calculationModes = [
   { value: CalculateFieldMode.BinaryOperation, label: 'Binary operation' },
   { value: CalculateFieldMode.ReduceRow, label: 'Reduce row' },
 ];
+
+const okTypes = new Set<FieldType>([FieldType.time, FieldType.number, FieldType.string]);
 
 export class CalculateFieldTransformerEditor extends React.PureComponent<
   CalculateFieldTransformerEditorProps,
@@ -86,7 +88,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
 
           for (const frame of input) {
             for (const field of frame.fields) {
-              if (field.type !== FieldType.number) {
+              if (!okTypes.has(field.type)) {
                 continue;
               }
 
@@ -374,7 +376,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
   }
 }
 
-export const calculateFieldTransformRegistryItem: TransformerRegistyItem<CalculateFieldTransformerOptions> = {
+export const calculateFieldTransformRegistryItem: TransformerRegistryItem<CalculateFieldTransformerOptions> = {
   id: DataTransformerID.calculateField,
   editor: CalculateFieldTransformerEditor,
   transformation: standardTransformers.calculateFieldTransformer,

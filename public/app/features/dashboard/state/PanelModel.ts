@@ -12,6 +12,7 @@ import {
   FieldConfigSource,
   PanelPlugin,
   ScopedVars,
+  EventBus,
   EventBusSrv,
   DataFrameDTO,
   urlUtil,
@@ -156,7 +157,7 @@ export class PanelModel implements DataConfigSource {
   isInView: boolean;
 
   hasRefreshed: boolean;
-  events: EventBusSrv;
+  events: EventBus;
   cacheTimeout?: any;
   cachedPluginOptions: Record<string, PanelOptionsCache>;
   legend?: { show: boolean; sort?: string; sortDesc?: boolean };

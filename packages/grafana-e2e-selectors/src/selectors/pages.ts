@@ -126,6 +126,7 @@ export const Pages = {
       container: 'Explore',
       graph: 'Explore Graph',
       table: 'Explore Table',
+      scrollBar: () => '.scrollbar-view',
     },
     Toolbar: {
       navBar: () => '.explore-toolbar',

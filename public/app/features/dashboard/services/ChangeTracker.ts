@@ -93,6 +93,11 @@ export class ChangeTracker {
       return true;
     }
 
+    //Ignore changes if the user has been signed out
+    if (!this.contextSrv.isSignedIn) {
+      return true;
+    }
+
     const meta = this.current.meta;
     return !meta.canSave || meta.fromScript || meta.fromFile;
   }

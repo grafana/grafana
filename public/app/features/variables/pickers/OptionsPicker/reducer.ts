@@ -252,6 +252,7 @@ const optionsPickerSlice = createSlice({
 
       return applyStateChanges(state, updateDefaultSelection, updateOptions);
     },
+    cleanPickerState: () => initialState,
   },
 });
 
@@ -265,6 +266,7 @@ export const {
   updateSearchQuery,
   updateOptionsAndFilter,
   updateOptionsFromSearch,
+  cleanPickerState,
 } = optionsPickerSlice.actions;
 
 export const optionsPickerReducer = optionsPickerSlice.reducer;

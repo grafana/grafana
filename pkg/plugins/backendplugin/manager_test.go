@@ -279,12 +279,14 @@ func newManagerScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *m
 	t.Helper()
 	cfg := setting.NewCfg()
 	license := &testLicensingService{}
+	validator := &testPluginRequestValidator{}
 	ctx := &managerScenarioCtx{
 		cfg:     cfg,
 		license: license,
 		manager: &manager{
-			Cfg:     cfg,
-			License: license,
+			Cfg:                    cfg,
+			License:                license,
+			PluginRequestValidator: validator,
 		},
 	}
 
@@ -417,4 +419,10 @@ func (t *testLicensingService) HasValidLicense() bool {
 
 func (t *testLicensingService) Environment() map[string]string {
 	return map[string]string{"GF_ENTERPRISE_LICENSE_TEXT": t.tokenRaw}
+}
+
+type testPluginRequestValidator struct{}
+
+func (t *testPluginRequestValidator) Validate(string, *http.Request) error {
+	return nil
 }

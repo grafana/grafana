@@ -39,7 +39,9 @@ func Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQ
 			continue
 		}
 
-		res := executeQuery(ctx, *qm, r, 50)
+		// If the default changes also update labels/placeholder in config page.
+		maxSeries := dsInfo.JsonData.Get("maxSeries").MustInt(1000)
+		res := executeQuery(ctx, *qm, r, maxSeries)
 
 		tRes.Results[query.RefId] = backendDataResponseToTSDBResponse(&res, query.RefId)
 	}

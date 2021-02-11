@@ -86,6 +86,10 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
       streams.push(super.query(backendOpts));
     }
 
+    if (streams.length === 0) {
+      return of({ data: [] });
+    }
+
     return merge(...streams);
   }
 

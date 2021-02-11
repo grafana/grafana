@@ -1,10 +1,9 @@
 import { AnyAction } from 'redux';
 import { isEqual } from 'lodash';
-import { getQueryKeys } from 'app/core/utils/explore';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
-import { queryReducer } from './query';
+import { queryReducer, runQueries, setQueriesAction } from './query';
 import { datasourceReducer } from './datasource';
-import { timeReducer } from './time';
+import { timeReducer, updateTime } from './time';
 import { historyReducer } from './history';
 import { makeExplorePaneState, makeInitialUpdateState, loadAndInitDatasource, createEmptyQueryResponse } from './utils';
 import { createAction, PayloadAction } from '@reduxjs/toolkit';
@@ -23,14 +22,13 @@ import {
   ensureQueries,
   generateNewKeyAndAddRefIdIfMissing,
   getTimeRangeFromUrl,
+  getQueryKeys,
 } from 'app/core/utils/explore';
 // Types
 import { ThunkResult } from 'app/types';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { updateLocation } from '../../../core/actions';
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
-import { runQueries, setQueriesAction } from './query';
-import { updateTime } from './time';
 import { toRawTimeRange } from '../utils/time';
 import { getDataSourceSrv } from '@grafana/runtime';
 

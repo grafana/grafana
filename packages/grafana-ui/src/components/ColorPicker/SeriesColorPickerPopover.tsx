@@ -3,7 +3,8 @@ import React, { FunctionComponent } from 'react';
 import { ColorPickerPopover, ColorPickerProps } from './ColorPickerPopover';
 import { PopoverContentProps } from '../Tooltip/Tooltip';
 import { Switch } from '../Forms/Legacy/Switch/Switch';
-import { withTheme } from '../../themes/ThemeContext';
+import { css } from 'emotion';
+import { withTheme, useStyles } from '../../themes';
 
 export interface SeriesColorPickerPopoverProps extends ColorPickerProps, PopoverContentProps {
   yaxis?: number;
@@ -11,6 +12,7 @@ export interface SeriesColorPickerPopoverProps extends ColorPickerProps, Popover
 }
 
 export const SeriesColorPickerPopover: FunctionComponent<SeriesColorPickerPopoverProps> = (props) => {
+  const styles = useStyles(getStyles);
   const { yaxis, onToggleAxis, color, ...colorPickerProps } = props;
 
   const customPickers = onToggleAxis
@@ -22,8 +24,8 @@ export const SeriesColorPickerPopover: FunctionComponent<SeriesColorPickerPopove
               <Switch
                 key="yaxisSwitch"
                 label="Use right y-axis"
-                className="ColorPicker__axisSwitch"
-                labelClass="ColorPicker__axisSwitchLabel"
+                className={styles.colorPickerAxisSwitch}
+                labelClass={styles.colorPickerAxisSwitchLabel}
                 checked={yaxis === 2}
                 onChange={() => {
                   if (onToggleAxis) {
@@ -87,3 +89,15 @@ export class AxisSelector extends React.PureComponent<AxisSelectorProps, AxisSel
 
 // This component is to enable SeriesColorPickerPopover usage via series-color-picker-popover directive
 export const SeriesColorPickerPopoverWithTheme = withTheme(SeriesColorPickerPopover);
+
+const getStyles = () => {
+  return {
+    colorPickerAxisSwitch: css`
+      width: 100%;
+    `,
+    colorPickerAxisSwitchLabel: css`
+      display: flex;
+      flex-grow: 1;
+    `,
+  };
+};

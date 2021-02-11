@@ -122,6 +122,7 @@ export const Components = {
       modeLabel: 'Transform mode label',
       calculationsLabel: 'Transform calculations label',
     },
+    searchInput: 'search transformations',
   },
   PageToolbar: {
     container: () => '.page-toolbar',
@@ -159,6 +160,9 @@ export const Components = {
   },
   TimeZonePicker: {
     container: 'Time zone picker select container',
+  },
+  TraceViewer: {
+    spanBar: () => '[data-test-id="SpanBar--wrapper"]',
   },
   QueryField: { container: 'Query field' },
   ValuePicker: {

@@ -196,16 +196,6 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		})
 	}
 
-	if hs.Cfg.IsNgAlertEnabled() {
-		navTree = append(navTree, &dtos.NavLink{
-			Text:     "NgAlerting",
-			Id:       "ngalerting",
-			SubTitle: "Next generation alerting",
-			Icon:     "bell",
-			Url:      setting.AppSubUrl + "/ngalerting",
-		})
-	}
-
 	if c.IsSignedIn {
 		navTree = append(navTree, getProfileNode(c))
 	}
@@ -418,8 +408,8 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		GoogleTagManagerId:      setting.GoogleTagManagerId,
 		BuildVersion:            setting.BuildVersion,
 		BuildCommit:             setting.BuildCommit,
-		NewGrafanaVersion:       plugins.GrafanaLatestVersion,
-		NewGrafanaVersionExists: plugins.GrafanaHasUpdate,
+		NewGrafanaVersion:       hs.PluginManager.GrafanaLatestVersion,
+		NewGrafanaVersionExists: hs.PluginManager.GrafanaHasUpdate,
 		AppName:                 setting.ApplicationName,
 		AppNameBodyClass:        getAppNameBodyClass(hs.License.HasValidLicense()),
 		FavIcon:                 "public/img/fav32.png",

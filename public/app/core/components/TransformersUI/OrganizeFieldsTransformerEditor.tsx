@@ -6,7 +6,7 @@ import {
   DataTransformerID,
   GrafanaTheme,
   standardTransformers,
-  TransformerRegistyItem,
+  TransformerRegistryItem,
   TransformerUIProps,
   getFieldDisplayName,
 } from '@grafana/data';
@@ -221,7 +221,7 @@ export const getAllFieldNamesFromDataFrames = (input: DataFrame[]): string[] => 
   );
 };
 
-export const organizeFieldsTransformRegistryItem: TransformerRegistyItem<OrganizeFieldsTransformerOptions> = {
+export const organizeFieldsTransformRegistryItem: TransformerRegistryItem<OrganizeFieldsTransformerOptions> = {
   id: DataTransformerID.organize,
   editor: OrganizeFieldsTransformerEditor,
   transformation: standardTransformers.organizeFieldsTransformer,
