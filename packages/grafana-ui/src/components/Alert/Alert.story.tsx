@@ -40,7 +40,7 @@ export const Examples: Story<Props> = ({ severity, title, buttonContent }) => {
         </Alert>
       </StoryExample>
       <StoryExample name="No dismiss">
-        <Alert title={title} severity="info" />
+        <Alert title={title} severity={severity} />
       </StoryExample>
       <StoryExample name="Severities">
         <VerticalGroup>
