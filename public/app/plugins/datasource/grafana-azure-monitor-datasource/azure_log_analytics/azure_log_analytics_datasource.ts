@@ -23,13 +23,13 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
 
   /**
    * @deprecated
-   * TODO: not sure what this is, its old and is migrated?
+   * TODO: Which one of these values should be used? Was there a migration?
    * */
   logAnalyticsSubscriptionId: string;
+  subscriptionId: string;
 
   azureMonitorUrl: string;
   defaultOrFirstWorkspace: string;
-  subscriptionId: string;
   cache: Map<string, any>;
 
   constructor(private instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>) {

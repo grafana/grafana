@@ -18,25 +18,30 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({ datasource, onQue
       return;
     }
 
-    console.log('SubscriptionField effect ');
-
     datasource.azureMonitorDatasource.getSubscriptions().then((results) => {
-      console.log('getSubscriptions results', results);
       const newSubscriptions = results.map(toOption);
       setSubscriptions(newSubscriptions);
 
-      // TODO: how much of this is needed?
-      // let newSubscription: string;
+      // Set a default subscription ID, if we can
+      let newSubscription = query.subscription;
 
-      // if (!query.subscription && query.queryType === 'Azure Monitor') {
-      //   newSubscription = datasource.azureMonitorDatasource.subscriptionId;
-      // } else if (!query.subscription && query.queryType === 'Azure Log Analytics') {
-      //   newSubscription = datasource.azureLogAnalyticsDatasource.logAnalyticsSubscriptionId;
-      // }
+      if (!newSubscription && query.queryType === AzureQueryType.AzureMonitor) {
+        newSubscription = datasource.azureMonitorDatasource.subscriptionId;
+      } else if (!query.subscription && query.queryType === AzureQueryType.LogAnalytics) {
+        newSubscription =
+          datasource.azureLogAnalyticsDatasource.logAnalyticsSubscriptionId ||
+          datasource.azureLogAnalyticsDatasource.subscriptionId;
+      }
 
-      // if (!query.subscription && this.subscriptions.length > 0) {
-      //   newSubscription = this.subscriptions[0].value;
-      // }
+      if (!newSubscription && newSubscriptions.length > 0) {
+        newSubscription = newSubscriptions[0].value;
+      }
+
+      newSubscription !== query.subscription &&
+        onQueryChange({
+          ...query,
+          subscription: newSubscription,
+        });
     });
   }, []);
 
