@@ -53,7 +53,7 @@ export class Sparkline extends PureComponent<Props, State> {
     this.state = {
       data,
       alignedDataFrame,
-      configBuilder: this.prepareConfig(alignedDataFrame, props),
+      configBuilder: this.prepareConfig(alignedDataFrame),
     };
   }
 
@@ -61,7 +61,7 @@ export class Sparkline extends PureComponent<Props, State> {
     if (oldProps.sparkline !== this.props.sparkline) {
       const data = this.prepareData(this.props);
       if (!compareDataFrameStructures(this.state.alignedDataFrame, data)) {
-        const configBuilder = this.prepareConfig(data, this.props);
+        const configBuilder = this.prepareConfig(data);
         this.setState({ alignedDataFrame: data, data: preparePlotData(data), configBuilder });
       } else {
         this.setState({ alignedDataFrame: data });
