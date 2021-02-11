@@ -96,13 +96,13 @@ export const PieChart: FC<Props> = ({ values, pieType, width, height, labelOptio
             cornerRadius={3}
             padAngle={0.005}
           >
-            {pie => {
-              return pie.arcs.map(arc => {
+            {(pie) => {
+              return pie.arcs.map((arc) => {
                 return (
                   <g
                     key={arc.data.title}
                     className={styles.svgArg}
-                    onMouseMove={event => onMouseMoveOverArc(event, arc.data)}
+                    onMouseMove={(event) => onMouseMoveOverArc(event, arc.data)}
                     onMouseOut={hideTooltip}
                   >
                     <path
