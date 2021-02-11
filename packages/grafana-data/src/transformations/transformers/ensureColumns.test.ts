@@ -68,9 +68,6 @@ describe('ensureColumns transformer', () => {
               "config": Object {},
               "labels": Object {},
               "name": "A",
-              "state": Object {
-                "displayName": "A",
-              },
               "type": "number",
               "values": Array [
                 1,
@@ -81,9 +78,6 @@ describe('ensureColumns transformer', () => {
               "config": Object {},
               "labels": Object {},
               "name": "B",
-              "state": Object {
-                "displayName": "B",
-              },
               "type": "number",
               "values": Array [
                 2,
@@ -94,9 +88,6 @@ describe('ensureColumns transformer', () => {
               "config": Object {},
               "labels": Object {},
               "name": "C",
-              "state": Object {
-                "displayName": "C",
-              },
               "type": "number",
               "values": Array [
                 3,
@@ -107,9 +98,6 @@ describe('ensureColumns transformer', () => {
               "config": Object {},
               "labels": Object {},
               "name": "D",
-              "state": Object {
-                "displayName": "D",
-              },
               "type": "string",
               "values": Array [
                 "first",
