@@ -584,14 +584,6 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     );
   }
 
-  transformSuggestDataFromTable(suggestData: TSDBResponse): Array<{ text: any; label: any; value: any }> {
-    return suggestData.results['metricFindQuery'].tables[0].rows.map(([text, value]) => ({
-      text,
-      value,
-      label: value,
-    }));
-  }
-
   transformSuggestDataFromDataframes(suggestData: TSDBResponse): Array<{ text: any; label: any; value: any }> {
     const frames = toDataQueryResponse({ data: suggestData }).data as DataFrame[];
     const table = toLegacyResponseData(frames[0]) as TableData;
