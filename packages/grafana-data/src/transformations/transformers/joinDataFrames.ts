@@ -124,6 +124,7 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
 
     for (let fieldIndex = 0; fieldIndex < frame.fields.length; fieldIndex++) {
       const field = frame.fields[fieldIndex];
+      field.state = field.state || {};
 
       if (!join && joinFieldMatcher(field, frame, options.frames)) {
         join = field;
@@ -147,7 +148,7 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
       }
 
       if (options.keepOriginIndices) {
-        field.state!.origin = {
+        field.state.origin = {
           frameIndex,
           fieldIndex,
         };
