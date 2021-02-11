@@ -71,7 +71,7 @@ def slack_step(channel):
                 'from_secret': 'slack_webhook',
             },
             'channel': channel,
-            'template': 'Build {{build.number}} failed: {{build.link}} for PR: {{build.pull}} \n Author: {{build.author}}',
+            'template': 'Build {{build.number}} failed: {{build.link}} for PR: {{build.pull}} Author: {{build.author}}',
         },
     }
 

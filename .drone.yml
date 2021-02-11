@@ -690,7 +690,7 @@ steps:
   image: plugins/slack
   settings:
     channel: grafana-ci-notifications
-    template: "Build {{build.number}} failed: {{build.link}} for PR: {{build.pull}} \n Author: {{build.author}}"
+    template: "Build {{build.number}} failed: {{build.link}} for PR: {{build.pull}} Author: {{build.author}}"
     webhook:
       from_secret: slack_webhook
 
@@ -1609,7 +1609,7 @@ steps:
   image: plugins/slack
   settings:
     channel: grafana-ci-notifications
-    template: "Build {{build.number}} failed: {{build.link}} for PR: {{build.pull}} \n Author: {{build.author}}"
+    template: "Build {{build.number}} failed: {{build.link}} for PR: {{build.pull}} Author: {{build.author}}"
     webhook:
       from_secret: slack_webhook
 
@@ -2511,7 +2511,7 @@ steps:
   image: plugins/slack
   settings:
     channel: grafana-ci-notifications
-    template: "Build {{build.number}} failed: {{build.link}} for PR: {{build.pull}} \n Author: {{build.author}}"
+    template: "Build {{build.number}} failed: {{build.link}} for PR: {{build.pull}} Author: {{build.author}}"
     webhook:
       from_secret: slack_webhook
 
@@ -3309,7 +3309,7 @@ steps:
   image: plugins/slack
   settings:
     channel: grafana-ci-notifications
-    template: "Build {{build.number}} failed: {{build.link}} for PR: {{build.pull}} \n Author: {{build.author}}"
+    template: "Build {{build.number}} failed: {{build.link}} for PR: {{build.pull}} Author: {{build.author}}"
     webhook:
       from_secret: slack_webhook
 
