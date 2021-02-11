@@ -6,9 +6,6 @@ import (
 	"net/http"
 	"text/template"
 
-	"github.com/gobwas/glob"
-
-	"github.com/grafana/grafana/pkg/registry"
 	macaron "gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -51,13 +48,6 @@ func Middleware(ac AccessControl) func(string, ...string) macaron.Handler {
 	}
 }
 
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name:     "fake-access-control",
-		Instance: &FakeAccessControl{},
-	})
-}
-
 var permissionMappings = map[string]struct {
 	Scopes []string
 	Role   models.RoleType
@@ -81,46 +71,4 @@ var permissionMappings = map[string]struct {
 		Scopes: []string{"orgs:*"},
 		Role:   models.ROLE_VIEWER,
 	},
-}
-
-type FakeAccessControl struct{}
-
-func (f FakeAccessControl) Evaluate(ctx context.Context, user *models.SignedInUser, permission string, scopes ...string) (bool, error) {
-	if user == nil {
-		return false, nil
-	}
-
-	m, exists := permissionMappings[permission]
-	if !exists {
-		return false, nil
-	}
-
-	if !user.OrgRole.Includes(m.Role) {
-		return false, nil
-	}
-
-	for _, scope := range scopes {
-		var match bool
-		for _, s := range m.Scopes {
-			rule, err := glob.Compile(s, ':', '/')
-			if err != nil {
-				return false, err
-			}
-
-			match = rule.Match(scope)
-			if match {
-				break
-			}
-		}
-
-		if !match {
-			return false, nil
-		}
-	}
-
-	return true, nil
-}
-
-func (f FakeAccessControl) Init() error {
-	return nil
 }

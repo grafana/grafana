@@ -12,39 +12,47 @@ import (
 // timeNow makes it possible to test usage of time
 var timeNow = time.Now
 
-func (ac *RBACService) GetPolicies(query *ListPoliciesQuery) error {
-	return ac.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+func (ac *RBACService) GetPolicies(ctx context.Context, orgID int64) ([]*Policy, error) {
+	var result []*Policy
+	err := ac.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		policies := make([]*Policy, 0)
 		q := "SELECT id, org_id, name, description, updated FROM policy WHERE org_id = ?"
-		if err := sess.SQL(q, query.OrgId).Find(&policies); err != nil {
+		if err := sess.SQL(q, orgID).Find(&policies); err != nil {
 			return err
 		}
 
-		query.Result = policies
+		result = policies
 		return nil
 	})
+	return result, err
 }
 
-func (ac *RBACService) GetPolicy(query *GetPolicyQuery) error {
-	return ac.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		policy, err := getPolicyById(sess, query.PolicyId, query.OrgId)
+func (ac *RBACService) GetPolicy(ctx context.Context, orgID, policyID int64) (*PolicyDTO, error) {
+	var result *PolicyDTO
+
+	err := ac.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		policy, err := getPolicyById(sess, policyID, orgID)
 		if err != nil {
 			return err
 		}
 
-		permissions, err := getPolicyPermissions(sess, query.PolicyId)
+		permissions, err := getPolicyPermissions(sess, policyID)
 		if err != nil {
 			return err
 		}
 
 		policy.Permissions = permissions
-		query.Result = policy
+		result = policy
 		return nil
 	})
+
+	return result, err
 }
 
-func (ac *RBACService) CreatePolicy(cmd *CreatePolicyCommand) error {
-	return ac.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+func (ac *RBACService) CreatePolicy(ctx context.Context, cmd CreatePolicyCommand) (*Policy, error) {
+	var result *Policy
+
+	err := ac.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		policy := &Policy{
 			OrgId:       cmd.OrgId,
 			Name:        cmd.Name,
@@ -60,13 +68,16 @@ func (ac *RBACService) CreatePolicy(cmd *CreatePolicyCommand) error {
 			return err
 		}
 
-		cmd.Result = policy
+		result = policy
 		return nil
 	})
+
+	return result, err
 }
 
-func (ac *RBACService) UpdatePolicy(cmd *UpdatePolicyCommand) error {
-	return ac.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+func (ac *RBACService) UpdatePolicy(ctx context.Context, cmd UpdatePolicyCommand) (*Policy, error) {
+	var result *Policy
+	err := ac.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		policy := &Policy{
 			Name:        cmd.Name,
 			Description: cmd.Description,
@@ -83,9 +94,10 @@ func (ac *RBACService) UpdatePolicy(cmd *UpdatePolicyCommand) error {
 			return errPolicyNotFound
 		}
 
-		cmd.Result = policy
+		result = policy
 		return nil
 	})
+	return result, err
 }
 
 func (ac *RBACService) DeletePolicy(cmd *DeletePolicyCommand) error {
@@ -105,16 +117,18 @@ func (ac *RBACService) DeletePolicy(cmd *DeletePolicyCommand) error {
 	})
 }
 
-func (ac *RBACService) GetPolicyPermissions(query *GetPolicyPermissionsQuery) error {
-	return ac.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		permissions, err := getPolicyPermissions(sess, query.PolicyId)
+func (ac *RBACService) GetPolicyPermissions(ctx context.Context, policyID int64) ([]Permission, error) {
+	var result []Permission
+	err := ac.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		permissions, err := getPolicyPermissions(sess, policyID)
 		if err != nil {
 			return err
 		}
 
-		query.Result = permissions
+		result = permissions
 		return nil
 	})
+	return result, err
 }
 
 func (ac *RBACService) CreatePermission(cmd *CreatePermissionCommand) error {

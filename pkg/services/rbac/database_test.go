@@ -1,6 +1,7 @@
 package rbac
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -91,13 +92,8 @@ func TestCreatingPolicy(t *testing.T) {
 
 			policyId := createPolicy(t, ac, tc.policy)
 
-			q := GetPolicyQuery{
-				OrgId:    1,
-				PolicyId: policyId,
-			}
-
-			err := ac.GetPolicy(&q)
-			policy := q.Result
+			res, err := ac.GetPolicy(context.Background(), 1, policyId)
+			policy := res
 
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedUpdated, policy.Updated)
@@ -167,17 +163,13 @@ func TestUpdatingPolicy(t *testing.T) {
 				Name: tc.newPolicy.name,
 			}
 
-			err := ac.UpdatePolicy(&updatePolicyCmd)
+			_, err := ac.UpdatePolicy(context.Background(), updatePolicyCmd)
 			require.NoError(t, err)
 
 			if tc.newPolicy.permissions != nil {
 				// Update permissions
-				getPermissionsQuery := GetPolicyPermissionsQuery{
-					PolicyId: policyId,
-				}
-				err := ac.GetPolicyPermissions(&getPermissionsQuery)
+				perm, err := ac.GetPolicyPermissions(context.Background(), policyId)
 				require.NoError(t, err)
-				perm := getPermissionsQuery.Result
 				for _, reqP := range tc.newPolicy.permissions {
 					for _, p := range perm {
 						if reqP.scope == p.Scope {
@@ -194,12 +186,8 @@ func TestUpdatingPolicy(t *testing.T) {
 				}
 
 				// Check updated
-				getUpdatedPermissionsQuery := GetPolicyPermissionsQuery{
-					PolicyId: policyId,
-				}
-				err = ac.GetPolicyPermissions(&getUpdatedPermissionsQuery)
+				perm, err = ac.GetPolicyPermissions(context.Background(), policyId)
 				require.NoError(t, err)
-				perm = getUpdatedPermissionsQuery.Result
 				for _, reqP := range tc.newPolicy.permissions {
 					for _, p := range perm {
 						if reqP.scope == p.Scope {

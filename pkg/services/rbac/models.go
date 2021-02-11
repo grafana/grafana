@@ -68,25 +68,6 @@ type UserPolicy struct {
 	Created time.Time
 }
 
-type ListPoliciesQuery struct {
-	OrgId int64 `json:"-"`
-
-	Result []*Policy
-}
-
-type GetPolicyQuery struct {
-	OrgId    int64 `json:"-"`
-	PolicyId int64
-
-	Result *PolicyDTO
-}
-
-type GetPolicyPermissionsQuery struct {
-	PolicyId int64
-
-	Result []Permission
-}
-
 type GetTeamPoliciesQuery struct {
 	OrgId  int64 `json:"-"`
 	TeamId int64
@@ -132,16 +113,12 @@ type CreatePolicyCommand struct {
 	OrgId       int64
 	Name        string
 	Description string
-
-	Result *Policy
 }
 
 type UpdatePolicyCommand struct {
 	Id          int64
 	Name        string
 	Description string
-
-	Result *Policy
 }
 
 type DeletePolicyCommand struct {

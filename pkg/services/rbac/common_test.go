@@ -38,9 +38,9 @@ func createPolicy(t *testing.T, ac *RBACService, p policyTestCase) int64 {
 		OrgId: 1,
 		Name:  p.name,
 	}
-	err := ac.CreatePolicy(&createPolicyCmd)
+	res, err := ac.CreatePolicy(context.Background(), createPolicyCmd)
 	require.NoError(t, err)
-	policyId := createPolicyCmd.Result.Id
+	policyId := res.Id
 
 	for _, perm := range p.permissions {
 		permCmd := CreatePermissionCommand{
@@ -73,9 +73,9 @@ func createUserWithPolicy(t *testing.T, ac *RBACService, user string, policies [
 			OrgId: 1,
 			Name:  p.name,
 		}
-		err := ac.CreatePolicy(&createPolicyCmd)
+		res, err := ac.CreatePolicy(context.Background(), createPolicyCmd)
 		require.NoError(t, err)
-		policyId := createPolicyCmd.Result.Id
+		policyId := res.Id
 
 		for _, perm := range p.permissions {
 			permCmd := CreatePermissionCommand{
@@ -109,9 +109,9 @@ func createTeamWithPolicy(t *testing.T, ac *RBACService, team string, policies [
 			OrgId: 1,
 			Name:  p.name,
 		}
-		err := ac.CreatePolicy(&createPolicyCmd)
+		res, err := ac.CreatePolicy(context.Background(), createPolicyCmd)
 		require.NoError(t, err)
-		policyId := createPolicyCmd.Result.Id
+		policyId := res.Id
 
 		for _, perm := range p.permissions {
 			permCmd := CreatePermissionCommand{
