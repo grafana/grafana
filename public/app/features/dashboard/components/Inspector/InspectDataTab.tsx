@@ -10,9 +10,9 @@ import {
   SelectableValue,
   toCSV,
   transformDataFrame,
+  CSVConfig,
 } from '@grafana/data';
 import { Button, Container, Field, HorizontalGroup, Spinner, Select, Switch, Table, VerticalGroup } from '@grafana/ui';
-import { CSVConfig } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { getPanelInspectorStyles } from './styles';

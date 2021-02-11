@@ -1,15 +1,9 @@
-// Libraries
 import React, { PureComponent } from 'react';
-
-// Components
-import { LegacyForms, InlineFormLabel } from '@grafana/ui';
-const { Select, FormField } = LegacyForms;
-
-// Types
+import { LegacyForms, InlineFormLabel, PieChartType } from '@grafana/ui';
 import { PanelEditorProps } from '@grafana/data';
-import { PieChartType } from '@grafana/ui';
 import { PieChartOptions } from './types';
 
+const { Select, FormField } = LegacyForms;
 const labelWidth = 8;
 
 const pieChartOptions = [

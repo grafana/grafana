@@ -16,8 +16,8 @@ import {
   getDisplayProcessor,
   getFieldDisplayName,
   InterpolateFunction,
+  TimeZone,
 } from '@grafana/data';
-import { TimeZone } from '@grafana/data';
 import { useClickAway } from 'react-use';
 import { getFieldLinksSupplier } from '../../../../features/panel/panellinks/linkSuppliers';
 
