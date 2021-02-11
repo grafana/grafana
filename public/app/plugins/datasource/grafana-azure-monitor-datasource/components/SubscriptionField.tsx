@@ -1,10 +1,10 @@
+import React, { useCallback, useEffect, useState } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
-import React, { useCallback, useEffect, useState } from 'react';
-import { AzureMonitorQuery, AzureQueryType } from '../types';
+
+import { AzureMonitorQuery, AzureQueryType, AzureQueryEditorFieldProps, Option } from '../types';
 import { toOption, findOption } from './common';
 import { Field } from './Field';
-import { AzureQueryEditorFieldProps, Option } from '../types';
 
 interface SubscriptionFieldProps extends AzureQueryEditorFieldProps {
   onQueryChange: (newQuery: AzureMonitorQuery) => void;

@@ -3,8 +3,7 @@ import { Button, Select, Input, HorizontalGroup, VerticalGroup, InlineLabel } fr
 
 import { MultipleFields } from '../Field';
 import { findOption } from '../common';
-import { AzureMetricDimension } from '../../types';
-import { AzureQueryEditorFieldProps, Option } from '../../types';
+import { AzureMetricDimension, AzureQueryEditorFieldProps, Option } from '../../types';
 
 interface DimensionFieldsProps extends AzureQueryEditorFieldProps {
   dimensionOptions: Option[];
