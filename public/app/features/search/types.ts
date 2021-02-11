@@ -41,7 +41,7 @@ export interface DashboardSectionItem {
   uid?: string;
   uri: string;
   url: string;
-  sortMeta?: string;
+  sortMeta?: number;
   sortMetaName?: string;
 }
 

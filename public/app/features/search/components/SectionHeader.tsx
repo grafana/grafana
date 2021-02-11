@@ -1,8 +1,8 @@
-import React, { FC, useCallback } from 'react';
+import React, { FC, useCallback, useMemo } from 'react';
 import { css, cx } from 'emotion';
 import { useLocalStorage } from 'react-use';
 import { GrafanaTheme } from '@grafana/data';
-import { Icon, Spinner, stylesFactory, useTheme } from '@grafana/ui';
+import { Icon, Spinner, stylesFactory, useTheme, Counter } from '@grafana/ui';
 import { DashboardSection, OnToggleChecked } from '../types';
 import { SearchCheckbox } from './SearchCheckbox';
 import { getSectionIcon, getSectionStorageKey } from '../utils';
@@ -40,6 +40,8 @@ export const SectionHeader: FC<SectionHeaderProps> = ({
     [section]
   );
 
+  const metaValue = useMemo(() => section.items.reduce((sum, item) => sum + (item?.sortMeta || 0), 0), [section.items]);
+
   return (
     <div
       className={styles.wrapper}
@@ -60,7 +62,9 @@ export const SectionHeader: FC<SectionHeaderProps> = ({
           </a>
         )}
       </div>
-
+      <span>
+        <Counter value={metaValue} />
+      </span>
       {section.itemsFetching ? <Spinner /> : <Icon name={section.expanded ? 'angle-down' : 'angle-right'} />}
     </div>
   );
