@@ -1,16 +1,8 @@
-// Libraries
 import React, { PureComponent } from 'react';
-
-// Services & Utils
 import { config } from 'app/core/config';
-
-// Components
 import { PieChart } from '@grafana/ui';
-import { getFieldDisplayValues } from '@grafana/data';
-
-// Types
 import { PieChartOptions } from './types';
-import { PanelProps } from '@grafana/data';
+import { getFieldDisplayValues, PanelProps } from '@grafana/data';
 
 interface Props extends PanelProps<PieChartOptions> {}
 

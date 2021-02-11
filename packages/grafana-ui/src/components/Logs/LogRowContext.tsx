@@ -1,11 +1,9 @@
 import React, { useContext, useRef, useState, useLayoutEffect, useEffect } from 'react';
-import { LogRowModel } from '@grafana/data';
+import { GrafanaTheme, DataQueryError, LogRowModel } from '@grafana/data';
 import { css, cx } from 'emotion';
 
 import { Alert } from '../Alert/Alert';
 import { LogRowContextRows, LogRowContextQueryErrors, HasMoreContextRows } from './LogRowContextProvider';
-import { GrafanaTheme } from '@grafana/data';
-import { DataQueryError } from '@grafana/data';
 import { ThemeContext } from '../../themes/ThemeContext';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { List } from '../List/List';
