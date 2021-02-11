@@ -4,7 +4,6 @@ import { LogLabelStatsModel, GrafanaTheme } from '@grafana/data';
 
 import { Themeable } from '../../types/theme';
 import { stylesFactory } from '../../themes';
-import { selectThemeVariant } from '../../themes/selectThemeVariant';
 import { withTheme } from '../../themes/index';
 
 //Components
@@ -13,13 +12,6 @@ import { LogLabelStatsRow } from './LogLabelStatsRow';
 const STATS_ROW_LIMIT = 5;
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const borderColor = selectThemeVariant(
-    {
-      light: theme.palette.gray5,
-      dark: theme.palette.dark9,
-    },
-    theme.type
-  );
   return {
     logsStats: css`
       label: logs-stats;
@@ -30,7 +22,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     logsStatsHeader: css`
       label: logs-stats__header;
-      border-bottom: 1px solid ${borderColor};
+      border-bottom: 1px solid ${theme.colors.border2};
       display: flex;
     `,
     logsStatsTitle: css`

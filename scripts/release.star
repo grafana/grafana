@@ -31,6 +31,7 @@ load(
     'notify_pipeline',
     'integration_test_services',
     'publish_packages_step',
+    'upload_cdn'
 )
 
 def release_npm_packages_step(edition, ver_mode):
@@ -99,7 +100,9 @@ def get_steps(edition, ver_mode):
         postgres_integration_tests_step(),
         mysql_integration_tests_step(),
     ])
+
     if should_upload:
+        steps.append(upload_cdn(edition=edition))
         steps.append(upload_packages_step(edition=edition, ver_mode=ver_mode))
     if should_publish:
         steps.extend([
@@ -112,6 +115,7 @@ def get_steps(edition, ver_mode):
         edition2 = 'enterprise2'
         steps.extend([
             package_step(edition=edition2, ver_mode=ver_mode, variants=['linux-x64']),
+            upload_cdn(edition=edition2),
             e2e_tests_server_step(edition=edition2, port=3002),
             e2e_tests_step(edition=edition2, port=3002),
         ])

@@ -103,6 +103,7 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 	metrics["stats.ds.other.count"] = dsOtherCount
 
 	metrics["stats.packaging."+setting.Packaging+".count"] = 1
+	metrics["stats.distributor."+setting.ReportingDistributor+".count"] = 1
 
 	// Alerting stats
 	alertingUsageStats, err := uss.AlertingUsageStats.QueryUsageStats()
