@@ -87,7 +87,8 @@ export { LogLabels } from './Logs/LogLabels';
 export { LogMessageAnsi } from './Logs/LogMessageAnsi';
 export { LogRows } from './Logs/LogRows';
 export { getLogRowStyles } from './Logs/getLogRowStyles';
-export { FieldLink } from './Logs/FieldLink';
+export { DataLinkButton } from './DataLinks/DataLinkButton';
+export { FieldLinkList } from './DataLinks/FieldLinkList';
 export { ToggleButtonGroup, ToggleButton } from './ToggleButtonGroup/ToggleButtonGroup';
 // Panel editors
 export { FullWidthButtonContainer } from './Button/FullWidthButtonContainer';
@@ -103,7 +104,6 @@ export { DataLinksContextMenu } from './DataLinks/DataLinksContextMenu';
 export { SeriesIcon } from './VizLegend/SeriesIcon';
 export { InfoBox } from './InfoBox/InfoBox';
 export { FeatureBadge, FeatureInfoBox } from './InfoBox/FeatureInfoBox';
-export { DismissableFeatureInfoBox } from './InfoBox/DismissableFeatureInfoBox';
 
 export { JSONFormatter } from './JSONFormatter/JSONFormatter';
 export { JsonExplorer } from './JSONFormatter/json_explorer/json_explorer';

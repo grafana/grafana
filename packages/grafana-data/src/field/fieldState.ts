@@ -38,10 +38,8 @@ export function getFieldDisplayName(field: Field, frame?: DataFrame, allFrames?:
   }
 
   const displayName = calculateFieldDisplayName(field, frame, allFrames);
-  field.state = {
-    ...field.state,
-    displayName,
-  };
+  field.state = field.state || {};
+  field.state.displayName = displayName;
 
   return displayName;
 }

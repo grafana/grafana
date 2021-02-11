@@ -2,16 +2,19 @@ import { Field, LinkModel } from '@grafana/data';
 import React from 'react';
 import { ButtonProps, Button } from '../Button';
 
-type FieldLinkProps = {
+type DataLinkButtonProps = {
   link: LinkModel<Field>;
   buttonProps?: ButtonProps;
 };
 
-export function FieldLink({ link, buttonProps }: FieldLinkProps) {
+/**
+ * @internal
+ */
+export function DataLinkButton({ link, buttonProps }: DataLinkButtonProps) {
   return (
     <a
       href={link.href}
-      target="_blank"
+      target={link.target}
       rel="noreferrer"
       onClick={
         link.onClick
@@ -24,7 +27,7 @@ export function FieldLink({ link, buttonProps }: FieldLinkProps) {
           : undefined
       }
     >
-      <Button icon="external-link-alt" {...buttonProps}>
+      <Button icon="external-link-alt" variant="primary" size="sm" {...buttonProps}>
         {link.title}
       </Button>
     </a>

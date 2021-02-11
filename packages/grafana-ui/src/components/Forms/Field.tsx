@@ -21,7 +21,7 @@ export interface FieldProps extends HTMLAttributes<HTMLDivElement> {
   /** Indicates if field is required */
   required?: boolean;
   /** Error message to display */
-  error?: string;
+  error?: string | null;
   /** Indicates horizontal layout of the field */
   horizontal?: boolean;
   className?: string;
