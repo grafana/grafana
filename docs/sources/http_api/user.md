@@ -298,8 +298,10 @@ Content-Type: application/json
 GET /api/user HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Basic YWRtaW46YWRtaW4=
 ```
+
+Requires basic authentication.
 
 **Example Response**:
 
@@ -328,7 +330,7 @@ Content-Type: application/json
 
 `PUT /api/user/password`
 
-Changes the password for the user
+Changes the password for the user. Requires basic authentication.
 
 **Example Request**:
 
@@ -336,7 +338,7 @@ Changes the password for the user
 PUT /api/user/password HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Basic YWRtaW46YWRtaW4=
 
 {
   "oldPassword": "old_password",
@@ -415,7 +417,7 @@ Content-Type: application/json
 
 `GET /api/user/orgs`
 
-Return a list of all organizations of the current user.
+Return a list of all organizations of the current user. Requires basic authentication.
 
 **Example Request**:
 
@@ -423,7 +425,7 @@ Return a list of all organizations of the current user.
 GET /api/user/orgs HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Basic YWRtaW46YWRtaW4=
 ```
 
 **Example Response**:
