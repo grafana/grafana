@@ -2,8 +2,8 @@ import React, { FC, useMemo, useState } from 'react';
 import { useObservable } from 'react-use';
 import { css } from 'emotion';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import { DataFrame, DataQuery, GrafanaTheme } from '@grafana/data';
-import { TabsBar, TabContent, Tab, useStyles, Icon, Button } from '@grafana/ui';
+import { DataFrame, DataQuery, GrafanaTheme, PanelData } from '@grafana/data';
+import { Button, Icon, Tab, TabContent, TabsBar, useStyles } from '@grafana/ui';
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import { PreviewQueryTab } from './PreviewQueryTab';
 import { PreviewInstancesTab } from './PreviewInstancesTab';
@@ -31,7 +31,7 @@ export const AlertingQueryPreview: FC<Props> = ({ getInstances, onRunQueries, on
   const styles = useStyles(getStyles);
 
   const observable = useMemo(() => queryRunner.getData({ withFieldConfig: true, withTransforms: true }), []);
-  const data = useObservable(observable);
+  const data = useObservable<PanelData>(observable);
   const instances = getInstances();
 
   return (
