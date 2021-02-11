@@ -9,7 +9,7 @@ weight = 200
 
 In Grafana, you can the UI them used in the Settings or Preferences. You can set the UI theme for the server, an organization, a team, or your personal user account. This topic provides instructions for each task.
 
-Some tasks require certain permissions. For more information about roles, refer to [Permissions]({{< relref "../../permissions/_index.md" >}}).
+{{< docs/shared "preferences/some-tasks-require-permissions.md" >}}
 
 ## Theme options
 
@@ -33,15 +33,35 @@ Here is an example of the light theme.
 
 ## Change server UI theme
 
+Grafana server administrators can change the Grafana UI theme for all users on the server by setting the [default_theme]({{< relref "../configuration.md#default-theme" >}}) option in the Grafana configuration file.
+
+To see what the current settings are, refer to [View server settings]({{< relref "../view-server/view-server-settings.md" >}}).
 
 ## Change organization UI theme
 
+Organization administrators can change the UI theme for all users in an organization.
+
+{{< docs/list >}}
+{{< docs/shared "preferences/org-preferences-list.md" >}}
+1. In the Preferences section, select the **UI theme**.
+1. Click **Save**.
+{{< /docs/list >}}
 
 ## Change team UI theme
 
+Organization administrators and team administrators can change the UI theme for all users in an organization.
+
+{{< docs/list >}}
+{{< docs/shared "manage-users/view-team-list.md" >}}
+1. Click on the team you want to change the UI theme for and then navigate to the **Settings** tab.
+{{< docs/shared "preferences/select-ui-theme-list.md" >}}
+{{< /docs/list >}}
 
 ## Change your personal UI theme
 
+You can change the UI theme for your user account. This setting overrides UI theme settings at higher levels.
 
-
-   - **UI Theme -** Click to set the **Dark** or **Light** to select a theme. **Default** is either the dark theme or the theme selected by your Grafana administrator.
+{{< docs/list >}}
+{{< docs/shared "preferences/navigate-user-preferences-list.md" >}}
+{{< docs/shared "preferences/select-ui-theme-list.md" >}}
+{{< /docs/list >}}
