@@ -2,10 +2,9 @@ import angular from 'angular';
 import _ from 'lodash';
 
 import { getPluginSettings } from './PluginSettingsCache';
-import { PluginMeta } from '@grafana/data';
+import { PluginMeta, AppEvents } from '@grafana/data';
 import { NavModelSrv } from 'app/core/core';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { AppEvents } from '@grafana/data';
 import { promiseToDigest } from '../../core/utils/promiseToDigest';
 
 export class AppPageCtrl {

@@ -76,7 +76,7 @@
     "@emotion/core": "10.0.27",
     "@grafana/api-documenter": "7.11.2",
     "@grafana/api-extractor": "7.10.1",
-    "@grafana/eslint-config": "2.1.1",
+    "@grafana/eslint-config": "2.2.0",
     "@rtsao/plugin-proposal-class-properties": "7.0.1-patch.1",
     "@testing-library/jest-dom": "5.11.5",
     "@testing-library/react": "11.1.2",

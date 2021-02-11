@@ -1,4 +1,3 @@
-import 'app/features/plugins/datasource_srv';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { DataSourceInstanceSettings, DataSourcePlugin } from '@grafana/data';
 

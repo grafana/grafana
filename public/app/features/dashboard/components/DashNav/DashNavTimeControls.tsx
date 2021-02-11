@@ -1,12 +1,11 @@
 // Libraries
 import React, { Component } from 'react';
-import { dateMath, GrafanaTheme, TimeZone } from '@grafana/data';
+import { dateMath, GrafanaTheme, TimeZone, TimeRange } from '@grafana/data';
 import { css } from 'emotion';
 
 // Types
 import { DashboardModel } from '../../state';
 import { LocationState, CoreEvents } from 'app/types';
-import { TimeRange } from '@grafana/data';
 
 // Components
 import { RefreshPicker, withTheme, stylesFactory, Themeable, defaultIntervals } from '@grafana/ui';

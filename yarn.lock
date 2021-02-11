@@ -3543,10 +3543,10 @@
     typescript "3.7.5"
     yaml "^1.8.3"
 
-"@grafana/eslint-config@2.1.0":
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/@grafana/eslint-config/-/eslint-config-2.1.0.tgz#334e7eb4e5cc5f92f5b1485c795e6c38c802484d"
-  integrity sha512-JDybQbeUTbgKHWDThDjlfFuAamH5Cb+NArkPWhWFK7j1z0jfUZZX7uO1MMIq8Lgq+fW30pVIrc8ka3Ls/DAFAA==
+"@grafana/eslint-config@2.2.0":
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/@grafana/eslint-config/-/eslint-config-2.2.0.tgz#3eda5b5a15b3226d14f40a5c45b07dec1f2242b8"
+  integrity sha512-veSCw2FmuKCEnDHjgGImwvNyOIAZ0CSM32cfMg9/jkePCuMXWXuQPA/UgajGbxX7NWdOqMZCPpa6TwcOv9hYJg==
   dependencies:
     "@typescript-eslint/eslint-plugin" "4.0.1"
     "@typescript-eslint/parser" "4.0.1"
@@ -3554,22 +3554,6 @@
     eslint-config-prettier "7.2.0"
     eslint-plugin-jsdoc "28.6.1"
     eslint-plugin-prettier "3.1.4"
-    eslint-plugin-react "7.21.5"
-    eslint-plugin-react-hooks "4.1.2"
-    prettier "2.2.1"
-    typescript "4.0.2"
-
-"@grafana/eslint-config@2.1.1":
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/@grafana/eslint-config/-/eslint-config-2.1.1.tgz#006755f3807866ba96e2fecf534d4491c7b8e051"
-  integrity sha512-tr4XLqTpAe4zLDQBiPHxmPRyYL9p+BfPNBezFw9np1bcsYI8d0A7spSwEJUiSne09j7vo07HUZgNBjSFa8qdrA==
-  dependencies:
-    "@typescript-eslint/eslint-plugin" "4.0.1"
-    "@typescript-eslint/parser" "4.0.1"
-    eslint "7.4.0"
-    eslint-config-prettier "7.2.0"
-    eslint-plugin-jsdoc "28.6.1"
-    eslint-plugin-prettier "3.3.1"
     eslint-plugin-react "7.21.5"
     eslint-plugin-react-hooks "4.1.2"
     prettier "2.2.1"
