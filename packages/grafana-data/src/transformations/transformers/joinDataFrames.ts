@@ -123,7 +123,6 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
     let fields: Field[] = [];
     for (let fieldIndex = 0; fieldIndex < frame.fields.length; fieldIndex++) {
       const field = frame.fields[fieldIndex];
-      getFieldDisplayName(field, frame, options.frames); // cache displayName in state
 
       if (!join && joinFieldMatcher(field, frame, options.frames)) {
         join = field;
