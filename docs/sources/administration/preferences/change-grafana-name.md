@@ -1,5 +1,5 @@
 +++
-title = "Change name"
+title = "Change name and email"
 keywords = ["grafana", "configuration", "documentation", "home"]
 weight = 100
 +++

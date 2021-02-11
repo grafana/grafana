@@ -1,5 +1,5 @@
 +++
-title = "Change the default home dashboard"
+title = "Change home dashboard"
 description = "How to replace the default home dashboard"
 keywords = ["grafana", "configuration", "documentation", "home"]
 aliases = ["/docs/grafana/latest/administration/change-home-dashboard/"]
@@ -30,7 +30,7 @@ Users with the Grafana Server Admin flag on their account or access to the confi
 ### Use a JSON file as the home dashboard
 
 1. Save your JSON file somewhere that Grafana can access it. For example, in the Grafana `data` folder of Grafana.
-1. Update your configuration file to set the path to the JSON file. Refer to [default_home_dashboard_path]({{< relref "./configuration.md">}}) for more information about modifying the Grafana configuration files.
+1. Update your configuration file to set the path to the JSON file. Refer to [default_home_dashboard_path]({{< relref "../configuration.md">}}) for more information about modifying the Grafana configuration files.
 
 ```ini
 [dashboards]
@@ -45,7 +45,7 @@ Organization administrators can choose a home dashboard for their organization.
 1. Navigate to the dashboard you want to set as the home dashboard.
 1. Click the star next to the dashboard title to mark the dashboard as a favorite if it is not already.
 1. On the left menu, hover your cursor over the **Configuration** (gear) icon and then click **Preferences**.
-1. In the **Home Dashboard** field, select the dashboard you want to use for your home dashboard. Options include all starred dashboards.
+1. In the **Home Dashboard** field, select the dashboard that you want to use for your home dashboard. Options include all starred dashboards.
 
 ## Set home dashboard for your team
 
