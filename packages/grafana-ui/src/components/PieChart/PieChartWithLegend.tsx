@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { PieChart, Props as PieChartProps } from './PieChart';
+import { Props as PieChartProps } from './PieChart';
 
 export interface Props extends PieChartProps {}
 
