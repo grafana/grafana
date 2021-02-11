@@ -4,12 +4,23 @@ import {
   compareDataFrameStructures,
   DataFrame,
   DataFrameFieldIndex,
+  DisplayValue,
   FieldMatcherID,
   fieldMatchers,
+  fieldReducers,
+  reduceField,
   TimeRange,
   TimeZone,
 } from '@grafana/data';
-import { GraphNGLegendEvent, UPlotChart, VizLayout, VizLegend, VizLegendItem, VizLegendOptions } from '..';
+import {
+  AxisPlacement,
+  GraphNGLegendEvent,
+  UPlotChart,
+  VizLayout,
+  VizLegend,
+  VizLegendItem,
+  VizLegendOptions,
+} from '..';
 import { withTheme } from '../../themes';
 import { Themeable } from '../../types';
 import { AlignedData } from 'uplot';
@@ -19,6 +30,7 @@ import { mapMouseEventToMode, preparePlotConfigBuilder, preparePlotData, prepare
 import { GraphNGContext } from './hooks';
 
 export const FIXED_UNIT = '__fixed';
+const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
 export interface GraphNGProps extends Themeable {
   width: number;
@@ -34,11 +46,11 @@ export interface GraphNGProps extends Themeable {
 }
 
 interface GraphNGState {
-  config: UPlotConfigBuilder;
   data: AlignedData;
-  seriesToDataFrameFieldIndexMap: DataFrameFieldIndex[];
   alignedDataFrame: DataFrame;
   dimFields: XYFieldMatchers;
+  seriesToDataFrameFieldIndexMap: DataFrameFieldIndex[];
+  config?: UPlotConfigBuilder;
 }
 
 class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
@@ -87,6 +99,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
       ...state,
       data: preparePlotData(frame),
       alignedDataFrame: frame,
+      seriesToDataFrameFieldIndexMap: frame.fields.map((f) => f.state!.origin!),
       dimFields,
     };
   }
@@ -103,7 +116,6 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
 
     this.setState({
       config: preparePlotConfigBuilder(alignedDataFrame, theme, this.getTimeRange, this.getTimeZone),
-      seriesToDataFrameFieldIndexMap: alignedDataFrame.fields.map((f) => f.state!.origin!),
     });
   }
 
@@ -147,7 +159,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
     return this.props.timeZone;
   };
 
-  onLegendLabelClick(legend: VizLegendItem, event: React.MouseEvent) {
+  onLegendLabelClick = (legend: VizLegendItem, event: React.MouseEvent) => {
     const { onLegendClick } = this.props;
     const { fieldIndex } = legend;
 
@@ -159,17 +171,63 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
       fieldIndex,
       mode: mapMouseEventToMode(event),
     });
-  }
+  };
 
   renderLegend() {
-    const { legend, onSeriesColorChange } = this.props;
+    const { legend, onSeriesColorChange, data } = this.props;
+    const { config } = this.state;
+
+    if (!config) {
+      return;
+    }
+
+    const legendItems = config
+      .getSeries()
+      .map<VizLegendItem | undefined>((s) => {
+        const seriesConfig = s.props;
+        const fieldIndex = seriesConfig.dataFrameFieldIndex;
+        const axisPlacement = config.getAxisPlacement(s.props.scaleKey);
+
+        if (seriesConfig.hideInLegend || !fieldIndex) {
+          return undefined;
+        }
+
+        const field = data[fieldIndex.frameIndex]?.fields[fieldIndex.fieldIndex];
+
+        return {
+          disabled: !seriesConfig.show ?? false,
+          fieldIndex,
+          color: seriesConfig.lineColor!,
+          label: seriesConfig.fieldName,
+          yAxis: axisPlacement === AxisPlacement.Left ? 1 : 2,
+          getDisplayValues: () => {
+            if (!legend.calcs?.length) {
+              return [];
+            }
+
+            const fmt = field.display ?? defaultFormatter;
+            const fieldCalcs = reduceField({
+              field,
+              reducers: legend.calcs,
+            });
+
+            return legend.calcs.map<DisplayValue>((reducer) => {
+              return {
+                ...fmt(fieldCalcs[reducer]),
+                title: fieldReducers.get(reducer).name,
+              };
+            });
+          },
+        };
+      })
+      .filter((i) => i !== undefined) as VizLegendItem[];
 
     return (
       <VizLayout.Legend position={legend.placement} maxHeight="35%" maxWidth="60%">
         <VizLegend
           onLabelClick={this.onLegendLabelClick}
           placement={legend.placement}
-          items={[]}
+          items={legendItems}
           displayMode={legend.displayMode}
           onSeriesColorChange={onSeriesColorChange}
         />
@@ -180,7 +238,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
   render() {
     const { width, height, children, timeZone, timeRange, ...plotProps } = this.props;
 
-    if (!this.state.data) {
+    if (!this.state.data || !this.state.config) {
       return null;
     }
 
@@ -195,7 +253,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
           {(vizWidth: number, vizHeight: number) => (
             <UPlotChart
               {...plotProps}
-              config={this.state.config}
+              config={this.state.config!}
               data={this.state.data}
               width={vizWidth}
               height={vizHeight}

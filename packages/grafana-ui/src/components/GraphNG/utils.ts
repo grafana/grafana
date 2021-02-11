@@ -1,3 +1,6 @@
+import React from 'react';
+import { AlignedData } from 'uplot';
+import isNumber from 'lodash/isNumber';
 import { GraphNGLegendEventMode, XYFieldMatchers } from './types';
 import {
   DataFrame,
@@ -15,9 +18,7 @@ import {
 } from '@grafana/data';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { AxisPlacement, DrawStyle, GraphFieldConfig, PointVisibility, ScaleDirection, ScaleOrientation } from '..';
-import { FIXED_UNIT } from '../../index';
-import { AlignedData } from 'uplot';
-import isNumber from 'lodash/isNumber';
+import { FIXED_UNIT } from './GraphNG';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 const defaultConfig: GraphFieldConfig = {
