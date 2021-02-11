@@ -5,52 +5,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-func overrideRBACInRegistry(cfg *setting.Cfg) RBACService {
-	ac := RBACService{
-		SQLStore:      nil,
-		Cfg:           cfg,
-		RouteRegister: routing.NewRouteRegister(),
-		log:           log.New("rbac-test"),
-	}
-
-	overrideServiceFunc := func(descriptor registry.Descriptor) (*registry.Descriptor, bool) {
-		if _, ok := descriptor.Instance.(*RBACService); ok {
-			return &registry.Descriptor{
-				Name:         "RBAC",
-				Instance:     &ac,
-				InitPriority: descriptor.InitPriority,
-			}, true
-		}
-		return nil, false
-	}
-
-	registry.RegisterOverride(overrideServiceFunc)
-
-	return ac
-}
-
-func mockTimeNow() {
-	var timeSeed int64
-	timeNow = func() time.Time {
-		fakeNow := time.Unix(timeSeed, 0).UTC()
-		timeSeed++
-		return fakeNow
-	}
-}
-
-func resetTimeNow() {
-	timeNow = time.Now
-}
 
 func TestCreatingPolicy(t *testing.T) {
 	mockTimeNow()
