@@ -1,9 +1,8 @@
 import React from 'react';
 import debounce from 'lodash/debounce';
 import { css } from 'emotion';
-import { DataFrame, CSVConfig, readCSV } from '@grafana/data';
+import { GrafanaTheme, DataFrame, CSVConfig, readCSV } from '@grafana/data';
 import { Icon } from '../Icon/Icon';
-import { GrafanaTheme } from '@grafana/data';
 import { Themeable } from '../../types/theme';
 import { TextArea } from '../TextArea/TextArea';
 import { stylesFactory, withTheme } from '../../themes';
