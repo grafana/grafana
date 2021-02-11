@@ -185,18 +185,6 @@ func TestQuery_Regions(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		var rows []interface{}
-		for _, region := range knownRegions {
-			rows = append(rows, []interface{}{
-				region,
-				region,
-			})
-		}
-		rows = append(rows, []interface{}{
-			regionName,
-			regionName,
-		})
-
 		expRegions := append(knownRegions, regionName)
 		expFrame := data.NewFrame(
 			"",
