@@ -31,7 +31,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -46,6 +45,8 @@ type datasourceInfo struct {
 
 	accessKey string
 	secretKey string
+
+	datasourceID int64
 }
 
 const cloudWatchTSFormat = "2006-01-02 15:04:05.000"
@@ -108,6 +109,7 @@ func NewInstanceSettings() datasource.InstanceFactoryFunc {
 			assumeRoleARN: jsonData["assumeRoleArn"],
 			externalID:    jsonData["externalId"],
 			namespace:     jsonData["customMetricsNamespaces"],
+			datasourceID:  settings.ID,
 		}
 
 		atStr := jsonData["authType"]
@@ -141,8 +143,6 @@ func NewInstanceSettings() datasource.InstanceFactoryFunc {
 
 // cloudWatchExecutor executes CloudWatch requests.
 type cloudWatchExecutor struct {
-	*models.DataSource //replace with instance manager?
-
 	ec2Client  ec2iface.EC2API
 	rgtaClient resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
 
@@ -153,7 +153,10 @@ type cloudWatchExecutor struct {
 }
 
 func (e *cloudWatchExecutor) newSession(region string, pluginCtx backend.PluginContext) (*session.Session, error) {
-	dsInfo := e.getDSInfo(pluginCtx)
+	dsInfo, err := e.getDSInfo(pluginCtx)
+	if err != nil {
+		return nil, err
+	}
 
 	bldr := strings.Builder{}
 	for i, s := range []string{
@@ -471,15 +474,15 @@ func (at authType) String() string {
 	}
 }
 
-func (e *cloudWatchExecutor) getDSInfo(pluginCtx backend.PluginContext) *datasourceInfo {
+func (e *cloudWatchExecutor) getDSInfo(pluginCtx backend.PluginContext) (*datasourceInfo, error) {
 	i, err := e.im.Get(pluginCtx)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	instance := i.(datasourceInfo)
 
-	return &instance
+	return &instance, nil
 }
 
 func isTerminated(queryStatus string) bool {

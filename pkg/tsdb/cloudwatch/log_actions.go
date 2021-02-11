@@ -89,7 +89,11 @@ func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, req *backend
 func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, model *simplejson.Json, query backend.DataQuery, pluginCtx backend.PluginContext) (*data.Frame, error) {
 	subType := model.Get("subtype").MustString()
 
-	dsInfo := e.getDSInfo(pluginCtx)
+	dsInfo, err := e.getDSInfo(pluginCtx)
+	if err != nil {
+		return nil, err
+	}
+
 	defaultRegion := dsInfo.region
 
 	region := model.Get("region").MustString(defaultRegion)

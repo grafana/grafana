@@ -62,10 +62,6 @@ func TestNewSession_AssumeRole(t *testing.T) {
 		const roleARN = "test"
 
 		e := newExecutor(nil, nil)
-		e.DataSource = fakeDataSource(fakeDataSourceCfg{
-			assumeRoleARN: roleARN,
-		})
-
 		e.im = datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return datasourceInfo{
 				assumeRoleARN: roleARN,
@@ -99,10 +95,6 @@ func TestNewSession_AssumeRole(t *testing.T) {
 		const externalID = "external"
 
 		e := newExecutor(nil, nil)
-		e.DataSource = fakeDataSource(fakeDataSourceCfg{
-			assumeRoleARN: roleARN,
-			externalID:    externalID,
-		})
 		e.im = datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return datasourceInfo{
 				assumeRoleARN: roleARN,

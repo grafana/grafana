@@ -215,14 +215,19 @@ func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel
 		return err
 	}
 
-	defaultRegion := e.DataSource.JsonData.Get("defaultRegion").MustString()
+	dsInfo, err := e.getDSInfo(pluginCtx)
+	if err != nil {
+		return err
+	}
+
+	defaultRegion := dsInfo.region
 	region := model.Get("region").MustString(defaultRegion)
 	logsClient, err := e.getCWLogsClient(region, pluginCtx)
 	if err != nil {
 		return err
 	}
 
-	queue, err := e.getQueue(fmt.Sprintf("%s-%d", region, e.DataSource.Id), pluginCtx)
+	queue, err := e.getQueue(fmt.Sprintf("%s-%d", region, dsInfo.datasourceID), pluginCtx)
 	if err != nil {
 		return err
 	}

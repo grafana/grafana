@@ -2,7 +2,6 @@ package cloudwatch
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
@@ -310,7 +309,11 @@ func parseMultiSelectValue(input string) []string {
 // Please update the region list in public/app/plugins/datasource/cloudwatch/partials/config.html
 func (e *cloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *simplejson.Json,
 	pluginCtx backend.PluginContext) ([]suggestData, error) {
-	dsInfo := e.getDSInfo(pluginCtx)
+	dsInfo, err := e.getDSInfo(pluginCtx)
+	if err != nil {
+		return nil, err
+	}
+
 	profile := dsInfo.profile
 	if cache, ok := regionCache.Load(profile); ok {
 		if cache2, ok2 := cache.([]suggestData); ok2 {
@@ -360,24 +363,14 @@ func (e *cloudWatchExecutor) handleGetNamespaces(ctx context.Context, parameters
 		keys = append(keys, key)
 	}
 
-	if e.DataSource != nil {
-		customNamespaces := e.DataSource.JsonData.Get("customMetricsNamespaces").MustString()
-		if customNamespaces != "" {
-			keys = append(keys, strings.Split(customNamespaces, ",")...)
-		}
-	} else {
-		var jsonData map[string]interface{}
+	dsInfo, err := e.getDSInfo(pluginCtx)
+	if err != nil {
+		return nil, err
+	}
 
-		err := json.Unmarshal(e.dsInstanceSettings.JSONData, &jsonData)
-		if err != nil {
-			return nil, err
-		}
-
-		sjs := simplejson.NewFromAny(jsonData)
-		customNamespaces := sjs.Get("customMetricsNamespaces").MustString()
-		if customNamespaces != "" {
-			keys = append(keys, strings.Split(customNamespaces, ",")...)
-		}
+	customNamespaces := dsInfo.namespace
+	if customNamespaces != "" {
+		keys = append(keys, strings.Split(customNamespaces, ",")...)
 	}
 
 	sort.Strings(keys)
@@ -748,7 +741,10 @@ func (e *cloudWatchExecutor) getMetricsForCustomMetrics(region, namespace string
 	metricsCacheLock.Lock()
 	defer metricsCacheLock.Unlock()
 
-	dsInfo := e.getDSInfo(pluginCtx)
+	dsInfo, err := e.getDSInfo(pluginCtx)
+	if err != nil {
+		return nil, err
+	}
 
 	if _, ok := customMetricsMetricsMap[dsInfo.profile]; !ok {
 		customMetricsMetricsMap[dsInfo.profile] = make(map[string]map[string]*customMetricsCache)
@@ -789,7 +785,10 @@ func (e *cloudWatchExecutor) getDimensionsForCustomMetrics(region, namespace str
 	dimensionsCacheLock.Lock()
 	defer dimensionsCacheLock.Unlock()
 
-	dsInfo := e.getDSInfo(pluginCtx)
+	dsInfo, err := e.getDSInfo(pluginCtx)
+	if err != nil {
+		return nil, err
+	}
 
 	if _, ok := customMetricsDimensionsMap[dsInfo.profile]; !ok {
 		customMetricsDimensionsMap[dsInfo.profile] = make(map[string]map[string]*customMetricsCache)
