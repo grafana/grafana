@@ -68,6 +68,7 @@ describe('SeriesToColumns Transformer', () => {
                 "name": "even",
               },
               "name": "temperature",
+              "state": Object {},
               "type": "number",
               "values": Array [
                 undefined,
@@ -84,6 +85,7 @@ describe('SeriesToColumns Transformer', () => {
                 "name": "even",
               },
               "name": "humidity",
+              "state": Object {},
               "type": "number",
               "values": Array [
                 undefined,
@@ -100,6 +102,7 @@ describe('SeriesToColumns Transformer', () => {
                 "name": "odd",
               },
               "name": "temperature",
+              "state": Object {},
               "type": "number",
               "values": Array [
                 11.1,
@@ -116,6 +119,7 @@ describe('SeriesToColumns Transformer', () => {
                 "name": "odd",
               },
               "name": "humidity",
+              "state": Object {},
               "type": "number",
               "values": Array [
                 11000.1,
@@ -308,6 +312,7 @@ describe('SeriesToColumns Transformer', () => {
                   "name": "temperature",
                 },
                 "name": "temperature",
+                "state": Object {},
                 "type": "number",
                 "values": Array [
                   1,
@@ -322,6 +327,7 @@ describe('SeriesToColumns Transformer', () => {
                   "name": "B",
                 },
                 "name": "temperature",
+                "state": Object {},
                 "type": "number",
                 "values": Array [
                   2,
@@ -390,6 +396,7 @@ describe('SeriesToColumns Transformer', () => {
               "name": "A",
             },
             "name": "temperature",
+            "state": Object {},
             "type": "number",
             "values": Array [
               10,
@@ -403,6 +410,7 @@ describe('SeriesToColumns Transformer', () => {
               "name": "C",
             },
             "name": "temperature",
+            "state": Object {},
             "type": "number",
             "values": Array [
               20,
@@ -457,6 +465,7 @@ describe('SeriesToColumns Transformer', () => {
             "config": Object {},
             "labels": Object {},
             "name": "temperature",
+            "state": Object {},
             "type": "number",
             "values": Array [
               10,
@@ -466,6 +475,7 @@ describe('SeriesToColumns Transformer', () => {
             "config": Object {},
             "labels": Object {},
             "name": "temperature",
+            "state": Object {},
             "type": "number",
             "values": Array [
               20,
