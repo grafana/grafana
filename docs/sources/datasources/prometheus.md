@@ -144,7 +144,7 @@ options are enabled, Grafana converts the labels from plain text to a regex comp
 ### Ad hoc filters variable
 
 Prometheus supports the special `Ad hoc filters` variable type. This variable allows you to specify any number of label/value filters on the fly. These filters will automatically
-be applied to all your Prometheus queries.
+applied to all your Prometheus queries.
 
 ## Annotations
 
