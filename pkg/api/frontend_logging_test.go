@@ -46,12 +46,12 @@ func logSentryEventScenario(t *testing.T, desc string, event frontendlogging.Fro
 
 		sc := setupScenarioContext(t, "/log")
 
-		CDNRootURL, e := url.Parse("https://storage.googleapis.com/grafana-static-assets")
+		cdnRootURL, e := url.Parse("https://storage.googleapis.com/grafana-static-assets")
 		require.NoError(t, e)
 
 		cfg := &setting.Cfg{
 			StaticRootPath: "/staticroot",
-			CDNRootURL:     CDNRootURL,
+			CDNRootURL:     cdnRootURL,
 		}
 
 		readSourceMap := func(dir string, path string) ([]byte, error) {
