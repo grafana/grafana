@@ -5,6 +5,7 @@ import { Options, PaddingSide } from 'uplot';
 import { usePlotPluginContext } from './context';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 import usePrevious from 'react-use/lib/usePrevious';
+import useMountedState from 'react-use/lib/useMountedState';
 
 export const usePlotPlugins = () => {
   /**
@@ -145,6 +146,7 @@ export const usePlotConfig = (width: number, height: number, configBuilder: UPlo
  */
 export const useRefreshAfterGraphRendered = (pluginId: string) => {
   const pluginsApi = usePlotPluginContext();
+  const isMounted = useMountedState();
   const [renderToken, setRenderToken] = useState(0);
 
   useEffect(() => {
@@ -153,7 +155,9 @@ export const useRefreshAfterGraphRendered = (pluginId: string) => {
       hooks: {
         // refresh events when uPlot draws
         draw: () => {
-          setRenderToken((c) => c + 1);
+          if (isMounted()) {
+            setRenderToken((c) => c + 1);
+          }
           return;
         },
       },
