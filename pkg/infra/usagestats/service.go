@@ -55,7 +55,7 @@ func (uss *UsageStatsService) Run(ctx context.Context) error {
 	uss.updateTotalStats()
 
 	onceEveryDayTick := time.NewTicker(time.Hour * 24)
-	everyMinuteTicker := time.NewTicker(time.Minute)
+	everyMinuteTicker := time.NewTicker(time.Minute * 30)
 	defer onceEveryDayTick.Stop()
 	defer everyMinuteTicker.Stop()
 
