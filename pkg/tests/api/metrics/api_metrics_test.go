@@ -146,7 +146,6 @@ func TestQueryCloudWatchLogs(t *testing.T) {
 		// In the future we should use gocmp instead and ignore this field
 		_, err := dataFrames.Encoded()
 		require.NoError(t, err)
-
 		assert.Equal(t, tsdb.Response{
 			Results: map[string]*tsdb.QueryResult{
 				"A": {

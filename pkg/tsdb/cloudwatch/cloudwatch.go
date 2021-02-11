@@ -146,10 +146,8 @@ type cloudWatchExecutor struct {
 	ec2Client  ec2iface.EC2API
 	rgtaClient resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
 
-	dsInstanceSettings *backend.DataSourceInstanceSettings
-	logsService        *LogsService
-
-	im instancemgmt.InstanceManager
+	logsService *LogsService
+	im          instancemgmt.InstanceManager
 }
 
 func (e *cloudWatchExecutor) newSession(region string, pluginCtx backend.PluginContext) (*session.Session, error) {
@@ -345,8 +343,6 @@ func (e *cloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwat
 
 // Query executes a CloudWatch query.
 func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	e.dsInstanceSettings = req.PluginContext.DataSourceInstanceSettings
-
 	/*
 		Unlike many other data sources,	with Cloudwatch Logs query requests don't receive the results as the response to the query, but rather
 		an ID is first returned. Following this, a client is expected to send requests along with the ID until the status of the query is complete,
@@ -387,8 +383,6 @@ func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDa
 }
 
 func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	e.dsInstanceSettings = req.PluginContext.DataSourceInstanceSettings
-
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
@@ -402,13 +396,11 @@ func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, req *back
 
 		region := model.Get("region").MustString(defaultRegion)
 		if region == defaultRegion {
-			var jsonData map[string]interface{}
-
-			err := json.Unmarshal(req.PluginContext.DataSourceInstanceSettings.JSONData, &jsonData)
+			dsInfo, err := e.getDSInfo(req.PluginContext)
 			if err != nil {
 				return nil, err
 			}
-			model.Set("region", jsonData["defaultRegion"])
+			model.Set("region", dsInfo.region)
 		}
 
 		logsClient, err := e.getCWLogsClient(region, req.PluginContext)
