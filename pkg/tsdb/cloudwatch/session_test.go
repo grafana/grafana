@@ -61,12 +61,11 @@ func TestNewSession_AssumeRole(t *testing.T) {
 
 		const roleARN = "test"
 
-		e := newExecutor(nil, nil)
-		e.im = datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		e := newExecutor(nil, datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return datasourceInfo{
 				assumeRoleARN: roleARN,
 			}, nil
-		})
+		}))
 
 		pluginCtx := backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -94,13 +93,12 @@ func TestNewSession_AssumeRole(t *testing.T) {
 		const roleARN = "test"
 		const externalID = "external"
 
-		e := newExecutor(nil, nil)
-		e.im = datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		e := newExecutor(nil, datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return datasourceInfo{
 				assumeRoleARN: roleARN,
 				externalID:    externalID,
 			}, nil
-		})
+		}))
 
 		pluginCtx := backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
