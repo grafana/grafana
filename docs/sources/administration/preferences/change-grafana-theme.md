@@ -43,13 +43,12 @@ Organization administrators can change the UI theme for all users in an organiza
 
 {{< docs/list >}}
 {{< docs/shared "preferences/org-preferences-list.md" >}}
-1. In the Preferences section, select the **UI theme**.
-1. Click **Save**.
+{{< docs/shared "preferences/select-ui-theme-list.md" >}}
 {{< /docs/list >}}
 
 ## Change team UI theme
 
-Organization administrators and team administrators can change the UI theme for all users in an organization.
+Organization administrators and team administrators can change the UI theme for all users in a team.
 
 {{< docs/list >}}
 {{< docs/shared "manage-users/view-team-list.md" >}}

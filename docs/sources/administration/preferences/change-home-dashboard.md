@@ -67,6 +67,6 @@ You can choose your own personal home dashboard. This setting overrides all home
 
 {{< docs/list >}}
 {{< docs/shared "preferences/navigate-to-the-dashboard-list.md" >}}
-{{< docs/shared "navigate-user-preferences-list.md" >}} 
+{{< docs/shared "preferences/navigate-user-preferences-list.md" >}}
 {{< docs/shared "preferences/select-home-dashboard-list.md" >}}
 {{< /docs/list >}}
