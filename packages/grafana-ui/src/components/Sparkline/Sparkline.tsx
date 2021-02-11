@@ -34,7 +34,7 @@ export interface SparklineProps extends Themeable {
 interface State {
   data: AlignedData;
   alignedDataFrame: DataFrame;
-  configBuilder?: UPlotConfigBuilder;
+  configBuilder: UPlotConfigBuilder;
 }
 
 const defaultConfig: GraphFieldConfig = {
