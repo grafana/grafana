@@ -496,7 +496,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     });
     const payload = [header, esQuery].join('\n') + '\n';
     const url = this.getMultiSearchUrl();
-    const response = await this.post(url, payload);
+    const response = await this.post(url, payload).toPromise();
     const targets: ElasticsearchQuery[] = [{ refId: `${row.dataFrame.refId}`, metrics: [], isLogsQuery: true }];
     const elasticResponse = new ElasticResponse(targets, transformHitsBasedOnDirection(response, sort));
     const logResponse = elasticResponse.getLogs(this.logMessageField, this.logLevelField);

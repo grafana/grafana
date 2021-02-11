@@ -10,6 +10,7 @@ import {
   QueryField,
   TypeaheadInput,
   BracesPlugin,
+  DOMUtil,
 } from '@grafana/ui';
 
 // Utils & Services
@@ -17,7 +18,6 @@ import {
 import { Plugin, Node } from 'slate';
 
 // Types
-import { DOMUtil } from '@grafana/ui';
 import { ExploreQueryFieldProps, AbsoluteTimeRange } from '@grafana/data';
 import { LokiQuery, LokiOptions } from '../types';
 import { LanguageMap, languages as prismLanguages } from 'prismjs';

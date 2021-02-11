@@ -30,7 +30,7 @@ import AccordianReferences from './AccordianReferences';
 import { autoColor, createStyle, Theme, useTheme } from '../../Theme';
 import { UIDivider } from '../../uiElementsContext';
 import { ubFlex, ubFlexAuto, ubItemsCenter, ubM0, ubMb1, ubMy1, ubTxRightAlign } from '../../uberUtilityStyles';
-import { FieldLink, TextArea } from '@grafana/ui';
+import { DataLinkButton, TextArea } from '@grafana/ui';
 import { CreateSpanLink } from '../types';
 
 const getStyles = createStyle((theme: Theme) => {
@@ -183,7 +183,7 @@ export default function SpanDetail(props: SpanDetailProps) {
         <LabeledList className={ubTxRightAlign} dividerClassName={styles.divider} items={overviewItems} />
       </div>
       {link ? (
-        <FieldLink link={{ ...link, title: 'Logs for this span' } as any} buttonProps={{ icon: 'gf-logs' }} />
+        <DataLinkButton link={{ ...link, title: 'Logs for this span' } as any} buttonProps={{ icon: 'gf-logs' }} />
       ) : null}
       <UIDivider className={cx(styles.divider, styles.dividerVertical, ubMy1)} />
       <div>
