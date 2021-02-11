@@ -19,7 +19,7 @@ interface DispatchProps {}
 export type Props = OwnProps & ConnectedProps & DispatchProps;
 
 export const NetworkGraph: FC<Props> = ({ nodes, edges, direction, width, height, onDoubleClick }) => {
-  let network: any = null;
+  const network = useRef<any>(null);
   const ref = useRef(null);
 
   const onNodeDoubleClick = useCallback(
@@ -55,16 +55,16 @@ export const NetworkGraph: FC<Props> = ({ nodes, edges, direction, width, height
       },
     };
 
-    network = new vis.Network(ref.current, data, options);
-    network.on('doubleClick', onNodeDoubleClick);
+    network.current = new vis.Network(ref.current, data, options);
+    network.current?.on('doubleClick', onNodeDoubleClick);
 
     return () => {
       // unsubscribe event handlers
-      if (network) {
-        network.off('doubleClick');
+      if (network.current) {
+        network.current.off('doubleClick');
       }
     };
-  }, []);
+  }, [direction, edges, nodes, onNodeDoubleClick]);
 
   return (
     <div>

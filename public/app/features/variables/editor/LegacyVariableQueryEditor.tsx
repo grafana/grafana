@@ -12,12 +12,9 @@ export const LEGACY_VARIABLE_QUERY_EDITOR_NAME = 'Grafana-LegacyVariableQueryEdi
 export const LegacyVariableQueryEditor: FC<VariableQueryProps> = ({ onChange, query }) => {
   const styles = useStyles(getStyles);
   const [value, setValue] = useState(query);
-  const onValueChange = useCallback(
-    (event: React.FormEvent<HTMLTextAreaElement>) => {
-      setValue(event.currentTarget.value);
-    },
-    [onChange]
-  );
+  const onValueChange = (event: React.FormEvent<HTMLTextAreaElement>) => {
+    setValue(event.currentTarget.value);
+  };
 
   const onBlur = useCallback(
     (event: React.FormEvent<HTMLTextAreaElement>) => {

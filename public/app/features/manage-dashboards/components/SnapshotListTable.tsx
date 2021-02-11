@@ -23,7 +23,7 @@ export const SnapshotListTable: FC<Props> = ({ url }) => {
         }));
         setSnapshots(snapshots);
       });
-  }, []);
+  }, [url]);
 
   const doRemoveSnapshot = useCallback(
     async (snapshot: Snapshot) => {
@@ -40,7 +40,7 @@ export const SnapshotListTable: FC<Props> = ({ url }) => {
 
   useEffect(() => {
     getSnapshots();
-  }, []);
+  }, [getSnapshots]);
 
   return (
     <div className="page-container page-body">

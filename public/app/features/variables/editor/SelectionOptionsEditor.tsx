@@ -19,21 +19,21 @@ export const SelectionOptionsEditor: FunctionComponent<SelectionOptionsEditorPro
     (event: React.ChangeEvent<HTMLInputElement>) => {
       props.onMultiChanged(toVariableIdentifier(props.variable), event.target.checked);
     },
-    [props.onMultiChanged, props.variable]
+    [props]
   );
 
   const onIncludeAllChanged = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       props.onPropChange({ propName: 'includeAll', propValue: event.target.checked });
     },
-    [props.onPropChange]
+    [props]
   );
 
   const onAllValueChanged = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       props.onPropChange({ propName: 'allValue', propValue: event.target.value });
     },
-    [props.onPropChange]
+    [props]
   );
   return (
     <VerticalGroup spacing="none">

@@ -18,9 +18,12 @@ const selectors = e2eSelectors.pages.Dashboards;
 
 export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSelected }) => {
   const styles = useStyles(getStyles);
-  const tagSelected = useCallback((tag: string, event: React.MouseEvent<HTMLElement>) => {
-    onTagSelected(tag);
-  }, []);
+  const tagSelected = useCallback(
+    (tag: string, event: React.MouseEvent<HTMLElement>) => {
+      onTagSelected(tag);
+    },
+    [onTagSelected]
+  );
 
   const toggleItem = useCallback(
     (event: React.MouseEvent) => {
@@ -29,7 +32,7 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSe
         onToggleChecked(item);
       }
     },
-    [item]
+    [item, onToggleChecked]
   );
 
   return (
