@@ -42,12 +42,12 @@ func (ac *RBACService) Evaluate(ctx context.Context, user *models.SignedInUser, 
 	}
 
 	//TODO: Send context to `GetUserPolicies` so the SQL query can be cancelled.
-	err := ac.GetUserPolicies(&q)
+	res, err := ac.GetUserPolicies(&q)
 	if err != nil {
 		return false, err
 	}
 
-	ok, dbScope := extractPermission(q.Result, permission)
+	ok, dbScope := extractPermission(res, permission)
 	if !ok {
 		return false, nil
 	}

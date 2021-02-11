@@ -131,8 +131,9 @@ func (ac *RBACService) GetPolicyPermissions(ctx context.Context, policyID int64)
 	return result, err
 }
 
-func (ac *RBACService) CreatePermission(cmd *CreatePermissionCommand) error {
-	return ac.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+func (ac *RBACService) CreatePermission(cmd *CreatePermissionCommand) (*Permission, error) {
+	var result *Permission
+	err := ac.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		permission := &Permission{
 			PolicyId:   cmd.PolicyId,
 			Permission: cmd.Permission,
@@ -145,13 +146,16 @@ func (ac *RBACService) CreatePermission(cmd *CreatePermissionCommand) error {
 			return err
 		}
 
-		cmd.Result = permission
+		result = permission
 		return nil
 	})
+
+	return result, err
 }
 
-func (ac *RBACService) UpdatePermission(cmd *UpdatePermissionCommand) error {
-	return ac.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+func (ac *RBACService) UpdatePermission(cmd *UpdatePermissionCommand) (*Permission, error) {
+	var result *Permission
+	err := ac.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		permission := &Permission{
 			Permission: cmd.Permission,
 			Scope:      cmd.Scope,
@@ -168,9 +172,11 @@ func (ac *RBACService) UpdatePermission(cmd *UpdatePermissionCommand) error {
 			return errPermissionNotFound
 		}
 
-		cmd.Result = permission
+		result = permission
 		return nil
 	})
+
+	return result, err
 }
 
 func (ac *RBACService) DeletePermission(cmd *DeletePermissionCommand) error {
@@ -184,9 +190,9 @@ func (ac *RBACService) DeletePermission(cmd *DeletePermissionCommand) error {
 	})
 }
 
-func (ac *RBACService) GetTeamPolicies(query *GetTeamPoliciesQuery) error {
-	return ac.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		query.Result = make([]*PolicyDTO, 0)
+func (ac *RBACService) GetTeamPolicies(query *GetTeamPoliciesQuery) ([]*PolicyDTO, error) {
+	var result []*PolicyDTO
+	err := ac.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		q := `SELECT
 			policy.id,
 			policy.name AS name,
@@ -195,17 +201,19 @@ func (ac *RBACService) GetTeamPolicies(query *GetTeamPoliciesQuery) error {
 			INNER JOIN team_policy ON policy.id = team_policy.policy_id AND team_policy.team_id = ?
 			WHERE policy.org_id = ? `
 
-		if err := sess.SQL(q, query.TeamId, query.OrgId).Find(&query.Result); err != nil {
+		if err := sess.SQL(q, query.TeamId, query.OrgId).Find(&result); err != nil {
 			return err
 		}
 
 		return nil
 	})
+
+	return result, err
 }
 
-func (ac *RBACService) GetUserPolicies(query *GetUserPoliciesQuery) error {
-	return ac.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		query.Result = make([]*PolicyDTO, 0)
+func (ac *RBACService) GetUserPolicies(query *GetUserPoliciesQuery) ([]*PolicyDTO, error) {
+	var result []*PolicyDTO
+	err := ac.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		// TODO: optimize this
 		q := `SELECT
 			policy.id,
@@ -222,14 +230,16 @@ func (ac *RBACService) GetUserPolicies(query *GetUserPoliciesQuery) error {
 					AND tm.user_id = ?
 				WHERE policy.org_id = ? `
 
-		err := sess.SQL(q, query.UserId, query.OrgId).Find(&query.Result)
+		err := sess.SQL(q, query.UserId, query.OrgId).Find(&result)
 		return err
 	})
+
+	return result, err
 }
 
-func (ac *RBACService) GetUserPermissions(query *GetUserPermissionsQuery) error {
-	return ac.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		query.Result = make([]Permission, 0)
+func (ac *RBACService) GetUserPermissions(query *GetUserPermissionsQuery) ([]*Permission, error) {
+	var result []*Permission
+	err := ac.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		// TODO: optimize this
 		q := `SELECT
 			permission.id,
@@ -246,12 +256,14 @@ func (ac *RBACService) GetUserPermissions(query *GetUserPermissionsQuery) error 
 					AND tm.user_id = ?
 				WHERE policy.org_id = ? `
 
-		if err := sess.SQL(q, query.UserId, query.OrgId).Find(&query.Result); err != nil {
+		if err := sess.SQL(q, query.UserId, query.OrgId).Find(&result); err != nil {
 			return err
 		}
 
 		return nil
 	})
+
+	return result, err
 }
 
 func (ac *RBACService) AddTeamPolicy(cmd *AddTeamPolicyCommand) error {

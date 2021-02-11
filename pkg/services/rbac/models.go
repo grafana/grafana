@@ -71,38 +71,28 @@ type UserPolicy struct {
 type GetTeamPoliciesQuery struct {
 	OrgId  int64 `json:"-"`
 	TeamId int64
-
-	Result []*PolicyDTO
 }
 
 type GetUserPoliciesQuery struct {
 	OrgId  int64 `json:"-"`
 	UserId int64
-
-	Result []*PolicyDTO
 }
 
 type GetUserPermissionsQuery struct {
 	OrgId  int64 `json:"-"`
 	UserId int64
-
-	Result []Permission
 }
 
 type CreatePermissionCommand struct {
 	PolicyId   int64
 	Permission string
 	Scope      string
-
-	Result *Permission
 }
 
 type UpdatePermissionCommand struct {
 	Id         int64
 	Permission string
 	Scope      string
-
-	Result *Permission
 }
 
 type DeletePermissionCommand struct {

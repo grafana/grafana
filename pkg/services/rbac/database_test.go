@@ -178,7 +178,7 @@ func TestUpdatingPolicy(t *testing.T) {
 									Id:         p.Id,
 									Permission: reqP.permission,
 								}
-								err = ac.UpdatePermission(&updatePermCmd)
+								_, err = ac.UpdatePermission(&updatePermCmd)
 								require.NoError(t, err)
 							}
 						}
@@ -303,9 +303,9 @@ func TestUserPolicy(t *testing.T) {
 				UserId: userQuery.Result.Id,
 			}
 
-			err = ac.GetUserPolicies(&userPoliciesQuery)
+			res, err := ac.GetUserPolicies(&userPoliciesQuery)
 			require.NoError(t, err)
-			assert.Equal(t, len(tc.userPolicies)+len(tc.teamPolicies), len(userPoliciesQuery.Result))
+			assert.Equal(t, len(tc.userPolicies)+len(tc.teamPolicies), len(res))
 		})
 	}
 }
@@ -402,9 +402,9 @@ func TestUserPermissions(t *testing.T) {
 				expectedPermissions = append(expectedPermissions, p.permissions...)
 			}
 
-			err = ac.GetUserPermissions(&userPermissionsQuery)
+			res, err := ac.GetUserPermissions(&userPermissionsQuery)
 			require.NoError(t, err)
-			assert.Equal(t, len(expectedPermissions), len(userPermissionsQuery.Result))
+			assert.Equal(t, len(expectedPermissions), len(res))
 			assert.Contains(t, expectedPermissions, permissionTestCase{scope: "/api/datasources", permission: "put"})
 			assert.NotContains(t, expectedPermissions, permissionTestCase{scope: "/api/restricted", permission: "post"})
 		})
