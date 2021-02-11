@@ -7,13 +7,9 @@ weight = 200
 
 # Change Grafana UI theme
 
-In Grafana, you can the UI them used in the Settings or Preferences. This topic provides instructions for each task.
+In Grafana, you can the UI them used in the Settings or Preferences. You can set the UI theme for the server, an organization, a team, or your personal user account. This topic provides instructions for each task.
 
 Some tasks require certain permissions. For more information about roles, refer to [Permissions]({{< relref "../../permissions/_index.md" >}}).
-
-
-   - **UI Theme -** Click to set the **Dark** or **Light** to select a theme. **Default** is either the dark theme or the theme selected by your Grafana administrator.
-
 
 ## Theme options
 
@@ -45,3 +41,7 @@ Here is an example of the light theme.
 
 
 ## Change your personal UI theme
+
+
+
+   - **UI Theme -** Click to set the **Dark** or **Light** to select a theme. **Default** is either the dark theme or the theme selected by your Grafana administrator.
