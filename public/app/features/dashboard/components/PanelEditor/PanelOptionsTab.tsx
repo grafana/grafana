@@ -1,5 +1,6 @@
 import React, { FC, useCallback, useMemo, useRef, useState } from 'react';
 import { css } from 'emotion';
+import omit from 'lodash/omit';
 import { DashboardModel, PanelModel } from '../../state';
 import { GrafanaTheme, PanelData, PanelPlugin } from '@grafana/data';
 import {
@@ -12,7 +13,6 @@ import {
   Select,
   stylesFactory,
   Switch,
-  TagsInput,
   TextArea,
   useStyles,
 } from '@grafana/ui';
@@ -23,8 +23,10 @@ import { VisualizationTab } from './VisualizationTab';
 import { OptionsGroup } from './OptionsGroup';
 import { RepeatRowSelect } from '../RepeatRowSelect/RepeatRowSelect';
 import { AddLibraryPanelModal } from '../../../library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal';
-import { LibraryPanelsView } from '../../../library-panels/components/LibraryPanelsView/LibraryPanelsView';
-import { LibraryPanelCardProps } from '../../../library-panels/components/LibraryPanelCard/LibraryPanelCard';
+import {
+  LibraryPanelInfo,
+  LibraryPanelsView,
+} from '../../../library-panels/components/LibraryPanelsView/LibraryPanelsView';
 import { PanelQueriesChangedEvent } from 'app/types/events';
 import config from 'app/core/config';
 
@@ -68,15 +70,10 @@ export const PanelOptionsTab: FC<Props> = ({
     }
   };
 
-  const useLibraryPanel = ({ model, uid, title, lastEdited, lastAuthor }: LibraryPanelCardProps) => {
+  const useLibraryPanel = (panelInfo: LibraryPanelInfo) => {
     panel.restoreModel({
-      ...model,
-      libraryPanel: {
-        uid,
-        name: title,
-        lastEdited,
-        lastAuthor,
-      },
+      ...panelInfo.model,
+      libraryPanel: omit(panelInfo, 'model'),
     });
 
     // dummy change for re-render
@@ -97,24 +94,28 @@ export const PanelOptionsTab: FC<Props> = ({
       <OptionsGroup title="Reusable panel information" id="Shared Panel Info" key="Shared Panel Info">
         {panel.libraryPanel.uid && (
           <p className={styles.libraryPanelInfo}>
+            {/*
+            // Commented out until connectedDashboards is included with library panel api response
             Used on {panel.libraryPanel.connectedDashboards}
-            {panel.libraryPanel.connectedDashboards?.length === 1 ? 'dashboard' : 'dashboards'} <br />
-            Last edited on {dashboard.formatDate(panel.libraryPanel.lastEdited!, 'L')} by
-            {panel.libraryPanel.avatarUrl && (
+            {panel.libraryPanel.connectedDashboards?.length === 1 ? 'dashboard' : 'dashboards'} <br /> */}
+            Last edited on {dashboard.formatDate(panel.libraryPanel.meta.updated!, 'L')} by
+            {panel.libraryPanel.meta.updatedBy.avatarUrl && (
               <img
                 width="22"
                 height="22"
                 className={styles.userAvatar}
-                src={panel.libraryPanel.avatarUrl}
-                alt={`Avatar for ${panel.libraryPanel.lastAuthor}`}
+                src={panel.libraryPanel.meta.updatedBy.avatarUrl}
+                alt={`Avatar for ${panel.libraryPanel.meta.updatedBy.name}`}
               />
             )}
-            {panel.libraryPanel.lastAuthor}
+            {panel.libraryPanel.meta.updatedBy.name}
           </p>
         )}
+        {/*
+        // Commenting out until tags are implemented
         <Field label="Tags">
           <TagsInput onChange={() => {}} />
-        </Field>
+        </Field> */}
       </OptionsGroup>
     );
   }

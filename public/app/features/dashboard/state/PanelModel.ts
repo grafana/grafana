@@ -35,6 +35,7 @@ import {
   isStandardFieldProp,
   restoreCustomOverrideRules,
 } from './getPanelOptionsWithDefaults';
+import { LibraryPanelDTO } from 'app/core/services/library_srv';
 
 export interface GridPos {
   x: number;
@@ -147,14 +148,7 @@ export class PanelModel implements DataConfigSource {
   links?: DataLink[];
   transparent: boolean;
 
-  libraryPanel?: {
-    uid?: string;
-    name: string;
-    lastEdited?: string;
-    lastAuthor?: string;
-    avatarUrl?: string;
-    connectedDashboards?: number[];
-  };
+  libraryPanel?: { uid: undefined; name: string } | Omit<LibraryPanelDTO, 'model'>;
 
   // non persisted
   isViewing: boolean;

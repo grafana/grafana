@@ -1,30 +1,23 @@
 import React, { useState } from 'react';
-import { Icon, IconButton, stylesFactory, TagList, ConfirmModal, Tooltip, useStyles, Card } from '@grafana/ui';
+import { Icon, IconButton, stylesFactory, ConfirmModal, Tooltip, useStyles, Card } from '@grafana/ui';
 import { css } from 'emotion';
+import omit from 'lodash/omit';
 import { GrafanaTheme } from '@grafana/data';
+import { copyPanel } from 'app/features/dashboard/utils/panel';
+import { LibraryPanelInfo } from '../LibraryPanelsView/LibraryPanelsView';
 
 export interface LibraryPanelCardProps {
-  id: number;
-  uid: string;
-  model: any;
-  title: string;
-  connectedDashboards: number[];
-  varCount: number;
-  lastEdited?: string;
-  lastAuthor?: string;
-  avatarUrl?: string;
+  panelInfo: LibraryPanelInfo;
   onClick?: () => void;
   onDelete?: () => void;
+  formatDate?: (dateString: string) => string;
 }
 
 export const LibraryPanelCard: React.FC<LibraryPanelCardProps & { children: JSX.Element | JSX.Element[] }> = ({
-  title,
-  connectedDashboards,
-  varCount,
-  lastEdited,
-  lastAuthor,
+  panelInfo,
   children,
   onDelete,
+  formatDate,
 }) => {
   const styles = useStyles(getStyles);
   const [showDeletionModal, setShowDeletionModal] = useState(false);
@@ -36,7 +29,7 @@ export const LibraryPanelCard: React.FC<LibraryPanelCardProps & { children: JSX.
 
   return (
     <>
-      <Card heading={title}>
+      <Card heading={panelInfo.name}>
         <Card.Figure>
           <Icon className={styles.panelIcon} name="book-open" />
         </Card.Figure>
@@ -45,34 +38,48 @@ export const LibraryPanelCard: React.FC<LibraryPanelCardProps & { children: JSX.
           <Tooltip content="Connected dashboards" placement="bottom">
             <div className={styles.tooltip}>
               <Icon name="apps" className={styles.detailIcon} />
-              {connectedDashboards.length}
+              {panelInfo.connectedDashboards.length}
             </div>
           </Tooltip>
 
+          {/*
+          Commenting this out as obtaining the number of variables used by a panel
+          isn't implemetned yet.
           <Tooltip content="Variables used" placement="bottom">
             <div className={styles.tooltip}>
               <Icon name="x" className={styles.detailIcon} />
               {varCount}
             </div>
-          </Tooltip>
+          </Tooltip> */}
 
           <span>
-            Last edited {lastEdited} by {lastAuthor}
+            Last edited {formatDate?.(panelInfo.meta.updated ?? '') ?? panelInfo.meta.updated} by{' '}
+            {panelInfo.meta.updatedBy.name}
           </span>
         </Card.Meta>
+        {/*
+        Commenting this out as tagging isn't implemented yet.
         <Card.Tags>
           <TagList className={styles.tagList} tags={['associated panel tag']} />
-        </Card.Tags>
+        </Card.Tags> */}
         <Card.Actions>{children}</Card.Actions>
         <Card.SecondaryActions>
-          <IconButton name="clipboard-alt" tooltip="Copy panel" tooltipPlacement="bottom" />
+          <IconButton
+            name="clipboard-alt"
+            tooltip="Copy panel"
+            tooltipPlacement="bottom"
+            onClick={() => copyPanel({ ...panelInfo.model, libraryPanel: omit(panelInfo, 'model') })}
+          />
           <IconButton
             name="trash-alt"
             tooltip="Delete panel"
             tooltipPlacement="bottom"
             onClick={() => setShowDeletionModal(true)}
           />
+          {/*
+          Commenting this out as panel favoriting hasn't been implemented yet.
           <IconButton name="star" tooltip="Favorite panel" tooltipPlacement="bottom" />
+          */}
         </Card.SecondaryActions>
       </Card>
       {showDeletionModal && (

@@ -2,14 +2,16 @@ import { Icon, Input, Select, Button, stylesFactory, useStyles } from '@grafana/
 import React, { useEffect, useState } from 'react';
 import { useDebounce } from 'react-use';
 import { cx, css } from 'emotion';
-import { LibraryPanelCard, LibraryPanelCardProps } from '../LibraryPanelCard/LibraryPanelCard';
+import { LibraryPanelCard } from '../LibraryPanelCard/LibraryPanelCard';
 import { GrafanaTheme } from '@grafana/data';
-import { getLibrarySrv } from 'app/core/services/library_srv';
+import { getLibrarySrv, LibraryPanelDTO } from 'app/core/services/library_srv';
 
+// Temporary type until LibraryPanelDTO contains connected dashboards info.
+export type LibraryPanelInfo = LibraryPanelDTO & { connectedDashboards: number[] };
 interface LibraryPanelViewProps {
   className?: string;
   onCreateNewPanel?: () => void;
-  children: (panel: LibraryPanelCardProps, i: number) => JSX.Element | JSX.Element[];
+  children: (panel: LibraryPanelInfo, i: number) => JSX.Element | JSX.Element[];
   formatDate?: (dateString: string) => string;
 }
 
@@ -25,7 +27,7 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
 
   // Deliberately not using useAsync here as we want to be able to update libraryPanels without
   // making an additional API request (for example when a user deletes a library panel and we want to update the view to reflect that)
-  const [libraryPanels, setLibraryPanels] = useState<LibraryPanelCardProps[] | undefined>(undefined);
+  const [libraryPanels, setLibraryPanels] = useState<LibraryPanelInfo[] | undefined>(undefined);
   useEffect(() => {
     const libPanelsPromise = getLibrarySrv()
       .getLibraryPanels()
@@ -37,7 +39,7 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
               .then((connected) => {
                 return {
                   ...panel,
-                  ConnectedDashboards: connected,
+                  connectedDashboards: connected,
                 };
               })
           )
@@ -45,28 +47,14 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
       });
 
     libPanelsPromise.then((panels) => {
-      setLibraryPanels(
-        panels.map((libraryPanel) => {
-          return {
-            id: libraryPanel.id,
-            uid: libraryPanel.uid,
-            title: libraryPanel.name,
-            connectedDashboards: libraryPanel.ConnectedDashboards,
-            varCount: 3,
-            lastEdited: libraryPanel.meta.updated,
-            lastAuthor: libraryPanel.meta.updatedBy.name,
-            avatarUrl: libraryPanel.meta.updatedBy.avatarUrl,
-            model: libraryPanel.model,
-          };
-        })
-      );
+      setLibraryPanels(panels);
     });
   }, []);
 
   const [filteredItems, setFilteredItems] = useState(libraryPanels);
   useDebounce(
     () => {
-      setFilteredItems(libraryPanels?.filter((v) => v.title.toLowerCase().includes(searchString.toLowerCase())));
+      setFilteredItems(libraryPanels?.filter((v) => v.name.toLowerCase().includes(searchString.toLowerCase())));
     },
     300,
     [searchString, libraryPanels]
@@ -103,11 +91,10 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
         ) : (
           filteredItems?.map((item, i) => (
             <LibraryPanelCard
-              {...item}
               key={`shared-panel=${i}`}
+              panelInfo={item}
               // onClick={() => setModalOpen(true)}
               onDelete={() => onDeletePanel(item.uid)}
-              lastEdited={formatDate?.(item.lastEdited ?? '') ?? item.lastEdited}
             >
               {children(item, i)}
             </LibraryPanelCard>
