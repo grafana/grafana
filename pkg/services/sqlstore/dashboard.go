@@ -1,7 +1,6 @@
 package sqlstore
 
 import (
-	"fmt"
 	"strings"
 	"time"
 
@@ -331,7 +330,8 @@ func makeQueryResult(query *search.FindPersistedDashboardsQuery, res []Dashboard
 			}
 
 			if query.Sort.MetaName != "" {
-				hit.SortMeta = strings.TrimSpace(fmt.Sprintf("%d %s", item.SortMeta, query.Sort.MetaName))
+				hit.SortMeta = item.SortMeta
+				hit.SortMetaName = query.Sort.MetaName
 			}
 
 			query.Result = append(query.Result, hit)

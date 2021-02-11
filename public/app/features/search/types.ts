@@ -41,6 +41,8 @@ export interface DashboardSectionItem {
   uid?: string;
   uri: string;
   url: string;
+  sortMeta?: string;
+  sortMetaName?: string;
 }
 
 export interface DashboardSearchHit extends DashboardSectionItem, DashboardSection {}
