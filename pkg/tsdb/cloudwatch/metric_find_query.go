@@ -311,7 +311,7 @@ func parseMultiSelectValue(input string) []string {
 func (e *cloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *simplejson.Json,
 	pluginCtx backend.PluginContext) ([]suggestData, error) {
 	dsInfo := e.getDSInfo(pluginCtx)
-	profile := dsInfo.Profile
+	profile := dsInfo.profile
 	if cache, ok := regionCache.Load(profile); ok {
 		if cache2, ok2 := cache.([]suggestData); ok2 {
 			return cache2, nil
@@ -750,37 +750,37 @@ func (e *cloudWatchExecutor) getMetricsForCustomMetrics(region, namespace string
 
 	dsInfo := e.getDSInfo(pluginCtx)
 
-	if _, ok := customMetricsMetricsMap[dsInfo.Profile]; !ok {
-		customMetricsMetricsMap[dsInfo.Profile] = make(map[string]map[string]*customMetricsCache)
+	if _, ok := customMetricsMetricsMap[dsInfo.profile]; !ok {
+		customMetricsMetricsMap[dsInfo.profile] = make(map[string]map[string]*customMetricsCache)
 	}
-	if _, ok := customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region]; !ok {
-		customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region] = make(map[string]*customMetricsCache)
+	if _, ok := customMetricsMetricsMap[dsInfo.profile][dsInfo.region]; !ok {
+		customMetricsMetricsMap[dsInfo.profile][dsInfo.region] = make(map[string]*customMetricsCache)
 	}
-	if _, ok := customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][namespace]; !ok {
-		customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][namespace] = &customMetricsCache{}
-		customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache = make([]string, 0)
+	if _, ok := customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace]; !ok {
+		customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace] = &customMetricsCache{}
+		customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace].Cache = make([]string, 0)
 	}
 
-	if customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][namespace].Expire.After(time.Now()) {
-		return customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache, nil
+	if customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace].Expire.After(time.Now()) {
+		return customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace].Cache, nil
 	}
 	result, err := e.getAllMetrics(region, namespace, pluginCtx)
 	if err != nil {
 		return []string{}, err
 	}
 
-	customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache = make([]string, 0)
-	customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][namespace].Expire = time.Now().Add(5 * time.Minute)
+	customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace].Cache = make([]string, 0)
+	customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace].Expire = time.Now().Add(5 * time.Minute)
 
 	for _, metric := range result.Metrics {
-		if isDuplicate(customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache, *metric.MetricName) {
+		if isDuplicate(customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace].Cache, *metric.MetricName) {
 			continue
 		}
-		customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache = append(
-			customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache, *metric.MetricName)
+		customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace].Cache = append(
+			customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace].Cache, *metric.MetricName)
 	}
 
-	return customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache, nil
+	return customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace].Cache, nil
 }
 
 var dimensionsCacheLock sync.Mutex
@@ -791,38 +791,38 @@ func (e *cloudWatchExecutor) getDimensionsForCustomMetrics(region, namespace str
 
 	dsInfo := e.getDSInfo(pluginCtx)
 
-	if _, ok := customMetricsDimensionsMap[dsInfo.Profile]; !ok {
-		customMetricsDimensionsMap[dsInfo.Profile] = make(map[string]map[string]*customMetricsCache)
+	if _, ok := customMetricsDimensionsMap[dsInfo.profile]; !ok {
+		customMetricsDimensionsMap[dsInfo.profile] = make(map[string]map[string]*customMetricsCache)
 	}
-	if _, ok := customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region]; !ok {
-		customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region] = make(map[string]*customMetricsCache)
+	if _, ok := customMetricsDimensionsMap[dsInfo.profile][dsInfo.region]; !ok {
+		customMetricsDimensionsMap[dsInfo.profile][dsInfo.region] = make(map[string]*customMetricsCache)
 	}
-	if _, ok := customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][namespace]; !ok {
-		customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][namespace] = &customMetricsCache{}
-		customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache = make([]string, 0)
+	if _, ok := customMetricsDimensionsMap[dsInfo.profile][dsInfo.region][namespace]; !ok {
+		customMetricsDimensionsMap[dsInfo.profile][dsInfo.region][namespace] = &customMetricsCache{}
+		customMetricsDimensionsMap[dsInfo.profile][dsInfo.region][namespace].Cache = make([]string, 0)
 	}
 
-	if customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][namespace].Expire.After(time.Now()) {
-		return customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache, nil
+	if customMetricsDimensionsMap[dsInfo.profile][dsInfo.region][namespace].Expire.After(time.Now()) {
+		return customMetricsDimensionsMap[dsInfo.profile][dsInfo.region][namespace].Cache, nil
 	}
 	result, err := e.getAllMetrics(region, namespace, pluginCtx)
 	if err != nil {
 		return []string{}, err
 	}
-	customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache = make([]string, 0)
-	customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][namespace].Expire = time.Now().Add(5 * time.Minute)
+	customMetricsDimensionsMap[dsInfo.profile][dsInfo.region][namespace].Cache = make([]string, 0)
+	customMetricsDimensionsMap[dsInfo.profile][dsInfo.region][namespace].Expire = time.Now().Add(5 * time.Minute)
 
 	for _, metric := range result.Metrics {
 		for _, dimension := range metric.Dimensions {
-			if isDuplicate(customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache, *dimension.Name) {
+			if isDuplicate(customMetricsDimensionsMap[dsInfo.profile][dsInfo.region][namespace].Cache, *dimension.Name) {
 				continue
 			}
-			customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache = append(
-				customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache, *dimension.Name)
+			customMetricsDimensionsMap[dsInfo.profile][dsInfo.region][namespace].Cache = append(
+				customMetricsDimensionsMap[dsInfo.profile][dsInfo.region][namespace].Cache, *dimension.Name)
 		}
 	}
 
-	return customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache, nil
+	return customMetricsDimensionsMap[dsInfo.profile][dsInfo.region][namespace].Cache, nil
 }
 
 func isDuplicate(nameList []string, target string) bool {

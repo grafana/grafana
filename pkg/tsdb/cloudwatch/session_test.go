@@ -69,7 +69,7 @@ func TestNewSession_AssumeRole(t *testing.T) {
 
 		e.im = datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return datasourceInfo{
-				AssumeRoleARN: roleARN,
+				assumeRoleARN: roleARN,
 			}, nil
 		})
 
@@ -106,8 +106,8 @@ func TestNewSession_AssumeRole(t *testing.T) {
 		})
 		e.im = datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return datasourceInfo{
-				AssumeRoleARN: roleARN,
-				ExternalID:    externalID,
+				assumeRoleARN: roleARN,
+				externalID:    externalID,
 			}, nil
 		})
 

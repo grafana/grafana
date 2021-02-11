@@ -37,15 +37,15 @@ import (
 )
 
 type datasourceInfo struct {
-	Profile       string
-	Region        string
-	AuthType      authType
-	AssumeRoleARN string
-	ExternalID    string
-	Namespace     string
+	profile       string
+	region        string
+	authType      authType
+	assumeRoleARN string
+	externalID    string
+	namespace     string
 
-	AccessKey string
-	SecretKey string
+	accessKey string
+	secretKey string
 }
 
 const cloudWatchTSFormat = "2006-01-02 15:04:05.000"
@@ -103,11 +103,11 @@ func NewInstanceSettings() datasource.InstanceFactoryFunc {
 		}
 
 		model := datasourceInfo{
-			Profile:       jsonData["profile"],
-			Region:        jsonData["defaultRegion"],
-			AssumeRoleARN: jsonData["assumeRoleArn"],
-			ExternalID:    jsonData["externalId"],
-			Namespace:     jsonData["customMetricsNamespaces"],
+			profile:       jsonData["profile"],
+			region:        jsonData["defaultRegion"],
+			assumeRoleARN: jsonData["assumeRoleArn"],
+			externalID:    jsonData["externalId"],
+			namespace:     jsonData["customMetricsNamespaces"],
 		}
 
 		atStr := jsonData["authType"]
@@ -126,14 +126,14 @@ func NewInstanceSettings() datasource.InstanceFactoryFunc {
 			plog.Warn("Unrecognized AWS authentication type", "type", atStr)
 		}
 
-		model.AuthType = at
+		model.authType = at
 
-		if model.Profile == "" {
-			model.Profile = settings.Database // legacy support
+		if model.profile == "" {
+			model.profile = settings.Database // legacy support
 		}
 
-		model.AccessKey = settings.DecryptedSecureJSONData["accessKey"]
-		model.SecretKey = settings.DecryptedSecureJSONData["secretKey"]
+		model.accessKey = settings.DecryptedSecureJSONData["accessKey"]
+		model.secretKey = settings.DecryptedSecureJSONData["secretKey"]
 
 		return model, nil
 	}
@@ -157,7 +157,7 @@ func (e *cloudWatchExecutor) newSession(region string, pluginCtx backend.PluginC
 
 	bldr := strings.Builder{}
 	for i, s := range []string{
-		dsInfo.AuthType.String(), dsInfo.AccessKey, dsInfo.Profile, dsInfo.AssumeRoleARN, region,
+		dsInfo.authType.String(), dsInfo.accessKey, dsInfo.profile, dsInfo.assumeRoleARN, region,
 	} {
 		if i != 0 {
 			bldr.WriteString(":")
@@ -182,31 +182,31 @@ func (e *cloudWatchExecutor) newSession(region string, pluginCtx backend.PluginC
 	}
 
 	var regionCfg *aws.Config
-	if dsInfo.Region == defaultRegion {
+	if dsInfo.region == defaultRegion {
 		plog.Warn("Region is set to \"default\", which is unsupported")
-		dsInfo.Region = ""
+		dsInfo.region = ""
 	}
-	if dsInfo.Region != "" {
-		regionCfg = &aws.Config{Region: aws.String(dsInfo.Region)}
+	if dsInfo.region != "" {
+		regionCfg = &aws.Config{Region: aws.String(dsInfo.region)}
 		cfgs = append(cfgs, regionCfg)
 	}
 
-	switch dsInfo.AuthType {
+	switch dsInfo.authType {
 	case authTypeSharedCreds:
-		plog.Debug("Authenticating towards AWS with shared credentials", "profile", dsInfo.Profile,
-			"region", dsInfo.Region)
+		plog.Debug("Authenticating towards AWS with shared credentials", "profile", dsInfo.profile,
+			"region", dsInfo.region)
 		cfgs = append(cfgs, &aws.Config{
-			Credentials: credentials.NewSharedCredentials("", dsInfo.Profile),
+			Credentials: credentials.NewSharedCredentials("", dsInfo.profile),
 		})
 	case authTypeKeys:
-		plog.Debug("Authenticating towards AWS with an access key pair", "region", dsInfo.Region)
+		plog.Debug("Authenticating towards AWS with an access key pair", "region", dsInfo.region)
 		cfgs = append(cfgs, &aws.Config{
-			Credentials: credentials.NewStaticCredentials(dsInfo.AccessKey, dsInfo.SecretKey, ""),
+			Credentials: credentials.NewStaticCredentials(dsInfo.accessKey, dsInfo.secretKey, ""),
 		})
 	case authTypeDefault:
-		plog.Debug("Authenticating towards AWS with default SDK method", "region", dsInfo.Region)
+		plog.Debug("Authenticating towards AWS with default SDK method", "region", dsInfo.region)
 	default:
-		panic(fmt.Sprintf("Unrecognized authType: %d", dsInfo.AuthType))
+		panic(fmt.Sprintf("Unrecognized authType: %d", dsInfo.authType))
 	}
 	sess, err := newSession(cfgs...)
 	if err != nil {
@@ -215,21 +215,21 @@ func (e *cloudWatchExecutor) newSession(region string, pluginCtx backend.PluginC
 
 	duration := stscreds.DefaultDuration
 	expiration := time.Now().UTC().Add(duration)
-	if dsInfo.AssumeRoleARN != "" {
+	if dsInfo.assumeRoleARN != "" {
 		// We should assume a role in AWS
-		plog.Debug("Trying to assume role in AWS", "arn", dsInfo.AssumeRoleARN)
+		plog.Debug("Trying to assume role in AWS", "arn", dsInfo.assumeRoleARN)
 
 		cfgs := []*aws.Config{
 			{
 				CredentialsChainVerboseErrors: aws.Bool(true),
 			},
 			{
-				Credentials: newSTSCredentials(sess, dsInfo.AssumeRoleARN, func(p *stscreds.AssumeRoleProvider) {
+				Credentials: newSTSCredentials(sess, dsInfo.assumeRoleARN, func(p *stscreds.AssumeRoleProvider) {
 					// Not sure if this is necessary, overlaps with p.Duration and is undocumented
 					p.Expiry.SetExpiration(expiration, 0)
 					p.Duration = duration
-					if dsInfo.ExternalID != "" {
-						p.ExternalID = aws.String(dsInfo.ExternalID)
+					if dsInfo.externalID != "" {
+						p.ExternalID = aws.String(dsInfo.externalID)
 					}
 				}),
 			},
