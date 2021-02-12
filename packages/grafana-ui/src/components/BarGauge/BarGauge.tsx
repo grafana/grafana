@@ -15,17 +15,11 @@ import {
   getColorForTheme,
   FALLBACK_COLOR,
   TextDisplayOptions,
+  VizOrientation,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-
-// Components
 import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
-
-// Utils
 import { measureText, calculateFontSize } from '../../utils/measureText';
-
-// Types
-import { VizOrientation } from '@grafana/data';
 import { Themeable } from '../../types';
 
 const MIN_VALUE_HEIGHT = 18;

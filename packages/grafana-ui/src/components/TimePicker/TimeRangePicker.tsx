@@ -12,8 +12,16 @@ import { stylesFactory } from '../../themes/stylesFactory';
 import { withTheme, useTheme } from '../../themes/ThemeContext';
 
 // Types
-import { isDateTime, rangeUtil, GrafanaTheme, dateTimeFormat, timeZoneFormatUserFriendly } from '@grafana/data';
-import { TimeRange, TimeZone, dateMath } from '@grafana/data';
+import {
+  isDateTime,
+  rangeUtil,
+  GrafanaTheme,
+  dateTimeFormat,
+  timeZoneFormatUserFriendly,
+  TimeRange,
+  TimeZone,
+  dateMath,
+} from '@grafana/data';
 import { Themeable } from '../../types';
 import { otherOptions, quickOptions } from './rangeOptions';
 import { ButtonGroup, ToolbarButton } from '../Button';
