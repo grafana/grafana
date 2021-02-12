@@ -34,7 +34,7 @@ Name        | Description
 `Password`  | Database user's password
 `HTTP mode` | How to query the database (`GET` or `POST` HTTP verb). The `POST` verb allows heavy queries that would return an error using the `GET` verb. Default is `GET`.
 `Min time interval` | See [detailed explanation]({{< relref "#min-time-interval" >}})
-`Max series`| Limits the number of series/tables that Grafana will process. Lower this number to prevent abuse, and increase it if you have lots of small time series and not all are shown. Defaults to 1000.
+`Max series`| Limits the number of series/tables that Grafana processes. Lower this number to prevent abuse, and increase it if you have lots of small time series and not all are shown. Defaults to 1000.
 
 Access mode controls how requests to the data source will be handled. Server should be the preferred way if nothing else stated.
 
