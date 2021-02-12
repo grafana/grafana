@@ -212,6 +212,7 @@ func TestMetrics(t *testing.T) {
 			setting.LDAPEnabled = true
 			setting.AuthProxyEnabled = true
 			setting.Packaging = "deb"
+			setting.ReportingDistributor = "hosted-grafana"
 
 			wg.Add(1)
 			err := uss.sendUsageStats(context.Background())
@@ -293,6 +294,7 @@ func TestMetrics(t *testing.T) {
 				assert.Equal(t, 1, metrics.Get("stats.auth_enabled.oauth_grafana_com.count").MustInt())
 
 				assert.Equal(t, 1, metrics.Get("stats.packaging.deb.count").MustInt())
+				assert.Equal(t, 1, metrics.Get("stats.distributor.hosted-grafana.count").MustInt())
 
 				assert.Equal(t, 1, metrics.Get("stats.auth_token_per_user_le_3").MustInt())
 				assert.Equal(t, 2, metrics.Get("stats.auth_token_per_user_le_6").MustInt())

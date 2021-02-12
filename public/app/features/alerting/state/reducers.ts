@@ -2,8 +2,9 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { ApplyFieldOverrideOptions, DataTransformerConfig, dateTime, FieldColorModeId } from '@grafana/data';
 import alertDef from './alertDef';
 import {
-  AlertCondition,
   AlertDefinition,
+  AlertDefinitionDTO,
+  AlertDefinitionQueryModel,
   AlertDefinitionState,
   AlertDefinitionUiState,
   AlertRule,
@@ -54,12 +55,14 @@ const dataConfig = {
 export const initialAlertDefinitionState: AlertDefinitionState = {
   alertDefinition: {
     id: 0,
+    uid: '',
     title: '',
     description: '',
-    condition: {} as AlertCondition,
-    interval: 60,
+    condition: '',
+    data: [],
+    intervalSeconds: 60,
   },
-  queryOptions: { maxDataPoints: 100, dataSource: {}, queries: [] },
+  queryOptions: { maxDataPoints: 100, dataSource: { name: '-- Mixed --' }, queries: [] },
   queryRunner: new PanelQueryRunner(dataConfig),
   uiState: { ...store.getObject(ALERT_DEFINITION_UI_STATE_STORAGE_KEY, DEFAULT_ALERT_DEFINITION_UI_STATE) },
   data: [],
@@ -156,10 +159,25 @@ const alertDefinitionSlice = createSlice({
   name: 'alertDefinition',
   initialState: initialAlertDefinitionState,
   reducers: {
-    setAlertDefinition: (state: AlertDefinitionState, action: PayloadAction<any>) => {
-      return { ...state, alertDefinition: action.payload };
+    setAlertDefinition: (state: AlertDefinitionState, action: PayloadAction<AlertDefinitionDTO>) => {
+      return {
+        ...state,
+        alertDefinition: {
+          title: action.payload.title,
+          id: action.payload.id,
+          uid: action.payload.uid,
+          condition: action.payload.condition,
+          intervalSeconds: action.payload.intervalSeconds,
+          data: action.payload.data,
+          description: '',
+        },
+        queryOptions: {
+          ...state.queryOptions,
+          queries: action.payload.data.map((q: AlertDefinitionQueryModel) => ({ ...q.model })),
+        },
+      };
     },
-    updateAlertDefinition: (state: AlertDefinitionState, action: PayloadAction<Partial<AlertDefinition>>) => {
+    updateAlertDefinitionOptions: (state: AlertDefinitionState, action: PayloadAction<Partial<AlertDefinition>>) => {
       return { ...state, alertDefinition: { ...state.alertDefinition, ...action.payload } };
     },
     setUiState: (state: AlertDefinitionState, action: PayloadAction<AlertDefinitionUiState>) => {
@@ -185,7 +203,13 @@ export const {
   resetSecureField,
 } = notificationChannelSlice.actions;
 
-export const { setUiState, updateAlertDefinition, setQueryOptions, setAlertDefinitions } = alertDefinitionSlice.actions;
+export const {
+  setUiState,
+  updateAlertDefinitionOptions,
+  setQueryOptions,
+  setAlertDefinitions,
+  setAlertDefinition,
+} = alertDefinitionSlice.actions;
 
 export const alertRulesReducer = alertRulesSlice.reducer;
 export const notificationChannelReducer = notificationChannelSlice.reducer;

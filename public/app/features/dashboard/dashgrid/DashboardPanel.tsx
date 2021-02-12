@@ -10,10 +10,9 @@ import { PanelChromeAngular } from './PanelChromeAngular';
 
 // Actions
 import { initDashboardPanel } from '../state/actions';
-import { updateLocation } from 'app/core/reducers/location';
 
 // Types
-import { PanelModel, DashboardModel } from '../state';
+import { DashboardModel, PanelModel } from '../state';
 import { StoreState } from 'app/types';
 import { PanelPlugin } from '@grafana/data';
 
@@ -40,7 +39,7 @@ const mapStateToProps = (state: StoreState, props: OwnProps) => {
   };
 };
 
-const mapDispatchToProps = { initDashboardPanel, updateLocation };
+const mapDispatchToProps = { initDashboardPanel };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
@@ -76,7 +75,7 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
   };
 
   renderPanel(plugin: PanelPlugin) {
-    const { dashboard, panel, isViewing, isInView, isEditing, updateLocation } = this.props;
+    const { dashboard, panel, isViewing, isInView, isEditing } = this.props;
 
     return (
       <AutoSizer>
@@ -110,7 +109,6 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
               isInView={isInView}
               width={width}
               height={height}
-              updateLocation={updateLocation}
             />
           );
         }}

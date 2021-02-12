@@ -1,8 +1,7 @@
-import { toDataQueryError } from '@grafana/runtime';
+import { toDataQueryError, getDataSourceSrv } from '@grafana/runtime';
 import { updateOptions } from '../state/actions';
 import { QueryVariableModel } from '../types';
 import { ThunkResult } from '../../../types';
-import { getDataSourceSrv } from '@grafana/runtime';
 import { getVariable } from '../state/selectors';
 import { addVariableEditorError, changeVariableEditorExtended, removeVariableEditorError } from '../editor/reducer';
 import { changeVariableProp } from '../state/sharedReducer';

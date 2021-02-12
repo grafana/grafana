@@ -67,7 +67,7 @@ describe('MeasurementCollector', () => {
             "type": "number",
             "values": Array [
               0,
-              null,
+              undefined,
             ],
           },
           Object {
@@ -79,7 +79,7 @@ describe('MeasurementCollector', () => {
             "type": "number",
             "values": Array [
               1,
-              null,
+              undefined,
             ],
           },
           Object {
@@ -203,7 +203,7 @@ describe('MeasurementCollector', () => {
             "name": "f0",
             "type": "number",
             "values": Array [
-              null,
+              undefined,
             ],
           },
           Object {
@@ -225,7 +225,7 @@ describe('MeasurementCollector', () => {
             "name": "f2",
             "type": "string",
             "values": Array [
-              null,
+              undefined,
             ],
           },
         ],

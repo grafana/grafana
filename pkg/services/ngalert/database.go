@@ -76,8 +76,8 @@ func (ng *AlertNG) saveAlertDefinition(cmd *saveAlertDefinitionCommand) error {
 		alertDefinition := &AlertDefinition{
 			OrgID:           cmd.OrgID,
 			Title:           cmd.Title,
-			Condition:       cmd.Condition.RefID,
-			Data:            cmd.Condition.QueriesAndExpressions,
+			Condition:       cmd.Condition,
+			Data:            cmd.Data,
 			IntervalSeconds: intervalSeconds,
 			Version:         initialVersion,
 			UID:             uid,
@@ -133,11 +133,11 @@ func (ng *AlertNG) updateAlertDefinition(cmd *updateAlertDefinitionCommand) erro
 		if title == "" {
 			title = existingAlertDefinition.Title
 		}
-		condition := cmd.Condition.RefID
+		condition := cmd.Condition
 		if condition == "" {
 			condition = existingAlertDefinition.Condition
 		}
-		data := cmd.Condition.QueriesAndExpressions
+		data := cmd.Data
 		if data == nil {
 			data = existingAlertDefinition.Data
 		}

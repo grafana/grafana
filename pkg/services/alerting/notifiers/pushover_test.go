@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/validations"
+
 	"github.com/grafana/grafana/pkg/services/alerting"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -75,7 +77,7 @@ func TestGenPushoverBody(t *testing.T) {
 				evalContext := alerting.NewEvalContext(context.Background(),
 					&alerting.Rule{
 						State: models.AlertStateAlerting,
-					})
+					}, &validations.OSSPluginRequestValidator{})
 				_, pushoverBody, err := notifier.genPushoverBody(evalContext, "", "")
 
 				So(err, ShouldBeNil)
@@ -86,7 +88,7 @@ func TestGenPushoverBody(t *testing.T) {
 				evalContext := alerting.NewEvalContext(context.Background(),
 					&alerting.Rule{
 						State: models.AlertStateOK,
-					})
+					}, &validations.OSSPluginRequestValidator{})
 				_, pushoverBody, err := notifier.genPushoverBody(evalContext, "", "")
 
 				So(err, ShouldBeNil)

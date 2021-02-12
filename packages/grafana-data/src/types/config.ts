@@ -18,10 +18,19 @@ export interface BuildInfo {
    */
   isEnterprise: boolean;
   env: string;
-  edition: string;
+  edition: GrafanaEdition;
   latestVersion: string;
   hasUpdate: boolean;
   hideVersion: boolean;
+}
+
+/**
+ * @internal
+ */
+export enum GrafanaEdition {
+  OpenSource = 'Open Source',
+  Pro = 'Pro',
+  Enterprise = 'Enterprise',
 }
 
 /**
@@ -54,7 +63,7 @@ export interface LicenseInfo {
   licenseUrl: string;
   stateInfo: string;
   hasValidLicense: boolean;
-  edition: string;
+  edition: GrafanaEdition;
 }
 
 /**
