@@ -8,7 +8,7 @@ weight = 50
 
 Grafana preferences are basic settings. They control your Grafana theme, your home dashboard, your time zone, and so on.
 
-Preferences are sometimes confusing, because they can be set at four different levels. Listed in order from highest to lowest, they are:
+Preferences are sometimes confusing because they can be set at four different levels according to highest-to-lowest precedence:
 
 - **Server -** Affects all users on the Grafana server. Set by a [Grafana Server Admin]({{< relref "../../permissions/_index.md#grafana-server-admin-role" >}}).
 - **Organization -** Affects all users in an organization. Set by an [Organization Admin]({{< relref "../../permissions/organization_roles.md#organization-admin-role" >}}).
