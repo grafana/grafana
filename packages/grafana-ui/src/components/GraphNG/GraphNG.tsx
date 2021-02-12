@@ -4,24 +4,12 @@ import {
   compareDataFrameStructures,
   DataFrame,
   DataFrameFieldIndex,
-  DisplayValue,
   FieldMatcherID,
   fieldMatchers,
-  fieldReducers,
-  reduceField,
   TimeRange,
   TimeZone,
 } from '@grafana/data';
-import {
-  AxisPlacement,
-  GraphNGLegendEvent,
-  LegendDisplayMode,
-  UPlotChart,
-  VizLayout,
-  VizLegend,
-  VizLegendItem,
-  VizLegendOptions,
-} from '..';
+import { GraphNGLegendEvent, LegendDisplayMode, UPlotChart, VizLayout, VizLegendItem, VizLegendOptions } from '..';
 import { withTheme } from '../../themes';
 import { Themeable } from '../../types';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
@@ -29,10 +17,10 @@ import { XYFieldMatchers } from './types';
 import { GraphNGContext } from './hooks';
 import { AlignedData } from 'uplot';
 import { preparePlotData } from '../uPlot/utils';
-import { mapMouseEventToMode, preparePlotConfigBuilder, preparePlotFrame } from './utils';
+import { preparePlotConfigBuilder, preparePlotFrame } from './utils';
+import { PlotLegend } from '../uPlot/PlotLegend';
 
 export const FIXED_UNIT = '__fixed';
-const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
 export interface GraphNGProps extends Themeable {
   width: number;
@@ -161,81 +149,22 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
     return this.props.timeZone;
   };
 
-  onLegendLabelClick = (legend: VizLegendItem, event: React.MouseEvent) => {
-    const { onLegendClick } = this.props;
-    const { fieldIndex } = legend;
-
-    if (!onLegendClick || !fieldIndex) {
-      return;
-    }
-
-    onLegendClick({
-      fieldIndex,
-      mode: mapMouseEventToMode(event),
-    });
-  };
-
   renderLegend() {
-    const { legend, onSeriesColorChange, data } = this.props;
+    const { legend, onSeriesColorChange, onLegendClick, data } = this.props;
     const { config } = this.state;
 
-    const hasLegend = legend && legend.displayMode !== LegendDisplayMode.Hidden;
-
-    if (!config || !hasLegend) {
+    if (!config || (legend && legend.displayMode === LegendDisplayMode.Hidden)) {
       return;
     }
 
-    const legendItems = config
-      .getSeries()
-      .map<VizLegendItem | undefined>((s) => {
-        const seriesConfig = s.props;
-        const fieldIndex = seriesConfig.dataFrameFieldIndex;
-        const axisPlacement = config.getAxisPlacement(s.props.scaleKey);
-
-        if (seriesConfig.hideInLegend || !fieldIndex) {
-          return undefined;
-        }
-
-        const field = data[fieldIndex.frameIndex]?.fields[fieldIndex.fieldIndex];
-
-        return {
-          disabled: !seriesConfig.show ?? false,
-          fieldIndex,
-          color: seriesConfig.lineColor!,
-          label: seriesConfig.fieldName,
-          yAxis: axisPlacement === AxisPlacement.Left ? 1 : 2,
-          getDisplayValues: () => {
-            if (!legend.calcs?.length) {
-              return [];
-            }
-
-            const fmt = field.display ?? defaultFormatter;
-            const fieldCalcs = reduceField({
-              field,
-              reducers: legend.calcs,
-            });
-
-            return legend.calcs.map<DisplayValue>((reducer) => {
-              return {
-                ...fmt(fieldCalcs[reducer]),
-                title: fieldReducers.get(reducer).name,
-              };
-            });
-          },
-        };
-      })
-      .filter((i) => i !== undefined) as VizLegendItem[];
-
     return (
-      <VizLayout.Legend position={legend.placement} maxHeight="35%" maxWidth="60%">
-        <VizLegend
-          onLabelClick={this.onLegendLabelClick}
-          placement={legend.placement}
-          items={legendItems}
-          displayMode={legend.displayMode}
-          onSeriesColorChange={onSeriesColorChange}
-        />
-      </VizLayout.Legend>
+      <PlotLegend
+        data={data}
+        config={config}
+        legend={legend}
+        onSeriesColorChange={onSeriesColorChange}
+        onLegendClick={onLegendClick}
+      />
     );
   }
 
