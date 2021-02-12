@@ -5,7 +5,7 @@ BENCH_FILE="tmp/bench_${COMMIT_HASH::7}.txt"
 BENCH_GRAPH="tmp/bench_${COMMIT_HASH::7}.html"
 
 # Run benchmark
-# go test -benchmem -run=^$ -bench . github.com/grafana/grafana/pkg/services/rbac | tee ${BENCH_FILE}
+go test -benchmem -run=^$ -bench . github.com/grafana/grafana/pkg/services/rbac | tee ${BENCH_FILE}
 
 CHART_DATA=$(cat ${BENCH_FILE} |
   grep -oP "^Benchmark([^[:blank:]]+)[[:blank:]]+[0-9]+[[:blank:]]+[0-9]+" |
@@ -13,8 +13,6 @@ CHART_DATA=$(cat ${BENCH_FILE} |
   sed -E 's/^[[:alpha:]]+[0-9]+_([0-9]+)-[0-9]+[[:blank:]]+(.*)/\1 \2/' |
   sed -E 's/([^[:blank:]]+)[[:blank:]]+([^[:blank:]]+)/\[\1, \2],\n/'
 )
-
-echo ${CHART_DATA}
 
 HTML_CHART="<html>
   <head>
