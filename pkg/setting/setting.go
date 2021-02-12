@@ -1196,7 +1196,9 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	hiddenUsers := users.Key("hidden_users").MustString("")
 	for _, user := range strings.Split(hiddenUsers, ",") {
 		user = strings.TrimSpace(user)
-		cfg.HiddenUsers[user] = struct{}{}
+		if user != "" {
+			cfg.HiddenUsers[user] = struct{}{}
+		}
 	}
 
 	return nil
