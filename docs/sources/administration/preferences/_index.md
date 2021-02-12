@@ -6,7 +6,7 @@ weight = 50
 
 # Grafana preferences
 
-Grafana preferences are basic settings. They control your Grafana theme, your home dashboard, your time zone, and so on.
+Grafana preferences are basic settings. They control your Grafana theme, the home dashboard, time zone, and so on.
 
 Preferences are sometimes confusing because they can be set at four different levels, listed from highest level to lowest:
 
