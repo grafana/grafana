@@ -34,7 +34,7 @@ func (hs *HTTPServer) GetFolderPermissionList(c *models.ReqContext) response.Res
 
 	filteredAcls := make([]*models.DashboardAclInfoDTO, 0, len(acl))
 	for _, perm := range acl {
-		if dtos.IsHiddenUser(perm.UserLogin, c.SignedInUser, hs.Cfg) {
+		if perm.UserId > 0 && dtos.IsHiddenUser(perm.UserLogin, c.SignedInUser, hs.Cfg) {
 			continue
 		}
 
