@@ -124,7 +124,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   runInstantQuery = (
     target: LokiQuery,
     options: DataQueryRequest<LokiQuery>,
-    responseListLength: number
+    responseListLength = 1
   ): Observable<DataQueryResponse> => {
     const timeNs = this.getTime(options.range.to, true);
     const queryLimit = isMetricsQuery(target.expr) ? options.maxDataPoints : target.maxLines;
@@ -490,13 +490,23 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   }
 
   async annotationQuery(options: AnnotationQueryRequest<LokiQuery>): Promise<AnnotationEvent[]> {
-    if (!options.annotation.expr) {
+    const annotation = options.annotation;
+    // In LokiAnnotationEditor we are using query object insted of listing every property separately (maxLines, instant, range,...)
+    // This way, if we add a new query property to the core editor, we don't have to update it again
+    const query = (annotation.query as unknown) as LokiQuery;
+
+    if (!query.expr) {
       return [];
     }
 
-    const interpolatedExpr = this.templateSrv.replace(options.annotation.expr, {}, this.interpolateQueryExpr);
-    const query = { refId: `annotation-${options.annotation.name}`, expr: interpolatedExpr };
-    const { data } = await this.runRangeQuery(query, options as any).toPromise();
+    const interpolatedExpr = this.templateSrv.replace(query.expr, {}, this.interpolateQueryExpr);
+    const annotationQuery = { ...query, refId: `annotation-${options.annotation.name}`, expr: interpolatedExpr };
+    console.log('annotationQuery', annotationQuery);
+    console.log('options', options);
+    const { data } = query.instant
+      ? await this.runInstantQuery(annotationQuery, options as any).toPromise()
+      : await this.runRangeQuery(annotationQuery, options as any).toPromise();
+
     const annotations: AnnotationEvent[] = [];
 
     for (const frame of data) {

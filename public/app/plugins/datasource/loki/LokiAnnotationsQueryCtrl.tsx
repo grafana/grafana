@@ -1,3 +1,4 @@
+import { LokiQuery } from './types';
 /**
  * Just a simple wrapper for a react component that is actually implementing the query editor.
  */
@@ -8,10 +9,11 @@ export class LokiAnnotationsQueryCtrl {
   /** @ngInject */
   constructor() {
     this.annotation.target = this.annotation.target || {};
+    this.annotation.query = this.annotation.query || {};
     this.onQueryChange = this.onQueryChange.bind(this);
   }
 
-  onQueryChange(expr: string) {
-    this.annotation.expr = expr;
+  onQueryChange(query: LokiQuery) {
+    this.annotation.query = query;
   }
 }
