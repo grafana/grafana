@@ -43,7 +43,7 @@ To change the team name or email, follow these steps:
 1. Click **Teams**. Grafana displays the team list.
 1. In the team list, click the name of the team that you want to change.
 1. Click the **Settings** tab.
-1. In the Team Settings section, you can edit any of the following:
+1. In the Team Settings section, you can edit the following:
    - **Name -** Edit this field to change the display name associated with the team.
    - **Email -** Edit this field to change the email address associated with the team.
 1. Click **Update**.
