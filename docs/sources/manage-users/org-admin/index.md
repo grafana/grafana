@@ -65,10 +65,6 @@ Grafana displays a list of pending invitations. If necessary, you can use the se
 
 ![Pending Invites list](/img/docs/manage-users/pending-invites-list-7-3.png)
 
-### Copy invitation
-
-SME - What does this do? I see the button, but it does not seem to do anything.
-
 ### Cancel invitation
 
 Revoke the invitation of a user that was invited but has not logged in.
