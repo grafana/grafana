@@ -35,12 +35,11 @@ import {
   decorateWithTableResult,
 } from '../utils/decorators';
 import { createErrorNotification } from '../../../core/copy/appNotification';
-import { richHistoryUpdatedAction } from './main';
-import { stateSave } from './explorePane';
+import { richHistoryUpdatedAction, stateSave } from './main';
 import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
 import { updateTime } from './time';
 import { historyUpdatedAction } from './history';
-import { createEmptyQueryResponse, makeInitialUpdateState } from './utils';
+import { createEmptyQueryResponse } from './utils';
 
 //
 // Actions and Payloads
@@ -174,7 +173,7 @@ export const scanStopAction = createAction<ScanStopPayload>('explore/scanStop');
  */
 export function addQueryRow(exploreId: ExploreId, index: number): ThunkResult<void> {
   return (dispatch, getState) => {
-    const queries = getState().explore[exploreId].queries;
+    const queries = getState().explore[exploreId]!.queries;
     const query = generateEmptyQuery(queries, index);
 
     dispatch(addQueryRowAction({ exploreId, index, query }));
@@ -194,7 +193,7 @@ export function changeQuery(
   return (dispatch, getState) => {
     // Null query means reset
     if (query === null) {
-      const queries = getState().explore[exploreId].queries;
+      const queries = getState().explore[exploreId]!.queries;
       const { refId, key } = queries[index];
       query = generateNewKeyAndAddRefIdIfMissing({ refId, key }, queries, index);
     }
@@ -292,12 +291,12 @@ export function modifyQueries(
 /**
  * Main action to run queries and dispatches sub-actions based on which result viewers are active
  */
-export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
+export const runQueries = (exploreId: ExploreId, options?: { replaceUrl?: boolean }): ThunkResult<void> => {
   return (dispatch, getState) => {
     dispatch(updateTime({ exploreId }));
 
     const richHistory = getState().explore.richHistory;
-    const exploreItemState = getState().explore[exploreId];
+    const exploreItemState = getState().explore[exploreId]!;
     const {
       datasourceInstance,
       queries,
@@ -314,7 +313,7 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
 
     if (!hasNonEmptyQuery(queries)) {
       dispatch(clearQueriesAction({ exploreId }));
-      dispatch(stateSave()); // Remember to save to state and update location
+      dispatch(stateSave({ replace: options?.replaceUrl })); // Remember to save to state and update location
       return;
     }
 
@@ -379,7 +378,7 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
             dispatch(richHistoryUpdatedAction({ richHistory: nextRichHistory }));
 
             // We save queries to the URL here so that only successfully run queries change the URL.
-            dispatch(stateSave());
+            dispatch(stateSave({ replace: options?.replaceUrl }));
           }
 
           firstResponse = false;
@@ -387,9 +386,9 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
           dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
 
           // Keep scanning for results if this was the last scanning transaction
-          if (getState().explore[exploreId].scanning) {
+          if (getState().explore[exploreId]!.scanning) {
             if (data.state === LoadingState.Done && data.series.length === 0) {
-              const range = getShiftedTimeRange(-1, getState().explore[exploreId].range);
+              const range = getShiftedTimeRange(-1, getState().explore[exploreId]!.range);
               dispatch(updateTime({ exploreId, absoluteRange: range }));
               dispatch(runQueries(exploreId));
             } else {
@@ -416,7 +415,7 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
 export function setQueries(exploreId: ExploreId, rawQueries: DataQuery[]): ThunkResult<void> {
   return (dispatch, getState) => {
     // Inject react keys into query objects
-    const queries = getState().explore[exploreId].queries;
+    const queries = getState().explore[exploreId]!.queries;
     const nextQueries = rawQueries.map((query, index) => generateNewKeyAndAddRefIdIfMissing(query, queries, index));
     dispatch(setQueriesAction({ exploreId, queries: nextQueries }));
     dispatch(runQueries(exploreId));
@@ -433,7 +432,7 @@ export function scanStart(exploreId: ExploreId): ThunkResult<void> {
     // Register the scanner
     dispatch(scanStartAction({ exploreId }));
     // Scanning must trigger query run, and return the new range
-    const range = getShiftedTimeRange(-1, getState().explore[exploreId].range);
+    const range = getShiftedTimeRange(-1, getState().explore[exploreId]!.range);
     // Set the new range to be displayed
     dispatch(updateTime({ exploreId, absoluteRange: range }));
     dispatch(runQueries(exploreId));
@@ -627,7 +626,6 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
       ...state,
       scanning: false,
       scanRange: undefined,
-      update: makeInitialUpdateState(),
     };
   }
 
@@ -687,7 +685,6 @@ export const processQueryResponse = (
     tableResult,
     logsResult,
     loading: loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming,
-    update: makeInitialUpdateState(),
     showLogs: !!logsResult,
     showMetrics: !!graphResult,
     showTable: !!tableResult,
