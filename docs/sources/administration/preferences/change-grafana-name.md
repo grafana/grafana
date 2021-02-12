@@ -31,7 +31,7 @@ Follow these instructions if you are an Organization Admin.
 
 {{< docs/list >}}
 {{< docs/shared "preferences/org-preferences-list.md" >}}
-1. In **Organization name**, enter the new organization name.
+1. In **Organization name**, enter the new name.
 1. Click **Update organization name**.
 {{< /docs/list >}}
 
