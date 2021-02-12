@@ -160,7 +160,9 @@ export function registerAngularDirectives() {
   ]);
 
   react2AngularDirective('lokiAnnotationsQueryEditor', LokiAnnotationsQueryEditor, [
-    'query',
+    'expr',
+    'maxLines',
+    'instant',
     'onChange',
     ['datasource', { watchDepth: 'reference' }],
   ]);

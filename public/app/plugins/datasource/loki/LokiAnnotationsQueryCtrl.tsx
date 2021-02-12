@@ -9,11 +9,12 @@ export class LokiAnnotationsQueryCtrl {
   /** @ngInject */
   constructor() {
     this.annotation.target = this.annotation.target || {};
-    this.annotation.query = this.annotation.query || {};
     this.onQueryChange = this.onQueryChange.bind(this);
   }
 
   onQueryChange(query: LokiQuery) {
-    this.annotation.query = query;
+    this.annotation.expr = query.expr;
+    this.annotation.maxLines = query.maxLines;
+    this.annotation.instant = query.instant;
   }
 }
