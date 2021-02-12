@@ -10,15 +10,20 @@ import { GraphNGLegendEvent } from '..';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
-interface PlotLegendProps {
+interface PlotLegendProps extends VizLegendOptions {
   data: DataFrame[];
   config: UPlotConfigBuilder;
-  legend: VizLegendOptions;
   onSeriesColorChange?: (label: string, color: string) => void;
   onLegendClick?: (event: GraphNGLegendEvent) => void;
 }
 
-export const PlotLegend: React.FC<PlotLegendProps> = ({ data, config, legend, onSeriesColorChange, onLegendClick }) => {
+export const PlotLegend: React.FC<PlotLegendProps> = ({
+  data,
+  config,
+  onSeriesColorChange,
+  onLegendClick,
+  ...legend
+}) => {
   const onLegendLabelClick = useCallback(
     (legend: VizLegendItem, event: React.MouseEvent) => {
       const { fieldIndex } = legend;
@@ -77,7 +82,7 @@ export const PlotLegend: React.FC<PlotLegendProps> = ({ data, config, legend, on
     .filter((i) => i !== undefined) as VizLegendItem[];
 
   return (
-    <VizLayout.Legend position={legend.placement} maxHeight="35%" maxWidth="60%">
+    <VizLayout.Legend placement={legend.placement} maxHeight="35%" maxWidth="60%">
       <VizLegend
         onLabelClick={onLegendLabelClick}
         placement={legend.placement}

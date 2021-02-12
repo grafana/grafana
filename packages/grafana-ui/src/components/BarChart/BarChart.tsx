@@ -1,26 +1,16 @@
 import React from 'react';
-import {
-  compareArrayValues,
-  compareDataFrameStructures,
-  DataFrame,
-  DisplayValue,
-  fieldReducers,
-  reduceField,
-  TimeRange,
-} from '@grafana/data';
+import { AlignedData } from 'uplot';
+import { compareArrayValues, compareDataFrameStructures, DataFrame, TimeRange } from '@grafana/data';
 import { VizLayout } from '../VizLayout/VizLayout';
 import { Themeable } from '../../types';
 import { UPlotChart } from '../uPlot/Plot';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { GraphNGLegendEvent } from '../GraphNG/types';
 import { BarChartOptions } from './types';
-import { AlignedData } from 'uplot';
 import { withTheme } from '../../themes';
 import { preparePlotConfigBuilder, preparePlotFrame } from './utils';
 import { preparePlotData } from '../uPlot/utils';
-import { LegendDisplayMode, VizLegendItem } from '../VizLegend/types';
-import { VizLegend } from '../VizLegend/VizLegend';
-import { mapMouseEventToMode } from '../GraphNG/utils';
+import { LegendDisplayMode } from '../VizLegend/types';
 import { PlotLegend } from '../uPlot/PlotLegend';
 
 /**
@@ -113,9 +103,9 @@ class UnthemedBarChart extends React.Component<BarChartProps, BarChartState> {
       <PlotLegend
         data={data}
         config={config}
-        legend={legend}
         onSeriesColorChange={onSeriesColorChange}
         onLegendClick={onLegendClick}
+        {...legend}
       />
     );
   }

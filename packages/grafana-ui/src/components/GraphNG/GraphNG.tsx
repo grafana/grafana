@@ -1,4 +1,5 @@
 import React from 'react';
+import { AlignedData } from 'uplot';
 import {
   compareArrayValues,
   compareDataFrameStructures,
@@ -9,16 +10,17 @@ import {
   TimeRange,
   TimeZone,
 } from '@grafana/data';
-import { GraphNGLegendEvent, LegendDisplayMode, UPlotChart, VizLayout, VizLegendItem, VizLegendOptions } from '..';
 import { withTheme } from '../../themes';
 import { Themeable } from '../../types';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
-import { XYFieldMatchers } from './types';
+import { GraphNGLegendEvent, XYFieldMatchers } from './types';
 import { GraphNGContext } from './hooks';
-import { AlignedData } from 'uplot';
-import { preparePlotData } from '../uPlot/utils';
 import { preparePlotConfigBuilder, preparePlotFrame } from './utils';
+import { preparePlotData } from '../uPlot/utils';
 import { PlotLegend } from '../uPlot/PlotLegend';
+import { UPlotChart } from '../uPlot/Plot';
+import { LegendDisplayMode, VizLegendOptions } from '../VizLegend/types';
+import { VizLayout } from '../VizLayout/VizLayout';
 
 export const FIXED_UNIT = '__fixed';
 
@@ -161,9 +163,9 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
       <PlotLegend
         data={data}
         config={config}
-        legend={legend}
         onSeriesColorChange={onSeriesColorChange}
         onLegendClick={onLegendClick}
+        {...legend}
       />
     );
   }
