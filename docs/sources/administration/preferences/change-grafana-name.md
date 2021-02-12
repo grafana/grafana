@@ -38,7 +38,7 @@ If you are an Organization Admin, follow these steps:
 ## Change team name or email
 
 Organization administrators and team administrators can change team names and email addresses.
-
+To change the team name or email, follow these steps:
 1. Hover your cursor over the **Configuration** (gear) icon in the side menu.
 1. Click **Teams**. Grafana displays the team list.
 1. In the team list, click the name of the team that you want to change.
