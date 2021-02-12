@@ -118,7 +118,6 @@ export const ContextMenuView: React.FC<ContextMenuProps> = ({
     const frame = data[originFieldIndex.frameIndex];
     const field = frame.fields[originFieldIndex.fieldIndex];
 
-    console.log(field);
     const displayValue = field.display!(field.values.get(dataIdx));
 
     const hasLinks = field.config.links && field.config.links.length > 0;
