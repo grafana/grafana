@@ -36,7 +36,7 @@ export function UnconnectedNodeGraphContainer(props: Props & ConnectedProps<type
 
 function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
   return {
-    range: state.explore[exploreId].range,
+    range: state.explore[exploreId]!.range,
   };
 }
 
