@@ -7,8 +7,8 @@ import { DashboardSearchHit } from 'app/features/search/types';
 import { DashboardDTO } from 'app/types';
 
 export interface Props {
-  onSelected: (dashboard: DashboardDTO) => void;
-  currentDashboard?: SelectableValue;
+  onChange: (dashboard: DashboardDTO) => void;
+  value?: SelectableValue;
   width?: number;
   isClearable?: boolean;
   invalid?: boolean;
@@ -26,14 +26,7 @@ const getDashboards = (query = '') => {
   });
 };
 
-export const DashboardPicker: FC<Props> = ({
-  onSelected,
-  currentDashboard,
-  width,
-  isClearable = false,
-  invalid,
-  disabled,
-}) => {
+export const DashboardPicker: FC<Props> = ({ onChange, value, width, isClearable = false, invalid, disabled }) => {
   const debouncedSearch = debounce(getDashboards, 300);
 
   return (
@@ -42,10 +35,10 @@ export const DashboardPicker: FC<Props> = ({
       isClearable={isClearable}
       defaultOptions={true}
       loadOptions={debouncedSearch}
-      onChange={onSelected}
+      onChange={onChange}
       placeholder="Select dashboard"
       noOptionsMessage="No dashboards found"
-      value={currentDashboard}
+      value={value}
       invalid={invalid}
       disabled={disabled}
     />
