@@ -27,7 +27,7 @@ Follow these instructions if you are a Grafana Server Admin.
 
 ### Organization Admin change organization name
 
-Follow these instructions if you are an Organization Admin.
+If you are an Organization Admin, follow these steps:
 
 {{< docs/list >}}
 {{< docs/shared "preferences/org-preferences-list.md" >}}
