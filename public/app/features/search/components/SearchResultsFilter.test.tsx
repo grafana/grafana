@@ -14,6 +14,7 @@ beforeEach(() => {
 const searchQuery = {
   starred: false,
   sort: null,
+  prevSort: null,
   tag: ['tag'],
   query: '',
   skipRecent: true,
