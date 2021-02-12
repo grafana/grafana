@@ -30,6 +30,6 @@ export const useDashboardRestore = (version: number) => {
       dashboardWatcher.reloadPage();
       appEvents.emit(AppEvents.alertSuccess, ['Dashboard restored', 'Restored from version ' + version]);
     }
-  }, [state]);
+  }, [dispatch, state, version]);
   return { state, onRestoreDashboard };
 };

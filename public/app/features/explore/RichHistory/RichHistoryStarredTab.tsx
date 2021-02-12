@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { css } from 'emotion';
-import { uniqBy, debounce } from 'lodash';
+import { uniqBy } from 'lodash';
 
 // Types
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
@@ -88,23 +88,9 @@ export function RichHistoryStarredTab(props: Props) {
 
   const datasourcesRetrievedFromQueryHistory = uniqBy(queries, 'datasourceName').map((d) => d.datasourceName);
   const listOfDatasources = createDatasourcesList(datasourcesRetrievedFromQueryHistory);
-  const starredQueries = queries.filter((q) => q.starred === true);
-
-  const filterAndSortQueriesDebounced = useCallback(
-    debounce((searchValue: string) => {
-      setFilteredQueries(
-        filterAndSortQueries(
-          starredQueries,
-          sortOrder,
-          datasourceFilters?.map((d) => d.value) as string[] | null,
-          searchValue
-        )
-      );
-    }, 300),
-    [queries, sortOrder, datasourceFilters]
-  );
 
   useEffect(() => {
+    const starredQueries = queries.filter((q) => q.starred === true);
     setFilteredQueries(
       filterAndSortQueries(
         starredQueries,
@@ -113,7 +99,7 @@ export function RichHistoryStarredTab(props: Props) {
         searchInput
       )
     );
-  }, [queries, sortOrder, datasourceFilters]);
+  }, [queries, sortOrder, datasourceFilters, searchInput]);
 
   return (
     <div className={styles.container}>
@@ -138,7 +124,6 @@ export function RichHistoryStarredTab(props: Props) {
               value={searchInput}
               onChange={(value: string) => {
                 setSearchInput(value);
-                filterAndSortQueriesDebounced(value);
               }}
             />
           </div>

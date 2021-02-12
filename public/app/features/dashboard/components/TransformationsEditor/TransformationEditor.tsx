@@ -61,10 +61,11 @@ export const TransformationEditor = ({
     [
       uiConfig.editor,
       uiConfig.transformation.defaultOptions,
-      config.transformation.id,
       config.transformation.options,
+      config.transformation.id,
       input,
       onChange,
+      index,
     ]
   );
 

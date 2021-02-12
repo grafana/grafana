@@ -22,7 +22,7 @@ export const PanelHeaderNotices: FC<Props> = ({ frames, panelId }) => {
         })
       );
     },
-    [panelId]
+    [dispatch, panelId]
   );
 
   // dedupe on severity

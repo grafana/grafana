@@ -47,7 +47,7 @@ export const useDashboardSave = (dashboard: DashboardModel) => {
         );
       }
     }
-  }, [state]);
+  }, [dashboard, dispatch, location.path, state]);
 
   return { state, onDashboardSave };
 };

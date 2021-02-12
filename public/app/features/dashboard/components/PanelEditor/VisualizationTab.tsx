@@ -30,20 +30,20 @@ export const VisualizationTabUnconnected = React.forwardRef<HTMLInputElement, Pr
     const theme = useTheme();
     const styles = getStyles(theme);
 
-    if (!plugin) {
-      return null;
-    }
-    const onPluginTypeChange = (meta: PanelPluginMeta) => {
-      if (meta.id === plugin.meta.id) {
-        onToggleOptionGroup(false);
-      } else {
-        changePanelPlugin(panel, meta.id);
-      }
-    };
+    const onPluginTypeChange = useCallback(
+      (meta: PanelPluginMeta) => {
+        if (meta.id === plugin?.meta.id) {
+          onToggleOptionGroup(false);
+        } else {
+          changePanelPlugin(panel, meta.id);
+        }
+      },
+      [changePanelPlugin, onToggleOptionGroup, panel, plugin?.meta.id]
+    );
 
     const onKeyPress = useCallback(
       (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter') {
+        if (e.key === 'Enter' && plugin) {
           const query = e.currentTarget.value;
           const plugins = getAllPanelPluginMeta();
           const match = filterPluginList(plugins, query, plugin.meta);
@@ -52,8 +52,12 @@ export const VisualizationTabUnconnected = React.forwardRef<HTMLInputElement, Pr
           }
         }
       },
-      [onPluginTypeChange]
+      [onPluginTypeChange, plugin]
     );
+
+    if (!plugin) {
+      return null;
+    }
 
     const suffix =
       searchQuery !== '' ? (
