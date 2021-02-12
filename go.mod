@@ -10,9 +10,6 @@ replace github.com/denisenkom/go-mssqldb => github.com/denisenkom/go-mssqldb v0.
 // It's also present on grafana/loki's go.mod so we'll need till it gets updated.
 replace k8s.io/client-go => k8s.io/client-go v0.18.8
 
-// Temporary directive to use latest commit of https://github.com/grafana/grafana-plugin-sdk-go/pull/252.
-replace github.com/grafana/grafana-plugin-sdk-go => github.com/grafana/grafana-plugin-sdk-go v0.86.1-0.20210206112234-808f7e650ff5
-
 require (
 	cloud.google.com/go v0.70.0 // indirect
 	cloud.google.com/go/storage v1.12.0
@@ -48,9 +45,9 @@ require (
 	github.com/gosimple/slug v1.9.0
 	github.com/grafana/grafana-aws-sdk v0.0.0-20210112151715-f082803d987a
 	github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
-	github.com/grafana/grafana-plugin-sdk-go v0.83.0
+	github.com/grafana/grafana-plugin-sdk-go v0.88.0
 	github.com/grafana/loki v1.6.2-0.20201026154740-6978ee5d7387
-	github.com/grpc-ecosystem/go-grpc-middleware v1.2.1
+	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/hashicorp/go-hclog v0.15.0
 	github.com/hashicorp/go-plugin v1.4.0
 	github.com/hashicorp/go-version v1.2.1
