@@ -26,7 +26,7 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({ query, datasour
   const metricsMetadata = useMetricsMetadata(datasource, query, subscriptionId, onChange);
 
   return (
-    <>
+    <div data-testid="azure-monitor-metrics-query-editor">
       <SubscriptionField
         query={query}
         datasource={datasource}
@@ -92,7 +92,7 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({ query, datasour
         subscriptionId={subscriptionId}
         onQueryChange={onChange}
       />
-    </>
+    </div>
   );
 };
 

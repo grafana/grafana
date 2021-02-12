@@ -14,7 +14,7 @@ const QueryEditor: React.FC<BaseQueryEditorProps> = ({ query, datasource, onChan
   const subscriptionId = query.subscription || datasource.azureMonitorDatasource.subscriptionId;
 
   return (
-    <div>
+    <div data-testid="azure-monitor-query-editor">
       <QueryTypeField query={query} onQueryChange={onChange} />
       <EditorForQueryType subscriptionId={subscriptionId} query={query} datasource={datasource} onChange={onChange} />
     </div>
