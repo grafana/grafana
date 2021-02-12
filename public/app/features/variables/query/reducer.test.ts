@@ -1,6 +1,5 @@
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import {
-  getAllMatches,
   metricNamesToVariableValues,
   queryVariableReducer,
   sortVariableValues,
