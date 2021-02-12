@@ -3,7 +3,6 @@ import { AlignedData } from 'uplot';
 import {
   compareDataFrameStructures,
   DataFrame,
-  DefaultTimeZone,
   FieldConfig,
   FieldSparkline,
   FieldType,
