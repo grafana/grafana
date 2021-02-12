@@ -12,7 +12,49 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/urfave/cli/v2"
+	"runtime"
 )
+
+var AppFlags = []cli.Flag{
+	&cli.StringFlag{
+		Name:    "pluginsDir",
+		Usage:   "Path to the Grafana plugin directory",
+		Value:   utils.GetGrafanaPluginDir(runtime.GOOS),
+		EnvVars: []string{"GF_PLUGIN_DIR"},
+	},
+	&cli.StringFlag{
+		Name:    "repo",
+		Usage:   "URL to the plugin repository",
+		Value:   "https://grafana.com/api/plugins",
+		EnvVars: []string{"GF_PLUGIN_REPO"},
+	},
+	&cli.StringFlag{
+		Name:    "pluginUrl",
+		Usage:   "Full url to the plugin zip file instead of downloading the plugin from grafana.com/api",
+		Value:   "",
+		EnvVars: []string{"GF_PLUGIN_URL"},
+	},
+	&cli.BoolFlag{
+		Name:  "insecure",
+		Usage: "Skip TLS verification (insecure)",
+	},
+	&cli.BoolFlag{
+		Name:  "debug, d",
+		Usage: "Enable debug logging",
+	},
+	&cli.StringFlag{
+		Name:  "configOverrides",
+		Usage: "Configuration options to override defaults as a string. e.g. cfg:default.paths.log=/dev/null",
+	},
+	&cli.StringFlag{
+		Name:  "homepath",
+		Usage: "Path to Grafana install/home path, defaults to working directory",
+	},
+	&cli.StringFlag{
+		Name:  "config",
+		Usage: "Path to config file",
+	},
+}
 
 func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore.SQLStore) error) func(context *cli.Context) error {
 	return func(context *cli.Context) error {
@@ -137,10 +179,12 @@ var Commands = []*cli.Command{
 		Name:        "plugins",
 		Usage:       "Manage plugins for grafana",
 		Subcommands: pluginCommands,
+		Flags:       AppFlags,
 	},
 	{
 		Name:        "admin",
 		Usage:       "Grafana admin commands",
 		Subcommands: adminCommands,
+		Flags:       AppFlags,
 	},
 }

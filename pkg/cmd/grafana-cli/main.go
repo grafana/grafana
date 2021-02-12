@@ -2,15 +2,12 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"runtime"
-
 	"github.com/fatih/color"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/urfave/cli/v2"
+	"os"
 )
 
 var version = "master"
@@ -26,47 +23,8 @@ func main() {
 				Email: "hello@grafana.com",
 			},
 		},
-		Version: version,
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:    "pluginsDir",
-				Usage:   "Path to the Grafana plugin directory",
-				Value:   utils.GetGrafanaPluginDir(runtime.GOOS),
-				EnvVars: []string{"GF_PLUGIN_DIR"},
-			},
-			&cli.StringFlag{
-				Name:    "repo",
-				Usage:   "URL to the plugin repository",
-				Value:   "https://grafana.com/api/plugins",
-				EnvVars: []string{"GF_PLUGIN_REPO"},
-			},
-			&cli.StringFlag{
-				Name:    "pluginUrl",
-				Usage:   "Full url to the plugin zip file instead of downloading the plugin from grafana.com/api",
-				Value:   "",
-				EnvVars: []string{"GF_PLUGIN_URL"},
-			},
-			&cli.BoolFlag{
-				Name:  "insecure",
-				Usage: "Skip TLS verification (insecure)",
-			},
-			&cli.BoolFlag{
-				Name:  "debug, d",
-				Usage: "Enable debug logging",
-			},
-			&cli.StringFlag{
-				Name:  "configOverrides",
-				Usage: "Configuration options to override defaults as a string. e.g. cfg:default.paths.log=/dev/null",
-			},
-			&cli.StringFlag{
-				Name:  "homepath",
-				Usage: "Path to Grafana install/home path, defaults to working directory",
-			},
-			&cli.StringFlag{
-				Name:  "config",
-				Usage: "Path to config file",
-			},
-		},
+		Version:         version,
+		Flags:           commands.AppFlags,
 		Commands:        commands.Commands,
 		CommandNotFound: cmdNotFound,
 	}
