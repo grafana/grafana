@@ -57,7 +57,7 @@ Organization administrators and Team Admins can choose a home dashboard for a te
 {{< docs/list >}}
 {{< docs/shared "preferences/navigate-to-the-dashboard-list.md" >}}
 {{< docs/shared "manage-users/view-team-list.md" >}}
-1. Click on the team you want to change the home dashboard for and then navigate to the **Settings** tab.
+1. Click on the team that you want to change the home dashboard for and then navigate to the **Settings** tab.
 {{< docs/shared "preferences/select-home-dashboard-list.md" >}}
 {{< /docs/list >}}
 

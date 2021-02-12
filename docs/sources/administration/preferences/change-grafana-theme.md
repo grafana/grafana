@@ -52,7 +52,7 @@ Organization administrators and team administrators can change the UI theme for 
 
 {{< docs/list >}}
 {{< docs/shared "manage-users/view-team-list.md" >}}
-1. Click on the team you want to change the UI theme for and then navigate to the **Settings** tab.
+1. Click on the team that you want to change the UI theme for and then navigate to the **Settings** tab.
 {{< docs/shared "preferences/select-ui-theme-list.md" >}}
 {{< /docs/list >}}
 
