@@ -12,7 +12,7 @@ Preferences are sometimes confusing because they can be set at four different le
 
 - **Server -** Affects all users on the Grafana server. Set by a [Grafana Server Admin]({{< relref "../../permissions/_index.md#grafana-server-admin-role" >}}).
 - **Organization -** Affects all users in an organization. Set by an [Organization Admin]({{< relref "../../permissions/organization_roles.md#organization-admin-role" >}}).
-- **Team -** Affects all users in assigned to a team. Set by an Organization Admin or Team Admin. To learn more about these roles, refer to [Organization roles]({{< relref "../../permissions/organization_roles.md" >}}).
+- **Team -** Affects all users assigned to a team. Set by an Organization Admin or Team Admin. To learn more about these roles, refer to [Organization roles]({{< relref "../../permissions/organization_roles.md" >}}).
 - **User account -** Affects the individual user. Set by the user on their own account.
 
 The lowest level always takes precedence. For example, if a user sets their theme to **Light**, then their visualization of Grafana displays the light theme. Nothing at any higher level can override that.
