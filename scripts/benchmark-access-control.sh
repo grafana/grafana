@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 
 COMMIT_HASH=$(git log -n 1 | grep -Po "(?<=commit )[0-9a-z]{40}")
-BENCH_FILE="tmp/bench_${COMMIT_HASH::7}.txt"
-BENCH_GRAPH="tmp/bench_${COMMIT_HASH::7}.html"
+COMMIT_HASH=${COMMIT_HASH::7}
+BENCH_FILE="tmp/bench_${COMMIT_HASH}.txt"
+BENCH_GRAPH="tmp/bench_${COMMIT_HASH}.html"
 
 # Run benchmark
 go test -benchmem -run=^$ -bench . github.com/grafana/grafana/pkg/services/rbac | tee ${BENCH_FILE}
@@ -28,7 +29,7 @@ HTML_CHART="<html>
         ]);
 
         var options = {
-          title: 'Policies Performance',
+          title: 'Policies Performance (commit ${COMMIT_HASH})',
           legend: 'none',
           vAxis: {
             title: 'Execution time (ns)',
