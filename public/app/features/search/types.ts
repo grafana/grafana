@@ -69,6 +69,8 @@ export interface DashboardQuery {
   skipStarred: boolean;
   folderIds: number[];
   sort: SelectableValue | null;
+  // Save sorting data between layouts
+  prevSort: SelectableValue | null;
   layout: SearchLayout;
 }
 
