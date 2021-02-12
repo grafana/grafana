@@ -115,12 +115,14 @@ export const Card: CardInterface = ({
         {figure}
         <div className={styles.inner}>
           <div className={styles.info}>
-            <div className={styles.heading} role="heading">
-              {heading}
-              {tags}
+            <div>
+              <div className={styles.heading} role="heading">
+                {heading}
+              </div>
+              {meta}
+              {description && <p className={styles.description}>{description}</p>}
             </div>
-            {meta}
-            {description && <p className={styles.description}>{description}</p>}
+            {tags}
           </div>
           {hasActions && (
             <div className={styles.actionRow}>
@@ -197,7 +199,7 @@ export const getCardStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     info: css`
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
       justify-content: space-between;
       align-items: center;
       width: 100%;
