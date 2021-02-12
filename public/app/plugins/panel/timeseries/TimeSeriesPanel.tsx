@@ -41,6 +41,14 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
     [fieldConfig, onFieldConfigChange]
   );
 
+  if (!data || !data.series?.length) {
+    return (
+      <div className="panel-empty">
+        <p>No data found in response</p>
+      </div>
+    );
+  }
+
   return (
     <GraphNG
       data={data.series}

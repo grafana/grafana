@@ -1,10 +1,8 @@
 import React from 'react';
-import { AlignedData } from 'uplot';
 import isNumber from 'lodash/isNumber';
 import { GraphNGLegendEventMode, XYFieldMatchers } from './types';
 import {
   DataFrame,
-  dateTime,
   FieldConfig,
   FieldType,
   formattedValueToString,
@@ -28,6 +26,7 @@ import {
 } from '../uPlot/config';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
+
 const defaultConfig: GraphFieldConfig = {
   drawStyle: DrawStyle.Line,
   showPoints: PointVisibility.Auto,
@@ -48,23 +47,6 @@ export function preparePlotFrame(data: DataFrame[], dimFields: XYFieldMatchers) 
     keep: dimFields.y,
     keepOriginIndices: true,
   });
-}
-
-export function preparePlotData(frame: DataFrame): AlignedData {
-  return frame.fields.map((f) => {
-    if (f.type === FieldType.time) {
-      if (f.values.length > 0 && typeof f.values.get(0) === 'string') {
-        const timestamps = [];
-        for (let i = 0; i < f.values.length; i++) {
-          timestamps.push(dateTime(f.values.get(i)).valueOf());
-        }
-        return timestamps;
-      }
-      return f.values.toArray();
-    }
-
-    return f.values.toArray();
-  }) as AlignedData;
 }
 
 export function preparePlotConfigBuilder(

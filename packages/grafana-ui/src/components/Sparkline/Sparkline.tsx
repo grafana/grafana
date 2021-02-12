@@ -9,7 +9,6 @@ import {
   FieldType,
   getFieldColorModeForField,
   getFieldDisplayName,
-  IndexVector,
 } from '@grafana/data';
 import {
   AxisPlacement,
@@ -22,7 +21,8 @@ import {
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { UPlotChart } from '../uPlot/Plot';
 import { Themeable } from '../../types';
-import { preparePlotData } from '../GraphNG/utils';
+import { preparePlotData } from '../uPlot/utils';
+import { preparePlotFrame } from './utils';
 
 export interface SparklineProps extends Themeable {
   width: number;
@@ -47,7 +47,7 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
   constructor(props: SparklineProps) {
     super(props);
 
-    const alignedDataFrame = prepareData(props.sparkline, props.config);
+    const alignedDataFrame = preparePlotFrame(props.sparkline, props.config);
     const data = preparePlotData(alignedDataFrame);
 
     this.state = {
@@ -58,7 +58,7 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
   }
 
   static getDerivedStateFromProps(props: SparklineProps, state: State) {
-    const frame = prepareData(props.sparkline, props.config);
+    const frame = preparePlotFrame(props.sparkline, props.config);
     if (!frame) {
       return { ...state };
     }
@@ -182,24 +182,4 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
       <UPlotChart data={data} config={configBuilder} width={width} height={height} timeRange={sparkline.timeRange!} />
     );
   }
-}
-
-function prepareData(sparkline: FieldSparkline, config?: FieldConfig<GraphFieldConfig>): DataFrame {
-  const length = sparkline.y.values.length;
-  const yFieldConfig = {
-    ...sparkline.y.config,
-    ...config,
-  };
-
-  return {
-    refId: 'sparkline',
-    fields: [
-      sparkline.x ?? IndexVector.newField(length),
-      {
-        ...sparkline.y,
-        config: yFieldConfig,
-      },
-    ],
-    length,
-  };
 }

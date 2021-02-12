@@ -15,6 +15,7 @@ import {
 import {
   AxisPlacement,
   GraphNGLegendEvent,
+  LegendDisplayMode,
   UPlotChart,
   VizLayout,
   VizLegend,
@@ -23,11 +24,12 @@ import {
 } from '..';
 import { withTheme } from '../../themes';
 import { Themeable } from '../../types';
-import { AlignedData } from 'uplot';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { XYFieldMatchers } from './types';
-import { mapMouseEventToMode, preparePlotConfigBuilder, preparePlotData, preparePlotFrame } from './utils';
 import { GraphNGContext } from './hooks';
+import { AlignedData } from 'uplot';
+import { preparePlotData } from '../uPlot/utils';
+import { mapMouseEventToMode, preparePlotConfigBuilder, preparePlotFrame } from './utils';
 
 export const FIXED_UNIT = '__fixed';
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
@@ -177,7 +179,9 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
     const { legend, onSeriesColorChange, data } = this.props;
     const { config } = this.state;
 
-    if (!config) {
+    const hasLegend = legend && legend.displayMode !== LegendDisplayMode.Hidden;
+
+    if (!config || !hasLegend) {
       return;
     }
 

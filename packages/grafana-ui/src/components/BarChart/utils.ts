@@ -15,6 +15,7 @@ import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation } fr
 import { BarsOptions, getConfig } from './bars';
 import { FIXED_UNIT } from '../GraphNG/GraphNG';
 
+/** @alpha */
 export function preparePlotConfigBuilder(
   data: DataFrame,
   theme: GrafanaTheme,
@@ -167,6 +168,7 @@ export function preparePlotConfigBuilder(
   return builder;
 }
 
+/** @internal */
 export function preparePlotFrame(data: DataFrame[]) {
   const firstFrame = data[0];
   const firstString = firstFrame.fields.find((f) => f.type === FieldType.string);
