@@ -8,10 +8,17 @@ BENCH_GRAPH="tmp/bench_${COMMIT_HASH}.html"
 # Run benchmark
 go test -benchmem -run=^$ -bench . github.com/grafana/grafana/pkg/services/rbac | tee ${BENCH_FILE}
 
-CHART_DATA=$(cat ${BENCH_FILE} |
-  grep -oP "^Benchmark([^[:blank:]]+)[[:blank:]]+[0-9]+[[:blank:]]+[0-9]+" |
+CHART_DATA_USERS=$(cat ${BENCH_FILE} |
+  grep -oP "^BenchmarkPoliciesUsers([^[:blank:]]+)[[:blank:]]+[0-9]+[[:blank:]]+[0-9]+" |
   sed -E 's/Benchmark([^[:blank:]]+)[[:blank:]]+[0-9]+[[:blank:]]+([0-9]+)/\1 \2/' |
-  sed -E 's/^[[:alpha:]]+[0-9]+_([0-9]+)-[0-9]+[[:blank:]]+(.*)/\1 \2/' |
+  sed -E 's/^[[:alpha:]]+([0-9]+)_([0-9]+)-[0-9]+[[:blank:]]+(.*)/\2 \3/' |
+  sed -E 's/([^[:blank:]]+)[[:blank:]]+([^[:blank:]]+)/\[\1, \2],\n/'
+)
+
+CHART_DATA_POLICIES=$(cat ${BENCH_FILE} |
+  grep -oP "^BenchmarkPoliciesPerUser([^[:blank:]]+)[[:blank:]]+[0-9]+[[:blank:]]+[0-9]+" |
+  sed -E 's/Benchmark([^[:blank:]]+)[[:blank:]]+[0-9]+[[:blank:]]+([0-9]+)/\1 \2/' |
+  sed -E 's/^[[:alpha:]]+([0-9]+)_([0-9]+)-[0-9]+[[:blank:]]+(.*)/\1 \3/' |
   sed -E 's/([^[:blank:]]+)[[:blank:]]+([^[:blank:]]+)/\[\1, \2],\n/'
 )
 
@@ -23,9 +30,14 @@ HTML_CHART="<html>
       google.charts.setOnLoadCallback(drawChart);
 
       function drawChart() {
-        var data = google.visualization.arrayToDataTable([
+        var dataUsers = google.visualization.arrayToDataTable([
           ['case', 'time'],
-          ${CHART_DATA}
+          ${CHART_DATA_USERS}
+        ]);
+
+        var dataPolicies = google.visualization.arrayToDataTable([
+          ['case', 'time'],
+          ${CHART_DATA_POLICIES}
         ]);
 
         var options = {
@@ -39,23 +51,34 @@ HTML_CHART="<html>
             title: 'Number of users',
             minValue: 0,
           },
-          trendlines: { 0: {
-            type: 'polynomial',
-            degree: 3,
-            color: 'purple',
-            lineWidth: 10,
-            opacity: 0.2,
-          } }
+          trendlines: {
+            0: {
+              type: 'polynomial',
+              degree: 3,
+              color: 'purple',
+              lineWidth: 10,
+              opacity: 0.2,
+            },
+          }
         };
 
-        var chart = new google.visualization.ScatterChart(document.getElementById('curve_chart'));
+        var chartUsers = new google.visualization.ScatterChart(document.getElementById('chart_users'));
+        var chartPolicies = new google.visualization.ScatterChart(document.getElementById('chart_policies'));
 
-        chart.draw(data, options);
+        chartUsers.draw(dataUsers, options);
+
+        var chartPoliciesOptions = options;
+        chartPoliciesOptions.hAxis.title = 'Number of policies per user';
+        chartPoliciesOptions.trendlines[0].color = 'red';
+        chartPolicies.draw(dataPolicies, options);
       }
     </script>
   </head>
   <body>
-    <div id='curve_chart' style='width: 900px; height: 500px'></div>
+    <div style='display: flex'>
+      <div id='chart_users' style='width: 900px; height: 500px'></div>
+      <div id='chart_policies' style='width: 900px; height: 500px'></div>
+    </div>
   </body>
 </html>
 "
