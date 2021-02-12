@@ -140,7 +140,7 @@ func createUserWithPolicy(t *testing.T, ac *RBACService, user string, policies [
 }
 
 func createTeamWithPolicy(t *testing.T, ac *RBACService, team string, policies []policyTestCase) {
-	createTeamCmd := models.CreateTeamCommand{OrgId: 1, Name: "team1", Email: "team1@test.com"}
+	createTeamCmd := models.CreateTeamCommand{OrgId: 1, Name: team, Email: team + "@test.com"}
 	err := sqlstore.CreateTeam(&createTeamCmd)
 	require.NoError(t, err)
 	teamId := createTeamCmd.Result.Id

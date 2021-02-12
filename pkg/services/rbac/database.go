@@ -221,16 +221,18 @@ func (ac *RBACService) GetUserPolicies(query *GetUserPoliciesQuery) ([]*PolicyDT
 			policy.name,
 			policy.description,
 			policy.created,
-			policy.updated,
-			up.user_id
+			policy.updated
 				FROM policy
-				LEFT JOIN user_policy AS up ON policy.id = up.policy_id
-				LEFT JOIN team_policy as tp ON policy.id = tp.policy_id
-				LEFT JOIN team_member as tm ON tm.team_id = tp.team_id
-					AND tm.user_id = ?
-				WHERE policy.org_id = ? `
+				WHERE policy.id IN (
+					SELECT up.policy_id FROM user_policy AS up WHERE up.user_id = ?
+					UNION
+					SELECT tp.policy_id FROM team_policy as tp
+						INNER JOIN team_member as tm ON tm.team_id = tp.team_id
+						WHERE tm.user_id = ?
+				)
+				AND policy.org_id = ? `
 
-		err := sess.SQL(q, query.UserId, query.OrgId).Find(&result)
+		err := sess.SQL(q, query.UserId, query.UserId, query.OrgId).Find(&result)
 		return err
 	})
 
@@ -250,13 +252,16 @@ func (ac *RBACService) GetUserPermissions(query *GetUserPermissionsQuery) ([]*Pe
 			permission.created
 				FROM permission
 				INNER JOIN policy ON policy.id = permission.policy_id
-				LEFT JOIN user_policy AS up ON policy.id = up.policy_id
-				LEFT JOIN team_policy as tp ON policy.id = tp.policy_id
-				LEFT JOIN team_member as tm ON tm.team_id = tp.team_id
-					AND tm.user_id = ?
-				WHERE policy.org_id = ? `
+				WHERE policy.id IN (
+					SELECT up.policy_id FROM user_policy AS up WHERE up.user_id = ?
+					UNION
+					SELECT tp.policy_id FROM team_policy as tp
+						INNER JOIN team_member as tm ON tm.team_id = tp.team_id
+						WHERE tm.user_id = ?
+				)
+				AND policy.org_id = ? `
 
-		if err := sess.SQL(q, query.UserId, query.OrgId).Find(&result); err != nil {
+		if err := sess.SQL(q, query.UserId, query.UserId, query.OrgId).Find(&result); err != nil {
 			return err
 		}
 

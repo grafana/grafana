@@ -2,6 +2,7 @@ package rbac
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -234,6 +235,20 @@ func TestUserPolicy(t *testing.T) {
 			createUserWithPolicy(t, ac, tc.userName, tc.userPolicies)
 			createTeamWithPolicy(t, ac, tc.teamName, tc.teamPolicies)
 
+			// Create more teams
+			for i := 0; i < 10; i++ {
+				teamName := fmt.Sprintf("faketeam%v", i)
+				policies := []policyTestCase{
+					{
+						name: fmt.Sprintf("fakepolicy%v", i),
+						permissions: []permissionTestCase{
+							{scope: "/api/datasources", permission: "put"},
+						},
+					},
+				}
+				createTeamWithPolicy(t, ac, teamName, policies)
+			}
+
 			userQuery := models.GetUserByLoginQuery{
 				LoginOrEmail: tc.userName,
 			}
@@ -316,6 +331,20 @@ func TestUserPermissions(t *testing.T) {
 
 			createUserWithPolicy(t, ac, tc.userName, tc.userPolicies)
 			createTeamWithPolicy(t, ac, tc.teamName, tc.teamPolicies)
+
+			// Create more teams
+			for i := 0; i < 10; i++ {
+				teamName := fmt.Sprintf("faketeam%v", i)
+				policies := []policyTestCase{
+					{
+						name: fmt.Sprintf("fakepolicy%v", i),
+						permissions: []permissionTestCase{
+							{scope: "/api/datasources", permission: "put"},
+						},
+					},
+				}
+				createTeamWithPolicy(t, ac, teamName, policies)
+			}
 
 			userQuery := models.GetUserByLoginQuery{
 				LoginOrEmail: tc.userName,
