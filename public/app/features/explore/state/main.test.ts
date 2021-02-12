@@ -1,11 +1,10 @@
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
-import { exploreReducer, navigateToExplore, splitCloseAction, splitOpenAction } from './main';
+import { exploreReducer, navigateToExplore, splitCloseAction } from './main';
 import { thunkTester } from 'test/core/thunk/thunkTester';
 import { PanelModel } from 'app/features/dashboard/state';
 import { updateLocation } from '../../../core/actions';
 import { MockDataSourceApi } from '../../../../test/mocks/datasource_srv';
 import { ExploreId, ExploreItemState, ExploreState } from '../../../types';
-import { makeExplorePaneState } from './utils';
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { ExploreUrlState } from '@grafana/data';
 
@@ -137,25 +136,6 @@ describe('navigateToExplore', () => {
 
 describe('Explore reducer', () => {
   describe('split view', () => {
-    it("should make right pane a duplicate of the given item's state on split open", () => {
-      const leftItemMock = ({
-        containerWidth: 100,
-      } as unknown) as ExploreItemState;
-
-      const initialState = ({
-        left: leftItemMock as ExploreItemState,
-        right: makeExplorePaneState(),
-      } as unknown) as ExploreState;
-
-      reducerTester<ExploreState>()
-        .givenReducer(exploreReducer, initialState)
-        .whenActionIsDispatched(splitOpenAction({ itemState: leftItemMock }))
-        .thenStateShouldEqual(({
-          left: leftItemMock,
-          right: leftItemMock,
-        } as unknown) as ExploreState);
-    });
-
     describe('split close', () => {
       it('should keep right pane as left when left is closed', () => {
         const leftItemMock = ({
