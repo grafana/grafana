@@ -71,7 +71,7 @@ def slack_step(channel):
                 'from_secret': 'slack_webhook',
             },
             'channel': channel,
-            'template': 'Build {{build.number}} failed for Commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}\nAuthor: {{build.author}}',
+            'template': 'Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}\nAuthor: {{build.author}}',
         },
     }
 
