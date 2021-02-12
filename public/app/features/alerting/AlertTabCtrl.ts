@@ -219,25 +219,28 @@ export class AlertTabCtrl {
     ThresholdMapper.alertToGraphThresholds(this.panel);
 
     for (const addedNotification of alert.notifications) {
+      let identifier = addedNotification.uid;
       // lookup notifier type by uid
-      let model: any = _.find(this.notifications, { uid: addedNotification.uid });
+      let model: any = _.find(this.notifications, { uid: identifier });
 
-      // fallback to using id if uid is missing
+      // fallback using id if uid is missing
+      if (!model && addedNotification.id) {
+        identifier = addedNotification.id;
+        model = _.find(this.notifications, { id: identifier });
+      }
+
       if (!model) {
-        model = _.find(this.notifications, { id: addedNotification.id });
-        if (!model) {
-          appEvents.emit(CoreEvents.showConfirmModal, {
-            title: 'Notifier with invalid ID is detected',
-            text: `Do you want to delete notifier with invalid ID: ${addedNotification.id} from the dashboard JSON?`,
-            text2: 'After successful deletion, make sure to save the dashboard for storing the update JSON.',
-            icon: 'trash-alt',
-            confirmText: 'Delete',
-            yesText: 'Delete',
-            onConfirm: async () => {
-              this.removeNotification(addedNotification);
-            },
-          });
-        }
+        appEvents.emit(CoreEvents.showConfirmModal, {
+          title: 'Notifier with invalid identifier is detected',
+          text: `Do you want to delete notifier with invalid identifier: ${identifier} from the dashboard JSON?`,
+          text2: 'After successful deletion, make sure to save the dashboard for storing the update JSON.',
+          icon: 'trash-alt',
+          confirmText: 'Delete',
+          yesText: 'Delete',
+          onConfirm: async () => {
+            this.removeNotification(addedNotification);
+          },
+        });
       }
 
       if (model && model.isDefault === false) {
