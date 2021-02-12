@@ -5,15 +5,22 @@ import userEvent from '@testing-library/user-event';
 import { PanelNotSupported, Props } from './PanelNotSupported';
 import { updateLocation } from '../../../../core/actions';
 import { PanelEditorTabId } from './types';
+import { Provider } from 'react-redux';
+import createMockStore from 'redux-mock-store';
 
 const setupTestContext = (options: Partial<Props>) => {
   const defaults: Props = {
     message: '',
     dispatch: jest.fn(),
   };
+  const store = createMockStore();
 
   const props = { ...defaults, ...options };
-  render(<PanelNotSupported {...props} />);
+  render(
+    <Provider store={store()}>
+      <PanelNotSupported {...props} />
+    </Provider>
+  );
 
   return { props };
 };
