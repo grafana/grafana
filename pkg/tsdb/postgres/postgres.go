@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
+
 	"xorm.io/core"
 )
 
@@ -183,7 +184,7 @@ func (s *postgresService) writeCertFiles(ds *models.DataSource) (string, string,
 	item, ok := s.dsCacheInstance.cache.Load(cacheKey)
 	s.dsCacheInstance.locker.RUnlock(cacheKey)
 	if ok {
-		if item.(int) == ds.Version {
+		if item.(int) >= ds.Version {
 			return tlsRootCertPath, tlsClientCertPath, tlsKeyPath, nil
 		}
 	}

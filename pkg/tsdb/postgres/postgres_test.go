@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"math/rand"
 	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -27,6 +28,76 @@ import (
 
 	_ "github.com/lib/pq"
 )
+
+func TestDataSourceCacheManager(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.DataPath = t.TempDir()
+
+	svc := postgresService{
+		Cfg:             cfg,
+		logger:          log.New("tsdb.postgres"),
+		dsCacheInstance: datasourceCacheManager{locker: newLocker()},
+	}
+
+	jsonData := `{"sslmode" : "verify-full", "tlsConfigurationMethod" : "file-content"}`
+	jsonDataValue, err := simplejson.NewJson([]byte(jsonData))
+	require.NoError(t, err)
+
+	secureJsonData := `{"tlsClientCert" : "I am client certification", "tlsClientKey" : "I am client key", "tlsCACert" : "I am CA certification"}`
+	securityjsonData := map[string]string{}
+	err = json.Unmarshal([]byte(secureJsonData), &securityjsonData)
+	securityjsonValue := securejsondata.GetEncryptedJsonData(securityjsonData)
+	require.NoError(t, err)
+
+	mockValidateCertFilePaths()
+	t.Cleanup(resetValidateCertFilePaths)
+	t.Run("Check datasource cache creation and modification", func(t *testing.T) {
+		var id int64
+		for id = 1; id <= 10; id++ {
+			ds := &models.DataSource{
+				Id:             id,
+				Version:        1,
+				Database:       "database",
+				JsonData:       jsonDataValue,
+				SecureJsonData: securityjsonValue,
+				Uid:            "testData",
+			}
+			svc.writeCertFiles(ds)
+		}
+
+		t.Run("check cache creation is succeed", func(t *testing.T) {
+			for id = 1; id <= 10; id++ {
+				version, ok := svc.dsCacheInstance.cache.Load(strconv.Itoa(int(id)))
+				require.True(t, ok)
+				require.Equal(t, int(1), version)
+			}
+		})
+
+		t.Run("cache is updated with the latest datasource version", func(t *testing.T) {
+			ds_v3 := &models.DataSource{
+				Id:             1,
+				Version:        3,
+				Database:       "database",
+				JsonData:       jsonDataValue,
+				SecureJsonData: securityjsonValue,
+				Uid:            "testData",
+			}
+			ds_v2 := &models.DataSource{
+				Id:             1,
+				Version:        2,
+				Database:       "database",
+				JsonData:       jsonDataValue,
+				SecureJsonData: securityjsonValue,
+				Uid:            "testData",
+			}
+			svc.writeCertFiles(ds_v3)
+			svc.writeCertFiles(ds_v2)
+			version, ok := svc.dsCacheInstance.cache.Load("1")
+			require.True(t, ok)
+			require.Equal(t, int(3), version)
+		})
+	})
+}
 
 // Test generateConnectionString.
 func TestGenerateConnectionString(t *testing.T) {
