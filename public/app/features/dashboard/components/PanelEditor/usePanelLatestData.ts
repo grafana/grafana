@@ -35,7 +35,8 @@ export const usePanelLatestData = (panel: PanelModel, options: GetDataOptions): 
      * Adding separate options to dependencies array to avoid additional hook for comparing previous options with current.
      * Otherwise, passing different references to the same object may cause troubles.
      */
-  }, [panel, options.withFieldConfig, options.withTransforms, options]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [panel, options.withFieldConfig, options.withTransforms]);
 
   return {
     data: latestData,

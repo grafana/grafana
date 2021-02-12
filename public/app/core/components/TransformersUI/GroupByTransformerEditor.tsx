@@ -40,7 +40,8 @@ export const GroupByTransformerEditor: React.FC<TransformerUIProps<GroupByTransf
         },
       });
     },
-    [options]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [onChange]
   );
 
   return (

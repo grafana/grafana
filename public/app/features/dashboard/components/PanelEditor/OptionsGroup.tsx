@@ -62,59 +62,59 @@ export const OptionsGroup: FC<OptionsGroupProps> = ({
   );
 };
 
-const CollapsibleSectionWithPersistence: FC<OptionsGroupProps> = memo((props) => {
-  const [value, setValue] = useLocalStorage(getOptionGroupStorageKey(props.id), {
-    defaultToClosed: props.defaultToClosed,
-  });
-  const onToggle = useCallback(
-    (isExpanded: boolean) => {
-      setValue({ defaultToClosed: !isExpanded });
-      if (props.onToggle) {
-        props.onToggle(isExpanded);
+const CollapsibleSectionWithPersistence: FC<OptionsGroupProps> = memo(
+  ({ onToggle: onToggleProps, id, defaultToClosed, title, children }) => {
+    const [value, setValue] = useLocalStorage(getOptionGroupStorageKey(id), {
+      defaultToClosed,
+    });
+    const onToggle = useCallback(
+      (isExpanded: boolean) => {
+        setValue({ defaultToClosed: !isExpanded });
+        if (onToggleProps) {
+          onToggleProps(isExpanded);
+        }
+      },
+      [onToggleProps, setValue]
+    );
+
+    return (
+      <CollapsibleSection id={id} title={title} defaultToClosed={value.defaultToClosed} onToggle={onToggle}>
+        {children}
+      </CollapsibleSection>
+    );
+  }
+);
+
+const CollapsibleSection: FC<Omit<OptionsGroupProps, 'persistMe'>> = memo(
+  ({ id, title, children, defaultToClosed, renderTitle, className, nested = false, onToggle }) => {
+    const [isExpanded, toggleExpand] = useState(!defaultToClosed);
+    const theme = useTheme();
+    const styles = getStyles(theme, isExpanded, nested);
+    useEffect(() => {
+      if (onToggle) {
+        onToggle(isExpanded);
       }
-    },
-    [setValue, props]
-  );
+    }, [isExpanded, onToggle]);
 
-  return <CollapsibleSection {...props} defaultToClosed={value.defaultToClosed} onToggle={onToggle} />;
-});
-
-const CollapsibleSection: FC<Omit<OptionsGroupProps, 'persistMe'>> = ({
-  id,
-  title,
-  children,
-  defaultToClosed,
-  renderTitle,
-  className,
-  nested = false,
-  onToggle,
-}) => {
-  const [isExpanded, toggleExpand] = useState(!defaultToClosed);
-  const theme = useTheme();
-  const styles = getStyles(theme, isExpanded, nested);
-  useEffect(() => {
-    if (onToggle) {
-      onToggle(isExpanded);
-    }
-  }, [isExpanded, onToggle]);
-
-  return (
-    <div className={cx(styles.box, className, 'options-group')}>
-      <div
-        className={styles.header}
-        onClick={() => toggleExpand(!isExpanded)}
-        aria-label={selectors.components.OptionsGroup.toggle(id)}
-      >
-        <div className={cx(styles.toggle, 'editor-options-group-toggle')}>
-          <Icon name={isExpanded ? 'angle-down' : 'angle-right'} />
+    return (
+      <div className={cx(styles.box, className, 'options-group')}>
+        <div
+          className={styles.header}
+          onClick={() => toggleExpand(!isExpanded)}
+          aria-label={selectors.components.OptionsGroup.toggle(id)}
+        >
+          <div className={cx(styles.toggle, 'editor-options-group-toggle')}>
+            <Icon name={isExpanded ? 'angle-down' : 'angle-right'} />
+          </div>
+          <div className={styles.title}>{renderTitle ? renderTitle(isExpanded) : title}</div>
         </div>
-        <div className={styles.title}>{renderTitle ? renderTitle(isExpanded) : title}</div>
+        {isExpanded && <div className={styles.body}>{_.isFunction(children) ? children(toggleExpand) : children}</div>}
       </div>
-      {isExpanded && <div className={styles.body}>{_.isFunction(children) ? children(toggleExpand) : children}</div>}
-    </div>
-  );
-};
+    );
+  }
+);
 
+CollapsibleSection.displayName = 'CollapsibleSection';
 const getStyles = stylesFactory((theme: GrafanaTheme, isExpanded: boolean, isNested: boolean) => {
   return {
     box: cx(

@@ -27,7 +27,7 @@ export const connectWithCleanUp = <
       return function cleanUp() {
         dispatch(cleanUpAction({ stateSelector }));
       };
-    }, []);
+    }, [dispatch]);
     // @ts-ignore
     return <ConnectedComponent {...props} />;
   };

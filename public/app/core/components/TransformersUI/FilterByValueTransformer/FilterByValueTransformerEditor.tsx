@@ -59,7 +59,7 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
       },
     });
     onChange({ ...options, filters });
-  }, [onChange, options, valueMatchers, input]);
+  }, [onChange, options, input]);
 
   const onDeleteFilter = useCallback(
     (index: number) => {
