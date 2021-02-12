@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import _ from 'lodash';
 import { css } from 'emotion';
-import { Button, Icon, Tag, useTheme } from '@grafana/ui';
+import { DeleteButton, Icon, IconButton, Tag, useTheme } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { DashboardModel, DashboardLink } from '../../state/DashboardModel';
 
@@ -87,18 +87,18 @@ export const LinkSettingsList: React.FC<LinkSettingsListProps> = ({ dashboard, s
                     : null}
                 </td>
                 <td style={{ width: '1%' }}>
-                  {idx !== 0 && <Icon name="arrow-up" onClick={() => moveLink(idx, -1)} />}
+                  {idx !== 0 && <IconButton surface="header" name="arrow-up" onClick={() => moveLink(idx, -1)} />}
                 </td>
                 <td style={{ width: '1%' }}>
                   {dashboard.links.length > 1 && idx !== dashboard.links.length - 1 ? (
-                    <Icon name="arrow-down" onClick={() => moveLink(idx, 1)} />
+                    <IconButton surface="header" name="arrow-down" onClick={() => moveLink(idx, 1)} />
                   ) : null}
                 </td>
                 <td style={{ width: '1%' }}>
-                  <Button icon="copy" onClick={() => duplicateLink(link, idx)} />
+                  <IconButton surface="header" name="copy" onClick={() => duplicateLink(link, idx)} />
                 </td>
                 <td style={{ width: '1%' }}>
-                  <Button icon="trash-alt" onClick={() => deleteLink(idx)} />
+                  <DeleteButton size="sm" onConfirm={() => deleteLink(idx)} />
                 </td>
               </tr>
             ))}
