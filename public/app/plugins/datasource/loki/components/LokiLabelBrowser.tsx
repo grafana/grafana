@@ -1,6 +1,7 @@
 import React, { Component, createRef, ChangeEvent } from 'react';
 import {
   Button,
+  ClickOutsideWrapper,
   HorizontalGroup,
   Input,
   Label,
@@ -225,6 +226,8 @@ export class LokiLabelBrowserPopover extends React.Component<BrowserProps, Brows
   };
 
   onClickLabel = (name: string, value: string | undefined, event: React.MouseEvent<HTMLElement>) => {
+    // Stop early before it reaches the ClickOutsideWrapper
+    event.stopPropagation();
     const label = this.state.labels.find((l) => l.name === name);
     if (!label) {
       return;
@@ -253,6 +256,8 @@ export class LokiLabelBrowserPopover extends React.Component<BrowserProps, Brows
   };
 
   onClickValue = (name: string, value: string | undefined, event: React.MouseEvent<HTMLElement>) => {
+    // Stop early before it reaches the ClickOutsideWrapper
+    event.stopPropagation();
     const label = this.state.labels.find((l) => l.name === name);
     if (!label || !label.values) {
       return;
@@ -517,6 +522,12 @@ class UnthemedLokiLabelBrowser extends Component<Props> {
     this.toggle();
   };
 
+  onClickOpen = (e: React.MouseEvent) => {
+    // Stop early before it reaches the ClickOutsideWrapper
+    e.stopPropagation();
+    this.toggle();
+  };
+
   toggle = () => {
     if (this.showing) {
       this.hider.hidePopper();
@@ -527,18 +538,36 @@ class UnthemedLokiLabelBrowser extends Component<Props> {
     }
   };
 
+  renderContent = () => {
+    const { languageProvider, theme } = this.props;
+    if (this.showing) {
+      return (
+        <ClickOutsideWrapper
+          onClick={() => {
+            if (this.showing) {
+              this.toggle();
+            }
+          }}
+        >
+          <LokiLabelBrowserPopover
+            languageProvider={languageProvider}
+            theme={theme}
+            onChange={this.onChange}
+            autoSelect={MAX_AUTO_SELECT}
+          />
+        </ClickOutsideWrapper>
+      );
+    }
+    // Just satisfying the interface here
+    return <></>;
+  };
+
   render() {
-    const { buttonClass, buttonText, disabled, languageProvider, theme } = this.props;
-    const popoverElement = React.createElement(LokiLabelBrowserPopover, {
-      languageProvider,
-      theme,
-      onChange: this.onChange,
-      autoSelect: MAX_AUTO_SELECT,
-    });
+    const { buttonClass, buttonText, disabled, theme } = this.props;
     const styles = getStyles(theme);
 
     return (
-      <PopoverController content={popoverElement} hideAfter={300}>
+      <PopoverController content={this.renderContent} hideAfter={300}>
         {(showPopper, hidePopper, popperProps) => {
           // HACK
           this.hider = { hidePopper, showPopper };
@@ -553,7 +582,12 @@ class UnthemedLokiLabelBrowser extends Component<Props> {
                   className={styles.popover}
                 />
               )}
-              <button disabled={disabled} ref={this.pickerTriggerRef} className={buttonClass} onClick={this.toggle}>
+              <button
+                disabled={disabled}
+                ref={this.pickerTriggerRef}
+                className={buttonClass}
+                onClick={this.onClickOpen}
+              >
                 {buttonText}
               </button>
             </>
