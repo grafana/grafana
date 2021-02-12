@@ -198,9 +198,15 @@ export class LokiLabelBrowserPopover extends React.Component<BrowserProps, Brows
     this.setState({ searchTerm: event.target.value });
   };
 
-  onClickAccept = () => {
+  onClickRunLogsQuery = () => {
     const selector = buildSelector(this.state.labels);
     this.props.onChange(selector);
+  };
+
+  onClickRunMetricsQuery = () => {
+    const selector = buildSelector(this.state.labels);
+    const query = `rate(${selector}[$__interval])`;
+    this.props.onChange(query);
   };
 
   onClickClear = () => {
@@ -410,7 +416,7 @@ export class LokiLabelBrowserPopover extends React.Component<BrowserProps, Brows
           </div>
         </div>
         <div className={styles.section}>
-          <Label description="Choose the label values that you would like to use for the query.">
+          <Label description="Choose the label values that you would like to use for the query. Use the search field to find values across selected labels.">
             2. Find values for the selected labels
           </Label>
           <div>
@@ -465,8 +471,16 @@ export class LokiLabelBrowserPopover extends React.Component<BrowserProps, Brows
             {selector}
           </div>
           <HorizontalGroup>
-            <Button aria-label="Selector submit button" disabled={empty} onClick={this.onClickAccept}>
-              Use selector
+            <Button aria-label="Use selector as logs button" disabled={empty} onClick={this.onClickRunLogsQuery}>
+              Show logs
+            </Button>
+            <Button
+              aria-label="Use selector as metrics button"
+              variant="secondary"
+              disabled={empty}
+              onClick={this.onClickRunMetricsQuery}
+            >
+              Show logs rate
             </Button>
             <Button
               aria-label="Validate submit button"
@@ -477,7 +491,7 @@ export class LokiLabelBrowserPopover extends React.Component<BrowserProps, Brows
               Validate selector
             </Button>
             <Button aria-label="Selector clear button" variant="secondary" onClick={this.onClickClear}>
-              Clear labels
+              Clear
             </Button>
             <div className={cx(styles.status, (status || error) && styles.statusShowing)}>
               <span className={error ? styles.error : ''}>{error || status}</span>
