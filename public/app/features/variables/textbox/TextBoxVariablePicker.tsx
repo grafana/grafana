@@ -34,8 +34,8 @@ export function TextBoxVariablePicker({ variable, onVariableChange }: Props): Re
         current: { ...variable.current, value: updatedValue },
       });
       return;
-    } 
-    
+    }
+
     variableAdapters.get(variable.type).updateOptions(variable);
   }, [dispatch, variable, updatedValue]);
 
