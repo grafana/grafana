@@ -71,7 +71,7 @@ def slack_step(channel):
                 'from_secret': 'slack_webhook',
             },
             'channel': channel,
-            'template': 'Build {{build.number}} failed for PR {{build.pull}}: {{build.link}}\nAuthor: {{build.author}}',
+            'template': 'Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}\nAuthor: {{build.author}}',
         },
     }
 
@@ -205,7 +205,7 @@ def enterprise_downstream_step(edition):
         },
     }
 
-def lint_backend_step(edition):    
+def lint_backend_step(edition):
     return {
         'name': 'lint-backend' + enterprise2_sfx(edition),
         'image': build_image,
@@ -445,7 +445,7 @@ def build_plugins_step(edition, sign=False):
         ],
     }
 
-def test_backend_step(edition):    
+def test_backend_step(edition):
     return {
         'name': 'test-backend' + enterprise2_sfx(edition),
         'image': build_image,
@@ -580,7 +580,7 @@ def gen_version_step(ver_mode, include_enterprise2=False, is_downstream=False):
 def package_step(edition, ver_mode, variants=None, is_downstream=False):
     variants_str = ''
     if variants:
-        variants_str = ' --variants {}'.format(','.join(variants))    
+        variants_str = ' --variants {}'.format(','.join(variants))
 
     if ver_mode in ('master', 'release', 'test-release', 'release-branch'):
         sign_args = ' --sign'
@@ -644,9 +644,9 @@ def package_step(edition, ver_mode, variants=None, is_downstream=False):
         'commands': cmds,
     }
 
-def e2e_tests_server_step(edition, port=3001):    
+def e2e_tests_server_step(edition, port=3001):
     package_file_pfx = ''
-    if edition == 'enterprise2':        
+    if edition == 'enterprise2':
         package_file_pfx = 'grafana' + enterprise2_sfx(edition)
     elif edition == 'enterprise':
         package_file_pfx = 'grafana-' + edition
@@ -724,13 +724,13 @@ def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publis
 
     ubuntu_sfx = ''
     if ubuntu:
-        ubuntu_sfx = '-ubuntu'      
+        ubuntu_sfx = '-ubuntu'
 
     settings = {
         'dry_run': not publish,
         'edition': edition,
         'ubuntu': ubuntu,
-    }    
+    }
 
     if publish:
         settings['username'] = {
@@ -836,7 +836,7 @@ def deploy_to_kubernetes_step(edition, is_downstream=False):
         ],
     }
 
-def enterprise2_sfx(edition):      
+def enterprise2_sfx(edition):
     if edition == 'enterprise2':
         return '-{}'.format(edition)
     return ''
@@ -844,7 +844,7 @@ def enterprise2_sfx(edition):
 def upload_packages_step(edition, ver_mode, is_downstream=False):
     if ver_mode == 'master' and edition in ('enterprise', 'enterprise2') and not is_downstream:
         return None
-    
+
     packages_bucket = ' --packages-bucket grafana-downloads' + enterprise2_sfx(edition)
 
     if ver_mode == 'test-release':
