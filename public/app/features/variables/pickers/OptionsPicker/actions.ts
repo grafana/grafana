@@ -72,7 +72,13 @@ export const filterOrSearchOptions = (searchQuery = ''): ThunkResult<void> => {
   };
 };
 
-export const commitChangesToVariable = (): ThunkResult<void> => {
+const setVariable = async (updated: VariableWithMultiSupport) => {
+  const adapter = variableAdapters.get(updated.type);
+  await adapter.setValue(updated, updated.current, true);
+  return;
+};
+
+export const commitChangesToVariable = (callback?: (updated: VariableWithMultiSupport) => void): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const picker = getState().templating.optionsPicker;
     const existing = getVariable<VariableWithMultiSupport>(picker.id, getState());
@@ -88,9 +94,11 @@ export const commitChangesToVariable = (): ThunkResult<void> => {
       return;
     }
 
-    const adapter = variableAdapters.get(updated.type);
-    await adapter.setValue(updated, updated.current, true);
-    return;
+    if (callback) {
+      return callback(updated);
+    }
+
+    return setVariable(updated);
   };
 };
 
@@ -159,7 +167,7 @@ const searchForOptions = async (dispatch: ThunkDispatch, getState: () => StoreSt
 
 const searchForOptionsWithDebounce = debounce(searchForOptions, 500);
 
-function mapToCurrent(picker: OptionsPickerState): VariableOption | undefined {
+export function mapToCurrent(picker: OptionsPickerState): VariableOption | undefined {
   const { options, selectedValues, queryValue: searchQuery, multi } = picker;
 
   if (options.length === 0 && searchQuery && searchQuery.length > 0) {

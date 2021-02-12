@@ -1,10 +1,9 @@
 import React from 'react';
-import { Badge, NodeGraph } from '@grafana/ui';
+import { Badge, NodeGraph, Collapse } from '@grafana/ui';
 import { DataFrame, TimeRange } from '@grafana/data';
 import { ExploreId, StoreState } from '../../types';
 import { splitOpen } from './state/main';
 import { connect, ConnectedProps } from 'react-redux';
-import { Collapse } from '@grafana/ui';
 import { useLinks } from './utils/links';
 
 interface Props {

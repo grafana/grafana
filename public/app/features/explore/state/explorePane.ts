@@ -3,9 +3,9 @@ import isEqual from 'lodash/isEqual';
 
 import { DEFAULT_RANGE, getQueryKeys, parseUrlState } from 'app/core/utils/explore';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
-import { queryReducer } from './query';
+import { queryReducer, runQueries, setQueriesAction } from './query';
 import { datasourceReducer } from './datasource';
-import { timeReducer } from './time';
+import { timeReducer, updateTime } from './time';
 import { historyReducer } from './history';
 import {
   makeExplorePaneState,
@@ -28,8 +28,6 @@ import { ensureQueries, generateNewKeyAndAddRefIdIfMissing, getTimeRangeFromUrl 
 // Types
 import { ThunkResult } from 'app/types';
 import { getTimeZone } from 'app/features/profile/state/selectors';
-import { runQueries, setQueriesAction } from './query';
-import { updateTime } from './time';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { getRichHistory } from '../../../core/utils/richHistory';
 import { richHistoryUpdatedAction } from './main';

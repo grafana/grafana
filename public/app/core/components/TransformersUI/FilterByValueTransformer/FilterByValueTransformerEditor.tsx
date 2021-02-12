@@ -3,7 +3,7 @@ import { css } from 'emotion';
 import {
   DataTransformerID,
   standardTransformers,
-  TransformerRegistyItem,
+  TransformerRegistryItem,
   TransformerUIProps,
   getFieldDisplayName,
   DataFrame,
@@ -133,13 +133,13 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
   );
 };
 
-export const filterByValueTransformRegistryItem: TransformerRegistyItem<FilterByValueTransformerOptions> = {
+export const filterByValueTransformRegistryItem: TransformerRegistryItem<FilterByValueTransformerOptions> = {
   id: DataTransformerID.filterByValue,
   editor: FilterByValueTransformerEditor,
   transformation: standardTransformers.filterByValueTransformer,
   name: standardTransformers.filterByValueTransformer.name,
   description:
-    'Removes rows of the query results using user definied filters. This is useful if you can not filter your data in the data source.',
+    'Removes rows of the query results using user-defined filters. This is useful if you can not filter your data in the data source.',
 };
 
 const getEditorStyles = stylesFactory(() => ({

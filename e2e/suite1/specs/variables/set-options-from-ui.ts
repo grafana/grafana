@@ -10,7 +10,7 @@ describe('Variables - Set options from ui', () => {
     e2e()
       .route({
         method: 'POST',
-        url: '/api/tsdb/query',
+        url: '/api/ds/query',
       })
       .as('query');
 
@@ -68,7 +68,7 @@ describe('Variables - Set options from ui', () => {
     e2e()
       .route({
         method: 'POST',
-        url: '/api/tsdb/query',
+        url: '/api/ds/query',
       })
       .as('query');
 
@@ -123,7 +123,7 @@ describe('Variables - Set options from ui', () => {
     e2e()
       .route({
         method: 'POST',
-        url: '/api/tsdb/query',
+        url: '/api/ds/query',
       })
       .as('query');
 

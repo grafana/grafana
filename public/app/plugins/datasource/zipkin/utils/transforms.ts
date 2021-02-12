@@ -1,5 +1,4 @@
-import { identity } from 'lodash';
-import { keyBy } from 'lodash';
+import { identity, keyBy } from 'lodash';
 import { ZipkinAnnotation, ZipkinEndpoint, ZipkinSpan } from '../types';
 import { TraceKeyValuePair, TraceLog, TraceProcess, TraceSpanData, TraceData } from '@grafana/data';
 

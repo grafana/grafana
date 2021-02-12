@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -62,6 +64,29 @@ func TestFormatDuration(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.Equal(t, tc.expected, FormatDuration(tc.duration))
+		})
+	}
+}
+
+func TestGetIntervalFrom(t *testing.T) {
+	testCases := []struct {
+		name            string
+		dsInfo          *models.DataSource
+		queryModel      string
+		defaultInterval time.Duration
+		expected        time.Duration
+	}{
+		{"45s", nil, `{"interval": "45s"}`, time.Second * 15, time.Second * 45},
+		{"45", nil, `{"interval": "45"}`, time.Second * 15, time.Second * 45},
+		{"2m", nil, `{"interval": "2m"}`, time.Second * 15, time.Minute * 2},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			js, _ := simplejson.NewJson([]byte(tc.queryModel))
+			actual, err := GetIntervalFrom(tc.dsInfo, js, tc.defaultInterval)
+			assert.Nil(t, err)
+			assert.Equal(t, tc.expected, actual)
 		})
 	}
 }

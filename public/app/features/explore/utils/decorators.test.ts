@@ -132,7 +132,7 @@ describe('decorateWithGraphLogsTraceAndTable', () => {
     });
   });
 
-  it('should handle query error', () => {
+  it('should return frames even if there is an error', () => {
     const { timeSeries, logs, table } = getTestContext();
     const series: DataFrame[] = [timeSeries, logs, table];
     const panelData: PanelData = {
@@ -147,9 +147,9 @@ describe('decorateWithGraphLogsTraceAndTable', () => {
       error: {},
       state: LoadingState.Error,
       timeRange: {},
-      graphFrames: [],
-      tableFrames: [],
-      logsFrames: [],
+      graphFrames: [timeSeries],
+      tableFrames: [table],
+      logsFrames: [logs],
       traceFrames: [],
       nodeGraphFrames: [],
       graphResult: null,
@@ -171,10 +171,10 @@ describe('decorateWithGraphResult', () => {
     expect(decorateWithGraphResult(panelData).graphResult).toBeNull();
   });
 
-  it('returns null if panelData has error', () => {
+  it('returns data if panelData has error', () => {
     const { timeSeries } = getTestContext();
     const panelData = createExplorePanelData({ error: {}, graphFrames: [timeSeries] });
-    expect(decorateWithGraphResult(panelData).graphResult).toBeNull();
+    expect(decorateWithGraphResult(panelData).graphResult).toMatchObject([timeSeries]);
   });
 });
 
@@ -272,11 +272,11 @@ describe('decorateWithTableResult', () => {
     expect(panelResult.tableResult).toBeNull();
   });
 
-  it('returns null if panelData has error', async () => {
+  it('returns data if panelData has error', async () => {
     const { table, emptyTable } = getTestContext();
     const panelData = createExplorePanelData({ error: {}, tableFrames: [table, emptyTable] });
     const panelResult = await decorateWithTableResult(panelData).toPromise();
-    expect(panelResult.tableResult).toBeNull();
+    expect(panelResult.tableResult).not.toBeNull();
   });
 });
 
@@ -386,9 +386,9 @@ describe('decorateWithLogsResult', () => {
     expect(decorateWithLogsResult()(panelData).logsResult).toBeNull();
   });
 
-  it('returns null if panelData has error', () => {
+  it('returns data if panelData has error', () => {
     const { logs } = getTestContext();
     const panelData = createExplorePanelData({ error: {}, logsFrames: [logs] });
-    expect(decorateWithLogsResult()(panelData).logsResult).toBeNull();
+    expect(decorateWithLogsResult()(panelData).logsResult).not.toBeNull();
   });
 });

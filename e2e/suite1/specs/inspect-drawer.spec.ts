@@ -75,36 +75,36 @@ const expectDrawerTabsAndContent = () => {
         expect(li.text()).equals('Data');
       });
       e2e.components.PanelInspector.Data.content().should('be.visible');
-      e2e.components.PanelInspector.Stats.content().should('not.be.visible');
-      e2e.components.PanelInspector.Json.content().should('not.be.visible');
-      e2e.components.PanelInspector.Query.content().should('not.be.visible');
+      e2e.components.PanelInspector.Stats.content().should('not.exist');
+      e2e.components.PanelInspector.Json.content().should('not.exist');
+      e2e.components.PanelInspector.Query.content().should('not.exist');
 
       // other tabs should also be visible, click on each to see if we get any console errors
       e2e.components.Tab.title('Stats').should('be.visible').click();
       e2e.components.PanelInspector.Stats.content().should('be.visible');
-      e2e.components.PanelInspector.Data.content().should('not.be.visible');
-      e2e.components.PanelInspector.Json.content().should('not.be.visible');
-      e2e.components.PanelInspector.Query.content().should('not.be.visible');
+      e2e.components.PanelInspector.Data.content().should('not.exist');
+      e2e.components.PanelInspector.Json.content().should('not.exist');
+      e2e.components.PanelInspector.Query.content().should('not.exist');
 
       e2e.components.Tab.title('JSON').should('be.visible').click();
       e2e.components.PanelInspector.Json.content().should('be.visible');
-      e2e.components.PanelInspector.Data.content().should('not.be.visible');
-      e2e.components.PanelInspector.Stats.content().should('not.be.visible');
-      e2e.components.PanelInspector.Query.content().should('not.be.visible');
+      e2e.components.PanelInspector.Data.content().should('not.exist');
+      e2e.components.PanelInspector.Stats.content().should('not.exist');
+      e2e.components.PanelInspector.Query.content().should('not.exist');
 
       e2e.components.Tab.title('Query').should('be.visible').click();
 
       e2e.components.PanelInspector.Query.content().should('be.visible');
-      e2e.components.PanelInspector.Data.content().should('not.be.visible');
-      e2e.components.PanelInspector.Stats.content().should('not.be.visible');
-      e2e.components.PanelInspector.Json.content().should('not.be.visible');
+      e2e.components.PanelInspector.Data.content().should('not.exist');
+      e2e.components.PanelInspector.Stats.content().should('not.exist');
+      e2e.components.PanelInspector.Json.content().should('not.exist');
     });
 };
 
 const expectDrawerClose = () => {
   // close using close button
   e2e.components.Drawer.General.close().click();
-  e2e.components.Drawer.General.title(`Inspect: ${PANEL_UNDER_TEST}`).should('not.be.visible');
+  e2e.components.Drawer.General.title(`Inspect: ${PANEL_UNDER_TEST}`).should('not.exist');
 };
 
 const expectDrawerExpandAndContract = (viewPortWidth: number) => {

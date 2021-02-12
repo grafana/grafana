@@ -1,9 +1,9 @@
-import React from 'react';
-import { JaegerDatasource, JaegerQuery } from './datasource';
+import { AppEvents, ExploreQueryFieldProps, TraceData, TraceSpan } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { ButtonCascader, CascaderOption } from '@grafana/ui';
-
-import { AppEvents, ExploreQueryFieldProps, TraceSpan, TraceData } from '@grafana/data';
+import React from 'react';
 import { appEvents } from '../../../core/core';
+import { JaegerDatasource, JaegerQuery } from './datasource';
 
 const ALL_OPERATIONS_KEY = '__ALL__';
 const NO_TRACES_KEY = '__NO_TRACES__';
@@ -203,8 +203,8 @@ export class JaegerQueryField extends React.PureComponent<Props, State> {
             </ButtonCascader>
           </div>
           <div className="gf-form gf-form--grow flex-shrink-1">
-            <div className={'slate-query-field__wrapper'}>
-              <div className="slate-query-field">
+            <div className="slate-query-field__wrapper">
+              <div className="slate-query-field" aria-label={selectors.components.QueryField.container}>
                 <input
                   style={{ width: '100%' }}
                   value={query.query || ''}

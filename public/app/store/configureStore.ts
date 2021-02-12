@@ -35,7 +35,7 @@ export function configureStore(initialState?: Partial<StoreState>) {
     devTools: process.env.NODE_ENV !== 'production',
     preloadedState: {
       navIndex: buildInitialState(),
-      ...(initialState || {}),
+      ...initialState,
     },
   });
 

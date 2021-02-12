@@ -17,7 +17,7 @@ e2e.scenario({
 
         e2e.components.Select.option().should('be.visible').first().click();
 
-        e2e.components.Select.input().should('be.visible').should('have.focus');
+        e2e.components.Select.input().should('exist').should('have.focus');
       });
 
     e2e.pages.Dashboard.Settings.General.title().click();
@@ -25,7 +25,7 @@ e2e.scenario({
     e2e.components.FolderPicker.container()
       .should('be.visible')
       .within(() => {
-        e2e.components.Select.input().should('be.visible').should('not.have.focus');
+        e2e.components.Select.input().should('exist').should('not.have.focus');
       });
   },
 });
