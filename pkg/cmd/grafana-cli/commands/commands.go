@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"runtime"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -12,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/urfave/cli/v2"
-	"runtime"
 )
 
 var AppFlags = []cli.Flag{
