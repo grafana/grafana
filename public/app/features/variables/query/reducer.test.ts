@@ -346,7 +346,6 @@ describe('metricNamesToVariableValues', () => {
     { value: 'demo.robustperception.io:9100', text: 'demo.robustperception.io:9100', selected: false },
   ];
 
-  ///.*_(\w+)\{/
   it.each`
     variableRegEx                                          | expected
     ${''}                                                  | ${metricsNames}
