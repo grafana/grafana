@@ -42,13 +42,20 @@ func benchmarkPolicies(b *testing.B, policiesPerUser, users int) {
 	}
 }
 
-func BenchmarkPolicies10_10(b *testing.B) { benchmarkPolicies(b, 10, 10) }
+func BenchmarkPoliciesUsers10_10(b *testing.B) { benchmarkPolicies(b, 10, 10) }
 
-func BenchmarkPolicies10_100(b *testing.B)  { benchmarkPolicies(b, 10, 100) }
-func BenchmarkPolicies10_1000(b *testing.B) { benchmarkPolicies(b, 10, 1000) }
+func BenchmarkPoliciesUsers10_100(b *testing.B)  { benchmarkPolicies(b, 10, 100) }
+func BenchmarkPoliciesUsers10_500(b *testing.B)  { benchmarkPolicies(b, 10, 500) }
+func BenchmarkPoliciesUsers10_1000(b *testing.B) { benchmarkPolicies(b, 10, 1000) }
+func BenchmarkPoliciesUsers10_5000(b *testing.B) { benchmarkPolicies(b, 10, 5000) }
+func BenchmarkPoliciesUsers10_10000(b *testing.B) {
+	if testing.Short() {
+		b.Skip("Skipping benchmark in short mode")
+	}
+	benchmarkPolicies(b, 10, 10000)
+}
 
-// func BenchmarkPolicies10_10000(b *testing.B) { benchmarkPolicies(b, 10, 10000) }
-
-func BenchmarkPolicies100_10(b *testing.B)   { benchmarkPolicies(b, 100, 10) }
-func BenchmarkPolicies1000_10(b *testing.B)  { benchmarkPolicies(b, 1000, 10) }
-func BenchmarkPolicies10000_10(b *testing.B) { benchmarkPolicies(b, 10000, 10) }
+func BenchmarkPoliciesPerUser10_10(b *testing.B)   { benchmarkPolicies(b, 10, 10) }
+func BenchmarkPoliciesPerUser100_10(b *testing.B)  { benchmarkPolicies(b, 100, 10) }
+func BenchmarkPoliciesPerUser500_10(b *testing.B)  { benchmarkPolicies(b, 500, 10) }
+func BenchmarkPoliciesPerUser1000_10(b *testing.B) { benchmarkPolicies(b, 1000, 10) }
