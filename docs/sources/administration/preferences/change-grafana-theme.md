@@ -48,7 +48,7 @@ Organization administrators can change the UI theme for all users in an organiza
 
 ## Change team UI theme
 
-Organization administrators and team administrators can change the UI theme for all users in a team.
+Organization and team administrators can change the UI theme for all users in a team.
 
 {{< docs/list >}}
 {{< docs/shared "manage-users/view-team-list.md" >}}
