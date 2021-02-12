@@ -552,9 +552,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
 
         return {
           data: dataframes,
-          error: Object.values(res.results).reduce((acc, curr) => {
-            return curr.error ? { message: curr.error } : acc;
-          }, null),
+          error: Object.values(res.results).reduce((acc, curr) => (curr.error ? { message: curr.error } : acc), null),
         };
       }),
       catchError((err) => {
