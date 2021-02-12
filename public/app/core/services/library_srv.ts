@@ -57,6 +57,10 @@ export class LibrarySrv {
   deleteLibraryPanel(uid: string): Promise<{ message: string }> {
     return getBackendSrv().delete(`/api/library-panels/${uid}`);
   }
+
+  disconnectLibraryPanel(uid: string, dashboardId: number) {
+    return getBackendSrv().delete(`/api/library-panels/${uid}/dashboards/${dashboardId}`);
+  }
 }
 
 export const librarySrv = new LibrarySrv();

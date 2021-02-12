@@ -92,10 +92,9 @@ export const PanelOptionsTab: FC<Props> = ({
       <OptionsGroup title="Reusable panel information" id="Shared Panel Info" key="Shared Panel Info">
         {panel.libraryPanel.uid && (
           <p className={styles.libraryPanelInfo}>
-            {/*
-            // Commented out until connectedDashboards is included with library panel api response
-            Used on {panel.libraryPanel.connectedDashboards}
-            {panel.libraryPanel.connectedDashboards?.length === 1 ? 'dashboard' : 'dashboards'} <br /> */}
+            {`Used on ${panel.libraryPanel.meta.connectedDashboards} `}
+            {panel.libraryPanel.meta.connectedDashboards === 1 ? 'dashboard' : 'dashboards'}
+            <br />
             Last edited on {dashboard.formatDate(panel.libraryPanel.meta.updated!, 'L')} by
             {panel.libraryPanel.meta.updatedBy.avatarUrl && (
               <img

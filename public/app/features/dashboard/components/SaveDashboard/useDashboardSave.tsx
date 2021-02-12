@@ -9,50 +9,19 @@ import { updateLocation } from 'app/core/reducers/location';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { saveDashboard as saveDashboardApiCall } from 'app/features/manage-dashboards/state/actions';
 import { getLibrarySrv } from 'app/core/services/library_srv';
-import config from 'app/core/config';
 
-const saveLibraryPanels = (saveModel: any, folderId: number) => {
-  // Check if there are any new library panels that need to be created first
-  const panelPromises = [];
-  for (const [i, panel] of saveModel.panels.entries()) {
-    if (!panel.libraryPanel) {
-      continue;
-    } else if (panel.libraryPanel && panel.libraryPanel.uid === undefined) {
-      panel.libraryPanel.name = panel.title;
-      panelPromises.push(
-        getLibrarySrv()
-          .addLibraryPanel(panel, folderId!)
-          .then((returnedPanel) => {
-            saveModel.panels[i] = {
-              id: returnedPanel.model.id,
-              gridPos: returnedPanel.model.gridPos,
-              libraryPanel: {
-                uid: returnedPanel.uid,
-                name: returnedPanel.name,
-              },
-            };
-          })
-      );
-    } else {
-      // For now, update library panels. Implement "Update panel instances" modal later.
-      panelPromises.push(
-        getLibrarySrv()
-          .updateLibraryPanel(panel, folderId!)
-          .then((returnedPanel) => {
-            saveModel.panels[i] = {
-              id: returnedPanel.model.id,
-              gridPos: returnedPanel.model.gridPos,
-              libraryPanel: {
-                uid: returnedPanel.uid,
-                name: returnedPanel.name,
-              },
-            };
-          })
-      );
-    }
-  }
+// Putting this here purely as a temporary measure, but I suspect it would make more sense
+// to handle panel unlinking on the backend in a similar manner.
+const unlinkLibraryPanels = (dashboard: DashboardModel) => {
+  const libraryPanels = dashboard.panels
+    .filter((panel) => panel.libraryPanel?.uid !== undefined)
+    .reduce<Record<string, boolean>>((libPanels, curPanel) => {
+      libPanels[curPanel.libraryPanel!.uid!] = true;
+      return libPanels;
+    }, {});
 
-  return Promise.all(panelPromises).then(() => saveModel);
+  const panelsToUnlink = dashboard.originalLibraryPanels.filter((libPanelId) => !libraryPanels[libPanelId]);
+  return panelsToUnlink.map((panelId) => getLibrarySrv().disconnectLibraryPanel(panelId, dashboard.id));
 };
 
 const saveDashboard = async (saveModel: any, options: SaveDashboardOptions, dashboard: DashboardModel) => {
@@ -61,11 +30,11 @@ const saveDashboard = async (saveModel: any, options: SaveDashboardOptions, dash
     folderId = dashboard.meta.folderId ?? saveModel.folderId;
   }
 
-  if (config.featureToggles.panelLibrary) {
-    await saveLibraryPanels(saveModel, folderId!);
-  }
-
-  return await saveDashboardApiCall({ ...options, folderId, dashboard: saveModel });
+  const savePromise = Promise.all([
+    saveDashboardApiCall({ ...options, folderId, dashboard: saveModel }),
+    ...unlinkLibraryPanels(dashboard),
+  ]);
+  return (await savePromise)[0];
 };
 
 export const useDashboardSave = (dashboard: DashboardModel) => {

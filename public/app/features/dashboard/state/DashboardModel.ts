@@ -73,6 +73,7 @@ export class DashboardModel {
   links: DashboardLink[];
   gnetId: any;
   panels: PanelModel[];
+  originalLibraryPanels: string[];
   panelInEdit?: PanelModel;
   panelInView?: PanelModel;
 
@@ -92,6 +93,7 @@ export class DashboardModel {
     templating: true, // needs special handling
     originalTime: true,
     originalTemplating: true,
+    originalLibraryPanels: true,
     panelInEdit: true,
     panelInView: true,
     getVariablesFromState: true,
@@ -125,6 +127,9 @@ export class DashboardModel {
     this.links = data.links || [];
     this.gnetId = data.gnetId || null;
     this.panels = _.map(data.panels || [], (panelData: any) => new PanelModel(panelData));
+    this.originalLibraryPanels = this.panels
+      .filter((panel) => panel.libraryPanel !== undefined)
+      .map((panel) => panel.libraryPanel!.uid!);
 
     this.resetOriginalVariables(true);
     this.resetOriginalTime();
