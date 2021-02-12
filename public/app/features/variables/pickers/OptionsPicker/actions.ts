@@ -96,9 +96,9 @@ export const commitChangesToVariable = (callback?: (updated: VariableWithMultiSu
 
     if (callback) {
       return callback(updated);
-    } else {
-      return setVariable(updated);
-    }
+    } 
+    
+    return setVariable(updated);
   };
 };
 
