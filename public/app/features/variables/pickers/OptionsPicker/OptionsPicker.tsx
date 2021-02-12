@@ -36,7 +36,7 @@ type Props = OwnProps & ConnectedProps & DispatchProps;
 
 export class OptionsPickerUnconnected extends PureComponent<Props> {
   onShowOptions = () => this.props.showOptions(this.props.variable);
-  onHideOptions = () => this.props.commitChangesToVariable();
+  onHideOptions = () => this.props.commitChangesToVariable(this.props.onVariableChange);
 
   onToggleOption = (option: VariableOption, clearOthers: boolean) => {
     const toggleFunc = this.props.variable.multi ? this.onToggleMultiValueVariable : this.onToggleSingleValueVariable;
