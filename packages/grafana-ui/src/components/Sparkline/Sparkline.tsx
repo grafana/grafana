@@ -91,7 +91,7 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
 
   prepareConfig(data: DataFrame) {
     const { theme } = this.props;
-    const builder = new UPlotConfigBuilder(() => DefaultTimeZone);
+    const builder = new UPlotConfigBuilder();
 
     builder.setCursor({
       show: true,

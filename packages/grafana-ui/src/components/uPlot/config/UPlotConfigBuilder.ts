@@ -5,7 +5,7 @@ import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
 import { AxisPlacement } from '../config';
 import uPlot, { Cursor, Band, Hooks, BBox } from 'uplot';
 import { defaultsDeep } from 'lodash';
-import { getTimeZoneInfo, TimeZone } from '@grafana/data';
+import { DefaultTimeZone, getTimeZoneInfo } from '@grafana/data';
 
 type valueof<T> = T[keyof T];
 
@@ -21,7 +21,7 @@ export class UPlotConfigBuilder {
   private hasBottomAxis = false;
   private hooks: Hooks.Arrays = {};
 
-  constructor(private getTimeZone?: () => TimeZone) {}
+  constructor(private getTimeZone = () => DefaultTimeZone) {}
 
   addHook(type: keyof Hooks.Defs, hook: valueof<Hooks.Defs>) {
     if (!this.hooks[type]) {
