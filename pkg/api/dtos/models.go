@@ -77,7 +77,7 @@ func GetGravatarUrlWithDefault(text string, defaultText string) string {
 }
 
 func IsHiddenUser(userLogin string, signedInUser *models.SignedInUser, cfg *setting.Cfg) bool {
-	if signedInUser.IsGrafanaAdmin || userLogin == signedInUser.Login {
+	if userLogin == "" || signedInUser.IsGrafanaAdmin || userLogin == signedInUser.Login {
 		return false
 	}
 
