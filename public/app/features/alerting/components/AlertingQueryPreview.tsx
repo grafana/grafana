@@ -26,7 +26,7 @@ export const AlertingQueryPreview: FC<Props> = ({ queryRunner }) => {
   const [activeTab, setActiveTab] = useState<string>(Tabs.Query);
   const styles = useStyles(getStyles);
 
-  const observable = useMemo(() => queryRunner.getData({ withFieldConfig: true, withTransforms: true }), []);
+  const observable = useMemo(() => queryRunner.getData({ withFieldConfig: true, withTransforms: true }), [queryRunner]);
   const data = useObservable(observable);
 
   return (

@@ -20,6 +20,6 @@ export const useDashboardDelete = (uid: string) => {
       );
       appEvents.emit(AppEvents.alertSuccess, ['Dashboard Deleted', state.value.title + ' has been deleted']);
     }
-  }, [state]);
+  }, [dispatch, state]);
   return { state, onRestoreDashboard };
 };

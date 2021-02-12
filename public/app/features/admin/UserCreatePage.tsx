@@ -23,10 +23,13 @@ interface UserDTO {
 const createUser = async (user: UserDTO) => getBackendSrv().post('/api/admin/users', user);
 
 const UserCreatePage: React.FC<UserCreatePageProps> = ({ navModel, updateLocation }) => {
-  const onSubmit = useCallback(async (data: UserDTO) => {
-    await createUser(data);
-    updateLocation({ path: '/admin/users' });
-  }, []);
+  const onSubmit = useCallback(
+    async (data: UserDTO) => {
+      await createUser(data);
+      updateLocation({ path: '/admin/users' });
+    },
+    [updateLocation]
+  );
 
   return (
     <Page navModel={navModel}>

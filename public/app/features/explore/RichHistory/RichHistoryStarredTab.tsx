@@ -14,6 +14,7 @@ import { filterAndSortQueries, createDatasourcesList, SortOrder } from 'app/core
 import RichHistoryCard from './RichHistoryCard';
 import { sortOrderOptions } from './RichHistory';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
+import { useDebounce } from 'react-use';
 
 export interface Props {
   queries: RichHistoryQuery[];
@@ -82,12 +83,21 @@ export function RichHistoryStarredTab(props: Props) {
 
   const [filteredQueries, setFilteredQueries] = useState<RichHistoryQuery[]>([]);
   const [searchInput, setSearchInput] = useState('');
+  const [debouncedSearchInput, setDebouncedSearchInput] = useState('');
 
   const theme = useTheme();
   const styles = getStyles(theme);
 
   const datasourcesRetrievedFromQueryHistory = uniqBy(queries, 'datasourceName').map((d) => d.datasourceName);
   const listOfDatasources = createDatasourcesList(datasourcesRetrievedFromQueryHistory);
+
+  useDebounce(
+    () => {
+      setDebouncedSearchInput(searchInput);
+    },
+    300,
+    [searchInput]
+  );
 
   useEffect(() => {
     const starredQueries = queries.filter((q) => q.starred === true);
@@ -96,10 +106,10 @@ export function RichHistoryStarredTab(props: Props) {
         starredQueries,
         sortOrder,
         datasourceFilters?.map((d) => d.value) as string[] | null,
-        searchInput
+        debouncedSearchInput
       )
     );
-  }, [queries, sortOrder, datasourceFilters, searchInput]);
+  }, [queries, sortOrder, datasourceFilters, debouncedSearchInput]);
 
   return (
     <div className={styles.container}>

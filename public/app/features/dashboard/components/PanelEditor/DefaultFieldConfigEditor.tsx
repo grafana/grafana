@@ -64,7 +64,7 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
         </Field>
       );
     },
-    [config]
+    [config.defaults, data, onDefaultValueChange]
   );
 
   const GENERAL_OPTIONS_CATEGORY = `${plugin.meta.name} options`;

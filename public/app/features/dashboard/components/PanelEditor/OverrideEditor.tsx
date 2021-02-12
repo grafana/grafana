@@ -85,7 +85,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
 
       onChange(override);
     },
-    [override, onChange]
+    [registry, override, onChange]
   );
 
   let configPropertiesOptions = registry

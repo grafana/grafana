@@ -66,7 +66,7 @@ export const OptionsPaneContent: React.FC<Props> = ({
         />
       );
     },
-    [data, plugin, panel, onFieldConfigsChange]
+    [panel, hasSeries, onFieldConfigsChange, data]
   );
 
   const renderFieldOverrideOptions = useCallback(
@@ -87,7 +87,7 @@ export const OptionsPaneContent: React.FC<Props> = ({
         />
       );
     },
-    [data, plugin, panel, onFieldConfigsChange]
+    [panel, hasSeries, onFieldConfigsChange, data]
   );
 
   // When the panel has no query only show the main tab

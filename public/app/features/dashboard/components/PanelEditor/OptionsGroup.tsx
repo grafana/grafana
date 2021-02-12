@@ -73,7 +73,7 @@ const CollapsibleSectionWithPersistence: FC<OptionsGroupProps> = memo((props) =>
         props.onToggle(isExpanded);
       }
     },
-    [setValue, props.onToggle]
+    [setValue, props]
   );
 
   return <CollapsibleSection {...props} defaultToClosed={value.defaultToClosed} onToggle={onToggle} />;
@@ -96,7 +96,7 @@ const CollapsibleSection: FC<Omit<OptionsGroupProps, 'persistMe'>> = ({
     if (onToggle) {
       onToggle(isExpanded);
     }
-  }, [isExpanded]);
+  }, [isExpanded, onToggle]);
 
   return (
     <div className={cx(styles.box, className, 'options-group')}>

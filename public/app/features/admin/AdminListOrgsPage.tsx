@@ -23,7 +23,7 @@ export const AdminListOrgsPages: FC = () => {
 
   useEffect(() => {
     fetchOrgs();
-  }, []);
+  }, [fetchOrgs]);
 
   return (
     <Page navModel={navModel}>

@@ -13,7 +13,8 @@ export interface Props {
 }
 
 export const PanelNotSupported: FC<Props> = ({ message, dispatch: propsDispatch }) => {
-  const dispatch = propsDispatch ? propsDispatch : useDispatch();
+  let dispatch = useDispatch();
+  dispatch = propsDispatch ?? dispatch;
   const onBackToQueries = useCallback(() => {
     dispatch(updateLocation({ query: { tab: PanelEditorTabId.Query }, partial: true }));
   }, [dispatch]);
