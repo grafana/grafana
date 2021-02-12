@@ -1,7 +1,14 @@
 import { AnyAction } from 'redux';
 import isEqual from 'lodash/isEqual';
 
-import { DEFAULT_RANGE, getQueryKeys, parseUrlState } from 'app/core/utils/explore';
+import {
+  DEFAULT_RANGE,
+  getQueryKeys,
+  parseUrlState,
+  ensureQueries,
+  generateNewKeyAndAddRefIdIfMissing,
+  getTimeRangeFromUrl,
+} from 'app/core/utils/explore';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { queryReducer, runQueries, setQueriesAction } from './query';
 import { datasourceReducer } from './datasource';
@@ -24,7 +31,6 @@ import {
   HistoryItem,
   DataSourceApi,
 } from '@grafana/data';
-import { ensureQueries, generateNewKeyAndAddRefIdIfMissing, getTimeRangeFromUrl } from 'app/core/utils/explore';
 // Types
 import { ThunkResult } from 'app/types';
 import { getTimeZone } from 'app/features/profile/state/selectors';

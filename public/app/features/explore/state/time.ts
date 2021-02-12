@@ -16,8 +16,7 @@ import { getTimeZone } from 'app/features/profile/state/selectors';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { runQueries } from './query';
-import { syncTimesAction } from './main';
-import { stateSave } from './main';
+import { syncTimesAction, stateSave } from './main';
 
 //
 // Actions and Payloads
