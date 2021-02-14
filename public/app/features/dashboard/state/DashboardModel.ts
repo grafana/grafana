@@ -206,6 +206,7 @@ export class DashboardModel {
     // get panel save models
     copy.panels = this.panels
       .filter((panel: PanelModel) => panel.type !== 'add-panel')
+      .filter((panel: PanelModel) => panel.repeatPanelId === undefined)
       .map((panel: PanelModel) => {
         // If we save while editing we should include the panel in edit mode instead of the
         // unmodified source panel

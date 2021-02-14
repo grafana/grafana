@@ -71,6 +71,22 @@ describe('DashboardModel', () => {
 
       expect(panels.length).toBe(1);
     });
+    it('should remove repeated panels', () => {
+      const model = new DashboardModel({});
+      model.addPanel({
+        repeatPanelId: 4,
+      });
+      model.addPanel({
+        type: 'graph',
+      });
+      model.addPanel({
+        repeatPanelId: 5,
+      });
+      const saveModel = model.getSaveModelClone();
+      const panels = saveModel.panels;
+
+      expect(panels.length).toBe(1);
+    });
 
     it('should save model in edit mode', () => {
       const model = new DashboardModel({});
