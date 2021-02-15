@@ -68,7 +68,7 @@ describe('AlertRulesTable', () => {
         <AlertRulesTable data={formattedRulesStubs} columns={columns} emptyMessage="empty" />
       </AlertRulesProvider.Provider>
     );
-
-    expect(wrapper.find(dataQa('alert-rules-details'))).toHaveLength(1);
+    const details = wrapper.find(dataQa('alert-rules-details'));
+    expect(details.text().length).toBeGreaterThan(0);
   });
 });

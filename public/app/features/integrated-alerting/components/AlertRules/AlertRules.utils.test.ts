@@ -142,6 +142,8 @@ describe('AlertRulesTable utils', () => {
           ],
           summary: 'Test 1',
         },
+        expr:
+          'sum by (node_name) (mongodb_ss_connections{conn_type="current"}) * 1024 * 1024↵/ on (node_name) (node_memory_MemTotal_bytes)↵* 100↵> [[ .threshold ]]',
       },
       ruleId: 'test 1',
       createdAt: '2020-11-25 16:53:39.366',
@@ -152,6 +154,8 @@ describe('AlertRulesTable utils', () => {
       summary: 'Database down - HR - Prod',
       threshold: 'true',
       lastNotified: '2020-11-25 16:53:39.366',
+      expr:
+        'sum by (node_name) (mongodb_ss_connections{conn_type="current"}) * 1024 * 1024↵/ on (node_name) (node_memory_MemTotal_bytes)↵* 100↵> [[ .threshold ]]',
     });
 
     expect(formatRule(rulesStubs[3])).toEqual({
@@ -211,6 +215,8 @@ describe('AlertRulesTable utils', () => {
           ],
           summary: 'Test 4',
         },
+        expr:
+          'sum by (node_name) (mongodb_ss_mem_resident * 1024 * 1024)↵/ on (node_name) (node_memory_MemTotal_bytes)↵* 100↵> 20',
       },
       ruleId: 'test 4',
       createdAt: '2020-11-25 16:53:39.366',
@@ -221,6 +227,8 @@ describe('AlertRulesTable utils', () => {
       summary: 'High network throughput in - Mnfcg - Dev',
       threshold: '75 %',
       lastNotified: '',
+      expr:
+        'sum by (node_name) (mongodb_ss_mem_resident * 1024 * 1024)↵/ on (node_name) (node_memory_MemTotal_bytes)↵* 100↵> 20',
     });
   });
 
@@ -279,6 +287,8 @@ describe('AlertRulesTable utils', () => {
             ],
             summary: 'Test 1',
           },
+          expr:
+            'sum by (node_name) (mongodb_ss_connections{conn_type="current"}) * 1024 * 1024↵/ on (node_name) (node_memory_MemTotal_bytes)↵* 100↵> [[ .threshold ]]',
         },
         ruleId: 'test 1',
         createdAt: '2020-11-25 16:53:39.366',
@@ -289,6 +299,8 @@ describe('AlertRulesTable utils', () => {
         summary: 'Database down - HR - Prod',
         threshold: 'true',
         lastNotified: '2020-11-25 16:53:39.366',
+        expr:
+          'sum by (node_name) (mongodb_ss_connections{conn_type="current"}) * 1024 * 1024↵/ on (node_name) (node_memory_MemTotal_bytes)↵* 100↵> [[ .threshold ]]',
       },
       {
         rawValues: {
@@ -347,6 +359,8 @@ describe('AlertRulesTable utils', () => {
             ],
             summary: 'Test 4',
           },
+          expr:
+            'sum by (node_name) (mongodb_ss_mem_resident * 1024 * 1024)↵/ on (node_name) (node_memory_MemTotal_bytes)↵* 100↵> 20',
         },
         ruleId: 'test 4',
         createdAt: '2020-11-25 16:53:39.366',
@@ -357,6 +371,8 @@ describe('AlertRulesTable utils', () => {
         summary: 'High network throughput in - Mnfcg - Dev',
         threshold: '75 %',
         lastNotified: '',
+        expr:
+          'sum by (node_name) (mongodb_ss_mem_resident * 1024 * 1024)↵/ on (node_name) (node_memory_MemTotal_bytes)↵* 100↵> 20',
       },
     ]);
   });
