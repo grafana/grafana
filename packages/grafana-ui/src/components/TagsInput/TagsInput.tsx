@@ -26,7 +26,7 @@ export const TagsInput: FC<Props> = ({ placeholder = 'New tag (enter key to add)
 
   const onAdd = (event: React.MouseEvent) => {
     event.preventDefault();
-    onChange(tags.concat([newTagName]));
+    onChange(tags.concat(newTagName));
     setNewName('');
   };
 
