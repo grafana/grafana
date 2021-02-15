@@ -49,4 +49,37 @@ describe('dataSourceVariableReducer', () => {
       }
     );
   });
+
+  describe('when createDataSourceOptions is dispatched and item is default data source', () => {
+    it('then the state should include an extra default option', () => {
+      const plugins = getMockPlugins(3);
+      const sources: DataSourceSelectItem[] = plugins.map((p) => ({
+        name: p.name,
+        value: `${p.name} value`,
+        meta: p,
+        sort: '',
+      }));
+      sources[1].isDefault = true;
+
+      const { initialState } = getVariableTestContext<DataSourceVariableModel>(adapter, {
+        query: sources[1].meta.id,
+        includeAll: false,
+      });
+      const payload = toVariablePayload({ id: '0', type: 'datasource' }, { sources, regex: undefined });
+
+      reducerTester<VariablesState>()
+        .givenReducer(dataSourceVariableReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(createDataSourceOptions(payload))
+        .thenStateShouldEqual({
+          ...initialState,
+          ['0']: ({
+            ...initialState['0'],
+            options: [
+              { text: 'pretty cool plugin-1', value: 'pretty cool plugin-1', selected: false },
+              { text: 'default', value: 'default', selected: false },
+            ],
+          } as unknown) as DataSourceVariableModel,
+        });
+    });
+  });
 });

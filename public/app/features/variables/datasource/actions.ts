@@ -18,10 +18,8 @@ export const updateDataSourceVariableOptions = (
   identifier: VariableIdentifier,
   dependencies: DataSourceVariableActionDependencies = { getDatasourceSrv: getDatasourceSrv }
 ): ThunkResult<void> => async (dispatch, getState) => {
-  const sources = dependencies
-    .getDatasourceSrv()
-    .getList({ metrics: true, variables: false })
-    .map(toDataSourceSelectItem);
+  const list = dependencies.getDatasourceSrv().getList({ metrics: true, variables: false });
+  const sources = list.map(toDataSourceSelectItem);
   const variableInState = getVariable<DataSourceVariableModel>(identifier.id, getState());
   let regex;
 
@@ -63,5 +61,6 @@ function toDataSourceSelectItem(setting: DataSourceInstanceSettings) {
     name: setting.name,
     value: setting.name,
     meta: setting.meta,
+    isDefault: setting.isDefault,
   };
 }
