@@ -13,7 +13,7 @@ export interface Props {
 }
 
 export const TagsInput: FC<Props> = ({ placeholder = 'New tag (enter key to add)', tags = [], onChange }) => {
-  const [newTagName, setNewName] = useState<string>('');
+  const [newTagName, setNewName] = useState('');
   const styles = useStyles(getStyles);
 
   const onNameChange = (event: ChangeEvent<HTMLInputElement>) => {
