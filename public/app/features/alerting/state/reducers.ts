@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { ApplyFieldOverrideOptions, DataTransformerConfig, dateTime, FieldColorModeId } from '@grafana/data';
+import { ApplyFieldOverrideOptions, DataFrame, DataTransformerConfig, dateTime, FieldColorModeId } from '@grafana/data';
 import alertDef from './alertDef';
 import {
   AlertDefinition,
@@ -62,11 +62,14 @@ export const initialAlertDefinitionState: AlertDefinitionState = {
     data: [],
     intervalSeconds: 60,
   },
-  queryOptions: { maxDataPoints: 100, dataSource: { name: '-- Mixed --' }, queries: [] },
   queryRunner: new PanelQueryRunner(dataConfig),
   uiState: { ...store.getObject(ALERT_DEFINITION_UI_STATE_STORAGE_KEY, DEFAULT_ALERT_DEFINITION_UI_STATE) },
   data: [],
   alertDefinitions: [] as AlertDefinition[],
+  /* These are functions as they are mutated later on and redux toolkit will Object.freeze state so
+   * we need to store these using functions instead */
+  getInstances: () => [] as DataFrame[],
+  getQueryOptions: () => ({ maxDataPoints: 100, dataSource: { name: '-- Mixed --' }, queries: [] }),
 };
 
 function convertToAlertRule(dto: AlertRuleDTO, state: string): AlertRule {
@@ -160,37 +163,49 @@ const alertDefinitionSlice = createSlice({
   initialState: initialAlertDefinitionState,
   reducers: {
     setAlertDefinition: (state: AlertDefinitionState, action: PayloadAction<AlertDefinitionDTO>) => {
-      return {
-        ...state,
-        alertDefinition: {
-          title: action.payload.title,
-          id: action.payload.id,
-          uid: action.payload.uid,
-          condition: action.payload.condition,
-          intervalSeconds: action.payload.intervalSeconds,
-          data: action.payload.data,
-          description: '',
-        },
-        queryOptions: {
-          ...state.queryOptions,
-          queries: action.payload.data.map((q: AlertDefinitionQueryModel) => ({ ...q.model })),
-        },
-      };
+      const currentOptions = state.getQueryOptions();
+
+      state.alertDefinition.title = action.payload.title;
+      state.alertDefinition.id = action.payload.id;
+      state.alertDefinition.uid = action.payload.uid;
+      state.alertDefinition.condition = action.payload.condition;
+      state.alertDefinition.intervalSeconds = action.payload.intervalSeconds;
+      state.alertDefinition.data = action.payload.data;
+      state.alertDefinition.description = action.payload.description;
+      state.getQueryOptions = () => ({
+        ...currentOptions,
+        queries: action.payload.data.map((q: AlertDefinitionQueryModel) => ({ ...q.model })),
+      });
     },
     updateAlertDefinitionOptions: (state: AlertDefinitionState, action: PayloadAction<Partial<AlertDefinition>>) => {
-      return { ...state, alertDefinition: { ...state.alertDefinition, ...action.payload } };
+      state.alertDefinition = { ...state.alertDefinition, ...action.payload };
     },
     setUiState: (state: AlertDefinitionState, action: PayloadAction<AlertDefinitionUiState>) => {
-      return { ...state, uiState: { ...state.uiState, ...action.payload } };
+      state.uiState = { ...state.uiState, ...action.payload };
     },
     setQueryOptions: (state: AlertDefinitionState, action: PayloadAction<QueryGroupOptions>) => {
-      return {
-        ...state,
-        queryOptions: action.payload,
-      };
+      state.getQueryOptions = () => action.payload;
     },
     setAlertDefinitions: (state: AlertDefinitionState, action: PayloadAction<AlertDefinition[]>) => {
-      return { ...state, alertDefinitions: action.payload };
+      state.alertDefinitions = action.payload;
+    },
+    setInstanceData: (state: AlertDefinitionState, action: PayloadAction<DataFrame[]>) => {
+      state.getInstances = () => action.payload;
+    },
+    cleanUpState: (state: AlertDefinitionState, action: PayloadAction<undefined>) => {
+      if (state.queryRunner) {
+        state.queryRunner.destroy();
+        state.queryRunner = undefined;
+        delete state.queryRunner;
+        state.queryRunner = new PanelQueryRunner(dataConfig);
+      }
+
+      state.alertDefinitions = initialAlertDefinitionState.alertDefinitions;
+      state.alertDefinition = initialAlertDefinitionState.alertDefinition;
+      state.data = initialAlertDefinitionState.data;
+      state.getInstances = initialAlertDefinitionState.getInstances;
+      state.getQueryOptions = initialAlertDefinitionState.getQueryOptions;
+      state.uiState = initialAlertDefinitionState.uiState;
     },
   },
 });
@@ -209,6 +224,8 @@ export const {
   setQueryOptions,
   setAlertDefinitions,
   setAlertDefinition,
+  setInstanceData,
+  cleanUpState,
 } = alertDefinitionSlice.actions;
 
 export const alertRulesReducer = alertRulesSlice.reducer;
