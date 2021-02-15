@@ -9,7 +9,7 @@ import { config } from 'app/core/config';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { AlertingQueryEditor } from './components/AlertingQueryEditor';
 import { AlertDefinitionOptions } from './components/AlertDefinitionOptions';
-import { AlertingQueryPreview } from './components/AlertingQueryPreview';
+import AlertingQueryPreview from './components/AlertingQueryPreview';
 import {
   cleanUpDefinitionState,
   createAlertDefinition,
@@ -123,15 +123,7 @@ class NextGenAlertingPageUnconnected extends PureComponent<Props> {
   }
 
   render() {
-    const {
-      alertDefinition,
-      getInstances,
-      uiState,
-      updateAlertDefinitionUiState,
-      queryRunner,
-      getQueryOptions,
-      onRunQueries,
-    } = this.props;
+    const { alertDefinition, uiState, updateAlertDefinitionUiState, getQueryOptions } = this.props;
 
     const styles = getStyles(config.theme);
     const queryOptions = getQueryOptions();
@@ -144,14 +136,7 @@ class NextGenAlertingPageUnconnected extends PureComponent<Props> {
         <div className={styles.splitPanesWrapper}>
           <SplitPaneWrapper
             leftPaneComponents={[
-              <AlertingQueryPreview
-                key="queryPreview"
-                queryRunner={queryRunner!} // if the queryRunner is undefined here somethings very wrong so it's ok to throw an unhandled error
-                getInstances={getInstances}
-                queries={queryOptions.queries}
-                onTest={this.onTest}
-                onRunQueries={onRunQueries}
-              />,
+              <AlertingQueryPreview key="queryPreview" onTest={this.onTest} />,
               <AlertingQueryEditor key="queryEditor" />,
             ]}
             uiState={uiState}
