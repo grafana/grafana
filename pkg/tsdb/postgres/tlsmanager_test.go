@@ -47,7 +47,7 @@ func TestDataSourceCacheManager(t *testing.T) {
 	mockValidateCertFilePaths()
 	t.Cleanup(resetValidateCertFilePaths)
 
-	t.Run("Check datasource cache creation and modification", func(t *testing.T) {
+	t.Run("Check datasource cache creation", func(t *testing.T) {
 		var id, index int64
 		var wg sync.WaitGroup
 		wg.Add(10)
@@ -55,6 +55,7 @@ func TestDataSourceCacheManager(t *testing.T) {
 		index = 1
 		for id = 1; id <= 10; id++ {
 			go func() {
+				mutex.Lock()
 				ds := &models.DataSource{
 					Id:             index,
 					Version:        1,
@@ -63,9 +64,7 @@ func TestDataSourceCacheManager(t *testing.T) {
 					SecureJsonData: securityjsonValue,
 					Uid:            "testData",
 				}
-				mutex.Lock()
 				defer mutex.Unlock()
-				fmt.Println("<<<<<<<<<<<<<<<<<<<<<<<", index)
 				mng.writeCertFiles(ds, &settings, cfg.DataPath)
 				index++
 				wg.Done()
@@ -75,7 +74,6 @@ func TestDataSourceCacheManager(t *testing.T) {
 
 		t.Run("check cache creation is succeed", func(t *testing.T) {
 			for id = 1; id <= 10; id++ {
-				fmt.Println("<<<<<<<<<<<<<<<<<<<<<<<", id)
 				version, ok := mng.dsCacheInstance.cache.Load(strconv.Itoa(int(id)))
 				require.True(t, ok)
 				require.Equal(t, int(1), version)
@@ -111,7 +109,7 @@ func TestDataSourceCacheManager(t *testing.T) {
 			assert.Equal(t, writeCertFileCallNum, 3)
 		})
 
-		t.Run("cache is updated with the latest datasource version", func(t *testing.T) {
+		t.Run("cache is updated with the last datasource version", func(t *testing.T) {
 			ds_v2 := &models.DataSource{
 				Id:             1,
 				Version:        2,

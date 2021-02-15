@@ -193,13 +193,13 @@ func (m *tlsManager) writeCertFiles(ds *models.DataSource, settings *tlsSettings
 		}
 	}
 
-	if err = writeCertFile(ds, m.logger, tlsRootCert, settings.RootCertFile); err != nil {
+	if err = writeCertFileFunc(ds, m.logger, tlsRootCert, settings.RootCertFile); err != nil {
 		return err
 	}
-	if err = writeCertFile(ds, m.logger, tlsClientCert, settings.CertFile); err != nil {
+	if err = writeCertFileFunc(ds, m.logger, tlsClientCert, settings.CertFile); err != nil {
 		return err
 	}
-	if err = writeCertFile(ds, m.logger, tlsClientKey, settings.CertKeyFile); err != nil {
+	if err = writeCertFileFunc(ds, m.logger, tlsClientKey, settings.CertKeyFile); err != nil {
 		return err
 	}
 
