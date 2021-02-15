@@ -75,6 +75,7 @@ export const formatRule = (rule: AlertRulesListResponseRule): AlertRule => {
     severity,
     summary,
     params,
+    expr,
   } = rule;
 
   return {
@@ -88,6 +89,7 @@ export const formatRule = (rule: AlertRulesListResponseRule): AlertRule => {
     threshold: formatThreshold(template, params),
     lastNotified: last_notified ? moment(last_notified).format('YYYY-MM-DD HH:mm:ss.SSS') : '',
     rawValues: rule,
+    expr,
   };
 };
 

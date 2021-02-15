@@ -55,6 +55,7 @@ export interface AlertRule {
   summary: string;
   threshold: string;
   rawValues: AlertRulesListResponseRule;
+  expr: string;
 }
 
 export interface AlertRulesListPayloadFilter {
@@ -94,6 +95,7 @@ export interface AlertRulesListResponseRule {
   severity: keyof typeof AlertRuleSeverity;
   summary: string;
   template: AlertRulesListPayloadTemplate;
+  expr: string;
   rule_id: string;
   custom_labels?: AlertRulePayloadCustomLabels;
 }
