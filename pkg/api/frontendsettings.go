@@ -243,6 +243,8 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"sentry":             hs.Cfg.Sentry,
 		"marketplaceUrl":     hs.Cfg.MarketplaceURL,
 		"expressionsEnabled": hs.Cfg.ExpressionsEnabled,
+		"awsAllowedAuthProviders": hs.Cfg.AWSAllowedAuthProviders,
+		"awsEnableAssumeRole": hs.Cfg.AWSEnableAssumeRole,
 	}
 
 	return jsonObj, nil
