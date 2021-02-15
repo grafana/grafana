@@ -9,6 +9,7 @@ import { auto, IPromise } from 'angular';
 import { DataFrame, PanelEvents, rangeUtil } from '@grafana/data';
 import { AzureQueryType, AzureMetricQuery, AzureMonitorQuery } from './types';
 import { convertTimeGrainsToMs } from './components/common';
+import Datasource from './datasource';
 
 export interface ResultFormat {
   text: string;
@@ -300,7 +301,18 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       return;
     }
 
-    return this.datasource.azureMonitorDatasource.getSubscriptions().then((subs: any) => {
+    // assert the type
+    if (!(this.datasource instanceof Datasource)) {
+      return;
+    }
+
+    return this.datasource.azureMonitorDatasource.getSubscriptions().then((subscriptions) => {
+      // We changed the format in the datasource for the new react stuff, so here we change it back
+      const subs = subscriptions.map((v) => ({
+        text: `${v.text} - ${v.value}`,
+        value: v.value,
+      }));
+
       this.subscriptions = subs;
       if (!this.target.subscription && this.target.queryType === 'Azure Monitor') {
         this.target.subscription = this.datasource.azureMonitorDatasource.subscriptionId;
