@@ -1,6 +1,7 @@
 import React from 'react';
 import { mount, ReactWrapper } from 'enzyme';
 import { render } from '@testing-library/react';
+import selectEvent from 'react-select-event';
 import { SelectBase } from './SelectBase';
 import { SelectableValue } from '@grafana/data';
 import { MultiValueContainer } from './MultiValue';
@@ -172,23 +173,23 @@ describe('SelectBase', () => {
 
   describe('options', () => {
     it('renders menu with provided options', () => {
-      const container = mount(<SelectBase options={options} onChange={onChangeHandler} isOpen />);
-      const menuOptions = container.find({ 'aria-label': 'Select option' });
+      const { getAllByLabelText } = render(<SelectBase options={options} onChange={onChangeHandler} isOpen />);
+      const menuOptions = getAllByLabelText('Select option');
       expect(menuOptions).toHaveLength(2);
     });
 
-    it('call onChange handler when option is selected', () => {
+    it('call onChange handler when option is selected', async () => {
       const spy = jest.fn();
-      const handler = (value: SelectableValue<number>) => spy(value);
-      const container = mount(<SelectBase options={options} onChange={handler} isOpen />);
-      const menuOptions = container.find({ 'aria-label': 'Select option' });
-      expect(menuOptions).toHaveLength(2);
-      const menuOption = menuOptions.first();
-      menuOption.simulate('click');
 
-      expect(spy).toBeCalledWith({
-        label: 'Option 1',
-        value: 1,
+      const { getByLabelText } = render(<SelectBase onChange={spy} options={options} aria-label="My select" />);
+
+      const selectEl = getByLabelText('My select');
+      expect(selectEl).toBeInTheDocument();
+
+      await selectEvent.select(selectEl, 'Option 2');
+      expect(spy).toHaveBeenCalledWith({
+        label: 'Option 2',
+        value: 2,
       });
     });
   });

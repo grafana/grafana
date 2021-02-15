@@ -5725,6 +5725,20 @@
     resolve-from "^5.0.0"
     store2 "^2.7.1"
 
+"@testing-library/dom@>=7":
+  version "7.29.4"
+  resolved "https://registry.yarnpkg.com/@testing-library/dom/-/dom-7.29.4.tgz#1647c2b478789621ead7a50614ad81ab5ae5b86c"
+  integrity sha512-CtrJRiSYEfbtNGtEsd78mk1n1v2TUbeABlNIcOCJdDfkN5/JTOwQEbbQpoSRxGqzcWPgStMvJ4mNolSuBRv1NA==
+  dependencies:
+    "@babel/code-frame" "^7.10.4"
+    "@babel/runtime" "^7.12.5"
+    "@types/aria-query" "^4.2.0"
+    aria-query "^4.2.2"
+    chalk "^4.1.0"
+    dom-accessibility-api "^0.5.4"
+    lz-string "^1.4.4"
+    pretty-format "^26.6.2"
+
 "@testing-library/dom@^7.26.6":
   version "7.26.6"
   resolved "https://registry.yarnpkg.com/@testing-library/dom/-/dom-7.26.6.tgz#d558db63070a3acea5bea7e2497e631cd12541cc"
@@ -22309,6 +22323,13 @@ react-reverse-portal@^2.0.1:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/react-reverse-portal/-/react-reverse-portal-2.0.1.tgz#23b18292c531fb7b343d85a614c15a995838ba31"
   integrity sha512-sj/D9nSHspqV8i8hWkTSZ5Ohnrqk2A5fkDKw4Xe/zV4OfF1UYwmbzrxLdmNRdKkWgQwnXIxaa2E3FC7QYdZAeA==
+
+react-select-event@^5.1.0:
+  version "5.1.0"
+  resolved "https://registry.yarnpkg.com/react-select-event/-/react-select-event-5.1.0.tgz#d45ef68f2a9c872903e8c9725f3ae6e7576f7be0"
+  integrity sha512-D5DzJlYCdZsGbDVFMQFynrG0OLalJM3ZzDT7KQADNVWE604JCeQF9bIuvPZqVD7IzhnPsFzOUCsilzDA6w6WRQ==
+  dependencies:
+    "@testing-library/dom" ">=7"
 
 react-select@^3.0.8:
   version "3.2.0"

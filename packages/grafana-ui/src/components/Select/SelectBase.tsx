@@ -90,6 +90,7 @@ const CustomControl = (props: any) => {
 
 export function SelectBase<T>({
   allowCustomValue = false,
+  'aria-label': ariaLabel,
   autoFocus = false,
   backspaceRemovesValue = true,
   cacheOptions,
@@ -170,6 +171,7 @@ export function SelectBase<T>({
   }
 
   const commonSelectProps = {
+    'aria-label': ariaLabel,
     autoFocus,
     backspaceRemovesValue,
     captureMenuScroll: false,

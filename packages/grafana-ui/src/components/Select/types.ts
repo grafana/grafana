@@ -7,6 +7,7 @@ export type InputActionMeta = {
 };
 
 export interface SelectCommonProps<T> {
+  ['aria-label']?: string;
   allowCustomValue?: boolean;
   /** Focus is set to the Select when rendered*/
   autoFocus?: boolean;
