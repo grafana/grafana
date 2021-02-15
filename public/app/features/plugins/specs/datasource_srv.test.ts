@@ -76,6 +76,12 @@ describe('datasource_srv', () => {
       uid: 'uid-code-Jaeger',
       meta: { tracing: true, id: 'jaeger' },
     },
+    CannotBeQueried: {
+      type: 'no-query',
+      name: 'no-query',
+      uid: 'no-query',
+      meta: { id: 'no-query' },
+    },
   };
 
   describe('Given a list of data sources', () => {
@@ -119,6 +125,13 @@ describe('datasource_srv', () => {
         const externalSources = dataSourceSrv.getExternal();
         expect(externalSources.length).toBe(6);
       });
+    });
+
+    it('Should by default filter out data sources that cannot be queried', () => {
+      const list = dataSourceSrv.getList({});
+      expect(list.find((x) => x.name === 'no-query')).toBeUndefined();
+      const all = dataSourceSrv.getList({ all: true });
+      expect(all.find((x) => x.name === 'no-query')).toBeDefined();
     });
 
     it('Can get list of data sources with variables: true', () => {
