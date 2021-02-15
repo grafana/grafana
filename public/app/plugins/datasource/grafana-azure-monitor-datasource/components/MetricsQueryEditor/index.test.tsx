@@ -58,7 +58,7 @@ describe('Azure Monitor QueryEditor', () => {
   it('should change the metric name when selected', async () => {
     const mockDatasource = createMockDatasource();
     const onChange = jest.fn();
-    mockDatasource.azureMonitorDatasource.getMetricNames = jest.fn().mockResolvedValueOnce([
+    mockDatasource.getMetricNames = jest.fn().mockResolvedValueOnce([
       {
         value: 'metric-a',
         text: 'Metric A',
