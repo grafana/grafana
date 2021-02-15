@@ -3,18 +3,13 @@ package postgres
 import (
 	"database/sql"
 	"fmt"
-	"io/ioutil"
-	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 
-	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -22,13 +17,6 @@ import (
 
 	"xorm.io/core"
 )
-
-var validateCertFunc = validateCertFilePaths
-
-type datasourceCacheManager struct {
-	locker *locker
-	cache  sync.Map
-}
 
 func init() {
 	registry.Register(&registry.Descriptor{
@@ -39,14 +27,14 @@ func init() {
 }
 
 type postgresService struct {
-	Cfg             *setting.Cfg `inject:""`
-	logger          log.Logger
-	dsCacheInstance datasourceCacheManager
+	Cfg        *setting.Cfg `inject:""`
+	logger     log.Logger
+	tlsManager tlsSettingsProvider
 }
 
 func (s *postgresService) Init() error {
 	s.logger = log.New("tsdb.postgres")
-	s.dsCacheInstance = datasourceCacheManager{locker: newLocker()}
+	s.tlsManager = newTLSManager(s.logger)
 	tsdb.RegisterTsdbQueryEndpoint("postgres", func(ds *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 		return s.newPostgresQueryEndpoint(ds)
 	})
@@ -94,160 +82,7 @@ func escape(input string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(input, `\`, `\\`), "'", `\'`)
 }
 
-type certFileType int
-
-const (
-	rootCert = iota
-	clientCert
-	clientKey
-)
-
-func (t certFileType) String() string {
-	switch t {
-	case rootCert:
-		return "root certificate"
-	case clientCert:
-		return "client certificate"
-	case clientKey:
-		return "client key"
-	default:
-		panic(fmt.Sprintf("Unrecognized certFileType %d", t))
-	}
-}
-
-func getFileName(dataDir string, fileType certFileType) string {
-	var filename string
-	switch fileType {
-	case rootCert:
-		filename = "root.crt"
-	case clientCert:
-		filename = "client.crt"
-	case clientKey:
-		filename = "client.key"
-	default:
-		panic(fmt.Sprintf("unrecognized certFileType %s", fileType.String()))
-	}
-	generatedFilePath := filepath.Join(dataDir, filename)
-	return generatedFilePath
-}
-
-// writeCertFile writes a certificate file.
-func (s *postgresService) writeCertFile(
-	ds *models.DataSource, fileContent, generatedFilePath string) error {
-	fileContent = strings.TrimSpace(fileContent)
-	if fileContent != "" {
-		s.logger.Debug("Writing cert file", "path", generatedFilePath)
-		if err := ioutil.WriteFile(generatedFilePath, []byte(fileContent), 0600); err != nil {
-			return err
-		}
-		// Make sure the file has the permissions expected by the Postgresql driver, otherwise it will bail
-		if err := os.Chmod(generatedFilePath, 0600); err != nil {
-			return err
-		}
-		return nil
-	}
-
-	s.logger.Debug("Deleting cert file since no content is provided", "path", generatedFilePath)
-	exists, err := fs.Exists(generatedFilePath)
-	if err != nil {
-		return err
-	}
-	if exists {
-		if err := os.Remove(generatedFilePath); err != nil {
-			return fmt.Errorf("failed to remove %q: %w", generatedFilePath, err)
-		}
-	}
-	return nil
-}
-
-func (s *postgresService) writeCertFiles(ds *models.DataSource) (string, string, string, error) {
-	s.logger.Debug("Writing TLS certificate files to disk")
-	decrypted := ds.SecureJsonData.Decrypt()
-	tlsRootCert := decrypted["tlsCACert"]
-	tlsClientCert := decrypted["tlsClientCert"]
-	tlsClientKey := decrypted["tlsClientKey"]
-
-	var tlsRootCertPath, tlsClientCertPath, tlsKeyPath string
-	if tlsRootCert == "" && tlsClientCert == "" && tlsClientKey == "" {
-		s.logger.Debug("No TLS/SSL certificates provided")
-	}
-
-	// Calculate all files path
-	workDir := filepath.Join(s.Cfg.DataPath, "tls", ds.Uid+"generatedTLSCerts")
-	tlsRootCertPath = getFileName(workDir, rootCert)
-	tlsClientCertPath = getFileName(workDir, clientCert)
-	tlsKeyPath = getFileName(workDir, clientKey)
-
-	// Find datasource in the cache, if found, skip writing files
-	cacheKey := strconv.Itoa(int(ds.Id))
-	s.dsCacheInstance.locker.RLock(cacheKey)
-	item, ok := s.dsCacheInstance.cache.Load(cacheKey)
-	s.dsCacheInstance.locker.RUnlock(cacheKey)
-	if ok {
-		if item.(int) == ds.Version {
-			return tlsRootCertPath, tlsClientCertPath, tlsKeyPath, nil
-		}
-	}
-
-	s.dsCacheInstance.locker.Lock(cacheKey)
-	defer s.dsCacheInstance.locker.Unlock(cacheKey)
-
-	item, ok = s.dsCacheInstance.cache.Load(cacheKey)
-	if ok {
-		if item.(int) == ds.Version {
-			return tlsRootCertPath, tlsClientCertPath, tlsKeyPath, nil
-		}
-	}
-
-	// Write certification directory and files
-	exists, err := fs.Exists(workDir)
-	if err != nil {
-		return tlsRootCertPath, tlsClientCertPath, tlsKeyPath, err
-	}
-	if !exists {
-		if err := os.MkdirAll(workDir, 0700); err != nil {
-			return tlsRootCertPath, tlsClientCertPath, tlsKeyPath, err
-		}
-	}
-
-	if err = s.writeCertFile(ds, tlsRootCert, tlsRootCertPath); err != nil {
-		return tlsRootCertPath, tlsClientCertPath, tlsKeyPath, err
-	}
-	if err = s.writeCertFile(ds, tlsClientCert, tlsClientCertPath); err != nil {
-		return tlsRootCertPath, tlsClientCertPath, tlsKeyPath, err
-	}
-	if err = s.writeCertFile(ds, tlsClientKey, tlsKeyPath); err != nil {
-		return tlsRootCertPath, tlsClientCertPath, tlsKeyPath, err
-	}
-
-	// Update datasource cache
-	s.dsCacheInstance.cache.Store(cacheKey, ds.Version)
-	return tlsRootCertPath, tlsClientCertPath, tlsKeyPath, nil
-}
-
-// validateCertFilePaths validates configured certificate file paths.
-func validateCertFilePaths(rootCert, clientCert, clientKey string) error {
-	for _, fpath := range []string{rootCert, clientCert, clientKey} {
-		if fpath == "" {
-			continue
-		}
-		exists, err := fs.Exists(fpath)
-		if err != nil {
-			return err
-		}
-		if !exists {
-			return fmt.Errorf("certificate file %q doesn't exist", fpath)
-		}
-	}
-	return nil
-}
-
 func (s *postgresService) generateConnectionString(datasource *models.DataSource) (string, error) {
-	tlsConfigurationMethod := strings.TrimSpace(
-		strings.ToLower(datasource.JsonData.Get("tlsConfigurationMethod").MustString("file-path")))
-	tlsMode := strings.TrimSpace(strings.ToLower(datasource.JsonData.Get("sslmode").MustString("verify-full")))
-	isTLSDisabled := tlsMode == "disable"
-
 	var host string
 	var port int
 	var err error
@@ -270,43 +105,32 @@ func (s *postgresService) generateConnectionString(datasource *models.DataSource
 		}
 	}
 
-	connStr := fmt.Sprintf("user='%s' password='%s' host='%s' dbname='%s' sslmode='%s'",
-		escape(datasource.User), escape(datasource.DecryptedPassword()), escape(host), escape(datasource.Database),
-		escape(tlsMode))
+	connStr := fmt.Sprintf("user='%s' password='%s' host='%s' dbname='%s'",
+		escape(datasource.User), escape(datasource.DecryptedPassword()), escape(host), escape(datasource.Database))
 	if port > 0 {
 		connStr += fmt.Sprintf(" port=%d", port)
 	}
-	if isTLSDisabled {
-		s.logger.Debug("Postgres TLS/SSL is disabled")
-	} else {
-		s.logger.Debug("Postgres TLS/SSL is enabled", "tlsMode", tlsMode)
-		var tlsRootCert, tlsCert, tlsKey string
-		if tlsConfigurationMethod == "file-content" {
-			if tlsRootCert, tlsCert, tlsKey, err = s.writeCertFiles(datasource); err != nil {
-				return "", err
-			}
-		} else {
-			tlsRootCert = datasource.JsonData.Get("sslRootCertFile").MustString("")
-			tlsCert = datasource.JsonData.Get("sslCertFile").MustString("")
-			tlsKey = datasource.JsonData.Get("sslKeyFile").MustString("")
-			if err = validateCertFunc(tlsRootCert, tlsCert, tlsKey); err != nil {
-				return "", err
-			}
-		}
 
-		// Attach root certificate if provided
-		if tlsRootCert != "" {
-			s.logger.Debug("Setting server root certificate", "tlsRootCert", tlsRootCert)
-			connStr += fmt.Sprintf(" sslrootcert='%s'", escape(tlsRootCert))
-		}
+	tlsSettings, err := s.tlsManager.getTLSSettings(datasource, s.Cfg.DataPath)
+	if err != nil {
+		return "", err
+	}
 
-		// Attach client certificate and key if both are provided
-		if tlsCert != "" && tlsKey != "" {
-			s.logger.Debug("Setting TLS/SSL client auth", "tlsCert", tlsCert, "tlsKey", tlsKey)
-			connStr += fmt.Sprintf(" sslcert='%s' sslkey='%s'", escape(tlsCert), escape(tlsKey))
-		} else if tlsCert != "" || tlsKey != "" {
-			return "", fmt.Errorf("TLS/SSL client certificate and key must both be specified")
-		}
+	connStr += fmt.Sprintf(" sslmode='%s'", escape(tlsSettings.Mode))
+
+	// Attach root certificate if provided
+	// Attach root certificate if provided
+	if tlsSettings.RootCertFile != "" {
+		s.logger.Debug("Setting server root certificate", "tlsRootCert", tlsSettings.RootCertFile)
+		connStr += fmt.Sprintf(" sslrootcert='%s'", escape(tlsSettings.RootCertFile))
+	}
+
+	// Attach client certificate and key if both are provided
+	if tlsSettings.CertFile != "" && tlsSettings.CertKeyFile != "" {
+		s.logger.Debug("Setting TLS/SSL client auth", "tlsCert", tlsSettings.CertFile, "tlsKey", tlsSettings.CertKeyFile)
+		connStr += fmt.Sprintf(" sslcert='%s' sslkey='%s'", escape(tlsSettings.CertFile), escape(tlsSettings.CertKeyFile))
+	} else if tlsSettings.CertFile != "" || tlsSettings.CertKeyFile != "" {
+		return "", fmt.Errorf("TLS/SSL client certificate and key must both be specified")
 	}
 
 	s.logger.Debug("Generated Postgres connection string successfully")

@@ -7,8 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
-	"regexp"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -29,89 +27,18 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func TestDataSourceCacheManager(t *testing.T) {
-	cfg := setting.NewCfg()
-	cfg.DataPath = t.TempDir()
-
-	svc := postgresService{
-		Cfg:             cfg,
-		logger:          log.New("tsdb.postgres"),
-		dsCacheInstance: datasourceCacheManager{locker: newLocker()},
-	}
-
-	jsonData := `{"sslmode" : "verify-full", "tlsConfigurationMethod" : "file-content"}`
-	jsonDataValue, err := simplejson.NewJson([]byte(jsonData))
-	require.NoError(t, err)
-
-	secureJsonData := `{"tlsClientCert" : "I am client certification", "tlsClientKey" : "I am client key", "tlsCACert" : "I am CA certification"}`
-	securityjsonData := map[string]string{}
-	err = json.Unmarshal([]byte(secureJsonData), &securityjsonData)
-	securityjsonValue := securejsondata.GetEncryptedJsonData(securityjsonData)
-	require.NoError(t, err)
-
-	mockValidateCertFilePaths()
-	t.Cleanup(resetValidateCertFilePaths)
-	t.Run("Check datasource cache creation and modification", func(t *testing.T) {
-		var id int64
-		for id = 1; id <= 10; id++ {
-			ds := &models.DataSource{
-				Id:             id,
-				Version:        1,
-				Database:       "database",
-				JsonData:       jsonDataValue,
-				SecureJsonData: securityjsonValue,
-				Uid:            "testData",
-			}
-			svc.writeCertFiles(ds)
-		}
-
-		t.Run("check cache creation is succeed", func(t *testing.T) {
-			for id = 1; id <= 10; id++ {
-				version, ok := svc.dsCacheInstance.cache.Load(strconv.Itoa(int(id)))
-				require.True(t, ok)
-				require.Equal(t, int(1), version)
-			}
-		})
-
-		t.Run("cache is updated with the latest datasource version", func(t *testing.T) {
-			ds_v2 := &models.DataSource{
-				Id:             1,
-				Version:        2,
-				Database:       "database",
-				JsonData:       jsonDataValue,
-				SecureJsonData: securityjsonValue,
-				Uid:            "testData",
-			}
-			ds_v3 := &models.DataSource{
-				Id:             1,
-				Version:        3,
-				Database:       "database",
-				JsonData:       jsonDataValue,
-				SecureJsonData: securityjsonValue,
-				Uid:            "testData",
-			}
-			svc.writeCertFiles(ds_v2)
-			svc.writeCertFiles(ds_v3)
-			version, ok := svc.dsCacheInstance.cache.Load("1")
-			require.True(t, ok)
-			require.Equal(t, int(3), version)
-		})
-	})
-}
-
 // Test generateConnectionString.
 func TestGenerateConnectionString(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.DataPath = t.TempDir()
 
-	mockValidateCertFilePaths()
-	t.Cleanup(resetValidateCertFilePaths)
 	testCases := []struct {
 		desc           string
 		host           string
 		user           string
 		password       string
 		database       string
+		tlsSettings    tlsSettings
 		expConnStr     string
 		expErr         string
 		jsonData       string
@@ -119,82 +46,82 @@ func TestGenerateConnectionString(t *testing.T) {
 		uid            string
 	}{
 		{
-			desc:       "Unix socket host",
-			host:       "/var/run/postgresql",
-			user:       "user",
-			password:   "password",
-			database:   "database",
-			expConnStr: "^user='user' password='password' host='/var/run/postgresql' dbname='database' sslmode='verify-full'$",
+			desc:        "Unix socket host",
+			host:        "/var/run/postgresql",
+			user:        "user",
+			password:    "password",
+			database:    "database",
+			tlsSettings: tlsSettings{Mode: "verify-full"},
+			expConnStr:  "user='user' password='password' host='/var/run/postgresql' dbname='database' sslmode='verify-full'",
 		},
 		{
-			desc:       "TCP host",
-			host:       "host",
-			user:       "user",
-			password:   "password",
-			database:   "database",
-			expConnStr: "^user='user' password='password' host='host' dbname='database' sslmode='verify-full'$",
+			desc:        "TCP host",
+			host:        "host",
+			user:        "user",
+			password:    "password",
+			database:    "database",
+			tlsSettings: tlsSettings{Mode: "verify-full"},
+			expConnStr:  "user='user' password='password' host='host' dbname='database' sslmode='verify-full'",
 		},
 		{
-			desc:       "TCP/port host",
-			host:       "host:1234",
-			user:       "user",
-			password:   "password",
-			database:   "database",
-			expConnStr: "^user='user' password='password' host='host' dbname='database' sslmode='verify-full' port=1234$",
+			desc:        "TCP/port host",
+			host:        "host:1234",
+			user:        "user",
+			password:    "password",
+			database:    "database",
+			tlsSettings: tlsSettings{Mode: "verify-full"},
+			expConnStr:  "user='user' password='password' host='host' dbname='database' port=1234 sslmode='verify-full'",
 		},
 		{
-			desc:     "Invalid port",
-			host:     "host:invalid",
-			user:     "user",
-			database: "database",
-			expErr:   "invalid port in host specifier",
+			desc:        "Invalid port",
+			host:        "host:invalid",
+			user:        "user",
+			database:    "database",
+			tlsSettings: tlsSettings{},
+			expErr:      "invalid port in host specifier",
 		},
 		{
-			desc:       "Password with single quote and backslash",
-			host:       "host",
-			user:       "user",
-			password:   `p'\assword`,
-			database:   "database",
-			expConnStr: `^user='user' password='p\\'\\\\assword' host='host' dbname='database' sslmode='verify-full'$`,
+			desc:        "Password with single quote and backslash",
+			host:        "host",
+			user:        "user",
+			password:    `p'\assword`,
+			database:    "database",
+			tlsSettings: tlsSettings{Mode: "verify-full"},
+			expConnStr:  `user='user' password='p\'\\assword' host='host' dbname='database' sslmode='verify-full'`,
 		},
 		{
-			desc:       "Custom TLS mode disabled",
-			host:       "host",
-			user:       "user",
-			password:   "password",
-			database:   "database",
-			jsonData:   `{"sslmode" : "disable"}`,
-			expConnStr: "^user='user' password='password' host='host' dbname='database' sslmode='disable'$",
+			desc:        "Custom TLS mode disabled",
+			host:        "host",
+			user:        "user",
+			password:    "password",
+			database:    "database",
+			tlsSettings: tlsSettings{Mode: "disable"},
+			jsonData:    `{}`,
+			expConnStr:  "user='user' password='password' host='host' dbname='database' sslmode='disable'",
 		},
 		{
-			desc:     "Custom TLS mode verify-full with file path",
+			desc:     "Custom TLS mode verify-full with certificate files",
 			host:     "host",
 			user:     "user",
 			password: "password",
 			database: "database",
-			jsonData: `{"sslmode" : "verify-full", "sslRootCertFile" : "i/am/coding/ca.crt",
-			"sslCertFile" : "i/am/coding/client.crt", "sslKeyFile" : "i/am/coding/client.key", "tlsConfigurationMethod" : "file-path"}`,
-			expConnStr: "^user='user' password='password' host='host' dbname='database' sslmode='verify-full' " +
-				"sslrootcert='i/am/coding/ca.crt' sslcert='i/am/coding/client.crt' sslkey='i/am/coding/client.key'$",
-		},
-		{
-			desc:           "Custom TLS mode verify-full with input text",
-			host:           "host",
-			user:           "user",
-			password:       "password",
-			database:       "database",
-			jsonData:       `{"sslmode" : "verify-full", "tlsConfigurationMethod" : "file-content"}`,
-			secureJsonData: `{"tlsClientCert" : "I am client certification", "tlsClientKey" : "I am client key", "tlsCACert" : "I am CA certification"}`,
-			expConnStr:     "^user='user' password='password' host='host' dbname='database' sslmode='verify-full' sslrootcert='.*root.crt' sslcert='.*client.crt' sslkey='.*client.key'$",
-			uid:            "testData",
+			tlsSettings: tlsSettings{
+				Mode:         "verify-full",
+				RootCertFile: "i/am/coding/ca.crt",
+				CertFile:     "i/am/coding/client.crt",
+				CertKeyFile:  "i/am/coding/client.key",
+			},
+			jsonData: `{}`,
+			expConnStr: "user='user' password='password' host='host' dbname='database' sslmode='verify-full' " +
+				"sslrootcert='i/am/coding/ca.crt' sslcert='i/am/coding/client.crt' sslkey='i/am/coding/client.key'",
 		},
 	}
 	for _, tt := range testCases {
 		t.Run(tt.desc, func(t *testing.T) {
 			svc := postgresService{
-				Cfg:             cfg,
-				logger:          log.New("tsdb.postgres"),
-				dsCacheInstance: datasourceCacheManager{locker: newLocker()},
+				Cfg:        cfg,
+				logger:     log.New("tsdb.postgres"),
+				tlsManager: &tlsTestManager{settings: tt.tlsSettings, dataPath: ""},
 			}
 
 			if tt.jsonData == "" {
@@ -224,7 +151,7 @@ func TestGenerateConnectionString(t *testing.T) {
 
 			if tt.expErr == "" {
 				require.NoError(t, err, tt.desc)
-				assert.Regexp(t, regexp.MustCompile(tt.expConnStr), connStr)
+				assert.Equal(t, tt.expConnStr, connStr)
 			} else {
 				require.Error(t, err, tt.desc)
 				assert.True(t, strings.HasPrefix(err.Error(), tt.expErr),
@@ -269,9 +196,8 @@ func TestPostgres(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.DataPath = t.TempDir()
 	svc := postgresService{
-		Cfg:             cfg,
-		logger:          log.New("tsdb.postgres"),
-		dsCacheInstance: datasourceCacheManager{locker: newLocker()},
+		Cfg:    cfg,
+		logger: log.New("tsdb.postgres"),
 	}
 
 	endpoint, err := svc.newPostgresQueryEndpoint(&models.DataSource{
@@ -1235,12 +1161,11 @@ func genTimeRangeByInterval(from time.Time, duration time.Duration, interval tim
 	return timeRange
 }
 
-func mockValidateCertFilePaths() {
-	validateCertFunc = func(rootCert, clientCert, clientKey string) error {
-		return nil
-	}
+type tlsTestManager struct {
+	settings tlsSettings
+	dataPath string
 }
 
-func resetValidateCertFilePaths() {
-	validateCertFunc = validateCertFilePaths
+func (m *tlsTestManager) getTLSSettings(datasource *models.DataSource, dataPath string) (tlsSettings, error) {
+	return m.settings, nil
 }
