@@ -29,9 +29,9 @@ function getChooserText(hasSyntax: boolean, hasLogLabels: boolean) {
     return 'Loading labels...';
   }
   if (!hasLogLabels) {
-    return '(No labels found)';
+    return '(No logs found)';
   }
-  return 'Log labels';
+  return 'Log browser';
 }
 
 function willApplySuggestion(suggestion: string, { typeaheadContext, typeaheadText }: SuggestionsState): string {
