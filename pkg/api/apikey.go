@@ -13,6 +13,28 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
+func GetAPIKeyCurrent(c *models.ReqContext) Response {
+	query := models.GetApiKeyByIdQuery{ApiKeyId: c.ApiKeyId}
+
+	if err := bus.Dispatch(&query); err != nil {
+		return Error(500, "Failed to list api keys", err)
+	}
+
+	var expiration *time.Time = nil
+	if query.Result.Expires != nil {
+		v := time.Unix(*query.Result.Expires, 0)
+		expiration = &v
+	}
+
+	return JSON(200, &models.ApiKeyDetailsDTO{
+		Id:         query.Result.Id,
+		OrgId:      query.Result.OrgId,
+		Name:       query.Result.Name,
+		Role:       query.Result.Role,
+		Expiration: expiration,
+	})
+}
+
 // GetAPIKeys returns a list of API keys
 func (hs *HTTPServer) GetAPIKeys(c *models.ReqContext) response.Response {
 	query := models.GetApiKeysQuery{OrgId: c.OrgId, User: c.SignedInUser, IncludeExpired: c.QueryBool("includeExpired")}

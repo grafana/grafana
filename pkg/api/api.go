@@ -288,6 +288,10 @@ func (hs *HTTPServer) registerRoutes() {
 		// orgs (admin routes)
 		apiRoute.Get("/orgs/name/:name/", authorizeInOrg(reqGrafanaAdmin, ac.UseGlobalOrg, ac.EvalPermission(ActionOrgsRead)), routing.Wrap(hs.GetOrgByName))
 
+		// current api key
+		apiRoute.Group("/auth/key", func(keyRoute routing.RouteRegister) {
+			keyRoute.Get("/", Wrap(GetAPIKeyCurrent))
+		})
 		// auth api keys
 		apiRoute.Group("/auth/keys", func(keysRoute routing.RouteRegister) {
 			apikeyIDScope := ac.Scope("apikeys", "id", ac.Parameter(":id"))
