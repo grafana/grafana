@@ -33,7 +33,7 @@ export const TagsInput: FC<Props> = ({ placeholder = 'New tag (enter key to add)
   const onKeyboardAdd = (event: KeyboardEvent) => {
     event.preventDefault();
     if (event.key === 'Enter' && newTagName !== '') {
-      onChange(tags.concat([newTagName]));
+      onChange(tags.concat(newTagName));
       setNewName('');
     }
   };
