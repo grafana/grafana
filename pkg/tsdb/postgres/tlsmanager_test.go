@@ -46,16 +46,17 @@ func TestDataSourceCacheManager(t *testing.T) {
 
 	mockValidateCertFilePaths()
 	t.Cleanup(resetValidateCertFilePaths)
+
 	t.Run("Check datasource cache creation and modification", func(t *testing.T) {
-		var id int64
+		var id, index int64
 		var wg sync.WaitGroup
 		wg.Add(10)
 		mutex := new(sync.Mutex)
-
+		index = 1
 		for id = 1; id <= 10; id++ {
 			go func() {
 				ds := &models.DataSource{
-					Id:             id,
+					Id:             index,
 					Version:        1,
 					Database:       "database",
 					JsonData:       jsonDataValue,
@@ -64,7 +65,9 @@ func TestDataSourceCacheManager(t *testing.T) {
 				}
 				mutex.Lock()
 				defer mutex.Unlock()
+				fmt.Println("<<<<<<<<<<<<<<<<<<<<<<<", index)
 				mng.writeCertFiles(ds, &settings, cfg.DataPath)
+				index++
 				wg.Done()
 			}()
 		}
@@ -72,6 +75,7 @@ func TestDataSourceCacheManager(t *testing.T) {
 
 		t.Run("check cache creation is succeed", func(t *testing.T) {
 			for id = 1; id <= 10; id++ {
+				fmt.Println("<<<<<<<<<<<<<<<<<<<<<<<", id)
 				version, ok := mng.dsCacheInstance.cache.Load(strconv.Itoa(int(id)))
 				require.True(t, ok)
 				require.Equal(t, int(1), version)
@@ -84,8 +88,8 @@ func TestDataSourceCacheManager(t *testing.T) {
 			mockWriteCertFile()
 			t.Cleanup(resetWriteCertFile)
 			var id int64
-			var wg sync.WaitGroup
-			wg.Add(5)
+			var wg1 sync.WaitGroup
+			wg1.Add(5)
 			mutex := new(sync.Mutex)
 			for id = 1; id <= 5; id++ {
 				go func() {
@@ -100,11 +104,13 @@ func TestDataSourceCacheManager(t *testing.T) {
 					mutex.Lock()
 					defer mutex.Unlock()
 					mng.writeCertFiles(ds, &settings, cfg.DataPath)
-					wg.Done()
+					wg1.Done()
 				}()
 			}
+			wg1.Wait()
 			assert.Equal(t, writeCertFileCallNum, 3)
 		})
+
 		t.Run("cache is updated with the latest datasource version", func(t *testing.T) {
 			ds_v2 := &models.DataSource{
 				Id:             1,
