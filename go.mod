@@ -57,7 +57,7 @@ require (
 	github.com/json-iterator/go v1.1.10
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/lib/pq v1.9.0
-	github.com/linkedin/goavro/v2 v2.9.7
+	github.com/linkedin/goavro/v2 v2.10.0
 	github.com/magefile/mage v1.11.0
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mattn/go-sqlite3 v1.14.6
@@ -98,6 +98,7 @@ require (
 	gopkg.in/redis.v5 v5.2.9
 	gopkg.in/square/go-jose.v2 v2.5.1
 	gopkg.in/yaml.v2 v2.4.0
+	gotest.tools v2.2.0+incompatible
 	xorm.io/core v0.7.3
 	xorm.io/xorm v0.8.1
 )
