@@ -614,8 +614,11 @@ func SearchUsers(query *models.SearchUsersQuery) error {
 		sess.Where(strings.Join(whereConditions, " AND "), whereParams...)
 	}
 
-	offset := query.Limit * (query.Page - 1)
-	sess.Limit(query.Limit, offset)
+	if query.Limit > 0 {
+		offset := query.Limit * (query.Page - 1)
+		sess.Limit(query.Limit, offset)
+	}
+
 	sess.Cols("u.id", "u.email", "u.name", "u.login", "u.is_admin", "u.is_disabled", "u.last_seen_at", "user_auth.auth_module")
 	sess.Asc("u.login", "u.email")
 	if err := sess.Find(&query.Result.Users); err != nil {
