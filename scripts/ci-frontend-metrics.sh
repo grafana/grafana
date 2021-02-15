@@ -9,7 +9,7 @@ MDX_COUNT="$(find ./packages/grafana-ui/src/components -name "*.mdx" | wc -l)"
 LEGACY_FORMS="$(grep -r -oP 'LegacyForms;' public/app | wc -l)"
 
 STRICT_LINT_RESULTS="$(yarn run eslint --rule '@typescript-eslint/no-explicit-any: ["error"]' --format unix ./public/ || true)"
-STRICT_LINT_EXPLICIT_ANY="$(echo ${STRICT_LINT_RESULTS} | grep -o "no-explicit-any" | wc -l)"
+STRICT_LINT_EXPLICIT_ANY="$(echo "${STRICT_LINT_RESULTS}" | grep -o "no-explicit-any" | wc -l)"
 
 echo -e "Typescript errors: $ERROR_COUNT"
 echo -e "Directives: $DIRECTIVES"
