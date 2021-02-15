@@ -90,7 +90,7 @@ func createPolicy(t *testing.T, ac *RBACService, p policyTestCase) int64 {
 			Scope:      perm.scope,
 		}
 
-		_, err := ac.CreatePermission(&permCmd)
+		_, err := ac.CreatePermission(context.Background(), &permCmd)
 		require.NoError(t, err)
 	}
 
@@ -125,7 +125,7 @@ func createUserWithPolicy(t *testing.T, ac *RBACService, user string, policies [
 				Scope:      perm.scope,
 			}
 
-			_, err := ac.CreatePermission(&permCmd)
+			_, err := ac.CreatePermission(context.Background(), &permCmd)
 			require.NoError(t, err)
 		}
 
@@ -161,7 +161,7 @@ func createTeamWithPolicy(t *testing.T, ac *RBACService, team string, policies [
 				Scope:      perm.scope,
 			}
 
-			_, err := ac.CreatePermission(&permCmd)
+			_, err := ac.CreatePermission(context.Background(), &permCmd)
 			require.NoError(t, err)
 		}
 

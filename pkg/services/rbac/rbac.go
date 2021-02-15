@@ -3,6 +3,8 @@ package rbac
 import (
 	"context"
 
+	"github.com/gobwas/glob"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -41,19 +43,31 @@ func (ac *RBACService) Evaluate(ctx context.Context, user *models.SignedInUser, 
 		UserId: user.UserId,
 	}
 
-	//TODO: Send context to `GetUserPolicies` so the SQL query can be cancelled.
-	res, err := ac.GetUserPolicies(&q)
+	res, err := ac.GetUserPolicies(ctx, &q)
 	if err != nil {
 		return false, err
 	}
 
-	ok, dbScope := extractPermission(res, permission)
+	ok, dbScopes := extractPermission(res, permission)
 	if !ok {
 		return false, nil
 	}
 
 	for _, s := range scope {
-		if _, exists := dbScope[s]; !exists {
+		var match bool
+		for dbScope := range dbScopes {
+			rule, err := glob.Compile(dbScope, ':', '/')
+			if err != nil {
+				return false, err
+			}
+
+			match = rule.Match(s)
+			if match {
+				break
+			}
+		}
+
+		if !match {
 			return false, nil
 		}
 	}

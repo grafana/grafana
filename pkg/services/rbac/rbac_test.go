@@ -1,6 +1,7 @@
 package rbac
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -61,7 +62,7 @@ func TestEvaluatingPermissions(t *testing.T) {
 				UserId: userQuery.Result.Id,
 			}
 
-			res, err := ac.GetUserPolicies(&userPoliciesQuery)
+			res, err := ac.GetUserPolicies(context.Background(), &userPoliciesQuery)
 			require.NoError(t, err)
 			assert.Equal(t, len(tc.policies), len(res))
 

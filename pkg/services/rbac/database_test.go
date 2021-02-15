@@ -278,7 +278,7 @@ func TestUserPolicy(t *testing.T) {
 				UserId: userQuery.Result.Id,
 			}
 
-			res, err := ac.GetUserPolicies(&userPoliciesQuery)
+			res, err := ac.GetUserPolicies(context.Background(), &userPoliciesQuery)
 			require.NoError(t, err)
 			assert.Equal(t, len(tc.userPolicies)+len(tc.teamPolicies), len(res))
 		})

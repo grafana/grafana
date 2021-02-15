@@ -131,7 +131,7 @@ func (ac *RBACService) GetPolicyPermissions(ctx context.Context, policyID int64)
 	return result, err
 }
 
-func (ac *RBACService) CreatePermission(cmd *CreatePermissionCommand) (*Permission, error) {
+func (ac *RBACService) CreatePermission(ctx context.Context, cmd *CreatePermissionCommand) (*Permission, error) {
 	var result *Permission
 	err := ac.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		permission := &Permission{
@@ -179,8 +179,8 @@ func (ac *RBACService) UpdatePermission(cmd *UpdatePermissionCommand) (*Permissi
 	return result, err
 }
 
-func (ac *RBACService) DeletePermission(cmd *DeletePermissionCommand) error {
-	return ac.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+func (ac *RBACService) DeletePermission(ctx context.Context, cmd *DeletePermissionCommand) error {
+	return ac.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		_, err := sess.Exec("DELETE FROM permission WHERE id = ?", cmd.Id)
 		if err != nil {
 			return err
@@ -211,9 +211,9 @@ func (ac *RBACService) GetTeamPolicies(query *GetTeamPoliciesQuery) ([]*PolicyDT
 	return result, err
 }
 
-func (ac *RBACService) GetUserPolicies(query *GetUserPoliciesQuery) ([]*PolicyDTO, error) {
+func (ac *RBACService) GetUserPolicies(ctx context.Context, query *GetUserPoliciesQuery) ([]*PolicyDTO, error) {
 	var result []*PolicyDTO
-	err := ac.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := ac.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		// TODO: optimize this
 		q := `SELECT
 			policy.id,
