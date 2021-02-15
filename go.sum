@@ -212,7 +212,7 @@ github.com/cenkalti/backoff/v4 v4.0.2/go.mod h1:eEew/i+1Q6OrCDZh3WiXYv3+nJwBASZ8
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/centrifugal/centrifuge v0.13.0 h1:nfcpaa/TXoA56ba/xXs3rc2Vrj/UZTFS1iTQ9q2MSZE=
 github.com/centrifugal/centrifuge v0.13.0/go.mod h1:jdFw/2dBFpME3OTisc5FVAC1ilqodnyMnQFjem0k0yg=
-github.com/centrifugal/centrifuge-go v0.6.4/go.mod h1:YW9BKhnEMOBPU7C/wfqdqzhIiF0xRd0R4sHW82a7sf8=
+github.com/centrifugal/centrifuge-go v0.6.5/go.mod h1:YW9BKhnEMOBPU7C/wfqdqzhIiF0xRd0R4sHW82a7sf8=
 github.com/centrifugal/protocol v0.3.4 h1:9q22iSp4CQOdQahfopvfmWWxDbj1Lo7ERG2j56mAxkE=
 github.com/centrifugal/protocol v0.3.4/go.mod h1:2YbBCaDwQHl37ErRdMrKSj18X2yVvpkQYtSX6aVbe5A=
 github.com/cespare/xxhash v0.0.0-20181017004759-096ff4a8a059/go.mod h1:XrSqR1VqqWfGrhpAt58auRo0WTKS1nRRg3ghfAqPWnc=
@@ -688,8 +688,8 @@ github.com/grafana/grafana-aws-sdk v0.1.0/go.mod h1:+pPo5U+pX0zWimR7YBc7ASeSQfbR
 github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4 h1:SPdxCL9BChFTlyi0Khv64vdCW4TMna8+sxL7+Chx+Ag=
 github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4/go.mod h1:nc0XxBzjeGcrMltCDw269LoWF9S8ibhgxolCdA1R8To=
 github.com/grafana/grafana-plugin-sdk-go v0.79.0/go.mod h1:NvxLzGkVhnoBKwzkst6CFfpMFKwAdIUZ1q8ssuLeF60=
-github.com/grafana/grafana-plugin-sdk-go v0.83.0 h1:X84eJMLSx0KOTRW1EziXkqLw9pSmK0RggWC98ImX/9g=
-github.com/grafana/grafana-plugin-sdk-go v0.83.0/go.mod h1:exQQHhClzHs2gOwjPSO4FOKwjjZ8VrnzbbABHX8LB6U=
+github.com/grafana/grafana-plugin-sdk-go v0.88.0 h1:Up4HGwlzHTb3XGljteirrqY7g0UNbMC46/eYNqVhHdw=
+github.com/grafana/grafana-plugin-sdk-go v0.88.0/go.mod h1:PTALh0lz+Y7k0+OMczAABTpeocL63aw6FVOBptp5GVo=
 github.com/grafana/loki v1.6.2-0.20201026154740-6978ee5d7387 h1:iwcM8lkYJ3EhytGLJ2BvRSwutb0QWoI7EWbYv3yJRsY=
 github.com/grafana/loki v1.6.2-0.20201026154740-6978ee5d7387/go.mod h1:jHA1OHnPsuj3LLgMXmFopsKDt4ARHHUhrmT3JrGf71g=
 github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7/go.mod h1:FecbI9+v66THATjSRHfNgh1IVFe/9kFxbXtjV0ctIMA=
