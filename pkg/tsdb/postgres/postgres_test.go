@@ -74,14 +74,6 @@ func TestDataSourceCacheManager(t *testing.T) {
 		})
 
 		t.Run("cache is updated with the latest datasource version", func(t *testing.T) {
-			ds_v3 := &models.DataSource{
-				Id:             1,
-				Version:        3,
-				Database:       "database",
-				JsonData:       jsonDataValue,
-				SecureJsonData: securityjsonValue,
-				Uid:            "testData",
-			}
 			ds_v2 := &models.DataSource{
 				Id:             1,
 				Version:        2,
@@ -90,8 +82,16 @@ func TestDataSourceCacheManager(t *testing.T) {
 				SecureJsonData: securityjsonValue,
 				Uid:            "testData",
 			}
-			svc.writeCertFiles(ds_v3)
+			ds_v3 := &models.DataSource{
+				Id:             1,
+				Version:        3,
+				Database:       "database",
+				JsonData:       jsonDataValue,
+				SecureJsonData: securityjsonValue,
+				Uid:            "testData",
+			}
 			svc.writeCertFiles(ds_v2)
+			svc.writeCertFiles(ds_v3)
 			version, ok := svc.dsCacheInstance.cache.Load("1")
 			require.True(t, ok)
 			require.Equal(t, int(3), version)
