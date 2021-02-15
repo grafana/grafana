@@ -1,3 +1,5 @@
+import { DataSourceInstanceSettings } from '@grafana/data';
+
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { TemplatingState } from '../state/reducers';
 import { getRootReducer } from '../state/helpers';
@@ -9,12 +11,12 @@ import {
   initDataSourceVariableEditor,
   updateDataSourceVariableOptions,
 } from './actions';
-import { DataSourceInstanceSettings, DataSourceJsonData, DataSourcePluginMeta } from '@grafana/data';
 import { getMockPlugin } from '../../plugins/__mocks__/pluginMocks';
 import { createDataSourceOptions } from './reducer';
 import { addVariable, setCurrentVariableValue } from '../state/sharedReducer';
 import { changeVariableEditorExtended } from '../editor/reducer';
 import { datasourceBuilder } from '../shared/testing/builders';
+import { getDataSourceInstanceSetting } from '../shared/testing/helpers';
 
 interface Args {
   sources?: DataSourceInstanceSettings[];
@@ -35,51 +37,6 @@ describe('data source actions', () => {
   variableAdapters.setInit(() => [createDataSourceVariableAdapter()]);
 
   describe('when updateDataSourceVariableOptions is dispatched', () => {
-    describe('and the data source is default', () => {
-      it('then the correct actions are dispatched', async () => {
-        const meta = getMockPlugin({ name: 'mock-data-name', id: 'mock-data-id' });
-        const sources: DataSourceInstanceSettings[] = [
-          getDataSourceInstanceSetting('first-name', meta),
-          getDataSourceInstanceSetting('second-name', meta),
-        ];
-        sources[1].isDefault = true;
-        const { datasource, dependencies } = getTestContext({
-          sources,
-          query: 'mock-data-id',
-        });
-
-        const tester = await reduxTester<{ templating: TemplatingState }>()
-          .givenRootReducer(getRootReducer())
-          .whenActionIsDispatched(
-            addVariable(toVariablePayload(datasource, { global: false, index: 0, model: datasource }))
-          )
-          .whenAsyncActionIsDispatched(
-            updateDataSourceVariableOptions(toVariableIdentifier(datasource), dependencies),
-            true
-          );
-
-        await tester.thenDispatchedActionsShouldEqual(
-          createDataSourceOptions(
-            toVariablePayload(
-              { type: 'datasource', id: '0' },
-              {
-                sources: [
-                  { name: 'first-name', value: 'first-name', meta },
-                  { name: 'second-name', value: 'second-name', meta, isDefault: true },
-                ],
-                regex: (undefined as unknown) as RegExp,
-              }
-            )
-          ),
-          setCurrentVariableValue(
-            toVariablePayload(
-              { type: 'datasource', id: '0' },
-              { option: { text: 'first-name', value: 'first-name', selected: false } }
-            )
-          )
-        );
-      });
-    });
     describe('and there is no regex', () => {
       it('then the correct actions are dispatched', async () => {
         const meta = getMockPlugin({ name: 'mock-data-name', id: 'mock-data-id' });
@@ -107,10 +64,7 @@ describe('data source actions', () => {
             toVariablePayload(
               { type: 'datasource', id: '0' },
               {
-                sources: [
-                  { name: 'first-name', value: 'first-name', meta },
-                  { name: 'second-name', value: 'second-name', meta },
-                ],
+                sources,
                 regex: (undefined as unknown) as RegExp,
               }
             )
@@ -158,10 +112,7 @@ describe('data source actions', () => {
             toVariablePayload(
               { type: 'datasource', id: '0' },
               {
-                sources: [
-                  { name: 'first-name', value: 'first-name', meta },
-                  { name: 'second-name', value: 'second-name', meta },
-                ],
+                sources,
                 regex: /.*(second-name).*/,
               }
             )
@@ -210,14 +161,3 @@ describe('data source actions', () => {
     });
   });
 });
-
-function getDataSourceInstanceSetting(name: string, meta: DataSourcePluginMeta): DataSourceInstanceSettings {
-  return {
-    id: 1,
-    uid: '',
-    type: '',
-    name,
-    meta,
-    jsonData: ({} as unknown) as DataSourceJsonData,
-  };
-}

@@ -1,3 +1,5 @@
+import { DataSourceInstanceSettings } from '@grafana/data';
+
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { VariablesState } from '../state/variablesReducer';
 import { createDataSourceOptions, dataSourceVariableReducer } from './reducer';
@@ -5,20 +7,15 @@ import { DataSourceVariableModel } from '../types';
 import { getVariableTestContext } from '../state/helpers';
 import cloneDeep from 'lodash/cloneDeep';
 import { createDataSourceVariableAdapter } from './adapter';
-import { DataSourceSelectItem } from '@grafana/data';
 import { toVariablePayload } from '../state/types';
 import { getMockPlugins } from '../../plugins/__mocks__/pluginMocks';
+import { getDataSourceInstanceSetting } from '../shared/testing/helpers';
 
 describe('dataSourceVariableReducer', () => {
   const adapter = createDataSourceVariableAdapter();
   describe('when createDataSourceOptions is dispatched', () => {
     const plugins = getMockPlugins(3);
-    const sources: DataSourceSelectItem[] = plugins.map((p) => ({
-      name: p.name,
-      value: `${p.name} value`,
-      meta: p,
-      sort: '',
-    }));
+    const sources: DataSourceInstanceSettings[] = plugins.map((p) => getDataSourceInstanceSetting(p.name, p));
 
     it.each`
       query                 | regex                           | includeAll | expected
@@ -53,12 +50,7 @@ describe('dataSourceVariableReducer', () => {
   describe('when createDataSourceOptions is dispatched and item is default data source', () => {
     it('then the state should include an extra default option', () => {
       const plugins = getMockPlugins(3);
-      const sources: DataSourceSelectItem[] = plugins.map((p) => ({
-        name: p.name,
-        value: `${p.name} value`,
-        meta: p,
-        sort: '',
-      }));
+      const sources: DataSourceInstanceSettings[] = plugins.map((p) => getDataSourceInstanceSetting(p.name, p));
       sources[1].isDefault = true;
 
       const { initialState } = getVariableTestContext<DataSourceVariableModel>(adapter, {
