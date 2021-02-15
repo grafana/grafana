@@ -66,3 +66,11 @@ type ApiKeyDTO struct {
 	Role       RoleType   `json:"role"`
 	Expiration *time.Time `json:"expiration,omitempty"`
 }
+
+type ApiKeyDetailsDTO struct {
+	Id         int64      `json:"id"`
+	OrgId      int64      `json:"orgId,omitempty"`
+	Name       string     `json:"name"`
+	Role       RoleType   `json:"role"`
+	Expiration *time.Time `json:"expiration,omitempty"`
+}
