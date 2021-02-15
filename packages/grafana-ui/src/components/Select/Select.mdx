@@ -1,6 +1,6 @@
-import { Props, Preview } from "@storybook/addon-docs/blocks";
-import { Select, AsyncSelect, MultiSelect, AsyncMultiSelect } from "./Select";
-import { generateOptions } from "./mockOptions";
+import { Props, Preview } from '@storybook/addon-docs/blocks';
+import { Select, AsyncSelect, MultiSelect, AsyncMultiSelect } from './Select';
+import { generateOptions } from './mockOptions';
 
 # Select variants
 
@@ -27,13 +27,13 @@ There are four properties for each option:
 
 ```jsx
 const options = [
-  { label: "Basic option", value: 0 },
-  { label: "Option with description", value: 1, description: "this is a description" },
+  { label: 'Basic option', value: 0 },
+  { label: 'Option with description', value: 1, description: 'this is a description' },
   {
-    label: "Option with description and image",
+    label: 'Option with description and image',
     value: 2,
-    description: "This is a very elaborate description, describing all the wonders in the world.",
-    imgUrl: "https://placekitten.com/40/40",
+    description: 'This is a very elaborate description, describing all the wonders in the world.',
+    imgUrl: 'https://placekitten.com/40/40',
   },
 ];
 ```
@@ -90,7 +90,7 @@ Where the async function could look like this:
 
 ```tsx
 const loadAsyncOptions = () => {
-  return new Promise<Array<SelectableValue<string>>>(resolve => {
+  return new Promise<Array<SelectableValue<string>>>((resolve) => {
     setTimeout(() => {
       resolve(options);
     }, 2000);
@@ -103,7 +103,7 @@ const loadAsyncOptions = () => {
 Possible to Select multiple values at the same time.
 
 ```tsx
-import { MultiSelect } from "@grafana/ui";
+import { MultiSelect } from '@grafana/ui';
 
 const multiSelect = () => {
   const [value, setValue] = useState<Array<SelectableValue<string>>>([]);
@@ -113,7 +113,7 @@ const multiSelect = () => {
       <MultiSelect
         options={options}
         value={value}
-        onChange={v => {
+        onChange={(v) => {
           setValue(v);
         }}
       />
