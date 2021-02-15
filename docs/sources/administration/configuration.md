@@ -654,13 +654,15 @@ Grafana provides many ways to authenticate users. Refer to the Grafana [Authenti
 
 The cookie name for storing the auth token. Default is `grafana_session`.
 
-### login_maximum_inactive_lifetime_days
+### login_maximum_inactive_lifetime_duration
 
-The lifetime (days) an authenticated user can be inactive before being required to log in at next visit. Default is 7 days.
+The maximum lifetime (duration) an authenticated user can be inactive before being required to login at next visit. Default is 7 days (7d).
+This setting should be expressed as a duration, e.g. 5m (minutes), 6h (hours), 10d (days), 2w (weeks), 1M (month). The lifetime resets at each successful token rotation (token_rotation_interval_minutes).
 
-### login_maximum_lifetime_days
+### login_maximum_lifetime_duration
 
-The maximum lifetime (days) an authenticated user can be logged in before being required to login. Default is 30 days.
+The maximum lifetime (duration) an authenticated user can be logged in since login time before being required to login. Default is 30 days (30d).
+This setting should be expressed as a duration, e.g. 5m (minutes), 6h (hours), 10d (days), 2w (weeks), 1M (month).
 
 ### token_rotation_interval_minutes
 

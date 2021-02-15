@@ -1,5 +1,5 @@
 import { createSelector } from 'reselect';
-import { ExploreItemState } from 'app/types';
+import { ExploreId, ExploreItemState, StoreState } from 'app/types';
 import { filterLogLevels, dedupLogRows } from 'app/core/logs_model';
 
 const logsRowsSelector = (state: ExploreItemState) => state.logsResult && state.logsResult.rows;
@@ -17,3 +17,5 @@ export const deduplicatedRowsSelector = createSelector(
     return dedupLogRows(filteredRows, dedupStrategy);
   }
 );
+
+export const isSplit = (state: StoreState) => Boolean(state.explore[ExploreId.left] && state.explore[ExploreId.right]);
