@@ -1,7 +1,6 @@
-import React, { useCallback, useContext } from 'react';
-import uPlot, { Series } from 'uplot';
+import React, { useContext } from 'react';
+import uPlot, { AlignedData, Series } from 'uplot';
 import { PlotPlugin } from './types';
-import { DataFrame, Field, FieldConfig } from '@grafana/data';
 
 interface PlotCanvasContextType {
   // canvas size css pxs
@@ -26,7 +25,7 @@ interface PlotContextType extends PlotPluginsContextType {
   getSeries: () => Series[];
   getCanvas: () => PlotCanvasContextType;
   canvasRef: any;
-  data: DataFrame;
+  data: AlignedData;
 }
 
 export const PlotContext = React.createContext<PlotContextType>({} as PlotContextType);
@@ -51,85 +50,10 @@ export const usePlotPluginContext = (): PlotPluginsContextType => {
   };
 };
 
-// Exposes API for building uPlot config
-
-interface PlotDataAPI {
-  /** Data frame passed to graph, x-axis aligned */
-  data: DataFrame;
-  /** Returns field by index */
-  getField: (idx: number) => Field;
-  /** Returns x-axis fields */
-  getXAxisFields: () => Field[];
-  /** Returns x-axis fields */
-  getYAxisFields: () => Field[];
-  /** Returns field value by field and value index */
-  getFieldValue: (fieldIdx: number, rowIdx: number) => any;
-  /** Returns field config by field index */
-  getFieldConfig: (fieldIdx: number) => FieldConfig;
-}
-
-export const usePlotData = (): PlotDataAPI => {
-  const ctx = usePlotContext();
-
-  const getField = useCallback(
-    (idx: number) => {
-      if (!ctx) {
-        throwWhenNoContext('usePlotData');
-      }
-      return ctx!.data.fields[idx];
-    },
-    [ctx]
-  );
-
-  const getFieldConfig = useCallback(
-    (idx: number) => {
-      const field: Field = getField(idx);
-      return field.config;
-    },
-    [ctx]
-  );
-
-  const getFieldValue = useCallback(
-    (fieldIdx: number, rowIdx: number) => {
-      const field: Field = getField(fieldIdx);
-      return field.values.get(rowIdx);
-    },
-    [ctx]
-  );
-
-  const getXAxisFields = useCallback(() => {
-    // by uPlot convention x-axis is always first field
-    // this may change when we introduce non-time x-axis and multiple x-axes (https://leeoniya.github.io/uPlot/demos/time-periods.html)
-    return [getField(0)];
-  }, [ctx]);
-
-  const getYAxisFields = useCallback(() => {
-    if (!ctx) {
-      throwWhenNoContext('usePlotData');
-    }
-    // by uPlot convention x-axis is always first field
-    // this may change when we introduce non-time x-axis and multiple x-axes (https://leeoniya.github.io/uPlot/demos/time-periods.html)
-    return ctx!.data.fields.slice(1);
-  }, [ctx]);
-
-  if (!ctx) {
-    throwWhenNoContext('usePlotData');
-  }
-
-  return {
-    data: ctx.data,
-    getField,
-    getFieldValue,
-    getFieldConfig,
-    getXAxisFields,
-    getYAxisFields,
-  };
-};
-
 export const buildPlotContext = (
   isPlotReady: boolean,
   canvasRef: any,
-  data: DataFrame,
+  data: AlignedData,
   registerPlugin: any,
   getPlotInstance: () => uPlot | undefined
 ): PlotContextType => {
