@@ -30,6 +30,20 @@ func init() {
 func (ac *RBACService) Init() error {
 	ac.log = log.New("rbac")
 
+	if _, exists := ac.Cfg.FeatureToggles["new_authz"]; !exists {
+		return nil
+	}
+
+	seeder := seeder{
+		Service: ac,
+	}
+
+	// TODO: Seed all orgs
+	err := seeder.Seed(context.TODO(), 1)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
