@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"testing"
@@ -45,8 +46,12 @@ func logSentryEventScenario(t *testing.T, desc string, event frontendlogging.Fro
 
 		sc := setupScenarioContext(t, "/log")
 
+		cdnRootURL, e := url.Parse("https://storage.googleapis.com/grafana-static-assets")
+		require.NoError(t, e)
+
 		cfg := &setting.Cfg{
 			StaticRootPath: "/staticroot",
+			CDNRootURL:     cdnRootURL,
 		}
 
 		readSourceMap := func(dir string, path string) ([]byte, error) {
@@ -252,6 +257,12 @@ func TestFrontendLoggingEndpoint(t *testing.T) {
 									Lineno:   3,
 									Colno:    10,
 								},
+								{
+									Function: "cdn",
+									Filename: "https://storage.googleapis.com/grafana-static-assets/grafana-oss/pre-releases/7.5.0-11925pre/public/build/foo.js", // source map found and mapped
+									Lineno:   3,
+									Colno:    10,
+								},
 							},
 						},
 					},
@@ -268,8 +279,9 @@ func TestFrontendLoggingEndpoint(t *testing.T) {
   at explode (http://localhost:3000/public/build/error.js:3:10)
   at wat (http://localhost:3000/public/build/bar.js:3:10)
   at nope (http://localhost:3000/baz.js:3:10)
-  at fake (http://localhost:3000/public/build/../../secrets.txt:3:10)`)
-			assert.Len(t, sourceMapReads, 5)
+  at fake (http://localhost:3000/public/build/../../secrets.txt:3:10)
+  at ? (core|webpack:///./some_source.ts:3:2)`)
+			assert.Len(t, sourceMapReads, 6)
 			assert.Equal(t, "/staticroot", sourceMapReads[0].dir)
 			assert.Equal(t, "build/moo/foo.js.map", sourceMapReads[0].path)
 			assert.Equal(t, "/usr/local/telepathic-panel", sourceMapReads[1].dir)
@@ -280,6 +292,8 @@ func TestFrontendLoggingEndpoint(t *testing.T) {
 			assert.Equal(t, "build/bar.js.map", sourceMapReads[3].path)
 			assert.Equal(t, "/staticroot", sourceMapReads[4].dir)
 			assert.Equal(t, "secrets.txt.map", sourceMapReads[4].path)
+			assert.Equal(t, "/staticroot", sourceMapReads[5].dir)
+			assert.Equal(t, "build/foo.js.map", sourceMapReads[5].path)
 		})
 	})
 }

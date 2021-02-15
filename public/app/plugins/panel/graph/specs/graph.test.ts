@@ -1,4 +1,3 @@
-import '../module';
 import { GraphCtrl } from '../module';
 import { MetricsPanelCtrl } from 'app/features/panel/metrics_panel_ctrl';
 import { PanelCtrl } from 'app/features/panel/panel_ctrl';
@@ -78,6 +77,9 @@ describe('grafanaGraph', () => {
         seriesOverrides: [],
         tooltip: {
           shared: true,
+        },
+        fieldConfig: {
+          defaults: {},
         },
       },
       renderingCompleted: jest.fn(),

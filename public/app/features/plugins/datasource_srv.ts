@@ -157,6 +157,15 @@ export class DatasourceSrv implements DataSourceService {
       if (filters.pluginId && x.meta.id !== filters.pluginId) {
         return false;
       }
+      if (
+        !filters.all &&
+        x.meta.metrics !== true &&
+        x.meta.annotations !== true &&
+        x.meta.tracing !== true &&
+        x.meta.logs !== true
+      ) {
+        return false;
+      }
       return true;
     });
 

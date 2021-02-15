@@ -327,7 +327,7 @@ export class TemplateSrv implements BaseTemplateSrv {
       value = this.getAllValue(variable);
       text = ALL_VARIABLE_TEXT;
       // skip formatting of custom all values
-      if (variable.allValue && fmt !== 'text') {
+      if (variable.allValue && fmt !== 'text' && fmt !== 'queryparam') {
         return { value: value };
       }
     }

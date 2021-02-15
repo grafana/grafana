@@ -3,13 +3,13 @@ import { InlineFormLabel, LegacyForms, Button } from '@grafana/ui';
 const { Select, Input } = LegacyForms;
 import {
   AppEvents,
+  SelectableValue,
   DataSourcePluginOptionsEditorProps,
   onUpdateDatasourceJsonDataOptionSelect,
   onUpdateDatasourceResetOption,
   onUpdateDatasourceJsonDataOption,
   onUpdateDatasourceSecureJsonDataOption,
 } from '@grafana/data';
-import { SelectableValue } from '@grafana/data';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchJsonData, CloudWatchSecureJsonData } from '../types';
