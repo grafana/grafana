@@ -126,6 +126,36 @@ const multiSelect = () => {
 
 Like MultiSelect but handles data asynchronously with the `loadOptions` prop.
 
-## Props
+# Testing
+
+Using React Testing Library, you can select the `<Select />` using its matching label, such as the label assigned with the `inputId` prop. Use the `react-select-event` package to select values from the options.
+
+```tsx
+import { render } from '@testing-library/react';
+import selectEvent from 'react-select-event';
+import { Select } from '@grafana/ui';
+
+it('should call onChange', () => {
+  const onChange = jest.fn();
+
+  const { getByLabelText } = render(
+    <>
+      <label htmlFor="my-select">My select</label>
+      <Select onChange={onChange} options={options} inputId="my-select" />
+    </>
+  );
+
+  const selectEl = getByLabelText('My select');
+  expect(selectEl).toBeInTheDocument();
+
+  await selectEvent.select(selectEl, 'Option 2');
+  expect(onChange).toHaveBeenCalledWith({
+    label: 'Option 2',
+    value: 2,
+  });
+});
+```
+
+# Props
 
 <Props of={Select} />

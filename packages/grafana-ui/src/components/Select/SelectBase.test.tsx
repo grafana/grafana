@@ -1,5 +1,6 @@
 import React from 'react';
 import { mount, ReactWrapper } from 'enzyme';
+import { render } from '@testing-library/react';
 import { SelectBase } from './SelectBase';
 import { SelectableValue } from '@grafana/data';
 import { MultiValueContainer } from './MultiValue';
@@ -26,6 +27,19 @@ describe('SelectBase', () => {
     const container = mount(<SelectBase onChange={onChangeHandler} isOpen />);
     const noopt = container.find({ 'aria-label': 'No options provided' });
     expect(noopt).toHaveLength(1);
+  });
+
+  it('is selectable via its label text', async () => {
+    const onChange = jest.fn();
+
+    const { getByLabelText } = render(
+      <>
+        <label htmlFor="my-select">My select</label>
+        <SelectBase onChange={onChange} options={options} inputId="my-select" />
+      </>
+    );
+
+    expect(getByLabelText('My select')).toBeInTheDocument();
   });
 
   describe('when openMenuOnFocus prop', () => {
@@ -162,6 +176,7 @@ describe('SelectBase', () => {
       const menuOptions = container.find({ 'aria-label': 'Select option' });
       expect(menuOptions).toHaveLength(2);
     });
+
     it('call onChange handler when option is selected', () => {
       const spy = jest.fn();
       const handler = (value: SelectableValue<number>) => spy(value);
