@@ -61,7 +61,7 @@ export const AlertRulesTable: FC<AlertRulesTableProps> = ({ pendingRequest, data
                       <tr>
                         <td colSpan={columns.length}>
                           <pre data-qa="alert-rules-details" className={style.details}>
-                            {alertRule.rawValues.template.yaml}
+                            {alertRule.expr}
                           </pre>
                         </td>
                       </tr>

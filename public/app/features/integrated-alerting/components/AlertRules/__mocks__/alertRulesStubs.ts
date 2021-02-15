@@ -48,6 +48,8 @@ export const rulesStubs: AlertRulesListResponseRule[] = [
         },
       ],
     },
+    expr:
+      'sum by (node_name) (mongodb_ss_connections{conn_type="current"}) * 1024 * 1024↵/ on (node_name) (node_memory_MemTotal_bytes)↵* 100↵> [[ .threshold ]]',
   },
   {
     rule_id: 'test 2',
@@ -96,6 +98,8 @@ export const rulesStubs: AlertRulesListResponseRule[] = [
         },
       ],
     },
+    expr:
+      'sum by (node_name) (mongodb_ss_mem_resident * 1024 * 1024)↵/ on (node_name) (node_memory_MemTotal_bytes)↵* 100↵> 20',
   },
   {
     rule_id: 'test 3',
@@ -137,6 +141,8 @@ export const rulesStubs: AlertRulesListResponseRule[] = [
         },
       ],
     },
+    expr:
+      'sum by (node_name) (mongodb_ss_mem_resident * 1024 * 1024)↵/ on (node_name) (node_memory_MemTotal_bytes)↵* 100↵> 20',
   },
   {
     rule_id: 'test 4',
@@ -188,6 +194,8 @@ export const rulesStubs: AlertRulesListResponseRule[] = [
         },
       ],
     },
+    expr:
+      'sum by (node_name) (mongodb_ss_mem_resident * 1024 * 1024)↵/ on (node_name) (node_memory_MemTotal_bytes)↵* 100↵> 20',
   },
   {
     rule_id: 'test 5',
@@ -229,6 +237,8 @@ export const rulesStubs: AlertRulesListResponseRule[] = [
         },
       ],
     },
+    expr:
+      'sum by (node_name) (mongodb_ss_mem_resident * 1024 * 1024)↵/ on (node_name) (node_memory_MemTotal_bytes)↵* 100↵> 20',
   },
   {
     rule_id: 'test 6',
@@ -270,6 +280,8 @@ export const rulesStubs: AlertRulesListResponseRule[] = [
         },
       ],
     },
+    expr:
+      'sum by (node_name) (mongodb_ss_mem_resident * 1024 * 1024)↵/ on (node_name) (node_memory_MemTotal_bytes)↵* 100↵> 20',
   },
 ];
 
