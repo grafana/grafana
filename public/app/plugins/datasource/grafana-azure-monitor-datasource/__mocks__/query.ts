@@ -9,6 +9,7 @@ const azureMonitorQuery: AzureMonitorQuery = {
     resultFormat: 'time_series',
     workspace: 'e3fe4fde-ad5e-4d60-9974-e2f3562ffdf2',
   },
+
   azureMonitor: {
     // aggOptions: [],
     aggregation: 'Average',
@@ -16,7 +17,7 @@ const azureMonitorQuery: AzureMonitorQuery = {
     // dimensionFilter: '*',
     dimensionFilters: [],
     metricDefinition: 'Microsoft.Compute/virtualMachines',
-    metricName: 'Percentage CPU',
+    metricName: 'Metric A',
     metricNamespace: 'Microsoft.Compute/virtualMachines',
     resourceGroup: 'grafanastaging',
     resourceName: 'grafana',
@@ -25,13 +26,15 @@ const azureMonitorQuery: AzureMonitorQuery = {
     // timeGrains: [],
     top: '10',
   },
+
   insightsAnalytics: {
     query: '',
     resultFormat: 'time_series',
   },
+
   queryType: AzureQueryType.AzureMonitor,
   refId: 'A',
-  subscription: '44693801-6ee6-49de-9b2d-9106972f9572',
+  subscription: 'abc-123',
 
   format: 'dunno lol', // unsure what this value should be. It's not there at runtime, but it's in the ts interface
 };
