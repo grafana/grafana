@@ -11,7 +11,7 @@ replace github.com/denisenkom/go-mssqldb => github.com/denisenkom/go-mssqldb v0.
 replace k8s.io/client-go => k8s.io/client-go v0.18.8
 
 require (
-	cloud.google.com/go/storage v1.12.0
+	cloud.google.com/go/storage v1.13.0
 	github.com/BurntSushi/toml v0.3.1
 	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f
 	github.com/aws/aws-sdk-go v1.37.7
@@ -82,8 +82,8 @@ require (
 	github.com/xorcare/pointer v1.1.0
 	github.com/yudai/gojsondiff v1.0.0
 	golang.org/x/crypto v0.0.0-20201208171446-5f87f3452ae9
-	golang.org/x/net v0.0.0-20201209123823-ac852fbbde11
-	golang.org/x/oauth2 v0.0.0-20201208152858-08078c50e5b5
+	golang.org/x/net v0.0.0-20201224014010-6772e930b67b
+	golang.org/x/oauth2 v0.0.0-20210113205817-d3ed898aa8a3
 	golang.org/x/sync v0.0.0-20201207232520-09787c993a3a
 	golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e
 	gonum.org/v1/gonum v0.8.2
