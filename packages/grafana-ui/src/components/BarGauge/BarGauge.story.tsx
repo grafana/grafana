@@ -1,24 +1,11 @@
 import React from 'react';
-import { number, text } from '@storybook/addon-knobs';
+import { Story } from '@storybook/react';
 import { BarGauge, BarGaugeDisplayMode } from '@grafana/ui';
 import { VizOrientation, ThresholdsMode, Field, FieldType, getDisplayProcessor } from '@grafana/data';
 import { Props } from './BarGauge';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import mdx from './BarGauge.mdx';
 import { useTheme } from '../../themes';
-
-const getKnobs = () => {
-  return {
-    value: number('value', 70),
-    title: text('title', 'Title'),
-    minValue: number('minValue', 0),
-    maxValue: number('maxValue', 100),
-    threshold1Value: number('threshold1Value', 40),
-    threshold1Color: text('threshold1Color', 'orange'),
-    threshold2Value: number('threshold2Value', 60),
-    threshold2Color: text('threshold2Color', 'red'),
-  };
-};
 
 export default {
   title: 'Visualizations/BarGauge',
@@ -28,23 +15,15 @@ export default {
     docs: {
       page: mdx,
     },
+    knobs: {
+      disabled: true,
+    },
   },
 };
 
 function addBarGaugeStory(overrides: Partial<Props>) {
-  return () => {
+  return ({ value, title, minValue, maxValue, threshold1Color, threshold2Color, threshold1Value, threshold2Value }) => {
     const theme = useTheme();
-
-    const {
-      value,
-      title,
-      minValue,
-      maxValue,
-      threshold1Color,
-      threshold2Color,
-      threshold1Value,
-      threshold2Value,
-    } = getKnobs();
 
     const field: Partial<Field> = {
       type: FieldType.number,
@@ -84,23 +63,54 @@ function addBarGaugeStory(overrides: Partial<Props>) {
   };
 }
 
-export const gradientVertical = addBarGaugeStory({
+export const gradientVertical: Story<Props> = addBarGaugeStory({
   displayMode: BarGaugeDisplayMode.Gradient,
   orientation: VizOrientation.Vertical,
   height: 500,
   width: 100,
 });
 
-export const gradientHorizontal = addBarGaugeStory({
+export const gradientHorizontal: Story<Props> = addBarGaugeStory({
   displayMode: BarGaugeDisplayMode.Gradient,
   orientation: VizOrientation.Horizontal,
   height: 100,
   width: 500,
 });
 
-export const lcdHorizontal = addBarGaugeStory({
+export const lcdHorizontal: Story<Props> = addBarGaugeStory({
   displayMode: BarGaugeDisplayMode.Lcd,
   orientation: VizOrientation.Vertical,
   height: 500,
   width: 100,
 });
+
+gradientVertical.args = {
+  value: 70,
+  title: 'Title',
+  minValue: 0,
+  maxValue: 100,
+  threshold1Value: 40,
+  threshold1Color: 'orange',
+  threshold2Value: 60,
+  threshold2Color: 'red',
+};
+gradientHorizontal.args = {
+  value: 70,
+  title: 'Title',
+  minValue: 0,
+  maxValue: 100,
+  threshold1Value: 40,
+  threshold1Color: 'orange',
+  threshold2Value: 60,
+  threshold2Color: 'red',
+};
+lcdHorizontal.args = {
+  value: 70,
+  title: 'Title',
+  minValue: 0,
+  maxValue: 100,
+  threshold1Value: 40,
+  threshold1Color: 'orange',
+  threshold2Value: 60,
+  threshold2Color: 'red',
+};
