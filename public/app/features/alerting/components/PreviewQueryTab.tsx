@@ -54,6 +54,7 @@ export const PreviewQueryTab: FC<Props> = ({ data, height, width }) => {
 const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {
   return {
     wrapper: css`
+      label: preview-wrapper;
       height: ${height}px;
     `,
     selectWrapper: css`

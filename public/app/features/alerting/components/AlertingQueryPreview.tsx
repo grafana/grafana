@@ -2,6 +2,7 @@ import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { css } from 'emotion';
 import AutoSizer from 'react-virtualized-auto-sizer';
+import { Subscription } from 'rxjs';
 import { DataFrame, DataQuery, GrafanaTheme, PanelData } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Button, Icon, Tab, TabContent, TabsBar } from '@grafana/ui';
@@ -9,7 +10,6 @@ import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import { PreviewQueryTab } from './PreviewQueryTab';
 import { PreviewInstancesTab } from './PreviewInstancesTab';
 import { EmptyState } from './EmptyState';
-import { getData } from '../utils/queryPreview';
 import { StoreState } from '../../../types';
 import { onRunQueries } from '../state/actions';
 
@@ -41,19 +41,36 @@ type Props = OwnProps & ConnectedProps & DispatchProps;
 
 interface State {
   activeTab: Tabs;
+  data: PanelData;
 }
 
 export class AlertingQueryPreview extends PureComponent<Props, State> {
+  private subscription: Subscription;
   state = {
     activeTab: Tabs.Query,
+    data: {} as PanelData,
   };
+
+  componentDidMount() {
+    this.subscription = this.props.queryRunner
+      .getData({ withFieldConfig: true, withTransforms: true })
+      .subscribe((data) => {
+        this.setState({ data });
+      });
+  }
+
+  componentWillUnmount() {
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
+  }
 
   onTabChange = (tabId: Tabs) => {
     this.setState({ activeTab: tabId });
   };
 
-  renderQueryAndInstances(data?: PanelData) {
-    const { activeTab } = this.state;
+  renderQueryAndInstances() {
+    const { activeTab, data } = this.state;
     const { instances, onTest } = this.props;
 
     if (!data) {
@@ -97,10 +114,10 @@ export class AlertingQueryPreview extends PureComponent<Props, State> {
   }
 
   render() {
-    const { queryRunner, queries } = this.props;
+    const { queries } = this.props;
+    const { data } = this.state;
 
     const styles = getStyles(config.theme);
-    const data = getData(queryRunner);
 
     return (
       <div className={styles.wrapper}>
@@ -120,7 +137,7 @@ export class AlertingQueryPreview extends PureComponent<Props, State> {
           {data && data.state === 'Error' ? (
             this.renderError(data)
           ) : queries && queries.length > 0 ? (
-            this.renderQueryAndInstances(data)
+            this.renderQueryAndInstances()
           ) : (
             <EmptyState title="No queries added.">
               <div>Start adding queries to this alert and a visualisation for your queries will appear here.</div>
