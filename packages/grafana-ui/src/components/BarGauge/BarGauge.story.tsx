@@ -40,6 +40,11 @@ export default {
         disable: true,
       },
     },
+    value: {
+      table: {
+        disable: true,
+      },
+    },
     display: {
       table: {
         disable: true,
@@ -73,8 +78,8 @@ export default {
   },
 };
 
-interface StoryProps {
-  value: number;
+interface StoryProps extends Partial<Props> {
+  numeric: number;
   title: string;
   minValue: number;
   maxValue: number;
@@ -82,13 +87,6 @@ interface StoryProps {
   threshold2Color: string;
   threshold1Value: number;
   threshold2Value: number;
-  displayMode: BarGaugeDisplayMode;
-  orientation: VizOrientation;
-  height: number;
-  width: number;
-  lcdCellWidth: number;
-  itemSpacing: number;
-  showUnfilled: boolean;
 }
 
 const AddBarGaugeStory = (storyProps: StoryProps) => {
@@ -119,9 +117,9 @@ const AddBarGaugeStory = (storyProps: StoryProps) => {
     width: storyProps.width,
     height: storyProps.height,
     value: {
-      text: storyProps.value.toString(),
+      text: storyProps.numeric.toString(),
       title: storyProps.title,
-      numeric: storyProps.value,
+      numeric: storyProps.numeric,
     },
     displayMode: storyProps.displayMode,
     orientation: storyProps.orientation,
@@ -137,7 +135,7 @@ export const gradientVertical: Story<StoryProps> = AddBarGaugeStory.bind({});
 export const gradientHorizontal: Story<StoryProps> = AddBarGaugeStory.bind({});
 
 gradientHorizontal.args = {
-  value: 70,
+  numeric: 70,
   title: 'Title',
   minValue: 0,
   maxValue: 100,
@@ -154,7 +152,7 @@ gradientHorizontal.args = {
   showUnfilled: true,
 };
 gradientVertical.args = {
-  value: 70,
+  numeric: 70,
   title: 'Title',
   minValue: 0,
   maxValue: 100,
