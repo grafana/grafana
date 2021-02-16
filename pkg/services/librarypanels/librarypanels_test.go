@@ -1530,7 +1530,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		t.Cleanup(registry.ClearOverrides)
 
 		ctx := macaron.Context{
-			Req: macaron.Request{&http.Request{}},
+			Req: macaron.Request{Request: &http.Request{}},
 		}
 		orgID := int64(1)
 		role := models.ROLE_ADMIN
