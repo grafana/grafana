@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { FieldConfigSource, GrafanaTheme, PanelPlugin, SelectableValue } from '@grafana/data';
 import { DashboardModel, PanelModel } from '../../state';
-import { CustomScrollbar, Select, stylesFactory, Tab, TabContent, TabsBar, ToolbarButton, useTheme } from '@grafana/ui';
+import { CustomScrollbar, Select, stylesFactory, Tab, TabContent, TabsBar, useTheme } from '@grafana/ui';
 import { OverrideFieldConfigEditor } from './OverrideFieldConfigEditor';
 import { DefaultFieldConfigEditor } from './DefaultFieldConfigEditor';
 import { css } from 'emotion';
@@ -85,7 +85,7 @@ export const OptionsPaneContent: React.FC<Props> = ({
     <div className={styles.wrapper} aria-label={selectors.components.PanelEditor.OptionsPane.content}>
       <div className={styles.panelOptionsPane}>
         <div className={styles.vizButtonWrapper}>
-          <VisualizationButton panel={panel} onToggleOptionsPane={onClose} isOptionsPaneOpen={false} />
+          <VisualizationButton panel={panel} />
         </div>
         <TabsBar className={styles.tabsBar}>
           <TabsBarContent

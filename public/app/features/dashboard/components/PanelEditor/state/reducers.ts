@@ -11,6 +11,7 @@ export const DEFAULT_PANEL_EDITOR_UI_STATE: PanelEditorUIState = {
   rightPaneSize: 400,
   topPaneSize: 0.45,
   mode: DisplayMode.Fill,
+  isVizPickerOpen: false,
 };
 
 export interface PanelEditorUIState {
@@ -22,6 +23,8 @@ export interface PanelEditorUIState {
   topPaneSize: number;
   /* Visualization size mode */
   mode: DisplayMode;
+  /* Visualization picker open */
+  isVizPickerOpen: boolean;
 }
 
 export interface PanelEditorState {
@@ -87,6 +90,13 @@ const pluginsSlice = createSlice({
     },
     setPanelEditorUIState: (state, action: PayloadAction<Partial<PanelEditorUIState>>) => {
       state.ui = { ...state.ui, ...action.payload };
+    },
+    toggleVizPicker: (state, action: PayloadAction<{ isOpen: boolean }>) => {
+      state.ui.isVizPickerOpen = action.payload.isOpen;
+      // Ensure options pane is opened when viz picker is open
+      if (state.ui.isVizPickerOpen) {
+        state.ui.isPanelOptionsVisible = true;
+      }
     },
     closeCompleted: (state) => {
       state.isOpen = false;

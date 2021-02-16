@@ -226,7 +226,6 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
       <div className={styles.panelToolbar}>
         <HorizontalGroup justify={variables.length > 0 ? 'space-between' : 'flex-end'} align="flex-start">
           {this.renderTemplateVariables(styles)}
-
           <HorizontalGroup>
             <RadioButtonGroup value={uiState.mode} options={displayModes} onChange={this.onDisplayModeChange} />
             <DashNavTimeControls
@@ -234,13 +233,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
               location={location}
               onChangeTimeZone={updateTimeZoneForSession}
             />
-            {!uiState.isPanelOptionsVisible && (
-              <VisualizationButton
-                panel={panel}
-                onToggleOptionsPane={this.onTogglePanelOptions}
-                isOptionsPaneOpen={false}
-              />
-            )}
+            {!uiState.isPanelOptionsVisible && <VisualizationButton panel={panel} />}
           </HorizontalGroup>
         </HorizontalGroup>
       </div>

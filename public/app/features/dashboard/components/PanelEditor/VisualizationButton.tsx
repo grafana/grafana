@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme, PanelPlugin, PanelPluginMeta } from '@grafana/data';
-import { useTheme, stylesFactory, Icon, Input, ToolbarButton, ToolbarButtonRow } from '@grafana/ui';
+import { useTheme, stylesFactory, Icon, Input, ToolbarButton, ToolbarButtonRow, ButtonGroup } from '@grafana/ui';
 import { changePanelPlugin } from '../../state/actions';
 import { StoreState } from 'app/types';
 import { PanelModel } from '../../state/PanelModel';
@@ -32,12 +32,8 @@ export const VisualizationButtonUnconnected = React.forwardRef<HTMLInputElement,
     const theme = useTheme();
     const styles = getStyles(theme);
 
-    if (!plugin) {
-      return null;
-    }
-
     const onPluginTypeChange = (meta: PanelPluginMeta) => {
-      if (meta.id === plugin.meta.id) {
+      if (meta.id === plugin!.meta.id) {
         setIsOpen(false);
       } else {
         changePanelPlugin(panel, meta.id);
@@ -53,14 +49,18 @@ export const VisualizationButtonUnconnected = React.forwardRef<HTMLInputElement,
         if (e.key === 'Enter') {
           const query = e.currentTarget.value;
           const plugins = getAllPanelPluginMeta();
-          const match = filterPluginList(plugins, query, plugin.meta);
+          const match = filterPluginList(plugins, query, plugin!.meta);
           if (match && match.length) {
             onPluginTypeChange(match[0]);
           }
         }
       },
-      [onPluginTypeChange]
+      [onPluginTypeChange, plugin]
     );
+
+    if (!plugin) {
+      return null;
+    }
 
     const suffix =
       searchQuery !== '' ? (
@@ -72,16 +72,23 @@ export const VisualizationButtonUnconnected = React.forwardRef<HTMLInputElement,
 
     return (
       <div className={styles.wrapper}>
-        <ToolbarButtonRow>
-          <ToolbarButton imgSrc={plugin.meta.info.logos.small} isOpen={isOpen} onClick={onToggleOpen} fullWidth>
+        <ButtonGroup>
+          <ToolbarButton
+            tooltip="Click to change visualisation"
+            imgSrc={plugin.meta.info.logos.small}
+            isOpen={isOpen}
+            onClick={onToggleOpen}
+            fullWidth
+          >
             {plugin.meta.name}
           </ToolbarButton>
           <ToolbarButton
+            tooltip={isOptionsPaneOpen ? 'Close options pane' : 'Show options pane'}
             icon="sliders-v-alt"
             onClick={onToggleOptionsPane}
-            variant={isOptionsPaneOpen ? 'active' : 'default'}
+            isOpen={isOptionsPaneOpen}
           />
-        </ToolbarButtonRow>
+        </ButtonGroup>
         {isOpen && (
           <>
             <Field>
