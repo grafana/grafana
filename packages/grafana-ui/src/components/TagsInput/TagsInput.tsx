@@ -42,8 +42,8 @@ export const TagsInput: FC<Props> = ({ placeholder = 'New tag (enter key to add)
     <div className={styles.wrapper}>
       <div className={styles.tags}>
         {tags?.map((tag: string, index: number) => {
-            return <TagItem key={`${tag}-${index}`} name={tag} onRemove={onRemove} />;
-          })}
+          return <TagItem key={`${tag}-${index}`} name={tag} onRemove={onRemove} />;
+        })}
       </div>
       <div>
         <Input
