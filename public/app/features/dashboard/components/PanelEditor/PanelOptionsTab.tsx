@@ -1,11 +1,10 @@
-import React, { FC, useCallback, useMemo, useRef } from 'react';
+import React, { FC, useCallback, useMemo } from 'react';
 import { DashboardModel, PanelModel } from '../../state';
 import { PanelData, PanelPlugin } from '@grafana/data';
 import { Counter, DataLinksInlineEditor, Field, Input, RadioButtonGroup, Select, Switch, TextArea } from '@grafana/ui';
 import { getPanelLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
 import { PanelOptionsEditor } from './PanelOptionsEditor';
 import { AngularPanelOptions } from './AngularPanelOptions';
-import { VisualizationTab } from './VisualizationTab';
 import { OptionsGroup } from './OptionsGroup';
 import { RepeatRowSelect } from '../RepeatRowSelect/RepeatRowSelect';
 
@@ -26,7 +25,6 @@ export const PanelOptionsTab: FC<Props> = ({
   onPanelConfigChange,
   onPanelOptionsChanged,
 }) => {
-  const visTabInputRef = useRef<HTMLInputElement>(null);
   const linkVariablesSuggestions = useMemo(() => getPanelLinksVariableSuggestions(), []);
   const onRepeatRowSelectChange = useCallback((value: string | null) => onPanelConfigChange('repeat', value), [
     onPanelConfigChange,
@@ -41,11 +39,6 @@ export const PanelOptionsTab: FC<Props> = ({
 
   const maxPerRowOptions = [2, 3, 4, 6, 8, 12].map((value) => ({ label: value.toString(), value }));
 
-  const focusVisPickerInput = (isExpanded: boolean) => {
-    if (isExpanded && visTabInputRef.current) {
-      visTabInputRef.current.focus();
-    }
-  };
   // Fist common panel settings Title, description
   elements.push(
     <OptionsGroup title="Settings" id="Panel settings" key="Panel settings">
@@ -64,12 +57,6 @@ export const PanelOptionsTab: FC<Props> = ({
           onChange={(e) => onPanelConfigChange('transparent', e.currentTarget.checked)}
         />
       </Field>
-    </OptionsGroup>
-  );
-
-  elements.push(
-    <OptionsGroup title="Visualization" id="Panel type" key="Panel type" defaultToClosed onToggle={focusVisPickerInput}>
-      {(toggleExpand) => <VisualizationTab panel={panel} ref={visTabInputRef} onToggleOptionGroup={toggleExpand} />}
     </OptionsGroup>
   );
 

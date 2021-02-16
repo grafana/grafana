@@ -20,6 +20,7 @@ import { css } from 'emotion';
 import { PanelOptionsTab } from './PanelOptionsTab';
 import { usePanelLatestData } from './usePanelLatestData';
 import { selectors } from '@grafana/e2e-selectors';
+import { VisualizationTab } from './VisualizationTab';
 
 interface Props {
   plugin: PanelPlugin;
@@ -94,43 +95,42 @@ export const OptionsPaneContent: React.FC<Props> = ({
   const showMainTab = activeTab === 'options' || plugin.meta.skipDataQuery;
 
   return (
-    <div className={styles.panelOptionsPane} aria-label={selectors.components.PanelEditor.OptionsPane.content}>
-      {plugin && (
-        <div className={styles.wrapper}>
-          <TabsBar className={styles.tabsBar}>
-            <TabsBarContent
-              width={width}
-              plugin={plugin}
-              isSearching={isSearching}
-              styles={styles}
-              activeTab={activeTab}
-              onClose={onClose}
-              setSearchMode={setSearchMode}
-              setActiveTab={setActiveTab}
-              panel={panel}
-            />
-          </TabsBar>
-          <TabContent className={styles.tabContent}>
-            <CustomScrollbar autoHeightMin="100%">
-              {showMainTab ? (
-                <PanelOptionsTab
-                  panel={panel}
-                  plugin={plugin}
-                  dashboard={dashboard}
-                  data={data}
-                  onPanelConfigChange={onPanelConfigChange}
-                  onPanelOptionsChanged={onPanelOptionsChanged}
-                />
-              ) : (
-                <>
-                  {activeTab === 'defaults' && renderFieldOptions(plugin)}
-                  {activeTab === 'overrides' && renderFieldOverrideOptions(plugin)}
-                </>
-              )}
-            </CustomScrollbar>
-          </TabContent>
-        </div>
-      )}
+    <div className={styles.wrapper} aria-label={selectors.components.PanelEditor.OptionsPane.content}>
+      <div className={styles.panelOptionsPane}>
+        <VisualizationTab panel={panel} onToggleOptionsPane={onClose} />
+        <TabsBar className={styles.tabsBar}>
+          <TabsBarContent
+            width={width}
+            plugin={plugin}
+            isSearching={isSearching}
+            styles={styles}
+            activeTab={activeTab}
+            onClose={onClose}
+            setSearchMode={setSearchMode}
+            setActiveTab={setActiveTab}
+            panel={panel}
+          />
+        </TabsBar>
+        <TabContent className={styles.tabContent}>
+          <CustomScrollbar autoHeightMin="100%">
+            {showMainTab ? (
+              <PanelOptionsTab
+                panel={panel}
+                plugin={plugin}
+                dashboard={dashboard}
+                data={data}
+                onPanelConfigChange={onPanelConfigChange}
+                onPanelOptionsChanged={onPanelOptionsChanged}
+              />
+            ) : (
+              <>
+                {activeTab === 'defaults' && renderFieldOptions(plugin)}
+                {activeTab === 'overrides' && renderFieldOverrideOptions(plugin)}
+              </>
+            )}
+          </CustomScrollbar>
+        </TabContent>
+      </div>
     </div>
   );
 };
@@ -250,17 +250,18 @@ const tabSelections: Array<SelectableValue<string>> = [
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     wrapper: css`
+      height: 100%;
+      width: 100%;
+    `,
+    panelOptionsPane: css`
       display: flex;
       flex-direction: column;
       height: 100%;
       padding-top: ${theme.spacing.md};
     `,
-    panelOptionsPane: css`
-      height: 100%;
-      width: 100%;
-    `,
     tabsBar: css`
       padding-right: ${theme.spacing.sm};
+      padding-top: ${theme.spacing.md};
     `,
     searchWrapper: css`
       display: flex;

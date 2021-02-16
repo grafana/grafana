@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme, PanelPlugin, PanelPluginMeta } from '@grafana/data';
-import { useTheme, stylesFactory, Icon, Input } from '@grafana/ui';
+import { useTheme, stylesFactory, Icon, Input, ToolbarButton, ToolbarButtonRow } from '@grafana/ui';
 import { changePanelPlugin } from '../../state/actions';
 import { StoreState } from 'app/types';
 import { PanelModel } from '../../state/PanelModel';
@@ -11,7 +11,7 @@ import { Field } from '@grafana/ui/src/components/Forms/Field';
 
 interface OwnProps {
   panel: PanelModel;
-  onToggleOptionGroup: (expand: boolean) => void;
+  onToggleOptionsPane: () => void;
 }
 
 interface ConnectedProps {
@@ -25,20 +25,26 @@ interface DispatchProps {
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
 export const VisualizationTabUnconnected = React.forwardRef<HTMLInputElement, Props>(
-  ({ panel, plugin, changePanelPlugin, onToggleOptionGroup }, ref) => {
+  ({ panel, plugin, changePanelPlugin, onToggleOptionsPane }, ref) => {
     const [searchQuery, setSearchQuery] = useState('');
+    const [isOpen, setIsOpen] = useState(false);
     const theme = useTheme();
     const styles = getStyles(theme);
 
     if (!plugin) {
       return null;
     }
+
     const onPluginTypeChange = (meta: PanelPluginMeta) => {
       if (meta.id === plugin.meta.id) {
-        onToggleOptionGroup(false);
+        setIsOpen(false);
       } else {
         changePanelPlugin(panel, meta.id);
       }
+    };
+
+    const onToggleOpen = () => {
+      setIsOpen(!isOpen);
     };
 
     const onKeyPress = useCallback(
@@ -65,24 +71,34 @@ export const VisualizationTabUnconnected = React.forwardRef<HTMLInputElement, Pr
 
     return (
       <div className={styles.wrapper}>
-        <Field>
-          <Input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.currentTarget.value)}
-            onKeyPress={onKeyPress}
-            prefix={<Icon name="filter" className={styles.icon} />}
-            suffix={suffix}
-            placeholder="Filter visualizations"
-            ref={ref}
-          />
-        </Field>
+        <ToolbarButtonRow>
+          <ToolbarButton imgSrc={plugin.meta.info.logos.small} isOpen={isOpen} onClick={onToggleOpen}>
+            {plugin.meta.name}
+          </ToolbarButton>
+          <ToolbarButton icon="sliders-v-alt" onClick={onToggleOptionsPane} />
+        </ToolbarButtonRow>
+        {isOpen && (
+          <>
+            <Field>
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.currentTarget.value)}
+                onKeyPress={onKeyPress}
+                prefix={<Icon name="filter" className={styles.icon} />}
+                suffix={suffix}
+                placeholder="Filter visualizations"
+                ref={ref}
+              />
+            </Field>
 
-        <VizTypePicker
-          current={plugin.meta}
-          onTypeChange={onPluginTypeChange}
-          searchQuery={searchQuery}
-          onClose={() => {}}
-        />
+            <VizTypePicker
+              current={plugin.meta}
+              onTypeChange={onPluginTypeChange}
+              searchQuery={searchQuery}
+              onClose={() => {}}
+            />
+          </>
+        )}
       </div>
     );
   }

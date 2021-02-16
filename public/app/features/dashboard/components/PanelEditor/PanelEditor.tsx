@@ -34,6 +34,7 @@ import { CoreEvents, StoreState } from 'app/types';
 import { DisplayMode, displayModes, PanelEditorTab } from './types';
 import { DashboardModel, PanelModel } from '../../state';
 import { PanelOptionsChangedEvent } from 'app/types/events';
+import { VisualizationTab } from './VisualizationTab';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -220,7 +221,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 
   renderPanelToolbar(styles: EditorStyles) {
-    const { dashboard, location, uiState, variables, updateTimeZoneForSession } = this.props;
+    const { dashboard, location, uiState, variables, updateTimeZoneForSession, panel } = this.props;
     return (
       <div className={styles.panelToolbar}>
         <HorizontalGroup justify={variables.length > 0 ? 'space-between' : 'flex-end'} align="flex-start">
@@ -234,9 +235,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
               onChangeTimeZone={updateTimeZoneForSession}
             />
             {!uiState.isPanelOptionsVisible && (
-              <ToolbarButton onClick={this.onTogglePanelOptions} tooltip="Open options pane" icon="angle-left">
-                Show options
-              </ToolbarButton>
+              <VisualizationTab panel={panel} onToggleOptionsPane={this.onTogglePanelOptions} />
             )}
           </HorizontalGroup>
         </HorizontalGroup>
