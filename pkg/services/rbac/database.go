@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // timeNow makes it possible to test usage of time
@@ -16,7 +17,7 @@ func (ac *RBACService) GetPolicies(ctx context.Context, orgID int64) ([]*Policy,
 	var result []*Policy
 	err := ac.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		policies := make([]*Policy, 0)
-		q := "SELECT id, org_id, name, description, updated FROM policy WHERE org_id = ?"
+		q := "SELECT id, uid, org_id, name, description, updated FROM policy WHERE org_id = ?"
 		if err := sess.SQL(q, orgID).Find(&policies); err != nil {
 			return err
 		}
@@ -49,12 +50,40 @@ func (ac *RBACService) GetPolicy(ctx context.Context, orgID, policyID int64) (*P
 	return result, err
 }
 
+func (ac *RBACService) GetPolicyByUID(ctx context.Context, orgId int64, uid string) (*PolicyDTO, error) {
+	var result *PolicyDTO
+
+	err := ac.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		policy, err := getPolicyByUID(sess, uid, orgId)
+		if err != nil {
+			return err
+		}
+
+		permissions, err := getPolicyPermissions(sess, policy.Id)
+		if err != nil {
+			return err
+		}
+
+		policy.Permissions = permissions
+		result = policy
+		return nil
+	})
+
+	return result, err
+}
+
 func (ac *RBACService) CreatePolicy(ctx context.Context, cmd CreatePolicyCommand) (*Policy, error) {
 	var result *Policy
 
 	err := ac.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		uid, err := generateNewPolicyUID(sess, cmd.OrgId)
+		if err != nil {
+			return fmt.Errorf("failed to generate UID for policy %q: %w", cmd.Name, err)
+		}
+
 		policy := &Policy{
 			OrgId:       cmd.OrgId,
+			UID:         uid,
 			Name:        cmd.Name,
 			Description: cmd.Description,
 			Created:     timeNow(),
@@ -78,13 +107,21 @@ func (ac *RBACService) CreatePolicy(ctx context.Context, cmd CreatePolicyCommand
 func (ac *RBACService) UpdatePolicy(ctx context.Context, cmd UpdatePolicyCommand) (*Policy, error) {
 	var result *Policy
 	err := ac.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		existingPolicy, err := getPolicyByUID(sess, cmd.UID, cmd.OrgId)
+		if err != nil {
+			return err
+		}
+
 		policy := &Policy{
+			Id:          existingPolicy.Id,
+			UID:         existingPolicy.UID,
+			OrgId:       existingPolicy.OrgId,
 			Name:        cmd.Name,
 			Description: cmd.Description,
 			Updated:     timeNow(),
 		}
 
-		affectedRows, err := sess.ID(cmd.Id).Update(policy)
+		affectedRows, err := sess.ID(existingPolicy.Id).Update(policy)
 
 		if err != nil {
 			return err
@@ -392,6 +429,30 @@ func getPolicyById(sess *sqlstore.DBSession, policyId int64, orgId int64) (*Poli
 	return &policyDTO, nil
 }
 
+func getPolicyByUID(sess *sqlstore.DBSession, uid string, orgId int64) (*PolicyDTO, error) {
+	policy := Policy{OrgId: orgId, UID: uid}
+	has, err := sess.Get(&policy)
+	if !has {
+		return nil, errPolicyNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	policyDTO := PolicyDTO{
+		Id:          policy.Id,
+		UID:         policy.UID,
+		OrgId:       policy.OrgId,
+		Name:        policy.Name,
+		Description: policy.Description,
+		Permissions: nil,
+		Created:     policy.Created,
+		Updated:     policy.Updated,
+	}
+
+	return &policyDTO, nil
+}
+
 func getPolicyPermissions(sess *sqlstore.DBSession, policyId int64) ([]Permission, error) {
 	permissions := make([]Permission, 0)
 	q := "SELECT id, policy_id, permission, scope, updated, created FROM permission WHERE policy_id = ?"
@@ -420,4 +481,21 @@ func policyExists(orgId int64, policyId int64, sess *sqlstore.DBSession) (bool, 
 	}
 
 	return true, nil
+}
+
+func generateNewPolicyUID(sess *sqlstore.DBSession, orgID int64) (string, error) {
+	for i := 0; i < 3; i++ {
+		uid := util.GenerateShortUID()
+
+		exists, err := sess.Where("org_id=? AND uid=?", orgID, uid).Get(&Policy{})
+		if err != nil {
+			return "", err
+		}
+
+		if !exists {
+			return uid, nil
+		}
+	}
+
+	return "", errPolicyFailedGenerateUniqueUID
 }

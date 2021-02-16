@@ -30,12 +30,14 @@ func addRBACMigrations(mg *migrator.Migrator) {
 			{Name: "name", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "description", Type: migrator.DB_Text, Nullable: true},
 			{Name: "org_id", Type: migrator.DB_BigInt},
+			{Name: "uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: false},
 			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
 			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"org_id"}},
 			{Cols: []string{"org_id", "name"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"org_id", "uid"}, Type: migrator.IndexType},
 		},
 	}
 
@@ -44,6 +46,7 @@ func addRBACMigrations(mg *migrator.Migrator) {
 	//-------  indexes ------------------
 	mg.AddMigration("add index policy.org_id", migrator.NewAddIndexMigration(policyV1, policyV1.Indices[0]))
 	mg.AddMigration("add unique index policy_org_id_name", migrator.NewAddIndexMigration(policyV1, policyV1.Indices[1]))
+	mg.AddMigration("add index policy_org_id_uid", migrator.NewAddIndexMigration(policyV1, policyV1.Indices[2]))
 
 	// Or rolePolicy? Role == Team in this case
 	teamPolicyV1 := migrator.Table{

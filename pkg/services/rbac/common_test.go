@@ -74,7 +74,7 @@ type permissionTestCase struct {
 	scope      string
 }
 
-func createPolicy(t *testing.T, ac *RBACService, p policyTestCase) int64 {
+func createPolicy(t *testing.T, ac *RBACService, p policyTestCase) *Policy {
 	createPolicyCmd := CreatePolicyCommand{
 		OrgId: 1,
 		Name:  p.name,
@@ -94,7 +94,7 @@ func createPolicy(t *testing.T, ac *RBACService, p policyTestCase) int64 {
 		require.NoError(t, err)
 	}
 
-	return policyId
+	return res
 }
 
 func createUserWithPolicy(t *testing.T, ac *RBACService, user string, policies []policyTestCase) {

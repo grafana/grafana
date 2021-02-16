@@ -1,8 +1,6 @@
 package rbac
 
 import (
-	"strconv"
-
 	"github.com/go-macaron/binding"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -13,10 +11,10 @@ import (
 func (ac *RBACService) registerAPIEndpoints() {
 	ac.RouteRegister.Group("/api/access-control", func(accessControl routing.RouteRegister) {
 		accessControl.Get("/policies", middleware.ReqSignedIn, routing.Wrap(ac.listPolicies))
-		accessControl.Get("/policies/:policyId", middleware.ReqSignedIn, routing.Wrap(ac.getPolicy))
+		accessControl.Get("/policies/:policyUID", middleware.ReqSignedIn, routing.Wrap(ac.getPolicy))
 		accessControl.Post("/policies", middleware.ReqEditorRole, binding.Bind(CreatePolicyCommand{}), routing.Wrap(ac.createPolicy))
-		accessControl.Put("/policies/:policyId", middleware.ReqEditorRole, binding.Bind(UpdatePolicyCommand{}), routing.Wrap(ac.updatePolicy))
-		accessControl.Delete("/policies/:policyId", middleware.ReqEditorRole, routing.Wrap(ac.deletePolicy))
+		accessControl.Put("/policies/:policyUID", middleware.ReqEditorRole, binding.Bind(UpdatePolicyCommand{}), routing.Wrap(ac.updatePolicy))
+		accessControl.Delete("/policies/:policyUID", middleware.ReqEditorRole, routing.Wrap(ac.deletePolicy))
 	})
 }
 
@@ -31,16 +29,11 @@ func (ac *RBACService) listPolicies(c *models.ReqContext) response.Response {
 	return response.JSON(200, policies)
 }
 
-// GET /api/access-control/policies/:policyId
+// GET /api/access-control/policies/:policyUID
 func (ac *RBACService) getPolicy(c *models.ReqContext) response.Response {
-	// TODO: use UID for policies?
-	policyIdStr := c.Params(":policyId")
-	policyId, err := strconv.Atoi(policyIdStr)
-	if err != nil {
-		return response.Error(500, "Failed to get policy", err)
-	}
+	policyUID := c.Params(":policyUID")
 
-	policy, err := ac.GetPolicy(c.Req.Context(), c.OrgId, int64(policyId))
+	policy, err := ac.GetPolicyByUID(c.Req.Context(), c.OrgId, policyUID)
 	if err != nil {
 		return response.Error(500, "Failed to get policy", err)
 	}
@@ -60,15 +53,10 @@ func (ac *RBACService) createPolicy(c *models.ReqContext, cmd CreatePolicyComman
 	return response.JSON(200, policy)
 }
 
-// PUT /api/access-control/policies/:policyId
+// PUT /api/access-control/policies/:policyUID
 func (ac *RBACService) updatePolicy(c *models.ReqContext, cmd UpdatePolicyCommand) response.Response {
-	// TODO: use UID for policies?
-	policyIdStr := c.Params(":policyId")
-	policyId, err := strconv.Atoi(policyIdStr)
-	if err != nil {
-		return response.Error(500, "Failed to update policy", err)
-	}
-	cmd.Id = int64(policyId)
+	policyUID := c.Params(":policyUID")
+	cmd.UID = policyUID
 
 	policy, err := ac.UpdatePolicy(c.Req.Context(), cmd)
 	if err != nil {
@@ -78,21 +66,16 @@ func (ac *RBACService) updatePolicy(c *models.ReqContext, cmd UpdatePolicyComman
 	return response.JSON(200, policy)
 }
 
-// DELETE /api/access-control/policies/:policyId
+// DELETE /api/access-control/policies/:policyUID
 func (ac *RBACService) deletePolicy(c *models.ReqContext) response.Response {
-	// TODO: use UID for policies?
-	policyIdStr := c.Params(":policyId")
-	policyId, err := strconv.Atoi(policyIdStr)
-	if err != nil {
-		return response.Error(500, "Failed to delete policy", err)
-	}
+	policyUID := c.Params(":policyUID")
 
 	cmd := &DeletePolicyCommand{
-		Id:    int64(policyId),
+		UID:   policyUID,
 		OrgId: c.SignedInUser.OrgId,
 	}
 
-	err = ac.DeletePolicy(cmd)
+	err := ac.DeletePolicy(cmd)
 	if err != nil {
 		return response.Error(500, "Failed to delete policy", err)
 	}
