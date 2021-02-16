@@ -79,7 +79,7 @@ export const GeneralSettings: React.FC<Props> = ({ dashboard }) => {
         <Field label="Description">
           <Input name="description" onBlur={onBlur} defaultValue={dashboard.description} />
         </Field>
-        <Field label="Tags" description="Press enter to add a tag">
+        <Field label="Tags">
           <TagsInput tags={dashboard.tags} onChange={onTagsChange} />
         </Field>
         <Field label="Folder">
