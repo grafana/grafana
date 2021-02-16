@@ -1,26 +1,14 @@
-import React, { CSSProperties, useCallback, useState } from 'react';
-import Transition from 'react-transition-group/Transition';
+import React, { useCallback, useState } from 'react';
 import { FieldConfigSource, GrafanaTheme, PanelPlugin, SelectableValue } from '@grafana/data';
 import { DashboardModel, PanelModel } from '../../state';
-import {
-  CustomScrollbar,
-  Icon,
-  Input,
-  Select,
-  stylesFactory,
-  Tab,
-  TabContent,
-  TabsBar,
-  ToolbarButton,
-  useTheme,
-} from '@grafana/ui';
+import { CustomScrollbar, Select, stylesFactory, Tab, TabContent, TabsBar, ToolbarButton, useTheme } from '@grafana/ui';
 import { OverrideFieldConfigEditor } from './OverrideFieldConfigEditor';
 import { DefaultFieldConfigEditor } from './DefaultFieldConfigEditor';
 import { css } from 'emotion';
 import { PanelOptionsTab } from './PanelOptionsTab';
 import { usePanelLatestData } from './usePanelLatestData';
 import { selectors } from '@grafana/e2e-selectors';
-import { VisualizationTab } from './VisualizationTab';
+import { VisualizationButton } from './VisualizationButton';
 
 interface Props {
   plugin: PanelPlugin;
@@ -46,7 +34,6 @@ export const OptionsPaneContent: React.FC<Props> = ({
   const theme = useTheme();
   const styles = getStyles(theme);
   const [activeTab, setActiveTab] = useState('options');
-  const [isSearching, setSearchMode] = useState(false);
   const { data, hasSeries } = usePanelLatestData(panel, { withTransforms: true, withFieldConfig: false });
 
   const renderFieldOptions = useCallback(
@@ -97,16 +84,14 @@ export const OptionsPaneContent: React.FC<Props> = ({
   return (
     <div className={styles.wrapper} aria-label={selectors.components.PanelEditor.OptionsPane.content}>
       <div className={styles.panelOptionsPane}>
-        <VisualizationTab panel={panel} onToggleOptionsPane={onClose} />
+        <div className={styles.vizButtonWrapper}>
+          <VisualizationButton panel={panel} onToggleOptionsPane={onClose} isOptionsPaneOpen={false} />
+        </div>
         <TabsBar className={styles.tabsBar}>
           <TabsBarContent
             width={width}
             plugin={plugin}
-            isSearching={isSearching}
-            styles={styles}
             activeTab={activeTab}
-            onClose={onClose}
-            setSearchMode={setSearchMode}
             setActiveTab={setActiveTab}
             panel={panel}
           />
@@ -138,51 +123,12 @@ export const OptionsPaneContent: React.FC<Props> = ({
 export const TabsBarContent: React.FC<{
   width: number;
   plugin: PanelPlugin;
-  isSearching: boolean;
   activeTab: string;
-  styles: OptionsPaneStyles;
-  onClose: () => void;
-  setSearchMode: (mode: boolean) => void;
   setActiveTab: (tab: string) => void;
   panel: PanelModel;
-}> = ({ width, plugin, isSearching, activeTab, onClose, setSearchMode, setActiveTab, styles, panel }) => {
+}> = ({ width, plugin, activeTab, setActiveTab, panel }) => {
   const overridesCount =
     panel.getFieldConfig().overrides.length === 0 ? undefined : panel.getFieldConfig().overrides.length;
-
-  if (isSearching) {
-    const defaultStyles = {
-      transition: 'width 50ms ease-in-out',
-      width: '50%',
-      display: 'flex',
-    };
-
-    const transitionStyles: { [str: string]: CSSProperties } = {
-      entered: { width: '100%' },
-    };
-
-    return (
-      <Transition in={true} timeout={0} appear={true}>
-        {(state) => {
-          return (
-            <div className={styles.searchWrapper}>
-              <div style={{ ...defaultStyles, ...transitionStyles[state] }}>
-                <Input
-                  className={styles.searchInput}
-                  type="text"
-                  prefix={<Icon name="search" />}
-                  ref={(elem) => elem && elem.focus()}
-                  placeholder="Search all options"
-                  suffix={
-                    <Icon name="times" onClick={() => setSearchMode(false)} className={styles.searchRemoveIcon} />
-                  }
-                />
-              </div>
-            </div>
-          );
-        }}
-      </Transition>
-    );
-  }
 
   // Show the appropriate tabs
   let tabs = tabSelections;
@@ -222,9 +168,6 @@ export const TabsBarContent: React.FC<{
           <div className="flex-grow-1" />
         </>
       )}
-      <div className={styles.tabsButton}>
-        <ToolbarButton icon="angle-right" tooltip="Close options pane" onClick={onClose} />
-      </div>
     </>
   );
 };
@@ -261,7 +204,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     tabsBar: css`
       padding-right: ${theme.spacing.sm};
-      padding-top: ${theme.spacing.md};
+    `,
+    vizButtonWrapper: css`
+      padding: 0 ${theme.spacing.md} ${theme.spacing.md} 0;
     `,
     searchWrapper: css`
       display: flex;
@@ -284,7 +229,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       background: ${theme.colors.bodyBg};
       border-left: 1px solid ${theme.colors.pageHeaderBorder};
     `,
-    tabsButton: css``,
     legacyOptions: css`
       label: legacy-options;
       .panel-options-grid {

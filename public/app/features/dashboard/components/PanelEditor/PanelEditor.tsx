@@ -34,7 +34,7 @@ import { CoreEvents, StoreState } from 'app/types';
 import { DisplayMode, displayModes, PanelEditorTab } from './types';
 import { DashboardModel, PanelModel } from '../../state';
 import { PanelOptionsChangedEvent } from 'app/types/events';
-import { VisualizationTab } from './VisualizationTab';
+import { VisualizationButton } from './VisualizationButton';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -235,7 +235,11 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
               onChangeTimeZone={updateTimeZoneForSession}
             />
             {!uiState.isPanelOptionsVisible && (
-              <VisualizationTab panel={panel} onToggleOptionsPane={this.onTogglePanelOptions} />
+              <VisualizationButton
+                panel={panel}
+                onToggleOptionsPane={this.onTogglePanelOptions}
+                isOptionsPaneOpen={false}
+              />
             )}
           </HorizontalGroup>
         </HorizontalGroup>

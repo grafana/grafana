@@ -11,6 +11,7 @@ import { Field } from '@grafana/ui/src/components/Forms/Field';
 
 interface OwnProps {
   panel: PanelModel;
+  isOptionsPaneOpen: boolean;
   onToggleOptionsPane: () => void;
 }
 
@@ -24,8 +25,8 @@ interface DispatchProps {
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
-export const VisualizationTabUnconnected = React.forwardRef<HTMLInputElement, Props>(
-  ({ panel, plugin, changePanelPlugin, onToggleOptionsPane }, ref) => {
+export const VisualizationButtonUnconnected = React.forwardRef<HTMLInputElement, Props>(
+  ({ panel, plugin, changePanelPlugin, onToggleOptionsPane, isOptionsPaneOpen }, ref) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [isOpen, setIsOpen] = useState(false);
     const theme = useTheme();
@@ -72,10 +73,14 @@ export const VisualizationTabUnconnected = React.forwardRef<HTMLInputElement, Pr
     return (
       <div className={styles.wrapper}>
         <ToolbarButtonRow>
-          <ToolbarButton imgSrc={plugin.meta.info.logos.small} isOpen={isOpen} onClick={onToggleOpen}>
+          <ToolbarButton imgSrc={plugin.meta.info.logos.small} isOpen={isOpen} onClick={onToggleOpen} fullWidth>
             {plugin.meta.name}
           </ToolbarButton>
-          <ToolbarButton icon="sliders-v-alt" onClick={onToggleOptionsPane} />
+          <ToolbarButton
+            icon="sliders-v-alt"
+            onClick={onToggleOptionsPane}
+            variant={isOptionsPaneOpen ? 'active' : 'default'}
+          />
         </ToolbarButtonRow>
         {isOpen && (
           <>
@@ -104,7 +109,7 @@ export const VisualizationTabUnconnected = React.forwardRef<HTMLInputElement, Pr
   }
 );
 
-VisualizationTabUnconnected.displayName = 'VisualizationTabUnconnected';
+VisualizationButtonUnconnected.displayName = 'VisualizationTabUnconnected';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
@@ -130,6 +135,6 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { changePanelPlugin };
 
-export const VisualizationTab = connect(mapStateToProps, mapDispatchToProps, undefined, { forwardRef: true })(
-  VisualizationTabUnconnected
+export const VisualizationButton = connect(mapStateToProps, mapDispatchToProps, undefined, { forwardRef: true })(
+  VisualizationButtonUnconnected
 );
