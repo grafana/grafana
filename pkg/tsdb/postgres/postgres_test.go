@@ -121,7 +121,7 @@ func TestGenerateConnectionString(t *testing.T) {
 			svc := postgresService{
 				Cfg:        cfg,
 				logger:     log.New("tsdb.postgres"),
-				tlsManager: &tlsTestManager{settings: tt.tlsSettings, dataPath: ""},
+				tlsManager: &tlsTestManager{settings: tt.tlsSettings},
 			}
 
 			if tt.jsonData == "" {
@@ -198,7 +198,7 @@ func TestPostgres(t *testing.T) {
 	svc := postgresService{
 		Cfg:        cfg,
 		logger:     log.New("tsdb.postgres"),
-		tlsManager: &tlsTestManager{settings: tlsSettings{Mode: "disable"}, dataPath: ""},
+		tlsManager: &tlsTestManager{settings: tlsSettings{Mode: "disable"}},
 	}
 
 	endpoint, err := svc.newPostgresQueryEndpoint(&models.DataSource{
@@ -1164,9 +1164,8 @@ func genTimeRangeByInterval(from time.Time, duration time.Duration, interval tim
 
 type tlsTestManager struct {
 	settings tlsSettings
-	dataPath string
 }
 
-func (m *tlsTestManager) getTLSSettings(datasource *models.DataSource, dataPath string) (tlsSettings, error) {
+func (m *tlsTestManager) getTLSSettings(datasource *models.DataSource) (tlsSettings, error) {
 	return m.settings, nil
 }

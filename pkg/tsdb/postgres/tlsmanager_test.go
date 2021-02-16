@@ -31,6 +31,7 @@ func TestDataSourceCacheManager(t *testing.T) {
 	mng := tlsManager{
 		logger:          log.New("tsdb.postgres"),
 		dsCacheInstance: datasourceCacheManager{locker: newLocker()},
+		dataPath:        cfg.DataPath,
 	}
 
 	settings := tlsSettings{}
@@ -65,7 +66,7 @@ func TestDataSourceCacheManager(t *testing.T) {
 					Uid:            "testData",
 				}
 				defer mutex.Unlock()
-				mng.writeCertFiles(ds, &settings, cfg.DataPath)
+				mng.writeCertFiles(ds, &settings)
 				index++
 				wg.Done()
 			}()
@@ -101,7 +102,7 @@ func TestDataSourceCacheManager(t *testing.T) {
 					}
 					mutex.Lock()
 					defer mutex.Unlock()
-					mng.writeCertFiles(ds, &settings, cfg.DataPath)
+					mng.writeCertFiles(ds, &settings)
 					wg1.Done()
 				}()
 			}
@@ -126,8 +127,8 @@ func TestDataSourceCacheManager(t *testing.T) {
 				SecureJsonData: securityjsonValue,
 				Uid:            "testData",
 			}
-			mng.writeCertFiles(ds_v2, &settings, cfg.DataPath)
-			mng.writeCertFiles(ds_v3, &settings, cfg.DataPath)
+			mng.writeCertFiles(ds_v2, &settings)
+			mng.writeCertFiles(ds_v3, &settings)
 			version, ok := mng.dsCacheInstance.cache.Load("1")
 			require.True(t, ok)
 			require.Equal(t, int(3), version)
@@ -229,6 +230,7 @@ func TestGetTLSSettings(t *testing.T) {
 			mng := tlsManager{
 				logger:          log.New("tsdb.postgres"),
 				dsCacheInstance: datasourceCacheManager{locker: newLocker()},
+				dataPath:        cfg.DataPath,
 			}
 
 			if tt.jsonData == "" {
@@ -251,7 +253,7 @@ func TestGetTLSSettings(t *testing.T) {
 				Version:        tt.version,
 			}
 
-			settings, err = mng.getTLSSettings(ds, cfg.DataPath)
+			settings, err = mng.getTLSSettings(ds)
 
 			if tt.expErr == "" {
 				require.NoError(t, err, tt.desc)

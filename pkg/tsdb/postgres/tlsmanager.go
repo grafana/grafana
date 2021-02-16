@@ -18,7 +18,7 @@ var validateCertFunc = validateCertFilePaths
 var writeCertFileFunc = writeCertFile
 
 type tlsSettingsProvider interface {
-	getTLSSettings(datasource *models.DataSource, dataPath string) (tlsSettings, error)
+	getTLSSettings(datasource *models.DataSource) (tlsSettings, error)
 }
 
 type datasourceCacheManager struct {
@@ -29,11 +29,13 @@ type datasourceCacheManager struct {
 type tlsManager struct {
 	logger          log.Logger
 	dsCacheInstance datasourceCacheManager
+	dataPath        string
 }
 
-func newTLSManager(logger log.Logger) tlsSettingsProvider {
+func newTLSManager(logger log.Logger, dataPath string) tlsSettingsProvider {
 	return &tlsManager{
 		logger:          logger,
+		dataPath:        dataPath,
 		dsCacheInstance: datasourceCacheManager{locker: newLocker()},
 	}
 }
@@ -46,7 +48,7 @@ type tlsSettings struct {
 	CertKeyFile         string
 }
 
-func (m *tlsManager) getTLSSettings(datasource *models.DataSource, dataPath string) (tlsSettings, error) {
+func (m *tlsManager) getTLSSettings(datasource *models.DataSource) (tlsSettings, error) {
 	tlsMode := strings.TrimSpace(strings.ToLower(datasource.JsonData.Get("sslmode").MustString("verify-full")))
 	isTLSDisabled := tlsMode == "disable"
 
@@ -58,13 +60,13 @@ func (m *tlsManager) getTLSSettings(datasource *models.DataSource, dataPath stri
 		return settings, nil
 	}
 
+	m.logger.Debug("Postgres TLS/SSL is enabled", "tlsMode", tlsMode)
+
 	settings.ConfigurationMethod = strings.TrimSpace(
 		strings.ToLower(datasource.JsonData.Get("tlsConfigurationMethod").MustString("file-path")))
 
-	m.logger.Debug("Postgres TLS/SSL is enabled", "tlsMode", tlsMode)
-	// var tlsRootCert, tlsCert, tlsKey string
 	if settings.ConfigurationMethod == "file-content" {
-		if err := m.writeCertFiles(datasource, &settings, dataPath); err != nil {
+		if err := m.writeCertFiles(datasource, &settings); err != nil {
 			return settings, err
 		}
 	} else {
@@ -144,7 +146,7 @@ func writeCertFile(
 	return nil
 }
 
-func (m *tlsManager) writeCertFiles(ds *models.DataSource, settings *tlsSettings, dataPath string) error {
+func (m *tlsManager) writeCertFiles(ds *models.DataSource, settings *tlsSettings) error {
 	m.logger.Debug("Writing TLS certificate files to disk")
 	decrypted := ds.SecureJsonData.Decrypt()
 	tlsRootCert := decrypted["tlsCACert"]
@@ -156,7 +158,7 @@ func (m *tlsManager) writeCertFiles(ds *models.DataSource, settings *tlsSettings
 	}
 
 	// Calculate all files path
-	workDir := filepath.Join(dataPath, "tls", ds.Uid+"generatedTLSCerts")
+	workDir := filepath.Join(m.dataPath, "tls", ds.Uid+"generatedTLSCerts")
 	settings.RootCertFile = getFileName(workDir, rootCert)
 	settings.CertFile = getFileName(workDir, clientCert)
 	settings.CertKeyFile = getFileName(workDir, clientKey)

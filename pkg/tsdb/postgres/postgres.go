@@ -34,7 +34,7 @@ type postgresService struct {
 
 func (s *postgresService) Init() error {
 	s.logger = log.New("tsdb.postgres")
-	s.tlsManager = newTLSManager(s.logger)
+	s.tlsManager = newTLSManager(s.logger, s.Cfg.DataPath)
 	tsdb.RegisterTsdbQueryEndpoint("postgres", func(ds *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 		return s.newPostgresQueryEndpoint(ds)
 	})
@@ -111,7 +111,7 @@ func (s *postgresService) generateConnectionString(datasource *models.DataSource
 		connStr += fmt.Sprintf(" port=%d", port)
 	}
 
-	tlsSettings, err := s.tlsManager.getTLSSettings(datasource, s.Cfg.DataPath)
+	tlsSettings, err := s.tlsManager.getTLSSettings(datasource)
 	if err != nil {
 		return "", err
 	}
