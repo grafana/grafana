@@ -17,35 +17,35 @@ var (
 
 // Policy is the model for Policy in RBAC.
 type Policy struct {
-	Id          int64
-	OrgId       int64
-	Name        string
-	Description string
+	Id          int64  `json:"id"`
+	OrgId       int64  `json:"orgId"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
 
-	Updated time.Time
-	Created time.Time
+	Updated time.Time `json:"updated"`
+	Created time.Time `json:"created"`
 }
 
 type PolicyDTO struct {
-	Id          int64
-	OrgId       int64
-	Name        string
-	Description string
-	Permissions []Permission
+	Id          int64        `json:"id"`
+	OrgId       int64        `json:"orgId"`
+	Name        string       `json:"name"`
+	Description string       `json:"description"`
+	Permissions []Permission `json:"permissions"`
 
-	Updated time.Time
-	Created time.Time
+	Updated time.Time `json:"updated"`
+	Created time.Time `json:"created"`
 }
 
 // Policy is the model for Permission in RBAC.
 type Permission struct {
-	Id         int64
-	PolicyId   int64
-	Permission string
-	Scope      string
+	Id         int64  `json:"id"`
+	PolicyId   int64  `json:"-"`
+	Permission string `json:"permission"`
+	Scope      string `json:"scope"`
 
-	Updated time.Time
-	Created time.Time
+	Updated time.Time `json:"updated"`
+	Created time.Time `json:"created"`
 }
 
 type TeamPolicy struct {
@@ -100,15 +100,15 @@ type DeletePermissionCommand struct {
 }
 
 type CreatePolicyCommand struct {
-	OrgId       int64
-	Name        string
-	Description string
+	OrgId       int64  `json:"-"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
 }
 
 type UpdatePolicyCommand struct {
-	Id          int64
-	Name        string
-	Description string
+	Id          int64  `json:"-"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
 }
 
 type DeletePolicyCommand struct {
