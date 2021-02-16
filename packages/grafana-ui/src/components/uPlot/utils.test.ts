@@ -27,7 +27,7 @@ describe('preparePlotData', () => {
   });
 
   it('creates array from DataFrame', () => {
-    expect(preparePlotData(df, StackingMode.None)).toMatchInlineSnapshot(`
+    expect(preparePlotData(df)).toMatchInlineSnapshot(`
       Array [
         Array [
           9997,
@@ -53,8 +53,36 @@ describe('preparePlotData', () => {
     `);
   });
 
-  it('creates stacked data', () => {
-    expect(preparePlotData(df, StackingMode.Standard)).toMatchInlineSnapshot(`
+  describe('stacking', () => {
+    it('none', () => {
+      expect(preparePlotData(df, StackingMode.None)).toMatchInlineSnapshot(`
+      Array [
+        Array [
+          9997,
+          9998,
+          9999,
+        ],
+        Array [
+          -10,
+          20,
+          10,
+        ],
+        Array [
+          10,
+          10,
+          10,
+        ],
+        Array [
+          20,
+          20,
+          20,
+        ],
+      ]
+    `);
+    });
+
+    it('standard', () => {
+      expect(preparePlotData(df, StackingMode.Standard)).toMatchInlineSnapshot(`
       Array [
         Array [
           9997,
@@ -78,5 +106,33 @@ describe('preparePlotData', () => {
         ],
       ]
     `);
+    });
+
+    it.skip('percentage', () => {
+      expect(preparePlotData(df, StackingMode.Standard)).toMatchInlineSnapshot(`
+      Array [
+        Array [
+          9997,
+          9998,
+          9999,
+        ],
+        Array [
+          -10,
+          20,
+          10,
+        ],
+        Array [
+          0,
+          30,
+          20,
+        ],
+        Array [
+          20,
+          50,
+          40,
+        ],
+      ]
+    `);
+    });
   });
 });

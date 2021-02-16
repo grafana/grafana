@@ -1,7 +1,7 @@
+import { DataFrame, dateTime, FieldType } from '@grafana/data';
 import throttle from 'lodash/throttle';
 import { AlignedData, Options } from 'uplot';
 import { PlotPlugin, PlotProps } from './types';
-import { DataFrame } from '@grafana/data';
 import { StackingMode } from './config';
 
 const LOGGING_ENABLED = true;
@@ -33,51 +33,54 @@ export function buildPlotConfig(props: PlotProps, plugins: Record<string, PlotPl
   } as Options;
 }
 
-export function isPlottingTime(config: Options) {
-  let isTimeSeries = false;
-
-  if (!config.scales) {
-    return false;
-  }
-
-  for (let i = 0; i < Object.keys(config.scales).length; i++) {
-    const key = Object.keys(config.scales)[i];
-    if (config.scales[key].time === true) {
-      isTimeSeries = true;
-      break;
+/** @internal */
+export function preparePlotData(frame: DataFrame, stacking = StackingMode.None): AlignedData {
+  const data = frame.fields.map((f) => {
+    if (f.type === FieldType.time) {
+      if (f.values.length > 0 && typeof f.values.get(0) === 'string') {
+        const timestamps = [];
+        for (let i = 0; i < f.values.length; i++) {
+          timestamps.push(dateTime(f.values.get(i)).valueOf());
+        }
+        return timestamps;
+      }
+      return f.values.toArray();
     }
+
+    return f.values.toArray();
+  }) as AlignedData;
+
+  if (stacking === StackingMode.None) {
+    return data;
   }
 
-  return isTimeSeries;
+  // TODO: percent stacking
+  const acc = Array(data[0].length).fill(0);
+  const result = [];
+
+  for (let i = 1; i < data.length; i++) {
+    for (let j = 0; j < data[i].length; j++) {
+      const v = data[i][j];
+      acc[j] += v === null || v === undefined ? 0 : +v;
+    }
+    result.push([...acc]);
+  }
+
+  return [data[0]].concat(result) as AlignedData;
 }
 
 // Dev helpers
+
+/** @internal */
 export const throttledLog = throttle((...t: any[]) => {
   console.log(...t);
 }, 500);
 
+/** @internal */
 export function pluginLog(id: string, throttle = false, ...t: any[]) {
   if (process.env.NODE_ENV === 'production' || !LOGGING_ENABLED) {
     return;
   }
   const fn = throttle ? throttledLog : console.log;
   fn(`[Plugin: ${id}]: `, ...t);
-}
-
-export function preparePlotData(frame: DataFrame, stacking = StackingMode.None): AlignedData {
-  if (stacking === StackingMode.None) {
-    return frame.fields.map((f) => f.values.toArray()) as AlignedData;
-  }
-
-  // TODO: percent stacking
-  const acc = Array(frame.fields[0].values.length).fill(0);
-  const result = [];
-  for (let i = 1; i < frame.fields.length; i++) {
-    for (let j = 0; j < frame.fields[i].values.length; j++) {
-      const v = frame.fields[i].values.get(j);
-      acc[j] += v === null || v === undefined ? 0 : +v;
-    }
-    result.push([...acc]);
-  }
-  return [frame.fields[0].values.toArray()].concat(result) as AlignedData;
 }

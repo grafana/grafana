@@ -12,6 +12,7 @@ import {
   FieldConfigSource,
   PanelPlugin,
   ScopedVars,
+  EventBus,
   EventBusSrv,
   DataFrameDTO,
   urlUtil,
@@ -153,7 +154,7 @@ export class PanelModel implements DataConfigSource {
   isInView: boolean;
 
   hasRefreshed: boolean;
-  events: EventBusSrv;
+  events: EventBus;
   cacheTimeout?: any;
   cachedPluginOptions: Record<string, PanelOptionsCache>;
   legend?: { show: boolean; sort?: string; sortDesc?: boolean };
@@ -312,11 +313,12 @@ export class PanelModel implements DataConfigSource {
     this.fieldConfig = restoreCustomOverrideRules(this.fieldConfig, prevOptions.fieldConfig);
   }
 
-  applyPluginOptionDefaults(plugin: PanelPlugin) {
+  applyPluginOptionDefaults(plugin: PanelPlugin, isAfterPluginChange: boolean) {
     const options = getPanelOptionsWithDefaults({
       plugin,
       currentOptions: this.options,
       currentFieldConfig: this.fieldConfig,
+      isAfterPluginChange: isAfterPluginChange,
     });
 
     this.fieldConfig = options.fieldConfig;
@@ -335,7 +337,7 @@ export class PanelModel implements DataConfigSource {
       }
     }
 
-    this.applyPluginOptionDefaults(plugin);
+    this.applyPluginOptionDefaults(plugin, false);
     this.resendLastResult();
   }
 
@@ -388,7 +390,7 @@ export class PanelModel implements DataConfigSource {
 
     // For some reason I need to rebind replace variables here, otherwise the viz repeater does not work
     this.replaceVariables = this.replaceVariables.bind(this);
-    this.applyPluginOptionDefaults(newPlugin);
+    this.applyPluginOptionDefaults(newPlugin, true);
 
     if (newPlugin.onPanelMigration) {
       this.pluginVersion = getPluginVersion(newPlugin);

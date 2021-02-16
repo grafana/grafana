@@ -17,6 +17,7 @@ export interface Props {
   plugin: PanelPlugin;
   currentFieldConfig: FieldConfigSource;
   currentOptions: Record<string, any>;
+  isAfterPluginChange: boolean;
 }
 
 export interface OptionDefaults {
@@ -24,7 +25,12 @@ export interface OptionDefaults {
   fieldConfig: FieldConfigSource;
 }
 
-export function getPanelOptionsWithDefaults({ plugin, currentOptions, currentFieldConfig }: Props): OptionDefaults {
+export function getPanelOptionsWithDefaults({
+  plugin,
+  currentOptions,
+  currentFieldConfig,
+  isAfterPluginChange,
+}: Props): OptionDefaults {
   const optionsWithDefaults = mergeWith(
     {},
     plugin.defaults,
@@ -37,7 +43,7 @@ export function getPanelOptionsWithDefaults({ plugin, currentOptions, currentFie
   );
 
   const fieldConfigWithDefaults = applyFieldConfigDefaults(currentFieldConfig, plugin);
-  const fieldConfigWithOptimalColorMode = adaptFieldColorMode(plugin, fieldConfigWithDefaults);
+  const fieldConfigWithOptimalColorMode = adaptFieldColorMode(plugin, fieldConfigWithDefaults, isAfterPluginChange);
 
   return { options: optionsWithDefaults, fieldConfig: fieldConfigWithOptimalColorMode };
 }
@@ -119,7 +125,15 @@ function cleanProperties(obj: any, parentPath: string, fieldConfigRegistry: Fiel
   }
 }
 
-function adaptFieldColorMode(plugin: PanelPlugin, fieldConfig: FieldConfigSource): FieldConfigSource {
+function adaptFieldColorMode(
+  plugin: PanelPlugin,
+  fieldConfig: FieldConfigSource,
+  isAfterPluginChange: boolean
+): FieldConfigSource {
+  if (!isAfterPluginChange) {
+    return fieldConfig;
+  }
+
   // adjust to prefered field color setting if needed
   const color = plugin.fieldConfigRegistry.getIfExists(FieldConfigProperty.Color);
 

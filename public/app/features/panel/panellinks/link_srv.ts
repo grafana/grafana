@@ -286,6 +286,7 @@ export class LinkSrv implements LinkService {
     const info: any = {};
     info.href = this.getLinkUrl(link);
     info.title = this.templateSrv.replace(link.title || '');
+    info.tooltip = this.templateSrv.replace(link.tooltip || '');
     return info;
   }
 

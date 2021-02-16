@@ -1,52 +1,31 @@
-import React, { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
+import React from 'react';
+import { AlignedData } from 'uplot';
 import {
+  compareArrayValues,
   compareDataFrameStructures,
   DataFrame,
-  DisplayValue,
-  FieldConfig,
-  FieldMatcher,
+  DataFrameFieldIndex,
   FieldMatcherID,
   fieldMatchers,
-  fieldReducers,
-  FieldType,
-  formattedValueToString,
-  getFieldColorModeForField,
-  getFieldDisplayName,
-  getFieldSeriesColor,
-  outerJoinDataFrames,
-  reduceField,
   TimeRange,
   TimeZone,
 } from '@grafana/data';
-import { useTheme } from '../../themes';
-import { UPlotChart } from '../uPlot/Plot';
-import {
-  AxisPlacement,
-  DrawStyle,
-  GraphFieldConfig,
-  PointVisibility,
-  ScaleDirection,
-  ScaleOrientation,
-  StackingMode,
-} from '../uPlot/config';
-import { VizLayout } from '../VizLayout/VizLayout';
-import { LegendDisplayMode, VizLegendItem, VizLegendOptions } from '../VizLegend/types';
-import { VizLegend } from '../VizLegend/VizLegend';
+import { withTheme } from '../../themes';
+import { Themeable } from '../../types';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
-import { useRevision } from '../uPlot/hooks';
-import { GraphNGLegendEvent } from './types';
-import { isNumber } from 'lodash';
-import { getNamesToFieldIndex, mapMouseEventToMode } from './utils';
+import { GraphNGLegendEvent, XYFieldMatchers } from './types';
+import { GraphNGContext } from './hooks';
+import { preparePlotConfigBuilder, preparePlotFrame } from './utils';
+import { StackingMode } from '../uPlot/config';
 import { preparePlotData } from '../uPlot/utils';
+import { PlotLegend } from '../uPlot/PlotLegend';
+import { UPlotChart } from '../uPlot/Plot';
+import { LegendDisplayMode, VizLegendOptions } from '../VizLegend/types';
+import { VizLayout } from '../VizLayout/VizLayout';
 
-const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
+export const FIXED_UNIT = '__fixed';
 
-export interface XYFieldMatchers {
-  x: FieldMatcher; // first match
-  y: FieldMatcher;
-}
-
-export interface GraphNGProps {
+export interface GraphNGProps extends Themeable {
   width: number;
   height: number;
   data: DataFrame[];
@@ -60,319 +39,177 @@ export interface GraphNGProps {
   children?: React.ReactNode;
 }
 
-const defaultConfig: GraphFieldConfig = {
-  drawStyle: DrawStyle.Line,
-  showPoints: PointVisibility.Auto,
-  axisPlacement: AxisPlacement.Auto,
-};
+interface GraphNGState {
+  data: AlignedData;
+  alignedDataFrame: DataFrame;
+  dimFields: XYFieldMatchers;
+  seriesToDataFrameFieldIndexMap: DataFrameFieldIndex[];
+  config?: UPlotConfigBuilder;
+}
 
-export const FIXED_UNIT = '__fixed';
+class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
+  constructor(props: GraphNGProps) {
+    super(props);
+    let dimFields = props.fields;
 
-export const GraphNG: React.FC<GraphNGProps> = ({
-  data,
-  fields,
-  children,
-  width,
-  height,
-  legend,
-  stacking,
-  timeRange,
-  timeZone,
-  onLegendClick,
-  onSeriesColorChange,
-  ...plotProps
-}) => {
-  const theme = useTheme();
-  const hasLegend = useRef(legend && legend.displayMode !== LegendDisplayMode.Hidden);
-
-  const frame = useMemo(() => {
-    // Default to timeseries config
-    if (!fields) {
-      fields = {
+    if (!dimFields) {
+      dimFields = {
         x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
         y: fieldMatchers.get(FieldMatcherID.numeric).get({}),
       };
     }
-    return outerJoinDataFrames({ frames: data, joinBy: fields.x, keep: fields.y, keepOriginIndices: true });
-  }, [data, fields]);
+    this.state = { dimFields } as GraphNGState;
+  }
 
-  const plotData = useMemo(() => {
+  /**
+   * Since no matter the nature of the change (data vs config only) we always calculate the plot-ready AlignedData array.
+   * It's cheaper than run prev and current AlignedData comparison to indicate necessity of data-only update. We assume
+   * that if there were no config updates, we can do data only updates(as described in Plot.tsx, L32)
+   *
+   * Preparing the uPlot-ready data in getDerivedStateFromProps makes the data updates happen only once for a render cycle.
+   * If we did it in componendDidUpdate we will end up having two data-only updates: 1) for props and 2) for state update
+   *
+   * This is a way of optimizing the uPlot rendering, yet there are consequences: when there is a config update,
+   * the data is updated first, and then the uPlot is re-initialized. But since the config updates does not happen that
+   * often (apart from the edit mode interactions) this should be a fair performance compromise.
+   */
+  static getDerivedStateFromProps(props: GraphNGProps, state: GraphNGState) {
+    let dimFields = props.fields;
+
+    if (!dimFields) {
+      dimFields = {
+        x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
+        y: fieldMatchers.get(FieldMatcherID.numeric).get({}),
+      };
+    }
+
+    const frame = preparePlotFrame(props.data, dimFields);
+
     if (!frame) {
-      return null;
+      return { ...state, dimFields };
     }
-    return preparePlotData(frame, stacking);
-  }, [frame, stacking]);
 
-  const compareFrames = useCallback((a?: DataFrame | null, b?: DataFrame | null) => {
-    if (a && b) {
-      return compareDataFrameStructures(a, b);
+    return {
+      ...state,
+      data: preparePlotData(frame),
+      alignedDataFrame: frame,
+      seriesToDataFrameFieldIndexMap: frame.fields.map((f) => f.state!.origin!),
+      dimFields,
+    };
+  }
+
+  componentDidMount() {
+    const { theme, stacking } = this.props;
+
+    // alignedDataFrame is already prepared by getDerivedStateFromProps method
+    const { alignedDataFrame } = this.state;
+
+    if (!alignedDataFrame) {
+      return;
     }
-    return false;
-  }, []);
 
-  const onLabelClick = useCallback(
-    (legend: VizLegendItem, event: React.MouseEvent) => {
-      const { fieldIndex } = legend;
+    this.setState({
+      config: preparePlotConfigBuilder(alignedDataFrame, theme, stacking, this.getTimeRange, this.getTimeZone),
+    });
+  }
 
-      if (!onLegendClick || !fieldIndex) {
+  componentDidUpdate(prevProps: GraphNGProps) {
+    const { data, theme, stacking } = this.props;
+    const { alignedDataFrame } = this.state;
+    let shouldConfigUpdate = false;
+    let stateUpdate = {} as GraphNGState;
+
+    if (this.state.config === undefined || this.props.timeZone !== prevProps.timeZone) {
+      shouldConfigUpdate = true;
+    }
+
+    if (data !== prevProps.data) {
+      if (!alignedDataFrame) {
         return;
       }
 
-      onLegendClick({
-        fieldIndex,
-        mode: mapMouseEventToMode(event),
-      });
-    },
-    [onLegendClick, data]
-  );
+      const hasStructureChanged = !compareArrayValues(data, prevProps.data, compareDataFrameStructures);
 
-  // reference change will not trigger re-render
-  const currentTimeRange = useRef<TimeRange>(timeRange);
-
-  useLayoutEffect(() => {
-    currentTimeRange.current = timeRange;
-  }, [timeRange]);
-
-  const configRev = useRevision(frame, compareFrames);
-
-  const configBuilder = useMemo(() => {
-    const builder = new UPlotConfigBuilder(stacking);
-
-    if (!frame) {
-      return builder;
-    }
-
-    // X is the first field in the aligned frame
-    const xField = frame.fields[0];
-    let seriesIndex = 0;
-
-    if (xField.type === FieldType.time) {
-      builder.addScale({
-        scaleKey: 'x',
-        orientation: ScaleOrientation.Horizontal,
-        direction: ScaleDirection.Right,
-        isTime: true,
-        range: () => {
-          const r = currentTimeRange.current!;
-          return [r.from.valueOf(), r.to.valueOf()];
-        },
-      });
-
-      builder.addAxis({
-        scaleKey: 'x',
-        isTime: true,
-        placement: AxisPlacement.Bottom,
-        timeZone,
-        theme,
-      });
-    } else {
-      // Not time!
-      builder.addScale({
-        scaleKey: 'x',
-        orientation: ScaleOrientation.Horizontal,
-        direction: ScaleDirection.Right,
-      });
-
-      builder.addAxis({
-        scaleKey: 'x',
-        placement: AxisPlacement.Bottom,
-        theme,
-      });
-    }
-    let indexByName: Map<string, number> | undefined = undefined;
-
-    for (let i = 0; i < frame.fields.length; i++) {
-      const field = frame.fields[i];
-      const config = field.config as FieldConfig<GraphFieldConfig>;
-      const customConfig: GraphFieldConfig = {
-        ...defaultConfig,
-        ...config.custom,
-      };
-
-      if (field === xField || field.type !== FieldType.number) {
-        continue;
-      }
-      field.state!.seriesIndex = seriesIndex++;
-
-      const fmt = field.display ?? defaultFormatter;
-      const scaleKey = config.unit || FIXED_UNIT;
-      const colorMode = getFieldColorModeForField(field);
-      const scaleColor = getFieldSeriesColor(field, theme);
-      const seriesColor = scaleColor.color;
-
-      // The builder will manage unique scaleKeys and combine where appropriate
-      builder.addScale({
-        scaleKey,
-        orientation: ScaleOrientation.Vertical,
-        direction: ScaleDirection.Up,
-        distribution: customConfig.scaleDistribution?.type,
-        log: customConfig.scaleDistribution?.log,
-        min: field.config.min,
-        max: field.config.max,
-        softMin: customConfig.axisSoftMin,
-        softMax: customConfig.axisSoftMax,
-      });
-
-      if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
-        builder.addAxis({
-          scaleKey,
-          label: customConfig.axisLabel,
-          size: customConfig.axisWidth,
-          placement: customConfig.axisPlacement ?? AxisPlacement.Auto,
-          formatValue: (v) => formattedValueToString(fmt(v)),
+      if (shouldConfigUpdate || hasStructureChanged) {
+        const builder = preparePlotConfigBuilder(
+          alignedDataFrame,
           theme,
-        });
-      }
-
-      const showPoints = customConfig.drawStyle === DrawStyle.Points ? PointVisibility.Always : customConfig.showPoints;
-
-      let { fillOpacity } = customConfig;
-      if (customConfig.fillBelowTo) {
-        if (!indexByName) {
-          indexByName = getNamesToFieldIndex(frame);
-        }
-        const t = indexByName.get(getFieldDisplayName(field, frame));
-        const b = indexByName.get(customConfig.fillBelowTo);
-        if (isNumber(b) && isNumber(t)) {
-          builder.addBand({
-            series: [t, b],
-            fill: null as any, // using null will have the band use fill options from `t`
-          });
-        }
-        if (!fillOpacity) {
-          fillOpacity = 35; // default from flot
-        }
-      }
-
-      builder.addSeries({
-        scaleKey,
-        showPoints,
-        colorMode,
-        fillOpacity,
-        theme,
-        drawStyle: customConfig.drawStyle!,
-        lineColor: customConfig.lineColor ?? seriesColor,
-        lineWidth: customConfig.lineWidth,
-        lineInterpolation: customConfig.lineInterpolation,
-        lineStyle: customConfig.lineStyle,
-        barAlignment: customConfig.barAlignment,
-        pointSize: customConfig.pointSize,
-        pointColor: customConfig.pointColor ?? seriesColor,
-        spanNulls: customConfig.spanNulls || false,
-        show: !customConfig.hideFrom?.graph,
-        gradientMode: customConfig.gradientMode,
-        thresholds: config.thresholds,
-
-        // The following properties are not used in the uPlot config, but are utilized as transport for legend config
-        dataFrameFieldIndex: field.state?.origin,
-        fieldName: getFieldDisplayName(field, frame),
-        hideInLegend: customConfig.hideFrom?.legend,
-      });
-    }
-
-    if (stacking !== StackingMode.None) {
-      const series = [{}].concat(builder.getSeries());
-      for (let i = 1; i < series.length; i++) {
-        builder.addBand({
-          series: [
-            series.findIndex((_, j) => {
-              return j > i;
-            }),
-            i,
-          ],
-          fill: null as any,
-        });
+          stacking,
+          this.getTimeRange,
+          this.getTimeZone
+        );
+        stateUpdate = { ...stateUpdate, config: builder };
       }
     }
-    return builder;
-  }, [configRev, timeZone, stacking]);
 
-  if (!frame) {
+    if (Object.keys(stateUpdate).length > 0) {
+      this.setState(stateUpdate);
+    }
+  }
+
+  mapSeriesIndexToDataFrameFieldIndex = (i: number) => {
+    return this.state.seriesToDataFrameFieldIndexMap[i];
+  };
+
+  getTimeRange = () => {
+    return this.props.timeRange;
+  };
+
+  getTimeZone = () => {
+    return this.props.timeZone;
+  };
+
+  renderLegend() {
+    const { legend, onSeriesColorChange, onLegendClick, data } = this.props;
+    const { config } = this.state;
+
+    if (!config || (legend && legend.displayMode === LegendDisplayMode.Hidden)) {
+      return;
+    }
+
     return (
-      <div className="panel-empty">
-        <p>No data found in response</p>
-      </div>
+      <PlotLegend
+        data={data}
+        config={config}
+        onSeriesColorChange={onSeriesColorChange}
+        onLegendClick={onLegendClick}
+        {...legend}
+      />
     );
   }
 
-  const legendItems = configBuilder
-    .getSeries()
-    .map<VizLegendItem | undefined>((s) => {
-      const seriesConfig = s.props;
-      const fieldIndex = seriesConfig.dataFrameFieldIndex;
-      const axisPlacement = configBuilder.getAxisPlacement(s.props.scaleKey);
+  render() {
+    const { width, height, children, timeZone, timeRange, ...plotProps } = this.props;
 
-      if (seriesConfig.hideInLegend || !fieldIndex) {
-        return undefined;
-      }
+    if (!this.state.data || !this.state.config) {
+      return null;
+    }
 
-      const field = data[fieldIndex.frameIndex]?.fields[fieldIndex.fieldIndex];
-
-      // Hackish: when the data prop and config builder are not in sync yet
-      if (!field) {
-        return undefined;
-      }
-
-      return {
-        disabled: !seriesConfig.show ?? false,
-        fieldIndex,
-        color: seriesConfig.lineColor!,
-        label: seriesConfig.fieldName,
-        yAxis: axisPlacement === AxisPlacement.Left ? 1 : 2,
-        getDisplayValues: () => {
-          if (!legend.calcs?.length) {
-            return [];
-          }
-
-          const fmt = field.display ?? defaultFormatter;
-          const fieldCalcs = reduceField({
-            field,
-            reducers: legend.calcs,
-          });
-
-          return legend.calcs.map<DisplayValue>((reducer) => {
-            return {
-              ...fmt(fieldCalcs[reducer]),
-              title: fieldReducers.get(reducer).name,
-            };
-          });
-        },
-      };
-    })
-    .filter((i) => i !== undefined) as VizLegendItem[];
-
-  let legendElement: React.ReactElement | undefined;
-
-  if (hasLegend && legendItems.length > 0) {
-    legendElement = (
-      <VizLayout.Legend position={legend.placement} maxHeight="35%" maxWidth="60%">
-        <VizLegend
-          onLabelClick={onLabelClick}
-          placement={legend.placement}
-          items={legendItems}
-          displayMode={legend.displayMode}
-          onSeriesColorChange={onSeriesColorChange}
-        />
-      </VizLayout.Legend>
+    return (
+      <GraphNGContext.Provider
+        value={{
+          mapSeriesIndexToDataFrameFieldIndex: this.mapSeriesIndexToDataFrameFieldIndex,
+          dimFields: this.state.dimFields,
+        }}
+      >
+        <VizLayout width={width} height={height} legend={this.renderLegend()}>
+          {(vizWidth: number, vizHeight: number) => (
+            <UPlotChart
+              {...plotProps}
+              config={this.state.config!}
+              data={this.state.data}
+              width={vizWidth}
+              height={vizHeight}
+              timeRange={timeRange}
+            >
+              {children}
+            </UPlotChart>
+          )}
+        </VizLayout>
+      </GraphNGContext.Provider>
     );
   }
+}
 
-  return (
-    <VizLayout width={width} height={height} legend={legendElement}>
-      {(vizWidth: number, vizHeight: number) => (
-        <UPlotChart
-          data={plotData}
-          dataFrame={frame}
-          config={configBuilder}
-          width={vizWidth}
-          height={vizHeight}
-          timeRange={timeRange}
-          timeZone={timeZone}
-          {...plotProps}
-        >
-          {children}
-        </UPlotChart>
-      )}
-    </VizLayout>
-  );
-};
+export const GraphNG = withTheme(UnthemedGraphNG);
+GraphNG.displayName = 'GraphNG';
