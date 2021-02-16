@@ -1,4 +1,4 @@
-import { Icon, Input, Select, Button, stylesFactory, useStyles } from '@grafana/ui';
+import { Icon, Input, Button, stylesFactory, useStyles } from '@grafana/ui';
 import React, { useEffect, useState } from 'react';
 import { useDebounce } from 'react-use';
 import { cx, css } from 'emotion';
@@ -9,15 +9,19 @@ import { getLibrarySrv, LibraryPanelDTO } from 'app/core/services/library_srv';
 interface LibraryPanelViewProps {
   className?: string;
   onCreateNewPanel?: () => void;
-  children: (panel: LibraryPanelDTO, i: number) => JSX.Element | JSX.Element[];
+  children?: (panel: LibraryPanelDTO, i: number) => JSX.Element | JSX.Element[];
+  onClickCard?: (panel: LibraryPanelDTO) => void;
   formatDate?: (dateString: string) => string;
+  showSecondaryActions?: boolean;
 }
 
 export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
   children,
   className,
   onCreateNewPanel,
+  onClickCard,
   formatDate,
+  showSecondaryActions,
 }) => {
   const styles = useStyles(getPanelViewStyles);
   const [searchString, setSearchString] = useState('');
@@ -57,13 +61,12 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
     <div className={cx(styles.container, className)}>
       <div className={styles.searchHeader}>
         <Input
-          className={styles.searchInput}
           placeholder="Search the panel library"
           prefix={<Icon name="search" />}
           value={searchString}
           onChange={(e) => setSearchString(e.currentTarget.value)}
         ></Input>
-        <Select placeholder="Filter by" onChange={() => {}} width={35} />
+        {/* <Select placeholder="Filter by" onChange={() => {}} width={35} /> */}
       </div>
       <div className={styles.panelTitle}>Popular panels from the panel library</div>
       <div className={styles.libraryPanelList}>
@@ -76,11 +79,12 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
             <LibraryPanelCard
               key={`shared-panel=${i}`}
               libraryPanel={item}
-              // onClick={() => setModalOpen(true)}
               onDelete={() => onDeletePanel(item.uid)}
+              onClick={onClickCard}
               formatDate={formatDate}
+              showSecondaryActions={showSecondaryActions}
             >
-              {children(item, i)}
+              {children?.(item, i)}
             </LibraryPanelCard>
           ))
         )}
@@ -115,16 +119,15 @@ const getPanelViewStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     libraryPanelList: css`
       display: flex;
-      gap: 8px;
       overflow-x: auto;
       flex-direction: column;
     `,
     searchHeader: css`
       display: flex;
     `,
-    searchInput: css`
-      margin-right: 122px;
-    `,
+    // searchInput: css`
+    //   margin-right: 122px;
+    // `,
     panelTitle: css`
       line-height: 30px;
     `,

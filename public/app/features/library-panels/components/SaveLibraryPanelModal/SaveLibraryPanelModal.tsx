@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Button, HorizontalGroup, Icon, Input, Modal, stylesFactory, TextArea, useStyles } from '@grafana/ui';
+import { Button, HorizontalGroup, Icon, Input, Modal, stylesFactory, useStyles } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { css } from 'emotion';
 import { useAsync, useDebounce } from 'react-use';
@@ -78,7 +78,6 @@ export const SaveLibraryPanelModal: React.FC<Props> = ({
             </tbody>
           </table>
         )}
-        <TextArea className={styles.noteTextbox} placeholder="Add a note to describe your changes..." />
         <HorizontalGroup>
           <Button
             onClick={() => {

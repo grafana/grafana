@@ -242,7 +242,10 @@ export const PanelOptionsTab: FC<Props> = ({
         key="panel-library"
         defaultToClosed
       >
-        <LibraryPanelsView formatDate={(dateString: string) => dashboard.formatDate(dateString, 'L')}>
+        <LibraryPanelsView
+          formatDate={(dateString: string) => dashboard.formatDate(dateString, 'L')}
+          showSecondaryActions
+        >
           {(panel) => (
             <Button variant="secondary" onClick={() => useLibraryPanel(panel)}>
               Use instead of current panel

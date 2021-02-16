@@ -1,23 +1,24 @@
 import React, { useState } from 'react';
 import { Icon, IconButton, stylesFactory, ConfirmModal, Tooltip, useStyles, Card } from '@grafana/ui';
 import { css } from 'emotion';
-import pick from 'lodash/pick';
 import { GrafanaTheme } from '@grafana/data';
-import { copyPanel } from 'app/features/dashboard/utils/panel';
 import { LibraryPanelDTO } from 'app/core/services/library_srv';
 
 export interface LibraryPanelCardProps {
   libraryPanel: LibraryPanelDTO;
-  onClick?: () => void;
+  onClick?: (panel: LibraryPanelDTO) => void;
   onDelete?: () => void;
+  showSecondaryActions?: boolean;
   formatDate?: (dateString: string) => string;
 }
 
-export const LibraryPanelCard: React.FC<LibraryPanelCardProps & { children: JSX.Element | JSX.Element[] }> = ({
+export const LibraryPanelCard: React.FC<LibraryPanelCardProps & { children?: JSX.Element | JSX.Element[] }> = ({
   libraryPanel,
   children,
+  onClick,
   onDelete,
   formatDate,
+  showSecondaryActions,
 }) => {
   const styles = useStyles(getStyles);
   const [showDeletionModal, setShowDeletionModal] = useState(false);
@@ -29,7 +30,7 @@ export const LibraryPanelCard: React.FC<LibraryPanelCardProps & { children: JSX.
 
   return (
     <>
-      <Card heading={libraryPanel.name}>
+      <Card heading={libraryPanel.name} onClick={onClick ? () => onClick(libraryPanel) : undefined}>
         <Card.Figure>
           <Icon className={styles.panelIcon} name="book-open" />
         </Card.Figure>
@@ -62,27 +63,21 @@ export const LibraryPanelCard: React.FC<LibraryPanelCardProps & { children: JSX.
         <Card.Tags>
           <TagList className={styles.tagList} tags={['associated panel tag']} />
         </Card.Tags> */}
-        <Card.Actions>{children}</Card.Actions>
-        <Card.SecondaryActions>
-          <IconButton
-            name="clipboard-alt"
-            tooltip="Copy panel"
-            tooltipPlacement="bottom"
-            onClick={() =>
-              copyPanel({ ...libraryPanel.model, libraryPanel: pick(libraryPanel, 'uid', 'name', 'meta') })
-            }
-          />
-          <IconButton
-            name="trash-alt"
-            tooltip="Delete panel"
-            tooltipPlacement="bottom"
-            onClick={() => setShowDeletionModal(true)}
-          />
-          {/*
+        {children && <Card.Actions>{children}</Card.Actions>}
+        {showSecondaryActions && (
+          <Card.SecondaryActions>
+            <IconButton
+              name="trash-alt"
+              tooltip="Delete panel"
+              tooltipPlacement="bottom"
+              onClick={() => setShowDeletionModal(true)}
+            />
+            {/*
           Commenting this out as panel favoriting hasn't been implemented yet.
           <IconButton name="star" tooltip="Favorite panel" tooltipPlacement="bottom" />
           */}
-        </Card.SecondaryActions>
+          </Card.SecondaryActions>
+        )}
       </Card>
       {showDeletionModal && (
         <ConfirmModal
