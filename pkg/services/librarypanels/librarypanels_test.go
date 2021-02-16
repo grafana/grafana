@@ -59,12 +59,12 @@ func TestCreateLibraryPanel(t *testing.T) {
 						CreatedBy: LibraryPanelDTOMetaUser{
 							ID:        1,
 							Name:      "signed_in_user",
-							AvatarURL: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
+							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
 						},
 						UpdatedBy: LibraryPanelDTOMetaUser{
 							ID:        1,
 							Name:      "signed_in_user",
-							AvatarURL: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
+							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
 						},
 					},
 				},
@@ -227,12 +227,12 @@ func TestGetLibraryPanel(t *testing.T) {
 						CreatedBy: LibraryPanelDTOMetaUser{
 							ID:        1,
 							Name:      "user_in_db",
-							AvatarURL: "/avatar/402d08de060496d6b6874495fe20f5ad",
+							AvatarUrl: "/avatar/402d08de060496d6b6874495fe20f5ad",
 						},
 						UpdatedBy: LibraryPanelDTOMetaUser{
 							ID:        1,
 							Name:      "user_in_db",
-							AvatarURL: "/avatar/402d08de060496d6b6874495fe20f5ad",
+							AvatarUrl: "/avatar/402d08de060496d6b6874495fe20f5ad",
 						},
 					},
 				},
@@ -336,12 +336,12 @@ func TestGetAllLibraryPanels(t *testing.T) {
 							CreatedBy: LibraryPanelDTOMetaUser{
 								ID:        1,
 								Name:      "user_in_db",
-								AvatarURL: "/avatar/402d08de060496d6b6874495fe20f5ad",
+								AvatarUrl: "/avatar/402d08de060496d6b6874495fe20f5ad",
 							},
 							UpdatedBy: LibraryPanelDTOMetaUser{
 								ID:        1,
 								Name:      "user_in_db",
-								AvatarURL: "/avatar/402d08de060496d6b6874495fe20f5ad",
+								AvatarUrl: "/avatar/402d08de060496d6b6874495fe20f5ad",
 							},
 						},
 					},
@@ -365,12 +365,12 @@ func TestGetAllLibraryPanels(t *testing.T) {
 							CreatedBy: LibraryPanelDTOMetaUser{
 								ID:        1,
 								Name:      "user_in_db",
-								AvatarURL: "/avatar/402d08de060496d6b6874495fe20f5ad",
+								AvatarUrl: "/avatar/402d08de060496d6b6874495fe20f5ad",
 							},
 							UpdatedBy: LibraryPanelDTOMetaUser{
 								ID:        1,
 								Name:      "user_in_db",
-								AvatarURL: "/avatar/402d08de060496d6b6874495fe20f5ad",
+								AvatarUrl: "/avatar/402d08de060496d6b6874495fe20f5ad",
 							},
 						},
 					},
@@ -566,12 +566,12 @@ func TestPatchLibraryPanel(t *testing.T) {
 						CreatedBy: LibraryPanelDTOMetaUser{
 							ID:        1,
 							Name:      "user_in_db",
-							AvatarURL: "/avatar/402d08de060496d6b6874495fe20f5ad",
+							AvatarUrl: "/avatar/402d08de060496d6b6874495fe20f5ad",
 						},
 						UpdatedBy: LibraryPanelDTOMetaUser{
 							ID:        1,
 							Name:      "signed_in_user",
-							AvatarURL: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
+							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
 						},
 					},
 				},
@@ -603,7 +603,7 @@ func TestPatchLibraryPanel(t *testing.T) {
 			require.NoError(t, err)
 			existing.Result.FolderID = int64(100)
 			existing.Result.Meta.CreatedBy.Name = "user_in_db"
-			existing.Result.Meta.CreatedBy.AvatarURL = "/avatar/402d08de060496d6b6874495fe20f5ad"
+			existing.Result.Meta.CreatedBy.AvatarUrl = "/avatar/402d08de060496d6b6874495fe20f5ad"
 			if diff := cmp.Diff(existing.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 			}
@@ -630,7 +630,7 @@ func TestPatchLibraryPanel(t *testing.T) {
 			require.NoError(t, err)
 			existing.Result.Name = "New Name"
 			existing.Result.Meta.CreatedBy.Name = "user_in_db"
-			existing.Result.Meta.CreatedBy.AvatarURL = "/avatar/402d08de060496d6b6874495fe20f5ad"
+			existing.Result.Meta.CreatedBy.AvatarUrl = "/avatar/402d08de060496d6b6874495fe20f5ad"
 			if diff := cmp.Diff(existing.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 			}
@@ -659,7 +659,7 @@ func TestPatchLibraryPanel(t *testing.T) {
 				"name": "New Model Name",
 			}
 			existing.Result.Meta.CreatedBy.Name = "user_in_db"
-			existing.Result.Meta.CreatedBy.AvatarURL = "/avatar/402d08de060496d6b6874495fe20f5ad"
+			existing.Result.Meta.CreatedBy.AvatarUrl = "/avatar/402d08de060496d6b6874495fe20f5ad"
 			if diff := cmp.Diff(existing.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 			}
@@ -685,7 +685,7 @@ func TestPatchLibraryPanel(t *testing.T) {
 			require.NoError(t, err)
 			existing.Result.Meta.UpdatedBy.ID = int64(2)
 			existing.Result.Meta.CreatedBy.Name = "user_in_db"
-			existing.Result.Meta.CreatedBy.AvatarURL = "/avatar/402d08de060496d6b6874495fe20f5ad"
+			existing.Result.Meta.CreatedBy.AvatarUrl = "/avatar/402d08de060496d6b6874495fe20f5ad"
 			if diff := cmp.Diff(existing.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 			}

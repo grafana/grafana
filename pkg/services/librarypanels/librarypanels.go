@@ -112,12 +112,12 @@ func (lps *LibraryPanelService) LoadLibraryPanelsForDashboard(dash *models.Dashb
 				"createdBy": map[string]interface{}{
 					"id":        libraryPanelInDB.Meta.CreatedBy.ID,
 					"name":      libraryPanelInDB.Meta.CreatedBy.Name,
-					"avatarUrl": libraryPanelInDB.Meta.CreatedBy.AvatarURL,
+					"avatarUrl": libraryPanelInDB.Meta.CreatedBy.AvatarUrl,
 				},
 				"updatedBy": map[string]interface{}{
 					"id":        libraryPanelInDB.Meta.UpdatedBy.ID,
 					"name":      libraryPanelInDB.Meta.UpdatedBy.Name,
-					"avatarUrl": libraryPanelInDB.Meta.UpdatedBy.AvatarURL,
+					"avatarUrl": libraryPanelInDB.Meta.UpdatedBy.AvatarUrl,
 				},
 			},
 		})

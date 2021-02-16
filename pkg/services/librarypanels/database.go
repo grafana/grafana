@@ -67,12 +67,12 @@ func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd cre
 			CreatedBy: LibraryPanelDTOMetaUser{
 				ID:        libraryPanel.CreatedBy,
 				Name:      c.SignedInUser.Login,
-				AvatarURL: dtos.GetGravatarUrl(c.SignedInUser.Email),
+				AvatarUrl: dtos.GetGravatarUrl(c.SignedInUser.Email),
 			},
 			UpdatedBy: LibraryPanelDTOMetaUser{
 				ID:        libraryPanel.UpdatedBy,
 				Name:      c.SignedInUser.Login,
-				AvatarURL: dtos.GetGravatarUrl(c.SignedInUser.Email),
+				AvatarUrl: dtos.GetGravatarUrl(c.SignedInUser.Email),
 			},
 		},
 	}
@@ -239,12 +239,12 @@ func (lps *LibraryPanelService) getLibraryPanel(c *models.ReqContext, uid string
 			CreatedBy: LibraryPanelDTOMetaUser{
 				ID:        libraryPanel.CreatedBy,
 				Name:      libraryPanel.CreatedByName,
-				AvatarURL: dtos.GetGravatarUrl(libraryPanel.CreatedByEmail),
+				AvatarUrl: dtos.GetGravatarUrl(libraryPanel.CreatedByEmail),
 			},
 			UpdatedBy: LibraryPanelDTOMetaUser{
 				ID:        libraryPanel.UpdatedBy,
 				Name:      libraryPanel.UpdatedByName,
-				AvatarURL: dtos.GetGravatarUrl(libraryPanel.UpdatedByEmail),
+				AvatarUrl: dtos.GetGravatarUrl(libraryPanel.UpdatedByEmail),
 			},
 		},
 	}
@@ -284,12 +284,12 @@ func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext) ([]Lib
 				CreatedBy: LibraryPanelDTOMetaUser{
 					ID:        panel.CreatedBy,
 					Name:      panel.CreatedByName,
-					AvatarURL: dtos.GetGravatarUrl(panel.CreatedByEmail),
+					AvatarUrl: dtos.GetGravatarUrl(panel.CreatedByEmail),
 				},
 				UpdatedBy: LibraryPanelDTOMetaUser{
 					ID:        panel.UpdatedBy,
 					Name:      panel.UpdatedByName,
-					AvatarURL: dtos.GetGravatarUrl(panel.UpdatedByEmail),
+					AvatarUrl: dtos.GetGravatarUrl(panel.UpdatedByEmail),
 				},
 			},
 		})
@@ -352,12 +352,12 @@ func (lps *LibraryPanelService) getLibraryPanelsForDashboardID(dashboardID int64
 					CreatedBy: LibraryPanelDTOMetaUser{
 						ID:        panel.CreatedBy,
 						Name:      panel.CreatedByName,
-						AvatarURL: dtos.GetGravatarUrl(panel.CreatedByEmail),
+						AvatarUrl: dtos.GetGravatarUrl(panel.CreatedByEmail),
 					},
 					UpdatedBy: LibraryPanelDTOMetaUser{
 						ID:        panel.UpdatedBy,
 						Name:      panel.UpdatedByName,
-						AvatarURL: dtos.GetGravatarUrl(panel.UpdatedByEmail),
+						AvatarUrl: dtos.GetGravatarUrl(panel.UpdatedByEmail),
 					},
 				},
 			}
@@ -425,12 +425,12 @@ func (lps *LibraryPanelService) patchLibraryPanel(c *models.ReqContext, cmd patc
 				CreatedBy: LibraryPanelDTOMetaUser{
 					ID:        panelInDB.CreatedBy,
 					Name:      panelInDB.CreatedByName,
-					AvatarURL: dtos.GetGravatarUrl(panelInDB.CreatedByEmail),
+					AvatarUrl: dtos.GetGravatarUrl(panelInDB.CreatedByEmail),
 				},
 				UpdatedBy: LibraryPanelDTOMetaUser{
 					ID:        libraryPanel.UpdatedBy,
 					Name:      c.SignedInUser.Login,
-					AvatarURL: dtos.GetGravatarUrl(c.SignedInUser.Email),
+					AvatarUrl: dtos.GetGravatarUrl(c.SignedInUser.Email),
 				},
 			},
 		}

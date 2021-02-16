@@ -71,7 +71,7 @@ type LibraryPanelDTOMeta struct {
 type LibraryPanelDTOMetaUser struct {
 	ID        int64  `json:"id"`
 	Name      string `json:"name"`
-	AvatarURL string `json:"avatarUrl"`
+	AvatarUrl string `json:"avatarUrl"`
 }
 
 // libraryPanelDashboard is the model for library panel connections.
