@@ -41,6 +41,7 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSe
     [item]
   );
 
+  const folderTitle = item.folderTitle || 'General';
   return (
     <Card
       aria-label={selectors.dashboards(item.title)}
@@ -52,22 +53,18 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSe
       <Card.Figure align={'center'}>
         <SearchCheckbox editable={editable} checked={item.checked} onClick={toggleItem} />
       </Card.Figure>
-      {(item.folderTitle || item.sortMeta) && (
-        <Card.Meta separator={''}>
-          {item.folderTitle && (
-            <span className={styles.metaContainer}>
-              <Icon name={'folder'} />
-              {item.folderTitle}
-            </span>
-          )}
-          {item.sortMetaName && (
-            <span className={styles.metaContainer}>
-              <Icon name={getIconFromMeta(item.sortMetaName)} />
-              {item.sortMeta} {item.sortMetaName}
-            </span>
-          )}
-        </Card.Meta>
-      )}
+      <Card.Meta separator={''}>
+        <span className={styles.metaContainer}>
+          <Icon name={'folder'} />
+          {folderTitle}
+        </span>
+        {item.sortMetaName && (
+          <span className={styles.metaContainer}>
+            <Icon name={getIconFromMeta(item.sortMetaName)} />
+            {item.sortMeta} {item.sortMetaName}
+          </span>
+        )}
+      </Card.Meta>
       <Card.Tags>
         <TagList tags={item.tags} onClick={tagSelected} />
       </Card.Tags>
@@ -87,6 +84,7 @@ const getStyles = (theme: GrafanaTheme) => {
 
       svg {
         margin-right: ${theme.spacing.xs};
+        margin-bottom: 0;
       }
     `,
   };
