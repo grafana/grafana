@@ -195,12 +195,6 @@ func TestPostgres(t *testing.T) {
 
 	cfg := setting.NewCfg()
 	cfg.DataPath = t.TempDir()
-	// tlsSettings{
-	// 	Mode:         "verify-full",
-	// 	RootCertFile: "i/am/coding/ca.crt",
-	// 	CertFile:     "i/am/coding/client.crt",
-	// 	CertKeyFile:  "i/am/coding/client.key",
-	// }
 	svc := postgresService{
 		Cfg:        cfg,
 		logger:     log.New("tsdb.postgres"),
