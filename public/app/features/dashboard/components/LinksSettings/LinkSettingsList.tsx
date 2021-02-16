@@ -86,11 +86,23 @@ export const LinkSettingsList: React.FC<LinkSettingsListProps> = ({ dashboard, s
                     : null}
                 </td>
                 <td style={{ width: '1%' }}>
-                  {idx !== 0 && <IconButton surface="header" name="arrow-up" onClick={() => moveLink(idx, -1)} />}
+                  {idx !== 0 && (
+                    <IconButton
+                      surface="header"
+                      name="arrow-up"
+                      aria-label="arrow-up"
+                      onClick={() => moveLink(idx, -1)}
+                    />
+                  )}
                 </td>
                 <td style={{ width: '1%' }}>
                   {dashboard.links.length > 1 && idx !== dashboard.links.length - 1 ? (
-                    <IconButton surface="header" name="arrow-down" onClick={() => moveLink(idx, 1)} />
+                    <IconButton
+                      surface="header"
+                      name="arrow-down"
+                      aria-label="arrow-down"
+                      onClick={() => moveLink(idx, 1)}
+                    />
                   ) : null}
                 </td>
                 <td style={{ width: '1%' }}>
