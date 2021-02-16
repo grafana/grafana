@@ -91,52 +91,50 @@ interface StoryProps {
   showUnfilled: boolean;
 }
 
-function addBarGaugeStory() {
-  return (storyProps: StoryProps) => {
-    const theme = useTheme();
+const AddBarGaugeStory = (storyProps: StoryProps) => {
+  const theme = useTheme();
 
-    const field: Partial<Field> = {
-      type: FieldType.number,
-      config: {
-        min: storyProps.minValue,
-        max: storyProps.maxValue,
-        thresholds: {
-          mode: ThresholdsMode.Absolute,
-          steps: [
-            { value: -Infinity, color: 'green' },
-            { value: storyProps.threshold1Value, color: storyProps.threshold1Color },
-            { value: storyProps.threshold2Value, color: storyProps.threshold2Color },
-          ],
-        },
+  const field: Partial<Field> = {
+    type: FieldType.number,
+    config: {
+      min: storyProps.minValue,
+      max: storyProps.maxValue,
+      thresholds: {
+        mode: ThresholdsMode.Absolute,
+        steps: [
+          { value: -Infinity, color: 'green' },
+          { value: storyProps.threshold1Value, color: storyProps.threshold1Color },
+          { value: storyProps.threshold2Value, color: storyProps.threshold2Color },
+        ],
       },
-    };
-    field.display = getDisplayProcessor({ field });
-
-    const props: Partial<Props> = {
-      theme,
-      lcdCellWidth: storyProps.lcdCellWidth,
-      itemSpacing: storyProps.itemSpacing,
-      showUnfilled: storyProps.showUnfilled,
-      width: storyProps.width,
-      height: storyProps.height,
-      value: {
-        text: storyProps.value.toString(),
-        title: storyProps.title,
-        numeric: storyProps.value,
-      },
-      displayMode: storyProps.displayMode,
-      orientation: storyProps.orientation,
-      field: field.config!,
-      display: field.display!,
-    };
-
-    return <BarGauge {...props} />;
+    },
   };
-}
+  field.display = getDisplayProcessor({ field });
 
-export const gradientVertical: Story<StoryProps> = addBarGaugeStory();
+  const props: Partial<Props> = {
+    theme,
+    lcdCellWidth: storyProps.lcdCellWidth,
+    itemSpacing: storyProps.itemSpacing,
+    showUnfilled: storyProps.showUnfilled,
+    width: storyProps.width,
+    height: storyProps.height,
+    value: {
+      text: storyProps.value.toString(),
+      title: storyProps.title,
+      numeric: storyProps.value,
+    },
+    displayMode: storyProps.displayMode,
+    orientation: storyProps.orientation,
+    field: field.config!,
+    display: field.display!,
+  };
 
-export const gradientHorizontal: Story<StoryProps> = addBarGaugeStory();
+  return <BarGauge {...props} />;
+};
+
+export const gradientVertical: Story<StoryProps> = AddBarGaugeStory.bind({});
+
+export const gradientHorizontal: Story<StoryProps> = AddBarGaugeStory.bind({});
 
 gradientHorizontal.args = {
   value: 70,
