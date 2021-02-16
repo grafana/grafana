@@ -32,6 +32,17 @@ datasources:
       timeInterval: "15s"
     secureJsonData:
       password: grafana
+  
+  - name: gdev-influxdb2
+    type: influxdb
+    access: proxy
+    url: http://localhost:8086
+    secureJsonData:
+      token: mytoken
+    jsonData:
+      version: Flux
+      organization: myorg
+      defaultBucket: mybucket
 
   - name: gdev-influxdb-telegraf
     type: influxdb
@@ -43,7 +54,7 @@ datasources:
       timeInterval: "10s"
     secureJsonData:
       password: grafana
-
+    
   - name: gdev-opentsdb
     type: opentsdb
     access: proxy
