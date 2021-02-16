@@ -51,9 +51,9 @@ func TestCreatingPolicy(t *testing.T) {
 			ac := setupTestEnv(t)
 			t.Cleanup(registry.ClearOverrides)
 
-			policyId := createPolicy(t, ac, tc.policy)
+			createPolicyRes := createPolicy(t, ac, tc.policy)
 
-			res, err := ac.GetPolicy(context.Background(), 1, policyId)
+			res, err := ac.GetPolicyByUID(context.Background(), 1, createPolicyRes.UID)
 			policy := res
 
 			require.NoError(t, err)
@@ -117,10 +117,10 @@ func TestUpdatingPolicy(t *testing.T) {
 			ac := setupTestEnv(t)
 			t.Cleanup(registry.ClearOverrides)
 
-			policyId := createPolicy(t, ac, tc.policy)
+			policy := createPolicy(t, ac, tc.policy)
 
 			updatePolicyCmd := UpdatePolicyCommand{
-				Id:   policyId,
+				UID:  policy.UID,
 				Name: tc.newPolicy.name,
 			}
 
@@ -129,7 +129,7 @@ func TestUpdatingPolicy(t *testing.T) {
 
 			if tc.newPolicy.permissions != nil {
 				// Update permissions
-				perm, err := ac.GetPolicyPermissions(context.Background(), policyId)
+				perm, err := ac.GetPolicyPermissions(context.Background(), policy.Id)
 				require.NoError(t, err)
 				for _, reqP := range tc.newPolicy.permissions {
 					for _, p := range perm {
@@ -147,7 +147,7 @@ func TestUpdatingPolicy(t *testing.T) {
 				}
 
 				// Check updated
-				perm, err = ac.GetPolicyPermissions(context.Background(), policyId)
+				perm, err = ac.GetPolicyPermissions(context.Background(), policy.Id)
 				require.NoError(t, err)
 				for _, reqP := range tc.newPolicy.permissions {
 					for _, p := range perm {

@@ -123,7 +123,7 @@ func (s seeder) createOrUpdatePolicy(ctx context.Context, policy PolicyDTO, old 
 	}
 
 	_, err = s.Service.UpdatePolicy(ctx, UpdatePolicyCommand{
-		Id:          old.Id,
+		UID:         old.UID,
 		Name:        policy.Name,
 		Description: policy.Description,
 	})

@@ -1,24 +1,26 @@
 package rbac
 
 import (
-	"fmt"
+	"errors"
 	"time"
 )
 
 var (
-	errPolicyNotFound         = fmt.Errorf("policy not found")
-	errTeamPolicyAlreadyAdded = fmt.Errorf("policy is already added to this team")
-	errUserPolicyAlreadyAdded = fmt.Errorf("policy is already added to this user")
-	errTeamPolicyNotFound     = fmt.Errorf("team policy not found")
-	errUserPolicyNotFound     = fmt.Errorf("user policy not found")
-	errTeamNotFound           = fmt.Errorf("team not found")
-	errPermissionNotFound     = fmt.Errorf("permission not found")
+	errPolicyNotFound                = errors.New("policy not found")
+	errTeamPolicyAlreadyAdded        = errors.New("policy is already added to this team")
+	errUserPolicyAlreadyAdded        = errors.New("policy is already added to this user")
+	errTeamPolicyNotFound            = errors.New("team policy not found")
+	errUserPolicyNotFound            = errors.New("user policy not found")
+	errTeamNotFound                  = errors.New("team not found")
+	errPermissionNotFound            = errors.New("permission not found")
+	errPolicyFailedGenerateUniqueUID = errors.New("failed to generate policy definition UID")
 )
 
 // Policy is the model for Policy in RBAC.
 type Policy struct {
 	Id          int64  `json:"id"`
 	OrgId       int64  `json:"orgId"`
+	UID         string `xorm:"uid" json:"uid"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 
@@ -29,6 +31,7 @@ type Policy struct {
 type PolicyDTO struct {
 	Id          int64        `json:"id"`
 	OrgId       int64        `json:"orgId"`
+	UID         string       `xorm:"uid" json:"uid"`
 	Name        string       `json:"name"`
 	Description string       `json:"description"`
 	Permissions []Permission `json:"permissions"`
@@ -106,13 +109,15 @@ type CreatePolicyCommand struct {
 }
 
 type UpdatePolicyCommand struct {
-	Id          int64  `json:"-"`
+	OrgId       int64  `json:"-"`
+	UID         string `json:"uid"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 }
 
 type DeletePolicyCommand struct {
 	Id    int64
+	UID   string `json:"uid"`
 	OrgId int64
 }
 
