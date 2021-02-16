@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { ClickOutsideWrapper } from '@grafana/ui';
 import { LoadingState } from '@grafana/data';
 
@@ -16,23 +16,25 @@ import { formatVariableLabel } from '../../shared/formatVariable';
 import { toVariableIdentifier } from '../../state/types';
 import { getVariableQueryRunner } from '../../query/VariableQueryRunner';
 
+const mapDispatchToProps = {
+  showOptions,
+  commitChangesToVariable,
+  filterOrSearchOptions,
+  toggleAllOptions,
+  toggleOption,
+  toggleAndFetchTag,
+  navigateOptions,
+};
+
+const mapStateToProps = (state: StoreState) => ({
+  picker: state.templating.optionsPicker,
+});
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
 interface OwnProps extends VariablePickerProps<VariableWithMultiSupport> {}
 
-interface ConnectedProps {
-  picker: OptionsPickerState;
-}
-
-interface DispatchProps {
-  showOptions: typeof showOptions;
-  commitChangesToVariable: typeof commitChangesToVariable;
-  toggleAllOptions: typeof toggleAllOptions;
-  toggleOption: typeof toggleOption;
-  toggleAndFetchTag: typeof toggleAndFetchTag;
-  filterOrSearchOptions: typeof filterOrSearchOptions;
-  navigateOptions: typeof navigateOptions;
-}
-
-type Props = OwnProps & ConnectedProps & DispatchProps;
+type Props = OwnProps & ConnectedProps<typeof connector>;
 
 export class OptionsPickerUnconnected extends PureComponent<Props> {
   onShowOptions = () => this.props.showOptions(this.props.variable);
@@ -122,19 +124,5 @@ const getSelectedTags = (variable: VariableWithOptions): VariableTag[] => {
   return variable.tags.filter((t) => t.selected);
 };
 
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
-  showOptions,
-  commitChangesToVariable,
-  filterOrSearchOptions,
-  toggleAllOptions,
-  toggleOption,
-  toggleAndFetchTag,
-  navigateOptions,
-};
-
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state) => ({
-  picker: state.templating.optionsPicker,
-});
-
-export const OptionsPicker = connect(mapStateToProps, mapDispatchToProps)(OptionsPickerUnconnected);
+export const OptionsPicker = connector(OptionsPickerUnconnected);
 OptionsPicker.displayName = 'OptionsPicker';
