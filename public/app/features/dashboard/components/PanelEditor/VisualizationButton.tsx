@@ -86,6 +86,7 @@ export const VisualizationButtonUnconnected: FC<Props> = ({
     <div className={styles.wrapper}>
       <ButtonGroup>
         <ToolbarButton
+          className={styles.vizButton}
           tooltip="Click to change visualisation"
           imgSrc={plugin.meta.info.logos.small}
           isOpen={isVizPickerOpen}
@@ -137,6 +138,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     wrapper: css`
       display: flex;
       flex-direction: column;
+    `,
+    vizButton: css`
+      text-align: left;
     `,
     openWrapper: css`
       padding-top: ${theme.spacing.md};
