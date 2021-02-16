@@ -148,7 +148,7 @@ func writeCertFile(
 
 func (m *tlsManager) writeCertFiles(ds *models.DataSource, settings *tlsSettings) error {
 	m.logger.Debug("Writing TLS certificate files to disk")
-	decrypted := ds.SecureJsonData.Decrypt()
+	decrypted := ds.DecryptedValues()
 	tlsRootCert := decrypted["tlsCACert"]
 	tlsClientCert := decrypted["tlsClientCert"]
 	tlsClientKey := decrypted["tlsClientKey"]
