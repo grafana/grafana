@@ -7,6 +7,7 @@ export type InputActionMeta = {
 };
 
 export interface SelectCommonProps<T> {
+  /** Label applied to the input field */
   ['aria-label']?: string;
   allowCustomValue?: boolean;
   /** Focus is set to the Select when rendered*/
@@ -26,7 +27,7 @@ export interface SelectCommonProps<T> {
   inputValue?: string;
   invalid?: boolean;
   isClearable?: boolean;
-  /** The id to set on the SelectContainer component. To set the ID for a label (with htmlFor), @see inputId instead */
+  /** The id to set on the SelectContainer component. To set the id for a label (with htmlFor), @see inputId instead */
   id?: string;
   isLoading?: boolean;
   isMulti?: boolean;
