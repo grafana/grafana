@@ -1,47 +1,60 @@
 import React, { useCallback, useState } from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme, PanelPlugin, PanelPluginMeta } from '@grafana/data';
-import { useTheme, stylesFactory, Icon, Input, ToolbarButton, ToolbarButtonRow, ButtonGroup } from '@grafana/ui';
+import { useTheme, stylesFactory, Icon, Input, ToolbarButton, ButtonGroup, LinkButton, Button } from '@grafana/ui';
 import { changePanelPlugin } from '../../state/actions';
 import { StoreState } from 'app/types';
 import { PanelModel } from '../../state/PanelModel';
 import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
 import { VizTypePicker, getAllPanelPluginMeta, filterPluginList } from '../VizTypePicker/VizTypePicker';
 import { Field } from '@grafana/ui/src/components/Forms/Field';
+import { setPanelEditorUIState, toggleVizPicker } from './state/reducers';
 
 interface OwnProps {
   panel: PanelModel;
-  isOptionsPaneOpen: boolean;
-  onToggleOptionsPane: () => void;
 }
 
 interface ConnectedProps {
   plugin?: PanelPlugin;
+  isVizPickerOpen: boolean;
+  isPanelOptionsVisible: boolean;
 }
 
 interface DispatchProps {
   changePanelPlugin: typeof changePanelPlugin;
+  toggleVizPicker: typeof toggleVizPicker;
+  setPanelEditorUIState: typeof setPanelEditorUIState;
 }
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
 export const VisualizationButtonUnconnected = React.forwardRef<HTMLInputElement, Props>(
-  ({ panel, plugin, changePanelPlugin, onToggleOptionsPane, isOptionsPaneOpen }, ref) => {
+  (
+    {
+      panel,
+      plugin,
+      changePanelPlugin,
+      toggleVizPicker,
+      isPanelOptionsVisible,
+      isVizPickerOpen,
+      setPanelEditorUIState,
+    },
+    ref
+  ) => {
     const [searchQuery, setSearchQuery] = useState('');
-    const [isOpen, setIsOpen] = useState(false);
     const theme = useTheme();
     const styles = getStyles(theme);
 
     const onPluginTypeChange = (meta: PanelPluginMeta) => {
       if (meta.id === plugin!.meta.id) {
-        setIsOpen(false);
+        toggleVizPicker(false);
       } else {
         changePanelPlugin(panel, meta.id);
       }
     };
 
     const onToggleOpen = () => {
-      setIsOpen(!isOpen);
+      toggleVizPicker(!isVizPickerOpen);
     };
 
     const onKeyPress = useCallback(
@@ -58,16 +71,19 @@ export const VisualizationButtonUnconnected = React.forwardRef<HTMLInputElement,
       [onPluginTypeChange, plugin]
     );
 
+    const onToggleOptionsPane = () => {
+      setPanelEditorUIState({ isPanelOptionsVisible: !isPanelOptionsVisible });
+    };
+
     if (!plugin) {
       return null;
     }
 
     const suffix =
       searchQuery !== '' ? (
-        <span className={styles.searchClear} onClick={() => setSearchQuery('')}>
-          <Icon name="times" />
+        <Button icon="times" variant="link" size="sm" onClick={() => setSearchQuery('')}>
           Clear filter
-        </span>
+        </Button>
       ) : null;
 
     return (
@@ -76,21 +92,21 @@ export const VisualizationButtonUnconnected = React.forwardRef<HTMLInputElement,
           <ToolbarButton
             tooltip="Click to change visualisation"
             imgSrc={plugin.meta.info.logos.small}
-            isOpen={isOpen}
+            isOpen={isVizPickerOpen}
             onClick={onToggleOpen}
             fullWidth
           >
             {plugin.meta.name}
           </ToolbarButton>
           <ToolbarButton
-            tooltip={isOptionsPaneOpen ? 'Close options pane' : 'Show options pane'}
+            tooltip={isPanelOptionsVisible ? 'Close options pane' : 'Show options pane'}
             icon="sliders-v-alt"
             onClick={onToggleOptionsPane}
-            isOpen={isOptionsPaneOpen}
+            isOpen={isPanelOptionsVisible}
           />
         </ButtonGroup>
-        {isOpen && (
-          <>
+        {isVizPickerOpen && (
+          <div className={styles.openWrapper}>
             <Field>
               <Input
                 value={searchQuery}
@@ -98,6 +114,7 @@ export const VisualizationButtonUnconnected = React.forwardRef<HTMLInputElement,
                 onKeyPress={onKeyPress}
                 prefix={<Icon name="filter" className={styles.icon} />}
                 suffix={suffix}
+                autoFocus
                 placeholder="Filter visualizations"
                 ref={ref}
               />
@@ -109,7 +126,7 @@ export const VisualizationButtonUnconnected = React.forwardRef<HTMLInputElement,
               searchQuery={searchQuery}
               onClose={() => {}}
             />
-          </>
+          </div>
         )}
       </div>
     );
@@ -127,9 +144,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       flex-direction: column;
     `,
-    searchClear: css`
-      color: ${theme.palette.gray60};
-      cursor: pointer;
+    openWrapper: css`
+      padding-top: ${theme.spacing.md};
     `,
   };
 });
@@ -137,10 +153,16 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
   return {
     plugin: state.plugins.panels[props.panel.type],
+    isPanelOptionsVisible: state.panelEditor.ui.isPanelOptionsVisible,
+    isVizPickerOpen: state.panelEditor.isVizPickerOpen,
   };
 };
 
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { changePanelPlugin };
+const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
+  changePanelPlugin,
+  toggleVizPicker,
+  setPanelEditorUIState,
+};
 
 export const VisualizationButton = connect(mapStateToProps, mapDispatchToProps, undefined, { forwardRef: true })(
   VisualizationButtonUnconnected

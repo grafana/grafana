@@ -28,7 +28,6 @@ const VizTypePickerPlugin: React.FC<Props> = ({ isCurrent, plugin, onClick, disa
         onClick={disabled ? () => {} : onClick}
         title={isCurrent ? 'Click again to close this section' : plugin.name}
       >
-        <div className={styles.bg} />
         <div className={styles.itemContent}>
           <div className={styles.name} title={plugin.name}>
             {plugin.name}
@@ -50,26 +49,15 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     wrapper: css`
       position: relative;
     `,
-    bg: css`
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: ${theme.colors.bg2};
-      border: 1px solid ${theme.colors.border2};
-      border-radius: 3px;
-      transform: scale(1);
-      transform-origin: center;
-      transition: all 0.1s ease-in;
-      z-index: 0;
-    `,
     item: css`
+      display: flex;
       flex-shrink: 0;
       flex-direction: column;
       text-align: center;
       cursor: pointer;
-      display: flex;
+      background: ${theme.colors.panelBg};
+      border: 1px solid ${theme.colors.panelBorder};
+      border-radius: ${theme.border.radius.sm};
       margin-right: 10px;
       align-items: center;
       justify-content: center;
@@ -79,28 +67,23 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       position: relative;
 
       &:hover {
-        > div:first-child {
-          transform: scale(1.05);
-          border-color: ${theme.colors.formFocusOutline};
-        }
+        background: ${styleMixins.hoverColor(theme.colors.bg1, theme)};
       }
     `,
     itemContent: css`
       position: relative;
-      z-index: 1;
       width: 100%;
     `,
     current: css`
       label: currentVisualizationItem;
-      > div:first-child {
-        ${styleMixins.focusCss(theme)};
-      }
+      border-color: ${theme.colors.bgBlue1};
     `,
     disabled: css`
       opacity: 0.2;
       filter: grayscale(1);
       cursor: default;
       pointer-events: none;
+
       &:hover {
         border: 1px solid ${theme.colors.border2};
       }
