@@ -19,6 +19,20 @@ export default {
       disabled: true,
     },
   },
+  args: {
+    numeric: 70,
+    title: 'Title',
+    minValue: 0,
+    maxValue: 100,
+    threshold1Value: 40,
+    threshold1Color: 'orange',
+    threshold2Value: 60,
+    threshold2Color: 'red',
+    displayMode: BarGaugeDisplayMode.Gradient,
+    lcdCellWidth: 12,
+    itemSpacing: 8,
+    showUnfilled: true,
+  },
   argTypes: {
     displayMode: {
       control: {
@@ -135,36 +149,12 @@ export const gradientVertical: Story<StoryProps> = AddBarGaugeStory.bind({});
 export const gradientHorizontal: Story<StoryProps> = AddBarGaugeStory.bind({});
 
 gradientHorizontal.args = {
-  numeric: 70,
-  title: 'Title',
-  minValue: 0,
-  maxValue: 100,
-  threshold1Value: 40,
-  threshold1Color: 'orange',
-  threshold2Value: 60,
-  threshold2Color: 'red',
-  displayMode: BarGaugeDisplayMode.Gradient,
   height: 100,
   width: 500,
   orientation: VizOrientation.Horizontal,
-  lcdCellWidth: 12,
-  itemSpacing: 8,
-  showUnfilled: true,
 };
 gradientVertical.args = {
-  numeric: 70,
-  title: 'Title',
-  minValue: 0,
-  maxValue: 100,
-  threshold1Value: 40,
-  threshold1Color: 'orange',
-  threshold2Value: 60,
-  threshold2Color: 'red',
-  displayMode: BarGaugeDisplayMode.Gradient,
   height: 500,
   width: 100,
   orientation: VizOrientation.Vertical,
-  lcdCellWidth: 12,
-  itemSpacing: 8,
-  showUnfilled: true,
 };
