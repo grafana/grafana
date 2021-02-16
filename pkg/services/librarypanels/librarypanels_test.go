@@ -59,12 +59,12 @@ func TestCreateLibraryPanel(t *testing.T) {
 						CreatedBy: LibraryPanelDTOMetaUser{
 							ID:        1,
 							Name:      "signed_in_user",
-							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
+							AvatarURL: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
 						},
 						UpdatedBy: LibraryPanelDTOMetaUser{
 							ID:        1,
 							Name:      "signed_in_user",
-							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
+							AvatarURL: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
 						},
 					},
 				},
@@ -227,12 +227,12 @@ func TestGetLibraryPanel(t *testing.T) {
 						CreatedBy: LibraryPanelDTOMetaUser{
 							ID:        1,
 							Name:      "user_in_db",
-							AvatarUrl: "/avatar/402d08de060496d6b6874495fe20f5ad",
+							AvatarURL: "/avatar/402d08de060496d6b6874495fe20f5ad",
 						},
 						UpdatedBy: LibraryPanelDTOMetaUser{
 							ID:        1,
 							Name:      "user_in_db",
-							AvatarUrl: "/avatar/402d08de060496d6b6874495fe20f5ad",
+							AvatarURL: "/avatar/402d08de060496d6b6874495fe20f5ad",
 						},
 					},
 				},
@@ -336,12 +336,12 @@ func TestGetAllLibraryPanels(t *testing.T) {
 							CreatedBy: LibraryPanelDTOMetaUser{
 								ID:        1,
 								Name:      "user_in_db",
-								AvatarUrl: "/avatar/402d08de060496d6b6874495fe20f5ad",
+								AvatarURL: "/avatar/402d08de060496d6b6874495fe20f5ad",
 							},
 							UpdatedBy: LibraryPanelDTOMetaUser{
 								ID:        1,
 								Name:      "user_in_db",
-								AvatarUrl: "/avatar/402d08de060496d6b6874495fe20f5ad",
+								AvatarURL: "/avatar/402d08de060496d6b6874495fe20f5ad",
 							},
 						},
 					},
@@ -365,12 +365,12 @@ func TestGetAllLibraryPanels(t *testing.T) {
 							CreatedBy: LibraryPanelDTOMetaUser{
 								ID:        1,
 								Name:      "user_in_db",
-								AvatarUrl: "/avatar/402d08de060496d6b6874495fe20f5ad",
+								AvatarURL: "/avatar/402d08de060496d6b6874495fe20f5ad",
 							},
 							UpdatedBy: LibraryPanelDTOMetaUser{
 								ID:        1,
 								Name:      "user_in_db",
-								AvatarUrl: "/avatar/402d08de060496d6b6874495fe20f5ad",
+								AvatarURL: "/avatar/402d08de060496d6b6874495fe20f5ad",
 							},
 						},
 					},
@@ -566,12 +566,12 @@ func TestPatchLibraryPanel(t *testing.T) {
 						CreatedBy: LibraryPanelDTOMetaUser{
 							ID:        1,
 							Name:      "user_in_db",
-							AvatarUrl: "/avatar/402d08de060496d6b6874495fe20f5ad",
+							AvatarURL: "/avatar/402d08de060496d6b6874495fe20f5ad",
 						},
 						UpdatedBy: LibraryPanelDTOMetaUser{
 							ID:        1,
 							Name:      "signed_in_user",
-							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
+							AvatarURL: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
 						},
 					},
 				},
@@ -603,7 +603,7 @@ func TestPatchLibraryPanel(t *testing.T) {
 			require.NoError(t, err)
 			existing.Result.FolderID = int64(100)
 			existing.Result.Meta.CreatedBy.Name = "user_in_db"
-			existing.Result.Meta.CreatedBy.AvatarUrl = "/avatar/402d08de060496d6b6874495fe20f5ad"
+			existing.Result.Meta.CreatedBy.AvatarURL = "/avatar/402d08de060496d6b6874495fe20f5ad"
 			if diff := cmp.Diff(existing.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 			}
@@ -630,7 +630,7 @@ func TestPatchLibraryPanel(t *testing.T) {
 			require.NoError(t, err)
 			existing.Result.Name = "New Name"
 			existing.Result.Meta.CreatedBy.Name = "user_in_db"
-			existing.Result.Meta.CreatedBy.AvatarUrl = "/avatar/402d08de060496d6b6874495fe20f5ad"
+			existing.Result.Meta.CreatedBy.AvatarURL = "/avatar/402d08de060496d6b6874495fe20f5ad"
 			if diff := cmp.Diff(existing.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 			}
@@ -659,7 +659,7 @@ func TestPatchLibraryPanel(t *testing.T) {
 				"name": "New Model Name",
 			}
 			existing.Result.Meta.CreatedBy.Name = "user_in_db"
-			existing.Result.Meta.CreatedBy.AvatarUrl = "/avatar/402d08de060496d6b6874495fe20f5ad"
+			existing.Result.Meta.CreatedBy.AvatarURL = "/avatar/402d08de060496d6b6874495fe20f5ad"
 			if diff := cmp.Diff(existing.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 			}
@@ -685,7 +685,7 @@ func TestPatchLibraryPanel(t *testing.T) {
 			require.NoError(t, err)
 			existing.Result.Meta.UpdatedBy.ID = int64(2)
 			existing.Result.Meta.CreatedBy.Name = "user_in_db"
-			existing.Result.Meta.CreatedBy.AvatarUrl = "/avatar/402d08de060496d6b6874495fe20f5ad"
+			existing.Result.Meta.CreatedBy.AvatarURL = "/avatar/402d08de060496d6b6874495fe20f5ad"
 			if diff := cmp.Diff(existing.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 			}
@@ -1257,6 +1257,85 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 
 			err = sc.service.ConnectLibraryPanelsForDashboard(sc.reqContext, &dash)
 			require.EqualError(t, err, errLibraryPanelHeaderUIDMissing.Error())
+		})
+
+	testScenario(t, "When an admin tries to store a dashboard with unusused/removed library panels, it should disconnect unusused/removed library panels",
+		func(t *testing.T, sc scenarioContext) {
+			command := getCreateCommand(1, "Unused Libray Panel")
+			response := sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, response.Status())
+
+			var unused libraryPanelResult
+			err := json.Unmarshal(response.Body(), &unused)
+			require.NoError(t, err)
+
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": unused.Result.UID, ":dashboardId": "1"})
+			response = sc.service.connectHandler(sc.reqContext)
+			require.Equal(t, 200, response.Status())
+
+			command = getCreateCommand(1, "Text - Library Panel1")
+			response = sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, response.Status())
+
+			var existing libraryPanelResult
+			err = json.Unmarshal(response.Body(), &existing)
+			require.NoError(t, err)
+
+			dashJSON := map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id": int64(1),
+						"gridPos": map[string]interface{}{
+							"h": 6,
+							"w": 6,
+							"x": 0,
+							"y": 0,
+						},
+					},
+					map[string]interface{}{
+						"id": int64(2),
+						"gridPos": map[string]interface{}{
+							"h": 6,
+							"w": 6,
+							"x": 6,
+							"y": 0,
+						},
+						"datasource": "${DS_GDEV-TESTDATA}",
+						"libraryPanel": map[string]interface{}{
+							"uid":  existing.Result.UID,
+							"name": existing.Result.Name,
+						},
+						"title": "Text - Library Panel",
+						"type":  "text",
+					},
+				},
+			}
+			dash := models.Dashboard{
+				Id:   int64(1),
+				Data: simplejson.NewFromAny(dashJSON),
+			}
+
+			err = sc.service.ConnectLibraryPanelsForDashboard(sc.reqContext, &dash)
+			require.NoError(t, err)
+
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": existing.Result.UID})
+			response = sc.service.getConnectedDashboardsHandler(sc.reqContext)
+			require.Equal(t, 200, response.Status())
+
+			var existingResult libraryPanelDashboardsResult
+			err = json.Unmarshal(response.Body(), &existingResult)
+			require.NoError(t, err)
+			require.Len(t, existingResult.Result, 1)
+			require.Equal(t, int64(1), existingResult.Result[0])
+
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": unused.Result.UID})
+			response = sc.service.getConnectedDashboardsHandler(sc.reqContext)
+			require.Equal(t, 200, response.Status())
+
+			var unusedResult libraryPanelDashboardsResult
+			err = json.Unmarshal(response.Body(), &unusedResult)
+			require.NoError(t, err)
+			require.Len(t, unusedResult.Result, 1)
 		})
 }
 

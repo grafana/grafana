@@ -67,12 +67,12 @@ func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd cre
 			CreatedBy: LibraryPanelDTOMetaUser{
 				ID:        libraryPanel.CreatedBy,
 				Name:      c.SignedInUser.Login,
-				AvatarUrl: dtos.GetGravatarUrl(c.SignedInUser.Email),
+				AvatarURL: dtos.GetGravatarUrl(c.SignedInUser.Email),
 			},
 			UpdatedBy: LibraryPanelDTOMetaUser{
 				ID:        libraryPanel.UpdatedBy,
 				Name:      c.SignedInUser.Login,
-				AvatarUrl: dtos.GetGravatarUrl(c.SignedInUser.Email),
+				AvatarURL: dtos.GetGravatarUrl(c.SignedInUser.Email),
 			},
 		},
 	}
@@ -115,6 +115,10 @@ func (lps *LibraryPanelService) connectDashboard(c *models.ReqContext, uid strin
 // connectLibraryPanelsForDashboard adds connections for all Library Panels in a Dashboard.
 func (lps *LibraryPanelService) connectLibraryPanelsForDashboard(c *models.ReqContext, uids []string, dashboardID int64) error {
 	err := lps.SQLStore.WithTransactionalDbSession(context.Background(), func(session *sqlstore.DBSession) error {
+		_, err := session.Exec("DELETE FROM library_panel_dashboard WHERE dashboard_id=?", dashboardID)
+		if err != nil {
+			return err
+		}
 		for _, uid := range uids {
 			err := connectDashboard(session, lps.SQLStore.Dialect, c.SignedInUser, uid, dashboardID)
 			if err != nil {
@@ -235,12 +239,12 @@ func (lps *LibraryPanelService) getLibraryPanel(c *models.ReqContext, uid string
 			CreatedBy: LibraryPanelDTOMetaUser{
 				ID:        libraryPanel.CreatedBy,
 				Name:      libraryPanel.CreatedByName,
-				AvatarUrl: dtos.GetGravatarUrl(libraryPanel.CreatedByEmail),
+				AvatarURL: dtos.GetGravatarUrl(libraryPanel.CreatedByEmail),
 			},
 			UpdatedBy: LibraryPanelDTOMetaUser{
 				ID:        libraryPanel.UpdatedBy,
 				Name:      libraryPanel.UpdatedByName,
-				AvatarUrl: dtos.GetGravatarUrl(libraryPanel.UpdatedByEmail),
+				AvatarURL: dtos.GetGravatarUrl(libraryPanel.UpdatedByEmail),
 			},
 		},
 	}
@@ -280,12 +284,12 @@ func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext) ([]Lib
 				CreatedBy: LibraryPanelDTOMetaUser{
 					ID:        panel.CreatedBy,
 					Name:      panel.CreatedByName,
-					AvatarUrl: dtos.GetGravatarUrl(panel.CreatedByEmail),
+					AvatarURL: dtos.GetGravatarUrl(panel.CreatedByEmail),
 				},
 				UpdatedBy: LibraryPanelDTOMetaUser{
 					ID:        panel.UpdatedBy,
 					Name:      panel.UpdatedByName,
-					AvatarUrl: dtos.GetGravatarUrl(panel.UpdatedByEmail),
+					AvatarURL: dtos.GetGravatarUrl(panel.UpdatedByEmail),
 				},
 			},
 		})
@@ -348,12 +352,12 @@ func (lps *LibraryPanelService) getLibraryPanelsForDashboardID(dashboardID int64
 					CreatedBy: LibraryPanelDTOMetaUser{
 						ID:        panel.CreatedBy,
 						Name:      panel.CreatedByName,
-						AvatarUrl: dtos.GetGravatarUrl(panel.CreatedByEmail),
+						AvatarURL: dtos.GetGravatarUrl(panel.CreatedByEmail),
 					},
 					UpdatedBy: LibraryPanelDTOMetaUser{
 						ID:        panel.UpdatedBy,
 						Name:      panel.UpdatedByName,
-						AvatarUrl: dtos.GetGravatarUrl(panel.UpdatedByEmail),
+						AvatarURL: dtos.GetGravatarUrl(panel.UpdatedByEmail),
 					},
 				},
 			}
@@ -421,12 +425,12 @@ func (lps *LibraryPanelService) patchLibraryPanel(c *models.ReqContext, cmd patc
 				CreatedBy: LibraryPanelDTOMetaUser{
 					ID:        panelInDB.CreatedBy,
 					Name:      panelInDB.CreatedByName,
-					AvatarUrl: dtos.GetGravatarUrl(panelInDB.CreatedByEmail),
+					AvatarURL: dtos.GetGravatarUrl(panelInDB.CreatedByEmail),
 				},
 				UpdatedBy: LibraryPanelDTOMetaUser{
 					ID:        libraryPanel.UpdatedBy,
 					Name:      c.SignedInUser.Login,
-					AvatarUrl: dtos.GetGravatarUrl(c.SignedInUser.Email),
+					AvatarURL: dtos.GetGravatarUrl(c.SignedInUser.Email),
 				},
 			},
 		}
