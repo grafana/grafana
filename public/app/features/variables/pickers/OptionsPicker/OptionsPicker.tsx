@@ -32,7 +32,7 @@ const mapStateToProps = (state: StoreState) => ({
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-interface OwnProps extends VariablePickerProps<VariableWithMultiSupport> {}
+interface OwnProps extends VariablePickerProps<VariableWithMultiSupport | VariableWithOptions> {}
 
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
@@ -41,7 +41,9 @@ export class OptionsPickerUnconnected extends PureComponent<Props> {
   onHideOptions = () => this.props.commitChangesToVariable(this.props.onVariableChange);
 
   onToggleOption = (option: VariableOption, clearOthers: boolean) => {
-    const toggleFunc = this.props.variable.multi ? this.onToggleMultiValueVariable : this.onToggleSingleValueVariable;
+    const toggleFunc = this.hasMultiPropertyAssigned(this.props.variable)
+      ? this.onToggleMultiValueVariable
+      : this.onToggleSingleValueVariable;
     toggleFunc(option, clearOthers);
   };
 
@@ -52,6 +54,10 @@ export class OptionsPickerUnconnected extends PureComponent<Props> {
 
   onToggleMultiValueVariable = (option: VariableOption, clearOthers: boolean) => {
     this.props.toggleOption({ option, clearOthers, forceSelect: false });
+  };
+
+  hasMultiPropertyAssigned = (variable: any) => {
+    return variable.hasOwnProperty('multi') && variable.multi === true;
   };
 
   render() {
@@ -66,7 +72,7 @@ export class OptionsPickerUnconnected extends PureComponent<Props> {
     );
   }
 
-  renderLink(showOptions: boolean, variable: VariableWithMultiSupport) {
+  renderLink(showOptions: boolean, variable: VariableWithOptions) {
     if (showOptions) {
       return null;
     }
