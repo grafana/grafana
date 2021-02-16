@@ -60,7 +60,7 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSe
               {item.folderTitle}
             </span>
           )}
-          {item.sortMeta && (
+          {item.sortMetaName && (
             <span className={styles.metaContainer}>
               <Icon name={getIconFromMeta(item.sortMetaName)} />
               {item.sortMeta}
