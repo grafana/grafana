@@ -1335,7 +1335,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 			var unusedResult libraryPanelDashboardsResult
 			err = json.Unmarshal(response.Body(), &unusedResult)
 			require.NoError(t, err)
-			require.Len(t, unusedResult.Result, 1)
+			require.Len(t, unusedResult.Result, 0)
 		})
 }
 
