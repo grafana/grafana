@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import _ from 'lodash';
 import { css } from 'emotion';
 import { DeleteButton, Icon, IconButton, Tag, useTheme } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
+import { arrayMove } from 'app/core/utils/arrayMove';
 import { DashboardModel, DashboardLink } from '../../state/DashboardModel';
 
 type LinkSettingsListProps = {
@@ -17,8 +17,7 @@ export const LinkSettingsList: React.FC<LinkSettingsListProps> = ({ dashboard, s
   const [renderCounter, setRenderCounter] = useState(0);
 
   const moveLink = (idx: number, direction: number) => {
-    // @ts-ignore
-    _.move(dashboard.links, idx, idx + direction);
+    arrayMove(dashboard.links, idx, idx + direction);
     setRenderCounter((renderCount) => renderCount + 1);
   };
   const duplicateLink = (link: DashboardLink, idx: number) => {

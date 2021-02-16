@@ -49,13 +49,6 @@ import { SentryEchoBackend } from './core/services/echo/backends/sentry/SentryBa
 import { monkeyPatchInjectorWithPreAssignedBindings } from './core/injectorMonkeyPatch';
 import { setVariableQueryRunner, VariableQueryRunner } from './features/variables/query/VariableQueryRunner';
 
-// add move to lodash for backward compatabiltiy
-// @ts-ignore
-_.move = (array: [], fromIndex: number, toIndex: number) => {
-  array.splice(toIndex, 0, array.splice(fromIndex, 1)[0]);
-  return array;
-};
-
 // import symlinked extensions
 const extensionsIndex = (require as any).context('.', true, /extensions\/index.ts/);
 extensionsIndex.keys().forEach((key: any) => {

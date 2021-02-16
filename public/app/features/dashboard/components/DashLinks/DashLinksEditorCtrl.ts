@@ -1,5 +1,6 @@
 import angular from 'angular';
 import _ from 'lodash';
+import { arrayMove } from 'app/core/utils/arrayMove';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { CoreEvents } from 'app/types';
@@ -69,9 +70,8 @@ export class DashLinksEditorCtrl {
     this.backToList();
   }
 
-  moveLink(index: string | number, dir: string | number) {
-    // @ts-ignore
-    _.move(this.dashboard.links, index, index + dir);
+  moveLink(index: number, dir: number) {
+    arrayMove(this.dashboard.links, index, index + dir);
   }
 
   duplicateLink(link: any, index: number) {
