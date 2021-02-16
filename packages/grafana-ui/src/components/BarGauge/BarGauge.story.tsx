@@ -20,17 +20,17 @@ export default {
     },
   },
   argTypes: {
+    displayMode: {
+      control: {
+        type: 'select',
+        options: [BarGaugeDisplayMode.Lcd, BarGaugeDisplayMode.Gradient, BarGaugeDisplayMode.Basic],
+      },
+    },
+    width: { control: { type: 'range', min: 200, max: 800 } },
+    height: { control: { type: 'range', min: 200, max: 800 } },
+    threshold1Color: { control: 'color' },
+    threshold2Color: { control: 'color' },
     theme: {
-      table: {
-        disable: true,
-      },
-    },
-    height: {
-      table: {
-        disable: true,
-      },
-    },
-    width: {
       table: {
         disable: true,
       },
@@ -55,32 +55,12 @@ export default {
         disable: true,
       },
     },
-    itemSpacing: {
-      table: {
-        disable: true,
-      },
-    },
-    lcdCellWidth: {
-      table: {
-        disable: true,
-      },
-    },
-    displayMode: {
-      table: {
-        disable: true,
-      },
-    },
     onClick: {
       table: {
         disable: true,
       },
     },
     className: {
-      table: {
-        disable: true,
-      },
-    },
-    showUnfilled: {
       table: {
         disable: true,
       },
@@ -102,9 +82,16 @@ interface StoryProps {
   threshold2Color: string;
   threshold1Value: number;
   threshold2Value: number;
+  displayMode: BarGaugeDisplayMode;
+  orientation: VizOrientation;
+  height: number;
+  width: number;
+  lcdCellWidth: number;
+  itemSpacing: number;
+  showUnfilled: boolean;
 }
 
-function addBarGaugeStory(overrides: Partial<Props>) {
+function addBarGaugeStory() {
   return (storyProps: StoryProps) => {
     const theme = useTheme();
 
@@ -125,49 +112,33 @@ function addBarGaugeStory(overrides: Partial<Props>) {
     };
     field.display = getDisplayProcessor({ field });
 
-    const props: Props = {
+    const props: Partial<Props> = {
       theme,
-      width: 300,
-      height: 300,
+      lcdCellWidth: storyProps.lcdCellWidth,
+      itemSpacing: storyProps.itemSpacing,
+      showUnfilled: storyProps.showUnfilled,
+      width: storyProps.width,
+      height: storyProps.height,
       value: {
         text: storyProps.value.toString(),
         title: storyProps.title,
         numeric: storyProps.value,
       },
-      orientation: VizOrientation.Vertical,
-      displayMode: BarGaugeDisplayMode.Basic,
+      displayMode: storyProps.displayMode,
+      orientation: storyProps.orientation,
       field: field.config!,
       display: field.display!,
     };
-
-    Object.assign(props, overrides);
 
     return <BarGauge {...props} />;
   };
 }
 
-export const gradientVertical: Story<StoryProps> = addBarGaugeStory({
-  displayMode: BarGaugeDisplayMode.Gradient,
-  orientation: VizOrientation.Vertical,
-  height: 500,
-  width: 100,
-});
+export const gradientVertical: Story<StoryProps> = addBarGaugeStory();
 
-export const gradientHorizontal: Story<StoryProps> = addBarGaugeStory({
-  displayMode: BarGaugeDisplayMode.Gradient,
-  orientation: VizOrientation.Horizontal,
-  height: 100,
-  width: 500,
-});
+export const gradientHorizontal: Story<StoryProps> = addBarGaugeStory();
 
-export const lcdHorizontal: Story<StoryProps> = addBarGaugeStory({
-  displayMode: BarGaugeDisplayMode.Lcd,
-  orientation: VizOrientation.Vertical,
-  height: 500,
-  width: 100,
-});
-
-gradientVertical.args = gradientHorizontal.args = lcdHorizontal.args = {
+gradientHorizontal.args = {
   value: 70,
   title: 'Title',
   minValue: 0,
@@ -176,4 +147,28 @@ gradientVertical.args = gradientHorizontal.args = lcdHorizontal.args = {
   threshold1Color: 'orange',
   threshold2Value: 60,
   threshold2Color: 'red',
+  displayMode: BarGaugeDisplayMode.Gradient,
+  height: 100,
+  width: 500,
+  orientation: VizOrientation.Horizontal,
+  lcdCellWidth: 12,
+  itemSpacing: 8,
+  showUnfilled: true,
+};
+gradientVertical.args = {
+  value: 70,
+  title: 'Title',
+  minValue: 0,
+  maxValue: 100,
+  threshold1Value: 40,
+  threshold1Color: 'orange',
+  threshold2Value: 60,
+  threshold2Color: 'red',
+  displayMode: BarGaugeDisplayMode.Gradient,
+  height: 500,
+  width: 100,
+  orientation: VizOrientation.Vertical,
+  lcdCellWidth: 12,
+  itemSpacing: 8,
+  showUnfilled: true,
 };
