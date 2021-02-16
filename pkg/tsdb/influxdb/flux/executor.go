@@ -3,11 +3,14 @@ package flux
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/influxdata/influxdb-client-go/v2/api"
 )
+
+const maxPointsEnforceFactor float64 = 2
 
 // executeQuery runs a flux query using the queryModel to interpolate the query and the runner to execute it.
 // maxSeries somehow limits the response.
@@ -27,7 +30,21 @@ func executeQuery(ctx context.Context, query queryModel, runner queryRunner, max
 		glog.Warn("Flux query failed", "err", err, "query", flux)
 		dr.Error = err
 	} else {
-		dr = readDataFrames(tables, int(float64(query.MaxDataPoints)*2), maxSeries)
+		// we only enforce a larger number than maxDataPoints
+		maxPointsEnforced := int(float64(query.MaxDataPoints) * maxPointsEnforceFactor)
+		// at the point where the check for exceeding maxPoints happens
+		// we do not have enough information to create a good error-message,
+		// so we create a function here that encapsulates the making
+		// of that error-message
+		makeMaxPointsExceededErrorMessage := func() string {
+			text := fmt.Sprintf("results are truncated, max points tolerance exceeded (max: %d, enforced: %d)", query.MaxDataPoints, maxPointsEnforced)
+			// we recommend to the user to use AggregateWindow(), but only if it is not already used
+			if !strings.Contains(query.RawQuery, "aggregateWindow(") {
+				text += ", try using the aggregateWindow() function in your query to reduce the number of points returned"
+			}
+			return text
+		}
+		dr = readDataFrames(tables, maxPointsEnforced, makeMaxPointsExceededErrorMessage, maxSeries)
 	}
 
 	// Make sure there is at least one frame
@@ -42,13 +59,14 @@ func executeQuery(ctx context.Context, query queryModel, runner queryRunner, max
 	return dr
 }
 
-func readDataFrames(result *api.QueryTableResult, maxPoints int, maxSeries int) (dr backend.DataResponse) {
+func readDataFrames(result *api.QueryTableResult, maxPoints int, makeMaxPointsExceededErrorMessage func() string, maxSeries int) (dr backend.DataResponse) {
 	glog.Debug("Reading data frames from query result", "maxPoints", maxPoints, "maxSeries", maxSeries)
 	dr = backend.DataResponse{}
 
 	builder := &frameBuilder{
-		maxPoints: maxPoints,
-		maxSeries: maxSeries,
+		maxPoints:                         maxPoints,
+		makeMaxPointsExceededErrorMessage: makeMaxPointsExceededErrorMessage,
+		maxSeries:                         maxSeries,
 	}
 
 	for result.Next() {

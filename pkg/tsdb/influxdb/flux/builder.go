@@ -30,18 +30,19 @@ type columnInfo struct {
 
 // frameBuilder is an interface to help testing.
 type frameBuilder struct {
-	tableID      int64
-	active       *data.Frame
-	frames       []*data.Frame
-	value        *data.FieldConverter
-	columns      []columnInfo
-	labels       []string
-	maxPoints    int // max points in a series
-	maxSeries    int // max number of series
-	totalSeries  int
-	isTimeSeries bool
-	timeColumn   string // sometimes it is not `_time`
-	timeDisplay  string
+	tableID                           int64
+	active                            *data.Frame
+	frames                            []*data.Frame
+	value                             *data.FieldConverter
+	columns                           []columnInfo
+	labels                            []string
+	maxPoints                         int           // max points in a series
+	makeMaxPointsExceededErrorMessage func() string // create nice error message when max-points exceeded
+	maxSeries                         int           // max number of series
+	totalSeries                       int
+	isTimeSeries                      bool
+	timeColumn                        string // sometimes it is not `_time`
+	timeDisplay                       string
 }
 
 func isTag(schk string) bool {
@@ -255,7 +256,7 @@ func (fb *frameBuilder) Append(record *query.FluxRecord) error {
 	}
 
 	if fb.active.Fields[0].Len() > fb.maxPoints {
-		return fmt.Errorf("returned too many points in a series: %d", fb.maxPoints)
+		return fmt.Errorf(fb.makeMaxPointsExceededErrorMessage())
 	}
 
 	return nil
