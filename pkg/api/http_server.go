@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/grafana/grafana/pkg/services/live"
@@ -103,8 +104,10 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 
 	hs.applyRoutes()
 
+	// Remove any square brackets enclosing IPv6 addresses, a format we support for backwards compatibility
+	host := strings.TrimSuffix(strings.TrimPrefix(setting.HttpAddr, "["), "]")
 	hs.httpSrv = &http.Server{
-		Addr:    net.JoinHostPort(setting.HttpAddr, setting.HttpPort),
+		Addr:    net.JoinHostPort(host, setting.HttpPort),
 		Handler: hs.macaron,
 	}
 	switch hs.Cfg.Protocol {

@@ -594,6 +594,9 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
   withCredentials?: boolean;
 }
 
+/**
+ * @deprecated -- use {@link DataSourceInstanceSettings} instead
+ */
 export interface DataSourceSelectItem {
   name: string;
   value: string | null;
