@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
@@ -801,7 +802,7 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 				Data: simplejson.NewFromAny(dashJSON),
 			}
 
-			err = sc.service.LoadLibraryPanelsForDashboard(&dash)
+			err = sc.service.LoadLibraryPanelsForDashboard(sc.reqContext, &dash)
 			require.NoError(t, err)
 			expectedJSON := map[string]interface{}{
 				"panels": []interface{}{
@@ -898,7 +899,7 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 				Data: simplejson.NewFromAny(dashJSON),
 			}
 
-			err = sc.service.LoadLibraryPanelsForDashboard(&dash)
+			err = sc.service.LoadLibraryPanelsForDashboard(sc.reqContext, &dash)
 			require.EqualError(t, err, errLibraryPanelHeaderUIDMissing.Error())
 		})
 
@@ -943,7 +944,7 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 				Data: simplejson.NewFromAny(dashJSON),
 			}
 
-			err = sc.service.LoadLibraryPanelsForDashboard(&dash)
+			err = sc.service.LoadLibraryPanelsForDashboard(sc.reqContext, &dash)
 			require.NoError(t, err)
 			expectedJSON := map[string]interface{}{
 				"panels": []interface{}{
@@ -1388,7 +1389,7 @@ func TestDisconnectLibraryPanelsForDashboard(t *testing.T) {
 				Data: simplejson.NewFromAny(dashJSON),
 			}
 
-			err = sc.service.DisconnectLibraryPanelsForDashboard(&dash)
+			err = sc.service.DisconnectLibraryPanelsForDashboard(sc.reqContext, &dash)
 			require.NoError(t, err)
 
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": existing.Result.UID})
@@ -1448,7 +1449,7 @@ func TestDisconnectLibraryPanelsForDashboard(t *testing.T) {
 				Data: simplejson.NewFromAny(dashJSON),
 			}
 
-			err = sc.service.DisconnectLibraryPanelsForDashboard(&dash)
+			err = sc.service.DisconnectLibraryPanelsForDashboard(sc.reqContext, &dash)
 			require.EqualError(t, err, errLibraryPanelHeaderUIDMissing.Error())
 		})
 }
@@ -1528,7 +1529,9 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 	t.Run(desc, func(t *testing.T) {
 		t.Cleanup(registry.ClearOverrides)
 
-		ctx := macaron.Context{}
+		ctx := macaron.Context{
+			Req: macaron.Request{&http.Request{}},
+		}
 		orgID := int64(1)
 		role := models.ROLE_ADMIN
 
