@@ -1,5 +1,5 @@
 import { backendSrv } from 'app/core/services/backend_srv';
-import { NavModel } from '@grafana/data';
+import { NavModel, NavModelItem } from '@grafana/data';
 
 export const loadFolderPage = (uid: string, activeChildId: string) => {
   const navModel: Pick<NavModel, 'main'> = {
@@ -39,19 +39,25 @@ export const loadFolderPage = (uid: string, activeChildId: string) => {
   return backendSrv.getFolderByUid(uid).then((folder) => {
     const folderTitle = folder.title;
     const folderUrl = folder.url;
+
     navModel.main.text = folderTitle;
 
-    const dashTab = navModel.main.children!.find((child: any) => child.id === 'manage-folder-dashboards');
+    const dashTab = navModel.main.children![0]!;
+    const permTab = navModel.main.children![1]!;
+    const settingsTab = navModel.main.children![2]!;
+
+    settingsTab!.url = folderUrl + '/settings';
     dashTab!.url = folderUrl;
+    permTab!.url = folderUrl + '/permissions';
+
+    navModel.main.children = [dashTab];
 
     if (folder.canAdmin) {
-      const permTab = navModel.main.children!.find((child: any) => child.id === 'manage-folder-permissions');
-      permTab!.url = folderUrl + '/permissions';
+      navModel.main.children.push(permTab);
+    }
 
-      const settingsTab = navModel.main.children!.find((child: any) => child.id === 'manage-folder-settings');
-      settingsTab!.url = folderUrl + '/settings';
-    } else {
-      navModel.main.children = [dashTab!];
+    if (folder.canEdit) {
+      navModel.main.children.push(settingsTab);
     }
 
     return { folder, model: navModel };
