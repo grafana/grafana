@@ -6,13 +6,13 @@ import { Select } from '../Select/Select';
 
 describe('Field', () => {
   it('renders the label', () => {
-    const { getByText } = render(
+    render(
       <Field label="My label">
         <Input id="my-text-input" />
       </Field>
     );
 
-    expect(getByText('My label')).toBeInTheDocument();
+    expect(screen.getByText('My label')).toBeInTheDocument();
   });
 
   it('renders with the id of its children', () => {
