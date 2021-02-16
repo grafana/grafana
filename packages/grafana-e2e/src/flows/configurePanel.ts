@@ -34,6 +34,7 @@ interface ConfigurePanelOptional {
   panelTitle?: string;
   timeRange?: TimeRangeConfig;
   visualizationName?: string;
+  matchExploreGraph?: boolean;
 }
 
 interface ConfigurePanelRequired {
@@ -75,6 +76,7 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
       dataSourceName,
       isEdit,
       isExplore,
+      matchExploreGraph,
       matchScreenshot,
       panelTitle,
       queriesForm,
@@ -200,7 +202,7 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
       let visualization;
 
       if (isExplore) {
-        visualization = e2e.pages.Explore.General.graph();
+        visualization = matchExploreGraph ? e2e.pages.Explore.General.graph() : e2e.pages.Explore.General.table();
       } else {
         visualization = e2e.components.Panels.Panel.containerByTitle(panelTitle).find('.panel-content');
       }
