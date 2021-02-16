@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
 
@@ -18,19 +17,6 @@ const (
 	permissionsPerPolicy = 10
 	usersPerTeam         = 10
 )
-
-func setupBenchTestEnv(b *testing.B) *RBACService {
-	cfg := setting.NewCfg()
-
-	ac := overrideRBACInRegistry(cfg)
-
-	sqlStore := sqlstore.InitTestDB(b)
-	ac.SQLStore = sqlStore
-
-	err := ac.Init()
-	require.NoError(b, err)
-	return &ac
-}
 
 func generatePolicies(b *testing.B, ac *RBACService, policiesPerUser, users int) {
 	numberOfTeams := int(math.Ceil(float64(users) / usersPerTeam))

@@ -11,7 +11,7 @@ import (
 )
 
 func setup(b *testing.B, policiesPerUser, users int) *RBACService {
-	ac := setupBenchTestEnv(b)
+	ac := setupTestEnv(b)
 	b.Cleanup(registry.ClearOverrides)
 	generatePolicies(b, ac, policiesPerUser, users)
 	return ac

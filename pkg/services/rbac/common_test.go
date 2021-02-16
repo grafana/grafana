@@ -51,7 +51,7 @@ func resetTimeNow() {
 	timeNow = time.Now
 }
 
-func setupTestEnv(t *testing.T) *RBACService {
+func setupTestEnv(t testing.TB) *RBACService {
 	cfg := setting.NewCfg()
 
 	ac := overrideRBACInRegistry(cfg)
