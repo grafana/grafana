@@ -11,9 +11,9 @@ import {
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import mdx from './BigValue.mdx';
 import { useTheme } from '../../themes';
+import { NOOP_CONTROL } from '@grafana/ui/.storybook/preview';
 import { ArrayVector, FieldSparkline, FieldType } from '@grafana/data';
 
-const NOOP_CONTROL = { control: { disable: true } };
 export default {
   title: 'Visualizations/BigValue',
   component: BigValue,
