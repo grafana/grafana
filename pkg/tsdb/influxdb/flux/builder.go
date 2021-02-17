@@ -30,19 +30,18 @@ type columnInfo struct {
 
 // frameBuilder is an interface to help testing.
 type frameBuilder struct {
-	tableID                           int64
-	active                            *data.Frame
-	frames                            []*data.Frame
-	value                             *data.FieldConverter
-	columns                           []columnInfo
-	labels                            []string
-	maxPoints                         int           // max points in a series
-	makeMaxPointsExceededErrorMessage func() string // create nice error message when max-points exceeded
-	maxSeries                         int           // max number of series
-	totalSeries                       int
-	isTimeSeries                      bool
-	timeColumn                        string // sometimes it is not `_time`
-	timeDisplay                       string
+	tableID      int64
+	active       *data.Frame
+	frames       []*data.Frame
+	value        *data.FieldConverter
+	columns      []columnInfo
+	labels       []string
+	maxPoints    int // max points in a series
+	maxSeries    int // max number of series
+	totalSeries  int
+	isTimeSeries bool
+	timeColumn   string // sometimes it is not `_time`
+	timeDisplay  string
 }
 
 func isTag(schk string) bool {
@@ -176,6 +175,14 @@ func getTimeSeriesTimeColumn(columns []*query.FluxColumn) *query.FluxColumn {
 	return nil
 }
 
+type maxPointsExceededError struct {
+	Count int
+}
+
+func (e maxPointsExceededError) Error() string {
+	return fmt.Sprintf("max data points limit exceeded (count is %d)", e.Count)
+}
+
 // Append appends a single entry from an influxdb2 record to a data frame
 // Values are appended to _value
 // Tags are appended as labels
@@ -255,8 +262,9 @@ func (fb *frameBuilder) Append(record *query.FluxRecord) error {
 		}
 	}
 
-	if fb.active.Fields[0].Len() > fb.maxPoints {
-		return fmt.Errorf(fb.makeMaxPointsExceededErrorMessage())
+	pointsCount := fb.active.Fields[0].Len()
+	if pointsCount > fb.maxPoints {
+		return maxPointsExceededError{Count: pointsCount}
 	}
 
 	return nil

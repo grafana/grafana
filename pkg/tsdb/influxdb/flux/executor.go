@@ -32,19 +32,32 @@ func executeQuery(ctx context.Context, query queryModel, runner queryRunner, max
 	} else {
 		// we only enforce a larger number than maxDataPoints
 		maxPointsEnforced := int(float64(query.MaxDataPoints) * maxPointsEnforceFactor)
-		// at the point where the check for exceeding maxPoints happens
-		// we do not have enough information to create a good error-message,
-		// so we create a function here that encapsulates the making
-		// of that error-message
-		makeMaxPointsExceededErrorMessage := func() string {
-			text := fmt.Sprintf("A query returned too many datapoints and the results have been truncated at %d points to prevent memory issues. At the current graph size, Grafana can only draw %d.", maxPointsEnforced, query.MaxDataPoints)
-			// we recommend to the user to use AggregateWindow(), but only if it is not already used
-			if !strings.Contains(query.RawQuery, "aggregateWindow(") {
-				text += " Try using the aggregateWindow() function in your query to reduce the number of points returned."
+
+		dr = readDataFrames(tables, maxPointsEnforced, maxSeries)
+
+		if dr.Error != nil {
+			// we check if a too-many-data-points error happened, and if it is so,
+			// we improve the error-message.
+			// (we have to do it in such a complicated way, because at the point where
+			// the error happens, there is not enough info to create a nice error message)
+			switch drErr := dr.Error.(type) {
+			case maxPointsExceededError:
+				{
+					pointCount := drErr.Count
+					text := fmt.Sprintf("A query returned too many datapoints and the results have been truncated at %d points to prevent memory issues. At the current graph size, Grafana can only draw %d.", pointCount, query.MaxDataPoints)
+					// we recommend to the user to use AggregateWindow(), but only if it is not already used
+					if !strings.Contains(query.RawQuery, "aggregateWindow(") {
+						text += " Try using the aggregateWindow() function in your query to reduce the number of points returned."
+					}
+
+					dr.Error = fmt.Errorf(text)
+
+				}
+			default:
+				// nothing, we keep the original error
 			}
-			return text
 		}
-		dr = readDataFrames(tables, maxPointsEnforced, makeMaxPointsExceededErrorMessage, maxSeries)
+
 	}
 
 	// Make sure there is at least one frame
@@ -59,14 +72,13 @@ func executeQuery(ctx context.Context, query queryModel, runner queryRunner, max
 	return dr
 }
 
-func readDataFrames(result *api.QueryTableResult, maxPoints int, makeMaxPointsExceededErrorMessage func() string, maxSeries int) (dr backend.DataResponse) {
+func readDataFrames(result *api.QueryTableResult, maxPoints int, maxSeries int) (dr backend.DataResponse) {
 	glog.Debug("Reading data frames from query result", "maxPoints", maxPoints, "maxSeries", maxSeries)
 	dr = backend.DataResponse{}
 
 	builder := &frameBuilder{
-		maxPoints:                         maxPoints,
-		makeMaxPointsExceededErrorMessage: makeMaxPointsExceededErrorMessage,
-		maxSeries:                         maxSeries,
+		maxPoints: maxPoints,
+		maxSeries: maxSeries,
 	}
 
 	for result.Next() {
