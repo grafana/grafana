@@ -155,7 +155,7 @@ class LegendSeriesLabel extends PureComponent<LegendSeriesLabelProps & LegendSer
         onClick={onLabelClick}
         aria-label={selectors.components.Panels.Visualization.Graph.Legend.legendItemAlias(label)}
       >
-        {label}
+        <div className="legend-yaxis-container">{label}</div>
       </a>,
     ];
   }
