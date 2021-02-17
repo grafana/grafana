@@ -218,7 +218,9 @@
 }
 
 .legend-yaxis-container {
-  padding: 10px;
+  padding: 5px;
+  border: 2px solid $text-color-emphasis;
+  border-radius: 10px;
 }
 
 .annotation-tags {
