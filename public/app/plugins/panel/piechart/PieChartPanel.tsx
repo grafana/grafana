@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { config } from 'app/core/config';
-import { PieChart } from '@grafana/ui';
+import { PieChartWithLegend } from '@grafana/ui';
 import { PieChartOptions } from './types';
 import { getFieldDisplayValues, PanelProps } from '@grafana/data';
 
@@ -20,7 +20,7 @@ export class PieChartPanel extends PureComponent<Props> {
     }).map((v) => v.display);
 
     return (
-      <PieChart
+      <PieChartWithLegend
         width={width}
         height={height}
         values={values}

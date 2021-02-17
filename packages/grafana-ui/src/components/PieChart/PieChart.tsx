@@ -10,6 +10,8 @@ import { useTooltip, useTooltipInPortal } from '@visx/tooltip';
 import { useComponentInstanceId } from '../../utils/useComponetInstanceId';
 import { css } from 'emotion';
 
+export const DEFAULT_COLOR = 'gray';
+
 export interface Props {
   height: number;
   width: number;
@@ -55,8 +57,10 @@ export const PieChart: FC<Props> = ({ values, pieType, width, height, labelOptio
   const showLabel = labelOptions.showName || labelOptions.showPercent || labelOptions.showValue;
 
   const getValue = (d: DisplayValue) => d.numeric;
-  const getGradientId = (idx: number) => `${componentInstanceId}-${idx}`;
-  const getColor = (arc: PieArcDatum<DisplayValue>) => `url(#${getGradientId(arc.index)})`;
+  const getGradientId = (color: string) => `${componentInstanceId}-${color}`;
+  const getColor = (color: string) => {
+    return `url(#${getGradientId(color)})`;
+  };
 
   const onMouseMoveOverArc = (event: any, datum: any) => {
     const coords = localPoint(event.target.ownerSVGElement, event);
@@ -72,11 +76,11 @@ export const PieChart: FC<Props> = ({ values, pieType, width, height, labelOptio
       <svg width={size} height={size} ref={containerRef}>
         <Group top={centerOffset + margin} left={centerOffset + margin}>
           {values.map((value, idx) => {
-            const color = value.color ?? 'gray';
+            const color = value.color ?? DEFAULT_COLOR;
             return (
               <RadialGradient
-                key={idx}
-                id={getGradientId(idx)}
+                key={value.color}
+                id={getGradientId(color)}
                 from={getGradientColorFrom(color, theme)}
                 to={getGradientColorTo(color, theme)}
                 fromOffset={gradientFromOffset}
@@ -107,7 +111,7 @@ export const PieChart: FC<Props> = ({ values, pieType, width, height, labelOptio
                   >
                     <path
                       d={pie.path({ ...arc })!}
-                      fill={getColor(arc)}
+                      fill={getColor(arc.data.color ?? DEFAULT_COLOR)}
                       stroke={theme.colors.panelBg}
                       strokeWidth={1}
                     />
