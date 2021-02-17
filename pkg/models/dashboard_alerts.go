@@ -19,9 +19,11 @@
 // swagger:meta
 package models
 
-import "github.com/grafana/grafana/pkg/models"
+import (
+	"github.com/grafana/grafana/pkg/models"
+)
 
-// swagger:route POST /api/dashboards/db RoutePostGrDashboards
+// swagger:route POST /api/dashboards/db grafana RoutePostGrDashboards
 //
 // creates a dashboard with alerts
 //
@@ -31,7 +33,7 @@ import "github.com/grafana/grafana/pkg/models"
 //       200: Ok
 //		 400: BadRequest
 //		 401: Unauthorized
-//       403: QuotaExceeded
+//       403: PermissionDenied
 //		 412: PreconditionFailed
 //       500: Err
 
@@ -54,7 +56,7 @@ type BadRequest struct{}
 type Unauthorized struct{}
 
 // swagger:model
-type QuotaExceeded struct{}
+type PermissionDenied struct{}
 
 // swagger:model
 type PreconditionFailed struct{}
@@ -64,3 +66,27 @@ type Err struct {
 	Message string
 	Error   error
 }
+
+// swagger:model
+type Conflict struct{}
+
+// swagger:route POST /api/alert-notifications grafana RoutePostNotifiers
+//
+// creates a dashboard with alerts
+//
+//     Schemes: http, https
+//
+//     Responses:
+//       200: Ok
+//		 401: Unauthorized
+//       409: Conflict
+//       500: Err
+
+// swagger:parameters RoutePostNotifiers
+type RoutePostNotifiersConfig struct {
+	// in:body
+	Body CreateAlertNotificationCommand
+}
+
+// swagger:model
+type CreateAlertNotificationCommand models.CreateAlertNotificationCommand
