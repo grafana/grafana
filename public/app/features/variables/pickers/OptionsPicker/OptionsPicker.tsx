@@ -4,7 +4,6 @@ import { ClickOutsideWrapper } from '@grafana/ui';
 import { LoadingState } from '@grafana/data';
 
 import { StoreState } from 'app/types';
-import { VariableLink } from '../shared/VariableLink';
 import { VariableInput } from '../shared/VariableInput';
 import { commitChangesToVariable, filterOrSearchOptions, navigateOptions, toggleAndFetchTag } from './actions';
 import { OptionsPickerState, showOptions, toggleAllOptions, toggleOption } from './reducer';
@@ -15,6 +14,7 @@ import { VariablePickerProps } from '../types';
 import { formatVariableLabel } from '../../shared/formatVariable';
 import { toVariableIdentifier } from '../../state/types';
 import { getVariableQueryRunner } from '../../query/VariableQueryRunner';
+import { VariableLink } from '../shared/VariableLink';
 
 export const optionPickerFactory = <Model extends VariableWithOptions | VariableWithMultiSupport>(): ComponentType<
   VariablePickerProps<Model>
@@ -66,8 +66,7 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
 
       return (
         <div className="variable-link-wrapper">
-          {!showOptions ? this.renderLink(variable) : null}
-          {showOptions ? this.renderOptions(picker) : null}
+          {showOptions ? this.renderOptions(picker) : this.renderLink(variable)}
         </div>
       );
     }
