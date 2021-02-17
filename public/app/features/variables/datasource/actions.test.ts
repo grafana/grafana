@@ -1,3 +1,5 @@
+import { DataSourceInstanceSettings } from '@grafana/data';
+
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { TemplatingState } from '../state/reducers';
 import { getRootReducer } from '../state/helpers';
@@ -9,12 +11,12 @@ import {
   initDataSourceVariableEditor,
   updateDataSourceVariableOptions,
 } from './actions';
-import { DataSourceInstanceSettings, DataSourceJsonData, DataSourcePluginMeta } from '@grafana/data';
 import { getMockPlugin } from '../../plugins/__mocks__/pluginMocks';
 import { createDataSourceOptions } from './reducer';
 import { addVariable, setCurrentVariableValue } from '../state/sharedReducer';
 import { changeVariableEditorExtended } from '../editor/reducer';
 import { datasourceBuilder } from '../shared/testing/builders';
+import { getDataSourceInstanceSetting } from '../shared/testing/helpers';
 
 interface Args {
   sources?: DataSourceInstanceSettings[];
@@ -62,10 +64,7 @@ describe('data source actions', () => {
             toVariablePayload(
               { type: 'datasource', id: '0' },
               {
-                sources: [
-                  { name: 'first-name', value: 'first-name', meta },
-                  { name: 'second-name', value: 'second-name', meta },
-                ],
+                sources,
                 regex: (undefined as unknown) as RegExp,
               }
             )
@@ -113,10 +112,7 @@ describe('data source actions', () => {
             toVariablePayload(
               { type: 'datasource', id: '0' },
               {
-                sources: [
-                  { name: 'first-name', value: 'first-name', meta },
-                  { name: 'second-name', value: 'second-name', meta },
-                ],
+                sources,
                 regex: /.*(second-name).*/,
               }
             )
@@ -165,14 +161,3 @@ describe('data source actions', () => {
     });
   });
 });
-
-function getDataSourceInstanceSetting(name: string, meta: DataSourcePluginMeta): DataSourceInstanceSettings {
-  return {
-    id: 1,
-    uid: '',
-    type: '',
-    name,
-    meta,
-    jsonData: ({} as unknown) as DataSourceJsonData,
-  };
-}
