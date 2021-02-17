@@ -9,7 +9,7 @@ import { config } from 'app/core/config';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { AlertingQueryEditor } from './components/AlertingQueryEditor';
 import { AlertDefinitionOptions } from './components/AlertDefinitionOptions';
-import AlertingQueryPreview from './components/AlertingQueryPreview';
+import { AlertingQueryPreview } from './components/AlertingQueryPreview';
 import {
   cleanUpDefinitionState,
   createAlertDefinition,
@@ -21,6 +21,7 @@ import {
   updateAlertDefinitionOption,
   updateAlertDefinitionUiState,
 } from './state/actions';
+import { updateLocation } from 'app/core/actions';
 import { getRouteParamsId } from 'app/core/selectors/location';
 import { StoreState } from 'app/types';
 
@@ -47,6 +48,7 @@ const mapDispatchToProps = {
   evaluateNotSavedAlertDefinition,
   onRunQueries,
   cleanUpDefinitionState,
+  updateLocation,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -97,7 +99,9 @@ class NextGenAlertingPageUnconnected extends PureComponent<Props> {
     }
   };
 
-  onDiscard = () => {};
+  onDiscard = () => {
+    this.props.updateLocation({ path: `${config.appSubUrl}/alerting/list` });
+  };
 
   onTest = () => {
     const { alertDefinition, evaluateAlertDefinition, evaluateNotSavedAlertDefinition } = this.props;

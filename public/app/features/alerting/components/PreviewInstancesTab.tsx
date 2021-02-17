@@ -5,14 +5,13 @@ import { EmptyState } from './EmptyState';
 
 interface Props {
   instances: DataFrame[];
-  isTested: boolean;
   width: number;
   height: number;
   onTest: () => void;
 }
 
-export const PreviewInstancesTab: FC<Props> = ({ instances, isTested, onTest, height, width }) => {
-  if (!isTested) {
+export const PreviewInstancesTab: FC<Props> = ({ instances, onTest, height, width }) => {
+  if (instances.length < 1) {
     return (
       <EmptyState title="You haven’t tested your alert yet.">
         <div>In order to see your instances, you need to test your alert first.</div>
