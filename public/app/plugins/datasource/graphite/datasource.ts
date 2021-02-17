@@ -18,6 +18,8 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 import { GraphiteOptions, GraphiteQuery, GraphiteType, MetricTankRequestMeta } from './types';
 import { getRollupNotice, getRuntimeConsolidationNotice } from 'app/plugins/datasource/graphite/meta';
 import { getSearchFilterScopedVar } from '../../../features/variables/utils';
+import { Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOptions> {
   basicAuth: string;
@@ -62,7 +64,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     };
   }
 
-  async query(options: DataQueryRequest<GraphiteQuery>): Promise<DataQueryResponse> {
+  query(options: DataQueryRequest<GraphiteQuery>): Observable<DataQueryResponse> {
     const graphOptions = {
       from: this.translateTime(options.range.raw.from, false, options.timezone),
       until: this.translateTime(options.range.raw.to, true, options.timezone),
@@ -74,7 +76,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
 
     const params = this.buildGraphiteParams(graphOptions, options.scopedVars);
     if (params.length === 0) {
-      return Promise.resolve({ data: [] });
+      return of({ data: [] });
     }
 
     if (this.isMetricTank) {
@@ -96,7 +98,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       httpOptions.requestId = this.name + '.panelId.' + options.panelId;
     }
 
-    return this.doGraphiteRequest(httpOptions).then(this.convertResponseToDataFrames);
+    return this.doGraphiteRequest(httpOptions).pipe(map(this.convertResponseToDataFrames));
   }
 
   addTracingHeaders(httpOptions: { headers: any }, options: { dashboardId?: number; panelId?: number }) {
@@ -199,7 +201,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
   interpolateVariablesInQueries(queries: GraphiteQuery[], scopedVars: ScopedVars): GraphiteQuery[] {
     let expandedQueries = queries;
     if (queries && queries.length > 0) {
-      expandedQueries = queries.map((query) => {
+      expandedQueries = queries.map(query => {
         const expandedQuery = {
           ...query,
           datasource: this.name,
@@ -222,7 +224,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
         maxDataPoints: 100,
       } as unknown) as DataQueryRequest<GraphiteQuery>;
 
-      return this.query(graphiteQuery).then((result) => {
+      return this.query(graphiteQuery).then(result => {
         const list = [];
 
         for (let i = 0; i < result.data.length; i++) {
@@ -388,7 +390,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     }
 
     return this.doGraphiteRequest(httpOptions).then((results: any) => {
-      return _.map(results.data, (metric) => {
+      return _.map(results.data, metric => {
         return {
           text: metric.text,
           expandable: metric.expandable ? true : false,
@@ -413,7 +415,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     }
 
     return this.doGraphiteRequest(httpOptions).then((results: any) => {
-      return _.map(results.data, (tag) => {
+      return _.map(results.data, tag => {
         return {
           text: tag.tag,
           id: tag.id,
@@ -437,7 +439,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
 
     return this.doGraphiteRequest(httpOptions).then((results: any) => {
       if (results.data && results.data.values) {
-        return _.map(results.data.values, (value) => {
+        return _.map(results.data.values, value => {
           return {
             text: value.value,
             id: value.id,
@@ -456,7 +458,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       method: 'GET',
       url: '/tags/autoComplete/tags',
       params: {
-        expr: _.map(expressions, (expression) => this.templateSrv.replace((expression || '').trim())),
+        expr: _.map(expressions, expression => this.templateSrv.replace((expression || '').trim())),
       },
       // for cancellations
       requestId: options.requestId,
@@ -475,7 +477,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
 
     return this.doGraphiteRequest(httpOptions).then((results: any) => {
       if (results.data) {
-        return _.map(results.data, (tag) => {
+        return _.map(results.data, tag => {
           return { text: tag };
         });
       } else {
@@ -491,7 +493,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       method: 'GET',
       url: '/tags/autoComplete/values',
       params: {
-        expr: _.map(expressions, (expression) => this.templateSrv.replace((expression || '').trim())),
+        expr: _.map(expressions, expression => this.templateSrv.replace((expression || '').trim())),
         tag: this.templateSrv.replace((tag || '').trim()),
       },
       // for cancellations
@@ -511,7 +513,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
 
     return this.doGraphiteRequest(httpOptions).then((results: any) => {
       if (results.data) {
-        return _.map(results.data, (value) => {
+        return _.map(results.data, value => {
           return { text: value };
         });
       } else {
@@ -622,7 +624,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     options.url = this.url + options.url;
     options.inspect = { type: 'graphite' };
 
-    return getBackendSrv().datasourceRequest(options);
+    return getBackendSrv().fetch(options);
   }
 
   buildGraphiteParams(options: any, scopedVars?: ScopedVars): string[] {
