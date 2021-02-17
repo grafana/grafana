@@ -1,10 +1,7 @@
+.DEFAULT_GOAL := openapi
+
 PKG_DIR = pkg
-GO_PKG_FILES := $(shell find $(PKG_DIR) -name *.go -print)
-
-# .PHONY: tst
-# tst:
-# 	@echo $(GO_PKG_FILES)
-
+GO_PKG_FILES = $(shell find $(PKG_DIR) -name *.go -print)
 
 
 spec.json: $(GO_PKG_FILES)

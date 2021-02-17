@@ -1,7 +1,63 @@
 {
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "schemes": [
+    "http",
+    "https"
+  ],
   "swagger": "2.0",
-  "paths": {},
+  "info": {
+    "title": "Documentation of the API.",
+    "version": "1.0.0"
+  },
+  "basePath": "/api/v1",
+  "paths": {
+    "/api/v1/alerts": {
+      "post": {
+        "description": "sets an Alertmanager config",
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "alertmanager"
+        ],
+        "operationId": "RoutePostAM",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/Config"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Ack",
+            "schema": {
+              "$ref": "#/definitions/Ack"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      }
+    }
+  },
   "definitions": {
+    "Ack": {
+      "type": "object",
+      "x-go-package": "github.com/grafana/alerting-api/pkg/models"
+    },
     "BasicAuth": {
       "type": "object",
       "title": "BasicAuth contains basic HTTP authentication credentials.",
@@ -954,6 +1010,10 @@
       "type": "object",
       "x-go-package": "net/url"
     },
+    "ValidationError": {
+      "type": "object",
+      "x-go-package": "github.com/grafana/alerting-api/pkg/models"
+    },
     "VictorOpsConfig": {
       "type": "object",
       "title": "VictorOpsConfig configures notifications via VictorOps.",
@@ -1074,6 +1134,11 @@
     },
     "duration": {
       "$ref": "#/definitions/Duration"
+    }
+  },
+  "securityDefinitions": {
+    "basic": {
+      "type": "basic"
     }
   }
 }
