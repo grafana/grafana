@@ -139,13 +139,22 @@ func (ac *RBACService) UpdatePolicy(ctx context.Context, cmd UpdatePolicyCommand
 
 func (ac *RBACService) DeletePolicy(cmd *DeletePolicyCommand) error {
 	return ac.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		policyId := cmd.Id
+		if policyId == 0 {
+			policy, err := getPolicyByUID(sess, cmd.UID, cmd.OrgId)
+			if err != nil {
+				return err
+			}
+			policyId = policy.Id
+		}
+
 		// Delete policy's permissions
-		_, err := sess.Exec("DELETE FROM permission WHERE policy_id = ?", cmd.Id)
+		_, err := sess.Exec("DELETE FROM permission WHERE policy_id = ?", policyId)
 		if err != nil {
 			return err
 		}
 
-		_, err = sess.Exec("DELETE FROM policy WHERE id = ? AND org_id = ?", cmd.Id, cmd.OrgId)
+		_, err = sess.Exec("DELETE FROM policy WHERE id = ? AND org_id = ?", policyId, cmd.OrgId)
 		if err != nil {
 			return err
 		}
