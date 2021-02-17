@@ -7,6 +7,7 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import mdx from './BarGauge.mdx';
 import { useTheme } from '../../themes';
 
+const NOOP_CONTROL = { control: { disable: true } };
 export default {
   title: 'Visualizations/BarGauge',
   component: BarGauge,
@@ -44,51 +45,15 @@ export default {
     height: { control: { type: 'range', min: 200, max: 800 } },
     threshold1Color: { control: 'color' },
     threshold2Color: { control: 'color' },
-    theme: {
-      table: {
-        disable: true,
-      },
-    },
-    field: {
-      table: {
-        disable: true,
-      },
-    },
-    value: {
-      table: {
-        disable: true,
-      },
-    },
-    display: {
-      table: {
-        disable: true,
-      },
-    },
-    orientation: {
-      table: {
-        disable: true,
-      },
-    },
-    text: {
-      table: {
-        disable: true,
-      },
-    },
-    onClick: {
-      table: {
-        disable: true,
-      },
-    },
-    className: {
-      table: {
-        disable: true,
-      },
-    },
-    alignmentFactors: {
-      table: {
-        disable: true,
-      },
-    },
+    theme: NOOP_CONTROL,
+    field: NOOP_CONTROL,
+    value: NOOP_CONTROL,
+    display: NOOP_CONTROL,
+    orientation: NOOP_CONTROL,
+    text: NOOP_CONTROL,
+    onClick: NOOP_CONTROL,
+    className: NOOP_CONTROL,
+    alignmentFactors: NOOP_CONTROL,
   },
 };
 
