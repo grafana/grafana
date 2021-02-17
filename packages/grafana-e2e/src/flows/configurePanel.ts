@@ -34,7 +34,7 @@ interface ConfigurePanelOptional {
   panelTitle?: string;
   timeRange?: TimeRangeConfig;
   visualizationName?: string;
-  matchExploreGraph?: boolean;
+  matchExploreTable?: boolean;
 }
 
 interface ConfigurePanelRequired {
