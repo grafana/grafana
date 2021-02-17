@@ -11,14 +11,25 @@ import { ExemplarsSettings } from './ExemplarsSettings';
 const { Select, Input, FormField, Switch } = LegacyForms;
 
 const httpOptions = [
-  { value: 'GET', label: 'GET' },
   { value: 'POST', label: 'POST' },
+  { value: 'GET', label: 'GET' },
 ];
 
 type Props = Pick<DataSourcePluginOptionsEditorProps<PromOptions>, 'options' | 'onOptionsChange'>;
 
 export const PromSettings = (props: Props) => {
   const { options, onOptionsChange } = props;
+
+  /**
+   * We want to change the default httpMethod to POST for all of the Prometheus data sources instances (no url) added in 7.5+.
+   * We are explicitly adding httpMethod as previously it could be undefined and defaulted to 'GET'.
+   * Undefined httpMethod is still going to be considered 'GET' for backward compatibility reasons, but if users open data
+   * source settings it is going to be set to 'GET' explicitly and it will be selected in httpMethod dropdown as 'GET'.
+   * */
+
+  if (!options.jsonData.httpMethod) {
+    options.url ? (options.jsonData.httpMethod = 'POST') : (options.jsonData.httpMethod = 'GET');
+  }
 
   return (
     <>
@@ -64,7 +75,7 @@ export const PromSettings = (props: Props) => {
         <div className="gf-form">
           <InlineFormLabel
             width={13}
-            tooltip="Specify the HTTP Method to query Prometheus. (POST is only available in Prometheus >= v2.1.0)"
+            tooltip="You can use either POST or GET HTTP method to query your Prometheus data source. The POST method allows you to perform heavy requests, while the GET method will restrict you and return an error if the query is too large. POST is only available in Prometheus v2.1+)"
           >
             HTTP Method
           </InlineFormLabel>
