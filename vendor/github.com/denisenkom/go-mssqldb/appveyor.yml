@@ -1,0 +1,65 @@
+version: 1.0.{build}
+
+image:
+  - Visual Studio 2015
+
+clone_folder: c:\gopath\src\github.com\denisenkom\go-mssqldb
+
+environment:
+  GOPATH: c:\gopath
+  HOST: localhost
+  SQLUSER: sa
+  SQLPASSWORD: Password12!
+  DATABASE: test
+  GOVERSION: 113
+  matrix:
+    - GOVERSION: 18
+      SQLINSTANCE: SQL2017
+    - GOVERSION: 19
+      SQLINSTANCE: SQL2017
+    - GOVERSION: 110
+      SQLINSTANCE: SQL2017
+    - GOVERSION: 111
+      SQLINSTANCE: SQL2017
+    - GOVERSION: 112
+      SQLINSTANCE: SQL2017
+    - SQLINSTANCE: SQL2017
+    - SQLINSTANCE: SQL2016
+    - SQLINSTANCE: SQL2014
+    - SQLINSTANCE: SQL2012SP1
+    - SQLINSTANCE: SQL2008R2SP2
+
+    #  Go 1.14+ and SQL2019 are available on the Visual Studio 2019 image only
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+      GOVERSION: 114
+      SQLINSTANCE: SQL2019
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+      GOVERSION: 115
+      SQLINSTANCE: SQL2019
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+      GOVERSION: 115
+      SQLINSTANCE: SQL2017
+
+install:
+  - set GOROOT=c:\go%GOVERSION%
+  - set PATH=%GOPATH%\bin;%GOROOT%\bin;%PATH%
+  - go version
+  - go env
+  - go get -u github.com/golang-sql/civil
+
+build_script:
+  - go build
+
+before_test:
+  # setup SQL Server
+  - ps: |
+      $instanceName = $env:SQLINSTANCE
+      Start-Service "MSSQL`$$instanceName"
+      Start-Service "SQLBrowser"
+  - sqlcmd -S "(local)\%SQLINSTANCE%" -Q "Use [master]; CREATE DATABASE test;"
+  - sqlcmd -S "(local)\%SQLINSTANCE%" -h -1 -Q "set nocount on; Select @@version"
+  - pip install codecov
+
+test_script:
+  - go test -race -cpu 4 -coverprofile=coverage.txt -covermode=atomic
+  - codecov -f coverage.txt
