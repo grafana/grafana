@@ -186,6 +186,14 @@ func getTimeSeriesTimeColumn(columns []*query.FluxColumn) *query.FluxColumn {
 func getTableID(record *query.FluxRecord, groupColumns []string) []interface{} {
 	result := make([]interface{}, len(groupColumns))
 
+	// Flux does not allow duplicate column-names,
+	// so we can be sure there is no confusion in the record.
+	//
+	// ( it does allow for a column named "table" to exist,
+	// and shadow the table-id "table" column, but the potentially
+	// shadowed table-id column is not a part of the group-key,
+	// so we should be safe )
+
 	for i, colName := range groupColumns {
 		result[i] = record.ValueByKey(colName)
 	}
