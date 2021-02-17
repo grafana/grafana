@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { css } from 'emotion';
+import _ from 'lodash';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { Subscription } from 'rxjs';
 import { DataFrame, DataQuery, GrafanaTheme, PanelData } from '@grafana/data';
@@ -71,16 +72,15 @@ export class AlertingQueryPreview extends PureComponent<Props, State> {
 
   renderQueryAndInstances() {
     const { activeTab, data } = this.state;
-    const { instances, onTest } = this.props;
+    const { instances, onTest, onRunQueries } = this.props;
 
-    if (!data) {
+    if (_.isEmpty(data)) {
       return (
         <EmptyState title="Run queries to view data.">
           <Button onClick={onRunQueries}>Run queries</Button>
         </EmptyState>
       );
     }
-
     return (
       <AutoSizer style={{ width: '100%', height: '100%' }}>
         {({ width, height }) => {
