@@ -27,7 +27,7 @@ When the number of maximum active viewers or editors is reached, Grafana display
 
 ### Usage billing
 
-It is possible to turn on usage billing in enterprise licensing to have unlimited number of user limits. When usage billing is on, Grafana will not enforce active user limits and instead will charge for active users above the limit, according to the customer's contract. 
+It is possible to turn on usage billing in Enterprise licensing in order to have an unlimited number of user limits. When usage billing is on, Grafana does not enforce active user limits. Instead, Grafana charges for active users above the limit, according to your customer contract.
 
 The usage billing must be agreed with Grafana Labs and is only available to customers who have automated license token renewal enabled.
 
