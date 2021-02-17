@@ -6,7 +6,7 @@
 ### Features and enhancements
 
 * **Explore**: Do not show non queryable data sources in data source picker. [#31144](https://github.com/grafana/grafana/pull/31144), [@torkelo](https://github.com/torkelo)
-* **Snapshots**: Disallow anonymous user to create snapshots. [#31263](https://github.com/grafana/grafana/pull/31263), [@marefr](https://github.com/marefr)
+* **Snapshots**: Do not allow an anonymous user to create snapshots. [#31263](https://github.com/grafana/grafana/pull/31263), [@marefr](https://github.com/marefr)
 
 ### Bug fixes
 
