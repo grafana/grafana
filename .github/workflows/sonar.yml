@@ -1,5 +1,5 @@
 # Scan files using sonarcloud. 
-
+  
 on:
   # Trigger analysis when pushing in master or pull requests, and when creating
   # a pull request. 
@@ -12,6 +12,11 @@ name: Main Workflow
 jobs:
   sonarcloud:
     runs-on: ubuntu-latest
+    env:
+      sonarCloudEndpointName: 'SC'
+      sonarCloudOrganization: 'vesaninja'
+      sonarCloudProjectKey: 'vesaninja_grafana'
+      sonarCloudProjectName: 'grafana'
     steps:
     - uses: actions/checkout@v2
       with:
