@@ -128,7 +128,7 @@ func (ac *RBACService) UpdatePolicy(ctx context.Context, cmd UpdatePolicyCommand
 		}
 
 		if affectedRows == 0 {
-			return errPolicyNotFound
+			return ErrPolicyNotFound
 		}
 
 		result = policy
@@ -215,7 +215,7 @@ func (ac *RBACService) UpdatePermission(cmd *UpdatePermissionCommand) (*Permissi
 		}
 
 		if affectedRows == 0 {
-			return errPermissionNotFound
+			return ErrPermissionNotFound
 		}
 
 		result = permission
@@ -322,7 +322,7 @@ func (ac *RBACService) AddTeamPolicy(cmd *AddTeamPolicyCommand) error {
 		if res, err := sess.Query("SELECT 1 from team_policy WHERE org_id=? and team_id=? and policy_id=?", cmd.OrgId, cmd.TeamId, cmd.PolicyId); err != nil {
 			return err
 		} else if len(res) == 1 {
-			return errTeamPolicyAlreadyAdded
+			return ErrTeamPolicyAlreadyAdded
 		}
 
 		if _, err := teamExists(cmd.OrgId, cmd.TeamId, sess); err != nil {
@@ -363,7 +363,7 @@ func (ac *RBACService) RemoveTeamPolicy(cmd *RemoveTeamPolicyCommand) error {
 		}
 		rows, err := res.RowsAffected()
 		if rows == 0 {
-			return errTeamPolicyNotFound
+			return ErrTeamPolicyNotFound
 		}
 
 		return err
@@ -375,7 +375,7 @@ func (ac *RBACService) AddUserPolicy(cmd *AddUserPolicyCommand) error {
 		if res, err := sess.Query("SELECT 1 from user_policy WHERE org_id=? and user_id=? and policy_id=?", cmd.OrgId, cmd.UserId, cmd.PolicyId); err != nil {
 			return err
 		} else if len(res) == 1 {
-			return errUserPolicyAlreadyAdded
+			return ErrUserPolicyAlreadyAdded
 		}
 
 		if _, err := policyExists(cmd.OrgId, cmd.PolicyId, sess); err != nil {
@@ -408,7 +408,7 @@ func (ac *RBACService) RemoveUserPolicy(cmd *RemoveUserPolicyCommand) error {
 		}
 		rows, err := res.RowsAffected()
 		if rows == 0 {
-			return errUserPolicyNotFound
+			return ErrUserPolicyNotFound
 		}
 
 		return err
@@ -419,7 +419,7 @@ func getPolicyById(sess *sqlstore.DBSession, policyId int64, orgId int64) (*Poli
 	policy := Policy{OrgId: orgId, Id: policyId}
 	has, err := sess.Get(&policy)
 	if !has {
-		return nil, errPolicyNotFound
+		return nil, ErrPolicyNotFound
 	}
 	if err != nil {
 		return nil, err
@@ -442,7 +442,7 @@ func getPolicyByUID(sess *sqlstore.DBSession, uid string, orgId int64) (*PolicyD
 	policy := Policy{OrgId: orgId, UID: uid}
 	has, err := sess.Get(&policy)
 	if !has {
-		return nil, errPolicyNotFound
+		return nil, ErrPolicyNotFound
 	}
 	if err != nil {
 		return nil, err
@@ -476,7 +476,7 @@ func teamExists(orgId int64, teamId int64, sess *sqlstore.DBSession) (bool, erro
 	if res, err := sess.Query("SELECT 1 from team WHERE org_id=? and id=?", orgId, teamId); err != nil {
 		return false, err
 	} else if len(res) != 1 {
-		return false, errTeamNotFound
+		return false, ErrTeamNotFound
 	}
 
 	return true, nil
@@ -486,7 +486,7 @@ func policyExists(orgId int64, policyId int64, sess *sqlstore.DBSession) (bool, 
 	if res, err := sess.Query("SELECT 1 from policy WHERE org_id=? and id=?", orgId, policyId); err != nil {
 		return false, err
 	} else if len(res) != 1 {
-		return false, errPolicyNotFound
+		return false, ErrPolicyNotFound
 	}
 
 	return true, nil
@@ -506,5 +506,5 @@ func generateNewPolicyUID(sess *sqlstore.DBSession, orgID int64) (string, error)
 		}
 	}
 
-	return "", errPolicyFailedGenerateUniqueUID
+	return "", ErrPolicyFailedGenerateUniqueUID
 }

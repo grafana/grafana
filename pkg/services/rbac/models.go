@@ -6,14 +6,14 @@ import (
 )
 
 var (
-	errPolicyNotFound                = errors.New("policy not found")
-	errTeamPolicyAlreadyAdded        = errors.New("policy is already added to this team")
-	errUserPolicyAlreadyAdded        = errors.New("policy is already added to this user")
-	errTeamPolicyNotFound            = errors.New("team policy not found")
-	errUserPolicyNotFound            = errors.New("user policy not found")
-	errTeamNotFound                  = errors.New("team not found")
-	errPermissionNotFound            = errors.New("permission not found")
-	errPolicyFailedGenerateUniqueUID = errors.New("failed to generate policy definition UID")
+	ErrPolicyNotFound                = errors.New("policy not found")
+	ErrTeamPolicyAlreadyAdded        = errors.New("policy is already added to this team")
+	ErrUserPolicyAlreadyAdded        = errors.New("policy is already added to this user")
+	ErrTeamPolicyNotFound            = errors.New("team policy not found")
+	ErrUserPolicyNotFound            = errors.New("user policy not found")
+	ErrTeamNotFound                  = errors.New("team not found")
+	ErrPermissionNotFound            = errors.New("permission not found")
+	ErrPolicyFailedGenerateUniqueUID = errors.New("failed to generate policy definition UID")
 )
 
 // Policy is the model for Policy in RBAC.
