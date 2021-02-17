@@ -1,20 +1,68 @@
 # github.com/beorn7/perks v1.0.1
 github.com/beorn7/perks/quantile
+# github.com/bradfitz/gomemcache v0.0.0-20190329173943-551aad21a668
+github.com/bradfitz/gomemcache/memcache
 # github.com/cespare/xxhash/v2 v2.1.1
 github.com/cespare/xxhash/v2
+# github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f
+github.com/dgryski/go-rendezvous
 # github.com/go-kit/kit v0.10.0
 github.com/go-kit/kit/log
 github.com/go-kit/kit/log/level
 # github.com/go-logfmt/logfmt v0.5.0
 github.com/go-logfmt/logfmt
+# github.com/go-macaron/inject v0.0.0-20200308113650-138e5925c53b
+github.com/go-macaron/inject
+# github.com/go-macaron/session v1.0.2
+## explicit
+github.com/go-macaron/session
+github.com/go-macaron/session/memcache
+github.com/go-macaron/session/postgres
+github.com/go-macaron/session/redis
+# github.com/go-redis/redis/v8 v8.4.0
+github.com/go-redis/redis/v8
+github.com/go-redis/redis/v8/internal
+github.com/go-redis/redis/v8/internal/hashtag
+github.com/go-redis/redis/v8/internal/pool
+github.com/go-redis/redis/v8/internal/proto
+github.com/go-redis/redis/v8/internal/rand
+github.com/go-redis/redis/v8/internal/util
+# github.com/go-sql-driver/mysql v1.4.1
+github.com/go-sql-driver/mysql
+# github.com/go-stack/stack v1.8.0
+github.com/go-stack/stack
 # github.com/golang/protobuf v1.4.2
 github.com/golang/protobuf/proto
 github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
+# github.com/gosimple/slug v1.9.0
+## explicit
+github.com/gosimple/slug
+# github.com/grafana/grafana v5.4.5+incompatible
+## explicit
+github.com/grafana/grafana/pkg/components/null
+github.com/grafana/grafana/pkg/components/securejsondata
+github.com/grafana/grafana/pkg/components/simplejson
+github.com/grafana/grafana/pkg/log
+github.com/grafana/grafana/pkg/models
+github.com/grafana/grafana/pkg/services/session
+github.com/grafana/grafana/pkg/setting
+github.com/grafana/grafana/pkg/util
+# github.com/inconshreveable/log15 v0.0.0-20201112154412-8562bdadbbac
+## explicit
+github.com/inconshreveable/log15
 # github.com/jpillora/backoff v1.0.0
 github.com/jpillora/backoff
+# github.com/lib/pq v1.2.0
+github.com/lib/pq
+github.com/lib/pq/oid
+github.com/lib/pq/scram
+# github.com/mattn/go-colorable v0.0.9
+github.com/mattn/go-colorable
+# github.com/mattn/go-isatty v0.0.4
+github.com/mattn/go-isatty
 # github.com/matttproud/golang_protobuf_extensions v1.0.1
 github.com/matttproud/golang_protobuf_extensions/pbutil
 # github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f
@@ -39,6 +87,29 @@ github.com/prometheus/common/model
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
+# github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be
+github.com/rainycape/unidecode
+# github.com/teris-io/shortid v0.0.0-20201117134242-e59966efd125
+## explicit
+github.com/teris-io/shortid
+# github.com/unknwon/com v1.0.1
+github.com/unknwon/com
+# go.opentelemetry.io/otel v0.14.0
+go.opentelemetry.io/otel
+go.opentelemetry.io/otel/codes
+go.opentelemetry.io/otel/internal
+go.opentelemetry.io/otel/internal/baggage
+go.opentelemetry.io/otel/internal/global
+go.opentelemetry.io/otel/internal/trace/noop
+go.opentelemetry.io/otel/label
+go.opentelemetry.io/otel/metric
+go.opentelemetry.io/otel/metric/number
+go.opentelemetry.io/otel/metric/registry
+go.opentelemetry.io/otel/propagation
+go.opentelemetry.io/otel/trace
+go.opentelemetry.io/otel/unit
+# golang.org/x/crypto v0.0.0-20201208171446-5f87f3452ae9
+golang.org/x/crypto/pbkdf2
 # golang.org/x/net v0.0.0-20201021035429-f5854403a974
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2
@@ -55,6 +126,8 @@ golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
+# google.golang.org/appengine v1.6.7
+google.golang.org/appengine/cloudsql
 # google.golang.org/protobuf v1.23.0
 google.golang.org/protobuf/encoding/prototext
 google.golang.org/protobuf/encoding/protowire
@@ -86,5 +159,9 @@ google.golang.org/protobuf/runtime/protoimpl
 google.golang.org/protobuf/types/known/anypb
 google.golang.org/protobuf/types/known/durationpb
 google.golang.org/protobuf/types/known/timestamppb
+# gopkg.in/ini.v1 v1.62.0
+gopkg.in/ini.v1
+# gopkg.in/macaron.v1 v1.4.0
+gopkg.in/macaron.v1
 # gopkg.in/yaml.v2 v2.4.0
 gopkg.in/yaml.v2

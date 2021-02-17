@@ -1,0 +1,107 @@
+sudo: false
+language: go
+go:
+  - 1.7.x
+  - 1.8.x
+  - 1.9.x
+  - 1.10.x
+  - master
+
+before_install:
+  - go get golang.org/x/tools/cmd/cover
+  - go get github.com/mattn/goveralls
+
+before_script:
+  - echo -e "[server]\ninnodb_log_file_size=256MB\ninnodb_buffer_pool_size=512MB\nmax_allowed_packet=16MB" | sudo tee -a /etc/mysql/my.cnf
+  - sudo service mysql restart
+  - .travis/wait_mysql.sh
+  - mysql -e 'create database gotest;'
+
+matrix:
+  include:
+    - env: DB=MYSQL8
+      sudo: required
+      dist: trusty
+      go: 1.10.x
+      services:
+        - docker
+      before_install:
+        - go get golang.org/x/tools/cmd/cover
+        - go get github.com/mattn/goveralls
+        - docker pull mysql:8.0
+        - docker run -d -p 127.0.0.1:3307:3306 --name mysqld -e MYSQL_DATABASE=gotest -e MYSQL_USER=gotest -e MYSQL_PASSWORD=secret -e MYSQL_ROOT_PASSWORD=verysecret
+          mysql:8.0 --innodb_log_file_size=256MB --innodb_buffer_pool_size=512MB --max_allowed_packet=16MB --local-infile=1
+        - cp .travis/docker.cnf ~/.my.cnf
+        - .travis/wait_mysql.sh
+      before_script:
+        - export MYSQL_TEST_USER=gotest
+        - export MYSQL_TEST_PASS=secret
+        - export MYSQL_TEST_ADDR=127.0.0.1:3307
+        - export MYSQL_TEST_CONCURRENT=1
+
+    - env: DB=MYSQL57
+      sudo: required
+      dist: trusty
+      go: 1.10.x
+      services:
+        - docker
+      before_install:
+        - go get golang.org/x/tools/cmd/cover
+        - go get github.com/mattn/goveralls
+        - docker pull mysql:5.7
+        - docker run -d -p 127.0.0.1:3307:3306 --name mysqld -e MYSQL_DATABASE=gotest -e MYSQL_USER=gotest -e MYSQL_PASSWORD=secret -e MYSQL_ROOT_PASSWORD=verysecret
+          mysql:5.7 --innodb_log_file_size=256MB --innodb_buffer_pool_size=512MB --max_allowed_packet=16MB --local-infile=1
+        - cp .travis/docker.cnf ~/.my.cnf
+        - .travis/wait_mysql.sh
+      before_script:
+        - export MYSQL_TEST_USER=gotest
+        - export MYSQL_TEST_PASS=secret
+        - export MYSQL_TEST_ADDR=127.0.0.1:3307
+        - export MYSQL_TEST_CONCURRENT=1
+
+    - env: DB=MARIA55
+      sudo: required
+      dist: trusty
+      go: 1.10.x
+      services:
+        - docker
+      before_install:
+        - go get golang.org/x/tools/cmd/cover
+        - go get github.com/mattn/goveralls
+        - docker pull mariadb:5.5
+        - docker run -d -p 127.0.0.1:3307:3306 --name mysqld -e MYSQL_DATABASE=gotest -e MYSQL_USER=gotest -e MYSQL_PASSWORD=secret -e MYSQL_ROOT_PASSWORD=verysecret
+          mariadb:5.5 --innodb_log_file_size=256MB --innodb_buffer_pool_size=512MB --max_allowed_packet=16MB --local-infile=1
+        - cp .travis/docker.cnf ~/.my.cnf
+        - .travis/wait_mysql.sh
+      before_script:
+        - export MYSQL_TEST_USER=gotest
+        - export MYSQL_TEST_PASS=secret
+        - export MYSQL_TEST_ADDR=127.0.0.1:3307
+        - export MYSQL_TEST_CONCURRENT=1
+
+    - env: DB=MARIA10_1
+      sudo: required
+      dist: trusty
+      go: 1.10.x
+      services:
+        - docker
+      before_install:
+        - go get golang.org/x/tools/cmd/cover
+        - go get github.com/mattn/goveralls
+        - docker pull mariadb:10.1
+        - docker run -d -p 127.0.0.1:3307:3306 --name mysqld -e MYSQL_DATABASE=gotest -e MYSQL_USER=gotest -e MYSQL_PASSWORD=secret -e MYSQL_ROOT_PASSWORD=verysecret
+          mariadb:10.1 --innodb_log_file_size=256MB --innodb_buffer_pool_size=512MB --max_allowed_packet=16MB --local-infile=1
+        - cp .travis/docker.cnf ~/.my.cnf
+        - .travis/wait_mysql.sh
+      before_script:
+        - export MYSQL_TEST_USER=gotest
+        - export MYSQL_TEST_PASS=secret
+        - export MYSQL_TEST_ADDR=127.0.0.1:3307
+        - export MYSQL_TEST_CONCURRENT=1
+
+script:
+  - go test -v -covermode=count -coverprofile=coverage.out
+  - go vet ./...
+  - .travis/gofmt.sh
+after_script:
+  - $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci
