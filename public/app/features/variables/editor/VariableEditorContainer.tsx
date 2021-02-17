@@ -48,7 +48,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
     this.props.switchToEditMode(identifier);
   };
 
-  onNewVariable = (event: MouseEvent<Element>) => {
+  onNewVariable = (event: MouseEvent) => {
     event.preventDefault();
     this.props.switchToNewMode();
   };

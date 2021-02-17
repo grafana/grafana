@@ -10,7 +10,7 @@ import { commitChangesToVariable, filterOrSearchOptions, navigateOptions, toggle
 import { OptionsPickerState, showOptions, toggleAllOptions, toggleOption } from './reducer';
 import { VariableOption, VariableTag, VariableWithMultiSupport, VariableWithOptions } from '../../types';
 import { VariableOptions } from '../shared/VariableOptions';
-import { isQuery } from '../../guard';
+import { isMulti, isQuery } from '../../guard';
 import { VariablePickerProps } from '../types';
 import { formatVariableLabel } from '../../shared/formatVariable';
 import { toVariableIdentifier } from '../../state/types';
@@ -44,9 +44,10 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
     onHideOptions = () => this.props.commitChangesToVariable(this.props.onVariableChange);
 
     onToggleOption = (option: VariableOption, clearOthers: boolean) => {
-      const toggleFunc = this.hasMultiPropertyAssigned(this.props.variable)
-        ? this.onToggleMultiValueVariable
-        : this.onToggleSingleValueVariable;
+      const toggleFunc =
+        isMulti(this.props.variable) && this.props.variable.multi
+          ? this.onToggleMultiValueVariable
+          : this.onToggleSingleValueVariable;
       toggleFunc(option, clearOthers);
     };
 
@@ -59,27 +60,19 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
       this.props.toggleOption({ option, clearOthers, forceSelect: false });
     };
 
-    hasMultiPropertyAssigned = (variable: any) => {
-      return variable.hasOwnProperty('multi') && variable.multi === true;
-    };
-
     render() {
       const { variable, picker } = this.props;
       const showOptions = picker.id === variable.id;
 
       return (
         <div className="variable-link-wrapper">
-          {this.renderLink(showOptions, variable)}
-          {this.renderOptions(showOptions, picker)}
+          {!showOptions ? this.renderLink(variable) : null}
+          {showOptions ? this.renderOptions(picker) : null}
         </div>
       );
     }
 
-    renderLink(showOptions: boolean, variable: VariableWithOptions) {
-      if (showOptions) {
-        return null;
-      }
-
+    renderLink(variable: VariableWithOptions) {
       const linkText = formatVariableLabel(variable);
       const tags = getSelectedTags(variable);
       const loading = variable.state === LoadingState.Loading;
@@ -99,11 +92,7 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
       getVariableQueryRunner().cancelRequest(toVariableIdentifier(this.props.variable));
     };
 
-    renderOptions(showOptions: boolean, picker: OptionsPickerState) {
-      if (!showOptions) {
-        return null;
-      }
-
+    renderOptions(picker: OptionsPickerState) {
       return (
         <ClickOutsideWrapper onClick={this.onHideOptions}>
           <VariableInput

@@ -1,6 +1,5 @@
 import React, { PureComponent, ReactNode } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { StoreState } from 'app/types';
 import { AdHocVariableFilter, AdHocVariableModel } from 'app/features/variables/types';
 import { VariablePickerProps } from '../../pickers/types';
 import { SelectableValue } from '@grafana/data';
@@ -16,9 +15,7 @@ const mapDispatchToProps = {
   changeFilter,
 };
 
-const mapStateToProps = (state: StoreState) => ({});
-
-const connector = connect(mapStateToProps, mapDispatchToProps);
+const connector = connect(null, mapDispatchToProps);
 
 interface OwnProps extends VariablePickerProps<AdHocVariableModel> {}
 
