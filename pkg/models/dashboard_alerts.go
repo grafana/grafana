@@ -72,7 +72,7 @@ type Conflict struct{}
 
 // swagger:route POST /api/alert-notifications grafana RoutePostNotifiers
 //
-// creates a dashboard with alerts
+// creates an alert notification channel
 //
 //     Schemes: http, https
 //
