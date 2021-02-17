@@ -218,9 +218,9 @@
 }
 
 .legend-yaxis-container {
-  padding: 5px;
-  border: 2px solid $legendAxisBorderColor;
-  border-radius: 10px;
+  padding-top: 4px;
+  margin: 12px;
+  border-bottom: 1px solid $legendAxisBorderColor;
 }
 
 .annotation-tags {
