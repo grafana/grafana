@@ -2,18 +2,29 @@ package models
 
 import "errors"
 
-var ErrInvalidEmailCode = errors.New("Invalid or expired email code")
-var ErrSmtpNotEnabled = errors.New("SMTP not configured, check your grafana.ini config file's [smtp] section.")
+var ErrInvalidEmailCode = errors.New("invalid or expired email code")
+var ErrSmtpNotEnabled = errors.New("SMTP not configured, check your grafana.ini config file's [smtp] section")
 
-type SendEmailCommand struct {
-	To           []string
-	Template     string
-	Subject      string
-	Data         map[string]interface{}
-	Info         string
-	EmbededFiles []string
+// SendEmailAttachFile is a definition of the attached files without path
+type SendEmailAttachFile struct {
+	Name    string
+	Content []byte
 }
 
+// SendEmailCommand is command for sending emails
+type SendEmailCommand struct {
+	To            []string
+	SingleEmail   bool
+	Template      string
+	Subject       string
+	Data          map[string]interface{}
+	Info          string
+	ReplyTo       []string
+	EmbeddedFiles []string
+	AttachedFiles []*SendEmailAttachFile
+}
+
+// SendEmailCommandSync is command for sending emails in sync
 type SendEmailCommandSync struct {
 	SendEmailCommand
 }

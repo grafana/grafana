@@ -1,81 +1,170 @@
+# github.com/FZambia/eagle v0.0.1
+github.com/FZambia/eagle
+# github.com/FZambia/sentinel v1.1.0
+github.com/FZambia/sentinel
+# github.com/apache/arrow/go/arrow v0.0.0-20200629181129-68b1273cbbf7
+github.com/apache/arrow/go/arrow
+github.com/apache/arrow/go/arrow/array
+github.com/apache/arrow/go/arrow/arrio
+github.com/apache/arrow/go/arrow/bitutil
+github.com/apache/arrow/go/arrow/decimal128
+github.com/apache/arrow/go/arrow/float16
+github.com/apache/arrow/go/arrow/internal/cpu
+github.com/apache/arrow/go/arrow/internal/debug
+github.com/apache/arrow/go/arrow/internal/flatbuf
+github.com/apache/arrow/go/arrow/ipc
+github.com/apache/arrow/go/arrow/memory
+# github.com/aws/aws-sdk-go v1.37.7
+github.com/aws/aws-sdk-go/aws
+github.com/aws/aws-sdk-go/aws/awserr
+github.com/aws/aws-sdk-go/aws/awsutil
+github.com/aws/aws-sdk-go/aws/client
+github.com/aws/aws-sdk-go/aws/client/metadata
+github.com/aws/aws-sdk-go/aws/corehandlers
+github.com/aws/aws-sdk-go/aws/credentials
+github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds
+github.com/aws/aws-sdk-go/aws/credentials/endpointcreds
+github.com/aws/aws-sdk-go/aws/credentials/processcreds
+github.com/aws/aws-sdk-go/aws/credentials/ssocreds
+github.com/aws/aws-sdk-go/aws/credentials/stscreds
+github.com/aws/aws-sdk-go/aws/csm
+github.com/aws/aws-sdk-go/aws/defaults
+github.com/aws/aws-sdk-go/aws/ec2metadata
+github.com/aws/aws-sdk-go/aws/endpoints
+github.com/aws/aws-sdk-go/aws/request
+github.com/aws/aws-sdk-go/aws/session
+github.com/aws/aws-sdk-go/aws/signer/v4
+github.com/aws/aws-sdk-go/internal/context
+github.com/aws/aws-sdk-go/internal/ini
+github.com/aws/aws-sdk-go/internal/sdkio
+github.com/aws/aws-sdk-go/internal/sdkmath
+github.com/aws/aws-sdk-go/internal/sdkrand
+github.com/aws/aws-sdk-go/internal/sdkuri
+github.com/aws/aws-sdk-go/internal/shareddefaults
+github.com/aws/aws-sdk-go/internal/strings
+github.com/aws/aws-sdk-go/internal/sync/singleflight
+github.com/aws/aws-sdk-go/private/protocol
+github.com/aws/aws-sdk-go/private/protocol/json/jsonutil
+github.com/aws/aws-sdk-go/private/protocol/jsonrpc
+github.com/aws/aws-sdk-go/private/protocol/query
+github.com/aws/aws-sdk-go/private/protocol/query/queryutil
+github.com/aws/aws-sdk-go/private/protocol/rest
+github.com/aws/aws-sdk-go/private/protocol/restjson
+github.com/aws/aws-sdk-go/private/protocol/xml/xmlutil
+github.com/aws/aws-sdk-go/service/sso
+github.com/aws/aws-sdk-go/service/sso/ssoiface
+github.com/aws/aws-sdk-go/service/sts
+github.com/aws/aws-sdk-go/service/sts/stsiface
 # github.com/beorn7/perks v1.0.1
 github.com/beorn7/perks/quantile
-# github.com/bradfitz/gomemcache v0.0.0-20190329173943-551aad21a668
-github.com/bradfitz/gomemcache/memcache
+# github.com/centrifugal/centrifuge v0.13.0
+github.com/centrifugal/centrifuge
+github.com/centrifugal/centrifuge/internal/bufpool
+github.com/centrifugal/centrifuge/internal/cancelctx
+github.com/centrifugal/centrifuge/internal/clientproto
+github.com/centrifugal/centrifuge/internal/controlpb
+github.com/centrifugal/centrifuge/internal/controlproto
+github.com/centrifugal/centrifuge/internal/dissolve
+github.com/centrifugal/centrifuge/internal/memstream
+github.com/centrifugal/centrifuge/internal/nowtime
+github.com/centrifugal/centrifuge/internal/prepared
+github.com/centrifugal/centrifuge/internal/priority
+github.com/centrifugal/centrifuge/internal/queue
+github.com/centrifugal/centrifuge/internal/recovery
+github.com/centrifugal/centrifuge/internal/timers
+# github.com/centrifugal/protocol v0.3.4
+github.com/centrifugal/protocol
 # github.com/cespare/xxhash/v2 v2.1.1
 github.com/cespare/xxhash/v2
-# github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f
-github.com/dgryski/go-rendezvous
+# github.com/cheekybits/genny v1.0.0
+github.com/cheekybits/genny/generic
 # github.com/go-kit/kit v0.10.0
 github.com/go-kit/kit/log
 github.com/go-kit/kit/log/level
 # github.com/go-logfmt/logfmt v0.5.0
 github.com/go-logfmt/logfmt
-# github.com/go-macaron/inject v0.0.0-20200308113650-138e5925c53b
+# github.com/go-macaron/inject v0.0.0-20160627170012-d8a0b8677191
 github.com/go-macaron/inject
-# github.com/go-macaron/session v1.0.2
-## explicit
-github.com/go-macaron/session
-github.com/go-macaron/session/memcache
-github.com/go-macaron/session/postgres
-github.com/go-macaron/session/redis
-# github.com/go-redis/redis/v8 v8.4.0
-github.com/go-redis/redis/v8
-github.com/go-redis/redis/v8/internal
-github.com/go-redis/redis/v8/internal/hashtag
-github.com/go-redis/redis/v8/internal/pool
-github.com/go-redis/redis/v8/internal/proto
-github.com/go-redis/redis/v8/internal/rand
-github.com/go-redis/redis/v8/internal/util
-# github.com/go-sql-driver/mysql v1.4.1
-github.com/go-sql-driver/mysql
 # github.com/go-stack/stack v1.8.0
 github.com/go-stack/stack
-# github.com/golang/protobuf v1.4.2
+# github.com/gogo/protobuf v1.3.2
+github.com/gogo/protobuf/gogoproto
+github.com/gogo/protobuf/proto
+github.com/gogo/protobuf/protoc-gen-gogo/descriptor
+# github.com/golang/protobuf v1.4.3
 github.com/golang/protobuf/proto
 github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
+# github.com/gomodule/redigo v2.0.0+incompatible
+github.com/gomodule/redigo/internal
+github.com/gomodule/redigo/redis
+# github.com/google/flatbuffers v1.11.0
+github.com/google/flatbuffers/go
+# github.com/google/go-cmp v0.5.4
+github.com/google/go-cmp/cmp
+github.com/google/go-cmp/cmp/cmpopts
+github.com/google/go-cmp/cmp/internal/diff
+github.com/google/go-cmp/cmp/internal/flags
+github.com/google/go-cmp/cmp/internal/function
+github.com/google/go-cmp/cmp/internal/value
+# github.com/google/uuid v1.2.0
+github.com/google/uuid
+# github.com/gorilla/websocket v1.4.2
+github.com/gorilla/websocket
 # github.com/gosimple/slug v1.9.0
-## explicit
 github.com/gosimple/slug
-# github.com/grafana/grafana v5.4.5+incompatible
+# github.com/grafana/grafana v1.9.2-0.20210217182004-6c4be29655a6
 ## explicit
-github.com/grafana/grafana/pkg/components/null
+github.com/grafana/grafana/pkg/components/gtime
+github.com/grafana/grafana/pkg/components/securedata
 github.com/grafana/grafana/pkg/components/securejsondata
 github.com/grafana/grafana/pkg/components/simplejson
-github.com/grafana/grafana/pkg/log
+github.com/grafana/grafana/pkg/infra/log
+github.com/grafana/grafana/pkg/infra/metrics/metricutil
 github.com/grafana/grafana/pkg/models
-github.com/grafana/grafana/pkg/services/session
 github.com/grafana/grafana/pkg/setting
 github.com/grafana/grafana/pkg/util
-# github.com/inconshreveable/log15 v0.0.0-20201112154412-8562bdadbbac
-## explicit
+github.com/grafana/grafana/pkg/util/errutil
+# github.com/grafana/grafana-aws-sdk v0.1.0
+github.com/grafana/grafana-aws-sdk/pkg/sigv4
+# github.com/grafana/grafana-plugin-sdk-go v0.88.0
+github.com/grafana/grafana-plugin-sdk-go/data
+# github.com/igm/sockjs-go/v3 v3.0.0
+github.com/igm/sockjs-go/v3/sockjs
+# github.com/inconshreveable/log15 v0.0.0-20180818164646-67afb5ed74ec
 github.com/inconshreveable/log15
+# github.com/jmespath/go-jmespath v0.4.0
+github.com/jmespath/go-jmespath
 # github.com/jpillora/backoff v1.0.0
 github.com/jpillora/backoff
-# github.com/lib/pq v1.2.0
-github.com/lib/pq
-github.com/lib/pq/oid
-github.com/lib/pq/scram
-# github.com/mattn/go-colorable v0.0.9
+# github.com/mattetti/filebuffer v1.0.1
+github.com/mattetti/filebuffer
+# github.com/mattn/go-colorable v0.1.8
 github.com/mattn/go-colorable
-# github.com/mattn/go-isatty v0.0.4
+# github.com/mattn/go-isatty v0.0.12
 github.com/mattn/go-isatty
+# github.com/mattn/go-runewidth v0.0.9
+github.com/mattn/go-runewidth
 # github.com/matttproud/golang_protobuf_extensions v1.0.1
 github.com/matttproud/golang_protobuf_extensions/pbutil
+# github.com/mna/redisc v1.1.7
+github.com/mna/redisc
 # github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f
 github.com/mwitkow/go-conntrack
+# github.com/olekukonko/tablewriter v0.0.4
+github.com/olekukonko/tablewriter
 # github.com/pkg/errors v0.9.1
 github.com/pkg/errors
 # github.com/prometheus/alertmanager v0.21.1-0.20210211203738-a7ca7b1d2951
 ## explicit
 github.com/prometheus/alertmanager/config
 github.com/prometheus/alertmanager/pkg/labels
-# github.com/prometheus/client_golang v1.7.1
+# github.com/prometheus/client_golang v1.9.0
 github.com/prometheus/client_golang/prometheus
 github.com/prometheus/client_golang/prometheus/internal
+github.com/prometheus/client_golang/prometheus/promhttp
 # github.com/prometheus/client_model v0.2.0
 github.com/prometheus/client_model/go
 # github.com/prometheus/common v0.15.0
@@ -83,52 +172,51 @@ github.com/prometheus/common/config
 github.com/prometheus/common/expfmt
 github.com/prometheus/common/internal/bitbucket.org/ww/goautoneg
 github.com/prometheus/common/model
-# github.com/prometheus/procfs v0.1.3
+# github.com/prometheus/procfs v0.2.0
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
 # github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be
 github.com/rainycape/unidecode
-# github.com/teris-io/shortid v0.0.0-20201117134242-e59966efd125
-## explicit
+# github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf
 github.com/teris-io/shortid
 # github.com/unknwon/com v1.0.1
 github.com/unknwon/com
-# go.opentelemetry.io/otel v0.14.0
-go.opentelemetry.io/otel
-go.opentelemetry.io/otel/codes
-go.opentelemetry.io/otel/internal
-go.opentelemetry.io/otel/internal/baggage
-go.opentelemetry.io/otel/internal/global
-go.opentelemetry.io/otel/internal/trace/noop
-go.opentelemetry.io/otel/label
-go.opentelemetry.io/otel/metric
-go.opentelemetry.io/otel/metric/number
-go.opentelemetry.io/otel/metric/registry
-go.opentelemetry.io/otel/propagation
-go.opentelemetry.io/otel/trace
-go.opentelemetry.io/otel/unit
 # golang.org/x/crypto v0.0.0-20201208171446-5f87f3452ae9
 golang.org/x/crypto/pbkdf2
-# golang.org/x/net v0.0.0-20201021035429-f5854403a974
+# golang.org/x/net v0.0.0-20201224014010-6772e930b67b
+golang.org/x/net/context
+golang.org/x/net/context/ctxhttp
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
 golang.org/x/net/internal/timeseries
 golang.org/x/net/trace
-# golang.org/x/sys v0.0.0-20200930185726-fdedc70b468f
+# golang.org/x/oauth2 v0.0.0-20210113205817-d3ed898aa8a3
+golang.org/x/oauth2
+golang.org/x/oauth2/internal
+# golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/text v0.3.3
+# golang.org/x/text v0.3.4
 golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
+# golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
+golang.org/x/xerrors
+golang.org/x/xerrors/internal
 # google.golang.org/appengine v1.6.7
-google.golang.org/appengine/cloudsql
-# google.golang.org/protobuf v1.23.0
+google.golang.org/appengine/internal
+google.golang.org/appengine/internal/base
+google.golang.org/appengine/internal/datastore
+google.golang.org/appengine/internal/log
+google.golang.org/appengine/internal/remote_api
+google.golang.org/appengine/internal/urlfetch
+google.golang.org/appengine/urlfetch
+# google.golang.org/protobuf v1.25.0
 google.golang.org/protobuf/encoding/prototext
 google.golang.org/protobuf/encoding/protowire
 google.golang.org/protobuf/internal/descfmt
@@ -139,12 +227,11 @@ google.golang.org/protobuf/internal/encoding/messageset
 google.golang.org/protobuf/internal/encoding/tag
 google.golang.org/protobuf/internal/encoding/text
 google.golang.org/protobuf/internal/errors
-google.golang.org/protobuf/internal/fieldnum
 google.golang.org/protobuf/internal/fieldsort
 google.golang.org/protobuf/internal/filedesc
 google.golang.org/protobuf/internal/filetype
 google.golang.org/protobuf/internal/flags
-google.golang.org/protobuf/internal/genname
+google.golang.org/protobuf/internal/genid
 google.golang.org/protobuf/internal/impl
 google.golang.org/protobuf/internal/mapsort
 google.golang.org/protobuf/internal/pragma

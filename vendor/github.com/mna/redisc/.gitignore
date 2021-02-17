@@ -1,0 +1,7 @@
+# cover/profile output files
+*.out
+
+# test binaries
+*.test
+
+

@@ -5,7 +5,9 @@ import (
 	"time"
 )
 
-var ErrInvalidApiKey = errors.New("Invalid API Key")
+var ErrInvalidApiKey = errors.New("invalid API key")
+var ErrInvalidApiKeyExpiration = errors.New("negative value for SecondsToLive")
+var ErrDuplicateApiKey = errors.New("API key, organization ID and name must be unique")
 
 type ApiKey struct {
 	Id      int64
@@ -15,25 +17,19 @@ type ApiKey struct {
 	Role    RoleType
 	Created time.Time
 	Updated time.Time
+	Expires *int64
 }
 
 // ---------------------
 // COMMANDS
 type AddApiKeyCommand struct {
-	Name  string   `json:"name" binding:"Required"`
-	Role  RoleType `json:"role" binding:"Required"`
-	OrgId int64    `json:"-"`
-	Key   string   `json:"-"`
+	Name          string   `json:"name" binding:"Required"`
+	Role          RoleType `json:"role" binding:"Required"`
+	OrgId         int64    `json:"-"`
+	Key           string   `json:"-"`
+	SecondsToLive int64    `json:"secondsToLive"`
 
 	Result *ApiKey `json:"-"`
-}
-
-type UpdateApiKeyCommand struct {
-	Id   int64    `json:"id"`
-	Name string   `json:"name"`
-	Role RoleType `json:"role"`
-
-	OrgId int64 `json:"-"`
 }
 
 type DeleteApiKeyCommand struct {
@@ -45,8 +41,9 @@ type DeleteApiKeyCommand struct {
 // QUERIES
 
 type GetApiKeysQuery struct {
-	OrgId  int64
-	Result []*ApiKey
+	OrgId          int64
+	IncludeExpired bool
+	Result         []*ApiKey
 }
 
 type GetApiKeyByNameQuery struct {
@@ -64,7 +61,8 @@ type GetApiKeyByIdQuery struct {
 // DTO & Projections
 
 type ApiKeyDTO struct {
-	Id   int64    `json:"id"`
-	Name string   `json:"name"`
-	Role RoleType `json:"role"`
+	Id         int64      `json:"id"`
+	Name       string     `json:"name"`
+	Role       RoleType   `json:"role"`
+	Expiration *time.Time `json:"expiration,omitempty"`
 }

@@ -1,0 +1,53 @@
+// Install protoc compiler https://github.com/google/protobuf/releases 
+// Install gogofaster program:
+// go get -u github.com/gogo/protobuf/protoc-gen-gogofaster
+// protoc --proto_path=../../vendor:. --gogofaster_out=. control.proto
+// Note that we use vendored gogoprotobuf path in example above.
+syntax = "proto3";
+
+package controlpb;
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+
+option (gogoproto.equal_all) = true;
+option (gogoproto.populate_all) = true;
+option (gogoproto.testgen_all) = true;
+
+enum MethodType {
+    option (gogoproto.goproto_enum_prefix) = false;
+
+    NODE = 0 [(gogoproto.enumvalue_customname) = "MethodTypeNode"];
+    UNSUBSCRIBE = 1 [(gogoproto.enumvalue_customname) = "MethodTypeUnsubscribe"];
+    DISCONNECT = 2 [(gogoproto.enumvalue_customname) = "MethodTypeDisconnect"];
+}
+
+message Command {
+    string uid = 1 [(gogoproto.customname) = "UID", (gogoproto.jsontag) = "uid"];
+    MethodType method = 2 [(gogoproto.jsontag) = "method"];
+    bytes params = 3 [(gogoproto.customtype) = "Raw", (gogoproto.jsontag) = "params", (gogoproto.nullable) = false];
+}
+
+message Node {
+    string uid = 1 [(gogoproto.customname) = "UID", (gogoproto.jsontag) = "uid"];
+    string name = 2 [(gogoproto.jsontag) = "name"];
+    string version = 3 [(gogoproto.jsontag) = "version"];
+    uint32 num_clients = 4 [(gogoproto.jsontag) = "num_clients"];
+    uint32 num_users = 5 [(gogoproto.jsontag) = "num_users"];
+    uint32 num_channels = 6 [(gogoproto.jsontag) = "num_channels"];
+    uint32 uptime = 7 [(gogoproto.jsontag) = "uptime"];
+    Metrics metrics = 8 [(gogoproto.jsontag) = "metrics"];
+}
+
+message Metrics {
+    double interval = 1 [(gogoproto.jsontag) = "interval"];
+    map<string, double> items = 2 [(gogoproto.jsontag) = "items"];
+}
+
+message Unsubscribe {
+    string channel = 1 [(gogoproto.jsontag) = "channel"];
+    string user = 2 [(gogoproto.jsontag) = "user"];
+}
+
+message Disconnect {
+    string user = 1 [(gogoproto.jsontag) = "user"];
+}
