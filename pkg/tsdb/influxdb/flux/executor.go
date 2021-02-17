@@ -10,7 +10,7 @@ import (
 	"github.com/influxdata/influxdb-client-go/v2/api"
 )
 
-const maxPointsEnforceFactor float64 = 2
+const maxPointsEnforceFactor float64 = 10
 
 // executeQuery runs a flux query using the queryModel to interpolate the query and the runner to execute it.
 // maxSeries somehow limits the response.
