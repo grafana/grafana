@@ -326,7 +326,7 @@ func (hs *HTTPServer) trySetEncryptedCookie(ctx *models.ReqContext, cookieName s
 
 func (hs *HTTPServer) redirectWithError(ctx *models.ReqContext, err error, v ...interface{}) {
 	ctx.Logger.Error(err.Error(), v...)
-	if err := hs.trySetEncryptedCookie(ctx, loginErrorCookieName, err.Error(), 60); err != nil {
+	if err := hs.trySetEncryptedCookie(ctx, loginErrorCookieName, getLoginExternalError(err), 60); err != nil {
 		hs.log.Error("Failed to set encrypted cookie", "err", err)
 	}
 
@@ -335,9 +335,18 @@ func (hs *HTTPServer) redirectWithError(ctx *models.ReqContext, err error, v ...
 
 func (hs *HTTPServer) RedirectResponseWithError(ctx *models.ReqContext, err error, v ...interface{}) *response.RedirectResponse {
 	ctx.Logger.Error(err.Error(), v...)
-	if err := hs.trySetEncryptedCookie(ctx, loginErrorCookieName, err.Error(), 60); err != nil {
+	if err := hs.trySetEncryptedCookie(ctx, loginErrorCookieName, getLoginExternalError(err), 60); err != nil {
 		hs.log.Error("Failed to set encrypted cookie", "err", err)
 	}
 
 	return response.Redirect(setting.AppSubUrl + "/login")
+}
+
+func getLoginExternalError(err error) string {
+	var createTokenErr *models.CreateTokenErr
+	if errors.As(err, &createTokenErr) {
+		return createTokenErr.ExternalErr
+	}
+
+	return err.Error()
 }
