@@ -20,6 +20,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const sub = appEvents.subscribe(ThemeChangedEvent, (event) => {
+      config.theme = event.payload;
       setTheme(event.payload);
     });
 
