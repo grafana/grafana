@@ -12,11 +12,6 @@ name: Main Workflow
 jobs:
   sonarcloud:
     runs-on: ubuntu-latest
-    env:
-      sonarCloudEndpointName: 'SC'
-      sonarCloudOrganization: 'vesaninja'
-      sonarCloudProjectKey: 'vesaninja_grafana'
-      sonarCloudProjectName: 'grafana'
     steps:
     - uses: actions/checkout@v2
       with:
@@ -24,6 +19,10 @@ jobs:
         fetch-depth: 0
     - name: SonarCloud Scan
       uses: sonarsource/sonarcloud-github-action@master
+      with:
+        args: >
+          -Dsonar.organization=vesaninja
+          -Dsonar.projectKey=vesaninja_grafana
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SONAR_TOKEN: 1837a8effa57d6e4ae2287bd6410ec7aefabcf51
