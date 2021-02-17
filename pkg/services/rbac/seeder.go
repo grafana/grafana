@@ -3,13 +3,15 @@ package rbac
 import (
 	"context"
 	"fmt"
-	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 type seeder struct {
 	Service *RBACService
+	log     log.Logger
 }
 
 var builtInPolicies = []PolicyDTO{
@@ -33,11 +35,16 @@ var builtInPolicies = []PolicyDTO{
 	},
 }
 
-func (s seeder) Seed(ctx context.Context, orgID int64) error {
+func (s *seeder) Seed(ctx context.Context, orgID int64) error {
+	_, err := s.seed(ctx, orgID, builtInPolicies)
+	return err
+}
+
+func (s *seeder) seed(ctx context.Context, orgID int64, policies []PolicyDTO) (bool, error) {
 	// FIXME: As this will run on startup, we want to optimize running this
 	existingPolicies, err := s.Service.GetPolicies(ctx, orgID)
 	if err != nil {
-		return err
+		return false, err
 	}
 	policySet := map[string]*Policy{}
 	for _, policy := range existingPolicies {
@@ -47,7 +54,9 @@ func (s seeder) Seed(ctx context.Context, orgID int64) error {
 		policySet[policy.Name] = policy
 	}
 
-	for _, policy := range builtInPolicies {
+	var ran bool
+
+	for _, policy := range policies {
 		policy.OrgId = orgID
 
 		current, exists := policySet[policy.Name]
@@ -59,7 +68,7 @@ func (s seeder) Seed(ctx context.Context, orgID int64) error {
 
 		p, err := s.createOrUpdatePolicy(ctx, policy, current)
 		if err != nil {
-			s.Service.log.Error("failed to create/update policy", "name", policy.Name, "err", err)
+			s.log.Error("failed to create/update policy", "name", policy.Name, "err", err)
 			continue
 		}
 		if p == 0 {
@@ -69,19 +78,20 @@ func (s seeder) Seed(ctx context.Context, orgID int64) error {
 
 		existingPermissions, err := s.Service.GetPolicyPermissions(ctx, p)
 		if err != nil {
-			s.Service.log.Info("failed to get current permissions for policy", "name", policy.Name, "err", err)
+			s.log.Info("failed to get current permissions for policy", "name", policy.Name, "err", err)
 		}
 
 		err = s.idempotentUpdatePermissions(ctx, p, policy.Permissions, existingPermissions)
 		if err != nil {
-			s.Service.log.Error("failed to update policy permissions", "name", policy.Name, "err", err)
+			s.log.Error("failed to update policy permissions", "name", policy.Name, "err", err)
 		}
+		ran = true
 	}
 
-	return nil
+	return ran, nil
 }
 
-func (s seeder) createOrUpdatePolicy(ctx context.Context, policy PolicyDTO, old *Policy) (int64, error) {
+func (s *seeder) createOrUpdatePolicy(ctx context.Context, policy PolicyDTO, old *Policy) (int64, error) {
 	if old == nil {
 		p, err := s.Service.CreatePolicy(ctx, CreatePolicyCommand{
 			OrgId:       policy.OrgId,
@@ -133,9 +143,12 @@ func (s seeder) createOrUpdatePolicy(ctx context.Context, policy PolicyDTO, old 
 	return old.Id, nil
 }
 
-func (s seeder) idempotentUpdatePermissions(ctx context.Context, policyID int64, new []Permission, old []Permission) error {
+func (s *seeder) idempotentUpdatePermissions(ctx context.Context, policyID int64, new []Permission, old []Permission) error {
+	if policyID == 0 {
+		return fmt.Errorf("refusing to add permissions to policy with ID 0 (it should not exist)")
+	}
+
 	added, removed := diffPermissionList(new, old)
-	fmt.Println("diff", new, old)
 
 	for _, p := range added {
 		_, err := s.Service.CreatePermission(ctx, &CreatePermissionCommand{
@@ -161,52 +174,46 @@ func (s seeder) idempotentUpdatePermissions(ctx context.Context, policyID int64,
 }
 
 func diffPermissionList(new, old []Permission) (added, removed []Permission) {
-	sortPermissionList(new)
-	sortPermissionList(old)
+	newMap, oldMap := permissionMap(new), permissionMap(old)
 
 	added = []Permission{}
 	removed = []Permission{}
 
-	newPos := 0
-	oldPos := 0
+	for _, p := range newMap {
+		if _, exists := oldMap[permissionTuple{
+			Permission: p.Permission,
+			Scope:      p.Scope,
+		}]; exists {
+			continue
+		}
+		added = append(added, p)
+	}
 
-	for {
-		if newPos >= len(new) && oldPos >= len(old) {
-			break
+	for _, p := range oldMap {
+		if _, exists := newMap[permissionTuple{
+			Permission: p.Permission,
+			Scope:      p.Scope,
+		}]; exists {
+			continue
 		}
-		if newPos >= len(new) {
-			removed = append(removed, old[oldPos:]...)
-			break
-		}
-		if oldPos >= len(old) {
-			added = append(added, new[newPos:]...)
-			break
-		}
-
-		n, o := new[newPos], old[oldPos]
-
-		switch {
-		case n.Permission > o.Permission || n.Permission == o.Permission && n.Scope > o.Scope:
-			oldPos++
-			removed = append(removed, o)
-		case n.Permission < o.Permission || n.Permission == o.Permission && n.Scope < o.Scope:
-			newPos++
-			added = append(added, o)
-		default:
-			newPos++
-			oldPos++
-		}
+		removed = append(removed, p)
 	}
 
 	return added, removed
 }
 
-func sortPermissionList(l []Permission) {
-	sort.Slice(l, func(i, j int) bool {
-		if l[i].Permission == l[j].Permission {
-			return l[i].Scope < l[j].Scope
-		}
+type permissionTuple struct {
+	Permission string
+	Scope      string
+}
 
-		return l[i].Permission < l[j].Permission
-	})
+func permissionMap(l []Permission) map[permissionTuple]Permission {
+	m := make(map[permissionTuple]Permission, len(l))
+	for _, p := range l {
+		m[permissionTuple{
+			Permission: p.Permission,
+			Scope:      p.Scope,
+		}] = p
+	}
+	return m
 }

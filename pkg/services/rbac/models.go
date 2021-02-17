@@ -149,3 +149,14 @@ type EvaluationResult struct {
 	HasAccess bool
 	Meta      interface{}
 }
+
+func (p PolicyDTO) Policy() Policy {
+	return Policy{
+		Id:          p.Id,
+		OrgId:       p.OrgId,
+		Name:        p.Name,
+		Description: p.Description,
+		Updated:     p.Updated,
+		Created:     p.Created,
+	}
+}

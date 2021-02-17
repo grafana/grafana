@@ -34,8 +34,9 @@ func (ac *RBACService) Init() error {
 		return nil
 	}
 
-	seeder := seeder{
+	seeder := &seeder{
 		Service: ac,
+		log:     ac.log,
 	}
 
 	// TODO: Seed all orgs
