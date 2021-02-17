@@ -37,10 +37,10 @@ func executeQuery(ctx context.Context, query queryModel, runner queryRunner, max
 		// so we create a function here that encapsulates the making
 		// of that error-message
 		makeMaxPointsExceededErrorMessage := func() string {
-			text := fmt.Sprintf("results are truncated, max points tolerance exceeded (max: %d, enforced: %d)", query.MaxDataPoints, maxPointsEnforced)
+			text := fmt.Sprintf("A query returned too many datapoints and the results have been truncated at %d points to prevent memory issues. At the current graph size, Grafana can only draw %d.", maxPointsEnforced, query.MaxDataPoints)
 			// we recommend to the user to use AggregateWindow(), but only if it is not already used
 			if !strings.Contains(query.RawQuery, "aggregateWindow(") {
-				text += ", try using the aggregateWindow() function in your query to reduce the number of points returned"
+				text += " Try using the aggregateWindow() function in your query to reduce the number of points returned."
 			}
 			return text
 		}
