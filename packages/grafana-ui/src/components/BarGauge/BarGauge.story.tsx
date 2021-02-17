@@ -1,13 +1,13 @@
 import React from 'react';
 import { Story } from '@storybook/react';
 import { BarGauge, BarGaugeDisplayMode } from '@grafana/ui';
+import { NOOP_CONTROL } from '@grafana/ui/.storybook/preview';
 import { VizOrientation, ThresholdsMode, Field, FieldType, getDisplayProcessor } from '@grafana/data';
 import { Props } from './BarGauge';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import mdx from './BarGauge.mdx';
 import { useTheme } from '../../themes';
 
-const NOOP_CONTROL = { control: { disable: true } };
 export default {
   title: 'Visualizations/BarGauge',
   component: BarGauge,
