@@ -34,9 +34,7 @@ export const usePanelSave = () => {
       libraryPanel: {
         uid: savedPanel.uid,
         name: savedPanel.name,
-        lastEdited: savedPanel.meta.updated,
-        lastAuthor: savedPanel.meta.updatedBy.name,
-        avatarUrl: savedPanel.meta.updatedBy.avatarUrl,
+        meta: savedPanel.meta,
       },
     });
     panel.refresh();
