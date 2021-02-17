@@ -1,18 +1,31 @@
 import React, { FC } from 'react';
-import { TextInputField, validators } from '@percona/platform-core';
+import { RadioButtonGroupField, TextInputField, validators } from '@percona/platform-core';
 import { Messages } from '../AddNotificationChannelModal.messages';
 import { PagerDutyFieldsProps } from './PagerDutyFields.types';
+import { PagerDutyKeyType } from '../../NotificationChannel.types';
+import { PAGER_DUTY_TYPE_OPTIONS } from '../AddNotificationChannel.constants';
+
+const { required } = validators;
+const keyValidator = [required];
 
 export const PagerDutyFields: FC<PagerDutyFieldsProps> = ({ values }) => {
-  const { required } = validators;
-  const { routing, service } = values;
-  const routingValidators = service ? [] : [required];
-  const serviceValidators = routing ? [] : [required];
+  let label = Messages.fields.routingKey;
+  let name = PagerDutyKeyType.routing;
+
+  if (values.keyType === PagerDutyKeyType.service) {
+    label = Messages.fields.serviceKey;
+    name = PagerDutyKeyType.service;
+  }
 
   return (
     <>
-      <TextInputField name="routing" label={Messages.fields.routingKey} validators={routingValidators} />
-      <TextInputField name="service" label={Messages.fields.serviceKey} validators={serviceValidators} />
+      <RadioButtonGroupField
+        name="keyType"
+        options={PAGER_DUTY_TYPE_OPTIONS}
+        initialValue={values?.keyType || PAGER_DUTY_TYPE_OPTIONS[0].value}
+        fullWidth
+      />
+      <TextInputField name={name} label={label} validators={keyValidator} />
     </>
   );
 };

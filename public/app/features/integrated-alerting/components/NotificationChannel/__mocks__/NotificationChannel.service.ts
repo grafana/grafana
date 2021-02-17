@@ -11,4 +11,7 @@ export const NotificationChannelService = {
   async remove(): Promise<void> {
     return Promise.resolve();
   },
+  async change(): Promise<void> {
+    return Promise.resolve();
+  },
 };
