@@ -7,7 +7,7 @@ import {
   DataQueryResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
-  DateTime,
+  // DateTime,
   // dateTime,
   getDefaultTimeRange,
   LogRowModel,
@@ -126,9 +126,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   query(options: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> {
     const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
 
-    const queries = options.targets.map((target) => {
-      const queryString = this.interpolateLuceneQuery(target.query || '', options.scopedVars);
-
+    const queries = this.interpolateVariablesInQueries(options.targets, options.scopedVars).map((target) => {
       return {
         queryType: 'timeseries',
         refId: target.refId,
@@ -137,7 +135,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
         datasourceId: this.id,
         timeField: target.timeField,
         alias: target.alias,
-        query: queryString,
+        query: target.query,
         bucketAggs: target.bucketAggs,
         metrics: target.metrics,
         adhocFilters: adhocFilters,
@@ -394,36 +392,18 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     return this.getFields('date')
       .pipe(
         mergeMap((dateFields) => {
-          const timeField: any = _.find(dateFields, { text: this.timeField });
+          const timeField = dateFields.find((field) => field.text === this.timeField);
           if (!timeField) {
-            return of({ status: 'error', message: 'No date field named ' + this.timeField + ' found' });
+            return of({ status: 'error', message: `No date field named ${this.timeField} found` });
           }
           return of({ status: 'success', message: 'Index OK. Time field name OK.' });
         }),
         catchError((err) => {
           console.error(err);
-          if (err.message) {
-            return of({ status: 'error', message: err.message });
-          } else {
-            return of({ status: 'error', message: err.status });
-          }
+          return of({ status: 'error', message: err.message || err.status });
         })
       )
       .toPromise();
-  }
-
-  getQueryHeader(searchType: any, timeFrom?: DateTime, timeTo?: DateTime): string {
-    const queryHeader: any = {
-      search_type: searchType,
-      ignore_unavailable: true,
-      // index: this.indexPattern.getIndexList(timeFrom, timeTo),
-    };
-
-    if (this.esVersion >= 56 && this.esVersion < 70) {
-      queryHeader['max_concurrent_shard_requests'] = this.maxConcurrentShardRequests;
-    }
-
-    return JSON.stringify(queryHeader);
   }
 
   getQueryDisplayText(query: ElasticsearchQuery) {
@@ -547,76 +527,6 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     // }
     return { data: [] };
   };
-
-  // query(options: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> {
-  //   let payload = '';
-  //   const targets = this.interpolateVariablesInQueries(_.cloneDeep(options.targets), options.scopedVars);
-  //   const sentTargets: ElasticsearchQuery[] = [];
-
-  //   // add global adhoc filters to timeFilter
-  //   const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
-
-  //   for (const target of targets) {
-  //     if (target.hide) {
-  //       continue;
-  //     }
-
-  //     let queryObj;
-  //     if (target.isLogsQuery || hasMetricOfType(target, 'logs')) {
-  //       target.bucketAggs = [defaultBucketAgg()];
-  //       target.metrics = [];
-  //       // Setting this for metrics queries that are typed as logs
-  //       target.isLogsQuery = true;
-  //       queryObj = this.queryBuilder.getLogsQuery(target, adhocFilters, target.query);
-  //     } else {
-  //       if (target.alias) {
-  //         target.alias = this.templateSrv.replace(target.alias, options.scopedVars, 'lucene');
-  //       }
-
-  //       queryObj = this.queryBuilder.build(target, adhocFilters, target.query);
-  //     }
-
-  //     const esQuery = JSON.stringify(queryObj);
-
-  //     const searchType = queryObj.size === 0 && this.esVersion < 5 ? 'count' : 'query_then_fetch';
-  //     const header = this.getQueryHeader(searchType, options.range.from, options.range.to);
-  //     payload += header + '\n';
-
-  //     payload += esQuery + '\n';
-
-  //     sentTargets.push(target);
-  //   }
-
-  //   if (sentTargets.length === 0) {
-  //     return of({ data: [] });
-  //   }
-
-  //   // We replace the range here for actual values. We need to replace it together with enclosing "" so that we replace
-  //   // it as an integer not as string with digits. This is because elastic will convert the string only if the time
-  //   // field is specified as type date (which probably should) but can also be specified as integer (millisecond epoch)
-  //   // and then sending string will error out.
-  //   payload = payload.replace(/"\$timeFrom"/g, options.range.from.valueOf().toString());
-  //   payload = payload.replace(/"\$timeTo"/g, options.range.to.valueOf().toString());
-  //   payload = this.templateSrv.replace(payload, options.scopedVars);
-
-  //   const url = this.getMultiSearchUrl();
-
-  //   return this.post(url, payload).pipe(
-  //     map((res) => {
-  //       const er = new ElasticResponse(sentTargets, res);
-
-  //       if (sentTargets.some((target) => target.isLogsQuery)) {
-  //         const response = er.getLogs(this.logMessageField, this.logLevelField);
-  //         for (const dataFrame of response.data) {
-  //           enhanceDataFrame(dataFrame, this.dataLinks);
-  //         }
-  //         return response;
-  //       }
-
-  //       return er.getTimeSeries();
-  //     })
-  //   );
-  // }
 
   // TODO: refID should be useless here, as the mappings are index-bound and not query-bound.
   getFields(fieldTypeFilter?: string, range: TimeRange = getDefaultTimeRange()): Observable<MetricFindValue[]> {
