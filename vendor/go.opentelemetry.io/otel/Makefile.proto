@@ -1,0 +1,72 @@
+#   -*- mode: makefile; -*-
+# Copyright The OpenTelemetry Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# This Makefile.proto has rules to generate *.pb.go files in
+# `exporters/otlp/internal/opentelemetry-proto-gen` from the .proto files in
+# `exporters/otlp/internal/opentelemetry-proto` using protoc with a go plugin.
+#
+# The protoc binary and other tools are sourced from a docker image
+# `PROTOC_IMAGE`.
+#
+# Prereqs: The archiving utility `pax` is installed.
+
+PROTOC_IMAGE          := namely/protoc-all:1.29_2
+PROTOBUF_VERSION      := v1
+OTEL_PROTO_SUBMODULE  := exporters/otlp/internal/opentelemetry-proto
+PROTOBUF_GEN_DIR      := exporters/otlp/internal/opentelemetry-proto-gen
+PROTOBUF_TEMP_DIR     := gen/pb-go
+PROTO_SOURCE_DIR      := gen/proto
+SUBMODULE_PROTO_FILES := $(wildcard $(OTEL_PROTO_SUBMODULE)/opentelemetry/proto/*/$(PROTOBUF_VERSION)/*.proto \
+                           $(OTEL_PROTO_SUBMODULE)/opentelemetry/proto/collector/*/$(PROTOBUF_VERSION)/*.proto)
+SOURCE_PROTO_FILES    := $(subst $(OTEL_PROTO_SUBMODULE),$(PROTO_SOURCE_DIR),$(SUBMODULE_PROTO_FILES))
+
+default: protobuf
+
+.PHONY: protobuf protobuf-source gen-protobuf copy-protobufs
+protobuf: protobuf-source gen-protobuf copy-protobufs
+
+protobuf-source: $(SOURCE_PROTO_FILES) | $(PROTO_SOURCE_DIR)/
+
+# Changes go_package in .proto file to point to repo-local location
+define exec-replace-pkgname
+sed  's,go_package = "github.com/open-telemetry/opentelemetry-proto/gen/go,go_package = "go.opentelemetry.io/otel/exporters/otlp/internal/opentelemetry-proto-gen,' < $(1) > $(2)
+
+endef
+
+# replace opentelemetry-proto package name by go.opentelemetry.io/otel specific version
+$(SOURCE_PROTO_FILES): $(PROTO_SOURCE_DIR)/%.proto: $(OTEL_PROTO_SUBMODULE)/%.proto
+	@mkdir -p $(@D)
+	$(call exec-replace-pkgname,$<,$@)
+
+# Command to run protoc using docker image
+define exec-protoc-all
+docker run -v `pwd`:/defs $(PROTOC_IMAGE) $(1)
+
+endef
+
+gen-protobuf: $(SOURCE_PROTO_FILES) | $(PROTOBUF_GEN_DIR)/
+	$(foreach file,$(subst ${PROTO_SOURCE_DIR}/,,$(SOURCE_PROTO_FILES)),$(call exec-protoc-all, -i $(PROTO_SOURCE_DIR) -f ${file} -l gogo -o ${PROTOBUF_TEMP_DIR}))
+
+# requires `pax` to be installed, as it has consistent options for both BSD (Darwin) and Linux
+copy-protobufs: | $(PROTOBUF_GEN_DIR)/
+	find ./$(PROTOBUF_TEMP_DIR)/go.opentelemetry.io/otel/$(PROTOBUF_GEN_DIR) -type f -print0 | \
+      pax -0 -s ',^./$(PROTOBUF_TEMP_DIR)/go.opentelemetry.io/otel/$(PROTOBUF_GEN_DIR),,' -rw ./$(PROTOBUF_GEN_DIR)
+
+$(PROTO_SOURCE_DIR)/ $(PROTOBUF_GEN_DIR)/:
+	mkdir -p $@
+
+.PHONY: clean
+clean:
+	rm -rf ./gen

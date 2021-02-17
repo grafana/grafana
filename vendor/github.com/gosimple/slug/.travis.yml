@@ -1,0 +1,20 @@
+language: go
+
+go:
+  - "1.x"
+  - master
+matrix:
+  allow_failures:
+    - go: master
+  fast_finish: true
+
+before_script:
+  - go get -t -v ./...
+  - go get -v golang.org/x/lint/golint
+  - go get -v honnef.co/go/tools/cmd/staticcheck
+  - go vet ./...
+script:
+  # run all our tests with race detector
+  - go test -v -race ./...
+  # "go vet on steroids" + linter
+  - staticcheck ./...

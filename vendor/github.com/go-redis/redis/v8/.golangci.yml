@@ -1,0 +1,24 @@
+run:
+  concurrency: 8
+  deadline: 5m
+  tests: false
+linters:
+  enable-all: true
+  disable:
+    - funlen
+    - gochecknoglobals
+    - gochecknoinits
+    - gocognit
+    - goconst
+    - godox
+    - gosec
+    - maligned
+    - wsl
+    - gomnd
+    - goerr113
+    - exhaustive
+    - nestif
+    - nlreturn
+    - exhaustivestruct
+    - wrapcheck
+    - errorlint

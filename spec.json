@@ -16,6 +16,63 @@
   },
   "basePath": "/api/v1",
   "paths": {
+    "/api/dashboards/db": {
+      "post": {
+        "description": "creates a dashboard with alerts",
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "operationId": "RoutePostGrDashboards",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/SaveDashboardCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "schema": {
+              "$ref": "#/definitions/Ok"
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "schema": {
+              "$ref": "#/definitions/BadRequest"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Unauthorized"
+            }
+          },
+          "403": {
+            "description": "QuotaExceeded",
+            "schema": {
+              "$ref": "#/definitions/QuotaExceeded"
+            }
+          },
+          "412": {
+            "description": "PreconditionFailed",
+            "schema": {
+              "$ref": "#/definitions/PreconditionFailed"
+            }
+          },
+          "500": {
+            "description": "Err",
+            "schema": {
+              "$ref": "#/definitions/Err"
+            }
+          }
+        }
+      }
+    },
     "/api/v1/alerts": {
       "post": {
         "description": "sets an Alertmanager config",
@@ -55,6 +112,10 @@
   },
   "definitions": {
     "Ack": {
+      "type": "object",
+      "x-go-package": "github.com/grafana/alerting-api/pkg/models"
+    },
+    "BadRequest": {
       "type": "object",
       "x-go-package": "github.com/grafana/alerting-api/pkg/models"
     },
@@ -107,6 +168,70 @@
         }
       },
       "$ref": "#/definitions/Config"
+    },
+    "Dashboard": {
+      "description": "Dashboard model",
+      "type": "object",
+      "properties": {
+        "Created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "CreatedBy": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Data": {
+          "$ref": "#/definitions/Json"
+        },
+        "FolderId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "GnetId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "HasAcl": {
+          "type": "boolean"
+        },
+        "Id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "IsFolder": {
+          "type": "boolean"
+        },
+        "OrgId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "PluginId": {
+          "type": "string"
+        },
+        "Slug": {
+          "type": "string"
+        },
+        "Title": {
+          "type": "string"
+        },
+        "Uid": {
+          "type": "string"
+        },
+        "Updated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "UpdatedBy": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Version": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "Duration": {
       "description": "A Duration represents the elapsed time between two instants\nas an int64 nanosecond count. The representation limits the\nlargest representable duration to approximately 290 years.",
@@ -176,6 +301,18 @@
         }
       },
       "x-go-package": "github.com/prometheus/alertmanager/config"
+    },
+    "Err": {
+      "type": "object",
+      "properties": {
+        "Error": {
+          "type": "string"
+        },
+        "Message": {
+          "type": "string"
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/models"
     },
     "GlobalConfig": {
       "description": "GlobalConfig defines configuration parameters that are valid globally\nunless overwritten.",
@@ -321,6 +458,10 @@
       },
       "x-go-package": "github.com/prometheus/alertmanager/config"
     },
+    "Json": {
+      "type": "object",
+      "x-go-package": "github.com/grafana/grafana/pkg/components/simplejson"
+    },
     "LabelName": {
       "description": "A LabelName is a key for a LabelSet or Metric.  It has a value associated\ntherewith.",
       "type": "string",
@@ -382,6 +523,10 @@
         }
       },
       "x-go-package": "github.com/prometheus/alertmanager/config"
+    },
+    "Ok": {
+      "type": "object",
+      "x-go-package": "github.com/grafana/alerting-api/pkg/models"
     },
     "OpsGenieConfig": {
       "type": "object",
@@ -571,6 +716,10 @@
       },
       "x-go-package": "github.com/prometheus/alertmanager/config"
     },
+    "PreconditionFailed": {
+      "type": "object",
+      "x-go-package": "github.com/grafana/alerting-api/pkg/models"
+    },
     "PushoverConfig": {
       "type": "object",
       "properties": {
@@ -623,6 +772,10 @@
         }
       },
       "x-go-package": "github.com/prometheus/alertmanager/config"
+    },
+    "QuotaExceeded": {
+      "type": "object",
+      "x-go-package": "github.com/grafana/alerting-api/pkg/models"
     },
     "Receiver": {
       "type": "object",
@@ -749,6 +902,44 @@
         }
       },
       "x-go-package": "github.com/prometheus/alertmanager/config"
+    },
+    "SaveDashboardCommand": {
+      "type": "object",
+      "properties": {
+        "Result": {
+          "$ref": "#/definitions/Dashboard"
+        },
+        "UpdatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "dashboard": {
+          "$ref": "#/definitions/Json"
+        },
+        "folderId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "FolderId"
+        },
+        "isFolder": {
+          "type": "boolean",
+          "x-go-name": "IsFolder"
+        },
+        "message": {
+          "type": "string",
+          "x-go-name": "Message"
+        },
+        "overwrite": {
+          "type": "boolean",
+          "x-go-name": "Overwrite"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "UserId"
+        }
+      },
+      "$ref": "#/definitions/SaveDashboardCommand"
     },
     "Secret": {
       "type": "string",
@@ -968,9 +1159,8 @@
       "x-go-package": "github.com/prometheus/common/config"
     },
     "URL": {
-      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
       "type": "object",
-      "title": "A URL represents a parsed URL (technically, a URI reference).",
+      "title": "URL is a custom URL type that allows validation at configuration load time.",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -1003,7 +1193,11 @@
           "$ref": "#/definitions/Userinfo"
         }
       },
-      "x-go-package": "net/url"
+      "x-go-package": "github.com/prometheus/common/config"
+    },
+    "Unauthorized": {
+      "type": "object",
+      "x-go-package": "github.com/grafana/alerting-api/pkg/models"
     },
     "Userinfo": {
       "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
