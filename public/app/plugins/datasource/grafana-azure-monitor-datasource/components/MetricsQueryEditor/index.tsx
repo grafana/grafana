@@ -1,7 +1,7 @@
 import React from 'react';
 
 import Datasource from '../../datasource';
-import { AzureMonitorQuery } from '../../types';
+import { AzureMonitorQuery, Option } from '../../types';
 import { useMetricsMetadata } from '../metrics';
 import SubscriptionField from '../SubscriptionField';
 import MetricNamespaceField from './MetricNamespaceField';
@@ -20,9 +20,16 @@ interface MetricsQueryEditorProps {
   datasource: Datasource;
   subscriptionId: string;
   onChange: (newQuery: AzureMonitorQuery) => void;
+  variableOptionGroup: { label: string; options: Option[] };
 }
 
-const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({ query, datasource, subscriptionId, onChange }) => {
+const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
+  query,
+  datasource,
+  subscriptionId,
+  variableOptionGroup,
+  onChange,
+}) => {
   const metricsMetadata = useMetricsMetadata(datasource, query, subscriptionId, onChange);
 
   return (
@@ -31,6 +38,7 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({ query, datasour
         query={query}
         datasource={datasource}
         subscriptionId={subscriptionId}
+        variableOptionGroup={variableOptionGroup}
         onQueryChange={onChange}
       />
 
@@ -38,15 +46,23 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({ query, datasour
         query={query}
         datasource={datasource}
         subscriptionId={subscriptionId}
+        variableOptionGroup={variableOptionGroup}
         onQueryChange={onChange}
       />
 
-      <NamespaceField query={query} datasource={datasource} subscriptionId={subscriptionId} onQueryChange={onChange} />
+      <NamespaceField
+        query={query}
+        datasource={datasource}
+        subscriptionId={subscriptionId}
+        variableOptionGroup={variableOptionGroup}
+        onQueryChange={onChange}
+      />
 
       <ResourceNameField
         query={query}
         datasource={datasource}
         subscriptionId={subscriptionId}
+        variableOptionGroup={variableOptionGroup}
         onQueryChange={onChange}
       />
 
@@ -55,15 +71,23 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({ query, datasour
         query={query}
         datasource={datasource}
         subscriptionId={subscriptionId}
+        variableOptionGroup={variableOptionGroup}
         onQueryChange={onChange}
       />
 
-      <MetricNameField query={query} datasource={datasource} subscriptionId={subscriptionId} onQueryChange={onChange} />
+      <MetricNameField
+        query={query}
+        datasource={datasource}
+        subscriptionId={subscriptionId}
+        variableOptionGroup={variableOptionGroup}
+        onQueryChange={onChange}
+      />
 
       <AggregationField
         query={query}
         datasource={datasource}
         subscriptionId={subscriptionId}
+        variableOptionGroup={variableOptionGroup}
         onQueryChange={onChange}
         aggregationOptions={metricsMetadata?.aggOptions ?? []}
       />
@@ -72,6 +96,7 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({ query, datasour
         query={query}
         datasource={datasource}
         subscriptionId={subscriptionId}
+        variableOptionGroup={variableOptionGroup}
         onQueryChange={onChange}
         timeGrainOptions={metricsMetadata?.timeGrains ?? []}
       />
@@ -80,16 +105,24 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({ query, datasour
         query={query}
         datasource={datasource}
         subscriptionId={subscriptionId}
+        variableOptionGroup={variableOptionGroup}
         onQueryChange={onChange}
         dimensionOptions={metricsMetadata?.dimensions ?? []}
       />
 
-      <TopField query={query} datasource={datasource} subscriptionId={subscriptionId} onQueryChange={onChange} />
+      <TopField
+        query={query}
+        datasource={datasource}
+        subscriptionId={subscriptionId}
+        variableOptionGroup={variableOptionGroup}
+        onQueryChange={onChange}
+      />
 
       <LegendFormatField
         query={query}
         datasource={datasource}
         subscriptionId={subscriptionId}
+        variableOptionGroup={variableOptionGroup}
         onQueryChange={onChange}
       />
     </div>

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Select } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 
@@ -10,19 +10,20 @@ const ResourceGroupsField: React.FC<AzureQueryEditorFieldProps> = ({
   query,
   datasource,
   subscriptionId,
+  variableOptionGroup,
   onQueryChange,
 }) => {
-  const [options, setOptions] = useState<Option[]>([]);
+  const [resourceGroups, setResourceGroups] = useState<Option[]>([]);
 
   useEffect(() => {
     if (!subscriptionId) {
-      options.length > 0 && setOptions([]);
+      resourceGroups.length > 0 && setResourceGroups([]);
       return;
     }
 
     datasource
       .getResourceGroups(subscriptionId)
-      .then((results) => setOptions(results.map(toOption)))
+      .then((results) => setResourceGroups(results.map(toOption)))
       .catch((err) => {
         // TODO: handle error
         console.error(err);
@@ -53,10 +54,12 @@ const ResourceGroupsField: React.FC<AzureQueryEditorFieldProps> = ({
     [query]
   );
 
+  const options = useMemo(() => [...resourceGroups, variableOptionGroup], [resourceGroups, variableOptionGroup]);
+
   return (
     <Field label="Resource Group">
       <Select
-        value={findOption(options, query.azureMonitor.resourceGroup)}
+        value={findOption(resourceGroups, query.azureMonitor.resourceGroup)}
         onChange={handleChange}
         options={options}
         width={38}

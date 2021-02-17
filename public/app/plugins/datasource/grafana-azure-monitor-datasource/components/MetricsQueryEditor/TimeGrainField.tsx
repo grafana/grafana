@@ -11,7 +11,12 @@ interface TimeGrainFieldProps extends AzureQueryEditorFieldProps {
   timeGrainOptions: Option[];
 }
 
-const TimeGrainField: React.FC<TimeGrainFieldProps> = ({ query, onQueryChange, timeGrainOptions }) => {
+const TimeGrainField: React.FC<TimeGrainFieldProps> = ({
+  query,
+  timeGrainOptions,
+  variableOptionGroup,
+  onQueryChange,
+}) => {
   const handleChange = useCallback(
     (change: SelectableValue<string>) => {
       if (!change.value) {
@@ -44,8 +49,10 @@ const TimeGrainField: React.FC<TimeGrainFieldProps> = ({ query, onQueryChange, t
       ]
     );
 
-    return timeGrainOptions.map((v) => (v.value === 'auto' ? { ...v, description: autoInterval } : v));
-  }, [timeGrainOptions]);
+    const baseTimeGrains = timeGrainOptions.map((v) => (v.value === 'auto' ? { ...v, description: autoInterval } : v));
+
+    return [...baseTimeGrains, variableOptionGroup];
+  }, [timeGrainOptions, variableOptionGroup]);
 
   return (
     <Field label="Time Grain">

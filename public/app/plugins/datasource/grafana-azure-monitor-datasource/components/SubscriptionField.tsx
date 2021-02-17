@@ -1,16 +1,21 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
 
 import { AzureMonitorQuery, AzureQueryType, AzureQueryEditorFieldProps, Option } from '../types';
-import { toOption, findOption } from './common';
+import { findOption } from './common';
 import { Field } from './Field';
 
 interface SubscriptionFieldProps extends AzureQueryEditorFieldProps {
   onQueryChange: (newQuery: AzureMonitorQuery) => void;
 }
 
-const SubscriptionField: React.FC<SubscriptionFieldProps> = ({ datasource, onQueryChange, query }) => {
+const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
+  datasource,
+  query,
+  variableOptionGroup,
+  onQueryChange,
+}) => {
   const [subscriptions, setSubscriptions] = useState<Option[]>([]);
 
   useEffect(() => {
@@ -19,7 +24,7 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({ datasource, onQue
     }
 
     datasource.azureMonitorDatasource.getSubscriptions().then((results) => {
-      const newSubscriptions = results.map(toOption);
+      const newSubscriptions = results.map((v) => ({ label: v.text, value: v.value, description: v.value }));
       setSubscriptions(newSubscriptions);
 
       // Set a default subscription ID, if we can
@@ -71,15 +76,17 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({ datasource, onQue
 
       onQueryChange(newQuery);
     },
-    [query]
+    [query, onQueryChange]
   );
+
+  const options = useMemo(() => [...subscriptions, variableOptionGroup], [subscriptions, variableOptionGroup]);
 
   return (
     <Field label="Subscription">
       <Select
         value={findOption(subscriptions, query.subscription)}
         onChange={handleChange}
-        options={subscriptions.map((v) => ({ ...v, description: v.value }))}
+        options={options}
         width={38}
       />
     </Field>

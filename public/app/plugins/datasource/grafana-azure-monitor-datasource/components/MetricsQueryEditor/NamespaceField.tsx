@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Select } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 
@@ -6,18 +6,24 @@ import { Field } from '../Field';
 import { findOption, toOption } from '../common';
 import { AzureQueryEditorFieldProps, Option } from '../../types';
 
-const NamespaceField: React.FC<AzureQueryEditorFieldProps> = ({ query, datasource, subscriptionId, onQueryChange }) => {
-  const [options, setOptions] = useState<Option[]>([]);
+const NamespaceField: React.FC<AzureQueryEditorFieldProps> = ({
+  query,
+  datasource,
+  subscriptionId,
+  variableOptionGroup,
+  onQueryChange,
+}) => {
+  const [namespaces, setNamespaces] = useState<Option[]>([]);
 
   useEffect(() => {
     if (!(subscriptionId && query.azureMonitor.resourceGroup)) {
-      options.length > 0 && setOptions([]);
+      namespaces.length > 0 && setNamespaces([]);
       return;
     }
 
     datasource
       .getMetricDefinitions(subscriptionId, query.azureMonitor.resourceGroup)
-      .then((results) => setOptions(results.map(toOption)))
+      .then((results) => setNamespaces(results.map(toOption)))
       .catch((err) => {
         // TODO: handle error
         console.error(err);
@@ -47,11 +53,13 @@ const NamespaceField: React.FC<AzureQueryEditorFieldProps> = ({ query, datasourc
     [query]
   );
 
+  const options = useMemo(() => [...namespaces, variableOptionGroup], [namespaces, variableOptionGroup]);
+
   return (
     <Field label="Namespace">
       {/* It's expected that the label reads Namespace but the property is metricDefinition */}
       <Select
-        value={findOption(options, query.azureMonitor.metricDefinition)}
+        value={findOption(namespaces, query.azureMonitor.metricDefinition)}
         onChange={handleChange}
         options={options}
         width={38}

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Select } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 
@@ -6,8 +6,14 @@ import { Field } from '../Field';
 import { findOption, toOption } from '../common';
 import { AzureQueryEditorFieldProps, Option } from '../../types';
 
-const MetricName: React.FC<AzureQueryEditorFieldProps> = ({ query, datasource, subscriptionId, onQueryChange }) => {
-  const [options, setOptions] = useState<Option[]>([]);
+const MetricName: React.FC<AzureQueryEditorFieldProps> = ({
+  query,
+  datasource,
+  subscriptionId,
+  variableOptionGroup,
+  onQueryChange,
+}) => {
+  const [metricNames, setMetricNames] = useState<Option[]>([]);
 
   useEffect(() => {
     if (
@@ -19,7 +25,7 @@ const MetricName: React.FC<AzureQueryEditorFieldProps> = ({ query, datasource, s
         query.azureMonitor.metricNamespace
       )
     ) {
-      options.length > 0 && setOptions([]);
+      metricNames.length > 0 && setMetricNames([]);
       return;
     }
 
@@ -31,7 +37,7 @@ const MetricName: React.FC<AzureQueryEditorFieldProps> = ({ query, datasource, s
         query.azureMonitor.resourceName,
         query.azureMonitor.metricNamespace
       )
-      .then((results) => setOptions(results.map(toOption)))
+      .then((results) => setMetricNames(results.map(toOption)))
       .catch((err) => {
         // TODO: handle error
         console.error(err);
@@ -61,10 +67,12 @@ const MetricName: React.FC<AzureQueryEditorFieldProps> = ({ query, datasource, s
     [query]
   );
 
+  const options = useMemo(() => [...metricNames, variableOptionGroup], [metricNames, variableOptionGroup]);
+
   return (
     <Field label="Metric">
       <Select
-        value={findOption(options, query.azureMonitor.metricName)}
+        value={findOption(metricNames, query.azureMonitor.metricName)}
         onChange={handleChange}
         options={options}
         width={38}
