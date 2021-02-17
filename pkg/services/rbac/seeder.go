@@ -151,7 +151,7 @@ func (s *seeder) idempotentUpdatePermissions(ctx context.Context, policyID int64
 	added, removed := diffPermissionList(new, old)
 
 	for _, p := range added {
-		_, err := s.Service.CreatePermission(ctx, &CreatePermissionCommand{
+		_, err := s.Service.CreatePermission(ctx, CreatePermissionCommand{
 			PolicyId:   policyID,
 			Permission: p.Permission,
 			Scope:      p.Scope,

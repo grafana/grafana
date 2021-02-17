@@ -34,7 +34,7 @@ type PolicyDTO struct {
 	UID         string       `xorm:"uid" json:"uid"`
 	Name        string       `json:"name"`
 	Description string       `json:"description"`
-	Permissions []Permission `json:"permissions"`
+	Permissions []Permission `json:"permissions,omitempty"`
 
 	Updated time.Time `json:"updated"`
 	Created time.Time `json:"created"`
@@ -106,6 +106,13 @@ type CreatePolicyCommand struct {
 	OrgId       int64  `json:"-"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
+}
+
+type CreatePolicyWithPermissionsCommand struct {
+	OrgId       int64        `json:"orgId"`
+	Name        string       `json:"name"`
+	Description string       `json:"description"`
+	Permissions []Permission `json:"permissions"`
 }
 
 type UpdatePolicyCommand struct {

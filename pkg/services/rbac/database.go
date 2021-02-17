@@ -76,28 +76,83 @@ func (ac *RBACService) CreatePolicy(ctx context.Context, cmd CreatePolicyCommand
 	var result *Policy
 
 	err := ac.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		uid, err := generateNewPolicyUID(sess, cmd.OrgId)
+		policy, err := ac.createPolicy(sess, cmd)
 		if err != nil {
-			return fmt.Errorf("failed to generate UID for policy %q: %w", cmd.Name, err)
-		}
-
-		policy := &Policy{
-			OrgId:       cmd.OrgId,
-			UID:         uid,
-			Name:        cmd.Name,
-			Description: cmd.Description,
-			Created:     timeNow(),
-			Updated:     timeNow(),
-		}
-
-		if _, err := sess.Insert(policy); err != nil {
-			if ac.SQLStore.Dialect.IsUniqueConstraintViolation(err) && strings.Contains(err.Error(), "name") {
-				return fmt.Errorf("policy with the name '%s' already exists: %w", cmd.Name, err)
-			}
 			return err
 		}
 
 		result = policy
+		return nil
+	})
+
+	return result, err
+}
+
+func (ac *RBACService) createPolicy(sess *sqlstore.DBSession, cmd CreatePolicyCommand) (*Policy, error) {
+	uid, err := generateNewPolicyUID(sess, cmd.OrgId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate UID for policy %q: %w", cmd.Name, err)
+	}
+
+	policy := &Policy{
+		OrgId:       cmd.OrgId,
+		UID:         uid,
+		Name:        cmd.Name,
+		Description: cmd.Description,
+		Created:     timeNow(),
+		Updated:     timeNow(),
+	}
+
+	if _, err := sess.Insert(policy); err != nil {
+		if ac.SQLStore.Dialect.IsUniqueConstraintViolation(err) && strings.Contains(err.Error(), "name") {
+			return nil, fmt.Errorf("policy with the name '%s' already exists: %w", cmd.Name, err)
+		}
+		return nil, err
+	}
+
+	return policy, nil
+}
+
+func (ac *RBACService) CreatePolicyWithPermissions(ctx context.Context, cmd CreatePolicyWithPermissionsCommand) (*PolicyDTO, error) {
+	var result *PolicyDTO
+
+	err := ac.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		createPolicyCmd := CreatePolicyCommand{
+			OrgId:       cmd.OrgId,
+			Name:        cmd.Name,
+			Description: cmd.Description,
+		}
+
+		policy, err := ac.createPolicy(sess, createPolicyCmd)
+		if err != nil {
+			return err
+		}
+
+		result = &PolicyDTO{
+			Id:          policy.Id,
+			UID:         policy.UID,
+			OrgId:       policy.OrgId,
+			Name:        policy.Name,
+			Description: policy.Description,
+			Created:     policy.Created,
+			Updated:     policy.Updated,
+		}
+
+		// Add permissions
+		for _, p := range cmd.Permissions {
+			createPermissionCmd := CreatePermissionCommand{
+				PolicyId:   policy.Id,
+				Permission: p.Permission,
+				Scope:      p.Scope,
+			}
+
+			permission, err := createPermission(sess, createPermissionCmd)
+			if err != nil {
+				return err
+			}
+			result.Permissions = append(result.Permissions, *permission)
+		}
+
 		return nil
 	})
 
@@ -177,18 +232,11 @@ func (ac *RBACService) GetPolicyPermissions(ctx context.Context, policyID int64)
 	return result, err
 }
 
-func (ac *RBACService) CreatePermission(ctx context.Context, cmd *CreatePermissionCommand) (*Permission, error) {
+func (ac *RBACService) CreatePermission(ctx context.Context, cmd CreatePermissionCommand) (*Permission, error) {
 	var result *Permission
 	err := ac.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		permission := &Permission{
-			PolicyId:   cmd.PolicyId,
-			Permission: cmd.Permission,
-			Scope:      cmd.Scope,
-			Created:    timeNow(),
-			Updated:    timeNow(),
-		}
-
-		if _, err := sess.Insert(permission); err != nil {
+		permission, err := createPermission(sess, cmd)
+		if err != nil {
 			return err
 		}
 
@@ -470,6 +518,22 @@ func getPolicyPermissions(sess *sqlstore.DBSession, policyId int64) ([]Permissio
 	}
 
 	return permissions, nil
+}
+
+func createPermission(sess *sqlstore.DBSession, cmd CreatePermissionCommand) (*Permission, error) {
+	permission := &Permission{
+		PolicyId:   cmd.PolicyId,
+		Permission: cmd.Permission,
+		Scope:      cmd.Scope,
+		Created:    timeNow(),
+		Updated:    timeNow(),
+	}
+
+	if _, err := sess.Insert(permission); err != nil {
+		return nil, err
+	}
+
+	return permission, nil
 }
 
 func teamExists(orgId int64, teamId int64, sess *sqlstore.DBSession) (bool, error) {

@@ -47,7 +47,7 @@ func generatePolicies(b *testing.B, ac *RBACService, policiesPerUser, users int)
 					Scope:      scope,
 				}
 
-				_, err := ac.CreatePermission(context.Background(), &permCmd)
+				_, err := ac.CreatePermission(context.Background(), permCmd)
 				require.NoError(b, err)
 			}
 
@@ -88,7 +88,7 @@ func generatePolicies(b *testing.B, ac *RBACService, policiesPerUser, users int)
 						Scope:      scope,
 					}
 
-					_, err := ac.CreatePermission(context.Background(), &permCmd)
+					_, err := ac.CreatePermission(context.Background(), permCmd)
 					require.NoError(b, err)
 				}
 
