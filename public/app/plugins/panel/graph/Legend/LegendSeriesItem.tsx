@@ -229,7 +229,7 @@ interface GraphLegendItemProps {
 
 const GraphLegendItem = ({ label, onLabelClick }: GraphLegendItemProps) => {
   return (
-    <a className="graph-legend-alias pointer" title={label} onClick={onLabelClick}>
+    <a className="graph-legend-alias pointer" title={label} onClick={onLabelClick ? onLabelClick : () => {}}>
       <div className="legend-yaxis-container">{label}</div>
     </a>
   );
