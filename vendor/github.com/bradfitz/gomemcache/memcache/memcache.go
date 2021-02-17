@@ -112,7 +112,6 @@ var (
 	resultTouched   = []byte("TOUCHED\r\n")
 
 	resultClientErrorPrefix = []byte("CLIENT_ERROR ")
-	versionPrefix           = []byte("VERSION")
 )
 
 // New returns a memcache client using the provided server(s)
@@ -132,6 +131,8 @@ func NewFromSelector(ss ServerSelector) *Client {
 // Client is a memcache client.
 // It is safe for unlocked use by multiple concurrent goroutines.
 type Client struct {
+	// Dialer specifies a custom dialer used to dial new connections to a server.
+	DialTimeout func(network, address string, timeout time.Duration) (net.Conn, error)
 	// Timeout specifies the socket read/write timeout.
 	// If zero, DefaultTimeout is used.
 	Timeout time.Duration
@@ -259,8 +260,10 @@ func (c *Client) dial(addr net.Addr) (net.Conn, error) {
 		cn  net.Conn
 		err error
 	}
-
-	nc, err := net.DialTimeout(addr.Network(), addr.String(), c.netTimeout())
+	if c.DialTimeout == nil {
+		c.DialTimeout = net.DialTimeout
+	}
+	nc, err := c.DialTimeout(addr.Network(), addr.String(), c.netTimeout())
 	if err == nil {
 		return nc, nil
 	}
@@ -394,30 +397,6 @@ func (c *Client) flushAllFromAddr(addr net.Addr) error {
 			break
 		default:
 			return fmt.Errorf("memcache: unexpected response line from flush_all: %q", string(line))
-		}
-		return nil
-	})
-}
-
-// ping sends the version command to the given addr
-func (c *Client) ping(addr net.Addr) error {
-	return c.withAddrRw(addr, func(rw *bufio.ReadWriter) error {
-		if _, err := fmt.Fprintf(rw, "version\r\n"); err != nil {
-			return err
-		}
-		if err := rw.Flush(); err != nil {
-			return err
-		}
-		line, err := rw.ReadSlice('\n')
-		if err != nil {
-			return err
-		}
-
-		switch {
-		case bytes.HasPrefix(line, versionPrefix):
-			break
-		default:
-			return fmt.Errorf("memcache: unexpected response line from ping: %q", string(line))
 		}
 		return nil
 	})
@@ -667,12 +646,6 @@ func (c *Client) DeleteAll() error {
 	return c.withKeyRw("", func(rw *bufio.ReadWriter) error {
 		return writeExpectf(rw, resultDeleted, "flush_all\r\n")
 	})
-}
-
-// Ping checks all instances if they are alive. Returns error if any
-// of them is down.
-func (c *Client) Ping() error {
-	return c.selector.Each(c.ping)
 }
 
 // Increment atomically increments key by delta. The return value is

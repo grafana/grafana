@@ -26,7 +26,8 @@ github.com/apache/arrow/go/arrow/internal/debug
 github.com/apache/arrow/go/arrow/internal/flatbuf
 github.com/apache/arrow/go/arrow/ipc
 github.com/apache/arrow/go/arrow/memory
-# github.com/aws/aws-sdk-go v1.37.7
+# github.com/aws/aws-sdk-go v1.37.8
+## explicit
 github.com/aws/aws-sdk-go/aws
 github.com/aws/aws-sdk-go/aws/arn
 github.com/aws/aws-sdk-go/aws/awserr
@@ -82,7 +83,7 @@ github.com/aws/aws-sdk-go/service/sts/stsiface
 github.com/benbjohnson/clock
 # github.com/beorn7/perks v1.0.1
 github.com/beorn7/perks/quantile
-# github.com/bradfitz/gomemcache v0.0.0-20190913173617-a41fca850d0b
+# github.com/bradfitz/gomemcache v0.0.0-20190913173617-a41fca850d0b => github.com/themihai/gomemcache v0.0.0-20180902122335-24332e2d58ab
 github.com/bradfitz/gomemcache/memcache
 # github.com/centrifugal/centrifuge v0.13.0
 github.com/centrifugal/centrifuge
@@ -198,7 +199,6 @@ github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2
 github.com/grafana/grafana/pkg/plugins/datasource/wrapper
 github.com/grafana/grafana/pkg/registry
 github.com/grafana/grafana/pkg/services/alerting
-github.com/grafana/grafana/pkg/services/alerting/notifiers
 github.com/grafana/grafana/pkg/services/annotations
 github.com/grafana/grafana/pkg/services/dashboards
 github.com/grafana/grafana/pkg/services/guardian
@@ -257,6 +257,8 @@ github.com/json-iterator/go
 github.com/jstemmer/go-junit-report
 github.com/jstemmer/go-junit-report/formatter
 github.com/jstemmer/go-junit-report/parser
+# github.com/kr/text v0.2.0
+## explicit
 # github.com/lib/pq v1.9.0
 github.com/lib/pq
 github.com/lib/pq/oid
@@ -283,6 +285,8 @@ github.com/modern-go/concurrent
 github.com/modern-go/reflect2
 # github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f
 github.com/mwitkow/go-conntrack
+# github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e
+## explicit
 # github.com/oklog/run v1.1.0
 github.com/oklog/run
 # github.com/olekukonko/tablewriter v0.0.4
@@ -302,6 +306,9 @@ github.com/pmezard/go-difflib/difflib
 github.com/prometheus/alertmanager/config
 github.com/prometheus/alertmanager/pkg/labels
 # github.com/prometheus/client_golang v1.9.0
+## explicit
+github.com/prometheus/client_golang/api
+github.com/prometheus/client_golang/api/prometheus/v1
 github.com/prometheus/client_golang/prometheus
 github.com/prometheus/client_golang/prometheus/internal
 github.com/prometheus/client_golang/prometheus/promhttp
@@ -363,7 +370,8 @@ golang.org/x/lint/golint
 # golang.org/x/mod v0.4.1
 golang.org/x/mod/module
 golang.org/x/mod/semver
-# golang.org/x/net v0.0.0-20201224014010-6772e930b67b
+# golang.org/x/net v0.0.0-20210119194325-5f4716e94777
+## explicit
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
 golang.org/x/net/http/httpguts
@@ -372,7 +380,8 @@ golang.org/x/net/http2/hpack
 golang.org/x/net/idna
 golang.org/x/net/internal/timeseries
 golang.org/x/net/trace
-# golang.org/x/oauth2 v0.0.0-20210113205817-d3ed898aa8a3
+# golang.org/x/oauth2 v0.0.0-20210210192628-66670185b0cd
+## explicit
 golang.org/x/oauth2
 golang.org/x/oauth2/google
 golang.org/x/oauth2/google/internal/externalaccount
@@ -439,18 +448,18 @@ google.golang.org/genproto/googleapis/iam/v1
 google.golang.org/genproto/googleapis/rpc/code
 google.golang.org/genproto/googleapis/rpc/status
 google.golang.org/genproto/googleapis/type/expr
-# google.golang.org/grpc v1.35.0
+# google.golang.org/grpc v1.35.0 => google.golang.org/grpc v1.29.1
 google.golang.org/grpc
 google.golang.org/grpc/attributes
 google.golang.org/grpc/backoff
 google.golang.org/grpc/balancer
 google.golang.org/grpc/balancer/base
-google.golang.org/grpc/balancer/grpclb/state
 google.golang.org/grpc/balancer/roundrobin
 google.golang.org/grpc/binarylog/grpc_binarylog_v1
 google.golang.org/grpc/codes
 google.golang.org/grpc/connectivity
 google.golang.org/grpc/credentials
+google.golang.org/grpc/credentials/internal
 google.golang.org/grpc/encoding
 google.golang.org/grpc/encoding/proto
 google.golang.org/grpc/grpclog
@@ -462,24 +471,19 @@ google.golang.org/grpc/internal/balancerload
 google.golang.org/grpc/internal/binarylog
 google.golang.org/grpc/internal/buffer
 google.golang.org/grpc/internal/channelz
-google.golang.org/grpc/internal/credentials
 google.golang.org/grpc/internal/envconfig
 google.golang.org/grpc/internal/grpclog
 google.golang.org/grpc/internal/grpcrand
 google.golang.org/grpc/internal/grpcsync
 google.golang.org/grpc/internal/grpcutil
-google.golang.org/grpc/internal/metadata
-google.golang.org/grpc/internal/resolver
 google.golang.org/grpc/internal/resolver/dns
 google.golang.org/grpc/internal/resolver/passthrough
-google.golang.org/grpc/internal/resolver/unix
-google.golang.org/grpc/internal/serviceconfig
 google.golang.org/grpc/internal/status
 google.golang.org/grpc/internal/syscall
 google.golang.org/grpc/internal/transport
-google.golang.org/grpc/internal/transport/networktype
 google.golang.org/grpc/keepalive
 google.golang.org/grpc/metadata
+google.golang.org/grpc/naming
 google.golang.org/grpc/peer
 google.golang.org/grpc/reflection
 google.golang.org/grpc/reflection/grpc_reflection_v1alpha
@@ -524,6 +528,8 @@ google.golang.org/protobuf/types/known/durationpb
 google.golang.org/protobuf/types/known/emptypb
 google.golang.org/protobuf/types/known/timestamppb
 google.golang.org/protobuf/types/pluginpb
+# gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f
+## explicit
 # gopkg.in/ini.v1 v1.62.0
 gopkg.in/ini.v1
 # gopkg.in/macaron.v1 v1.4.0
@@ -542,7 +548,8 @@ gopkg.in/square/go-jose.v2/json
 gopkg.in/square/go-jose.v2/jwt
 # gopkg.in/yaml.v2 v2.4.0
 gopkg.in/yaml.v2
-# gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
+# gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
+## explicit
 gopkg.in/yaml.v3
 # xorm.io/builder v0.3.6
 xorm.io/builder
@@ -550,3 +557,19 @@ xorm.io/builder
 xorm.io/core
 # xorm.io/xorm v0.8.2
 xorm.io/xorm
+# git.apache.org/thrift.git => github.com/apache/thrift v0.0.0-20180902110319-2566ecd5d999
+# k8s.io/client-go => k8s.io/client-go v0.19.2
+# k8s.io/api => k8s.io/api v0.19.4
+# github.com/satori/go.uuid => github.com/satori/go.uuid v1.2.0
+# github.com/gocql/gocql => github.com/grafana/gocql v0.0.0-20200605141915-ba5dc39ece85
+# google.golang.org/grpc => google.golang.org/grpc v1.29.1
+# github.com/sercand/kuberesolver => github.com/sercand/kuberesolver v2.4.0+incompatible
+# github.com/bradfitz/gomemcache => github.com/themihai/gomemcache v0.0.0-20180902122335-24332e2d58ab
+# github.com/opentracing-contrib/go-grpc => github.com/pracucci/go-grpc v0.0.0-20201022134131-ef559b8db645
+# github.com/go-openapi/errors => github.com/go-openapi/errors v0.19.4
+# github.com/go-openapi/loads => github.com/go-openapi/loads v0.19.5
+# github.com/go-openapi/runtime => github.com/go-openapi/runtime v0.19.15
+# github.com/go-openapi/spec => github.com/go-openapi/spec v0.19.8
+# github.com/go-openapi/strfmt => github.com/go-openapi/strfmt v0.19.5
+# github.com/go-openapi/swag => github.com/go-openapi/swag v0.19.9
+# github.com/go-openapi/validate => github.com/go-openapi/validate v0.19.8

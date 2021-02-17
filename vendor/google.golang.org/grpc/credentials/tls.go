@@ -25,9 +25,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net"
-	"net/url"
 
-	credinternal "google.golang.org/grpc/internal/credentials"
+	"google.golang.org/grpc/credentials/internal"
 )
 
 // TLSInfo contains the auth information for a TLS authenticated connection.
@@ -35,8 +34,6 @@ import (
 type TLSInfo struct {
 	State tls.ConnectionState
 	CommonAuthInfo
-	// This API is experimental.
-	SPIFFEID *url.URL
 }
 
 // AuthType returns the type of TLSInfo as a string.
@@ -72,7 +69,7 @@ func (c tlsCreds) Info() ProtocolInfo {
 
 func (c *tlsCreds) ClientHandshake(ctx context.Context, authority string, rawConn net.Conn) (_ net.Conn, _ AuthInfo, err error) {
 	// use local cfg to avoid clobbering ServerName if using multiple endpoints
-	cfg := credinternal.CloneTLSConfig(c.config)
+	cfg := cloneTLSConfig(c.config)
 	if cfg.ServerName == "" {
 		serverName, _, err := net.SplitHostPort(authority)
 		if err != nil {
@@ -97,17 +94,7 @@ func (c *tlsCreds) ClientHandshake(ctx context.Context, authority string, rawCon
 		conn.Close()
 		return nil, nil, ctx.Err()
 	}
-	tlsInfo := TLSInfo{
-		State: conn.ConnectionState(),
-		CommonAuthInfo: CommonAuthInfo{
-			SecurityLevel: PrivacyAndIntegrity,
-		},
-	}
-	id := credinternal.SPIFFEIDFromState(conn.ConnectionState())
-	if id != nil {
-		tlsInfo.SPIFFEID = id
-	}
-	return credinternal.WrapSyscallConn(rawConn, conn), tlsInfo, nil
+	return internal.WrapSyscallConn(rawConn, conn), TLSInfo{conn.ConnectionState(), CommonAuthInfo{PrivacyAndIntegrity}}, nil
 }
 
 func (c *tlsCreds) ServerHandshake(rawConn net.Conn) (net.Conn, AuthInfo, error) {
@@ -116,17 +103,7 @@ func (c *tlsCreds) ServerHandshake(rawConn net.Conn) (net.Conn, AuthInfo, error)
 		conn.Close()
 		return nil, nil, err
 	}
-	tlsInfo := TLSInfo{
-		State: conn.ConnectionState(),
-		CommonAuthInfo: CommonAuthInfo{
-			SecurityLevel: PrivacyAndIntegrity,
-		},
-	}
-	id := credinternal.SPIFFEIDFromState(conn.ConnectionState())
-	if id != nil {
-		tlsInfo.SPIFFEID = id
-	}
-	return credinternal.WrapSyscallConn(rawConn, conn), tlsInfo, nil
+	return internal.WrapSyscallConn(rawConn, conn), TLSInfo{conn.ConnectionState(), CommonAuthInfo{PrivacyAndIntegrity}}, nil
 }
 
 func (c *tlsCreds) Clone() TransportCredentials {
@@ -138,10 +115,23 @@ func (c *tlsCreds) OverrideServerName(serverNameOverride string) error {
 	return nil
 }
 
+const alpnProtoStrH2 = "h2"
+
+func appendH2ToNextProtos(ps []string) []string {
+	for _, p := range ps {
+		if p == alpnProtoStrH2 {
+			return ps
+		}
+	}
+	ret := make([]string, 0, len(ps)+1)
+	ret = append(ret, ps...)
+	return append(ret, alpnProtoStrH2)
+}
+
 // NewTLS uses c to construct a TransportCredentials based on TLS.
 func NewTLS(c *tls.Config) TransportCredentials {
-	tc := &tlsCreds{credinternal.CloneTLSConfig(c)}
-	tc.config.NextProtos = credinternal.AppendH2ToNextProtos(tc.config.NextProtos)
+	tc := &tlsCreds{cloneTLSConfig(c)}
+	tc.config.NextProtos = appendH2ToNextProtos(tc.config.NextProtos)
 	return tc
 }
 
@@ -195,10 +185,7 @@ func NewServerTLSFromFile(certFile, keyFile string) (TransportCredentials, error
 // TLSChannelzSecurityValue defines the struct that TLS protocol should return
 // from GetSecurityValue(), containing security info like cipher and certificate used.
 //
-// Experimental
-//
-// Notice: This type is EXPERIMENTAL and may be changed or removed in a
-// later release.
+// This API is EXPERIMENTAL.
 type TLSChannelzSecurityValue struct {
 	ChannelzSecurityValue
 	StandardName      string
@@ -230,4 +217,19 @@ var cipherSuiteLookup = map[uint16]string{
 	tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256:   "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256",
 	tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305:    "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305",
 	tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305:  "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
+}
+
+// cloneTLSConfig returns a shallow clone of the exported
+// fields of cfg, ignoring the unexported sync.Once, which
+// contains a mutex and must not be copied.
+//
+// If cfg is nil, a new zero tls.Config is returned.
+//
+// TODO: inline this function if possible.
+func cloneTLSConfig(cfg *tls.Config) *tls.Config {
+	if cfg == nil {
+		return &tls.Config{}
+	}
+
+	return cfg.Clone()
 }

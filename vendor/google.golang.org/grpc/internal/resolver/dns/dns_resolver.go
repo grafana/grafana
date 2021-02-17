@@ -32,7 +32,6 @@ import (
 	"sync"
 	"time"
 
-	grpclbstate "google.golang.org/grpc/balancer/grpclb/state"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/internal/envconfig"
 	"google.golang.org/grpc/internal/grpcrand"
@@ -43,8 +42,6 @@ import (
 // EnableSRVLookups controls whether the DNS resolver attempts to fetch gRPCLB
 // addresses from SRV records.  Must not be changed after init time.
 var EnableSRVLookups = false
-
-var logger = grpclog.Component("dns")
 
 func init() {
 	resolver.Register(NewBuilder())
@@ -254,7 +251,7 @@ func (d *dnsResolver) lookupSRV() ([]resolver.Address, error) {
 				return nil, fmt.Errorf("dns: error parsing A record IP address %v", a)
 			}
 			addr := ip + ":" + strconv.Itoa(int(s.Port))
-			newAddrs = append(newAddrs, resolver.Address{Addr: addr, ServerName: s.Target})
+			newAddrs = append(newAddrs, resolver.Address{Addr: addr, Type: resolver.GRPCLB, ServerName: s.Target})
 		}
 	}
 	return newAddrs, nil
@@ -274,7 +271,7 @@ func handleDNSError(err error, lookupType string) error {
 	err = filterError(err)
 	if err != nil {
 		err = fmt.Errorf("dns: %v record lookup error: %v", lookupType, err)
-		logger.Info(err)
+		grpclog.Infoln(err)
 	}
 	return err
 }
@@ -297,7 +294,7 @@ func (d *dnsResolver) lookupTXT() *serviceconfig.ParseResult {
 
 	// TXT record must have "grpc_config=" attribute in order to be used as service config.
 	if !strings.HasPrefix(res, txtAttribute) {
-		logger.Warningf("dns: TXT record %v missing %v attribute", res, txtAttribute)
+		grpclog.Warningf("dns: TXT record %v missing %v attribute", res, txtAttribute)
 		// This is not an error; it is the equivalent of not having a service config.
 		return nil
 	}
@@ -329,15 +326,13 @@ func (d *dnsResolver) lookup() (*resolver.State, error) {
 	if hostErr != nil && (srvErr != nil || len(srv) == 0) {
 		return nil, hostErr
 	}
-
-	state := resolver.State{Addresses: addrs}
-	if len(srv) > 0 {
-		state = grpclbstate.Set(state, &grpclbstate.State{BalancerAddresses: srv})
+	state := &resolver.State{
+		Addresses: append(addrs, srv...),
 	}
 	if !d.disableServiceConfig {
 		state.ServiceConfig = d.lookupTXT()
 	}
-	return &state, nil
+	return state, nil
 }
 
 // formatIP returns ok = false if addr is not a valid textual representation of an IP address.
@@ -423,12 +418,12 @@ func canaryingSC(js string) string {
 	var rcs []rawChoice
 	err := json.Unmarshal([]byte(js), &rcs)
 	if err != nil {
-		logger.Warningf("dns: error parsing service config json: %v", err)
+		grpclog.Warningf("dns: error parsing service config json: %v", err)
 		return ""
 	}
 	cliHostname, err := os.Hostname()
 	if err != nil {
-		logger.Warningf("dns: error getting client hostname: %v", err)
+		grpclog.Warningf("dns: error getting client hostname: %v", err)
 		return ""
 	}
 	var sc string

@@ -18,8 +18,6 @@
  *
  */
 
-// Package syscall provides functionalities that grpc uses to get low-level
-// operating system stats/info.
 package syscall
 
 import (
@@ -31,11 +29,10 @@ import (
 )
 
 var once sync.Once
-var logger = grpclog.Component("core")
 
 func log() {
 	once.Do(func() {
-		logger.Info("CPU time info is unavailable on non-linux or appengine environment.")
+		grpclog.Info("CPU time info is unavailable on non-linux or appengine environment.")
 	})
 }
 
@@ -50,7 +47,7 @@ func GetCPUTime() int64 {
 type Rusage struct{}
 
 // GetRusage is a no-op function under non-linux or appengine environment.
-func GetRusage() *Rusage {
+func GetRusage() (rusage *Rusage) {
 	log()
 	return nil
 }

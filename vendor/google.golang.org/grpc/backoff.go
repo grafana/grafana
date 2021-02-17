@@ -48,10 +48,7 @@ type BackoffConfig struct {
 // here for more details:
 // https://github.com/grpc/grpc/blob/master/doc/connection-backoff.md.
 //
-// Experimental
-//
-// Notice: This type is EXPERIMENTAL and may be changed or removed in a
-// later release.
+// This API is EXPERIMENTAL.
 type ConnectParams struct {
 	// Backoff specifies the configuration options for connection backoff.
 	Backoff backoff.Config

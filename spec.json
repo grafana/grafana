@@ -197,11 +197,85 @@
           }
         }
       }
+    },
+    "/api/v1/status/alerts": {
+      "get": {
+        "description": "gets the current alerts",
+        "tags": [
+          "RuleStatus"
+        ],
+        "operationId": "RouteGetAlertStatuses",
+        "responses": {
+          "200": {
+            "description": "AlertResponse",
+            "schema": {
+              "$ref": "#/definitions/AlertResponse"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/status/rules": {
+      "get": {
+        "description": "gets the evaluation statuses of all rules",
+        "tags": [
+          "RuleStatus"
+        ],
+        "operationId": "RouteGetRuleStatuses",
+        "responses": {
+          "200": {
+            "description": "RuleResponse",
+            "schema": {
+              "$ref": "#/definitions/RuleResponse"
+            }
+          }
+        }
+      }
     }
   },
   "definitions": {
     "Ack": {
       "type": "object",
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
+    "Alert": {
+      "type": "object",
+      "title": "Alert has info for an alert.",
+      "properties": {
+        "activeAt": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "ActiveAt"
+        },
+        "annotations": {
+          "$ref": "#/definitions/labels"
+        },
+        "labels": {
+          "$ref": "#/definitions/labels"
+        },
+        "state": {
+          "type": "string",
+          "x-go-name": "State"
+        },
+        "value": {
+          "type": "string",
+          "x-go-name": "Value"
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
+    "AlertDiscovery": {
+      "type": "object",
+      "title": "AlertDiscovery has info for all active alerts.",
+      "properties": {
+        "alerts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Alert"
+          },
+          "x-go-name": "Alerts"
+        }
+      },
       "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     },
     "AlertNotification": {
@@ -254,6 +328,32 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
+    "AlertResponse": {
+      "type": "object",
+      "properties": {
+        "Body": {
+          "description": "in: body",
+          "type": "object",
+          "properties": {
+            "data": {
+              "$ref": "#/definitions/AlertDiscovery"
+            },
+            "error": {
+              "type": "string",
+              "x-go-name": "Error"
+            },
+            "errorType": {
+              "$ref": "#/definitions/ErrorType"
+            },
+            "status": {
+              "type": "string",
+              "x-go-name": "Status"
+            }
+          }
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
     "AlertingConfig": {
       "type": "object",
       "properties": {
@@ -293,6 +393,65 @@
       "properties": {
         "Body": {
           "$ref": "#/definitions/AlertingConfig"
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
+    "AlertingRule": {
+      "description": "adapted from cortex",
+      "type": "object",
+      "properties": {
+        "alerts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Alert"
+          },
+          "x-go-name": "Alerts"
+        },
+        "annotations": {
+          "$ref": "#/definitions/labels"
+        },
+        "duration": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "Duration"
+        },
+        "evaluationTime": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "EvaluationTime"
+        },
+        "health": {
+          "type": "string",
+          "x-go-name": "Health"
+        },
+        "labels": {
+          "$ref": "#/definitions/labels"
+        },
+        "lastError": {
+          "type": "string",
+          "x-go-name": "LastError"
+        },
+        "lastEvaluation": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "LastEvaluation"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "query": {
+          "type": "string",
+          "x-go-name": "Query"
+        },
+        "state": {
+          "description": "State can be \"pending\", \"firing\", \"inactive\".",
+          "type": "string",
+          "x-go-name": "State"
+        },
+        "type": {
+          "$ref": "#/definitions/RuleType"
         }
       },
       "x-go-package": "github.com/grafana/alerting-api/pkg/api"
@@ -560,6 +719,11 @@
         }
       },
       "x-go-package": "github.com/grafana/alerting-api/pkg/models"
+    },
+    "ErrorType": {
+      "type": "string",
+      "title": "ErrorType models the different API error types.",
+      "x-go-package": "github.com/prometheus/client_golang/api/prometheus/v1"
     },
     "GlobalConfig": {
       "description": "GlobalConfig defines configuration parameters that are valid globally\nunless overwritten.",
@@ -1249,6 +1413,126 @@
       },
       "x-go-package": "github.com/prometheus/alertmanager/config"
     },
+    "Rule": {
+      "description": "adapted from cortex",
+      "type": "object",
+      "properties": {
+        "evaluationTime": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "EvaluationTime"
+        },
+        "health": {
+          "type": "string",
+          "x-go-name": "Health"
+        },
+        "labels": {
+          "$ref": "#/definitions/labels"
+        },
+        "lastError": {
+          "type": "string",
+          "x-go-name": "LastError"
+        },
+        "lastEvaluation": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "LastEvaluation"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "query": {
+          "type": "string",
+          "x-go-name": "Query"
+        },
+        "type": {
+          "$ref": "#/definitions/RuleType"
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
+    "RuleDiscovery": {
+      "type": "object",
+      "properties": {
+        "groups": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RuleGroup"
+          },
+          "x-go-name": "RuleGroups"
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
+    "RuleGroup": {
+      "type": "object",
+      "properties": {
+        "evaluationTime": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "EvaluationTime"
+        },
+        "file": {
+          "type": "string",
+          "x-go-name": "File"
+        },
+        "interval": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "Interval"
+        },
+        "lastEvaluation": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "LastEvaluation"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "rules": {
+          "description": "In order to preserve rule ordering, while exposing type (alerting or recording)\nspecific properties, both alerting and recording rules are exposed in the\nsame array.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AlertingRule"
+          },
+          "x-go-name": "Rules"
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
+    "RuleResponse": {
+      "type": "object",
+      "properties": {
+        "Body": {
+          "description": "in: body",
+          "type": "object",
+          "properties": {
+            "data": {
+              "$ref": "#/definitions/RuleDiscovery"
+            },
+            "error": {
+              "type": "string",
+              "x-go-name": "Error"
+            },
+            "errorType": {
+              "$ref": "#/definitions/ErrorType"
+            },
+            "status": {
+              "type": "string",
+              "x-go-name": "Status"
+            }
+          }
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
+    "RuleType": {
+      "type": "string",
+      "title": "RuleType models the type of a rule.",
+      "x-go-package": "github.com/prometheus/client_golang/api/prometheus/v1"
+    },
     "SaveDashboardCommand": {
       "type": "object",
       "properties": {
@@ -1721,8 +2005,34 @@
       },
       "x-go-package": "github.com/prometheus/alertmanager/config"
     },
+    "discoveryBase": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string",
+          "x-go-name": "Error"
+        },
+        "errorType": {
+          "$ref": "#/definitions/ErrorType"
+        },
+        "status": {
+          "type": "string",
+          "x-go-name": "Status"
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
     "duration": {
       "$ref": "#/definitions/Duration"
+    },
+    "labels": {
+      "description": "The custom marshaling for labels.Labels ends up doing this anyways.",
+      "type": "object",
+      "title": "override the labels type with a map for generation.",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     }
   },
   "securityDefinitions": {

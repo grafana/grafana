@@ -16,8 +16,6 @@
  *
  */
 
-//go:generate ./regenerate.sh
-
 /*
 Package grpc implements an RPC system called gRPC.
 
