@@ -6,7 +6,7 @@ import { MetricFindValue, SelectableValue } from '@grafana/data';
 interface Props {
   datasource: string;
   filterKey: string;
-  filterValue: string | null;
+  filterValue: string | undefined;
   onChange: (item: SelectableValue<string>) => void;
   placeHolder?: string;
 }

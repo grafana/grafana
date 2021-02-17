@@ -25,7 +25,7 @@ interface OwnProps extends VariablePickerProps<AdHocVariableModel> {}
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
 export class AdHocPickerUnconnected extends PureComponent<Props> {
-  onChange = (index: number, prop: string) => (key: SelectableValue<string>) => {
+  onChange = (index: number, prop: string) => (key: SelectableValue<string | null>) => {
     const { id, filters } = this.props.variable;
     const { value } = key;
 
