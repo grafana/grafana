@@ -339,7 +339,7 @@
       <div class="gf-form">
         <label class="gf-form-label query-keyword width-9">Resource</label>
         <gf-form-dropdown
-          model="ctrl.target.azureLogAnalytics.resource"
+          model="ctrl.target.azureResourceLogAnalytics.resource"
           allow-custom="true"
           lookup-text="true"
           get-options="ctrl.getResources()"
@@ -365,11 +365,11 @@
     <div class="gf-form gf-form--grow">
       <kusto-editor
         class="gf-form gf-form--grow"
-        query="ctrl.target.azureLogAnalytics.query"
-        change="ctrl.onLogAnalyticsQueryChange"
+        query="ctrl.target.azureResourceLogAnalytics.query"
+        change="ctrl.onResourceLogAnalyticsQueryChange"
         execute="ctrl.onLogAnalyticsQueryExecute"
         variables="ctrl.templateVariables"
-        getSchema="ctrl.getAzureLogAnalyticsSchema"
+        getSchema="ctrl.getAzureResourceLogAnalyticsSchema"
       />
     </div>
 
@@ -379,7 +379,7 @@
         <div class="gf-form-select-wrapper">
           <select
             class="gf-form-input gf-size-auto"
-            ng-model="ctrl.target.azureLogAnalytics.resultFormat"
+            ng-model="ctrl.target.azureResourceLogAnalytics.resultFormat"
             ng-options="f.value as f.text for f in ctrl.resultFormats"
             ng-change="ctrl.refresh()"
           ></select>

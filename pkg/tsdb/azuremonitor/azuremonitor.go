@@ -51,6 +51,7 @@ func (e *AzureMonitorExecutor) Query(ctx context.Context, dsInfo *models.DataSou
 	var azureMonitorQueries []*tsdb.Query
 	var applicationInsightsQueries []*tsdb.Query
 	var azureLogAnalyticsQueries []*tsdb.Query
+	var azureResourceLogAnalyticsQueries []*tsdb.Query
 	var insightsAnalyticsQueries []*tsdb.Query
 
 	for _, query := range tsdbQuery.Queries {
@@ -63,6 +64,8 @@ func (e *AzureMonitorExecutor) Query(ctx context.Context, dsInfo *models.DataSou
 			applicationInsightsQueries = append(applicationInsightsQueries, query)
 		case "Azure Log Analytics":
 			azureLogAnalyticsQueries = append(azureLogAnalyticsQueries, query)
+		case "Azure Resource Log Analytics":
+			azureResourceLogAnalyticsQueries = append(azureResourceLogAnalyticsQueries, query)
 		case "Insights Analytics":
 			insightsAnalyticsQueries = append(insightsAnalyticsQueries, query)
 		default:
@@ -81,6 +84,11 @@ func (e *AzureMonitorExecutor) Query(ctx context.Context, dsInfo *models.DataSou
 	}
 
 	alaDatasource := &AzureLogAnalyticsDatasource{
+		httpClient: e.httpClient,
+		dsInfo:     e.dsInfo,
+	}
+
+	arlaDatasource := &AzureResourceLogAnalyticsDatasource{
 		httpClient: e.httpClient,
 		dsInfo:     e.dsInfo,
 	}
@@ -105,6 +113,11 @@ func (e *AzureMonitorExecutor) Query(ctx context.Context, dsInfo *models.DataSou
 		return nil, err
 	}
 
+	arlaResult, err := arlaDatasource.executeTimeSeriesQuery(ctx, azureResourceLogAnalyticsQueries, tsdbQuery.TimeRange)
+	if err != nil {
+		return nil, err
+	}
+
 	iaResult, err := iaDatasource.executeTimeSeriesQuery(ctx, insightsAnalyticsQueries, tsdbQuery.TimeRange)
 	if err != nil {
 		return nil, err
@@ -115,6 +128,10 @@ func (e *AzureMonitorExecutor) Query(ctx context.Context, dsInfo *models.DataSou
 	}
 
 	for k, v := range alaResult.Results {
+		azResult.Results[k] = v
+	}
+
+	for k, v := range arlaResult.Results {
 		azResult.Results[k] = v
 	}
 

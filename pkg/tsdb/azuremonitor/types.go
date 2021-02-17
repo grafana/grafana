@@ -59,6 +59,10 @@ type AzureLogAnalyticsResponse struct {
 	Tables []AzureLogAnalyticsTable `json:"tables"`
 }
 
+type AzureResourceLogAnalyticsResponse struct {
+	Tables []AzureLogAnalyticsTable `json:"tables"`
+}
+
 // AzureLogAnalyticsTable is the table format for Log Analytics responses
 type AzureLogAnalyticsTable struct {
 	Name    string `json:"name"`
@@ -135,6 +139,11 @@ type logJSONQuery struct {
 		ResultFormat string `json:"resultFormat"`
 		Workspace    string `json:"workspace"`
 	} `json:"azureLogAnalytics"`
+	AzureResourceLogAnalytics struct {
+		Query        string `json:"query"`
+		ResultFormat string `json:"resultFormat"`
+		Resource     string `json:"resource"`
+	} `json:"azureResourceLogAnalytics"`
 }
 
 // InsightsDimensions will unmarshal from a JSON string, or an array of strings,

@@ -138,6 +138,21 @@
       "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
     },
     {
+      "path": "resourcesloganalytics",
+      "method": "POST",
+      "url": "https://management.azure.com",
+      "tokenAuth": {
+        "url": "https://login.microsoftonline.com/{{.JsonData.logAnalyticsTenantId}}/oauth2/token",
+        "params": {
+          "grant_type": "client_credentials",
+          "client_id": "{{.JsonData.logAnalyticsClientId}}",
+          "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret}}",
+          "resource": "https://management.azure.com/"
+        }
+      },
+      "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
+    },
+    {
       "path": "chinaworkspacesloganalytics",
       "method": "GET",
       "url": "https://management.chinacloudapi.cn",
@@ -169,8 +184,8 @@
     },
     {
       "path": "loganalyticsresourceazure",
-      "method": "GET",
-      "url": "https://api.loganalytics.io/v1/workspaces",
+      "method": "POST",
+      "url": "https://api.loganalytics.io/v1",
       "tokenAuth": {
         "url": "https://login.microsoftonline.com/{{.JsonData.logAnalyticsTenantId}}/oauth2/token",
         "params": {
@@ -189,6 +204,24 @@
       "path": "loganalyticsazure",
       "method": "GET",
       "url": "https://api.loganalytics.io/v1/workspaces",
+      "tokenAuth": {
+        "url": "https://login.microsoftonline.com/{{.JsonData.logAnalyticsTenantId}}/oauth2/token",
+        "params": {
+          "grant_type": "client_credentials",
+          "client_id": "{{.JsonData.logAnalyticsClientId}}",
+          "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret}}",
+          "resource": "https://api.loganalytics.io"
+        }
+      },
+      "headers": [
+        { "name": "x-ms-app", "content": "Grafana" },
+        { "name": "Cache-Control", "content": "public, max-age=60" }
+      ]
+    },
+    {
+      "path": "resourceloganalyticsazure",
+      "method": "POST",
+      "url": "https://api.loganalytics.io/v1",
       "tokenAuth": {
         "url": "https://login.microsoftonline.com/{{.JsonData.logAnalyticsTenantId}}/oauth2/token",
         "params": {

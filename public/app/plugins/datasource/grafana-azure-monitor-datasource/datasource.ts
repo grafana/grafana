@@ -166,6 +166,10 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
       promises.push(this.azureLogAnalyticsDatasource.testDatasource());
     }
 
+    if (this.azureResourceLogAnalyticsDatasource.isConfigured()) {
+      promises.push(this.azureResourceLogAnalyticsDatasource.testDatasource());
+    }
+
     if (promises.length === 0) {
       return {
         status: 'error',

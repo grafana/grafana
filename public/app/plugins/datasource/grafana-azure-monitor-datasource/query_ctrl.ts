@@ -40,6 +40,11 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       resultFormat: string;
       workspace: string;
     };
+    azureResourceLogAnalytics: {
+      query: string;
+      resultFormat: string;
+      resource: string;
+    };
     appInsights: {
       // metric style query when rawQuery == false
       metricName: string;
@@ -78,25 +83,30 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       timeGrains: [] as string[],
     },
     azureLogAnalytics: {
-      query: [
-        '//change this example to create your own time series query',
-        '<table name>                                                              ' +
-          '//the table to query (e.g. Usage, Heartbeat, Perf)',
-        '| where $__timeFilter(TimeGenerated)                                      ' +
-          '//this is a macro used to show the full chart’s time range, choose the datetime column here',
-        '| summarize count() by <group by column>, bin(TimeGenerated, $__interval) ' +
-          '//change “group by column” to a column in your table, such as “Computer”. ' +
-          'The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.',
-        '| order by TimeGenerated asc',
-      ].join('\n'),
+      query: ['AzureActivity | take 10'].join('\n'),
       resultFormat: 'time_series',
       workspace:
         this.datasource && this.datasource.azureLogAnalyticsDatasource
           ? this.datasource.azureLogAnalyticsDatasource.defaultOrFirstWorkspace
           : '',
+    },
+    azureResourceLogAnalytics: {
+      query: [
+        'AzureActivity | take 10',
+        // '//change this example to create your own time series query',
+        // '<table name>                                                              ' +
+        //   '//the table to query (e.g. Usage, Heartbeat, Perf)',
+        // '| where $__timeFilter(TimeGenerated)                                      ' +
+        //   '//this is a macro used to show the full chart’s time range, choose the datetime column here',
+        // '| summarize count() by <group by column>, bin(TimeGenerated, $__interval) ' +
+        //   '//change “group by column” to a column in your table, such as “Computer”. ' +
+        //   'The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.',
+        // '| order by TimeGenerated asc',
+      ].join('\n'),
+      resultFormat: 'time_series',
       resource:
-        this.datasource && this.datasource.azureLogAnalyticsDatasource
-          ? this.datasource.azureLogAnalyticsDatasource.defaultOrFirstResource
+        this.datasource && this.datasource.azureResourceLogAnalyticsDatasource
+          ? this.datasource.azureResourceLogAnalyticsDatasource.defaultOrFirstResource
           : '',
     },
     appInsights: {
@@ -112,6 +122,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
 
   resultFormats: ResultFormat[];
   workspaces: any[];
+  resources: any[];
   showHelp: boolean;
   showLastQuery: boolean;
   lastQuery: string;
@@ -145,6 +156,9 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     this.getSubscriptions();
     if (this.target.queryType === 'Azure Log Analytics') {
       this.getWorkspaces();
+    }
+    if (this.target.queryType === 'Azure Resource Log Analytics') {
+      this.getResources();
     }
   }
 
@@ -292,9 +306,9 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     if (this.target.queryType === 'Azure Log Analytics') {
       return this.getWorkspaces();
     }
-    // if (this.target.queryType === 'Azure Resource Log Analytics') {
-    //   return this.getResources();
-    // }
+    if (this.target.queryType === 'Azure Resource Log Analytics') {
+      return this.getResources();
+    }
   }
 
   getSubscriptions() {
@@ -308,6 +322,8 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
         this.target.subscription = this.datasource.azureMonitorDatasource.subscriptionId;
       } else if (!this.target.subscription && this.target.queryType === 'Azure Log Analytics') {
         this.target.subscription = this.datasource.azureLogAnalyticsDatasource.logAnalyticsSubscriptionId;
+      } else if (!this.target.subscription && this.target.queryType === 'Azure Resource Log Analytics') {
+        this.target.subscription = this.datasource.azureResourceLogAnalyticsDatasource.logAnalyticsSubscriptionId;
       }
 
       if (!this.target.subscription && this.subscriptions.length > 0) {
@@ -321,6 +337,10 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   onSubscriptionChange() {
     if (this.target.queryType === 'Azure Log Analytics') {
       return this.getWorkspaces();
+    }
+
+    if (this.target.queryType === 'Azure Resource Log Analytics') {
+      return this.getResources();
     }
 
     if (this.target.queryType === 'Azure Monitor') {
@@ -552,7 +572,6 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   }
 
   /* Azure Log Analytics */
-
   getWorkspaces = () => {
     return this.datasource.azureLogAnalyticsDatasource
       .getWorkspaces(this.target.subscription)
@@ -575,25 +594,24 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   };
 
   getResources = () => {
-    return [{}];
-    // return this.datasource.azureResourceLogAnalyticsDatasource
-    //   .getResources(this.target.subscription)
-    //   .then((list: any[]) => {
-    //     this.workspaces = list;
+    return this.datasource.azureResourceLogAnalyticsDatasource
+      .getResources(this.target.subscription)
+      .then((list: any[]) => {
+        this.resources = list;
 
-    //     if (list.length > 0 && !this.target.azureLogAnalytics.workspace) {
-    //       if (this.datasource.azureResourceLogAnalyticsDatasource.defaultOrFirstResource) {
-    //         this.target.azureLogAnalytics.workspace = this.datasource.azureResourceLogAnalyticsDatasource.defaultOrFirstResource;
-    //       }
+        if (list.length > 0 && !this.target.azureResourceLogAnalytics.resource) {
+          if (this.datasource.azureResourceLogAnalyticsDatasource.defaultOrFirstResource) {
+            this.target.azureResourceLogAnalytics.resource = this.datasource.azureResourceLogAnalyticsDatasource.defaultOrFirstResource;
+          }
 
-    //       if (!this.target.azureLogAnalytics.workspace) {
-    //         this.target.azureLogAnalytics.workspace = list[0].value;
-    //       }
-    //     }
+          if (!this.target.azureResourceLogAnalytics.resource) {
+            this.target.azureResourceLogAnalytics.resource = list[0].value;
+          }
+        }
 
-    //     return this.workspaces;
-    //   })
-    //   .catch(this.handleQueryCtrlError.bind(this));
+        return this.resources;
+      })
+      .catch(this.handleQueryCtrlError.bind(this));
   };
 
   getAzureLogAnalyticsSchema = () => {
@@ -604,8 +622,22 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       .catch(this.handleQueryCtrlError.bind(this));
   };
 
+  getAzureResourceLogAnalyticsSchema = () => {
+    return this.getResources()
+      .then(() => {
+        return this.datasource.azureResourceLogAnalyticsDatasource.getSchema(
+          this.target.azureResourceLogAnalytics.resource
+        );
+      })
+      .catch(this.handleQueryCtrlError.bind(this));
+  };
+
   onLogAnalyticsQueryChange = (nextQuery: string) => {
     this.target.azureLogAnalytics.query = nextQuery;
+  };
+
+  onResourceLogAnalyticsQueryChange = (nextQuery: string) => {
+    this.target.azureResourceLogAnalytics.query = nextQuery;
   };
 
   onLogAnalyticsQueryExecute = () => {

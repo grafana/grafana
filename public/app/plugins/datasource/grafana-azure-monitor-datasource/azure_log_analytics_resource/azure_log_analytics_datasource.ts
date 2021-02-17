@@ -40,7 +40,7 @@ export default class azureResourceLogAnalyticsDatasource extends DataSourceWithB
         break;
       default:
         // Azure Global
-        this.baseUrl = '/loganalyticsazure';
+        this.baseUrl = '/loganalyticsresourceazure';
     }
 
     this.url = instanceSettings.url || '';
@@ -83,15 +83,15 @@ export default class azureResourceLogAnalyticsDatasource extends DataSourceWithB
 
   async getResources(subscription: string): Promise<AzureLogsVariable[]> {
     const result = await getBackendSrv().datasourceRequest({
-      url: `/azuremonitor/providers/Microsoft.ResourceGraph/resources?api-version=2019-04-01`,
+      url: this.url + `/azuremonitor/providers/Microsoft.ResourceGraph/resources?api-version=2019-04-01`,
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       data: { subscriptions: [this.subscriptionId], query: 'project id, name' },
     });
 
     return (
-      _.map(result.data.value, (val: any) => {
-        return { text: val.name, value: val.properties.customerId };
+      _.map(result.data.data.rows, (val: any) => {
+        return { text: val[1], value: val[0] };
       }) || []
     );
   }
@@ -112,28 +112,29 @@ export default class azureResourceLogAnalyticsDatasource extends DataSourceWithB
     const workspaceListUrl =
       this.azureMonitorUrl +
       `/${subscriptionId}/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview`;
-    return this.doRequest(workspaceListUrl, true);
+    return this.doRequest(workspaceListUrl, 'GET', true);
   }
 
-  getSchema(workspace: string) {
-    if (!workspace) {
+  getSchema(resource: string) {
+    if (!resource) {
       return Promise.resolve();
     }
-    const url = `${this.baseUrl}/${getTemplateSrv().replace(workspace, {})}/metadata`;
 
-    return this.doRequest(url).then((response: any) => {
+    const url = `${this.baseUrl}${getTemplateSrv().replace(resource, {})}/metadata`;
+
+    return this.doRequest(url, 'POST').then((response: any) => {
       return new ResponseParser(response.data).parseSchemaResult();
     });
   }
 
   applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): Record<string, any> {
-    const item = target.azureLogAnalytics;
+    const item = target.azureResourceLogAnalytics;
 
     const templateSrv = getTemplateSrv();
-    let workspace = templateSrv.replace(item.workspace, scopedVars);
+    let resource = templateSrv.replace(item.resource, scopedVars);
 
-    if (!workspace && this.defaultOrFirstResource) {
-      workspace = this.defaultOrFirstResource;
+    if (!resource && this.defaultOrFirstResource) {
+      resource = this.defaultOrFirstResource;
     }
 
     const subscriptionId = templateSrv.replace(target.subscription || this.subscriptionId, scopedVars);
@@ -142,12 +143,12 @@ export default class azureResourceLogAnalyticsDatasource extends DataSourceWithB
     return {
       refId: target.refId,
       format: target.format,
-      queryType: AzureQueryType.LogAnalytics,
+      queryType: AzureQueryType.ResourceLogAnalytics,
       subscriptionId: subscriptionId,
-      azureLogAnalytics: {
+      azureResourceLogAnalytics: {
         resultFormat: item.resultFormat,
         query: query,
-        resource: workspace,
+        resource: resource,
       },
     };
   }
@@ -237,12 +238,12 @@ export default class azureResourceLogAnalyticsDatasource extends DataSourceWithB
   metricFindQueryInternal(query: string): Promise<MetricFindValue[]> {
     const workspacesQuery = query.match(/^workspaces\(\)/i);
     if (workspacesQuery) {
-      return this.getWorkspaces(this.subscriptionId);
+      return this.getResources(this.subscriptionId);
     }
 
     const workspacesQueryWithSub = query.match(/^workspaces\(["']?([^\)]+?)["']?\)/i);
     if (workspacesQueryWithSub) {
-      return this.getWorkspaces((workspacesQueryWithSub[1] || '').trim());
+      return this.getResources((workspacesQueryWithSub[1] || '').trim());
     }
 
     return this.getDefaultOrFirstResource().then((workspace: any) => {
@@ -356,7 +357,7 @@ export default class azureResourceLogAnalyticsDatasource extends DataSourceWithB
     });
   }
 
-  async doRequest(url: string, useCache = false, maxRetries = 1): Promise<any> {
+  async doRequest(url: string, method = 'GET', data?: any, useCache = false, maxRetries = 1): Promise<any> {
     try {
       if (useCache && this.cache.has(url)) {
         return this.cache.get(url);
@@ -364,7 +365,8 @@ export default class azureResourceLogAnalyticsDatasource extends DataSourceWithB
 
       const res = await getBackendSrv().datasourceRequest({
         url: this.url + url,
-        method: 'GET',
+        method,
+        data,
       });
 
       if (useCache) {
@@ -374,7 +376,7 @@ export default class azureResourceLogAnalyticsDatasource extends DataSourceWithB
       return res;
     } catch (error) {
       if (maxRetries > 0) {
-        return this.doRequest(url, useCache, maxRetries - 1);
+        return this.doRequest(url, method, data, useCache, maxRetries - 1);
       }
 
       throw error;
@@ -388,16 +390,16 @@ export default class azureResourceLogAnalyticsDatasource extends DataSourceWithB
     }
 
     return this.getDefaultOrFirstResource()
-      .then((ws: any) => {
-        const url = `${this.baseUrl}/${ws}/metadata`;
+      .then((rs: any) => {
+        const url = `${this.baseUrl}${rs}/metadata`;
 
-        return this.doRequest(url);
+        return this.doRequest(url, 'POST');
       })
       .then((response: any) => {
         if (response.status === 200) {
           return {
             status: 'success',
-            message: 'Successfully queried the Azure Log Analytics service.',
+            message: 'Successfully queried the Azure Resource Log Analytics service.',
             title: 'Success',
           };
         }
@@ -409,7 +411,7 @@ export default class azureResourceLogAnalyticsDatasource extends DataSourceWithB
       })
       .catch((error: any) => {
         let message = 'Azure Log Analytics: ';
-        if (error.config && error.config.url && error.config.url.indexOf('workspacesloganalytics') > -1) {
+        if (error.config && error.config.url && error.config.url.indexOf('resourcesloganalytics') > -1) {
           message = 'Azure Log Analytics requires access to Azure Monitor but had the following error: ';
         }
 
