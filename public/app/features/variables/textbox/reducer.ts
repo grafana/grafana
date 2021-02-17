@@ -8,6 +8,7 @@ export const initialTextBoxVariableModelState: TextBoxVariableModel = {
   ...initialVariableModelState,
   type: 'textbox',
   query: '',
+  width: '192',
   current: {} as VariableOption,
   options: [],
   originalQuery: null,

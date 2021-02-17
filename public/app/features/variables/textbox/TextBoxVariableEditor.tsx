@@ -9,7 +9,7 @@ import { selectors } from '@grafana/e2e-selectors';
 
 export interface Props extends VariableEditorProps<TextBoxVariableModel> {}
 
-export function TextBoxVariableEditor({ onPropChange, variable: { query } }: Props): ReactElement {
+export function TextBoxVariableEditor({ onPropChange, variable: { query, width } }: Props): ReactElement {
   const updateVariable = useCallback(
     (event: ChangeEvent<HTMLInputElement>, updateOptions: boolean) => {
       event.preventDefault();
@@ -18,12 +18,22 @@ export function TextBoxVariableEditor({ onPropChange, variable: { query } }: Pro
     },
     [onPropChange]
   );
+  const updateWidthVariable = useCallback(
+    (event: ChangeEvent<HTMLInputElement>, updateOptions: boolean) => {
+      event.preventDefault();
+      onPropChange({ propName: 'width', propValue: event.target.value, updateOptions });
+    },
+    [onPropChange]
+  );
 
   const onChange = useCallback((e: ChangeEvent<HTMLInputElement>) => updateVariable(e, false), [updateVariable]);
+  const onWidthChange = useCallback((e: ChangeEvent<HTMLInputElement>) => updateWidthVariable(e, false), [
+    updateVariable,
+  ]);
   const onBlur = useCallback((e: ChangeEvent<HTMLInputElement>) => updateVariable(e, true), [updateVariable]);
 
   return (
-    <VerticalGroup spacing="xs">
+    <VerticalGroup spacing="none">
       <VariableSectionHeader name="Text Options" />
       <VariableTextField
         value={query}
@@ -34,6 +44,14 @@ export function TextBoxVariableEditor({ onPropChange, variable: { query } }: Pro
         labelWidth={20}
         grow
         ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.TextBoxVariable.textBoxOptionsQueryInput}
+      />
+      <VariableTextField
+        type="number"
+        value={width}
+        name="Width"
+        placeholder="defualt value, if any"
+        onChange={onWidthChange}
+        labelWidth={20}
       />
     </VerticalGroup>
   );

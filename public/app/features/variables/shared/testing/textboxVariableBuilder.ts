@@ -6,4 +6,8 @@ export class TextBoxVariableBuilder<T extends TextBoxVariableModel> extends Opti
     this.variable.originalQuery = original;
     return this;
   }
+  withWidth(width: string) {
+    this.variable.width = width;
+    return this;
+  }
 }

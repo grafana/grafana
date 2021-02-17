@@ -2,6 +2,7 @@ import React, { FormEvent, PropsWithChildren, ReactElement } from 'react';
 import { InlineField, Input, PopoverContent } from '@grafana/ui';
 
 interface VariableTextFieldProps {
+  type?: string;
   value: string;
   name: string;
   placeholder: string;
@@ -16,6 +17,7 @@ interface VariableTextFieldProps {
 }
 
 export function VariableTextField({
+  type,
   value,
   name,
   placeholder,
@@ -31,7 +33,7 @@ export function VariableTextField({
   return (
     <InlineField label={name} labelWidth={labelWidth ?? 12} tooltip={tooltip} grow={grow}>
       <Input
-        type="text"
+        type={type === undefined ? 'text' : type}
         id={name}
         name={name}
         placeholder={placeholder}
