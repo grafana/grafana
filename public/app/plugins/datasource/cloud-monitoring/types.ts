@@ -1,4 +1,4 @@
-import { DataQuery, DataSourceJsonData } from '@grafana/data';
+import { DataQuery, DataSourceJsonData, SelectableValue } from '@grafana/data';
 
 export enum AuthType {
   JWT = 'jwt',
@@ -32,8 +32,8 @@ export interface CloudMonitoringVariableQuery extends DataQuery {
   selectedMetricType: string;
   selectedSLOService: string;
   labelKey: string;
-  projects: Array<{ value: string; name: string }>;
-  sloServices: Array<{ value: string; name: string }>;
+  projects: SelectableValue[];
+  sloServices: SelectableValue[];
   projectName: string;
 }
 
@@ -46,9 +46,9 @@ export interface VariableQueryData {
   labels: string[];
   labelKey: string;
   metricTypes: Array<{ value: string; name: string }>;
-  services: Array<{ value: string; name: string }>;
-  projects: Array<{ value: string; name: string }>;
-  sloServices: Array<{ value: string; name: string }>;
+  services: SelectableValue[];
+  projects: SelectableValue[];
+  sloServices: SelectableValue[];
   projectName: string;
   loading: boolean;
 }

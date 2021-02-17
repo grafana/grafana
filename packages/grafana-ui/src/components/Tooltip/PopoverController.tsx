@@ -1,5 +1,5 @@
 import React from 'react';
-import * as PopperJS from 'popper.js';
+import { Placement } from '@popperjs/core';
 import { PopoverContent } from './Tooltip';
 
 // This API allows popovers to update Popper's position when e.g. popover content changes
@@ -34,13 +34,13 @@ type PopperControllerRenderProp = (
   hidePopper: () => void,
   popperProps: {
     show: boolean;
-    placement: PopperJS.Placement;
+    placement: Placement;
     content: PopoverContent;
   }
 ) => JSX.Element;
 
 interface Props {
-  placement?: PopperJS.Placement;
+  placement?: Placement;
   content: PopoverContent;
   className?: string;
   children: PopperControllerRenderProp;

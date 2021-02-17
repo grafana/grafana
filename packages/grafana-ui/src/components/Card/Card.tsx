@@ -101,7 +101,7 @@ export const Card: CardInterface = ({
   const disableEvents = disabled && !actions;
 
   const containerStyles = getContainerStyles(theme, disableEvents, disableHover);
-  const onCardClick = useCallback(() => (disableHover ? () => {} : onClick), [disableHover, onClick]);
+  const onCardClick = useCallback(() => (disableHover ? () => {} : onClick?.()), [disableHover, onClick]);
 
   return (
     <CardContainer

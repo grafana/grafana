@@ -4,15 +4,13 @@ import React, { PureComponent } from 'react';
 
 // Ignoring because I couldn't get @types/react-select work with Torkel's fork
 // @ts-ignore
-import { default as ReactSelect } from '@torkelo/react-select';
+import { default as ReactSelect, components } from '@torkelo/react-select';
 // @ts-ignore
 import Creatable from '@torkelo/react-select/creatable';
 // @ts-ignore
 import { CreatableProps } from 'react-select';
 // @ts-ignore
 import { default as ReactAsyncSelect } from '@torkelo/react-select/async';
-// @ts-ignore
-import { components } from '@torkelo/react-select';
 
 // Components
 import { SelectOption } from './SelectOption';
@@ -23,8 +21,7 @@ import IndicatorsContainer from './IndicatorsContainer';
 import NoOptionsMessage from './NoOptionsMessage';
 import resetSelectStyles from '../../../Select/resetSelectStyles';
 import { CustomScrollbar } from '../../../CustomScrollbar/CustomScrollbar';
-import { PopoverContent } from '../../../Tooltip/Tooltip';
-import { Tooltip } from '../../../Tooltip/Tooltip';
+import { PopoverContent, Tooltip } from '../../../Tooltip/Tooltip';
 import { SelectableValue } from '@grafana/data';
 
 /**

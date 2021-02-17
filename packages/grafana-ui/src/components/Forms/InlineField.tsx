@@ -5,6 +5,7 @@ import { useTheme } from '../../themes';
 import { InlineLabel } from './InlineLabel';
 import { PopoverContent } from '../Tooltip/Tooltip';
 import { FieldProps } from './Field';
+import { getChildId } from '../../utils/children';
 
 export interface Props extends Omit<FieldProps, 'css' | 'horizontal' | 'description' | 'error'> {
   /** Content for the label's tooltip */
@@ -32,12 +33,8 @@ export const InlineField: FC<Props> = ({
 }) => {
   const theme = useTheme();
   const styles = getStyles(theme, grow);
-  const child = React.Children.only(children);
-  let inputId;
+  const inputId = getChildId(children);
 
-  if (child) {
-    inputId = (child as React.ReactElement<{ id?: string }>).props.id;
-  }
   const labelElement =
     typeof label === 'string' ? (
       <InlineLabel width={labelWidth} tooltip={tooltip} htmlFor={inputId} transparent={transparent}>

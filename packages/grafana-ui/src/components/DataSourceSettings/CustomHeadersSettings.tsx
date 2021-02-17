@@ -52,6 +52,7 @@ const getCustomHeaderRowStyles = stylesFactory(() => {
     `,
   };
 });
+
 const CustomHeaderRow: React.FC<CustomHeaderRowProps> = ({ header, onBlur, onChange, onRemove, onReset }) => {
   const styles = getCustomHeaderRowStyles();
   return (
@@ -138,7 +139,7 @@ export class CustomHeadersSettings extends PureComponent<Props, State> {
   onHeaderAdd = () => {
     this.setState((prevState) => {
       return { headers: [...prevState.headers, { id: uniqueId(), name: '', value: '', configured: false }] };
-    }, this.updateSettings);
+    });
   };
 
   onHeaderChange = (headerIndex: number, value: CustomHeader) => {
