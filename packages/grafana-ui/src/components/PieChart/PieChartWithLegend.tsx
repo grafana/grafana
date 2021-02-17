@@ -8,7 +8,6 @@ export interface Props extends PieChartProps {}
 
 export const PieChartWithLegend: FC<Props> = ({ values, width, height, ...restProps }) => {
   const legendItems = values.map<VizLegendItem>((value) => {
-    console.log(value.title, value.color);
     return {
       label: value.title ?? '',
       color: value.color ?? DEFAULT_COLOR,
