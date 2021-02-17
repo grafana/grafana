@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import { Button, Select, Input, HorizontalGroup, VerticalGroup, InlineLabel } from '@grafana/ui';
 
-import { MultipleFields } from '../Field';
+import { Field } from '../Field';
 import { findOption } from '../common';
 import { AzureMetricDimension, AzureQueryEditorFieldProps, Option } from '../../types';
 
@@ -55,7 +55,7 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ query, dimensionOptio
   };
 
   return (
-    <MultipleFields label="Dimension">
+    <Field label="Dimension">
       <VerticalGroup spacing="xs">
         {query.azureMonitor.dimensionFilters.map((filter, index) => (
           <HorizontalGroup key={index} spacing="xs">
@@ -82,7 +82,7 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ query, dimensionOptio
           Add new dimension
         </Button>
       </VerticalGroup>
-    </MultipleFields>
+    </Field>
   );
 };
 
