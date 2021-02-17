@@ -32,6 +32,7 @@ const QueryTypeField: React.FC<QueryTypeFieldProps> = ({ query, onQueryChange })
   return (
     <Field label="Service">
       <Select
+        inputId="azure-monitor-query-type-field"
         value={findOption(QUERY_TYPES, query.queryType)}
         options={QUERY_TYPES}
         onChange={handleChange}

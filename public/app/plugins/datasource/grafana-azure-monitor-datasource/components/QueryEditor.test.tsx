@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import selectEvent from 'react-select-event';
 
 import QueryEditor from './QueryEditor';
 
@@ -8,10 +8,22 @@ import mockQuery from '../__mocks__/query';
 import createMockDatasource from '../__mocks__/datasource';
 import { AzureQueryType } from '../types';
 
+const variableOptionGroup = {
+  label: 'Template variables',
+  options: [],
+};
+
 describe('Azure Monitor QueryEditor', () => {
   it('renders the Metrics query editor when the query type is Metrics', async () => {
     const mockDatasource = createMockDatasource();
-    render(<QueryEditor query={mockQuery} datasource={mockDatasource} onChange={() => {}} />);
+    render(
+      <QueryEditor
+        query={mockQuery}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        onChange={() => {}}
+      />
+    );
     await waitFor(() => expect(screen.getByTestId('azure-monitor-metrics-query-editor')).toBeInTheDocument());
   });
 
@@ -21,19 +33,32 @@ describe('Azure Monitor QueryEditor', () => {
       ...mockQuery,
       queryType: AzureQueryType.LogAnalytics,
     };
-    render(<QueryEditor query={logsMockQuery} datasource={mockDatasource} onChange={() => {}} />);
+    render(
+      <QueryEditor
+        query={logsMockQuery}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        onChange={() => {}}
+      />
+    );
     await waitFor(() => expect(screen.queryByTestId('azure-monitor-metrics-query-editor')).not.toBeInTheDocument());
   });
 
   it('changes the query type when selected', async () => {
     const mockDatasource = createMockDatasource();
     const onChange = jest.fn();
-    render(<QueryEditor query={mockQuery} datasource={mockDatasource} onChange={onChange} />);
+    render(
+      <QueryEditor
+        query={mockQuery}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        onChange={onChange}
+      />
+    );
     await waitFor(() => expect(screen.getByTestId('azure-monitor-query-editor')).toBeInTheDocument());
 
-    // Click the dropdown, then select "Logs"
-    userEvent.click(screen.getByText('Metrics'));
-    userEvent.click(screen.getByText('Logs'));
+    const metrics = await screen.findByLabelText('Service');
+    await selectEvent.select(metrics, 'Logs');
 
     expect(onChange).toHaveBeenCalledWith({
       ...mockQuery,

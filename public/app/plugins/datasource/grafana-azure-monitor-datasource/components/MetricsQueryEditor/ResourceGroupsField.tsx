@@ -59,6 +59,7 @@ const ResourceGroupsField: React.FC<AzureQueryEditorFieldProps> = ({
   return (
     <Field label="Resource Group">
       <Select
+        inputId="azure-monitor-metrics-resource-group-field"
         value={findOption(resourceGroups, query.azureMonitor.resourceGroup)}
         onChange={handleChange}
         options={options}

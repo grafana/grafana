@@ -27,7 +27,13 @@ const TopField: React.FC<AzureQueryEditorFieldProps> = ({ onQueryChange, query }
 
   return (
     <Field label="Top">
-      <Input value={value} onChange={handleChange} onBlur={handleBlur} width={16} />
+      <Input
+        id="azure-monitor-metrics-top-field"
+        value={value}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        width={16}
+      />
     </Field>
   );
 };

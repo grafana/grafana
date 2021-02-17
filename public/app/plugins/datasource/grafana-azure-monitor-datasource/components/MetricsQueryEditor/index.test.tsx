@@ -1,17 +1,28 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import selectEvent from 'react-select-event';
 
 import MetricsQueryEditor from '../MetricsQueryEditor';
 
 import mockQuery from '../../__mocks__/query';
 import createMockDatasource from '../../__mocks__/datasource';
 
+const variableOptionGroup = {
+  label: 'Template variables',
+  options: [],
+};
+
 describe('Azure Monitor QueryEditor', () => {
   it('should render', async () => {
     const mockDatasource = createMockDatasource();
     render(
-      <MetricsQueryEditor subscriptionId="123" query={mockQuery} datasource={mockDatasource} onChange={() => {}} />
+      <MetricsQueryEditor
+        subscriptionId="123"
+        query={mockQuery}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        onChange={() => {}}
+      />
     );
     await waitFor(() => expect(screen.getByTestId('azure-monitor-metrics-query-editor')).toBeInTheDocument());
   });
@@ -31,13 +42,17 @@ describe('Azure Monitor QueryEditor', () => {
     ]);
 
     render(
-      <MetricsQueryEditor subscriptionId="123" query={mockQuery} datasource={mockDatasource} onChange={onChange} />
+      <MetricsQueryEditor
+        subscriptionId="123"
+        query={mockQuery}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        onChange={onChange}
+      />
     );
-    await waitFor(() => expect(screen.getByTestId('azure-monitor-metrics-query-editor')).toBeInTheDocument());
 
-    // Click the dropdown, then select an option
-    userEvent.click(screen.getByText('Primary Subscription'));
-    userEvent.click(screen.getByText('Another Subscription'));
+    const subscriptions = await screen.findByLabelText('Subscription');
+    await selectEvent.select(subscriptions, 'Another Subscription');
 
     expect(onChange).toHaveBeenCalledWith({
       ...mockQuery,
@@ -70,13 +85,18 @@ describe('Azure Monitor QueryEditor', () => {
     ]);
 
     render(
-      <MetricsQueryEditor subscriptionId="123" query={mockQuery} datasource={mockDatasource} onChange={onChange} />
+      <MetricsQueryEditor
+        subscriptionId="123"
+        query={mockQuery}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        onChange={onChange}
+      />
     );
     await waitFor(() => expect(screen.getByTestId('azure-monitor-metrics-query-editor')).toBeInTheDocument());
 
-    // Click the dropdown, then select an option
-    userEvent.click(screen.getByText('Metric A'));
-    userEvent.click(screen.getByText('Metric B'));
+    const metrics = await screen.findByLabelText('Metric');
+    await selectEvent.select(metrics, 'Metric B');
 
     expect(onChange).toHaveBeenCalledWith({
       ...mockQuery,

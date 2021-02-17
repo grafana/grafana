@@ -85,6 +85,7 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
     <Field label="Subscription">
       <Select
         value={findOption(subscriptions, query.subscription)}
+        inputId="azure-monitor-subscriptions-field"
         onChange={handleChange}
         options={options}
         width={38}

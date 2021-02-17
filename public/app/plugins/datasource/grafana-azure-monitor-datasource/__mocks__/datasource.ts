@@ -8,6 +8,8 @@ export default function createMockDatasource() {
   // We make this a partial so we get _some_ kind of type safety when making this, rather than
   // having it be any or casted immediately to Datasource
   const _mockDatasource: DeepPartial<Datasource> = {
+    getVariables: jest.fn().mockReturnValueOnce([]),
+
     azureMonitorDatasource: {
       isConfigured() {
         return true;

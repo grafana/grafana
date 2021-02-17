@@ -59,6 +59,7 @@ const NamespaceField: React.FC<AzureQueryEditorFieldProps> = ({
     <Field label="Namespace">
       {/* It's expected that the label reads Namespace but the property is metricDefinition */}
       <Select
+        inputId="azure-monitor-metrics-namespace-field"
         value={findOption(namespaces, query.azureMonitor.metricDefinition)}
         onChange={handleChange}
         options={options}
