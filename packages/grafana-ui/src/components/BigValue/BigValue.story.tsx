@@ -1,11 +1,19 @@
 import React from 'react';
 import { Story } from '@storybook/react';
-import { BigValue, BigValueColorMode, BigValueGraphMode, BigValueJustifyMode, BigValueTextMode } from './BigValue';
+import {
+  BigValue,
+  BigValueColorMode,
+  BigValueGraphMode,
+  BigValueJustifyMode,
+  BigValueTextMode,
+  Props,
+} from './BigValue';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import mdx from './BigValue.mdx';
 import { useTheme } from '../../themes';
 import { ArrayVector, FieldSparkline, FieldType } from '@grafana/data';
 
+const NOOP_CONTROL = { control: { disable: true } };
 export default {
   title: 'Visualizations/BigValue',
   component: BigValue,
@@ -26,63 +34,37 @@ export default {
     justifyMode: { control: { type: 'select', options: [BigValueJustifyMode.Auto, BigValueJustifyMode.Center] } },
     textMode: {
       control: {
-        type: 'select',
-        options: [BigValueTextMode.Auto, BigValueTextMode.Name, BigValueTextMode.ValueAndName, BigValueTextMode.None],
+        type: 'radio',
+        options: [
+          BigValueTextMode.Auto,
+          BigValueTextMode.Name,
+          BigValueTextMode.ValueAndName,
+          BigValueTextMode.None,
+          BigValueTextMode.Value,
+        ],
       },
     },
     color: { control: 'color' },
-    sparkline: {
-      table: {
-        disable: true,
-      },
-    },
-    onClick: {
-      table: {
-        disable: true,
-      },
-    },
-    className: {
-      table: {
-        disable: true,
-      },
-    },
-    alignmentFactors: {
-      table: {
-        disable: true,
-      },
-    },
-    text: {
-      table: {
-        disable: true,
-      },
-    },
-    count: {
-      table: {
-        disable: true,
-      },
-    },
-    theme: {
-      table: {
-        disable: true,
-      },
-    },
+    value: NOOP_CONTROL,
+    sparkline: NOOP_CONTROL,
+    onClick: NOOP_CONTROL,
+    className: NOOP_CONTROL,
+    alignmentFactors: NOOP_CONTROL,
+    text: NOOP_CONTROL,
+    count: NOOP_CONTROL,
+    theme: NOOP_CONTROL,
   },
 };
 
-interface StoryProps {
-  value: string;
+interface StoryProps extends Partial<Props> {
+  numeric: number;
   title: string;
-  colorMode: BigValueColorMode;
-  graphMode: BigValueGraphMode;
-  height: number;
-  width: number;
   color: string;
-  textMode: BigValueTextMode;
-  justifyMode: BigValueJustifyMode;
+  valueText: string;
 }
 
 export const Basic: Story<StoryProps> = ({
-  value,
+  valueText,
   title,
   colorMode,
   graphMode,
@@ -112,7 +94,7 @@ export const Basic: Story<StoryProps> = ({
       textMode={textMode}
       justifyMode={justifyMode}
       value={{
-        text: value,
+        text: valueText,
         numeric: 5022,
         color: color,
         title,
@@ -123,7 +105,7 @@ export const Basic: Story<StoryProps> = ({
 };
 
 Basic.args = {
-  value: '$5022',
+  valueText: '$5022',
   title: 'Total Earnings',
   colorMode: BigValueColorMode.Value,
   graphMode: BigValueGraphMode.Area,
