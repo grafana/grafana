@@ -3,25 +3,39 @@ package models
 import (
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/securedata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 // DashboardSnapshot model
 type DashboardSnapshot struct {
-	Id          int64
-	Name        string
-	Key         string
-	DeleteKey   string
-	OrgId       int64
-	UserId      int64
-	External    bool
-	ExternalUrl string
+	Id                int64
+	Name              string
+	Key               string
+	DeleteKey         string
+	OrgId             int64
+	UserId            int64
+	External          bool
+	ExternalUrl       string
+	ExternalDeleteUrl string
 
 	Expires time.Time
 	Created time.Time
 	Updated time.Time
 
-	Dashboard *simplejson.Json
+	Dashboard          *simplejson.Json
+	DashboardEncrypted securedata.SecureData
+}
+
+func (ds *DashboardSnapshot) DashboardJSON() (*simplejson.Json, error) {
+	if ds.DashboardEncrypted != nil {
+		decrypted, err := ds.DashboardEncrypted.Decrypt()
+		if err != nil {
+			return nil, err
+		}
+		return simplejson.NewJson(decrypted)
+	}
+	return ds.Dashboard, nil
 }
 
 // DashboardSnapshotDTO without dashboard map
@@ -48,7 +62,10 @@ type CreateDashboardSnapshotCommand struct {
 	Expires   int64            `json:"expires"`
 
 	// these are passed when storing an external snapshot ref
-	External  bool   `json:"external"`
+	External          bool   `json:"external"`
+	ExternalUrl       string `json:"-"`
+	ExternalDeleteUrl string `json:"-"`
+
 	Key       string `json:"key"`
 	DeleteKey string `json:"deleteKey"`
 
@@ -73,7 +90,6 @@ type GetDashboardSnapshotQuery struct {
 	Result *DashboardSnapshot
 }
 
-type DashboardSnapshots []*DashboardSnapshot
 type DashboardSnapshotsList []*DashboardSnapshotDTO
 
 type GetDashboardSnapshotsQuery struct {

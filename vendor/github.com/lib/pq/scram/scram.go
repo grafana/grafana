@@ -94,7 +94,7 @@ func (c *Client) Out() []byte {
 	return c.out.Bytes()
 }
 
-// Err returns the error that ocurred, or nil if there were no errors.
+// Err returns the error that occurred, or nil if there were no errors.
 func (c *Client) Err() error {
 	return c.err
 }

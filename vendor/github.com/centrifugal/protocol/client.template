@@ -1,0 +1,217 @@
+syntax = "proto3";
+
+package protocol;
+{{if env.Getenv "GOGO"}}
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+
+option (gogoproto.equal_all) = true;
+option (gogoproto.populate_all) = true;
+option (gogoproto.testgen_all) = true;
+{{end}}
+message Error {
+    uint32 code = 1{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "code"]{{end}};
+    string message = 2{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "message"]{{end}};
+}
+
+enum MethodType {
+    {{ if env.Getenv "GOGO" -}}option (gogoproto.goproto_enum_prefix) = false;
+    {{ end -}}
+    CONNECT = 0{{if env.Getenv "GOGO"}} [(gogoproto.enumvalue_customname) = "MethodTypeConnect"]{{end}};
+    SUBSCRIBE = 1{{if env.Getenv "GOGO"}} [(gogoproto.enumvalue_customname) = "MethodTypeSubscribe"]{{end}};
+    UNSUBSCRIBE = 2{{if env.Getenv "GOGO"}} [(gogoproto.enumvalue_customname) = "MethodTypeUnsubscribe"]{{end}};
+    PUBLISH = 3{{if env.Getenv "GOGO"}} [(gogoproto.enumvalue_customname) = "MethodTypePublish"]{{end}};
+    PRESENCE = 4{{if env.Getenv "GOGO"}} [(gogoproto.enumvalue_customname) = "MethodTypePresence"]{{end}};
+    PRESENCE_STATS = 5{{if env.Getenv "GOGO"}} [(gogoproto.enumvalue_customname) = "MethodTypePresenceStats"]{{end}};
+    HISTORY = 6{{if env.Getenv "GOGO"}} [(gogoproto.enumvalue_customname) = "MethodTypeHistory"]{{end}};
+    PING = 7{{if env.Getenv "GOGO"}} [(gogoproto.enumvalue_customname) = "MethodTypePing"]{{end}};
+    SEND = 8{{if env.Getenv "GOGO"}} [(gogoproto.enumvalue_customname) = "MethodTypeSend"]{{end}};
+    RPC = 9{{if env.Getenv "GOGO"}} [(gogoproto.enumvalue_customname) = "MethodTypeRPC"]{{end}};
+    REFRESH = 10{{if env.Getenv "GOGO"}} [(gogoproto.enumvalue_customname) = "MethodTypeRefresh"]{{end}};
+    SUB_REFRESH = 11{{if env.Getenv "GOGO"}} [(gogoproto.enumvalue_customname) = "MethodTypeSubRefresh"]{{end}};
+}
+
+message Command {
+    uint32 id = 1{{if env.Getenv "GOGO"}} [(gogoproto.customname) = "ID", (gogoproto.jsontag) = "id,omitempty"]{{end}};
+    MethodType method = 2{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "method,omitempty"]{{end}};
+    bytes params = 3{{if env.Getenv "GOGO"}} [(gogoproto.customtype) = "Raw", (gogoproto.jsontag) = "params,omitempty", (gogoproto.nullable) = false]{{end}};
+}
+
+message Reply {
+    uint32 id = 1{{if env.Getenv "GOGO"}} [(gogoproto.customname) = "ID", (gogoproto.jsontag) = "id,omitempty"]{{end}};
+    Error error = 2{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "error,omitempty"]{{end}};
+    bytes result = 3{{if env.Getenv "GOGO"}} [(gogoproto.customtype) = "Raw", (gogoproto.jsontag) = "result,omitempty", (gogoproto.nullable) = false]{{end}};
+}
+
+enum PushType {
+    {{ if env.Getenv "GOGO" -}}option (gogoproto.goproto_enum_prefix) = false;
+    {{ end -}}
+    PUBLICATION = 0{{if env.Getenv "GOGO"}} [(gogoproto.enumvalue_customname) = "PushTypePublication"]{{end}};
+    JOIN = 1{{if env.Getenv "GOGO"}} [(gogoproto.enumvalue_customname) = "PushTypeJoin"]{{end}};
+    LEAVE = 2{{if env.Getenv "GOGO"}} [(gogoproto.enumvalue_customname) = "PushTypeLeave"]{{end}};
+    UNSUB = 3{{if env.Getenv "GOGO"}} [(gogoproto.enumvalue_customname) = "PushTypeUnsub"]{{end}};
+    MESSAGE = 4{{if env.Getenv "GOGO"}} [(gogoproto.enumvalue_customname) = "PushTypeMessage"]{{end}};
+    SUB = 5{{if env.Getenv "GOGO"}} [(gogoproto.enumvalue_customname) = "PushTypeSub"]{{end}};
+}
+
+message Push {
+    PushType type = 1{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "type,omitempty"]{{end}};
+    string channel = 2{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "channel,omitempty"]{{end}};
+    bytes data = 3{{if env.Getenv "GOGO"}} [(gogoproto.customtype) = "Raw", (gogoproto.jsontag) = "data", (gogoproto.nullable) = false]{{end}};
+}
+
+message ClientInfo {
+    string user = 1{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "user"]{{end}};
+    string client = 2{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "client"]{{end}};
+    bytes conn_info = 3{{if env.Getenv "GOGO"}} [(gogoproto.customtype) = "Raw", (gogoproto.jsontag) = "conn_info,omitempty", (gogoproto.nullable) = false]{{end}};
+    bytes chan_info = 4{{if env.Getenv "GOGO"}} [(gogoproto.customtype) = "Raw", (gogoproto.jsontag) = "chan_info,omitempty", (gogoproto.nullable) = false]{{end}};
+}
+
+message Publication {
+    uint32 seq = 1{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "seq,omitempty"]{{end}};
+    uint32 gen = 2{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "gen,omitempty"]{{end}};
+    string uid = 3{{if env.Getenv "GOGO"}} [(gogoproto.customname) = "UID", (gogoproto.jsontag) = "uid,omitempty"]{{end}};
+    bytes data = 4{{if env.Getenv "GOGO"}} [(gogoproto.customtype) = "Raw", (gogoproto.jsontag) = "data", (gogoproto.nullable) = false]{{end}};
+    ClientInfo info = 5{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "info,omitempty"]{{end}};
+    uint64 offset = 6{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "offset,omitempty"]{{end}};
+}
+
+message Join {
+    ClientInfo info = 1{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "info", (gogoproto.nullable) = false]{{end}};
+}
+
+message Leave {
+    ClientInfo info = 1{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "info", (gogoproto.nullable) = false]{{end}};
+}
+
+message Unsub {
+    bool resubscribe =1{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "resubscribe,omitempty"]{{end}};
+}
+
+message Sub {
+    bool recoverable = 1{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "recoverable,omitempty"]{{end}};
+    uint32 seq = 2{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "seq,omitempty"]{{end}};
+    uint32 gen = 3{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "gen,omitempty"]{{end}};
+    string epoch = 4{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "epoch,omitempty"]{{end}};
+    uint64 offset = 5{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "offset,omitempty"]{{end}};
+}
+
+message Message {
+    bytes data = 1{{if env.Getenv "GOGO"}} [(gogoproto.customtype) = "Raw", (gogoproto.jsontag) = "data", (gogoproto.nullable) = false]{{end}};
+}
+
+message ConnectRequest {
+    string token = 1{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "token,omitempty"]{{end}};
+    bytes data = 2{{if env.Getenv "GOGO"}} [(gogoproto.customtype) = "Raw", (gogoproto.jsontag) = "data,omitempty", (gogoproto.nullable) = false]{{end}};
+    map<string, SubscribeRequest> subs = 3{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "subs,omitempty"]{{end}};
+    string name = 4{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "name,omitempty"]{{end}};
+    string version = 5{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "version,omitempty"]{{end}};
+}
+
+message ConnectResult {
+    string client = 1{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "client"]{{end}};
+    string version = 2{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "version"]{{end}};
+    bool expires = 3{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "expires,omitempty"]{{end}};
+    uint32 ttl = 4{{if env.Getenv "GOGO"}} [(gogoproto.customname) = "TTL", (gogoproto.jsontag) = "ttl,omitempty"]{{end}};
+    bytes data = 5{{if env.Getenv "GOGO"}} [(gogoproto.customtype) = "Raw", (gogoproto.jsontag) = "data,omitempty", (gogoproto.nullable) = false]{{end}};
+    map<string, SubscribeResult> subs = 6{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "subs,omitempty"]{{end}};
+}
+
+message RefreshRequest {
+    string token = 1{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "token"]{{end}};
+}
+
+message RefreshResult {
+    string client = 1{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "client"]{{end}};
+    string version = 2{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "version"]{{end}};
+    bool expires = 3{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "expires,omitempty"]{{end}};
+    uint32 ttl = 4{{if env.Getenv "GOGO"}} [(gogoproto.customname) = "TTL", (gogoproto.jsontag) = "ttl,omitempty"]{{end}};
+}
+
+message SubscribeRequest {
+    string channel = 1{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "channel,omitempty"]{{end}};
+    string token = 2{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "token,omitempty"]{{end}};
+    bool recover = 3{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "recover,omitempty"]{{end}};
+    uint32 seq = 4{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "seq,omitempty"]{{end}};
+    uint32 gen = 5{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "gen,omitempty"]{{end}};
+    string epoch = 6{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "epoch,omitempty"]{{end}};
+    uint64 offset = 7{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "offset,omitempty"]{{end}};
+}
+
+message SubscribeResult {
+    bool expires = 1{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "expires,omitempty"]{{end}};
+    uint32 ttl = 2{{if env.Getenv "GOGO"}} [(gogoproto.customname) = "TTL", (gogoproto.jsontag) = "ttl,omitempty"]{{end}};
+    bool recoverable = 3{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "recoverable,omitempty"]{{end}};
+    uint32 seq = 4{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "seq,omitempty"]{{end}};
+    uint32 gen = 5{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "gen,omitempty"]{{end}};
+    string epoch = 6{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "epoch,omitempty"]{{end}};   
+    repeated Publication publications = 7{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "publications,omitempty"]{{end}};
+    bool recovered = 8{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "recovered,omitempty"]{{end}};
+    uint64 offset = 9{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "offset,omitempty"]{{end}};
+}
+
+message SubRefreshRequest {
+    string channel = 1{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "channel"]{{end}};
+    string token = 2{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "token"]{{end}};
+}
+
+message SubRefreshResult {
+    bool expires = 1{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "expires,omitempty"]{{end}};
+    uint32 ttl = 2{{if env.Getenv "GOGO"}} [(gogoproto.customname) = "TTL", (gogoproto.jsontag) = "ttl,omitempty"]{{end}};
+}
+
+message UnsubscribeRequest {
+    string channel = 1{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "channel"]{{end}};
+}
+
+message UnsubscribeResult {}
+
+message PublishRequest {
+    string channel = 1{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "channel"]{{end}};
+    bytes data = 2{{if env.Getenv "GOGO"}} [(gogoproto.customtype) = "Raw", (gogoproto.jsontag) = "data", (gogoproto.nullable) = false]{{end}};
+}
+
+message PublishResult {}
+
+message PresenceRequest {
+    string channel = 1{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "channel"]{{end}};
+}
+
+message PresenceResult {
+    map<string, ClientInfo> presence = 1{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "presence"]{{end}};
+}
+
+message PresenceStatsRequest {
+    string channel = 1{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "channel"]{{end}};
+}
+
+message PresenceStatsResult {
+    uint32 num_clients = 1{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "num_clients"]{{end}};
+    uint32 num_users = 2{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "num_users"]{{end}};
+}
+
+message HistoryRequest {
+    string channel = 1{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "channel"]{{end}};
+}
+
+message HistoryResult {
+    repeated Publication publications = 1{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "publications"]{{end}};
+}
+
+message PingRequest {
+}
+
+message PingResult {
+}
+
+message RPCRequest{
+    bytes data = 1{{if env.Getenv "GOGO"}} [(gogoproto.customtype) = "Raw", (gogoproto.jsontag) = "data", (gogoproto.nullable) = false]{{end}};
+    string method = 2{{if env.Getenv "GOGO"}} [(gogoproto.jsontag) = "method,omitempty"]{{end}};
+}
+
+message RPCResult {
+    bytes data = 1 {{if env.Getenv "GOGO"}} [(gogoproto.customtype) = "Raw", (gogoproto.jsontag) = "data,omitempty", (gogoproto.nullable) = false]{{end}};
+}
+
+message SendRequest{
+    bytes data = 1{{if env.Getenv "GOGO"}} [(gogoproto.customtype) = "Raw", (gogoproto.jsontag) = "data", (gogoproto.nullable) = false]{{end}};
+}

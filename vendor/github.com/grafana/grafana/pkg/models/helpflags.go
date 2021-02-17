@@ -9,8 +9,6 @@ const (
 
 func (f HelpFlags1) HasFlag(flag HelpFlags1) bool { return f&flag != 0 }
 func (f *HelpFlags1) AddFlag(flag HelpFlags1)     { *f |= flag }
-func (f *HelpFlags1) ClearFlag(flag HelpFlags1)   { *f &= ^flag }
-func (f *HelpFlags1) ToggleFlag(flag HelpFlags1)  { *f ^= flag }
 
 type SetUserHelpFlagCommand struct {
 	HelpFlags1 HelpFlags1

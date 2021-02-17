@@ -1,10 +1,10 @@
 sudo: false
 language: go
 go:
-  - 1.7.x
-  - 1.8.x
-  - 1.9.x
   - 1.10.x
+  - 1.11.x
+  - 1.12.x
+  - 1.13.x
   - master
 
 before_install:
@@ -97,6 +97,28 @@ matrix:
         - export MYSQL_TEST_USER=gotest
         - export MYSQL_TEST_PASS=secret
         - export MYSQL_TEST_ADDR=127.0.0.1:3307
+        - export MYSQL_TEST_CONCURRENT=1
+
+    - os: osx
+      osx_image: xcode10.1
+      addons:
+        homebrew:
+          packages:
+            - mysql
+          update: true
+      go: 1.12.x
+      before_install:
+        - go get golang.org/x/tools/cmd/cover
+        - go get github.com/mattn/goveralls
+      before_script:
+        - echo -e "[server]\ninnodb_log_file_size=256MB\ninnodb_buffer_pool_size=512MB\nmax_allowed_packet=16MB\nlocal_infile=1" >> /usr/local/etc/my.cnf
+        - mysql.server start
+        - mysql -uroot -e 'CREATE USER gotest IDENTIFIED BY "secret"'
+        - mysql -uroot -e 'GRANT ALL ON *.* TO gotest'
+        - mysql -uroot -e 'create database gotest;'
+        - export MYSQL_TEST_USER=gotest
+        - export MYSQL_TEST_PASS=secret
+        - export MYSQL_TEST_ADDR=127.0.0.1:3306
         - export MYSQL_TEST_CONCURRENT=1
 
 script:

@@ -1,0 +1,22 @@
+sudo: false
+language: go
+
+services:
+  - redis-server
+
+go:
+  - 1.4
+  - 1.6
+  - 1.7
+  - tip
+
+matrix:
+  allow_failures:
+    - go: 1.4
+    - go: tip
+
+install:
+  - go get github.com/onsi/ginkgo
+  - go get github.com/onsi/gomega
+  - mkdir -p $HOME/gopath/src/gopkg.in
+  - mv `pwd` $HOME/gopath/src/gopkg.in/redis.v5

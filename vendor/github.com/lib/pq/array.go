@@ -35,19 +35,31 @@ func Array(a interface{}) interface {
 		return (*BoolArray)(&a)
 	case []float64:
 		return (*Float64Array)(&a)
+	case []float32:
+		return (*Float32Array)(&a)
 	case []int64:
 		return (*Int64Array)(&a)
+	case []int32:
+		return (*Int32Array)(&a)
 	case []string:
 		return (*StringArray)(&a)
+	case [][]byte:
+		return (*ByteaArray)(&a)
 
 	case *[]bool:
 		return (*BoolArray)(a)
 	case *[]float64:
 		return (*Float64Array)(a)
+	case *[]float32:
+		return (*Float32Array)(a)
 	case *[]int64:
 		return (*Int64Array)(a)
+	case *[]int32:
+		return (*Int32Array)(a)
 	case *[]string:
 		return (*StringArray)(a)
+	case *[][]byte:
+		return (*ByteaArray)(a)
 	}
 
 	return GenericArray{a}
@@ -267,6 +279,70 @@ func (a Float64Array) Value() (driver.Value, error) {
 	return "{}", nil
 }
 
+// Float32Array represents a one-dimensional array of the PostgreSQL double
+// precision type.
+type Float32Array []float32
+
+// Scan implements the sql.Scanner interface.
+func (a *Float32Array) Scan(src interface{}) error {
+	switch src := src.(type) {
+	case []byte:
+		return a.scanBytes(src)
+	case string:
+		return a.scanBytes([]byte(src))
+	case nil:
+		*a = nil
+		return nil
+	}
+
+	return fmt.Errorf("pq: cannot convert %T to Float32Array", src)
+}
+
+func (a *Float32Array) scanBytes(src []byte) error {
+	elems, err := scanLinearArray(src, []byte{','}, "Float32Array")
+	if err != nil {
+		return err
+	}
+	if *a != nil && len(elems) == 0 {
+		*a = (*a)[:0]
+	} else {
+		b := make(Float32Array, len(elems))
+		for i, v := range elems {
+			var x float64
+			if x, err = strconv.ParseFloat(string(v), 32); err != nil {
+				return fmt.Errorf("pq: parsing array element index %d: %v", i, err)
+			}
+			b[i] = float32(x)
+		}
+		*a = b
+	}
+	return nil
+}
+
+// Value implements the driver.Valuer interface.
+func (a Float32Array) Value() (driver.Value, error) {
+	if a == nil {
+		return nil, nil
+	}
+
+	if n := len(a); n > 0 {
+		// There will be at least two curly brackets, N bytes of values,
+		// and N-1 bytes of delimiters.
+		b := make([]byte, 1, 1+2*n)
+		b[0] = '{'
+
+		b = strconv.AppendFloat(b, float64(a[0]), 'f', -1, 32)
+		for i := 1; i < n; i++ {
+			b = append(b, ',')
+			b = strconv.AppendFloat(b, float64(a[i]), 'f', -1, 32)
+		}
+
+		return string(append(b, '}')), nil
+	}
+
+	return "{}", nil
+}
+
 // GenericArray implements the driver.Valuer and sql.Scanner interfaces for
 // an array or slice of any dimension.
 type GenericArray struct{ A interface{} }
@@ -475,6 +551,69 @@ func (a Int64Array) Value() (driver.Value, error) {
 		for i := 1; i < n; i++ {
 			b = append(b, ',')
 			b = strconv.AppendInt(b, a[i], 10)
+		}
+
+		return string(append(b, '}')), nil
+	}
+
+	return "{}", nil
+}
+
+// Int32Array represents a one-dimensional array of the PostgreSQL integer types.
+type Int32Array []int32
+
+// Scan implements the sql.Scanner interface.
+func (a *Int32Array) Scan(src interface{}) error {
+	switch src := src.(type) {
+	case []byte:
+		return a.scanBytes(src)
+	case string:
+		return a.scanBytes([]byte(src))
+	case nil:
+		*a = nil
+		return nil
+	}
+
+	return fmt.Errorf("pq: cannot convert %T to Int32Array", src)
+}
+
+func (a *Int32Array) scanBytes(src []byte) error {
+	elems, err := scanLinearArray(src, []byte{','}, "Int32Array")
+	if err != nil {
+		return err
+	}
+	if *a != nil && len(elems) == 0 {
+		*a = (*a)[:0]
+	} else {
+		b := make(Int32Array, len(elems))
+		for i, v := range elems {
+			var x int
+			if x, err = strconv.Atoi(string(v)); err != nil {
+				return fmt.Errorf("pq: parsing array element index %d: %v", i, err)
+			}
+			b[i] = int32(x)
+		}
+		*a = b
+	}
+	return nil
+}
+
+// Value implements the driver.Valuer interface.
+func (a Int32Array) Value() (driver.Value, error) {
+	if a == nil {
+		return nil, nil
+	}
+
+	if n := len(a); n > 0 {
+		// There will be at least two curly brackets, N bytes of values,
+		// and N-1 bytes of delimiters.
+		b := make([]byte, 1, 1+2*n)
+		b[0] = '{'
+
+		b = strconv.AppendInt(b, int64(a[0]), 10)
+		for i := 1; i < n; i++ {
+			b = append(b, ',')
+			b = strconv.AppendInt(b, int64(a[i]), 10)
 		}
 
 		return string(append(b, '}')), nil

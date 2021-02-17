@@ -2,3 +2,5 @@
 *.test
 *~
 *.swp
+.idea
+.vscode

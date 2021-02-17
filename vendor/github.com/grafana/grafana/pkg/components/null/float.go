@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"math"
 	"reflect"
 	"strconv"
 )
@@ -42,10 +43,24 @@ func FloatFromPtr(f *float64) Float {
 	return NewFloat(*f, true)
 }
 
+// FloatFromString creates a new Float from string f.
+// If the string is equal to the value of nullString then the Float will be null.
+// An empty string f will return an error.
+func FloatFromString(f string, nullString string) (Float, error) {
+	if f == nullString {
+		return FloatFromPtr(nil), nil
+	}
+	fV, err := strconv.ParseFloat(f, 64)
+	if err != nil {
+		return Float{}, err
+	}
+	return FloatFrom(fV), nil
+}
+
 // UnmarshalJSON implements json.Unmarshaler.
 // It supports number and null input.
 // 0 will not be considered a null Float.
-// It also supports unmarshalling a sql.NullFloat64.
+// It also supports unmarshaling a sql.NullFloat64.
 func (f *Float) UnmarshalJSON(data []byte) error {
 	var err error
 	var v interface{}
@@ -85,7 +100,7 @@ func (f *Float) UnmarshalText(text []byte) error {
 // MarshalJSON implements json.Marshaler.
 // It will encode null if this Float is null.
 func (f Float) MarshalJSON() ([]byte, error) {
-	if !f.Valid {
+	if !f.Valid || math.IsNaN(f.Float64) {
 		return []byte(nullString), nil
 	}
 	return []byte(strconv.FormatFloat(f.Float64, 'f', -1, 64)), nil
@@ -117,20 +132,6 @@ func (f Float) FullString() string {
 	}
 
 	return fmt.Sprintf("%f", f.Float64)
-}
-
-// SetValid changes this Float's value and also sets it to be non-null.
-func (f *Float) SetValid(n float64) {
-	f.Float64 = n
-	f.Valid = true
-}
-
-// Ptr returns a pointer to this Float's value, or a nil pointer if this Float is null.
-func (f Float) Ptr() *float64 {
-	if !f.Valid {
-		return nil
-	}
-	return &f.Float64
 }
 
 // IsZero returns true for invalid Floats, for future omitempty support (Go 1.4?)

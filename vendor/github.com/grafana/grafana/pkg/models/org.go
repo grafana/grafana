@@ -7,8 +7,8 @@ import (
 
 // Typed errors
 var (
-	ErrOrgNotFound  = errors.New("Organization not found")
-	ErrOrgNameTaken = errors.New("Organization name is taken")
+	ErrOrgNotFound  = errors.New("organization not found")
+	ErrOrgNameTaken = errors.New("organization name is taken")
 )
 
 type Org struct {
@@ -67,6 +67,7 @@ type SearchOrgsQuery struct {
 	Name  string
 	Limit int
 	Page  int
+	Ids   []int64
 
 	Result []*OrgDTO
 }

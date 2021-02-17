@@ -111,6 +111,13 @@ func (rows *mysqlRows) Close() (err error) {
 		return err
 	}
 
+	// flip the buffer for this connection if we need to drain it.
+	// note that for a successful query (i.e. one where rows.next()
+	// has been called until it returns false), `rows.mc` will be nil
+	// by the time the user calls `(*Rows).Close`, so we won't reach this
+	// see: https://github.com/golang/go/commit/651ddbdb5056ded455f47f9c494c67b389622a47
+	mc.buf.flip()
+
 	// Remove unread packets from stream
 	if !rows.rs.done {
 		err = mc.readUntilEOF()

@@ -2,7 +2,6 @@ package log15
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/go-stack/stack"
@@ -58,12 +57,7 @@ func LvlFromString(lvlString string) (Lvl, error) {
 	case "crit":
 		return LvlCrit, nil
 	default:
-		// try to catch e.g. "INFO", "WARN" without slowing down the fast path
-		lower := strings.ToLower(lvlString)
-		if lower != lvlString {
-			return LvlFromString(lower)
-		}
-		return LvlDebug, fmt.Errorf("log15: unknown level: %v", lvlString)
+		return LvlDebug, fmt.Errorf("Unknown level: %v", lvlString)
 	}
 }
 

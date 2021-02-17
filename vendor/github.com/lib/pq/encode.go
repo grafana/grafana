@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -15,6 +16,8 @@ import (
 
 	"github.com/lib/pq/oid"
 )
+
+var time2400Regex = regexp.MustCompile(`^(24:00(?::00(?:\.0+)?)?)(?:[Z+-].*)?$`)
 
 func binaryEncode(parameterStatus *parameterStatus, x interface{}) []byte {
 	switch v := x.(type) {
@@ -202,9 +205,26 @@ func mustParse(f string, typ oid.Oid, s []byte) time.Time {
 		str[len(str)-3] == ':' {
 		f += ":00"
 	}
+	// Special case for 24:00 time.
+	// Unfortunately, golang does not parse 24:00 as a proper time.
+	// In this case, we want to try "round to the next day", to differentiate.
+	// As such, we find if the 24:00 time matches at the beginning; if so,
+	// we default it back to 00:00 but add a day later.
+	var is2400Time bool
+	switch typ {
+	case oid.T_timetz, oid.T_time:
+		if matches := time2400Regex.FindStringSubmatch(str); matches != nil {
+			// Concatenate timezone information at the back.
+			str = "00:00:00" + str[len(matches[1]):]
+			is2400Time = true
+		}
+	}
 	t, err := time.Parse(f, str)
 	if err != nil {
 		errorf("decode: %s", err)
+	}
+	if is2400Time {
+		t = t.Add(24 * time.Hour)
 	}
 	return t
 }
@@ -487,7 +507,7 @@ func FormatTimestamp(t time.Time) []byte {
 	b := []byte(t.Format("2006-01-02 15:04:05.999999999Z07:00"))
 
 	_, offset := t.Zone()
-	offset = offset % 60
+	offset %= 60
 	if offset != 0 {
 		// RFC3339Nano already printed the minus sign
 		if offset < 0 {
