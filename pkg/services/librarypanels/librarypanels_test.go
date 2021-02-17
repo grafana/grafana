@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
@@ -801,7 +802,7 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 				Data: simplejson.NewFromAny(dashJSON),
 			}
 
-			err = sc.service.LoadLibraryPanelsForDashboard(&dash)
+			err = sc.service.LoadLibraryPanelsForDashboard(sc.reqContext, &dash)
 			require.NoError(t, err)
 			expectedJSON := map[string]interface{}{
 				"panels": []interface{}{
@@ -898,7 +899,7 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 				Data: simplejson.NewFromAny(dashJSON),
 			}
 
-			err = sc.service.LoadLibraryPanelsForDashboard(&dash)
+			err = sc.service.LoadLibraryPanelsForDashboard(sc.reqContext, &dash)
 			require.EqualError(t, err, errLibraryPanelHeaderUIDMissing.Error())
 		})
 
@@ -943,7 +944,7 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 				Data: simplejson.NewFromAny(dashJSON),
 			}
 
-			err = sc.service.LoadLibraryPanelsForDashboard(&dash)
+			err = sc.service.LoadLibraryPanelsForDashboard(sc.reqContext, &dash)
 			require.NoError(t, err)
 			expectedJSON := map[string]interface{}{
 				"panels": []interface{}{
@@ -1258,6 +1259,85 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 			err = sc.service.ConnectLibraryPanelsForDashboard(sc.reqContext, &dash)
 			require.EqualError(t, err, errLibraryPanelHeaderUIDMissing.Error())
 		})
+
+	testScenario(t, "When an admin tries to store a dashboard with unusused/removed library panels, it should disconnect unusused/removed library panels",
+		func(t *testing.T, sc scenarioContext) {
+			command := getCreateCommand(1, "Unused Libray Panel")
+			response := sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, response.Status())
+
+			var unused libraryPanelResult
+			err := json.Unmarshal(response.Body(), &unused)
+			require.NoError(t, err)
+
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": unused.Result.UID, ":dashboardId": "1"})
+			response = sc.service.connectHandler(sc.reqContext)
+			require.Equal(t, 200, response.Status())
+
+			command = getCreateCommand(1, "Text - Library Panel1")
+			response = sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, response.Status())
+
+			var existing libraryPanelResult
+			err = json.Unmarshal(response.Body(), &existing)
+			require.NoError(t, err)
+
+			dashJSON := map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id": int64(1),
+						"gridPos": map[string]interface{}{
+							"h": 6,
+							"w": 6,
+							"x": 0,
+							"y": 0,
+						},
+					},
+					map[string]interface{}{
+						"id": int64(2),
+						"gridPos": map[string]interface{}{
+							"h": 6,
+							"w": 6,
+							"x": 6,
+							"y": 0,
+						},
+						"datasource": "${DS_GDEV-TESTDATA}",
+						"libraryPanel": map[string]interface{}{
+							"uid":  existing.Result.UID,
+							"name": existing.Result.Name,
+						},
+						"title": "Text - Library Panel",
+						"type":  "text",
+					},
+				},
+			}
+			dash := models.Dashboard{
+				Id:   int64(1),
+				Data: simplejson.NewFromAny(dashJSON),
+			}
+
+			err = sc.service.ConnectLibraryPanelsForDashboard(sc.reqContext, &dash)
+			require.NoError(t, err)
+
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": existing.Result.UID})
+			response = sc.service.getConnectedDashboardsHandler(sc.reqContext)
+			require.Equal(t, 200, response.Status())
+
+			var existingResult libraryPanelDashboardsResult
+			err = json.Unmarshal(response.Body(), &existingResult)
+			require.NoError(t, err)
+			require.Len(t, existingResult.Result, 1)
+			require.Equal(t, int64(1), existingResult.Result[0])
+
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": unused.Result.UID})
+			response = sc.service.getConnectedDashboardsHandler(sc.reqContext)
+			require.Equal(t, 200, response.Status())
+
+			var unusedResult libraryPanelDashboardsResult
+			err = json.Unmarshal(response.Body(), &unusedResult)
+			require.NoError(t, err)
+			require.Len(t, unusedResult.Result, 0)
+		})
 }
 
 func TestDisconnectLibraryPanelsForDashboard(t *testing.T) {
@@ -1309,7 +1389,7 @@ func TestDisconnectLibraryPanelsForDashboard(t *testing.T) {
 				Data: simplejson.NewFromAny(dashJSON),
 			}
 
-			err = sc.service.DisconnectLibraryPanelsForDashboard(&dash)
+			err = sc.service.DisconnectLibraryPanelsForDashboard(sc.reqContext, &dash)
 			require.NoError(t, err)
 
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": existing.Result.UID})
@@ -1369,7 +1449,7 @@ func TestDisconnectLibraryPanelsForDashboard(t *testing.T) {
 				Data: simplejson.NewFromAny(dashJSON),
 			}
 
-			err = sc.service.DisconnectLibraryPanelsForDashboard(&dash)
+			err = sc.service.DisconnectLibraryPanelsForDashboard(sc.reqContext, &dash)
 			require.EqualError(t, err, errLibraryPanelHeaderUIDMissing.Error())
 		})
 }
@@ -1449,7 +1529,9 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 	t.Run(desc, func(t *testing.T) {
 		t.Cleanup(registry.ClearOverrides)
 
-		ctx := macaron.Context{}
+		ctx := macaron.Context{
+			Req: macaron.Request{Request: &http.Request{}},
+		}
 		orgID := int64(1)
 		role := models.ROLE_ADMIN
 

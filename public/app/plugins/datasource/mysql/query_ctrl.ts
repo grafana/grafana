@@ -7,13 +7,9 @@ import MysqlQuery from './mysql_query';
 import sqlPart from './sql_part';
 import { auto } from 'angular';
 import { CoreEvents } from 'app/types';
-import { PanelEvents } from '@grafana/data';
+import { PanelEvents, QueryResultMeta } from '@grafana/data';
 import { VariableWithMultiSupport } from 'app/features/variables/types';
-import { getLocationSrv, TemplateSrv } from '@grafana/runtime';
-
-export interface QueryMeta {
-  sql: string;
-}
+import { TemplateSrv } from '@grafana/runtime';
 
 const defaultQuery = `SELECT
   UNIX_TIMESTAMP(<time_column>) as time_sec,
@@ -28,11 +24,12 @@ export class MysqlQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
 
   formats: any[];
-  lastQueryError: string | null;
+  lastQueryError?: string;
   showHelp: boolean;
 
   queryModel: MysqlQuery;
   metaBuilder: MysqlMetaQuery;
+  lastQueryMeta?: QueryResultMeta;
   tableSegment: any;
   whereAdd: any;
   timeColumnSegment: any;
@@ -106,13 +103,6 @@ export class MysqlQueryCtrl extends QueryCtrl {
 
     this.panelCtrl.events.on(PanelEvents.dataReceived, this.onDataReceived.bind(this), $scope);
     this.panelCtrl.events.on(PanelEvents.dataError, this.onDataError.bind(this), $scope);
-  }
-
-  showQueryInspector() {
-    getLocationSrv().update({
-      query: { inspect: this.panel.id, inspectTab: 'query' },
-      partial: true,
-    });
   }
 
   updateRawSqlAndRefresh() {
@@ -278,7 +268,8 @@ export class MysqlQueryCtrl extends QueryCtrl {
   }
 
   onDataReceived(dataList: any) {
-    this.lastQueryError = null;
+    this.lastQueryError = undefined;
+    this.lastQueryMeta = dataList[0]?.meta;
   }
 
   onDataError(err: any) {

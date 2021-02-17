@@ -6,6 +6,7 @@ import { GraphFieldConfig, DrawStyle } from '../uPlot/config';
 import uPlot from 'uplot';
 import createMockRaf from 'mock-raf';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
+import { preparePlotData } from './utils';
 
 const mockRaf = createMockRaf();
 const setDataMock = jest.fn();
@@ -71,10 +72,9 @@ describe('UPlotChart', () => {
 
     const { unmount } = render(
       <UPlotChart
-        data={data} // mock
+        data={preparePlotData(data)} // mock
         config={config}
         timeRange={timeRange}
-        timeZone={'browser'}
         width={100}
         height={100}
       />
@@ -96,10 +96,9 @@ describe('UPlotChart', () => {
 
       const { rerender } = render(
         <UPlotChart
-          data={data} // mock
+          data={preparePlotData(data)} // mock
           config={config}
           timeRange={timeRange}
-          timeZone={'browser'}
           width={100}
           height={100}
         />
@@ -116,10 +115,9 @@ describe('UPlotChart', () => {
 
       rerender(
         <UPlotChart
-          data={data} // changed
+          data={preparePlotData(data)} // changed
           config={config}
           timeRange={timeRange}
-          timeZone={'browser'}
           width={100}
           height={100}
         />
@@ -134,7 +132,7 @@ describe('UPlotChart', () => {
       const { data, timeRange, config } = mockData();
 
       const { queryAllByTestId } = render(
-        <UPlotChart data={data} config={config} timeRange={timeRange} timeZone={'browser'} width={0} height={0} />
+        <UPlotChart data={preparePlotData(data)} config={config} timeRange={timeRange} width={0} height={0} />
       );
 
       expect(queryAllByTestId('uplot-main-div')).toHaveLength(1);
@@ -146,10 +144,9 @@ describe('UPlotChart', () => {
 
       const { rerender } = render(
         <UPlotChart
-          data={data} // frame
+          data={preparePlotData(data)} // frame
           config={config}
           timeRange={timeRange}
-          timeZone={'browser'}
           width={100}
           height={100}
         />
@@ -164,10 +161,9 @@ describe('UPlotChart', () => {
 
       rerender(
         <UPlotChart
-          data={data}
+          data={preparePlotData(data)}
           config={new UPlotConfigBuilder()}
           timeRange={timeRange}
-          timeZone={'browser'}
           width={100}
           height={100}
         />
@@ -182,10 +178,9 @@ describe('UPlotChart', () => {
 
       const { rerender } = render(
         <UPlotChart
-          data={data} // frame
+          data={preparePlotData(data)} // frame
           config={config}
           timeRange={timeRange}
-          timeZone={'browser'}
           width={100}
           height={100}
         />
@@ -198,10 +193,9 @@ describe('UPlotChart', () => {
 
       rerender(
         <UPlotChart
-          data={data} // frame
+          data={preparePlotData(data)} // frame
           config={new UPlotConfigBuilder()}
           timeRange={timeRange}
-          timeZone={'browser'}
           width={200}
           height={200}
         />
