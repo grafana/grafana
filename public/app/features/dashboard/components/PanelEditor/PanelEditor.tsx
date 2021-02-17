@@ -149,16 +149,6 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   };
 
   onFieldConfigChange = (config: FieldConfigSource) => {
-    if (this.props.panel.libraryPanel?.uid !== undefined) {
-      this.props.dashboard.panels.forEach((panel) => {
-        if (panel.libraryPanel?.uid === this.props.panel.libraryPanel!.uid) {
-          panel.updateFieldConfig({
-            ...config,
-          });
-        }
-      });
-    }
-
     // we do not need to trigger force update here as the function call below
     // fires PanelOptionsChangedEvent which we subscribe to above
     this.props.panel.updateFieldConfig({
@@ -167,30 +157,12 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   };
 
   onPanelOptionsChanged = (options: any) => {
-    if (this.props.panel.libraryPanel?.uid !== undefined) {
-      this.props.dashboard.panels.forEach((panel) => {
-        if (panel.libraryPanel?.uid === this.props.panel.libraryPanel!.uid) {
-          panel.updateOptions(options);
-        }
-      });
-    }
-
     // we do not need to trigger force update here as the function call below
     // fires PanelOptionsChangedEvent which we subscribe to above
     this.props.panel.updateOptions(options);
   };
 
   onPanelConfigChanged = (configKey: keyof PanelModel, value: any) => {
-    if (this.props.panel.libraryPanel?.uid !== undefined) {
-      this.props.dashboard.panels.forEach((panel) => {
-        if (panel.libraryPanel?.uid === this.props.panel.libraryPanel!.uid) {
-          // @ts-ignore
-          panel[configKey] = value;
-          panel.render();
-        }
-      });
-    }
-
     // @ts-ignore
     this.props.panel[configKey] = value;
     this.props.panel.render();

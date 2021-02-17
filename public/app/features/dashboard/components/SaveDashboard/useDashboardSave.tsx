@@ -8,33 +8,14 @@ import appEvents from 'app/core/app_events';
 import { updateLocation } from 'app/core/reducers/location';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { saveDashboard as saveDashboardApiCall } from 'app/features/manage-dashboards/state/actions';
-import { getLibrarySrv } from 'app/core/services/library_srv';
 
-// Putting this here purely as a temporary measure, but I suspect it would make more sense
-// to handle panel unlinking on the backend in a similar manner.
-const unlinkLibraryPanels = (dashboard: DashboardModel) => {
-  const libraryPanels = dashboard.panels
-    .filter((panel) => panel.libraryPanel?.uid !== undefined)
-    .reduce<Record<string, boolean>>((libPanels, curPanel) => {
-      libPanels[curPanel.libraryPanel!.uid!] = true;
-      return libPanels;
-    }, {});
-
-  const panelsToUnlink = dashboard.originalLibraryPanels.filter((libPanelId) => !libraryPanels[libPanelId]);
-  return panelsToUnlink.map((panelId) => getLibrarySrv().disconnectLibraryPanel(panelId, dashboard.id));
-};
-
-const saveDashboard = async (saveModel: any, options: SaveDashboardOptions, dashboard: DashboardModel) => {
+const saveDashboard = (saveModel: any, options: SaveDashboardOptions, dashboard: DashboardModel) => {
   let folderId = options.folderId;
   if (folderId === undefined) {
     folderId = dashboard.meta.folderId ?? saveModel.folderId;
   }
 
-  const savePromise = Promise.all([
-    saveDashboardApiCall({ ...options, folderId, dashboard: saveModel }),
-    ...unlinkLibraryPanels(dashboard),
-  ]);
-  return (await savePromise)[0];
+  return saveDashboardApiCall({ ...options, folderId, dashboard: saveModel });
 };
 
 export const useDashboardSave = (dashboard: DashboardModel) => {

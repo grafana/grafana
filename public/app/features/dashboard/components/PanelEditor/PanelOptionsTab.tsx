@@ -71,6 +71,7 @@ export const PanelOptionsTab: FC<Props> = ({
   const useLibraryPanel = (panelInfo: LibraryPanelDTO) => {
     panel.restoreModel({
       ...panelInfo.model,
+      ...pick(panel, 'gridPos', 'id'),
       libraryPanel: pick(panelInfo, 'uid', 'name', 'meta'),
     });
 

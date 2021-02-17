@@ -9,6 +9,7 @@ import {
 } from './reducers';
 import { cleanUpEditPanel, panelModelAndPluginReady } from '../../../state/reducers';
 import store from 'app/core/store';
+import pick from 'lodash/pick';
 
 export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardModel): ThunkResult<void> {
   return (dispatch) => {
@@ -23,6 +24,38 @@ export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardMod
   };
 }
 
+function updateDuplicateLibraryPanels(modifiedPanel: PanelModel, dashboard: DashboardModel, dispatch: any) {
+  if (modifiedPanel.libraryPanel?.uid === undefined) {
+    return;
+  }
+
+  const modifiedSaveModel = modifiedPanel.getSaveModel();
+  for (const panel of dashboard.panels) {
+    if (panel.libraryPanel?.uid !== modifiedPanel.libraryPanel!.uid) {
+      continue;
+    }
+
+    panel.restoreModel({
+      ...modifiedSaveModel,
+      ...pick(panel, 'gridPos', 'id'),
+    });
+
+    // Loaded plugin is not included in the persisted properties
+    // So is not handled by restoreModel
+    panel.plugin = modifiedSaveModel.plugin;
+
+    if (panel.type !== modifiedPanel.type) {
+      dispatch(panelModelAndPluginReady({ panelId: panel.id, plugin: panel.plugin! }));
+    }
+
+    // Resend last query result on source panel query runner
+    // But do this after the panel edit editor exit process has completed
+    setTimeout(() => {
+      panel.getQueryRunner().useLastResultFrom(modifiedPanel.getQueryRunner());
+    }, 20);
+  }
+}
+
 export function panelEditorCleanUp(): ThunkResult<void> {
   return (dispatch, getStore) => {
     const dashboard = getStore().dashboard.getModel();
@@ -33,6 +66,8 @@ export function panelEditorCleanUp(): ThunkResult<void> {
       const modifiedSaveModel = panel.getSaveModel();
       const sourcePanel = getSourcePanel();
       const panelTypeChanged = sourcePanel.type !== panel.type;
+
+      updateDuplicateLibraryPanels(panel, dashboard!, dispatch);
 
       // restore the source panel id before we update source panel
       modifiedSaveModel.id = sourcePanel.id;
