@@ -1,4 +1,4 @@
-import { NotificationChannelType } from '../NotificationChannel.types';
+import { NotificationChannelType, PagerDutyKeyType } from '../NotificationChannel.types';
 import { Messages } from './AddNotificationChannelModal.messages';
 import { EmailFields } from './EmailFields/EmailFields';
 import { PagerDutyFields } from './PagerDutyFields/PagerDutyFields';
@@ -24,3 +24,14 @@ export const TYPE_FIELDS_COMPONENT = {
   [NotificationChannelType.pagerDuty]: PagerDutyFields,
   [NotificationChannelType.slack]: SlackFields,
 };
+
+export const PAGER_DUTY_TYPE_OPTIONS = [
+  {
+    value: PagerDutyKeyType.routing,
+    label: Messages.fields.routingKey,
+  },
+  {
+    value: PagerDutyKeyType.service,
+    label: Messages.fields.serviceKey,
+  },
+];

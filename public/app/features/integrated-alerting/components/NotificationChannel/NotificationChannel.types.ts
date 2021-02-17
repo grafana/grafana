@@ -13,6 +13,10 @@ export enum NotificationChannelType {
   slack = 'slack',
 }
 
+export enum PagerDutyKeyType {
+  service = 'service',
+  routing = 'routing',
+}
 export interface NotificationChannel {
   type: NotificationChannelType;
   channelId: string;
@@ -69,6 +73,7 @@ export interface NotificationChannelRenderProps {
   name: string;
   type: SelectableValue<NotificationChannelType>;
   emails?: string;
+  keyType?: PagerDutyKeyType;
   routing?: string;
   service?: string;
   channel?: string;
