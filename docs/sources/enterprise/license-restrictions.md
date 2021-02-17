@@ -25,6 +25,12 @@ Restrictions are applied separately for viewers and editors.
 
 When the number of maximum active viewers or editors is reached, Grafana displays a warning banner.
 
+### Usage billing
+
+It is possible to turn on usage billing in enterprise licensing to have unlimited number of user limits. When usage billing is on, Grafana will not enforce active user limits and instead will charge for active users above the limit, according to the customer's contract. 
+
+The usage billing must be agreed with Grafana Labs and is only available to customers who have automated license token renewal enabled.
+
 ## Expiration date
 
 The license expiration date is the date when a license is no longer active. As the license expiration date approaches, Grafana Enterprise displays a banner.
