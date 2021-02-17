@@ -225,7 +225,12 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) res
 
 	err = hs.loginUserWithUser(user, c)
 	if err != nil {
-		resp = response.Error(http.StatusInternalServerError, "Error while signing in user", err)
+		var createTokenErr *models.CreateTokenErr
+		if errors.As(err, &createTokenErr) {
+			resp = response.Error(createTokenErr.StatusCode, createTokenErr.ExternalErr, createTokenErr.InternalErr)
+		} else {
+			resp = response.Error(http.StatusInternalServerError, "Error while signing in user", err)
+		}
 		return resp
 	}
 
