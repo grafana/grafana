@@ -1,0 +1,1 @@
+export const HIDDEN_PASSWORD_LENGTH = 15;

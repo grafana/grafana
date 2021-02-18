@@ -562,6 +562,13 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
           ),
       },
     })
+    .when('/dbaas', {
+      template: '<react-container />',
+      resolve: {
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "IntegratedAlertingPage" */ 'app/percona/dbaas/DBaaS')),
+      },
+    })
     .when('/alerting/notification/new', {
       template: '<react-container />',
       resolve: {

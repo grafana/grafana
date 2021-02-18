@@ -18,7 +18,7 @@ const TopSection: FC<any> = () => {
     id: 'dbaas',
     icon: 'database',
     text: 'DBaaS',
-    url: '/graph/d/pmm-dbaas/pmm-dbaas',
+    url: `${config.appSubUrl}/dbaas`,
   };
   const onOpenSearch = () => {
     getLocationSrv().update({ query: { search: 'open' }, partial: true });
