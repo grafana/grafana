@@ -198,6 +198,173 @@
         }
       }
     },
+    "/api/v1/rules": {
+      "get": {
+        "description": "List rule groups",
+        "produces": [
+          "application/yaml"
+        ],
+        "tags": [
+          "RulerConfig"
+        ],
+        "operationId": "RouteGetRulesConfig",
+        "responses": {
+          "202": {
+            "description": "NamespaceConfigResponse",
+            "schema": {
+              "$ref": "#/definitions/NamespaceConfigResponse"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rules/{Namespace}": {
+      "get": {
+        "description": "Get rule groups by namespace",
+        "produces": [
+          "application/yaml"
+        ],
+        "tags": [
+          "RulerConfig"
+        ],
+        "operationId": "RouteGetNamespaceRulesConfig",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "Namespace",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "RuleGroupConfigResponse",
+            "schema": {
+              "$ref": "#/definitions/RuleGroupConfigResponse"
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "Creates or updates a rule group",
+        "consumes": [
+          "application/yaml"
+        ],
+        "tags": [
+          "RulerConfig"
+        ],
+        "operationId": "RoutePostNameRulesConfig",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "Namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/RuleGroupConfig"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Ack",
+            "schema": {
+              "$ref": "#/definitions/Ack"
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "Delete namespace",
+        "tags": [
+          "RulerConfig"
+        ],
+        "operationId": "RouteDeleteNamespaceRulesConfig",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "Namespace",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Ack",
+            "schema": {
+              "$ref": "#/definitions/Ack"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rules/{Namespace}/{Groupname}": {
+      "get": {
+        "description": "Get rule group",
+        "produces": [
+          "application/yaml"
+        ],
+        "tags": [
+          "RulerConfig"
+        ],
+        "operationId": "RouteGetRulegGroupConfig",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "Namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "Groupname",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "RuleGroupConfigResponse",
+            "schema": {
+              "$ref": "#/definitions/RuleGroupConfigResponse"
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "Delete rule group",
+        "tags": [
+          "RulerConfig"
+        ],
+        "operationId": "RouteDeleteRuleGroupConfig",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "Namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "Groupname",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Ack",
+            "schema": {
+              "$ref": "#/definitions/Ack"
+            }
+          }
+        }
+      }
+    },
     "/api/v1/status/alerts": {
       "get": {
         "description": "gets the current alerts",
@@ -720,6 +887,39 @@
       "title": "ErrorType models the different API error types.",
       "x-go-package": "github.com/prometheus/client_golang/api/prometheus/v1"
     },
+    "ExtendedRuleNode": {
+      "type": "object",
+      "properties": {
+        "Alert": {
+          "$ref": "#/definitions/Node"
+        },
+        "Annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "Expr": {
+          "$ref": "#/definitions/Node"
+        },
+        "For": {
+          "$ref": "#/definitions/Duration"
+        },
+        "GrafanaManagedAlert": {
+          "$ref": "#/definitions/Node"
+        },
+        "Labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "Record": {
+          "$ref": "#/definitions/Node"
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
     "GlobalConfig": {
       "description": "GlobalConfig defines configuration parameters that are valid globally\nunless overwritten.",
       "type": "object",
@@ -791,7 +991,6 @@
       "x-go-package": "github.com/prometheus/alertmanager/config"
     },
     "GrafanaReceiver": {
-      "description": "type GrafanaReceiver models.CreateAlertNotificationCommand",
       "$ref": "#/definitions/CreateAlertNotificationCommand"
     },
     "HTTPClientConfig": {
@@ -872,6 +1071,11 @@
       "type": "object",
       "x-go-package": "github.com/grafana/grafana/pkg/components/simplejson"
     },
+    "Kind": {
+      "type": "integer",
+      "format": "uint32",
+      "x-go-package": "gopkg.in/yaml.v3"
+    },
     "LabelName": {
       "description": "A LabelName is a key for a LabelSet or Metric.  It has a value associated\ntherewith.",
       "type": "string",
@@ -922,6 +1126,70 @@
         "$ref": "#/definitions/Matcher"
       },
       "$ref": "#/definitions/Matchers"
+    },
+    "NamespaceConfigResponse": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/RuleGroupConfig"
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
+    "Node": {
+      "description": "It's worth noting that although Node offers access into details such as\nline numbers, colums, and comments, the content when re-encoded will not\nhave its original textual representation preserved. An effort is made to\nrender the data plesantly, and to preserve comments near the data they\ndescribe, though.\n\nValues that make use of the Node type interact with the yaml package in the\nsame way any other type would do, by encoding and decoding yaml data\ndirectly or indirectly into them.\n\nFor example:\n\nvar person struct {\nName    string\nAddress yaml.Node\n}\nerr := yaml.Unmarshal(data, \u0026person)\n\nOr by itself:\n\nvar person Node\nerr := yaml.Unmarshal(data, \u0026person)",
+      "type": "object",
+      "title": "Node represents an element in the YAML document hierarchy. While documents\nare typically encoded and decoded into higher level types, such as structs\nand maps, Node is an intermediate representation that allows detailed\ncontrol over the content being decoded or encoded.",
+      "properties": {
+        "Alias": {
+          "$ref": "#/definitions/Node"
+        },
+        "Anchor": {
+          "description": "Anchor holds the anchor name for this node, which allows aliases to point to it.",
+          "type": "string"
+        },
+        "Column": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Content": {
+          "description": "Content holds contained nodes for documents, mappings, and sequences.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Node"
+          }
+        },
+        "FootComment": {
+          "description": "FootComment holds any comments following the node and before empty lines.",
+          "type": "string"
+        },
+        "HeadComment": {
+          "description": "HeadComment holds any comments in the lines preceding the node and\nnot separated by an empty line.",
+          "type": "string"
+        },
+        "Kind": {
+          "$ref": "#/definitions/Kind"
+        },
+        "Line": {
+          "description": "Line and Column hold the node position in the decoded YAML text.\nThese fields are not respected when encoding the node.",
+          "type": "integer",
+          "format": "int64"
+        },
+        "LineComment": {
+          "description": "LineComment holds any comments at the end of the line where the node is in.",
+          "type": "string"
+        },
+        "Style": {
+          "$ref": "#/definitions/Style"
+        },
+        "Tag": {
+          "description": "Tag holds the YAML tag defining the data type for the value.\nWhen decoding, this field will always be set to the resolved tag,\neven when it wasn't explicitly provided in the YAML content.\nWhen encoding, if this field is unset the value type will be\nimplied from the node properties, and if it is set, it will only\nbe serialized into the representation if TaggedStyle is used or\nthe implicit tag diverges from the provided one.",
+          "type": "string"
+        },
+        "Value": {
+          "description": "Value holds the unescaped and unquoted represenation of the value.",
+          "type": "string"
+        }
+      },
+      "x-go-package": "gopkg.in/yaml.v3"
     },
     "NotifierConfig": {
       "type": "object",
@@ -1191,12 +1459,6 @@
       "type": "object",
       "title": "Receiver configuration provides configuration on how to contact a receiver.",
       "properties": {
-        "GrafanaManagedReceivers": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/GrafanaReceiver"
-          }
-        },
         "email_configs": {
           "type": "array",
           "items": {
@@ -1259,7 +1521,7 @@
           "x-go-name": "WechatConfigs"
         }
       },
-      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+      "x-go-package": "github.com/prometheus/alertmanager/config"
     },
     "Regexp": {
       "description": "A Regexp is safe for concurrent use by multiple goroutines,\nexcept for configuration methods, such as Longest.",
@@ -1407,6 +1669,73 @@
         }
       },
       "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
+    "RuleGroupConfig": {
+      "type": "object",
+      "properties": {
+        "Interval": {
+          "$ref": "#/definitions/Duration"
+        },
+        "Name": {
+          "type": "string"
+        },
+        "Rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ExtendedRuleNode"
+          }
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
+    "RuleGroupConfigResponse": {
+      "type": "object",
+      "properties": {
+        "Interval": {
+          "$ref": "#/definitions/Duration"
+        },
+        "Name": {
+          "type": "string"
+        },
+        "Rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ExtendedRuleNode"
+          }
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
+    "RuleNode": {
+      "type": "object",
+      "title": "RuleNode adds yaml.v3 layer to support line and column outputs for invalid rules.",
+      "properties": {
+        "Alert": {
+          "$ref": "#/definitions/Node"
+        },
+        "Annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "Expr": {
+          "$ref": "#/definitions/Node"
+        },
+        "For": {
+          "$ref": "#/definitions/Duration"
+        },
+        "Labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "Record": {
+          "$ref": "#/definitions/Node"
+        }
+      },
+      "x-go-package": "github.com/prometheus/prometheus/pkg/rulefmt"
     },
     "RuleResponse": {
       "type": "object",
@@ -1678,6 +2007,11 @@
         }
       },
       "x-go-package": "github.com/prometheus/alertmanager/config"
+    },
+    "Style": {
+      "type": "integer",
+      "format": "uint32",
+      "x-go-package": "gopkg.in/yaml.v3"
     },
     "TLSConfig": {
       "type": "object",
