@@ -2,6 +2,7 @@ package flux
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -40,20 +41,15 @@ func executeQuery(ctx context.Context, query queryModel, runner queryRunner, max
 			// we improve the error-message.
 			// (we have to do it in such a complicated way, because at the point where
 			// the error happens, there is not enough info to create a nice error message)
-			switch drErr := dr.Error.(type) {
-			case maxPointsExceededError:
-				{
-					pointCount := drErr.Count
-					text := fmt.Sprintf("A query returned too many datapoints and the results have been truncated at %d points to prevent memory issues. At the current graph size, Grafana can only draw %d.", pointCount, query.MaxDataPoints)
-					// we recommend to the user to use AggregateWindow(), but only if it is not already used
-					if !strings.Contains(query.RawQuery, "aggregateWindow(") {
-						text += " Try using the aggregateWindow() function in your query to reduce the number of points returned."
-					}
-
-					dr.Error = fmt.Errorf(text)
+			var maxPointError maxPointsExceededError
+			if errors.As(dr.Error, &maxPointError) {
+				text := fmt.Sprintf("A query returned too many datapoints and the results have been truncated at %d points to prevent memory issues. At the current graph size, Grafana can only draw %d.", maxPointError.Count, query.MaxDataPoints)
+				// we recommend to the user to use AggregateWindow(), but only if it is not already used
+				if !strings.Contains(query.RawQuery, "aggregateWindow(") {
+					text += " Try using the aggregateWindow() function in your query to reduce the number of points returned."
 				}
-			default:
-				// nothing, we keep the original error
+
+				dr.Error = fmt.Errorf(text)
 			}
 		}
 	}
