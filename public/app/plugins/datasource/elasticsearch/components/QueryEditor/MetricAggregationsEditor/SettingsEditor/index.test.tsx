@@ -12,6 +12,7 @@ describe('Settings Editor', () => {
       const initialSize = '500';
       const query: ElasticsearchQuery = {
         refId: 'A',
+        query: '',
         metrics: [
           {
             id: metricId,
@@ -21,6 +22,7 @@ describe('Settings Editor', () => {
             },
           },
         ],
+        bucketAggs: [],
       };
 
       const onChange = jest.fn();

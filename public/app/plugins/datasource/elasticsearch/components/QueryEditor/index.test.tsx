@@ -10,6 +10,7 @@ describe('QueryEditor', () => {
       const alias = '{{metric}}';
       const query: ElasticsearchQuery = {
         refId: 'A',
+        query: '',
         alias,
         metrics: [
           {
