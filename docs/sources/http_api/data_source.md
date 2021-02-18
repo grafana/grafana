@@ -504,7 +504,7 @@ Queries a time series data source having backend implementation.
 
 `POST /api/tsdb/query`
 
-> **Note:** Most of our builtin data sources have backend implementation.
+> **Note:** Most of Grafana's builtin data sources have backend implementation.
 
 **Example Request**:
 
