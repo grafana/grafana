@@ -116,10 +116,12 @@ type CreatePolicyWithPermissionsCommand struct {
 }
 
 type UpdatePolicyCommand struct {
-	OrgId       int64  `json:"-"`
-	UID         string `json:"uid"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
+	Id          int64        `json:"id"`
+	OrgId       int64        `json:"-"`
+	UID         string       `json:"uid"`
+	Name        string       `json:"name"`
+	Description string       `json:"description"`
+	Permissions []Permission `json:"permissions"`
 }
 
 type DeletePolicyCommand struct {

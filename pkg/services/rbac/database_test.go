@@ -80,18 +80,23 @@ func TestUpdatingPolicy(t *testing.T) {
 		policy    policyTestCase
 		newPolicy policyTestCase
 
-		expectedError   error
-		expectedUpdated time.Time
+		expectedError error
 	}{
 		{
 			desc: "should successfuly update policy name",
 			policy: policyTestCase{
 				name: "a name",
+				permissions: []permissionTestCase{
+					{scope: "/api/report", permission: "get"},
+				},
 			},
 			newPolicy: policyTestCase{
 				name: "a different name",
+				permissions: []permissionTestCase{
+					{scope: "/api/report", permission: "post"},
+					{scope: "/api/report", permission: "get"},
+				},
 			},
-			expectedUpdated: time.Unix(1, 0).UTC(),
 		},
 		{
 			desc: "should successfuly create policy with permissions",
@@ -109,7 +114,6 @@ func TestUpdatingPolicy(t *testing.T) {
 					{scope: "/api/report", permission: "post"},
 				},
 			},
-			expectedUpdated: time.Unix(3, 0).UTC(),
 		},
 	}
 	for _, tc := range testCases {
@@ -118,44 +122,34 @@ func TestUpdatingPolicy(t *testing.T) {
 			t.Cleanup(registry.ClearOverrides)
 
 			policy := createPolicy(t, ac, tc.policy)
+			updated := policy.Updated
 
 			updatePolicyCmd := UpdatePolicyCommand{
 				UID:  policy.UID,
 				Name: tc.newPolicy.name,
 			}
+			for _, perm := range tc.newPolicy.permissions {
+				updatePolicyCmd.Permissions = append(updatePolicyCmd.Permissions, Permission{
+					Permission: perm.permission,
+					Scope:      perm.scope,
+				})
+			}
 
 			_, err := ac.UpdatePolicy(context.Background(), updatePolicyCmd)
 			require.NoError(t, err)
 
-			if tc.newPolicy.permissions != nil {
-				// Update permissions
-				perm, err := ac.GetPolicyPermissions(context.Background(), policy.Id)
-				require.NoError(t, err)
-				for _, reqP := range tc.newPolicy.permissions {
-					for _, p := range perm {
-						if reqP.scope == p.Scope {
-							if reqP.permission != p.Permission {
-								updatePermCmd := UpdatePermissionCommand{
-									Id:         p.Id,
-									Permission: reqP.permission,
-								}
-								_, err = ac.UpdatePermission(&updatePermCmd)
-								require.NoError(t, err)
-							}
-						}
-					}
-				}
+			updatedPolicy, err := ac.GetPolicyByUID(context.Background(), 1, policy.UID)
 
-				// Check updated
-				perm, err = ac.GetPolicyPermissions(context.Background(), policy.Id)
-				require.NoError(t, err)
-				for _, reqP := range tc.newPolicy.permissions {
-					for _, p := range perm {
-						if reqP.scope == p.Scope {
-							require.Equal(t, reqP.permission, p.Permission)
-						}
-					}
-				}
+			require.NoError(t, err)
+			assert.Equal(t, tc.newPolicy.name, updatedPolicy.Name)
+			assert.True(t, updatedPolicy.Updated.After(updated))
+			assert.Equal(t, len(tc.newPolicy.permissions), len(updatedPolicy.Permissions))
+
+			// Check permissions
+			require.NoError(t, err)
+			for i, updatedPermission := range updatedPolicy.Permissions {
+				assert.Equal(t, tc.newPolicy.permissions[i].permission, updatedPermission.Permission)
+				assert.Equal(t, tc.newPolicy.permissions[i].scope, updatedPermission.Scope)
 			}
 		})
 	}

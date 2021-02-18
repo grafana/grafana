@@ -74,25 +74,21 @@ type permissionTestCase struct {
 	scope      string
 }
 
-func createPolicy(t *testing.T, ac *RBACService, p policyTestCase) *Policy {
-	createPolicyCmd := CreatePolicyCommand{
-		OrgId: 1,
-		Name:  p.name,
+func createPolicy(t *testing.T, ac *RBACService, p policyTestCase) *PolicyDTO {
+	createPolicyCmd := CreatePolicyWithPermissionsCommand{
+		OrgId:       1,
+		Name:        p.name,
+		Permissions: []Permission{},
 	}
-	res, err := ac.CreatePolicy(context.Background(), createPolicyCmd)
-	require.NoError(t, err)
-	policyId := res.Id
-
 	for _, perm := range p.permissions {
-		permCmd := CreatePermissionCommand{
-			PolicyId:   policyId,
+		createPolicyCmd.Permissions = append(createPolicyCmd.Permissions, Permission{
 			Permission: perm.permission,
 			Scope:      perm.scope,
-		}
-
-		_, err := ac.CreatePermission(context.Background(), permCmd)
-		require.NoError(t, err)
+		})
 	}
+
+	res, err := ac.CreatePolicyWithPermissions(context.Background(), createPolicyCmd)
+	require.NoError(t, err)
 
 	return res
 }

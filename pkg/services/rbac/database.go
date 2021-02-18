@@ -159,8 +159,9 @@ func (ac *RBACService) CreatePolicyWithPermissions(ctx context.Context, cmd Crea
 	return result, err
 }
 
-func (ac *RBACService) UpdatePolicy(ctx context.Context, cmd UpdatePolicyCommand) (*Policy, error) {
-	var result *Policy
+// UpdatePolicy updates policy with permissions
+func (ac *RBACService) UpdatePolicy(ctx context.Context, cmd UpdatePolicyCommand) (*PolicyDTO, error) {
+	var result *PolicyDTO
 	err := ac.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		existingPolicy, err := getPolicyByUID(sess, cmd.UID, cmd.OrgId)
 		if err != nil {
@@ -186,9 +187,40 @@ func (ac *RBACService) UpdatePolicy(ctx context.Context, cmd UpdatePolicyCommand
 			return ErrPolicyNotFound
 		}
 
-		result = policy
+		result = &PolicyDTO{
+			Id:          policy.Id,
+			UID:         policy.UID,
+			OrgId:       policy.OrgId,
+			Name:        policy.Name,
+			Description: policy.Description,
+			Created:     policy.Created,
+			Updated:     policy.Updated,
+		}
+
+		// Delete policy's permissions
+		_, err = sess.Exec("DELETE FROM permission WHERE policy_id = ?", existingPolicy.Id)
+		if err != nil {
+			return err
+		}
+
+		// Add permissions
+		for _, p := range cmd.Permissions {
+			createPermissionCmd := CreatePermissionCommand{
+				PolicyId:   policy.Id,
+				Permission: p.Permission,
+				Scope:      p.Scope,
+			}
+
+			permission, err := createPermission(sess, createPermissionCmd)
+			if err != nil {
+				return err
+			}
+			result.Permissions = append(result.Permissions, *permission)
+		}
+
 		return nil
 	})
+
 	return result, err
 }
 
