@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { DisplayValue, formattedValueToString, GrafanaTheme } from '@grafana/data';
+import { DisplayValue, FALLBACK_COLOR, formattedValueToString, GrafanaTheme } from '@grafana/data';
 import { useStyles, useTheme } from '../../themes/ThemeContext';
 import tinycolor from 'tinycolor2';
 import Pie, { PieArcDatum } from '@visx/shape/lib/shapes/Pie';
@@ -12,8 +12,6 @@ import { css } from 'emotion';
 import { VizLegend, VizLegendItem } from '..';
 import { VizLayout } from '../VizLayout/VizLayout';
 import { LegendDisplayMode, VizLegendOptions } from '../VizLegend/types';
-
-export const DEFAULT_COLOR = 'gray';
 
 export interface Props {
   height: number;
@@ -72,7 +70,7 @@ export const PieChart: FC<Props> = ({
     const legendItems = values.map<VizLegendItem>((value) => {
       return {
         label: value.title ?? '',
-        color: value.color ?? DEFAULT_COLOR,
+        color: value.color ?? FALLBACK_COLOR,
         yAxis: 1,
       };
     });
@@ -109,7 +107,7 @@ export const PieChart: FC<Props> = ({
             <svg width={layout.size} height={layout.size} ref={containerRef}>
               <Group top={layout.position} left={layout.position}>
                 {values.map((value) => {
-                  const color = value.color ?? DEFAULT_COLOR;
+                  const color = value.color ?? FALLBACK_COLOR;
                   return (
                     <RadialGradient
                       key={value.color}
@@ -144,7 +142,7 @@ export const PieChart: FC<Props> = ({
                         >
                           <path
                             d={pie.path({ ...arc })!}
-                            fill={useGradients ? getGradientColor(arc.data.color ?? DEFAULT_COLOR) : arc.data.color}
+                            fill={useGradients ? getGradientColor(arc.data.color ?? FALLBACK_COLOR) : arc.data.color}
                             stroke={theme.colors.panelBg}
                             strokeWidth={1}
                           />
