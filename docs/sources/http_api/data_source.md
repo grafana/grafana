@@ -533,12 +533,12 @@ Content-Type: application/json
 JSON Body schema:
 
 - **from/to** – Should be either absolute in epoch timestamps in milliseconds or relative using Grafana time units. For example, `now-1h`.
-- **query.refId** – Specifies an identifier of the query. Is optional and default to `"A".
-- **query.datasourceId** – Specifies the data source to be queried. Each `query` in the request must have an unique `datasourceId`.
-- **query.maxDataPoints** - Species maximum amount of data points that dashboard panel can render. Is optional and default to 100.
-- **query.intervalMs** - Specifies the time interval in milliseconds of time series. Is optional and defaults to 1000.
+- **queries.refId** – Specifies an identifier of the query. Is optional and default to `"A".
+- **queries.datasourceId** – Specifies the data source to be queried. Each `query` in the request must have an unique `datasourceId`.
+- **queries.maxDataPoints** - Species maximum amount of data points that dashboard panel can render. Is optional and default to 100.
+- **queries.intervalMs** - Specifies the time interval in milliseconds of time series. Is optional and defaults to 1000.
 
-In addition, each data source have their own specific properties that should be added in a request. 
+In addition, each data source has its own specific properties that should be added in a request. 
 
 **Example Request for the MySQL data source:**
 
