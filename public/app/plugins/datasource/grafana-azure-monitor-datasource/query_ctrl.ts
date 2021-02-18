@@ -83,7 +83,17 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       timeGrains: [] as string[],
     },
     azureLogAnalytics: {
-      query: ['AzureActivity | take 10'].join('\n'),
+      query: [
+        '//change this example to create your own time series query',
+        '<table name>                                                              ' +
+          '//the table to query (e.g. Usage, Heartbeat, Perf)',
+        '| where $__timeFilter(TimeGenerated)                                      ' +
+          '//this is a macro used to show the full chart’s time range, choose the datetime column here',
+        '| summarize count() by <group by column>, bin(TimeGenerated, $__interval) ' +
+          '//change “group by column” to a column in your table, such as “Computer”. ' +
+          'The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.',
+        '| order by TimeGenerated asc',
+      ].join('\n'),
       resultFormat: 'time_series',
       workspace:
         this.datasource && this.datasource.azureLogAnalyticsDatasource
@@ -92,16 +102,15 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     },
     azureResourceLogAnalytics: {
       query: [
-        'AzureActivity | take 10',
-        // '//change this example to create your own time series query',
-        // '<table name>                                                              ' +
-        //   '//the table to query (e.g. Usage, Heartbeat, Perf)',
-        // '| where $__timeFilter(TimeGenerated)                                      ' +
-        //   '//this is a macro used to show the full chart’s time range, choose the datetime column here',
-        // '| summarize count() by <group by column>, bin(TimeGenerated, $__interval) ' +
-        //   '//change “group by column” to a column in your table, such as “Computer”. ' +
-        //   'The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.',
-        // '| order by TimeGenerated asc',
+        '//change this example to create your own time series query',
+        '<table name>                                                              ' +
+          '//the table to query (e.g. Usage, Heartbeat, Perf)',
+        '| where $__timeFilter(TimeGenerated)                                      ' +
+          '//this is a macro used to show the full chart’s time range, choose the datetime column here',
+        '| summarize count() by <group by column>, bin(TimeGenerated, $__interval) ' +
+          '//change “group by column” to a column in your table, such as “Computer”. ' +
+          'The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.',
+        '| order by TimeGenerated asc',
       ].join('\n'),
       resultFormat: 'time_series',
       resource:

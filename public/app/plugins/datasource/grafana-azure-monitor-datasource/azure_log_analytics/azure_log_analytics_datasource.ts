@@ -393,7 +393,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
         };
       })
       .catch((error: any) => {
-        let message = 'Azure Log Analytics: ';
+        let message = 'Azure Workspace Log Analytics: ';
         if (error.config && error.config.url && error.config.url.indexOf('workspacesloganalytics') > -1) {
           message = 'Azure Log Analytics requires access to Azure Monitor but had the following error: ';
         }

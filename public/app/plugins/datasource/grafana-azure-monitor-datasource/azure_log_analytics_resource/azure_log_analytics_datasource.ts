@@ -40,7 +40,7 @@ export default class azureResourceLogAnalyticsDatasource extends DataSourceWithB
         break;
       default:
         // Azure Global
-        this.baseUrl = '/loganalyticsresourceazure';
+        this.baseUrl = '/resourceloganalyticsazure';
     }
 
     this.url = instanceSettings.url || '';
@@ -53,7 +53,7 @@ export default class azureResourceLogAnalyticsDatasource extends DataSourceWithB
     return (
       (!!this.instanceSettings.jsonData.logAnalyticsSubscriptionId &&
         this.instanceSettings.jsonData.logAnalyticsSubscriptionId.length > 0) ||
-      !!this.instanceSettings.jsonData.azureLogAnalyticsSameAs
+      !!this.instanceSettings.jsonData.azureResourceLogAnalyticsSameAs
     );
   }
 
@@ -410,7 +410,7 @@ export default class azureResourceLogAnalyticsDatasource extends DataSourceWithB
         };
       })
       .catch((error: any) => {
-        let message = 'Azure Log Analytics: ';
+        let message = 'Azure Resource Log Analytics: ';
         if (error.config && error.config.url && error.config.url.indexOf('resourcesloganalytics') > -1) {
           message = 'Azure Log Analytics requires access to Azure Monitor but had the following error: ';
         }
@@ -439,7 +439,7 @@ export default class azureResourceLogAnalyticsDatasource extends DataSourceWithB
   }
 
   isValidConfig() {
-    if (this.instanceSettings.jsonData.azureLogAnalyticsSameAs) {
+    if (this.instanceSettings.jsonData.azureResourceLogAnalyticsSameAs) {
       return undefined;
     }
 

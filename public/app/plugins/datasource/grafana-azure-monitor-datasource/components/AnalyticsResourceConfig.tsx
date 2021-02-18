@@ -12,14 +12,14 @@ export interface State {
 export interface Props {
   options: AzureDataSourceSettings;
   subscriptions: SelectableValue[];
-  workspaces: SelectableValue[];
+  resources: SelectableValue[];
   makeSameAs: () => void;
   onUpdateDatasourceOptions: (options: AzureDataSourceSettings) => void;
   onUpdateJsonDataOption: (key: string, val: any) => void;
   onUpdateSecureJsonDataOption: (key: string, val: any) => void;
   onResetOptionKey: (key: string) => void;
   onLoadSubscriptions: (type?: string) => void;
-  onLoadWorkspaces: (type?: string) => void;
+  onLoadResources: (type?: string) => void;
 }
 export class AnalyticsResourceConfig extends PureComponent<Props, State> {
   constructor(props: Props) {
@@ -50,18 +50,18 @@ export class AnalyticsResourceConfig extends PureComponent<Props, State> {
     this.props.onUpdateJsonDataOption('logAnalyticsDefaultResource', logAnalyticsDefaultResource.value);
   };
 
-  onAzureLogAnalyticsSameAsChange = () => {
+  onAzureResourceLogAnalyticsSameAsChange = () => {
     const { options, onUpdateDatasourceOptions, makeSameAs } = this.props;
 
-    if (!options.jsonData.azureLogAnalyticsSameAs && options.secureJsonData!.clientSecret) {
+    if (!options.jsonData.azureResourceLogAnalyticsSameAs && options.secureJsonData!.clientSecret) {
       makeSameAs();
-    } else if (!options.jsonData.azureLogAnalyticsSameAs) {
+    } else if (!options.jsonData.azureResourceLogAnalyticsSameAs) {
       // if currently off, clear monitor secret
       onUpdateDatasourceOptions({
         ...options,
         jsonData: {
           ...options.jsonData,
-          azureLogAnalyticsSameAs: !options.jsonData.azureLogAnalyticsSameAs,
+          azureResourceLogAnalyticsSameAs: !options.jsonData.azureResourceLogAnalyticsSameAs,
         },
         secureJsonData: {
           ...options.secureJsonData,
@@ -76,7 +76,10 @@ export class AnalyticsResourceConfig extends PureComponent<Props, State> {
         sameAsSwitched: true,
       });
     } else {
-      this.props.onUpdateJsonDataOption('azureLogAnalyticsSameAs', !options.jsonData.azureLogAnalyticsSameAs);
+      this.props.onUpdateJsonDataOption(
+        'azureResourceLogAnalyticsSameAs',
+        !options.jsonData.azureResourceLogAnalyticsSameAs
+      );
     }
   };
 
@@ -89,7 +92,7 @@ export class AnalyticsResourceConfig extends PureComponent<Props, State> {
       options: { jsonData, secureJsonData, secureJsonFields },
     } = this.props;
 
-    if (jsonData.azureLogAnalyticsSameAs) {
+    if (jsonData.azureResourceLogAnalyticsSameAs) {
       return (
         jsonData.tenantId &&
         jsonData.clientId &&
@@ -112,24 +115,24 @@ export class AnalyticsResourceConfig extends PureComponent<Props, State> {
     const {
       options: { jsonData, secureJsonData, secureJsonFields },
       subscriptions,
-      workspaces,
+      resources,
     } = this.props;
 
     const { sameAsSwitched } = this.state;
 
-    if (!jsonData.hasOwnProperty('azureLogAnalyticsSameAs')) {
-      jsonData.azureLogAnalyticsSameAs = true;
+    if (!jsonData.hasOwnProperty('azureResourceLogAnalyticsSameAs')) {
+      jsonData.azureResourceLogAnalyticsSameAs = true;
     }
 
     const addtlAttrs = {
-      ...(jsonData.azureLogAnalyticsSameAs && {
+      ...(jsonData.azureResourceLogAnalyticsSameAs && {
         tooltip: 'Workspaces are pulled from default subscription selected above.',
       }),
     };
 
     const showSameAsHelpMsg =
       sameAsSwitched &&
-      jsonData.azureLogAnalyticsSameAs &&
+      jsonData.azureResourceLogAnalyticsSameAs &&
       secureJsonFields &&
       !secureJsonFields.clientSecret &&
       !secureJsonData!.clientSecret;
@@ -139,8 +142,8 @@ export class AnalyticsResourceConfig extends PureComponent<Props, State> {
         <h3 className="page-heading">Azure Monitor Logs Details by Resources</h3>
         <Switch
           label="Same details as Azure Monitor API"
-          checked={jsonData.azureLogAnalyticsSameAs ?? false}
-          onChange={this.onAzureLogAnalyticsSameAsChange}
+          checked={jsonData.azureResourceLogAnalyticsSameAs ?? false}
+          onChange={this.onAzureResourceLogAnalyticsSameAsChange}
           {...addtlAttrs}
         />
         {showSameAsHelpMsg && (
@@ -150,7 +153,7 @@ export class AnalyticsResourceConfig extends PureComponent<Props, State> {
             </div>
           </div>
         )}
-        {!jsonData.azureLogAnalyticsSameAs && (
+        {!jsonData.azureResourceLogAnalyticsSameAs && (
           <AzureCredentialsForm
             subscriptionOptions={subscriptions}
             selectedSubscription={jsonData.logAnalyticsSubscriptionId}
@@ -177,8 +180,8 @@ export class AnalyticsResourceConfig extends PureComponent<Props, State> {
               </InlineFormLabel>
               <div className="width-25">
                 <Select
-                  value={workspaces.find((workspace) => workspace.value === jsonData.logAnalyticsDefaultResource)}
-                  options={workspaces}
+                  value={resources.find((resource) => resource.value === jsonData.logAnalyticsDefaultResource)}
+                  options={resources}
                   defaultValue={jsonData.logAnalyticsDefaultResource}
                   onChange={this.onResourceSelectChange}
                 />
@@ -192,7 +195,7 @@ export class AnalyticsResourceConfig extends PureComponent<Props, State> {
                   variant="secondary"
                   size="sm"
                   type="button"
-                  onClick={() => this.props.onLoadWorkspaces()}
+                  onClick={() => this.props.onLoadResources()}
                   disabled={!this.hasWorkspaceRequiredFields()}
                 >
                   Load Resources

@@ -236,9 +236,9 @@ func (e *AzureResourceLogAnalyticsDatasource) getPluginRoute(plugin *plugins.Dat
 
 	switch cloudName {
 	case "chinaazuremonitor":
-		pluginRouteName = "chinaloganalyticsazure"
+		pluginRouteName = "chinaresourceloganalyticsazure"
 	case "govazuremonitor":
-		pluginRouteName = "govloganalyticsazure"
+		pluginRouteName = "govresourceloganalyticsazure"
 	}
 
 	var logAnalyticsRoute *plugins.AppPluginRoute
@@ -251,17 +251,6 @@ func (e *AzureResourceLogAnalyticsDatasource) getPluginRoute(plugin *plugins.Dat
 	}
 
 	return logAnalyticsRoute, pluginRouteName, nil
-}
-
-// GetPrimaryResultTable returns the first table in the response named "PrimaryResult", or an
-// error if there is no table by that name.
-func (ar *AzureResourceLogAnalyticsResponse) GetPrimaryResultTable() (*AzureLogAnalyticsTable, error) {
-	for _, t := range ar.Tables {
-		if t.Name == "PrimaryResult" {
-			return &t, nil
-		}
-	}
-	return nil, fmt.Errorf("no data as PrimaryResult table is missing from the response")
 }
 
 func (e *AzureResourceLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (AzureLogAnalyticsResponse, error) {
@@ -292,7 +281,7 @@ func (e *AzureResourceLogAnalyticsDatasource) unmarshalResponse(res *http.Respon
 	return data, nil
 }
 
-// LogAnalyticsMeta is a type for the a Frame's Meta's Custom property.
+// ResourceLogAnalyticsMeta is a type for the a Frame's Meta's Custom property.
 type ResourceLogAnalyticsMeta struct {
 	ColumnTypes  []string `json:"azureColumnTypes"`
 	Subscription string   `json:"subscription"`
@@ -316,7 +305,7 @@ func setAdditionalResourceFrameMeta(frame *data.Frame, query, subscriptionID, re
 	return fmt.Errorf("failed to encode the query into the encodedQuery property")
 }
 
-// encodeQuery encodes the query in gzip so the frontend can build links.
+// encodeResourceQuery encodes the query in gzip so the frontend can build links.
 func encodeResourceQuery(rawQuery string) ([]byte, error) {
 	var b bytes.Buffer
 	gz := gzip.NewWriter(&b)

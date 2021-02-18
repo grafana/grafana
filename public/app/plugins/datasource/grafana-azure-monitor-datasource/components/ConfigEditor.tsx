@@ -321,7 +321,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
         <AnalyticsResourceConfig
           options={options}
-          workspaces={logAnalyticsResources}
+          resources={logAnalyticsResources}
           subscriptions={logAnalyticsSubscriptions}
           makeSameAs={this.makeSameAs}
           onUpdateDatasourceOptions={this.props.onOptionsChange}
@@ -329,7 +329,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
           onUpdateSecureJsonDataOption={this.updateSecureJsonDataOption}
           onResetOptionKey={this.resetSecureKey}
           onLoadSubscriptions={this.onLoadSubscriptions}
-          onLoadWorkspaces={this.getResources}
+          onLoadResources={this.getResources}
         />
 
         <InsightsConfig

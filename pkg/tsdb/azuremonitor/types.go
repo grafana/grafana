@@ -59,10 +59,6 @@ type AzureLogAnalyticsResponse struct {
 	Tables []AzureLogAnalyticsTable `json:"tables"`
 }
 
-type AzureResourceLogAnalyticsResponse struct {
-	Tables []AzureLogAnalyticsTable `json:"tables"`
-}
-
 // AzureLogAnalyticsTable is the table format for Log Analytics responses
 type AzureLogAnalyticsTable struct {
 	Name    string `json:"name"`

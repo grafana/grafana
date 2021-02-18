@@ -300,6 +300,13 @@ export default class FakeSchemaData {
           functions: ['f/Func1'],
         },
       ],
+      resources: [
+        {
+          resourceId:
+            '/subscriptions/44693801-6ee6-49de-9b2d-999999999999/resourceGroups/danieltest/providers/' +
+            'microsoft.operationalinsights/workspaces/danieltest',
+        },
+      ],
     };
   }
 }
