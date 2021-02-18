@@ -1,7 +1,7 @@
 package api
 
 import (
-	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/prometheus/alertmanager/config"
 )
 
@@ -48,7 +48,8 @@ type AlertingConfig struct {
 	Receivers []*Receiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
 }
 
-type GrafanaReceiver alerting.NotifierPlugin
+//type GrafanaReceiver models.CreateAlertNotificationCommand
+type GrafanaReceiver models.CreateAlertNotificationCommand
 
 type Receiver struct {
 	config.Receiver

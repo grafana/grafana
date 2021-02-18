@@ -640,11 +640,6 @@
       "format": "int64",
       "$ref": "#/definitions/Duration"
     },
-    "ElementType": {
-      "type": "string",
-      "title": "ElementType is the type of element that can be rendered in the frontend.",
-      "x-go-package": "github.com/grafana/grafana/pkg/services/alerting"
-    },
     "EmailConfig": {
       "type": "object",
       "title": "EmailConfig configures notifications via mail.",
@@ -796,7 +791,8 @@
       "x-go-package": "github.com/prometheus/alertmanager/config"
     },
     "GrafanaReceiver": {
-      "$ref": "#/definitions/NotifierPlugin"
+      "description": "type GrafanaReceiver models.CreateAlertNotificationCommand",
+      "$ref": "#/definitions/CreateAlertNotificationCommand"
     },
     "HTTPClientConfig": {
       "type": "object",
@@ -872,11 +868,6 @@
       },
       "x-go-package": "github.com/prometheus/alertmanager/config"
     },
-    "InputType": {
-      "type": "string",
-      "title": "InputType is the type of input that can be rendered in the frontend.",
-      "x-go-package": "github.com/grafana/grafana/pkg/services/alerting"
-    },
     "Json": {
       "type": "object",
       "x-go-package": "github.com/grafana/grafana/pkg/components/simplejson"
@@ -942,91 +933,6 @@
         }
       },
       "x-go-package": "github.com/prometheus/alertmanager/config"
-    },
-    "NotifierOption": {
-      "type": "object",
-      "title": "NotifierOption holds information about options specific for the NotifierPlugin.",
-      "properties": {
-        "description": {
-          "type": "string",
-          "x-go-name": "Description"
-        },
-        "element": {
-          "$ref": "#/definitions/ElementType"
-        },
-        "inputType": {
-          "$ref": "#/definitions/InputType"
-        },
-        "label": {
-          "type": "string",
-          "x-go-name": "Label"
-        },
-        "placeholder": {
-          "type": "string",
-          "x-go-name": "Placeholder"
-        },
-        "propertyName": {
-          "type": "string",
-          "x-go-name": "PropertyName"
-        },
-        "required": {
-          "type": "boolean",
-          "x-go-name": "Required"
-        },
-        "secure": {
-          "type": "boolean",
-          "x-go-name": "Secure"
-        },
-        "selectOptions": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/SelectOption"
-          },
-          "x-go-name": "SelectOptions"
-        },
-        "showWhen": {
-          "$ref": "#/definitions/ShowWhen"
-        },
-        "validationRule": {
-          "type": "string",
-          "x-go-name": "ValidationRule"
-        }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/services/alerting"
-    },
-    "NotifierPlugin": {
-      "type": "object",
-      "title": "NotifierPlugin holds meta information about a notifier.",
-      "properties": {
-        "description": {
-          "type": "string",
-          "x-go-name": "Description"
-        },
-        "heading": {
-          "type": "string",
-          "x-go-name": "Heading"
-        },
-        "info": {
-          "type": "string",
-          "x-go-name": "Info"
-        },
-        "name": {
-          "type": "string",
-          "x-go-name": "Name"
-        },
-        "options": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/NotifierOption"
-          },
-          "x-go-name": "Options"
-        },
-        "type": {
-          "type": "string",
-          "x-go-name": "Type"
-        }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/services/alerting"
     },
     "Ok": {
       "type": "object",
@@ -1592,36 +1498,6 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/components/securejsondata"
     },
-    "SelectOption": {
-      "type": "object",
-      "title": "SelectOption is a simple type for Options that have dropdown options. Should be used when Element is ElementTypeSelect.",
-      "properties": {
-        "label": {
-          "type": "string",
-          "x-go-name": "Label"
-        },
-        "value": {
-          "type": "string",
-          "x-go-name": "Value"
-        }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/services/alerting"
-    },
-    "ShowWhen": {
-      "type": "object",
-      "title": "ShowWhen holds information about when options are dependant on other options.",
-      "properties": {
-        "field": {
-          "type": "string",
-          "x-go-name": "Field"
-        },
-        "is": {
-          "type": "string",
-          "x-go-name": "Is"
-        }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/services/alerting"
-    },
     "SlackAction": {
       "description": "See https://api.slack.com/docs/message-attachments#action_fields and https://api.slack.com/docs/message-buttons\nfor more information.",
       "type": "object",
@@ -1831,9 +1707,8 @@
       "x-go-package": "github.com/prometheus/common/config"
     },
     "URL": {
-      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
       "type": "object",
-      "title": "A URL represents a parsed URL (technically, a URI reference).",
+      "title": "URL is a custom URL type that allows validation at configuration load time.",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -1866,7 +1741,7 @@
           "$ref": "#/definitions/Userinfo"
         }
       },
-      "x-go-package": "net/url"
+      "x-go-package": "github.com/prometheus/common/config"
     },
     "Unauthorized": {
       "type": "object",
