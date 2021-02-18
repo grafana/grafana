@@ -110,17 +110,18 @@ function getTestContext({
 }
 
 describe('ElasticDatasource', function (this: any) {
-  describe('When testing datasource with index pattern', () => {
-    it('should translate index pattern to current day', () => {
-      const { ds, fetchMock } = getTestContext({ jsonData: { interval: 'Daily', esVersion: 2 } });
+  // This is now handled by the backend
+  // describe('When testing datasource with index pattern', () => {
+  //   it('should translate index pattern to current day', () => {
+  //     const { ds, fetchMock } = getTestContext({ jsonData: { interval: 'Daily', esVersion: 2 } });
 
-      ds.testDatasource();
+  //     ds.testDatasource();
 
-      const today = toUtc().format('YYYY.MM.DD');
-      expect(fetchMock).toHaveBeenCalledTimes(1);
-      expect(fetchMock.mock.calls[0][0].url).toBe(`${ELASTICSEARCH_MOCK_URL}/asd-${today}/_mapping`);
-    });
-  });
+  //     const today = toUtc().format('YYYY.MM.DD');
+  //     expect(fetchMock).toHaveBeenCalledTimes(1);
+  //     expect(fetchMock.mock.calls[0][0].url).toBe(`${ELASTICSEARCH_MOCK_URL}/asd-${today}/_mapping`);
+  //   });
+  // });
 
   describe('When issuing metric query with interval pattern', () => {
     async function runScenario() {
@@ -178,10 +179,11 @@ describe('ElasticDatasource', function (this: any) {
       return { result, body, header, query };
     }
 
-    it('should translate index pattern to current day', async () => {
-      const { header } = await runScenario();
-      expect(header.index).toEqual(['asd-2015.05.30', 'asd-2015.05.31', 'asd-2015.06.01']);
-    });
+    // This is now handled by the backend
+    // it('should translate index pattern to current day', async () => {
+    //   const { header } = await runScenario();
+    //   expect(header.index).toEqual(['asd-2015.05.30', 'asd-2015.05.31', 'asd-2015.06.01']);
+    // });
 
     it('should not resolve the variable in the original alias field in the query', async () => {
       const { query } = await runScenario();
@@ -845,21 +847,6 @@ describe('ElasticDatasource', function (this: any) {
     it('should not set terms aggregation size to 0', async () => {
       const { body } = await runScenario();
       expect(body['aggs']['1']['terms'].size).not.toBe(0);
-    });
-  });
-
-  describe('query', () => {
-    it('should replace range as integer not string', async () => {
-      const { ds } = getTestContext({ jsonData: { interval: 'Daily', esVersion: 2, timeField: '@time' } });
-      const postMock = jest.fn((url: string, data: any) => of(createFetchResponse({ responses: [] })));
-      ds['post'] = postMock;
-
-      await expect(ds.query(createElasticQuery())).toEmitValuesWith((received) => {
-        expect(postMock).toHaveBeenCalledTimes(1);
-
-        const query = postMock.mock.calls[0][1];
-        expect(typeof JSON.parse(query.split('\n')[1]).query.bool.filter[0].range['@time'].gte).toBe('number');
-      });
     });
   });
 
