@@ -92,7 +92,9 @@ export class QueryEditorRow extends PureComponent<Props, State> {
         // Important that this use this.props here so that as this fuction is only created on mount and it's
         // important not to capture old prop functions in this closure
 
-        // query.hide can be changed "from the outside", so we have to apply it
+        // the "hide" attribute of the quries can be changed from the "outside",
+        // it will be applied to "this.props.query.hide", but not to "query.hide".
+        // so we have to apply it.
         if (query.hide !== me.props.query.hide) {
           query.hide = me.props.query.hide;
         }
