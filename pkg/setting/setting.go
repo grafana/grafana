@@ -274,8 +274,8 @@ type Cfg struct {
 	AdminPassword                string
 
 	// AWS Plugin Auth
-	AWSAllowedAuthProviders			[]string
-	AWSEnableAssumeRole			bool
+	AWSAllowedAuthProviders []string
+	AWSEnableAssumeRole     bool
 
 	// Auth proxy settings
 	AuthProxyEnabled          bool
@@ -935,7 +935,7 @@ func (cfg *Cfg) readAWSPluginsConfig() {
 	for _, user := range strings.Split(allowedAuthProviders, ",") {
 		user = strings.TrimSpace(user)
 		if user != "" {
-			cfg.AWSAllowedAuthProviders = append(cfg.AWSAllowedAuthProviders, user) 
+			cfg.AWSAllowedAuthProviders = append(cfg.AWSAllowedAuthProviders, user)
 		}
 	}
 }
