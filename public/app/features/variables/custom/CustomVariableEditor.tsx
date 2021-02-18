@@ -1,4 +1,4 @@
-import React, { ChangeEvent, FocusEvent, PureComponent } from 'react';
+import React, { FormEvent, PureComponent } from 'react';
 import { CustomVariableModel, VariableWithMultiSupport } from '../types';
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
 import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
@@ -21,10 +21,10 @@ interface DispatchProps {
 export type Props = OwnProps & ConnectedProps & DispatchProps;
 
 class CustomVariableEditorUnconnected extends PureComponent<Props> {
-  onChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
+  onChange = (event: FormEvent<HTMLTextAreaElement>) => {
     this.props.onPropChange({
       propName: 'query',
-      propValue: event.target.value,
+      propValue: event.currentTarget.value,
     });
   };
 
@@ -32,10 +32,10 @@ class CustomVariableEditorUnconnected extends PureComponent<Props> {
     this.props.onPropChange({ propName, propValue, updateOptions: true });
   };
 
-  onBlur = (event: FocusEvent<HTMLTextAreaElement>) => {
+  onBlur = (event: FormEvent<HTMLTextAreaElement>) => {
     this.props.onPropChange({
       propName: 'query',
-      propValue: event.target.value,
+      propValue: event.currentTarget.value,
       updateOptions: true,
     });
   };

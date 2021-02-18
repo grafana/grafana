@@ -1,4 +1,4 @@
-import React, { ChangeEvent, FocusEvent, PureComponent } from 'react';
+import React, { FormEvent, PureComponent } from 'react';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { InlineFieldRow, VerticalGroup } from '@grafana/ui';
 
@@ -34,17 +34,17 @@ export class DataSourceVariableEditorUnConnected extends PureComponent<Props> {
     this.props.initDataSourceVariableEditor();
   }
 
-  onRegExChange = (event: ChangeEvent<HTMLInputElement>) => {
+  onRegExChange = (event: FormEvent<HTMLInputElement>) => {
     this.props.onPropChange({
       propName: 'regex',
-      propValue: event.target.value,
+      propValue: event.currentTarget.value,
     });
   };
 
-  onRegExBlur = (event: FocusEvent<HTMLInputElement>) => {
+  onRegExBlur = (event: FormEvent<HTMLInputElement>) => {
     this.props.onPropChange({
       propName: 'regex',
-      propValue: event.target.value,
+      propValue: event.currentTarget.value,
       updateOptions: true,
     });
   };

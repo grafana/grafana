@@ -516,7 +516,7 @@ export const onTimeRangeUpdated = (
     }
 
     return false;
-  });
+  }) as VariableWithOptions[];
 
   const promises = variablesThatNeedRefresh.map((variable: VariableWithOptions) =>
     dispatch(timeRangeUpdated(toVariableIdentifier(variable)))

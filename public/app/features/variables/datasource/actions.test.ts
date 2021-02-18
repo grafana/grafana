@@ -1,8 +1,7 @@
 import { DataSourceInstanceSettings } from '@grafana/data';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
-import { TemplatingState } from '../state/reducers';
-import { getRootReducer } from '../state/helpers';
+import { getRootReducer, RootReducerType } from '../state/helpers';
 import { toVariableIdentifier, toVariablePayload } from '../state/types';
 import { variableAdapters } from '../adapters';
 import { createDataSourceVariableAdapter } from './adapter';
@@ -49,7 +48,7 @@ describe('data source actions', () => {
           query: 'mock-data-id',
         });
 
-        const tester = await reduxTester<{ templating: TemplatingState }>()
+        const tester = await reduxTester<RootReducerType>()
           .givenRootReducer(getRootReducer())
           .whenActionIsDispatched(
             addVariable(toVariablePayload(datasource, { global: false, index: 0, model: datasource }))
@@ -97,7 +96,7 @@ describe('data source actions', () => {
           regex: '/.*(second-name).*/',
         });
 
-        const tester = await reduxTester<{ templating: TemplatingState }>()
+        const tester = await reduxTester<RootReducerType>()
           .givenRootReducer(getRootReducer())
           .whenActionIsDispatched(
             addVariable(toVariablePayload(datasource, { global: false, index: 0, model: datasource }))
@@ -142,7 +141,7 @@ describe('data source actions', () => {
 
       const { dependencies, getListMock, getDatasourceSrvMock } = getTestContext({ sources });
 
-      await reduxTester<{ templating: TemplatingState }>()
+      await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(initDataSourceVariableEditor(dependencies))
         .thenDispatchedActionsShouldEqual(
