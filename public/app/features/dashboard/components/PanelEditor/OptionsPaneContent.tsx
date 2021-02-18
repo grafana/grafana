@@ -253,5 +253,3 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
   };
 });
-
-type OptionsPaneStyles = ReturnType<typeof getStyles>;
