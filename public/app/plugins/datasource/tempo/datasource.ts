@@ -1,20 +1,21 @@
 import {
-  dateMath,
-  DateTime,
-  MutableDataFrame,
-  DataSourceApi,
-  DataSourceInstanceSettings,
+  DataQuery,
   DataQueryRequest,
   DataQueryResponse,
-  DataQuery,
+  DataSourceApi,
+  DataSourceInstanceSettings,
+  dateMath,
+  DateTime,
   FieldType,
+  MutableDataFrame,
 } from '@grafana/data';
-import { getBackendSrv, BackendSrvRequest } from '@grafana/runtime';
-import { Observable, from, of } from 'rxjs';
-import { map } from 'rxjs/operators';
-
-import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
 import { serializeParams } from 'app/core/utils/fetch';
+import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { transformResponse } from './transform';
+import { isTempoResponse, TempoResponse } from './types';
 
 export type TempoQuery = {
   query: string;
@@ -35,7 +36,7 @@ export class TempoDatasource extends DataSourceApi<TempoQuery> {
     // traces at one we need to change this.
     const id = options.targets[0]?.query;
     if (id) {
-      return this._request(`/api/traces/${encodeURIComponent(id)}`).pipe(
+      return this._request<TempoResponse | { data: any }>(`/api/traces/${encodeURIComponent(id)}`).pipe(
         map((response) => {
           return {
             data: [
@@ -44,7 +45,9 @@ export class TempoDatasource extends DataSourceApi<TempoQuery> {
                   {
                     name: 'trace',
                     type: FieldType.trace,
-                    values: response?.data?.data || [],
+                    values: isTempoResponse(response.data)
+                      ? [transformResponse(response.data, id)]
+                      : response.data.data || [],
                   },
                 ],
                 meta: {
@@ -99,17 +102,15 @@ export class TempoDatasource extends DataSourceApi<TempoQuery> {
     return query.query;
   }
 
-  private _request(apiUrl: string, data?: any, options?: Partial<BackendSrvRequest>): Observable<Record<string, any>> {
-    // Hack for proxying metadata requests
-    const baseUrl = `/api/datasources/proxy/${this.instanceSettings.id}`;
+  private _request<T = any>(apiUrl: string, data?: any, options?: Partial<BackendSrvRequest>) {
     const params = data ? serializeParams(data) : '';
-    const url = `${baseUrl}${apiUrl}${params.length ? `?${params}` : ''}`;
+    const url = `${this.instanceSettings.url}${apiUrl}${params.length ? `?${params}` : ''}`;
     const req = {
       ...options,
       url,
     };
 
-    return from(getBackendSrv().datasourceRequest(req));
+    return getBackendSrv().fetch<T>(req);
   }
 }
 
