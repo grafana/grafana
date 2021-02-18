@@ -229,25 +229,25 @@ const PieLabel: FC<{
   );
 };
 
-const getLabelPos = (arc: PieArcDatum<DisplayValue>, outerRadius: number, innerRadius: number) => {
+function getLabelPos(arc: PieArcDatum<DisplayValue>, outerRadius: number, innerRadius: number) {
   const r = (outerRadius + innerRadius) / 2;
   const a = (+arc.startAngle + +arc.endAngle) / 2 - Math.PI / 2;
   return [Math.cos(a) * r, Math.sin(a) * r];
-};
+}
 
-const getGradientColorFrom = (color: string, theme: GrafanaTheme) => {
+function getGradientColorFrom(color: string, theme: GrafanaTheme) {
   return tinycolor(color)
     .darken(20 * (theme.isDark ? 1 : -0.7))
     .spin(8)
     .toRgbString();
-};
+}
 
-const getGradientColorTo = (color: string, theme: GrafanaTheme) => {
+function getGradientColorTo(color: string, theme: GrafanaTheme) {
   return tinycolor(color)
     .darken(10 * (theme.isDark ? 1 : -0.7))
     .spin(-8)
     .toRgbString();
-};
+}
 
 interface PieLayout {
   position: number;
@@ -257,7 +257,7 @@ interface PieLayout {
   gradientFromOffset: number;
 }
 
-const getPieLayout = (height: number, width: number, pieType: PieChartType, margin = 16): PieLayout => {
+function getPieLayout(height: number, width: number, pieType: PieChartType, margin = 16): PieLayout {
   const size = Math.min(width, height);
   const outerRadius = (size - margin * 2) / 2;
   const donutThickness = pieType === PieChartType.Pie ? outerRadius : Math.max(outerRadius / 3, 20);
@@ -272,7 +272,7 @@ const getPieLayout = (height: number, width: number, pieType: PieChartType, marg
     innerRadius: innerRadius,
     gradientFromOffset: gradientFromOffset,
   };
-};
+}
 
 const getStyles = (theme: GrafanaTheme) => {
   return {
