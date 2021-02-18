@@ -51,13 +51,11 @@ func executeQuery(ctx context.Context, query queryModel, runner queryRunner, max
 					}
 
 					dr.Error = fmt.Errorf(text)
-
 				}
 			default:
 				// nothing, we keep the original error
 			}
 		}
-
 	}
 
 	// Make sure there is at least one frame
