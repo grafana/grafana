@@ -20,8 +20,8 @@ export const createSystemVariableAdapter = (): VariableAdapter<SystemVariable<an
       state: LoadingState.Done,
     },
     reducer: (state: any, action: any) => state,
-    picker: (null as unknown) as ComponentType<VariablePickerProps>,
-    editor: (null as unknown) as ComponentType<VariableEditorProps>,
+    picker: (null as unknown) as ComponentType<VariablePickerProps<SystemVariable<any>>>,
+    editor: (null as unknown) as ComponentType<VariableEditorProps<SystemVariable<any>>>,
     dependsOn: () => {
       return false;
     },
