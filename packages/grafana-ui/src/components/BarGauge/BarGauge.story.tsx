@@ -109,15 +109,15 @@ const AddBarGaugeStory = (storyProps: StoryProps) => {
   return <BarGauge {...props} />;
 };
 
-export const gradientVertical: Story<StoryProps> = AddBarGaugeStory.bind({});
-gradientVertical.args = {
+export const barGaugeVertical: Story<StoryProps> = AddBarGaugeStory.bind({});
+barGaugeVertical.args = {
   height: 500,
   width: 100,
   orientation: VizOrientation.Vertical,
 };
 
-export const gradientHorizontal: Story<StoryProps> = AddBarGaugeStory.bind({});
-gradientHorizontal.args = {
+export const barGaugeHorizontal: Story<StoryProps> = AddBarGaugeStory.bind({});
+barGaugeHorizontal.args = {
   height: 100,
   width: 500,
   orientation: VizOrientation.Horizontal,
