@@ -38,6 +38,7 @@ type datasourceInfo struct {
 	AssumeRoleARN string
 	ExternalID    string
 	Namespace     string
+	Endpoint      string
 
 	AccessKey string
 	SecretKey string
@@ -129,6 +130,9 @@ func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error)
 		regionCfg = &aws.Config{Region: aws.String(dsInfo.Region)}
 		cfgs = append(cfgs, regionCfg)
 	}
+	// if dsInfo.Endpoint != "" {
+	// 	cfgs.Endpoint = aws.String(settings.Endpoint)
+	// }
 
 	switch dsInfo.AuthType {
 	case authTypeSharedCreds:
@@ -413,6 +417,7 @@ func (e *cloudWatchExecutor) getDSInfo(region string) *datasourceInfo {
 	atStr := e.DataSource.JsonData.Get("authType").MustString()
 	assumeRoleARN := e.DataSource.JsonData.Get("assumeRoleArn").MustString()
 	externalID := e.DataSource.JsonData.Get("externalId").MustString()
+	endpoint := e.DataSource.JsonData.Get("endpoint").MustString()
 	decrypted := e.DataSource.DecryptedValues()
 	accessKey := decrypted["accessKey"]
 	secretKey := decrypted["secretKey"]
@@ -445,6 +450,7 @@ func (e *cloudWatchExecutor) getDSInfo(region string) *datasourceInfo {
 		ExternalID:    externalID,
 		AccessKey:     accessKey,
 		SecretKey:     secretKey,
+		Endpoint:      endpoint,
 	}
 }
 
