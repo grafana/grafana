@@ -80,6 +80,8 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     const panel = new PanelModel({ targets: queries });
     const dashboard = {} as DashboardModel;
 
+    const me = this;
+
     return {
       datasource: datasource,
       target: query,
@@ -89,6 +91,12 @@ export class QueryEditorRow extends PureComponent<Props, State> {
         // Old angular editors modify the query model and just call refresh
         // Important that this use this.props here so that as this fuction is only created on mount and it's
         // important not to capture old prop functions in this closure
+
+        // query.hide can be changed "from the outside", so we have to apply it
+        if (query.hide !== me.props.query.hide) {
+          query.hide = me.props.query.hide;
+        }
+
         this.props.onChange(query);
         this.props.onRunQuery();
       },
