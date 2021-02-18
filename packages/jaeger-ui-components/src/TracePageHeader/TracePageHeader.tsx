@@ -113,10 +113,13 @@ const getStyles = createStyle((theme: Theme) => {
       border-bottom: 1px solid #e4e4e4;
       padding: 0.25rem 0.5rem !important;
     `,
-    TracePageHeaderOverviewItemValueDetail: css`
-      label: TracePageHeaderOverviewItemValueDetail;
-      color: #aaa;
-    `,
+    TracePageHeaderOverviewItemValueDetail: cx(
+      css`
+        label: TracePageHeaderOverviewItemValueDetail;
+        color: #aaa;
+      `,
+      'trace-item-value-detail'
+    ),
     TracePageHeaderOverviewItemValue: css`
       label: TracePageHeaderOverviewItemValue;
       &:hover > .trace-item-value-detail {
@@ -168,9 +171,7 @@ export const HEADER_ITEMS = [
       return match ? (
         <span className={styles.TracePageHeaderOverviewItemValue}>
           {match[1]}
-          <span className={cx(styles.TracePageHeaderOverviewItemValueDetail, 'trace-item-value-detail')}>
-            {match[2]}
-          </span>
+          <span className={styles.TracePageHeaderOverviewItemValueDetail}>{match[2]}</span>
         </span>
       ) : (
         dateStr
