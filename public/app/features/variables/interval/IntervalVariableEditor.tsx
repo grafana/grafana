@@ -1,4 +1,4 @@
-import React, { ChangeEvent, FocusEvent, PureComponent } from 'react';
+import React, { ChangeEvent, FormEvent, PureComponent } from 'react';
 import { InlineFieldRow, VerticalGroup } from '@grafana/ui';
 
 import { IntervalVariableModel } from '../types';
@@ -20,17 +20,17 @@ export class IntervalVariableEditor extends PureComponent<Props> {
     });
   };
 
-  onQueryChanged = (event: ChangeEvent<HTMLInputElement>) => {
+  onQueryChanged = (event: FormEvent<HTMLInputElement>) => {
     this.props.onPropChange({
       propName: 'query',
-      propValue: event.target.value,
+      propValue: event.currentTarget.value,
     });
   };
 
-  onQueryBlur = (event: FocusEvent<HTMLInputElement>) => {
+  onQueryBlur = (event: FormEvent<HTMLInputElement>) => {
     this.props.onPropChange({
       propName: 'query',
-      propValue: event.target.value,
+      propValue: event.currentTarget.value,
       updateOptions: true,
     });
   };
@@ -43,10 +43,10 @@ export class IntervalVariableEditor extends PureComponent<Props> {
     });
   };
 
-  onAutoMinChanged = (event: ChangeEvent<HTMLInputElement>) => {
+  onAutoMinChanged = (event: FormEvent<HTMLInputElement>) => {
     this.props.onPropChange({
       propName: 'auto_min',
-      propValue: event.target.value,
+      propValue: event.currentTarget.value,
       updateOptions: true,
     });
   };
