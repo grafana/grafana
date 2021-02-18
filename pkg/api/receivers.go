@@ -48,7 +48,6 @@ type AlertingConfig struct {
 	Receivers []*Receiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
 }
 
-//type GrafanaReceiver models.CreateAlertNotificationCommand
 type GrafanaReceiver models.CreateAlertNotificationCommand
 
 type Receiver struct {
