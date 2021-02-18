@@ -354,40 +354,6 @@
       },
       "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     },
-    "AlertingConfig": {
-      "type": "object",
-      "properties": {
-        "global": {
-          "$ref": "#/definitions/GlobalConfig"
-        },
-        "inhibit_rules": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/InhibitRule"
-          },
-          "x-go-name": "InhibitRules"
-        },
-        "receivers": {
-          "description": "Override with our superset receiver type",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Receiver"
-          },
-          "x-go-name": "Receivers"
-        },
-        "route": {
-          "$ref": "#/definitions/Route"
-        },
-        "templates": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "x-go-name": "Templates"
-        }
-      },
-      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
-    },
     "AlertingConfigResponse": {
       "type": "object",
       "properties": {
@@ -452,6 +418,114 @@
         },
         "type": {
           "$ref": "#/definitions/RuleType"
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
+    "ApiAlertingConfig": {
+      "type": "object",
+      "properties": {
+        "global": {
+          "$ref": "#/definitions/GlobalConfig"
+        },
+        "inhibit_rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/InhibitRule"
+          },
+          "x-go-name": "InhibitRules"
+        },
+        "receivers": {
+          "description": "Override with our superset receiver type",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ApiReceiver"
+          },
+          "x-go-name": "Receivers"
+        },
+        "route": {
+          "$ref": "#/definitions/Route"
+        },
+        "templates": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Templates"
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
+    "ApiReceiver": {
+      "type": "object",
+      "properties": {
+        "email_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/EmailConfig"
+          },
+          "x-go-name": "EmailConfigs"
+        },
+        "grafana_managed_receiver_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/GrafanaReceiver"
+          },
+          "x-go-name": "GrafanaManagedReceivers"
+        },
+        "name": {
+          "description": "A unique identifier for this receiver.",
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "opsgenie_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OpsGenieConfig"
+          },
+          "x-go-name": "OpsGenieConfigs"
+        },
+        "pagerduty_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PagerdutyConfig"
+          },
+          "x-go-name": "PagerdutyConfigs"
+        },
+        "pushover_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PushoverConfig"
+          },
+          "x-go-name": "PushoverConfigs"
+        },
+        "slack_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SlackConfig"
+          },
+          "x-go-name": "SlackConfigs"
+        },
+        "victorops_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/VictorOpsConfig"
+          },
+          "x-go-name": "VictorOpsConfigs"
+        },
+        "webhook_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/WebhookConfig"
+          },
+          "x-go-name": "WebhookConfigs"
+        },
+        "wechat_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/WechatConfig"
+          },
+          "x-go-name": "WechatConfigs"
         }
       },
       "x-go-package": "github.com/grafana/alerting-api/pkg/api"
@@ -635,10 +709,9 @@
       "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "Duration": {
-      "description": "Duration wraps time.Duration. It is used to parse the custom duration format\nfrom YAML.\nThis type should not propagate beyond the scope of input/output processing.",
+      "description": "A Duration represents the elapsed time between two instants\nas an int64 nanosecond count. The representation limits the\nlargest representable duration to approximately 290 years.",
       "type": "integer",
       "format": "int64",
-      "x-go-package": "time",
       "$ref": "#/definitions/Duration"
     },
     "ElementType": {
@@ -1870,7 +1943,7 @@
       "type": "object",
       "properties": {
         "alertmanager_config": {
-          "$ref": "#/definitions/AlertingConfig"
+          "$ref": "#/definitions/ApiAlertingConfig"
         },
         "template_files": {
           "type": "object",
