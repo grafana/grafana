@@ -3,7 +3,7 @@ import { DataSourceSettings } from '@grafana/data';
 export const getMockDataSources = (amount: number) => {
   const dataSources = [];
 
-  for (let i = 0; i <= amount; i++) {
+  for (let i = 0; i < amount; i++) {
     dataSources.push({
       access: '',
       basicAuth: false,
