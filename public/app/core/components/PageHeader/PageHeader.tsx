@@ -124,14 +124,18 @@ function renderTitle(title: string, breadcrumbs: NavModelBreadcrumb[]) {
   }
 
   if (!breadcrumbs || breadcrumbs.length === 0) {
-    return <h1 className="page-header__title">{title}</h1>;
+    return (
+      <h1 className="page-header__title" data-testid="page-title">
+        {title}
+      </h1>
+    );
   }
 
   const breadcrumbsResult = [];
   for (const bc of breadcrumbs) {
     if (bc.url) {
       breadcrumbsResult.push(
-        <a className="text-link" key={breadcrumbsResult.length} href={bc.url}>
+        <a className="text-link" key={breadcrumbsResult.length} href={bc.url} data-testid="breadcrumb-text-link">
           {bc.title}
         </a>
       );
@@ -141,7 +145,11 @@ function renderTitle(title: string, breadcrumbs: NavModelBreadcrumb[]) {
   }
   breadcrumbsResult.push(<span key={breadcrumbs.length + 1}> / {title}</span>);
 
-  return <h1 className="page-header__title">{breadcrumbsResult}</h1>;
+  return (
+    <h1 className="page-header__title" data-testid="page-title">
+      {breadcrumbsResult}
+    </h1>
+  );
 }
 
 const getStyles = (theme: GrafanaTheme) => ({
