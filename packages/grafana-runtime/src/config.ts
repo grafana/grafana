@@ -71,7 +71,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   expressionsEnabled = false;
   customTheme?: any;
   awsAllowedAuthProviders: string[] = [];
-  awsEnableAssumeRole = false;
+  awsAssumeRoleEnabled = false;
 
   constructor(options: GrafanaBootConfig) {
     this.theme = options.bootData.user.lightTheme ? getTheme(GrafanaThemeType.Light) : getTheme(GrafanaThemeType.Dark);

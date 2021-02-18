@@ -275,7 +275,7 @@ type Cfg struct {
 
 	// AWS Plugin Auth
 	AWSAllowedAuthProviders []string
-	AWSEnableAssumeRole     bool
+	AWSAssumeRoleEnabled    bool
 
 	// Auth proxy settings
 	AuthProxyEnabled          bool
@@ -865,7 +865,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 
 	cfg.readLDAPConfig()
-	cfg.readAWSPluginsConfig()
+	cfg.readAWSConfig()
 	cfg.readSessionConfig()
 	cfg.readSmtpSettings()
 	cfg.readQuotaSettings()
@@ -928,9 +928,9 @@ func (cfg *Cfg) readLDAPConfig() {
 	cfg.LDAPAllowSignup = LDAPAllowSignup
 }
 
-func (cfg *Cfg) readAWSPluginsConfig() {
+func (cfg *Cfg) readAWSConfig() {
 	awsPluginSec := cfg.Raw.Section("aws.plugin")
-	cfg.AWSEnableAssumeRole = awsPluginSec.Key("enable_assume_role").MustBool(false)
+	cfg.AWSAssumeRoleEnabled = awsPluginSec.Key("assume_role_enabled").MustBool(false)
 	allowedAuthProviders := awsPluginSec.Key("allowed_auth_providers").String()
 	for _, user := range strings.Split(allowedAuthProviders, ",") {
 		user = strings.TrimSpace(user)
