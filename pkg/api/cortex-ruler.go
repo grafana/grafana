@@ -1,9 +1,9 @@
 package api
 
 import (
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/pkg/rulefmt"
-	"gopkg.in/yaml.v3"
 )
 
 // swagger:route Get /api/v1/rules RulerConfig RouteGetRulesConfig
@@ -99,5 +99,48 @@ type RuleGroupConfig struct {
 
 type ExtendedRuleNode struct {
 	rulefmt.RuleNode
-	GrafanaManagedAlert yaml.Node `yaml:"alert,omitempty"`
+	//GrafanaManagedAlert yaml.Node `yaml:"grafana_alert,omitempty"`
+	GrafanaManagedAlert ExtendedUpsertAlertDefinitionCommand `yaml:"grafana_alert,omitempty"`
+}
+
+// UpsertAlertDefinitionCommand is copy of the unexported struct:
+https://github.com/grafana/grafana/blob/debb82e12417e82a0e2bd09e1a450065f884c1bc/pkg/services/ngalert/models.go#L85
+type UpsertAlertDefinitionCommand struct {
+	Title           string            `json:"title"`
+	OrgID           int64             `json:"org_id"`
+	Condition       string            `json:"condition"`
+	Data            []eval.AlertQuery `json:"data"`
+	IntervalSeconds *int64            `json:"intervalSeconds"`
+	// UID exists is set only for existing definitins
+	UID string `json:"uid"`
+
+	Result *ngalert.AlertDefinition `json:"-"`
+}
+
+// swagger:enum NoDataState
+type NoDataState string
+
+const (
+	Alerting      NoDataState = "Alerting"
+	NoData        NoDataState = "NoData"
+	KeepLastState NoDataState = "KeepLastState"
+	OK            NoDataState = "OK"
+)
+
+// swagger:enum ExecutionErrorState
+type ExecutionErrorState string
+
+const (
+	AlertingErrState      ExecutionErrorState = "Alerting"
+	KeepLastStateErrState ExecutionErrorState = "KeepLastState"
+)
+
+// ExtendedUpsertAlertDefinitionCommand extends UpsertAlertDefinitionCommand
+// with properties of grafana dashboard alerts
+// swagger:model
+type ExtendedUpsertAlertDefinitionCommand struct {
+	UpsertAlertDefinitionCommand
+	NoDataState         NoDataState            `json:"no_data_state"`
+	ExecutionErrorState ExecutionErrorState    `json:"exec_err_state"`
+	Settings            map[string]interface{} `json:"settings"`
 }

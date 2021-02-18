@@ -85,6 +85,8 @@ github.com/cheekybits/genny/generic
 github.com/davecgh/go-spew/spew
 # github.com/edsrzf/mmap-go v1.0.0
 github.com/edsrzf/mmap-go
+# github.com/fatih/color v1.10.0
+github.com/fatih/color
 # github.com/go-kit/kit v0.10.0
 github.com/go-kit/kit/log
 github.com/go-kit/kit/log/level
@@ -100,9 +102,11 @@ github.com/gogo/protobuf/proto
 github.com/gogo/protobuf/protoc-gen-gogo/descriptor
 # github.com/golang/protobuf v1.4.3
 github.com/golang/protobuf/proto
+github.com/golang/protobuf/protoc-gen-go/descriptor
 github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
+github.com/golang/protobuf/ptypes/empty
 github.com/golang/protobuf/ptypes/timestamp
 # github.com/golang/snappy v0.0.2
 github.com/golang/snappy
@@ -126,20 +130,43 @@ github.com/gorilla/websocket
 github.com/gosimple/slug
 # github.com/grafana/grafana v1.9.2-0.20210217182004-6c4be29655a6
 ## explicit
+github.com/grafana/grafana/pkg/bus
 github.com/grafana/grafana/pkg/components/gtime
+github.com/grafana/grafana/pkg/components/null
 github.com/grafana/grafana/pkg/components/securedata
 github.com/grafana/grafana/pkg/components/securejsondata
 github.com/grafana/grafana/pkg/components/simplejson
+github.com/grafana/grafana/pkg/expr
+github.com/grafana/grafana/pkg/expr/mathexp
+github.com/grafana/grafana/pkg/expr/mathexp/parse
 github.com/grafana/grafana/pkg/infra/log
 github.com/grafana/grafana/pkg/infra/metrics/metricutil
 github.com/grafana/grafana/pkg/models
+github.com/grafana/grafana/pkg/services/ngalert/eval
 github.com/grafana/grafana/pkg/setting
+github.com/grafana/grafana/pkg/tsdb
 github.com/grafana/grafana/pkg/util
 github.com/grafana/grafana/pkg/util/errutil
 # github.com/grafana/grafana-aws-sdk v0.1.0
 github.com/grafana/grafana-aws-sdk/pkg/sigv4
 # github.com/grafana/grafana-plugin-sdk-go v0.88.0
+github.com/grafana/grafana-plugin-sdk-go/backend
+github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin
+github.com/grafana/grafana-plugin-sdk-go/backend/log
 github.com/grafana/grafana-plugin-sdk-go/data
+github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2
+# github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
+github.com/grpc-ecosystem/go-grpc-middleware
+# github.com/grpc-ecosystem/go-grpc-prometheus v1.2.1-0.20191002090509-6af20e3a5340
+github.com/grpc-ecosystem/go-grpc-prometheus
+github.com/grpc-ecosystem/go-grpc-prometheus/packages/grpcstatus
+# github.com/hashicorp/go-hclog v0.15.0
+github.com/hashicorp/go-hclog
+# github.com/hashicorp/go-plugin v1.4.0
+github.com/hashicorp/go-plugin
+github.com/hashicorp/go-plugin/internal/plugin
+# github.com/hashicorp/yamux v0.0.0-20181012175058-2f1d1f20f75d
+github.com/hashicorp/yamux
 # github.com/igm/sockjs-go/v3 v3.0.0
 github.com/igm/sockjs-go/v3/sockjs
 # github.com/inconshreveable/log15 v0.0.0-20180818164646-67afb5ed74ec
@@ -162,6 +189,8 @@ github.com/mattn/go-isatty
 github.com/mattn/go-runewidth
 # github.com/matttproud/golang_protobuf_extensions v1.0.1
 github.com/matttproud/golang_protobuf_extensions/pbutil
+# github.com/mitchellh/go-testing-interface v1.0.0
+github.com/mitchellh/go-testing-interface
 # github.com/mna/redisc v1.1.7
 github.com/mna/redisc
 # github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd
@@ -172,6 +201,8 @@ github.com/modern-go/reflect2
 github.com/mwitkow/go-conntrack
 # github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e
 ## explicit
+# github.com/oklog/run v1.1.0
+github.com/oklog/run
 # github.com/oklog/ulid v1.3.1
 github.com/oklog/ulid
 # github.com/olekukonko/tablewriter v0.0.4
@@ -239,6 +270,8 @@ github.com/prometheus/prometheus/util/testutil
 github.com/rainycape/unidecode
 # github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf
 github.com/teris-io/shortid
+# github.com/timberio/go-datemath v0.1.1-0.20200323150745-74ddef604fff
+github.com/timberio/go-datemath
 # github.com/uber/jaeger-client-go v2.25.0+incompatible
 github.com/uber/jaeger-client-go
 github.com/uber/jaeger-client-go/internal/baggage
@@ -298,6 +331,32 @@ golang.org/x/tools/go/internal/gcimporter
 # golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 golang.org/x/xerrors
 golang.org/x/xerrors/internal
+# gonum.org/v1/gonum v0.8.2
+gonum.org/v1/gonum/blas
+gonum.org/v1/gonum/blas/blas64
+gonum.org/v1/gonum/blas/cblas128
+gonum.org/v1/gonum/blas/gonum
+gonum.org/v1/gonum/floats
+gonum.org/v1/gonum/floats/scalar
+gonum.org/v1/gonum/graph
+gonum.org/v1/gonum/graph/internal/linear
+gonum.org/v1/gonum/graph/internal/ordered
+gonum.org/v1/gonum/graph/internal/set
+gonum.org/v1/gonum/graph/internal/uid
+gonum.org/v1/gonum/graph/iterator
+gonum.org/v1/gonum/graph/simple
+gonum.org/v1/gonum/graph/topo
+gonum.org/v1/gonum/graph/traverse
+gonum.org/v1/gonum/internal/asm/c128
+gonum.org/v1/gonum/internal/asm/c64
+gonum.org/v1/gonum/internal/asm/f32
+gonum.org/v1/gonum/internal/asm/f64
+gonum.org/v1/gonum/internal/cmplx64
+gonum.org/v1/gonum/internal/math32
+gonum.org/v1/gonum/lapack
+gonum.org/v1/gonum/lapack/gonum
+gonum.org/v1/gonum/lapack/lapack64
+gonum.org/v1/gonum/mat
 # google.golang.org/appengine v1.6.7
 google.golang.org/appengine/internal
 google.golang.org/appengine/internal/base
@@ -306,6 +365,52 @@ google.golang.org/appengine/internal/log
 google.golang.org/appengine/internal/remote_api
 google.golang.org/appengine/internal/urlfetch
 google.golang.org/appengine/urlfetch
+# google.golang.org/genproto v0.0.0-20210203152818-3206188e46ba
+google.golang.org/genproto/googleapis/rpc/status
+# google.golang.org/grpc v1.35.0 => google.golang.org/grpc v1.29.1
+google.golang.org/grpc
+google.golang.org/grpc/attributes
+google.golang.org/grpc/backoff
+google.golang.org/grpc/balancer
+google.golang.org/grpc/balancer/base
+google.golang.org/grpc/balancer/roundrobin
+google.golang.org/grpc/binarylog/grpc_binarylog_v1
+google.golang.org/grpc/codes
+google.golang.org/grpc/connectivity
+google.golang.org/grpc/credentials
+google.golang.org/grpc/credentials/internal
+google.golang.org/grpc/encoding
+google.golang.org/grpc/encoding/proto
+google.golang.org/grpc/grpclog
+google.golang.org/grpc/health
+google.golang.org/grpc/health/grpc_health_v1
+google.golang.org/grpc/internal
+google.golang.org/grpc/internal/backoff
+google.golang.org/grpc/internal/balancerload
+google.golang.org/grpc/internal/binarylog
+google.golang.org/grpc/internal/buffer
+google.golang.org/grpc/internal/channelz
+google.golang.org/grpc/internal/envconfig
+google.golang.org/grpc/internal/grpclog
+google.golang.org/grpc/internal/grpcrand
+google.golang.org/grpc/internal/grpcsync
+google.golang.org/grpc/internal/grpcutil
+google.golang.org/grpc/internal/resolver/dns
+google.golang.org/grpc/internal/resolver/passthrough
+google.golang.org/grpc/internal/status
+google.golang.org/grpc/internal/syscall
+google.golang.org/grpc/internal/transport
+google.golang.org/grpc/keepalive
+google.golang.org/grpc/metadata
+google.golang.org/grpc/naming
+google.golang.org/grpc/peer
+google.golang.org/grpc/reflection
+google.golang.org/grpc/reflection/grpc_reflection_v1alpha
+google.golang.org/grpc/resolver
+google.golang.org/grpc/serviceconfig
+google.golang.org/grpc/stats
+google.golang.org/grpc/status
+google.golang.org/grpc/tap
 # google.golang.org/protobuf v1.25.0
 google.golang.org/protobuf/encoding/prototext
 google.golang.org/protobuf/encoding/protowire
@@ -333,8 +438,10 @@ google.golang.org/protobuf/reflect/protoreflect
 google.golang.org/protobuf/reflect/protoregistry
 google.golang.org/protobuf/runtime/protoiface
 google.golang.org/protobuf/runtime/protoimpl
+google.golang.org/protobuf/types/descriptorpb
 google.golang.org/protobuf/types/known/anypb
 google.golang.org/protobuf/types/known/durationpb
+google.golang.org/protobuf/types/known/emptypb
 google.golang.org/protobuf/types/known/timestamppb
 # gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f
 ## explicit

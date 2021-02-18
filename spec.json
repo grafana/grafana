@@ -495,6 +495,31 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
+    "AlertQuery": {
+      "type": "object",
+      "title": "AlertQuery represents a single query associated with an alert definition.",
+      "properties": {
+        "model": {
+          "description": "JSON is the raw JSON query and includes the above properties as well as custom properties.",
+          "type": "object",
+          "x-go-name": "Model"
+        },
+        "queryType": {
+          "description": "QueryType is an optional identifier for the type of query.\nIt can be used to distinguish different types of queries.",
+          "type": "string",
+          "x-go-name": "QueryType"
+        },
+        "refId": {
+          "description": "RefID is the unique identifier of the query, set by the frontend call.",
+          "type": "string",
+          "x-go-name": "RefID"
+        },
+        "relativeTimeRange": {
+          "$ref": "#/definitions/RelativeTimeRange"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/eval"
+    },
     "AlertResponse": {
       "type": "object",
       "properties": {
@@ -802,9 +827,9 @@
       "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "Duration": {
-      "description": "A Duration represents the elapsed time between two instants\nas an int64 nanosecond count. The representation limits the\nlargest representable duration to approximately 290 years.",
       "type": "integer",
       "format": "int64",
+      "title": "Duration is a type used for marshalling durations.",
       "$ref": "#/definitions/Duration"
     },
     "EmailConfig": {
@@ -906,7 +931,7 @@
           "$ref": "#/definitions/Duration"
         },
         "GrafanaManagedAlert": {
-          "$ref": "#/definitions/Node"
+          "$ref": "#/definitions/ExtendedUpsertAlertDefinitionCommand"
         },
         "Labels": {
           "type": "object",
@@ -916,6 +941,68 @@
         },
         "Record": {
           "$ref": "#/definitions/Node"
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
+    "ExtendedUpsertAlertDefinitionCommand": {
+      "description": "ExtendedUpsertAlertDefinitionCommand extends UpsertAlertDefinitionCommand\nwith properties of grafana dashboard alerts",
+      "type": "object",
+      "properties": {
+        "condition": {
+          "type": "string",
+          "x-go-name": "Condition"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AlertQuery"
+          },
+          "x-go-name": "Data"
+        },
+        "exec_err_state": {
+          "type": "string",
+          "enum": [
+            "Alerting",
+            "KeepLastState"
+          ],
+          "x-go-name": "ExecutionErrorState"
+        },
+        "intervalSeconds": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "IntervalSeconds"
+        },
+        "no_data_state": {
+          "type": "string",
+          "enum": [
+            "Alerting",
+            "NoData",
+            "KeepLastState",
+            "OK"
+          ],
+          "x-go-name": "NoDataState"
+        },
+        "org_id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "OrgID"
+        },
+        "settings": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Settings"
+        },
+        "title": {
+          "type": "string",
+          "x-go-name": "Title"
+        },
+        "uid": {
+          "description": "UID exists is set only for existing definitins",
+          "type": "string",
+          "x-go-name": "UID"
         }
       },
       "x-go-package": "github.com/grafana/alerting-api/pkg/api"
@@ -1529,6 +1616,19 @@
       "title": "Regexp is the representation of a compiled regular expression.",
       "x-go-package": "regexp"
     },
+    "RelativeTimeRange": {
+      "description": "RelativeTimeRange is the per query start and end time\nfor requests.",
+      "type": "object",
+      "properties": {
+        "from": {
+          "$ref": "#/definitions/Duration"
+        },
+        "to": {
+          "$ref": "#/definitions/Duration"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/eval"
+    },
     "Route": {
       "type": "object",
       "title": "A Route is a node that contains definitions of how to handle alerts.",
@@ -2080,6 +2180,42 @@
     "Unauthorized": {
       "type": "object",
       "x-go-package": "github.com/grafana/alerting-api/pkg/models"
+    },
+    "UpsertAlertDefinitionCommand": {
+      "type": "object",
+      "properties": {
+        "condition": {
+          "type": "string",
+          "x-go-name": "Condition"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AlertQuery"
+          },
+          "x-go-name": "Data"
+        },
+        "intervalSeconds": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "IntervalSeconds"
+        },
+        "org_id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "OrgID"
+        },
+        "title": {
+          "type": "string",
+          "x-go-name": "Title"
+        },
+        "uid": {
+          "description": "UID exists is set only for existing definitins",
+          "type": "string",
+          "x-go-name": "UID"
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     },
     "Userinfo": {
       "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
