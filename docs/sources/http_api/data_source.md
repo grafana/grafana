@@ -497,3 +497,110 @@ Content-Type: application/json
 `GET /api/datasources/proxy/:datasourceId/*`
 
 Proxies all calls to the actual data source.
+
+## Query a time series database by id
+
+`POST /api/tsdb/query`
+
+Queries a time series data source having backend implementation.
+
+> **Note:** Most of our builtin data sources have backend implementation.
+
+**Example Request**:
+
+```http
+POST /api/tsdb/query HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+
+{
+  "from": "1420066800000",
+  "to": "1575845999999",
+  "queries": [
+    {
+      "refId": "A",
+      "intervalMs": 86400000,
+      "maxDataPoints": 1092,
+      "datasourceId": 86,
+      "rawSql": "SELECT 1 as valueOne, 2 as valueTwo",
+      "format": "table"
+    }
+  ]
+}
+```
+> **Note:** The `from`, `to`, and `queries` properties are required.
+
+JSON Body schema:
+
+- **from/to** – Should be either absolute in epoch timestamps in milliseconds or relative using Grafana time units. For example, `now-1h`.
+- **query.refId** – Specifies an identifier of the query. Is optional and default to `"A".
+- **query.datasourceId** – Specifies the data source to be queried. Each `query` in the request must have an unique `datasourceId`.
+- **query.maxDataPoints** - Species maximum amount of data points that dashboard panel can render. Is optional and default to 100.
+- **query.intervalMs** - Specifies the time interval in milliseconds of time series. Is optional and defaults to 1000.
+
+In addition, each data source have their own specific properties that should be added in a request. 
+
+**Example Request for the MySQL data source:**
+
+```http
+POST /api/tsdb/query HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+
+{
+  "from": "1420066800000",
+  "to": "1575845999999",
+  "queries": [
+    {
+      "refId": "A",
+      "intervalMs": 86400000,
+      "maxDataPoints": 1092,
+      "datasourceId": 86,
+      "rawSql": "SELECT\n  time,\n  sum(opened) AS \"Opened\",\n  sum(closed) AS \"Closed\"\nFROM\n  issues_activity\nWHERE\n  $__unixEpochFilter(time) AND\n  period = 'm' AND\n  repo IN('grafana/grafana') AND\n  opened_by IN('Contributor','Grafana Labs')\nGROUP BY 1\nORDER BY 1\n",
+      "format": "time_series"
+    }
+  ]
+}
+```
+
+**Example MySQL time series query response:**
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+  "results": {
+    "A": {
+      "refId": "A",
+      "meta": {
+        "rowCount": 0,
+        "sql": "SELECT\n  time,\n  sum(opened) AS \"Opened\",\n  sum(closed) AS \"Closed\"\nFROM\n  issues_activity\nWHERE\n  time >= 1420066800 AND time <= 1575845999 AND\n  period = 'm' AND\n  repo IN('grafana/grafana') AND\n  opened_by IN('Contributor','Grafana Labs')\nGROUP BY 1\nORDER BY 1\n"
+      },
+      "series": [
+        {
+          "name": "Opened",
+          "points": [
+            [
+              109,
+              1420070400000
+            ],
+            [
+              122,
+              1422748800000
+            ]
+          ]
+        },
+        {
+          "name": "Closed",
+          "points": [
+            [
+              89,
+              1420070400000
+            ]
+          ]
+        }
+      ]
+    }
+  }
+}
+```
