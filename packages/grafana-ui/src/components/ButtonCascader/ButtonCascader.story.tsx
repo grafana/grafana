@@ -10,7 +10,6 @@ export default {
   component: ButtonCascader,
   decorators: [withCenteredStory],
   parameters: {
-    docs: {},
     knobs: {
       disabled: true,
     },
@@ -39,8 +38,8 @@ export default {
   },
 };
 
-const Template: Story<ButtonCascaderProps> = (args) => {
-  return <ButtonCascader {...args}>{args.children}</ButtonCascader>;
+const Template: Story<ButtonCascaderProps> = ({ children, ...args }) => {
+  return <ButtonCascader {...args}>{children}</ButtonCascader>;
 };
 
 export const simple = Template.bind({});
