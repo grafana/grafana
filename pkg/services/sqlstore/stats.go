@@ -46,7 +46,7 @@ func GetSystemStats(query *models.GetSystemStatsQuery) error {
 	sb.Write("SELECT ")
 	sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("user") + `) AS users,`)
 	sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("org") + `) AS orgs,`)
-	sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("dashboard") + `) AS dashboards,`)
+	sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("dashboard") + ` d WHERE d.is_folder=0) AS dashboards,`)
 	sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("data_source") + `) AS datasources,`)
 	sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("star") + `) AS stars,`)
 	sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("playlist") + `) AS playlists,`)
@@ -119,7 +119,7 @@ func GetAdminStats(query *models.GetAdminStatsQuery) error {
 		) AS orgs,
 		(
 			SELECT COUNT(*)
-			FROM ` + dialect.Quote("dashboard") + `
+			FROM ` + dialect.Quote("dashboard") + `d WHERE d.is_folder=0
 		) AS dashboards,
 		(
 			SELECT COUNT(*)
