@@ -17,12 +17,13 @@ import {
   PrometheusDatasource,
   prometheusRegularEscape,
   prometheusSpecialRegexEscape,
-  THANOS,
 } from './datasource';
 import { PromOptions, PromQuery } from './types';
 import { VariableHide } from '../../../features/variables/types';
 import { describe } from '../../../../test/lib/common';
 import { QueryOptions } from 'app/types';
+import { PrometheusFlavour } from './flavour_provider';
+import { DOWNSAMPLE_1H, DOWNSAMPLE_5M, DOWNSAMPLE_RAW } from './configuration/PromSettings';
 
 const fetchMock = jest.fn().mockReturnValue(of(createDefaultPromResponse()));
 
@@ -1592,56 +1593,104 @@ describe('PrometheusDatasource', () => {
   });
 });
 
-describe('PrometheusDatasource for Thanos', () => {
+describe('PrometheusDatasource with Thanos flavour', () => {
+  const dateNow = Date.now.bind(global.Date);
   const instanceSettings = ({
     url: 'proxied',
     directUrl: 'direct',
     user: 'test',
     password: 'mupp',
     jsonData: {
-      flavour: THANOS,
-      retentionPolicies: { DOWNSAMPLE_RAW: '1d', DOWNSAMPLE_5M: '1w', DOWNSAMPLE_1H: '0d' }.toString(),
+      flavour: PrometheusFlavour.Thanos,
     },
   } as unknown) as DataSourceInstanceSettings<PromOptions>;
+  const jsonData = instanceSettings.jsonData;
 
-  let ds: PrometheusDatasource;
-  beforeEach(() => {
-    ds = new PrometheusDatasource(instanceSettings);
+  afterEach(() => {
+    global.Date.now = dateNow;
   });
 
   describe('The __rate_interval variable', () => {
     const target = { expr: 'rate(process_cpu_seconds_total[$__rate_interval])', refId: 'A' };
 
     beforeEach(() => {
-      (templateSrv.replace as any).mockClear();
+      (templateSrvStub.replace as any).mockClear();
     });
-    it('should be interval + scrape interval if min step set to 1m, interval is 5m and start set to point with raw resolution available', () => {
-      // For a 7d graph, $__interval is 5m
-      const dateNow = Date.now.bind(global.Date);
-      global.Date.now = jest.fn(() => 10080);
-      ds.createQuery({ ...target, interval: '1m' }, { interval: '5m' } as any, 0, 10080);
-      expect((templateSrv.replace as any).mock.calls[2][1]['__rate_interval'].value).toBe('360s');
-      global.Date.now = dateNow;
+    let ds: PrometheusDatasource;
+
+    afterEach(() => {
+      instanceSettings.jsonData = jsonData;
     });
-    it('should be 2*5m if min step set to 1m, interval is 5m and start set to point with 5m+ resolution available', () => {
-      // For a 7d graph, $__interval is 5m
-      const dateNow = Date.now.bind(global.Date);
-      global.Date.now = jest.fn(() => 2 * 24 * 3600);
-      ds.createQuery({ ...target, interval: '1m' }, { interval: '5m' } as any, 0, 10080);
-      expect((templateSrv.replace as any).mock.calls[2][1]['__rate_interval'].value).toBe('600s');
-      global.Date.now = dateNow;
+
+    it('should be 4 times the scrape interval if interval + scrape interval is lower and start set to point with raw resolution available', () => {
+      instanceSettings.jsonData.retentionPolicies = JSON.stringify({
+        [DOWNSAMPLE_RAW]: '600s',
+        [DOWNSAMPLE_5M]: '0s',
+        [DOWNSAMPLE_1H]: '0s',
+      });
+      ds = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
+      global.Date.now = jest.fn(() => 300_000);
+      ds.createQuery(target, { interval: '15s' } as any, 0, 300);
+      expect(templateSrvStub.replace.mock.calls[1][1]['__rate_interval'].value).toBe('60s');
     });
-    it('should be 2*1h if min step set to 1m, interval is 5m and start set to point with only 1h resolution available', () => {
-      // For a 7d graph, $__interval is 5m
-      const dateNow = Date.now.bind(global.Date);
-      global.Date.now = jest.fn(() => 10 * 24 * 3600);
-      ds.createQuery({ ...target, interval: '1m' }, { interval: '5m' } as any, 0, 10080);
-      expect((templateSrv.replace as any).mock.calls[2][1]['__rate_interval'].value).toBe('7200s');
-      global.Date.now = dateNow;
+    it('should be 2 * 5 minutes if raw resolution is unavailable at start', () => {
+      instanceSettings.jsonData.retentionPolicies = JSON.stringify({
+        [DOWNSAMPLE_RAW]: '100s',
+        [DOWNSAMPLE_5M]: '0s',
+        [DOWNSAMPLE_1H]: '0s',
+      });
+      ds = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
+      global.Date.now = jest.fn(() => 300_000);
+      // For pure prometheus data source $__rate_interval would be 60s.
+      ds.createQuery(target, { interval: '15s' } as any, 0, 300);
+      expect(templateSrvStub.replace.mock.calls[1][1]['__rate_interval'].value).toBe('600s');
+    });
+    it('should be 2 * 1 hour if only 1 hour resolution is available at start', () => {
+      instanceSettings.jsonData.retentionPolicies = JSON.stringify({
+        [DOWNSAMPLE_RAW]: '100s',
+        [DOWNSAMPLE_5M]: '100s',
+        [DOWNSAMPLE_1H]: '0s',
+      });
+      ds = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
+      global.Date.now = jest.fn(() => 300_000);
+      // For pure prometheus data source $__rate_interval would be 60s.
+      ds.createQuery(target, { interval: '15s' } as any, 0, 300);
+      expect(templateSrvStub.replace.mock.calls[1][1]['__rate_interval'].value).toBe('7200s');
+    });
+    it('should be 2 * 1 hour if 1 hour resolution is the one possibly containing the most data', () => {
+      instanceSettings.jsonData.retentionPolicies = JSON.stringify({
+        [DOWNSAMPLE_RAW]: '100s',
+        [DOWNSAMPLE_5M]: '100s',
+        [DOWNSAMPLE_1H]: '200s',
+      });
+      ds = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
+      global.Date.now = jest.fn(() => 300_000);
+      // For pure prometheus data source $__rate_interval would be 60s.
+      ds.createQuery(target, { interval: '15s' } as any, 0, 300);
+      expect(templateSrvStub.replace.mock.calls[1][1]['__rate_interval'].value).toBe('7200s');
+    });
+    it('should be 2 * 5 minutes if start is beyond any retention, yet downsampled data has the same retention', () => {
+      instanceSettings.jsonData.retentionPolicies = JSON.stringify({
+        [DOWNSAMPLE_RAW]: '100s',
+        [DOWNSAMPLE_5M]: '200s',
+        [DOWNSAMPLE_1H]: '200s',
+      });
+      ds = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
+      global.Date.now = jest.fn(() => 300_000);
+      // For pure prometheus data source $__rate_interval would be 60s.
+      ds.createQuery(target, { interval: '15s' } as any, 0, 300);
+      expect(templateSrvStub.replace.mock.calls[1][1]['__rate_interval'].value).toBe('600s');
     });
   });
 
   describe('When querying prometheus with one target, instant = true', () => {
+    instanceSettings.jsonData.retentionPolicies = JSON.stringify({
+      [DOWNSAMPLE_RAW]: '100s',
+      [DOWNSAMPLE_5M]: '200s',
+      [DOWNSAMPLE_1H]: '300s',
+    });
+    const ds = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
+    instanceSettings.jsonData = jsonData;
     const query = {
       range: { from: time({ seconds: 63 }), to: time({ seconds: 123 }) },
       targets: [{ expr: 'test{job="testjob"}', format: 'time_series', instant: true }],
@@ -1665,35 +1714,35 @@ describe('PrometheusDatasource for Thanos', () => {
       };
 
       fetchMock.mockImplementation(() => of(response));
-      ds.query(query as any).subscribe((data: any) => {});
     });
 
     it('and with raw resolution available should generate the correct query', () => {
-      const dateNow = Date.now.bind(global.Date);
-      global.Date.now = jest.fn(() => 123);
+      global.Date.now = jest.fn(() => 200_000);
+      ds.query(query as any).subscribe((data: any) => {});
       const urlExpected = `proxied/api/v1/query?query=${encodeURIComponent('test{job="testjob"}')}&time=123`;
       const res = fetchMock.mock.calls[0][0];
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
-      global.Date.now = dateNow;
     });
     it('and with 5m resolution available should generate the correct query with max_source_resolution set', () => {
-      const dateNow = Date.now.bind(global.Date);
-      global.Date.now = jest.fn(() => 2 * 24 * 3600);
-      const urlExpected = `proxied/api/v1/query?query=${encodeURIComponent('test{job="testjob"}')}&time=123&max_source_resolution=300s`;
+      global.Date.now = jest.fn(() => 300_000);
+      ds.query(query as any).subscribe((data: any) => {});
+      const urlExpected = `proxied/api/v1/query?query=${encodeURIComponent(
+        'test{job="testjob"}'
+      )}&time=123&max_source_resolution=300s`;
       const res = fetchMock.mock.calls[0][0];
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
-      global.Date.now = dateNow;
     });
     it('and with 1h resolution available should generate the correct query with max_source_resolution set', () => {
-      const dateNow = Date.now.bind(global.Date);
-      global.Date.now = jest.fn(() => 10 * 24 * 3600);
-      const urlExpected = `proxied/api/v1/query?query=${encodeURIComponent('test{job="testjob"}')}&time=123&max_source_resolution=3600s`;
+      global.Date.now = jest.fn(() => 400_000);
+      ds.query(query as any).subscribe((data: any) => {});
+      const urlExpected = `proxied/api/v1/query?query=${encodeURIComponent(
+        'test{job="testjob"}'
+      )}&time=123&max_source_resolution=3600s`;
       const res = fetchMock.mock.calls[0][0];
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
-      global.Date.now = dateNow;
     });
   });
 });

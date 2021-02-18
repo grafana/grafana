@@ -42,11 +42,9 @@ import {
 } from './types';
 import { PrometheusVariableSupport } from './variables';
 import PrometheusMetricFindQuery from './metric_find_query';
+import { PrometheusFlavourProvider, PrometheusFlavour } from './flavour_provider';
 
 export const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
-
-export const PROMETHEUS = 'Prometheus';
-export const THANOS = 'Thanos';
 
 export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> {
   type: string;
@@ -58,14 +56,13 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   withCredentials: any;
   metricsNameCache = new LRU<string, string[]>(10);
   interval: string;
-  flavour: string;
-  retentionPolicies: Array<{ [level: number]: number }>;
   queryTimeout: string;
   httpMethod: string;
   languageProvider: PrometheusLanguageProvider;
   exemplarTraceIdDestinations: ExemplarTraceIdDestination[] | undefined;
   lookupsDisabled: boolean;
   customQueryParameters: any;
+  flavourProvider: PrometheusFlavourProvider;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
@@ -82,7 +79,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     this.interval = instanceSettings.jsonData.timeInterval || '15s';
     this.queryTimeout = instanceSettings.jsonData.queryTimeout;
     this.httpMethod = instanceSettings.jsonData.httpMethod || 'GET';
-    this.flavour = instanceSettings.jsonData.flavour || PROMETHEUS;
     this.directUrl = instanceSettings.jsonData.directUrl;
     this.exemplarTraceIdDestinations = instanceSettings.jsonData.exemplarTraceIdDestinations;
     this.ruleMappings = {};
@@ -90,7 +86,10 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     this.lookupsDisabled = instanceSettings.jsonData.disableMetricsLookup ?? false;
     this.customQueryParameters = new URLSearchParams(instanceSettings.jsonData.customQueryParameters);
     this.variables = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
-    this.retentionPolicies = this.prepareRetentionPolicies(this.flavour, instanceSettings.jsonData.retentionPolicies);
+    this.flavourProvider = new PrometheusFlavourProvider(
+      instanceSettings.jsonData.flavour as PrometheusFlavour,
+      instanceSettings.jsonData.retentionPolicies
+    );
   }
 
   init = () => {
@@ -245,25 +244,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       activeTargets,
     };
   };
-
-  private prepareRetentionPolicies(flavour: string, s: string) {
-    if (flavour !== THANOS || s === '' || s === undefined) {
-      return [];
-    }
-    let j = JSON.parse(s);
-    let level;
-    let rp: Array<{ [level: number]: number }> = [];
-    for (level in j) {
-      let d = prometheusParseDuration(j[level]);
-      if (d >= 0) {
-        rp.push([parseInt(level, 10), d]);
-      }
-    }
-    rp = rp.sort((a, b) => {
-      return a[0] - b[0];
-    });
-    return rp;
-  }
 
   query(options: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
     const start = this.getPrometheusTime(options.range.from, false);
@@ -453,22 +433,9 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     if (scrapeInterval === 0) {
       scrapeInterval = 15;
     }
-    const downsampledInterval = this.getDownsampledInterval(start);
-    const rateInterval = Math.max(interval + scrapeInterval, 4 * scrapeInterval, 2 * downsampledInterval);
+    let rateInterval = Math.max(interval + scrapeInterval, 4 * scrapeInterval);
+    rateInterval = this.flavourProvider.adjustRateInterval(rateInterval, start);
     return { __rate_interval: { text: rateInterval + 's', value: rateInterval + 's' } };
-  }
-
-  getDownsampledInterval(start: number): number {
-    let downsampledInterval = 0;
-    const now = Date.now();
-    start = start * 1000;
-
-    for (let i = 1; i < this.retentionPolicies.length; i++) {
-      if (start < now - this.retentionPolicies[i - 1][1]) {
-        downsampledInterval = this.retentionPolicies[i][0];
-      }
-    }
-    return downsampledInterval;
   }
 
   adjustInterval(interval: number, minInterval: number, range: number, intervalFactor: number) {
@@ -522,7 +489,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
   performInstantQuery(query: PromQueryRequest, time: number) {
     const url = '/api/v1/query';
-    const data: any = {
+    let data: any = {
       query: query.expr,
       time,
     };
@@ -537,10 +504,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       }
     }
 
-    const downsampledInterval = this.getDownsampledInterval(time);
-    if (downsampledInterval > 0) {
-      data['max_source_resolution'] = downsampledInterval + 's';
-    }
+    data = this.flavourProvider.adjustInstantRequestData(data, time);
 
     return this._request<PromDataSuccessResponse<PromVectorData | PromScalarData>>(url, data, {
       requestId: query.requestId,
@@ -867,28 +831,4 @@ export function prometheusRegularEscape(value: any) {
 
 export function prometheusSpecialRegexEscape(value: any) {
   return typeof value === 'string' ? value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&') : value;
-}
-
-let promTimeFactors: { [index: string]: number } = {
-  ms: 1,
-  s: 1000,
-  m: 1000 * 60,
-  h: 1000 * 60 * 60,
-  d: 1000 * 60 * 60 * 24,
-  w: 1000 * 60 * 60 * 24 * 7,
-  y: 1000 * 60 * 60 * 24 * 365,
-};
-let durationPartRE = new RegExp('([0-9]+)(ms|s|m|h|d|w|y)', 'g');
-let durationRE = new RegExp('^(([0-9]+)(ms|s|m|h|d|w|y))+$');
-
-export function prometheusParseDuration(s: string) {
-  if (durationRE.exec(s) === null) {
-    return -1;
-  }
-  let m: RegExpExecArray | null;
-  let duration = 0;
-  while ((m = durationPartRE.exec(s)) !== null) {
-    duration += parseInt(m[1], 10) * promTimeFactors[m[2]];
-  }
-  return duration;
 }

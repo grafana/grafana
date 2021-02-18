@@ -211,3 +211,26 @@ export function limitSuggestions(items: string[]) {
 export function addLimitInfo(items: any[] | undefined): string {
   return items && items.length >= SUGGESTIONS_LIMIT ? `, limited to the first ${SUGGESTIONS_LIMIT} received items` : '';
 }
+
+export function durationToMs(s: string) {
+  if (durationRE.exec(s) === null) {
+    return -1;
+  }
+  let m: RegExpExecArray | null;
+  let duration = 0;
+  while ((m = durationPartRE.exec(s)) !== null) {
+    duration += parseInt(m[1], 10) * promTimeMs[m[2]];
+  }
+  return duration;
+}
+const durationRE = new RegExp('^(([0-9]+)(ms|s|m|h|d|w|y))+$');
+const durationPartRE = new RegExp('([0-9]+)(ms|s|m|h|d|w|y)', 'g');
+const promTimeMs: { [index: string]: number } = {
+  ms: 1,
+  s: 1000,
+  m: 1000 * 60,
+  h: 1000 * 60 * 60,
+  d: 1000 * 60 * 60 * 24,
+  w: 1000 * 60 * 60 * 24 * 7,
+  y: 1000 * 60 * 60 * 24 * 365,
+};

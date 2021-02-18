@@ -8,7 +8,7 @@ import { EventsWithValidation, InlineFormLabel, LegacyForms, regexValidation } f
 import React, { SyntheticEvent } from 'react';
 import { PromOptions } from '../types';
 import { ExemplarsSettings } from './ExemplarsSettings';
-import { PROMETHEUS, THANOS } from '../datasource';
+import { PrometheusFlavour } from '../flavour_provider';
 
 export const DOWNSAMPLE_RAW = 0;
 export const DOWNSAMPLE_5M = 60 * 5;
@@ -22,8 +22,8 @@ const httpOptions = [
 ];
 
 const flavourOptions = [
-  { value: PROMETHEUS, label: PROMETHEUS },
-  { value: THANOS, label: THANOS },
+  { value: PrometheusFlavour.Prometheus, label: PrometheusFlavour.Prometheus },
+  { value: PrometheusFlavour.Thanos, label: PrometheusFlavour.Thanos },
 ];
 
 type Props = Pick<DataSourcePluginOptionsEditorProps<PromOptions>, 'options' | 'onOptionsChange'>;
@@ -122,12 +122,12 @@ export const PromSettings = (props: Props) => {
           </div>
         </div>
         <div className="gf-form">
-          <InlineFormLabel width={14} tooltip="Datasource backend.">
+          <InlineFormLabel width={14} tooltip="Data source backend.">
             Flavour
           </InlineFormLabel>
           <Select
             options={flavourOptions}
-            value={flavourOptions.find(o => o.value === options.jsonData.flavour)}
+            value={flavourOptions.find((o) => o.value === options.jsonData.flavour)}
             onChange={onChangeHandler('flavour', options, onOptionsChange)}
             width={7}
           />
@@ -143,20 +143,20 @@ export const PromSettings = (props: Props) => {
           )
         }
       />
-      {options.jsonData.flavour === THANOS && (
+      {options.jsonData.flavour === PrometheusFlavour.Thanos && (
         <>
           <h3 className="page-heading">Thanos downsampling and retention</h3>
           <div className="gf-form-group">
             <div className="gf-form-inline">
               <div className="gf-form max-width-30">
                 <FormField
-                  label="Retention for raw data"
+                  label="Retention for raw resolution"
                   labelWidth={14}
                   tooltip="Raw data retention. 0 for unlimited."
                   inputEl={
                     <Input
                       className="width-25"
-                      value={retentionPolicies[DOWNSAMPLE_RAW.toString(10)] || '0d'}
+                      value={retentionPolicies[DOWNSAMPLE_RAW.toString(10)] || '0s'}
                       onChange={onRetentionChangeHandler(
                         DOWNSAMPLE_RAW.toString(10),
                         options,
@@ -174,13 +174,13 @@ export const PromSettings = (props: Props) => {
             <div className="gf-form-inline">
               <div className="gf-form max-width-30">
                 <FormField
-                  label="Retention for 5m resolution"
+                  label="Retention for 5 minutes resolution"
                   labelWidth={14}
-                  tooltip="Thanos 5m downsampled data retention. 0 for unlimited."
+                  tooltip="Thanos 5 minutes downsampled data retention. 0 for unlimited."
                   inputEl={
                     <Input
                       className="width-25"
-                      value={retentionPolicies[DOWNSAMPLE_5M.toString(10)] || '0d'}
+                      value={retentionPolicies[DOWNSAMPLE_5M.toString(10)] || '0s'}
                       onChange={onRetentionChangeHandler(
                         DOWNSAMPLE_5M.toString(10),
                         options,
@@ -198,13 +198,13 @@ export const PromSettings = (props: Props) => {
             <div className="gf-form-inline">
               <div className="gf-form max-width-30">
                 <FormField
-                  label="Retention for 1h resolution"
+                  label="Retention for 1 hour resolution"
                   labelWidth={14}
-                  tooltip="Thanos 1h downsampled data retention. 0 for unlimited."
+                  tooltip="Thanos 1 hour downsampled data retention. 0 for unlimited."
                   inputEl={
                     <Input
                       className="width-25"
-                      value={retentionPolicies[DOWNSAMPLE_1H.toString(10)] || '0d'}
+                      value={retentionPolicies[DOWNSAMPLE_1H.toString(10)] || '0s'}
                       onChange={onRetentionChangeHandler(
                         DOWNSAMPLE_1H.toString(10),
                         options,
