@@ -117,7 +117,7 @@ type CreatePolicyWithPermissionsCommand struct {
 
 type UpdatePolicyCommand struct {
 	Id          int64        `json:"id"`
-	OrgId       int64        `json:"-"`
+	OrgId       int64        `json:"orgId"`
 	UID         string       `json:"uid"`
 	Name        string       `json:"name"`
 	Description string       `json:"description"`

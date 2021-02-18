@@ -163,6 +163,7 @@ func (ac *RBACService) CreatePolicyWithPermissions(ctx context.Context, cmd Crea
 func (ac *RBACService) UpdatePolicy(ctx context.Context, cmd UpdatePolicyCommand) (*PolicyDTO, error) {
 	var result *PolicyDTO
 	err := ac.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		// TODO: work with both ID and UID
 		existingPolicy, err := getPolicyByUID(sess, cmd.UID, cmd.OrgId)
 		if err != nil {
 			return err
