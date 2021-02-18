@@ -32,7 +32,13 @@ import (
 // swagger:parameters RoutePostAlertingConfig
 type BodyAlertingConfig struct {
 	// in:body
-	Body AlertingConfig
+	Body UserConfig
+}
+
+// swagger:model
+type UserConfig struct {
+	TemplateFiles      map[string]string `yaml:"template_files" json:"template_files"`
+	AlertmanagerConfig AlertingConfig    `yaml:"alertmanager_config" json:"alertmanager_config"`
 }
 
 // swagger:model
@@ -40,7 +46,6 @@ type AlertingConfigResponse struct {
 	BodyAlertingConfig
 }
 
-// swagger:model
 type AlertingConfig struct {
 	config.Config
 

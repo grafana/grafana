@@ -157,7 +157,7 @@
             "name": "Body",
             "in": "body",
             "schema": {
-              "$ref": "#/definitions/AlertingConfig"
+              "$ref": "#/definitions/UserConfig"
             }
           }
         ],
@@ -392,7 +392,7 @@
       "type": "object",
       "properties": {
         "Body": {
-          "$ref": "#/definitions/AlertingConfig"
+          "$ref": "#/definitions/UserConfig"
         }
       },
       "x-go-package": "github.com/grafana/alerting-api/pkg/api"
@@ -480,7 +480,7 @@
       "type": "object",
       "properties": {
         "Body": {
-          "$ref": "#/definitions/AlertingConfig"
+          "$ref": "#/definitions/UserConfig"
         }
       },
       "x-go-package": "github.com/grafana/alerting-api/pkg/api"
@@ -635,9 +635,10 @@
       "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "Duration": {
-      "description": "A Duration represents the elapsed time between two instants\nas an int64 nanosecond count. The representation limits the\nlargest representable duration to approximately 290 years.",
+      "description": "Duration wraps time.Duration. It is used to parse the custom duration format\nfrom YAML.\nThis type should not propagate beyond the scope of input/output processing.",
       "type": "integer",
       "format": "int64",
+      "x-go-package": "time",
       "$ref": "#/definitions/Duration"
     },
     "ElementType": {
@@ -1285,12 +1286,6 @@
       "type": "object",
       "title": "Receiver configuration provides configuration on how to contact a receiver.",
       "properties": {
-        "GrafanaManagedReceivers": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/GrafanaReceiver"
-          }
-        },
         "email_configs": {
           "type": "array",
           "items": {
@@ -1353,7 +1348,7 @@
           "x-go-name": "WechatConfigs"
         }
       },
-      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+      "x-go-package": "github.com/prometheus/alertmanager/config"
     },
     "Regexp": {
       "description": "A Regexp is safe for concurrent use by multiple goroutines,\nexcept for configuration methods, such as Longest.",
@@ -1831,9 +1826,8 @@
       "x-go-package": "github.com/prometheus/common/config"
     },
     "URL": {
-      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
       "type": "object",
-      "title": "A URL represents a parsed URL (technically, a URI reference).",
+      "title": "URL is a custom URL type that allows validation at configuration load time.",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -1866,11 +1860,27 @@
           "$ref": "#/definitions/Userinfo"
         }
       },
-      "x-go-package": "net/url"
+      "x-go-package": "github.com/prometheus/common/config"
     },
     "Unauthorized": {
       "type": "object",
       "x-go-package": "github.com/grafana/alerting-api/pkg/models"
+    },
+    "UserConfig": {
+      "type": "object",
+      "properties": {
+        "alertmanager_config": {
+          "$ref": "#/definitions/AlertingConfig"
+        },
+        "template_files": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "TemplateFiles"
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     },
     "Userinfo": {
       "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
