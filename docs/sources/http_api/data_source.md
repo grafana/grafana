@@ -498,7 +498,7 @@ Content-Type: application/json
 
 Proxies all calls to the actual data source.
 
-## Query a time series database by id
+## Query a time series data source by id
 
 Queries a time series data source having backend implementation.
 
