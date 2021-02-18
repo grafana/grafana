@@ -28,7 +28,7 @@ export const PromSettings = (props: Props) => {
    * */
 
   if (!options.jsonData.httpMethod) {
-    options.url ? (options.jsonData.httpMethod = 'POST') : (options.jsonData.httpMethod = 'GET');
+    options.url ? (options.jsonData.httpMethod = 'GET') : (options.jsonData.httpMethod = 'POST');
   }
 
   return (
