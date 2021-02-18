@@ -1,39 +1,58 @@
 // Libraries
-import React, { PureComponent } from 'react';
+import React, { FC } from 'react';
 import classNames from 'classnames';
-
-// Components
-import DataSourcesListItem from './DataSourcesListItem';
 
 // Types
 import { DataSourceSettings } from '@grafana/data';
 import { LayoutMode, LayoutModes } from '../../core/components/LayoutSelector/LayoutSelector';
+import { Card, Tag, useStyles } from '@grafana/ui';
+import { css } from 'emotion';
 
 export interface Props {
   dataSources: DataSourceSettings[];
   layoutMode: LayoutMode;
 }
 
-export class DataSourcesList extends PureComponent<Props> {
-  render() {
-    const { dataSources, layoutMode } = this.props;
+export const DataSourcesList: FC<Props> = ({ dataSources, layoutMode }) => {
+  const listStyle = classNames({
+    'card-section': true,
+    'card-list-layout-grid': layoutMode === LayoutModes.Grid,
+    'card-list-layout-list': layoutMode === LayoutModes.List,
+  });
+  const styles = useStyles(getStyles);
 
-    const listStyle = classNames({
-      'card-section': true,
-      'card-list-layout-grid': layoutMode === LayoutModes.Grid,
-      'card-list-layout-list': layoutMode === LayoutModes.List,
-    });
-
-    return (
-      <section className={listStyle}>
-        <ol className="card-list">
-          {dataSources.map((dataSource, index) => {
-            return <DataSourcesListItem dataSource={dataSource} key={`${dataSource.id}-${index}`} />;
-          })}
-        </ol>
-      </section>
-    );
-  }
-}
+  return (
+    <section className={listStyle}>
+      <ul className={styles.list}>
+        {dataSources.map((dataSource, index) => {
+          return (
+            <li key={`${dataSource.id}-${index}`}>
+              <Card heading={dataSource.name} href={`datasources/edit/${dataSource.id}`}>
+                <Card.Figure>
+                  <img src={dataSource.typeLogoUrl} alt={dataSource.name} />
+                </Card.Figure>
+                <Card.Meta>
+                  {[
+                    dataSource.url,
+                    dataSource.type?.toUpperCase(),
+                    dataSource.isDefault && <Tag name={'default'} colorIndex={1} />,
+                  ].filter(Boolean)}
+                </Card.Meta>
+              </Card>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+};
 
 export default DataSourcesList;
+
+const getStyles = () => {
+  return {
+    list: css`
+      list-style: none;
+    `,
+  };
+};
