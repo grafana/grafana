@@ -2,7 +2,7 @@ import { FolderDTO } from 'app/types';
 import { NavModelItem, NavModel } from '@grafana/data';
 
 export function buildNavModel(folder: FolderDTO): NavModelItem {
-  return {
+  const model = {
     icon: 'folder',
     id: 'manage-folder',
     subTitle: 'Manage folder dashboards & permissions',
@@ -17,22 +17,30 @@ export function buildNavModel(folder: FolderDTO): NavModelItem {
         text: 'Dashboards',
         url: folder.url,
       },
-      {
-        active: false,
-        icon: 'lock',
-        id: `folder-permissions-${folder.uid}`,
-        text: 'Permissions',
-        url: `${folder.url}/permissions`,
-      },
-      {
-        active: false,
-        icon: 'cog',
-        id: `folder-settings-${folder.uid}`,
-        text: 'Settings',
-        url: `${folder.url}/settings`,
-      },
     ],
   };
+
+  if (folder.canAdmin) {
+    model.children.push({
+      active: false,
+      icon: 'lock',
+      id: `folder-permissions-${folder.uid}`,
+      text: 'Permissions',
+      url: `${folder.url}/permissions`,
+    });
+  }
+
+  if (folder.canSave) {
+    model.children.push({
+      active: false,
+      icon: 'cog',
+      id: `folder-settings-${folder.uid}`,
+      text: 'Settings',
+      url: `${folder.url}/settings`,
+    });
+  }
+
+  return model;
 }
 
 export function getLoadingNav(tabIndex: number): NavModel {
@@ -41,9 +49,9 @@ export function getLoadingNav(tabIndex: number): NavModel {
     uid: 'loading',
     title: 'Loading',
     url: 'url',
-    canSave: false,
-    canEdit: false,
-    canAdmin: false,
+    canSave: true,
+    canEdit: true,
+    canAdmin: true,
     version: 0,
   });
 
