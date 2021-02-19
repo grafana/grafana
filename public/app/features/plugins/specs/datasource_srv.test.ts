@@ -11,9 +11,18 @@ const templateSrv: any = {
         value: 'BBB',
       },
     },
+    {
+      type: 'datasource',
+      name: 'datasourceDefault',
+      current: {
+        value: 'default',
+      },
+    },
   ],
   replace: (v: string) => {
-    return v.replace('${datasource}', 'BBB');
+    let result = v.replace('${datasource}', 'BBB');
+    result = result.replace('${datasourceDefault}', 'default');
+    return result;
   },
 };
 
@@ -115,6 +124,12 @@ describe('datasource_srv', () => {
       it('should work with variable', () => {
         const ds = dataSourceSrv.getInstanceSettings('${datasource}');
         expect(ds?.name).toBe('${datasource}');
+        expect(ds?.uid).toBe('uid-code-BBB');
+      });
+
+      it('should work with variable', () => {
+        const ds = dataSourceSrv.getInstanceSettings('${datasourceDefault}');
+        expect(ds?.name).toBe('${datasourceDefault}');
         expect(ds?.uid).toBe('uid-code-BBB');
       });
     });
