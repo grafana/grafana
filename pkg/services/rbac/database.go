@@ -358,10 +358,14 @@ func (ac *RBACService) GetUserPolicies(ctx context.Context, query GetUserPolicie
 					SELECT tp.policy_id FROM team_policy as tp
 						INNER JOIN team_member as tm ON tm.team_id = tp.team_id
 						WHERE tm.user_id = ?
+					UNION
+					SELECT rp.policy_id FROM builtin_role_policy AS rp
+						WHERE role IN (?)
 				)
 				AND policy.org_id = ? `
 
-		err := sess.SQL(q, query.UserId, query.UserId, query.OrgId).Find(&result)
+		// FIXME: list of built in roles.
+		err := sess.SQL(q, query.UserId, query.UserId, "Viewer", query.OrgId).Find(&result)
 		return err
 	})
 
@@ -387,10 +391,14 @@ func (ac *RBACService) GetUserPermissions(ctx context.Context, query GetUserPerm
 					SELECT tp.policy_id FROM team_policy as tp
 						INNER JOIN team_member as tm ON tm.team_id = tp.team_id
 						WHERE tm.user_id = ?
+					UNION
+					SELECT rp.policy_id FROM builtin_role_policy AS rp
+						WHERE role IN (?)
 				)
 				AND policy.org_id = ? `
 
-		if err := sess.SQL(q, query.UserId, query.UserId, query.OrgId).Find(&result); err != nil {
+		// FIXME: list of built in roles.
+		if err := sess.SQL(q, query.UserId, query.UserId, "Viewer", query.OrgId).Find(&result); err != nil {
 			return err
 		}
 
