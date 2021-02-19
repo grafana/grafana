@@ -253,7 +253,7 @@
           }
         }
       },
-      "put": {
+      "post": {
         "description": "gets an Alerting config",
         "tags": [
           "folders"

@@ -6,7 +6,7 @@
 //       200: Permissions
 //       400: ValidationError
 
-// swagger:route PUT /api/v1/folder/{Id}/permissions folders RouteSetFolderPermissions
+// swagger:route POST /api/v1/folder/{Id}/permissions folders RouteSetFolderPermissions
 //
 // gets an Alerting config
 //
