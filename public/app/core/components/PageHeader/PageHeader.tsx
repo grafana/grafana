@@ -94,19 +94,12 @@ export const PageHeader: FC<Props> = ({ model }) => {
 };
 
 function renderHeaderTitle(main: NavModelItem) {
-  const iconClassName =
-    main.icon === 'grafana'
-      ? css`
-          margin-top: 12px;
-        `
-      : css`
-          margin-top: 14px;
-        `;
+  const marginTop = main.icon === 'grafana' ? 12 : 14;
 
   return (
     <div className="page-header__inner">
       <span className="page-header__logo">
-        {main.icon && <Icon name={main.icon as IconName} size="xxxl" className={iconClassName} />}
+        {main.icon && <Icon name={main.icon as IconName} size="xxxl" style={{ marginTop }} />}
         {main.img && <img className="page-header__img" src={main.img} alt={`logo of ${main.text}`} />}
       </span>
 
@@ -146,7 +139,7 @@ function renderTitle(title: string, breadcrumbs: NavModelBreadcrumb[]) {
 
 const getStyles = (theme: GrafanaTheme) => ({
   headerCanvas: css`
-    background: ${theme.colors.dashboardBg};
+    background: ${theme.colors.bg2};
     border-bottom: 1px solid ${theme.colors.border1};
   `,
 });
