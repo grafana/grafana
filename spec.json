@@ -738,9 +738,6 @@
         "For": {
           "$ref": "#/definitions/Duration"
         },
-        "GrafanaManagedAlert": {
-          "$ref": "#/definitions/ExtendedUpsertAlertDefinitionCommand"
-        },
         "Labels": {
           "type": "object",
           "additionalProperties": {
@@ -749,6 +746,9 @@
         },
         "Record": {
           "$ref": "#/definitions/Node"
+        },
+        "grafana_alert": {
+          "$ref": "#/definitions/ExtendedUpsertAlertDefinitionCommand"
         }
       },
       "x-go-package": "github.com/grafana/alerting-api/pkg/api"
@@ -1567,17 +1567,19 @@
     "RuleGroupConfig": {
       "type": "object",
       "properties": {
-        "Interval": {
+        "interval": {
           "$ref": "#/definitions/Duration"
         },
-        "Name": {
-          "type": "string"
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
         },
-        "Rules": {
+        "rules": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/ExtendedRuleNode"
-          }
+          },
+          "x-go-name": "Rules"
         }
       },
       "x-go-package": "github.com/grafana/alerting-api/pkg/api"
@@ -1585,17 +1587,19 @@
     "RuleGroupConfigResponse": {
       "type": "object",
       "properties": {
-        "Interval": {
+        "interval": {
           "$ref": "#/definitions/Duration"
         },
-        "Name": {
-          "type": "string"
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
         },
-        "Rules": {
+        "rules": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/ExtendedRuleNode"
-          }
+          },
+          "x-go-name": "Rules"
         }
       },
       "x-go-package": "github.com/grafana/alerting-api/pkg/api"

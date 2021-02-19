@@ -92,33 +92,33 @@ type NamespaceConfigResponse map[string]RuleGroupConfig
 
 // swagger:model
 type RuleGroupConfig struct {
-	Name     string             `yaml:"name"`
-	Interval model.Duration     `yaml:"interval,omitempty"`
-	Rules    []ExtendedRuleNode `yaml:"rules"`
+	Name     string             `yaml:"name" json:"name"`
+	Interval model.Duration     `yaml:"interval,omitempty" json:"interval,omitempty"`
+	Rules    []ExtendedRuleNode `yaml:"rules" json:"rules"`
 }
 
 type ExtendedRuleNode struct {
 	rulefmt.RuleNode
 	//GrafanaManagedAlert yaml.Node `yaml:"grafana_alert,omitempty"`
-	GrafanaManagedAlert ExtendedUpsertAlertDefinitionCommand `yaml:"grafana_alert,omitempty"`
+	GrafanaManagedAlert ExtendedUpsertAlertDefinitionCommand `yaml:"grafana_alert,omitempty" json:"grafana_alert,omitempty"`
 }
 
 // UpsertAlertDefinitionCommand is copy of the unexported struct:
 https://github.com/grafana/grafana/blob/debb82e12417e82a0e2bd09e1a450065f884c1bc/pkg/services/ngalert/models.go#L85
 type UpsertAlertDefinitionCommand struct {
-	Title           string            `json:"title"`
+	Title           string            `json:"title" yaml:"title"`
 	// OrgID is an obsolete field (it will derive from the x-grafana-org-id header)
-	OrgID           int64             `json:"-"`
+	OrgID           int64             `json:"-" yaml:"-"`
 	// Condition is the refID of the query or expression to be evaluated
-	Condition       string            `json:"condition"`
+	Condition       string            `json:"condition" yaml:"condition"`
 	// Data is an array of the queries and expressions
-	Data            []eval.AlertQuery `json:"data"`
+	Data            []eval.AlertQuery `json:"data" yaml:"data"`
 	// IntervalSeconds is an obsolete field (it will derive from the ruleGroup interval)
-	IntervalSeconds *int64            `json:"-"`
+	IntervalSeconds *int64            `json:"-" yaml:"-"`
 	// UID is set only for existing definitions
-	UID string `json:"uid"`
+	UID string `json:"uid" yaml:"uid"`
 
-	Result *ngalert.AlertDefinition `json:"-"`
+	Result *ngalert.AlertDefinition `json:"-" yaml:"-"`
 }
 
 // swagger:enum NoDataState
@@ -144,11 +144,11 @@ const (
 // swagger:model
 type ExtendedUpsertAlertDefinitionCommand struct {
 	UpsertAlertDefinitionCommand
-	NoDataState         NoDataState            `json:"no_data_state"`
-	ExecutionErrorState ExecutionErrorState    `json:"exec_err_state"`
-	Settings            map[string]interface{} `json:"settings"`
+	NoDataState         NoDataState            `json:"no_data_state" yaml:"no_data_state"`
+	ExecutionErrorState ExecutionErrorState    `json:"exec_err_state" yaml:"exec_err_state"`
+	Settings            map[string]interface{} `json:"settings" yaml:"settings"`
 	// internal state
-	FolderUID string `json:"-"`
-	DatasourceUIDs []string `json:"-"`
-	RuleGroupUID string `json:"-"`
+	FolderUID string `json:"-" yaml:"-"`
+	DatasourceUIDs []string `json:"-" yaml:"-"`
+	RuleGroupUID string `json:"-" yaml:"-"`
 }
