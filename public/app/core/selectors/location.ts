@@ -1,3 +1,4 @@
-export const getRouteParamsId = state => state.routeParams.id;
+import { LocationState } from 'app/types';
 
-export const getRouteParamsPage = state => state.routeParams.page;
+export const getRouteParamsId = (state: LocationState) => state.routeParams.id;
+export const getRouteParamsPage = (state: LocationState) => state.routeParams.page;

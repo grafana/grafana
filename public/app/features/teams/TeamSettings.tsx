@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { FormLabel } from '@grafana/ui';
+import { FormLabel, Input } from '@grafana/ui';
 
 import { SharedPreferences } from 'app/core/components/SharedPreferences/SharedPreferences';
 import { updateTeam } from './state/actions';
@@ -19,7 +19,7 @@ interface State {
 }
 
 export class TeamSettings extends React.Component<Props, State> {
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
 
     this.state = {
@@ -28,15 +28,15 @@ export class TeamSettings extends React.Component<Props, State> {
     };
   }
 
-  onChangeName = event => {
+  onChangeName = (event: any) => {
     this.setState({ name: event.target.value });
   };
 
-  onChangeEmail = event => {
+  onChangeEmail = (event: any) => {
     this.setState({ email: event.target.value });
   };
 
-  onUpdate = event => {
+  onUpdate = (event: any) => {
     const { name, email } = this.state;
     event.preventDefault();
     this.props.updateTeam(name, email);
@@ -52,7 +52,7 @@ export class TeamSettings extends React.Component<Props, State> {
         <form name="teamDetailsForm" className="gf-form-group" onSubmit={this.onUpdate}>
           <div className="gf-form max-width-30">
             <FormLabel>Name</FormLabel>
-            <input
+            <Input
               type="text"
               required
               value={name}
@@ -65,7 +65,7 @@ export class TeamSettings extends React.Component<Props, State> {
             <FormLabel tooltip="This is optional and is primarily used to set the team profile avatar (via gravatar service)">
               Email
             </FormLabel>
-            <input
+            <Input
               type="email"
               className="gf-form-input max-width-22"
               value={email}
@@ -86,7 +86,7 @@ export class TeamSettings extends React.Component<Props, State> {
   }
 }
 
-function mapStateToProps(state) {
+function mapStateToProps(state: any) {
   const teamId = getRouteParamsId(state.location);
 
   return {
@@ -98,7 +98,4 @@ const mapDispatchToProps = {
   updateTeam,
 };
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(TeamSettings);
+export default connect(mapStateToProps, mapDispatchToProps)(TeamSettings);

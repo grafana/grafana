@@ -1,0 +1,91 @@
+//
+// Alerts
+// --------------------------------------------------
+
+// Base styles
+// -------------------------
+
+.alert {
+  padding: 15px 20px;
+  margin-bottom: $space-xs;
+  text-shadow: 0 2px 0 rgba(255, 255, 255, 0.5);
+  background: $alert-error-bg;
+  position: relative;
+  color: $white;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+  border-radius: $border-radius;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+// Alternate styles
+// -------------------------
+
+.alert-success {
+  background: $alert-success-bg;
+}
+
+.alert-danger,
+.alert-error {
+  background: $alert-error-bg;
+}
+
+.alert-info {
+  background: $alert-info-bg;
+}
+
+.alert-warning {
+  background: $alert-warning-bg;
+}
+
+.page-alert-list {
+  z-index: 8000;
+  min-width: 400px;
+  max-width: 600px;
+  position: fixed;
+  right: 10px;
+  top: 60px;
+}
+
+.alert-close {
+  padding: 0 0 0 $space-md;
+  border: none;
+  background: none;
+  display: flex;
+  align-items: center;
+
+  .fa {
+    align-self: flex-end;
+    font-size: 21px;
+    color: rgba(255, 255, 255, 0.75);
+  }
+}
+
+.alert-title {
+  font-weight: $font-weight-semi-bold;
+}
+
+.alert-icon {
+  padding: 0 $space-md 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 35px;
+  .fa {
+    font-size: 21px;
+  }
+}
+
+.alert-body {
+  flex-grow: 1;
+
+  a {
+    color: $white;
+    text-decoration: underline;
+  }
+}
+
+.alert-icon-on-top {
+  align-items: flex-start;
+}

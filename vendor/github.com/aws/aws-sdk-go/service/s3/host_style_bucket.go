@@ -30,10 +30,10 @@ var accelerateOpBlacklist = operationBlacklist{
 	opListBuckets, opCreateBucket, opDeleteBucket,
 }
 
-// Request handler to automatically add the bucket name to the endpoint domain
+// Automatically add the bucket name to the endpoint domain
 // if possible. This style of bucket is valid for all bucket names which are
 // DNS compatible and do not contain "."
-func updateEndpointForS3Config(r *request.Request) {
+func updateEndpointForS3Config(r *request.Request, bucketName string) {
 	forceHostStyle := aws.BoolValue(r.Config.S3ForcePathStyle)
 	accelerate := aws.BoolValue(r.Config.S3UseAccelerate)
 
@@ -43,45 +43,29 @@ func updateEndpointForS3Config(r *request.Request) {
 				r.Config.Logger.Log("ERROR: aws.Config.S3UseAccelerate is not compatible with aws.Config.S3ForcePathStyle, ignoring S3ForcePathStyle.")
 			}
 		}
-		updateEndpointForAccelerate(r)
+		updateEndpointForAccelerate(r, bucketName)
 	} else if !forceHostStyle && r.Operation.Name != opGetBucketLocation {
-		updateEndpointForHostStyle(r)
+		updateEndpointForHostStyle(r, bucketName)
 	}
 }
 
-func updateEndpointForHostStyle(r *request.Request) {
-	bucket, ok := bucketNameFromReqParams(r.Params)
-	if !ok {
-		// Ignore operation requests if the bucketname was not provided
-		// if this is an input validation error the validation handler
-		// will report it.
-		return
-	}
-
-	if !hostCompatibleBucketName(r.HTTPRequest.URL, bucket) {
+func updateEndpointForHostStyle(r *request.Request, bucketName string) {
+	if !hostCompatibleBucketName(r.HTTPRequest.URL, bucketName) {
 		// bucket name must be valid to put into the host
 		return
 	}
 
-	moveBucketToHost(r.HTTPRequest.URL, bucket)
+	moveBucketToHost(r.HTTPRequest.URL, bucketName)
 }
 
 var (
 	accelElem = []byte("s3-accelerate.dualstack.")
 )
 
-func updateEndpointForAccelerate(r *request.Request) {
-	bucket, ok := bucketNameFromReqParams(r.Params)
-	if !ok {
-		// Ignore operation requests if the bucketname was not provided
-		// if this is an input validation error the validation handler
-		// will report it.
-		return
-	}
-
-	if !hostCompatibleBucketName(r.HTTPRequest.URL, bucket) {
+func updateEndpointForAccelerate(r *request.Request, bucketName string) {
+	if !hostCompatibleBucketName(r.HTTPRequest.URL, bucketName) {
 		r.Error = awserr.New("InvalidParameterException",
-			fmt.Sprintf("bucket name %s is not compatible with S3 Accelerate", bucket),
+			fmt.Sprintf("bucket name %s is not compatible with S3 Accelerate", bucketName),
 			nil)
 		return
 	}
@@ -106,7 +90,7 @@ func updateEndpointForAccelerate(r *request.Request) {
 
 	r.HTTPRequest.URL.Host = strings.Join(parts, ".")
 
-	moveBucketToHost(r.HTTPRequest.URL, bucket)
+	moveBucketToHost(r.HTTPRequest.URL, bucketName)
 }
 
 // Attempts to retrieve the bucket name from the request input parameters.
@@ -148,8 +132,5 @@ func dnsCompatibleBucketName(bucket string) bool {
 // moveBucketToHost moves the bucket name from the URI path to URL host.
 func moveBucketToHost(u *url.URL, bucket string) {
 	u.Host = bucket + "." + u.Host
-	u.Path = strings.Replace(u.Path, "/{Bucket}", "", -1)
-	if u.Path == "" {
-		u.Path = "/"
-	}
+	removeBucketFromPath(u)
 }

@@ -1,7 +1,7 @@
 import React from 'react';
 import { storiesOf } from '@storybook/react';
 import { NamedColorsPalette } from './NamedColorsPalette';
-import { getColorName, getColorDefinitionByName } from '../../utils/namedColorsPalette';
+import { getColorName, getColorDefinitionByName } from '@grafana/data';
 import { select } from '@storybook/addon-knobs';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
@@ -11,7 +11,7 @@ const BasicGreen = getColorDefinitionByName('green');
 const BasicRed = getColorDefinitionByName('red');
 const LightBlue = getColorDefinitionByName('light-blue');
 
-const NamedColorsPaletteStories = storiesOf('UI/ColorPicker/Palettes/NamedColorsPalette', module);
+const NamedColorsPaletteStories = storiesOf('General/ColorPicker/Palettes/NamedColorsPalette', module);
 
 NamedColorsPaletteStories.addDecorator(withCenteredStory);
 

@@ -5,36 +5,8 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/annotations"
 )
-
-func TestSavingTags(t *testing.T) {
-	InitTestDB(t)
-
-	Convey("Testing annotation saving/loading", t, func() {
-
-		repo := SqlAnnotationRepo{}
-
-		Convey("Can save tags", func() {
-			Reset(func() {
-				_, err := x.Exec("DELETE FROM annotation_tag WHERE 1=1")
-				So(err, ShouldBeNil)
-			})
-
-			tagPairs := []*models.Tag{
-				{Key: "outage"},
-				{Key: "type", Value: "outage"},
-				{Key: "server", Value: "server-1"},
-				{Key: "error"},
-			}
-			tags, err := repo.ensureTagsExist(newSession(), tagPairs)
-
-			So(err, ShouldBeNil)
-			So(len(tags), ShouldEqual, 4)
-		})
-	})
-}
 
 func TestAnnotations(t *testing.T) {
 	InitTestDB(t)
@@ -63,6 +35,7 @@ func TestAnnotations(t *testing.T) {
 
 			So(err, ShouldBeNil)
 			So(annotation.Id, ShouldBeGreaterThan, 0)
+			So(annotation.Epoch, ShouldEqual, annotation.EpochEnd)
 
 			annotation2 := &annotations.Item{
 				OrgId:       1,
@@ -70,13 +43,15 @@ func TestAnnotations(t *testing.T) {
 				DashboardId: 2,
 				Text:        "hello",
 				Type:        "alert",
-				Epoch:       20,
+				Epoch:       21, // Should swap epoch & epochEnd
+				EpochEnd:    20,
 				Tags:        []string{"outage", "error", "type:outage", "server:server-1"},
-				RegionId:    1,
 			}
 			err = repo.Save(annotation2)
 			So(err, ShouldBeNil)
 			So(annotation2.Id, ShouldBeGreaterThan, 0)
+			So(annotation2.Epoch, ShouldEqual, 20)
+			So(annotation2.EpochEnd, ShouldEqual, 21)
 
 			globalAnnotation1 := &annotations.Item{
 				OrgId:  1,
@@ -128,17 +103,6 @@ func TestAnnotations(t *testing.T) {
 				items, err := repo.Find(&annotations.ItemQuery{
 					OrgId:        1,
 					AnnotationId: annotation2.Id,
-				})
-
-				So(err, ShouldBeNil)
-				So(items, ShouldHaveLength, 1)
-				So(items[0].Id, ShouldEqual, annotation2.Id)
-			})
-
-			Convey("Can query for annotation by region id", func() {
-				items, err := repo.Find(&annotations.ItemQuery{
-					OrgId:    1,
-					RegionId: annotation2.RegionId,
 				})
 
 				So(err, ShouldBeNil)

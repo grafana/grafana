@@ -1,0 +1,25 @@
+enable:
+
+run:
+  deadline: 10m
+
+linters:
+  disable-all: true
+  enable:
+    - deadcode
+    - gofmt
+    - gosimple
+    - govet
+    - ineffassign
+    - structcheck
+    - typecheck
+    - unconvert
+    - unused
+    - varcheck
+    - goconst
+    - staticcheck
+    - errcheck
+
+linter-settings:
+  goconst:
+    ignore-tests: true

@@ -18,7 +18,7 @@
 
 // Package grpclog defines logging for grpc.
 //
-// All logs in transport package only go to verbose level 2.
+// All logs in transport and grpclb packages only go to verbose level 2.
 // All logs in other packages in grpc are logged in spite of the verbosity level.
 //
 // In the default logger,
@@ -105,18 +105,21 @@ func Fatalln(args ...interface{}) {
 }
 
 // Print prints to the logger. Arguments are handled in the manner of fmt.Print.
+//
 // Deprecated: use Info.
 func Print(args ...interface{}) {
 	logger.Info(args...)
 }
 
 // Printf prints to the logger. Arguments are handled in the manner of fmt.Printf.
+//
 // Deprecated: use Infof.
 func Printf(format string, args ...interface{}) {
 	logger.Infof(format, args...)
 }
 
 // Println prints to the logger. Arguments are handled in the manner of fmt.Println.
+//
 // Deprecated: use Infoln.
 func Println(args ...interface{}) {
 	logger.Infoln(args...)

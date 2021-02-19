@@ -2,8 +2,37 @@ import _ from 'lodash';
 import flatten from 'app/core/utils/flatten';
 import TimeSeries from 'app/core/time_series2';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
+import { TableTransform } from './types';
+import { Column, TableData } from '@grafana/data';
 
-const transformers = {};
+const transformers: { [key: string]: TableTransform } = {};
+export const timeSeriesFormatFilterer = (data: any): any[] => {
+  if (!Array.isArray(data)) {
+    return data.datapoints ? [data] : [];
+  }
+
+  return data.reduce((acc, series) => {
+    if (!series.datapoints) {
+      return acc;
+    }
+
+    return acc.concat(series);
+  }, []);
+};
+
+export const tableDataFormatFilterer = (data: any): any[] => {
+  if (!Array.isArray(data)) {
+    return data.columns ? [data] : [];
+  }
+
+  return data.reduce((acc, series) => {
+    if (!series.columns) {
+      return acc;
+    }
+
+    return acc.concat(series);
+  }, []);
+};
 
 transformers['timeseries_to_rows'] = {
   description: 'Time series to rows',
@@ -12,9 +41,10 @@ transformers['timeseries_to_rows'] = {
   },
   transform: (data, panel, model) => {
     model.columns = [{ text: 'Time', type: 'date' }, { text: 'Metric' }, { text: 'Value' }];
+    const filteredData = timeSeriesFormatFilterer(data);
 
-    for (let i = 0; i < data.length; i++) {
-      const series = data[i];
+    for (let i = 0; i < filteredData.length; i++) {
+      const series = filteredData[i];
       for (let y = 0; y < series.datapoints.length; y++) {
         const dp = series.datapoints[y];
         model.rows.push([dp[1], series.target, dp[0]]);
@@ -32,10 +62,11 @@ transformers['timeseries_to_columns'] = {
     model.columns.push({ text: 'Time', type: 'date' });
 
     // group by time
-    const points = {};
+    const points: any = {};
+    const filteredData = timeSeriesFormatFilterer(data);
 
-    for (let i = 0; i < data.length; i++) {
-      const series = data[i];
+    for (let i = 0; i < filteredData.length; i++) {
+      const series = filteredData[i];
       model.columns.push({ text: series.target });
 
       for (let y = 0; y < series.datapoints.length; y++) {
@@ -55,7 +86,7 @@ transformers['timeseries_to_columns'] = {
       const point = points[time];
       const values = [point.time];
 
-      for (let i = 0; i < data.length; i++) {
+      for (let i = 0; i < filteredData.length; i++) {
         const value = point[i];
         values.push(value);
       }
@@ -85,10 +116,12 @@ transformers['timeseries_aggregations'] = {
       model.columns.push({ text: panel.columns[i].text });
     }
 
-    for (i = 0; i < data.length; i++) {
+    const filteredData = timeSeriesFormatFilterer(data);
+
+    for (i = 0; i < filteredData.length; i++) {
       const series = new TimeSeries({
-        datapoints: data[i].datapoints,
-        alias: data[i].target,
+        datapoints: filteredData[i].datapoints,
+        alias: filteredData[i].target,
       });
 
       series.getFlotPairs('connected');
@@ -137,11 +170,13 @@ transformers['table'] = {
       return [...data[0].columns];
     }
 
+    const filteredData = tableDataFormatFilterer(data);
+
     // Track column indexes: name -> index
-    const columnNames = {};
+    const columnNames: any = {};
 
     // Union of all columns
-    const columns = data.reduce((acc, series) => {
+    const columns = filteredData.reduce((acc: Column[], series: TableData) => {
       series.columns.forEach(col => {
         const { text } = col;
         if (columnNames[text] === undefined) {
@@ -154,13 +189,13 @@ transformers['table'] = {
 
     return columns;
   },
-  transform: (data, panel, model) => {
+  transform: (data: any[], panel, model) => {
     if (!data || data.length === 0) {
       return;
     }
-
-    const noTableIndex = _.findIndex(data, d => d.type !== 'table');
-    if (noTableIndex > -1) {
+    const filteredData = tableDataFormatFilterer(data);
+    const noTableIndex = _.findIndex(filteredData, d => 'columns' in d && 'rows' in d);
+    if (noTableIndex < 0) {
       throw {
         message: `Result of query #${String.fromCharCode(
           65 + noTableIndex
@@ -168,7 +203,7 @@ transformers['table'] = {
       };
     }
 
-    mergeTablesIntoModel(model, ...data);
+    mergeTablesIntoModel(model, ...filteredData);
   },
 };
 
@@ -190,7 +225,7 @@ transformers['json'] = {
       const maxDocs = Math.min(series.datapoints.length, 100);
       for (let y = 0; y < maxDocs; y++) {
         const doc = series.datapoints[y];
-        const flattened = flatten(doc, null);
+        const flattened = flatten(doc, {});
         for (const propName in flattened) {
           names[propName] = true;
         }
@@ -227,7 +262,7 @@ transformers['json'] = {
         const values = [];
 
         if (_.isObject(dp) && panel.columns.length > 0) {
-          const flattened = flatten(dp, null);
+          const flattened = flatten(dp);
           for (z = 0; z < panel.columns.length; z++) {
             values.push(flattened[panel.columns[z].value]);
           }
@@ -241,7 +276,7 @@ transformers['json'] = {
   },
 };
 
-function transformDataToTable(data, panel) {
+function transformDataToTable(data: any, panel: any) {
   const model = new TableModel();
 
   if (!data || data.length === 0) {

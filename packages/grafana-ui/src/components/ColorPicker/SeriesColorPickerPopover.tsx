@@ -1,11 +1,11 @@
 import React, { FunctionComponent } from 'react';
 
 import { ColorPickerPopover, ColorPickerProps } from './ColorPickerPopover';
-import { PopperContentProps } from '../Tooltip/PopperController';
+import { PopoverContentProps } from '../Tooltip/Tooltip';
 import { Switch } from '../Switch/Switch';
 import { withTheme } from '../../themes/ThemeContext';
 
-export interface SeriesColorPickerPopoverProps extends ColorPickerProps, PopperContentProps {
+export interface SeriesColorPickerPopoverProps extends ColorPickerProps, PopoverContentProps {
   yaxis?: number;
   onToggleAxis?: () => void;
 }

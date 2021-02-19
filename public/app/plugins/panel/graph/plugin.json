@@ -3,8 +3,6 @@
   "name": "Graph",
   "id": "graph",
 
-  "dataFormats": ["time_series", "table"],
-
   "info": {
     "description": "Graph Panel for Grafana",
     "author": {

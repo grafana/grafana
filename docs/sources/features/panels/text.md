@@ -2,7 +2,7 @@
 title = "Text"
 keywords = ["grafana", "text", "documentation", "panel"]
 type = "docs"
-aliases = ["/reference/alertlist/"]
+aliases = ["/docs/grafana/latest/reference/alertlist/"]
 [menu.docs]
 name = "Text"
 parent = "panels"

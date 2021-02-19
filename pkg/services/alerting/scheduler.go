@@ -4,35 +4,35 @@ import (
 	"math"
 	"time"
 
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
-type SchedulerImpl struct {
+type schedulerImpl struct {
 	jobs map[int64]*Job
 	log  log.Logger
 }
 
-func NewScheduler() Scheduler {
-	return &SchedulerImpl{
+func newScheduler() scheduler {
+	return &schedulerImpl{
 		jobs: make(map[int64]*Job),
 		log:  log.New("alerting.scheduler"),
 	}
 }
 
-func (s *SchedulerImpl) Update(rules []*Rule) {
+func (s *schedulerImpl) Update(rules []*Rule) {
 	s.log.Debug("Scheduling update", "ruleCount", len(rules))
 
 	jobs := make(map[int64]*Job)
 
 	for i, rule := range rules {
 		var job *Job
-		if s.jobs[rule.Id] != nil {
-			job = s.jobs[rule.Id]
+		if s.jobs[rule.ID] != nil {
+			job = s.jobs[rule.ID]
 		} else {
-			job = &Job{
-				Running: false,
-			}
+			job = &Job{}
+			job.SetRunning(false)
 		}
 
 		job.Rule = rule
@@ -42,17 +42,17 @@ func (s *SchedulerImpl) Update(rules []*Rule) {
 		if job.Offset == 0 { //zero offset causes division with 0 panics.
 			job.Offset = 1
 		}
-		jobs[rule.Id] = job
+		jobs[rule.ID] = job
 	}
 
 	s.jobs = jobs
 }
 
-func (s *SchedulerImpl) Tick(tickTime time.Time, execQueue chan *Job) {
+func (s *schedulerImpl) Tick(tickTime time.Time, execQueue chan *Job) {
 	now := tickTime.Unix()
 
 	for _, job := range s.jobs {
-		if job.Running || job.Rule.State == models.AlertStatePaused {
+		if job.GetRunning() || job.Rule.State == models.AlertStatePaused {
 			continue
 		}
 
@@ -62,7 +62,13 @@ func (s *SchedulerImpl) Tick(tickTime time.Time, execQueue chan *Job) {
 			continue
 		}
 
-		if now%job.Rule.Frequency == 0 {
+		// Check the job frequency against the minimum interval required
+		interval := job.Rule.Frequency
+		if interval < setting.AlertingMinInterval {
+			interval = setting.AlertingMinInterval
+		}
+
+		if now%interval == 0 {
 			if job.Offset > 0 {
 				job.OffsetWait = true
 			} else {
@@ -72,7 +78,7 @@ func (s *SchedulerImpl) Tick(tickTime time.Time, execQueue chan *Job) {
 	}
 }
 
-func (s *SchedulerImpl) enqueue(job *Job, execQueue chan *Job) {
-	s.log.Debug("Scheduler: Putting job on to exec queue", "name", job.Rule.Name, "id", job.Rule.Id)
+func (s *schedulerImpl) enqueue(job *Job, execQueue chan *Job) {
+	s.log.Debug("Scheduler: Putting job on to exec queue", "name", job.Rule.Name, "id", job.Rule.ID)
 	execQueue <- job
 }

@@ -32,6 +32,7 @@ exports[`Render should render component 1`] = `
         className="card-item-details"
       >
         <div
+          aria-label="Data source list item gdev-cloudwatch"
           className="card-item-name"
         >
           gdev-cloudwatch

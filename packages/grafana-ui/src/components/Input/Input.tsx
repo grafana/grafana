@@ -11,6 +11,7 @@ export enum InputStatus {
 interface Props extends React.HTMLProps<HTMLInputElement> {
   validationEvents?: ValidationEvents;
   hideErrorMessage?: boolean;
+  inputRef?: React.LegacyRef<HTMLInputElement>;
 
   // Override event props and append status as argument
   onBlur?: (event: React.FocusEvent<HTMLInputElement>, status?: InputStatus) => void;
@@ -18,12 +19,16 @@ interface Props extends React.HTMLProps<HTMLInputElement> {
   onChange?: (event: React.ChangeEvent<HTMLInputElement>, status?: InputStatus) => void;
 }
 
-export class Input extends PureComponent<Props> {
+interface State {
+  error: string | null;
+}
+
+export class Input extends PureComponent<Props, State> {
   static defaultProps = {
     className: '',
   };
 
-  state = {
+  state: State = {
     error: null,
   };
 
@@ -66,14 +71,14 @@ export class Input extends PureComponent<Props> {
   };
 
   render() {
-    const { validationEvents, className, hideErrorMessage, ...restProps } = this.props;
+    const { validationEvents, className, hideErrorMessage, inputRef, ...restProps } = this.props;
     const { error } = this.state;
     const inputClassName = classNames('gf-form-input', { invalid: this.isInvalid }, className);
     const inputElementProps = this.populateEventPropsWithStatus(restProps, validationEvents);
 
     return (
-      <div className="our-custom-wrapper-class">
-        <input {...inputElementProps} className={inputClassName} />
+      <div style={{ flexGrow: 1 }}>
+        <input {...inputElementProps} ref={inputRef} className={inputClassName} />
         {error && !hideErrorMessage && <span>{error}</span>}
       </div>
     );

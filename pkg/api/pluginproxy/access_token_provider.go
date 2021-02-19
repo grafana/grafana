@@ -67,14 +67,14 @@ func (provider *accessTokenProvider) getAccessToken(data templateData) (string, 
 		}
 	}
 
-	urlInterpolated, err := interpolateString(provider.route.TokenAuth.Url, data)
+	urlInterpolated, err := InterpolateString(provider.route.TokenAuth.Url, data)
 	if err != nil {
 		return "", err
 	}
 
 	params := make(url.Values)
 	for key, value := range provider.route.TokenAuth.Params {
-		interpolatedParam, err := interpolateString(value, data)
+		interpolatedParam, err := InterpolateString(value, data)
 		if err != nil {
 			return "", err
 		}
@@ -119,7 +119,7 @@ func (provider *accessTokenProvider) getJwtAccessToken(ctx context.Context, data
 	conf := &jwt.Config{}
 
 	if val, ok := provider.route.JwtTokenAuth.Params["client_email"]; ok {
-		interpolatedVal, err := interpolateString(val, data)
+		interpolatedVal, err := InterpolateString(val, data)
 		if err != nil {
 			return "", err
 		}
@@ -127,7 +127,7 @@ func (provider *accessTokenProvider) getJwtAccessToken(ctx context.Context, data
 	}
 
 	if val, ok := provider.route.JwtTokenAuth.Params["private_key"]; ok {
-		interpolatedVal, err := interpolateString(val, data)
+		interpolatedVal, err := InterpolateString(val, data)
 		if err != nil {
 			return "", err
 		}
@@ -135,7 +135,7 @@ func (provider *accessTokenProvider) getJwtAccessToken(ctx context.Context, data
 	}
 
 	if val, ok := provider.route.JwtTokenAuth.Params["token_uri"]; ok {
-		interpolatedVal, err := interpolateString(val, data)
+		interpolatedVal, err := InterpolateString(val, data)
 		if err != nil {
 			return "", err
 		}

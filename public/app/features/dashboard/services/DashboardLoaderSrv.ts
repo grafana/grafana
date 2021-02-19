@@ -1,26 +1,29 @@
 import angular from 'angular';
-import moment from 'moment';
+import moment from 'moment'; // eslint-disable-line no-restricted-imports
 import _ from 'lodash';
 import $ from 'jquery';
 import kbn from 'app/core/utils/kbn';
-import * as dateMath from 'app/core/utils/datemath';
+import { dateMath, AppEvents } from '@grafana/data';
 import impressionSrv from 'app/core/services/impression_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
+import { DashboardSrv } from './DashboardSrv';
+import DatasourceSrv from 'app/features/plugins/datasource_srv';
+import { UrlQueryValue } from '@grafana/runtime';
+import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 
 export class DashboardLoaderSrv {
   /** @ngInject */
   constructor(
-    private backendSrv,
-    private dashboardSrv,
-    private datasourceSrv,
-    private $http,
-    private $q,
-    private $timeout,
-    contextSrv,
-    private $routeParams,
-    private $rootScope
+    private dashboardSrv: DashboardSrv,
+    private datasourceSrv: DatasourceSrv,
+    private $http: any,
+    private $timeout: any,
+    contextSrv: any,
+    private $routeParams: any,
+    private $rootScope: GrafanaRootScope
   ) {}
 
-  _dashboardLoadFailed(title, snapshot?) {
+  _dashboardLoadFailed(title: string, snapshot?: boolean) {
     snapshot = snapshot || false;
     return {
       meta: {
@@ -31,25 +34,25 @@ export class DashboardLoaderSrv {
         canEdit: false,
         dashboardNotFound: true,
       },
-      dashboard: { title: title },
+      dashboard: { title },
     };
   }
 
-  loadDashboard(type, slug, uid) {
+  loadDashboard(type: UrlQueryValue, slug: any, uid: any) {
     let promise;
 
     if (type === 'script') {
       promise = this._loadScriptedDashboard(slug);
     } else if (type === 'snapshot') {
-      promise = this.backendSrv.get('/api/snapshots/' + slug).catch(() => {
+      promise = backendSrv.get('/api/snapshots/' + slug).catch(() => {
         return this._dashboardLoadFailed('Snapshot not found', true);
       });
     } else {
-      promise = this.backendSrv
+      promise = backendSrv
         .getDashboardByUid(uid)
-        .then(result => {
+        .then((result: any) => {
           if (result.meta.isFolder) {
-            this.$rootScope.appEvent('alert-error', ['Dashboard not found']);
+            this.$rootScope.appEvent(AppEvents.alertError, ['Dashboard not found']);
             throw new Error('Dashboard not found');
           }
           return result;
@@ -59,7 +62,7 @@ export class DashboardLoaderSrv {
         });
     }
 
-    promise.then(result => {
+    promise.then((result: any) => {
       if (result.meta.dashboardNotFound !== true) {
         impressionSrv.addDashboardImpression(result.dashboard.id);
       }
@@ -70,13 +73,13 @@ export class DashboardLoaderSrv {
     return promise;
   }
 
-  _loadScriptedDashboard(file) {
+  _loadScriptedDashboard(file: string) {
     const url = 'public/dashboards/' + file.replace(/\.(?!js)/, '/') + '?' + new Date().getTime();
 
     return this.$http({ url: url, method: 'GET' })
       .then(this._executeScript.bind(this))
       .then(
-        result => {
+        (result: any) => {
           return {
             meta: {
               fromScript: true,
@@ -87,9 +90,9 @@ export class DashboardLoaderSrv {
             dashboard: result.data,
           };
         },
-        err => {
+        (err: any) => {
           console.log('Script dashboard error ' + err);
-          this.$rootScope.appEvent('alert-error', [
+          this.$rootScope.appEvent(AppEvents.alertError, [
             'Script Error',
             'Please make sure it exists and returns a valid dashboard',
           ]);
@@ -98,14 +101,12 @@ export class DashboardLoaderSrv {
       );
   }
 
-  _executeScript(result) {
+  _executeScript(result: any) {
     const services = {
       dashboardSrv: this.dashboardSrv,
       datasourceSrv: this.datasourceSrv,
-      $q: this.$q,
     };
 
-    /*jshint -W054 */
     const scriptFunc = new Function(
       'ARGS',
       'kbn',
@@ -123,13 +124,13 @@ export class DashboardLoaderSrv {
 
     // Handle async dashboard scripts
     if (_.isFunction(scriptResult)) {
-      const deferred = this.$q.defer();
-      scriptResult(dashboard => {
-        this.$timeout(() => {
-          deferred.resolve({ data: dashboard });
+      return new Promise(resolve => {
+        scriptResult((dashboard: any) => {
+          this.$timeout(() => {
+            resolve({ data: dashboard });
+          });
         });
       });
-      return deferred.promise;
     }
 
     return { data: scriptResult };

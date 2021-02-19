@@ -2,6 +2,7 @@ import React from 'react';
 import { shallow } from 'enzyme';
 import BottomNavLinks from './BottomNavLinks';
 import appEvents from '../../app_events';
+import { CoreEvents } from 'app/types';
 
 jest.mock('../../app_events', () => ({
   emit: jest.fn(),
@@ -10,7 +11,9 @@ jest.mock('../../app_events', () => ({
 const setup = (propOverrides?: object) => {
   const props = Object.assign(
     {
-      link: {},
+      link: {
+        text: 'Hello',
+      },
       user: {
         id: 1,
         isGrafanaAdmin: false,
@@ -18,6 +21,7 @@ const setup = (propOverrides?: object) => {
         orgCount: 2,
         orgRole: '',
         orgId: 1,
+        login: 'hello',
         orgName: 'Grafana',
         timezone: 'UTC',
         helpFlags1: 1,
@@ -44,6 +48,7 @@ describe('Render', () => {
       },
     });
 
+    wrapper.find('.sidemenu-org-switcher a').simulate('click');
     expect(wrapper).toMatchSnapshot();
   });
 
@@ -85,13 +90,11 @@ describe('Render', () => {
 describe('Functions', () => {
   describe('item clicked', () => {
     const wrapper = setup();
-    const mockEvent = { preventDefault: jest.fn() };
     it('should emit show modal event if url matches shortcut', () => {
-      const child = { url: '/shortcuts' };
       const instance = wrapper.instance() as BottomNavLinks;
-      instance.itemClicked(mockEvent, child);
+      instance.onOpenShortcuts();
 
-      expect(appEvents.emit).toHaveBeenCalledWith('show-modal', { templateHtml: '<help-modal></help-modal>' });
+      expect(appEvents.emit).toHaveBeenCalledWith(CoreEvents.showModal, { templateHtml: '<help-modal></help-modal>' });
     });
   });
 });

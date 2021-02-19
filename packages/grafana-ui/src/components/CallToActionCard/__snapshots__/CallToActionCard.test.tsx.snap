@@ -1,0 +1,52 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`CallToActionCard rendering when message and footer provided 1`] = `
+<div
+  class="css-1ud9puf-call-to-action-card"
+>
+  <div
+    class="css-m2iibx"
+  >
+    Click button bellow
+  </div>
+  <a
+    href="http://dummy.link"
+  >
+    Click me
+  </a>
+  <div
+    class="css-1sg2huk"
+  >
+    footer content
+  </div>
+</div>
+`;
+
+exports[`CallToActionCard rendering when message and no footer provided 1`] = `
+<div
+  class="css-1ud9puf-call-to-action-card"
+>
+  <div
+    class="css-m2iibx"
+  >
+    Click button bellow
+  </div>
+  <a
+    href="http://dummy.link"
+  >
+    Click me
+  </a>
+</div>
+`;
+
+exports[`CallToActionCard rendering when no message and footer provided 1`] = `
+<div
+  class="css-1ud9puf-call-to-action-card"
+>
+  <a
+    href="http://dummy.link"
+  >
+    Click me
+  </a>
+</div>
+`;

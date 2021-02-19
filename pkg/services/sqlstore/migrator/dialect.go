@@ -48,6 +48,7 @@ type Dialect interface {
 	NoOpSql() string
 
 	IsUniqueConstraintViolation(err error) bool
+	IsDeadlock(err error) bool
 }
 
 func NewDialect(engine *xorm.Engine) Dialect {

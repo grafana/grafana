@@ -85,9 +85,10 @@ func (rt releaseType) nightly() bool {
 }
 
 type buildArtifact struct {
-	os         string
-	arch       string
-	urlPostfix string
+	os             string
+	arch           string
+	urlPostfix     string
+	packagePostfix string
 }
 
 func (t buildArtifact) getURL(baseArchiveURL, version string, releaseType releaseType) string {
@@ -102,7 +103,7 @@ func (t buildArtifact) getURL(baseArchiveURL, version string, releaseType releas
 		rhelReleaseExtra = "-1"
 	}
 
-	url := strings.Join([]string{baseArchiveURL, prefix, version, rhelReleaseExtra, t.urlPostfix}, "")
+	url := strings.Join([]string{baseArchiveURL, t.packagePostfix, prefix, version, rhelReleaseExtra, t.urlPostfix}, "")
 	return url
 }
 
@@ -128,9 +129,10 @@ var completeBuildArtifactConfigurations = []buildArtifact{
 		urlPostfix: "_armhf.deb",
 	},
 	{
-		os:         "deb",
-		arch:       "armv6",
-		urlPostfix: "_armel.deb",
+		os:             "deb",
+		arch:           "armv6",
+		packagePostfix: "-rpi",
+		urlPostfix:     "_armhf.deb",
 	},
 	{
 		os:         "rhel",
@@ -172,6 +174,11 @@ var completeBuildArtifactConfigurations = []buildArtifact{
 		arch:       "amd64",
 		urlPostfix: ".windows-amd64.zip",
 	},
+	{
+		os:         "win-installer",
+		arch:       "amd64",
+		urlPostfix: ".windows-amd64.msi",
+	},
 }
 
 type artifactFilter struct {
@@ -179,21 +186,32 @@ type artifactFilter struct {
 	arch string
 }
 
-func filterBuildArtifacts(filters []artifactFilter) ([]buildArtifact, error) {
-	var artifacts []buildArtifact
-	for _, f := range filters {
-		matched := false
+type filterType string
 
-		for _, a := range completeBuildArtifactConfigurations {
+const (
+	Add    filterType = "add"
+	Remove filterType = "remove"
+)
+
+func filterBuildArtifacts(filterFrom []buildArtifact, ft filterType, filters []artifactFilter) ([]buildArtifact, error) {
+	var artifacts []buildArtifact
+
+	for _, a := range filterFrom {
+		matched := false
+		var match buildArtifact
+
+		for _, f := range filters {
 			if f.os == a.os && f.arch == a.arch {
-				artifacts = append(artifacts, a)
+				match = a
 				matched = true
 				break
 			}
 		}
 
-		if !matched {
-			return nil, fmt.Errorf("No buildArtifact for os=%v, arch=%v", f.os, f.arch)
+		if matched && ft == Add {
+			artifacts = append(artifacts, match)
+		} else if !matched && ft == Remove {
+			artifacts = append(artifacts, a)
 		}
 	}
 	return artifacts, nil

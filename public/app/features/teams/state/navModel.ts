@@ -1,5 +1,6 @@
-import { Team, NavModelItem, NavModel, TeamPermissionLevel } from 'app/types';
+import { Team, TeamPermissionLevel } from 'app/types';
 import config from 'app/core/config';
+import { NavModelItem, NavModel } from '@grafana/data';
 
 export function buildNavModel(team: Team): NavModelItem {
   const navModel = {
@@ -27,7 +28,7 @@ export function buildNavModel(team: Team): NavModelItem {
     ],
   };
 
-  if (config.buildInfo.isEnterprise) {
+  if (config.licenseInfo.hasLicense) {
     navModel.children.push({
       active: false,
       icon: 'fa fa-fw fa-refresh',

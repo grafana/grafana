@@ -1,12 +1,12 @@
 import _ from 'lodash';
 
-export default function sortByKeys(input) {
+export default function sortByKeys(input: any): any {
   if (_.isArray(input)) {
     return input.map(sortByKeys);
   }
 
   if (_.isPlainObject(input)) {
-    const sortedObject = {};
+    const sortedObject: any = {};
     for (const key of _.keys(input).sort()) {
       sortedObject[key] = sortByKeys(input[key]);
     }

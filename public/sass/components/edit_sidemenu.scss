@@ -8,10 +8,12 @@
   min-width: 0;
 }
 
+//Deprecated class but maybe used by plugins (in panel settings)
 .edit-sidemenu-aside {
   margin-right: $spacer * 2;
 }
 
+//Deprecated class but maybe used by plugins (in panel settings)
 .edit-sidemenu {
   width: 100%;
   list-style: none;
@@ -37,11 +39,13 @@
     flex-direction: column;
   }
 
+  //Deprecated class but maybe used by plugins (in panel settings)
   .edit-sidemenu-aside {
     width: 100%;
     margin-bottom: 2rem;
   }
 
+  //Deprecated class but maybe used by plugins (in panel settings)
   .edit-sidemenu {
     li {
       float: left;

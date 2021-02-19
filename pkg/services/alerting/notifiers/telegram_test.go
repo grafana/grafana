@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -18,7 +18,7 @@ func TestTelegramNotifier(t *testing.T) {
 				json := `{ }`
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
-				model := &m.AlertNotification{
+				model := &models.AlertNotification{
 					Name:     "telegram_testing",
 					Type:     "telegram",
 					Settings: settingsJSON,
@@ -36,7 +36,7 @@ func TestTelegramNotifier(t *testing.T) {
 				}`
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
-				model := &m.AlertNotification{
+				model := &models.AlertNotification{
 					Name:     "telegram_testing",
 					Type:     "telegram",
 					Settings: settingsJSON,
@@ -57,7 +57,7 @@ func TestTelegramNotifier(t *testing.T) {
 					&alerting.Rule{
 						Name:    "This is an alarm",
 						Message: "Some kind of message.",
-						State:   m.AlertStateOK,
+						State:   models.AlertStateOK,
 					})
 
 				caption := generateImageCaption(evalContext, "http://grafa.url/abcdef", "")
@@ -74,7 +74,7 @@ func TestTelegramNotifier(t *testing.T) {
 						&alerting.Rule{
 							Name:    "This is an alarm",
 							Message: "Some kind of message.",
-							State:   m.AlertStateOK,
+							State:   models.AlertStateOK,
 						})
 
 					caption := generateImageCaption(evalContext,
@@ -92,7 +92,7 @@ func TestTelegramNotifier(t *testing.T) {
 						&alerting.Rule{
 							Name:    "This is an alarm",
 							Message: "Some kind of message that is too long for appending to our pretty little message, this line is actually exactly 197 chars long and I will get there in the end I promise I will. Yes siree that's it. But suddenly Telegram increased the length so now we need some lorem ipsum to fix this test. Here we go: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus consectetur molestie cursus. Donec suscipit egestas nisi. Proin ut efficitur ex. Mauris mi augue, volutpat a nisi vel, euismod dictum arcu. Sed quis tempor eros, sed malesuada dolor. Ut orci augue, viverra sit amet blandit quis, faucibus sit amet ex. Duis condimentum efficitur lectus, id dignissim quam tempor id. Morbi sollicitudin rhoncus diam, id tincidunt lectus scelerisque vitae. Etiam imperdiet semper sem, vel eleifend ligula mollis eget. Etiam ultrices fringilla lacus, sit amet pharetra ex blandit quis. Suspendisse in egestas neque, et posuere lectus. Vestibulum eu ex dui. Sed molestie nulla a lobortis scelerisque. Nulla ipsum ex, iaculis vitae vehicula sit amet, fermentum eu eros.",
-							State:   m.AlertStateOK,
+							State:   models.AlertStateOK,
 						})
 
 					caption := generateImageCaption(evalContext,
@@ -109,7 +109,7 @@ func TestTelegramNotifier(t *testing.T) {
 						&alerting.Rule{
 							Name:    "This is an alarm",
 							Message: "Some kind of message that is too long for appending to our pretty little message, this line is actually exactly 197 chars long and I will get there in the end I promise I will. Yes siree that's it. But suddenly Telegram increased the length so now we need some lorem ipsum to fix this test. Here we go: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus consectetur molestie cursus. Donec suscipit egestas nisi. Proin ut efficitur ex. Mauris mi augue, volutpat a nisi vel, euismod dictum arcu. Sed quis tempor eros, sed malesuada dolor. Ut orci augue, viverra sit amet blandit quis, faucibus sit amet ex. Duis condimentum efficitur lectus, id dignissim quam tempor id. Morbi sollicitudin rhoncus diam, id tincidunt lectus scelerisque vitae. Etiam imperdiet semper sem, vel eleifend ligula mollis eget. Etiam ultrices fringilla lacus, sit amet pharetra ex blandit quis. Suspendisse in egestas neque, et posuere lectus. Vestibulum eu ex dui. Sed molestie nulla a lobortis sceleri",
-							State:   m.AlertStateOK,
+							State:   models.AlertStateOK,
 						})
 
 					caption := generateImageCaption(evalContext,

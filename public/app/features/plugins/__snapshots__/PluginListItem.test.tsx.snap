@@ -6,7 +6,7 @@ exports[`Render should render component 1`] = `
 >
   <a
     className="card-item"
-    href="plugins/1/edit"
+    href="plugins/1/"
   >
     <div
       className="card-item-header"
@@ -14,9 +14,7 @@ exports[`Render should render component 1`] = `
       <div
         className="card-item-type"
       >
-        <i
-          className="icon-gf icon-gf-"
-        />
+        panel
       </div>
     </div>
     <div
@@ -54,7 +52,7 @@ exports[`Render should render has plugin section 1`] = `
 >
   <a
     className="card-item"
-    href="plugins/1/edit"
+    href="plugins/1/"
   >
     <div
       className="card-item-header"
@@ -62,9 +60,7 @@ exports[`Render should render has plugin section 1`] = `
       <div
         className="card-item-type"
       >
-        <i
-          className="icon-gf icon-gf-"
-        />
+        panel
       </div>
       <div
         className="card-item-notice"

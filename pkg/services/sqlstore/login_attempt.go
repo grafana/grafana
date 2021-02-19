@@ -43,7 +43,7 @@ func DeleteOldLoginAttempts(cmd *m.DeleteOldLoginAttemptsCommand) error {
 		if err != nil {
 			return err
 		}
-
+		// nolint: gosimple
 		if result == nil || len(result) == 0 || result[0] == nil {
 			return nil
 		}

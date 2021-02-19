@@ -1,0 +1,93 @@
+[
+  {
+    "name": "Bool",
+    "type": "bool",
+    "value": false,
+    "context_default": "false",
+    "parser": "strconv.ParseBool(f.Value.String())"
+  },
+  {
+    "name": "BoolT",
+    "type": "bool",
+    "value": false,
+    "doctail": " that is true by default",
+    "context_default": "false",
+    "parser": "strconv.ParseBool(f.Value.String())"
+  },
+  {
+    "name": "Duration",
+    "type": "time.Duration",
+    "doctail": " (see https://golang.org/pkg/time/#ParseDuration)",
+    "context_default": "0",
+    "parser": "time.ParseDuration(f.Value.String())"
+  },
+  {
+    "name": "Float64",
+    "type": "float64",
+    "context_default": "0",
+    "parser": "strconv.ParseFloat(f.Value.String(), 64)"
+  },
+  {
+    "name": "Generic",
+    "type": "Generic",
+    "dest": false,
+    "context_default": "nil",
+    "context_type": "interface{}"
+  },
+  {
+    "name": "Int64",
+    "type": "int64",
+    "context_default": "0",
+    "parser": "strconv.ParseInt(f.Value.String(), 0, 64)"
+  },
+  {
+    "name": "Int",
+    "type": "int",
+    "context_default": "0",
+    "parser": "strconv.ParseInt(f.Value.String(), 0, 64)",
+    "parser_cast": "int(parsed)"
+  },
+  {
+    "name": "IntSlice",
+    "type": "*IntSlice",
+    "dest": false,
+    "context_default": "nil",
+    "context_type": "[]int",
+    "parser": "(f.Value.(*IntSlice)).Value(), error(nil)"
+  },
+  {
+    "name": "Int64Slice",
+    "type": "*Int64Slice",
+    "dest": false,
+    "context_default": "nil",
+    "context_type": "[]int64",
+    "parser": "(f.Value.(*Int64Slice)).Value(), error(nil)"
+  },
+  {
+    "name": "String",
+    "type": "string",
+    "context_default": "\"\"",
+    "parser": "f.Value.String(), error(nil)"
+  },
+  {
+    "name": "StringSlice",
+    "type": "*StringSlice",
+    "dest": false,
+    "context_default": "nil",
+    "context_type": "[]string",
+    "parser": "(f.Value.(*StringSlice)).Value(), error(nil)"
+  },
+  {
+    "name": "Uint64",
+    "type": "uint64",
+    "context_default": "0",
+    "parser": "strconv.ParseUint(f.Value.String(), 0, 64)"
+  },
+  {
+    "name": "Uint",
+    "type": "uint",
+    "context_default": "0",
+    "parser": "strconv.ParseUint(f.Value.String(), 0, 64)",
+    "parser_cast": "uint(parsed)"
+  }
+]

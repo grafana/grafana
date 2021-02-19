@@ -1,28 +1,31 @@
+import { getBackendSrv } from '@grafana/runtime';
+import { NavModelSrv } from 'app/core/core';
+import { Scope, CoreEvents, AppEventEmitter } from 'app/types';
+import { promiseToDigest } from 'app/core/utils/promiseToDigest';
+
 export default class AdminListOrgsCtrl {
   /** @ngInject */
-  constructor($scope, backendSrv, navModelSrv) {
-    $scope.init = () => {
+  constructor($scope: Scope & AppEventEmitter, navModelSrv: NavModelSrv) {
+    $scope.init = async () => {
       $scope.navModel = navModelSrv.getNav('admin', 'global-orgs', 0);
-      $scope.getOrgs();
+      await $scope.getOrgs();
     };
 
-    $scope.getOrgs = () => {
-      backendSrv.get('/api/orgs').then(orgs => {
-        $scope.orgs = orgs;
-      });
+    $scope.getOrgs = async () => {
+      const orgs = await promiseToDigest($scope)(getBackendSrv().get('/api/orgs'));
+      $scope.orgs = orgs;
     };
 
-    $scope.deleteOrg = org => {
-      $scope.appEvent('confirm-modal', {
+    $scope.deleteOrg = (org: any) => {
+      $scope.appEvent(CoreEvents.showConfirmModal, {
         title: 'Delete',
-        text: 'Do you want to delete organization ' + org.name + '?',
+        text: `Do you want to delete organization ${org.name}?`,
         text2: 'All dashboards for this organization will be removed!',
         icon: 'fa-trash',
         yesText: 'Delete',
-        onConfirm: () => {
-          backendSrv.delete('/api/orgs/' + org.id).then(() => {
-            $scope.getOrgs();
-          });
+        onConfirm: async () => {
+          await getBackendSrv().delete('/api/orgs/' + org.id);
+          await $scope.getOrgs();
         },
       });
     };

@@ -62,13 +62,6 @@
     font-size: 11px;
     padding: 2px 6px;
   }
-
-  &--alert {
-    padding: 0.5rem 1rem;
-    .card-item-name a {
-      font-size: $font-size-h5;
-    }
-  }
 }
 
 .card-item-body {
@@ -147,15 +140,10 @@
 
   .card-item-figure {
     margin: 0 $space-md $space-md 0;
-    height: 6rem;
+    height: 80px;
 
     img {
-      width: 6rem;
-    }
-    .fa,
-    .icon-gf,
-    .gicon {
-      font-size: 3.5rem;
+      width: 80px;
     }
   }
 

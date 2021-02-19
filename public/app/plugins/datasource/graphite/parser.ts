@@ -1,18 +1,23 @@
 import { Lexer } from './lexer';
 
-export function Parser(this: any, expression) {
-  this.expression = expression;
-  this.lexer = new Lexer(expression);
-  this.tokens = this.lexer.tokenize();
-  this.index = 0;
-}
+export class Parser {
+  expression: any;
+  lexer: Lexer;
+  tokens: any;
+  index: number;
 
-Parser.prototype = {
-  getAst: function() {
+  constructor(expression: any) {
+    this.expression = expression;
+    this.lexer = new Lexer(expression);
+    this.tokens = this.lexer.tokenize();
+    this.index = 0;
+  }
+
+  getAst() {
     return this.start();
-  },
+  }
 
-  start: function() {
+  start() {
     try {
       return this.functionCall() || this.metricExpression();
     } catch (e) {
@@ -22,9 +27,9 @@ Parser.prototype = {
         pos: e.pos,
       };
     }
-  },
+  }
 
-  curlyBraceSegment: function() {
+  curlyBraceSegment() {
     if (this.match('identifier', '{') || this.match('{')) {
       let curlySegment = '';
 
@@ -51,9 +56,9 @@ Parser.prototype = {
     } else {
       return null;
     }
-  },
+  }
 
-  metricSegment: function() {
+  metricSegment() {
     const curly = this.curlyBraceSegment();
     if (curly) {
       return curly;
@@ -97,14 +102,14 @@ Parser.prototype = {
 
     this.consumeToken();
     return node;
-  },
+  }
 
-  metricExpression: function() {
+  metricExpression() {
     if (!this.match('templateStart') && !this.match('identifier') && !this.match('number') && !this.match('{')) {
       return null;
     }
 
-    const node = {
+    const node: any = {
       type: 'metric',
       segments: [],
     };
@@ -123,9 +128,9 @@ Parser.prototype = {
     }
 
     return node;
-  },
+  }
 
-  functionCall: function() {
+  functionCall() {
     if (!this.match('identifier', '(')) {
       return null;
     }
@@ -147,9 +152,9 @@ Parser.prototype = {
     this.consumeToken();
 
     return node;
-  },
+  }
 
-  boolExpression: function() {
+  boolExpression() {
     if (!this.match('bool')) {
       return null;
     }
@@ -158,9 +163,9 @@ Parser.prototype = {
       type: 'bool',
       value: this.consumeToken().value === 'true',
     };
-  },
+  }
 
-  functionParameters: function() {
+  functionParameters(): any {
     if (this.match(')') || this.match('')) {
       return [];
     }
@@ -179,9 +184,9 @@ Parser.prototype = {
 
     this.consumeToken();
     return [param].concat(this.functionParameters());
-  },
+  }
 
-  seriesRefExpression: function() {
+  seriesRefExpression() {
     if (!this.match('identifier')) {
       return null;
     }
@@ -197,9 +202,9 @@ Parser.prototype = {
       type: 'series-ref',
       value: token.value,
     };
-  },
+  }
 
-  numericLiteral: function() {
+  numericLiteral() {
     if (!this.match('number')) {
       return null;
     }
@@ -208,9 +213,9 @@ Parser.prototype = {
       type: 'number',
       value: parseFloat(this.consumeToken().value),
     };
-  },
+  }
 
-  stringLiteral: function() {
+  stringLiteral() {
     if (!this.match('string')) {
       return null;
     }
@@ -224,29 +229,29 @@ Parser.prototype = {
       type: 'string',
       value: token.value,
     };
-  },
+  }
 
-  errorMark: function(text) {
+  errorMark(text: string) {
     const currentToken = this.tokens[this.index];
     const type = currentToken ? currentToken.type : 'end of string';
     throw {
       message: text + ' instead found ' + type,
       pos: currentToken ? currentToken.pos : this.lexer.char,
     };
-  },
+  }
 
   // returns token value and incre
-  consumeToken: function() {
+  consumeToken() {
     this.index++;
     return this.tokens[this.index - 1];
-  },
+  }
 
-  matchToken: function(type, index) {
+  matchToken(type: any, index: number) {
     const token = this.tokens[this.index + index];
     return (token === undefined && type === '') || (token && token.type === type);
-  },
+  }
 
-  match: function(token1, token2) {
+  match(token1: any, token2?: any) {
     return this.matchToken(token1, 0) && (!token2 || this.matchToken(token2, 1));
-  },
-};
+  }
+}

@@ -5,7 +5,7 @@ function outlineFixer() {
   const styleElement = d.createElement('STYLE');
   const domEvents = 'addEventListener' in d;
 
-  const addEventListener = (type, callback) => {
+  const addEventListener = (type: string, callback: { (): void; (): void }) => {
     // Basic cross-browser event handling
     if (domEvents) {
       d.addEventListener(type, callback);
@@ -14,7 +14,7 @@ function outlineFixer() {
     }
   };
 
-  const setCss = cssText => {
+  const setCss = (cssText: string) => {
     // Handle setting of <style> element contents in IE8
     !!styleElement.styleSheet ? (styleElement.styleSheet.cssText = cssText) : (styleElement.innerHTML = cssText);
   };

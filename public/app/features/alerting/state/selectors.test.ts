@@ -3,7 +3,7 @@ import { getSearchQuery, getAlertRuleItems } from './selectors';
 describe('Get search query', () => {
   it('should get search query', () => {
     const state = { searchQuery: 'dashboard' };
-    const result = getSearchQuery(state);
+    const result = getSearchQuery(state as any);
 
     expect(result).toEqual(state.searchQuery);
   });
@@ -29,7 +29,7 @@ describe('Get alert rule items', () => {
       searchQuery: '',
     };
 
-    const result = getAlertRuleItems(state);
+    const result = getAlertRuleItems(state as any);
     expect(result.length).toEqual(1);
   });
 
@@ -88,7 +88,7 @@ describe('Get alert rule items', () => {
       searchQuery: 'dashboard',
     };
 
-    const result = getAlertRuleItems(state);
+    const result = getAlertRuleItems(state as any);
     expect(result.length).toEqual(3);
   });
 });

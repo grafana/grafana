@@ -1,15 +1,31 @@
-import angular from 'angular';
+import angular, { ILocationService } from 'angular';
+import { dateTime } from '@grafana/data';
+import { e2e } from '@grafana/e2e';
+
 import config from 'app/core/config';
-import moment from 'moment';
+import { appendQueryToUrl, toUrlParams } from 'app/core/utils/url';
+import { TimeSrv } from '../../services/TimeSrv';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
+import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 
 /** @ngInject */
-export function ShareModalCtrl($scope, $rootScope, $location, $timeout, timeSrv, templateSrv, linkSrv) {
+export function ShareModalCtrl(
+  $scope: any,
+  $rootScope: GrafanaRootScope,
+  $location: ILocationService,
+  $timeout: any,
+  timeSrv: TimeSrv,
+  templateSrv: TemplateSrv,
+  linkSrv: LinkSrv
+) {
   $scope.options = {
     forCurrent: true,
     includeTemplateVars: true,
     theme: 'current',
   };
   $scope.editor = { index: $scope.tabIndex || 0 };
+  $scope.selectors = e2e.pages.SharePanelModal.selectors;
 
   $scope.init = () => {
     $scope.panel = $scope.model && $scope.model.panel ? $scope.model.panel : $scope.panel; // React pass panel and dashboard in the "model" property
@@ -72,13 +88,13 @@ export function ShareModalCtrl($scope, $rootScope, $location, $timeout, timeSrv,
       delete params.fullscreen;
     }
 
-    $scope.shareUrl = linkSrv.addParamsToUrl(baseUrl, params);
+    $scope.shareUrl = appendQueryToUrl(baseUrl, toUrlParams(params));
 
     let soloUrl = baseUrl.replace(config.appSubUrl + '/dashboard/', config.appSubUrl + '/dashboard-solo/');
     soloUrl = soloUrl.replace(config.appSubUrl + '/d/', config.appSubUrl + '/d-solo/');
     delete params.fullscreen;
     delete params.edit;
-    soloUrl = linkSrv.addParamsToUrl(soloUrl, params);
+    soloUrl = appendQueryToUrl(soloUrl, toUrlParams(params));
 
     $scope.iframeHtml = '<iframe src="' + soloUrl + '" width="450" height="200" frameborder="0"></iframe>';
 
@@ -93,7 +109,7 @@ export function ShareModalCtrl($scope, $rootScope, $location, $timeout, timeSrv,
   // This function will try to return the proper full name of the local timezone
   // Chrome does not handle the timezone offset (but phantomjs does)
   $scope.getLocalTimeZone = () => {
-    const utcOffset = '&tz=UTC' + encodeURIComponent(moment().format('Z'));
+    const utcOffset = '&tz=UTC' + encodeURIComponent(dateTime().format('Z'));
 
     // Older browser does not the internationalization API
     if (!(window as any).Intl) {

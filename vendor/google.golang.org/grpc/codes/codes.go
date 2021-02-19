@@ -22,6 +22,7 @@ package codes // import "google.golang.org/grpc/codes"
 
 import (
 	"fmt"
+	"strconv"
 )
 
 // A Code is an unsigned 32-bit error code as defined in the gRPC spec.
@@ -131,7 +132,8 @@ const (
 
 	// Unavailable indicates the service is currently unavailable.
 	// This is a most likely a transient condition and may be corrected
-	// by retrying with a backoff.
+	// by retrying with a backoff. Note that it is not always safe to retry
+	// non-idempotent operations.
 	//
 	// See litmus test above for deciding between FailedPrecondition,
 	// Aborted, and Unavailable.
@@ -143,6 +145,8 @@ const (
 	// Unauthenticated indicates the request does not have valid
 	// authentication credentials for the operation.
 	Unauthenticated Code = 16
+
+	_maxCode = 17
 )
 
 var strToCode = map[string]Code{
@@ -176,6 +180,16 @@ func (c *Code) UnmarshalJSON(b []byte) error {
 	if c == nil {
 		return fmt.Errorf("nil receiver passed to UnmarshalJSON")
 	}
+
+	if ci, err := strconv.ParseUint(string(b), 10, 32); err == nil {
+		if ci >= _maxCode {
+			return fmt.Errorf("invalid code: %q", ci)
+		}
+
+		*c = Code(ci)
+		return nil
+	}
+
 	if jc, ok := strToCode[string(b)]; ok {
 		*c = jc
 		return nil

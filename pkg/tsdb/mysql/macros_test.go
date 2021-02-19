@@ -6,13 +6,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestMacroEngine(t *testing.T) {
 	Convey("MacroEngine", t, func() {
-		engine := &mySqlMacroEngine{}
+		engine := &mySqlMacroEngine{
+			logger: log.New("test"),
+		}
 		query := &tsdb.Query{}
 
 		Convey("Given a time range between 2018-04-12 00:00 and 2018-04-12 00:05", func() {
@@ -156,6 +159,34 @@ func TestMacroEngine(t *testing.T) {
 
 				So(sql, ShouldEqual, fmt.Sprintf("select time >= %d AND time <= %d", from.Unix(), to.Unix()))
 			})
+		})
+
+		Convey("Given queries that contains unallowed user functions", func() {
+			tcs := []string{
+				"select \nSESSION_USER(), abc",
+				"SELECT session_User( ) ",
+				"SELECT session_User(	)\n",
+				"SELECT current_user",
+				"SELECT current_USER",
+				"SELECT current_user()",
+				"SELECT Current_User()",
+				"SELECT current_user(   )",
+				"SELECT current_user(\t )",
+				"SELECT user()",
+				"SELECT USER()",
+				"SELECT SYSTEM_USER()",
+				"SELECT System_User()",
+				"SELECT System_User(  )",
+				"SELECT System_User(\t \t)",
+				"SHOW \t grants",
+				" show Grants\n",
+				"show grants;",
+			}
+
+			for _, tc := range tcs {
+				_, err := engine.Interpolate(nil, nil, tc)
+				So(err.Error(), ShouldEqual, "Invalid query. Inspect Grafana server log for details")
+			}
 		})
 	})
 }

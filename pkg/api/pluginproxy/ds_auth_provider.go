@@ -1,13 +1,11 @@
 package pluginproxy
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
-	"text/template"
 
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -24,7 +22,7 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 		SecureJsonData: ds.SecureJsonData.Decrypt(),
 	}
 
-	interpolatedURL, err := interpolateString(route.Url, data)
+	interpolatedURL, err := InterpolateString(route.Url, data)
 	if err != nil {
 		logger.Error("Error interpolating proxy url", "error", err)
 		return
@@ -81,24 +79,9 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 	logger.Info("Requesting", "url", req.URL.String())
 }
 
-func interpolateString(text string, data templateData) (string, error) {
-	t, err := template.New("content").Parse(text)
-	if err != nil {
-		return "", fmt.Errorf("could not parse template %s", text)
-	}
-
-	var contentBuf bytes.Buffer
-	err = t.Execute(&contentBuf, data)
-	if err != nil {
-		return "", fmt.Errorf("failed to execute template %s", text)
-	}
-
-	return contentBuf.String(), nil
-}
-
 func addHeaders(reqHeaders *http.Header, route *plugins.AppPluginRoute, data templateData) error {
 	for _, header := range route.Headers {
-		interpolated, err := interpolateString(header.Content, data)
+		interpolated, err := InterpolateString(header.Content, data)
 		if err != nil {
 			return err
 		}

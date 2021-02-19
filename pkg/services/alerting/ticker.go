@@ -6,7 +6,7 @@ import (
 	"github.com/benbjohnson/clock"
 )
 
-// ticker is a ticker to power the alerting scheduler. it's like a time.Ticker, except:
+// Ticker is a ticker to power the alerting scheduler. it's like a time.Ticker, except:
 // * it doesn't drop ticks for slow receivers, rather, it queues up.  so that callers are in control to instrument what's going on.
 // * it automatically ticks every second, which is the right thing in our current design
 // * it ticks on second marks or very shortly after. this provides a predictable load pattern

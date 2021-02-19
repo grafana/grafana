@@ -7,12 +7,14 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/log"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 )
 
+// NotificationTestCommand initiates an test
+// execution of an alert notification.
 type NotificationTestCommand struct {
-	State    m.AlertStateType
+	State    models.AlertStateType
 	Name     string
 	Type     string
 	Settings *simplejson.Json
@@ -27,9 +29,9 @@ func init() {
 }
 
 func handleNotificationTestCommand(cmd *NotificationTestCommand) error {
-	notifier := NewNotificationService(nil).(*notificationService)
+	notifier := newNotificationService(nil)
 
-	model := &m.AlertNotification{
+	model := &models.AlertNotification{
 		Name:     cmd.Name,
 		Type:     cmd.Type,
 		Settings: cmd.Settings,
@@ -47,16 +49,16 @@ func handleNotificationTestCommand(cmd *NotificationTestCommand) error {
 
 func createTestEvalContext(cmd *NotificationTestCommand) *EvalContext {
 	testRule := &Rule{
-		DashboardId: 1,
-		PanelId:     1,
+		DashboardID: 1,
+		PanelID:     1,
 		Name:        "Test notification",
 		Message:     "Someone is testing the alert notification within grafana.",
-		State:       m.AlertStateAlerting,
+		State:       models.AlertStateAlerting,
 	}
 
 	ctx := NewEvalContext(context.Background(), testRule)
 	if cmd.Settings.Get("uploadImage").MustBool(true) {
-		ctx.ImagePublicUrl = "https://grafana.com/assets/img/blog/mixed_styles.png"
+		ctx.ImagePublicURL = "https://grafana.com/assets/img/blog/mixed_styles.png"
 	}
 	ctx.IsTestRun = true
 	ctx.Firing = true

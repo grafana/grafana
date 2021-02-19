@@ -3,14 +3,19 @@ package api
 import (
 	"strconv"
 
+	"github.com/grafana/grafana/pkg/services/rendering"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/util"
+
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
+// getFrontendSettingsMap returns a json object with all the settings needed for front end initialisation.
 func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interface{}, error) {
 	orgDataSources := make([]*m.DataSource, 0)
 
@@ -46,6 +51,14 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 		return nil, err
 	}
 
+	pluginsToPreload := []string{}
+
+	for _, app := range enabledPlugins.Apps {
+		if app.Preload {
+			pluginsToPreload = append(pluginsToPreload, app.Module)
+		}
+	}
+
 	for _, ds := range orgDataSources {
 		url := ds.Url
 
@@ -66,21 +79,26 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 			continue
 		}
 
+		if meta.Preload {
+			pluginsToPreload = append(pluginsToPreload, meta.Module)
+		}
+
 		dsMap["meta"] = meta
 
 		if ds.IsDefault {
 			defaultDatasource = ds.Name
 		}
 
-		if ds.JsonData != nil {
-			dsMap["jsonData"] = ds.JsonData
-		} else {
-			dsMap["jsonData"] = make(map[string]string)
+		jsonData := ds.JsonData
+		if jsonData == nil {
+			jsonData = simplejson.New()
 		}
+
+		dsMap["jsonData"] = jsonData
 
 		if ds.Access == m.DS_ACCESS_DIRECT {
 			if ds.BasicAuth {
-				dsMap["basicAuth"] = util.GetBasicAuthHeader(ds.BasicAuthUser, ds.BasicAuthPassword)
+				dsMap["basicAuth"] = util.GetBasicAuthHeader(ds.BasicAuthUser, ds.DecryptedBasicAuthPassword())
 			}
 			if ds.WithCredentials {
 				dsMap["withCredentials"] = ds.WithCredentials
@@ -88,29 +106,24 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 
 			if ds.Type == m.DS_INFLUXDB_08 {
 				dsMap["username"] = ds.User
-				dsMap["password"] = ds.Password
+				dsMap["password"] = ds.DecryptedPassword()
 				dsMap["url"] = url + "/db/" + ds.Database
 			}
 
 			if ds.Type == m.DS_INFLUXDB {
 				dsMap["username"] = ds.User
-				dsMap["password"] = ds.Password
-				dsMap["database"] = ds.Database
+				dsMap["password"] = ds.DecryptedPassword()
 				dsMap["url"] = url
 			}
 		}
 
-		if ds.Type == m.DS_ES {
-			dsMap["index"] = ds.Database
-		}
-
-		if ds.Type == m.DS_INFLUXDB {
+		if (ds.Type == m.DS_INFLUXDB) || (ds.Type == m.DS_ES) {
 			dsMap["database"] = ds.Database
 		}
 
 		if ds.Type == m.DS_PROMETHEUS {
 			// add unproxied server URL for link to Prometheus web UI
-			dsMap["directUrl"] = ds.Url
+			jsonData.Set("directUrl", ds.Url)
 		}
 
 		datasources[ds.Name] = dsMap
@@ -133,19 +146,24 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 
 	panels := map[string]interface{}{}
 	for _, panel := range enabledPlugins.Panels {
-		if panel.State == plugins.PluginStateAlpha && !hs.Cfg.EnableAlphaPanels {
+		if panel.State == plugins.PluginStateAlpha && !hs.Cfg.PluginsEnableAlpha {
 			continue
 		}
 
+		if panel.Preload {
+			pluginsToPreload = append(pluginsToPreload, panel.Module)
+		}
+
 		panels[panel.Id] = map[string]interface{}{
-			"module":       panel.Module,
-			"baseUrl":      panel.BaseUrl,
-			"name":         panel.Name,
-			"id":           panel.Id,
-			"info":         panel.Info,
-			"hideFromList": panel.HideFromList,
-			"sort":         getPanelSort(panel.Id),
-			"dataFormats":  panel.DataFormats,
+			"module":        panel.Module,
+			"baseUrl":       panel.BaseUrl,
+			"name":          panel.Name,
+			"id":            panel.Id,
+			"info":          panel.Info,
+			"hideFromList":  panel.HideFromList,
+			"sort":          getPanelSort(panel.Id),
+			"skipDataQuery": panel.SkipDataQuery,
+			"state":         panel.State,
 		}
 	}
 
@@ -156,28 +174,42 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 		"appSubUrl":                  setting.AppSubUrl,
 		"allowOrgCreate":             (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
 		"authProxyEnabled":           setting.AuthProxyEnabled,
-		"ldapEnabled":                setting.LdapEnabled,
+		"ldapEnabled":                setting.LDAPEnabled,
 		"alertingEnabled":            setting.AlertingEnabled,
 		"alertingErrorOrTimeout":     setting.AlertingErrorOrTimeout,
 		"alertingNoDataOrNullValues": setting.AlertingNoDataOrNullValues,
+		"alertingMinInterval":        setting.AlertingMinInterval,
 		"exploreEnabled":             setting.ExploreEnabled,
 		"googleAnalyticsId":          setting.GoogleAnalyticsId,
 		"disableLoginForm":           setting.DisableLoginForm,
+		"disableUserSignUp":          !setting.AllowUserSignUp,
+		"loginHint":                  setting.LoginHint,
+		"passwordHint":               setting.PasswordHint,
 		"externalUserMngInfo":        setting.ExternalUserMngInfo,
 		"externalUserMngLinkUrl":     setting.ExternalUserMngLinkUrl,
 		"externalUserMngLinkName":    setting.ExternalUserMngLinkName,
 		"viewersCanEdit":             setting.ViewersCanEdit,
 		"editorsCanAdmin":            hs.Cfg.EditorsCanAdmin,
 		"disableSanitizeHtml":        hs.Cfg.DisableSanitizeHtml,
+		"pluginsToPreload":           pluginsToPreload,
 		"buildInfo": map[string]interface{}{
 			"version":       setting.BuildVersion,
 			"commit":        setting.BuildCommit,
 			"buildstamp":    setting.BuildStamp,
+			"edition":       hs.License.Edition(),
 			"latestVersion": plugins.GrafanaLatestVersion,
 			"hasUpdate":     plugins.GrafanaHasUpdate,
 			"env":           setting.Env,
-			"isEnterprise":  setting.IsEnterprise,
+			"isEnterprise":  hs.License.HasValidLicense(),
 		},
+		"licenseInfo": map[string]interface{}{
+			"hasLicense": hs.License.HasLicense(),
+			"expiry":     hs.License.Expiry(),
+			"stateInfo":  hs.License.StateInfo(),
+			"licenseUrl": hs.License.LicenseURL(c.SignedInUser),
+		},
+		"featureToggles":    hs.Cfg.FeatureToggles,
+		"phantomJSRenderer": rendering.IsPhantomJSEnabled,
 	}
 
 	return jsonObj, nil
@@ -188,7 +220,7 @@ func getPanelSort(id string) int {
 	switch id {
 	case "graph":
 		sort = 1
-	case "singlestat":
+	case "stat":
 		sort = 2
 	case "gauge":
 		sort = 3
@@ -196,14 +228,18 @@ func getPanelSort(id string) int {
 		sort = 4
 	case "table":
 		sort = 5
-	case "text":
+	case "singlestat":
 		sort = 6
-	case "heatmap":
+	case "text":
 		sort = 7
-	case "alertlist":
+	case "heatmap":
 		sort = 8
-	case "dashlist":
+	case "alertlist":
 		sort = 9
+	case "dashlist":
+		sort = 10
+	case "news":
+		sort = 10
 	}
 	return sort
 }

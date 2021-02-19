@@ -1,6 +1,6 @@
 package ext
 
-import opentracing "github.com/opentracing/opentracing-go"
+import "github.com/opentracing/opentracing-go"
 
 // These constants define common tag names recommended for better portability across
 // tracing systems and languages/platforms.
@@ -74,7 +74,7 @@ var (
 	PeerHostname = stringTagName("peer.hostname")
 
 	// PeerHostIPv4 records IP v4 host address of the peer
-	PeerHostIPv4 = uint32TagName("peer.ipv4")
+	PeerHostIPv4 = ipv4Tag("peer.ipv4")
 
 	// PeerHostIPv6 records IP v6 host address of the peer
 	PeerHostIPv6 = stringTagName("peer.ipv6")
@@ -194,5 +194,17 @@ type boolTagName string
 
 // Add adds a bool tag to the `span`
 func (tag boolTagName) Set(span opentracing.Span, value bool) {
+	span.SetTag(string(tag), value)
+}
+
+type ipv4Tag string
+
+// Set adds IP v4 host address of the peer as an uint32 value to the `span`, keep this for backward and zipkin compatibility
+func (tag ipv4Tag) Set(span opentracing.Span, value uint32) {
+	span.SetTag(string(tag), value)
+}
+
+// SetString records IP v4 host address of the peer as a .-separated tuple to the `span`. E.g., "127.0.0.1"
+func (tag ipv4Tag) SetString(span opentracing.Span, value string) {
 	span.SetTag(string(tag), value)
 }

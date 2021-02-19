@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -13,8 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/dashdiffs"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -47,7 +48,7 @@ func dashboardGuardianResponse(err error) Response {
 	return Error(403, "Access denied to this dashboard", nil)
 }
 
-func GetDashboard(c *m.ReqContext) Response {
+func (hs *HTTPServer) GetDashboard(c *m.ReqContext) Response {
 	dash, rsp := getDashboardHelper(c.OrgId, c.Params(":slug"), 0, c.Params(":uid"))
 	if rsp != nil {
 		return rsp
@@ -106,14 +107,26 @@ func GetDashboard(c *m.ReqContext) Response {
 		meta.FolderUrl = query.Result.GetUrl()
 	}
 
-	isDashboardProvisioned := &m.IsDashboardProvisionedQuery{DashboardId: dash.Id}
-	err = bus.Dispatch(isDashboardProvisioned)
+	provisioningData, err := dashboards.NewProvisioningService().GetProvisionedDashboardDataByDashboardId(dash.Id)
 	if err != nil {
 		return Error(500, "Error while checking if dashboard is provisioned", err)
 	}
 
-	if isDashboardProvisioned.Result {
-		meta.Provisioned = true
+	if provisioningData != nil {
+		allowUiUpdate := hs.ProvisioningService.GetAllowUiUpdatesFromConfig(provisioningData.Name)
+		if !allowUiUpdate {
+			meta.Provisioned = true
+		}
+
+		meta.ProvisionedExternalId, err = filepath.Rel(
+			hs.ProvisioningService.GetDashboardProvisionerResolvedPath(provisioningData.Name),
+			provisioningData.ExternalId,
+		)
+		if err != nil {
+			// Not sure when this could happen so not sure how to better handle this. Right now ProvisionedExternalId
+			// is for better UX, showing in Save/Delete dialogs and so it won't break anything if it is empty.
+			hs.log.Warn("Failed to create ProvisionedExternalId", "err", err)
+		}
 	}
 
 	// make sure db version is in sync with json model version
@@ -124,7 +137,7 @@ func GetDashboard(c *m.ReqContext) Response {
 		Meta:      meta,
 	}
 
-	c.TimeRequest(metrics.M_Api_Dashboard_Get)
+	c.TimeRequest(metrics.MApiDashboardGet)
 	return JSON(200, dto)
 }
 
@@ -153,7 +166,7 @@ func getDashboardHelper(orgID int64, slug string, id int64, uid string) (*m.Dash
 	return query.Result, nil
 }
 
-func DeleteDashboard(c *m.ReqContext) Response {
+func DeleteDashboardBySlug(c *m.ReqContext) Response {
 	query := m.GetDashboardsBySlugQuery{OrgId: c.OrgId, Slug: c.Params(":slug")}
 
 	if err := bus.Dispatch(&query); err != nil {
@@ -164,29 +177,15 @@ func DeleteDashboard(c *m.ReqContext) Response {
 		return JSON(412, util.DynMap{"status": "multiple-slugs-exists", "message": m.ErrDashboardsWithSameSlugExists.Error()})
 	}
 
-	dash, rsp := getDashboardHelper(c.OrgId, c.Params(":slug"), 0, "")
-	if rsp != nil {
-		return rsp
-	}
-
-	guardian := guardian.New(dash.Id, c.OrgId, c.SignedInUser)
-	if canSave, err := guardian.CanSave(); err != nil || !canSave {
-		return dashboardGuardianResponse(err)
-	}
-
-	cmd := m.DeleteDashboardCommand{OrgId: c.OrgId, Id: dash.Id}
-	if err := bus.Dispatch(&cmd); err != nil {
-		return Error(500, "Failed to delete dashboard", err)
-	}
-
-	return JSON(200, util.DynMap{
-		"title":   dash.Title,
-		"message": fmt.Sprintf("Dashboard %s deleted", dash.Title),
-	})
+	return deleteDashboard(c)
 }
 
 func DeleteDashboardByUID(c *m.ReqContext) Response {
-	dash, rsp := getDashboardHelper(c.OrgId, "", 0, c.Params(":uid"))
+	return deleteDashboard(c)
+}
+
+func deleteDashboard(c *m.ReqContext) Response {
+	dash, rsp := getDashboardHelper(c.OrgId, c.Params(":slug"), 0, c.Params(":uid"))
 	if rsp != nil {
 		return rsp
 	}
@@ -196,8 +195,10 @@ func DeleteDashboardByUID(c *m.ReqContext) Response {
 		return dashboardGuardianResponse(err)
 	}
 
-	cmd := m.DeleteDashboardCommand{OrgId: c.OrgId, Id: dash.Id}
-	if err := bus.Dispatch(&cmd); err != nil {
+	err := dashboards.NewService().DeleteDashboard(dash.Id, c.OrgId)
+	if err == m.ErrDashboardCannotDeleteProvisionedDashboard {
+		return Error(400, "Dashboard cannot be deleted because it was provisioned", err)
+	} else if err != nil {
 		return Error(500, "Failed to delete dashboard", err)
 	}
 
@@ -224,6 +225,16 @@ func (hs *HTTPServer) PostDashboard(c *m.ReqContext, cmd m.SaveDashboardCommand)
 		}
 	}
 
+	provisioningData, err := dashboards.NewProvisioningService().GetProvisionedDashboardDataByDashboardId(dash.Id)
+	if err != nil {
+		return Error(500, "Error while checking if dashboard is provisioned", err)
+	}
+
+	allowUiUpdate := true
+	if provisioningData != nil {
+		allowUiUpdate = hs.ProvisioningService.GetAllowUiUpdatesFromConfig(provisioningData.Name)
+	}
+
 	dashItem := &dashboards.SaveDashboardDTO{
 		Dashboard: dash,
 		Message:   cmd.Message,
@@ -232,8 +243,31 @@ func (hs *HTTPServer) PostDashboard(c *m.ReqContext, cmd m.SaveDashboardCommand)
 		Overwrite: cmd.Overwrite,
 	}
 
-	dashboard, err := dashboards.NewService().SaveDashboard(dashItem)
+	dashboard, err := dashboards.NewService().SaveDashboard(dashItem, allowUiUpdate)
+	if err != nil {
+		return dashboardSaveErrorToApiResponse(err)
+	}
 
+	if hs.Cfg.EditorsCanAdmin && newDashboard {
+		inFolder := cmd.FolderId > 0
+		err := dashboards.MakeUserAdmin(hs.Bus, cmd.OrgId, cmd.UserId, dashboard.Id, !inFolder)
+		if err != nil {
+			hs.log.Error("Could not make user admin", "dashboard", dashboard.Title, "user", c.SignedInUser.UserId, "error", err)
+		}
+	}
+
+	c.TimeRequest(metrics.MApiDashboardSave)
+	return JSON(200, util.DynMap{
+		"status":  "success",
+		"slug":    dashboard.Slug,
+		"version": dashboard.Version,
+		"id":      dashboard.Id,
+		"uid":     dashboard.Uid,
+		"url":     dashboard.GetUrl(),
+	})
+}
+
+func dashboardSaveErrorToApiResponse(err error) Response {
 	if err == m.ErrDashboardTitleEmpty ||
 		err == m.ErrDashboardWithSameNameAsFolder ||
 		err == m.ErrDashboardFolderWithSameNameAsDashboard ||
@@ -256,45 +290,28 @@ func (hs *HTTPServer) PostDashboard(c *m.ReqContext, cmd m.SaveDashboardCommand)
 		return Error(422, validationErr.Error(), nil)
 	}
 
-	if err != nil {
-		if err == m.ErrDashboardWithSameNameInFolderExists {
-			return JSON(412, util.DynMap{"status": "name-exists", "message": err.Error()})
-		}
-		if err == m.ErrDashboardVersionMismatch {
-			return JSON(412, util.DynMap{"status": "version-mismatch", "message": err.Error()})
-		}
-		if pluginErr, ok := err.(m.UpdatePluginDashboardError); ok {
-			message := "The dashboard belongs to plugin " + pluginErr.PluginId + "."
-			// look up plugin name
-			if pluginDef, exist := plugins.Plugins[pluginErr.PluginId]; exist {
-				message = "The dashboard belongs to plugin " + pluginDef.Name + "."
-			}
-			return JSON(412, util.DynMap{"status": "plugin-dashboard", "message": message})
-		}
-		if err == m.ErrDashboardNotFound {
-			return JSON(404, util.DynMap{"status": "not-found", "message": err.Error()})
-		}
-		return Error(500, "Failed to save dashboard", err)
+	if err == m.ErrDashboardWithSameNameInFolderExists {
+		return JSON(412, util.DynMap{"status": "name-exists", "message": err.Error()})
 	}
 
-	if hs.Cfg.EditorsCanAdmin && newDashboard {
-		inFolder := cmd.FolderId > 0
-		err := dashboards.MakeUserAdmin(hs.Bus, cmd.OrgId, cmd.UserId, dashboard.Id, !inFolder)
-		if err != nil {
-			hs.log.Error("Could not make user admin", "dashboard", cmd.Result.Title, "user", c.SignedInUser.UserId, "error", err)
-			return Error(500, "Failed to make user admin of dashboard", err)
-		}
+	if err == m.ErrDashboardVersionMismatch {
+		return JSON(412, util.DynMap{"status": "version-mismatch", "message": err.Error()})
 	}
 
-	c.TimeRequest(metrics.M_Api_Dashboard_Save)
-	return JSON(200, util.DynMap{
-		"status":  "success",
-		"slug":    dashboard.Slug,
-		"version": dashboard.Version,
-		"id":      dashboard.Id,
-		"uid":     dashboard.Uid,
-		"url":     dashboard.GetUrl(),
-	})
+	if pluginErr, ok := err.(m.UpdatePluginDashboardError); ok {
+		message := "The dashboard belongs to plugin " + pluginErr.PluginId + "."
+		// look up plugin name
+		if pluginDef, exist := plugins.Plugins[pluginErr.PluginId]; exist {
+			message = "The dashboard belongs to plugin " + pluginDef.Name + "."
+		}
+		return JSON(412, util.DynMap{"status": "plugin-dashboard", "message": message})
+	}
+
+	if err == m.ErrDashboardNotFound {
+		return JSON(404, util.DynMap{"status": "not-found", "message": err.Error()})
+	}
+
+	return Error(500, "Failed to save dashboard", err)
 }
 
 func GetHomeDashboard(c *m.ReqContext) Response {
@@ -319,6 +336,7 @@ func GetHomeDashboard(c *m.ReqContext) Response {
 	if err != nil {
 		return Error(500, "Failed to load home dashboard", err)
 	}
+	defer file.Close()
 
 	dash := dtos.DashboardFullWithMeta{}
 	dash.Meta.IsHome = true
@@ -419,8 +437,15 @@ func GetDashboardVersion(c *m.ReqContext) Response {
 	}
 
 	dashVersionMeta := &m.DashboardVersionMeta{
-		DashboardVersion: *query.Result,
-		CreatedBy:        creator,
+		Id:            query.Result.Id,
+		DashboardId:   query.Result.DashboardId,
+		Data:          query.Result.Data,
+		ParentVersion: query.Result.ParentVersion,
+		RestoredFrom:  query.Result.RestoredFrom,
+		Version:       query.Result.Version,
+		Created:       query.Result.Created,
+		Message:       query.Result.Message,
+		CreatedBy:     creator,
 	}
 
 	return JSON(200, dashVersionMeta)

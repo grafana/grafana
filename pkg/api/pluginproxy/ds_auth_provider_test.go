@@ -14,7 +14,7 @@ func TestDsAuthProvider(t *testing.T) {
 			},
 		}
 
-		interpolated, err := interpolateString("{{.SecureJsonData.Test}}", data)
+		interpolated, err := InterpolateString("{{.SecureJsonData.Test}}", data)
 		So(err, ShouldBeNil)
 		So(interpolated, ShouldEqual, "0asd+asd")
 	})

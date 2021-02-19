@@ -1,7 +1,7 @@
 ﻿import coreModule from '../core_module';
 
 /** @ngInject */
-export function autofillEventFix($compile) {
+export function autofillEventFix($compile: any) {
   return {
     link: ($scope: any, elem: any) => {
       const input = elem[0];

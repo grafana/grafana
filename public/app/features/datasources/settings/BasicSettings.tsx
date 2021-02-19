@@ -1,5 +1,6 @@
 import React, { FC } from 'react';
-import { FormLabel, Switch } from '@grafana/ui';
+import { FormLabel, Input, Switch } from '@grafana/ui';
+import { e2e } from '@grafana/e2e';
 
 export interface Props {
   dataSourceName: string;
@@ -10,7 +11,7 @@ export interface Props {
 
 const BasicSettings: FC<Props> = ({ dataSourceName, isDefault, onDefaultChange, onNameChange }) => {
   return (
-    <div className="gf-form-group">
+    <div className="gf-form-group" aria-label="Datasource settings page basic settings">
       <div className="gf-form-inline">
         <div className="gf-form max-width-30" style={{ marginRight: '3px' }}>
           <FormLabel
@@ -21,18 +22,24 @@ const BasicSettings: FC<Props> = ({ dataSourceName, isDefault, onDefaultChange, 
           >
             Name
           </FormLabel>
-          <input
+          <Input
             className="gf-form-input max-width-23"
             type="text"
             value={dataSourceName}
             placeholder="Name"
             onChange={event => onNameChange(event.target.value)}
             required
+            aria-label={e2e.pages.DataSource.selectors.name}
           />
         </div>
-        {/*
-        //@ts-ignore */}
-        <Switch label="Default" checked={isDefault} onChange={event => onDefaultChange(event.target.checked)} />
+        <Switch
+          label="Default"
+          checked={isDefault}
+          onChange={event => {
+            // @ts-ignore
+            onDefaultChange(event.target.checked);
+          }}
+        />
       </div>
     </div>
   );

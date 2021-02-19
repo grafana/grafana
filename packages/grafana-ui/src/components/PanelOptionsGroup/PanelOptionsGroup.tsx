@@ -2,7 +2,7 @@
 import React, { FunctionComponent } from 'react';
 
 interface Props {
-  title?: string;
+  title?: string | JSX.Element;
   onClose?: () => void;
   children: JSX.Element | JSX.Element[] | boolean;
   onAdd?: () => void;

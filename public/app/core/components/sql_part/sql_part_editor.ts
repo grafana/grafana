@@ -14,7 +14,7 @@ const template = `
 `;
 
 /** @ngInject */
-export function sqlPartEditorDirective($compile, templateSrv) {
+export function sqlPartEditorDirective(templateSrv: any) {
   const paramTemplate = '<input type="text" class="hide input-mini"></input>';
 
   return {
@@ -25,17 +25,16 @@ export function sqlPartEditorDirective($compile, templateSrv) {
       handleEvent: '&',
       debounce: '@',
     },
-    link: function postLink($scope, elem) {
+    link: function postLink($scope: any, elem: any) {
       const part = $scope.part;
       const partDef = part.def;
       const $paramsContainer = elem.find('.query-part-parameters');
       const debounceLookup = $scope.debounce;
-      let cancelBlur = null;
+      let cancelBlur: any = null;
 
       $scope.partActions = [];
 
-      function clickFuncParam(this: any, paramIndex) {
-        /*jshint validthis:true */
+      function clickFuncParam(this: any, paramIndex: number) {
         const $link = $(this);
         const $input = $link.next();
 
@@ -54,14 +53,13 @@ export function sqlPartEditorDirective($compile, templateSrv) {
         }
       }
 
-      function inputBlur($input, paramIndex) {
+      function inputBlur($input: JQuery, paramIndex: number) {
         cancelBlur = setTimeout(() => {
           switchToLink($input, paramIndex);
         }, 200);
       }
 
-      function switchToLink($input, paramIndex) {
-        /*jshint validthis:true */
+      function switchToLink($input: JQuery, paramIndex: number) {
         const $link = $input.prev();
         const newValue = $input.val();
 
@@ -78,24 +76,22 @@ export function sqlPartEditorDirective($compile, templateSrv) {
         $link.show();
       }
 
-      function inputKeyPress(this: any, paramIndex, e) {
-        /*jshint validthis:true */
+      function inputKeyPress(this: any, paramIndex: number, e: any) {
         if (e.which === 13) {
           switchToLink($(this), paramIndex);
         }
       }
 
       function inputKeyDown(this: any) {
-        /*jshint validthis:true */
         this.style.width = (3 + this.value.length) * 8 + 'px';
       }
 
-      function addTypeahead($input, param, paramIndex) {
+      function addTypeahead($input: JQuery, param: any, paramIndex: number) {
         if (!param.options && !param.dynamicLookup) {
           return;
         }
 
-        const typeaheadSource = (query, callback) => {
+        const typeaheadSource = (query: string, callback: any) => {
           if (param.options) {
             let options = param.options;
             if (param.type === 'int') {
@@ -107,7 +103,7 @@ export function sqlPartEditorDirective($compile, templateSrv) {
           }
 
           $scope.$apply(() => {
-            $scope.handleEvent({ $event: { name: 'get-param-options', param: param } }).then(result => {
+            $scope.handleEvent({ $event: { name: 'get-param-options', param: param } }).then((result: any) => {
               const dynamicOptions = _.map(result, op => {
                 return _.escape(op.value);
               });
@@ -128,7 +124,7 @@ export function sqlPartEditorDirective($compile, templateSrv) {
           source: typeaheadSource,
           minLength: 0,
           items: 1000,
-          updater: value => {
+          updater: (value: string) => {
             value = _.unescape(value);
             if (value === part.params[paramIndex]) {
               clearTimeout(cancelBlur);
@@ -152,17 +148,17 @@ export function sqlPartEditorDirective($compile, templateSrv) {
       }
 
       $scope.showActionsMenu = () => {
-        $scope.handleEvent({ $event: { name: 'get-part-actions' } }).then(res => {
+        $scope.handleEvent({ $event: { name: 'get-part-actions' } }).then((res: any) => {
           $scope.partActions = res;
         });
       };
 
-      $scope.triggerPartAction = action => {
+      $scope.triggerPartAction = (action: string) => {
         $scope.handleEvent({ $event: { name: 'action', action: action } });
       };
 
       function addElementsAndCompile() {
-        _.each(partDef.params, (param, index) => {
+        _.each(partDef.params, (param: any, index: number) => {
           if (param.optional && part.params.length <= index) {
             return;
           }
@@ -172,7 +168,7 @@ export function sqlPartEditorDirective($compile, templateSrv) {
           }
 
           const paramValue = templateSrv.highlightVariablesAsHtml(part.params[index]);
-          const $paramLink = $('<a class="graphite-func-param-link pointer">' + paramValue + '</a>');
+          const $paramLink = $('<a class="query-part__link">' + paramValue + '</a>');
           const $input = $(paramTemplate);
 
           $paramLink.appendTo($paramsContainer);

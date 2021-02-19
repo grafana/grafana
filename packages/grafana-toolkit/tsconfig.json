@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "declarationDir": "dist/src",
+    "module": "commonjs",
+    "outDir": "dist/src",
+    "rootDirs": ["."],
+    "typeRoots": ["node_modules/@types"]
+  },
+  "exclude": ["dist", "node_modules"],
+  "extends": "@grafana/tsconfig",
+  "include": ["src/**/*.ts", "../../public/app/types/jquery/*.ts"]
+}

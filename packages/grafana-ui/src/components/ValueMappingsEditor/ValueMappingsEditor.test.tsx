@@ -2,7 +2,7 @@ import React from 'react';
 import { shallow } from 'enzyme';
 
 import { ValueMappingsEditor, Props } from './ValueMappingsEditor';
-import { MappingType } from '../../types';
+import { MappingType } from '@grafana/data';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
@@ -59,7 +59,7 @@ describe('Next id to add', () => {
   it('should be 4', () => {
     const { instance } = setup();
 
-    instance.addMapping();
+    instance.onAddMapping();
 
     expect(instance.state.nextIdToAdd).toEqual(4);
   });

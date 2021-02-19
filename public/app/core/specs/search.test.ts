@@ -51,15 +51,18 @@ describe('SearchCtrl', () => {
           items: [],
           selected: true,
           expanded: false,
-          toggle: i => (i.expanded = !i.expanded),
+          toggle: (i: any) => (i.expanded = !i.expanded),
         },
         {
           id: 0,
           title: 'General',
-          items: [{ id: 3, selected: false }, { id: 5, selected: false }],
+          items: [
+            { id: 3, selected: false },
+            { id: 5, selected: false },
+          ],
           selected: false,
           expanded: true,
-          toggle: i => (i.expanded = !i.expanded),
+          toggle: (i: any) => (i.expanded = !i.expanded),
         },
       ];
     });
@@ -145,18 +148,24 @@ describe('SearchCtrl', () => {
         {
           id: 1,
           title: 'folder',
-          items: [{ id: 2, selected: false }, { id: 4, selected: false }],
+          items: [
+            { id: 2, selected: false },
+            { id: 4, selected: false },
+          ],
           selected: true,
           expanded: false,
-          toggle: i => (i.expanded = !i.expanded),
+          toggle: (i: any) => (i.expanded = !i.expanded),
         },
         {
           id: 0,
           title: 'General',
-          items: [{ id: 3, selected: false }, { id: 5, selected: false }],
+          items: [
+            { id: 3, selected: false },
+            { id: 5, selected: false },
+          ],
           selected: false,
           expanded: true,
-          toggle: i => (i.expanded = !i.expanded),
+          toggle: (i: any) => (i.expanded = !i.expanded),
         },
       ];
     });
@@ -249,10 +258,13 @@ describe('SearchCtrl', () => {
       ctrl.results = [
         {
           hideHeader: true,
-          items: [{ id: 3, selected: true }, { id: 5, selected: false }],
+          items: [
+            { id: 3, selected: true },
+            { id: 5, selected: false },
+          ],
           selected: false,
           expanded: true,
-          toggle: i => (i.expanded = !i.expanded),
+          toggle: (i: any) => (i.expanded = !i.expanded),
         },
       ];
     });

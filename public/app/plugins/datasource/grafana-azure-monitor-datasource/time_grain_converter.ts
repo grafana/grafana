@@ -2,7 +2,7 @@ import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
 
 export default class TimeGrainConverter {
-  static createISO8601Duration(timeGrain, timeGrainUnit) {
+  static createISO8601Duration(timeGrain: string | number, timeGrainUnit: any) {
     const timeIntervals = ['hour', 'minute', 'h', 'm'];
     if (_.includes(timeIntervals, timeGrainUnit)) {
       return `PT${timeGrain}${timeGrainUnit[0].toUpperCase()}`;
@@ -32,7 +32,7 @@ export default class TimeGrainConverter {
     return TimeGrainConverter.createISO8601Duration(timeGrain, unit);
   }
 
-  static findClosestTimeGrain(interval, allowedTimeGrains) {
+  static findClosestTimeGrain(interval: any, allowedTimeGrains: string[]) {
     const timeGrains = _.filter(allowedTimeGrains, o => o !== 'auto');
 
     let closest = timeGrains[0];

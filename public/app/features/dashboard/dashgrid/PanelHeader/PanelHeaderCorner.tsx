@@ -1,11 +1,13 @@
 import React, { Component } from 'react';
-import Remarkable from 'remarkable';
-import { Tooltip, ScopedVars } from '@grafana/ui';
+
+import { renderMarkdown, LinkModelSupplier, ScopedVars } from '@grafana/data';
+import { Tooltip, PopoverContent } from '@grafana/ui';
+import { getLocationSrv } from '@grafana/runtime';
 
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import templateSrv from 'app/features/templating/template_srv';
-import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { InspectTab } from '../../components/Inspector/PanelInspector';
 
 enum InfoMode {
   Error = 'Error',
@@ -18,7 +20,7 @@ interface Props {
   title?: string;
   description?: string;
   scopedVars?: ScopedVars;
-  links?: [];
+  links?: LinkModelSupplier<PanelModel>;
   error?: string;
 }
 
@@ -42,22 +44,22 @@ export class PanelHeaderCorner extends Component<Props> {
 
   getInfoContent = (): JSX.Element => {
     const { panel } = this.props;
-    const markdown = panel.description;
-    const linkSrv = new LinkSrv(templateSrv, this.timeSrv);
+    const markdown = panel.description || '';
     const interpolatedMarkdown = templateSrv.replace(markdown, panel.scopedVars);
-    const remarkableInterpolatedMarkdown = new Remarkable().render(interpolatedMarkdown);
+    const markedInterpolatedMarkdown = renderMarkdown(interpolatedMarkdown);
+    const links = this.props.links && this.props.links.getLinks(panel);
 
     return (
-      <div className="markdown-html">
-        <div dangerouslySetInnerHTML={{ __html: remarkableInterpolatedMarkdown }} />
-        {panel.links && panel.links.length > 0 && (
-          <ul className="text-left">
-            {panel.links.map((link, idx) => {
-              const info = linkSrv.getPanelLinkAnchorInfo(link, panel.scopedVars);
+      <div className="panel-info-content markdown-html">
+        <div dangerouslySetInnerHTML={{ __html: markedInterpolatedMarkdown }} />
+
+        {links && links.length > 0 && (
+          <ul className="panel-info-corner-links">
+            {links.map((link, idx) => {
               return (
                 <li key={idx}>
-                  <a className="panel-menu-link" href={info.href} target={info.target}>
-                    {info.title}
+                  <a className="panel-info-corner-links__item" href={link.href} target={link.target}>
+                    {link.title}
                   </a>
                 </li>
               );
@@ -68,11 +70,18 @@ export class PanelHeaderCorner extends Component<Props> {
     );
   };
 
-  renderCornerType(infoMode: InfoMode, content: string | JSX.Element) {
+  /**
+   * Open the Panel Inspector when we click on an error
+   */
+  onClickError = () => {
+    getLocationSrv().update({ partial: true, query: { inspect: this.props.panel.id, tab: InspectTab.Error } });
+  };
+
+  renderCornerType(infoMode: InfoMode, content: PopoverContent, onClick?: () => void) {
     const theme = infoMode === InfoMode.Error ? 'error' : 'info';
     return (
-      <Tooltip content={content} placement="bottom-start" theme={theme}>
-        <div className={`panel-info-corner panel-info-corner--${infoMode.toLowerCase()}`}>
+      <Tooltip content={content} placement="top-start" theme={theme}>
+        <div className={`panel-info-corner panel-info-corner--${infoMode.toLowerCase()}`} onClick={onClick}>
           <i className="fa" />
           <span className="panel-info-corner-inner" />
         </div>
@@ -88,11 +97,11 @@ export class PanelHeaderCorner extends Component<Props> {
     }
 
     if (infoMode === InfoMode.Error) {
-      return this.renderCornerType(infoMode, this.props.error);
+      return this.renderCornerType(infoMode, this.props.error, this.onClickError);
     }
 
-    if (infoMode === InfoMode.Info) {
-      return this.renderCornerType(infoMode, this.getInfoContent());
+    if (infoMode === InfoMode.Info || infoMode === InfoMode.Links) {
+      return this.renderCornerType(infoMode, this.getInfoContent);
     }
 
     return null;

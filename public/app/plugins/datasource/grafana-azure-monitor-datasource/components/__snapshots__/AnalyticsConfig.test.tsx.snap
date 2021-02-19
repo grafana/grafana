@@ -1,0 +1,289 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should disable log analytics credentials form 1`] = `
+<Fragment>
+  <h3
+    className="page-heading"
+  >
+    Azure Log Analytics API Details
+  </h3>
+  <Switch
+    checked={false}
+    label="Same details as Azure Monitor API"
+    onChange={[Function]}
+  />
+  <AzureCredentialsForm
+    clientSecret=""
+    clientSecretConfigured={false}
+    onClientIdChange={[Function]}
+    onClientSecretChange={[Function]}
+    onLoadSubscriptions={[Function]}
+    onResetClientSecret={[Function]}
+    onSubscriptionSelectChange={[Function]}
+    onTenantIdChange={[Function]}
+    subscriptionOptions={Array []}
+    tenantId=""
+  />
+  <div
+    className="gf-form-group"
+  >
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-12"
+          tooltip="Choose the default/preferred Workspace for Azure Log Analytics queries."
+        >
+          Default Workspace
+        </Component>
+        <div
+          className="width-25"
+        >
+          <Select
+            allowCustomValue={false}
+            autoFocus={false}
+            backspaceRemovesValue={true}
+            className=""
+            components={
+              Object {
+                "Group": [Function],
+                "IndicatorsContainer": [Function],
+                "MenuList": [Function],
+                "Option": [Function],
+                "SingleValue": [Function],
+              }
+            }
+            defaultValue=""
+            isClearable={false}
+            isDisabled={false}
+            isLoading={false}
+            isMulti={false}
+            isSearchable={true}
+            maxMenuHeight={300}
+            onChange={[Function]}
+            openMenuOnFocus={false}
+            options={Array []}
+            tabSelectsValue={true}
+          />
+        </div>
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <div
+          className="max-width-30 gf-form-inline"
+        >
+          <Button
+            disabled={true}
+            onClick={[Function]}
+            size="sm"
+            type="button"
+            variant="secondary"
+          >
+            Load Workspaces
+          </Button>
+        </div>
+      </div>
+    </div>
+  </div>
+</Fragment>
+`;
+
+exports[`Render should enable azure log analytics load workspaces button 1`] = `
+<Fragment>
+  <h3
+    className="page-heading"
+  >
+    Azure Log Analytics API Details
+  </h3>
+  <Switch
+    checked={false}
+    label="Same details as Azure Monitor API"
+    onChange={[Function]}
+  />
+  <AzureCredentialsForm
+    clientSecret=""
+    clientSecretConfigured={false}
+    onClientIdChange={[Function]}
+    onClientSecretChange={[Function]}
+    onLoadSubscriptions={[Function]}
+    onResetClientSecret={[Function]}
+    onSubscriptionSelectChange={[Function]}
+    onTenantIdChange={[Function]}
+    subscriptionOptions={Array []}
+    tenantId=""
+  />
+  <div
+    className="gf-form-group"
+  >
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-12"
+          tooltip="Choose the default/preferred Workspace for Azure Log Analytics queries."
+        >
+          Default Workspace
+        </Component>
+        <div
+          className="width-25"
+        >
+          <Select
+            allowCustomValue={false}
+            autoFocus={false}
+            backspaceRemovesValue={true}
+            className=""
+            components={
+              Object {
+                "Group": [Function],
+                "IndicatorsContainer": [Function],
+                "MenuList": [Function],
+                "Option": [Function],
+                "SingleValue": [Function],
+              }
+            }
+            defaultValue=""
+            isClearable={false}
+            isDisabled={false}
+            isLoading={false}
+            isMulti={false}
+            isSearchable={true}
+            maxMenuHeight={300}
+            onChange={[Function]}
+            openMenuOnFocus={false}
+            options={Array []}
+            tabSelectsValue={true}
+          />
+        </div>
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <div
+          className="max-width-30 gf-form-inline"
+        >
+          <Button
+            disabled={true}
+            onClick={[Function]}
+            size="sm"
+            type="button"
+            variant="secondary"
+          >
+            Load Workspaces
+          </Button>
+        </div>
+      </div>
+    </div>
+  </div>
+</Fragment>
+`;
+
+exports[`Render should render component 1`] = `
+<Fragment>
+  <h3
+    className="page-heading"
+  >
+    Azure Log Analytics API Details
+  </h3>
+  <Switch
+    checked={false}
+    label="Same details as Azure Monitor API"
+    onChange={[Function]}
+  />
+  <AzureCredentialsForm
+    clientSecret=""
+    clientSecretConfigured={false}
+    onClientIdChange={[Function]}
+    onClientSecretChange={[Function]}
+    onLoadSubscriptions={[Function]}
+    onResetClientSecret={[Function]}
+    onSubscriptionSelectChange={[Function]}
+    onTenantIdChange={[Function]}
+    subscriptionOptions={Array []}
+    tenantId=""
+  />
+  <div
+    className="gf-form-group"
+  >
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-12"
+          tooltip="Choose the default/preferred Workspace for Azure Log Analytics queries."
+        >
+          Default Workspace
+        </Component>
+        <div
+          className="width-25"
+        >
+          <Select
+            allowCustomValue={false}
+            autoFocus={false}
+            backspaceRemovesValue={true}
+            className=""
+            components={
+              Object {
+                "Group": [Function],
+                "IndicatorsContainer": [Function],
+                "MenuList": [Function],
+                "Option": [Function],
+                "SingleValue": [Function],
+              }
+            }
+            defaultValue=""
+            isClearable={false}
+            isDisabled={false}
+            isLoading={false}
+            isMulti={false}
+            isSearchable={true}
+            maxMenuHeight={300}
+            onChange={[Function]}
+            openMenuOnFocus={false}
+            options={Array []}
+            tabSelectsValue={true}
+          />
+        </div>
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <div
+          className="max-width-30 gf-form-inline"
+        >
+          <Button
+            disabled={true}
+            onClick={[Function]}
+            size="sm"
+            type="button"
+            variant="secondary"
+          >
+            Load Workspaces
+          </Button>
+        </div>
+      </div>
+    </div>
+  </div>
+</Fragment>
+`;

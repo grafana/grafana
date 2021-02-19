@@ -4,14 +4,16 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 var (
-	azlog log.Logger
+	azlog           log.Logger
+	legendKeyFormat *regexp.Regexp
 )
 
 // AzureMonitorExecutor executes queries for the Azure Monitor datasource - all four services
@@ -36,6 +38,7 @@ func NewAzureMonitorExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint,
 func init() {
 	azlog = log.New("tsdb.azuremonitor")
 	tsdb.RegisterTsdbQueryEndpoint("grafana-azure-monitor-datasource", NewAzureMonitorExecutor)
+	legendKeyFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 }
 
 // Query takes in the frontend queries, parses them into the query format
@@ -43,10 +46,10 @@ func init() {
 // executes the queries against the API and parses the response into
 // the right format
 func (e *AzureMonitorExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	var result *tsdb.Response
 	var err error
 
 	var azureMonitorQueries []*tsdb.Query
+	var applicationInsightsQueries []*tsdb.Query
 
 	for _, query := range tsdbQuery.Queries {
 		queryType := query.Model.Get("queryType").MustString("")
@@ -54,6 +57,8 @@ func (e *AzureMonitorExecutor) Query(ctx context.Context, dsInfo *models.DataSou
 		switch queryType {
 		case "Azure Monitor":
 			azureMonitorQueries = append(azureMonitorQueries, query)
+		case "Application Insights":
+			applicationInsightsQueries = append(applicationInsightsQueries, query)
 		default:
 			return nil, fmt.Errorf("Alerting not supported for %s", queryType)
 		}
@@ -64,7 +69,24 @@ func (e *AzureMonitorExecutor) Query(ctx context.Context, dsInfo *models.DataSou
 		dsInfo:     e.dsInfo,
 	}
 
-	result, err = azDatasource.executeTimeSeriesQuery(ctx, azureMonitorQueries, tsdbQuery.TimeRange)
+	aiDatasource := &ApplicationInsightsDatasource{
+		httpClient: e.httpClient,
+		dsInfo:     e.dsInfo,
+	}
 
-	return result, err
+	azResult, err := azDatasource.executeTimeSeriesQuery(ctx, azureMonitorQueries, tsdbQuery.TimeRange)
+	if err != nil {
+		return nil, err
+	}
+
+	aiResult, err := aiDatasource.executeTimeSeriesQuery(ctx, applicationInsightsQueries, tsdbQuery.TimeRange)
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range aiResult.Results {
+		azResult.Results[k] = v
+	}
+
+	return azResult, nil
 }

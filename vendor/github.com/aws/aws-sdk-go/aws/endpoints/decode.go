@@ -83,8 +83,10 @@ func decodeV3Endpoints(modelDef modelDefinition, opts DecodeModelOptions) (Resol
 		p := &ps[i]
 		custAddEC2Metadata(p)
 		custAddS3DualStack(p)
+		custRegionalS3(p)
 		custRmIotDataService(p)
 		custFixAppAutoscalingChina(p)
+		custFixAppAutoscalingUsGov(p)
 	}
 
 	return ps, nil
@@ -97,6 +99,33 @@ func custAddS3DualStack(p *partition) {
 
 	custAddDualstack(p, "s3")
 	custAddDualstack(p, "s3-control")
+}
+
+func custRegionalS3(p *partition) {
+	if p.ID != "aws" {
+		return
+	}
+
+	service, ok := p.Services["s3"]
+	if !ok {
+		return
+	}
+
+	// If global endpoint already exists no customization needed.
+	if _, ok := service.Endpoints["aws-global"]; ok {
+		return
+	}
+
+	service.PartitionEndpoint = "aws-global"
+	service.Endpoints["us-east-1"] = endpoint{}
+	service.Endpoints["aws-global"] = endpoint{
+		Hostname: "s3.amazonaws.com",
+		CredentialScope: credentialScope{
+			Region: "us-east-1",
+		},
+	}
+
+	p.Services["s3"] = service
 }
 
 func custAddDualstack(p *partition, svcName string) {
@@ -146,6 +175,33 @@ func custFixAppAutoscalingChina(p *partition) {
 	}
 
 	s.Defaults.Hostname = expectHostname + ".cn"
+	p.Services[serviceName] = s
+}
+
+func custFixAppAutoscalingUsGov(p *partition) {
+	if p.ID != "aws-us-gov" {
+		return
+	}
+
+	const serviceName = "application-autoscaling"
+	s, ok := p.Services[serviceName]
+	if !ok {
+		return
+	}
+
+	if a := s.Defaults.CredentialScope.Service; a != "" {
+		fmt.Printf("custFixAppAutoscalingUsGov: ignoring customization, expected empty credential scope service, got %s\n", a)
+		return
+	}
+
+	if a := s.Defaults.Hostname; a != "" {
+		fmt.Printf("custFixAppAutoscalingUsGov: ignoring customization, expected empty hostname, got %s\n", a)
+		return
+	}
+
+	s.Defaults.CredentialScope.Service = "application-autoscaling"
+	s.Defaults.Hostname = "autoscaling.{region}.amazonaws.com"
+
 	p.Services[serviceName] = s
 }
 

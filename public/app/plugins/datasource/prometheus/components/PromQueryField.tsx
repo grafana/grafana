@@ -1,26 +1,51 @@
 import _ from 'lodash';
-import React from 'react';
-import Cascader from 'rc-cascader';
-import PluginPrism from 'slate-prism';
+import React, { ReactNode } from 'react';
+
+import { Plugin } from 'slate';
+import {
+  ButtonCascader,
+  CascaderOption,
+  SlatePrism,
+  TypeaheadInput,
+  TypeaheadOutput,
+  QueryField,
+  BracesPlugin,
+} from '@grafana/ui';
+
 import Prism from 'prismjs';
 
-import { TypeaheadOutput, HistoryItem } from 'app/types/explore';
-
 // dom also includes Element polyfills
-import { getNextCharacter, getPreviousCousin } from 'app/features/explore/utils/dom';
-import BracesPlugin from 'app/features/explore/slate-plugins/braces';
-import RunnerPlugin from 'app/features/explore/slate-plugins/runner';
-import QueryField, { TypeaheadInput, QueryFieldState } from 'app/features/explore/QueryField';
-import { PromQuery } from '../types';
+import { PromQuery, PromOptions, PromMetricsMetadata } from '../types';
 import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
-import { ExploreDataSourceApi, ExploreQueryFieldProps } from '@grafana/ui';
+import { ExploreQueryFieldProps, QueryHint, isDataFrame, toLegacyResponseData, HistoryItem } from '@grafana/data';
+import { DOMUtil, SuggestionsState } from '@grafana/ui';
+import { PrometheusDatasource } from '../datasource';
+import PromQlLanguageProvider from '../language_provider';
 
 const HISTOGRAM_GROUP = '__histograms__';
-const METRIC_MARK = 'metric';
 const PRISM_SYNTAX = 'promql';
 export const RECORDING_RULES_GROUP = '__recording_rules__';
 
-export function groupMetricsByPrefix(metrics: string[], delimiter = '_'): CascaderOption[] {
+function getChooserText(hasSyntax: boolean, metrics: string[]) {
+  if (!hasSyntax) {
+    return 'Loading metrics...';
+  }
+  if (metrics && metrics.length === 0) {
+    return '(No metrics found)';
+  }
+  return 'Metrics';
+}
+
+function addMetricsMetadata(metric: string, metadata?: PromMetricsMetadata): CascaderOption {
+  const option: CascaderOption = { label: metric, value: metric };
+  if (metadata && metadata[metric]) {
+    const { type = '', help } = metadata[metric][0];
+    option.title = [metric, type.toUpperCase(), help].join('\n');
+  }
+  return option;
+}
+
+export function groupMetricsByPrefix(metrics: string[], metadata?: PromMetricsMetadata): CascaderOption[] {
   // Filter out recording rules and insert as first option
   const ruleRegex = /:\w+:/;
   const ruleNames = metrics.filter(metric => ruleRegex.test(metric));
@@ -35,13 +60,14 @@ export function groupMetricsByPrefix(metrics: string[], delimiter = '_'): Cascad
 
   const options = ruleNames.length > 0 ? [rulesOption] : [];
 
+  const delimiter = '_';
   const metricsOptions = _.chain(metrics)
-    .filter(metric => !ruleRegex.test(metric))
-    .groupBy(metric => metric.split(delimiter)[0])
+    .filter((metric: string) => !ruleRegex.test(metric))
+    .groupBy((metric: string) => metric.split(delimiter)[0])
     .map(
       (metricsForPrefix: string[], prefix: string): CascaderOption => {
         const prefixIsMetric = metricsForPrefix.length === 1 && metricsForPrefix[0] === prefix;
-        const children = prefixIsMetric ? [] : metricsForPrefix.sort().map(m => ({ label: m, value: m }));
+        const children = prefixIsMetric ? [] : metricsForPrefix.sort().map(m => addMetricsMetadata(m, metadata));
         return {
           children,
           label: prefix,
@@ -55,11 +81,11 @@ export function groupMetricsByPrefix(metrics: string[], delimiter = '_'): Cascad
   return [...options, ...metricsOptions];
 }
 
-export function willApplySuggestion(suggestion: string, { typeaheadContext, typeaheadText }: QueryFieldState): string {
+export function willApplySuggestion(suggestion: string, { typeaheadContext, typeaheadText }: SuggestionsState): string {
   // Modify suggestion based on context
   switch (typeaheadContext) {
     case 'context-labels': {
-      const nextChar = getNextCharacter();
+      const nextChar = DOMUtil.getNextCharacter();
       if (!nextChar || nextChar === '}' || nextChar === ',') {
         suggestion += '=';
       }
@@ -71,7 +97,7 @@ export function willApplySuggestion(suggestion: string, { typeaheadContext, type
       if (!typeaheadText.match(/^(!?=~?"|")/)) {
         suggestion = `"${suggestion}`;
       }
-      if (getNextCharacter() !== '"') {
+      if (DOMUtil.getNextCharacter() !== '"') {
         suggestion = `${suggestion}"`;
       }
       break;
@@ -82,28 +108,23 @@ export function willApplySuggestion(suggestion: string, { typeaheadContext, type
   return suggestion;
 }
 
-interface CascaderOption {
-  label: string;
-  value: string;
-  children?: CascaderOption[];
-  disabled?: boolean;
-}
-
-interface PromQueryFieldProps extends ExploreQueryFieldProps<ExploreDataSourceApi, PromQuery> {
-  history: HistoryItem[];
+interface PromQueryFieldProps extends ExploreQueryFieldProps<PrometheusDatasource, PromQuery, PromOptions> {
+  history: Array<HistoryItem<PromQuery>>;
+  ExtraFieldElement?: ReactNode;
 }
 
 interface PromQueryFieldState {
   metricsOptions: any[];
   syntaxLoaded: boolean;
+  hint: QueryHint | null;
 }
 
 class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryFieldState> {
-  plugins: any[];
-  languageProvider: any;
+  plugins: Plugin[];
+  languageProvider: PromQlLanguageProvider;
   languageProviderInitializationPromise: CancelablePromise<any>;
 
-  constructor(props: PromQueryFieldProps, context) {
+  constructor(props: PromQueryFieldProps, context: React.Context<any>) {
     super(props, context);
 
     if (props.datasource.languageProvider) {
@@ -112,33 +133,25 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
     this.plugins = [
       BracesPlugin(),
-      RunnerPlugin({ handler: props.onExecuteQuery }),
-      PluginPrism({
-        onlyIn: node => node.type === 'code_block',
-        getSyntax: node => 'promql',
+      SlatePrism({
+        onlyIn: (node: any) => node.type === 'code_block',
+        getSyntax: (node: any) => 'promql',
       }),
     ];
 
     this.state = {
       metricsOptions: [],
       syntaxLoaded: false,
+      hint: null,
     };
   }
 
   componentDidMount() {
     if (this.languageProvider) {
-      this.languageProviderInitializationPromise = makePromiseCancelable(this.languageProvider.start());
-      this.languageProviderInitializationPromise.promise
-        .then(remaining => {
-          remaining.map(task => task.then(this.onUpdateLanguage).catch(() => {}));
-        })
-        .then(() => this.onUpdateLanguage())
-        .catch(({ isCanceled }) => {
-          if (isCanceled) {
-            console.warn('PromQueryField has unmounted, language provider intialization was canceled');
-          }
-        });
+      Prism.languages[PRISM_SYNTAX] = this.languageProvider.syntax;
+      this.refreshMetrics(makePromiseCancelable(this.languageProvider.start()));
     }
+    this.refreshHint();
   }
 
   componentWillUnmount() {
@@ -146,6 +159,42 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
       this.languageProviderInitializationPromise.cancel();
     }
   }
+
+  componentDidUpdate(prevProps: PromQueryFieldProps) {
+    const { data } = this.props;
+
+    if (data && prevProps.data && prevProps.data.series !== data.series) {
+      this.refreshHint();
+    }
+  }
+
+  refreshHint = () => {
+    const { datasource, query, data } = this.props;
+
+    if (!data || data.series.length === 0) {
+      this.setState({ hint: null });
+      return;
+    }
+
+    const result = isDataFrame(data.series[0]) ? data.series.map(toLegacyResponseData) : data.series;
+    const hints = datasource.getQueryHints(query, result);
+    const hint = hints && hints.length > 0 ? hints[0] : null;
+    this.setState({ hint });
+  };
+
+  refreshMetrics = (cancelablePromise: CancelablePromise<any>) => {
+    this.languageProviderInitializationPromise = cancelablePromise;
+    this.languageProviderInitializationPromise.promise
+      .then(remaining => {
+        remaining.map((task: Promise<any>) => task.then(this.onUpdateLanguage).catch(() => {}));
+      })
+      .then(() => this.onUpdateLanguage())
+      .catch(err => {
+        if (!err.isCanceled) {
+          throw err;
+        }
+      });
+  };
 
   onChangeMetrics = (values: string[], selectedOptions: CascaderOption[]) => {
     let query;
@@ -170,39 +219,40 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
   onChangeQuery = (value: string, override?: boolean) => {
     // Send text change to parent
-    const { query, onQueryChange, onExecuteQuery } = this.props;
-    if (onQueryChange) {
+    const { query, onChange, onRunQuery } = this.props;
+    if (onChange) {
       const nextQuery: PromQuery = { ...query, expr: value };
-      onQueryChange(nextQuery);
+      onChange(nextQuery);
 
-      if (override && onExecuteQuery) {
-        onExecuteQuery();
+      if (override && onRunQuery) {
+        onRunQuery();
       }
     }
   };
 
   onClickHintFix = () => {
-    const { hint, onExecuteHint } = this.props;
-    if (onExecuteHint && hint && hint.fix) {
-      onExecuteHint(hint.fix.action);
-    }
+    const { datasource, query, onChange, onRunQuery } = this.props;
+    const { hint } = this.state;
+
+    onChange(datasource.modifyQuery(query, hint.fix.action));
+    onRunQuery();
   };
 
   onUpdateLanguage = () => {
-    const { histogramMetrics, metrics } = this.languageProvider;
+    const {
+      histogramMetrics,
+      metrics,
+      metricsMetadata,
+      lookupsDisabled,
+      lookupMetricsThreshold,
+    } = this.languageProvider;
     if (!metrics) {
       return;
     }
 
-    Prism.languages[PRISM_SYNTAX] = this.languageProvider.getSyntax();
-    Prism.languages[PRISM_SYNTAX][METRIC_MARK] = {
-      alias: 'variable',
-      pattern: new RegExp(`(?:^|\\s)(${metrics.join('|')})(?:$|\\s)`),
-    };
-
     // Build metrics tree
-    const metricsByPrefix = groupMetricsByPrefix(metrics);
-    const histogramOptions = histogramMetrics.map(hm => ({ label: hm, value: hm }));
+    const metricsByPrefix = groupMetricsByPrefix(metrics, metricsMetadata);
+    const histogramOptions = histogramMetrics.map((hm: any) => ({ label: hm, value: hm }));
     const metricsOptions =
       histogramMetrics.length > 0
         ? [
@@ -211,73 +261,84 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
           ]
         : metricsByPrefix;
 
-    this.setState({ metricsOptions, syntaxLoaded: true });
+    // Hint for big disabled lookups
+    let hint: QueryHint;
+    if (lookupsDisabled) {
+      hint = {
+        label: `Dynamic label lookup is disabled for datasources with more than ${lookupMetricsThreshold} metrics.`,
+        type: 'INFO',
+      };
+    }
+
+    this.setState({ hint, metricsOptions, syntaxLoaded: true });
   };
 
-  onTypeahead = (typeahead: TypeaheadInput): TypeaheadOutput => {
+  onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
     if (!this.languageProvider) {
       return { suggestions: [] };
     }
 
     const { history } = this.props;
-    const { prefix, text, value, wrapperNode } = typeahead;
+    const { prefix, text, value, wrapperClasses, labelKey } = typeahead;
 
-    // Get DOM-dependent context
-    const wrapperClasses = Array.from(wrapperNode.classList);
-    const labelKeyNode = getPreviousCousin(wrapperNode, '.attr-name');
-    const labelKey = labelKeyNode && labelKeyNode.textContent;
-    const nextChar = getNextCharacter();
-
-    const result = this.languageProvider.provideCompletionItems(
+    const result = await this.languageProvider.provideCompletionItems(
       { text, value, prefix, wrapperClasses, labelKey },
       { history }
     );
 
-    console.log('handleTypeahead', wrapperClasses, text, prefix, nextChar, labelKey, result.context);
+    // console.log('handleTypeahead', wrapperClasses, text, prefix, labelKey, result.context);
 
     return result;
   };
 
   render() {
-    const { error, hint, query } = this.props;
-    const { metricsOptions, syntaxLoaded } = this.state;
+    const { data, query, ExtraFieldElement } = this.props;
+    const { metricsOptions, syntaxLoaded, hint } = this.state;
     const cleanText = this.languageProvider ? this.languageProvider.cleanText : undefined;
-    const chooserText = syntaxLoaded ? 'Metrics' : 'Loading metrics...';
+    const chooserText = getChooserText(syntaxLoaded, metricsOptions);
+    const buttonDisabled = !(syntaxLoaded && metricsOptions && metricsOptions.length > 0);
+    const showError = data && data.error && data.error.refId === query.refId;
 
     return (
       <>
-        <div className="gf-form-inline gf-form-inline--nowrap">
+        <div className="gf-form-inline gf-form-inline--nowrap flex-grow-1">
           <div className="gf-form flex-shrink-0">
-            <Cascader options={metricsOptions} onChange={this.onChangeMetrics}>
-              <button className="gf-form-label gf-form-label--btn" disabled={!syntaxLoaded}>
-                {chooserText} <i className="fa fa-caret-down" />
-              </button>
-            </Cascader>
+            <ButtonCascader options={metricsOptions} disabled={buttonDisabled} onChange={this.onChangeMetrics}>
+              {chooserText}
+            </ButtonCascader>
           </div>
           <div className="gf-form gf-form--grow flex-shrink-1">
             <QueryField
               additionalPlugins={this.plugins}
               cleanText={cleanText}
-              initialQuery={query.expr}
+              query={query.expr}
               onTypeahead={this.onTypeahead}
               onWillApplySuggestion={willApplySuggestion}
-              onQueryChange={this.onChangeQuery}
-              onExecuteQuery={this.props.onExecuteQuery}
+              onBlur={this.props.onBlur}
+              onChange={this.onChangeQuery}
+              onRunQuery={this.props.onRunQuery}
               placeholder="Enter a PromQL query"
               portalOrigin="prometheus"
               syntaxLoaded={syntaxLoaded}
             />
           </div>
+          {ExtraFieldElement}
         </div>
-        {error ? <div className="prom-query-field-info text-error">{error}</div> : null}
+        {showError ? (
+          <div className="query-row-break">
+            <div className="prom-query-field-info text-error">{data.error.message}</div>
+          </div>
+        ) : null}
         {hint ? (
-          <div className="prom-query-field-info text-warning">
-            {hint.label}{' '}
-            {hint.fix ? (
-              <a className="text-link muted" onClick={this.onClickHintFix}>
-                {hint.fix.label}
-              </a>
-            ) : null}
+          <div className="query-row-break">
+            <div className="prom-query-field-info text-warning">
+              {hint.label}{' '}
+              {hint.fix ? (
+                <a className="text-link muted" onClick={this.onClickHintFix}>
+                  {hint.fix.label}
+                </a>
+              ) : null}
+            </div>
           </div>
         ) : null}
       </>

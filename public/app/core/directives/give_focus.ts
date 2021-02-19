@@ -1,14 +1,14 @@
 import coreModule from '../core_module';
 
 coreModule.directive('giveFocus', () => {
-  return (scope, element, attrs) => {
-    element.click(e => {
+  return (scope: any, element: any, attrs: any) => {
+    element.click((e: any) => {
       e.stopPropagation();
     });
 
     scope.$watch(
       attrs.giveFocus,
-      newValue => {
+      (newValue: any) => {
         if (!newValue) {
           return;
         }

@@ -6,7 +6,7 @@
 // JSON
 @for $i from 0 through 16 {
   .diff-indent-#{$i} {
-    padding-left: $i * 1.5rem;
+    padding-left: $i * 21px;
     margin-left: 10px;
   }
 }
@@ -108,7 +108,7 @@
   font-size: 16px;
   font-style: normal;
   padding: 10px 15px;
-  margin: 1rem 0;
+  margin: $space-md 0;
 
   & .diff-group {
     padding: 0 5px;
@@ -153,7 +153,7 @@
   border-radius: 3px;
   color: $diff-label-fg;
   display: inline;
-  font-size: 0.95rem;
+  font-size: $font-size-base;
   margin: 0 5px;
   padding: 3px 8px;
 }
@@ -188,7 +188,7 @@
 
 .diff-change-group {
   width: 100%;
-  color: rgba(223, 224, 225, 0.6);
+  color: $text-color;
   margin-bottom: 14px;
 }
 

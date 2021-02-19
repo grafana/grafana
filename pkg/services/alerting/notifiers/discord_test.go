@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -16,35 +16,37 @@ func TestDiscordNotifier(t *testing.T) {
 				json := `{ }`
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
-				model := &m.AlertNotification{
+				model := &models.AlertNotification{
 					Name:     "discord_testing",
 					Type:     "discord",
 					Settings: settingsJSON,
 				}
 
-				_, err := NewDiscordNotifier(model)
+				_, err := newDiscordNotifier(model)
 				So(err, ShouldNotBeNil)
 			})
 
 			Convey("settings should trigger incident", func() {
 				json := `
 				{
-          "url": "https://web.hook/"
+					"content": "@everyone Please check this notification",
+					"url": "https://web.hook/"
 				}`
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
-				model := &m.AlertNotification{
+				model := &models.AlertNotification{
 					Name:     "discord_testing",
 					Type:     "discord",
 					Settings: settingsJSON,
 				}
 
-				not, err := NewDiscordNotifier(model)
+				not, err := newDiscordNotifier(model)
 				discordNotifier := not.(*DiscordNotifier)
 
 				So(err, ShouldBeNil)
 				So(discordNotifier.Name, ShouldEqual, "discord_testing")
 				So(discordNotifier.Type, ShouldEqual, "discord")
+				So(discordNotifier.Content, ShouldEqual, "@everyone Please check this notification")
 				So(discordNotifier.WebhookURL, ShouldEqual, "https://web.hook/")
 			})
 		})

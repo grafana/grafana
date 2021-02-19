@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bmizerany/assert"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestDatabaseStorageGarbageCollection(t *testing.T) {
@@ -32,10 +32,12 @@ func TestDatabaseStorageGarbageCollection(t *testing.T) {
 	assert.Equal(t, err, nil)
 
 	// insert object that should never expire
-	db.Set("key4", obj, 0)
+	err = db.Set("key4", obj, 0)
+	assert.Equal(t, err, nil)
 
 	getTime = time.Now
-	db.Set("key5", obj, 1000*time.Second)
+	err = db.Set("key5", obj, 1000*time.Second)
+	assert.Equal(t, err, nil)
 
 	//run GC
 	db.internalRunGC()
@@ -66,7 +68,8 @@ func TestSecondSet(t *testing.T) {
 	obj := &CacheableStruct{String: "hey!"}
 
 	err = db.Set("killa-gorilla", obj, 0)
-	err = db.Set("killa-gorilla", obj, 0)
+	assert.Equal(t, err, nil)
 
+	err = db.Set("killa-gorilla", obj, 0)
 	assert.Equal(t, err, nil)
 }

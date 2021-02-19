@@ -239,7 +239,7 @@ for more information).  Note that the channel name will be truncated to 63
 bytes by the PostgreSQL server.
 
 You can find a complete, working example of Listener usage at
-http://godoc.org/github.com/lib/pq/example/listen.
+https://godoc.org/github.com/lib/pq/example/listen.
 
 */
 package pq

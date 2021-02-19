@@ -3,7 +3,7 @@ title = "LDAP Authentication"
 description = "Grafana LDAP Authentication Guide "
 keywords = ["grafana", "configuration", "documentation", "ldap", "active directory"]
 type = "docs"
-aliases = ["/installation/ldap/"]
+aliases = ["/docs/grafana/latest/installation/ldap/"]
 [menu.docs]
 name = "LDAP"
 identifier = "ldap"
@@ -24,7 +24,7 @@ This means that you should be able to configure LDAP integration using any compl
 
 ## Enable LDAP
 
-In order to use LDAP integration you'll first need to enable LDAP in the [main config file]({{< relref "installation/configuration.md" >}}) as well as specify the path to the LDAP
+In order to use LDAP integration you'll first need to enable LDAP in the [main config file]({{< relref "../installation/configuration.md" >}}) as well as specify the path to the LDAP
 specific configuration file (default: `/etc/grafana/ldap.toml`).
 
 ```bash
@@ -90,12 +90,31 @@ member_of = "memberOf"
 email =  "email"
 ```
 
+## LDAP Debug View
+
+> Only available in Grafana v6.4+
+
+Grafana has an LDAP debug view built-in which allows you to test your LDAP configuration directly within Grafana. At the moment of writing, only Grafana admins can use the LDAP debug view.
+ 
+Within this view, you'll be able to see which LDAP servers are currently reachable and test your current configuration.
+
+{{< docs-imagebox img="/img/docs/ldap_debug.png" class="docs-image--no-shadow" max-width="600px" >}}
+
+
+To use the debug view:
+
+ 1. Type the username of a user that exists within any of your LDAP server(s)
+ 2. Then, press "Run"
+ 3. If the user is found within any of your LDAP instances, the mapping information is displayed
+
+{{< docs-imagebox img="/img/docs/ldap_debug_mapping_testing.png" class="docs-image--no-shadow" max-width="600px" >}}
+
 ### Bind
 
-#### Bind & Bind Password
+#### Bind and Bind Password
 
 By default the configuration expects you to specify a bind DN and bind password. This should be a read only user that can perform LDAP searches.
-When the user DN is found a second bind is performed with the user provided username & password (in the normal Grafana login form).
+When the user DN is found a second bind is performed with the user provided username and password (in the normal Grafana login form).
 
 ```bash
 bind_dn = "cn=admin,dc=grafana,dc=org"
@@ -125,8 +144,6 @@ group_search_base_dns = ["ou=groups,dc=grafana,dc=org"]
 ## the %s in the search filter will be replaced with the attribute defined below
 group_search_filter_user_attribute = "uid"
 ```
-
-Also set `member_of = "dn"` in the `[servers.attributes]` section.
 
 ### Group Mappings
 
@@ -215,6 +232,67 @@ email =  "email"
 # [[servers.group_mappings]] omitted for clarity
 ```
 
+### Multiple LDAP servers
+
+Grafana does support receiving information from multiple LDAP servers.
+
+**LDAP specific configuration file (ldap.toml):**
+```bash
+# --- First LDAP Server ---
+
+[[servers]]
+host = "10.0.0.1"
+port = 389
+use_ssl = false
+start_tls = false
+ssl_skip_verify = false
+bind_dn = "cn=admin,dc=grafana,dc=org"
+bind_password = 'grafana'
+search_filter = "(cn=%s)"
+search_base_dns = ["ou=users,dc=grafana,dc=org"]
+
+[servers.attributes]
+name = "givenName"
+surname = "sn"
+username = "cn"
+member_of = "memberOf"
+email =  "email"
+
+[[servers.group_mappings]]
+group_dn = "cn=admins,ou=groups,dc=grafana,dc=org"
+org_role = "Admin"
+grafana_admin = true
+
+# --- Second LDAP Server ---
+
+[[servers]]
+host = "10.0.0.2"
+port = 389
+use_ssl = false
+start_tls = false
+ssl_skip_verify = false
+
+bind_dn = "cn=admin,dc=grafana,dc=org"
+bind_password = 'grafana'
+search_filter = "(cn=%s)"
+search_base_dns = ["ou=users,dc=grafana,dc=org"]
+
+[servers.attributes]
+name = "givenName"
+surname = "sn"
+username = "cn"
+member_of = "memberOf"
+email =  "email"
+
+[[servers.group_mappings]]
+group_dn = "cn=editors,ou=groups,dc=grafana,dc=org"
+org_role = "Editor"
+
+[[servers.group_mappings]]
+group_dn = "*"
+org_role = "Viewer"
+```
+
 ### Active Directory
 
 [Active Directory](https://technet.microsoft.com/en-us/library/hh831484(v=ws.11).aspx) is a directory service which is commonly used in Windows environments.
@@ -247,6 +325,8 @@ email =  "mail"
 # [[servers.group_mappings]] omitted for clarity
 ```
 
+
+
 #### Port requirements
 
 In above example SSL is enabled and an encrypted port have been configured. If your Active Directory don't support SSL please change `enable_ssl = false` and `port = 389`.
@@ -254,7 +334,7 @@ Please inspect your Active Directory configuration and documentation to find the
 
 ## Troubleshooting
 
-To troubleshoot and get more log info enable ldap debug logging in the [main config file]({{< relref "installation/configuration.md" >}}).
+To troubleshoot and get more log info enable ldap debug logging in the [main config file]({{< relref "../installation/configuration.md" >}}).
 
 ```bash
 [log]

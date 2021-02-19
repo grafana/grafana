@@ -37,23 +37,8 @@ package proto
 
 import (
 	"errors"
-	"fmt"
 	"reflect"
 )
-
-// RequiredNotSetError is an error type returned by either Marshal or Unmarshal.
-// Marshal reports this when a required field is not initialized.
-// Unmarshal reports this when a required field is missing from the wire data.
-type RequiredNotSetError struct {
-	field string
-}
-
-func (e *RequiredNotSetError) Error() string {
-	if e.field == "" {
-		return fmt.Sprintf("proto: required field not set")
-	}
-	return fmt.Sprintf("proto: required field %q not set", e.field)
-}
 
 var (
 	// errRepeatedHasNil is the error returned if Marshal is called with

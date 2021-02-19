@@ -1,8 +1,9 @@
 import React, { Component } from 'react';
 import { debounce } from 'lodash';
+import { Input } from '@grafana/ui';
 
 export interface Props {
-  onChange: (alignmentPeriod) => void;
+  onChange: (alignmentPeriod: any) => void;
   value: string;
 }
 
@@ -11,9 +12,9 @@ export interface State {
 }
 
 export class AliasBy extends Component<Props, State> {
-  propagateOnChange: (value) => void;
+  propagateOnChange: (value: any) => void;
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
     this.propagateOnChange = debounce(this.props.onChange, 500);
     this.state = { value: '' };
@@ -23,13 +24,13 @@ export class AliasBy extends Component<Props, State> {
     this.setState({ value: this.props.value });
   }
 
-  componentWillReceiveProps(nextProps: Props) {
+  UNSAFE_componentWillReceiveProps(nextProps: Props) {
     if (nextProps.value !== this.props.value) {
       this.setState({ value: nextProps.value });
     }
   }
 
-  onChange = e => {
+  onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     this.setState({ value: e.target.value });
     this.propagateOnChange(e.target.value);
   };
@@ -40,7 +41,7 @@ export class AliasBy extends Component<Props, State> {
         <div className="gf-form-inline">
           <div className="gf-form">
             <label className="gf-form-label query-keyword width-9">Alias By</label>
-            <input type="text" className="gf-form-input width-24" value={this.state.value} onChange={this.onChange} />
+            <Input type="text" className="gf-form-input width-24" value={this.state.value} onChange={this.onChange} />
           </div>
           <div className="gf-form gf-form--grow">
             <div className="gf-form-label gf-form-label--grow" />

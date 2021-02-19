@@ -1,7 +1,6 @@
 export * from './teams';
 export * from './alerting';
 export * from './location';
-export * from './navModel';
 export * from './folders';
 export * from './dashboard';
 export * from './acl';
@@ -14,3 +13,9 @@ export * from './appNotifications';
 export * from './search';
 export * from './explore';
 export * from './store';
+export * from './ldap';
+export * from './appEvent';
+export * from './angular';
+
+import * as CoreEvents from './events';
+export { CoreEvents };

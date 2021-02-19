@@ -82,7 +82,7 @@ type Codec interface {
 	Name() string
 }
 
-var registeredCodecs = make(map[string]Codec, 0)
+var registeredCodecs = make(map[string]Codec)
 
 // RegisterCodec registers the provided Codec for use with all gRPC clients and
 // servers.
@@ -102,10 +102,10 @@ func RegisterCodec(codec Codec) {
 	if codec == nil {
 		panic("cannot register a nil Codec")
 	}
-	contentSubtype := strings.ToLower(codec.Name())
-	if contentSubtype == "" {
-		panic("cannot register Codec with empty string result for String()")
+	if codec.Name() == "" {
+		panic("cannot register Codec with empty string result for Name()")
 	}
+	contentSubtype := strings.ToLower(codec.Name())
 	registeredCodecs[contentSubtype] = codec
 }
 

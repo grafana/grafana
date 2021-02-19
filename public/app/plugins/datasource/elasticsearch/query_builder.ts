@@ -1,16 +1,17 @@
 import * as queryDef from './query_def';
+import { ElasticsearchAggregation } from './types';
 
 export class ElasticQueryBuilder {
   timeField: string;
   esVersion: number;
 
-  constructor(options) {
+  constructor(options: { timeField: string; esVersion: number }) {
     this.timeField = options.timeField;
     this.esVersion = options.esVersion;
   }
 
   getRangeFilter() {
-    const filter = {};
+    const filter: any = {};
     filter[this.timeField] = {
       gte: '$timeFrom',
       lte: '$timeTo',
@@ -20,7 +21,7 @@ export class ElasticQueryBuilder {
     return filter;
   }
 
-  buildTermsAgg(aggDef, queryNode, target) {
+  buildTermsAgg(aggDef: ElasticsearchAggregation, queryNode: { terms?: any; aggs?: any }, target: { metrics: any[] }) {
     let metricRef, metric, y;
     queryNode.terms = { field: aggDef.field };
 
@@ -63,7 +64,7 @@ export class ElasticQueryBuilder {
     return queryNode;
   }
 
-  getDateHistogramAgg(aggDef) {
+  getDateHistogramAgg(aggDef: ElasticsearchAggregation) {
     const esAgg: any = {};
     const settings = aggDef.settings || {};
     esAgg.interval = settings.interval;
@@ -87,7 +88,7 @@ export class ElasticQueryBuilder {
     return esAgg;
   }
 
-  getHistogramAgg(aggDef) {
+  getHistogramAgg(aggDef: ElasticsearchAggregation) {
     const esAgg: any = {};
     const settings = aggDef.settings || {};
     esAgg.interval = settings.interval;
@@ -100,8 +101,8 @@ export class ElasticQueryBuilder {
     return esAgg;
   }
 
-  getFiltersAgg(aggDef) {
-    const filterObj = {};
+  getFiltersAgg(aggDef: ElasticsearchAggregation) {
+    const filterObj: any = {};
     for (let i = 0; i < aggDef.settings.filters.length; i++) {
       const query = aggDef.settings.filters[i].query;
       let label = aggDef.settings.filters[i].label;
@@ -117,7 +118,7 @@ export class ElasticQueryBuilder {
     return filterObj;
   }
 
-  documentQuery(query, size) {
+  documentQuery(query: any, size: number) {
     query.size = size;
     query.sort = {};
     query.sort[this.timeField] = { order: 'desc', unmapped_type: 'boolean' };
@@ -128,20 +129,15 @@ export class ElasticQueryBuilder {
     }
 
     query.script_fields = {};
-    if (this.esVersion < 5) {
-      query.fielddata_fields = [this.timeField];
-    } else {
-      query.docvalue_fields = [this.timeField];
-    }
     return query;
   }
 
-  addAdhocFilters(query, adhocFilters) {
+  addAdhocFilters(query: any, adhocFilters: any) {
     if (!adhocFilters) {
       return;
     }
 
-    let i, filter, condition, queryCondition;
+    let i, filter, condition: any, queryCondition: any;
 
     for (i = 0; i < adhocFilters.length; i++) {
       filter = adhocFilters[i];
@@ -183,7 +179,7 @@ export class ElasticQueryBuilder {
     }
   }
 
-  build(target, adhocFilters?, queryString?) {
+  build(target: any, adhocFilters?: any, queryString?: string) {
     // make sure query has defaults;
     target.metrics = target.metrics || [queryDef.defaultMetricAgg()];
     target.bucketAggs = target.bucketAggs || [queryDef.defaultBucketAgg()];
@@ -223,8 +219,8 @@ export class ElasticQueryBuilder {
     nestedAggs = query;
 
     for (i = 0; i < target.bucketAggs.length; i++) {
-      const aggDef = target.bucketAggs[i];
-      const esAgg = {};
+      const aggDef: any = target.bucketAggs[i];
+      const esAgg: any = {};
 
       switch (aggDef.type) {
         case 'date_histogram': {
@@ -265,8 +261,8 @@ export class ElasticQueryBuilder {
         continue;
       }
 
-      const aggField = {};
-      let metricAgg = null;
+      const aggField: any = {};
+      let metricAgg: any = null;
 
       if (queryDef.isPipelineAgg(metric.type)) {
         if (queryDef.isPipelineAggWithMultipleBucketPaths(metric.type)) {
@@ -323,7 +319,7 @@ export class ElasticQueryBuilder {
     return query;
   }
 
-  getTermsQuery(queryDef) {
+  getTermsQuery(queryDef: any) {
     const query: any = {
       size: 0,
       query: {
@@ -352,19 +348,63 @@ export class ElasticQueryBuilder {
         terms: {
           field: queryDef.field,
           size: size,
-          order: {
-            _term: 'asc',
-          },
+          order: {},
         },
       },
     };
 
-    if (this.esVersion >= 60) {
-      query.aggs['1'].terms.order = {
-        _key: 'asc',
-      };
+    // Default behaviour is to order results by { _key: asc }
+    // queryDef.order allows selection of asc/desc
+    // queryDef.orderBy allows selection of doc_count ordering (defaults desc)
+
+    const { orderBy = 'key', order = orderBy === 'doc_count' ? 'desc' : 'asc' } = queryDef;
+
+    if (['asc', 'desc'].indexOf(order) < 0) {
+      throw { message: `Invalid query sort order ${order}` };
+    }
+
+    switch (orderBy) {
+      case 'key':
+      case 'term':
+        const keyname = this.esVersion >= 60 ? '_key' : '_term';
+        query.aggs['1'].terms.order[keyname] = order;
+        break;
+      case 'doc_count':
+        query.aggs['1'].terms.order['_count'] = order;
+        break;
+      default:
+        throw { message: `Invalid query sort type ${orderBy}` };
     }
 
     return query;
+  }
+
+  getLogsQuery(target: any, adhocFilters?: any, querystring?: string) {
+    let query: any = {
+      size: 0,
+      query: {
+        bool: {
+          filter: [{ range: this.getRangeFilter() }],
+        },
+      },
+    };
+
+    this.addAdhocFilters(query, adhocFilters);
+
+    if (target.query) {
+      query.query.bool.filter.push({
+        query_string: {
+          analyze_wildcard: true,
+          query: querystring,
+        },
+      });
+    }
+
+    query = this.documentQuery(query, 500);
+
+    return {
+      ...query,
+      aggs: this.build(target, null, querystring).aggs,
+    };
   }
 }

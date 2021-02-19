@@ -2,7 +2,7 @@ import store from '../store';
 
 Object.assign(window, {
   localStorage: {
-    removeItem(key) {
+    removeItem(key: string) {
       delete window.localStorage[key];
     },
   },

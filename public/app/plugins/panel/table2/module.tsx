@@ -1,9 +1,11 @@
-import { ReactPanelPlugin } from '@grafana/ui';
+import { PanelPlugin } from '@grafana/data';
 
 import { TablePanelEditor } from './TablePanelEditor';
 import { TablePanel } from './TablePanel';
+import { tableFieldRegistry } from './custom';
 import { Options, defaults } from './types';
 
-export const reactPanel = new ReactPanelPlugin<Options>(TablePanel);
-reactPanel.setEditor(TablePanelEditor);
-reactPanel.setDefaults(defaults);
+export const plugin = new PanelPlugin<Options>(TablePanel)
+  .setDefaults(defaults)
+  .setCustomFieldConfigs(tableFieldRegistry)
+  .setEditor(TablePanelEditor);

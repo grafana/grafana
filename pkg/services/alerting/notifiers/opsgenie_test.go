@@ -1,11 +1,13 @@
 package notifiers
 
 import (
-	"testing"
-
+	"context"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/alerting"
 	. "github.com/smartystreets/goconvey/convey"
+	"testing"
 )
 
 func TestOpsGenieNotifier(t *testing.T) {
@@ -16,7 +18,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 				json := `{ }`
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
-				model := &m.AlertNotification{
+				model := &models.AlertNotification{
 					Name:     "opsgenie_testing",
 					Type:     "opsgenie",
 					Settings: settingsJSON,
@@ -33,7 +35,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 				}`
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
-				model := &m.AlertNotification{
+				model := &models.AlertNotification{
 					Name:     "opsgenie_testing",
 					Type:     "opsgenie",
 					Settings: settingsJSON,
@@ -45,7 +47,54 @@ func TestOpsGenieNotifier(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(opsgenieNotifier.Name, ShouldEqual, "opsgenie_testing")
 				So(opsgenieNotifier.Type, ShouldEqual, "opsgenie")
-				So(opsgenieNotifier.ApiKey, ShouldEqual, "abcdefgh0123456789")
+				So(opsgenieNotifier.APIKey, ShouldEqual, "abcdefgh0123456789")
+			})
+
+			Convey("alert payload should include tag pairs in a ['key1:value1'] format when a value exists and in ['key2'] format when a value is absent", func() {
+				json := `
+				{
+          "apiKey": "abcdefgh0123456789"
+				}`
+
+				tagPairs := []*models.Tag{
+					{Key: "keyOnly"},
+					{Key: "aKey", Value: "aValue"},
+				}
+
+				settingsJSON, _ := simplejson.NewJson([]byte(json))
+				model := &models.AlertNotification{
+					Name:     "opsgenie_testing",
+					Type:     "opsgenie",
+					Settings: settingsJSON,
+				}
+
+				notifier, notifierErr := NewOpsGenieNotifier(model) //unhandled error
+
+				opsgenieNotifier := notifier.(*OpsGenieNotifier)
+
+				evalContext := alerting.NewEvalContext(context.Background(), &alerting.Rule{
+					ID:            0,
+					Name:          "someRule",
+					Message:       "someMessage",
+					State:         models.AlertStateAlerting,
+					AlertRuleTags: tagPairs,
+				})
+				evalContext.IsTestRun = true
+
+				receivedTags := make([]string, 0)
+				bus.AddHandlerCtx("alerting", func(ctx context.Context, cmd *models.SendWebhookSync) error {
+					bodyJson, err := simplejson.NewJson([]byte(cmd.Body))
+					if err == nil {
+						receivedTags = bodyJson.Get("tags").MustStringArray([]string{})
+					}
+					return err
+				})
+
+				alertErr := opsgenieNotifier.createAlert(evalContext)
+
+				So(notifierErr, ShouldBeNil)
+				So(alertErr, ShouldBeNil)
+				So(receivedTags, ShouldResemble, []string{"keyOnly", "aKey:aValue"})
 			})
 		})
 	})

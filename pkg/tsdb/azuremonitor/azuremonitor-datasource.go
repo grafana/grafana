@@ -32,7 +32,7 @@ type AzureMonitorDatasource struct {
 
 var (
 	// 1m, 5m, 15m, 30m, 1h, 6h, 12h, 1d in milliseconds
-	allowedIntervalsMS = []int64{60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000}
+	defaultAllowedIntervalsMS = []int64{60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000}
 )
 
 // executeTimeSeriesQuery does the following:
@@ -85,24 +85,29 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 		azlog.Debug("AzureMonitor", "target", azureMonitorTarget)
 
 		urlComponents := map[string]string{}
+		urlComponents["subscription"] = fmt.Sprintf("%v", query.Model.Get("subscription").MustString())
 		urlComponents["resourceGroup"] = fmt.Sprintf("%v", azureMonitorTarget["resourceGroup"])
 		urlComponents["metricDefinition"] = fmt.Sprintf("%v", azureMonitorTarget["metricDefinition"])
 		urlComponents["resourceName"] = fmt.Sprintf("%v", azureMonitorTarget["resourceName"])
 
 		ub := urlBuilder{
-			ResourceGroup:    urlComponents["resourceGroup"],
-			MetricDefinition: urlComponents["metricDefinition"],
-			ResourceName:     urlComponents["resourceName"],
+			DefaultSubscription: query.DataSource.JsonData.Get("subscriptionId").MustString(),
+			Subscription:        urlComponents["subscription"],
+			ResourceGroup:       urlComponents["resourceGroup"],
+			MetricDefinition:    urlComponents["metricDefinition"],
+			ResourceName:        urlComponents["resourceName"],
 		}
 		azureURL := ub.Build()
 
-		alias := fmt.Sprintf("%v", azureMonitorTarget["alias"])
+		alias := ""
+		if val, ok := azureMonitorTarget["alias"]; ok {
+			alias = fmt.Sprintf("%v", val)
+		}
 
 		timeGrain := fmt.Sprintf("%v", azureMonitorTarget["timeGrain"])
+		timeGrains := azureMonitorTarget["allowedTimeGrainsMs"]
 		if timeGrain == "auto" {
-			autoInterval := e.findClosestAllowedIntervalMS(query.IntervalMs)
-			tg := &TimeGrain{}
-			timeGrain, err = tg.createISO8601DurationFromIntervalMS(autoInterval)
+			timeGrain, err = setAutoTimeGrain(query.IntervalMs, timeGrains)
 			if err != nil {
 				return nil, err
 			}
@@ -114,11 +119,13 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 		params.Add("interval", timeGrain)
 		params.Add("aggregation", fmt.Sprintf("%v", azureMonitorTarget["aggregation"]))
 		params.Add("metricnames", fmt.Sprintf("%v", azureMonitorTarget["metricName"]))
+		params.Add("metricnamespace", fmt.Sprintf("%v", azureMonitorTarget["metricNamespace"]))
 
 		dimension := strings.TrimSpace(fmt.Sprintf("%v", azureMonitorTarget["dimension"]))
 		dimensionFilter := strings.TrimSpace(fmt.Sprintf("%v", azureMonitorTarget["dimensionFilter"]))
-		if azureMonitorTarget["dimension"] != nil && azureMonitorTarget["dimensionFilter"] != nil && len(dimension) > 0 && len(dimensionFilter) > 0 {
+		if azureMonitorTarget["dimension"] != nil && azureMonitorTarget["dimensionFilter"] != nil && len(dimension) > 0 && len(dimensionFilter) > 0 && dimension != "None" {
 			params.Add("$filter", fmt.Sprintf("%s eq '%s'", dimension, dimensionFilter))
+			params.Add("top", fmt.Sprintf("%v", azureMonitorTarget["top"]))
 		}
 
 		target = params.Encode()
@@ -162,12 +169,15 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *AzureM
 
 	defer span.Finish()
 
-	opentracing.GlobalTracer().Inject(
+	if err := opentracing.GlobalTracer().Inject(
 		span.Context(),
 		opentracing.HTTPHeaders,
-		opentracing.HTTPHeadersCarrier(req.Header))
+		opentracing.HTTPHeadersCarrier(req.Header)); err != nil {
+		queryResult.Error = err
+		return queryResult, AzureMonitorResponse{}, nil
+	}
 
-	azlog.Debug("AzureMonitor", "Request URL", req.URL.String())
+	azlog.Debug("AzureMonitor", "Request ApiURL", req.URL.String())
 	res, err := ctxhttp.Do(ctx, e.httpClient, req)
 	if err != nil {
 		queryResult.Error = err
@@ -199,8 +209,7 @@ func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo *mode
 	}
 
 	cloudName := dsInfo.JsonData.Get("cloudName").MustString("azuremonitor")
-	subscriptionID := dsInfo.JsonData.Get("subscriptionId").MustString()
-	proxyPass := fmt.Sprintf("%s/subscriptions/%s", cloudName, subscriptionID)
+	proxyPass := fmt.Sprintf("%s/subscriptions", cloudName)
 
 	u, _ := url.Parse(dsInfo.Url)
 	u.Path = path.Join(u.Path, "render")
@@ -255,7 +264,7 @@ func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, data 
 			metadataName = series.Metadatavalues[0].Name.LocalizedValue
 			metadataValue = series.Metadatavalues[0].Value
 		}
-		defaultMetricName := formatLegendKey(query.UrlComponents["resourceName"], data.Value[0].Name.LocalizedValue, metadataName, metadataValue)
+		metricName := formatAzureMonitorLegendKey(query.Alias, query.UrlComponents["resourceName"], data.Value[0].Name.LocalizedValue, metadataName, metadataValue, data.Namespace, data.Value[0].ID)
 
 		for _, point := range series.Data {
 			var value float64
@@ -277,36 +286,60 @@ func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, data 
 		}
 
 		queryRes.Series = append(queryRes.Series, &tsdb.TimeSeries{
-			Name:   defaultMetricName,
+			Name:   metricName,
 			Points: points,
 		})
 	}
+	queryRes.Meta.Set("unit", data.Value[0].Unit)
 
 	return nil
 }
 
-// findClosestAllowedIntervalMs is used for the auto time grain setting.
-// It finds the closest time grain from the list of allowed time grains for Azure Monitor
-// using the Grafana interval in milliseconds
-func (e *AzureMonitorDatasource) findClosestAllowedIntervalMS(intervalMs int64) int64 {
-	closest := allowedIntervalsMS[0]
-
-	for i, allowed := range allowedIntervalsMS {
-		if intervalMs > allowed {
-			if i+1 < len(allowedIntervalsMS) {
-				closest = allowedIntervalsMS[i+1]
-			} else {
-				closest = allowed
-			}
+// formatAzureMonitorLegendKey builds the legend key or timeseries name
+// Alias patterns like {{resourcename}} are replaced with the appropriate data values.
+func formatAzureMonitorLegendKey(alias string, resourceName string, metricName string, metadataName string, metadataValue string, namespace string, seriesID string) string {
+	if alias == "" {
+		if len(metadataName) > 0 {
+			return fmt.Sprintf("%s{%s=%s}.%s", resourceName, metadataName, metadataValue, metricName)
 		}
+		return fmt.Sprintf("%s.%s", resourceName, metricName)
 	}
-	return closest
-}
 
-// formatLegendKey builds the legend key or timeseries name
-func formatLegendKey(resourceName string, metricName string, metadataName string, metadataValue string) string {
-	if len(metadataName) > 0 {
-		return fmt.Sprintf("%s{%s=%s}.%s", resourceName, metadataName, metadataValue, metricName)
-	}
-	return fmt.Sprintf("%s.%s", resourceName, metricName)
+	startIndex := strings.Index(seriesID, "/resourceGroups/") + 16
+	endIndex := strings.Index(seriesID, "/providers")
+	resourceGroup := seriesID[startIndex:endIndex]
+
+	result := legendKeyFormat.ReplaceAllFunc([]byte(alias), func(in []byte) []byte {
+		metaPartName := strings.Replace(string(in), "{{", "", 1)
+		metaPartName = strings.Replace(metaPartName, "}}", "", 1)
+		metaPartName = strings.ToLower(strings.TrimSpace(metaPartName))
+
+		if metaPartName == "resourcegroup" {
+			return []byte(resourceGroup)
+		}
+
+		if metaPartName == "namespace" {
+			return []byte(namespace)
+		}
+
+		if metaPartName == "resourcename" {
+			return []byte(resourceName)
+		}
+
+		if metaPartName == "metric" {
+			return []byte(metricName)
+		}
+
+		if metaPartName == "dimensionname" {
+			return []byte(metadataName)
+		}
+
+		if metaPartName == "dimensionvalue" {
+			return []byte(metadataValue)
+		}
+
+		return in
+	})
+
+	return string(result)
 }

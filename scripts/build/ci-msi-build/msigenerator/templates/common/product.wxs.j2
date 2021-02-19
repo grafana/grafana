@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product Id="*"
+    UpgradeCode="{{ config.upgrade_code }}"
+    Name="{{ config.product_name }}"
+    Version="{{ config.grafana_version }}"
+    Manufacturer="{{ config.manufacturer }}"
+    Language="1033">
+
+    <Package
+      Platform="x64"
+      InstallerVersion="200"
+      Compressed="yes"
+      Comments="Windows Installer Package"/>
+
+    <Media Id="1" Cabinet="product.cab" EmbedCab="yes"/>
+
+    <Icon Id="icon.ico" SourceFile="grafana_icon.ico"/>
+
+    <WixVariable Id="WixUILicenseRtf" Value="{{config.license}}" />
+    <WixVariable Id="WixUIBannerBmp" Value="grafana_top_banner_white.bmp" />
+    <WixVariable Id="WixUIDialogBmp" Value="grafana_dialog_background.bmp" />
+
+    <Property Id="ARPPRODUCTICON" Value="icon.ico" />
+    <Property Id="ARPHELPLINK" Value="https://www.grafana.com" />
+    <Property Id="ARPURLINFOABOUT" Value="https://www.grafana.com" />
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFiles64Folder">
+        <Directory Id="INSTALLDIR" Name="GrafanaLabs">
+          {% for feature in features %}
+            {% for component_group in feature.component_groups %}
+              <Directory Id="{{component_group.directory}}"/>
+            {% endfor %}
+          {% endfor %}
+        </Directory>
+      </Directory>
+    </Directory>
+
+    <Feature Id="DefaultFeature" Title="Grafana" Display="expand" ConfigurableDirectory="INSTALLDIR">
+      {% for feature in features %}
+        <Feature Id="{{ feature.name }}Feature" Title="{{ feature.title }}" Level="1">
+          {% for component_group in feature.component_groups %}
+            <ComponentGroupRef Id="{{ component_group.ref_id }}"/>
+          {% endfor %}
+        </Feature>
+      {% endfor %}
+    </Feature>
+
+    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLDIR" />
+		<UIRef Id="WixUI_FeatureTree"/>
+
+   </Product>
+</Wix>

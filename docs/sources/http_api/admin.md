@@ -2,7 +2,7 @@
 title = "Admin HTTP API "
 description = "Grafana Admin HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "admin"]
-aliases = ["/http_api/admin/"]
+aliases = ["/docs/grafana/latest/http_api/admin/"]
 type = "docs"
 [menu.docs]
 name = "Admin"
@@ -23,7 +23,7 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 **Example Request**:
 
-```bash
+```http
 GET /api/admin/settings
 Accept: application/json
 Content-Type: application/json
@@ -31,7 +31,7 @@ Content-Type: application/json
 
 **Example Response**:
 
-```bash
+```http
 HTTP/1.1 200
 Content-Type: application/json
 
@@ -181,7 +181,7 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 **Example Request**:
 
-```bash
+```http
 GET /api/admin/stats
 Accept: application/json
 Content-Type: application/json
@@ -189,7 +189,7 @@ Content-Type: application/json
 
 **Example Response**:
 
-```json
+```http
 HTTP/1.1 200
 Content-Type: application/json
 
@@ -214,8 +214,8 @@ Content-Type: application/json
 Create new user. Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
 
 **Example Request**:
-```json
 
+```http
 POST /api/admin/users HTTP/1.1
 Accept: application/json
 Content-Type: application/json
@@ -230,7 +230,7 @@ Content-Type: application/json
 
 **Example Response**:
 
-```json
+```http
 HTTP/1.1 200
 Content-Type: application/json
 
@@ -246,7 +246,7 @@ Change password for a specific user.
 
 **Example Request**:
 
-```json
+```http
 PUT /api/admin/users/2/password HTTP/1.1
 Accept: application/json
 Content-Type: application/json
@@ -256,7 +256,7 @@ Content-Type: application/json
 
 **Example Response**:
 
-```json
+```http
 HTTP/1.1 200
 Content-Type: application/json
 
@@ -271,7 +271,7 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 **Example Request**:
 
-```json
+```http
 PUT /api/admin/users/2/permissions HTTP/1.1
 Accept: application/json
 Content-Type: application/json
@@ -281,7 +281,7 @@ Content-Type: application/json
 
 **Example Response**:
 
-```json
+```http
 HTTP/1.1 200
 Content-Type: application/json
 
@@ -296,7 +296,7 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 **Example Request**:
 
-```json
+```http
 DELETE /api/admin/users/2 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
@@ -304,7 +304,7 @@ Content-Type: application/json
 
 **Example Response**:
 
-```json
+```http
 HTTP/1.1 200
 Content-Type: application/json
 
@@ -319,7 +319,7 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 **Example Request**:
 
-```json
+```http
 POST /api/admin/pause-all-alerts HTTP/1.1
 Accept: application/json
 Content-Type: application/json
@@ -335,11 +335,15 @@ JSON Body schema:
 
 **Example Response**:
 
-```json
+```http
 HTTP/1.1 200
 Content-Type: application/json
 
-{"state": "new state", "message": "alerts pause/un paused", "alertsAffected": 100}
+{
+  "state":   "Paused",
+  "message": "alert paused",
+  "alertsAffected": 1
+}
 ```
 
 ## Auth tokens for User
@@ -369,7 +373,11 @@ Content-Type: application/json
     "id": 361,
     "isActive": false,
     "clientIp": "127.0.0.1",
-    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36",
+    "browser": "Chrome",
+    "browserVersion": "72.0",
+    "os": "Linux",
+    "osVersion": "",
+    "device": "Other",
     "createdAt": "2019-03-05T21:22:54+01:00",
     "seenAt": "2019-03-06T19:41:06+01:00"
   },
@@ -377,7 +385,11 @@ Content-Type: application/json
     "id": 364,
     "isActive": false,
     "clientIp": "127.0.0.1",
-    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1",
+    "browser": "Mobile Safari",
+    "browserVersion": "11.0",
+    "os": "iOS",
+    "osVersion": "11.0",
+    "device": "iPhone",
     "createdAt": "2019-03-06T19:41:19+01:00",
     "seenAt": "2019-03-06T19:41:21+01:00"
   }
@@ -441,5 +453,65 @@ Content-Type: application/json
 
 {
   "message": "User auth token revoked"
+}
+```
+
+## Reload provisioning configurations
+
+`POST /api/admin/provisioning/dashboards/reload`
+
+`POST /api/admin/provisioning/datasources/reload`
+
+`POST /api/admin/provisioning/notifications/reload`
+
+Reloads the provisioning config files for specified type and provision entities again. It won't return
+until the new provisioned entities are already stored in the database. In case of dashboards, it will stop
+polling for changes in dashboard files and then restart it with new configs after returning.
+
+Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
+
+**Example Request**:
+
+```http
+POST /api/admin/provisioning/dashboards/reload HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+  "message": "Dashboards config reloaded"
+}
+```
+
+## Reload LDAP configuration
+
+`POST /api/admin/ldap/reload`
+
+Reloads the LDAP configuration.
+
+Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
+
+**Example Request**:
+
+```http
+POST /api/admin/ldap/reload HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+  "message": "LDAP config reloaded"
 }
 ```

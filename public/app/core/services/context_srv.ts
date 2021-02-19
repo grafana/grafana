@@ -9,6 +9,7 @@ export class User {
   orgRole: any;
   orgId: number;
   orgName: string;
+  login: string;
   orgCount: number;
   timezone: string;
   helpFlags1: number;
@@ -44,7 +45,7 @@ export class ContextSrv {
     this.hasEditPermissionInFolders = this.user.hasEditPermissionInFolders;
   }
 
-  hasRole(role) {
+  hasRole(role: string) {
     return this.user.orgRole === role;
   }
 

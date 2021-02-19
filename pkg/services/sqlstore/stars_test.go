@@ -36,7 +36,6 @@ func TestUserStarsDataAccess(t *testing.T) {
 
 				So(query.Result, ShouldBeFalse)
 			})
-
 		})
 	})
 }

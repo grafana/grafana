@@ -1,10 +1,11 @@
 import $ from 'jquery';
 import coreModule from 'app/core/core_module';
 import config from 'app/core/config';
+import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 
 export class Analytics {
   /** @ngInject */
-  constructor(private $rootScope, private $location) {}
+  constructor(private $rootScope: GrafanaRootScope, private $location: any) {}
 
   gaInit() {
     $.ajax({
@@ -14,7 +15,7 @@ export class Analytics {
     });
     const ga = ((window as any).ga =
       (window as any).ga ||
-      //tslint:disable-next-line:only-arrow-functions
+      // this had the equivalent of `eslint-disable-next-line prefer-arrow/prefer-arrow-functions`
       function() {
         (ga.q = ga.q || []).push(arguments);
       });
@@ -35,7 +36,7 @@ export class Analytics {
 }
 
 /** @ngInject */
-function startAnalytics(googleAnalyticsSrv) {
+function startAnalytics(googleAnalyticsSrv: Analytics) {
   if ((config as any).googleAnalyticsId) {
     googleAnalyticsSrv.init();
   }

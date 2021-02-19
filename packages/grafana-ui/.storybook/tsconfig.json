@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "declarationDir": "dist",
+    "noUnusedLocals": false,
+    "outDir": "compiled"
+  },
+  "exclude": ["../dist", "../node_modules"],
+  "extends": "../tsconfig.json",
+  "include": ["../src/**/*.ts", "../src/**/*.tsx"]
+}

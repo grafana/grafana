@@ -7,11 +7,10 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	macaron "gopkg.in/macaron.v1"
 )
@@ -21,14 +20,13 @@ var pluginProxyTransport *http.Transport
 func (hs *HTTPServer) initAppPluginRoutes(r *macaron.Macaron) {
 	pluginProxyTransport = &http.Transport{
 		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: setting.PluginAppsSkipVerifyTLS,
+			InsecureSkipVerify: hs.Cfg.PluginsAppsSkipVerifyTLS,
 			Renegotiation:      tls.RenegotiateFreelyAsClient,
 		},
 		Proxy: http.ProxyFromEnvironment,
 		Dial: (&net.Dialer{
 			Timeout:   30 * time.Second,
 			KeepAlive: 30 * time.Second,
-			DualStack: true,
 		}).Dial,
 		TLSHandshakeTimeout: 10 * time.Second,
 	}

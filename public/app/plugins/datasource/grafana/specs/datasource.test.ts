@@ -1,24 +1,36 @@
+import { DataSourceInstanceSettings, dateTime } from '@grafana/data';
+import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { GrafanaDatasource } from '../datasource';
-import q from 'q';
-import moment from 'moment';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => backendSrv,
+}));
+
+jest.mock('app/features/templating/template_srv', () => ({
+  replace: (val: string) => {
+    return val.replace('$var2', 'replaced__delimiter__replaced2').replace('$var', 'replaced');
+  },
+}));
 
 describe('grafana data source', () => {
+  const getMock = jest.spyOn(backendSrv, 'get');
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   describe('when executing an annotations query', () => {
-    let calledBackendSrvParams;
-    const backendSrvStub = {
-      get: (url, options) => {
+    let calledBackendSrvParams: any;
+    let ds: GrafanaDatasource;
+    beforeEach(() => {
+      getMock.mockImplementation((url: string, options: any) => {
         calledBackendSrvParams = options;
-        return q.resolve([]);
-      },
-    };
+        return Promise.resolve([]);
+      });
 
-    const templateSrvStub = {
-      replace: val => {
-        return val.replace('$var2', 'replaced__delimiter__replaced2').replace('$var', 'replaced');
-      },
-    };
-
-    const ds = new GrafanaDatasource(backendSrvStub, q, templateSrvStub);
+      ds = new GrafanaDatasource({} as DataSourceInstanceSettings);
+    });
 
     describe('with tags that have template variables', () => {
       const options = setupAnnotationQueryOptions({ tags: ['tag1:$var'] });
@@ -65,13 +77,13 @@ describe('grafana data source', () => {
   });
 });
 
-function setupAnnotationQueryOptions(annotation, dashboard?) {
+function setupAnnotationQueryOptions(annotation: { tags: string[]; type?: string }, dashboard?: { id: number }) {
   return {
-    annotation: annotation,
-    dashboard: dashboard,
+    annotation,
+    dashboard,
     range: {
-      from: moment(1432288354),
-      to: moment(1432288401),
+      from: dateTime(1432288354),
+      to: dateTime(1432288401),
     },
     rangeRaw: { from: 'now-24h', to: 'now' },
   };

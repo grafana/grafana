@@ -89,7 +89,7 @@ export class SoloPanelPage extends Component<Props, State> {
 
     return (
       <div className="panel-solo">
-        <DashboardPanel dashboard={dashboard} panel={panel} isEditing={false} isFullscreen={false} />
+        <DashboardPanel dashboard={dashboard} panel={panel} isEditing={false} isFullscreen={false} isInView={true} />
       </div>
     );
   }
@@ -100,16 +100,11 @@ const mapStateToProps = (state: StoreState) => ({
   urlSlug: state.location.routeParams.slug,
   urlType: state.location.routeParams.type,
   urlPanelId: state.location.query.panelId,
-  dashboard: state.dashboard.model as DashboardModel,
+  dashboard: state.dashboard.getModel() as DashboardModel,
 });
 
 const mapDispatchToProps = {
   initDashboard,
 };
 
-export default hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(SoloPanelPage)
-);
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(SoloPanelPage));

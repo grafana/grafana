@@ -1,17 +1,17 @@
 import InfluxDatasource from './datasource';
 import { InfluxQueryCtrl } from './query_ctrl';
-
-class InfluxConfigCtrl {
-  static templateUrl = 'partials/config.html';
-}
+import { InfluxLogsQueryField } from './components/InfluxLogsQueryField';
+import InfluxStartPage from './components/InfluxStartPage';
+import { DataSourcePlugin } from '@grafana/data';
+import ConfigEditor from './components/ConfigEditor';
 
 class InfluxAnnotationsQueryCtrl {
   static templateUrl = 'partials/annotations.editor.html';
 }
 
-export {
-  InfluxDatasource as Datasource,
-  InfluxQueryCtrl as QueryCtrl,
-  InfluxConfigCtrl as ConfigCtrl,
-  InfluxAnnotationsQueryCtrl as AnnotationsQueryCtrl,
-};
+export const plugin = new DataSourcePlugin(InfluxDatasource)
+  .setConfigEditor(ConfigEditor)
+  .setQueryCtrl(InfluxQueryCtrl)
+  .setAnnotationQueryCtrl(InfluxAnnotationsQueryCtrl)
+  .setExploreLogsQueryField(InfluxLogsQueryField)
+  .setExploreStartPage(InfluxStartPage);

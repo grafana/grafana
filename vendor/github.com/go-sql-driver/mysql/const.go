@@ -9,6 +9,7 @@
 package mysql
 
 const (
+	defaultAuthPlugin       = "mysql_native_password"
 	defaultMaxAllowedPacket = 4 << 20 // 4 MiB
 	minProtocolVersion      = 10
 	maxPacketSize           = 1<<24 - 1
@@ -19,10 +20,11 @@ const (
 // http://dev.mysql.com/doc/internals/en/client-server-protocol.html
 
 const (
-	iOK          byte = 0x00
-	iLocalInFile byte = 0xfb
-	iEOF         byte = 0xfe
-	iERR         byte = 0xff
+	iOK           byte = 0x00
+	iAuthMoreData byte = 0x01
+	iLocalInFile  byte = 0xfb
+	iEOF          byte = 0xfe
+	iERR          byte = 0xff
 )
 
 // https://dev.mysql.com/doc/internals/en/capability-flags.html#packet-Protocol::CapabilityFlags
@@ -163,4 +165,10 @@ const (
 	statusPsOutParams
 	statusInTransReadonly
 	statusSessionStateChanged
+)
+
+const (
+	cachingSha2PasswordRequestPublicKey          = 2
+	cachingSha2PasswordFastAuthSuccess           = 3
+	cachingSha2PasswordPerformFullAuthentication = 4
 )

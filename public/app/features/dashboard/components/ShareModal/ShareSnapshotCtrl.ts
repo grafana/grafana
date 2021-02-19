@@ -1,9 +1,22 @@
-import angular from 'angular';
+import angular, { ILocationService, IScope } from 'angular';
 import _ from 'lodash';
+import { getBackendSrv } from '@grafana/runtime';
+
+import { TimeSrv } from '../../services/TimeSrv';
+import { DashboardModel } from '../../state/DashboardModel';
+import { PanelModel } from '../../state/PanelModel';
+import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
+import { promiseToDigest } from '../../../../core/utils/promiseToDigest';
 
 export class ShareSnapshotCtrl {
   /** @ngInject */
-  constructor($scope, $rootScope, $location, backendSrv, $timeout, timeSrv) {
+  constructor(
+    $scope: IScope & Record<string, any>,
+    $rootScope: GrafanaRootScope,
+    $location: ILocationService,
+    $timeout: any,
+    timeSrv: TimeSrv
+  ) {
     $scope.snapshot = {
       name: $scope.dashboard.title,
       expires: 0,
@@ -26,15 +39,19 @@ export class ShareSnapshotCtrl {
     ];
 
     $scope.init = () => {
-      backendSrv.get('/api/snapshot/shared-options').then(options => {
-        $scope.sharingButtonText = options['externalSnapshotName'];
-        $scope.externalEnabled = options['externalEnabled'];
-      });
+      promiseToDigest($scope)(
+        getBackendSrv()
+          .get('/api/snapshot/shared-options')
+          .then((options: { [x: string]: any }) => {
+            $scope.sharingButtonText = options['externalSnapshotName'];
+            $scope.externalEnabled = options['externalEnabled'];
+          })
+      );
     };
 
     $scope.apiUrl = '/api/snapshots';
 
-    $scope.createSnapshot = external => {
+    $scope.createSnapshot = (external: any) => {
       $scope.dashboard.snapshot = {
         timestamp: new Date(),
       };
@@ -52,7 +69,7 @@ export class ShareSnapshotCtrl {
       }, $scope.snapshot.timeoutSeconds * 1000);
     };
 
-    $scope.saveSnapshot = external => {
+    $scope.saveSnapshot = (external: any) => {
       const dash = $scope.dashboard.getSaveModelClone();
       $scope.scrubDashboard(dash);
 
@@ -63,16 +80,20 @@ export class ShareSnapshotCtrl {
         external: external,
       };
 
-      backendSrv.post($scope.apiUrl, cmdData).then(
-        results => {
-          $scope.loading = false;
-          $scope.deleteUrl = results.deleteUrl;
-          $scope.snapshotUrl = results.url;
-          $scope.step = 2;
-        },
-        () => {
-          $scope.loading = false;
-        }
+      promiseToDigest($scope)(
+        getBackendSrv()
+          .post($scope.apiUrl, cmdData)
+          .then(
+            (results: { deleteUrl: any; url: any }) => {
+              $scope.loading = false;
+              $scope.deleteUrl = results.deleteUrl;
+              $scope.snapshotUrl = results.url;
+              $scope.step = 2;
+            },
+            () => {
+              $scope.loading = false;
+            }
+          )
       );
     };
 
@@ -80,7 +101,7 @@ export class ShareSnapshotCtrl {
       return $scope.snapshotUrl;
     };
 
-    $scope.scrubDashboard = dash => {
+    $scope.scrubDashboard = (dash: DashboardModel) => {
       // change title
       dash.title = $scope.snapshot.name;
 
@@ -99,7 +120,7 @@ export class ShareSnapshotCtrl {
         .filter(annotation => {
           return annotation.enable;
         })
-        .map(annotation => {
+        .map((annotation: any) => {
           return {
             name: annotation.name,
             enable: annotation.enable,
@@ -131,7 +152,7 @@ export class ShareSnapshotCtrl {
 
       // cleanup snapshotData
       delete $scope.dashboard.snapshot;
-      $scope.dashboard.forEachPanel(panel => {
+      $scope.dashboard.forEachPanel((panel: PanelModel) => {
         delete panel.snapshotData;
       });
       _.each($scope.dashboard.annotations.list, annotation => {
@@ -140,9 +161,13 @@ export class ShareSnapshotCtrl {
     };
 
     $scope.deleteSnapshot = () => {
-      backendSrv.get($scope.deleteUrl).then(() => {
-        $scope.step = 3;
-      });
+      promiseToDigest($scope)(
+        getBackendSrv()
+          .get($scope.deleteUrl)
+          .then(() => {
+            $scope.step = 3;
+          })
+      );
     };
   }
 }

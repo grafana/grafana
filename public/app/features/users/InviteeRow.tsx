@@ -27,19 +27,19 @@ class InviteeRow extends PureComponent<Props> {
         <td>{invitee.email}</td>
         <td>{invitee.name}</td>
         <td className="text-right">
-          <button className="btn btn-inverse btn-mini" onClick={this.copyToClipboard}>
+          <button className="btn btn-inverse btn-small" onClick={this.copyToClipboard}>
             <textarea
               readOnly={true}
               value={invitee.url}
-              style={{ position: 'absolute', right: -1000 }}
+              style={{ position: 'absolute', bottom: 0, right: 0, opacity: 0, zIndex: -10 }}
               ref={this.copyUrlRef}
             />
-            <i className="fa fa-clipboard" /> Copy Invite
+            Copy Invite
           </button>
           &nbsp;
         </td>
         <td>
-          <button className="btn btn-danger btn-mini" onClick={() => revokeInvite(invitee.code)}>
+          <button className="btn btn-danger btn-small" onClick={() => revokeInvite(invitee.code)}>
             <i className="fa fa-remove" />
           </button>
         </td>
@@ -52,9 +52,6 @@ const mapDispatchToProps = {
   revokeInvite,
 };
 
-export default connect(
-  () => {
-    return {};
-  },
-  mapDispatchToProps
-)(InviteeRow);
+export default connect(() => {
+  return {};
+}, mapDispatchToProps)(InviteeRow);

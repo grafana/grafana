@@ -1,6 +1,11 @@
 import _ from 'lodash';
 import config from 'app/core/config';
 import locationUtil from 'app/core/utils/location_util';
+import { ValidationSrv } from './services/ValidationSrv';
+import { NavModelSrv } from 'app/core/core';
+import { ILocationService, IScope } from 'angular';
+import { backendSrv } from 'app/core/services/backend_srv';
+import { promiseToDigest } from 'app/core/utils/promiseToDigest';
 
 export class DashboardImportCtrl {
   navModel: any;
@@ -27,7 +32,13 @@ export class DashboardImportCtrl {
   isValidFolderSelection: boolean;
 
   /** @ngInject */
-  constructor(private backendSrv, private validationSrv, navModelSrv, private $location, $routeParams) {
+  constructor(
+    private $scope: IScope,
+    private validationSrv: ValidationSrv,
+    navModelSrv: NavModelSrv,
+    private $location: ILocationService,
+    $routeParams: any
+  ) {
     this.navModel = navModelSrv.getNav('create', 'import');
 
     this.step = 1;
@@ -45,7 +56,7 @@ export class DashboardImportCtrl {
     }
   }
 
-  onUpload(dash) {
+  onUpload(dash: any) {
     this.dash = dash;
     this.dash.id = null;
     this.step = 2;
@@ -53,7 +64,7 @@ export class DashboardImportCtrl {
 
     if (this.dash.__inputs) {
       for (const input of this.dash.__inputs) {
-        const inputModel = {
+        const inputModel: any = {
           name: input.name,
           label: input.label,
           info: input.description,
@@ -78,7 +89,7 @@ export class DashboardImportCtrl {
     this.uidChanged(true);
   }
 
-  setDatasourceOptions(input, inputModel) {
+  setDatasourceOptions(input: { pluginId: string; pluginName: string }, inputModel: any) {
     const sources = _.filter(config.datasources, val => {
       return val.type === input.pluginId;
     });
@@ -107,23 +118,25 @@ export class DashboardImportCtrl {
     this.titleTouched = true;
     this.nameExists = false;
 
-    this.validationSrv
-      .validateNewDashboardName(this.folderId, this.dash.title)
-      .then(() => {
-        this.nameExists = false;
-        this.hasNameValidationError = false;
-      })
-      .catch(err => {
-        if (err.type === 'EXISTING') {
-          this.nameExists = true;
-        }
+    promiseToDigest(this.$scope)(
+      this.validationSrv
+        .validateNewDashboardName(this.folderId, this.dash.title)
+        .then(() => {
+          this.nameExists = false;
+          this.hasNameValidationError = false;
+        })
+        .catch(err => {
+          if (err.type === 'EXISTING') {
+            this.nameExists = true;
+          }
 
-        this.hasNameValidationError = true;
-        this.nameValidationError = err.message;
-      });
+          this.hasNameValidationError = true;
+          this.nameValidationError = err.message;
+        })
+    );
   }
 
-  uidChanged(initial) {
+  uidChanged(initial: boolean) {
     this.uidExists = false;
     this.hasUidValidationError = false;
 
@@ -131,21 +144,26 @@ export class DashboardImportCtrl {
       this.autoGenerateUidValue = 'value set';
     }
 
-    this.backendSrv
-      .getDashboardByUid(this.dash.uid)
-      .then(res => {
-        this.uidExists = true;
-        this.hasUidValidationError = true;
-        this.uidValidationError = `Dashboard named '${res.dashboard.title}' in folder '${
-          res.meta.folderTitle
-        }' has the same uid`;
-      })
-      .catch(err => {
-        err.isHandled = true;
-      });
+    if (!this.dash.uid) {
+      return;
+    }
+
+    promiseToDigest(this.$scope)(
+      backendSrv
+        // @ts-ignore
+        .getDashboardByUid(this.dash.uid)
+        .then((res: any) => {
+          this.uidExists = true;
+          this.hasUidValidationError = true;
+          this.uidValidationError = `Dashboard named '${res.dashboard.title}' in folder '${res.meta.folderTitle}' has the same uid`;
+        })
+        .catch((err: any) => {
+          err.isHandled = true;
+        })
+    );
   }
 
-  onFolderChange(folder) {
+  onFolderChange(folder: any) {
     this.folderId = folder.id;
     this.titleChanged();
   }
@@ -172,17 +190,19 @@ export class DashboardImportCtrl {
       };
     });
 
-    return this.backendSrv
-      .post('api/dashboards/import', {
-        dashboard: this.dash,
-        overwrite: true,
-        inputs: inputs,
-        folderId: this.folderId,
-      })
-      .then(res => {
-        const dashUrl = locationUtil.stripBaseFromUrl(res.importedUrl);
-        this.$location.url(dashUrl);
-      });
+    return promiseToDigest(this.$scope)(
+      backendSrv
+        .post('api/dashboards/import', {
+          dashboard: this.dash,
+          overwrite: true,
+          inputs: inputs,
+          folderId: this.folderId,
+        })
+        .then(res => {
+          const dashUrl = locationUtil.stripBaseFromUrl(res.importedUrl);
+          this.$location.url(dashUrl);
+        })
+    );
   }
 
   loadJsonText() {
@@ -211,18 +231,20 @@ export class DashboardImportCtrl {
       this.gnetError = 'Could not find dashboard';
     }
 
-    return this.backendSrv
-      .get('api/gnet/dashboards/' + dashboardId)
-      .then(res => {
-        this.gnetInfo = res;
-        // store reference to grafana.com
-        res.json.gnetId = res.id;
-        this.onUpload(res.json);
-      })
-      .catch(err => {
-        err.isHandled = true;
-        this.gnetError = err.data.message || err;
-      });
+    return promiseToDigest(this.$scope)(
+      backendSrv
+        .get('api/gnet/dashboards/' + dashboardId)
+        .then(res => {
+          this.gnetInfo = res;
+          // store reference to grafana.com
+          res.json.gnetId = res.id;
+          this.onUpload(res.json);
+        })
+        .catch(err => {
+          err.isHandled = true;
+          this.gnetError = err.data.message || err;
+        })
+    );
   }
 
   back() {

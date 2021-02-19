@@ -1,9 +1,9 @@
 import React, { PureComponent } from 'react';
 
 import { FormLabel, Select } from '@grafana/ui';
-import { getBackendSrv, BackendSrv } from 'app/core/services/backend_srv';
 
 import { DashboardSearchHit, DashboardSearchHitType } from 'app/types';
+import { backendSrv } from 'app/core/services/backend_srv';
 
 export interface Props {
   resourceUri: string;
@@ -16,7 +16,11 @@ export interface State {
   dashboards: DashboardSearchHit[];
 }
 
-const themes = [{ value: '', label: 'Default' }, { value: 'dark', label: 'Dark' }, { value: 'light', label: 'Light' }];
+const themes = [
+  { value: '', label: 'Default' },
+  { value: 'dark', label: 'Dark' },
+  { value: 'light', label: 'Light' },
+];
 
 const timezones = [
   { value: '', label: 'Default' },
@@ -25,9 +29,9 @@ const timezones = [
 ];
 
 export class SharedPreferences extends PureComponent<Props, State> {
-  backendSrv: BackendSrv = getBackendSrv();
+  backendSrv = backendSrv;
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
 
     this.state = {
@@ -39,8 +43,8 @@ export class SharedPreferences extends PureComponent<Props, State> {
   }
 
   async componentDidMount() {
-    const prefs = await this.backendSrv.get(`/api/${this.props.resourceUri}/preferences`);
-    const dashboards = await this.backendSrv.search({ starred: true });
+    const prefs = await backendSrv.get(`/api/${this.props.resourceUri}/preferences`);
+    const dashboards = await backendSrv.search({ starred: true });
     const defaultDashboardHit: DashboardSearchHit = {
       id: 0,
       title: 'Default',
@@ -58,7 +62,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
     };
 
     if (prefs.homeDashboardId > 0 && !dashboards.find(d => d.id === prefs.homeDashboardId)) {
-      const missing = await this.backendSrv.search({ dashboardIds: [prefs.homeDashboardId] });
+      const missing = await backendSrv.search({ dashboardIds: [prefs.homeDashboardId] });
       if (missing && missing.length > 0) {
         dashboards.push(missing[0]);
       }
@@ -72,12 +76,12 @@ export class SharedPreferences extends PureComponent<Props, State> {
     });
   }
 
-  onSubmitForm = async event => {
+  onSubmitForm = async (event: React.SyntheticEvent) => {
     event.preventDefault();
 
     const { homeDashboardId, theme, timezone } = this.state;
 
-    await this.backendSrv.put(`/api/${this.props.resourceUri}/preferences`, {
+    await backendSrv.put(`/api/${this.props.resourceUri}/preferences`, {
       homeDashboardId,
       theme,
       timezone,
@@ -95,6 +99,13 @@ export class SharedPreferences extends PureComponent<Props, State> {
 
   onHomeDashboardChanged = (dashboardId: number) => {
     this.setState({ homeDashboardId: dashboardId });
+  };
+
+  getFullDashName = (dashboard: DashboardSearchHit) => {
+    if (typeof dashboard.folderTitle === 'undefined' || dashboard.folderTitle === '') {
+      return dashboard.title;
+    }
+    return dashboard.folderTitle + ' / ' + dashboard.title;
   };
 
   render() {
@@ -123,10 +134,10 @@ export class SharedPreferences extends PureComponent<Props, State> {
           <Select
             value={dashboards.find(dashboard => dashboard.id === homeDashboardId)}
             getOptionValue={i => i.id}
-            getOptionLabel={i => i.title}
+            getOptionLabel={this.getFullDashName}
             onChange={(dashboard: DashboardSearchHit) => this.onHomeDashboardChanged(dashboard.id)}
             options={dashboards}
-            placeholder="Chose default dashboard"
+            placeholder="Choose default dashboard"
             width={20}
           />
         </div>

@@ -1,19 +1,19 @@
 +++
 title = "Datasource Permissions HTTP API "
-description = "Grafana Datasource Permissions HTTP API"
+description = "Data Source Permissions API"
 keywords = ["grafana", "http", "documentation", "api", "datasource", "permission", "permissions", "acl", "enterprise"]
-aliases = ["/http_api/datasourcepermissions/"]
+aliases = ["/docs/grafana/latest/http_api/datasourcepermissions/"]
 type = "docs"
 [menu.docs]
 name = "Datasource Permissions"
 parent = "http_api"
 +++
 
-# Datasource Permissions API
+# Data Source Permissions API
 
-> Datasource Permissions is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "enterprise/index.md" >}}).
+> The Data Source Permissions is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../enterprise" >}}).
 
-This API can be used to enable, disable, list, add and remove permissions for a datasource.
+This API can be used to enable, disable, list, add and remove permissions for a data source.
 
 Permissions can be set for a user or a team. Permissions cannot be set for Admins - they always have access to everything.
 
@@ -21,13 +21,13 @@ The permission levels for the permission field:
 
 - 1 = Query
 
-## Enable permissions for a datasource
+## Enable permissions for a data source
 
 `POST /api/datasources/:id/enable-permissions`
 
-Enables permissions for the datasource with the given `id`. No one except Org Admins will be able to query the datasource until permissions have been added which permit certain users or teams to query the datasource.
+Enables permissions for the data source with the given `id`. No one except Org Admins will be able to query the data source until permissions have been added which permit certain users or teams to query the data source.
 
-**Example request**:
+**Example request:**
 
 ```http
 POST /api/datasources/1/enable-permissions
@@ -38,7 +38,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 {}
 ```
 
-**Example response**:
+**Example response:**
 
 ```http
 HTTP/1.1 200 OK
@@ -48,7 +48,7 @@ Content-Length: 35
 {"message":"Datasource permissions enabled"}
 ```
 
-Status Codes:
+Status codes:
 
 - **200** - Ok
 - **400** - Permissions cannot be enabled, see response body for details
@@ -56,13 +56,13 @@ Status Codes:
 - **403** - Access denied
 - **404** - Datasource not found
 
-## Disable permissions for a datasource
+## Disable permissions for a data source
 
 `POST /api/datasources/:id/disable-permissions`
 
-Disables permissions for the datasource with the given `id`. All existing permissions will be removed and anyone will be able to query the datasource.
+Disables permissions for the data source with the given `id`. All existing permissions will be removed and anyone will be able to query the data source.
 
-**Example request**:
+**Example request:**
 
 ```http
 POST /api/datasources/1/disable-permissions
@@ -73,7 +73,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 {}
 ```
 
-**Example response**:
+**Example response:**
 
 ```http
 HTTP/1.1 200 OK
@@ -83,7 +83,7 @@ Content-Length: 35
 {"message":"Datasource permissions disabled"}
 ```
 
-Status Codes:
+Status codes:
 
 - **200** - Ok
 - **400** - Permissions cannot be disabled, see response body for details
@@ -91,13 +91,13 @@ Status Codes:
 - **403** - Access denied
 - **404** - Datasource not found
 
-## Get permissions for a datasource
+## Get permissions for a data source
 
 `GET /api/datasources/:id/permissions`
 
-Gets all existing permissions for the datasource with the given `id`.
+Gets all existing permissions for the data source with the given `id`.
 
-**Example request**:
+**Example request:**
 
 ```http
 GET /api/datasources/1/permissions HTTP/1.1
@@ -106,7 +106,7 @@ Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```
 
-**Example Response**
+**Example response:**
 
 ```http
 HTTP/1.1 200 OK
@@ -145,20 +145,20 @@ Content-Length: 551
 }
 ```
 
-Status Codes:
+Status codes:
 
 - **200** - Ok
 - **401** - Unauthorized
 - **403** - Access denied
 - **404** - Datasource not found
 
-## Add permission for a datasource
+## Add permission for a data source
 
 `POST /api/datasources/:id/permissions`
 
-Adds a user permission for the datasource with the given `id`.
+Adds a user permission for the data source with the given `id`.
 
-**Example request**:
+**Example request:**
 
 ```http
 POST /api/datasources/1/permissions
@@ -172,7 +172,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 }
 ```
 
-**Example response**:
+**Example response:**
 
 ```http
 HTTP/1.1 200 OK
@@ -182,9 +182,9 @@ Content-Length: 35
 {"message":"Datasource permission added"}
 ```
 
-Adds a team permission for the datasource with the given `id`.
+Adds a team permission for the data source with the given `id`.
 
-**Example request**:
+**Example request:**
 
 ```http
 POST /api/datasources/1/permissions
@@ -198,7 +198,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 }
 ```
 
-**Example response**:
+**Example response:**
 
 ```http
 HTTP/1.1 200 OK
@@ -208,7 +208,7 @@ Content-Length: 35
 {"message":"Datasource permission added"}
 ```
 
-Status Codes:
+Status codes:
 
 - **200** - Ok
 - **400** - Permission cannot be added, see response body for details
@@ -216,13 +216,13 @@ Status Codes:
 - **403** - Access denied
 - **404** - Datasource not found
 
-## Remove permission for a datasource
+## Remove permission for a data source
 
 `DELETE /api/datasources/:id/permissions/:permissionId`
 
-Removes the permission with the given `permissionId` for the datasource with the given `id`.
+Removes the permission with the given `permissionId` for the data source with the given `id`.
 
-**Example request**:
+**Example request:**
 
 ```http
 DELETE /api/datasources/1/permissions/2
@@ -231,7 +231,7 @@ Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```
 
-**Example response**:
+**Example response:**
 
 ```http
 HTTP/1.1 200 OK
@@ -241,7 +241,7 @@ Content-Length: 35
 {"message":"Datasource permission removed"}
 ```
 
-Status Codes:
+Status codes:
 
 - **200** - Ok
 - **401** - Unauthorized

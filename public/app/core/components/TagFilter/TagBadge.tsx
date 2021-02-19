@@ -1,5 +1,5 @@
 import React from 'react';
-import tags from 'app/core/utils/tags';
+import { getTagColorsFromName } from '@grafana/ui';
 
 export interface Props {
   label: string;
@@ -9,13 +9,13 @@ export interface Props {
 }
 
 export class TagBadge extends React.Component<Props, any> {
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
   }
 
   render() {
     const { label, removeIcon, count } = this.props;
-    const { color, borderColor } = tags.getTagColorsFromName(label);
+    const { color, borderColor } = getTagColorsFromName(label);
     const tagStyle = {
       backgroundColor: color,
       borderColor: borderColor,

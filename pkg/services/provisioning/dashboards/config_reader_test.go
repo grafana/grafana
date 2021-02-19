@@ -1,9 +1,10 @@
 package dashboards
 
 import (
+	"os"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -18,8 +19,10 @@ func TestDashboardsAsConfig(t *testing.T) {
 		logger := log.New("test-logger")
 
 		Convey("Can read config file version 1 format", func() {
+			_ = os.Setenv("TEST_VAR", "general")
 			cfgProvider := configReader{path: simpleDashboardConfig, log: logger}
 			cfg, err := cfgProvider.readConfig()
+			_ = os.Unsetenv("TEST_VAR")
 			So(err, ShouldBeNil)
 
 			validateDashboardAsConfig(t, cfg)
@@ -66,6 +69,7 @@ func validateDashboardAsConfig(t *testing.T, cfg []*DashboardsAsConfig) {
 	So(ds.Type, ShouldEqual, "file")
 	So(ds.OrgId, ShouldEqual, 2)
 	So(ds.Folder, ShouldEqual, "developers")
+	So(ds.FolderUid, ShouldEqual, "xyz")
 	So(ds.Editable, ShouldBeTrue)
 	So(len(ds.Options), ShouldEqual, 1)
 	So(ds.Options["path"], ShouldEqual, "/var/lib/grafana/dashboards")
@@ -77,6 +81,7 @@ func validateDashboardAsConfig(t *testing.T, cfg []*DashboardsAsConfig) {
 	So(ds2.Type, ShouldEqual, "file")
 	So(ds2.OrgId, ShouldEqual, 1)
 	So(ds2.Folder, ShouldEqual, "")
+	So(ds2.FolderUid, ShouldEqual, "")
 	So(ds2.Editable, ShouldBeFalse)
 	So(len(ds2.Options), ShouldEqual, 1)
 	So(ds2.Options["path"], ShouldEqual, "/var/lib/grafana/dashboards")

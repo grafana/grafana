@@ -335,8 +335,7 @@
 }
 
 @mixin left-brand-border-gradient() {
-  border: none;
-  border-image: linear-gradient(rgba(255, 213, 0, 1) 0%, rgba(255, 68, 0, 1) 99%, rgba(255, 68, 0, 1) 100%);
+  border-image: $brand-gradient-vertical;
   border-image-slice: 1;
   border-style: solid;
   border-top: 0;
@@ -346,7 +345,7 @@
 }
 
 @mixin brand-bottom-border() {
-  border-image: $brand-gradient;
+  border-image: $brand-gradient-horizontal;
   border-image-slice: 1;
   border-style: solid;
   border-top: 0;
@@ -362,9 +361,18 @@
   background: $list-item-bg;
   box-shadow: $list-item-shadow;
   color: $list-item-link-color;
+  border-radius: $border-radius;
 
   &:hover {
     background: $list-item-hover-bg;
     color: $list-item-link-color;
+  }
+}
+
+@function lightOrDarkTheme($lightColor, $darkColor) {
+  @if (lightness($text-color) < 50) {
+    @return $lightColor;
+  } @else {
+    @return $darkColor;
   }
 }

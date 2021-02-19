@@ -1,32 +1,5 @@
 import React, { forwardRef } from 'react';
-
-const specialChars = ['(', '[', '{', '}', ']', ')', '|', '*', '+', '-', '.', '?', '<', '>', '#', '&', '^', '$'];
-
-export const escapeStringForRegex = (value: string) => {
-  if (!value) {
-    return value;
-  }
-
-  const newValue = specialChars.reduce(
-    (escaped, currentChar) => escaped.replace(currentChar, '\\' + currentChar),
-    value
-  );
-
-  return newValue;
-};
-
-export const unEscapeStringFromRegex = (value: string) => {
-  if (!value) {
-    return value;
-  }
-
-  const newValue = specialChars.reduce(
-    (escaped, currentChar) => escaped.replace('\\' + currentChar, currentChar),
-    value
-  );
-
-  return newValue;
-};
+import { escapeStringForRegex, unEscapeStringFromRegex } from '@grafana/data';
 
 export interface Props {
   value: string | undefined;

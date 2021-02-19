@@ -35,17 +35,15 @@ func (s *SocialGitlab) IsSignupAllowed() bool {
 	return s.allowSignup
 }
 
-func (s *SocialGitlab) IsGroupMember(client *http.Client) bool {
+func (s *SocialGitlab) IsGroupMember(groups []string) bool {
 	if len(s.allowedGroups) == 0 {
 		return true
 	}
 
-	for groups, url := s.GetGroups(client, s.apiUrl+"/groups"); groups != nil; groups, url = s.GetGroups(client, url) {
-		for _, allowedGroup := range s.allowedGroups {
-			for _, group := range groups {
-				if group == allowedGroup {
-					return true
-				}
+	for _, allowedGroup := range s.allowedGroups {
+		for _, group := range groups {
+			if group == allowedGroup {
+				return true
 			}
 		}
 	}
@@ -53,7 +51,18 @@ func (s *SocialGitlab) IsGroupMember(client *http.Client) bool {
 	return false
 }
 
-func (s *SocialGitlab) GetGroups(client *http.Client, url string) ([]string, string) {
+func (s *SocialGitlab) GetGroups(client *http.Client) []string {
+	groups := make([]string, 0)
+
+	for page, url := s.GetGroupsPage(client, s.apiUrl+"/groups"); page != nil; page, url = s.GetGroupsPage(client, url) {
+		groups = append(groups, page...)
+	}
+
+	return groups
+}
+
+// GetGroupsPage returns groups and link to the next page if response is paginated
+func (s *SocialGitlab) GetGroupsPage(client *http.Client, url string) ([]string, string) {
 	type Group struct {
 		FullPath string `json:"full_path"`
 	}
@@ -83,6 +92,7 @@ func (s *SocialGitlab) GetGroups(client *http.Client, url string) ([]string, str
 		fullPaths[i] = group.FullPath
 	}
 
+	// GitLab uses Link header with "rel" set to prev/next/first/last page. We need "next".
 	if link, ok := response.Headers["Link"]; ok {
 		pattern := regexp.MustCompile(`<([^>]+)>; rel="next"`)
 		if matches := pattern.FindStringSubmatch(link[0]); matches != nil {
@@ -117,14 +127,17 @@ func (s *SocialGitlab) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 		return nil, fmt.Errorf("User %s is inactive", data.Username)
 	}
 
+	groups := s.GetGroups(client)
+
 	userInfo := &BasicUserInfo{
-		Id:    fmt.Sprintf("%d", data.Id),
-		Name:  data.Name,
-		Login: data.Username,
-		Email: data.Email,
+		Id:     fmt.Sprintf("%d", data.Id),
+		Name:   data.Name,
+		Login:  data.Username,
+		Email:  data.Email,
+		Groups: groups,
 	}
 
-	if !s.IsGroupMember(client) {
+	if !s.IsGroupMember(groups) {
 		return nil, ErrMissingGroupMembership
 	}
 

@@ -1,13 +1,13 @@
 .gf-code-editor {
-  min-height: 2.6rem;
-  min-width: 20rem;
+  min-height: 36px;
+  min-width: 280px;
   flex-grow: 1;
-  margin-right: 0.25rem;
+  margin-right: $space-xs;
 
   &.ace_editor {
     @include font-family-monospace();
-    font-size: 1rem;
-    min-height: 3.6rem; // Include space for horizontal scrollbar
+    font-size: $font-size-md;
+    min-height: 50px; // Include space for horizontal scrollbar
 
     @include border-radius($input-border-radius-sm);
     border: $border-width solid $input-border-color;
@@ -20,7 +20,7 @@
 
 .ace_editor.ace_autocomplete {
   @include font-family-monospace();
-  font-size: 1rem;
+  font-size: $font-size-md;
 
   // Ace editor adds <style> tag at the end of <head>, after grafana.css, so !important
   // is used for overriding styles with the same CSS specificity.
@@ -62,11 +62,11 @@ $doc-font-size: $font-size-sm;
   color: $popover-help-color;
   background-image: none;
   border: 1px solid $dropdownBorder;
-  padding: 0.5rem 1rem;
+  padding: $space-sm $space-md;
 
   hr {
     background-color: $popover-help-color;
-    margin: 0.5rem 0rem;
+    margin: $space-sm 0;
   }
 
   code {

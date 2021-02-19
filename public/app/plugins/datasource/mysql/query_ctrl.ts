@@ -5,6 +5,10 @@ import { QueryCtrl } from 'app/plugins/sdk';
 import { SqlPart } from 'app/core/components/sql_part/sql_part';
 import MysqlQuery from './mysql_query';
 import sqlPart from './sql_part';
+import { auto } from 'angular';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { CoreEvents } from 'app/types';
+import { PanelEvents } from '@grafana/data';
 
 export interface QueryMeta {
   sql: string;
@@ -41,7 +45,12 @@ export class MysqlQueryCtrl extends QueryCtrl {
   groupAdd: any;
 
   /** @ngInject */
-  constructor($scope, $injector, private templateSrv, private $q, private uiSegmentSrv) {
+  constructor(
+    $scope: any,
+    $injector: auto.IInjectorService,
+    private templateSrv: TemplateSrv,
+    private uiSegmentSrv: any
+  ) {
     super($scope, $injector);
 
     this.target = this.target;
@@ -49,7 +58,10 @@ export class MysqlQueryCtrl extends QueryCtrl {
     this.metaBuilder = new MysqlMetaQuery(this.target, this.queryModel);
     this.updateProjection();
 
-    this.formats = [{ text: 'Time series', value: 'time_series' }, { text: 'Table', value: 'table' }];
+    this.formats = [
+      { text: 'Time series', value: 'time_series' },
+      { text: 'Table', value: 'table' },
+    ];
 
     if (!this.target.rawSql) {
       // special handling when in table panel
@@ -59,7 +71,7 @@ export class MysqlQueryCtrl extends QueryCtrl {
         this.target.rawQuery = true;
       } else {
         this.target.rawSql = defaultQuery;
-        this.datasource.metricFindQuery(this.metaBuilder.findMetricTable()).then(result => {
+        this.datasource.metricFindQuery(this.metaBuilder.findMetricTable()).then((result: any) => {
           if (result.length > 0) {
             this.target.table = result[0].text;
             let segment = this.uiSegmentSrv.newSegment(this.target.table);
@@ -74,7 +86,7 @@ export class MysqlQueryCtrl extends QueryCtrl {
             this.target.timeColumnType = 'timestamp';
             this.target.select = [[{ type: 'column', params: [result[2].text] }]];
             this.updateProjection();
-            this.panelCtrl.refresh();
+            this.updateRawSqlAndRefresh();
           }
         });
       }
@@ -93,8 +105,16 @@ export class MysqlQueryCtrl extends QueryCtrl {
     this.whereAdd = this.uiSegmentSrv.newPlusButton();
     this.groupAdd = this.uiSegmentSrv.newPlusButton();
 
-    this.panelCtrl.events.on('data-received', this.onDataReceived.bind(this), $scope);
-    this.panelCtrl.events.on('data-error', this.onDataError.bind(this), $scope);
+    this.panelCtrl.events.on(PanelEvents.dataReceived, this.onDataReceived.bind(this), $scope);
+    this.panelCtrl.events.on(PanelEvents.dataError, this.onDataError.bind(this), $scope);
+  }
+
+  updateRawSqlAndRefresh() {
+    if (!this.target.rawQuery) {
+      this.target.rawSql = this.queryModel.buildQuery();
+    }
+
+    this.panelCtrl.refresh();
   }
 
   updateProjection() {
@@ -142,7 +162,7 @@ export class MysqlQueryCtrl extends QueryCtrl {
 
   toggleEditorMode() {
     if (this.target.rawQuery) {
-      appEvents.emit('confirm-modal', {
+      appEvents.emit(CoreEvents.showConfirmModal, {
         title: 'Warning',
         text2: 'Switching to query builder may overwrite your raw SQL.',
         icon: 'fa-exclamation',
@@ -156,7 +176,7 @@ export class MysqlQueryCtrl extends QueryCtrl {
     }
   }
 
-  resetPlusButton(button) {
+  resetPlusButton(button: { html: any; value: any }) {
     const plusButton = this.uiSegmentSrv.newPlusButton();
     button.html = plusButton.html;
     button.value = plusButton.value;
@@ -180,7 +200,7 @@ export class MysqlQueryCtrl extends QueryCtrl {
     this.metricColumnSegment.value = segment.value;
     this.target.metricColumn = 'none';
 
-    const task1 = this.datasource.metricFindQuery(this.metaBuilder.buildColumnQuery('time')).then(result => {
+    const task1 = this.datasource.metricFindQuery(this.metaBuilder.buildColumnQuery('time')).then((result: any) => {
       // check if time column is still valid
       if (result.length > 0 && !_.find(result, (r: any) => r.text === this.target.timeColumn)) {
         const segment = this.uiSegmentSrv.newSegment(result[0].text);
@@ -189,15 +209,15 @@ export class MysqlQueryCtrl extends QueryCtrl {
       }
       return this.timeColumnChanged(false);
     });
-    const task2 = this.datasource.metricFindQuery(this.metaBuilder.buildColumnQuery('value')).then(result => {
+    const task2 = this.datasource.metricFindQuery(this.metaBuilder.buildColumnQuery('value')).then((result: any) => {
       if (result.length > 0) {
         this.target.select = [[{ type: 'column', params: [result[0].text] }]];
         this.updateProjection();
       }
     });
 
-    this.$q.all([task1, task2]).then(() => {
-      this.panelCtrl.refresh();
+    Promise.all([task1, task2]).then(() => {
+      this.updateRawSqlAndRefresh();
     });
   }
 
@@ -210,31 +230,33 @@ export class MysqlQueryCtrl extends QueryCtrl {
 
   timeColumnChanged(refresh?: boolean) {
     this.target.timeColumn = this.timeColumnSegment.value;
-    return this.datasource.metricFindQuery(this.metaBuilder.buildDatatypeQuery(this.target.timeColumn)).then(result => {
-      if (result.length === 1) {
-        if (this.target.timeColumnType !== result[0].text) {
-          this.target.timeColumnType = result[0].text;
-        }
-        let partModel;
-        if (this.queryModel.hasUnixEpochTimecolumn()) {
-          partModel = sqlPart.create({ type: 'macro', name: '$__unixEpochFilter', params: [] });
-        } else {
-          partModel = sqlPart.create({ type: 'macro', name: '$__timeFilter', params: [] });
+    return this.datasource
+      .metricFindQuery(this.metaBuilder.buildDatatypeQuery(this.target.timeColumn))
+      .then((result: any) => {
+        if (result.length === 1) {
+          if (this.target.timeColumnType !== result[0].text) {
+            this.target.timeColumnType = result[0].text;
+          }
+          let partModel;
+          if (this.queryModel.hasUnixEpochTimecolumn()) {
+            partModel = sqlPart.create({ type: 'macro', name: '$__unixEpochFilter', params: [] });
+          } else {
+            partModel = sqlPart.create({ type: 'macro', name: '$__timeFilter', params: [] });
+          }
+
+          if (this.whereParts.length >= 1 && this.whereParts[0].def.type === 'macro') {
+            // replace current macro
+            this.whereParts[0] = partModel;
+          } else {
+            this.whereParts.splice(0, 0, partModel);
+          }
         }
 
-        if (this.whereParts.length >= 1 && this.whereParts[0].def.type === 'macro') {
-          // replace current macro
-          this.whereParts[0] = partModel;
-        } else {
-          this.whereParts.splice(0, 0, partModel);
+        this.updatePersistedParts();
+        if (refresh !== false) {
+          this.updateRawSqlAndRefresh();
         }
-      }
-
-      this.updatePersistedParts();
-      if (refresh !== false) {
-        this.panelCtrl.refresh();
-      }
-    });
+      });
   }
 
   getMetricColumnSegments() {
@@ -246,20 +268,20 @@ export class MysqlQueryCtrl extends QueryCtrl {
 
   metricColumnChanged() {
     this.target.metricColumn = this.metricColumnSegment.value;
-    this.panelCtrl.refresh();
+    this.updateRawSqlAndRefresh();
   }
 
-  onDataReceived(dataList) {
+  onDataReceived(dataList: any) {
     this.lastQueryMeta = null;
     this.lastQueryError = null;
 
-    const anySeriesFromQuery = _.find(dataList, { refId: this.target.refId });
+    const anySeriesFromQuery: any = _.find(dataList, { refId: this.target.refId });
     if (anySeriesFromQuery) {
       this.lastQueryMeta = anySeriesFromQuery.meta;
     }
   }
 
-  onDataError(err) {
+  onDataError(err: any) {
     if (err.data && err.data.results) {
       const queryRes = err.data.results[this.target.refId];
       if (queryRes) {
@@ -269,8 +291,8 @@ export class MysqlQueryCtrl extends QueryCtrl {
     }
   }
 
-  transformToSegments(config) {
-    return results => {
+  transformToSegments(config: any) {
+    return (results: any) => {
       const segments = _.map(results, segment => {
         return this.uiSegmentSrv.newSegment({
           value: segment.text,
@@ -304,15 +326,15 @@ export class MysqlQueryCtrl extends QueryCtrl {
     };
   }
 
-  findAggregateIndex(selectParts) {
+  findAggregateIndex(selectParts: any) {
     return _.findIndex(selectParts, (p: any) => p.def.type === 'aggregate' || p.def.type === 'percentile');
   }
 
-  findWindowIndex(selectParts) {
+  findWindowIndex(selectParts: any) {
     return _.findIndex(selectParts, (p: any) => p.def.type === 'window' || p.def.type === 'moving_window');
   }
 
-  addSelectPart(selectParts, item, subItem) {
+  addSelectPart(selectParts: any[], item: { value: any }, subItem: { type: any; value: any }) {
     let partType = item.value;
     if (subItem && subItem.type) {
       partType = subItem.type;
@@ -381,10 +403,10 @@ export class MysqlQueryCtrl extends QueryCtrl {
     }
 
     this.updatePersistedParts();
-    this.panelCtrl.refresh();
+    this.updateRawSqlAndRefresh();
   }
 
-  removeSelectPart(selectParts, part) {
+  removeSelectPart(selectParts: any, part: { def: { type: string } }) {
     if (part.def.type === 'column') {
       // remove all parts of column unless its last column
       if (this.selectParts.length > 1) {
@@ -399,7 +421,7 @@ export class MysqlQueryCtrl extends QueryCtrl {
     this.updatePersistedParts();
   }
 
-  handleSelectPartEvent(selectParts, part, evt) {
+  handleSelectPartEvent(selectParts: any, part: { def: any }, evt: { name: any }) {
     switch (evt.name) {
       case 'get-param-options': {
         switch (part.def.type) {
@@ -417,21 +439,21 @@ export class MysqlQueryCtrl extends QueryCtrl {
       }
       case 'part-param-changed': {
         this.updatePersistedParts();
-        this.panelCtrl.refresh();
+        this.updateRawSqlAndRefresh();
         break;
       }
       case 'action': {
         this.removeSelectPart(selectParts, part);
-        this.panelCtrl.refresh();
+        this.updateRawSqlAndRefresh();
         break;
       }
       case 'get-part-actions': {
-        return this.$q.when([{ text: 'Remove', value: 'remove-part' }]);
+        return Promise.resolve([{ text: 'Remove', value: 'remove-part' }]);
       }
     }
   }
 
-  handleGroupPartEvent(part, index, evt) {
+  handleGroupPartEvent(part: any, index: any, evt: { name: any }) {
     switch (evt.name) {
       case 'get-param-options': {
         return this.datasource
@@ -441,21 +463,21 @@ export class MysqlQueryCtrl extends QueryCtrl {
       }
       case 'part-param-changed': {
         this.updatePersistedParts();
-        this.panelCtrl.refresh();
+        this.updateRawSqlAndRefresh();
         break;
       }
       case 'action': {
         this.removeGroup(part, index);
-        this.panelCtrl.refresh();
+        this.updateRawSqlAndRefresh();
         break;
       }
       case 'get-part-actions': {
-        return this.$q.when([{ text: 'Remove', value: 'remove-part' }]);
+        return Promise.resolve([{ text: 'Remove', value: 'remove-part' }]);
       }
     }
   }
 
-  addGroup(partType, value) {
+  addGroup(partType: string, value: string) {
     let params = [value];
     if (partType === 'time') {
       params = ['$__interval', 'none'];
@@ -484,7 +506,7 @@ export class MysqlQueryCtrl extends QueryCtrl {
     this.updatePersistedParts();
   }
 
-  removeGroup(part, index) {
+  removeGroup(part: { def: { type: string } }, index: number) {
     if (part.def.type === 'time') {
       // remove aggregations
       this.selectParts = _.map(this.selectParts, (s: any) => {
@@ -501,7 +523,7 @@ export class MysqlQueryCtrl extends QueryCtrl {
     this.updatePersistedParts();
   }
 
-  handleWherePartEvent(whereParts, part, evt, index) {
+  handleWherePartEvent(whereParts: any, part: any, evt: any, index: any) {
     switch (evt.name) {
       case 'get-param-options': {
         switch (evt.param.name) {
@@ -513,7 +535,7 @@ export class MysqlQueryCtrl extends QueryCtrl {
           case 'right':
             if (['int', 'bigint', 'double', 'datetime'].indexOf(part.datatype) > -1) {
               // don't do value lookups for numerical fields
-              return this.$q.when([]);
+              return Promise.resolve([]);
             } else {
               return this.datasource
                 .metricFindQuery(this.metaBuilder.buildValueQuery(part.params[0]))
@@ -528,9 +550,9 @@ export class MysqlQueryCtrl extends QueryCtrl {
                 .catch(this.handleQueryError.bind(this));
             }
           case 'op':
-            return this.$q.when(this.uiSegmentSrv.newOperators(this.metaBuilder.getOperators(part.datatype)));
+            return Promise.resolve(this.uiSegmentSrv.newOperators(this.metaBuilder.getOperators(part.datatype)));
           default:
-            return this.$q.when([]);
+            return Promise.resolve([]);
         }
       }
       case 'part-param-changed': {
@@ -540,18 +562,18 @@ export class MysqlQueryCtrl extends QueryCtrl {
             part.datatype = d[0].text;
           }
         });
-        this.panelCtrl.refresh();
+        this.updateRawSqlAndRefresh();
         break;
       }
       case 'action': {
         // remove element
         whereParts.splice(index, 1);
         this.updatePersistedParts();
-        this.panelCtrl.refresh();
+        this.updateRawSqlAndRefresh();
         break;
       }
       case 'get-part-actions': {
-        return this.$q.when([{ text: 'Remove', value: 'remove-part' }]);
+        return Promise.resolve([{ text: 'Remove', value: 'remove-part' }]);
       }
     }
   }
@@ -564,10 +586,10 @@ export class MysqlQueryCtrl extends QueryCtrl {
       options.push(this.uiSegmentSrv.newSegment({ type: 'macro', value: '$__timeFilter' }));
     }
     options.push(this.uiSegmentSrv.newSegment({ type: 'expression', value: 'Expression' }));
-    return this.$q.when(options);
+    return Promise.resolve(options);
   }
 
-  addWhereAction(part, index) {
+  addWhereAction(part: any, index: number) {
     switch (this.whereAdd.type) {
       case 'macro': {
         const partModel = sqlPart.create({ type: 'macro', name: this.whereAdd.value, params: [] });
@@ -586,13 +608,13 @@ export class MysqlQueryCtrl extends QueryCtrl {
 
     this.updatePersistedParts();
     this.resetPlusButton(this.whereAdd);
-    this.panelCtrl.refresh();
+    this.updateRawSqlAndRefresh();
   }
 
   getGroupOptions() {
     return this.datasource
       .metricFindQuery(this.metaBuilder.buildColumnQuery('group'))
-      .then(tags => {
+      .then((tags: any) => {
         const options = [];
         if (!this.queryModel.hasTimeGroup()) {
           options.push(this.uiSegmentSrv.newSegment({ type: 'time', value: 'time($__interval,none)' }));
@@ -613,10 +635,10 @@ export class MysqlQueryCtrl extends QueryCtrl {
     }
 
     this.resetPlusButton(this.groupAdd);
-    this.panelCtrl.refresh();
+    this.updateRawSqlAndRefresh();
   }
 
-  handleQueryError(err) {
+  handleQueryError(err: any): any[] {
     this.error = err.message || 'Failed to issue metric query';
     return [];
   }

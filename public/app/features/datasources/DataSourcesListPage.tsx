@@ -2,20 +2,17 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
-
 // Components
 import Page from 'app/core/components/Page/Page';
 import OrgActionBar from 'app/core/components/OrgActionBar/OrgActionBar';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import DataSourcesList from './DataSourcesList';
-
 // Types
-import { DataSourceSettings } from '@grafana/ui/src/types';
-import { NavModel, StoreState } from 'app/types';
+import { DataSourceSettings, NavModel } from '@grafana/data';
+import { StoreState } from 'app/types';
 import { LayoutMode } from 'app/core/components/LayoutSelector/LayoutSelector';
-
 // Actions
-import { loadDataSources, setDataSourcesLayoutMode, setDataSourcesSearchQuery } from './state/actions';
+import { loadDataSources } from './state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 
 import {
@@ -24,6 +21,7 @@ import {
   getDataSourcesLayoutMode,
   getDataSourcesSearchQuery,
 } from './state/selectors';
+import { setDataSourcesLayoutMode, setDataSourcesSearchQuery } from './state/reducers';
 
 export interface Props {
   navModel: NavModel;
@@ -39,7 +37,7 @@ export interface Props {
 
 const emptyListModel = {
   title: 'There are no data sources defined yet',
-  buttonIcon: 'gicon gicon-add-datasources',
+  buttonIcon: 'gicon gicon-datasources',
   buttonLink: 'datasources/new',
   buttonTitle: 'Add data source',
   proTip: 'You can also define data sources through configuration files.',
@@ -78,7 +76,7 @@ export class DataSourcesListPage extends PureComponent<Props> {
       <Page navModel={navModel}>
         <Page.Contents isLoading={!hasFetched}>
           <>
-            {hasFetched && dataSourcesCount === 0 && <EmptyListCTA model={emptyListModel} />}
+            {hasFetched && dataSourcesCount === 0 && <EmptyListCTA {...emptyListModel} />}
             {hasFetched &&
               dataSourcesCount > 0 && [
                 <OrgActionBar
@@ -115,9 +113,4 @@ const mapDispatchToProps = {
   setDataSourcesLayoutMode,
 };
 
-export default hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(DataSourcesListPage)
-);
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DataSourcesListPage));

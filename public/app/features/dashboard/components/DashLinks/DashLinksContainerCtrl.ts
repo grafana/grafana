@@ -1,6 +1,15 @@
 import angular from 'angular';
 import _ from 'lodash';
 import { iconMap } from './DashLinksEditorCtrl';
+import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
+import { DashboardSrv } from '../../services/DashboardSrv';
+import { PanelEvents } from '@grafana/data';
+import { CoreEvents } from 'app/types';
+import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
+import { promiseToDigest } from '../../../../core/utils/promiseToDigest';
+
+export type DashboardLink = { tags: any; target: string; keepTime: any; includeVars: any };
 
 function dashLinksContainer() {
   return {
@@ -16,10 +25,10 @@ function dashLinksContainer() {
 }
 
 /** @ngInject */
-function dashLink($compile, $sanitize, linkSrv) {
+function dashLink($compile: any, $sanitize: any, linkSrv: LinkSrv) {
   return {
     restrict: 'E',
-    link: (scope, elem) => {
+    link: (scope: any, elem: JQuery) => {
       const link = scope.link;
       const dashboard = scope.dashboard;
 
@@ -79,25 +88,25 @@ function dashLink($compile, $sanitize, linkSrv) {
       }
 
       update();
-      dashboard.events.on('refresh', update, scope);
+      dashboard.events.on(PanelEvents.refresh, update, scope);
     },
   };
 }
 
 export class DashLinksContainerCtrl {
   /** @ngInject */
-  constructor($scope, $rootScope, $q, backendSrv, dashboardSrv, linkSrv) {
+  constructor($scope: any, $rootScope: GrafanaRootScope, dashboardSrv: DashboardSrv, linkSrv: LinkSrv) {
     const currentDashId = dashboardSrv.getCurrent().id;
 
-    function buildLinks(linkDef) {
+    function buildLinks(linkDef: any) {
       if (linkDef.type === 'dashboards') {
         if (!linkDef.tags) {
           console.log('Dashboard link missing tag');
-          return $q.when([]);
+          return Promise.resolve([]);
         }
 
         if (linkDef.asDropdown) {
-          return $q.when([
+          return Promise.resolve([
             {
               title: linkDef.title,
               tags: linkDef.tags,
@@ -114,10 +123,11 @@ export class DashLinksContainerCtrl {
       }
 
       if (linkDef.type === 'link') {
-        return $q.when([
+        return Promise.resolve([
           {
             url: linkDef.url,
             title: linkDef.title,
+            // @ts-ignore
             icon: iconMap[linkDef.icon],
             tooltip: linkDef.tooltip,
             target: linkDef.targetBlank ? '_blank' : '_self',
@@ -127,42 +137,44 @@ export class DashLinksContainerCtrl {
         ]);
       }
 
-      return $q.when([]);
+      return Promise.resolve([]);
     }
 
     function updateDashLinks() {
       const promises = _.map($scope.links, buildLinks);
 
-      $q.all(promises).then(results => {
+      Promise.all(promises).then(results => {
         $scope.generatedLinks = _.flatten(results);
       });
     }
 
-    $scope.searchDashboards = (link, limit) => {
-      return backendSrv.search({ tag: link.tags, limit: limit }).then(results => {
-        return _.reduce(
-          results,
-          (memo, dash) => {
-            // do not add current dashboard
-            if (dash.id !== currentDashId) {
-              memo.push({
-                title: dash.title,
-                url: dash.url,
-                target: link.target === '_self' ? '' : link.target,
-                icon: 'fa fa-th-large',
-                keepTime: link.keepTime,
-                includeVars: link.includeVars,
-              });
-            }
-            return memo;
-          },
-          []
-        );
-      });
+    $scope.searchDashboards = (link: DashboardLink, limit: any) => {
+      return promiseToDigest($scope)(
+        backendSrv.search({ tag: link.tags, limit: limit }).then(results => {
+          return _.reduce(
+            results,
+            (memo, dash) => {
+              // do not add current dashboard
+              if (dash.id !== currentDashId) {
+                memo.push({
+                  title: dash.title,
+                  url: dash.url,
+                  target: link.target === '_self' ? '' : link.target,
+                  icon: 'fa fa-th-large',
+                  keepTime: link.keepTime,
+                  includeVars: link.includeVars,
+                });
+              }
+              return memo;
+            },
+            []
+          );
+        })
+      );
     };
 
-    $scope.fillDropdown = link => {
-      $scope.searchDashboards(link, 100).then(results => {
+    $scope.fillDropdown = (link: { searchHits: any }) => {
+      $scope.searchDashboards(link, 100).then((results: any) => {
         _.each(results, hit => {
           hit.url = linkSrv.getLinkUrl(hit);
         });
@@ -171,7 +183,7 @@ export class DashLinksContainerCtrl {
     };
 
     updateDashLinks();
-    $rootScope.onAppEvent('dash-links-updated', updateDashLinks, $scope);
+    $rootScope.onAppEvent(CoreEvents.dashLinksUpdated, updateDashLinks, $scope);
   }
 }
 

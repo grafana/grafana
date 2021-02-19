@@ -16,8 +16,9 @@ import { importDashboard, removeDashboard } from '../dashboard/state/actions';
 import { getDataSource } from './state/selectors';
 
 // Types
-import { NavModel, PluginDashboard, StoreState } from 'app/types';
-import { DataSourceSettings } from '@grafana/ui/src/types';
+import { PluginDashboard, StoreState } from 'app/types';
+import { DataSourceSettings } from '@grafana/data';
+import { NavModel } from '@grafana/data';
 
 export interface Props {
   navModel: NavModel;
@@ -41,10 +42,10 @@ export class DataSourceDashboards extends PureComponent<Props> {
 
   onImport = (dashboard: PluginDashboard, overwrite: boolean) => {
     const { dataSource, importDashboard } = this.props;
-    const data = {
+    const data: any = {
       pluginId: dashboard.pluginId,
       path: dashboard.path,
-      overwrite: overwrite,
+      overwrite,
       inputs: [],
     };
 
@@ -98,9 +99,4 @@ const mapDispatchToProps = {
   removeDashboard,
 };
 
-export default hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(DataSourceDashboards)
-);
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DataSourceDashboards));

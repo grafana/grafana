@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"errors"
 )
 
@@ -31,12 +32,12 @@ type RevokeAuthTokenCmd struct {
 
 // UserTokenService are used for generating and validating user tokens
 type UserTokenService interface {
-	CreateToken(userId int64, clientIP, userAgent string) (*UserToken, error)
-	LookupToken(unhashedToken string) (*UserToken, error)
-	TryRotateToken(token *UserToken, clientIP, userAgent string) (bool, error)
-	RevokeToken(token *UserToken) error
-	RevokeAllUserTokens(userId int64) error
-	ActiveTokenCount() (int64, error)
-	GetUserToken(userId, userTokenId int64) (*UserToken, error)
-	GetUserTokens(userId int64) ([]*UserToken, error)
+	CreateToken(ctx context.Context, userId int64, clientIP, userAgent string) (*UserToken, error)
+	LookupToken(ctx context.Context, unhashedToken string) (*UserToken, error)
+	TryRotateToken(ctx context.Context, token *UserToken, clientIP, userAgent string) (bool, error)
+	RevokeToken(ctx context.Context, token *UserToken) error
+	RevokeAllUserTokens(ctx context.Context, userId int64) error
+	ActiveTokenCount(ctx context.Context) (int64, error)
+	GetUserToken(ctx context.Context, userId, userTokenId int64) (*UserToken, error)
+	GetUserTokens(ctx context.Context, userId int64) ([]*UserToken, error)
 }

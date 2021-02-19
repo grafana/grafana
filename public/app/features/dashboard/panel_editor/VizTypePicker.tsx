@@ -1,13 +1,13 @@
 import React, { PureComponent } from 'react';
 
 import config from 'app/core/config';
-import { PanelPlugin } from 'app/types/plugins';
 import VizTypePickerPlugin from './VizTypePickerPlugin';
 import { EmptySearchResult } from '@grafana/ui';
+import { PanelPluginMeta } from '@grafana/data';
 
 export interface Props {
-  current: PanelPlugin;
-  onTypeChanged: (newType: PanelPlugin) => void;
+  current: PanelPluginMeta;
+  onTypeChange: (newType: PanelPluginMeta) => void;
   searchQuery: string;
   onClose: () => void;
 }
@@ -25,30 +25,25 @@ export class VizTypePicker extends PureComponent<Props> {
     return filteredPluginList.length - 1;
   }
 
-  get getPanelPlugins(): PanelPlugin[] {
+  get getPanelPlugins(): PanelPluginMeta[] {
     const allPanels = config.panels;
 
     return Object.keys(allPanels)
       .filter(key => allPanels[key]['hideFromList'] === false)
       .map(key => allPanels[key])
-      .sort((a: PanelPlugin, b: PanelPlugin) => a.sort - b.sort);
+      .sort((a: PanelPluginMeta, b: PanelPluginMeta) => a.sort - b.sort);
   }
 
-  renderVizPlugin = (plugin: PanelPlugin, index: number) => {
-    const { onTypeChanged } = this.props;
+  renderVizPlugin = (plugin: PanelPluginMeta, index: number) => {
+    const { onTypeChange } = this.props;
     const isCurrent = plugin.id === this.props.current.id;
 
     return (
-      <VizTypePickerPlugin
-        key={plugin.id}
-        isCurrent={isCurrent}
-        plugin={plugin}
-        onClick={() => onTypeChanged(plugin)}
-      />
+      <VizTypePickerPlugin key={plugin.id} isCurrent={isCurrent} plugin={plugin} onClick={() => onTypeChange(plugin)} />
     );
   };
 
-  getFilteredPluginList = (): PanelPlugin[] => {
+  getFilteredPluginList = (): PanelPluginMeta[] => {
     const { searchQuery } = this.props;
     const regex = new RegExp(searchQuery, 'i');
     const pluginList = this.pluginList;

@@ -2,29 +2,16 @@ import AdminListUsersCtrl from './AdminListUsersCtrl';
 import AdminEditUserCtrl from './AdminEditUserCtrl';
 import AdminListOrgsCtrl from './AdminListOrgsCtrl';
 import AdminEditOrgCtrl from './AdminEditOrgCtrl';
-import StyleGuideCtrl from './StyleGuideCtrl';
 
 import coreModule from 'app/core/core_module';
-
-class AdminSettingsCtrl {
-  navModel: any;
-
-  /** @ngInject */
-  constructor($scope, backendSrv, navModelSrv) {
-    this.navModel = navModelSrv.getNav('admin', 'server-settings', 0);
-
-    backendSrv.get('/api/admin/settings').then(settings => {
-      $scope.settings = settings;
-    });
-  }
-}
+import { NavModelSrv } from 'app/core/core';
 
 class AdminHomeCtrl {
   navModel: any;
 
   /** @ngInject */
-  constructor(navModelSrv) {
-    this.navModel = navModelSrv.getNav('admin', 0);
+  constructor(navModelSrv: NavModelSrv) {
+    this.navModel = navModelSrv.getNav('admin');
   }
 }
 
@@ -32,6 +19,4 @@ coreModule.controller('AdminListUsersCtrl', AdminListUsersCtrl);
 coreModule.controller('AdminEditUserCtrl', AdminEditUserCtrl);
 coreModule.controller('AdminListOrgsCtrl', AdminListOrgsCtrl);
 coreModule.controller('AdminEditOrgCtrl', AdminEditOrgCtrl);
-coreModule.controller('AdminSettingsCtrl', AdminSettingsCtrl);
 coreModule.controller('AdminHomeCtrl', AdminHomeCtrl);
-coreModule.controller('StyleGuideCtrl', StyleGuideCtrl);

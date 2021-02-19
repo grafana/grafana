@@ -1,0 +1,901 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should disable access key id field 1`] = `
+<Fragment>
+  <h3
+    className="page-heading"
+  >
+    CloudWatch Details
+  </h3>
+  <div
+    className="gf-form-group"
+  >
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-14"
+        >
+          Auth Provider
+        </Component>
+        <Select
+          allowCustomValue={false}
+          autoFocus={false}
+          backspaceRemovesValue={true}
+          className="width-30"
+          components={
+            Object {
+              "Group": [Function],
+              "IndicatorsContainer": [Function],
+              "MenuList": [Function],
+              "Option": [Function],
+              "SingleValue": [Function],
+            }
+          }
+          defaultValue="keys"
+          isClearable={false}
+          isDisabled={false}
+          isLoading={false}
+          isMulti={false}
+          isSearchable={true}
+          maxMenuHeight={300}
+          onChange={[Function]}
+          openMenuOnFocus={false}
+          options={
+            Array [
+              Object {
+                "label": "Access & secret key",
+                "value": "keys",
+              },
+              Object {
+                "label": "Credentials file",
+                "value": "credentials",
+              },
+              Object {
+                "label": "ARN",
+                "value": "arn",
+              },
+            ]
+          }
+          tabSelectsValue={true}
+          value={
+            Object {
+              "label": "Access & secret key",
+              "value": "keys",
+            }
+          }
+        />
+      </div>
+    </div>
+    <div>
+      <div
+        className="gf-form-inline"
+      >
+        <div
+          className="gf-form"
+        >
+          <Component
+            className="width-14"
+          >
+            Access Key ID
+          </Component>
+          <div
+            className="width-30"
+          >
+            <Input
+              className="width-30"
+              onChange={[Function]}
+              value=""
+            />
+          </div>
+        </div>
+      </div>
+      <div
+        className="gf-form-inline"
+      >
+        <div
+          className="gf-form"
+        >
+          <Component
+            className="width-14"
+          >
+            Secret Access Key
+          </Component>
+          <div
+            className="width-30"
+          >
+            <Input
+              className="width-30"
+              onChange={[Function]}
+              value=""
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-14"
+          tooltip="Specify the region, such as for US West (Oregon) use \` us-west-2 \` as the region."
+        >
+          Default Region
+        </Component>
+        <Select
+          allowCustomValue={false}
+          autoFocus={false}
+          backspaceRemovesValue={true}
+          className="width-30"
+          components={
+            Object {
+              "Group": [Function],
+              "IndicatorsContainer": [Function],
+              "MenuList": [Function],
+              "Option": [Function],
+              "SingleValue": [Function],
+            }
+          }
+          defaultValue="us-east-2"
+          isClearable={false}
+          isDisabled={false}
+          isLoading={false}
+          isMulti={false}
+          isSearchable={true}
+          maxMenuHeight={300}
+          onChange={[Function]}
+          openMenuOnFocus={false}
+          options={Array []}
+          tabSelectsValue={true}
+        />
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-14"
+          tooltip="Namespaces of Custom Metrics."
+        >
+          Custom Metrics
+        </Component>
+        <Input
+          className="width-30"
+          onChange={[Function]}
+          placeholder="Namespace1,Namespace2"
+          value=""
+        />
+      </div>
+    </div>
+  </div>
+</Fragment>
+`;
+
+exports[`Render should render component 1`] = `
+<Fragment>
+  <h3
+    className="page-heading"
+  >
+    CloudWatch Details
+  </h3>
+  <div
+    className="gf-form-group"
+  >
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-14"
+        >
+          Auth Provider
+        </Component>
+        <Select
+          allowCustomValue={false}
+          autoFocus={false}
+          backspaceRemovesValue={true}
+          className="width-30"
+          components={
+            Object {
+              "Group": [Function],
+              "IndicatorsContainer": [Function],
+              "MenuList": [Function],
+              "Option": [Function],
+              "SingleValue": [Function],
+            }
+          }
+          defaultValue="keys"
+          isClearable={false}
+          isDisabled={false}
+          isLoading={false}
+          isMulti={false}
+          isSearchable={true}
+          maxMenuHeight={300}
+          onChange={[Function]}
+          openMenuOnFocus={false}
+          options={
+            Array [
+              Object {
+                "label": "Access & secret key",
+                "value": "keys",
+              },
+              Object {
+                "label": "Credentials file",
+                "value": "credentials",
+              },
+              Object {
+                "label": "ARN",
+                "value": "arn",
+              },
+            ]
+          }
+          tabSelectsValue={true}
+          value={
+            Object {
+              "label": "Access & secret key",
+              "value": "keys",
+            }
+          }
+        />
+      </div>
+    </div>
+    <div>
+      <div
+        className="gf-form-inline"
+      >
+        <div
+          className="gf-form"
+        >
+          <Component
+            className="width-14"
+          >
+            Access Key ID
+          </Component>
+          <div
+            className="width-30"
+          >
+            <Input
+              className="width-30"
+              onChange={[Function]}
+              value=""
+            />
+          </div>
+        </div>
+      </div>
+      <div
+        className="gf-form-inline"
+      >
+        <div
+          className="gf-form"
+        >
+          <Component
+            className="width-14"
+          >
+            Secret Access Key
+          </Component>
+          <div
+            className="width-30"
+          >
+            <Input
+              className="width-30"
+              onChange={[Function]}
+              value=""
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-14"
+          tooltip="Specify the region, such as for US West (Oregon) use \` us-west-2 \` as the region."
+        >
+          Default Region
+        </Component>
+        <Select
+          allowCustomValue={false}
+          autoFocus={false}
+          backspaceRemovesValue={true}
+          className="width-30"
+          components={
+            Object {
+              "Group": [Function],
+              "IndicatorsContainer": [Function],
+              "MenuList": [Function],
+              "Option": [Function],
+              "SingleValue": [Function],
+            }
+          }
+          defaultValue="us-east-2"
+          isClearable={false}
+          isDisabled={false}
+          isLoading={false}
+          isMulti={false}
+          isSearchable={true}
+          maxMenuHeight={300}
+          onChange={[Function]}
+          openMenuOnFocus={false}
+          options={Array []}
+          tabSelectsValue={true}
+        />
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-14"
+          tooltip="Namespaces of Custom Metrics."
+        >
+          Custom Metrics
+        </Component>
+        <Input
+          className="width-30"
+          onChange={[Function]}
+          placeholder="Namespace1,Namespace2"
+          value=""
+        />
+      </div>
+    </div>
+  </div>
+</Fragment>
+`;
+
+exports[`Render should should show access key and secret access key fields 1`] = `
+<Fragment>
+  <h3
+    className="page-heading"
+  >
+    CloudWatch Details
+  </h3>
+  <div
+    className="gf-form-group"
+  >
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-14"
+        >
+          Auth Provider
+        </Component>
+        <Select
+          allowCustomValue={false}
+          autoFocus={false}
+          backspaceRemovesValue={true}
+          className="width-30"
+          components={
+            Object {
+              "Group": [Function],
+              "IndicatorsContainer": [Function],
+              "MenuList": [Function],
+              "Option": [Function],
+              "SingleValue": [Function],
+            }
+          }
+          defaultValue="keys"
+          isClearable={false}
+          isDisabled={false}
+          isLoading={false}
+          isMulti={false}
+          isSearchable={true}
+          maxMenuHeight={300}
+          onChange={[Function]}
+          openMenuOnFocus={false}
+          options={
+            Array [
+              Object {
+                "label": "Access & secret key",
+                "value": "keys",
+              },
+              Object {
+                "label": "Credentials file",
+                "value": "credentials",
+              },
+              Object {
+                "label": "ARN",
+                "value": "arn",
+              },
+            ]
+          }
+          tabSelectsValue={true}
+          value={
+            Object {
+              "label": "Access & secret key",
+              "value": "keys",
+            }
+          }
+        />
+      </div>
+    </div>
+    <div>
+      <div
+        className="gf-form-inline"
+      >
+        <div
+          className="gf-form"
+        >
+          <Component
+            className="width-14"
+          >
+            Access Key ID
+          </Component>
+          <div
+            className="width-30"
+          >
+            <Input
+              className="width-30"
+              onChange={[Function]}
+              value=""
+            />
+          </div>
+        </div>
+      </div>
+      <div
+        className="gf-form-inline"
+      >
+        <div
+          className="gf-form"
+        >
+          <Component
+            className="width-14"
+          >
+            Secret Access Key
+          </Component>
+          <div
+            className="width-30"
+          >
+            <Input
+              className="width-30"
+              onChange={[Function]}
+              value=""
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-14"
+          tooltip="Specify the region, such as for US West (Oregon) use \` us-west-2 \` as the region."
+        >
+          Default Region
+        </Component>
+        <Select
+          allowCustomValue={false}
+          autoFocus={false}
+          backspaceRemovesValue={true}
+          className="width-30"
+          components={
+            Object {
+              "Group": [Function],
+              "IndicatorsContainer": [Function],
+              "MenuList": [Function],
+              "Option": [Function],
+              "SingleValue": [Function],
+            }
+          }
+          defaultValue="us-east-2"
+          isClearable={false}
+          isDisabled={false}
+          isLoading={false}
+          isMulti={false}
+          isSearchable={true}
+          maxMenuHeight={300}
+          onChange={[Function]}
+          openMenuOnFocus={false}
+          options={Array []}
+          tabSelectsValue={true}
+        />
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-14"
+          tooltip="Namespaces of Custom Metrics."
+        >
+          Custom Metrics
+        </Component>
+        <Input
+          className="width-30"
+          onChange={[Function]}
+          placeholder="Namespace1,Namespace2"
+          value=""
+        />
+      </div>
+    </div>
+  </div>
+</Fragment>
+`;
+
+exports[`Render should should show arn role field 1`] = `
+<Fragment>
+  <h3
+    className="page-heading"
+  >
+    CloudWatch Details
+  </h3>
+  <div
+    className="gf-form-group"
+  >
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-14"
+        >
+          Auth Provider
+        </Component>
+        <Select
+          allowCustomValue={false}
+          autoFocus={false}
+          backspaceRemovesValue={true}
+          className="width-30"
+          components={
+            Object {
+              "Group": [Function],
+              "IndicatorsContainer": [Function],
+              "MenuList": [Function],
+              "Option": [Function],
+              "SingleValue": [Function],
+            }
+          }
+          defaultValue="keys"
+          isClearable={false}
+          isDisabled={false}
+          isLoading={false}
+          isMulti={false}
+          isSearchable={true}
+          maxMenuHeight={300}
+          onChange={[Function]}
+          openMenuOnFocus={false}
+          options={
+            Array [
+              Object {
+                "label": "Access & secret key",
+                "value": "keys",
+              },
+              Object {
+                "label": "Credentials file",
+                "value": "credentials",
+              },
+              Object {
+                "label": "ARN",
+                "value": "arn",
+              },
+            ]
+          }
+          tabSelectsValue={true}
+          value={
+            Object {
+              "label": "Access & secret key",
+              "value": "keys",
+            }
+          }
+        />
+      </div>
+    </div>
+    <div>
+      <div
+        className="gf-form-inline"
+      >
+        <div
+          className="gf-form"
+        >
+          <Component
+            className="width-14"
+          >
+            Access Key ID
+          </Component>
+          <div
+            className="width-30"
+          >
+            <Input
+              className="width-30"
+              onChange={[Function]}
+              value=""
+            />
+          </div>
+        </div>
+      </div>
+      <div
+        className="gf-form-inline"
+      >
+        <div
+          className="gf-form"
+        >
+          <Component
+            className="width-14"
+          >
+            Secret Access Key
+          </Component>
+          <div
+            className="width-30"
+          >
+            <Input
+              className="width-30"
+              onChange={[Function]}
+              value=""
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-14"
+          tooltip="Specify the region, such as for US West (Oregon) use \` us-west-2 \` as the region."
+        >
+          Default Region
+        </Component>
+        <Select
+          allowCustomValue={false}
+          autoFocus={false}
+          backspaceRemovesValue={true}
+          className="width-30"
+          components={
+            Object {
+              "Group": [Function],
+              "IndicatorsContainer": [Function],
+              "MenuList": [Function],
+              "Option": [Function],
+              "SingleValue": [Function],
+            }
+          }
+          defaultValue="us-east-2"
+          isClearable={false}
+          isDisabled={false}
+          isLoading={false}
+          isMulti={false}
+          isSearchable={true}
+          maxMenuHeight={300}
+          onChange={[Function]}
+          openMenuOnFocus={false}
+          options={Array []}
+          tabSelectsValue={true}
+        />
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-14"
+          tooltip="Namespaces of Custom Metrics."
+        >
+          Custom Metrics
+        </Component>
+        <Input
+          className="width-30"
+          onChange={[Function]}
+          placeholder="Namespace1,Namespace2"
+          value=""
+        />
+      </div>
+    </div>
+  </div>
+</Fragment>
+`;
+
+exports[`Render should should show credentials profile name field 1`] = `
+<Fragment>
+  <h3
+    className="page-heading"
+  >
+    CloudWatch Details
+  </h3>
+  <div
+    className="gf-form-group"
+  >
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-14"
+        >
+          Auth Provider
+        </Component>
+        <Select
+          allowCustomValue={false}
+          autoFocus={false}
+          backspaceRemovesValue={true}
+          className="width-30"
+          components={
+            Object {
+              "Group": [Function],
+              "IndicatorsContainer": [Function],
+              "MenuList": [Function],
+              "Option": [Function],
+              "SingleValue": [Function],
+            }
+          }
+          defaultValue="keys"
+          isClearable={false}
+          isDisabled={false}
+          isLoading={false}
+          isMulti={false}
+          isSearchable={true}
+          maxMenuHeight={300}
+          onChange={[Function]}
+          openMenuOnFocus={false}
+          options={
+            Array [
+              Object {
+                "label": "Access & secret key",
+                "value": "keys",
+              },
+              Object {
+                "label": "Credentials file",
+                "value": "credentials",
+              },
+              Object {
+                "label": "ARN",
+                "value": "arn",
+              },
+            ]
+          }
+          tabSelectsValue={true}
+          value={
+            Object {
+              "label": "Access & secret key",
+              "value": "keys",
+            }
+          }
+        />
+      </div>
+    </div>
+    <div>
+      <div
+        className="gf-form-inline"
+      >
+        <div
+          className="gf-form"
+        >
+          <Component
+            className="width-14"
+          >
+            Access Key ID
+          </Component>
+          <div
+            className="width-30"
+          >
+            <Input
+              className="width-30"
+              onChange={[Function]}
+              value=""
+            />
+          </div>
+        </div>
+      </div>
+      <div
+        className="gf-form-inline"
+      >
+        <div
+          className="gf-form"
+        >
+          <Component
+            className="width-14"
+          >
+            Secret Access Key
+          </Component>
+          <div
+            className="width-30"
+          >
+            <Input
+              className="width-30"
+              onChange={[Function]}
+              value=""
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-14"
+          tooltip="Specify the region, such as for US West (Oregon) use \` us-west-2 \` as the region."
+        >
+          Default Region
+        </Component>
+        <Select
+          allowCustomValue={false}
+          autoFocus={false}
+          backspaceRemovesValue={true}
+          className="width-30"
+          components={
+            Object {
+              "Group": [Function],
+              "IndicatorsContainer": [Function],
+              "MenuList": [Function],
+              "Option": [Function],
+              "SingleValue": [Function],
+            }
+          }
+          defaultValue="us-east-2"
+          isClearable={false}
+          isDisabled={false}
+          isLoading={false}
+          isMulti={false}
+          isSearchable={true}
+          maxMenuHeight={300}
+          onChange={[Function]}
+          openMenuOnFocus={false}
+          options={Array []}
+          tabSelectsValue={true}
+        />
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-14"
+          tooltip="Namespaces of Custom Metrics."
+        >
+          Custom Metrics
+        </Component>
+        <Input
+          className="width-30"
+          onChange={[Function]}
+          placeholder="Namespace1,Namespace2"
+          value=""
+        />
+      </div>
+    </div>
+  </div>
+</Fragment>
+`;

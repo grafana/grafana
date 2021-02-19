@@ -138,7 +138,8 @@ func TestDeleteExpiredSnapshots(t *testing.T) {
 			OrgId:        1,
 			SignedInUser: &m.SignedInUser{OrgRole: m.ROLE_ADMIN},
 		}
-		SearchDashboardSnapshots(&query)
+		err = SearchDashboardSnapshots(&query)
+		So(err, ShouldBeNil)
 
 		So(len(query.Result), ShouldEqual, 1)
 		So(query.Result[0].Key, ShouldEqual, notExpiredsnapshot.Key)

@@ -1,7 +1,11 @@
-import { Variable, containsVariable, assignModelProperties, variableTypes } from './variable';
-import { stringToJsRegex } from '@grafana/ui';
+import { assignModelProperties, containsVariable, VariableActions, variableTypes } from './variable';
+import { stringToJsRegex } from '@grafana/data';
+import { VariableSrv } from './variable_srv';
+import { TemplateSrv } from './template_srv';
+import { DatasourceSrv } from '../plugins/datasource_srv';
+import { config } from '@grafana/runtime';
 
-export class DatasourceVariable implements Variable {
+export class DatasourceVariable implements VariableActions {
   regex: any;
   query: string;
   options: any;
@@ -11,7 +15,7 @@ export class DatasourceVariable implements Variable {
   refresh: any;
   skipUrlSync: boolean;
 
-  defaults = {
+  defaults: any = {
     type: 'datasource',
     name: '',
     hide: 0,
@@ -27,7 +31,12 @@ export class DatasourceVariable implements Variable {
   };
 
   /** @ngInject */
-  constructor(private model, private datasourceSrv, private variableSrv, private templateSrv) {
+  constructor(
+    private model: any,
+    private datasourceSrv: DatasourceSrv,
+    private variableSrv: VariableSrv,
+    private templateSrv: TemplateSrv
+  ) {
     assignModelProperties(this, model, this.defaults);
     this.refresh = 1;
   }
@@ -40,7 +49,7 @@ export class DatasourceVariable implements Variable {
     return this.model;
   }
 
-  setValue(option) {
+  setValue(option: any) {
     return this.variableSrv.setOptionAsCurrent(this, option);
   }
 
@@ -76,21 +85,22 @@ export class DatasourceVariable implements Variable {
     if (this.includeAll) {
       this.addAllOption();
     }
-    return this.variableSrv.validateVariableSelectionState(this);
+    const { defaultDatasource } = config.bootData.settings;
+    return this.variableSrv.validateVariableSelectionState(this, defaultDatasource);
   }
 
   addAllOption() {
     this.options.unshift({ text: 'All', value: '$__all' });
   }
 
-  dependsOn(variable) {
+  dependsOn(variable: any) {
     if (this.regex) {
       return containsVariable(this.regex, variable.name);
     }
     return false;
   }
 
-  setValueFromUrl(urlValue) {
+  setValueFromUrl(urlValue: string | string[]) {
     return this.variableSrv.setOptionFromUrl(this, urlValue);
   }
 

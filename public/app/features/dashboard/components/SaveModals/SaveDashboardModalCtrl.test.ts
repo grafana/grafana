@@ -1,6 +1,6 @@
 import { SaveDashboardModalCtrl } from './SaveDashboardModalCtrl';
 
-const setup = (timeChanged, variableValuesChanged, cb) => {
+const setup = (timeChanged: boolean, variableValuesChanged: boolean, cb: Function) => {
   const dash = {
     hasTimeChanged: jest.fn().mockReturnValue(timeChanged),
     hasVariableValuesChanged: jest.fn().mockReturnValue(variableValuesChanged),
@@ -8,7 +8,7 @@ const setup = (timeChanged, variableValuesChanged, cb) => {
     resetOriginalVariables: jest.fn(),
     getSaveModelClone: jest.fn().mockReturnValue({}),
   };
-  const dashboardSrvMock = {
+  const dashboardSrvMock: any = {
     getCurrent: jest.fn().mockReturnValue(dash),
     save: jest.fn().mockReturnValue(Promise.resolve()),
   };
@@ -22,7 +22,7 @@ const setup = (timeChanged, variableValuesChanged, cb) => {
 
 describe('SaveDashboardModal', () => {
   describe('Given time and template variable values have not changed', () => {
-    setup(false, false, (dash, ctrl: SaveDashboardModalCtrl) => {
+    setup(false, false, (dash: any, ctrl: SaveDashboardModalCtrl) => {
       it('When creating ctrl should set time and template variable values changed', () => {
         expect(ctrl.timeChange).toBeFalsy();
         expect(ctrl.variableValueChange).toBeFalsy();
@@ -31,7 +31,7 @@ describe('SaveDashboardModal', () => {
   });
 
   describe('Given time and template variable values have changed', () => {
-    setup(true, true, (dash, ctrl: SaveDashboardModalCtrl) => {
+    setup(true, true, (dash: any, ctrl: SaveDashboardModalCtrl) => {
       it('When creating ctrl should set time and template variable values changed', () => {
         expect(ctrl.timeChange).toBeTruthy();
         expect(ctrl.variableValueChange).toBeTruthy();

@@ -2,48 +2,33 @@ import _ from 'lodash';
 import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
 import AppInsightsDatasource from './app_insights/app_insights_datasource';
 import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
+import { AzureMonitorQuery, AzureDataSourceJsonData } from './types';
+import { DataSourceApi, DataQueryRequest, DataSourceInstanceSettings } from '@grafana/data';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
-export default class Datasource {
-  id: number;
-  name: string;
+export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDataSourceJsonData> {
   azureMonitorDatasource: AzureMonitorDatasource;
   appInsightsDatasource: AppInsightsDatasource;
   azureLogAnalyticsDatasource: AzureLogAnalyticsDatasource;
 
   /** @ngInject */
-  constructor(instanceSettings, private backendSrv, private templateSrv, private $q) {
-    this.name = instanceSettings.name;
-    this.id = instanceSettings.id;
-    this.azureMonitorDatasource = new AzureMonitorDatasource(
-      instanceSettings,
-      this.backendSrv,
-      this.templateSrv,
-      this.$q
-    );
-    this.appInsightsDatasource = new AppInsightsDatasource(
-      instanceSettings,
-      this.backendSrv,
-      this.templateSrv,
-      this.$q
-    );
+  constructor(instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>, private templateSrv: TemplateSrv) {
+    super(instanceSettings);
+    this.azureMonitorDatasource = new AzureMonitorDatasource(instanceSettings, this.templateSrv);
+    this.appInsightsDatasource = new AppInsightsDatasource(instanceSettings, this.templateSrv);
 
-    this.azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(
-      instanceSettings,
-      this.backendSrv,
-      this.templateSrv,
-      this.$q
-    );
+    this.azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(instanceSettings, this.templateSrv);
   }
 
-  query(options) {
+  async query(options: DataQueryRequest<AzureMonitorQuery>) {
     const promises: any[] = [];
     const azureMonitorOptions = _.cloneDeep(options);
-    const appInsightsTargets = _.cloneDeep(options);
-    const azureLogAnalyticsTargets = _.cloneDeep(options);
+    const appInsightsOptions = _.cloneDeep(options);
+    const azureLogAnalyticsOptions = _.cloneDeep(options);
 
     azureMonitorOptions.targets = _.filter(azureMonitorOptions.targets, ['queryType', 'Azure Monitor']);
-    appInsightsTargets.targets = _.filter(appInsightsTargets.targets, ['queryType', 'Application Insights']);
-    azureLogAnalyticsTargets.targets = _.filter(azureLogAnalyticsTargets.targets, ['queryType', 'Azure Log Analytics']);
+    appInsightsOptions.targets = _.filter(appInsightsOptions.targets, ['queryType', 'Application Insights']);
+    azureLogAnalyticsOptions.targets = _.filter(azureLogAnalyticsOptions.targets, ['queryType', 'Azure Log Analytics']);
 
     if (azureMonitorOptions.targets.length > 0) {
       const amPromise = this.azureMonitorDatasource.query(azureMonitorOptions);
@@ -52,22 +37,22 @@ export default class Datasource {
       }
     }
 
-    if (appInsightsTargets.targets.length > 0) {
-      const aiPromise = this.appInsightsDatasource.query(appInsightsTargets);
+    if (appInsightsOptions.targets.length > 0) {
+      const aiPromise = this.appInsightsDatasource.query(appInsightsOptions);
       if (aiPromise) {
         promises.push(aiPromise);
       }
     }
 
-    if (azureLogAnalyticsTargets.targets.length > 0) {
-      const alaPromise = this.azureLogAnalyticsDatasource.query(azureLogAnalyticsTargets);
+    if (azureLogAnalyticsOptions.targets.length > 0) {
+      const alaPromise = this.azureLogAnalyticsDatasource.query(azureLogAnalyticsOptions);
       if (alaPromise) {
         promises.push(alaPromise);
       }
     }
 
     if (promises.length === 0) {
-      return this.$q.when({ data: [] });
+      return Promise.resolve({ data: [] });
     }
 
     return Promise.all(promises).then(results => {
@@ -75,11 +60,11 @@ export default class Datasource {
     });
   }
 
-  annotationQuery(options) {
+  async annotationQuery(options: any) {
     return this.azureLogAnalyticsDatasource.annotationQuery(options);
   }
 
-  metricFindQuery(query: string) {
+  async metricFindQuery(query: string) {
     if (!query) {
       return Promise.resolve([]);
     }
@@ -102,7 +87,7 @@ export default class Datasource {
     return Promise.resolve([]);
   }
 
-  testDatasource() {
+  async testDatasource() {
     const promises: any[] = [];
 
     if (this.azureMonitorDatasource.isConfigured()) {
@@ -125,7 +110,7 @@ export default class Datasource {
       };
     }
 
-    return this.$q.all(promises).then(results => {
+    return Promise.all(promises).then(results => {
       let status = 'success';
       let message = '';
 
@@ -145,24 +130,59 @@ export default class Datasource {
   }
 
   /* Azure Monitor REST API methods */
-  getResourceGroups() {
-    return this.azureMonitorDatasource.getResourceGroups();
+  getResourceGroups(subscriptionId: string) {
+    return this.azureMonitorDatasource.getResourceGroups(subscriptionId);
   }
 
-  getMetricDefinitions(resourceGroup: string) {
-    return this.azureMonitorDatasource.getMetricDefinitions(resourceGroup);
+  getMetricDefinitions(subscriptionId: string, resourceGroup: string) {
+    return this.azureMonitorDatasource.getMetricDefinitions(subscriptionId, resourceGroup);
   }
 
-  getResourceNames(resourceGroup: string, metricDefinition: string) {
-    return this.azureMonitorDatasource.getResourceNames(resourceGroup, metricDefinition);
+  getResourceNames(subscriptionId: string, resourceGroup: string, metricDefinition: string) {
+    return this.azureMonitorDatasource.getResourceNames(subscriptionId, resourceGroup, metricDefinition);
   }
 
-  getMetricNames(resourceGroup: string, metricDefinition: string, resourceName: string) {
-    return this.azureMonitorDatasource.getMetricNames(resourceGroup, metricDefinition, resourceName);
+  getMetricNames(
+    subscriptionId: string,
+    resourceGroup: string,
+    metricDefinition: string,
+    resourceName: string,
+    metricNamespace: string
+  ) {
+    return this.azureMonitorDatasource.getMetricNames(
+      subscriptionId,
+      resourceGroup,
+      metricDefinition,
+      resourceName,
+      metricNamespace
+    );
   }
 
-  getMetricMetadata(resourceGroup: string, metricDefinition: string, resourceName: string, metricName: string) {
-    return this.azureMonitorDatasource.getMetricMetadata(resourceGroup, metricDefinition, resourceName, metricName);
+  getMetricNamespaces(subscriptionId: string, resourceGroup: string, metricDefinition: string, resourceName: string) {
+    return this.azureMonitorDatasource.getMetricNamespaces(
+      subscriptionId,
+      resourceGroup,
+      metricDefinition,
+      resourceName
+    );
+  }
+
+  getMetricMetadata(
+    subscriptionId: string,
+    resourceGroup: string,
+    metricDefinition: string,
+    resourceName: string,
+    metricNamespace: string,
+    metricName: string
+  ) {
+    return this.azureMonitorDatasource.getMetricMetadata(
+      subscriptionId,
+      resourceGroup,
+      metricDefinition,
+      resourceName,
+      metricNamespace,
+      metricName
+    );
   }
 
   /* Application Insights API method */
@@ -170,16 +190,20 @@ export default class Datasource {
     return this.appInsightsDatasource.getMetricNames();
   }
 
-  getAppInsightsMetricMetadata(metricName) {
+  getAppInsightsMetricMetadata(metricName: string) {
     return this.appInsightsDatasource.getMetricMetadata(metricName);
   }
 
-  getAppInsightsColumns(refId) {
+  getAppInsightsColumns(refId: string | number) {
     return this.appInsightsDatasource.logAnalyticsColumns[refId];
   }
 
   /*Azure Log Analytics */
-  getAzureLogAnalyticsWorkspaces() {
-    return this.azureLogAnalyticsDatasource.getWorkspaces();
+  getAzureLogAnalyticsWorkspaces(subscriptionId: string) {
+    return this.azureLogAnalyticsDatasource.getWorkspaces(subscriptionId);
+  }
+
+  getSubscriptions() {
+    return this.azureMonitorDatasource.getSubscriptions();
   }
 }

@@ -110,7 +110,6 @@ h6,
 .h5,
 .h6 {
   margin-bottom: $space-sm;
-  font-family: $headings-font-family;
   font-weight: $font-weight-regular;
   line-height: $headings-line-height;
   color: $headings-color;
@@ -386,4 +385,8 @@ a.external-link {
 
 th {
   font-weight: $font-weight-semi-bold;
+}
+
+canvas {
+  display: block;
 }

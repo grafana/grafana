@@ -1,0 +1,20 @@
+# ldap-admin
+dn: cn=ldap-admin,ou=users,dc=grafana,dc=org
+mail: ldap-admin@grafana.com
+userPassword: grafana
+objectClass: person
+objectClass: top
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+sn: ldap-admin
+cn: ldap-admin
+
+dn: cn=ldap-torkel,ou=users,dc=grafana,dc=org
+mail: ldap-torkel@grafana.com
+userPassword: grafana
+objectClass: person
+objectClass: top
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+sn: ldap-torkel
+cn: ldap-torkel

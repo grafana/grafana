@@ -1,9 +1,9 @@
 import { TemplateSrv } from '../template_srv';
 
 describe('templateSrv', () => {
-  let _templateSrv;
+  let _templateSrv: any;
 
-  function initTemplateSrv(variables) {
+  function initTemplateSrv(variables: any) {
     _templateSrv = new TemplateSrv();
     _templateSrv.init(variables);
   }
@@ -22,6 +22,35 @@ describe('templateSrv', () => {
   describe('replace can pass scoped vars', () => {
     beforeEach(() => {
       initTemplateSrv([{ type: 'query', name: 'test', current: { value: 'oogle' } }]);
+    });
+
+    it('scoped vars should support objects', () => {
+      const target = _templateSrv.replace('${series.name} ${series.nested.field}', {
+        series: { value: { name: 'Server1', nested: { field: 'nested' } } },
+      });
+      expect(target).toBe('Server1 nested');
+    });
+
+    it('built in vars should support objects', () => {
+      _templateSrv.setGlobalVariable('__dashboard', {
+        value: { name: 'hello' },
+      });
+      const target = _templateSrv.replace('${__dashboard.name}');
+      expect(target).toBe('hello');
+    });
+
+    it('scoped vars should support objects with propert names with dot', () => {
+      const target = _templateSrv.replace('${series.name} ${series.nested["field.with.dot"]}', {
+        series: { value: { name: 'Server1', nested: { 'field.with.dot': 'nested' } } },
+      });
+      expect(target).toBe('Server1 nested');
+    });
+
+    it('scoped vars should support arrays of objects', () => {
+      const target = _templateSrv.replace('${series.rows[0].name} ${series.rows[1].name}', {
+        series: { value: { rows: [{ name: 'first' }, { name: 'second' }] } },
+      });
+      expect(target).toBe('first second');
     });
 
     it('should replace $test with scoped value', () => {
@@ -110,6 +139,23 @@ describe('templateSrv', () => {
     it('should replace $test with globbed value', () => {
       const target = _templateSrv.replace('this.$test.filters', {}, 'glob');
       expect(target).toBe('this.{value1,value2}.filters');
+    });
+
+    describe('when the globbed variable only has one value', () => {
+      beforeEach(() => {
+        initTemplateSrv([
+          {
+            type: 'query',
+            name: 'test',
+            current: { value: ['value1'] },
+          },
+        ]);
+      });
+
+      it('should not glob the value', () => {
+        const target = _templateSrv.replace('this.$test.filters', {}, 'glob');
+        expect(target).toBe('this.value1.filters');
+      });
     });
 
     it('should replace ${test} with globbed value', () => {
@@ -227,6 +273,14 @@ describe('templateSrv', () => {
       initTemplateSrv([{ type: 'query', name: 'test', current: { value: 'value/4' } }]);
       const target = _templateSrv.replace('this:${test:lucene}', {});
       expect(target).toBe('this:value\\/4');
+    });
+  });
+
+  describe('html format', () => {
+    it('should encode values html escape sequences', () => {
+      initTemplateSrv([{ type: 'query', name: 'test', current: { value: '<script>alert(asd)</script>' } }]);
+      const target = _templateSrv.replace('$test', {}, 'html');
+      expect(target).toBe('&lt;script&gt;alert(asd)&lt;/script&gt;');
     });
   });
 
@@ -374,7 +428,7 @@ describe('templateSrv', () => {
     });
 
     it('should set multiple url params', () => {
-      const params = {};
+      const params: any = {};
       _templateSrv.fillVariableValuesForUrl(params);
       expect(params['var-test']).toMatchObject(['val1', 'val2']);
     });
@@ -395,7 +449,7 @@ describe('templateSrv', () => {
     });
 
     it('should not include template variable value in url', () => {
-      const params = {};
+      const params: any = {};
       _templateSrv.fillVariableValuesForUrl(params);
       expect(params['var-test']).toBe(undefined);
     });
@@ -417,7 +471,7 @@ describe('templateSrv', () => {
     });
 
     it('should not include template variable value in url', () => {
-      const params = {};
+      const params: any = {};
       _templateSrv.fillVariableValuesForUrl(params);
       expect(params['var-test']).toBe(undefined);
     });
@@ -429,7 +483,7 @@ describe('templateSrv', () => {
     });
 
     it('should set scoped value as url params', () => {
-      const params = {};
+      const params: any = {};
       _templateSrv.fillVariableValuesForUrl(params, {
         test: { value: 'val1' },
       });
@@ -443,7 +497,7 @@ describe('templateSrv', () => {
     });
 
     it('should not set scoped value as url params', () => {
-      const params = {};
+      const params: any = {};
       _templateSrv.fillVariableValuesForUrl(params, {
         test: { name: 'test', value: 'val1', skipUrlSync: true },
       });
@@ -499,6 +553,11 @@ describe('templateSrv', () => {
   describe('built in interval variables', () => {
     beforeEach(() => {
       initTemplateSrv([]);
+    });
+
+    it('should be possible to fetch value with getBuilInIntervalValue', () => {
+      const val = _templateSrv.getBuiltInIntervalValue();
+      expect(val).toBe('1s');
     });
 
     it('should replace $__interval_ms with interval milliseconds', () => {

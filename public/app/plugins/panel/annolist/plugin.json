@@ -1,0 +1,20 @@
+{
+  "type": "panel",
+  "name": "Annotations list (alpha)",
+  "id": "annolist",
+  "state": "alpha",
+
+  "skipDataQuery": true,
+
+  "info": {
+    "description": "List annotations",
+    "author": {
+      "name": "Grafana Project",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/icn-annolist-panel.svg",
+      "large": "img/icn-annolist-panel.svg"
+    }
+  }
+}

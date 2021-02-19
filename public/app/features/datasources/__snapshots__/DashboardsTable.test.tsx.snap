@@ -20,7 +20,7 @@ exports[`Render should render table 1`] = `
         className="width-1"
       >
         <i
-          className="icon-gf icon-gf-dashboard"
+          className="gicon gicon-dashboard"
         />
       </td>
       <td>
@@ -50,7 +50,7 @@ exports[`Render should render table 1`] = `
         className="width-1"
       >
         <i
-          className="icon-gf icon-gf-dashboard"
+          className="gicon gicon-dashboard"
         />
       </td>
       <td>

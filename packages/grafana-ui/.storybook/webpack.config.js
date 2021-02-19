@@ -1,14 +1,35 @@
 const path = require('path');
+module.exports = ({ config, mode }) => {
+  config.module.rules = [
+    ...(config.module.rules || []),
+    {
+      test: /\.tsx?$/,
+      use: [
+        {
+          loader: require.resolve('ts-loader'),
+          options: {
+            // transpileOnly: true,
+            configFile: path.resolve(__dirname, 'tsconfig.json'),
+          },
+        },
+        {
+          loader: require.resolve('react-docgen-typescript-loader'),
+          options: {
+            tsconfigPath: path.resolve(__dirname, 'tsconfig.json'),
+            // https://github.com/styleguidist/react-docgen-typescript#parseroptions
+            // @ts-ignore
+            propFilter: prop => {
+              if (prop.parent) {
+                return !prop.parent.fileName.includes('node_modules/@types/react/');
+              }
 
-module.exports = (baseConfig, env, config) => {
-  config.module.rules.push({
-    test: /\.(ts|tsx)$/,
-    use: [
-      {
-        loader: require.resolve('awesome-typescript-loader'),
-      },
-    ],
-  });
+              return true;
+            },
+          },
+        },
+      ],
+    },
+  ];
 
   config.module.rules.push({
     test: /\.scss$/,
@@ -20,9 +41,6 @@ module.exports = (baseConfig, env, config) => {
         loader: 'css-loader',
         options: {
           importLoaders: 2,
-          // url: false,
-          // sourceMap: false,
-          // minimize: false,
         },
       },
       {
@@ -55,10 +73,9 @@ module.exports = (baseConfig, env, config) => {
     ],
   });
 
-  config.resolve.extensions.push('.ts', '.tsx');
-
-  // Remove pure js loading rules as Storybook's Babel config is causing problems when mixing ES6 and CJS
-  // More about the problem we encounter: https://github.com/webpack/webpack/issues/4039
-  config.module.rules = config.module.rules.filter(rule => rule.test.toString() !== /\.(mjs|jsx?)$/.toString());
+  config.resolve.extensions.push('.ts', '.tsx', '.mdx');
+  config.stats = {
+    warningsFilter: /export .* was not found in/,
+  };
   return config;
 };

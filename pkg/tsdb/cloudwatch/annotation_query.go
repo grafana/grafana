@@ -24,7 +24,7 @@ func (e *CloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryCo
 	namespace := parameters.Get("namespace").MustString("")
 	metricName := parameters.Get("metricName").MustString("")
 	dimensions := parameters.Get("dimensions").MustMap()
-	statistics, extendedStatistics, err := parseStatistics(parameters)
+	statistics, err := parseStatistics(parameters)
 	if err != nil {
 		return nil, err
 	}
@@ -51,19 +51,23 @@ func (e *CloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryCo
 		if err != nil {
 			return nil, errors.New("Failed to call cloudwatch:DescribeAlarms")
 		}
-		alarmNames = filterAlarms(resp, namespace, metricName, dimensions, statistics, extendedStatistics, period)
+		alarmNames = filterAlarms(resp, namespace, metricName, dimensions, statistics, period)
 	} else {
 		if region == "" || namespace == "" || metricName == "" || len(statistics) == 0 {
-			return result, nil
+			return result, errors.New("Invalid annotations query")
 		}
 
 		var qd []*cloudwatch.Dimension
 		for k, v := range dimensions {
-			if vv, ok := v.(string); ok {
-				qd = append(qd, &cloudwatch.Dimension{
-					Name:  aws.String(k),
-					Value: aws.String(vv),
-				})
+			if vv, ok := v.([]interface{}); ok {
+				for _, vvv := range vv {
+					if vvvv, ok := vvv.(string); ok {
+						qd = append(qd, &cloudwatch.Dimension{
+							Name:  aws.String(k),
+							Value: aws.String(vvvv),
+						})
+					}
+				}
 			}
 		}
 		for _, s := range statistics {
@@ -73,22 +77,6 @@ func (e *CloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryCo
 				Dimensions: qd,
 				Statistic:  aws.String(s),
 				Period:     aws.Int64(period),
-			}
-			resp, err := svc.DescribeAlarmsForMetric(params)
-			if err != nil {
-				return nil, errors.New("Failed to call cloudwatch:DescribeAlarmsForMetric")
-			}
-			for _, alarm := range resp.MetricAlarms {
-				alarmNames = append(alarmNames, alarm.AlarmName)
-			}
-		}
-		for _, s := range extendedStatistics {
-			params := &cloudwatch.DescribeAlarmsForMetricInput{
-				Namespace:         aws.String(namespace),
-				MetricName:        aws.String(metricName),
-				Dimensions:        qd,
-				ExtendedStatistic: aws.String(s),
-				Period:            aws.Int64(period),
 			}
 			resp, err := svc.DescribeAlarmsForMetric(params)
 			if err != nil {
@@ -158,7 +146,7 @@ func transformAnnotationToTable(data []map[string]string, result *tsdb.QueryResu
 	result.Meta.Set("rowCount", len(data))
 }
 
-func filterAlarms(alarms *cloudwatch.DescribeAlarmsOutput, namespace string, metricName string, dimensions map[string]interface{}, statistics []string, extendedStatistics []string, period int64) []*string {
+func filterAlarms(alarms *cloudwatch.DescribeAlarmsOutput, namespace string, metricName string, dimensions map[string]interface{}, statistics []string, period int64) []*string {
 	alarmNames := make([]*string, 0)
 
 	for _, alarm := range alarms.MetricAlarms {
@@ -188,18 +176,6 @@ func filterAlarms(alarms *cloudwatch.DescribeAlarmsOutput, namespace string, met
 		if len(statistics) != 0 {
 			found := false
 			for _, s := range statistics {
-				if *alarm.Statistic == s {
-					found = true
-				}
-			}
-			if !found {
-				continue
-			}
-		}
-
-		if len(extendedStatistics) != 0 {
-			found := false
-			for _, s := range extendedStatistics {
 				if *alarm.Statistic == s {
 					found = true
 				}

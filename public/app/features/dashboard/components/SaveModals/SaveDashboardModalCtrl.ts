@@ -1,4 +1,8 @@
+import { e2e } from '@grafana/e2e';
+
 import coreModule from 'app/core/core_module';
+import { DashboardSrv } from '../../services/DashboardSrv';
+import { CloneOptions } from '../../state/DashboardModel';
 
 const template = `
 <div class="modal-body">
@@ -55,6 +59,7 @@ const template = `
         class="btn btn-primary"
         ng-class="{'btn-primary--processing': ctrl.isSaving}"
         ng-disabled="ctrl.saveForm.$invalid || ctrl.isSaving"
+        aria-label={{ctrl.selectors.save}}
       >
         <span ng-if="!ctrl.isSaving">Save</span>
         <span ng-if="ctrl.isSaving === true">Saving...</span>
@@ -71,30 +76,32 @@ export class SaveDashboardModalCtrl {
   saveTimerange = false;
   time: any;
   originalTime: any;
-  current = [];
-  originalCurrent = [];
+  current: any[] = [];
+  originalCurrent: any[] = [];
   max: number;
   saveForm: any;
   isSaving: boolean;
   dismiss: () => void;
   timeChange = false;
   variableValueChange = false;
+  selectors: typeof e2e.pages.SaveDashboardModal.selectors;
 
   /** @ngInject */
-  constructor(private dashboardSrv) {
+  constructor(private dashboardSrv: DashboardSrv) {
     this.message = '';
     this.max = 64;
     this.isSaving = false;
     this.timeChange = this.dashboardSrv.getCurrent().hasTimeChanged();
     this.variableValueChange = this.dashboardSrv.getCurrent().hasVariableValuesChanged();
+    this.selectors = e2e.pages.SaveDashboardModal.selectors;
   }
 
-  save() {
+  save(): void | Promise<any> {
     if (!this.saveForm.$valid) {
       return;
     }
 
-    const options = {
+    const options: CloneOptions = {
       saveVariables: this.saveVariables,
       saveTimerange: this.saveTimerange,
       message: this.message,
@@ -104,11 +111,10 @@ export class SaveDashboardModalCtrl {
     const saveModel = dashboard.getSaveModelClone(options);
 
     this.isSaving = true;
-
     return this.dashboardSrv.save(saveModel, options).then(this.postSave.bind(this, options));
   }
 
-  postSave(options) {
+  postSave(options?: { saveVariables?: boolean; saveTimerange?: boolean }) {
     if (options.saveVariables) {
       this.dashboardSrv.getCurrent().resetOriginalVariables();
     }

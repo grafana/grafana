@@ -1,8 +1,9 @@
 package hclog
 
 import (
-	"log"
+	"io"
 	"io/ioutil"
+	"log"
 )
 
 // NewNullLogger instantiates a Logger for which all calls
@@ -40,6 +41,12 @@ func (l *nullLogger) Named(name string) Logger { return l }
 
 func (l *nullLogger) ResetNamed(name string) Logger { return l }
 
+func (l *nullLogger) SetLevel(level Level) {}
+
 func (l *nullLogger) StandardLogger(opts *StandardLoggerOptions) *log.Logger {
-	return log.New(ioutil.Discard, "", log.LstdFlags)
+	return log.New(l.StandardWriter(opts), "", log.LstdFlags)
+}
+
+func (l *nullLogger) StandardWriter(opts *StandardLoggerOptions) io.Writer {
+	return ioutil.Discard
 }

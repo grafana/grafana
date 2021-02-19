@@ -1,87 +1,9 @@
-import { ThunkAction } from 'redux-thunk';
-import { getBackendSrv } from 'app/core/services/backend_srv';
-import { StoreState, Team, TeamGroup, TeamMember } from 'app/types';
-import { updateNavIndex, UpdateNavIndexAction } from 'app/core/actions';
+import { getBackendSrv } from '@grafana/runtime';
+
+import { TeamMember, ThunkResult } from 'app/types';
+import { updateNavIndex } from 'app/core/actions';
 import { buildNavModel } from './navModel';
-
-export enum ActionTypes {
-  LoadTeams = 'LOAD_TEAMS',
-  LoadTeam = 'LOAD_TEAM',
-  SetSearchQuery = 'SET_TEAM_SEARCH_QUERY',
-  SetSearchMemberQuery = 'SET_TEAM_MEMBER_SEARCH_QUERY',
-  LoadTeamMembers = 'TEAM_MEMBERS_LOADED',
-  LoadTeamGroups = 'TEAM_GROUPS_LOADED',
-}
-
-export interface LoadTeamsAction {
-  type: ActionTypes.LoadTeams;
-  payload: Team[];
-}
-
-export interface LoadTeamAction {
-  type: ActionTypes.LoadTeam;
-  payload: Team;
-}
-
-export interface LoadTeamMembersAction {
-  type: ActionTypes.LoadTeamMembers;
-  payload: TeamMember[];
-}
-
-export interface LoadTeamGroupsAction {
-  type: ActionTypes.LoadTeamGroups;
-  payload: TeamGroup[];
-}
-
-export interface SetSearchQueryAction {
-  type: ActionTypes.SetSearchQuery;
-  payload: string;
-}
-
-export interface SetSearchMemberQueryAction {
-  type: ActionTypes.SetSearchMemberQuery;
-  payload: string;
-}
-
-export type Action =
-  | LoadTeamsAction
-  | SetSearchQueryAction
-  | LoadTeamAction
-  | LoadTeamMembersAction
-  | SetSearchMemberQueryAction
-  | LoadTeamGroupsAction;
-
-type ThunkResult<R> = ThunkAction<R, StoreState, undefined, Action | UpdateNavIndexAction>;
-
-const teamsLoaded = (teams: Team[]): LoadTeamsAction => ({
-  type: ActionTypes.LoadTeams,
-  payload: teams,
-});
-
-const teamLoaded = (team: Team): LoadTeamAction => ({
-  type: ActionTypes.LoadTeam,
-  payload: team,
-});
-
-const teamMembersLoaded = (teamMembers: TeamMember[]): LoadTeamMembersAction => ({
-  type: ActionTypes.LoadTeamMembers,
-  payload: teamMembers,
-});
-
-const teamGroupsLoaded = (teamGroups: TeamGroup[]): LoadTeamGroupsAction => ({
-  type: ActionTypes.LoadTeamGroups,
-  payload: teamGroups,
-});
-
-export const setSearchMemberQuery = (searchQuery: string): SetSearchMemberQueryAction => ({
-  type: ActionTypes.SetSearchMemberQuery,
-  payload: searchQuery,
-});
-
-export const setSearchQuery = (searchQuery: string): SetSearchQueryAction => ({
-  type: ActionTypes.SetSearchQuery,
-  payload: searchQuery,
-});
+import { teamGroupsLoaded, teamLoaded, teamMembersLoaded, teamsLoaded } from './reducers';
 
 export function loadTeams(): ThunkResult<void> {
   return async dispatch => {
@@ -149,7 +71,7 @@ export function addTeamGroup(groupId: string): ThunkResult<void> {
 export function removeTeamGroup(groupId: string): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const team = getStore().team.team;
-    await getBackendSrv().delete(`/api/teams/${team.id}/groups/${groupId}`);
+    await getBackendSrv().delete(`/api/teams/${team.id}/groups/${encodeURIComponent(groupId)}`);
     dispatch(loadTeamGroups());
   };
 }

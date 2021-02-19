@@ -3,7 +3,7 @@ title = "Using Graphite in Grafana"
 description = "Guide for using graphite in Grafana"
 keywords = ["grafana", "graphite", "guide"]
 type = "docs"
-aliases = ["/datasources/graphite"]
+aliases = ["/docs/grafana/latest/datasources/graphite"]
 [menu.docs]
 name = "Graphite"
 identifier = "graphite"
@@ -28,7 +28,7 @@ queries through the use of query references.
 
 Name | Description
 ------------ | -------------
-*Name* | The data source name. This is how you refer to the data source in panels & queries.
+*Name* | The data source name. This is how you refer to the data source in panels and queries.
 *Default* | Default data source means that it will be pre-selected for new panels.
 *Url* | The HTTP protocol, IP, and port of your graphite-web or graphite-api install.
 *Access* | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser.
@@ -91,7 +91,7 @@ Instead of hard-coding things like server, application and sensor name in you me
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns makes it easy to change the data
 being displayed in your dashboard.
 
-Checkout the [Templating]({{< relref "reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 Graphite 1.1 introduced tags and Grafana added support for Graphite queries with tags in version 5.0. To create a variable using tag values, then you need to use the Grafana functions `tags` and `tag_values`.
@@ -114,6 +114,25 @@ variable with all possible values that exist in the wildcard position.
 You can also create nested variables that use other variables in their definition. For example
 `apps.$app.servers.*` uses the variable `$app` in its query definition.
 
+#### Using `__searchFilter` to filter results in Query Variable
+> Available from Grafana 6.5 and above
+
+Using `__searchFilter` in the query field will filter the query result based on what the user types in the dropdown select box.
+When nothing has been entered by the user the default value for `__searchFilter` is `*` and `` when used as part of a regular expression.
+
+The example below shows how to use `__searchFilter` as part of the query field to enable searching for `server` while the user types in the dropdown select box.
+
+Query
+```bash
+apps.$app.servers.$__searchFilter
+```
+
+TagValues
+```bash
+tag_values(server, server=~${__searchFilter:regex})
+```
+
+
 ### Variable Usage
 
 You can use a variable in a metric node path or as a parameter to a function.
@@ -128,7 +147,7 @@ Why two ways? The first syntax is easier to read and write but does not allow yo
 the second syntax in expressions like  `my.server[[serverNumber]].count`.
 
 Example:
-[Graphite Templated Dashboard](http://play.grafana.org/dashboard/db/graphite-templated-nested)
+[Graphite Templated Dashboard](https://play.grafana.org/dashboard/db/graphite-templated-nested)
 
 ### Variable Usage in Tag Queries
 
@@ -140,21 +159,21 @@ Example of a tag expression with regex formatting and using the Equal Tilde oper
 server=~${servers:regex}
 ```
 
-Checkout the [Advanced Formatting Options section in the Variables]({{< relref "reference/templating.md#advanced-formatting-options" >}}) documentation for examples and details.
+Check out the [Advanced Formatting Options section in the Variables]({{< relref "../../reference/templating.md#advanced-formatting-options" >}}) documentation for examples and details.
 
 ## Annotations
 
-[Annotations]({{< relref "reference/annotations.md" >}}) allows you to overlay rich event information on top of graphs. You add annotation
+[Annotations]({{< relref "../../reference/annotations.md" >}}) allows you to overlay rich event information on top of graphs. You add annotation
 queries via the Dashboard menu / Annotations view.
 
 Graphite supports two ways to query annotations. A regular metric query, for this you use the `Graphite query` textbox. A Graphite events query, use the `Graphite event tags` textbox,
 specify a tag or wildcard (leave empty should also work)
 
-## Configure the Datasource with Provisioning
+## Configure the data source with provisioning
 
-It's now possible to configure datasources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
+It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../../administration/provisioning/#datasources" >}})
 
-Here are some provisioning examples for this datasource.
+Here are some provisioning examples for this data source.
 
 ```yaml
 apiVersion: 1

@@ -1,19 +1,25 @@
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { AppNotification, AppNotificationsState } from 'app/types/';
-import { Action, ActionTypes } from '../actions/appNotification';
 
 export const initialState: AppNotificationsState = {
   appNotifications: [] as AppNotification[],
 };
 
-export const appNotificationsReducer = (state = initialState, action: Action): AppNotificationsState => {
-  switch (action.type) {
-    case ActionTypes.AddAppNotification:
-      return { ...state, appNotifications: state.appNotifications.concat([action.payload]) };
-    case ActionTypes.ClearAppNotification:
-      return {
-        ...state,
-        appNotifications: state.appNotifications.filter(appNotification => appNotification.id !== action.payload),
-      };
-  }
-  return state;
-};
+const appNotificationsSlice = createSlice({
+  name: 'appNotifications',
+  initialState,
+  reducers: {
+    notifyApp: (state, action: PayloadAction<AppNotification>): AppNotificationsState => ({
+      ...state,
+      appNotifications: state.appNotifications.concat([action.payload]),
+    }),
+    clearAppNotification: (state, action: PayloadAction<number>): AppNotificationsState => ({
+      ...state,
+      appNotifications: state.appNotifications.filter(appNotification => appNotification.id !== action.payload),
+    }),
+  },
+});
+
+export const { notifyApp, clearAppNotification } = appNotificationsSlice.actions;
+
+export const appNotificationsReducer = appNotificationsSlice.reducer;

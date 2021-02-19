@@ -13,7 +13,7 @@ import (
 
 	"golang.org/x/net/context/ctxhttp"
 
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -82,10 +82,12 @@ func (e *GraphiteExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 
 	defer span.Finish()
 
-	opentracing.GlobalTracer().Inject(
+	if err := opentracing.GlobalTracer().Inject(
 		span.Context(),
 		opentracing.HTTPHeaders,
-		opentracing.HTTPHeadersCarrier(req.Header))
+		opentracing.HTTPHeadersCarrier(req.Header)); err != nil {
+		return nil, err
+	}
 
 	res, err := ctxhttp.Do(ctx, httpClient, req)
 	if err != nil {
@@ -149,7 +151,7 @@ func (e *GraphiteExecutor) createRequest(dsInfo *models.DataSource, data url.Val
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	if dsInfo.BasicAuth {
-		req.SetBasicAuth(dsInfo.BasicAuthUser, dsInfo.BasicAuthPassword)
+		req.SetBasicAuth(dsInfo.BasicAuthUser, dsInfo.DecryptedBasicAuthPassword())
 	}
 
 	return req, err

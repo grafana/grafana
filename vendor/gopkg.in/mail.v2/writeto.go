@@ -19,8 +19,8 @@ func (m *Message) WriteTo(w io.Writer) (int64, error) {
 }
 
 func (w *messageWriter) writeMessage(m *Message) {
-	if _, ok := m.header["Mime-Version"]; !ok {
-		w.writeString("Mime-Version: 1.0\r\n")
+	if _, ok := m.header["MIME-Version"]; !ok {
+		w.writeString("MIME-Version: 1.0\r\n")
 	}
 	if _, ok := m.header["Date"]; !ok {
 		w.writeHeader("Date", m.FormatDate(now()))
@@ -161,7 +161,11 @@ func (w *messageWriter) Write(p []byte) (int, error) {
 }
 
 func (w *messageWriter) writeString(s string) {
-	n, _ := io.WriteString(w.w, s)
+	if w.err != nil { // do nothing when in error
+		return
+	}
+	var n int
+	n, w.err = io.WriteString(w.w, s)
 	w.n += int64(n)
 }
 

@@ -77,7 +77,18 @@ func nametomib(name string) (mib []_C_int, err error) {
 	return buf[0 : n/siz], nil
 }
 
-//sys   ptrace(request int, pid int, addr uintptr, data uintptr) (err error)
+func direntIno(buf []byte) (uint64, bool) {
+	return readInt(buf, unsafe.Offsetof(Dirent{}.Ino), unsafe.Sizeof(Dirent{}.Ino))
+}
+
+func direntReclen(buf []byte) (uint64, bool) {
+	return readInt(buf, unsafe.Offsetof(Dirent{}.Reclen), unsafe.Sizeof(Dirent{}.Reclen))
+}
+
+func direntNamlen(buf []byte) (uint64, bool) {
+	return readInt(buf, unsafe.Offsetof(Dirent{}.Namlen), unsafe.Sizeof(Dirent{}.Namlen))
+}
+
 func PtraceAttach(pid int) (err error) { return ptrace(PT_ATTACH, pid, 0, 0) }
 func PtraceDetach(pid int) (err error) { return ptrace(PT_DETACH, pid, 0, 0) }
 
@@ -108,17 +119,8 @@ func getAttrList(path string, attrList attrList, attrBuf []byte, options uint) (
 		return nil, err
 	}
 
-	_, _, e1 := Syscall6(
-		SYS_GETATTRLIST,
-		uintptr(unsafe.Pointer(_p0)),
-		uintptr(unsafe.Pointer(&attrList)),
-		uintptr(unsafe.Pointer(&attrBuf[0])),
-		uintptr(len(attrBuf)),
-		uintptr(options),
-		0,
-	)
-	if e1 != 0 {
-		return nil, e1
+	if err := getattrlist(_p0, unsafe.Pointer(&attrList), unsafe.Pointer(&attrBuf[0]), uintptr(len(attrBuf)), int(options)); err != nil {
+		return nil, err
 	}
 	size := *(*uint32)(unsafe.Pointer(&attrBuf[0]))
 
@@ -151,6 +153,25 @@ func getAttrList(path string, attrList attrList, attrBuf []byte, options uint) (
 	return
 }
 
+//sys getattrlist(path *byte, list unsafe.Pointer, buf unsafe.Pointer, size uintptr, options int) (err error)
+
+func SysctlClockinfo(name string) (*Clockinfo, error) {
+	mib, err := sysctlmib(name)
+	if err != nil {
+		return nil, err
+	}
+
+	n := uintptr(SizeofClockinfo)
+	var ci Clockinfo
+	if err := sysctl(mib, (*byte)(unsafe.Pointer(&ci)), &n, nil, 0); err != nil {
+		return nil, err
+	}
+	if n != SizeofClockinfo {
+		return nil, EIO
+	}
+	return &ci, nil
+}
+
 //sysnb pipe() (r int, w int, err error)
 
 func Pipe(p []int) (err error) {
@@ -168,12 +189,113 @@ func Getfsstat(buf []Statfs_t, flags int) (n int, err error) {
 		_p0 = unsafe.Pointer(&buf[0])
 		bufsize = unsafe.Sizeof(Statfs_t{}) * uintptr(len(buf))
 	}
-	r0, _, e1 := Syscall(SYS_GETFSSTAT64, uintptr(_p0), bufsize, uintptr(flags))
-	n = int(r0)
-	if e1 != 0 {
-		err = e1
+	return getfsstat(_p0, bufsize, flags)
+}
+
+func xattrPointer(dest []byte) *byte {
+	// It's only when dest is set to NULL that the OS X implementations of
+	// getxattr() and listxattr() return the current sizes of the named attributes.
+	// An empty byte array is not sufficient. To maintain the same behaviour as the
+	// linux implementation, we wrap around the system calls and pass in NULL when
+	// dest is empty.
+	var destp *byte
+	if len(dest) > 0 {
+		destp = &dest[0]
 	}
-	return
+	return destp
+}
+
+//sys	getxattr(path string, attr string, dest *byte, size int, position uint32, options int) (sz int, err error)
+
+func Getxattr(path string, attr string, dest []byte) (sz int, err error) {
+	return getxattr(path, attr, xattrPointer(dest), len(dest), 0, 0)
+}
+
+func Lgetxattr(link string, attr string, dest []byte) (sz int, err error) {
+	return getxattr(link, attr, xattrPointer(dest), len(dest), 0, XATTR_NOFOLLOW)
+}
+
+//sys	fgetxattr(fd int, attr string, dest *byte, size int, position uint32, options int) (sz int, err error)
+
+func Fgetxattr(fd int, attr string, dest []byte) (sz int, err error) {
+	return fgetxattr(fd, attr, xattrPointer(dest), len(dest), 0, 0)
+}
+
+//sys	setxattr(path string, attr string, data *byte, size int, position uint32, options int) (err error)
+
+func Setxattr(path string, attr string, data []byte, flags int) (err error) {
+	// The parameters for the OS X implementation vary slightly compared to the
+	// linux system call, specifically the position parameter:
+	//
+	//  linux:
+	//      int setxattr(
+	//          const char *path,
+	//          const char *name,
+	//          const void *value,
+	//          size_t size,
+	//          int flags
+	//      );
+	//
+	//  darwin:
+	//      int setxattr(
+	//          const char *path,
+	//          const char *name,
+	//          void *value,
+	//          size_t size,
+	//          u_int32_t position,
+	//          int options
+	//      );
+	//
+	// position specifies the offset within the extended attribute. In the
+	// current implementation, only the resource fork extended attribute makes
+	// use of this argument. For all others, position is reserved. We simply
+	// default to setting it to zero.
+	return setxattr(path, attr, xattrPointer(data), len(data), 0, flags)
+}
+
+func Lsetxattr(link string, attr string, data []byte, flags int) (err error) {
+	return setxattr(link, attr, xattrPointer(data), len(data), 0, flags|XATTR_NOFOLLOW)
+}
+
+//sys	fsetxattr(fd int, attr string, data *byte, size int, position uint32, options int) (err error)
+
+func Fsetxattr(fd int, attr string, data []byte, flags int) (err error) {
+	return fsetxattr(fd, attr, xattrPointer(data), len(data), 0, 0)
+}
+
+//sys	removexattr(path string, attr string, options int) (err error)
+
+func Removexattr(path string, attr string) (err error) {
+	// We wrap around and explicitly zero out the options provided to the OS X
+	// implementation of removexattr, we do so for interoperability with the
+	// linux variant.
+	return removexattr(path, attr, 0)
+}
+
+func Lremovexattr(link string, attr string) (err error) {
+	return removexattr(link, attr, XATTR_NOFOLLOW)
+}
+
+//sys	fremovexattr(fd int, attr string, options int) (err error)
+
+func Fremovexattr(fd int, attr string) (err error) {
+	return fremovexattr(fd, attr, 0)
+}
+
+//sys	listxattr(path string, dest *byte, size int, options int) (sz int, err error)
+
+func Listxattr(path string, dest []byte) (sz int, err error) {
+	return listxattr(path, xattrPointer(dest), len(dest), 0)
+}
+
+func Llistxattr(link string, dest []byte) (sz int, err error) {
+	return listxattr(link, xattrPointer(dest), len(dest), XATTR_NOFOLLOW)
+}
+
+//sys	flistxattr(fd int, dest *byte, size int, options int) (sz int, err error)
+
+func Flistxattr(fd int, dest []byte) (sz int, err error) {
+	return flistxattr(fd, xattrPointer(dest), len(dest), 0)
 }
 
 func setattrlistTimes(path string, times []Timespec, flags int) error {
@@ -192,20 +314,15 @@ func setattrlistTimes(path string, times []Timespec, flags int) error {
 	if flags&AT_SYMLINK_NOFOLLOW != 0 {
 		options |= FSOPT_NOFOLLOW
 	}
-	_, _, e1 := Syscall6(
-		SYS_SETATTRLIST,
-		uintptr(unsafe.Pointer(_p0)),
-		uintptr(unsafe.Pointer(&attrList)),
-		uintptr(unsafe.Pointer(&attributes)),
-		uintptr(unsafe.Sizeof(attributes)),
-		uintptr(options),
-		0,
-	)
-	if e1 != 0 {
-		return e1
-	}
-	return nil
+	return setattrlist(
+		_p0,
+		unsafe.Pointer(&attrList),
+		unsafe.Pointer(&attributes),
+		unsafe.Sizeof(attributes),
+		options)
 }
+
+//sys setattrlist(path *byte, list unsafe.Pointer, buf unsafe.Pointer, size uintptr, options int) (err error)
 
 func utimensat(dirfd int, path string, times *[2]Timespec, flags int) error {
 	// Darwin doesn't support SYS_UTIMENSAT
@@ -222,42 +339,7 @@ func Kill(pid int, signum syscall.Signal) (err error) { return kill(pid, int(sig
 
 //sys	ioctl(fd int, req uint, arg uintptr) (err error)
 
-// ioctl itself should not be exposed directly, but additional get/set
-// functions for specific types are permissible.
-
-// IoctlSetInt performs an ioctl operation which sets an integer value
-// on fd, using the specified request number.
-func IoctlSetInt(fd int, req uint, value int) error {
-	return ioctl(fd, req, uintptr(value))
-}
-
-func IoctlSetWinsize(fd int, req uint, value *Winsize) error {
-	return ioctl(fd, req, uintptr(unsafe.Pointer(value)))
-}
-
-func IoctlSetTermios(fd int, req uint, value *Termios) error {
-	return ioctl(fd, req, uintptr(unsafe.Pointer(value)))
-}
-
-// IoctlGetInt performs an ioctl operation which gets an integer value
-// from fd, using the specified request number.
-func IoctlGetInt(fd int, req uint) (int, error) {
-	var value int
-	err := ioctl(fd, req, uintptr(unsafe.Pointer(&value)))
-	return value, err
-}
-
-func IoctlGetWinsize(fd int, req uint) (*Winsize, error) {
-	var value Winsize
-	err := ioctl(fd, req, uintptr(unsafe.Pointer(&value)))
-	return &value, err
-}
-
-func IoctlGetTermios(fd int, req uint) (*Termios, error) {
-	var value Termios
-	err := ioctl(fd, req, uintptr(unsafe.Pointer(&value)))
-	return &value, err
-}
+//sys   sysctl(mib []_C_int, old *byte, oldlen *uintptr, new *byte, newlen uintptr) (err error) = SYS_SYSCTL
 
 func Uname(uname *Utsname) error {
 	mib := []_C_int{CTL_KERN, KERN_OSTYPE}
@@ -305,6 +387,18 @@ func Uname(uname *Utsname) error {
 	return nil
 }
 
+func Sendfile(outfd int, infd int, offset *int64, count int) (written int, err error) {
+	if raceenabled {
+		raceReleaseMerge(unsafe.Pointer(&ioSync))
+	}
+	var length = int64(count)
+	err = sendfile(infd, outfd, *offset, &length, nil, 0)
+	written = int(length)
+	return
+}
+
+//sys	sendfile(infd int, outfd int, offset int64, len *int64, hdtr unsafe.Pointer, flags int) (err error)
+
 /*
  * Exposed directly
  */
@@ -315,6 +409,7 @@ func Uname(uname *Utsname) error {
 //sys	Chmod(path string, mode uint32) (err error)
 //sys	Chown(path string, uid int, gid int) (err error)
 //sys	Chroot(path string) (err error)
+//sys	ClockGettime(clockid int32, time *Timespec) (err error)
 //sys	Close(fd int) (err error)
 //sys	Dup(fd int) (nfd int, err error)
 //sys	Dup2(from int, to int) (err error)
@@ -329,12 +424,8 @@ func Uname(uname *Utsname) error {
 //sys	Fchownat(dirfd int, path string, uid int, gid int, flags int) (err error)
 //sys	Flock(fd int, how int) (err error)
 //sys	Fpathconf(fd int, name int) (val int, err error)
-//sys	Fstat(fd int, stat *Stat_t) (err error) = SYS_FSTAT64
-//sys	Fstatat(fd int, path string, stat *Stat_t, flags int) (err error) = SYS_FSTATAT64
-//sys	Fstatfs(fd int, stat *Statfs_t) (err error) = SYS_FSTATFS64
 //sys	Fsync(fd int) (err error)
 //sys	Ftruncate(fd int, length int64) (err error)
-//sys	Getdirentries(fd int, buf []byte, basep *uintptr) (n int, err error) = SYS_GETDIRENTRIES64
 //sys	Getdtablesize() (size int)
 //sysnb	Getegid() (egid int)
 //sysnb	Geteuid() (uid int)
@@ -354,7 +445,6 @@ func Uname(uname *Utsname) error {
 //sys	Link(path string, link string) (err error)
 //sys	Linkat(pathfd int, path string, linkfd int, link string, flags int) (err error)
 //sys	Listen(s int, backlog int) (err error)
-//sys	Lstat(path string, stat *Stat_t) (err error) = SYS_LSTAT64
 //sys	Mkdir(path string, mode uint32) (err error)
 //sys	Mkdirat(dirfd int, path string, mode uint32) (err error)
 //sys	Mkfifo(path string, mode uint32) (err error)
@@ -372,7 +462,7 @@ func Uname(uname *Utsname) error {
 //sys	Revoke(path string) (err error)
 //sys	Rmdir(path string) (err error)
 //sys	Seek(fd int, offset int64, whence int) (newoffset int64, err error) = SYS_LSEEK
-//sys	Select(n int, r *FdSet, w *FdSet, e *FdSet, timeout *Timeval) (err error)
+//sys	Select(nfd int, r *FdSet, w *FdSet, e *FdSet, timeout *Timeval) (n int, err error)
 //sys	Setegid(egid int) (err error)
 //sysnb	Seteuid(euid int) (err error)
 //sysnb	Setgid(gid int) (err error)
@@ -386,8 +476,6 @@ func Uname(uname *Utsname) error {
 //sysnb	Setsid() (pid int, err error)
 //sysnb	Settimeofday(tp *Timeval) (err error)
 //sysnb	Setuid(uid int) (err error)
-//sys	Stat(path string, stat *Stat_t) (err error) = SYS_STAT64
-//sys	Statfs(path string, stat *Statfs_t) (err error) = SYS_STATFS64
 //sys	Symlink(path string, link string) (err error)
 //sys	Symlinkat(oldpath string, newdirfd int, newpath string) (err error)
 //sys	Sync() (err error)
@@ -447,14 +535,6 @@ func Uname(uname *Utsname) error {
 // Watchevent
 // Waitevent
 // Modwatch
-// Getxattr
-// Fgetxattr
-// Setxattr
-// Fsetxattr
-// Removexattr
-// Fremovexattr
-// Listxattr
-// Flistxattr
 // Fsctl
 // Initgroups
 // Posix_spawn

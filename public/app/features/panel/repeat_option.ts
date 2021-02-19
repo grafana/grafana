@@ -1,5 +1,5 @@
 import { coreModule } from 'app/core/core';
-
+import { VariableSrv } from 'app/features/templating/variable_srv';
 const template = `
 <div class="gf-form-select-wrapper max-width-18">
   <select class="gf-form-input" ng-model="panel.repeat" ng-options="f.value as f.text for f in variables" ng-change="optionChanged()">
@@ -8,17 +8,17 @@ const template = `
 `;
 
 /** @ngInject */
-function dashRepeatOptionDirective(variableSrv) {
+function dashRepeatOptionDirective(variableSrv: VariableSrv) {
   return {
     restrict: 'E',
     template: template,
     scope: {
       panel: '=',
     },
-    link: (scope, element) => {
+    link: (scope: any, element: JQuery) => {
       element.css({ display: 'block', width: '100%' });
 
-      scope.variables = variableSrv.variables.map(item => {
+      scope.variables = variableSrv.variables.map((item: any) => {
         return { text: item.name, value: item.name };
       });
 

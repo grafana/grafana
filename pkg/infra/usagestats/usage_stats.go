@@ -28,12 +28,13 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 
 	metrics := map[string]interface{}{}
 	report := map[string]interface{}{
-		"version":   version,
-		"metrics":   metrics,
-		"os":        runtime.GOOS,
-		"arch":      runtime.GOARCH,
-		"edition":   getEdition(),
-		"packaging": setting.Packaging,
+		"version":         version,
+		"metrics":         metrics,
+		"os":              runtime.GOOS,
+		"arch":            runtime.GOARCH,
+		"edition":         getEdition(),
+		"hasValidLicense": uss.License.HasValidLicense(),
+		"packaging":       setting.Packaging,
 	}
 
 	statsQuery := models.GetSystemStatsQuery{}
@@ -60,6 +61,9 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 	metrics["stats.snapshots.count"] = statsQuery.Result.Snapshots
 	metrics["stats.teams.count"] = statsQuery.Result.Teams
 	metrics["stats.total_auth_token.count"] = statsQuery.Result.AuthTokens
+	metrics["stats.valid_license.count"] = getValidLicenseCount(uss.License.HasValidLicense())
+	metrics["stats.edition.oss.count"] = getOssEditionCount()
+	metrics["stats.edition.enterprise.count"] = getEnterpriseEditionCount()
 
 	userCount := statsQuery.Result.Users
 	avgAuthTokensPerUser := statsQuery.Result.AuthTokens
@@ -132,7 +136,7 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 	authTypes := map[string]bool{}
 	authTypes["anonymous"] = setting.AnonymousEnabled
 	authTypes["basic_auth"] = setting.BasicAuthEnabled
-	authTypes["ldap"] = setting.LdapEnabled
+	authTypes["ldap"] = setting.LDAPEnabled
 	authTypes["auth_proxy"] = setting.AuthProxyEnabled
 
 	for provider, enabled := range oauthProviders {
@@ -151,27 +155,63 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 	data := bytes.NewBuffer(out)
 
 	client := http.Client{Timeout: 5 * time.Second}
-	go client.Post(usageStatsURL, "application/json", data)
+	go func() {
+		if _, err := client.Post(usageStatsURL, "application/json", data); err != nil {
+			metricsLogger.Error("Failed to send usage stats", "err", err)
+		}
+	}()
 }
 
 func (uss *UsageStatsService) updateTotalStats() {
+	if !uss.Cfg.MetricsEndpointEnabled || uss.Cfg.MetricsEndpointDisableTotalStats {
+		return
+	}
+
 	statsQuery := models.GetSystemStatsQuery{}
 	if err := uss.Bus.Dispatch(&statsQuery); err != nil {
 		metricsLogger.Error("Failed to get system stats", "error", err)
 		return
 	}
 
-	metrics.M_StatTotal_Dashboards.Set(float64(statsQuery.Result.Dashboards))
-	metrics.M_StatTotal_Users.Set(float64(statsQuery.Result.Users))
-	metrics.M_StatActive_Users.Set(float64(statsQuery.Result.ActiveUsers))
-	metrics.M_StatTotal_Playlists.Set(float64(statsQuery.Result.Playlists))
-	metrics.M_StatTotal_Orgs.Set(float64(statsQuery.Result.Orgs))
+	metrics.MStatTotalDashboards.Set(float64(statsQuery.Result.Dashboards))
+	metrics.MStatTotalUsers.Set(float64(statsQuery.Result.Users))
+	metrics.MStatActiveUsers.Set(float64(statsQuery.Result.ActiveUsers))
+	metrics.MStatTotalPlaylists.Set(float64(statsQuery.Result.Playlists))
+	metrics.MStatTotalOrgs.Set(float64(statsQuery.Result.Orgs))
+	metrics.StatsTotalViewers.Set(float64(statsQuery.Result.Viewers))
+	metrics.StatsTotalActiveViewers.Set(float64(statsQuery.Result.ActiveViewers))
+	metrics.StatsTotalEditors.Set(float64(statsQuery.Result.Editors))
+	metrics.StatsTotalActiveEditors.Set(float64(statsQuery.Result.ActiveEditors))
+	metrics.StatsTotalAdmins.Set(float64(statsQuery.Result.Admins))
+	metrics.StatsTotalActiveAdmins.Set(float64(statsQuery.Result.ActiveAdmins))
 }
 
 func getEdition() string {
+	edition := "oss"
 	if setting.IsEnterprise {
-		return "enterprise"
-	} else {
-		return "oss"
+		edition = "enterprise"
 	}
+
+	return edition
+}
+
+func getEnterpriseEditionCount() int {
+	if setting.IsEnterprise {
+		return 1
+	}
+	return 0
+}
+
+func getOssEditionCount() int {
+	if setting.IsEnterprise {
+		return 0
+	}
+	return 1
+}
+
+func getValidLicenseCount(validLicense bool) int {
+	if validLicense {
+		return 1
+	}
+	return 0
 }

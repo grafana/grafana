@@ -14,8 +14,11 @@ import (
 	"time"
 
 	"github.com/opentracing/opentracing-go"
+	"golang.org/x/oauth2"
 
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/login/social"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
@@ -35,6 +38,19 @@ type DataSourceProxy struct {
 	route     *plugins.AppPluginRoute
 	plugin    *plugins.DataSourcePlugin
 	cfg       *setting.Cfg
+}
+
+type handleResponseTransport struct {
+	transport http.RoundTripper
+}
+
+func (t *handleResponseTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	res, err := t.transport.RoundTrip(req)
+	if err != nil {
+		return nil, err
+	}
+	res.Header.Del("Set-Cookie")
+	return res, nil
 }
 
 type httpClient interface {
@@ -72,11 +88,14 @@ func (proxy *DataSourceProxy) HandleRequest() {
 		FlushInterval: time.Millisecond * 200,
 	}
 
-	var err error
-	reverseProxy.Transport, err = proxy.ds.GetHttpTransport()
+	transport, err := proxy.ds.GetHttpTransport()
 	if err != nil {
 		proxy.ctx.JsonApiErr(400, "Unable to load TLS certificate", err)
 		return
+	}
+
+	reverseProxy.Transport = &handleResponseTransport{
+		transport: transport,
 	}
 
 	proxy.logRequest()
@@ -93,13 +112,14 @@ func (proxy *DataSourceProxy) HandleRequest() {
 	proxy.addTraceFromHeaderValue(span, "X-Panel-Id", "panel_id")
 	proxy.addTraceFromHeaderValue(span, "X-Dashboard-Id", "dashboard_id")
 
-	opentracing.GlobalTracer().Inject(
+	if err := opentracing.GlobalTracer().Inject(
 		span.Context(),
 		opentracing.HTTPHeaders,
-		opentracing.HTTPHeadersCarrier(proxy.ctx.Req.Request.Header))
+		opentracing.HTTPHeadersCarrier(proxy.ctx.Req.Request.Header)); err != nil {
+		logger.Error("Failed to inject span context instance", "err", err)
+	}
 
 	reverseProxy.ServeHTTP(proxy.ctx.Resp, proxy.ctx.Req.Request)
-	proxy.ctx.Resp.Header().Del("Set-Cookie")
 }
 
 func (proxy *DataSourceProxy) addTraceFromHeaderValue(span opentracing.Span, headerName string, tagName string) {
@@ -107,28 +127,6 @@ func (proxy *DataSourceProxy) addTraceFromHeaderValue(span opentracing.Span, hea
 	dashId, err := strconv.Atoi(panelId)
 	if err == nil {
 		span.SetTag(tagName, dashId)
-	}
-}
-
-func (proxy *DataSourceProxy) useCustomHeaders(req *http.Request) {
-	decryptSdj := proxy.ds.SecureJsonData.Decrypt()
-	index := 1
-	for {
-		headerNameSuffix := fmt.Sprintf("httpHeaderName%d", index)
-		headerValueSuffix := fmt.Sprintf("httpHeaderValue%d", index)
-		if key := proxy.ds.JsonData.Get(headerNameSuffix).MustString(); key != "" {
-			if val, ok := decryptSdj[headerValueSuffix]; ok {
-				// remove if exists
-				if req.Header.Get(key) != "" {
-					req.Header.Del(key)
-				}
-				req.Header.Add(key, val)
-				logger.Debug("Using custom header ", "CustomHeaders", key)
-			}
-		} else {
-			break
-		}
-		index += 1
 	}
 }
 
@@ -143,26 +141,21 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 		if proxy.ds.Type == m.DS_INFLUXDB_08 {
 			req.URL.Path = util.JoinURLFragments(proxy.targetUrl.Path, "db/"+proxy.ds.Database+"/"+proxy.proxyPath)
 			reqQueryVals.Add("u", proxy.ds.User)
-			reqQueryVals.Add("p", proxy.ds.Password)
+			reqQueryVals.Add("p", proxy.ds.DecryptedPassword())
 			req.URL.RawQuery = reqQueryVals.Encode()
 		} else if proxy.ds.Type == m.DS_INFLUXDB {
 			req.URL.Path = util.JoinURLFragments(proxy.targetUrl.Path, proxy.proxyPath)
 			req.URL.RawQuery = reqQueryVals.Encode()
 			if !proxy.ds.BasicAuth {
 				req.Header.Del("Authorization")
-				req.Header.Add("Authorization", util.GetBasicAuthHeader(proxy.ds.User, proxy.ds.Password))
+				req.Header.Add("Authorization", util.GetBasicAuthHeader(proxy.ds.User, proxy.ds.DecryptedPassword()))
 			}
 		} else {
 			req.URL.Path = util.JoinURLFragments(proxy.targetUrl.Path, proxy.proxyPath)
 		}
 		if proxy.ds.BasicAuth {
 			req.Header.Del("Authorization")
-			req.Header.Add("Authorization", util.GetBasicAuthHeader(proxy.ds.BasicAuthUser, proxy.ds.BasicAuthPassword))
-		}
-
-		// Lookup and use custom headers
-		if proxy.ds.SecureJsonData != nil {
-			proxy.useCustomHeaders(req)
+			req.Header.Add("Authorization", util.GetBasicAuthHeader(proxy.ds.BasicAuthUser, proxy.ds.DecryptedBasicAuthPassword()))
 		}
 
 		dsAuth := req.Header.Get("X-DS-Authorization")
@@ -220,6 +213,10 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 
 		if proxy.route != nil {
 			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds)
+		}
+
+		if proxy.ds.JsonData != nil && proxy.ds.JsonData.Get("oauthPassThru").MustBool() {
+			addOAuthPassThruAuth(proxy.ctx, req)
 		}
 	}
 }
@@ -310,4 +307,47 @@ func checkWhiteList(c *m.ReqContext, host string) bool {
 	}
 
 	return true
+}
+
+func addOAuthPassThruAuth(c *m.ReqContext, req *http.Request) {
+	authInfoQuery := &m.GetAuthInfoQuery{UserId: c.UserId}
+	if err := bus.Dispatch(authInfoQuery); err != nil {
+		logger.Error("Error feching oauth information for user", "error", err)
+		return
+	}
+
+	provider := authInfoQuery.Result.AuthModule
+	connect, ok := social.SocialMap[strings.TrimPrefix(provider, "oauth_")] // The socialMap keys don't have "oauth_" prefix, but everywhere else in the system does
+	if !ok {
+		logger.Error("Failed to find oauth provider with given name", "provider", provider)
+		return
+	}
+
+	// TokenSource handles refreshing the token if it has expired
+	token, err := connect.TokenSource(c.Req.Context(), &oauth2.Token{
+		AccessToken:  authInfoQuery.Result.OAuthAccessToken,
+		Expiry:       authInfoQuery.Result.OAuthExpiry,
+		RefreshToken: authInfoQuery.Result.OAuthRefreshToken,
+		TokenType:    authInfoQuery.Result.OAuthTokenType,
+	}).Token()
+	if err != nil {
+		logger.Error("Failed to retrieve access token from oauth provider", "provider", authInfoQuery.Result.AuthModule, "error", err)
+		return
+	}
+
+	// If the tokens are not the same, update the entry in the DB
+	if token.AccessToken != authInfoQuery.Result.OAuthAccessToken {
+		updateAuthCommand := &m.UpdateAuthInfoCommand{
+			UserId:     authInfoQuery.Result.UserId,
+			AuthModule: authInfoQuery.Result.AuthModule,
+			AuthId:     authInfoQuery.Result.AuthId,
+			OAuthToken: token,
+		}
+		if err := bus.Dispatch(updateAuthCommand); err != nil {
+			logger.Error("Failed to update access token during token refresh", "error", err)
+			return
+		}
+	}
+	req.Header.Del("Authorization")
+	req.Header.Add("Authorization", fmt.Sprintf("%s %s", token.Type(), token.AccessToken))
 }

@@ -2,7 +2,7 @@
 title = "User HTTP API "
 description = "Grafana User HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "user"]
-aliases = ["/http_api/user/"]
+aliases = ["/docs/grafana/latest/http_api/user/"]
 type = "docs"
 [menu.docs]
 name = "Users"
@@ -116,12 +116,18 @@ HTTP/1.1 200
 Content-Type: application/json
 
 {
-  "email": "user@mygraf.com"
+  "id": "1",
+  "email": "user@mygraf.com",
   "name": "admin",
   "login": "admin",
   "theme": "light",
   "orgId": 1,
-  "isGrafanaAdmin": true
+  "isGrafanaAdmin": true,
+  "isDisabled": true,
+  "isExternal": false,
+  "authLabels": [],
+  "updatedAt": "2019-09-09T11:31:26+01:00",
+  "createdAt": "2019-09-09T11:31:26+01:00"
 }
 ```
 
@@ -162,7 +168,12 @@ Content-Type: application/json
   "login": "admin",
   "theme": "light",
   "orgId": 1,
-  "isGrafanaAdmin": true
+  "isGrafanaAdmin": true,
+  "isDisabled": false,
+  "isExternal": false,
+  "authLabels": null,
+  "updatedAt": "2019-09-25T14:44:37+01:00",
+  "createdAt": "2019-09-25T14:44:37+01:00"
 }
 ```
 
@@ -308,8 +319,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 {
   "oldPassword": "old_password",
-  "newPassword": "new_password",
-  "confirmNew": "confirm_new_password"
+  "newPassword": "new_password"
 }
 ```
 
@@ -320,6 +330,18 @@ HTTP/1.1 200
 Content-Type: application/json
 
 {"message":"User password changed"}
+```
+
+**Change Password with a Script**
+
+If you need to change a password with a script, here is an example of changing the Admin password using curl with basic auth:
+
+```bash
+curl -X PUT -H "Content-Type: application/json" -d '{
+  "oldPassword": "oldpass",
+  "newPassword": "newpass",
+  "confirmNew": "newpass"
+}' http://admin:oldpass@<your_grafana_host>:3000/api/user/password
 ```
 
 ## Switch user context for a specified user
@@ -505,7 +527,11 @@ Content-Type: application/json
     "id": 361,
     "isActive": true,
     "clientIp": "127.0.0.1",
-    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36",
+    "browser": "Chrome",
+    "browserVersion": "72.0",
+    "os": "Linux",
+    "osVersion": "",
+    "device": "Other",
     "createdAt": "2019-03-05T21:22:54+01:00",
     "seenAt": "2019-03-06T19:41:06+01:00"
   },
@@ -513,7 +539,11 @@ Content-Type: application/json
     "id": 364,
     "isActive": false,
     "clientIp": "127.0.0.1",
-    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1",
+    "browser": "Mobile Safari",
+    "browserVersion": "11.0",
+    "os": "iOS",
+    "osVersion": "11.0",
+    "device": "iPhone",
     "createdAt": "2019-03-06T19:41:19+01:00",
     "seenAt": "2019-03-06T19:41:21+01:00"
   }

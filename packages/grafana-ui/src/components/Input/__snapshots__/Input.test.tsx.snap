@@ -2,7 +2,11 @@
 
 exports[`Input renders correctly 1`] = `
 <div
-  className="our-custom-wrapper-class"
+  style={
+    Object {
+      "flexGrow": 1,
+    }
+  }
 >
   <input
     className="gf-form-input"

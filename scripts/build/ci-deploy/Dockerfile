@@ -1,4 +1,4 @@
-FROM circleci/golang:1.11
+FROM circleci/golang:1.13
 
 RUN git clone https://github.com/aptly-dev/aptly $GOPATH/src/github.com/aptly-dev/aptly && \
     cd $GOPATH/src/github.com/aptly-dev/aptly && \
@@ -18,7 +18,9 @@ RUN pip install -U awscli crcmod && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/* && \
     ln -s /opt/google-cloud-sdk/bin/gsutil /usr/bin/gsutil && \
-    ln -s /opt/google-cloud-sdk/bin/gcloud /usr/bin/gcloud
+    ln -s /opt/google-cloud-sdk/bin/gcloud /usr/bin/gcloud && \
+    mkdir -p /deb-repo /rpm-repo && \
+    chown circleci:circleci /deb-repo /rpm-repo
 
 COPY --from=0 /go/bin/aptly /usr/local/bin/aptly
 

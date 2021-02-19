@@ -1,23 +1,58 @@
-import React, { PureComponent } from 'react';
-import { VizOrientation } from '../../types';
+import React, { PureComponent, CSSProperties } from 'react';
+import { VizOrientation } from '@grafana/data';
 
-interface RenderProps<T> {
-  vizWidth: number;
-  vizHeight: number;
-  value: T;
-}
+interface Props<V, D> {
+  /**
+   * Optionally precalculate dimensions to support consistent behavior between repeated
+   * values.  Two typical patterns are:
+   * 1) Calculate raw values like font size etc and pass them to each vis
+   * 2) find the maximum input values and pass that to the vis
+   */
+  getAlignmentFactors?: (values: V[], width: number, height: number) => D;
 
-interface Props<T> {
-  children: (renderProps: RenderProps<T>) => JSX.Element | JSX.Element[];
+  /**
+   * Render a single value
+   */
+  renderValue: (value: V, width: number, height: number, dims: D) => JSX.Element;
   height: number;
   width: number;
-  values: T[];
+  source: any; // If this changes, new values will be requested
+  getValues: () => V[];
+  renderCounter: number; // force update of values & render
   orientation: VizOrientation;
+  itemSpacing?: number;
 }
 
-const SPACE_BETWEEN = 10;
+interface DefaultProps {
+  itemSpacing: number;
+}
 
-export class VizRepeater<T> extends PureComponent<Props<T>> {
+type PropsWithDefaults<V, D> = Props<V, D> & DefaultProps;
+
+interface State<V> {
+  values: V[];
+}
+
+export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>> {
+  static defaultProps: DefaultProps = {
+    itemSpacing: 10,
+  };
+
+  constructor(props: Props<V, D>) {
+    super(props);
+
+    this.state = {
+      values: props.getValues(),
+    };
+  }
+
+  componentDidUpdate(prevProps: Props<V, D>) {
+    const { renderCounter, source } = this.props;
+    if (renderCounter !== prevProps.renderCounter || source !== prevProps.source) {
+      this.setState({ values: this.props.getValues() });
+    }
+  }
+
   getOrientation(): VizOrientation {
     const { orientation, width, height } = this.props;
 
@@ -33,7 +68,8 @@ export class VizRepeater<T> extends PureComponent<Props<T>> {
   }
 
   render() {
-    const { children, height, values, width } = this.props;
+    const { renderValue, height, width, itemSpacing, getAlignmentFactors } = this.props as PropsWithDefaults<V, D>;
+    const { values } = this.state;
     const orientation = this.getOrientation();
 
     const itemStyles: React.CSSProperties = {
@@ -49,29 +85,45 @@ export class VizRepeater<T> extends PureComponent<Props<T>> {
 
     if (orientation === VizOrientation.Horizontal) {
       repeaterStyle.flexDirection = 'column';
-      itemStyles.margin = `${SPACE_BETWEEN / 2}px 0`;
+      itemStyles.marginBottom = `${itemSpacing}px`;
       vizWidth = width;
-      vizHeight = height / values.length - SPACE_BETWEEN;
+      vizHeight = height / values.length - itemSpacing + itemSpacing / values.length;
     } else {
       repeaterStyle.flexDirection = 'row';
-      itemStyles.margin = `0 ${SPACE_BETWEEN / 2}px`;
+      repeaterStyle.justifyContent = 'space-between';
+      itemStyles.marginRight = `${itemSpacing}px`;
       vizHeight = height;
-      vizWidth = width / values.length - SPACE_BETWEEN;
+      vizWidth = width / values.length - itemSpacing + itemSpacing / values.length;
     }
 
     itemStyles.width = `${vizWidth}px`;
     itemStyles.height = `${vizHeight}px`;
 
+    const dims = getAlignmentFactors ? getAlignmentFactors(values, vizWidth, vizHeight) : ({} as D);
     return (
       <div style={repeaterStyle}>
         {values.map((value, index) => {
           return (
-            <div key={index} style={itemStyles}>
-              {children({ vizHeight, vizWidth, value })}
+            <div key={index} style={getItemStylesForIndex(itemStyles, index, values.length)}>
+              {renderValue(value, vizWidth, vizHeight, dims)}
             </div>
           );
         })}
       </div>
     );
   }
+}
+
+/*
+ * Removes any padding on the last item
+ */
+function getItemStylesForIndex(itemStyles: CSSProperties, index: number, length: number): CSSProperties {
+  if (index === length - 1) {
+    return {
+      ...itemStyles,
+      marginRight: 0,
+      marginBottom: 0,
+    };
+  }
+  return itemStyles;
 }

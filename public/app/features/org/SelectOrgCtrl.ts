@@ -1,9 +1,11 @@
 import angular from 'angular';
 import config from 'app/core/config';
+import { getBackendSrv } from '@grafana/runtime';
+import { promiseToDigest } from 'app/core/utils/promiseToDigest';
 
 export class SelectOrgCtrl {
   /** @ngInject */
-  constructor($scope, backendSrv, contextSrv) {
+  constructor($scope: any, contextSrv: any) {
     contextSrv.sidemenu = false;
 
     $scope.navModel = {
@@ -19,15 +21,21 @@ export class SelectOrgCtrl {
     };
 
     $scope.getUserOrgs = () => {
-      backendSrv.get('/api/user/orgs').then(orgs => {
-        $scope.orgs = orgs;
-      });
+      promiseToDigest($scope)(
+        getBackendSrv()
+          .get('/api/user/orgs')
+          .then((orgs: any) => {
+            $scope.orgs = orgs;
+          })
+      );
     };
 
-    $scope.setUsingOrg = org => {
-      backendSrv.post('/api/user/using/' + org.orgId).then(() => {
-        window.location.href = config.appSubUrl + '/';
-      });
+    $scope.setUsingOrg = (org: any) => {
+      getBackendSrv()
+        .post('/api/user/using/' + org.orgId)
+        .then(() => {
+          window.location.href = config.appSubUrl + '/';
+        });
     };
 
     $scope.init();

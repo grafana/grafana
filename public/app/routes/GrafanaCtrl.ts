@@ -1,46 +1,69 @@
 // Libraries
 import _ from 'lodash';
 import $ from 'jquery';
+// @ts-ignore
 import Drop from 'tether-drop';
 
 // Utils and servies
 import { colors } from '@grafana/ui';
+import { setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
 import { profiler } from 'app/core/profiler';
 import appEvents from 'app/core/app_events';
-import { BackendSrv, setBackendSrv } from 'app/core/services/backend_srv';
 import { TimeSrv, setTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { DatasourceSrv, setDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { KeybindingSrv, setKeybindingSrv } from 'app/core/services/keybindingSrv';
 import { AngularLoader, setAngularLoader } from 'app/core/services/AngularLoader';
 import { configureStore } from 'app/store/configureStore';
 
+import { LocationUpdate, setLocationSrv } from '@grafana/runtime';
+import { updateLocation } from 'app/core/actions';
+
 // Types
-import { KioskUrlValue } from 'app/types';
+import { KioskUrlValue, CoreEvents, AppEventEmitter, AppEventConsumer } from 'app/types';
+import { setLinkSrv, LinkSrv } from 'app/features/panel/panellinks/link_srv';
+import { UtilSrv } from 'app/core/services/util_srv';
+import { ContextSrv } from 'app/core/services/context_srv';
+import { BridgeSrv } from 'app/core/services/bridge_srv';
+import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
+import { DashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { ILocationService, ITimeoutService, IRootScopeService, IAngularEvent } from 'angular';
+import { AppEvent, AppEvents } from '@grafana/data';
+import { backendSrv } from 'app/core/services/backend_srv';
+
+export type GrafanaRootScope = IRootScopeService & AppEventEmitter & AppEventConsumer & { colors: string[] };
 
 export class GrafanaCtrl {
   /** @ngInject */
   constructor(
-    $scope,
-    utilSrv,
-    $rootScope,
-    $controller,
-    contextSrv,
-    bridgeSrv,
-    backendSrv: BackendSrv,
+    $scope: any,
+    utilSrv: UtilSrv,
+    $rootScope: GrafanaRootScope,
+    contextSrv: ContextSrv,
+    bridgeSrv: BridgeSrv,
     timeSrv: TimeSrv,
+    linkSrv: LinkSrv,
     datasourceSrv: DatasourceSrv,
     keybindingSrv: KeybindingSrv,
+    dashboardSrv: DashboardSrv,
     angularLoader: AngularLoader
   ) {
     // make angular loader service available to react components
     setAngularLoader(angularLoader);
     setBackendSrv(backendSrv);
-    setDatasourceSrv(datasourceSrv);
+    setDataSourceSrv(datasourceSrv);
     setTimeSrv(timeSrv);
+    setLinkSrv(linkSrv);
     setKeybindingSrv(keybindingSrv);
-    configureStore();
+    setDashboardSrv(dashboardSrv);
+
+    const store = configureStore();
+    setLocationSrv({
+      update: (opt: LocationUpdate) => {
+        store.dispatch(updateLocation(opt));
+      },
+    });
 
     $scope.init = () => {
       $scope.contextSrv = contextSrv;
@@ -54,8 +77,18 @@ export class GrafanaCtrl {
 
     $rootScope.colors = colors;
 
-    $rootScope.onAppEvent = function(name, callback, localScope) {
-      const unbind = $rootScope.$on(name, callback);
+    $rootScope.onAppEvent = function<T>(
+      event: AppEvent<T> | string,
+      callback: (event: IAngularEvent, ...args: any[]) => void,
+      localScope?: any
+    ) {
+      let unbind;
+      if (typeof event === 'string') {
+        unbind = $rootScope.$on(event, callback);
+      } else {
+        unbind = $rootScope.$on(event.name, callback);
+      }
+
       let callerScope = this;
       if (callerScope.$id === 1 && !localScope) {
         console.log('warning rootScope onAppEvent called without localscope');
@@ -66,9 +99,14 @@ export class GrafanaCtrl {
       callerScope.$on('$destroy', unbind);
     };
 
-    $rootScope.appEvent = (name, payload) => {
-      $rootScope.$emit(name, payload);
-      appEvents.emit(name, payload);
+    $rootScope.appEvent = <T>(event: AppEvent<T> | string, payload?: T | any) => {
+      if (typeof event === 'string') {
+        $rootScope.$emit(event, payload);
+        appEvents.emit(event, payload);
+      } else {
+        $rootScope.$emit(event.name, payload);
+        appEvents.emit(event, payload);
+      }
     };
 
     $scope.init();
@@ -95,43 +133,48 @@ function setViewModeBodyClass(body: JQuery, mode: KioskUrlValue) {
 }
 
 /** @ngInject */
-export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScope, $location) {
+export function grafanaAppDirective(
+  playlistSrv: PlaylistSrv,
+  contextSrv: ContextSrv,
+  $timeout: ITimeoutService,
+  $rootScope: IRootScopeService,
+  $location: ILocationService
+) {
   return {
     restrict: 'E',
     controller: GrafanaCtrl,
-    link: (scope, elem) => {
+    link: (scope: IRootScopeService & AppEventEmitter, elem: JQuery) => {
       const body = $('body');
-
       // see https://github.com/zenorocha/clipboard.js/issues/155
       $.fn.modal.Constructor.prototype.enforceFocus = () => {};
 
       $('.preloader').remove();
 
-      appEvents.on('toggle-sidemenu-mobile', () => {
+      appEvents.on(CoreEvents.toggleSidemenuMobile, () => {
         body.toggleClass('sidemenu-open--xs');
       });
 
-      appEvents.on('toggle-sidemenu-hidden', () => {
+      appEvents.on(CoreEvents.toggleSidemenuHidden, () => {
         body.toggleClass('sidemenu-hidden');
       });
 
-      appEvents.on('playlist-started', () => {
+      appEvents.on(CoreEvents.playlistStarted, () => {
         elem.toggleClass('view-mode--playlist', true);
       });
 
-      appEvents.on('playlist-stopped', () => {
+      appEvents.on(CoreEvents.playlistStopped, () => {
         elem.toggleClass('view-mode--playlist', false);
       });
 
       // check if we are in server side render
-      if (document.cookie.indexOf('renderKey') !== -1) {
+      if (config.phantomJSRenderer && document.cookie.indexOf('renderKey') !== -1) {
         body.addClass('body--phantomjs');
       }
 
       // tooltip removal fix
       // manage page classes
-      let pageClass;
-      scope.$on('$routeChangeSuccess', (evt, data) => {
+      let pageClass: string;
+      scope.$on('$routeChangeSuccess', (evt: any, data: any) => {
         if (pageClass) {
           body.removeClass(pageClass);
         }
@@ -156,11 +199,11 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
           drop.destroy();
         }
 
-        appEvents.emit('hide-dash-search');
+        appEvents.emit(CoreEvents.hideDashSearch);
       });
 
       // handle kiosk mode
-      appEvents.on('toggle-kiosk-mode', (options: { exit?: boolean }) => {
+      appEvents.on(CoreEvents.toggleKioskMode, (options: { exit?: boolean }) => {
         const search: { kiosk?: KioskUrlValue } = $location.search();
 
         if (options && options.exit) {
@@ -170,7 +213,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         switch (search.kiosk) {
           case 'tv': {
             search.kiosk = true;
-            appEvents.emit('alert-success', ['Press ESC to exit Kiosk mode']);
+            appEvents.emit(AppEvents.alertSuccess, ['Press ESC to exit Kiosk mode']);
             break;
           }
           case '1':
@@ -184,7 +227,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         }
 
         $timeout(() => $location.search(search));
-        setViewModeBodyClass(body, search.kiosk);
+        setViewModeBodyClass(body, search.kiosk!);
       });
 
       // handle in active view state class
@@ -226,7 +269,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
       // check every 2 seconds
       setInterval(checkForInActiveUser, 2000);
 
-      appEvents.on('toggle-view-mode', () => {
+      appEvents.on(CoreEvents.toggleViewMode, () => {
         lastActivity = 0;
         checkForInActiveUser();
       });
@@ -256,7 +299,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         if (body.find('.search-container').length > 0) {
           if (target.parents('.search-results-container, .search-field-wrapper').length === 0) {
             scope.$apply(() => {
-              scope.appEvent('hide-dash-search');
+              scope.appEvent(CoreEvents.hideDashSearch);
             });
           }
         }
@@ -265,28 +308,6 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         const popover = elem.find('.popover');
         if (popover.length > 0 && target.parents('.graph-legend').length === 0) {
           popover.hide();
-        }
-
-        // hide time picker
-        const timePickerDropDownIsOpen = elem.find('.gf-timepicker-dropdown').length > 0;
-        if (timePickerDropDownIsOpen) {
-          const targetIsInTimePickerDropDown = target.parents('.gf-timepicker-dropdown').length > 0;
-          const targetIsInTimePickerNav = target.parents('.gf-timepicker-nav').length > 0;
-          const targetIsDatePickerRowBtn = target.parents('td[id^="datepicker-"]').length > 0;
-          const targetIsDatePickerHeaderBtn = target.parents('button[id^="datepicker-"]').length > 0;
-
-          if (
-            targetIsInTimePickerNav ||
-            targetIsInTimePickerDropDown ||
-            targetIsDatePickerRowBtn ||
-            targetIsDatePickerHeaderBtn
-          ) {
-            return;
-          }
-
-          scope.$apply(() => {
-            scope.appEvent('closeTimepicker');
-          });
         }
       });
     },

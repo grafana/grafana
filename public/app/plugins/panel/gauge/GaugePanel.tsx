@@ -5,48 +5,62 @@ import React, { PureComponent } from 'react';
 import { config } from 'app/core/config';
 
 // Components
-import { Gauge } from '@grafana/ui';
+import { Gauge, DataLinksContextMenu } from '@grafana/ui';
 
 // Types
 import { GaugeOptions } from './types';
-import { DisplayValue, PanelProps } from '@grafana/ui';
-import { getSingleStatValues } from '../singlestat2/SingleStatPanel';
-import { ProcessedValuesRepeater } from '../singlestat2/ProcessedValuesRepeater';
+import { VizRepeater } from '@grafana/ui';
+import { FieldDisplay, getFieldDisplayValues, VizOrientation, PanelProps } from '@grafana/data';
+import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 
 export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
-  renderValue = (value: DisplayValue, width: number, height: number): JSX.Element => {
+  renderValue = (value: FieldDisplay, width: number, height: number): JSX.Element => {
     const { options } = this.props;
+    const { field, display } = value;
 
     return (
-      <Gauge
-        value={value}
-        width={width}
-        height={height}
-        thresholds={options.thresholds}
-        showThresholdLabels={options.showThresholdLabels}
-        showThresholdMarkers={options.showThresholdMarkers}
-        minValue={options.minValue}
-        maxValue={options.maxValue}
-        theme={config.theme}
-      />
+      <DataLinksContextMenu links={getFieldLinksSupplier(value)}>
+        {({ openMenu, targetClassName }) => {
+          return (
+            <Gauge
+              value={display}
+              width={width}
+              height={height}
+              field={field}
+              showThresholdLabels={options.showThresholdLabels}
+              showThresholdMarkers={options.showThresholdMarkers}
+              theme={config.theme}
+              onClick={openMenu}
+              className={targetClassName}
+            />
+          );
+        }}
+      </DataLinksContextMenu>
     );
   };
 
-  getProcessedValues = (): DisplayValue[] => {
-    return getSingleStatValues(this.props);
+  getValues = (): FieldDisplay[] => {
+    const { data, options, replaceVariables } = this.props;
+    return getFieldDisplayValues({
+      fieldOptions: options.fieldOptions,
+      replaceVariables,
+      theme: config.theme,
+      data: data.series,
+      autoMinMax: true,
+    });
   };
 
   render() {
-    const { height, width, options, data, renderCounter } = this.props;
+    const { height, width, data, renderCounter } = this.props;
     return (
-      <ProcessedValuesRepeater
-        getProcessedValues={this.getProcessedValues}
+      <VizRepeater
+        getValues={this.getValues}
         renderValue={this.renderValue}
         width={width}
         height={height}
         source={data}
         renderCounter={renderCounter}
-        orientation={options.orientation}
+        orientation={VizOrientation.Auto}
       />
     );
   }

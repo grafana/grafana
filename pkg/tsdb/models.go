@@ -9,6 +9,7 @@ import (
 type TsdbQuery struct {
 	TimeRange *TimeRange
 	Queries   []*Query
+	Debug     bool
 }
 
 type Query struct {
@@ -31,6 +32,7 @@ type QueryResult struct {
 	Meta        *simplejson.Json `json:"meta,omitempty"`
 	Series      TimeSeriesSlice  `json:"series"`
 	Tables      []*Table         `json:"tables"`
+	Dataframes  [][]byte         `json:"dataframes"`
 }
 
 type TimeSeries struct {

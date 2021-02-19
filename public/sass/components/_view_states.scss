@@ -9,21 +9,34 @@
   }
 
   .navbar-page-btn {
-    transform: translate3d(-36px, 0, 0);
-
     i {
-      opacity: 0;
+      display: none;
+    }
+
+    i.navbar-page-btn__folder-icon {
+      display: inline-block;
+      opacity: inherit;
     }
   }
 
-  .navbar-button--zoom,
-  .navbar-button--refresh {
+  .navbar-button--zoom {
     display: none;
   }
 }
 
 .view-mode--playlist {
   @extend .view-mode--inactive;
+}
+
+// https://github.com/grafana/grafana/issues/18114
+.view-mode--tv.panel-in-fullscreen {
+  .navbar {
+    padding-left: $navbar-padding;
+  }
+
+  .navbar-page-btn {
+    transform: none;
+  }
 }
 
 .view-mode--tv {
@@ -35,8 +48,15 @@
     box-shadow: none;
 
     .sidemenu__top,
-    .sidemenu__bottom {
+    .sidemenu__bottom,
+    .sidemenu__logo_small_breakpoint {
       display: none;
+    }
+
+    .sidemenu__logo {
+      @include media-breakpoint-down(sm) {
+        display: block;
+      }
     }
   }
 

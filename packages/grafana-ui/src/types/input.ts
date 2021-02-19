@@ -4,5 +4,6 @@
 }
 
 export interface ValidationEvents {
+  // Event name should be one of EventsWithValidation enum
   [eventName: string]: ValidationRule[];
 }

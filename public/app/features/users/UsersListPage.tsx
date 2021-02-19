@@ -1,16 +1,18 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import Remarkable from 'remarkable';
+import { NavModel, renderMarkdown } from '@grafana/data';
+
 import Page from 'app/core/components/Page/Page';
 import UsersActionBar from './UsersActionBar';
 import UsersTable from './UsersTable';
 import InviteesTable from './InviteesTable';
-import { Invitee, NavModel, OrgUser } from 'app/types';
+import { CoreEvents, Invitee, OrgUser } from 'app/types';
 import appEvents from 'app/core/app_events';
-import { loadUsers, loadInvitees, setUsersSearchQuery, updateUser, removeUser } from './state/actions';
+import { loadInvitees, loadUsers, removeUser, updateUser } from './state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getInvitees, getUsers, getUsersSearchQuery } from './state/selectors';
+import { setUsersSearchQuery } from './state/reducers';
 
 export interface Props {
   navModel: NavModel;
@@ -33,12 +35,11 @@ export interface State {
 export class UsersListPage extends PureComponent<Props, State> {
   externalUserMngInfoHtml: string;
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
 
     if (this.props.externalUserMngInfo) {
-      const markdownRenderer = new Remarkable();
-      this.externalUserMngInfoHtml = markdownRenderer.render(this.props.externalUserMngInfo);
+      this.externalUserMngInfoHtml = renderMarkdown(this.props.externalUserMngInfo);
     }
 
     this.state = {
@@ -59,14 +60,14 @@ export class UsersListPage extends PureComponent<Props, State> {
     return await this.props.loadInvitees();
   }
 
-  onRoleChange = (role, user) => {
+  onRoleChange = (role: string, user: OrgUser) => {
     const updatedUser = { ...user, role: role };
 
     this.props.updateUser(updatedUser);
   };
 
-  onRemoveUser = user => {
-    appEvents.emit('confirm-modal', {
+  onRemoveUser = (user: OrgUser) => {
+    appEvents.emit(CoreEvents.showConfirmModal, {
       title: 'Delete',
       text: 'Are you sure you want to delete user ' + user.login + '?',
       yesText: 'Delete',
@@ -119,7 +120,7 @@ export class UsersListPage extends PureComponent<Props, State> {
   }
 }
 
-function mapStateToProps(state) {
+function mapStateToProps(state: any) {
   return {
     navModel: getNavModel(state.navIndex, 'users'),
     users: getUsers(state.users),
@@ -138,9 +139,4 @@ const mapDispatchToProps = {
   removeUser,
 };
 
-export default hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(UsersListPage)
-);
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(UsersListPage));

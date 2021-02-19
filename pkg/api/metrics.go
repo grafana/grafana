@@ -2,15 +2,95 @@ package api
 
 import (
 	"context"
+	"sort"
+
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
-	"github.com/grafana/grafana/pkg/tsdb/testdata"
+	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+// POST /api/ds/query   DataSource query w/ expressions
+func (hs *HTTPServer) QueryMetricsV2(c *m.ReqContext, reqDto dtos.MetricRequest) Response {
+	if !setting.IsExpressionsEnabled() {
+		return Error(404, "Expressions feature toggle is not enabled", nil)
+	}
+
+	if len(reqDto.Queries) == 0 {
+		return Error(500, "No queries found in query", nil)
+	}
+
+	request := &tsdb.TsdbQuery{
+		TimeRange: tsdb.NewTimeRange(reqDto.From, reqDto.To),
+		Debug:     reqDto.Debug,
+	}
+
+	expr := false
+	var ds *m.DataSource
+	for i, query := range reqDto.Queries {
+		name, err := query.Get("datasource").String()
+		if err != nil {
+			return Error(500, "datasource missing name", err)
+		}
+		if name == "__expr__" {
+			expr = true
+		}
+
+		datasourceID, err := query.Get("datasourceId").Int64()
+		if err != nil {
+			return Error(500, "datasource missing ID", nil)
+		}
+
+		if i == 0 && !expr {
+			ds, err = hs.DatasourceCache.GetDatasource(datasourceID, c.SignedInUser, c.SkipCache)
+			if err != nil {
+				if err == m.ErrDataSourceAccessDenied {
+					return Error(403, "Access denied to datasource", err)
+				}
+				return Error(500, "Unable to load datasource meta data", err)
+			}
+		}
+		request.Queries = append(request.Queries, &tsdb.Query{
+			RefId:         query.Get("refId").MustString("A"),
+			MaxDataPoints: query.Get("maxDataPoints").MustInt64(100),
+			IntervalMs:    query.Get("intervalMs").MustInt64(1000),
+			Model:         query,
+			DataSource:    ds,
+		})
+
+	}
+
+	var resp *tsdb.Response
+	var err error
+	if !expr {
+		resp, err = tsdb.HandleRequest(c.Req.Context(), ds, request)
+		if err != nil {
+			return Error(500, "Metric request error", err)
+		}
+	} else {
+		resp, err = plugins.Transform.Transform(c.Req.Context(), request)
+		if err != nil {
+			return Error(500, "Transform request error", err)
+		}
+	}
+
+	statusCode := 200
+	for _, res := range resp.Results {
+		if res.Error != nil {
+			res.ErrorString = res.Error.Error()
+			resp.Message = res.ErrorString
+			statusCode = 400
+		}
+	}
+
+	return JSON(statusCode, &resp)
+}
 
 // POST /api/tsdb/query
 func (hs *HTTPServer) QueryMetrics(c *m.ReqContext, reqDto dtos.MetricRequest) Response {
@@ -33,7 +113,7 @@ func (hs *HTTPServer) QueryMetrics(c *m.ReqContext, reqDto dtos.MetricRequest) R
 		return Error(500, "Unable to load datasource meta data", err)
 	}
 
-	request := &tsdb.TsdbQuery{TimeRange: timeRange}
+	request := &tsdb.TsdbQuery{TimeRange: timeRange, Debug: reqDto.Debug}
 
 	for _, query := range reqDto.Queries {
 		request.Queries = append(request.Queries, &tsdb.Query{
@@ -66,7 +146,14 @@ func (hs *HTTPServer) QueryMetrics(c *m.ReqContext, reqDto dtos.MetricRequest) R
 func GetTestDataScenarios(c *m.ReqContext) Response {
 	result := make([]interface{}, 0)
 
-	for _, scenario := range testdata.ScenarioRegistry {
+	scenarioIds := make([]string, 0)
+	for id := range testdatasource.ScenarioRegistry {
+		scenarioIds = append(scenarioIds, id)
+	}
+	sort.Strings(scenarioIds)
+
+	for _, scenarioId := range scenarioIds {
+		scenario := testdatasource.ScenarioRegistry[scenarioId]
 		result = append(result, map[string]interface{}{
 			"id":          scenario.Id,
 			"name":        scenario.Name,
@@ -81,6 +168,7 @@ func GetTestDataScenarios(c *m.ReqContext) Response {
 // Generates a index out of range error
 func GenerateError(c *m.ReqContext) Response {
 	var array []string
+	// nolint: govet
 	return JSON(200, array[20])
 }
 

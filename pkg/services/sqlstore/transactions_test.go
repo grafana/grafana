@@ -5,12 +5,12 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
-
 	. "github.com/smartystreets/goconvey/convey"
+
+	"github.com/grafana/grafana/pkg/models"
 )
 
-var ProvokedError = errors.New("testing error.")
+var ErrProvokedError = errors.New("testing error")
 
 func TestTransaction(t *testing.T) {
 	ss := InitTestDB(t)
@@ -42,10 +42,10 @@ func TestTransaction(t *testing.T) {
 					return err
 				}
 
-				return ProvokedError
+				return ErrProvokedError
 			})
 
-			So(err, ShouldEqual, ProvokedError)
+			So(err, ShouldEqual, ErrProvokedError)
 
 			query := &models.GetApiKeyByIdQuery{ApiKeyId: cmd.Result.Id}
 			err = GetApiKeyById(query)

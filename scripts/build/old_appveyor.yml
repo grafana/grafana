@@ -1,0 +1,40 @@
+version: "{build}"
+
+os: Windows Server 2012 R2
+
+clone_folder: c:\gopath\src\github.com\grafana\grafana
+
+environment:
+  nodejs_version: "12"
+  GOPATH: C:\gopath
+  GOVERSION: 1.13.4
+
+install:
+  - rmdir c:\go /s /q
+  # install nodejs and npm
+  - ps: Install-Product node $env:nodejs_version
+  - npm install -g yarn --silent
+  - yarn install --pure-lockfile --no-progress
+  - npm install -g grunt-cli
+  - appveyor DownloadFile https://storage.googleapis.com/golang/go%GOVERSION%.windows-amd64.zip
+  - 7z x go%GOVERSION%.windows-amd64.zip -y -oC:\ > NUL
+  # install gcc (needed for sqlite3)
+  - choco install -y --limit-output mingw
+  - set PATH=C:\tools\mingw64\bin;%PATH%
+  - echo %PATH%
+  - echo %GOPATH%
+  - go version
+  - go env
+  # - go run build.go setup
+
+build_script:
+  - go run build.go build
+  - grunt release
+  - go run build.go sha-dist
+  - cp dist/* .
+  - go test -v ./pkg/...
+
+artifacts:
+  - path: grafana-*windows-*.*
+    name: binzip
+    type: zip

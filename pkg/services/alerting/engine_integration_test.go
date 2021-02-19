@@ -11,20 +11,24 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/setting"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestEngineTimeouts(t *testing.T) {
 	Convey("Alerting engine timeout tests", t, func() {
-		engine := NewEngine()
+		engine := &AlertEngine{}
+		err := engine.Init()
+		So(err, ShouldBeNil)
+		setting.AlertingNotificationTimeout = 30 * time.Second
+		setting.AlertingMaxAttempts = 3
 		engine.resultHandler = &FakeResultHandler{}
-		job := &Job{Running: true, Rule: &Rule{}}
+		job := &Job{running: true, Rule: &Rule{}}
 
 		Convey("Should trigger as many retries as needed", func() {
 			Convey("pended alert for datasource -> result handler should be worked", func() {
 				// reduce alert timeout to test quickly
-				originAlertTimeout := alertTimeout
-				alertTimeout = 2 * time.Second
+				setting.AlertingEvaluationTimeout = 30 * time.Second
 				transportTimeoutInterval := 2 * time.Second
 				serverBusySleepDuration := 1 * time.Second
 
@@ -33,13 +37,14 @@ func TestEngineTimeouts(t *testing.T) {
 				engine.evalHandler = evalHandler
 				engine.resultHandler = resultHandler
 
-				engine.processJobWithRetry(context.TODO(), job)
+				err := engine.processJobWithRetry(context.TODO(), job)
+				So(err, ShouldBeNil)
 
 				So(evalHandler.EvalSucceed, ShouldEqual, true)
 				So(resultHandler.ResultHandleSucceed, ShouldEqual, true)
 
 				// initialize for other tests.
-				alertTimeout = originAlertTimeout
+				setting.AlertingEvaluationTimeout = 2 * time.Second
 				engine.resultHandler = &FakeResultHandler{}
 			})
 		})
@@ -87,7 +92,7 @@ func (handler *FakeCommonTimeoutHandler) Eval(evalContext *EvalContext) {
 	evalContext.Error = errors.New("Fake evaluation timeout test failure; wrong response")
 }
 
-func (handler *FakeCommonTimeoutHandler) Handle(evalContext *EvalContext) error {
+func (handler *FakeCommonTimeoutHandler) handle(evalContext *EvalContext) error {
 	// 1. prepare mock server
 	path := "/resulthandle"
 	srv := runBusyServer(path, handler.ServerBusySleepDuration)

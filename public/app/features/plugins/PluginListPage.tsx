@@ -4,15 +4,17 @@ import { connect } from 'react-redux';
 import Page from 'app/core/components/Page/Page';
 import OrgActionBar from 'app/core/components/OrgActionBar/OrgActionBar';
 import PluginList from './PluginList';
-import { NavModel, Plugin } from 'app/types';
-import { loadPlugins, setPluginsLayoutMode, setPluginsSearchQuery } from './state/actions';
+import { loadPlugins } from './state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getLayoutMode, getPlugins, getPluginsSearchQuery } from './state/selectors';
 import { LayoutMode } from 'app/core/components/LayoutSelector/LayoutSelector';
+import { NavModel, PluginMeta } from '@grafana/data';
+import { StoreState } from 'app/types';
+import { setPluginsLayoutMode, setPluginsSearchQuery } from './state/reducers';
 
 export interface Props {
   navModel: NavModel;
-  plugins: Plugin[];
+  plugins: PluginMeta[];
   layoutMode: LayoutMode;
   searchQuery: string;
   hasFetched: boolean;
@@ -57,7 +59,7 @@ export class PluginListPage extends PureComponent<Props> {
               setSearchQuery={query => setPluginsSearchQuery(query)}
               linkButton={linkButton}
             />
-            {hasFetched && plugins && (plugins && <PluginList plugins={plugins} layoutMode={layoutMode} />)}
+            {hasFetched && plugins && plugins && <PluginList plugins={plugins} layoutMode={layoutMode} />}
           </>
         </Page.Contents>
       </Page>
@@ -65,7 +67,7 @@ export class PluginListPage extends PureComponent<Props> {
   }
 }
 
-function mapStateToProps(state) {
+function mapStateToProps(state: StoreState) {
   return {
     navModel: getNavModel(state.navIndex, 'plugins'),
     plugins: getPlugins(state.plugins),
@@ -81,9 +83,4 @@ const mapDispatchToProps = {
   setPluginsSearchQuery,
 };
 
-export default hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(PluginListPage)
-);
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(PluginListPage));

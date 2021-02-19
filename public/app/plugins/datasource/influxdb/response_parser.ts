@@ -1,7 +1,7 @@
 import _ from 'lodash';
 
 export default class ResponseParser {
-  parse(query, results) {
+  parse(query: string, results: { results: any }) {
     if (!results || results.results.length === 0) {
       return [];
     }
@@ -44,12 +44,14 @@ export default class ResponseParser {
       });
     });
 
+    // @ts-ignore problems with typings for this _.map only accepts [] but this needs to be object
     return _.map(res, value => {
+      // @ts-ignore
       return { text: value.toString() };
     });
   }
 }
 
-function addUnique(arr, value) {
+function addUnique(arr: { [x: string]: any }, value: string | number) {
   arr[value] = value;
 }

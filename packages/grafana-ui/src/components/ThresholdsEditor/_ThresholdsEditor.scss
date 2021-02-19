@@ -31,6 +31,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
   cursor: pointer;
 
   &:hover {
@@ -40,6 +41,7 @@
 
 .thresholds-row-color-indicator {
   width: 10px;
+  flex-shrink: 0;
 }
 
 .thresholds-row-input {
@@ -69,7 +71,7 @@
 
 .thresholds-row-input-inner-value > input {
   height: $input-height;
-  padding: $input-padding-y $input-padding-x;
+  padding: $input-padding;
   width: 150px;
   border-top: 1px solid $input-label-border-color;
   border-bottom: 1px solid $input-label-border-color;
@@ -96,7 +98,7 @@
   align-items: center;
   justify-content: center;
   height: $input-height;
-  padding: $input-padding-y $input-padding-x;
+  padding: $input-padding;
   width: 42px;
   background-color: $input-label-bg;
   border: 1px solid $input-label-border-color;

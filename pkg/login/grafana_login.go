@@ -9,7 +9,10 @@ import (
 )
 
 var validatePassword = func(providedPassword string, userPassword string, userSalt string) error {
-	passwordHashed := util.EncodePassword(providedPassword, userSalt)
+	passwordHashed, err := util.EncodePassword(providedPassword, userSalt)
+	if err != nil {
+		return err
+	}
 	if subtle.ConstantTimeCompare([]byte(passwordHashed), []byte(userPassword)) != 1 {
 		return ErrInvalidCredentials
 	}
@@ -25,6 +28,10 @@ var loginUsingGrafanaDB = func(query *m.LoginUserQuery) error {
 	}
 
 	user := userQuery.Result
+
+	if user.IsDisabled {
+		return ErrUserDisabled
+	}
 
 	if err := validatePassword(query.Password, user.Password, user.Salt); err != nil {
 		return err

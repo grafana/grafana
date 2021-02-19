@@ -101,11 +101,10 @@ func (w *tdsBuffer) Write(p []byte) (total int, err error) {
 		}
 		p = p[copied:]
 	}
-	return
 }
 
 func (w *tdsBuffer) WriteByte(b byte) error {
-	if int(w.wpos) == len(w.wbuf) {
+	if int(w.wpos) == len(w.wbuf) || w.wpos == w.packetSize {
 		if err := w.flush(); err != nil {
 			return err
 		}
@@ -144,7 +143,7 @@ func (r *tdsBuffer) readNextPacket() error {
 	if err != nil {
 		return err
 	}
-	if int(h.Size) > len(r.rbuf) {
+	if int(h.Size) > r.packetSize {
 		return errors.New("Invalid packet size, it is longer than buffer size")
 	}
 	if headerSize > int(h.Size) {

@@ -245,23 +245,6 @@ func (b *Builder) Or(cond Cond) *Builder {
 	return b
 }
 
-type insertColsSorter struct {
-	cols []string
-	vals []interface{}
-}
-
-func (s insertColsSorter) Len() int {
-	return len(s.cols)
-}
-func (s insertColsSorter) Swap(i, j int) {
-	s.cols[i], s.cols[j] = s.cols[j], s.cols[i]
-	s.vals[i], s.vals[j] = s.vals[j], s.vals[i]
-}
-
-func (s insertColsSorter) Less(i, j int) bool {
-	return s.cols[i] < s.cols[j]
-}
-
 // Insert sets insert SQL
 func (b *Builder) Insert(eq ...interface{}) *Builder {
 	if len(eq) > 0 {
@@ -292,10 +275,10 @@ func (b *Builder) Insert(eq ...interface{}) *Builder {
 	}
 
 	if len(b.insertCols) == len(b.insertVals) {
-		sort.Sort(insertColsSorter{
-			cols: b.insertCols,
-			vals: b.insertVals,
+		sort.Slice(b.insertVals, func(i, j int) bool {
+			return b.insertCols[i] < b.insertCols[j]
 		})
+		sort.Strings(b.insertCols)
 	}
 	b.optype = insertType
 	return b

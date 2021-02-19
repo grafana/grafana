@@ -41,6 +41,8 @@ type Span interface {
 	Context() SpanContext
 
 	// Sets or changes the operation name.
+	//
+	// Returns a reference to this Span for chaining.
 	SetOperationName(operationName string) Span
 
 	// Adds a tag to the span.
@@ -51,6 +53,8 @@ type Span interface {
 	// other tag value types is undefined at the OpenTracing level. If a
 	// tracing system does not know how to handle a particular value type, it
 	// may ignore the tag, but shall not panic.
+	//
+	// Returns a reference to this Span for chaining.
 	SetTag(key string, value interface{}) Span
 
 	// LogFields is an efficient and type-checked way to record key:value

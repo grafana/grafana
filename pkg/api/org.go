@@ -88,7 +88,7 @@ func CreateOrg(c *m.ReqContext, cmd m.CreateOrgCommand) Response {
 		return Error(500, "Failed to create organization", err)
 	}
 
-	metrics.M_Api_Org_Create.Inc()
+	metrics.MApiOrgCreate.Inc()
 
 	return JSON(200, &util.DynMap{
 		"orgId":   cmd.Result.Id,

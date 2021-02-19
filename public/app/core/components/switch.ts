@@ -38,7 +38,7 @@ export class SwitchCtrl {
   label: string;
 
   /** @ngInject */
-  constructor($scope, private $timeout) {
+  constructor($scope: any, private $timeout: any) {
     this.show = true;
     this.id = $scope.$id;
   }

@@ -5,6 +5,7 @@ export const getMockUsers = (amount: number) => {
     users.push({
       avatarUrl: 'url/to/avatar',
       email: `user-${i}@test.com`,
+      name: `user-${i} test`,
       lastSeenAt: '2018-10-01',
       lastSeenAtAge: '',
       login: `user-${i}`,
@@ -21,6 +22,7 @@ export const getMockUser = () => {
   return {
     avatarUrl: 'url/to/avatar',
     email: `user@test.com`,
+    name: 'user test',
     lastSeenAt: '2018-10-01',
     lastSeenAtAge: '',
     login: `user`,

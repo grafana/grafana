@@ -1,24 +1,37 @@
-import { Variable, assignModelProperties, variableTypes } from './variable';
+import {
+  assignModelProperties,
+  TextBoxVariableModel,
+  VariableActions,
+  VariableHide,
+  VariableOption,
+  VariableType,
+  variableTypes,
+} from './variable';
+import { VariableSrv } from './variable_srv';
 
-export class TextBoxVariable implements Variable {
-  query: string;
-  current: any;
-  options: any[];
+export class TextBoxVariable implements TextBoxVariableModel, VariableActions {
+  type: VariableType;
+  name: string;
+  label: string;
+  hide: VariableHide;
   skipUrlSync: boolean;
+  query: string;
+  current: VariableOption;
+  options: VariableOption[];
 
-  defaults = {
+  defaults: TextBoxVariableModel = {
     type: 'textbox',
     name: '',
-    hide: 2,
     label: '',
+    hide: VariableHide.dontHide,
     query: '',
-    current: {},
+    current: {} as VariableOption,
     options: [],
     skipUrlSync: false,
   };
 
   /** @ngInject */
-  constructor(private model, private variableSrv) {
+  constructor(private model: any, private variableSrv: VariableSrv) {
     assignModelProperties(this, model, this.defaults);
   }
 
@@ -27,21 +40,21 @@ export class TextBoxVariable implements Variable {
     return this.model;
   }
 
-  setValue(option) {
+  setValue(option: any) {
     this.variableSrv.setOptionAsCurrent(this, option);
   }
 
   updateOptions() {
-    this.options = [{ text: this.query.trim(), value: this.query.trim() }];
+    this.options = [{ text: this.query.trim(), value: this.query.trim(), selected: false }];
     this.current = this.options[0];
     return Promise.resolve();
   }
 
-  dependsOn(variable) {
+  dependsOn(variable: any) {
     return false;
   }
 
-  setValueFromUrl(urlValue) {
+  setValueFromUrl(urlValue: string) {
     this.query = urlValue;
     return this.variableSrv.setOptionFromUrl(this, urlValue);
   }
@@ -50,7 +63,7 @@ export class TextBoxVariable implements Variable {
     return this.current.value;
   }
 }
-
+// @ts-ignore
 variableTypes['textbox'] = {
   name: 'Text box',
   ctor: TextBoxVariable,

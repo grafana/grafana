@@ -14,7 +14,7 @@ type timeoutConn struct {
 	continueRead  bool
 }
 
-func NewTimeoutConn(conn net.Conn, timeout time.Duration) *timeoutConn {
+func newTimeoutConn(conn net.Conn, timeout time.Duration) *timeoutConn {
 	return &timeoutConn{
 		c:       conn,
 		timeout: timeout,

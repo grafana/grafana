@@ -10,7 +10,7 @@ import {
 } from './functions';
 
 export default class StackdriverMetricFindQuery {
-  constructor(private datasource) {}
+  constructor(private datasource: any) {}
 
   async execute(query: any) {
     try {
@@ -42,7 +42,7 @@ export default class StackdriverMetricFindQuery {
 
   async handleServiceQuery() {
     const metricDescriptors = await this.datasource.getMetricTypes(this.datasource.projectName);
-    const services = extractServicesFromMetricDescriptors(metricDescriptors);
+    const services: any[] = extractServicesFromMetricDescriptors(metricDescriptors);
     return services.map(s => ({
       text: s.serviceShortName,
       value: s.service,
@@ -50,19 +50,21 @@ export default class StackdriverMetricFindQuery {
     }));
   }
 
-  async handleMetricTypesQuery({ selectedService }) {
+  async handleMetricTypesQuery({ selectedService }: any) {
     if (!selectedService) {
       return [];
     }
     const metricDescriptors = await this.datasource.getMetricTypes(this.datasource.projectName);
-    return getMetricTypesByService(metricDescriptors, this.datasource.templateSrv.replace(selectedService)).map(s => ({
-      text: s.displayName,
-      value: s.type,
-      expandable: true,
-    }));
+    return getMetricTypesByService(metricDescriptors, this.datasource.templateSrv.replace(selectedService)).map(
+      (s: any) => ({
+        text: s.displayName,
+        value: s.type,
+        expandable: true,
+      })
+    );
   }
 
-  async handleLabelKeysQuery({ selectedMetricType }) {
+  async handleLabelKeysQuery({ selectedMetricType }: any) {
     if (!selectedMetricType) {
       return [];
     }
@@ -70,51 +72,44 @@ export default class StackdriverMetricFindQuery {
     return labelKeys.map(this.toFindQueryResult);
   }
 
-  async handleLabelValuesQuery({ selectedMetricType, labelKey }) {
+  async handleLabelValuesQuery({ selectedMetricType, labelKey }: any) {
     if (!selectedMetricType) {
       return [];
     }
     const refId = 'handleLabelValuesQuery';
-    const response = await this.datasource.getLabels(selectedMetricType, refId);
+    const labels = await this.datasource.getLabels(selectedMetricType, refId, [labelKey]);
     const interpolatedKey = this.datasource.templateSrv.replace(labelKey);
-    const [name] = interpolatedKey.split('.').reverse();
-    let values = [];
-    if (response.meta && response.meta.metricLabels && response.meta.metricLabels.hasOwnProperty(name)) {
-      values = response.meta.metricLabels[name];
-    } else if (response.meta && response.meta.resourceLabels && response.meta.resourceLabels.hasOwnProperty(name)) {
-      values = response.meta.resourceLabels[name];
-    }
-
+    const values = labels.hasOwnProperty(interpolatedKey) ? labels[interpolatedKey] : [];
     return values.map(this.toFindQueryResult);
   }
 
-  async handleResourceTypeQuery({ selectedMetricType }) {
+  async handleResourceTypeQuery({ selectedMetricType }: any) {
     if (!selectedMetricType) {
       return [];
     }
     const refId = 'handleResourceTypeQueryQueryType';
-    const response = await this.datasource.getLabels(selectedMetricType, refId);
-    return response.meta.resourceTypes ? response.meta.resourceTypes.map(this.toFindQueryResult) : [];
+    const labels = await this.datasource.getLabels(selectedMetricType, refId);
+    return labels['resource.type'].map(this.toFindQueryResult);
   }
 
-  async handleAlignersQuery({ selectedMetricType }) {
+  async handleAlignersQuery({ selectedMetricType }: any) {
     if (!selectedMetricType) {
       return [];
     }
     const metricDescriptors = await this.datasource.getMetricTypes(this.datasource.projectName);
     const { valueType, metricKind } = metricDescriptors.find(
-      m => m.type === this.datasource.templateSrv.replace(selectedMetricType)
+      (m: any) => m.type === this.datasource.templateSrv.replace(selectedMetricType)
     );
     return getAlignmentOptionsByMetric(valueType, metricKind).map(this.toFindQueryResult);
   }
 
-  async handleAggregationQuery({ selectedMetricType }) {
+  async handleAggregationQuery({ selectedMetricType }: any) {
     if (!selectedMetricType) {
       return [];
     }
     const metricDescriptors = await this.datasource.getMetricTypes(this.datasource.projectName);
     const { valueType, metricKind } = metricDescriptors.find(
-      m => m.type === this.datasource.templateSrv.replace(selectedMetricType)
+      (m: any) => m.type === this.datasource.templateSrv.replace(selectedMetricType)
     );
     return getAggregationOptionsByMetric(valueType, metricKind).map(this.toFindQueryResult);
   }
@@ -123,7 +118,7 @@ export default class StackdriverMetricFindQuery {
     return alignmentPeriods.map(this.toFindQueryResult);
   }
 
-  toFindQueryResult(x) {
+  toFindQueryResult(x: any) {
     return isString(x) ? { text: x, expandable: true } : { ...x, expandable: true };
   }
 }

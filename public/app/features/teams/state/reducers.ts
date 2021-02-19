@@ -1,7 +1,26 @@
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+
 import { Team, TeamGroup, TeamMember, TeamsState, TeamState } from 'app/types';
-import { Action, ActionTypes } from './actions';
 
 export const initialTeamsState: TeamsState = { teams: [], searchQuery: '', hasFetched: false };
+
+const teamsSlice = createSlice({
+  name: 'teams',
+  initialState: initialTeamsState,
+  reducers: {
+    teamsLoaded: (state, action: PayloadAction<Team[]>): TeamsState => {
+      return { ...state, hasFetched: true, teams: action.payload };
+    },
+    setSearchQuery: (state, action: PayloadAction<string>): TeamsState => {
+      return { ...state, searchQuery: action.payload };
+    },
+  },
+});
+
+export const { teamsLoaded, setSearchQuery } = teamsSlice.actions;
+
+export const teamsReducer = teamsSlice.reducer;
+
 export const initialTeamState: TeamState = {
   team: {} as Team,
   members: [] as TeamMember[],
@@ -9,34 +28,28 @@ export const initialTeamState: TeamState = {
   searchMemberQuery: '',
 };
 
-export const teamsReducer = (state = initialTeamsState, action: Action): TeamsState => {
-  switch (action.type) {
-    case ActionTypes.LoadTeams:
-      return { ...state, hasFetched: true, teams: action.payload };
-
-    case ActionTypes.SetSearchQuery:
-      return { ...state, searchQuery: action.payload };
-  }
-  return state;
-};
-
-export const teamReducer = (state = initialTeamState, action: Action): TeamState => {
-  switch (action.type) {
-    case ActionTypes.LoadTeam:
+const teamSlice = createSlice({
+  name: 'team',
+  initialState: initialTeamState,
+  reducers: {
+    teamLoaded: (state, action: PayloadAction<Team>): TeamState => {
       return { ...state, team: action.payload };
-
-    case ActionTypes.LoadTeamMembers:
+    },
+    teamMembersLoaded: (state, action: PayloadAction<TeamMember[]>): TeamState => {
       return { ...state, members: action.payload };
-
-    case ActionTypes.SetSearchMemberQuery:
+    },
+    setSearchMemberQuery: (state, action: PayloadAction<string>): TeamState => {
       return { ...state, searchMemberQuery: action.payload };
-
-    case ActionTypes.LoadTeamGroups:
+    },
+    teamGroupsLoaded: (state, action: PayloadAction<TeamGroup[]>): TeamState => {
       return { ...state, groups: action.payload };
-  }
+    },
+  },
+});
 
-  return state;
-};
+export const { teamLoaded, teamGroupsLoaded, teamMembersLoaded, setSearchMemberQuery } = teamSlice.actions;
+
+export const teamReducer = teamSlice.reducer;
 
 export default {
   teams: teamsReducer,

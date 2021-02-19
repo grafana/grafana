@@ -7,7 +7,7 @@
 				<info-popover mode="right-normal">
 					<ul>
 						<li>Dashboard: This will fetch annotation and alert state changes for whole dashboard and show them only on the event's originating panel.</li>
-						<li>All: This will fetch any annotation events that match the tags filter.</li>
+						<li>Tags: This will fetch any annotation events that match the tags filter.</li>
 					</ul>
 				</info-popover>
 			</span>
@@ -32,10 +32,19 @@
 				label-class="width-9"
 				checked="ctrl.annotation.matchAny"
 				on-change="ctrl.refresh()"
-				tooltip="By default Grafana will only show annotation that matches all tags in the query. Enabling this will make Grafana return any annotation with the tags you specify."></gf-form-switch>
+				tooltip="By default Grafana only shows annotations that match all tags in the query. Enabling this returns annotations that match any of the tags in the query."></gf-form-switch>
 		</div>
 		<div class="gf-form" ng-if="ctrl.annotation.type === 'tags'">
-			<span class="gf-form-label">Tags</span>
+			<span class="gf-form-label">
+				Tags
+				<info-popover mode="right-normal">
+					A tag entered here as 'foo' will match
+					<ul>
+						<li>annotation tags 'foo'</li>
+						<li>annotation key-value tags formatted as 'foo:bar'</li>
+					</ul>
+				</info-popover>
+			</span>
 			<bootstrap-tagsinput ng-model="ctrl.annotation.tags" tagclass="label label-tag" placeholder="add tags">
 			</bootstrap-tagsinput>
 		</div>

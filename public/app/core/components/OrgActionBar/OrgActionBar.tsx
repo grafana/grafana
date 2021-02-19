@@ -14,10 +14,10 @@ export interface Props {
 export default class OrgActionBar extends PureComponent<Props> {
   render() {
     const { searchQuery, layoutMode, onSetLayoutMode, linkButton, setSearchQuery, target } = this.props;
-    const linkProps = { href: linkButton.href, target: undefined };
+    const linkProps = { href: linkButton.href };
 
     if (target) {
-      linkProps.target = target;
+      (linkProps as any).target = target;
     }
 
     return (

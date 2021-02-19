@@ -1,11 +1,14 @@
 import coreModule from 'app/core/core_module';
 import _ from 'lodash';
 import * as queryDef from './query_def';
+import { ElasticsearchAggregation } from './types';
+import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
+import { CoreEvents } from 'app/types';
 
 export class ElasticMetricAggCtrl {
   /** @ngInject */
-  constructor($scope, uiSegmentSrv, $q, $rootScope) {
-    const metricAggs = $scope.target.metrics;
+  constructor($scope: any, uiSegmentSrv: any, $rootScope: GrafanaRootScope) {
+    const metricAggs: ElasticsearchAggregation[] = $scope.target.metrics;
     $scope.metricAggTypes = queryDef.getMetricAggTypes($scope.esVersion);
     $scope.extendedStats = queryDef.extendedStats;
     $scope.pipelineAggOptions = [];
@@ -22,7 +25,7 @@ export class ElasticMetricAggCtrl {
     };
 
     $rootScope.onAppEvent(
-      'elastic-query-updated',
+      CoreEvents.elasticQueryUpdated,
       () => {
         $scope.index = _.indexOf(metricAggs, $scope.agg);
         $scope.updatePipelineAggOptions();
@@ -81,7 +84,7 @@ export class ElasticMetricAggCtrl {
             $scope.agg.meta,
             (memo, val, key) => {
               if (val) {
-                const def = _.find($scope.extendedStats, { value: key });
+                const def: any = _.find($scope.extendedStats, { value: key });
                 memo.push(def.text);
               }
               return memo;

@@ -23,7 +23,12 @@ func (qs *QuotaService) QuotaReached(c *m.ReqContext, target string) (bool, erro
 	if !setting.Quota.Enabled {
 		return false, nil
 	}
-
+	// No request context means this is a background service, like LDAP Background Sync.
+	// TODO: we should replace the req context with a more limited interface or struct,
+	//       something that we could easily provide from background jobs.
+	if c == nil {
+		return false, nil
+	}
 	// get the list of scopes that this target is valid for. Org, User, Global
 	scopes, err := m.GetQuotaScopes(target)
 	if err != nil {
@@ -43,12 +48,12 @@ func (qs *QuotaService) QuotaReached(c *m.ReqContext, target string) (bool, erro
 			}
 			if target == "session" {
 
-				usedSessions, err := qs.AuthTokenService.ActiveTokenCount()
+				usedSessions, err := qs.AuthTokenService.ActiveTokenCount(c.Req.Context())
 				if err != nil {
 					return false, err
 				}
 
-				if int64(usedSessions) > scope.DefaultLimit {
+				if usedSessions > scope.DefaultLimit {
 					c.Logger.Debug("Sessions limit reached", "active", usedSessions, "limit", scope.DefaultLimit)
 					return true, nil
 				}

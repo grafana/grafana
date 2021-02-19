@@ -37,7 +37,9 @@
 
 .add-panel-widget__link {
   margin: 0 $space-sm;
-  width: 154px;
+  width: 160px;
+  height: 88px !important;
+  flex-direction: column !important;
 }
 
 .add-panel-widget__icon {

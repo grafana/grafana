@@ -1,35 +1,21 @@
-import { VizOrientation, SelectOptionItem } from '@grafana/ui';
-import { SingleStatBaseOptions } from '../singlestat2/types';
+import { SingleStatBaseOptions, BarGaugeDisplayMode } from '@grafana/ui';
+import { standardGaugeFieldOptions } from '../gauge/types';
+import { VizOrientation, SelectableValue } from '@grafana/data';
 
 export interface BarGaugeOptions extends SingleStatBaseOptions {
-  minValue: number;
-  maxValue: number;
-  displayMode: 'basic' | 'lcd' | 'gradient';
+  displayMode: BarGaugeDisplayMode;
+  showUnfilled: boolean;
 }
 
-export const displayModes: SelectOptionItem[] = [
-  { value: 'gradient', label: 'Gradient' },
-  { value: 'lcd', label: 'Retro LCD' },
-  { value: 'basic', label: 'Basic' },
-];
-
-export const orientationOptions: SelectOptionItem[] = [
-  { value: VizOrientation.Horizontal, label: 'Horizontal' },
-  { value: VizOrientation.Vertical, label: 'Vertical' },
+export const displayModes: Array<SelectableValue<string>> = [
+  { value: BarGaugeDisplayMode.Gradient, label: 'Gradient' },
+  { value: BarGaugeDisplayMode.Lcd, label: 'Retro LCD' },
+  { value: BarGaugeDisplayMode.Basic, label: 'Basic' },
 ];
 
 export const defaults: BarGaugeOptions = {
-  minValue: 0,
-  maxValue: 100,
-  displayMode: 'lcd',
+  displayMode: BarGaugeDisplayMode.Lcd,
   orientation: VizOrientation.Horizontal,
-  valueOptions: {
-    unit: 'none',
-    stat: 'avg',
-    prefix: '',
-    suffix: '',
-    decimals: null,
-  },
-  thresholds: [{ index: 0, value: -Infinity, color: 'green' }, { index: 1, value: 80, color: 'red' }],
-  valueMappings: [],
+  fieldOptions: standardGaugeFieldOptions,
+  showUnfilled: true,
 };

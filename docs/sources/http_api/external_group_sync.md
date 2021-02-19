@@ -2,7 +2,7 @@
 title = "External Group Sync HTTP API "
 description = "Grafana External Group Sync HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "team", "teams", "group", "member", "enterprise"]
-aliases = ["/http_api/external_group_sync/"]
+aliases = ["/docs/grafana/latest/http_api/external_group_sync/"]
 type = "docs"
 [menu.docs]
 name = "External Group Sync"
@@ -11,7 +11,7 @@ parent = "http_api"
 
 # External Group Synchronization API
 
-> External Group Synchronization is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "enterprise/index.md" >}}).
+> External Group Synchronization is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../enterprise" >}}).
 
 ## Get External Groups
 

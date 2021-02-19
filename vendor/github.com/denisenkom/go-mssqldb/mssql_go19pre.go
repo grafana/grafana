@@ -7,6 +7,10 @@ import (
 	"fmt"
 )
 
-func (s *Stmt) makeParamExtra(val driver.Value) (Param, error) {
-	return Param{}, fmt.Errorf("mssql: unknown type for %T", val)
+func (s *Stmt) makeParamExtra(val driver.Value) (param, error) {
+	return param{}, fmt.Errorf("mssql: unknown type for %T", val)
+}
+
+func scanIntoOut(name string, fromServer, scanInto interface{}) error {
+	return fmt.Errorf("mssql: unsupported OUTPUT type, use a newer Go version")
 }

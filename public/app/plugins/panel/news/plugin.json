@@ -1,0 +1,20 @@
+{
+  "type": "panel",
+  "name": "News Panel",
+  "id": "news",
+
+  "skipDataQuery": true,
+
+  "state": "beta",
+
+  "info": {
+    "author": {
+      "name": "Grafana Project",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/news.svg",
+      "large": "img/news.svg"
+    }
+  }
+}

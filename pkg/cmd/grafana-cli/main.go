@@ -23,6 +23,7 @@ func main() {
 	app.Author = "Grafana Project"
 	app.Email = "https://github.com/grafana/grafana"
 	app.Version = version
+
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:   "pluginsDir",
@@ -50,6 +51,18 @@ func main() {
 			Name:  "debug, d",
 			Usage: "enable debug logging",
 		},
+		cli.StringFlag{
+			Name:  "configOverrides",
+			Usage: "configuration options to override defaults as a string. e.g. cfg:default.paths.log=/dev/null",
+		},
+		cli.StringFlag{
+			Name:  "homepath",
+			Usage: "path to grafana install/home path, defaults to working directory",
+		},
+		cli.StringFlag{
+			Name:  "config",
+			Usage: "path to config file",
+		},
 	}
 
 	app.Before = func(c *cli.Context) error {
@@ -66,7 +79,7 @@ func main() {
 
 func setupLogging() {
 	for _, f := range os.Args {
-		if f == "-D" || f == "--debug" || f == "-debug" {
+		if f == "-d" || f == "--debug" || f == "-debug" {
 			logger.SetDebug(true)
 		}
 	}

@@ -1,6 +1,6 @@
 // Services & Utils
 import { createErrorNotification } from 'app/core/copy/appNotification';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -18,11 +18,13 @@ import {
   dashboardInitFailed,
   dashboardInitSlow,
   dashboardInitServices,
-} from './actions';
+  clearDashboardQueriesToUpdateOnLoad,
+} from './reducers';
 
 // Types
 import { DashboardRouteInfo, StoreState, ThunkDispatch, ThunkResult, DashboardDTO } from 'app/types';
 import { DashboardModel } from './DashboardModel';
+import { DataQuery } from '@grafana/data';
 
 export interface InitDashboardArgs {
   $injector: any;
@@ -36,7 +38,7 @@ export interface InitDashboardArgs {
 }
 
 async function redirectToNewUrl(slug: string, dispatch: ThunkDispatch, currentPath: string) {
-  const res = await getBackendSrv().getDashboardBySlug(slug);
+  const res = await backendSrv.getDashboardBySlug(slug);
 
   if (res) {
     let newUrl = res.meta.url;
@@ -60,7 +62,7 @@ async function fetchDashboard(
     switch (args.routeInfo) {
       case DashboardRouteInfo.Home: {
         // load home dash
-        const dashDTO: DashboardDTO = await getBackendSrv().get('/api/dashboards/home');
+        const dashDTO: DashboardDTO = await backendSrv.get('/api/dashboards/home');
 
         // if user specified a custom home dashboard redirect to that
         if (dashDTO.redirectUri) {
@@ -128,7 +130,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     // Detect slow loading / initializing and set state flag
     // This is in order to not show loading indication for fast loading dashboards as it creates blinking/flashing
     setTimeout(() => {
-      if (getState().dashboard.model === null) {
+      if (getState().dashboard.getModel() === null) {
         dispatch(dashboardInitSlow());
       }
     }, 500);
@@ -171,6 +173,11 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     timeSrv.init(dashboard);
     annotationsSrv.init(dashboard);
 
+    if (storeState.dashboard.modifiedQueries) {
+      const { panelId, queries } = storeState.dashboard.modifiedQueries;
+      dashboard.meta.fromExplore = !!(panelId && queries);
+    }
+
     // template values service needs to initialize completely before
     // the rest of the dashboard can load
     try {
@@ -198,8 +205,14 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       console.log(err);
     }
 
+    if (storeState.dashboard.modifiedQueries) {
+      const { panelId, queries } = storeState.dashboard.modifiedQueries;
+      updateQueriesWhenComingFromExplore(dispatch, dashboard, panelId, queries);
+    }
+
     // legacy srv state
     dashboardSrv.setCurrent(dashboard);
+
     // yay we are done
     dispatch(dashboardInitCompleted(dashboard));
   };
@@ -230,4 +243,20 @@ function getNewDashboardModelData(urlFolderId?: string): any {
   }
 
   return data;
+}
+
+function updateQueriesWhenComingFromExplore(
+  dispatch: ThunkDispatch,
+  dashboard: DashboardModel,
+  originPanelId: number,
+  queries: DataQuery[]
+) {
+  const panelArrId = dashboard.panels.findIndex(panel => panel.id === originPanelId);
+
+  if (panelArrId > -1) {
+    dashboard.panels[panelArrId].targets = queries;
+  }
+
+  // Clear update state now that we're done
+  dispatch(clearDashboardQueriesToUpdateOnLoad());
 }

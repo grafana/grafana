@@ -1,6 +1,8 @@
 import React from 'react';
+import { action } from '@storybook/addon-actions';
 
 interface StateHolderProps<T> {
+  logState?: boolean;
   initialState: T;
   children: (currentState: T, updateState: (nextState: T) => void) => React.ReactNode;
 }
@@ -28,11 +30,13 @@ export class UseState<T> extends React.Component<StateHolderProps<T>, { value: T
   }
 
   handleStateUpdate = (nextState: T) => {
-    console.log(nextState);
     this.setState({ value: nextState });
   };
 
   render() {
+    if (this.props.logState) {
+      action('UseState current state')(this.state.value);
+    }
     return this.props.children(this.state.value, this.handleStateUpdate);
   }
 }

@@ -1,4 +1,6 @@
 import _ from 'lodash';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { ScopedVars } from '@grafana/data';
 
 export default class PostgresQuery {
   target: any;
@@ -6,7 +8,7 @@ export default class PostgresQuery {
   scopedVars: any;
 
   /** @ngInject */
-  constructor(target, templateSrv?, scopedVars?) {
+  constructor(target: any, templateSrv?: TemplateSrv, scopedVars?: ScopedVars) {
     this.target = target;
     this.templateSrv = templateSrv;
     this.scopedVars = scopedVars;
@@ -35,7 +37,7 @@ export default class PostgresQuery {
   }
 
   // remove identifier quoting from identifier to use in metadata queries
-  unquoteIdentifier(value) {
+  unquoteIdentifier(value: string) {
     if (value[0] === '"' && value[value.length - 1] === '"') {
       return value.substring(1, value.length - 1).replace(/""/g, '"');
     } else {
@@ -43,15 +45,15 @@ export default class PostgresQuery {
     }
   }
 
-  quoteIdentifier(value) {
+  quoteIdentifier(value: any) {
     return '"' + String(value).replace(/"/g, '""') + '"';
   }
 
-  quoteLiteral(value) {
+  quoteLiteral(value: any) {
     return "'" + String(value).replace(/'/g, "''") + "'";
   }
 
-  escapeLiteral(value) {
+  escapeLiteral(value: any) {
     return String(value).replace(/'/g, "''");
   }
 
@@ -63,7 +65,7 @@ export default class PostgresQuery {
     return this.target.metricColumn !== 'none';
   }
 
-  interpolateQueryStr(value, variable, defaultFormatFn) {
+  interpolateQueryStr(value: any, variable: { multi: any; includeAll: any }, defaultFormatFn: any) {
     // if no multi or include all do not regexEscape
     if (!variable.multi && !variable.includeAll) {
       return this.escapeLiteral(value);
@@ -77,7 +79,7 @@ export default class PostgresQuery {
     return escapedValues.join(',');
   }
 
-  render(interpolate?) {
+  render(interpolate?: any) {
     const target = this.target;
 
     // new query with no table set yet
@@ -146,14 +148,14 @@ export default class PostgresQuery {
     return query;
   }
 
-  buildValueColumn(column) {
+  buildValueColumn(column: any) {
     let query = '';
 
-    const columnName = _.find(column, (g: any) => g.type === 'column');
+    const columnName: any = _.find(column, (g: any) => g.type === 'column');
     query = columnName.params[0];
 
-    const aggregate = _.find(column, (g: any) => g.type === 'aggregate' || g.type === 'percentile');
-    const windows = _.find(column, (g: any) => g.type === 'window' || g.type === 'moving_window');
+    const aggregate: any = _.find(column, (g: any) => g.type === 'aggregate' || g.type === 'percentile');
+    const windows: any = _.find(column, (g: any) => g.type === 'window' || g.type === 'moving_window');
 
     if (aggregate) {
       const func = aggregate.params[0];
@@ -218,7 +220,7 @@ export default class PostgresQuery {
       }
     }
 
-    const alias = _.find(column, (g: any) => g.type === 'alias');
+    const alias: any = _.find(column, (g: any) => g.type === 'alias');
     if (alias) {
       query += ' AS ' + this.quoteIdentifier(alias.params[0]);
     }

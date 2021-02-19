@@ -1,0 +1,75 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`sharedSingleStatMigrationHandler Remove unused \`overrides\` option 1`] = `
+Object {
+  "fieldOptions": Object {
+    "decimals": 5,
+    "defaults": Object {
+      "mappings": undefined,
+      "max": 100,
+      "min": 0,
+      "thresholds": undefined,
+    },
+    "overrides": Array [],
+    "stat": "last",
+    "unit": "watt",
+  },
+}
+`;
+
+exports[`sharedSingleStatMigrationHandler from old valueOptions model without pluginVersion 1`] = `
+Object {
+  "fieldOptions": Object {
+    "calcs": Array [
+      "last",
+    ],
+    "defaults": Object {
+      "color": Object {
+        "mode": "thresholds",
+      },
+      "decimals": 5,
+      "mappings": Array [
+        Object {
+          "text": "OK",
+          "type": 1,
+          "value": "1",
+        },
+      ],
+      "max": 100,
+      "min": 10,
+      "thresholds": Object {
+        "mode": "absolute",
+        "steps": Array [
+          Object {
+            "color": "green",
+            "index": 0,
+            "value": -Infinity,
+          },
+          Object {
+            "color": "orange",
+            "index": 1,
+            "value": 40,
+          },
+          Object {
+            "color": "red",
+            "index": 2,
+            "value": 80,
+          },
+        ],
+      },
+      "unit": "watt",
+    },
+  },
+}
+`;
+
+exports[`sharedSingleStatMigrationHandler move thresholds to scale 1`] = `
+Object {
+  "fieldOptions": Object {
+    "defaults": Object {
+      "mappings": undefined,
+      "thresholds": undefined,
+    },
+  },
+}
+`;

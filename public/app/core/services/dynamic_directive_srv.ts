@@ -3,9 +3,9 @@ import coreModule from '../core_module';
 
 class DynamicDirectiveSrv {
   /** @ngInject */
-  constructor(private $compile) {}
+  constructor(private $compile: angular.ICompileService) {}
 
-  addDirective(element, name, scope) {
+  addDirective(element: any, name: string, scope: any) {
     const child = angular.element(document.createElement(name));
     this.$compile(child)(scope);
 
@@ -13,7 +13,7 @@ class DynamicDirectiveSrv {
     element.append(child);
   }
 
-  link(scope, elem, attrs, options) {
+  link(scope: any, elem: JQLite, attrs: any, options: any) {
     const directiveInfo = options.directive(scope);
     if (!directiveInfo || !directiveInfo.fn) {
       elem.empty();
@@ -28,13 +28,13 @@ class DynamicDirectiveSrv {
     this.addDirective(elem, directiveInfo.name, scope);
   }
 
-  create(options) {
+  create(options: any) {
     const directiveDef = {
       restrict: 'E',
       scope: options.scope,
-      link: (scope, elem, attrs) => {
+      link: (scope: any, elem: JQLite, attrs: any) => {
         if (options.watchPath) {
-          let childScope = null;
+          let childScope: any = null;
           scope.$watch(options.watchPath, () => {
             if (childScope) {
               childScope.$destroy();

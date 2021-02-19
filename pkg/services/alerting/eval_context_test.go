@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/grafana/grafana/pkg/models"
 )
 
@@ -16,7 +18,7 @@ func TestStateIsUpdatedWhenNeeded(t *testing.T) {
 		ctx.PrevAlertState = models.AlertStateOK
 		ctx.Rule.State = models.AlertStateAlerting
 
-		if !ctx.ShouldUpdateAlertState() {
+		if !ctx.shouldUpdateAlertState() {
 			t.Fatalf("expected should updated to be true")
 		}
 	})
@@ -25,7 +27,7 @@ func TestStateIsUpdatedWhenNeeded(t *testing.T) {
 		ctx.PrevAlertState = models.AlertStateOK
 		ctx.Rule.State = models.AlertStateOK
 
-		if ctx.ShouldUpdateAlertState() {
+		if ctx.shouldUpdateAlertState() {
 			t.Fatalf("expected should updated to be false")
 		}
 	})
@@ -195,12 +197,10 @@ func TestGetStateFromEvalContext(t *testing.T) {
 	}
 
 	for _, tc := range tcs {
-		ctx := NewEvalContext(context.TODO(), &Rule{Conditions: []Condition{&conditionStub{firing: true}}})
+		evalContext := NewEvalContext(context.Background(), &Rule{Conditions: []Condition{&conditionStub{firing: true}}})
 
-		tc.applyFn(ctx)
-		have := ctx.GetNewState()
-		if have != tc.expected {
-			t.Errorf("failed: %s \n expected '%s' have '%s'\n", tc.name, tc.expected, string(have))
-		}
+		tc.applyFn(evalContext)
+		newState := evalContext.GetNewState()
+		assert.Equal(t, tc.expected, newState, "failed: %s \n expected '%s' have '%s'\n", tc.name, tc.expected, string(newState))
 	}
 }

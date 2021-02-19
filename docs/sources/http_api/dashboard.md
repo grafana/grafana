@@ -2,7 +2,7 @@
 title = "Dashboard HTTP API "
 description = "Grafana Dashboard HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "dashboard"]
-aliases = ["/http_api/dashboard/"]
+aliases = ["/docs/grafana/latest/http_api/dashboard/"]
 type = "docs"
 [menu.docs]
 name = "Dashboard"
@@ -17,7 +17,7 @@ The identifier (id) of a dashboard is an auto-incrementing numeric value and is 
 
 The unique identifier (uid) of a dashboard can be used for uniquely identify a dashboard between multiple Grafana installs.
 It's automatically generated if not provided when creating a dashboard. The uid allows having consistent URL's for accessing
-dashboards and when syncing dashboards between multiple Grafana installs, see [dashboard provisioning](/administration/provisioning/#dashboards)
+dashboards and when syncing dashboards between multiple Grafana installs, see [dashboard provisioning]({{< relref "../administration/provisioning.md#dashboards" >}})
 for more information. This means that changing the title of a dashboard will not break any bookmarked links to that dashboard.
 
 The uid can have a maximum length of 40 characters.
@@ -274,7 +274,7 @@ Content-Type: application/json
 ```
 
 ## Dashboard Search
-See [Folder/Dashboard Search API](/http_api/folder_dashboard_search).
+See [Folder/Dashboard Search API]({{< relref "folder_dashboard_search.md" >}}).
 
 ## Deprecated resources
 Please note that these resource have been deprecated and will be removed in a future release.

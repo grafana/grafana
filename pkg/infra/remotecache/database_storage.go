@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -39,10 +39,14 @@ func (dc *databaseCache) Run(ctx context.Context) error {
 }
 
 func (dc *databaseCache) internalRunGC() {
-	now := getTime().Unix()
-	sql := `DELETE FROM cache_data WHERE (? - created_at) >= expires AND expires <> 0`
+	err := dc.SQLStore.WithDbSession(context.Background(), func(session *sqlstore.DBSession) error {
+		now := getTime().Unix()
+		sql := `DELETE FROM cache_data WHERE (? - created_at) >= expires AND expires <> 0`
 
-	_, err := dc.SQLStore.NewSession().Exec(sql, now)
+		_, err := session.Exec(sql, now)
+		return err
+	})
+
 	if err != nil {
 		dc.log.Error("failed to run garbage collect", "error", err)
 	}
@@ -66,7 +70,10 @@ func (dc *databaseCache) Get(key string) (interface{}, error) {
 	if cacheHit.Expires > 0 {
 		existedButExpired := getTime().Unix()-cacheHit.CreatedAt >= cacheHit.Expires
 		if existedButExpired {
-			_ = dc.Delete(key) //ignore this error since we will return `ErrCacheItemNotFound` anyway
+			err = dc.Delete(key) //ignore this error since we will return `ErrCacheItemNotFound` anyway
+			if err != nil {
+				dc.log.Debug("Deletion of expired key failed: %v", err)
+			}
 			return nil, ErrCacheItemNotFound
 		}
 	}
@@ -87,37 +94,46 @@ func (dc *databaseCache) Set(key string, value interface{}, expire time.Duration
 	}
 
 	session := dc.SQLStore.NewSession()
-
-	var cacheHit CacheData
-	has, err := session.Where("cache_key = ?", key).Get(&cacheHit)
-	if err != nil {
-		return err
-	}
+	defer session.Close()
 
 	var expiresInSeconds int64
 	if expire != 0 {
 		expiresInSeconds = int64(expire) / int64(time.Second)
 	}
 
-	// insert or update depending on if item already exist
-	if has {
-		sql := `UPDATE cache_data SET data=?, created_at=?, expires=? WHERE cache_key=?`
-		_, err = session.Exec(sql, data, getTime().Unix(), expiresInSeconds, key)
-	} else {
-		sql := `INSERT INTO cache_data (cache_key,data,created_at,expires) VALUES(?,?,?,?)`
-		_, err = session.Exec(sql, key, data, getTime().Unix(), expiresInSeconds)
+	// attempt to insert the key
+	sql := `INSERT INTO cache_data (cache_key,data,created_at,expires) VALUES(?,?,?,?)`
+	_, err = session.Exec(sql, key, data, getTime().Unix(), expiresInSeconds)
+	if err != nil {
+		// attempt to update if a unique constrain violation or a deadlock (for MySQL) occurs
+		// if the update fails propagate the error
+		// which eventually will result in a key that is not finally set
+		// but since it's a cache does not harm a lot
+		if dc.SQLStore.Dialect.IsUniqueConstraintViolation(err) || dc.SQLStore.Dialect.IsDeadlock(err) {
+			sql := `UPDATE cache_data SET data=?, created_at=?, expires=? WHERE cache_key=?`
+			_, err = session.Exec(sql, data, getTime().Unix(), expiresInSeconds, key)
+			if err != nil && dc.SQLStore.Dialect.IsDeadlock(err) {
+				// most probably somebody else is upserting the key
+				// so it is safe enough not to propagate this error
+				return nil
+			}
+		}
 	}
 
 	return err
 }
 
 func (dc *databaseCache) Delete(key string) error {
-	sql := "DELETE FROM cache_data WHERE cache_key=?"
-	_, err := dc.SQLStore.NewSession().Exec(sql, key)
+	return dc.SQLStore.WithDbSession(context.Background(), func(session *sqlstore.DBSession) error {
+		sql := "DELETE FROM cache_data WHERE cache_key=?"
+		_, err := session.Exec(sql, key)
 
-	return err
+		return err
+	})
+
 }
 
+// CacheData is the struct representing the table in the database
 type CacheData struct {
 	CacheKey  string
 	Data      []byte

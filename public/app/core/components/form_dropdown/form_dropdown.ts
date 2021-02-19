@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import coreModule from '../../core_module';
-import { ISCEService, IQService } from 'angular';
+import { ISCEService } from 'angular';
 
 function typeaheadMatcher(this: any, item: string) {
   let str = this.query;
@@ -38,13 +38,7 @@ export class FormDropdownCtrl {
   debounce: number;
 
   /** @ngInject */
-  constructor(
-    private $scope: any,
-    $element: JQLite,
-    private $sce: ISCEService,
-    private templateSrv: any,
-    private $q: IQService
-  ) {
+  constructor(private $scope: any, $element: JQLite, private $sce: ISCEService, private templateSrv: any) {
     this.inputElement = $element.find('input').first();
     this.linkElement = $element.find('a').first();
     this.linkMode = true;
@@ -108,10 +102,7 @@ export class FormDropdownCtrl {
 
   getOptionsInternal(query: string) {
     const result = this.getOptions({ $query: query });
-    if (this.isPromiseLike(result)) {
-      return result;
-    }
-    return this.$q.when(result);
+    return Promise.resolve(result);
   }
 
   isPromiseLike(obj: any) {
@@ -120,12 +111,12 @@ export class FormDropdownCtrl {
 
   modelChanged() {
     if (_.isObject(this.model)) {
-      this.updateDisplay(this.model.text);
+      this.updateDisplay((this.model as any).text);
     } else {
       // if we have text use it
       if (this.lookupText) {
         this.getOptionsInternal('').then((options: any) => {
-          const item = _.find(options, { value: this.model });
+          const item: any = _.find(options, { value: this.model });
           this.updateDisplay(item ? item.text : this.model);
         });
       } else {
@@ -193,7 +184,7 @@ export class FormDropdownCtrl {
     }
 
     this.$scope.$apply(() => {
-      const option = _.find(this.optionCache, { text: text });
+      const option: any = _.find(this.optionCache, { text: text });
 
       if (option) {
         if (_.isObject(this.model)) {
@@ -204,7 +195,7 @@ export class FormDropdownCtrl {
         this.text = option.text;
       } else if (this.allowCustom) {
         if (_.isObject(this.model)) {
-          this.model.text = this.model.value = text;
+          (this.model as any).text = (this.model as any).value = text;
         } else {
           this.model = text;
         }

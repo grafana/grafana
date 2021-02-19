@@ -4,7 +4,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
 <div
   className=""
 >
-  <Connect(DashNav)
+  <Component
     $injector={Object {}}
     dashboard={
       DashboardModel {
@@ -66,6 +66,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
               "y": 0,
             },
             "id": 1,
+            "restoreModel": [Function],
             "targets": Array [
               Object {
                 "refId": "A",
@@ -78,7 +79,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
         ],
         "refresh": undefined,
         "revision": undefined,
-        "schemaVersion": 18,
+        "schemaVersion": 22,
         "snapshot": undefined,
         "style": "dark",
         "tags": Array [],
@@ -93,6 +94,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
         "timezone": "",
         "title": "My dashboard",
         "uid": null,
+        "updatePanel": [Function],
         "version": 0,
       }
     }
@@ -111,13 +113,106 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
       autoHideTimeout={200}
       className="custom-scrollbar--page"
       hideTracksWhenNotNeeded={false}
-      scrollTop={0}
       setScrollTop={[Function]}
       updateAfterMountMs={500}
     >
       <div
         className="dashboard-container"
       >
+        <SubMenu
+          dashboard={
+            DashboardModel {
+              "annotations": Object {
+                "list": Array [
+                  Object {
+                    "builtIn": 1,
+                    "datasource": "-- Grafana --",
+                    "enable": true,
+                    "hide": true,
+                    "iconColor": "rgba(0, 211, 255, 1)",
+                    "name": "Annotations & Alerts",
+                    "type": "dashboard",
+                  },
+                ],
+              },
+              "autoUpdate": undefined,
+              "description": undefined,
+              "editable": true,
+              "events": Emitter {
+                "emitter": EventEmitter {
+                  "_events": Object {},
+                  "_eventsCount": 0,
+                },
+              },
+              "gnetId": null,
+              "graphTooltip": 0,
+              "id": null,
+              "links": Array [],
+              "meta": Object {
+                "canEdit": true,
+                "canMakeEditable": false,
+                "canSave": true,
+                "canShare": true,
+                "canStar": true,
+                "fullscreen": false,
+                "isEditing": false,
+                "showSettings": true,
+              },
+              "originalTemplating": Array [],
+              "originalTime": Object {
+                "from": "now-6h",
+                "to": "now",
+              },
+              "panels": Array [
+                PanelModel {
+                  "cachedPluginOptions": Object {},
+                  "datasource": null,
+                  "events": Emitter {
+                    "emitter": EventEmitter {
+                      "_events": Object {},
+                      "_eventsCount": 0,
+                    },
+                  },
+                  "gridPos": Object {
+                    "h": 1,
+                    "w": 1,
+                    "x": 0,
+                    "y": 0,
+                  },
+                  "id": 1,
+                  "restoreModel": [Function],
+                  "targets": Array [
+                    Object {
+                      "refId": "A",
+                    },
+                  ],
+                  "title": "My graph",
+                  "transparent": false,
+                  "type": "graph",
+                },
+              ],
+              "refresh": undefined,
+              "revision": undefined,
+              "schemaVersion": 22,
+              "snapshot": undefined,
+              "style": "dark",
+              "tags": Array [],
+              "templating": Object {
+                "list": Array [],
+              },
+              "time": Object {
+                "from": "now-6h",
+                "to": "now",
+              },
+              "timepicker": Object {},
+              "timezone": "",
+              "title": "My dashboard",
+              "uid": null,
+              "updatePanel": [Function],
+              "version": 0,
+            }
+          }
+        />
         <DashboardGrid
           dashboard={
             DashboardModel {
@@ -179,6 +274,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                     "y": 0,
                   },
                   "id": 1,
+                  "restoreModel": [Function],
                   "targets": Array [
                     Object {
                       "refId": "A",
@@ -191,7 +287,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
               ],
               "refresh": undefined,
               "revision": undefined,
-              "schemaVersion": 18,
+              "schemaVersion": 22,
               "snapshot": undefined,
               "style": "dark",
               "tags": Array [],
@@ -206,11 +302,13 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
               "timezone": "",
               "title": "My dashboard",
               "uid": null,
+              "updatePanel": [Function],
               "version": 0,
             }
           }
           isEditing={false}
           isFullscreen={false}
+          scrollTop={0}
         />
       </div>
     </CustomScrollbar>
@@ -240,7 +338,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
 <div
   className="dashboard-page--settings-opening"
 >
-  <Connect(DashNav)
+  <Component
     $injector={Object {}}
     dashboard={
       DashboardModel {
@@ -302,6 +400,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
               "y": 0,
             },
             "id": 1,
+            "restoreModel": [Function],
             "targets": Array [
               Object {
                 "refId": "A",
@@ -314,7 +413,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
         ],
         "refresh": undefined,
         "revision": undefined,
-        "schemaVersion": 18,
+        "schemaVersion": 22,
         "snapshot": undefined,
         "style": "dark",
         "tags": Array [],
@@ -329,6 +428,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
         "timezone": "",
         "title": "My dashboard",
         "uid": null,
+        "updatePanel": [Function],
         "version": 0,
       }
     }
@@ -348,7 +448,6 @@ exports[`DashboardPage When dashboard has editview url state should render setti
       autoHideTimeout={200}
       className="custom-scrollbar--page"
       hideTracksWhenNotNeeded={false}
-      scrollTop={0}
       setScrollTop={[Function]}
       updateAfterMountMs={500}
     >
@@ -413,6 +512,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                   "y": 0,
                 },
                 "id": 1,
+                "restoreModel": [Function],
                 "targets": Array [
                   Object {
                     "refId": "A",
@@ -425,7 +525,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
             ],
             "refresh": undefined,
             "revision": undefined,
-            "schemaVersion": 18,
+            "schemaVersion": 22,
             "snapshot": undefined,
             "style": "dark",
             "tags": Array [],
@@ -440,6 +540,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
             "timezone": "",
             "title": "My dashboard",
             "uid": null,
+            "updatePanel": [Function],
             "version": 0,
           }
         }
@@ -447,6 +548,100 @@ exports[`DashboardPage When dashboard has editview url state should render setti
       <div
         className="dashboard-container"
       >
+        <SubMenu
+          dashboard={
+            DashboardModel {
+              "annotations": Object {
+                "list": Array [
+                  Object {
+                    "builtIn": 1,
+                    "datasource": "-- Grafana --",
+                    "enable": true,
+                    "hide": true,
+                    "iconColor": "rgba(0, 211, 255, 1)",
+                    "name": "Annotations & Alerts",
+                    "type": "dashboard",
+                  },
+                ],
+              },
+              "autoUpdate": undefined,
+              "description": undefined,
+              "editable": true,
+              "events": Emitter {
+                "emitter": EventEmitter {
+                  "_events": Object {},
+                  "_eventsCount": 0,
+                },
+              },
+              "gnetId": null,
+              "graphTooltip": 0,
+              "id": null,
+              "links": Array [],
+              "meta": Object {
+                "canEdit": true,
+                "canMakeEditable": false,
+                "canSave": true,
+                "canShare": true,
+                "canStar": true,
+                "fullscreen": false,
+                "isEditing": false,
+                "showSettings": true,
+              },
+              "originalTemplating": Array [],
+              "originalTime": Object {
+                "from": "now-6h",
+                "to": "now",
+              },
+              "panels": Array [
+                PanelModel {
+                  "cachedPluginOptions": Object {},
+                  "datasource": null,
+                  "events": Emitter {
+                    "emitter": EventEmitter {
+                      "_events": Object {},
+                      "_eventsCount": 0,
+                    },
+                  },
+                  "gridPos": Object {
+                    "h": 1,
+                    "w": 1,
+                    "x": 0,
+                    "y": 0,
+                  },
+                  "id": 1,
+                  "restoreModel": [Function],
+                  "targets": Array [
+                    Object {
+                      "refId": "A",
+                    },
+                  ],
+                  "title": "My graph",
+                  "transparent": false,
+                  "type": "graph",
+                },
+              ],
+              "refresh": undefined,
+              "revision": undefined,
+              "schemaVersion": 22,
+              "snapshot": undefined,
+              "style": "dark",
+              "tags": Array [],
+              "templating": Object {
+                "list": Array [],
+              },
+              "time": Object {
+                "from": "now-6h",
+                "to": "now",
+              },
+              "timepicker": Object {},
+              "timezone": "",
+              "title": "My dashboard",
+              "uid": null,
+              "updatePanel": [Function],
+              "version": 0,
+            }
+          }
+        />
         <DashboardGrid
           dashboard={
             DashboardModel {
@@ -508,6 +703,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                     "y": 0,
                   },
                   "id": 1,
+                  "restoreModel": [Function],
                   "targets": Array [
                     Object {
                       "refId": "A",
@@ -520,7 +716,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
               ],
               "refresh": undefined,
               "revision": undefined,
-              "schemaVersion": 18,
+              "schemaVersion": 22,
               "snapshot": undefined,
               "style": "dark",
               "tags": Array [],
@@ -535,11 +731,13 @@ exports[`DashboardPage When dashboard has editview url state should render setti
               "timezone": "",
               "title": "My dashboard",
               "uid": null,
+              "updatePanel": [Function],
               "version": 0,
             }
           }
           isEditing={false}
           isFullscreen={false}
+          scrollTop={0}
         />
       </div>
     </CustomScrollbar>

@@ -13,9 +13,9 @@ export function spectrumPicker() {
     scope: true,
     replace: true,
     template: '<color-picker color="ngModel.$viewValue" onChange="onColorChange"></color-picker>',
-    link: (scope, element, attrs, ngModel) => {
+    link: (scope: any, element: any, attrs: any, ngModel: any) => {
       scope.ngModel = ngModel;
-      scope.onColorChange = color => {
+      scope.onColorChange = (color: string) => {
         ngModel.$setViewValue(color);
       };
     },

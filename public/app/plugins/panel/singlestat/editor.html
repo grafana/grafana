@@ -1,18 +1,57 @@
 <div class="editor-row">
+
+  <div class="grafana-info-box" ng-if="ctrl.panel.gauge.show">
+    <h5>Gauge Migration</h5>
+    <p>
+      Gauge visualizations within the Singlestat panel are deprecated.  Please
+      migrate this panel to use the Gauge panel
+
+      <div class="gf-form-button-row">
+        <button class="btn btn-primary" ng-click="ctrl.migrateToGaugePanel(true)">
+          Migrate to Gauge Panel
+        </button>
+        <button class="btn btn-inverse" ng-click="ctrl.migrateToGaugePanel(false)">
+          Show as single stat
+        </button>
+      </div>
+
+      <br/>
+
+      <div ng-if="ctrl.panel.sparkline.show">
+        <b>NOTE:</b> Sparklines are not supported in the gauge panel
+      </div>
+
+      <div ng-if="ctrl.panel.prefix">
+        <b>NOTE:</b> Prefix will not be show in the gauge panel
+      </div>
+
+      <div ng-if="ctrl.panel.postfix">
+        <b>NOTE:</b> Postfix will not be show in the gauge panel
+      </div>
+
+      <div ng-if="ctrl.panel.links && ctrl.panel.links.length">
+        <b>NOTE:</b> Links will be in the upper left corner, rather than anywhere on the gauge
+      </div>
+    </p>
+  </div>
+
+
   <div class="section gf-form-group">
     <h5 class="section-heading">Value</h5>
 
     <div class="gf-form-inline">
-      <div class="gf-form" ng-show="ctrl.dataType === 'timeseries'">
-        <label class="gf-form-label width-6">Stat</label>
+      <div class="gf-form" ng-if="ctrl.fieldNames.length > 1">
+        <label class="gf-form-label width-6">Field</label>
         <div class="gf-form-select-wrapper width-12">
-          <select class="gf-form-input" ng-model="ctrl.panel.valueName" ng-options="f.value as f.text for f in ctrl.valueNameOptions" ng-change="ctrl.refresh()"></select>
+          <select class="gf-form-input" ng-model="ctrl.panel.tableColumn" ng-options="f for f in ctrl.fieldNames" ng-change="ctrl.refresh()"></select>
         </div>
       </div>
-      <div class="gf-form" ng-show="ctrl.dataType === 'table'">
-        <label class="gf-form-label width-6">Column</label>
+    </div>
+    <div class="gf-form-inline">
+      <div class="gf-form">
+        <label class="gf-form-label width-6">Show</label>
         <div class="gf-form-select-wrapper width-12">
-          <select class="gf-form-input" ng-model="ctrl.panel.tableColumn" ng-options="f for f in ctrl.tableColumnOptions" ng-change="ctrl.refresh()"></select>
+          <select class="gf-form-input" ng-model="ctrl.panel.valueName" ng-options="f.value as f.text for f in ctrl.valueNameOptions" ng-change="ctrl.refresh()"></select>
         </div>
       </div>
       <div class="gf-form">
@@ -27,24 +66,29 @@
       <div class="gf-form">
         <label class="gf-form-label width-6">Prefix</label>
         <input type="text" class="gf-form-input width-12" ng-model="ctrl.panel.prefix" ng-change="ctrl.render()" ng-model-onblur>
+      </div>
+      <div class="gf-form">
         <label class="gf-form-label width-6">Font size</label>
         <div class="gf-form-select-wrapper">
           <select class="gf-form-input" ng-model="ctrl.panel.prefixFontSize" ng-options="f for f in ctrl.fontSizes" ng-change="ctrl.render()" ng-disabled="!ctrl.canModifyText()"></select>
         </div>
       </div>
     </div>
-
-    <div class="gf-form">
-      <label class="gf-form-label width-6">Postfix</label>
-      <input type="text" class="gf-form-input width-12" ng-model="ctrl.panel.postfix" ng-change="ctrl.render()" ng-model-onblur>
-      <label class="gf-form-label width-6">Font size</label>
-      <div class="gf-form-select-wrapper">
-        <select class="input-small gf-form-input" ng-model="ctrl.panel.postfixFontSize" ng-options="f for f in ctrl.fontSizes" ng-change="ctrl.render()" ng-disabled="!ctrl.canModifyText()"></select>
+    <div class="gf-form-inline">
+      <div class="gf-form">
+        <label class="gf-form-label width-6">Postfix</label>
+        <input type="text" class="gf-form-input width-12" ng-model="ctrl.panel.postfix" ng-change="ctrl.render()" ng-model-onblur>
+      </div>
+      <div class="gf-form">
+        <label class="gf-form-label width-6">Font size</label>
+        <div class="gf-form-select-wrapper">
+          <select class="input-small gf-form-input" ng-model="ctrl.panel.postfixFontSize" ng-options="f for f in ctrl.fontSizes" ng-change="ctrl.render()" ng-disabled="!ctrl.canModifyText()"></select>
+        </div>
       </div>
     </div>
     <div class="gf-form">
       <label class="gf-form-label width-6">Unit</label>
-      <div class="gf-form-dropdown-typeahead width-18" ng-model="ctrl.panel.format" dropdown-typeahead2="ctrl.unitFormats" dropdown-typeahead-on-select="ctrl.setUnitFormat($subItem)"></div>
+      <unit-picker onChange="ctrl.setUnitFormat()" value="ctrl.panel.format" width="18" />
     </div>
     <div class="gf-form">
       <label class="gf-form-label width-6">Decimals</label>
@@ -85,9 +129,17 @@
 
   <div class="section gf-form-group">
     <h5 class="section-heading">Spark lines</h5>
-    <gf-form-switch class="gf-form" label-class="width-9" label="Show" checked="ctrl.panel.sparkline.show" on-change="ctrl.render()"></gf-form-switch>
+    <gf-form-switch class="gf-form" label-class="width-9" label="Show" checked="ctrl.panel.sparkline.show" on-change="ctrl.refresh()"></gf-form-switch>
     <div ng-if="ctrl.panel.sparkline.show">
       <gf-form-switch class="gf-form" label-class="width-9" label="Full height" checked="ctrl.panel.sparkline.full" on-change="ctrl.render()"></gf-form-switch>
+      <div class="gf-form">
+        <label class="gf-form-label width-9">Y-Min</label>
+        <input type="number" class="gf-form-input width-5" placeholder="auto" data-placement="right" ng-model="ctrl.panel.sparkline.ymin" ng-change="ctrl.render()" ng-model-onblur empty-to-null>
+      </div>
+      <div class="gf-form">
+        <label class="gf-form-label width-9">Y-Max</label>
+        <input type="number" class="gf-form-input width-5" placeholder="auto" data-placement="right" ng-model="ctrl.panel.sparkline.ymax" ng-change="ctrl.render()" ng-model-onblur empty-to-null>
+      </div>
       <div class="gf-form">
         <label class="gf-form-label width-9">Line Color</label>
         <span class="gf-form-label">
@@ -103,7 +155,7 @@
     </div>
   </div>
 
-  <div class="section gf-form-group">
+  <div class="section gf-form-group" ng-if="ctrl.panel.gauge.show">
     <h5 class="section-heading">Gauge</h5>
     <gf-form-switch class="gf-form" label-class="width-10" switch-class="max-width-6" label="Show" checked="ctrl.panel.gauge.show" on-change="ctrl.render()"></gf-form-switch>
     <div ng-if="ctrl.panel.gauge.show">

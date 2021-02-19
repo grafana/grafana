@@ -1,9 +1,10 @@
 import _ from 'lodash';
 import $ from 'jquery';
 import coreModule from 'app/core/core_module';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
 /** @ngInject */
-export function graphiteFuncEditor($compile, templateSrv, popoverSrv) {
+export function graphiteFuncEditor($compile: any, templateSrv: TemplateSrv) {
   const funcSpanTemplate = `
     <function-editor
       func="func"
@@ -17,29 +18,27 @@ export function graphiteFuncEditor($compile, templateSrv, popoverSrv) {
 
   return {
     restrict: 'A',
-    link: function postLink($scope, elem) {
+    link: function postLink($scope: any, elem: JQuery) {
       const $funcLink = $(funcSpanTemplate);
       const ctrl = $scope.ctrl;
       const func = $scope.func;
       let scheduledRelink = false;
       let paramCountAtLink = 0;
-      let cancelBlur = null;
+      let cancelBlur: any = null;
 
-      ctrl.handleRemoveFunction = func => {
+      ctrl.handleRemoveFunction = (func: any) => {
         ctrl.removeFunction(func);
       };
 
-      ctrl.handleMoveLeft = func => {
+      ctrl.handleMoveLeft = (func: any) => {
         ctrl.moveFunction(func, -1);
       };
 
-      ctrl.handleMoveRight = func => {
+      ctrl.handleMoveRight = (func: any) => {
         ctrl.moveFunction(func, 1);
       };
 
-      function clickFuncParam(this: any, paramIndex) {
-        /*jshint validthis:true */
-
+      function clickFuncParam(this: any, paramIndex: any) {
         const $link = $(this);
         const $comma = $link.prev('.comma');
         const $input = $link.next();
@@ -73,18 +72,17 @@ export function graphiteFuncEditor($compile, templateSrv, popoverSrv) {
         }
       }
 
-      function paramDef(index) {
+      function paramDef(index: number) {
         if (index < func.def.params.length) {
           return func.def.params[index];
         }
-        if (_.last(func.def.params).multiple) {
+        if ((_.last(func.def.params) as any).multiple) {
           return _.assign({}, _.last(func.def.params), { optional: true });
         }
         return {};
       }
 
-      function switchToLink(inputElem, paramIndex) {
-        /*jshint validthis:true */
+      function switchToLink(inputElem: HTMLElement, paramIndex: any) {
         const $input = $(inputElem);
 
         clearTimeout(cancelBlur);
@@ -117,8 +115,7 @@ export function graphiteFuncEditor($compile, templateSrv, popoverSrv) {
       }
 
       // this = input element
-      function inputBlur(this: any, paramIndex) {
-        /*jshint validthis:true */
+      function inputBlur(this: any, paramIndex: any) {
         const inputElem = this;
         // happens long before the click event on the typeahead options
         // need to have long delay because the blur
@@ -127,19 +124,17 @@ export function graphiteFuncEditor($compile, templateSrv, popoverSrv) {
         }, 200);
       }
 
-      function inputKeyPress(this: any, paramIndex, e) {
-        /*jshint validthis:true */
+      function inputKeyPress(this: any, paramIndex: any, e: any) {
         if (e.which === 13) {
           $(this).blur();
         }
       }
 
       function inputKeyDown(this: any) {
-        /*jshint validthis:true */
         this.style.width = (3 + this.value.length) * 8 + 'px';
       }
 
-      function addTypeahead($input, paramIndex) {
+      function addTypeahead($input: any, paramIndex: any) {
         $input.attr('data-provide', 'typeahead');
 
         let options = paramDef(paramIndex).options;
@@ -153,7 +148,7 @@ export function graphiteFuncEditor($compile, templateSrv, popoverSrv) {
           source: options,
           minLength: 0,
           items: 20,
-          updater: value => {
+          updater: (value: any) => {
             $input.val(value);
             switchToLink($input[0], paramIndex);
             return value;
@@ -170,37 +165,40 @@ export function graphiteFuncEditor($compile, templateSrv, popoverSrv) {
       function addElementsAndCompile() {
         $funcLink.appendTo(elem);
 
-        const defParams = _.clone(func.def.params);
-        const lastParam = _.last(func.def.params);
+        const defParams: any = _.clone(func.def.params);
+        const lastParam: any = _.last(func.def.params);
 
         while (func.params.length >= defParams.length && lastParam && lastParam.multiple) {
           defParams.push(_.assign({}, lastParam, { optional: true }));
         }
 
-        _.each(defParams, (param, index) => {
+        _.each(defParams, (param: any, index: number) => {
           if (param.optional && func.params.length < index) {
             return false;
           }
 
           let paramValue = templateSrv.highlightVariablesAsHtml(func.params[index]);
-          const hasValue = paramValue !== null && paramValue !== undefined;
-
+          const hasValue = paramValue !== null && paramValue !== undefined && paramValue !== '';
           const last = index >= func.params.length - 1 && param.optional && !hasValue;
+          let linkClass = 'query-part__link';
+
+          if (last) {
+            linkClass += ' query-part__last';
+          }
+
           if (last && param.multiple) {
             paramValue = '+';
+          } else if (!hasValue) {
+            // for params with no value default to param name
+            paramValue = param.name;
+            linkClass += ' query-part__link--no-value';
           }
 
           if (index > 0) {
             $('<span class="comma' + (last ? ' query-part__last' : '') + '">, </span>').appendTo(elem);
           }
 
-          const $paramLink = $(
-            '<a ng-click="" class="graphite-func-param-link' +
-              (last ? ' query-part__last' : '') +
-              '">' +
-              (hasValue ? paramValue : '&nbsp;') +
-              '</a>'
-          );
+          const $paramLink = $(`<a ng-click="" class="${linkClass}">${paramValue}</a>`);
           const $input = $(paramTemplate);
           $input.attr('placeholder', param.name);
 
@@ -231,7 +229,7 @@ export function graphiteFuncEditor($compile, templateSrv, popoverSrv) {
           $scope.func.added = false;
           setTimeout(() => {
             elem
-              .find('.graphite-func-param-link')
+              .find('.query-part__link')
               .first()
               .click();
           }, 10);

@@ -1,8 +1,9 @@
 import React, { PureComponent } from 'react';
 import alertDef from './state/alertDef';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { DashboardModel } from '../dashboard/state/DashboardModel';
 import appEvents from '../../core/app_events';
+import { CoreEvents } from 'app/types';
 
 interface Props {
   dashboard: DashboardModel;
@@ -15,7 +16,7 @@ interface State {
 }
 
 class StateHistory extends PureComponent<Props, State> {
-  state = {
+  state: State = {
     stateHistoryItems: [],
   };
 
@@ -24,8 +25,8 @@ class StateHistory extends PureComponent<Props, State> {
 
     getBackendSrv()
       .get(`/api/annotations?dashboardId=${dashboard.id}&panelId=${panelId}&limit=50&type=alert`)
-      .then(res => {
-        const items = res.map(item => {
+      .then((res: any[]) => {
+        const items = res.map((item: any) => {
           return {
             stateModel: alertDef.getStateDisplayModel(item.newState),
             time: dashboard.formatDate(item.time, 'MMM D, YYYY HH:mm:ss'),
@@ -42,7 +43,7 @@ class StateHistory extends PureComponent<Props, State> {
   clearHistory = () => {
     const { dashboard, onRefresh, panelId } = this.props;
 
-    appEvents.emit('confirm-modal', {
+    appEvents.emit(CoreEvents.showConfirmModal, {
       title: 'Delete Alert History',
       text: 'Are you sure you want to remove all history & annotations for this alert?',
       icon: 'fa-trash',
@@ -54,12 +55,11 @@ class StateHistory extends PureComponent<Props, State> {
             panelId: panelId,
           })
           .then(() => {
+            this.setState({
+              stateHistoryItems: [],
+            });
             onRefresh();
           });
-
-        this.setState({
-          stateHistoryItems: [],
-        });
       },
     });
   };
@@ -72,7 +72,7 @@ class StateHistory extends PureComponent<Props, State> {
         {stateHistoryItems.length > 0 && (
           <div className="p-b-1">
             <span className="muted">Last 50 state changes</span>
-            <button className="btn btn-mini btn-danger pull-right" onClick={this.clearHistory}>
+            <button className="btn btn-small btn-danger pull-right" onClick={this.clearHistory}>
               <i className="fa fa-trash" /> {` Clear history`}
             </button>
           </div>

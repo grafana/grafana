@@ -5,6 +5,7 @@ apiVersion: 1
 # - name: 'default'
 #   orgId: 1
 #   folder: ''
+#   folderUid: ''
 #   type: file
 #   options:
 #     path: /var/lib/grafana/dashboards

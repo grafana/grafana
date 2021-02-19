@@ -1,27 +1,42 @@
 .icon-margin-right {
   margin-right: 0.25em;
+
+  @media only screen and (max-width: 1320px) {
+    margin-right: 0;
+  }
+}
+
+.icon-brand-gradient {
+  text-shadow: none;
+  background: linear-gradient(180deg, #f05a28 30%, #fbca0a 100%);
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  -moz-text-fill-color: transparent;
 }
 
 .icon-margin-left {
   margin-left: 0.25em;
+
+  @media only screen and (max-width: 1320px) {
+    margin-left: 0;
+  }
 }
 
-.run-icon {
-  transform: rotate(90deg);
+.explore-active-button-glow {
+  box-shadow: $btn-active-box-shadow;
+}
+.explore-ds-picker {
+  min-width: 200px;
+  max-width: 300px;
 }
 
-.timepicker {
-  display: flex;
-}
+.explore-ds-picker--small {
+  min-width: 60px;
+  max-width: 60px;
 
-.timepicker-rangestring {
-  margin-left: 0.5em;
-}
-
-.datasource-picker {
   .ds-picker {
-    min-width: 200px;
-    max-width: 200px;
+    min-width: 60px;
+    max-width: 60px;
   }
 }
 
@@ -41,6 +56,14 @@
 .explore-toolbar-item {
   position: relative;
   align-self: center;
+
+  &:first-child {
+    padding-left: 34px;
+
+    @include media-breakpoint-up(md) {
+      padding-left: 0;
+    }
+  }
 }
 
 .explore-toolbar.splitted {
@@ -63,13 +86,8 @@
   flex: 1 1 0;
   flex-flow: row nowrap;
   font-size: 18px;
-  min-height: 55px;
-  line-height: 55px;
-  justify-content: space-between;
-  margin-left: $space-xl;
-}
-
-.explore-toolbar-header {
+  min-height: $navbarHeight;
+  line-height: $navbarHeight;
   justify-content: space-between;
   align-items: center;
 }
@@ -83,22 +101,35 @@
   display: flex;
   flex-flow: row wrap;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
 }
 
 .explore-toolbar-content-item {
-  padding: 10px 2px;
-}
+  display: flex;
+  padding: 2px 2px;
 
-.explore-toolbar-content-item:first-child {
-  padding-left: $dashboard-padding;
-  margin-right: auto;
+  &:first-child {
+    padding-left: $dashboard-padding;
+    margin-right: auto;
+  }
 }
 
 @media only screen and (max-width: 1545px) {
   .explore-toolbar.splitted {
     .timepicker-rangestring {
       display: none;
+    }
+  }
+}
+
+@media only screen and (max-width: 1400px) {
+  .explore-toolbar.splitted {
+    .explore-toolbar-content-item {
+      .navbar-button {
+        span {
+          display: none;
+        }
+      }
     }
   }
 }
@@ -117,38 +148,62 @@
   .explore-toolbar.splitted {
     .explore-toolbar-content-item {
       padding: 2px 0;
-      margin: 0;
     }
   }
+}
 
-  .explore-toolbar-content-item {
-    padding: 2px 2px;
+@media only screen and (max-width: 897px) {
+  .explore-toolbar {
+    .explore-toolbar-content-item {
+      .navbar-button span {
+        display: none;
+      }
+    }
   }
 }
 
-@media only screen and (max-width: 803px) {
-  .btn-title {
-    display: none;
+@media only screen and (max-width: 810px) {
+  .explore-toolbar {
+    .explore-toolbar-content-item {
+      &:first-child {
+        padding-left: 2px;
+        margin: 0 12px 0 16px;
+      }
+    }
   }
 }
 
-@media only screen and (max-width: 702px) {
-  .explore-toolbar-content-item:first-child {
-    padding-left: 2px;
-    margin-right: 0;
+.explore-icon-align {
+  .navbar-button {
+    i {
+      position: relative;
+      top: -1px;
+
+      @media only screen and (max-width: 1320px) {
+        margin: 0 -3px;
+      }
+    }
   }
 }
 
-@media only screen and (max-width: 544px) {
-  .explore-toolbar-header-title {
-    .navbar-page-btn {
-      margin-left: $dashboard-padding;
+.explore-toolbar.splitted {
+  .explore-icon-align {
+    .navbar-button {
+      i {
+        margin: 0 -3px;
+      }
     }
   }
 }
 
 .explore {
+  display: flex;
   flex: 1 1 auto;
+  flex-direction: column;
+}
+
+.explore.explore-live {
+  flex-direction: column-reverse;
 }
 
 .explore + .explore {
@@ -156,7 +211,14 @@
 }
 
 .explore-container {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
   padding: $dashboard-padding;
+}
+
+.explore-container.explore-live {
+  flex-direction: column-reverse;
 }
 
 .explore-wrapper {
@@ -167,100 +229,21 @@
   }
 }
 
-.explore-panel {
-  margin-top: $space-sm;
-}
-
-.explore-panel__body {
-  padding: $panel-padding;
-}
-
-.explore-panel__header {
-  padding: $panel-padding;
-  padding-top: 5px;
-  padding-bottom: 0;
-  display: flex;
-  cursor: pointer;
-  margin-bottom: 5px;
-  transition: all 0.1s linear;
-}
-
-.explore-panel__header-label {
-  font-weight: 500;
-  margin-right: $space-sm;
-  font-size: $font-size-h6;
-  box-shadow: $text-shadow-faint;
-}
-
-.explore-panel__header-buttons {
-  margin-right: $space-sm;
-  font-size: $font-size-lg;
-  line-height: $font-size-h6;
-}
-
-.time-series-disclaimer {
-  width: 300px;
-  margin: $space-sm auto;
-  padding: 10px 0;
-  border-radius: $border-radius;
-  text-align: center;
-  background-color: $panel-bg;
-
-  .disclaimer-icon {
-    color: $yellow;
-    margin-right: $space-xs;
-  }
-
-  .show-all-time-series {
-    cursor: pointer;
-    color: $external-link-color;
-  }
+.explore-input--ml {
+  margin-left: 4px;
 }
 
 .navbar .elapsed-time {
   position: absolute;
   left: 0;
   right: 0;
-  top: 3.5rem;
+  top: 48px;
   text-align: center;
-  font-size: 0.8rem;
+  font-size: 11px;
 }
 
 .graph-legend {
   flex-wrap: wrap;
-}
-
-.explore-panel__loader {
-  height: 2px;
-  position: relative;
-  overflow: hidden;
-  background: none;
-  margin: $space-xs;
-}
-
-.explore-panel__loader--active:after {
-  content: ' ';
-  display: block;
-  width: 25%;
-  top: 0;
-  top: -50%;
-  height: 250%;
-  position: absolute;
-  animation: loader 2s cubic-bezier(0.17, 0.67, 0.83, 0.67) 500ms;
-  animation-iteration-count: 100;
-  left: -25%;
-  background: $blue;
-}
-
-@keyframes loader {
-  from {
-    left: -25%;
-    opacity: 0.1;
-  }
-  to {
-    left: 100%;
-    opacity: 1;
-  }
 }
 
 .query-row {
@@ -269,7 +252,7 @@
   align-items: flex-start;
 
   & + & {
-    margin-top: 0.5rem;
+    margin-top: $space-sm;
   }
 }
 
@@ -278,19 +261,24 @@
 }
 
 .query-row-status {
-  position: absolute;
+  position: relative;
   top: 0;
-  right: 105px;
+  right: 35px;
   z-index: 1015;
   display: flex;
   flex-direction: column;
   justify-content: center;
   height: $input-height;
+  width: 0;
 }
 
 .query-row-field {
   margin-right: 3px;
   flex-grow: 1;
+}
+
+.query-row-break {
+  flex-basis: 100%;
 }
 
 .query-transactions {
@@ -299,7 +287,7 @@
 
 .query-transaction {
   display: table-row;
-  color: $text-color-faint;
+  color: $text-color-weak;
   line-height: 1.44;
 }
 
@@ -311,6 +299,7 @@
   from {
     color: $text-color-faint;
   }
+
   to {
     color: $blue;
   }
@@ -356,64 +345,80 @@
   border-bottom: 2px solid $body-bg;
   height: 2em;
 }
+
 .ReactTable .rt-thead.-header .rt-th {
   text-align: left;
   color: $blue;
-  font-weight: 500;
+  font-weight: $font-weight-semi-bold;
 }
+
 .ReactTable .rt-thead .rt-td,
 .ReactTable .rt-thead .rt-th {
   padding: 0.45em 0 0.45em 1.1em;
   border-right: none;
   box-shadow: none;
 }
+
 .ReactTable .rt-tbody .rt-td {
   padding: 0.45em 0 0.45em 1.1em;
   border-bottom: 2px solid $body-bg;
   border-right: 2px solid $body-bg;
 }
+
 .ReactTable .rt-tbody .rt-td:last-child {
   border-right: none;
 }
+
 .ReactTable .-pagination {
   border-top: none;
   box-shadow: none;
   margin-top: $space-sm;
 }
+
 .ReactTable .-pagination .-btn {
   color: $blue;
   background: $list-item-bg;
 }
+
 .ReactTable .-pagination input,
 .ReactTable .-pagination select {
   color: $input-color;
   background-color: $input-bg;
 }
+
 .ReactTable .-loading {
   background: $input-bg;
 }
+
 .ReactTable .-loading.-active {
   opacity: 0.8;
 }
+
 .ReactTable .-loading > div {
   color: $input-color;
 }
+
 .ReactTable .rt-tr .rt-td:last-child {
   text-align: right;
 }
+
 .ReactTable .rt-noData {
   top: 60px;
   z-index: inherit;
 }
 
-// React-component cascade fix: show "loading" even though item can expand
-
+// React-component cascade fix: show "loading" when loading children
 .rc-cascader-menu-item-loading:after {
   position: absolute;
   right: 12px;
   content: 'loading';
   color: #767980;
   font-style: italic;
+}
+
+// React-component cascade fix: vertical alignment issue with Safari
+.rc-cascader-menu {
+  vertical-align: top;
 }
 
 // TODO Experimental
@@ -427,7 +432,21 @@
   font-size: $font-size-h3;
 }
 
-.cheat-sheet-item__expression {
+.cheat-sheet-item__example {
   margin: $space-xs 0;
   cursor: pointer;
+}
+
+.query-type-toggle {
+  margin-left: 5px;
+
+  .btn.active {
+    background-color: $input-bg;
+    background-image: none;
+    background-clip: padding-box;
+    border: $input-border;
+    border-radius: $input-border-radius;
+    @include box-shadow($input-box-shadow);
+    color: $input-color;
+  }
 }

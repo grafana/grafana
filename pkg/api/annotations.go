@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -69,6 +68,7 @@ func PostAnnotation(c *m.ReqContext, cmd dtos.PostAnnotationsCmd) Response {
 		DashboardId: cmd.DashboardId,
 		PanelId:     cmd.PanelId,
 		Epoch:       cmd.Time,
+		EpochEnd:    cmd.TimeEnd,
 		Text:        cmd.Text,
 		Data:        cmd.Data,
 		Tags:        cmd.Tags,
@@ -79,32 +79,6 @@ func PostAnnotation(c *m.ReqContext, cmd dtos.PostAnnotationsCmd) Response {
 	}
 
 	startID := item.Id
-
-	// handle regions
-	if cmd.IsRegion {
-		item.RegionId = startID
-
-		if item.Data == nil {
-			item.Data = simplejson.New()
-		}
-
-		if err := repo.Update(&item); err != nil {
-			return Error(500, "Failed set regionId on annotation", err)
-		}
-
-		item.Id = 0
-		item.Epoch = cmd.TimeEnd
-
-		if err := repo.Save(&item); err != nil {
-			return Error(500, "Failed save annotation for region end time", err)
-		}
-
-		return JSON(200, util.DynMap{
-			"message": "Annotation added",
-			"id":      startID,
-			"endId":   item.Id,
-		})
-	}
 
 	return JSON(200, util.DynMap{
 		"message": "Annotation added",
@@ -181,30 +155,17 @@ func UpdateAnnotation(c *m.ReqContext, cmd dtos.UpdateAnnotationsCmd) Response {
 	}
 
 	item := annotations.Item{
-		OrgId:  c.OrgId,
-		UserId: c.UserId,
-		Id:     annotationID,
-		Epoch:  cmd.Time,
-		Text:   cmd.Text,
-		Tags:   cmd.Tags,
+		OrgId:    c.OrgId,
+		UserId:   c.UserId,
+		Id:       annotationID,
+		Epoch:    cmd.Time,
+		EpochEnd: cmd.TimeEnd,
+		Text:     cmd.Text,
+		Tags:     cmd.Tags,
 	}
 
 	if err := repo.Update(&item); err != nil {
 		return Error(500, "Failed to update annotation", err)
-	}
-
-	if cmd.IsRegion {
-		itemRight := item
-		itemRight.RegionId = item.Id
-		itemRight.Epoch = cmd.TimeEnd
-
-		// We don't know id of region right event, so set it to 0 and find then using query like
-		// ... WHERE region_id = <item.RegionId> AND id != <item.RegionId> ...
-		itemRight.Id = 0
-
-		if err := repo.Update(&itemRight); err != nil {
-			return Error(500, "Failed to update annotation for region end time", err)
-		}
 	}
 
 	return Success("Annotation updated")
@@ -230,9 +191,9 @@ func PatchAnnotation(c *m.ReqContext, cmd dtos.PatchAnnotationsCmd) Response {
 		UserId:   c.UserId,
 		Id:       annotationID,
 		Epoch:    items[0].Time,
+		EpochEnd: items[0].TimeEnd,
 		Text:     items[0].Text,
 		Tags:     items[0].Tags,
-		RegionId: items[0].RegionId,
 	}
 
 	if cmd.Tags != nil {
@@ -247,23 +208,12 @@ func PatchAnnotation(c *m.ReqContext, cmd dtos.PatchAnnotationsCmd) Response {
 		existing.Epoch = cmd.Time
 	}
 
-	if err := repo.Update(&existing); err != nil {
-		return Error(500, "Failed to update annotation", err)
+	if cmd.TimeEnd > 0 && cmd.TimeEnd != existing.EpochEnd {
+		existing.EpochEnd = cmd.TimeEnd
 	}
 
-	// Update region end time if provided
-	if existing.RegionId != 0 && cmd.TimeEnd > 0 {
-		itemRight := existing
-		itemRight.RegionId = existing.Id
-		itemRight.Epoch = cmd.TimeEnd
-
-		// We don't know id of region right event, so set it to 0 and find then using query like
-		// ... WHERE region_id = <item.RegionId> AND id != <item.RegionId> ...
-		itemRight.Id = 0
-
-		if err := repo.Update(&itemRight); err != nil {
-			return Error(500, "Failed to update annotation for region end time", err)
-		}
+	if err := repo.Update(&existing); err != nil {
+		return Error(500, "Failed to update annotation", err)
 	}
 
 	return Success("Annotation patched")
@@ -275,7 +225,6 @@ func DeleteAnnotations(c *m.ReqContext, cmd dtos.DeleteAnnotationsCmd) Response 
 	err := repo.Delete(&annotations.DeleteParams{
 		OrgId:       c.OrgId,
 		Id:          cmd.AnnotationId,
-		RegionId:    cmd.RegionId,
 		DashboardId: cmd.DashboardId,
 		PanelId:     cmd.PanelId,
 	})
@@ -305,26 +254,6 @@ func DeleteAnnotationByID(c *m.ReqContext) Response {
 	}
 
 	return Success("Annotation deleted")
-}
-
-func DeleteAnnotationRegion(c *m.ReqContext) Response {
-	repo := annotations.GetRepository()
-	regionID := c.ParamsInt64(":regionId")
-
-	if resp := canSave(c, repo, regionID); resp != nil {
-		return resp
-	}
-
-	err := repo.Delete(&annotations.DeleteParams{
-		OrgId:    c.OrgId,
-		RegionId: regionID,
-	})
-
-	if err != nil {
-		return Error(500, "Failed to delete annotation region", err)
-	}
-
-	return Success("Annotation region deleted")
 }
 
 func canSaveByDashboardID(c *m.ReqContext, dashboardID int64) (bool, error) {

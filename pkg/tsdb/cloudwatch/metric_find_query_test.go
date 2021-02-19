@@ -10,12 +10,12 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
-	"github.com/bmizerany/assert"
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
 )
 
 type mockedEc2 struct {
@@ -120,8 +120,9 @@ func TestCloudWatchMetrics(t *testing.T) {
 		result, _ := executor.handleGetRegions(context.Background(), simplejson.New(), &tsdb.TsdbQuery{})
 
 		Convey("Should return regions", func() {
-			So(result[0].Text, ShouldEqual, "ap-northeast-1")
-			So(result[1].Text, ShouldEqual, "ap-northeast-2")
+			So(result[0].Text, ShouldEqual, "ap-east-1")
+			So(result[1].Text, ShouldEqual, "ap-northeast-1")
+			So(result[2].Text, ShouldEqual, "ap-northeast-2")
 		})
 	})
 

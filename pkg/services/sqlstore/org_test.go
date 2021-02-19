@@ -2,18 +2,38 @@ package sqlstore
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
-	. "github.com/smartystreets/goconvey/convey"
-
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestAccountDataAccess(t *testing.T) {
 	Convey("Testing Account DB Access", t, func() {
 		InitTestDB(t)
+
+		Convey("Given we have organizations, we can query them by IDs", func() {
+			var err error
+			var cmd *m.CreateOrgCommand
+			ids := []int64{}
+
+			for i := 1; i < 4; i++ {
+				cmd = &m.CreateOrgCommand{Name: fmt.Sprint("Org #", i)}
+				err = CreateOrg(cmd)
+				So(err, ShouldBeNil)
+
+				ids = append(ids, cmd.Result.Id)
+			}
+
+			query := &m.SearchOrgsQuery{Ids: ids}
+			err = SearchOrgs(query)
+
+			So(err, ShouldBeNil)
+			So(len(query.Result), ShouldEqual, 3)
+		})
 
 		Convey("Given single org mode", func() {
 			setting.AutoAssignOrg = true
@@ -31,8 +51,10 @@ func TestAccountDataAccess(t *testing.T) {
 
 				q1 := m.GetUserOrgListQuery{UserId: ac1cmd.Result.Id}
 				q2 := m.GetUserOrgListQuery{UserId: ac2cmd.Result.Id}
-				GetUserOrgList(&q1)
-				GetUserOrgList(&q2)
+				err = GetUserOrgList(&q1)
+				So(err, ShouldBeNil)
+				err = GetUserOrgList(&q2)
+				So(err, ShouldBeNil)
 
 				So(q1.Result[0].OrgId, ShouldEqual, q2.Result[0].OrgId)
 				So(q1.Result[0].Role, ShouldEqual, "Viewer")

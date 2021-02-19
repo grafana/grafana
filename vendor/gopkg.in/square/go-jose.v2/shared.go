@@ -58,6 +58,11 @@ var (
 	// an RSA private key with more than two primes.
 	ErrUnsupportedKeyType = errors.New("square/go-jose: unsupported key type/format")
 
+	// ErrInvalidKeySize indicates that the given key is not the correct size
+	// for the selected algorithm. This can occur, for example, when trying to
+	// encrypt with AES-256 but passing only a 128-bit key as input.
+	ErrInvalidKeySize = errors.New("square/go-jose: invalid key size for algorithm")
+
 	// ErrNotSupported serialization of object is not supported. This occurs when
 	// trying to compact-serialize an object which can't be represented in
 	// compact form.

@@ -1,4 +1,4 @@
-/* tslint:disable:max-line-length */
+/* eslint-disable max-len */
 export const operatorTokens = [
   { text: '!between', hint: 'Matches the input that is outside the inclusive range.' },
   { text: 'as', hint: "Binds a name to the operator's input tabular expression." },
@@ -648,6 +648,16 @@ export const grafanaMacros = [
     text: '$__timeFilter',
     display: '$__timeFilter()',
     hint: 'Macro that uses the selected timerange in Grafana to filter the query.',
+  },
+  {
+    text: '$__timeTo',
+    display: '$__timeTo()',
+    hint: 'Returns the From datetime from the Grafana picker. Example: datetime(2018-06-05T20:09:58.907Z).',
+  },
+  {
+    text: '$__timeFrom',
+    display: '$__timeFrom()',
+    hint: 'Returns the From datetime from the Grafana picker. Example: datetime(2018-06-05T18:09:58.907Z).',
   },
   {
     text: '$__escapeMulti',

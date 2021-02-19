@@ -1,6 +1,13 @@
 import _ from 'lodash';
 import ResponseParser from './response_parser';
 import PostgresQuery from 'app/plugins/datasource/postgres/postgres_query';
+import { getBackendSrv } from '@grafana/runtime';
+import { ScopedVars } from '@grafana/data';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+//Types
+import { PostgresQueryForInterpolation } from './types';
+import { getSearchFilterScopedVar } from '../../../features/templating/variable';
 
 export class PostgresDatasource {
   id: any;
@@ -11,16 +18,20 @@ export class PostgresDatasource {
   interval: string;
 
   /** @ngInject */
-  constructor(instanceSettings, private backendSrv, private $q, private templateSrv, private timeSrv) {
+  constructor(
+    instanceSettings: { name: any; id?: any; jsonData?: any },
+    private templateSrv: TemplateSrv,
+    private timeSrv: TimeSrv
+  ) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
     this.jsonData = instanceSettings.jsonData;
-    this.responseParser = new ResponseParser(this.$q);
+    this.responseParser = new ResponseParser();
     this.queryModel = new PostgresQuery({});
     this.interval = (instanceSettings.jsonData || {}).timeInterval || '1m';
   }
 
-  interpolateVariable = (value, variable) => {
+  interpolateVariable = (value: string, variable: { multi: any; includeAll: any }) => {
     if (typeof value === 'string') {
       if (variable.multi || variable.includeAll) {
         return this.queryModel.quoteLiteral(value);
@@ -39,7 +50,25 @@ export class PostgresDatasource {
     return quotedValues.join(',');
   };
 
-  query(options) {
+  interpolateVariablesInQueries(
+    queries: PostgresQueryForInterpolation[],
+    scopedVars: ScopedVars
+  ): PostgresQueryForInterpolation[] {
+    let expandedQueries = queries;
+    if (queries && queries.length > 0) {
+      expandedQueries = queries.map(query => {
+        const expandedQuery = {
+          ...query,
+          datasource: this.name,
+          rawSql: this.templateSrv.replace(query.rawSql, scopedVars, this.interpolateVariable),
+        };
+        return expandedQuery;
+      });
+    }
+    return expandedQueries;
+  }
+
+  query(options: any) {
     const queries = _.filter(options.targets, target => {
       return target.hide !== true;
     }).map(target => {
@@ -56,10 +85,10 @@ export class PostgresDatasource {
     });
 
     if (queries.length === 0) {
-      return this.$q.when({ data: [] });
+      return Promise.resolve({ data: [] });
     }
 
-    return this.backendSrv
+    return getBackendSrv()
       .datasourceRequest({
         url: '/api/tsdb/query',
         method: 'POST',
@@ -72,9 +101,9 @@ export class PostgresDatasource {
       .then(this.responseParser.processQueryResult);
   }
 
-  annotationQuery(options) {
+  annotationQuery(options: any) {
     if (!options.annotation.rawQuery) {
-      return this.$q.reject({
+      return Promise.reject({
         message: 'Query missing in annotation definition',
       });
     }
@@ -86,7 +115,7 @@ export class PostgresDatasource {
       format: 'table',
     };
 
-    return this.backendSrv
+    return getBackendSrv()
       .datasourceRequest({
         url: '/api/tsdb/query',
         method: 'POST',
@@ -96,19 +125,25 @@ export class PostgresDatasource {
           queries: [query],
         },
       })
-      .then(data => this.responseParser.transformAnnotationResponse(options, data));
+      .then((data: any) => this.responseParser.transformAnnotationResponse(options, data));
   }
 
-  metricFindQuery(query, optionalOptions) {
+  metricFindQuery(query: string, optionalOptions: { variable?: any; searchFilter?: string }) {
     let refId = 'tempvar';
     if (optionalOptions && optionalOptions.variable && optionalOptions.variable.name) {
       refId = optionalOptions.variable.name;
     }
 
+    const rawSql = this.templateSrv.replace(
+      query,
+      getSearchFilterScopedVar({ query, wildcardChar: '%', options: optionalOptions }),
+      this.interpolateVariable
+    );
+
     const interpolatedQuery = {
       refId: refId,
       datasourceId: this.id,
-      rawSql: this.templateSrv.replace(query, {}, this.interpolateVariable),
+      rawSql,
       format: 'table',
     };
 
@@ -119,13 +154,13 @@ export class PostgresDatasource {
       to: range.to.valueOf().toString(),
     };
 
-    return this.backendSrv
+    return getBackendSrv()
       .datasourceRequest({
         url: '/api/tsdb/query',
         method: 'POST',
         data: data,
       })
-      .then(data => this.responseParser.parseMetricFindQueryResult(refId, data));
+      .then((data: any) => this.responseParser.parseMetricFindQueryResult(refId, data));
   }
 
   getVersion() {
@@ -138,10 +173,10 @@ export class PostgresDatasource {
 
   testDatasource() {
     return this.metricFindQuery('SELECT 1', {})
-      .then(res => {
+      .then((res: any) => {
         return { status: 'success', message: 'Database Connection OK' };
       })
-      .catch(err => {
+      .catch((err: any) => {
         console.log(err);
         if (err.data && err.data.message) {
           return { status: 'error', message: err.data.message };
@@ -149,5 +184,20 @@ export class PostgresDatasource {
           return { status: 'error', message: err.status };
         }
       });
+  }
+
+  targetContainsTemplate(target: any) {
+    let rawSql = '';
+
+    if (target.rawQuery) {
+      rawSql = target.rawSql;
+    } else {
+      const query = new PostgresQuery(target);
+      rawSql = query.buildQuery();
+    }
+
+    rawSql = rawSql.replace('$__', '');
+
+    return this.templateSrv.variableExists(rawSql);
   }
 }

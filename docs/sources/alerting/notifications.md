@@ -27,7 +27,7 @@ can configure and setup a new Notification Channel.
 You specify a name and a type, and type specific options. You can also test the notification to make
 sure it's setup correctly.
 
-### Send on all alerts
+### Default (send on all alerts)
 
 When checked, this option will notify for all alert rules - existing and new.
 
@@ -40,7 +40,7 @@ When checked, this option will notify for all alert rules - existing and new.
 When this option is checked additional notifications (reminders) will be sent for triggered alerts. You can specify how often reminders
 should be sent using number of seconds (s), minutes (m) or hours (h), for example `30s`, `3m`, `5m` or `1h` etc.
 
-**Important:** Alert reminders are sent after rules are evaluated. Therefore a reminder can never be sent more frequently than a configured [alert rule evaluation interval](/alerting/rules/#name-evaluation-interval).
+**Important:** Alert reminders are sent after rules are evaluated. Therefore a reminder can never be sent more frequently than a configured [alert rule evaluation interval]({{< relref "rules/#name-evaluation-interval" >}}).
 
 These examples show how often and when reminders are sent for a triggered alert.
 
@@ -65,7 +65,7 @@ Grafana ships with the following set of notification types:
 
 ### Email
 
-To enable email notifications you have to setup [SMTP settings](/installation/configuration/#smtp)
+To enable email notifications you have to setup [SMTP settings]({{< relref "../installation/configuration/#smtp" >}})
 in the Grafana config. Email notifications will upload an image of the alert graph to an
 external image destination if available or fallback to attaching the image to the email.
 Be aware that if you use the `local` image storage email servers and clients might not be
@@ -100,7 +100,10 @@ To set up PagerDuty, all you have to do is to provide an API key.
 Setting | Description
 ---------- | -----------
 Integration Key | Integration key for PagerDuty.
+Severity | Level for dynamic notifications, default is `critical`
 Auto resolve incidents | Resolve incidents in PagerDuty once the alert goes back to ok
+
+**Note:** The tags `Class`, `Group`, and `Component` have special meaning in the [Pagerduty Common Event Format - PD-CEF](https://support.pagerduty.com/docs/pd-cef).  If an alert panel defines these tag keys they will be transposed to the root of the event sent to Pagerduty.  This means they will be available within the Pagerduty UI and Filtering tools.
 
 ### Webhook
 
@@ -111,20 +114,26 @@ Example json body:
 
 ```json
 {
-  "title": "My alert",
-  "ruleId": 1,
-  "ruleName": "Load peaking!",
-  "ruleUrl": "http://url.to.grafana/db/dashboard/my_dashboard?panelId=2",
-  "state": "alerting",
-  "imageUrl": "http://s3.image.url",
-  "message": "Load is peaking. Make sure the traffic is real and spin up more webfronts",
-  "evalMatches": [
+  "dashboardId":1,
+  "evalMatches":[
     {
-      "metric": "requests",
-      "tags": {},
-      "value": 122
+      "value":1,
+      "metric":"Count",
+      "tags":{}
     }
-  ]
+  ],
+  "imageUrl":"https://grafana.com/assets/img/blog/mixed_styles.png",
+  "message":"Notification Message",
+  "orgId":1,
+  "panelId":2,
+  "ruleId":1,
+  "ruleName":"Panel Title alert",
+  "ruleUrl":"http://localhost:3000/d/hZ7BuVbWz/test-dashboard?fullscreen\u0026edit\u0026tab=alert\u0026panelId=2\u0026orgId=1",
+  "state":"alerting",
+  "tags":{
+    "tag name":"tag value"
+  },
+  "title":"[Alerting] Panel Title alert"
 }
 ```
 
@@ -165,38 +174,56 @@ Once these two properties are set, you can send the alerts to Kafka for further 
 
 Notifications can be sent by setting up an incoming webhook in Google Hangouts chat. Configuring such a webhook is described [here](https://developers.google.com/hangouts/chat/how-tos/webhooks).
 
-### All supported notifier
+### Squadcast
 
-Name | Type |Support images
------|------------ | ------
-Slack | `slack` | yes
-Pagerduty | `pagerduty` | yes
-Email | `email` | yes
-Webhook | `webhook` | link
-Kafka | `kafka` | no
-Google Hangouts Chat | `googlechat` | yes
-Hipchat | `hipchat` | yes
-VictorOps | `victorops` | yes
-Sensu | `sensu` | yes
-OpsGenie | `opsgenie` | yes
-Threema | `threema` | yes
-Pushover | `pushover` | no
-Telegram | `telegram` | no
-Line | `line` | no
-Prometheus Alertmanager | `prometheus-alertmanager` | no
+Squadcast helps you get alerted via Phone call, SMS, Email and Push notifications and lets you take actions on those alerts. Grafana notifications can be sent to Squadcast via a simple incoming webhook. Refer the official [Squadcast support documentation](https://support.squadcast.com/docs/grafana) for configuring these webhooks.
+
+### All supported notifiers
+
+Name | Type | Supports images | Support alert rule tags
+-----|------|---------------- | -----------------------
+DingDing | `dingding` | yes, external only | no
+Discord | `discord` | yes | no
+Email | `email` | yes | no
+Google Hangouts Chat | `googlechat` | yes, external only | no
+Hipchat | `hipchat` | yes, external only | no
+Kafka | `kafka` | yes, external only | no
+Line | `line` | yes, external only | no
+Microsoft Teams | `teams` | yes, external only | no
+OpsGenie | `opsgenie` | yes, external only | yes
+Pagerduty | `pagerduty` | yes, external only | yes
+Prometheus Alertmanager | `prometheus-alertmanager` | yes, external only | yes
+Pushover | `pushover` | yes | no
+Sensu | `sensu` | yes, external only | no
+Slack | `slack` | yes | no
+Squadcast | `webhook` | no | no
+Telegram | `telegram` | yes | no
+Threema | `threema` | yes, external only | no
+VictorOps | `victorops` | yes, external only | no
+Webhook | `webhook` | yes, external only | yes
 
 # Enable images in notifications {#external-image-store}
 
-Grafana can render the panel associated with the alert rule and include that in the notification. Most Notification Channels require that this image be publicly accessible (Slack and PagerDuty for example). In order to include images in alert notifications, Grafana can upload the image to an image store. It currently supports
-Amazon S3, Webdav, Google Cloud Storage and Azure Blob Storage. So to set that up you need to configure the [external image uploader](/installation/configuration/#external-image-storage) in your grafana-server ini config file.
+Grafana can render the panel associated with the alert rule as a PNG image and include that in the notification. Read more about the requirements and how to configure image rendering [here]({{< relref "../administration/image_rendering/" >}}).
+
+Most Notification Channels require that this image be publicly accessible (Slack and PagerDuty for example). In order to include images in alert notifications, Grafana can upload the image to an image store. It currently supports
+Amazon S3, Webdav, Google Cloud Storage and Azure Blob Storage. So to set that up you need to configure the [external image uploader]({{< relref "../installation/configuration/#external-image-storage" >}}) in your grafana-server ini config file.
 
 Be aware that some notifiers requires public access to the image to be able to include it in the notification. So make sure to enable public access to the images. If you're using local image uploader, your Grafana instance need to be accessible by the internet.
 
-Currently only the Email Channels attaches images if no external image store is specified. To include images in alert notifications for other channels then you need to set up an external image store.
+Notification services which need public image access are marked as 'external only'.
 
-This is an optional requirement. You can get Slack and email notifications without setting this up.
+# Use alert rule tags in notifications {#alert-rule-tags}
+
+> Only available in Grafana v6.3+.
+
+Grafana can include a list of tags (key/value) in the notification.
+It's called alert rule tags to contrast with tags parsed from timeseries.
+It currently supports only the Prometheus Alertmanager notifier.
+
+ This is an optional feature. You can get notifications without using alert rule tags.
 
 # Configure the link back to Grafana from alert notifications
 
 All alert notifications contain a link back to the triggered alert in the Grafana instance.
-This url is based on the [domain](/installation/configuration/#domain) setting in Grafana.
+This url is based on the [domain]({{< relref "../installation/configuration/#domain" >}}) setting in Grafana.

@@ -19,7 +19,7 @@ module.exports = function(options) {
         loader: 'postcss-loader',
         options: {
           sourceMap: options.sourceMap,
-          config: { path: __dirname + '/postcss.config.js' },
+          config: { path: __dirname },
         },
       },
       {

@@ -7,15 +7,16 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-type EvalHandler interface {
+type evalHandler interface {
 	Eval(evalContext *EvalContext)
 }
 
-type Scheduler interface {
+type scheduler interface {
 	Tick(time time.Time, execQueue chan *Job)
 	Update(rules []*Rule)
 }
 
+// Notifier is responsible for sending alert notifications.
 type Notifier interface {
 	Notify(evalContext *EvalContext) error
 	GetType() string
@@ -24,7 +25,7 @@ type Notifier interface {
 	// ShouldNotify checks this evaluation should send an alert notification
 	ShouldNotify(ctx context.Context, evalContext *EvalContext, notificationState *models.AlertNotificationState) bool
 
-	GetNotifierUid() string
+	GetNotifierUID() string
 	GetIsDefault() bool
 	GetSendReminder() bool
 	GetDisableResolveMessage() bool
@@ -48,6 +49,7 @@ func (notifiers notifierStateSlice) ShouldUploadImage() bool {
 	return false
 }
 
+// ConditionResult is the result of a condition evaluation.
 type ConditionResult struct {
 	Firing      bool
 	NoDataFound bool
@@ -55,6 +57,7 @@ type ConditionResult struct {
 	EvalMatches []*EvalMatch
 }
 
+// Condition is responsible for evaluating an alert condition.
 type Condition interface {
 	Eval(result *EvalContext) (*ConditionResult, error)
 }

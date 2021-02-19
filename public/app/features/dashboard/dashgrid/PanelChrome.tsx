@@ -1,28 +1,31 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import { AutoSizer } from 'react-virtualized';
-
-// Services
-import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
-
+import classNames from 'classnames';
+import { Unsubscribable } from 'rxjs';
 // Components
 import { PanelHeader } from './PanelHeader/PanelHeader';
-import { DataPanel } from './DataPanel';
-import ErrorBoundary from '../../../core/components/ErrorBoundary/ErrorBoundary';
-
-// Utils
+import { ErrorBoundary } from '@grafana/ui';
+// Utils & Services
+import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
-import { PANEL_HEADER_HEIGHT } from 'app/core/constants';
 import { profiler } from 'app/core/profiler';
+import { getProcessedDataFrames } from '../state/runRequest';
+import templateSrv from 'app/features/templating/template_srv';
 import config from 'app/core/config';
-
 // Types
 import { DashboardModel, PanelModel } from '../state';
-import { PanelPlugin } from 'app/types';
-import { DataQueryResponse, TimeRange, LoadingState, TableData, DataQueryError, toTableData } from '@grafana/ui';
-import { ScopedVars } from '@grafana/ui';
-
-import templateSrv from 'app/features/templating/template_srv';
+import { PANEL_BORDER } from 'app/core/constants';
+import {
+  LoadingState,
+  ScopedVars,
+  AbsoluteTimeRange,
+  DefaultTimeRange,
+  toUtc,
+  toDataFrameDTO,
+  PanelEvents,
+  PanelData,
+  PanelPlugin,
+} from '@grafana/data';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -31,59 +34,194 @@ export interface Props {
   dashboard: DashboardModel;
   plugin: PanelPlugin;
   isFullscreen: boolean;
+  isInView: boolean;
+  isInEditMode?: boolean;
+  width: number;
+  height: number;
 }
 
 export interface State {
-  refreshCounter: number;
+  isFirstLoad: boolean;
   renderCounter: number;
-  timeInfo?: string;
-  timeRange?: TimeRange;
   errorMessage: string | null;
+  refreshWhenInView: boolean;
+
+  // Current state of all events
+  data: PanelData;
 }
 
 export class PanelChrome extends PureComponent<Props, State> {
   timeSrv: TimeSrv = getTimeSrv();
+  querySubscription: Unsubscribable;
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
-
     this.state = {
-      refreshCounter: 0,
+      isFirstLoad: true,
       renderCounter: 0,
       errorMessage: null,
+      refreshWhenInView: false,
+      data: {
+        state: LoadingState.NotStarted,
+        series: [],
+        timeRange: DefaultTimeRange,
+      },
     };
   }
 
   componentDidMount() {
-    this.props.panel.events.on('refresh', this.onRefresh);
-    this.props.panel.events.on('render', this.onRender);
-    this.props.dashboard.panelInitialized(this.props.panel);
+    const { panel, dashboard, isInEditMode } = this.props;
+    panel.events.on(PanelEvents.refresh, this.onRefresh);
+    panel.events.on(PanelEvents.render, this.onRender);
+    dashboard.panelInitialized(this.props.panel);
+
+    // Move snapshot data into the query response
+    if (this.hasPanelSnapshot) {
+      this.setState({
+        data: {
+          ...this.state.data,
+          state: LoadingState.Done,
+          series: getProcessedDataFrames(panel.snapshotData),
+        },
+        isFirstLoad: false,
+      });
+    } else {
+      if (isInEditMode) {
+        this.querySubscription = panel
+          .getQueryRunner()
+          .getData()
+          .subscribe({
+            next: data => this.onDataUpdate(data),
+          });
+      }
+
+      if (!this.wantsQueryExecution) {
+        this.setState({ isFirstLoad: false });
+      }
+    }
   }
 
   componentWillUnmount() {
-    this.props.panel.events.off('refresh', this.onRefresh);
+    this.props.panel.events.off(PanelEvents.refresh, this.onRefresh);
+    this.props.panel.events.off(PanelEvents.render, this.onRender);
+
+    if (this.querySubscription) {
+      this.querySubscription.unsubscribe();
+      this.querySubscription = null;
+    }
   }
 
-  onRefresh = () => {
-    console.log('onRefresh');
-    if (!this.isVisible) {
+  componentDidUpdate(prevProps: Props) {
+    const { isInView } = this.props;
+
+    // View state has changed
+    if (isInView !== prevProps.isInView) {
+      if (isInView) {
+        // Check if we need a delayed refresh
+        if (this.state.refreshWhenInView) {
+          this.onRefresh();
+        }
+      } else if (this.querySubscription) {
+        this.querySubscription.unsubscribe();
+        this.querySubscription = null;
+      }
+    }
+  }
+
+  // Updates the response with information from the stream
+  // The next is outside a react synthetic event so setState is not batched
+  // So in this context we can only do a single call to setState
+  onDataUpdate(data: PanelData) {
+    if (!this.props.isInView) {
+      // Ignore events when not visible.
+      // The call will be repeated when the panel comes into view
       return;
     }
 
-    const { panel } = this.props;
+    let { isFirstLoad } = this.state;
+    let errorMessage: string | null = null;
+
+    switch (data.state) {
+      case LoadingState.Loading:
+        // Skip updating state data if it is already in loading state
+        // This is to avoid rendering partial loading responses
+        if (this.state.data.state === LoadingState.Loading) {
+          return;
+        }
+        break;
+      case LoadingState.Error:
+        const { error } = data;
+        if (error) {
+          if (errorMessage !== error.message) {
+            errorMessage = error.message;
+          }
+        }
+        break;
+      case LoadingState.Done:
+        // If we are doing a snapshot save data in panel model
+        if (this.props.dashboard.snapshot) {
+          this.props.panel.snapshotData = data.series.map(frame => toDataFrameDTO(frame));
+        }
+        if (isFirstLoad) {
+          isFirstLoad = false;
+        }
+        break;
+    }
+
+    this.setState({ isFirstLoad, errorMessage, data });
+  }
+
+  onRefresh = () => {
+    const { panel, isInView, width } = this.props;
+    if (!isInView) {
+      console.log('Refresh when panel is visible', panel.id);
+      this.setState({ refreshWhenInView: true });
+      return;
+    }
+
     const timeData = applyPanelTimeOverrides(panel, this.timeSrv.timeRange());
 
-    this.setState({
-      refreshCounter: this.state.refreshCounter + 1,
-      timeRange: timeData.timeRange,
-      timeInfo: timeData.timeInfo,
-    });
+    // Issue Query
+    if (this.wantsQueryExecution) {
+      if (width < 0) {
+        console.log('Refresh skippted, no width yet... wait till we know');
+        return;
+      }
+
+      const queryRunner = panel.getQueryRunner();
+
+      if (!this.querySubscription) {
+        this.querySubscription = queryRunner.getData().subscribe({
+          next: data => this.onDataUpdate(data),
+        });
+      }
+
+      queryRunner.run({
+        datasource: panel.datasource,
+        queries: panel.targets,
+        panelId: panel.id,
+        dashboardId: this.props.dashboard.id,
+        timezone: this.props.dashboard.getTimezone(),
+        timeRange: timeData.timeRange,
+        timeInfo: timeData.timeInfo,
+        widthPixels: width,
+        maxDataPoints: panel.maxDataPoints,
+        minInterval: panel.interval,
+        scopedVars: panel.scopedVars,
+        cacheTimeout: panel.cacheTimeout,
+        transformations: panel.transformations,
+      });
+    }
   };
 
   onRender = () => {
-    this.setState({
-      renderCounter: this.state.renderCounter + 1,
-    });
+    const stateUpdate = { renderCounter: this.state.renderCounter + 1 };
+
+    this.setState(stateUpdate);
+  };
+
+  onOptionsChange = (options: any) => {
+    this.props.panel.updateOptions(options);
   };
 
   replaceVariables = (value: string, extraVars?: ScopedVars, format?: string) => {
@@ -94,150 +232,137 @@ export class PanelChrome extends PureComponent<Props, State> {
     return templateSrv.replace(value, vars, format);
   };
 
-  onDataResponse = (dataQueryResponse: DataQueryResponse) => {
-    if (this.props.dashboard.isSnapshot()) {
-      this.props.panel.snapshotData = dataQueryResponse.data;
-    }
-    // clear error state (if any)
-    this.clearErrorState();
-
-    // This event is used by old query editors and panel editor options
-    this.props.panel.events.emit('data-received', dataQueryResponse.data);
-  };
-
-  onDataError = (message: string, error: DataQueryError) => {
-    if (this.state.errorMessage !== message) {
-      this.setState({ errorMessage: message });
-    }
-    // this event is used by old query editors
-    this.props.panel.events.emit('data-error', error);
-  };
-
   onPanelError = (message: string) => {
     if (this.state.errorMessage !== message) {
       this.setState({ errorMessage: message });
     }
   };
 
-  clearErrorState() {
-    if (this.state.errorMessage) {
-      this.setState({ errorMessage: null });
-    }
-  }
-
-  get isVisible() {
-    return !this.props.dashboard.otherPanelInFullscreen(this.props.panel);
-  }
-
   get hasPanelSnapshot() {
     const { panel } = this.props;
     return panel.snapshotData && panel.snapshotData.length;
   }
 
-  get needsQueryExecution() {
-    return this.hasPanelSnapshot || this.props.plugin.dataFormats.length > 0;
+  panelHasLastResult = () => {
+    return !!this.props.panel.getQueryRunner().getLastResult();
+  };
+
+  get wantsQueryExecution() {
+    return !(this.props.plugin.meta.skipDataQuery || this.hasPanelSnapshot);
   }
 
-  get getDataForPanel() {
-    return this.hasPanelSnapshot ? toTableData(this.props.panel.snapshotData) : null;
-  }
+  onChangeTimeRange = (timeRange: AbsoluteTimeRange) => {
+    this.timeSrv.setTime({
+      from: toUtc(timeRange.from),
+      to: toUtc(timeRange.to),
+    });
+  };
 
-  renderPanelPlugin(loading: LoadingState, data: TableData[], width: number, height: number): JSX.Element {
+  renderPanel(width: number, height: number): JSX.Element {
     const { panel, plugin } = this.props;
-    const { timeRange, renderCounter } = this.state;
-    const PanelComponent = plugin.exports.reactPanel.panel;
+    const { renderCounter, data, isFirstLoad } = this.state;
+    const { theme } = config;
 
     // This is only done to increase a counter that is used by backend
     // image rendering (phantomjs/headless chrome) to know when to capture image
+    const loading = data.state;
     if (loading === LoadingState.Done) {
-      profiler.renderingCompleted(panel.id);
+      profiler.renderingCompleted();
     }
 
+    // do not render component until we have first data
+    if (isFirstLoad && (loading === LoadingState.Loading || loading === LoadingState.NotStarted)) {
+      return null;
+    }
+
+    const PanelComponent = plugin.panel;
+    const timeRange = data.timeRange || this.timeSrv.timeRange();
+
+    const headerHeight = this.hasOverlayHeader() ? 0 : theme.panelHeaderHeight;
+    const chromePadding = plugin.noPadding ? 0 : theme.panelPadding;
+    const panelWidth = width - chromePadding * 2 - PANEL_BORDER;
+    const innerPanelHeight = height - headerHeight - chromePadding * 2 - PANEL_BORDER;
+
+    const panelContentClassNames = classNames({
+      'panel-content': true,
+      'panel-content--no-padding': plugin.noPadding,
+    });
+
     return (
-      <div className="panel-content">
-        <PanelComponent
-          loading={loading}
-          data={data}
-          timeRange={timeRange}
-          options={panel.getOptions(plugin.exports.reactPanel.defaults)}
-          width={width - 2 * config.theme.panelPadding.horizontal}
-          height={height - PANEL_HEADER_HEIGHT - config.theme.panelPadding.vertical}
-          renderCounter={renderCounter}
-          replaceVariables={this.replaceVariables}
-        />
-      </div>
+      <>
+        <div className={panelContentClassNames}>
+          <PanelComponent
+            id={panel.id}
+            data={data}
+            timeRange={timeRange}
+            timeZone={this.props.dashboard.getTimezone()}
+            options={panel.getOptions()}
+            transparent={panel.transparent}
+            width={panelWidth}
+            height={innerPanelHeight}
+            renderCounter={renderCounter}
+            replaceVariables={this.replaceVariables}
+            onOptionsChange={this.onOptionsChange}
+            onChangeTimeRange={this.onChangeTimeRange}
+          />
+        </div>
+      </>
     );
   }
 
-  renderPanelBody = (width: number, height: number): JSX.Element => {
+  hasOverlayHeader() {
     const { panel } = this.props;
-    const { refreshCounter, timeRange } = this.state;
-    const { datasource, targets } = panel;
-    return (
-      <>
-        {this.needsQueryExecution ? (
-          <DataPanel
-            panelId={panel.id}
-            datasource={datasource}
-            queries={targets}
-            timeRange={timeRange}
-            isVisible={this.isVisible}
-            widthPixels={width}
-            refreshCounter={refreshCounter}
-            scopedVars={panel.scopedVars}
-            onDataResponse={this.onDataResponse}
-            onError={this.onDataError}
-          >
-            {({ loading, data }) => {
-              return this.renderPanelPlugin(loading, data, width, height);
-            }}
-          </DataPanel>
-        ) : (
-          this.renderPanelPlugin(LoadingState.Done, this.getDataForPanel, width, height)
-        )}
-      </>
-    );
-  };
+    const { errorMessage, data } = this.state;
+
+    // always show normal header if we have an error message
+    if (errorMessage) {
+      return false;
+    }
+
+    // always show normal header if we have time override
+    if (data.request && data.request.timeInfo) {
+      return false;
+    }
+
+    return !panel.hasTitle();
+  }
 
   render() {
-    const { dashboard, panel, isFullscreen } = this.props;
-    const { errorMessage, timeInfo } = this.state;
+    const { dashboard, panel, isFullscreen, width, height } = this.props;
+    const { errorMessage, data } = this.state;
     const { transparent } = panel;
 
-    const containerClassNames = `panel-container panel-container--absolute ${transparent ? 'panel-transparent' : ''}`;
-    return (
-      <AutoSizer>
-        {({ width, height }) => {
-          if (width === 0) {
-            return null;
-          }
+    const containerClassNames = classNames({
+      'panel-container': true,
+      'panel-container--absolute': true,
+      'panel-container--transparent': transparent,
+      'panel-container--no-title': this.hasOverlayHeader(),
+    });
 
-          return (
-            <div className={containerClassNames}>
-              <PanelHeader
-                panel={panel}
-                dashboard={dashboard}
-                timeInfo={timeInfo}
-                title={panel.title}
-                description={panel.description}
-                scopedVars={panel.scopedVars}
-                links={panel.links}
-                error={errorMessage}
-                isFullscreen={isFullscreen}
-              />
-              <ErrorBoundary>
-                {({ error, errorInfo }) => {
-                  if (errorInfo) {
-                    this.onPanelError(error.message || DEFAULT_PLUGIN_ERROR);
-                    return null;
-                  }
-                  return this.renderPanelBody(width, height);
-                }}
-              </ErrorBoundary>
-            </div>
-          );
-        }}
-      </AutoSizer>
+    return (
+      <div className={containerClassNames}>
+        <PanelHeader
+          panel={panel}
+          dashboard={dashboard}
+          timeInfo={data.request ? data.request.timeInfo : null}
+          title={panel.title}
+          description={panel.description}
+          scopedVars={panel.scopedVars}
+          links={panel.links}
+          error={errorMessage}
+          isFullscreen={isFullscreen}
+          isLoading={data.state === LoadingState.Loading}
+        />
+        <ErrorBoundary>
+          {({ error, errorInfo }) => {
+            if (errorInfo) {
+              this.onPanelError(error.message || DEFAULT_PLUGIN_ERROR);
+              return null;
+            }
+            return this.renderPanel(width, height);
+          }}
+        </ErrorBoundary>
+      </div>
     );
   }
 }

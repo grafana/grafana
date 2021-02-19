@@ -1,5 +1,9 @@
 import _ from 'lodash';
-import { appEvents, coreModule } from 'app/core/core';
+import { appEvents, coreModule, NavModelSrv } from 'app/core/core';
+import { getBackendSrv } from '@grafana/runtime';
+import { AppEvents } from '@grafana/data';
+import { IScope } from 'angular';
+import { promiseToDigest } from '../../core/utils/promiseToDigest';
 
 export class AlertNotificationEditCtrl {
   theForm: any;
@@ -17,6 +21,7 @@ export class AlertNotificationEditCtrl {
     settings: {
       httpMethod: 'POST',
       autoResolve: true,
+      severity: 'critical',
       uploadImage: true,
     },
     isDefault: false,
@@ -24,7 +29,13 @@ export class AlertNotificationEditCtrl {
   getFrequencySuggestion: any;
 
   /** @ngInject */
-  constructor(private $routeParams, private backendSrv, private $location, private $templateCache, navModelSrv) {
+  constructor(
+    private $scope: IScope,
+    private $routeParams: any,
+    private $location: any,
+    private $templateCache: any,
+    navModelSrv: NavModelSrv
+  ) {
     this.navModel = navModelSrv.getNav('alerting', 'channels', 0);
     this.isNew = !this.$routeParams.id;
 
@@ -32,33 +43,37 @@ export class AlertNotificationEditCtrl {
       return ['1m', '5m', '10m', '15m', '30m', '1h'];
     };
 
-    this.backendSrv
-      .get(`/api/alert-notifiers`)
-      .then(notifiers => {
-        this.notifiers = notifiers;
+    promiseToDigest(this.$scope)(
+      getBackendSrv()
+        .get(`/api/alert-notifiers`)
+        .then((notifiers: any) => {
+          this.notifiers = notifiers;
 
-        // add option templates
-        for (const notifier of this.notifiers) {
-          this.$templateCache.put(this.getNotifierTemplateId(notifier.type), notifier.optionsTemplate);
-        }
+          // add option templates
+          for (const notifier of this.notifiers) {
+            this.$templateCache.put(this.getNotifierTemplateId(notifier.type), notifier.optionsTemplate);
+          }
 
-        if (!this.$routeParams.id) {
-          this.navModel.breadcrumbs.push({ text: 'New channel' });
-          this.navModel.node = { text: 'New channel' };
-          return _.defaults(this.model, this.defaults);
-        }
+          if (!this.$routeParams.id) {
+            this.navModel.breadcrumbs.push({ text: 'New channel' });
+            this.navModel.node = { text: 'New channel' };
+            return _.defaults(this.model, this.defaults);
+          }
 
-        return this.backendSrv.get(`/api/alert-notifications/${this.$routeParams.id}`).then(result => {
-          this.navModel.breadcrumbs.push({ text: result.name });
-          this.navModel.node = { text: result.name };
-          result.settings = _.defaults(result.settings, this.defaults.settings);
-          return result;
-        });
-      })
-      .then(model => {
-        this.model = model;
-        this.notifierTemplateId = this.getNotifierTemplateId(this.model.type);
-      });
+          return getBackendSrv()
+            .get(`/api/alert-notifications/${this.$routeParams.id}`)
+            .then((result: any) => {
+              this.navModel.breadcrumbs.push({ text: result.name });
+              this.navModel.node = { text: result.name };
+              result.settings = _.defaults(result.settings, this.defaults.settings);
+              return result;
+            });
+        })
+        .then((model: any) => {
+          this.model = model;
+          this.notifierTemplateId = this.getNotifierTemplateId(this.model.type);
+        })
+    );
   }
 
   save() {
@@ -67,33 +82,48 @@ export class AlertNotificationEditCtrl {
     }
 
     if (this.model.id) {
-      this.backendSrv
-        .put(`/api/alert-notifications/${this.model.id}`, this.model)
-        .then(res => {
-          this.model = res;
-          appEvents.emit('alert-success', ['Notification updated', '']);
-        })
-        .catch(err => {
-          if (err.data && err.data.error) {
-            appEvents.emit('alert-error', [err.data.error]);
-          }
-        });
+      promiseToDigest(this.$scope)(
+        getBackendSrv()
+          .put(`/api/alert-notifications/${this.model.id}`, this.model)
+          .then((res: any) => {
+            this.model = res;
+            appEvents.emit(AppEvents.alertSuccess, ['Notification updated']);
+          })
+          .catch((err: any) => {
+            if (err.data && err.data.error) {
+              appEvents.emit(AppEvents.alertError, [err.data.error]);
+            }
+          })
+      );
     } else {
-      this.backendSrv
-        .post(`/api/alert-notifications`, this.model)
-        .then(res => {
-          appEvents.emit('alert-success', ['Notification created', '']);
-          this.$location.path('alerting/notifications');
-        })
-        .catch(err => {
-          if (err.data && err.data.error) {
-            appEvents.emit('alert-error', [err.data.error]);
-          }
-        });
+      promiseToDigest(this.$scope)(
+        getBackendSrv()
+          .post(`/api/alert-notifications`, this.model)
+          .then((res: any) => {
+            appEvents.emit(AppEvents.alertSuccess, ['Notification created']);
+            this.$location.path('alerting/notifications');
+          })
+          .catch((err: any) => {
+            if (err.data && err.data.error) {
+              appEvents.emit(AppEvents.alertError, [err.data.error]);
+            }
+          })
+      );
     }
   }
 
-  getNotifierTemplateId(type) {
+  deleteNotification() {
+    promiseToDigest(this.$scope)(
+      getBackendSrv()
+        .delete(`/api/alert-notifications/${this.model.id}`)
+        .then((res: any) => {
+          this.model = res;
+          this.$location.path('alerting/notifications');
+        })
+    );
+  }
+
+  getNotifierTemplateId(type: string) {
     return `notifier-options-${type}`;
   }
 
@@ -114,9 +144,7 @@ export class AlertNotificationEditCtrl {
       settings: this.model.settings,
     };
 
-    this.backendSrv.post(`/api/alert-notifications/test`, payload).then(res => {
-      appEvents.emit('alert-success', ['Test notification sent', '']);
-    });
+    promiseToDigest(this.$scope)(getBackendSrv().post(`/api/alert-notifications/test`, payload));
   }
 }
 

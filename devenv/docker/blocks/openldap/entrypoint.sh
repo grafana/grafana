@@ -49,10 +49,6 @@ EOF
         dc_string="$dc_string,dc=$dc_part"
     done
 
-    base_string="BASE ${dc_string:1}"
-
-    sed -i "s/^#BASE.*/${base_string}/g" /etc/ldap/ldap.conf
-
     if [[ -n "$SLAPD_CONFIG_PASSWORD" ]]; then
         password_hash=`slappasswd -s "${SLAPD_CONFIG_PASSWORD}"`
 

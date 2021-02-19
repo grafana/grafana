@@ -37,3 +37,12 @@ func TestDateAge(t *testing.T) {
 		So(GetAgeString(time.Now().Add(-time.Hour*24*409)), ShouldEqual, "1y")
 	})
 }
+
+func TestToCamelCase(t *testing.T) {
+	Convey("ToCamelCase", t, func() {
+		So(ToCamelCase("kebab-case-string"), ShouldEqual, "kebabCaseString")
+		So(ToCamelCase("snake_case_string"), ShouldEqual, "snakeCaseString")
+		So(ToCamelCase("mixed-case_string"), ShouldEqual, "mixedCaseString")
+		So(ToCamelCase("alreadyCamelCase"), ShouldEqual, "alreadyCamelCase")
+	})
+}

@@ -3,7 +3,7 @@ import { shallow } from 'enzyme';
 import AlertRuleItem, { Props } from './AlertRuleItem';
 
 jest.mock('react-redux', () => ({
-  connect: () => params => params,
+  connect: () => (params: any) => params,
 }));
 
 const setup = (propOverrides?: object) => {

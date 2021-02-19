@@ -1,0 +1,682 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": false,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "limit": 100,
+        "name": "Annotations & Alerts",
+        "showIn": 0,
+        "type": "dashboard"
+      },
+      {
+        "datasource": "gdev-elasticsearch-v6-logs",
+        "enable": false,
+        "iconColor": "rgba(255, 96, 96, 1)",
+        "limit": 100,
+        "name": "test",
+        "query": "",
+        "showIn": 0,
+        "textField": "description",
+        "type": "alert"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "iteration": 1554310839317,
+  "links": [
+    {
+      "asDropdown": true,
+      "icon": "external link",
+      "tags": ["gdev", "elasticsearch", "datasource-test"],
+      "title": "Dashboards",
+      "type": "dashboards"
+    }
+  ],
+  "panels": [
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "gdev-elasticsearch-v6-metrics",
+      "editable": true,
+      "error": false,
+      "fill": 1,
+      "grid": {},
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": false,
+        "max": true,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "connected",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "bucketAggs": [
+            {
+              "field": "@hostname",
+              "id": "3",
+              "settings": {
+                "min_doc_count": 1,
+                "order": "asc",
+                "orderBy": "1",
+                "size": "5"
+              },
+              "type": "terms"
+            },
+            {
+              "field": "@timestamp",
+              "id": "2",
+              "settings": {
+                "interval": "auto",
+                "min_doc_count": 0,
+                "trimEdges": 0
+              },
+              "type": "date_histogram"
+            }
+          ],
+          "dsType": "elasticsearch",
+          "metrics": [
+            {
+              "field": "@value",
+              "id": "1",
+              "meta": {},
+              "settings": {},
+              "type": "max"
+            }
+          ],
+          "query": "*",
+          "refId": "A",
+          "target": "",
+          "timeField": "@timestamp"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Top 5 servers",
+      "tooltip": {
+        "msResolution": true,
+        "shared": true,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {
+        "Count": "#6ED0E0"
+      },
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "gdev-elasticsearch-v6-metrics",
+      "editable": true,
+      "error": false,
+      "fill": 1,
+      "grid": {},
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 0,
+        "y": 7
+      },
+      "id": 2,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": false,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "connected",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "alias": "Count",
+          "lines": false,
+          "yaxis": 2,
+          "zindex": -1
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "{{metric}}",
+          "bucketAggs": [
+            {
+              "field": "@timestamp",
+              "id": "2",
+              "settings": {
+                "interval": "5m",
+                "min_doc_count": 0,
+                "trimEdges": 0
+              },
+              "type": "date_histogram"
+            }
+          ],
+          "dsType": "elasticsearch",
+          "metrics": [
+            {
+              "field": "@value",
+              "id": "1",
+              "meta": {},
+              "settings": {
+                "percents": [25, 50, 75, 95, 99]
+              },
+              "type": "percentiles"
+            }
+          ],
+          "query": "@metric:cpu",
+          "refId": "A",
+          "target": "",
+          "timeField": "@timestamp"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Percentiles & Metric filter",
+      "tooltip": {
+        "msResolution": false,
+        "shared": true,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {
+        "Count": "#6ED0E0"
+      },
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "gdev-elasticsearch-v6-metrics",
+      "editable": true,
+      "error": false,
+      "fill": 1,
+      "grid": {},
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 12,
+        "y": 7
+      },
+      "id": 3,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": false,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "connected",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "alias": "Count",
+          "lines": false,
+          "yaxis": 2,
+          "zindex": -1
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "{{metric}}",
+          "bucketAggs": [
+            {
+              "field": "@timestamp",
+              "id": "2",
+              "settings": {
+                "interval": "auto",
+                "min_doc_count": 0,
+                "trimEdges": 0
+              },
+              "type": "date_histogram"
+            }
+          ],
+          "dsType": "elasticsearch",
+          "metrics": [
+            {
+              "field": "@value",
+              "id": "1",
+              "meta": {
+                "std_deviation_bounds_lower": true,
+                "std_deviation_bounds_upper": true
+              },
+              "settings": {},
+              "type": "extended_stats"
+            }
+          ],
+          "query": "@metric:cpu",
+          "refId": "A",
+          "target": "",
+          "timeField": "@timestamp"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Standard dev",
+      "tooltip": {
+        "msResolution": true,
+        "shared": true,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "columns": [
+        {
+          "text": "@hostname",
+          "value": "@hostname"
+        },
+        {
+          "text": "Average",
+          "value": "Average"
+        },
+        {
+          "text": "Max",
+          "value": "Max"
+        },
+        {
+          "text": "Sum",
+          "value": "Sum"
+        }
+      ],
+      "datasource": "gdev-elasticsearch-v6-metrics",
+      "editable": true,
+      "error": false,
+      "fontSize": "100%",
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 13
+      },
+      "id": 6,
+      "links": [],
+      "pageSize": null,
+      "scroll": true,
+      "showHeader": true,
+      "sort": {
+        "col": 0,
+        "desc": true
+      },
+      "styles": [
+        {
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "pattern": "@timestamp",
+          "type": "date"
+        },
+        {
+          "colorMode": null,
+          "colors": ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "pattern": "/.*/",
+          "thresholds": [],
+          "type": "number",
+          "unit": "short"
+        }
+      ],
+      "targets": [
+        {
+          "bucketAggs": [
+            {
+              "field": "@hostname",
+              "id": "2",
+              "settings": {
+                "min_doc_count": 1,
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "0"
+              },
+              "type": "terms"
+            }
+          ],
+          "dsType": "elasticsearch",
+          "metrics": [
+            {
+              "field": "@value",
+              "id": "1",
+              "meta": {},
+              "settings": {},
+              "type": "avg"
+            },
+            {
+              "field": "@value",
+              "id": "3",
+              "meta": {},
+              "settings": {},
+              "type": "max"
+            },
+            {
+              "field": "@value",
+              "id": "4",
+              "meta": {},
+              "settings": {},
+              "type": "sum"
+            }
+          ],
+          "refId": "B",
+          "timeField": "@timestamp"
+        }
+      ],
+      "title": "ES Metrics",
+      "transform": "table",
+      "type": "table"
+    },
+    {
+      "columns": [
+        {
+          "text": "@timestamp",
+          "value": "@timestamp"
+        },
+        {
+          "text": "@message",
+          "value": "@message"
+        },
+        {
+          "text": "tags",
+          "value": "tags"
+        },
+        {
+          "text": "description",
+          "value": "description"
+        }
+      ],
+      "datasource": "gdev-elasticsearch-v6-logs",
+      "editable": true,
+      "error": false,
+      "fontSize": "100%",
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 20
+      },
+      "id": 5,
+      "links": [],
+      "pageSize": null,
+      "scroll": true,
+      "showHeader": true,
+      "sort": {
+        "col": 0,
+        "desc": true
+      },
+      "styles": [
+        {
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "pattern": "@timestamp",
+          "type": "date"
+        }
+      ],
+      "targets": [
+        {
+          "bucketAggs": [],
+          "dsType": "elasticsearch",
+          "metrics": [
+            {
+              "field": "select field",
+              "id": "1",
+              "meta": {},
+              "settings": {
+                "size": 500
+              },
+              "type": "raw_document"
+            }
+          ],
+          "refId": "A",
+          "target": "",
+          "timeField": "@timestamp"
+        }
+      ],
+      "title": "ES Log query",
+      "transform": "json",
+      "type": "table"
+    },
+    {
+      "circleMaxSize": 30,
+      "circleMinSize": 2,
+      "colors": ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
+      "datasource": "gdev-elasticsearch-v6-metrics",
+      "decimals": 0,
+      "esGeoPoint": "@location",
+      "esMetric": "Average",
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 27
+      },
+      "hideEmpty": false,
+      "hideZero": false,
+      "id": 8,
+      "initialZoom": "1",
+      "links": [],
+      "locationData": "geohash",
+      "mapCenter": "(0°, 0°)",
+      "mapCenterLatitude": 0,
+      "mapCenterLongitude": 0,
+      "maxDataPoints": 1,
+      "mouseWheelZoom": false,
+      "showLegend": true,
+      "stickyLabels": false,
+      "tableQueryOptions": {
+        "geohashField": "geohash",
+        "latitudeField": "latitude",
+        "longitudeField": "longitude",
+        "metricField": "metric",
+        "queryType": "geohash"
+      },
+      "targets": [
+        {
+          "bucketAggs": [
+            {
+              "fake": true,
+              "field": "@location",
+              "id": "3",
+              "settings": {
+                "precision": 2
+              },
+              "type": "geohash_grid"
+            }
+          ],
+          "metrics": [
+            {
+              "field": "@value",
+              "id": "1",
+              "meta": {},
+              "settings": {},
+              "type": "avg"
+            }
+          ],
+          "refId": "A",
+          "target": "",
+          "timeField": "@timestamp"
+        }
+      ],
+      "thresholds": "0,10",
+      "title": "World map panel",
+      "type": "grafana-worldmap-panel",
+      "unitPlural": "",
+      "unitSingle": "",
+      "valueName": "total"
+    }
+  ],
+  "schemaVersion": 18,
+  "style": "dark",
+  "tags": ["elasticsearch", "gdev", "datasource-test"],
+  "templating": {
+    "list": [
+      {
+        "datasource": "gdev-elasticsearch-v6-metrics",
+        "filters": [],
+        "hide": 0,
+        "label": "",
+        "name": "Filters",
+        "skipUrlSync": false,
+        "type": "adhoc"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "timepicker": {
+    "collapse": false,
+    "enable": true,
+    "notice": false,
+    "now": true,
+    "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"],
+    "status": "Stable",
+    "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"],
+    "type": "timepicker"
+  },
+  "timezone": "browser",
+  "title": "Datasource tests - Elasticsearch v6",
+  "uid": "NF8Pq2Biz",
+  "version": 5
+}

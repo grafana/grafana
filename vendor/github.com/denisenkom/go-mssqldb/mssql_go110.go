@@ -16,11 +16,11 @@ func (c *Conn) ResetSession(ctx context.Context) error {
 	}
 	c.resetSession = true
 
-	if c.connector == nil || len(c.connector.ResetSQL) == 0 {
+	if c.connector == nil || len(c.connector.SessionInitSQL) == 0 {
 		return nil
 	}
 
-	s, err := c.prepareContext(ctx, c.connector.ResetSQL)
+	s, err := c.prepareContext(ctx, c.connector.SessionInitSQL)
 	if err != nil {
 		return driver.ErrBadConn
 	}
@@ -34,10 +34,7 @@ func (c *Conn) ResetSession(ctx context.Context) error {
 
 // Connect to the server and return a TDS connection.
 func (c *Connector) Connect(ctx context.Context) (driver.Conn, error) {
-	conn, err := c.driver.connect(ctx, c.params)
-	if conn != nil {
-		conn.connector = c
-	}
+	conn, err := c.driver.connect(ctx, c, c.params)
 	if err == nil {
 		err = conn.ResetSession(ctx)
 	}

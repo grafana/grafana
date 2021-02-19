@@ -6,7 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
-	_ "github.com/grafana/grafana/pkg/log"
+	_ "github.com/grafana/grafana/pkg/infra/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/search"
 )
@@ -55,7 +55,7 @@ func populateDashboardsByTag(orgID int64, signedInUser *m.SignedInUser, dashboar
 					Slug:  item.Slug,
 					Title: item.Title,
 					Uri:   item.Uri,
-					Url:   m.GetDashboardUrl(item.Uid, item.Slug),
+					Url:   item.Url,
 					Order: dashboardTagOrder[tag],
 				})
 			}

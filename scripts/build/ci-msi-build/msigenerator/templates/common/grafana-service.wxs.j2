@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
+     xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
+
+  <Fragment>
+    <ComponentGroup Id="GrafanaServiceX64">
+      <Component Id="nssm_component" Guid="*" Directory="INSTALLDIR">
+        <File Id="nssm" KeyPath="yes" Source="SourceDir\nssm-{{ nssm_version }}\win64\nssm.exe" />
+
+        <ServiceInstall Id="ServiceInstall"
+          Account="LocalSystem"
+          ErrorControl="normal"
+          Name="Grafana"
+          Start="auto"
+          Type="ownProcess"
+          Vital="yes"
+          Description="Grafana by Grafana Labs"
+          DisplayName="Grafana">
+          <ServiceConfig OnInstall="yes" OnReinstall="yes" DelayedAutoStart="no" />
+        </ServiceInstall>
+
+        <ServiceControl Id="ControlService"
+          Name="Grafana"
+          Wait="yes"
+          Start="install"
+          Stop="both"
+          Remove="uninstall"
+        />
+
+        <RegistryKey Root="HKLM" Key="SYSTEM\CurrentControlSet\Services\Grafana">
+          <RegistryKey Key="Parameters">
+            <RegistryValue Name="AppDirectory" Value="[INSTALLDIR]grafana" Type="expandable" />
+            <RegistryValue Name="Application" Value="[INSTALLDIR]grafana\bin\grafana-server.exe" Type="expandable" />
+            <RegistryValue Name="AppParameters" Value='' Type="expandable" />
+
+            <RegistryValue Name="AppEnvironmentExtra" Type="multiString">
+              <MultiStringValue>LOG_LEVEL=DEBUG</MultiStringValue>
+            </RegistryValue>
+         
+            <RegistryValue Name="AppStdout" Value="[LOGDIR]grafana-service.log" Type="expandable" />
+            <RegistryValue Name="AppStderr" Value="[LOGDIR]grafana-service.log" Type="expandable" />
+            <RegistryValue Name="AppRotateFiles" Value="1" Type="integer" />
+            <RegistryValue Name="AppRotateOnline" Value="1" Type="integer" />
+
+            <!-- Rotate after 100 MB -->
+            <RegistryValue Name="AppRotateBytes" Value="104857600" Type="integer" />
+            <RegistryValue Name="AppStdoutCopyAndTruncate" Value="1" Type="integer" />
+            <RegistryValue Name="AppStderrCopyAndTruncate" Value="1" Type="integer" />
+            <RegistryValue Name="AppRotateDelay" Value="1000" Type="integer" />
+
+            <RegistryKey Key="AppExit">
+              <RegistryValue Type="string" Value="Restart" />
+            </RegistryKey>
+          </RegistryKey>
+        </RegistryKey>
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+</Wix>

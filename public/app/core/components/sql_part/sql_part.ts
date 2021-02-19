@@ -61,7 +61,7 @@ export class SqlPart {
     this.params = part.params;
   }
 
-  updateParam(strValue, index) {
+  updateParam(strValue: string, index: number) {
     // handle optional parameters
     if (strValue === '' && this.def.params[index].optional) {
       this.params.splice(index, 1);

@@ -1,0 +1,50 @@
+.refresh-picker {
+  position: relative;
+  display: none;
+
+  .refresh-picker-buttons {
+    display: flex;
+  }
+
+  .navbar-button--border-right-0 {
+    border-right: 0;
+  }
+
+  .gf-form-input--form-dropdown {
+    position: static;
+  }
+
+  .gf-form-select-box__menu {
+    position: absolute;
+    left: 0;
+    width: 100%;
+  }
+
+  &--off {
+    .select-button-value {
+      display: none;
+    }
+  }
+
+  &--live {
+    .select-button-value {
+      animation: liveText 2s infinite;
+    }
+  }
+
+  @include media-breakpoint-up(xs) {
+    display: block;
+  }
+}
+
+@keyframes liveText {
+  0% {
+    color: $orange;
+  }
+  50% {
+    color: $yellow;
+  }
+  100% {
+    color: $orange;
+  }
+}

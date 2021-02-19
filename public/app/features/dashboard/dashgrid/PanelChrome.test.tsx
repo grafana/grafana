@@ -11,10 +11,8 @@ describe('PanelChrome', () => {
           bbb: { value: 'BBB', text: 'upperB' },
         },
       },
-      dashboard: {},
-      plugin: {},
       isFullscreen: false,
-    });
+    } as any);
   });
 
   it('Should replace a panel variable', () => {

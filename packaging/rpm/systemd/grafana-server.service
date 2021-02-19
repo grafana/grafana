@@ -3,7 +3,7 @@ Description=Grafana instance
 Documentation=http://docs.grafana.org
 Wants=network-online.target
 After=network-online.target
-After=postgresql.service mariadb.service mysql.service
+After=postgresql.service mariadb.service mysqld.service
 
 [Service]
 EnvironmentFile=/etc/sysconfig/grafana-server

@@ -1,7 +1,7 @@
 +++
 title = "Developer Guide"
 type = "docs"
-aliases = ["/plugins/development/", "/plugins/datasources/", "/plugins/apps/", "/plugins/panels/"]
+aliases = ["/docs/grafana/latest/plugins/development/", "/docs/grafana/latest/plugins/datasources/", "/docs/grafana/latest/plugins/apps/", "/docs/grafana/latest/plugins/panels/"]
 [menu.docs]
 name = "Developer Guide"
 parent = "developing"
@@ -12,15 +12,18 @@ weight = 1
 
 You can extend Grafana by writing your own plugins and then share them with other users in [our plugin repository](https://grafana.com/plugins).
 
+Grafana already has a strong community of contributors and plugin developers. By making it easier to develop and install plugins with resources such as this guide, we hope that the community can grow even stronger and develop new plugins that we would never think about.
+
 ## Short version
 
-1. [Setup grafana](http://docs.grafana.org/project/building_from_source/)
+1. [Set up Grafana](https://github.com/grafana/grafana/blob/master/contribute/developer-guide.md)
 2. Clone an example plugin into ```/var/lib/grafana/plugins```  or `data/plugins` (relative to grafana git repo if you're running development version from source dir)
 3. Use one of our example plugins as starting point
 
 Example plugins
 
-- [Typescript data source example](https://github.com/grafana/typescript-template-datasource)
+- ["Hello World" panel using Angular](https://github.com/grafana/simple-angular-panel)
+- ["Hello World" panel using React](https://github.com/grafana/simple-react-panel)
 - [Simple json data source](https://github.com/grafana/simple-json-datasource)
 - [Clock panel](https://github.com/grafana/clock-panel)
 - [Pie chart panel](https://github.com/grafana/piechart-panel)
@@ -43,7 +46,7 @@ All our example plugins have build scripted configured.
 
 ## Keep your plugin up to date
 
-New versions of Grafana can sometimes cause plugins to break. Checkout our [PLUGIN_DEV.md](https://github.com/grafana/grafana/blob/master/PLUGIN_DEV.md) doc for changes in
+New versions of Grafana can sometimes cause plugins to break. Check out our [PLUGIN_DEV.md](https://github.com/grafana/grafana/blob/master/PLUGIN_DEV.md) doc for changes in
 Grafana that can impact your plugin.
 
 ## Metadata
@@ -93,7 +96,7 @@ export {
 
 There are three ways that you can start developing a Grafana plugin.
 
-1. Setup a Grafana development environment. [(described here)](http://docs.grafana.org/project/building_from_source/) and place your plugin in the ```data/plugins``` folder.
+1. Set up a Grafana development environment. [(described here)](https://github.com/grafana/grafana/blob/master/contribute/developer-guide.md) and place your plugin in the ```data/plugins``` folder.
 2. Install Grafana and place your plugin in the plugins directory which is set in your [config file](/installation/configuration). By default this is `/var/lib/grafana/plugins` on Linux systems.
 3. Place your plugin directory anywhere you like and specify it grafana.ini.
 
@@ -119,7 +122,7 @@ If a panel receives data and hooks into the `data-received` event then it should
 
 We currently have three different examples that you can fork/download to get started developing your grafana plugin.
 
- - [simple-json-datasource](https://github.com/grafana/simple-json-datasource) (small datasource plugin for querying json data from backends)
+ - [simple-json-datasource](https://github.com/grafana/simple-json-datasource) (small data source plugin for querying json data from backends)
  - [example-app](https://github.com/grafana/example-app)
  - [clock-panel](https://github.com/grafana/clock-panel)
  - [singlestat-panel](https://github.com/grafana/grafana/blob/master/public/app/plugins/panel/singlestat/module.ts)
@@ -131,5 +134,5 @@ We currently have three different examples that you can fork/download to get sta
 - [Plugin Defaults and Editor Mode]({{< relref "defaults-and-editor-mode.md" >}})
 - [Grafana Plugin Code Styleguide]({{< relref "code-styleguide.md" >}})
 - [Grafana Apps]({{< relref "apps.md" >}})
-- [Grafana Datasources]({{< relref "datasources.md" >}})
+- [Grafana Data Sources]({{< relref "datasources.md" >}})
 - [plugin.json Schema]({{< relref "plugin.json.md" >}})

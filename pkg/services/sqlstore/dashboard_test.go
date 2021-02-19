@@ -259,6 +259,50 @@ func TestDashboardDataAccess(t *testing.T) {
 				So(hit.FolderTitle, ShouldEqual, "")
 			})
 
+			Convey("Should be able to limit search", func() {
+				query := search.FindPersistedDashboardsQuery{
+					OrgId:        1,
+					Limit:        1,
+					SignedInUser: &m.SignedInUser{OrgId: 1, OrgRole: m.ROLE_EDITOR},
+				}
+
+				err := SearchDashboards(&query)
+				So(err, ShouldBeNil)
+
+				So(len(query.Result), ShouldEqual, 1)
+				So(query.Result[0].Title, ShouldEqual, "1 test dash folder")
+			})
+
+			Convey("Should be able to search beyond limit using paging", func() {
+				query := search.FindPersistedDashboardsQuery{
+					OrgId:        1,
+					Limit:        1,
+					Page:         2,
+					SignedInUser: &m.SignedInUser{OrgId: 1, OrgRole: m.ROLE_EDITOR},
+				}
+
+				err := SearchDashboards(&query)
+				So(err, ShouldBeNil)
+
+				So(len(query.Result), ShouldEqual, 1)
+				So(query.Result[0].Title, ShouldEqual, "test dash 23")
+			})
+
+			Convey("Should be able to filter by tag and type", func() {
+				query := search.FindPersistedDashboardsQuery{
+					OrgId:        1,
+					Type:         "dash-db",
+					Tags:         []string{"prod"},
+					SignedInUser: &m.SignedInUser{OrgId: 1, OrgRole: m.ROLE_EDITOR},
+				}
+
+				err := SearchDashboards(&query)
+				So(err, ShouldBeNil)
+
+				So(len(query.Result), ShouldEqual, 3)
+				So(query.Result[0].Title, ShouldEqual, "test dash 23")
+			})
+
 			Convey("Should be able to search for a dashboard folder's children", func() {
 				query := search.FindPersistedDashboardsQuery{
 					OrgId:        1,
@@ -301,15 +345,17 @@ func TestDashboardDataAccess(t *testing.T) {
 
 			Convey("Given two dashboards, one is starred dashboard by user 10, other starred by user 1", func() {
 				starredDash := insertTestDashboard("starred dash", 1, 0, false)
-				StarDashboard(&m.StarDashboardCommand{
+				err := StarDashboard(&m.StarDashboardCommand{
 					DashboardId: starredDash.Id,
 					UserId:      10,
 				})
+				So(err, ShouldBeNil)
 
-				StarDashboard(&m.StarDashboardCommand{
+				err = StarDashboard(&m.StarDashboardCommand{
 					DashboardId: savedDash.Id,
 					UserId:      1,
 				})
+				So(err, ShouldBeNil)
 
 				Convey("Should be able to search for starred dashboards", func() {
 					query := search.FindPersistedDashboardsQuery{
@@ -395,7 +441,8 @@ func createUser(name string, role string, isAdmin bool) m.User {
 	So(err, ShouldBeNil)
 
 	q1 := m.GetUserOrgListQuery{UserId: currentUserCmd.Result.Id}
-	GetUserOrgList(&q1)
+	err = GetUserOrgList(&q1)
+	So(err, ShouldBeNil)
 	So(q1.Result[0].Role, ShouldEqual, role)
 
 	return currentUserCmd.Result

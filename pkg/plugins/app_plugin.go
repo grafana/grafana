@@ -6,6 +6,7 @@ import (
 
 	"github.com/gosimple/slug"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -45,8 +46,8 @@ type JwtTokenAuth struct {
 	Params map[string]string `json:"params"`
 }
 
-func (app *AppPlugin) Load(decoder *json.Decoder, pluginDir string) error {
-	if err := decoder.Decode(&app); err != nil {
+func (app *AppPlugin) Load(decoder *json.Decoder, pluginDir string, backendPluginManager backendplugin.Manager) error {
+	if err := decoder.Decode(app); err != nil {
 		return err
 	}
 

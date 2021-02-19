@@ -1,32 +1,44 @@
 import React, { PureComponent } from 'react';
 import { VariableQueryProps } from 'app/types/plugins';
+import { e2e } from '@grafana/e2e';
 
 export default class DefaultVariableQueryEditor extends PureComponent<VariableQueryProps, any> {
-  constructor(props) {
+  constructor(props: VariableQueryProps) {
     super(props);
     this.state = { value: props.query };
   }
 
-  handleChange(event) {
-    this.setState({ value: event.target.value });
-  }
+  onChange = (event: React.FormEvent<HTMLTextAreaElement>) => {
+    this.setState({ value: event.currentTarget.value });
+  };
 
-  handleBlur(event) {
-    this.props.onChange(event.target.value, event.target.value);
+  onBlur = (event: React.FormEvent<HTMLTextAreaElement>) => {
+    this.props.onChange(event.currentTarget.value, event.currentTarget.value);
+  };
+
+  getLineCount() {
+    const { value } = this.state;
+
+    if (typeof value === 'string') {
+      return value.split('\n').length;
+    }
+
+    return 1;
   }
 
   render() {
     return (
       <div className="gf-form">
         <span className="gf-form-label width-10">Query</span>
-        <input
-          type="text"
+        <textarea
+          rows={this.getLineCount()}
           className="gf-form-input"
           value={this.state.value}
-          onChange={e => this.handleChange(e)}
-          onBlur={e => this.handleBlur(e)}
+          onChange={this.onChange}
+          onBlur={this.onBlur}
           placeholder="metric name or tags query"
           required
+          aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.selectors.queryOptionsQueryInput}
         />
       </div>
     );

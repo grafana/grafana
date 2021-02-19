@@ -1,10 +1,13 @@
 import _ from 'lodash';
-import angular from 'angular';
-import moment from 'moment';
+import angular, { ILocationService, IScope } from 'angular';
 
 import locationUtil from 'app/core/utils/location_util';
 import { DashboardModel } from '../../state/DashboardModel';
-import { HistoryListOpts, RevisionsModel, CalculateDiffOptions, HistorySrv } from './HistorySrv';
+import { CalculateDiffOptions, HistoryListOpts, HistorySrv, RevisionsModel } from './HistorySrv';
+import { AppEvents, dateTime, DateTimeInput, toUtc } from '@grafana/data';
+import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
+import { CoreEvents } from 'app/types';
+import { promiseToDigest } from '../../../../core/utils/promiseToDigest';
 
 export class HistoryListCtrl {
   appending: boolean;
@@ -24,12 +27,11 @@ export class HistoryListCtrl {
 
   /** @ngInject */
   constructor(
-    private $route,
-    private $rootScope,
-    private $location,
-    private $q,
+    private $route: any,
+    private $rootScope: GrafanaRootScope,
+    private $location: ILocationService,
     private historySrv: HistorySrv,
-    public $scope
+    public $scope: IScope
   ) {
     this.appending = false;
     this.diff = 'basic';
@@ -40,7 +42,7 @@ export class HistoryListCtrl {
     this.start = 0;
     this.canCompare = false;
 
-    this.$rootScope.onAppEvent('dashboard-saved', this.onDashboardSaved.bind(this), $scope);
+    this.$rootScope.onAppEvent(CoreEvents.dashboardSaved, this.onDashboardSaved.bind(this), $scope);
     this.resetFromSource();
   }
 
@@ -56,7 +58,7 @@ export class HistoryListCtrl {
   }
 
   dismiss() {
-    this.$rootScope.appEvent('hide-dash-editor');
+    this.$rootScope.appEvent(CoreEvents.hideDashEditor);
   }
 
   addToLog() {
@@ -69,23 +71,23 @@ export class HistoryListCtrl {
     this.canCompare = selected === 2;
   }
 
-  formatDate(date) {
+  formatDate(date: DateTimeInput) {
     return this.dashboard.formatDate(date);
   }
 
-  formatBasicDate(date) {
-    const now = this.dashboard.timezone === 'browser' ? moment() : moment.utc();
-    const then = this.dashboard.timezone === 'browser' ? moment(date) : moment.utc(date);
+  formatBasicDate(date: DateTimeInput) {
+    const now = this.dashboard.timezone === 'browser' ? dateTime() : toUtc();
+    const then = this.dashboard.timezone === 'browser' ? dateTime(date) : toUtc(date);
     return then.from(now);
   }
 
-  getDiff(diff: string) {
+  getDiff(diff: 'basic' | 'json') {
     this.diff = diff;
     this.mode = 'compare';
 
-    // have it already been fetched?
-    if (this.delta[this.diff]) {
-      return this.$q.when(this.delta[this.diff]);
+    // has it already been fetched?
+    if (this.delta[diff]) {
+      return Promise.resolve(this.delta[diff]);
     }
 
     const selected = _.filter(this.revisions, { checked: true });
@@ -107,17 +109,20 @@ export class HistoryListCtrl {
       diffType: diff,
     };
 
-    return this.historySrv
-      .calculateDiff(options)
-      .then(response => {
-        this.delta[this.diff] = response;
-      })
-      .catch(() => {
-        this.mode = 'list';
-      })
-      .finally(() => {
-        this.loading = false;
-      });
+    return promiseToDigest(this.$scope)(
+      this.historySrv
+        .calculateDiff(options)
+        .then((response: any) => {
+          // @ts-ignore
+          this.delta[this.diff] = response;
+        })
+        .catch(() => {
+          this.mode = 'list';
+        })
+        .finally(() => {
+          this.loading = false;
+        })
+    );
   }
 
   getLog(append = false) {
@@ -128,25 +133,27 @@ export class HistoryListCtrl {
       start: this.start,
     };
 
-    return this.historySrv
-      .getHistoryList(this.dashboard, options)
-      .then(revisions => {
-        // set formatted dates & default values
-        for (const rev of revisions) {
-          rev.createdDateString = this.formatDate(rev.created);
-          rev.ageString = this.formatBasicDate(rev.created);
-          rev.checked = false;
-        }
+    return promiseToDigest(this.$scope)(
+      this.historySrv
+        .getHistoryList(this.dashboard, options)
+        .then((revisions: any) => {
+          // set formatted dates & default values
+          for (const rev of revisions) {
+            rev.createdDateString = this.formatDate(rev.created);
+            rev.ageString = this.formatBasicDate(rev.created);
+            rev.checked = false;
+          }
 
-        this.revisions = append ? this.revisions.concat(revisions) : revisions;
-      })
-      .catch(err => {
-        this.loading = false;
-      })
-      .finally(() => {
-        this.loading = false;
-        this.appending = false;
-      });
+          this.revisions = append ? this.revisions.concat(revisions) : revisions;
+        })
+        .catch((err: any) => {
+          this.loading = false;
+        })
+        .finally(() => {
+          this.loading = false;
+          this.appending = false;
+        })
+    );
   }
 
   isLastPage() {
@@ -169,7 +176,7 @@ export class HistoryListCtrl {
   }
 
   restore(version: number) {
-    this.$rootScope.appEvent('confirm-modal', {
+    this.$rootScope.appEvent(CoreEvents.showConfirmModal, {
       title: 'Restore version',
       text: '',
       text2: `Are you sure you want to restore the dashboard to version ${version}? All unsaved changes will be lost.`,
@@ -181,17 +188,19 @@ export class HistoryListCtrl {
 
   restoreConfirm(version: number) {
     this.loading = true;
-    return this.historySrv
-      .restoreDashboard(this.dashboard, version)
-      .then(response => {
-        this.$location.url(locationUtil.stripBaseFromUrl(response.url)).replace();
-        this.$route.reload();
-        this.$rootScope.appEvent('alert-success', ['Dashboard restored', 'Restored from version ' + version]);
-      })
-      .catch(() => {
-        this.mode = 'list';
-        this.loading = false;
-      });
+    return promiseToDigest(this.$scope)(
+      this.historySrv
+        .restoreDashboard(this.dashboard, version)
+        .then((response: any) => {
+          this.$location.url(locationUtil.stripBaseFromUrl(response.url)).replace();
+          this.$route.reload();
+          this.$rootScope.appEvent(AppEvents.alertSuccess, ['Dashboard restored', 'Restored from version ' + version]);
+        })
+        .catch(() => {
+          this.mode = 'list';
+          this.loading = false;
+        })
+    );
   }
 }
 

@@ -1,4 +1,5 @@
-import React, { FC } from 'react';
+import React, { ChangeEvent, FC } from 'react';
+import { Input } from '@grafana/ui';
 
 export interface Props {
   orgName: string;
@@ -21,12 +22,10 @@ const OrgProfile: FC<Props> = ({ onSubmit, onOrgNameChange, orgName }) => {
         <div className="gf-form-inline">
           <div className="gf-form max-width-28">
             <span className="gf-form-label">Organization name</span>
-            <input
+            <Input
               className="gf-form-input"
               type="text"
-              onChange={event => {
-                onOrgNameChange(event.target.value);
-              }}
+              onChange={(event: ChangeEvent<HTMLInputElement>) => onOrgNameChange(event.target.value)}
               value={orgName}
             />
           </div>

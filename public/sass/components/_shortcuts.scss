@@ -17,7 +17,7 @@
     text-align: left;
     color: $text-muted;
     width: 99%;
-    padding: 0.38rem 1rem;
+    padding: $space-sm $space-md;
   }
 
   .shortcut-table-keys {
@@ -31,7 +31,7 @@
 .shortcut-table-key {
   display: inline-block;
   text-align: center;
-  margin-right: 0.3rem;
+  margin-right: $space-xs;
   padding: 3px 5px;
   font: 11px Consolas, 'Liberation Mono', Menlo, Courier, monospace;
   line-height: 10px;

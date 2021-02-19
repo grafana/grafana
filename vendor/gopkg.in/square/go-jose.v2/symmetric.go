@@ -35,7 +35,7 @@ import (
 )
 
 // Random reader (stubbed out in tests)
-var randReader = rand.Reader
+var RandReader = rand.Reader
 
 const (
 	// RFC7518 recommends a minimum of 1,000 iterations:
@@ -103,7 +103,7 @@ func newAESGCM(keySize int) contentCipher {
 func newAESCBC(keySize int) contentCipher {
 	return &aeadContentCipher{
 		keyBytes:     keySize * 2,
-		authtagBytes: 16,
+		authtagBytes: keySize,
 		getAead: func(key []byte) (cipher.AEAD, error) {
 			return josecipher.NewCBCHMAC(key, aes.NewCipher)
 		},
@@ -148,7 +148,7 @@ func getPbkdf2Params(alg KeyAlgorithm) (int, func() hash.Hash) {
 // getRandomSalt generates a new salt of the given size.
 func getRandomSalt(size int) ([]byte, error) {
 	salt := make([]byte, size)
-	_, err := io.ReadFull(randReader, salt)
+	_, err := io.ReadFull(RandReader, salt)
 	if err != nil {
 		return nil, err
 	}
@@ -193,7 +193,7 @@ func newSymmetricSigner(sigAlg SignatureAlgorithm, key []byte) (recipientSigInfo
 // Generate a random key for the given content cipher
 func (ctx randomKeyGenerator) genKey() ([]byte, rawHeader, error) {
 	key := make([]byte, ctx.size)
-	_, err := io.ReadFull(randReader, key)
+	_, err := io.ReadFull(RandReader, key)
 	if err != nil {
 		return nil, rawHeader{}, err
 	}
@@ -233,7 +233,7 @@ func (ctx aeadContentCipher) encrypt(key, aad, pt []byte) (*aeadParts, error) {
 
 	// Initialize a new nonce
 	iv := make([]byte, aead.NonceSize())
-	_, err = io.ReadFull(randReader, iv)
+	_, err = io.ReadFull(RandReader, iv)
 	if err != nil {
 		return nil, err
 	}

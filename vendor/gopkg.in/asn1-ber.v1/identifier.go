@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math"
 )
 
 func readIdentifier(reader io.Reader) (Identifier, int, error) {
@@ -80,24 +79,34 @@ func encodeIdentifier(identifier Identifier) []byte {
 
 		tag := identifier.Tag
 
-		highBit := uint(63)
-		for {
-			if tag&(1<<highBit) != 0 {
-				break
-			}
-			highBit--
+		b = append(b, encodeHighTag(tag)...)
+	}
+	return b
+}
+
+func encodeHighTag(tag Tag) []byte {
+	// set cap=4 to hopefully avoid additional allocations
+	b := make([]byte, 0, 4)
+	for tag != 0 {
+		// t := last 7 bits of tag (HighTagValueBitmask = 0x7F)
+		t := tag & HighTagValueBitmask
+
+		// right shift tag 7 to remove what was just pulled off
+		tag >>= 7
+
+		// if b already has entries this entry needs a continuation bit (0x80)
+		if len(b) != 0 {
+			t |= HighTagContinueBitmask
 		}
 
-		tagBytes := int(math.Ceil(float64(highBit) / 7.0))
-		for i := tagBytes - 1; i >= 0; i-- {
-			offset := uint(i) * 7
-			mask := Tag(0x7f) << offset
-			tagByte := (tag & mask) >> offset
-			if i != 0 {
-				tagByte |= 0x80
-			}
-			b = append(b, byte(tagByte))
-		}
+		b = append(b, byte(t))
+	}
+	// reverse
+	// since bits were pulled off 'tag' small to high the byte slice is in reverse order.
+	// example: tag = 0xFF results in {0x7F, 0x01 + 0x80 (continuation bit)}
+	// this needs to be reversed into 0x81 0x7F
+	for i, j := 0, len(b)-1; i < len(b)/2; i++ {
+		b[i], b[j-i] = b[j-i], b[i]
 	}
 	return b
 }

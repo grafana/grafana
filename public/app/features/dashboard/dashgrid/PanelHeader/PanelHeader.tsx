@@ -1,7 +1,9 @@
 import React, { Component } from 'react';
 import classNames from 'classnames';
 import { isEqual } from 'lodash';
-import { ScopedVars } from '@grafana/ui';
+import { DataLink, ScopedVars, PanelMenuItem } from '@grafana/data';
+import { ClickOutsideWrapper } from '@grafana/ui';
+import { e2e } from '@grafana/e2e';
 
 import PanelHeaderCorner from './PanelHeaderCorner';
 import { PanelHeaderMenu } from './PanelHeaderMenu';
@@ -9,7 +11,8 @@ import templateSrv from 'app/features/templating/template_srv';
 
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { ClickOutsideWrapper } from 'app/core/components/ClickOutsideWrapper/ClickOutsideWrapper';
+import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
+import { getPanelMenu } from 'app/features/dashboard/utils/getPanelMenu';
 
 export interface Props {
   panel: PanelModel;
@@ -18,9 +21,10 @@ export interface Props {
   title?: string;
   description?: string;
   scopedVars?: ScopedVars;
-  links?: [];
+  links?: DataLink[];
   error?: string;
   isFullscreen: boolean;
+  isLoading: boolean;
 }
 
 interface ClickCoordinates {
@@ -30,13 +34,15 @@ interface ClickCoordinates {
 
 interface State {
   panelMenuOpen: boolean;
+  menuItems: PanelMenuItem[];
 }
 
 export class PanelHeader extends Component<Props, State> {
   clickCoordinates: ClickCoordinates = { x: 0, y: 0 };
-  state = {
+
+  state: State = {
     panelMenuOpen: false,
-    clickCoordinates: { x: 0, y: 0 },
+    menuItems: [],
   };
 
   eventToClickCoordinates = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -55,13 +61,19 @@ export class PanelHeader extends Component<Props, State> {
   };
 
   onMenuToggle = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (this.isClick(this.eventToClickCoordinates(event))) {
-      event.stopPropagation();
-
-      this.setState(prevState => ({
-        panelMenuOpen: !prevState.panelMenuOpen,
-      }));
+    if (!this.isClick(this.eventToClickCoordinates(event))) {
+      return;
     }
+
+    event.stopPropagation();
+
+    const { dashboard, panel } = this.props;
+    const menuItems = getPanelMenu(dashboard, panel);
+
+    this.setState({
+      panelMenuOpen: !this.state.panelMenuOpen,
+      menuItems,
+    });
   };
 
   closeMenu = () => {
@@ -70,36 +82,52 @@ export class PanelHeader extends Component<Props, State> {
     });
   };
 
-  render() {
-    const { panel, dashboard, timeInfo, scopedVars, error, isFullscreen } = this.props;
+  private renderLoadingState(): JSX.Element {
+    return (
+      <div className="panel-loading">
+        <i className="fa fa-spinner fa-spin" />
+      </div>
+    );
+  }
 
-    const panelHeaderClass = classNames({ 'panel-header': true, 'grid-drag-handle': !isFullscreen });
+  render() {
+    const { panel, timeInfo, scopedVars, error, isFullscreen, isLoading } = this.props;
+    const { menuItems } = this.state;
     const title = templateSrv.replaceWithText(panel.title, scopedVars);
+
+    const panelHeaderClass = classNames({
+      'panel-header': true,
+      'grid-drag-handle': !isFullscreen,
+    });
 
     return (
       <>
-        <PanelHeaderCorner
-          panel={panel}
-          title={panel.title}
-          description={panel.description}
-          scopedVars={panel.scopedVars}
-          links={panel.links}
-          error={error}
-        />
+        {isLoading && this.renderLoadingState()}
         <div className={panelHeaderClass}>
-          <div className="panel-title-container" onClick={this.onMenuToggle} onMouseDown={this.onMouseDown}>
+          <PanelHeaderCorner
+            panel={panel}
+            title={panel.title}
+            description={panel.description}
+            scopedVars={panel.scopedVars}
+            links={getPanelLinksSupplier(panel)}
+            error={error}
+          />
+          <div
+            className="panel-title-container"
+            onClick={this.onMenuToggle}
+            onMouseDown={this.onMouseDown}
+            aria-label={e2e.pages.Dashboard.Panels.Panel.selectors.title(title)}
+          >
             <div className="panel-title">
               <span className="icon-gf panel-alert-icon" />
               <span className="panel-title-text">
                 {title} <span className="fa fa-caret-down panel-menu-toggle" />
               </span>
-
               {this.state.panelMenuOpen && (
                 <ClickOutsideWrapper onClick={this.closeMenu}>
-                  <PanelHeaderMenu panel={panel} dashboard={dashboard} />
+                  <PanelHeaderMenu items={menuItems} />
                 </ClickOutsideWrapper>
               )}
-
               {timeInfo && (
                 <span className="panel-time-info">
                   <i className="fa fa-clock-o" /> {timeInfo}

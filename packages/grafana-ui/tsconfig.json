@@ -1,19 +1,15 @@
 {
-  "extends": "../../tsconfig.json",
-  "include": ["src/**/*.ts", "src/**/*.tsx"],
-  "exclude": ["dist", "node_modules"],
   "compilerOptions": {
-    "rootDirs": [".", "stories"],
-    "module": "esnext",
-    "outDir": "compiled",
-    "declaration": true,
+    "baseUrl": "node_modules/@types",
     "declarationDir": "dist",
-    "strict": true,
-    "alwaysStrict": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
-    "typeRoots": ["./node_modules/@types", "types"],
-    "skipLibCheck": true, // Temp workaround for Duplicate identifier tsc errors,
-    "removeComments": false
-  }
+    "outDir": "compiled",
+    "paths": {
+      "@grafana/slate-react": ["slate-react"]
+    },
+    "rootDirs": [".", "stories"],
+    "typeRoots": ["node_modules/@types"]
+  },
+  "exclude": ["dist", "node_modules"],
+  "extends": "@grafana/tsconfig",
+  "include": ["src/**/*.ts*"]
 }

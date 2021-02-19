@@ -1,8 +1,9 @@
 import React from 'react';
+// @ts-ignore
 import renderer from 'react-test-renderer';
 import { TeamPicker } from './TeamPicker';
 
-jest.mock('app/core/services/backend_srv', () => ({
+jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => {
     return {
       get: () => {

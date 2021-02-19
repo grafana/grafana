@@ -1,5 +1,7 @@
+import { PanelModel } from 'app/features/dashboard/state';
+
 export class ThresholdMapper {
-  static alertToGraphThresholds(panel) {
+  static alertToGraphThresholds(panel: PanelModel) {
     for (let i = 0; i < panel.alert.conditions.length; i++) {
       const condition = panel.alert.conditions[i];
       if (condition.type !== 'query') {
@@ -7,7 +9,7 @@ export class ThresholdMapper {
       }
 
       const evaluator = condition.evaluator;
-      const thresholds = (panel.thresholds = []);
+      const thresholds: any[] = (panel.thresholds = []);
 
       switch (evaluator.type) {
         case 'gt': {
