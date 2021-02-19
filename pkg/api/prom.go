@@ -6,14 +6,14 @@ import (
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
-// swagger:route GET /api/v1/status/rules RuleStatus RouteGetRuleStatuses
+// swagger:route GET /api/v1/status/rules prometheus RouteGetRuleStatuses
 //
 // gets the evaluation statuses of all rules
 //
 //     Responses:
 //       200: RuleResponse
 
-// swagger:route GET /api/v1/status/alerts RuleStatus RouteGetAlertStatuses
+// swagger:route GET /api/v1/status/alerts prometheus RouteGetAlertStatuses
 //
 // gets the current alerts
 //
