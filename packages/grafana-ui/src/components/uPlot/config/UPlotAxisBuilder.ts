@@ -145,8 +145,8 @@ const timeUnitSize = {
   minute: 60 * 1000,
   hour: 60 * 60 * 1000,
   day: 24 * 60 * 60 * 1000,
-  month: 30 * 24 * 60 * 60 * 1000,
-  year: 365.2425 * 24 * 60 * 60 * 1000,
+  month: 28 * 24 * 60 * 60 * 1000,
+  year: 365 * 24 * 60 * 60 * 1000,
 };
 
 /** Format time axis ticks */
