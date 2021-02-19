@@ -119,15 +119,17 @@ func AdminOrFeatureEnabled(enabled bool) macaron.Handler {
 	}
 }
 
+// SnapshotPublicModeOrSignedIn creates a middleware that allows access
+// if snapshot public mode is enabled or if user is signed in.
 func SnapshotPublicModeOrSignedIn(cfg *setting.Cfg) macaron.Handler {
 	return func(c *models.ReqContext) {
 		if cfg.SnapshotPublicMode {
 			return
 		}
 
-		_, err := c.Invoke(ReqSignedIn)
-		if err != nil {
-			c.JsonApiErr(500, "Failed to invoke required signed in middleware", err)
+		if !c.IsSignedIn {
+			notAuthorized(c)
+			return
 		}
 	}
 }

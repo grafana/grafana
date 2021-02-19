@@ -74,6 +74,51 @@ func TestCreateLibraryPanel(t *testing.T) {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 			}
 		})
+
+	testScenario(t, "When an admin tries to create a library panel where name and panel title differ, it should update panel title",
+		func(t *testing.T, sc scenarioContext) {
+			command := getCreateCommand(1, "Library Panel Name")
+			response := sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, response.Status())
+
+			var result libraryPanelResult
+			err := json.Unmarshal(response.Body(), &result)
+			require.NoError(t, err)
+			var expected = libraryPanelResult{
+				Result: libraryPanel{
+					ID:       1,
+					OrgID:    1,
+					FolderID: 1,
+					UID:      result.Result.UID,
+					Name:     "Library Panel Name",
+					Model: map[string]interface{}{
+						"datasource": "${DS_GDEV-TESTDATA}",
+						"id":         float64(1),
+						"title":      "Library Panel Name",
+						"type":       "text",
+					},
+					Meta: LibraryPanelDTOMeta{
+						CanEdit:             true,
+						ConnectedDashboards: 0,
+						Created:             result.Result.Meta.Created,
+						Updated:             result.Result.Meta.Updated,
+						CreatedBy: LibraryPanelDTOMetaUser{
+							ID:        1,
+							Name:      "signed_in_user",
+							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
+						},
+						UpdatedBy: LibraryPanelDTOMetaUser{
+							ID:        1,
+							Name:      "signed_in_user",
+							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
+						},
+					},
+				},
+			}
+			if diff := cmp.Diff(expected, result, getCompareOptions()...); diff != "" {
+				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+			}
+		})
 }
 
 func TestConnectLibraryPanel(t *testing.T) {
@@ -355,7 +400,7 @@ func TestGetAllLibraryPanels(t *testing.T) {
 						Model: map[string]interface{}{
 							"datasource": "${DS_GDEV-TESTDATA}",
 							"id":         float64(1),
-							"title":      "Text - Library Panel",
+							"title":      "Text - Library Panel2",
 							"type":       "text",
 						},
 						Meta: LibraryPanelDTOMeta{
@@ -556,7 +601,7 @@ func TestPatchLibraryPanel(t *testing.T) {
 					Model: map[string]interface{}{
 						"datasource": "${DS_GDEV-TESTDATA}",
 						"id":         float64(1),
-						"title":      "Model - New name",
+						"title":      "Panel - New name",
 						"type":       "text",
 					},
 					Meta: LibraryPanelDTOMeta{
@@ -610,7 +655,7 @@ func TestPatchLibraryPanel(t *testing.T) {
 			}
 		})
 
-	testScenario(t, "When an admin tries to patch a library panel with name only, it should change name successfully and return correct result",
+	testScenario(t, "When an admin tries to patch a library panel with name only, it should change name successfully, sync title and return correct result",
 		func(t *testing.T, sc scenarioContext) {
 			command := getCreateCommand(1, "Text - Library Panel")
 			response := sc.service.createHandler(sc.reqContext, command)
@@ -626,12 +671,15 @@ func TestPatchLibraryPanel(t *testing.T) {
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": existing.Result.UID})
 			response = sc.service.patchHandler(sc.reqContext, cmd)
 			require.Equal(t, 200, response.Status())
+
 			var result libraryPanelResult
 			err = json.Unmarshal(response.Body(), &result)
 			require.NoError(t, err)
+
 			existing.Result.Name = "New Name"
 			existing.Result.Meta.CreatedBy.Name = "user_in_db"
 			existing.Result.Meta.CreatedBy.AvatarUrl = "/avatar/402d08de060496d6b6874495fe20f5ad"
+			existing.Result.Model["title"] = "New Name"
 			if diff := cmp.Diff(existing.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 			}
@@ -648,7 +696,7 @@ func TestPatchLibraryPanel(t *testing.T) {
 			require.NoError(t, err)
 
 			cmd := patchLibraryPanelCommand{
-				Model: []byte(`{ "name": "New Model Name" }`),
+				Model: []byte(`{ "title": "New Model Title", "name": "New Model Name" }`),
 			}
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": existing.Result.UID})
 			response = sc.service.patchHandler(sc.reqContext, cmd)
@@ -657,7 +705,8 @@ func TestPatchLibraryPanel(t *testing.T) {
 			err = json.Unmarshal(response.Body(), &result)
 			require.NoError(t, err)
 			existing.Result.Model = map[string]interface{}{
-				"name": "New Model Name",
+				"title": "Text - Library Panel",
+				"name":  "New Model Name",
 			}
 			existing.Result.Meta.CreatedBy.Name = "user_in_db"
 			existing.Result.Meta.CreatedBy.AvatarUrl = "/avatar/402d08de060496d6b6874495fe20f5ad"
@@ -844,7 +893,7 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 								},
 							},
 						},
-						"title": "Text - Library Panel",
+						"title": "Text - Library Panel1",
 						"type":  "text",
 					},
 				},

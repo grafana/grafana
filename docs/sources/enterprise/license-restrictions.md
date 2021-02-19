@@ -25,6 +25,8 @@ Restrictions are applied separately for viewers and editors.
 
 When the number of maximum active viewers or editors is reached, Grafana displays a warning banner.
 
+Sometimes it is useful to log in to an account from multiple locations concurrently. With Grafana Enterprise, accounts are limited to three concurrent sessions.
+
 ### Usage billing
 
 It is possible to turn on usage billing in Enterprise licensing in order to have an unlimited number of user limits. When usage billing is on, Grafana does not enforce active user limits. Instead, Grafana Labs charges for active users above the limit, according to your customer contract. 
