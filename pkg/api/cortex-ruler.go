@@ -6,54 +6,55 @@ import (
 	"github.com/prometheus/prometheus/pkg/rulefmt"
 )
 
-// swagger:route Get /api/v1/rules RulerConfig RouteGetRulesConfig
+// swagger:route Get /api/v1/rules ruler RouteGetRulesConfig
 //
 // List rule groups
 //
 //     Produces:
-//     - application/yaml
+//     - application/json
 //
 //     Responses:
 //       202: NamespaceConfigResponse
 
-// swagger:route POST /api/v1/rules/{Namespace} RulerConfig RoutePostNameRulesConfig
+// swagger:route POST /api/v1/rules/{Namespace} ruler RoutePostNameRulesConfig
 //
 // Creates or updates a rule group
 //
 //     Consumes:
+//     - application/json
 //     - application/yaml
 //
 //     Responses:
 //       202: Ack
 
-// swagger:route Get /api/v1/rules/{Namespace} RulerConfig RouteGetNamespaceRulesConfig
+// swagger:route Get /api/v1/rules/{Namespace} ruler RouteGetNamespaceRulesConfig
 //
 // Get rule groups by namespace
 //
 //     Produces:
-//     - application/yaml
+//     - application/json
 //
 //     Responses:
 //       202: NamespaceConfigResponse
 
-// swagger:route Delete /api/v1/rules/{Namespace} RulerConfig RouteDeleteNamespaceRulesConfig
+// swagger:route Delete /api/v1/rules/{Namespace} ruler RouteDeleteNamespaceRulesConfig
 //
 // Delete namespace
 //
 //     Responses:
 //       202: Ack
 
-// swagger:route Get /api/v1/rules/{Namespace}/{Groupname} RulerConfig RouteGetRulegGroupConfig
+// swagger:route Get /api/v1/rules/{Namespace}/{Groupname} ruler RouteGetRulegGroupConfig
 //
 // Get rule group
 //
 //     Produces:
-//     - application/yaml
+//     - application/json
 //
 //     Responses:
 //       202: RuleGroupConfigResponse
 
-// swagger:route Delete /api/v1/rules/{Namespace}/{Groupname} RulerConfig RouteDeleteRuleGroupConfig
+// swagger:route Delete /api/v1/rules/{Namespace}/{Groupname} ruler RouteDeleteRuleGroupConfig
 //
 // Delete rule group
 //
@@ -97,8 +98,17 @@ type RuleGroupConfig struct {
 	Rules    []ExtendedRuleNode `yaml:"rules" json:"rules"`
 }
 
+type ApiRuleNode struct {
+	Record      string         `yaml:"record,omitempty" json:"record,omitempty"`
+	Alert       string        `yaml:"alert,omitempty" json:"alert,omitempty"`
+	Expr        string         `yaml:"expr" json:"expr"`
+	For         model.Duration    `yaml:"for,omitempty" json:"for,omitempty"`
+	Labels      map[string]string `yaml:"labels,omitempty" json:"labels,omitempty"`
+	Annotations map[string]string `yaml:"annotations,omitempty" json:"annotations,omitempty"`
+}
+
 type ExtendedRuleNode struct {
-	rulefmt.RuleNode
+	ApiRuleNode
 	//GrafanaManagedAlert yaml.Node `yaml:"grafana_alert,omitempty"`
 	GrafanaManagedAlert ExtendedUpsertAlertDefinitionCommand `yaml:"grafana_alert,omitempty" json:"grafana_alert,omitempty"`
 }
