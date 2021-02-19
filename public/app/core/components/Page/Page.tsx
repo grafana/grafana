@@ -26,7 +26,7 @@ export const Page: PageType = ({ navModel, children, ...otherProps }) => {
 
   useEffect(() => {
     const title = getTitleFromNavModel(navModel);
-    document.title = title ? title + ' - ' + Branding.AppTitle : Branding.AppTitle;
+    document.title = title ? `${title} - ${Branding.AppTitle}` : Branding.AppTitle;
   }, [navModel]);
 
   return (

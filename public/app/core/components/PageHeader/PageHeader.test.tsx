@@ -1,6 +1,6 @@
 import React from 'react';
 import PageHeader from './PageHeader';
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 
 describe('PageHeader', () => {
   describe('when the nav tree has a node with a title', () => {
@@ -16,10 +16,9 @@ describe('PageHeader', () => {
         node: {},
       };
 
-      const dom = render(<PageHeader model={nav as any} />);
+      render(<PageHeader model={nav as any} />);
 
-      const title = await dom.findByTestId('page-title');
-      expect(title.textContent).toBe('node');
+      expect(screen.getByRole('heading', { name: 'node' })).toBeInTheDocument();
     });
   });
 
@@ -37,13 +36,10 @@ describe('PageHeader', () => {
         node: {},
       };
 
-      const dom = render(<PageHeader model={nav as any} />);
+      render(<PageHeader model={nav as any} />);
 
-      const title = await dom.findByTestId('page-title');
-      expect(title.textContent).toBe('Parent / child');
-
-      const parentLink = await dom.findByTestId('breadcrumb-text-link');
-      expect(parentLink.getAttribute('href')).toBe('parentUrl');
+      expect(screen.getByRole('heading', { name: 'Parent / child' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Parent' })).toBeInTheDocument();
     });
   });
 });
