@@ -1,5 +1,4 @@
 import React from 'react';
-import { action } from '@storybook/addon-actions';
 import { Story } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Card, Props } from './Card';
@@ -133,9 +132,6 @@ export const Full: Story<Props> = ({ disabled }) => {
       <Card.Figure>
         <img src={logo} alt="Prometheus Logo" />
       </Card.Figure>
-      <Card.Tags>
-        <TagList tags={['firing', 'active', 'test', 'testdata', 'prometheus']} onClick={action('Clicked tag')} />
-      </Card.Tags>
       <Card.Actions>
         <Button key="settings" variant="secondary">
           Main action

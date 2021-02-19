@@ -6,7 +6,7 @@ import { config } from '@grafana/runtime';
 import { NavModel } from '@grafana/data';
 import { UserProvider, UserAPI, LoadingStates } from 'app/core/utils/UserProvider';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { User, Team, UserOrg, UserSession, StoreState } from 'app/types';
+import { UserDTO, Team, UserOrg, UserSession, StoreState } from 'app/types';
 import { SharedPreferences } from 'app/core/components/SharedPreferences/SharedPreferences';
 import Page from 'app/core/components/Page/Page';
 import { UserTeams } from './UserTeams';
@@ -21,7 +21,14 @@ export interface Props {
 export const UserProfileEdit: FC<Props> = ({ navModel }) => (
   <Page navModel={navModel}>
     <UserProvider userId={config.bootData.user.id}>
-      {(api: UserAPI, states: LoadingStates, teams: Team[], orgs: UserOrg[], sessions: UserSession[], user: User) => {
+      {(
+        api: UserAPI,
+        states: LoadingStates,
+        teams: Team[],
+        orgs: UserOrg[],
+        sessions: UserSession[],
+        user: UserDTO
+      ) => {
         return (
           <Page.Contents>
             {states.loadUser ? (

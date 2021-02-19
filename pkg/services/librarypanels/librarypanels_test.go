@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
@@ -49,6 +50,51 @@ func TestCreateLibraryPanel(t *testing.T) {
 						"datasource": "${DS_GDEV-TESTDATA}",
 						"id":         float64(1),
 						"title":      "Text - Library Panel",
+						"type":       "text",
+					},
+					Meta: LibraryPanelDTOMeta{
+						CanEdit:             true,
+						ConnectedDashboards: 0,
+						Created:             result.Result.Meta.Created,
+						Updated:             result.Result.Meta.Updated,
+						CreatedBy: LibraryPanelDTOMetaUser{
+							ID:        1,
+							Name:      "signed_in_user",
+							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
+						},
+						UpdatedBy: LibraryPanelDTOMetaUser{
+							ID:        1,
+							Name:      "signed_in_user",
+							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
+						},
+					},
+				},
+			}
+			if diff := cmp.Diff(expected, result, getCompareOptions()...); diff != "" {
+				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+			}
+		})
+
+	testScenario(t, "When an admin tries to create a library panel where name and panel title differ, it should update panel title",
+		func(t *testing.T, sc scenarioContext) {
+			command := getCreateCommand(1, "Library Panel Name")
+			response := sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, response.Status())
+
+			var result libraryPanelResult
+			err := json.Unmarshal(response.Body(), &result)
+			require.NoError(t, err)
+			var expected = libraryPanelResult{
+				Result: libraryPanel{
+					ID:       1,
+					OrgID:    1,
+					FolderID: 1,
+					UID:      result.Result.UID,
+					Name:     "Library Panel Name",
+					Model: map[string]interface{}{
+						"datasource": "${DS_GDEV-TESTDATA}",
+						"id":         float64(1),
+						"title":      "Library Panel Name",
 						"type":       "text",
 					},
 					Meta: LibraryPanelDTOMeta{
@@ -354,7 +400,7 @@ func TestGetAllLibraryPanels(t *testing.T) {
 						Model: map[string]interface{}{
 							"datasource": "${DS_GDEV-TESTDATA}",
 							"id":         float64(1),
-							"title":      "Text - Library Panel",
+							"title":      "Text - Library Panel2",
 							"type":       "text",
 						},
 						Meta: LibraryPanelDTOMeta{
@@ -555,7 +601,7 @@ func TestPatchLibraryPanel(t *testing.T) {
 					Model: map[string]interface{}{
 						"datasource": "${DS_GDEV-TESTDATA}",
 						"id":         float64(1),
-						"title":      "Model - New name",
+						"title":      "Panel - New name",
 						"type":       "text",
 					},
 					Meta: LibraryPanelDTOMeta{
@@ -609,7 +655,7 @@ func TestPatchLibraryPanel(t *testing.T) {
 			}
 		})
 
-	testScenario(t, "When an admin tries to patch a library panel with name only, it should change name successfully and return correct result",
+	testScenario(t, "When an admin tries to patch a library panel with name only, it should change name successfully, sync title and return correct result",
 		func(t *testing.T, sc scenarioContext) {
 			command := getCreateCommand(1, "Text - Library Panel")
 			response := sc.service.createHandler(sc.reqContext, command)
@@ -625,12 +671,15 @@ func TestPatchLibraryPanel(t *testing.T) {
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": existing.Result.UID})
 			response = sc.service.patchHandler(sc.reqContext, cmd)
 			require.Equal(t, 200, response.Status())
+
 			var result libraryPanelResult
 			err = json.Unmarshal(response.Body(), &result)
 			require.NoError(t, err)
+
 			existing.Result.Name = "New Name"
 			existing.Result.Meta.CreatedBy.Name = "user_in_db"
 			existing.Result.Meta.CreatedBy.AvatarUrl = "/avatar/402d08de060496d6b6874495fe20f5ad"
+			existing.Result.Model["title"] = "New Name"
 			if diff := cmp.Diff(existing.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 			}
@@ -647,7 +696,7 @@ func TestPatchLibraryPanel(t *testing.T) {
 			require.NoError(t, err)
 
 			cmd := patchLibraryPanelCommand{
-				Model: []byte(`{ "name": "New Model Name" }`),
+				Model: []byte(`{ "title": "New Model Title", "name": "New Model Name" }`),
 			}
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": existing.Result.UID})
 			response = sc.service.patchHandler(sc.reqContext, cmd)
@@ -656,7 +705,8 @@ func TestPatchLibraryPanel(t *testing.T) {
 			err = json.Unmarshal(response.Body(), &result)
 			require.NoError(t, err)
 			existing.Result.Model = map[string]interface{}{
-				"name": "New Model Name",
+				"title": "Text - Library Panel",
+				"name":  "New Model Name",
 			}
 			existing.Result.Meta.CreatedBy.Name = "user_in_db"
 			existing.Result.Meta.CreatedBy.AvatarUrl = "/avatar/402d08de060496d6b6874495fe20f5ad"
@@ -801,7 +851,7 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 				Data: simplejson.NewFromAny(dashJSON),
 			}
 
-			err = sc.service.LoadLibraryPanelsForDashboard(&dash)
+			err = sc.service.LoadLibraryPanelsForDashboard(sc.reqContext, &dash)
 			require.NoError(t, err)
 			expectedJSON := map[string]interface{}{
 				"panels": []interface{}{
@@ -843,7 +893,7 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 								},
 							},
 						},
-						"title": "Text - Library Panel",
+						"title": "Text - Library Panel1",
 						"type":  "text",
 					},
 				},
@@ -898,7 +948,7 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 				Data: simplejson.NewFromAny(dashJSON),
 			}
 
-			err = sc.service.LoadLibraryPanelsForDashboard(&dash)
+			err = sc.service.LoadLibraryPanelsForDashboard(sc.reqContext, &dash)
 			require.EqualError(t, err, errLibraryPanelHeaderUIDMissing.Error())
 		})
 
@@ -943,7 +993,7 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 				Data: simplejson.NewFromAny(dashJSON),
 			}
 
-			err = sc.service.LoadLibraryPanelsForDashboard(&dash)
+			err = sc.service.LoadLibraryPanelsForDashboard(sc.reqContext, &dash)
 			require.NoError(t, err)
 			expectedJSON := map[string]interface{}{
 				"panels": []interface{}{
@@ -1258,6 +1308,85 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 			err = sc.service.ConnectLibraryPanelsForDashboard(sc.reqContext, &dash)
 			require.EqualError(t, err, errLibraryPanelHeaderUIDMissing.Error())
 		})
+
+	testScenario(t, "When an admin tries to store a dashboard with unusused/removed library panels, it should disconnect unusused/removed library panels",
+		func(t *testing.T, sc scenarioContext) {
+			command := getCreateCommand(1, "Unused Libray Panel")
+			response := sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, response.Status())
+
+			var unused libraryPanelResult
+			err := json.Unmarshal(response.Body(), &unused)
+			require.NoError(t, err)
+
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": unused.Result.UID, ":dashboardId": "1"})
+			response = sc.service.connectHandler(sc.reqContext)
+			require.Equal(t, 200, response.Status())
+
+			command = getCreateCommand(1, "Text - Library Panel1")
+			response = sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, response.Status())
+
+			var existing libraryPanelResult
+			err = json.Unmarshal(response.Body(), &existing)
+			require.NoError(t, err)
+
+			dashJSON := map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id": int64(1),
+						"gridPos": map[string]interface{}{
+							"h": 6,
+							"w": 6,
+							"x": 0,
+							"y": 0,
+						},
+					},
+					map[string]interface{}{
+						"id": int64(2),
+						"gridPos": map[string]interface{}{
+							"h": 6,
+							"w": 6,
+							"x": 6,
+							"y": 0,
+						},
+						"datasource": "${DS_GDEV-TESTDATA}",
+						"libraryPanel": map[string]interface{}{
+							"uid":  existing.Result.UID,
+							"name": existing.Result.Name,
+						},
+						"title": "Text - Library Panel",
+						"type":  "text",
+					},
+				},
+			}
+			dash := models.Dashboard{
+				Id:   int64(1),
+				Data: simplejson.NewFromAny(dashJSON),
+			}
+
+			err = sc.service.ConnectLibraryPanelsForDashboard(sc.reqContext, &dash)
+			require.NoError(t, err)
+
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": existing.Result.UID})
+			response = sc.service.getConnectedDashboardsHandler(sc.reqContext)
+			require.Equal(t, 200, response.Status())
+
+			var existingResult libraryPanelDashboardsResult
+			err = json.Unmarshal(response.Body(), &existingResult)
+			require.NoError(t, err)
+			require.Len(t, existingResult.Result, 1)
+			require.Equal(t, int64(1), existingResult.Result[0])
+
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": unused.Result.UID})
+			response = sc.service.getConnectedDashboardsHandler(sc.reqContext)
+			require.Equal(t, 200, response.Status())
+
+			var unusedResult libraryPanelDashboardsResult
+			err = json.Unmarshal(response.Body(), &unusedResult)
+			require.NoError(t, err)
+			require.Len(t, unusedResult.Result, 0)
+		})
 }
 
 func TestDisconnectLibraryPanelsForDashboard(t *testing.T) {
@@ -1309,7 +1438,7 @@ func TestDisconnectLibraryPanelsForDashboard(t *testing.T) {
 				Data: simplejson.NewFromAny(dashJSON),
 			}
 
-			err = sc.service.DisconnectLibraryPanelsForDashboard(&dash)
+			err = sc.service.DisconnectLibraryPanelsForDashboard(sc.reqContext, &dash)
 			require.NoError(t, err)
 
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": existing.Result.UID})
@@ -1369,7 +1498,7 @@ func TestDisconnectLibraryPanelsForDashboard(t *testing.T) {
 				Data: simplejson.NewFromAny(dashJSON),
 			}
 
-			err = sc.service.DisconnectLibraryPanelsForDashboard(&dash)
+			err = sc.service.DisconnectLibraryPanelsForDashboard(sc.reqContext, &dash)
 			require.EqualError(t, err, errLibraryPanelHeaderUIDMissing.Error())
 		})
 }
@@ -1449,7 +1578,9 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 	t.Run(desc, func(t *testing.T) {
 		t.Cleanup(registry.ClearOverrides)
 
-		ctx := macaron.Context{}
+		ctx := macaron.Context{
+			Req: macaron.Request{Request: &http.Request{}},
+		}
 		orgID := int64(1)
 		role := models.ROLE_ADMIN
 

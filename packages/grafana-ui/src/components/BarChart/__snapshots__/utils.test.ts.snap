@@ -1,0 +1,961 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`GraphNG utils preparePlotConfigBuilder orientation 1`] = `
+UPlotConfigBuilder {
+  "axes": Object {
+    "m/s": UPlotAxisBuilder {
+      "props": Object {
+        "formatValue": [Function],
+        "label": undefined,
+        "placement": "bottom",
+        "scaleKey": "m/s",
+        "size": undefined,
+        "theme": Object {
+          "colors": Object {
+            "panelBg": "#000000",
+          },
+        },
+      },
+    },
+    "x": UPlotAxisBuilder {
+      "props": Object {
+        "gap": 15,
+        "grid": false,
+        "isTime": false,
+        "placement": "left",
+        "scaleKey": "x",
+        "splits": [Function],
+        "theme": Object {
+          "colors": Object {
+            "panelBg": "#000000",
+          },
+        },
+        "ticks": false,
+        "values": [Function],
+      },
+    },
+  },
+  "bands": Array [],
+  "cursor": Object {
+    "points": Object {
+      "show": false,
+    },
+    "x": false,
+    "y": false,
+  },
+  "getTimeZone": [Function],
+  "hasBottomAxis": true,
+  "hasLeftAxis": true,
+  "hooks": Object {
+    "drawClear": Array [
+      [Function],
+    ],
+    "init": Array [
+      [Function],
+    ],
+    "setCursor": Array [
+      [Function],
+    ],
+  },
+  "scales": Array [
+    UPlotScaleBuilder {
+      "props": Object {
+        "direction": -1,
+        "distribution": "ordinal",
+        "isTime": false,
+        "orientation": 1,
+        "scaleKey": "x",
+      },
+    },
+    UPlotScaleBuilder {
+      "props": Object {
+        "direction": 1,
+        "max": undefined,
+        "min": undefined,
+        "orientation": 0,
+        "scaleKey": "m/s",
+        "softMax": undefined,
+        "softMin": 0,
+      },
+    },
+  ],
+  "select": Object {
+    "show": false,
+  },
+  "series": Array [
+    UPlotSeriesBuilder {
+      "props": Object {
+        "colorMode": Object {
+          "description": "Derive colors from thresholds",
+          "getCalculator": [Function],
+          "id": "thresholds",
+          "isByValue": true,
+          "name": "From thresholds",
+        },
+        "dataFrameFieldIndex": Object {
+          "fieldIndex": 1,
+          "frameIndex": 0,
+        },
+        "fieldName": "Metric 1",
+        "fillOpacity": 0.1,
+        "gradientMode": "opacity",
+        "hideInLegend": undefined,
+        "lineColor": "#808080",
+        "lineWidth": 2,
+        "pathBuilder": [Function],
+        "pointsBuilder": [Function],
+        "pxAlign": false,
+        "scaleKey": "m/s",
+        "show": true,
+        "theme": Object {
+          "colors": Object {
+            "panelBg": "#000000",
+          },
+        },
+        "thresholds": undefined,
+      },
+    },
+  ],
+  "tzDate": [Function],
+}
+`;
+
+exports[`GraphNG utils preparePlotConfigBuilder orientation 2`] = `
+UPlotConfigBuilder {
+  "axes": Object {
+    "m/s": UPlotAxisBuilder {
+      "props": Object {
+        "formatValue": [Function],
+        "label": undefined,
+        "placement": "bottom",
+        "scaleKey": "m/s",
+        "size": undefined,
+        "theme": Object {
+          "colors": Object {
+            "panelBg": "#000000",
+          },
+        },
+      },
+    },
+    "x": UPlotAxisBuilder {
+      "props": Object {
+        "gap": 15,
+        "grid": false,
+        "isTime": false,
+        "placement": "left",
+        "scaleKey": "x",
+        "splits": [Function],
+        "theme": Object {
+          "colors": Object {
+            "panelBg": "#000000",
+          },
+        },
+        "ticks": false,
+        "values": [Function],
+      },
+    },
+  },
+  "bands": Array [],
+  "cursor": Object {
+    "points": Object {
+      "show": false,
+    },
+    "x": false,
+    "y": false,
+  },
+  "getTimeZone": [Function],
+  "hasBottomAxis": true,
+  "hasLeftAxis": true,
+  "hooks": Object {
+    "drawClear": Array [
+      [Function],
+    ],
+    "init": Array [
+      [Function],
+    ],
+    "setCursor": Array [
+      [Function],
+    ],
+  },
+  "scales": Array [
+    UPlotScaleBuilder {
+      "props": Object {
+        "direction": -1,
+        "distribution": "ordinal",
+        "isTime": false,
+        "orientation": 1,
+        "scaleKey": "x",
+      },
+    },
+    UPlotScaleBuilder {
+      "props": Object {
+        "direction": 1,
+        "max": undefined,
+        "min": undefined,
+        "orientation": 0,
+        "scaleKey": "m/s",
+        "softMax": undefined,
+        "softMin": 0,
+      },
+    },
+  ],
+  "select": Object {
+    "show": false,
+  },
+  "series": Array [
+    UPlotSeriesBuilder {
+      "props": Object {
+        "colorMode": Object {
+          "description": "Derive colors from thresholds",
+          "getCalculator": [Function],
+          "id": "thresholds",
+          "isByValue": true,
+          "name": "From thresholds",
+        },
+        "dataFrameFieldIndex": Object {
+          "fieldIndex": 1,
+          "frameIndex": 0,
+        },
+        "fieldName": "Metric 1",
+        "fillOpacity": 0.1,
+        "gradientMode": "opacity",
+        "hideInLegend": undefined,
+        "lineColor": "#808080",
+        "lineWidth": 2,
+        "pathBuilder": [Function],
+        "pointsBuilder": [Function],
+        "pxAlign": false,
+        "scaleKey": "m/s",
+        "show": true,
+        "theme": Object {
+          "colors": Object {
+            "panelBg": "#000000",
+          },
+        },
+        "thresholds": undefined,
+      },
+    },
+  ],
+  "tzDate": [Function],
+}
+`;
+
+exports[`GraphNG utils preparePlotConfigBuilder orientation 3`] = `
+UPlotConfigBuilder {
+  "axes": Object {
+    "m/s": UPlotAxisBuilder {
+      "props": Object {
+        "formatValue": [Function],
+        "label": undefined,
+        "placement": "left",
+        "scaleKey": "m/s",
+        "size": undefined,
+        "theme": Object {
+          "colors": Object {
+            "panelBg": "#000000",
+          },
+        },
+      },
+    },
+    "x": UPlotAxisBuilder {
+      "props": Object {
+        "gap": 15,
+        "grid": false,
+        "isTime": false,
+        "placement": "bottom",
+        "scaleKey": "x",
+        "splits": [Function],
+        "theme": Object {
+          "colors": Object {
+            "panelBg": "#000000",
+          },
+        },
+        "ticks": false,
+        "values": [Function],
+      },
+    },
+  },
+  "bands": Array [],
+  "cursor": Object {
+    "points": Object {
+      "show": false,
+    },
+    "x": false,
+    "y": false,
+  },
+  "getTimeZone": [Function],
+  "hasBottomAxis": true,
+  "hasLeftAxis": true,
+  "hooks": Object {
+    "drawClear": Array [
+      [Function],
+    ],
+    "init": Array [
+      [Function],
+    ],
+    "setCursor": Array [
+      [Function],
+    ],
+  },
+  "scales": Array [
+    UPlotScaleBuilder {
+      "props": Object {
+        "direction": 1,
+        "distribution": "ordinal",
+        "isTime": false,
+        "orientation": 0,
+        "scaleKey": "x",
+      },
+    },
+    UPlotScaleBuilder {
+      "props": Object {
+        "direction": 1,
+        "max": undefined,
+        "min": undefined,
+        "orientation": 1,
+        "scaleKey": "m/s",
+        "softMax": undefined,
+        "softMin": 0,
+      },
+    },
+  ],
+  "select": Object {
+    "show": false,
+  },
+  "series": Array [
+    UPlotSeriesBuilder {
+      "props": Object {
+        "colorMode": Object {
+          "description": "Derive colors from thresholds",
+          "getCalculator": [Function],
+          "id": "thresholds",
+          "isByValue": true,
+          "name": "From thresholds",
+        },
+        "dataFrameFieldIndex": Object {
+          "fieldIndex": 1,
+          "frameIndex": 0,
+        },
+        "fieldName": "Metric 1",
+        "fillOpacity": 0.1,
+        "gradientMode": "opacity",
+        "hideInLegend": undefined,
+        "lineColor": "#808080",
+        "lineWidth": 2,
+        "pathBuilder": [Function],
+        "pointsBuilder": [Function],
+        "pxAlign": false,
+        "scaleKey": "m/s",
+        "show": true,
+        "theme": Object {
+          "colors": Object {
+            "panelBg": "#000000",
+          },
+        },
+        "thresholds": undefined,
+      },
+    },
+  ],
+  "tzDate": [Function],
+}
+`;
+
+exports[`GraphNG utils preparePlotConfigBuilder stacking 1`] = `
+UPlotConfigBuilder {
+  "axes": Object {
+    "m/s": UPlotAxisBuilder {
+      "props": Object {
+        "formatValue": [Function],
+        "label": undefined,
+        "placement": "bottom",
+        "scaleKey": "m/s",
+        "size": undefined,
+        "theme": Object {
+          "colors": Object {
+            "panelBg": "#000000",
+          },
+        },
+      },
+    },
+    "x": UPlotAxisBuilder {
+      "props": Object {
+        "gap": 15,
+        "grid": false,
+        "isTime": false,
+        "placement": "left",
+        "scaleKey": "x",
+        "splits": [Function],
+        "theme": Object {
+          "colors": Object {
+            "panelBg": "#000000",
+          },
+        },
+        "ticks": false,
+        "values": [Function],
+      },
+    },
+  },
+  "bands": Array [],
+  "cursor": Object {
+    "points": Object {
+      "show": false,
+    },
+    "x": false,
+    "y": false,
+  },
+  "getTimeZone": [Function],
+  "hasBottomAxis": true,
+  "hasLeftAxis": true,
+  "hooks": Object {
+    "drawClear": Array [
+      [Function],
+    ],
+    "init": Array [
+      [Function],
+    ],
+    "setCursor": Array [
+      [Function],
+    ],
+  },
+  "scales": Array [
+    UPlotScaleBuilder {
+      "props": Object {
+        "direction": -1,
+        "distribution": "ordinal",
+        "isTime": false,
+        "orientation": 1,
+        "scaleKey": "x",
+      },
+    },
+    UPlotScaleBuilder {
+      "props": Object {
+        "direction": 1,
+        "max": undefined,
+        "min": undefined,
+        "orientation": 0,
+        "scaleKey": "m/s",
+        "softMax": undefined,
+        "softMin": 0,
+      },
+    },
+  ],
+  "select": Object {
+    "show": false,
+  },
+  "series": Array [
+    UPlotSeriesBuilder {
+      "props": Object {
+        "colorMode": Object {
+          "description": "Derive colors from thresholds",
+          "getCalculator": [Function],
+          "id": "thresholds",
+          "isByValue": true,
+          "name": "From thresholds",
+        },
+        "dataFrameFieldIndex": Object {
+          "fieldIndex": 1,
+          "frameIndex": 0,
+        },
+        "fieldName": "Metric 1",
+        "fillOpacity": 0.1,
+        "gradientMode": "opacity",
+        "hideInLegend": undefined,
+        "lineColor": "#808080",
+        "lineWidth": 2,
+        "pathBuilder": [Function],
+        "pointsBuilder": [Function],
+        "pxAlign": false,
+        "scaleKey": "m/s",
+        "show": true,
+        "theme": Object {
+          "colors": Object {
+            "panelBg": "#000000",
+          },
+        },
+        "thresholds": undefined,
+      },
+    },
+  ],
+  "tzDate": [Function],
+}
+`;
+
+exports[`GraphNG utils preparePlotConfigBuilder stacking 2`] = `
+UPlotConfigBuilder {
+  "axes": Object {
+    "m/s": UPlotAxisBuilder {
+      "props": Object {
+        "formatValue": [Function],
+        "label": undefined,
+        "placement": "bottom",
+        "scaleKey": "m/s",
+        "size": undefined,
+        "theme": Object {
+          "colors": Object {
+            "panelBg": "#000000",
+          },
+        },
+      },
+    },
+    "x": UPlotAxisBuilder {
+      "props": Object {
+        "gap": 15,
+        "grid": false,
+        "isTime": false,
+        "placement": "left",
+        "scaleKey": "x",
+        "splits": [Function],
+        "theme": Object {
+          "colors": Object {
+            "panelBg": "#000000",
+          },
+        },
+        "ticks": false,
+        "values": [Function],
+      },
+    },
+  },
+  "bands": Array [],
+  "cursor": Object {
+    "points": Object {
+      "show": false,
+    },
+    "x": false,
+    "y": false,
+  },
+  "getTimeZone": [Function],
+  "hasBottomAxis": true,
+  "hasLeftAxis": true,
+  "hooks": Object {
+    "drawClear": Array [
+      [Function],
+    ],
+    "init": Array [
+      [Function],
+    ],
+    "setCursor": Array [
+      [Function],
+    ],
+  },
+  "scales": Array [
+    UPlotScaleBuilder {
+      "props": Object {
+        "direction": -1,
+        "distribution": "ordinal",
+        "isTime": false,
+        "orientation": 1,
+        "scaleKey": "x",
+      },
+    },
+    UPlotScaleBuilder {
+      "props": Object {
+        "direction": 1,
+        "max": undefined,
+        "min": undefined,
+        "orientation": 0,
+        "scaleKey": "m/s",
+        "softMax": undefined,
+        "softMin": 0,
+      },
+    },
+  ],
+  "select": Object {
+    "show": false,
+  },
+  "series": Array [
+    UPlotSeriesBuilder {
+      "props": Object {
+        "colorMode": Object {
+          "description": "Derive colors from thresholds",
+          "getCalculator": [Function],
+          "id": "thresholds",
+          "isByValue": true,
+          "name": "From thresholds",
+        },
+        "dataFrameFieldIndex": Object {
+          "fieldIndex": 1,
+          "frameIndex": 0,
+        },
+        "fieldName": "Metric 1",
+        "fillOpacity": 0.1,
+        "gradientMode": "opacity",
+        "hideInLegend": undefined,
+        "lineColor": "#808080",
+        "lineWidth": 2,
+        "pathBuilder": [Function],
+        "pointsBuilder": [Function],
+        "pxAlign": false,
+        "scaleKey": "m/s",
+        "show": true,
+        "theme": Object {
+          "colors": Object {
+            "panelBg": "#000000",
+          },
+        },
+        "thresholds": undefined,
+      },
+    },
+  ],
+  "tzDate": [Function],
+}
+`;
+
+exports[`GraphNG utils preparePlotConfigBuilder stacking 3`] = `
+UPlotConfigBuilder {
+  "axes": Object {
+    "m/s": UPlotAxisBuilder {
+      "props": Object {
+        "formatValue": [Function],
+        "label": undefined,
+        "placement": "bottom",
+        "scaleKey": "m/s",
+        "size": undefined,
+        "theme": Object {
+          "colors": Object {
+            "panelBg": "#000000",
+          },
+        },
+      },
+    },
+    "x": UPlotAxisBuilder {
+      "props": Object {
+        "gap": 15,
+        "grid": false,
+        "isTime": false,
+        "placement": "left",
+        "scaleKey": "x",
+        "splits": [Function],
+        "theme": Object {
+          "colors": Object {
+            "panelBg": "#000000",
+          },
+        },
+        "ticks": false,
+        "values": [Function],
+      },
+    },
+  },
+  "bands": Array [],
+  "cursor": Object {
+    "points": Object {
+      "show": false,
+    },
+    "x": false,
+    "y": false,
+  },
+  "getTimeZone": [Function],
+  "hasBottomAxis": true,
+  "hasLeftAxis": true,
+  "hooks": Object {
+    "drawClear": Array [
+      [Function],
+    ],
+    "init": Array [
+      [Function],
+    ],
+    "setCursor": Array [
+      [Function],
+    ],
+  },
+  "scales": Array [
+    UPlotScaleBuilder {
+      "props": Object {
+        "direction": -1,
+        "distribution": "ordinal",
+        "isTime": false,
+        "orientation": 1,
+        "scaleKey": "x",
+      },
+    },
+    UPlotScaleBuilder {
+      "props": Object {
+        "direction": 1,
+        "max": undefined,
+        "min": undefined,
+        "orientation": 0,
+        "scaleKey": "m/s",
+        "softMax": undefined,
+        "softMin": 0,
+      },
+    },
+  ],
+  "select": Object {
+    "show": false,
+  },
+  "series": Array [
+    UPlotSeriesBuilder {
+      "props": Object {
+        "colorMode": Object {
+          "description": "Derive colors from thresholds",
+          "getCalculator": [Function],
+          "id": "thresholds",
+          "isByValue": true,
+          "name": "From thresholds",
+        },
+        "dataFrameFieldIndex": Object {
+          "fieldIndex": 1,
+          "frameIndex": 0,
+        },
+        "fieldName": "Metric 1",
+        "fillOpacity": 0.1,
+        "gradientMode": "opacity",
+        "hideInLegend": undefined,
+        "lineColor": "#808080",
+        "lineWidth": 2,
+        "pathBuilder": [Function],
+        "pointsBuilder": [Function],
+        "pxAlign": false,
+        "scaleKey": "m/s",
+        "show": true,
+        "theme": Object {
+          "colors": Object {
+            "panelBg": "#000000",
+          },
+        },
+        "thresholds": undefined,
+      },
+    },
+  ],
+  "tzDate": [Function],
+}
+`;
+
+exports[`GraphNG utils preparePlotConfigBuilder value visibility 1`] = `
+UPlotConfigBuilder {
+  "axes": Object {
+    "m/s": UPlotAxisBuilder {
+      "props": Object {
+        "formatValue": [Function],
+        "label": undefined,
+        "placement": "bottom",
+        "scaleKey": "m/s",
+        "size": undefined,
+        "theme": Object {
+          "colors": Object {
+            "panelBg": "#000000",
+          },
+        },
+      },
+    },
+    "x": UPlotAxisBuilder {
+      "props": Object {
+        "gap": 15,
+        "grid": false,
+        "isTime": false,
+        "placement": "left",
+        "scaleKey": "x",
+        "splits": [Function],
+        "theme": Object {
+          "colors": Object {
+            "panelBg": "#000000",
+          },
+        },
+        "ticks": false,
+        "values": [Function],
+      },
+    },
+  },
+  "bands": Array [],
+  "cursor": Object {
+    "points": Object {
+      "show": false,
+    },
+    "x": false,
+    "y": false,
+  },
+  "getTimeZone": [Function],
+  "hasBottomAxis": true,
+  "hasLeftAxis": true,
+  "hooks": Object {
+    "drawClear": Array [
+      [Function],
+    ],
+    "init": Array [
+      [Function],
+    ],
+    "setCursor": Array [
+      [Function],
+    ],
+  },
+  "scales": Array [
+    UPlotScaleBuilder {
+      "props": Object {
+        "direction": -1,
+        "distribution": "ordinal",
+        "isTime": false,
+        "orientation": 1,
+        "scaleKey": "x",
+      },
+    },
+    UPlotScaleBuilder {
+      "props": Object {
+        "direction": 1,
+        "max": undefined,
+        "min": undefined,
+        "orientation": 0,
+        "scaleKey": "m/s",
+        "softMax": undefined,
+        "softMin": 0,
+      },
+    },
+  ],
+  "select": Object {
+    "show": false,
+  },
+  "series": Array [
+    UPlotSeriesBuilder {
+      "props": Object {
+        "colorMode": Object {
+          "description": "Derive colors from thresholds",
+          "getCalculator": [Function],
+          "id": "thresholds",
+          "isByValue": true,
+          "name": "From thresholds",
+        },
+        "dataFrameFieldIndex": Object {
+          "fieldIndex": 1,
+          "frameIndex": 0,
+        },
+        "fieldName": "Metric 1",
+        "fillOpacity": 0.1,
+        "gradientMode": "opacity",
+        "hideInLegend": undefined,
+        "lineColor": "#808080",
+        "lineWidth": 2,
+        "pathBuilder": [Function],
+        "pointsBuilder": [Function],
+        "pxAlign": false,
+        "scaleKey": "m/s",
+        "show": true,
+        "theme": Object {
+          "colors": Object {
+            "panelBg": "#000000",
+          },
+        },
+        "thresholds": undefined,
+      },
+    },
+  ],
+  "tzDate": [Function],
+}
+`;
+
+exports[`GraphNG utils preparePlotConfigBuilder value visibility 2`] = `
+UPlotConfigBuilder {
+  "axes": Object {
+    "m/s": UPlotAxisBuilder {
+      "props": Object {
+        "formatValue": [Function],
+        "label": undefined,
+        "placement": "bottom",
+        "scaleKey": "m/s",
+        "size": undefined,
+        "theme": Object {
+          "colors": Object {
+            "panelBg": "#000000",
+          },
+        },
+      },
+    },
+    "x": UPlotAxisBuilder {
+      "props": Object {
+        "gap": 15,
+        "grid": false,
+        "isTime": false,
+        "placement": "left",
+        "scaleKey": "x",
+        "splits": [Function],
+        "theme": Object {
+          "colors": Object {
+            "panelBg": "#000000",
+          },
+        },
+        "ticks": false,
+        "values": [Function],
+      },
+    },
+  },
+  "bands": Array [],
+  "cursor": Object {
+    "points": Object {
+      "show": false,
+    },
+    "x": false,
+    "y": false,
+  },
+  "getTimeZone": [Function],
+  "hasBottomAxis": true,
+  "hasLeftAxis": true,
+  "hooks": Object {
+    "drawClear": Array [
+      [Function],
+    ],
+    "init": Array [
+      [Function],
+    ],
+    "setCursor": Array [
+      [Function],
+    ],
+  },
+  "scales": Array [
+    UPlotScaleBuilder {
+      "props": Object {
+        "direction": -1,
+        "distribution": "ordinal",
+        "isTime": false,
+        "orientation": 1,
+        "scaleKey": "x",
+      },
+    },
+    UPlotScaleBuilder {
+      "props": Object {
+        "direction": 1,
+        "max": undefined,
+        "min": undefined,
+        "orientation": 0,
+        "scaleKey": "m/s",
+        "softMax": undefined,
+        "softMin": 0,
+      },
+    },
+  ],
+  "select": Object {
+    "show": false,
+  },
+  "series": Array [
+    UPlotSeriesBuilder {
+      "props": Object {
+        "colorMode": Object {
+          "description": "Derive colors from thresholds",
+          "getCalculator": [Function],
+          "id": "thresholds",
+          "isByValue": true,
+          "name": "From thresholds",
+        },
+        "dataFrameFieldIndex": Object {
+          "fieldIndex": 1,
+          "frameIndex": 0,
+        },
+        "fieldName": "Metric 1",
+        "fillOpacity": 0.1,
+        "gradientMode": "opacity",
+        "hideInLegend": undefined,
+        "lineColor": "#808080",
+        "lineWidth": 2,
+        "pathBuilder": [Function],
+        "pointsBuilder": [Function],
+        "pxAlign": false,
+        "scaleKey": "m/s",
+        "show": true,
+        "theme": Object {
+          "colors": Object {
+            "panelBg": "#000000",
+          },
+        },
+        "thresholds": undefined,
+      },
+    },
+  ],
+  "tzDate": [Function],
+}
+`;

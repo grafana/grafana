@@ -2,8 +2,8 @@ import React, { FC, useMemo, useState } from 'react';
 import { useObservable } from 'react-use';
 import { css } from 'emotion';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import { GrafanaTheme } from '@grafana/data';
-import { TabsBar, TabContent, Tab, useStyles, Icon } from '@grafana/ui';
+import { DataFrame, DataQuery, GrafanaTheme, PanelData } from '@grafana/data';
+import { Button, Icon, Tab, TabContent, TabsBar, useStyles } from '@grafana/ui';
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import { PreviewQueryTab } from './PreviewQueryTab';
 import { PreviewInstancesTab } from './PreviewInstancesTab';
@@ -20,14 +20,19 @@ const tabs = [
 
 interface Props {
   queryRunner: PanelQueryRunner;
+  getInstances: () => DataFrame[];
+  queries: DataQuery[];
+  onTest: () => void;
+  onRunQueries: () => void;
 }
 
-export const AlertingQueryPreview: FC<Props> = ({ queryRunner }) => {
+export const AlertingQueryPreview: FC<Props> = ({ getInstances, onRunQueries, onTest, queryRunner, queries }) => {
   const [activeTab, setActiveTab] = useState<string>(Tabs.Query);
   const styles = useStyles(getStyles);
 
   const observable = useMemo(() => queryRunner.getData({ withFieldConfig: true, withTransforms: true }), []);
-  const data = useObservable(observable);
+  const data = useObservable<PanelData>(observable);
+  const instances = getInstances();
 
   return (
     <div className={styles.wrapper}>
@@ -49,16 +54,33 @@ export const AlertingQueryPreview: FC<Props> = ({ queryRunner }) => {
             <h4 className={styles.noQueriesHeader}>There was an error :(</h4>
             <div>{data.error?.data?.error}</div>
           </div>
-        ) : data && data.series.length > 0 ? (
+        ) : queries && queries.length > 0 ? (
           <AutoSizer style={{ width: '100%', height: '100%' }}>
             {({ width, height }) => {
               switch (activeTab) {
                 case Tabs.Instances:
-                  return <PreviewInstancesTab isTested={false} data={data} styles={styles} />;
+                  return (
+                    <PreviewInstancesTab
+                      isTested={instances.length > 0}
+                      instances={instances}
+                      styles={styles}
+                      width={width}
+                      height={height}
+                      onTest={onTest}
+                    />
+                  );
 
                 case Tabs.Query:
                 default:
-                  return <PreviewQueryTab data={data} width={width} height={height} />;
+                  if (data) {
+                    return <PreviewQueryTab data={data} width={width} height={height} />;
+                  }
+                  return (
+                    <div className={styles.noQueries}>
+                      <h4 className={styles.noQueriesHeader}>Run queries to view data.</h4>
+                      <Button onClick={onRunQueries}>Run queries</Button>
+                    </div>
+                  );
               }
             }}
           </AutoSizer>

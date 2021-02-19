@@ -68,13 +68,16 @@ func (store *SourceMapStore) guessSourceMapLocation(sourceURL string) (*sourceMa
 		return nil, err
 	}
 
-	// determine if source comes from grafana core, look in public build dir
-	if strings.HasPrefix(u.Path, "/public/build/") {
-		return &sourceMapLocation{
-			dir:      store.cfg.StaticRootPath,
-			path:     filepath.Join("build", u.Path[len("/public/build/"):]) + ".map",
-			pluginID: "",
-		}, nil
+	// determine if source comes from grafana core, locally or CDN, look in public build dir on fs
+	if strings.HasPrefix(u.Path, "/public/build/") || (store.cfg.CDNRootURL != nil && strings.HasPrefix(sourceURL, store.cfg.CDNRootURL.String()) && strings.Contains(u.Path, "/public/build/")) {
+		pathParts := strings.SplitN(u.Path, "/public/build/", 2)
+		if len(pathParts) == 2 {
+			return &sourceMapLocation{
+				dir:      store.cfg.StaticRootPath,
+				path:     filepath.Join("build", pathParts[1]+".map"),
+				pluginID: "",
+			}, nil
+		}
 		// if source comes from a plugin, look in plugin dir
 	} else if strings.HasPrefix(u.Path, "/public/plugins/") {
 		for _, route := range plugins.StaticRoutes {

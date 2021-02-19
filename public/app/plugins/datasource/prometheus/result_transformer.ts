@@ -78,7 +78,7 @@ export function transform(
     prometheusResult.forEach((exemplarData) => {
       const data = exemplarData.exemplars.map((exemplar) => {
         return {
-          [TIME_SERIES_TIME_FIELD_NAME]: exemplar.timestamp,
+          [TIME_SERIES_TIME_FIELD_NAME]: exemplar.timestamp * 1000,
           [TIME_SERIES_VALUE_FIELD_NAME]: exemplar.value,
           ...exemplar.labels,
           ...exemplarData.seriesLabels,
@@ -165,8 +165,9 @@ function getDataLinks(options: ExemplarTraceIdDestination): DataLink[] {
 
   if (options.url) {
     dataLinks.push({
-      title: 'Open link',
+      title: `Go to ${options.url}`,
       url: options.url,
+      targetBlank: true,
     });
   }
   return dataLinks;

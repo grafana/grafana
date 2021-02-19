@@ -59,3 +59,5 @@ export const parameters = {
     escapeHTML: false,
   },
 };
+
+export const NOOP_CONTROL = { control: { disable: true } };

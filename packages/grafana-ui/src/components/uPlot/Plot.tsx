@@ -4,7 +4,6 @@ import { buildPlotContext, PlotContext } from './context';
 import { pluginLog } from './utils';
 import { usePlotConfig } from './hooks';
 import { PlotProps } from './types';
-import { DataFrame, dateTime, FieldType } from '@grafana/data';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 import usePrevious from 'react-use/lib/usePrevious';
 
@@ -19,12 +18,7 @@ export const UPlotChart: React.FC<PlotProps> = (props) => {
   const plotInstance = useRef<uPlot>();
   const [isPlotReady, setIsPlotReady] = useState(false);
   const prevProps = usePrevious(props);
-  const { isConfigReady, currentConfig, registerPlugin } = usePlotConfig(
-    props.width,
-    props.height,
-    props.timeZone,
-    props.config
-  );
+  const { isConfigReady, currentConfig, registerPlugin } = usePlotConfig(props.width, props.height, props.config);
 
   const getPlotInstance = useCallback(() => {
     return plotInstance.current;
@@ -39,7 +33,7 @@ export const UPlotChart: React.FC<PlotProps> = (props) => {
 
     // 1. When config is ready and there is no uPlot instance, create new uPlot and return
     if (isConfigReady && !plotInstance.current) {
-      plotInstance.current = initializePlot(prepareData(props.data), currentConfig.current, canvasRef.current);
+      plotInstance.current = initializePlot(props.data, currentConfig.current, canvasRef.current);
       setIsPlotReady(true);
       return;
     }
@@ -54,18 +48,18 @@ export const UPlotChart: React.FC<PlotProps> = (props) => {
       return;
     }
 
-    // 3. When config or timezone has changed, re-initialize plot
-    if (isConfigReady && (props.config !== prevProps.config || props.timeZone !== prevProps.timeZone)) {
+    // 3. When config has changed re-initialize plot
+    if (isConfigReady && props.config !== prevProps.config) {
       if (plotInstance.current) {
         pluginLog('uPlot core', false, 'destroying instance');
         plotInstance.current.destroy();
       }
-      plotInstance.current = initializePlot(prepareData(props.data), currentConfig.current, canvasRef.current);
+      plotInstance.current = initializePlot(props.data, currentConfig.current, canvasRef.current);
       return;
     }
 
     // 4. Otherwise, assume only data has changed and update uPlot data
-    updateData(props.data, props.config, plotInstance.current, prepareData(props.data));
+    updateData(props.config, props.data, plotInstance.current);
   }, [props, isConfigReady]);
 
   // When component unmounts, clean the existing uPlot instance
@@ -86,29 +80,12 @@ export const UPlotChart: React.FC<PlotProps> = (props) => {
   );
 };
 
-function prepareData(frame: DataFrame): AlignedData {
-  return frame.fields.map((f) => {
-    if (f.type === FieldType.time) {
-      if (f.values.length > 0 && typeof f.values.get(0) === 'string') {
-        const timestamps = [];
-        for (let i = 0; i < f.values.length; i++) {
-          timestamps.push(dateTime(f.values.get(i)).valueOf());
-        }
-        return timestamps;
-      }
-      return f.values.toArray();
-    }
-
-    return f.values.toArray();
-  }) as AlignedData;
-}
-
-function initializePlot(data: AlignedData, config: Options, el: HTMLDivElement) {
+function initializePlot(data: AlignedData | null, config: Options, el: HTMLDivElement) {
   pluginLog('UPlotChart: init uPlot', false, 'initialized with', data, config);
   return new uPlot(config, data, el);
 }
 
-function updateData(frame: DataFrame, config: UPlotConfigBuilder, plotInstance?: uPlot, data?: AlignedData | null) {
+function updateData(config: UPlotConfigBuilder, data?: AlignedData | null, plotInstance?: uPlot) {
   if (!plotInstance || !data) {
     return;
   }

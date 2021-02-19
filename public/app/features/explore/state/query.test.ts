@@ -4,15 +4,19 @@ import {
   cancelQueriesAction,
   queryReducer,
   removeQueryRowAction,
+  runQueries,
   scanStartAction,
   scanStopAction,
 } from './query';
 import { ExploreId, ExploreItemState } from 'app/types';
-import { interval } from 'rxjs';
-import { RawTimeRange, toUtc } from '@grafana/data';
+import { interval, of } from 'rxjs';
+import { ArrayVector, DataQueryResponse, DefaultTimeZone, MutableDataFrame, RawTimeRange, toUtc } from '@grafana/data';
 import { thunkTester } from 'test/core/thunk/thunkTester';
 import { makeExplorePaneState } from './utils';
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
+import { configureStore } from '../../../store/configureStore';
+import { setTimeSrv } from '../../dashboard/services/TimeSrv';
+import Mock = jest.Mock;
 
 const QUERY_KEY_REGEX = /Q-(?:[a-z0-9]+-){5}(?:[0-9]+)/;
 const t = toUtc();
@@ -24,6 +28,58 @@ const testRange = {
     to: t,
   },
 };
+const defaultInitialState = {
+  user: {
+    orgId: '1',
+    timeZone: DefaultTimeZone,
+  },
+  explore: {
+    [ExploreId.left]: {
+      datasourceInstance: {
+        query: jest.fn(),
+        meta: {
+          id: 'something',
+        },
+      },
+      initialized: true,
+      containerWidth: 1920,
+      eventBridge: { emit: () => {} } as any,
+      queries: [{ expr: 'test' }] as any[],
+      range: testRange,
+      refreshInterval: {
+        label: 'Off',
+        value: 0,
+      },
+    },
+  },
+};
+
+describe('runQueries', () => {
+  it('should pass dataFrames to state even if there is error in response', async () => {
+    setTimeSrv({
+      init() {},
+    } as any);
+    const store = configureStore({
+      ...(defaultInitialState as any),
+    });
+    (store.getState().explore[ExploreId.left].datasourceInstance?.query as Mock).mockReturnValueOnce(
+      of({
+        error: { message: 'test error' },
+        data: [
+          new MutableDataFrame({
+            fields: [{ name: 'test', values: new ArrayVector() }],
+            meta: {
+              preferredVisualisationType: 'graph',
+            },
+          }),
+        ],
+      } as DataQueryResponse)
+    );
+    await store.dispatch(runQueries(ExploreId.left));
+    expect(store.getState().explore[ExploreId.left].showMetrics).toBeTruthy();
+    expect(store.getState().explore[ExploreId.left].graphResult).toBeDefined();
+  });
+});
 
 describe('running queries', () => {
   it('should cancel running query when cancelQueries is dispatched', async () => {
