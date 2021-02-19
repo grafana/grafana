@@ -12,8 +12,6 @@
     {
       "files": [
         "packages/grafana-ui/src/components/uPlot/**/*.{ts,tsx}",
-        "packages/grafana-ui/src/components/GraphNG/GraphNG.tsx",
-        "packages/grafana-ui/src/components/BarChart/BarChart.tsx",
         "public/app/**/*.{ts,tsx}"
       ],
       "rules": {
