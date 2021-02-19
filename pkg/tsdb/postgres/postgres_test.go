@@ -4,7 +4,6 @@ package postgres
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"math/rand"
 	"strings"
@@ -33,17 +32,15 @@ func TestGenerateConnectionString(t *testing.T) {
 	cfg.DataPath = t.TempDir()
 
 	testCases := []struct {
-		desc           string
-		host           string
-		user           string
-		password       string
-		database       string
-		tlsSettings    tlsSettings
-		expConnStr     string
-		expErr         string
-		jsonData       string
-		secureJsonData string
-		uid            string
+		desc        string
+		host        string
+		user        string
+		password    string
+		database    string
+		tlsSettings tlsSettings
+		expConnStr  string
+		expErr      string
+		uid         string
 	}{
 		{
 			desc:        "Unix socket host",
@@ -96,7 +93,6 @@ func TestGenerateConnectionString(t *testing.T) {
 			password:    "password",
 			database:    "database",
 			tlsSettings: tlsSettings{Mode: "disable"},
-			jsonData:    `{}`,
 			expConnStr:  "user='user' password='password' host='host' dbname='database' sslmode='disable'",
 		},
 		{
@@ -111,7 +107,6 @@ func TestGenerateConnectionString(t *testing.T) {
 				CertFile:     "i/am/coding/client.crt",
 				CertKeyFile:  "i/am/coding/client.key",
 			},
-			jsonData: `{}`,
 			expConnStr: "user='user' password='password' host='host' dbname='database' sslmode='verify-full' " +
 				"sslrootcert='i/am/coding/ca.crt' sslcert='i/am/coding/client.crt' sslkey='i/am/coding/client.key'",
 		},
@@ -124,27 +119,12 @@ func TestGenerateConnectionString(t *testing.T) {
 				tlsManager: &tlsTestManager{settings: tt.tlsSettings},
 			}
 
-			if tt.jsonData == "" {
-				tt.jsonData = `{}`
-			}
-			if tt.secureJsonData == "" {
-				tt.secureJsonData = `{}`
-			}
-			securityjsonData := map[string]string{}
-			jsonData, err := simplejson.NewJson([]byte(tt.jsonData))
-			require.NoError(t, err, tt.desc)
-
-			err = json.Unmarshal([]byte(tt.secureJsonData), &securityjsonData)
-			require.NoError(t, err)
-
 			ds := &models.DataSource{
-				Url:            tt.host,
-				User:           tt.user,
-				Password:       tt.password,
-				Database:       tt.database,
-				JsonData:       jsonData,
-				SecureJsonData: securejsondata.GetEncryptedJsonData(securityjsonData),
-				Uid:            tt.uid,
+				Url:      tt.host,
+				User:     tt.user,
+				Password: tt.password,
+				Database: tt.database,
+				Uid:      tt.uid,
 			}
 
 			connStr, err := svc.generateConnectionString(ds)

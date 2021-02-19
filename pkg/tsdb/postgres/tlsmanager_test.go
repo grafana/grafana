@@ -1,9 +1,6 @@
-// +build integration
-
 package postgres
 
 import (
-	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"strconv"
@@ -34,47 +31,41 @@ func TestDataSourceCacheManager(t *testing.T) {
 		dataPath:        cfg.DataPath,
 	}
 
-	settings := tlsSettings{}
-	jsonData := `{"sslmode" : "verify-full", "tlsConfigurationMethod" : "file-content"}`
-	jsonDataValue, err := simplejson.NewJson([]byte(jsonData))
-	require.NoError(t, err)
-
-	secureJsonData := `{"tlsClientCert" : "I am client certification", "tlsClientKey" : "I am client key", "tlsCACert" : "I am CA certification"}`
-	securityjsonData := map[string]string{}
-	err = json.Unmarshal([]byte(secureJsonData), &securityjsonData)
-	securityjsonValue := securejsondata.GetEncryptedJsonData(securityjsonData)
-	require.NoError(t, err)
+	jsonData := simplejson.NewFromAny(map[string]interface{}{
+		"sslmode":                "verify-full",
+		"tlsConfigurationMethod": "file-content",
+	})
+	secureJSONData := securejsondata.GetEncryptedJsonData(map[string]string{
+		"tlsClientCert": "I am client certification",
+		"tlsClientKey":  "I am client key",
+		"tlsCACert":     "I am CA certification",
+	})
 
 	mockValidateCertFilePaths()
 	t.Cleanup(resetValidateCertFilePaths)
 
 	t.Run("Check datasource cache creation", func(t *testing.T) {
-		var id, index int64
 		var wg sync.WaitGroup
 		wg.Add(10)
-		mutex := new(sync.Mutex)
-		index = 1
-		for id = 1; id <= 10; id++ {
-			go func() {
-				mutex.Lock()
+		for id := int64(1); id <= 10; id++ {
+			go func(id int64) {
 				ds := &models.DataSource{
-					Id:             index,
+					Id:             id,
 					Version:        1,
 					Database:       "database",
-					JsonData:       jsonDataValue,
-					SecureJsonData: securityjsonValue,
+					JsonData:       jsonData,
+					SecureJsonData: secureJSONData,
 					Uid:            "testData",
 				}
-				defer mutex.Unlock()
-				mng.writeCertFiles(ds, &settings)
-				index++
+				s := tlsSettings{}
+				mng.writeCertFiles(ds, &s)
 				wg.Done()
-			}()
+			}(id)
 		}
 		wg.Wait()
 
 		t.Run("check cache creation is succeed", func(t *testing.T) {
-			for id = 1; id <= 10; id++ {
+			for id := int64(1); id <= 10; id++ {
 				version, ok := mng.dsCacheInstance.cache.Load(strconv.Itoa(int(id)))
 				require.True(t, ok)
 				require.Equal(t, int(1), version)
@@ -86,49 +77,47 @@ func TestDataSourceCacheManager(t *testing.T) {
 		t.Run("check when version not changed, cache and files are not updated", func(t *testing.T) {
 			mockWriteCertFile()
 			t.Cleanup(resetWriteCertFile)
-			var id int64
 			var wg1 sync.WaitGroup
 			wg1.Add(5)
-			mutex := new(sync.Mutex)
-			for id = 1; id <= 5; id++ {
-				go func() {
+			for id := int64(1); id <= 5; id++ {
+				go func(id int64) {
 					ds := &models.DataSource{
 						Id:             1,
 						Version:        2,
 						Database:       "database",
-						JsonData:       jsonDataValue,
-						SecureJsonData: securityjsonValue,
+						JsonData:       jsonData,
+						SecureJsonData: secureJSONData,
 						Uid:            "testData",
 					}
-					mutex.Lock()
-					defer mutex.Unlock()
-					mng.writeCertFiles(ds, &settings)
+					s := tlsSettings{}
+					mng.writeCertFiles(ds, &s)
 					wg1.Done()
-				}()
+				}(id)
 			}
 			wg1.Wait()
 			assert.Equal(t, writeCertFileCallNum, 3)
 		})
 
 		t.Run("cache is updated with the last datasource version", func(t *testing.T) {
-			ds_v2 := &models.DataSource{
+			dsV2 := &models.DataSource{
 				Id:             1,
 				Version:        2,
 				Database:       "database",
-				JsonData:       jsonDataValue,
-				SecureJsonData: securityjsonValue,
+				JsonData:       jsonData,
+				SecureJsonData: secureJSONData,
 				Uid:            "testData",
 			}
-			ds_v3 := &models.DataSource{
+			dsV3 := &models.DataSource{
 				Id:             1,
 				Version:        3,
 				Database:       "database",
-				JsonData:       jsonDataValue,
-				SecureJsonData: securityjsonValue,
+				JsonData:       jsonData,
+				SecureJsonData: secureJSONData,
 				Uid:            "testData",
 			}
-			mng.writeCertFiles(ds_v2, &settings)
-			mng.writeCertFiles(ds_v3, &settings)
+			s := tlsSettings{}
+			mng.writeCertFiles(dsV2, &s)
+			mng.writeCertFiles(dsV3, &s)
 			version, ok := mng.dsCacheInstance.cache.Load("1")
 			require.True(t, ok)
 			require.Equal(t, int(3), version)
@@ -183,8 +172,8 @@ func TestGetTLSSettings(t *testing.T) {
 	testCases := []struct {
 		desc           string
 		expErr         string
-		jsonData       string
-		secureJsonData string
+		jsonData       map[string]interface{}
+		secureJSONData map[string]string
 		uid            string
 		tlsSettings    tlsSettings
 		version        int
@@ -192,15 +181,25 @@ func TestGetTLSSettings(t *testing.T) {
 		{
 			desc:    "Custom TLS authentication disabled",
 			version: 1,
-			jsonData: `{"sslmode" : "disable", "sslRootCertFile" : "i/am/coding/ca.crt",
-			"sslCertFile" : "i/am/coding/client.crt", "sslKeyFile" : "i/am/coding/client.key", "tlsConfigurationMethod" : "file-path"}`,
+			jsonData: map[string]interface{}{
+				"sslmode":                "disable",
+				"sslRootCertFile":        "i/am/coding/ca.crt",
+				"sslCertFile":            "i/am/coding/client.crt",
+				"sslKeyFile":             "i/am/coding/client.key",
+				"tlsConfigurationMethod": "file-path",
+			},
 			tlsSettings: tlsSettings{Mode: "disable"},
 		},
 		{
 			desc:    "Custom TLS authentication with file path",
 			version: 2,
-			jsonData: `{"sslmode" : "verify-full", "sslRootCertFile" : "i/am/coding/ca.crt",
-			"sslCertFile" : "i/am/coding/client.crt", "sslKeyFile" : "i/am/coding/client.key", "tlsConfigurationMethod" : "file-path"}`,
+			jsonData: map[string]interface{}{
+				"sslmode":                "verify-full",
+				"sslRootCertFile":        "i/am/coding/ca.crt",
+				"sslCertFile":            "i/am/coding/client.crt",
+				"sslKeyFile":             "i/am/coding/client.key",
+				"tlsConfigurationMethod": "file-path",
+			},
 			tlsSettings: tlsSettings{
 				Mode:                "verify-full",
 				ConfigurationMethod: "file-path",
@@ -210,11 +209,18 @@ func TestGetTLSSettings(t *testing.T) {
 			},
 		},
 		{
-			desc:           "Custom TLS mode verify-full with certificate files content",
-			version:        3,
-			uid:            "xxx",
-			jsonData:       `{"sslmode": "verify-full", "tlsConfigurationMethod": "file-content"}`,
-			secureJsonData: `{"tlsClientCert" : "I am client certification", "tlsClientKey" : "I am client key", "tlsCACert" : "I am CA certification"}`,
+			desc:    "Custom TLS mode verify-full with certificate files content",
+			version: 3,
+			uid:     "xxx",
+			jsonData: map[string]interface{}{
+				"sslmode":                "verify-full",
+				"tlsConfigurationMethod": "file-content",
+			},
+			secureJSONData: map[string]string{
+				"tlsCACert":     "I am CA certification",
+				"tlsClientCert": "I am client certification",
+				"tlsClientKey":  "I am client key",
+			},
 			tlsSettings: tlsSettings{
 				Mode:                "verify-full",
 				ConfigurationMethod: "file-content",
@@ -233,27 +239,15 @@ func TestGetTLSSettings(t *testing.T) {
 				dataPath:        cfg.DataPath,
 			}
 
-			if tt.jsonData == "" {
-				tt.jsonData = `{}`
-			}
-			if tt.secureJsonData == "" {
-				tt.secureJsonData = `{}`
-			}
-			securityjsonData := map[string]string{}
-			jsonData, err := simplejson.NewJson([]byte(tt.jsonData))
-			require.NoError(t, err, tt.desc)
-
-			err = json.Unmarshal([]byte(tt.secureJsonData), &securityjsonData)
-			require.NoError(t, err)
-
+			jsonData := simplejson.NewFromAny(tt.jsonData)
 			ds := &models.DataSource{
 				JsonData:       jsonData,
-				SecureJsonData: securejsondata.GetEncryptedJsonData(securityjsonData),
+				SecureJsonData: securejsondata.GetEncryptedJsonData(tt.secureJSONData),
 				Uid:            tt.uid,
 				Version:        tt.version,
 			}
 
-			settings, err = mng.getTLSSettings(ds)
+			settings, err := mng.getTLSSettings(ds)
 
 			if tt.expErr == "" {
 				require.NoError(t, err, tt.desc)
