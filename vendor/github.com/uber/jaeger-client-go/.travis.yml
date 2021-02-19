@@ -1,0 +1,56 @@
+sudo: required
+
+language: go
+go_import_path: github.com/uber/jaeger-client-go
+
+dist: trusty
+
+matrix:
+  include:
+  - go: 1.14.x
+    env:
+    - TESTS=true
+    - USE_DEP=true
+    - COVERAGE=true
+  - go: 1.14.x
+    env:
+    - USE_DEP=true
+    - CROSSDOCK=true
+  - go: 1.14.x
+    env:
+    - TESTS=true
+    - USE_DEP=false
+    - USE_GLIDE=true
+  # test with previous version of Go
+  - go: 1.13.x
+    env:
+    - TESTS=true
+    - USE_DEP=true
+    - CI_SKIP_LINT=true
+
+services:
+  - docker
+
+env:
+  global:
+    - DOCKER_COMPOSE_VERSION=1.8.0
+    - COMMIT=${TRAVIS_COMMIT::8}
+    # DOCKER_PASS
+    - secure: "CnjVyxNvMC/dhr/eR7C+FiWucZ4/O5LfAuz9YU0qlnV6XLR7XXRtzZlfFKIImJT6xHp+OptTqAIXqUbvwK2OXDP1ZsLiWRm+2elb9/isGusWXjs3g817lX8njSUcIFILbfi+vAE7UD2BKjHxpmvWmCZidisU1rcaZ9OQNPqMnNIDxVx0FOTwYx+2hfkdjnN5dikzafBDQ6ZZV/mGbcaTG45GGFU6DHyVLzf9qCPXyXnz2+VDhcoPQsYkzE56XHCmHxvEfXxgfqYefJNUlFPhniAQySVsCNVDJ8QcCV6uHaXoIzxJKx9FdUnWKI1/AtpQsTZPgEm4Ujnt+kGJsXopXy2Xx4MZxmcTCBwAMjZxPMF7KoojbtDeOZgEMtf1tGPN6DTNc3NpVmr0BKZ44lhqk+vnd8HAiC1tHDEoSb1Esl7dMUUf1qZAh3MtT+NYi3mTwyx/ilXUS7KPyy7x0ezB3kGuMoLhvR2hrprqRr5NOV2hrd1au+IXmb+4IanFOsBlceBfs8P0JFMO/aw15r+HimSZpQsJx//IT0LReCZYXLe0/WVsF/8+HDwHKlO99gGpk4iXlNKKvdPWabihMp3I3peMrvL+jnlwh47RqHs/0Q71xsKjVWTn+Svq3FpVP0Pgyxhg+oG4WEByBiLnBQcZwSBhWexkJrNI73GzaZiIldk="
+    # DOCKER_USER
+    - secure: "bpBSmypHzI4PnteM4cwLiMC2163Sj/4mEl+1dj+6NWl2tr1hREeVXKhsWBpah25n6BDyr2A4yhBZcWLaNKrsCKT3U37csAQTOFVeQ9x5xhPq+ohANd/OsspFsxNZaKwx161LizH/uTDotMxxevZacsyYWGNv/cRFkwcQ8upLkReRR6puJ+jNQC0BFpKWBJY/zpm5J7xFb7FO20LvQVyRgsgzqWmg9oRNVw9uwOfSY3btacftYctDLUbAr8YRNHd2C6dZnMAi8KdDTLXKTqjKmp6WidOmi92Ml7tOjB+bV6TOaVAhrcI5Rdje4rRWG4MucAjPMP0ZBW36KTfcGqFUcDhX7UqISe2WxoI+8ZD6fJ+nNtD3bk4YAUJB4BSs2sQdiYyjpHyGJR6RW50+3uRz2YbXpzVr9wqv2lZSl/xy3wC5Hag55uqzVlSiDw2pK8lctT3dnQveE7PqAI577PjF2NrHlgrBbykOwwUCNbRTmykzqoDnkxclmiZ+rflEeWsSYglePK/d6Gj9+N7wJZM5heprdJJMFTrzMWZ21Ll9ZGY9updCBKmJA8pBYiLHbu0lWOp+9QUGC+621Zq0d1PHhN6L4eXk/f3RNoZTr//cX6WdNmmO7tBbaGpmp/UYiYTY1WO9vP7tCDsT75k285HCfnIrlGRdbCZZbfuYNGPKIQ0="
+
+install:
+  - make install-ci USE_DEP=$USE_DEP
+  - if [ "$CROSSDOCK" == true ]; then bash ./travis/install-crossdock-deps.sh ; fi
+
+script:
+  - if [ "$TESTS" == true ]; then make test-ci ; else echo 'skipping tests'; fi
+  - if [ "$CROSSDOCK" == true ]; then bash ./travis/build-crossdock.sh ; else echo 'skipping crossdock'; fi
+
+after_success:
+  - if [ "$COVERAGE" == true ]; then mv cover.out coverage.txt ; else echo 'skipping coverage'; fi
+  - if [ "$COVERAGE" == true ]; then bash <(curl -s https://codecov.io/bash) ; else echo 'skipping coverage'; fi
+
+after_failure:
+  - if [ "$CROSSDOCK" == true ]; then timeout 5 docker-compose -f crossdock/docker-compose.yml logs; fi

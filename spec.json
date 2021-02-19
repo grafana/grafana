@@ -292,6 +292,173 @@
         }
       }
     },
+    "/api/v1/rules": {
+      "get": {
+        "description": "List rule groups",
+        "produces": [
+          "application/yaml"
+        ],
+        "tags": [
+          "RulerConfig"
+        ],
+        "operationId": "RouteGetRulesConfig",
+        "responses": {
+          "202": {
+            "description": "NamespaceConfigResponse",
+            "schema": {
+              "$ref": "#/definitions/NamespaceConfigResponse"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rules/{Namespace}": {
+      "get": {
+        "description": "Get rule groups by namespace",
+        "produces": [
+          "application/yaml"
+        ],
+        "tags": [
+          "RulerConfig"
+        ],
+        "operationId": "RouteGetNamespaceRulesConfig",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "Namespace",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "NamespaceConfigResponse",
+            "schema": {
+              "$ref": "#/definitions/NamespaceConfigResponse"
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "Creates or updates a rule group",
+        "consumes": [
+          "application/yaml"
+        ],
+        "tags": [
+          "RulerConfig"
+        ],
+        "operationId": "RoutePostNameRulesConfig",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "Namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/RuleGroupConfig"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Ack",
+            "schema": {
+              "$ref": "#/definitions/Ack"
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "Delete namespace",
+        "tags": [
+          "RulerConfig"
+        ],
+        "operationId": "RouteDeleteNamespaceRulesConfig",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "Namespace",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Ack",
+            "schema": {
+              "$ref": "#/definitions/Ack"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rules/{Namespace}/{Groupname}": {
+      "get": {
+        "description": "Get rule group",
+        "produces": [
+          "application/yaml"
+        ],
+        "tags": [
+          "RulerConfig"
+        ],
+        "operationId": "RouteGetRulegGroupConfig",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "Namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "Groupname",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "RuleGroupConfigResponse",
+            "schema": {
+              "$ref": "#/definitions/RuleGroupConfigResponse"
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "Delete rule group",
+        "tags": [
+          "RulerConfig"
+        ],
+        "operationId": "RouteDeleteRuleGroupConfig",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "Namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "Groupname",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Ack",
+            "schema": {
+              "$ref": "#/definitions/Ack"
+            }
+          }
+        }
+      }
+    },
     "/api/v1/status/alerts": {
       "get": {
         "description": "gets the current alerts",
@@ -424,6 +591,31 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
+    "AlertQuery": {
+      "type": "object",
+      "title": "AlertQuery represents a single query associated with an alert definition.",
+      "properties": {
+        "model": {
+          "description": "JSON is the raw JSON query and includes the above properties as well as custom properties.",
+          "type": "object",
+          "x-go-name": "Model"
+        },
+        "queryType": {
+          "description": "QueryType is an optional identifier for the type of query.\nIt can be used to distinguish different types of queries.",
+          "type": "string",
+          "x-go-name": "QueryType"
+        },
+        "refId": {
+          "description": "RefID is the unique identifier of the query, set by the frontend call.",
+          "type": "string",
+          "x-go-name": "RefID"
+        },
+        "relativeTimeRange": {
+          "$ref": "#/definitions/RelativeTimeRange"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/eval"
     },
     "AlertResponse": {
       "type": "object",
@@ -762,9 +954,9 @@
       "x-go-package": "github.com/go-openapi/strfmt"
     },
     "Duration": {
-      "description": "A Duration represents the elapsed time between two instants\nas an int64 nanosecond count. The representation limits the\nlargest representable duration to approximately 290 years.",
       "type": "integer",
       "format": "int64",
+      "title": "Duration is a type used for marshalling durations.",
       "$ref": "#/definitions/Duration"
     },
     "EmailConfig": {
@@ -834,6 +1026,93 @@
       "type": "string",
       "title": "ErrorType models the different API error types.",
       "x-go-package": "github.com/prometheus/client_golang/api/prometheus/v1"
+    },
+    "ExtendedRuleNode": {
+      "type": "object",
+      "properties": {
+        "Alert": {
+          "$ref": "#/definitions/Node"
+        },
+        "Annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "Expr": {
+          "$ref": "#/definitions/Node"
+        },
+        "For": {
+          "$ref": "#/definitions/Duration"
+        },
+        "Labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "Record": {
+          "$ref": "#/definitions/Node"
+        },
+        "grafana_alert": {
+          "$ref": "#/definitions/ExtendedUpsertAlertDefinitionCommand"
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
+    "ExtendedUpsertAlertDefinitionCommand": {
+      "description": "ExtendedUpsertAlertDefinitionCommand extends UpsertAlertDefinitionCommand\nwith properties of grafana dashboard alerts",
+      "type": "object",
+      "properties": {
+        "condition": {
+          "description": "Condition is the refID of the query or expression to be evaluated",
+          "type": "string",
+          "x-go-name": "Condition"
+        },
+        "data": {
+          "description": "Data is an array of the queries and expressions",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AlertQuery"
+          },
+          "x-go-name": "Data"
+        },
+        "exec_err_state": {
+          "type": "string",
+          "enum": [
+            "Alerting",
+            "KeepLastState"
+          ],
+          "x-go-name": "ExecutionErrorState"
+        },
+        "no_data_state": {
+          "type": "string",
+          "enum": [
+            "Alerting",
+            "NoData",
+            "KeepLastState",
+            "OK"
+          ],
+          "x-go-name": "NoDataState"
+        },
+        "settings": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Settings"
+        },
+        "title": {
+          "type": "string",
+          "x-go-name": "Title"
+        },
+        "uid": {
+          "description": "UID is set only for existing definitions",
+          "type": "string",
+          "x-go-name": "UID"
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     },
     "GettableAlerts": {
       "$ref": "#/definitions/gettableAlerts"
@@ -989,6 +1268,11 @@
       "type": "object",
       "x-go-package": "github.com/grafana/grafana/pkg/components/simplejson"
     },
+    "Kind": {
+      "type": "integer",
+      "format": "uint32",
+      "x-go-package": "gopkg.in/yaml.v3"
+    },
     "LabelName": {
       "description": "A LabelName is a key for a LabelSet or Metric.  It has a value associated\ntherewith.",
       "type": "string",
@@ -1039,6 +1323,70 @@
         "$ref": "#/definitions/Matcher"
       },
       "$ref": "#/definitions/Matchers"
+    },
+    "NamespaceConfigResponse": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/RuleGroupConfig"
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
+    "Node": {
+      "description": "It's worth noting that although Node offers access into details such as\nline numbers, colums, and comments, the content when re-encoded will not\nhave its original textual representation preserved. An effort is made to\nrender the data plesantly, and to preserve comments near the data they\ndescribe, though.\n\nValues that make use of the Node type interact with the yaml package in the\nsame way any other type would do, by encoding and decoding yaml data\ndirectly or indirectly into them.\n\nFor example:\n\nvar person struct {\nName    string\nAddress yaml.Node\n}\nerr := yaml.Unmarshal(data, \u0026person)\n\nOr by itself:\n\nvar person Node\nerr := yaml.Unmarshal(data, \u0026person)",
+      "type": "object",
+      "title": "Node represents an element in the YAML document hierarchy. While documents\nare typically encoded and decoded into higher level types, such as structs\nand maps, Node is an intermediate representation that allows detailed\ncontrol over the content being decoded or encoded.",
+      "properties": {
+        "Alias": {
+          "$ref": "#/definitions/Node"
+        },
+        "Anchor": {
+          "description": "Anchor holds the anchor name for this node, which allows aliases to point to it.",
+          "type": "string"
+        },
+        "Column": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Content": {
+          "description": "Content holds contained nodes for documents, mappings, and sequences.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Node"
+          }
+        },
+        "FootComment": {
+          "description": "FootComment holds any comments following the node and before empty lines.",
+          "type": "string"
+        },
+        "HeadComment": {
+          "description": "HeadComment holds any comments in the lines preceding the node and\nnot separated by an empty line.",
+          "type": "string"
+        },
+        "Kind": {
+          "$ref": "#/definitions/Kind"
+        },
+        "Line": {
+          "description": "Line and Column hold the node position in the decoded YAML text.\nThese fields are not respected when encoding the node.",
+          "type": "integer",
+          "format": "int64"
+        },
+        "LineComment": {
+          "description": "LineComment holds any comments at the end of the line where the node is in.",
+          "type": "string"
+        },
+        "Style": {
+          "$ref": "#/definitions/Style"
+        },
+        "Tag": {
+          "description": "Tag holds the YAML tag defining the data type for the value.\nWhen decoding, this field will always be set to the resolved tag,\neven when it wasn't explicitly provided in the YAML content.\nWhen encoding, if this field is unset the value type will be\nimplied from the node properties, and if it is set, it will only\nbe serialized into the representation if TaggedStyle is used or\nthe implicit tag diverges from the provided one.",
+          "type": "string"
+        },
+        "Value": {
+          "description": "Value holds the unescaped and unquoted represenation of the value.",
+          "type": "string"
+        }
+      },
+      "x-go-package": "gopkg.in/yaml.v3"
     },
     "NotifierConfig": {
       "type": "object",
@@ -1378,6 +1726,19 @@
       "title": "Regexp is the representation of a compiled regular expression.",
       "x-go-package": "regexp"
     },
+    "RelativeTimeRange": {
+      "description": "RelativeTimeRange is the per query start and end time\nfor requests.",
+      "type": "object",
+      "properties": {
+        "from": {
+          "$ref": "#/definitions/Duration"
+        },
+        "to": {
+          "$ref": "#/definitions/Duration"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/eval"
+    },
     "RoleType": {
       "type": "string",
       "x-go-package": "github.com/grafana/grafana/pkg/models"
@@ -1522,6 +1883,77 @@
         }
       },
       "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
+    "RuleGroupConfig": {
+      "type": "object",
+      "properties": {
+        "interval": {
+          "$ref": "#/definitions/Duration"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ExtendedRuleNode"
+          },
+          "x-go-name": "Rules"
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
+    "RuleGroupConfigResponse": {
+      "type": "object",
+      "properties": {
+        "interval": {
+          "$ref": "#/definitions/Duration"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ExtendedRuleNode"
+          },
+          "x-go-name": "Rules"
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
+    "RuleNode": {
+      "type": "object",
+      "title": "RuleNode adds yaml.v3 layer to support line and column outputs for invalid rules.",
+      "properties": {
+        "Alert": {
+          "$ref": "#/definitions/Node"
+        },
+        "Annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "Expr": {
+          "$ref": "#/definitions/Node"
+        },
+        "For": {
+          "$ref": "#/definitions/Duration"
+        },
+        "Labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "Record": {
+          "$ref": "#/definitions/Node"
+        }
+      },
+      "x-go-package": "github.com/prometheus/prometheus/pkg/rulefmt"
     },
     "RuleResponse": {
       "type": "object",
@@ -1756,6 +2188,11 @@
       },
       "x-go-package": "github.com/prometheus/alertmanager/config"
     },
+    "Style": {
+      "type": "integer",
+      "format": "uint32",
+      "x-go-package": "gopkg.in/yaml.v3"
+    },
     "TLSConfig": {
       "type": "object",
       "title": "TLSConfig configures the options for TLS connections.",
@@ -1832,6 +2269,34 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
+    "UpsertAlertDefinitionCommand": {
+      "type": "object",
+      "properties": {
+        "condition": {
+          "description": "Condition is the refID of the query or expression to be evaluated",
+          "type": "string",
+          "x-go-name": "Condition"
+        },
+        "data": {
+          "description": "Data is an array of the queries and expressions",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AlertQuery"
+          },
+          "x-go-name": "Data"
+        },
+        "title": {
+          "type": "string",
+          "x-go-name": "Title"
+        },
+        "uid": {
+          "description": "UID is set only for existing definitions",
+          "type": "string",
+          "x-go-name": "UID"
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     },
     "UserConfig": {
       "type": "object",
