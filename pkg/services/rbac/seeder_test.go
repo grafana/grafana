@@ -47,11 +47,14 @@ func TestSeeder(t *testing.T) {
 				Permission: "ice_cream:serve",
 				Scope:      "flavor:mint",
 			},
+			{
+				Permission: "candy.liquorice:eat",
+				Scope:      "",
+			},
 		},
 	}
-	var policy Policy
 
-	created := t.Run("create policy", func(t *testing.T) {
+	t.Run("create policy", func(t *testing.T) {
 		// Return <id, nil> when creating the policy.
 		id, err := s.createOrUpdatePolicy(
 			context.Background(),
@@ -69,24 +72,29 @@ func TestSeeder(t *testing.T) {
 
 		p, err := s.Service.GetPolicy(context.Background(), 1, id)
 		require.NoError(t, err)
-		policy = p.Policy()
-	})
-	require.True(t, created)
+		policy := p.Policy()
 
-	t.Run("update to same version", func(t *testing.T) {
-		// Return <0, nil> when trying to deploy the same or an older generation of the policy.
-		ran, err := s.seed(context.Background(), 1, []PolicyDTO{v1})
-		require.NoError(t, err)
-		assert.False(t, ran)
-	})
-	t.Run("update to new policy version", func(t *testing.T) {
-		// Return <id, nil> when updating with a newer version.
-		ran, err := s.seed(context.Background(), 1, []PolicyDTO{v2})
-		require.NoError(t, err)
-		assert.True(t, ran)
+		t.Run("update to same version", func(t *testing.T) {
+			err := s.seed(context.Background(), 1, []PolicyDTO{v1})
+			require.NoError(t, err)
+		})
+		t.Run("update to new policy version", func(t *testing.T) {
+			err := s.seed(context.Background(), 1, []PolicyDTO{v2})
+			require.NoError(t, err)
 
-		p, err := s.Service.GetPolicy(context.Background(), 1, policy.Id)
-		require.NoError(t, err)
-		assert.Len(t, p.Permissions, len(v2.Permissions))
+			p, err := s.Service.GetPolicy(context.Background(), 1, policy.Id)
+			require.NoError(t, err)
+			assert.Len(t, p.Permissions, len(v2.Permissions))
+
+			lookup := permissionMap(p.Permissions)
+			assert.Contains(t, lookup, permissionTuple{
+				Permission: "candy.liquorice:eat",
+				Scope:      "",
+			})
+			assert.NotContains(t, lookup, permissionTuple{
+				Permission: "ice_cream:eat",
+				Scope:      "flavor:chocolate",
+			})
+		})
 	})
 }

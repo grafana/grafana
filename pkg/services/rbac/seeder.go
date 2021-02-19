@@ -43,15 +43,15 @@ var builtInPolicyGrants = map[string][]string{
 }
 
 func (s *seeder) Seed(ctx context.Context, orgID int64) error {
-	_, err := s.seed(ctx, orgID, builtInPolicies)
+	err := s.seed(ctx, orgID, builtInPolicies)
 	return err
 }
 
-func (s *seeder) seed(ctx context.Context, orgID int64, policies []PolicyDTO) (bool, error) {
+func (s *seeder) seed(ctx context.Context, orgID int64, policies []PolicyDTO) error {
 	// FIXME: As this will run on startup, we want to optimize running this
 	existingPolicies, err := s.Service.GetPolicies(ctx, orgID)
 	if err != nil {
-		return false, err
+		return err
 	}
 	policySet := map[string]*Policy{}
 	for _, policy := range existingPolicies {
@@ -60,8 +60,6 @@ func (s *seeder) seed(ctx context.Context, orgID int64, policies []PolicyDTO) (b
 		}
 		policySet[policy.Name] = policy
 	}
-
-	var ran bool
 
 	for _, policy := range policies {
 		policy.OrgId = orgID
@@ -73,51 +71,37 @@ func (s *seeder) seed(ctx context.Context, orgID int64, policies []PolicyDTO) (b
 			}
 		}
 
-		p, err := s.createOrUpdatePolicy(ctx, policy, current)
+		policyID, err := s.createOrUpdatePolicy(ctx, policy, current)
 		if err != nil {
 			s.log.Error("failed to create/update policy", "name", policy.Name, "err", err)
-			continue
-		}
-		if p == 0 {
-			// remote version was equal or newer than current version
 			continue
 		}
 
 		if roles, exists := builtInPolicyGrants[policy.Name]; exists {
 			for _, role := range roles {
-				err := s.Service.AddBuiltinRolePolicy(ctx, orgID, p, role)
+				err := s.Service.AddBuiltinRolePolicy(ctx, orgID, policyID, role)
 				if err != nil {
 					s.log.Error("failed to assign policy to role",
 						"name", policy.Name,
 						"role", role,
 						"err", err,
 					)
-					return false, err
+					return err
 				}
 			}
 		}
-
-		existingPermissions, err := s.Service.GetPolicyPermissions(ctx, p)
-		if err != nil {
-			s.log.Info("failed to get current permissions for policy", "name", policy.Name, "err", err)
-		}
-
-		err = s.idempotentUpdatePermissions(ctx, p, policy.Permissions, existingPermissions)
-		if err != nil {
-			s.log.Error("failed to update policy permissions", "name", policy.Name, "err", err)
-		}
-		ran = true
 	}
 
-	return ran, nil
+	return nil
 }
 
 func (s *seeder) createOrUpdatePolicy(ctx context.Context, policy PolicyDTO, old *Policy) (int64, error) {
 	if old == nil {
-		p, err := s.Service.CreatePolicy(ctx, CreatePolicyCommand{
+		p, err := s.Service.CreatePolicyWithPermissions(ctx, CreatePolicyWithPermissionsCommand{
 			OrgId:       policy.OrgId,
 			Name:        policy.Name,
 			Description: policy.Description,
+			Permissions: policy.Permissions,
 		})
 		if err != nil {
 			return 0, err
@@ -160,6 +144,16 @@ func (s *seeder) createOrUpdatePolicy(ctx context.Context, policy PolicyDTO, old
 	})
 	if err != nil {
 		return 0, err
+	}
+
+	existingPermissions, err := s.Service.GetPolicyPermissions(ctx, old.Id)
+	if err != nil {
+		s.log.Info("failed to get current permissions for policy", "name", policy.Name, "err", err)
+	}
+
+	err = s.idempotentUpdatePermissions(ctx, old.Id, policy.Permissions, existingPermissions)
+	if err != nil {
+		s.log.Error("failed to update policy permissions", "name", policy.Name, "err", err)
 	}
 	return old.Id, nil
 }
