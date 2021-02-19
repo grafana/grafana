@@ -150,7 +150,8 @@ describe('datasource_srv', () => {
 
     it('Can get list of data sources with variables: true', () => {
       const list = dataSourceSrv.getList({ metrics: true, variables: true });
-      expect(list[0].name).toBe('${datasource}');
+      expect(list[0].name).toBe('${datasourceDefault}');
+      expect(list[1].name).toBe('${datasource}');
     });
 
     it('Can get list of data sources with tracing: true', () => {
