@@ -340,7 +340,7 @@ func (ac *RBACService) GetTeamPolicies(query *GetTeamPoliciesQuery) ([]*PolicyDT
 	return result, err
 }
 
-func (ac *RBACService) GetUserPolicies(ctx context.Context, query *GetUserPoliciesQuery) ([]*PolicyDTO, error) {
+func (ac *RBACService) GetUserPolicies(ctx context.Context, query GetUserPoliciesQuery) ([]*PolicyDTO, error) {
 	var result []*PolicyDTO
 	err := ac.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		// TODO: optimize this
@@ -368,9 +368,9 @@ func (ac *RBACService) GetUserPolicies(ctx context.Context, query *GetUserPolici
 	return result, err
 }
 
-func (ac *RBACService) GetUserPermissions(query *GetUserPermissionsQuery) ([]*Permission, error) {
+func (ac *RBACService) GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]*Permission, error) {
 	var result []*Permission
-	err := ac.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := ac.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		// TODO: optimize this
 		q := `SELECT
 			permission.id,

@@ -272,7 +272,7 @@ func TestUserPolicy(t *testing.T) {
 				UserId: userQuery.Result.Id,
 			}
 
-			res, err := ac.GetUserPolicies(context.Background(), &userPoliciesQuery)
+			res, err := ac.GetUserPolicies(context.Background(), userPoliciesQuery)
 			require.NoError(t, err)
 			assert.Equal(t, len(tc.userPolicies)+len(tc.teamPolicies), len(res))
 		})
@@ -385,7 +385,7 @@ func TestUserPermissions(t *testing.T) {
 				expectedPermissions = append(expectedPermissions, p.permissions...)
 			}
 
-			res, err := ac.GetUserPermissions(&userPermissionsQuery)
+			res, err := ac.GetUserPermissions(context.Background(), userPermissionsQuery)
 			require.NoError(t, err)
 			assert.Equal(t, len(expectedPermissions), len(res))
 			assert.Contains(t, expectedPermissions, permissionTestCase{scope: "/api/datasources", permission: "put"})

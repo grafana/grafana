@@ -53,12 +53,10 @@ func (ac *RBACService) AddMigration(mg *migrator.Migrator) {
 }
 
 func (ac *RBACService) Evaluate(ctx context.Context, user *models.SignedInUser, permission string, scope ...string) (bool, error) {
-	q := GetUserPoliciesQuery{
+	res, err := ac.GetUserPermissions(ctx, GetUserPermissionsQuery{
 		OrgId:  user.OrgId,
 		UserId: user.UserId,
-	}
-
-	res, err := ac.GetUserPolicies(ctx, &q)
+	})
 	if err != nil {
 		return false, err
 	}
@@ -90,19 +88,17 @@ func (ac *RBACService) Evaluate(ctx context.Context, user *models.SignedInUser, 
 	return true, nil
 }
 
-func extractPermission(policies []*PolicyDTO, permission string) (bool, map[string]struct{}) {
+func extractPermission(permissions []*Permission, permission string) (bool, map[string]struct{}) {
 	scopes := map[string]struct{}{}
 	ok := false
 
-	for _, policy := range policies {
-		if policy == nil {
+	for _, p := range permissions {
+		if p == nil {
 			continue
 		}
-		for _, p := range policy.Permissions {
-			if p.Permission == permission {
-				ok = true
-				scopes[p.Scope] = struct{}{}
-			}
+		if p.Permission == permission {
+			ok = true
+			scopes[p.Scope] = struct{}{}
 		}
 	}
 

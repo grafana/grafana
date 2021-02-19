@@ -62,7 +62,7 @@ func TestEvaluatingPermissions(t *testing.T) {
 				UserId: userQuery.Result.Id,
 			}
 
-			res, err := ac.GetUserPolicies(context.Background(), &userPoliciesQuery)
+			res, err := ac.GetUserPolicies(context.Background(), userPoliciesQuery)
 			require.NoError(t, err)
 			assert.Equal(t, len(tc.policies), len(res))
 
@@ -71,7 +71,7 @@ func TestEvaluatingPermissions(t *testing.T) {
 				UserId: userQuery.Result.Id,
 			}
 
-			permissions, err := ac.GetUserPermissions(&userPermissionsQuery)
+			permissions, err := ac.GetUserPermissions(context.Background(), userPermissionsQuery)
 			require.NoError(t, err)
 			assert.Equal(t, len(tc.policies[0].permissions), len(permissions))
 		})

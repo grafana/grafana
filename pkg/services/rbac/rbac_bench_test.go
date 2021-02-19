@@ -1,6 +1,7 @@
 package rbac
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -26,7 +27,7 @@ func getPolicies(b *testing.B, ac *RBACService, policiesPerUser, users int) {
 	userId := userQuery.Result.Id
 
 	userPermissionsQuery := GetUserPermissionsQuery{OrgId: 1, UserId: userId}
-	res, err := ac.GetUserPermissions(&userPermissionsQuery)
+	res, err := ac.GetUserPermissions(context.Background(), userPermissionsQuery)
 	require.NoError(b, err)
 	expectedPermissions := permissionsPerPolicy * policiesPerUser
 	assert.Greater(b, len(res), expectedPermissions)
