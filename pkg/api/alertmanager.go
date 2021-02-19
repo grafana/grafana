@@ -46,6 +46,56 @@ import (
 //       200: AlertGroups
 //       400: ValidationError
 
+// swagger:route GET /api/v1/silences alertmanager RouteGetSilences
+//
+// get silences
+//
+//     Responses:
+//       200: Silences
+//       400: ValidationError
+
+// swagger:route POST /api/v1/silences alertmanager RouteCreateSilence
+//
+// create silence
+//
+//     Responses:
+//       201: Silence
+//       400: ValidationError
+
+// swagger:route GET /api/v1/silence/{SilenceId} alertmanager RouteGetSilence
+//
+// get silence
+//
+//     Responses:
+//       200: Silence
+//       400: ValidationError
+
+// swagger:route DELETE /api/v1/silence/{SilenceId} alertmanager RouteDeleteSilence
+//
+// delete silence
+//
+//     Responses:
+//       200: Ok
+//       400: ValidationError
+
+// swagger:parameters RouteCreateSilence
+type CreateSilenceParams struct {
+	// in:body
+	Body Silence
+}
+
+//swagger:parameters RouteGetSilence RouteDeleteSilence
+type GetDeleteSilenceParams struct {
+	// in:path
+	SilenceId string
+}
+
+// swagger:model
+type Silence amv2.Silence
+
+// swagger:model
+type Silences []amv2.Silence
+
 // swagger:model
 type GettableAlerts amv2.GettableAlerts
 

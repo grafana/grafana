@@ -460,6 +460,116 @@
         }
       }
     },
+    "/api/v1/silence/{SilenceId}": {
+      "get": {
+        "description": "get silence",
+        "tags": [
+          "alertmanager"
+        ],
+        "operationId": "RouteGetSilence",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "SilenceId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Silence",
+            "schema": {
+              "$ref": "#/definitions/Silence"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "delete silence",
+        "tags": [
+          "alertmanager"
+        ],
+        "operationId": "RouteDeleteSilence",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "SilenceId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/Ok"
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/silences": {
+      "get": {
+        "description": "get silences",
+        "tags": [
+          "alertmanager"
+        ],
+        "operationId": "RouteGetSilences",
+        "responses": {
+          "200": {
+            "description": "Silences",
+            "schema": {
+              "$ref": "#/definitions/Silences"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "create silence",
+        "tags": [
+          "alertmanager"
+        ],
+        "operationId": "RouteCreateSilence",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/Silence"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Silence",
+            "schema": {
+              "$ref": "#/definitions/Silence"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      }
+    },
     "/api/v1/status/alerts": {
       "get": {
         "description": "gets the current alerts",
@@ -1955,6 +2065,16 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/components/securejsondata"
     },
+    "Silence": {
+      "$ref": "#/definitions/silence"
+    },
+    "Silences": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/silence"
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
     "SlackAction": {
       "description": "See https://api.slack.com/docs/message-attachments#action_fields and https://api.slack.com/docs/message-buttons\nfor more information.",
       "type": "object",
@@ -2164,9 +2284,8 @@
       "x-go-package": "github.com/prometheus/common/config"
     },
     "URL": {
-      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
       "type": "object",
-      "title": "A URL represents a parsed URL (technically, a URI reference).",
+      "title": "URL is a custom URL type that allows validation at configuration load time.",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -2199,7 +2318,7 @@
           "$ref": "#/definitions/Userinfo"
         }
       },
-      "x-go-package": "net/url"
+      "x-go-package": "github.com/prometheus/common/config"
     },
     "UpdateDashboardAclCommand": {
       "type": "object",
