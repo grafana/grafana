@@ -37,7 +37,7 @@ datasources:
   - name: gdev-influxdb2
     type: influxdb
     access: proxy
-    url: http://influxdb:8086
+    url: http://influxdb2:8086
     secureJsonData:
       token: mytoken
     jsonData:

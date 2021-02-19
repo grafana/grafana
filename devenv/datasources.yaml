@@ -36,9 +36,11 @@ datasources:
   - name: gdev-influxdb2
     type: influxdb
     access: proxy
-    url: http://localhost:8086
+    url: http://localhost:8087
+    user: grafana
     secureJsonData:
       token: mytoken
+      password: grafana12345
     jsonData:
       version: Flux
       organization: myorg
