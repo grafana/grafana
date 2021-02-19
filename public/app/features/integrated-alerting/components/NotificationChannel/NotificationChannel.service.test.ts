@@ -1,14 +1,16 @@
+import { api } from 'app/percona/shared/helpers/api';
+
 import { NotificationChannelService } from './NotificationChannel.service';
 import { NotificationChannelType } from './NotificationChannel.types';
 import { notificationChannelResponseStubs, notificationChannelStubs } from './__mocks__/notificationChannelStubs';
 
-const postMock = jest.fn();
-
-jest.mock('@grafana/runtime', () => ({
-  getBackendSrv: () => ({
-    post: postMock,
-  }),
+jest.mock('app/percona/shared/helpers/api', () => ({
+  api: {
+    post: jest.fn(),
+  },
 }));
+const postMock = jest.fn(() => new Promise(() => null));
+(api.post as jest.Mock).mockImplementation(postMock);
 
 describe('NotificationChannelService', () => {
   it('should return a list of notification channels', async () => {
