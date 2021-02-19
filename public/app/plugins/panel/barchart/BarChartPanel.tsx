@@ -1,16 +1,10 @@
 import React, { useCallback, useMemo } from 'react';
-import { DataFrame, Field, FieldType, PanelProps } from '@grafana/data';
+import { FieldType, PanelProps, VizOrientation } from '@grafana/data';
 import { BarChart, BarChartOptions, GraphNGLegendEvent } from '@grafana/ui';
 import { changeSeriesColorConfigFactory } from '../timeseries/overrides/colorSeriesConfigFactory';
 import { hideSeriesConfigFactory } from '../timeseries/overrides/hideSeriesConfigFactory';
-import { config } from 'app/core/config';
 
 interface Props extends PanelProps<BarChartOptions> {}
-
-interface BarData {
-  error?: string;
-  frame?: DataFrame; // first string vs all numbers
-}
 
 /**
  * @alpha
@@ -23,6 +17,14 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
   fieldConfig,
   onFieldConfigChange,
 }) => {
+  const orientation = useMemo(() => {
+    if (!options.orientation || options.orientation === VizOrientation.Auto) {
+      return width < height ? VizOrientation.Horizontal : VizOrientation.Vertical;
+    }
+
+    return options.orientation;
+  }, [width, height, options.orientation]);
+
   const onLegendClick = useCallback(
     (event: GraphNGLegendEvent) => {
       onFieldConfigChange(hideSeriesConfigFactory(event, fieldConfig, data.series));
@@ -37,34 +39,6 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
     [fieldConfig, onFieldConfigChange]
   );
 
-  const barData = useMemo<BarData>(() => {
-    const firstFrame = data.series[0];
-    const firstString = firstFrame.fields.find((f) => f.type === FieldType.string);
-    if (!firstString) {
-      return {
-        error: 'Bar charts requires a string field',
-      };
-    }
-    const fields: Field[] = [firstString];
-    for (const f of firstFrame.fields) {
-      if (f.type === FieldType.number) {
-        fields.push(f);
-      }
-    }
-    if (fields.length < 2) {
-      return {
-        error: 'No numeric fields found',
-      };
-    }
-
-    return {
-      frame: {
-        ...firstFrame,
-        fields, // filtered to to the values we have
-      },
-    };
-  }, [data]);
-
   if (!data || !data.series?.length) {
     return (
       <div className="panel-empty">
@@ -73,31 +47,38 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
     );
   }
 
-  if (barData.error) {
+  const firstFrame = data.series[0];
+  if (!firstFrame.fields.find((f) => f.type === FieldType.string)) {
     return (
       <div className="panel-empty">
-        <p>{barData.error}</p>
+        <p>Bar charts requires a string field</p>
       </div>
     );
   }
-
-  if (!barData.frame) {
+  if (
+    firstFrame.fields.reduce((acc, f) => {
+      if (f.type === FieldType.number) {
+        return acc + 1;
+      }
+      return acc;
+    }, 0) < 2
+  ) {
     return (
       <div className="panel-empty">
-        <p>No data found in response</p>
+        <p>No numeric fields found</p>
       </div>
     );
   }
 
   return (
     <BarChart
-      data={barData.frame}
+      data={data.series}
       width={width}
       height={height}
-      theme={config.theme}
       onLegendClick={onLegendClick}
       onSeriesColorChange={onSeriesColorChange}
       {...options}
+      orientation={orientation}
     />
   );
 };

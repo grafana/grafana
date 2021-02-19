@@ -45,12 +45,12 @@ func (lps *LibraryPanelService) IsEnabled() bool {
 
 // LoadLibraryPanelsForDashboard loops through all panels in dashboard JSON and replaces any library panel JSON
 // with JSON stored for library panel in db.
-func (lps *LibraryPanelService) LoadLibraryPanelsForDashboard(dash *models.Dashboard) error {
+func (lps *LibraryPanelService) LoadLibraryPanelsForDashboard(c *models.ReqContext, dash *models.Dashboard) error {
 	if !lps.IsEnabled() {
 		return nil
 	}
 
-	libraryPanels, err := lps.getLibraryPanelsForDashboardID(dash.Id)
+	libraryPanels, err := lps.getLibraryPanelsForDashboardID(c, dash.Id)
 	if err != nil {
 		return err
 	}
@@ -194,7 +194,7 @@ func (lps *LibraryPanelService) ConnectLibraryPanelsForDashboard(c *models.ReqCo
 }
 
 // DisconnectLibraryPanelsForDashboard loops through all panels in dashboard JSON and disconnects any library panels from the dashboard.
-func (lps *LibraryPanelService) DisconnectLibraryPanelsForDashboard(dash *models.Dashboard) error {
+func (lps *LibraryPanelService) DisconnectLibraryPanelsForDashboard(c *models.ReqContext, dash *models.Dashboard) error {
 	if !lps.IsEnabled() {
 		return nil
 	}
@@ -216,7 +216,7 @@ func (lps *LibraryPanelService) DisconnectLibraryPanelsForDashboard(dash *models
 		panelCount++
 	}
 
-	return lps.disconnectLibraryPanelsForDashboard(dash.Id, panelCount)
+	return lps.disconnectLibraryPanelsForDashboard(c, dash.Id, panelCount)
 }
 
 // AddMigration defines database migrations.

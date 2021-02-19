@@ -212,7 +212,7 @@ If you are running Grafana in an Amazon EKS cluster, follow the AWS guide to [Qu
 
 ## Exemplars
 
-> **Note:** This feature is available in Prometheus 2.25+ and Grafana 7.4+.
+> **Note:** This feature is available in Prometheus 2.26+ and Grafana 7.4+.
 
 Grafana 7.4 and later versions have the capability to show exemplars data alongside a metric both in Explore and Dashboards.
 Exemplars are a way to associate higher cardinality metadata from a specific event with traditional timeseries data.

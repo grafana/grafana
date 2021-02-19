@@ -28,12 +28,31 @@ export interface DataSourceSrv {
 
 /** @public */
 export interface GetDataSourceListFilters {
+  /** Include mixed deta source by setting this to true */
   mixed?: boolean;
+
+  /** Only return data sources that support metrics response */
   metrics?: boolean;
+
+  /** Only return data sources that support tracing response */
   tracing?: boolean;
+
+  /** Only return data sources that support annotations */
   annotations?: boolean;
+
+  /**
+   * By default only data sources that can be queried will be returned. Meaning they have tracing,
+   * metrics, logs or annotations flag set in plugin.json file
+   * */
+  all?: boolean;
+
+  /** Set to true to return dashboard data source */
   dashboard?: boolean;
+
+  /** Set to true to return data source variables */
   variables?: boolean;
+
+  /** filter list by plugin  */
   pluginId?: string;
 }
 

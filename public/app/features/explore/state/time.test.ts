@@ -1,6 +1,6 @@
 import { dateTime, LoadingState } from '@grafana/data';
 
-import { makeExplorePaneState, makeInitialUpdateState } from './utils';
+import { makeExplorePaneState } from './utils';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { reducerTester } from 'test/core/redux/reducerTester';
 import { changeRangeAction, changeRefreshIntervalAction, timeReducer } from './time';
@@ -55,7 +55,6 @@ describe('Explore item reducer', () => {
       it('then it should set correct state', () => {
         reducerTester<ExploreItemState>()
           .givenReducer(timeReducer, ({
-            update: { ...makeInitialUpdateState(), range: true },
             range: null,
             absoluteRange: null,
           } as unknown) as ExploreItemState)
@@ -67,7 +66,6 @@ describe('Explore item reducer', () => {
             })
           )
           .thenStateShouldEqual(({
-            update: { ...makeInitialUpdateState(), range: false },
             absoluteRange: { from: 1546297200000, to: 1546383600000 },
             range: { from: dateTime('2019-01-01'), to: dateTime('2019-01-02'), raw: { from: 'now-1d', to: 'now' } },
           } as unknown) as ExploreItemState);

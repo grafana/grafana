@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, fireEvent, screen, waitFor, act } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import selectEvent from 'react-select-event';
 import * as SearchSrv from 'app/core/services/search_srv';
 import * as MockSearchSrv from 'app/core/services/__mocks__/search_srv';
 import { DashboardSearch, Props } from './DashboardSearch';
@@ -50,6 +50,7 @@ describe('DashboardSearch', () => {
       folderIds: [],
       layout: SearchLayout.Folders,
       sort: undefined,
+      prevSort: null,
     });
   });
 
@@ -71,6 +72,7 @@ describe('DashboardSearch', () => {
       folderIds: [],
       layout: SearchLayout.Folders,
       sort: undefined,
+      prevSort: null,
     });
   });
 
@@ -94,12 +96,9 @@ describe('DashboardSearch', () => {
     setup();
 
     await waitFor(() => screen.getByLabelText('Tag filter'));
-    // Get the actual element for the underlying Select component, since Select doesn't accept aria- props
-    const tagComponent = screen.getByLabelText('Tag filter').querySelector('div') as Node;
-    fireEvent.keyDown(tagComponent, { keyCode: 40 });
 
-    const firstTag = await screen.findByText('tag1');
-    userEvent.click(firstTag);
+    const tagComponent = screen.getByLabelText('Tag filter');
+    await selectEvent.select(tagComponent, 'tag1');
 
     expect(tagComponent).toBeInTheDocument();
 
@@ -113,6 +112,7 @@ describe('DashboardSearch', () => {
         folderIds: [],
         layout: SearchLayout.Folders,
         sort: undefined,
+        prevSort: null,
       })
     );
   });

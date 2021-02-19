@@ -9,12 +9,14 @@ import LokiDatasource from '../datasource';
 
 interface Props {
   expr: string;
+  maxLines?: number;
+  instant?: boolean;
   datasource: LokiDatasource;
-  onChange: (expr: string) => void;
+  onChange: (query: LokiQuery) => void;
 }
 
 export const LokiAnnotationsQueryEditor = memo(function LokiAnnotationQueryEditor(props: Props) {
-  const { expr, datasource, onChange } = props;
+  const { expr, maxLines, instant, datasource, onChange } = props;
 
   // Timerange to get existing labels from. Hard coding like this seems to be good enough right now.
   const absolute = {
@@ -27,17 +29,18 @@ export const LokiAnnotationsQueryEditor = memo(function LokiAnnotationQueryEdito
     absolute
   );
 
-  const query: LokiQuery = {
+  const queryWithRefId: LokiQuery = {
     refId: '',
     expr,
+    maxLines,
+    instant,
   };
-
   return (
     <div className="gf-form-group">
       <LokiQueryFieldForm
         datasource={datasource}
-        query={query}
-        onChange={(query: LokiQuery) => onChange(query.expr)}
+        query={queryWithRefId}
+        onChange={onChange}
         onRunQuery={() => {}}
         history={[]}
         onLoadOptions={setActiveOption}

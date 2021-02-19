@@ -62,7 +62,7 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
       onLegendClick={onLegendClick}
       onSeriesColorChange={onSeriesColorChange}
     >
-      <TooltipPlugin mode={options.tooltipOptions.mode as any} timeZone={timeZone} />
+      <TooltipPlugin data={data.series} mode={options.tooltipOptions.mode as any} timeZone={timeZone} />
       <>{/* needs to be an array */}</>
     </GraphNG>
   );
