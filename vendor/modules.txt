@@ -2,6 +2,12 @@
 github.com/FZambia/eagle
 # github.com/FZambia/sentinel v1.1.0
 github.com/FZambia/sentinel
+# github.com/PuerkitoBio/purell v1.1.1
+github.com/PuerkitoBio/purell
+# github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578
+github.com/PuerkitoBio/urlesc
+# github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f
+github.com/VividCortex/mysqlerr
 # github.com/apache/arrow/go/arrow v0.0.0-20200629181129-68b1273cbbf7
 github.com/apache/arrow/go/arrow
 github.com/apache/arrow/go/arrow/array
@@ -14,6 +20,8 @@ github.com/apache/arrow/go/arrow/internal/debug
 github.com/apache/arrow/go/arrow/internal/flatbuf
 github.com/apache/arrow/go/arrow/ipc
 github.com/apache/arrow/go/arrow/memory
+# github.com/asaskevich/govalidator v0.0.0-20200108200545-475eaeb16496
+github.com/asaskevich/govalidator
 # github.com/aws/aws-sdk-go v1.37.8
 ## explicit
 github.com/aws/aws-sdk-go/aws
@@ -94,6 +102,32 @@ github.com/go-kit/kit/log/level
 github.com/go-logfmt/logfmt
 # github.com/go-macaron/inject v0.0.0-20160627170012-d8a0b8677191
 github.com/go-macaron/inject
+<<<<<<< HEAD
+=======
+# github.com/go-openapi/analysis v0.19.10
+github.com/go-openapi/analysis
+github.com/go-openapi/analysis/internal
+# github.com/go-openapi/errors v0.19.4 => github.com/go-openapi/errors v0.19.4
+github.com/go-openapi/errors
+# github.com/go-openapi/jsonpointer v0.19.3
+github.com/go-openapi/jsonpointer
+# github.com/go-openapi/jsonreference v0.19.3
+github.com/go-openapi/jsonreference
+# github.com/go-openapi/loads v0.19.5 => github.com/go-openapi/loads v0.19.5
+github.com/go-openapi/loads
+# github.com/go-openapi/runtime v0.19.15 => github.com/go-openapi/runtime v0.19.15
+github.com/go-openapi/runtime
+# github.com/go-openapi/spec v0.19.8 => github.com/go-openapi/spec v0.19.8
+github.com/go-openapi/spec
+# github.com/go-openapi/strfmt v0.19.5 => github.com/go-openapi/strfmt v0.19.5
+github.com/go-openapi/strfmt
+# github.com/go-openapi/swag v0.19.9 => github.com/go-openapi/swag v0.19.9
+github.com/go-openapi/swag
+# github.com/go-openapi/validate v0.19.8 => github.com/go-openapi/validate v0.19.8
+github.com/go-openapi/validate
+# github.com/go-sql-driver/mysql v1.5.0
+github.com/go-sql-driver/mysql
+>>>>>>> origin/master
 # github.com/go-stack/stack v1.8.0
 github.com/go-stack/stack
 # github.com/gogo/protobuf v1.3.2
@@ -130,6 +164,7 @@ github.com/gorilla/websocket
 github.com/gosimple/slug
 # github.com/grafana/grafana v1.9.2-0.20210217182004-6c4be29655a6
 ## explicit
+github.com/grafana/grafana/pkg/api/dtos
 github.com/grafana/grafana/pkg/bus
 github.com/grafana/grafana/pkg/components/gtime
 github.com/grafana/grafana/pkg/components/null
@@ -179,6 +214,17 @@ github.com/jpillora/backoff
 github.com/json-iterator/go
 # github.com/kr/text v0.2.0
 ## explicit
+<<<<<<< HEAD
+=======
+# github.com/lib/pq v1.9.0
+github.com/lib/pq
+github.com/lib/pq/oid
+github.com/lib/pq/scram
+# github.com/mailru/easyjson v0.7.1
+github.com/mailru/easyjson/buffer
+github.com/mailru/easyjson/jlexer
+github.com/mailru/easyjson/jwriter
+>>>>>>> origin/master
 # github.com/mattetti/filebuffer v1.0.1
 github.com/mattetti/filebuffer
 # github.com/mattn/go-colorable v0.1.8
@@ -191,6 +237,8 @@ github.com/mattn/go-runewidth
 github.com/matttproud/golang_protobuf_extensions/pbutil
 # github.com/mitchellh/go-testing-interface v1.0.0
 github.com/mitchellh/go-testing-interface
+# github.com/mitchellh/mapstructure v1.2.2
+github.com/mitchellh/mapstructure
 # github.com/mna/redisc v1.1.7
 github.com/mna/redisc
 # github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd
@@ -217,6 +265,7 @@ github.com/pkg/errors
 github.com/pmezard/go-difflib/difflib
 # github.com/prometheus/alertmanager v0.21.1-0.20210211203738-a7ca7b1d2951
 ## explicit
+github.com/prometheus/alertmanager/api/v2/models
 github.com/prometheus/alertmanager/config
 github.com/prometheus/alertmanager/pkg/labels
 # github.com/prometheus/client_golang v1.9.0
@@ -289,11 +338,39 @@ github.com/uber/jaeger-client-go/utils
 github.com/uber/jaeger-lib/metrics
 # github.com/unknwon/com v1.0.1
 github.com/unknwon/com
+<<<<<<< HEAD
 # go.uber.org/atomic v1.7.0
 go.uber.org/atomic
 # go.uber.org/goleak v1.1.10
 go.uber.org/goleak
 go.uber.org/goleak/internal/stack
+=======
+# go.mongodb.org/mongo-driver v1.3.2
+go.mongodb.org/mongo-driver/bson
+go.mongodb.org/mongo-driver/bson/bsoncodec
+go.mongodb.org/mongo-driver/bson/bsonoptions
+go.mongodb.org/mongo-driver/bson/bsonrw
+go.mongodb.org/mongo-driver/bson/bsontype
+go.mongodb.org/mongo-driver/bson/primitive
+go.mongodb.org/mongo-driver/x/bsonx/bsoncore
+# go.opencensus.io v0.22.5
+go.opencensus.io
+go.opencensus.io/internal
+go.opencensus.io/internal/tagencoding
+go.opencensus.io/metric/metricdata
+go.opencensus.io/metric/metricproducer
+go.opencensus.io/plugin/ochttp
+go.opencensus.io/plugin/ochttp/propagation/b3
+go.opencensus.io/resource
+go.opencensus.io/stats
+go.opencensus.io/stats/internal
+go.opencensus.io/stats/view
+go.opencensus.io/tag
+go.opencensus.io/trace
+go.opencensus.io/trace/internal
+go.opencensus.io/trace/propagation
+go.opencensus.io/trace/tracestate
+>>>>>>> origin/master
 # golang.org/x/crypto v0.0.0-20201208171446-5f87f3452ae9
 golang.org/x/crypto/pbkdf2
 # golang.org/x/lint v0.0.0-20201208152925-83fdc39ff7b5
@@ -324,6 +401,7 @@ golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
+golang.org/x/text/width
 # golang.org/x/tools v0.1.0
 golang.org/x/tools/go/ast/astutil
 golang.org/x/tools/go/gcexportdata
