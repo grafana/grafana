@@ -498,9 +498,9 @@ Content-Type: application/json
 
 Proxies all calls to the actual data source.
 
-## Query a time series data source by id
+## Query a data source by id
 
-Queries a time series data source having backend implementation.
+Queries a data source having backend implementation.
 
 `POST /api/tsdb/query`
 
