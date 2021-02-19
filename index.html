@@ -16,7 +16,7 @@
     <script>
       window.onload = function() {
         const ui = SwaggerUIBundle({
-          url: "https://grafana.github.io/alerting-api/spec.json",
+          url: "https://grafana.github.io/alerting-api/spec.json?cachebuster=" + Math.random(),
           dom_id: '#swagger-ui',
           deepLinking: true,
           presets: [

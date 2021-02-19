@@ -126,9 +126,141 @@
     },
     "/api/v1/alerts": {
       "get": {
+        "description": "get alertmanager alerts",
+        "tags": [
+          "alertmanager"
+        ],
+        "operationId": "RouteGetAmAlerts",
+        "parameters": [
+          {
+            "type": "boolean",
+            "x-go-name": "Active",
+            "description": "Show active alerts",
+            "name": "active",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "x-go-name": "Silenced",
+            "description": "Show silenced alerts",
+            "name": "silenced",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "x-go-name": "Inhibited",
+            "description": "Show inhibited alerts",
+            "name": "inhibited",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-go-name": "Matchers",
+            "description": "A list of matchers to filter alerts by",
+            "name": "matchers",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-go-name": "Receivers",
+            "description": "A list of receivers to filter alerts by",
+            "name": "receivers",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "GettableAlerts",
+            "schema": {
+              "$ref": "#/definitions/GettableAlerts"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/alerts/groups": {
+      "get": {
+        "description": "get alertmanager alerts",
+        "tags": [
+          "alertmanager"
+        ],
+        "operationId": "RouteGetAmAlertGroups",
+        "parameters": [
+          {
+            "type": "boolean",
+            "x-go-name": "Active",
+            "description": "Show active alerts",
+            "name": "active",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "x-go-name": "Silenced",
+            "description": "Show silenced alerts",
+            "name": "silenced",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "x-go-name": "Inhibited",
+            "description": "Show inhibited alerts",
+            "name": "inhibited",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-go-name": "Matchers",
+            "description": "A list of matchers to filter alerts by",
+            "name": "matchers",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-go-name": "Receivers",
+            "description": "A list of receivers to filter alerts by",
+            "name": "receivers",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AlertGroups",
+            "schema": {
+              "$ref": "#/definitions/AlertGroups"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/config": {
+      "get": {
         "description": "gets an Alerting config",
         "tags": [
-          "AlertingConfig"
+          "alertmanager"
         ],
         "operationId": "RouteGetAlertingConfig",
         "responses": {
@@ -149,7 +281,7 @@
       "post": {
         "description": "sets an Alerting config",
         "tags": [
-          "AlertingConfig"
+          "alertmanager"
         ],
         "operationId": "RoutePostAlertingConfig",
         "parameters": [
@@ -179,7 +311,7 @@
       "delete": {
         "description": "deletes the Alerting config for a tenant",
         "tags": [
-          "AlertingConfig"
+          "alertmanager"
         ],
         "operationId": "RouteDeleteAlertingConfig",
         "responses": {
@@ -277,6 +409,9 @@
         }
       },
       "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
+    "AlertGroups": {
+      "$ref": "#/definitions/alertGroups"
     },
     "AlertNotification": {
       "type": "object",
@@ -708,11 +843,23 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
+    "DateTime": {
+      "description": "DateTime is a time but it serializes to ISO8601 format with millis\nIt knows how to read 3 different variations of a RFC3339 date time.\nMost APIs we encounter want either millisecond or second precision times.\nThis just tries to make it worry-free.",
+      "type": "string",
+      "format": "date-time",
+      "x-go-package": "github.com/go-openapi/strfmt"
+    },
     "Duration": {
-      "description": "A Duration represents the elapsed time between two instants\nas an int64 nanosecond count. The representation limits the\nlargest representable duration to approximately 290 years.",
+      "description": "Duration wraps time.Duration. It is used to parse the custom duration format\nfrom YAML.\nThis type should not propagate beyond the scope of input/output processing.",
       "type": "integer",
       "format": "int64",
+      "x-go-package": "time",
       "$ref": "#/definitions/Duration"
+    },
+    "ElementType": {
+      "type": "string",
+      "title": "ElementType is the type of element that can be rendered in the frontend.",
+      "x-go-package": "github.com/grafana/grafana/pkg/services/alerting"
     },
     "EmailConfig": {
       "type": "object",
@@ -794,6 +941,9 @@
       "title": "ErrorType models the different API error types.",
       "x-go-package": "github.com/prometheus/client_golang/api/prometheus/v1"
     },
+    "GettableAlerts": {
+      "$ref": "#/definitions/gettableAlerts"
+    },
     "GlobalConfig": {
       "description": "GlobalConfig defines configuration parameters that are valid globally\nunless overwritten.",
       "type": "object",
@@ -865,8 +1015,7 @@
       "x-go-package": "github.com/prometheus/alertmanager/config"
     },
     "GrafanaReceiver": {
-      "description": "type GrafanaReceiver models.CreateAlertNotificationCommand",
-      "$ref": "#/definitions/CreateAlertNotificationCommand"
+      "$ref": "#/definitions/NotifierPlugin"
     },
     "HTTPClientConfig": {
       "type": "object",
@@ -942,6 +1091,11 @@
       },
       "x-go-package": "github.com/prometheus/alertmanager/config"
     },
+    "InputType": {
+      "type": "string",
+      "title": "InputType is the type of input that can be rendered in the frontend.",
+      "x-go-package": "github.com/grafana/grafana/pkg/services/alerting"
+    },
     "Json": {
       "type": "object",
       "x-go-package": "github.com/grafana/grafana/pkg/components/simplejson"
@@ -1007,6 +1161,91 @@
         }
       },
       "x-go-package": "github.com/prometheus/alertmanager/config"
+    },
+    "NotifierOption": {
+      "type": "object",
+      "title": "NotifierOption holds information about options specific for the NotifierPlugin.",
+      "properties": {
+        "description": {
+          "type": "string",
+          "x-go-name": "Description"
+        },
+        "element": {
+          "$ref": "#/definitions/ElementType"
+        },
+        "inputType": {
+          "$ref": "#/definitions/InputType"
+        },
+        "label": {
+          "type": "string",
+          "x-go-name": "Label"
+        },
+        "placeholder": {
+          "type": "string",
+          "x-go-name": "Placeholder"
+        },
+        "propertyName": {
+          "type": "string",
+          "x-go-name": "PropertyName"
+        },
+        "required": {
+          "type": "boolean",
+          "x-go-name": "Required"
+        },
+        "secure": {
+          "type": "boolean",
+          "x-go-name": "Secure"
+        },
+        "selectOptions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SelectOption"
+          },
+          "x-go-name": "SelectOptions"
+        },
+        "showWhen": {
+          "$ref": "#/definitions/ShowWhen"
+        },
+        "validationRule": {
+          "type": "string",
+          "x-go-name": "ValidationRule"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/services/alerting"
+    },
+    "NotifierPlugin": {
+      "type": "object",
+      "title": "NotifierPlugin holds meta information about a notifier.",
+      "properties": {
+        "description": {
+          "type": "string",
+          "x-go-name": "Description"
+        },
+        "heading": {
+          "type": "string",
+          "x-go-name": "Heading"
+        },
+        "info": {
+          "type": "string",
+          "x-go-name": "Info"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/NotifierOption"
+          },
+          "x-go-name": "Options"
+        },
+        "type": {
+          "type": "string",
+          "x-go-name": "Type"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/services/alerting"
     },
     "Ok": {
       "type": "object",
@@ -1566,6 +1805,36 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/components/securejsondata"
     },
+    "SelectOption": {
+      "type": "object",
+      "title": "SelectOption is a simple type for Options that have dropdown options. Should be used when Element is ElementTypeSelect.",
+      "properties": {
+        "label": {
+          "type": "string",
+          "x-go-name": "Label"
+        },
+        "value": {
+          "type": "string",
+          "x-go-name": "Value"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/services/alerting"
+    },
+    "ShowWhen": {
+      "type": "object",
+      "title": "ShowWhen holds information about when options are dependant on other options.",
+      "properties": {
+        "field": {
+          "type": "string",
+          "x-go-name": "Field"
+        },
+        "is": {
+          "type": "string",
+          "x-go-name": "Is"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/services/alerting"
+    },
     "SlackAction": {
       "description": "See https://api.slack.com/docs/message-attachments#action_fields and https://api.slack.com/docs/message-buttons\nfor more information.",
       "type": "object",
@@ -1775,8 +2044,9 @@
       "x-go-package": "github.com/prometheus/common/config"
     },
     "URL": {
+      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
       "type": "object",
-      "title": "URL is a custom URL type that allows validation at configuration load time.",
+      "title": "A URL represents a parsed URL (technically, a URI reference).",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -1809,7 +2079,7 @@
           "$ref": "#/definitions/Userinfo"
         }
       },
-      "x-go-package": "github.com/prometheus/common/config"
+      "x-go-package": "net/url"
     },
     "Unauthorized": {
       "type": "object",
@@ -1964,6 +2234,176 @@
       },
       "x-go-package": "github.com/prometheus/alertmanager/config"
     },
+    "alert": {
+      "description": "Alert alert",
+      "type": "object",
+      "required": [
+        "labels"
+      ],
+      "properties": {
+        "generatorURL": {
+          "description": "generator URL\nFormat: uri",
+          "type": "string",
+          "format": "uri",
+          "x-go-name": "GeneratorURL"
+        },
+        "labels": {
+          "$ref": "#/definitions/labelSet"
+        }
+      },
+      "x-go-name": "Alert",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+    },
+    "alertGroup": {
+      "description": "AlertGroup alert group",
+      "type": "object",
+      "required": [
+        "alerts",
+        "labels",
+        "receiver"
+      ],
+      "properties": {
+        "alerts": {
+          "description": "alerts",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/gettableAlert"
+          },
+          "x-go-name": "Alerts"
+        },
+        "labels": {
+          "$ref": "#/definitions/labelSet"
+        },
+        "receiver": {
+          "$ref": "#/definitions/receiver"
+        }
+      },
+      "x-go-name": "AlertGroup",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+    },
+    "alertGroups": {
+      "description": "AlertGroups alert groups",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/alertGroup"
+      },
+      "x-go-name": "AlertGroups",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+    },
+    "alertStatus": {
+      "description": "AlertStatus alert status",
+      "type": "object",
+      "required": [
+        "inhibitedBy",
+        "silencedBy",
+        "state"
+      ],
+      "properties": {
+        "inhibitedBy": {
+          "description": "inhibited by",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "InhibitedBy"
+        },
+        "silencedBy": {
+          "description": "silenced by",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "SilencedBy"
+        },
+        "state": {
+          "description": "state",
+          "type": "string",
+          "enum": [
+            "[unprocessed active suppressed]"
+          ],
+          "x-go-name": "State"
+        }
+      },
+      "x-go-name": "AlertStatus",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+    },
+    "alertmanagerConfig": {
+      "description": "AlertmanagerConfig alertmanager config",
+      "type": "object",
+      "required": [
+        "original"
+      ],
+      "properties": {
+        "original": {
+          "description": "original",
+          "type": "string",
+          "x-go-name": "Original"
+        }
+      },
+      "x-go-name": "AlertmanagerConfig",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+    },
+    "alertmanagerStatus": {
+      "description": "AlertmanagerStatus alertmanager status",
+      "type": "object",
+      "required": [
+        "cluster",
+        "config",
+        "uptime",
+        "versionInfo"
+      ],
+      "properties": {
+        "cluster": {
+          "$ref": "#/definitions/clusterStatus"
+        },
+        "config": {
+          "$ref": "#/definitions/alertmanagerConfig"
+        },
+        "uptime": {
+          "description": "uptime",
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "Uptime"
+        },
+        "versionInfo": {
+          "$ref": "#/definitions/versionInfo"
+        }
+      },
+      "x-go-name": "AlertmanagerStatus",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+    },
+    "clusterStatus": {
+      "description": "ClusterStatus cluster status",
+      "type": "object",
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "name": {
+          "description": "name",
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "peers": {
+          "description": "peers",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/peerStatus"
+          },
+          "x-go-name": "Peers"
+        },
+        "status": {
+          "description": "status",
+          "type": "string",
+          "enum": [
+            "[ready settling disabled]"
+          ],
+          "x-go-name": "Status"
+        }
+      },
+      "x-go-name": "ClusterStatus",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+    },
     "discoveryBase": {
       "type": "object",
       "properties": {
@@ -1984,6 +2424,154 @@
     "duration": {
       "$ref": "#/definitions/Duration"
     },
+    "gettableAlert": {
+      "description": "GettableAlert gettable alert",
+      "type": "object",
+      "required": [
+        "labels",
+        "annotations",
+        "endsAt",
+        "fingerprint",
+        "receivers",
+        "startsAt",
+        "status",
+        "updatedAt"
+      ],
+      "properties": {
+        "annotations": {
+          "$ref": "#/definitions/labelSet"
+        },
+        "endsAt": {
+          "description": "ends at",
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "EndsAt"
+        },
+        "fingerprint": {
+          "description": "fingerprint",
+          "type": "string",
+          "x-go-name": "Fingerprint"
+        },
+        "generatorURL": {
+          "description": "generator URL\nFormat: uri",
+          "type": "string",
+          "format": "uri",
+          "x-go-name": "GeneratorURL"
+        },
+        "labels": {
+          "$ref": "#/definitions/labelSet"
+        },
+        "receivers": {
+          "description": "receivers",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/receiver"
+          },
+          "x-go-name": "Receivers"
+        },
+        "startsAt": {
+          "description": "starts at",
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "StartsAt"
+        },
+        "status": {
+          "$ref": "#/definitions/alertStatus"
+        },
+        "updatedAt": {
+          "description": "updated at",
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "UpdatedAt"
+        }
+      },
+      "x-go-name": "GettableAlert",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+    },
+    "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/gettableAlert"
+      },
+      "x-go-name": "GettableAlerts",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+    },
+    "gettableSilence": {
+      "description": "GettableSilence gettable silence",
+      "type": "object",
+      "required": [
+        "comment",
+        "createdBy",
+        "endsAt",
+        "matchers",
+        "startsAt",
+        "id",
+        "status",
+        "updatedAt"
+      ],
+      "properties": {
+        "comment": {
+          "description": "comment",
+          "type": "string",
+          "x-go-name": "Comment"
+        },
+        "createdBy": {
+          "description": "created by",
+          "type": "string",
+          "x-go-name": "CreatedBy"
+        },
+        "endsAt": {
+          "description": "ends at",
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "EndsAt"
+        },
+        "id": {
+          "description": "id",
+          "type": "string",
+          "x-go-name": "ID"
+        },
+        "matchers": {
+          "$ref": "#/definitions/matchers"
+        },
+        "startsAt": {
+          "description": "starts at",
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "StartsAt"
+        },
+        "status": {
+          "$ref": "#/definitions/silenceStatus"
+        },
+        "updatedAt": {
+          "description": "updated at",
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "UpdatedAt"
+        }
+      },
+      "x-go-name": "GettableSilence",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+    },
+    "gettableSilences": {
+      "description": "GettableSilences gettable silences",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/gettableSilence"
+      },
+      "x-go-name": "GettableSilences",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+    },
+    "labelSet": {
+      "description": "LabelSet label set",
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "x-go-name": "LabelSet",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+    },
     "labels": {
       "description": "The custom marshaling for labels.Labels ends up doing this anyways.",
       "type": "object",
@@ -1992,6 +2580,275 @@
         "type": "string"
       },
       "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
+    "matcher": {
+      "description": "Matcher matcher",
+      "type": "object",
+      "required": [
+        "isRegex",
+        "name",
+        "value"
+      ],
+      "properties": {
+        "isRegex": {
+          "description": "is regex",
+          "type": "boolean",
+          "x-go-name": "IsRegex"
+        },
+        "name": {
+          "description": "name",
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "value": {
+          "description": "value",
+          "type": "string",
+          "x-go-name": "Value"
+        }
+      },
+      "x-go-name": "Matcher",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+    },
+    "matchers": {
+      "description": "Matchers matchers",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/matcher"
+      },
+      "x-go-name": "Matchers",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+    },
+    "peerStatus": {
+      "description": "PeerStatus peer status",
+      "type": "object",
+      "required": [
+        "address",
+        "name"
+      ],
+      "properties": {
+        "address": {
+          "description": "address",
+          "type": "string",
+          "x-go-name": "Address"
+        },
+        "name": {
+          "description": "name",
+          "type": "string",
+          "x-go-name": "Name"
+        }
+      },
+      "x-go-name": "PeerStatus",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+    },
+    "postableAlert": {
+      "description": "PostableAlert postable alert",
+      "type": "object",
+      "required": [
+        "labels"
+      ],
+      "properties": {
+        "annotations": {
+          "$ref": "#/definitions/labelSet"
+        },
+        "endsAt": {
+          "description": "ends at\nFormat: date-time",
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "EndsAt"
+        },
+        "generatorURL": {
+          "description": "generator URL\nFormat: uri",
+          "type": "string",
+          "format": "uri",
+          "x-go-name": "GeneratorURL"
+        },
+        "labels": {
+          "$ref": "#/definitions/labelSet"
+        },
+        "startsAt": {
+          "description": "starts at\nFormat: date-time",
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "StartsAt"
+        }
+      },
+      "x-go-name": "PostableAlert",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+    },
+    "postableAlerts": {
+      "description": "PostableAlerts postable alerts",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/postableAlert"
+      },
+      "x-go-name": "PostableAlerts",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+    },
+    "postableSilence": {
+      "description": "PostableSilence postable silence",
+      "type": "object",
+      "required": [
+        "comment",
+        "createdBy",
+        "endsAt",
+        "matchers",
+        "startsAt"
+      ],
+      "properties": {
+        "comment": {
+          "description": "comment",
+          "type": "string",
+          "x-go-name": "Comment"
+        },
+        "createdBy": {
+          "description": "created by",
+          "type": "string",
+          "x-go-name": "CreatedBy"
+        },
+        "endsAt": {
+          "description": "ends at",
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "EndsAt"
+        },
+        "id": {
+          "description": "id",
+          "type": "string",
+          "x-go-name": "ID"
+        },
+        "matchers": {
+          "$ref": "#/definitions/matchers"
+        },
+        "startsAt": {
+          "description": "starts at",
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "StartsAt"
+        }
+      },
+      "x-go-name": "PostableSilence",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+    },
+    "receiver": {
+      "description": "Receiver receiver",
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "description": "name",
+          "type": "string",
+          "x-go-name": "Name"
+        }
+      },
+      "x-go-name": "Receiver",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+    },
+    "silence": {
+      "description": "Silence silence",
+      "type": "object",
+      "required": [
+        "comment",
+        "createdBy",
+        "endsAt",
+        "matchers",
+        "startsAt"
+      ],
+      "properties": {
+        "comment": {
+          "description": "comment",
+          "type": "string",
+          "x-go-name": "Comment"
+        },
+        "createdBy": {
+          "description": "created by",
+          "type": "string",
+          "x-go-name": "CreatedBy"
+        },
+        "endsAt": {
+          "description": "ends at",
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "EndsAt"
+        },
+        "matchers": {
+          "$ref": "#/definitions/matchers"
+        },
+        "startsAt": {
+          "description": "starts at",
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "StartsAt"
+        }
+      },
+      "x-go-name": "Silence",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+    },
+    "silenceStatus": {
+      "description": "SilenceStatus silence status",
+      "type": "object",
+      "required": [
+        "state"
+      ],
+      "properties": {
+        "state": {
+          "description": "state",
+          "type": "string",
+          "enum": [
+            "[expired active pending]"
+          ],
+          "x-go-name": "State"
+        }
+      },
+      "x-go-name": "SilenceStatus",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+    },
+    "versionInfo": {
+      "description": "VersionInfo version info",
+      "type": "object",
+      "required": [
+        "branch",
+        "buildDate",
+        "buildUser",
+        "goVersion",
+        "revision",
+        "version"
+      ],
+      "properties": {
+        "branch": {
+          "description": "branch",
+          "type": "string",
+          "x-go-name": "Branch"
+        },
+        "buildDate": {
+          "description": "build date",
+          "type": "string",
+          "x-go-name": "BuildDate"
+        },
+        "buildUser": {
+          "description": "build user",
+          "type": "string",
+          "x-go-name": "BuildUser"
+        },
+        "goVersion": {
+          "description": "go version",
+          "type": "string",
+          "x-go-name": "GoVersion"
+        },
+        "revision": {
+          "description": "revision",
+          "type": "string",
+          "x-go-name": "Revision"
+        },
+        "version": {
+          "description": "version",
+          "type": "string",
+          "x-go-name": "Version"
+        }
+      },
+      "x-go-name": "VersionInfo",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     }
   },
   "securityDefinitions": {
