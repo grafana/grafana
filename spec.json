@@ -16,114 +16,6 @@
   },
   "basePath": "/api/v1",
   "paths": {
-    "/api/alert-notifications": {
-      "post": {
-        "description": "creates an alert notification channel",
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "grafana"
-        ],
-        "operationId": "RoutePostNotifiers",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/CreateAlertNotificationCommand"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Ok",
-            "schema": {
-              "$ref": "#/definitions/Ok"
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "schema": {
-              "$ref": "#/definitions/Unauthorized"
-            }
-          },
-          "409": {
-            "description": "Conflict",
-            "schema": {
-              "$ref": "#/definitions/Conflict"
-            }
-          },
-          "500": {
-            "description": "Err",
-            "schema": {
-              "$ref": "#/definitions/Err"
-            }
-          }
-        }
-      }
-    },
-    "/api/dashboards/db": {
-      "post": {
-        "description": "creates a dashboard with alerts",
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "grafana"
-        ],
-        "operationId": "RoutePostGrDashboards",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/SaveDashboardCommand"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Ok",
-            "schema": {
-              "$ref": "#/definitions/Ok"
-            }
-          },
-          "400": {
-            "description": "BadRequest",
-            "schema": {
-              "$ref": "#/definitions/BadRequest"
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "schema": {
-              "$ref": "#/definitions/Unauthorized"
-            }
-          },
-          "403": {
-            "description": "PermissionDenied",
-            "schema": {
-              "$ref": "#/definitions/PermissionDenied"
-            }
-          },
-          "412": {
-            "description": "PreconditionFailed",
-            "schema": {
-              "$ref": "#/definitions/PreconditionFailed"
-            }
-          },
-          "500": {
-            "description": "Err",
-            "schema": {
-              "$ref": "#/definitions/Err"
-            }
-          }
-        }
-      }
-    },
     "/api/v1/alerts": {
       "get": {
         "description": "gets an Alerting config",
@@ -238,9 +130,9 @@
         ],
         "responses": {
           "202": {
-            "description": "RuleGroupConfigResponse",
+            "description": "NamespaceConfigResponse",
             "schema": {
-              "$ref": "#/definitions/RuleGroupConfigResponse"
+              "$ref": "#/definitions/NamespaceConfigResponse"
             }
           }
         }
@@ -648,10 +540,6 @@
       },
       "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     },
-    "BadRequest": {
-      "type": "object",
-      "x-go-package": "github.com/grafana/alerting-api/pkg/models"
-    },
     "BasicAuth": {
       "type": "object",
       "title": "BasicAuth contains basic HTTP authentication credentials.",
@@ -711,10 +599,6 @@
       },
       "x-go-package": "github.com/prometheus/alertmanager/config"
     },
-    "Conflict": {
-      "type": "object",
-      "x-go-package": "github.com/grafana/alerting-api/pkg/models"
-    },
     "CreateAlertNotificationCommand": {
       "type": "object",
       "properties": {
@@ -758,70 +642,6 @@
         "uid": {
           "type": "string",
           "x-go-name": "Uid"
-        }
-      },
-      "$ref": "#/definitions/CreateAlertNotificationCommand"
-    },
-    "Dashboard": {
-      "description": "Dashboard model",
-      "type": "object",
-      "properties": {
-        "Created": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "CreatedBy": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Data": {
-          "$ref": "#/definitions/Json"
-        },
-        "FolderId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "GnetId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "HasAcl": {
-          "type": "boolean"
-        },
-        "Id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "IsFolder": {
-          "type": "boolean"
-        },
-        "OrgId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "PluginId": {
-          "type": "string"
-        },
-        "Slug": {
-          "type": "string"
-        },
-        "Title": {
-          "type": "string"
-        },
-        "Uid": {
-          "type": "string"
-        },
-        "Updated": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "UpdatedBy": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Version": {
-          "type": "integer",
-          "format": "int64"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
@@ -895,18 +715,6 @@
       },
       "x-go-package": "github.com/prometheus/alertmanager/config"
     },
-    "Err": {
-      "type": "object",
-      "properties": {
-        "Error": {
-          "type": "string"
-        },
-        "Message": {
-          "type": "string"
-        }
-      },
-      "x-go-package": "github.com/grafana/alerting-api/pkg/models"
-    },
     "ErrorType": {
       "type": "string",
       "title": "ErrorType models the different API error types.",
@@ -950,10 +758,12 @@
       "type": "object",
       "properties": {
         "condition": {
+          "description": "Condition is the refID of the query or expression to be evaluated",
           "type": "string",
           "x-go-name": "Condition"
         },
         "data": {
+          "description": "Data is an array of the queries and expressions",
           "type": "array",
           "items": {
             "$ref": "#/definitions/AlertQuery"
@@ -968,11 +778,6 @@
           ],
           "x-go-name": "ExecutionErrorState"
         },
-        "intervalSeconds": {
-          "type": "integer",
-          "format": "int64",
-          "x-go-name": "IntervalSeconds"
-        },
         "no_data_state": {
           "type": "string",
           "enum": [
@@ -982,11 +787,6 @@
             "OK"
           ],
           "x-go-name": "NoDataState"
-        },
-        "org_id": {
-          "type": "integer",
-          "format": "int64",
-          "x-go-name": "OrgID"
         },
         "settings": {
           "type": "object",
@@ -1000,7 +800,7 @@
           "x-go-name": "Title"
         },
         "uid": {
-          "description": "UID exists is set only for existing definitins",
+          "description": "UID is set only for existing definitions",
           "type": "string",
           "x-go-name": "UID"
         }
@@ -1289,10 +1089,6 @@
       },
       "x-go-package": "github.com/prometheus/alertmanager/config"
     },
-    "Ok": {
-      "type": "object",
-      "x-go-package": "github.com/grafana/alerting-api/pkg/models"
-    },
     "OpsGenieConfig": {
       "type": "object",
       "title": "OpsGenieConfig configures notifications via OpsGenie.",
@@ -1481,14 +1277,6 @@
       },
       "x-go-package": "github.com/prometheus/alertmanager/config"
     },
-    "PermissionDenied": {
-      "type": "object",
-      "x-go-package": "github.com/grafana/alerting-api/pkg/models"
-    },
-    "PreconditionFailed": {
-      "type": "object",
-      "x-go-package": "github.com/grafana/alerting-api/pkg/models"
-    },
     "PushoverConfig": {
       "type": "object",
       "properties": {
@@ -1546,6 +1334,12 @@
       "type": "object",
       "title": "Receiver configuration provides configuration on how to contact a receiver.",
       "properties": {
+        "GrafanaManagedReceivers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/GrafanaReceiver"
+          }
+        },
         "email_configs": {
           "type": "array",
           "items": {
@@ -1608,7 +1402,7 @@
           "x-go-name": "WechatConfigs"
         }
       },
-      "x-go-package": "github.com/prometheus/alertmanager/config"
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     },
     "Regexp": {
       "description": "A Regexp is safe for concurrent use by multiple goroutines,\nexcept for configuration methods, such as Longest.",
@@ -1867,44 +1661,6 @@
       "type": "string",
       "title": "RuleType models the type of a rule.",
       "x-go-package": "github.com/prometheus/client_golang/api/prometheus/v1"
-    },
-    "SaveDashboardCommand": {
-      "type": "object",
-      "properties": {
-        "Result": {
-          "$ref": "#/definitions/Dashboard"
-        },
-        "UpdatedAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "dashboard": {
-          "$ref": "#/definitions/Json"
-        },
-        "folderId": {
-          "type": "integer",
-          "format": "int64",
-          "x-go-name": "FolderId"
-        },
-        "isFolder": {
-          "type": "boolean",
-          "x-go-name": "IsFolder"
-        },
-        "message": {
-          "type": "string",
-          "x-go-name": "Message"
-        },
-        "overwrite": {
-          "type": "boolean",
-          "x-go-name": "Overwrite"
-        },
-        "userId": {
-          "type": "integer",
-          "format": "int64",
-          "x-go-name": "UserId"
-        }
-      },
-      "$ref": "#/definitions/SaveDashboardCommand"
     },
     "Secret": {
       "type": "string",
@@ -2177,40 +1933,28 @@
       },
       "x-go-package": "github.com/prometheus/common/config"
     },
-    "Unauthorized": {
-      "type": "object",
-      "x-go-package": "github.com/grafana/alerting-api/pkg/models"
-    },
     "UpsertAlertDefinitionCommand": {
       "type": "object",
       "properties": {
         "condition": {
+          "description": "Condition is the refID of the query or expression to be evaluated",
           "type": "string",
           "x-go-name": "Condition"
         },
         "data": {
+          "description": "Data is an array of the queries and expressions",
           "type": "array",
           "items": {
             "$ref": "#/definitions/AlertQuery"
           },
           "x-go-name": "Data"
         },
-        "intervalSeconds": {
-          "type": "integer",
-          "format": "int64",
-          "x-go-name": "IntervalSeconds"
-        },
-        "org_id": {
-          "type": "integer",
-          "format": "int64",
-          "x-go-name": "OrgID"
-        },
         "title": {
           "type": "string",
           "x-go-name": "Title"
         },
         "uid": {
-          "description": "UID exists is set only for existing definitins",
+          "description": "UID is set only for existing definitions",
           "type": "string",
           "x-go-name": "UID"
         }

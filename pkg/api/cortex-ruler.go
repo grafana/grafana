@@ -34,7 +34,7 @@ import (
 //     - application/yaml
 //
 //     Responses:
-//       202: RuleGroupConfigResponse
+//       202: NamespaceConfigResponse
 
 // swagger:route Delete /api/v1/rules/{Namespace} RulerConfig RouteDeleteNamespaceRulesConfig
 //
@@ -107,11 +107,15 @@ type ExtendedRuleNode struct {
 https://github.com/grafana/grafana/blob/debb82e12417e82a0e2bd09e1a450065f884c1bc/pkg/services/ngalert/models.go#L85
 type UpsertAlertDefinitionCommand struct {
 	Title           string            `json:"title"`
-	OrgID           int64             `json:"org_id"`
+	// OrgID is an obsolete field (it will derive from the x-grafana-org-id header)
+	OrgID           int64             `json:"-"`
+	// Condition is the refID of the query or expression to be evaluated
 	Condition       string            `json:"condition"`
+	// Data is an array of the queries and expressions
 	Data            []eval.AlertQuery `json:"data"`
-	IntervalSeconds *int64            `json:"intervalSeconds"`
-	// UID exists is set only for existing definitins
+	// IntervalSeconds is an obsolete field (it will derive from the ruleGroup interval)
+	IntervalSeconds *int64            `json:"-"`
+	// UID is set only for existing definitions
 	UID string `json:"uid"`
 
 	Result *ngalert.AlertDefinition `json:"-"`
@@ -143,4 +147,8 @@ type ExtendedUpsertAlertDefinitionCommand struct {
 	NoDataState         NoDataState            `json:"no_data_state"`
 	ExecutionErrorState ExecutionErrorState    `json:"exec_err_state"`
 	Settings            map[string]interface{} `json:"settings"`
+	// internal state
+	FolderUID string `json:"-"`
+	DatasourceUIDs []string `json:"-"`
+	RuleGroupUID string `json:"-"`
 }
