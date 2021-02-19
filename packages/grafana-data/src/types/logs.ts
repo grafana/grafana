@@ -62,6 +62,7 @@ export interface LogRowModel {
   // Actual log line
   entry: string;
   hasAnsi: boolean;
+  hasUnescapedNewlines: boolean;
   labels: Labels;
   logLevel: LogLevel;
   raw: string;

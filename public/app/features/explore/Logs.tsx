@@ -29,6 +29,8 @@ import {
   InlineSwitch,
   withTheme,
   stylesFactory,
+  Icon,
+  Tooltip,
 } from '@grafana/ui';
 import store from 'app/core/store';
 import { ExploreGraphPanel } from './ExploreGraphPanel';
@@ -89,11 +91,16 @@ interface State {
   logsSortOrder: LogsSortOrder | null;
   isFlipping: boolean;
   showDetectedFields: string[];
+  hasUnescapedNewlines: boolean;
+  escapedNewlines: boolean;
+  isEscaping: boolean;
 }
 
 export class UnthemedLogs extends PureComponent<Props, State> {
   flipOrderTimer: NodeJS.Timeout;
   cancelFlippingTimer: NodeJS.Timeout;
+  escapeNewlinesTimer: NodeJS.Timeout;
+  cancelEscapeNewlinesTimer: NodeJS.Timeout;
 
   state: State = {
     showLabels: store.getBool(SETTINGS_KEYS.showLabels, false),
@@ -102,11 +109,16 @@ export class UnthemedLogs extends PureComponent<Props, State> {
     logsSortOrder: null,
     isFlipping: false,
     showDetectedFields: [],
+    hasUnescapedNewlines: this.props.logRows.some((r) => r.hasUnescapedNewlines),
+    escapedNewlines: false,
+    isEscaping: false,
   };
 
   componentWillUnmount() {
     clearTimeout(this.flipOrderTimer);
     clearTimeout(this.cancelFlippingTimer);
+    clearTimeout(this.escapeNewlinesTimer);
+    clearTimeout(this.cancelEscapeNewlinesTimer);
   }
 
   onChangeLogsSortOrder = () => {
@@ -121,6 +133,17 @@ export class UnthemedLogs extends PureComponent<Props, State> {
       });
     }, 0);
     this.cancelFlippingTimer = setTimeout(() => this.setState({ isFlipping: false }), 1000);
+  };
+
+  onEscapeNewlines = () => {
+    this.setState({ isEscaping: true });
+    // we are using setTimeout here to make sure that disabled button is rendered before the rendering of escaped logs
+    this.escapeNewlinesTimer = setTimeout(() => {
+      this.setState((prevState) => ({
+        escapedNewlines: !prevState.escapedNewlines,
+      }));
+    }, 0);
+    this.cancelEscapeNewlinesTimer = setTimeout(() => this.setState({ isEscaping: false }), 2000);
   };
 
   onChangeDedup = (dedup: LogsDedupStrategy) => {
@@ -237,7 +260,17 @@ export class UnthemedLogs extends PureComponent<Props, State> {
       theme,
     } = this.props;
 
-    const { showLabels, showTime, wrapLogMessage, logsSortOrder, isFlipping, showDetectedFields } = this.state;
+    const {
+      showLabels,
+      showTime,
+      wrapLogMessage,
+      logsSortOrder,
+      isFlipping,
+      showDetectedFields,
+      hasUnescapedNewlines,
+      isEscaping,
+      escapedNewlines,
+    } = this.state;
 
     const hasData = logRows && logRows.length > 0;
     const dedupCount = dedupedRows
@@ -346,6 +379,26 @@ export class UnthemedLogs extends PureComponent<Props, State> {
           />
         )}
 
+        {hasUnescapedNewlines && (
+          <MetaInfoText
+            metaItems={[
+              {
+                label: 'Your logs might have incorrectly escaped newlines',
+                value: (
+                  <Tooltip content="Experimental feature: Your logs might not be correctly escaped" placement="right">
+                    <Button variant="secondary" size="sm" onClick={this.onEscapeNewlines} disabled={isEscaping}>
+                      <span>
+                        {isEscaping ? 'Escaping...' : escapedNewlines ? 'Remove escaping' : 'Escape newlines'}&nbsp;
+                      </span>
+                      <Icon name="exclamation-triangle" className="muted" size="sm" />
+                    </Button>
+                  </Tooltip>
+                ),
+              },
+            ]}
+          />
+        )}
+
         <LogRows
           logRows={logRows}
           deduplicatedRows={dedupedRows}
@@ -358,6 +411,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
           showContextToggle={showContextToggle}
           showLabels={showLabels}
           showTime={showTime}
+          escapedNewlines={escapedNewlines}
           wrapLogMessage={wrapLogMessage}
           timeZone={timeZone}
           getFieldLinks={getFieldLinks}

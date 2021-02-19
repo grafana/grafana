@@ -37,6 +37,7 @@ export interface Props extends Themeable {
   showDetectedFields?: string[];
   onClickShowDetectedField?: (key: string) => void;
   onClickHideDetectedField?: (key: string) => void;
+  escapedNewlines: boolean;
 }
 
 interface State {
@@ -105,6 +106,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       showDetectedFields,
       onClickShowDetectedField,
       onClickHideDetectedField,
+      escapedNewlines,
     } = this.props;
     const { renderAll } = this.state;
     const { logsRowsTable, logsRowsHorizontalScroll } = getLogRowStyles(theme);
@@ -156,6 +158,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   onClickHideDetectedField={onClickHideDetectedField}
                   getFieldLinks={getFieldLinks}
                   logsSortOrder={logsSortOrder}
+                  escapedNewlines={escapedNewlines}
                 />
               ))}
             {hasData &&
@@ -180,6 +183,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   onClickHideDetectedField={onClickHideDetectedField}
                   getFieldLinks={getFieldLinks}
                   logsSortOrder={logsSortOrder}
+                  escapedNewlines={escapedNewlines}
                 />
               ))}
             {hasData && !renderAll && (
