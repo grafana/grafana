@@ -2,7 +2,6 @@ package api
 
 import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
-	promapi "github.com/prometheus/client_golang/api/prometheus/v1/api"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/pkg/rulefmt"
 )
@@ -23,6 +22,7 @@ import (
 //
 //     Consumes:
 //     - application/json
+//     - application/yaml
 //
 //     Responses:
 //       202: Ack
