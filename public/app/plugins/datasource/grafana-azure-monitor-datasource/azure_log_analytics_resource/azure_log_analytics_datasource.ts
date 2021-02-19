@@ -31,12 +31,12 @@ export default class azureResourceLogAnalyticsDatasource extends DataSourceWithB
 
     switch (this.instanceSettings.jsonData.cloudName) {
       case 'govazuremonitor': // Azure US Government
-        this.baseUrl = '/govloganalyticsazure';
+        this.baseUrl = '/govresourceloganalyticsazure';
         break;
       case 'germanyazuremonitor': // Azure Germany
         break;
       case 'chinaazuremonitor': // Azure China
-        this.baseUrl = '/chinaloganalyticsazure';
+        this.baseUrl = '/chinaresourceloganalyticsazure';
         break;
       default:
         // Azure Global
@@ -46,7 +46,7 @@ export default class azureResourceLogAnalyticsDatasource extends DataSourceWithB
     this.url = instanceSettings.url || '';
     this.defaultOrFirstResource = this.instanceSettings.jsonData.logAnalyticsDefaultResource || '';
 
-    this.setWorkspaceUrl();
+    this.setResourceUrl();
   }
 
   isConfigured(): boolean {
@@ -57,7 +57,7 @@ export default class azureResourceLogAnalyticsDatasource extends DataSourceWithB
     );
   }
 
-  setWorkspaceUrl() {
+  setResourceUrl() {
     if (!!this.instanceSettings.jsonData.subscriptionId || !!this.instanceSettings.jsonData.azureLogAnalyticsSameAs) {
       this.subscriptionId = this.instanceSettings.jsonData.subscriptionId;
       const azureCloud = this.instanceSettings.jsonData.cloudName || 'azuremonitor';
@@ -67,16 +67,16 @@ export default class azureResourceLogAnalyticsDatasource extends DataSourceWithB
 
       switch (this.instanceSettings.jsonData.cloudName) {
         case 'govazuremonitor': // Azure US Government
-          this.azureMonitorUrl = `/govworkspacesloganalytics/subscriptions`;
+          this.azureMonitorUrl = `/govresourceloganalyticsazure/subscriptions`;
           break;
         case 'germanyazuremonitor': // Azure Germany
           break;
         case 'chinaazuremonitor': // Azure China
-          this.azureMonitorUrl = `/chinaworkspacesloganalytics/subscriptions`;
+          this.azureMonitorUrl = `/chinaresourceloganalyticsazure/subscriptions`;
           break;
         default:
           // Azure Global
-          this.azureMonitorUrl = `/workspacesloganalytics/subscriptions`;
+          this.azureMonitorUrl = `/resourceloganalyticsazure/subscriptions`;
       }
     }
   }
@@ -92,16 +92,6 @@ export default class azureResourceLogAnalyticsDatasource extends DataSourceWithB
     return (
       _.map(result.data.data.rows, (val: any) => {
         return { text: val[1], value: val[0] };
-      }) || []
-    );
-  }
-
-  async getWorkspaces(subscription: string): Promise<AzureLogsVariable[]> {
-    const response = await this.getWorkspaceList(subscription);
-
-    return (
-      _.map(response.data.value, (val: any) => {
-        return { text: val.name, value: val.properties.customerId };
       }) || []
     );
   }
