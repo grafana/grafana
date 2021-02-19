@@ -20,6 +20,7 @@ const setup = (propOverrides?: Partial<Props>, rowOverrides?: Partial<LogRowMode
       timeLocal: '',
       timeUtc: '',
       hasAnsi: false,
+      hasUnescapedNewlines: false,
       entry: '',
       raw: '',
       uid: '0',
