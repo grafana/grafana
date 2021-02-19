@@ -199,6 +199,7 @@ github.com/gorilla/websocket
 github.com/gosimple/slug
 # github.com/grafana/grafana v1.9.2-0.20210217182004-6c4be29655a6
 ## explicit
+github.com/grafana/grafana/pkg/api/dtos
 github.com/grafana/grafana/pkg/bus
 github.com/grafana/grafana/pkg/cmd/grafana-cli/logger
 github.com/grafana/grafana/pkg/components/gtime
