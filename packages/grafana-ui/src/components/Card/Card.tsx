@@ -299,13 +299,15 @@ const Meta: FC<ChildProps & { separator?: string }> = memo(({ children, styles, 
 
   // Join meta data elements by separator
   if (Array.isArray(children) && separator) {
-    meta = React.Children.toArray(children).reduce((prev, curr, i) => [
-      prev,
-      <span key={`separator_${i}`} className={styles?.separator}>
-        {separator}
-      </span>,
-      curr,
-    ]);
+    meta = React.Children.toArray(children)
+      .filter(Boolean)
+      .reduce((prev, curr, i) => [
+        prev,
+        <span key={`separator_${i}`} className={styles?.separator}>
+          {separator}
+        </span>,
+        curr,
+      ]);
   }
   return <div className={styles?.metadata}>{meta}</div>;
 });
