@@ -157,7 +157,7 @@
             "name": "Body",
             "in": "body",
             "schema": {
-              "$ref": "#/definitions/AlertingConfig"
+              "$ref": "#/definitions/UserConfig"
             }
           }
         ],
@@ -354,45 +354,11 @@
       },
       "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     },
-    "AlertingConfig": {
-      "type": "object",
-      "properties": {
-        "global": {
-          "$ref": "#/definitions/GlobalConfig"
-        },
-        "inhibit_rules": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/InhibitRule"
-          },
-          "x-go-name": "InhibitRules"
-        },
-        "receivers": {
-          "description": "Override with our superset receiver type",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Receiver"
-          },
-          "x-go-name": "Receivers"
-        },
-        "route": {
-          "$ref": "#/definitions/Route"
-        },
-        "templates": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "x-go-name": "Templates"
-        }
-      },
-      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
-    },
     "AlertingConfigResponse": {
       "type": "object",
       "properties": {
         "Body": {
-          "$ref": "#/definitions/AlertingConfig"
+          "$ref": "#/definitions/UserConfig"
         }
       },
       "x-go-package": "github.com/grafana/alerting-api/pkg/api"
@@ -456,6 +422,114 @@
       },
       "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     },
+    "ApiAlertingConfig": {
+      "type": "object",
+      "properties": {
+        "global": {
+          "$ref": "#/definitions/GlobalConfig"
+        },
+        "inhibit_rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/InhibitRule"
+          },
+          "x-go-name": "InhibitRules"
+        },
+        "receivers": {
+          "description": "Override with our superset receiver type",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ApiReceiver"
+          },
+          "x-go-name": "Receivers"
+        },
+        "route": {
+          "$ref": "#/definitions/Route"
+        },
+        "templates": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Templates"
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
+    "ApiReceiver": {
+      "type": "object",
+      "properties": {
+        "email_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/EmailConfig"
+          },
+          "x-go-name": "EmailConfigs"
+        },
+        "grafana_managed_receiver_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/GrafanaReceiver"
+          },
+          "x-go-name": "GrafanaManagedReceivers"
+        },
+        "name": {
+          "description": "A unique identifier for this receiver.",
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "opsgenie_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OpsGenieConfig"
+          },
+          "x-go-name": "OpsGenieConfigs"
+        },
+        "pagerduty_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PagerdutyConfig"
+          },
+          "x-go-name": "PagerdutyConfigs"
+        },
+        "pushover_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PushoverConfig"
+          },
+          "x-go-name": "PushoverConfigs"
+        },
+        "slack_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SlackConfig"
+          },
+          "x-go-name": "SlackConfigs"
+        },
+        "victorops_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/VictorOpsConfig"
+          },
+          "x-go-name": "VictorOpsConfigs"
+        },
+        "webhook_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/WebhookConfig"
+          },
+          "x-go-name": "WebhookConfigs"
+        },
+        "wechat_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/WechatConfig"
+          },
+          "x-go-name": "WechatConfigs"
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
     "BadRequest": {
       "type": "object",
       "x-go-package": "github.com/grafana/alerting-api/pkg/models"
@@ -480,7 +554,7 @@
       "type": "object",
       "properties": {
         "Body": {
-          "$ref": "#/definitions/AlertingConfig"
+          "$ref": "#/definitions/UserConfig"
         }
       },
       "x-go-package": "github.com/grafana/alerting-api/pkg/api"
@@ -1191,12 +1265,6 @@
       "type": "object",
       "title": "Receiver configuration provides configuration on how to contact a receiver.",
       "properties": {
-        "GrafanaManagedReceivers": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/GrafanaReceiver"
-          }
-        },
         "email_configs": {
           "type": "array",
           "items": {
@@ -1259,7 +1327,7 @@
           "x-go-name": "WechatConfigs"
         }
       },
-      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+      "x-go-package": "github.com/prometheus/alertmanager/config"
     },
     "Regexp": {
       "description": "A Regexp is safe for concurrent use by multiple goroutines,\nexcept for configuration methods, such as Longest.",
@@ -1746,6 +1814,22 @@
     "Unauthorized": {
       "type": "object",
       "x-go-package": "github.com/grafana/alerting-api/pkg/models"
+    },
+    "UserConfig": {
+      "type": "object",
+      "properties": {
+        "alertmanager_config": {
+          "$ref": "#/definitions/ApiAlertingConfig"
+        },
+        "template_files": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "TemplateFiles"
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     },
     "Userinfo": {
       "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",

@@ -32,7 +32,13 @@ import (
 // swagger:parameters RoutePostAlertingConfig
 type BodyAlertingConfig struct {
 	// in:body
-	Body AlertingConfig
+	Body UserConfig
+}
+
+// swagger:model
+type UserConfig struct {
+	TemplateFiles      map[string]string `yaml:"template_files" json:"template_files"`
+	AlertmanagerConfig ApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
 }
 
 // swagger:model
@@ -40,17 +46,16 @@ type AlertingConfigResponse struct {
 	BodyAlertingConfig
 }
 
-// swagger:model
-type AlertingConfig struct {
+type ApiAlertingConfig struct {
 	config.Config
 
 	// Override with our superset receiver type
-	Receivers []*Receiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
+	Receivers []*ApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
 }
 
 type GrafanaReceiver models.CreateAlertNotificationCommand
 
-type Receiver struct {
+type ApiReceiver struct {
 	config.Receiver
-	GrafanaManagedReceivers []*GrafanaReceiver
+	GrafanaManagedReceivers []*GrafanaReceiver `yaml:"grafana_managed_receiver_configs,omitempty" json:"grafana_managed_receiver_configs,omitempty"`
 }
