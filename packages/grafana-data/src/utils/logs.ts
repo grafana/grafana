@@ -3,7 +3,6 @@ import { countBy, chain, escapeRegExp } from 'lodash';
 import { LogLevel, LogRowModel, LogLabelStatsModel, LogsParser, LogsModel, LogsSortOrder } from '../types/logs';
 import { DataFrame, FieldType } from '../types/index';
 import { ArrayVector } from '../vector/ArrayVector';
-import { StringifyOptions } from 'querystring';
 
 // This matches:
 // first a label from start of the string or first white space, then any word chars until "="
