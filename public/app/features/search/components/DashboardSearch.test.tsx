@@ -50,6 +50,7 @@ describe('DashboardSearch', () => {
       folderIds: [],
       layout: SearchLayout.Folders,
       sort: undefined,
+      prevSort: null,
     });
   });
 
@@ -71,6 +72,7 @@ describe('DashboardSearch', () => {
       folderIds: [],
       layout: SearchLayout.Folders,
       sort: undefined,
+      prevSort: null,
     });
   });
 
@@ -110,6 +112,7 @@ describe('DashboardSearch', () => {
         folderIds: [],
         layout: SearchLayout.Folders,
         sort: undefined,
+        prevSort: null,
       })
     );
   });
