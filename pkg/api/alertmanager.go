@@ -75,7 +75,7 @@ import (
 // delete silence
 //
 //     Responses:
-//       200: Ok
+//       200: Ack
 //       400: ValidationError
 
 // swagger:parameters RouteCreateSilence

@@ -506,7 +506,10 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/Ok"
+            "description": "Ack",
+            "schema": {
+              "$ref": "#/definitions/Ack"
+            }
           },
           "400": {
             "description": "ValidationError",
