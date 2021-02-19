@@ -15,8 +15,8 @@ import (
 
 type AppPlugin struct {
 	FrontendPluginBase
-	Routes   []*AppPluginRoute `json:"routes"`
-	NoConfig bool              `json: "noConfig"`
+	Routes       []*AppPluginRoute `json:"routes"`
+	NoConfigPage bool              `json: "noConfigPage"`
 
 	FoundChildPlugins []*PluginInclude `json:"-"`
 	Pinned            bool             `json:"-"`
