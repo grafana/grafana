@@ -43,11 +43,11 @@ var builtInPolicyGrants = map[string][]string{
 }
 
 func (s *seeder) Seed(ctx context.Context, orgID int64) error {
-	err := s.seed(ctx, orgID, builtInPolicies)
+	err := s.seed(ctx, orgID, builtInPolicies, builtInPolicyGrants)
 	return err
 }
 
-func (s *seeder) seed(ctx context.Context, orgID int64, policies []PolicyDTO) error {
+func (s *seeder) seed(ctx context.Context, orgID int64, policies []PolicyDTO, policyGrants map[string][]string) error {
 	// FIXME: As this will run on startup, we want to optimize running this
 	existingPolicies, err := s.Service.GetPolicies(ctx, orgID)
 	if err != nil {
@@ -77,7 +77,7 @@ func (s *seeder) seed(ctx context.Context, orgID int64, policies []PolicyDTO) er
 			continue
 		}
 
-		if roles, exists := builtInPolicyGrants[policy.Name]; exists {
+		if roles, exists := policyGrants[policy.Name]; exists {
 			for _, role := range roles {
 				err := s.Service.AddBuiltinRolePolicy(ctx, orgID, policyID, role)
 				if err != nil {

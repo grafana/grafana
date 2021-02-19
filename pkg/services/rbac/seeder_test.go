@@ -55,7 +55,6 @@ func TestSeeder(t *testing.T) {
 	}
 
 	t.Run("create policy", func(t *testing.T) {
-		// Return <id, nil> when creating the policy.
 		id, err := s.createOrUpdatePolicy(
 			context.Background(),
 			v1,
@@ -64,22 +63,27 @@ func TestSeeder(t *testing.T) {
 		require.NoError(t, err)
 		assert.NotZero(t, id)
 
-		err = s.idempotentUpdatePermissions(context.Background(), id,
-			v1.Permissions,
-			nil,
-		)
-		require.NoError(t, err)
-
 		p, err := s.Service.GetPolicy(context.Background(), 1, id)
 		require.NoError(t, err)
+
+		lookup := permissionMap(p.Permissions)
+		assert.Contains(t, lookup, permissionTuple{
+			Permission: "ice_cream:eat",
+			Scope:      "flavor:vanilla",
+		})
+		assert.Contains(t, lookup, permissionTuple{
+			Permission: "ice_cream:eat",
+			Scope:      "flavor:chocolate",
+		})
+
 		policy := p.Policy()
 
 		t.Run("update to same version", func(t *testing.T) {
-			err := s.seed(context.Background(), 1, []PolicyDTO{v1})
+			err := s.seed(context.Background(), 1, []PolicyDTO{v1}, nil)
 			require.NoError(t, err)
 		})
 		t.Run("update to new policy version", func(t *testing.T) {
-			err := s.seed(context.Background(), 1, []PolicyDTO{v2})
+			err := s.seed(context.Background(), 1, []PolicyDTO{v2}, nil)
 			require.NoError(t, err)
 
 			p, err := s.Service.GetPolicy(context.Background(), 1, policy.Id)
