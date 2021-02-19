@@ -25,11 +25,7 @@ export const DataSourcesList: FC<Props> = ({ dataSources, layoutMode }) => {
                 <img src={dataSource.typeLogoUrl} alt={dataSource.name} />
               </Card.Figure>
               <Card.Meta>
-                {[
-                  dataSource.url,
-                  dataSource.type?.toUpperCase(),
-                  dataSource.isDefault && <Tag name={'default'} colorIndex={1} />,
-                ]}
+                {[dataSource.typeName, dataSource.url, dataSource.isDefault && <Tag name={'default'} colorIndex={1} />]}
               </Card.Meta>
             </Card>
           </li>
