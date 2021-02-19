@@ -132,8 +132,8 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Group("/user", func(userRoute routing.RouteRegister) {
 			userRoute.Get("/", authorize("users:read", "users:self"), routing.Wrap(GetSignedInUser))
 			userRoute.Put("/", authorize("users.userinfo:write", "users:self"), bind(models.UpdateUserCommand{}), routing.Wrap(UpdateSignedInUser))
-			userRoute.Post("/using/:id", authorize("orgs:switch", `orgs:{{index . ":id"}}`), routing.Wrap(UserSetUsingOrg))
-			userRoute.Get("/orgs", authorize("orgs:list"), routing.Wrap(GetSignedInUserOrgList))
+			userRoute.Post("/using/:id", reqSignedIn, routing.Wrap(UserSetUsingOrg))
+			userRoute.Get("/orgs", reqSignedIn, routing.Wrap(GetSignedInUserOrgList))
 			userRoute.Get("/teams", authorize("users.teams:read", "users:self"), routing.Wrap(GetSignedInUserTeamList))
 
 			userRoute.Post("/stars/dashboard/:id", routing.Wrap(StarDashboard))
