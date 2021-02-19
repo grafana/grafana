@@ -375,6 +375,56 @@
     "AlertGroups": {
       "$ref": "#/definitions/alertGroups"
     },
+    "AlertNotification": {
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "Created"
+        },
+        "disableResolveMessage": {
+          "type": "boolean",
+          "x-go-name": "DisableResolveMessage"
+        },
+        "frequency": {
+          "$ref": "#/definitions/Duration"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Id"
+        },
+        "isDefault": {
+          "type": "boolean",
+          "x-go-name": "IsDefault"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "secureSettings": {
+          "$ref": "#/definitions/SecureJsonData"
+        },
+        "sendReminder": {
+          "type": "boolean",
+          "x-go-name": "SendReminder"
+        },
+        "settings": {
+          "$ref": "#/definitions/Json"
+        },
+        "type": {
+          "type": "string",
+          "x-go-name": "Type"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "Updated"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
     "AlertResponse": {
       "type": "object",
       "properties": {
@@ -636,6 +686,53 @@
       },
       "x-go-package": "github.com/prometheus/alertmanager/config"
     },
+    "CreateAlertNotificationCommand": {
+      "type": "object",
+      "properties": {
+        "Result": {
+          "$ref": "#/definitions/AlertNotification"
+        },
+        "disableResolveMessage": {
+          "type": "boolean",
+          "x-go-name": "DisableResolveMessage"
+        },
+        "frequency": {
+          "type": "string",
+          "x-go-name": "Frequency"
+        },
+        "isDefault": {
+          "type": "boolean",
+          "x-go-name": "IsDefault"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "secureSettings": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "SecureSettings"
+        },
+        "sendReminder": {
+          "type": "boolean",
+          "x-go-name": "SendReminder"
+        },
+        "settings": {
+          "$ref": "#/definitions/Json"
+        },
+        "type": {
+          "type": "string",
+          "x-go-name": "Type"
+        },
+        "uid": {
+          "type": "string",
+          "x-go-name": "Uid"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
     "DashboardAclUpdateItem": {
       "type": "object",
       "properties": {
@@ -669,11 +766,6 @@
       "type": "integer",
       "format": "int64",
       "$ref": "#/definitions/Duration"
-    },
-    "ElementType": {
-      "type": "string",
-      "title": "ElementType is the type of element that can be rendered in the frontend.",
-      "x-go-package": "github.com/grafana/grafana/pkg/services/alerting"
     },
     "EmailConfig": {
       "type": "object",
@@ -817,7 +909,7 @@
       "x-go-package": "github.com/prometheus/alertmanager/config"
     },
     "GrafanaReceiver": {
-      "$ref": "#/definitions/NotifierPlugin"
+      "$ref": "#/definitions/CreateAlertNotificationCommand"
     },
     "HTTPClientConfig": {
       "type": "object",
@@ -893,10 +985,9 @@
       },
       "x-go-package": "github.com/prometheus/alertmanager/config"
     },
-    "InputType": {
-      "type": "string",
-      "title": "InputType is the type of input that can be rendered in the frontend.",
-      "x-go-package": "github.com/grafana/grafana/pkg/services/alerting"
+    "Json": {
+      "type": "object",
+      "x-go-package": "github.com/grafana/grafana/pkg/components/simplejson"
     },
     "LabelName": {
       "description": "A LabelName is a key for a LabelSet or Metric.  It has a value associated\ntherewith.",
@@ -959,91 +1050,6 @@
         }
       },
       "x-go-package": "github.com/prometheus/alertmanager/config"
-    },
-    "NotifierOption": {
-      "type": "object",
-      "title": "NotifierOption holds information about options specific for the NotifierPlugin.",
-      "properties": {
-        "description": {
-          "type": "string",
-          "x-go-name": "Description"
-        },
-        "element": {
-          "$ref": "#/definitions/ElementType"
-        },
-        "inputType": {
-          "$ref": "#/definitions/InputType"
-        },
-        "label": {
-          "type": "string",
-          "x-go-name": "Label"
-        },
-        "placeholder": {
-          "type": "string",
-          "x-go-name": "Placeholder"
-        },
-        "propertyName": {
-          "type": "string",
-          "x-go-name": "PropertyName"
-        },
-        "required": {
-          "type": "boolean",
-          "x-go-name": "Required"
-        },
-        "secure": {
-          "type": "boolean",
-          "x-go-name": "Secure"
-        },
-        "selectOptions": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/SelectOption"
-          },
-          "x-go-name": "SelectOptions"
-        },
-        "showWhen": {
-          "$ref": "#/definitions/ShowWhen"
-        },
-        "validationRule": {
-          "type": "string",
-          "x-go-name": "ValidationRule"
-        }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/services/alerting"
-    },
-    "NotifierPlugin": {
-      "type": "object",
-      "title": "NotifierPlugin holds meta information about a notifier.",
-      "properties": {
-        "description": {
-          "type": "string",
-          "x-go-name": "Description"
-        },
-        "heading": {
-          "type": "string",
-          "x-go-name": "Heading"
-        },
-        "info": {
-          "type": "string",
-          "x-go-name": "Info"
-        },
-        "name": {
-          "type": "string",
-          "x-go-name": "Name"
-        },
-        "options": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/NotifierOption"
-          },
-          "x-go-name": "Options"
-        },
-        "type": {
-          "type": "string",
-          "x-go-name": "Type"
-        }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/services/alerting"
     },
     "OpsGenieConfig": {
       "type": "object",
@@ -1557,35 +1563,17 @@
       "title": "SecretURL is a URL that must not be revealed on marshaling.",
       "$ref": "#/definitions/URL"
     },
-    "SelectOption": {
+    "SecureJsonData": {
+      "description": "SecureJsonData is used to store encrypted data (for example in data_source table). Only values are separately\nencrypted.",
       "type": "object",
-      "title": "SelectOption is a simple type for Options that have dropdown options. Should be used when Element is ElementTypeSelect.",
-      "properties": {
-        "label": {
-          "type": "string",
-          "x-go-name": "Label"
-        },
-        "value": {
-          "type": "string",
-          "x-go-name": "Value"
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "integer",
+          "format": "uint8"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/services/alerting"
-    },
-    "ShowWhen": {
-      "type": "object",
-      "title": "ShowWhen holds information about when options are dependant on other options.",
-      "properties": {
-        "field": {
-          "type": "string",
-          "x-go-name": "Field"
-        },
-        "is": {
-          "type": "string",
-          "x-go-name": "Is"
-        }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/services/alerting"
+      "x-go-package": "github.com/grafana/grafana/pkg/components/securejsondata"
     },
     "SlackAction": {
       "description": "See https://api.slack.com/docs/message-attachments#action_fields and https://api.slack.com/docs/message-buttons\nfor more information.",
@@ -1796,8 +1784,9 @@
       "x-go-package": "github.com/prometheus/common/config"
     },
     "URL": {
+      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
       "type": "object",
-      "title": "URL is a custom URL type that allows validation at configuration load time.",
+      "title": "A URL represents a parsed URL (technically, a URI reference).",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -1830,7 +1819,7 @@
           "$ref": "#/definitions/Userinfo"
         }
       },
-      "x-go-package": "github.com/prometheus/common/config"
+      "x-go-package": "net/url"
     },
     "UpdateDashboardAclCommand": {
       "type": "object",
