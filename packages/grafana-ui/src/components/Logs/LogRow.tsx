@@ -43,6 +43,8 @@ interface Props extends Themeable {
   timeZone: TimeZone;
   allowDetails?: boolean;
   logsSortOrder?: LogsSortOrder | null;
+  escapedNewlines?: boolean;
+  showDetectedFields?: string[];
   getRows: () => LogRowModel[];
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
@@ -50,10 +52,8 @@ interface Props extends Themeable {
   getRowContext: (row: LogRowModel, options?: RowContextOptions) => Promise<DataQueryResponse>;
   getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
   showContextToggle?: (row?: LogRowModel) => boolean;
-  showDetectedFields?: string[];
   onClickShowDetectedField?: (key: string) => void;
   onClickHideDetectedField?: (key: string) => void;
-  escapedNewlines: boolean;
 }
 
 interface State {

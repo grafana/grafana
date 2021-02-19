@@ -18,7 +18,6 @@ export interface Props extends Themeable {
   deduplicatedRows?: LogRowModel[];
   dedupStrategy: LogsDedupStrategy;
   highlighterExpressions?: string[];
-  showContextToggle?: (row?: LogRowModel) => boolean;
   showLabels: boolean;
   showTime: boolean;
   wrapLogMessage: boolean;
@@ -30,14 +29,15 @@ export interface Props extends Themeable {
   // Passed to fix problems with inactive scrolling in Logs Panel
   // Can be removed when we unify scrolling for Panel and Explore
   disableCustomHorizontalScroll?: boolean;
+  escapedNewlines?: boolean;
+  showDetectedFields?: string[];
+  showContextToggle?: (row?: LogRowModel) => boolean;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
   getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<any>;
   getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
-  showDetectedFields?: string[];
   onClickShowDetectedField?: (key: string) => void;
   onClickHideDetectedField?: (key: string) => void;
-  escapedNewlines: boolean;
 }
 
 interface State {
