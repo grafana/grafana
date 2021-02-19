@@ -14,6 +14,7 @@ module.exports = {
   addons: [
     '@storybook/addon-docs',
     '@storybook/addon-controls',
+    '../src/addons/grafana-controls/preset.ts',
     '@storybook/addon-knobs',
     '@storybook/addon-actions',
     'storybook-dark-mode/register',
