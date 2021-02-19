@@ -385,7 +385,10 @@ export class UnthemedLogs extends PureComponent<Props, State> {
               {
                 label: 'Your logs might have incorrectly escaped newlines',
                 value: (
-                  <Tooltip content="Experimental feature: Your logs might not be correctly escaped" placement="right">
+                  <Tooltip
+                    content="We suggest to try to fix the escaping of your log lines first. This is an experimental feature, your logs might not be correctly escaped."
+                    placement="right"
+                  >
                     <Button variant="secondary" size="sm" onClick={this.onEscapeNewlines} disabled={isEscaping}>
                       <span>
                         {isEscaping ? 'Escaping...' : escapedNewlines ? 'Remove escaping' : 'Escape newlines'}&nbsp;
