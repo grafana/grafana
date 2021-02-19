@@ -1,6 +1,7 @@
 package librarypanels
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -26,6 +27,23 @@ FROM library_panel AS lp
 `
 )
 
+func syncTitleWithName(libraryPanel *LibraryPanel) error {
+	var model map[string]interface{}
+	if err := json.Unmarshal(libraryPanel.Model, &model); err != nil {
+		return err
+	}
+
+	model["title"] = libraryPanel.Name
+	syncedModel, err := json.Marshal(&model)
+	if err != nil {
+		return err
+	}
+
+	libraryPanel.Model = syncedModel
+
+	return nil
+}
+
 // createLibraryPanel adds a Library Panel.
 func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd createLibraryPanelCommand) (LibraryPanelDTO, error) {
 	libraryPanel := LibraryPanel{
@@ -41,6 +59,11 @@ func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd cre
 		CreatedBy: c.SignedInUser.UserId,
 		UpdatedBy: c.SignedInUser.UserId,
 	}
+
+	if err := syncTitleWithName(&libraryPanel); err != nil {
+		return LibraryPanelDTO{}, err
+	}
+
 	err := lps.SQLStore.WithTransactionalDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
 		if _, err := session.Insert(&libraryPanel); err != nil {
 			if lps.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
@@ -398,6 +421,9 @@ func (lps *LibraryPanelService) patchLibraryPanel(c *models.ReqContext, cmd patc
 		}
 		if cmd.Model == nil {
 			libraryPanel.Model = panelInDB.Model
+		}
+		if err := syncTitleWithName(&libraryPanel); err != nil {
+			return err
 		}
 
 		if rowsAffected, err := session.ID(panelInDB.ID).Update(&libraryPanel); err != nil {
