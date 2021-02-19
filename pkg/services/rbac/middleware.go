@@ -47,28 +47,3 @@ func Middleware(ac AccessControl) func(string, ...string) macaron.Handler {
 		}
 	}
 }
-
-var permissionMappings = map[string]struct {
-	Scopes []string
-	Role   models.RoleType
-}{
-	"users:read": {
-		Scopes: []string{"users:self"},
-		Role:   models.ROLE_VIEWER,
-	},
-	"users.tokens:list": {
-		Scopes: []string{"users:self"},
-		Role:   models.ROLE_VIEWER,
-	},
-	"users.teams:read": {
-		Scopes: []string{"users:*"},
-		Role:   models.ROLE_VIEWER,
-	},
-	"orgs:list": {
-		Role: models.ROLE_VIEWER,
-	},
-	"orgs:switch": {
-		Scopes: []string{"orgs:*"},
-		Role:   models.ROLE_VIEWER,
-	},
-}

@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/models"
+
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -492,6 +494,34 @@ func (ac *RBACService) RemoveUserPolicy(cmd *RemoveUserPolicyCommand) error {
 			return ErrUserPolicyNotFound
 		}
 
+		return err
+	})
+}
+
+func (ac *RBACService) AddBuiltinRolePolicy(ctx context.Context, orgID, policyID int64, role string) error {
+	if !models.RoleType(role).IsValid() && role != "Grafana Admin" {
+		return fmt.Errorf("role '%s' is not a valid role", role)
+	}
+
+	return ac.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		if res, err := sess.Query("SELECT 1 from builtin_role_policy WHERE policy_id=? and role=?", policyID, role); err != nil {
+			return err
+		} else if len(res) == 1 {
+			return ErrUserPolicyAlreadyAdded
+		}
+
+		if _, err := policyExists(orgID, policyID, sess); err != nil {
+			return err
+		}
+
+		policy := BuiltinRolePolicy{
+			PolicyID: policyID,
+			Role:     role,
+			Updated:  timeNow(),
+			Created:  timeNow(),
+		}
+
+		_, err := sess.Table("builtin_role_policy").Insert(policy)
 		return err
 	})
 }

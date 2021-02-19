@@ -35,6 +35,13 @@ var builtInPolicies = []PolicyDTO{
 	},
 }
 
+// FIXME: Make sure builtin grants can be removed without being recreated
+var builtInPolicyGrants = map[string][]string{
+	"grafana:builtin:users:read:self": {
+		"Viewer",
+	},
+}
+
 func (s *seeder) Seed(ctx context.Context, orgID int64) error {
 	_, err := s.seed(ctx, orgID, builtInPolicies)
 	return err
@@ -74,6 +81,20 @@ func (s *seeder) seed(ctx context.Context, orgID int64, policies []PolicyDTO) (b
 		if p == 0 {
 			// remote version was equal or newer than current version
 			continue
+		}
+
+		if roles, exists := builtInPolicyGrants[policy.Name]; exists {
+			for _, role := range roles {
+				err := s.Service.AddBuiltinRolePolicy(ctx, orgID, p, role)
+				if err != nil {
+					s.log.Error("failed to assign policy to role",
+						"name", policy.Name,
+						"role", role,
+						"err", err,
+					)
+					return false, err
+				}
+			}
 		}
 
 		existingPermissions, err := s.Service.GetPolicyPermissions(ctx, p)

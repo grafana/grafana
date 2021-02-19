@@ -71,6 +71,15 @@ type UserPolicy struct {
 	Created time.Time
 }
 
+type BuiltinRolePolicy struct {
+	ID       *int64 `xorm:"id"`
+	PolicyID int64  `xorm:"policy_id"`
+	Role     string
+
+	Updated time.Time
+	Created time.Time
+}
+
 type GetTeamPoliciesQuery struct {
 	OrgId  int64 `json:"-"`
 	TeamId int64
