@@ -54,26 +54,16 @@ e2e.scenario({
     // Panel sidebar is rendered open by default
     e2e.components.PanelEditor.OptionsPane.content().should('be.visible');
 
-    // Can toggle on/off sidebar
-    e2e.components.PanelEditor.OptionsPane.close().should('be.visible');
-    e2e.components.PanelEditor.OptionsPane.open().should('not.exist');
-
     // close options pane
-    e2e.components.PanelEditor.OptionsPane.close().click();
-    e2e.components.PanelEditor.OptionsPane.open().should('be.visible');
-    e2e.components.PanelEditor.OptionsPane.close().should('not.exist');
+    e2e.components.PanelEditor.toggleVizOptions().click();
     e2e.components.PanelEditor.OptionsPane.content().should('not.exist');
 
     // open options pane
-    e2e.components.PanelEditor.OptionsPane.open().click();
-    e2e.components.PanelEditor.OptionsPane.close().should('be.visible');
-    e2e.components.PanelEditor.OptionsPane.open().should('not.exist');
+    e2e.components.PanelEditor.toggleVizOptions().should('be.visible').click();
     e2e.components.PanelEditor.OptionsPane.content().should('be.visible');
 
-    // Can change visualisation type
-    e2e.components.OptionsGroup.toggle('Panel type').should('be.visible').click();
-
     // Check that Graph is chosen
+    e2e.components.PanelEditor.toggleVizPicker().click();
     e2e.components.PluginVisualization.item('Graph').should('be.visible');
     e2e.components.PluginVisualization.current().within((div: JQuery<HTMLDivElement>) => {
       expect(div.text()).equals('Graph');
@@ -93,6 +83,9 @@ e2e.scenario({
     e2e.components.PluginVisualization.current().within((div: JQuery<HTMLDivElement>) => {
       expect(div.text()).equals('Table');
     });
+
+    // close viz picker
+    e2e.components.PanelEditor.toggleVizPicker().click();
 
     // Data pane should be rendered
     e2e.components.PanelEditor.DataPane.content().should('be.visible');

@@ -68,6 +68,8 @@ export const Components = {
     FieldOptions: {
       propertyEditor: (type: string) => `${type} field property editor`,
     },
+    toggleVizPicker: 'toggle-viz-picker',
+    toggleVizOptions: 'toggle-viz-options',
   },
   PanelInspector: {
     Data: {

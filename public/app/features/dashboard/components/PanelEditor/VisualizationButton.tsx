@@ -9,6 +9,7 @@ import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
 import { VizTypePicker, getAllPanelPluginMeta, filterPluginList } from '../VizTypePicker/VizTypePicker';
 import { Field } from '@grafana/ui/src/components/Forms/Field';
 import { setPanelEditorUIState, toggleVizPicker } from './state/reducers';
+import { selectors } from '@grafana/e2e-selectors';
 
 interface OwnProps {
   panel: PanelModel;
@@ -91,6 +92,7 @@ export const VisualizationButtonUnconnected: FC<Props> = ({
           imgSrc={plugin.meta.info.logos.small}
           isOpen={isVizPickerOpen}
           onClick={onToggleOpen}
+          aria-label={selectors.components.PanelEditor.toggleVizPicker}
           fullWidth
         >
           {plugin.meta.name}
@@ -100,6 +102,7 @@ export const VisualizationButtonUnconnected: FC<Props> = ({
           icon="sliders-v-alt"
           onClick={onToggleOptionsPane}
           isOpen={isPanelOptionsVisible}
+          aria-label={selectors.components.PanelEditor.toggleVizOptions}
         />
       </ButtonGroup>
       {isVizPickerOpen && (
