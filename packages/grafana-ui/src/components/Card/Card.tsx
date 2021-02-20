@@ -260,12 +260,6 @@ export const getCardStyles = stylesFactory((theme: GrafanaTheme) => {
     innerLink: css`
       display: flex;
       width: 100%;
-
-      &:hover {
-        .card-heading {
-          color: ${theme.colors.linkExternal};
-        }
-      }
     `,
     tagList: css`
       max-width: 50%;
