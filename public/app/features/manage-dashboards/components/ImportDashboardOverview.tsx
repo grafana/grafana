@@ -87,7 +87,7 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
           validateFieldsOnMount={['title', 'uid']}
           validateOn="onChange"
         >
-          {({ register, errors, control, getValues }) => (
+          {({ register, errors, control, watch, getValues }) => (
             <ImportDashboardForm
               register={register}
               errors={errors}
@@ -98,6 +98,7 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
               onCancel={this.onCancel}
               onUidReset={this.onUidReset}
               onSubmit={this.onSubmit}
+              watch={watch}
               initialFolderId={folder.id}
             />
           )}

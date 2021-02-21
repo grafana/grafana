@@ -1,5 +1,5 @@
 +++
-title = "Getting Started"
+title = "Getting started"
 weight = 10
 aliases = ["/docs/grafana/latest/guides/what-is-grafana"]
 +++
@@ -22,7 +22,7 @@ The following sections provide an overview of things you might want to do with y
 
 Explore your data through ad-hoc queries and dynamic drilldown. Split view and compare different time ranges, queries and data sources side by side.
 
-Refer to [Explore]({{< relref "../explore/index.md" >}}) for more information.
+Refer to [Explore]({{< relref "../explore/_index.md" >}}) for more information.
 
 ## Alerts
 
@@ -78,7 +78,7 @@ When organizations have one Grafana and multiple teams, they often want the abil
 
 Grafana Cloud is a highly available, fast, fully managed OpenSaaS logging and metrics platform. Everything you love about Grafana, but Grafana Labs hosts it for you and handles all the headaches.
 
-[Learn more about Grafana Cloud.](https://grafana.com/cloud/)
+[Learn more about Grafana Cloud](https://grafana.com/cloud/) or try the [Grafana Cloud Linux host Quickstart](/docs/grafana-cloud/quickstart/).
 
 ## Grafana Enterprise
 

@@ -10,7 +10,7 @@ mkdir /lib64 && ln -s /lib/libc.musl-x86_64.so.1 /lib64/ld-linux-x86-64.so.2
 rm /bin/cp
 mv /usr/local/bin/cp /bin/cp
 
-apk add --no-cache curl nodejs npm yarn build-base openssh git-lfs perl-utils coreutils python3
+apk add --no-cache curl 'nodejs-current=14.5.0-r0' npm yarn build-base openssh git-lfs perl-utils coreutils python3
 
 #
 # Only relevant for testing, but cypress does not work with musl/alpine.
@@ -18,17 +18,17 @@ apk add --no-cache curl nodejs npm yarn build-base openssh git-lfs perl-utils co
 # apk add --no-cache xvfb glib nss nspr gdk-pixbuf "gtk+3.0" pango atk cairo dbus-libs libxcomposite libxrender libxi libxtst libxrandr libxscrnsaver alsa-lib at-spi2-atk at-spi2-core cups-libs gcompat libc6-compat
 
 # Install Go
-filename="go1.15.3.linux-amd64.tar.gz"
-get_file "https://dl.google.com/go/$filename" "/tmp/$filename" "010a88df924a81ec21b293b5da8f9b11c176d27c0ee3962dc1738d2352d3c02d"
+filename="go1.15.7.linux-amd64.tar.gz"
+get_file "https://dl.google.com/go/$filename" "/tmp/$filename" "0d142143794721bb63ce6c8a6180c4062bcf8ef4715e7d6d6609f3a8282629b3"
 untar_file "/tmp/$filename"
 
 # Install golangci-lint
-GOLANGCILINT_VERSION=1.32.2
+GOLANGCILINT_VERSION=1.37.0
 filename="golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64"
 get_file "https://github.com/golangci/golangci-lint/releases/download/v${GOLANGCILINT_VERSION}/$filename.tar.gz" \
-    "/tmp/${filename}.tar.gz" \
-    "e7ab86d833bf9faed39801ab3b5cd294f026d26f9a7da63a42390943ead486cc"
-untar_file "/tmp/${filename}.tar.gz"
+    "/tmp/$filename.tar.gz" \
+    "5fe9852e754b621c5264fb8ac810a75033e7f18e972315a60c5c3f8a37b3cb88"
+untar_file "/tmp/$filename.tar.gz"
 ln -s /usr/local/${filename}/golangci-lint /usr/local/bin/golangci-lint
 ln -s /usr/local/go/bin/go /usr/local/bin/go
 ln -s /usr/local/go/bin/gofmt /usr/local/bin/gofmt
@@ -40,10 +40,10 @@ apk add --no-cache fontconfig zip jq
 # Install code climate
 get_file "https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64" \
     "/usr/local/bin/cc-test-reporter" \
-    "b4138199aa755ebfe171b57cc46910b13258ace5fbc4eaa099c42607cd0bff32"
-chmod +x /usr/local/bin/cc-test-reporter
+    "e1be1930379bd169d3a8e82135cf57216ad52ecfaf520b5804f269721e4dcc3d"
+chmod 755 /usr/local/bin/cc-test-reporter
 
-curl -fL -o /usr/local/bin/grabpl "https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.24/grabpl"
+curl -fL -o /usr/local/bin/grabpl "https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.38/grabpl"
 
 apk add --no-cache git
 # Install Mage

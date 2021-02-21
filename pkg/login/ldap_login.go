@@ -33,7 +33,7 @@ var loginUsingLDAP = func(query *models.LoginUserQuery) (bool, error) {
 		return false, nil
 	}
 
-	config, err := getLDAPConfig()
+	config, err := getLDAPConfig(query.Cfg)
 	if err != nil {
 		return true, errutil.Wrap("Failed to get LDAP config", err)
 	}

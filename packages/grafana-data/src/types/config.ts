@@ -18,10 +18,19 @@ export interface BuildInfo {
    */
   isEnterprise: boolean;
   env: string;
-  edition: string;
+  edition: GrafanaEdition;
   latestVersion: string;
   hasUpdate: boolean;
   hideVersion: boolean;
+}
+
+/**
+ * @internal
+ */
+export enum GrafanaEdition {
+  OpenSource = 'Open Source',
+  Pro = 'Pro',
+  Enterprise = 'Enterprise',
 }
 
 /**
@@ -33,10 +42,8 @@ export interface BuildInfo {
  */
 export interface FeatureToggles {
   live: boolean;
-  expressions: boolean;
   ngalert: boolean;
-  // Just for demo at the moment
-  traceToLogs: boolean;
+  panelLibrary: boolean;
 
   /**
    * @remarks
@@ -56,7 +63,7 @@ export interface LicenseInfo {
   licenseUrl: string;
   stateInfo: string;
   hasValidLicense: boolean;
-  edition: string;
+  edition: GrafanaEdition;
 }
 
 /**
@@ -118,4 +125,5 @@ export interface GrafanaConfig {
   http2Enabled: boolean;
   dateFormats?: SystemDateFormatSettings;
   sentry: SentryConfig;
+  customTheme?: any;
 }

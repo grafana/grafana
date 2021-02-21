@@ -6,6 +6,7 @@ import { LiveChannelSupport } from './live';
 export enum PluginState {
   alpha = 'alpha', // Only included if `enable_alpha` config option is true
   beta = 'beta', // Will show a warning banner
+  stable = 'stable', // Will not show anything
   deprecated = 'deprecated', // Will continue to work -- but not show up in the options to add
 }
 

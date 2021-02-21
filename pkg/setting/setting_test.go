@@ -2,6 +2,7 @@ package setting
 
 import (
 	"bufio"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -30,7 +31,7 @@ func TestLoadingSettings(t *testing.T) {
 			err := cfg.Load(&CommandLineArgs{HomePath: "../../"})
 			So(err, ShouldBeNil)
 
-			So(AdminUser, ShouldEqual, "admin")
+			So(cfg.AdminUser, ShouldEqual, "admin")
 			So(cfg.RendererCallbackUrl, ShouldEqual, "http://localhost:3000/")
 		})
 
@@ -39,7 +40,10 @@ func TestLoadingSettings(t *testing.T) {
 			if err != nil {
 				t.Errorf("failed to load defaults.ini file: %v", err)
 			}
-			defer file.Close()
+			defer func() {
+				err := file.Close()
+				So(err, ShouldBeNil)
+			}()
 
 			scanner := bufio.NewScanner(file)
 			for scanner.Scan() {
@@ -51,41 +55,45 @@ func TestLoadingSettings(t *testing.T) {
 		})
 
 		Convey("Should be able to override via environment variables", func() {
-			os.Setenv("GF_SECURITY_ADMIN_USER", "superduper")
+			err := os.Setenv("GF_SECURITY_ADMIN_USER", "superduper")
+			require.NoError(t, err)
 
 			cfg := NewCfg()
-			err := cfg.Load(&CommandLineArgs{HomePath: "../../"})
+			err = cfg.Load(&CommandLineArgs{HomePath: "../../"})
 			So(err, ShouldBeNil)
 
-			So(AdminUser, ShouldEqual, "superduper")
+			So(cfg.AdminUser, ShouldEqual, "superduper")
 			So(cfg.DataPath, ShouldEqual, filepath.Join(HomePath, "data"))
 			So(cfg.LogsPath, ShouldEqual, filepath.Join(cfg.DataPath, "log"))
 		})
 
 		Convey("Should replace password when defined in environment", func() {
-			os.Setenv("GF_SECURITY_ADMIN_PASSWORD", "supersecret")
+			err := os.Setenv("GF_SECURITY_ADMIN_PASSWORD", "supersecret")
+			require.NoError(t, err)
 
 			cfg := NewCfg()
-			err := cfg.Load(&CommandLineArgs{HomePath: "../../"})
+			err = cfg.Load(&CommandLineArgs{HomePath: "../../"})
 			So(err, ShouldBeNil)
 
 			So(appliedEnvOverrides, ShouldContain, "GF_SECURITY_ADMIN_PASSWORD=*********")
 		})
 
 		Convey("Should return an error when url is invalid", func() {
-			os.Setenv("GF_DATABASE_URL", "postgres.%31://grafana:secret@postgres:5432/grafana")
+			err := os.Setenv("GF_DATABASE_URL", "postgres.%31://grafana:secret@postgres:5432/grafana")
+			require.NoError(t, err)
 
 			cfg := NewCfg()
-			err := cfg.Load(&CommandLineArgs{HomePath: "../../"})
+			err = cfg.Load(&CommandLineArgs{HomePath: "../../"})
 
 			So(err, ShouldNotBeNil)
 		})
 
 		Convey("Should replace password in URL when url environment is defined", func() {
-			os.Setenv("GF_DATABASE_URL", "mysql://user:secret@localhost:3306/database")
+			err := os.Setenv("GF_DATABASE_URL", "mysql://user:secret@localhost:3306/database")
+			require.NoError(t, err)
 
 			cfg := NewCfg()
-			err := cfg.Load(&CommandLineArgs{HomePath: "../../"})
+			err = cfg.Load(&CommandLineArgs{HomePath: "../../"})
 			So(err, ShouldBeNil)
 
 			So(appliedEnvOverrides, ShouldContain, "GF_DATABASE_URL=mysql://user:-redacted-@localhost:3306/database")
@@ -133,7 +141,7 @@ func TestLoadingSettings(t *testing.T) {
 			})
 			So(err, ShouldBeNil)
 
-			So(Domain, ShouldEqual, "test2")
+			So(cfg.Domain, ShouldEqual, "test2")
 		})
 
 		Convey("Defaults can be overridden in specified config file", func() {
@@ -186,9 +194,10 @@ func TestLoadingSettings(t *testing.T) {
 
 		Convey("Can use environment variables in config values", func() {
 			if runtime.GOOS == windows {
-				os.Setenv("GF_DATA_PATH", `c:\tmp\env_override`)
+				err := os.Setenv("GF_DATA_PATH", `c:\tmp\env_override`)
+				require.NoError(t, err)
 				cfg := NewCfg()
-				err := cfg.Load(&CommandLineArgs{
+				err = cfg.Load(&CommandLineArgs{
 					HomePath: "../../",
 					Args:     []string{"cfg:paths.data=${GF_DATA_PATH}"},
 				})
@@ -196,9 +205,10 @@ func TestLoadingSettings(t *testing.T) {
 
 				So(cfg.DataPath, ShouldEqual, `c:\tmp\env_override`)
 			} else {
-				os.Setenv("GF_DATA_PATH", "/tmp/env_override")
+				err := os.Setenv("GF_DATA_PATH", "/tmp/env_override")
+				require.NoError(t, err)
 				cfg := NewCfg()
-				err := cfg.Load(&CommandLineArgs{
+				err = cfg.Load(&CommandLineArgs{
 					HomePath: "../../",
 					Args:     []string{"cfg:paths.data=${GF_DATA_PATH}"},
 				})
@@ -239,7 +249,7 @@ func TestLoadingSettings(t *testing.T) {
 			})
 			So(err, ShouldBeNil)
 
-			So(AuthProxySyncTtl, ShouldEqual, 2)
+			So(cfg.AuthProxySyncTTL, ShouldEqual, 2)
 		})
 
 		Convey("Only ldap_sync_ttl should return the value ldap_sync_ttl", func() {
@@ -250,7 +260,7 @@ func TestLoadingSettings(t *testing.T) {
 			})
 			So(err, ShouldBeNil)
 
-			So(AuthProxySyncTtl, ShouldEqual, 5)
+			So(cfg.AuthProxySyncTTL, ShouldEqual, 5)
 		})
 
 		Convey("ldap_sync should override ldap_sync_ttl that is default value", func() {
@@ -261,7 +271,7 @@ func TestLoadingSettings(t *testing.T) {
 			})
 			So(err, ShouldBeNil)
 
-			So(AuthProxySyncTtl, ShouldEqual, 5)
+			So(cfg.AuthProxySyncTTL, ShouldEqual, 5)
 		})
 
 		Convey("ldap_sync should not override ldap_sync_ttl that is different from default value", func() {
@@ -272,7 +282,7 @@ func TestLoadingSettings(t *testing.T) {
 			})
 			So(err, ShouldBeNil)
 
-			So(AuthProxySyncTtl, ShouldEqual, 12)
+			So(cfg.AuthProxySyncTTL, ShouldEqual, 12)
 		})
 	})
 
@@ -366,4 +376,54 @@ func TestAuthDurationSettings(t *testing.T) {
 	err = readAuthSettings(f, cfg)
 	require.NoError(t, err)
 	require.Equal(t, maxLifetimeDurationTest, cfg.LoginMaxLifetime)
+
+	f = ini.Empty()
+	sec, err = f.NewSection("auth")
+	require.NoError(t, err)
+	_, err = sec.NewKey("login_maximum_lifetime_days", "")
+	require.NoError(t, err)
+	_, err = sec.NewKey("login_maximum_lifetime_duration", "")
+	require.NoError(t, err)
+	maxLifetimeDurationTest, err = time.ParseDuration("720h")
+	require.NoError(t, err)
+	err = readAuthSettings(f, cfg)
+	require.NoError(t, err)
+	require.Equal(t, maxLifetimeDurationTest, cfg.LoginMaxLifetime)
+}
+
+func TestGetCDNPath(t *testing.T) {
+	var err error
+	cfg := NewCfg()
+	cfg.BuildVersion = "v7.5.0-11124"
+	cfg.CDNRootURL, err = url.Parse("http://cdn.grafana.com")
+	require.NoError(t, err)
+
+	require.Equal(t, "http://cdn.grafana.com/grafana-oss/v7.5.0-11124/", cfg.GetContentDeliveryURL("grafana-oss"))
+	require.Equal(t, "http://cdn.grafana.com/grafana/v7.5.0-11124/", cfg.GetContentDeliveryURL("grafana"))
+}
+
+func TestGetContentDeliveryURLWhenNoCDNRootURLIsSet(t *testing.T) {
+	cfg := NewCfg()
+	require.Equal(t, "", cfg.GetContentDeliveryURL("grafana-oss"))
+}
+
+func TestGetCDNPathWithPreReleaseVersionAndSubPath(t *testing.T) {
+	var err error
+	cfg := NewCfg()
+	cfg.BuildVersion = "v7.5.0-11124pre"
+	cfg.CDNRootURL, err = url.Parse("http://cdn.grafana.com/sub")
+	require.NoError(t, err)
+	require.Equal(t, "http://cdn.grafana.com/sub/grafana-oss/pre-releases/v7.5.0-11124pre/", cfg.GetContentDeliveryURL("grafana-oss"))
+	require.Equal(t, "http://cdn.grafana.com/sub/grafana/pre-releases/v7.5.0-11124pre/", cfg.GetContentDeliveryURL("grafana"))
+}
+
+// Adding a case for this in case we switch to proper semver version strings
+func TestGetCDNPathWithAlphaVersion(t *testing.T) {
+	var err error
+	cfg := NewCfg()
+	cfg.BuildVersion = "v7.5.0-alpha.11124"
+	cfg.CDNRootURL, err = url.Parse("http://cdn.grafana.com")
+	require.NoError(t, err)
+	require.Equal(t, "http://cdn.grafana.com/grafana-oss/pre-releases/v7.5.0-alpha.11124/", cfg.GetContentDeliveryURL("grafana-oss"))
+	require.Equal(t, "http://cdn.grafana.com/grafana/pre-releases/v7.5.0-alpha.11124/", cfg.GetContentDeliveryURL("grafana"))
 }

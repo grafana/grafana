@@ -42,11 +42,9 @@ func (m *postgresMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.Tim
 		if groups[1] == "__timeGroup" {
 			if index := strings.Index(sql, groups[0]); index >= 0 {
 				index += len(groups[0])
-				if len(sql) > index {
-					// check for character after macro expression
-					if sql[index] == ',' {
-						groups[1] = "__timeGroupAlias"
-					}
+				// check for character after macro expression
+				if len(sql) > index && sql[index] == ',' {
+					groups[1] = "__timeGroupAlias"
 				}
 			}
 		}
@@ -109,7 +107,7 @@ func (m *postgresMacroEngine) evaluateMacro(name string, args []string) (string,
 		}
 
 		if m.timescaledb {
-			return fmt.Sprintf("time_bucket('%vs',%s)", interval.Seconds(), args[0]), nil
+			return fmt.Sprintf("time_bucket('%.0fs',%s)", interval.Seconds(), args[0]), nil
 		}
 
 		return fmt.Sprintf(

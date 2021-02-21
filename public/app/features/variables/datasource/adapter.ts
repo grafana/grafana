@@ -4,11 +4,11 @@ import { dispatch } from '../../../store/store';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { VariableAdapter } from '../adapters';
 import { dataSourceVariableReducer, initialDataSourceVariableModelState } from './reducer';
-import { OptionsPicker } from '../pickers';
 import { ALL_VARIABLE_TEXT, toVariableIdentifier } from '../state/types';
 import { DataSourceVariableEditor } from './DataSourceVariableEditor';
 import { updateDataSourceVariableOptions } from './actions';
 import { containsVariable, isAllVariable } from '../utils';
+import { optionPickerFactory } from '../pickers';
 
 export const createDataSourceVariableAdapter = (): VariableAdapter<DataSourceVariableModel> => {
   return {
@@ -17,7 +17,7 @@ export const createDataSourceVariableAdapter = (): VariableAdapter<DataSourceVar
     name: 'Datasource',
     initialState: initialDataSourceVariableModelState,
     reducer: dataSourceVariableReducer,
-    picker: OptionsPicker,
+    picker: optionPickerFactory<DataSourceVariableModel>(),
     editor: DataSourceVariableEditor,
     dependsOn: (variable, variableToTest) => {
       if (variable.regex) {
@@ -31,14 +31,14 @@ export const createDataSourceVariableAdapter = (): VariableAdapter<DataSourceVar
     setValueFromUrl: async (variable, urlValue) => {
       await dispatch(setOptionFromUrl(toVariableIdentifier(variable), urlValue));
     },
-    updateOptions: async variable => {
+    updateOptions: async (variable) => {
       await dispatch(updateDataSourceVariableOptions(toVariableIdentifier(variable)));
     },
-    getSaveModel: variable => {
+    getSaveModel: (variable) => {
       const { index, id, state, global, ...rest } = cloneDeep(variable);
       return { ...rest, options: [] };
     },
-    getValueForUrl: variable => {
+    getValueForUrl: (variable) => {
       if (isAllVariable(variable)) {
         return ALL_VARIABLE_TEXT;
       }

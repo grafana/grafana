@@ -14,7 +14,7 @@ import (
 
 // OrgRedirect changes org and redirects users if the
 // querystring `orgId` doesn't match the active org.
-func OrgRedirect() macaron.Handler {
+func OrgRedirect(cfg *setting.Cfg) macaron.Handler {
 	return func(res http.ResponseWriter, req *http.Request, c *macaron.Context) {
 		orgIdValue := req.URL.Query().Get("orgId")
 		orgId, err := strconv.ParseInt(orgIdValue, 10, 64)
@@ -43,7 +43,7 @@ func OrgRedirect() macaron.Handler {
 			return
 		}
 
-		newURL := setting.ToAbsUrl(fmt.Sprintf("%s?%s", strings.TrimPrefix(c.Req.URL.Path, "/"), c.Req.URL.Query().Encode()))
+		newURL := fmt.Sprintf("%s%s?%s", cfg.AppURL, strings.TrimPrefix(c.Req.URL.Path, "/"), c.Req.URL.Query().Encode())
 		c.Redirect(newURL, 302)
 	}
 }

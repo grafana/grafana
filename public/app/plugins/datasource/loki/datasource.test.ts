@@ -1,6 +1,6 @@
 import { of, throwError } from 'rxjs';
 import { take } from 'rxjs/operators';
-import { AnnotationQueryRequest, CoreApp, DataFrame, dateTime, FieldCache, TimeRange, TimeSeries } from '@grafana/data';
+import { AnnotationQueryRequest, CoreApp, DataFrame, dateTime, FieldCache, TimeSeries } from '@grafana/data';
 import { BackendSrvRequest, FetchResponse } from '@grafana/runtime';
 
 import LokiDatasource from './datasource';
@@ -11,6 +11,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { CustomVariableModel } from '../../../features/variables/types';
 import { initialCustomVariableModelState } from '../../../features/variables/custom/reducer';
 import { makeMockLokiDatasource } from './mocks';
+import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
 jest.mock('@grafana/runtime', () => ({
   // @ts-ignore
@@ -115,6 +116,23 @@ describe('LokiDatasource', () => {
       expect(req.start).toBeDefined();
       expect(req.end).toBeDefined();
       expect(adjustIntervalSpy).toHaveBeenCalledWith(2000, expect.anything());
+    });
+
+    it('should set the minimal step to 1ms', () => {
+      const target = { expr: '{job="grafana"}', refId: 'B' };
+      const raw = { from: 'now', to: 'now-1h' };
+      const range = { from: dateTime('2020-10-14T00:00:00'), to: dateTime('2020-10-14T00:00:01'), raw: raw };
+      const options = {
+        range,
+        intervalMs: 0.0005,
+      };
+
+      const req = ds.createRangeQuery(target, options as any, 1000);
+      expect(req.start).toBeDefined();
+      expect(req.end).toBeDefined();
+      expect(adjustIntervalSpy).toHaveBeenCalledWith(0.0005, expect.anything());
+      // Step is in seconds (1 ms === 0.001 s)
+      expect(req.step).toEqual(0.001);
     });
   });
 
@@ -252,7 +270,7 @@ describe('LokiDatasource', () => {
 
       fetchMock.mockImplementation(() => of(testMetricsResponse));
 
-      await expect(ds.query(options)).toEmitValuesWith(received => {
+      await expect(ds.query(options)).toEmitValuesWith((received) => {
         const result = received[0];
         const timeSeries = result.data[0] as TimeSeries;
 
@@ -270,7 +288,7 @@ describe('LokiDatasource', () => {
 
       fetchMock.mockImplementation(() => of(testLogsResponse));
 
-      await expect(ds.query(options)).toEmitValuesWith(received => {
+      await expect(ds.query(options)).toEmitValuesWith((received) => {
         const result = received[0];
         const dataFrame = result.data[0] as DataFrame;
         const fieldCache = new FieldCache(dataFrame);
@@ -297,7 +315,7 @@ describe('LokiDatasource', () => {
         })
       );
 
-      await expect(ds.query(options)).toEmitValuesWith(received => {
+      await expect(ds.query(options)).toEmitValuesWith((received) => {
         const err: any = received[0];
         expect(err.data.message).toBe(
           'Error: parse error at line 1, col 6: invalid char escape. Make sure that all special characters are escaped with \\. For more information on escaping of special characters visit LogQL documentation at https://grafana.com/docs/loki/latest/logql/.'
@@ -422,24 +440,6 @@ describe('LokiDatasource', () => {
         expect(result.status).toEqual('error');
         expect(result.message).toBe('Loki: Bad Gateway. 502');
       });
-    });
-  });
-
-  describe('when creating a range query', () => {
-    // Loki v1 API has an issue with float step parameters, can be removed when API is fixed
-    it('should produce an integer step parameter', () => {
-      const ds = createLokiDSForTests();
-      const query: LokiQuery = { expr: 'foo', refId: 'bar' };
-      const range: TimeRange = {
-        from: dateTime(0),
-        to: dateTime(1e9 + 1),
-        raw: { from: '0', to: '1000000001' },
-      };
-
-      // Odd timerange/interval combination that would lead to a float step
-      const options = { range, intervalMs: 2000 };
-
-      expect(Number.isInteger(ds.createRangeQuery(query, options as any, 1000).step!)).toBeTruthy();
     });
   });
 
@@ -592,18 +592,4 @@ function makeMetadataAndVersionsMocks() {
     mocks.push(mock);
   }
   return mocks;
-}
-
-function createFetchResponse<T>(data: T): FetchResponse<T> {
-  return {
-    data,
-    status: 200,
-    url: 'http://localhost:3000/api/query',
-    config: { url: 'http://localhost:3000/api/query' },
-    type: 'basic',
-    statusText: 'Ok',
-    redirected: false,
-    headers: ({} as unknown) as Headers,
-    ok: true,
-  };
 }

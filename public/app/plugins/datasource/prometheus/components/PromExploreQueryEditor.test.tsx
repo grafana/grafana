@@ -7,7 +7,11 @@ import { PromQuery } from '../types';
 import { LoadingState, PanelData, toUtc, TimeRange } from '@grafana/data';
 
 const setup = (renderMethod: any, propOverrides?: object) => {
-  const datasourceMock: unknown = {};
+  const datasourceMock: unknown = {
+    languageProvider: {
+      syntax: () => {},
+    },
+  };
   const datasource: PrometheusDatasource = datasourceMock as PrometheusDatasource;
   const onRunQuery = jest.fn();
   const onChange = jest.fn();

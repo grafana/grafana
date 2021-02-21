@@ -7,11 +7,18 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/setting"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/models"
 )
+
+const alertingEvaluationTimeout = 30 * time.Second
+
+type Evaluator struct {
+	Cfg *setting.Cfg
+}
 
 // invalidEvalResultFormatError is an error for invalid format of the alert definition evaluation results.
 type invalidEvalResultFormatError struct {
@@ -36,6 +43,7 @@ func (e *invalidEvalResultFormatError) Unwrap() error {
 // of the query or expression that will be evaluated.
 type Condition struct {
 	RefID string `json:"refId"`
+	OrgID int64  `json:"-"`
 
 	QueriesAndExpressions []AlertQuery `json:"queriesAndExpressions"`
 }
@@ -85,22 +93,23 @@ func (c Condition) IsValid() bool {
 
 // AlertExecCtx is the context provided for executing an alert condition.
 type AlertExecCtx struct {
-	AlertDefitionID int64
-	SignedInUser    *models.SignedInUser
+	OrgID              int64
+	ExpressionsEnabled bool
 
 	Ctx context.Context
 }
 
-// Execute runs the Condition's expressions or queries.
-func (c *Condition) Execute(ctx AlertExecCtx, fromStr, toStr string) (*ExecutionResults, error) {
+// execute runs the Condition's expressions or queries.
+func (c *Condition) execute(ctx AlertExecCtx, now time.Time) (*ExecutionResults, error) {
 	result := ExecutionResults{}
 	if !c.IsValid() {
 		return nil, fmt.Errorf("invalid conditions")
+		// TODO: Things probably
 	}
 
 	queryDataReq := &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
-			// TODO: Things probably
+			OrgID: ctx.OrgID,
 		},
 		Queries: []backend.DataQuery{},
 	}
@@ -127,11 +136,12 @@ func (c *Condition) Execute(ctx AlertExecCtx, fromStr, toStr string) (*Execution
 			RefID:         q.RefID,
 			MaxDataPoints: maxDatapoints,
 			QueryType:     q.QueryType,
-			TimeRange:     q.RelativeTimeRange.toTimeRange(time.Now()),
+			TimeRange:     q.RelativeTimeRange.toTimeRange(now),
 		})
 	}
 
-	pbRes, err := expr.TransformData(ctx.Ctx, queryDataReq)
+	exprService := expr.Service{Cfg: &setting.Cfg{ExpressionsEnabled: ctx.ExpressionsEnabled}}
+	pbRes, err := exprService.TransformData(ctx.Ctx, queryDataReq)
 	if err != nil {
 		return &result, err
 	}
@@ -152,9 +162,9 @@ func (c *Condition) Execute(ctx AlertExecCtx, fromStr, toStr string) (*Execution
 	return &result, nil
 }
 
-// EvaluateExecutionResult takes the ExecutionResult, and returns a frame where
+// evaluateExecutionResult takes the ExecutionResult, and returns a frame where
 // each column is a string type that holds a string representing its state.
-func EvaluateExecutionResult(results *ExecutionResults) (Results, error) {
+func evaluateExecutionResult(results *ExecutionResults) (Results, error) {
 	evalResults := make([]result, 0)
 	labels := make(map[string]bool)
 	for _, f := range results.Results {
@@ -205,4 +215,23 @@ func (evalResults Results) AsDataFrame() data.Frame {
 	}
 	f := data.NewFrame("", fields...)
 	return *f
+}
+
+// ConditionEval executes conditions and evaluates the result.
+func (e *Evaluator) ConditionEval(condition *Condition, now time.Time) (Results, error) {
+	alertCtx, cancelFn := context.WithTimeout(context.Background(), alertingEvaluationTimeout)
+	defer cancelFn()
+
+	alertExecCtx := AlertExecCtx{OrgID: condition.OrgID, Ctx: alertCtx, ExpressionsEnabled: e.Cfg.ExpressionsEnabled}
+
+	execResult, err := condition.execute(alertExecCtx, now)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute conditions: %w", err)
+	}
+
+	evalResults, err := evaluateExecutionResult(execResult)
+	if err != nil {
+		return nil, fmt.Errorf("failed to evaluate results: %w", err)
+	}
+	return evalResults, nil
 }

@@ -7,7 +7,7 @@ import React from 'react';
 import { TagsInput } from '@grafana/ui';
 
 export const plugin = new PanelPlugin<DashListOptions>(DashList)
-  .setPanelOptions(builder => {
+  .setPanelOptions((builder) => {
     builder
       .addBooleanSwitch({
         path: 'showStarred',
@@ -44,8 +44,16 @@ export const plugin = new PanelPlugin<DashListOptions>(DashList)
         name: 'Folder',
         id: 'folderId',
         defaultValue: null,
-        editor: props => {
-          return <FolderPicker initialTitle="All" enableReset={true} onChange={({ id }) => props.onChange(id)} />;
+        editor: function RenderFolderPicker(props) {
+          return (
+            <FolderPicker
+              initialFolderId={props.value}
+              useNewForms
+              initialTitle="All"
+              enableReset={true}
+              onChange={({ id }) => props.onChange(id)}
+            />
+          );
         },
       })
       .addCustomEditor({
@@ -54,7 +62,7 @@ export const plugin = new PanelPlugin<DashListOptions>(DashList)
         name: 'Tags',
         description: '',
         defaultValue: [],
-        editor: props => {
+        editor(props) {
           return <TagsInput tags={props.value} onChange={props.onChange} />;
         },
       });
@@ -74,7 +82,7 @@ export const plugin = new PanelPlugin<DashListOptions>(DashList)
     const previousVersion = parseFloat(panel.pluginVersion || '6.1');
     if (previousVersion < 6.3) {
       const oldProps = ['starred', 'recent', 'search', 'headings', 'limit', 'query', 'folderId'];
-      oldProps.forEach(prop => delete panel[prop]);
+      oldProps.forEach((prop) => delete panel[prop]);
     }
 
     return newOptions;

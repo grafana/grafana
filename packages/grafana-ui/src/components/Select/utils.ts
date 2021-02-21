@@ -1,12 +1,13 @@
 import { SelectableValue } from '@grafana/data';
-import { SelectOptions } from './types';
+import { SelectableOptGroup } from './types';
 
 /**
  * Normalize the value format to SelectableValue[] | []. Only used for single select
  */
-export const cleanValue = (value: any, options: SelectOptions): SelectableValue[] | [] => {
+export const cleanValue = (value: any, options: Array<SelectableValue | SelectableOptGroup | SelectableOptGroup[]>) => {
   if (Array.isArray(value)) {
-    return value.filter(Boolean);
+    const filtered = value.filter(Boolean);
+    return filtered?.length ? filtered : undefined;
   }
   if (typeof value === 'object' && value !== null) {
     return [value];
@@ -17,13 +18,16 @@ export const cleanValue = (value: any, options: SelectOptions): SelectableValue[
       return [selectedValue];
     }
   }
-  return [];
+  return undefined;
 };
 
 /**
  * Find the label for a string|number value inside array of options or optgroups
  */
-export const findSelectedValue = (value: string | number, options: SelectOptions): SelectableValue | null => {
+export const findSelectedValue = (
+  value: string | number,
+  options: Array<SelectableValue | SelectableOptGroup | SelectableOptGroup[]>
+): SelectableValue | null => {
   for (const option of options) {
     if ('options' in option) {
       let found = findSelectedValue(value, option.options);

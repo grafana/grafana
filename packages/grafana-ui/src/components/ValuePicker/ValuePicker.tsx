@@ -39,7 +39,13 @@ export function ValuePicker<T>({
   const [isPicking, setIsPicking] = useState(false);
 
   const buttonEl = (
-    <Button size={size || 'sm'} icon={icon || 'plus'} onClick={() => setIsPicking(true)} variant={variant}>
+    <Button
+      size={size || 'sm'}
+      icon={icon || 'plus'}
+      onClick={() => setIsPicking(true)}
+      variant={variant}
+      aria-label={selectors.components.ValuePicker.button}
+    >
       {label}
     </Button>
   );
@@ -55,7 +61,7 @@ export function ValuePicker<T>({
             isOpen
             onCloseMenu={() => setIsPicking(false)}
             autoFocus={true}
-            onChange={value => {
+            onChange={(value) => {
               setIsPicking(false);
               onChange(value);
             }}

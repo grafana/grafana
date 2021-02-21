@@ -18,18 +18,24 @@ export const UIElements: Elements = {
   Dropdown: (() => null as any) as any,
   Menu: (() => null as any) as any,
   MenuItem: (() => null as any) as any,
-  Button: ({ onClick, children, className }: ButtonProps) => (
-    <Button variant={'secondary'} onClick={onClick} className={className}>
-      {children}
-    </Button>
-  ),
+  Button({ onClick, children, className }: ButtonProps) {
+    return (
+      <Button variant={'secondary'} onClick={onClick} className={className}>
+        {children}
+      </Button>
+    );
+  },
   Divider,
-  Input: props => <Input {...props} />,
-  InputGroup: ({ children, className, style }) => (
-    <span className={className} style={style}>
-      {children}
-    </span>
-  ),
+  Input(props) {
+    return <Input {...props} />;
+  },
+  InputGroup({ children, className, style }) {
+    return (
+      <span className={className} style={style}>
+        {children}
+      </span>
+    );
+  },
 };
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {

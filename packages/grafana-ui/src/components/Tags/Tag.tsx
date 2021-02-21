@@ -40,6 +40,8 @@ export const Tag = forwardRef<HTMLElement, Props>(({ name, onClick, className, c
   );
 });
 
+Tag.displayName = 'Tag';
+
 const getTagStyles = (theme: GrafanaTheme, name: string, colorIndex?: number) => {
   let colors;
   if (colorIndex === undefined) {

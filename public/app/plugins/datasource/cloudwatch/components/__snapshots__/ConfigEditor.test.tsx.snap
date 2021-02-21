@@ -16,12 +16,12 @@ exports[`Render should disable access key id field 1`] = `
       <div
         className="gf-form"
       >
-        <Component
+        <FormLabel
           className="width-14"
           tooltip="Specify which AWS credentials chain to use. AWS SDK Default is the recommended option for EKS, ECS, or if you've attached an IAM role to your EC2 instance."
         >
           Authentication Provider
-        </Component>
+        </FormLabel>
         <Select
           allowCustomValue={false}
           autoFocus={false}
@@ -78,11 +78,11 @@ exports[`Render should disable access key id field 1`] = `
         <div
           className="gf-form"
         >
-          <Component
+          <FormLabel
             className="width-14"
           >
             Access Key ID
-          </Component>
+          </FormLabel>
           <div
             className="width-30"
           >
@@ -100,11 +100,11 @@ exports[`Render should disable access key id field 1`] = `
         <div
           className="gf-form"
         >
-          <Component
+          <FormLabel
             className="width-14"
           >
             Secret Access Key
-          </Component>
+          </FormLabel>
           <div
             className="width-30"
           >
@@ -123,12 +123,12 @@ exports[`Render should disable access key id field 1`] = `
       <div
         className="gf-form"
       >
-        <Component
+        <FormLabel
           className="width-14"
           tooltip="Optionally, specify the ARN of a role to assume. Specifying a role here will ensure that the selected authentication provider is used to assume the specified role rather than using the credentials directly. Leave blank if you don't need to assume a role at all"
         >
           Assume Role ARN
-        </Component>
+        </FormLabel>
         <div
           className="width-30"
         >
@@ -146,12 +146,12 @@ exports[`Render should disable access key id field 1`] = `
         <div
           className="gf-form"
         >
-          <Component
+          <FormLabel
             className="width-14"
             tooltip="If you are assuming a role in another account, that has been created with an external ID, specify the external ID here."
           >
             External ID
-          </Component>
+          </FormLabel>
           <div
             className="width-30"
           >
@@ -171,12 +171,12 @@ exports[`Render should disable access key id field 1`] = `
       <div
         className="gf-form"
       >
-        <Component
+        <FormLabel
           className="width-14"
           tooltip="Specify the region, such as for US West (Oregon) use \` us-west-2 \` as the region."
         >
           Default Region
-        </Component>
+        </FormLabel>
         <Select
           allowCustomValue={false}
           autoFocus={false}
@@ -211,12 +211,12 @@ exports[`Render should disable access key id field 1`] = `
       <div
         className="gf-form"
       >
-        <Component
+        <FormLabel
           className="width-14"
           tooltip="Namespaces of Custom Metrics."
         >
           Custom Metrics
-        </Component>
+        </FormLabel>
         <Input
           className="width-30"
           onChange={[Function]}
@@ -245,12 +245,12 @@ exports[`Render should render component 1`] = `
       <div
         className="gf-form"
       >
-        <Component
+        <FormLabel
           className="width-14"
           tooltip="Specify which AWS credentials chain to use. AWS SDK Default is the recommended option for EKS, ECS, or if you've attached an IAM role to your EC2 instance."
         >
           Authentication Provider
-        </Component>
+        </FormLabel>
         <Select
           allowCustomValue={false}
           autoFocus={false}
@@ -307,11 +307,11 @@ exports[`Render should render component 1`] = `
         <div
           className="gf-form"
         >
-          <Component
+          <FormLabel
             className="width-14"
           >
             Access Key ID
-          </Component>
+          </FormLabel>
           <div
             className="width-30"
           >
@@ -329,11 +329,11 @@ exports[`Render should render component 1`] = `
         <div
           className="gf-form"
         >
-          <Component
+          <FormLabel
             className="width-14"
           >
             Secret Access Key
-          </Component>
+          </FormLabel>
           <div
             className="width-30"
           >
@@ -352,12 +352,12 @@ exports[`Render should render component 1`] = `
       <div
         className="gf-form"
       >
-        <Component
+        <FormLabel
           className="width-14"
           tooltip="Optionally, specify the ARN of a role to assume. Specifying a role here will ensure that the selected authentication provider is used to assume the specified role rather than using the credentials directly. Leave blank if you don't need to assume a role at all"
         >
           Assume Role ARN
-        </Component>
+        </FormLabel>
         <div
           className="width-30"
         >
@@ -375,12 +375,12 @@ exports[`Render should render component 1`] = `
         <div
           className="gf-form"
         >
-          <Component
+          <FormLabel
             className="width-14"
             tooltip="If you are assuming a role in another account, that has been created with an external ID, specify the external ID here."
           >
             External ID
-          </Component>
+          </FormLabel>
           <div
             className="width-30"
           >
@@ -400,12 +400,12 @@ exports[`Render should render component 1`] = `
       <div
         className="gf-form"
       >
-        <Component
+        <FormLabel
           className="width-14"
           tooltip="Specify the region, such as for US West (Oregon) use \` us-west-2 \` as the region."
         >
           Default Region
-        </Component>
+        </FormLabel>
         <Select
           allowCustomValue={false}
           autoFocus={false}
@@ -440,12 +440,12 @@ exports[`Render should render component 1`] = `
       <div
         className="gf-form"
       >
-        <Component
+        <FormLabel
           className="width-14"
           tooltip="Namespaces of Custom Metrics."
         >
           Custom Metrics
-        </Component>
+        </FormLabel>
         <Input
           className="width-30"
           onChange={[Function]}
@@ -474,12 +474,12 @@ exports[`Render should show access key and secret access key fields 1`] = `
       <div
         className="gf-form"
       >
-        <Component
+        <FormLabel
           className="width-14"
           tooltip="Specify which AWS credentials chain to use. AWS SDK Default is the recommended option for EKS, ECS, or if you've attached an IAM role to your EC2 instance."
         >
           Authentication Provider
-        </Component>
+        </FormLabel>
         <Select
           allowCustomValue={false}
           autoFocus={false}
@@ -536,11 +536,11 @@ exports[`Render should show access key and secret access key fields 1`] = `
         <div
           className="gf-form"
         >
-          <Component
+          <FormLabel
             className="width-14"
           >
             Access Key ID
-          </Component>
+          </FormLabel>
           <div
             className="width-30"
           >
@@ -558,11 +558,11 @@ exports[`Render should show access key and secret access key fields 1`] = `
         <div
           className="gf-form"
         >
-          <Component
+          <FormLabel
             className="width-14"
           >
             Secret Access Key
-          </Component>
+          </FormLabel>
           <div
             className="width-30"
           >
@@ -581,12 +581,12 @@ exports[`Render should show access key and secret access key fields 1`] = `
       <div
         className="gf-form"
       >
-        <Component
+        <FormLabel
           className="width-14"
           tooltip="Optionally, specify the ARN of a role to assume. Specifying a role here will ensure that the selected authentication provider is used to assume the specified role rather than using the credentials directly. Leave blank if you don't need to assume a role at all"
         >
           Assume Role ARN
-        </Component>
+        </FormLabel>
         <div
           className="width-30"
         >
@@ -604,12 +604,12 @@ exports[`Render should show access key and secret access key fields 1`] = `
         <div
           className="gf-form"
         >
-          <Component
+          <FormLabel
             className="width-14"
             tooltip="If you are assuming a role in another account, that has been created with an external ID, specify the external ID here."
           >
             External ID
-          </Component>
+          </FormLabel>
           <div
             className="width-30"
           >
@@ -629,12 +629,12 @@ exports[`Render should show access key and secret access key fields 1`] = `
       <div
         className="gf-form"
       >
-        <Component
+        <FormLabel
           className="width-14"
           tooltip="Specify the region, such as for US West (Oregon) use \` us-west-2 \` as the region."
         >
           Default Region
-        </Component>
+        </FormLabel>
         <Select
           allowCustomValue={false}
           autoFocus={false}
@@ -669,12 +669,12 @@ exports[`Render should show access key and secret access key fields 1`] = `
       <div
         className="gf-form"
       >
-        <Component
+        <FormLabel
           className="width-14"
           tooltip="Namespaces of Custom Metrics."
         >
           Custom Metrics
-        </Component>
+        </FormLabel>
         <Input
           className="width-30"
           onChange={[Function]}
@@ -703,12 +703,12 @@ exports[`Render should show arn role field 1`] = `
       <div
         className="gf-form"
       >
-        <Component
+        <FormLabel
           className="width-14"
           tooltip="Specify which AWS credentials chain to use. AWS SDK Default is the recommended option for EKS, ECS, or if you've attached an IAM role to your EC2 instance."
         >
           Authentication Provider
-        </Component>
+        </FormLabel>
         <Select
           allowCustomValue={false}
           autoFocus={false}
@@ -765,11 +765,11 @@ exports[`Render should show arn role field 1`] = `
         <div
           className="gf-form"
         >
-          <Component
+          <FormLabel
             className="width-14"
           >
             Access Key ID
-          </Component>
+          </FormLabel>
           <div
             className="width-30"
           >
@@ -787,11 +787,11 @@ exports[`Render should show arn role field 1`] = `
         <div
           className="gf-form"
         >
-          <Component
+          <FormLabel
             className="width-14"
           >
             Secret Access Key
-          </Component>
+          </FormLabel>
           <div
             className="width-30"
           >
@@ -810,12 +810,12 @@ exports[`Render should show arn role field 1`] = `
       <div
         className="gf-form"
       >
-        <Component
+        <FormLabel
           className="width-14"
           tooltip="Optionally, specify the ARN of a role to assume. Specifying a role here will ensure that the selected authentication provider is used to assume the specified role rather than using the credentials directly. Leave blank if you don't need to assume a role at all"
         >
           Assume Role ARN
-        </Component>
+        </FormLabel>
         <div
           className="width-30"
         >
@@ -833,12 +833,12 @@ exports[`Render should show arn role field 1`] = `
         <div
           className="gf-form"
         >
-          <Component
+          <FormLabel
             className="width-14"
             tooltip="If you are assuming a role in another account, that has been created with an external ID, specify the external ID here."
           >
             External ID
-          </Component>
+          </FormLabel>
           <div
             className="width-30"
           >
@@ -858,12 +858,12 @@ exports[`Render should show arn role field 1`] = `
       <div
         className="gf-form"
       >
-        <Component
+        <FormLabel
           className="width-14"
           tooltip="Specify the region, such as for US West (Oregon) use \` us-west-2 \` as the region."
         >
           Default Region
-        </Component>
+        </FormLabel>
         <Select
           allowCustomValue={false}
           autoFocus={false}
@@ -898,12 +898,12 @@ exports[`Render should show arn role field 1`] = `
       <div
         className="gf-form"
       >
-        <Component
+        <FormLabel
           className="width-14"
           tooltip="Namespaces of Custom Metrics."
         >
           Custom Metrics
-        </Component>
+        </FormLabel>
         <Input
           className="width-30"
           onChange={[Function]}
@@ -932,12 +932,12 @@ exports[`Render should show credentials profile name field 1`] = `
       <div
         className="gf-form"
       >
-        <Component
+        <FormLabel
           className="width-14"
           tooltip="Specify which AWS credentials chain to use. AWS SDK Default is the recommended option for EKS, ECS, or if you've attached an IAM role to your EC2 instance."
         >
           Authentication Provider
-        </Component>
+        </FormLabel>
         <Select
           allowCustomValue={false}
           autoFocus={false}
@@ -994,11 +994,11 @@ exports[`Render should show credentials profile name field 1`] = `
         <div
           className="gf-form"
         >
-          <Component
+          <FormLabel
             className="width-14"
           >
             Access Key ID
-          </Component>
+          </FormLabel>
           <div
             className="width-30"
           >
@@ -1016,11 +1016,11 @@ exports[`Render should show credentials profile name field 1`] = `
         <div
           className="gf-form"
         >
-          <Component
+          <FormLabel
             className="width-14"
           >
             Secret Access Key
-          </Component>
+          </FormLabel>
           <div
             className="width-30"
           >
@@ -1039,12 +1039,12 @@ exports[`Render should show credentials profile name field 1`] = `
       <div
         className="gf-form"
       >
-        <Component
+        <FormLabel
           className="width-14"
           tooltip="Optionally, specify the ARN of a role to assume. Specifying a role here will ensure that the selected authentication provider is used to assume the specified role rather than using the credentials directly. Leave blank if you don't need to assume a role at all"
         >
           Assume Role ARN
-        </Component>
+        </FormLabel>
         <div
           className="width-30"
         >
@@ -1062,12 +1062,12 @@ exports[`Render should show credentials profile name field 1`] = `
         <div
           className="gf-form"
         >
-          <Component
+          <FormLabel
             className="width-14"
             tooltip="If you are assuming a role in another account, that has been created with an external ID, specify the external ID here."
           >
             External ID
-          </Component>
+          </FormLabel>
           <div
             className="width-30"
           >
@@ -1087,12 +1087,12 @@ exports[`Render should show credentials profile name field 1`] = `
       <div
         className="gf-form"
       >
-        <Component
+        <FormLabel
           className="width-14"
           tooltip="Specify the region, such as for US West (Oregon) use \` us-west-2 \` as the region."
         >
           Default Region
-        </Component>
+        </FormLabel>
         <Select
           allowCustomValue={false}
           autoFocus={false}
@@ -1127,12 +1127,12 @@ exports[`Render should show credentials profile name field 1`] = `
       <div
         className="gf-form"
       >
-        <Component
+        <FormLabel
           className="width-14"
           tooltip="Namespaces of Custom Metrics."
         >
           Custom Metrics
-        </Component>
+        </FormLabel>
         <Input
           className="width-30"
           onChange={[Function]}

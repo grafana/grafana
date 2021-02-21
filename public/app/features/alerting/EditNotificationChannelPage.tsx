@@ -83,15 +83,15 @@ export class EditNotificationChannelPage extends PureComponent<Props> {
               onSubmit={this.onSubmit}
               defaultValues={{
                 ...notificationChannel,
-                type: notificationChannelTypes.find(n => n.value === notificationChannel.type),
+                type: notificationChannelTypes.find((n) => n.value === notificationChannel.type),
               }}
             >
               {({ control, errors, getValues, register, watch }) => {
-                const selectedChannel = notificationChannelTypes.find(c => c.value === getValues().type.value);
+                const selectedChannel = notificationChannelTypes.find((c) => c.value === getValues().type.value);
 
                 return (
                   <NotificationChannelForm
-                    selectableChannels={mapChannelsToSelectableValue(notificationChannelTypes)}
+                    selectableChannels={mapChannelsToSelectableValue(notificationChannelTypes, true)}
                     selectedChannel={selectedChannel}
                     imageRendererAvailable={config.rendererAvailable}
                     onTestChannel={this.onTestChannel}
@@ -118,7 +118,7 @@ export class EditNotificationChannelPage extends PureComponent<Props> {
   }
 }
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => {
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state) => {
   const channelId = getRouteParamsId(state.location) as number;
   return {
     navModel: getNavModel(state.navIndex, 'channels'),
@@ -138,5 +138,5 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
 export default connectWithCleanUp(
   mapStateToProps,
   mapDispatchToProps,
-  state => state.notificationChannel
+  (state) => state.notificationChannel
 )(EditNotificationChannelPage);

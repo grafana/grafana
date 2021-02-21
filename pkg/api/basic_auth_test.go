@@ -22,7 +22,7 @@ func TestBasicAuthenticatedRequest(t *testing.T) {
 			Request: httpReq,
 		}
 		encodedCreds := encodeBasicAuthCredentials(expectedUser, expectedPass)
-		req.Header.Add("Authorization", fmt.Sprintf("Basic %s", encodedCreds))
+		req.Header.Set("Authorization", fmt.Sprintf("Basic %s", encodedCreds))
 		authenticated := BasicAuthenticatedRequest(req, expectedUser, expectedPass)
 
 		assert.True(t, authenticated)
@@ -35,7 +35,7 @@ func TestBasicAuthenticatedRequest(t *testing.T) {
 			Request: httpReq,
 		}
 		encodedCreds := encodeBasicAuthCredentials("invaliduser", "invalidpass")
-		req.Header.Add("Authorization", fmt.Sprintf("Basic %s", encodedCreds))
+		req.Header.Set("Authorization", fmt.Sprintf("Basic %s", encodedCreds))
 		authenticated := BasicAuthenticatedRequest(req, expectedUser, expectedPass)
 
 		assert.False(t, authenticated)

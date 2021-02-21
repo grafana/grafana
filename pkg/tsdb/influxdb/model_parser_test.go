@@ -6,18 +6,17 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
 )
 
-func TestInfluxdbQueryParser(t *testing.T) {
-	Convey("Influxdb query parser", t, func() {
-		parser := &InfluxdbQueryParser{}
-		dsInfo := &models.DataSource{
-			JsonData: simplejson.New(),
-		}
+func TestInfluxdbQueryParser_Parse(t *testing.T) {
+	parser := &InfluxdbQueryParser{}
+	dsInfo := &models.DataSource{
+		JsonData: simplejson.New(),
+	}
 
-		Convey("can parse influxdb json model", func() {
-			json := `
+	t.Run("can parse influxdb json model", func(t *testing.T) {
+		json := `
         {
         "groupBy": [
           {
@@ -106,22 +105,22 @@ func TestInfluxdbQueryParser(t *testing.T) {
         ]
       }
       `
-			dsInfo.JsonData.Set("timeInterval", ">20s")
-			modelJson, err := simplejson.NewJson([]byte(json))
-			So(err, ShouldBeNil)
+		dsInfo.JsonData.Set("timeInterval", ">20s")
+		modelJSON, err := simplejson.NewJson([]byte(json))
+		require.NoError(t, err)
 
-			res, err := parser.Parse(modelJson, dsInfo)
-			So(err, ShouldBeNil)
-			So(len(res.GroupBy), ShouldEqual, 3)
-			So(len(res.Selects), ShouldEqual, 3)
-			So(len(res.Tags), ShouldEqual, 2)
-			So(res.Tz, ShouldEqual, "Europe/Paris")
-			So(res.Interval, ShouldEqual, time.Second*20)
-			So(res.Alias, ShouldEqual, "series alias")
-		})
+		res, err := parser.Parse(modelJSON, dsInfo)
+		require.NoError(t, err)
+		require.Len(t, res.GroupBy, 3)
+		require.Len(t, res.Selects, 3)
+		require.Len(t, res.Tags, 2)
+		require.Equal(t, "Europe/Paris", res.Tz)
+		require.Equal(t, time.Second*20, res.Interval)
+		require.Equal(t, "series alias", res.Alias)
+	})
 
-		Convey("can part raw query json model", func() {
-			json := `
+	t.Run("can parse raw query json model", func(t *testing.T) {
+		json := `
       {
         "groupBy": [
           {
@@ -165,16 +164,15 @@ func TestInfluxdbQueryParser(t *testing.T) {
       }
       `
 
-			modelJson, err := simplejson.NewJson([]byte(json))
-			So(err, ShouldBeNil)
+		modelJSON, err := simplejson.NewJson([]byte(json))
+		require.NoError(t, err)
 
-			res, err := parser.Parse(modelJson, dsInfo)
-			So(err, ShouldBeNil)
-			So(res.RawQuery, ShouldEqual, "RawDummyQuery")
-			So(len(res.GroupBy), ShouldEqual, 2)
-			So(len(res.Selects), ShouldEqual, 1)
-			So(len(res.Tags), ShouldEqual, 0)
-			So(res.Interval, ShouldEqual, time.Second*10)
-		})
+		res, err := parser.Parse(modelJSON, dsInfo)
+		require.NoError(t, err)
+		require.Equal(t, "RawDummyQuery", res.RawQuery)
+		require.Len(t, res.GroupBy, 2)
+		require.Len(t, res.Selects, 1)
+		require.Empty(t, res.Tags)
+		require.Equal(t, time.Second*10, res.Interval)
 	})
 }

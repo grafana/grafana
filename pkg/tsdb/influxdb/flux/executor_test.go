@@ -73,141 +73,129 @@ func verifyGoldenResponse(t *testing.T, name string) *backend.DataResponse {
 }
 
 func TestExecuteSimple(t *testing.T) {
-	t.Run("Simple Test", func(t *testing.T) {
-		dr := verifyGoldenResponse(t, "simple")
-		require.Len(t, dr.Frames, 1)
-		require.Contains(t, dr.Frames[0].Name, "test")
-		require.Len(t, dr.Frames[0].Fields[1].Labels, 2)
-		require.Equal(t, "Time", dr.Frames[0].Fields[0].Name)
+	dr := verifyGoldenResponse(t, "simple")
+	require.Len(t, dr.Frames, 1)
+	require.Contains(t, dr.Frames[0].Name, "test")
+	require.Len(t, dr.Frames[0].Fields[1].Labels, 2)
+	require.Equal(t, "Time", dr.Frames[0].Fields[0].Name)
 
-		st, err := dr.Frames[0].StringTable(-1, -1)
-		require.NoError(t, err)
-		fmt.Println(st)
-		fmt.Println("----------------------")
-	})
+	st, err := dr.Frames[0].StringTable(-1, -1)
+	require.NoError(t, err)
+	fmt.Println(st)
+	fmt.Println("----------------------")
 }
 
 func TestExecuteSingle(t *testing.T) {
-	t.Run("Single value", func(t *testing.T) {
-		dr := verifyGoldenResponse(t, "single")
-		require.Len(t, dr.Frames, 1)
-	})
+	dr := verifyGoldenResponse(t, "single")
+	require.Len(t, dr.Frames, 1)
 }
 
 func TestExecuteMultiple(t *testing.T) {
-	t.Run("Multiple Test", func(t *testing.T) {
-		dr := verifyGoldenResponse(t, "multiple")
-		require.Len(t, dr.Frames, 4)
-		require.Contains(t, dr.Frames[0].Name, "test")
-		require.Len(t, dr.Frames[0].Fields[1].Labels, 2)
-		require.Equal(t, "Time", dr.Frames[0].Fields[0].Name)
+	dr := verifyGoldenResponse(t, "multiple")
+	require.Len(t, dr.Frames, 3)
+	require.Contains(t, dr.Frames[0].Name, "test")
+	require.Len(t, dr.Frames[0].Fields[1].Labels, 2)
+	require.Equal(t, "Time", dr.Frames[0].Fields[0].Name)
 
-		st, err := dr.Frames[0].StringTable(-1, -1)
-		require.NoError(t, err)
-		fmt.Println(st)
-		fmt.Println("----------------------")
-	})
+	st, err := dr.Frames[0].StringTable(-1, -1)
+	require.NoError(t, err)
+	fmt.Println(st)
+	fmt.Println("----------------------")
 }
 
 func TestExecuteGrouping(t *testing.T) {
-	t.Run("Grouping Test", func(t *testing.T) {
-		dr := verifyGoldenResponse(t, "grouping")
-		require.Len(t, dr.Frames, 3)
-		require.Contains(t, dr.Frames[0].Name, "system")
-		require.Len(t, dr.Frames[0].Fields[1].Labels, 1)
-		require.Equal(t, "Time", dr.Frames[0].Fields[0].Name)
+	dr := verifyGoldenResponse(t, "grouping")
+	require.Len(t, dr.Frames, 3)
+	require.Contains(t, dr.Frames[0].Name, "system")
+	require.Len(t, dr.Frames[0].Fields[1].Labels, 1)
+	require.Equal(t, "Time", dr.Frames[0].Fields[0].Name)
 
-		st, err := dr.Frames[0].StringTable(-1, -1)
-		require.NoError(t, err)
-		fmt.Println(st)
-		fmt.Println("----------------------")
-	})
+	st, err := dr.Frames[0].StringTable(-1, -1)
+	require.NoError(t, err)
+	fmt.Println(st)
+	fmt.Println("----------------------")
 }
 
 func TestAggregateGrouping(t *testing.T) {
-	t.Run("Grouping Test", func(t *testing.T) {
-		dr := verifyGoldenResponse(t, "aggregate")
-		require.Len(t, dr.Frames, 1)
+	dr := verifyGoldenResponse(t, "aggregate")
+	require.Len(t, dr.Frames, 1)
 
-		str, err := dr.Frames[0].StringTable(-1, -1)
-		require.NoError(t, err)
-		fmt.Println(str)
+	str, err := dr.Frames[0].StringTable(-1, -1)
+	require.NoError(t, err)
+	fmt.Println(str)
 
-		// 	 `Name:
-		// Dimensions: 2 Fields by 3 Rows
-		// +-------------------------------+--------------------------+
-		// | Name: Time                    | Name:                    |
-		// | Labels:                       | Labels: host=hostname.ru |
-		// | Type: []time.Time             | Type: []*float64         |
-		// +-------------------------------+--------------------------+
-		// | 2020-06-05 12:06:00 +0000 UTC | 8.291                    |
-		// | 2020-06-05 12:07:00 +0000 UTC | 0.534                    |
-		// | 2020-06-05 12:08:00 +0000 UTC | 0.667                    |
-		// +-------------------------------+--------------------------+
-		// `
+	// 	 `Name:
+	// Dimensions: 2 Fields by 3 Rows
+	// +-------------------------------+--------------------------+
+	// | Name: Time                    | Name:                    |
+	// | Labels:                       | Labels: host=hostname.ru |
+	// | Type: []time.Time             | Type: []*float64         |
+	// +-------------------------------+--------------------------+
+	// | 2020-06-05 12:06:00 +0000 UTC | 8.291                    |
+	// | 2020-06-05 12:07:00 +0000 UTC | 0.534                    |
+	// | 2020-06-05 12:08:00 +0000 UTC | 0.667                    |
+	// +-------------------------------+--------------------------+
+	// `
 
-		expectedFrame := data.NewFrame("",
-			data.NewField("Time", nil, []time.Time{
-				time.Date(2020, 6, 5, 12, 6, 0, 0, time.UTC),
-				time.Date(2020, 6, 5, 12, 7, 0, 0, time.UTC),
-				time.Date(2020, 6, 5, 12, 8, 0, 0, time.UTC),
-			}),
-			data.NewField("", map[string]string{"host": "hostname.ru"}, []*float64{
-				pointer.Float64(8.291),
-				pointer.Float64(0.534),
-				pointer.Float64(0.667),
-			}),
-		)
-		expectedFrame.Meta = &data.FrameMeta{}
+	expectedFrame := data.NewFrame("",
+		data.NewField("Time", nil, []time.Time{
+			time.Date(2020, 6, 5, 12, 6, 0, 0, time.UTC),
+			time.Date(2020, 6, 5, 12, 7, 0, 0, time.UTC),
+			time.Date(2020, 6, 5, 12, 8, 0, 0, time.UTC),
+		}),
+		data.NewField("", map[string]string{"host": "hostname.ru"}, []*float64{
+			pointer.Float64(8.291),
+			pointer.Float64(0.534),
+			pointer.Float64(0.667),
+		}),
+	)
+	expectedFrame.Meta = &data.FrameMeta{}
 
-		diff := cmp.Diff(expectedFrame, dr.Frames[0], data.FrameTestCompareOptions()...)
-		assert.Empty(t, diff)
-	})
+	diff := cmp.Diff(expectedFrame, dr.Frames[0], data.FrameTestCompareOptions()...)
+	assert.Empty(t, diff)
 }
 
 func TestNonStandardTimeColumn(t *testing.T) {
-	t.Run("Time Column", func(t *testing.T) {
-		dr := verifyGoldenResponse(t, "non_standard_time_column")
-		require.Len(t, dr.Frames, 1)
+	dr := verifyGoldenResponse(t, "non_standard_time_column")
+	require.Len(t, dr.Frames, 1)
 
-		str, err := dr.Frames[0].StringTable(-1, -1)
-		require.NoError(t, err)
-		fmt.Println(str)
+	str, err := dr.Frames[0].StringTable(-1, -1)
+	require.NoError(t, err)
+	fmt.Println(str)
 
-		// Dimensions: 2 Fields by 1 Rows
-		// +-----------------------------------------+------------------+
-		// | Name: _start_water                      | Name:            |
-		// | Labels:                                 | Labels: st=1     |
-		// | Type: []time.Time                       | Type: []*float64 |
-		// +-----------------------------------------+------------------+
-		// | 2020-06-28 17:50:13.012584046 +0000 UTC | 156.304          |
-		// +-----------------------------------------+------------------+
+	// Dimensions: 2 Fields by 1 Rows
+	// +-----------------------------------------+------------------+
+	// | Name: _start_water                      | Name:            |
+	// | Labels:                                 | Labels: st=1     |
+	// | Type: []time.Time                       | Type: []*float64 |
+	// +-----------------------------------------+------------------+
+	// | 2020-06-28 17:50:13.012584046 +0000 UTC | 156.304          |
+	// +-----------------------------------------+------------------+
 
-		expectedFrame := data.NewFrame("",
-			data.NewField("_start_water", nil, []time.Time{
-				time.Date(2020, 6, 28, 17, 50, 13, 12584046, time.UTC),
-			}),
-			data.NewField("", map[string]string{"st": "1"}, []*float64{
-				pointer.Float64(156.304),
-			}),
-		)
-		expectedFrame.Meta = &data.FrameMeta{}
+	expectedFrame := data.NewFrame("",
+		data.NewField("_start_water", nil, []time.Time{
+			time.Date(2020, 6, 28, 17, 50, 13, 12584046, time.UTC),
+		}),
+		data.NewField("", map[string]string{"st": "1"}, []*float64{
+			pointer.Float64(156.304),
+		}),
+	)
+	expectedFrame.Meta = &data.FrameMeta{}
 
-		diff := cmp.Diff(expectedFrame, dr.Frames[0], data.FrameTestCompareOptions()...)
-		assert.Empty(t, diff)
-	})
+	diff := cmp.Diff(expectedFrame, dr.Frames[0], data.FrameTestCompareOptions()...)
+	assert.Empty(t, diff)
 }
 
 func TestBuckets(t *testing.T) {
-	t.Run("Buckes", func(t *testing.T) {
-		verifyGoldenResponse(t, "buckets")
-	})
+	verifyGoldenResponse(t, "buckets")
+}
+
+func TestBooleanGrouping(t *testing.T) {
+	verifyGoldenResponse(t, "boolean")
 }
 
 func TestGoldenFiles(t *testing.T) {
-	t.Run("Renamed", func(t *testing.T) {
-		verifyGoldenResponse(t, "renamed")
-	})
+	verifyGoldenResponse(t, "renamed")
 }
 
 func TestRealQuery(t *testing.T) {

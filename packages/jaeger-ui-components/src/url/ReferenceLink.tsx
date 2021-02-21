@@ -37,7 +37,7 @@ export default function ReferenceLink(props: ReferenceLinkProps) {
 
   return (
     <ExternalLinkContext.Consumer>
-      {createLinkToExternalSpan => {
+      {(createLinkToExternalSpan) => {
         if (!createLinkToExternalSpan) {
           throw new Error("ExternalLinkContext does not have a value, you probably forgot to setup it's provider");
         }

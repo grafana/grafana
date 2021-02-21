@@ -2,17 +2,7 @@ import { ComponentType } from 'react';
 import { Reducer } from 'redux';
 import { Registry, UrlQueryValue, VariableType } from '@grafana/data';
 
-import {
-  AdHocVariableModel,
-  ConstantVariableModel,
-  CustomVariableModel,
-  DataSourceVariableModel,
-  IntervalVariableModel,
-  QueryVariableModel,
-  TextBoxVariableModel,
-  VariableModel,
-  VariableOption,
-} from './types';
+import { VariableModel, VariableOption } from './types';
 import { VariableEditorProps } from './editor/types';
 import { VariablesState } from './state/variablesReducer';
 import { VariablePickerProps } from './pickers/types';
@@ -34,22 +24,13 @@ export interface VariableAdapter<Model extends VariableModel> {
   setValue: (variable: Model, option: VariableOption, emitChanges?: boolean) => Promise<void>;
   setValueFromUrl: (variable: Model, urlValue: UrlQueryValue) => Promise<void>;
   updateOptions: (variable: Model, searchFilter?: string) => Promise<void>;
-  getSaveModel: (variable: Model) => Partial<Model>;
+  getSaveModel: (variable: Model, saveCurrentAsDefault?: boolean) => Partial<Model>;
   getValueForUrl: (variable: Model) => string | string[];
-  picker: ComponentType<VariablePickerProps>;
-  editor: ComponentType<VariableEditorProps>;
+  picker: ComponentType<VariablePickerProps<Model>>;
+  editor: ComponentType<VariableEditorProps<Model>>;
   reducer: Reducer<VariablesState>;
+  beforeAdding?: (model: any) => any;
 }
-
-export type VariableModels =
-  | QueryVariableModel
-  | CustomVariableModel
-  | TextBoxVariableModel
-  | ConstantVariableModel
-  | DataSourceVariableModel
-  | IntervalVariableModel
-  | AdHocVariableModel;
-export type VariableTypeRegistry<Model extends VariableModel = VariableModel> = Registry<VariableAdapter<Model>>;
 
 export const getDefaultVariableAdapters = () => [
   createQueryVariableAdapter(),
@@ -62,4 +43,4 @@ export const getDefaultVariableAdapters = () => [
   createSystemVariableAdapter(),
 ];
 
-export const variableAdapters: VariableTypeRegistry = new Registry<VariableAdapter<VariableModels>>();
+export const variableAdapters = new Registry<VariableAdapter<any>>();

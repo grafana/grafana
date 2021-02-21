@@ -113,16 +113,23 @@ func (provider *accessTokenProvider) getAccessToken(data templateData) (string, 
 		params.Add(key, interpolatedParam)
 	}
 
-	getTokenReq, _ := http.NewRequest("POST", urlInterpolated, bytes.NewBufferString(params.Encode()))
-	getTokenReq.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	getTokenReq.Header.Add("Content-Length", strconv.Itoa(len(params.Encode())))
+	getTokenReq, err := http.NewRequest("POST", urlInterpolated, bytes.NewBufferString(params.Encode()))
+	if err != nil {
+		return "", err
+	}
+	getTokenReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	getTokenReq.Header.Set("Content-Length", strconv.Itoa(len(params.Encode())))
 
 	resp, err := client.Do(getTokenReq)
 	if err != nil {
 		return "", err
 	}
 
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			logger.Warn("Failed to close response body", "err", err)
+		}
+	}()
 
 	var token jwtToken
 	if err := json.NewDecoder(resp.Body).Decode(&token); err != nil {

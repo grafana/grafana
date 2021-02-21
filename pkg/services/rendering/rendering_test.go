@@ -28,7 +28,7 @@ func TestGetUrl(t *testing.T) {
 		t.Run("And protocol HTTP configured should return expected path", func(t *testing.T) {
 			rs.Cfg.ServeFromSubPath = false
 			rs.Cfg.AppSubURL = ""
-			setting.Protocol = setting.HTTPScheme
+			rs.Cfg.Protocol = setting.HTTPScheme
 			url := rs.getURL(path)
 			require.Equal(t, "http://localhost:3000/"+path+"&render=1", url)
 
@@ -43,7 +43,7 @@ func TestGetUrl(t *testing.T) {
 		t.Run("And protocol HTTPS configured should return expected path", func(t *testing.T) {
 			rs.Cfg.ServeFromSubPath = false
 			rs.Cfg.AppSubURL = ""
-			setting.Protocol = setting.HTTPSScheme
+			rs.Cfg.Protocol = setting.HTTPSScheme
 			url := rs.getURL(path)
 			require.Equal(t, "https://localhost:3000/"+path+"&render=1", url)
 		})
@@ -51,7 +51,7 @@ func TestGetUrl(t *testing.T) {
 		t.Run("And protocol HTTP2 configured should return expected path", func(t *testing.T) {
 			rs.Cfg.ServeFromSubPath = false
 			rs.Cfg.AppSubURL = ""
-			setting.Protocol = setting.HTTP2Scheme
+			rs.Cfg.Protocol = setting.HTTP2Scheme
 			url := rs.getURL(path)
 			require.Equal(t, "https://localhost:3000/"+path+"&render=1", url)
 		})

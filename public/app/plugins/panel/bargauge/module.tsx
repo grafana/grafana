@@ -7,7 +7,7 @@ import { barGaugePanelMigrationHandler } from './BarGaugeMigrations';
 
 export const plugin = new PanelPlugin<BarGaugeOptions>(BarGaugePanel)
   .useFieldConfig()
-  .setPanelOptions(builder => {
+  .setPanelOptions((builder) => {
     addStandardDataReduceOptions(builder);
     builder
       .addRadio({

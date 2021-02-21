@@ -52,8 +52,8 @@ func (dp *DataPipeline) execute(c context.Context) (mathexp.Vars, error) {
 
 // BuildPipeline builds a graph of the nodes, and returns the nodes in an
 // executable order.
-func buildPipeline(queries []backend.DataQuery) (DataPipeline, error) {
-	graph, err := buildDependencyGraph(queries)
+func buildPipeline(req *backend.QueryDataRequest) (DataPipeline, error) {
+	graph, err := buildDependencyGraph(req)
 	if err != nil {
 		return nil, err
 	}
@@ -67,8 +67,8 @@ func buildPipeline(queries []backend.DataQuery) (DataPipeline, error) {
 }
 
 // buildDependencyGraph returns a dependency graph for a set of queries.
-func buildDependencyGraph(queries []backend.DataQuery) (*simple.DirectedGraph, error) {
-	graph, err := buildGraph(queries)
+func buildDependencyGraph(req *backend.QueryDataRequest) (*simple.DirectedGraph, error) {
+	graph, err := buildGraph(req)
 	if err != nil {
 		return nil, err
 	}
@@ -113,10 +113,10 @@ func buildNodeRegistry(g *simple.DirectedGraph) map[string]Node {
 }
 
 // buildGraph creates a new graph populated with nodes for every query.
-func buildGraph(queries []backend.DataQuery) (*simple.DirectedGraph, error) {
+func buildGraph(req *backend.QueryDataRequest) (*simple.DirectedGraph, error) {
 	dp := simple.NewDirectedGraph()
 
-	for _, query := range queries {
+	for _, query := range req.Queries {
 		rawQueryProp := make(map[string]interface{})
 		err := json.Unmarshal(query.JSON, &rawQueryProp)
 		if err != nil {
@@ -139,7 +139,7 @@ func buildGraph(queries []backend.DataQuery) (*simple.DirectedGraph, error) {
 		case DatasourceName:
 			node, err = buildCMDNode(dp, rn)
 		default: // If it's not an expression query, it's a data source query.
-			node, err = buildDSNode(dp, rn)
+			node, err = buildDSNode(dp, rn, req.PluginContext.OrgID)
 		}
 		if err != nil {
 			return nil, err

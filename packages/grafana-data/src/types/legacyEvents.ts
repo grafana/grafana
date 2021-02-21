@@ -22,8 +22,7 @@ export const PanelEvents = {
   dataSnapshotLoad: eventFactory<DataQueryResponseData[]>('data-snapshot-load'),
   editModeInitialized: eventFactory('init-edit-mode'),
   initPanelActions: eventFactory<AngularPanelMenuItem[]>('init-panel-actions'),
-  panelInitialized: eventFactory('panel-initialized'),
-  panelSizeChanged: eventFactory('panel-size-changed'),
+  initialized: eventFactory('panel-initialized'),
   panelTeardown: eventFactory('panel-teardown'),
   render: eventFactory<any>('render'),
 };

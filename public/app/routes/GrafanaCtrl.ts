@@ -6,7 +6,14 @@ import Drop from 'tether-drop';
 
 // Utils and servies
 import { colors } from '@grafana/ui';
-import { getTemplateSrv, setBackendSrv, setDataSourceSrv, setLegacyAngularInjector } from '@grafana/runtime';
+import {
+  getTemplateSrv,
+  setBackendSrv,
+  setDataSourceSrv,
+  setLegacyAngularInjector,
+  LocationUpdate,
+  setLocationSrv,
+} from '@grafana/runtime';
 import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
 import { profiler } from 'app/core/profiler';
@@ -17,7 +24,6 @@ import { KeybindingSrv, setKeybindingSrv } from 'app/core/services/keybindingSrv
 import { AngularLoader, setAngularLoader } from 'app/core/services/AngularLoader';
 import { configureStore } from 'app/store/configureStore';
 
-import { LocationUpdate, setLocationSrv } from '@grafana/runtime';
 import { updateLocation } from 'app/core/actions';
 
 // Types
@@ -28,10 +34,9 @@ import { ContextSrv } from 'app/core/services/context_srv';
 import { BridgeSrv } from 'app/core/services/bridge_srv';
 import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
 import { DashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { ILocationService, ITimeoutService, IRootScopeService, IAngularEvent } from 'angular';
+import { ILocationService, ITimeoutService, IRootScopeService, IAngularEvent, auto } from 'angular';
 import { AppEvent, AppEvents, locationUtil } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { auto } from 'angular';
 import { initGrafanaLive } from 'app/features/live/live';
 
 export type GrafanaRootScope = IRootScopeService & AppEventEmitter & AppEventConsumer & { colors: string[] };
@@ -61,6 +66,8 @@ export class GrafanaCtrl {
     setKeybindingSrv(keybindingSrv);
     setDashboardSrv(dashboardSrv);
     setLegacyAngularInjector($injector);
+
+    datasourceSrv.init(config.datasources, config.defaultDatasource);
 
     locationUtil.initialize({
       getConfig: () => config,
@@ -93,7 +100,7 @@ export class GrafanaCtrl {
 
     $rootScope.colors = colors;
 
-    $rootScope.onAppEvent = function<T>(
+    $rootScope.onAppEvent = function <T>(
       event: AppEvent<T> | string,
       callback: (event: IAngularEvent, ...args: any[]) => void,
       localScope?: any
@@ -284,7 +291,7 @@ export function grafanaAppDirective(
       });
 
       // handle document clicks that should hide things
-      body.click(evt => {
+      body.click((evt) => {
         const target = $(evt.target);
         if (target.parents().length === 0) {
           return;

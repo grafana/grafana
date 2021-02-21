@@ -19,8 +19,14 @@ export default {
   },
 };
 
-export const simple = () => {
+export const vertical = () => {
   const { message } = getKnobs();
 
   return <FieldValidationMessage>{message}</FieldValidationMessage>;
+};
+
+export const horizontal = () => {
+  const { message } = getKnobs();
+
+  return <FieldValidationMessage horizontal>{message}</FieldValidationMessage>;
 };

@@ -1,20 +1,27 @@
 import React, { FC } from 'react';
 import config from 'app/core/config';
+import { UserDTO } from 'app/types';
 import { Button, LinkButton, Form, Field, Input, HorizontalGroup } from '@grafana/ui';
 import { ChangePasswordFields } from 'app/core/utils/UserProvider';
 import { css } from 'emotion';
 
 export interface Props {
+  user: UserDTO;
   isSaving: boolean;
   onChangePassword: (payload: ChangePasswordFields) => void;
 }
 
-export const ChangePasswordForm: FC<Props> = ({ onChangePassword, isSaving }) => {
-  const { ldapEnabled, authProxyEnabled } = config;
+export const ChangePasswordForm: FC<Props> = ({ user, onChangePassword, isSaving }) => {
+  const { ldapEnabled, authProxyEnabled, disableLoginForm } = config;
+  const authSource = user.authLabels?.length && user.authLabels[0];
 
   if (ldapEnabled || authProxyEnabled) {
     return <p>You cannot change password when ldap or auth proxy authentication is enabled.</p>;
   }
+  if (authSource && disableLoginForm) {
+    return <p>Password cannot be changed here!</p>;
+  }
+
   return (
     <div
       className={css`
@@ -36,8 +43,8 @@ export const ChangePasswordForm: FC<Props> = ({ onChangePassword, isSaving }) =>
                   ref={register({
                     required: 'New password is required',
                     validate: {
-                      confirm: v => v === getValues().confirmNew || 'Passwords must match',
-                      old: v => v !== getValues().oldPassword || `New password can't be the same as the old one.`,
+                      confirm: (v) => v === getValues().confirmNew || 'Passwords must match',
+                      old: (v) => v !== getValues().oldPassword || `New password can't be the same as the old one.`,
                     },
                   })}
                 />
@@ -49,7 +56,7 @@ export const ChangePasswordForm: FC<Props> = ({ onChangePassword, isSaving }) =>
                   name="confirmNew"
                   ref={register({
                     required: 'New password confirmation is required',
-                    validate: v => v === getValues().newPassword || 'Passwords must match',
+                    validate: (v) => v === getValues().newPassword || 'Passwords must match',
                   })}
                 />
               </Field>

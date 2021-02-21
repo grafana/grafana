@@ -22,14 +22,14 @@ export const DashboardListPage: FC<Props> = memo(({ navModel, uid, url }) => {
       return Promise.resolve({ pageNavModel: navModel });
     }
 
-    return loadFolderPage(uid!, 'manage-folder-dashboards').then(({ folder, model }) => {
+    return loadFolderPage(uid!).then(({ folder, folderNav }) => {
       const path = locationUtil.stripBaseFromUrl(folder.url);
 
       if (path !== location.pathname) {
         getLocationSrv().update({ path });
       }
 
-      return { folder, pageNavModel: { ...navModel, ...model } };
+      return { folder, pageNavModel: { ...navModel, main: folderNav } };
     });
   }, [uid]);
 
@@ -42,7 +42,9 @@ export const DashboardListPage: FC<Props> = memo(({ navModel, uid, url }) => {
   );
 });
 
-const mapStateToProps: MapStateToProps<Props, {}, StoreState> = state => {
+DashboardListPage.displayName = 'DashboardListPage';
+
+const mapStateToProps: MapStateToProps<Props, {}, StoreState> = (state) => {
   return {
     navModel: getNavModel(state.navIndex, 'manage-dashboards'),
     uid: getRouteParams(state.location).uid as string | undefined,

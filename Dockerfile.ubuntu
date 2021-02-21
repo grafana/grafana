@@ -1,4 +1,4 @@
-FROM node:12.19.0-slim AS js-builder
+FROM node:14.15.1-slim AS js-builder
 
 WORKDIR /usr/src/app/
 
@@ -7,14 +7,14 @@ COPY packages packages
 
 RUN yarn install --pure-lockfile
 
-COPY Gruntfile.js tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js ./
+COPY tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js ./
 COPY public public
 COPY tools tools
 COPY scripts scripts
 COPY emails emails
 
 ENV NODE_ENV production
-RUN ./node_modules/.bin/grunt build
+RUN yarn build
 
 FROM golang:1.15.1 AS go-builder
 
@@ -58,6 +58,7 @@ RUN mkdir -p "$GF_PATHS_HOME/.aws" && \
   mkdir -p "$GF_PATHS_PROVISIONING/datasources" \
              "$GF_PATHS_PROVISIONING/dashboards" \
              "$GF_PATHS_PROVISIONING/notifiers" \
+             "$GF_PATHS_PROVISIONING/plugins" \
              "$GF_PATHS_LOGS" \
              "$GF_PATHS_PLUGINS" \
              "$GF_PATHS_DATA" && \

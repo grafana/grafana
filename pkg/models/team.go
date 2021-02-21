@@ -50,9 +50,11 @@ type DeleteTeamCommand struct {
 }
 
 type GetTeamByIdQuery struct {
-	OrgId  int64
-	Id     int64
-	Result *TeamDTO
+	OrgId        int64
+	Id           int64
+	SignedInUser *SignedInUser
+	HiddenUsers  map[string]struct{}
+	Result       *TeamDTO
 }
 
 type GetTeamsByUserQuery struct {
@@ -68,6 +70,8 @@ type SearchTeamsQuery struct {
 	Page         int
 	OrgId        int64
 	UserIdFilter int64
+	SignedInUser *SignedInUser
+	HiddenUsers  map[string]struct{}
 
 	Result SearchTeamQueryResult
 }

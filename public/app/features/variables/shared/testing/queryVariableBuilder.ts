@@ -11,4 +11,9 @@ export class QueryVariableBuilder<T extends QueryVariableModel> extends Datasour
     this.variable.tagsQuery = tagsQuery;
     return this;
   }
+
+  withDatasource(datasource: string) {
+    this.variable.datasource = datasource;
+    return this;
+  }
 }

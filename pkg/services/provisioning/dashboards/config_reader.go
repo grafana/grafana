@@ -19,6 +19,9 @@ type configReader struct {
 
 func (cr *configReader) parseConfigs(file os.FileInfo) ([]*config, error) {
 	filename, _ := filepath.Abs(filepath.Join(cr.path, file.Name()))
+
+	// nolint:gosec
+	// We can ignore the gosec G304 warning on this one because `filename` comes from ps.Cfg.ProvisioningPath
 	yamlFile, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
@@ -107,7 +110,7 @@ func (cr *configReader) readConfig() ([]*config, error) {
 
 	for uid, times := range uidUsage {
 		if times > 1 {
-			cr.log.Error("the same 'folderUid' is used more than once", "folderUid", uid)
+			cr.log.Error("the same folder UID is used more than once", "folderUid", uid)
 		}
 	}
 

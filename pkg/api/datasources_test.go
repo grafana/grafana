@@ -4,7 +4,10 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -12,8 +15,9 @@ import (
 )
 
 const (
-	testOrgID  int64 = 1
-	testUserID int64 = 1
+	testOrgID     int64  = 1
+	testUserID    int64  = 1
+	testUserLogin string = "testUser"
 )
 
 func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
@@ -31,7 +35,8 @@ func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 		})
 
 		// handler func being tested
-		sc.handlerFunc = GetDataSources
+		hs := &HTTPServer{Bus: bus.GetBus(), Cfg: setting.NewCfg()}
+		sc.handlerFunc = hs.GetDataSources
 		sc.fakeReq("GET", "/api/datasources").exec()
 
 		respJSON := []map[string]interface{}{}
@@ -58,7 +63,7 @@ func TestAddDataSource_InvalidURL(t *testing.T) {
 
 	sc := setupScenarioContext(t, "/api/datasources")
 
-	sc.m.Post(sc.url, Wrap(func(c *models.ReqContext) Response {
+	sc.m.Post(sc.url, routing.Wrap(func(c *models.ReqContext) response.Response {
 		return AddDataSource(c, models.AddDataSourceCommand{
 			Name: "Test",
 			Url:  "invalid:url",
@@ -88,7 +93,7 @@ func TestAddDataSource_URLWithoutProtocol(t *testing.T) {
 
 	sc := setupScenarioContext(t, "/api/datasources")
 
-	sc.m.Post(sc.url, Wrap(func(c *models.ReqContext) Response {
+	sc.m.Post(sc.url, routing.Wrap(func(c *models.ReqContext) response.Response {
 		return AddDataSource(c, models.AddDataSourceCommand{
 			Name: name,
 			Url:  url,
@@ -106,7 +111,7 @@ func TestUpdateDataSource_InvalidURL(t *testing.T) {
 
 	sc := setupScenarioContext(t, "/api/datasources/1234")
 
-	sc.m.Put(sc.url, Wrap(func(c *models.ReqContext) Response {
+	sc.m.Put(sc.url, routing.Wrap(func(c *models.ReqContext) response.Response {
 		return AddDataSource(c, models.AddDataSourceCommand{
 			Name: "Test",
 			Url:  "invalid:url",
@@ -136,7 +141,7 @@ func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 
 	sc := setupScenarioContext(t, "/api/datasources/1234")
 
-	sc.m.Put(sc.url, Wrap(func(c *models.ReqContext) Response {
+	sc.m.Put(sc.url, routing.Wrap(func(c *models.ReqContext) response.Response {
 		return AddDataSource(c, models.AddDataSourceCommand{
 			Name: name,
 			Url:  url,

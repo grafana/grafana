@@ -24,7 +24,7 @@ export const customVariableSlice = createSlice({
       const { includeAll, query } = instanceState;
 
       const match = query.match(/(?:\\,|[^,])+/g) ?? [];
-      const options = match.map(text => {
+      const options = match.map((text) => {
         text = text.replace(/\\,/g, ',');
         const textMatch = /^(.+)\s:\s(.+)$/g.exec(text) ?? [];
         if (textMatch.length === 3) {

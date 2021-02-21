@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { PlotPlugin } from './types';
 import { pluginLog } from './utils';
-import uPlot from 'uplot';
-import { getTimeZoneInfo, TimeZone } from '@grafana/data';
+import { Options, PaddingSide } from 'uplot';
 import { usePlotPluginContext } from './context';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
+import usePrevious from 'react-use/lib/usePrevious';
+import useMountedState from 'react-use/lib/useMountedState';
 
 export const usePlotPlugins = () => {
   /**
@@ -29,7 +30,7 @@ export const usePlotPlugins = () => {
      * If any other plugin will try to register, the previously scheduled call will be canceled
      * and arePluginsReady will be deferred to next animation frame.
      */
-    cancellationToken.current = window.requestAnimationFrame(function() {
+    cancellationToken.current = window.requestAnimationFrame(function () {
       if (isMounted.current) {
         setPluginsReady(true);
       }
@@ -40,7 +41,7 @@ export const usePlotPlugins = () => {
     (plugin: PlotPlugin) => {
       pluginLog(plugin.id, false, 'register');
 
-      setPlugins(plugs => {
+      setPlugins((plugs) => {
         if (plugs.hasOwnProperty(plugin.id)) {
           throw new Error(`${plugin.id} that is already registered`);
         }
@@ -53,7 +54,7 @@ export const usePlotPlugins = () => {
       checkPluginsReady();
 
       return () => {
-        setPlugins(p => {
+        setPlugins((p) => {
           pluginLog(plugin.id, false, 'unregister');
           delete p[plugin.id];
           return {
@@ -84,7 +85,13 @@ export const usePlotPlugins = () => {
   };
 };
 
-export const DEFAULT_PLOT_CONFIG = {
+const paddingSide: PaddingSide = (u, side, sidesWithAxes, cycleNum) => {
+  let hasCrossAxis = side % 2 ? sidesWithAxes[0] || sidesWithAxes[2] : sidesWithAxes[1] || sidesWithAxes[3];
+
+  return sidesWithAxes[side] || !hasCrossAxis ? 0 : 8;
+};
+
+export const DEFAULT_PLOT_CONFIG: Partial<Options> = {
   focus: {
     alpha: 1,
   },
@@ -96,48 +103,37 @@ export const DEFAULT_PLOT_CONFIG = {
   legend: {
     show: false,
   },
-  gutters: {
-    x: 8,
-    y: 8,
-  },
+  padding: [paddingSide, paddingSide, paddingSide, paddingSide],
   series: [],
   hooks: {},
 };
 
-export const usePlotConfig = (width: number, height: number, timeZone: TimeZone, configBuilder: UPlotConfigBuilder) => {
+export const usePlotConfig = (width: number, height: number, configBuilder: UPlotConfigBuilder) => {
   const { arePluginsReady, plugins, registerPlugin } = usePlotPlugins();
-  const [currentConfig, setCurrentConfig] = useState<uPlot.Options>();
+  const [isConfigReady, setIsConfigReady] = useState(false);
 
-  const tzDate = useMemo(() => {
-    let fmt = undefined;
+  const currentConfig = useRef<Options>();
 
-    const tz = getTimeZoneInfo(timeZone, Date.now())?.ianaName;
-
-    if (tz) {
-      fmt = (ts: number) => uPlot.tzDate(new Date(ts * 1e3), tz);
-    }
-
-    return fmt;
-  }, [timeZone]);
-
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!arePluginsReady) {
       return;
     }
-
-    setCurrentConfig({
+    currentConfig.current = {
       ...DEFAULT_PLOT_CONFIG,
       width,
       height,
-      plugins: Object.entries(plugins).map(p => ({
+      ms: 1,
+      plugins: Object.entries(plugins).map((p) => ({
         hooks: p[1].hooks,
       })),
-      tzDate,
       ...configBuilder.getConfig(),
-    });
+    };
+
+    setIsConfigReady(true);
   }, [arePluginsReady, plugins, width, height, configBuilder]);
 
   return {
+    isConfigReady,
     registerPlugin,
     currentConfig,
   };
@@ -150,6 +146,7 @@ export const usePlotConfig = (width: number, height: number, timeZone: TimeZone,
  */
 export const useRefreshAfterGraphRendered = (pluginId: string) => {
   const pluginsApi = usePlotPluginContext();
+  const isMounted = useMountedState();
   const [renderToken, setRenderToken] = useState(0);
 
   useEffect(() => {
@@ -158,7 +155,9 @@ export const useRefreshAfterGraphRendered = (pluginId: string) => {
       hooks: {
         // refresh events when uPlot draws
         draw: () => {
-          setRenderToken(c => c + 1);
+          if (isMounted()) {
+            setRenderToken((c) => c + 1);
+          }
           return;
         },
       },
@@ -171,3 +170,18 @@ export const useRefreshAfterGraphRendered = (pluginId: string) => {
 
   return renderToken;
 };
+
+export function useRevision<T>(dep?: T | null, cmp?: (prev?: T | null, next?: T | null) => boolean) {
+  const [rev, setRev] = useState(0);
+  const prevDep = usePrevious(dep);
+  const comparator = cmp ? cmp : (a?: T | null, b?: T | null) => a === b;
+
+  useLayoutEffect(() => {
+    const hasChange = !comparator(prevDep, dep);
+    if (hasChange) {
+      setRev((r) => r + 1);
+    }
+  }, [dep]);
+
+  return rev;
+}

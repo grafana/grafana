@@ -1,4 +1,4 @@
-// Libaries
+// Libraries
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import ReactGridLayout, { ItemCallback } from 'react-grid-layout';
@@ -14,8 +14,8 @@ import { DashboardRow } from '../components/DashboardRow';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 import { DashboardPanel } from './DashboardPanel';
 import { DashboardModel, PanelModel } from '../state';
-import { CoreEvents } from 'app/types';
-import { panelAdded, panelRemoved } from '../state/PanelModel';
+import { Subscription } from 'rxjs';
+import { DashboardPanelsChangedEvent } from 'app/types/events';
 
 let lastGridWidth = 1200;
 let ignoreNextWidthChange = false;
@@ -28,7 +28,6 @@ interface GridWrapperProps {
   onDragStop: ItemCallback;
   onResize: ItemCallback;
   onResizeStop: ItemCallback;
-  onWidthChange: () => void;
   className: string;
   isResizable?: boolean;
   isDraggable?: boolean;
@@ -43,7 +42,6 @@ function GridWrapper({
   onDragStop,
   onResize,
   onResizeStop,
-  onWidthChange,
   className,
   isResizable,
   isDraggable,
@@ -56,7 +54,6 @@ function GridWrapper({
     if (ignoreNextWidthChange) {
       ignoreNextWidthChange = false;
     } else if (!viewPanel && Math.abs(width - lastGridWidth) > 8) {
-      onWidthChange();
       lastGridWidth = width;
     }
   }
@@ -102,26 +99,17 @@ export interface Props {
 }
 
 export class DashboardGrid extends PureComponent<Props> {
-  panelMap: { [id: string]: PanelModel };
-  panelRef: { [id: string]: HTMLElement } = {};
+  private panelMap: { [id: string]: PanelModel } = {};
+  private panelRef: { [id: string]: HTMLElement } = {};
+  private eventSubs = new Subscription();
 
   componentDidMount() {
     const { dashboard } = this.props;
-
-    dashboard.on(panelAdded, this.triggerForceUpdate);
-    dashboard.on(panelRemoved, this.triggerForceUpdate);
-    dashboard.on(CoreEvents.repeatsProcessed, this.triggerForceUpdate);
-    dashboard.on(CoreEvents.rowCollapsed, this.triggerForceUpdate);
-    dashboard.on(CoreEvents.rowExpanded, this.triggerForceUpdate);
+    this.eventSubs.add(dashboard.events.subscribe(DashboardPanelsChangedEvent, this.triggerForceUpdate));
   }
 
   componentWillUnmount() {
-    const { dashboard } = this.props;
-    dashboard.off(panelAdded, this.triggerForceUpdate);
-    dashboard.off(panelRemoved, this.triggerForceUpdate);
-    dashboard.off(CoreEvents.repeatsProcessed, this.triggerForceUpdate);
-    dashboard.off(CoreEvents.rowCollapsed, this.triggerForceUpdate);
-    dashboard.off(CoreEvents.rowExpanded, this.triggerForceUpdate);
+    this.eventSubs.unsubscribe();
   }
 
   buildLayout() {
@@ -173,12 +161,6 @@ export class DashboardGrid extends PureComponent<Props> {
     this.forceUpdate();
   };
 
-  onWidthChange = () => {
-    for (const panel of this.props.dashboard.panels) {
-      panel.resizeDone();
-    }
-  };
-
   updateGridPos = (item: ReactGridLayout.Layout, layout: ReactGridLayout.Layout[]) => {
     this.panelMap[item.i!].updateGridPos(item);
 
@@ -193,7 +175,6 @@ export class DashboardGrid extends PureComponent<Props> {
 
   onResizeStop: ItemCallback = (layout, oldItem, newItem) => {
     this.updateGridPos(newItem, layout);
-    this.panelMap[newItem.i!].resizeDone();
   };
 
   onDragStop: ItemCallback = (layout, oldItem, newItem) => {
@@ -247,7 +228,7 @@ export class DashboardGrid extends PureComponent<Props> {
       panel.isInView = this.isInView(panel);
 
       panelElements.push(
-        <div key={id} className={panelClasses} id={'panel-' + id} ref={elem => elem && (this.panelRef[id] = elem)}>
+        <div key={id} className={panelClasses} id={'panel-' + id} ref={(elem) => elem && (this.panelRef[id] = elem)}>
           {this.renderPanel(panel)}
         </div>
       );
@@ -286,7 +267,6 @@ export class DashboardGrid extends PureComponent<Props> {
         isResizable={dashboard.meta.canEdit}
         isDraggable={dashboard.meta.canEdit}
         onLayoutChange={this.onLayoutChange}
-        onWidthChange={this.onWidthChange}
         onDragStop={this.onDragStop}
         onResize={this.onResize}
         onResizeStop={this.onResizeStop}

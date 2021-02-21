@@ -128,7 +128,7 @@ export class HeatmapRenderer {
   getYAxisWidth(elem: any) {
     const axisText = elem.selectAll('.axis-y text').nodes();
     const maxTextWidth = _.max(
-      _.map(axisText, text => {
+      _.map(axisText, (text) => {
         // Use SVG getBBox method
         return text.getBBox().width;
       })
@@ -180,10 +180,7 @@ export class HeatmapRenderer {
       .call(xAxis);
 
     // Remove horizontal line in the top of axis labels (called domain in d3)
-    this.heatmap
-      .select('.axis-x')
-      .select('.domain')
-      .remove();
+    this.heatmap.select('.axis-x').select('.domain').remove();
   }
 
   addYAxis() {
@@ -221,10 +218,7 @@ export class HeatmapRenderer {
       ticks: ticks,
     };
 
-    this.scope.yScale = this.yScale = d3
-      .scaleLinear()
-      .domain([yMin, yMax])
-      .range([this.chartHeight, 0]);
+    this.scope.yScale = this.yScale = d3.scaleLinear().domain([yMin, yMax]).range([this.chartHeight, 0]);
 
     const yAxis = d3
       .axisLeft(this.yScale)
@@ -234,10 +228,7 @@ export class HeatmapRenderer {
       .tickSizeOuter(0)
       .tickPadding(Y_AXIS_TICK_PADDING);
 
-    this.heatmap
-      .append('g')
-      .attr('class', 'axis axis-y')
-      .call(yAxis);
+    this.heatmap.append('g').attr('class', 'axis axis-y').call(yAxis);
 
     // Calculate Y axis width first, then move axis into visible area
     const posY = this.margin.top;
@@ -245,10 +236,7 @@ export class HeatmapRenderer {
     this.heatmap.select('.axis-y').attr('transform', 'translate(' + posX + ',' + posY + ')');
 
     // Remove vertical line in the right of axis labels (called domain in d3)
-    this.heatmap
-      .select('.axis-y')
-      .select('.domain')
-      .remove();
+    this.heatmap.select('.axis-y').select('.domain').remove();
   }
 
   // Wide Y values range and anjust to bucket size
@@ -318,10 +306,7 @@ export class HeatmapRenderer {
       .tickSizeOuter(0)
       .tickPadding(Y_AXIS_TICK_PADDING);
 
-    this.heatmap
-      .append('g')
-      .attr('class', 'axis axis-y')
-      .call(yAxis);
+    this.heatmap.append('g').attr('class', 'axis axis-y').call(yAxis);
 
     // Calculate Y axis width first, then move axis into visible area
     const posY = this.margin.top;
@@ -330,17 +315,11 @@ export class HeatmapRenderer {
 
     // Set first tick as pseudo 0
     if (yMin < 1) {
-      this.heatmap
-        .select('.axis-y')
-        .select('.tick text')
-        .text('0');
+      this.heatmap.select('.axis-y').select('.tick text').text('0');
     }
 
     // Remove vertical line in the right of axis labels (called domain in d3)
-    this.heatmap
-      .select('.axis-y')
-      .select('.domain')
-      .remove();
+    this.heatmap.select('.axis-y').select('.domain').remove();
   }
 
   addYAxisFromBuckets() {
@@ -382,10 +361,7 @@ export class HeatmapRenderer {
       yAxis.ticks(ticks);
     }
 
-    this.heatmap
-      .append('g')
-      .attr('class', 'axis axis-y')
-      .call(yAxis);
+    this.heatmap.append('g').attr('class', 'axis axis-y').call(yAxis);
 
     // Calculate Y axis width first, then move axis into visible area
     const posY = this.margin.top;
@@ -399,10 +375,7 @@ export class HeatmapRenderer {
     }
 
     // Remove vertical line in the right of axis labels (called domain in d3)
-    this.heatmap
-      .select('.axis-y')
-      .select('.domain')
-      .remove();
+    this.heatmap.select('.axis-y').select('.domain').remove();
   }
 
   // Adjust data range to log base
@@ -466,10 +439,7 @@ export class HeatmapRenderer {
   }
 
   fixYAxisTickSize() {
-    this.heatmap
-      .select('.axis-y')
-      .selectAll('.tick line')
-      .attr('x2', this.chartWidth);
+    this.heatmap.select('.axis-y').selectAll('.tick line').attr('x2', this.chartWidth);
   }
 
   addAxes() {
@@ -494,17 +464,11 @@ export class HeatmapRenderer {
     this.xAxisHeight = this.getXAxisHeight(this.heatmap);
 
     if (!this.panel.yAxis.show) {
-      this.heatmap
-        .select('.axis-y')
-        .selectAll('line')
-        .style('opacity', 0);
+      this.heatmap.select('.axis-y').selectAll('line').style('opacity', 0);
     }
 
     if (!this.panel.xAxis.show) {
-      this.heatmap
-        .select('.axis-x')
-        .selectAll('line')
-        .style('opacity', 0);
+      this.heatmap.select('.axis-x').selectAll('line').style('opacity', 0);
     }
   }
 
@@ -521,11 +485,7 @@ export class HeatmapRenderer {
       this.heatmap.remove();
     }
 
-    this.heatmap = d3
-      .select(heatmapElem)
-      .append('svg')
-      .attr('width', this.width)
-      .attr('height', this.height);
+    this.heatmap = d3.select(heatmapElem).append('svg').attr('width', this.width).attr('height', this.height);
   }
 
   addHeatmap() {
@@ -735,7 +695,7 @@ export class HeatmapRenderer {
   }
 
   onMouseLeave() {
-    this.ctrl.dashboard.$emit(new LegacyGraphHoverClearEvent());
+    this.ctrl.dashboard.events.publish(new LegacyGraphHoverClearEvent());
     this.clearCrosshair();
   }
 
@@ -781,7 +741,7 @@ export class HeatmapRenderer {
     // Set minimum offset to prevent showing legend from another panel
     pos.panelRelY = Math.max(pos.offset.y / this.height, 0.001);
     // broadcast to other graph panels that we are hovering
-    this.ctrl.dashboard.events.emit$(new LegacyGraphHoverEvent({ pos: pos, panel: this.panel }));
+    this.ctrl.dashboard.events.publish(new LegacyGraphHoverEvent({ pos: pos, panel: this.panel }));
   }
 
   limitSelection(x2: number) {

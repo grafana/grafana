@@ -3,7 +3,7 @@ title = "Configure Grafana Docker image"
 description = "Guide for configuring the Grafana Docker image"
 keywords = ["grafana", "configuration", "documentation", "docker"]
 aliases = ["/docs/grafana/latest/installation/configure-docker/"]
-weight = 400
+weight = 200
 +++
 
 # Configure a Grafana Docker image
@@ -12,7 +12,7 @@ If you are running Grafana in a Docker image, then you configure Grafana using [
 
 ## Save your Grafana data
 
-If you do not designate a location for information storage, then all your Grafana data disappears as soon as you stop your image. To save your data, you need to set up persistent storage or bind mounts for your container.
+If you do not designate a location for information storage, then all your Grafana data disappears as soon as you stop your container. To save your data, you need to set up persistent storage or bind mounts for your container.
 
 ### Run Grafana container with persistent storage (recommended)
 

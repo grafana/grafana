@@ -19,3 +19,5 @@ export const TimePickerTitle = memo<PropsWithChildren<{}>>(({ children }) => {
 
   return <span className={styles.text}>{children}</span>;
 });
+
+TimePickerTitle.displayName = 'TimePickerTitle';

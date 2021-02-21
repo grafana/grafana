@@ -1,6 +1,10 @@
 package dtos
 
-import "github.com/grafana/grafana/pkg/setting"
+import (
+	"github.com/grafana/grafana/pkg/setting"
+
+	"html/template"
+)
 
 type IndexViewData struct {
 	User                    *CurrentUser
@@ -17,10 +21,13 @@ type IndexViewData struct {
 	NewGrafanaVersion       string
 	AppName                 string
 	AppNameBodyClass        string
-	FavIcon                 string
-	AppleTouchIcon          string
+	FavIcon                 template.URL
+	AppleTouchIcon          template.URL
 	AppTitle                string
 	Sentry                  *setting.Sentry
+	ContentDeliveryURL      string
+	// Nonce is a cryptographic identifier for use with Content Security Policy.
+	Nonce string
 }
 
 const (
@@ -55,3 +62,6 @@ type NavLink struct {
 	HideFromTabs bool       `json:"hideFromTabs,omitempty"`
 	Children     []*NavLink `json:"children,omitempty"`
 }
+
+// NavIDCfg is the id for org configuration navigation node
+const NavIDCfg = "cfg"

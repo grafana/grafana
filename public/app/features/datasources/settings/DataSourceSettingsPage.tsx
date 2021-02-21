@@ -2,8 +2,6 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import isString from 'lodash/isString';
-import { Icon } from '@grafana/ui';
-import { selectors } from '@grafana/e2e-selectors';
 // Components
 import Page from 'app/core/components/Page/Page';
 import { GenericDataSourcePlugin, PluginSettings } from './PluginSettings';
@@ -25,10 +23,13 @@ import { getRouteParamsId } from 'app/core/selectors/location';
 // Types
 import { CoreEvents, StoreState } from 'app/types/';
 import { DataSourcePluginMeta, DataSourceSettings, NavModel, UrlQueryMap } from '@grafana/data';
+import { Alert, InfoBox } from '@grafana/ui';
 import { getDataSourceLoadingNav } from '../state/navModel';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
 import { dataSourceLoaded, setDataSourceName, setIsDefault } from '../state/reducers';
 import { connectWithCleanUp } from 'app/core/components/connectWithCleanUp';
+import { selectors } from '@grafana/e2e-selectors';
+import { CloudInfoBox } from './CloudInfoBox';
 
 export interface Props {
   navModel: NavModel;
@@ -99,10 +100,10 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
 
   renderIsReadOnlyMessage() {
     return (
-      <div className="grafana-info-box span8">
+      <InfoBox severity="info">
         This datasource was added by config and cannot be modified using the UI. Please contact your server admin to
         update this datasource.
-      </div>
+      </InfoBox>
     );
   }
 
@@ -172,7 +173,7 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
   }
 
   renderSettings() {
-    const { dataSourceMeta, setDataSourceName, setIsDefault, dataSource, testingStatus, plugin } = this.props;
+    const { dataSourceMeta, setDataSourceName, setIsDefault, dataSource, plugin, testingStatus } = this.props;
 
     return (
       <form onSubmit={this.onSubmit}>
@@ -186,11 +187,13 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
           </div>
         )}
 
+        <CloudInfoBox dataSource={dataSource} />
+
         <BasicSettings
           dataSourceName={dataSource.name}
           isDefault={dataSource.isDefault}
-          onDefaultChange={state => setIsDefault(state)}
-          onNameChange={name => setDataSourceName(name)}
+          onDefaultChange={(state) => setIsDefault(state)}
+          onNameChange={(name) => setDataSourceName(name)}
         />
 
         {plugin && (
@@ -204,24 +207,19 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
 
         <div className="gf-form-group">
           {testingStatus && testingStatus.message && (
-            <div className={`alert-${testingStatus.status} alert`} aria-label={selectors.pages.DataSource.alert}>
-              <div className="alert-icon">
-                {testingStatus.status === 'error' ? <Icon name="exclamation-triangle" /> : <Icon name="check" />}
-              </div>
-              <div className="alert-body">
-                <div className="alert-title" aria-label={selectors.pages.DataSource.alertMessage}>
-                  {testingStatus.message}
-                </div>
-              </div>
-            </div>
+            <Alert
+              severity={testingStatus.status === 'error' ? 'error' : 'success'}
+              title={testingStatus.message}
+              aria-label={selectors.pages.DataSource.alert}
+            />
           )}
         </div>
 
         <ButtonRow
-          onSubmit={event => this.onSubmit(event)}
+          onSubmit={(event) => this.onSubmit(event)}
           isReadOnly={this.isReadOnly()}
           onDelete={this.onDelete}
-          onTest={event => this.onTest(event)}
+          onTest={(event) => this.onTest(event)}
         />
       </form>
     );
@@ -279,5 +277,5 @@ const mapDispatchToProps = {
 };
 
 export default hot(module)(
-  connectWithCleanUp(mapStateToProps, mapDispatchToProps, state => state.dataSourceSettings)(DataSourceSettingsPage)
+  connectWithCleanUp(mapStateToProps, mapDispatchToProps, (state) => state.dataSourceSettings)(DataSourceSettingsPage)
 );

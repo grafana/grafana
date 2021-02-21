@@ -17,6 +17,9 @@ import (
 )
 
 func TestPluginManager_Init(t *testing.T) {
+	staticRootPath, err := filepath.Abs("../../public/")
+	require.NoError(t, err)
+
 	origRootPath := setting.StaticRootPath
 	origRaw := setting.Raw
 	origEnv := setting.Env
@@ -25,16 +28,16 @@ func TestPluginManager_Init(t *testing.T) {
 		setting.Raw = origRaw
 		setting.Env = origEnv
 	})
-
-	var err error
-	setting.StaticRootPath, err = filepath.Abs("../../public/")
-	require.NoError(t, err)
+	setting.StaticRootPath = staticRootPath
 	setting.Raw = ini.Empty()
 	setting.Env = setting.Prod
 
 	t.Run("Base case", func(t *testing.T) {
 		pm := &PluginManager{
 			Cfg: &setting.Cfg{
+				Raw:            ini.Empty(),
+				Env:            setting.Prod,
+				StaticRootPath: staticRootPath,
 				PluginSettings: setting.PluginSettings{
 					"nginx-app": map[string]string{
 						"path": "testdata/test-app",
@@ -55,14 +58,8 @@ func TestPluginManager_Init(t *testing.T) {
 	})
 
 	t.Run("With external back-end plugin lacking signature", func(t *testing.T) {
-		origPluginsPath := setting.PluginsPath
-		t.Cleanup(func() {
-			setting.PluginsPath = origPluginsPath
-		})
-		setting.PluginsPath = "testdata/unsigned"
-
 		pm := &PluginManager{
-			Cfg: &setting.Cfg{},
+			Cfg: &setting.Cfg{PluginsPath: "testdata/unsigned"},
 		}
 		err := pm.Init()
 		require.NoError(t, err)
@@ -71,14 +68,9 @@ func TestPluginManager_Init(t *testing.T) {
 	})
 
 	t.Run("With external unsigned back-end plugin and configuration disabling signature check of this plugin", func(t *testing.T) {
-		origPluginsPath := setting.PluginsPath
-		t.Cleanup(func() {
-			setting.PluginsPath = origPluginsPath
-		})
-		setting.PluginsPath = "testdata/unsigned"
-
 		pm := &PluginManager{
 			Cfg: &setting.Cfg{
+				PluginsPath:          "testdata/unsigned",
 				PluginsAllowUnsigned: []string{"test"},
 			},
 			BackendPluginManager: &fakeBackendPluginManager{},
@@ -89,15 +81,11 @@ func TestPluginManager_Init(t *testing.T) {
 		assert.Empty(t, pm.scanningErrors)
 	})
 
-	t.Run("With external back-end plugin with invalid signature", func(t *testing.T) {
-		origPluginsPath := setting.PluginsPath
-		t.Cleanup(func() {
-			setting.PluginsPath = origPluginsPath
-		})
-		setting.PluginsPath = "testdata/invalid-signature"
-
+	t.Run("With external back-end plugin with invalid v1 signature", func(t *testing.T) {
 		pm := &PluginManager{
-			Cfg: &setting.Cfg{},
+			Cfg: &setting.Cfg{
+				PluginsPath: "testdata/invalid-v1-signature",
+			},
 		}
 		err := pm.Init()
 		require.NoError(t, err)
@@ -106,15 +94,11 @@ func TestPluginManager_Init(t *testing.T) {
 	})
 
 	t.Run("With external back-end plugin lacking files listed in manifest", func(t *testing.T) {
-		origPluginsPath := setting.PluginsPath
-		t.Cleanup(func() {
-			setting.PluginsPath = origPluginsPath
-		})
-		setting.PluginsPath = "testdata/lacking-files"
-
 		fm := &fakeBackendPluginManager{}
 		pm := &PluginManager{
-			Cfg:                  &setting.Cfg{},
+			Cfg: &setting.Cfg{
+				PluginsPath: "testdata/lacking-files",
+			},
 			BackendPluginManager: fm,
 		}
 		err := pm.Init()
@@ -124,15 +108,11 @@ func TestPluginManager_Init(t *testing.T) {
 	})
 
 	t.Run("Transform plugins should be ignored when expressions feature is off", func(t *testing.T) {
-		origPluginsPath := setting.PluginsPath
-		t.Cleanup(func() {
-			setting.PluginsPath = origPluginsPath
-		})
-		setting.PluginsPath = "testdata/behind-feature-flag"
-
 		fm := fakeBackendPluginManager{}
 		pm := &PluginManager{
-			Cfg:                  &setting.Cfg{},
+			Cfg: &setting.Cfg{
+				PluginsPath: "testdata/behind-feature-flag",
+			},
 			BackendPluginManager: &fm,
 		}
 		err := pm.Init()
@@ -143,20 +123,125 @@ func TestPluginManager_Init(t *testing.T) {
 	})
 
 	t.Run("With nested plugin duplicating parent", func(t *testing.T) {
-		origPluginsPath := setting.PluginsPath
-		t.Cleanup(func() {
-			setting.PluginsPath = origPluginsPath
-		})
-		setting.PluginsPath = "testdata/duplicate-plugins"
-
 		pm := &PluginManager{
-			Cfg: &setting.Cfg{},
+			Cfg: &setting.Cfg{
+				PluginsPath: "testdata/duplicate-plugins",
+			},
 		}
 		err := pm.Init()
 		require.NoError(t, err)
 
 		assert.Len(t, pm.scanningErrors, 1)
 		assert.True(t, errors.Is(pm.scanningErrors[0], duplicatePluginError{}))
+	})
+
+	t.Run("With external back-end plugin with valid v2 signature", func(t *testing.T) {
+		pm := &PluginManager{
+			Cfg: &setting.Cfg{
+				PluginsPath: "testdata/valid-v2-signature",
+			},
+			BackendPluginManager: &fakeBackendPluginManager{},
+		}
+		err := pm.Init()
+		require.NoError(t, err)
+		require.Empty(t, pm.scanningErrors)
+
+		pluginId := "test"
+		assert.NotNil(t, Plugins[pluginId])
+		assert.Equal(t, "datasource", Plugins[pluginId].Type)
+		assert.Equal(t, "Test", Plugins[pluginId].Name)
+		assert.Equal(t, pluginId, Plugins[pluginId].Id)
+		assert.Equal(t, "1.0.0", Plugins[pluginId].Info.Version)
+		assert.Equal(t, pluginSignatureValid, Plugins[pluginId].Signature)
+		assert.Equal(t, grafanaType, Plugins[pluginId].SignatureType)
+		assert.Equal(t, "Grafana Labs", Plugins[pluginId].SignatureOrg)
+		assert.False(t, Plugins[pluginId].IsCorePlugin)
+	})
+
+	t.Run("With back-end plugin with invalid v2 private signature (mismatched root URL)", func(t *testing.T) {
+		origAppURL := setting.AppUrl
+		t.Cleanup(func() {
+			setting.AppUrl = origAppURL
+		})
+		setting.AppUrl = "http://localhost:1234"
+
+		pm := &PluginManager{
+			Cfg: &setting.Cfg{
+				PluginsPath: "testdata/valid-v2-pvt-signature",
+			},
+		}
+		err := pm.Init()
+		require.NoError(t, err)
+
+		assert.Equal(t, []error{fmt.Errorf(`plugin "test" has an invalid signature`)}, pm.scanningErrors)
+		assert.Nil(t, Plugins[("test")])
+	})
+
+	t.Run("With back-end plugin with valid v2 private signature", func(t *testing.T) {
+		origAppURL := setting.AppUrl
+		t.Cleanup(func() {
+			setting.AppUrl = origAppURL
+		})
+		setting.AppUrl = "http://localhost:3000/"
+
+		pm := &PluginManager{
+			Cfg: &setting.Cfg{
+				PluginsPath: "testdata/valid-v2-pvt-signature",
+			},
+			BackendPluginManager: &fakeBackendPluginManager{},
+		}
+		err := pm.Init()
+		require.NoError(t, err)
+		require.Empty(t, pm.scanningErrors)
+
+		pluginId := "test"
+		assert.NotNil(t, Plugins[pluginId])
+		assert.Equal(t, "datasource", Plugins[pluginId].Type)
+		assert.Equal(t, "Test", Plugins[pluginId].Name)
+		assert.Equal(t, pluginId, Plugins[pluginId].Id)
+		assert.Equal(t, "1.0.0", Plugins[pluginId].Info.Version)
+		assert.Equal(t, pluginSignatureValid, Plugins[pluginId].Signature)
+		assert.Equal(t, privateType, Plugins[pluginId].SignatureType)
+		assert.Equal(t, "Will Browne", Plugins[pluginId].SignatureOrg)
+		assert.False(t, Plugins[pluginId].IsCorePlugin)
+	})
+
+	t.Run("With back-end plugin with modified v2 signature (missing file from plugin dir)", func(t *testing.T) {
+		origAppURL := setting.AppUrl
+		t.Cleanup(func() {
+			setting.AppUrl = origAppURL
+		})
+		setting.AppUrl = "http://localhost:3000/"
+
+		pm := &PluginManager{
+			Cfg: &setting.Cfg{
+				PluginsPath: "testdata/invalid-v2-signature",
+			},
+			BackendPluginManager: &fakeBackendPluginManager{},
+		}
+		err := pm.Init()
+		require.NoError(t, err)
+		assert.Equal(t, []error{fmt.Errorf(`plugin "test"'s signature has been modified`)}, pm.scanningErrors)
+		assert.Nil(t, Plugins[("test")])
+	})
+
+	t.Run("With back-end plugin with modified v2 signature (unaccounted file in plugin dir)", func(t *testing.T) {
+		origAppURL := setting.AppUrl
+		t.Cleanup(func() {
+			setting.AppUrl = origAppURL
+		})
+		setting.AppUrl = "http://localhost:3000/"
+
+		pm := &PluginManager{
+			Cfg: &setting.Cfg{
+				PluginsPath: "testdata/invalid-v2-signature-2",
+			},
+			BackendPluginManager: &fakeBackendPluginManager{},
+		}
+		err := pm.Init()
+		require.NoError(t, err)
+		assert.Equal(t, []error{fmt.Errorf(`plugin "test"'s signature has been modified`)}, pm.scanningErrors)
+		assert.Nil(t, Plugins[("test")])
 	})
 }
 

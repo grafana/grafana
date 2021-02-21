@@ -9,12 +9,12 @@ export abstract class GrafanaLiveScope {
   /**
    * Load the real namespaces
    */
-  abstract async getChannelSupport(namespace: string): Promise<LiveChannelSupport | undefined>;
+  abstract getChannelSupport(namespace: string): Promise<LiveChannelSupport | undefined>;
 
   /**
    * List the possible values within this scope
    */
-  abstract async listNamespaces(): Promise<Array<SelectableValue<string>>>;
+  abstract listNamespaces(): Promise<Array<SelectableValue<string>>>;
 }
 
 export interface CoreGrafanaLiveFeature {
@@ -82,7 +82,9 @@ export class GrafanaLiveDataSourceScope extends GrafanaLiveScope {
     if (this.names) {
       return Promise.resolve(this.names);
     }
+
     const names: Array<SelectableValue<string>> = [];
+
     for (const [key, ds] of Object.entries(config.datasources)) {
       if (ds.meta.live) {
         try {
@@ -99,6 +101,7 @@ export class GrafanaLiveDataSourceScope extends GrafanaLiveScope {
         }
       }
     }
+
     return (this.names = names);
   }
 }

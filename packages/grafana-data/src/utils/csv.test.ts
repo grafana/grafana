@@ -86,7 +86,7 @@ describe('write csv', () => {
     const fields = f[0].fields;
     expect(fields.length).toBe(3);
     expect(getDataFrameRow(f[0], 0)).toEqual(firstRow);
-    expect(fields.map(f => f.name).join(',')).toEqual('a,b,c'); // the names
+    expect(fields.map((f) => f.name).join(',')).toEqual('a,b,c'); // the names
   });
 
   it('should add Excel header given config', () => {

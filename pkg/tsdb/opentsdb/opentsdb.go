@@ -110,10 +110,14 @@ func (e *OpenTsdbExecutor) parseResponse(query OpenTsdbQuery, res *http.Response
 	queryRes := tsdb.NewQueryResult()
 
 	body, err := ioutil.ReadAll(res.Body)
-	defer res.Body.Close()
 	if err != nil {
 		return nil, err
 	}
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			plog.Warn("Failed to close response body", "err", err)
+		}
+	}()
 
 	if res.StatusCode/100 != 2 {
 		plog.Info("Request failed", "status", res.Status, "body", string(body))

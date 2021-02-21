@@ -1,5 +1,3 @@
-import { Pages } from './pages';
-
 export const Components = {
   DataSource: {
     TestData: {
@@ -20,6 +18,7 @@ export const Components = {
       title: (title: string) => `Panel header title item ${title}`,
       headerItems: (item: string) => `Panel header item ${item}`,
       containerByTitle: (title: string) => `Panel container title ${title}`,
+      headerCornerInfo: (mode: string) => `Panel header ${mode}`,
     },
     Visualization: {
       Graph: {
@@ -36,6 +35,9 @@ export const Components = {
       },
       BarGauge: {
         value: 'Bar gauge value',
+      },
+      Text: {
+        container: () => '.markdown-html',
       },
     },
   },
@@ -54,14 +56,17 @@ export const Components = {
     },
     OptionsPane: {
       content: 'Panel editor option pane content',
-      close: Pages.Dashboard.Toolbar.toolbarItems('Close options pane'),
-      open: Pages.Dashboard.Toolbar.toolbarItems('Open options pane'),
+      close: 'Page toolbar button Close options pane',
+      open: 'Page toolbar button Open options pane',
       select: 'Panel editor option pane select',
       tab: (title: string) => `Panel editor option pane tab ${title}`,
     },
     // not sure about the naming *DataPane*
     DataPane: {
       content: 'Panel editor data pane content',
+    },
+    FieldOptions: {
+      propertyEditor: (type: string) => `${type} field property editor`,
     },
   },
   PanelInspector: {
@@ -83,6 +88,9 @@ export const Components = {
   Tab: {
     title: (title: string) => `Tab ${title}`,
     active: () => '[class*="-activeTabStyle"]',
+  },
+  RefreshPicker: {
+    runButton: 'RefreshPicker run button',
   },
   QueryTab: {
     content: 'Query editor tab content',
@@ -109,10 +117,16 @@ export const Components = {
     transformationEditorDebugger: (name: string) => `Transformation editor debugger ${name}`,
   },
   Transforms: {
+    card: (name: string) => `New transform ${name}`,
     Reduce: {
       modeLabel: 'Transform mode label',
       calculationsLabel: 'Transform calculations label',
     },
+    searchInput: 'search transformations',
+  },
+  PageToolbar: {
+    container: () => '.page-toolbar',
+    item: (tooltip: string) => `Page toolbar button ${tooltip}`,
   },
   QueryEditorToolbarItem: {
     button: (title: string) => `QueryEditor toolbar item button ${title}`,
@@ -121,7 +135,7 @@ export const Components = {
     backArrow: 'Go Back button',
   },
   OptionsGroup: {
-    toggle: (title: string) => `Options group ${title}`,
+    toggle: (title?: string) => (title ? `Options group ${title}` : 'Options group'),
   },
   PluginVisualization: {
     item: (title: string) => `Plugin visualization item ${title}`,
@@ -147,8 +161,12 @@ export const Components = {
   TimeZonePicker: {
     container: 'Time zone picker select container',
   },
+  TraceViewer: {
+    spanBar: () => '[data-test-id="SpanBar--wrapper"]',
+  },
   QueryField: { container: 'Query field' },
   ValuePicker: {
+    button: 'Value picker add button',
     select: (name: string) => `Value picker select ${name}`,
   },
   Search: {

@@ -1,5 +1,5 @@
 import { of, throwError } from 'rxjs';
-import { DataSourceInstanceSettings, observableTester, toUtc } from '@grafana/data';
+import { DataSourceInstanceSettings, toUtc } from '@grafana/data';
 
 import CloudMonitoringDataSource from '../datasource';
 import { metricDescriptors } from './testData';
@@ -84,7 +84,7 @@ describe('CloudMonitoringDataSource', () => {
 
   describe('When performing query', () => {
     describe('and no time series data is returned', () => {
-      it('should return a list of datapoints', done => {
+      it('should return a list of datapoints', async () => {
         const options = {
           range: {
             from: toUtc('2017-08-22T20:00:00Z'),
@@ -116,12 +116,9 @@ describe('CloudMonitoringDataSource', () => {
 
         const { ds } = getTestcontext({ response });
 
-        observableTester().subscribeAndExpectOnNext({
-          expect: results => {
-            expect(results.data.length).toBe(0);
-          },
-          observable: ds.query(options as any),
-          done,
+        await expect(ds.query(options as any)).toEmitValuesWith((received) => {
+          const results = received[0];
+          expect(results.data.length).toBe(0);
         });
       });
     });
@@ -213,51 +210,6 @@ describe('CloudMonitoringDataSource', () => {
         expect(interpolated.length).toBe(2);
         expect(interpolated[0]).toBe('groupby1');
         expect(interpolated[1]).toBe('groupby2');
-      });
-    });
-  });
-
-  describe('unit parsing', () => {
-    const { ds } = getTestcontext();
-
-    describe('when theres only one target', () => {
-      describe('and the cloud monitoring unit does nott have a corresponding grafana unit', () => {
-        it('should return undefined', () => {
-          const res = ds.resolvePanelUnitFromTargets([{ unit: 'megaseconds' }]);
-
-          expect(res).toBeUndefined();
-        });
-      });
-      describe('and the cloud monitoring unit has a corresponding grafana unit', () => {
-        it('should return bits', () => {
-          const res = ds.resolvePanelUnitFromTargets([{ unit: 'bit' }]);
-
-          expect(res).toEqual('bits');
-        });
-      });
-    });
-
-    describe('when theres more than one target', () => {
-      describe('and all target units are the same', () => {
-        it('should return bits', () => {
-          const res = ds.resolvePanelUnitFromTargets([{ unit: 'bit' }, { unit: 'bit' }]);
-
-          expect(res).toEqual('bits');
-        });
-      });
-      describe('and all target units are the same but does not have grafana mappings', () => {
-        it('should return the default value of undefined', () => {
-          const res = ds.resolvePanelUnitFromTargets([{ unit: 'megaseconds' }, { unit: 'megaseconds' }]);
-
-          expect(res).toBeUndefined();
-        });
-      });
-      describe('and all target units are not the same', () => {
-        it('should return the default value of undefined', () => {
-          const res = ds.resolvePanelUnitFromTargets([{ unit: 'bit' }, { unit: 'min' }]);
-
-          expect(res).toBeUndefined();
-        });
       });
     });
   });

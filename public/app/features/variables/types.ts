@@ -86,7 +86,9 @@ export interface QueryVariableModel extends DataSourceVariableModel {
   query: any;
 }
 
-export interface TextBoxVariableModel extends VariableWithOptions {}
+export interface TextBoxVariableModel extends VariableWithOptions {
+  originalQuery: string | null;
+}
 
 export interface ConstantVariableModel extends VariableWithOptions {}
 
@@ -139,6 +141,7 @@ export interface VariableModel extends BaseVariableModel {
   index: number;
   state: LoadingState;
   error: any | null;
+  description: string | null;
 }
 
 export const initialVariableModelState: VariableModel = {
@@ -152,6 +155,7 @@ export const initialVariableModelState: VariableModel = {
   skipUrlSync: false,
   state: LoadingState.NotStarted,
   error: null,
+  description: null,
 };
 
 export type VariableQueryEditorType<

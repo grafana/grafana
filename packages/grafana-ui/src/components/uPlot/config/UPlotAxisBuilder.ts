@@ -1,68 +1,92 @@
 import { dateTimeFormat, GrafanaTheme, systemDateFormats, TimeZone } from '@grafana/data';
-import uPlot from 'uplot';
-import { AxisSide, PlotConfigBuilder } from '../types';
+import uPlot, { Axis } from 'uplot';
+import { PlotConfigBuilder } from '../types';
 import { measureText } from '../../../utils/measureText';
+import { AxisPlacement } from '../config';
+import { optMinMax } from './UPlotScaleBuilder';
 
 export interface AxisProps {
   scaleKey: string;
   theme: GrafanaTheme;
   label?: string;
-  stroke?: string;
   show?: boolean;
-  size?: number;
-  side?: AxisSide;
+  size?: number | null;
+  gap?: number;
+  placement?: AxisPlacement;
   grid?: boolean;
+  ticks?: boolean;
   formatValue?: (v: any) => string;
+  splits?: Axis.Splits;
   values?: any;
   isTime?: boolean;
   timeZone?: TimeZone;
 }
 
-export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, uPlot.Axis> {
-  getConfig(): uPlot.Axis {
+export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
+  merge(props: AxisProps) {
+    this.props.size = optMinMax('max', this.props.size, props.size);
+    if (!this.props.label) {
+      this.props.label = props.label;
+    }
+    if (this.props.placement === AxisPlacement.Auto) {
+      this.props.placement = props.placement;
+    }
+  }
+
+  getConfig(): Axis {
     const {
       scaleKey,
       label,
       show = true,
-      side = 3,
+      placement = AxisPlacement.Auto,
       grid = true,
+      ticks = true,
+      gap = 5,
       formatValue,
+      splits,
       values,
       isTime,
       timeZone,
       theme,
     } = this.props;
-    const stroke = this.props.stroke || theme.colors.text;
+
     const gridColor = theme.isDark ? theme.palette.gray25 : theme.palette.gray90;
 
-    let config: uPlot.Axis = {
+    let config: Axis = {
       scale: scaleKey,
-      label,
       show,
-      stroke,
-      side,
-      font: '12px Roboto',
-      size: calculateAxisSize,
+      stroke: theme.colors.text,
+      side: getUPlotSideFromAxis(placement),
+      font: `12px 'Roboto'`,
+      labelFont: `12px 'Roboto'`,
+      size: this.props.size ?? calculateAxisSize,
+      gap,
       grid: {
         show: grid,
         stroke: gridColor,
         width: 1 / devicePixelRatio,
       },
       ticks: {
-        show: true,
+        show: ticks,
         stroke: gridColor,
         width: 1 / devicePixelRatio,
       },
+      splits,
       values: values,
       space: calculateSpace,
     };
+
+    if (label !== undefined && label !== null && label.length > 0) {
+      config.label = label;
+      config.labelSize = 18;
+    }
 
     if (values) {
       config.values = values;
     } else if (isTime) {
       config.values = formatTime;
     } else if (formatValue) {
-      config.values = (u: uPlot, vals: any[]) => vals.map(v => formatValue(v));
+      config.values = (u: uPlot, vals: any[]) => vals.map((v) => formatValue(v));
     }
 
     // store timezone
@@ -75,13 +99,24 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, uPlot.Axis> {
 /* Minimum grid & tick spacing in CSS pixels */
 function calculateSpace(self: uPlot, axisIdx: number, scaleMin: number, scaleMax: number, plotDim: number): number {
   const axis = self.axes[axisIdx];
+  const scale = self.scales[axis.scale!];
 
-  // For x-axis (bottom) we need bigger spacing between labels
-  if (axis.side === 2) {
-    return 60;
+  // for axis left & right
+  if (axis.side !== 2 || !scale) {
+    return 30;
   }
 
-  return 30;
+  const defaultSpacing = 40;
+
+  if (scale.time) {
+    const maxTicks = plotDim / defaultSpacing;
+    const increment = (scaleMax - scaleMin) / maxTicks;
+    const sample = formatTime(self, [scaleMin], axisIdx, defaultSpacing, increment);
+    const width = measureText(sample[0], 12).width + 18;
+    return width;
+  }
+
+  return defaultSpacing;
 }
 
 /** height of x axis or width of y axis in CSS pixels alloted for values, gap & ticks, but excluding axis label */
@@ -102,30 +137,57 @@ function calculateAxisSize(self: uPlot, values: string[], axisIdx: number) {
     }
   }
 
-  return measureText(maxLength, 12).width - 8;
+  return measureText(maxLength, 12).width + 18;
 }
+
+const timeUnitSize = {
+  second: 1000,
+  minute: 60 * 1000,
+  hour: 60 * 60 * 1000,
+  day: 24 * 60 * 60 * 1000,
+  month: 28 * 24 * 60 * 60 * 1000,
+  year: 365 * 24 * 60 * 60 * 1000,
+};
 
 /** Format time axis ticks */
 function formatTime(self: uPlot, splits: number[], axisIdx: number, foundSpace: number, foundIncr: number): string[] {
   const timeZone = (self.axes[axisIdx] as any).timeZone;
   const scale = self.scales.x;
   const range = (scale?.max ?? 0) - (scale?.min ?? 0);
-  const oneDay = 86400;
-  const oneYear = 31536000;
+  const yearRoundedToDay = Math.round(timeUnitSize.year / timeUnitSize.day) * timeUnitSize.day;
+  const incrementRoundedToDay = Math.round(foundIncr / timeUnitSize.day) * timeUnitSize.day;
 
   let format = systemDateFormats.interval.minute;
 
-  if (foundIncr <= 45) {
+  if (foundIncr < timeUnitSize.second) {
+    format = systemDateFormats.interval.second.replace('ss', 'ss.SS');
+  } else if (foundIncr <= timeUnitSize.minute) {
     format = systemDateFormats.interval.second;
-  } else if (foundIncr <= 7200 || range <= oneDay) {
+  } else if (foundIncr <= timeUnitSize.hour || range <= timeUnitSize.day) {
     format = systemDateFormats.interval.minute;
-  } else if (foundIncr <= 80000) {
+  } else if (foundIncr <= timeUnitSize.day) {
     format = systemDateFormats.interval.hour;
-  } else if (foundIncr <= 2419200 || range <= oneYear) {
+  } else if (foundIncr <= timeUnitSize.month || range < timeUnitSize.year) {
     format = systemDateFormats.interval.day;
-  } else if (foundIncr <= 31536000) {
+  } else if (incrementRoundedToDay === yearRoundedToDay) {
+    format = systemDateFormats.interval.year;
+  } else if (foundIncr <= timeUnitSize.year) {
     format = systemDateFormats.interval.month;
   }
 
-  return splits.map(v => dateTimeFormat(v * 1000, { format, timeZone }));
+  return splits.map((v) => dateTimeFormat(v, { format, timeZone }));
+}
+
+export function getUPlotSideFromAxis(axis: AxisPlacement) {
+  switch (axis) {
+    case AxisPlacement.Top:
+      return 0;
+    case AxisPlacement.Right:
+      return 1;
+    case AxisPlacement.Bottom:
+      return 2;
+    case AxisPlacement.Left:
+  }
+
+  return 3; // default everythign to the left
 }

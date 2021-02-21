@@ -64,13 +64,13 @@ To link a component’s stories with an MDX file you have to do this:
 ```jsx
 // In TabsBar.story.tsx
 
-import { TabsBar } from "./TabsBar";
+import { TabsBar } from './TabsBar';
 
 // Import the MDX file
-import mdx from "./TabsBar.mdx";
+import mdx from './TabsBar.mdx';
 
 export default {
-  title: "General/Tabs/TabsBar",
+  title: 'General/Tabs/TabsBar',
   component: TabsBar,
   parameters: {
     docs: {
@@ -93,8 +93,8 @@ There are some things that the MDX file should contain:
 ```jsx
 // In MyComponent.mdx
 
-import { Props } from "@storybook/addon-docs/blocks";
-import { MyComponent } from "./MyComponent";
+import { Props } from '@storybook/addon-docs/blocks';
+import { MyComponent } from './MyComponent';
 
 <Props of={MyComponent} />;
 ```
@@ -141,39 +141,66 @@ interface MyProps {
 }
 ```
 
-### Knobs
+### Controls
 
-Knobs is an [addon to Storybook](https://github.com/storybookjs/storybook/tree/master/addons/knobs) which can be used to easily switch values in the UI. A good use case for it is to try different props for the component. Using knobs is easy. Grafana is set up so knobs can be used straight out of the box. Here is an example of how you might use it.
+The [controls addon](https://storybook.js.org/docs/react/essentials/controls) provides a way to interact with a component's properties dynamically and requires much less code than knobs. We're deprecating knobs in favor of using controls.
 
-```jsx
-// In MyComponent.story.tsx
+#### Migrating a story from Knobs to Controls
 
-import { number, text } from "@storybook/addon-knobs";
+As a test, we migrated the [button story](https://github.com/grafana/grafana/blob/master/packages/grafana-ui/src/components/Button/Button.story.tsx). Here's the guide on how to migrate a story to controls.
 
-export const basicStory = () => (
-  <MyComponent
-    max={number("Max value", 10)}
-    min={number("Min value", -10)}
-    title={text("Title", "Look at the value!")}
-  />
-);
-```
+1.  Remove the `@storybook/addon-knobs` dependency.
+2.  Import the Story type from `@storybook/react`
 
-The general convention is that the first parameter of the knob is its name and the second is the default value. There are some more types:
+    `import { Story } from @storybook/react`
 
-| Knob      | Description                                                                                                                          |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `text`    | Any text field                                                                                                                       |
-| `number`  | Any number input. Also [available as range](https://github.com/storybookjs/storybook/tree/master/addons/knobs#number-bound-by-range) |
-| `boolean` | A switch between true/false                                                                                                          |
-| `color`   | Color picker                                                                                                                         |
-| `object`  | JSON input or array. Good to use if the property requires more complex data structures.                                              |
-| `array`   | Array of strings separated by a comma                                                                                                |
-| `select`  | Select a value from an options object. Good for trying different test cases.                                                         |
-| `options` | Configurable UI for selecting a range of options                                                                                     |
-| `files`   | File selector                                                                                                                        |
-| `date`    | Select date as stringified Unix timestamp                                                                                            |
-| `button`  | Has a handler which is called when clicked                                                                                           |
+3.  Import the props interface from the component you're working on (these must be exported in the component).
+
+    `import { Props } from './Component'`
+
+4.  Add the Story type to all stories in the file, then replace the props sent to the component
+    and remove any knobs.
+
+    Before
+
+    ```tsx
+    export const Simple = () => {
+      const prop1 = text('Prop1', 'Example text');
+      const prop2 = select('Prop2', ['option1', 'option2'], 'option1');
+
+      return <Component prop1={prop1} prop2={prop2} />;
+    };
+    ```
+
+    After
+
+    ```tsx
+    export const Simple: Story<Props> = ({ prop1, prop2 }) => {
+      return <Component prop1={prop1} prop2={prop2} />;
+    };
+    ```
+
+5.  Add default props (or args in Storybook language).
+
+    ```tsx
+    Simple.args = {
+      prop1: 'Example text',
+      prop2: 'option 1',
+    };
+    ```
+
+6.  If the component has advanced props type (ie. other than string, number, boolean), you need to
+    specify these in an `argTypes`. This is done in the default export of the story.
+
+    ```tsx
+    export default {
+      title: 'Component/Component',
+      component: Component,
+      argTypes: {
+        prop2: { control: { type: 'select', options: ['option1', 'option2'] } },
+      },
+    };
+    ```
 
 ## Best practices
 

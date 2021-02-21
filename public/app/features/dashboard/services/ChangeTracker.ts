@@ -93,6 +93,11 @@ export class ChangeTracker {
       return true;
     }
 
+    //Ignore changes if the user has been signed out
+    if (!this.contextSrv.isSignedIn) {
+      return true;
+    }
+
     const meta = this.current.meta;
     return !meta.canSave || meta.fromScript || meta.fromFile;
   }
@@ -117,7 +122,7 @@ export class ChangeTracker {
     // ignore iteration property
     delete dash.iteration;
 
-    dash.panels = _.filter(dash.panels, panel => {
+    dash.panels = _.filter(dash.panels, (panel) => {
       if (panel.repeatPanelId) {
         return false;
       }

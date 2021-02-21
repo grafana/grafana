@@ -5,78 +5,82 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/setting"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestDashboardModel(t *testing.T) {
-	Convey("Generate full dashboard url", t, func() {
-		setting.AppUrl = "http://grafana.local/"
-		fullUrl := GetFullDashboardUrl("uid", "my-dashboard")
-		So(fullUrl, ShouldEqual, "http://grafana.local/d/uid/my-dashboard")
-	})
+func TestGetDashboardUrl(t *testing.T) {
+	origAppURL := setting.AppUrl
+	t.Cleanup(func() { setting.AppUrl = origAppURL })
 
-	Convey("Generate relative dashboard url", t, func() {
-		setting.AppUrl = ""
-		fullUrl := GetDashboardUrl("uid", "my-dashboard")
-		So(fullUrl, ShouldEqual, "/d/uid/my-dashboard")
-	})
+	setting.AppUrl = ""
+	url := GetDashboardUrl("uid", "my-dashboard")
+	assert.Equal(t, "/d/uid/my-dashboard", url)
+}
 
-	Convey("When generating slug", t, func() {
-		dashboard := NewDashboard("Grafana Play Home")
-		dashboard.UpdateSlug()
+func TestGetFullDashboardUrl(t *testing.T) {
+	origAppURL := setting.AppUrl
+	t.Cleanup(func() { setting.AppUrl = origAppURL })
 
-		So(dashboard.Slug, ShouldEqual, "grafana-play-home")
-	})
+	setting.AppUrl = "http://grafana.local/"
+	url := GetFullDashboardUrl("uid", "my-dashboard")
+	assert.Equal(t, "http://grafana.local/d/uid/my-dashboard", url)
+}
 
-	Convey("Can slugify titles", t, func() {
-		tests := map[string]string{
-			"Grafana Play Home": "grafana-play-home",
-			"snöräv-över-ån":    "snorav-over-an",
-			"漢字":                "han-zi",      // Hanzi for hanzi
-			"🇦🇶":                "8J-HpvCfh7Y", // flag of Antarctica-emoji, using fallback
-			"𒆠":                 "8JKGoA",      // cuneiform Ki, using fallback
-		}
+func TestDashboard_UpdateSlug(t *testing.T) {
+	dashboard := NewDashboard("Grafana Play Home")
+	assert.Equal(t, "grafana-play-home", dashboard.Slug)
 
-		for input, expected := range tests {
-			slug := SlugifyTitle(input)
+	dashboard.UpdateSlug()
+	assert.Equal(t, "grafana-play-home", dashboard.Slug)
+}
 
-			So(slug, ShouldEqual, expected)
-		}
-	})
+func TestNewDashboardFromJson(t *testing.T) {
+	json := simplejson.New()
+	json.Set("title", "test dash")
+	json.Set("tags", "")
 
-	Convey("Given a dashboard json", t, func() {
-		json := simplejson.New()
-		json.Set("title", "test dash")
+	dash := NewDashboardFromJson(json)
+	assert.Equal(t, "test dash", dash.Title)
+	require.Empty(t, dash.GetTags())
+}
 
-		Convey("With tags as string value", func() {
-			json.Set("tags", "")
-			dash := NewDashboardFromJson(json)
-
-			So(len(dash.GetTags()), ShouldEqual, 0)
-		})
-	})
-
-	Convey("Given a new dashboard folder", t, func() {
+func TestSaveDashboardCommand_GetDashboardModel(t *testing.T) {
+	t.Run("should set IsFolder", func(t *testing.T) {
 		json := simplejson.New()
 		json.Set("title", "test dash")
 
 		cmd := &SaveDashboardCommand{Dashboard: json, IsFolder: true}
 		dash := cmd.GetDashboardModel()
 
-		Convey("Should set IsFolder to true", func() {
-			So(dash.IsFolder, ShouldBeTrue)
-		})
+		assert.Equal(t, "test dash", dash.Title)
+		assert.True(t, dash.IsFolder)
 	})
 
-	Convey("Given a child dashboard", t, func() {
+	t.Run("should set FolderId", func(t *testing.T) {
 		json := simplejson.New()
 		json.Set("title", "test dash")
 
 		cmd := &SaveDashboardCommand{Dashboard: json, FolderId: 1}
 		dash := cmd.GetDashboardModel()
 
-		Convey("Should set FolderId", func() {
-			So(dash.FolderId, ShouldEqual, 1)
-		})
+		assert.Equal(t, int64(1), dash.FolderId)
 	})
+}
+
+func TestSlugifyTitle(t *testing.T) {
+	testCases := map[string]string{
+		"Grafana Play Home": "grafana-play-home",
+		"snöräv-över-ån":    "snorav-over-an",
+		"漢字":                "han-zi",      // Hanzi for hanzi
+		"🇦🇶":                "8J-HpvCfh7Y", // flag of Antarctica-emoji, using fallback
+		"𒆠":                 "8JKGoA",      // cuneiform Ki, using fallback
+	}
+
+	for input, expected := range testCases {
+		t.Run(input, func(t *testing.T) {
+			slug := SlugifyTitle(input)
+			assert.Equal(t, expected, slug)
+		})
+	}
 }

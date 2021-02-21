@@ -2,6 +2,7 @@ package prometheus
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -15,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
-	api "github.com/prometheus/client_golang/api"
+	"github.com/prometheus/client_golang/api"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 )
@@ -215,4 +216,19 @@ func parseResponse(value model.Value, query *PrometheusQuery) (*tsdb.QueryResult
 	}
 
 	return queryRes, nil
+}
+
+// IsAPIError returns whether err is or wraps a Prometheus error.
+func IsAPIError(err error) bool {
+	// Check if the right error type is in err's chain.
+	var e *apiv1.Error
+	return errors.As(err, &e)
+}
+
+func ConvertAPIError(err error) error {
+	var e *apiv1.Error
+	if errors.As(err, &e) {
+		return fmt.Errorf("%s: %s", e.Msg, e.Detail)
+	}
+	return err
 }

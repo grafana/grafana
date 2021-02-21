@@ -55,7 +55,7 @@ export class MonitorConfig extends PureComponent<Props> {
     const { options, subscriptions } = this.props;
     return (
       <>
-        <h3 className="page-heading">Azure Monitor Details</h3>
+        <h3 className="page-heading">Azure Monitor Metrics Details</h3>
         <AzureCredentialsForm
           selectedAzureCloud={options.jsonData.cloudName || 'azuremonitor'}
           azureCloudOptions={azureClouds}

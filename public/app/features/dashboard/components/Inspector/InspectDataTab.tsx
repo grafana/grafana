@@ -10,20 +10,19 @@ import {
   SelectableValue,
   toCSV,
   transformDataFrame,
+  CSVConfig,
 } from '@grafana/data';
 import { Button, Container, Field, HorizontalGroup, Spinner, Select, Switch, Table, VerticalGroup } from '@grafana/ui';
-import { CSVConfig } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { getPanelInspectorStyles } from './styles';
 import { config } from 'app/core/config';
 import { saveAs } from 'file-saver';
 import { css } from 'emotion';
-import { GetDataOptions } from '../../state/PanelQueryRunner';
+import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { PanelModel } from 'app/features/dashboard/state';
 import { DetailText } from './DetailText';
-import { getDatasourceSrv } from '../../../plugins/datasource_srv';
 
 interface Props {
   panel: PanelModel;
@@ -69,12 +68,12 @@ export class InspectDataTab extends PureComponent<Props, State> {
     }
 
     if (prevProps.data !== this.props.data || prevState.transformId !== this.state.transformId) {
-      const currentTransform = this.state.transformationOptions.find(item => item.value === this.state.transformId);
+      const currentTransform = this.state.transformationOptions.find((item) => item.value === this.state.transformId);
 
       if (currentTransform && currentTransform.transformer.id !== DataTransformerID.noop) {
         const selectedDataFrame = this.state.selectedDataFrame;
         const dataFrameIndex = this.state.dataFrameIndex;
-        const subscription = transformDataFrame([currentTransform.transformer], this.props.data).subscribe(data => {
+        const subscription = transformDataFrame([currentTransform.transformer], this.props.data).subscribe((data) => {
           this.setState({ transformedData: data, selectedDataFrame, dataFrameIndex }, () => subscription.unsubscribe());
         });
         return;
@@ -125,7 +124,6 @@ export class InspectDataTab extends PureComponent<Props, State> {
       replaceVariables: (value: string) => {
         return value;
       },
-      getDataSourceSettingsByUid: getDatasourceSrv().getDataSourceSettingsByUid,
     });
   }
 

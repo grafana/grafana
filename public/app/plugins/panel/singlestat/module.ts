@@ -3,7 +3,6 @@ import { auto } from 'angular';
 import $ from 'jquery';
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.gauge';
-import 'app/features/panel/panellinks/link_srv';
 
 import {
   DataFrame,
@@ -31,7 +30,7 @@ import { convertOldAngularValueMapping } from '@grafana/ui';
 import config from 'app/core/config';
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
 import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
-import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest';
+import { getProcessedDataFrames } from 'app/features/query/state/runRequest';
 
 const BASE_FONT_SIZE = 38;
 
@@ -52,10 +51,10 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
   data: Partial<ShowData> = {};
 
-  fontSizes: any[];
+  fontSizes: any[] = [];
   fieldNames: string[] = [];
 
-  invalidGaugeRange: boolean;
+  invalidGaugeRange = false;
   panel: any;
   events: any;
   valueNameOptions: any[] = [
@@ -641,7 +640,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         });
       });
 
-      elem.click(evt => {
+      elem.click((evt) => {
         if (!linkInfo) {
           return;
         }
@@ -666,7 +665,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         drilldownTooltip.detach();
       });
 
-      elem.mousemove(e => {
+      elem.mousemove((e) => {
         if (!linkInfo) {
           return;
         }

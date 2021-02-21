@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+
+	"github.com/opentracing/opentracing-go"
 )
 
 // HandlerFunc defines a handler function interface.
@@ -84,6 +86,11 @@ func (b *InProcBus) SetTransactionManager(tm TransactionManager) {
 func (b *InProcBus) DispatchCtx(ctx context.Context, msg Msg) error {
 	var msgName = reflect.TypeOf(msg).Elem().Name()
 
+	span, ctx := opentracing.StartSpanFromContext(ctx, "bus - "+msgName)
+	defer span.Finish()
+
+	span.SetTag("msg", msgName)
+
 	var handler = b.handlersWithCtx[msgName]
 	if handler == nil {
 		return ErrHandlerNotFound
@@ -105,16 +112,14 @@ func (b *InProcBus) DispatchCtx(ctx context.Context, msg Msg) error {
 func (b *InProcBus) Dispatch(msg Msg) error {
 	var msgName = reflect.TypeOf(msg).Elem().Name()
 
-	var handler = b.handlersWithCtx[msgName]
 	withCtx := true
-
+	handler := b.handlersWithCtx[msgName]
 	if handler == nil {
 		withCtx = false
 		handler = b.handlers[msgName]
-	}
-
-	if handler == nil {
-		return ErrHandlerNotFound
+		if handler == nil {
+			return ErrHandlerNotFound
+		}
 	}
 
 	var params = []reflect.Value{}

@@ -133,10 +133,14 @@ func (e *GraphiteExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 
 func (e *GraphiteExecutor) parseResponse(res *http.Response) ([]TargetResponseDTO, error) {
 	body, err := ioutil.ReadAll(res.Body)
-	defer res.Body.Close()
 	if err != nil {
 		return nil, err
 	}
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			glog.Warn("Failed to close response body", "err", err)
+		}
+	}()
 
 	if res.StatusCode/100 != 2 {
 		glog.Info("Request failed", "status", res.Status, "body", string(body))

@@ -1,145 +1,293 @@
-import React, { PureComponent } from 'react';
-import { select, pie, arc, event } from 'd3';
-import sum from 'lodash/sum';
-import { DisplayValue, GrafanaThemeType, formattedValueToString } from '@grafana/data';
-import { Themeable } from '../../index';
-import { colors as grafana_colors } from '../../utils/index';
+import React, { FC } from 'react';
+import { DisplayValue, FALLBACK_COLOR, formattedValueToString, GrafanaTheme } from '@grafana/data';
+import { useStyles, useTheme } from '../../themes/ThemeContext';
+import tinycolor from 'tinycolor2';
+import Pie, { PieArcDatum } from '@visx/shape/lib/shapes/Pie';
+import { Group } from '@visx/group';
+import { RadialGradient } from '@visx/gradient';
+import { localPoint } from '@visx/event';
+import { useTooltip, useTooltipInPortal } from '@visx/tooltip';
+import { useComponentInstanceId } from '../../utils/useComponetInstanceId';
+import { css } from 'emotion';
+import { VizLegend, VizLegendItem } from '..';
+import { VizLayout } from '../VizLayout/VizLayout';
+import { LegendDisplayMode, VizLegendOptions } from '../VizLegend/types';
 
-export enum PieChartType {
-  PIE = 'pie',
-  DONUT = 'donut',
-}
-
-export interface Props extends Themeable {
+interface SvgProps {
   height: number;
   width: number;
   values: DisplayValue[];
-
   pieType: PieChartType;
-  strokeWidth: number;
+  labelOptions?: PieChartLabelOptions;
+  useGradients?: boolean;
+}
+export interface Props extends SvgProps {
+  legendOptions?: VizLegendOptions;
 }
 
-export class PieChart extends PureComponent<Props> {
-  containerElement: any;
-  svgElement: any;
-  tooltipElement: any;
-  tooltipValueElement: any;
+export enum PieChartType {
+  Pie = 'pie',
+  Donut = 'donut',
+}
 
-  static defaultProps = {
-    pieType: 'pie',
-    format: 'short',
-    stat: 'current',
-    strokeWidth: 1,
-    theme: GrafanaThemeType.Dark,
-  };
+export interface PieChartLabelOptions {
+  showName?: boolean;
+  showValue?: boolean;
+  showPercent?: boolean;
+}
 
-  componentDidMount() {
-    this.draw();
-  }
+const defaultLegendOptions: VizLegendOptions = {
+  displayMode: LegendDisplayMode.List,
+  placement: 'right',
+  calcs: [],
+};
 
-  componentDidUpdate() {
-    this.draw();
-  }
-
-  draw() {
-    const { values, pieType, strokeWidth } = this.props;
-
-    if (values.length === 0) {
-      return;
+export const PieChart: FC<Props> = ({ values, legendOptions = defaultLegendOptions, width, height, ...restProps }) => {
+  const getLegend = (values: DisplayValue[], legendOptions: VizLegendOptions) => {
+    if (legendOptions.displayMode === LegendDisplayMode.Hidden) {
+      return undefined;
     }
 
-    const data = values.map(datapoint => datapoint.numeric);
-    const names = values.map(datapoint => formattedValueToString(datapoint));
-    const colors = values.map((p, idx) => {
-      if (p.color) {
-        return p.color;
-      }
-      return grafana_colors[idx % grafana_colors.length];
+    const legendItems = values.map<VizLegendItem>((value) => {
+      return {
+        label: value.title ?? '',
+        color: value.color ?? FALLBACK_COLOR,
+        yAxis: 1,
+      };
     });
 
-    const total = sum(data) || 1;
-    const percents = data.map((item: number) => (item / total) * 100);
+    return (
+      <VizLegend items={legendItems} placement={legendOptions.placement} displayMode={legendOptions.displayMode} />
+    );
+  };
 
-    const width = this.containerElement.offsetWidth;
-    const height = this.containerElement.offsetHeight;
-    const radius = Math.min(width, height) / 2;
+  return (
+    <VizLayout width={width} height={height} legend={getLegend(values, legendOptions)}>
+      {(vizWidth: number, vizHeight: number) => {
+        return <PieChartSvg width={vizWidth} height={vizHeight} values={values} {...restProps} />;
+      }}
+    </VizLayout>
+  );
+};
 
-    const outerRadius = radius - radius / 10;
-    const innerRadius = pieType === PieChartType.PIE ? 0 : radius - radius / 3;
+export const PieChartSvg: FC<SvgProps> = ({
+  values,
+  pieType,
+  width,
+  height,
+  useGradients = true,
+  labelOptions = { showName: true },
+}) => {
+  const theme = useTheme();
+  const componentInstanceId = useComponentInstanceId('PieChart');
+  const styles = useStyles(getStyles);
+  const { tooltipData, tooltipLeft, tooltipTop, tooltipOpen, showTooltip, hideTooltip } = useTooltip<DisplayValue>();
+  const { containerRef, TooltipInPortal } = useTooltipInPortal({
+    detectBounds: true,
+    scroll: true,
+  });
 
-    const svg = select(this.svgElement)
-      .html('')
-      .attr('width', width)
-      .attr('height', height)
-      .append('g')
-      .attr('transform', `translate(${width / 2},${height / 2})`);
-
-    const pieChart = pie();
-
-    const customArc = arc()
-      .outerRadius(outerRadius)
-      .innerRadius(innerRadius)
-      .padAngle(0);
-
-    svg
-      .selectAll('path')
-      .data(pieChart(data))
-      .enter()
-      .append('path')
-      .attr('d', customArc as any)
-      .attr('fill', (d: any, idx: number) => colors[idx])
-      .style('fill-opacity', 0.15)
-      .style('stroke', (d: any, idx: number) => colors[idx])
-      .style('stroke-width', `${strokeWidth}px`)
-      .on('mouseover', (d: any, idx: any) => {
-        select(this.tooltipElement).style('opacity', 1);
-        select(this.tooltipValueElement).text(`${names[idx]} (${percents[idx].toFixed(2)}%)`);
-      })
-      .on('mousemove', () => {
-        select(this.tooltipElement)
-          .style('top', `${event.pageY - height / 2}px`)
-          .style('left', `${event.pageX}px`);
-      })
-      .on('mouseout', () => {
-        select(this.tooltipElement).style('opacity', 0);
-      });
+  if (values.length < 0) {
+    return <div>No data</div>;
   }
 
-  render() {
-    const { height, width, values } = this.props;
+  const getValue = (d: DisplayValue) => d.numeric;
+  const getGradientId = (color: string) => `${componentInstanceId}-${color}`;
+  const getGradientColor = (color: string) => {
+    return `url(#${getGradientId(color)})`;
+  };
 
-    if (values.length > 0) {
-      return (
-        <div className="piechart-panel">
-          <div
-            ref={element => (this.containerElement = element)}
-            className="piechart-container"
-            style={{
-              height: `${height * 0.9}px`,
-              width: `${Math.min(width, height * 1.3)}px`,
-            }}
-          >
-            <svg ref={element => (this.svgElement = element)} />
-          </div>
-          <div className="piechart-tooltip" ref={element => (this.tooltipElement = element)}>
-            <div className="piechart-tooltip-time">
-              <div
-                id="tooltip-value"
-                className="piechart-tooltip-value"
-                ref={element => (this.tooltipValueElement = element)}
+  const onMouseMoveOverArc = (event: any, datum: any) => {
+    const coords = localPoint(event.target.ownerSVGElement, event);
+    showTooltip({
+      tooltipLeft: coords!.x,
+      tooltipTop: coords!.y,
+      tooltipData: datum,
+    });
+  };
+
+  const showLabel = labelOptions.showName || labelOptions.showPercent || labelOptions.showValue;
+  const total = values.reduce((acc, item) => item.numeric + acc, 0);
+  const layout = getPieLayout(width, height, pieType);
+
+  return (
+    <div className={styles.container}>
+      <svg width={layout.size} height={layout.size} ref={containerRef}>
+        <Group top={layout.position} left={layout.position}>
+          {values.map((value) => {
+            const color = value.color ?? FALLBACK_COLOR;
+            return (
+              <RadialGradient
+                key={value.color}
+                id={getGradientId(color)}
+                from={getGradientColorFrom(color, theme)}
+                to={getGradientColorTo(color, theme)}
+                fromOffset={layout.gradientFromOffset}
+                toOffset="1"
+                gradientUnits="userSpaceOnUse"
+                cx={0}
+                cy={0}
+                radius={layout.outerRadius}
               />
-            </div>
-          </div>
-        </div>
-      );
-    } else {
-      return (
-        <div className="piechart-panel">
-          <div className="datapoints-warning">
-            <span className="small">No data points</span>
-          </div>
-        </div>
-      );
-    }
+            );
+          })}
+          <Pie
+            data={values}
+            pieValue={getValue}
+            outerRadius={layout.outerRadius}
+            innerRadius={layout.innerRadius}
+            cornerRadius={3}
+            padAngle={0.005}
+          >
+            {(pie) => {
+              return pie.arcs.map((arc) => {
+                return (
+                  <g
+                    key={arc.data.title}
+                    className={styles.svgArg}
+                    onMouseMove={(event) => onMouseMoveOverArc(event, arc.data)}
+                    onMouseOut={hideTooltip}
+                  >
+                    <path
+                      d={pie.path({ ...arc })!}
+                      fill={useGradients ? getGradientColor(arc.data.color ?? FALLBACK_COLOR) : arc.data.color}
+                      stroke={theme.colors.panelBg}
+                      strokeWidth={1}
+                    />
+                    {showLabel && (
+                      <PieLabel
+                        arc={arc}
+                        outerRadius={layout.outerRadius}
+                        innerRadius={layout.innerRadius}
+                        labelOptions={labelOptions}
+                        total={total}
+                      />
+                    )}
+                  </g>
+                );
+              });
+            }}
+          </Pie>
+        </Group>
+      </svg>
+      {tooltipOpen && (
+        <TooltipInPortal key={Math.random()} top={tooltipTop} left={tooltipLeft}>
+          {tooltipData!.title} {formattedValueToString(tooltipData!)}
+        </TooltipInPortal>
+      )}
+    </div>
+  );
+};
+
+const PieLabel: FC<{
+  arc: PieArcDatum<DisplayValue>;
+  outerRadius: number;
+  innerRadius: number;
+  labelOptions: PieChartLabelOptions;
+  total: number;
+}> = ({ arc, outerRadius, innerRadius, labelOptions, total }) => {
+  const labelRadius = innerRadius === 0 ? outerRadius / 6 : innerRadius;
+  const [labelX, labelY] = getLabelPos(arc, outerRadius, labelRadius);
+  const hasSpaceForLabel = arc.endAngle - arc.startAngle >= 0.3;
+
+  if (!hasSpaceForLabel) {
+    return null;
   }
+
+  let labelFontSize = labelOptions.showName
+    ? Math.min(Math.max((outerRadius / 150) * 14, 12), 30)
+    : Math.min(Math.max((outerRadius / 100) * 14, 12), 36);
+
+  return (
+    <g>
+      <text
+        fill="white"
+        x={labelX}
+        y={labelY}
+        dy=".33em"
+        fontSize={labelFontSize}
+        textAnchor="middle"
+        pointerEvents="none"
+      >
+        {labelOptions.showName && (
+          <tspan x={labelX} dy="1.2em">
+            {arc.data.title}
+          </tspan>
+        )}
+        {labelOptions.showValue && (
+          <tspan x={labelX} dy="1.2em">
+            {formattedValueToString(arc.data)}
+          </tspan>
+        )}
+        {labelOptions.showPercent && (
+          <tspan x={labelX} dy="1.2em">
+            {((arc.data.numeric / total) * 100).toFixed(0) + '%'}
+          </tspan>
+        )}
+      </text>
+    </g>
+  );
+};
+
+function getLabelPos(arc: PieArcDatum<DisplayValue>, outerRadius: number, innerRadius: number) {
+  const r = (outerRadius + innerRadius) / 2;
+  const a = (+arc.startAngle + +arc.endAngle) / 2 - Math.PI / 2;
+  return [Math.cos(a) * r, Math.sin(a) * r];
 }
+
+function getGradientColorFrom(color: string, theme: GrafanaTheme) {
+  return tinycolor(color)
+    .darken(20 * (theme.isDark ? 1 : -0.7))
+    .spin(8)
+    .toRgbString();
+}
+
+function getGradientColorTo(color: string, theme: GrafanaTheme) {
+  return tinycolor(color)
+    .darken(10 * (theme.isDark ? 1 : -0.7))
+    .spin(-8)
+    .toRgbString();
+}
+
+interface PieLayout {
+  position: number;
+  size: number;
+  outerRadius: number;
+  innerRadius: number;
+  gradientFromOffset: number;
+}
+
+function getPieLayout(height: number, width: number, pieType: PieChartType, margin = 16): PieLayout {
+  const size = Math.min(width, height);
+  const outerRadius = (size - margin * 2) / 2;
+  const donutThickness = pieType === PieChartType.Pie ? outerRadius : Math.max(outerRadius / 3, 20);
+  const innerRadius = outerRadius - donutThickness;
+  const centerOffset = (size - margin * 2) / 2;
+  // for non donut pie charts shift gradient out a bit
+  const gradientFromOffset = 1 - (outerRadius - innerRadius) / outerRadius;
+  return {
+    position: centerOffset + margin,
+    size: size,
+    outerRadius: outerRadius,
+    innerRadius: innerRadius,
+    gradientFromOffset: gradientFromOffset,
+  };
+}
+
+const getStyles = (theme: GrafanaTheme) => {
+  return {
+    container: css`
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    `,
+    svgArg: css`
+      transition: all 200ms ease-in-out;
+      &:hover {
+        transform: scale3d(1.03, 1.03, 1);
+      }
+    `,
+  };
+};

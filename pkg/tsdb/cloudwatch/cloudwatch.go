@@ -153,7 +153,7 @@ func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error)
 	}
 
 	duration := stscreds.DefaultDuration
-	expiration := time.Now().Add(duration)
+	expiration := time.Now().UTC().Add(duration)
 	if dsInfo.AssumeRoleARN != "" {
 		// We should assume a role in AWS
 		plog.Debug("Trying to assume role in AWS", "arn", dsInfo.AssumeRoleARN)
@@ -199,7 +199,7 @@ func (e *cloudWatchExecutor) getCWClient(region string) (cloudwatchiface.CloudWa
 	if err != nil {
 		return nil, err
 	}
-	return newCWClient(sess), nil
+	return NewCWClient(sess), nil
 }
 
 func (e *cloudWatchExecutor) getCWLogsClient(region string) (cloudwatchlogsiface.CloudWatchLogsAPI, error) {
@@ -208,7 +208,7 @@ func (e *cloudWatchExecutor) getCWLogsClient(region string) (cloudwatchlogsiface
 		return nil, err
 	}
 
-	logsClient := newCWLogsClient(sess)
+	logsClient := NewCWLogsClient(sess)
 
 	return logsClient, nil
 }
@@ -452,10 +452,10 @@ func isTerminated(queryStatus string) bool {
 	return queryStatus == "Complete" || queryStatus == "Cancelled" || queryStatus == "Failed" || queryStatus == "Timeout"
 }
 
-// CloudWatch client factory.
+// NewCWClient is a CloudWatch client factory.
 //
 // Stubbable by tests.
-var newCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
+var NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
 	client := cloudwatch.New(sess)
 	client.Handlers.Send.PushFront(func(r *request.Request) {
 		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
@@ -464,10 +464,10 @@ var newCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
 	return client
 }
 
-// CloudWatch logs client factory.
+// NewCWLogsClient is a CloudWatch logs client factory.
 //
 // Stubbable by tests.
-var newCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
+var NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
 	client := cloudwatchlogs.New(sess)
 	client.Handlers.Send.PushFront(func(r *request.Request) {
 		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))

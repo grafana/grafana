@@ -1,3 +1,5 @@
+import { Components } from './components';
+
 export const Pages = {
   Login: {
     url: '/login',
@@ -14,7 +16,6 @@ export const Pages = {
     delete: 'Data source settings page Delete button',
     saveAndTest: 'Data source settings page Save and Test button',
     alert: 'Data source settings page Alert',
-    alertMessage: 'Data source settings page Alert message',
   },
   DataSources: {
     url: '/datasources',
@@ -33,10 +34,6 @@ export const Pages = {
   },
   Dashboard: {
     url: (uid: string) => `/d/${uid}`,
-    Toolbar: {
-      toolbarItems: (button: string) => `Dashboard navigation bar button ${button}`,
-      navBar: () => '.navbar',
-    },
     SubMenu: {
       submenuItem: 'Dashboard template variables submenu item',
       submenuItemLabels: (item: string) => `Dashboard template variables submenu Label ${item}`,
@@ -88,7 +85,7 @@ export const Pages = {
             submitButton: 'Variable editor Submit button',
           },
           QueryVariable: {
-            queryOptionsDataSourceSelect: 'Variable editor Form Query DataSource select',
+            queryOptionsDataSourceSelect: Components.DataSourcePicker.container,
             queryOptionsRefreshSelect: 'Variable editor Form Query Refresh select',
             queryOptionsRegExInput: 'Variable editor Form Query RegEx field',
             queryOptionsSortSelect: 'Variable editor Form Query Sort select',
@@ -99,6 +96,9 @@ export const Pages = {
           },
           ConstantVariable: {
             constantOptionsQueryInput: 'Variable editor Form Constant Query field',
+          },
+          TextBoxVariable: {
+            textBoxOptionsQueryInput: 'Variable editor Form TextBox Query field',
           },
         },
       },
@@ -125,8 +125,8 @@ export const Pages = {
     General: {
       container: 'Explore',
       graph: 'Explore Graph',
-      runButton: 'Run button',
       table: 'Explore Table',
+      scrollBar: () => '.scrollbar-view',
     },
     Toolbar: {
       navBar: () => '.explore-toolbar',

@@ -30,6 +30,9 @@ describe('GraphCtrl', () => {
     gridPos: {
       w: 100,
     },
+    fieldConfig: {
+      defaults: {},
+    },
   };
 
   const ctx = {} as any;
@@ -71,9 +74,7 @@ describe('GraphCtrl', () => {
   describe('when time series are inside range', () => {
     beforeEach(() => {
       const range = {
-        from: dateTime()
-          .subtract(1, 'days')
-          .valueOf(),
+        from: dateTime().subtract(1, 'days').valueOf(),
         to: dateTime().valueOf(),
       };
 

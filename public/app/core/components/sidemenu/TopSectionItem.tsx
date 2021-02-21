@@ -8,14 +8,12 @@ export interface Props {
   onClick?: () => void;
 }
 
-const TopSectionItem: FC<Props> = props => {
-  const { link, onClick } = props;
-
+const TopSectionItem: FC<Props> = ({ link, onClick }) => {
   return (
     <div className="sidemenu-item dropdown">
       <a className="sidemenu-link" href={link.url} target={link.target} onClick={onClick}>
         <span className="icon-circle sidemenu-icon">
-          <Icon name={link.icon as any} size="xl" />
+          {link.icon && <Icon name={link.icon as any} size="xl" />}
           {link.img && <img src={link.img} />}
         </span>
       </a>

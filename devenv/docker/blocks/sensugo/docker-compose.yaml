@@ -1,0 +1,18 @@
+  sensu-backend:
+    image: sensu/sensu:latest
+    container_name: sensu-backend
+    ports:
+      - "3080:3000"
+      - "8080:8080"
+      - "8081:8081"
+    volumes:
+      - ./docker/blocks/sensugo/backend.yml:/etc/sensu/backend.yml
+      - sensu-backend-data:/var/lib/sensu/etcd
+    environment:
+      SENSU_BACKEND_CLUSTER_ADMIN_USERNAME: admin
+      SENSU_BACKEND_CLUSTER_ADMIN_PASSWORD: Password123
+    command: "sensu-backend start --log-level info"
+
+volumes:
+  sensu-backend-data: {}
+

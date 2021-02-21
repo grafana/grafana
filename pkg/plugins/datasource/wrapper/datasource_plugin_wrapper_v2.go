@@ -127,7 +127,7 @@ func BackendUserFromSignedInUser(su *models.SignedInUser) *backend.User {
 	return &backend.User{
 		Login: su.Login,
 		Name:  su.Name,
-		Email: su.Name,
+		Email: su.Email,
 		Role:  string(su.OrgRole),
 	}
 }

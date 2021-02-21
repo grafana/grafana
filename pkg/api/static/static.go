@@ -134,7 +134,11 @@ func staticHandler(ctx *macaron.Context, log *log.Logger, opt StaticOptions) boo
 	if err != nil {
 		return false
 	}
-	defer f.Close()
+	defer func() {
+		if err := f.Close(); err != nil {
+			log.Printf("Failed to close file: %s\n", err)
+		}
+	}()
 
 	fi, err := f.Stat()
 	if err != nil {
@@ -154,7 +158,11 @@ func staticHandler(ctx *macaron.Context, log *log.Logger, opt StaticOptions) boo
 		if err != nil {
 			return false // Discard error.
 		}
-		defer f.Close()
+		defer func() {
+			if err := f.Close(); err != nil {
+				log.Printf("Failed to close file: %s", err)
+			}
+		}()
 
 		fi, err = f.Stat()
 		if err != nil || fi.IsDir() {
@@ -163,7 +171,7 @@ func staticHandler(ctx *macaron.Context, log *log.Logger, opt StaticOptions) boo
 	}
 
 	if !opt.SkipLogging {
-		log.Println("[Static] Serving " + file)
+		log.Printf("[Static] Serving %s\n", file)
 	}
 
 	// Add an Expires header to the static content

@@ -5,21 +5,19 @@ import { css } from 'emotion';
 import { GraphSeriesValue } from '@grafana/data';
 
 import { Graph, GraphProps } from './Graph';
-import { LegendRenderOptions, LegendItem, LegendDisplayMode } from '../Legend/Legend';
-import { GraphLegend } from './GraphLegend';
+import { VizLegendItem, LegendDisplayMode, SeriesColorChangeHandler, LegendPlacement } from '../VizLegend/types';
+import { VizLegend } from '../VizLegend/VizLegend';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { stylesFactory } from '../../themes';
 
-export type SeriesOptionChangeHandler<TOption> = (label: string, option: TOption) => void;
-export type SeriesColorChangeHandler = SeriesOptionChangeHandler<string>;
-export type SeriesAxisToggleHandler = SeriesOptionChangeHandler<number>;
-
-export interface GraphWithLegendProps extends GraphProps, LegendRenderOptions {
+export interface GraphWithLegendProps extends GraphProps {
   legendDisplayMode: LegendDisplayMode;
+  placement: LegendPlacement;
+  hideEmpty?: boolean;
+  hideZero?: boolean;
   sortLegendBy?: string;
   sortLegendDesc?: boolean;
   onSeriesColorChange?: SeriesColorChangeHandler;
-  onSeriesAxisToggle?: SeriesAxisToggleHandler;
   onSeriesToggle?: (label: string, event: React.MouseEvent<HTMLElement>) => void;
   onToggleSort: (sortBy: string) => void;
 }
@@ -28,7 +26,6 @@ const getGraphWithLegendStyles = stylesFactory(({ placement }: GraphWithLegendPr
   wrapper: css`
     display: flex;
     flex-direction: ${placement === 'bottom' ? 'column' : 'row'};
-    height: 100%;
   `,
   graphContainer: css`
     min-height: 65%;
@@ -60,7 +57,6 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
     sortLegendDesc,
     legendDisplayMode,
     placement,
-    onSeriesAxisToggle,
     onSeriesColorChange,
     onSeriesToggle,
     onToggleSort,
@@ -75,7 +71,7 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
   } = props;
   const { graphContainer, wrapper, legendContainer } = getGraphWithLegendStyles(props);
 
-  const legendItems = series.reduce<LegendItem[]>((acc, s) => {
+  const legendItems = series.reduce<VizLegendItem[]>((acc, s) => {
     return shouldHideLegendItem(s.data, hideEmpty, hideZero)
       ? acc
       : acc.concat([
@@ -84,7 +80,7 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
             color: s.color || '',
             disabled: !s.isVisible,
             yAxis: s.yAxis.index,
-            displayValues: s.info || [],
+            getDisplayValues: () => s.info || [],
           },
         ]);
   }, []);
@@ -112,7 +108,7 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
       {legendDisplayMode !== LegendDisplayMode.Hidden && (
         <div className={legendContainer}>
           <CustomScrollbar hideHorizontalTrack>
-            <GraphLegend
+            <VizLegend
               items={legendItems}
               displayMode={legendDisplayMode}
               placement={placement}
@@ -124,7 +120,6 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
                 }
               }}
               onSeriesColorChange={onSeriesColorChange}
-              onSeriesAxisToggle={onSeriesAxisToggle}
               onToggleSort={onToggleSort}
             />
           </CustomScrollbar>

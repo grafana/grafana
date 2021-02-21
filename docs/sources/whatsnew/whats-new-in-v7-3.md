@@ -10,7 +10,7 @@ list = false
 
 # What's new in Grafana v7.3
 
-This topic includes the release notes for Grafana v7.3. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
+This topic includes the release notes for Grafana v7.3. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) or the [Patch release notes](#patch-release-notes).
 
 The main highlights are:
 
@@ -36,12 +36,12 @@ Another new feature that can be seen in the image above is the new image cell di
 
 A new standard field [color scheme]({{< relref "../panels/field-options/standard-field-options.md#color-scheme" >}}) option has been added. This new option will provide a unified way for all new panels to specify how colors should be assigned.
 
-* **Single color**: Specify a single color, useful in an override rule.
-* **From thresholds**: Informs Grafana to take the color from the matching threshold.
-* **Classic palette**: Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations.
-* **Green-Yellow-Red (by value)**: This is a continuous color scheme where Grafana will interpolate a color based on the value being displayed and the field  min & max values.
-* **Blue-Yellow-Red (by value)**: Same as above but different colors.
-* **Blues (by value)**: Same as above but color scheme go from panel background to blue.
+- **Single color**: Specifies a single color. Useful in an override rule.
+- **From thresholds**: Informs Grafana to take color from the matching threshold.
+- **Classic palette**: Assigns a color by looking up a color in a palette by series index. Useful for Graphs and pie charts, and other categorical data visualizations in Grafana.
+- **Green-Yellow-Red (by value)**: A continuous color scheme where Grafana will interpolate a color based on the value assigned to the green, yellow, and red components. The value must be within the min & max limits.
+- **Blue-Yellow-Red (by value)**: Same as above but different colors.
+- **Blues (by value)**: Same as above but color scheme go from panel background to blue.
 
 <div class="clearfix"></div>
 
@@ -75,7 +75,7 @@ The updated Google Cloud monitoring data source is shipped with pre-configured d
 
 To import the pre-configured dashboards, go to the configuration page of your Google Cloud Monitoring data source and click on the `Dashboards` tab. Click `Import` for the dashboard you would like to use. To customize the dashboard, we recommend to save the dashboard under a different name, because otherwise the dashboard will be overwritten when a new version of the dashboard is released.
 
-For more details, see the [Google Cloud Monitoring docs]({{<relref "../datasources/cloudmonitoring/#out-of-the-box-dashboards">}})
+For more details, see the [Google Cloud Monitoring docs]({{<relref "../datasources/google-cloud-monitoring/_index.md/#out-of-the-box-dashboards">}})
 
 ## Shorten URL for dashboards and Explore
 
@@ -149,4 +149,13 @@ See [upgrade notes]({{< relref "../installation/upgrading.md" >}}).
 
 Check out [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) for a complete list of new features, changes, and bug fixes.
 
-<!-- BEGIN Optimal Workshop Intercept Snippet --><div id='owInviteSnippet' style='position:fixed;right:20px;bottom:20px;width:280px;padding:20px;margin:0;border-radius:6px;background:#1857B8;color:#F7F8FA;text-align:left;z-index:2200000000;opacity:0;transition:opacity 500ms;-webkit-transition:opacity 500ms;display:none;'><div id='owInviteMessage' style='padding:0;margin:0 0 20px 0;font-size:16px;'>Got a spare two and a half minutes to help us improve the docs?</div><a id='owInviteOk' href='https://Grafana.optimalworkshop.com/questions/grafana-docs?tag=docs&utm_medium=intercept' onclick='this.parentNode.style.display="none";' target='_blank' style='color:#F7FAFF;font-size:16px;font-weight:bold;text-decoration:underline;'>Yes, I&#x27;ll help</a><a id='owInviteCancel' href='javascript:void(0)' onclick='this.parentNode.style.display="none";' style='color:#F7F8FA;font-size:14px;text-decoration:underline;float:right;'>Close</a></div><script>var owOnload=function(){if(-1==document.cookie.indexOf('ow-intercept-quiz-4ior230e')){var o=new XMLHttpRequest;o.onloadend=function(){try{var o=document.getElementById('owInviteSnippet');var date=new Date();date.setMonth(date.getMonth()+1);this.response&&JSON.parse(this.response).active===!0&&(document.cookie='ow-intercept-quiz-4ior230e=Done;path=/;expires='+date.toUTCString()+';',setTimeout(function(){o.style.display='block',o.style.opacity=1},2e3))}catch(e){}},o.open('POST','https://app.optimalworkshop.com/survey_status/questions/4ior230e/active'),o.send()}};if(window.addEventListener){window.addEventListener('load',function(){owOnload();});}else if(window.attachEvent){window.attachEvent('onload',function(){owOnload();});}</script><!-- END Optimal Workshop snippet -->
+## Patch release notes
+
+- [Grafana 7.3.0 release notes]({{< relref "../release-notes/release-notes-7-3-0.md" >}})
+- [Grafana 7.3.1 release notes]({{< relref "../release-notes/release-notes-7-3-1.md" >}})
+- [Grafana 7.3.2 release notes]({{< relref "../release-notes/release-notes-7-3-2.md" >}})
+- [Grafana 7.3.3 release notes]({{< relref "../release-notes/release-notes-7-3-3.md" >}})
+- [Grafana 7.3.4 release notes]({{< relref "../release-notes/release-notes-7-3-4.md" >}})
+- [Grafana 7.3.5 release notes]({{< relref "../release-notes/release-notes-7-3-5.md" >}})
+- [Grafana 7.3.6 release notes]({{< relref "../release-notes/release-notes-7-3-6.md" >}})
+- [Grafana 7.3.7 release notes]({{< relref "../release-notes/release-notes-7-3-7.md" >}})

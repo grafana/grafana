@@ -20,6 +20,8 @@ class AlertListPanel extends PanelCtrl {
     { text: 'Alphabetical (asc)', value: 1 },
     { text: 'Alphabetical (desc)', value: 2 },
     { text: 'Importance', value: 3 },
+    { text: 'Time (asc)', value: 4 },
+    { text: 'Time (desc)', value: 5 },
   ];
 
   stateFilter: any = {};
@@ -56,14 +58,22 @@ class AlertListPanel extends PanelCtrl {
 
   sortResult(alerts: any[]) {
     if (this.panel.sortOrder === 3) {
-      return _.sortBy(alerts, a => {
+      return _.sortBy(alerts, (a) => {
         // @ts-ignore
-        return alertDef.alertStateSortScore[a.state];
+        return alertDef.alertStateSortScore[a.state || a.newState];
       });
+    } else if (this.panel.sortOrder === 4) {
+      return _.sortBy(alerts, (a) => {
+        return new Date(a.newStateDate || a.time);
+      });
+    } else if (this.panel.sortOrder === 5) {
+      return _.sortBy(alerts, (a) => {
+        return new Date(a.newStateDate || a.time);
+      }).reverse();
     }
 
-    const result = _.sortBy(alerts, a => {
-      return a.name.toLowerCase();
+    const result = _.sortBy(alerts, (a) => {
+      return (a.name || a.alertName).toLowerCase();
     });
     if (this.panel.sortOrder === 2) {
       result.reverse();
@@ -123,13 +133,15 @@ class AlertListPanel extends PanelCtrl {
     return promiseToDigest(this.$scope)(
       getBackendSrv()
         .get('/api/annotations', params, `alert-list-get-state-changes-${this.panel.id}`)
-        .then(data => {
-          this.alertHistory = _.map(data, al => {
-            al.time = this.dashboard.formatDate(al.time, 'MMM D, YYYY HH:mm:ss');
-            al.stateModel = alertDef.getStateDisplayModel(al.newState);
-            al.info = alertDef.getAlertAnnotationInfo(al);
-            return al;
-          });
+        .then((data) => {
+          this.alertHistory = this.sortResult(
+            _.map(data, (al) => {
+              al.time = this.dashboard.formatDate(al.time, 'MMM D, YYYY HH:mm:ss');
+              al.stateModel = alertDef.getStateDisplayModel(al.newState);
+              al.info = alertDef.getAlertAnnotationInfo(al);
+              return al;
+            })
+          );
 
           this.noAlertsMessage = this.alertHistory.length === 0 ? 'No alerts in current time range' : '';
 
@@ -166,13 +178,11 @@ class AlertListPanel extends PanelCtrl {
     return promiseToDigest(this.$scope)(
       getBackendSrv()
         .get('/api/alerts', params, `alert-list-get-current-alert-state-${this.panel.id}`)
-        .then(data => {
+        .then((data) => {
           this.currentAlerts = this.sortResult(
-            _.map(data, al => {
+            _.map(data, (al) => {
               al.stateModel = alertDef.getStateDisplayModel(al.state);
-              al.newStateDateAgo = dateTime(al.newStateDate)
-                .locale('en')
-                .fromNow(true);
+              al.newStateDateAgo = dateTime(al.newStateDate).locale('en').fromNow(true);
               return al;
             })
           );

@@ -172,7 +172,11 @@ func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query 
 	}
 
 	body, err := ioutil.ReadAll(res.Body)
-	defer res.Body.Close()
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			azlog.Warn("Failed to close response body", "err", err)
+		}
+	}()
 	if err != nil {
 		return nil, err
 	}

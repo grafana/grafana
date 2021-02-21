@@ -1,9 +1,8 @@
-import { FieldColorModeId, toDataFrame } from '@grafana/data';
+import { FieldColorModeId, toDataFrame, dateTime } from '@grafana/data';
 import React from 'react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { GraphNG } from './GraphNG';
-import { dateTime } from '@grafana/data';
-import { LegendDisplayMode } from '../Legend/Legend';
+import { LegendDisplayMode } from '../VizLegend/types';
 import { prepDataForStorybook } from '../../utils/storybook/data';
 import { useTheme } from '../../themes';
 import { text, select } from '@storybook/addon-knobs';
@@ -63,8 +62,8 @@ export const Lines: React.FC = () => {
           to: dateTime(1546380000000),
         },
       }}
-      legend={{ displayMode: LegendDisplayMode.List, placement: legendPlacement }}
+      legend={{ displayMode: LegendDisplayMode.List, placement: legendPlacement, calcs: [] }}
       timeZone="browser"
-    ></GraphNG>
+    />
   );
 };

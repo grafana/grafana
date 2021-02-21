@@ -2,35 +2,20 @@ package middleware
 
 import (
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 
 	macaron "gopkg.in/macaron.v1"
 
+	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 type AuthOptions struct {
 	ReqGrafanaAdmin bool
 	ReqSignedIn     bool
-}
-
-func getApiKey(c *models.ReqContext) string {
-	header := c.Req.Header.Get("Authorization")
-	parts := strings.SplitN(header, " ", 2)
-	if len(parts) == 2 && parts[0] == "Bearer" {
-		key := parts[1]
-		return key
-	}
-
-	username, password, err := util.DecodeBasicAuthHeader(header)
-	if err == nil && username == "api_key" {
-		return password
-	}
-
-	return ""
 }
 
 func accessForbidden(c *models.ReqContext) {
@@ -53,16 +38,17 @@ func notAuthorized(c *models.ReqContext) {
 		redirectTo = setting.AppSubUrl + c.Req.RequestURI
 	}
 
-	// remove forceLogin query param if it exists
-	if parsed, err := url.ParseRequestURI(redirectTo); err == nil {
-		params := parsed.Query()
-		params.Del("forceLogin")
-		parsed.RawQuery = params.Encode()
-		WriteCookie(c.Resp, "redirect_to", url.QueryEscape(parsed.String()), 0, newCookieOptions)
-	} else {
-		c.Logger.Debug("Failed parsing request URI; redirect cookie will not be set", "redirectTo", redirectTo, "error", err)
-	}
+	// remove any forceLogin=true params
+	redirectTo = removeForceLoginParams(redirectTo)
+
+	cookies.WriteCookie(c.Resp, "redirect_to", url.QueryEscape(redirectTo), 0, nil)
 	c.Redirect(setting.AppSubUrl + "/login")
+}
+
+var forceLoginParamsRegexp = regexp.MustCompile(`&?forceLogin=true`)
+
+func removeForceLoginParams(str string) string {
+	return forceLoginParamsRegexp.ReplaceAllString(str, "")
 }
 
 func EnsureEditorOrViewerCanEdit(c *models.ReqContext) {
@@ -133,15 +119,17 @@ func AdminOrFeatureEnabled(enabled bool) macaron.Handler {
 	}
 }
 
-func SnapshotPublicModeOrSignedIn() macaron.Handler {
+// SnapshotPublicModeOrSignedIn creates a middleware that allows access
+// if snapshot public mode is enabled or if user is signed in.
+func SnapshotPublicModeOrSignedIn(cfg *setting.Cfg) macaron.Handler {
 	return func(c *models.ReqContext) {
-		if setting.SnapshotPublicMode {
+		if cfg.SnapshotPublicMode {
 			return
 		}
 
-		_, err := c.Invoke(ReqSignedIn)
-		if err != nil {
-			c.JsonApiErr(500, "Failed to invoke required signed in middleware", err)
+		if !c.IsSignedIn {
+			notAuthorized(c)
+			return
 		}
 	}
 }

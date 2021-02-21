@@ -34,6 +34,7 @@ export type IconName =
   | 'exclamation-triangle'
   | 'times'
   | 'signin'
+  | 'signout'
   | 'cloud-upload'
   | 'step-backward'
   | 'square-shape'
@@ -79,6 +80,7 @@ export type IconName =
   | 'compass'
   | 'sliders-v-alt'
   | 'bell'
+  | 'bell-slash'
   | 'database'
   | 'user'
   | 'camera'
@@ -109,6 +111,7 @@ export type IconName =
   | 'search-plus'
   | 'minus-circle'
   | 'table'
+  | 'arrow'
   | 'plus'
   | 'heart'
   | 'heart-break'
@@ -118,7 +121,13 @@ export type IconName =
   | 'sort-amount-down'
   | 'cloud'
   | 'draggabledots'
-  | 'folder-upload';
+  | 'folder-upload'
+  | 'palette'
+  | 'gf-interpolation-linear'
+  | 'gf-interpolation-smooth'
+  | 'gf-interpolation-step-before'
+  | 'gf-interpolation-step-after'
+  | 'gf-logs';
 
 export const getAvailableIcons = (): IconName[] => [
   'fa fa-spinner',
@@ -197,6 +206,7 @@ export const getAvailableIcons = (): IconName[] => [
   'compass',
   'sliders-v-alt',
   'bell',
+  'bell-slash',
   'database',
   'user',
   'camera',
@@ -226,6 +236,7 @@ export const getAvailableIcons = (): IconName[] => [
   'signal',
   'search-plus',
   'minus-circle',
+  'arrow',
   'table',
   'plus',
   'heart',
@@ -236,4 +247,10 @@ export const getAvailableIcons = (): IconName[] => [
   'cloud',
   'draggabledots',
   'folder-upload',
+  'palette',
+  'gf-interpolation-linear',
+  'gf-interpolation-smooth',
+  'gf-interpolation-step-before',
+  'gf-interpolation-step-after',
+  'gf-logs',
 ];

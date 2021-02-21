@@ -55,7 +55,7 @@ export class MysqlDatasource {
   ): MysqlQueryForInterpolation[] {
     let expandedQueries = queries;
     if (queries && queries.length > 0) {
-      expandedQueries = queries.map(query => {
+      expandedQueries = queries.map((query) => {
         const expandedQuery = {
           ...query,
           datasource: this.name,
@@ -69,9 +69,9 @@ export class MysqlDatasource {
   }
 
   query(options: any): Observable<MysqlResponse> {
-    const queries = _.filter(options.targets, target => {
+    const queries = _.filter(options.targets, (target) => {
       return target.hide !== true;
-    }).map(target => {
+    }).map((target) => {
       const queryModel = new MysqlQuery(target, this.templateSrv, options.scopedVars);
 
       return {
@@ -194,7 +194,7 @@ export class MysqlDatasource {
       })
       .pipe(
         mapTo({ status: 'success', message: 'Database Connection OK' }),
-        catchError(err => {
+        catchError((err) => {
           console.error(err);
           if (err.data && err.data.message) {
             return of({ status: 'error', message: err.data.message });

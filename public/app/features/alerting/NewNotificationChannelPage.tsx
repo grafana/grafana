@@ -54,11 +54,11 @@ class NewNotificationChannelPage extends PureComponent<Props> {
           <h2 className="page-sub-heading">New notification channel</h2>
           <Form onSubmit={this.onSubmit} validateOn="onChange" defaultValues={defaultValues} maxWidth={600}>
             {({ register, errors, control, getValues, watch }) => {
-              const selectedChannel = notificationChannelTypes.find(c => c.value === getValues().type.value);
+              const selectedChannel = notificationChannelTypes.find((c) => c.value === getValues().type.value);
 
               return (
                 <NotificationChannelForm
-                  selectableChannels={mapChannelsToSelectableValue(notificationChannelTypes)}
+                  selectableChannels={mapChannelsToSelectableValue(notificationChannelTypes, true)}
                   selectedChannel={selectedChannel}
                   onTestChannel={this.onTestChannel}
                   register={register}
@@ -79,7 +79,7 @@ class NewNotificationChannelPage extends PureComponent<Props> {
   }
 }
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => {
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state) => {
   return {
     navModel: getNavModel(state.navIndex, 'channels'),
     notificationChannelTypes: state.notificationChannel.notificationChannelTypes,

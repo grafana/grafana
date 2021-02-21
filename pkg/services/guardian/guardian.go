@@ -23,6 +23,7 @@ type DashboardGuardian interface {
 	HasPermission(permission models.PermissionType) (bool, error)
 	CheckPermissionBeforeUpdate(permission models.PermissionType, updatePermissions []*models.DashboardAcl) (bool, error)
 	GetAcl() ([]*models.DashboardAclInfoDTO, error)
+	GetHiddenACL(*setting.Cfg) ([]*models.DashboardAcl, error)
 }
 
 type dashboardGuardianImpl struct {
@@ -213,6 +214,38 @@ func (g *dashboardGuardianImpl) getTeams() ([]*models.TeamDTO, error) {
 	return query.Result, err
 }
 
+func (g *dashboardGuardianImpl) GetHiddenACL(cfg *setting.Cfg) ([]*models.DashboardAcl, error) {
+	hiddenACL := make([]*models.DashboardAcl, 0)
+	if g.user.IsGrafanaAdmin {
+		return hiddenACL, nil
+	}
+
+	existingPermissions, err := g.GetAcl()
+	if err != nil {
+		return hiddenACL, err
+	}
+
+	for _, item := range existingPermissions {
+		if item.Inherited || item.UserLogin == g.user.Login {
+			continue
+		}
+
+		if _, hidden := cfg.HiddenUsers[item.UserLogin]; hidden {
+			hiddenACL = append(hiddenACL, &models.DashboardAcl{
+				OrgID:       item.OrgId,
+				DashboardID: item.DashboardId,
+				UserID:      item.UserId,
+				TeamID:      item.TeamId,
+				Role:        item.Role,
+				Permission:  item.Permission,
+				Created:     item.Created,
+				Updated:     item.Updated,
+			})
+		}
+	}
+	return hiddenACL, nil
+}
+
 // nolint:unused
 type FakeDashboardGuardian struct {
 	DashId                           int64
@@ -226,6 +259,7 @@ type FakeDashboardGuardian struct {
 	CheckPermissionBeforeUpdateValue bool
 	CheckPermissionBeforeUpdateError error
 	GetAclValue                      []*models.DashboardAclInfoDTO
+	GetHiddenAclValue                []*models.DashboardAcl
 }
 
 func (g *FakeDashboardGuardian) CanSave() (bool, error) {
@@ -254,6 +288,10 @@ func (g *FakeDashboardGuardian) CheckPermissionBeforeUpdate(permission models.Pe
 
 func (g *FakeDashboardGuardian) GetAcl() ([]*models.DashboardAclInfoDTO, error) {
 	return g.GetAclValue, nil
+}
+
+func (g *FakeDashboardGuardian) GetHiddenACL(cfg *setting.Cfg) ([]*models.DashboardAcl, error) {
+	return g.GetHiddenAclValue, nil
 }
 
 // nolint:unused

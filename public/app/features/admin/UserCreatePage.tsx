@@ -62,7 +62,7 @@ const UserCreatePage: React.FC<UserCreatePageProps> = ({ navModel, updateLocatio
                     type="password"
                     name="password"
                     ref={register({
-                      validate: value => value.trim() !== '' && value.length >= 4,
+                      validate: (value) => value.trim() !== '' && value.length >= 4,
                     })}
                   />
                 </Field>

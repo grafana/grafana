@@ -2,13 +2,14 @@ package auth
 
 import (
 	"context"
+	"net"
 
 	"github.com/grafana/grafana/pkg/models"
 )
 
 type FakeUserAuthTokenService struct {
-	CreateTokenProvider         func(ctx context.Context, userId int64, clientIP, userAgent string) (*models.UserToken, error)
-	TryRotateTokenProvider      func(ctx context.Context, token *models.UserToken, clientIP, userAgent string) (bool, error)
+	CreateTokenProvider         func(ctx context.Context, user *models.User, clientIP net.IP, userAgent string) (*models.UserToken, error)
+	TryRotateTokenProvider      func(ctx context.Context, token *models.UserToken, clientIP net.IP, userAgent string) (bool, error)
 	LookupTokenProvider         func(ctx context.Context, unhashedToken string) (*models.UserToken, error)
 	RevokeTokenProvider         func(ctx context.Context, token *models.UserToken) error
 	RevokeAllUserTokensProvider func(ctx context.Context, userId int64) error
@@ -20,13 +21,13 @@ type FakeUserAuthTokenService struct {
 
 func NewFakeUserAuthTokenService() *FakeUserAuthTokenService {
 	return &FakeUserAuthTokenService{
-		CreateTokenProvider: func(ctx context.Context, userId int64, clientIP, userAgent string) (*models.UserToken, error) {
+		CreateTokenProvider: func(ctx context.Context, user *models.User, clientIP net.IP, userAgent string) (*models.UserToken, error) {
 			return &models.UserToken{
 				UserId:        0,
 				UnhashedToken: "",
 			}, nil
 		},
-		TryRotateTokenProvider: func(ctx context.Context, token *models.UserToken, clientIP, userAgent string) (bool, error) {
+		TryRotateTokenProvider: func(ctx context.Context, token *models.UserToken, clientIP net.IP, userAgent string) (bool, error) {
 			return false, nil
 		},
 		LookupTokenProvider: func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
@@ -56,15 +57,22 @@ func NewFakeUserAuthTokenService() *FakeUserAuthTokenService {
 	}
 }
 
-func (s *FakeUserAuthTokenService) CreateToken(ctx context.Context, userId int64, clientIP, userAgent string) (*models.UserToken, error) {
-	return s.CreateTokenProvider(context.Background(), userId, clientIP, userAgent)
+// Init initializes the service.
+// Required for dependency injection.
+func (s *FakeUserAuthTokenService) Init() error {
+	return nil
+}
+
+func (s *FakeUserAuthTokenService) CreateToken(ctx context.Context, user *models.User, clientIP net.IP, userAgent string) (*models.UserToken, error) {
+	return s.CreateTokenProvider(context.Background(), user, clientIP, userAgent)
 }
 
 func (s *FakeUserAuthTokenService) LookupToken(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
 	return s.LookupTokenProvider(context.Background(), unhashedToken)
 }
 
-func (s *FakeUserAuthTokenService) TryRotateToken(ctx context.Context, token *models.UserToken, clientIP, userAgent string) (bool, error) {
+func (s *FakeUserAuthTokenService) TryRotateToken(ctx context.Context, token *models.UserToken, clientIP net.IP,
+	userAgent string) (bool, error) {
 	return s.TryRotateTokenProvider(context.Background(), token, clientIP, userAgent)
 }
 

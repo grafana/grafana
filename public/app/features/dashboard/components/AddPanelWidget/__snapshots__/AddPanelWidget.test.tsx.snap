@@ -15,7 +15,7 @@ exports[`Render should render component 1`] = `
       onPasteCopiedPanel={[Function]}
     />
     <div>
-      <Component
+      <HorizontalGroup
         justify="center"
       >
         <Button
@@ -25,7 +25,7 @@ exports[`Render should render component 1`] = `
         >
           Convert to row
         </Button>
-      </Component>
+      </HorizontalGroup>
     </div>
   </div>
 </div>

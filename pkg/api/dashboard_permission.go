@@ -5,12 +5,13 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
 )
 
-func GetDashboardPermissionList(c *models.ReqContext) Response {
+func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) response.Response {
 	dashID := c.ParamsInt64(":dashboardId")
 
 	_, rsp := getDashboardHelper(c.OrgId, "", dashID, "")
@@ -26,10 +27,15 @@ func GetDashboardPermissionList(c *models.ReqContext) Response {
 
 	acl, err := g.GetAcl()
 	if err != nil {
-		return Error(500, "Failed to get dashboard permissions", err)
+		return response.Error(500, "Failed to get dashboard permissions", err)
 	}
 
+	filteredAcls := make([]*models.DashboardAclInfoDTO, 0, len(acl))
 	for _, perm := range acl {
+		if perm.UserId > 0 && dtos.IsHiddenUser(perm.UserLogin, c.SignedInUser, hs.Cfg) {
+			continue
+		}
+
 		perm.UserAvatarUrl = dtos.GetGravatarUrl(perm.UserEmail)
 
 		if perm.TeamId > 0 {
@@ -38,14 +44,16 @@ func GetDashboardPermissionList(c *models.ReqContext) Response {
 		if perm.Slug != "" {
 			perm.Url = models.GetDashboardFolderUrl(perm.IsFolder, perm.Uid, perm.Slug)
 		}
+
+		filteredAcls = append(filteredAcls, perm)
 	}
 
-	return JSON(200, acl)
+	return response.JSON(200, filteredAcls)
 }
 
-func UpdateDashboardPermissions(c *models.ReqContext, apiCmd dtos.UpdateDashboardAclCommand) Response {
+func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext, apiCmd dtos.UpdateDashboardAclCommand) response.Response {
 	if err := validatePermissionsUpdate(apiCmd); err != nil {
-		return Error(400, err.Error(), err)
+		return response.Error(400, err.Error(), err)
 	}
 
 	dashID := c.ParamsInt64(":dashboardId")
@@ -76,27 +84,33 @@ func UpdateDashboardPermissions(c *models.ReqContext, apiCmd dtos.UpdateDashboar
 		})
 	}
 
+	hiddenACL, err := g.GetHiddenACL(hs.Cfg)
+	if err != nil {
+		return response.Error(500, "Error while retrieving hidden permissions", err)
+	}
+	cmd.Items = append(cmd.Items, hiddenACL...)
+
 	if okToUpdate, err := g.CheckPermissionBeforeUpdate(models.PERMISSION_ADMIN, cmd.Items); err != nil || !okToUpdate {
 		if err != nil {
 			if errors.Is(err, guardian.ErrGuardianPermissionExists) || errors.Is(err, guardian.ErrGuardianOverride) {
-				return Error(400, err.Error(), err)
+				return response.Error(400, err.Error(), err)
 			}
 
-			return Error(500, "Error while checking dashboard permissions", err)
+			return response.Error(500, "Error while checking dashboard permissions", err)
 		}
 
-		return Error(403, "Cannot remove own admin permission for a folder", nil)
+		return response.Error(403, "Cannot remove own admin permission for a folder", nil)
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		if errors.Is(err, models.ErrDashboardAclInfoMissing) ||
 			errors.Is(err, models.ErrDashboardPermissionDashboardEmpty) {
-			return Error(409, err.Error(), err)
+			return response.Error(409, err.Error(), err)
 		}
-		return Error(500, "Failed to create permission", err)
+		return response.Error(500, "Failed to create permission", err)
 	}
 
-	return Success("Dashboard permissions updated")
+	return response.Success("Dashboard permissions updated")
 }
 
 func validatePermissionsUpdate(apiCmd dtos.UpdateDashboardAclCommand) error {

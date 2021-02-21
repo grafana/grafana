@@ -120,7 +120,7 @@ describe('getQueryHints()', () => {
 
   it('returns a sum hint when many time series results are returned for a simple metric', () => {
     const seriesCount = SUM_HINT_THRESHOLD_COUNT;
-    const series = Array.from({ length: seriesCount }, _ => ({
+    const series = Array.from({ length: seriesCount }, (_) => ({
       datapoints: [
         [0, 0],
         [0, 0],

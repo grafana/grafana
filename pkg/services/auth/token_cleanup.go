@@ -8,12 +8,11 @@ import (
 )
 
 func (s *UserAuthTokenService) Run(ctx context.Context) error {
-	var err error
 	ticker := time.NewTicker(time.Hour)
 	maxInactiveLifetime := s.Cfg.LoginMaxInactiveLifetime
 	maxLifetime := s.Cfg.LoginMaxLifetime
 
-	err = s.ServerLockService.LockAndExecute(ctx, "cleanup expired auth tokens", time.Hour*12, func() {
+	err := s.ServerLockService.LockAndExecute(ctx, "cleanup expired auth tokens", time.Hour*12, func() {
 		if _, err := s.deleteExpiredTokens(ctx, maxInactiveLifetime, maxLifetime); err != nil {
 			s.log.Error("An error occurred while deleting expired tokens", "err", err)
 		}

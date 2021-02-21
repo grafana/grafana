@@ -12,14 +12,16 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/model"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestCountersAsDelta(t *testing.T) {
-	b, _ := NewBridge(&Config{
+	b, err := NewBridge(&Config{
 		URL:             "localhost:12345",
 		CountersAsDelta: true,
 	})
+	require.NoError(t, err)
 	ty := dto.MetricType(0)
 	mf := &dto.MetricFamily{
 		Type:   &ty,
@@ -442,29 +444,21 @@ func TestSkipNanValues(t *testing.T) {
 		Gatherer:        reg,
 		CountersAsDelta: true,
 	})
-	if err != nil {
-		t.Fatalf("error creating bridge: %v", err)
-	}
+	require.NoError(t, err)
 
 	// first collect
 	mfs, err := reg.Gather()
-	if err != nil {
-		t.Fatalf("error: %v", err)
-	}
+	require.NoError(t, err)
 
 	var buf bytes.Buffer
 	err = b.writeMetrics(&buf, mfs, "prefix.", model.Time(1477043083))
-	if err != nil {
-		t.Fatalf("error: %v", err)
-	}
+	require.NoError(t, err)
 
 	want := `prefix.http_request_total_sum.constname.constvalue 0 1477043
 prefix.http_request_total_count.constname.constvalue.count 0 1477043
 `
 
-	if got := buf.String(); want != got {
-		t.Fatalf("wanted \n%s\n, got \n%s\n", want, got)
-	}
+	assert.Equal(t, want, buf.String())
 }
 
 func TestPush(t *testing.T) {
@@ -489,20 +483,17 @@ func TestPush(t *testing.T) {
 		Gatherer: reg,
 		Prefix:   "prefix.",
 	})
-	if err != nil {
-		t.Fatalf("error creating bridge: %v", err)
-	}
+	require.NoError(t, err)
 
 	nmg, err := newMockGraphite(port)
-	if err != nil {
-		t.Fatalf("error creating mock graphite: %v", err)
-	}
-	defer nmg.Close()
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		err := nmg.Close()
+		require.NoError(t, err)
+	})
 
 	err = b.Push()
-	if err != nil {
-		t.Fatalf("error pushing: %v", err)
-	}
+	require.NoError(t, err)
 
 	wants := []string{
 		"prefix.name.constname.constvalue.labelname.val1.count 1",

@@ -46,3 +46,37 @@ const dispatchedActions = await thunkTester(initialState)
 
 expect(dispatchedActions).toEqual([someAction('reducer tests')]);
 ```
+
+## Typing of connected props
+
+It is possible to infer connected props automatically from `mapStateToProps` and `mapDispatchToProps` using a helper type `ConnectedProps` from Redux. For this to work the `connect` call has to be split into two parts.
+
+```typescript
+import { connect, ConnectedProps } from 'react-redux'
+
+const mapStateToProps = (state: StoreState) => {
+  return {
+    location: state.location,
+    initDone: state.panelEditor.initDone,
+    uiState: state.panelEditor.ui,
+  };
+};
+
+const mapDispatchToProps = {
+  updateLocation,
+  initPanelEditor,
+  panelEditorCleanUp,
+  setDiscardChanges,
+  updatePanelEditorUIState,
+  updateTimeZoneForSession,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+type Props = OwnProps & ConnectedProps<typeof connector>;
+
+class PanelEditorUnconnected extends PureComponent<Props> {};
+
+export const PanelEditor = connector(PanelEditorUnconnected);
+```
+For more examples, refer to the [Redux docs](https://react-redux.js.org/using-react-redux/static-typing#inferring-the-connected-props-automatically).

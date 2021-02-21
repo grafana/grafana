@@ -3,9 +3,12 @@
 package sqlstore
 
 import (
+	"errors"
+	"strconv"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -107,8 +110,8 @@ func TestDataAccess(t *testing.T) {
 			err := UpdateDataSource(&cmd)
 			require.NoError(t, err)
 
-			query := models.GetDataSourceByIdQuery{Id: ds.Id}
-			err = GetDataSourceById(&query)
+			query := models.GetDataSourceQuery{Id: ds.Id, OrgId: 10}
+			err = GetDataSource(&query)
 			require.NoError(t, err)
 			require.Equal(t, ds.Uid, query.Result.Uid)
 		})
@@ -177,7 +180,7 @@ func TestDataAccess(t *testing.T) {
 			InitTestDB(t)
 			ds := initDatasource()
 
-			err := DeleteDataSourceById(&models.DeleteDataSourceByIdCommand{Id: ds.Id, OrgId: ds.OrgId})
+			err := DeleteDataSource(&models.DeleteDataSourceCommand{ID: ds.Id, OrgID: ds.OrgId})
 			require.NoError(t, err)
 
 			query := models.GetDataSourcesQuery{OrgId: 10}
@@ -191,7 +194,7 @@ func TestDataAccess(t *testing.T) {
 			InitTestDB(t)
 			ds := initDatasource()
 
-			err := DeleteDataSourceById(&models.DeleteDataSourceByIdCommand{Id: ds.Id, OrgId: 123123})
+			err := DeleteDataSource(&models.DeleteDataSourceCommand{ID: ds.Id, OrgID: 123123})
 			require.NoError(t, err)
 			query := models.GetDataSourcesQuery{OrgId: 10}
 			err = GetDataSources(&query)
@@ -206,12 +209,131 @@ func TestDataAccess(t *testing.T) {
 		ds := initDatasource()
 		query := models.GetDataSourcesQuery{OrgId: 10}
 
-		err := DeleteDataSourceByName(&models.DeleteDataSourceByNameCommand{Name: ds.Name, OrgId: ds.OrgId})
+		err := DeleteDataSource(&models.DeleteDataSourceCommand{Name: ds.Name, OrgID: ds.OrgId})
 		require.NoError(t, err)
 
 		err = GetDataSources(&query)
 		require.NoError(t, err)
 
 		require.Equal(t, 0, len(query.Result))
+	})
+
+	t.Run("GetDataSource", func(t *testing.T) {
+		t.Run("Number of data sources returned limited to 6 per organization", func(t *testing.T) {
+			InitTestDB(t)
+			datasourceLimit := 6
+			for i := 0; i < datasourceLimit+1; i++ {
+				err := AddDataSource(&models.AddDataSourceCommand{
+					OrgId:    10,
+					Name:     "laban" + strconv.Itoa(i),
+					Type:     models.DS_GRAPHITE,
+					Access:   models.DS_ACCESS_DIRECT,
+					Url:      "http://test",
+					Database: "site",
+					ReadOnly: true,
+				})
+				require.NoError(t, err)
+			}
+			query := models.GetDataSourcesQuery{OrgId: 10, DataSourceLimit: datasourceLimit}
+
+			err := GetDataSources(&query)
+
+			require.NoError(t, err)
+			require.Equal(t, datasourceLimit, len(query.Result))
+		})
+
+		t.Run("No limit should be applied on the returned data sources if the limit is not set", func(t *testing.T) {
+			InitTestDB(t)
+			numberOfDatasource := 5100
+			for i := 0; i < numberOfDatasource; i++ {
+				err := AddDataSource(&models.AddDataSourceCommand{
+					OrgId:    10,
+					Name:     "laban" + strconv.Itoa(i),
+					Type:     models.DS_GRAPHITE,
+					Access:   models.DS_ACCESS_DIRECT,
+					Url:      "http://test",
+					Database: "site",
+					ReadOnly: true,
+				})
+				require.NoError(t, err)
+			}
+			query := models.GetDataSourcesQuery{OrgId: 10}
+
+			err := GetDataSources(&query)
+
+			require.NoError(t, err)
+			require.Equal(t, numberOfDatasource, len(query.Result))
+		})
+
+		t.Run("No limit should be applied on the returned data sources if the limit is negative", func(t *testing.T) {
+			InitTestDB(t)
+			numberOfDatasource := 5100
+			for i := 0; i < numberOfDatasource; i++ {
+				err := AddDataSource(&models.AddDataSourceCommand{
+					OrgId:    10,
+					Name:     "laban" + strconv.Itoa(i),
+					Type:     models.DS_GRAPHITE,
+					Access:   models.DS_ACCESS_DIRECT,
+					Url:      "http://test",
+					Database: "site",
+					ReadOnly: true,
+				})
+				require.NoError(t, err)
+			}
+			query := models.GetDataSourcesQuery{OrgId: 10, DataSourceLimit: -1}
+
+			err := GetDataSources(&query)
+
+			require.NoError(t, err)
+			require.Equal(t, numberOfDatasource, len(query.Result))
+		})
+	})
+}
+
+func TestGetDefaultDataSource(t *testing.T) {
+	InitTestDB(t)
+
+	t.Run("should return error if there is no default datasource", func(t *testing.T) {
+		cmd := models.AddDataSourceCommand{
+			OrgId:  10,
+			Name:   "nisse",
+			Type:   models.DS_GRAPHITE,
+			Access: models.DS_ACCESS_DIRECT,
+			Url:    "http://test",
+		}
+
+		err := AddDataSource(&cmd)
+		require.NoError(t, err)
+
+		query := models.GetDefaultDataSourceQuery{OrgId: 10}
+		err = GetDefaultDataSource(&query)
+		require.Error(t, err)
+		assert.True(t, errors.Is(err, models.ErrDataSourceNotFound))
+	})
+
+	t.Run("should return default datasource if exists", func(t *testing.T) {
+		cmd := models.AddDataSourceCommand{
+			OrgId:     10,
+			Name:      "default datasource",
+			Type:      models.DS_GRAPHITE,
+			Access:    models.DS_ACCESS_DIRECT,
+			Url:       "http://test",
+			IsDefault: true,
+		}
+
+		err := AddDataSource(&cmd)
+		require.NoError(t, err)
+
+		query := models.GetDefaultDataSourceQuery{OrgId: 10}
+		err = GetDefaultDataSource(&query)
+		require.NoError(t, err)
+		assert.Equal(t, "default datasource", query.Result.Name)
+	})
+
+	t.Run("should not return default datasource of other organisation", func(t *testing.T) {
+		query := models.GetDefaultDataSourceQuery{OrgId: 1}
+		err := GetDefaultDataSource(&query)
+		require.Error(t, err)
+		assert.True(t, errors.Is(err, models.ErrDataSourceNotFound))
 	})
 }

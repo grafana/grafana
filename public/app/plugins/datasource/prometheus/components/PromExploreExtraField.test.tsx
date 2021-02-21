@@ -5,6 +5,7 @@ import { PromExploreExtraFieldProps, PromExploreExtraField } from './PromExplore
 const setup = (propOverrides?: PromExploreExtraFieldProps) => {
   const queryType = 'range';
   const stepValue = '1';
+  const query = { exemplar: false };
   const onStepChange = jest.fn();
   const onQueryTypeChange = jest.fn();
   const onKeyDownFunc = jest.fn();
@@ -12,6 +13,7 @@ const setup = (propOverrides?: PromExploreExtraFieldProps) => {
   const props: any = {
     queryType,
     stepValue,
+    query,
     onStepChange,
     onQueryTypeChange,
     onKeyDownFunc,

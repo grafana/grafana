@@ -2,7 +2,7 @@ import { DataQueryError, LoadingState, PanelData } from '@grafana/data';
 import { useEffect, useRef, useState } from 'react';
 import { PanelModel } from '../../state';
 import { Unsubscribable } from 'rxjs';
-import { GetDataOptions } from '../../state/PanelQueryRunner';
+import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
 
 interface UsePanelLatestData {
   data?: PanelData;
@@ -23,7 +23,7 @@ export const usePanelLatestData = (panel: PanelModel, options: GetDataOptions): 
       .getQueryRunner()
       .getData(options)
       .subscribe({
-        next: data => setLatestData(data),
+        next: (data) => setLatestData(data),
       });
 
     return () => {

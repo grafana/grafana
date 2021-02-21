@@ -92,4 +92,147 @@ describe('test comparisons', () => {
       })
     ).toBeFalsy();
   });
+
+  it('should skip provided properties', () => {
+    expect(
+      compareDataFrameStructures(
+        {
+          ...frameB,
+          fields: [
+            field0,
+            {
+              ...field1,
+              config: {
+                ...field1.config,
+              },
+            },
+          ],
+        },
+        {
+          ...frameB,
+          fields: [
+            field0,
+            {
+              ...field1,
+              config: {
+                ...field1.config,
+                unit: 'rpm',
+              },
+            },
+          ],
+        },
+        ['unit']
+      )
+    ).toBeTruthy();
+  });
+
+  describe('custom config comparison', () => {
+    it('handles custom config shallow equality', () => {
+      const a = {
+        ...frameB,
+        fields: [
+          field0,
+          {
+            ...field1,
+            config: {
+              custom: {
+                a: 1,
+                b: 'test',
+              },
+            },
+          },
+        ],
+      };
+
+      const b = {
+        ...frameB,
+        fields: [
+          field0,
+          {
+            ...field1,
+            config: {
+              custom: {
+                a: 1,
+                b: 'test',
+              },
+            },
+          },
+        ],
+      };
+
+      expect(compareDataFrameStructures(a, b)).toBeTruthy();
+    });
+
+    it('handles custom config shallow inequality', () => {
+      const a = {
+        ...frameB,
+        fields: [
+          field0,
+          {
+            ...field1,
+            config: {
+              custom: {
+                a: 1,
+              },
+            },
+          },
+        ],
+      };
+
+      const b = {
+        ...frameB,
+        fields: [
+          field0,
+          {
+            ...field1,
+            config: {
+              custom: {
+                a: 2,
+              },
+            },
+          },
+        ],
+      };
+
+      expect(compareDataFrameStructures(a, b)).toBeFalsy();
+    });
+
+    it('does not compare deeply', () => {
+      const a = {
+        ...frameB,
+        fields: [
+          field0,
+          {
+            ...field1,
+            config: {
+              custom: {
+                a: {
+                  b: 1,
+                },
+              },
+            },
+          },
+        ],
+      };
+
+      const b = {
+        ...frameB,
+        fields: [
+          field0,
+          {
+            ...field1,
+            config: {
+              custom: {
+                a: {
+                  b: 1,
+                },
+              },
+            },
+          },
+        ],
+      };
+
+      expect(compareDataFrameStructures(a, b)).toBeFalsy();
+    });
+  });
 });

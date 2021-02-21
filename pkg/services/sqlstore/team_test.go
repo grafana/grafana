@@ -48,6 +48,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				So(team1.Name, ShouldEqual, "group1 name")
 				So(team1.Email, ShouldEqual, "test1@test.com")
 				So(team1.OrgId, ShouldEqual, testOrgId)
+				So(team1.MemberCount, ShouldEqual, 0)
 
 				err = AddTeamMember(&models.AddTeamMemberCommand{OrgId: testOrgId, TeamId: team1.Id, UserId: userIds[0]})
 				So(err, ShouldBeNil)
@@ -74,6 +75,20 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				So(q2.Result[0].Login, ShouldEqual, "loginuser1")
 				So(q2.Result[0].OrgId, ShouldEqual, testOrgId)
 				So(q2.Result[0].External, ShouldEqual, true)
+
+				err = SearchTeams(query)
+				So(err, ShouldBeNil)
+				team1 = query.Result.Teams[0]
+				So(team1.MemberCount, ShouldEqual, 2)
+
+				getTeamQuery := &models.GetTeamByIdQuery{OrgId: testOrgId, Id: team1.Id}
+				err = GetTeamById(getTeamQuery)
+				So(err, ShouldBeNil)
+				team1 = getTeamQuery.Result
+				So(team1.Name, ShouldEqual, "group1 name")
+				So(team1.Email, ShouldEqual, "test1@test.com")
+				So(team1.OrgId, ShouldEqual, testOrgId)
+				So(team1.MemberCount, ShouldEqual, 2)
 			})
 
 			Convey("Should return latest auth module for users when getting team members", func() {
@@ -274,6 +289,38 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				err = IsAdminOfTeams(query)
 				So(err, ShouldBeNil)
 				So(query.Result, ShouldBeTrue)
+			})
+
+			Convey("Should not return hidden users in team member count", func() {
+				signedInUser := &models.SignedInUser{Login: "loginuser0"}
+				hiddenUsers := map[string]struct{}{"loginuser0": {}, "loginuser1": {}}
+
+				teamId := group1.Result.Id
+				err = AddTeamMember(&models.AddTeamMemberCommand{OrgId: testOrgId, TeamId: teamId, UserId: userIds[0]})
+				So(err, ShouldBeNil)
+				err = AddTeamMember(&models.AddTeamMemberCommand{OrgId: testOrgId, TeamId: teamId, UserId: userIds[1]})
+				So(err, ShouldBeNil)
+				err = AddTeamMember(&models.AddTeamMemberCommand{OrgId: testOrgId, TeamId: teamId, UserId: userIds[2]})
+				So(err, ShouldBeNil)
+
+				searchQuery := &models.SearchTeamsQuery{OrgId: testOrgId, Page: 1, Limit: 10, SignedInUser: signedInUser, HiddenUsers: hiddenUsers}
+				err = SearchTeams(searchQuery)
+				So(err, ShouldBeNil)
+				So(searchQuery.Result.Teams, ShouldHaveLength, 2)
+				team1 := searchQuery.Result.Teams[0]
+				So(team1.MemberCount, ShouldEqual, 2)
+
+				searchQueryFilteredByUser := &models.SearchTeamsQuery{OrgId: testOrgId, Page: 1, Limit: 10, UserIdFilter: userIds[0], SignedInUser: signedInUser, HiddenUsers: hiddenUsers}
+				err = SearchTeams(searchQueryFilteredByUser)
+				So(err, ShouldBeNil)
+				So(searchQueryFilteredByUser.Result.Teams, ShouldHaveLength, 1)
+				team1 = searchQuery.Result.Teams[0]
+				So(team1.MemberCount, ShouldEqual, 2)
+
+				getTeamQuery := &models.GetTeamByIdQuery{OrgId: testOrgId, Id: teamId, SignedInUser: signedInUser, HiddenUsers: hiddenUsers}
+				err = GetTeamById(getTeamQuery)
+				So(err, ShouldBeNil)
+				So(getTeamQuery.Result.MemberCount, ShouldEqual, 2)
 			})
 		})
 	})

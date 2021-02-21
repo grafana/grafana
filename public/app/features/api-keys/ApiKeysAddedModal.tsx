@@ -36,7 +36,7 @@ export const ApiKeysAddedModal = (props: Props) => {
           <br />
           <br />
           <pre className="small">
-            curl -H "Authorization: Bearer {props.apiKey}" {props.rootPath}/api/dashboards/home
+            curl -H &quot;Authorization: Bearer {props.apiKey}&quot; {props.rootPath}/api/dashboards/home
           </pre>
         </div>
       </div>

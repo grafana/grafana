@@ -52,7 +52,8 @@ function getParentSpanId(span, levels) {
 function attachReferences(spans, depth, spansPerLevel) {
   let levels = [[getSpanId(spans[0])]];
 
-  const duplicateLevelFilter = currentLevels => span => !currentLevels.find(level => level.indexOf(span.spanID) >= 0);
+  const duplicateLevelFilter = (currentLevels) => (span) =>
+    !currentLevels.find((level) => level.indexOf(span.spanID) >= 0);
 
   while (levels.length < depth) {
     const remainingSpans = spans.filter(duplicateLevelFilter(levels));
@@ -64,9 +65,9 @@ function attachReferences(spans, depth, spansPerLevel) {
   }
 
   // filter out empty levels
-  levels = levels.filter(level => level.length > 0);
+  levels = levels.filter((level) => level.length > 0);
 
-  return spans.map(span => {
+  return spans.map((span) => {
     const parentSpanId = getParentSpanId(span, levels);
     return parentSpanId
       ? {
