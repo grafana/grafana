@@ -14,8 +14,9 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/datasource/wrapper"
+	backendmodels "github.com/grafana/grafana/pkg/plugins/backendplugin/models"
+	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
+	"github.com/grafana/grafana/pkg/plugins/models/adapters"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -53,7 +54,7 @@ func (hs *HTTPServer) getPluginContext(pluginID string, user *models.SignedInUse
 	return backend.PluginContext{
 		OrgID:    user.OrgId,
 		PluginID: plugin.Id,
-		User:     wrapper.BackendUserFromSignedInUser(user),
+		User:     adapters.BackendUserFromSignedInUser(user),
 		AppInstanceSettings: &backend.AppInstanceSettings{
 			JSONData:                jsonData,
 			DecryptedSecureJSONData: decryptedSecureJSONData,
@@ -96,7 +97,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 			continue
 		}
 
-		if pluginDef.State == plugins.PluginStateAlpha && !hs.Cfg.PluginsEnableAlpha {
+		if pluginDef.State == pluginmodels.PluginStateAlpha && !hs.Cfg.PluginsEnableAlpha {
 			continue
 		}
 
@@ -205,7 +206,7 @@ func GetPluginDashboards(c *models.ReqContext) response.Response {
 
 	list, err := plugins.GetPluginDashboards(c.OrgId, pluginID)
 	if err != nil {
-		var notFound plugins.PluginNotFoundError
+		var notFound pluginmodels.PluginNotFoundError
 		if errors.As(err, &notFound) {
 			return response.Error(404, notFound.Error(), nil)
 		}
@@ -222,7 +223,7 @@ func GetPluginMarkdown(c *models.ReqContext) response.Response {
 
 	content, err := plugins.GetPluginMarkdown(pluginID, name)
 	if err != nil {
-		var notFound plugins.PluginNotFoundError
+		var notFound pluginmodels.PluginNotFoundError
 		if errors.As(err, &notFound) {
 			return response.Error(404, notFound.Error(), nil)
 		}
@@ -243,27 +244,18 @@ func GetPluginMarkdown(c *models.ReqContext) response.Response {
 	return resp
 }
 
-func ImportDashboard(c *models.ReqContext, apiCmd dtos.ImportDashboardCommand) response.Response {
+func (hs *HTTPServer) ImportDashboard(c *models.ReqContext, apiCmd dtos.ImportDashboardCommand) response.Response {
 	if apiCmd.PluginId == "" && apiCmd.Dashboard == nil {
 		return response.Error(422, "Dashboard must be set", nil)
 	}
 
-	cmd := plugins.ImportDashboardCommand{
-		OrgId:     c.OrgId,
-		User:      c.SignedInUser,
-		PluginId:  apiCmd.PluginId,
-		Path:      apiCmd.Path,
-		Inputs:    apiCmd.Inputs,
-		Overwrite: apiCmd.Overwrite,
-		FolderId:  apiCmd.FolderId,
-		Dashboard: apiCmd.Dashboard,
-	}
-
-	if err := bus.Dispatch(&cmd); err != nil {
+	dashInfo, err := hs.PluginManager.ImportDashboard(apiCmd.PluginId, apiCmd.Path, c.OrgId, apiCmd.FolderId,
+		apiCmd.Dashboard, apiCmd.Overwrite, apiCmd.Inputs, c.SignedInUser, hs.TSDBService)
+	if err != nil {
 		return dashboardSaveErrorToApiResponse(err)
 	}
 
-	return response.JSON(200, cmd.Result)
+	return response.JSON(200, dashInfo)
 }
 
 // CollectPluginMetrics collect metrics from a plugin.
@@ -372,19 +364,19 @@ func (hs *HTTPServer) GetPluginErrorsList(c *models.ReqContext) response.Respons
 }
 
 func translatePluginRequestErrorToAPIError(err error) response.Response {
-	if errors.Is(err, backendplugin.ErrPluginNotRegistered) {
+	if errors.Is(err, backendmodels.ErrPluginNotRegistered) {
 		return response.Error(404, "Plugin not found", err)
 	}
 
-	if errors.Is(err, backendplugin.ErrMethodNotImplemented) {
+	if errors.Is(err, backendmodels.ErrMethodNotImplemented) {
 		return response.Error(404, "Not found", err)
 	}
 
-	if errors.Is(err, backendplugin.ErrHealthCheckFailed) {
+	if errors.Is(err, backendmodels.ErrHealthCheckFailed) {
 		return response.Error(500, "Plugin health check failed", err)
 	}
 
-	if errors.Is(err, backendplugin.ErrPluginUnavailable) {
+	if errors.Is(err, backendmodels.ErrPluginUnavailable) {
 		return response.Error(503, "Plugin unavailable", err)
 	}
 

@@ -18,7 +18,7 @@ import (
 
 func TestCloudMonitoring(t *testing.T) {
 	Convey("Google Cloud Monitoring", t, func() {
-		executor := &CloudMonitoringExecutor{}
+		executor := &Executor{}
 		Convey("Parse migrated queries from frontend and build Google Cloud Monitoring API queries", func() {
 			fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
 			tsdbQuery := &tsdb.TsdbQuery{

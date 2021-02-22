@@ -27,7 +27,7 @@ func TestDashboardImport(t *testing.T) {
 			},
 		}
 
-		err := ImportDashboard(&cmd)
+		err := ImportDashboard(cmd)
 		So(err, ShouldBeNil)
 
 		Convey("should install dashboard", func() {

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/gtime"
-	"github.com/grafana/grafana/pkg/tsdb"
+	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
 
@@ -16,17 +16,19 @@ const sExpr = `\$` + rsIdentifier + `\(([^\)]*)\)`
 
 type msSqlMacroEngine struct {
 	*sqleng.SqlMacroEngineBase
-	timeRange *tsdb.TimeRange
-	query     *tsdb.Query
+	timeRange pluginmodels.TSDBTimeRange
+	query     pluginmodels.TSDBSubQuery
 }
 
 func newMssqlMacroEngine() sqleng.SqlMacroEngine {
 	return &msSqlMacroEngine{SqlMacroEngineBase: sqleng.NewSqlMacroEngineBase()}
 }
 
-func (m *msSqlMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string) (string, error) {
+func (m *msSqlMacroEngine) Interpolate(query pluginmodels.TSDBSubQuery, timeRange pluginmodels.TSDBTimeRange,
+	sql string) (string, error) {
 	m.timeRange = timeRange
 	m.query = query
+	// TODO: Return any error
 	rExp, _ := regexp.Compile(sExpr)
 	var macroError error
 

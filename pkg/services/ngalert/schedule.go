@@ -47,11 +47,12 @@ func (ng *AlertNG) definitionRoutine(grafanaCtx context.Context, key alertDefini
 					OrgID:                 alertDefinition.OrgID,
 					QueriesAndExpressions: alertDefinition.Data,
 				}
-				results, err := ng.schedule.evaluator.ConditionEval(&condition, ctx.now)
+				results, err := ng.schedule.evaluator.ConditionEval(&condition, ctx.now, ng.TSDBService)
 				end = timeNow()
 				if err != nil {
 					// consider saving alert instance on error
-					ng.schedule.log.Error("failed to evaluate alert definition", "title", alertDefinition.Title, "key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "error", err)
+					ng.schedule.log.Error("failed to evaluate alert definition", "title", alertDefinition.Title,
+						"key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "error", err)
 					return err
 				}
 				for _, r := range results {

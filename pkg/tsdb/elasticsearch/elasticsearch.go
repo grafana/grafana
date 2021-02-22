@@ -5,42 +5,39 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/tsdb"
+	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
+	"github.com/grafana/grafana/pkg/tsdb/interval"
 )
 
 // ElasticsearchExecutor represents a handler for handling elasticsearch datasource request
-type ElasticsearchExecutor struct{}
-
-var (
-	intervalCalculator tsdb.IntervalCalculator
-)
-
-// NewElasticsearchExecutor creates a new elasticsearch executor
-func NewElasticsearchExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-	return &ElasticsearchExecutor{}, nil
+type Executor struct {
+	intervalCalculator interval.Calculator
 }
 
-func init() {
-	intervalCalculator = tsdb.NewIntervalCalculator(nil)
-	tsdb.RegisterTsdbQueryEndpoint("elasticsearch", NewElasticsearchExecutor)
+// NewExecutor creates a new Executor.
+func NewExecutor(*models.DataSource) (pluginmodels.TSDBPlugin, error) {
+	return &Executor{
+		intervalCalculator: interval.NewCalculator(),
+	}, nil
 }
 
 // Query handles an elasticsearch datasource request
-func (e *ElasticsearchExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
+func (e *Executor) TSDBQuery(ctx context.Context, dsInfo *models.DataSource,
+	tsdbQuery pluginmodels.TSDBQuery) (pluginmodels.TSDBResponse, error) {
 	if len(tsdbQuery.Queries) == 0 {
-		return nil, fmt.Errorf("query contains no queries")
+		return pluginmodels.TSDBResponse{}, fmt.Errorf("query contains no queries")
 	}
 
-	client, err := es.NewClient(ctx, dsInfo, tsdbQuery.TimeRange)
+	client, err := es.NewClient(ctx, dsInfo, *tsdbQuery.TimeRange)
 	if err != nil {
-		return nil, err
+		return pluginmodels.TSDBResponse{}, err
 	}
 
 	if tsdbQuery.Debug {
 		client.EnableDebug()
 	}
 
-	query := newTimeSeriesQuery(client, tsdbQuery, intervalCalculator)
+	query := newTimeSeriesQuery(client, tsdbQuery, e.intervalCalculator)
 	return query.execute()
 }

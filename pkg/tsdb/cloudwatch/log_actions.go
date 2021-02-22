@@ -12,12 +12,13 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb"
+	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	"golang.org/x/sync/errgroup"
 )
 
-func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	resultChan := make(chan *tsdb.QueryResult, len(queryContext.Queries))
+func (e *cloudWatchExecutor) executeLogActions(ctx context.Context,
+	queryContext pluginmodels.TSDBQuery) (pluginmodels.TSDBResponse, error) {
+	resultChan := make(chan pluginmodels.TSDBQueryResult, len(queryContext.Queries))
 	eg, ectx := errgroup.WithContext(ctx)
 
 	for _, query := range queryContext.Queries {
@@ -42,7 +43,10 @@ func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, queryContext
 					return err
 				}
 
-				resultChan <- &tsdb.QueryResult{RefId: query.RefId, Dataframes: tsdb.NewDecodedDataFrames(groupedFrames)}
+				resultChan <- pluginmodels.TSDBQueryResult{
+					RefID:      query.RefID,
+					Dataframes: pluginmodels.NewDecodedDataFrames(groupedFrames),
+				}
 				return nil
 			}
 
@@ -54,30 +58,31 @@ func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, queryContext
 				}
 			}
 
-			resultChan <- &tsdb.QueryResult{
-				RefId:      query.RefId,
-				Dataframes: tsdb.NewDecodedDataFrames(data.Frames{dataframe}),
+			resultChan <- pluginmodels.TSDBQueryResult{
+				RefID:      query.RefID,
+				Dataframes: pluginmodels.NewDecodedDataFrames(data.Frames{dataframe}),
 			}
 			return nil
 		})
 	}
 	if err := eg.Wait(); err != nil {
-		return nil, err
+		return pluginmodels.TSDBResponse{}, err
 	}
 
 	close(resultChan)
 
-	response := &tsdb.Response{
-		Results: make(map[string]*tsdb.QueryResult),
+	response := pluginmodels.TSDBResponse{
+		Results: make(map[string]pluginmodels.TSDBQueryResult),
 	}
 	for result := range resultChan {
-		response.Results[result.RefId] = result
+		response.Results[result.RefID] = result
 	}
 
 	return response, nil
 }
 
-func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, queryContext *tsdb.TsdbQuery, query *tsdb.Query) (*data.Frame, error) {
+func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, queryContext pluginmodels.TSDBQuery,
+	query pluginmodels.TSDBSubQuery) (*data.Frame, error) {
 	parameters := query.Model
 	subType := query.Model.Get("subtype").MustString()
 
@@ -94,13 +99,13 @@ func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, queryContext 
 	case "DescribeLogGroups":
 		data, err = e.handleDescribeLogGroups(ctx, logsClient, parameters)
 	case "GetLogGroupFields":
-		data, err = e.handleGetLogGroupFields(ctx, logsClient, parameters, query.RefId)
+		data, err = e.handleGetLogGroupFields(ctx, logsClient, parameters, query.RefID)
 	case "StartQuery":
-		data, err = e.handleStartQuery(ctx, logsClient, parameters, queryContext.TimeRange, query.RefId)
+		data, err = e.handleStartQuery(ctx, logsClient, parameters, *queryContext.TimeRange, query.RefID)
 	case "StopQuery":
 		data, err = e.handleStopQuery(ctx, logsClient, parameters)
 	case "GetQueryResults":
-		data, err = e.handleGetQueryResults(ctx, logsClient, parameters, query.RefId)
+		data, err = e.handleGetQueryResults(ctx, logsClient, parameters, query.RefID)
 	case "GetLogEvents":
 		data, err = e.handleGetLogEvents(ctx, logsClient, parameters)
 	}
@@ -195,7 +200,7 @@ func (e *cloudWatchExecutor) handleDescribeLogGroups(ctx context.Context,
 }
 
 func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
-	parameters *simplejson.Json, timeRange *tsdb.TimeRange) (*cloudwatchlogs.StartQueryOutput, error) {
+	parameters *simplejson.Json, timeRange pluginmodels.TSDBTimeRange) (*cloudwatchlogs.StartQueryOutput, error) {
 	startTime, err := timeRange.ParseFrom()
 	if err != nil {
 		return nil, err
@@ -214,7 +219,8 @@ func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 	// so that a row's context can be retrieved later if necessary.
 	// The usage of ltrim around the @log/@logStream fields is a necessary workaround, as without it,
 	// CloudWatch wouldn't consider a query using a non-alised @log/@logStream valid.
-	modifiedQueryString := "fields @timestamp,ltrim(@log) as " + logIdentifierInternal + ",ltrim(@logStream) as " + logStreamIdentifierInternal + "|" + parameters.Get("queryString").MustString("")
+	modifiedQueryString := "fields @timestamp,ltrim(@log) as " + logIdentifierInternal + ",ltrim(@logStream) as " +
+		logStreamIdentifierInternal + "|" + parameters.Get("queryString").MustString("")
 
 	startQueryInput := &cloudwatchlogs.StartQueryInput{
 		StartTime:     aws.Int64(startTime.Unix()),
@@ -231,7 +237,7 @@ func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 }
 
 func (e *cloudWatchExecutor) handleStartQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
-	parameters *simplejson.Json, timeRange *tsdb.TimeRange, refID string) (*data.Frame, error) {
+	parameters *simplejson.Json, timeRange pluginmodels.TSDBTimeRange, refID string) (*data.Frame, error) {
 	startQueryResponse, err := e.executeStartQuery(ctx, logsClient, parameters, timeRange)
 	if err != nil {
 		return nil, err

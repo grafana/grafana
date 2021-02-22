@@ -12,19 +12,19 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/flux"
 )
 
-type InfluxDBExecutor struct {
+type Executor struct {
 	// *models.DataSource
 	QueryParser    *InfluxdbQueryParser
 	ResponseParser *ResponseParser
 }
 
-func NewInfluxDBExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-	return &InfluxDBExecutor{
+func NewExecutor(*models.DataSource) (pluginmodels.TSDBPlugin, error) {
+	return &Executor{
 		QueryParser:    &InfluxdbQueryParser{},
 		ResponseParser: &ResponseParser{},
 	}, nil
@@ -38,10 +38,10 @@ var ErrInvalidHttpMode error = errors.New("'httpMode' should be either 'GET' or 
 
 func init() {
 	glog = log.New("tsdb.influxdb")
-	tsdb.RegisterTsdbQueryEndpoint("influxdb", NewInfluxDBExecutor)
 }
 
-func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
+func (e *Executor) TSDBQuery(ctx context.Context, dsInfo *models.DataSource, tsdbQuery pluginmodels.TSDBQuery) (
+	pluginmodels.TSDBResponse, error) {
 	glog.Debug("Received a query request", "numQueries", len(tsdbQuery.Queries))
 
 	version := dsInfo.JsonData.Get("version").MustString("")
@@ -54,14 +54,14 @@ func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 	// NOTE: the following path is currently only called from alerting queries
 	// In dashboards, the request runs through proxy and are managed in the frontend
 
-	query, err := e.getQuery(dsInfo, tsdbQuery.Queries, tsdbQuery)
+	query, err := e.getQuery(dsInfo, tsdbQuery)
 	if err != nil {
-		return nil, err
+		return pluginmodels.TSDBResponse{}, err
 	}
 
 	rawQuery, err := query.Build(tsdbQuery)
 	if err != nil {
-		return nil, err
+		return pluginmodels.TSDBResponse{}, err
 	}
 
 	if setting.Env == setting.Dev {
@@ -70,17 +70,17 @@ func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 
 	req, err := e.createRequest(ctx, dsInfo, rawQuery)
 	if err != nil {
-		return nil, err
+		return pluginmodels.TSDBResponse{}, err
 	}
 
 	httpClient, err := dsInfo.GetHttpClient()
 	if err != nil {
-		return nil, err
+		return pluginmodels.TSDBResponse{}, err
 	}
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		return nil, err
+		return pluginmodels.TSDBResponse{}, err
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
@@ -88,41 +88,39 @@ func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 		}
 	}()
 	if resp.StatusCode/100 != 2 {
-		return nil, fmt.Errorf("InfluxDB returned error status: %s", resp.Status)
+		return pluginmodels.TSDBResponse{}, fmt.Errorf("InfluxDB returned error status: %s", resp.Status)
 	}
 
 	var response Response
 	dec := json.NewDecoder(resp.Body)
 	dec.UseNumber()
 	if err := dec.Decode(&response); err != nil {
-		return nil, err
+		return pluginmodels.TSDBResponse{}, err
 	}
 	if response.Err != nil {
-		return nil, response.Err
+		return pluginmodels.TSDBResponse{}, response.Err
 	}
 
-	result := &tsdb.Response{}
-	result.Results = make(map[string]*tsdb.QueryResult)
-	result.Results["A"] = e.ResponseParser.Parse(&response, query)
+	result := pluginmodels.TSDBResponse{
+		Results: map[string]pluginmodels.TSDBQueryResult{
+			"A": e.ResponseParser.Parse(&response, query),
+		},
+	}
 
 	return result, nil
 }
 
-func (e *InfluxDBExecutor) getQuery(dsInfo *models.DataSource, queries []*tsdb.Query, context *tsdb.TsdbQuery) (*Query, error) {
-	if len(queries) == 0 {
+func (e *Executor) getQuery(dsInfo *models.DataSource, query pluginmodels.TSDBQuery) (*Query, error) {
+	if len(query.Queries) == 0 {
 		return nil, fmt.Errorf("query request contains no queries")
 	}
 
 	// The model supports multiple queries, but right now this is only used from
 	// alerting so we only needed to support batch executing 1 query at a time.
-	query, err := e.QueryParser.Parse(queries[0].Model, dsInfo)
-	if err != nil {
-		return nil, err
-	}
-	return query, nil
+	return e.QueryParser.Parse(query.Queries[0].Model, dsInfo)
 }
 
-func (e *InfluxDBExecutor) createRequest(ctx context.Context, dsInfo *models.DataSource, query string) (*http.Request, error) {
+func (e *Executor) createRequest(ctx context.Context, dsInfo *models.DataSource, query string) (*http.Request, error) {
 	u, err := url.Parse(dsInfo.Url)
 	if err != nil {
 		return nil, err

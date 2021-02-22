@@ -11,11 +11,12 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb"
+	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 )
 
 // Parses the json queries and returns a requestQuery. The requestQuery has a 1 to 1 mapping to a query editor row
-func (e *cloudWatchExecutor) parseQueries(queryContext *tsdb.TsdbQuery, startTime time.Time, endTime time.Time) (map[string][]*requestQuery, error) {
+func (e *cloudWatchExecutor) parseQueries(queryContext pluginmodels.TSDBQuery, startTime time.Time,
+	endTime time.Time) (map[string][]*requestQuery, error) {
 	requestQueries := make(map[string][]*requestQuery)
 	for i, query := range queryContext.Queries {
 		queryType := query.Model.Get("type").MustString()
@@ -23,7 +24,7 @@ func (e *cloudWatchExecutor) parseQueries(queryContext *tsdb.TsdbQuery, startTim
 			continue
 		}
 
-		refID := query.RefId
+		refID := query.RefID
 		query, err := parseRequestQuery(queryContext.Queries[i].Model, refID, startTime, endTime)
 		if err != nil {
 			return nil, &queryError{err: err, RefID: refID}

@@ -7,7 +7,8 @@ import (
 	rendererV1 "github.com/grafana/grafana-plugin-model/go/renderer"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/models"
 	"github.com/hashicorp/go-plugin"
 )
 
@@ -51,15 +52,15 @@ func newClientV1(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 }
 
 func (c *clientV1) CollectMetrics(ctx context.Context) (*backend.CollectMetricsResult, error) {
-	return nil, backendplugin.ErrMethodNotImplemented
+	return nil, models.ErrMethodNotImplemented
 }
 
 func (c *clientV1) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	return nil, backendplugin.ErrMethodNotImplemented
+	return nil, models.ErrMethodNotImplemented
 }
 
 func (c *clientV1) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	return backendplugin.ErrMethodNotImplemented
+	return models.ErrMethodNotImplemented
 }
 
 type datasourceV1QueryFunc func(ctx context.Context, req *datasourceV1.DatasourceRequest) (*datasourceV1.DatasourceResponse, error)
@@ -75,7 +76,7 @@ func instrumentDatasourcePluginV1(plugin datasourceV1.DatasourcePlugin) datasour
 
 	return datasourceV1QueryFunc(func(ctx context.Context, req *datasourceV1.DatasourceRequest) (*datasourceV1.DatasourceResponse, error) {
 		var resp *datasourceV1.DatasourceResponse
-		err := backendplugin.InstrumentQueryDataRequest(req.Datasource.Type, func() (innerErr error) {
+		err := instrumentation.InstrumentQueryDataRequest(req.Datasource.Type, func() (innerErr error) {
 			resp, innerErr = plugin.Query(ctx, req)
 			return
 		})

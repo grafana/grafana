@@ -1,4 +1,4 @@
-package plugins
+package models
 
 import (
 	"context"
@@ -7,8 +7,8 @@ import (
 
 	pluginModel "github.com/grafana/grafana-plugin-model/go/renderer"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
+	backendmodels "github.com/grafana/grafana/pkg/plugins/backendplugin/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -19,16 +19,13 @@ type RendererPlugin struct {
 	Executable           string `json:"executable,omitempty"`
 	GrpcPluginV1         pluginModel.RendererPlugin
 	GrpcPluginV2         pluginextensionv2.RendererPlugin
-	backendPluginManager backendplugin.Manager
+	backendPluginManager backendmodels.Manager
 }
 
-func (r *RendererPlugin) Load(decoder *json.Decoder, base *PluginBase, backendPluginManager backendplugin.Manager) error {
+func (r *RendererPlugin) Load(decoder *json.Decoder, base *PluginBase,
+	backendPluginManager backendmodels.Manager) (interface{}, error) {
 	if err := decoder.Decode(r); err != nil {
-		return err
-	}
-
-	if err := r.registerPlugin(base); err != nil {
-		return err
+		return nil, err
 	}
 
 	r.backendPluginManager = backendPluginManager
@@ -40,11 +37,10 @@ func (r *RendererPlugin) Load(decoder *json.Decoder, base *PluginBase, backendPl
 		OnStart:       r.onPluginStart,
 	})
 	if err := backendPluginManager.Register(r.Id, factory); err != nil {
-		return errutil.Wrapf(err, "Failed to register backend plugin")
+		return nil, errutil.Wrapf(err, "failed to register backend plugin")
 	}
 
-	Renderer = r
-	return nil
+	return r, nil
 }
 
 func (r *RendererPlugin) Start(ctx context.Context) error {

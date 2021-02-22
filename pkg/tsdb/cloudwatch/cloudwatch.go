@@ -26,9 +26,9 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 type datasourceInfo struct {
@@ -66,13 +66,12 @@ type CloudWatchService struct {
 }
 
 func (s *CloudWatchService) Init() error {
-	plog.Debug("initing")
-
-	tsdb.RegisterTsdbQueryEndpoint("cloudwatch", func(ds *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-		return newExecutor(s.LogsService), nil
-	})
-
 	return nil
+}
+
+func (s *CloudWatchService) NewExecutor(*models.DataSource) (pluginmodels.TSDBPlugin, error) {
+	// XXX: Can we just inline newExecutor?
+	return newExecutor(s.LogsService), nil
 }
 
 func newExecutor(logsService *LogsService) *cloudWatchExecutor {
@@ -243,12 +242,12 @@ func (e *cloudWatchExecutor) getRGTAClient(region string) (resourcegroupstagging
 }
 
 func (e *cloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
-	queryContext *tsdb.TsdbQuery) (*cloudwatchlogs.GetQueryResultsOutput, error) {
+	queryContext pluginmodels.TSDBQuery) (*cloudwatchlogs.GetQueryResultsOutput, error) {
 	const maxAttempts = 8
 	const pollPeriod = 1000 * time.Millisecond
 
 	queryParams := queryContext.Queries[0].Model
-	startQueryOutput, err := e.executeStartQuery(ctx, logsClient, queryParams, queryContext.TimeRange)
+	startQueryOutput, err := e.executeStartQuery(ctx, logsClient, queryParams, *queryContext.TimeRange)
 	if err != nil {
 		return nil, err
 	}
@@ -280,15 +279,17 @@ func (e *cloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwat
 	return nil, nil
 }
 
-// Query executes a CloudWatch query.
-func (e *cloudWatchExecutor) Query(ctx context.Context, dsInfo *models.DataSource, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
+// TSDBQuery executes a CloudWatch query.
+func (e *cloudWatchExecutor) TSDBQuery(ctx context.Context, dsInfo *models.DataSource,
+	queryContext pluginmodels.TSDBQuery) (pluginmodels.TSDBResponse, error) {
 	e.DataSource = dsInfo
 
 	/*
-		Unlike many other data sources,	with Cloudwatch Logs query requests don't receive the results as the response to the query, but rather
-		an ID is first returned. Following this, a client is expected to send requests along with the ID until the status of the query is complete,
-		receiving (possibly partial) results each time. For queries made via dashboards and Explore, the logic of making these repeated queries is handled on
-		the frontend, but because alerts are executed on the backend the logic needs to be reimplemented here.
+		Unlike many other data sources,	with Cloudwatch Logs query requests don't receive the results as the response
+		to the query, but rather an ID is first returned. Following this, a client is expected to send requests along
+		with the ID until the status of the query is complete, receiving (possibly partial) results each time. For
+		queries made via dashboards and Explore, the logic of making these repeated queries is handled on the
+		frontend, but because alerts are executed on the backend the logic needs to be reimplemented here.
 	*/
 	queryParams := queryContext.Queries[0].Model
 	_, fromAlert := queryContext.Headers["FromAlert"]
@@ -301,7 +302,7 @@ func (e *cloudWatchExecutor) Query(ctx context.Context, dsInfo *models.DataSourc
 	queryType := queryParams.Get("type").MustString("")
 
 	var err error
-	var result *tsdb.Response
+	var result pluginmodels.TSDBResponse
 	switch queryType {
 	case "metricFindQuery":
 		result, err = e.executeMetricFindQuery(ctx, queryContext)
@@ -320,7 +321,8 @@ func (e *cloudWatchExecutor) Query(ctx context.Context, dsInfo *models.DataSourc
 	return result, err
 }
 
-func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
+func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryContext pluginmodels.TSDBQuery) (
+	pluginmodels.TSDBResponse, error) {
 	queryParams := queryContext.Queries[0].Model
 	queryParams.Set("subtype", "StartQuery")
 	queryParams.Set("queryString", queryParams.Get("expression").MustString(""))
@@ -333,12 +335,12 @@ func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryCont
 
 	logsClient, err := e.getCWLogsClient(region)
 	if err != nil {
-		return nil, err
+		return pluginmodels.TSDBResponse{}, err
 	}
 
-	result, err := e.executeStartQuery(ctx, logsClient, queryParams, queryContext.TimeRange)
+	result, err := e.executeStartQuery(ctx, logsClient, queryParams, *queryContext.TimeRange)
 	if err != nil {
-		return nil, err
+		return pluginmodels.TSDBResponse{}, err
 	}
 
 	queryParams.Set("queryId", *result.QueryId)
@@ -346,38 +348,38 @@ func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryCont
 	// Get query results
 	getQueryResultsOutput, err := e.alertQuery(ctx, logsClient, queryContext)
 	if err != nil {
-		return nil, err
+		return pluginmodels.TSDBResponse{}, err
 	}
 
 	dataframe, err := logsResultsToDataframes(getQueryResultsOutput)
 	if err != nil {
-		return nil, err
+		return pluginmodels.TSDBResponse{}, err
 	}
 
 	statsGroups := queryParams.Get("statsGroups").MustStringArray()
 	if len(statsGroups) > 0 && len(dataframe.Fields) > 0 {
 		groupedFrames, err := groupResults(dataframe, statsGroups)
 		if err != nil {
-			return nil, err
+			return pluginmodels.TSDBResponse{}, err
 		}
 
-		response := &tsdb.Response{
-			Results: make(map[string]*tsdb.QueryResult),
+		response := pluginmodels.TSDBResponse{
+			Results: make(map[string]pluginmodels.TSDBQueryResult),
 		}
 
-		response.Results["A"] = &tsdb.QueryResult{
-			RefId:      "A",
-			Dataframes: tsdb.NewDecodedDataFrames(groupedFrames),
+		response.Results["A"] = pluginmodels.TSDBQueryResult{
+			RefID:      "A",
+			Dataframes: pluginmodels.NewDecodedDataFrames(groupedFrames),
 		}
 
 		return response, nil
 	}
 
-	response := &tsdb.Response{
-		Results: map[string]*tsdb.QueryResult{
+	response := pluginmodels.TSDBResponse{
+		Results: map[string]pluginmodels.TSDBQueryResult{
 			"A": {
-				RefId:      "A",
-				Dataframes: tsdb.NewDecodedDataFrames(data.Frames{dataframe}),
+				RefID:      "A",
+				Dataframes: pluginmodels.NewDecodedDataFrames(data.Frames{dataframe}),
 			},
 		},
 	}

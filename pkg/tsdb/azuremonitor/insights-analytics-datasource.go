@@ -15,8 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/net/context/ctxhttp"
@@ -39,14 +39,15 @@ type InsightsAnalyticsQuery struct {
 	Target string
 }
 
-func (e *InsightsAnalyticsDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []*tsdb.Query, timeRange *tsdb.TimeRange) (*tsdb.Response, error) {
-	result := &tsdb.Response{
-		Results: map[string]*tsdb.QueryResult{},
+func (e *InsightsAnalyticsDatasource) executeTimeSeriesQuery(ctx context.Context,
+	originalQueries []pluginmodels.TSDBSubQuery, timeRange pluginmodels.TSDBTimeRange) (pluginmodels.TSDBResponse, error) {
+	result := pluginmodels.TSDBResponse{
+		Results: map[string]pluginmodels.TSDBQueryResult{},
 	}
 
 	queries, err := e.buildQueries(originalQueries, timeRange)
 	if err != nil {
-		return nil, err
+		return pluginmodels.TSDBResponse{}, err
 	}
 
 	for _, query := range queries {
@@ -56,7 +57,8 @@ func (e *InsightsAnalyticsDatasource) executeTimeSeriesQuery(ctx context.Context
 	return result, nil
 }
 
-func (e *InsightsAnalyticsDatasource) buildQueries(queries []*tsdb.Query, timeRange *tsdb.TimeRange) ([]*InsightsAnalyticsQuery, error) {
+func (e *InsightsAnalyticsDatasource) buildQueries(queries []pluginmodels.TSDBSubQuery,
+	timeRange pluginmodels.TSDBTimeRange) ([]*InsightsAnalyticsQuery, error) {
 	iaQueries := []*InsightsAnalyticsQuery{}
 
 	for _, query := range queries {
@@ -74,7 +76,7 @@ func (e *InsightsAnalyticsDatasource) buildQueries(queries []*tsdb.Query, timeRa
 
 		qm.RawQuery = queryJSONModel.InsightsAnalytics.Query
 		qm.ResultFormat = queryJSONModel.InsightsAnalytics.ResultFormat
-		qm.RefID = query.RefId
+		qm.RefID = query.RefID
 
 		if qm.RawQuery == "" {
 			return nil, fmt.Errorf("query is missing query string property")
@@ -94,10 +96,10 @@ func (e *InsightsAnalyticsDatasource) buildQueries(queries []*tsdb.Query, timeRa
 	return iaQueries, nil
 }
 
-func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *InsightsAnalyticsQuery) *tsdb.QueryResult {
-	queryResult := &tsdb.QueryResult{RefId: query.RefID}
+func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *InsightsAnalyticsQuery) pluginmodels.TSDBQueryResult {
+	queryResult := pluginmodels.TSDBQueryResult{RefID: query.RefID}
 
-	queryResultError := func(err error) *tsdb.QueryResult {
+	queryResultError := func(err error) pluginmodels.TSDBQueryResult {
 		queryResult.Error = err
 		return queryResult
 	}
@@ -170,12 +172,15 @@ func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *I
 			if err == nil {
 				frame = wideFrame
 			} else {
-				frame.AppendNotices(data.Notice{Severity: data.NoticeSeverityWarning, Text: "could not convert frame to time series, returning raw table: " + err.Error()})
+				frame.AppendNotices(data.Notice{
+					Severity: data.NoticeSeverityWarning,
+					Text:     "could not convert frame to time series, returning raw table: " + err.Error(),
+				})
 			}
 		}
 	}
 	frames := data.Frames{frame}
-	queryResult.Dataframes = tsdb.NewDecodedDataFrames(frames)
+	queryResult.Dataframes = pluginmodels.NewDecodedDataFrames(frames)
 
 	return queryResult
 }
@@ -215,14 +220,15 @@ func (e *InsightsAnalyticsDatasource) createRequest(ctx context.Context, dsInfo 
 	return req, nil
 }
 
-func (e *InsightsAnalyticsDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin, cloudName string) (*plugins.AppPluginRoute, string, error) {
+func (e *InsightsAnalyticsDatasource) getPluginRoute(plugin *pluginmodels.DataSourcePlugin, cloudName string) (
+	*pluginmodels.AppPluginRoute, string, error) {
 	pluginRouteName := "appinsights"
 
 	if cloudName == "chinaazuremonitor" {
 		pluginRouteName = "chinaappinsights"
 	}
 
-	var pluginRoute *plugins.AppPluginRoute
+	var pluginRoute *pluginmodels.AppPluginRoute
 
 	for _, route := range plugin.Routes {
 		if route.Path == pluginRouteName {

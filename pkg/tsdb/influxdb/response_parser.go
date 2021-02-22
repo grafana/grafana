@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/components/null"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/plugins/models"
 )
 
 type ResponseParser struct{}
@@ -21,8 +21,8 @@ func init() {
 	legendFormat = regexp.MustCompile(`\[\[(\w+)(\.\w+)*\]\]*|\$\s*(\w+?)*`)
 }
 
-func (rp *ResponseParser) Parse(response *Response, query *Query) *tsdb.QueryResult {
-	queryRes := tsdb.NewQueryResult()
+func (rp *ResponseParser) Parse(response *Response, query *Query) models.TSDBQueryResult {
+	var queryRes models.TSDBQueryResult
 
 	for _, result := range response.Results {
 		queryRes.Series = append(queryRes.Series, rp.transformRows(result.Series, queryRes, query)...)
@@ -34,22 +34,22 @@ func (rp *ResponseParser) Parse(response *Response, query *Query) *tsdb.QueryRes
 	return queryRes
 }
 
-func (rp *ResponseParser) transformRows(rows []Row, queryResult *tsdb.QueryResult, query *Query) tsdb.TimeSeriesSlice {
-	var result tsdb.TimeSeriesSlice
+func (rp *ResponseParser) transformRows(rows []Row, queryResult models.TSDBQueryResult, query *Query) models.TSDBTimeSeriesSlice {
+	var result models.TSDBTimeSeriesSlice
 	for _, row := range rows {
 		for columnIndex, column := range row.Columns {
 			if column == "time" {
 				continue
 			}
 
-			var points tsdb.TimeSeriesPoints
+			var points models.TSDBTimeSeriesPoints
 			for _, valuePair := range row.Values {
 				point, err := rp.parseTimepoint(valuePair, columnIndex)
 				if err == nil {
 					points = append(points, point)
 				}
 			}
-			result = append(result, &tsdb.TimeSeries{
+			result = append(result, models.TSDBTimeSeries{
 				Name:   rp.formatSeriesName(row, column, query),
 				Points: points,
 				Tags:   row.Tags,
@@ -115,19 +115,19 @@ func (rp *ResponseParser) buildSeriesNameFromQuery(row Row, column string) strin
 	return fmt.Sprintf("%s.%s%s", row.Name, column, tagText)
 }
 
-func (rp *ResponseParser) parseTimepoint(valuePair []interface{}, valuePosition int) (tsdb.TimePoint, error) {
+func (rp *ResponseParser) parseTimepoint(valuePair []interface{}, valuePosition int) (models.TSDBTimePoint, error) {
 	value := rp.parseValue(valuePair[valuePosition])
 
 	timestampNumber, ok := valuePair[0].(json.Number)
 	if !ok {
-		return tsdb.TimePoint{}, fmt.Errorf("valuePair[0] has invalid type: %#v", valuePair[0])
+		return models.TSDBTimePoint{}, fmt.Errorf("valuePair[0] has invalid type: %#v", valuePair[0])
 	}
 	timestamp, err := timestampNumber.Float64()
 	if err != nil {
-		return tsdb.TimePoint{}, err
+		return models.TSDBTimePoint{}, err
 	}
 
-	return tsdb.NewTimePoint(value, timestamp), nil
+	return models.TSDBTimePoint{value, null.FloatFrom(timestamp)}, nil
 }
 
 func (rp *ResponseParser) parseValue(value interface{}) null.Float {

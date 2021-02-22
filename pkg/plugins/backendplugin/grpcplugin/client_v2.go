@@ -9,7 +9,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/hashicorp/go-plugin"
@@ -103,7 +104,7 @@ func (c *clientV2) CollectMetrics(ctx context.Context) (*backend.CollectMetricsR
 
 func (c *clientV2) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	if c.DiagnosticsClient == nil {
-		return nil, backendplugin.ErrMethodNotImplemented
+		return nil, models.ErrMethodNotImplemented
 	}
 
 	protoContext := backend.ToProto().PluginContext(req.PluginContext)
@@ -124,14 +125,14 @@ func (c *clientV2) CheckHealth(ctx context.Context, req *backend.CheckHealthRequ
 
 func (c *clientV2) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	if c.ResourceClient == nil {
-		return backendplugin.ErrMethodNotImplemented
+		return models.ErrMethodNotImplemented
 	}
 
 	protoReq := backend.ToProto().CallResourceRequest(req)
 	protoStream, err := c.ResourceClient.CallResource(ctx, protoReq)
 	if err != nil {
 		if status.Code(err) == codes.Unimplemented {
-			return backendplugin.ErrMethodNotImplemented
+			return models.ErrMethodNotImplemented
 		}
 
 		return errutil.Wrap("Failed to call resource", err)
@@ -141,7 +142,7 @@ func (c *clientV2) CallResource(ctx context.Context, req *backend.CallResourceRe
 		protoResp, err := protoStream.Recv()
 		if err != nil {
 			if status.Code(err) == codes.Unimplemented {
-				return backendplugin.ErrMethodNotImplemented
+				return models.ErrMethodNotImplemented
 			}
 
 			if errors.Is(err, io.EOF) {
@@ -170,7 +171,7 @@ func instrumentDataClient(plugin grpcplugin.DataClient) grpcplugin.DataClient {
 
 	return dataClientQueryDataFunc(func(ctx context.Context, req *pluginv2.QueryDataRequest, opts ...grpc.CallOption) (*pluginv2.QueryDataResponse, error) {
 		var resp *pluginv2.QueryDataResponse
-		err := backendplugin.InstrumentQueryDataRequest(req.PluginContext.PluginId, func() (innerErr error) {
+		err := instrumentation.InstrumentQueryDataRequest(req.PluginContext.PluginId, func() (innerErr error) {
 			resp, innerErr = plugin.QueryData(ctx, req)
 			return
 		})

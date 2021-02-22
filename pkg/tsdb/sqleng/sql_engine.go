@@ -13,14 +13,15 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/interval"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/tsdb"
 
 	"github.com/grafana/grafana/pkg/components/null"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	"xorm.io/core"
 	"xorm.io/xorm"
 )
@@ -31,13 +32,13 @@ const MetaKeyExecutedQueryString = "executedQueryString"
 // SqlMacroEngine interpolates macros into sql. It takes in the Query to have access to query context and
 // timeRange to be able to generate queries that use from and to.
 type SqlMacroEngine interface {
-	Interpolate(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string) (string, error)
+	Interpolate(query pluginmodels.TSDBSubQuery, timeRange pluginmodels.TSDBTimeRange, sql string) (string, error)
 }
 
 // SqlQueryResultTransformer transforms a query result row to RowValues with proper types.
 type SqlQueryResultTransformer interface {
 	// TransformQueryResult transforms a query result row to RowValues with proper types.
-	TransformQueryResult(columnTypes []*sql.ColumnType, rows *core.Rows) (tsdb.RowValues, error)
+	TransformQueryResult(columnTypes []*sql.ColumnType, rows *core.Rows) (pluginmodels.TSDBRowValues, error)
 	// TransformQueryError transforms a query error.
 	TransformQueryError(err error) error
 }
@@ -53,7 +54,7 @@ var engineCache = engineCacheType{
 	versions: make(map[int64]int),
 }
 
-var sqlIntervalCalculator = tsdb.NewIntervalCalculator(nil)
+var sqlIntervalCalculator = interval.NewCalculator()
 
 // NewXormEngine is an xorm.Engine factory, that can be stubbed by tests.
 //nolint:gocritic
@@ -80,7 +81,8 @@ type SqlQueryEndpointConfiguration struct {
 	MetricColumnTypes []string
 }
 
-var NewSqlQueryEndpoint = func(config *SqlQueryEndpointConfiguration, queryResultTransformer SqlQueryResultTransformer, macroEngine SqlMacroEngine, log log.Logger) (tsdb.TsdbQueryEndpoint, error) {
+var NewSqlQueryEndpoint = func(config *SqlQueryEndpointConfiguration, queryResultTransformer SqlQueryResultTransformer,
+	macroEngine SqlMacroEngine, log log.Logger) (pluginmodels.TSDBPlugin, error) {
 	queryEndpoint := sqlQueryEndpoint{
 		queryResultTransformer: queryResultTransformer,
 		macroEngine:            macroEngine,
@@ -128,9 +130,10 @@ var NewSqlQueryEndpoint = func(config *SqlQueryEndpointConfiguration, queryResul
 const rowLimit = 1000000
 
 // Query is the main function for the SqlQueryEndpoint
-func (e *sqlQueryEndpoint) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	result := &tsdb.Response{
-		Results: make(map[string]*tsdb.QueryResult),
+func (e *sqlQueryEndpoint) TSDBQuery(ctx context.Context, dsInfo *models.DataSource,
+	tsdbQuery pluginmodels.TSDBQuery) (pluginmodels.TSDBResponse, error) {
+	result := pluginmodels.TSDBResponse{
+		Results: make(map[string]pluginmodels.TSDBQueryResult),
 	}
 
 	var wg sync.WaitGroup
@@ -141,18 +144,18 @@ func (e *sqlQueryEndpoint) Query(ctx context.Context, dsInfo *models.DataSource,
 			continue
 		}
 
-		queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: query.RefId}
-		result.Results[query.RefId] = queryResult
+		queryResult := pluginmodels.TSDBQueryResult{Meta: simplejson.New(), RefID: query.RefID}
+		result.Results[query.RefID] = queryResult
 
 		// global substitutions
-		rawSQL, err := Interpolate(query, tsdbQuery.TimeRange, rawSQL)
+		rawSQL, err := Interpolate(query, *tsdbQuery.TimeRange, rawSQL)
 		if err != nil {
 			queryResult.Error = err
 			continue
 		}
 
 		// datasource specific substitutions
-		rawSQL, err = e.macroEngine.Interpolate(query, tsdbQuery.TimeRange, rawSQL)
+		rawSQL, err = e.macroEngine.Interpolate(query, *tsdbQuery.TimeRange, rawSQL)
 		if err != nil {
 			queryResult.Error = err
 			continue
@@ -162,7 +165,7 @@ func (e *sqlQueryEndpoint) Query(ctx context.Context, dsInfo *models.DataSource,
 
 		wg.Add(1)
 
-		go func(rawSQL string, query *tsdb.Query, queryResult *tsdb.QueryResult) {
+		go func(rawSQL string, query pluginmodels.TSDBSubQuery, queryResult pluginmodels.TSDBQueryResult) {
 			defer wg.Done()
 			session := e.engine.NewSession()
 			defer session.Close()
@@ -203,8 +206,8 @@ func (e *sqlQueryEndpoint) Query(ctx context.Context, dsInfo *models.DataSource,
 }
 
 // Interpolate provides global macros/substitutions for all sql datasources.
-var Interpolate = func(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string) (string, error) {
-	minInterval, err := tsdb.GetIntervalFrom(query.DataSource, query.Model, time.Second*60)
+var Interpolate = func(query pluginmodels.TSDBSubQuery, timeRange pluginmodels.TSDBTimeRange, sql string) (string, error) {
+	minInterval, err := interval.GetIntervalFrom(query.DataSource, query.Model, time.Second*60)
 	if err != nil {
 		return sql, nil
 	}
@@ -218,7 +221,8 @@ var Interpolate = func(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string)
 	return sql, nil
 }
 
-func (e *sqlQueryEndpoint) transformToTable(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult, tsdbQuery *tsdb.TsdbQuery) error {
+func (e *sqlQueryEndpoint) transformToTable(query pluginmodels.TSDBSubQuery, rows *core.Rows,
+	result pluginmodels.TSDBQueryResult, tsdbQuery pluginmodels.TSDBQuery) error {
 	columnNames, err := rows.Columns()
 	columnCount := len(columnNames)
 
@@ -230,9 +234,9 @@ func (e *sqlQueryEndpoint) transformToTable(query *tsdb.Query, rows *core.Rows, 
 	timeIndex := -1
 	timeEndIndex := -1
 
-	table := &tsdb.Table{
-		Columns: make([]tsdb.TableColumn, columnCount),
-		Rows:    make([]tsdb.RowValues, 0),
+	table := pluginmodels.TSDBTable{
+		Columns: make([]pluginmodels.TSDBTableColumn, columnCount),
+		Rows:    make([]pluginmodels.TSDBRowValues, 0),
 	}
 
 	for i, name := range columnNames {
@@ -279,7 +283,7 @@ func (e *sqlQueryEndpoint) transformToTable(query *tsdb.Query, rows *core.Rows, 
 	return nil
 }
 
-func newProcessCfg(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery, rows *core.Rows) (*processCfg, error) {
+func newProcessCfg(query pluginmodels.TSDBSubQuery, tsdbQuery pluginmodels.TSDBQuery, rows *core.Rows) (*processCfg, error) {
 	columnNames, err := rows.Columns()
 	if err != nil {
 		return nil, err
@@ -301,14 +305,14 @@ func newProcessCfg(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery, rows *core.Rows
 		metricPrefix:       false,
 		fillMissing:        fillMissing,
 		seriesByQueryOrder: list.New(),
-		pointsBySeries:     make(map[string]*tsdb.TimeSeries),
+		pointsBySeries:     make(map[string]pluginmodels.TSDBTimeSeries),
 		tsdbQuery:          tsdbQuery,
 	}
 	return cfg, nil
 }
 
-func (e *sqlQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult,
-	tsdbQuery *tsdb.TsdbQuery) error {
+func (e *sqlQueryEndpoint) transformToTimeSeries(query pluginmodels.TSDBSubQuery, rows *core.Rows,
+	result pluginmodels.TSDBQueryResult, tsdbQuery pluginmodels.TSDBQuery) error {
 	cfg, err := newProcessCfg(query, tsdbQuery, rows)
 	if err != nil {
 		return err
@@ -390,7 +394,7 @@ func (e *sqlQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *core.R
 		// align interval start
 		intervalStart = math.Floor(intervalStart/cfg.fillInterval) * cfg.fillInterval
 		for i := intervalStart + cfg.fillInterval; i < intervalEnd; i += cfg.fillInterval {
-			series.Points = append(series.Points, tsdb.TimePoint{cfg.fillValue, null.FloatFrom(i)})
+			series.Points = append(series.Points, pluginmodels.TSDBTimePoint{cfg.fillValue, null.FloatFrom(i)})
 			cfg.rowCount++
 		}
 	}
@@ -409,10 +413,10 @@ type processCfg struct {
 	metricPrefix       bool
 	metricPrefixValue  string
 	fillMissing        bool
-	pointsBySeries     map[string]*tsdb.TimeSeries
+	pointsBySeries     map[string]pluginmodels.TSDBTimeSeries
 	seriesByQueryOrder *list.List
 	fillValue          null.Float
-	tsdbQuery          *tsdb.TsdbQuery
+	tsdbQuery          pluginmodels.TSDBQuery
 	fillInterval       float64
 	fillPrevious       bool
 }
@@ -477,7 +481,7 @@ func (e *sqlQueryEndpoint) processRow(cfg *processCfg) error {
 
 		series, exist := cfg.pointsBySeries[metric]
 		if !exist {
-			series = &tsdb.TimeSeries{Name: metric}
+			series = pluginmodels.TSDBTimeSeries{Name: metric}
 			cfg.pointsBySeries[metric] = series
 			cfg.seriesByQueryOrder.PushBack(metric)
 		}
@@ -502,12 +506,12 @@ func (e *sqlQueryEndpoint) processRow(cfg *processCfg) error {
 			intervalStart = math.Floor(intervalStart/cfg.fillInterval) * cfg.fillInterval
 
 			for i := intervalStart; i < timestamp; i += cfg.fillInterval {
-				series.Points = append(series.Points, tsdb.TimePoint{cfg.fillValue, null.FloatFrom(i)})
+				series.Points = append(series.Points, pluginmodels.TSDBTimePoint{cfg.fillValue, null.FloatFrom(i)})
 				cfg.rowCount++
 			}
 		}
 
-		series.Points = append(series.Points, tsdb.TimePoint{value, null.FloatFrom(timestamp)})
+		series.Points = append(series.Points, pluginmodels.TSDBTimePoint{value, null.FloatFrom(timestamp)})
 
 		if setting.Env == setting.Dev {
 			e.log.Debug("Rows", "metric", metric, "time", timestamp, "value", value)
@@ -519,7 +523,7 @@ func (e *sqlQueryEndpoint) processRow(cfg *processCfg) error {
 
 // ConvertSqlTimeColumnToEpochMs converts column named time to unix timestamp in milliseconds
 // to make native datetime types and epoch dates work in annotation and table queries.
-func ConvertSqlTimeColumnToEpochMs(values tsdb.RowValues, timeIndex int) {
+func ConvertSqlTimeColumnToEpochMs(values pluginmodels.TSDBRowValues, timeIndex int) {
 	if timeIndex >= 0 {
 		switch value := values[timeIndex].(type) {
 		case time.Time:
@@ -529,40 +533,40 @@ func ConvertSqlTimeColumnToEpochMs(values tsdb.RowValues, timeIndex int) {
 				values[timeIndex] = float64(value.UnixNano()) / float64(time.Millisecond)
 			}
 		case int64:
-			values[timeIndex] = int64(tsdb.EpochPrecisionToMs(float64(value)))
+			values[timeIndex] = int64(epochPrecisionToMS(float64(value)))
 		case *int64:
 			if value != nil {
-				values[timeIndex] = int64(tsdb.EpochPrecisionToMs(float64(*value)))
+				values[timeIndex] = int64(epochPrecisionToMS(float64(*value)))
 			}
 		case uint64:
-			values[timeIndex] = int64(tsdb.EpochPrecisionToMs(float64(value)))
+			values[timeIndex] = int64(epochPrecisionToMS(float64(value)))
 		case *uint64:
 			if value != nil {
-				values[timeIndex] = int64(tsdb.EpochPrecisionToMs(float64(*value)))
+				values[timeIndex] = int64(epochPrecisionToMS(float64(*value)))
 			}
 		case int32:
-			values[timeIndex] = int64(tsdb.EpochPrecisionToMs(float64(value)))
+			values[timeIndex] = int64(epochPrecisionToMS(float64(value)))
 		case *int32:
 			if value != nil {
-				values[timeIndex] = int64(tsdb.EpochPrecisionToMs(float64(*value)))
+				values[timeIndex] = int64(epochPrecisionToMS(float64(*value)))
 			}
 		case uint32:
-			values[timeIndex] = int64(tsdb.EpochPrecisionToMs(float64(value)))
+			values[timeIndex] = int64(epochPrecisionToMS(float64(value)))
 		case *uint32:
 			if value != nil {
-				values[timeIndex] = int64(tsdb.EpochPrecisionToMs(float64(*value)))
+				values[timeIndex] = int64(epochPrecisionToMS(float64(*value)))
 			}
 		case float64:
-			values[timeIndex] = tsdb.EpochPrecisionToMs(value)
+			values[timeIndex] = epochPrecisionToMS(value)
 		case *float64:
 			if value != nil {
-				values[timeIndex] = tsdb.EpochPrecisionToMs(*value)
+				values[timeIndex] = epochPrecisionToMS(*value)
 			}
 		case float32:
-			values[timeIndex] = tsdb.EpochPrecisionToMs(float64(value))
+			values[timeIndex] = epochPrecisionToMS(float64(value))
 		case *float32:
 			if value != nil {
-				values[timeIndex] = tsdb.EpochPrecisionToMs(float64(*value))
+				values[timeIndex] = epochPrecisionToMS(float64(*value))
 			}
 		}
 	}
@@ -678,7 +682,7 @@ func ConvertSqlValueColumnToFloat(columnName string, columnValue interface{}) (n
 	return value, nil
 }
 
-func SetupFillmode(query *tsdb.Query, interval time.Duration, fillmode string) error {
+func SetupFillmode(query pluginmodels.TSDBSubQuery, interval time.Duration, fillmode string) error {
 	query.Model.Set("fill", true)
 	query.Model.Set("fillInterval", interval.Seconds())
 	switch fillmode {
@@ -719,4 +723,19 @@ func (m *SqlMacroEngineBase) ReplaceAllStringSubmatchFunc(re *regexp.Regexp, str
 	}
 
 	return result + str[lastIndex:]
+}
+
+// epochPrecisionToMS converts epoch precision to millisecond, if needed.
+// Only seconds to milliseconds supported right now
+func epochPrecisionToMS(value float64) float64 {
+	s := strconv.FormatFloat(value, 'e', -1, 64)
+	if strings.HasSuffix(s, "e+09") {
+		return value * float64(1e3)
+	}
+
+	if strings.HasSuffix(s, "e+18") {
+		return value / float64(time.Millisecond)
+	}
+
+	return value
 }

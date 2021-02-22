@@ -1,4 +1,4 @@
-package wrapper
+package models
 
 import (
 	"testing"
@@ -10,7 +10,7 @@ import (
 )
 
 func TestMapTables(t *testing.T) {
-	dpw := NewDatasourcePluginWrapper(log.New("test-logger"), nil)
+	dpw := newDataSourcePluginWrapper(log.New("test-logger"), nil)
 	var qr = &datasource.QueryResult{}
 	qr.Tables = append(qr.Tables, &datasource.Table{
 		Columns: []*datasource.TableColumn{},
@@ -23,7 +23,7 @@ func TestMapTables(t *testing.T) {
 }
 
 func TestMapTable(t *testing.T) {
-	dpw := NewDatasourcePluginWrapper(log.New("test-logger"), nil)
+	dpw := newDataSourcePluginWrapper(log.New("test-logger"), nil)
 
 	source := &datasource.Table{
 		Columns: []*datasource.TableColumn{{Name: "column1"}, {Name: "column2"}},
@@ -53,9 +53,10 @@ func TestMapTable(t *testing.T) {
 }
 
 func TestMappingRowValue(t *testing.T) {
-	dpw := NewDatasourcePluginWrapper(log.New("test-logger"), nil)
+	dpw := newDataSourcePluginWrapper(log.New("test-logger"), nil)
 
-	boolRowValue, _ := dpw.mapRowValue(&datasource.RowValue{Kind: datasource.RowValue_TYPE_BOOL, BoolValue: true})
+	boolRowValue, err := dpw.mapRowValue(&datasource.RowValue{Kind: datasource.RowValue_TYPE_BOOL, BoolValue: true})
+	require.NoError(t, err)
 	haveBool, ok := boolRowValue.(bool)
 	require.True(t, ok)
 	require.True(t, haveBool)

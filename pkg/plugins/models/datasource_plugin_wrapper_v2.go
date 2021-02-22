@@ -1,4 +1,4 @@
-package wrapper
+package models
 
 import (
 	"context"
@@ -10,11 +10,11 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins/models/adapters"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
-	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-func NewDatasourcePluginWrapperV2(log log.Logger, pluginId, pluginType string, client grpcplugin.DataClient) *DatasourcePluginWrapperV2 {
+func newDataSourcePluginWrapperV2(log log.Logger, pluginId, pluginType string, client grpcplugin.DataClient) *DatasourcePluginWrapperV2 {
 	return &DatasourcePluginWrapperV2{DataClient: client, logger: log, pluginId: pluginId, pluginType: pluginType}
 }
 
@@ -25,30 +25,10 @@ type DatasourcePluginWrapperV2 struct {
 	pluginType string
 }
 
-func ModelToInstanceSettings(ds *models.DataSource) (*backend.DataSourceInstanceSettings, error) {
-	jsonDataBytes, err := ds.JsonData.MarshalJSON()
+func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataSource, query TSDBQuery) (TSDBResponse, error) {
+	instanceSettings, err := adapters.ModelToInstanceSettings(ds)
 	if err != nil {
-		return nil, err
-	}
-
-	return &backend.DataSourceInstanceSettings{
-		ID:                      ds.Id,
-		Name:                    ds.Name,
-		URL:                     ds.Url,
-		Database:                ds.Database,
-		User:                    ds.User,
-		BasicAuthEnabled:        ds.BasicAuth,
-		BasicAuthUser:           ds.BasicAuthUser,
-		JSONData:                jsonDataBytes,
-		DecryptedSecureJSONData: ds.DecryptedValues(),
-		Updated:                 ds.Updated,
-	}, nil
-}
-
-func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataSource, query *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	instanceSettings, err := ModelToInstanceSettings(ds)
-	if err != nil {
-		return nil, err
+		return TSDBResponse{}, err
 	}
 
 	if query.Headers == nil {
@@ -66,7 +46,7 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 		PluginContext: &pluginv2.PluginContext{
 			OrgId:                      ds.OrgId,
 			PluginId:                   tw.pluginId,
-			User:                       backend.ToProto().User(BackendUserFromSignedInUser(query.User)),
+			User:                       backend.ToProto().User(adapters.BackendUserFromSignedInUser(query.User)),
 			DataSourceInstanceSettings: backend.ToProto().DataSourceInstanceSettings(instanceSettings),
 		},
 		Queries: []*pluginv2.DataQuery{},
@@ -76,12 +56,12 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 	for _, q := range query.Queries {
 		modelJSON, err := q.Model.MarshalJSON()
 		if err != nil {
-			return nil, err
+			return TSDBResponse{}, err
 		}
 		pbQuery.Queries = append(pbQuery.Queries, &pluginv2.DataQuery{
 			Json:          modelJSON,
-			IntervalMS:    q.IntervalMs,
-			RefId:         q.RefId,
+			IntervalMS:    q.IntervalMS,
+			RefId:         q.RefID,
 			MaxDataPoints: q.MaxDataPoints,
 			TimeRange: &pluginv2.TimeRange{
 				ToEpochMS:   query.TimeRange.GetToAsMsEpoch(),
@@ -93,17 +73,17 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 
 	pbRes, err := tw.DataClient.QueryData(ctx, pbQuery)
 	if err != nil {
-		return nil, err
+		return TSDBResponse{}, err
 	}
 
-	tR := &tsdb.Response{
-		Results: make(map[string]*tsdb.QueryResult, len(pbRes.Responses)),
+	tR := TSDBResponse{
+		Results: make(map[string]TSDBQueryResult, len(pbRes.Responses)),
 	}
 
 	for refID, pRes := range pbRes.Responses {
-		qr := &tsdb.QueryResult{
-			RefId:      refID,
-			Dataframes: tsdb.NewEncodedDataFrames(pRes.Frames),
+		qr := TSDBQueryResult{
+			RefID:      refID,
+			Dataframes: NewEncodedDataFrames(pRes.Frames),
 		}
 		if len(pRes.JsonMeta) != 0 {
 			qr.Meta = simplejson.NewFromAny(pRes.JsonMeta)
@@ -116,18 +96,4 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 	}
 
 	return tR, nil
-}
-
-// BackendUserFromSignedInUser converts Grafana's SignedInUser model
-// to the backend plugin's model.
-func BackendUserFromSignedInUser(su *models.SignedInUser) *backend.User {
-	if su == nil {
-		return nil
-	}
-	return &backend.User{
-		Login: su.Login,
-		Name:  su.Name,
-		Email: su.Email,
-		Role:  string(su.OrgRole),
-	}
 }

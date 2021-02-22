@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/tsdb"
+	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	"github.com/influxdata/influxdb-client-go/v2/api"
 )
@@ -21,21 +21,22 @@ func init() {
 }
 
 // Query builds flux queries, executes them, and returns the results.
-func Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	glog.Debug("Received a query", "query", *tsdbQuery)
-	tRes := &tsdb.Response{
-		Results: make(map[string]*tsdb.QueryResult),
+func Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery pluginmodels.TSDBQuery) (
+	pluginmodels.TSDBResponse, error) {
+	glog.Debug("Received a query", "query", tsdbQuery)
+	tRes := pluginmodels.TSDBResponse{
+		Results: make(map[string]pluginmodels.TSDBQueryResult),
 	}
 	r, err := runnerFromDataSource(dsInfo)
 	if err != nil {
-		return nil, err
+		return pluginmodels.TSDBResponse{}, err
 	}
 	defer r.client.Close()
 
 	for _, query := range tsdbQuery.Queries {
-		qm, err := getQueryModelTSDB(query, tsdbQuery.TimeRange, dsInfo)
+		qm, err := getQueryModelTSDB(query, *tsdbQuery.TimeRange, dsInfo)
 		if err != nil {
-			tRes.Results[query.RefId] = &tsdb.QueryResult{Error: err}
+			tRes.Results[query.RefID] = pluginmodels.TSDBQueryResult{Error: err}
 			continue
 		}
 
@@ -43,7 +44,7 @@ func Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQ
 		maxSeries := dsInfo.JsonData.Get("maxSeries").MustInt(1000)
 		res := executeQuery(ctx, *qm, r, maxSeries)
 
-		tRes.Results[query.RefId] = backendDataResponseToTSDBResponse(&res, query.RefId)
+		tRes.Results[query.RefID] = backendDataResponseToTSDBResponse(&res, query.RefID)
 	}
 	return tRes, nil
 }
@@ -95,15 +96,15 @@ func runnerFromDataSource(dsInfo *models.DataSource) (*runner, error) {
 }
 
 // backendDataResponseToTSDBResponse takes the SDK's style response and changes it into a
-// tsdb.QueryResult. This is a wrapper so less of existing code needs to be changed. This should
+// pluginmodels.TSDBQueryResult. This is a wrapper so less of existing code needs to be changed. This should
 // be able to be removed in the near future https://github.com/grafana/grafana/pull/25472.
-func backendDataResponseToTSDBResponse(dr *backend.DataResponse, refID string) *tsdb.QueryResult {
-	qr := &tsdb.QueryResult{RefId: refID}
+func backendDataResponseToTSDBResponse(dr *backend.DataResponse, refID string) pluginmodels.TSDBQueryResult {
+	qr := pluginmodels.TSDBQueryResult{RefID: refID}
 
 	qr.Error = dr.Error
 
 	if dr.Frames != nil {
-		qr.Dataframes = tsdb.NewDecodedDataFrames(dr.Frames)
+		qr.Dataframes = pluginmodels.NewDecodedDataFrames(dr.Frames)
 	}
 	return qr
 }

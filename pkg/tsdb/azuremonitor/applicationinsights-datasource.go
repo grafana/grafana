@@ -18,8 +18,8 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/net/context/ctxhttp"
@@ -49,20 +49,22 @@ type ApplicationInsightsQuery struct {
 	aggregation string
 }
 
-func (e *ApplicationInsightsDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []*tsdb.Query, timeRange *tsdb.TimeRange) (*tsdb.Response, error) {
-	result := &tsdb.Response{
-		Results: map[string]*tsdb.QueryResult{},
+func (e *ApplicationInsightsDatasource) executeTimeSeriesQuery(ctx context.Context,
+	originalQueries []pluginmodels.TSDBSubQuery,
+	timeRange pluginmodels.TSDBTimeRange) (pluginmodels.TSDBResponse, error) {
+	result := pluginmodels.TSDBResponse{
+		Results: map[string]pluginmodels.TSDBQueryResult{},
 	}
 
 	queries, err := e.buildQueries(originalQueries, timeRange)
 	if err != nil {
-		return nil, err
+		return pluginmodels.TSDBResponse{}, err
 	}
 
 	for _, query := range queries {
 		queryRes, err := e.executeQuery(ctx, query)
 		if err != nil {
-			return nil, err
+			return pluginmodels.TSDBResponse{}, err
 		}
 		result.Results[query.RefID] = queryRes
 	}
@@ -70,7 +72,8 @@ func (e *ApplicationInsightsDatasource) executeTimeSeriesQuery(ctx context.Conte
 	return result, nil
 }
 
-func (e *ApplicationInsightsDatasource) buildQueries(queries []*tsdb.Query, timeRange *tsdb.TimeRange) ([]*ApplicationInsightsQuery, error) {
+func (e *ApplicationInsightsDatasource) buildQueries(queries []pluginmodels.TSDBSubQuery,
+	timeRange pluginmodels.TSDBTimeRange) ([]*ApplicationInsightsQuery, error) {
 	applicationInsightsQueries := []*ApplicationInsightsQuery{}
 	startTime, err := timeRange.ParseFrom()
 	if err != nil {
@@ -100,7 +103,7 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []*tsdb.Query, time
 		timeGrain := insightsJSONModel.TimeGrain
 		timeGrains := insightsJSONModel.AllowedTimeGrainsMs
 		if timeGrain == "auto" {
-			timeGrain, err = setAutoTimeGrain(query.IntervalMs, timeGrains)
+			timeGrain, err = setAutoTimeGrain(query.IntervalMS, timeGrains)
 			if err != nil {
 				return nil, err
 			}
@@ -122,7 +125,7 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []*tsdb.Query, time
 			params.Add("segment", strings.Join(insightsJSONModel.Dimensions, ","))
 		}
 		applicationInsightsQueries = append(applicationInsightsQueries, &ApplicationInsightsQuery{
-			RefID:       query.RefId,
+			RefID:       query.RefID,
 			ApiURL:      azureURL,
 			Params:      params,
 			Alias:       insightsJSONModel.Alias,
@@ -136,8 +139,9 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []*tsdb.Query, time
 	return applicationInsightsQueries, nil
 }
 
-func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query *ApplicationInsightsQuery) (*tsdb.QueryResult, error) {
-	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: query.RefID}
+func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query *ApplicationInsightsQuery) (
+	pluginmodels.TSDBQueryResult, error) {
+	queryResult := pluginmodels.TSDBQueryResult{Meta: simplejson.New(), RefID: query.RefID}
 
 	req, err := e.createRequest(ctx, e.dsInfo)
 	if err != nil {
@@ -178,18 +182,18 @@ func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query 
 		}
 	}()
 	if err != nil {
-		return nil, err
+		return pluginmodels.TSDBQueryResult{}, err
 	}
 
 	if res.StatusCode/100 != 2 {
 		azlog.Debug("Request failed", "status", res.Status, "body", string(body))
-		return nil, fmt.Errorf("request failed, status: %s", res.Status)
+		return pluginmodels.TSDBQueryResult{}, fmt.Errorf("request failed, status: %s", res.Status)
 	}
 
 	mr := MetricsResult{}
 	err = json.Unmarshal(body, &mr)
 	if err != nil {
-		return nil, err
+		return pluginmodels.TSDBQueryResult{}, err
 	}
 
 	frame, err := InsightsMetricsResultToFrame(mr, query.metricName, query.aggregation, query.dimensions)
@@ -200,7 +204,7 @@ func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query 
 
 	applyInsightsMetricAlias(frame, query.Alias)
 
-	queryResult.Dataframes = tsdb.NewDecodedDataFrames(data.Frames{frame})
+	queryResult.Dataframes = pluginmodels.NewDecodedDataFrames(data.Frames{frame})
 	return queryResult, nil
 }
 
@@ -239,15 +243,15 @@ func (e *ApplicationInsightsDatasource) createRequest(ctx context.Context, dsInf
 	return req, nil
 }
 
-func (e *ApplicationInsightsDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin, cloudName string) (*plugins.AppPluginRoute, string, error) {
+func (e *ApplicationInsightsDatasource) getPluginRoute(plugin *pluginmodels.DataSourcePlugin, cloudName string) (
+	*pluginmodels.AppPluginRoute, string, error) {
 	pluginRouteName := "appinsights"
 
 	if cloudName == "chinaazuremonitor" {
 		pluginRouteName = "chinaappinsights"
 	}
 
-	var pluginRoute *plugins.AppPluginRoute
-
+	var pluginRoute *pluginmodels.AppPluginRoute
 	for _, route := range plugin.Routes {
 		if route.Path == pluginRouteName {
 			pluginRoute = route

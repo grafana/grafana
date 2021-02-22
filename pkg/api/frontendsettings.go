@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -147,7 +148,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			defaultDS = n
 		}
 
-		meta := dsM["meta"].(*plugins.DataSourcePlugin)
+		meta := dsM["meta"].(*pluginmodels.DataSourcePlugin)
 		if meta.Preload {
 			pluginsToPreload = append(pluginsToPreload, meta.Module)
 		}
@@ -155,7 +156,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 
 	panels := map[string]interface{}{}
 	for _, panel := range enabledPlugins.Panels {
-		if panel.State == plugins.PluginStateAlpha && !hs.Cfg.PluginsEnableAlpha {
+		if panel.State == pluginmodels.PluginStateAlpha && !hs.Cfg.PluginsEnableAlpha {
 			continue
 		}
 

@@ -1,4 +1,4 @@
-package plugins
+package models
 
 import (
 	"net/url"
@@ -14,12 +14,15 @@ type FrontendPluginBase struct {
 	PluginBase
 }
 
-func (fp *FrontendPluginBase) initFrontendPlugin() {
+func (fp *FrontendPluginBase) InitFrontendPlugin() {
 	if isExternalPlugin(fp.PluginDir) {
-		StaticRoutes = append(StaticRoutes, &PluginStaticRoute{
-			Directory: fp.PluginDir,
-			PluginId:  fp.Id,
-		})
+		// TODO
+		/*
+			StaticRoutes = append(StaticRoutes, &PluginStaticRoute{
+				Directory: fp.PluginDir,
+				PluginId:  fp.Id,
+			})
+		*/
 	}
 
 	fp.handleModuleDefaults()

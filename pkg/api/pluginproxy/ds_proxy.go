@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/datasource"
 	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
+	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -34,8 +34,8 @@ type DataSourceProxy struct {
 	ctx       *models.ReqContext
 	targetUrl *url.URL
 	proxyPath string
-	route     *plugins.AppPluginRoute
-	plugin    *plugins.DataSourcePlugin
+	route     *pluginmodels.AppPluginRoute
+	plugin    *pluginmodels.DataSourcePlugin
 	cfg       *setting.Cfg
 }
 
@@ -68,7 +68,7 @@ func (lw *logWrapper) Write(p []byte) (n int, err error) {
 }
 
 // NewDataSourceProxy creates a new Datasource proxy
-func NewDataSourceProxy(ds *models.DataSource, plugin *plugins.DataSourcePlugin, ctx *models.ReqContext,
+func NewDataSourceProxy(ds *models.DataSource, plugin *pluginmodels.DataSourcePlugin, ctx *models.ReqContext,
 	proxyPath string, cfg *setting.Cfg) (*DataSourceProxy, error) {
 	targetURL, err := datasource.ValidateURL(ds.Type, ds.Url)
 	if err != nil {

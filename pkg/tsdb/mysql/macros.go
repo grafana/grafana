@@ -8,7 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/gtime"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/tsdb"
+	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
 
@@ -19,8 +19,8 @@ var restrictedRegExp = regexp.MustCompile(`(?im)([\s]*show[\s]+grants|[\s,]sessi
 
 type mySqlMacroEngine struct {
 	*sqleng.SqlMacroEngineBase
-	timeRange *tsdb.TimeRange
-	query     *tsdb.Query
+	timeRange pluginmodels.TSDBTimeRange
+	query     pluginmodels.TSDBSubQuery
 	logger    log.Logger
 }
 
@@ -28,7 +28,7 @@ func newMysqlMacroEngine(logger log.Logger) sqleng.SqlMacroEngine {
 	return &mySqlMacroEngine{SqlMacroEngineBase: sqleng.NewSqlMacroEngineBase(), logger: logger}
 }
 
-func (m *mySqlMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string) (string, error) {
+func (m *mySqlMacroEngine) Interpolate(query pluginmodels.TSDBSubQuery, timeRange pluginmodels.TSDBTimeRange, sql string) (string, error) {
 	m.timeRange = timeRange
 	m.query = query
 
@@ -38,6 +38,7 @@ func (m *mySqlMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.TimeRa
 		return "", errors.New("invalid query - inspect Grafana server log for details")
 	}
 
+	// TODO: Handle error
 	rExp, _ := regexp.Compile(sExpr)
 	var macroError error
 

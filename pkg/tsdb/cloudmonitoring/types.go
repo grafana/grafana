@@ -5,14 +5,15 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/grafana/grafana/pkg/tsdb"
+	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 )
 
 type (
 	cloudMonitoringQueryExecutor interface {
-		run(ctx context.Context, tsdbQuery *tsdb.TsdbQuery, e *CloudMonitoringExecutor) (*tsdb.QueryResult, cloudMonitoringResponse, string, error)
-		parseResponse(queryRes *tsdb.QueryResult, data cloudMonitoringResponse, executedQueryString string) error
-		parseToAnnotations(queryRes *tsdb.QueryResult, data cloudMonitoringResponse, title string, text string, tags string) error
+		run(ctx context.Context, tsdbQuery pluginmodels.TSDBQuery, e *Executor) (
+			pluginmodels.TSDBQueryResult, cloudMonitoringResponse, string, error)
+		parseResponse(queryRes pluginmodels.TSDBQueryResult, data cloudMonitoringResponse, executedQueryString string) error
+		parseToAnnotations(queryRes pluginmodels.TSDBQueryResult, data cloudMonitoringResponse, title string, text string, tags string) error
 		buildDeepLink() string
 		getRefID() string
 		getUnit() string
@@ -39,7 +40,7 @@ type (
 		Query       string
 		IntervalMS  int64
 		AliasBy     string
-		timeRange   *tsdb.TimeRange
+		timeRange   pluginmodels.TSDBTimeRange
 		Unit        string
 	}
 

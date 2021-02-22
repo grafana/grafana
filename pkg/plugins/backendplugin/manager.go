@@ -15,39 +15,17 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
+	backendmodels "github.com/grafana/grafana/pkg/plugins/backendplugin/models"
+	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 )
 
-var (
-	// ErrPluginNotRegistered error returned when plugin not registered.
-	ErrPluginNotRegistered = errors.New("plugin not registered")
-	// ErrHealthCheckFailed error returned when health check failed.
-	ErrHealthCheckFailed = errors.New("health check failed")
-	// ErrPluginUnavailable error returned when plugin is unavailable.
-	ErrPluginUnavailable = errors.New("plugin unavailable")
-	// ErrMethodNotImplemented error returned when plugin method not implemented.
-	ErrMethodNotImplemented = errors.New("method not implemented")
-)
-
 func init() {
 	registry.RegisterServiceWithPriority(&manager{}, registry.MediumHigh)
-}
-
-// Manager manages backend plugins.
-type Manager interface {
-	// Register registers a backend plugin
-	Register(pluginID string, factory PluginFactoryFunc) error
-	// StartPlugin starts a non-managed backend plugin
-	StartPlugin(ctx context.Context, pluginID string) error
-	// CollectMetrics collects metrics from a registered backend plugin.
-	CollectMetrics(ctx context.Context, pluginID string) (*backend.CollectMetricsResult, error)
-	// CheckHealth checks the health of a registered backend plugin.
-	CheckHealth(ctx context.Context, pCtx backend.PluginContext) (*backend.CheckHealthResult, error)
-	// CallResource calls a plugin resource.
-	CallResource(pluginConfig backend.PluginContext, ctx *models.ReqContext, path string)
 }
 
 type manager struct {
@@ -55,13 +33,13 @@ type manager struct {
 	License                models.Licensing              `inject:""`
 	PluginRequestValidator models.PluginRequestValidator `inject:""`
 	pluginsMu              sync.RWMutex
-	plugins                map[string]Plugin
+	plugins                map[string]backendmodels.Plugin
 	logger                 log.Logger
 	pluginSettings         map[string]pluginSettings
 }
 
 func (m *manager) Init() error {
-	m.plugins = make(map[string]Plugin)
+	m.plugins = make(map[string]backendmodels.Plugin)
 	m.logger = log.New("plugins.backend")
 	m.pluginSettings = extractPluginSettings(m.Cfg)
 
@@ -76,7 +54,7 @@ func (m *manager) Run(ctx context.Context) error {
 }
 
 // Register registers a backend plugin
-func (m *manager) Register(pluginID string, factory PluginFactoryFunc) error {
+func (m *manager) Register(pluginID string, factory backendmodels.PluginFactoryFunc) error {
 	m.logger.Debug("Registering backend plugin", "pluginId", pluginID)
 	m.pluginsMu.Lock()
 	defer m.pluginsMu.Unlock()
@@ -121,6 +99,19 @@ func (m *manager) Register(pluginID string, factory PluginFactoryFunc) error {
 	return nil
 }
 
+func (m *manager) GetTSDBPlugin(pluginID string) pluginmodels.TSDBPlugin {
+	plugin := m.plugins[pluginID]
+	if plugin == nil || !plugin.CanHandleTSDBQueries() {
+		return nil
+	}
+
+	if tsdbPlugin, ok := plugin.(pluginmodels.TSDBPlugin); ok {
+		return tsdbPlugin
+	}
+
+	return nil
+}
+
 // start starts all managed backend plugins
 func (m *manager) start(ctx context.Context) {
 	m.pluginsMu.RLock()
@@ -143,7 +134,7 @@ func (m *manager) StartPlugin(ctx context.Context, pluginID string) error {
 	p, registered := m.plugins[pluginID]
 	m.pluginsMu.RUnlock()
 	if !registered {
-		return ErrPluginNotRegistered
+		return backendmodels.ErrPluginNotRegistered
 	}
 
 	if p.IsManaged() {
@@ -160,7 +151,7 @@ func (m *manager) stop(ctx context.Context) {
 	var wg sync.WaitGroup
 	for _, p := range m.plugins {
 		wg.Add(1)
-		go func(p Plugin, ctx context.Context) {
+		go func(p backendmodels.Plugin, ctx context.Context) {
 			defer wg.Done()
 			p.Logger().Debug("Stopping plugin")
 			if err := p.Stop(ctx); err != nil {
@@ -179,11 +170,11 @@ func (m *manager) CollectMetrics(ctx context.Context, pluginID string) (*backend
 	m.pluginsMu.RUnlock()
 
 	if !registered {
-		return nil, ErrPluginNotRegistered
+		return nil, backendmodels.ErrPluginNotRegistered
 	}
 
 	var resp *backend.CollectMetricsResult
-	err := instrumentCollectMetrics(p.PluginID(), func() (innerErr error) {
+	err := instrumentation.InstrumentCollectMetrics(p.PluginID(), func() (innerErr error) {
 		resp, innerErr = p.CollectMetrics(ctx)
 		return
 	})
@@ -214,21 +205,21 @@ func (m *manager) CheckHealth(ctx context.Context, pluginContext backend.PluginC
 	m.pluginsMu.RUnlock()
 
 	if !registered {
-		return nil, ErrPluginNotRegistered
+		return nil, backendmodels.ErrPluginNotRegistered
 	}
 
 	var resp *backend.CheckHealthResult
-	err = instrumentCheckHealthRequest(p.PluginID(), func() (innerErr error) {
+	err = instrumentation.InstrumentCheckHealthRequest(p.PluginID(), func() (innerErr error) {
 		resp, innerErr = p.CheckHealth(ctx, &backend.CheckHealthRequest{PluginContext: pluginContext})
 		return
 	})
 
 	if err != nil {
-		if errors.Is(err, ErrMethodNotImplemented) {
+		if errors.Is(err, backendmodels.ErrMethodNotImplemented) {
 			return nil, err
 		}
 
-		return nil, errutil.Wrap("failed to check plugin health", ErrHealthCheckFailed)
+		return nil, errutil.Wrap("failed to check plugin health", backendmodels.ErrHealthCheckFailed)
 	}
 
 	return resp, nil
@@ -244,7 +235,7 @@ func (m *manager) callResourceInternal(w http.ResponseWriter, req *http.Request,
 	m.pluginsMu.RUnlock()
 
 	if !registered {
-		return ErrPluginNotRegistered
+		return backendmodels.ErrPluginNotRegistered
 	}
 
 	keepCookieModel := keepCookiesJSONModel{}
@@ -272,7 +263,7 @@ func (m *manager) callResourceInternal(w http.ResponseWriter, req *http.Request,
 		Body:          body,
 	}
 
-	return instrumentCallResourceRequest(p.PluginID(), func() error {
+	return instrumentation.InstrumentCallResourceRequest(p.PluginID(), func() error {
 		childCtx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		stream := newCallResourceResponseStream(childCtx)
@@ -332,12 +323,12 @@ func (m *manager) CallResource(pCtx backend.PluginContext, reqCtx *models.ReqCon
 }
 
 func handleCallResourceError(err error, reqCtx *models.ReqContext) {
-	if errors.Is(err, ErrPluginUnavailable) {
+	if errors.Is(err, backendmodels.ErrPluginUnavailable) {
 		reqCtx.JsonApiErr(503, "Plugin unavailable", err)
 		return
 	}
 
-	if errors.Is(err, ErrMethodNotImplemented) {
+	if errors.Is(err, backendmodels.ErrMethodNotImplemented) {
 		reqCtx.JsonApiErr(404, "Not found", err)
 		return
 	}
@@ -345,7 +336,7 @@ func handleCallResourceError(err error, reqCtx *models.ReqContext) {
 	reqCtx.JsonApiErr(500, "Failed to call resource", err)
 }
 
-func flushStream(plugin Plugin, stream CallResourceClientResponseStream, w http.ResponseWriter) error {
+func flushStream(plugin backendmodels.Plugin, stream CallResourceClientResponseStream, w http.ResponseWriter) error {
 	processedStreams := 0
 
 	for {
@@ -400,12 +391,12 @@ func flushStream(plugin Plugin, stream CallResourceClientResponseStream, w http.
 	}
 }
 
-func startPluginAndRestartKilledProcesses(ctx context.Context, p Plugin) error {
+func startPluginAndRestartKilledProcesses(ctx context.Context, p backendmodels.Plugin) error {
 	if err := p.Start(ctx); err != nil {
 		return err
 	}
 
-	go func(ctx context.Context, p Plugin) {
+	go func(ctx context.Context, p backendmodels.Plugin) {
 		if err := restartKilledProcess(ctx, p); err != nil {
 			p.Logger().Error("Attempt to restart killed plugin process failed", "error", err)
 		}
@@ -414,7 +405,7 @@ func startPluginAndRestartKilledProcesses(ctx context.Context, p Plugin) error {
 	return nil
 }
 
-func restartKilledProcess(ctx context.Context, p Plugin) error {
+func restartKilledProcess(ctx context.Context, p backendmodels.Plugin) error {
 	ticker := time.NewTicker(time.Second * 1)
 
 	for {

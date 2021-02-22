@@ -1,4 +1,4 @@
-package backendplugin
+package instrumentation
 
 import (
 	"context"
@@ -48,15 +48,15 @@ func instrumentPluginRequest(pluginID string, endpoint string, fn func() error) 
 	return err
 }
 
-func instrumentCollectMetrics(pluginID string, fn func() error) error {
+func InstrumentCollectMetrics(pluginID string, fn func() error) error {
 	return instrumentPluginRequest(pluginID, "collectMetrics", fn)
 }
 
-func instrumentCheckHealthRequest(pluginID string, fn func() error) error {
+func InstrumentCheckHealthRequest(pluginID string, fn func() error) error {
 	return instrumentPluginRequest(pluginID, "checkHealth", fn)
 }
 
-func instrumentCallResourceRequest(pluginID string, fn func() error) error {
+func InstrumentCallResourceRequest(pluginID string, fn func() error) error {
 	return instrumentPluginRequest(pluginID, "callResource", fn)
 }
 

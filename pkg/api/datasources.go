@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/datasource/wrapper"
+	"github.com/grafana/grafana/pkg/plugins/models/adapters"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -369,13 +369,13 @@ func (hs *HTTPServer) CallDatasourceResource(c *models.ReqContext) {
 		return
 	}
 
-	dsInstanceSettings, err := wrapper.ModelToInstanceSettings(ds)
+	dsInstanceSettings, err := adapters.ModelToInstanceSettings(ds)
 	if err != nil {
 		c.JsonApiErr(500, "Unable to process datasource instance model", err)
 	}
 
 	pCtx := backend.PluginContext{
-		User:                       wrapper.BackendUserFromSignedInUser(c.SignedInUser),
+		User:                       adapters.BackendUserFromSignedInUser(c.SignedInUser),
 		OrgID:                      c.OrgId,
 		PluginID:                   plugin.Id,
 		DataSourceInstanceSettings: dsInstanceSettings,
@@ -433,12 +433,12 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) response.Respo
 		return response.Error(500, "Unable to find datasource plugin", err)
 	}
 
-	dsInstanceSettings, err := wrapper.ModelToInstanceSettings(ds)
+	dsInstanceSettings, err := adapters.ModelToInstanceSettings(ds)
 	if err != nil {
 		return response.Error(500, "Unable to get datasource model", err)
 	}
 	pCtx := backend.PluginContext{
-		User:                       wrapper.BackendUserFromSignedInUser(c.SignedInUser),
+		User:                       adapters.BackendUserFromSignedInUser(c.SignedInUser),
 		OrgID:                      c.OrgId,
 		PluginID:                   plugin.Id,
 		DataSourceInstanceSettings: dsInstanceSettings,

@@ -11,7 +11,7 @@ import (
 )
 
 func TestPluginDashboards(t *testing.T) {
-	Convey("When asking plugin dashboard info", t, func() {
+	Convey("When asking for plugin dashboard info", t, func() {
 		pm := &PluginManager{
 			Cfg: &setting.Cfg{
 				FeatureToggles: map[string]bool{},
@@ -48,7 +48,6 @@ func TestPluginDashboards(t *testing.T) {
 		})
 
 		dashboards, err := GetPluginDashboards(1, "test-app")
-
 		So(err, ShouldBeNil)
 
 		Convey("should return 2 dashboards", func() {

@@ -13,22 +13,19 @@ import (
 	mssql "github.com/denisenkom/go-mssqldb"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/tsdb"
+	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"xorm.io/core"
 )
 
-func init() {
-	tsdb.RegisterTsdbQueryEndpoint("mssql", newMssqlQueryEndpoint)
-}
-
 var logger = log.New("tsdb.mssql")
 
-func newMssqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+func NewExecutor(datasource *models.DataSource) (pluginmodels.TSDBPlugin, error) {
 	cnnstr, err := generateConnectionString(datasource)
 	if err != nil {
 		return nil, err
 	}
+	// TODO: Don't use global
 	if setting.Env == setting.Dev {
 		logger.Debug("getEngine", "connection", cnnstr)
 	}
@@ -105,7 +102,8 @@ type mssqlQueryResultTransformer struct {
 	log log.Logger
 }
 
-func (t *mssqlQueryResultTransformer) TransformQueryResult(columnTypes []*sql.ColumnType, rows *core.Rows) (tsdb.RowValues, error) {
+func (t *mssqlQueryResultTransformer) TransformQueryResult(columnTypes []*sql.ColumnType, rows *core.Rows) (
+	pluginmodels.TSDBRowValues, error) {
 	values := make([]interface{}, len(columnTypes))
 	valuePtrs := make([]interface{}, len(columnTypes))
 

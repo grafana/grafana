@@ -7,12 +7,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/models"
+	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -23,11 +23,12 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 		return response.Error(http.StatusBadRequest, "No queries found in query", nil)
 	}
 
-	request := &tsdb.TsdbQuery{
-		TimeRange: tsdb.NewTimeRange(reqDTO.From, reqDTO.To),
+	timeRange := pluginmodels.NewTSDBTimeRange(reqDTO.From, reqDTO.To)
+	request := pluginmodels.TSDBQuery{
+		TimeRange: &timeRange,
 		Debug:     reqDTO.Debug,
 		User:      c.SignedInUser,
-		Queries:   make([]*tsdb.Query, 0, len(reqDTO.Queries)),
+		Queries:   make([]pluginmodels.TSDBSubQuery, 0, len(reqDTO.Queries)),
 	}
 
 	// Loop to see if we have an expression.
@@ -57,10 +58,10 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 			}
 		}
 
-		request.Queries = append(request.Queries, &tsdb.Query{
-			RefId:         query.Get("refId").MustString("A"),
+		request.Queries = append(request.Queries, pluginmodels.TSDBSubQuery{
+			RefID:         query.Get("refId").MustString("A"),
 			MaxDataPoints: query.Get("maxDataPoints").MustInt64(100),
-			IntervalMs:    query.Get("intervalMs").MustInt64(1000),
+			IntervalMS:    query.Get("intervalMs").MustInt64(1000),
 			QueryType:     query.Get("queryType").MustString(""),
 			Model:         query,
 			DataSource:    ds,
@@ -72,7 +73,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 		return response.Error(http.StatusForbidden, "Access denied", err)
 	}
 
-	resp, err := tsdb.HandleRequest(c.Req.Context(), ds, request)
+	resp, err := hs.TSDBService.HandleRequest(c.Req.Context(), ds, request)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Metric request error", err)
 	}
@@ -91,11 +92,12 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 
 // handleExpressions handles POST /api/ds/query when there is an expression.
 func (hs *HTTPServer) handleExpressions(c *models.ReqContext, reqDTO dtos.MetricRequest) response.Response {
-	request := &tsdb.TsdbQuery{
-		TimeRange: tsdb.NewTimeRange(reqDTO.From, reqDTO.To),
+	timeRange := pluginmodels.NewTSDBTimeRange(reqDTO.From, reqDTO.To)
+	request := pluginmodels.TSDBQuery{
+		TimeRange: &timeRange,
 		Debug:     reqDTO.Debug,
 		User:      c.SignedInUser,
-		Queries:   make([]*tsdb.Query, 0, len(reqDTO.Queries)),
+		Queries:   make([]pluginmodels.TSDBSubQuery, 0, len(reqDTO.Queries)),
 	}
 
 	for _, query := range reqDTO.Queries {
@@ -116,10 +118,10 @@ func (hs *HTTPServer) handleExpressions(c *models.ReqContext, reqDTO dtos.Metric
 			}
 		}
 
-		request.Queries = append(request.Queries, &tsdb.Query{
-			RefId:         query.Get("refId").MustString("A"),
+		request.Queries = append(request.Queries, pluginmodels.TSDBSubQuery{
+			RefID:         query.Get("refId").MustString("A"),
 			MaxDataPoints: query.Get("maxDataPoints").MustInt64(100),
-			IntervalMs:    query.Get("intervalMs").MustInt64(1000),
+			IntervalMS:    query.Get("intervalMs").MustInt64(1000),
 			QueryType:     query.Get("queryType").MustString(""),
 			Model:         query,
 		})
@@ -157,8 +159,6 @@ func (hs *HTTPServer) handleGetDataSourceError(err error, datasourceID int64) *r
 // QueryMetrics returns query metrics
 // POST /api/tsdb/query
 func (hs *HTTPServer) QueryMetrics(c *models.ReqContext, reqDto dtos.MetricRequest) response.Response {
-	timeRange := tsdb.NewTimeRange(reqDto.From, reqDto.To)
-
 	if len(reqDto.Queries) == 0 {
 		return response.Error(http.StatusBadRequest, "No queries found in query", nil)
 	}
@@ -178,23 +178,24 @@ func (hs *HTTPServer) QueryMetrics(c *models.ReqContext, reqDto dtos.MetricReque
 		return response.Error(http.StatusForbidden, "Access denied", err)
 	}
 
-	request := &tsdb.TsdbQuery{
-		TimeRange: timeRange,
+	timeRange := pluginmodels.NewTSDBTimeRange(reqDto.From, reqDto.To)
+	request := pluginmodels.TSDBQuery{
+		TimeRange: &timeRange,
 		Debug:     reqDto.Debug,
 		User:      c.SignedInUser,
 	}
 
 	for _, query := range reqDto.Queries {
-		request.Queries = append(request.Queries, &tsdb.Query{
-			RefId:         query.Get("refId").MustString("A"),
+		request.Queries = append(request.Queries, pluginmodels.TSDBSubQuery{
+			RefID:         query.Get("refId").MustString("A"),
 			MaxDataPoints: query.Get("maxDataPoints").MustInt64(100),
-			IntervalMs:    query.Get("intervalMs").MustInt64(1000),
+			IntervalMS:    query.Get("intervalMs").MustInt64(1000),
 			Model:         query,
 			DataSource:    ds,
 		})
 	}
 
-	resp, err := tsdb.HandleRequest(c.Req.Context(), ds, request)
+	resp, err := hs.TSDBService.HandleRequest(c.Req.Context(), ds, request)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Metric request error", err)
 	}
@@ -221,28 +222,28 @@ func GenerateSQLTestData(c *models.ReqContext) response.Response {
 }
 
 // GET /api/tsdb/testdata/random-walk
-func GetTestDataRandomWalk(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetTestDataRandomWalk(c *models.ReqContext) response.Response {
 	from := c.Query("from")
 	to := c.Query("to")
-	intervalMs := c.QueryInt64("intervalMs")
+	intervalMS := c.QueryInt64("intervalMs")
 
-	timeRange := tsdb.NewTimeRange(from, to)
-	request := &tsdb.TsdbQuery{TimeRange: timeRange}
+	timeRange := pluginmodels.NewTSDBTimeRange(from, to)
+	request := pluginmodels.TSDBQuery{TimeRange: &timeRange}
 
 	dsInfo := &models.DataSource{
 		Type:     "testdata",
 		JsonData: simplejson.New(),
 	}
-	request.Queries = append(request.Queries, &tsdb.Query{
-		RefId:      "A",
-		IntervalMs: intervalMs,
+	request.Queries = append(request.Queries, pluginmodels.TSDBSubQuery{
+		RefID:      "A",
+		IntervalMS: intervalMS,
 		Model: simplejson.NewFromAny(&util.DynMap{
 			"scenario": "random_walk",
 		}),
 		DataSource: dsInfo,
 	})
 
-	resp, err := tsdb.HandleRequest(context.Background(), dsInfo, request)
+	resp, err := hs.TSDBService.HandleRequest(context.Background(), dsInfo, request)
 	if err != nil {
 		return response.Error(500, "Metric request error", err)
 	}

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/gtime"
-	"github.com/grafana/grafana/pkg/tsdb"
+	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
 
@@ -16,8 +16,8 @@ const sExpr = `\$` + rsIdentifier + `\(([^\)]*)\)`
 
 type postgresMacroEngine struct {
 	*sqleng.SqlMacroEngineBase
-	timeRange   *tsdb.TimeRange
-	query       *tsdb.Query
+	timeRange   pluginmodels.TSDBTimeRange
+	query       pluginmodels.TSDBSubQuery
 	timescaledb bool
 }
 
@@ -28,9 +28,11 @@ func newPostgresMacroEngine(timescaledb bool) sqleng.SqlMacroEngine {
 	}
 }
 
-func (m *postgresMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string) (string, error) {
+func (m *postgresMacroEngine) Interpolate(query pluginmodels.TSDBSubQuery, timeRange pluginmodels.TSDBTimeRange,
+	sql string) (string, error) {
 	m.timeRange = timeRange
 	m.query = query
+	// TODO: Handle error
 	rExp, _ := regexp.Compile(sExpr)
 	var macroError error
 

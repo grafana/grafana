@@ -3,7 +3,7 @@ package influxdb
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/plugins/models"
 )
 
 func TestInfluxdbQueryPart(t *testing.T) {
@@ -27,7 +27,7 @@ func TestInfluxdbQueryPart(t *testing.T) {
 		{mode: "non_negative_difference", params: []string{}, input: "max(value)", expected: `non_negative_difference(max(value))`},
 	}
 
-	queryContext := &tsdb.TsdbQuery{TimeRange: tsdb.NewTimeRange("5m", "now")}
+	queryContext := models.TSDBQuery{TimeRange: models.NewTSDBTimeRange("5m", "now")}
 	query := &Query{}
 
 	for _, tc := range tcs {

@@ -139,7 +139,7 @@ func (dn *DSNode) NodeType() NodeType {
 	return TypeDatasourceNode
 }
 
-func buildDSNode(dp *simple.DirectedGraph, rn *rawNode, orgID int64) (*DSNode, error) {
+func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, orgID int64) (*DSNode, error) {
 	encodedQuery, err := json.Marshal(rn.Query)
 	if err != nil {
 		return nil, err
@@ -200,7 +200,7 @@ func buildDSNode(dp *simple.DirectedGraph, rn *rawNode, orgID int64) (*DSNode, e
 // Execute runs the node and adds the results to vars. If the node requires
 // other nodes they must have already been executed and their results must
 // already by in vars.
-func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Results, error) {
+func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (mathexp.Results, error) {
 	pc := backend.PluginContext{
 		OrgID: dn.orgID,
 		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
@@ -220,7 +220,7 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Resul
 		},
 	}
 
-	resp, err := QueryData(ctx, &backend.QueryDataRequest{
+	resp, err := s.queryData(ctx, &backend.QueryDataRequest{
 		PluginContext: pc,
 		Queries:       q,
 	})

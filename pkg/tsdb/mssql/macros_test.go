@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -15,7 +16,7 @@ import (
 func TestMacroEngine(t *testing.T) {
 	Convey("MacroEngine", t, func() {
 		engine := &msSqlMacroEngine{}
-		query := &tsdb.Query{
+		query := pluginmodels.TSDBQuery{
 			Model: simplejson.New(),
 		}
 

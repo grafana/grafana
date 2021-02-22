@@ -5,26 +5,13 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/tsdb/tsdbifaces"
 )
 
 var varRegex = regexp.MustCompile(`(\$\{.+?\})`)
-
-type ImportDashboardCommand struct {
-	Dashboard *simplejson.Json
-	Path      string
-	Inputs    []ImportDashboardInput
-	Overwrite bool
-	FolderId  int64
-
-	OrgId    int64
-	User     *models.SignedInUser
-	PluginId string
-	Result   *PluginDashboardInfoDTO
-}
 
 type ImportDashboardInput struct {
 	Type     string `json:"type"`
@@ -41,58 +28,54 @@ func (e DashboardInputMissingError) Error() string {
 	return fmt.Sprintf("Dashboard input variable: %v missing from import command", e.VariableName)
 }
 
-func init() {
-	bus.AddHandler("plugins", ImportDashboard)
-}
-
-func ImportDashboard(cmd *ImportDashboardCommand) error {
+func (pm *PluginManager) ImportDashboard(pluginID, path string, orgID, folderID int64, dashboardModel *simplejson.Json,
+	overwrite bool, inputs []ImportDashboardInput, user *models.SignedInUser,
+	requestHandler tsdbifaces.RequestHandler) (PluginDashboardInfoDTO, error) {
 	var dashboard *models.Dashboard
-	var err error
-
-	if cmd.PluginId != "" {
-		if dashboard, err = loadPluginDashboard(cmd.PluginId, cmd.Path); err != nil {
-			return err
+	if pluginID != "" {
+		var err error
+		if dashboard, err = LoadPluginDashboard(pluginID, path); err != nil {
+			return PluginDashboardInfoDTO{}, err
 		}
 	} else {
-		dashboard = models.NewDashboardFromJson(cmd.Dashboard)
+		dashboard = models.NewDashboardFromJson(dashboardModel)
 	}
 
 	evaluator := &DashTemplateEvaluator{
 		template: dashboard.Data,
-		inputs:   cmd.Inputs,
+		inputs:   inputs,
 	}
 
 	generatedDash, err := evaluator.Eval()
 	if err != nil {
-		return err
+		return PluginDashboardInfoDTO{}, err
 	}
 
 	saveCmd := models.SaveDashboardCommand{
 		Dashboard: generatedDash,
-		OrgId:     cmd.OrgId,
-		UserId:    cmd.User.UserId,
-		Overwrite: cmd.Overwrite,
-		PluginId:  cmd.PluginId,
-		FolderId:  cmd.FolderId,
+		OrgId:     orgID,
+		UserId:    user.UserId,
+		Overwrite: overwrite,
+		PluginId:  pluginID,
+		FolderId:  folderID,
 	}
 
 	dto := &dashboards.SaveDashboardDTO{
-		OrgId:     cmd.OrgId,
+		OrgId:     orgID,
 		Dashboard: saveCmd.GetDashboardModel(),
 		Overwrite: saveCmd.Overwrite,
-		User:      cmd.User,
+		User:      user,
 	}
 
-	savedDash, err := dashboards.NewService().ImportDashboard(dto)
-
+	savedDash, err := dashboards.NewService(requestHandler).ImportDashboard(dto)
 	if err != nil {
-		return err
+		return PluginDashboardInfoDTO{}, err
 	}
 
-	cmd.Result = &PluginDashboardInfoDTO{
-		PluginId:         cmd.PluginId,
+	return PluginDashboardInfoDTO{
+		PluginId:         pluginID,
 		Title:            savedDash.Title,
-		Path:             cmd.Path,
+		Path:             path,
 		Revision:         savedDash.Data.Get("revision").MustInt64(1),
 		FolderId:         savedDash.FolderId,
 		ImportedUri:      "db/" + savedDash.Slug,
@@ -101,9 +84,7 @@ func ImportDashboard(cmd *ImportDashboardCommand) error {
 		Imported:         true,
 		DashboardId:      savedDash.Id,
 		Slug:             savedDash.Slug,
-	}
-
-	return nil
+	}, nil
 }
 
 type DashTemplateEvaluator struct {

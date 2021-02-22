@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/tsdb"
+	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 )
 
 // returns a map of queries with query id as key. In the case a q request query
@@ -55,7 +55,8 @@ func (e *cloudWatchExecutor) transformRequestQueriesToCloudWatchQueries(requestQ
 	return cloudwatchQueries, nil
 }
 
-func (e *cloudWatchExecutor) transformQueryResponsesToQueryResult(cloudwatchResponses []*cloudwatchResponse, requestQueries []*requestQuery, startTime time.Time, endTime time.Time) (map[string]*tsdb.QueryResult, error) {
+func (e *cloudWatchExecutor) transformQueryResponsesToQueryResult(cloudwatchResponses []*cloudwatchResponse,
+	requestQueries []*requestQuery, startTime time.Time, endTime time.Time) (map[string]pluginmodels.TSDBQueryResult, error) {
 	responsesByRefID := make(map[string][]*cloudwatchResponse)
 	refIDs := sort.StringSlice{}
 	for _, res := range cloudwatchResponses {
@@ -65,12 +66,13 @@ func (e *cloudWatchExecutor) transformQueryResponsesToQueryResult(cloudwatchResp
 	// Ensure stable results
 	refIDs.Sort()
 
-	results := make(map[string]*tsdb.QueryResult)
+	results := make(map[string]pluginmodels.TSDBQueryResult)
 	for _, refID := range refIDs {
 		responses := responsesByRefID[refID]
-		queryResult := tsdb.NewQueryResult()
-		queryResult.RefId = refID
-		queryResult.Series = tsdb.TimeSeriesSlice{}
+		queryResult := pluginmodels.TSDBQueryResult{
+			RefID:  refID,
+			Series: pluginmodels.TSDBTimeSeriesSlice{},
+		}
 		frames := make(data.Frames, 0, len(responses))
 
 		requestExceededMaxLimit := false
@@ -133,15 +135,17 @@ func (e *cloudWatchExecutor) transformQueryResponsesToQueryResult(cloudwatchResp
 			frame.Fields[1].Config.Links = createDataLinks(link)
 		}
 
-		queryResult.Dataframes = tsdb.NewDecodedDataFrames(frames)
+		queryResult.Dataframes = pluginmodels.NewDecodedDataFrames(frames)
 		results[refID] = queryResult
 	}
 
 	return results, nil
 }
 
-// buildDeepLink generates a deep link from Grafana to the CloudWatch console. The link params are based on metric(s) for a given query row in the Query Editor.
-func buildDeepLink(refID string, requestQueries []*requestQuery, executedQueries []executedQuery, startTime time.Time, endTime time.Time) (string, error) {
+// buildDeepLink generates a deep link from Grafana to the CloudWatch console. The link params are based on
+// metric(s) for a given query row in the Query Editor.
+func buildDeepLink(refID string, requestQueries []*requestQuery, executedQueries []executedQuery, startTime time.Time,
+	endTime time.Time) (string, error) {
 	if isMathExpression(executedQueries) {
 		return "", nil
 	}

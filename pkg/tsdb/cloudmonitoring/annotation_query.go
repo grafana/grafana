@@ -4,24 +4,25 @@ import (
 	"context"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/tsdb"
+	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 )
 
-func (e *CloudMonitoringExecutor) executeAnnotationQuery(ctx context.Context, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	result := &tsdb.Response{
-		Results: make(map[string]*tsdb.QueryResult),
+func (e *Executor) executeAnnotationQuery(ctx context.Context, tsdbQuery pluginmodels.TSDBQuery) (
+	pluginmodels.TSDBResponse, error) {
+	result := pluginmodels.TSDBResponse{
+		Results: make(map[string]pluginmodels.TSDBQueryResult),
 	}
 
 	firstQuery := tsdbQuery.Queries[0]
 
 	queries, err := e.buildQueryExecutors(tsdbQuery)
 	if err != nil {
-		return nil, err
+		return pluginmodels.TSDBResponse{}, err
 	}
 
 	queryRes, resp, _, err := queries[0].run(ctx, tsdbQuery, e)
 	if err != nil {
-		return nil, err
+		return pluginmodels.TSDBResponse{}, err
 	}
 
 	metricQuery := firstQuery.Model.Get("metricQuery")
@@ -29,15 +30,15 @@ func (e *CloudMonitoringExecutor) executeAnnotationQuery(ctx context.Context, ts
 	text := metricQuery.Get("text").MustString()
 	tags := metricQuery.Get("tags").MustString()
 	err = queries[0].parseToAnnotations(queryRes, resp, title, text, tags)
-	result.Results[firstQuery.RefId] = queryRes
+	result.Results[firstQuery.RefID] = queryRes
 
 	return result, err
 }
 
-func transformAnnotationToTable(data []map[string]string, result *tsdb.QueryResult) {
-	table := &tsdb.Table{
-		Columns: make([]tsdb.TableColumn, 4),
-		Rows:    make([]tsdb.RowValues, 0),
+func transformAnnotationToTable(data []map[string]string, result pluginmodels.TSDBQueryResult) {
+	table := pluginmodels.TSDBTable{
+		Columns: make([]pluginmodels.TSDBTableColumn, 4),
+		Rows:    make([]pluginmodels.TSDBRowValues, 0),
 	}
 	table.Columns[0].Text = "time"
 	table.Columns[1].Text = "title"

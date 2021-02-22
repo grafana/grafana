@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -42,7 +43,7 @@ type RenderUser struct {
 
 type RenderingService struct {
 	log             log.Logger
-	pluginInfo      *plugins.RendererPlugin
+	pluginInfo      *pluginmodels.RendererPlugin
 	renderAction    renderFunc
 	domain          string
 	inProgressCount int

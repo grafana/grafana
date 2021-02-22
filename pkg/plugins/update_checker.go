@@ -40,7 +40,7 @@ func getAllExternalPluginSlugs() string {
 }
 
 func (pm *PluginManager) checkForUpdates() {
-	if !setting.CheckForUpdates {
+	if !pm.Cfg.CheckForUpdates {
 		return
 	}
 

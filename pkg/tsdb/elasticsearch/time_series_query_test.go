@@ -926,7 +926,7 @@ func executeTsdbQuery(c es.Client, body string, from, to time.Time, minInterval 
 		},
 		TimeRange: tsdb.NewTimeRange(fromStr, toStr),
 	}
-	query := newTimeSeriesQuery(c, tsdbQuery, tsdb.NewIntervalCalculator(&tsdb.IntervalOptions{MinInterval: minInterval}))
+	query := newTimeSeriesQuery(c, tsdbQuery, interval.NewCalculator(&tsdb.CalculatorOptions{MinInterval: minInterval}))
 	return query.execute()
 }
 

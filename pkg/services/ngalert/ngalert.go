@@ -6,6 +6,7 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/tsdb"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -34,6 +35,7 @@ type AlertNG struct {
 	DatasourceCache datasources.CacheService `inject:""`
 	RouteRegister   routing.RouteRegister    `inject:""`
 	SQLStore        *sqlstore.SQLStore       `inject:""`
+	TSDBService     *tsdb.Service            `inject:""`
 	log             log.Logger
 	schedule        *schedule
 }

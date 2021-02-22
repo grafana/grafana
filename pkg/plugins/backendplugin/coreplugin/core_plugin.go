@@ -6,22 +6,24 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
+	backendmodels "github.com/grafana/grafana/pkg/plugins/backendplugin/models"
+	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 )
 
 // corePlugin represents a plugin that's part of Grafana core.
 type corePlugin struct {
-	pluginID string
-	logger   log.Logger
+	isTSDBPlugin bool
+	pluginID     string
+	logger       log.Logger
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
 	backend.QueryDataHandler
 }
 
-// New returns a new backendplugin.PluginFactoryFunc for creating a core (built-in) backendplugin.Plugin.
-func New(opts backend.ServeOpts) backendplugin.PluginFactoryFunc {
-	return backendplugin.PluginFactoryFunc(func(pluginID string, logger log.Logger, env []string) (backendplugin.Plugin, error) {
+// New returns a new backendmodels.PluginFactoryFunc for creating a core (built-in) backendmodels.Plugin.
+func New(opts backend.ServeOpts) backendmodels.PluginFactoryFunc {
+	return func(pluginID string, logger log.Logger, env []string) (backendmodels.Plugin, error) {
 		return &corePlugin{
 			pluginID:            pluginID,
 			logger:              logger,
@@ -29,7 +31,7 @@ func New(opts backend.ServeOpts) backendplugin.PluginFactoryFunc {
 			CallResourceHandler: opts.CallResourceHandler,
 			QueryDataHandler:    opts.QueryDataHandler,
 		}, nil
-	})
+	}
 }
 
 func (cp *corePlugin) PluginID() string {
@@ -40,11 +42,21 @@ func (cp *corePlugin) Logger() log.Logger {
 	return cp.logger
 }
 
+func (cp *corePlugin) CanHandleTSDBQueries() bool {
+	return cp.isTSDBPlugin
+}
+
+func (cp *corePlugin) TSDBQuery(ctx context.Context, dsInfo *models.DataSource,
+	tsdbQuery pluginmodels.TSDBQuery) (pluginmodels.TSDBResponse, error) {
+	// TODO: Inline the adapter
+	adapter := newQueryEndpointAdapter(cp.pluginID, cp.logger, instrumentation.InstrumentQueryDataHandler(
+		cp.QueryDataHandler))
+	return adapter.TSDBQuery(ctx, dsInfo, tsdbQuery)
+}
+
 func (cp *corePlugin) Start(ctx context.Context) error {
 	if cp.QueryDataHandler != nil {
-		tsdb.RegisterTsdbQueryEndpoint(cp.pluginID, func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-			return newQueryEndpointAdapter(cp.pluginID, cp.logger, backendplugin.InstrumentQueryDataHandler(cp.QueryDataHandler)), nil
-		})
+		cp.isTSDBPlugin = true
 	}
 	return nil
 }
@@ -62,7 +74,7 @@ func (cp *corePlugin) Exited() bool {
 }
 
 func (cp *corePlugin) CollectMetrics(ctx context.Context) (*backend.CollectMetricsResult, error) {
-	return nil, backendplugin.ErrMethodNotImplemented
+	return nil, backendmodels.ErrMethodNotImplemented
 }
 
 func (cp *corePlugin) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
@@ -70,7 +82,7 @@ func (cp *corePlugin) CheckHealth(ctx context.Context, req *backend.CheckHealthR
 		return cp.CheckHealthHandler.CheckHealth(ctx, req)
 	}
 
-	return nil, backendplugin.ErrMethodNotImplemented
+	return nil, backendmodels.ErrMethodNotImplemented
 }
 
 func (cp *corePlugin) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
@@ -78,5 +90,5 @@ func (cp *corePlugin) CallResource(ctx context.Context, req *backend.CallResourc
 		return cp.CallResourceHandler.CallResource(ctx, req, sender)
 	}
 
-	return backendplugin.ErrMethodNotImplemented
+	return backendmodels.ErrMethodNotImplemented
 }

@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCloudMonitoringExecutor_parseToAnnotations(t *testing.T) {
+func TestExecutor_parseToAnnotations(t *testing.T) {
 	data, err := loadTestFile("./test-data/2-series-response-no-agg.json")
 	require.NoError(t, err)
 	require.Len(t, data.TimeSeries, 3)

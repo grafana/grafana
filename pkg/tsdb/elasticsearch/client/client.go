@@ -15,9 +15,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/tsdb/interval"
 
 	"github.com/grafana/grafana/pkg/models"
+	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	"golang.org/x/net/context/ctxhttp"
 )
 
@@ -42,7 +43,7 @@ type Client interface {
 }
 
 // NewClient creates a new elasticsearch client
-var NewClient = func(ctx context.Context, ds *models.DataSource, timeRange *tsdb.TimeRange) (Client, error) {
+var NewClient = func(ctx context.Context, ds *models.DataSource, timeRange pluginmodels.TSDBTimeRange) (Client, error) {
 	version, err := ds.JsonData.Get("esVersion").Int()
 	if err != nil {
 		return nil, fmt.Errorf("elasticsearch version is required, err=%v", err)
@@ -87,7 +88,7 @@ type baseClientImpl struct {
 	version      int
 	timeField    string
 	indices      []string
-	timeRange    *tsdb.TimeRange
+	timeRange    pluginmodels.TSDBTimeRange
 	debugEnabled bool
 }
 
@@ -100,7 +101,7 @@ func (c *baseClientImpl) GetTimeField() string {
 }
 
 func (c *baseClientImpl) GetMinInterval(queryInterval string) (time.Duration, error) {
-	return tsdb.GetIntervalFrom(c.ds, simplejson.NewFromAny(map[string]interface{}{
+	return interval.GetIntervalFrom(c.ds, simplejson.NewFromAny(map[string]interface{}{
 		"interval": queryInterval,
 	}), 5*time.Second)
 }
@@ -112,7 +113,7 @@ func (c *baseClientImpl) getSettings() *simplejson.Json {
 type multiRequest struct {
 	header   map[string]interface{}
 	body     interface{}
-	interval tsdb.Interval
+	interval interval.Interval
 }
 
 func (c *baseClientImpl) executeBatchRequest(uriPath, uriQuery string, requests []*multiRequest) (*response, error) {

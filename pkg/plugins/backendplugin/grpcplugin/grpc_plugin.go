@@ -7,7 +7,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/models"
 	"github.com/hashicorp/go-plugin"
 )
 
@@ -26,9 +26,9 @@ type grpcPlugin struct {
 	mutex         sync.RWMutex
 }
 
-// newPlugin allocates and returns a new gRPC (external) backendplugin.Plugin.
-func newPlugin(descriptor PluginDescriptor) backendplugin.PluginFactoryFunc {
-	return backendplugin.PluginFactoryFunc(func(pluginID string, logger log.Logger, env []string) (backendplugin.Plugin, error) {
+// newPlugin allocates and returns a new gRPC (external) models.Plugin.
+func newPlugin(descriptor PluginDescriptor) models.PluginFactoryFunc {
+	return func(pluginID string, logger log.Logger, env []string) (models.Plugin, error) {
 		return &grpcPlugin{
 			descriptor: descriptor,
 			logger:     logger,
@@ -36,7 +36,11 @@ func newPlugin(descriptor PluginDescriptor) backendplugin.PluginFactoryFunc {
 				return plugin.NewClient(newClientConfig(descriptor.executablePath, env, logger, descriptor.versionedPlugins))
 			},
 		}, nil
-	})
+	}
+}
+
+func (p *grpcPlugin) CanHandleTSDBQueries() bool {
+	return false
 }
 
 func (p *grpcPlugin) PluginID() string {
@@ -103,7 +107,7 @@ func (p *grpcPlugin) CollectMetrics(ctx context.Context) (*backend.CollectMetric
 	p.mutex.RLock()
 	if p.client == nil || p.client.Exited() || p.pluginClient == nil {
 		p.mutex.RUnlock()
-		return nil, backendplugin.ErrPluginUnavailable
+		return nil, models.ErrPluginUnavailable
 	}
 	pluginClient := p.pluginClient
 	p.mutex.RUnlock()
@@ -115,7 +119,7 @@ func (p *grpcPlugin) CheckHealth(ctx context.Context, req *backend.CheckHealthRe
 	p.mutex.RLock()
 	if p.client == nil || p.client.Exited() || p.pluginClient == nil {
 		p.mutex.RUnlock()
-		return nil, backendplugin.ErrPluginUnavailable
+		return nil, models.ErrPluginUnavailable
 	}
 	pluginClient := p.pluginClient
 	p.mutex.RUnlock()
@@ -127,7 +131,7 @@ func (p *grpcPlugin) CallResource(ctx context.Context, req *backend.CallResource
 	p.mutex.RLock()
 	if p.client == nil || p.client.Exited() || p.pluginClient == nil {
 		p.mutex.RUnlock()
-		return backendplugin.ErrPluginUnavailable
+		return models.ErrPluginUnavailable
 	}
 	pluginClient := p.pluginClient
 	p.mutex.RUnlock()

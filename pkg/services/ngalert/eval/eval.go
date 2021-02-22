@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -100,7 +101,7 @@ type AlertExecCtx struct {
 }
 
 // execute runs the Condition's expressions or queries.
-func (c *Condition) execute(ctx AlertExecCtx, now time.Time) (*ExecutionResults, error) {
+func (c *Condition) execute(ctx AlertExecCtx, now time.Time, tsdbService *tsdb.Service) (*ExecutionResults, error) {
 	result := ExecutionResults{}
 	if !c.IsValid() {
 		return nil, fmt.Errorf("invalid conditions")
@@ -218,13 +219,13 @@ func (evalResults Results) AsDataFrame() data.Frame {
 }
 
 // ConditionEval executes conditions and evaluates the result.
-func (e *Evaluator) ConditionEval(condition *Condition, now time.Time) (Results, error) {
+func (e *Evaluator) ConditionEval(condition *Condition, now time.Time, tsdbService *tsdb.Service) (Results, error) {
 	alertCtx, cancelFn := context.WithTimeout(context.Background(), alertingEvaluationTimeout)
 	defer cancelFn()
 
 	alertExecCtx := AlertExecCtx{OrgID: condition.OrgID, Ctx: alertCtx, ExpressionsEnabled: e.Cfg.ExpressionsEnabled}
 
-	execResult, err := condition.execute(alertExecCtx, now)
+	execResult, err := condition.execute(alertExecCtx, now, tsdbService)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute conditions: %w", err)
 	}

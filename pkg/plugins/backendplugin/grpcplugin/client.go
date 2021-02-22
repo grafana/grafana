@@ -7,7 +7,7 @@ import (
 	rendererV1 "github.com/grafana/grafana-plugin-model/go/renderer"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	goplugin "github.com/hashicorp/go-plugin"
 )
@@ -79,7 +79,7 @@ func getV2PluginSet() goplugin.PluginSet {
 }
 
 // NewBackendPlugin creates a new backend plugin factory used for registering a backend plugin.
-func NewBackendPlugin(pluginID, executablePath string, startFns PluginStartFuncs) backendplugin.PluginFactoryFunc {
+func NewBackendPlugin(pluginID, executablePath string, startFns PluginStartFuncs) models.PluginFactoryFunc {
 	return newPlugin(PluginDescriptor{
 		pluginID:       pluginID,
 		executablePath: executablePath,
@@ -95,7 +95,7 @@ func NewBackendPlugin(pluginID, executablePath string, startFns PluginStartFuncs
 }
 
 // NewRendererPlugin creates a new renderer plugin factory used for registering a backend renderer plugin.
-func NewRendererPlugin(pluginID, executablePath string, startFns PluginStartFuncs) backendplugin.PluginFactoryFunc {
+func NewRendererPlugin(pluginID, executablePath string, startFns PluginStartFuncs) models.PluginFactoryFunc {
 	return newPlugin(PluginDescriptor{
 		pluginID:       pluginID,
 		executablePath: executablePath,

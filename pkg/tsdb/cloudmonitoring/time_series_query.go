@@ -13,13 +13,15 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb"
+	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
+	"github.com/grafana/grafana/pkg/tsdb/interval"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/net/context/ctxhttp"
 )
 
-func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, tsdbQuery *tsdb.TsdbQuery, e *CloudMonitoringExecutor) (*tsdb.QueryResult, cloudMonitoringResponse, string, error) {
-	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: timeSeriesQuery.RefID}
+func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, tsdbQuery pluginmodels.TSDBQuery,
+	e *Executor) (pluginmodels.TSDBQueryResult, cloudMonitoringResponse, string, error) {
+	queryResult := pluginmodels.TSDBQueryResult{Meta: simplejson.New(), RefID: timeSeriesQuery.RefID}
 	projectName := timeSeriesQuery.ProjectName
 	if projectName == "" {
 		defaultProject, err := e.getDefaultProject(ctx)
@@ -41,8 +43,8 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, t
 		queryResult.Error = err
 		return queryResult, cloudMonitoringResponse{}, "", nil
 	}
-	intervalCalculator := tsdb.NewIntervalCalculator(&tsdb.IntervalOptions{})
-	interval := intervalCalculator.Calculate(tsdbQuery.TimeRange, time.Duration(timeSeriesQuery.IntervalMS/1000)*time.Second)
+	intervalCalculator := interval.NewCalculator(interval.CalculatorOptions{})
+	interval := intervalCalculator.Calculate(*tsdbQuery.TimeRange, time.Duration(timeSeriesQuery.IntervalMS/1000)*time.Second)
 	timeFormat := "2006/01/02-15:04:05"
 	timeSeriesQuery.Query += fmt.Sprintf(" | graph_period %s | within d'%s', d'%s'", interval.Text, from.UTC().Format(timeFormat), to.UTC().Format(timeFormat))
 
@@ -92,7 +94,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, t
 	return queryResult, data, timeSeriesQuery.Query, nil
 }
 
-func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *tsdb.QueryResult, response cloudMonitoringResponse, executedQueryString string) error {
+func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes pluginmodels.TSDBQueryResult, response cloudMonitoringResponse, executedQueryString string) error {
 	labels := make(map[string]map[string]bool)
 	frames := data.Frames{}
 	for _, series := range response.TimeSeriesData {
@@ -244,7 +246,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *ts
 		frames = addConfigData(frames, dl)
 	}
 
-	queryRes.Dataframes = tsdb.NewDecodedDataFrames(frames)
+	queryRes.Dataframes = pluginmodels.NewDecodedDataFrames(frames)
 
 	labelsByKey := make(map[string][]string)
 	for key, values := range labels {
@@ -258,7 +260,8 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *ts
 	return nil
 }
 
-func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseToAnnotations(queryRes *tsdb.QueryResult, data cloudMonitoringResponse, title string, text string, tags string) error {
+func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseToAnnotations(queryRes pluginmodels.TSDBQueryResult,
+	data cloudMonitoringResponse, title string, text string, tags string) error {
 	annotations := make([]map[string]string, 0)
 
 	for _, series := range data.TimeSeriesData {

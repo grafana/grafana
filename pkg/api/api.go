@@ -315,7 +315,7 @@ func (hs *HTTPServer) registerRoutes() {
 			dashboardRoute.Post("/db", bind(models.SaveDashboardCommand{}), routing.Wrap(hs.PostDashboard))
 			dashboardRoute.Get("/home", routing.Wrap(hs.GetHomeDashboard))
 			dashboardRoute.Get("/tags", GetDashboardTags)
-			dashboardRoute.Post("/import", bind(dtos.ImportDashboardCommand{}), routing.Wrap(ImportDashboard))
+			dashboardRoute.Post("/import", bind(dtos.ImportDashboardCommand{}), routing.Wrap(hs.ImportDashboard))
 
 			dashboardRoute.Group("/id/:dashboardId", func(dashIdRoute routing.RouteRegister) {
 				dashIdRoute.Get("/versions", routing.Wrap(GetDashboardVersions))
@@ -352,7 +352,7 @@ func (hs *HTTPServer) registerRoutes() {
 		// metrics
 		apiRoute.Post("/tsdb/query", bind(dtos.MetricRequest{}), routing.Wrap(hs.QueryMetrics))
 		apiRoute.Get("/tsdb/testdata/gensql", reqGrafanaAdmin, routing.Wrap(GenerateSQLTestData))
-		apiRoute.Get("/tsdb/testdata/random-walk", routing.Wrap(GetTestDataRandomWalk))
+		apiRoute.Get("/tsdb/testdata/random-walk", routing.Wrap(hs.GetTestDataRandomWalk))
 
 		// DataSource w/ expressions
 		apiRoute.Post("/ds/query", bind(dtos.MetricRequest{}), routing.Wrap(hs.QueryMetricsV2))

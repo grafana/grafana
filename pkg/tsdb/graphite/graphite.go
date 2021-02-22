@@ -16,8 +16,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/opentracing/opentracing-go"
 )
 
@@ -25,18 +25,14 @@ type GraphiteExecutor struct {
 	HttpClient *http.Client
 }
 
-func NewGraphiteExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+func NewExecutor(*models.DataSource) (pluginmodels.TSDBPlugin, error) {
 	return &GraphiteExecutor{}, nil
 }
 
 var glog = log.New("tsdb.graphite")
 
-func init() {
-	tsdb.RegisterTsdbQueryEndpoint("graphite", NewGraphiteExecutor)
-}
-
-func (e *GraphiteExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	result := &tsdb.Response{}
+func (e *GraphiteExecutor) TSDBQuery(ctx context.Context, dsInfo *models.DataSource, tsdbQuery pluginmodels.TSDBQuery) (
+	pluginmodels.TSDBResponse, error) {
 
 	from := "-" + formatTimeRange(tsdbQuery.TimeRange.From)
 	until := formatTimeRange(tsdbQuery.TimeRange.To)
@@ -68,7 +64,7 @@ func (e *GraphiteExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 
 	if target == "" {
 		glog.Error("No targets in query model", "models without targets", strings.Join(emptyQueries, "\n"))
-		return nil, errors.New("no query target found for the alert rule")
+		return pluginmodels.TSDBResponse{}, errors.New("no query target found for the alert rule")
 	}
 
 	formData["target"] = []string{target}
@@ -79,12 +75,12 @@ func (e *GraphiteExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 
 	req, err := e.createRequest(dsInfo, formData)
 	if err != nil {
-		return nil, err
+		return pluginmodels.TSDBResponse{}, err
 	}
 
 	httpClient, err := dsInfo.GetHttpClient()
 	if err != nil {
-		return nil, err
+		return pluginmodels.TSDBResponse{}, err
 	}
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "graphite query")
@@ -100,24 +96,24 @@ func (e *GraphiteExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 		span.Context(),
 		opentracing.HTTPHeaders,
 		opentracing.HTTPHeadersCarrier(req.Header)); err != nil {
-		return nil, err
+		return pluginmodels.TSDBResponse{}, err
 	}
 
 	res, err := ctxhttp.Do(ctx, httpClient, req)
 	if err != nil {
-		return nil, err
+		return pluginmodels.TSDBResponse{}, err
 	}
 
 	data, err := e.parseResponse(res)
 	if err != nil {
-		return nil, err
+		return pluginmodels.TSDBResponse{}, err
 	}
 
-	result.Results = make(map[string]*tsdb.QueryResult)
-	queryRes := tsdb.NewQueryResult()
-
+	result := pluginmodels.TSDBResponse{}
+	result.Results = make(map[string]pluginmodels.TSDBQueryResult)
+	queryRes := pluginmodels.TSDBQueryResult{}
 	for _, series := range data {
-		queryRes.Series = append(queryRes.Series, &tsdb.TimeSeries{
+		queryRes.Series = append(queryRes.Series, pluginmodels.TSDBTimeSeries{
 			Name:   series.Target,
 			Points: series.DataPoints,
 		})

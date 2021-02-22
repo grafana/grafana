@@ -11,16 +11,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/tsdb"
+	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"xorm.io/core"
 )
 
-func init() {
-	tsdb.RegisterTsdbQueryEndpoint("postgres", newPostgresQueryEndpoint)
-}
-
-func newPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+func NewExecutor(datasource *models.DataSource) (pluginmodels.TSDBPlugin, error) {
 	logger := log.New("tsdb.postgres")
 	logger.Debug("Creating Postgres query endpoint")
 
@@ -53,7 +49,7 @@ func newPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndp
 	}
 
 	logger.Debug("Successfully connected to Postgres")
-	return endpoint, err
+	return endpoint, nil
 }
 
 // escape single quotes and backslashes in Postgres connection string parameters.
@@ -122,7 +118,8 @@ type postgresQueryResultTransformer struct {
 	log log.Logger
 }
 
-func (t *postgresQueryResultTransformer) TransformQueryResult(columnTypes []*sql.ColumnType, rows *core.Rows) (tsdb.RowValues, error) {
+func (t *postgresQueryResultTransformer) TransformQueryResult(columnTypes []*sql.ColumnType, rows *core.Rows) (
+	pluginmodels.TSDBRowValues, error) {
 	values := make([]interface{}, len(columnTypes))
 	valuePtrs := make([]interface{}, len(columnTypes))
 

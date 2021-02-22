@@ -17,14 +17,14 @@ import (
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 type OpenTsdbExecutor struct {
 }
 
-func NewOpenTsdbExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+func NewExecutor(*models.DataSource) (pluginmodels.TSDBPlugin, error) {
 	return &OpenTsdbExecutor{}, nil
 }
 
@@ -34,11 +34,10 @@ var (
 
 func init() {
 	plog = log.New("tsdb.opentsdb")
-	tsdb.RegisterTsdbQueryEndpoint("opentsdb", NewOpenTsdbExecutor)
 }
 
-func (e *OpenTsdbExecutor) Query(ctx context.Context, dsInfo *models.DataSource, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	result := &tsdb.Response{}
+func (e *OpenTsdbExecutor) TSDBQuery(ctx context.Context, dsInfo *models.DataSource,
+	queryContext pluginmodels.TSDBQuery) (pluginmodels.TSDBResponse, error) {
 
 	var tsdbQuery OpenTsdbQuery
 
@@ -56,26 +55,27 @@ func (e *OpenTsdbExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 
 	req, err := e.createRequest(dsInfo, tsdbQuery)
 	if err != nil {
-		return nil, err
+		return pluginmodels.TSDBResponse{}, err
 	}
 
 	httpClient, err := dsInfo.GetHttpClient()
 	if err != nil {
-		return nil, err
+		return pluginmodels.TSDBResponse{}, err
 	}
 
 	res, err := ctxhttp.Do(ctx, httpClient, req)
 	if err != nil {
-		return nil, err
+		return pluginmodels.TSDBResponse{}, err
 	}
 
 	queryResult, err := e.parseResponse(tsdbQuery, res)
 	if err != nil {
-		return nil, err
+		return pluginmodels.TSDBResponse{}, err
 	}
 
-	result.Results = queryResult
-	return result, nil
+	return pluginmodels.TSDBResponse{
+		Results: queryResult,
+	}, nil
 }
 
 func (e *OpenTsdbExecutor) createRequest(dsInfo *models.DataSource, data OpenTsdbQuery) (*http.Request, error) {
@@ -105,9 +105,9 @@ func (e *OpenTsdbExecutor) createRequest(dsInfo *models.DataSource, data OpenTsd
 	return req, err
 }
 
-func (e *OpenTsdbExecutor) parseResponse(query OpenTsdbQuery, res *http.Response) (map[string]*tsdb.QueryResult, error) {
-	queryResults := make(map[string]*tsdb.QueryResult)
-	queryRes := tsdb.NewQueryResult()
+func (e *OpenTsdbExecutor) parseResponse(query OpenTsdbQuery, res *http.Response) (map[string]pluginmodels.TSDBQueryResult, error) {
+	queryResults := make(map[string]pluginmodels.TSDBQueryResult)
+	queryRes := pluginmodels.TSDBQueryResult{}
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
@@ -132,7 +132,7 @@ func (e *OpenTsdbExecutor) parseResponse(query OpenTsdbQuery, res *http.Response
 	}
 
 	for _, val := range data {
-		series := tsdb.TimeSeries{
+		series := pluginmodels.TSDBTimeSeries{
 			Name: val.Metric,
 		}
 
@@ -142,17 +142,19 @@ func (e *OpenTsdbExecutor) parseResponse(query OpenTsdbQuery, res *http.Response
 				plog.Info("Failed to unmarshal opentsdb timestamp", "timestamp", timeString)
 				return nil, err
 			}
-			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(value), timestamp))
+			series.Points = append(series.Points, pluginmodels.TSDBTimePoint{
+				null.FloatFrom(value), null.FloatFrom(timestamp),
+			})
 		}
 
-		queryRes.Series = append(queryRes.Series, &series)
+		queryRes.Series = append(queryRes.Series, series)
 	}
 
 	queryResults["A"] = queryRes
 	return queryResults, nil
 }
 
-func (e *OpenTsdbExecutor) buildMetric(query *tsdb.Query) map[string]interface{} {
+func (e *OpenTsdbExecutor) buildMetric(query pluginmodels.TSDBSubQuery) map[string]interface{} {
 	metric := make(map[string]interface{})
 
 	// Setting metric and aggregator

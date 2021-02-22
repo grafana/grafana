@@ -293,7 +293,7 @@ func newManagerScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *m
 	err := ctx.manager.Init()
 	require.NoError(t, err)
 
-	ctx.factory = PluginFactoryFunc(func(pluginID string, logger log.Logger, env []string) (Plugin, error) {
+	ctx.factory = func(pluginID string, logger log.Logger, env []string) (Plugin, error) {
 		ctx.plugin = &testPlugin{
 			pluginID: pluginID,
 			logger:   logger,
@@ -302,7 +302,7 @@ func newManagerScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *m
 		ctx.env = env
 
 		return ctx.plugin, nil
-	})
+	}
 
 	fn(t, ctx)
 }

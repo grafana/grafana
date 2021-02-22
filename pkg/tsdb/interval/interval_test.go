@@ -1,4 +1,4 @@
-package tsdb
+package interval
 
 import (
 	"testing"
@@ -10,7 +10,7 @@ import (
 )
 
 func TestIntervalCalculator_Calculate(t *testing.T) {
-	calculator := NewIntervalCalculator(&IntervalOptions{})
+	calculator := NewCalculator(CalculatorOptions{})
 
 	testCases := []struct {
 		name      string
