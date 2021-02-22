@@ -117,8 +117,10 @@ func (ss *SQLStore) Init() error {
 		return err
 	}
 	// Make sure the changes are synced, so they get shared with eventual other DB connections
-	if err := ss.Sync(); err != nil {
-		return err
+	if !ss.dbCfg.SkipMigrations {
+		if err := ss.Sync(); err != nil {
+			return err
+		}
 	}
 
 	return nil

@@ -3,7 +3,7 @@ import { e2e } from '@grafana/e2e';
 describe('Trace view', () => {
   it('Can lazy load big traces', () => {
     e2e.flows.login('admin', 'admin');
-    e2e().intercept('GET', '/api/datasources/proxy/29/api/traces/long-trace', {
+    e2e().intercept('GET', '/api/traces/long-trace', {
       fixture: 'long-trace-response.json',
     });
 
