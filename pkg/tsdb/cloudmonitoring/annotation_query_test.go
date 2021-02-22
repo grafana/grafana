@@ -1,6 +1,7 @@
 package cloudmonitoring
 
 import (
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -9,19 +10,29 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCloudMonitoringExecutor_parseToAnnotations(t *testing.T) {
-	data, err := loadTestFile("./test-data/2-series-response-no-agg.json")
+func TestCloudMonitoringExecutor_transformToDataframes(t *testing.T) {
+	d, err := loadTestFile("./test-data/2-series-response-no-agg.json")
 	require.NoError(t, err)
-	require.Len(t, data.TimeSeries, 3)
+	require.Len(t, d.TimeSeries, 3)
 
-	res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "annotationQuery"}
-	query := &cloudMonitoringTimeSeriesFilter{}
+	res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "annotationQuery",
+		Dataframes: tsdb.NewDecodedDataFrames(data.Frames{
+			&data.Frame{
+				Name: "title",
+				Fields: []*data.Field{
+					data.NewField("test", nil, []string{}),
+					data.NewField("test", nil, []string{}),
+				},
+			},
+		}),
+	}
 
-	err = query.parseToAnnotations(res, data, "atitle {{metric.label.instance_name}} {{metric.value}}", "atext {{resource.label.zone}}", "atag")
+	transformToDataframes(res, "atitle", "atext", "atag")
 	require.NoError(t, err)
 
-	require.Len(t, res.Tables, 1)
-	require.Len(t, res.Tables[0].Rows, 9)
-	assert.Equal(t, "atitle collector-asia-east-1 9.856650", res.Tables[0].Rows[0][1])
-	assert.Equal(t, "atext asia-east1-a", res.Tables[0].Rows[0][3])
+	decoded, err := res.Dataframes.Decoded()
+	require.Len(t, decoded, 1)
+	assert.Equal(t, "atitle", decoded[0].Fields[1].Name)
+	assert.Equal(t, "atext", decoded[0].Fields[2].Name)
+	assert.Equal(t, "atag", decoded[0].Fields[3].Name)
 }
