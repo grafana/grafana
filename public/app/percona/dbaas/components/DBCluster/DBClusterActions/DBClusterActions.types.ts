@@ -5,5 +5,6 @@ export interface DBClusterActionsProps {
   setSelectedCluster: (dbCluster: DBCluster) => void;
   setDeleteModalVisible: (isVisible: boolean) => void;
   setEditModalVisible: (isVisible: boolean) => void;
+  setLogsModalVisible: (isVisible: boolean) => void;
   getDBClusters: GetDBClustersAction;
 }

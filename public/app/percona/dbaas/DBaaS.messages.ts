@@ -125,6 +125,7 @@ export const Messages = {
         restartCluster: 'Restart',
         suspend: 'Suspend',
         resume: 'Resume',
+        logs: 'View logs',
       },
       status: {
         [DBClusterStatus.changing]: 'Pending',

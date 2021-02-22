@@ -9,6 +9,7 @@ import { getStyles } from './DBCluster.styles';
 import { DBCluster as Cluster, DBClusterProps } from './DBCluster.types';
 import { AddDBClusterModal } from './AddDBClusterModal/AddDBClusterModal';
 import { EditDBClusterModal } from './EditDBClusterModal/EditDBClusterModal';
+import { DBClusterLogsModal } from './DBClusterLogsModal/DBClusterLogsModal';
 import { useDBClusters } from './DBCluster.hooks';
 import {
   clusterStatusRender,
@@ -25,6 +26,7 @@ export const DBCluster: FC<DBClusterProps> = ({ kubernetes }) => {
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
+  const [logsModalVisible, setLogsModalVisible] = useState(false);
   const [selectedCluster, setSelectedCluster] = useState<Cluster>();
   const [dbClusters, getDBClusters, loading] = useDBClusters(kubernetes);
   const [settings, setSettings] = useState<Settings>();
@@ -50,7 +52,10 @@ export const DBCluster: FC<DBClusterProps> = ({ kubernetes }) => {
       },
       {
         Header: Messages.dbcluster.table.clusterStatusColumn,
-        accessor: clusterStatusRender,
+        accessor: clusterStatusRender({
+          setSelectedCluster,
+          setLogsModalVisible,
+        }),
       },
       {
         Header: Messages.dbcluster.table.actionsColumn,
@@ -58,6 +63,7 @@ export const DBCluster: FC<DBClusterProps> = ({ kubernetes }) => {
           setSelectedCluster,
           setDeleteModalVisible,
           setEditModalVisible,
+          setLogsModalVisible,
           getDBClusters,
         }),
       },
@@ -106,6 +112,7 @@ export const DBCluster: FC<DBClusterProps> = ({ kubernetes }) => {
         onDBClusterChanged={getDBClusters}
         selectedCluster={selectedCluster}
       />
+      <DBClusterLogsModal isVisible={logsModalVisible} setVisible={setLogsModalVisible} dbCluster={selectedCluster} />
       <Table columns={columns} data={dbClusters} loading={loading} noData={<AddNewClusterButton />} />
     </div>
   );
