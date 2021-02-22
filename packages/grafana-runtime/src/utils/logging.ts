@@ -5,13 +5,37 @@ export { LogLevel };
 type Contexts = Record<string, Record<string, number | string | Record<string, string | number>>>;
 
 /**
- * Log a message. Depending on configuration might be forwarded to backend and logged to stdout or sent to Sentry
+ * Log a message at INFO level. Depending on configuration might be forwarded to backend and logged to stdout or sent to Sentry
  *
  * @public
  */
-export function logMessage(message: string, contexts?: Contexts, level = LogLevel.Info) {
+export function logInfo(message: string, contexts?: Contexts) {
   captureMessage(message, {
-    level,
+    level: LogLevel.Info,
+    contexts,
+  });
+}
+
+/**
+ * Log a message at WARNING level. Depending on configuration might be forwarded to backend and logged to stdout or sent to Sentry
+ *
+ * @public
+ */
+export function logWarning(message: string, contexts?: Contexts) {
+  captureMessage(message, {
+    level: LogLevel.Warning,
+    contexts,
+  });
+}
+
+/**
+ * Log a message at DEBUG level. Depending on configuration might be forwarded to backend and logged to stdout or sent to Sentry
+ *
+ * @public
+ */
+export function logDebug(message: string, contexts?: Contexts) {
+  captureMessage(message, {
+    level: LogLevel.Debug,
     contexts,
   });
 }
