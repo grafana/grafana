@@ -288,7 +288,6 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseToAnnotations(quer
 		}
 	}
 
-	transformAnnotationToTable(annotations, queryRes)
 	return nil
 }
 

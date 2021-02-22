@@ -2,9 +2,9 @@ package cloudmonitoring
 
 import (
 	"context"
-	"strings"
-
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"strings"
 )
 
 func (e *CloudMonitoringExecutor) executeAnnotationQuery(ctx context.Context, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
@@ -19,19 +19,44 @@ func (e *CloudMonitoringExecutor) executeAnnotationQuery(ctx context.Context, ts
 		return nil, err
 	}
 
-	queryRes, resp, _, err := queries[0].run(ctx, tsdbQuery, e)
+	queryRes, resp, executedQuery, err := queries[0].run(ctx, tsdbQuery, e)
 	if err != nil {
 		return nil, err
+	}
+
+	err = queries[0].parseResponse(queryRes, resp, executedQuery)
+	if err != nil {
+		queryRes.Error = err
 	}
 
 	metricQuery := firstQuery.Model.Get("metricQuery")
 	title := metricQuery.Get("title").MustString()
 	text := metricQuery.Get("text").MustString()
 	tags := metricQuery.Get("tags").MustString()
+
+	transformToDataframes(queryRes, title, tags, text)
+
 	err = queries[0].parseToAnnotations(queryRes, resp, title, text, tags)
 	result.Results[firstQuery.RefId] = queryRes
 
 	return result, err
+}
+
+func transformToDataframes(queryRes *tsdb.QueryResult, title string, tags string, text string) {
+	frames, _ := queryRes.Dataframes.Decoded()
+	for i := range frames {
+		frames[i].Fields[0].Name = "time"
+
+		emptyArr := make([]string, frames[i].Fields[0].Len())
+		labels := frames[i].Fields[1].Labels
+		frames[i].Fields = data.Fields{
+			frames[i].Fields[0],
+			data.NewField(title, labels, emptyArr),
+			data.NewField(tags, labels, emptyArr),
+			data.NewField(text, labels, emptyArr),
+		}
+	}
+	queryRes.Dataframes = tsdb.NewDecodedDataFrames(frames)
 }
 
 func transformAnnotationToTable(data []map[string]string, result *tsdb.QueryResult) {
