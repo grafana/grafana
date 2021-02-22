@@ -80,6 +80,11 @@ import (
 
 // swagger:parameters RouteCreateSilence
 type CreateSilenceParams struct {
+	// ID of any existing silence to overwrite
+	// in:body
+	// required: false
+	Id string `json:"id"`
+
 	// in:body
 	Body Silence
 }
