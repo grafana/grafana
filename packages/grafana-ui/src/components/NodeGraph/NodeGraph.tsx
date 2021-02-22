@@ -230,7 +230,8 @@ const EdgeLabels = memo(function EdgeLabels(props: EdgeLabelsProps) {
           (e.source as NodeDatum).id === props.nodeHoveringId ||
           (e.target as NodeDatum).id === props.nodeHoveringId ||
           props.edgeHoveringId === e.id;
-        return shouldShow && <EdgeLabel key={e.id} edge={e} />;
+        const hasStats = e.mainStat || e.secondaryStat;
+        return shouldShow && hasStats && <EdgeLabel key={e.id} edge={e} />;
       })}
     </>
   );

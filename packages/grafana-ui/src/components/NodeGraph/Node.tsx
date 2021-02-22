@@ -109,6 +109,12 @@ function ResponseTypeCircle(props: { node: NodeDatum }) {
   }
 
   const nonZero = node.arcSections.filter((s) => s.value !== 0);
+  if (nonZero.length === 0) {
+    // Fallback if no arc is defined
+    return (
+      <circle fill="none" stroke={getColorForTheme('', theme)} strokeWidth={2} r={nodeR} cx={node.x} cy={node.y} />
+    );
+  }
 
   const { elements } = nonZero.reduce(
     (acc, section) => {
