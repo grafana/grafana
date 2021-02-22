@@ -12,6 +12,7 @@ export const DBClusterActions: FC<DBClusterActionsProps> = ({
   setSelectedCluster,
   setDeleteModalVisible,
   setEditModalVisible,
+  setLogsModalVisible,
   getDBClusters,
 }) => {
   const getActions = useCallback(
@@ -66,6 +67,13 @@ export const DBClusterActions: FC<DBClusterActionsProps> = ({
           } catch (e) {
             logger.error(e);
           }
+        },
+      },
+      {
+        title: Messages.dbcluster.table.actions.logs,
+        action: () => {
+          setSelectedCluster(dbCluster);
+          setLogsModalVisible(true);
         },
       },
     ],

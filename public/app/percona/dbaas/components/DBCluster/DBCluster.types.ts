@@ -55,6 +55,23 @@ export interface DBClusterConnection {
   username: string;
 }
 
+export interface DBClusterLogs {
+  pods: DBClusterPodLogs[];
+}
+
+export interface DBClusterPodLogs {
+  name: string;
+  isOpen: boolean;
+  events: string;
+  containers: DBClusterContainerLogs[];
+}
+
+export interface DBClusterContainerLogs {
+  name: string;
+  isOpen: boolean;
+  logs: string;
+}
+
 export interface DBClusterPayload {
   kubernetes_cluster_name: string;
   name: string;
@@ -95,4 +112,14 @@ interface DBClusterOperationAPI {
 
 export interface DBClusterConnectionAPI {
   connection_credentials: DBClusterConnection;
+}
+
+export interface DBClusterLogsAPI {
+  logs: DBClusterLogAPI[];
+}
+
+export interface DBClusterLogAPI {
+  pod: string;
+  container?: string;
+  logs: string[];
 }

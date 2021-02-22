@@ -79,3 +79,36 @@ export const mongoDBClusterConnectionStub: DBClusterConnection = {
 };
 
 export const getDBClustersActionStub = jest.fn();
+
+export const dbClusterLogsAPI = {
+  logs: [
+    {
+      pod: 'testpod1',
+      container: 'testpod1container1',
+      logs: ['test pod1', 'logs', '1'],
+    },
+    {
+      pod: 'testpod1',
+      container: 'testpod1container2',
+      logs: ['test pod1', 'logs', '2'],
+    },
+    {
+      pod: 'testpod1',
+      logs: ['test pod1', 'events'],
+    },
+    {
+      pod: 'testpod2',
+      container: 'testpod2container1',
+      logs: ['test pod2', 'logs', '1'],
+    },
+    {
+      pod: 'testpod2',
+      logs: ['test pod2', 'events'],
+    },
+    {
+      pod: 'testpod2',
+      container: 'testpod2container2',
+      logs: [],
+    },
+  ],
+};

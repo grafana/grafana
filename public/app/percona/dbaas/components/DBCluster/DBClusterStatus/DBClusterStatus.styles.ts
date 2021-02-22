@@ -46,5 +46,9 @@ export const getStyles = ({ colors, palette, spacing, typography }: GrafanaTheme
   `,
   logsLabel: css`
     font-size: ${typography.size.sm};
+    color: ${colors.linkExternal};
+    &:hover {
+      color: ${colors.textBlue};
+    }
   `,
 });

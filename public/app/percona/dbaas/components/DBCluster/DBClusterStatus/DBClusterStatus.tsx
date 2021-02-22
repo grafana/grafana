@@ -10,7 +10,9 @@ import { DBClusterStatus as Status } from '../DBCluster.types';
 import { COMPLETE_PROGRESS_DELAY, STATUS_DATA_QA } from './DBClusterStatus.constants';
 import { getProgressMessage, getShowProgressBarValue } from './DBClusterStatus.utils';
 
-export const DBClusterStatus: FC<DBClusterStatusProps> = ({ status, message, finishedSteps, totalSteps }) => {
+export const DBClusterStatus: FC<DBClusterStatusProps> = ({ dbCluster, setSelectedCluster, setLogsModalVisible }) => {
+  const { message, finishedSteps, totalSteps } = dbCluster;
+  const status = dbCluster.status as Status;
   const styles = useStyles(getStyles);
   const prevStatus = useRef<Status>();
   const statusError = status === Status.failed || status === Status.invalid;
@@ -26,6 +28,10 @@ export const DBClusterStatus: FC<DBClusterStatusProps> = ({ status, message, fin
     () => () => <pre>{message ? message.replace(/;/g, '\n') : Messages.dbcluster.table.status.errorMessage}</pre>,
     [message]
   );
+  const openLogs = () => {
+    setSelectedCluster(dbCluster);
+    setLogsModalVisible(true);
+  };
 
   useEffect(() => {
     // handles the last step of the progress bar
@@ -59,7 +65,9 @@ export const DBClusterStatus: FC<DBClusterStatusProps> = ({ status, message, fin
       )}
       {statusError && message && (
         <div className={styles.logsWrapper}>
-          <span className={styles.logsLabel}>{Messages.dbcluster.table.status.logs}</span>
+          <a className={styles.logsLabel} onClick={() => openLogs()}>
+            {Messages.dbcluster.table.status.logs}
+          </a>
           <Tooltip content={<ErrorMessage />} placement="bottom">
             <span className={cx(styles.statusIcon)} data-qa="cluster-status-error-message">
               <Icon name="info-circle" />
