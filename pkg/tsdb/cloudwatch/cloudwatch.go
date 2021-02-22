@@ -97,7 +97,7 @@ func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error)
 
 	bldr := strings.Builder{}
 	for i, s := range []string{
-		dsInfo.AuthType.String(), dsInfo.AccessKey, dsInfo.Profile, dsInfo.AssumeRoleARN, region,
+		dsInfo.AuthType.String(), dsInfo.AccessKey, dsInfo.Profile, dsInfo.AssumeRoleARN, region, dsInfo.Endpoint,
 	} {
 		if i != 0 {
 			bldr.WriteString(":")
@@ -130,9 +130,10 @@ func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error)
 		regionCfg = &aws.Config{Region: aws.String(dsInfo.Region)}
 		cfgs = append(cfgs, regionCfg)
 	}
-	// if dsInfo.Endpoint != "" {
-	// 	cfgs.Endpoint = aws.String(settings.Endpoint)
-	// }
+	
+	if dsInfo.Endpoint != "" {
+		cfgs = append(cfgs, &aws.Config{ Endpoint: aws.String(dsInfo.Endpoint)})
+	}
 
 	switch dsInfo.AuthType {
 	case authTypeSharedCreds:
