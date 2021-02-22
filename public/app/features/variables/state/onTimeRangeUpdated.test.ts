@@ -10,8 +10,7 @@ import { createConstantVariableAdapter } from '../constant/adapter';
 import { VariableRefresh } from '../types';
 import { constantBuilder, intervalBuilder } from '../shared/testing/builders';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
-import { TemplatingState } from './reducers';
-import { getRootReducer } from './helpers';
+import { getRootReducer, RootReducerType } from './helpers';
 import { toVariableIdentifier, toVariablePayload } from './types';
 import {
   setCurrentVariableValue,
@@ -23,6 +22,7 @@ import { createIntervalOptions } from '../interval/reducer';
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
 import { notifyApp } from '../../../core/reducers/appNotification';
 import { expect } from '../../../../test/lib/common';
+import { TemplatingState } from './reducers';
 
 variableAdapters.setInit(() => [createIntervalVariableAdapter(), createConstantVariableAdapter()]);
 
@@ -63,7 +63,7 @@ const getTestContext = () => {
   } as unknown) as DashboardState;
   const startRefreshMock = jest.fn();
   const adapter = variableAdapters.get('interval');
-  const preloadedState = {
+  const preloadedState = ({
     dashboard,
     location: { query: '' },
     templating: ({
@@ -72,7 +72,7 @@ const getTestContext = () => {
         'constant-1': { ...constant },
       },
     } as unknown) as TemplatingState,
-  };
+  } as unknown) as RootReducerType;
 
   return {
     interval,
@@ -98,7 +98,7 @@ describe('when onTimeRangeUpdated is dispatched', () => {
         startRefreshMock,
       } = getTestContext();
 
-      const tester = await reduxTester<{ templating: TemplatingState }>({ preloadedState })
+      const tester = await reduxTester<RootReducerType>({ preloadedState })
         .givenRootReducer(getRootReducer())
         .whenAsyncActionIsDispatched(onTimeRangeUpdated(range, dependencies));
 
@@ -133,7 +133,7 @@ describe('when onTimeRangeUpdated is dispatched', () => {
         startRefreshMock,
       } = getTestContext();
 
-      const base = await reduxTester<{ templating: TemplatingState }>({ preloadedState })
+      const base = await reduxTester<RootReducerType>({ preloadedState })
         .givenRootReducer(getRootReducer())
         .whenAsyncActionIsDispatched(setOptionAsCurrent(toVariableIdentifier(interval), interval.options[0], false));
 
@@ -173,7 +173,7 @@ describe('when onTimeRangeUpdated is dispatched', () => {
 
       adapter.updateOptions = jest.fn().mockRejectedValue(new Error('Something broke'));
 
-      const tester = await reduxTester<{ templating: TemplatingState }>({ preloadedState, debug: true })
+      const tester = await reduxTester<RootReducerType>({ preloadedState, debug: true })
         .givenRootReducer(getRootReducer())
         .whenAsyncActionIsDispatched(onTimeRangeUpdated(range, dependencies), true);
 

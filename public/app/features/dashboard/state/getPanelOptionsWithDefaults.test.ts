@@ -79,6 +79,7 @@ describe('getPanelOptionsWithDefaults', () => {
           defaults: {},
           overrides: [],
         },
+        isAfterPluginChange: false,
       });
 
       expect(result).toMatchInlineSnapshot(`
@@ -129,6 +130,7 @@ describe('getPanelOptionsWithDefaults', () => {
           },
           overrides: [],
         },
+        isAfterPluginChange: true,
       });
 
       expect(result).toMatchInlineSnapshot(`
@@ -187,6 +189,7 @@ describe('getPanelOptionsWithDefaults', () => {
           },
           overrides: [],
         },
+        isAfterPluginChange: true,
       });
 
       expect(result.fieldConfig.defaults.color!.mode).toBe(FieldColorModeId.PaletteClassic);
@@ -223,6 +226,7 @@ describe('getPanelOptionsWithDefaults', () => {
             },
           },
         },
+        isAfterPluginChange: true,
       });
       expect(result.fieldConfig.defaults.color!.mode).toBe(FieldColorModeId.Thresholds);
     });
@@ -357,6 +361,7 @@ interface ScenarioOptions {
   standardOptions?: Partial<Record<FieldConfigProperty, StandardOptionConfig>>;
   plugin?: PanelPlugin;
   options?: any;
+  isAfterPluginChange?: boolean;
 }
 
 function runScenario(options: ScenarioOptions) {
@@ -386,5 +391,6 @@ function runScenario(options: ScenarioOptions) {
     plugin,
     currentOptions: options.options || {},
     currentFieldConfig: fieldConfig,
+    isAfterPluginChange: !!options.isAfterPluginChange,
   });
 }

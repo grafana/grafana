@@ -7,6 +7,7 @@ export function createDatasourceSettings<T>(jsonData: T): DataSourceSettings<T> 
     name: 'datasource-test',
     typeLogoUrl: '',
     type: 'datasource',
+    typeName: 'Datasource',
     access: 'server',
     url: 'http://localhost',
     password: '',

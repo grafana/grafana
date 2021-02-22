@@ -17,7 +17,7 @@ export { LoadingPlaceholder, LoadingPlaceholderProps } from './LoadingPlaceholde
 export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
 export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
-export { PieChart, PieChartType } from './PieChart/PieChart';
+export { PieChart, PieChartType, PieChartLabelOptions } from './PieChart/PieChart';
 export { UnitPicker } from './UnitPicker/UnitPicker';
 export { StatsPicker } from './StatsPicker/StatsPicker';
 export { RefreshPicker, defaultIntervals } from './RefreshPicker/RefreshPicker';
@@ -87,7 +87,8 @@ export { LogLabels } from './Logs/LogLabels';
 export { LogMessageAnsi } from './Logs/LogMessageAnsi';
 export { LogRows } from './Logs/LogRows';
 export { getLogRowStyles } from './Logs/getLogRowStyles';
-export { FieldLink } from './Logs/FieldLink';
+export { DataLinkButton } from './DataLinks/DataLinkButton';
+export { FieldLinkList } from './DataLinks/FieldLinkList';
 export { ToggleButtonGroup, ToggleButton } from './ToggleButtonGroup/ToggleButtonGroup';
 // Panel editors
 export { FullWidthButtonContainer } from './Button/FullWidthButtonContainer';
@@ -103,7 +104,6 @@ export { DataLinksContextMenu } from './DataLinks/DataLinksContextMenu';
 export { SeriesIcon } from './VizLegend/SeriesIcon';
 export { InfoBox } from './InfoBox/InfoBox';
 export { FeatureBadge, FeatureInfoBox } from './InfoBox/FeatureInfoBox';
-export { DismissableFeatureInfoBox } from './InfoBox/DismissableFeatureInfoBox';
 
 export { JSONFormatter } from './JSONFormatter/JSONFormatter';
 export { JsonExplorer } from './JSONFormatter/json_explorer/json_explorer';
@@ -129,7 +129,6 @@ export { StringArrayEditor } from './OptionsUI/strings';
 export { NumberValueEditor } from './OptionsUI/number';
 export { SliderValueEditor } from './OptionsUI/slider';
 export { SelectValueEditor } from './OptionsUI/select';
-export { FieldConfigItemHeaderTitle } from './FieldConfigs/FieldConfigItemHeaderTitle';
 
 // Next-gen forms
 export { Form } from './Forms/Form';
@@ -206,8 +205,9 @@ export { UPlotChart } from './uPlot/Plot';
 export * from './uPlot/geometries';
 export * from './uPlot/plugins';
 export { useRefreshAfterGraphRendered } from './uPlot/hooks';
-export { usePlotContext, usePlotData, usePlotPluginContext } from './uPlot/context';
+export { usePlotContext, usePlotPluginContext } from './uPlot/context';
 export { GraphNG, FIXED_UNIT } from './GraphNG/GraphNG';
+export { useGraphNGContext } from './GraphNG/hooks';
 export { BarChart } from './BarChart/BarChart';
 export { BarChartOptions, BarStackingMode, BarValueVisibility, BarChartFieldConfig } from './BarChart/types';
 export { GraphNGLegendEvent, GraphNGLegendEventMode } from './GraphNG/types';

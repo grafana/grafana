@@ -273,7 +273,7 @@ func (hs *HTTPServer) loginUserWithUser(user *models.User, c *models.ReqContext)
 }
 
 func (hs *HTTPServer) Logout(c *models.ReqContext) {
-	if hs.Cfg.SAMLEnabled && hs.Cfg.SAMLSingleLogoutEnabled {
+	if hs.Cfg.SAMLEnabled && hs.Cfg.SAMLSingleLogoutEnabled && hs.License.HasValidLicense() {
 		c.Redirect(setting.AppSubUrl + "/logout/saml")
 		return
 	}

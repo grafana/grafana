@@ -1,8 +1,7 @@
-import { FieldColorModeId, toDataFrame } from '@grafana/data';
+import { FieldColorModeId, toDataFrame, dateTime } from '@grafana/data';
 import React from 'react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { GraphNG } from './GraphNG';
-import { dateTime } from '@grafana/data';
 import { LegendDisplayMode } from '../VizLegend/types';
 import { prepDataForStorybook } from '../../utils/storybook/data';
 import { useTheme } from '../../themes';

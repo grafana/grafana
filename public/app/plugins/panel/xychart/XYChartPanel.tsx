@@ -19,6 +19,7 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
   onFieldConfigChange,
 }) => {
   const dims = useMemo(() => getXYDimensions(options.dims, data.series), [options.dims, data.series]);
+
   if (dims.error) {
     return (
       <div>
@@ -61,7 +62,7 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
       onLegendClick={onLegendClick}
       onSeriesColorChange={onSeriesColorChange}
     >
-      <TooltipPlugin mode={options.tooltipOptions.mode as any} timeZone={timeZone} />
+      <TooltipPlugin data={data.series} mode={options.tooltipOptions.mode as any} timeZone={timeZone} />
       <>{/* needs to be an array */}</>
     </GraphNG>
   );

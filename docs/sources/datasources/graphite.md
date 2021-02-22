@@ -12,7 +12,7 @@ Grafana has an advanced Graphite query editor that lets you quickly navigate the
 change function parameters and much more. The editor can handle all types of graphite queries. It can even handle complex nested
 queries through the use of query references.
 
-Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana. Only organization admins can add data sources.
+Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana. Only organization admins can add data sources. To learn more about the Graphite data source, refer to Graphite's [product documentation](https://graphite.readthedocs.io/en/stable/).
 
 ## Graphite settings
 
@@ -69,6 +69,8 @@ a function is selected, it will be added and your focus will be in the text box 
                   animated-gif="/img/docs/graphite/graphite-functions-demo.gif" >}}
 
 Some functions like aliasByNode support an optional second argument. To add an argument, hover your mouse over the first argument and then click the `+` symbol that appears. To remove the second optional parameter, click on it and leave it blank and the editor will remove it.
+
+To learn more, refer to [Graphite's documentation on functions](https://graphite.readthedocs.io/en/latest/functions.html).
 
 ### Sort labels
 

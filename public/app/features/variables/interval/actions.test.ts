@@ -1,6 +1,5 @@
-import { getRootReducer } from '../state/helpers';
+import { getRootReducer, RootReducerType } from '../state/helpers';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
-import { TemplatingState } from '../state/reducers';
 import { toVariableIdentifier, toVariablePayload } from '../state/types';
 import { updateAutoValue, UpdateAutoValueDependencies, updateIntervalVariableOptions } from './actions';
 import { createIntervalOptions } from './reducer';
@@ -26,7 +25,7 @@ describe('interval actions', () => {
     it('then correct actions are dispatched', async () => {
       const interval = intervalBuilder().withId('0').withQuery('1s,1m,1h,1d').withAuto(false).build();
 
-      const tester = await reduxTester<{ templating: TemplatingState }>()
+      const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
         .whenAsyncActionIsDispatched(updateIntervalVariableOptions(toVariableIdentifier(interval)), true);
@@ -64,7 +63,7 @@ describe('interval actions', () => {
         .withAutoMin('1xyz') // illegal interval string
         .build();
 
-      const tester = await reduxTester<{ templating: TemplatingState }>()
+      const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
         .whenAsyncActionIsDispatched(updateOptions(toVariableIdentifier(interval)), true);
@@ -121,7 +120,7 @@ describe('interval actions', () => {
           } as unknown) as TemplateSrv,
         };
 
-        await reduxTester<{ templating: TemplatingState }>()
+        await reduxTester<RootReducerType>()
           .givenRootReducer(getRootReducer())
           .whenActionIsDispatched(
             addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval }))
@@ -165,7 +164,7 @@ describe('interval actions', () => {
           } as unknown) as TemplateSrv,
         };
 
-        await reduxTester<{ templating: TemplatingState }>()
+        await reduxTester<RootReducerType>()
           .givenRootReducer(getRootReducer())
           .whenActionIsDispatched(
             addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval }))
