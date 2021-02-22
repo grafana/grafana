@@ -37,7 +37,7 @@ require (
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/go-stack/stack v1.8.0
 	github.com/gobwas/glob v0.2.3
-	github.com/golang/mock v1.4.4
+	github.com/golang/mock v1.5.0
 	github.com/golang/protobuf v1.4.3
 	github.com/google/go-cmp v0.5.4
 	github.com/google/uuid v1.2.0
