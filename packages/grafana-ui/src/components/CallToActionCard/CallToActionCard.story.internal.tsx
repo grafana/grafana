@@ -15,7 +15,7 @@ export default {
     },
   },
   argTypes: {
-    ctaElement: { control: { type: 'select', options: ['button', 'custom'] } },
+    Element: { control: { type: 'select', options: ['button', 'custom'] } },
     className: NOOP_CONTROL,
     callToActionElement: NOOP_CONTROL,
     theme: NOOP_CONTROL,
@@ -23,7 +23,7 @@ export default {
 };
 
 interface StoryProps extends Partial<CallToActionCardProps> {
-  ctaElement: string;
+  Element: string;
   H1Text: string;
   buttonText: string;
 }
@@ -40,13 +40,13 @@ export const basic: Story<StoryProps> = (args) => {
 
   return renderComponentWithTheme(CallToActionCard, {
     message: args.message,
-    callToActionElement: ctaElements[args.ctaElement],
+    callToActionElement: ctaElements[args.Element],
     footer: args.footer,
   });
 };
 
 basic.args = {
-  ctaElement: 'custom',
+  Element: 'custom',
   message: 'Renders message prop content',
   footer: 'Renders footer prop content',
   H1Text: 'This is just H1 tag, you can any component as CTA element',
