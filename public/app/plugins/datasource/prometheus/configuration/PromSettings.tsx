@@ -75,7 +75,7 @@ export const PromSettings = (props: Props) => {
         <div className="gf-form">
           <InlineFormLabel
             width={13}
-            tooltip="You can use either POST or GET HTTP method to query your Prometheus data source. The POST method allows you to perform heavy requests, while the GET method will restrict you and return an error if the query is too large. POST is only available in Prometheus v2.1+)"
+            tooltip="You can use either POST or GET HTTP method to query your Prometheus data source. POST is the recommended method as it allows bigger queries. Change this to GET if you have a Prometheus version older than 2.1 or if POST requests are restricted in your network."
           >
             HTTP Method
           </InlineFormLabel>
