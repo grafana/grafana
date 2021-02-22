@@ -28,24 +28,27 @@ export default {
       disable: true,
     },
     grafanaControls: {
-      width: { control: { type: 'range', min: 200, max: 800 } },
-      height: { control: { type: 'range', min: 200, max: 800 } },
-      colorMode: { control: { type: 'select', options: [BigValueColorMode.Value, BigValueColorMode.Background] } },
-      graphMode: { control: { type: 'select', options: [BigValueGraphMode.Area, BigValueGraphMode.None] } },
-      justifyMode: { control: { type: 'select', options: [BigValueJustifyMode.Auto, BigValueJustifyMode.Center] } },
-      textMode: {
-        control: {
-          type: 'radio',
-          options: [
-            BigValueTextMode.Auto,
-            BigValueTextMode.Name,
-            BigValueTextMode.ValueAndName,
-            BigValueTextMode.None,
-            BigValueTextMode.Value,
-          ],
+      disable: false,
+      controls: {
+        width: { control: { type: 'range', min: 200, max: 800 } },
+        height: { control: { type: 'range', min: 200, max: 800 } },
+        colorMode: { control: { type: 'select', options: [BigValueColorMode.Value, BigValueColorMode.Background] } },
+        graphMode: { control: { type: 'select', options: [BigValueGraphMode.Area, BigValueGraphMode.None] } },
+        justifyMode: { control: { type: 'select', options: [BigValueJustifyMode.Auto, BigValueJustifyMode.Center] } },
+        textMode: {
+          control: {
+            type: 'radio',
+            options: [
+              BigValueTextMode.Auto,
+              BigValueTextMode.Name,
+              BigValueTextMode.ValueAndName,
+              BigValueTextMode.None,
+              BigValueTextMode.Value,
+            ],
+          },
         },
+        color: { control: { type: 'color' } },
       },
-      color: { control: { type: 'color' } },
     },
   },
 };

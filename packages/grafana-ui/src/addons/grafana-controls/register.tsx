@@ -11,16 +11,16 @@ const PARAM_KEY = 'grafanaControls';
 const GrafanaControlsPanel = () => {
   const [args, updateArgs, resetArgs] = useArgs();
   const rows = useArgTypes();
-  const argTypes = useParameter<ArgTypes>(PARAM_KEY, {});
+  const { controls } = useParameter<ArgTypes>(PARAM_KEY, { controls: {} });
   const newRows: ArgTypes = {};
 
-  for (const key in argTypes) {
-    if (!Object.hasOwnProperty.call(argTypes, key)) {
+  for (const key in controls) {
+    if (!Object.hasOwnProperty.call(controls, key)) {
       continue;
     }
 
     if (Object.hasOwnProperty.call(rows, key)) {
-      newRows[key] = { ...rows[key], ...argTypes[key] };
+      newRows[key] = { ...rows[key], ...controls[key] };
     }
   }
 
@@ -32,12 +32,24 @@ const GrafanaControlsPanel = () => {
 addons.register(ADDON_ID, (api) => {
   addons.add(PANEL_ID, {
     type: types.PANEL,
-    title: 'Grafana Controls',
-    // eslint-disable-next-line react/display-name
-    render: ({ active, key }) => (
-      <AddonPanel active={Boolean(active)} key={key}>
-        <GrafanaControlsPanel />
-      </AddonPanel>
-    ),
+    title() {
+      const { controls } = useParameter<ArgTypes>(PARAM_KEY, { controls: {} });
+      const controlsCount = Object.values(controls).filter((argType) => argType?.control).length;
+      const suffix = controlsCount === 0 ? '' : ` (${controlsCount})`;
+      return `Controls${suffix}`;
+    },
+    paramKey: PARAM_KEY,
+    /* eslint-disable react/display-name */
+    // @ts-ignore
+    render: ({ active, key }) => {
+      if (!active || !api.getCurrentStoryData()) {
+        return null;
+      }
+      return (
+        <AddonPanel active={Boolean(active)} key={key}>
+          <GrafanaControlsPanel />
+        </AddonPanel>
+      );
+    },
   });
 });

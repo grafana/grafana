@@ -2,7 +2,6 @@ import React from 'react';
 import { Story } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { ButtonCascader } from '@grafana/ui';
-import { NOOP_CONTROL } from '@grafana/ui/.storybook/preview';
 import { ButtonCascaderProps } from './ButtonCascader';
 
 export default {
@@ -11,7 +10,17 @@ export default {
   decorators: [withCenteredStory],
   parameters: {
     knobs: {
-      disabled: true,
+      disable: true,
+    },
+    controls: {
+      disable: true,
+    },
+    grafanaControls: {
+      disable: false,
+      controls: {
+        icon: { control: { type: 'select', options: ['plus', 'minus', 'table'] } },
+        options: { control: { type: 'object' } },
+      },
     },
   },
   args: {
@@ -28,13 +37,6 @@ export default {
       },
       { label: 'D', value: 'D' },
     ],
-  },
-  argTypes: {
-    icon: { control: { type: 'select', options: ['plus', 'minus', 'table'] } },
-    options: { control: 'object' },
-    className: NOOP_CONTROL,
-    value: NOOP_CONTROL,
-    fieldNames: NOOP_CONTROL,
   },
 };
 
