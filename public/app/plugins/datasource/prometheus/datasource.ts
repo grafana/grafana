@@ -84,7 +84,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     this.languageProvider = new PrometheusLanguageProvider(this);
     this.lookupsDisabled = instanceSettings.jsonData.disableMetricsLookup ?? false;
     this.customQueryParameters = new URLSearchParams(instanceSettings.jsonData.customQueryParameters);
-
     this.variables = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
   }
 
@@ -145,6 +144,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         data[key] = value;
       }
     }
+
     // If URL includes endpoint that supports POST method, try to use configures method
     if (GET_AND_POST_MEDATADATA_ENDPOINTS.some((endpoint) => url.includes(endpoint))) {
       try {
