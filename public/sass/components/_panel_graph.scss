@@ -217,6 +217,12 @@
   }
 }
 
+.legend-yaxis-container {
+  padding-top: 4px;
+  margin: 12px;
+  border-bottom: 1px solid $legendAxisBorderColor;
+}
+
 .annotation-tags {
   color: $purple;
 }

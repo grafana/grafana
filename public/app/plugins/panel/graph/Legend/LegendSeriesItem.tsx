@@ -148,15 +148,7 @@ class LegendSeriesLabel extends PureComponent<LegendSeriesLabelProps & LegendSer
         onColorChange={onColorChange}
         onToggleAxis={onToggleAxis}
       />,
-      <a
-        className="graph-legend-alias pointer"
-        title={label}
-        key="label"
-        onClick={onLabelClick}
-        aria-label={selectors.components.Panels.Visualization.Graph.Legend.legendItemAlias(label)}
-      >
-        {label}
-      </a>,
+      <GraphLegendItem label={label} key="label" onLabelClick={onLabelClick} />,
     ];
   }
 }
@@ -229,3 +221,21 @@ function LegendValue({ value, valueName, asTable, onValueClick }: LegendValuePro
     </div>
   );
 }
+
+interface GraphLegendItemProps {
+  label: string;
+  onLabelClick?: (event: any) => void;
+}
+
+const GraphLegendItem = ({ label, onLabelClick }: GraphLegendItemProps) => {
+  return (
+    <a
+      className="graph-legend-alias pointer"
+      title={label}
+      onClick={onLabelClick ? onLabelClick : () => {}}
+      aria-label={selectors.components.Panels.Visualization.Graph.Legend.legendItemAlias(label)}
+    >
+      <div className="legend-yaxis-container">{label}</div>
+    </a>
+  );
+};
