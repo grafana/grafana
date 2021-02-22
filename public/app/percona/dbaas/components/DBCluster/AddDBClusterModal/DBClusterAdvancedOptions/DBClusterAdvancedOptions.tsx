@@ -85,6 +85,7 @@ export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) 
             name={AddDBClusterFields.nodes}
             label={Messages.dbcluster.addModal.fields.nodes}
             validators={nodeValidators}
+            parse={parsePositiveInt}
           />
         )}
       </div>
