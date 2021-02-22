@@ -145,7 +145,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       }
     }
 
-    // If URL includes endpoint that supports POST method, try to use configures method
+    // If URL includes endpoint that supports POST and GET method, try to use configured method. This might fail as POST is supported only in v2.10+.
     if (GET_AND_POST_MEDATADATA_ENDPOINTS.some((endpoint) => url.includes(endpoint))) {
       try {
         return await this._request<T>(url, data, { method: this.httpMethod, hideFromInspector: true }).toPromise();
