@@ -150,11 +150,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       try {
         return await this._request<T>(url, data, { method: this.httpMethod, hideFromInspector: true }).toPromise();
       } catch (err) {
-        // Theoretically we should retry only on 405, but various status codes have been obsereved - so we've added more possible options
-        const hasStatusCodesToRetry = [401, 403, 404, 405].some((statusCode) => err.status === statusCode);
-        const hasPostHttpMethod = this.httpMethod === 'POST';
-        // If error, check method and status code and either console.warn + retry with GET, or throw error
-        if (hasPostHttpMethod && hasStatusCodesToRetry) {
+        // If status code of error is Method Not Allowed (405) and HTTP method is POST, retry with GET
+        if (this.httpMethod === 'POST' && err.status === 405) {
           console.warn(`Couldn't use configured POST HTTP method for this request. Trying to use GET method instead.`);
         } else {
           throw err;
