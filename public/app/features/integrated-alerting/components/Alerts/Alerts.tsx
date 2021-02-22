@@ -102,7 +102,7 @@ export const Alerts: FC = () => {
   }, []);
 
   return (
-    <Table data={data} columns={columns} pendingRequest={pendingRequest} emptyMessage={noData}>
+    <Table totalItems={data.length} data={data} columns={columns} pendingRequest={pendingRequest} emptyMessage={noData}>
       {(rows, table) =>
         rows.map(row => {
           const { prepareRow } = table;

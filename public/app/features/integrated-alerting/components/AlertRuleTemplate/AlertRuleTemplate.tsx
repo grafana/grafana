@@ -82,7 +82,13 @@ export const AlertRuleTemplate: FC = () => {
         setVisible={setAddModalVisible}
         getAlertRuleTemplates={getAlertRuleTemplates}
       />
-      <Table data={data} columns={columns} pendingRequest={pendingRequest} emptyMessage={noData} />
+      <Table
+        totalItems={data.length}
+        data={data}
+        columns={columns}
+        pendingRequest={pendingRequest}
+        emptyMessage={noData}
+      />
     </>
   );
 };

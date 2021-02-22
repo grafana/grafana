@@ -103,7 +103,9 @@ describe('AlertRules', () => {
   });
 
   it('should render correctly without data', async () => {
-    jest.spyOn(AlertRulesService, 'list').mockReturnValueOnce(Promise.resolve({ rules: [] }));
+    jest
+      .spyOn(AlertRulesService, 'list')
+      .mockReturnValueOnce(Promise.resolve({ rules: [], totals: { total_items: 0, total_pages: 0 } }));
 
     let wrapper: ReactWrapper;
 
