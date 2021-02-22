@@ -3,15 +3,15 @@ import React, { useEffect, useState } from 'react';
 import { useDebounce } from 'react-use';
 import { cx, css } from 'emotion';
 import { LibraryPanelCard } from '../LibraryPanelCard/LibraryPanelCard';
-import { GrafanaTheme } from '@grafana/data';
-import { getLibrarySrv, LibraryPanelDTO } from 'app/core/services/library_srv';
+import { DateTimeInput, GrafanaTheme } from '@grafana/data';
+import { deleteLibraryPanel, getLibraryPanels, LibraryPanelDTO } from '../../state/api';
 
 interface LibraryPanelViewProps {
   className?: string;
   onCreateNewPanel?: () => void;
   children?: (panel: LibraryPanelDTO, i: number) => JSX.Element | JSX.Element[];
   onClickCard?: (panel: LibraryPanelDTO) => void;
-  formatDate?: (dateString: string) => string;
+  formatDate?: (dateString: DateTimeInput, format?: string) => string;
   showSecondaryActions?: boolean;
 }
 
@@ -31,11 +31,9 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
   // making an additional API request (for example when a user deletes a library panel and we want to update the view to reflect that)
   const [libraryPanels, setLibraryPanels] = useState<LibraryPanelDTO[] | undefined>(undefined);
   useEffect(() => {
-    getLibrarySrv()
-      .getLibraryPanels()
-      .then((panels) => {
-        setLibraryPanels(panels);
-      });
+    getLibraryPanels().then((panels) => {
+      setLibraryPanels(panels);
+    });
   }, []);
 
   const [filteredItems, setFilteredItems] = useState(libraryPanels);
@@ -49,7 +47,7 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
 
   const onDeletePanel = async (uid: string) => {
     try {
-      await getLibrarySrv().deleteLibraryPanel(uid);
+      await deleteLibraryPanel(uid);
       const panelIndex = libraryPanels!.findIndex((panel) => panel.uid === uid);
       setLibraryPanels([...libraryPanels!.slice(0, panelIndex), ...libraryPanels!.slice(panelIndex + 1)]);
     } catch (err) {
@@ -59,6 +57,7 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
 
   return (
     <div className={cx(styles.container, className)}>
+      <span>Popular panels from the panel library</span>
       <div className={styles.searchHeader}>
         <Input
           placeholder="Search the panel library"
@@ -68,7 +67,6 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
         ></Input>
         {/* <Select placeholder="Filter by" onChange={() => {}} width={35} /> */}
       </div>
-      <div className={styles.panelTitle}>Popular panels from the panel library</div>
       <div className={styles.libraryPanelList}>
         {libraryPanels === undefined ? (
           <p>Loading library panels...</p>
@@ -115,6 +113,7 @@ const getPanelViewStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       flex-direction: column;
       flex-wrap: nowrap;
+      gap: ${theme.spacing.sm};
       height: 100%;
     `,
     libraryPanelList: css`
@@ -128,9 +127,6 @@ const getPanelViewStyles = stylesFactory((theme: GrafanaTheme) => {
     // searchInput: css`
     //   margin-right: 122px;
     // `,
-    panelTitle: css`
-      line-height: 30px;
-    `,
     newPanelButton: css`
       margin-top: 10px;
       align-self: flex-start;

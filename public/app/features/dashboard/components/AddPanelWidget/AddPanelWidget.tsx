@@ -17,7 +17,7 @@ import { css, cx, keyframes } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import tinycolor from 'tinycolor2';
 import { LibraryPanelsView } from '../../../library-panels/components/LibraryPanelsView/LibraryPanelsView';
-import { LibraryPanelDTO } from 'app/core/services/library_srv';
+import { LibraryPanelDTO } from 'app/features/library-panels/state/api';
 
 export type PanelPluginInfo = { id: any; defaults: { gridPos: { w: any; h: any }; title: any } };
 

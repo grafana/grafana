@@ -1,32 +1,17 @@
-import React, { FC, useCallback, useMemo, useRef, useState } from 'react';
-import { css } from 'emotion';
-import pick from 'lodash/pick';
+import React, { FC, useCallback, useMemo, useRef } from 'react';
 import { DashboardModel, PanelModel } from '../../state';
-import { GrafanaTheme, PanelData, PanelPlugin } from '@grafana/data';
-import {
-  Button,
-  Counter,
-  DataLinksInlineEditor,
-  Field,
-  Input,
-  RadioButtonGroup,
-  Select,
-  stylesFactory,
-  Switch,
-  TextArea,
-  useStyles,
-} from '@grafana/ui';
+import { PanelData, PanelPlugin } from '@grafana/data';
+import { Counter, DataLinksInlineEditor, Field, Input, RadioButtonGroup, Select, Switch, TextArea } from '@grafana/ui';
 import { getPanelLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
 import { PanelOptionsEditor } from './PanelOptionsEditor';
 import { AngularPanelOptions } from './AngularPanelOptions';
 import { VisualizationTab } from './VisualizationTab';
 import { OptionsGroup } from './OptionsGroup';
 import { RepeatRowSelect } from '../RepeatRowSelect/RepeatRowSelect';
-import { AddLibraryPanelModal } from '../../../library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal';
-import { LibraryPanelsView } from '../../../library-panels/components/LibraryPanelsView/LibraryPanelsView';
-import { PanelQueriesChangedEvent } from 'app/types/events';
 import config from 'app/core/config';
-import { LibraryPanelDTO } from 'app/core/services/library_srv';
+import { LibraryPanelInformation } from 'app/features/library-panels/components/LibraryPanelInfo/LibraryPanelInfo';
+import { isLibraryPanel } from '../../state/PanelModel';
+import { PanelLibraryOptionsGroup } from 'app/features/library-panels/components/PanelLibraryOptionsGroup/PanelLibraryOptionsGroup';
 
 interface Props {
   panel: PanelModel;
@@ -45,8 +30,6 @@ export const PanelOptionsTab: FC<Props> = ({
   onPanelConfigChange,
   onPanelOptionsChanged,
 }) => {
-  const styles = useStyles(getStyles);
-  const [showingAddPanelModal, setShowingAddPanelModal] = useState(false);
   const visTabInputRef = useRef<HTMLInputElement>(null);
   const linkVariablesSuggestions = useMemo(() => getPanelLinksVariableSuggestions(), []);
   const onRepeatRowSelectChange = useCallback((value: string | null) => onPanelConfigChange('repeat', value), [
@@ -68,53 +51,13 @@ export const PanelOptionsTab: FC<Props> = ({
     }
   };
 
-  const useLibraryPanel = (panelInfo: LibraryPanelDTO) => {
-    panel.restoreModel({
-      ...panelInfo.model,
-      ...pick(panel, 'gridPos', 'id'),
-      libraryPanel: pick(panelInfo, 'uid', 'name', 'meta'),
-    });
-
-    // dummy change for re-render
-    onPanelConfigChange('isEditing', true);
-    panel.refresh();
-    panel.events.publish(PanelQueriesChangedEvent);
-  };
-
-  const onAddToPanelLibrary = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    setShowingAddPanelModal(true);
-  };
-
-  if (config.featureToggles.panelLibrary && panel.libraryPanel) {
+  if (config.featureToggles.panelLibrary && isLibraryPanel(panel)) {
     elements.push(
-      <OptionsGroup title="Reusable panel information" id="Shared Panel Info" key="Shared Panel Info">
-        {panel.libraryPanel.uid && (
-          <p className={styles.libraryPanelInfo}>
-            {`Used on ${panel.libraryPanel.meta.connectedDashboards} `}
-            {panel.libraryPanel.meta.connectedDashboards === 1 ? 'dashboard' : 'dashboards'}
-            <br />
-            Last edited on {dashboard.formatDate(panel.libraryPanel.meta.updated!, 'L')} by
-            {panel.libraryPanel.meta.updatedBy.avatarUrl && (
-              <img
-                width="22"
-                height="22"
-                className={styles.userAvatar}
-                src={panel.libraryPanel.meta.updatedBy.avatarUrl}
-                alt={`Avatar for ${panel.libraryPanel.meta.updatedBy.name}`}
-              />
-            )}
-            {panel.libraryPanel.meta.updatedBy.name}
-          </p>
-        )}
-        {/*
-        // Commenting out until tags are implemented
-        <Field label="Tags">
-          <TagsInput onChange={() => {}} />
-        </Field> */}
-      </OptionsGroup>
+      <LibraryPanelInformation
+        panel={panel}
+        formatDate={(dateString, format) => dashboard.formatDate(dateString, format)}
+        key="Library Panel Information"
+      />
     );
   }
 
@@ -225,66 +168,8 @@ export const PanelOptionsTab: FC<Props> = ({
   );
 
   if (config.featureToggles.panelLibrary) {
-    elements.push(
-      <OptionsGroup
-        renderTitle={(isExpanded) => {
-          return isExpanded && !panel.libraryPanel ? (
-            <div className={styles.panelLibraryTitle}>
-              <span>Panel library</span>
-              <Button size="sm" onClick={onAddToPanelLibrary}>
-                Add this panel to the panel library
-              </Button>
-            </div>
-          ) : (
-            'Panel library'
-          );
-        }}
-        id="panel-library"
-        key="panel-library"
-        defaultToClosed
-      >
-        <LibraryPanelsView
-          formatDate={(dateString: string) => dashboard.formatDate(dateString, 'L')}
-          showSecondaryActions
-        >
-          {(panel) => (
-            <Button variant="secondary" onClick={() => useLibraryPanel(panel)}>
-              Use instead of current panel
-            </Button>
-          )}
-        </LibraryPanelsView>
-        {showingAddPanelModal && (
-          <AddLibraryPanelModal
-            panel={panel}
-            onDismiss={() => setShowingAddPanelModal(false)}
-            initialFolderId={dashboard.meta.folderId}
-            isOpen={showingAddPanelModal}
-          />
-        )}
-      </OptionsGroup>
-    );
+    elements.push(<PanelLibraryOptionsGroup panel={panel} dashboard={dashboard} key="Panel Library" />);
   }
 
   return <>{elements}</>;
 };
-
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  return {
-    libraryPanelInfo: css`
-      color: ${theme.colors.textSemiWeak};
-      font-size: ${theme.typography.size.sm};
-    `,
-    panelLibraryTitle: css`
-      display: flex;
-      gap: 10px;
-    `,
-    userAvatar: css`
-      border-radius: 50%;
-      box-sizing: content-box;
-      width: 22px;
-      height: 22px;
-      padding-left: ${theme.spacing.sm};
-      padding-right: ${theme.spacing.sm};
-    `,
-  };
-});

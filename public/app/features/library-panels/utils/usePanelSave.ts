@@ -3,7 +3,7 @@ import useAsyncFn from 'react-use/lib/useAsyncFn';
 import { AppEvents } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import { PanelModel } from 'app/features/dashboard/state';
-import { getLibrarySrv } from 'app/core/services/library_srv';
+import { addLibraryPanel, updateLibraryPanel } from '../state/api';
 
 const saveLibraryPanels = (panel: any, folderId: number) => {
   if (!panel.libraryPanel) {
@@ -12,10 +12,10 @@ const saveLibraryPanels = (panel: any, folderId: number) => {
 
   if (panel.libraryPanel && panel.libraryPanel.uid === undefined) {
     panel.libraryPanel.name = panel.title;
-    return getLibrarySrv().addLibraryPanel(panel, folderId!);
+    return addLibraryPanel(panel, folderId!);
   }
 
-  return getLibrarySrv().updateLibraryPanel(panel, folderId!);
+  return updateLibraryPanel(panel, folderId!);
 };
 
 export const usePanelSave = () => {

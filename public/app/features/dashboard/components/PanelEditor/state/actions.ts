@@ -1,5 +1,7 @@
 import { DashboardModel, PanelModel } from '../../../state';
-import { ThunkResult } from 'app/types';
+import { CoreEvents, ThunkResult } from 'app/types';
+import { appEvents } from 'app/core/core';
+import { SaveLibraryPanelModal } from 'app/features/library-panels/components/SaveLibraryPanelModal/SaveLibraryPanelModal';
 import {
   closeCompleted,
   PANEL_EDITOR_UI_STATE_STORAGE_KEY,
@@ -7,9 +9,12 @@ import {
   setPanelEditorUIState,
   updateEditorInitState,
 } from './reducers';
+import { updateLocation } from 'app/core/actions';
 import { cleanUpEditPanel, panelModelAndPluginReady } from '../../../state/reducers';
 import store from 'app/core/store';
 import pick from 'lodash/pick';
+import omit from 'lodash/omit';
+import isEqual from 'lodash/isEqual';
 
 export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardModel): ThunkResult<void> {
   return (dispatch) => {
@@ -21,6 +26,52 @@ export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardMod
         sourcePanel,
       })
     );
+  };
+}
+
+export function updateSourcePanel(sourcePanel: PanelModel): ThunkResult<void> {
+  return (dispatch, getStore) => {
+    const { getPanel } = getStore().panelEditor;
+
+    dispatch(
+      updateEditorInitState({
+        panel: getPanel(),
+        sourcePanel,
+      })
+    );
+  };
+}
+
+export function exitPanelEditor(): ThunkResult<void> {
+  return (dispatch, getStore) => {
+    const dashboard = getStore().dashboard.getModel();
+    const { getPanel, getSourcePanel, shouldDiscardChanges } = getStore().panelEditor;
+    const onConfirm = () =>
+      dispatch(
+        updateLocation({
+          query: { editPanel: null, tab: null },
+          partial: true,
+        })
+      );
+
+    const modifiedPanel = getPanel();
+    const modifiedSaveModel = modifiedPanel.getSaveModel();
+    const initialSaveModel = getSourcePanel().getSaveModel();
+    const panelChanged = !isEqual(omit(initialSaveModel, 'id'), omit(modifiedSaveModel, 'id'));
+    if (shouldDiscardChanges || !modifiedPanel.libraryPanel || !panelChanged) {
+      onConfirm();
+      return;
+    }
+
+    appEvents.emit(CoreEvents.showModalReact, {
+      component: SaveLibraryPanelModal,
+      props: {
+        panel: modifiedPanel,
+        folderId: dashboard!.meta.folderId,
+        isOpen: true,
+        onConfirm,
+      },
+    });
   };
 }
 

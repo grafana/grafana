@@ -36,7 +36,7 @@ import {
   isStandardFieldProp,
   restoreCustomOverrideRules,
 } from './getPanelOptionsWithDefaults';
-import { LibraryPanelDTO } from 'app/core/services/library_srv';
+import { LibraryPanelDTO } from 'app/features/library-panels/state/api';
 
 export interface GridPos {
   x: number;
@@ -531,6 +531,10 @@ export class PanelModel implements DataConfigSource {
 
 function getPluginVersion(plugin: PanelPlugin): string {
   return plugin && plugin.meta.info.version ? plugin.meta.info.version : config.buildInfo.version;
+}
+
+export function isLibraryPanel(panel: PanelModel): panel is PanelModel & Required<Pick<PanelModel, 'libraryPanel'>> {
+  return panel.libraryPanel !== undefined;
 }
 
 interface PanelOptionsCache {

@@ -6,27 +6,32 @@ import { useAsync, useDebounce } from 'react-use';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { usePanelSave } from '../../utils/usePanelSave';
 import { PanelModel } from 'app/features/dashboard/state';
+import { getLibraryPanelConnectedDashboards, LibraryPanelDTO } from '../../state/api';
 
 interface Props {
-  panel: PanelModel;
+  panel: PanelModel & { libraryPanel: Pick<LibraryPanelDTO, 'uid' | 'name' | 'meta'> };
   folderId: number;
   isOpen: boolean;
+  onConfirm: () => void;
   onDismiss: () => void;
-  connectedDashboards: number[];
 }
 
-export const SaveLibraryPanelModal: React.FC<Props> = ({
-  panel,
-  folderId,
-  isOpen,
-  onDismiss,
-  connectedDashboards,
-}: Props) => {
+export const SaveLibraryPanelModal: React.FC<Props> = ({ panel, folderId, isOpen, onDismiss, onConfirm }: Props) => {
   const [searchString, setSearchString] = useState('');
+  const connectedDashboardsState = useAsync(async () => {
+    const connectedDashboards = await getLibraryPanelConnectedDashboards(panel.libraryPanel.uid);
+    return connectedDashboards;
+  }, []);
+
   const dashState = useAsync(async () => {
-    const dashboardDTOs = await getBackendSrv().search({ dashboardIds: connectedDashboards });
-    return dashboardDTOs.map((dash) => dash.title);
-  }, [connectedDashboards]);
+    if (connectedDashboardsState.value) {
+      const dashboardDTOs = await getBackendSrv().search({ dashboardIds: connectedDashboardsState.value });
+      return dashboardDTOs.map((dash) => dash.title);
+    }
+
+    return [];
+  }, [connectedDashboardsState.value]);
+
   const [filteredDashboards, setFilteredDashboards] = useState<string[]>([]);
   useDebounce(
     () => {
@@ -51,7 +56,8 @@ export const SaveLibraryPanelModal: React.FC<Props> = ({
         <p className={styles.textInfo}>
           {'This update will affect '}
           <strong>
-            {connectedDashboards.length} {connectedDashboards.length === 1 ? 'dashboard' : 'dashboards'}.
+            {panel.libraryPanel.meta.connectedDashboards}{' '}
+            {panel.libraryPanel.meta.connectedDashboards === 1 ? 'dashboard' : 'dashboards'}.
           </strong>
           The following dashboards using the panel will be affected:
         </p>
@@ -67,7 +73,9 @@ export const SaveLibraryPanelModal: React.FC<Props> = ({
         ) : (
           <table className={styles.myTable}>
             <thead>
-              <th>Dashboard name</th>
+              <tr>
+                <th>Dashboard name</th>
+              </tr>
             </thead>
             <tbody>
               {filteredDashboards.map((dashName, i) => (
@@ -81,7 +89,10 @@ export const SaveLibraryPanelModal: React.FC<Props> = ({
         <HorizontalGroup>
           <Button
             onClick={() => {
-              saveLibraryPanel(panel, folderId).then(() => onDismiss());
+              saveLibraryPanel(panel, folderId).then(() => {
+                onConfirm();
+                onDismiss();
+              });
             }}
           >
             Update all

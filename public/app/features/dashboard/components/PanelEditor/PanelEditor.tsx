@@ -20,7 +20,13 @@ import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPane
 import { SaveDashboardModalProxy } from '../SaveDashboard/SaveDashboardModalProxy';
 import { DashboardPanel } from '../../dashgrid/DashboardPanel';
 
-import { initPanelEditor, panelEditorCleanUp, updatePanelEditorUIState } from './state/actions';
+import {
+  exitPanelEditor,
+  updateSourcePanel,
+  initPanelEditor,
+  panelEditorCleanUp,
+  updatePanelEditorUIState,
+} from './state/actions';
 
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 import { updateLocation } from 'app/core/reducers/location';
@@ -36,7 +42,6 @@ import { DashboardModel, PanelModel } from '../../state';
 import { PanelOptionsChangedEvent } from 'app/types/events';
 import { UnlinkModal } from '../../../library-panels/components/UnlinkModal/UnlinkModal';
 import { SaveLibraryPanelModal } from 'app/features/library-panels/components/SaveLibraryPanelModal/SaveLibraryPanelModal';
-import { getLibrarySrv } from 'app/core/services/library_srv';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -61,6 +66,8 @@ const mapStateToProps = (state: StoreState) => {
 const mapDispatchToProps = {
   updateLocation,
   initPanelEditor,
+  exitPanelEditor,
+  updateSourcePanel,
   panelEditorCleanUp,
   setDiscardChanges,
   updatePanelEditorUIState,
@@ -96,13 +103,6 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     this.forceUpdate();
   };
 
-  onPanelExit = () => {
-    this.props.updateLocation({
-      query: { editPanel: null, tab: null },
-      partial: true,
-    });
-  };
-
   onDiscard = () => {
     this.props.setDiscardChanges(true);
     this.props.updateLocation({
@@ -129,19 +129,19 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
       return;
     }
 
-    getLibrarySrv()
-      .getLibraryPanelConnectedDashboards(panelId)
-      .then((dashes) => {
-        appEvents.emit(CoreEvents.showModalReact, {
-          component: SaveLibraryPanelModal,
-          props: {
-            panel: this.props.panel,
-            folderId: this.props.dashboard.meta.folderId,
-            isOpen: true,
-            connectedDashboards: dashes,
-          },
-        });
-      });
+    appEvents.emit(CoreEvents.showModalReact, {
+      component: SaveLibraryPanelModal,
+      props: {
+        panel: this.props.panel,
+        folderId: this.props.dashboard.meta.folderId,
+        isOpen: true,
+        onConfirm: () => {
+          // need to update the source panel here so that when
+          // the user exits the panel editor they aren't prompted to save again
+          this.props.updateSourcePanel(this.props.panel);
+        },
+      },
+    });
   };
 
   onChangeTab = (tab: PanelEditorTab) => {
@@ -294,7 +294,12 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         Discard
       </ToolbarButton>,
       this.props.panel.libraryPanel ? (
-        <ToolbarButton onClick={this.onSavePanel} title="Apply changes and save library panel" key="save-panel">
+        <ToolbarButton
+          onClick={this.onSavePanel}
+          variant="primary"
+          title="Apply changes and save library panel"
+          key="save-panel"
+        >
           Save Panel
         </ToolbarButton>
       ) : (
@@ -303,7 +308,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         </ToolbarButton>
       ),
       <ToolbarButton
-        onClick={this.onPanelExit}
+        onClick={this.props.exitPanelEditor}
         variant="primary"
         title="Apply changes and go back to dashboard"
         key="apply"
@@ -324,6 +329,9 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
           Unlink
         </ToolbarButton>
       );
+
+      // Remove "Apply" button
+      editorActions.pop();
     }
 
     return editorActions;
@@ -365,7 +373,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
     return (
       <div className={styles.wrapper} aria-label={selectors.components.PanelEditor.General.content}>
-        <PageToolbar title={`${dashboard.title} / Edit Panel`} onGoBack={this.onPanelExit}>
+        <PageToolbar title={`${dashboard.title} / Edit Panel`} onGoBack={this.props.exitPanelEditor}>
           {this.renderEditorActions()}
         </PageToolbar>
         <div className={styles.verticalSplitPanesWrapper}>
