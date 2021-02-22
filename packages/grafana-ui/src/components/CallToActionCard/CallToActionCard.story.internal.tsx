@@ -28,7 +28,7 @@ interface StoryProps extends Partial<CallToActionCardProps> {
   buttonText: string;
 }
 
-export const basic: Story<StoryProps> = (args) => {
+export const Basic: Story<StoryProps> = (args) => {
   const ctaElements: { [key: string]: JSX.Element } = {
     custom: <h1>{args.H1Text}</h1>,
     button: (
@@ -45,7 +45,7 @@ export const basic: Story<StoryProps> = (args) => {
   });
 };
 
-basic.args = {
+Basic.args = {
   Element: 'custom',
   message: 'Renders message prop content',
   footer: 'Renders footer prop content',
