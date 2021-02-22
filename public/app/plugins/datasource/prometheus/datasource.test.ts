@@ -106,37 +106,11 @@ describe('PrometheusDatasource', () => {
       expect(fetchMock.mock.calls[0][0].method).toBe('GET');
     });
 
-    it('should perform a GET request with the DS HTTP method set to POST for non-POST endpoints', () => {
+    it('should still perform a GET request with the DS HTTP method set to POST', () => {
       const postSettings = _.cloneDeep(instanceSettings);
       postSettings.jsonData.httpMethod = 'POST';
       const promDs = new PrometheusDatasource(postSettings, templateSrvStub as any, timeSrvStub as any);
       promDs.metadataRequest('/foo');
-      expect(fetchMock.mock.calls.length).toBe(1);
-      expect(fetchMock.mock.calls[0][0].method).toBe('GET');
-    });
-    it('should perform a GET request with no DS version, DS HTTP method set to POST for POST endpoints', () => {
-      const postSettings = _.cloneDeep(instanceSettings);
-      postSettings.jsonData.httpMethod = 'POST';
-      const promDs = new PrometheusDatasource(postSettings, templateSrvStub as any, timeSrvStub as any);
-      promDs.metadataRequest('/api/v1/series');
-      expect(fetchMock.mock.calls.length).toBe(1);
-      expect(fetchMock.mock.calls[0][0].method).toBe('GET');
-    });
-    it('should perform a POST request with the DS version, DS HTTP method set to POST and with POST endpoints', () => {
-      const postSettings = _.cloneDeep(instanceSettings);
-      postSettings.jsonData.httpMethod = 'POST';
-      const promDs = new PrometheusDatasource(postSettings, templateSrvStub as any, timeSrvStub as any);
-      promDs.version = '2.14.0';
-      promDs.metadataRequest('/api/v1/series');
-      expect(fetchMock.mock.calls.length).toBe(1);
-      expect(fetchMock.mock.calls[0][0].method).toBe('POST');
-    });
-    it('should perform a GET request with the DS version, DS HTTP method set to GET and with POST endpoints', () => {
-      const postSettings = _.cloneDeep(instanceSettings);
-      postSettings.jsonData.httpMethod = 'GET';
-      const promDs = new PrometheusDatasource(postSettings, templateSrvStub as any, timeSrvStub as any);
-      promDs.version = '2.14.0';
-      promDs.metadataRequest('/api/v1/series');
       expect(fetchMock.mock.calls.length).toBe(1);
       expect(fetchMock.mock.calls[0][0].method).toBe('GET');
     });

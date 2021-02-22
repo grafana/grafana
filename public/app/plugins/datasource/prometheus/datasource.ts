@@ -44,7 +44,6 @@ import { PrometheusVariableSupport } from './variables';
 import PrometheusMetricFindQuery from './metric_find_query';
 
 export const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
-const GET_AND_POST_MEDATADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', 'api/v1/series', 'api/v1/labels'];
 
 export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> {
   type: string;
@@ -62,7 +61,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   exemplarTraceIdDestinations: ExemplarTraceIdDestination[] | undefined;
   lookupsDisabled: boolean;
   customQueryParameters: any;
-  version: string | undefined;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
@@ -86,12 +84,10 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     this.lookupsDisabled = instanceSettings.jsonData.disableMetricsLookup ?? false;
     this.customQueryParameters = new URLSearchParams(instanceSettings.jsonData.customQueryParameters);
     this.variables = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
-    this.version = undefined;
   }
 
   init = () => {
     this.loadRules();
-    this.setVersion();
   };
 
   getQueryDisplayText(query: PromQuery) {
@@ -147,14 +143,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         data[key] = value;
       }
     }
-    // If we have version (endpoint added in 2.14), we know that Prometheus instance supports POST method for /series and /labels
-    const supportsGetAndPostMethods =
-      this.version && GET_AND_POST_MEDATADATA_ENDPOINTS.some((endpoint) => url.includes(endpoint));
 
-    return this._request<T>(url, data, {
-      method: supportsGetAndPostMethods ? this.httpMethod : 'GET',
-      hideFromInspector: true,
-    }).toPromise(); // toPromise until we change getTagValues, getTagKeys to Observable
+    return this._request<T>(url, data, { method: 'GET', hideFromInspector: true }).toPromise(); // toPromise until we change getTagValues, getTagKeys to Observable
   }
 
   interpolateQueryExpr(value: string | string[] = [], variable: any) {
@@ -729,19 +719,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       }
     } catch (e) {
       console.log('Rules API is experimental. Ignore next error.');
-      console.error(e);
-    }
-  }
-
-  async setVersion() {
-    try {
-      const res = await this.metadataRequest('/api/v1/status/buildinfo');
-      const version = res.data?.data?.version;
-      if (version) {
-        this.version = version;
-      }
-    } catch (e) {
-      console.error(`Wasn't able to retrieve Prometheus version`);
       console.error(e);
     }
   }
