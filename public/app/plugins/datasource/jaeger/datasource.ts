@@ -8,6 +8,9 @@ import {
   DataQueryResponse,
   DataQuery,
   FieldType,
+  DataFrame,
+  TraceViewData,
+  FieldDTO,
 } from '@grafana/data';
 import { getBackendSrv, BackendSrvRequest } from '@grafana/runtime';
 import { Observable, from, of } from 'rxjs';
@@ -15,6 +18,7 @@ import { catchError, map } from 'rxjs/operators';
 
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { serializeParams } from 'app/core/utils/fetch';
+import { convertTraceToGraph } from './graphTransform';
 
 export type JaegerQuery = {
   query: string;
@@ -34,46 +38,19 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
     // At this moment we expect only one target. In case we somehow change the UI to be able to show multiple
     // traces at one we need to change this.
     const id = options.targets[0]?.query;
-    if (id) {
-      // TODO: this api is internal, used in jaeger ui. Officially they have gRPC api that should be used.
-      return this._request(`/api/traces/${encodeURIComponent(id)}`).pipe(
-        map((response) => {
-          return {
-            data: [
-              new MutableDataFrame({
-                fields: [
-                  {
-                    name: 'trace',
-                    type: FieldType.trace,
-                    values: response?.data?.data || [],
-                  },
-                ],
-                meta: {
-                  preferredVisualisationType: 'trace',
-                },
-              }),
-            ],
-          };
-        })
-      );
-    } else {
-      return of({
-        data: [
-          new MutableDataFrame({
-            fields: [
-              {
-                name: 'trace',
-                type: FieldType.trace,
-                values: [],
-              },
-            ],
-            meta: {
-              preferredVisualisationType: 'trace',
-            },
-          }),
-        ],
-      });
+
+    if (!id) {
+      return of({ data: [createTraceFrame([])] });
     }
+
+    // TODO: this api is internal, used in jaeger ui. Officially they have gRPC api that should be used.
+    return this._request(`/api/traces/${encodeURIComponent(id)}`).pipe(
+      map((response) => {
+        return {
+          data: [createTraceFrame(response?.data?.data || []), ...createGraphFrames(response?.data?.data || [])],
+        };
+      })
+    );
   }
 
   async testDatasource(): Promise<any> {
@@ -145,4 +122,59 @@ function getTime(date: string | DateTime, roundUp: boolean) {
     date = dateMath.parse(date, roundUp)!;
   }
   return date.valueOf() * 1000;
+}
+
+function createTraceFrame(data: any): DataFrame {
+  return new MutableDataFrame({
+    fields: [
+      {
+        name: 'trace',
+        type: FieldType.trace,
+        values: data,
+      },
+    ],
+    meta: {
+      preferredVisualisationType: 'trace',
+    },
+  });
+}
+
+function createGraphFrames(data: TraceViewData[]): DataFrame[] {
+  const { nodes, edges } = convertTraceToGraph(data[0]);
+
+  return [
+    new MutableDataFrame({
+      name: 'nodes',
+      fields: mapFields(nodes),
+      meta: { preferredVisualisationType: 'nodeGraph' },
+    }),
+
+    new MutableDataFrame({
+      name: 'edges',
+      fields: mapFields(edges),
+      meta: { preferredVisualisationType: 'nodeGraph' },
+    }),
+  ];
+}
+
+function mapFields(data: Array<Record<string, any>>): FieldDTO[] {
+  const map = data.reduce((acc, datum) => {
+    for (const key of Object.keys(datum)) {
+      if (!acc[key]) {
+        acc[key] = createField(key);
+      }
+      (acc[key].values! as any[]).push(datum[key as keyof typeof datum]);
+    }
+    return acc;
+  }, {} as Record<string, FieldDTO>);
+  return Object.values(map);
+}
+
+function createField(name: string, displayName?: string): FieldDTO {
+  return {
+    name,
+    type: FieldType.string,
+    values: [],
+    config: { displayName: displayName || name },
+  };
 }
