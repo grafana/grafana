@@ -59,7 +59,7 @@ import (
 // get silences
 //
 //     Responses:
-//       200: Silences
+//       200: GettableSilences
 //       400: ValidationError
 
 // swagger:route POST /api/v1/silences alertmanager RouteCreateSilence
@@ -67,7 +67,7 @@ import (
 // create silence
 //
 //     Responses:
-//       201: Silence
+//       201: GettableSilence
 //       400: ValidationError
 
 // swagger:route GET /api/v1/silence/{SilenceId} alertmanager RouteGetSilence
@@ -75,7 +75,7 @@ import (
 // get silence
 //
 //     Responses:
-//       200: Silence
+//       200: GettableSilence
 //       400: ValidationError
 
 // swagger:route DELETE /api/v1/silence/{SilenceId} alertmanager RouteDeleteSilence
@@ -88,13 +88,8 @@ import (
 
 // swagger:parameters RouteCreateSilence
 type CreateSilenceParams struct {
-	// ID of any existing silence to overwrite
 	// in:body
-	// required: false
-	Id string `json:"id"`
-
-	// in:body
-	Body Silence
+	Body SilenceBody
 }
 
 //swagger:parameters RouteGetSilence RouteDeleteSilence
@@ -104,10 +99,16 @@ type GetDeleteSilenceParams struct {
 }
 
 // swagger:model
-type Silence amv2.Silence
+type SilenceBody struct {
+	Idd string `json:"id"`
+	amv2.Silence
+}
 
 // swagger:model
-type Silences []amv2.Silence
+type GettableSilences []amv2.GettableSilences
+
+// swagger:model
+type GetableSilence amv2.Silence
 
 // swagger:model
 type GettableAlerts amv2.GettableAlerts
