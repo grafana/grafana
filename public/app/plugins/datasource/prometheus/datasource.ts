@@ -149,7 +149,14 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       try {
         return await this._request<T>(url, data, { method: this.httpMethod, hideFromInspector: true }).toPromise();
       } catch (err) {
-        console.warn(`Couldn't use configured HTTP method for this request. Trying to use GET method instead.`);
+        const hasStatusCodesToRetry = [401, 403, 404, 405].some((statusCode) => err.status === statusCode);
+        const hasPostHttpMethod = this.httpMethod === 'POST';
+
+        if (hasPostHttpMethod && hasStatusCodesToRetry) {
+          console.warn(`Couldn't use configured POST HTTP method for this request. Trying to use GET method instead.`);
+        } else {
+          throw err;
+        }
       }
     }
 
