@@ -21,17 +21,20 @@ import { AlertRulesService } from '../AlertRules.service';
 
 import { Messages } from './AddAlertRuleModal.messages';
 import { getStyles } from './AddAlertRuleModal.styles';
-import { AddAlertRuleModalProps, AddAlertRuleFormValues } from './AddAlertRuleModal.types';
+import { AddAlertRuleFormValues, AddAlertRuleModalProps } from './AddAlertRuleModal.types';
 import {
   formatTemplateOptions,
   formatChannelsOptions,
   formatCreateAPIPayload,
   formatUpdateAPIPayload,
   getInitialValues,
+  minValidator,
 } from './AddAlertRuleModal.utils';
-import { SEVERITY_OPTIONS } from './AddAlertRulesModal.constants';
+import { SEVERITY_OPTIONS, MINIMUM_DURATION_VALUE } from './AddAlertRulesModal.constants';
 
 const { required } = validators;
+const durationValidators = [required, minValidator(MINIMUM_DURATION_VALUE)];
+const nameValidators = [required];
 
 export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVisible, alertRule }) => {
   const styles = useStyles(getStyles);
@@ -107,13 +110,13 @@ export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVi
                   )}
                 </Field>
 
-                <TextInputField label={Messages.nameField} name="name" validators={[required]} />
+                <TextInputField label={Messages.nameField} name="name" validators={nameValidators} />
               </>
             )}
 
             <TextInputField label={Messages.thresholdField} name="threshold" />
 
-            <NumberInputField label={Messages.durationField} name="duration" validators={[required]} />
+            <NumberInputField label={Messages.durationField} name="duration" validators={durationValidators} />
 
             <Field name="severity" validate={required}>
               {({ input }) => (
