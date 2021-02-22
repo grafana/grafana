@@ -44,6 +44,7 @@ import { PrometheusVariableSupport } from './variables';
 import PrometheusMetricFindQuery from './metric_find_query';
 
 export const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
+const GET_AND_POST_MEDATADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', 'api/v1/series', 'api/v1/labels'];
 
 export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> {
   type: string;
@@ -137,14 +138,22 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   }
 
   // Use this for tab completion features, wont publish response to other components
-  metadataRequest<T = any>(url: string) {
+  async metadataRequest<T = any>(url: string) {
     const data: any = {};
     for (const [key, value] of this.customQueryParameters) {
       if (data[key] == null) {
         data[key] = value;
       }
     }
-    return this._request<T>(url, data, { method: 'GET', hideFromInspector: true }).toPromise(); // toPromise until we change getTagValues, getTagKeys to Observable
+    if (GET_AND_POST_MEDATADATA_ENDPOINTS.some((endpoint) => url.includes(endpoint))) {
+      try {
+        return await this._request<T>(url, data, { method: this.httpMethod, hideFromInspector: true }).toPromise();
+      } catch (err) {
+        console.warn(`Couldn't use configured HTTP method for this request. Trying to use GET method instead.`);
+      }
+    }
+
+    return await this._request<T>(url, data, { method: 'GET', hideFromInspector: true }).toPromise(); // toPromise until we change getTagValues, getTagKeys to Observable
   }
 
   interpolateQueryExpr(value: string | string[] = [], variable: any) {
