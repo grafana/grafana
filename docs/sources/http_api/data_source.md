@@ -540,7 +540,7 @@ JSON Body schema:
 
 In addition, each data source has its own specific properties that should be added in a request. 
 
-**Example Request for the MySQL data source:**
+**Example request for the MySQL data source:**
 
 ```http
 POST /api/tsdb/query HTTP/1.1
