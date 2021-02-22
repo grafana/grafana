@@ -38,6 +38,14 @@ import (
 //       200: GettableAlerts
 //       400: ValidationError
 
+// swagger:route POST /api/v1/alerts alertmanager RoutePostAmAlerts
+//
+// create alertmanager alerts
+//
+//     Responses:
+//       200: Ack
+//       400: ValidationError
+
 // swagger:route GET /api/v1/alerts/groups alertmanager RouteGetAmAlertGroups
 //
 // get alertmanager alerts
@@ -134,6 +142,12 @@ type AlertsParams struct {
 	// in: query
 	// required: false
 	Receivers []string `json:"receivers"`
+}
+
+// swagger:parameters RoutePostAmAlerts
+type PostableAlerts struct {
+	// in:body
+	PostableAlerts []amv2.PostableAlert `yaml:"" json:""`
 }
 
 // swagger:parameters RoutePostAlertingConfig
