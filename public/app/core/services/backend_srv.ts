@@ -8,7 +8,7 @@ import { AppEvents, DataQueryErrorType } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
 import { DashboardSearchHit } from 'app/features/search/types';
-import { FolderDTO, OrgUser } from 'app/types';
+import { FolderDTO } from 'app/types';
 import { coreModule } from 'app/core/core_module';
 import { ContextSrv, contextSrv } from './context_srv';
 import { parseInitFromOptions, parseResponseBody, parseUrlFromOptions } from '../utils/fetch';
@@ -397,10 +397,6 @@ export class BackendSrv implements BackendService {
 
   getFolderByUid(uid: string) {
     return this.get<FolderDTO>(`/api/folders/${uid}`);
-  }
-
-  async getOrgUsers(): Promise<OrgUser[]> {
-    return this.get('/api/org/users');
   }
 }
 
