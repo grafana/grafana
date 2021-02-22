@@ -8,7 +8,7 @@ import { SelectableValue } from '@grafana/data';
 import { css } from 'emotion';
 import { onChangeCascader } from './optionMappings';
 
-export interface CascaderProps {
+interface CascaderProps {
   /** The separator between levels in the search */
   separator?: string;
   placeholder?: string;
