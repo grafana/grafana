@@ -17,6 +17,7 @@ type AppPlugin struct {
 	FrontendPluginBase
 	Routes       []*AppPluginRoute `json:"routes"`
 	NoConfigPage bool              `json: "noConfigPage"`
+	AutoEnabled  bool              `json: "autoEnabled"`
 
 	FoundChildPlugins []*PluginInclude `json:"-"`
 	Pinned            bool             `json:"-"`

@@ -64,7 +64,10 @@ func GetEnabledPlugins(orgId int64) (*EnabledPlugins, error) {
 	}
 
 	for pluginId, app := range Apps {
-		if b, ok := pluginSettingMap[pluginId]; ok {
+		if app.AutoEnabled {
+			app.Pinned = true
+			enabledPlugins.Apps = append(enabledPlugins.Apps, app)
+		} else if b, ok := pluginSettingMap[pluginId]; ok {
 			app.Pinned = b.Pinned
 			enabledPlugins.Apps = append(enabledPlugins.Apps, app)
 		}
