@@ -22,11 +22,11 @@ import AccordianLogs from './SpanDetail/AccordianLogs';
 
 import { ViewedBoundsFunctionType } from './utils';
 import { TNil } from '../types';
-import { TraceSpan } from '@grafana/data';
-import { createStyle } from '../Theme';
+import { GrafanaTheme, TraceSpan } from '@grafana/data';
 import { UIPopover } from '../uiElementsContext';
+import { useStyles } from '@grafana/ui';
 
-const getStyles = createStyle(() => {
+const getStyles = (theme: GrafanaTheme) => {
   return {
     wrapper: css`
       label: wrapper;
@@ -65,14 +65,14 @@ const getStyles = createStyle(() => {
     `,
     logMarker: css`
       label: logMarker;
-      background-color: rgba(0, 0, 0, 0.5);
+      background-color: ${theme.colors.text};
       cursor: pointer;
       height: 60%;
       min-width: 1px;
       position: absolute;
       top: 20%;
       &:hover {
-        background-color: #000;
+        background-color: ${theme.colors.textSemiWeak};
       }
       &::before,
       &::after {
@@ -87,16 +87,8 @@ const getStyles = createStyle(() => {
         left: 0;
       }
     `,
-    logHint: css`
-      label: logHint;
-      pointer-events: none;
-      // TODO won't work with different UI elements injected
-      & .ant-popover-inner-content {
-        padding: 0.25rem;
-      }
-    `,
   };
-});
+};
 
 type TCommonProps = {
   color: string;
@@ -155,7 +147,7 @@ function SpanBar(props: TInnerProps) {
     // round to the nearest 0.2%
     return toPercent(Math.round(posPercent * 500) / 500);
   });
-  const styles = getStyles();
+  const styles = useStyles(getStyles);
 
   return (
     <div
