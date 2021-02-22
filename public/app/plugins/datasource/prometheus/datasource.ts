@@ -83,7 +83,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     this.languageProvider = new PrometheusLanguageProvider(this);
     this.lookupsDisabled = instanceSettings.jsonData.disableMetricsLookup ?? false;
     this.customQueryParameters = new URLSearchParams(instanceSettings.jsonData.customQueryParameters);
-
     this.variables = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
   }
 
@@ -144,6 +143,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         data[key] = value;
       }
     }
+
     return this._request<T>(url, data, { method: 'GET', hideFromInspector: true }).toPromise(); // toPromise until we change getTagValues, getTagKeys to Observable
   }
 

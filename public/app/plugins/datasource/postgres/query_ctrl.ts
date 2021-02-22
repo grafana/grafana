@@ -7,13 +7,9 @@ import PostgresQuery from './postgres_query';
 import sqlPart from './sql_part';
 import { auto } from 'angular';
 import { CoreEvents } from 'app/types';
-import { PanelEvents } from '@grafana/data';
+import { PanelEvents, QueryResultMeta } from '@grafana/data';
 import { VariableWithMultiSupport } from 'app/features/variables/types';
-import { getLocationSrv, TemplateSrv } from '@grafana/runtime';
-
-export interface QueryMeta {
-  sql: string;
-}
+import { TemplateSrv } from '@grafana/runtime';
 
 const defaultQuery = `SELECT
   $__time(time_column),
@@ -30,7 +26,8 @@ export class PostgresQueryCtrl extends QueryCtrl {
   formats: any[];
   queryModel: PostgresQuery;
   metaBuilder: PostgresMetaQuery;
-  lastQueryError: string | null;
+  lastQueryMeta?: QueryResultMeta;
+  lastQueryError?: string;
   showHelp: boolean;
   tableSegment: any;
   whereAdd: any;
@@ -104,13 +101,6 @@ export class PostgresQueryCtrl extends QueryCtrl {
 
     this.panelCtrl.events.on(PanelEvents.dataReceived, this.onDataReceived.bind(this), $scope);
     this.panelCtrl.events.on(PanelEvents.dataError, this.onDataError.bind(this), $scope);
-  }
-
-  showQueryInspector() {
-    getLocationSrv().update({
-      query: { inspect: this.panel.id, inspectTab: 'query' },
-      partial: true,
-    });
   }
 
   updateRawSqlAndRefresh() {
@@ -311,7 +301,8 @@ export class PostgresQueryCtrl extends QueryCtrl {
   }
 
   onDataReceived(dataList: any) {
-    this.lastQueryError = null;
+    this.lastQueryError = undefined;
+    this.lastQueryMeta = dataList[0]?.meta;
   }
 
   onDataError(err: any) {

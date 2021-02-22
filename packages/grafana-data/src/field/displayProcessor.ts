@@ -31,6 +31,7 @@ const timeFormats: KeyValue<boolean> = {
   dateTimeAsUS: true,
   dateTimeAsUSNoDateIfToday: true,
   dateTimeAsLocal: true,
+  dateTimeAsLocalNoDateIfToday: true,
   dateTimeFromNow: true,
 };
 

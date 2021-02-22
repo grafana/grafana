@@ -124,7 +124,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   runInstantQuery = (
     target: LokiQuery,
     options: DataQueryRequest<LokiQuery>,
-    responseListLength: number
+    responseListLength = 1
   ): Observable<DataQueryResponse> => {
     const timeNs = this.getTime(options.range.to, true);
     const queryLimit = isMetricsQuery(target.expr) ? options.maxDataPoints : target.maxLines;
@@ -490,13 +490,18 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   }
 
   async annotationQuery(options: AnnotationQueryRequest<LokiQuery>): Promise<AnnotationEvent[]> {
-    if (!options.annotation.expr) {
+    const { expr, maxLines, instant } = options.annotation;
+
+    if (!expr) {
       return [];
     }
 
-    const interpolatedExpr = this.templateSrv.replace(options.annotation.expr, {}, this.interpolateQueryExpr);
-    const query = { refId: `annotation-${options.annotation.name}`, expr: interpolatedExpr };
-    const { data } = await this.runRangeQuery(query, options as any).toPromise();
+    const interpolatedExpr = this.templateSrv.replace(expr, {}, this.interpolateQueryExpr);
+    const query = { refId: `annotation-${options.annotation.name}`, expr: interpolatedExpr, maxLines, instant };
+    const { data } = instant
+      ? await this.runInstantQuery(query, options as any).toPromise()
+      : await this.runRangeQuery(query, options as any).toPromise();
+
     const annotations: AnnotationEvent[] = [];
 
     for (const frame of data) {
