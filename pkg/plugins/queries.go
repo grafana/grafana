@@ -30,9 +30,10 @@ func GetPluginSettings(orgId int64) (map[string]*models.PluginSettingInfoDTO, er
 			Enabled:  true,
 		}
 
-		// apps are disabled by default
-		if pluginDef.Type == PluginTypeApp {
-			opt.Enabled = false
+		// apps are disabled by default unless autoEnabled: true
+		if app, exists := Apps[pluginDef.Id]; exists {
+			opt.Enabled = app.AutoEnabled
+			opt.Pinned = app.AutoEnabled
 		}
 
 		// if it's included in app check app settings
@@ -64,10 +65,7 @@ func GetEnabledPlugins(orgId int64) (*EnabledPlugins, error) {
 	}
 
 	for pluginId, app := range Apps {
-		if app.AutoEnabled {
-			app.Pinned = true
-			enabledPlugins.Apps = append(enabledPlugins.Apps, app)
-		} else if b, ok := pluginSettingMap[pluginId]; ok {
+		if b, ok := pluginSettingMap[pluginId]; ok {
 			app.Pinned = b.Pinned
 			enabledPlugins.Apps = append(enabledPlugins.Apps, app)
 		}
