@@ -14,28 +14,27 @@ import angular from 'angular';
 import 'angular-route';
 import 'angular-sanitize';
 import 'angular-bindonce';
-import 'react';
-import 'react-dom';
+import ReactDOM from 'react-dom';
+import React from 'react';
 
 import 'vendor/bootstrap/bootstrap';
 import 'vendor/angular-other/angular-strap';
 import config from 'app/core/config';
 // @ts-ignore ignoring this for now, otherwise we would have to extend _ interface with move
 import {
-  AppEvents,
   setLocale,
   setTimeZoneResolver,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
   standardTransformersRegistry,
 } from '@grafana/data';
-import appEvents from 'app/core/app_events';
-import { checkBrowserCompatibility } from 'app/core/utils/browser';
+
+// TODO[Router]
+// import { checkBrowserCompatibility } from 'app/core/utils/browser';
 import { importPluginModule } from 'app/features/plugins/plugin_loader';
-import { angularModules, coreModule } from 'app/core/core_module';
+import { angularModules } from 'app/core/core_module';
 import { registerAngularDirectives } from 'app/core/core';
-import { setupAngularRoutes } from 'app/routes/routes';
-import { registerEchoBackend, setEchoSrv } from '@grafana/runtime';
+import { registerEchoBackend, setEchoSrv, setLocationService } from '@grafana/runtime';
 import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
@@ -46,8 +45,13 @@ import { getDefaultVariableAdapters, variableAdapters } from './features/variabl
 import { initDevFeatures } from './dev';
 import { getStandardTransformers } from 'app/core/utils/standardTransformers';
 import { SentryEchoBackend } from './core/services/echo/backends/sentry/SentryBackend';
-import { monkeyPatchInjectorWithPreAssignedBindings } from './core/injectorMonkeyPatch';
+// TODO[Router]
+// import { monkeyPatchInjectorWithPreAssignedBindings } from './core/injectorMonkeyPatch';
 import { setVariableQueryRunner, VariableQueryRunner } from './features/variables/query/VariableQueryRunner';
+import { configureStore } from './store/configureStore';
+import { DashboardLoaderSrv } from './features/dashboard/services/DashboardLoaderSrv';
+import AppWrapper from './core/AppWrapper';
+import { LocationService } from './core/navigation/LocationService';
 
 // add move to lodash for backward compatabiltiy
 // @ts-ignore
@@ -72,6 +76,7 @@ export class GrafanaApp {
   preBootModules: any[] | null;
 
   constructor() {
+    this.initServices();
     this.preBootModules = [];
     this.registerFunctions = {};
     this.ngModuleDependencies = [];
@@ -89,11 +94,11 @@ export class GrafanaApp {
 
   init() {
     const app = angular.module('grafana', []);
-
     addClassIfNoOverlayScrollbar();
     setLocale(config.bootData.user.locale);
     setTimeZoneResolver(() => config.bootData.user.timezone);
 
+    configureStore();
     standardEditorsRegistry.setInit(getStandardOptionEditors);
     standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
     standardTransformersRegistry.setInit(getStandardTransformers);
@@ -143,7 +148,6 @@ export class GrafanaApp {
 
     this.ngModuleDependencies = [
       'grafana.core',
-      'ngRoute',
       'ngSanitize',
       '$strap.directives',
       'grafana',
@@ -157,39 +161,52 @@ export class GrafanaApp {
     });
 
     // register react angular wrappers
-    coreModule.config(setupAngularRoutes);
+    angular.module('grafana.services').service('dashboardLoaderSrv', DashboardLoaderSrv);
     registerAngularDirectives();
 
     // disable tool tip animation
     $.fn.tooltip.defaults.animation = false;
 
     // bootstrap the app
-    const injector: any = angular.bootstrap(document, this.ngModuleDependencies);
+    // const injector: any = angular.bootstrap(document, this.ngModuleDependencies);
 
-    injector.invoke(() => {
-      _.each(this.preBootModules, (module: angular.IModule) => {
-        _.extend(module, this.registerFunctions);
-      });
-
-      this.preBootModules = null;
-
-      if (!checkBrowserCompatibility()) {
-        setTimeout(() => {
-          appEvents.emit(AppEvents.alertWarning, [
-            'Your browser is not fully supported',
-            'A newer browser version is recommended',
-          ]);
-        }, 1000);
-      }
-    });
-
-    monkeyPatchInjectorWithPreAssignedBindings(injector);
+    // injector.invoke(() => {
+    //   _.each(this.preBootModules, (module: angular.IModule) => {
+    //     _.extend(module, this.registerFunctions);
+    //   });
+    //
+    //   this.preBootModules = null;
+    // TODO[Router]
+    //   if (!checkBrowserCompatibility()) {
+    //     setTimeout(() => {
+    //       appEvents.emit(AppEvents.alertWarning, [
+    //         'Your browser is not fully supported',
+    //         'A newer browser version is recommended',
+    //       ]);
+    //     }, 1000);
+    //   }
+    // });
+    // TODO[Router]
+    //     monkeyPatchInjectorWithPreAssignedBindings(injector);
 
     // Preload selected app plugins
+    const promises = [];
     for (const modulePath of config.pluginsToPreload) {
-      importPluginModule(modulePath);
+      promises.push(importPluginModule(modulePath));
     }
+    Promise.all(promises).then(() => {
+      ReactDOM.render(
+        React.createElement(AppWrapper, {
+          app: this,
+        }),
+        document.getElementById('reactRoot')
+      );
+    });
   }
+
+  initServices = () => {
+    setLocationService(new LocationService());
+  };
 
   initEchoSrv() {
     setEchoSrv(new Echo({ debug: process.env.NODE_ENV === 'development' }));
