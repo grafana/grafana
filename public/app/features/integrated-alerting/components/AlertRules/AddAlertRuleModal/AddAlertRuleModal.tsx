@@ -15,13 +15,14 @@ import { AppEvents } from '@grafana/data';
 import { Messages } from './AddAlertRuleModal.messages';
 import { AddAlertRuleModalProps, AddAlertRuleFormValues } from './AddAlertRuleModal.types';
 import { getStyles } from './AddAlertRuleModal.styles';
-import { SEVERITY_OPTIONS } from './AddAlertRulesModal.constants';
+import { SEVERITY_OPTIONS, MINIMUM_DURATION_VALUE } from './AddAlertRulesModal.constants';
 import {
   formatTemplateOptions,
   formatChannelsOptions,
   formatCreateAPIPayload,
   formatUpdateAPIPayload,
   getInitialValues,
+  minValidator,
 } from './AddAlertRuleModal.utils';
 import { AlertRulesProvider } from '../AlertRules.provider';
 import { AlertRulesService } from '../AlertRules.service';
@@ -30,6 +31,8 @@ import { NotificationChannelService } from '../../NotificationChannel/Notificati
 import { appEvents } from 'app/core/core';
 
 const { required } = validators;
+const durationValidators = [required, minValidator(MINIMUM_DURATION_VALUE)];
+const nameValidators = [required];
 
 export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVisible, alertRule }) => {
   const styles = useStyles(getStyles);
@@ -105,13 +108,13 @@ export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVi
                   )}
                 </Field>
 
-                <TextInputField label={Messages.nameField} name="name" validators={[required]} />
+                <TextInputField label={Messages.nameField} name="name" validators={nameValidators} />
               </>
             )}
 
             <TextInputField label={Messages.thresholdField} name="threshold" />
 
-            <NumberInputField label={Messages.durationField} name="duration" validators={[required]} />
+            <NumberInputField label={Messages.durationField} name="duration" validators={durationValidators} />
 
             <Field name="severity" validate={required}>
               {({ input }) => (
