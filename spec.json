@@ -325,6 +325,82 @@
         }
       }
     },
+    "/api/v1/receiver/test": {
+      "get": {
+        "description": "Test receiver",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "testing"
+        ],
+        "operationId": "RouteTestReceiverConfig",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/ExtendedReceiver"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/Success"
+            }
+          },
+          "412": {
+            "description": "SmtpNotEnabled",
+            "schema": {
+              "$ref": "#/definitions/SmtpNotEnabled"
+            }
+          },
+          "500": {
+            "description": "Failure",
+            "schema": {
+              "$ref": "#/definitions/Failure"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rule/test": {
+      "get": {
+        "description": "Test rule",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "testing"
+        ],
+        "operationId": "RouteTestRuleConfig",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/TestRulePayload"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "TestRuleResponse",
+            "schema": {
+              "$ref": "#/definitions/TestRuleResponse"
+            }
+          }
+        }
+      }
+    },
     "/api/v1/rules": {
       "get": {
         "description": "List rule groups",
@@ -682,6 +758,24 @@
     },
     "AlertGroups": {
       "$ref": "#/definitions/alertGroups"
+    },
+    "AlertInstancesResponse": {
+      "type": "object",
+      "properties": {
+        "instances": {
+          "description": "Instances is an array of arrow encoded dataframes\neach frame has a single row, and a column for each instance (alert identified by unique labels) with a boolean value (firing/not firing)",
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint8"
+            }
+          },
+          "x-go-name": "Instances"
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     },
     "AlertNotification": {
       "type": "object",
@@ -1203,6 +1297,61 @@
       "title": "ErrorType models the different API error types.",
       "x-go-package": "github.com/prometheus/client_golang/api/prometheus/v1"
     },
+    "EvalAlertConditionCommand": {
+      "type": "object",
+      "properties": {
+        "condition": {
+          "type": "string",
+          "x-go-name": "Condition"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AlertQuery"
+          },
+          "x-go-name": "Data"
+        },
+        "now": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "Now"
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
+    "ExtendedReceiver": {
+      "type": "object",
+      "properties": {
+        "email_configs": {
+          "$ref": "#/definitions/EmailConfig"
+        },
+        "grafana_managed_receiver": {
+          "$ref": "#/definitions/GrafanaReceiver"
+        },
+        "opsgenie_configs": {
+          "$ref": "#/definitions/OpsGenieConfig"
+        },
+        "pagerduty_configs": {
+          "$ref": "#/definitions/PagerdutyConfig"
+        },
+        "pushover_configs": {
+          "$ref": "#/definitions/PushoverConfig"
+        },
+        "slack_configs": {
+          "$ref": "#/definitions/SlackConfig"
+        },
+        "victorops_configs": {
+          "$ref": "#/definitions/VictorOpsConfig"
+        },
+        "webhook_configs": {
+          "$ref": "#/definitions/WebhookConfig"
+        },
+        "wechat_configs": {
+          "$ref": "#/definitions/WechatConfig"
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
     "ExtendedRuleNode": {
       "type": "object",
       "properties": {
@@ -1294,6 +1443,9 @@
         }
       },
       "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
+    "Failure": {
+      "$ref": "#/definitions/ResponseDetails"
     },
     "GetableSilence": {
       "$ref": "#/definitions/silence"
@@ -1471,6 +1623,21 @@
         "$ref": "#/definitions/LabelName"
       },
       "x-go-package": "github.com/prometheus/common/model"
+    },
+    "LotexQuery": {
+      "type": "object",
+      "properties": {
+        "Expr": {
+          "type": "string",
+          "example": "(node_filesystem_avail_bytes{fstype!=\"\",job=\"integrations/node_exporter\"} node_filesystem_size_bytes{fstype!=\"\",job=\"integrations/node_exporter\"} * 100 \u003c 5 and node_filesystem_readonly{fstype!=\"\",job=\"integrations/node_exporter\"} == 0)"
+        },
+        "datasourceUid": {
+          "description": "DatasourceUID is required if the query will be sent to grafana to be executed",
+          "type": "string",
+          "x-go-name": "DatasourceUID"
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     },
     "MatchRegexps": {
       "type": "object",
@@ -1867,6 +2034,16 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/eval"
+    },
+    "ResponseDetails": {
+      "type": "object",
+      "properties": {
+        "msg": {
+          "type": "string",
+          "x-go-name": "Msg"
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     },
     "RoleType": {
       "type": "string",
@@ -2328,6 +2505,12 @@
       },
       "x-go-package": "github.com/prometheus/alertmanager/config"
     },
+    "SmtpNotEnabled": {
+      "$ref": "#/definitions/ResponseDetails"
+    },
+    "Success": {
+      "$ref": "#/definitions/ResponseDetails"
+    },
     "TLSConfig": {
       "type": "object",
       "title": "TLSConfig configures the options for TLS connections.",
@@ -2355,9 +2538,35 @@
       },
       "x-go-package": "github.com/prometheus/common/config"
     },
-    "URL": {
+    "TestRulePayload": {
       "type": "object",
-      "title": "URL is a custom URL type that allows validation at configuration load time.",
+      "properties": {
+        "expr": {
+          "$ref": "#/definitions/LotexQuery"
+        },
+        "grafana_condition": {
+          "$ref": "#/definitions/EvalAlertConditionCommand"
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
+    "TestRuleResponse": {
+      "type": "object",
+      "properties": {
+        "alerts": {
+          "type": "object",
+          "x-go-name": "Alerts"
+        },
+        "grafana_alert_instances": {
+          "$ref": "#/definitions/AlertInstancesResponse"
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
+    "URL": {
+      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
+      "type": "object",
+      "title": "A URL represents a parsed URL (technically, a URI reference).",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -2390,7 +2599,7 @@
           "$ref": "#/definitions/Userinfo"
         }
       },
-      "x-go-package": "github.com/prometheus/common/config"
+      "x-go-package": "net/url"
     },
     "UpdateDashboardAclCommand": {
       "type": "object",
