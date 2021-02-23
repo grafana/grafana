@@ -81,7 +81,7 @@ export class LocationService implements LocationServiceAPI {
     }
   };
 
-  push = (location: H.Path) => {
+  push = (location: H.Path | H.LocationDescriptor) => {
     this.history.push(location);
   };
 
@@ -128,7 +128,7 @@ export class LocationService implements LocationServiceAPI {
 
   // TODO[Router]
   //@ts-ignore
-  search(search: any, paramValue: any): any {
+  search(search: any): any {
     navigationLogger('LocationService', false, 'Angular compat layer: search');
     throw new Error('Angular compat layer: search implementation missing');
     // This is a makover of original Angular's implementation.

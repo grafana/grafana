@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { ILocationService, ITimeoutService } from 'angular';
+import { ITimeoutService } from 'angular';
 import {
   dateMath,
   dateTime,
@@ -20,6 +20,14 @@ import { appEvents } from '../../../core/core';
 import { CoreEvents } from '../../../types';
 import { config } from 'app/core/config';
 import { getRefreshFromUrl } from '../utils/getRefreshFromUrl';
+import { getLocationService } from '@grafana/runtime';
+
+interface TimeSrvDependencies {
+  getLocationService: typeof getLocationService;
+}
+const runtimeDependencies: TimeSrvDependencies = {
+  getLocationService,
+};
 
 export class TimeSrv {
   time: any;
@@ -34,9 +42,9 @@ export class TimeSrv {
   constructor(
     $rootScope: GrafanaRootScope,
     private $timeout: ITimeoutService,
-    private $location: ILocationService,
     private timer: any,
-    private contextSrv: ContextSrv
+    private contextSrv: ContextSrv,
+    private dependencies = runtimeDependencies
   ) {
     // default time
     this.time = getDefaultTimeRange().raw;
@@ -131,26 +139,31 @@ export class TimeSrv {
   }
 
   private initTimeFromUrl() {
-    const params = this.$location.search();
-
-    if (params.time && params['time.window']) {
-      this.time = this.getTimeWindow(params.time, params['time.window']);
+    const params = new URLSearchParams(this.dependencies.getLocationService().getCurrentLocation().search);
+    if (params.get('time') && params.get('time.window')) {
+      this.time = this.getTimeWindow(params.get('time')!, params.get('time.window')!);
     }
 
-    if (params.from) {
-      this.time.from = this.parseUrlParam(params.from) || this.time.from;
+    if (params.get('from')) {
+      this.time.from = this.parseUrlParam(params.get('from')!) || this.time.from;
     }
-    if (params.to) {
-      this.time.to = this.parseUrlParam(params.to) || this.time.to;
+    if (params.get('to')) {
+      this.time.to = this.parseUrlParam(params.get('to')!) || this.time.to;
     }
     // if absolute ignore refresh option saved to dashboard
-    if (params.to && params.to.indexOf('now') === -1) {
+    if (params.get('to') && params.get('to')!.indexOf('now') === -1) {
       this.refresh = false;
       this.dashboard.refresh = false;
     }
+
+    let paramsJSON: Record<string, string> = {};
+    params.forEach(function (value, key) {
+      paramsJSON[key] = value;
+    });
+
     // but if refresh explicitly set then use that
     this.refresh = getRefreshFromUrl({
-      params,
+      params: paramsJSON,
       currentRefresh: this.refresh,
       refreshIntervals: this.dashboard?.timepicker?.refresh_intervals,
       isAllowedIntervalFn: this.contextSrv.isAllowedInterval,
@@ -247,10 +260,15 @@ export class TimeSrv {
     // update url
     if (fromRouteUpdate !== true) {
       const urlRange = this.timeRangeForUrl();
-      const urlParams = this.$location.search();
-      urlParams.from = urlRange.from;
-      urlParams.to = urlRange.to;
-      this.$location.search(urlParams);
+      const urlParams = new URLSearchParams(this.dependencies.getLocationService().getCurrentLocation().search);
+
+      urlParams.set('from', urlRange.from.toString());
+      urlParams.set('to', urlRange.to.toString());
+
+      this.dependencies.getLocationService().push({
+        ...this.dependencies.getLocationService().getCurrentLocation(),
+        search: urlParams.toString(),
+      });
     }
 
     this.$timeout(this.refreshDashboard.bind(this), 0);

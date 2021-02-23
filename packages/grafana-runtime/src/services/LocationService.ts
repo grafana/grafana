@@ -6,10 +6,9 @@ interface AngularLocationProviderAPI extends Pick<ILocationService, 'path' | 'ha
 
 export interface LocationService extends AngularLocationProviderAPI {
   partial: (query: Record<string, any>, replace?: boolean) => void;
-  push: (location: H.Path) => void;
+  push: (location: H.Path | H.LocationDescriptor<any>) => void;
   replace: (location: H.Path) => void;
   getCurrentLocation: () => H.Location;
-  pushPath: (path: H.Path) => void;
   getHistory: () => H.History;
 }
 
