@@ -179,5 +179,9 @@ type GrafanaReceiver models.CreateAlertNotificationCommand
 
 type ApiReceiver struct {
 	config.Receiver
+	GrafanaReceivers
+}
+
+type GrafanaReceivers struct {
 	GrafanaManagedReceivers []*GrafanaReceiver `yaml:"grafana_managed_receiver_configs,omitempty" json:"grafana_managed_receiver_configs,omitempty"`
 }
