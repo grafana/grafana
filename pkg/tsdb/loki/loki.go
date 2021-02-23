@@ -62,7 +62,6 @@ func init() {
 }
 
 func (e *LokiExecutor) getClient(dsInfo *models.DataSource) (apiv1.API, error) {
-	fmt.Println("----idx----", dsInfo.Url)
 	cfg := api.Config{
 		Address:      dsInfo.Url + "/loki/",
 		RoundTripper: e.Transport,
@@ -168,14 +167,13 @@ func parseQuery(dsInfo *models.DataSource, queries []*tsdb.Query, queryContext *
 			return nil, err
 		}
 
-		dsInterval, err := tsdb.GetIntervalFrom(dsInfo, queryModel.Model, time.Second*15)
+		dsInterval, err := tsdb.GetIntervalFrom(dsInfo, queryModel.Model, time.Second)
 		if err != nil {
 			return nil, err
 		}
 
-		intervalFactor := queryModel.Model.Get("intervalFactor").MustInt64(1)
 		interval := intervalCalculator.Calculate(queryContext.TimeRange, dsInterval)
-		step := time.Duration(int64(interval.Value) * intervalFactor)
+		step := time.Duration(int64(interval.Value))
 
 		qs = append(qs, &LokiQuery{
 			Expr:         expr,
