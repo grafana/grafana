@@ -315,7 +315,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
       editorActions.splice(
         1,
         0,
-        <ModalsController>
+        <ModalsController key="unlink-controller">
           {({ showModal, hideModal }) => {
             return (
               <ToolbarButton

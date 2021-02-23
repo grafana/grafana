@@ -24,8 +24,9 @@ export const SaveLibraryPanelModal: React.FC<Props> = ({ panel, folderId, isOpen
   }, []);
 
   const dashState = useAsync(async () => {
-    if (connectedDashboardsState.value) {
-      const dashboardDTOs = await getBackendSrv().search({ dashboardIds: connectedDashboardsState.value });
+    const connectedDashboards = connectedDashboardsState.value;
+    if (connectedDashboards && connectedDashboards.length > 0) {
+      const dashboardDTOs = await getBackendSrv().search({ dashboardIds: connectedDashboards });
       return dashboardDTOs.map((dash) => dash.title);
     }
 
@@ -131,7 +132,7 @@ const getModalStyles = stylesFactory((theme: GrafanaTheme) => {
         height: ${theme.spacing.xl};
       }
 
-      tr:nth-child(odd) {
+      tbody > tr:nth-child(odd) {
         background: ${theme.colors.bg2};
       }
     `,
