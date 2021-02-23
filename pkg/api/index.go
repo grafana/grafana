@@ -282,7 +282,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 
 	if len(configNodes) > 0 {
 		navTree = append(navTree, &dtos.NavLink{
-			Id:         "cfg",
+			Id:         dtos.NavIDCfg,
 			Text:       "Configuration",
 			SubTitle:   "Organization: " + c.OrgName,
 			Icon:       "cog",
@@ -408,8 +408,8 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		GoogleTagManagerId:      setting.GoogleTagManagerId,
 		BuildVersion:            setting.BuildVersion,
 		BuildCommit:             setting.BuildCommit,
-		NewGrafanaVersion:       plugins.GrafanaLatestVersion,
-		NewGrafanaVersionExists: plugins.GrafanaHasUpdate,
+		NewGrafanaVersion:       hs.PluginManager.GrafanaLatestVersion,
+		NewGrafanaVersionExists: hs.PluginManager.GrafanaHasUpdate,
 		AppName:                 setting.ApplicationName,
 		AppNameBodyClass:        getAppNameBodyClass(hs.License.HasValidLicense()),
 		FavIcon:                 "public/img/fav32.png",

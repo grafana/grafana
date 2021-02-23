@@ -15,7 +15,7 @@ const onExemplarsChange = ({ query, onChange }: Props) => (e: React.ChangeEvent<
 export function PromExemplarField(props: Props) {
   return (
     <InlineField label="Exemplars" labelWidth="auto">
-      <InlineSwitch label="Exemplars" value={props.query.exemplar} onChange={onExemplarsChange(props)} />
+      <InlineSwitch label="Exemplars" value={!!props.query.exemplar} onChange={onExemplarsChange(props)} />
     </InlineField>
   );
 }

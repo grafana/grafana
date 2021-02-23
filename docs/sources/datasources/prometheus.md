@@ -141,6 +141,11 @@ There are two syntaxes:
 Why two ways? The first syntax is easier to read and write but does not allow you to use a variable in the middle of a word. When the _Multi-value_ or _Include all value_
 options are enabled, Grafana converts the labels from plain text to a regex compatible string. Which means you have to use `=~` instead of `=`.
 
+### Ad hoc filters variable
+
+Prometheus supports the special [ad hoc filters]({{< relref "../variables/variable-types/add-ad-hoc-filters.md" >}}) variable type. It allows you to specify any number of label/value filters on the fly. These filters are automatically
+applied to all your Prometheus queries.
+
 ## Annotations
 
 [Annotations]({{< relref "../dashboards/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation
@@ -207,7 +212,7 @@ If you are running Grafana in an Amazon EKS cluster, follow the AWS guide to [Qu
 
 ## Exemplars
 
-> **Note:** This feature is available in Prometheus 2.25+ and Grafana 7.4+.
+> **Note:** This feature is available in Prometheus 2.26+ and Grafana 7.4+.
 
 Grafana 7.4 and later versions have the capability to show exemplars data alongside a metric both in Explore and Dashboards.
 Exemplars are a way to associate higher cardinality metadata from a specific event with traditional timeseries data.

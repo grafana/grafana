@@ -122,6 +122,7 @@ export type IconName =
   | 'cloud'
   | 'draggabledots'
   | 'folder-upload'
+  | 'palette'
   | 'gf-interpolation-linear'
   | 'gf-interpolation-smooth'
   | 'gf-interpolation-step-before'
@@ -246,6 +247,7 @@ export const getAvailableIcons = (): IconName[] => [
   'cloud',
   'draggabledots',
   'folder-upload',
+  'palette',
   'gf-interpolation-linear',
   'gf-interpolation-smooth',
   'gf-interpolation-step-before',

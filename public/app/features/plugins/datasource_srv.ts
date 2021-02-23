@@ -54,7 +54,15 @@ export class DatasourceSrv implements DataSourceService {
     // For this we just pick the current or first data source in the variable
     if (nameOrUid[0] === '$') {
       const interpolatedName = this.templateSrv.replace(nameOrUid, {}, variableInterpolation);
-      const dsSettings = this.settingsMapByUid[interpolatedName] ?? this.settingsMapByName[interpolatedName];
+
+      let dsSettings;
+
+      if (interpolatedName === 'default') {
+        dsSettings = this.settingsMapByName[this.defaultName];
+      } else {
+        dsSettings = this.settingsMapByUid[interpolatedName] ?? this.settingsMapByName[interpolatedName];
+      }
+
       if (!dsSettings) {
         return undefined;
       }
@@ -155,6 +163,15 @@ export class DatasourceSrv implements DataSourceService {
         return false;
       }
       if (filters.pluginId && x.meta.id !== filters.pluginId) {
+        return false;
+      }
+      if (
+        !filters.all &&
+        x.meta.metrics !== true &&
+        x.meta.annotations !== true &&
+        x.meta.tracing !== true &&
+        x.meta.logs !== true
+      ) {
         return false;
       }
       return true;

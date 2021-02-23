@@ -7,7 +7,8 @@ import { VariablesState } from './variablesReducer';
 import { locationReducer } from '../../../core/reducers/location';
 import { VariableAdapter } from '../adapters';
 import { dashboardReducer } from 'app/features/dashboard/state/reducers';
-import { templatingReducers } from './reducers';
+import { templatingReducers, TemplatingState } from './reducers';
+import { DashboardState, LocationState } from '../../../types';
 
 export const getVariableState = (
   noOfVariables: number,
@@ -76,6 +77,8 @@ export const getRootReducer = () =>
     templating: templatingReducers,
   });
 
+export type RootReducerType = { location: LocationState; dashboard: DashboardState; templating: TemplatingState };
+
 export const getTemplatingRootReducer = () =>
   combineReducers({
     templating: templatingReducers,
@@ -86,3 +89,5 @@ export const getTemplatingAndLocationRootReducer = () =>
     templating: templatingReducers,
     location: locationReducer,
   });
+
+export type TemplatingAndLocationReducerType = { location: LocationState; templating: TemplatingState };

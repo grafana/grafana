@@ -15,7 +15,7 @@ import { VariableUsagesButton } from '../inspect/VariableUsagesButton';
 export interface Props {
   variables: VariableModel[];
   dashboard: DashboardModel | null;
-  onAddClick: (event: MouseEvent<HTMLAnchorElement>) => void;
+  onAddClick: (event: MouseEvent) => void;
   onEditClick: (identifier: VariableIdentifier) => void;
   onChangeVariableOrder: (identifier: VariableIdentifier, fromIndex: number, toIndex: number) => void;
   onDuplicateVariable: (identifier: VariableIdentifier) => void;

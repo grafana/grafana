@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { Unsubscribable, PartialObserver } from 'rxjs';
-import { FeatureInfoBox, stylesFactory, Button, JSONFormatter, CustomScrollbar } from '@grafana/ui';
+import { FeatureInfoBox, stylesFactory, Button, JSONFormatter, CustomScrollbar, CodeEditor } from '@grafana/ui';
 import {
   GrafanaTheme,
   PanelProps,
@@ -19,7 +19,6 @@ import { TablePanel } from '../table/TablePanel';
 import { LivePanelOptions, MessageDisplayMode } from './types';
 import { config, getGrafanaLiveSrv, MeasurementCollector } from '@grafana/runtime';
 import { css, cx } from 'emotion';
-import { CodeEditor } from '@grafana/ui';
 
 interface Props extends PanelProps<LivePanelOptions> {}
 

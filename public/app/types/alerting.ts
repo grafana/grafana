@@ -1,4 +1,4 @@
-import { DataQuery, PanelData, SelectableValue, TimeRange } from '@grafana/data';
+import { DataFrame, DataQuery, PanelData, SelectableValue, TimeRange } from '@grafana/data';
 import { PanelQueryRunner } from '../features/query/state/PanelQueryRunner';
 import { QueryGroupOptions } from './query';
 import { ExpressionQuery } from '../features/expressions/types';
@@ -140,10 +140,11 @@ export interface AlertNotification {
 export interface AlertDefinitionState {
   uiState: AlertDefinitionUiState;
   alertDefinition: AlertDefinition;
-  queryOptions: QueryGroupOptions;
-  queryRunner: PanelQueryRunner;
+  queryRunner?: PanelQueryRunner;
   data: PanelData[];
   alertDefinitions: AlertDefinition[];
+  getInstances: () => DataFrame[];
+  getQueryOptions: () => QueryGroupOptions;
 }
 
 export interface AlertDefinition {

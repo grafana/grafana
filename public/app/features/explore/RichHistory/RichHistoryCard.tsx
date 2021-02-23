@@ -5,7 +5,7 @@ import { css, cx } from 'emotion';
 import { stylesFactory, useTheme, TextArea, Button, IconButton } from '@grafana/ui';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { GrafanaTheme, AppEvents, DataSourceApi } from '@grafana/data';
-import { RichHistoryQuery, ExploreId, ExploreItemState } from 'app/types/explore';
+import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 import { createUrlFromRichHistory, createQueryText } from 'app/core/utils/richHistory';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { copyStringToClipboard } from 'app/core/utils/explore';
@@ -313,9 +313,7 @@ export function RichHistoryCard(props: Props) {
 
 function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
   const explore = state.explore;
-  const { datasourceInstance } = explore[exploreId];
-  // @ts-ignore
-  const item: ExploreItemState = explore[exploreId];
+  const { datasourceInstance } = explore[exploreId]!;
   return {
     exploreId,
     datasourceInstance,

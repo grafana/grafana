@@ -35,7 +35,7 @@ Add an organization to your Grafana server.
 
 Two things happen:
 - Grafana creates a new organization with you as the sole member and Admin.
-- Grafana opens the new organization [Preferences tab]({{< relref "../../administration/preferences.md" >}}).
+- Grafana opens the new organization [Preferences tab]({{< relref "../../administration/preferences/_index.md" >}}).
 
 You can now add users or perform other Organization Admin tasks.
 
