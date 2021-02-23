@@ -17,11 +17,13 @@ import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamic
 import { playlistRoutes } from '../features/playlist/playlist_routes';
 import { RouteDescriptor } from '../core/navigation/types';
 import { SignupPage } from 'app/core/components/Signup/SignupPage';
+import { testRoutes } from 'app/core/navigation/testRoutes';
 
 // const importDashboardPage = () =>
 //   SafeDynamicImport(import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage'));
 
 export const routes: RouteDescriptor[] = [
+  ...testRoutes,
   {
     path: '/',
     pageClass: 'page-dashboard',
@@ -396,5 +398,6 @@ export const routes: RouteDescriptor[] = [
       import(/* webpackChunkName: "NgAlertingPage"*/ 'app/features/alerting/NextGenAlertingPage')
     ),
   },
-  ...playlistRoutes,
+  // TODO[Router]
+  // ...playlistRoutes,
 ];
