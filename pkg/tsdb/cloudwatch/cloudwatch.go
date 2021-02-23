@@ -130,9 +130,9 @@ func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error)
 		regionCfg = &aws.Config{Region: aws.String(dsInfo.Region)}
 		cfgs = append(cfgs, regionCfg)
 	}
-	
+
 	if dsInfo.Endpoint != "" {
-		cfgs = append(cfgs, &aws.Config{ Endpoint: aws.String(dsInfo.Endpoint)})
+		cfgs = append(cfgs, &aws.Config{Endpoint: aws.String(dsInfo.Endpoint)})
 	}
 
 	switch dsInfo.AuthType {
