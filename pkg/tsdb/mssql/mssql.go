@@ -25,17 +25,15 @@ func init() {
 var logger = log.New("tsdb.mssql")
 
 func newMssqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-	cnnstr, err := generateConnectionString(datasource)
-	if err != nil {
-		return nil, err
-	}
-	if setting.Env == setting.Dev {
-		logger.Debug("getEngine", "connection", cnnstr)
-	}
-
 	config := sqleng.SqlQueryEndpointConfiguration{
-		DriverName:        "mssql",
-		ConnectionString:  cnnstr,
+		DriverName: "mssql",
+		ConnectionString: func() (string, error) {
+			cnnstr, err := generateConnectionString(datasource)
+			if setting.Env == setting.Dev {
+				logger.Debug("getEngine", "connection", cnnstr)
+			}
+			return cnnstr, err
+		},
 		Datasource:        datasource,
 		MetricColumnTypes: []string{"VARCHAR", "CHAR", "NVARCHAR", "NCHAR"},
 	}
