@@ -2,7 +2,7 @@ import React from 'react';
 import { Story } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { ButtonCascader } from '@grafana/ui';
-import { NOOP_CONTROL } from '@grafana/ui/.storybook/preview';
+import { NOOP_CONTROL } from '../../utils/storybook/noopControl';
 import { ButtonCascaderProps } from './ButtonCascader';
 
 export default {
