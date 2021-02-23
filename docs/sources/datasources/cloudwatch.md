@@ -107,7 +107,7 @@ The `Assume Role ARN` field allows you to specify which IAM role to assume, if a
 
 ### Endpoint
 
-The `Endpoint` field allows you to specify a custom endpoint URL that overrides the default generated endpoint for the CloudWatch API. Leave this field blank if you want to use the default generated endpoint. For more information on why and how to use Service endpoints in the [official AWS documentation](https://docs.aws.amazon.com/general/latest/gr/rande.html).
+The `Endpoint` field allows you to specify a custom endpoint URL that overrides the default generated endpoint for the CloudWatch API. Leave this field blank if you want to use the default generated endpoint. For more information on why and how to use Service endpoints, see the [official AWS documentation](https://docs.aws.amazon.com/general/latest/gr/rande.html).
 
 ### EKS IAM roles for service accounts
 
