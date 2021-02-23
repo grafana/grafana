@@ -99,6 +99,7 @@ const mustKeepProps: { [str: string]: boolean } = {
   maxDataPoints: true,
   interval: true,
   replaceVariables: true,
+  libraryPanel: true,
 };
 
 const defaults: any = {
