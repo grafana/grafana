@@ -774,7 +774,7 @@ Refer to [LDAP authentication]({{< relref "../auth/ldap.md" >}}) for detailed in
 
 ## [aws]
 
-In this section, core and external AWS plugins can be configured.
+You can configure core and external AWS plugins.
 
 ### allowed_auth_providers
 
