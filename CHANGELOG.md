@@ -1,4 +1,96 @@
 
+<!-- 7.4.2 START -->
+
+# 7.4.2 (2021-02-17)
+
+### Features and enhancements
+
+* **Explore**: Do not show non queryable data sources in data source picker. [#31144](https://github.com/grafana/grafana/pull/31144), [@torkelo](https://github.com/torkelo)
+* **Snapshots**: Do not allow an anonymous user to create snapshots. [#31263](https://github.com/grafana/grafana/pull/31263), [@marefr](https://github.com/marefr)
+
+### Bug fixes
+
+* **CloudWatch**: Ensure empty query row errors are not passed to the panel. [#31172](https://github.com/grafana/grafana/pull/31172), [@sunker](https://github.com/sunker)
+* **DashboardLinks**: Fix the links that always cause a full page to reload. [#31178](https://github.com/grafana/grafana/pull/31178), [@torkelo](https://github.com/torkelo)
+* **DashboardListPanel**: Fix issue with folder picker always showing All and using old form styles. [#31160](https://github.com/grafana/grafana/pull/31160), [@torkelo](https://github.com/torkelo)
+* **IPv6**: Support host address configured with enclosing square brackets. [#31226](https://github.com/grafana/grafana/pull/31226), [@aknuds1](https://github.com/aknuds1)
+* **Permissions**: Fix team and role permissions on folders/dashboards not displayed for non Grafana Admin users. [#31132](https://github.com/grafana/grafana/pull/31132), [@AgnesToulet](https://github.com/AgnesToulet)
+* **Postgres**: Fix timeGroup macro converts long intervals to invalid numbers when TimescaleDB is enabled. [#31179](https://github.com/grafana/grafana/pull/31179), [@kurokochin](https://github.com/kurokochin)
+* **Prometheus**: Fix enabling of disabled queries when editing in dashboard. [#31055](https://github.com/grafana/grafana/pull/31055), [@ivanahuckova](https://github.com/ivanahuckova)
+* **QueryEditors**: Fix an issue that happens after moving queries then editing would update other queries. [#31193](https://github.com/grafana/grafana/pull/31193), [@torkelo](https://github.com/torkelo)
+* **SqlDataSources**: Fix the Show Generated SQL button in query editors. [#31236](https://github.com/grafana/grafana/pull/31236), [@torkelo](https://github.com/torkelo)
+* **StatPanels**: Fix an issue where the palette color scheme is not cleared when loading panel. [#31126](https://github.com/grafana/grafana/pull/31126), [@torkelo](https://github.com/torkelo)
+* **Variables**: Add the default option back for the data source variable. [#31208](https://github.com/grafana/grafana/pull/31208), [@hugohaggmark](https://github.com/hugohaggmark)
+* **Variables**: Fix missing empty elements from regex filters. [#31156](https://github.com/grafana/grafana/pull/31156), [@hugohaggmark](https://github.com/hugohaggmark)
+
+<!-- 7.4.2 END -->
+
+<!-- 7.4.1 START -->
+
+# 7.4.1 (2021-02-11)
+
+### Features and enhancements
+
+* **Influx**: Make max series limit configurable and show the limiting message if applied. [#31025](https://github.com/grafana/grafana/pull/31025), [@aocenas](https://github.com/aocenas)
+* **Make value mappings correctly interpret numeric-like strings**. [#30893](https://github.com/grafana/grafana/pull/30893), [@dprokop](https://github.com/dprokop)
+* **Variables**: Adds queryparam formatting option. [#30858](https://github.com/grafana/grafana/pull/30858), [@hugohaggmark](https://github.com/hugohaggmark)
+
+### Bug fixes
+
+* **Alerting**: Fixes so notification channels are properly deleted. [#31040](https://github.com/grafana/grafana/pull/31040), [@hugohaggmark](https://github.com/hugohaggmark)
+* **BarGauge**: Improvements to value sizing and table inner width calculations. [#30990](https://github.com/grafana/grafana/pull/30990), [@torkelo](https://github.com/torkelo)
+* **DashboardLinks**: Fixes crash when link has no title. [#31008](https://github.com/grafana/grafana/pull/31008), [@hugohaggmark](https://github.com/hugohaggmark)
+* **Elasticsearch**: Fix alias field value not being shown in query editor. [#30992](https://github.com/grafana/grafana/pull/30992), [@Elfo404](https://github.com/Elfo404)
+* **Elasticsearch**: Fix log row context errors. [#31088](https://github.com/grafana/grafana/pull/31088), [@Elfo404](https://github.com/Elfo404)
+* **Elasticsearch**: Show Size setting for raw_data metric. [#30980](https://github.com/grafana/grafana/pull/30980), [@Elfo404](https://github.com/Elfo404)
+* **Graph**: Fixes so graph is shown for non numeric time values. [#30972](https://github.com/grafana/grafana/pull/30972), [@hugohaggmark](https://github.com/hugohaggmark)
+* **Logging**: Ignore 'file already closed' error when closing file. [#31119](https://github.com/grafana/grafana/pull/31119), [@aknuds1](https://github.com/aknuds1)
+* **Plugins**: Fix plugin signature validation for manifest v2 on Windows. [#31045](https://github.com/grafana/grafana/pull/31045), [@wbrowne](https://github.com/wbrowne)
+* **TextPanel**: Fixes so panel title is updated when variables change. [#30884](https://github.com/grafana/grafana/pull/30884), [@hugohaggmark](https://github.com/hugohaggmark)
+* **Transforms**: Fixes Outer join issue with duplicate field names not getting the same unique field names as before. [#31121](https://github.com/grafana/grafana/pull/31121), [@torkelo](https://github.com/torkelo)
+
+<!-- 7.4.1 END -->
+
+<!-- 7.4.0 START -->
+
+# 7.4.0 (2021-02-04)
+
+### Features and enhancements
+
+* **CDN**: Adds support for serving assets over a CDN. [#30691](https://github.com/grafana/grafana/pull/30691), [@torkelo](https://github.com/torkelo)
+* **DashboardLinks**: Support variable expression in to tooltip - Issue #30409. [#30569](https://github.com/grafana/grafana/pull/30569), [@huynhsamha](https://github.com/huynhsamha)
+* **Explore**: Set Explore's GraphNG to be connected. [#30707](https://github.com/grafana/grafana/pull/30707), [@ivanahuckova](https://github.com/ivanahuckova)
+* **InfluxDB**: Add http configuration when selecting InfluxDB v2 flavor. [#30827](https://github.com/grafana/grafana/pull/30827), [@aocenas](https://github.com/aocenas)
+* **InfluxDB**: Show all datapoints for dynamically windowed flux query. [#30688](https://github.com/grafana/grafana/pull/30688), [@davkal](https://github.com/davkal)
+* **Loki**: Improve live tailing errors. [#30517](https://github.com/grafana/grafana/pull/30517), [@ivanahuckova](https://github.com/ivanahuckova)
+
+### Bug fixes
+
+* **Admin**: Fixes so form values are filled in from backend. [#30544](https://github.com/grafana/grafana/pull/30544), [@hugohaggmark](https://github.com/hugohaggmark)
+* **Admin**: Fixes so whole org drop down is visible when adding users to org. [#30481](https://github.com/grafana/grafana/pull/30481), [@hugohaggmark](https://github.com/hugohaggmark)
+* **Alerting**: Hides threshold handle for percentual thresholds. [#30431](https://github.com/grafana/grafana/pull/30431), [@hugohaggmark](https://github.com/hugohaggmark)
+* **CloudWatch**: Prevent field config from being overwritten. [#30437](https://github.com/grafana/grafana/pull/30437), [@sunker](https://github.com/sunker)
+* **Decimals**: Big Improvements to auto decimals and fixes to auto decimals bug found in 7.4-beta1. [#30519](https://github.com/grafana/grafana/pull/30519), [@torkelo](https://github.com/torkelo)
+* **Explore**: Fix jumpy live tailing. [#30650](https://github.com/grafana/grafana/pull/30650), [@ivanahuckova](https://github.com/ivanahuckova)
+* **Explore**: Fix loading visualisation on the top of the new time series panel. [#30553](https://github.com/grafana/grafana/pull/30553), [@ivanahuckova](https://github.com/ivanahuckova)
+* **Footer**: Fixes layout issue in footer. [#30443](https://github.com/grafana/grafana/pull/30443), [@torkelo](https://github.com/torkelo)
+* **Graph**: Fixes so only users with correct permissions can add annotations. [#30419](https://github.com/grafana/grafana/pull/30419), [@hugohaggmark](https://github.com/hugohaggmark)
+* **Mobile**: Fixes issue scrolling on mobile in chrome. [#30746](https://github.com/grafana/grafana/pull/30746), [@torkelo](https://github.com/torkelo)
+* **PanelEdit**: Trigger refresh when changing data source. [#30744](https://github.com/grafana/grafana/pull/30744), [@torkelo](https://github.com/torkelo)
+* **Panels**: Fixes so panels are refreshed when scrolling past them fast. [#30784](https://github.com/grafana/grafana/pull/30784), [@hugohaggmark](https://github.com/hugohaggmark)
+* **Prometheus**: Fix show query instead of Value if no __name__ and metric. [#30511](https://github.com/grafana/grafana/pull/30511), [@zoltanbedi](https://github.com/zoltanbedi)
+* **TimeSeriesPanel**: Fixes default value for Gradient mode. [#30484](https://github.com/grafana/grafana/pull/30484), [@torkelo](https://github.com/torkelo)
+* **Variables**: Clears drop down state when leaving dashboard. [#30810](https://github.com/grafana/grafana/pull/30810), [@hugohaggmark](https://github.com/hugohaggmark)
+* **Variables**: Fixes display value when using capture groups in regex. [#30636](https://github.com/grafana/grafana/pull/30636), [@hugohaggmark](https://github.com/hugohaggmark)
+* **Variables**: Fixes so queries work for numbers values too. [#30602](https://github.com/grafana/grafana/pull/30602), [@hugohaggmark](https://github.com/hugohaggmark)
+* **Variables**: Fixes so text format will show All instead of custom all value. [#30730](https://github.com/grafana/grafana/pull/30730), [@hugohaggmark](https://github.com/hugohaggmark)
+
+### Plugin development fixes & changes
+
+* **Plugins**: Fix failing plugin builds because of wrong internal import. [#30439](https://github.com/grafana/grafana/pull/30439), [@aocenas](https://github.com/aocenas)
+
+<!-- 7.4.0 END -->
+
 <!-- 7.4.0-beta1 START -->
 
 # 7.4.0-beta1 (2021-01-20)
@@ -128,6 +220,7 @@ This option to group query variable values into groups by tags has been an exper
 
 ### Plugin development fixes & changes
 
+* **AngularPlugins**: Angular controller events emitter is now a separate emitter and not the same as PanelModel events emitter. [#30379](https://github.com/grafana/grafana/pull/30379), [@torkelo](https://github.com/torkelo)
 * **FieldConfig API**: Add ability to hide field option or disable it from the overrides. [#29879](https://github.com/grafana/grafana/pull/29879), [@dprokop](https://github.com/dprokop)
 * **Select**: Changes default menu placement for Select from auto to bottom. [#29837](https://github.com/grafana/grafana/pull/29837), [@hugohaggmark](https://github.com/hugohaggmark)
 * **Collapse**: Allow component children to use height: 100% styling. [#29776](https://github.com/grafana/grafana/pull/29776), [@aocenas](https://github.com/aocenas)

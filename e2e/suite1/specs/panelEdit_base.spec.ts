@@ -27,7 +27,7 @@ e2e.scenario({
         });
         e2e.components.QueryTab.content().should('be.visible');
         e2e.components.TransformTab.content().should('not.exist');
-        e2e.components.AlertTab.content().should('not.be.visible');
+        e2e.components.AlertTab.content().should('not.exist');
 
         //  Bottom pane tabs
         //  Can change to Transform tab
@@ -36,8 +36,8 @@ e2e.scenario({
           expect(li.text()).equals('Transform0'); // there's no transform so therefore Transform + 0
         });
         e2e.components.Transforms.card('Merge').scrollIntoView().should('be.visible');
-        e2e.components.QueryTab.content().should('not.be.visible');
-        e2e.components.AlertTab.content().should('not.be.visible');
+        e2e.components.QueryTab.content().should('not.exist');
+        e2e.components.AlertTab.content().should('not.exist');
 
         //  Can change to Alerts tab (graph panel is the default vis so the alerts tab should be rendered)
         e2e.components.Tab.title('Alert').should('be.visible').click();
@@ -45,7 +45,7 @@ e2e.scenario({
           expect(li.text()).equals('Alert0'); // there's no alert so therefore Alert + 0
         });
         e2e.components.AlertTab.content().should('be.visible');
-        e2e.components.QueryTab.content().should('not.be.visible');
+        e2e.components.QueryTab.content().should('not.exist');
         e2e.components.TransformTab.content().should('not.exist');
 
         e2e.components.Tab.title('Query').should('be.visible').click();
@@ -56,18 +56,18 @@ e2e.scenario({
 
     // Can toggle on/off sidebar
     e2e.components.PanelEditor.OptionsPane.close().should('be.visible');
-    e2e.components.PanelEditor.OptionsPane.open().should('not.be.visible');
+    e2e.components.PanelEditor.OptionsPane.open().should('not.exist');
 
     // close options pane
     e2e.components.PanelEditor.OptionsPane.close().click();
     e2e.components.PanelEditor.OptionsPane.open().should('be.visible');
-    e2e.components.PanelEditor.OptionsPane.close().should('not.be.visible');
-    e2e.components.PanelEditor.OptionsPane.content().should('not.be.visible');
+    e2e.components.PanelEditor.OptionsPane.close().should('not.exist');
+    e2e.components.PanelEditor.OptionsPane.content().should('not.exist');
 
     // open options pane
     e2e.components.PanelEditor.OptionsPane.open().click();
     e2e.components.PanelEditor.OptionsPane.close().should('be.visible');
-    e2e.components.PanelEditor.OptionsPane.open().should('not.be.visible');
+    e2e.components.PanelEditor.OptionsPane.open().should('not.exist');
     e2e.components.PanelEditor.OptionsPane.content().should('be.visible');
 
     // Can change visualisation type
@@ -86,7 +86,7 @@ e2e.scenario({
     });
 
     // Data pane should not be rendered
-    e2e.components.PanelEditor.DataPane.content().should('not.be.visible');
+    e2e.components.PanelEditor.DataPane.content().should('not.exist');
 
     // Change to Table panel
     e2e.components.PluginVisualization.item('Table').scrollIntoView().should('be.visible').click();
@@ -103,12 +103,12 @@ e2e.scenario({
     e2e.components.PanelEditor.OptionsPane.tab('Field').click();
 
     e2e.components.FieldConfigEditor.content().should('be.visible');
-    e2e.components.OverridesConfigEditor.content().should('not.be.visible');
+    e2e.components.OverridesConfigEditor.content().should('not.exist');
 
     e2e.components.PanelEditor.OptionsPane.tab('Field').should('be.visible');
     e2e.components.PanelEditor.OptionsPane.tab('Overrides').should('be.visible').click();
 
     e2e.components.OverridesConfigEditor.content().should('be.visible');
-    e2e.components.FieldConfigEditor.content().should('not.be.visible');
+    e2e.components.FieldConfigEditor.content().should('not.exist');
   },
 });

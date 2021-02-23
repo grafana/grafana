@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/grafana/grafana/pkg/services/live"
@@ -60,28 +61,29 @@ type HTTPServer struct {
 	httpSrv     *http.Server
 	middlewares []macaron.Handler
 
-	RouteRegister        routing.RouteRegister              `inject:""`
-	Bus                  bus.Bus                            `inject:""`
-	RenderService        rendering.Service                  `inject:""`
-	Cfg                  *setting.Cfg                       `inject:""`
-	HooksService         *hooks.HooksService                `inject:""`
-	CacheService         *localcache.CacheService           `inject:""`
-	DatasourceCache      datasources.CacheService           `inject:""`
-	AuthTokenService     models.UserTokenService            `inject:""`
-	QuotaService         *quota.QuotaService                `inject:""`
-	RemoteCacheService   *remotecache.RemoteCache           `inject:""`
-	ProvisioningService  provisioning.ProvisioningService   `inject:""`
-	Login                *login.LoginService                `inject:""`
-	License              models.Licensing                   `inject:""`
-	BackendPluginManager backendplugin.Manager              `inject:""`
-	PluginManager        *plugins.PluginManager             `inject:""`
-	SearchService        *search.SearchService              `inject:""`
-	ShortURLService      *shorturls.ShortURLService         `inject:""`
-	Live                 *live.GrafanaLive                  `inject:""`
-	ContextHandler       *contexthandler.ContextHandler     `inject:""`
-	SQLStore             *sqlstore.SQLStore                 `inject:""`
-	LibraryPanelService  *librarypanels.LibraryPanelService `inject:""`
-	Listener             net.Listener
+	RouteRegister          routing.RouteRegister              `inject:""`
+	Bus                    bus.Bus                            `inject:""`
+	RenderService          rendering.Service                  `inject:""`
+	Cfg                    *setting.Cfg                       `inject:""`
+	HooksService           *hooks.HooksService                `inject:""`
+	CacheService           *localcache.CacheService           `inject:""`
+	DatasourceCache        datasources.CacheService           `inject:""`
+	AuthTokenService       models.UserTokenService            `inject:""`
+	QuotaService           *quota.QuotaService                `inject:""`
+	RemoteCacheService     *remotecache.RemoteCache           `inject:""`
+	ProvisioningService    provisioning.ProvisioningService   `inject:""`
+	Login                  *login.LoginService                `inject:""`
+	License                models.Licensing                   `inject:""`
+	BackendPluginManager   backendplugin.Manager              `inject:""`
+	PluginRequestValidator models.PluginRequestValidator      `inject:""`
+	PluginManager          *plugins.PluginManager             `inject:""`
+	SearchService          *search.SearchService              `inject:""`
+	ShortURLService        *shorturls.ShortURLService         `inject:""`
+	Live                   *live.GrafanaLive                  `inject:""`
+	ContextHandler         *contexthandler.ContextHandler     `inject:""`
+	SQLStore               *sqlstore.SQLStore                 `inject:""`
+	LibraryPanelService    *librarypanels.LibraryPanelService `inject:""`
+	Listener               net.Listener
 }
 
 func (hs *HTTPServer) Init() error {
@@ -102,8 +104,10 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 
 	hs.applyRoutes()
 
+	// Remove any square brackets enclosing IPv6 addresses, a format we support for backwards compatibility
+	host := strings.TrimSuffix(strings.TrimPrefix(setting.HttpAddr, "["), "]")
 	hs.httpSrv = &http.Server{
-		Addr:    net.JoinHostPort(setting.HttpAddr, setting.HttpPort),
+		Addr:    net.JoinHostPort(host, setting.HttpPort),
 		Handler: hs.macaron,
 	}
 	switch hs.Cfg.Protocol {

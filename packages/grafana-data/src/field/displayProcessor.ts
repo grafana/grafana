@@ -27,9 +27,11 @@ interface DisplayProcessorOptions {
 // Reasonable units for time
 const timeFormats: KeyValue<boolean> = {
   dateTimeAsIso: true,
-  dateTimeAsIsoSmart: true,
+  dateTimeAsIsoNoDateIfToday: true,
   dateTimeAsUS: true,
-  dateTimeAsUSSmart: true,
+  dateTimeAsUSNoDateIfToday: true,
+  dateTimeAsLocal: true,
+  dateTimeAsLocalNoDateIfToday: true,
   dateTimeFromNow: true,
 };
 
@@ -90,14 +92,6 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
         text = v.text;
         suffix = v.suffix;
         prefix = v.prefix;
-
-        // Check if the formatted text mapped to a different value
-        if (mappings && mappings.length > 0) {
-          const mappedValue = getMappedValue(mappings, text);
-          if (mappedValue) {
-            text = mappedValue.text;
-          }
-        }
       }
 
       // Return the value along with scale info

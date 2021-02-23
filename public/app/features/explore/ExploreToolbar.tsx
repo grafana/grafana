@@ -21,6 +21,7 @@ import { RunButton } from './RunButton';
 import { LiveTailControls } from './useLiveTailControls';
 import { cancelQueries, clearQueries, runQueries } from './state/query';
 import ReturnToDashboardButton from './ReturnToDashboardButton';
+import { isSplit } from './state/selectors';
 
 interface OwnProps {
   exploreId: ExploreId;
@@ -127,7 +128,12 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
               )}
             </div>
             {splitted && (
-              <IconButton className="explore-toolbar-header-close" onClick={() => closeSplit(exploreId)} name="times" />
+              <IconButton
+                title="Close split pane"
+                className="explore-toolbar-header-close"
+                onClick={() => closeSplit(exploreId)}
+                name="times"
+              />
             )}
           </div>
         </div>
@@ -227,9 +233,8 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
 }
 
 const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps => {
-  const splitted = state.explore.split;
   const syncedTimes = state.explore.syncedTimes;
-  const exploreItem: ExploreItemState = state.explore[exploreId];
+  const exploreItem: ExploreItemState = state.explore[exploreId]!;
   const {
     datasourceInstance,
     datasourceMissing,
@@ -249,7 +254,7 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     loading,
     range,
     timeZone: getTimeZone(state.user),
-    splitted,
+    splitted: isSplit(state),
     refreshInterval,
     hasLiveOption,
     isLive,

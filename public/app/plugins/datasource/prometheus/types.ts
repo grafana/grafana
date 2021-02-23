@@ -69,21 +69,15 @@ export interface Labels {
   [index: string]: any;
 }
 
-export interface ScrapeExemplar {
-  exemplar: Exemplar;
-  scrapeTimestamp: number;
-}
-
 export interface Exemplar {
   labels: Labels;
   value: number;
   timestamp: number;
-  hasTimestamp: boolean;
 }
 
 export interface PromExemplarData {
   seriesLabels: PromMetric;
-  exemplars: ScrapeExemplar[];
+  exemplars: Exemplar[];
 }
 
 export interface PromVectorData {

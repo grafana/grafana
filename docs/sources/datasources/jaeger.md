@@ -9,7 +9,7 @@ weight = 800
 # Jaeger data source
 
 Grafana ships with built-in support for Jaeger, which provides open source, end-to-end distributed tracing.
-Just add it as a data source and you are ready to query your traces in [Explore]({{< relref "../explore/index.md" >}}).
+Just add it as a data source and you are ready to query your traces in [Explore]({{< relref "../explore/_index.md" >}}).
 
 ## Add data source
 
@@ -28,7 +28,7 @@ To access Jaeger settings, click the **Configuration** (gear) icon, then click *
 
 > **Note:** This feature is available in Grafana 7.4+.
 
-This is a configuration for the [trace to logs feature]({{< relref "../explore/index.md#trace-to-logs" >}}). Select target data source (at this moment limited to Loki data sources) and select which tags will be used in the logs query.
+This is a configuration for the [trace to logs feature]({{< relref "../explore/trace-integration" >}}). Select target data source (at this moment limited to Loki data sources) and select which tags will be used in the logs query.
 
 - **Data source -** Target data source.
 - **Tags -** The tags that will be used in the Loki query. Default is `'cluster', 'hostname', 'namespace', 'pod'`.
@@ -37,7 +37,7 @@ This is a configuration for the [trace to logs feature]({{< relref "../explore/i
 
 ## Query traces
 
-You can query and display traces from Jaeger via [Explore]({{< relref "../explore/index.md" >}}).
+You can query and display traces from Jaeger via [Explore]({{< relref "../explore/_index.md" >}}).
 
 {{< docs-imagebox img="/img/docs/v70/jaeger-query-editor.png" class="docs-image--no-shadow" caption="Screenshot of the Jaeger query editor" >}}
 

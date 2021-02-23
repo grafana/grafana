@@ -46,7 +46,8 @@ export const DashboardLinks: FC<Props> = ({ dashboard, links }) => {
           <a
             className="gf-form-label gf-form-label--dashlink"
             href={sanitizeUrl(linkInfo.href)}
-            target={link.targetBlank ? '_blank' : '_self'}
+            target={link.targetBlank ? '_blank' : undefined}
+            rel="noreferrer"
             aria-label={selectors.components.DashboardLinks.link}
           >
             <Icon name={iconMap[link.icon] as IconName} style={{ marginRight: '4px' }} />
@@ -56,7 +57,7 @@ export const DashboardLinks: FC<Props> = ({ dashboard, links }) => {
 
         return (
           <div key={key} className="gf-form" aria-label={selectors.components.DashboardLinks.container}>
-            {link.tooltip ? <Tooltip content={link.tooltip}>{linkElement}</Tooltip> : linkElement}
+            {link.tooltip ? <Tooltip content={linkInfo.tooltip}>{linkElement}</Tooltip> : linkElement}
           </div>
         );
       })}

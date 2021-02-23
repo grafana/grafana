@@ -8,6 +8,9 @@ import sortBy from 'lodash/sortBy';
 import { LegendTableItem } from './VizLegendTableItem';
 import { GrafanaTheme } from '@grafana/data';
 
+/**
+ * @internal
+ */
 export const VizLegendTable: FC<VizLegendTableProps> = ({
   items,
   sortBy: sortKey,

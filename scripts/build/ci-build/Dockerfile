@@ -3,6 +3,7 @@ FROM debian:stretch-20201209 AS toolchain
 
 ENV OSX_MIN=10.10 \
     CTNG=1.24.0 \
+    CTNG_CHKSUM=89b8794a4184ad4928750e29712ed4f194aa1d0b93768d67ff64f30c30f1b1e165647cafc6de94d68d3ef70e50446e544dad65aa36137511a32ee7a667dddfb4 \
     # This is the last revision that builds on Debian Stretch
     OSX_CROSS_REV=a1d7d7a8d569f9f0b8c3140b8b32848dbcd62afa
 
@@ -56,7 +57,9 @@ RUN rm -rf /tmp/osxcross/target/SDK/*/usr/share && \
     rm -rf /tmp/osxcross
 RUN apt-get install -yq                     \
         unzip libtool-bin bison flex gawk gcc g++ gperf help2man libncurses5-dev make patch python-dev texinfo xz-utils
-RUN curl -fL http://crosstool-ng.org/download/crosstool-ng/crosstool-ng-${CTNG}.tar.xz | tar -xJ -C /tmp/
+RUN curl -fLO http://crosstool-ng.org/download/crosstool-ng/crosstool-ng-${CTNG}.tar.xz
+RUN echo $CTNG_CHKSUM crosstool-ng-${CTNG}.tar.xz | sha512sum --check --strict --status
+RUN tar xf crosstool-ng-${CTNG}.tar.xz
 RUN cd /tmp/crosstool-ng-${CTNG}        && \
     ./configure --enable-local          && \
     make && \
@@ -73,8 +76,8 @@ RUN cd /tmp && \
     rm -rf /tmp/x86_64-centos6-linux-gnu/ && \
     rm -rf /tmp/crosstool-ng-${CTNG}
 
-ARG GOLANGCILINT_VERSION=1.34.1
-ARG GOLANGCILINT_CHKSUM=23e4a9d8f89729007c6d749c245f725c2dbcfb194f4099003f9b826f1d386ad1
+ARG GOLANGCILINT_VERSION=1.37.0
+ARG GOLANGCILINT_CHKSUM=5fe9852e754b621c5264fb8ac810a75033e7f18e972315a60c5c3f8a37b3cb88
 
 RUN curl -fLO https://github.com/golangci/golangci-lint/releases/download/v${GOLANGCILINT_VERSION}/golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64.tar.gz
 RUN echo ${GOLANGCILINT_CHKSUM} golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64.tar.gz | sha256sum --check --strict --status

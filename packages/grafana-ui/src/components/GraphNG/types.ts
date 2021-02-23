@@ -1,4 +1,4 @@
-import { DataFrameFieldIndex } from '@grafana/data';
+import { DataFrameFieldIndex, FieldMatcher } from '@grafana/data';
 
 /**
  * Mode to describe if a legend is isolated/selected or being appended to an existing
@@ -17,4 +17,9 @@ export enum GraphNGLegendEventMode {
 export interface GraphNGLegendEvent {
   fieldIndex: DataFrameFieldIndex;
   mode: GraphNGLegendEventMode;
+}
+
+export interface XYFieldMatchers {
+  x: FieldMatcher; // first match
+  y: FieldMatcher;
 }

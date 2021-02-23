@@ -34,13 +34,14 @@ type LibraryPanelWithMeta struct {
 	Created time.Time
 	Updated time.Time
 
-	CanEdit        bool
-	CreatedBy      int64
-	UpdatedBy      int64
-	CreatedByName  string
-	CreatedByEmail string
-	UpdatedByName  string
-	UpdatedByEmail string
+	CanEdit             bool
+	ConnectedDashboards int64
+	CreatedBy           int64
+	UpdatedBy           int64
+	CreatedByName       string
+	CreatedByEmail      string
+	UpdatedByName       string
+	UpdatedByEmail      string
 }
 
 // LibraryPanelDTO is the frontend DTO for library panels.
@@ -56,7 +57,8 @@ type LibraryPanelDTO struct {
 
 // LibraryPanelDTOMeta is the meta information for LibraryPanelDTO.
 type LibraryPanelDTOMeta struct {
-	CanEdit bool `json:"canEdit"`
+	CanEdit             bool  `json:"canEdit"`
+	ConnectedDashboards int64 `json:"connectedDashboards"`
 
 	Created time.Time `json:"created"`
 	Updated time.Time `json:"updated"`

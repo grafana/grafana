@@ -1,5 +1,6 @@
 import {
   FieldColorModeId,
+  FieldConfigEditorBuilder,
   FieldConfigProperty,
   FieldType,
   identityOverrideProcessor,
@@ -11,6 +12,7 @@ import {
 } from '@grafana/data';
 import {
   AxisPlacement,
+  BarAlignment,
   DrawStyle,
   GraphFieldConfig,
   graphFieldOptions,
@@ -21,6 +23,7 @@ import {
   ScaleDistributionConfig,
   GraphGradientMode,
   LegendDisplayMode,
+  AxisConfig,
 } from '@grafana/ui';
 import { SeriesConfigEditor } from './HideSeriesConfigEditor';
 import { ScaleDistributionEditor } from './ScaleDistributionEditor';
@@ -34,6 +37,7 @@ export const defaultGraphConfig: GraphFieldConfig = {
   lineWidth: 1,
   fillOpacity: 0,
   gradientMode: GraphGradientMode.None,
+  barAlignment: BarAlignment.Center,
 };
 
 export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOptionsArgs<GraphFieldConfig> {
@@ -68,6 +72,15 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
             options: graphFieldOptions.lineInterpolation,
           },
           showIf: (c) => c.drawStyle === DrawStyle.Line,
+        })
+        .addRadio({
+          path: 'barAlignment',
+          name: 'Bar alignment',
+          defaultValue: cfg.barAlignment,
+          settings: {
+            options: graphFieldOptions.barAlignment,
+          },
+          showIf: (c) => c.drawStyle === DrawStyle.Bars,
         })
         .addSliderInput({
           path: 'lineWidth',
@@ -151,86 +164,104 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
             step: 1,
           },
           showIf: (c) => c.showPoints !== PointVisibility.Never || c.drawStyle === DrawStyle.Points,
-        })
-        .addRadio({
-          path: 'axisPlacement',
-          name: 'Placement',
-          category: ['Axis'],
-          defaultValue: graphFieldOptions.axisPlacement[0].value,
-          settings: {
-            options: graphFieldOptions.axisPlacement,
-          },
-        })
-        .addTextInput({
-          path: 'axisLabel',
-          name: 'Label',
-          category: ['Axis'],
-          defaultValue: '',
-          settings: {
-            placeholder: 'Optional text',
-          },
-          showIf: (c) => c.axisPlacement !== AxisPlacement.Hidden,
-          // no matter what the field type is
-          shouldApply: () => true,
-        })
-        .addNumberInput({
-          path: 'axisWidth',
-          name: 'Width',
-          category: ['Axis'],
-          settings: {
-            placeholder: 'Auto',
-          },
-          showIf: (c) => c.axisPlacement !== AxisPlacement.Hidden,
-        })
-        .addNumberInput({
-          path: 'axisSoftMin',
-          name: 'Soft min',
-          category: ['Axis'],
-          settings: {
-            placeholder: 'See: Standard options > Min',
-          },
-        })
-        .addNumberInput({
-          path: 'axisSoftMax',
-          name: 'Soft max',
-          category: ['Axis'],
-          settings: {
-            placeholder: 'See: Standard options > Max',
-          },
-        })
-        .addCustomEditor<void, ScaleDistributionConfig>({
-          id: 'scaleDistribution',
-          path: 'scaleDistribution',
-          name: 'Scale',
-          category: ['Axis'],
-          editor: ScaleDistributionEditor,
-          override: ScaleDistributionEditor,
-          defaultValue: { type: ScaleDistribution.Linear },
-          shouldApply: (f) => f.type === FieldType.number,
-          process: identityOverrideProcessor,
-        })
-        .addCustomEditor({
-          id: 'hideFrom',
-          name: 'Hide in area',
-          category: ['Series'],
-          path: 'hideFrom',
-          defaultValue: {
-            tooltip: false,
-            graph: false,
-            legend: false,
-          },
-          editor: SeriesConfigEditor,
-          override: SeriesConfigEditor,
-          shouldApply: () => true,
-          hideFromDefaults: true,
-          hideFromOverrides: true,
-          process: (value) => value,
         });
+
+      addAxisConfig(builder, cfg);
+      addHideFrom(builder);
     },
   };
 }
 
-export function addLegendOptions(builder: PanelOptionsEditorBuilder<OptionsWithLegend>) {
+export function addHideFrom(builder: FieldConfigEditorBuilder<AxisConfig>) {
+  builder.addCustomEditor({
+    id: 'hideFrom',
+    name: 'Hide in area',
+    category: ['Series'],
+    path: 'hideFrom',
+    defaultValue: {
+      tooltip: false,
+      graph: false,
+      legend: false,
+    },
+    editor: SeriesConfigEditor,
+    override: SeriesConfigEditor,
+    shouldApply: () => true,
+    hideFromDefaults: true,
+    hideFromOverrides: true,
+    process: (value) => value,
+  });
+}
+
+export function addAxisConfig(
+  builder: FieldConfigEditorBuilder<AxisConfig>,
+  defaultConfig: AxisConfig,
+  hideScale?: boolean
+) {
+  builder
+    .addRadio({
+      path: 'axisPlacement',
+      name: 'Placement',
+      category: ['Axis'],
+      defaultValue: graphFieldOptions.axisPlacement[0].value,
+      settings: {
+        options: graphFieldOptions.axisPlacement,
+      },
+    })
+    .addTextInput({
+      path: 'axisLabel',
+      name: 'Label',
+      category: ['Axis'],
+      defaultValue: '',
+      settings: {
+        placeholder: 'Optional text',
+      },
+      showIf: (c) => c.axisPlacement !== AxisPlacement.Hidden,
+      // no matter what the field type is
+      shouldApply: () => true,
+    })
+    .addNumberInput({
+      path: 'axisWidth',
+      name: 'Width',
+      category: ['Axis'],
+      settings: {
+        placeholder: 'Auto',
+      },
+      showIf: (c) => c.axisPlacement !== AxisPlacement.Hidden,
+    })
+    .addNumberInput({
+      path: 'axisSoftMin',
+      name: 'Soft min',
+      defaultValue: defaultConfig.axisSoftMin,
+      category: ['Axis'],
+      settings: {
+        placeholder: 'See: Standard options > Min',
+      },
+    })
+    .addNumberInput({
+      path: 'axisSoftMax',
+      name: 'Soft max',
+      defaultValue: defaultConfig.axisSoftMax,
+      category: ['Axis'],
+      settings: {
+        placeholder: 'See: Standard options > Max',
+      },
+    });
+  if (!hideScale) {
+    builder.addCustomEditor<void, ScaleDistributionConfig>({
+      id: 'scaleDistribution',
+      path: 'scaleDistribution',
+      name: 'Scale',
+      category: ['Axis'],
+      editor: ScaleDistributionEditor,
+      override: ScaleDistributionEditor,
+      defaultValue: { type: ScaleDistribution.Linear },
+      shouldApply: (f) => f.type === FieldType.number,
+      process: identityOverrideProcessor,
+    });
+  }
+}
+
+export function addLegendOptions<T extends OptionsWithLegend>(builder: PanelOptionsEditorBuilder<T>) {
   builder
     .addRadio({
       path: 'legend.displayMode',

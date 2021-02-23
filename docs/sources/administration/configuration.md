@@ -3,7 +3,7 @@ title = "Configuration"
 description = "Configuration documentation"
 keywords = ["grafana", "configuration", "documentation"]
 aliases = ["/docs/grafana/latest/installation/configuration/"]
-weight = 300
+weight = 150
 +++
 
 # Configuration
@@ -12,7 +12,7 @@ Grafana has a number of configuration options that you can specify in a `.ini` c
 
 > **Note:** You must restart Grafana for any configuration changes to take effect.
 
-To see all settings currently applied to the Grafana server, refer to [View server settings]({{< relref "view-server-settings.md" >}}).
+To see all settings currently applied to the Grafana server, refer to [View server settings]({{< relref "view-server/view-server-settings.md" >}}).
 
 ## Config file locations
 
@@ -258,6 +258,15 @@ Path to the certificate key file (if `protocol` is set to `https` or `h2`).
 ### socket
 
 Path where the socket should be created when `protocol=socket`. Make sure that Grafana has appropriate permissions before you change this setting.
+
+### cdn_url
+
+> **Note**: Available in Grafana v7.4 and later versions.
+
+Specify a full HTTP URL address to the root of your Grafana CDN assets. Grafana will add edition and version paths.
+
+For example, given a cdn url like `https://cdn.myserver.com` grafana will try to load a javascript file from
+`http://cdn.myserver.com/grafana-oss/v7.4.0/public/build/app.<hash>.js`.
 
 <hr />
 
@@ -645,13 +654,15 @@ Grafana provides many ways to authenticate users. Refer to the Grafana [Authenti
 
 The cookie name for storing the auth token. Default is `grafana_session`.
 
-### login_maximum_inactive_lifetime_days
+### login_maximum_inactive_lifetime_duration
 
-The lifetime (days) an authenticated user can be inactive before being required to log in at next visit. Default is 7 days.
+The maximum lifetime (duration) an authenticated user can be inactive before being required to login at next visit. Default is 7 days (7d).
+This setting should be expressed as a duration, e.g. 5m (minutes), 6h (hours), 10d (days), 2w (weeks), 1M (month). The lifetime resets at each successful token rotation (token_rotation_interval_minutes).
 
-### login_maximum_lifetime_days
+### login_maximum_lifetime_duration
 
-The maximum lifetime (days) an authenticated user can be logged in before being required to login. Default is 30 days.
+The maximum lifetime (duration) an authenticated user can be logged in since login time before being required to login. Default is 30 days (30d).
+This setting should be expressed as a duration, e.g. 5m (minutes), 6h (hours), 10d (days), 2w (weeks), 1M (month).
 
 ### token_rotation_interval_minutes
 
@@ -1085,7 +1096,7 @@ Configures max number of API annotations that Grafana keeps. Default value is 0,
 
 ## [explore]
 
-For more information about this feature, refer to [Explore]({{< relref "../explore/index.md" >}}).
+For more information about this feature, refer to [Explore]({{< relref "../explore/_index.md" >}}).
 
 ### enabled
 
@@ -1093,7 +1104,7 @@ Enable or disable the Explore section. Default is `enabled`.
 
 ## [metrics]
 
-For detailed instructions, refer to [Internal Grafana metrics]({{< relref "metrics.md" >}}).
+For detailed instructions, refer to [Internal Grafana metrics]({{< relref "view-server/internal-metrics.md" >}}).
 
 ### enabled
 

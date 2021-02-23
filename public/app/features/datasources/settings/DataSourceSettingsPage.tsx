@@ -23,12 +23,13 @@ import { getRouteParamsId } from 'app/core/selectors/location';
 // Types
 import { CoreEvents, StoreState } from 'app/types/';
 import { DataSourcePluginMeta, DataSourceSettings, NavModel, UrlQueryMap } from '@grafana/data';
-import { Alert } from '@grafana/ui';
+import { Alert, InfoBox } from '@grafana/ui';
 import { getDataSourceLoadingNav } from '../state/navModel';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
 import { dataSourceLoaded, setDataSourceName, setIsDefault } from '../state/reducers';
 import { connectWithCleanUp } from 'app/core/components/connectWithCleanUp';
 import { selectors } from '@grafana/e2e-selectors';
+import { CloudInfoBox } from './CloudInfoBox';
 
 export interface Props {
   navModel: NavModel;
@@ -99,10 +100,10 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
 
   renderIsReadOnlyMessage() {
     return (
-      <div className="grafana-info-box span8">
+      <InfoBox severity="info">
         This datasource was added by config and cannot be modified using the UI. Please contact your server admin to
         update this datasource.
-      </div>
+      </InfoBox>
     );
   }
 
@@ -185,6 +186,8 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
             </label>
           </div>
         )}
+
+        <CloudInfoBox dataSource={dataSource} />
 
         <BasicSettings
           dataSourceName={dataSource.name}

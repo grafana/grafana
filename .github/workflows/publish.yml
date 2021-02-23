@@ -16,7 +16,7 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - run: git clone --single-branch --no-tags --depth 1 -b master https://grafanabot:${{ secrets.GH_BOT_ACCESS_TOKEN }}@github.com/grafana/website-sync ./.github/actions/website-sync
-    - uses: actions/cache@v2
+    - uses: actions/cache@v2.1.4
       with:
         path: '**/node_modules'
         key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}

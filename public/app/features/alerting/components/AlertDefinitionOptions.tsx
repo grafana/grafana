@@ -1,13 +1,18 @@
 import React, { FC, FormEvent, useMemo } from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import { Field, Input, Select, TextArea, useStyles } from '@grafana/ui';
-import { AlertDefinition, NotificationChannelType, QueryGroupOptions } from 'app/types';
+import { Field, Input, Select, Tab, TabContent, TabsBar, TextArea, useStyles } from '@grafana/ui';
+import { AlertDefinition, QueryGroupOptions } from 'app/types';
+
+const intervalOptions: Array<SelectableValue<number>> = [
+  { value: 60, label: '1m' },
+  { value: 300, label: '5m' },
+  { value: 600, label: '10m' },
+];
 
 interface Props {
   alertDefinition: AlertDefinition;
-  notificationChannelTypes: NotificationChannelType[];
-  onChange: (event: FormEvent) => void;
+  onChange: (event: FormEvent<HTMLElement>) => void;
   onIntervalChange: (interval: SelectableValue<number>) => void;
   onConditionChange: (refId: SelectableValue<string>) => void;
   queryOptions: QueryGroupOptions;
@@ -26,9 +31,11 @@ export const AlertDefinitionOptions: FC<Props> = ({
   ]);
 
   return (
-    <div style={{ paddingTop: '16px' }}>
-      <div className={styles.container}>
-        <h4>Alert definition</h4>
+    <div className={styles.wrapper}>
+      <TabsBar>
+        <Tab label="Alert definition" active={true} />
+      </TabsBar>
+      <TabContent className={styles.container}>
         <Field label="Title">
           <Input width={25} name="title" value={alertDefinition.title} onChange={onChange} />
         </Field>
@@ -47,12 +54,8 @@ export const AlertDefinitionOptions: FC<Props> = ({
             <span className={styles.optionName}>Every</span>
             <Select
               onChange={onIntervalChange}
-              value={alertDefinition.interval}
-              options={[
-                { value: 60, label: '1m' },
-                { value: 300, label: '5m' },
-                { value: 600, label: '10m' },
-              ]}
+              value={intervalOptions.find((i) => i.value === alertDefinition.intervalSeconds)}
+              options={intervalOptions}
               width={10}
             />
           </div>
@@ -61,13 +64,13 @@ export const AlertDefinitionOptions: FC<Props> = ({
           <div className={styles.optionRow}>
             <Select
               onChange={onConditionChange}
-              value={alertDefinition.condition.refId}
+              value={refIds.find((r) => r.value === alertDefinition.condition)}
               options={refIds}
               noOptionsMessage="No queries added"
             />
           </div>
         </Field>
-      </div>
+      </TabContent>
     </div>
   );
 };
@@ -76,10 +79,13 @@ const getStyles = (theme: GrafanaTheme) => {
   return {
     wrapper: css`
       padding-top: ${theme.spacing.md};
+      height: 100%;
     `,
     container: css`
       padding: ${theme.spacing.md};
       background-color: ${theme.colors.panelBg};
+      height: 100%;
+      border-left: 1px solid ${theme.colors.border1};
     `,
     optionRow: css`
       display: flex;
