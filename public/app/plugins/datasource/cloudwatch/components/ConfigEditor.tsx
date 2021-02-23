@@ -316,7 +316,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
           </div>
           <div className="gf-form-inline">
             <div className="gf-form">
-              <InlineFormLabel className="width-14" tooltip="Optionally, specify a custom endpoint for the service">
+              <InlineFormLabel className="width-14" tooltip="Optionally, specify a custom endpoint for the service.">
                 Endpoint
               </InlineFormLabel>
               <div className="width-30">
