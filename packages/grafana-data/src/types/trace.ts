@@ -92,3 +92,20 @@ export type Trace = TraceData & {
   traceName: string;
   services: Array<{ name: string; numberOfSpans: number }>;
 };
+
+export interface TraceDataFrameView {
+  traceID: string;
+  spanID: string;
+  operationName: string;
+  serviceName: string;
+  serviceTags: TraceKeyValuePair[];
+  startTime: number;
+  duration: number;
+  logs: TraceLog[];
+  tags?: TraceKeyValuePair[];
+  references?: TraceSpanReference[];
+  warnings?: string[] | null;
+  stackTraces?: string[];
+  flags: number;
+  errorIconColor?: string;
+}

@@ -1,16 +1,22 @@
 import {
-  dateMath,
-  DateTime,
-  MutableDataFrame,
-  DataSourceApi,
-  DataSourceInstanceSettings,
+  DataFrame,
+  DataQuery,
   DataQueryRequest,
   DataQueryResponse,
-  DataQuery,
+  DataSourceApi,
+  DataSourceInstanceSettings,
+  dateMath,
+  DateTime,
+  FieldDTO,
   FieldType,
+  MutableDataFrame,
+  TraceDataFrameView,
+  TraceProcess,
+  TraceSpanData,
+  TraceViewData,
 } from '@grafana/data';
-import { getBackendSrv, BackendSrvRequest } from '@grafana/runtime';
-import { Observable, from, of } from 'rxjs';
+import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
+import { from, Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -34,46 +40,18 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
     // At this moment we expect only one target. In case we somehow change the UI to be able to show multiple
     // traces at one we need to change this.
     const id = options.targets[0]?.query;
-    if (id) {
-      // TODO: this api is internal, used in jaeger ui. Officially they have gRPC api that should be used.
-      return this._request(`/api/traces/${encodeURIComponent(id)}`).pipe(
-        map((response) => {
-          return {
-            data: [
-              new MutableDataFrame({
-                fields: [
-                  {
-                    name: 'trace',
-                    type: FieldType.trace,
-                    values: response?.data?.data || [],
-                  },
-                ],
-                meta: {
-                  preferredVisualisationType: 'trace',
-                },
-              }),
-            ],
-          };
-        })
-      );
-    } else {
-      return of({
-        data: [
-          new MutableDataFrame({
-            fields: [
-              {
-                name: 'trace',
-                type: FieldType.trace,
-                values: [],
-              },
-            ],
-            meta: {
-              preferredVisualisationType: 'trace',
-            },
-          }),
-        ],
-      });
+    if (!id) {
+      return of({ data: [emptyTraceDataFrame] });
     }
+
+    // TODO: this api is internal, used in jaeger ui. Officially they have gRPC api that should be used.
+    return this._request(`/api/traces/${encodeURIComponent(id)}`).pipe(
+      map((response) => {
+        return {
+          data: [createTraceFrame(response?.data?.data?.[0] || [])],
+        };
+      })
+    );
   }
 
   async testDatasource(): Promise<any> {
@@ -146,3 +124,56 @@ function getTime(date: string | DateTime, roundUp: boolean) {
   }
   return date.valueOf() * 1000;
 }
+
+function createTraceFrame(data: TraceViewData): DataFrame {
+  const spans = data.spans.map((s) => toDataFrameView(s, data.processes));
+
+  return new MutableDataFrame({
+    fields: mapFields(spans),
+    meta: {
+      preferredVisualisationType: 'trace',
+    },
+  });
+}
+
+function mapFields(data: Array<Record<string, any>>): FieldDTO[] {
+  const map = data.reduce((acc, datum) => {
+    for (const key of Object.keys(datum)) {
+      if (!acc[key]) {
+        acc[key] = {
+          name: key,
+          type: guessFieldType(datum[key]),
+          values: [],
+        };
+      }
+      (acc[key].values! as any[]).push(datum[key as keyof typeof datum]);
+    }
+    return acc;
+  }, {} as Record<string, FieldDTO>);
+  return Object.values(map);
+}
+
+function guessFieldType(val: any) {
+  return typeof val === 'string' ? FieldType.string : typeof val === 'number' ? FieldType.number : FieldType.other;
+}
+
+function toDataFrameView(span: TraceSpanData, processes: Record<string, TraceProcess>): TraceDataFrameView {
+  return {
+    ...span,
+    serviceName: processes[span.processID].serviceName,
+    serviceTags: processes[span.processID].tags,
+  };
+}
+
+const emptyTraceDataFrame = new MutableDataFrame({
+  fields: [
+    {
+      name: 'trace',
+      type: FieldType.trace,
+      values: [],
+    },
+  ],
+  meta: {
+    preferredVisualisationType: 'trace',
+  },
+});
