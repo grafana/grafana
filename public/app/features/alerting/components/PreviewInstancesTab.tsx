@@ -11,7 +11,7 @@ interface Props {
 }
 
 export const PreviewInstancesTab: FC<Props> = ({ instances, onTest, height, width }) => {
-  if (instances.length < 1) {
+  if (!instances.length) {
     return (
       <EmptyState title="You haven’t tested your alert yet.">
         <div>In order to see your instances, you need to test your alert first.</div>

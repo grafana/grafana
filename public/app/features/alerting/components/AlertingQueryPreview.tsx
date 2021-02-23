@@ -81,22 +81,21 @@ class AlertingQueryPreviewUnconnected extends PureComponent<Props, State> {
 
     if (queries && queries.length === 0) {
       return this.renderNoQueries();
-    } else {
-      return (
-        <AutoSizer style={{ width: '100%', height: '100%' }}>
-          {({ width, height }) => {
-            switch (activeTab) {
-              case Tabs.Instances:
-                return <PreviewInstancesTab instances={instances} width={width} height={height} onTest={onTest} />;
-
-              case Tabs.Query:
-              default:
-                return <PreviewQueryTab data={data} width={width} height={height} onRunQueries={onRunQueries} />;
-            }
-          }}
-        </AutoSizer>
-      );
     }
+    return (
+      <AutoSizer style={{ width: '100%', height: '100%' }}>
+        {({ width, height }) => {
+          switch (activeTab) {
+            case Tabs.Instances:
+              return <PreviewInstancesTab instances={instances} width={width} height={height} onTest={onTest} />;
+
+            case Tabs.Query:
+            default:
+              return <PreviewQueryTab data={data} width={width} height={height} onRunQueries={onRunQueries} />;
+          }
+        }}
+      </AutoSizer>
+    );
   }
 
   renderError(data: PanelData) {

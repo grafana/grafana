@@ -1,5 +1,4 @@
 import React, { FC, useMemo, useState } from 'react';
-import _ from 'lodash';
 import { css } from 'emotion';
 import { getFrameDisplayName, GrafanaTheme, PanelData, SelectableValue } from '@grafana/data';
 import { Button, Select, stylesFactory, Table, useTheme } from '@grafana/ui';
@@ -27,7 +26,7 @@ export const PreviewQueryTab: FC<Props> = ({ data, height, onRunQueries, width }
   // Select padding
   const padding = 16;
 
-  if (_.isEmpty(data)) {
+  if (!Object.keys(data).length) {
     return (
       <EmptyState title="Run queries to view data.">
         <Button onClick={onRunQueries}>Run queries</Button>
