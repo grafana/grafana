@@ -294,7 +294,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
           title="Apply changes and save library panel"
           key="save-panel"
         >
-          Save Panel
+          Save library panel
         </ToolbarButton>
       ) : (
         <ToolbarButton onClick={this.onSaveDashboard} title="Apply changes and save dashboard" key="save">
