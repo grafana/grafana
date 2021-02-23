@@ -1,0 +1,32 @@
+sudo: false
+language: go
+go:
+    - "1.4.x"
+    - "1.5.x"
+    - "1.6.x"
+    - "1.7.x"
+    - "1.8.x"
+    - "1.9.x"
+    - "1.10.x"
+    - "1.11.x"
+    - "1.12.x"
+    - tip
+
+git:
+  depth: 1
+
+matrix:
+    fast_finish: true
+    allow_failures:
+        - go: tip
+go_import_path: gopkg.in/ldap.v3
+install:
+    - go get gopkg.in/asn1-ber.v1
+    - go get code.google.com/p/go.tools/cmd/cover || go get golang.org/x/tools/cmd/cover
+    - go get github.com/golang/lint/golint || go get golang.org/x/lint/golint || true
+    - go build -v ./...
+script:
+    - make test
+    - make fmt
+    - make vet
+    - make lint

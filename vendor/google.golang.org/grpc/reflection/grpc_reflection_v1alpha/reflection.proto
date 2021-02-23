@@ -16,6 +16,8 @@
 
 syntax = "proto3";
 
+option go_package = "google.golang.org/grpc/reflection/grpc_reflection_v1alpha";
+
 package grpc.reflection.v1alpha;
 
 service ServerReflection {

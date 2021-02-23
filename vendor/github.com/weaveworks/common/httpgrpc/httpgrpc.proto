@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package httpgrpc;
+
+option go_package = "httpgrpc";
+
+service HTTP {
+  rpc Handle(HTTPRequest) returns (HTTPResponse) {};
+}
+
+message HTTPRequest {
+  string method = 1;
+  string url = 2;
+  repeated Header headers = 3;
+  bytes body = 4;
+}
+
+message HTTPResponse {
+  int32 Code = 1;
+  repeated Header headers = 2;
+  bytes body = 3;
+}
+
+message Header {
+  string key = 1;
+  repeated string values = 2;
+}

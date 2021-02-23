@@ -1,0 +1,33 @@
+---
+kind: pipeline
+name: go1.12
+
+steps:
+
+- name: test
+  pull: default
+  image: golang:1.12
+  commands:
+  - go vet
+  - "go test -v -race -coverprofile=coverage.txt -covermode=atomic -dbConn=\"root:@tcp(mysql:3306)/core_test?charset=utf8mb4\""
+  environment:
+    GO111MODULE: "on"
+    GOPROXY: https://goproxy.cn
+  when:
+    event:
+    - push
+    - tag
+    - pull_request
+
+services:
+- name: mysql
+  pull: default
+  image: mysql:5.7
+  environment:
+    MYSQL_ALLOW_EMPTY_PASSWORD: yes
+    MYSQL_DATABASE: core_test
+  when:
+    event:
+    - push
+    - tag
+    - pull_request

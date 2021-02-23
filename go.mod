@@ -10,7 +10,7 @@ require (
 	github.com/prometheus/alertmanager v0.21.1-0.20210211203738-a7ca7b1d2951
 	github.com/prometheus/client_golang v1.9.0
 	github.com/prometheus/common v0.15.0
-	github.com/prometheus/prometheus v1.8.2-0.20201014093524-73e2ce1bd643
+	github.com/stretchr/testify v1.7.0
 	golang.org/x/net v0.0.0-20210119194325-5f4716e94777 // indirect
 	golang.org/x/oauth2 v0.0.0-20210210192628-66670185b0cd // indirect
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
@@ -31,9 +31,6 @@ replace github.com/satori/go.uuid => github.com/satori/go.uuid v1.2.0
 
 // Use fork of gocql that has gokit logs and Prometheus metrics.
 replace github.com/gocql/gocql => github.com/grafana/gocql v0.0.0-20200605141915-ba5dc39ece85
-
-// We can't upgrade to grpc 1.30.0 until go.etcd.io/etcd will support it.
-replace google.golang.org/grpc => google.golang.org/grpc v1.29.1
 
 // We can't upgrade until grpc upgrade is unblocked.
 replace github.com/sercand/kuberesolver => github.com/sercand/kuberesolver v2.4.0+incompatible
