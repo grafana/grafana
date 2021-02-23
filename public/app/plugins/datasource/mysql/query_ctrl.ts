@@ -25,7 +25,7 @@ export class MysqlQueryCtrl extends QueryCtrl {
 
   formats: any[];
   lastQueryError?: string;
-  showHelp: boolean;
+  showHelp!: boolean;
 
   queryModel: MysqlQuery;
   metaBuilder: MysqlMetaQuery;
@@ -34,10 +34,10 @@ export class MysqlQueryCtrl extends QueryCtrl {
   whereAdd: any;
   timeColumnSegment: any;
   metricColumnSegment: any;
-  selectMenu: any[];
-  selectParts: SqlPart[][];
-  groupParts: SqlPart[];
-  whereParts: SqlPart[];
+  selectMenu: any[] = [];
+  selectParts: SqlPart[][] = [];
+  groupParts: SqlPart[] = [];
+  whereParts: SqlPart[] = [];
   groupAdd: any;
 
   /** @ngInject */
@@ -136,7 +136,6 @@ export class MysqlQueryCtrl extends QueryCtrl {
   }
 
   buildSelectMenu() {
-    this.selectMenu = [];
     const aggregates = {
       text: 'Aggregate Functions',
       value: 'aggregate',

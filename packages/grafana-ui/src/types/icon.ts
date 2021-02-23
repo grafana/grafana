@@ -92,6 +92,7 @@ export type IconName =
   | 'minus'
   | 'mobile-android'
   | 'monitor'
+  | 'palette'
   | 'panel-add'
   | 'pause'
   | 'pen'
@@ -224,6 +225,7 @@ export const getAvailableIcons = (): IconName[] => [
   'minus',
   'mobile-android',
   'monitor',
+  'palette',
   'panel-add',
   'pause',
   'pen',
