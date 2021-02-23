@@ -10,8 +10,8 @@ import (
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
 
-// ElasticsearchExecutor represents a handler for handling elasticsearch datasource request
-type ElasticsearchExecutor struct{}
+// Executor represents a handler for handling elasticsearch datasource request
+type Executor struct{}
 
 var (
 	intervalCalculator tsdb.IntervalCalculator
@@ -19,7 +19,7 @@ var (
 
 // NewElasticsearchExecutor creates a new elasticsearch executor
 func NewElasticsearchExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-	return &ElasticsearchExecutor{}, nil
+	return &Executor{}, nil
 }
 
 func init() {
@@ -28,7 +28,7 @@ func init() {
 }
 
 // Query handles an elasticsearch datasource request
-func (e *ElasticsearchExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
+func (e *Executor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	if len(tsdbQuery.Queries) == 0 {
 		return nil, fmt.Errorf("query contains no queries")
 	}
