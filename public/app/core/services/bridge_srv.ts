@@ -16,43 +16,39 @@ export class BridgeSrv {
   private lastUrl: string | null = null;
 
   /** @ngInject */
-  constructor(
-    private $location: ILocationService,
-    private $timeout: ITimeoutService,
-    private $rootScope: GrafanaRootScope,
-    private $route: any
-  ) {
-    this.angularUrl = $location.url();
+  constructor() {
+    // private $route: any // private $rootScope: GrafanaRootScope, // private $timeout: ITimeoutService, // private $location: ILocationService,
+    // this.angularUrl = $location.url();
   }
 
   init() {
-    this.$rootScope.$on('$routeUpdate', (evt, data) => {
-      const state = store.getState();
+    // this.$rootScope.$on('$routeUpdate', (evt, data) => {
+    //   const state = store.getState();
+    //
+    //   this.angularUrl = this.$location.url();
+    //
+    //   if (state.location.url !== this.angularUrl) {
+    //     store.dispatch(
+    //       updateLocation({
+    //         path: this.$location.path(),
+    //         query: this.$location.search(),
+    //         routeParams: this.$route.current.params,
+    //       })
+    //     );
+    //   }
+    // });
 
-      this.angularUrl = this.$location.url();
-
-      if (state.location.url !== this.angularUrl) {
-        store.dispatch(
-          updateLocation({
-            path: this.$location.path(),
-            query: this.$location.search(),
-            routeParams: this.$route.current.params,
-          })
-        );
-      }
-    });
-
-    this.$rootScope.$on('$routeChangeSuccess', (evt, data) => {
-      this.angularUrl = this.$location.url();
-
-      store.dispatch(
-        updateLocation({
-          path: this.$location.path(),
-          query: this.$location.search(),
-          routeParams: this.$route.current.params,
-        })
-      );
-    });
+    // this.$rootScope.$on('$routeChangeSuccess', (evt, data) => {
+    //   this.angularUrl = this.$location.url();
+    //
+    //   store.dispatch(
+    //     updateLocation({
+    //       path: this.$location.path(),
+    //       query: this.$location.search(),
+    //       routeParams: this.$route.current.params,
+    //     })
+    //   );
+    // });
 
     // Listen for changes in redux location -> update angular location
     store.subscribe(() => {
@@ -63,19 +59,19 @@ export class BridgeSrv {
       if (url === this.lastUrl) {
         return;
       }
-
-      if (this.angularUrl !== url) {
-        // store angular url right away as otherwise we end up syncing multiple times
-        this.angularUrl = url;
-
-        this.$timeout(() => {
-          this.$location.url(url);
-          // some state changes should not trigger new browser history
-          if (state.location.replace) {
-            this.$location.replace();
-          }
-        });
-      }
+      //
+      // if (this.angularUrl !== url) {
+      //   // store angular url right away as otherwise we end up syncing multiple times
+      //   this.angularUrl = url;
+      //
+      //   this.$timeout(() => {
+      //     this.$location.url(url);
+      //     // some state changes should not trigger new browser history
+      //     if (state.location.replace) {
+      //       this.$location.replace();
+      //     }
+      //   });
+      // }
 
       // if only query params changed, check if variables changed
       if (state.location.path === this.lastPath && state.location.query !== this.lastQuery) {

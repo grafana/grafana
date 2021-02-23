@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import Mousetrap from 'mousetrap';
 import 'mousetrap-global-bind';
-import { ILocationService, IRootScopeService, ITimeoutService } from 'angular';
+import { IRootScopeService } from 'angular';
 import { LegacyGraphHoverClearEvent, locationUtil } from '@grafana/data';
 
 import coreModule from 'app/core/core_module';
@@ -13,7 +13,7 @@ import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
-import { defaultQueryParams } from 'app/features/search/reducers/searchQueryReducer';
+// import { defaultQueryParams } from 'app/features/search/reducers/searchQueryReducer';
 import { ContextSrv } from './context_srv';
 
 export class KeybindingSrv {
@@ -23,34 +23,33 @@ export class KeybindingSrv {
   /** @ngInject */
   constructor(
     private $rootScope: GrafanaRootScope,
-    private $location: ILocationService,
-    private $timeout: ITimeoutService,
+    // private $timeout: ITimeoutService,
     private datasourceSrv: any,
     private timeSrv: any,
     private contextSrv: ContextSrv
   ) {
     // clear out all shortcuts on route change
-    $rootScope.$on('$routeChangeSuccess', () => {
-      Mousetrap.reset();
-      // rebind global shortcuts
-      this.setupGlobal();
-    });
+    // $rootScope.$on('$routeChangeSuccess', () => {
+    //   Mousetrap.reset();
+    //   // rebind global shortcuts
+    //   this.setupGlobal();
+    // });
 
     this.setupGlobal();
     appEvents.on(CoreEvents.showModal, () => (this.modalOpen = true));
   }
 
   setupGlobal() {
-    if (!(this.$location.path() === '/login')) {
-      this.bind(['?', 'h'], this.showHelpModal);
-      this.bind('g h', this.goToHome);
-      this.bind('g a', this.openAlerting);
-      this.bind('g p', this.goToProfile);
-      this.bind('s o', this.openSearch);
-      this.bind('f', this.openSearch);
-      this.bind('esc', this.exit);
-      this.bindGlobal('esc', this.globalEsc);
-    }
+    // if (!(this.$location.path() === '/login')) {
+    //   this.bind(['?', 'h'], this.showHelpModal);
+    //   this.bind('g h', this.goToHome);
+    //   this.bind('g a', this.openAlerting);
+    //   this.bind('g p', this.goToProfile);
+    //   this.bind('s o', this.openSearch);
+    //   this.bind('f', this.openSearch);
+    //   this.bind('esc', this.exit);
+    //   this.bindGlobal('esc', this.globalEsc);
+    // }
   }
 
   globalEsc() {
@@ -80,25 +79,25 @@ export class KeybindingSrv {
   }
 
   openSearch() {
-    const search = _.extend(this.$location.search(), { search: 'open' });
-    this.$location.search(search);
+    // const search = _.extend(this.$location.search(), { search: 'open' });
+    // this.$location.search(search);
   }
 
   closeSearch() {
-    const search = _.extend(this.$location.search(), { search: null, ...defaultQueryParams });
-    this.$location.search(search);
+    // const search = _.extend(this.$location.search(), { search: null, ...defaultQueryParams });
+    // this.$location.search(search);
   }
 
   openAlerting() {
-    this.$location.url('/alerting');
+    // this.$location.url('/alerting');
   }
 
   goToHome() {
-    this.$location.url('/');
+    // this.$location.url('/');
   }
 
   goToProfile() {
-    this.$location.url('/profile');
+    // this.$location.url('/profile');
   }
 
   showHelpModal() {
@@ -114,40 +113,40 @@ export class KeybindingSrv {
     }
 
     // close settings view
-    const search = this.$location.search();
-    if (search.editview) {
-      delete search.editview;
-      this.$location.search(search);
-      return;
-    }
+    // const search = this.$location.search();
+    // if (search.editview) {
+    //   delete search.editview;
+    //   this.$location.search(search);
+    //   return;
+    // }
+    //
+    // if (search.inspect) {
+    //   delete search.inspect;
+    //   delete search.inspectTab;
+    //   this.$location.search(search);
+    //   return;
+    // }
+    //
+    // if (search.editPanel) {
+    //   delete search.editPanel;
+    //   delete search.tab;
+    //   this.$location.search(search);
+    //   return;
+    // }
+    //
+    // if (search.viewPanel) {
+    //   delete search.viewPanel;
+    //   this.$location.search(search);
+    //   return;
+    // }
 
-    if (search.inspect) {
-      delete search.inspect;
-      delete search.inspectTab;
-      this.$location.search(search);
-      return;
-    }
-
-    if (search.editPanel) {
-      delete search.editPanel;
-      delete search.tab;
-      this.$location.search(search);
-      return;
-    }
-
-    if (search.viewPanel) {
-      delete search.viewPanel;
-      this.$location.search(search);
-      return;
-    }
-
-    if (search.kiosk) {
-      this.$rootScope.appEvent(CoreEvents.toggleKioskMode, { exit: true });
-    }
-
-    if (search.search) {
-      this.closeSearch();
-    }
+    // if (search.kiosk) {
+    //   this.$rootScope.appEvent(CoreEvents.toggleKioskMode, { exit: true });
+    // }
+    //
+    // if (search.search) {
+    //   this.closeSearch();
+    // }
   }
 
   bind(keyArg: string | string[], fn: () => void) {
@@ -181,8 +180,8 @@ export class KeybindingSrv {
   }
 
   showDashEditView() {
-    const search = _.extend(this.$location.search(), { editview: 'settings' });
-    this.$location.search(search);
+    // const search = _.extend(this.$location.search(), { editview: 'settings' });
+    // this.$location.search(search);
   }
 
   setupDashboardBindings(scope: IRootScopeService & AppEventEmitter, dashboard: DashboardModel) {
@@ -224,23 +223,23 @@ export class KeybindingSrv {
       }
 
       if (dashboard.canEditPanelById(dashboard.meta.focusPanelId)) {
-        const search = _.extend(this.$location.search(), { editPanel: dashboard.meta.focusPanelId });
-        this.$location.search(search);
+        // const search = _.extend(this.$location.search(), { editPanel: dashboard.meta.focusPanelId });
+        // this.$location.search(search);
       }
     });
 
     // view panel
     this.bind('v', () => {
       if (dashboard.meta.focusPanelId) {
-        const search = _.extend(this.$location.search(), { viewPanel: dashboard.meta.focusPanelId });
-        this.$location.search(search);
+        // const search = _.extend(this.$location.search(), { viewPanel: dashboard.meta.focusPanelId });
+        // this.$location.search(search);
       }
     });
 
     this.bind('i', () => {
       if (dashboard.meta.focusPanelId) {
-        const search = _.extend(this.$location.search(), { inspect: dashboard.meta.focusPanelId });
-        this.$location.search(search);
+        // const search = _.extend(this.$location.search(), { inspect: dashboard.meta.focusPanelId });
+        // this.$location.search(search);
       }
     });
 
@@ -261,7 +260,7 @@ export class KeybindingSrv {
           if (url) {
             const urlWithoutBase = locationUtil.stripBaseFromUrl(url);
             if (urlWithoutBase) {
-              this.$timeout(() => this.$location.url(urlWithoutBase));
+              // this.$timeout(() => this.$location.url(urlWithoutBase));
             }
           }
         }
@@ -331,7 +330,7 @@ export class KeybindingSrv {
     });
 
     this.bind('d n', () => {
-      this.$location.url('/dashboard/new');
+      // this.$location.url('/dashboard/new');
     });
 
     this.bind('d r', () => {

@@ -160,8 +160,8 @@ export function grafanaAppDirective(
   playlistSrv: PlaylistSrv,
   contextSrv: ContextSrv,
   $timeout: ITimeoutService,
-  $rootScope: IRootScopeService,
-  $location: ILocationService
+  $rootScope: IRootScopeService
+  // $location: ILocationService
 ) {
   return {
     restrict: 'E',

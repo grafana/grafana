@@ -53,6 +53,10 @@ import { DashboardLoaderSrv } from './features/dashboard/services/DashboardLoade
 import AppWrapper from './core/AppWrapper';
 import { LocationService } from './core/navigation/LocationService';
 
+// Function that patches Angular routing that seems to kick off because of $routeProvider and ng-include usages
+// Ref: https://stackoverflow.com/questions/58146221/is-it-possible-to-tamper-client-side-code-in-angular-app
+import bridgeReactAngularRouting from './core/navigation/bridgeReactAngularRouting';
+
 // add move to lodash for backward compatabiltiy
 // @ts-ignore
 _.move = (array: [], fromIndex: number, toIndex: number) => {
@@ -163,7 +167,7 @@ export class GrafanaApp {
     // register react angular wrappers
     angular.module('grafana.services').service('dashboardLoaderSrv', DashboardLoaderSrv);
     registerAngularDirectives();
-
+    bridgeReactAngularRouting();
     // disable tool tip animation
     $.fn.tooltip.defaults.animation = false;
 

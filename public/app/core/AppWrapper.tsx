@@ -12,6 +12,7 @@ import { ConfigContext, ThemeProvider } from './utils/ConfigProvider';
 import { RouteDescriptor } from './navigation/types';
 import { contextSrv } from './services/context_srv';
 import { SideMenu } from './components/sidemenu/SideMenu';
+import { navigationLogger } from './navigation/utils';
 
 interface AppWrapperProps {
   app: GrafanaApp;
@@ -20,14 +21,14 @@ interface AppWrapperState {
   ngInjector: any;
 }
 
-//TODO[Router]: move to usitls
+//TODO[Router]: move to utils
 const prepareQueryObject = (locationQuery: string) => {
   const params: Array<[string, string | boolean]> = [];
   new URLSearchParams(locationQuery).forEach((v, k) => params.push([k, parseValue(v)]));
   return Object.fromEntries(new Map(params));
 };
 
-//TODO[Router]: move to usitls
+//TODO[Router]: move to utils
 const parseValue = (value: string) => {
   if (value === 'true') {
     return true;
@@ -60,7 +61,7 @@ export default class AppWrapper extends React.Component<AppWrapperProps, AppWrap
   bootstrapNgApp() {
     const { app } = this.props;
     const invoker = angular.bootstrap(document, app.ngModuleDependencies);
-
+    navigationLogger('AppWrapper', false, 'Angular app bootstrap');
     this.setState(
       { ngInjector: invoker },
       invoker.invoke(() => {
@@ -97,24 +98,23 @@ export default class AppWrapper extends React.Component<AppWrapperProps, AppWrap
     }
 
     return (
-      <pre>{JSON.stringify(route)}</pre>
-      // <Route
-      //   exact
-      //   path={route.path}
-      //   key={`${route.path}`}
-      //   render={(props) => {
-      //     return React.createElement(route.component, {
-      //       $injector: this.state.ngInjector,
-      //       $rootScope: $rootScope,
-      //       $contextSrv: contextSrv,
-      //       routeInfo: route.routeInfo,
-      //       // @ts-ignore
-      //       query: prepareQueryObject(props.location.search),
-      //       // route: props.match,
-      //       ...props,
-      //     });
-      //   }}
-      // />
+      <Route
+        exact
+        path={route.path}
+        key={`${route.path}`}
+        render={(props) => {
+          return React.createElement(route.component, {
+            $injector: this.state.ngInjector,
+            $rootScope: $rootScope,
+            $contextSrv: contextSrv,
+            routeInfo: route.routeInfo,
+            // @ts-ignore
+            query: prepareQueryObject(props.location.search),
+            // route: props.match,
+            ...props,
+          });
+        }}
+      />
     );
   };
 
@@ -123,7 +123,8 @@ export default class AppWrapper extends React.Component<AppWrapperProps, AppWrap
   }
 
   render() {
-    console.log('Rendering AppWrapper');
+    navigationLogger('AppWrapper', false, 'rendering');
+
     // @ts-ignore
     const appSeed = `<grafana-app ng-cloak><app-notifications-list class="page-alert-list"></app-notifications-list><dashboard-search></dashboard-search><div ng-view class="scroll-canvas"><div id="ngRoot"></div></div></grafana-app>`;
 
