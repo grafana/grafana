@@ -135,10 +135,13 @@ export class PanelChrome extends Component<Props, State> {
   // The next is outside a react synthetic event so setState is not batched
   // So in this context we can only do a single call to setState
   onDataUpdate(data: PanelData) {
-    if (!this.props.isInView && data.state !== LoadingState.Streaming) {
-      // Ignore events when not visible.
-      // The call will be repeated when the panel comes into view
-      this.setState({ refreshWhenInView: true });
+    if (!this.props.isInView) {
+      if (data.state !== LoadingState.Streaming) {
+        // Ignore events when not visible.
+        // The call will be repeated when the panel comes into view
+        this.setState({ refreshWhenInView: true });
+      }
+
       return;
     }
 
