@@ -58,13 +58,13 @@ func init() {
 	plog = log.New("tsdb.loki")
 	tsdb.RegisterTsdbQueryEndpoint("loki", NewLokiExecutor)
 	legendFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
-	plog.Info("==============legendFormat==============:", legendFormat)
 	intervalCalculator = tsdb.NewIntervalCalculator(&tsdb.IntervalOptions{MinInterval: time.Second * 1})
 }
 
 func (e *LokiExecutor) getClient(dsInfo *models.DataSource) (apiv1.API, error) {
+	fmt.Println("----idx----", dsInfo.Url)
 	cfg := api.Config{
-		Address:      dsInfo.Url,
+		Address:      dsInfo.Url + "/loki/",
 		RoundTripper: e.Transport,
 	}
 
@@ -108,7 +108,7 @@ func (e *LokiExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsd
 
 		plog.Debug("Sending query", "start", timeRange.Start, "end", timeRange.End, "step", timeRange.Step, "query", query.Expr)
 
-		span, ctx := opentracing.StartSpanFromContext(ctx, "alerting.prometheus")
+		span, ctx := opentracing.StartSpanFromContext(ctx, "alerting.loki")
 		span.SetTag("expr", query.Expr)
 		span.SetTag("start_unixnano", query.Start.UnixNano())
 		span.SetTag("stop_unixnano", query.End.UnixNano())
