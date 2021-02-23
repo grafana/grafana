@@ -1,5 +1,6 @@
 [run]
 timeout = "10m"
+modules-download-mode = "readonly"
 
 [linters-settings.golint]
 min-confidence = 3
