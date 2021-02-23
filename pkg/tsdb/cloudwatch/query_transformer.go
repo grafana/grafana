@@ -116,8 +116,12 @@ func (e *cloudWatchExecutor) transformQueryResponsesToQueryResult(cloudwatchResp
 		}
 
 		for _, frame := range frames {
-			frame.Meta = &data.FrameMeta{
-				ExecutedQueryString: string(eq),
+			if frame.Meta != nil {
+				frame.Meta.ExecutedQueryString = string(eq)
+			} else {
+				frame.Meta = &data.FrameMeta{
+					ExecutedQueryString: string(eq),
+				}
 			}
 
 			if link == "" || len(frame.Fields) < 2 {

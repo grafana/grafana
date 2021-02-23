@@ -103,7 +103,7 @@ func (a *queryEndpointAdapter) Query(ctx context.Context, ds *models.DataSource,
 		qr.Dataframes = tsdb.NewDecodedDataFrames(r.Frames)
 
 		if r.Error != nil {
-			qr.Error = r.Error
+			qr.ErrorString = r.Error.Error()
 		}
 
 		tR.Results[refID] = qr
