@@ -1,4 +1,5 @@
 import { e2e } from '@grafana/e2e';
+import { selectors } from '@grafana/e2e-selectors';
 
 describe('Trace view', () => {
   it('Can lazy load big traces', () => {
@@ -25,7 +26,11 @@ describe('Trace view', () => {
 
     e2e().wait('@longTrace');
 
-    e2e.components.TraceViewer.spanBar().should('have.length', 100);
+    e2e()
+      .get(selectors.components.TraceViewer.spanBar(), { timeout: 50000 })
+      .should('be.visible')
+      .and('have.length', 100);
+
     e2e.pages.Explore.General.scrollBar().scrollTo('center');
 
     // After scrolling we should have 140 spans instead of the first 100
