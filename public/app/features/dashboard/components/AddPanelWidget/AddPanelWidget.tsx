@@ -12,12 +12,12 @@ import { updateLocation } from 'app/core/actions';
 import { addPanel } from 'app/features/dashboard/state/reducers';
 // Types
 import { DashboardModel, PanelModel } from '../../state';
-import { LS_PANEL_COPY_KEY } from 'app/core/constants';
-import { css, cx, keyframes } from 'emotion';
-import { GrafanaTheme } from '@grafana/data';
-import tinycolor from 'tinycolor2';
 import { LibraryPanelsView } from '../../../library-panels/components/LibraryPanelsView/LibraryPanelsView';
 import { LibraryPanelDTO } from 'app/features/library-panels/state/api';
+import { LS_PANEL_COPY_KEY } from 'app/core/constants';
+import { GrafanaTheme } from '@grafana/data';
+import { css, cx, keyframes } from 'emotion';
+import tinycolor from 'tinycolor2';
 
 export type PanelPluginInfo = { id: any; defaults: { gridPos: { w: any; h: any }; title: any } };
 
@@ -312,21 +312,3 @@ const getAddPanelWigetHandleStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
   };
 });
-
-// const getAddPanelWidgetCreateStyles = stylesFactory((theme: GrafanaTheme) => {
-//   return {
-//     wrapper: css`
-//       cursor: pointer;
-//       display: flex;
-//       flex-direction: column;
-//       align-items: center;
-//       margin-bottom: ${theme.spacing.lg};
-//       &:hover {
-//         background: ${theme.colors.bg2};
-//       }
-//     `,
-//     icon: css`
-//       color: ${theme.colors.textWeak};
-//     `,
-//   };
-// });

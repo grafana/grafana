@@ -25,7 +25,6 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
 }) => {
   const styles = useStyles(getPanelViewStyles);
   const [searchString, setSearchString] = useState('');
-  // const [modalOpen, setModalOpen] = useState(false);
 
   // Deliberately not using useAsync here as we want to be able to update libraryPanels without
   // making an additional API request (for example when a user deletes a library panel and we want to update the view to reflect that)
@@ -92,17 +91,6 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
           Create a new reusable panel
         </Button>
       )}
-      {/* {modalOpen && (
-        <VarImportModal
-          vars={[
-            { name: 'jobs', definition: 'label_values(job)' },
-            { name: 'disk_series', definition: 'metrics(node_disk)' },
-            { name: 'query', definition: 'query_result(up{job=~"$jobs"})' },
-          ]}
-          isOpen={modalOpen}
-          onDismiss={() => setModalOpen(false)}
-        />
-      )} */}
     </div>
   );
 };
@@ -124,9 +112,6 @@ const getPanelViewStyles = stylesFactory((theme: GrafanaTheme) => {
     searchHeader: css`
       display: flex;
     `,
-    // searchInput: css`
-    //   margin-right: 122px;
-    // `,
     newPanelButton: css`
       margin-top: 10px;
       align-self: flex-start;

@@ -6,7 +6,14 @@ import { Subscription } from 'rxjs';
 
 import { FieldConfigSource, GrafanaTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { HorizontalGroup, PageToolbar, RadioButtonGroup, stylesFactory, ToolbarButton } from '@grafana/ui';
+import {
+  HorizontalGroup,
+  ModalsController,
+  PageToolbar,
+  RadioButtonGroup,
+  stylesFactory,
+  ToolbarButton,
+} from '@grafana/ui';
 
 import config from 'app/core/config';
 import { appEvents } from 'app/core/core';
@@ -181,19 +188,6 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     updatePanelEditorUIState({ isPanelOptionsVisible: !uiState.isPanelOptionsVisible });
   };
 
-  onUnlinkPanel = () => {
-    appEvents.emit(CoreEvents.showModalReact, {
-      component: UnlinkModal,
-      props: {
-        onConfirm: () => {
-          delete this.props.panel.libraryPanel;
-          this.props.panel.render();
-          this.forceUpdate();
-        },
-      },
-    });
-  };
-
   renderPanel = (styles: EditorStyles) => {
     const { dashboard, panel, tabs, uiState } = this.props;
     return (
@@ -321,13 +315,29 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
       editorActions.splice(
         1,
         0,
-        <ToolbarButton
-          onClick={this.onUnlinkPanel}
-          title="Disconnects this panel from the reusable panel so that you can edit it regularly."
-          key="unlink"
-        >
-          Unlink
-        </ToolbarButton>
+        <ModalsController>
+          {({ showModal, hideModal }) => {
+            return (
+              <ToolbarButton
+                onClick={() => {
+                  showModal(UnlinkModal, {
+                    onConfirm: () => {
+                      delete this.props.panel.libraryPanel;
+                      this.props.panel.render();
+                      this.forceUpdate();
+                    },
+                    onDismiss: hideModal,
+                    isOpen: true,
+                  });
+                }}
+                title="Disconnects this panel from the reusable panel so that you can edit it regularly."
+                key="unlink"
+              >
+                Unlink
+              </ToolbarButton>
+            );
+          }}
+        </ModalsController>
       );
 
       // Remove "Apply" button
