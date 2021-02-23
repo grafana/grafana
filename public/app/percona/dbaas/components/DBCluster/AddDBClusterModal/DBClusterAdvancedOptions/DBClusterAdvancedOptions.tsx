@@ -30,13 +30,9 @@ export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) 
   const nodeValidators = [required, min(MIN_NODES)];
   const parameterValidators = [required, min(MIN_RESOURCES), resourceValidator];
   const { topology, resources, memory, cpu, databaseType, disk } = values;
+  const resourcesInputProps = { step: '0.1' };
 
   const parsePositiveInt = useCallback(value => (value > 0 && Number.isInteger(+value) ? value : undefined), []);
-
-  const parseNonNegativeFloat = useCallback(
-    value => (value > 0 ? (+value).toFixed(1).replace(/\.0+$/, '') : value),
-    []
-  );
 
   const topologies = useMemo(
     () =>
@@ -100,14 +96,14 @@ export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) 
           label={Messages.dbcluster.addModal.fields.memory}
           validators={parameterValidators}
           disabled={resources !== DBClusterResources.custom}
-          parse={parseNonNegativeFloat}
+          inputProps={resourcesInputProps}
         />
         <NumberInputField
           name={AddDBClusterFields.cpu}
           label={Messages.dbcluster.addModal.fields.cpu}
           validators={parameterValidators}
           disabled={resources !== DBClusterResources.custom}
-          parse={parseNonNegativeFloat}
+          inputProps={resourcesInputProps}
         />
         <NumberInputField
           name={AddDBClusterFields.disk}

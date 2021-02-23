@@ -1,5 +1,9 @@
 export const resourceValidator = (value: number) => {
-  const check = (value * 10) % 1;
+  if (!value || Math.floor(value) === value) {
+    return undefined;
+  }
 
-  return check ? 'Must be an increment of 0.1' : undefined;
+  const precision = value.toString().split('.')[1]?.length || 0;
+
+  return precision > 1 ? 'Only one decimal place allowed' : undefined;
 };
