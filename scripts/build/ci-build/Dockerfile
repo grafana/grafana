@@ -76,8 +76,8 @@ RUN cd /tmp && \
     rm -rf /tmp/x86_64-centos6-linux-gnu/ && \
     rm -rf /tmp/crosstool-ng-${CTNG}
 
-ARG GOLANGCILINT_VERSION=1.37.0
-ARG GOLANGCILINT_CHKSUM=5fe9852e754b621c5264fb8ac810a75033e7f18e972315a60c5c3f8a37b3cb88
+ARG GOLANGCILINT_VERSION=1.37.1
+ARG GOLANGCILINT_CHKSUM=1929425d7733d136b342395c77f171d459aa89b198933465ec4c854aa34c41a2
 
 RUN curl -fLO https://github.com/golangci/golangci-lint/releases/download/v${GOLANGCILINT_VERSION}/golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64.tar.gz
 RUN echo ${GOLANGCILINT_CHKSUM} golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64.tar.gz | sha256sum --check --strict --status
