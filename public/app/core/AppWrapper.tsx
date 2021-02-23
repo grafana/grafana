@@ -103,6 +103,7 @@ export default class AppWrapper extends React.Component<AppWrapperProps, AppWrap
         path={route.path}
         key={`${route.path}`}
         render={(props) => {
+          navigationLogger('AppWrapper', false, 'Rendering route', route);
           return React.createElement(route.component, {
             $injector: this.state.ngInjector,
             $rootScope: $rootScope,
@@ -136,8 +137,6 @@ export default class AppWrapper extends React.Component<AppWrapperProps, AppWrap
               <ModalsProvider>
                 <>
                   <div className="grafana-app">
-                    {/* TODO[Router]: types mismatch?! */}
-                    {/* @ts-ignore */}
                     <Router history={getLocationService().getHistory()}>
                       <>
                         <div className={'sidemenu'}>
