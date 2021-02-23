@@ -284,7 +284,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseToAnnotations(quer
 			annotation["tags"] = append(annotation["tags"], tags)
 			annotation["text"] = append(annotation["text"], formatAnnotationText(text, value, series.Metric.Type, series.Metric.Labels, series.Resource.Labels))
 		}
-		frames = append(frames, data.NewFrame("annotation",
+		frames = append(frames, data.NewFrame(queryRes.RefId,
 			data.NewField("time", nil, annotation["time"]),
 			data.NewField("title", nil, annotation["title"]),
 			data.NewField("tags", nil, annotation["tags"]),
