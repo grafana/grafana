@@ -30,13 +30,13 @@ jest.mock('app/features/dashboard/services/DashboardSrv', () => ({
 }));
 
 class ScenarioCtx {
-  ds: DataSourceApi;
-  request: DataQueryRequest;
-  subscriber: Subscriber<DataQueryResponse>;
+  ds!: DataSourceApi;
+  request!: DataQueryRequest;
+  subscriber!: Subscriber<DataQueryResponse>;
   isUnsubbed = false;
   setupFn: () => void = () => {};
-  results: PanelData[];
-  subscription: Subscription;
+  results!: PanelData[];
+  subscription!: Subscription;
   wasStarted = false;
   error: Error | null = null;
   toStartTime = dateTime();

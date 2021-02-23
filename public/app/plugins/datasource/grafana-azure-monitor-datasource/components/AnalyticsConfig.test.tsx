@@ -9,6 +9,7 @@ const setup = (propOverrides?: object) => {
       orgId: 1,
       name: 'Azure Monitor-10-10',
       type: 'grafana-azure-monitor-datasource',
+      typeName: 'Azure',
       typeLogoUrl: '',
       access: 'proxy',
       url: '',

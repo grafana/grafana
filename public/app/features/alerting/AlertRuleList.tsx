@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import Page from 'app/core/components/Page/Page';
 import AlertRuleItem from './AlertRuleItem';
 import appEvents from 'app/core/app_events';
@@ -10,24 +10,37 @@ import { AlertDefinition, AlertRule, CoreEvents, StoreState } from 'app/types';
 import { getAlertRulesAsync, togglePauseAlertRule } from './state/actions';
 import { getAlertRuleItems, getSearchQuery } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
-import { NavModel, SelectableValue } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { setSearchQuery } from './state/reducers';
 import { Button, LinkButton, Select, VerticalGroup } from '@grafana/ui';
 import { AlertDefinitionItem } from './components/AlertDefinitionItem';
 
-export interface Props {
-  navModel: NavModel;
-  alertRules: Array<AlertRule | AlertDefinition>;
-  updateLocation: typeof updateLocation;
-  getAlertRulesAsync: typeof getAlertRulesAsync;
-  setSearchQuery: typeof setSearchQuery;
-  togglePauseAlertRule: typeof togglePauseAlertRule;
-  stateFilter: string;
-  search: string;
-  isLoading: boolean;
+function mapStateToProps(state: StoreState) {
+  return {
+    navModel: getNavModel(state.navIndex, 'alert-list'),
+    alertRules: getAlertRuleItems(state),
+    stateFilter: state.location.query.state,
+    search: getSearchQuery(state.alertRules),
+    isLoading: state.alertRules.isLoading,
+    ngAlertDefinitions: state.alertDefinition.alertDefinitions,
+  };
 }
 
-export class AlertRuleList extends PureComponent<Props, any> {
+const mapDispatchToProps = {
+  updateLocation,
+  getAlertRulesAsync,
+  setSearchQuery,
+  togglePauseAlertRule,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+interface OwnProps {}
+
+export type Props = OwnProps & ConnectedProps<typeof connector>;
+
+export class AlertRuleListUnconnected extends PureComponent<Props, any> {
   stateFilters = [
     { label: 'All', value: 'all' },
     { label: 'OK', value: 'ok' },
@@ -118,9 +131,11 @@ export class AlertRuleList extends PureComponent<Props, any> {
               </div>
             </div>
             <div className="page-action-bar__spacer" />
-            <LinkButton variant="primary" href="alerting/new">
-              Add NG Alert
-            </LinkButton>
+            {config.featureToggles.ngalert && (
+              <LinkButton variant="primary" href="alerting/new">
+                Add NG Alert
+              </LinkButton>
+            )}
             <Button variant="secondary" onClick={this.onOpenHowTo}>
               How to add an alert
             </Button>
@@ -153,20 +168,4 @@ export class AlertRuleList extends PureComponent<Props, any> {
   }
 }
 
-const mapStateToProps = (state: StoreState) => ({
-  navModel: getNavModel(state.navIndex, 'alert-list'),
-  alertRules: getAlertRuleItems(state),
-  stateFilter: state.location.query.state,
-  search: getSearchQuery(state.alertRules),
-  isLoading: state.alertRules.isLoading,
-  ngAlertDefinitions: state.alertDefinition.alertDefinitions,
-});
-
-const mapDispatchToProps = {
-  updateLocation,
-  getAlertRulesAsync,
-  setSearchQuery,
-  togglePauseAlertRule,
-};
-
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(AlertRuleList));
+export default hot(module)(connector(AlertRuleListUnconnected));
