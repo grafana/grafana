@@ -4,7 +4,8 @@ import * as H from 'history';
 import { LocationService as LocationServiceAPI } from '@grafana/runtime';
 import { locationUtil } from '@grafana/data';
 import parseKeyValue, { forEach, isNumber, isObject, isString, isUndefined } from './parseKeyValue';
-import { queryString } from './queryString';
+// import { queryString } from './queryString';
+import { navigationLogger } from './utils';
 
 //TODO[Router] replace with LocationSrv
 export class LocationService implements LocationServiceAPI {
@@ -15,9 +16,10 @@ export class LocationService implements LocationServiceAPI {
     this.history = history || H.createBrowserHistory();
 
     this.history.listen((update) => {
-      const urlWithoutBase = locationUtil.stripBaseFromUrl(update.location.pathname);
+      navigationLogger('LocationService', false, 'history.listen', update);
+      const urlWithoutBase = locationUtil.stripBaseFromUrl(update.pathname);
       if (this.fullPageReloadRoutes.indexOf(urlWithoutBase) > -1) {
-        window.location.href = update.location.pathname;
+        window.location.href = update.pathname;
         return;
       }
     });
@@ -59,11 +61,11 @@ export class LocationService implements LocationServiceAPI {
     }
   };
 
-  push = (location: H.To) => {
+  push = (location: H.Path) => {
     this.history.push(location);
   };
 
-  replace = (location: H.To) => {
+  replace = (location: H.Path) => {
     this.history.replace(location);
   };
 
@@ -124,15 +126,15 @@ export class LocationService implements LocationServiceAPI {
       case 1:
         if (isString(search) || isNumber(search)) {
           search = search.toString();
-          this.history.push(
-            {
-              pathname: this.history.location.pathname,
-              hash: this.history.location.hash,
-              search: `?${search}`,
-            },
-            { ...this.history.location.state }
-          );
           // TODO
+          // this.history.push(
+          //   {
+          //     pathname: this.history.location.pathname,
+          //     hash: this.history.location.hash,
+          //     search: `?${search}`,
+          //   },
+          //   { ...this.history.location.state }
+          // );
           // this.$$search = parseKeyValue(search);
         } else if (isObject(search)) {
           const newSearch = { ...search };
@@ -143,14 +145,14 @@ export class LocationService implements LocationServiceAPI {
             }
           });
 
-          this.history.push(
-            {
-              pathname: this.history.location.pathname,
-              hash: this.history.location.hash,
-              search: `?${queryString(newSearch)}`,
-            },
-            { ...this.history.location.state }
-          );
+          // this.history.push(
+          //   {
+          //     pathname: this.history.location.pathname,
+          //     hash: this.history.location.hash,
+          //     search: `?${queryString(newSearch)}`,
+          //   },
+          //   { ...this.history.location.state }
+          // );
         } else {
           throw new Error('The first argument of the `$location#search()` call must be a string or an object.');
         }
@@ -159,26 +161,26 @@ export class LocationService implements LocationServiceAPI {
         if (isUndefined(paramValue) || paramValue === null) {
           const newSearch = { ...search };
           delete newSearch[search];
-          this.history.push(
-            {
-              pathname: this.history.location.pathname,
-              hash: this.history.location.hash,
-              search: `?${queryString(newSearch)}`,
-            },
-            { ...this.history.location.state }
-          );
+          // this.history.push(
+          // {
+          //   pathname: this.history.location.pathname,
+          //   hash: this.history.location.hash,
+          //   search: `?${queryString(newSearch)}`,
+          // },
+          // { ...this.history.location.state }
+          // );
         } else {
           const newSearch = parseKeyValue(this.history.location.search.slice(1));
           // @ts-ignore
           newSearch[search] = paramValue;
-          this.history.push(
-            {
-              pathname: this.history.location.pathname,
-              hash: this.history.location.hash,
-              search: `?${queryString(newSearch)}`,
-            },
-            { ...this.history.location.state }
-          );
+          // this.history.push(
+          //   {
+          //     pathname: this.history.location.pathname,
+          //     hash: this.history.location.hash,
+          //     search: `?${queryString(newSearch)}`,
+          //   },
+          //   { ...this.history.location.state }
+          // );
         }
     }
   }
