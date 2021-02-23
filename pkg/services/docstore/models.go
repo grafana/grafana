@@ -3,9 +3,9 @@ package docstore
 import "time"
 
 type EntityStore interface {
-	GetEntity(query GetEntityQuery) GetEntityResponse
-	SaveEntity(cmd SaveEntityCommand) SaveEntityResponse
-	ListEntitiesQuery(cmd ListEntitiesQuery) ListEntitiesResult
+	GetEntity(query GetEntityQuery) (GetEntityResponse, error)
+	SaveEntity(cmd SaveEntityCommand) (SaveEntityResponse, error)
+	ListEntitiesQuery(cmd ListEntitiesQuery) (ListEntitiesResult, error)
 }
 
 type SaveEntityCommand struct{}
