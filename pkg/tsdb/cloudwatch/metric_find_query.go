@@ -24,7 +24,7 @@ import (
 // Known AWS regions.
 var knownRegions = []string{
 	"af-south-1", "ap-east-1", "ap-northeast-1", "ap-northeast-2", "ap-northeast-3", "ap-south-1", "ap-southeast-1",
-	"ap-southeast-2", "ca-central-1", "cn-north-1", "cn-northwest-1", "eu-central-1", "eu-north-1", "eu-west-1",
+	"ap-southeast-2", "ca-central-1", "cn-north-1", "cn-northwest-1", "eu-central-1", "eu-north-1", "eu-south-1", "eu-west-1",
 	"eu-west-2", "eu-west-3", "me-south-1", "sa-east-1", "us-east-1", "us-east-2", "us-gov-east-1", "us-gov-west-1",
 	"us-iso-east-1", "us-isob-east-1", "us-west-1", "us-west-2",
 }
@@ -60,7 +60,7 @@ var metricsMap = map[string][]string{
 	"AWS/Cognito":                 {"AccountTakeOverRisk", "CompromisedCredentialsRisk", "NoRisk", "OverrideBlock", "Risk"},
 	"AWS/Connect":                 {"CallBackNotDialableNumber", "CallRecordingUploadError", "CallsBreachingConcurrencyQuota", "CallsPerInterval", "ConcurrentCalls", "ConcurrentCallsPercentage", "ContactFlowErrors", "ContactFlowFatalErrors", "LongestQueueWaitTime", "MisconfiguredPhoneNumbers", "MissedCalls", "PublicSigningKeyUsage", "QueueCapacityExceededError", "QueueSize", "ThrottledCalls", "ToInstancePacketLossRate"},
 	"AWS/DataSync":                {"BytesVerifiedSource", "BytesPreparedSource", "FilesVerifiedSource", "FilesPreparedSource", "BytesVerifiedDestination", "BytesPreparedDestination", "FilesVerifiedDestination", "FilesPreparedDestination", "FilesTransferred", "BytesTransferred", "BytesWritten"},
-	"AWS/DDoSProtection":          {"DDoSDetected", "DDoSAttackBitsPerSecond", "DDoSAttackPacketsPerSecond", "DDoSAttackRequestsPerSecond"},
+	"AWS/DDoSProtection":          {"DDoSDetected", "DDoSAttackBitsPerSecond", "DDoSAttackPacketsPerSecond", "DDoSAttackRequestsPerSecond", "VolumeBitsPerSecond", "VolumePacketsPerSecond"},
 	"AWS/DMS":                     {"CDCChangesDiskSource", "CDCChangesDiskTarget", "CDCChangesMemorySource", "CDCChangesMemoryTarget", "CDCIncomingChanges", "CDCLatencySource", "CDCLatencyTarget", "CDCThroughputBandwidthSource", "CDCThroughputBandwidthTarget", "CDCThroughputRowsSource", "CDCThroughputRowsTarget", "CPUUtilization", "FreeStorageSpace", "FreeableMemory", "FullLoadThroughputBandwidthSource", "FullLoadThroughputBandwidthTarget", "FullLoadThroughputRowsSource", "FullLoadThroughputRowsTarget", "NetworkReceiveThroughput", "NetworkTransmitThroughput", "ReadIOPS", "ReadLatency", "ReadThroughput", "SwapUsage", "WriteIOPS", "WriteLatency", "WriteThroughput"},
 	"AWS/DocDB":                   {"BackupRetentionPeriodStorageUsed", "BufferCacheHitRatio", "ChangeStreamLogSize", "CPUUtilization", "DatabaseConnections", "DBInstanceReplicaLag", "DBClusterReplicaLagMaximum", "DBClusterReplicaLagMinimum", "DiskQueueDepth", "EngineUptime", "FreeableMemory", "FreeLocalStorage", "NetworkReceiveThroughput", "NetworkThroughput", "NetworkTransmitThroughput", "ReadIOPS", "ReadLatency", "ReadThroughput", "SnapshotStorageUsed", "SwapUsage", "TotalBackupStorageBilled", "VolumeBytesUsed", "VolumeReadIOPs", "VolumeWriteIOPs", "WriteIOPS", "WriteLatency", "WriteThroughput"},
 	"AWS/DX":                      {"ConnectionBpsEgress", "ConnectionBpsIngress", "ConnectionErrorCount", "ConnectionCRCErrorCount", "ConnectionLightLevelRx", "ConnectionLightLevelTx", "ConnectionPpsEgress", "ConnectionPpsIngress", "ConnectionState", "VirtualInterfaceBpsEgress", "VirtualInterfaceBpsIngress", "VirtualInterfacePpsEgress", "VirtualInterfacePpsIngress"},
@@ -156,7 +156,7 @@ var dimensionsMap = map[string][]string{
 	"AWS/Cognito":                 {"Operation", "RiskLevel", "UserPoolId"},
 	"AWS/Connect":                 {"InstanceId", "MetricGroup", "Participant", "QueueName", "Stream Type", "Type of Connection"},
 	"AWS/DataSync":                {"AgentId", "TaskId"},
-	"AWS/DDoSProtection":          {"ResourceArn", "AttackVector"},
+	"AWS/DDoSProtection":          {"ResourceArn", "AttackVector", "MitigationAction", "Protocol", "SourcePort", "DestinationPort", "SourceIp", "SourceAsn", "TcpFlags"},
 	"AWS/DMS":                     {"ReplicationInstanceIdentifier", "ReplicationTaskIdentifier"},
 	"AWS/DocDB":                   {"DBClusterIdentifier", "DBInstanceIdentifier", "Role"},
 	"AWS/DX":                      {"ConnectionId", "OpticalLaneNumber", "VirtualInterfaceId"},
