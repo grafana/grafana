@@ -1,14 +1,11 @@
 import { e2e } from '@grafana/e2e';
 import { selectors } from '@grafana/e2e-selectors';
+import { response } from '../../mocks/long-trace-response';
 
 describe('Trace view', () => {
   it('Can lazy load big traces', () => {
     e2e.flows.login('admin', 'admin');
-    e2e()
-      .intercept('GET', '/api/traces/long-trace', {
-        fixture: 'long-trace-response.json',
-      })
-      .as('longTrace');
+    e2e().intercept('/api/traces/long-trace', response).as('longTrace');
 
     e2e.pages.Explore.visit();
 
