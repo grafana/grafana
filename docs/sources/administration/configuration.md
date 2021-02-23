@@ -778,7 +778,7 @@ You can configure core and external AWS plugins.
 
 ### allowed_auth_providers
 
-Specify what authentication providers should be allowed for AWS plugins. The providers will be listed in the data source configuration page for the plugin. If the plugin is configured using provisioning, only providers that are specified in `allowed_auth_providers` will be accepted.
+Specify what authentication providers that the AWS plugins allow. For a list of allowed providers, refer to the data-source configuration page for a given plugin. If you configure a plugin by provisioning, only providers that are specified in `allowed_auth_providers` are allowed.
 
 Options: `default` (AWS SDK Default), `keys` (Access && key secret key), `credentials` (Credentials field), `ec2_IAM_role` (EC2 IAM Role)
 
