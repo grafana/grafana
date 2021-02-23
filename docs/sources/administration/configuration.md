@@ -784,7 +784,7 @@ Options: `default` (AWS SDK Default), `keys` (Access && key secret key), `creden
 
 ### assume_role_enabled
 
-Set to false to disable AWS authentication using an assumed role with temporary security credentials. Please refer to [AWS official docs](https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html) for details about assume roles.
+Set to `false` to disable AWS authentication from using an assumed role with temporary security credentials. For details about assume roles, refer to the AWS API reference documentation about the [AssumeRole](https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html) operation.
 
 If this option is disabled, the **Assume Role** and the **External Id** field will be removed from the AWS data source configuration page. If the plugin is configured using provisioning, it will be possible using an assumed role as long as `assume_role_enabled` is set to true.
 
