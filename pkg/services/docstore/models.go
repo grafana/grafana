@@ -2,6 +2,34 @@ package docstore
 
 import "time"
 
+type EntityStore interface {
+	GetEntity(query GetEntityQuery) GetEntityResponse
+	SaveEntity(cmd SaveEntityCommand) SaveEntityResponse
+	ListEntitiesQuery(cmd ListEntitiesQuery) ListEntitiesResult
+}
+
+type SaveEntityCommand struct{}
+type SaveEntityResponse struct{}
+
+type GetEntityQuery struct{}
+type GetEntityResponse struct{}
+
+type ListEntitiesQuery struct {
+	IDs          []string
+	Tags         []string
+	QueryString  string
+	User         EntityUserInfo
+	Page         int64
+	ItemsPerPage int64
+}
+
+type ListEntitiesResult struct {
+	Items      []Entity
+	Page       int64
+	PageCount  int64
+	TotalCount int64
+}
+
 type Entity struct {
 	Meta EntityMeta
 	Doc  interface{}
@@ -62,9 +90,4 @@ type EntityTag struct {
 	Id    string
 	OrgId int64
 	Color string
-}
-
-type EntityStore interface {
-	GetById(id string) Entity
-	CreateEntity(entity Entity)
 }
