@@ -30,18 +30,19 @@ type columnInfo struct {
 
 // frameBuilder is an interface to help testing.
 type frameBuilder struct {
-	tableID      int64
-	active       *data.Frame
-	frames       []*data.Frame
-	value        *data.FieldConverter
-	columns      []columnInfo
-	labels       []string
-	maxPoints    int // max points in a series
-	maxSeries    int // max number of series
-	totalSeries  int
-	isTimeSeries bool
-	timeColumn   string // sometimes it is not `_time`
-	timeDisplay  string
+	currentGroupKey     []interface{}
+	groupKeyColumnNames []string
+	active              *data.Frame
+	frames              []*data.Frame
+	value               *data.FieldConverter
+	columns             []columnInfo
+	labels              []string
+	maxPoints           int // max points in a series
+	maxSeries           int // max number of series
+	totalSeries         int
+	isTimeSeries        bool
+	timeColumn          string // sometimes it is not `_time`
+	timeDisplay         string
 }
 
 func isTag(schk string) bool {
@@ -95,11 +96,18 @@ func getConverter(t string) (*data.FieldConverter, error) {
 func (fb *frameBuilder) Init(metadata *query.FluxTableMetadata) error {
 	columns := metadata.Columns()
 	fb.frames = make([]*data.Frame, 0)
-	fb.tableID = -1
+	fb.currentGroupKey = nil
 	fb.value = nil
 	fb.columns = make([]columnInfo, 0)
 	fb.isTimeSeries = false
 	fb.timeColumn = ""
+	fb.groupKeyColumnNames = make([]string, 0)
+
+	for _, col := range columns {
+		if col.IsGroup() {
+			fb.groupKeyColumnNames = append(fb.groupKeyColumnNames, col.Name())
+		}
+	}
 
 	for _, col := range columns {
 		switch {
@@ -175,14 +183,52 @@ func getTimeSeriesTimeColumn(columns []*query.FluxColumn) *query.FluxColumn {
 	return nil
 }
 
+func getTableID(record *query.FluxRecord, groupColumns []string) []interface{} {
+	result := make([]interface{}, len(groupColumns))
+
+	// Flux does not allow duplicate column-names,
+	// so we can be sure there is no confusion in the record.
+	//
+	// ( it does allow for a column named "table" to exist,
+	// and shadow the table-id "table" column, but the potentially
+	// shadowed table-id column is not a part of the group-key,
+	// so we should be safe )
+
+	for i, colName := range groupColumns {
+		result[i] = record.ValueByKey(colName)
+	}
+
+	return result
+}
+
+func isTableIDEqual(id1 []interface{}, id2 []interface{}) bool {
+	if (id1 == nil) || (id2 == nil) {
+		return false
+	}
+
+	if len(id1) != len(id2) {
+		return false
+	}
+
+	for i, id1Val := range id1 {
+		id2Val := id2[i]
+
+		if id1Val != id2Val {
+			return false
+		}
+	}
+
+	return true
+}
+
 // Append appends a single entry from an influxdb2 record to a data frame
 // Values are appended to _value
 // Tags are appended as labels
 // _measurement holds the dataframe name
 // _field holds the field name.
 func (fb *frameBuilder) Append(record *query.FluxRecord) error {
-	table, ok := record.ValueByKey("table").(int64)
-	if ok && table != fb.tableID {
+	table := getTableID(record, fb.groupKeyColumnNames)
+	if (fb.currentGroupKey == nil) || !isTableIDEqual(table, fb.currentGroupKey) {
 		fb.totalSeries++
 		if fb.totalSeries > fb.maxSeries {
 			return fmt.Errorf("results are truncated, max series reached (%d)", fb.maxSeries)
@@ -226,7 +272,7 @@ func (fb *frameBuilder) Append(record *query.FluxRecord) error {
 		}
 
 		fb.frames = append(fb.frames, fb.active)
-		fb.tableID = table
+		fb.currentGroupKey = table
 	}
 
 	if fb.isTimeSeries {
