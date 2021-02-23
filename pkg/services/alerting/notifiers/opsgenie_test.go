@@ -150,7 +150,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 					Message:       "someMessage",
 					State:         models.AlertStateAlerting,
 					AlertRuleTags: tagPairs,
-				})
+				}, nil)
 				evalContext.IsTestRun = true
 
 				tags := make([]string, 0)
@@ -200,7 +200,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 					Message:       "someMessage",
 					State:         models.AlertStateAlerting,
 					AlertRuleTags: tagPairs,
-				})
+				}, nil)
 				evalContext.IsTestRun = true
 
 				tags := make([]string, 0)
