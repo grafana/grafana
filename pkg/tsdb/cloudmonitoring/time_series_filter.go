@@ -268,25 +268,30 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) handleNonDistributionSe
 	setDisplayNameAsFieldName(dataField)
 }
 
-func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseToAnnotations(queryRes *tsdb.QueryResult, data cloudMonitoringResponse, title string, text string, tags string) error {
-	annotations := make([]map[string]string, 0)
-
-	for _, series := range data.TimeSeries {
-		// reverse the order to be ascending
+func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseToAnnotations(queryRes *tsdb.QueryResult, response cloudMonitoringResponse, title string, text string, tags string) error {
+	frames := data.Frames{}
+	for j := 0; j < len(response.TimeSeries); j++ {
+		series := response.TimeSeries[j]
+		annotation := make(map[string][]string)
 		for i := len(series.Points) - 1; i >= 0; i-- {
 			point := series.Points[i]
 			value := strconv.FormatFloat(point.Value.DoubleValue, 'f', 6, 64)
 			if series.ValueType == "STRING" {
 				value = point.Value.StringValue
 			}
-			annotation := make(map[string]string)
-			annotation["time"] = point.Interval.EndTime.UTC().Format(time.RFC3339)
-			annotation["title"] = formatAnnotationText(title, value, series.Metric.Type, series.Metric.Labels, series.Resource.Labels)
-			annotation["tags"] = tags
-			annotation["text"] = formatAnnotationText(text, value, series.Metric.Type, series.Metric.Labels, series.Resource.Labels)
-			annotations = append(annotations, annotation)
+			annotation["time"] = append(annotation["time"], point.Interval.EndTime.UTC().Format(time.RFC3339))
+			annotation["title"] = append(annotation["title"], formatAnnotationText(title, value, series.Metric.Type, series.Metric.Labels, series.Resource.Labels))
+			annotation["tags"] = append(annotation["tags"], tags)
+			annotation["text"] = append(annotation["text"], formatAnnotationText(text, value, series.Metric.Type, series.Metric.Labels, series.Resource.Labels))
 		}
+		frames = append(frames, data.NewFrame("annotation",
+			data.NewField("time", nil, annotation["time"]),
+			data.NewField("title", nil, annotation["title"]),
+			data.NewField("tags", nil, annotation["tags"]),
+			data.NewField("text", nil, annotation["text"]),
+		))
 	}
+	queryRes.Dataframes = tsdb.NewDecodedDataFrames(frames)
 
 	return nil
 }
