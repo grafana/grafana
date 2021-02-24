@@ -19,7 +19,7 @@ export default {
       page: mdx,
     },
     knobs: {
-      disabled: true,
+      disable: true,
     },
   },
   args: {
@@ -32,7 +32,7 @@ export default {
   },
 };
 
-export const basic: Story<ColorPickerProps> = ({ enableNamedColors }) => {
+export const Basic: Story<ColorPickerProps> = ({ enableNamedColors }) => {
   return (
     <UseState initialState="#00ff00">
       {(selectedColor, updateSelectedColor) => {
