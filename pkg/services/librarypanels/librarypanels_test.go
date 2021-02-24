@@ -8,6 +8,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/bus"
+
+	"github.com/grafana/grafana/pkg/services/dashboards"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/macaron.v1"
@@ -22,7 +26,7 @@ import (
 func TestCreateLibraryPanel(t *testing.T) {
 	testScenario(t, "When an admin tries to create a library panel that already exists, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommand(1, "Text - Library Panel")
+			command := getCreateCommand(sc.folder.Id, "Text - Library Panel")
 			response := sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, response.Status())
 
@@ -32,7 +36,7 @@ func TestCreateLibraryPanel(t *testing.T) {
 
 	testScenario(t, "When an admin tries to create a library panel that does not exists, it should succeed",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommand(1, "Text - Library Panel")
+			command := getCreateCommand(sc.folder.Id, "Text - Library Panel")
 			response := sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, response.Status())
 
@@ -86,7 +90,7 @@ func TestConnectLibraryPanel(t *testing.T) {
 
 	testScenario(t, "When an admin tries to create a connection that already exists, it should succeed",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommand(1, "Text - Library Panel")
+			command := getCreateCommand(sc.folder.Id, "Text - Library Panel")
 			response := sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, response.Status())
 
@@ -112,7 +116,7 @@ func TestDeleteLibraryPanel(t *testing.T) {
 
 	testScenario(t, "When an admin tries to delete a library panel that exists, it should succeed",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommand(1, "Text - Library Panel")
+			command := getCreateCommand(sc.folder.Id, "Text - Library Panel")
 			response := sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, response.Status())
 
@@ -127,7 +131,7 @@ func TestDeleteLibraryPanel(t *testing.T) {
 
 	testScenario(t, "When an admin tries to delete a library panel in another org, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommand(1, "Text - Library Panel")
+			command := getCreateCommand(sc.folder.Id, "Text - Library Panel")
 			response := sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, response.Status())
 
@@ -153,7 +157,7 @@ func TestDisconnectLibraryPanel(t *testing.T) {
 
 	testScenario(t, "When an admin tries to remove a connection that does not exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommand(1, "Text - Library Panel")
+			command := getCreateCommand(sc.folder.Id, "Text - Library Panel")
 			response := sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, response.Status())
 
@@ -168,7 +172,7 @@ func TestDisconnectLibraryPanel(t *testing.T) {
 
 	testScenario(t, "When an admin tries to remove a connection that does exist, it should succeed",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommand(1, "Text - Library Panel")
+			command := getCreateCommand(sc.folder.Id, "Text - Library Panel")
 			response := sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, response.Status())
 
@@ -194,7 +198,7 @@ func TestGetLibraryPanel(t *testing.T) {
 
 	testScenario(t, "When an admin tries to get a library panel that exists, it should succeed and return correct result",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommand(1, "Text - Library Panel")
+			command := getCreateCommand(sc.folder.Id, "Text - Library Panel")
 			response := sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, response.Status())
 
@@ -245,7 +249,7 @@ func TestGetLibraryPanel(t *testing.T) {
 
 	testScenario(t, "When an admin tries to get a library panel that exists in an other org, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommand(1, "Text - Library Panel")
+			command := getCreateCommand(sc.folder.Id, "Text - Library Panel")
 			response := sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, response.Status())
 
@@ -262,7 +266,7 @@ func TestGetLibraryPanel(t *testing.T) {
 
 	testScenario(t, "When an admin tries to get a library panel with 2 connected dashboards, it should succeed and return correct connected dashboards",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommand(1, "Text - Library Panel")
+			command := getCreateCommand(sc.folder.Id, "Text - Library Panel")
 			response := sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, response.Status())
 
@@ -301,11 +305,11 @@ func TestGetAllLibraryPanels(t *testing.T) {
 
 	testScenario(t, "When an admin tries to get all library panels and two exist, it should succeed",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommand(1, "Text - Library Panel")
+			command := getCreateCommand(sc.folder.Id, "Text - Library Panel")
 			response := sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, response.Status())
 
-			command = getCreateCommand(1, "Text - Library Panel2")
+			command = getCreateCommand(sc.folder.Id, "Text - Library Panel2")
 			response = sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, response.Status())
 
@@ -384,11 +388,11 @@ func TestGetAllLibraryPanels(t *testing.T) {
 
 	testScenario(t, "When an admin tries to get all library panels and two exist but only one is connected, it should succeed and return correct connected dashboards",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommand(1, "Text - Library Panel")
+			command := getCreateCommand(sc.folder.Id, "Text - Library Panel")
 			response := sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, response.Status())
 
-			command = getCreateCommand(1, "Text - Library Panel2")
+			command = getCreateCommand(sc.folder.Id, "Text - Library Panel2")
 			response = sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, response.Status())
 
@@ -415,7 +419,7 @@ func TestGetAllLibraryPanels(t *testing.T) {
 
 	testScenario(t, "When an admin tries to get all library panels in a different org, none should be returned",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommand(1, "Text - Library Panel")
+			command := getCreateCommand(sc.folder.Id, "Text - Library Panel")
 
 			response := sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, response.Status())
@@ -441,6 +445,59 @@ func TestGetAllLibraryPanels(t *testing.T) {
 			require.NotNil(t, result.Result)
 			require.Equal(t, 0, len(result.Result))
 		})
+
+	testScenario(t, "When an user tries to get all library panels, library panels in folders where the user has no access should not be returned",
+		func(t *testing.T, sc scenarioContext) {
+			updateFolderACL(t, sc, models.ROLE_EDITOR, models.PERMISSION_EDIT)
+
+			command := getCreateCommand(sc.folder.Id, "Editor - Library Panel")
+			response := sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, response.Status())
+
+			cmd := models.CreateFolderCommand{
+				Uid:   "AdminOnlyFolder",
+				Title: "Admin Only Folder",
+			}
+			createFolder(t, &sc, &cmd)
+			updateFolderACL(t, sc, models.ROLE_ADMIN, models.PERMISSION_ADMIN)
+
+			command = getCreateCommand(sc.folder.Id, "Admin - Library Panel")
+			response = sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, response.Status())
+
+			response = sc.service.getAllHandler(sc.reqContext)
+			require.Equal(t, 200, response.Status())
+
+			var result libraryPanelsResult
+			err := json.Unmarshal(response.Body(), &result)
+			require.NoError(t, err)
+			require.Equal(t, 2, len(result.Result))
+			require.Equal(t, int64(1), result.Result[0].FolderID)
+			require.Equal(t, int64(2), cmd.Result.Id)
+			require.Equal(t, "Editor - Library Panel", result.Result[0].Name)
+			require.Equal(t, "Admin - Library Panel", result.Result[1].Name)
+
+			sc.reqContext.SignedInUser.OrgRole = models.ROLE_EDITOR
+			response = sc.service.getAllHandler(sc.reqContext)
+			require.Equal(t, 200, response.Status())
+
+			result = libraryPanelsResult{}
+			err = json.Unmarshal(response.Body(), &result)
+			require.NoError(t, err)
+			require.Equal(t, 1, len(result.Result))
+			require.Equal(t, int64(1), result.Result[0].FolderID)
+			require.Equal(t, "Editor - Library Panel", result.Result[0].Name)
+
+			sc.reqContext.SignedInUser.OrgRole = models.ROLE_VIEWER
+			response = sc.service.getAllHandler(sc.reqContext)
+			require.Equal(t, 200, response.Status())
+
+			result = libraryPanelsResult{}
+			err = json.Unmarshal(response.Body(), &result)
+			require.NoError(t, err)
+			require.NotNil(t, result.Result)
+			require.Equal(t, 0, len(result.Result))
+		})
 }
 
 func TestGetConnectedDashboards(t *testing.T) {
@@ -453,7 +510,7 @@ func TestGetConnectedDashboards(t *testing.T) {
 
 	testScenario(t, "When an admin tries to get connected dashboards for a library panel that exists, but has no connections, it should return none",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommand(1, "Text - Library Panel")
+			command := getCreateCommand(sc.folder.Id, "Text - Library Panel")
 			response := sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, response.Status())
 
@@ -473,7 +530,7 @@ func TestGetConnectedDashboards(t *testing.T) {
 
 	testScenario(t, "When an admin tries to get connected dashboards for a library panel that exists and has connections, it should return connected dashboard IDs",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommand(1, "Text - Library Panel")
+			command := getCreateCommand(sc.folder.Id, "Text - Library Panel")
 			response := sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, response.Status())
 
@@ -512,7 +569,7 @@ func TestPatchLibraryPanel(t *testing.T) {
 
 	testScenario(t, "When an admin tries to patch a library panel that exists, it should succeed",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommand(1, "Text - Library Panel")
+			command := getCreateCommand(sc.folder.Id, "Text - Library Panel")
 			response := sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, response.Status())
 
@@ -584,7 +641,7 @@ func TestPatchLibraryPanel(t *testing.T) {
 
 	testScenario(t, "When an admin tries to patch a library panel with folder only, it should change folder successfully and return correct result",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommand(1, "Text - Library Panel")
+			command := getCreateCommand(sc.folder.Id, "Text - Library Panel")
 			response := sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, response.Status())
 
@@ -612,7 +669,7 @@ func TestPatchLibraryPanel(t *testing.T) {
 
 	testScenario(t, "When an admin tries to patch a library panel with name only, it should change name successfully and return correct result",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommand(1, "Text - Library Panel")
+			command := getCreateCommand(sc.folder.Id, "Text - Library Panel")
 			response := sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, response.Status())
 
@@ -639,7 +696,7 @@ func TestPatchLibraryPanel(t *testing.T) {
 
 	testScenario(t, "When an admin tries to patch a library panel with model only, it should change model successfully and return correct result",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommand(1, "Text - Library Panel")
+			command := getCreateCommand(sc.folder.Id, "Text - Library Panel")
 			response := sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, response.Status())
 
@@ -668,7 +725,7 @@ func TestPatchLibraryPanel(t *testing.T) {
 
 	testScenario(t, "When another admin tries to patch a library panel, it should change UpdatedBy successfully and return correct result",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommand(1, "Text - Library Panel")
+			command := getCreateCommand(sc.folder.Id, "Text - Library Panel")
 			response := sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, response.Status())
 
@@ -694,11 +751,11 @@ func TestPatchLibraryPanel(t *testing.T) {
 
 	testScenario(t, "When an admin tries to patch a library panel with a name that already exists, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommand(1, "Existing")
+			command := getCreateCommand(sc.folder.Id, "Existing")
 			response := sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, response.Status())
 
-			command = getCreateCommand(1, "Text - Library Panel")
+			command = getCreateCommand(sc.folder.Id, "Text - Library Panel")
 			response = sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, response.Status())
 
@@ -716,11 +773,15 @@ func TestPatchLibraryPanel(t *testing.T) {
 
 	testScenario(t, "When an admin tries to patch a library panel with a folder where a library panel with the same name already exists, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommand(2, "Text - Library Panel")
+			command := getCreateCommand(sc.folder.Id, "Text - Library Panel")
 			response := sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, response.Status())
 
-			command = getCreateCommand(1, "Text - Library Panel")
+			createFolder(t, &sc, &models.CreateFolderCommand{
+				Uid:   "NewTestFolder",
+				Title: "New Test Folder",
+			})
+			command = getCreateCommand(sc.folder.Id, "Text - Library Panel")
 			response = sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, response.Status())
 
@@ -729,7 +790,7 @@ func TestPatchLibraryPanel(t *testing.T) {
 			require.NoError(t, err)
 
 			cmd := patchLibraryPanelCommand{
-				FolderID: 2,
+				FolderID: 1,
 			}
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID})
 			response = sc.service.patchHandler(sc.reqContext, cmd)
@@ -738,7 +799,7 @@ func TestPatchLibraryPanel(t *testing.T) {
 
 	testScenario(t, "When an admin tries to patch a library panel in another org, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommand(1, "Text - Library Panel")
+			command := getCreateCommand(sc.folder.Id, "Text - Library Panel")
 			response := sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, response.Status())
 
@@ -747,7 +808,7 @@ func TestPatchLibraryPanel(t *testing.T) {
 			require.NoError(t, err)
 
 			cmd := patchLibraryPanelCommand{
-				FolderID: 2,
+				FolderID: sc.folder.Id,
 			}
 			sc.reqContext.OrgId = 2
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID})
@@ -759,7 +820,7 @@ func TestPatchLibraryPanel(t *testing.T) {
 func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 	testScenario(t, "When an admin tries to load a dashboard with a library panel, it should copy JSON properties from library panel",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommand(1, "Text - Library Panel1")
+			command := getCreateCommand(sc.folder.Id, "Text - Library Panel1")
 			response := sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, response.Status())
 
@@ -857,7 +918,7 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 
 	testScenario(t, "When an admin tries to load a dashboard with a library panel without uid, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommand(1, "Text - Library Panel1")
+			command := getCreateCommand(sc.folder.Id, "Text - Library Panel1")
 			response := sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, response.Status())
 
@@ -905,7 +966,7 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 
 	testScenario(t, "When an admin tries to load a dashboard with a library panel that is not connected, it should set correct JSON and continue",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommand(1, "Text - Library Panel1")
+			command := getCreateCommand(sc.folder.Id, "Text - Library Panel1")
 			response := sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, response.Status())
 
@@ -983,7 +1044,7 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 func TestCleanLibraryPanelsForDashboard(t *testing.T) {
 	testScenario(t, "When an admin tries to store a dashboard with a library panel, it should just keep the correct JSON properties in library panel",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommand(1, "Text - Library Panel1")
+			command := getCreateCommand(sc.folder.Id, "Text - Library Panel1")
 			response := sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, response.Status())
 
@@ -1061,7 +1122,7 @@ func TestCleanLibraryPanelsForDashboard(t *testing.T) {
 
 	testScenario(t, "When an admin tries to store a dashboard with a library panel without uid, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommand(1, "Text - Library Panel1")
+			command := getCreateCommand(sc.folder.Id, "Text - Library Panel1")
 			response := sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, response.Status())
 
@@ -1108,7 +1169,7 @@ func TestCleanLibraryPanelsForDashboard(t *testing.T) {
 
 	testScenario(t, "When an admin tries to store a dashboard with a library panel without name, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommand(1, "Text - Library Panel1")
+			command := getCreateCommand(sc.folder.Id, "Text - Library Panel1")
 			response := sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, response.Status())
 
@@ -1157,7 +1218,7 @@ func TestCleanLibraryPanelsForDashboard(t *testing.T) {
 func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 	testScenario(t, "When an admin tries to store a dashboard with a library panel, it should connect the two",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommand(1, "Text - Library Panel1")
+			command := getCreateCommand(sc.folder.Id, "Text - Library Panel1")
 			response := sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, response.Status())
 
@@ -1215,7 +1276,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 
 	testScenario(t, "When an admin tries to store a dashboard with a library panel without uid, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommand(1, "Text - Library Panel1")
+			command := getCreateCommand(sc.folder.Id, "Text - Library Panel1")
 			response := sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, response.Status())
 
@@ -1262,7 +1323,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 
 	testScenario(t, "When an admin tries to store a dashboard with unusused/removed library panels, it should disconnect unusused/removed library panels",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommand(1, "Unused Libray Panel")
+			command := getCreateCommand(sc.folder.Id, "Unused Libray Panel")
 			response := sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, response.Status())
 
@@ -1274,7 +1335,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 			response = sc.service.connectHandler(sc.reqContext)
 			require.Equal(t, 200, response.Status())
 
-			command = getCreateCommand(1, "Text - Library Panel1")
+			command = getCreateCommand(sc.folder.Id, "Text - Library Panel1")
 			response = sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, response.Status())
 
@@ -1343,7 +1404,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 func TestDisconnectLibraryPanelsForDashboard(t *testing.T) {
 	testScenario(t, "When an admin tries to delete a dashboard with a library panel, it should disconnect the two",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommand(1, "Text - Library Panel1")
+			command := getCreateCommand(sc.folder.Id, "Text - Library Panel1")
 			response := sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, response.Status())
 
@@ -1404,7 +1465,7 @@ func TestDisconnectLibraryPanelsForDashboard(t *testing.T) {
 
 	testScenario(t, "When an admin tries to delete a dashboard with a library panel without uid, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommand(1, "Text - Library Panel1")
+			command := getCreateCommand(sc.folder.Id, "Text - Library Panel1")
 			response := sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, response.Status())
 
@@ -1519,6 +1580,31 @@ type scenarioContext struct {
 	service    *LibraryPanelService
 	reqContext *models.ReqContext
 	user       models.SignedInUser
+	folder     *models.Folder
+}
+
+func createFolder(t *testing.T, sc *scenarioContext, cmd *models.CreateFolderCommand) {
+	s := dashboards.NewFolderService(sc.user.OrgId, &sc.user)
+	err := s.CreateFolder(cmd)
+	require.NoError(t, err)
+	sc.folder = cmd.Result
+}
+
+func updateFolderACL(t *testing.T, sc scenarioContext, roleType models.RoleType, permission models.PermissionType) {
+	cmd := models.UpdateDashboardAclCommand{
+		DashboardID: sc.folder.Id,
+		Items: []*models.DashboardAcl{
+			{
+				DashboardID: sc.folder.Id,
+				Role:        &roleType,
+				Permission:  permission,
+				Created:     time.Now(),
+				Updated:     time.Now(),
+			},
+		},
+	}
+	err := bus.Dispatch(&cmd)
+	require.NoError(t, err)
 }
 
 // testScenario is a wrapper around t.Run performing common setup for library panel tests.
@@ -1575,6 +1661,14 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 				SignedInUser: &user,
 			},
 		}
+
+		folderCmd := models.CreateFolderCommand{
+			Uid:   "testFolder",
+			Title: "TestFolder",
+		}
+
+		createFolder(t, &sc, &folderCmd)
+
 		fn(t, sc)
 	})
 }
