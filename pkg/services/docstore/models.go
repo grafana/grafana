@@ -5,19 +5,26 @@ import "time"
 type EntityStore interface {
 	GetEntity(query GetEntityQuery) (GetEntityResponse, error)
 	SaveEntity(cmd SaveEntityCommand) (SaveEntityResponse, error)
-	ListEntitiesQuery(cmd ListEntitiesQuery) (ListEntitiesResult, error)
+	ListEntities(cmd ListEntitiesQuery) (ListEntitiesResult, error)
 }
 
 type SaveEntityCommand struct{}
 type SaveEntityResponse struct{}
 
-type GetEntityQuery struct{}
-type GetEntityResponse struct{}
+type GetEntityQuery struct {
+	OrgId int64
+	Id    string
+}
+type GetEntityResponse struct {
+	Entity Entity
+}
 
 type ListEntitiesQuery struct {
-	IDs          []string
-	Tags         []string
-	QueryString  string
+	OrgId       int64
+	IDs         []string
+	Tags        []string
+	QueryString string
+	// To filter list by
 	User         EntityUserInfo
 	Page         int64
 	ItemsPerPage int64
