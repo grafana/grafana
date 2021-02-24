@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 
@@ -13,24 +14,43 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
+
 	"xorm.io/core"
 )
 
 func init() {
-	tsdb.RegisterTsdbQueryEndpoint("postgres", newPostgresQueryEndpoint)
+	registry.Register(&registry.Descriptor{
+		Name:         "PostgresService",
+		InitPriority: registry.Low,
+		Instance:     &postgresService{},
+	})
 }
 
-func newPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-	logger := log.New("tsdb.postgres")
-	logger.Debug("Creating Postgres query endpoint")
+type postgresService struct {
+	Cfg        *setting.Cfg `inject:""`
+	logger     log.Logger
+	tlsManager tlsSettingsProvider
+}
 
-	cnnstr, err := generateConnectionString(datasource, logger)
+func (s *postgresService) Init() error {
+	s.logger = log.New("tsdb.postgres")
+	s.tlsManager = newTLSManager(s.logger, s.Cfg.DataPath)
+	tsdb.RegisterTsdbQueryEndpoint("postgres", func(ds *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+		return s.newPostgresQueryEndpoint(ds)
+	})
+	return nil
+}
+
+func (s *postgresService) newPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+	s.logger.Debug("Creating Postgres query endpoint")
+
+	cnnstr, err := s.generateConnectionString(datasource)
 	if err != nil {
 		return nil, err
 	}
 
-	if setting.Env == setting.Dev {
-		logger.Debug("getEngine", "connection", cnnstr)
+	if s.Cfg.Env == setting.Dev {
+		s.logger.Debug("getEngine", "connection", cnnstr)
 	}
 
 	config := sqleng.SqlQueryEndpointConfiguration{
@@ -41,18 +61,19 @@ func newPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndp
 	}
 
 	queryResultTransformer := postgresQueryResultTransformer{
-		log: logger,
+		log: s.logger,
 	}
 
 	timescaledb := datasource.JsonData.Get("timescaledb").MustBool(false)
 
-	endpoint, err := sqleng.NewSqlQueryEndpoint(&config, &queryResultTransformer, newPostgresMacroEngine(timescaledb), logger)
+	endpoint, err := sqleng.NewSqlQueryEndpoint(&config, &queryResultTransformer, newPostgresMacroEngine(timescaledb),
+		s.logger)
 	if err != nil {
-		logger.Debug("Failed connecting to Postgres", "err", err)
+		s.logger.Error("Failed connecting to Postgres", "err", err)
 		return nil, err
 	}
 
-	logger.Debug("Successfully connected to Postgres")
+	s.logger.Debug("Successfully connected to Postgres")
 	return endpoint, err
 }
 
@@ -61,15 +82,13 @@ func escape(input string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(input, `\`, `\\`), "'", `\'`)
 }
 
-func generateConnectionString(datasource *models.DataSource, logger log.Logger) (string, error) {
-	tlsMode := strings.TrimSpace(strings.ToLower(datasource.JsonData.Get("sslmode").MustString("verify-full")))
-	isTLSDisabled := tlsMode == "disable"
-
+func (s *postgresService) generateConnectionString(datasource *models.DataSource) (string, error) {
 	var host string
 	var port int
+	var err error
 	if strings.HasPrefix(datasource.Url, "/") {
 		host = datasource.Url
-		logger.Debug("Generating connection string with Unix socket specifier", "socket", host)
+		s.logger.Debug("Generating connection string with Unix socket specifier", "socket", host)
 	} else {
 		sp := strings.SplitN(datasource.Url, ":", 2)
 		host = sp[0]
@@ -80,41 +99,41 @@ func generateConnectionString(datasource *models.DataSource, logger log.Logger) 
 				return "", errutil.Wrapf(err, "invalid port in host specifier %q", sp[1])
 			}
 
-			logger.Debug("Generating connection string with network host/port pair", "host", host, "port", port)
+			s.logger.Debug("Generating connection string with network host/port pair", "host", host, "port", port)
 		} else {
-			logger.Debug("Generating connection string with network host", "host", host)
+			s.logger.Debug("Generating connection string with network host", "host", host)
 		}
 	}
 
-	connStr := fmt.Sprintf("user='%s' password='%s' host='%s' dbname='%s' sslmode='%s'",
-		escape(datasource.User), escape(datasource.DecryptedPassword()), escape(host), escape(datasource.Database),
-		escape(tlsMode))
+	connStr := fmt.Sprintf("user='%s' password='%s' host='%s' dbname='%s'",
+		escape(datasource.User), escape(datasource.DecryptedPassword()), escape(host), escape(datasource.Database))
 	if port > 0 {
 		connStr += fmt.Sprintf(" port=%d", port)
 	}
-	if isTLSDisabled {
-		logger.Debug("Postgres TLS/SSL is disabled")
-	} else {
-		logger.Debug("Postgres TLS/SSL is enabled", "tlsMode", tlsMode)
 
-		// Attach root certificate if provided
-		if tlsRootCert := datasource.JsonData.Get("sslRootCertFile").MustString(""); tlsRootCert != "" {
-			logger.Debug("Setting server root certificate", "tlsRootCert", tlsRootCert)
-			connStr += fmt.Sprintf(" sslrootcert='%s'", tlsRootCert)
-		}
-
-		// Attach client certificate and key if both are provided
-		tlsCert := datasource.JsonData.Get("sslCertFile").MustString("")
-		tlsKey := datasource.JsonData.Get("sslKeyFile").MustString("")
-		if tlsCert != "" && tlsKey != "" {
-			logger.Debug("Setting TLS/SSL client auth", "tlsCert", tlsCert, "tlsKey", tlsKey)
-			connStr += fmt.Sprintf(" sslcert='%s' sslkey='%s'", tlsCert, tlsKey)
-		} else if tlsCert != "" || tlsKey != "" {
-			return "", fmt.Errorf("TLS/SSL client certificate and key must both be specified")
-		}
+	tlsSettings, err := s.tlsManager.getTLSSettings(datasource)
+	if err != nil {
+		return "", err
 	}
 
-	logger.Debug("Generated Postgres connection string successfully")
+	connStr += fmt.Sprintf(" sslmode='%s'", escape(tlsSettings.Mode))
+
+	// Attach root certificate if provided
+	// Attach root certificate if provided
+	if tlsSettings.RootCertFile != "" {
+		s.logger.Debug("Setting server root certificate", "tlsRootCert", tlsSettings.RootCertFile)
+		connStr += fmt.Sprintf(" sslrootcert='%s'", escape(tlsSettings.RootCertFile))
+	}
+
+	// Attach client certificate and key if both are provided
+	if tlsSettings.CertFile != "" && tlsSettings.CertKeyFile != "" {
+		s.logger.Debug("Setting TLS/SSL client auth", "tlsCert", tlsSettings.CertFile, "tlsKey", tlsSettings.CertKeyFile)
+		connStr += fmt.Sprintf(" sslcert='%s' sslkey='%s'", escape(tlsSettings.CertFile), escape(tlsSettings.CertKeyFile))
+	} else if tlsSettings.CertFile != "" || tlsSettings.CertKeyFile != "" {
+		return "", fmt.Errorf("TLS/SSL client certificate and key must both be specified")
+	}
+
+	s.logger.Debug("Generated Postgres connection string successfully")
 	return connStr, nil
 }
 
