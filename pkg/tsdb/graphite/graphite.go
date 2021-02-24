@@ -39,10 +39,12 @@ func init() {
 func (e *GraphiteExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	result := &tsdb.Response{}
 
+	// This logic is used when called from Dashboard Alerting.
 	from := "-" + formatTimeRange(tsdbQuery.TimeRange.From)
 	until := formatTimeRange(tsdbQuery.TimeRange.To)
 
-	if timeRangeIsDigit(tsdbQuery.TimeRange) {
+	// This logic is used when called through server side expressions.
+	if isTimeRangeNumeric(tsdbQuery.TimeRange) {
 		var err error
 		from, until, err = epochMStoGraphiteTime(tsdbQuery.TimeRange)
 		if err != nil {
@@ -213,7 +215,7 @@ func fixIntervalFormat(target string) string {
 	return target
 }
 
-func timeRangeIsDigit(tr *tsdb.TimeRange) bool {
+func isTimeRangeNumeric(tr *tsdb.TimeRange) bool {
 	if _, err := strconv.ParseInt(tr.From, 10, 64); err != nil {
 		return false
 	}
