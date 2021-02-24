@@ -1,6 +1,9 @@
 package api
 
 import (
+	"encoding/json"
+	"fmt"
+
 	"github.com/grafana/grafana/pkg/models"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
@@ -177,9 +180,56 @@ type ApiAlertingConfig struct {
 
 type GrafanaReceiver models.CreateAlertNotificationCommand
 
+type ReceiverType int
+
+const (
+	GrafanaManagedReceiver ReceiverType = iota
+	AMReceiver
+)
+
 type ApiReceiver struct {
 	config.Receiver
 	GrafanaReceivers
+}
+
+func (r *ApiReceiver) UnmarshalJSON(b []byte) error {
+	type plain ApiReceiver
+	if err := json.Unmarshal(b, (*plain)(r)); err != nil {
+		return err
+	}
+
+	hasGrafanaReceivers := len(r.GrafanaReceivers.GrafanaManagedReceivers) > 0
+
+	if hasGrafanaReceivers {
+		if len(r.EmailConfigs) > 0 {
+			return fmt.Errorf("cannot have both Alertmanager EmailConfigs & Grafana receivers together")
+		}
+		if len(r.PagerdutyConfigs) > 0 {
+			return fmt.Errorf("cannot have both Alertmanager PagerdutyConfigs & Grafana receivers together")
+		}
+		if len(r.SlackConfigs) > 0 {
+			return fmt.Errorf("cannot have both Alertmanager SlackConfigs & Grafana receivers together")
+		}
+		if len(r.WebhookConfigs) > 0 {
+			return fmt.Errorf("cannot have both Alertmanager WebhookConfigs & Grafana receivers together")
+		}
+		if len(r.OpsGenieConfigs) > 0 {
+			return fmt.Errorf("cannot have both Alertmanager OpsGenieConfigs & Grafana receivers together")
+		}
+		if len(r.WechatConfigs) > 0 {
+			return fmt.Errorf("cannot have both Alertmanager WechatConfigs & Grafana receivers together")
+		}
+		if len(r.PushoverConfigs) > 0 {
+			return fmt.Errorf("cannot have both Alertmanager PushoverConfigs & Grafana receivers together")
+		}
+		if len(r.VictorOpsConfigs) > 0 {
+			return fmt.Errorf("cannot have both Alertmanager VictorOpsConfigs & Grafana receivers together")
+		}
+
+	}
+
+	return nil
+
 }
 
 type GrafanaReceivers struct {
