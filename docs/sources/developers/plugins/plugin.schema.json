@@ -122,10 +122,6 @@
     "hiddenQueries": {
       "type": "boolean"
     },
-    "noConfigPage": {
-      "type": "boolean",
-      "description": "For app plugins that have no config page"
-    },
     "autoEnabled": {
       "type": "boolean",
       "description": "Set to true for app plugins that should be enabled by default in all orgs"
