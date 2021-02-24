@@ -325,6 +325,82 @@
         }
       }
     },
+    "/api/v1/receiver/test": {
+      "get": {
+        "description": "Test receiver",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "testing"
+        ],
+        "operationId": "RouteTestReceiverConfig",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/ExtendedReceiver"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/Success"
+            }
+          },
+          "412": {
+            "description": "SmtpNotEnabled",
+            "schema": {
+              "$ref": "#/definitions/SmtpNotEnabled"
+            }
+          },
+          "500": {
+            "description": "Failure",
+            "schema": {
+              "$ref": "#/definitions/Failure"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rule/test": {
+      "get": {
+        "description": "Test rule",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "testing"
+        ],
+        "operationId": "RouteTestRuleConfig",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/TestRulePayload"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "TestRuleResponse",
+            "schema": {
+              "$ref": "#/definitions/TestRuleResponse"
+            }
+          }
+        }
+      }
+    },
     "/api/v1/rules": {
       "get": {
         "description": "List rule groups",
@@ -682,6 +758,24 @@
     },
     "AlertGroups": {
       "$ref": "#/definitions/alertGroups"
+    },
+    "AlertInstancesResponse": {
+      "type": "object",
+      "properties": {
+        "instances": {
+          "description": "Instances is an array of arrow encoded dataframes\neach frame has a single row, and a column for each instance (alert identified by unique labels) with a boolean value (firing/not firing)",
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint8"
+            }
+          },
+          "x-go-name": "Instances"
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     },
     "AlertNotification": {
       "type": "object",
@@ -1203,6 +1297,61 @@
       "title": "ErrorType models the different API error types.",
       "x-go-package": "github.com/prometheus/client_golang/api/prometheus/v1"
     },
+    "EvalAlertConditionCommand": {
+      "type": "object",
+      "properties": {
+        "condition": {
+          "type": "string",
+          "x-go-name": "Condition"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AlertQuery"
+          },
+          "x-go-name": "Data"
+        },
+        "now": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "Now"
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
+    "ExtendedReceiver": {
+      "type": "object",
+      "properties": {
+        "email_configs": {
+          "$ref": "#/definitions/EmailConfig"
+        },
+        "grafana_managed_receiver": {
+          "$ref": "#/definitions/GrafanaReceiver"
+        },
+        "opsgenie_configs": {
+          "$ref": "#/definitions/OpsGenieConfig"
+        },
+        "pagerduty_configs": {
+          "$ref": "#/definitions/PagerdutyConfig"
+        },
+        "pushover_configs": {
+          "$ref": "#/definitions/PushoverConfig"
+        },
+        "slack_configs": {
+          "$ref": "#/definitions/SlackConfig"
+        },
+        "victorops_configs": {
+          "$ref": "#/definitions/VictorOpsConfig"
+        },
+        "webhook_configs": {
+          "$ref": "#/definitions/WebhookConfig"
+        },
+        "wechat_configs": {
+          "$ref": "#/definitions/WechatConfig"
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
     "ExtendedRuleNode": {
       "type": "object",
       "properties": {
@@ -1294,6 +1443,9 @@
         }
       },
       "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
+    "Failure": {
+      "$ref": "#/definitions/ResponseDetails"
     },
     "GetableSilence": {
       "$ref": "#/definitions/silence"
@@ -1459,6 +1611,17 @@
       "type": "object",
       "x-go-package": "github.com/grafana/grafana/pkg/components/simplejson"
     },
+    "Label": {
+      "type": "object",
+      "title": "Label is a key/value pair of strings.",
+      "properties": {
+        "Name": {
+          "type": "string",
+          "x-go-name": "Value"
+        }
+      },
+      "x-go-package": "github.com/prometheus/prometheus/pkg/labels"
+    },
     "LabelName": {
       "description": "A LabelName is a key for a LabelSet or Metric.  It has a value associated\ntherewith.",
       "type": "string",
@@ -1471,6 +1634,29 @@
         "$ref": "#/definitions/LabelName"
       },
       "x-go-package": "github.com/prometheus/common/model"
+    },
+    "Labels": {
+      "description": "Labels is a sorted set of labels. Order has to be guaranteed upon\ninstantiation.",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Label"
+      },
+      "x-go-package": "github.com/prometheus/prometheus/pkg/labels"
+    },
+    "LotexQuery": {
+      "type": "object",
+      "properties": {
+        "Expr": {
+          "type": "string",
+          "example": "(node_filesystem_avail_bytes{fstype!=\"\",job=\"integrations/node_exporter\"} node_filesystem_size_bytes{fstype!=\"\",job=\"integrations/node_exporter\"} * 100 \u003c 5 and node_filesystem_readonly{fstype!=\"\",job=\"integrations/node_exporter\"} == 0)"
+        },
+        "datasourceUid": {
+          "description": "DatasourceUID is required if the query will be sent to grafana to be executed",
+          "type": "string",
+          "x-go-name": "DatasourceUID"
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     },
     "MatchRegexps": {
       "type": "object",
@@ -1728,6 +1914,21 @@
       },
       "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     },
+    "Point": {
+      "type": "object",
+      "title": "Point represents a single data point for a given timestamp.",
+      "properties": {
+        "T": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "V": {
+          "type": "number",
+          "format": "double"
+        }
+      },
+      "x-go-package": "github.com/prometheus/prometheus/promql"
+    },
     "PushoverConfig": {
       "type": "object",
       "properties": {
@@ -1867,6 +2068,16 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/eval"
+    },
+    "ResponseDetails": {
+      "type": "object",
+      "properties": {
+        "msg": {
+          "type": "string",
+          "x-go-name": "Msg"
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     },
     "RoleType": {
       "type": "string",
@@ -2083,6 +2294,24 @@
       "type": "string",
       "title": "RuleType models the type of a rule.",
       "x-go-package": "github.com/prometheus/client_golang/api/prometheus/v1"
+    },
+    "Sample": {
+      "type": "object",
+      "title": "Sample is a single sample belonging to a metric.",
+      "properties": {
+        "Metric": {
+          "$ref": "#/definitions/Labels"
+        },
+        "T": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "V": {
+          "type": "number",
+          "format": "double"
+        }
+      },
+      "x-go-package": "github.com/prometheus/prometheus/promql"
     },
     "Secret": {
       "type": "string",
@@ -2328,6 +2557,12 @@
       },
       "x-go-package": "github.com/prometheus/alertmanager/config"
     },
+    "SmtpNotEnabled": {
+      "$ref": "#/definitions/ResponseDetails"
+    },
+    "Success": {
+      "$ref": "#/definitions/ResponseDetails"
+    },
     "TLSConfig": {
       "type": "object",
       "title": "TLSConfig configures the options for TLS connections.",
@@ -2354,6 +2589,30 @@
         }
       },
       "x-go-package": "github.com/prometheus/common/config"
+    },
+    "TestRulePayload": {
+      "type": "object",
+      "properties": {
+        "expr": {
+          "$ref": "#/definitions/LotexQuery"
+        },
+        "grafana_condition": {
+          "$ref": "#/definitions/EvalAlertConditionCommand"
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
+    "TestRuleResponse": {
+      "type": "object",
+      "properties": {
+        "alerts": {
+          "$ref": "#/definitions/Vector"
+        },
+        "grafana_alert_instances": {
+          "$ref": "#/definitions/AlertInstancesResponse"
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     },
     "URL": {
       "type": "object",
@@ -2406,7 +2665,9 @@
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
     "UpsertAlertDefinitionCommand": {
+      "description": "https://github.com/grafana/grafana/blob/debb82e12417e82a0e2bd09e1a450065f884c1bc/pkg/services/ngalert/models.go#L85",
       "type": "object",
+      "title": "UpsertAlertDefinitionCommand is copy of the unexported struct:",
       "properties": {
         "condition": {
           "description": "Condition is the refID of the query or expression to be evaluated",
@@ -2463,6 +2724,14 @@
         }
       },
       "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
+    "Vector": {
+      "description": "Vector is basically only an alias for model.Samples, but the\ncontract is that in a Vector, all Samples have the same timestamp.",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Sample"
+      },
+      "x-go-package": "github.com/prometheus/prometheus/promql"
     },
     "VictorOpsConfig": {
       "type": "object",
