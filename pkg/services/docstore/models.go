@@ -23,15 +23,23 @@ type GetEntityResponse struct {
 	Entity Entity
 }
 
+// Query to get a list of entities by ids, tags, query or releationships
+// So for this you can for example get all dashboards used by a library panel
 type ListEntitiesQuery struct {
-	OrgId       int64
-	IDs         *[]string
-	Tags        *[]string
+	OrgId int64
+	// To get a specific list of entities by id
+	IDs *[]string
+	// Filter by tags
+	Tags *[]string
+	// Filter by entity type
+	EntityTypes *[]string
+	// Filter by query string (match on title, description etc, container name)
 	QueryString *string
 	// To query for entities that are related / linked to a specific entity
 	Relationship *ListEntitiesRelationshipFilter
 	// Minimum permission
-	Permission   string
+	Permission string
+	// User used for permission filtering
 	User         EntityUserInfo
 	Page         int64
 	ItemsPerPage int64
