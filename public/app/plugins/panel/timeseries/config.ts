@@ -24,7 +24,6 @@ import {
   GraphGradientMode,
   LegendDisplayMode,
   AxisConfig,
-  VizLegendOptions,
 } from '@grafana/ui';
 import { SeriesConfigEditor } from './HideSeriesConfigEditor';
 import { ScaleDistributionEditor } from './ScaleDistributionEditor';
