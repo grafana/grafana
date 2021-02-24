@@ -4,7 +4,7 @@ import { StreamingDataFrame } from './StreamingDataFrame';
 
 describe('Streaming JSON', () => {
   describe('when called with a DataFrame', () => {
-    it('then it should reverse the order of values in all fields', () => {
+    it('should decode values not supported natively in JSON (e.g. NaN, Infinity)', () => {
       const json: DataFrameJSON = {
         schema: {
           fields: [

@@ -48,7 +48,7 @@ export interface DataFrameData {
 
   /**
    * Holds value multipliers per field so we can encode large numbers concisely
-   * e.g. [4900000000, 35000000000] -> 1e9 + [35, 4.9]
+   * e.g. [4900000000, 35000000000] -> 1e9 + [4.9, 35]
    */
   factors?: number[];
 
@@ -126,7 +126,9 @@ export function decodeFieldValueEntities(lookup: FieldValueEntityLookup, values:
   for (const key in lookup) {
     const repl = ENTITY_MAP[key as keyof FieldValueEntityLookup];
     for (const idx of lookup[key as keyof FieldValueEntityLookup]!) {
-      values[idx] = repl;
+      if (idx < values.length) {
+        values[idx] = repl;
+      }
     }
   }
 }
