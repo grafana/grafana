@@ -270,8 +270,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) handleNonDistributionSe
 
 func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseToAnnotations(queryRes *tsdb.QueryResult, response cloudMonitoringResponse, title string, text string, tags string) error {
 	frames := data.Frames{}
-	for j := 0; j < len(response.TimeSeries); j++ {
-		series := response.TimeSeries[j]
+	for _, series := range response.TimeSeries {
 		if len(series.Points) == 0 {
 			continue
 		}
