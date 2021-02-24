@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link, NavLink } from 'react-router-dom';
+import { RouterDebugger } from './RouterDebugger';
 import { RouteDescriptor } from './types';
 
 export const testRoutes: RouteDescriptor[] = [
@@ -24,5 +25,10 @@ export const testRoutes: RouteDescriptor[] = [
         <NavLink to={'/test1'}>Test1 navlink</NavLink>
       </>
     ),
+  },
+  {
+    path: '/router-debug',
+    // eslint-disable-next-line react/display-name
+    component: RouterDebugger,
   },
 ];
