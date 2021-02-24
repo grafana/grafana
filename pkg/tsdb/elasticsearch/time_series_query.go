@@ -31,20 +31,22 @@ func (e *timeSeriesQuery) execute() (*tsdb.Response, error) {
 		return nil, err
 	}
 
-	ms := e.client.MultiSearch()
+	multiSearchRequestBuilder := e.client.MultiSearch()
 
 	from := fmt.Sprintf("%d", e.tsdbQuery.TimeRange.GetFromAsMsEpoch())
 	to := fmt.Sprintf("%d", e.tsdbQuery.TimeRange.GetToAsMsEpoch())
+
 	result := &tsdb.Response{
 		Results: make(map[string]*tsdb.QueryResult),
 	}
-	for _, q := range queries {
-		if err := e.processQuery(q, ms, from, to, result); err != nil {
+
+	for _, query := range queries {
+		if err := e.processQuery(query, multiSearchRequestBuilder, from, to, result); err != nil {
 			return nil, err
 		}
 	}
 
-	req, err := ms.Build()
+	req, err := multiSearchRequestBuilder.Build()
 	if err != nil {
 		return nil, err
 	}
