@@ -7,6 +7,7 @@ import { PromQuery } from '../prometheus/types';
 
 import Prism, { Token } from 'prismjs';
 import grammar from '../prometheus/promql';
+import { defaultBucketAgg } from './query_def';
 
 function getNameLabelValue(promQuery: string, tokens: any): string {
   let nameLabelValue = '';
@@ -104,13 +105,25 @@ export default class ElasticsearchLanguageProvider extends LanguageProvider {
     Object.assign(this, initialValues);
   }
 
+  /**
+   * The current implementation only supports switching from Prometheus/Loki queries.
+   * For them we transform the query to an ES Logs query since it's the behaviour most users expect.
+   * For every other datasource we just copy the refId and let the query editor initialize a default query.
+   * */
   importQueries(queries: DataQuery[], datasourceType: string): ElasticsearchQuery[] {
     if (datasourceType === 'prometheus' || datasourceType === 'loki') {
       return queries.map((query) => {
-        let prometheusQuery: PromQuery = query as PromQuery;
+        let prometheusQuery = query as PromQuery;
         const expr = getElasticsearchQuery(extractPrometheusLabels(prometheusQuery.expr));
         return {
           isLogsQuery: true,
+          metrics: [
+            {
+              id: '1',
+              type: 'logs',
+            },
+          ],
+          bucketAggs: [{ ...defaultBucketAgg('2'), field: this.datasource.timeField }],
           query: expr,
           refId: query.refId,
         };
@@ -118,8 +131,6 @@ export default class ElasticsearchLanguageProvider extends LanguageProvider {
     }
     return queries.map((query) => {
       return {
-        isLogsQuery: true,
-        query: '',
         refId: query.refId,
       };
     });

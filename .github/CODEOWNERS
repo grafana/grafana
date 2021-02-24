@@ -27,6 +27,9 @@ go.sum @grafana/backend-platform
 /pkg/tsdb/azuremonitor @grafana/cloud-datasources
 /pkg/tsdb/cloudmonitoring @grafana/cloud-datasources
 
+# Database migrations
+/pkg/services/sqlstore/migrations @grafana/backend-platform @grafana/hosted-grafana-team
+*_mig.go @grafana/backend-platform @grafana/hosted-grafana-team
 
 # Backend code docs
 /contribute/style-guides/backend.md @grafana/backend-platform
