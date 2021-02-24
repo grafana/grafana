@@ -930,7 +930,7 @@ func (cfg *Cfg) readLDAPConfig() {
 
 func (cfg *Cfg) readAWSConfig() {
 	awsPluginSec := cfg.Raw.Section("aws")
-	cfg.AWSAssumeRoleEnabled = awsPluginSec.Key("assume_role_enabled").MustBool(false)
+	cfg.AWSAssumeRoleEnabled = awsPluginSec.Key("assume_role_enabled").MustBool(true)
 	allowedAuthProviders := awsPluginSec.Key("allowed_auth_providers").String()
 	for _, user := range strings.Split(allowedAuthProviders, ",") {
 		user = strings.TrimSpace(user)
