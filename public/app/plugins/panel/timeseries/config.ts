@@ -262,25 +262,13 @@ export function addAxisConfig(
   }
 }
 
-export function addLegendOptions<T extends OptionsWithLegend>(
-  builder: PanelOptionsEditorBuilder<T>,
-  defaultOverrides?: Partial<VizLegendOptions>
-) {
-  const defaults = {
-    ...{
-      displayMode: LegendDisplayMode.List,
-      placement: 'bottom',
-      calcs: [],
-    },
-    ...defaultOverrides,
-  };
-
+export function addLegendOptions<T extends OptionsWithLegend>(builder: PanelOptionsEditorBuilder<T>) {
   builder
     .addRadio({
       path: 'legend.displayMode',
       name: 'Legend mode',
       description: '',
-      defaultValue: defaults.displayMode,
+      defaultValue: LegendDisplayMode.List,
       settings: {
         options: [
           { value: LegendDisplayMode.List, label: 'List' },
@@ -293,7 +281,7 @@ export function addLegendOptions<T extends OptionsWithLegend>(
       path: 'legend.placement',
       name: 'Legend placement',
       description: '',
-      defaultValue: defaults.placement,
+      defaultValue: 'bottom',
       settings: {
         options: [
           { value: 'bottom', label: 'Bottom' },
@@ -308,7 +296,7 @@ export function addLegendOptions<T extends OptionsWithLegend>(
       name: 'Legend calculations',
       description: 'Choose a reducer functions / calculations to include in legend',
       editor: standardEditorsRegistry.get('stats-picker').editor as any,
-      defaultValue: defaults.calcs,
+      defaultValue: [],
       settings: {
         allowMultiple: true,
       },
