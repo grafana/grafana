@@ -38,7 +38,6 @@ func GetProvisionedDataByDashboardId(cmd *models.GetProvisionedDashboardDataById
 func SaveProvisionedDashboard(cmd *models.SaveProvisionedDashboardCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		err := saveDashboard(sess, cmd.DashboardCmd)
-
 		if err != nil {
 			return err
 		}

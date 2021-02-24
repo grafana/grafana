@@ -276,7 +276,7 @@ function updateQueriesWhenComingFromExplore(
   originPanelId: number,
   queries: DataQuery[]
 ) {
-  const panelArrId = dashboard.panels.findIndex(panel => panel.id === originPanelId);
+  const panelArrId = dashboard.panels.findIndex((panel) => panel.id === originPanelId);
 
   if (panelArrId > -1) {
     dashboard.panels[panelArrId].targets = queries;

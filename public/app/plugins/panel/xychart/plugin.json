@@ -1,0 +1,17 @@
+{
+  "type": "panel",
+  "name": "XY Chart",
+  "id": "xychart",
+  "state": "alpha",
+
+  "info": {
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/icn-xychart.svg",
+      "large": "img/icn-xychart.svg"
+    }
+  }
+}

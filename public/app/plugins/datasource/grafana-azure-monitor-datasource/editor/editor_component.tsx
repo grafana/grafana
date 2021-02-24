@@ -67,7 +67,7 @@ class Editor extends Component<EditorProps, any> {
 
 coreModule.directive('kustoEditor', [
   'reactDirective',
-  reactDirective => {
+  (reactDirective) => {
     return reactDirective(Editor, [
       'change',
       'database',

@@ -106,7 +106,7 @@ func registerEndPoint(df ...*data.Frame) {
 	}
 
 	tsdb.RegisterTsdbQueryEndpoint("test", endpoint)
-	bus.AddHandler("test", func(query *models.GetDataSourceByIdQuery) error {
+	bus.AddHandler("test", func(query *models.GetDataSourceQuery) error {
 		query.Result = &models.DataSource{Id: 1, OrgId: 1, Type: "test"}
 		return nil
 	})

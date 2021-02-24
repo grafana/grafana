@@ -62,7 +62,7 @@ export class QueryInspector extends PureComponent<Props, State> {
 
     this.subs.add(
       backendSrv.getInspectorStream().subscribe({
-        next: response => this.onDataSourceResponse(response),
+        next: (response) => this.onDataSourceResponse(response),
       })
     );
 
@@ -120,7 +120,7 @@ export class QueryInspector extends PureComponent<Props, State> {
   }
 
   onPanelRefresh = () => {
-    this.setState(prevState => ({
+    this.setState((prevState) => ({
       ...prevState,
       dsQuery: {
         isLoading: true,
@@ -170,7 +170,7 @@ export class QueryInspector extends PureComponent<Props, State> {
       delete response.$$config;
     }
 
-    this.setState(prevState => ({
+    this.setState((prevState) => ({
       ...prevState,
       dsQuery: {
         isLoading: false,
@@ -192,14 +192,14 @@ export class QueryInspector extends PureComponent<Props, State> {
   };
 
   onToggleExpand = () => {
-    this.setState(prevState => ({
+    this.setState((prevState) => ({
       ...prevState,
       allNodesExpanded: !this.state.allNodesExpanded,
     }));
   };
 
   onToggleMocking = () => {
-    this.setState(prevState => ({
+    this.setState((prevState) => ({
       ...prevState,
       isMocking: !this.state.isMocking,
     }));
@@ -216,7 +216,7 @@ export class QueryInspector extends PureComponent<Props, State> {
 
   setMockedResponse = (evt: any) => {
     const mockedResponse = evt.target.value;
-    this.setState(prevState => ({
+    this.setState((prevState) => ({
       ...prevState,
       mockedResponse,
     }));
@@ -237,7 +237,7 @@ export class QueryInspector extends PureComponent<Props, State> {
 
     return (
       <div>
-        {executedQueries.map(info => {
+        {executedQueries.map((info) => {
           return (
             <div key={info.refId}>
               <div>

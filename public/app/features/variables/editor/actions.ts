@@ -17,7 +17,7 @@ import { updateOptions } from '../state/actions';
 import { VariableModel } from '../types';
 
 export const variableEditorMount = (identifier: VariableIdentifier): ThunkResult<void> => {
-  return async dispatch => {
+  return async (dispatch) => {
     dispatch(variableEditorMounted({ name: getVariable(identifier.id).name }));
   };
 };
@@ -29,7 +29,7 @@ export const variableEditorUnMount = (identifier: VariableIdentifier): ThunkResu
 };
 
 export const onEditorUpdate = (identifier: VariableIdentifier): ThunkResult<void> => {
-  return async dispatch => {
+  return async (dispatch) => {
     await dispatch(updateOptions(identifier));
     dispatch(switchToListMode());
   };
@@ -47,7 +47,7 @@ export const changeVariableName = (identifier: VariableIdentifier, newName: stri
     }
 
     const variables = getVariables(getState());
-    const foundVariables = variables.filter(v => v.name === newName && v.id !== identifier.id);
+    const foundVariables = variables.filter((v) => v.name === newName && v.id !== identifier.id);
 
     if (foundVariables.length) {
       errorText = 'Variable with the same name already exists';
@@ -98,11 +98,11 @@ export const switchToNewMode = (type: VariableType = 'query'): ThunkResult<void>
   dispatch(setIdInEditor({ id: identifier.id }));
 };
 
-export const switchToEditMode = (identifier: VariableIdentifier): ThunkResult<void> => dispatch => {
+export const switchToEditMode = (identifier: VariableIdentifier): ThunkResult<void> => (dispatch) => {
   dispatch(setIdInEditor({ id: identifier.id }));
 };
 
-export const switchToListMode = (): ThunkResult<void> => dispatch => {
+export const switchToListMode = (): ThunkResult<void> => (dispatch) => {
   dispatch(clearIdInEditor());
 };
 
@@ -110,7 +110,7 @@ export function getNextAvailableId(type: VariableType, variables: VariableModel[
   let counter = 0;
   let nextId = `${type}${counter}`;
 
-  while (variables.find(variable => variable.id === nextId)) {
+  while (variables.find((variable) => variable.id === nextId)) {
     nextId = `${type}${++counter}`;
   }
 

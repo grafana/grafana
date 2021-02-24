@@ -30,16 +30,16 @@ export function toEmitValuesWith(
     return Promise.resolve(failsChecks);
   }
 
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     const receivedValues: any[] = [];
     const subscription = new Subscription();
 
     subscription.add(
       received.subscribe({
-        next: value => {
+        next: (value) => {
           receivedValues.push(value);
         },
-        error: err => {
+        error: (err) => {
           receivedValues.push(err);
           subscription.unsubscribe();
           resolve(tryExpectations(receivedValues, expectations));

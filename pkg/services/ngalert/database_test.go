@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -37,7 +38,8 @@ func TestCreatingAlertDefinition(t *testing.T) {
 		inputTitle           string
 		expectedError        error
 		expectedInterval     int64
-		expectedUpdated      time.Time
+
+		expectedUpdated time.Time
 	}{
 		{
 			desc:                 "should create successfuly an alert definition with default interval",
@@ -56,30 +58,36 @@ func TestCreatingAlertDefinition(t *testing.T) {
 		{
 			desc:                 "should fail to create an alert definition with too big name",
 			inputIntervalSeconds: &customIntervalSeconds,
-			inputTitle:           getLongString(alertDefinitionMaxNameLength + 1),
+			inputTitle:           getLongString(alertDefinitionMaxTitleLength + 1),
 			expectedError:        errors.New(""),
+		},
+		{
+			desc:                 "should fail to create an alert definition with empty title",
+			inputIntervalSeconds: &customIntervalSeconds,
+			inputTitle:           "",
+			expectedError:        errEmptyTitleError,
 		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			ng := setupTestEnv(t)
+			t.Cleanup(registry.ClearOverrides)
+
 			q := saveAlertDefinitionCommand{
-				OrgID: 1,
-				Title: tc.inputTitle,
-				Condition: eval.Condition{
-					RefID: "B",
-					QueriesAndExpressions: []eval.AlertQuery{
-						{
-							Model: json.RawMessage(`{
+				OrgID:     1,
+				Title:     tc.inputTitle,
+				Condition: "B",
+				Data: []eval.AlertQuery{
+					{
+						Model: json.RawMessage(`{
 								"datasource": "__expr__",
 								"type":"math",
 								"expression":"2 + 3 > 1"
 							}`),
-							RefID: "B",
-							RelativeTimeRange: eval.RelativeTimeRange{
-								From: eval.Duration(time.Duration(5) * time.Hour),
-								To:   eval.Duration(time.Duration(3) * time.Hour),
-							},
+						RefID: "B",
+						RelativeTimeRange: eval.RelativeTimeRange{
+							From: eval.Duration(time.Duration(5) * time.Hour),
+							To:   eval.Duration(time.Duration(3) * time.Hour),
 						},
 					},
 				},
@@ -101,32 +109,64 @@ func TestCreatingAlertDefinition(t *testing.T) {
 		})
 	}
 }
+func TestCreatingConflictionAlertDefinition(t *testing.T) {
+	t.Run("Should fail to create alert definition with conflicting org_id, title", func(t *testing.T) {
+		ng := setupTestEnv(t)
+		t.Cleanup(registry.ClearOverrides)
+
+		q := saveAlertDefinitionCommand{
+			OrgID:     1,
+			Title:     "title",
+			Condition: "B",
+			Data: []eval.AlertQuery{
+				{
+					Model: json.RawMessage(`{
+								"datasource": "__expr__",
+								"type":"math",
+								"expression":"2 + 3 > 1"
+							}`),
+					RefID: "B",
+					RelativeTimeRange: eval.RelativeTimeRange{
+						From: eval.Duration(time.Duration(5) * time.Hour),
+						To:   eval.Duration(time.Duration(3) * time.Hour),
+					},
+				},
+			},
+		}
+
+		err := ng.saveAlertDefinition(&q)
+		require.NoError(t, err)
+
+		err = ng.saveAlertDefinition(&q)
+		require.Error(t, err)
+		assert.True(t, ng.SQLStore.Dialect.IsUniqueConstraintViolation(err))
+	})
+}
 
 func TestUpdatingAlertDefinition(t *testing.T) {
-	mockTimeNow()
-	defer resetTimeNow()
-
 	t.Run("zero rows affected when updating unknown alert", func(t *testing.T) {
+		mockTimeNow()
+		defer resetTimeNow()
+
 		ng := setupTestEnv(t)
+		t.Cleanup(registry.ClearOverrides)
 
 		q := updateAlertDefinitionCommand{
-			ID:    1,
-			OrgID: 1,
-			Title: "something completely different",
-			Condition: eval.Condition{
-				RefID: "A",
-				QueriesAndExpressions: []eval.AlertQuery{
-					{
-						Model: json.RawMessage(`{
+			UID:       "unknown",
+			OrgID:     1,
+			Title:     "something completely different",
+			Condition: "A",
+			Data: []eval.AlertQuery{
+				{
+					Model: json.RawMessage(`{
 							"datasource": "__expr__",
 							"type":"math",
 							"expression":"2 + 2 > 1"
 						}`),
-						RefID: "A",
-						RelativeTimeRange: eval.RelativeTimeRange{
-							From: eval.Duration(time.Duration(5) * time.Hour),
-							To:   eval.Duration(time.Duration(3) * time.Hour),
-						},
+					RefID: "A",
+					RelativeTimeRange: eval.RelativeTimeRange{
+						From: eval.Duration(time.Duration(5) * time.Hour),
+						To:   eval.Duration(time.Duration(3) * time.Hour),
 					},
 				},
 			},
@@ -134,11 +174,15 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 
 		err := ng.updateAlertDefinition(&q)
 		require.NoError(t, err)
-		assert.Equal(t, int64(0), q.RowsAffected)
 	})
 
 	t.Run("updating existing alert", func(t *testing.T) {
+		mockTimeNow()
+		defer resetTimeNow()
+
 		ng := setupTestEnv(t)
+		t.Cleanup(registry.ClearOverrides)
+
 		var initialInterval int64 = 120
 		alertDefinition := createTestAlertDefinition(t, ng, initialInterval)
 		created := alertDefinition.Updated
@@ -152,6 +196,7 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 			expectedError           error
 			expectedIntervalSeconds int64
 			expectedUpdated         time.Time
+			expectedTitle           string
 		}{
 			{
 				desc:                    "should not update previous interval if it's not provided",
@@ -159,7 +204,8 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 				inputOrgID:              alertDefinition.OrgID,
 				inputTitle:              "something completely different",
 				expectedIntervalSeconds: initialInterval,
-				expectedUpdated:         time.Unix(2, 0).UTC(),
+				expectedUpdated:         time.Unix(1, 0).UTC(),
+				expectedTitle:           "something completely different",
 			},
 			{
 				desc:                    "should update interval if it's provided",
@@ -167,7 +213,8 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 				inputOrgID:              alertDefinition.OrgID,
 				inputTitle:              "something completely different",
 				expectedIntervalSeconds: customInterval,
-				expectedUpdated:         time.Unix(3, 0).UTC(),
+				expectedUpdated:         time.Unix(2, 0).UTC(),
+				expectedTitle:           "something completely different",
 			},
 			{
 				desc:                    "should not update organisation if it's provided",
@@ -175,34 +222,41 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 				inputOrgID:              0,
 				inputTitle:              "something completely different",
 				expectedIntervalSeconds: customInterval,
-				expectedUpdated:         time.Unix(4, 0).UTC(),
+				expectedUpdated:         time.Unix(3, 0).UTC(),
+				expectedTitle:           "something completely different",
 			},
 			{
-				desc:          "should not update alert definition if the name it's too big",
+				desc:          "should not update alert definition if the title it's too big",
 				inputInterval: &customInterval,
 				inputOrgID:    0,
-				inputTitle:    getLongString(alertDefinitionMaxNameLength + 1),
+				inputTitle:    getLongString(alertDefinitionMaxTitleLength + 1),
 				expectedError: errors.New(""),
+			},
+			{
+				desc:                    "should not update alert definition title if the title is empty",
+				inputInterval:           &customInterval,
+				inputOrgID:              0,
+				inputTitle:              "",
+				expectedIntervalSeconds: customInterval,
+				expectedUpdated:         time.Unix(4, 0).UTC(),
+				expectedTitle:           "something completely different",
 			},
 		}
 
 		q := updateAlertDefinitionCommand{
-			ID:    (*alertDefinition).ID,
-			Title: "something completely different",
-			Condition: eval.Condition{
-				RefID: "B",
-				QueriesAndExpressions: []eval.AlertQuery{
-					{
-						Model: json.RawMessage(`{
+			UID:       (*alertDefinition).UID,
+			Condition: "B",
+			Data: []eval.AlertQuery{
+				{
+					Model: json.RawMessage(`{
 							"datasource": "__expr__",
 							"type":"math",
 							"expression":"2 + 3 > 1"
 						}`),
-						RefID: "B",
-						RelativeTimeRange: eval.RelativeTimeRange{
-							From: eval.Duration(5 * time.Hour),
-							To:   eval.Duration(3 * time.Hour),
-						},
+					RefID: "B",
+					RelativeTimeRange: eval.RelativeTimeRange{
+						From: eval.Duration(5 * time.Hour),
+						To:   eval.Duration(3 * time.Hour),
 					},
 				},
 			},
@@ -224,40 +278,34 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 				case tc.expectedError != nil:
 					require.Error(t, err)
 
-					getAlertDefinitionByIDQuery := getAlertDefinitionByIDQuery{ID: (*alertDefinition).ID}
-					err = ng.getAlertDefinitionByID(&getAlertDefinitionByIDQuery)
-					require.NoError(t, err)
-					assert.Equal(t, previousAlertDefinition.Title, getAlertDefinitionByIDQuery.Result.Title)
-					assert.Equal(t, previousAlertDefinition.Condition, getAlertDefinitionByIDQuery.Result.Condition)
-					assert.Equal(t, len(previousAlertDefinition.Data), len(getAlertDefinitionByIDQuery.Result.Data))
-					assert.Equal(t, previousAlertDefinition.IntervalSeconds, getAlertDefinitionByIDQuery.Result.IntervalSeconds)
-					assert.Equal(t, previousAlertDefinition.Updated, getAlertDefinitionByIDQuery.Result.Updated)
-					assert.Equal(t, previousAlertDefinition.Version, getAlertDefinitionByIDQuery.Result.Version)
-					assert.Equal(t, previousAlertDefinition.OrgID, getAlertDefinitionByIDQuery.Result.OrgID)
-					assert.Equal(t, previousAlertDefinition.UID, getAlertDefinitionByIDQuery.Result.UID)
+					assert.Equal(t, previousAlertDefinition.Title, q.Result.Title)
+					assert.Equal(t, previousAlertDefinition.Condition, q.Result.Condition)
+					assert.Equal(t, len(previousAlertDefinition.Data), len(q.Result.Data))
+					assert.Equal(t, previousAlertDefinition.IntervalSeconds, q.Result.IntervalSeconds)
+					assert.Equal(t, previousAlertDefinition.Updated, q.Result.Updated)
+					assert.Equal(t, previousAlertDefinition.Version, q.Result.Version)
+					assert.Equal(t, previousAlertDefinition.OrgID, q.Result.OrgID)
+					assert.Equal(t, previousAlertDefinition.UID, q.Result.UID)
 				default:
 					require.NoError(t, err)
-					assert.Equal(t, int64(1), q.RowsAffected)
-					assert.Equal(t, int64(1), q.Result.ID)
+					assert.Equal(t, previousAlertDefinition.ID, q.Result.ID)
+					assert.Equal(t, previousAlertDefinition.UID, q.Result.UID)
 					assert.True(t, q.Result.Updated.After(lastUpdated))
 					assert.Equal(t, tc.expectedUpdated, q.Result.Updated)
 					assert.Equal(t, previousAlertDefinition.Version+1, q.Result.Version)
 
 					assert.Equal(t, alertDefinition.OrgID, q.Result.OrgID)
 
-					getAlertDefinitionByIDQuery := getAlertDefinitionByIDQuery{ID: (*alertDefinition).ID}
-					err = ng.getAlertDefinitionByID(&getAlertDefinitionByIDQuery)
-					require.NoError(t, err)
-					assert.Equal(t, "something completely different", getAlertDefinitionByIDQuery.Result.Title)
-					assert.Equal(t, "B", getAlertDefinitionByIDQuery.Result.Condition)
-					assert.Equal(t, 1, len(getAlertDefinitionByIDQuery.Result.Data))
-					assert.Equal(t, tc.expectedUpdated, getAlertDefinitionByIDQuery.Result.Updated)
-					assert.Equal(t, tc.expectedIntervalSeconds, getAlertDefinitionByIDQuery.Result.IntervalSeconds)
-					assert.Equal(t, previousAlertDefinition.Version+1, getAlertDefinitionByIDQuery.Result.Version)
-					assert.Equal(t, alertDefinition.OrgID, getAlertDefinitionByIDQuery.Result.OrgID)
-					assert.Equal(t, alertDefinition.UID, getAlertDefinitionByIDQuery.Result.UID)
+					assert.Equal(t, "something completely different", q.Result.Title)
+					assert.Equal(t, "B", q.Result.Condition)
+					assert.Equal(t, 1, len(q.Result.Data))
+					assert.Equal(t, tc.expectedUpdated, q.Result.Updated)
+					assert.Equal(t, tc.expectedIntervalSeconds, q.Result.IntervalSeconds)
+					assert.Equal(t, previousAlertDefinition.Version+1, q.Result.Version)
+					assert.Equal(t, alertDefinition.OrgID, q.Result.OrgID)
+					assert.Equal(t, alertDefinition.UID, q.Result.UID)
 
-					previousAlertDefinition = getAlertDefinitionByIDQuery.Result
+					previousAlertDefinition = q.Result
 				}
 			})
 
@@ -266,32 +314,94 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 	})
 }
 
+func TestUpdatingConflictingAlertDefinition(t *testing.T) {
+	t.Run("should fail to update alert definition with reserved title", func(t *testing.T) {
+		mockTimeNow()
+		defer resetTimeNow()
+
+		ng := setupTestEnv(t)
+		t.Cleanup(registry.ClearOverrides)
+
+		var initialInterval int64 = 120
+		alertDef1 := createTestAlertDefinition(t, ng, initialInterval)
+		alertDef2 := createTestAlertDefinition(t, ng, initialInterval)
+
+		q := updateAlertDefinitionCommand{
+			UID:       (*alertDef2).UID,
+			Title:     alertDef1.Title,
+			Condition: "B",
+			Data: []eval.AlertQuery{
+				{
+					Model: json.RawMessage(`{
+							"datasource": "__expr__",
+							"type":"math",
+							"expression":"2 + 3 > 1"
+						}`),
+					RefID: "B",
+					RelativeTimeRange: eval.RelativeTimeRange{
+						From: eval.Duration(5 * time.Hour),
+						To:   eval.Duration(3 * time.Hour),
+					},
+				},
+			},
+		}
+
+		err := ng.updateAlertDefinition(&q)
+		require.Error(t, err)
+		assert.True(t, ng.SQLStore.Dialect.IsUniqueConstraintViolation(err))
+	})
+}
+
 func TestDeletingAlertDefinition(t *testing.T) {
 	t.Run("zero rows affected when deleting unknown alert", func(t *testing.T) {
 		ng := setupTestEnv(t)
+		t.Cleanup(registry.ClearOverrides)
 
-		q := deleteAlertDefinitionByIDCommand{
-			ID:    1,
+		q := deleteAlertDefinitionByUIDCommand{
+			UID:   "unknown",
 			OrgID: 1,
 		}
 
-		err := ng.deleteAlertDefinitionByID(&q)
+		err := ng.deleteAlertDefinitionByUID(&q)
 		require.NoError(t, err)
-		assert.Equal(t, int64(0), q.RowsAffected)
 	})
 
 	t.Run("deleting successfully existing alert", func(t *testing.T) {
 		ng := setupTestEnv(t)
+		t.Cleanup(registry.ClearOverrides)
+
 		alertDefinition := createTestAlertDefinition(t, ng, 60)
 
-		q := deleteAlertDefinitionByIDCommand{
-			ID:    (*alertDefinition).ID,
+		q := deleteAlertDefinitionByUIDCommand{
+			UID:   (*alertDefinition).UID,
 			OrgID: 1,
 		}
 
-		err := ng.deleteAlertDefinitionByID(&q)
+		// save an instance for the definition
+		saveCmd := &saveAlertInstanceCommand{
+			DefinitionOrgID: alertDefinition.OrgID,
+			DefinitionUID:   alertDefinition.UID,
+			State:           InstanceStateFiring,
+			Labels:          InstanceLabels{"test": "testValue"},
+		}
+		err := ng.saveAlertInstance(saveCmd)
 		require.NoError(t, err)
-		assert.Equal(t, int64(1), q.RowsAffected)
+		listCommand := &listAlertInstancesQuery{
+			DefinitionOrgID: alertDefinition.OrgID,
+			DefinitionUID:   alertDefinition.UID,
+		}
+		err = ng.listAlertInstances(listCommand)
+		require.NoError(t, err)
+		require.Len(t, listCommand.Result, 1)
+
+		err = ng.deleteAlertDefinitionByUID(&q)
+		require.NoError(t, err)
+
+		// assert that alert instance is deleted
+		err = ng.listAlertInstances(listCommand)
+		require.NoError(t, err)
+
+		require.Len(t, listCommand.Result, 0)
 	})
 }
 

@@ -407,7 +407,7 @@ var serializedATN = [
 
 var atn = new antlr4.atn.ATNDeserializer().deserialize(serializedATN);
 
-var decisionsToDFA = atn.decisionToState.map(function(ds, index) {
+var decisionsToDFA = atn.decisionToState.map(function (ds, index) {
   return new antlr4.dfa.DFA(ds, index);
 });
 
@@ -718,7 +718,7 @@ ScrollQLParser.prototype = Object.create(antlr4.Parser.prototype);
 ScrollQLParser.prototype.constructor = ScrollQLParser;
 
 Object.defineProperty(ScrollQLParser.prototype, 'atn', {
-  get: function() {
+  get: function () {
     return atn;
   },
 });
@@ -911,21 +911,21 @@ function QueryContext(parser, parent, invokingState) {
 QueryContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 QueryContext.prototype.constructor = QueryContext;
 
-QueryContext.prototype.logQuery = function() {
+QueryContext.prototype.logQuery = function () {
   return this.getTypedRuleContext(LogQueryContext, 0);
 };
 
-QueryContext.prototype.EOF = function() {
+QueryContext.prototype.EOF = function () {
   return this.getToken(ScrollQLParser.EOF, 0);
 };
 
-QueryContext.prototype.enterRule = function(listener) {
+QueryContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterQuery(this);
   }
 };
 
-QueryContext.prototype.exitRule = function(listener) {
+QueryContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitQuery(this);
   }
@@ -933,7 +933,7 @@ QueryContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.QueryContext = QueryContext;
 
-ScrollQLParser.prototype.query = function() {
+ScrollQLParser.prototype.query = function () {
   var localctx = new QueryContext(this, this._ctx, this.state);
   this.enterRule(localctx, 0, ScrollQLParser.RULE_query);
   try {
@@ -973,33 +973,33 @@ function LogQueryContext(parser, parent, invokingState) {
 LogQueryContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 LogQueryContext.prototype.constructor = LogQueryContext;
 
-LogQueryContext.prototype.logSourceStage = function() {
+LogQueryContext.prototype.logSourceStage = function () {
   return this.getTypedRuleContext(LogSourceStageContext, 0);
 };
 
-LogQueryContext.prototype.SYM_PIPE = function() {
+LogQueryContext.prototype.SYM_PIPE = function () {
   return this.getToken(ScrollQLParser.SYM_PIPE, 0);
 };
 
-LogQueryContext.prototype.logStatsStage = function() {
+LogQueryContext.prototype.logStatsStage = function () {
   return this.getTypedRuleContext(LogStatsStageContext, 0);
 };
 
-LogQueryContext.prototype.SYM_WRITE = function() {
+LogQueryContext.prototype.SYM_WRITE = function () {
   return this.getToken(ScrollQLParser.SYM_WRITE, 0);
 };
 
-LogQueryContext.prototype.resultId = function() {
+LogQueryContext.prototype.resultId = function () {
   return this.getTypedRuleContext(ResultIdContext, 0);
 };
 
-LogQueryContext.prototype.enterRule = function(listener) {
+LogQueryContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterLogQuery(this);
   }
 };
 
-LogQueryContext.prototype.exitRule = function(listener) {
+LogQueryContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitLogQuery(this);
   }
@@ -1007,7 +1007,7 @@ LogQueryContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.LogQueryContext = LogQueryContext;
 
-ScrollQLParser.prototype.logQuery = function() {
+ScrollQLParser.prototype.logQuery = function () {
   var localctx = new LogQueryContext(this, this._ctx, this.state);
   this.enterRule(localctx, 2, ScrollQLParser.RULE_logQuery);
   var _la = 0; // Token type
@@ -1067,11 +1067,11 @@ function LogAestheticContext(parser, parent, invokingState) {
 LogAestheticContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 LogAestheticContext.prototype.constructor = LogAestheticContext;
 
-LogAestheticContext.prototype.resultId = function() {
+LogAestheticContext.prototype.resultId = function () {
   return this.getTypedRuleContext(ResultIdContext, 0);
 };
 
-LogAestheticContext.prototype.SYM_PIPE = function(i) {
+LogAestheticContext.prototype.SYM_PIPE = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -1082,7 +1082,7 @@ LogAestheticContext.prototype.SYM_PIPE = function(i) {
   }
 };
 
-LogAestheticContext.prototype.logAestheticOp = function(i) {
+LogAestheticContext.prototype.logAestheticOp = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -1093,13 +1093,13 @@ LogAestheticContext.prototype.logAestheticOp = function(i) {
   }
 };
 
-LogAestheticContext.prototype.enterRule = function(listener) {
+LogAestheticContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterLogAesthetic(this);
   }
 };
 
-LogAestheticContext.prototype.exitRule = function(listener) {
+LogAestheticContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitLogAesthetic(this);
   }
@@ -1107,7 +1107,7 @@ LogAestheticContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.LogAestheticContext = LogAestheticContext;
 
-ScrollQLParser.prototype.logAesthetic = function() {
+ScrollQLParser.prototype.logAesthetic = function () {
   var localctx = new LogAestheticContext(this, this._ctx, this.state);
   this.enterRule(localctx, 4, ScrollQLParser.RULE_logAesthetic);
   var _la = 0; // Token type
@@ -1160,7 +1160,7 @@ function LogSourceStageContext(parser, parent, invokingState) {
 LogSourceStageContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 LogSourceStageContext.prototype.constructor = LogSourceStageContext;
 
-LogSourceStageContext.prototype.logSource = function(i) {
+LogSourceStageContext.prototype.logSource = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -1171,7 +1171,7 @@ LogSourceStageContext.prototype.logSource = function(i) {
   }
 };
 
-LogSourceStageContext.prototype.SYM_PIPE = function(i) {
+LogSourceStageContext.prototype.SYM_PIPE = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -1182,11 +1182,11 @@ LogSourceStageContext.prototype.SYM_PIPE = function(i) {
   }
 };
 
-LogSourceStageContext.prototype.implicitLogOpSearch = function() {
+LogSourceStageContext.prototype.implicitLogOpSearch = function () {
   return this.getTypedRuleContext(ImplicitLogOpSearchContext, 0);
 };
 
-LogSourceStageContext.prototype.logOp = function(i) {
+LogSourceStageContext.prototype.logOp = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -1197,13 +1197,13 @@ LogSourceStageContext.prototype.logOp = function(i) {
   }
 };
 
-LogSourceStageContext.prototype.enterRule = function(listener) {
+LogSourceStageContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterLogSourceStage(this);
   }
 };
 
-LogSourceStageContext.prototype.exitRule = function(listener) {
+LogSourceStageContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitLogSourceStage(this);
   }
@@ -1211,7 +1211,7 @@ LogSourceStageContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.LogSourceStageContext = LogSourceStageContext;
 
-ScrollQLParser.prototype.logSourceStage = function() {
+ScrollQLParser.prototype.logSourceStage = function () {
   var localctx = new LogSourceStageContext(this, this._ctx, this.state);
   this.enterRule(localctx, 6, ScrollQLParser.RULE_logSourceStage);
   try {
@@ -1289,11 +1289,11 @@ function LogStatsStageContext(parser, parent, invokingState) {
 LogStatsStageContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 LogStatsStageContext.prototype.constructor = LogStatsStageContext;
 
-LogStatsStageContext.prototype.logStats = function() {
+LogStatsStageContext.prototype.logStats = function () {
   return this.getTypedRuleContext(LogStatsContext, 0);
 };
 
-LogStatsStageContext.prototype.SYM_PIPE = function(i) {
+LogStatsStageContext.prototype.SYM_PIPE = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -1304,7 +1304,7 @@ LogStatsStageContext.prototype.SYM_PIPE = function(i) {
   }
 };
 
-LogStatsStageContext.prototype.logOp = function(i) {
+LogStatsStageContext.prototype.logOp = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -1315,13 +1315,13 @@ LogStatsStageContext.prototype.logOp = function(i) {
   }
 };
 
-LogStatsStageContext.prototype.enterRule = function(listener) {
+LogStatsStageContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterLogStatsStage(this);
   }
 };
 
-LogStatsStageContext.prototype.exitRule = function(listener) {
+LogStatsStageContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitLogStatsStage(this);
   }
@@ -1329,7 +1329,7 @@ LogStatsStageContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.LogStatsStageContext = LogStatsStageContext;
 
-ScrollQLParser.prototype.logStatsStage = function() {
+ScrollQLParser.prototype.logStatsStage = function () {
   var localctx = new LogStatsStageContext(this, this._ctx, this.state);
   this.enterRule(localctx, 8, ScrollQLParser.RULE_logStatsStage);
   var _la = 0; // Token type
@@ -1379,37 +1379,37 @@ function LogOpContext(parser, parent, invokingState) {
 LogOpContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 LogOpContext.prototype.constructor = LogOpContext;
 
-LogOpContext.prototype.logOpFields = function() {
+LogOpContext.prototype.logOpFields = function () {
   return this.getTypedRuleContext(LogOpFieldsContext, 0);
 };
 
-LogOpContext.prototype.logOpParse = function() {
+LogOpContext.prototype.logOpParse = function () {
   return this.getTypedRuleContext(LogOpParseContext, 0);
 };
 
-LogOpContext.prototype.logOpFilter = function() {
+LogOpContext.prototype.logOpFilter = function () {
   return this.getTypedRuleContext(LogOpFilterContext, 0);
 };
 
-LogOpContext.prototype.logOpSearch = function() {
+LogOpContext.prototype.logOpSearch = function () {
   return this.getTypedRuleContext(LogOpSearchContext, 0);
 };
 
-LogOpContext.prototype.logOpSort = function() {
+LogOpContext.prototype.logOpSort = function () {
   return this.getTypedRuleContext(LogOpSortContext, 0);
 };
 
-LogOpContext.prototype.logOpLimit = function() {
+LogOpContext.prototype.logOpLimit = function () {
   return this.getTypedRuleContext(LogOpLimitContext, 0);
 };
 
-LogOpContext.prototype.enterRule = function(listener) {
+LogOpContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterLogOp(this);
   }
 };
 
-LogOpContext.prototype.exitRule = function(listener) {
+LogOpContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitLogOp(this);
   }
@@ -1417,7 +1417,7 @@ LogOpContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.LogOpContext = LogOpContext;
 
-ScrollQLParser.prototype.logOp = function() {
+ScrollQLParser.prototype.logOp = function () {
   var localctx = new LogOpContext(this, this._ctx, this.state);
   this.enterRule(localctx, 10, ScrollQLParser.RULE_logOp);
   try {
@@ -1496,11 +1496,11 @@ function LogAestheticOpContext(parser, parent, invokingState) {
 LogAestheticOpContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 LogAestheticOpContext.prototype.constructor = LogAestheticOpContext;
 
-LogAestheticOpContext.prototype.functionId = function() {
+LogAestheticOpContext.prototype.functionId = function () {
   return this.getTypedRuleContext(FunctionIdContext, 0);
 };
 
-LogAestheticOpContext.prototype.SYM_EQ = function(i) {
+LogAestheticOpContext.prototype.SYM_EQ = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -1511,7 +1511,7 @@ LogAestheticOpContext.prototype.SYM_EQ = function(i) {
   }
 };
 
-LogAestheticOpContext.prototype.rawId = function(i) {
+LogAestheticOpContext.prototype.rawId = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -1522,7 +1522,7 @@ LogAestheticOpContext.prototype.rawId = function(i) {
   }
 };
 
-LogAestheticOpContext.prototype.fieldId = function(i) {
+LogAestheticOpContext.prototype.fieldId = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -1533,7 +1533,7 @@ LogAestheticOpContext.prototype.fieldId = function(i) {
   }
 };
 
-LogAestheticOpContext.prototype.SYM_COMMA = function(i) {
+LogAestheticOpContext.prototype.SYM_COMMA = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -1544,13 +1544,13 @@ LogAestheticOpContext.prototype.SYM_COMMA = function(i) {
   }
 };
 
-LogAestheticOpContext.prototype.enterRule = function(listener) {
+LogAestheticOpContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterLogAestheticOp(this);
   }
 };
 
-LogAestheticOpContext.prototype.exitRule = function(listener) {
+LogAestheticOpContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitLogAestheticOp(this);
   }
@@ -1558,7 +1558,7 @@ LogAestheticOpContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.LogAestheticOpContext = LogAestheticOpContext;
 
-ScrollQLParser.prototype.logAestheticOp = function() {
+ScrollQLParser.prototype.logAestheticOp = function () {
   var localctx = new LogAestheticOpContext(this, this._ctx, this.state);
   this.enterRule(localctx, 12, ScrollQLParser.RULE_logAestheticOp);
   var _la = 0; // Token type
@@ -1685,15 +1685,15 @@ function LogSourceContext(parser, parent, invokingState) {
 LogSourceContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 LogSourceContext.prototype.constructor = LogSourceContext;
 
-LogSourceContext.prototype.K_SOURCE = function() {
+LogSourceContext.prototype.K_SOURCE = function () {
   return this.getToken(ScrollQLParser.K_SOURCE, 0);
 };
 
-LogSourceContext.prototype.K_START = function() {
+LogSourceContext.prototype.K_START = function () {
   return this.getToken(ScrollQLParser.K_START, 0);
 };
 
-LogSourceContext.prototype.SYM_EQ = function(i) {
+LogSourceContext.prototype.SYM_EQ = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -1704,15 +1704,15 @@ LogSourceContext.prototype.SYM_EQ = function(i) {
   }
 };
 
-LogSourceContext.prototype.K_END = function() {
+LogSourceContext.prototype.K_END = function () {
   return this.getToken(ScrollQLParser.K_END, 0);
 };
 
-LogSourceContext.prototype.logId = function() {
+LogSourceContext.prototype.logId = function () {
   return this.getTypedRuleContext(LogIdContext, 0);
 };
 
-LogSourceContext.prototype.timeExpr = function(i) {
+LogSourceContext.prototype.timeExpr = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -1723,13 +1723,13 @@ LogSourceContext.prototype.timeExpr = function(i) {
   }
 };
 
-LogSourceContext.prototype.enterRule = function(listener) {
+LogSourceContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterLogSource(this);
   }
 };
 
-LogSourceContext.prototype.exitRule = function(listener) {
+LogSourceContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitLogSource(this);
   }
@@ -1737,7 +1737,7 @@ LogSourceContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.LogSourceContext = LogSourceContext;
 
-ScrollQLParser.prototype.logSource = function() {
+ScrollQLParser.prototype.logSource = function () {
   var localctx = new LogSourceContext(this, this._ctx, this.state);
   this.enterRule(localctx, 14, ScrollQLParser.RULE_logSource);
   try {
@@ -1788,29 +1788,29 @@ function TimeExprContext(parser, parent, invokingState) {
 TimeExprContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 TimeExprContext.prototype.constructor = TimeExprContext;
 
-TimeExprContext.prototype.nowTimeExpr = function() {
+TimeExprContext.prototype.nowTimeExpr = function () {
   return this.getTypedRuleContext(NowTimeExprContext, 0);
 };
 
-TimeExprContext.prototype.relativeTimeExpr = function() {
+TimeExprContext.prototype.relativeTimeExpr = function () {
   return this.getTypedRuleContext(RelativeTimeExprContext, 0);
 };
 
-TimeExprContext.prototype.epochTimeExpr = function() {
+TimeExprContext.prototype.epochTimeExpr = function () {
   return this.getTypedRuleContext(EpochTimeExprContext, 0);
 };
 
-TimeExprContext.prototype.iso8601TimeExpr = function() {
+TimeExprContext.prototype.iso8601TimeExpr = function () {
   return this.getTypedRuleContext(Iso8601TimeExprContext, 0);
 };
 
-TimeExprContext.prototype.enterRule = function(listener) {
+TimeExprContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterTimeExpr(this);
   }
 };
 
-TimeExprContext.prototype.exitRule = function(listener) {
+TimeExprContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitTimeExpr(this);
   }
@@ -1818,7 +1818,7 @@ TimeExprContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.TimeExprContext = TimeExprContext;
 
-ScrollQLParser.prototype.timeExpr = function() {
+ScrollQLParser.prototype.timeExpr = function () {
   var localctx = new TimeExprContext(this, this._ctx, this.state);
   this.enterRule(localctx, 16, ScrollQLParser.RULE_timeExpr);
   try {
@@ -1880,17 +1880,17 @@ function NowTimeExprContext(parser, parent, invokingState) {
 NowTimeExprContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 NowTimeExprContext.prototype.constructor = NowTimeExprContext;
 
-NowTimeExprContext.prototype.K_NOW = function() {
+NowTimeExprContext.prototype.K_NOW = function () {
   return this.getToken(ScrollQLParser.K_NOW, 0);
 };
 
-NowTimeExprContext.prototype.enterRule = function(listener) {
+NowTimeExprContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterNowTimeExpr(this);
   }
 };
 
-NowTimeExprContext.prototype.exitRule = function(listener) {
+NowTimeExprContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitNowTimeExpr(this);
   }
@@ -1898,7 +1898,7 @@ NowTimeExprContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.NowTimeExprContext = NowTimeExprContext;
 
-ScrollQLParser.prototype.nowTimeExpr = function() {
+ScrollQLParser.prototype.nowTimeExpr = function () {
   var localctx = new NowTimeExprContext(this, this._ctx, this.state);
   this.enterRule(localctx, 18, ScrollQLParser.RULE_nowTimeExpr);
   try {
@@ -1935,7 +1935,7 @@ function RelativeTimeExprContext(parser, parent, invokingState) {
 RelativeTimeExprContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 RelativeTimeExprContext.prototype.constructor = RelativeTimeExprContext;
 
-RelativeTimeExprContext.prototype.copyFrom = function(ctx) {
+RelativeTimeExprContext.prototype.copyFrom = function (ctx) {
   antlr4.ParserRuleContext.prototype.copyFrom.call(this, ctx);
 };
 
@@ -1951,28 +1951,28 @@ PosRelativeTimeExprContext.prototype.constructor = PosRelativeTimeExprContext;
 
 ScrollQLParser.PosRelativeTimeExprContext = PosRelativeTimeExprContext;
 
-PosRelativeTimeExprContext.prototype.timeUnitKeywords = function() {
+PosRelativeTimeExprContext.prototype.timeUnitKeywords = function () {
   return this.getTypedRuleContext(TimeUnitKeywordsContext, 0);
 };
 
-PosRelativeTimeExprContext.prototype.SYM_PLUS = function() {
+PosRelativeTimeExprContext.prototype.SYM_PLUS = function () {
   return this.getToken(ScrollQLParser.SYM_PLUS, 0);
 };
 
-PosRelativeTimeExprContext.prototype.LIT_INTEGER = function() {
+PosRelativeTimeExprContext.prototype.LIT_INTEGER = function () {
   return this.getToken(ScrollQLParser.LIT_INTEGER, 0);
 };
 
-PosRelativeTimeExprContext.prototype.LIT_NUMBER = function() {
+PosRelativeTimeExprContext.prototype.LIT_NUMBER = function () {
   return this.getToken(ScrollQLParser.LIT_NUMBER, 0);
 };
-PosRelativeTimeExprContext.prototype.enterRule = function(listener) {
+PosRelativeTimeExprContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterPosRelativeTimeExpr(this);
   }
 };
 
-PosRelativeTimeExprContext.prototype.exitRule = function(listener) {
+PosRelativeTimeExprContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitPosRelativeTimeExpr(this);
   }
@@ -1990,28 +1990,28 @@ NegRelativeTimeExprContext.prototype.constructor = NegRelativeTimeExprContext;
 
 ScrollQLParser.NegRelativeTimeExprContext = NegRelativeTimeExprContext;
 
-NegRelativeTimeExprContext.prototype.SYM_MINUS = function() {
+NegRelativeTimeExprContext.prototype.SYM_MINUS = function () {
   return this.getToken(ScrollQLParser.SYM_MINUS, 0);
 };
 
-NegRelativeTimeExprContext.prototype.timeUnitKeywords = function() {
+NegRelativeTimeExprContext.prototype.timeUnitKeywords = function () {
   return this.getTypedRuleContext(TimeUnitKeywordsContext, 0);
 };
 
-NegRelativeTimeExprContext.prototype.LIT_INTEGER = function() {
+NegRelativeTimeExprContext.prototype.LIT_INTEGER = function () {
   return this.getToken(ScrollQLParser.LIT_INTEGER, 0);
 };
 
-NegRelativeTimeExprContext.prototype.LIT_NUMBER = function() {
+NegRelativeTimeExprContext.prototype.LIT_NUMBER = function () {
   return this.getToken(ScrollQLParser.LIT_NUMBER, 0);
 };
-NegRelativeTimeExprContext.prototype.enterRule = function(listener) {
+NegRelativeTimeExprContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterNegRelativeTimeExpr(this);
   }
 };
 
-NegRelativeTimeExprContext.prototype.exitRule = function(listener) {
+NegRelativeTimeExprContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitNegRelativeTimeExpr(this);
   }
@@ -2019,7 +2019,7 @@ NegRelativeTimeExprContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.RelativeTimeExprContext = RelativeTimeExprContext;
 
-ScrollQLParser.prototype.relativeTimeExpr = function() {
+ScrollQLParser.prototype.relativeTimeExpr = function () {
   var localctx = new RelativeTimeExprContext(this, this._ctx, this.state);
   this.enterRule(localctx, 20, ScrollQLParser.RULE_relativeTimeExpr);
   var _la = 0; // Token type
@@ -2141,21 +2141,21 @@ function Iso8601TimeExprContext(parser, parent, invokingState) {
 Iso8601TimeExprContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 Iso8601TimeExprContext.prototype.constructor = Iso8601TimeExprContext;
 
-Iso8601TimeExprContext.prototype.stringOrBareString = function() {
+Iso8601TimeExprContext.prototype.stringOrBareString = function () {
   return this.getTypedRuleContext(StringOrBareStringContext, 0);
 };
 
-Iso8601TimeExprContext.prototype.bareSpaceDelimited = function() {
+Iso8601TimeExprContext.prototype.bareSpaceDelimited = function () {
   return this.getTypedRuleContext(BareSpaceDelimitedContext, 0);
 };
 
-Iso8601TimeExprContext.prototype.enterRule = function(listener) {
+Iso8601TimeExprContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterIso8601TimeExpr(this);
   }
 };
 
-Iso8601TimeExprContext.prototype.exitRule = function(listener) {
+Iso8601TimeExprContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitIso8601TimeExpr(this);
   }
@@ -2163,7 +2163,7 @@ Iso8601TimeExprContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.Iso8601TimeExprContext = Iso8601TimeExprContext;
 
-ScrollQLParser.prototype.iso8601TimeExpr = function() {
+ScrollQLParser.prototype.iso8601TimeExpr = function () {
   var localctx = new Iso8601TimeExprContext(this, this._ctx, this.state);
   this.enterRule(localctx, 22, ScrollQLParser.RULE_iso8601TimeExpr);
   try {
@@ -2214,21 +2214,21 @@ function EpochTimeExprContext(parser, parent, invokingState) {
 EpochTimeExprContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 EpochTimeExprContext.prototype.constructor = EpochTimeExprContext;
 
-EpochTimeExprContext.prototype.LIT_INTEGER = function() {
+EpochTimeExprContext.prototype.LIT_INTEGER = function () {
   return this.getToken(ScrollQLParser.LIT_INTEGER, 0);
 };
 
-EpochTimeExprContext.prototype.LIT_NUMBER = function() {
+EpochTimeExprContext.prototype.LIT_NUMBER = function () {
   return this.getToken(ScrollQLParser.LIT_NUMBER, 0);
 };
 
-EpochTimeExprContext.prototype.enterRule = function(listener) {
+EpochTimeExprContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterEpochTimeExpr(this);
   }
 };
 
-EpochTimeExprContext.prototype.exitRule = function(listener) {
+EpochTimeExprContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitEpochTimeExpr(this);
   }
@@ -2236,7 +2236,7 @@ EpochTimeExprContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.EpochTimeExprContext = EpochTimeExprContext;
 
-ScrollQLParser.prototype.epochTimeExpr = function() {
+ScrollQLParser.prototype.epochTimeExpr = function () {
   var localctx = new EpochTimeExprContext(this, this._ctx, this.state);
   this.enterRule(localctx, 24, ScrollQLParser.RULE_epochTimeExpr);
   var _la = 0; // Token type
@@ -2281,7 +2281,7 @@ function BareSpaceDelimitedContext(parser, parent, invokingState) {
 BareSpaceDelimitedContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 BareSpaceDelimitedContext.prototype.constructor = BareSpaceDelimitedContext;
 
-BareSpaceDelimitedContext.prototype.SYM_MINUS = function(i) {
+BareSpaceDelimitedContext.prototype.SYM_MINUS = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -2292,7 +2292,7 @@ BareSpaceDelimitedContext.prototype.SYM_MINUS = function(i) {
   }
 };
 
-BareSpaceDelimitedContext.prototype.LIT_INTEGER = function(i) {
+BareSpaceDelimitedContext.prototype.LIT_INTEGER = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -2303,7 +2303,7 @@ BareSpaceDelimitedContext.prototype.LIT_INTEGER = function(i) {
   }
 };
 
-BareSpaceDelimitedContext.prototype.LIT_NUMBER = function(i) {
+BareSpaceDelimitedContext.prototype.LIT_NUMBER = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -2314,7 +2314,7 @@ BareSpaceDelimitedContext.prototype.LIT_NUMBER = function(i) {
   }
 };
 
-BareSpaceDelimitedContext.prototype.SYM_COLON = function(i) {
+BareSpaceDelimitedContext.prototype.SYM_COLON = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -2325,7 +2325,7 @@ BareSpaceDelimitedContext.prototype.SYM_COLON = function(i) {
   }
 };
 
-BareSpaceDelimitedContext.prototype.RAW_ID = function(i) {
+BareSpaceDelimitedContext.prototype.RAW_ID = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -2336,13 +2336,13 @@ BareSpaceDelimitedContext.prototype.RAW_ID = function(i) {
   }
 };
 
-BareSpaceDelimitedContext.prototype.enterRule = function(listener) {
+BareSpaceDelimitedContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterBareSpaceDelimited(this);
   }
 };
 
-BareSpaceDelimitedContext.prototype.exitRule = function(listener) {
+BareSpaceDelimitedContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitBareSpaceDelimited(this);
   }
@@ -2350,7 +2350,7 @@ BareSpaceDelimitedContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.BareSpaceDelimitedContext = BareSpaceDelimitedContext;
 
-ScrollQLParser.prototype.bareSpaceDelimited = function() {
+ScrollQLParser.prototype.bareSpaceDelimited = function () {
   var localctx = new BareSpaceDelimitedContext(this, this._ctx, this.state);
   this.enterRule(localctx, 26, ScrollQLParser.RULE_bareSpaceDelimited);
   var _la = 0; // Token type
@@ -2426,11 +2426,11 @@ function LogStatsContext(parser, parent, invokingState) {
 LogStatsContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 LogStatsContext.prototype.constructor = LogStatsContext;
 
-LogStatsContext.prototype.K_STATS = function() {
+LogStatsContext.prototype.K_STATS = function () {
   return this.getToken(ScrollQLParser.K_STATS, 0);
 };
 
-LogStatsContext.prototype.statsExpr = function(i) {
+LogStatsContext.prototype.statsExpr = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -2441,7 +2441,7 @@ LogStatsContext.prototype.statsExpr = function(i) {
   }
 };
 
-LogStatsContext.prototype.SYM_COMMA = function(i) {
+LogStatsContext.prototype.SYM_COMMA = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -2452,11 +2452,11 @@ LogStatsContext.prototype.SYM_COMMA = function(i) {
   }
 };
 
-LogStatsContext.prototype.K_BY = function() {
+LogStatsContext.prototype.K_BY = function () {
   return this.getToken(ScrollQLParser.K_BY, 0);
 };
 
-LogStatsContext.prototype.statsGroupField = function(i) {
+LogStatsContext.prototype.statsGroupField = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -2467,17 +2467,17 @@ LogStatsContext.prototype.statsGroupField = function(i) {
   }
 };
 
-LogStatsContext.prototype.K_GROUP = function() {
+LogStatsContext.prototype.K_GROUP = function () {
   return this.getToken(ScrollQLParser.K_GROUP, 0);
 };
 
-LogStatsContext.prototype.enterRule = function(listener) {
+LogStatsContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterLogStats(this);
   }
 };
 
-LogStatsContext.prototype.exitRule = function(listener) {
+LogStatsContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitLogStats(this);
   }
@@ -2485,7 +2485,7 @@ LogStatsContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.LogStatsContext = LogStatsContext;
 
-ScrollQLParser.prototype.logStats = function() {
+ScrollQLParser.prototype.logStats = function () {
   var localctx = new LogStatsContext(this, this._ctx, this.state);
   this.enterRule(localctx, 28, ScrollQLParser.RULE_logStats);
   var _la = 0; // Token type
@@ -2572,25 +2572,25 @@ function StatsExprContext(parser, parent, invokingState) {
 StatsExprContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 StatsExprContext.prototype.constructor = StatsExprContext;
 
-StatsExprContext.prototype.expressionRoot = function() {
+StatsExprContext.prototype.expressionRoot = function () {
   return this.getTypedRuleContext(ExpressionRootContext, 0);
 };
 
-StatsExprContext.prototype.K_AS = function() {
+StatsExprContext.prototype.K_AS = function () {
   return this.getToken(ScrollQLParser.K_AS, 0);
 };
 
-StatsExprContext.prototype.aliasId = function() {
+StatsExprContext.prototype.aliasId = function () {
   return this.getTypedRuleContext(AliasIdContext, 0);
 };
 
-StatsExprContext.prototype.enterRule = function(listener) {
+StatsExprContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterStatsExpr(this);
   }
 };
 
-StatsExprContext.prototype.exitRule = function(listener) {
+StatsExprContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitStatsExpr(this);
   }
@@ -2598,7 +2598,7 @@ StatsExprContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.StatsExprContext = StatsExprContext;
 
-ScrollQLParser.prototype.statsExpr = function() {
+ScrollQLParser.prototype.statsExpr = function () {
   var localctx = new StatsExprContext(this, this._ctx, this.state);
   this.enterRule(localctx, 30, ScrollQLParser.RULE_statsExpr);
   var _la = 0; // Token type
@@ -2645,7 +2645,7 @@ function StatsGroupFieldContext(parser, parent, invokingState) {
 StatsGroupFieldContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 StatsGroupFieldContext.prototype.constructor = StatsGroupFieldContext;
 
-StatsGroupFieldContext.prototype.copyFrom = function(ctx) {
+StatsGroupFieldContext.prototype.copyFrom = function (ctx) {
   antlr4.ParserRuleContext.prototype.copyFrom.call(this, ctx);
 };
 
@@ -2660,16 +2660,16 @@ StatsGroupFieldIdContext.prototype.constructor = StatsGroupFieldIdContext;
 
 ScrollQLParser.StatsGroupFieldIdContext = StatsGroupFieldIdContext;
 
-StatsGroupFieldIdContext.prototype.fieldId = function() {
+StatsGroupFieldIdContext.prototype.fieldId = function () {
   return this.getTypedRuleContext(FieldIdContext, 0);
 };
-StatsGroupFieldIdContext.prototype.enterRule = function(listener) {
+StatsGroupFieldIdContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterStatsGroupFieldId(this);
   }
 };
 
-StatsGroupFieldIdContext.prototype.exitRule = function(listener) {
+StatsGroupFieldIdContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitStatsGroupFieldId(this);
   }
@@ -2686,16 +2686,16 @@ StatsGroupFieldProjectionContext.prototype.constructor = StatsGroupFieldProjecti
 
 ScrollQLParser.StatsGroupFieldProjectionContext = StatsGroupFieldProjectionContext;
 
-StatsGroupFieldProjectionContext.prototype.fieldSpec = function() {
+StatsGroupFieldProjectionContext.prototype.fieldSpec = function () {
   return this.getTypedRuleContext(FieldSpecContext, 0);
 };
-StatsGroupFieldProjectionContext.prototype.enterRule = function(listener) {
+StatsGroupFieldProjectionContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterStatsGroupFieldProjection(this);
   }
 };
 
-StatsGroupFieldProjectionContext.prototype.exitRule = function(listener) {
+StatsGroupFieldProjectionContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitStatsGroupFieldProjection(this);
   }
@@ -2703,7 +2703,7 @@ StatsGroupFieldProjectionContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.StatsGroupFieldContext = StatsGroupFieldContext;
 
-ScrollQLParser.prototype.statsGroupField = function() {
+ScrollQLParser.prototype.statsGroupField = function () {
   var localctx = new StatsGroupFieldContext(this, this._ctx, this.state);
   this.enterRule(localctx, 32, ScrollQLParser.RULE_statsGroupField);
   try {
@@ -2755,7 +2755,7 @@ function LogOpFieldsContext(parser, parent, invokingState) {
 LogOpFieldsContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 LogOpFieldsContext.prototype.constructor = LogOpFieldsContext;
 
-LogOpFieldsContext.prototype.copyFrom = function(ctx) {
+LogOpFieldsContext.prototype.copyFrom = function (ctx) {
   antlr4.ParserRuleContext.prototype.copyFrom.call(this, ctx);
 };
 
@@ -2772,11 +2772,11 @@ LogOpFieldsDisplayContext.prototype.constructor = LogOpFieldsDisplayContext;
 
 ScrollQLParser.LogOpFieldsDisplayContext = LogOpFieldsDisplayContext;
 
-LogOpFieldsDisplayContext.prototype.K_DISPLAY = function() {
+LogOpFieldsDisplayContext.prototype.K_DISPLAY = function () {
   return this.getToken(ScrollQLParser.K_DISPLAY, 0);
 };
 
-LogOpFieldsDisplayContext.prototype.fieldSpec = function(i) {
+LogOpFieldsDisplayContext.prototype.fieldSpec = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -2787,7 +2787,7 @@ LogOpFieldsDisplayContext.prototype.fieldSpec = function(i) {
   }
 };
 
-LogOpFieldsDisplayContext.prototype.SYM_COMMA = function(i) {
+LogOpFieldsDisplayContext.prototype.SYM_COMMA = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -2798,13 +2798,13 @@ LogOpFieldsDisplayContext.prototype.SYM_COMMA = function(i) {
   }
 };
 
-LogOpFieldsDisplayContext.prototype.enterRule = function(listener) {
+LogOpFieldsDisplayContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterLogOpFieldsDisplay(this);
   }
 };
 
-LogOpFieldsDisplayContext.prototype.exitRule = function(listener) {
+LogOpFieldsDisplayContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitLogOpFieldsDisplay(this);
   }
@@ -2823,11 +2823,11 @@ LogOpFieldsFieldsContext.prototype.constructor = LogOpFieldsFieldsContext;
 
 ScrollQLParser.LogOpFieldsFieldsContext = LogOpFieldsFieldsContext;
 
-LogOpFieldsFieldsContext.prototype.K_FIELDS = function() {
+LogOpFieldsFieldsContext.prototype.K_FIELDS = function () {
   return this.getToken(ScrollQLParser.K_FIELDS, 0);
 };
 
-LogOpFieldsFieldsContext.prototype.fieldSpec = function(i) {
+LogOpFieldsFieldsContext.prototype.fieldSpec = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -2838,7 +2838,7 @@ LogOpFieldsFieldsContext.prototype.fieldSpec = function(i) {
   }
 };
 
-LogOpFieldsFieldsContext.prototype.SYM_COMMA = function(i) {
+LogOpFieldsFieldsContext.prototype.SYM_COMMA = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -2849,13 +2849,13 @@ LogOpFieldsFieldsContext.prototype.SYM_COMMA = function(i) {
   }
 };
 
-LogOpFieldsFieldsContext.prototype.enterRule = function(listener) {
+LogOpFieldsFieldsContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterLogOpFieldsFields(this);
   }
 };
 
-LogOpFieldsFieldsContext.prototype.exitRule = function(listener) {
+LogOpFieldsFieldsContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitLogOpFieldsFields(this);
   }
@@ -2863,7 +2863,7 @@ LogOpFieldsFieldsContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.LogOpFieldsContext = LogOpFieldsContext;
 
-ScrollQLParser.prototype.logOpFields = function() {
+ScrollQLParser.prototype.logOpFields = function () {
   var localctx = new LogOpFieldsContext(this, this._ctx, this.state);
   this.enterRule(localctx, 34, ScrollQLParser.RULE_logOpFields);
   var _la = 0; // Token type
@@ -2949,25 +2949,25 @@ function FieldSpecContext(parser, parent, invokingState) {
 FieldSpecContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 FieldSpecContext.prototype.constructor = FieldSpecContext;
 
-FieldSpecContext.prototype.expressionRoot = function() {
+FieldSpecContext.prototype.expressionRoot = function () {
   return this.getTypedRuleContext(ExpressionRootContext, 0);
 };
 
-FieldSpecContext.prototype.K_AS = function() {
+FieldSpecContext.prototype.K_AS = function () {
   return this.getToken(ScrollQLParser.K_AS, 0);
 };
 
-FieldSpecContext.prototype.aliasId = function() {
+FieldSpecContext.prototype.aliasId = function () {
   return this.getTypedRuleContext(AliasIdContext, 0);
 };
 
-FieldSpecContext.prototype.enterRule = function(listener) {
+FieldSpecContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterFieldSpec(this);
   }
 };
 
-FieldSpecContext.prototype.exitRule = function(listener) {
+FieldSpecContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitFieldSpec(this);
   }
@@ -2975,7 +2975,7 @@ FieldSpecContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.FieldSpecContext = FieldSpecContext;
 
-ScrollQLParser.prototype.fieldSpec = function() {
+ScrollQLParser.prototype.fieldSpec = function () {
   var localctx = new FieldSpecContext(this, this._ctx, this.state);
   this.enterRule(localctx, 36, ScrollQLParser.RULE_fieldSpec);
   var _la = 0; // Token type
@@ -3027,19 +3027,19 @@ function LogOpParseContext(parser, parent, invokingState) {
 LogOpParseContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 LogOpParseContext.prototype.constructor = LogOpParseContext;
 
-LogOpParseContext.prototype.K_PARSE = function() {
+LogOpParseContext.prototype.K_PARSE = function () {
   return this.getToken(ScrollQLParser.K_PARSE, 0);
 };
 
-LogOpParseContext.prototype.K_AS = function() {
+LogOpParseContext.prototype.K_AS = function () {
   return this.getToken(ScrollQLParser.K_AS, 0);
 };
 
-LogOpParseContext.prototype.string = function() {
+LogOpParseContext.prototype.string = function () {
   return this.getTypedRuleContext(StringContext, 0);
 };
 
-LogOpParseContext.prototype.aliasId = function(i) {
+LogOpParseContext.prototype.aliasId = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -3050,7 +3050,7 @@ LogOpParseContext.prototype.aliasId = function(i) {
   }
 };
 
-LogOpParseContext.prototype.SYM_COMMA = function(i) {
+LogOpParseContext.prototype.SYM_COMMA = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -3061,21 +3061,21 @@ LogOpParseContext.prototype.SYM_COMMA = function(i) {
   }
 };
 
-LogOpParseContext.prototype.fieldId = function() {
+LogOpParseContext.prototype.fieldId = function () {
   return this.getTypedRuleContext(FieldIdContext, 0);
 };
 
-LogOpParseContext.prototype.regex = function() {
+LogOpParseContext.prototype.regex = function () {
   return this.getTypedRuleContext(RegexContext, 0);
 };
 
-LogOpParseContext.prototype.enterRule = function(listener) {
+LogOpParseContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterLogOpParse(this);
   }
 };
 
-LogOpParseContext.prototype.exitRule = function(listener) {
+LogOpParseContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitLogOpParse(this);
   }
@@ -3083,7 +3083,7 @@ LogOpParseContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.LogOpParseContext = LogOpParseContext;
 
-ScrollQLParser.prototype.logOpParse = function() {
+ScrollQLParser.prototype.logOpParse = function () {
   var localctx = new LogOpParseContext(this, this._ctx, this.state);
   this.enterRule(localctx, 38, ScrollQLParser.RULE_logOpParse);
   var _la = 0; // Token type
@@ -3310,21 +3310,21 @@ function LogOpSearchContext(parser, parent, invokingState) {
 LogOpSearchContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 LogOpSearchContext.prototype.constructor = LogOpSearchContext;
 
-LogOpSearchContext.prototype.K_SEARCH = function() {
+LogOpSearchContext.prototype.K_SEARCH = function () {
   return this.getToken(ScrollQLParser.K_SEARCH, 0);
 };
 
-LogOpSearchContext.prototype.searchExpr = function() {
+LogOpSearchContext.prototype.searchExpr = function () {
   return this.getTypedRuleContext(SearchExprContext, 0);
 };
 
-LogOpSearchContext.prototype.enterRule = function(listener) {
+LogOpSearchContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterLogOpSearch(this);
   }
 };
 
-LogOpSearchContext.prototype.exitRule = function(listener) {
+LogOpSearchContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitLogOpSearch(this);
   }
@@ -3332,7 +3332,7 @@ LogOpSearchContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.LogOpSearchContext = LogOpSearchContext;
 
-ScrollQLParser.prototype.logOpSearch = function() {
+ScrollQLParser.prototype.logOpSearch = function () {
   var localctx = new LogOpSearchContext(this, this._ctx, this.state);
   this.enterRule(localctx, 40, ScrollQLParser.RULE_logOpSearch);
   try {
@@ -3371,21 +3371,21 @@ function ImplicitLogOpSearchContext(parser, parent, invokingState) {
 ImplicitLogOpSearchContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 ImplicitLogOpSearchContext.prototype.constructor = ImplicitLogOpSearchContext;
 
-ImplicitLogOpSearchContext.prototype.searchExpr = function() {
+ImplicitLogOpSearchContext.prototype.searchExpr = function () {
   return this.getTypedRuleContext(SearchExprContext, 0);
 };
 
-ImplicitLogOpSearchContext.prototype.SE_K_SEARCH = function() {
+ImplicitLogOpSearchContext.prototype.SE_K_SEARCH = function () {
   return this.getToken(ScrollQLParser.SE_K_SEARCH, 0);
 };
 
-ImplicitLogOpSearchContext.prototype.enterRule = function(listener) {
+ImplicitLogOpSearchContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterImplicitLogOpSearch(this);
   }
 };
 
-ImplicitLogOpSearchContext.prototype.exitRule = function(listener) {
+ImplicitLogOpSearchContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitImplicitLogOpSearch(this);
   }
@@ -3393,7 +3393,7 @@ ImplicitLogOpSearchContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.ImplicitLogOpSearchContext = ImplicitLogOpSearchContext;
 
-ScrollQLParser.prototype.implicitLogOpSearch = function() {
+ScrollQLParser.prototype.implicitLogOpSearch = function () {
   var localctx = new ImplicitLogOpSearchContext(this, this._ctx, this.state);
   this.enterRule(localctx, 42, ScrollQLParser.RULE_implicitLogOpSearch);
   var _la = 0; // Token type
@@ -3439,7 +3439,7 @@ function SearchExprContext(parser, parent, invokingState) {
 SearchExprContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 SearchExprContext.prototype.constructor = SearchExprContext;
 
-SearchExprContext.prototype.copyFrom = function(ctx) {
+SearchExprContext.prototype.copyFrom = function (ctx) {
   antlr4.ParserRuleContext.prototype.copyFrom.call(this, ctx);
 };
 
@@ -3455,16 +3455,16 @@ SearchExprTermContext.prototype.constructor = SearchExprTermContext;
 
 ScrollQLParser.SearchExprTermContext = SearchExprTermContext;
 
-SearchExprTermContext.prototype.searchTerm = function() {
+SearchExprTermContext.prototype.searchTerm = function () {
   return this.getTypedRuleContext(SearchTermContext, 0);
 };
-SearchExprTermContext.prototype.enterRule = function(listener) {
+SearchExprTermContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterSearchExprTerm(this);
   }
 };
 
-SearchExprTermContext.prototype.exitRule = function(listener) {
+SearchExprTermContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitSearchExprTerm(this);
   }
@@ -3481,20 +3481,20 @@ SearchExprNotContext.prototype.constructor = SearchExprNotContext;
 
 ScrollQLParser.SearchExprNotContext = SearchExprNotContext;
 
-SearchExprNotContext.prototype.SE_K_NOT = function() {
+SearchExprNotContext.prototype.SE_K_NOT = function () {
   return this.getToken(ScrollQLParser.SE_K_NOT, 0);
 };
 
-SearchExprNotContext.prototype.searchExpr = function() {
+SearchExprNotContext.prototype.searchExpr = function () {
   return this.getTypedRuleContext(SearchExprContext, 0);
 };
-SearchExprNotContext.prototype.enterRule = function(listener) {
+SearchExprNotContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterSearchExprNot(this);
   }
 };
 
-SearchExprNotContext.prototype.exitRule = function(listener) {
+SearchExprNotContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitSearchExprNot(this);
   }
@@ -3511,7 +3511,7 @@ SearchExprAndContext.prototype.constructor = SearchExprAndContext;
 
 ScrollQLParser.SearchExprAndContext = SearchExprAndContext;
 
-SearchExprAndContext.prototype.searchExpr = function(i) {
+SearchExprAndContext.prototype.searchExpr = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -3522,16 +3522,16 @@ SearchExprAndContext.prototype.searchExpr = function(i) {
   }
 };
 
-SearchExprAndContext.prototype.SE_K_AND = function() {
+SearchExprAndContext.prototype.SE_K_AND = function () {
   return this.getToken(ScrollQLParser.SE_K_AND, 0);
 };
-SearchExprAndContext.prototype.enterRule = function(listener) {
+SearchExprAndContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterSearchExprAnd(this);
   }
 };
 
-SearchExprAndContext.prototype.exitRule = function(listener) {
+SearchExprAndContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitSearchExprAnd(this);
   }
@@ -3548,24 +3548,24 @@ SearchExprNestedContext.prototype.constructor = SearchExprNestedContext;
 
 ScrollQLParser.SearchExprNestedContext = SearchExprNestedContext;
 
-SearchExprNestedContext.prototype.SE_SYM_LPAREN = function() {
+SearchExprNestedContext.prototype.SE_SYM_LPAREN = function () {
   return this.getToken(ScrollQLParser.SE_SYM_LPAREN, 0);
 };
 
-SearchExprNestedContext.prototype.searchExpr = function() {
+SearchExprNestedContext.prototype.searchExpr = function () {
   return this.getTypedRuleContext(SearchExprContext, 0);
 };
 
-SearchExprNestedContext.prototype.SE_SYM_RPAREN = function() {
+SearchExprNestedContext.prototype.SE_SYM_RPAREN = function () {
   return this.getToken(ScrollQLParser.SE_SYM_RPAREN, 0);
 };
-SearchExprNestedContext.prototype.enterRule = function(listener) {
+SearchExprNestedContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterSearchExprNested(this);
   }
 };
 
-SearchExprNestedContext.prototype.exitRule = function(listener) {
+SearchExprNestedContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitSearchExprNested(this);
   }
@@ -3582,7 +3582,7 @@ SearchExprOrContext.prototype.constructor = SearchExprOrContext;
 
 ScrollQLParser.SearchExprOrContext = SearchExprOrContext;
 
-SearchExprOrContext.prototype.searchExpr = function(i) {
+SearchExprOrContext.prototype.searchExpr = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -3593,22 +3593,22 @@ SearchExprOrContext.prototype.searchExpr = function(i) {
   }
 };
 
-SearchExprOrContext.prototype.SE_K_OR = function() {
+SearchExprOrContext.prototype.SE_K_OR = function () {
   return this.getToken(ScrollQLParser.SE_K_OR, 0);
 };
-SearchExprOrContext.prototype.enterRule = function(listener) {
+SearchExprOrContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterSearchExprOr(this);
   }
 };
 
-SearchExprOrContext.prototype.exitRule = function(listener) {
+SearchExprOrContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitSearchExprOr(this);
   }
 };
 
-ScrollQLParser.prototype.searchExpr = function(_p) {
+ScrollQLParser.prototype.searchExpr = function (_p) {
   if (_p === undefined) {
     _p = 0;
   }
@@ -3745,33 +3745,33 @@ function SearchTermContext(parser, parent, invokingState) {
 SearchTermContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 SearchTermContext.prototype.constructor = SearchTermContext;
 
-SearchTermContext.prototype.SE_UNQUOTED_STRING = function() {
+SearchTermContext.prototype.SE_UNQUOTED_STRING = function () {
   return this.getToken(ScrollQLParser.SE_UNQUOTED_STRING, 0);
 };
 
-SearchTermContext.prototype.SE_SDQUOTED_STRING = function() {
+SearchTermContext.prototype.SE_SDQUOTED_STRING = function () {
   return this.getToken(ScrollQLParser.SE_SDQUOTED_STRING, 0);
 };
 
-SearchTermContext.prototype.SE_SSQUOTED_STRING = function() {
+SearchTermContext.prototype.SE_SSQUOTED_STRING = function () {
   return this.getToken(ScrollQLParser.SE_SSQUOTED_STRING, 0);
 };
 
-SearchTermContext.prototype.SE_CDQUOTED_STRING = function() {
+SearchTermContext.prototype.SE_CDQUOTED_STRING = function () {
   return this.getToken(ScrollQLParser.SE_CDQUOTED_STRING, 0);
 };
 
-SearchTermContext.prototype.SE_CSQUOTED_STRING = function() {
+SearchTermContext.prototype.SE_CSQUOTED_STRING = function () {
   return this.getToken(ScrollQLParser.SE_CSQUOTED_STRING, 0);
 };
 
-SearchTermContext.prototype.enterRule = function(listener) {
+SearchTermContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterSearchTerm(this);
   }
 };
 
-SearchTermContext.prototype.exitRule = function(listener) {
+SearchTermContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitSearchTerm(this);
   }
@@ -3779,7 +3779,7 @@ SearchTermContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.SearchTermContext = SearchTermContext;
 
-ScrollQLParser.prototype.searchTerm = function() {
+ScrollQLParser.prototype.searchTerm = function () {
   var localctx = new SearchTermContext(this, this._ctx, this.state);
   this.enterRule(localctx, 46, ScrollQLParser.RULE_searchTerm);
   try {
@@ -3844,21 +3844,21 @@ function LogOpFilterContext(parser, parent, invokingState) {
 LogOpFilterContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 LogOpFilterContext.prototype.constructor = LogOpFilterContext;
 
-LogOpFilterContext.prototype.K_FILTER = function() {
+LogOpFilterContext.prototype.K_FILTER = function () {
   return this.getToken(ScrollQLParser.K_FILTER, 0);
 };
 
-LogOpFilterContext.prototype.expressionRoot = function() {
+LogOpFilterContext.prototype.expressionRoot = function () {
   return this.getTypedRuleContext(ExpressionRootContext, 0);
 };
 
-LogOpFilterContext.prototype.enterRule = function(listener) {
+LogOpFilterContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterLogOpFilter(this);
   }
 };
 
-LogOpFilterContext.prototype.exitRule = function(listener) {
+LogOpFilterContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitLogOpFilter(this);
   }
@@ -3866,7 +3866,7 @@ LogOpFilterContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.LogOpFilterContext = LogOpFilterContext;
 
-ScrollQLParser.prototype.logOpFilter = function() {
+ScrollQLParser.prototype.logOpFilter = function () {
   var localctx = new LogOpFilterContext(this, this._ctx, this.state);
   this.enterRule(localctx, 48, ScrollQLParser.RULE_logOpFilter);
   try {
@@ -3905,7 +3905,7 @@ function LogOpSortContext(parser, parent, invokingState) {
 LogOpSortContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 LogOpSortContext.prototype.constructor = LogOpSortContext;
 
-LogOpSortContext.prototype.sortExpr = function(i) {
+LogOpSortContext.prototype.sortExpr = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -3916,19 +3916,19 @@ LogOpSortContext.prototype.sortExpr = function(i) {
   }
 };
 
-LogOpSortContext.prototype.K_SORT = function() {
+LogOpSortContext.prototype.K_SORT = function () {
   return this.getToken(ScrollQLParser.K_SORT, 0);
 };
 
-LogOpSortContext.prototype.K_ORDER = function() {
+LogOpSortContext.prototype.K_ORDER = function () {
   return this.getToken(ScrollQLParser.K_ORDER, 0);
 };
 
-LogOpSortContext.prototype.K_BY = function() {
+LogOpSortContext.prototype.K_BY = function () {
   return this.getToken(ScrollQLParser.K_BY, 0);
 };
 
-LogOpSortContext.prototype.SYM_COMMA = function(i) {
+LogOpSortContext.prototype.SYM_COMMA = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -3939,13 +3939,13 @@ LogOpSortContext.prototype.SYM_COMMA = function(i) {
   }
 };
 
-LogOpSortContext.prototype.enterRule = function(listener) {
+LogOpSortContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterLogOpSort(this);
   }
 };
 
-LogOpSortContext.prototype.exitRule = function(listener) {
+LogOpSortContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitLogOpSort(this);
   }
@@ -3953,7 +3953,7 @@ LogOpSortContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.LogOpSortContext = LogOpSortContext;
 
-ScrollQLParser.prototype.logOpSort = function() {
+ScrollQLParser.prototype.logOpSort = function () {
   var localctx = new LogOpSortContext(this, this._ctx, this.state);
   this.enterRule(localctx, 50, ScrollQLParser.RULE_logOpSort);
   var _la = 0; // Token type
@@ -4018,7 +4018,7 @@ function SortExprContext(parser, parent, invokingState) {
 SortExprContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 SortExprContext.prototype.constructor = SortExprContext;
 
-SortExprContext.prototype.copyFrom = function(ctx) {
+SortExprContext.prototype.copyFrom = function (ctx) {
   antlr4.ParserRuleContext.prototype.copyFrom.call(this, ctx);
 };
 
@@ -4034,20 +4034,20 @@ SortExprDescContext.prototype.constructor = SortExprDescContext;
 
 ScrollQLParser.SortExprDescContext = SortExprDescContext;
 
-SortExprDescContext.prototype.K_DESC = function() {
+SortExprDescContext.prototype.K_DESC = function () {
   return this.getToken(ScrollQLParser.K_DESC, 0);
 };
 
-SortExprDescContext.prototype.fieldId = function() {
+SortExprDescContext.prototype.fieldId = function () {
   return this.getTypedRuleContext(FieldIdContext, 0);
 };
-SortExprDescContext.prototype.enterRule = function(listener) {
+SortExprDescContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterSortExprDesc(this);
   }
 };
 
-SortExprDescContext.prototype.exitRule = function(listener) {
+SortExprDescContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitSortExprDesc(this);
   }
@@ -4065,20 +4065,20 @@ SortExprAscContext.prototype.constructor = SortExprAscContext;
 
 ScrollQLParser.SortExprAscContext = SortExprAscContext;
 
-SortExprAscContext.prototype.fieldId = function() {
+SortExprAscContext.prototype.fieldId = function () {
   return this.getTypedRuleContext(FieldIdContext, 0);
 };
 
-SortExprAscContext.prototype.K_ASC = function() {
+SortExprAscContext.prototype.K_ASC = function () {
   return this.getToken(ScrollQLParser.K_ASC, 0);
 };
-SortExprAscContext.prototype.enterRule = function(listener) {
+SortExprAscContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterSortExprAsc(this);
   }
 };
 
-SortExprAscContext.prototype.exitRule = function(listener) {
+SortExprAscContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitSortExprAsc(this);
   }
@@ -4086,7 +4086,7 @@ SortExprAscContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.SortExprContext = SortExprContext;
 
-ScrollQLParser.prototype.sortExpr = function() {
+ScrollQLParser.prototype.sortExpr = function () {
   var localctx = new SortExprContext(this, this._ctx, this.state);
   this.enterRule(localctx, 52, ScrollQLParser.RULE_sortExpr);
   var _la = 0; // Token type
@@ -4149,7 +4149,7 @@ function LogOpLimitContext(parser, parent, invokingState) {
 LogOpLimitContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 LogOpLimitContext.prototype.constructor = LogOpLimitContext;
 
-LogOpLimitContext.prototype.copyFrom = function(ctx) {
+LogOpLimitContext.prototype.copyFrom = function (ctx) {
   antlr4.ParserRuleContext.prototype.copyFrom.call(this, ctx);
 };
 
@@ -4165,24 +4165,24 @@ LogOpLimitHeadContext.prototype.constructor = LogOpLimitHeadContext;
 
 ScrollQLParser.LogOpLimitHeadContext = LogOpLimitHeadContext;
 
-LogOpLimitHeadContext.prototype.K_LIMIT = function() {
+LogOpLimitHeadContext.prototype.K_LIMIT = function () {
   return this.getToken(ScrollQLParser.K_LIMIT, 0);
 };
 
-LogOpLimitHeadContext.prototype.K_HEAD = function() {
+LogOpLimitHeadContext.prototype.K_HEAD = function () {
   return this.getToken(ScrollQLParser.K_HEAD, 0);
 };
 
-LogOpLimitHeadContext.prototype.LIT_INTEGER = function() {
+LogOpLimitHeadContext.prototype.LIT_INTEGER = function () {
   return this.getToken(ScrollQLParser.LIT_INTEGER, 0);
 };
-LogOpLimitHeadContext.prototype.enterRule = function(listener) {
+LogOpLimitHeadContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterLogOpLimitHead(this);
   }
 };
 
-LogOpLimitHeadContext.prototype.exitRule = function(listener) {
+LogOpLimitHeadContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitLogOpLimitHead(this);
   }
@@ -4200,20 +4200,20 @@ LogOpLimitTailContext.prototype.constructor = LogOpLimitTailContext;
 
 ScrollQLParser.LogOpLimitTailContext = LogOpLimitTailContext;
 
-LogOpLimitTailContext.prototype.K_TAIL = function() {
+LogOpLimitTailContext.prototype.K_TAIL = function () {
   return this.getToken(ScrollQLParser.K_TAIL, 0);
 };
 
-LogOpLimitTailContext.prototype.LIT_INTEGER = function() {
+LogOpLimitTailContext.prototype.LIT_INTEGER = function () {
   return this.getToken(ScrollQLParser.LIT_INTEGER, 0);
 };
-LogOpLimitTailContext.prototype.enterRule = function(listener) {
+LogOpLimitTailContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterLogOpLimitTail(this);
   }
 };
 
-LogOpLimitTailContext.prototype.exitRule = function(listener) {
+LogOpLimitTailContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitLogOpLimitTail(this);
   }
@@ -4221,7 +4221,7 @@ LogOpLimitTailContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.LogOpLimitContext = LogOpLimitContext;
 
-ScrollQLParser.prototype.logOpLimit = function() {
+ScrollQLParser.prototype.logOpLimit = function () {
   var localctx = new LogOpLimitContext(this, this._ctx, this.state);
   this.enterRule(localctx, 54, ScrollQLParser.RULE_logOpLimit);
   var _la = 0; // Token type
@@ -4285,17 +4285,17 @@ function ExpressionRootContext(parser, parent, invokingState) {
 ExpressionRootContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 ExpressionRootContext.prototype.constructor = ExpressionRootContext;
 
-ExpressionRootContext.prototype.expression = function() {
+ExpressionRootContext.prototype.expression = function () {
   return this.getTypedRuleContext(ExpressionContext, 0);
 };
 
-ExpressionRootContext.prototype.enterRule = function(listener) {
+ExpressionRootContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterExpressionRoot(this);
   }
 };
 
-ExpressionRootContext.prototype.exitRule = function(listener) {
+ExpressionRootContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitExpressionRoot(this);
   }
@@ -4303,7 +4303,7 @@ ExpressionRootContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.ExpressionRootContext = ExpressionRootContext;
 
-ScrollQLParser.prototype.expressionRoot = function() {
+ScrollQLParser.prototype.expressionRoot = function () {
   var localctx = new ExpressionRootContext(this, this._ctx, this.state);
   this.enterRule(localctx, 56, ScrollQLParser.RULE_expressionRoot);
   try {
@@ -4340,7 +4340,7 @@ function ExpressionContext(parser, parent, invokingState) {
 ExpressionContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 ExpressionContext.prototype.constructor = ExpressionContext;
 
-ExpressionContext.prototype.copyFrom = function(ctx) {
+ExpressionContext.prototype.copyFrom = function (ctx) {
   antlr4.ParserRuleContext.prototype.copyFrom.call(this, ctx);
 };
 
@@ -4356,7 +4356,7 @@ ExpressionAddSubContext.prototype.constructor = ExpressionAddSubContext;
 
 ScrollQLParser.ExpressionAddSubContext = ExpressionAddSubContext;
 
-ExpressionAddSubContext.prototype.expression = function(i) {
+ExpressionAddSubContext.prototype.expression = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -4367,20 +4367,20 @@ ExpressionAddSubContext.prototype.expression = function(i) {
   }
 };
 
-ExpressionAddSubContext.prototype.SYM_PLUS = function() {
+ExpressionAddSubContext.prototype.SYM_PLUS = function () {
   return this.getToken(ScrollQLParser.SYM_PLUS, 0);
 };
 
-ExpressionAddSubContext.prototype.SYM_MINUS = function() {
+ExpressionAddSubContext.prototype.SYM_MINUS = function () {
   return this.getToken(ScrollQLParser.SYM_MINUS, 0);
 };
-ExpressionAddSubContext.prototype.enterRule = function(listener) {
+ExpressionAddSubContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterExpressionAddSub(this);
   }
 };
 
-ExpressionAddSubContext.prototype.exitRule = function(listener) {
+ExpressionAddSubContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitExpressionAddSub(this);
   }
@@ -4398,7 +4398,7 @@ ExpressionEqContext.prototype.constructor = ExpressionEqContext;
 
 ScrollQLParser.ExpressionEqContext = ExpressionEqContext;
 
-ExpressionEqContext.prototype.expression = function(i) {
+ExpressionEqContext.prototype.expression = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -4409,7 +4409,7 @@ ExpressionEqContext.prototype.expression = function(i) {
   }
 };
 
-ExpressionEqContext.prototype.SYM_EQ = function(i) {
+ExpressionEqContext.prototype.SYM_EQ = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -4420,16 +4420,16 @@ ExpressionEqContext.prototype.SYM_EQ = function(i) {
   }
 };
 
-ExpressionEqContext.prototype.SYM_NEQ = function() {
+ExpressionEqContext.prototype.SYM_NEQ = function () {
   return this.getToken(ScrollQLParser.SYM_NEQ, 0);
 };
-ExpressionEqContext.prototype.enterRule = function(listener) {
+ExpressionEqContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterExpressionEq(this);
   }
 };
 
-ExpressionEqContext.prototype.exitRule = function(listener) {
+ExpressionEqContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitExpressionEq(this);
   }
@@ -4447,7 +4447,7 @@ ExpressionCompContext.prototype.constructor = ExpressionCompContext;
 
 ScrollQLParser.ExpressionCompContext = ExpressionCompContext;
 
-ExpressionCompContext.prototype.expression = function(i) {
+ExpressionCompContext.prototype.expression = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -4458,28 +4458,28 @@ ExpressionCompContext.prototype.expression = function(i) {
   }
 };
 
-ExpressionCompContext.prototype.SYM_LTEQ = function() {
+ExpressionCompContext.prototype.SYM_LTEQ = function () {
   return this.getToken(ScrollQLParser.SYM_LTEQ, 0);
 };
 
-ExpressionCompContext.prototype.SYM_GTEQ = function() {
+ExpressionCompContext.prototype.SYM_GTEQ = function () {
   return this.getToken(ScrollQLParser.SYM_GTEQ, 0);
 };
 
-ExpressionCompContext.prototype.SYM_GT = function() {
+ExpressionCompContext.prototype.SYM_GT = function () {
   return this.getToken(ScrollQLParser.SYM_GT, 0);
 };
 
-ExpressionCompContext.prototype.SYM_LT = function() {
+ExpressionCompContext.prototype.SYM_LT = function () {
   return this.getToken(ScrollQLParser.SYM_LT, 0);
 };
-ExpressionCompContext.prototype.enterRule = function(listener) {
+ExpressionCompContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterExpressionComp(this);
   }
 };
 
-ExpressionCompContext.prototype.exitRule = function(listener) {
+ExpressionCompContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitExpressionComp(this);
   }
@@ -4496,7 +4496,7 @@ ExpressionExpoContext.prototype.constructor = ExpressionExpoContext;
 
 ScrollQLParser.ExpressionExpoContext = ExpressionExpoContext;
 
-ExpressionExpoContext.prototype.expression = function(i) {
+ExpressionExpoContext.prototype.expression = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -4507,16 +4507,16 @@ ExpressionExpoContext.prototype.expression = function(i) {
   }
 };
 
-ExpressionExpoContext.prototype.SYM_CARET = function() {
+ExpressionExpoContext.prototype.SYM_CARET = function () {
   return this.getToken(ScrollQLParser.SYM_CARET, 0);
 };
-ExpressionExpoContext.prototype.enterRule = function(listener) {
+ExpressionExpoContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterExpressionExpo(this);
   }
 };
 
-ExpressionExpoContext.prototype.exitRule = function(listener) {
+ExpressionExpoContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitExpressionExpo(this);
   }
@@ -4535,36 +4535,36 @@ ExpressionLikeContext.prototype.constructor = ExpressionLikeContext;
 
 ScrollQLParser.ExpressionLikeContext = ExpressionLikeContext;
 
-ExpressionLikeContext.prototype.expression = function() {
+ExpressionLikeContext.prototype.expression = function () {
   return this.getTypedRuleContext(ExpressionContext, 0);
 };
 
-ExpressionLikeContext.prototype.K_LIKE = function() {
+ExpressionLikeContext.prototype.K_LIKE = function () {
   return this.getToken(ScrollQLParser.K_LIKE, 0);
 };
 
-ExpressionLikeContext.prototype.SYM_EQTILDE = function() {
+ExpressionLikeContext.prototype.SYM_EQTILDE = function () {
   return this.getToken(ScrollQLParser.SYM_EQTILDE, 0);
 };
 
-ExpressionLikeContext.prototype.SYM_TILDEEQ = function() {
+ExpressionLikeContext.prototype.SYM_TILDEEQ = function () {
   return this.getToken(ScrollQLParser.SYM_TILDEEQ, 0);
 };
 
-ExpressionLikeContext.prototype.likeTerm = function() {
+ExpressionLikeContext.prototype.likeTerm = function () {
   return this.getTypedRuleContext(LikeTermContext, 0);
 };
 
-ExpressionLikeContext.prototype.K_NOT = function() {
+ExpressionLikeContext.prototype.K_NOT = function () {
   return this.getToken(ScrollQLParser.K_NOT, 0);
 };
-ExpressionLikeContext.prototype.enterRule = function(listener) {
+ExpressionLikeContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterExpressionLike(this);
   }
 };
 
-ExpressionLikeContext.prototype.exitRule = function(listener) {
+ExpressionLikeContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitExpressionLike(this);
   }
@@ -4581,16 +4581,16 @@ ExpressionTermContext.prototype.constructor = ExpressionTermContext;
 
 ScrollQLParser.ExpressionTermContext = ExpressionTermContext;
 
-ExpressionTermContext.prototype.term = function() {
+ExpressionTermContext.prototype.term = function () {
   return this.getTypedRuleContext(TermContext, 0);
 };
-ExpressionTermContext.prototype.enterRule = function(listener) {
+ExpressionTermContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterExpressionTerm(this);
   }
 };
 
-ExpressionTermContext.prototype.exitRule = function(listener) {
+ExpressionTermContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitExpressionTerm(this);
   }
@@ -4607,20 +4607,20 @@ ExpressionNegContext.prototype.constructor = ExpressionNegContext;
 
 ScrollQLParser.ExpressionNegContext = ExpressionNegContext;
 
-ExpressionNegContext.prototype.SYM_MINUS = function() {
+ExpressionNegContext.prototype.SYM_MINUS = function () {
   return this.getToken(ScrollQLParser.SYM_MINUS, 0);
 };
 
-ExpressionNegContext.prototype.expression = function() {
+ExpressionNegContext.prototype.expression = function () {
   return this.getTypedRuleContext(ExpressionContext, 0);
 };
-ExpressionNegContext.prototype.enterRule = function(listener) {
+ExpressionNegContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterExpressionNeg(this);
   }
 };
 
-ExpressionNegContext.prototype.exitRule = function(listener) {
+ExpressionNegContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitExpressionNeg(this);
   }
@@ -4637,24 +4637,24 @@ ExpressionNotContext.prototype.constructor = ExpressionNotContext;
 
 ScrollQLParser.ExpressionNotContext = ExpressionNotContext;
 
-ExpressionNotContext.prototype.expression = function() {
+ExpressionNotContext.prototype.expression = function () {
   return this.getTypedRuleContext(ExpressionContext, 0);
 };
 
-ExpressionNotContext.prototype.SYM_NOT = function() {
+ExpressionNotContext.prototype.SYM_NOT = function () {
   return this.getToken(ScrollQLParser.SYM_NOT, 0);
 };
 
-ExpressionNotContext.prototype.K_NOT = function() {
+ExpressionNotContext.prototype.K_NOT = function () {
   return this.getToken(ScrollQLParser.K_NOT, 0);
 };
-ExpressionNotContext.prototype.enterRule = function(listener) {
+ExpressionNotContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterExpressionNot(this);
   }
 };
 
-ExpressionNotContext.prototype.exitRule = function(listener) {
+ExpressionNotContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitExpressionNot(this);
   }
@@ -4671,20 +4671,20 @@ ExpressionPosContext.prototype.constructor = ExpressionPosContext;
 
 ScrollQLParser.ExpressionPosContext = ExpressionPosContext;
 
-ExpressionPosContext.prototype.SYM_PLUS = function() {
+ExpressionPosContext.prototype.SYM_PLUS = function () {
   return this.getToken(ScrollQLParser.SYM_PLUS, 0);
 };
 
-ExpressionPosContext.prototype.expression = function() {
+ExpressionPosContext.prototype.expression = function () {
   return this.getTypedRuleContext(ExpressionContext, 0);
 };
-ExpressionPosContext.prototype.enterRule = function(listener) {
+ExpressionPosContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterExpressionPos(this);
   }
 };
 
-ExpressionPosContext.prototype.exitRule = function(listener) {
+ExpressionPosContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitExpressionPos(this);
   }
@@ -4702,7 +4702,7 @@ ExpressionMulDivModContext.prototype.constructor = ExpressionMulDivModContext;
 
 ScrollQLParser.ExpressionMulDivModContext = ExpressionMulDivModContext;
 
-ExpressionMulDivModContext.prototype.expression = function(i) {
+ExpressionMulDivModContext.prototype.expression = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -4713,24 +4713,24 @@ ExpressionMulDivModContext.prototype.expression = function(i) {
   }
 };
 
-ExpressionMulDivModContext.prototype.SYM_MUL = function() {
+ExpressionMulDivModContext.prototype.SYM_MUL = function () {
   return this.getToken(ScrollQLParser.SYM_MUL, 0);
 };
 
-ExpressionMulDivModContext.prototype.SYM_DIV = function() {
+ExpressionMulDivModContext.prototype.SYM_DIV = function () {
   return this.getToken(ScrollQLParser.SYM_DIV, 0);
 };
 
-ExpressionMulDivModContext.prototype.SYM_MOD = function() {
+ExpressionMulDivModContext.prototype.SYM_MOD = function () {
   return this.getToken(ScrollQLParser.SYM_MOD, 0);
 };
-ExpressionMulDivModContext.prototype.enterRule = function(listener) {
+ExpressionMulDivModContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterExpressionMulDivMod(this);
   }
 };
 
-ExpressionMulDivModContext.prototype.exitRule = function(listener) {
+ExpressionMulDivModContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitExpressionMulDivMod(this);
   }
@@ -4749,11 +4749,11 @@ ExpressionAndContext.prototype.constructor = ExpressionAndContext;
 
 ScrollQLParser.ExpressionAndContext = ExpressionAndContext;
 
-ExpressionAndContext.prototype.K_AND = function() {
+ExpressionAndContext.prototype.K_AND = function () {
   return this.getToken(ScrollQLParser.K_AND, 0);
 };
 
-ExpressionAndContext.prototype.expression = function(i) {
+ExpressionAndContext.prototype.expression = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -4763,13 +4763,13 @@ ExpressionAndContext.prototype.expression = function(i) {
     return this.getTypedRuleContext(ExpressionContext, i);
   }
 };
-ExpressionAndContext.prototype.enterRule = function(listener) {
+ExpressionAndContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterExpressionAnd(this);
   }
 };
 
-ExpressionAndContext.prototype.exitRule = function(listener) {
+ExpressionAndContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitExpressionAnd(this);
   }
@@ -4786,24 +4786,24 @@ ExpressionNestedContext.prototype.constructor = ExpressionNestedContext;
 
 ScrollQLParser.ExpressionNestedContext = ExpressionNestedContext;
 
-ExpressionNestedContext.prototype.SYM_LPAREN = function() {
+ExpressionNestedContext.prototype.SYM_LPAREN = function () {
   return this.getToken(ScrollQLParser.SYM_LPAREN, 0);
 };
 
-ExpressionNestedContext.prototype.expression = function() {
+ExpressionNestedContext.prototype.expression = function () {
   return this.getTypedRuleContext(ExpressionContext, 0);
 };
 
-ExpressionNestedContext.prototype.SYM_RPAREN = function() {
+ExpressionNestedContext.prototype.SYM_RPAREN = function () {
   return this.getToken(ScrollQLParser.SYM_RPAREN, 0);
 };
-ExpressionNestedContext.prototype.enterRule = function(listener) {
+ExpressionNestedContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterExpressionNested(this);
   }
 };
 
-ExpressionNestedContext.prototype.exitRule = function(listener) {
+ExpressionNestedContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitExpressionNested(this);
   }
@@ -4822,11 +4822,11 @@ ExpressionOrContext.prototype.constructor = ExpressionOrContext;
 
 ScrollQLParser.ExpressionOrContext = ExpressionOrContext;
 
-ExpressionOrContext.prototype.K_OR = function() {
+ExpressionOrContext.prototype.K_OR = function () {
   return this.getToken(ScrollQLParser.K_OR, 0);
 };
 
-ExpressionOrContext.prototype.expression = function(i) {
+ExpressionOrContext.prototype.expression = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -4836,13 +4836,13 @@ ExpressionOrContext.prototype.expression = function(i) {
     return this.getTypedRuleContext(ExpressionContext, i);
   }
 };
-ExpressionOrContext.prototype.enterRule = function(listener) {
+ExpressionOrContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterExpressionOr(this);
   }
 };
 
-ExpressionOrContext.prototype.exitRule = function(listener) {
+ExpressionOrContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitExpressionOr(this);
   }
@@ -4862,34 +4862,34 @@ ExpressionInContext.prototype.constructor = ExpressionInContext;
 
 ScrollQLParser.ExpressionInContext = ExpressionInContext;
 
-ExpressionInContext.prototype.K_IN = function() {
+ExpressionInContext.prototype.K_IN = function () {
   return this.getToken(ScrollQLParser.K_IN, 0);
 };
 
-ExpressionInContext.prototype.expression = function() {
+ExpressionInContext.prototype.expression = function () {
   return this.getTypedRuleContext(ExpressionContext, 0);
 };
 
-ExpressionInContext.prototype.array = function() {
+ExpressionInContext.prototype.array = function () {
   return this.getTypedRuleContext(ArrayContext, 0);
 };
 
-ExpressionInContext.prototype.K_NOT = function() {
+ExpressionInContext.prototype.K_NOT = function () {
   return this.getToken(ScrollQLParser.K_NOT, 0);
 };
-ExpressionInContext.prototype.enterRule = function(listener) {
+ExpressionInContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterExpressionIn(this);
   }
 };
 
-ExpressionInContext.prototype.exitRule = function(listener) {
+ExpressionInContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitExpressionIn(this);
   }
 };
 
-ScrollQLParser.prototype.expression = function(_p) {
+ScrollQLParser.prototype.expression = function (_p) {
   if (_p === undefined) {
     _p = 0;
   }
@@ -5219,7 +5219,7 @@ function TermContext(parser, parent, invokingState) {
 TermContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 TermContext.prototype.constructor = TermContext;
 
-TermContext.prototype.copyFrom = function(ctx) {
+TermContext.prototype.copyFrom = function (ctx) {
   antlr4.ParserRuleContext.prototype.copyFrom.call(this, ctx);
 };
 
@@ -5235,16 +5235,16 @@ TermStrContext.prototype.constructor = TermStrContext;
 
 ScrollQLParser.TermStrContext = TermStrContext;
 
-TermStrContext.prototype.stringOrBareString = function() {
+TermStrContext.prototype.stringOrBareString = function () {
   return this.getTypedRuleContext(StringOrBareStringContext, 0);
 };
-TermStrContext.prototype.enterRule = function(listener) {
+TermStrContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterTermStr(this);
   }
 };
 
-TermStrContext.prototype.exitRule = function(listener) {
+TermStrContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitTermStr(this);
   }
@@ -5262,16 +5262,16 @@ TermIdContext.prototype.constructor = TermIdContext;
 
 ScrollQLParser.TermIdContext = TermIdContext;
 
-TermIdContext.prototype.fieldId = function() {
+TermIdContext.prototype.fieldId = function () {
   return this.getTypedRuleContext(FieldIdContext, 0);
 };
-TermIdContext.prototype.enterRule = function(listener) {
+TermIdContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterTermId(this);
   }
 };
 
-TermIdContext.prototype.exitRule = function(listener) {
+TermIdContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitTermId(this);
   }
@@ -5289,16 +5289,16 @@ TermFnContext.prototype.constructor = TermFnContext;
 
 ScrollQLParser.TermFnContext = TermFnContext;
 
-TermFnContext.prototype.func = function() {
+TermFnContext.prototype.func = function () {
   return this.getTypedRuleContext(FuncContext, 0);
 };
-TermFnContext.prototype.enterRule = function(listener) {
+TermFnContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterTermFn(this);
   }
 };
 
-TermFnContext.prototype.exitRule = function(listener) {
+TermFnContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitTermFn(this);
   }
@@ -5316,16 +5316,16 @@ TermNumContext.prototype.constructor = TermNumContext;
 
 ScrollQLParser.TermNumContext = TermNumContext;
 
-TermNumContext.prototype.number = function() {
+TermNumContext.prototype.number = function () {
   return this.getTypedRuleContext(NumberContext, 0);
 };
-TermNumContext.prototype.enterRule = function(listener) {
+TermNumContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterTermNum(this);
   }
 };
 
-TermNumContext.prototype.exitRule = function(listener) {
+TermNumContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitTermNum(this);
   }
@@ -5333,7 +5333,7 @@ TermNumContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.TermContext = TermContext;
 
-ScrollQLParser.prototype.term = function() {
+ScrollQLParser.prototype.term = function () {
   var localctx = new TermContext(this, this._ctx, this.state);
   this.enterRule(localctx, 60, ScrollQLParser.RULE_term);
   try {
@@ -5401,21 +5401,21 @@ function LikeTermContext(parser, parent, invokingState) {
 LikeTermContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 LikeTermContext.prototype.constructor = LikeTermContext;
 
-LikeTermContext.prototype.regex = function() {
+LikeTermContext.prototype.regex = function () {
   return this.getTypedRuleContext(RegexContext, 0);
 };
 
-LikeTermContext.prototype.regexString = function() {
+LikeTermContext.prototype.regexString = function () {
   return this.getTypedRuleContext(RegexStringContext, 0);
 };
 
-LikeTermContext.prototype.enterRule = function(listener) {
+LikeTermContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterLikeTerm(this);
   }
 };
 
-LikeTermContext.prototype.exitRule = function(listener) {
+LikeTermContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitLikeTerm(this);
   }
@@ -5423,7 +5423,7 @@ LikeTermContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.LikeTermContext = LikeTermContext;
 
-ScrollQLParser.prototype.likeTerm = function() {
+ScrollQLParser.prototype.likeTerm = function () {
   var localctx = new LikeTermContext(this, this._ctx, this.state);
   this.enterRule(localctx, 62, ScrollQLParser.RULE_likeTerm);
   try {
@@ -5476,7 +5476,7 @@ function FuncContext(parser, parent, invokingState) {
 FuncContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 FuncContext.prototype.constructor = FuncContext;
 
-FuncContext.prototype.copyFrom = function(ctx) {
+FuncContext.prototype.copyFrom = function (ctx) {
   antlr4.ParserRuleContext.prototype.copyFrom.call(this, ctx);
 };
 
@@ -5494,19 +5494,19 @@ FunctionWithArgsContext.prototype.constructor = FunctionWithArgsContext;
 
 ScrollQLParser.FunctionWithArgsContext = FunctionWithArgsContext;
 
-FunctionWithArgsContext.prototype.SYM_LPAREN = function() {
+FunctionWithArgsContext.prototype.SYM_LPAREN = function () {
   return this.getToken(ScrollQLParser.SYM_LPAREN, 0);
 };
 
-FunctionWithArgsContext.prototype.SYM_RPAREN = function() {
+FunctionWithArgsContext.prototype.SYM_RPAREN = function () {
   return this.getToken(ScrollQLParser.SYM_RPAREN, 0);
 };
 
-FunctionWithArgsContext.prototype.functionId = function() {
+FunctionWithArgsContext.prototype.functionId = function () {
   return this.getTypedRuleContext(FunctionIdContext, 0);
 };
 
-FunctionWithArgsContext.prototype.functionArg = function(i) {
+FunctionWithArgsContext.prototype.functionArg = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -5517,7 +5517,7 @@ FunctionWithArgsContext.prototype.functionArg = function(i) {
   }
 };
 
-FunctionWithArgsContext.prototype.SYM_COMMA = function(i) {
+FunctionWithArgsContext.prototype.SYM_COMMA = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -5528,13 +5528,13 @@ FunctionWithArgsContext.prototype.SYM_COMMA = function(i) {
   }
 };
 
-FunctionWithArgsContext.prototype.enterRule = function(listener) {
+FunctionWithArgsContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterFunctionWithArgs(this);
   }
 };
 
-FunctionWithArgsContext.prototype.exitRule = function(listener) {
+FunctionWithArgsContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitFunctionWithArgs(this);
   }
@@ -5552,28 +5552,28 @@ FunctionWithNoArgsContext.prototype.constructor = FunctionWithNoArgsContext;
 
 ScrollQLParser.FunctionWithNoArgsContext = FunctionWithNoArgsContext;
 
-FunctionWithNoArgsContext.prototype.SYM_LPAREN = function() {
+FunctionWithNoArgsContext.prototype.SYM_LPAREN = function () {
   return this.getToken(ScrollQLParser.SYM_LPAREN, 0);
 };
 
-FunctionWithNoArgsContext.prototype.SYM_RPAREN = function() {
+FunctionWithNoArgsContext.prototype.SYM_RPAREN = function () {
   return this.getToken(ScrollQLParser.SYM_RPAREN, 0);
 };
 
-FunctionWithNoArgsContext.prototype.functionId = function() {
+FunctionWithNoArgsContext.prototype.functionId = function () {
   return this.getTypedRuleContext(FunctionIdContext, 0);
 };
 
-FunctionWithNoArgsContext.prototype.SYM_MUL = function() {
+FunctionWithNoArgsContext.prototype.SYM_MUL = function () {
   return this.getToken(ScrollQLParser.SYM_MUL, 0);
 };
-FunctionWithNoArgsContext.prototype.enterRule = function(listener) {
+FunctionWithNoArgsContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterFunctionWithNoArgs(this);
   }
 };
 
-FunctionWithNoArgsContext.prototype.exitRule = function(listener) {
+FunctionWithNoArgsContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitFunctionWithNoArgs(this);
   }
@@ -5581,7 +5581,7 @@ FunctionWithNoArgsContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.FuncContext = FuncContext;
 
-ScrollQLParser.prototype.func = function() {
+ScrollQLParser.prototype.func = function () {
   var localctx = new FuncContext(this, this._ctx, this.state);
   this.enterRule(localctx, 64, ScrollQLParser.RULE_func);
   var _la = 0; // Token type
@@ -5666,7 +5666,7 @@ function FunctionArgContext(parser, parent, invokingState) {
 FunctionArgContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 FunctionArgContext.prototype.constructor = FunctionArgContext;
 
-FunctionArgContext.prototype.copyFrom = function(ctx) {
+FunctionArgContext.prototype.copyFrom = function (ctx) {
   antlr4.ParserRuleContext.prototype.copyFrom.call(this, ctx);
 };
 
@@ -5681,16 +5681,16 @@ FunctionArgFieldClauseContext.prototype.constructor = FunctionArgFieldClauseCont
 
 ScrollQLParser.FunctionArgFieldClauseContext = FunctionArgFieldClauseContext;
 
-FunctionArgFieldClauseContext.prototype.expression = function() {
+FunctionArgFieldClauseContext.prototype.expression = function () {
   return this.getTypedRuleContext(ExpressionContext, 0);
 };
-FunctionArgFieldClauseContext.prototype.enterRule = function(listener) {
+FunctionArgFieldClauseContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterFunctionArgFieldClause(this);
   }
 };
 
-FunctionArgFieldClauseContext.prototype.exitRule = function(listener) {
+FunctionArgFieldClauseContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitFunctionArgFieldClause(this);
   }
@@ -5707,16 +5707,16 @@ FunctionArgTimePeriodContext.prototype.constructor = FunctionArgTimePeriodContex
 
 ScrollQLParser.FunctionArgTimePeriodContext = FunctionArgTimePeriodContext;
 
-FunctionArgTimePeriodContext.prototype.relativeTimeExpr = function() {
+FunctionArgTimePeriodContext.prototype.relativeTimeExpr = function () {
   return this.getTypedRuleContext(RelativeTimeExprContext, 0);
 };
-FunctionArgTimePeriodContext.prototype.enterRule = function(listener) {
+FunctionArgTimePeriodContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterFunctionArgTimePeriod(this);
   }
 };
 
-FunctionArgTimePeriodContext.prototype.exitRule = function(listener) {
+FunctionArgTimePeriodContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitFunctionArgTimePeriod(this);
   }
@@ -5724,7 +5724,7 @@ FunctionArgTimePeriodContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.FunctionArgContext = FunctionArgContext;
 
-ScrollQLParser.prototype.functionArg = function() {
+ScrollQLParser.prototype.functionArg = function () {
   var localctx = new FunctionArgContext(this, this._ctx, this.state);
   this.enterRule(localctx, 66, ScrollQLParser.RULE_functionArg);
   try {
@@ -5776,11 +5776,11 @@ function ArrayContext(parser, parent, invokingState) {
 ArrayContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 ArrayContext.prototype.constructor = ArrayContext;
 
-ArrayContext.prototype.SYM_LBRACKET = function() {
+ArrayContext.prototype.SYM_LBRACKET = function () {
   return this.getToken(ScrollQLParser.SYM_LBRACKET, 0);
 };
 
-ArrayContext.prototype.arrayElem = function(i) {
+ArrayContext.prototype.arrayElem = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -5791,11 +5791,11 @@ ArrayContext.prototype.arrayElem = function(i) {
   }
 };
 
-ArrayContext.prototype.SYM_RBRACKET = function() {
+ArrayContext.prototype.SYM_RBRACKET = function () {
   return this.getToken(ScrollQLParser.SYM_RBRACKET, 0);
 };
 
-ArrayContext.prototype.SYM_COMMA = function(i) {
+ArrayContext.prototype.SYM_COMMA = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -5806,13 +5806,13 @@ ArrayContext.prototype.SYM_COMMA = function(i) {
   }
 };
 
-ArrayContext.prototype.enterRule = function(listener) {
+ArrayContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterArray(this);
   }
 };
 
-ArrayContext.prototype.exitRule = function(listener) {
+ArrayContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitArray(this);
   }
@@ -5820,7 +5820,7 @@ ArrayContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.ArrayContext = ArrayContext;
 
-ScrollQLParser.prototype.array = function() {
+ScrollQLParser.prototype.array = function () {
   var localctx = new ArrayContext(this, this._ctx, this.state);
   this.enterRule(localctx, 68, ScrollQLParser.RULE_array);
   var _la = 0; // Token type
@@ -5891,21 +5891,21 @@ function ArrayElemContext(parser, parent, invokingState) {
 ArrayElemContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 ArrayElemContext.prototype.constructor = ArrayElemContext;
 
-ArrayElemContext.prototype.string = function() {
+ArrayElemContext.prototype.string = function () {
   return this.getTypedRuleContext(StringContext, 0);
 };
 
-ArrayElemContext.prototype.number = function() {
+ArrayElemContext.prototype.number = function () {
   return this.getTypedRuleContext(NumberContext, 0);
 };
 
-ArrayElemContext.prototype.enterRule = function(listener) {
+ArrayElemContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterArrayElem(this);
   }
 };
 
-ArrayElemContext.prototype.exitRule = function(listener) {
+ArrayElemContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitArrayElem(this);
   }
@@ -5913,7 +5913,7 @@ ArrayElemContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.ArrayElemContext = ArrayElemContext;
 
-ScrollQLParser.prototype.arrayElem = function() {
+ScrollQLParser.prototype.arrayElem = function () {
   var localctx = new ArrayElemContext(this, this._ctx, this.state);
   this.enterRule(localctx, 70, ScrollQLParser.RULE_arrayElem);
   try {
@@ -5973,21 +5973,21 @@ function NumberContext(parser, parent, invokingState) {
 NumberContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 NumberContext.prototype.constructor = NumberContext;
 
-NumberContext.prototype.LIT_NUMBER = function() {
+NumberContext.prototype.LIT_NUMBER = function () {
   return this.getToken(ScrollQLParser.LIT_NUMBER, 0);
 };
 
-NumberContext.prototype.LIT_INTEGER = function() {
+NumberContext.prototype.LIT_INTEGER = function () {
   return this.getToken(ScrollQLParser.LIT_INTEGER, 0);
 };
 
-NumberContext.prototype.enterRule = function(listener) {
+NumberContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterNumber(this);
   }
 };
 
-NumberContext.prototype.exitRule = function(listener) {
+NumberContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitNumber(this);
   }
@@ -5995,7 +5995,7 @@ NumberContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.NumberContext = NumberContext;
 
-ScrollQLParser.prototype.number = function() {
+ScrollQLParser.prototype.number = function () {
   var localctx = new NumberContext(this, this._ctx, this.state);
   this.enterRule(localctx, 72, ScrollQLParser.RULE_number);
   try {
@@ -6049,45 +6049,45 @@ function StringContext(parser, parent, invokingState) {
 StringContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 StringContext.prototype.constructor = StringContext;
 
-StringContext.prototype.SDQUOTED_STRING = function() {
+StringContext.prototype.SDQUOTED_STRING = function () {
   return this.getToken(ScrollQLParser.SDQUOTED_STRING, 0);
 };
 
-StringContext.prototype.RE_SDQUOTED_STRING = function() {
+StringContext.prototype.RE_SDQUOTED_STRING = function () {
   return this.getToken(ScrollQLParser.RE_SDQUOTED_STRING, 0);
 };
 
-StringContext.prototype.SSQUOTED_STRING = function() {
+StringContext.prototype.SSQUOTED_STRING = function () {
   return this.getToken(ScrollQLParser.SSQUOTED_STRING, 0);
 };
 
-StringContext.prototype.RE_SSQUOTED_STRING = function() {
+StringContext.prototype.RE_SSQUOTED_STRING = function () {
   return this.getToken(ScrollQLParser.RE_SSQUOTED_STRING, 0);
 };
 
-StringContext.prototype.CDQUOTED_STRING = function() {
+StringContext.prototype.CDQUOTED_STRING = function () {
   return this.getToken(ScrollQLParser.CDQUOTED_STRING, 0);
 };
 
-StringContext.prototype.RE_CDQUOTED_STRING = function() {
+StringContext.prototype.RE_CDQUOTED_STRING = function () {
   return this.getToken(ScrollQLParser.RE_CDQUOTED_STRING, 0);
 };
 
-StringContext.prototype.CSQUOTED_STRING = function() {
+StringContext.prototype.CSQUOTED_STRING = function () {
   return this.getToken(ScrollQLParser.CSQUOTED_STRING, 0);
 };
 
-StringContext.prototype.RE_CSQUOTED_STRING = function() {
+StringContext.prototype.RE_CSQUOTED_STRING = function () {
   return this.getToken(ScrollQLParser.RE_CSQUOTED_STRING, 0);
 };
 
-StringContext.prototype.enterRule = function(listener) {
+StringContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterString(this);
   }
 };
 
-StringContext.prototype.exitRule = function(listener) {
+StringContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitString(this);
   }
@@ -6095,7 +6095,7 @@ StringContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.StringContext = StringContext;
 
-ScrollQLParser.prototype.string = function() {
+ScrollQLParser.prototype.string = function () {
   var localctx = new StringContext(this, this._ctx, this.state);
   this.enterRule(localctx, 74, ScrollQLParser.RULE_string);
   var _la = 0; // Token type
@@ -6193,49 +6193,49 @@ function StringOrBareStringContext(parser, parent, invokingState) {
 StringOrBareStringContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 StringOrBareStringContext.prototype.constructor = StringOrBareStringContext;
 
-StringOrBareStringContext.prototype.SDQUOTED_STRING = function() {
+StringOrBareStringContext.prototype.SDQUOTED_STRING = function () {
   return this.getToken(ScrollQLParser.SDQUOTED_STRING, 0);
 };
 
-StringOrBareStringContext.prototype.RE_SDQUOTED_STRING = function() {
+StringOrBareStringContext.prototype.RE_SDQUOTED_STRING = function () {
   return this.getToken(ScrollQLParser.RE_SDQUOTED_STRING, 0);
 };
 
-StringOrBareStringContext.prototype.SSQUOTED_STRING = function() {
+StringOrBareStringContext.prototype.SSQUOTED_STRING = function () {
   return this.getToken(ScrollQLParser.SSQUOTED_STRING, 0);
 };
 
-StringOrBareStringContext.prototype.RE_SSQUOTED_STRING = function() {
+StringOrBareStringContext.prototype.RE_SSQUOTED_STRING = function () {
   return this.getToken(ScrollQLParser.RE_SSQUOTED_STRING, 0);
 };
 
-StringOrBareStringContext.prototype.CDQUOTED_STRING = function() {
+StringOrBareStringContext.prototype.CDQUOTED_STRING = function () {
   return this.getToken(ScrollQLParser.CDQUOTED_STRING, 0);
 };
 
-StringOrBareStringContext.prototype.RE_CDQUOTED_STRING = function() {
+StringOrBareStringContext.prototype.RE_CDQUOTED_STRING = function () {
   return this.getToken(ScrollQLParser.RE_CDQUOTED_STRING, 0);
 };
 
-StringOrBareStringContext.prototype.CSQUOTED_STRING = function() {
+StringOrBareStringContext.prototype.CSQUOTED_STRING = function () {
   return this.getToken(ScrollQLParser.CSQUOTED_STRING, 0);
 };
 
-StringOrBareStringContext.prototype.RE_CSQUOTED_STRING = function() {
+StringOrBareStringContext.prototype.RE_CSQUOTED_STRING = function () {
   return this.getToken(ScrollQLParser.RE_CSQUOTED_STRING, 0);
 };
 
-StringOrBareStringContext.prototype.RAW_ID = function() {
+StringOrBareStringContext.prototype.RAW_ID = function () {
   return this.getToken(ScrollQLParser.RAW_ID, 0);
 };
 
-StringOrBareStringContext.prototype.enterRule = function(listener) {
+StringOrBareStringContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterStringOrBareString(this);
   }
 };
 
-StringOrBareStringContext.prototype.exitRule = function(listener) {
+StringOrBareStringContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitStringOrBareString(this);
   }
@@ -6243,7 +6243,7 @@ StringOrBareStringContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.StringOrBareStringContext = StringOrBareStringContext;
 
-ScrollQLParser.prototype.stringOrBareString = function() {
+ScrollQLParser.prototype.stringOrBareString = function () {
   var localctx = new StringOrBareStringContext(this, this._ctx, this.state);
   this.enterRule(localctx, 76, ScrollQLParser.RULE_stringOrBareString);
   var _la = 0; // Token type
@@ -6341,17 +6341,17 @@ function RegexContext(parser, parent, invokingState) {
 RegexContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 RegexContext.prototype.constructor = RegexContext;
 
-RegexContext.prototype.REGEX = function() {
+RegexContext.prototype.REGEX = function () {
   return this.getToken(ScrollQLParser.REGEX, 0);
 };
 
-RegexContext.prototype.enterRule = function(listener) {
+RegexContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterRegex(this);
   }
 };
 
-RegexContext.prototype.exitRule = function(listener) {
+RegexContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitRegex(this);
   }
@@ -6359,7 +6359,7 @@ RegexContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.RegexContext = RegexContext;
 
-ScrollQLParser.prototype.regex = function() {
+ScrollQLParser.prototype.regex = function () {
   var localctx = new RegexContext(this, this._ctx, this.state);
   this.enterRule(localctx, 78, ScrollQLParser.RULE_regex);
   try {
@@ -6400,29 +6400,29 @@ function RegexStringContext(parser, parent, invokingState) {
 RegexStringContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 RegexStringContext.prototype.constructor = RegexStringContext;
 
-RegexStringContext.prototype.RE_SDQUOTED_STRING = function() {
+RegexStringContext.prototype.RE_SDQUOTED_STRING = function () {
   return this.getToken(ScrollQLParser.RE_SDQUOTED_STRING, 0);
 };
 
-RegexStringContext.prototype.RE_SSQUOTED_STRING = function() {
+RegexStringContext.prototype.RE_SSQUOTED_STRING = function () {
   return this.getToken(ScrollQLParser.RE_SSQUOTED_STRING, 0);
 };
 
-RegexStringContext.prototype.RE_CDQUOTED_STRING = function() {
+RegexStringContext.prototype.RE_CDQUOTED_STRING = function () {
   return this.getToken(ScrollQLParser.RE_CDQUOTED_STRING, 0);
 };
 
-RegexStringContext.prototype.RE_CSQUOTED_STRING = function() {
+RegexStringContext.prototype.RE_CSQUOTED_STRING = function () {
   return this.getToken(ScrollQLParser.RE_CSQUOTED_STRING, 0);
 };
 
-RegexStringContext.prototype.enterRule = function(listener) {
+RegexStringContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterRegexString(this);
   }
 };
 
-RegexStringContext.prototype.exitRule = function(listener) {
+RegexStringContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitRegexString(this);
   }
@@ -6430,7 +6430,7 @@ RegexStringContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.RegexStringContext = RegexStringContext;
 
-ScrollQLParser.prototype.regexString = function() {
+ScrollQLParser.prototype.regexString = function () {
   var localctx = new RegexStringContext(this, this._ctx, this.state);
   this.enterRule(localctx, 80, ScrollQLParser.RULE_regexString);
   try {
@@ -6497,57 +6497,57 @@ function LogIdContext(parser, parent, invokingState) {
 LogIdContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 LogIdContext.prototype.constructor = LogIdContext;
 
-LogIdContext.prototype.RAW_ID = function() {
+LogIdContext.prototype.RAW_ID = function () {
   return this.getToken(ScrollQLParser.RAW_ID, 0);
 };
 
-LogIdContext.prototype.keywords = function() {
+LogIdContext.prototype.keywords = function () {
   return this.getTypedRuleContext(KeywordsContext, 0);
 };
 
-LogIdContext.prototype.timeUnitKeywords = function() {
+LogIdContext.prototype.timeUnitKeywords = function () {
   return this.getTypedRuleContext(TimeUnitKeywordsContext, 0);
 };
 
-LogIdContext.prototype.SDQUOTED_STRING = function() {
+LogIdContext.prototype.SDQUOTED_STRING = function () {
   return this.getToken(ScrollQLParser.SDQUOTED_STRING, 0);
 };
 
-LogIdContext.prototype.RE_SDQUOTED_STRING = function() {
+LogIdContext.prototype.RE_SDQUOTED_STRING = function () {
   return this.getToken(ScrollQLParser.RE_SDQUOTED_STRING, 0);
 };
 
-LogIdContext.prototype.SSQUOTED_STRING = function() {
+LogIdContext.prototype.SSQUOTED_STRING = function () {
   return this.getToken(ScrollQLParser.SSQUOTED_STRING, 0);
 };
 
-LogIdContext.prototype.RE_SSQUOTED_STRING = function() {
+LogIdContext.prototype.RE_SSQUOTED_STRING = function () {
   return this.getToken(ScrollQLParser.RE_SSQUOTED_STRING, 0);
 };
 
-LogIdContext.prototype.CDQUOTED_STRING = function() {
+LogIdContext.prototype.CDQUOTED_STRING = function () {
   return this.getToken(ScrollQLParser.CDQUOTED_STRING, 0);
 };
 
-LogIdContext.prototype.RE_CDQUOTED_STRING = function() {
+LogIdContext.prototype.RE_CDQUOTED_STRING = function () {
   return this.getToken(ScrollQLParser.RE_CDQUOTED_STRING, 0);
 };
 
-LogIdContext.prototype.CSQUOTED_STRING = function() {
+LogIdContext.prototype.CSQUOTED_STRING = function () {
   return this.getToken(ScrollQLParser.CSQUOTED_STRING, 0);
 };
 
-LogIdContext.prototype.RE_CSQUOTED_STRING = function() {
+LogIdContext.prototype.RE_CSQUOTED_STRING = function () {
   return this.getToken(ScrollQLParser.RE_CSQUOTED_STRING, 0);
 };
 
-LogIdContext.prototype.enterRule = function(listener) {
+LogIdContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterLogId(this);
   }
 };
 
-LogIdContext.prototype.exitRule = function(listener) {
+LogIdContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitLogId(this);
   }
@@ -6555,7 +6555,7 @@ LogIdContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.LogIdContext = LogIdContext;
 
-ScrollQLParser.prototype.logId = function() {
+ScrollQLParser.prototype.logId = function () {
   var localctx = new LogIdContext(this, this._ctx, this.state);
   this.enterRule(localctx, 82, ScrollQLParser.RULE_logId);
   var _la = 0; // Token type
@@ -6716,21 +6716,21 @@ function FieldIdContext(parser, parent, invokingState) {
 FieldIdContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 FieldIdContext.prototype.constructor = FieldIdContext;
 
-FieldIdContext.prototype.userId = function() {
+FieldIdContext.prototype.userId = function () {
   return this.getTypedRuleContext(UserIdContext, 0);
 };
 
-FieldIdContext.prototype.systemId = function() {
+FieldIdContext.prototype.systemId = function () {
   return this.getTypedRuleContext(SystemIdContext, 0);
 };
 
-FieldIdContext.prototype.enterRule = function(listener) {
+FieldIdContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterFieldId(this);
   }
 };
 
-FieldIdContext.prototype.exitRule = function(listener) {
+FieldIdContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitFieldId(this);
   }
@@ -6738,7 +6738,7 @@ FieldIdContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.FieldIdContext = FieldIdContext;
 
-ScrollQLParser.prototype.fieldId = function() {
+ScrollQLParser.prototype.fieldId = function () {
   var localctx = new FieldIdContext(this, this._ctx, this.state);
   this.enterRule(localctx, 84, ScrollQLParser.RULE_fieldId);
   try {
@@ -6790,21 +6790,21 @@ function AliasIdContext(parser, parent, invokingState) {
 AliasIdContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 AliasIdContext.prototype.constructor = AliasIdContext;
 
-AliasIdContext.prototype.userId = function() {
+AliasIdContext.prototype.userId = function () {
   return this.getTypedRuleContext(UserIdContext, 0);
 };
 
-AliasIdContext.prototype.systemId = function() {
+AliasIdContext.prototype.systemId = function () {
   return this.getTypedRuleContext(SystemIdContext, 0);
 };
 
-AliasIdContext.prototype.enterRule = function(listener) {
+AliasIdContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterAliasId(this);
   }
 };
 
-AliasIdContext.prototype.exitRule = function(listener) {
+AliasIdContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitAliasId(this);
   }
@@ -6812,7 +6812,7 @@ AliasIdContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.AliasIdContext = AliasIdContext;
 
-ScrollQLParser.prototype.aliasId = function() {
+ScrollQLParser.prototype.aliasId = function () {
   var localctx = new AliasIdContext(this, this._ctx, this.state);
   this.enterRule(localctx, 86, ScrollQLParser.RULE_aliasId);
   try {
@@ -6864,21 +6864,21 @@ function UserIdContext(parser, parent, invokingState) {
 UserIdContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 UserIdContext.prototype.constructor = UserIdContext;
 
-UserIdContext.prototype.unquotedUserId = function() {
+UserIdContext.prototype.unquotedUserId = function () {
   return this.getTypedRuleContext(UnquotedUserIdContext, 0);
 };
 
-UserIdContext.prototype.quotedUserId = function() {
+UserIdContext.prototype.quotedUserId = function () {
   return this.getTypedRuleContext(QuotedUserIdContext, 0);
 };
 
-UserIdContext.prototype.enterRule = function(listener) {
+UserIdContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterUserId(this);
   }
 };
 
-UserIdContext.prototype.exitRule = function(listener) {
+UserIdContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitUserId(this);
   }
@@ -6886,7 +6886,7 @@ UserIdContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.UserIdContext = UserIdContext;
 
-ScrollQLParser.prototype.userId = function() {
+ScrollQLParser.prototype.userId = function () {
   var localctx = new UserIdContext(this, this._ctx, this.state);
   this.enterRule(localctx, 88, ScrollQLParser.RULE_userId);
   try {
@@ -6995,21 +6995,21 @@ function UnquotedUserIdContext(parser, parent, invokingState) {
 UnquotedUserIdContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 UnquotedUserIdContext.prototype.constructor = UnquotedUserIdContext;
 
-UnquotedUserIdContext.prototype.unquotedUserBareId = function() {
+UnquotedUserIdContext.prototype.unquotedUserBareId = function () {
   return this.getTypedRuleContext(UnquotedUserBareIdContext, 0);
 };
 
-UnquotedUserIdContext.prototype.unquotedUserAtId = function() {
+UnquotedUserIdContext.prototype.unquotedUserAtId = function () {
   return this.getTypedRuleContext(UnquotedUserAtIdContext, 0);
 };
 
-UnquotedUserIdContext.prototype.enterRule = function(listener) {
+UnquotedUserIdContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterUnquotedUserId(this);
   }
 };
 
-UnquotedUserIdContext.prototype.exitRule = function(listener) {
+UnquotedUserIdContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitUnquotedUserId(this);
   }
@@ -7017,7 +7017,7 @@ UnquotedUserIdContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.UnquotedUserIdContext = UnquotedUserIdContext;
 
-ScrollQLParser.prototype.unquotedUserId = function() {
+ScrollQLParser.prototype.unquotedUserId = function () {
   var localctx = new UnquotedUserIdContext(this, this._ctx, this.state);
   this.enterRule(localctx, 90, ScrollQLParser.RULE_unquotedUserId);
   try {
@@ -7122,11 +7122,11 @@ function UnquotedUserAtIdContext(parser, parent, invokingState) {
 UnquotedUserAtIdContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 UnquotedUserAtIdContext.prototype.constructor = UnquotedUserAtIdContext;
 
-UnquotedUserAtIdContext.prototype.rawId = function() {
+UnquotedUserAtIdContext.prototype.rawId = function () {
   return this.getTypedRuleContext(RawIdContext, 0);
 };
 
-UnquotedUserAtIdContext.prototype.SYM_AT = function(i) {
+UnquotedUserAtIdContext.prototype.SYM_AT = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -7137,7 +7137,7 @@ UnquotedUserAtIdContext.prototype.SYM_AT = function(i) {
   }
 };
 
-UnquotedUserAtIdContext.prototype.RE_SYM_AT = function(i) {
+UnquotedUserAtIdContext.prototype.RE_SYM_AT = function (i) {
   if (i === undefined) {
     i = null;
   }
@@ -7148,13 +7148,13 @@ UnquotedUserAtIdContext.prototype.RE_SYM_AT = function(i) {
   }
 };
 
-UnquotedUserAtIdContext.prototype.enterRule = function(listener) {
+UnquotedUserAtIdContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterUnquotedUserAtId(this);
   }
 };
 
-UnquotedUserAtIdContext.prototype.exitRule = function(listener) {
+UnquotedUserAtIdContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitUnquotedUserAtId(this);
   }
@@ -7162,7 +7162,7 @@ UnquotedUserAtIdContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.UnquotedUserAtIdContext = UnquotedUserAtIdContext;
 
-ScrollQLParser.prototype.unquotedUserAtId = function() {
+ScrollQLParser.prototype.unquotedUserAtId = function () {
   var localctx = new UnquotedUserAtIdContext(this, this._ctx, this.state);
   this.enterRule(localctx, 92, ScrollQLParser.RULE_unquotedUserAtId);
   var _la = 0; // Token type
@@ -7225,17 +7225,17 @@ function UnquotedUserBareIdContext(parser, parent, invokingState) {
 UnquotedUserBareIdContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 UnquotedUserBareIdContext.prototype.constructor = UnquotedUserBareIdContext;
 
-UnquotedUserBareIdContext.prototype.rawId = function() {
+UnquotedUserBareIdContext.prototype.rawId = function () {
   return this.getTypedRuleContext(RawIdContext, 0);
 };
 
-UnquotedUserBareIdContext.prototype.enterRule = function(listener) {
+UnquotedUserBareIdContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterUnquotedUserBareId(this);
   }
 };
 
-UnquotedUserBareIdContext.prototype.exitRule = function(listener) {
+UnquotedUserBareIdContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitUnquotedUserBareId(this);
   }
@@ -7243,7 +7243,7 @@ UnquotedUserBareIdContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.UnquotedUserBareIdContext = UnquotedUserBareIdContext;
 
-ScrollQLParser.prototype.unquotedUserBareId = function() {
+ScrollQLParser.prototype.unquotedUserBareId = function () {
   var localctx = new UnquotedUserBareIdContext(this, this._ctx, this.state);
   this.enterRule(localctx, 94, ScrollQLParser.RULE_unquotedUserBareId);
   try {
@@ -7281,21 +7281,21 @@ function QuotedUserIdContext(parser, parent, invokingState) {
 QuotedUserIdContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 QuotedUserIdContext.prototype.constructor = QuotedUserIdContext;
 
-QuotedUserIdContext.prototype.QUOTED_IDENT = function() {
+QuotedUserIdContext.prototype.QUOTED_IDENT = function () {
   return this.getToken(ScrollQLParser.QUOTED_IDENT, 0);
 };
 
-QuotedUserIdContext.prototype.RE_QUOTED_IDENT = function() {
+QuotedUserIdContext.prototype.RE_QUOTED_IDENT = function () {
   return this.getToken(ScrollQLParser.RE_QUOTED_IDENT, 0);
 };
 
-QuotedUserIdContext.prototype.enterRule = function(listener) {
+QuotedUserIdContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterQuotedUserId(this);
   }
 };
 
-QuotedUserIdContext.prototype.exitRule = function(listener) {
+QuotedUserIdContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitQuotedUserId(this);
   }
@@ -7303,7 +7303,7 @@ QuotedUserIdContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.QuotedUserIdContext = QuotedUserIdContext;
 
-ScrollQLParser.prototype.quotedUserId = function() {
+ScrollQLParser.prototype.quotedUserId = function () {
   var localctx = new QuotedUserIdContext(this, this._ctx, this.state);
   this.enterRule(localctx, 96, ScrollQLParser.RULE_quotedUserId);
   var _la = 0; // Token type
@@ -7350,21 +7350,21 @@ function SystemIdContext(parser, parent, invokingState) {
 SystemIdContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 SystemIdContext.prototype.constructor = SystemIdContext;
 
-SystemIdContext.prototype.unquotedSystemId = function() {
+SystemIdContext.prototype.unquotedSystemId = function () {
   return this.getTypedRuleContext(UnquotedSystemIdContext, 0);
 };
 
-SystemIdContext.prototype.quotedSystemId = function() {
+SystemIdContext.prototype.quotedSystemId = function () {
   return this.getTypedRuleContext(QuotedSystemIdContext, 0);
 };
 
-SystemIdContext.prototype.enterRule = function(listener) {
+SystemIdContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterSystemId(this);
   }
 };
 
-SystemIdContext.prototype.exitRule = function(listener) {
+SystemIdContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitSystemId(this);
   }
@@ -7372,7 +7372,7 @@ SystemIdContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.SystemIdContext = SystemIdContext;
 
-ScrollQLParser.prototype.systemId = function() {
+ScrollQLParser.prototype.systemId = function () {
   var localctx = new SystemIdContext(this, this._ctx, this.state);
   this.enterRule(localctx, 98, ScrollQLParser.RULE_systemId);
   try {
@@ -7423,25 +7423,25 @@ function UnquotedSystemIdContext(parser, parent, invokingState) {
 UnquotedSystemIdContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 UnquotedSystemIdContext.prototype.constructor = UnquotedSystemIdContext;
 
-UnquotedSystemIdContext.prototype.SYM_AT = function() {
+UnquotedSystemIdContext.prototype.SYM_AT = function () {
   return this.getToken(ScrollQLParser.SYM_AT, 0);
 };
 
-UnquotedSystemIdContext.prototype.RE_SYM_AT = function() {
+UnquotedSystemIdContext.prototype.RE_SYM_AT = function () {
   return this.getToken(ScrollQLParser.RE_SYM_AT, 0);
 };
 
-UnquotedSystemIdContext.prototype.rawId = function() {
+UnquotedSystemIdContext.prototype.rawId = function () {
   return this.getTypedRuleContext(RawIdContext, 0);
 };
 
-UnquotedSystemIdContext.prototype.enterRule = function(listener) {
+UnquotedSystemIdContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterUnquotedSystemId(this);
   }
 };
 
-UnquotedSystemIdContext.prototype.exitRule = function(listener) {
+UnquotedSystemIdContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitUnquotedSystemId(this);
   }
@@ -7449,7 +7449,7 @@ UnquotedSystemIdContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.UnquotedSystemIdContext = UnquotedSystemIdContext;
 
-ScrollQLParser.prototype.unquotedSystemId = function() {
+ScrollQLParser.prototype.unquotedSystemId = function () {
   var localctx = new UnquotedSystemIdContext(this, this._ctx, this.state);
   this.enterRule(localctx, 100, ScrollQLParser.RULE_unquotedSystemId);
   var _la = 0; // Token type
@@ -7496,29 +7496,29 @@ function QuotedSystemIdContext(parser, parent, invokingState) {
 QuotedSystemIdContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 QuotedSystemIdContext.prototype.constructor = QuotedSystemIdContext;
 
-QuotedSystemIdContext.prototype.SYM_AT = function() {
+QuotedSystemIdContext.prototype.SYM_AT = function () {
   return this.getToken(ScrollQLParser.SYM_AT, 0);
 };
 
-QuotedSystemIdContext.prototype.RE_SYM_AT = function() {
+QuotedSystemIdContext.prototype.RE_SYM_AT = function () {
   return this.getToken(ScrollQLParser.RE_SYM_AT, 0);
 };
 
-QuotedSystemIdContext.prototype.QUOTED_IDENT = function() {
+QuotedSystemIdContext.prototype.QUOTED_IDENT = function () {
   return this.getToken(ScrollQLParser.QUOTED_IDENT, 0);
 };
 
-QuotedSystemIdContext.prototype.RE_QUOTED_IDENT = function() {
+QuotedSystemIdContext.prototype.RE_QUOTED_IDENT = function () {
   return this.getToken(ScrollQLParser.RE_QUOTED_IDENT, 0);
 };
 
-QuotedSystemIdContext.prototype.enterRule = function(listener) {
+QuotedSystemIdContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterQuotedSystemId(this);
   }
 };
 
-QuotedSystemIdContext.prototype.exitRule = function(listener) {
+QuotedSystemIdContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitQuotedSystemId(this);
   }
@@ -7526,7 +7526,7 @@ QuotedSystemIdContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.QuotedSystemIdContext = QuotedSystemIdContext;
 
-ScrollQLParser.prototype.quotedSystemId = function() {
+ScrollQLParser.prototype.quotedSystemId = function () {
   var localctx = new QuotedSystemIdContext(this, this._ctx, this.state);
   this.enterRule(localctx, 102, ScrollQLParser.RULE_quotedSystemId);
   var _la = 0; // Token type
@@ -7579,17 +7579,17 @@ function ResultIdContext(parser, parent, invokingState) {
 ResultIdContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 ResultIdContext.prototype.constructor = ResultIdContext;
 
-ResultIdContext.prototype.rawId = function() {
+ResultIdContext.prototype.rawId = function () {
   return this.getTypedRuleContext(RawIdContext, 0);
 };
 
-ResultIdContext.prototype.enterRule = function(listener) {
+ResultIdContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterResultId(this);
   }
 };
 
-ResultIdContext.prototype.exitRule = function(listener) {
+ResultIdContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitResultId(this);
   }
@@ -7597,7 +7597,7 @@ ResultIdContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.ResultIdContext = ResultIdContext;
 
-ScrollQLParser.prototype.resultId = function() {
+ScrollQLParser.prototype.resultId = function () {
   var localctx = new ResultIdContext(this, this._ctx, this.state);
   this.enterRule(localctx, 104, ScrollQLParser.RULE_resultId);
   try {
@@ -7634,17 +7634,17 @@ function FunctionIdContext(parser, parent, invokingState) {
 FunctionIdContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 FunctionIdContext.prototype.constructor = FunctionIdContext;
 
-FunctionIdContext.prototype.rawId = function() {
+FunctionIdContext.prototype.rawId = function () {
   return this.getTypedRuleContext(RawIdContext, 0);
 };
 
-FunctionIdContext.prototype.enterRule = function(listener) {
+FunctionIdContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterFunctionId(this);
   }
 };
 
-FunctionIdContext.prototype.exitRule = function(listener) {
+FunctionIdContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitFunctionId(this);
   }
@@ -7652,7 +7652,7 @@ FunctionIdContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.FunctionIdContext = FunctionIdContext;
 
-ScrollQLParser.prototype.functionId = function() {
+ScrollQLParser.prototype.functionId = function () {
   var localctx = new FunctionIdContext(this, this._ctx, this.state);
   this.enterRule(localctx, 106, ScrollQLParser.RULE_functionId);
   try {
@@ -7689,29 +7689,29 @@ function RawIdContext(parser, parent, invokingState) {
 RawIdContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 RawIdContext.prototype.constructor = RawIdContext;
 
-RawIdContext.prototype.RAW_ID = function() {
+RawIdContext.prototype.RAW_ID = function () {
   return this.getToken(ScrollQLParser.RAW_ID, 0);
 };
 
-RawIdContext.prototype.RE_RAW_ID = function() {
+RawIdContext.prototype.RE_RAW_ID = function () {
   return this.getToken(ScrollQLParser.RE_RAW_ID, 0);
 };
 
-RawIdContext.prototype.keywords = function() {
+RawIdContext.prototype.keywords = function () {
   return this.getTypedRuleContext(KeywordsContext, 0);
 };
 
-RawIdContext.prototype.timeUnitKeywords = function() {
+RawIdContext.prototype.timeUnitKeywords = function () {
   return this.getTypedRuleContext(TimeUnitKeywordsContext, 0);
 };
 
-RawIdContext.prototype.enterRule = function(listener) {
+RawIdContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterRawId(this);
   }
 };
 
-RawIdContext.prototype.exitRule = function(listener) {
+RawIdContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitRawId(this);
   }
@@ -7719,7 +7719,7 @@ RawIdContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.RawIdContext = RawIdContext;
 
-ScrollQLParser.prototype.rawId = function() {
+ScrollQLParser.prototype.rawId = function () {
   var localctx = new RawIdContext(this, this._ctx, this.state);
   this.enterRule(localctx, 108, ScrollQLParser.RULE_rawId);
   var _la = 0; // Token type
@@ -7833,125 +7833,125 @@ function KeywordsContext(parser, parent, invokingState) {
 KeywordsContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 KeywordsContext.prototype.constructor = KeywordsContext;
 
-KeywordsContext.prototype.K_SOURCE = function() {
+KeywordsContext.prototype.K_SOURCE = function () {
   return this.getToken(ScrollQLParser.K_SOURCE, 0);
 };
 
-KeywordsContext.prototype.K_START = function() {
+KeywordsContext.prototype.K_START = function () {
   return this.getToken(ScrollQLParser.K_START, 0);
 };
 
-KeywordsContext.prototype.K_END = function() {
+KeywordsContext.prototype.K_END = function () {
   return this.getToken(ScrollQLParser.K_END, 0);
 };
 
-KeywordsContext.prototype.K_NOW = function() {
+KeywordsContext.prototype.K_NOW = function () {
   return this.getToken(ScrollQLParser.K_NOW, 0);
 };
 
-KeywordsContext.prototype.K_LIVE = function() {
+KeywordsContext.prototype.K_LIVE = function () {
   return this.getToken(ScrollQLParser.K_LIVE, 0);
 };
 
-KeywordsContext.prototype.K_PARSE = function() {
+KeywordsContext.prototype.K_PARSE = function () {
   return this.getToken(ScrollQLParser.K_PARSE, 0);
 };
 
-KeywordsContext.prototype.K_SEARCH = function() {
+KeywordsContext.prototype.K_SEARCH = function () {
   return this.getToken(ScrollQLParser.K_SEARCH, 0);
 };
 
-KeywordsContext.prototype.K_FIELDS = function() {
+KeywordsContext.prototype.K_FIELDS = function () {
   return this.getToken(ScrollQLParser.K_FIELDS, 0);
 };
 
-KeywordsContext.prototype.K_DISPLAY = function() {
+KeywordsContext.prototype.K_DISPLAY = function () {
   return this.getToken(ScrollQLParser.K_DISPLAY, 0);
 };
 
-KeywordsContext.prototype.K_FILTER = function() {
+KeywordsContext.prototype.K_FILTER = function () {
   return this.getToken(ScrollQLParser.K_FILTER, 0);
 };
 
-KeywordsContext.prototype.K_STATS = function() {
+KeywordsContext.prototype.K_STATS = function () {
   return this.getToken(ScrollQLParser.K_STATS, 0);
 };
 
-KeywordsContext.prototype.K_GROUP = function() {
+KeywordsContext.prototype.K_GROUP = function () {
   return this.getToken(ScrollQLParser.K_GROUP, 0);
 };
 
-KeywordsContext.prototype.K_BY = function() {
+KeywordsContext.prototype.K_BY = function () {
   return this.getToken(ScrollQLParser.K_BY, 0);
 };
 
-KeywordsContext.prototype.K_AS = function() {
+KeywordsContext.prototype.K_AS = function () {
   return this.getToken(ScrollQLParser.K_AS, 0);
 };
 
-KeywordsContext.prototype.K_SORT = function() {
+KeywordsContext.prototype.K_SORT = function () {
   return this.getToken(ScrollQLParser.K_SORT, 0);
 };
 
-KeywordsContext.prototype.K_ORDER = function() {
+KeywordsContext.prototype.K_ORDER = function () {
   return this.getToken(ScrollQLParser.K_ORDER, 0);
 };
 
-KeywordsContext.prototype.K_ASC = function() {
+KeywordsContext.prototype.K_ASC = function () {
   return this.getToken(ScrollQLParser.K_ASC, 0);
 };
 
-KeywordsContext.prototype.K_DESC = function() {
+KeywordsContext.prototype.K_DESC = function () {
   return this.getToken(ScrollQLParser.K_DESC, 0);
 };
 
-KeywordsContext.prototype.K_HEAD = function() {
+KeywordsContext.prototype.K_HEAD = function () {
   return this.getToken(ScrollQLParser.K_HEAD, 0);
 };
 
-KeywordsContext.prototype.K_TAIL = function() {
+KeywordsContext.prototype.K_TAIL = function () {
   return this.getToken(ScrollQLParser.K_TAIL, 0);
 };
 
-KeywordsContext.prototype.K_LIMIT = function() {
+KeywordsContext.prototype.K_LIMIT = function () {
   return this.getToken(ScrollQLParser.K_LIMIT, 0);
 };
 
-KeywordsContext.prototype.K_AND = function() {
+KeywordsContext.prototype.K_AND = function () {
   return this.getToken(ScrollQLParser.K_AND, 0);
 };
 
-KeywordsContext.prototype.K_OR = function() {
+KeywordsContext.prototype.K_OR = function () {
   return this.getToken(ScrollQLParser.K_OR, 0);
 };
 
-KeywordsContext.prototype.K_NOT = function() {
+KeywordsContext.prototype.K_NOT = function () {
   return this.getToken(ScrollQLParser.K_NOT, 0);
 };
 
-KeywordsContext.prototype.K_LIKE = function() {
+KeywordsContext.prototype.K_LIKE = function () {
   return this.getToken(ScrollQLParser.K_LIKE, 0);
 };
 
-KeywordsContext.prototype.K_MATCHES = function() {
+KeywordsContext.prototype.K_MATCHES = function () {
   return this.getToken(ScrollQLParser.K_MATCHES, 0);
 };
 
-KeywordsContext.prototype.K_REGEX = function() {
+KeywordsContext.prototype.K_REGEX = function () {
   return this.getToken(ScrollQLParser.K_REGEX, 0);
 };
 
-KeywordsContext.prototype.K_IN = function() {
+KeywordsContext.prototype.K_IN = function () {
   return this.getToken(ScrollQLParser.K_IN, 0);
 };
 
-KeywordsContext.prototype.enterRule = function(listener) {
+KeywordsContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterKeywords(this);
   }
 };
 
-KeywordsContext.prototype.exitRule = function(listener) {
+KeywordsContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitKeywords(this);
   }
@@ -7959,7 +7959,7 @@ KeywordsContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.KeywordsContext = KeywordsContext;
 
-ScrollQLParser.prototype.keywords = function() {
+ScrollQLParser.prototype.keywords = function () {
   var localctx = new KeywordsContext(this, this._ctx, this.state);
   this.enterRule(localctx, 110, ScrollQLParser.RULE_keywords);
   var _la = 0; // Token type
@@ -8037,7 +8037,7 @@ function TimeUnitKeywordsContext(parser, parent, invokingState) {
 TimeUnitKeywordsContext.prototype = Object.create(antlr4.ParserRuleContext.prototype);
 TimeUnitKeywordsContext.prototype.constructor = TimeUnitKeywordsContext;
 
-TimeUnitKeywordsContext.prototype.copyFrom = function(ctx) {
+TimeUnitKeywordsContext.prototype.copyFrom = function (ctx) {
   antlr4.ParserRuleContext.prototype.copyFrom.call(this, ctx);
 };
 
@@ -8052,24 +8052,24 @@ TimeUnitYearsContext.prototype.constructor = TimeUnitYearsContext;
 
 ScrollQLParser.TimeUnitYearsContext = TimeUnitYearsContext;
 
-TimeUnitYearsContext.prototype.K_TU_Y = function() {
+TimeUnitYearsContext.prototype.K_TU_Y = function () {
   return this.getToken(ScrollQLParser.K_TU_Y, 0);
 };
 
-TimeUnitYearsContext.prototype.K_TU_YR = function() {
+TimeUnitYearsContext.prototype.K_TU_YR = function () {
   return this.getToken(ScrollQLParser.K_TU_YR, 0);
 };
 
-TimeUnitYearsContext.prototype.K_TU_YEAR = function() {
+TimeUnitYearsContext.prototype.K_TU_YEAR = function () {
   return this.getToken(ScrollQLParser.K_TU_YEAR, 0);
 };
-TimeUnitYearsContext.prototype.enterRule = function(listener) {
+TimeUnitYearsContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterTimeUnitYears(this);
   }
 };
 
-TimeUnitYearsContext.prototype.exitRule = function(listener) {
+TimeUnitYearsContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitTimeUnitYears(this);
   }
@@ -8086,24 +8086,24 @@ TimeUnitMinutesContext.prototype.constructor = TimeUnitMinutesContext;
 
 ScrollQLParser.TimeUnitMinutesContext = TimeUnitMinutesContext;
 
-TimeUnitMinutesContext.prototype.K_TU_M = function() {
+TimeUnitMinutesContext.prototype.K_TU_M = function () {
   return this.getToken(ScrollQLParser.K_TU_M, 0);
 };
 
-TimeUnitMinutesContext.prototype.K_TU_MIN = function() {
+TimeUnitMinutesContext.prototype.K_TU_MIN = function () {
   return this.getToken(ScrollQLParser.K_TU_MIN, 0);
 };
 
-TimeUnitMinutesContext.prototype.K_TU_MINUTE = function() {
+TimeUnitMinutesContext.prototype.K_TU_MINUTE = function () {
   return this.getToken(ScrollQLParser.K_TU_MINUTE, 0);
 };
-TimeUnitMinutesContext.prototype.enterRule = function(listener) {
+TimeUnitMinutesContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterTimeUnitMinutes(this);
   }
 };
 
-TimeUnitMinutesContext.prototype.exitRule = function(listener) {
+TimeUnitMinutesContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitTimeUnitMinutes(this);
   }
@@ -8120,24 +8120,24 @@ TimeUnitHoursContext.prototype.constructor = TimeUnitHoursContext;
 
 ScrollQLParser.TimeUnitHoursContext = TimeUnitHoursContext;
 
-TimeUnitHoursContext.prototype.K_TU_H = function() {
+TimeUnitHoursContext.prototype.K_TU_H = function () {
   return this.getToken(ScrollQLParser.K_TU_H, 0);
 };
 
-TimeUnitHoursContext.prototype.K_TU_HR = function() {
+TimeUnitHoursContext.prototype.K_TU_HR = function () {
   return this.getToken(ScrollQLParser.K_TU_HR, 0);
 };
 
-TimeUnitHoursContext.prototype.K_TU_HOUR = function() {
+TimeUnitHoursContext.prototype.K_TU_HOUR = function () {
   return this.getToken(ScrollQLParser.K_TU_HOUR, 0);
 };
-TimeUnitHoursContext.prototype.enterRule = function(listener) {
+TimeUnitHoursContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterTimeUnitHours(this);
   }
 };
 
-TimeUnitHoursContext.prototype.exitRule = function(listener) {
+TimeUnitHoursContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitTimeUnitHours(this);
   }
@@ -8154,20 +8154,20 @@ TimeUnitWeeksContext.prototype.constructor = TimeUnitWeeksContext;
 
 ScrollQLParser.TimeUnitWeeksContext = TimeUnitWeeksContext;
 
-TimeUnitWeeksContext.prototype.K_TU_W = function() {
+TimeUnitWeeksContext.prototype.K_TU_W = function () {
   return this.getToken(ScrollQLParser.K_TU_W, 0);
 };
 
-TimeUnitWeeksContext.prototype.K_TU_WEEK = function() {
+TimeUnitWeeksContext.prototype.K_TU_WEEK = function () {
   return this.getToken(ScrollQLParser.K_TU_WEEK, 0);
 };
-TimeUnitWeeksContext.prototype.enterRule = function(listener) {
+TimeUnitWeeksContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterTimeUnitWeeks(this);
   }
 };
 
-TimeUnitWeeksContext.prototype.exitRule = function(listener) {
+TimeUnitWeeksContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitTimeUnitWeeks(this);
   }
@@ -8184,20 +8184,20 @@ TimeUnitDaysContext.prototype.constructor = TimeUnitDaysContext;
 
 ScrollQLParser.TimeUnitDaysContext = TimeUnitDaysContext;
 
-TimeUnitDaysContext.prototype.K_TU_D = function() {
+TimeUnitDaysContext.prototype.K_TU_D = function () {
   return this.getToken(ScrollQLParser.K_TU_D, 0);
 };
 
-TimeUnitDaysContext.prototype.K_TU_DAY = function() {
+TimeUnitDaysContext.prototype.K_TU_DAY = function () {
   return this.getToken(ScrollQLParser.K_TU_DAY, 0);
 };
-TimeUnitDaysContext.prototype.enterRule = function(listener) {
+TimeUnitDaysContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterTimeUnitDays(this);
   }
 };
 
-TimeUnitDaysContext.prototype.exitRule = function(listener) {
+TimeUnitDaysContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitTimeUnitDays(this);
   }
@@ -8214,24 +8214,24 @@ TimeUnitMonthsContext.prototype.constructor = TimeUnitMonthsContext;
 
 ScrollQLParser.TimeUnitMonthsContext = TimeUnitMonthsContext;
 
-TimeUnitMonthsContext.prototype.K_TU_MO = function() {
+TimeUnitMonthsContext.prototype.K_TU_MO = function () {
   return this.getToken(ScrollQLParser.K_TU_MO, 0);
 };
 
-TimeUnitMonthsContext.prototype.K_TU_MON = function() {
+TimeUnitMonthsContext.prototype.K_TU_MON = function () {
   return this.getToken(ScrollQLParser.K_TU_MON, 0);
 };
 
-TimeUnitMonthsContext.prototype.K_TU_MONTH = function() {
+TimeUnitMonthsContext.prototype.K_TU_MONTH = function () {
   return this.getToken(ScrollQLParser.K_TU_MONTH, 0);
 };
-TimeUnitMonthsContext.prototype.enterRule = function(listener) {
+TimeUnitMonthsContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterTimeUnitMonths(this);
   }
 };
 
-TimeUnitMonthsContext.prototype.exitRule = function(listener) {
+TimeUnitMonthsContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitTimeUnitMonths(this);
   }
@@ -8248,24 +8248,24 @@ TimeUnitQuartersContext.prototype.constructor = TimeUnitQuartersContext;
 
 ScrollQLParser.TimeUnitQuartersContext = TimeUnitQuartersContext;
 
-TimeUnitQuartersContext.prototype.K_TU_Q = function() {
+TimeUnitQuartersContext.prototype.K_TU_Q = function () {
   return this.getToken(ScrollQLParser.K_TU_Q, 0);
 };
 
-TimeUnitQuartersContext.prototype.K_TU_QTR = function() {
+TimeUnitQuartersContext.prototype.K_TU_QTR = function () {
   return this.getToken(ScrollQLParser.K_TU_QTR, 0);
 };
 
-TimeUnitQuartersContext.prototype.K_TU_QUARTER = function() {
+TimeUnitQuartersContext.prototype.K_TU_QUARTER = function () {
   return this.getToken(ScrollQLParser.K_TU_QUARTER, 0);
 };
-TimeUnitQuartersContext.prototype.enterRule = function(listener) {
+TimeUnitQuartersContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterTimeUnitQuarters(this);
   }
 };
 
-TimeUnitQuartersContext.prototype.exitRule = function(listener) {
+TimeUnitQuartersContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitTimeUnitQuarters(this);
   }
@@ -8282,24 +8282,24 @@ TimeUnitMilliSecondsContext.prototype.constructor = TimeUnitMilliSecondsContext;
 
 ScrollQLParser.TimeUnitMilliSecondsContext = TimeUnitMilliSecondsContext;
 
-TimeUnitMilliSecondsContext.prototype.K_TU_MS = function() {
+TimeUnitMilliSecondsContext.prototype.K_TU_MS = function () {
   return this.getToken(ScrollQLParser.K_TU_MS, 0);
 };
 
-TimeUnitMilliSecondsContext.prototype.K_TU_MSEC = function() {
+TimeUnitMilliSecondsContext.prototype.K_TU_MSEC = function () {
   return this.getToken(ScrollQLParser.K_TU_MSEC, 0);
 };
 
-TimeUnitMilliSecondsContext.prototype.K_TU_MSECOND = function() {
+TimeUnitMilliSecondsContext.prototype.K_TU_MSECOND = function () {
   return this.getToken(ScrollQLParser.K_TU_MSECOND, 0);
 };
-TimeUnitMilliSecondsContext.prototype.enterRule = function(listener) {
+TimeUnitMilliSecondsContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterTimeUnitMilliSeconds(this);
   }
 };
 
-TimeUnitMilliSecondsContext.prototype.exitRule = function(listener) {
+TimeUnitMilliSecondsContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitTimeUnitMilliSeconds(this);
   }
@@ -8316,24 +8316,24 @@ TimeUnitSecondsContext.prototype.constructor = TimeUnitSecondsContext;
 
 ScrollQLParser.TimeUnitSecondsContext = TimeUnitSecondsContext;
 
-TimeUnitSecondsContext.prototype.K_TU_S = function() {
+TimeUnitSecondsContext.prototype.K_TU_S = function () {
   return this.getToken(ScrollQLParser.K_TU_S, 0);
 };
 
-TimeUnitSecondsContext.prototype.K_TU_SEC = function() {
+TimeUnitSecondsContext.prototype.K_TU_SEC = function () {
   return this.getToken(ScrollQLParser.K_TU_SEC, 0);
 };
 
-TimeUnitSecondsContext.prototype.K_TU_SECOND = function() {
+TimeUnitSecondsContext.prototype.K_TU_SECOND = function () {
   return this.getToken(ScrollQLParser.K_TU_SECOND, 0);
 };
-TimeUnitSecondsContext.prototype.enterRule = function(listener) {
+TimeUnitSecondsContext.prototype.enterRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.enterTimeUnitSeconds(this);
   }
 };
 
-TimeUnitSecondsContext.prototype.exitRule = function(listener) {
+TimeUnitSecondsContext.prototype.exitRule = function (listener) {
   if (listener instanceof ScrollQLParserListener) {
     listener.exitTimeUnitSeconds(this);
   }
@@ -8341,7 +8341,7 @@ TimeUnitSecondsContext.prototype.exitRule = function(listener) {
 
 ScrollQLParser.TimeUnitKeywordsContext = TimeUnitKeywordsContext;
 
-ScrollQLParser.prototype.timeUnitKeywords = function() {
+ScrollQLParser.prototype.timeUnitKeywords = function () {
   var localctx = new TimeUnitKeywordsContext(this, this._ctx, this.state);
   this.enterRule(localctx, 112, ScrollQLParser.RULE_timeUnitKeywords);
   var _la = 0; // Token type
@@ -8553,7 +8553,7 @@ ScrollQLParser.prototype.timeUnitKeywords = function() {
   return localctx;
 };
 
-ScrollQLParser.prototype.sempred = function(localctx, ruleIndex, predIndex) {
+ScrollQLParser.prototype.sempred = function (localctx, ruleIndex, predIndex) {
   switch (ruleIndex) {
     case 22:
       return this.searchExpr_sempred(localctx, predIndex);
@@ -8564,7 +8564,7 @@ ScrollQLParser.prototype.sempred = function(localctx, ruleIndex, predIndex) {
   }
 };
 
-ScrollQLParser.prototype.searchExpr_sempred = function(localctx, predIndex) {
+ScrollQLParser.prototype.searchExpr_sempred = function (localctx, predIndex) {
   switch (predIndex) {
     case 0:
       return this.precpred(this._ctx, 3);
@@ -8575,7 +8575,7 @@ ScrollQLParser.prototype.searchExpr_sempred = function(localctx, predIndex) {
   }
 };
 
-ScrollQLParser.prototype.expression_sempred = function(localctx, predIndex) {
+ScrollQLParser.prototype.expression_sempred = function (localctx, predIndex) {
   switch (predIndex) {
     case 2:
       return this.precpred(this._ctx, 13);

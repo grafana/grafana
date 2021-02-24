@@ -11,7 +11,7 @@ import LogsCheatSheet from './components/LogsCheatSheet';
 export const plugin = new DataSourcePlugin<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData>(
   CloudWatchDatasource
 )
-  .setExploreStartPage(LogsCheatSheet)
+  .setQueryEditorHelp(LogsCheatSheet)
   .setConfigEditor(ConfigEditor)
   .setQueryEditor(PanelQueryEditor)
   .setExploreMetricsQueryField(PanelQueryEditor)

@@ -12,18 +12,19 @@ Grafana ships with a built-in Microsoft SQL Server (MS SQL) data source plugin t
 
 ### Data source options
 
-Name           | Description
-------------   | -------------
-`Name`         | The data source name. This is how you refer to the data source in panels and queries.
-`Default`      | Default data source means that it will be pre-selected for new panels.
-`Host`         | The IP address/hostname and optional port of your MS SQL instance. If port is omitted, default 1433 will be used.
-`Database`     | Name of your MS SQL database.
-`User`         | Database user's login/username
-`Password`     | Database user's password
-`Encrypt`      | This option determines whether or to which extent a secure SSL TCP/IP connection will be negotiated with the server, default `false`.
-`Max open`     | The maximum number of open connections to the database, default `unlimited`.
-`Max idle`     | The maximum number of connections in the idle connection pool, default `2`.
-`Max lifetime` | The maximum amount of time in seconds a connection may be reused, default `14400`/4 hours.
+| Name             | Description                                                                                                                           |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `Name`           | The data source name. This is how you refer to the data source in panels and queries.                                                 |
+| `Default`        | Default data source means that it will be pre-selected for new panels.                                                                |
+| `Host`           | The IP address/hostname and optional port of your MS SQL instance. If port is omitted, default 1433 will be used.                     |
+| `Database`       | Name of your MS SQL database.                                                                                                         |
+| `Authentication` | Authentication mode. Either using SQL Server Authentication or Windows Authentication (single sign on for Windows users).             |
+| `User`           | Database user's login/username                                                                                                        |
+| `Password`       | Database user's password                                                                                                              |
+| `Encrypt`        | This option determines whether or to which extent a secure SSL TCP/IP connection will be negotiated with the server, default `false`. |
+| `Max open`       | The maximum number of open connections to the database, default `unlimited`.                                                          |
+| `Max idle`       | The maximum number of connections in the idle connection pool, default `2`.                                                           |
+| `Max lifetime`   | The maximum amount of time in seconds a connection may be reused, default `14400`/4 hours.                                            |
 
 ### Min time interval
 
@@ -32,16 +33,16 @@ Recommended to be set to write frequency, for example `1m` if your data is writt
 This option can also be overridden/configured in a dashboard panel under data source options. It's important to note that this value **needs** to be formatted as a
 number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 seconds). The following time identifiers are supported:
 
-Identifier   | Description
------------- | -------------
-`y`          | year
-`M`          | month
-`w`          | week
-`d`          | day
-`h`          | hour
-`m`          | minute
-`s`          | second
-`ms`         | millisecond
+| Identifier | Description |
+| ---------- | ----------- |
+| `y`        | year        |
+| `M`        | month       |
+| `w`        | week        |
+| `d`        | day         |
+| `h`        | hour        |
+| `m`        | minute      |
+| `s`        | second      |
+| `ms`       | millisecond |
 
 ### Database user permissions
 
@@ -71,7 +72,7 @@ If possible, we recommend you to use the latest service pack available for optim
 You will find the MSSQL query editor in the metrics tab in Graph, Singlestat or Table panel's edit mode. You enter edit mode by clicking the
 panel title, then edit. The editor allows you to define a SQL query to select data to be visualized.
 
-1. Select *Format as* `Time series` (for use in Graph or Singlestat panel's among others) or `Table` (for use in Table panel among others).
+1. Select _Format as_ `Time series` (for use in Graph or Singlestat panel's among others) or `Table` (for use in Table panel among others).
 1. This is the actual editor where you write your SQL queries.
 1. Show help section for MSSQL below the query editor.
 1. Show actual executed SQL query. Will be available first after a successful query has been executed.
@@ -83,26 +84,26 @@ panel title, then edit. The editor allows you to define a SQL query to select da
 
 To simplify syntax and to allow for dynamic parts, like date range filters, the query can contain macros.
 
-Macro example                                           | Description
-------------------------------------------------------- | -------------
-`$__time(dateColumn)`                                   | Will be replaced by an expression to rename the column to *time*. For example, *dateColumn as time*
-`$__timeEpoch(dateColumn)`                              | Will be replaced by an expression to convert a DATETIME column type to Unix timestamp and rename it to *time*. <br/>For example, *DATEDIFF(second, '1970-01-01', dateColumn) AS time*
-`$__timeFilter(dateColumn)`                             | Will be replaced by a time range filter using the specified column name. <br/>For example, *dateColumn BETWEEN '2017-04-21T05:01:17Z' AND '2017-04-21T05:06:17Z'*
-`$__timeFrom()`                                         | Will be replaced by the start of the currently active time selection. For example, *'2017-04-21T05:01:17Z'*
-`$__timeTo()`                                           | Will be replaced by the end of the currently active time selection. For example, *'2017-04-21T05:06:17Z'*
-`$__timeGroup(dateColumn,'5m'[, fillvalue])`            | Will be replaced by an expression usable in GROUP BY clause. Providing a *fillValue* of *NULL* or *floating value* will automatically fill empty series in timerange with that value. <br/>For example, *CAST(ROUND(DATEDIFF(second, '1970-01-01', time_column)/300.0, 0) as bigint)\*300*.
-`$__timeGroup(dateColumn,'5m', 0)`                      | Same as above but with a fill parameter so missing points in that series will be added by grafana and 0 will be used as value.
-`$__timeGroup(dateColumn,'5m', NULL)`                   | Same as above but NULL will be used as value for missing points.
-`$__timeGroup(dateColumn,'5m', previous)`               | Same as above but the previous value in that series will be used as fill value if no value has been seen yet NULL will be used (only available in Grafana 5.3+).
-`$__timeGroupAlias(dateColumn,'5m')`                    | Will be replaced identical to $__timeGroup but with an added column alias (only available in Grafana 5.3+).
-`$__unixEpochFilter(dateColumn)`                        | Will be replaced by a time range filter using the specified column name with times represented as Unix timestamp. For example, *dateColumn > 1494410783 AND dateColumn < 1494497183*
-`$__unixEpochFrom()`                                    | Will be replaced by the start of the currently active time selection as Unix timestamp. For example, *1494410783*
-`$__unixEpochTo()`                                      | Will be replaced by the end of the currently active time selection as Unix timestamp. For example, *1494497183*
-`$__unixEpochNanoFilter(dateColumn)`                    | Will be replaced by a time range filter using the specified column name with times represented as nanosecond timestamp. For example, *dateColumn > 1494410783152415214 AND dateColumn < 1494497183142514872*
-`$__unixEpochNanoFrom()`                                | Will be replaced by the start of the currently active time selection as nanosecond timestamp. For example, *1494410783152415214*
-`$__unixEpochNanoTo()`                                  | Will be replaced by the end of the currently active time selection as nanosecond timestamp. For example, *1494497183142514872*
-`$__unixEpochGroup(dateColumn,'5m', [fillmode])`        | Same as $__timeGroup but for times stored as Unix timestamp (only available in Grafana 5.3+).
-`$__unixEpochGroupAlias(dateColumn,'5m', [fillmode])`   | Same as above but also adds a column alias (only available in Grafana 5.3+).
+| Macro example                                         | Description                                                                                                                                                                                                                                                                                 |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `$__time(dateColumn)`                                 | Will be replaced by an expression to rename the column to _time_. For example, _dateColumn as time_                                                                                                                                                                                         |
+| `$__timeEpoch(dateColumn)`                            | Will be replaced by an expression to convert a DATETIME column type to Unix timestamp and rename it to _time_. <br/>For example, _DATEDIFF(second, '1970-01-01', dateColumn) AS time_                                                                                                       |
+| `$__timeFilter(dateColumn)`                           | Will be replaced by a time range filter using the specified column name. <br/>For example, _dateColumn BETWEEN '2017-04-21T05:01:17Z' AND '2017-04-21T05:06:17Z'_                                                                                                                           |
+| `$__timeFrom()`                                       | Will be replaced by the start of the currently active time selection. For example, _'2017-04-21T05:01:17Z'_                                                                                                                                                                                 |
+| `$__timeTo()`                                         | Will be replaced by the end of the currently active time selection. For example, _'2017-04-21T05:06:17Z'_                                                                                                                                                                                   |
+| `$__timeGroup(dateColumn,'5m'[, fillvalue])`          | Will be replaced by an expression usable in GROUP BY clause. Providing a _fillValue_ of _NULL_ or _floating value_ will automatically fill empty series in timerange with that value. <br/>For example, _CAST(ROUND(DATEDIFF(second, '1970-01-01', time_column)/300.0, 0) as bigint)\*300_. |
+| `$__timeGroup(dateColumn,'5m', 0)`                    | Same as above but with a fill parameter so missing points in that series will be added by grafana and 0 will be used as value.                                                                                                                                                              |
+| `$__timeGroup(dateColumn,'5m', NULL)`                 | Same as above but NULL will be used as value for missing points.                                                                                                                                                                                                                            |
+| `$__timeGroup(dateColumn,'5m', previous)`             | Same as above but the previous value in that series will be used as fill value if no value has been seen yet NULL will be used (only available in Grafana 5.3+).                                                                                                                            |
+| `$__timeGroupAlias(dateColumn,'5m')`                  | Will be replaced identical to \$\_\_timeGroup but with an added column alias (only available in Grafana 5.3+).                                                                                                                                                                              |
+| `$__unixEpochFilter(dateColumn)`                      | Will be replaced by a time range filter using the specified column name with times represented as Unix timestamp. For example, _dateColumn > 1494410783 AND dateColumn < 1494497183_                                                                                                        |
+| `$__unixEpochFrom()`                                  | Will be replaced by the start of the currently active time selection as Unix timestamp. For example, _1494410783_                                                                                                                                                                           |
+| `$__unixEpochTo()`                                    | Will be replaced by the end of the currently active time selection as Unix timestamp. For example, _1494497183_                                                                                                                                                                             |
+| `$__unixEpochNanoFilter(dateColumn)`                  | Will be replaced by a time range filter using the specified column name with times represented as nanosecond timestamp. For example, _dateColumn > 1494410783152415214 AND dateColumn < 1494497183142514872_                                                                                |
+| `$__unixEpochNanoFrom()`                              | Will be replaced by the start of the currently active time selection as nanosecond timestamp. For example, _1494410783152415214_                                                                                                                                                            |
+| `$__unixEpochNanoTo()`                                | Will be replaced by the end of the currently active time selection as nanosecond timestamp. For example, _1494497183142514872_                                                                                                                                                              |
+| `$__unixEpochGroup(dateColumn,'5m', [fillmode])`      | Same as \$\_\_timeGroup but for times stored as Unix timestamp (only available in Grafana 5.3+).                                                                                                                                                                                            |
+| `$__unixEpochGroupAlias(dateColumn,'5m', [fillmode])` | Same as above but also adds a column alias (only available in Grafana 5.3+).                                                                                                                                                                                                                |
 
 We plan to add many more macros. If you have suggestions for what macros you would like to see, please [open an issue](https://github.com/grafana/grafana) in our GitHub repo.
 
@@ -144,14 +145,13 @@ Query editor with example query:
 
 {{< docs-imagebox img="/img/docs/v51/mssql_table_query.png" max-width="500px" class="docs-image--no-shadow" >}}
 
-
 The query:
 
 ```sql
 SELECT * FROM [mssql_types]
 ```
 
-You can control the name of the Table panel columns by using regular `AS ` SQL column selection syntax. Example:
+You can control the name of the Table panel columns by using regular `AS` SQL column selection syntax. Example:
 
 ```sql
 SELECT
@@ -180,7 +180,6 @@ CREATE TABLE [event] (
   tags nvarchar(100),
 )
 ```
-
 
 ```sql
 CREATE TABLE metric_values (
@@ -240,7 +239,7 @@ When the above query is used in a graph panel, it will produce two series named 
 
 {{< docs-imagebox img="/img/docs/v51/mssql_time_series_three.png" class="docs-image--no-shadow docs-image--right" >}}
 
-**Example using the $__timeGroup macro:**
+**Example using the \$\_\_timeGroup macro:**
 
 ```sql
 SELECT
@@ -264,7 +263,7 @@ Any two series lacking a value in a three-minute window will render a line betwe
 
 {{< docs-imagebox img="/img/docs/v51/mssql_time_series_four.png" class="docs-image--no-shadow docs-image--right" >}}
 
-**Example using the $__timeGroup macro with fill parameter set to zero:**
+**Example using the \$\_\_timeGroup macro with fill parameter set to zero:**
 
 ```sql
 SELECT
@@ -330,7 +329,7 @@ If the variable is a multi-value variable then use the `IN` comparison operator 
 
 There are two syntaxes:
 
-`$<varname>`  Example with a template variable named `hostname`:
+`$<varname>` Example with a template variable named `hostname`:
 
 ```sql
 SELECT
@@ -341,7 +340,7 @@ WHERE $__timeFilter(atimestamp) and hostname in($hostname)
 ORDER BY atimestamp
 ```
 
-`[[varname]]`  Example with a template variable named `hostname`:
+`[[varname]]` Example with a template variable named `hostname`:
 
 ```sql
 SELECT
@@ -366,12 +365,12 @@ Read more about variable formatting options in the [Variables]({{< relref "../va
 
 **Columns:**
 
-Name        | Description
------------ | -------------
-`time`      | The name of the date/time field. Could be a column with a native SQL date/time data type or epoch value.
-`timeend`   | Optional name of the end date/time field. Could be a column with a native SQL date/time data type or epoch value. (Grafana v6.6+)
-`text`      | Event description field.
-`tags`      | Optional field name to use for event tags as a comma separated string.
+| Name      | Description                                                                                                                       |
+| --------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `time`    | The name of the date/time field. Could be a column with a native SQL date/time data type or epoch value.                          |
+| `timeend` | Optional name of the end date/time field. Could be a column with a native SQL date/time data type or epoch value. (Grafana v6.6+) |
+| `text`    | Event description field.                                                                                                          |
+| `tags`    | Optional field name to use for event tags as a comma separated string.                                                            |
 
 **Example database tables:**
 
@@ -460,6 +459,7 @@ ORDER BY 1
 ```
 
 **Second query:**
+
 ```sql
 SELECT
   $__timeGroup(time, '5m') as time,
@@ -599,10 +599,9 @@ datasources:
     database: grafana
     user: grafana
     jsonData:
-      maxOpenConns: 0         # Grafana v5.4+
-      maxIdleConns: 2         # Grafana v5.4+
-      connMaxLifetime: 14400  # Grafana v5.4+
+      maxOpenConns: 0 # Grafana v5.4+
+      maxIdleConns: 2 # Grafana v5.4+
+      connMaxLifetime: 14400 # Grafana v5.4+
     secureJsonData:
-      password: "Password!"
-
+      password: 'Password!'
 ```

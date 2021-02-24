@@ -5,17 +5,15 @@ import { QueryVariableModel } from '../types';
 import { ThunkDispatch } from '../../../types';
 import { toVariableIdentifier, toVariablePayload } from '../state/types';
 import { validateVariableSelectionState } from '../state/actions';
-import { DataSourceApi, FieldType, getFieldDisplayName, MetricFindValue, PanelData } from '@grafana/data';
+import { DataSourceApi, FieldType, getFieldDisplayName, isDataFrame, MetricFindValue, PanelData } from '@grafana/data';
 import { updateVariableOptions, updateVariableTags } from './reducer';
 import { getTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
 import { getLegacyQueryOptions, getTemplatedRegex } from '../utils';
 
-const metricFindValueProps = ['text', 'Text', 'value', 'Value'];
-
 export function toMetricFindValues(): OperatorFunction<PanelData, MetricFindValue[]> {
-  return source =>
+  return (source) =>
     source.pipe(
-      map(panelData => {
+      map((panelData) => {
         const frames = panelData.series;
         if (!frames || !frames.length) {
           return [];
@@ -99,9 +97,9 @@ export function updateOptionsState(args: {
   dispatch: ThunkDispatch;
   getTemplatedRegexFunc: typeof getTemplatedRegex;
 }): OperatorFunction<MetricFindValue[], void> {
-  return source =>
+  return (source) =>
     source.pipe(
-      map(results => {
+      map((results) => {
         const { variable, dispatch, getTemplatedRegexFunc } = args;
         const templatedRegex = getTemplatedRegexFunc(variable);
         const payload = toVariablePayload(variable, { results, templatedRegex });
@@ -118,7 +116,7 @@ export function runUpdateTagsRequest(
   },
   timeSrv: TimeSrv = getTimeSrv()
 ): OperatorFunction<void, MetricFindValue[]> {
-  return source =>
+  return (source) =>
     source.pipe(
       mergeMap(() => {
         const { datasource, searchFilter, variable } = args;
@@ -138,9 +136,9 @@ export function updateTagsState(args: {
   variable: QueryVariableModel;
   dispatch: ThunkDispatch;
 }): OperatorFunction<MetricFindValue[], void> {
-  return source =>
+  return (source) =>
     source.pipe(
-      map(tagResults => {
+      map((tagResults) => {
         const { dispatch, variable } = args;
 
         if (variable.useTags) {
@@ -155,7 +153,7 @@ export function validateVariableSelection(args: {
   dispatch: ThunkDispatch;
   searchFilter?: string;
 }): OperatorFunction<void, void> {
-  return source =>
+  return (source) =>
     source.pipe(
       mergeMap(() => {
         const { dispatch, variable, searchFilter } = args;
@@ -183,5 +181,25 @@ export function areMetricFindValues(data: any[]): data is MetricFindValue[] {
   }
 
   const firstValue: any = data[0];
-  return metricFindValueProps.some(prop => firstValue.hasOwnProperty(prop) && typeof firstValue[prop] === 'string');
+  if (isDataFrame(firstValue)) {
+    return false;
+  }
+
+  for (const firstValueKey in firstValue) {
+    if (!firstValue.hasOwnProperty(firstValueKey)) {
+      continue;
+    }
+
+    if (typeof firstValue[firstValueKey] !== 'string' && typeof firstValue[firstValueKey] !== 'number') {
+      continue;
+    }
+
+    const key = firstValueKey.toLowerCase();
+
+    if (key === 'text' || key === 'value') {
+      return true;
+    }
+  }
+
+  return false;
 }

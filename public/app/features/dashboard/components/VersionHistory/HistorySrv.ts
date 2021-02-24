@@ -49,4 +49,7 @@ export class HistorySrv {
   }
 }
 
+const historySrv = new HistorySrv();
+export { historySrv };
+
 coreModule.service('historySrv', HistorySrv);

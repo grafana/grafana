@@ -57,7 +57,7 @@ func (rs *RenderingService) Init() error {
 	// ensure ImagesDir exists
 	err := os.MkdirAll(rs.Cfg.ImagesDir, 0700)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create images directory %q: %w", rs.Cfg.ImagesDir, err)
 	}
 
 	// set value used for domain attribute of renderKey cookie

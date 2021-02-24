@@ -11,310 +11,276 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb"
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana/pkg/models"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-//nolint:goconst
-func TestClient(t *testing.T) {
-	Convey("Test elasticsearch client", t, func() {
-		Convey("NewClient", func() {
-			Convey("When no version set should return error", func() {
-				ds := &models.DataSource{
-					JsonData: simplejson.NewFromAny(make(map[string]interface{})),
-				}
+func TestNewClient(t *testing.T) {
+	t.Run("When no version set should return error", func(t *testing.T) {
+		ds := &models.DataSource{
+			JsonData: simplejson.NewFromAny(make(map[string]interface{})),
+		}
 
-				_, err := NewClient(context.Background(), ds, nil)
-				So(err, ShouldNotBeNil)
-			})
+		_, err := NewClient(context.Background(), ds, nil)
+		require.Error(t, err)
+	})
 
-			Convey("When no time field name set should return error", func() {
-				ds := &models.DataSource{
-					JsonData: simplejson.NewFromAny(map[string]interface{}{
-						"esVersion": 5,
-					}),
-				}
+	t.Run("When no time field name set should return error", func(t *testing.T) {
+		ds := &models.DataSource{
+			JsonData: simplejson.NewFromAny(map[string]interface{}{
+				"esVersion": 5,
+			}),
+		}
 
-				_, err := NewClient(context.Background(), ds, nil)
-				So(err, ShouldNotBeNil)
-			})
+		_, err := NewClient(context.Background(), ds, nil)
+		require.Error(t, err)
+	})
 
-			Convey("When unsupported version set should return error", func() {
-				ds := &models.DataSource{
-					JsonData: simplejson.NewFromAny(map[string]interface{}{
-						"esVersion": 6,
-						"timeField": "@timestamp",
-					}),
-				}
+	t.Run("When unsupported version set should return error", func(t *testing.T) {
+		ds := &models.DataSource{
+			JsonData: simplejson.NewFromAny(map[string]interface{}{
+				"esVersion": 6,
+				"timeField": "@timestamp",
+			}),
+		}
 
-				_, err := NewClient(context.Background(), ds, nil)
-				So(err, ShouldNotBeNil)
-			})
+		_, err := NewClient(context.Background(), ds, nil)
+		require.Error(t, err)
+	})
 
-			Convey("When version 2 should return v2 client", func() {
-				ds := &models.DataSource{
-					JsonData: simplejson.NewFromAny(map[string]interface{}{
-						"esVersion": 2,
-						"timeField": "@timestamp",
-					}),
-				}
-
-				c, err := NewClient(context.Background(), ds, nil)
-				So(err, ShouldBeNil)
-				So(c.GetVersion(), ShouldEqual, 2)
-			})
-
-			Convey("When version 5 should return v5 client", func() {
-				ds := &models.DataSource{
-					JsonData: simplejson.NewFromAny(map[string]interface{}{
-						"esVersion": 5,
-						"timeField": "@timestamp",
-					}),
-				}
-
-				c, err := NewClient(context.Background(), ds, nil)
-				So(err, ShouldBeNil)
-				So(c.GetVersion(), ShouldEqual, 5)
-			})
-
-			Convey("When version 56 should return v5.6 client", func() {
-				ds := &models.DataSource{
-					JsonData: simplejson.NewFromAny(map[string]interface{}{
-						"esVersion": 56,
-						"timeField": "@timestamp",
-					}),
-				}
-
-				c, err := NewClient(context.Background(), ds, nil)
-				So(err, ShouldBeNil)
-				So(c.GetVersion(), ShouldEqual, 56)
-			})
-
-			Convey("When version 60 should return v6.0 client", func() {
-				ds := &models.DataSource{
-					JsonData: simplejson.NewFromAny(map[string]interface{}{
-						"esVersion": 60,
-						"timeField": "@timestamp",
-					}),
-				}
-
-				c, err := NewClient(context.Background(), ds, nil)
-				So(err, ShouldBeNil)
-				So(c.GetVersion(), ShouldEqual, 60)
-			})
-
-			Convey("When version 70 should return v7.0 client", func() {
-				ds := &models.DataSource{
-					JsonData: simplejson.NewFromAny(map[string]interface{}{
-						"esVersion": 70,
-						"timeField": "@timestamp",
-					}),
-				}
-
-				c, err := NewClient(context.Background(), ds, nil)
-				So(err, ShouldBeNil)
-				So(c.GetVersion(), ShouldEqual, 70)
-			})
-		})
-
-		httpClientScenario(t, "Given a fake http client and a v2.x client with response", &models.DataSource{
-			Database: "[metrics-]YYYY.MM.DD",
+	t.Run("When version 2 should return v2 client", func(t *testing.T) {
+		ds := &models.DataSource{
 			JsonData: simplejson.NewFromAny(map[string]interface{}{
 				"esVersion": 2,
 				"timeField": "@timestamp",
-				"interval":  "Daily",
 			}),
-		}, func(sc *scenarioContext) {
-			sc.responseBody = `{
+		}
+
+		c, err := NewClient(context.Background(), ds, nil)
+		require.NoError(t, err)
+		assert.Equal(t, 2, c.GetVersion())
+	})
+
+	t.Run("When version 5 should return v5 client", func(t *testing.T) {
+		ds := &models.DataSource{
+			JsonData: simplejson.NewFromAny(map[string]interface{}{
+				"esVersion": 5,
+				"timeField": "@timestamp",
+			}),
+		}
+
+		c, err := NewClient(context.Background(), ds, nil)
+		require.NoError(t, err)
+		assert.Equal(t, 5, c.GetVersion())
+	})
+
+	t.Run("When version 56 should return v5.6 client", func(t *testing.T) {
+		ds := &models.DataSource{
+			JsonData: simplejson.NewFromAny(map[string]interface{}{
+				"esVersion": 56,
+				"timeField": "@timestamp",
+			}),
+		}
+
+		c, err := NewClient(context.Background(), ds, nil)
+		require.NoError(t, err)
+		assert.Equal(t, 56, c.GetVersion())
+	})
+
+	t.Run("When version 60 should return v6.0 client", func(t *testing.T) {
+		ds := &models.DataSource{
+			JsonData: simplejson.NewFromAny(map[string]interface{}{
+				"esVersion": 60,
+				"timeField": "@timestamp",
+			}),
+		}
+
+		c, err := NewClient(context.Background(), ds, nil)
+		require.NoError(t, err)
+		assert.Equal(t, 60, c.GetVersion())
+	})
+
+	t.Run("When version 70 should return v7.0 client", func(t *testing.T) {
+		ds := &models.DataSource{
+			JsonData: simplejson.NewFromAny(map[string]interface{}{
+				"esVersion": 70,
+				"timeField": "@timestamp",
+			}),
+		}
+
+		c, err := NewClient(context.Background(), ds, nil)
+		require.NoError(t, err)
+		assert.Equal(t, 70, c.GetVersion())
+	})
+}
+
+func TestClient_ExecuteMultisearch(t *testing.T) {
+	httpClientScenario(t, "Given a fake http client and a v2.x client with response", &models.DataSource{
+		Database: "[metrics-]YYYY.MM.DD",
+		JsonData: simplejson.NewFromAny(map[string]interface{}{
+			"esVersion": 2,
+			"timeField": "@timestamp",
+			"interval":  "Daily",
+		}),
+	}, func(sc *scenarioContext) {
+		sc.responseBody = `{
 				"responses": [
 					{
-						"hits": {	"hits": [], "max_score": 0,	"total": 4656	},
+						"hits": { "hits": [], "max_score": 0, "total": 4656 },
 						"status": 200
 					}
 				]
 			}`
 
-			Convey("When executing multi search", func() {
-				ms, err := createMultisearchForTest(sc.client)
-				So(err, ShouldBeNil)
-				res, err := sc.client.ExecuteMultisearch(ms)
-				So(err, ShouldBeNil)
+		ms, err := createMultisearchForTest(t, sc.client)
+		require.NoError(t, err)
+		res, err := sc.client.ExecuteMultisearch(ms)
+		require.NoError(t, err)
 
-				Convey("Should send correct request and payload", func() {
-					So(sc.request, ShouldNotBeNil)
-					So(sc.request.Method, ShouldEqual, http.MethodPost)
-					So(sc.request.URL.Path, ShouldEqual, "/_msearch")
+		require.NotNil(t, sc.request)
+		assert.Equal(t, http.MethodPost, sc.request.Method)
+		assert.Equal(t, "/_msearch", sc.request.URL.Path)
 
-					So(sc.requestBody, ShouldNotBeNil)
+		require.NotNil(t, sc.requestBody)
+		headerBytes, err := sc.requestBody.ReadBytes('\n')
+		require.NoError(t, err)
+		bodyBytes := sc.requestBody.Bytes()
 
-					headerBytes, err := sc.requestBody.ReadBytes('\n')
-					So(err, ShouldBeNil)
-					bodyBytes := sc.requestBody.Bytes()
+		jHeader, err := simplejson.NewJson(headerBytes)
+		require.NoError(t, err)
 
-					jHeader, err := simplejson.NewJson(headerBytes)
-					So(err, ShouldBeNil)
+		jBody, err := simplejson.NewJson(bodyBytes)
+		require.NoError(t, err)
 
-					jBody, err := simplejson.NewJson(bodyBytes)
-					So(err, ShouldBeNil)
+		assert.Equal(t, "metrics-2018.05.15", jHeader.Get("index").MustString())
+		assert.True(t, jHeader.Get("ignore_unavailable").MustBool(false))
+		assert.Equal(t, "count", jHeader.Get("search_type").MustString())
+		assert.Empty(t, jHeader.Get("max_concurrent_shard_requests"))
 
-					So(jHeader.Get("index").MustString(), ShouldEqual, "metrics-2018.05.15")
-					So(jHeader.Get("ignore_unavailable").MustBool(false), ShouldEqual, true)
-					So(jHeader.Get("search_type").MustString(), ShouldEqual, "count")
-					So(jHeader.Get("max_concurrent_shard_requests").MustInt(10), ShouldEqual, 10)
+		assert.Equal(t, "15000*@hostname", jBody.GetPath("aggs", "2", "aggs", "1", "avg", "script").MustString())
 
-					Convey("and replace $__interval variable", func() {
-						So(jBody.GetPath("aggs", "2", "aggs", "1", "avg", "script").MustString(), ShouldEqual, "15000*@hostname")
-					})
+		assert.Equal(t, "15s", jBody.GetPath("aggs", "2", "date_histogram", "interval").MustString())
 
-					Convey("and replace $__interval_ms variable", func() {
-						So(jBody.GetPath("aggs", "2", "date_histogram", "interval").MustString(), ShouldEqual, "15s")
-					})
-				})
+		assert.Equal(t, 200, res.Status)
+		require.Len(t, res.Responses, 1)
+	})
 
-				Convey("Should parse response", func() {
-					So(res.Status, ShouldEqual, 200)
-					So(res.Responses, ShouldHaveLength, 1)
-				})
-			})
-		})
-
-		httpClientScenario(t, "Given a fake http client and a v5.x client with response", &models.DataSource{
-			Database: "[metrics-]YYYY.MM.DD",
-			JsonData: simplejson.NewFromAny(map[string]interface{}{
-				"esVersion":                  5,
-				"maxConcurrentShardRequests": 100,
-				"timeField":                  "@timestamp",
-				"interval":                   "Daily",
-			}),
-		}, func(sc *scenarioContext) {
-			sc.responseBody = `{
+	httpClientScenario(t, "Given a fake http client and a v5.x client with response", &models.DataSource{
+		Database: "[metrics-]YYYY.MM.DD",
+		JsonData: simplejson.NewFromAny(map[string]interface{}{
+			"esVersion":                  5,
+			"maxConcurrentShardRequests": 100,
+			"timeField":                  "@timestamp",
+			"interval":                   "Daily",
+		}),
+	}, func(sc *scenarioContext) {
+		sc.responseBody = `{
 				"responses": [
 					{
-						"hits": {	"hits": [], "max_score": 0,	"total": 4656	},
+						"hits": { "hits": [], "max_score": 0, "total": 4656 },
 						"status": 200
 					}
 				]
 			}`
 
-			Convey("When executing multi search", func() {
-				ms, err := createMultisearchForTest(sc.client)
-				So(err, ShouldBeNil)
-				res, err := sc.client.ExecuteMultisearch(ms)
-				So(err, ShouldBeNil)
+		ms, err := createMultisearchForTest(t, sc.client)
+		require.NoError(t, err)
+		res, err := sc.client.ExecuteMultisearch(ms)
+		require.NoError(t, err)
 
-				Convey("Should send correct request and payload", func() {
-					So(sc.request, ShouldNotBeNil)
-					So(sc.request.Method, ShouldEqual, http.MethodPost)
-					So(sc.request.URL.Path, ShouldEqual, "/_msearch")
+		require.NotNil(t, sc.request)
+		assert.Equal(t, http.MethodPost, sc.request.Method)
+		assert.Equal(t, "/_msearch", sc.request.URL.Path)
 
-					So(sc.requestBody, ShouldNotBeNil)
+		require.NotNil(t, sc.requestBody)
 
-					headerBytes, err := sc.requestBody.ReadBytes('\n')
-					So(err, ShouldBeNil)
-					bodyBytes := sc.requestBody.Bytes()
+		headerBytes, err := sc.requestBody.ReadBytes('\n')
+		require.NoError(t, err)
+		bodyBytes := sc.requestBody.Bytes()
 
-					jHeader, err := simplejson.NewJson(headerBytes)
-					So(err, ShouldBeNil)
+		jHeader, err := simplejson.NewJson(headerBytes)
+		require.NoError(t, err)
 
-					jBody, err := simplejson.NewJson(bodyBytes)
-					So(err, ShouldBeNil)
+		jBody, err := simplejson.NewJson(bodyBytes)
+		require.NoError(t, err)
 
-					So(jHeader.Get("index").MustString(), ShouldEqual, "metrics-2018.05.15")
-					So(jHeader.Get("ignore_unavailable").MustBool(false), ShouldEqual, true)
-					So(jHeader.Get("search_type").MustString(), ShouldEqual, "query_then_fetch")
-					So(jHeader.Get("max_concurrent_shard_requests").MustInt(10), ShouldEqual, 10)
+		assert.Equal(t, "metrics-2018.05.15", jHeader.Get("index").MustString())
+		assert.True(t, jHeader.Get("ignore_unavailable").MustBool(false))
+		assert.Equal(t, "query_then_fetch", jHeader.Get("search_type").MustString())
+		assert.Empty(t, jHeader.Get("max_concurrent_shard_requests"))
 
-					Convey("and replace $__interval variable", func() {
-						So(jBody.GetPath("aggs", "2", "aggs", "1", "avg", "script").MustString(), ShouldEqual, "15000*@hostname")
-					})
+		assert.Equal(t, "15000*@hostname", jBody.GetPath("aggs", "2", "aggs", "1", "avg", "script").MustString())
 
-					Convey("and replace $__interval_ms variable", func() {
-						So(jBody.GetPath("aggs", "2", "date_histogram", "interval").MustString(), ShouldEqual, "15s")
-					})
-				})
+		assert.Equal(t, "15s", jBody.GetPath("aggs", "2", "date_histogram", "interval").MustString())
 
-				Convey("Should parse response", func() {
-					So(res.Status, ShouldEqual, 200)
-					So(res.Responses, ShouldHaveLength, 1)
-				})
-			})
-		})
+		assert.Equal(t, 200, res.Status)
+		require.Len(t, res.Responses, 1)
+	})
 
-		httpClientScenario(t, "Given a fake http client and a v5.6 client with response", &models.DataSource{
-			Database: "[metrics-]YYYY.MM.DD",
-			JsonData: simplejson.NewFromAny(map[string]interface{}{
-				"esVersion":                  56,
-				"maxConcurrentShardRequests": 100,
-				"timeField":                  "@timestamp",
-				"interval":                   "Daily",
-			}),
-		}, func(sc *scenarioContext) {
-			sc.responseBody = `{
+	httpClientScenario(t, "Given a fake http client and a v5.6 client with response", &models.DataSource{
+		Database: "[metrics-]YYYY.MM.DD",
+		JsonData: simplejson.NewFromAny(map[string]interface{}{
+			"esVersion":                  56,
+			"maxConcurrentShardRequests": 100,
+			"timeField":                  "@timestamp",
+			"interval":                   "Daily",
+		}),
+	}, func(sc *scenarioContext) {
+		sc.responseBody = `{
 				"responses": [
 					{
-						"hits": {	"hits": [], "max_score": 0,	"total": 4656	},
+						"hits": { "hits": [], "max_score": 0, "total": 4656 },
 						"status": 200
 					}
 				]
 			}`
 
-			Convey("When executing multi search", func() {
-				ms, err := createMultisearchForTest(sc.client)
-				So(err, ShouldBeNil)
-				res, err := sc.client.ExecuteMultisearch(ms)
-				So(err, ShouldBeNil)
+		ms, err := createMultisearchForTest(t, sc.client)
+		require.NoError(t, err)
+		res, err := sc.client.ExecuteMultisearch(ms)
+		require.NoError(t, err)
 
-				Convey("Should send correct request and payload", func() {
-					So(sc.request, ShouldNotBeNil)
-					So(sc.request.Method, ShouldEqual, http.MethodPost)
-					So(sc.request.URL.Path, ShouldEqual, "/_msearch")
+		require.NotNil(t, sc.request)
+		assert.Equal(t, http.MethodPost, sc.request.Method)
+		assert.Equal(t, "/_msearch", sc.request.URL.Path)
 
-					So(sc.requestBody, ShouldNotBeNil)
+		require.NotNil(t, sc.requestBody)
 
-					headerBytes, err := sc.requestBody.ReadBytes('\n')
-					So(err, ShouldBeNil)
-					bodyBytes := sc.requestBody.Bytes()
+		headerBytes, err := sc.requestBody.ReadBytes('\n')
+		require.NoError(t, err)
+		bodyBytes := sc.requestBody.Bytes()
 
-					jHeader, err := simplejson.NewJson(headerBytes)
-					So(err, ShouldBeNil)
+		jHeader, err := simplejson.NewJson(headerBytes)
+		require.NoError(t, err)
 
-					jBody, err := simplejson.NewJson(bodyBytes)
-					So(err, ShouldBeNil)
+		jBody, err := simplejson.NewJson(bodyBytes)
+		require.NoError(t, err)
 
-					So(jHeader.Get("index").MustString(), ShouldEqual, "metrics-2018.05.15")
-					So(jHeader.Get("ignore_unavailable").MustBool(false), ShouldEqual, true)
-					So(jHeader.Get("search_type").MustString(), ShouldEqual, "query_then_fetch")
-					So(jHeader.Get("max_concurrent_shard_requests").MustInt(), ShouldEqual, 100)
+		assert.Equal(t, "metrics-2018.05.15", jHeader.Get("index").MustString())
+		assert.True(t, jHeader.Get("ignore_unavailable").MustBool(false))
+		assert.Equal(t, "query_then_fetch", jHeader.Get("search_type").MustString())
+		assert.Equal(t, 100, jHeader.Get("max_concurrent_shard_requests").MustInt())
 
-					Convey("and replace $__interval variable", func() {
-						So(jBody.GetPath("aggs", "2", "aggs", "1", "avg", "script").MustString(), ShouldEqual, "15000*@hostname")
-					})
+		assert.Equal(t, "15000*@hostname", jBody.GetPath("aggs", "2", "aggs", "1", "avg", "script").MustString())
 
-					Convey("and replace $__interval_ms variable", func() {
-						So(jBody.GetPath("aggs", "2", "date_histogram", "interval").MustString(), ShouldEqual, "15s")
-					})
-				})
+		assert.Equal(t, "15s", jBody.GetPath("aggs", "2", "date_histogram", "interval").MustString())
 
-				Convey("Should parse response", func() {
-					So(res.Status, ShouldEqual, 200)
-					So(res.Responses, ShouldHaveLength, 1)
-				})
-			})
-		})
+		assert.Equal(t, 200, res.Status)
+		require.Len(t, res.Responses, 1)
+	})
 
-		httpClientScenario(t, "Given a fake http client and a v7.0 client with response", &models.DataSource{
-			Database: "[metrics-]YYYY.MM.DD",
-			JsonData: simplejson.NewFromAny(map[string]interface{}{
-				"esVersion":                  70,
-				"maxConcurrentShardRequests": 6,
-				"timeField":                  "@timestamp",
-				"interval":                   "Daily",
-			}),
-		}, func(sc *scenarioContext) {
-			sc.responseBody = `{
+	httpClientScenario(t, "Given a fake http client and a v7.0 client with response", &models.DataSource{
+		Database: "[metrics-]YYYY.MM.DD",
+		JsonData: simplejson.NewFromAny(map[string]interface{}{
+			"esVersion":                  70,
+			"maxConcurrentShardRequests": 6,
+			"timeField":                  "@timestamp",
+			"interval":                   "Daily",
+		}),
+	}, func(sc *scenarioContext) {
+		sc.responseBody = `{
 				"responses": [
 					{
 						"hits": {	"hits": [], "max_score": 0,	"total": { "value": 4656, "relation": "eq"}	},
@@ -323,53 +289,45 @@ func TestClient(t *testing.T) {
 				]
 			}`
 
-			Convey("When executing multi search", func() {
-				ms, err := createMultisearchForTest(sc.client)
-				So(err, ShouldBeNil)
-				res, err := sc.client.ExecuteMultisearch(ms)
-				So(err, ShouldBeNil)
+		ms, err := createMultisearchForTest(t, sc.client)
+		require.NoError(t, err)
+		res, err := sc.client.ExecuteMultisearch(ms)
+		require.NoError(t, err)
 
-				Convey("Should send correct request and payload", func() {
-					So(sc.request, ShouldNotBeNil)
-					So(sc.request.Method, ShouldEqual, http.MethodPost)
-					So(sc.request.URL.Path, ShouldEqual, "/_msearch")
-					So(sc.request.URL.RawQuery, ShouldEqual, "max_concurrent_shard_requests=6")
+		require.NotNil(t, sc.request)
+		assert.Equal(t, http.MethodPost, sc.request.Method)
+		assert.Equal(t, "/_msearch", sc.request.URL.Path)
+		assert.Equal(t, "max_concurrent_shard_requests=6", sc.request.URL.RawQuery)
 
-					So(sc.requestBody, ShouldNotBeNil)
+		require.NotNil(t, sc.requestBody)
 
-					headerBytes, err := sc.requestBody.ReadBytes('\n')
-					So(err, ShouldBeNil)
-					bodyBytes := sc.requestBody.Bytes()
+		headerBytes, err := sc.requestBody.ReadBytes('\n')
+		require.NoError(t, err)
+		bodyBytes := sc.requestBody.Bytes()
 
-					jHeader, err := simplejson.NewJson(headerBytes)
-					So(err, ShouldBeNil)
+		jHeader, err := simplejson.NewJson(headerBytes)
+		require.NoError(t, err)
 
-					jBody, err := simplejson.NewJson(bodyBytes)
-					So(err, ShouldBeNil)
+		jBody, err := simplejson.NewJson(bodyBytes)
+		require.NoError(t, err)
 
-					So(jHeader.Get("index").MustString(), ShouldEqual, "metrics-2018.05.15")
-					So(jHeader.Get("ignore_unavailable").MustBool(false), ShouldEqual, true)
-					So(jHeader.Get("search_type").MustString(), ShouldEqual, "query_then_fetch")
+		assert.Equal(t, "metrics-2018.05.15", jHeader.Get("index").MustString())
+		assert.True(t, jHeader.Get("ignore_unavailable").MustBool(false))
+		assert.Equal(t, "query_then_fetch", jHeader.Get("search_type").MustString())
+		assert.Empty(t, jHeader.Get("max_concurrent_shard_requests"))
 
-					Convey("and replace $__interval variable", func() {
-						So(jBody.GetPath("aggs", "2", "aggs", "1", "avg", "script").MustString(), ShouldEqual, "15000*@hostname")
-					})
+		assert.Equal(t, "15000*@hostname", jBody.GetPath("aggs", "2", "aggs", "1", "avg", "script").MustString())
 
-					Convey("and replace $__interval_ms variable", func() {
-						So(jBody.GetPath("aggs", "2", "date_histogram", "interval").MustString(), ShouldEqual, "15s")
-					})
-				})
+		assert.Equal(t, "15s", jBody.GetPath("aggs", "2", "date_histogram", "interval").MustString())
 
-				Convey("Should parse response", func() {
-					So(res.Status, ShouldEqual, 200)
-					So(res.Responses, ShouldHaveLength, 1)
-				})
-			})
-		})
+		assert.Equal(t, 200, res.Status)
+		require.Len(t, res.Responses, 1)
 	})
 }
 
-func createMultisearchForTest(c Client) (*MultiSearchRequest, error) {
+func createMultisearchForTest(t *testing.T, c Client) (*MultiSearchRequest, error) {
+	t.Helper()
+
 	msb := c.MultiSearch()
 	s := msb.Search(tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
 	s.Agg().DateHistogram("2", "@timestamp", func(a *DateHistogramAgg, ab AggBuilder) {
@@ -395,7 +353,7 @@ type scenarioFunc func(*scenarioContext)
 func httpClientScenario(t *testing.T, desc string, ds *models.DataSource, fn scenarioFunc) {
 	t.Helper()
 
-	Convey(desc, func() {
+	t.Run(desc, func(t *testing.T) {
 		sc := &scenarioContext{
 			responseStatus: 200,
 			responseBody:   `{ "responses": [] }`,
@@ -403,13 +361,13 @@ func httpClientScenario(t *testing.T, desc string, ds *models.DataSource, fn sce
 		ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 			sc.request = r
 			buf, err := ioutil.ReadAll(r.Body)
-			require.Nil(t, err)
+			require.NoError(t, err)
 
 			sc.requestBody = bytes.NewBuffer(buf)
 
 			rw.Header().Set("Content-Type", "application/json")
 			_, err = rw.Write([]byte(sc.responseBody))
-			require.Nil(t, err)
+			require.NoError(t, err)
 			rw.WriteHeader(sc.responseStatus)
 		}))
 		ds.Url = ts.URL
@@ -421,20 +379,20 @@ func httpClientScenario(t *testing.T, desc string, ds *models.DataSource, fn sce
 		timeRange := tsdb.NewTimeRange(fromStr, toStr)
 
 		c, err := NewClient(context.Background(), ds, timeRange)
-		So(err, ShouldBeNil)
-		So(c, ShouldNotBeNil)
+		require.NoError(t, err)
+		require.NotNil(t, c)
 		sc.client = c
 
-		currentNewDatasourceHttpClient := newDatasourceHttpClient
+		currentNewDatasourceHTTPClient := newDatasourceHttpClient
 
 		newDatasourceHttpClient = func(ds *models.DataSource) (*http.Client, error) {
 			return ts.Client(), nil
 		}
 
-		defer func() {
+		t.Cleanup(func() {
 			ts.Close()
-			newDatasourceHttpClient = currentNewDatasourceHttpClient
-		}()
+			newDatasourceHttpClient = currentNewDatasourceHTTPClient
+		})
 
 		fn(sc)
 	})

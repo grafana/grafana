@@ -1,13 +1,13 @@
 ace.define(
   'ace/mode/sql_highlight_rules',
   ['require', 'exports', 'module', 'ace/lib/oop', 'ace/mode/text_highlight_rules'],
-  function(require, exports, module) {
+  function (require, exports, module) {
     'use strict';
 
     var oop = require('../lib/oop');
     var TextHighlightRules = require('./text_highlight_rules').TextHighlightRules;
 
-    var SqlHighlightRules = function() {
+    var SqlHighlightRules = function () {
       var keywords =
         'select|insert|update|delete|from|where|and|or|group|by|order|limit|offset|having|as|case|' +
         'when|else|end|type|left|right|join|on|outer|desc|asc|union|create|table|primary|key|if|' +
@@ -90,20 +90,20 @@ ace.define(
 ace.define(
   'ace/mode/sql',
   ['require', 'exports', 'module', 'ace/lib/oop', 'ace/mode/text', 'ace/mode/sql_highlight_rules'],
-  function(require, exports, module) {
+  function (require, exports, module) {
     'use strict';
 
     var oop = require('../lib/oop');
     var TextMode = require('./text').Mode;
     var SqlHighlightRules = require('./sql_highlight_rules').SqlHighlightRules;
 
-    var Mode = function() {
+    var Mode = function () {
       this.HighlightRules = SqlHighlightRules;
       this.$behaviour = this.$defaultBehaviour;
     };
     oop.inherits(Mode, TextMode);
 
-    (function() {
+    (function () {
       this.lineCommentStart = '--';
 
       this.$id = 'ace/mode/sql';

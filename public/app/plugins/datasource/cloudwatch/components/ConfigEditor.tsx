@@ -3,13 +3,13 @@ import { InlineFormLabel, LegacyForms, Button } from '@grafana/ui';
 const { Select, Input } = LegacyForms;
 import {
   AppEvents,
+  SelectableValue,
   DataSourcePluginOptionsEditorProps,
   onUpdateDatasourceJsonDataOptionSelect,
   onUpdateDatasourceResetOption,
   onUpdateDatasourceJsonDataOption,
   onUpdateDatasourceSecureJsonDataOption,
 } from '@grafana/data';
-import { SelectableValue } from '@grafana/data';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchJsonData, CloudWatchSecureJsonData } from '../types';
@@ -100,6 +100,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
             'cn-northwest-1',
             'eu-central-1',
             'eu-north-1',
+            'eu-south-1',
             'eu-west-1',
             'eu-west-2',
             'eu-west-3',
@@ -151,10 +152,10 @@ export class ConfigEditor extends PureComponent<Props, State> {
               </InlineFormLabel>
               <Select
                 className="width-30"
-                value={authProviderOptions.find(authProvider => authProvider.value === options.jsonData.authType)}
+                value={authProviderOptions.find((authProvider) => authProvider.value === options.jsonData.authType)}
                 options={authProviderOptions}
                 defaultValue={options.jsonData.authType}
-                onChange={option => {
+                onChange={(option) => {
                   onUpdateDatasourceJsonDataOptionSelect(this.props, 'authType')(option);
                 }}
               />
@@ -294,7 +295,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
               </InlineFormLabel>
               <Select
                 className="width-30"
-                value={regions.find(region => region.value === options.jsonData.defaultRegion)}
+                value={regions.find((region) => region.value === options.jsonData.defaultRegion)}
                 options={regions}
                 defaultValue={options.jsonData.defaultRegion}
                 onChange={onUpdateDatasourceJsonDataOptionSelect(this.props, 'defaultRegion')}

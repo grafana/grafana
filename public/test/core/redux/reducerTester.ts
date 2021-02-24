@@ -35,7 +35,7 @@ export const deepFreeze = <T>(obj: T): T => {
 
   if (obj && obj instanceof Object) {
     const object: ObjectType = obj;
-    Object.getOwnPropertyNames(object).forEach(propertyName => {
+    Object.getOwnPropertyNames(object).forEach((propertyName) => {
       const objectProperty: any = object[propertyName];
       if (
         hasOwnProp.call(object, propertyName) &&

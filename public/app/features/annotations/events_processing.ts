@@ -7,10 +7,10 @@ export function dedupAnnotations(annotations: any) {
   const events = _.partition(annotations, 'id');
 
   const eventsById = _.groupBy(events[0], 'id');
-  dedup = _.map(eventsById, eventGroup => {
+  dedup = _.map(eventsById, (eventGroup) => {
     if (eventGroup.length > 1 && !_.every(eventGroup, isPanelAlert)) {
       // Get first non-panel alert
-      return _.find(eventGroup, event => {
+      return _.find(eventGroup, (event) => {
         return event.eventType !== 'panel-alert';
       });
     } else {

@@ -115,7 +115,7 @@ export class MetricTankMetaInspector extends PureComponent<Props, State> {
     return (
       <div>
         <h2 className="page-heading">Metrictank Lineage</h2>
-        {Object.keys(seriesMetas).map(key => this.renderMeta(seriesMetas[key], key))}
+        {Object.keys(seriesMetas).map((key) => this.renderMeta(seriesMetas[key], key))}
       </div>
     );
   }

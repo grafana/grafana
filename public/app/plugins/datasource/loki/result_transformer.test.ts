@@ -1,7 +1,13 @@
 import { CircularDataFrame, FieldCache, FieldType, MutableDataFrame } from '@grafana/data';
-import { LokiStreamResult, LokiTailResponse, LokiStreamResponse, LokiResultType, TransformerOptions } from './types';
+import {
+  LokiStreamResult,
+  LokiTailResponse,
+  LokiStreamResponse,
+  LokiResultType,
+  TransformerOptions,
+  LokiMatrixResult,
+} from './types';
 import * as ResultTransformer from './result_transformer';
-import { enhanceDataFrame } from './result_transformer';
 import { setTemplateSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
@@ -60,7 +66,7 @@ describe('loki result transformer', () => {
 
   describe('lokiStreamResultToDataFrame', () => {
     it('converts streams to series', () => {
-      const data = streamResult.map(stream => ResultTransformer.lokiStreamResultToDataFrame(stream));
+      const data = streamResult.map((stream) => ResultTransformer.lokiStreamResultToDataFrame(stream));
 
       expect(data.length).toBe(2);
       expect(data[0].fields[1].labels!['foo']).toEqual('bar');
@@ -94,13 +100,20 @@ describe('loki result transformer', () => {
         },
       ];
 
-      const data = streamResultWithDuplicateLogs.map(stream => ResultTransformer.lokiStreamResultToDataFrame(stream));
+      const data = streamResultWithDuplicateLogs.map((stream) => ResultTransformer.lokiStreamResultToDataFrame(stream));
 
       expect(data[0].fields[2].values.get(0)).toEqual('65cee200875f58ee1430d8bd2e8b74e7');
       expect(data[0].fields[2].values.get(1)).toEqual('65cee200875f58ee1430d8bd2e8b74e7_1');
       expect(data[0].fields[2].values.get(2)).not.toEqual('65cee200875f58ee1430d8bd2e8b74e7_2');
       expect(data[0].fields[2].values.get(3)).toEqual('65cee200875f58ee1430d8bd2e8b74e7_2');
       expect(data[1].fields[2].values.get(0)).not.toEqual('65cee200875f58ee1430d8bd2e8b74e7_3');
+    });
+
+    it('should append refId to the unique ids if refId is provided', () => {
+      const data = streamResult.map((stream) => ResultTransformer.lokiStreamResultToDataFrame(stream, false, 'B'));
+      expect(data.length).toBe(2);
+      expect(data[0].fields[2].values.get(0)).toEqual('2b431b8a98b80b3b2c2f4cd2444ae6cb_B');
+      expect(data[1].fields[2].values.get(0)).toEqual('75d73d66cff40f9d1a1f2d5a0bf295d0_B');
     });
   });
 
@@ -118,9 +131,9 @@ describe('loki result transformer', () => {
       });
 
       expect(ResultTransformer.enhanceDataFrame).toBeCalled();
-      dataFrames.forEach(frame => {
+      dataFrames.forEach((frame) => {
         expect(
-          frame.fields.filter(field => field.name === 'test' && field.type === 'string').length
+          frame.fields.filter((field) => field.name === 'test' && field.type === 'string').length
         ).toBeGreaterThanOrEqual(1);
       });
     });
@@ -189,14 +202,15 @@ describe('loki result transformer', () => {
       data.addField({ name: 'line', type: FieldType.string }).labels = { job: 'grafana' };
       data.addField({ name: 'labels', type: FieldType.other });
       data.addField({ name: 'id', type: FieldType.string });
+      data.refId = 'C';
 
       ResultTransformer.appendResponseToBufferedData(tailResponse, data);
-      expect(data.get(0).id).toEqual('870e4d105741bdfc2c67904ee480d4f3');
-      expect(data.get(1).id).toEqual('870e4d105741bdfc2c67904ee480d4f3_1');
-      expect(data.get(2).id).toEqual('707e4ec2b842f389dbb993438505856d');
-      expect(data.get(3).id).toEqual('78f044015a58fad3e257a855b167d85e');
-      expect(data.get(4).id).toEqual('870e4d105741bdfc2c67904ee480d4f3_2');
-      expect(data.get(5).id).toEqual('707e4ec2b842f389dbb993438505856d_1');
+      expect(data.get(0).id).toEqual('870e4d105741bdfc2c67904ee480d4f3_C');
+      expect(data.get(1).id).toEqual('870e4d105741bdfc2c67904ee480d4f3_1_C');
+      expect(data.get(2).id).toEqual('707e4ec2b842f389dbb993438505856d_C');
+      expect(data.get(3).id).toEqual('78f044015a58fad3e257a855b167d85e_C');
+      expect(data.get(4).id).toEqual('870e4d105741bdfc2c67904ee480d4f3_2_C');
+      expect(data.get(5).id).toEqual('707e4ec2b842f389dbb993438505856d_1_C');
     });
   });
 
@@ -209,12 +223,26 @@ describe('loki result transformer', () => {
       expect(label).toBe('label1');
     });
   });
+
+  describe('lokiResultsToTableModel', () => {
+    it('should correctly set the type of the label column to be a string', () => {
+      const lokiResultWithIntLabel = ([
+        { metric: { test: 1 }, value: [1610367143, 10] },
+        { metric: { test: 2 }, value: [1610367144, 20] },
+      ] as unknown) as LokiMatrixResult[];
+
+      const table = ResultTransformer.lokiResultsToTableModel(lokiResultWithIntLabel, 1, 'A', {});
+      expect(table.columns[0].type).toBe('time');
+      expect(table.columns[1].type).toBe('string');
+      expect(table.columns[2].type).toBe('number');
+    });
+  });
 });
 
 describe('enhanceDataFrame', () => {
   it('adds links to fields', () => {
     const df = new MutableDataFrame({ fields: [{ name: 'line', values: ['nothing', 'trace1=1234', 'trace2=foo'] }] });
-    enhanceDataFrame(df, {
+    ResultTransformer.enhanceDataFrame(df, {
       derivedFields: [
         {
           matcherRegex: 'trace1=(\\w+)',
@@ -254,6 +282,32 @@ describe('enhanceDataFrame', () => {
       title: '',
       internal: { datasourceName: 'Loki1', datasourceUid: 'uid2', query: { query: 'test' } },
       url: '',
+    });
+  });
+
+  describe('lokiPointsToTimeseriesPoints()', () => {
+    /**
+     * NOTE on time parameters:
+     * - Input time series data has timestamps in sec (like Prometheus)
+     * - Output time series has timestamps in ms (as expected for the chart lib)
+     * - Start/end parameters are in ns (as expected for Loki)
+     * - Step is in sec (like in Prometheus)
+     */
+    const data: Array<[number, string]> = [
+      [1, '1'],
+      [2, '0'],
+      [4, '1'],
+    ];
+
+    it('returns data as is if step, start, and end align', () => {
+      const options: Partial<TransformerOptions> = { start: 1 * 1e9, end: 4 * 1e9, step: 1 };
+      const result = ResultTransformer.lokiPointsToTimeseriesPoints(data, options as TransformerOptions);
+      expect(result).toEqual([
+        [1, 1000],
+        [0, 2000],
+        [null, 3000],
+        [1, 4000],
+      ]);
     });
   });
 });

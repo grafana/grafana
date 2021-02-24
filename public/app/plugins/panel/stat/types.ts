@@ -11,8 +11,9 @@ import {
   FieldOverrideContext,
   getFieldDisplayName,
   escapeStringForRegex,
+  VizOrientation,
+  PanelOptionsEditorBuilder,
 } from '@grafana/data';
-import { PanelOptionsEditorBuilder } from '@grafana/data';
 
 // Structure copied from angular
 export interface StatPanelOptions extends SingleStatBaseOptions {
@@ -22,8 +23,8 @@ export interface StatPanelOptions extends SingleStatBaseOptions {
   textMode: BigValueTextMode;
 }
 
-export function addStandardDataReduceOptions(
-  builder: PanelOptionsEditorBuilder<SingleStatBaseOptions>,
+export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
+  builder: PanelOptionsEditorBuilder<T>,
   includeOrientation = true,
   includeFieldMatcher = true,
   includeTextSizes = true
@@ -51,7 +52,7 @@ export function addStandardDataReduceOptions(
       min: 1,
       max: 5000,
     },
-    showIf: options => options.reduceOptions.values === true,
+    showIf: (options) => options.reduceOptions.values === true,
   });
 
   builder.addCustomEditor({
@@ -62,7 +63,7 @@ export function addStandardDataReduceOptions(
     editor: standardEditorsRegistry.get('stats-picker').editor as any,
     defaultValue: [ReducerID.lastNotNull],
     // Hides it when all values mode is on
-    showIf: currentConfig => currentConfig.reduceOptions.values === false,
+    showIf: (currentConfig) => currentConfig.reduceOptions.values === false,
   });
 
   if (includeFieldMatcher) {
@@ -101,12 +102,12 @@ export function addStandardDataReduceOptions(
       description: 'Stacking direction in case of multiple series or fields',
       settings: {
         options: [
-          { value: 'auto', label: 'Auto' },
-          { value: 'horizontal', label: 'Horizontal' },
-          { value: 'vertical', label: 'Vertical' },
+          { value: VizOrientation.Auto, label: 'Auto' },
+          { value: VizOrientation.Horizontal, label: 'Horizontal' },
+          { value: VizOrientation.Vertical, label: 'Vertical' },
         ],
       },
-      defaultValue: 'auto',
+      defaultValue: VizOrientation.Auto,
     });
   }
 

@@ -13,9 +13,15 @@ type Licensing interface {
 	// Return edition
 	Edition() string
 
+	// Used to build content delivery URL
+	ContentDeliveryPrefix() string
+
 	LicenseURL(user *SignedInUser) string
 
 	StateInfo() string
+}
 
-	TokenRaw() string
+type LicenseEnvironment interface {
+	// Environment is a map of environment variables
+	Environment() map[string]string
 }

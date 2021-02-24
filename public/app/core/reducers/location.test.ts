@@ -16,7 +16,7 @@ describe('locationReducer', () => {
             routeParams: { routeParam: 2 },
           })
         )
-        .thenStatePredicateShouldEqual(resultingState => {
+        .thenStatePredicateShouldEqual((resultingState) => {
           expect(resultingState.path).toEqual('/api/dashboard');
           expect(resultingState.url).toEqual('/api/dashboard?queryParam=1');
           expect(resultingState.query).toEqual({ queryParam: 1 });
@@ -40,7 +40,7 @@ describe('locationReducer', () => {
             routeParams: { routeParam: 2 },
           })
         )
-        .thenStatePredicateShouldEqual(resultingState => {
+        .thenStatePredicateShouldEqual((resultingState) => {
           expect(resultingState.path).toEqual('/api/dashboard');
           expect(resultingState.url).toEqual('/api/dashboard?queryParam=1');
           expect(resultingState.query).toEqual({ queryParam: 1 });
@@ -64,7 +64,7 @@ describe('locationReducer', () => {
             routeParams: { routeParam: 2 },
           })
         )
-        .thenStatePredicateShouldEqual(resultingState => {
+        .thenStatePredicateShouldEqual((resultingState) => {
           expect(resultingState.path).toEqual('/api/dashboard');
           expect(resultingState.url).toEqual('/api/dashboard?queryParam=1&queryParam2=2');
           expect(resultingState.query).toEqual({ queryParam: 1, queryParam2: 2 });
@@ -87,7 +87,7 @@ describe('locationReducer', () => {
             routeParams: { routeParam: 2 },
           })
         )
-        .thenStatePredicateShouldEqual(resultingState => {
+        .thenStatePredicateShouldEqual((resultingState) => {
           expect(resultingState.path).toEqual('/api/dashboard');
           expect(resultingState.url).toEqual('/api/dashboard?queryParam=3&queryParam2=2');
           expect(resultingState.query).toEqual({ queryParam: 3, queryParam2: 2 });
@@ -114,7 +114,7 @@ describe('locationReducer', () => {
             replace: false,
           })
         )
-        .thenStatePredicateShouldEqual(resultingState => {
+        .thenStatePredicateShouldEqual((resultingState) => {
           expect(resultingState.path).toEqual('/api/dashboard');
           expect(resultingState.url).toEqual('/api/dashboard?queryParam=1');
           expect(resultingState.query).toEqual({ queryParam: 1 });
@@ -141,7 +141,7 @@ describe('locationReducer', () => {
             routeParams: { routeParam: 2 },
           })
         )
-        .thenStatePredicateShouldEqual(resultingState => {
+        .thenStatePredicateShouldEqual((resultingState) => {
           expect(resultingState.path).toEqual('/api/state/path');
           expect(resultingState.url).toEqual('/api/state/path?queryParam=1');
           expect(resultingState.query).toEqual({ queryParam: 1 });

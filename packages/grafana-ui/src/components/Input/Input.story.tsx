@@ -102,7 +102,7 @@ export const WithFieldValidation = () => {
   return (
     <div>
       <Field invalid={value === ''} error={value === '' ? 'This input is required' : ''}>
-        <Input value={value} onChange={e => setValue(e.currentTarget.value)} />
+        <Input value={value} onChange={(e) => setValue(e.currentTarget.value)} />
       </Field>
     </div>
   );

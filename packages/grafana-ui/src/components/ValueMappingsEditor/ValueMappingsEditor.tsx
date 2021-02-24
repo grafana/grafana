@@ -17,7 +17,7 @@ export const ValueMappingsEditor: React.FC<Props> = ({ value, onChange, children
       text: '',
     };
 
-    const id = Math.max(...value.map(v => v.id), 0) + 1;
+    const id = Math.max(...value.map((v) => v.id), 0) + 1;
 
     onChange([
       ...value,
@@ -33,7 +33,7 @@ export const ValueMappingsEditor: React.FC<Props> = ({ value, onChange, children
   };
 
   const onMappingChange = (update: ValueMapping) => {
-    onChange(value.map(item => (item.id === update.id ? update : item)));
+    onChange(value.map((item) => (item.id === update.id ? update : item)));
   };
 
   return (

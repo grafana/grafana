@@ -15,20 +15,23 @@ const addValueToTextMappingText = (
     return allValueMappings.concat(valueToTextMapping);
   }
 
-  const valueAsNumber = parseFloat(value as string);
-  const valueToTextMappingAsNumber = parseFloat(valueToTextMapping.value as string);
+  let valueAsNumber, valueToTextMappingAsNumber;
 
-  if (isNaN(valueAsNumber) || isNaN(valueToTextMappingAsNumber)) {
-    if (value === valueToTextMapping.value) {
+  if (isNumeric(value as string) && isNumeric(valueToTextMapping.value)) {
+    valueAsNumber = parseFloat(value as string);
+    valueToTextMappingAsNumber = parseFloat(valueToTextMapping.value as string);
+
+    if (valueAsNumber === valueToTextMappingAsNumber) {
       return allValueMappings.concat(valueToTextMapping);
     }
-  }
-
-  if (valueAsNumber !== valueToTextMappingAsNumber) {
     return allValueMappings;
   }
 
-  return allValueMappings.concat(valueToTextMapping);
+  if (value === valueToTextMapping.value) {
+    return allValueMappings.concat(valueToTextMapping);
+  }
+
+  return allValueMappings;
 };
 
 const addRangeToTextMappingText = (
@@ -93,3 +96,12 @@ const isNullValueMap = (mapping: ValueMap): boolean => {
   }
   return mapping.value.toLowerCase() === 'null';
 };
+
+// Ref https://stackoverflow.com/a/42356340
+export function isNumeric(num: any) {
+  if (num === true) {
+    return false;
+  }
+
+  return Boolean(Number(num));
+}

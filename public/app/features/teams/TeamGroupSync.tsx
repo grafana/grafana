@@ -140,7 +140,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
                   <th style={{ width: '1%' }} />
                 </tr>
               </thead>
-              <tbody>{groups.map(group => this.renderGroup(group))}</tbody>
+              <tbody>{groups.map((group) => this.renderGroup(group))}</tbody>
             </table>
           </div>
         )}

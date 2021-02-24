@@ -46,7 +46,7 @@ export const GroupBys: FunctionComponent<Props> = ({ groupBys = [], values = [],
           onChange={({ value = '' }) => onChange([...values, value])}
           options={[
             variableOptionGroup,
-            ...labelsToGroupedOptions([...groupBys.filter(groupBy => !values.includes(groupBy)), ...systemLabels]),
+            ...labelsToGroupedOptions([...groupBys.filter((groupBy) => !values.includes(groupBy)), ...systemLabels]),
           ]}
         />
       )}

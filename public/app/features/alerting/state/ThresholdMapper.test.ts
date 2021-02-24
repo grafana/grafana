@@ -1,6 +1,9 @@
-import { describe, it, expect } from 'test/lib/common';
+import { hiddenReducerTypes, ThresholdMapper } from './ThresholdMapper';
+import alertDef from './alertDef';
 
-import { ThresholdMapper } from './ThresholdMapper';
+const visibleReducerTypes = alertDef.reducerTypes
+  .filter(({ value }) => hiddenReducerTypes.indexOf(value) === -1)
+  .map(({ value }) => value);
 
 describe('ThresholdMapper', () => {
   describe('with greater than evaluator', () => {
@@ -74,4 +77,62 @@ describe('ThresholdMapper', () => {
       expect(panel.thresholds[1].value).toBe(200);
     });
   });
+
+  visibleReducerTypes.forEach((type) => {
+    describe(`with {${type}} reducer`, () => {
+      it('visible should be true', () => {
+        const panel = getPanel({ reducerType: type });
+
+        const updated = ThresholdMapper.alertToGraphThresholds(panel);
+
+        expect(updated).toBe(true);
+        expect(panel.thresholds[0]).toEqual({
+          value: 100,
+          op: 'gt',
+          fill: true,
+          line: true,
+          colorMode: 'critical',
+          visible: true,
+        });
+      });
+    });
+  });
+
+  hiddenReducerTypes.forEach((type) => {
+    describe(`with {${type}} reducer`, () => {
+      it('visible should be false', () => {
+        const panel = getPanel({ reducerType: type });
+
+        const updated = ThresholdMapper.alertToGraphThresholds(panel);
+
+        expect(updated).toBe(true);
+        expect(panel.thresholds[0]).toEqual({
+          value: 100,
+          op: 'gt',
+          fill: true,
+          line: true,
+          colorMode: 'critical',
+          visible: false,
+        });
+      });
+    });
+  });
 });
+
+function getPanel({ reducerType }: { reducerType?: string } = {}) {
+  const panel: any = {
+    type: 'graph',
+    options: { alertThreshold: true },
+    alert: {
+      conditions: [
+        {
+          type: 'query',
+          evaluator: { type: 'gt', params: [100] },
+          reducer: { type: reducerType },
+        },
+      ],
+    },
+  };
+
+  return panel;
+}

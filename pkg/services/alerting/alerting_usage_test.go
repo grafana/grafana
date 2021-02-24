@@ -38,7 +38,7 @@ func TestAlertingUsageStats(t *testing.T) {
 		return nil
 	})
 
-	ae.Bus.AddHandler(func(query *models.GetDataSourceByIdQuery) error {
+	ae.Bus.AddHandler(func(query *models.GetDataSourceQuery) error {
 		ds := map[int64]*models.DataSource{
 			1: {Type: "influxdb"},
 			2: {Type: "graphite"},

@@ -42,7 +42,7 @@ function bootstrapTagsinput() {
     },
     template: '<select multiple></select>',
     replace: false,
-    link: function(scope: any, element: any, attrs: any) {
+    link: function (scope: any, element: any, attrs: any) {
       if (!angular.isArray(scope.model)) {
         scope.model = [];
       }

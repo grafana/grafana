@@ -1,10 +1,9 @@
-import React from 'react';
+import React, { PureComponent } from 'react';
 import config from 'app/core/config';
 
 import { updateLocation } from 'app/core/actions';
 import { connect } from 'react-redux';
 import { StoreState } from 'app/types';
-import { PureComponent } from 'react';
 import { getBackendSrv } from '@grafana/runtime';
 import { hot } from 'react-hot-loader';
 import appEvents from 'app/core/app_events';

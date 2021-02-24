@@ -140,7 +140,7 @@ export function graphiteFuncEditor($compile: any, templateSrv: TemplateSrv) {
 
         let options = paramDef(paramIndex).options;
         if (paramDef(paramIndex).type === 'int') {
-          options = _.map(options, val => {
+          options = _.map(options, (val) => {
             return val.toString();
           });
         }
@@ -157,7 +157,7 @@ export function graphiteFuncEditor($compile: any, templateSrv: TemplateSrv) {
         });
 
         const typeahead = $input.data('typeahead');
-        typeahead.lookup = function() {
+        typeahead.lookup = function () {
           this.query = this.$element.val() || '';
           return this.process(this.source);
         };
@@ -229,10 +229,7 @@ export function graphiteFuncEditor($compile: any, templateSrv: TemplateSrv) {
         if ($scope.func.added) {
           $scope.func.added = false;
           setTimeout(() => {
-            elem
-              .find('.query-part__link')
-              .first()
-              .click();
+            elem.find('.query-part__link').first().click();
           }, 10);
         }
       }

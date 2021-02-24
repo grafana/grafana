@@ -11,6 +11,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/rendering"
 
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -47,8 +48,9 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg) (*macaron.Macaron, *HT
 	hs := &HTTPServer{
 		Cfg:           cfg,
 		Bus:           bus.GetBus(),
-		License:       &licensing.OSSLicensingService{},
+		License:       &licensing.OSSLicensingService{Cfg: cfg},
 		RenderService: r,
+		PluginManager: &plugins.PluginManager{Cfg: cfg},
 	}
 
 	m := macaron.New()
@@ -74,13 +76,17 @@ func TestHTTPServer_GetFrontendSettings_hideVersionAnonyomus(t *testing.T) {
 	}
 
 	cfg := setting.NewCfg()
+	cfg.Env = "testing"
+	cfg.BuildVersion = "7.8.9"
+	cfg.BuildCommit = "01234567"
 	m, hs := setupTestEnvironment(t, cfg)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/frontend/settings", nil)
 
-	setting.BuildVersion = "7.8.9"
-	setting.BuildCommit = "01234567"
-	setting.Env = "testing"
+	// TODO: Remove
+	setting.BuildVersion = cfg.BuildVersion
+	setting.BuildCommit = cfg.BuildCommit
+	setting.Env = cfg.Env
 
 	tests := []struct {
 		desc        string
