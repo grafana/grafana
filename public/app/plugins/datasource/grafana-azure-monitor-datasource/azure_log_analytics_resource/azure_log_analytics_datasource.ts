@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import LogAnalyticsQuerystringBuilder from '../log_analytics/querystring_builder';
-import ResponseParser from './response_parser';
+import ResponseParser from '../response_parser';
 import { AzureMonitorQuery, AzureDataSourceJsonData, AzureLogsVariable, AzureQueryType } from '../types';
 import {
   DataQueryRequest,
@@ -226,18 +226,18 @@ export default class azureResourceLogAnalyticsDatasource extends DataSourceWithB
    * external interface does not support
    */
   metricFindQueryInternal(query: string): Promise<MetricFindValue[]> {
-    const workspacesQuery = query.match(/^workspaces\(\)/i);
-    if (workspacesQuery) {
+    const resourcesQuery = query.match(/^resources\(\)/i);
+    if (resourcesQuery) {
       return this.getResources(this.subscriptionId);
     }
 
-    const workspacesQueryWithSub = query.match(/^workspaces\(["']?([^\)]+?)["']?\)/i);
-    if (workspacesQueryWithSub) {
-      return this.getResources((workspacesQueryWithSub[1] || '').trim());
+    const resourcesQueryWithSub = query.match(/^resources\(["']?([^\)]+?)["']?\)/i);
+    if (resourcesQueryWithSub) {
+      return this.getResources((resourcesQueryWithSub[1] || '').trim());
     }
 
-    return this.getDefaultOrFirstResource().then((workspace: any) => {
-      const queries: any[] = this.buildQuery(query, null, workspace);
+    return this.getDefaultOrFirstResource().then((resource: any) => {
+      const queries: any[] = this.buildQuery(query, null, resource);
 
       const promises = this.doQueries(queries);
 
@@ -306,8 +306,8 @@ export default class azureResourceLogAnalyticsDatasource extends DataSourceWithB
       return Promise.resolve(this.defaultOrFirstResource);
     }
 
-    return this.getResources(this.subscriptionId).then((workspaces: any[]) => {
-      this.defaultOrFirstResource = workspaces[0].value;
+    return this.getResources(this.subscriptionId).then((resources: any[]) => {
+      this.defaultOrFirstResource = resources[0].value;
       return this.defaultOrFirstResource;
     });
   }

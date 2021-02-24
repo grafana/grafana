@@ -49,19 +49,11 @@ describe('AzureResourceLogAnalyticsDatasource', () => {
       ],
     };
 
-    const workspaceResponse = {
-      value: [
-        {
-          name: 'aworkspace',
-          properties: {
-            source: 'Azure',
-            customerId: 'abc1b44e-3e57-4410-b027-6cc0ae6dee67',
-          },
-        },
-      ],
+    const resourceResponse = {
+      rows: [['test resource id', 'test resource name']],
     };
 
-    let workspacesUrl: string;
+    let resourcesUrl: string;
     let azureLogAnalyticsUrl: string;
 
     beforeEach(async () => {
@@ -72,20 +64,20 @@ describe('AzureResourceLogAnalyticsDatasource', () => {
       ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
 
       datasourceRequestMock.mockImplementation((options: { url: string }) => {
-        if (options.url.indexOf('Microsoft.OperationalInsights/workspaces') > -1) {
-          workspacesUrl = options.url;
-          return Promise.resolve({ data: workspaceResponse, status: 200 });
+        if (options.url.indexOf('Microsoft.ResourceGraph/resources') > -1) {
+          resourcesUrl = options.url;
+          return Promise.resolve({ data: { data: resourceResponse, status: 200 } });
         } else {
           azureLogAnalyticsUrl = options.url;
-          return Promise.resolve({ data: tableResponseWithOneColumn, status: 200 });
+          return Promise.resolve({ data: { data: tableResponseWithOneColumn, status: 200 } });
         }
       });
 
-      await ctx.ds.metricFindQuery('workspace("aworkspace").AzureActivity  | distinct Category');
+      await ctx.ds.metricFindQuery('resource("test resource id").AzureActivity  | distinct Category');
     });
 
     it('should use the loganalyticsazure plugin route', () => {
-      expect(workspacesUrl).toContain('azuremonitor');
+      expect(resourcesUrl).toContain('azuremonitor');
       expect(azureLogAnalyticsUrl).toContain('loganalyticsazure');
     });
   });
@@ -131,7 +123,7 @@ describe('AzureResourceLogAnalyticsDatasource', () => {
     });
 
     it('should return a schema with a table and rows', () => {
-      return ctx.ds.azureLogAnalyticsDatasource.getSchema('myWorkspace').then((result: KustoSchema) => {
+      return ctx.ds.azureResourceLogAnalyticsDatasource.getSchema('myWorkspace').then((result: KustoSchema) => {
         expect(Object.keys(result.Databases.Default.Tables).length).toBe(2);
         expect(result.Databases.Default.Tables.Alert.Name).toBe('Alert');
         expect(result.Databases.Default.Tables.AzureActivity.Name).toBe('AzureActivity');
@@ -149,126 +141,29 @@ describe('AzureResourceLogAnalyticsDatasource', () => {
   describe('When performing metricFindQuery', () => {
     let queryResults: AzureLogsVariable[];
 
-    const workspacesResponse = {
-      value: [
-        {
-          name: 'workspace1',
-          properties: {
-            customerId: 'eeee4fde-1aaa-4d60-9974-eeee562ffaa1',
-          },
-        },
-        {
-          name: 'workspace2',
-          properties: {
-            customerId: 'eeee4fde-1aaa-4d60-9974-eeee562ffaa2',
-          },
-        },
+    const resourcesResponse = {
+      rows: [
+        ['test resource id 1', 'test resource name 1'],
+        ['test resource id 2', 'test resource name 2'],
       ],
     };
 
-    describe('and is the workspaces() macro', () => {
+    describe('and is the resources() macro', () => {
       beforeEach(async () => {
         datasourceRequestMock.mockImplementation((options: { url: string }) => {
-          expect(options.url).toContain('xxx');
-          return Promise.resolve({ data: workspacesResponse, status: 200 });
+          expect(options.url).toContain('Microsoft.ResourceGraph/resources');
+          return Promise.resolve({ data: { data: resourcesResponse, status: 200 } });
         });
 
-        queryResults = await ctx.ds.metricFindQuery('workspaces()');
+        queryResults = await ctx.ds.metricFindQuery('resources()');
       });
 
-      it('should return a list of workspaces', () => {
+      it('should return a list of resources', () => {
         expect(queryResults.length).toBe(2);
-        expect(queryResults[0].text).toBe('workspace1');
-        expect(queryResults[0].value).toBe('eeee4fde-1aaa-4d60-9974-eeee562ffaa1');
-        expect(queryResults[1].text).toBe('workspace2');
-        expect(queryResults[1].value).toBe('eeee4fde-1aaa-4d60-9974-eeee562ffaa2');
-      });
-    });
-
-    describe('and is the workspaces() macro with the subscription parameter', () => {
-      beforeEach(async () => {
-        datasourceRequestMock.mockImplementation((options: { url: string }) => {
-          expect(options.url).toContain('11112222-eeee-4949-9b2d-9106972f9123');
-          return Promise.resolve({ data: workspacesResponse, status: 200 });
-        });
-
-        queryResults = await ctx.ds.metricFindQuery('workspaces(11112222-eeee-4949-9b2d-9106972f9123)');
-      });
-
-      it('should return a list of workspaces', () => {
-        expect(queryResults.length).toBe(2);
-        expect(queryResults[0].text).toBe('workspace1');
-        expect(queryResults[0].value).toBe('eeee4fde-1aaa-4d60-9974-eeee562ffaa1');
-        expect(queryResults[1].text).toBe('workspace2');
-        expect(queryResults[1].value).toBe('eeee4fde-1aaa-4d60-9974-eeee562ffaa2');
-      });
-    });
-
-    describe('and is the workspaces() macro with the subscription parameter quoted', () => {
-      beforeEach(async () => {
-        datasourceRequestMock.mockImplementation((options: { url: string }) => {
-          expect(options.url).toContain('11112222-eeee-4949-9b2d-9106972f9123');
-          return Promise.resolve({ data: workspacesResponse, status: 200 });
-        });
-
-        queryResults = await ctx.ds.metricFindQuery('workspaces("11112222-eeee-4949-9b2d-9106972f9123")');
-      });
-
-      it('should return a list of workspaces', () => {
-        expect(queryResults.length).toBe(2);
-        expect(queryResults[0].text).toBe('workspace1');
-        expect(queryResults[0].value).toBe('eeee4fde-1aaa-4d60-9974-eeee562ffaa1');
-        expect(queryResults[1].text).toBe('workspace2');
-        expect(queryResults[1].value).toBe('eeee4fde-1aaa-4d60-9974-eeee562ffaa2');
-      });
-    });
-
-    describe('and is a custom query', () => {
-      const tableResponseWithOneColumn = {
-        tables: [
-          {
-            name: 'PrimaryResult',
-            columns: [
-              {
-                name: 'Category',
-                type: 'string',
-              },
-            ],
-            rows: [['Administrative'], ['Policy']],
-          },
-        ],
-      };
-
-      const workspaceResponse = {
-        value: [
-          {
-            name: 'aworkspace',
-            properties: {
-              source: 'Azure',
-              customerId: 'abc1b44e-3e57-4410-b027-6cc0ae6dee67',
-            },
-          },
-        ],
-      };
-
-      beforeEach(async () => {
-        datasourceRequestMock.mockImplementation((options: { url: string }) => {
-          if (options.url.indexOf('Microsoft.OperationalInsights/workspaces') > -1) {
-            return Promise.resolve({ data: workspaceResponse, status: 200 });
-          } else {
-            return Promise.resolve({ data: tableResponseWithOneColumn, status: 200 });
-          }
-        });
-
-        queryResults = await ctx.ds.metricFindQuery('workspace("aworkspace").AzureActivity  | distinct Category');
-      });
-
-      it('should return a list of categories in the correct format', () => {
-        expect(queryResults.length).toBe(2);
-        expect(queryResults[0].text).toBe('Administrative');
-        expect(queryResults[0].value).toBe('Administrative');
-        expect(queryResults[1].text).toBe('Policy');
-        expect(queryResults[1].value).toBe('Policy');
+        expect(queryResults[0].text).toBe('test resource name 1');
+        expect(queryResults[0].value).toBe('test resource id 1');
+        expect(queryResults[1].text).toBe('test resource name 2');
+        expect(queryResults[1].value).toBe('test resource id 2');
       });
     });
   });
@@ -300,24 +195,16 @@ describe('AzureResourceLogAnalyticsDatasource', () => {
       ],
     };
 
-    const workspaceResponse = {
-      value: [
-        {
-          name: 'aworkspace',
-          properties: {
-            source: 'Azure',
-            customerId: 'abc1b44e-3e57-4410-b027-6cc0ae6dee67',
-          },
-        },
-      ],
+    const resourceResponse = {
+      rows: [['test resource id', 'test resource name']],
     };
 
     let annotationResults: any[];
 
     beforeEach(async () => {
       datasourceRequestMock.mockImplementation((options: { url: string }) => {
-        if (options.url.indexOf('Microsoft.OperationalInsights/workspaces') > -1) {
-          return Promise.resolve({ data: workspaceResponse, status: 200 });
+        if (options.url.indexOf('Microsoft.ResourceGraph/resources') > -1) {
+          return Promise.resolve({ data: { data: resourceResponse, status: 200 } });
         } else {
           return Promise.resolve({ data: tableResponse, status: 200 });
         }

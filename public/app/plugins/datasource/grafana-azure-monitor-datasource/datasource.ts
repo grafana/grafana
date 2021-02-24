@@ -143,6 +143,12 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
       return amResult;
     }
 
+    const arlaResult =
+      query.indexOf('resource') > -1 ? this.azureResourceLogAnalyticsDatasource.metricFindQueryInternal(query) : null;
+    if (arlaResult) {
+      return arlaResult;
+    }
+
     const alaResult = this.azureLogAnalyticsDatasource.metricFindQueryInternal(query);
     if (alaResult) {
       return alaResult;

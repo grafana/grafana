@@ -68,8 +68,7 @@ describe('AzureLogAnalyticsDatasource', () => {
       ctx.instanceSettings.jsonData.subscriptionId = 'xxx';
       ctx.instanceSettings.jsonData.tenantId = 'xxx';
       ctx.instanceSettings.jsonData.clientId = 'xxx';
-      console.log(ctx.instanceSettings.jsonData.azureLogAnalyticsSameAs);
-      // ctx.instanceSettings.jsonData.azureLogAnalyticsSameAs = true;
+      ctx.instanceSettings.jsonData.azureLogAnalyticsSameAs = true;
       ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
 
       datasourceRequestMock.mockImplementation((options: { url: string }) => {
