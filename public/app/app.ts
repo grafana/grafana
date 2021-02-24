@@ -50,12 +50,13 @@ import { SentryEchoBackend } from './core/services/echo/backends/sentry/SentryBa
 import { setVariableQueryRunner, VariableQueryRunner } from './features/variables/query/VariableQueryRunner';
 import { configureStore } from './store/configureStore';
 import { DashboardLoaderSrv } from './features/dashboard/services/DashboardLoaderSrv';
-import AppWrapper from './core/AppWrapper';
+import { AppWrapper } from './core/AppWrapper';
 import { LocationService } from './core/navigation/LocationService';
 
 // Function that patches Angular routing that seems to kick off because of $routeProvider and ng-include usages
 // Ref: https://stackoverflow.com/questions/58146221/is-it-possible-to-tamper-client-side-code-in-angular-app
 import bridgeReactAngularRouting from './core/navigation/bridgeReactAngularRouting';
+import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
 
 // add move to lodash for backward compatabiltiy
 // @ts-ignore
@@ -168,6 +169,10 @@ export class GrafanaApp {
     angular.module('grafana.services').service('dashboardLoaderSrv', DashboardLoaderSrv);
     registerAngularDirectives();
     bridgeReactAngularRouting();
+
+    // intercept anchor clicks and forward it to custom history instead of relying on browser's history
+    document.addEventListener('click', interceptLinkClicks);
+
     // disable tool tip animation
     $.fn.tooltip.defaults.animation = false;
 
