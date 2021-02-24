@@ -34,22 +34,22 @@ func (rp *ResponseParser) Parse(response *Response, query *Query) models.DataQue
 	return queryRes
 }
 
-func (rp *ResponseParser) transformRows(rows []Row, queryResult models.DataQueryResult, query *Query) models.TSDBTimeSeriesSlice {
-	var result models.TSDBTimeSeriesSlice
+func (rp *ResponseParser) transformRows(rows []Row, queryResult models.DataQueryResult, query *Query) models.DataTimeSeriesSlice {
+	var result models.DataTimeSeriesSlice
 	for _, row := range rows {
 		for columnIndex, column := range row.Columns {
 			if column == "time" {
 				continue
 			}
 
-			var points models.TSDBTimeSeriesPoints
+			var points models.DataTimeSeriesPoints
 			for _, valuePair := range row.Values {
 				point, err := rp.parseTimepoint(valuePair, columnIndex)
 				if err == nil {
 					points = append(points, point)
 				}
 			}
-			result = append(result, models.TSDBTimeSeries{
+			result = append(result, models.DataTimeSeries{
 				Name:   rp.formatSeriesName(row, column, query),
 				Points: points,
 				Tags:   row.Tags,
@@ -115,19 +115,19 @@ func (rp *ResponseParser) buildSeriesNameFromQuery(row Row, column string) strin
 	return fmt.Sprintf("%s.%s%s", row.Name, column, tagText)
 }
 
-func (rp *ResponseParser) parseTimepoint(valuePair []interface{}, valuePosition int) (models.TSDBTimePoint, error) {
+func (rp *ResponseParser) parseTimepoint(valuePair []interface{}, valuePosition int) (models.DataTimePoint, error) {
 	value := rp.parseValue(valuePair[valuePosition])
 
 	timestampNumber, ok := valuePair[0].(json.Number)
 	if !ok {
-		return models.TSDBTimePoint{}, fmt.Errorf("valuePair[0] has invalid type: %#v", valuePair[0])
+		return models.DataTimePoint{}, fmt.Errorf("valuePair[0] has invalid type: %#v", valuePair[0])
 	}
 	timestamp, err := timestampNumber.Float64()
 	if err != nil {
-		return models.TSDBTimePoint{}, err
+		return models.DataTimePoint{}, err
 	}
 
-	return models.TSDBTimePoint{value, null.FloatFrom(timestamp)}, nil
+	return models.DataTimePoint{value, null.FloatFrom(timestamp)}, nil
 }
 
 func (rp *ResponseParser) parseValue(value interface{}) null.Float {

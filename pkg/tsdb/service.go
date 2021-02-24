@@ -29,7 +29,7 @@ func init() {
 	})
 }
 
-// Service handles requests to TSDB data sources.
+// Service handles data requests to data sources.
 type Service struct {
 	Cfg                    *setting.Cfg                  `inject:""`
 	CloudWatchService      *cloudwatch.CloudWatchService `inject:""`
@@ -67,7 +67,7 @@ func (s *Service) HandleRequest(ctx context.Context, ds *models.DataSource, quer
 
 		endpoint, err := factory(ds)
 		if err != nil {
-			return pluginmodels.DataResponse{}, fmt.Errorf("could not instantiate endpoint for TSDB plugin %q: %w",
+			return pluginmodels.DataResponse{}, fmt.Errorf("could not instantiate endpoint for data plugin %q: %w",
 				ds.Type, err)
 		}
 		return endpoint.DataQuery(ctx, ds, query)

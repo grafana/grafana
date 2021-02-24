@@ -38,7 +38,7 @@ type SqlMacroEngine interface {
 // SqlQueryResultTransformer transforms a query result row to RowValues with proper types.
 type SqlQueryResultTransformer interface {
 	// TransformQueryResult transforms a query result row to RowValues with proper types.
-	TransformQueryResult(columnTypes []*sql.ColumnType, rows *core.Rows) (pluginmodels.TSDBRowValues, error)
+	TransformQueryResult(columnTypes []*sql.ColumnType, rows *core.Rows) (pluginmodels.DataRowValues, error)
 	// TransformQueryError transforms a query error.
 	TransformQueryError(err error) error
 }
@@ -234,9 +234,9 @@ func (e *sqlQueryEndpoint) transformToTable(query pluginmodels.DataSubQuery, row
 	timeIndex := -1
 	timeEndIndex := -1
 
-	table := pluginmodels.TSDBTable{
-		Columns: make([]pluginmodels.TSDBTableColumn, columnCount),
-		Rows:    make([]pluginmodels.TSDBRowValues, 0),
+	table := pluginmodels.DataTable{
+		Columns: make([]pluginmodels.DataTableColumn, columnCount),
+		Rows:    make([]pluginmodels.DataRowValues, 0),
 	}
 
 	for i, name := range columnNames {
@@ -305,7 +305,7 @@ func newProcessCfg(query pluginmodels.DataSubQuery, tsdbQuery pluginmodels.DataQ
 		metricPrefix:       false,
 		fillMissing:        fillMissing,
 		seriesByQueryOrder: list.New(),
-		pointsBySeries:     make(map[string]pluginmodels.TSDBTimeSeries),
+		pointsBySeries:     make(map[string]pluginmodels.DataTimeSeries),
 		tsdbQuery:          tsdbQuery,
 	}
 	return cfg, nil
@@ -394,7 +394,7 @@ func (e *sqlQueryEndpoint) transformToTimeSeries(query pluginmodels.DataSubQuery
 		// align interval start
 		intervalStart = math.Floor(intervalStart/cfg.fillInterval) * cfg.fillInterval
 		for i := intervalStart + cfg.fillInterval; i < intervalEnd; i += cfg.fillInterval {
-			series.Points = append(series.Points, pluginmodels.TSDBTimePoint{cfg.fillValue, null.FloatFrom(i)})
+			series.Points = append(series.Points, pluginmodels.DataTimePoint{cfg.fillValue, null.FloatFrom(i)})
 			cfg.rowCount++
 		}
 	}
@@ -413,7 +413,7 @@ type processCfg struct {
 	metricPrefix       bool
 	metricPrefixValue  string
 	fillMissing        bool
-	pointsBySeries     map[string]pluginmodels.TSDBTimeSeries
+	pointsBySeries     map[string]pluginmodels.DataTimeSeries
 	seriesByQueryOrder *list.List
 	fillValue          null.Float
 	tsdbQuery          pluginmodels.DataQuery
@@ -481,7 +481,7 @@ func (e *sqlQueryEndpoint) processRow(cfg *processCfg) error {
 
 		series, exist := cfg.pointsBySeries[metric]
 		if !exist {
-			series = pluginmodels.TSDBTimeSeries{Name: metric}
+			series = pluginmodels.DataTimeSeries{Name: metric}
 			cfg.pointsBySeries[metric] = series
 			cfg.seriesByQueryOrder.PushBack(metric)
 		}
@@ -506,12 +506,12 @@ func (e *sqlQueryEndpoint) processRow(cfg *processCfg) error {
 			intervalStart = math.Floor(intervalStart/cfg.fillInterval) * cfg.fillInterval
 
 			for i := intervalStart; i < timestamp; i += cfg.fillInterval {
-				series.Points = append(series.Points, pluginmodels.TSDBTimePoint{cfg.fillValue, null.FloatFrom(i)})
+				series.Points = append(series.Points, pluginmodels.DataTimePoint{cfg.fillValue, null.FloatFrom(i)})
 				cfg.rowCount++
 			}
 		}
 
-		series.Points = append(series.Points, pluginmodels.TSDBTimePoint{value, null.FloatFrom(timestamp)})
+		series.Points = append(series.Points, pluginmodels.DataTimePoint{value, null.FloatFrom(timestamp)})
 
 		if setting.Env == setting.Dev {
 			e.log.Debug("Rows", "metric", metric, "time", timestamp, "value", value)
@@ -523,7 +523,7 @@ func (e *sqlQueryEndpoint) processRow(cfg *processCfg) error {
 
 // ConvertSqlTimeColumnToEpochMs converts column named time to unix timestamp in milliseconds
 // to make native datetime types and epoch dates work in annotation and table queries.
-func ConvertSqlTimeColumnToEpochMs(values pluginmodels.TSDBRowValues, timeIndex int) {
+func ConvertSqlTimeColumnToEpochMs(values pluginmodels.DataRowValues, timeIndex int) {
 	if timeIndex >= 0 {
 		switch value := values[timeIndex].(type) {
 		case time.Time:

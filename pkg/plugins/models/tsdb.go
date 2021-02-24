@@ -37,33 +37,33 @@ type DataTimeRange struct {
 	now  time.Time
 }
 
-type TSDBTable struct {
-	Columns []TSDBTableColumn `json:"columns"`
-	Rows    []TSDBRowValues   `json:"rows"`
+type DataTable struct {
+	Columns []DataTableColumn `json:"columns"`
+	Rows    []DataRowValues   `json:"rows"`
 }
 
-type TSDBTableColumn struct {
+type DataTableColumn struct {
 	Text string `json:"text"`
 }
 
-type TSDBTimePoint [2]null.Float
-type TSDBTimeSeriesPoints []TSDBTimePoint
-type TSDBTimeSeriesSlice []TSDBTimeSeries
-type TSDBRowValues []interface{}
+type DataTimePoint [2]null.Float
+type DataTimeSeriesPoints []DataTimePoint
+type DataTimeSeriesSlice []DataTimeSeries
+type DataRowValues []interface{}
 
 type DataQueryResult struct {
 	Error       error               `json:"-"`
 	ErrorString string              `json:"error,omitempty"`
 	RefID       string              `json:"refId"`
 	Meta        *simplejson.Json    `json:"meta,omitempty"`
-	Series      TSDBTimeSeriesSlice `json:"series"`
-	Tables      []TSDBTable         `json:"tables"`
+	Series      DataTimeSeriesSlice `json:"series"`
+	Tables      []DataTable         `json:"tables"`
 	Dataframes  DataFrames          `json:"dataframes"`
 }
 
-type TSDBTimeSeries struct {
+type DataTimeSeries struct {
 	Name   string               `json:"name"`
-	Points TSDBTimeSeriesPoints `json:"points"`
+	Points DataTimeSeriesPoints `json:"points"`
 	Tags   map[string]string    `json:"tags,omitempty"`
 }
 
@@ -163,12 +163,12 @@ func parseTimeRange(s string, now time.Time, withRoundUp bool, location *time.Lo
 	return now.Add(diff), nil
 }
 
-// SeriesToFrame converts a TSDBTimeSeries to an SDK frame.
-func SeriesToFrame(series TSDBTimeSeries) (*data.Frame, error) {
+// SeriesToFrame converts a DataTimeSeries to an SDK frame.
+func SeriesToFrame(series DataTimeSeries) (*data.Frame, error) {
 	timeVec := make([]*time.Time, len(series.Points))
 	floatVec := make([]*float64, len(series.Points))
 	for idx, point := range series.Points {
-		timeVec[idx], floatVec[idx] = convertTSDBTimePoint(point)
+		timeVec[idx], floatVec[idx] = convertDataTimePoint(point)
 	}
 	frame := data.NewFrame(series.Name,
 		data.NewField("time", nil, timeVec),
@@ -178,9 +178,9 @@ func SeriesToFrame(series TSDBTimeSeries) (*data.Frame, error) {
 	return frame, nil
 }
 
-// convertTSDBTimePoint converts a TSDBTimePoint into two values appropriate
+// convertDataTimePoint converts a DataTimePoint into two values appropriate
 // for Series values.
-func convertTSDBTimePoint(point TSDBTimePoint) (t *time.Time, f *float64) {
+func convertDataTimePoint(point DataTimePoint) (t *time.Time, f *float64) {
 	timeIdx, valueIdx := 1, 0
 	if point[timeIdx].Valid { // Assuming valid is null?
 		tI := int64(point[timeIdx].Float64)

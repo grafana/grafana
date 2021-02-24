@@ -127,9 +127,9 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryCo
 }
 
 func transformAnnotationToTable(data []map[string]string, result pluginmodels.DataQueryResult) {
-	table := pluginmodels.TSDBTable{
-		Columns: make([]pluginmodels.TSDBTableColumn, 4),
-		Rows:    make([]pluginmodels.TSDBRowValues, 0),
+	table := pluginmodels.DataTable{
+		Columns: make([]pluginmodels.DataTableColumn, 4),
+		Rows:    make([]pluginmodels.DataRowValues, 0),
 	}
 	table.Columns[0].Text = "time"
 	table.Columns[1].Text = "title"

@@ -113,7 +113,7 @@ func (e *GraphiteExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSou
 	result.Results = make(map[string]pluginmodels.DataQueryResult)
 	queryRes := pluginmodels.DataQueryResult{}
 	for _, series := range data {
-		queryRes.Series = append(queryRes.Series, pluginmodels.TSDBTimeSeries{
+		queryRes.Series = append(queryRes.Series, pluginmodels.DataTimeSeries{
 			Name:   series.Target,
 			Points: series.DataPoints,
 		})

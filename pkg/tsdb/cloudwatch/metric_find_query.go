@@ -278,8 +278,8 @@ func (e *cloudWatchExecutor) executeMetricFindQuery(ctx context.Context, queryCo
 }
 
 func transformToTable(data []suggestData, result pluginmodels.DataQueryResult) {
-	table := pluginmodels.TSDBTable{
-		Columns: []pluginmodels.TSDBTableColumn{
+	table := pluginmodels.DataTable{
+		Columns: []pluginmodels.DataTableColumn{
 			{
 				Text: "text",
 			},
@@ -287,7 +287,7 @@ func transformToTable(data []suggestData, result pluginmodels.DataQueryResult) {
 				Text: "value",
 			},
 		},
-		Rows: make([]pluginmodels.TSDBRowValues, 0),
+		Rows: make([]pluginmodels.DataRowValues, 0),
 	}
 
 	for _, r := range data {

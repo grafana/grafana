@@ -101,7 +101,7 @@ func (m *manager) Register(pluginID string, factory backendmodels.PluginFactoryF
 
 func (m *manager) GetDataPlugin(pluginID string) pluginmodels.DataPlugin {
 	plugin := m.plugins[pluginID]
-	if plugin == nil || !plugin.CanHandleTSDBQueries() {
+	if plugin == nil || !plugin.CanHandleDataQueries() {
 		return nil
 	}
 

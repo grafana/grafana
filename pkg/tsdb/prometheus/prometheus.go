@@ -200,10 +200,10 @@ func parseResponse(value model.Value, query *PrometheusQuery) (pluginmodels.Data
 	}
 
 	for _, v := range data {
-		series := pluginmodels.TSDBTimeSeries{
+		series := pluginmodels.DataTimeSeries{
 			Name:   formatLegend(v.Metric, query),
 			Tags:   make(map[string]string, len(v.Metric)),
-			Points: make([]pluginmodels.TSDBTimePoint, 0, len(v.Values)),
+			Points: make([]pluginmodels.DataTimePoint, 0, len(v.Values)),
 		}
 
 		for k, v := range v.Metric {
@@ -211,7 +211,7 @@ func parseResponse(value model.Value, query *PrometheusQuery) (pluginmodels.Data
 		}
 
 		for _, k := range v.Values {
-			series.Points = append(series.Points, pluginmodels.TSDBTimePoint{
+			series.Points = append(series.Points, pluginmodels.DataTimePoint{
 				null.FloatFrom(float64(k.Value)),
 				null.FloatFrom(float64(k.Timestamp.Unix() * 1000)),
 			})

@@ -71,7 +71,7 @@ func (e *cloudWatchExecutor) transformQueryResponsesToQueryResult(cloudwatchResp
 		responses := responsesByRefID[refID]
 		queryResult := pluginmodels.DataQueryResult{
 			RefID:  refID,
-			Series: pluginmodels.TSDBTimeSeriesSlice{},
+			Series: pluginmodels.DataTimeSeriesSlice{},
 		}
 		frames := make(data.Frames, 0, len(responses))
 

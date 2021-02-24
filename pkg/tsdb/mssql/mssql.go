@@ -103,7 +103,7 @@ type mssqlQueryResultTransformer struct {
 }
 
 func (t *mssqlQueryResultTransformer) TransformQueryResult(columnTypes []*sql.ColumnType, rows *core.Rows) (
-	pluginmodels.TSDBRowValues, error) {
+	pluginmodels.DataRowValues, error) {
 	values := make([]interface{}, len(columnTypes))
 	valuePtrs := make([]interface{}, len(columnTypes))
 

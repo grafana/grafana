@@ -42,7 +42,7 @@ func (cp *corePlugin) Logger() log.Logger {
 	return cp.logger
 }
 
-func (cp *corePlugin) CanHandleTSDBQueries() bool {
+func (cp *corePlugin) CanHandleDataQueries() bool {
 	return cp.isDataPlugin
 }
 

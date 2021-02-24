@@ -77,7 +77,7 @@ type mysqlQueryResultTransformer struct {
 }
 
 func (t *mysqlQueryResultTransformer) TransformQueryResult(columnTypes []*sql.ColumnType, rows *core.Rows) (
-	pluginmodels.TSDBRowValues, error) {
+	pluginmodels.DataRowValues, error) {
 	values := make([]interface{}, len(columnTypes))
 
 	for i := range values {

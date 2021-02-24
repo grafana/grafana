@@ -132,7 +132,7 @@ func (e *OpenTsdbExecutor) parseResponse(query OpenTsdbQuery, res *http.Response
 	}
 
 	for _, val := range data {
-		series := pluginmodels.TSDBTimeSeries{
+		series := pluginmodels.DataTimeSeries{
 			Name: val.Metric,
 		}
 
@@ -142,7 +142,7 @@ func (e *OpenTsdbExecutor) parseResponse(query OpenTsdbQuery, res *http.Response
 				plog.Info("Failed to unmarshal opentsdb timestamp", "timestamp", timeString)
 				return nil, err
 			}
-			series.Points = append(series.Points, pluginmodels.TSDBTimePoint{
+			series.Points = append(series.Points, pluginmodels.DataTimePoint{
 				null.FloatFrom(value), null.FloatFrom(timestamp),
 			})
 		}

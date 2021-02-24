@@ -39,7 +39,7 @@ func newPlugin(descriptor PluginDescriptor) models.PluginFactoryFunc {
 	}
 }
 
-func (p *grpcPlugin) CanHandleTSDBQueries() bool {
+func (p *grpcPlugin) CanHandleDataQueries() bool {
 	return false
 }
 

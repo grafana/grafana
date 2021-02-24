@@ -69,7 +69,7 @@ func (p *DataSourcePlugin) DataQuery(ctx context.Context, dsInfo *models.DataSou
 		return endpoint.Query(ctx, dsInfo, query)
 	}
 
-	return DataResponse{}, fmt.Errorf("plugin %q doesn't support TSDB queries", p.Id)
+	return DataResponse{}, fmt.Errorf("plugin %q doesn't support data queries", p.Id)
 }
 
 func (p *DataSourcePlugin) onLegacyPluginStart(pluginID string, client *grpcplugin.LegacyClient, logger log.Logger) error {
