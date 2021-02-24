@@ -27,6 +27,6 @@ fi
 
 cd packages/grafana-e2e
 
-yarn $CMD --record --key 2fc99d3a-e25f-4724-a4bb-79f338bfb2da --env BASE_URL=$URL,SLOWMO=$SLOWMO \
+yarn $CMD --env BASE_URL=$URL,SLOWMO=$SLOWMO \
   --config integrationFolder=../../e2e/$SUITE/specs,screenshotsFolder=../../e2e/$SUITE/screenshots,videosFolder=../../e2e/$SUITE/videos,fileServerFolder=./cypress,viewportWidth=1920,viewportHeight=1080,trashAssetsBeforeRuns=false \
-  $PARAMS --spec ../../e2e/suite1/specs/trace-view-scrolling.spec.ts
+  $PARAMS
