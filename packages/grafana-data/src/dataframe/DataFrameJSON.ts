@@ -102,6 +102,8 @@ export interface FieldSchema {
  * Since JSON cannot encode NaN, Inf, -Inf, and undefined, the locations
  * of these entities in field value arrays are stored here for restoration
  * after JSON.parse()
+ *
+ * @alpha
  */
 export interface FieldValueEntityLookup {
   NaN?: number[];
