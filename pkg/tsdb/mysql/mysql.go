@@ -24,7 +24,7 @@ func characterEscape(s string, escapeChar string) string {
 	return strings.ReplaceAll(s, escapeChar, url.QueryEscape(escapeChar))
 }
 
-func NewExecutor(datasource *models.DataSource) (pluginmodels.TSDBPlugin, error) {
+func NewExecutor(datasource *models.DataSource) (pluginmodels.DataPlugin, error) {
 	logger := log.New("tsdb.mysql")
 
 	protocol := "tcp"

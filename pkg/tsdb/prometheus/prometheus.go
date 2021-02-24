@@ -40,7 +40,7 @@ func (bat basicAuthTransport) RoundTrip(req *http.Request) (*http.Response, erro
 	return bat.Transport.RoundTrip(req)
 }
 
-func NewExecutor(dsInfo *models.DataSource) (pluginmodels.TSDBPlugin, error) {
+func NewExecutor(dsInfo *models.DataSource) (pluginmodels.DataPlugin, error) {
 	transport, err := dsInfo.GetHttpTransport()
 	if err != nil {
 		return nil, err

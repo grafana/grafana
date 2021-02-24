@@ -36,7 +36,7 @@ type Service struct {
 	CloudMonitoringService *cloudmonitoring.Service      `inject:""`
 	AzureMonitorService    *azuremonitor.Service         `inject:""`
 
-	registry map[string]func(*models.DataSource) (pluginmodels.TSDBPlugin, error)
+	registry map[string]func(*models.DataSource) (pluginmodels.DataPlugin, error)
 }
 
 // Init initialises the service.
@@ -57,7 +57,7 @@ func (s *Service) Init() error {
 
 func (s *Service) HandleRequest(ctx context.Context, ds *models.DataSource, query pluginmodels.DataQuery) (
 	pluginmodels.DataResponse, error) {
-	plugin := plugins.GetTSDBPlugin(ds.Type)
+	plugin := plugins.GetDataPlugin(ds.Type)
 	if plugin == nil {
 		factory, exists := s.registry[ds.Type]
 		if !exists {

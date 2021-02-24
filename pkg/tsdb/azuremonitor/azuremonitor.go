@@ -39,7 +39,7 @@ type AzureMonitorExecutor struct {
 }
 
 // NewAzureMonitorExecutor initializes a http client
-func (s *Service) NewExecutor(dsInfo *models.DataSource) (pluginmodels.TSDBPlugin, error) {
+func (s *Service) NewExecutor(dsInfo *models.DataSource) (pluginmodels.DataPlugin, error) {
 	httpClient, err := dsInfo.GetHttpClient()
 	if err != nil {
 		return nil, err

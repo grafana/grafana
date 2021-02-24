@@ -20,7 +20,7 @@ import (
 
 var logger = log.New("tsdb.mssql")
 
-func NewExecutor(datasource *models.DataSource) (pluginmodels.TSDBPlugin, error) {
+func NewExecutor(datasource *models.DataSource) (pluginmodels.DataPlugin, error) {
 	cnnstr, err := generateConnectionString(datasource)
 	if err != nil {
 		return nil, err

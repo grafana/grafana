@@ -23,7 +23,7 @@ type Executor struct {
 	ResponseParser *ResponseParser
 }
 
-func NewExecutor(*models.DataSource) (pluginmodels.TSDBPlugin, error) {
+func NewExecutor(*models.DataSource) (pluginmodels.DataPlugin, error) {
 	return &Executor{
 		QueryParser:    &InfluxdbQueryParser{},
 		ResponseParser: &ResponseParser{},

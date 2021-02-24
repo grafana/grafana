@@ -72,7 +72,7 @@ type DataResponse struct {
 	Message string                     `json:"message,omitempty"`
 }
 
-type TSDBPlugin interface {
+type DataPlugin interface {
 	DataQuery(ctx context.Context, ds *models.DataSource, query DataQuery) (DataResponse, error)
 }
 

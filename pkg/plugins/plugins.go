@@ -595,8 +595,8 @@ func collectPluginFilesWithin(rootDir string) ([]string, error) {
 	return files, err
 }
 
-// GetTSDBPlugin gets a TSDBPlugin with a certain name. If none is found, nil is returned.
-func GetTSDBPlugin(pluginID string) pluginmodels.TSDBPlugin {
+// GetDataPlugin gets a DataPlugin with a certain name. If none is found, nil is returned.
+func GetDataPlugin(pluginID string) pluginmodels.DataPlugin {
 	return DataSources[pluginID]
 	// TODO: Look among other plugins
 }

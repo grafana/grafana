@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/models/adapters"
 )
 
-func newQueryEndpointAdapter(pluginID string, logger log.Logger, handler backend.QueryDataHandler) pluginmodels.TSDBPlugin {
+func newQueryEndpointAdapter(pluginID string, logger log.Logger, handler backend.QueryDataHandler) pluginmodels.DataPlugin {
 	return &queryEndpointAdapter{
 		pluginID: pluginID,
 		logger:   logger,

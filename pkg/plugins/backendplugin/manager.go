@@ -99,13 +99,13 @@ func (m *manager) Register(pluginID string, factory backendmodels.PluginFactoryF
 	return nil
 }
 
-func (m *manager) GetTSDBPlugin(pluginID string) pluginmodels.TSDBPlugin {
+func (m *manager) GetDataPlugin(pluginID string) pluginmodels.DataPlugin {
 	plugin := m.plugins[pluginID]
 	if plugin == nil || !plugin.CanHandleTSDBQueries() {
 		return nil
 	}
 
-	if tsdbPlugin, ok := plugin.(pluginmodels.TSDBPlugin); ok {
+	if tsdbPlugin, ok := plugin.(pluginmodels.DataPlugin); ok {
 		return tsdbPlugin
 	}
 

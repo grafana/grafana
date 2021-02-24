@@ -16,7 +16,7 @@ type Executor struct {
 }
 
 // NewExecutor creates a new Executor.
-func NewExecutor(*models.DataSource) (pluginmodels.TSDBPlugin, error) {
+func NewExecutor(*models.DataSource) (pluginmodels.DataPlugin, error) {
 	return &Executor{
 		intervalCalculator: interval.NewCalculator(),
 	}, nil

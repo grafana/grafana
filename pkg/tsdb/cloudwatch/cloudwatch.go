@@ -69,7 +69,7 @@ func (s *CloudWatchService) Init() error {
 	return nil
 }
 
-func (s *CloudWatchService) NewExecutor(*models.DataSource) (pluginmodels.TSDBPlugin, error) {
+func (s *CloudWatchService) NewExecutor(*models.DataSource) (pluginmodels.DataPlugin, error) {
 	// XXX: Can we just inline newExecutor?
 	return newExecutor(s.LogsService), nil
 }

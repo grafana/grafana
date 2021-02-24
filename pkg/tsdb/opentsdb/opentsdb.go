@@ -24,7 +24,7 @@ import (
 type OpenTsdbExecutor struct {
 }
 
-func NewExecutor(*models.DataSource) (pluginmodels.TSDBPlugin, error) {
+func NewExecutor(*models.DataSource) (pluginmodels.DataPlugin, error) {
 	return &OpenTsdbExecutor{}, nil
 }
 

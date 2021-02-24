@@ -16,7 +16,7 @@ import (
 	"xorm.io/core"
 )
 
-func NewExecutor(datasource *models.DataSource) (pluginmodels.TSDBPlugin, error) {
+func NewExecutor(datasource *models.DataSource) (pluginmodels.DataPlugin, error) {
 	logger := log.New("tsdb.postgres")
 	logger.Debug("Creating Postgres query endpoint")
 

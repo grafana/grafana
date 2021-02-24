@@ -82,7 +82,7 @@ type SqlQueryEndpointConfiguration struct {
 }
 
 var NewSqlQueryEndpoint = func(config *SqlQueryEndpointConfiguration, queryResultTransformer SqlQueryResultTransformer,
-	macroEngine SqlMacroEngine, log log.Logger) (pluginmodels.TSDBPlugin, error) {
+	macroEngine SqlMacroEngine, log log.Logger) (pluginmodels.DataPlugin, error) {
 	queryEndpoint := sqlQueryEndpoint{
 		queryResultTransformer: queryResultTransformer,
 		macroEngine:            macroEngine,

@@ -25,7 +25,7 @@ type GraphiteExecutor struct {
 	HttpClient *http.Client
 }
 
-func NewExecutor(*models.DataSource) (pluginmodels.TSDBPlugin, error) {
+func NewExecutor(*models.DataSource) (pluginmodels.DataPlugin, error) {
 	return &GraphiteExecutor{}, nil
 }
 

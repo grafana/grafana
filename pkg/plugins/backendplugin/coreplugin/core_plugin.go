@@ -13,7 +13,7 @@ import (
 
 // corePlugin represents a plugin that's part of Grafana core.
 type corePlugin struct {
-	isTSDBPlugin bool
+	isDataPlugin bool
 	pluginID     string
 	logger       log.Logger
 	backend.CheckHealthHandler
@@ -43,7 +43,7 @@ func (cp *corePlugin) Logger() log.Logger {
 }
 
 func (cp *corePlugin) CanHandleTSDBQueries() bool {
-	return cp.isTSDBPlugin
+	return cp.isDataPlugin
 }
 
 func (cp *corePlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
@@ -56,7 +56,7 @@ func (cp *corePlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 
 func (cp *corePlugin) Start(ctx context.Context) error {
 	if cp.QueryDataHandler != nil {
-		cp.isTSDBPlugin = true
+		cp.isDataPlugin = true
 	}
 	return nil
 }
