@@ -49,7 +49,7 @@ export const Basic: Story<ColorPickerProps> = ({ enableNamedColors }) => {
   );
 };
 
-export const SeriesPicker: Story = ({ enableNamedColors }) => {
+export const SeriesPicker: Story<ColorPickerProps> = ({ enableNamedColors }) => {
   return (
     <UseState initialState="#00ff00">
       {(selectedColor, updateSelectedColor) => {
