@@ -15,7 +15,7 @@ import { DashboardModel, PanelModel } from '../../state';
 import { LibraryPanelsView } from '../../../library-panels/components/LibraryPanelsView/LibraryPanelsView';
 import { LibraryPanelDTO } from 'app/features/library-panels/state/api';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
-import { GrafanaTheme } from '@grafana/data';
+import { DateTimeInput, GrafanaTheme } from '@grafana/data';
 import { css, cx, keyframes } from 'emotion';
 import tinycolor from 'tinycolor2';
 
@@ -150,7 +150,7 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard, u
       {addPanelView ? (
         <LibraryPanelsView
           className={styles.libraryPanelsWrapper}
-          formatDate={(dateString: string) => dashboard.formatDate(dateString, 'L')}
+          formatDate={(dateString: DateTimeInput) => dashboard.formatDate(dateString, 'L')}
           onClickCard={(panel) => onAddLibraryPanel(panel)}
           showSecondaryActions={false}
         />

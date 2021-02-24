@@ -18,7 +18,6 @@ import { defaultQueryParams } from 'app/features/search/reducers/searchQueryRedu
 import { ContextSrv } from './context_srv';
 
 export class KeybindingSrv {
-  helpModal: boolean;
   modalOpen = false;
 
   /** @ngInject */

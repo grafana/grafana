@@ -176,7 +176,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     this.forceUpdate();
   };
 
-  onDisplayModeChange = (mode: DisplayMode) => {
+  onDisplayModeChange = (mode?: DisplayMode) => {
     const { updatePanelEditorUIState } = this.props;
     updatePanelEditorUIState({
       mode: mode,
