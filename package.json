@@ -196,6 +196,7 @@
     "webpack-cli": "3.3.10",
     "webpack-dev-server": "3.11.1",
     "webpack-merge": "4.2.2",
+    "worker-loader": "^3.0.8",
     "zone.js": "0.7.8"
   },
   "dependencies": {
@@ -239,6 +240,7 @@
     "debounce-promise": "3.1.2",
     "emotion": "10.0.27",
     "eventemitter3": "4.0.0",
+    "events": "^3.2.0",
     "fast-text-encoding": "^1.0.0",
     "file-saver": "2.0.2",
     "hoist-non-react-statics": "3.3.2",

@@ -1,5 +1,3 @@
-import Centrifuge from 'centrifuge/dist/centrifuge.protobuf';
-import SockJS from 'sockjs-client';
 import { GrafanaLiveSrv, setGrafanaLiveSrv, getGrafanaLiveSrv, config } from '@grafana/runtime';
 import { BehaviorSubject } from 'rxjs';
 import { LiveChannel, LiveChannelScope, LiveChannelAddress } from '@grafana/data';
@@ -11,6 +9,7 @@ import {
   GrafanaLivePluginScope,
 } from './scopes';
 import { registerLiveFeatures } from './features';
+import CentrifugeWorkerProxy from './CentrifugeWorkerProxy';
 
 export const sessionId =
   (window as any)?.grafanaBootData?.user?.id +
@@ -21,31 +20,27 @@ export const sessionId =
 
 export class CentrifugeSrv implements GrafanaLiveSrv {
   readonly open = new Map<string, CentrifugeLiveChannel>();
-
-  readonly centrifuge: Centrifuge;
+  readonly centrifugeProxy: CentrifugeWorkerProxy;
   readonly connectionState: BehaviorSubject<boolean>;
   readonly connectionBlocker: Promise<void>;
   readonly scopes: Record<LiveChannelScope, GrafanaLiveScope>;
 
   constructor() {
-    this.centrifuge = new Centrifuge(`${config.appUrl}live/sockjs`, {
-      debug: true,
-      sockjs: SockJS,
-    });
-    this.centrifuge.setConnectData({
-      sessionId,
-    });
-    this.centrifuge.connect(); // do connection
-    this.connectionState = new BehaviorSubject<boolean>(this.centrifuge.isConnected());
+    this.centrifugeProxy = new CentrifugeWorkerProxy(config.appUrl, sessionId);
+
+    this.centrifugeProxy.connect();
+
+    this.connectionState = new BehaviorSubject<boolean>(this.centrifugeProxy.isConnected());
+
     this.connectionBlocker = new Promise<void>((resolve) => {
-      if (this.centrifuge.isConnected()) {
+      if (this.centrifugeProxy.isConnected()) {
         return resolve();
       }
       const connectListener = () => {
         resolve();
-        this.centrifuge.removeListener('connect', connectListener);
+        this.centrifugeProxy.off('connect', connectListener);
       };
-      this.centrifuge.addListener('connect', connectListener);
+      this.centrifugeProxy.on('connect', connectListener);
     });
 
     this.scopes = {
@@ -55,9 +50,9 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
     };
 
     // Register global listeners
-    this.centrifuge.on('connect', this.onConnect);
-    this.centrifuge.on('disconnect', this.onDisconnect);
-    this.centrifuge.on('publish', this.onServerSideMessage);
+    this.centrifugeProxy.on('connect', this.onConnect);
+    this.centrifugeProxy.on('disconnect', this.onDisconnect);
+    this.centrifugeProxy.on('publish', this.onServerSideMessage);
   }
 
   //----------------------------------------------------------
@@ -65,7 +60,7 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
   //----------------------------------------------------------
 
   onConnect = (context: any) => {
-    console.log('CONNECT', context);
+    console.log('LIVE CONNECT', context);
     this.connectionState.next(true);
   };
 
@@ -121,13 +116,13 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
       throw new Error('unknown path: ' + addr.path);
     }
     if (config.canPublish?.()) {
-      channel.publish = (data: any) => this.centrifuge.publish(channel.id, data);
+      channel.publish = (data: any) => this.centrifugeProxy.publish(channel.id, data);
     }
     const events = channel.initalize(config);
-    if (!this.centrifuge.isConnected()) {
+    if (!this.centrifugeProxy.isConnected()) {
       await this.connectionBlocker;
     }
-    channel.subscription = this.centrifuge.subscribe(channel.id, events);
+    channel.subscription = this.centrifugeProxy.subscribe(channel.id, events);
     return;
   }
 
@@ -139,7 +134,7 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
    * Is the server currently connected
    */
   isConnected() {
-    return this.centrifuge.isConnected();
+    return this.centrifugeProxy.isConnected();
   }
 
   /**
