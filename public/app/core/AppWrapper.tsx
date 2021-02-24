@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { Router, Route, Redirect } from 'react-router-dom';
+import React, { useEffect, useRef } from 'react';
+import { Router, Route, Redirect, Switch } from 'react-router-dom';
 import angular from 'angular';
 import { each, extend } from 'lodash';
 import { config, getLocationService } from '@grafana/runtime';
@@ -68,13 +68,6 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
     // @ts-ignore
     const roles = route.roles ? route.roles() : [];
 
-    // TODO[Router]: test this logic
-    if (roles && roles.length) {
-      if (!roles.some((r: string) => contextSrv.hasRole(r))) {
-        return <Redirect to="/" />;
-      }
-    }
-
     if (isAngularRoute) {
       return null;
     }
@@ -95,6 +88,13 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
             })
           );
 
+          // TODO[Router]: test this logic
+          if (roles && roles.length) {
+            if (!roles.some((r: string) => contextSrv.hasRole(r))) {
+              return <Redirect to="/" />;
+            }
+          }
+
           return (
             <GrafanaRoute
               {...props}
@@ -111,7 +111,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
   };
 
   renderRoutes() {
-    return <>{routes.map((descriptor, i) => this.renderRoute(descriptor, i))}</>;
+    return <Switch>{routes.map((descriptor, i) => this.renderRoute(descriptor, i))}</Switch>;
   }
 
   render() {
@@ -157,15 +157,15 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
 }
 
 const GrafanaRoute: React.FC<GrafanaRouteProps<any>> = (props) => {
+  const pageClasses = useRef<string[]>([]);
+  pageClasses.current = props.pageClass ? props.pageClass.split(' ') : [];
+
   useEffect(() => {
     navigationLogger('GrafanaRoute', false, 'Mounted', props.match);
-    if (props.pageClass) {
-      document.body.classList.add(props.pageClass);
-    }
+    pageClasses.current.forEach((c) => document.body.classList.add(c));
+
     return () => {
-      if (props.pageClass) {
-        document.body.classList.remove(props.pageClass);
-      }
+      pageClasses.current.forEach((c) => document.body.classList.add(c));
     };
   });
 
