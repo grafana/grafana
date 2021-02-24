@@ -237,12 +237,14 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"licenseUrl":      hs.License.LicenseURL(c.SignedInUser),
 			"edition":         hs.License.Edition(),
 		},
-		"featureToggles":     hs.Cfg.FeatureToggles,
-		"rendererAvailable":  hs.RenderService.IsAvailable(),
-		"http2Enabled":       hs.Cfg.Protocol == setting.HTTP2Scheme,
-		"sentry":             hs.Cfg.Sentry,
-		"marketplaceUrl":     hs.Cfg.MarketplaceURL,
-		"expressionsEnabled": hs.Cfg.ExpressionsEnabled,
+		"featureToggles":          hs.Cfg.FeatureToggles,
+		"rendererAvailable":       hs.RenderService.IsAvailable(),
+		"http2Enabled":            hs.Cfg.Protocol == setting.HTTP2Scheme,
+		"sentry":                  hs.Cfg.Sentry,
+		"marketplaceUrl":          hs.Cfg.MarketplaceURL,
+		"expressionsEnabled":      hs.Cfg.ExpressionsEnabled,
+		"awsAllowedAuthProviders": hs.Cfg.AWSAllowedAuthProviders,
+		"awsAssumeRoleEnabled":    hs.Cfg.AWSAssumeRoleEnabled,
 	}
 
 	return jsonObj, nil
