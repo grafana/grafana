@@ -3,6 +3,7 @@ import { PieChartPanel } from './PieChartPanel';
 import { PieChartOptions } from './types';
 import { addStandardDataReduceOptions } from '../stat/types';
 import { LegendDisplayMode, PieChartType } from '@grafana/ui';
+import { PieChartLabels } from '@grafana/ui/src/components/PieChart/PieChart';
 
 export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
   .useFieldConfig({
@@ -35,6 +36,19 @@ export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
         },
         defaultValue: PieChartType.Pie,
       })
+      .addSelect({
+        name: 'Labels',
+        path: 'displayLabels',
+        defaultValue: [],
+        description: 'Select the labels to be displayed in the pie chart',
+        settings: {
+          options: [
+            { value: PieChartLabels.Percent, label: 'Percent' },
+            { value: PieChartLabels.Name, label: 'Name' },
+            { value: PieChartLabels.Value, label: 'Value' },
+          ],
+        },
+      })
       .addBooleanSwitch({
         name: 'Show name',
         path: 'labelOptions.showName',
@@ -53,6 +67,11 @@ export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
       .addBooleanSwitch({
         name: 'Show percent in legend',
         path: 'legend.showPercent',
+        defaultValue: false,
+      })
+      .addBooleanSwitch({
+        name: 'Show value in legend',
+        path: 'legend.showValue',
         defaultValue: false,
       })
       .addRadio({

@@ -3,6 +3,6 @@ import { PieChartType, SingleStatBaseOptions, PieChartLabelOptions, VizLegendOpt
 export interface PieChartOptions extends SingleStatBaseOptions {
   pieType: PieChartType;
   labelOptions: PieChartLabelOptions;
+  displayLabels: [];
   legend: VizLegendOptions;
-  showPercentInLegend: boolean;
 }

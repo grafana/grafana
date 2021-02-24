@@ -13,12 +13,19 @@ import { VizLegend, VizLegendItem } from '..';
 import { VizLayout } from '../VizLayout/VizLayout';
 import { LegendDisplayMode, VizLegendOptions } from '../VizLegend/types';
 
+export enum PieChartLabels {
+  Name = 'name',
+  Value = 'value',
+  Percent = 'percent',
+}
+
 interface SvgProps {
   height: number;
   width: number;
   values: DisplayValue[];
   pieType: PieChartType;
   labelOptions?: PieChartLabelOptions;
+  displayLabels?: PieChartLabels[];
   useGradients?: boolean;
 }
 export interface Props extends SvgProps {
@@ -38,6 +45,7 @@ export interface PieChartLabelOptions {
 
 export interface PieChartLegendOptions extends VizLegendOptions {
   showPercent?: boolean;
+  showValue?: boolean;
 }
 
 const defaultLegendOptions: PieChartLegendOptions = {
@@ -60,13 +68,20 @@ export const PieChart: FC<Props> = ({ values, legendOptions = defaultLegendOptio
         color: value.color ?? FALLBACK_COLOR,
         yAxis: 1,
         getDisplayValues: () => {
+          let displayValues = [];
           if (legendOptions.showPercent) {
             const fractionOfTotal = value.numeric / total;
             const percentOfTotal = fractionOfTotal * 100;
-            return [{ numeric: fractionOfTotal, percent: percentOfTotal, text: percentOfTotal.toFixed(0) + '%' }];
-          } else {
-            return [];
+            displayValues.push({
+              numeric: fractionOfTotal,
+              percent: percentOfTotal,
+              text: percentOfTotal.toFixed(0) + '%',
+            });
           }
+          if (legendOptions.showValue) {
+            displayValues.push({ numeric: value.numeric, text: formattedValueToString(value) });
+          }
+          return displayValues;
         },
       };
     });
