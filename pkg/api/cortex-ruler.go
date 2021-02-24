@@ -1,9 +1,9 @@
 package api
 
 import (
+	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/prometheus/common/model"
-	"github.com/prometheus/prometheus/pkg/rulefmt"
 )
 
 // swagger:route Get /api/v1/rules ruler RouteGetRulesConfig
@@ -99,9 +99,9 @@ type RuleGroupConfig struct {
 }
 
 type ApiRuleNode struct {
-	Record      string         `yaml:"record,omitempty" json:"record,omitempty"`
-	Alert       string        `yaml:"alert,omitempty" json:"alert,omitempty"`
-	Expr        string         `yaml:"expr" json:"expr"`
+	Record      string            `yaml:"record,omitempty" json:"record,omitempty"`
+	Alert       string            `yaml:"alert,omitempty" json:"alert,omitempty"`
+	Expr        string            `yaml:"expr" json:"expr"`
 	For         model.Duration    `yaml:"for,omitempty" json:"for,omitempty"`
 	Labels      map[string]string `yaml:"labels,omitempty" json:"labels,omitempty"`
 	Annotations map[string]string `yaml:"annotations,omitempty" json:"annotations,omitempty"`
@@ -114,17 +114,17 @@ type ExtendedRuleNode struct {
 }
 
 // UpsertAlertDefinitionCommand is copy of the unexported struct:
-https://github.com/grafana/grafana/blob/debb82e12417e82a0e2bd09e1a450065f884c1bc/pkg/services/ngalert/models.go#L85
+// https://github.com/grafana/grafana/blob/debb82e12417e82a0e2bd09e1a450065f884c1bc/pkg/services/ngalert/models.go#L85
 type UpsertAlertDefinitionCommand struct {
-	Title           string            `json:"title" yaml:"title"`
+	Title string `json:"title" yaml:"title"`
 	// OrgID is an obsolete field (it will derive from the x-grafana-org-id header)
-	OrgID           int64             `json:"-" yaml:"-"`
+	OrgID int64 `json:"-" yaml:"-"`
 	// Condition is the refID of the query or expression to be evaluated
-	Condition       string            `json:"condition" yaml:"condition"`
+	Condition string `json:"condition" yaml:"condition"`
 	// Data is an array of the queries and expressions
-	Data            []eval.AlertQuery `json:"data" yaml:"data"`
+	Data []eval.AlertQuery `json:"data" yaml:"data"`
 	// IntervalSeconds is an obsolete field (it will derive from the ruleGroup interval)
-	IntervalSeconds *int64            `json:"-" yaml:"-"`
+	IntervalSeconds *int64 `json:"-" yaml:"-"`
 	// UID is set only for existing definitions
 	UID string `json:"uid" yaml:"uid"`
 
@@ -158,7 +158,7 @@ type ExtendedUpsertAlertDefinitionCommand struct {
 	ExecutionErrorState ExecutionErrorState    `json:"exec_err_state" yaml:"exec_err_state"`
 	Settings            map[string]interface{} `json:"settings" yaml:"settings"`
 	// internal state
-	FolderUID string `json:"-" yaml:"-"`
+	FolderUID      string   `json:"-" yaml:"-"`
 	DatasourceUIDs []string `json:"-" yaml:"-"`
-	RuleGroupUID string `json:"-" yaml:"-"`
+	RuleGroupUID   string   `json:"-" yaml:"-"`
 }
