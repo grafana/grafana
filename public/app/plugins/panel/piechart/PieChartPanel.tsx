@@ -26,6 +26,7 @@ export class PieChartPanel extends PureComponent<Props> {
         values={values}
         pieType={options.pieType}
         labelOptions={options.labelOptions}
+        legendOptions={options.legend}
       />
     );
   }

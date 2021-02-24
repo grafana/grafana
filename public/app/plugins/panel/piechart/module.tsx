@@ -3,6 +3,7 @@ import { PieChartPanel } from './PieChartPanel';
 import { PieChartOptions } from './types';
 import { addStandardDataReduceOptions } from '../stat/types';
 import { PieChartType } from '@grafana/ui';
+import { addLegendOptions } from '../timeseries/config';
 
 export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
   .useFieldConfig({
@@ -49,5 +50,11 @@ export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
         name: 'Show percent',
         path: 'labelOptions.showPercent',
         defaultValue: false,
+      })
+      .addBooleanSwitch({
+        name: 'Show percent in legend',
+        path: 'legend.showPercent',
+        defaultValue: false,
       });
+    addLegendOptions(builder, { placement: 'right' });
   });
