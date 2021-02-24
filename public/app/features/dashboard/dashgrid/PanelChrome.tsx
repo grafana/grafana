@@ -136,9 +136,12 @@ export class PanelChrome extends Component<Props, State> {
   // So in this context we can only do a single call to setState
   onDataUpdate(data: PanelData) {
     if (!this.props.isInView) {
-      // Ignore events when not visible.
-      // The call will be repeated when the panel comes into view
-      this.setState({ refreshWhenInView: true });
+      if (data.state !== LoadingState.Streaming) {
+        // Ignore events when not visible.
+        // The call will be repeated when the panel comes into view
+        this.setState({ refreshWhenInView: true });
+      }
+
       return;
     }
 

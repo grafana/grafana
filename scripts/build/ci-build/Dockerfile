@@ -1,5 +1,5 @@
 # Use old Debian (this has support into 2022) in order to ensure binary compatibility with older glibc's.
-FROM debian:stretch-20201209 AS toolchain
+FROM debian:stretch-20210208 AS toolchain
 
 ENV OSX_MIN=10.10 \
     CTNG=1.24.0 \
@@ -76,8 +76,8 @@ RUN cd /tmp && \
     rm -rf /tmp/x86_64-centos6-linux-gnu/ && \
     rm -rf /tmp/crosstool-ng-${CTNG}
 
-ARG GOLANGCILINT_VERSION=1.37.0
-ARG GOLANGCILINT_CHKSUM=5fe9852e754b621c5264fb8ac810a75033e7f18e972315a60c5c3f8a37b3cb88
+ARG GOLANGCILINT_VERSION=1.37.1
+ARG GOLANGCILINT_CHKSUM=1929425d7733d136b342395c77f171d459aa89b198933465ec4c854aa34c41a2
 
 RUN curl -fLO https://github.com/golangci/golangci-lint/releases/download/v${GOLANGCILINT_VERSION}/golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64.tar.gz
 RUN echo ${GOLANGCILINT_CHKSUM} golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64.tar.gz | sha256sum --check --strict --status
@@ -98,14 +98,13 @@ RUN tar xf cue_${CUE_VERSION}_Linux_x86_64.tar.gz -C /tmp cue
 
 # Base image to crossbuild grafana.
 # Use old Debian (this has support into 2022) in order to ensure binary compatibility with older glibc's.
-FROM debian:stretch-20201209
+FROM debian:stretch-20210208
 
-ENV GOVERSION=1.15.6 \
+ENV GOVERSION=1.16 \
     PATH=/usr/local/go/bin:$PATH \
     GOPATH=/go \
-    NODEVERSION=14.15.4-1nodesource1 \
-    YARNVERSION=1.22.5-1 \
-    GO111MODULE=on
+    NODEVERSION=14.15.5-1nodesource1 \
+    YARNVERSION=1.22.5-1
 
 # Use ARG so as not to persist environment variable in image
 ARG DEBIAN_FRONTEND=noninteractive
