@@ -5,7 +5,7 @@ import { SelectableValue } from '@grafana/data';
 import { LinkSettingsMode } from '../DashboardSettings/LinksSettings';
 import { DashboardLink, DashboardModel } from '../../state/DashboardModel';
 
-const NEW_LINK = {
+const newLink = {
   icon: 'external link',
   title: '',
   tooltip: '',
@@ -18,12 +18,12 @@ const NEW_LINK = {
   includeVars: false,
 } as DashboardLink;
 
-const LINK_TYPE_OPTIONS = [
+const linkTypeOptions = [
   { value: 'dashboards', label: 'Dashboards' },
   { value: 'link', label: 'Link' },
 ];
 
-export const LINK_ICON_MAP: { [key: string]: string } = {
+const linkIconMap: { [key: string]: string } = {
   'external link': 'external-link-alt',
   dashboard: 'apps',
   question: 'question-circle',
@@ -33,7 +33,7 @@ export const LINK_ICON_MAP: { [key: string]: string } = {
   cloud: 'cloud',
 };
 
-const LINK_ICON_OPTIONS = Object.keys(LINK_ICON_MAP).map((key) => ({ label: key, value: key }));
+const linkIconOptions = Object.keys(linkIconMap).map((key) => ({ label: key, value: key }));
 
 type LinkSettingsEditProps = {
   mode: LinkSettingsMode;
@@ -43,7 +43,7 @@ type LinkSettingsEditProps = {
 };
 
 export const LinkSettingsEdit: React.FC<LinkSettingsEditProps> = ({ mode, editLinkIdx, dashboard, backToList }) => {
-  const [linkSettings, setLinkSettings] = useState(editLinkIdx !== null ? dashboard.links[editLinkIdx] : NEW_LINK);
+  const [linkSettings, setLinkSettings] = useState(editLinkIdx !== null ? dashboard.links[editLinkIdx] : newLink);
 
   const onTagsChange = (tags: any[]) => {
     setLinkSettings((link) => ({ ...link, tags: tags }));
@@ -83,7 +83,7 @@ export const LinkSettingsEdit: React.FC<LinkSettingsEditProps> = ({ mode, editLi
       `}
     >
       <Field label="Type">
-        <Select value={linkSettings.type} options={LINK_TYPE_OPTIONS} onChange={onTypeChange} />
+        <Select value={linkSettings.type} options={linkTypeOptions} onChange={onTypeChange} />
       </Field>
       <Field label="Title">
         <Input name="title" aria-label="title" value={linkSettings.title} onChange={onChange} />
@@ -104,7 +104,7 @@ export const LinkSettingsEdit: React.FC<LinkSettingsEditProps> = ({ mode, editLi
             <Input name="tooltip" value={linkSettings.tooltip} onChange={onChange} placeholder="Open dashboard" />
           </Field>
           <Field label="Icon">
-            <Select value={linkSettings.icon} options={LINK_ICON_OPTIONS} onChange={onIconChange} />
+            <Select value={linkSettings.icon} options={linkIconOptions} onChange={onIconChange} />
           </Field>
         </>
       )}
