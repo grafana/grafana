@@ -174,8 +174,8 @@ type AlertingConfigResponse struct {
 type ApiAlertingConfig struct {
 	config.Config
 
-	// Override/eliminate Routes tree in AM config - we'll set it via new fields
-	Route struct{} `yaml:"route,omitempty" json:"route,omitempty"`
+	// TODO: PR a followup to https://github.com/go-swagger/go-swagger/pull/1527 in order to allow
+	// explicitly ignoring embedded fields. In the meantime, these are hackily removed in our make targets via `jq`
 
 	AlertManagerRoute   *config.Route `yaml:"alertmanager_route,omitempty" json:"alertmanager_route,omitempty"`
 	GrafanaManagedRoute *config.Route `yaml:"grafana_managed_route,omitempty" json:"grafana_managed_route,omitempty"`

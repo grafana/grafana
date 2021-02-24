@@ -2,7 +2,7 @@
 
 [view api](https://grafana.github.io/alerting-api/)
 
-This repo aims to define the unified alerting API as code. It generates OpenAPI definitions from go structs, initially pulled from 
+This repo aims to define the unified alerting API as code. It generates OpenAPI definitions from go structs
 
 
 ## Running
@@ -11,3 +11,4 @@ This repo aims to define the unified alerting API as code. It generates OpenAPI 
 
 ## Requires
  - [go-swagger](https://github.com/go-swagger/go-swagger)
+ - [jq](https://stedolan.github.io/jq/)
