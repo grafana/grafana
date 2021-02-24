@@ -27,7 +27,60 @@ describe('DataFrame JSON', () => {
       };
 
       const frame = dataFrameFromJSON(json);
-      expect(frame).toMatchInlineSnapshot();
+      expect(frame).toMatchInlineSnapshot(`
+        Object {
+          "fields": Array [
+            Object {
+              "config": Object {},
+              "entities": Object {},
+              "name": "time",
+              "type": "time",
+              "values": Array [
+                100,
+                200,
+                300,
+              ],
+            },
+            Object {
+              "config": Object {},
+              "entities": Object {
+                "Inf": Array [
+                  1,
+                ],
+                "NaN": Array [
+                  0,
+                ],
+                "Undef": Array [
+                  2,
+                ],
+              },
+              "name": "name",
+              "type": "string",
+              "values": Array [
+                NaN,
+                Infinity,
+                undefined,
+              ],
+            },
+            Object {
+              "config": Object {},
+              "entities": Object {
+                "NegInf": Array [
+                  2,
+                ],
+              },
+              "name": "value",
+              "type": "number",
+              "values": Array [
+                1,
+                2,
+                -Infinity,
+              ],
+            },
+          ],
+          "length": 3,
+        }
+      `);
     });
   });
 });
