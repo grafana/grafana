@@ -69,6 +69,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   };
   marketplaceUrl?: string;
   expressionsEnabled = false;
+  customTheme?: any;
 
   constructor(options: GrafanaBootConfig) {
     this.theme = options.bootData.user.lightTheme ? getTheme(GrafanaThemeType.Light) : getTheme(GrafanaThemeType.Dark);

@@ -28,6 +28,7 @@ const setup = (propOverrides?: object) => {
       url: '',
       database: '',
       type: 'cloudwatch',
+      typeName: 'Cloudwatch',
       user: '',
       password: '',
       basicAuth: false,

@@ -47,6 +47,7 @@ export const DashboardLinks: FC<Props> = ({ dashboard, links }) => {
             className="gf-form-label gf-form-label--dashlink"
             href={sanitizeUrl(linkInfo.href)}
             target={link.targetBlank ? '_blank' : undefined}
+            rel="noreferrer"
             aria-label={selectors.components.DashboardLinks.link}
           >
             <Icon name={iconMap[link.icon] as IconName} style={{ marginRight: '4px' }} />
