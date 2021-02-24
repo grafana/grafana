@@ -14,14 +14,20 @@ describe('MeasurementCollector', () => {
               { name: 'value', type: FieldType.number },
             ],
           },
-          data: [
-            [100, 200],
-            [1, 2],
-          ],
+          data: {
+            values: [
+              [100, 200],
+              [1, 2],
+            ],
+          },
         },
         {
           key: 'aaa',
-          data: [[300], [3]],
+          data: { values: [[300], [3]] },
+        },
+        {
+          key: 'aaa',
+          data: { values: [[400], [4]] },
         },
       ],
     });
@@ -33,28 +39,30 @@ describe('MeasurementCollector', () => {
         "fields": Array [
           Object {
             "config": Object {},
+            "entities": Object {},
             "name": "time",
-            "replaced": Object {},
             "type": "time",
             "values": Array [
               100,
               200,
               300,
+              400,
             ],
           },
           Object {
             "config": Object {},
+            "entities": Object {},
             "name": "value",
-            "replaced": Object {},
             "type": "number",
             "values": Array [
               1,
               2,
               3,
+              4,
             ],
           },
         ],
-        "lastUpdateTime": 1612915480600,
+        "lastUpdateTime": 1614141621477,
         "meta": undefined,
         "name": undefined,
         "options": Object {
