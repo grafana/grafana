@@ -244,6 +244,7 @@
     "eventemitter3": "4.0.0",
     "events": "^3.2.0",
     "fast-json-patch": "2.2.1",
+    "events": "^3.2.0",
     "fast-text-encoding": "^1.0.0",
     "file-saver": "2.0.2",
     "hoist-non-react-statics": "3.3.2",
