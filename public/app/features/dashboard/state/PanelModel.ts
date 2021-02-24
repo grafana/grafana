@@ -107,15 +107,16 @@ const defaults: any = {
   transparent: false,
   options: {},
   datasource: null,
+  title: '',
 };
 
 export class PanelModel implements DataConfigSource {
   /* persisted id, used in URL to identify a panel */
-  id: number;
-  editSourceId: number;
-  gridPos: GridPos;
-  type: string;
-  title: string;
+  id!: number;
+  editSourceId?: number;
+  gridPos!: GridPos;
+  type!: string;
+  title!: string;
   alert?: any;
   scopedVars?: ScopedVars;
   repeat?: string;

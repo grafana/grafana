@@ -1,6 +1,7 @@
 package librarypanels
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -13,7 +14,8 @@ import (
 
 var (
 	sqlStatmentLibrayPanelDTOWithMeta = `
-SELECT lp.id, lp.org_id, lp.folder_id, lp.uid, lp.name, lp.model, lp.created, lp.created_by, lp.updated, lp.updated_by
+SELECT DISTINCT
+	lp.id, lp.org_id, lp.folder_id, lp.uid, lp.name, lp.model, lp.created, lp.created_by, lp.updated, lp.updated_by
 	, 0 AS can_edit
 	, u1.login AS created_by_name
 	, u1.email AS created_by_email
@@ -25,6 +27,23 @@ FROM library_panel AS lp
 	LEFT JOIN user AS u2 ON lp.updated_by = u2.id
 `
 )
+
+func syncTitleWithName(libraryPanel *LibraryPanel) error {
+	var model map[string]interface{}
+	if err := json.Unmarshal(libraryPanel.Model, &model); err != nil {
+		return err
+	}
+
+	model["title"] = libraryPanel.Name
+	syncedModel, err := json.Marshal(&model)
+	if err != nil {
+		return err
+	}
+
+	libraryPanel.Model = syncedModel
+
+	return nil
+}
 
 // createLibraryPanel adds a Library Panel.
 func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd createLibraryPanelCommand) (LibraryPanelDTO, error) {
@@ -41,6 +60,11 @@ func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd cre
 		CreatedBy: c.SignedInUser.UserId,
 		UpdatedBy: c.SignedInUser.UserId,
 	}
+
+	if err := syncTitleWithName(&libraryPanel); err != nil {
+		return LibraryPanelDTO{}, err
+	}
+
 	err := lps.SQLStore.WithTransactionalDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
 		if _, err := session.Insert(&libraryPanel); err != nil {
 			if lps.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
@@ -252,14 +276,21 @@ func (lps *LibraryPanelService) getLibraryPanel(c *models.ReqContext, uid string
 }
 
 // getAllLibraryPanels gets all library panels.
-func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext) ([]LibraryPanelDTO, error) {
-	orgID := c.SignedInUser.OrgId
+func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext, limit int64) ([]LibraryPanelDTO, error) {
 	libraryPanels := make([]LibraryPanelWithMeta, 0)
 	err := lps.SQLStore.WithDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
-		sql := sqlStatmentLibrayPanelDTOWithMeta + "WHERE lp.org_id=?"
-		sess := session.SQL(sql, orgID)
-		err := sess.Find(&libraryPanels)
-		if err != nil {
+		builder := sqlstore.SQLBuilder{}
+		builder.Write(sqlStatmentLibrayPanelDTOWithMeta)
+		builder.Write(" LEFT JOIN dashboard AS dashboard on lp.folder_id = dashboard.id")
+		builder.Write(` WHERE lp.org_id = ?`, c.SignedInUser.OrgId)
+		if c.SignedInUser.OrgRole != models.ROLE_ADMIN {
+			builder.WriteDashboardPermissionFilter(c.SignedInUser, models.PERMISSION_VIEW)
+		}
+		if limit == 0 {
+			limit = 1000
+		}
+		builder.Write(lps.SQLStore.Dialect.Limit(limit))
+		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&libraryPanels); err != nil {
 			return err
 		}
 
@@ -398,6 +429,9 @@ func (lps *LibraryPanelService) patchLibraryPanel(c *models.ReqContext, cmd patc
 		}
 		if cmd.Model == nil {
 			libraryPanel.Model = panelInDB.Model
+		}
+		if err := syncTitleWithName(&libraryPanel); err != nil {
+			return err
 		}
 
 		if rowsAffected, err := session.ID(panelInDB.ID).Update(&libraryPanel); err != nil {

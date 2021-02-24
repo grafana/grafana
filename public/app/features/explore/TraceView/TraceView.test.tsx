@@ -5,13 +5,14 @@ import { TraceView } from './TraceView';
 import { TracePageHeader, TraceTimelineViewer } from '@jaegertracing/jaeger-ui-components';
 import { TraceSpanData, TraceData } from '@grafana/data';
 import { setDataSourceSrv } from '@grafana/runtime';
+import { ExploreId } from 'app/types';
 
 jest.mock('react-redux', () => ({
   useSelector: jest.fn(() => undefined),
 }));
 
 function renderTraceView() {
-  const wrapper = shallow(<TraceView trace={response} splitOpenFn={() => {}} />);
+  const wrapper = shallow(<TraceView exploreId={ExploreId.left} trace={response} splitOpenFn={() => {}} />);
   return {
     timeline: wrapper.find(TraceTimelineViewer),
     header: wrapper.find(TracePageHeader),
@@ -37,7 +38,7 @@ describe('TraceView', () => {
   it('does not render anything on missing trace', () => {
     // Simulating Explore's access to empty response data
     const trace = [][0];
-    const { container } = render(<TraceView trace={trace} splitOpenFn={() => {}} />);
+    const { container } = render(<TraceView exploreId={ExploreId.left} trace={trace} splitOpenFn={() => {}} />);
     expect(container.hasChildNodes()).toBeFalsy();
   });
 
