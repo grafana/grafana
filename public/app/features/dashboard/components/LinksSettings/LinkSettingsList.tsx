@@ -106,7 +106,7 @@ export const LinkSettingsList: React.FC<LinkSettingsListProps> = ({ dashboard, s
                   ) : null}
                 </td>
                 <td style={{ width: '1%' }}>
-                  <IconButton surface="header" name="copy" onClick={() => duplicateLink(link, idx)} />
+                  <IconButton surface="header" aria-label="copy" name="copy" onClick={() => duplicateLink(link, idx)} />
                 </td>
                 <td style={{ width: '1%' }}>
                   <DeleteButton size="sm" onConfirm={() => deleteLink(idx)} />

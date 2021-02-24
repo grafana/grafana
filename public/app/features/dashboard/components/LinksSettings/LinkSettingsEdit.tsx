@@ -86,7 +86,7 @@ export const LinkSettingsEdit: React.FC<LinkSettingsEditProps> = ({ mode, editLi
         <Select value={linkSettings.type} options={LINK_TYPE_OPTIONS} onChange={onTypeChange} />
       </Field>
       <Field label="Title">
-        <Input name="title" value={linkSettings.title} onChange={onChange} />
+        <Input name="title" aria-label="title" value={linkSettings.title} onChange={onChange} />
       </Field>
       {linkSettings.type === 'dashboards' && (
         <>
