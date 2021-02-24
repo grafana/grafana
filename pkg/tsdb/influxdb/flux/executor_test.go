@@ -103,6 +103,11 @@ func TestExecuteMultiple(t *testing.T) {
 	fmt.Println("----------------------")
 }
 
+func TestExecuteColumnNamedTable(t *testing.T) {
+	dr := verifyGoldenResponse(t, "table")
+	require.Len(t, dr.Frames, 1)
+}
+
 func TestExecuteGrouping(t *testing.T) {
 	dr := verifyGoldenResponse(t, "grouping")
 	require.Len(t, dr.Frames, 3)

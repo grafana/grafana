@@ -315,6 +315,21 @@ export class ConfigEditor extends PureComponent<Props, State> {
               />
             </div>
           </div>
+          <div className="gf-form-inline">
+            <div className="gf-form">
+              <InlineFormLabel className="width-14" tooltip="Optionally, specify a custom endpoint for the service.">
+                Endpoint
+              </InlineFormLabel>
+              <div className="width-30">
+                <Input
+                  className="width-30"
+                  placeholder={'https://{service}.{region}.amazonaws.com'}
+                  value={options.jsonData.endpoint || ''}
+                  onChange={onUpdateDatasourceJsonDataOption(this.props, 'endpoint')}
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </>
     );
