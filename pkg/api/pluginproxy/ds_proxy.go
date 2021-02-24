@@ -245,8 +245,8 @@ func (proxy *DataSourceProxy) validateRequest() error {
 		if proxy.ctx.Req.Request.Method == "PUT" {
 			return errors.New("puts not allowed on proxied Prometheus datasource")
 		}
-		if proxy.ctx.Req.Request.Method == "POST" && !(proxy.proxyPath == "api/v1/query" || proxy.proxyPath == "api/v1/query_range") {
-			return errors.New("posts not allowed on proxied Prometheus datasource except on /query and /query_range")
+		if proxy.ctx.Req.Request.Method == "POST" && !(proxy.proxyPath == "api/v1/query" || proxy.proxyPath == "api/v1/query_range" || proxy.proxyPath == "api/v1/series" || proxy.proxyPath == "api/v1/labels") {
+			return errors.New("posts not allowed on proxied Prometheus datasource except on /query, /query_range, /series and /labels")
 		}
 	}
 
