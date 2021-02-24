@@ -66,6 +66,7 @@ func setupTestEnv(t testing.TB) *RBACService {
 
 type policyTestCase struct {
 	name        string
+	uid         string
 	permissions []permissionTestCase
 }
 
@@ -77,6 +78,7 @@ type permissionTestCase struct {
 func createPolicy(t *testing.T, ac *RBACService, p policyTestCase) *PolicyDTO {
 	createPolicyCmd := CreatePolicyWithPermissionsCommand{
 		OrgId:       1,
+		UID:         p.uid,
 		Name:        p.name,
 		Permissions: []Permission{},
 	}

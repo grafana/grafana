@@ -20,7 +20,6 @@ func TestCreatingPolicy(t *testing.T) {
 	testCases := []struct {
 		desc        string
 		policy      policyTestCase
-		inputName   string
 		permissions []permissionTestCase
 
 		expectedError   error
@@ -35,6 +34,15 @@ func TestCreatingPolicy(t *testing.T) {
 			expectedUpdated: time.Unix(1, 0).UTC(),
 		},
 		{
+			desc: "should successfuly create policy with UID",
+			policy: policyTestCase{
+				name:        "a name",
+				uid:         "testUID",
+				permissions: nil,
+			},
+			expectedUpdated: time.Unix(3, 0).UTC(),
+		},
+		{
 			desc: "should successfuly create policy with permissions",
 			policy: policyTestCase{
 				name: "a name",
@@ -43,7 +51,7 @@ func TestCreatingPolicy(t *testing.T) {
 					{scope: "/api/report", permission: "get"},
 				},
 			},
-			expectedUpdated: time.Unix(3, 0).UTC(),
+			expectedUpdated: time.Unix(5, 0).UTC(),
 		},
 	}
 	for _, tc := range testCases {
@@ -58,6 +66,11 @@ func TestCreatingPolicy(t *testing.T) {
 
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedUpdated, policy.Updated)
+
+			if tc.policy.uid != "" {
+				assert.Equal(t, tc.policy.uid, policy.UID)
+			}
+
 			if tc.policy.permissions == nil {
 				assert.Empty(t, policy.Permissions)
 			} else {

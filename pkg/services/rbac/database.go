@@ -91,14 +91,17 @@ func (ac *RBACService) CreatePolicy(ctx context.Context, cmd CreatePolicyCommand
 }
 
 func (ac *RBACService) createPolicy(sess *sqlstore.DBSession, cmd CreatePolicyCommand) (*Policy, error) {
-	uid, err := generateNewPolicyUID(sess, cmd.OrgId)
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate UID for policy %q: %w", cmd.Name, err)
+	if cmd.UID == "" {
+		uid, err := generateNewPolicyUID(sess, cmd.OrgId)
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate UID for policy %q: %w", cmd.Name, err)
+		}
+		cmd.UID = uid
 	}
 
 	policy := &Policy{
 		OrgId:       cmd.OrgId,
-		UID:         uid,
+		UID:         cmd.UID,
 		Name:        cmd.Name,
 		Description: cmd.Description,
 		Created:     timeNow(),
@@ -121,6 +124,7 @@ func (ac *RBACService) CreatePolicyWithPermissions(ctx context.Context, cmd Crea
 	err := ac.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		createPolicyCmd := CreatePolicyCommand{
 			OrgId:       cmd.OrgId,
+			UID:         cmd.UID,
 			Name:        cmd.Name,
 			Description: cmd.Description,
 		}
