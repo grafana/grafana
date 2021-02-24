@@ -262,9 +262,9 @@ export function addAxisConfig(
   }
 }
 
-export function addLegendOptions(
-  builder: PanelOptionsEditorBuilder<OptionsWithLegend>,
-  defaultOverrides: Partial<VizLegendOptions>
+export function addLegendOptions<T extends OptionsWithLegend>(
+  builder: PanelOptionsEditorBuilder<T>,
+  defaultOverrides?: Partial<VizLegendOptions>
 ) {
   const defaults = {
     ...{

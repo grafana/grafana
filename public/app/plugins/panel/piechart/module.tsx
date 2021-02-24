@@ -2,8 +2,7 @@ import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/dat
 import { PieChartPanel } from './PieChartPanel';
 import { PieChartOptions } from './types';
 import { addStandardDataReduceOptions } from '../stat/types';
-import { PieChartType } from '@grafana/ui';
-import { addLegendOptions } from '../timeseries/config';
+import { LegendDisplayMode, PieChartType } from '@grafana/ui';
 
 export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
   .useFieldConfig({
@@ -55,6 +54,31 @@ export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
         name: 'Show percent in legend',
         path: 'legend.showPercent',
         defaultValue: false,
+      })
+      .addRadio({
+        path: 'legend.displayMode',
+        name: 'Legend mode',
+        description: '',
+        defaultValue: LegendDisplayMode.List,
+        settings: {
+          options: [
+            { value: LegendDisplayMode.List, label: 'List' },
+            { value: LegendDisplayMode.Table, label: 'Table' },
+            { value: LegendDisplayMode.Hidden, label: 'Hidden' },
+          ],
+        },
+      })
+      .addRadio({
+        path: 'legend.placement',
+        name: 'Legend placement',
+        description: '',
+        defaultValue: 'right',
+        settings: {
+          options: [
+            { value: 'bottom', label: 'Bottom' },
+            { value: 'right', label: 'Right' },
+          ],
+        },
+        showIf: (c) => c.legend.displayMode !== LegendDisplayMode.Hidden,
       });
-    addLegendOptions(builder, { placement: 'right' });
   });
