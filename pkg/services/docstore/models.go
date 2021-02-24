@@ -8,29 +8,41 @@ type EntityStore interface {
 	ListEntities(cmd ListEntitiesQuery) (ListEntitiesResult, error)
 }
 
-type SaveEntityCommand struct{}
-type SaveEntityResponse struct{}
+type SaveEntityCommand struct {
+}
+
+type SaveEntityResponse struct {
+}
 
 type GetEntityQuery struct {
 	OrgId int64
 	Id    string
 }
+
 type GetEntityResponse struct {
 	Entity Entity
 }
 
 type ListEntitiesQuery struct {
 	OrgId       int64
-	IDs         []string
-	Tags        []string
-	QueryString string
-	// To filter list by
+	IDs         *[]string
+	Tags        *[]string
+	QueryString *string
+	// To query for entities that are related / linked to a specific entity
+	Relationship *ListEntitiesRelationshipFilter
+	// Minimum permission
+	Permission   string
 	User         EntityUserInfo
 	Page         int64
 	ItemsPerPage int64
 }
 
+type ListEntitiesRelationshipFilter struct {
+	Id string
+}
+
 type ListEntitiesResult struct {
+	// Should probably be EntityListItem (some list item projection)
 	Items      []Entity
 	Page       int64
 	PageCount  int64
@@ -38,11 +50,11 @@ type ListEntitiesResult struct {
 }
 
 type Entity struct {
-	Meta EntityMeta
+	Meta EntityMetaRead
 	Doc  interface{}
 }
 
-type EntityMeta struct {
+type EntityMetaCommon struct {
 	OrgId int64
 	// Thinking similar/same as uid
 	Id string
@@ -60,14 +72,32 @@ type EntityMeta struct {
 	Relationships []EntityRelationship
 	// For optimistic concurrency
 	Version int64
+}
+
+type EntityMetaWrite struct {
+	EntityMetaCommon
 	// Thinking folder here
+	ContainerId string
+}
+
+type EntityMetaRead struct {
+	EntityMetaCommon
+	// Folder info (name title etc)
 	Container EntityMetaContainer
+	// Permissions for the user who fetched the entity
+	Permissions EntityPermissions
 	// Dates
 	CreatedOn time.Time
 	UpdatedOn time.Time
 	// Created by user
 	CreatedBy EntityUserInfo
 	UpdatedBy EntityUserInfo
+}
+
+type EntityPermissions struct {
+	CanEdit  bool
+	CanView  bool
+	CanAdmin bool
 }
 
 type EntityUserInfo struct {
