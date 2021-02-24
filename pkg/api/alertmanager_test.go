@@ -63,3 +63,241 @@ func Test_ApiReceiver_Marshaling(t *testing.T) {
 		})
 	}
 }
+
+func Test_AllReceivers(t *testing.T) {
+	input := &config.Route{
+		Receiver: "foo",
+		Routes: []*config.Route{
+			{
+				Receiver: "bar",
+				Routes: []*config.Route{
+					{
+						Receiver: "bazz",
+					},
+				},
+			},
+			{
+				Receiver: "buzz",
+			},
+		},
+	}
+
+	require.Equal(t, []string{"foo", "bar", "bazz", "buzz"}, AllReceivers(input))
+}
+
+func Test_ApiAlertingConfig_Marshaling(t *testing.T) {
+	for _, tc := range []struct {
+		desc  string
+		input ApiAlertingConfig
+		err   bool
+	}{
+		{
+			desc: "success",
+			input: ApiAlertingConfig{
+				Config: config.Config{},
+				AlertManagerRoute: &config.Route{
+					Receiver: "am",
+					Routes: []*config.Route{
+						{
+							Receiver: "am",
+						},
+					},
+				},
+				GrafanaManagedRoute: &config.Route{
+					Receiver: "graf",
+					Routes: []*config.Route{
+						{
+							Receiver: "graf",
+						},
+					},
+				},
+				Receivers: []*ApiReceiver{
+					{
+						Receiver: config.Receiver{
+							Name:         "am",
+							EmailConfigs: []*config.EmailConfig{{}},
+						},
+					},
+					{
+						Receiver: config.Receiver{
+							Name: "graf",
+						},
+						GrafanaReceivers: GrafanaReceivers{
+							GrafanaManagedReceivers: []*GrafanaReceiver{{}},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "failure undefined am receiver",
+			input: ApiAlertingConfig{
+				Config: config.Config{},
+				AlertManagerRoute: &config.Route{
+					Receiver: "am",
+					Routes: []*config.Route{
+						{
+							Receiver: "unmentioned",
+						},
+					},
+				},
+				GrafanaManagedRoute: &config.Route{
+					Receiver: "graf",
+					Routes: []*config.Route{
+						{
+							Receiver: "graf",
+						},
+					},
+				},
+				Receivers: []*ApiReceiver{
+					{
+						Receiver: config.Receiver{
+							Name:         "am",
+							EmailConfigs: []*config.EmailConfig{{}},
+						},
+					},
+					{
+						Receiver: config.Receiver{
+							Name: "graf",
+						},
+						GrafanaReceivers: GrafanaReceivers{
+							GrafanaManagedReceivers: []*GrafanaReceiver{{}},
+						},
+					},
+				},
+			},
+			err: true,
+		},
+		{
+			desc: "failure undefined graf receiver",
+			input: ApiAlertingConfig{
+				Config: config.Config{},
+				AlertManagerRoute: &config.Route{
+					Receiver: "am",
+					Routes: []*config.Route{
+						{
+							Receiver: "am",
+						},
+					},
+				},
+				GrafanaManagedRoute: &config.Route{
+					Receiver: "graf",
+					Routes: []*config.Route{
+						{
+							Receiver: "unmentioned",
+						},
+					},
+				},
+				Receivers: []*ApiReceiver{
+					{
+						Receiver: config.Receiver{
+							Name:         "am",
+							EmailConfigs: []*config.EmailConfig{{}},
+						},
+					},
+					{
+						Receiver: config.Receiver{
+							Name: "graf",
+						},
+						GrafanaReceivers: GrafanaReceivers{
+							GrafanaManagedReceivers: []*GrafanaReceiver{{}},
+						},
+					},
+				},
+			},
+			err: true,
+		},
+		{
+			desc: "failure mixed AM in Grafana",
+			input: ApiAlertingConfig{
+				Config: config.Config{},
+				AlertManagerRoute: &config.Route{
+					Receiver: "am",
+					Routes: []*config.Route{
+						{
+							Receiver: "am",
+						},
+					},
+				},
+				GrafanaManagedRoute: &config.Route{
+					Receiver: "graf",
+					Routes: []*config.Route{
+						{
+							Receiver: "am",
+						},
+					},
+				},
+				Receivers: []*ApiReceiver{
+					{
+						Receiver: config.Receiver{
+							Name:         "am",
+							EmailConfigs: []*config.EmailConfig{{}},
+						},
+					},
+					{
+						Receiver: config.Receiver{
+							Name: "graf",
+						},
+						GrafanaReceivers: GrafanaReceivers{
+							GrafanaManagedReceivers: []*GrafanaReceiver{{}},
+						},
+					},
+				},
+			},
+			err: true,
+		},
+		{
+			desc: "failure mixed Grafana in AM",
+			input: ApiAlertingConfig{
+				Config: config.Config{},
+				AlertManagerRoute: &config.Route{
+					Receiver: "am",
+					Routes: []*config.Route{
+						{
+							Receiver: "graf",
+						},
+					},
+				},
+				GrafanaManagedRoute: &config.Route{
+					Receiver: "graf",
+					Routes: []*config.Route{
+						{
+							Receiver: "graf",
+						},
+					},
+				},
+				Receivers: []*ApiReceiver{
+					{
+						Receiver: config.Receiver{
+							Name:         "am",
+							EmailConfigs: []*config.EmailConfig{{}},
+						},
+					},
+					{
+						Receiver: config.Receiver{
+							Name: "graf",
+						},
+						GrafanaReceivers: GrafanaReceivers{
+							GrafanaManagedReceivers: []*GrafanaReceiver{{}},
+						},
+					},
+				},
+			},
+			err: true,
+		},
+	} {
+		t.Run(tc.desc, func(t *testing.T) {
+			encoded, err := json.Marshal(tc.input)
+			require.Nil(t, err)
+
+			var out ApiAlertingConfig
+			err = json.Unmarshal(encoded, &out)
+
+			if tc.err {
+				require.Error(t, err)
+			} else {
+				require.Equal(t, tc.input, out)
+			}
+		})
+	}
+}
