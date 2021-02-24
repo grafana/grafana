@@ -183,8 +183,8 @@ type GrafanaReceiver models.CreateAlertNotificationCommand
 type ReceiverType int
 
 const (
-	GrafanaManagedReceiver ReceiverType = iota
-	AMReceiver
+	GrafanaReceiverType ReceiverType = iota
+	AlertmanagerReceiverType
 )
 
 type ApiReceiver struct {
@@ -227,9 +227,15 @@ func (r *ApiReceiver) UnmarshalJSON(b []byte) error {
 		}
 
 	}
-
 	return nil
 
+}
+
+func (r *ApiReceiver) Type() ReceiverType {
+	if len(r.GrafanaReceivers.GrafanaManagedReceivers) > 0 {
+		return GrafanaReceiverType
+	}
+	return AlertmanagerReceiverType
 }
 
 type GrafanaReceivers struct {
