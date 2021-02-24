@@ -9,9 +9,12 @@ type EntityStore interface {
 }
 
 type SaveEntityCommand struct {
+	Meta EntityMetaWrite
+	Data interface{}
 }
 
 type SaveEntityResponse struct {
+	Entity Entity
 }
 
 type GetEntityQuery struct {
@@ -59,7 +62,7 @@ type ListEntitiesResult struct {
 
 type Entity struct {
 	Meta EntityMetaRead
-	Doc  interface{}
+	Data interface{}
 }
 
 type EntityMetaCommon struct {
