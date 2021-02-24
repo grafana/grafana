@@ -272,6 +272,9 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseToAnnotations(quer
 	frames := data.Frames{}
 	for j := 0; j < len(response.TimeSeries); j++ {
 		series := response.TimeSeries[j]
+		if len(series.Points) == 0 {
+			continue
+		}
 		annotation := make(map[string][]string)
 		for i := len(series.Points) - 1; i >= 0; i-- {
 			point := series.Points[i]

@@ -26,3 +26,35 @@ func TestCloudMonitoringExecutor_parseToAnnotations(t *testing.T) {
 	assert.Equal(t, "tags", decoded[0].Fields[2].Name)
 	assert.Equal(t, "text", decoded[0].Fields[3].Name)
 }
+
+func TestCloudMonitoringExecutor_parseToAnnotations_emptyTimeSeries(t *testing.T) {
+	res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "annotationQuery"}
+	query := &cloudMonitoringTimeSeriesFilter{}
+
+	response := cloudMonitoringResponse{
+		TimeSeries: []timeSeries{},
+	}
+
+	err := query.parseToAnnotations(res, response, "atitle", "atext", "atag")
+	require.NoError(t, err)
+
+	decoded, _ := res.Dataframes.Decoded()
+	require.Len(t, decoded, 0)
+}
+
+func TestCloudMonitoringExecutor_parseToAnnotations_noPointsInSeries(t *testing.T) {
+	res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "annotationQuery"}
+	query := &cloudMonitoringTimeSeriesFilter{}
+
+	response := cloudMonitoringResponse{
+		TimeSeries: []timeSeries{
+			{Points: nil},
+		},
+	}
+
+	err := query.parseToAnnotations(res, response, "atitle", "atext", "atag")
+	require.NoError(t, err)
+
+	decoded, _ := res.Dataframes.Decoded()
+	require.Len(t, decoded, 0)
+}
