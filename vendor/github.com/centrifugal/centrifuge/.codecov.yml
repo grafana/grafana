@@ -1,2 +1,0 @@
-ignore:
-  - "internal/controlpb/control*"  # generated code
