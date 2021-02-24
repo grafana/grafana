@@ -19,7 +19,7 @@ import { getTemplatedRegex } from '../utils';
 import { v4 as uuidv4 } from 'uuid';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { QueryRunners } from './queryRunners';
-import { runRequest } from '../../query/state/runRequest';
+import { preProcessPanelData, runRequest } from '../../query/state/runRequest';
 import {
   runUpdateTagsRequest,
   toMetricFindValues,
@@ -129,7 +129,7 @@ export class VariableQueryRunner {
               return throwError(data.error);
             }
 
-            return of(data);
+            return of(preProcessPanelData(data));
           }),
           toMetricFindValues(),
           updateOptionsState({ variable, dispatch, getTemplatedRegexFunc }),
