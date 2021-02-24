@@ -129,7 +129,8 @@ func (pm *PluginManager) Init() error {
 	}
 
 	for _, panel := range Panels {
-		panel.InitFrontendPlugin()
+		staticRoutes := panel.InitFrontendPlugin()
+		StaticRoutes = append(StaticRoutes, staticRoutes...)
 	}
 
 	for _, ds := range DataSources {

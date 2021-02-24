@@ -14,15 +14,15 @@ type FrontendPluginBase struct {
 	PluginBase
 }
 
-func (fp *FrontendPluginBase) InitFrontendPlugin() {
+func (fp *FrontendPluginBase) InitFrontendPlugin() []*PluginStaticRoute {
+	var staticRoutes []*PluginStaticRoute
 	if isExternalPlugin(fp.PluginDir) {
-		// TODO
-		/*
-			StaticRoutes = append(StaticRoutes, &PluginStaticRoute{
+		staticRoutes = []*PluginStaticRoute{
+			{
 				Directory: fp.PluginDir,
 				PluginId:  fp.Id,
-			})
-		*/
+			},
+		}
 	}
 
 	fp.handleModuleDefaults()
@@ -33,6 +33,8 @@ func (fp *FrontendPluginBase) InitFrontendPlugin() {
 	for i := 0; i < len(fp.Info.Screenshots); i++ {
 		fp.Info.Screenshots[i].Path = evalRelativePluginUrlPath(fp.Info.Screenshots[i].Path, fp.BaseUrl)
 	}
+
+	return staticRoutes
 }
 
 func getPluginLogoUrl(pluginType, path, baseUrl string) string {
