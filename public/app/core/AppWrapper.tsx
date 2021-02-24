@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React, { useEffect } from 'react';
 import { Router, Route, Redirect } from 'react-router-dom';
 import angular from 'angular';
 import { each, extend } from 'lodash';
@@ -9,37 +9,21 @@ import { ErrorBoundaryAlert, ModalRoot, ModalsProvider } from '@grafana/ui';
 import { GrafanaApp } from '../app';
 import { routes } from 'app/routes/routes';
 import { ConfigContext, ThemeProvider } from './utils/ConfigProvider';
-import { RouteDescriptor } from './navigation/types';
+import { GrafanaRouteProps, RouteDescriptor } from './navigation/types';
 import { contextSrv } from './services/context_srv';
 import { SideMenu } from './components/sidemenu/SideMenu';
-import { navigationLogger } from './navigation/utils';
+import { navigationLogger, queryStringToJSON } from './navigation/utils';
+import { updateLocation } from './actions';
 
 interface AppWrapperProps {
   app: GrafanaApp;
 }
+
 interface AppWrapperState {
   ngInjector: any;
 }
 
-//TODO[Router]: move to utils
-const prepareQueryObject = (locationQuery: string) => {
-  const params: Array<[string, string | boolean]> = [];
-  new URLSearchParams(locationQuery).forEach((v, k) => params.push([k, parseValue(v)]));
-  return Object.fromEntries(new Map(params));
-};
-
-//TODO[Router]: move to utils
-const parseValue = (value: string) => {
-  if (value === 'true') {
-    return true;
-  }
-  if (value === 'false') {
-    return false;
-  }
-  return value;
-};
-
-export default class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState> {
+export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState> {
   container = React.createRef<HTMLDivElement>();
 
   constructor(props: AppWrapperProps) {
@@ -76,15 +60,13 @@ export default class AppWrapper extends React.Component<AppWrapperProps, AppWrap
   }
 
   renderRoute = (route: RouteDescriptor, index: number) => {
+    // const { updateLocation } = this.props;
     // TODO[Router]
     // @ts-ignore
     const isAngularRoute = !!route.controller;
     // TODO[Router]
     // @ts-ignore
     const roles = route.roles ? route.roles() : [];
-
-    const { ngInjector } = this.state;
-    const $rootScope = ngInjector.get('$rootScope');
 
     // TODO[Router]: test this logic
     if (roles && roles.length) {
@@ -103,17 +85,26 @@ export default class AppWrapper extends React.Component<AppWrapperProps, AppWrap
         path={route.path}
         key={`${route.path}`}
         render={(props) => {
-          navigationLogger('AppWrapper', false, 'Rendering route', route);
-          return React.createElement(route.component, {
-            $injector: this.state.ngInjector,
-            $rootScope: $rootScope,
-            $contextSrv: contextSrv,
-            routeInfo: route.routeInfo,
-            // @ts-ignore
-            query: prepareQueryObject(props.location.search),
-            // route: props.match,
-            ...props,
-          });
+          navigationLogger('AppWrapper', false, 'Rendering route', route, 'with match', props.location);
+
+          store.dispatch(
+            updateLocation({
+              path: props.location.pathname,
+              routeParams: props.match.params,
+              query: queryStringToJSON(props.location.search),
+            })
+          );
+
+          return (
+            <GrafanaRoute
+              {...props}
+              component={route.component}
+              pageClass={route.pageClass}
+              $injector={this.state.ngInjector}
+              $contextSrv={contextSrv}
+              routeInfo={route.routeInfo}
+            />
+          );
         }}
       />
     );
@@ -164,3 +155,23 @@ export default class AppWrapper extends React.Component<AppWrapperProps, AppWrap
     );
   }
 }
+
+const GrafanaRoute: React.FC<GrafanaRouteProps<any>> = (props) => {
+  useEffect(() => {
+    navigationLogger('GrafanaRoute', false, 'Mounted', props.match);
+    if (props.pageClass) {
+      document.body.classList.add(props.pageClass);
+    }
+    return () => {
+      if (props.pageClass) {
+        document.body.classList.remove(props.pageClass);
+      }
+    };
+  });
+
+  const { component, ...routeComponentProps } = props;
+
+  return React.createElement(component, {
+    ...routeComponentProps,
+  });
+};

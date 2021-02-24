@@ -22,7 +22,6 @@ import { TimeSrv, setTimeSrv, getTimeSrv } from 'app/features/dashboard/services
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { KeybindingSrv, setKeybindingSrv } from 'app/core/services/keybindingSrv';
 import { AngularLoader, setAngularLoader } from 'app/core/services/AngularLoader';
-import { configureStore } from 'app/store/configureStore';
 
 import { updateLocation } from 'app/core/actions';
 
@@ -34,10 +33,11 @@ import { ContextSrv } from 'app/core/services/context_srv';
 import { BridgeSrv } from 'app/core/services/bridge_srv';
 import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
 import { DashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { ILocationService, ITimeoutService, IRootScopeService, IAngularEvent, auto } from 'angular';
+import { ITimeoutService, IRootScopeService, IAngularEvent, auto } from 'angular';
 import { AppEvent, AppEvents, locationUtil } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { initGrafanaLive } from 'app/features/live/live';
+import { store } from '../store/store';
 
 export type GrafanaRootScope = IRootScopeService & AppEventEmitter & AppEventConsumer & { colors: string[] };
 
@@ -76,7 +76,6 @@ export class GrafanaCtrl {
       buildParamsFromVariables: getTemplateSrv().fillVariableValuesForUrl,
     });
 
-    const store = configureStore();
     setLocationSrv({
       update: (opt: LocationUpdate) => {
         store.dispatch(updateLocation(opt));

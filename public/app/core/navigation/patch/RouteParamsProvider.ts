@@ -7,6 +7,6 @@ export class RouteParamsProvider {
     navigationLogger('Patch angular', false, 'RouteParamsProvider');
   }
   $get = () => {
-    throw new Error('TODO: Refactor $routeParams');
+    // throw new Error('TODO: Refactor $routeParams');
   };
 }
