@@ -1,0 +1,50 @@
+{
+  "TooltipMode": {
+    "Attr() targetType": "type",
+    "Expr()": {
+      "Op": "|",
+      "Parts": [
+        {
+          "Bytes()": "single",
+          "IncompleteKind()": "string",
+          "IsClosed()": false,
+          "IsConcrete()": true,
+          "Kind()": "string",
+          "Label()": "TooltipMode",
+          "Path()": "TooltipMode",
+          "Source() type": "*ast.BasicLit",
+          "String()": "single"
+        },
+        {
+          "Bytes()": "multi",
+          "IncompleteKind()": "string",
+          "IsClosed()": false,
+          "IsConcrete()": true,
+          "Kind()": "string",
+          "Label()": "TooltipMode",
+          "Path()": "TooltipMode",
+          "Source() type": "*ast.BasicLit",
+          "String()": "multi"
+        },
+        {
+          "Bytes()": "none",
+          "IncompleteKind()": "string",
+          "IsClosed()": false,
+          "IsConcrete()": true,
+          "Kind()": "string",
+          "Label()": "TooltipMode",
+          "Path()": "TooltipMode",
+          "Source() type": "*ast.BasicLit",
+          "String()": "none"
+        }
+      ]
+    },
+    "IncompleteKind()": "string",
+    "IsClosed()": false,
+    "IsConcrete()": false,
+    "Kind()": "_|_",
+    "Label()": "TooltipMode",
+    "Path()": "TooltipMode",
+    "Source() type": "*ast.Field"
+  }
+}
