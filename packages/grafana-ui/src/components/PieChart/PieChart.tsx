@@ -22,7 +22,7 @@ interface SvgProps {
   useGradients?: boolean;
 }
 export interface Props extends SvgProps {
-  legendOptions?: VizLegendOptions;
+  legendOptions?: PieChartLegendOptions;
 }
 
 export enum PieChartType {
@@ -36,23 +36,38 @@ export interface PieChartLabelOptions {
   showPercent?: boolean;
 }
 
-const defaultLegendOptions: VizLegendOptions = {
+export interface PieChartLegendOptions extends VizLegendOptions {
+  showPercent?: boolean;
+}
+
+const defaultLegendOptions: PieChartLegendOptions = {
   displayMode: LegendDisplayMode.List,
   placement: 'right',
   calcs: [],
+  showPercent: true,
 };
 
 export const PieChart: FC<Props> = ({ values, legendOptions = defaultLegendOptions, width, height, ...restProps }) => {
-  const getLegend = (values: DisplayValue[], legendOptions: VizLegendOptions) => {
+  const getLegend = (values: DisplayValue[], legendOptions: PieChartLegendOptions) => {
     if (legendOptions.displayMode === LegendDisplayMode.Hidden) {
       return undefined;
     }
+    const total = values.reduce((acc, item) => item.numeric + acc, 0);
 
     const legendItems = values.map<VizLegendItem>((value) => {
       return {
         label: value.title ?? '',
         color: value.color ?? FALLBACK_COLOR,
         yAxis: 1,
+        getDisplayValues: () => {
+          if (legendOptions.showPercent) {
+            const fractionOfTotal = value.numeric / total;
+            const percentOfTotal = fractionOfTotal * 100;
+            return [{ numeric: fractionOfTotal, percent: percentOfTotal, text: percentOfTotal.toFixed(0) + '%' }];
+          } else {
+            return [];
+          }
+        },
       };
     });
 

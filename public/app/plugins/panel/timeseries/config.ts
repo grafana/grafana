@@ -24,6 +24,7 @@ import {
   GraphGradientMode,
   LegendDisplayMode,
   AxisConfig,
+  VizLegendOptions,
 } from '@grafana/ui';
 import { SeriesConfigEditor } from './HideSeriesConfigEditor';
 import { ScaleDistributionEditor } from './ScaleDistributionEditor';
@@ -261,13 +262,25 @@ export function addAxisConfig(
   }
 }
 
-export function addLegendOptions(builder: PanelOptionsEditorBuilder<OptionsWithLegend>) {
+export function addLegendOptions(
+  builder: PanelOptionsEditorBuilder<OptionsWithLegend>,
+  defaultOverrides: Partial<VizLegendOptions>
+) {
+  const defaults = {
+    ...{
+      displayMode: LegendDisplayMode.List,
+      placement: 'bottom',
+      calcs: [],
+    },
+    ...defaultOverrides,
+  };
+
   builder
     .addRadio({
       path: 'legend.displayMode',
       name: 'Legend mode',
       description: '',
-      defaultValue: LegendDisplayMode.List,
+      defaultValue: defaults.displayMode,
       settings: {
         options: [
           { value: LegendDisplayMode.List, label: 'List' },
@@ -280,7 +293,7 @@ export function addLegendOptions(builder: PanelOptionsEditorBuilder<OptionsWithL
       path: 'legend.placement',
       name: 'Legend placement',
       description: '',
-      defaultValue: 'bottom',
+      defaultValue: defaults.placement,
       settings: {
         options: [
           { value: 'bottom', label: 'Bottom' },
@@ -295,7 +308,7 @@ export function addLegendOptions(builder: PanelOptionsEditorBuilder<OptionsWithL
       name: 'Legend calculations',
       description: 'Choose a reducer functions / calculations to include in legend',
       editor: standardEditorsRegistry.get('stats-picker').editor as any,
-      defaultValue: [],
+      defaultValue: defaults.calcs,
       settings: {
         allowMultiple: true,
       },
