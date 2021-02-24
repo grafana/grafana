@@ -1611,6 +1611,17 @@
       "type": "object",
       "x-go-package": "github.com/grafana/grafana/pkg/components/simplejson"
     },
+    "Label": {
+      "type": "object",
+      "title": "Label is a key/value pair of strings.",
+      "properties": {
+        "Name": {
+          "type": "string",
+          "x-go-name": "Value"
+        }
+      },
+      "x-go-package": "github.com/prometheus/prometheus/pkg/labels"
+    },
     "LabelName": {
       "description": "A LabelName is a key for a LabelSet or Metric.  It has a value associated\ntherewith.",
       "type": "string",
@@ -1623,6 +1634,14 @@
         "$ref": "#/definitions/LabelName"
       },
       "x-go-package": "github.com/prometheus/common/model"
+    },
+    "Labels": {
+      "description": "Labels is a sorted set of labels. Order has to be guaranteed upon\ninstantiation.",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Label"
+      },
+      "x-go-package": "github.com/prometheus/prometheus/pkg/labels"
     },
     "LotexQuery": {
       "type": "object",
@@ -1894,6 +1913,21 @@
         "$ref": "#/definitions/UpdateDashboardAclCommand"
       },
       "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
+    "Point": {
+      "type": "object",
+      "title": "Point represents a single data point for a given timestamp.",
+      "properties": {
+        "T": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "V": {
+          "type": "number",
+          "format": "double"
+        }
+      },
+      "x-go-package": "github.com/prometheus/prometheus/promql"
     },
     "PushoverConfig": {
       "type": "object",
@@ -2261,6 +2295,24 @@
       "title": "RuleType models the type of a rule.",
       "x-go-package": "github.com/prometheus/client_golang/api/prometheus/v1"
     },
+    "Sample": {
+      "type": "object",
+      "title": "Sample is a single sample belonging to a metric.",
+      "properties": {
+        "Metric": {
+          "$ref": "#/definitions/Labels"
+        },
+        "T": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "V": {
+          "type": "number",
+          "format": "double"
+        }
+      },
+      "x-go-package": "github.com/prometheus/prometheus/promql"
+    },
     "Secret": {
       "type": "string",
       "title": "Secret special type for storing secrets.",
@@ -2554,8 +2606,7 @@
       "type": "object",
       "properties": {
         "alerts": {
-          "type": "object",
-          "x-go-name": "Alerts"
+          "$ref": "#/definitions/Vector"
         },
         "grafana_alert_instances": {
           "$ref": "#/definitions/AlertInstancesResponse"
@@ -2564,9 +2615,8 @@
       "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     },
     "URL": {
-      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
       "type": "object",
-      "title": "A URL represents a parsed URL (technically, a URI reference).",
+      "title": "URL is a custom URL type that allows validation at configuration load time.",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -2599,7 +2649,7 @@
           "$ref": "#/definitions/Userinfo"
         }
       },
-      "x-go-package": "net/url"
+      "x-go-package": "github.com/prometheus/common/config"
     },
     "UpdateDashboardAclCommand": {
       "type": "object",
@@ -2615,7 +2665,9 @@
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
     "UpsertAlertDefinitionCommand": {
+      "description": "https://github.com/grafana/grafana/blob/debb82e12417e82a0e2bd09e1a450065f884c1bc/pkg/services/ngalert/models.go#L85",
       "type": "object",
+      "title": "UpsertAlertDefinitionCommand is copy of the unexported struct:",
       "properties": {
         "condition": {
           "description": "Condition is the refID of the query or expression to be evaluated",
@@ -2672,6 +2724,14 @@
         }
       },
       "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
+    "Vector": {
+      "description": "Vector is basically only an alias for model.Samples, but the\ncontract is that in a Vector, all Samples have the same timestamp.",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Sample"
+      },
+      "x-go-package": "github.com/prometheus/prometheus/promql"
     },
     "VictorOpsConfig": {
       "type": "object",

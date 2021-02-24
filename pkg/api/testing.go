@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/prometheus/promql"
 )
 
 // swagger:route Get /api/v1/receiver/test testing RouteTestReceiverConfig
@@ -71,7 +72,7 @@ type EvalAlertConditionCommand struct {
 
 // swagger:model
 type TestRuleResponse struct {
-	Alerts                interface{}            `json:"alerts"`
+	Alerts                promql.Vector          `json:"alerts"`
 	GrafanaAlertInstances AlertInstancesResponse `json:"grafana_alert_instances"`
 }
 
