@@ -25,10 +25,10 @@ type DatasourcePluginWrapperV2 struct {
 	pluginType string
 }
 
-func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataSource, query TSDBQuery) (TSDBResponse, error) {
+func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataSource, query DataQuery) (DataResponse, error) {
 	instanceSettings, err := adapters.ModelToInstanceSettings(ds)
 	if err != nil {
-		return TSDBResponse{}, err
+		return DataResponse{}, err
 	}
 
 	if query.Headers == nil {
@@ -56,7 +56,7 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 	for _, q := range query.Queries {
 		modelJSON, err := q.Model.MarshalJSON()
 		if err != nil {
-			return TSDBResponse{}, err
+			return DataResponse{}, err
 		}
 		pbQuery.Queries = append(pbQuery.Queries, &pluginv2.DataQuery{
 			Json:          modelJSON,
@@ -73,15 +73,15 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 
 	pbRes, err := tw.DataClient.QueryData(ctx, pbQuery)
 	if err != nil {
-		return TSDBResponse{}, err
+		return DataResponse{}, err
 	}
 
-	tR := TSDBResponse{
-		Results: make(map[string]TSDBQueryResult, len(pbRes.Responses)),
+	tR := DataResponse{
+		Results: make(map[string]DataQueryResult, len(pbRes.Responses)),
 	}
 
 	for refID, pRes := range pbRes.Responses {
-		qr := TSDBQueryResult{
+		qr := DataQueryResult{
 			RefID:      refID,
 			Dataframes: NewEncodedDataFrames(pRes.Frames),
 		}

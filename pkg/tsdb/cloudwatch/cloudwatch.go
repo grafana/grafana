@@ -242,7 +242,7 @@ func (e *cloudWatchExecutor) getRGTAClient(region string) (resourcegroupstagging
 }
 
 func (e *cloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
-	queryContext pluginmodels.TSDBQuery) (*cloudwatchlogs.GetQueryResultsOutput, error) {
+	queryContext pluginmodels.DataQuery) (*cloudwatchlogs.GetQueryResultsOutput, error) {
 	const maxAttempts = 8
 	const pollPeriod = 1000 * time.Millisecond
 
@@ -279,9 +279,9 @@ func (e *cloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwat
 	return nil, nil
 }
 
-// TSDBQuery executes a CloudWatch query.
-func (e *cloudWatchExecutor) TSDBQuery(ctx context.Context, dsInfo *models.DataSource,
-	queryContext pluginmodels.TSDBQuery) (pluginmodels.TSDBResponse, error) {
+// DataQuery executes a CloudWatch query.
+func (e *cloudWatchExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource,
+	queryContext pluginmodels.DataQuery) (pluginmodels.DataResponse, error) {
 	e.DataSource = dsInfo
 
 	/*
@@ -302,7 +302,7 @@ func (e *cloudWatchExecutor) TSDBQuery(ctx context.Context, dsInfo *models.DataS
 	queryType := queryParams.Get("type").MustString("")
 
 	var err error
-	var result pluginmodels.TSDBResponse
+	var result pluginmodels.DataResponse
 	switch queryType {
 	case "metricFindQuery":
 		result, err = e.executeMetricFindQuery(ctx, queryContext)
@@ -321,8 +321,8 @@ func (e *cloudWatchExecutor) TSDBQuery(ctx context.Context, dsInfo *models.DataS
 	return result, err
 }
 
-func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryContext pluginmodels.TSDBQuery) (
-	pluginmodels.TSDBResponse, error) {
+func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryContext pluginmodels.DataQuery) (
+	pluginmodels.DataResponse, error) {
 	queryParams := queryContext.Queries[0].Model
 	queryParams.Set("subtype", "StartQuery")
 	queryParams.Set("queryString", queryParams.Get("expression").MustString(""))
@@ -335,12 +335,12 @@ func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryCont
 
 	logsClient, err := e.getCWLogsClient(region)
 	if err != nil {
-		return pluginmodels.TSDBResponse{}, err
+		return pluginmodels.DataResponse{}, err
 	}
 
 	result, err := e.executeStartQuery(ctx, logsClient, queryParams, *queryContext.TimeRange)
 	if err != nil {
-		return pluginmodels.TSDBResponse{}, err
+		return pluginmodels.DataResponse{}, err
 	}
 
 	queryParams.Set("queryId", *result.QueryId)
@@ -348,26 +348,26 @@ func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryCont
 	// Get query results
 	getQueryResultsOutput, err := e.alertQuery(ctx, logsClient, queryContext)
 	if err != nil {
-		return pluginmodels.TSDBResponse{}, err
+		return pluginmodels.DataResponse{}, err
 	}
 
 	dataframe, err := logsResultsToDataframes(getQueryResultsOutput)
 	if err != nil {
-		return pluginmodels.TSDBResponse{}, err
+		return pluginmodels.DataResponse{}, err
 	}
 
 	statsGroups := queryParams.Get("statsGroups").MustStringArray()
 	if len(statsGroups) > 0 && len(dataframe.Fields) > 0 {
 		groupedFrames, err := groupResults(dataframe, statsGroups)
 		if err != nil {
-			return pluginmodels.TSDBResponse{}, err
+			return pluginmodels.DataResponse{}, err
 		}
 
-		response := pluginmodels.TSDBResponse{
-			Results: make(map[string]pluginmodels.TSDBQueryResult),
+		response := pluginmodels.DataResponse{
+			Results: make(map[string]pluginmodels.DataQueryResult),
 		}
 
-		response.Results["A"] = pluginmodels.TSDBQueryResult{
+		response.Results["A"] = pluginmodels.DataQueryResult{
 			RefID:      "A",
 			Dataframes: pluginmodels.NewDecodedDataFrames(groupedFrames),
 		}
@@ -375,8 +375,8 @@ func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryCont
 		return response, nil
 	}
 
-	response := pluginmodels.TSDBResponse{
-		Results: map[string]pluginmodels.TSDBQueryResult{
+	response := pluginmodels.DataResponse{
+		Results: map[string]pluginmodels.DataQueryResult{
 			"A": {
 				RefID:      "A",
 				Dataframes: pluginmodels.NewDecodedDataFrames(data.Frames{dataframe}),

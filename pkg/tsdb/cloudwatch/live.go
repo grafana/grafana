@@ -108,19 +108,19 @@ func (r *logQueryRunner) publishResults(channelName string) error {
 
 // executeLiveLogQuery executes a CloudWatch Logs query with live updates over WebSocket.
 // A WebSocket channel is created, which goroutines send responses over.
-func (e *cloudWatchExecutor) executeLiveLogQuery(ctx context.Context, queryContext pluginmodels.TSDBQuery) (
-	pluginmodels.TSDBResponse, error) {
+func (e *cloudWatchExecutor) executeLiveLogQuery(ctx context.Context, queryContext pluginmodels.DataQuery) (
+	pluginmodels.DataResponse, error) {
 	responseChannelName := uuid.New().String()
-	responseChannel := make(chan pluginmodels.TSDBResponse)
+	responseChannel := make(chan pluginmodels.DataResponse)
 	if err := e.logsService.AddResponseChannel("plugin/cloudwatch/"+responseChannelName, responseChannel); err != nil {
 		close(responseChannel)
-		return pluginmodels.TSDBResponse{}, err
+		return pluginmodels.DataResponse{}, err
 	}
 
 	go e.sendLiveQueriesToChannel(queryContext, responseChannel)
 
-	response := pluginmodels.TSDBResponse{
-		Results: map[string]pluginmodels.TSDBQueryResult{
+	response := pluginmodels.DataResponse{
+		Results: map[string]pluginmodels.DataQueryResult{
 			"A": {
 				RefID: "A",
 				Meta: simplejson.NewFromAny(map[string]interface{}{
@@ -133,8 +133,8 @@ func (e *cloudWatchExecutor) executeLiveLogQuery(ctx context.Context, queryConte
 	return response, nil
 }
 
-func (e *cloudWatchExecutor) sendLiveQueriesToChannel(queryContext pluginmodels.TSDBQuery,
-	responseChannel chan pluginmodels.TSDBResponse) {
+func (e *cloudWatchExecutor) sendLiveQueriesToChannel(queryContext pluginmodels.DataQuery,
+	responseChannel chan pluginmodels.DataResponse) {
 	defer close(responseChannel)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
@@ -211,8 +211,8 @@ func (e *cloudWatchExecutor) fetchConcurrentQueriesQuota(region string) int {
 	return defaultConcurrentQueries
 }
 
-func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel chan pluginmodels.TSDBResponse,
-	query pluginmodels.TSDBSubQuery, timeRange pluginmodels.TSDBTimeRange) error {
+func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel chan pluginmodels.DataResponse,
+	query pluginmodels.DataSubQuery, timeRange pluginmodels.DataTimeRange) error {
 	defaultRegion := e.DataSource.JsonData.Get("defaultRegion").MustString()
 	parameters := query.Model
 	region := parameters.Get("region").MustString(defaultRegion)
@@ -285,8 +285,8 @@ func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel
 			dataFrames = data.Frames{dataFrame}
 		}
 
-		responseChannel <- pluginmodels.TSDBResponse{
-			Results: map[string]pluginmodels.TSDBQueryResult{
+		responseChannel <- pluginmodels.DataResponse{
+			Results: map[string]pluginmodels.DataQueryResult{
 				query.RefID: {
 					RefID:      query.RefID,
 					Dataframes: pluginmodels.NewDecodedDataFrames(dataFrames),

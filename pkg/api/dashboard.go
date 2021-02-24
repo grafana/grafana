@@ -226,7 +226,7 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 		}
 	}
 
-	err := dashboards.NewService(hs.TSDBService).DeleteDashboard(dash.Id, c.OrgId)
+	err := dashboards.NewService(hs.DataService).DeleteDashboard(dash.Id, c.OrgId)
 	if err != nil {
 		var dashboardErr models.DashboardErr
 		if ok := errors.As(err, &dashboardErr); ok {
@@ -288,7 +288,7 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		Overwrite: cmd.Overwrite,
 	}
 
-	dashboard, err := dashboards.NewService(hs.TSDBService).SaveDashboard(dashItem, allowUiUpdate)
+	dashboard, err := dashboards.NewService(hs.DataService).SaveDashboard(dashItem, allowUiUpdate)
 	if err != nil {
 		return dashboardSaveErrorToApiResponse(err)
 	}

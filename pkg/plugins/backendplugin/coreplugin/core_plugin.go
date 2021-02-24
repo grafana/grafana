@@ -46,12 +46,12 @@ func (cp *corePlugin) CanHandleTSDBQueries() bool {
 	return cp.isTSDBPlugin
 }
 
-func (cp *corePlugin) TSDBQuery(ctx context.Context, dsInfo *models.DataSource,
-	tsdbQuery pluginmodels.TSDBQuery) (pluginmodels.TSDBResponse, error) {
+func (cp *corePlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
+	tsdbQuery pluginmodels.DataQuery) (pluginmodels.DataResponse, error) {
 	// TODO: Inline the adapter
 	adapter := newQueryEndpointAdapter(cp.pluginID, cp.logger, instrumentation.InstrumentQueryDataHandler(
 		cp.QueryDataHandler))
-	return adapter.TSDBQuery(ctx, dsInfo, tsdbQuery)
+	return adapter.DataQuery(ctx, dsInfo, tsdbQuery)
 }
 
 func (cp *corePlugin) Start(ctx context.Context) error {

@@ -56,7 +56,7 @@ func (e *cloudWatchExecutor) transformRequestQueriesToCloudWatchQueries(requestQ
 }
 
 func (e *cloudWatchExecutor) transformQueryResponsesToQueryResult(cloudwatchResponses []*cloudwatchResponse,
-	requestQueries []*requestQuery, startTime time.Time, endTime time.Time) (map[string]pluginmodels.TSDBQueryResult, error) {
+	requestQueries []*requestQuery, startTime time.Time, endTime time.Time) (map[string]pluginmodels.DataQueryResult, error) {
 	responsesByRefID := make(map[string][]*cloudwatchResponse)
 	refIDs := sort.StringSlice{}
 	for _, res := range cloudwatchResponses {
@@ -66,10 +66,10 @@ func (e *cloudWatchExecutor) transformQueryResponsesToQueryResult(cloudwatchResp
 	// Ensure stable results
 	refIDs.Sort()
 
-	results := make(map[string]pluginmodels.TSDBQueryResult)
+	results := make(map[string]pluginmodels.DataQueryResult)
 	for _, refID := range refIDs {
 		responses := responsesByRefID[refID]
-		queryResult := pluginmodels.TSDBQueryResult{
+		queryResult := pluginmodels.DataQueryResult{
 			RefID:  refID,
 			Series: pluginmodels.TSDBTimeSeriesSlice{},
 		}

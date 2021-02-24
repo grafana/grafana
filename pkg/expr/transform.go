@@ -35,7 +35,7 @@ func init() {
 }
 
 // WrapTransformData creates and executes transform requests
-func (s *Service) WrapTransformData(ctx context.Context, query pluginmodels.TSDBQuery) (pluginmodels.TSDBResponse, error) {
+func (s *Service) WrapTransformData(ctx context.Context, query pluginmodels.DataQuery) (pluginmodels.DataResponse, error) {
 	sdkReq := &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
 			OrgID: query.User.OrgId,
@@ -46,7 +46,7 @@ func (s *Service) WrapTransformData(ctx context.Context, query pluginmodels.TSDB
 	for _, q := range query.Queries {
 		modelJSON, err := q.Model.MarshalJSON()
 		if err != nil {
-			return pluginmodels.TSDBResponse{}, err
+			return pluginmodels.DataResponse{}, err
 		}
 		sdkReq.Queries = append(sdkReq.Queries, backend.DataQuery{
 			JSON:          modelJSON,
@@ -62,14 +62,14 @@ func (s *Service) WrapTransformData(ctx context.Context, query pluginmodels.TSDB
 	}
 	pbRes, err := s.TransformData(ctx, sdkReq)
 	if err != nil {
-		return pluginmodels.TSDBResponse{}, err
+		return pluginmodels.DataResponse{}, err
 	}
 
-	tR := pluginmodels.TSDBResponse{
-		Results: make(map[string]pluginmodels.TSDBQueryResult, len(pbRes.Responses)),
+	tR := pluginmodels.DataResponse{
+		Results: make(map[string]pluginmodels.DataQueryResult, len(pbRes.Responses)),
 	}
 	for refID, res := range pbRes.Responses {
-		tRes := pluginmodels.TSDBQueryResult{
+		tRes := pluginmodels.DataQueryResult{
 			RefID:      refID,
 			Dataframes: pluginmodels.NewDecodedDataFrames(res.Frames),
 		}
@@ -184,13 +184,13 @@ func (s *Service) queryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	// Convert plugin-model (datasource) queries to tsdb queries
-	queries := make([]pluginmodels.TSDBSubQuery, len(req.Queries))
+	queries := make([]pluginmodels.DataSubQuery, len(req.Queries))
 	for i, query := range req.Queries {
 		sj, err := simplejson.NewJson(query.JSON)
 		if err != nil {
 			return nil, err
 		}
-		queries[i] = pluginmodels.TSDBSubQuery{
+		queries[i] = pluginmodels.DataSubQuery{
 			RefID:         query.RefID,
 			IntervalMS:    query.Interval.Milliseconds(),
 			MaxDataPoints: query.MaxDataPoints,
@@ -201,16 +201,16 @@ func (s *Service) queryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	// For now take Time Range from first query.
-	timeRange := pluginmodels.NewTSDBTimeRange(strconv.FormatInt(req.Queries[0].TimeRange.From.Unix()*1000, 10),
+	timeRange := pluginmodels.NewDataTimeRange(strconv.FormatInt(req.Queries[0].TimeRange.From.Unix()*1000, 10),
 		strconv.FormatInt(req.Queries[0].TimeRange.To.Unix()*1000, 10))
 
-	tQ := pluginmodels.TSDBQuery{
+	tQ := pluginmodels.DataQuery{
 		TimeRange: &timeRange,
 		Queries:   queries,
 	}
 
 	// Execute the converted queries
-	tsdbRes, err := s.TSDBService.HandleRequest(ctx, getDsInfo.Result, tQ)
+	tsdbRes, err := s.DataService.HandleRequest(ctx, getDsInfo.Result, tQ)
 	if err != nil {
 		return nil, err
 	}

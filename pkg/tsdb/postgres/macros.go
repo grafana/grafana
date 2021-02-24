@@ -16,8 +16,8 @@ const sExpr = `\$` + rsIdentifier + `\(([^\)]*)\)`
 
 type postgresMacroEngine struct {
 	*sqleng.SqlMacroEngineBase
-	timeRange   pluginmodels.TSDBTimeRange
-	query       pluginmodels.TSDBSubQuery
+	timeRange   pluginmodels.DataTimeRange
+	query       pluginmodels.DataSubQuery
 	timescaledb bool
 }
 
@@ -28,7 +28,7 @@ func newPostgresMacroEngine(timescaledb bool) sqleng.SqlMacroEngine {
 	}
 }
 
-func (m *postgresMacroEngine) Interpolate(query pluginmodels.TSDBSubQuery, timeRange pluginmodels.TSDBTimeRange,
+func (m *postgresMacroEngine) Interpolate(query pluginmodels.DataSubQuery, timeRange pluginmodels.DataTimeRange,
 	sql string) (string, error) {
 	m.timeRange = timeRange
 	m.query = query

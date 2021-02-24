@@ -17,8 +17,8 @@ import (
 )
 
 func (e *cloudWatchExecutor) executeLogActions(ctx context.Context,
-	queryContext pluginmodels.TSDBQuery) (pluginmodels.TSDBResponse, error) {
-	resultChan := make(chan pluginmodels.TSDBQueryResult, len(queryContext.Queries))
+	queryContext pluginmodels.DataQuery) (pluginmodels.DataResponse, error) {
+	resultChan := make(chan pluginmodels.DataQueryResult, len(queryContext.Queries))
 	eg, ectx := errgroup.WithContext(ctx)
 
 	for _, query := range queryContext.Queries {
@@ -43,7 +43,7 @@ func (e *cloudWatchExecutor) executeLogActions(ctx context.Context,
 					return err
 				}
 
-				resultChan <- pluginmodels.TSDBQueryResult{
+				resultChan <- pluginmodels.DataQueryResult{
 					RefID:      query.RefID,
 					Dataframes: pluginmodels.NewDecodedDataFrames(groupedFrames),
 				}
@@ -58,7 +58,7 @@ func (e *cloudWatchExecutor) executeLogActions(ctx context.Context,
 				}
 			}
 
-			resultChan <- pluginmodels.TSDBQueryResult{
+			resultChan <- pluginmodels.DataQueryResult{
 				RefID:      query.RefID,
 				Dataframes: pluginmodels.NewDecodedDataFrames(data.Frames{dataframe}),
 			}
@@ -66,13 +66,13 @@ func (e *cloudWatchExecutor) executeLogActions(ctx context.Context,
 		})
 	}
 	if err := eg.Wait(); err != nil {
-		return pluginmodels.TSDBResponse{}, err
+		return pluginmodels.DataResponse{}, err
 	}
 
 	close(resultChan)
 
-	response := pluginmodels.TSDBResponse{
-		Results: make(map[string]pluginmodels.TSDBQueryResult),
+	response := pluginmodels.DataResponse{
+		Results: make(map[string]pluginmodels.DataQueryResult),
 	}
 	for result := range resultChan {
 		response.Results[result.RefID] = result
@@ -81,8 +81,8 @@ func (e *cloudWatchExecutor) executeLogActions(ctx context.Context,
 	return response, nil
 }
 
-func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, queryContext pluginmodels.TSDBQuery,
-	query pluginmodels.TSDBSubQuery) (*data.Frame, error) {
+func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, queryContext pluginmodels.DataQuery,
+	query pluginmodels.DataSubQuery) (*data.Frame, error) {
 	parameters := query.Model
 	subType := query.Model.Get("subtype").MustString()
 
@@ -200,7 +200,7 @@ func (e *cloudWatchExecutor) handleDescribeLogGroups(ctx context.Context,
 }
 
 func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
-	parameters *simplejson.Json, timeRange pluginmodels.TSDBTimeRange) (*cloudwatchlogs.StartQueryOutput, error) {
+	parameters *simplejson.Json, timeRange pluginmodels.DataTimeRange) (*cloudwatchlogs.StartQueryOutput, error) {
 	startTime, err := timeRange.ParseFrom()
 	if err != nil {
 		return nil, err
@@ -237,7 +237,7 @@ func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 }
 
 func (e *cloudWatchExecutor) handleStartQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
-	parameters *simplejson.Json, timeRange pluginmodels.TSDBTimeRange, refID string) (*data.Frame, error) {
+	parameters *simplejson.Json, timeRange pluginmodels.DataTimeRange, refID string) (*data.Frame, error) {
 	startQueryResponse, err := e.executeStartQuery(ctx, logsClient, parameters, timeRange)
 	if err != nil {
 		return nil, err

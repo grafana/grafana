@@ -16,15 +16,15 @@ const sExpr = `\$` + rsIdentifier + `\(([^\)]*)\)`
 
 type msSqlMacroEngine struct {
 	*sqleng.SqlMacroEngineBase
-	timeRange pluginmodels.TSDBTimeRange
-	query     pluginmodels.TSDBSubQuery
+	timeRange pluginmodels.DataTimeRange
+	query     pluginmodels.DataSubQuery
 }
 
 func newMssqlMacroEngine() sqleng.SqlMacroEngine {
 	return &msSqlMacroEngine{SqlMacroEngineBase: sqleng.NewSqlMacroEngineBase()}
 }
 
-func (m *msSqlMacroEngine) Interpolate(query pluginmodels.TSDBSubQuery, timeRange pluginmodels.TSDBTimeRange,
+func (m *msSqlMacroEngine) Interpolate(query pluginmodels.DataSubQuery, timeRange pluginmodels.DataTimeRange,
 	sql string) (string, error) {
 	m.timeRange = timeRange
 	m.query = query

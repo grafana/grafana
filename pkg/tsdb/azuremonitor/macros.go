@@ -15,8 +15,8 @@ const sExpr = `\$` + rsIdentifier + `(?:\(([^\)]*)\))?`
 const escapeMultiExpr = `\$__escapeMulti\(('.*')\)`
 
 type kqlMacroEngine struct {
-	timeRange pluginmodels.TSDBTimeRange
-	query     pluginmodels.TSDBSubQuery
+	timeRange pluginmodels.DataTimeRange
+	query     pluginmodels.DataSubQuery
 }
 
 //  Macros:
@@ -29,7 +29,7 @@ type kqlMacroEngine struct {
 //   - $__escapeMulti('\\vm\eth0\Total','\\vm\eth2\Total') -> @'\\vm\eth0\Total',@'\\vm\eth2\Total'
 
 // KqlInterpolate interpolates macros for Kusto Query Language (KQL) queries
-func KqlInterpolate(query pluginmodels.TSDBSubQuery, timeRange pluginmodels.TSDBTimeRange, kql string, defaultTimeField ...string) (string, error) {
+func KqlInterpolate(query pluginmodels.DataSubQuery, timeRange pluginmodels.DataTimeRange, kql string, defaultTimeField ...string) (string, error) {
 	engine := kqlMacroEngine{}
 
 	defaultTimeFieldForAllDatasources := "timestamp"
@@ -39,7 +39,7 @@ func KqlInterpolate(query pluginmodels.TSDBSubQuery, timeRange pluginmodels.TSDB
 	return engine.Interpolate(query, timeRange, kql, defaultTimeFieldForAllDatasources)
 }
 
-func (m *kqlMacroEngine) Interpolate(query pluginmodels.TSDBSubQuery, timeRange pluginmodels.TSDBTimeRange, kql string, defaultTimeField string) (string, error) {
+func (m *kqlMacroEngine) Interpolate(query pluginmodels.DataSubQuery, timeRange pluginmodels.DataTimeRange, kql string, defaultTimeField string) (string, error) {
 	m.timeRange = timeRange
 	m.query = query
 	rExp, _ := regexp.Compile(sExpr)

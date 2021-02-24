@@ -40,14 +40,14 @@ type InsightsAnalyticsQuery struct {
 }
 
 func (e *InsightsAnalyticsDatasource) executeTimeSeriesQuery(ctx context.Context,
-	originalQueries []pluginmodels.TSDBSubQuery, timeRange pluginmodels.TSDBTimeRange) (pluginmodels.TSDBResponse, error) {
-	result := pluginmodels.TSDBResponse{
-		Results: map[string]pluginmodels.TSDBQueryResult{},
+	originalQueries []pluginmodels.DataSubQuery, timeRange pluginmodels.DataTimeRange) (pluginmodels.DataResponse, error) {
+	result := pluginmodels.DataResponse{
+		Results: map[string]pluginmodels.DataQueryResult{},
 	}
 
 	queries, err := e.buildQueries(originalQueries, timeRange)
 	if err != nil {
-		return pluginmodels.TSDBResponse{}, err
+		return pluginmodels.DataResponse{}, err
 	}
 
 	for _, query := range queries {
@@ -57,8 +57,8 @@ func (e *InsightsAnalyticsDatasource) executeTimeSeriesQuery(ctx context.Context
 	return result, nil
 }
 
-func (e *InsightsAnalyticsDatasource) buildQueries(queries []pluginmodels.TSDBSubQuery,
-	timeRange pluginmodels.TSDBTimeRange) ([]*InsightsAnalyticsQuery, error) {
+func (e *InsightsAnalyticsDatasource) buildQueries(queries []pluginmodels.DataSubQuery,
+	timeRange pluginmodels.DataTimeRange) ([]*InsightsAnalyticsQuery, error) {
 	iaQueries := []*InsightsAnalyticsQuery{}
 
 	for _, query := range queries {
@@ -96,10 +96,10 @@ func (e *InsightsAnalyticsDatasource) buildQueries(queries []pluginmodels.TSDBSu
 	return iaQueries, nil
 }
 
-func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *InsightsAnalyticsQuery) pluginmodels.TSDBQueryResult {
-	queryResult := pluginmodels.TSDBQueryResult{RefID: query.RefID}
+func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *InsightsAnalyticsQuery) pluginmodels.DataQueryResult {
+	queryResult := pluginmodels.DataQueryResult{RefID: query.RefID}
 
-	queryResultError := func(err error) pluginmodels.TSDBQueryResult {
+	queryResultError := func(err error) pluginmodels.DataQueryResult {
 		queryResult.Error = err
 		return queryResult
 	}

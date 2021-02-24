@@ -23,7 +23,7 @@ const DatasourceUID = "-100"
 // Service is service representation for expression handling.
 type Service struct {
 	Cfg         *setting.Cfg
-	TSDBService *tsdb.Service
+	DataService *tsdb.Service
 }
 
 func (s *Service) isDisabled() bool {

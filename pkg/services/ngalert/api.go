@@ -55,7 +55,7 @@ func (ng *AlertNG) conditionEvalEndpoint(c *models.ReqContext, cmd evalAlertCond
 
 	evaluator := eval.Evaluator{Cfg: ng.Cfg}
 
-	evalResults, err := evaluator.ConditionEval(&evalCond, now, ng.TSDBService)
+	evalResults, err := evaluator.ConditionEval(&evalCond, now, ng.DataService)
 	if err != nil {
 		return response.Error(400, "Failed to evaluate conditions", err)
 	}
@@ -86,7 +86,7 @@ func (ng *AlertNG) alertDefinitionEvalEndpoint(c *models.ReqContext) response.Re
 	}
 
 	evaluator := eval.Evaluator{Cfg: ng.Cfg}
-	evalResults, err := evaluator.ConditionEval(condition, timeNow(), ng.TSDBService)
+	evalResults, err := evaluator.ConditionEval(condition, timeNow(), ng.DataService)
 	if err != nil {
 		return response.Error(400, "Failed to evaluate alert", err)
 	}

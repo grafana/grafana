@@ -15,19 +15,19 @@ func init() {
 // LogsService provides methods for querying CloudWatch Logs.
 type LogsService struct {
 	channelMu        sync.Mutex
-	responseChannels map[string]chan pluginmodels.TSDBResponse
+	responseChannels map[string]chan pluginmodels.DataResponse
 	queues           map[string](chan bool)
 	queueLock        sync.Mutex
 }
 
 // Init is called by the DI framework to initialize the instance.
 func (s *LogsService) Init() error {
-	s.responseChannels = make(map[string]chan pluginmodels.TSDBResponse)
+	s.responseChannels = make(map[string]chan pluginmodels.DataResponse)
 	s.queues = make(map[string](chan bool))
 	return nil
 }
 
-func (s *LogsService) AddResponseChannel(name string, channel chan pluginmodels.TSDBResponse) error {
+func (s *LogsService) AddResponseChannel(name string, channel chan pluginmodels.DataResponse) error {
 	s.channelMu.Lock()
 	defer s.channelMu.Unlock()
 
@@ -39,7 +39,7 @@ func (s *LogsService) AddResponseChannel(name string, channel chan pluginmodels.
 	return nil
 }
 
-func (s *LogsService) GetResponseChannel(name string) (chan pluginmodels.TSDBResponse, error) {
+func (s *LogsService) GetResponseChannel(name string) (chan pluginmodels.DataResponse, error) {
 	s.channelMu.Lock()
 	defer s.channelMu.Unlock()
 

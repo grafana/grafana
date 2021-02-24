@@ -12,8 +12,8 @@ import (
 	"github.com/timberio/go-datemath"
 )
 
-// TSDBSubQuery represents a TSDB sub-query.
-type TSDBSubQuery struct {
+// DataSubQuery represents a data sub-query.
+type DataSubQuery struct {
 	RefID         string             `json:"refId"`
 	Model         *simplejson.Json   `json:"model,omitempty"`
 	DataSource    *models.DataSource `json:"datasource"`
@@ -22,16 +22,16 @@ type TSDBSubQuery struct {
 	QueryType     string             `json:"queryType"`
 }
 
-// TSDBQuery contains all information about a TSDB query request.
-type TSDBQuery struct {
-	TimeRange *TSDBTimeRange
-	Queries   []TSDBSubQuery
+// DataQuery contains all information about a data query request.
+type DataQuery struct {
+	TimeRange *DataTimeRange
+	Queries   []DataSubQuery
 	Headers   map[string]string
 	Debug     bool
 	User      *models.SignedInUser
 }
 
-type TSDBTimeRange struct {
+type DataTimeRange struct {
 	From string
 	To   string
 	now  time.Time
@@ -51,7 +51,7 @@ type TSDBTimeSeriesPoints []TSDBTimePoint
 type TSDBTimeSeriesSlice []TSDBTimeSeries
 type TSDBRowValues []interface{}
 
-type TSDBQueryResult struct {
+type DataQueryResult struct {
 	Error       error               `json:"-"`
 	ErrorString string              `json:"error,omitempty"`
 	RefID       string              `json:"refId"`
@@ -67,48 +67,48 @@ type TSDBTimeSeries struct {
 	Tags   map[string]string    `json:"tags,omitempty"`
 }
 
-type TSDBResponse struct {
-	Results map[string]TSDBQueryResult `json:"results"`
+type DataResponse struct {
+	Results map[string]DataQueryResult `json:"results"`
 	Message string                     `json:"message,omitempty"`
 }
 
 type TSDBPlugin interface {
-	TSDBQuery(ctx context.Context, ds *models.DataSource, query TSDBQuery) (TSDBResponse, error)
+	DataQuery(ctx context.Context, ds *models.DataSource, query DataQuery) (DataResponse, error)
 }
 
-func NewTSDBTimeRange(from, to string) TSDBTimeRange {
-	return TSDBTimeRange{
+func NewDataTimeRange(from, to string) DataTimeRange {
+	return DataTimeRange{
 		From: from,
 		To:   to,
 		now:  time.Now(),
 	}
 }
 
-func (tr *TSDBTimeRange) GetFromAsMsEpoch() int64 {
+func (tr *DataTimeRange) GetFromAsMsEpoch() int64 {
 	return tr.MustGetFrom().UnixNano() / int64(time.Millisecond)
 }
 
-func (tr *TSDBTimeRange) GetFromAsSecondsEpoch() int64 {
+func (tr *DataTimeRange) GetFromAsSecondsEpoch() int64 {
 	return tr.GetFromAsMsEpoch() / 1000
 }
 
-func (tr *TSDBTimeRange) GetFromAsTimeUTC() time.Time {
+func (tr *DataTimeRange) GetFromAsTimeUTC() time.Time {
 	return tr.MustGetFrom().UTC()
 }
 
-func (tr *TSDBTimeRange) GetToAsMsEpoch() int64 {
+func (tr *DataTimeRange) GetToAsMsEpoch() int64 {
 	return tr.MustGetTo().UnixNano() / int64(time.Millisecond)
 }
 
-func (tr *TSDBTimeRange) GetToAsSecondsEpoch() int64 {
+func (tr *DataTimeRange) GetToAsSecondsEpoch() int64 {
 	return tr.GetToAsMsEpoch() / 1000
 }
 
-func (tr *TSDBTimeRange) GetToAsTimeUTC() time.Time {
+func (tr *DataTimeRange) GetToAsTimeUTC() time.Time {
 	return tr.MustGetTo().UTC()
 }
 
-func (tr *TSDBTimeRange) MustGetFrom() time.Time {
+func (tr *DataTimeRange) MustGetFrom() time.Time {
 	res, err := tr.ParseFrom()
 	if err != nil {
 		return time.Unix(0, 0)
@@ -116,7 +116,7 @@ func (tr *TSDBTimeRange) MustGetFrom() time.Time {
 	return res
 }
 
-func (tr *TSDBTimeRange) MustGetTo() time.Time {
+func (tr *DataTimeRange) MustGetTo() time.Time {
 	res, err := tr.ParseTo()
 	if err != nil {
 		return time.Unix(0, 0)
@@ -124,19 +124,19 @@ func (tr *TSDBTimeRange) MustGetTo() time.Time {
 	return res
 }
 
-func (tr TSDBTimeRange) ParseFrom() (time.Time, error) {
+func (tr DataTimeRange) ParseFrom() (time.Time, error) {
 	return parseTimeRange(tr.From, tr.now, false, nil)
 }
 
-func (tr TSDBTimeRange) ParseTo() (time.Time, error) {
+func (tr DataTimeRange) ParseTo() (time.Time, error) {
 	return parseTimeRange(tr.To, tr.now, true, nil)
 }
 
-func (tr TSDBTimeRange) ParseFromWithLocation(location *time.Location) (time.Time, error) {
+func (tr DataTimeRange) ParseFromWithLocation(location *time.Location) (time.Time, error) {
 	return parseTimeRange(tr.From, tr.now, false, location)
 }
 
-func (tr TSDBTimeRange) ParseToWithLocation(location *time.Location) (time.Time, error) {
+func (tr DataTimeRange) ParseToWithLocation(location *time.Location) (time.Time, error) {
 	return parseTimeRange(tr.To, tr.now, true, location)
 }
 

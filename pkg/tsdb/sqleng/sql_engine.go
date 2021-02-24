@@ -32,7 +32,7 @@ const MetaKeyExecutedQueryString = "executedQueryString"
 // SqlMacroEngine interpolates macros into sql. It takes in the Query to have access to query context and
 // timeRange to be able to generate queries that use from and to.
 type SqlMacroEngine interface {
-	Interpolate(query pluginmodels.TSDBSubQuery, timeRange pluginmodels.TSDBTimeRange, sql string) (string, error)
+	Interpolate(query pluginmodels.DataSubQuery, timeRange pluginmodels.DataTimeRange, sql string) (string, error)
 }
 
 // SqlQueryResultTransformer transforms a query result row to RowValues with proper types.
@@ -130,10 +130,10 @@ var NewSqlQueryEndpoint = func(config *SqlQueryEndpointConfiguration, queryResul
 const rowLimit = 1000000
 
 // Query is the main function for the SqlQueryEndpoint
-func (e *sqlQueryEndpoint) TSDBQuery(ctx context.Context, dsInfo *models.DataSource,
-	tsdbQuery pluginmodels.TSDBQuery) (pluginmodels.TSDBResponse, error) {
-	result := pluginmodels.TSDBResponse{
-		Results: make(map[string]pluginmodels.TSDBQueryResult),
+func (e *sqlQueryEndpoint) DataQuery(ctx context.Context, dsInfo *models.DataSource,
+	tsdbQuery pluginmodels.DataQuery) (pluginmodels.DataResponse, error) {
+	result := pluginmodels.DataResponse{
+		Results: make(map[string]pluginmodels.DataQueryResult),
 	}
 
 	var wg sync.WaitGroup
@@ -144,7 +144,7 @@ func (e *sqlQueryEndpoint) TSDBQuery(ctx context.Context, dsInfo *models.DataSou
 			continue
 		}
 
-		queryResult := pluginmodels.TSDBQueryResult{Meta: simplejson.New(), RefID: query.RefID}
+		queryResult := pluginmodels.DataQueryResult{Meta: simplejson.New(), RefID: query.RefID}
 		result.Results[query.RefID] = queryResult
 
 		// global substitutions
@@ -165,7 +165,7 @@ func (e *sqlQueryEndpoint) TSDBQuery(ctx context.Context, dsInfo *models.DataSou
 
 		wg.Add(1)
 
-		go func(rawSQL string, query pluginmodels.TSDBSubQuery, queryResult pluginmodels.TSDBQueryResult) {
+		go func(rawSQL string, query pluginmodels.DataSubQuery, queryResult pluginmodels.DataQueryResult) {
 			defer wg.Done()
 			session := e.engine.NewSession()
 			defer session.Close()
@@ -206,7 +206,7 @@ func (e *sqlQueryEndpoint) TSDBQuery(ctx context.Context, dsInfo *models.DataSou
 }
 
 // Interpolate provides global macros/substitutions for all sql datasources.
-var Interpolate = func(query pluginmodels.TSDBSubQuery, timeRange pluginmodels.TSDBTimeRange, sql string) (string, error) {
+var Interpolate = func(query pluginmodels.DataSubQuery, timeRange pluginmodels.DataTimeRange, sql string) (string, error) {
 	minInterval, err := interval.GetIntervalFrom(query.DataSource, query.Model, time.Second*60)
 	if err != nil {
 		return sql, nil
@@ -221,8 +221,8 @@ var Interpolate = func(query pluginmodels.TSDBSubQuery, timeRange pluginmodels.T
 	return sql, nil
 }
 
-func (e *sqlQueryEndpoint) transformToTable(query pluginmodels.TSDBSubQuery, rows *core.Rows,
-	result pluginmodels.TSDBQueryResult, tsdbQuery pluginmodels.TSDBQuery) error {
+func (e *sqlQueryEndpoint) transformToTable(query pluginmodels.DataSubQuery, rows *core.Rows,
+	result pluginmodels.DataQueryResult, tsdbQuery pluginmodels.DataQuery) error {
 	columnNames, err := rows.Columns()
 	columnCount := len(columnNames)
 
@@ -283,7 +283,7 @@ func (e *sqlQueryEndpoint) transformToTable(query pluginmodels.TSDBSubQuery, row
 	return nil
 }
 
-func newProcessCfg(query pluginmodels.TSDBSubQuery, tsdbQuery pluginmodels.TSDBQuery, rows *core.Rows) (*processCfg, error) {
+func newProcessCfg(query pluginmodels.DataSubQuery, tsdbQuery pluginmodels.DataQuery, rows *core.Rows) (*processCfg, error) {
 	columnNames, err := rows.Columns()
 	if err != nil {
 		return nil, err
@@ -311,8 +311,8 @@ func newProcessCfg(query pluginmodels.TSDBSubQuery, tsdbQuery pluginmodels.TSDBQ
 	return cfg, nil
 }
 
-func (e *sqlQueryEndpoint) transformToTimeSeries(query pluginmodels.TSDBSubQuery, rows *core.Rows,
-	result pluginmodels.TSDBQueryResult, tsdbQuery pluginmodels.TSDBQuery) error {
+func (e *sqlQueryEndpoint) transformToTimeSeries(query pluginmodels.DataSubQuery, rows *core.Rows,
+	result pluginmodels.DataQueryResult, tsdbQuery pluginmodels.DataQuery) error {
 	cfg, err := newProcessCfg(query, tsdbQuery, rows)
 	if err != nil {
 		return err
@@ -416,7 +416,7 @@ type processCfg struct {
 	pointsBySeries     map[string]pluginmodels.TSDBTimeSeries
 	seriesByQueryOrder *list.List
 	fillValue          null.Float
-	tsdbQuery          pluginmodels.TSDBQuery
+	tsdbQuery          pluginmodels.DataQuery
 	fillInterval       float64
 	fillPrevious       bool
 }
@@ -682,7 +682,7 @@ func ConvertSqlValueColumnToFloat(columnName string, columnValue interface{}) (n
 	return value, nil
 }
 
-func SetupFillmode(query pluginmodels.TSDBSubQuery, interval time.Duration, fillmode string) error {
+func SetupFillmode(query pluginmodels.DataSubQuery, interval time.Duration, fillmode string) error {
 	query.Model.Set("fill", true)
 	query.Model.Set("fillInterval", interval.Seconds())
 	switch fillmode {

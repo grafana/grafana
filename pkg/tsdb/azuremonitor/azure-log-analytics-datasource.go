@@ -45,15 +45,15 @@ type AzureLogAnalyticsQuery struct {
 // 1. build the AzureMonitor url and querystring for each query
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into the timeseries format
-func (e *AzureLogAnalyticsDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []pluginmodels.TSDBSubQuery,
-	timeRange pluginmodels.TSDBTimeRange) (pluginmodels.TSDBResponse, error) {
-	result := pluginmodels.TSDBResponse{
-		Results: map[string]pluginmodels.TSDBQueryResult{},
+func (e *AzureLogAnalyticsDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []pluginmodels.DataSubQuery,
+	timeRange pluginmodels.DataTimeRange) (pluginmodels.DataResponse, error) {
+	result := pluginmodels.DataResponse{
+		Results: map[string]pluginmodels.DataQueryResult{},
 	}
 
 	queries, err := e.buildQueries(originalQueries, timeRange)
 	if err != nil {
-		return pluginmodels.TSDBResponse{}, err
+		return pluginmodels.DataResponse{}, err
 	}
 
 	for _, query := range queries {
@@ -63,8 +63,8 @@ func (e *AzureLogAnalyticsDatasource) executeTimeSeriesQuery(ctx context.Context
 	return result, nil
 }
 
-func (e *AzureLogAnalyticsDatasource) buildQueries(queries []pluginmodels.TSDBSubQuery,
-	timeRange pluginmodels.TSDBTimeRange) ([]*AzureLogAnalyticsQuery, error) {
+func (e *AzureLogAnalyticsDatasource) buildQueries(queries []pluginmodels.DataSubQuery,
+	timeRange pluginmodels.DataTimeRange) ([]*AzureLogAnalyticsQuery, error) {
 	azureLogAnalyticsQueries := []*AzureLogAnalyticsQuery{}
 
 	for _, query := range queries {
@@ -112,10 +112,10 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(queries []pluginmodels.TSDBSu
 }
 
 func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *AzureLogAnalyticsQuery,
-	queries []pluginmodels.TSDBSubQuery, timeRange pluginmodels.TSDBTimeRange) pluginmodels.TSDBQueryResult {
-	queryResult := pluginmodels.TSDBQueryResult{RefID: query.RefID}
+	queries []pluginmodels.DataSubQuery, timeRange pluginmodels.DataTimeRange) pluginmodels.DataQueryResult {
+	queryResult := pluginmodels.DataQueryResult{RefID: query.RefID}
 
-	queryResultErrorWithExecuted := func(err error) pluginmodels.TSDBQueryResult {
+	queryResultErrorWithExecuted := func(err error) pluginmodels.DataQueryResult {
 		queryResult.Error = err
 		frames := data.Frames{
 			&data.Frame{

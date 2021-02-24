@@ -9,5 +9,5 @@ import (
 
 // RequestHandler is a TSDB request handler interface.
 type RequestHandler interface {
-	HandleRequest(context.Context, *models.DataSource, pluginmodels.TSDBQuery) (pluginmodels.TSDBResponse, error)
+	HandleRequest(context.Context, *models.DataSource, pluginmodels.DataQuery) (pluginmodels.DataResponse, error)
 }

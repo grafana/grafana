@@ -21,10 +21,10 @@ type DatasourcePluginWrapper struct {
 	logger log.Logger
 }
 
-func (tw *DatasourcePluginWrapper) Query(ctx context.Context, ds *models.DataSource, query TSDBQuery) (TSDBResponse, error) {
+func (tw *DatasourcePluginWrapper) Query(ctx context.Context, ds *models.DataSource, query DataQuery) (DataResponse, error) {
 	jsonData, err := ds.JsonData.MarshalJSON()
 	if err != nil {
-		return TSDBResponse{}, err
+		return DataResponse{}, err
 	}
 
 	pbQuery := &datasource.DatasourceRequest{
@@ -49,7 +49,7 @@ func (tw *DatasourcePluginWrapper) Query(ctx context.Context, ds *models.DataSou
 	for _, q := range query.Queries {
 		modelJson, err := q.Model.MarshalJSON()
 		if err != nil {
-			return TSDBResponse{}, err
+			return DataResponse{}, err
 		}
 
 		pbQuery.Queries = append(pbQuery.Queries, &datasource.Query{
@@ -62,15 +62,15 @@ func (tw *DatasourcePluginWrapper) Query(ctx context.Context, ds *models.DataSou
 
 	pbres, err := tw.DatasourcePlugin.Query(ctx, pbQuery)
 	if err != nil {
-		return TSDBResponse{}, err
+		return DataResponse{}, err
 	}
 
-	res := TSDBResponse{
-		Results: map[string]TSDBQueryResult{},
+	res := DataResponse{
+		Results: map[string]DataQueryResult{},
 	}
 
 	for _, r := range pbres.Results {
-		qr := TSDBQueryResult{
+		qr := DataQueryResult{
 			RefID:  r.RefId,
 			Series: []TSDBTimeSeries{},
 			Tables: []TSDBTable{},
@@ -106,7 +106,7 @@ func (tw *DatasourcePluginWrapper) Query(ctx context.Context, ds *models.DataSou
 
 		mappedTables, err := tw.mapTables(r)
 		if err != nil {
-			return TSDBResponse{}, err
+			return DataResponse{}, err
 		}
 		qr.Tables = mappedTables
 

@@ -59,7 +59,7 @@ func (p *DataSourcePlugin) Load(decoder *json.Decoder, base *PluginBase, backend
 	return p, nil
 }
 
-func (p *DataSourcePlugin) TSDBQuery(ctx context.Context, dsInfo *models.DataSource, query TSDBQuery) (TSDBResponse, error) {
+func (p *DataSourcePlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource, query DataQuery) (DataResponse, error) {
 	if p.client != nil {
 		endpoint := newDataSourcePluginWrapperV2(p.logger, p.Id, p.Type, p.client.DataPlugin)
 		return endpoint.Query(ctx, dsInfo, query)
@@ -69,7 +69,7 @@ func (p *DataSourcePlugin) TSDBQuery(ctx context.Context, dsInfo *models.DataSou
 		return endpoint.Query(ctx, dsInfo, query)
 	}
 
-	return TSDBResponse{}, fmt.Errorf("plugin %q doesn't support TSDB queries", p.Id)
+	return DataResponse{}, fmt.Errorf("plugin %q doesn't support TSDB queries", p.Id)
 }
 
 func (p *DataSourcePlugin) onLegacyPluginStart(pluginID string, client *grpcplugin.LegacyClient, logger log.Logger) error {

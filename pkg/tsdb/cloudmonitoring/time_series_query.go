@@ -19,9 +19,9 @@ import (
 	"golang.org/x/net/context/ctxhttp"
 )
 
-func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, tsdbQuery pluginmodels.TSDBQuery,
-	e *Executor) (pluginmodels.TSDBQueryResult, cloudMonitoringResponse, string, error) {
-	queryResult := pluginmodels.TSDBQueryResult{Meta: simplejson.New(), RefID: timeSeriesQuery.RefID}
+func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, tsdbQuery pluginmodels.DataQuery,
+	e *Executor) (pluginmodels.DataQueryResult, cloudMonitoringResponse, string, error) {
+	queryResult := pluginmodels.DataQueryResult{Meta: simplejson.New(), RefID: timeSeriesQuery.RefID}
 	projectName := timeSeriesQuery.ProjectName
 	if projectName == "" {
 		defaultProject, err := e.getDefaultProject(ctx)
@@ -94,7 +94,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, t
 	return queryResult, data, timeSeriesQuery.Query, nil
 }
 
-func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes pluginmodels.TSDBQueryResult, response cloudMonitoringResponse, executedQueryString string) error {
+func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes pluginmodels.DataQueryResult, response cloudMonitoringResponse, executedQueryString string) error {
 	labels := make(map[string]map[string]bool)
 	frames := data.Frames{}
 	for _, series := range response.TimeSeriesData {
@@ -260,7 +260,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes plu
 	return nil
 }
 
-func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseToAnnotations(queryRes pluginmodels.TSDBQueryResult,
+func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseToAnnotations(queryRes pluginmodels.DataQueryResult,
 	data cloudMonitoringResponse, title string, text string, tags string) error {
 	annotations := make([]map[string]string, 0)
 

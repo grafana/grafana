@@ -83,10 +83,10 @@ func (e *PrometheusExecutor) getClient(dsInfo *models.DataSource) (apiv1.API, er
 	return apiv1.NewAPI(client), nil
 }
 
-func (e *PrometheusExecutor) TSDBQuery(ctx context.Context, dsInfo *models.DataSource,
-	tsdbQuery pluginmodels.TSDBQuery) (pluginmodels.TSDBResponse, error) {
-	result := pluginmodels.TSDBResponse{
-		Results: map[string]pluginmodels.TSDBQueryResult{},
+func (e *PrometheusExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource,
+	tsdbQuery pluginmodels.DataQuery) (pluginmodels.DataResponse, error) {
+	result := pluginmodels.DataResponse{
+		Results: map[string]pluginmodels.DataQueryResult{},
 	}
 
 	client, err := e.getClient(dsInfo)
@@ -148,7 +148,7 @@ func formatLegend(metric model.Metric, query *PrometheusQuery) string {
 	return string(result)
 }
 
-func (e *PrometheusExecutor) parseQuery(dsInfo *models.DataSource, query pluginmodels.TSDBQuery) (
+func (e *PrometheusExecutor) parseQuery(dsInfo *models.DataSource, query pluginmodels.DataQuery) (
 	[]*PrometheusQuery, error) {
 	qs := []*PrometheusQuery{}
 	for _, queryModel := range query.Queries {
@@ -191,8 +191,8 @@ func (e *PrometheusExecutor) parseQuery(dsInfo *models.DataSource, query pluginm
 	return qs, nil
 }
 
-func parseResponse(value model.Value, query *PrometheusQuery) (pluginmodels.TSDBQueryResult, error) {
-	var queryRes pluginmodels.TSDBQueryResult
+func parseResponse(value model.Value, query *PrometheusQuery) (pluginmodels.DataQueryResult, error) {
+	var queryRes pluginmodels.DataQueryResult
 
 	data, ok := value.(model.Matrix)
 	if !ok {

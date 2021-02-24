@@ -15,7 +15,7 @@ var (
 	regexpMeasurementPattern = regexp.MustCompile(`^\/.*\/$`)
 )
 
-func (query *Query) Build(queryContext models.TSDBQuery) (string, error) {
+func (query *Query) Build(queryContext models.DataQuery) (string, error) {
 	var res string
 	if query.UseRawQuery && query.RawQuery != "" {
 		res = query.RawQuery
@@ -78,7 +78,7 @@ func (query *Query) renderTags() []string {
 	return res
 }
 
-func (query *Query) renderTimeFilter(queryContext models.TSDBQuery) string {
+func (query *Query) renderTimeFilter(queryContext models.DataQuery) string {
 	from := "now() - " + queryContext.TimeRange.From
 	to := ""
 
@@ -89,7 +89,7 @@ func (query *Query) renderTimeFilter(queryContext models.TSDBQuery) string {
 	return fmt.Sprintf("time > %s%s", from, to)
 }
 
-func (query *Query) renderSelectors(queryContext models.TSDBQuery) string {
+func (query *Query) renderSelectors(queryContext models.DataQuery) string {
 	res := "SELECT "
 
 	var selectors []string
@@ -136,7 +136,7 @@ func (query *Query) renderWhereClause() string {
 	return res
 }
 
-func (query *Query) renderGroupBy(queryContext models.TSDBQuery) string {
+func (query *Query) renderGroupBy(queryContext models.DataQuery) string {
 	groupBy := ""
 	for i, group := range query.GroupBy {
 		if i == 0 {

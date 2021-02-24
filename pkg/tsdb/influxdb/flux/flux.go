@@ -21,22 +21,22 @@ func init() {
 }
 
 // Query builds flux queries, executes them, and returns the results.
-func Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery pluginmodels.TSDBQuery) (
-	pluginmodels.TSDBResponse, error) {
+func Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery pluginmodels.DataQuery) (
+	pluginmodels.DataResponse, error) {
 	glog.Debug("Received a query", "query", tsdbQuery)
-	tRes := pluginmodels.TSDBResponse{
-		Results: make(map[string]pluginmodels.TSDBQueryResult),
+	tRes := pluginmodels.DataResponse{
+		Results: make(map[string]pluginmodels.DataQueryResult),
 	}
 	r, err := runnerFromDataSource(dsInfo)
 	if err != nil {
-		return pluginmodels.TSDBResponse{}, err
+		return pluginmodels.DataResponse{}, err
 	}
 	defer r.client.Close()
 
 	for _, query := range tsdbQuery.Queries {
 		qm, err := getQueryModelTSDB(query, *tsdbQuery.TimeRange, dsInfo)
 		if err != nil {
-			tRes.Results[query.RefID] = pluginmodels.TSDBQueryResult{Error: err}
+			tRes.Results[query.RefID] = pluginmodels.DataQueryResult{Error: err}
 			continue
 		}
 
@@ -44,7 +44,7 @@ func Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery pluginmodel
 		maxSeries := dsInfo.JsonData.Get("maxSeries").MustInt(1000)
 		res := executeQuery(ctx, *qm, r, maxSeries)
 
-		tRes.Results[query.RefID] = backendDataResponseToTSDBResponse(&res, query.RefID)
+		tRes.Results[query.RefID] = backendDataResponseToDataResponse(&res, query.RefID)
 	}
 	return tRes, nil
 }
@@ -95,11 +95,11 @@ func runnerFromDataSource(dsInfo *models.DataSource) (*runner, error) {
 	}, nil
 }
 
-// backendDataResponseToTSDBResponse takes the SDK's style response and changes it into a
-// pluginmodels.TSDBQueryResult. This is a wrapper so less of existing code needs to be changed. This should
+// backendDataResponseToDataResponse takes the SDK's style response and changes it into a
+// pluginmodels.DataQueryResult. This is a wrapper so less of existing code needs to be changed. This should
 // be able to be removed in the near future https://github.com/grafana/grafana/pull/25472.
-func backendDataResponseToTSDBResponse(dr *backend.DataResponse, refID string) pluginmodels.TSDBQueryResult {
-	qr := pluginmodels.TSDBQueryResult{RefID: refID}
+func backendDataResponseToDataResponse(dr *backend.DataResponse, refID string) pluginmodels.DataQueryResult {
+	qr := pluginmodels.DataQueryResult{RefID: refID}
 
 	qr.Error = dr.Error
 

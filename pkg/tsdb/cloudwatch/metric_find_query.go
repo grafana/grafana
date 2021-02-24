@@ -237,8 +237,8 @@ var dimensionsMap = map[string][]string{
 
 var regionCache sync.Map
 
-func (e *cloudWatchExecutor) executeMetricFindQuery(ctx context.Context, queryContext pluginmodels.TSDBQuery) (
-	pluginmodels.TSDBResponse, error) {
+func (e *cloudWatchExecutor) executeMetricFindQuery(ctx context.Context, queryContext pluginmodels.DataQuery) (
+	pluginmodels.DataResponse, error) {
 	firstQuery := queryContext.Queries[0]
 
 	parameters := firstQuery.Model
@@ -264,20 +264,20 @@ func (e *cloudWatchExecutor) executeMetricFindQuery(ctx context.Context, queryCo
 		data, err = e.handleGetResourceArns(ctx, parameters, queryContext)
 	}
 	if err != nil {
-		return pluginmodels.TSDBResponse{}, err
+		return pluginmodels.DataResponse{}, err
 	}
 
-	queryResult := pluginmodels.TSDBQueryResult{Meta: simplejson.New(), RefID: firstQuery.RefID}
+	queryResult := pluginmodels.DataQueryResult{Meta: simplejson.New(), RefID: firstQuery.RefID}
 	transformToTable(data, queryResult)
-	result := pluginmodels.TSDBResponse{
-		Results: map[string]pluginmodels.TSDBQueryResult{
+	result := pluginmodels.DataResponse{
+		Results: map[string]pluginmodels.DataQueryResult{
 			firstQuery.RefID: queryResult,
 		},
 	}
 	return result, nil
 }
 
-func transformToTable(data []suggestData, result pluginmodels.TSDBQueryResult) {
+func transformToTable(data []suggestData, result pluginmodels.DataQueryResult) {
 	table := pluginmodels.TSDBTable{
 		Columns: []pluginmodels.TSDBTableColumn{
 			{
@@ -318,7 +318,7 @@ func parseMultiSelectValue(input string) []string {
 // Whenever this list is updated, the frontend list should also be updated.
 // Please update the region list in public/app/plugins/datasource/cloudwatch/partials/config.html
 func (e *cloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *simplejson.Json,
-	queryContext pluginmodels.TSDBQuery) ([]suggestData, error) {
+	queryContext pluginmodels.DataQuery) ([]suggestData, error) {
 	dsInfo := e.getDSInfo(defaultRegion)
 	profile := dsInfo.Profile
 	if cache, ok := regionCache.Load(profile); ok {
@@ -363,7 +363,7 @@ func (e *cloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *s
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) handleGetNamespaces(ctx context.Context, parameters *simplejson.Json, queryContext pluginmodels.TSDBQuery) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetNamespaces(ctx context.Context, parameters *simplejson.Json, queryContext pluginmodels.DataQuery) ([]suggestData, error) {
 	keys := []string{}
 	for key := range metricsMap {
 		keys = append(keys, key)
@@ -382,7 +382,7 @@ func (e *cloudWatchExecutor) handleGetNamespaces(ctx context.Context, parameters
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) handleGetMetrics(ctx context.Context, parameters *simplejson.Json, queryContext pluginmodels.TSDBQuery) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetMetrics(ctx context.Context, parameters *simplejson.Json, queryContext pluginmodels.DataQuery) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	namespace := parameters.Get("namespace").MustString()
 
@@ -408,7 +408,7 @@ func (e *cloudWatchExecutor) handleGetMetrics(ctx context.Context, parameters *s
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters *simplejson.Json, queryContext pluginmodels.TSDBQuery) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters *simplejson.Json, queryContext pluginmodels.DataQuery) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	namespace := parameters.Get("namespace").MustString()
 
@@ -434,7 +434,7 @@ func (e *cloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) handleGetDimensionValues(ctx context.Context, parameters *simplejson.Json, queryContext pluginmodels.TSDBQuery) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetDimensionValues(ctx context.Context, parameters *simplejson.Json, queryContext pluginmodels.DataQuery) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	namespace := parameters.Get("namespace").MustString()
 	metricName := parameters.Get("metricName").MustString()
@@ -486,7 +486,7 @@ func (e *cloudWatchExecutor) handleGetDimensionValues(ctx context.Context, param
 }
 
 func (e *cloudWatchExecutor) handleGetEbsVolumeIds(ctx context.Context, parameters *simplejson.Json,
-	queryContext pluginmodels.TSDBQuery) ([]suggestData, error) {
+	queryContext pluginmodels.DataQuery) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	instanceId := parameters.Get("instanceId").MustString()
 
@@ -509,7 +509,7 @@ func (e *cloudWatchExecutor) handleGetEbsVolumeIds(ctx context.Context, paramete
 }
 
 func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, parameters *simplejson.Json,
-	queryContext pluginmodels.TSDBQuery) ([]suggestData, error) {
+	queryContext pluginmodels.DataQuery) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	attributeName := parameters.Get("attributeName").MustString()
 	filterJson := parameters.Get("filters").MustMap()
@@ -589,7 +589,7 @@ func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 }
 
 func (e *cloudWatchExecutor) handleGetResourceArns(ctx context.Context, parameters *simplejson.Json,
-	queryContext pluginmodels.TSDBQuery) ([]suggestData, error) {
+	queryContext pluginmodels.DataQuery) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	resourceType := parameters.Get("resourceType").MustString()
 	filterJson := parameters.Get("tags").MustMap()

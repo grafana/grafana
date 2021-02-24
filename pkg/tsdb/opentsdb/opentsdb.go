@@ -36,8 +36,8 @@ func init() {
 	plog = log.New("tsdb.opentsdb")
 }
 
-func (e *OpenTsdbExecutor) TSDBQuery(ctx context.Context, dsInfo *models.DataSource,
-	queryContext pluginmodels.TSDBQuery) (pluginmodels.TSDBResponse, error) {
+func (e *OpenTsdbExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource,
+	queryContext pluginmodels.DataQuery) (pluginmodels.DataResponse, error) {
 
 	var tsdbQuery OpenTsdbQuery
 
@@ -55,25 +55,25 @@ func (e *OpenTsdbExecutor) TSDBQuery(ctx context.Context, dsInfo *models.DataSou
 
 	req, err := e.createRequest(dsInfo, tsdbQuery)
 	if err != nil {
-		return pluginmodels.TSDBResponse{}, err
+		return pluginmodels.DataResponse{}, err
 	}
 
 	httpClient, err := dsInfo.GetHttpClient()
 	if err != nil {
-		return pluginmodels.TSDBResponse{}, err
+		return pluginmodels.DataResponse{}, err
 	}
 
 	res, err := ctxhttp.Do(ctx, httpClient, req)
 	if err != nil {
-		return pluginmodels.TSDBResponse{}, err
+		return pluginmodels.DataResponse{}, err
 	}
 
 	queryResult, err := e.parseResponse(tsdbQuery, res)
 	if err != nil {
-		return pluginmodels.TSDBResponse{}, err
+		return pluginmodels.DataResponse{}, err
 	}
 
-	return pluginmodels.TSDBResponse{
+	return pluginmodels.DataResponse{
 		Results: queryResult,
 	}, nil
 }
@@ -105,9 +105,9 @@ func (e *OpenTsdbExecutor) createRequest(dsInfo *models.DataSource, data OpenTsd
 	return req, err
 }
 
-func (e *OpenTsdbExecutor) parseResponse(query OpenTsdbQuery, res *http.Response) (map[string]pluginmodels.TSDBQueryResult, error) {
-	queryResults := make(map[string]pluginmodels.TSDBQueryResult)
-	queryRes := pluginmodels.TSDBQueryResult{}
+func (e *OpenTsdbExecutor) parseResponse(query OpenTsdbQuery, res *http.Response) (map[string]pluginmodels.DataQueryResult, error) {
+	queryResults := make(map[string]pluginmodels.DataQueryResult)
+	queryRes := pluginmodels.DataQueryResult{}
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
@@ -154,7 +154,7 @@ func (e *OpenTsdbExecutor) parseResponse(query OpenTsdbQuery, res *http.Response
 	return queryResults, nil
 }
 
-func (e *OpenTsdbExecutor) buildMetric(query pluginmodels.TSDBSubQuery) map[string]interface{} {
+func (e *OpenTsdbExecutor) buildMetric(query pluginmodels.DataSubQuery) map[string]interface{} {
 	metric := make(map[string]interface{})
 
 	// Setting metric and aggregator

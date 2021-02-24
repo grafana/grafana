@@ -40,9 +40,9 @@ var newResponseParser = func(responses []*es.SearchResponse, targets []*Query, d
 	}
 }
 
-func (rp *responseParser) getTimeSeries() (pluginmodels.TSDBResponse, error) {
-	result := pluginmodels.TSDBResponse{}
-	result.Results = make(map[string]pluginmodels.TSDBQueryResult)
+func (rp *responseParser) getTimeSeries() (pluginmodels.DataResponse, error) {
+	result := pluginmodels.DataResponse{}
+	result.Results = make(map[string]pluginmodels.DataQueryResult)
 
 	if rp.Responses == nil {
 		return result, nil
@@ -63,7 +63,7 @@ func (rp *responseParser) getTimeSeries() (pluginmodels.TSDBResponse, error) {
 			continue
 		}
 
-		queryRes := pluginmodels.TSDBQueryResult{
+		queryRes := pluginmodels.DataQueryResult{
 			Meta: debugInfo,
 		}
 		props := make(map[string]string)
@@ -73,7 +73,7 @@ func (rp *responseParser) getTimeSeries() (pluginmodels.TSDBResponse, error) {
 		}
 		err := rp.processBuckets(res.Aggregations, target, queryRes.Series, &table, props, 0)
 		if err != nil {
-			return pluginmodels.TSDBResponse{}, err
+			return pluginmodels.DataResponse{}, err
 		}
 		rp.nameSeries(queryRes.Series, target)
 		rp.trimDatapoints(queryRes.Series, target)
@@ -568,8 +568,8 @@ func findAgg(target *Query, aggID string) (*BucketAgg, error) {
 	return nil, errors.New("can't found aggDef, aggID:" + aggID)
 }
 
-func getErrorFromElasticResponse(response *es.SearchResponse) pluginmodels.TSDBQueryResult {
-	var result pluginmodels.TSDBQueryResult
+func getErrorFromElasticResponse(response *es.SearchResponse) pluginmodels.DataQueryResult {
+	var result pluginmodels.DataQueryResult
 	json := simplejson.NewFromAny(response.Error)
 	reason := json.Get("reason").MustString()
 	rootCauseReason := json.Get("root_cause").GetIndex(0).Get("reason").MustString()

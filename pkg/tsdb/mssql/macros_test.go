@@ -16,7 +16,7 @@ import (
 func TestMacroEngine(t *testing.T) {
 	Convey("MacroEngine", t, func() {
 		engine := &msSqlMacroEngine{}
-		query := pluginmodels.TSDBQuery{
+		query := pluginmodels.DataQuery{
 			Model: simplejson.New(),
 		}
 

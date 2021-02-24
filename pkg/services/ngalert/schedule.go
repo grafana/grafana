@@ -47,7 +47,7 @@ func (ng *AlertNG) definitionRoutine(grafanaCtx context.Context, key alertDefini
 					OrgID:                 alertDefinition.OrgID,
 					QueriesAndExpressions: alertDefinition.Data,
 				}
-				results, err := ng.schedule.evaluator.ConditionEval(&condition, ctx.now, ng.TSDBService)
+				results, err := ng.schedule.evaluator.ConditionEval(&condition, ctx.now, ng.DataService)
 				end = timeNow()
 				if err != nil {
 					// consider saving alert instance on error

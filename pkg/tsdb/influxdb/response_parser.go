@@ -21,8 +21,8 @@ func init() {
 	legendFormat = regexp.MustCompile(`\[\[(\w+)(\.\w+)*\]\]*|\$\s*(\w+?)*`)
 }
 
-func (rp *ResponseParser) Parse(response *Response, query *Query) models.TSDBQueryResult {
-	var queryRes models.TSDBQueryResult
+func (rp *ResponseParser) Parse(response *Response, query *Query) models.DataQueryResult {
+	var queryRes models.DataQueryResult
 
 	for _, result := range response.Results {
 		queryRes.Series = append(queryRes.Series, rp.transformRows(result.Series, queryRes, query)...)
@@ -34,7 +34,7 @@ func (rp *ResponseParser) Parse(response *Response, query *Query) models.TSDBQue
 	return queryRes
 }
 
-func (rp *ResponseParser) transformRows(rows []Row, queryResult models.TSDBQueryResult, query *Query) models.TSDBTimeSeriesSlice {
+func (rp *ResponseParser) transformRows(rows []Row, queryResult models.DataQueryResult, query *Query) models.TSDBTimeSeriesSlice {
 	var result models.TSDBTimeSeriesSlice
 	for _, row := range rows {
 		for columnIndex, column := range row.Columns {

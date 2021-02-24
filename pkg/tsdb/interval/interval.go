@@ -28,7 +28,7 @@ type intervalCalculator struct {
 }
 
 type Calculator interface {
-	Calculate(timeRange pluginmodels.TSDBTimeRange, minInterval time.Duration) Interval
+	Calculate(timeRange pluginmodels.DataTimeRange, minInterval time.Duration) Interval
 }
 
 type CalculatorOptions struct {
@@ -53,7 +53,7 @@ func (i *Interval) Milliseconds() int64 {
 	return i.Value.Nanoseconds() / int64(time.Millisecond)
 }
 
-func (ic *intervalCalculator) Calculate(timerange pluginmodels.TSDBTimeRange, minInterval time.Duration) Interval {
+func (ic *intervalCalculator) Calculate(timerange pluginmodels.DataTimeRange, minInterval time.Duration) Interval {
 	to := timerange.MustGetTo().UnixNano()
 	from := timerange.MustGetFrom().UnixNano()
 	interval := time.Duration((to - from) / defaultRes)

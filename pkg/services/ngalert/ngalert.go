@@ -35,7 +35,7 @@ type AlertNG struct {
 	DatasourceCache datasources.CacheService `inject:""`
 	RouteRegister   routing.RouteRegister    `inject:""`
 	SQLStore        *sqlstore.SQLStore       `inject:""`
-	TSDBService     *tsdb.Service            `inject:""`
+	DataService     *tsdb.Service            `inject:""`
 	log             log.Logger
 	schedule        *schedule
 }

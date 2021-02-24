@@ -15,7 +15,7 @@ import (
 )
 
 // Parses the json queries and returns a requestQuery. The requestQuery has a 1 to 1 mapping to a query editor row
-func (e *cloudWatchExecutor) parseQueries(queryContext pluginmodels.TSDBQuery, startTime time.Time,
+func (e *cloudWatchExecutor) parseQueries(queryContext pluginmodels.DataQuery, startTime time.Time,
 	endTime time.Time) (map[string][]*requestQuery, error) {
 	requestQueries := make(map[string][]*requestQuery)
 	for i, query := range queryContext.Queries {

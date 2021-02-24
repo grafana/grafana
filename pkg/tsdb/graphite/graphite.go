@@ -31,8 +31,8 @@ func NewExecutor(*models.DataSource) (pluginmodels.TSDBPlugin, error) {
 
 var glog = log.New("tsdb.graphite")
 
-func (e *GraphiteExecutor) TSDBQuery(ctx context.Context, dsInfo *models.DataSource, tsdbQuery pluginmodels.TSDBQuery) (
-	pluginmodels.TSDBResponse, error) {
+func (e *GraphiteExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource, tsdbQuery pluginmodels.DataQuery) (
+	pluginmodels.DataResponse, error) {
 
 	from := "-" + formatTimeRange(tsdbQuery.TimeRange.From)
 	until := formatTimeRange(tsdbQuery.TimeRange.To)
@@ -64,7 +64,7 @@ func (e *GraphiteExecutor) TSDBQuery(ctx context.Context, dsInfo *models.DataSou
 
 	if target == "" {
 		glog.Error("No targets in query model", "models without targets", strings.Join(emptyQueries, "\n"))
-		return pluginmodels.TSDBResponse{}, errors.New("no query target found for the alert rule")
+		return pluginmodels.DataResponse{}, errors.New("no query target found for the alert rule")
 	}
 
 	formData["target"] = []string{target}
@@ -75,12 +75,12 @@ func (e *GraphiteExecutor) TSDBQuery(ctx context.Context, dsInfo *models.DataSou
 
 	req, err := e.createRequest(dsInfo, formData)
 	if err != nil {
-		return pluginmodels.TSDBResponse{}, err
+		return pluginmodels.DataResponse{}, err
 	}
 
 	httpClient, err := dsInfo.GetHttpClient()
 	if err != nil {
-		return pluginmodels.TSDBResponse{}, err
+		return pluginmodels.DataResponse{}, err
 	}
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "graphite query")
@@ -96,22 +96,22 @@ func (e *GraphiteExecutor) TSDBQuery(ctx context.Context, dsInfo *models.DataSou
 		span.Context(),
 		opentracing.HTTPHeaders,
 		opentracing.HTTPHeadersCarrier(req.Header)); err != nil {
-		return pluginmodels.TSDBResponse{}, err
+		return pluginmodels.DataResponse{}, err
 	}
 
 	res, err := ctxhttp.Do(ctx, httpClient, req)
 	if err != nil {
-		return pluginmodels.TSDBResponse{}, err
+		return pluginmodels.DataResponse{}, err
 	}
 
 	data, err := e.parseResponse(res)
 	if err != nil {
-		return pluginmodels.TSDBResponse{}, err
+		return pluginmodels.DataResponse{}, err
 	}
 
-	result := pluginmodels.TSDBResponse{}
-	result.Results = make(map[string]pluginmodels.TSDBQueryResult)
-	queryRes := pluginmodels.TSDBQueryResult{}
+	result := pluginmodels.DataResponse{}
+	result.Results = make(map[string]pluginmodels.DataQueryResult)
+	queryRes := pluginmodels.DataQueryResult{}
 	for _, series := range data {
 		queryRes.Series = append(queryRes.Series, pluginmodels.TSDBTimeSeries{
 			Name:   series.Target,

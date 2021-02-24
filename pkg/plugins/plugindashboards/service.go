@@ -20,7 +20,7 @@ func init() {
 }
 
 type Service struct {
-	TSDBService   *tsdb.Service          `inject:""`
+	DataService   *tsdb.Service          `inject:""`
 	PluginManager *plugins.PluginManager `inject:""`
 
 	logger log.Logger
@@ -146,6 +146,6 @@ func (s *Service) autoUpdateAppDashboard(pluginDashInfo *plugins.PluginDashboard
 		pluginDashInfo.Revision, "oldRev", pluginDashInfo.ImportedRevision)
 	user := &models.SignedInUser{UserId: 0, OrgRole: models.ROLE_ADMIN}
 	_, err = s.PluginManager.ImportDashboard(pluginDashInfo.PluginId, pluginDashInfo.Path, orgID, 0, dash.Data, true,
-		nil, user, s.TSDBService)
+		nil, user, s.DataService)
 	return err
 }

@@ -24,7 +24,7 @@ import (
 
 func init() {
 	registry.Register(&registry.Descriptor{
-		Name:     "TSDBService",
+		Name:     "DataService",
 		Instance: &Service{},
 	})
 }
@@ -55,23 +55,23 @@ func (s *Service) Init() error {
 	return nil
 }
 
-func (s *Service) HandleRequest(ctx context.Context, ds *models.DataSource, query pluginmodels.TSDBQuery) (
-	pluginmodels.TSDBResponse, error) {
+func (s *Service) HandleRequest(ctx context.Context, ds *models.DataSource, query pluginmodels.DataQuery) (
+	pluginmodels.DataResponse, error) {
 	plugin := plugins.GetTSDBPlugin(ds.Type)
 	if plugin == nil {
 		factory, exists := s.registry[ds.Type]
 		if !exists {
-			return pluginmodels.TSDBResponse{}, fmt.Errorf(
+			return pluginmodels.DataResponse{}, fmt.Errorf(
 				"could not find plugin corresponding to data source type: %q", ds.Type)
 		}
 
 		endpoint, err := factory(ds)
 		if err != nil {
-			return pluginmodels.TSDBResponse{}, fmt.Errorf("could not instantiate endpoint for TSDB plugin %q: %w",
+			return pluginmodels.DataResponse{}, fmt.Errorf("could not instantiate endpoint for TSDB plugin %q: %w",
 				ds.Type, err)
 		}
-		return endpoint.TSDBQuery(ctx, ds, query)
+		return endpoint.DataQuery(ctx, ds, query)
 	}
 
-	return plugin.TSDBQuery(ctx, ds, query)
+	return plugin.DataQuery(ctx, ds, query)
 }

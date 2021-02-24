@@ -40,8 +40,8 @@ func init() {
 	glog = log.New("tsdb.influxdb")
 }
 
-func (e *Executor) TSDBQuery(ctx context.Context, dsInfo *models.DataSource, tsdbQuery pluginmodels.TSDBQuery) (
-	pluginmodels.TSDBResponse, error) {
+func (e *Executor) DataQuery(ctx context.Context, dsInfo *models.DataSource, tsdbQuery pluginmodels.DataQuery) (
+	pluginmodels.DataResponse, error) {
 	glog.Debug("Received a query request", "numQueries", len(tsdbQuery.Queries))
 
 	version := dsInfo.JsonData.Get("version").MustString("")
@@ -56,12 +56,12 @@ func (e *Executor) TSDBQuery(ctx context.Context, dsInfo *models.DataSource, tsd
 
 	query, err := e.getQuery(dsInfo, tsdbQuery)
 	if err != nil {
-		return pluginmodels.TSDBResponse{}, err
+		return pluginmodels.DataResponse{}, err
 	}
 
 	rawQuery, err := query.Build(tsdbQuery)
 	if err != nil {
-		return pluginmodels.TSDBResponse{}, err
+		return pluginmodels.DataResponse{}, err
 	}
 
 	if setting.Env == setting.Dev {
@@ -70,17 +70,17 @@ func (e *Executor) TSDBQuery(ctx context.Context, dsInfo *models.DataSource, tsd
 
 	req, err := e.createRequest(ctx, dsInfo, rawQuery)
 	if err != nil {
-		return pluginmodels.TSDBResponse{}, err
+		return pluginmodels.DataResponse{}, err
 	}
 
 	httpClient, err := dsInfo.GetHttpClient()
 	if err != nil {
-		return pluginmodels.TSDBResponse{}, err
+		return pluginmodels.DataResponse{}, err
 	}
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		return pluginmodels.TSDBResponse{}, err
+		return pluginmodels.DataResponse{}, err
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
@@ -88,21 +88,21 @@ func (e *Executor) TSDBQuery(ctx context.Context, dsInfo *models.DataSource, tsd
 		}
 	}()
 	if resp.StatusCode/100 != 2 {
-		return pluginmodels.TSDBResponse{}, fmt.Errorf("InfluxDB returned error status: %s", resp.Status)
+		return pluginmodels.DataResponse{}, fmt.Errorf("InfluxDB returned error status: %s", resp.Status)
 	}
 
 	var response Response
 	dec := json.NewDecoder(resp.Body)
 	dec.UseNumber()
 	if err := dec.Decode(&response); err != nil {
-		return pluginmodels.TSDBResponse{}, err
+		return pluginmodels.DataResponse{}, err
 	}
 	if response.Err != nil {
-		return pluginmodels.TSDBResponse{}, response.Err
+		return pluginmodels.DataResponse{}, response.Err
 	}
 
-	result := pluginmodels.TSDBResponse{
-		Results: map[string]pluginmodels.TSDBQueryResult{
+	result := pluginmodels.DataResponse{
+		Results: map[string]pluginmodels.DataQueryResult{
 			"A": e.ResponseParser.Parse(&response, query),
 		},
 	}
@@ -110,7 +110,7 @@ func (e *Executor) TSDBQuery(ctx context.Context, dsInfo *models.DataSource, tsd
 	return result, nil
 }
 
-func (e *Executor) getQuery(dsInfo *models.DataSource, query pluginmodels.TSDBQuery) (*Query, error) {
+func (e *Executor) getQuery(dsInfo *models.DataSource, query pluginmodels.DataQuery) (*Query, error) {
 	if len(query.Queries) == 0 {
 		return nil, fmt.Errorf("query request contains no queries")
 	}

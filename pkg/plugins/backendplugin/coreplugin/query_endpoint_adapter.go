@@ -45,11 +45,11 @@ func modelToInstanceSettings(ds *models.DataSource) (*backend.DataSourceInstance
 	}, nil
 }
 
-func (a *queryEndpointAdapter) TSDBQuery(ctx context.Context, ds *models.DataSource, query pluginmodels.TSDBQuery) (
-	pluginmodels.TSDBResponse, error) {
+func (a *queryEndpointAdapter) DataQuery(ctx context.Context, ds *models.DataSource, query pluginmodels.DataQuery) (
+	pluginmodels.DataResponse, error) {
 	instanceSettings, err := modelToInstanceSettings(ds)
 	if err != nil {
-		return pluginmodels.TSDBResponse{}, err
+		return pluginmodels.DataResponse{}, err
 	}
 
 	req := &backend.QueryDataRequest{
@@ -66,7 +66,7 @@ func (a *queryEndpointAdapter) TSDBQuery(ctx context.Context, ds *models.DataSou
 	for _, q := range query.Queries {
 		modelJSON, err := q.Model.MarshalJSON()
 		if err != nil {
-			return pluginmodels.TSDBResponse{}, err
+			return pluginmodels.DataResponse{}, err
 		}
 		req.Queries = append(req.Queries, backend.DataQuery{
 			RefID:         q.RefID,
@@ -83,15 +83,15 @@ func (a *queryEndpointAdapter) TSDBQuery(ctx context.Context, ds *models.DataSou
 
 	resp, err := a.handler.QueryData(ctx, req)
 	if err != nil {
-		return pluginmodels.TSDBResponse{}, err
+		return pluginmodels.DataResponse{}, err
 	}
 
-	tR := pluginmodels.TSDBResponse{
-		Results: make(map[string]pluginmodels.TSDBQueryResult, len(resp.Responses)),
+	tR := pluginmodels.DataResponse{
+		Results: make(map[string]pluginmodels.DataQueryResult, len(resp.Responses)),
 	}
 
 	for refID, r := range resp.Responses {
-		qr := pluginmodels.TSDBQueryResult{
+		qr := pluginmodels.DataQueryResult{
 			RefID: refID,
 		}
 

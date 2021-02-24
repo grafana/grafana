@@ -19,8 +19,8 @@ var restrictedRegExp = regexp.MustCompile(`(?im)([\s]*show[\s]+grants|[\s,]sessi
 
 type mySqlMacroEngine struct {
 	*sqleng.SqlMacroEngineBase
-	timeRange pluginmodels.TSDBTimeRange
-	query     pluginmodels.TSDBSubQuery
+	timeRange pluginmodels.DataTimeRange
+	query     pluginmodels.DataSubQuery
 	logger    log.Logger
 }
 
@@ -28,7 +28,7 @@ func newMysqlMacroEngine(logger log.Logger) sqleng.SqlMacroEngine {
 	return &mySqlMacroEngine{SqlMacroEngineBase: sqleng.NewSqlMacroEngineBase(), logger: logger}
 }
 
-func (m *mySqlMacroEngine) Interpolate(query pluginmodels.TSDBSubQuery, timeRange pluginmodels.TSDBTimeRange, sql string) (string, error) {
+func (m *mySqlMacroEngine) Interpolate(query pluginmodels.DataSubQuery, timeRange pluginmodels.DataTimeRange, sql string) (string, error) {
 	m.timeRange = timeRange
 	m.query = query
 

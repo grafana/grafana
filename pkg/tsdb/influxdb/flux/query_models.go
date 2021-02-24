@@ -46,8 +46,8 @@ type queryModel struct {
 // 	return model, nil
 // }
 
-// getQueryModelTSDB builds a queryModel from pluginmodels.TSDBQuery information and datasource configuration (dsInfo).
-func getQueryModelTSDB(query pluginmodels.TSDBSubQuery, timeRange pluginmodels.TSDBTimeRange,
+// getQueryModelTSDB builds a queryModel from pluginmodels.DataQuery information and datasource configuration (dsInfo).
+func getQueryModelTSDB(query pluginmodels.DataSubQuery, timeRange pluginmodels.DataTimeRange,
 	dsInfo *models.DataSource) (*queryModel, error) {
 	model := &queryModel{}
 	queryBytes, err := query.Model.Encode()

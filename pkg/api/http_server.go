@@ -84,7 +84,7 @@ type HTTPServer struct {
 	ContextHandler         *contexthandler.ContextHandler     `inject:""`
 	SQLStore               *sqlstore.SQLStore                 `inject:""`
 	LibraryPanelService    *librarypanels.LibraryPanelService `inject:""`
-	TSDBService            *tsdb.Service                      `inject:""`
+	DataService            *tsdb.Service                      `inject:""`
 	PluginDashboardService *plugindashboards.Service          `inject:""`
 	Listener               net.Listener
 }
