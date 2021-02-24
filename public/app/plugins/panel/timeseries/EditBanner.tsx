@@ -1,15 +1,14 @@
-import { DismissableFeatureInfoBox } from '@grafana/ui';
+import { FeatureInfoBox } from '@grafana/ui';
 import { css } from 'emotion';
 import React from 'react';
 
 export const EditBanner: React.FC = ({}) => {
   return (
-    <DismissableFeatureInfoBox
+    <FeatureInfoBox
       title="New time series panel"
       className={css`
         margin: 8px;
       `}
-      persistenceId="timeseries-parity-azx"
       url={'https://github.com/grafana/grafana/issues/30564'}
       urlTitle="See open github issue"
     >
@@ -23,6 +22,6 @@ export const EditBanner: React.FC = ({}) => {
           <li>Region selection</li>
         </ul>
       </p>
-    </DismissableFeatureInfoBox>
+    </FeatureInfoBox>
   );
 };
