@@ -2,9 +2,9 @@ package notifiers
 
 import (
 	"fmt"
-	"time"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
