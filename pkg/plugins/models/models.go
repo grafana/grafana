@@ -9,7 +9,7 @@ import (
 	backendmodels "github.com/grafana/grafana/pkg/plugins/backendplugin/models"
 )
 
-var (
+const (
 	PluginTypeApp       = "app"
 	PluginTypeDashboard = "dashboard"
 )

@@ -3,7 +3,6 @@ package models
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -64,25 +63,20 @@ func (p *DataSourcePlugin) DataQuery(ctx context.Context, dsInfo *models.DataSou
 		endpoint := newDataSourcePluginWrapperV2(p.logger, p.Id, p.Type, p.client.DataPlugin)
 		return endpoint.Query(ctx, dsInfo, query)
 	}
-	if p.legacyClient != nil {
-		endpoint := newDataSourcePluginWrapper(p.logger, p.legacyClient.DatasourcePlugin)
-		return endpoint.Query(ctx, dsInfo, query)
-	}
 
-	return DataResponse{}, fmt.Errorf("plugin %q doesn't support data queries", p.Id)
+	endpoint := newDataSourcePluginWrapper(p.logger, p.legacyClient.DatasourcePlugin)
+	return endpoint.Query(ctx, dsInfo, query)
 }
 
 func (p *DataSourcePlugin) onLegacyPluginStart(pluginID string, client *grpcplugin.LegacyClient, logger log.Logger) error {
 	p.legacyClient = client
 	p.logger = logger
-	// TODO
-	/*
-		tsdb.RegisterTsdbQueryEndpoint(pluginID, func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-			return wrapper.NewDatasourcePluginWrapper(logger, client.DatasourcePlugin), nil
-		})
-	*/
 
 	return nil
+}
+
+func (p *DataSourcePlugin) CanHandleDataQueries() bool {
+	return p.client != nil || p.legacyClient != nil
 }
 
 func (p *DataSourcePlugin) onPluginStart(pluginID string, client *grpcplugin.Client, logger log.Logger) error {
@@ -92,14 +86,6 @@ func (p *DataSourcePlugin) onPluginStart(pluginID string, client *grpcplugin.Cli
 
 	p.client = client
 	p.logger = logger
-	// TODO
-	/*
-		if client.DataPlugin != nil {
-			tsdb.RegisterTsdbQueryEndpoint(pluginID, func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-				return wrapper.NewDatasourcePluginWrapperV2(logger, p.Id, p.Type, client.DataPlugin), nil
-			})
-		}
-	*/
 
 	return nil
 }

@@ -65,7 +65,6 @@ func (s *Service) syncPluginDashboards(pluginDef *pluginmodels.PluginBase, orgID
 
 	// Get plugin dashboards
 	dashboards, err := plugins.GetPluginDashboards(orgID, pluginDef.Id)
-
 	if err != nil {
 		s.logger.Error("Failed to load app dashboards", "error", err)
 		return
@@ -98,7 +97,7 @@ func (s *Service) syncPluginDashboards(pluginDef *pluginmodels.PluginBase, orgID
 	// update version in plugin_setting table to mark that we have processed the update
 	query := models.GetPluginSettingByIdQuery{PluginId: pluginDef.Id, OrgId: orgID}
 	if err := bus.Dispatch(&query); err != nil {
-		s.logger.Error("Failed to read plugin setting by id", "error", err)
+		s.logger.Error("Failed to read plugin setting by ID", "error", err)
 		return
 	}
 
