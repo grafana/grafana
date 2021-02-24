@@ -10,10 +10,7 @@ import {
   FieldDTO,
   FieldType,
   MutableDataFrame,
-  TraceDataFrameView,
-  TraceProcess,
-  TraceSpanData,
-  TraceViewData,
+  TraceSpanRow,
 } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
 import { from, Observable, of } from 'rxjs';
@@ -21,6 +18,8 @@ import { catchError, map } from 'rxjs/operators';
 
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { serializeParams } from 'app/core/utils/fetch';
+
+import { TraceProcess, Span, TraceResponse } from './types';
 
 export type JaegerQuery = {
   query: string;
@@ -125,7 +124,7 @@ function getTime(date: string | DateTime, roundUp: boolean) {
   return date.valueOf() * 1000;
 }
 
-function createTraceFrame(data: TraceViewData): DataFrame {
+function createTraceFrame(data: TraceResponse): DataFrame {
   const spans = data.spans.map((s) => toDataFrameView(s, data.processes));
 
   return new MutableDataFrame({
@@ -157,7 +156,7 @@ function guessFieldType(val: any) {
   return typeof val === 'string' ? FieldType.string : typeof val === 'number' ? FieldType.number : FieldType.other;
 }
 
-function toDataFrameView(span: TraceSpanData, processes: Record<string, TraceProcess>): TraceDataFrameView {
+function toDataFrameView(span: Span, processes: Record<string, TraceProcess>): TraceSpanRow {
   return {
     ...span,
     serviceName: processes[span.processID].serviceName,

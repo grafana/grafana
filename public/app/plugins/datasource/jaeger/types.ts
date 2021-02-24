@@ -14,18 +14,23 @@ export type TraceLog = {
   fields: TraceKeyValuePair[];
 };
 
+export type TraceProcess = {
+  serviceName: string;
+  tags: TraceKeyValuePair[];
+};
+
 export type TraceSpanReference = {
   refType: 'CHILD_OF' | 'FOLLOWS_FROM';
   spanID: string;
   traceID: string;
 };
 
-export interface TraceSpanRow {
-  traceID: string;
+export type Span = {
   spanID: string;
+  traceID: string;
+  processID: string;
   operationName: string;
-  serviceName: string;
-  serviceTags: TraceKeyValuePair[];
+  // Times are in microseconds
   startTime: number;
   duration: number;
   logs: TraceLog[];
@@ -35,4 +40,11 @@ export interface TraceSpanRow {
   stackTraces?: string[];
   flags: number;
   errorIconColor?: string;
-}
+};
+
+export type TraceResponse = {
+  processes: Record<string, TraceProcess>;
+  traceID: string;
+  warnings?: string[] | null;
+  spans: Span[];
+};

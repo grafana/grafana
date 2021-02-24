@@ -3,7 +3,13 @@ import {
   ThemeOptions,
   ThemeProvider,
   ThemeType,
+  Trace,
+  TraceKeyValuePair,
+  TraceLink,
   TracePageHeader,
+  TraceProcess,
+  TraceResponse,
+  TraceSpan,
   TraceTimelineViewer,
   transformTraceData,
   TTraceTimeline,
@@ -16,17 +22,7 @@ import { useChildrenState } from './useChildrenState';
 import { useDetailState } from './useDetailState';
 import { useHoverIndentGuide } from './useHoverIndentGuide';
 import { colors, useTheme } from '@grafana/ui';
-import {
-  DataFrame,
-  DataFrameView,
-  Trace,
-  TraceDataFrameView,
-  TraceKeyValuePair,
-  TraceLink,
-  TraceProcess,
-  TraceSpan,
-  TraceViewData,
-} from '@grafana/data';
+import { DataFrame, DataFrameView, TraceSpanRow } from '@grafana/data';
 import { createSpanLinkFactory } from './createSpanLink';
 import { useSelector } from 'react-redux';
 import { StoreState } from 'app/types';
@@ -178,10 +174,10 @@ export function TraceView(props: Props) {
   );
 }
 
-function transformDataFrames(frames: DataFrame[]) {
+function transformDataFrames(frames: DataFrame[]): Trace | null {
   // At this point we only show single trace.
   const frame = frames[0];
-  let data: TraceViewData =
+  let data: TraceResponse =
     frame.fields.length === 1
       ? // For backward compatibility when we sent whole json response in a single field/value
         frame.fields[0].values.get(0)
@@ -189,8 +185,8 @@ function transformDataFrames(frames: DataFrame[]) {
   return transformTraceData(data);
 }
 
-function transformTraceDataFrame(frame: DataFrame): TraceViewData {
-  const view = new DataFrameView<TraceDataFrameView>(frame);
+function transformTraceDataFrame(frame: DataFrame): TraceResponse {
+  const view = new DataFrameView<TraceSpanRow>(frame);
   const processes: Record<string, TraceProcess> = {};
   for (let i = 0; i < view.length; i++) {
     const span = view.get(i);

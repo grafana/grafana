@@ -22,7 +22,7 @@ import AccordianLogs from './SpanDetail/AccordianLogs';
 
 import { ViewedBoundsFunctionType } from './utils';
 import { TNil } from '../types';
-import { TraceSpan } from '@grafana/data';
+import { TraceSpan } from '../types/trace';
 import { UIPopover } from '../uiElementsContext';
 import { createStyle } from '../Theme';
 

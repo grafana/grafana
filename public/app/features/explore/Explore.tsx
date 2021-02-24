@@ -17,7 +17,6 @@ import {
   RawTimeRange,
   TimeZone,
   LogsModel,
-  TraceViewData,
   DataFrame,
 } from '@grafana/data';
 
