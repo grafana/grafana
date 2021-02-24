@@ -15,9 +15,9 @@ export const EditBanner: React.FC = ({}) => {
     >
       <p>
         The new time series panel is now the default panel in grafana. For most things, this is will be the best choice.
-        However a few features exist in the graph panel that are not yet implemented in this panel. Speciffically:
+        However, a few features exist in the graph panel that are not yet implemented in this panel. Specifically:
         <ul>
-          <li>Annotaiton editor</li>
+          <li>Annotation editor</li>
           <li>Alert threshold visualization</li>
           <li>Global tooltip/crosshairs</li>
           <li>Region selection</li>
