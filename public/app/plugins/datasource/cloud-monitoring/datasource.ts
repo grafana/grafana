@@ -84,14 +84,16 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
           });
           const df: any = [];
           if (dataQueryResponse.data.length !== 0) {
-            for (let i = 0, j = 0; i < dataQueryResponse.data.length, j < dataQueryResponse.data[i].length; i++, j++) {
-              df.push({
-                annotation: annotation,
-                time: Date.parse(dataQueryResponse.data[i].fields[0].values.get(j)),
-                title: dataQueryResponse.data[i].fields[1].values.get(j),
-                tags: [],
-                text: dataQueryResponse.data[i].fields[3].values.get(j),
-              });
+            for (let i = 0; i < dataQueryResponse.data.length; i++) {
+              for (let j = 0; j < dataQueryResponse.data.length; j++) {
+                df.push({
+                  annotation: annotation,
+                  time: Date.parse(dataQueryResponse.data[i].fields[0].values.get(j)),
+                  title: dataQueryResponse.data[i].fields[1].values.get(j),
+                  tags: [],
+                  text: dataQueryResponse.data[i].fields[3].values.get(j),
+                });
+              }
             }
           }
           return df;
