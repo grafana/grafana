@@ -13,6 +13,7 @@ interface LibraryPanelViewProps {
   onClickCard?: (panel: LibraryPanelDTO) => void;
   formatDate?: (dateString: DateTimeInput, format?: string) => string;
   showSecondaryActions?: boolean;
+  currentPanelId?: string;
 }
 
 export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
@@ -22,6 +23,7 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
   onClickCard,
   formatDate,
   showSecondaryActions,
+  currentPanelId: currentPanel,
 }) => {
   const styles = useStyles(getPanelViewStyles);
   const [searchString, setSearchString] = useState('');
@@ -38,10 +40,14 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
   const [filteredItems, setFilteredItems] = useState(libraryPanels);
   useDebounce(
     () => {
-      setFilteredItems(libraryPanels?.filter((v) => v.name.toLowerCase().includes(searchString.toLowerCase())));
+      setFilteredItems(
+        libraryPanels?.filter(
+          (v) => v.name.toLowerCase().includes(searchString.toLowerCase()) && v.uid !== currentPanel
+        )
+      );
     },
     300,
-    [searchString, libraryPanels]
+    [searchString, libraryPanels, currentPanel]
   );
 
   const onDeletePanel = async (uid: string) => {
