@@ -29,9 +29,9 @@ Sometimes it is useful to log in to an account from multiple locations concurren
 
 ### Usage billing
 
-It is possible to turn on usage billing in Enterprise licensing in order to have an unlimited number of user limits. When usage billing is on, Grafana does not enforce active user limits. Instead, Grafana Labs charges for active users above the limit, according to your customer contract. 
+It is possible to turn on usage billing in Enterprise licensing in order to have an unlimited number of active users. When usage billing is on, Grafana does not enforce active user limits. Instead, Grafana Labs charges for active users above the limit, according to your customer contract. 
 
-Usage billing must be agreed upon with Grafana Labs, and it is only available if Grafana Enterprise is configured to [automatically refresh the license](https://grafana.com/docs/grafana/latest/enterprise/enterprise-configuration/#auto_refresh_license).
+Usage billing must be agreed upon with Grafana Labs, and it is only available if Grafana Enterprise is configured to [automatically refresh its license](https://grafana.com/docs/grafana/latest/enterprise/enterprise-configuration/#auto_refresh_license).
 
 ## Expiration date
 
