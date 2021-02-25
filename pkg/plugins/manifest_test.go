@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -104,7 +105,7 @@ khdr/tZ1PDgRxMqB/u+Vtbpl0xSxgblnrDOYMSI=
 		assert.Equal(t, int64(1605807018050), manifest.Time)
 		assert.Equal(t, "7e4d0c6a708866e7", manifest.KeyID)
 		assert.Equal(t, "2.0.0", manifest.ManifestVersion)
-		assert.Equal(t, privateType, manifest.SignatureType)
+		assert.Equal(t, pluginmodels.PrivateType, manifest.SignatureType)
 		assert.Equal(t, "willbrowne", manifest.SignedByOrg)
 		assert.Equal(t, "Will Browne", manifest.SignedByOrgName)
 		assert.Equal(t, []string{"http://localhost:3000/"}, manifest.RootURLs)

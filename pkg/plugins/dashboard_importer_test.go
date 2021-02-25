@@ -8,49 +8,42 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/setting"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDashboardImport(t *testing.T) {
-	pluginScenario("When importing a plugin dashboard", t, func() {
+	pluginScenario(t, "When importing a plugin dashboard", func(t *testing.T, pm *PluginManager) {
 		origNewDashboardService := dashboards.NewService
+		t.Cleanup(func() {
+			dashboards.NewService = origNewDashboardService
+		})
 		mock := &dashboards.FakeDashboardService{}
 		dashboards.MockDashboardService(mock)
 
-		cmd := ImportDashboardCommand{
-			PluginId: "test-app",
-			Path:     "dashboards/connections.json",
-			OrgId:    1,
-			User:     &models.SignedInUser{UserId: 1, OrgRole: models.ROLE_ADMIN},
-			Inputs: []ImportDashboardInput{
+		info, err := pm.ImportDashboard("test-app", "dashboards/connections.json", 1, 0, nil, false,
+			[]ImportDashboardInput{
 				{Name: "*", Type: "datasource", Value: "graphite"},
-			},
-		}
+			}, &models.SignedInUser{UserId: 1, OrgRole: models.ROLE_ADMIN}, nil)
+		require.NoError(t, err)
+		require.NotNil(t, info)
 
-		err := ImportDashboard(cmd)
-		So(err, ShouldBeNil)
+		resultStr, err := mock.SavedDashboards[0].Dashboard.Data.EncodePretty()
+		require.NoError(t, err)
+		expectedBytes, err := ioutil.ReadFile("testdata/test-app/dashboards/connections_result.json")
+		require.NoError(t, err)
+		expectedJson, err := simplejson.NewJson(expectedBytes)
+		require.NoError(t, err)
+		expectedStr, err := expectedJson.EncodePretty()
+		require.NoError(t, err)
 
-		Convey("should install dashboard", func() {
-			So(cmd.Result, ShouldNotBeNil)
+		require.Equal(t, expectedStr, resultStr)
 
-			resultStr, _ := mock.SavedDashboards[0].Dashboard.Data.EncodePretty()
-			expectedBytes, _ := ioutil.ReadFile("testdata/test-app/dashboards/connections_result.json")
-			expectedJson, _ := simplejson.NewJson(expectedBytes)
-			expectedStr, _ := expectedJson.EncodePretty()
-
-			So(string(resultStr), ShouldEqual, string(expectedStr))
-
-			panel := mock.SavedDashboards[0].Dashboard.Data.Get("rows").GetIndex(0).Get("panels").GetIndex(0)
-			So(panel.Get("datasource").MustString(), ShouldEqual, "graphite")
-		})
-
-		Reset(func() {
-			dashboards.NewService = origNewDashboardService
-		})
+		panel := mock.SavedDashboards[0].Dashboard.Data.Get("rows").GetIndex(0).Get("panels").GetIndex(0)
+		require.Equal(t, "graphite", panel.Get("datasource").MustString())
 	})
 
-	Convey("When evaling dashboard template", t, func() {
-		template, _ := simplejson.NewJson([]byte(`{
+	t.Run("When evaling dashboard template", func(t *testing.T) {
+		template, err := simplejson.NewJson([]byte(`{
 		"__inputs": [
 			{
 						"name": "DS_NAME",
@@ -61,6 +54,7 @@ func TestDashboardImport(t *testing.T) {
 			"prop": "${DS_NAME}_${DS_NAME}"
 		}
 		}`))
+		require.NoError(t, err)
 
 		evaluator := &DashTemplateEvaluator{
 			template: template,
@@ -70,21 +64,19 @@ func TestDashboardImport(t *testing.T) {
 		}
 
 		res, err := evaluator.Eval()
-		So(err, ShouldBeNil)
+		require.NoError(t, err)
 
-		Convey("should render template", func() {
-			So(res.GetPath("test", "prop").MustString(), ShouldEqual, "my-server_my-server")
-		})
+		require.Equal(t, "my-server_my-server", res.GetPath("test", "prop").MustString())
 
-		Convey("should not include inputs in output", func() {
-			inputs := res.Get("__inputs")
-			So(inputs.Interface(), ShouldBeNil)
-		})
+		inputs := res.Get("__inputs")
+		require.Nil(t, inputs.Interface())
 	})
 }
 
-func pluginScenario(desc string, t *testing.T, fn func()) {
-	Convey("Given a plugin", t, func() {
+func pluginScenario(t *testing.T, desc string, fn func(*testing.T, *PluginManager)) {
+	t.Helper()
+
+	t.Run("Given a plugin", func(t *testing.T) {
 		pm := &PluginManager{
 			Cfg: &setting.Cfg{
 				FeatureToggles: map[string]bool{},
@@ -96,8 +88,10 @@ func pluginScenario(desc string, t *testing.T, fn func()) {
 			},
 		}
 		err := pm.Init()
-		So(err, ShouldBeNil)
+		require.NoError(t, err)
 
-		Convey(desc, fn)
+		t.Run(desc, func(t *testing.T) {
+			fn(t, pm)
+		})
 	})
 }
