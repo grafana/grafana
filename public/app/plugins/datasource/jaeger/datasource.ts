@@ -125,7 +125,7 @@ function getTime(date: string | DateTime, roundUp: boolean) {
 }
 
 function createTraceFrame(data: TraceResponse): DataFrame {
-  const spans = data.spans.map((s) => toDataFrameView(s, data.processes));
+  const spans = data.spans.map((s) => toSpanRow(s, data.processes));
 
   return new MutableDataFrame({
     fields: mapFields(spans),
@@ -156,9 +156,19 @@ function guessFieldType(val: any) {
   return typeof val === 'string' ? FieldType.string : typeof val === 'number' ? FieldType.number : FieldType.other;
 }
 
-function toDataFrameView(span: Span, processes: Record<string, TraceProcess>): TraceSpanRow {
+function toSpanRow(span: Span, processes: Record<string, TraceProcess>): TraceSpanRow {
   return {
-    ...span,
+    spanID: span.spanID,
+    traceID: span.traceID,
+    parentSpanID: span.references?.find((r) => r.refType === 'CHILD_OF')?.spanID,
+    operationName: span.operationName,
+    startTime: span.startTime,
+    duration: span.duration,
+    logs: span.logs,
+    tags: span.tags,
+    warnings: span.warnings ?? undefined,
+    stackTraces: span.stackTraces,
+    errorIconColor: span.errorIconColor,
     serviceName: processes[span.processID].serviceName,
     serviceTags: processes[span.processID].tags,
   };

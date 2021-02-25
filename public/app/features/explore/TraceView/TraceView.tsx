@@ -202,7 +202,13 @@ function transformTraceDataFrame(frame: DataFrame): TraceResponse {
     traceID: view.get(0).traceID,
     processes,
     spans: view.toArray().map((s) => {
-      return { ...s, processID: s.serviceName };
+      return {
+        ...s,
+        processID: s.serviceName,
+        flags: 0,
+        references: s.parentSpanID ? [{ refType: 'CHILD_OF', spanID: s.parentSpanID, traceID: s.traceID }] : undefined,
+        logs: s.logs || [],
+      };
     }),
   };
 }
