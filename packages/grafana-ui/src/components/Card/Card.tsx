@@ -97,7 +97,7 @@ export const Card: CardInterface = ({
   );
 
   const hasActions = Boolean(actions || secondaryActions);
-  const disableHover = disabled || !onClick;
+  const disableHover = disabled || (!onClick && !href);
   const disableEvents = disabled && !actions;
 
   const containerStyles = getContainerStyles(theme, disableEvents, disableHover);
@@ -196,6 +196,8 @@ export const getCardStyles = stylesFactory((theme: GrafanaTheme) => {
       margin-bottom: 0;
       font-size: ${theme.typography.size.md};
       line-height: ${theme.typography.lineHeight.xs};
+      color: ${theme.colors.text};
+      font-weight: ${theme.typography.weight.semibold};
     `,
     info: css`
       display: flex;
@@ -221,7 +223,7 @@ export const getCardStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     media: css`
       margin-right: ${theme.spacing.md};
-      max-width: 40px;
+      width: 40px;
       & > * {
         width: 100%;
       }
@@ -299,7 +301,11 @@ const Meta: FC<ChildProps & { separator?: string }> = memo(({ children, styles, 
 
   // Join meta data elements by separator
   if (Array.isArray(children) && separator) {
-    meta = React.Children.toArray(children).reduce((prev, curr, i) => [
+    const filtered = React.Children.toArray(children).filter(Boolean);
+    if (!filtered.length) {
+      return null;
+    }
+    meta = filtered.reduce((prev, curr, i) => [
       prev,
       <span key={`separator_${i}`} className={styles?.separator}>
         {separator}

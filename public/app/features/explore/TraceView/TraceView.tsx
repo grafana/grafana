@@ -13,7 +13,7 @@ import {
 import { TraceToLogsData } from 'app/core/components/TraceToLogsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { StoreState } from 'app/types';
-import { SplitOpen } from 'app/types/explore';
+import { ExploreId, SplitOpen } from 'app/types/explore';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { createSpanLinkFactory } from './createSpanLink';
@@ -31,6 +31,7 @@ function noop(): {} {
 type Props = {
   trace?: TraceViewData;
   splitOpenFn: SplitOpen;
+  exploreId: ExploreId;
 };
 
 export function TraceView(props: Props) {
@@ -60,7 +61,7 @@ export function TraceView(props: Props) {
 
   const traceProp = useMemo(() => transformTraceData(props.trace), [props.trace]);
   const { search, setSearch, spanFindMatches } = useSearch(traceProp?.spans);
-  const dataSourceName = useSelector((state: StoreState) => state.explore.left.datasourceInstance?.name);
+  const dataSourceName = useSelector((state: StoreState) => state.explore[props.exploreId]?.datasourceInstance?.name);
   const traceToLogsOptions = (getDatasourceSrv().getInstanceSettings(dataSourceName)?.jsonData as TraceToLogsData)
     ?.tracesToLogs;
 

@@ -46,5 +46,5 @@ export function useNodeLimit(
     const newEdges = edges.filter((e) => newNodes[e.source as string] && newNodes[e.target as string]);
 
     return { nodes: Object.values(newNodes), edges: newEdges };
-  }, [edges, nodes]);
+  }, [edges, limit, nodes]);
 }
