@@ -40,11 +40,11 @@ func (e *GraphiteExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSou
 	until := formatTimeRange(tsdbQuery.TimeRange.To)
 
 	// This logic is used when called through server side expressions.
-	if isTimeRangeNumeric(tsdbQuery.TimeRange) {
+	if isTimeRangeNumeric(*tsdbQuery.TimeRange) {
 		var err error
-		from, until, err = epochMStoGraphiteTime(tsdbQuery.TimeRange)
+		from, until, err = epochMStoGraphiteTime(*tsdbQuery.TimeRange)
 		if err != nil {
-			return nil, err
+			return pluginmodels.DataResponse{}, err
 		}
 	}
 
@@ -211,7 +211,7 @@ func fixIntervalFormat(target string) string {
 	return target
 }
 
-func isTimeRangeNumeric(tr *tsdb.TimeRange) bool {
+func isTimeRangeNumeric(tr pluginmodels.DataTimeRange) bool {
 	if _, err := strconv.ParseInt(tr.From, 10, 64); err != nil {
 		return false
 	}
@@ -221,7 +221,7 @@ func isTimeRangeNumeric(tr *tsdb.TimeRange) bool {
 	return true
 }
 
-func epochMStoGraphiteTime(tr *tsdb.TimeRange) (string, string, error) {
+func epochMStoGraphiteTime(tr pluginmodels.DataTimeRange) (string, string, error) {
 	from, err := strconv.ParseInt(tr.From, 10, 64)
 	if err != nil {
 		return "", "", err
