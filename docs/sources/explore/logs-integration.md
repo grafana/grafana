@@ -82,6 +82,11 @@ You can change the order of received logs from the default descending order (new
 
 Each log row has an extendable area with its labels and detected fields, for more robust interaction. For all labels we have added the ability to filter for (positive filter) and filter out (negative filter) selected labels. Each field or label also has a stats icon to display ad-hoc statistics in relation to all displayed logs.
 
+#### Derived fields links
+
+By using Derived fields, you are able to turn any part of a log message into the internal or external link. Created link will be visible as button next to the Detected field in the Log details view.
+{{< docs-imagebox img="/img/docs/explore/detected-fields-link-7-4.png" max-width="800px" caption="Detected fields link in Explore" >}}
+
 ### Toggle detected fields
 
 > **Note:** Available in Grafana 7.2 and later versions.
