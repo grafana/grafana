@@ -73,7 +73,6 @@ const getStyles = (theme: GrafanaTheme) => ({
     display: flex;
     font-size: ${theme.typography.size.sm};
     white-space: nowrap;
-    margin-bottom: ${theme.spacing.xs};
   `,
   rightWrapper: css`
     padding-left: ${theme.spacing.sm};
