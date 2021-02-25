@@ -12,7 +12,7 @@ import { ConfigContext, ThemeProvider } from './utils/ConfigProvider';
 import { GrafanaRouteProps, RouteDescriptor } from './navigation/types';
 import { contextSrv } from './services/context_srv';
 import { SideMenu } from './components/sidemenu/SideMenu';
-import { navigationLogger, queryStringToJSON } from './navigation/utils';
+import { navigationLogger, queryStringToJSON, shouldForceReload } from './navigation/utils';
 import { updateLocation } from './actions';
 
 interface AppWrapperProps {
@@ -79,6 +79,12 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
         key={`${route.path}`}
         render={(props) => {
           navigationLogger('AppWrapper', false, 'Rendering route', route, 'with match', props.location);
+
+          if (shouldForceReload(props.location.search)) {
+            navigationLogger('AppWrapper', false, 'Force login', props.location);
+            window.location.href = `${props.location.pathname}${props.location.search}`;
+            return null;
+          }
 
           store.dispatch(
             updateLocation({

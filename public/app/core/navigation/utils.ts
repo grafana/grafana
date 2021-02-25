@@ -17,3 +17,14 @@ function parseValue(value: string) {
   }
   return value;
 }
+
+export function shouldForceReload(query: string) {
+  const params = new URLSearchParams(query);
+  const forceLoginParam = params.get('forceLogin');
+
+  if (forceLoginParam !== null && parseValue(forceLoginParam)) {
+    return true;
+  }
+
+  return false;
+}
