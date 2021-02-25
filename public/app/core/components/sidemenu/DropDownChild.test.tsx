@@ -32,4 +32,21 @@ describe('Render', () => {
 
     expect(wrapper).toMatchSnapshot();
   });
+
+  it('should render nested submenu items', () => {
+    const wrapper = setup({
+      child: {
+        divider: false,
+        icon: 'icon-test',
+        children: [
+          {
+            divider: false,
+            icon: 'icon-test',
+          },
+        ],
+      },
+    });
+
+    expect(wrapper).toMatchSnapshot();
+  });
 });

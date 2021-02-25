@@ -84,6 +84,53 @@ $mobile-menu-breakpoint: md;
   top: auto !important;
 }
 
+// nested menus
+.sidemenu-item.dropdown {
+  > ul {
+    li {
+      // the holder
+      position: relative;
+      ul {
+        // the dropdown
+        visibility: hidden;
+        opacity: 0;
+        padding: 0;
+        min-width: 140px;
+        width: auto;
+        position: absolute;
+        top: 0;
+        left: 100%;
+        // the dropdown items style
+        li {
+          margin: 0;
+          display: flex;
+          align-items: center;
+          justify-content: flex-start;
+          height: 30px;
+          a {
+            white-space: nowrap;
+            width: 100%;
+          }
+          // every dropdown after the first must open to the right
+          ul {
+            top: -2%;
+            left: 100%;
+            transform: translate(0);
+          }
+        }
+      }
+      // on hover an li (not an <a>) must show its ul (dropdown)
+      &:hover {
+        > ul {
+          opacity: 1;
+          visibility: visible;
+          transition-delay: 0ms;
+        }
+      }
+    }
+  }
+}
+
 .sidemenu-link {
   color: $side-menu-icon-color !important;
   line-height: 42px;
