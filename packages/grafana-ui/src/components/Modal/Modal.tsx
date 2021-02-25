@@ -42,13 +42,12 @@ export function Modal(props: PropsWithChildren<Props>): ReturnType<FC<Props>> {
     }
   }, [propsOnDismiss]);
 
-  const onEscKey = (ev: KeyboardEvent) => {
-    if (ev.key === 'Esc' || ev.key === 'Escape') {
-      onDismiss();
-    }
-  };
-
   useEffect(() => {
+    const onEscKey = (ev: KeyboardEvent) => {
+      if (ev.key === 'Esc' || ev.key === 'Escape') {
+        onDismiss();
+      }
+    };
     if (isOpen && closeOnEscape) {
       document.addEventListener('keydown', onEscKey, false);
     } else {
@@ -57,7 +56,7 @@ export function Modal(props: PropsWithChildren<Props>): ReturnType<FC<Props>> {
     return () => {
       document.removeEventListener('keydown', onEscKey, false);
     };
-  }, [closeOnEscape, isOpen]);
+  }, [closeOnEscape, isOpen, onDismiss]);
 
   if (!isOpen) {
     return null;

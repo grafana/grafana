@@ -17,8 +17,8 @@ export const DOWNSAMPLE_1H = 60 * 60;
 const { Select, Input, FormField, Switch } = LegacyForms;
 
 const httpOptions = [
-  { value: 'GET', label: 'GET' },
   { value: 'POST', label: 'POST' },
+  { value: 'GET', label: 'GET' },
 ];
 
 const flavourOptions = [
@@ -30,12 +30,25 @@ type Props = Pick<DataSourcePluginOptionsEditorProps<PromOptions>, 'options' | '
 
 export const PromSettings = (props: Props) => {
   const { options, onOptionsChange } = props;
+
+  /**
+   * We want to change the default httpMethod to 'POST' for all of the new Prometheus data sources instances (no url) added in 7.5+.
+   * We are explicitly adding httpMethod, as previously it could be undefined and defaulted to 'GET'.
+   * Undefined httpMethod is still going to be considered 'GET' for backward compatibility reasons, but if users open data
+   * source settings it is going to be set to 'GET' explicitly and it will be selected in httpMethod dropdown as 'GET'.
+   * */
+
+  if (!options.jsonData.httpMethod) {
+    options.url ? (options.jsonData.httpMethod = 'GET') : (options.jsonData.httpMethod = 'POST');
+  }
+
   let retentionPolicies: { [index: string]: any } = {};
   if (options.jsonData.retentionPolicies === '' || options.jsonData.retentionPolicies === undefined) {
     retentionPolicies[DOWNSAMPLE_RAW.toString(10)] = '0d';
   } else {
     retentionPolicies = JSON.parse(options.jsonData.retentionPolicies);
   }
+
   return (
     <>
       <div className="gf-form-group">
@@ -80,7 +93,7 @@ export const PromSettings = (props: Props) => {
         <div className="gf-form">
           <InlineFormLabel
             width={13}
-            tooltip="Specify the HTTP Method to query Prometheus. (POST is only available in Prometheus >= v2.1.0)"
+            tooltip="You can use either POST or GET HTTP method to query your Prometheus data source. POST is the recommended method as it allows bigger queries. Change this to GET if you have a Prometheus version older than 2.1 or if POST requests are restricted in your network."
           >
             HTTP Method
           </InlineFormLabel>

@@ -78,6 +78,9 @@ describe('grafanaGraph', () => {
         tooltip: {
           shared: true,
         },
+        fieldConfig: {
+          defaults: {},
+        },
       },
       renderingCompleted: jest.fn(),
       hiddenSeries: {},

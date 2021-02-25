@@ -1,6 +1,6 @@
 import React from 'react';
 import { shallow } from 'enzyme';
-import { AlertRuleList, Props } from './AlertRuleList';
+import { AlertRuleListUnconnected, Props } from './AlertRuleList';
 import { AlertRule } from '../../types';
 import appEvents from '../../core/app_events';
 import { NavModel } from '@grafana/data';
@@ -24,15 +24,16 @@ const setup = (propOverrides?: object) => {
     stateFilter: '',
     search: '',
     isLoading: false,
+    ngAlertDefinitions: [],
   };
 
   Object.assign(props, propOverrides);
 
-  const wrapper = shallow(<AlertRuleList {...props} />);
+  const wrapper = shallow(<AlertRuleListUnconnected {...props} />);
 
   return {
     wrapper,
-    instance: wrapper.instance() as AlertRuleList,
+    instance: wrapper.instance() as AlertRuleListUnconnected,
   };
 };
 

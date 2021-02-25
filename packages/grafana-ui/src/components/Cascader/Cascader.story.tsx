@@ -1,6 +1,8 @@
-import { text } from '@storybook/addon-knobs';
+import { Story } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+import { NOOP_CONTROL } from '../../utils/storybook/noopControl';
 import { Cascader } from '@grafana/ui';
+import { CascaderProps } from './Cascader';
 import mdx from './Cascader.mdx';
 import React from 'react';
 
@@ -12,50 +14,59 @@ export default {
     docs: {
       page: mdx,
     },
+    knobs: {
+      disable: true,
+    },
   },
-};
-
-const options = [
-  {
-    label: 'First',
-    value: '1',
-    items: [
+  args: {
+    onSelect: (val: string) => console.log(val),
+    options: [
       {
-        label: 'Second',
-        value: '2',
+        label: 'First',
+        value: '1',
+        items: [
+          {
+            label: 'Second',
+            value: '2',
+          },
+          {
+            label: 'Third',
+            value: '3',
+          },
+          {
+            label: 'Fourth',
+            value: '4',
+          },
+        ],
       },
       {
-        label: 'Third',
-        value: '3',
-      },
-      {
-        label: 'Fourth',
-        value: '4',
+        label: 'FirstFirst',
+        value: '5',
       },
     ],
   },
-  {
-    label: 'FirstFirst',
-    value: '5',
+  argTypes: {
+    width: { control: { type: 'range', min: 0, max: 70 } },
+    placeholder: NOOP_CONTROL,
+    initialValue: NOOP_CONTROL,
+    changeOnSelect: NOOP_CONTROL,
   },
-];
+};
 
-export const simple = () => (
-  <Cascader separator={text('Separator', '')} options={options} onSelect={(val) => console.log(val)} />
-);
-export const withInitialValue = () => (
-  <Cascader options={options} initialValue="3" onSelect={(val) => console.log(val)} />
-);
+const Template: Story<CascaderProps> = (args) => <Cascader {...args} />;
 
-export const withCustomValue = () => {
-  const onCreateLabel = text('Custom value creation label', 'Create new value: ');
-  return (
-    <Cascader
-      options={options}
-      allowCustomValue
-      formatCreateLabel={(val) => onCreateLabel + val}
-      initialValue="Custom Initial Value"
-      onSelect={(val) => console.log(val)}
-    />
-  );
+export const Simple = Template.bind({});
+Simple.args = {
+  separator: '',
+};
+export const WithInitialValue = Template.bind({});
+WithInitialValue.args = {
+  initialValue: '3',
+};
+
+export const WithCustomValue = Template.bind({});
+WithCustomValue.args = {
+  initialValue: 'Custom Initial Value',
+  allowCustomValue: true,
+  formatCreateLabel: (val) => 'Custom Label' + val,
 };

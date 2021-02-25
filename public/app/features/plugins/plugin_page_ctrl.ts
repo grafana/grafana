@@ -38,6 +38,7 @@ export class AppPageCtrl {
       this.navModel = this.navModelSrv.getNotFoundNav();
       return;
     }
+
     if (app.type !== 'app' || !app.enabled) {
       this.$rootScope.appEvent(AppEvents.alertError, ['Application Not Enabled']);
       this.navModel = this.navModelSrv.getNotFoundNav();

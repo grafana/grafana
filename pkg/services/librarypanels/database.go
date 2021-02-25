@@ -1,7 +1,7 @@
 package librarypanels
 
 import (
-	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -14,7 +14,8 @@ import (
 
 var (
 	sqlStatmentLibrayPanelDTOWithMeta = `
-SELECT lp.id, lp.org_id, lp.folder_id, lp.uid, lp.name, lp.model, lp.created, lp.created_by, lp.updated, lp.updated_by
+SELECT DISTINCT
+	lp.id, lp.org_id, lp.folder_id, lp.uid, lp.name, lp.model, lp.created, lp.created_by, lp.updated, lp.updated_by
 	, 0 AS can_edit
 	, u1.login AS created_by_name
 	, u1.email AS created_by_email
@@ -26,6 +27,23 @@ FROM library_panel AS lp
 	LEFT JOIN user AS u2 ON lp.updated_by = u2.id
 `
 )
+
+func syncTitleWithName(libraryPanel *LibraryPanel) error {
+	var model map[string]interface{}
+	if err := json.Unmarshal(libraryPanel.Model, &model); err != nil {
+		return err
+	}
+
+	model["title"] = libraryPanel.Name
+	syncedModel, err := json.Marshal(&model)
+	if err != nil {
+		return err
+	}
+
+	libraryPanel.Model = syncedModel
+
+	return nil
+}
 
 // createLibraryPanel adds a Library Panel.
 func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd createLibraryPanelCommand) (LibraryPanelDTO, error) {
@@ -42,7 +60,12 @@ func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd cre
 		CreatedBy: c.SignedInUser.UserId,
 		UpdatedBy: c.SignedInUser.UserId,
 	}
-	err := lps.SQLStore.WithTransactionalDbSession(context.Background(), func(session *sqlstore.DBSession) error {
+
+	if err := syncTitleWithName(&libraryPanel); err != nil {
+		return LibraryPanelDTO{}, err
+	}
+
+	err := lps.SQLStore.WithTransactionalDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
 		if _, err := session.Insert(&libraryPanel); err != nil {
 			if lps.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
 				return errLibraryPanelAlreadyExists
@@ -105,7 +128,7 @@ func connectDashboard(session *sqlstore.DBSession, dialect migrator.Dialect, use
 
 // connectDashboard adds a connection between a Library Panel and a Dashboard.
 func (lps *LibraryPanelService) connectDashboard(c *models.ReqContext, uid string, dashboardID int64) error {
-	err := lps.SQLStore.WithTransactionalDbSession(context.Background(), func(session *sqlstore.DBSession) error {
+	err := lps.SQLStore.WithTransactionalDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
 		return connectDashboard(session, lps.SQLStore.Dialect, c.SignedInUser, uid, dashboardID)
 	})
 
@@ -114,7 +137,11 @@ func (lps *LibraryPanelService) connectDashboard(c *models.ReqContext, uid strin
 
 // connectLibraryPanelsForDashboard adds connections for all Library Panels in a Dashboard.
 func (lps *LibraryPanelService) connectLibraryPanelsForDashboard(c *models.ReqContext, uids []string, dashboardID int64) error {
-	err := lps.SQLStore.WithTransactionalDbSession(context.Background(), func(session *sqlstore.DBSession) error {
+	err := lps.SQLStore.WithTransactionalDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
+		_, err := session.Exec("DELETE FROM library_panel_dashboard WHERE dashboard_id=?", dashboardID)
+		if err != nil {
+			return err
+		}
 		for _, uid := range uids {
 			err := connectDashboard(session, lps.SQLStore.Dialect, c.SignedInUser, uid, dashboardID)
 			if err != nil {
@@ -129,7 +156,7 @@ func (lps *LibraryPanelService) connectLibraryPanelsForDashboard(c *models.ReqCo
 
 // deleteLibraryPanel deletes a Library Panel.
 func (lps *LibraryPanelService) deleteLibraryPanel(c *models.ReqContext, uid string) error {
-	return lps.SQLStore.WithTransactionalDbSession(context.Background(), func(session *sqlstore.DBSession) error {
+	return lps.SQLStore.WithTransactionalDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
 		panel, err := getLibraryPanel(session, uid, c.SignedInUser.OrgId)
 		if err != nil {
 			return err
@@ -155,7 +182,7 @@ func (lps *LibraryPanelService) deleteLibraryPanel(c *models.ReqContext, uid str
 
 // disconnectDashboard deletes a connection between a Library Panel and a Dashboard.
 func (lps *LibraryPanelService) disconnectDashboard(c *models.ReqContext, uid string, dashboardID int64) error {
-	return lps.SQLStore.WithTransactionalDbSession(context.Background(), func(session *sqlstore.DBSession) error {
+	return lps.SQLStore.WithTransactionalDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
 		panel, err := getLibraryPanel(session, uid, c.SignedInUser.OrgId)
 		if err != nil {
 			return err
@@ -177,8 +204,8 @@ func (lps *LibraryPanelService) disconnectDashboard(c *models.ReqContext, uid st
 }
 
 // disconnectLibraryPanelsForDashboard deletes connections for all Library Panels in a Dashboard.
-func (lps *LibraryPanelService) disconnectLibraryPanelsForDashboard(dashboardID int64, panelCount int64) error {
-	return lps.SQLStore.WithTransactionalDbSession(context.Background(), func(session *sqlstore.DBSession) error {
+func (lps *LibraryPanelService) disconnectLibraryPanelsForDashboard(c *models.ReqContext, dashboardID int64, panelCount int64) error {
+	return lps.SQLStore.WithTransactionalDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
 		result, err := session.Exec("DELETE FROM library_panel_dashboard WHERE dashboard_id=?", dashboardID)
 		if err != nil {
 			return err
@@ -214,7 +241,7 @@ func getLibraryPanel(session *sqlstore.DBSession, uid string, orgID int64) (Libr
 // getLibraryPanel gets a Library Panel.
 func (lps *LibraryPanelService) getLibraryPanel(c *models.ReqContext, uid string) (LibraryPanelDTO, error) {
 	var libraryPanel LibraryPanelWithMeta
-	err := lps.SQLStore.WithDbSession(context.Background(), func(session *sqlstore.DBSession) error {
+	err := lps.SQLStore.WithDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
 		var err error
 		libraryPanel, err = getLibraryPanel(session, uid, c.SignedInUser.OrgId)
 		return err
@@ -249,14 +276,21 @@ func (lps *LibraryPanelService) getLibraryPanel(c *models.ReqContext, uid string
 }
 
 // getAllLibraryPanels gets all library panels.
-func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext) ([]LibraryPanelDTO, error) {
-	orgID := c.SignedInUser.OrgId
+func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext, limit int64) ([]LibraryPanelDTO, error) {
 	libraryPanels := make([]LibraryPanelWithMeta, 0)
-	err := lps.SQLStore.WithDbSession(context.Background(), func(session *sqlstore.DBSession) error {
-		sql := sqlStatmentLibrayPanelDTOWithMeta + "WHERE lp.org_id=?"
-		sess := session.SQL(sql, orgID)
-		err := sess.Find(&libraryPanels)
-		if err != nil {
+	err := lps.SQLStore.WithDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
+		builder := sqlstore.SQLBuilder{}
+		builder.Write(sqlStatmentLibrayPanelDTOWithMeta)
+		builder.Write(" LEFT JOIN dashboard AS dashboard on lp.folder_id = dashboard.id")
+		builder.Write(` WHERE lp.org_id = ?`, c.SignedInUser.OrgId)
+		if c.SignedInUser.OrgRole != models.ROLE_ADMIN {
+			builder.WriteDashboardPermissionFilter(c.SignedInUser, models.PERMISSION_VIEW)
+		}
+		if limit == 0 {
+			limit = 1000
+		}
+		builder.Write(lps.SQLStore.Dialect.Limit(limit))
+		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&libraryPanels); err != nil {
 			return err
 		}
 
@@ -297,7 +331,7 @@ func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext) ([]Lib
 // getConnectedDashboards gets all dashboards connected to a Library Panel.
 func (lps *LibraryPanelService) getConnectedDashboards(c *models.ReqContext, uid string) ([]int64, error) {
 	connectedDashboardIDs := make([]int64, 0)
-	err := lps.SQLStore.WithDbSession(context.Background(), func(session *sqlstore.DBSession) error {
+	err := lps.SQLStore.WithDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
 		panel, err := getLibraryPanel(session, uid, c.SignedInUser.OrgId)
 		if err != nil {
 			return err
@@ -321,9 +355,9 @@ func (lps *LibraryPanelService) getConnectedDashboards(c *models.ReqContext, uid
 	return connectedDashboardIDs, err
 }
 
-func (lps *LibraryPanelService) getLibraryPanelsForDashboardID(dashboardID int64) (map[string]LibraryPanelDTO, error) {
+func (lps *LibraryPanelService) getLibraryPanelsForDashboardID(c *models.ReqContext, dashboardID int64) (map[string]LibraryPanelDTO, error) {
 	libraryPanelMap := make(map[string]LibraryPanelDTO)
-	err := lps.SQLStore.WithDbSession(context.Background(), func(session *sqlstore.DBSession) error {
+	err := lps.SQLStore.WithDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
 		var libraryPanels []LibraryPanelWithMeta
 		sql := sqlStatmentLibrayPanelDTOWithMeta + "INNER JOIN library_panel_dashboard AS lpd ON lpd.librarypanel_id = lp.id AND lpd.dashboard_id=?"
 		sess := session.SQL(sql, dashboardID)
@@ -368,7 +402,7 @@ func (lps *LibraryPanelService) getLibraryPanelsForDashboardID(dashboardID int64
 // patchLibraryPanel updates a Library Panel.
 func (lps *LibraryPanelService) patchLibraryPanel(c *models.ReqContext, cmd patchLibraryPanelCommand, uid string) (LibraryPanelDTO, error) {
 	var dto LibraryPanelDTO
-	err := lps.SQLStore.WithTransactionalDbSession(context.Background(), func(session *sqlstore.DBSession) error {
+	err := lps.SQLStore.WithTransactionalDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
 		panelInDB, err := getLibraryPanel(session, uid, c.SignedInUser.OrgId)
 		if err != nil {
 			return err
@@ -395,6 +429,9 @@ func (lps *LibraryPanelService) patchLibraryPanel(c *models.ReqContext, cmd patc
 		}
 		if cmd.Model == nil {
 			libraryPanel.Model = panelInDB.Model
+		}
+		if err := syncTitleWithName(&libraryPanel); err != nil {
+			return err
 		}
 
 		if rowsAffected, err := session.ID(panelInDB.ID).Update(&libraryPanel); err != nil {

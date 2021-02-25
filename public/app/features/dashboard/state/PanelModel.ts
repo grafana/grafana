@@ -36,6 +36,7 @@ import {
   isStandardFieldProp,
   restoreCustomOverrideRules,
 } from './getPanelOptionsWithDefaults';
+import { LibraryPanelDTO } from 'app/features/library-panels/state/api';
 
 export interface GridPos {
   x: number;
@@ -98,6 +99,7 @@ const mustKeepProps: { [str: string]: boolean } = {
   maxDataPoints: true,
   interval: true,
   replaceVariables: true,
+  libraryPanel: true,
 };
 
 const defaults: any = {
@@ -107,15 +109,16 @@ const defaults: any = {
   transparent: false,
   options: {},
   datasource: null,
+  title: '',
 };
 
 export class PanelModel implements DataConfigSource {
   /* persisted id, used in URL to identify a panel */
-  id: number;
-  editSourceId: number;
-  gridPos: GridPos;
-  type: string;
-  title: string;
+  id!: number;
+  editSourceId?: number;
+  gridPos!: GridPos;
+  type!: string;
+  title!: string;
   alert?: any;
   scopedVars?: ScopedVars;
   repeat?: string;
@@ -147,6 +150,8 @@ export class PanelModel implements DataConfigSource {
   description?: string;
   links?: DataLink[];
   transparent: boolean;
+
+  libraryPanel?: { uid: undefined; name: string } | Pick<LibraryPanelDTO, 'uid' | 'name' | 'meta'>;
 
   // non persisted
   isViewing: boolean;
@@ -313,11 +318,12 @@ export class PanelModel implements DataConfigSource {
     this.fieldConfig = restoreCustomOverrideRules(this.fieldConfig, prevOptions.fieldConfig);
   }
 
-  applyPluginOptionDefaults(plugin: PanelPlugin) {
+  applyPluginOptionDefaults(plugin: PanelPlugin, isAfterPluginChange: boolean) {
     const options = getPanelOptionsWithDefaults({
       plugin,
       currentOptions: this.options,
       currentFieldConfig: this.fieldConfig,
+      isAfterPluginChange: isAfterPluginChange,
     });
 
     this.fieldConfig = options.fieldConfig;
@@ -336,7 +342,7 @@ export class PanelModel implements DataConfigSource {
       }
     }
 
-    this.applyPluginOptionDefaults(plugin);
+    this.applyPluginOptionDefaults(plugin, false);
     this.resendLastResult();
   }
 
@@ -389,7 +395,7 @@ export class PanelModel implements DataConfigSource {
 
     // For some reason I need to rebind replace variables here, otherwise the viz repeater does not work
     this.replaceVariables = this.replaceVariables.bind(this);
-    this.applyPluginOptionDefaults(newPlugin);
+    this.applyPluginOptionDefaults(newPlugin, true);
 
     if (newPlugin.onPanelMigration) {
       this.pluginVersion = getPluginVersion(newPlugin);
@@ -527,6 +533,10 @@ export class PanelModel implements DataConfigSource {
 
 function getPluginVersion(plugin: PanelPlugin): string {
   return plugin && plugin.meta.info.version ? plugin.meta.info.version : config.buildInfo.version;
+}
+
+export function isLibraryPanel(panel: PanelModel): panel is PanelModel & Required<Pick<PanelModel, 'libraryPanel'>> {
+  return panel.libraryPanel !== undefined;
 }
 
 interface PanelOptionsCache {
