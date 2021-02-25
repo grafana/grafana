@@ -37,7 +37,7 @@ func addRBACMigrations(mg *migrator.Migrator) {
 		Indices: []*migrator.Index{
 			{Cols: []string{"org_id"}},
 			{Cols: []string{"org_id", "name"}, Type: migrator.UniqueIndex},
-			{Cols: []string{"org_id", "uid"}, Type: migrator.IndexType},
+			{Cols: []string{"org_id", "uid"}, Type: migrator.UniqueIndex},
 		},
 	}
 
