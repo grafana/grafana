@@ -272,6 +272,10 @@ type Cfg struct {
 	AdminUser                    string
 	AdminPassword                string
 
+	// AWS Plugin Auth
+	AWSAllowedAuthProviders []string
+	AWSAssumeRoleEnabled    bool
+
 	// Auth proxy settings
 	AuthProxyEnabled          bool
 	AuthProxyHeaderName       string
@@ -863,6 +867,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 
 	cfg.readLDAPConfig()
+	cfg.readAWSConfig()
 	cfg.readSessionConfig()
 	cfg.readSmtpSettings()
 	cfg.readQuotaSettings()
@@ -923,6 +928,18 @@ func (cfg *Cfg) readLDAPConfig() {
 	LDAPActiveSyncEnabled = ldapSec.Key("active_sync_enabled").MustBool(false)
 	LDAPAllowSignup = ldapSec.Key("allow_sign_up").MustBool(true)
 	cfg.LDAPAllowSignup = LDAPAllowSignup
+}
+
+func (cfg *Cfg) readAWSConfig() {
+	awsPluginSec := cfg.Raw.Section("aws")
+	cfg.AWSAssumeRoleEnabled = awsPluginSec.Key("assume_role_enabled").MustBool(true)
+	allowedAuthProviders := awsPluginSec.Key("allowed_auth_providers").String()
+	for _, authProvider := range strings.Split(allowedAuthProviders, ",") {
+		authProvider = strings.TrimSpace(authProvider)
+		if authProvider != "" {
+			cfg.AWSAllowedAuthProviders = append(cfg.AWSAllowedAuthProviders, authProvider)
+		}
+	}
 }
 
 func (cfg *Cfg) readSessionConfig() {

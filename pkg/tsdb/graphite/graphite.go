@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"path"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"golang.org/x/net/context/ctxhttp"
@@ -34,8 +35,19 @@ var glog = log.New("tsdb.graphite")
 func (e *GraphiteExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource, tsdbQuery pluginmodels.DataQuery) (
 	pluginmodels.DataResponse, error) {
 
+	// This logic is used when called from Dashboard Alerting.
 	from := "-" + formatTimeRange(tsdbQuery.TimeRange.From)
 	until := formatTimeRange(tsdbQuery.TimeRange.To)
+
+	// This logic is used when called through server side expressions.
+	if isTimeRangeNumeric(tsdbQuery.TimeRange) {
+		var err error
+		from, until, err = epochMStoGraphiteTime(tsdbQuery.TimeRange)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	var target string
 
 	formData := url.Values{
@@ -150,6 +162,12 @@ func (e *GraphiteExecutor) parseResponse(res *http.Response) ([]TargetResponseDT
 		return nil, err
 	}
 
+	for si := range data {
+		// Convert Response to timestamps MS
+		for pi, point := range data[si].DataPoints {
+			data[si].DataPoints[pi][1].Float64 = point[1].Float64 * 1000
+		}
+	}
 	return data, nil
 }
 
@@ -191,4 +209,28 @@ func fixIntervalFormat(target string) string {
 		return strings.ReplaceAll(M, "M", "mon")
 	})
 	return target
+}
+
+func isTimeRangeNumeric(tr *tsdb.TimeRange) bool {
+	if _, err := strconv.ParseInt(tr.From, 10, 64); err != nil {
+		return false
+	}
+	if _, err := strconv.ParseInt(tr.To, 10, 64); err != nil {
+		return false
+	}
+	return true
+}
+
+func epochMStoGraphiteTime(tr *tsdb.TimeRange) (string, string, error) {
+	from, err := strconv.ParseInt(tr.From, 10, 64)
+	if err != nil {
+		return "", "", err
+	}
+
+	to, err := strconv.ParseInt(tr.To, 10, 64)
+	if err != nil {
+		return "", "", err
+	}
+
+	return fmt.Sprintf("%d", from/1000), fmt.Sprintf("%d", to/1000), nil
 }

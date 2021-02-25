@@ -2,6 +2,7 @@ import { DataFrameView, FieldCache, KeyValue, MutableDataFrame } from '@grafana/
 import { ElasticResponse } from '../elastic_response';
 import flatten from 'app/core/utils/flatten';
 import { ElasticsearchQuery } from '../types';
+import { highlightTags } from '../query_def';
 
 describe('ElasticResponse', () => {
   let targets: ElasticsearchQuery[];
@@ -1218,7 +1219,7 @@ describe('ElasticResponse', () => {
         key: 'Q-1561369883389-0.7611823271062786-0',
         liveStreaming: false,
         maxDataPoints: 1620,
-        query: '',
+        query: 'hello AND message',
         timeField: '@timestamp',
       },
     ];
@@ -1254,6 +1255,11 @@ describe('ElasticResponse', () => {
                     lvl: 'debug',
                   },
                 },
+                highlight: {
+                  message: [
+                    `${highlightTags.pre}hello${highlightTags.post}, i am a ${highlightTags.pre}message${highlightTags.post}`,
+                  ],
+                },
               },
               {
                 _id: 'kdospaidopa',
@@ -1268,6 +1274,11 @@ describe('ElasticResponse', () => {
                     lvl: 'info',
                   },
                 },
+                highlight: {
+                  message: [
+                    `${highlightTags.pre}hello${highlightTags.post}, i am a ${highlightTags.pre}message${highlightTags.post}`,
+                  ],
+                },
               },
             ],
           },
@@ -1279,6 +1290,12 @@ describe('ElasticResponse', () => {
       const result = new ElasticResponse(targets, response).getLogs();
       expect(result.data.length).toBe(2);
       const logResults = result.data[0] as MutableDataFrame;
+      expect(logResults).toHaveProperty('meta');
+      expect(logResults.meta).toEqual({
+        searchWords: ['hello', 'message'],
+        preferredVisualisationType: 'logs',
+      });
+
       const fields = logResults.fields.map((f) => {
         return {
           name: f.name,
