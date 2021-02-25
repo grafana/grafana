@@ -271,6 +271,7 @@ const getStyles = (theme: GrafanaTheme) => {
       display: flex;
       align-items: center;
       height: 38px;
+      flex-shrink: 0;
       width: 100%;
       font-size: ${theme.typography.size.md};
       font-weight: ${theme.typography.weight.semibold};
