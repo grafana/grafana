@@ -118,7 +118,7 @@ func parseQuery(dsInfo *models.DataSource, queries []*tsdb.Query, queryContext *
 
 		end, err := queryContext.TimeRange.ParseTo()
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse From: %v", err)
+			return nil, fmt.Errorf("failed to parse To: %v", err)
 		}
 
 		dsInterval, err := tsdb.GetIntervalFrom(dsInfo, queryModel.Model, time.Second)
