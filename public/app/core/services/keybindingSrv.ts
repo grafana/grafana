@@ -7,7 +7,7 @@ import { LegacyGraphHoverClearEvent, locationUtil } from '@grafana/data';
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
-import { store } from 'app/store/store';
+import { store, dispatch } from 'app/store/store';
 import { AppEventEmitter, CoreEvents } from 'app/types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { DashboardModel } from 'app/features/dashboard/state';
@@ -15,6 +15,7 @@ import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
 import { defaultQueryParams } from 'app/features/search/reducers/searchQueryReducer';
 import { ContextSrv } from './context_srv';
+import { initQuickEdit } from 'app/features/dashboard/state/actions';
 
 export class KeybindingSrv {
   helpModal: boolean;
@@ -356,6 +357,11 @@ export class KeybindingSrv {
       const queryParams = store.getState().location.query;
       const newUrlParam = queryParams.autofitpanels ? '' : '&autofitpanels';
       window.location.href = window.location.href + newUrlParam;
+    });
+
+    this.bind('q', () => {
+      console.log(dashboard.meta.focusPanelId);
+      dispatch(initQuickEdit(dashboard.meta.focusPanelId as string));
     });
   }
 }

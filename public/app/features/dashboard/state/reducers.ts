@@ -23,6 +23,7 @@ export const initialState: DashboardState = {
   modifiedQueries: null,
   panels: {},
   initError: null,
+  quickEditPanelId: null,
 };
 
 const dashbardSlice = createSlice({
@@ -90,6 +91,12 @@ const dashbardSlice = createSlice({
       // TODO: refactor, since the state should be mutated by copying only
       state.panels[action.payload.id] = { pluginId: action.payload.type };
     },
+    startQuickEdit: (state, action: PayloadAction<{ panelId: string }>) => {
+      state.quickEditPanelId = action.payload.panelId;
+    },
+    closeQuickEdit: (state) => {
+      state.quickEditPanelId = null;
+    },
   },
 });
 
@@ -125,6 +132,8 @@ export const {
   addPanel,
   cleanUpEditPanel,
   setPanelAngularComponent,
+  startQuickEdit,
+  closeQuickEdit,
 } = dashbardSlice.actions;
 
 export const dashboardReducer = dashbardSlice.reducer;

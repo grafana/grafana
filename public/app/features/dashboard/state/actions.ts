@@ -8,6 +8,7 @@ import {
   loadDashboardPermissions,
   panelModelAndPluginReady,
   setPanelAngularComponent,
+  startQuickEdit,
 } from './reducers';
 import { notifyApp } from 'app/core/actions';
 import { loadPanelPlugin } from 'app/features/plugins/state/actions';
@@ -163,4 +164,8 @@ export function changePanelPlugin(panel: PanelModel, pluginId: string): ThunkRes
 export const cleanUpDashboardAndVariables = (): ThunkResult<void> => (dispatch) => {
   dispatch(cleanUpDashboard());
   dispatch(cancelVariables());
+};
+
+export const initQuickEdit = (panelId: string): ThunkResult<void> => (dispatch) => {
+  dispatch(startQuickEdit({ panelId }));
 };

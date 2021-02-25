@@ -84,4 +84,5 @@ export interface DashboardState {
   permissions: DashboardAcl[];
   modifiedQueries: QueriesToUpdateOnDashboardLoad | null;
   panels: { [id: string]: PanelState };
+  quickEditPanelId: string | null;
 }
