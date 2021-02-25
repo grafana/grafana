@@ -1,23 +1,21 @@
-// Libraries
 import React, { useMemo, useState } from 'react';
+import { connect, MapDispatchToProps } from 'react-redux';
+import { css, cx, keyframes } from 'emotion';
 import _ from 'lodash';
+import tinycolor from 'tinycolor2';
 import { LocationUpdate } from '@grafana/runtime';
 import { Icon, IconButton, styleMixins, stylesFactory, useStyles, useTheme } from '@grafana/ui';
-import { connect, MapDispatchToProps } from 'react-redux';
-// Utils
+import { selectors } from '@grafana/e2e-selectors';
+import { DateTimeInput, GrafanaTheme } from '@grafana/data';
+
 import config from 'app/core/config';
 import store from 'app/core/store';
-// Store
 import { updateLocation } from 'app/core/actions';
 import { addPanel } from 'app/features/dashboard/state/reducers';
-// Types
 import { DashboardModel, PanelModel } from '../../state';
 import { LibraryPanelsView } from '../../../library-panels/components/LibraryPanelsView/LibraryPanelsView';
 import { LibraryPanelDTO } from 'app/features/library-panels/state/api';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
-import { DateTimeInput, GrafanaTheme } from '@grafana/data';
-import { css, cx, keyframes } from 'emotion';
-import tinycolor from 'tinycolor2';
 
 export type PanelPluginInfo = { id: any; defaults: { gridPos: { w: any; h: any }; title: any } };
 
@@ -157,7 +155,7 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard, u
       ) : (
         <div className={styles.actionsWrapper}>
           <div className={styles.actionsRow}>
-            <div onClick={() => onCreateNewPanel()}>
+            <div onClick={() => onCreateNewPanel()} aria-label={selectors.pages.AddDashboard.addNewPanel}>
               <Icon name="file-blank" size="xl" />
               Add an empty panel
             </div>
