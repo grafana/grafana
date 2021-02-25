@@ -35,8 +35,8 @@ export const SideMenu = () => {
           &nbsp;Close
         </span>
       </div>
-      <TopSection key="topsection" />,
-      <BottomSection key="bottomsection" />,
+      <TopSection key="topsection" />
+      <BottomSection key="bottomsection" />
     </div>
   );
 };
