@@ -8,6 +8,10 @@ type TraceLog = {
   fields: TraceKeyValuePair[];
 };
 
+/**
+ * This describes the structure of the dataframe that should be returned from a tracing data source to show trace
+ * in a TraceView component.
+ */
 export interface TraceSpanRow {
   traceID: string;
   spanID: string;
