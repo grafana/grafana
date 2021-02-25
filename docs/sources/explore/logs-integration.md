@@ -84,7 +84,7 @@ Each log row has an extendable area with its labels and detected fields, for mor
 
 #### Derived fields links
 
-By using Derived fields, you are able to turn any part of a log message into the internal or external link. Created link will be visible as button next to the Detected field in the Log details view.
+By using Derived fields, you can turn any part of a log message into an internal or external link. The created link is visible as a button next to the Detected field in the Log details view.
 {{< docs-imagebox img="/img/docs/explore/detected-fields-link-7-4.png" max-width="800px" caption="Detected fields link in Explore" >}}
 
 #### Toggle detected fields
