@@ -47,8 +47,8 @@ func TestCreatingPolicy(t *testing.T) {
 			policy: policyTestCase{
 				name: "a name",
 				permissions: []permissionTestCase{
-					{scope: "/api/admin/users", permission: "post"},
-					{scope: "/api/report", permission: "get"},
+					{scope: "users", permission: "admin.users:create"},
+					{scope: "reports", permission: "reports:read"},
 				},
 			},
 			expectedUpdated: time.Unix(5, 0).UTC(),
@@ -100,14 +100,14 @@ func TestUpdatingPolicy(t *testing.T) {
 			policy: policyTestCase{
 				name: "a name",
 				permissions: []permissionTestCase{
-					{scope: "/api/report", permission: "get"},
+					{scope: "reports", permission: "reports:read"},
 				},
 			},
 			newPolicy: policyTestCase{
 				name: "a different name",
 				permissions: []permissionTestCase{
-					{scope: "/api/report", permission: "post"},
-					{scope: "/api/report", permission: "get"},
+					{scope: "reports", permission: "reports:create"},
+					{scope: "reports", permission: "reports:read"},
 				},
 			},
 		},
@@ -116,15 +116,15 @@ func TestUpdatingPolicy(t *testing.T) {
 			policy: policyTestCase{
 				name: "a name",
 				permissions: []permissionTestCase{
-					{scope: "/api/admin/users", permission: "post"},
-					{scope: "/api/report", permission: "get"},
+					{scope: "users", permission: "admin.users:create"},
+					{scope: "reports", permission: "reports:read"},
 				},
 			},
 			newPolicy: policyTestCase{
 				name: "a different name",
 				permissions: []permissionTestCase{
-					{scope: "/api/admin/users", permission: "put"},
-					{scope: "/api/report", permission: "post"},
+					{scope: "users", permission: "admin.users:read"},
+					{scope: "reports", permission: "reports:create"},
 				},
 			},
 		},
@@ -249,7 +249,7 @@ func TestUserPolicy(t *testing.T) {
 					{
 						name: fmt.Sprintf("fakepolicy%v", i),
 						permissions: []permissionTestCase{
-							{scope: "/api/datasources", permission: "put"},
+							{scope: "datasources", permission: "datasources:create"},
 						},
 					},
 				}
@@ -315,15 +315,15 @@ func TestUserPermissions(t *testing.T) {
 			userPolicies: []policyTestCase{
 				{
 					name: "CreateUser", permissions: []permissionTestCase{
-						{scope: "/api/admin/users", permission: "post"},
-						{scope: "/api/report", permission: "get"},
+						{scope: "users", permission: "admin.users:create"},
+						{scope: "reports", permission: "reports:read"},
 					},
 				},
 			},
 			teamPolicies: []policyTestCase{
 				{
 					name: "CreateDataSource", permissions: []permissionTestCase{
-						{scope: "/api/datasources", permission: "put"},
+						{scope: "datasources", permission: "datasources:create"},
 					},
 				},
 			},
@@ -346,7 +346,7 @@ func TestUserPermissions(t *testing.T) {
 					{
 						name: fmt.Sprintf("fakepolicy%v", i),
 						permissions: []permissionTestCase{
-							{scope: "/api/datasources", permission: "put"},
+							{scope: "datasources", permission: "datasources:create"},
 						},
 					},
 				}
@@ -401,8 +401,8 @@ func TestUserPermissions(t *testing.T) {
 			res, err := ac.GetUserPermissions(context.Background(), userPermissionsQuery)
 			require.NoError(t, err)
 			assert.Equal(t, len(expectedPermissions), len(res))
-			assert.Contains(t, expectedPermissions, permissionTestCase{scope: "/api/datasources", permission: "put"})
-			assert.NotContains(t, expectedPermissions, permissionTestCase{scope: "/api/restricted", permission: "post"})
+			assert.Contains(t, expectedPermissions, permissionTestCase{scope: "datasources", permission: "datasources:create"})
+			assert.NotContains(t, expectedPermissions, permissionTestCase{scope: "/api/restricted", permission: "restricted:read"})
 		})
 	}
 }
