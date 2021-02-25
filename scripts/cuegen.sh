@@ -4,6 +4,16 @@ set -eo pipefail
 # MUST BE RUN FROM GRAFANA ROOT DIR
 test -d cue
 
+# Must have latest cue and cuetsy
+if ! command -v cue &> /dev/null; then
+    echo "must install cue on PATH"
+    exit 1
+fi
+if ! command -v cuetsy &> /dev/null; then
+    echo "must install cuetsy on PATH"
+    exit 1
+fi
+
 # TODO Everything here needs to be moved into custom CUE logic in a Go program.
 # It _might_ be possible to do what we want with some CUE tools magic
 # (https://pkg.go.dev/cuelang.org/go@v0.3.0-beta.5/pkg/tool), but unless that

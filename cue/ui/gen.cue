@@ -3,14 +3,14 @@ package grafanaschema
 
 
 TooltipMode:       "single" | "multi" | "none"                             @cuetsy(targetType="type")
-AxisPlacement:     'auto' | 'top' | 'right' | 'bottom' | 'left' | 'hidden' @cuetsy(targetType="enum")
-PointVisibility:   'auto' | 'never' | 'always'                             @cuetsy(targetType="enum")
-DrawStyle:         'line' | 'bars' | 'points'                              @cuetsy(targetType="enum")
-LineInterpolation: 'linear' | 'smooth' | 'stepBefore' | 'stepAfter'        @cuetsy(targetType="enum")
-ScaleDistribution: 'linear' | 'log'                                        @cuetsy(targetType="enum")
-GraphGradientMode: 'none' | 'opacity' | 'hue' | 'scheme'                   @cuetsy(targetType="enum")
+AxisPlacement:     "auto" | "top" | "right" | "bottom" | "left" | "hidden" @cuetsy(targetType="enum")
+PointVisibility:   "auto" | "never" | "always"                             @cuetsy(targetType="enum")
+DrawStyle:         "line" | "bars" | "points"                              @cuetsy(targetType="enum")
+LineInterpolation: "linear" | "smooth" | "stepBefore" | "stepAfter"        @cuetsy(targetType="enum")
+ScaleDistribution: "linear" | "log"                                        @cuetsy(targetType="enum")
+GraphGradientMode: "none" | "opacity" | "hue" | "scheme"                   @cuetsy(targetType="enum")
 LineStyle: {
-	fill?: 'solid' | 'dash' | 'dot' | 'square'
+	fill?: "solid" | "dash" | "dot" | "square"
 	dash?: [number]
 } @cuetsy(targetType="interface")
 LineConfig: {
