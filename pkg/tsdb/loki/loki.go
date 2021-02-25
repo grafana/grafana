@@ -54,7 +54,6 @@ func (e *LokiExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsd
 	}
 
 	for _, query := range queries {
-
 		plog.Debug("Sending query", "start", query.Start, "end", query.End, "step", query.Step, "query", query.Expr)
 		span, _ := opentracing.StartSpanFromContext(ctx, "alerting.loki")
 		span.SetTag("expr", query.Expr)
@@ -62,9 +61,9 @@ func (e *LokiExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsd
 		span.SetTag("stop_unixnano", query.End.UnixNano())
 		defer span.Finish()
 
-		//currently hard coded as not used - applies to log queries
+		//Currently hard coded as not used - applies to log queries
 		limit := 1000
-		//currently hard coded as not used - applies to queries which produce a stream response
+		//Currently hard coded as not used - applies to queries which produce a stream response
 		interval := time.Second * 1
 
 		value, err := client.QueryRange(query.Expr, limit, query.Start, query.End, logproto.BACKWARD, query.Step, interval, false)
@@ -83,7 +82,7 @@ func (e *LokiExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsd
 	return result, nil
 }
 
-// If legend (using of name or pattern instead of time series name) is used, use that name/pattern for formatting
+//If legend (using of name or pattern instead of time series name) is used, use that name/pattern for formatting
 func formatLegend(metric model.Metric, query *LokiQuery) string {
 	if query.LegendFormat == "" {
 		return metric.String()
