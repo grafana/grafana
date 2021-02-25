@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	backendmodels "github.com/grafana/grafana/pkg/plugins/backendplugin/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
@@ -22,19 +23,19 @@ func TestManager(t *testing.T) {
 	newManagerScenario(t, false, func(t *testing.T, ctx *managerScenarioCtx) {
 		t.Run("Unregistered plugin scenario", func(t *testing.T) {
 			err := ctx.manager.StartPlugin(context.Background(), testPluginID)
-			require.Equal(t, ErrPluginNotRegistered, err)
+			require.Equal(t, backendmodels.ErrPluginNotRegistered, err)
 
 			_, err = ctx.manager.CollectMetrics(context.Background(), testPluginID)
-			require.Equal(t, ErrPluginNotRegistered, err)
+			require.Equal(t, backendmodels.ErrPluginNotRegistered, err)
 
 			_, err = ctx.manager.CheckHealth(context.Background(), backend.PluginContext{PluginID: testPluginID})
-			require.Equal(t, ErrPluginNotRegistered, err)
+			require.Equal(t, backendmodels.ErrPluginNotRegistered, err)
 
 			req, err := http.NewRequest(http.MethodGet, "/test", nil)
 			require.NoError(t, err)
 			w := httptest.NewRecorder()
 			err = ctx.manager.callResourceInternal(w, req, backend.PluginContext{PluginID: testPluginID})
-			require.Equal(t, ErrPluginNotRegistered, err)
+			require.Equal(t, backendmodels.ErrPluginNotRegistered, err)
 		})
 	})
 
@@ -121,12 +122,12 @@ func TestManager(t *testing.T) {
 				t.Run("Unimplemented handlers", func(t *testing.T) {
 					t.Run("Collect metrics should return method not implemented error", func(t *testing.T) {
 						_, err = ctx.manager.CollectMetrics(context.Background(), testPluginID)
-						require.Equal(t, ErrMethodNotImplemented, err)
+						require.Equal(t, backendmodels.ErrMethodNotImplemented, err)
 					})
 
 					t.Run("Check health should return method not implemented error", func(t *testing.T) {
 						_, err = ctx.manager.CheckHealth(context.Background(), backend.PluginContext{PluginID: testPluginID})
-						require.Equal(t, ErrMethodNotImplemented, err)
+						require.Equal(t, backendmodels.ErrMethodNotImplemented, err)
 					})
 
 					t.Run("Call resource should return method not implemented error", func(t *testing.T) {
@@ -134,17 +135,17 @@ func TestManager(t *testing.T) {
 						require.NoError(t, err)
 						w := httptest.NewRecorder()
 						err = ctx.manager.callResourceInternal(w, req, backend.PluginContext{PluginID: testPluginID})
-						require.Equal(t, ErrMethodNotImplemented, err)
+						require.Equal(t, backendmodels.ErrMethodNotImplemented, err)
 					})
 				})
 
 				t.Run("Implemented handlers", func(t *testing.T) {
 					t.Run("Collect metrics should return expected result", func(t *testing.T) {
-						ctx.plugin.CollectMetricsHandlerFunc = backend.CollectMetricsHandlerFunc(func(ctx context.Context) (*backend.CollectMetricsResult, error) {
+						ctx.plugin.CollectMetricsHandlerFunc = func(ctx context.Context) (*backend.CollectMetricsResult, error) {
 							return &backend.CollectMetricsResult{
 								PrometheusMetrics: []byte("hello"),
 							}, nil
-						})
+						}
 
 						res, err := ctx.manager.CollectMetrics(context.Background(), testPluginID)
 						require.NoError(t, err)
@@ -156,13 +157,13 @@ func TestManager(t *testing.T) {
 						json := []byte(`{
 							"key": "value"
 						}`)
-						ctx.plugin.CheckHealthHandlerFunc = backend.CheckHealthHandlerFunc(func(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+						ctx.plugin.CheckHealthHandlerFunc = func(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 							return &backend.CheckHealthResult{
 								Status:      backend.HealthStatusOk,
 								Message:     "All good",
 								JSONDetails: json,
 							}, nil
-						})
+						}
 
 						res, err := ctx.manager.CheckHealth(context.Background(), backend.PluginContext{PluginID: testPluginID})
 						require.NoError(t, err)
@@ -173,11 +174,12 @@ func TestManager(t *testing.T) {
 					})
 
 					t.Run("Call resource should return expected response", func(t *testing.T) {
-						ctx.plugin.CallResourceHandlerFunc = backend.CallResourceHandlerFunc(func(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+						ctx.plugin.CallResourceHandlerFunc = func(ctx context.Context,
+							req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 							return sender.Send(&backend.CallResourceResponse{
 								Status: http.StatusOK,
 							})
-						})
+						}
 
 						req, err := http.NewRequest(http.MethodGet, "/test", bytes.NewReader([]byte{}))
 						require.NoError(t, err)
@@ -270,7 +272,7 @@ type managerScenarioCtx struct {
 	cfg     *setting.Cfg
 	license *testLicensingService
 	manager *manager
-	factory PluginFactoryFunc
+	factory backendmodels.PluginFactoryFunc
 	plugin  *testPlugin
 	env     []string
 }
@@ -293,7 +295,7 @@ func newManagerScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *m
 	err := ctx.manager.Init()
 	require.NoError(t, err)
 
-	ctx.factory = func(pluginID string, logger log.Logger, env []string) (Plugin, error) {
+	ctx.factory = func(pluginID string, logger log.Logger, env []string) (backendmodels.Plugin, error) {
 		ctx.plugin = &testPlugin{
 			pluginID: pluginID,
 			logger:   logger,
@@ -326,6 +328,10 @@ func (tp *testPlugin) PluginID() string {
 
 func (tp *testPlugin) Logger() log.Logger {
 	return tp.logger
+}
+
+func (tp *testPlugin) CanHandleDataQueries() bool {
+	return false
 }
 
 func (tp *testPlugin) Start(ctx context.Context) error {
@@ -364,7 +370,7 @@ func (tp *testPlugin) CollectMetrics(ctx context.Context) (*backend.CollectMetri
 		return tp.CollectMetricsHandlerFunc(ctx)
 	}
 
-	return nil, ErrMethodNotImplemented
+	return nil, backendmodels.ErrMethodNotImplemented
 }
 
 func (tp *testPlugin) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
@@ -372,7 +378,7 @@ func (tp *testPlugin) CheckHealth(ctx context.Context, req *backend.CheckHealthR
 		return tp.CheckHealthHandlerFunc(ctx, req)
 	}
 
-	return nil, ErrMethodNotImplemented
+	return nil, backendmodels.ErrMethodNotImplemented
 }
 
 func (tp *testPlugin) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
@@ -380,7 +386,7 @@ func (tp *testPlugin) CallResource(ctx context.Context, req *backend.CallResourc
 		return tp.CallResourceHandlerFunc(ctx, req, sender)
 	}
 
-	return ErrMethodNotImplemented
+	return backendmodels.ErrMethodNotImplemented
 }
 
 type testLicensingService struct {
