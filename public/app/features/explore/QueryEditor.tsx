@@ -34,12 +34,21 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
     const loader = getAngularLoader();
     const template = '<plugin-component type="query-ctrl"> </plugin-component>';
     const target = { datasource: datasource.name, ...initialQuery };
+
+    const me = this;
+
     const scopeProps = {
       ctrl: {
         datasource,
         target,
         refresh: () => {
           setTimeout(() => {
+            // the "hide" attribute of the quries can be changed from the "outside",
+            // it will be applied to "this.props.initialQuery.hide", but not to "target.hide".
+            // so we have to apply it.
+            if (target.hide !== me.props.initialQuery.hide) {
+              target.hide = me.props.initialQuery.hide;
+            }
             this.props.onQueryChange?.(target);
             this.props.onExecuteQuery?.();
           }, 1);
