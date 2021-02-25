@@ -11,7 +11,7 @@ func isGeneralFolder(folderID int64) bool {
 	return folderID == 0
 }
 
-func (lps *LibraryPanelService) doesFolderExist(session *sqlstore.DBSession, user *models.SignedInUser, folderID int64) (bool, error) {
+func doesFolderExist(session *sqlstore.DBSession, user *models.SignedInUser, folderID int64) (bool, error) {
 	if isGeneralFolder(folderID) {
 		return true, nil
 	}
@@ -33,7 +33,7 @@ func (lps *LibraryPanelService) doesFolderExist(session *sqlstore.DBSession, use
 	return true, nil
 }
 
-func (lps *LibraryPanelService) doesUserHaveEditorPermissionsForFolder(session *sqlstore.DBSession, user *models.SignedInUser, folderID int64) (bool, error) {
+func doesUserHaveEditorPermissionsOnFolder(session *sqlstore.DBSession, user *models.SignedInUser, folderID int64) (bool, error) {
 	if isGeneralFolder(folderID) && user.HasRole(models.ROLE_EDITOR) {
 		return true, nil
 	}
@@ -48,7 +48,6 @@ func (lps *LibraryPanelService) doesUserHaveEditorPermissionsForFolder(session *
 	if user.OrgRole != models.ROLE_ADMIN {
 		builder.WriteDashboardPermissionFilter(user, models.PERMISSION_EDIT)
 	}
-	builder.Write(lps.SQLStore.Dialect.Limit(int64(1)))
 	count, err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Count()
 	if err != nil {
 		return false, err

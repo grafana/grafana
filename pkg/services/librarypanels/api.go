@@ -135,6 +135,12 @@ func (lps *LibraryPanelService) patchHandler(c *models.ReqContext, cmd patchLibr
 		if errors.Is(err, errLibraryPanelNotFound) {
 			return response.Error(404, errLibraryPanelNotFound.Error(), err)
 		}
+		if errors.Is(err, models.ErrFolderNotFound) {
+			return response.Error(404, models.ErrFolderNotFound.Error(), err)
+		}
+		if errors.Is(err, models.ErrFolderAccessDenied) {
+			return response.Error(403, models.ErrFolderAccessDenied.Error(), err)
+		}
 		return response.Error(500, "Failed to update library panel", err)
 	}
 
