@@ -15,9 +15,8 @@ type GrafanaRouteComponentProps<T> = Omit<GrafanaRouteProps<T>, 'component' | 'r
 
 export interface RouteDescriptor {
   path: string;
-  reloadOnSearch?: boolean;
   component: React.ComponentType<GrafanaRouteComponentProps<any>>;
-  redirectTo?: string;
+  reloadOnSearch?: boolean;
   roles?: () => string[];
   pageClass?: string;
   routeInfo?: string;

@@ -22,6 +22,7 @@ import 'vendor/angular-other/angular-strap';
 import config from 'app/core/config';
 // @ts-ignore ignoring this for now, otherwise we would have to extend _ interface with move
 import {
+  AppEvents,
   setLocale,
   setTimeZoneResolver,
   standardEditorsRegistry,
@@ -34,7 +35,7 @@ import {
 import { importPluginModule } from 'app/features/plugins/plugin_loader';
 import { angularModules } from 'app/core/core_module';
 import { registerAngularDirectives } from 'app/core/core';
-import { registerEchoBackend, setEchoSrv, setLocationService } from '@grafana/runtime';
+import { getLocationService, registerEchoBackend, setEchoSrv, setLocationService } from '@grafana/runtime';
 import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
@@ -57,6 +58,9 @@ import { LocationService } from './core/navigation/LocationService';
 // Ref: https://stackoverflow.com/questions/58146221/is-it-possible-to-tamper-client-side-code-in-angular-app
 import bridgeReactAngularRouting from './core/navigation/bridgeReactAngularRouting';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
+import appEvents from './core/app_events';
+import { CoreEvents, KioskUrlValue } from './types';
+import { queryStringToJSON, setViewModeBodyClass } from './core/navigation/utils';
 
 // add move to lodash for backward compatabiltiy
 // @ts-ignore
@@ -82,6 +86,7 @@ export class GrafanaApp {
 
   constructor() {
     this.initServices();
+    this.registerAppEvents();
     this.preBootModules = [];
     this.registerFunctions = {};
     this.ngModuleDependencies = [];
@@ -100,6 +105,7 @@ export class GrafanaApp {
   init() {
     const app = angular.module('grafana', []);
     addClassIfNoOverlayScrollbar();
+    setViewModeBodyClass(queryStringToJSON(getLocationService().getCurrentLocation().search).kiosk as KioskUrlValue);
     setLocale(config.bootData.user.locale);
     setTimeZoneResolver(() => config.bootData.user.timezone);
 
@@ -216,6 +222,37 @@ export class GrafanaApp {
   initServices = () => {
     setLocationService(new LocationService());
   };
+
+  registerAppEvents() {
+    appEvents.on(CoreEvents.toggleKioskMode, (options: { exit?: boolean }) => {
+      const search: { kiosk?: KioskUrlValue | null } = queryStringToJSON(
+        getLocationService().getCurrentLocation().search
+      );
+
+      if (options && options.exit) {
+        search.kiosk = '1';
+      }
+
+      switch (search.kiosk) {
+        case 'tv': {
+          search.kiosk = true;
+          appEvents.emit(AppEvents.alertSuccess, ['Press ESC to exit Kiosk mode']);
+          break;
+        }
+        case '1':
+        case true: {
+          search.kiosk = null;
+          break;
+        }
+        default: {
+          search.kiosk = 'tv';
+        }
+      }
+
+      getLocationService().partial(search);
+      setViewModeBodyClass(search.kiosk!);
+    });
+  }
 
   initEchoSrv() {
     setEchoSrv(new Echo({ debug: process.env.NODE_ENV === 'development' }));

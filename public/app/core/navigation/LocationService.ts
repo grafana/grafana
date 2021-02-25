@@ -3,7 +3,8 @@ import * as H from 'history';
 //TODO[Router] replace with LocationSrv
 import { LocationService as LocationServiceAPI } from '@grafana/runtime';
 import { locationUtil } from '@grafana/data';
-import { navigationLogger } from './utils';
+import { navigationLogger, queryStringToJSON, setViewModeBodyClass } from './utils';
+import { KioskUrlValue } from '../../types';
 
 //TODO[Router] replace with LocationSrv
 export class LocationService implements LocationServiceAPI {
@@ -20,6 +21,9 @@ export class LocationService implements LocationServiceAPI {
         window.location.href = update.pathname;
         return;
       }
+
+      const mode = queryStringToJSON(update.search).kiosk as KioskUrlValue;
+      setViewModeBodyClass(mode);
     });
 
     // For debugging purposes the location service is attached to global _debug variable

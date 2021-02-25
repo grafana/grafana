@@ -1,4 +1,5 @@
 import { createLogger } from '@grafana/ui';
+import { KioskUrlValue } from '../../types';
 
 export const navigationLogger = createLogger('Router');
 
@@ -27,4 +28,22 @@ export function shouldForceReload(query: string) {
   }
 
   return false;
+}
+
+export function setViewModeBodyClass(mode: KioskUrlValue) {
+  const viewModeClasses = ['view-mode--tv', 'view-mode--kiosk', 'view-mode--inactive'];
+  viewModeClasses.forEach((c) => document.body.classList.remove(c));
+
+  switch (mode) {
+    case 'tv': {
+      document.body.classList.add('view-mode--tv');
+      break;
+    }
+    // 1 & true for legacy states
+    case '1':
+    case true: {
+      document.body.classList.add('view-mode--kiosk');
+      break;
+    }
+  }
 }

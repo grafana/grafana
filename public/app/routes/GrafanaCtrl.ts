@@ -1,8 +1,6 @@
 // Libraries
 import _ from 'lodash';
 import $ from 'jquery';
-// @ts-ignore
-import Drop from 'tether-drop';
 
 // Utils and servies
 import { colors } from '@grafana/ui';
@@ -26,7 +24,7 @@ import { AngularLoader, setAngularLoader } from 'app/core/services/AngularLoader
 import { updateLocation } from 'app/core/actions';
 
 // Types
-import { KioskUrlValue, CoreEvents, AppEventEmitter, AppEventConsumer } from 'app/types';
+import { CoreEvents, AppEventEmitter, AppEventConsumer } from 'app/types';
 import { setLinkSrv, LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import { UtilSrv } from 'app/core/services/util_srv';
 import { ContextSrv } from 'app/core/services/context_srv';
@@ -34,7 +32,7 @@ import { BridgeSrv } from 'app/core/services/bridge_srv';
 import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
 import { DashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { ITimeoutService, IRootScopeService, IAngularEvent, auto } from 'angular';
-import { AppEvent, AppEvents, locationUtil } from '@grafana/data';
+import { AppEvent, locationUtil } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { initGrafanaLive } from 'app/features/live/live';
 import { store } from '../store/store';
@@ -135,32 +133,12 @@ export class GrafanaCtrl {
   }
 }
 
-function setViewModeBodyClass(body: JQuery, mode: KioskUrlValue) {
-  body.removeClass('view-mode--tv');
-  body.removeClass('view-mode--kiosk');
-  body.removeClass('view-mode--inactive');
-
-  switch (mode) {
-    case 'tv': {
-      body.addClass('view-mode--tv');
-      break;
-    }
-    // 1 & true for legacy states
-    case '1':
-    case true: {
-      body.addClass('view-mode--kiosk');
-      break;
-    }
-  }
-}
-
 /** @ngInject */
 export function grafanaAppDirective(
   playlistSrv: PlaylistSrv,
   contextSrv: ContextSrv,
   $timeout: ITimeoutService,
   $rootScope: IRootScopeService
-  // $location: ILocationService
 ) {
   return {
     restrict: 'E',
@@ -186,63 +164,6 @@ export function grafanaAppDirective(
 
       appEvents.on(CoreEvents.playlistStopped, () => {
         elem.toggleClass('view-mode--playlist', false);
-      });
-
-      // tooltip removal fix
-      // manage page classes
-      let pageClass: string;
-      scope.$on('$routeChangeSuccess', (evt: any, data: any) => {
-        if (pageClass) {
-          body.removeClass(pageClass);
-        }
-
-        if (data.$$route) {
-          pageClass = data.$$route.pageClass;
-          if (pageClass) {
-            body.addClass(pageClass);
-          }
-        }
-
-        // clear body class sidemenu states
-        body.removeClass('sidemenu-open--xs');
-
-        $('#tooltip, .tooltip').remove();
-
-        // check for kiosk url param
-        setViewModeBodyClass(body, data.params.kiosk);
-
-        // close all drops
-        for (const drop of Drop.drops) {
-          drop.destroy();
-        }
-      });
-
-      // handle kiosk mode
-      appEvents.on(CoreEvents.toggleKioskMode, (options: { exit?: boolean }) => {
-        const search: { kiosk?: KioskUrlValue } = $location.search();
-
-        if (options && options.exit) {
-          search.kiosk = '1';
-        }
-
-        switch (search.kiosk) {
-          case 'tv': {
-            search.kiosk = true;
-            appEvents.emit(AppEvents.alertSuccess, ['Press ESC to exit Kiosk mode']);
-            break;
-          }
-          case '1':
-          case true: {
-            delete search.kiosk;
-            break;
-          }
-          default: {
-            search.kiosk = 'tv';
-          }
-        }
-
-        $timeout(() => $location.search(search));
-        setViewModeBodyClass(body, search.kiosk!);
       });
 
       // handle in active view state class
