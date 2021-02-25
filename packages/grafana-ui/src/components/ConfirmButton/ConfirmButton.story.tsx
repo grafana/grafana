@@ -64,7 +64,7 @@ export const Basic: Story<StoryProps> = (args) => {
   );
 };
 
-export const withCustomButton: Story<StoryProps> = (args) => {
+export const WithCustomButton: Story<StoryProps> = (args) => {
   return (
     <>
       <div className="gf-form-group">
@@ -89,7 +89,7 @@ export const withCustomButton: Story<StoryProps> = (args) => {
   );
 };
 
-export const deleteButton: Story<StoryProps> = (args) => {
+export const Delete: Story<StoryProps> = (args) => {
   return (
     <>
       <div className="gf-form-group">
