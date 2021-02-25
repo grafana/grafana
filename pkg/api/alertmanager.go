@@ -9,7 +9,7 @@ import (
 	"github.com/prometheus/alertmanager/config"
 )
 
-// swagger:route POST /api/v1/config alertmanager RoutePostAlertingConfig
+// swagger:route POST /api/am/{DatasourceId}/v1/config alertmanager RoutePostAlertingConfig
 //
 // sets an Alerting config
 //
@@ -17,7 +17,7 @@ import (
 //       201: Ack
 //       400: ValidationError
 
-// swagger:route GET /api/v1/config alertmanager RouteGetAlertingConfig
+// swagger:route GET /api/am/{DatasourceId}/v1/config alertmanager RouteGetAlertingConfig
 //
 // gets an Alerting config
 //
@@ -25,7 +25,7 @@ import (
 //       200: AlertingConfigResponse
 //       400: ValidationError
 
-// swagger:route DELETE /api/v1/config alertmanager RouteDeleteAlertingConfig
+// swagger:route DELETE /api/am/{DatasourceId}/v1/config alertmanager RouteDeleteAlertingConfig
 //
 // deletes the Alerting config for a tenant
 //
@@ -33,7 +33,7 @@ import (
 //       200: Ack
 //       400: ValidationError
 
-// swagger:route GET /api/v1/alerts alertmanager RouteGetAmAlerts
+// swagger:route GET /api/am/{DatasourceId}/v1/alerts alertmanager RouteGetAmAlerts
 //
 // get alertmanager alerts
 //
@@ -41,7 +41,7 @@ import (
 //       200: GettableAlerts
 //       400: ValidationError
 
-// swagger:route POST /api/v1/alerts alertmanager RoutePostAmAlerts
+// swagger:route POST /api/am/{DatasourceId}/v1/alerts alertmanager RoutePostAmAlerts
 //
 // create alertmanager alerts
 //
@@ -49,7 +49,7 @@ import (
 //       200: Ack
 //       400: ValidationError
 
-// swagger:route GET /api/v1/alerts/groups alertmanager RouteGetAmAlertGroups
+// swagger:route GET /api/am/{DatasourceId}/v1/alerts/groups alertmanager RouteGetAmAlertGroups
 //
 // get alertmanager alerts
 //
@@ -57,7 +57,7 @@ import (
 //       200: AlertGroups
 //       400: ValidationError
 
-// swagger:route GET /api/v1/silences alertmanager RouteGetSilences
+// swagger:route GET /api/am/{DatasourceId}/v1/silences alertmanager RouteGetSilences
 //
 // get silences
 //
@@ -65,7 +65,7 @@ import (
 //       200: GettableSilences
 //       400: ValidationError
 
-// swagger:route POST /api/v1/silences alertmanager RouteCreateSilence
+// swagger:route POST /api/am/{DatasourceId}/v1/silences alertmanager RouteCreateSilence
 //
 // create silence
 //
@@ -73,7 +73,7 @@ import (
 //       201: GettableSilence
 //       400: ValidationError
 
-// swagger:route GET /api/v1/silence/{SilenceId} alertmanager RouteGetSilence
+// swagger:route GET /api/am/{DatasourceId}/v1/silence/{SilenceId} alertmanager RouteGetSilence
 //
 // get silence
 //
@@ -81,7 +81,7 @@ import (
 //       200: GettableSilence
 //       400: ValidationError
 
-// swagger:route DELETE /api/v1/silence/{SilenceId} alertmanager RouteDeleteSilence
+// swagger:route DELETE /api/am/{DatasourceId}/v1/silence/{SilenceId} alertmanager RouteDeleteSilence
 //
 // delete silence
 //
@@ -103,7 +103,7 @@ type GetDeleteSilenceParams struct {
 
 // swagger:model
 type SilenceBody struct {
-	Idd string `json:"id"`
+	Id string `json:"id"`
 	amv2.Silence
 }
 
@@ -158,6 +158,12 @@ type PostableAlerts struct {
 type BodyAlertingConfig struct {
 	// in:body
 	Body UserConfig
+}
+
+// swagger:parameters RoutePostAlertingConfig RouteGetAlertingConfig RouteDeleteAlertingConfig RouteGetAmAlerts RoutePostAmAlerts RouteGetAmAlertGroups RouteGetSilences RouteCreateSilence RouteGetSilence RouteDeleteSilence RoutePostAlertingConfig
+type DatasourceReference struct {
+	// in:path
+	DatasourceId string
 }
 
 // swagger:model

@@ -16,7 +16,7 @@
   },
   "basePath": "/api/v1",
   "paths": {
-    "/api/v1/alerts": {
+    "/api/am/{DatasourceId}/v1/alerts": {
       "get": {
         "description": "get alertmanager alerts",
         "tags": [
@@ -64,6 +64,12 @@
             "description": "A list of receivers to filter alerts by",
             "name": "receivers",
             "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "DatasourceId",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -97,6 +103,12 @@
                 "$ref": "#/definitions/postableAlert"
               }
             }
+          },
+          {
+            "type": "string",
+            "name": "DatasourceId",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -115,7 +127,7 @@
         }
       }
     },
-    "/api/v1/alerts/groups": {
+    "/api/am/{DatasourceId}/v1/alerts/groups": {
       "get": {
         "description": "get alertmanager alerts",
         "tags": [
@@ -163,6 +175,12 @@
             "description": "A list of receivers to filter alerts by",
             "name": "receivers",
             "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "DatasourceId",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -181,13 +199,21 @@
         }
       }
     },
-    "/api/v1/config": {
+    "/api/am/{DatasourceId}/v1/config": {
       "get": {
         "description": "gets an Alerting config",
         "tags": [
           "alertmanager"
         ],
         "operationId": "RouteGetAlertingConfig",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "DatasourceId",
+            "in": "path",
+            "required": true
+          }
+        ],
         "responses": {
           "200": {
             "description": "AlertingConfigResponse",
@@ -216,6 +242,12 @@
             "schema": {
               "$ref": "#/definitions/UserConfig"
             }
+          },
+          {
+            "type": "string",
+            "name": "DatasourceId",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -239,12 +271,153 @@
           "alertmanager"
         ],
         "operationId": "RouteDeleteAlertingConfig",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "DatasourceId",
+            "in": "path",
+            "required": true
+          }
+        ],
         "responses": {
           "200": {
             "description": "Ack",
             "schema": {
               "$ref": "#/definitions/Ack"
             }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      }
+    },
+    "/api/am/{DatasourceId}/v1/silence/{SilenceId}": {
+      "get": {
+        "description": "get silence",
+        "tags": [
+          "alertmanager"
+        ],
+        "operationId": "RouteGetSilence",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "SilenceId",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "DatasourceId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/GettableSilence"
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "delete silence",
+        "tags": [
+          "alertmanager"
+        ],
+        "operationId": "RouteDeleteSilence",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "SilenceId",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "DatasourceId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ack",
+            "schema": {
+              "$ref": "#/definitions/Ack"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      }
+    },
+    "/api/am/{DatasourceId}/v1/silences": {
+      "get": {
+        "description": "get silences",
+        "tags": [
+          "alertmanager"
+        ],
+        "operationId": "RouteGetSilences",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "DatasourceId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "GettableSilences",
+            "schema": {
+              "$ref": "#/definitions/GettableSilences"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "create silence",
+        "tags": [
+          "alertmanager"
+        ],
+        "operationId": "RouteCreateSilence",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/SilenceBody"
+            }
+          },
+          {
+            "type": "string",
+            "name": "DatasourceId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "$ref": "#/responses/GettableSilence"
           },
           "400": {
             "description": "ValidationError",
@@ -564,113 +737,6 @@
             "description": "Ack",
             "schema": {
               "$ref": "#/definitions/Ack"
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/silence/{SilenceId}": {
-      "get": {
-        "description": "get silence",
-        "tags": [
-          "alertmanager"
-        ],
-        "operationId": "RouteGetSilence",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "SilenceId",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/GettableSilence"
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "delete": {
-        "description": "delete silence",
-        "tags": [
-          "alertmanager"
-        ],
-        "operationId": "RouteDeleteSilence",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "SilenceId",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/silences": {
-      "get": {
-        "description": "get silences",
-        "tags": [
-          "alertmanager"
-        ],
-        "operationId": "RouteGetSilences",
-        "responses": {
-          "200": {
-            "description": "GettableSilences",
-            "schema": {
-              "$ref": "#/definitions/GettableSilences"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "post": {
-        "description": "create silence",
-        "tags": [
-          "alertmanager"
-        ],
-        "operationId": "RouteCreateSilence",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/SilenceBody"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "$ref": "#/responses/GettableSilence"
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
             }
           }
         }
@@ -2378,7 +2444,7 @@
         },
         "id": {
           "type": "string",
-          "x-go-name": "Idd"
+          "x-go-name": "Id"
         },
         "matchers": {
           "$ref": "#/definitions/matchers"
@@ -2631,9 +2697,8 @@
       "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     },
     "URL": {
-      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
       "type": "object",
-      "title": "A URL represents a parsed URL (technically, a URI reference).",
+      "title": "URL is a custom URL type that allows validation at configuration load time.",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -2666,7 +2731,7 @@
           "$ref": "#/definitions/Userinfo"
         }
       },
-      "x-go-package": "net/url"
+      "x-go-package": "github.com/prometheus/common/config"
     },
     "UpdateDashboardAclCommand": {
       "type": "object",
