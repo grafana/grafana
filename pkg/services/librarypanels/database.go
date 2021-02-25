@@ -66,6 +66,12 @@ func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd cre
 	}
 
 	err := lps.SQLStore.WithTransactionalDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
+		if _, err := lps.doesFolderExist(session, c.SignedInUser, cmd.FolderID); err != nil {
+			return err
+		}
+		if _, err := lps.doesUserHaveEditorPermissionsForFolder(session, c.SignedInUser, cmd.FolderID); err != nil {
+			return err
+		}
 		if _, err := session.Insert(&libraryPanel); err != nil {
 			if lps.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
 				return errLibraryPanelAlreadyExists

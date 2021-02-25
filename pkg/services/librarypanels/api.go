@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/go-macaron/binding"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
@@ -34,6 +35,12 @@ func (lps *LibraryPanelService) createHandler(c *models.ReqContext, cmd createLi
 	if err != nil {
 		if errors.Is(err, errLibraryPanelAlreadyExists) {
 			return response.Error(400, errLibraryPanelAlreadyExists.Error(), err)
+		}
+		if errors.Is(err, models.ErrFolderNotFound) {
+			return response.Error(404, models.ErrFolderNotFound.Error(), err)
+		}
+		if errors.Is(err, models.ErrFolderAccessDenied) {
+			return response.Error(403, models.ErrFolderAccessDenied.Error(), err)
 		}
 		return response.Error(500, "Failed to create library panel", err)
 	}
