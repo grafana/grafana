@@ -25,7 +25,7 @@ Restrictions are applied separately for viewers and editors.
 
 When the number of maximum active viewers or editors is reached, Grafana displays a warning banner.
 
-Sometimes it is useful to log in to an account from multiple locations concurrently. With Grafana Enterprise, accounts are limited to three concurrent sessions.
+Sometimes it is useful to log in to an account from multiple locations concurrently. With Grafana Enterprise 7.5 and up, accounts are limited to three concurrent sessions.
 
 ## Expiration date
 
