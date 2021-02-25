@@ -17,7 +17,7 @@ export class GrafanaRoute extends React.Component<GrafanaRouteProps<any>> {
   }
 
   componentWillUnmount() {
-    navigationLogger('GrafanaRoute', false, 'Unmount', this.props.route.routeInfo);
+    navigationLogger('GrafanaRoute', false, 'Unmount', this.props.route);
     this.updateBodyClassNames(true);
   }
 
@@ -66,7 +66,7 @@ export class GrafanaRoute extends React.Component<GrafanaRouteProps<any>> {
   render() {
     const { component, route, ...routeComponentProps } = this.props;
 
-    return React.createElement(component, {
+    return React.createElement(component(), {
       ...routeComponentProps,
       routeInfo: route.routeInfo,
     });

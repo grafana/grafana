@@ -1,4 +1,4 @@
-import React, { PureComponent, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import appEvents from '../../app_events';
 import TopSection from './TopSection';
 import BottomSection from './BottomSection';
