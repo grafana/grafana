@@ -5,7 +5,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-model/go/datasource"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/stretchr/testify/require"
 )
 
@@ -41,8 +40,8 @@ func TestMapTable(t *testing.T) {
 		}},
 	}
 
-	want := &tsdb.Table{
-		Columns: []tsdb.TableColumn{{Text: "column1"}, {Text: "column2"}},
+	want := DataTable{
+		Columns: []DataTableColumn{{Text: "column1"}, {Text: "column2"}},
 	}
 	have, err := dpw.mapTable(source)
 	require.NoError(t, err)
