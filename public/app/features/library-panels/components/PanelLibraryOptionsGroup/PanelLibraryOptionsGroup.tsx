@@ -59,6 +59,7 @@ export const PanelLibraryOptionsGroup: React.FC<Props> = ({ panel, dashboard }) 
     >
       <LibraryPanelsView
         formatDate={(dateString: string) => dashboard.formatDate(dateString, 'L')}
+        currentPanelId={panel.libraryPanel?.uid}
         showSecondaryActions
       >
         {(panel) => (
