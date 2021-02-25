@@ -28,8 +28,8 @@ mkdir -p cue/ui cue/data
 rm -f {cue/ui/gen.cue,cue/data/gen.cue}
 
 # TODO decide if multiple or single files seems like better ergonomics
-cue def -s $(find packages/grafana-ui -type f -name "models.cue") > cue/ui/gen.cue
-cue def -s $(find packages/grafana-data -type f -name "models.cue") > cue/data/gen.cue
+cue def -s $(find packages/grafana-ui -type f -name "*.cue") > cue/ui/gen.cue
+cue def -s $(find packages/grafana-data -type f -name "*.cue") > cue/data/gen.cue
 
 # Horrible hack to remove import statements. 
 #
@@ -88,3 +88,4 @@ cue eval -E {cue/ui/gen.cue,cue/data/gen.cue} > /dev/null
 
 # Run cuetsy over all core .cue files.
 find packages -type f -name '*.cue' -exec cuetsy {} \;
+find public/app/plugins -type f -name '*.cue' -exec cuetsy {} \;
