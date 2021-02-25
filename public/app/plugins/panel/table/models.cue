@@ -1,9 +1,12 @@
-package table // must match the plugin id???
+package grafanaschema
 
+import ui "github.com/grafana/grafana/cue/ui:grafanaschema"
 // TODO need to import from `grafanaschema`
 
 PanelOptions: {
-    showHeader: bool | *true         `
+    frameIndex: number
+    showHeader: bool | *true
+    sortBy?: ui.TableSortByFieldState
 } @cuetsy(targetType="interface")
 
 PanelFieldConfig: {

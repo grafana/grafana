@@ -4,8 +4,8 @@ set -eo pipefail
 # MUST BE RUN FROM GRAFANA ROOT DIR
 test -d cue
 
-# Everything here needs to be moved into custom CUE logic in grafana-cli. It
-# _might_ be possible to do what we want with some CUE tools magic
+# TODO Everything here needs to be moved into custom CUE logic in a Go program.
+# It _might_ be possible to do what we want with some CUE tools magic
 # (https://pkg.go.dev/cuelang.org/go@v0.3.0-beta.5/pkg/tool), but unless that
 # turns out to be pretty straightforward, it's probably better to encode our
 # filesystem semantics there.
@@ -30,8 +30,7 @@ cue def -s $(find packages/grafana-data -type f -name "models.cue") > cue/data/g
 # HACK-IMPOSED CONSTRAINT: Can't import between @grafana/ui and @grafana/data,
 # because those imports will also be removed
 # 
-# TODO move a more careful import-elimination check into grafana-cli, and
-# differentiate between impmorts that
+# TODO move a more careful import-elimination check into a Go tool
 #
 # It's important to understand why this is necessary, though. We are expecting
 # that these core components may depend on each other - e.g., how
@@ -74,4 +73,5 @@ sed -ie "s/[A-Za-z]*\.\([A-Za-z]*\)/\1/g" {cue/ui/gen.cue,cue/data/gen.cue}
 # Check that our output is still valid CUE.
 cue eval -E {cue/ui/gen.cue,cue/data/gen.cue} > /dev/null
 
-# TODO run cuetsy over all core .cue files here. Probably best to not do it for plugins
+# Run cuetsy over all core .cue files.
+find packages -type f -name '*.cue' -exec cuetsy {} \;
