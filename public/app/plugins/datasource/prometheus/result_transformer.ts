@@ -75,12 +75,12 @@ export function transform(
 
   if (isExemplarData(prometheusResult)) {
     const events: TimeAndValue[] = [];
-    prometheusResult.forEach(exemplarData => {
-      const data = exemplarData.exemplars.map(exemplar => {
+    prometheusResult.forEach((exemplarData) => {
+      const data = exemplarData.exemplars.map((exemplar) => {
         return {
-          [TIME_SERIES_TIME_FIELD_NAME]: exemplar.scrapeTimestamp,
-          [TIME_SERIES_VALUE_FIELD_NAME]: exemplar.exemplar.value,
-          ...exemplar.exemplar.labels,
+          [TIME_SERIES_TIME_FIELD_NAME]: exemplar.timestamp * 1000,
+          [TIME_SERIES_VALUE_FIELD_NAME]: exemplar.value,
+          ...exemplar.labels,
           ...exemplarData.seriesLabels,
         };
       });
@@ -96,7 +96,7 @@ export function transform(
     // Add data links if configured
     if (transformOptions.exemplarTraceIdDestinations?.length) {
       for (const exemplarTraceIdDestination of transformOptions.exemplarTraceIdDestinations) {
-        const traceIDField = dataFrame.fields.find(field => field.name === exemplarTraceIdDestination!.name);
+        const traceIDField = dataFrame.fields.find((field) => field.name === exemplarTraceIdDestination!.name);
         if (traceIDField) {
           const links = getDataLinks(exemplarTraceIdDestination);
           traceIDField.config.links = traceIDField.config.links?.length
@@ -165,8 +165,9 @@ function getDataLinks(options: ExemplarTraceIdDestination): DataLink[] {
 
   if (options.url) {
     dataLinks.push({
-      title: 'Open link',
+      title: `Go to ${options.url}`,
       url: options.url,
+      targetBlank: true,
     });
   }
   return dataLinks;
@@ -202,7 +203,7 @@ function sampleExemplars(events: TimeAndValue[], options: TransformOptions) {
       sampledExemplars.push(exemplarsInBucket[0]);
     } else {
       // Choose which values to sample
-      const bucketValues = exemplarsInBucket.map(ex => ex[TIME_SERIES_VALUE_FIELD_NAME]).sort(descending);
+      const bucketValues = exemplarsInBucket.map((ex) => ex[TIME_SERIES_VALUE_FIELD_NAME]).sort(descending);
       const sampledBucketValues = bucketValues.reduce((acc: number[], curr) => {
         if (acc.length === 0) {
           // First value is max and is always added
@@ -218,7 +219,9 @@ function sampleExemplars(events: TimeAndValue[], options: TransformOptions) {
       }, []);
       // Find the exemplars for the sampled values
       sampledExemplars.push(
-        ...sampledBucketValues.map(value => exemplarsInBucket.find(ex => ex[TIME_SERIES_VALUE_FIELD_NAME] === value)!)
+        ...sampledBucketValues.map(
+          (value) => exemplarsInBucket.find((ex) => ex[TIME_SERIES_VALUE_FIELD_NAME] === value)!
+        )
       );
     }
   }
@@ -296,26 +299,29 @@ function transformMetricDataToTable(md: MatrixOrVectorResult[], options: Transfo
   const timeField = getTimeField([]);
   const metricFields = Object.keys(md.reduce((acc, series) => ({ ...acc, ...series.metric }), {}))
     .sort()
-    .map(label => {
+    .map((label) => {
+      // Labels have string field type, otherwise table tries to figure out the type which can result in unexpected results
+      // Only "le" label has a number field type
+      const numberField = label === 'le';
       return {
         name: label,
         config: { filterable: true },
-        type: FieldType.other,
+        type: numberField ? FieldType.number : FieldType.string,
         values: new ArrayVector(),
       };
     });
   const valueField = getValueField({ data: [], valueName: valueText });
 
-  md.forEach(d => {
+  md.forEach((d) => {
     if (isMatrixData(d)) {
-      d.values.forEach(val => {
+      d.values.forEach((val) => {
         timeField.values.add(val[0] * 1000);
-        metricFields.forEach(metricField => metricField.values.add(getLabelValue(d.metric, metricField.name)));
+        metricFields.forEach((metricField) => metricField.values.add(getLabelValue(d.metric, metricField.name)));
         valueField.values.add(parseSampleValue(val[1]));
       });
     } else {
       timeField.values.add(d.value[0] * 1000);
-      metricFields.forEach(metricField => metricField.values.add(getLabelValue(d.metric, metricField.name)));
+      metricFields.forEach((metricField) => metricField.values.add(getLabelValue(d.metric, metricField.name)));
       valueField.values.add(parseSampleValue(d.value[1]));
     }
   });
@@ -343,7 +349,7 @@ function getTimeField(data: PromValue[], isMs = false): MutableField {
     name: TIME_SERIES_TIME_FIELD_NAME,
     type: FieldType.time,
     config: {},
-    values: new ArrayVector<number>(data.map(val => (isMs ? val[0] : val[0] * 1000))),
+    values: new ArrayVector<number>(data.map((val) => (isMs ? val[0] : val[0] * 1000))),
   };
 }
 type ValueFieldOptions = {
@@ -369,7 +375,7 @@ function getValueField({
       displayNameFromDS,
     },
     labels,
-    values: new ArrayVector<number | null>(data.map(val => (parseValue ? parseSampleValue(val[1]) : val[1]))),
+    values: new ArrayVector<number | null>(data.map((val) => (parseValue ? parseSampleValue(val[1]) : val[1]))),
   };
 }
 
@@ -381,7 +387,11 @@ function createLabelInfo(labels: { [key: string]: string }, options: TransformOp
 
   const { __name__, ...labelsWithoutName } = labels;
   const labelPart = formatLabels(labelsWithoutName);
-  const title = `${__name__ ?? ''}${labelPart}`;
+  let title = `${__name__ ?? ''}${labelPart}`;
+
+  if (!title) {
+    title = options.query;
+  }
 
   return { name: title, labels: labelsWithoutName };
 }
@@ -390,7 +400,7 @@ export function getOriginalMetricName(labelData: { [key: string]: string }) {
   const metricName = labelData.__name__ || '';
   delete labelData.__name__;
   const labelPart = Object.entries(labelData)
-    .map(label => `${label[0]}="${label[1]}"`)
+    .map((label) => `${label[0]}="${label[1]}"`)
     .join(',');
   return `${metricName}{${labelPart}}`;
 }
@@ -413,8 +423,8 @@ function transformToHistogramOverTime(seriesList: DataFrame[]) {
     le30    30  10  35    =>    10  0   5
     */
   for (let i = seriesList.length - 1; i > 0; i--) {
-    const topSeries = seriesList[i].fields.find(s => s.name === TIME_SERIES_VALUE_FIELD_NAME);
-    const bottomSeries = seriesList[i - 1].fields.find(s => s.name === TIME_SERIES_VALUE_FIELD_NAME);
+    const topSeries = seriesList[i].fields.find((s) => s.name === TIME_SERIES_VALUE_FIELD_NAME);
+    const bottomSeries = seriesList[i - 1].fields.find((s) => s.name === TIME_SERIES_VALUE_FIELD_NAME);
     if (!topSeries || !bottomSeries) {
       throw new Error('Prometheus heatmap transform error: data should be a time series');
     }

@@ -1,8 +1,7 @@
 import React from 'react';
 import { css, cx } from 'emotion';
 import { VizLegendSeriesIcon } from './VizLegendSeriesIcon';
-import { VizLegendItem } from './types';
-import { SeriesColorChangeHandler } from './types';
+import { VizLegendItem, SeriesColorChangeHandler } from './types';
 import { VizLegendStatsList } from './VizLegendStatsList';
 import { useStyles } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
@@ -14,6 +13,9 @@ export interface Props {
   onSeriesColorChange?: SeriesColorChangeHandler;
 }
 
+/**
+ * @internal
+ */
 export const VizLegendListItem: React.FunctionComponent<Props> = ({ item, onSeriesColorChange, onLabelClick }) => {
   const styles = useStyles(getStyles);
 
@@ -22,14 +24,14 @@ export const VizLegendListItem: React.FunctionComponent<Props> = ({ item, onSeri
       <VizLegendSeriesIcon
         disabled={!onSeriesColorChange}
         color={item.color}
-        onColorChange={color => {
+        onColorChange={(color) => {
           if (onSeriesColorChange) {
             onSeriesColorChange(item.label, color);
           }
         }}
       />
       <div
-        onClick={event => {
+        onClick={(event) => {
           if (onLabelClick) {
             onLabelClick(item, event);
           }

@@ -20,7 +20,7 @@ export function ExemplarsSettings({ options, onChange }: Props) {
             <ExemplarSetting
               key={index}
               value={option}
-              onChange={newField => {
+              onChange={(newField) => {
                 const newOptions = [...options];
                 newOptions.splice(index, 1, newField);
                 onChange(newOptions);
@@ -40,7 +40,7 @@ export function ExemplarsSettings({ options, onChange }: Props) {
           margin-bottom: 10px;
         `}
         icon="plus"
-        onClick={event => {
+        onClick={(event) => {
           event.preventDefault();
           const newOptions = [...(options || []), { name: 'traceID' }];
           onChange(newOptions);

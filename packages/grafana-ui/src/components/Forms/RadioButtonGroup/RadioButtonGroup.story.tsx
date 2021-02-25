@@ -45,7 +45,7 @@ export const RadioButtons = () => {
           disabled={disabled}
           disabledOptions={[disabledItem]}
           value={selected}
-          onChange={v => setSelected(v!)}
+          onChange={(v) => setSelected(v!)}
           size={size}
           fullWidth
         />
@@ -57,13 +57,18 @@ export const RadioButtons = () => {
           disabled={disabled}
           disabledOptions={[disabledItem]}
           value={selected}
-          onChange={v => setSelected(v!)}
+          onChange={(v) => setSelected(v!)}
           size={size}
         />
       </div>
       <div style={{ marginBottom: '32px' }}>
         <h5>With only icons and descriptions</h5>
-        <RadioButtonGroup options={optionsWithOnlyIcons} value={selected} onChange={v => setSelected(v!)} size={size} />
+        <RadioButtonGroup
+          options={optionsWithOnlyIcons}
+          value={selected}
+          onChange={(v) => setSelected(v!)}
+          size={size}
+        />
       </div>
     </div>
   );

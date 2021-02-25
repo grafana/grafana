@@ -72,7 +72,13 @@ export const filterOrSearchOptions = (searchQuery = ''): ThunkResult<void> => {
   };
 };
 
-export const commitChangesToVariable = (): ThunkResult<void> => {
+const setVariable = async (updated: VariableWithMultiSupport) => {
+  const adapter = variableAdapters.get(updated.type);
+  await adapter.setValue(updated, updated.current, true);
+  return;
+};
+
+export const commitChangesToVariable = (callback?: (updated: any) => void): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const picker = getState().templating.optionsPicker;
     const existing = getVariable<VariableWithMultiSupport>(picker.id, getState());
@@ -88,9 +94,11 @@ export const commitChangesToVariable = (): ThunkResult<void> => {
       return;
     }
 
-    const adapter = variableAdapters.get(updated.type);
-    await adapter.setValue(updated, updated.current, true);
-    return;
+    if (callback) {
+      return callback(updated);
+    }
+
+    return setVariable(updated);
   };
 };
 
@@ -131,7 +139,7 @@ const fetchTagValues = (tagText: string): ThunkResult<Promise<string[]>> => {
     if (!Array.isArray(results)) {
       return [];
     }
-    return results.map(value => value.text);
+    return results.map((value) => value.text);
   };
 };
 
@@ -159,7 +167,7 @@ const searchForOptions = async (dispatch: ThunkDispatch, getState: () => StoreSt
 
 const searchForOptionsWithDebounce = debounce(searchForOptions, 500);
 
-function mapToCurrent(picker: OptionsPickerState): VariableOption | undefined {
+export function mapToCurrent(picker: OptionsPickerState): VariableOption | undefined {
   const { options, selectedValues, queryValue: searchQuery, multi } = picker;
 
   if (options.length === 0 && searchQuery && searchQuery.length > 0) {
@@ -167,7 +175,7 @@ function mapToCurrent(picker: OptionsPickerState): VariableOption | undefined {
   }
 
   if (!multi) {
-    return selectedValues.find(o => o.selected);
+    return selectedValues.find((o) => o.selected);
   }
 
   const texts: string[] = [];
@@ -185,7 +193,7 @@ function mapToCurrent(picker: OptionsPickerState): VariableOption | undefined {
   return {
     value: values,
     text: texts,
-    tags: picker.tags.filter(t => t.selected),
+    tags: picker.tags.filter((t) => t.selected),
     selected: true,
   };
 }

@@ -11,7 +11,7 @@ import { Props } from './types';
 /**
  * Expects the container div to have size set and will fill it 100%
  */
-export const OverrideFieldConfigEditor: React.FC<Props> = props => {
+export const OverrideFieldConfigEditor: React.FC<Props> = (props) => {
   const theme = useTheme();
   const { config } = props;
 
@@ -63,7 +63,7 @@ export const OverrideFieldConfigEditor: React.FC<Props> = props => {
               key={`${o.matcher.id}/${i}`}
               data={data}
               override={o}
-              onChange={value => onOverrideChange(i, value)}
+              onChange={(value) => onOverrideChange(i, value)}
               onRemove={() => onOverrideRemove(i)}
               registry={fieldConfigRegistry}
             />
@@ -82,9 +82,9 @@ export const OverrideFieldConfigEditor: React.FC<Props> = props => {
           variant="secondary"
           options={fieldMatchersUI
             .list()
-            .filter(o => !o.excludeFromPicker)
-            .map<SelectableValue<string>>(i => ({ label: i.name, value: i.id, description: i.description }))}
-          onChange={value => onOverrideAdd(value)}
+            .filter((o) => !o.excludeFromPicker)
+            .map<SelectableValue<string>>((i) => ({ label: i.name, value: i.id, description: i.description }))}
+          onChange={(value) => onOverrideAdd(value)}
           isFullWidth={false}
         />
       </Container>

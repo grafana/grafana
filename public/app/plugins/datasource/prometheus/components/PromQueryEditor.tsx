@@ -50,9 +50,9 @@ export class PromQueryEditor extends PureComponent<Props, State> {
       interval: query.interval,
       legendFormat: query.legendFormat,
       // Select options
-      formatOption: FORMAT_OPTIONS.find(option => option.value === query.format) || FORMAT_OPTIONS[0],
+      formatOption: FORMAT_OPTIONS.find((option) => option.value === query.format) || FORMAT_OPTIONS[0],
       intervalFactorOption:
-        INTERVAL_FACTOR_OPTIONS.find(option => option.value === query.intervalFactor) || INTERVAL_FACTOR_OPTIONS[0],
+        INTERVAL_FACTOR_OPTIONS.find((option) => option.value === query.intervalFactor) || INTERVAL_FACTOR_OPTIONS[0],
       // Switch options
       instant: Boolean(query.instant),
     };
@@ -92,7 +92,9 @@ export class PromQueryEditor extends PureComponent<Props, State> {
 
   onRunQuery = () => {
     const { query } = this;
-    this.props.onChange(query);
+    // Change of query.hide happens outside of this component and is just passed as prop. We have to update it when running queries.
+    const { hide } = this.props.query;
+    this.props.onChange({ ...query, hide });
     this.props.onRunQuery();
   };
 

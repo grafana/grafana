@@ -162,6 +162,13 @@ export interface FieldState {
    * Useful for assigning color to series by looking up a color in a palette using this index
    */
   seriesIndex?: number;
+
+  /**
+   * Location of this field within the context frames results
+   *
+   * @internal -- we will try to make this unnecessary
+   */
+  origin?: DataFrameFieldIndex;
 }
 
 export interface NumericRange {
@@ -206,7 +213,8 @@ export const TIME_SERIES_METRIC_FIELD_NAME = 'Metric';
 /**
  * Describes where a specific data frame field is located within a
  * dataset of type DataFrame[]
- * @public
+ *
+ * @internal -- we will try to make this unnecessary
  */
 export interface DataFrameFieldIndex {
   frameIndex: number;

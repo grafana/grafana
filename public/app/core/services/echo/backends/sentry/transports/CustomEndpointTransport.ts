@@ -39,7 +39,7 @@ export class CustomEndpointTransport implements BaseTransport {
         level: event.level ?? (event.exception ? Severity.Error : Severity.Info),
         exception: event.exception
           ? {
-              values: event.exception.values?.map(value => ({
+              values: event.exception.values?.map((value) => ({
                 ...value,
                 // according to both typescript and go types, value is supposed to be string.
                 // but in some odd cases at runtime it turns out to be an empty object {}
@@ -48,7 +48,7 @@ export class CustomEndpointTransport implements BaseTransport {
               })),
             }
           : event.exception,
-        breadcrumbs: event.breadcrumbs?.map(breadcrumb => ({
+        breadcrumbs: event.breadcrumbs?.map((breadcrumb) => ({
           ...breadcrumb,
           timestamp: makeTimestamp(breadcrumb.timestamp),
         })),
@@ -78,7 +78,7 @@ export class CustomEndpointTransport implements BaseTransport {
       new SyncPromise<Response>((resolve, reject) => {
         window
           .fetch(sentryReq.url, options)
-          .then(response => {
+          .then((response) => {
             const status = Status.fromHttpCode(response.status);
 
             if (status === Status.Success) {

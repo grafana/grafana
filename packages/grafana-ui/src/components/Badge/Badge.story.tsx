@@ -10,7 +10,7 @@ export default {
   parameters: {
     docs: {},
     knobs: {
-      disabled: true,
+      disable: true,
     },
   },
   argTypes: {
@@ -19,7 +19,7 @@ export default {
   },
 };
 
-const Template: Story<BadgeProps> = args => <Badge {...args} />;
+const Template: Story<BadgeProps> = (args) => <Badge {...args} />;
 
 export const Basic = Template.bind({});
 

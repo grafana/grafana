@@ -30,7 +30,7 @@ class WrapperWithState extends PureComponent<any, State> {
     if (!txt) {
       return [];
     }
-    return txt.split(',').map(v => v.trim());
+    return txt.split(',').map((v) => v.trim());
   };
 
   componentDidUpdate(prevProps: any) {

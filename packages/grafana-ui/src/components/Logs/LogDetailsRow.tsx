@@ -10,7 +10,7 @@ import { stylesFactory } from '../../themes/stylesFactory';
 //Components
 import { LogLabelStats } from './LogLabelStats';
 import { IconButton } from '../IconButton/IconButton';
-import { FieldLink } from './FieldLink';
+import { DataLinkButton } from '../DataLinks/DataLinkButton';
 
 export interface Props extends Themeable {
   parsedValue: string;
@@ -104,7 +104,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   };
 
   toggleFieldsStats() {
-    this.setState(state => {
+    this.setState((state) => {
       return {
         showFieldsStats: !state.showFieldsStats,
       };
@@ -154,11 +154,11 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
         <td className={cx(styles.wordBreakAll, wrapLogMessage && styles.wrapLine)}>
           {parsedValue}
           {links &&
-            links.map(link => {
+            links.map((link) => {
               return (
                 <>
                   &nbsp;
-                  <FieldLink link={link} />
+                  <DataLinkButton link={link} />
                 </>
               );
             })}

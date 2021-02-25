@@ -15,7 +15,7 @@ import (
 )
 
 func TestSQLBuilder(t *testing.T) {
-	t.Run("writeDashboardPermissionFilter", func(t *testing.T) {
+	t.Run("WriteDashboardPermissionFilter", func(t *testing.T) {
 		t.Run("user ACL", func(t *testing.T) {
 			test(t,
 				DashboardProps{},
@@ -340,7 +340,7 @@ func getDashboards(sqlStore *SQLStore, search Search, aclUserId int64) ([]*dashb
 
 	var res []*dashboardResponse
 	builder.Write("SELECT * FROM dashboard WHERE true")
-	builder.writeDashboardPermissionFilter(signedInUser, search.RequiredPermission)
+	builder.WriteDashboardPermissionFilter(signedInUser, search.RequiredPermission)
 	err := sqlStore.engine.SQL(builder.GetSQLString(), builder.params...).Find(&res)
 	return res, err
 }

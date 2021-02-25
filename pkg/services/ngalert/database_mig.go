@@ -36,6 +36,20 @@ func addAlertDefinitionMigrations(mg *migrator.Migrator) {
 
 	mg.AddMigration("alter alert_definition table data column to mediumtext in mysql", migrator.NewRawSQLMigration("").
 		Mysql("ALTER TABLE alert_definition MODIFY data MEDIUMTEXT;"))
+
+	mg.AddMigration("drop index in alert_definition on org_id and title columns", migrator.NewDropIndexMigration(alertDefinition, alertDefinition.Indices[0]))
+	mg.AddMigration("drop index in alert_definition on org_id and uid columns", migrator.NewDropIndexMigration(alertDefinition, alertDefinition.Indices[1]))
+
+	uniqueIndices := []*migrator.Index{
+		{Cols: []string{"org_id", "title"}, Type: migrator.UniqueIndex},
+		{Cols: []string{"org_id", "uid"}, Type: migrator.UniqueIndex},
+	}
+	mg.AddMigration("add unique index in alert_definition on org_id and title columns", migrator.NewAddIndexMigration(alertDefinition, uniqueIndices[0]))
+	mg.AddMigration("add unique index in alert_definition on org_id and uid columns", migrator.NewAddIndexMigration(alertDefinition, uniqueIndices[1]))
+
+	mg.AddMigration("Add column paused in alert_definition", migrator.NewAddColumnMigration(alertDefinition, &migrator.Column{
+		Name: "paused", Type: migrator.DB_Bool, Nullable: false, Default: "0",
+	}))
 }
 
 func addAlertDefinitionVersionMigrations(mg *migrator.Migrator) {

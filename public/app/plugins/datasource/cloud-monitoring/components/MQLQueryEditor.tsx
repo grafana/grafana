@@ -24,7 +24,7 @@ export function MQLQueryEditor({ query, onChange, onRunQuery }: React.PropsWithC
         rows={10}
         placeholder="Enter a Cloud Monitoring MQL query (Run with Shift+Enter)"
         onBlur={onRunQuery}
-        onChange={e => onChange(e.currentTarget.value)}
+        onChange={(e) => onChange(e.currentTarget.value)}
         onKeyDown={onKeyDown}
       />
     </>

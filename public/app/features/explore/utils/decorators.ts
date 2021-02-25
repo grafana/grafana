@@ -20,24 +20,12 @@ import { ExplorePanelData } from '../../../types';
  * dataFrames with different type of data. This is later used for type specific processing. As we use this in
  * Observable pipeline, it decorates the existing panelData to pass the results to later processing stages.
  */
-export const decorateWithGraphLogsTraceAndTable = (data: PanelData): ExplorePanelData => {
-  if (data.error) {
-    return {
-      ...data,
-      graphFrames: [],
-      tableFrames: [],
-      logsFrames: [],
-      traceFrames: [],
-      graphResult: null,
-      tableResult: null,
-      logsResult: null,
-    };
-  }
-
+export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData => {
   const graphFrames: DataFrame[] = [];
   const tableFrames: DataFrame[] = [];
   const logsFrames: DataFrame[] = [];
   const traceFrames: DataFrame[] = [];
+  const nodeGraphFrames: DataFrame[] = [];
 
   for (const frame of data.series) {
     switch (frame.meta?.preferredVisualisationType) {
@@ -52,6 +40,9 @@ export const decorateWithGraphLogsTraceAndTable = (data: PanelData): ExplorePane
         break;
       case 'table':
         tableFrames.push(frame);
+        break;
+      case 'nodeGraph':
+        nodeGraphFrames.push(frame);
         break;
       default:
         if (isTimeSeries(frame)) {
@@ -70,6 +61,7 @@ export const decorateWithGraphLogsTraceAndTable = (data: PanelData): ExplorePane
     tableFrames,
     logsFrames,
     traceFrames,
+    nodeGraphFrames,
     graphResult: null,
     tableResult: null,
     logsResult: null,
@@ -77,7 +69,7 @@ export const decorateWithGraphLogsTraceAndTable = (data: PanelData): ExplorePane
 };
 
 export const decorateWithGraphResult = (data: ExplorePanelData): ExplorePanelData => {
-  if (data.error || !data.graphFrames.length) {
+  if (!data.graphFrames.length) {
     return { ...data, graphResult: null };
   }
 
@@ -90,10 +82,6 @@ export const decorateWithGraphResult = (data: ExplorePanelData): ExplorePanelDat
  * multiple results and so this should be used with mergeMap or similar to unbox the internal observable.
  */
 export const decorateWithTableResult = (data: ExplorePanelData): Observable<ExplorePanelData> => {
-  if (data.error) {
-    return of({ ...data, tableResult: null });
-  }
-
   if (data.tableFrames.length === 0) {
     return of({ ...data, tableResult: null });
   }
@@ -111,7 +99,7 @@ export const decorateWithTableResult = (data: ExplorePanelData): Observable<Expl
     return 0;
   });
 
-  const hasOnlyTimeseries = data.tableFrames.every(df => isTimeSeries(df));
+  const hasOnlyTimeseries = data.tableFrames.every((df) => isTimeSeries(df));
 
   // If we have only timeseries we do join on default time column which makes more sense. If we are showing
   // non timeseries or some mix of data we are not trying to join on anything and just try to merge them in
@@ -121,7 +109,7 @@ export const decorateWithTableResult = (data: ExplorePanelData): Observable<Expl
     : of(data.tableFrames).pipe(standardTransformers.mergeTransformer.operator({}));
 
   return transformer.pipe(
-    map(frames => {
+    map((frames) => {
       const frame = frames[0];
 
       // set display processor
@@ -143,10 +131,6 @@ export const decorateWithTableResult = (data: ExplorePanelData): Observable<Expl
 export const decorateWithLogsResult = (
   options: { absoluteRange?: AbsoluteTimeRange; refreshInterval?: string } = {}
 ) => (data: ExplorePanelData): ExplorePanelData => {
-  if (data.error) {
-    return { ...data, logsResult: null };
-  }
-
   if (data.logsFrames.length === 0) {
     return { ...data, logsResult: null };
   }
@@ -167,7 +151,7 @@ export const decorateWithLogsResult = (
  * Check if frame contains time series, which for our purpose means 1 time column and 1 or more numeric columns.
  */
 function isTimeSeries(frame: DataFrame): boolean {
-  const grouped = groupBy(frame.fields, field => field.type);
+  const grouped = groupBy(frame.fields, (field) => field.type);
   return Boolean(
     Object.keys(grouped).length === 2 && grouped[FieldType.time]?.length === 1 && grouped[FieldType.number]
   );

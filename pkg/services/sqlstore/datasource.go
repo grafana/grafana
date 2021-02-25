@@ -243,6 +243,7 @@ func UpdateDataSource(cmd *models.UpdateDataSourceCommand) error {
 		// plain text fields to SecureJsonData.
 		sess.MustCols("password")
 		sess.MustCols("basic_auth_password")
+		sess.MustCols("user")
 
 		var updateSession *xorm.Session
 		if cmd.Version != 0 {

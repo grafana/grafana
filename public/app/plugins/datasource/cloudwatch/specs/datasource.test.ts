@@ -9,7 +9,6 @@ import {
 } from '@grafana/data';
 
 import * as redux from 'app/store/store';
-import '../datasource';
 import { CloudWatchDatasource, MAX_ATTEMPTS } from '../datasource';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CloudWatchLogsQuery, CloudWatchLogsQueryStatus, CloudWatchMetricsQuery, LogAction } from '../types';
@@ -187,7 +186,7 @@ describe('CloudWatchDatasource', () => {
     it('should stop querying when no more data received a number of times in a row', async () => {
       const { ds } = getTestContext();
       const fakeFrames = genMockFrames(20);
-      const initialRecordsMatched = fakeFrames[0].meta!.stats!.find(stat => stat.displayName === 'Records scanned')!
+      const initialRecordsMatched = fakeFrames[0].meta!.stats!.find((stat) => stat.displayName === 'Records scanned')!
         .value!;
       for (let i = 1; i < 4; i++) {
         fakeFrames[i].meta!.stats = [
@@ -198,7 +197,7 @@ describe('CloudWatchDatasource', () => {
         ];
       }
 
-      const finalRecordsMatched = fakeFrames[9].meta!.stats!.find(stat => stat.displayName === 'Records scanned')!
+      const finalRecordsMatched = fakeFrames[9].meta!.stats!.find((stat) => stat.displayName === 'Records scanned')!
         .value!;
       for (let i = 10; i < fakeFrames.length; i++) {
         fakeFrames[i].meta!.stats = [
@@ -418,7 +417,7 @@ describe('CloudWatchDatasource', () => {
       });
     });
 
-    it.each(['pNN.NN', 'p9', 'p99.', 'p99.999'])('should cancel query for invalid extended statistics (%s)', stat => {
+    it.each(['pNN.NN', 'p9', 'p99.', 'p99.999'])('should cancel query for invalid extended statistics (%s)', (stat) => {
       const { ds } = getTestContext({ response });
       const query = {
         range: defaultTimeRange,
@@ -445,7 +444,7 @@ describe('CloudWatchDatasource', () => {
     it('should return series list', async () => {
       const { ds } = getTestContext({ response });
 
-      await expect(ds.query(query)).toEmitValuesWith(received => {
+      await expect(ds.query(query)).toEmitValuesWith((received) => {
         const result = received[0];
         expect(getFrameDisplayName(result.data[0])).toBe(response.results.A.series[0].name);
         expect(result.data[0].fields[1].values.buffer[0]).toBe(response.results.A.series[0].points[0][0]);
@@ -520,7 +519,7 @@ describe('CloudWatchDatasource', () => {
         const { ds } = getTestContext({ response: backendErrorResponse, throws: true });
         const memoizedDebounceSpy = jest.spyOn(ds, 'debouncedAlert');
 
-        await expect(ds.query(query)).toEmitValuesWith(received => {
+        await expect(ds.query(query)).toEmitValuesWith((received) => {
           expect(memoizedDebounceSpy).toHaveBeenCalledWith('TestDatasource', 'us-east-1');
           expect(memoizedDebounceSpy).toHaveBeenCalledWith('TestDatasource', 'us-east-2');
           expect(memoizedDebounceSpy).toHaveBeenCalledWith('TestDatasource', 'eu-north-1');
@@ -712,7 +711,7 @@ describe('CloudWatchDatasource', () => {
     it('should return series list', async () => {
       const { ds } = getTestContext({ response });
 
-      await expect(ds.query(query)).toEmitValuesWith(received => {
+      await expect(ds.query(query)).toEmitValuesWith((received) => {
         const result = received[0];
         expect(getFrameDisplayName(result.data[0])).toBe(response.results.A.series[0].name);
         expect(result.data[0].fields[1].values.buffer[0]).toBe(response.results.A.series[0].points[0][0]);

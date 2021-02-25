@@ -21,7 +21,7 @@ export class Timer {
   }
 
   cancelAll() {
-    _.each(this.timers, t => {
+    _.each(this.timers, (t) => {
       this.$timeout.cancel(t);
     });
     this.timers = [];

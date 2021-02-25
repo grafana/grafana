@@ -18,11 +18,14 @@ const VizLegendItemStat: React.FunctionComponent<{ stat: DisplayValue }> = ({ st
 
 VizLegendItemStat.displayName = 'VizLegendItemStat';
 
+/**
+ * @internal
+ */
 export const VizLegendStatsList: React.FunctionComponent<{ stats: DisplayValue[] }> = ({ stats }) => {
   if (stats.length === 0) {
     return null;
   }
-  return <InlineList items={stats} renderItem={stat => <VizLegendItemStat stat={stat} />} />;
+  return <InlineList items={stats} renderItem={(stat) => <VizLegendItemStat stat={stat} />} />;
 };
 
 VizLegendStatsList.displayName = 'VizLegendStatsList';

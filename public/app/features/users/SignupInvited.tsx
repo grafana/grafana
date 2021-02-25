@@ -1,23 +1,13 @@
 import React, { FC, useState } from 'react';
-import { hot } from 'react-hot-loader';
-import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
-import { StoreState } from 'app/types';
-import { updateLocation } from 'app/core/actions';
+import { useSelector } from 'react-redux';
 import { getBackendSrv } from '@grafana/runtime';
 import { Button, Field, Form, Input } from '@grafana/ui';
 import { useAsync } from 'react-use';
+
+import { StoreState } from 'app/types';
 import Page from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { getConfig } from 'app/core/config';
-import { UrlQueryValue } from '@grafana/data';
-
-interface ConnectedProps {
-  code?: UrlQueryValue;
-}
-
-interface DispatchProps {
-  updateLocation: typeof updateLocation;
-}
 
 interface FormModel {
   email: string;
@@ -38,12 +28,13 @@ const navModel = {
   },
 };
 
-const SingupInvitedPageUnconnected: FC<DispatchProps & ConnectedProps> = ({ code }) => {
+export const SignupInvitedPage: FC = () => {
+  const code = useSelector((state: StoreState) => state.location.routeParams.code);
   const [initFormModel, setInitFormModel] = useState<FormModel>();
   const [greeting, setGreeting] = useState<string>();
   const [invitedBy, setInvitedBy] = useState<string>();
   useAsync(async () => {
-    const invite = await getBackendSrv().get('/api/user/invite/' + code);
+    const invite = await getBackendSrv().get(`/api/user/invite/${code}`);
     setInitFormModel({
       email: invite.email,
       name: invite.name,
@@ -52,12 +43,16 @@ const SingupInvitedPageUnconnected: FC<DispatchProps & ConnectedProps> = ({ code
 
     setGreeting(invite.name || invite.email || invite.username);
     setInvitedBy(invite.invitedBy);
-  }, []);
+  }, [code]);
 
   const onSubmit = async (formData: FormModel) => {
     await getBackendSrv().post('/api/user/invite/complete', { ...formData, inviteCode: code });
     window.location.href = getConfig().appSubUrl + '/';
   };
+
+  if (!initFormModel) {
+    return null;
+  }
 
   return (
     <Page navModel={navModel}>
@@ -110,12 +105,4 @@ const SingupInvitedPageUnconnected: FC<DispatchProps & ConnectedProps> = ({ code
   );
 };
 
-const mapStateToProps: MapStateToProps<ConnectedProps, {}, StoreState> = (state: StoreState) => ({
-  code: state.location.routeParams.code,
-});
-
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, {}> = {
-  updateLocation,
-};
-
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(SingupInvitedPageUnconnected));
+export default SignupInvitedPage;

@@ -65,6 +65,7 @@ export function ExploreGraphNGPanel({
         drawStyle: DrawStyle.Line,
         fillOpacity: 0,
         pointSize: 5,
+        spanNulls: true,
       },
     },
     overrides: [],
@@ -86,7 +87,7 @@ export function ExploreGraphNGPanel({
       fieldConfig,
       data,
       timeZone,
-      replaceVariables: value => value, // We don't need proper replace here as it is only used in getLinks and we use getFieldLinks
+      replaceVariables: (value) => value, // We don't need proper replace here as it is only used in getLinks and we use getFieldLinks
       theme,
       fieldConfigRegistry: registry,
     });
@@ -128,14 +129,10 @@ export function ExploreGraphNGPanel({
           legend={{ displayMode: LegendDisplayMode.List, placement: 'bottom', calcs: [] }}
           timeZone={timeZone}
         >
-          <TooltipPlugin mode="single" timeZone={timeZone} />
           <ZoomPlugin onZoom={onUpdateTimeRange} />
-          <ContextMenuPlugin timeZone={timeZone} />
-          {annotations ? (
-            <ExemplarsPlugin exemplars={annotations} timeZone={timeZone} getFieldLinks={getFieldLinks} />
-          ) : (
-            <></>
-          )}
+          <TooltipPlugin data={data} mode="single" timeZone={timeZone} />
+          <ContextMenuPlugin data={data} timeZone={timeZone} />
+          {annotations && <ExemplarsPlugin exemplars={annotations} timeZone={timeZone} getFieldLinks={getFieldLinks} />}
         </GraphNG>
       </Collapse>
     </>

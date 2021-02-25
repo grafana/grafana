@@ -110,7 +110,7 @@ describe('getFieldLinksSupplier', () => {
     };
 
     const supplier = getFieldLinksSupplier(fieldDisp);
-    const links = supplier?.getLinks(templateSrv.replace.bind(templateSrv)).map(m => {
+    const links = supplier?.getLinks(templateSrv.replace.bind(templateSrv)).map((m) => {
       return {
         title: m.title,
         href: m.href,

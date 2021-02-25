@@ -27,7 +27,7 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
 
   query(request: DataQueryRequest<DataQuery>): Observable<DataQueryResponse> {
     // Remove any invalid queries
-    const queries = request.targets.filter(t => {
+    const queries = request.targets.filter((t) => {
       return t.datasource !== MIXED_DATASOURCE_NAME;
     });
 
@@ -61,7 +61,7 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
           dsRequest.targets = query.targets;
 
           return from(api.query(dsRequest)).pipe(
-            map(response => {
+            map((response) => {
               return {
                 ...response,
                 data: response.data || [],
@@ -69,7 +69,7 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
                 key: `mixed-${i}-${response.key || ''}`,
               } as DataQueryResponse;
             }),
-            catchError(err => {
+            catchError((err) => {
               err = toDataQueryError(err);
 
               err.message = `${api.name}: ${err.message}`;
@@ -104,7 +104,7 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
       return responses;
     }
 
-    const error = responses.find(response => response.state === LoadingState.Error);
+    const error = responses.find((response) => response.state === LoadingState.Error);
     if (error) {
       responses.push(error); // adds the first found error entry so error shows up in the panel
     } else {

@@ -1,10 +1,9 @@
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
-import { Input, Tooltip, defaultIntervals } from '@grafana/ui';
+import { Input, defaultIntervals, Field } from '@grafana/ui';
 
 import { getTimeSrv } from '../../services/TimeSrv';
 
 export interface Props {
-  renderCount: number; // hack to make sure Angular changes are propagated properly, please remove when DashboardSettings are migrated to React
   refreshIntervals: string[];
   onRefreshIntervalChange: (interval: string[]) => void;
   getIntervalsFunc?: typeof getValidIntervals;
@@ -12,7 +11,6 @@ export interface Props {
 }
 
 export const AutoRefreshIntervals: FC<Props> = ({
-  renderCount,
   refreshIntervals,
   onRefreshIntervalChange,
   getIntervalsFunc = getValidIntervals,
@@ -24,7 +22,7 @@ export const AutoRefreshIntervals: FC<Props> = ({
   useEffect(() => {
     const intervals = getIntervalsFunc(refreshIntervals ?? defaultIntervals);
     setIntervals(intervals);
-  }, [renderCount, refreshIntervals]);
+  }, [refreshIntervals]);
 
   const intervalsString = useMemo(() => {
     if (!Array.isArray(intervals)) {
@@ -58,16 +56,19 @@ export const AutoRefreshIntervals: FC<Props> = ({
   );
 
   return (
-    <div className="gf-form">
-      <label className="gf-form-label width-7">Auto-refresh</label>
-      {invalidIntervalsMessage ? (
-        <Tooltip placement="right" content={invalidIntervalsMessage}>
-          <Input width={60} invalid value={intervalsString} onChange={onIntervalsChange} onBlur={onIntervalsBlur} />
-        </Tooltip>
-      ) : (
-        <Input width={60} value={intervalsString} onChange={onIntervalsChange} onBlur={onIntervalsBlur} />
-      )}
-    </div>
+    <Field
+      label="Auto refresh"
+      description="Define the auto refresh intervals that should be available in the auto refresh dropdown"
+      error={invalidIntervalsMessage}
+      invalid={!!invalidIntervalsMessage}
+    >
+      <Input
+        invalid={!!invalidIntervalsMessage}
+        value={intervalsString}
+        onChange={onIntervalsChange}
+        onBlur={onIntervalsBlur}
+      />
+    </Field>
   );
 };
 
@@ -87,6 +88,6 @@ export const getValidIntervals = (
   intervals: string[],
   dependencies: { getTimeSrv: typeof getTimeSrv } = { getTimeSrv }
 ) => {
-  const cleanIntervals = intervals.filter(i => i.trim() !== '').map(interval => interval.replace(/\s+/g, ''));
+  const cleanIntervals = intervals.filter((i) => i.trim() !== '').map((interval) => interval.replace(/\s+/g, ''));
   return [...new Set(dependencies.getTimeSrv().getValidIntervals(cleanIntervals))];
 };

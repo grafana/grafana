@@ -171,15 +171,40 @@ For data source plugins. Proxy routes used for plugin authentication and adding 
 
 ### Properties
 
-| Property      | Type                 | Required | Description                                                                                             |
-|---------------|----------------------|----------|---------------------------------------------------------------------------------------------------------|
-| `headers`     | array                | No       | For data source plugins. Route headers adds HTTP headers to the proxied request.                        |
-| `method`      | string               | No       | For data source plugins. Route method matches the HTTP verb like GET or POST.                           |
-| `path`        | string               | No       | For data source plugins. The route path that is replaced by the route URL field when proxying the call. |
-| `reqRole`     | string               | No       |                                                                                                         |
-| `reqSignedIn` | boolean              | No       |                                                                                                         |
-| `tokenAuth`   | [object](#tokenauth) | No       | For data source plugins. Token authentication section used with an OAuth API.                           |
-| `url`         | string               | No       | For data source plugins. Route URL is where the request is proxied to.                                  |
+| Property       | Type                    | Required | Description                                                                                             |
+|----------------|-------------------------|----------|---------------------------------------------------------------------------------------------------------|
+| `headers`      | array                   | No       | For data source plugins. Route headers adds HTTP headers to the proxied request.                        |
+| `jwtTokenAuth` | [object](#jwttokenauth) | No       | For data source plugins. Token authentication section used with an JWT OAuth API.                       |
+| `method`       | string                  | No       | For data source plugins. Route method matches the HTTP verb like GET or POST.                           |
+| `path`         | string                  | No       | For data source plugins. The route path that is replaced by the route URL field when proxying the call. |
+| `reqRole`      | string                  | No       |                                                                                                         |
+| `reqSignedIn`  | boolean                 | No       |                                                                                                         |
+| `tokenAuth`    | [object](#tokenauth)    | No       | For data source plugins. Token authentication section used with an OAuth API.                           |
+| `url`          | string                  | No       | For data source plugins. Route URL is where the request is proxied to.                                  |
+
+### jwtTokenAuth
+
+For data source plugins. Token authentication section used with an JWT OAuth API.
+
+#### Properties
+
+| Property | Type              | Required | Description                                                               |
+|----------|-------------------|----------|---------------------------------------------------------------------------|
+| `params` | [object](#params) | No       | For data source plugins. Parameters for the token authentication request. |
+| `url`    | string            | No       | For data source plugins. URL to fetch the JWT token.                      |
+
+#### params
+
+For data source plugins. Parameters for the token authentication request.
+
+##### Properties
+
+| Property        | Type   | Required | Description                                                                                                        |
+|-----------------|--------|----------|--------------------------------------------------------------------------------------------------------------------|
+| `client_id`     | string | No       | For data source plugins. OAuth client id.                                                                          |
+| `client_secret` | string | No       | For data source plugins. OAuth client secret. Usually populated by decrypting the secret from the SecureJson blob. |
+| `grant_type`    | string | No       | For data source plugins. OAuth grant type.                                                                         |
+| `resource`      | string | No       | For data source plugins. OAuth resource.                                                                           |
 
 ### tokenAuth
 

@@ -1,7 +1,6 @@
 import React, { ReactNode } from 'react';
 import { css } from 'emotion';
-import { TimeOption, TimeZone } from '@grafana/data';
-import { TimeRange } from '@grafana/data';
+import { TimeRange, TimeOption, TimeZone } from '@grafana/data';
 import { TimePickerTitle } from './TimePickerTitle';
 import { TimeRangeOption } from './TimeRangeOption';
 import { mapOptionToTimeRange } from './mapper';
@@ -36,7 +35,7 @@ interface Props {
   timeZone?: TimeZone;
 }
 
-export const TimeRangeList: React.FC<Props> = props => {
+export const TimeRangeList: React.FC<Props> = (props) => {
   const styles = getStyles();
   const { title, options, placeholderEmpty } = props;
 
@@ -69,7 +68,7 @@ const Options: React.FC<Props> = ({ options, value, onSelect, timeZone }) => {
             key={keyForOption(option, index)}
             value={option}
             selected={isEqual(option, value)}
-            onSelect={option => onSelect(mapOptionToTimeRange(option, timeZone))}
+            onSelect={(option) => onSelect(mapOptionToTimeRange(option, timeZone))}
           />
         ))}
       </div>

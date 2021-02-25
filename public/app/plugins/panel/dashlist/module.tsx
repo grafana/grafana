@@ -7,7 +7,7 @@ import React from 'react';
 import { TagsInput } from '@grafana/ui';
 
 export const plugin = new PanelPlugin<DashListOptions>(DashList)
-  .setPanelOptions(builder => {
+  .setPanelOptions((builder) => {
     builder
       .addBooleanSwitch({
         path: 'showStarred',
@@ -45,7 +45,15 @@ export const plugin = new PanelPlugin<DashListOptions>(DashList)
         id: 'folderId',
         defaultValue: null,
         editor: function RenderFolderPicker(props) {
-          return <FolderPicker initialTitle="All" enableReset={true} onChange={({ id }) => props.onChange(id)} />;
+          return (
+            <FolderPicker
+              initialFolderId={props.value}
+              useNewForms
+              initialTitle="All"
+              enableReset={true}
+              onChange={({ id }) => props.onChange(id)}
+            />
+          );
         },
       })
       .addCustomEditor({
@@ -74,7 +82,7 @@ export const plugin = new PanelPlugin<DashListOptions>(DashList)
     const previousVersion = parseFloat(panel.pluginVersion || '6.1');
     if (previousVersion < 6.3) {
       const oldProps = ['starred', 'recent', 'search', 'headings', 'limit', 'query', 'folderId'];
-      oldProps.forEach(prop => delete panel[prop]);
+      oldProps.forEach((prop) => delete panel[prop]);
     }
 
     return newOptions;

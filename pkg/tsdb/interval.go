@@ -2,6 +2,7 @@ package tsdb
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -81,6 +82,13 @@ func GetIntervalFrom(dsInfo *models.DataSource, queryModel *simplejson.Json, def
 	}
 
 	interval = strings.Replace(strings.Replace(interval, "<", "", 1), ">", "", 1)
+	isPureNum, err := regexp.MatchString(`^\d+$`, interval)
+	if err != nil {
+		return time.Duration(0), err
+	}
+	if isPureNum {
+		interval += "s"
+	}
 	parsedInterval, err := time.ParseDuration(interval)
 	if err != nil {
 		return time.Duration(0), err

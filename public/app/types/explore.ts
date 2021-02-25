@@ -5,7 +5,6 @@ import {
   DataQuery,
   DataQueryRequest,
   DataSourceApi,
-  ExploreUrlState,
   HistoryItem,
   LogLevel,
   LogsDedupStrategy,
@@ -27,10 +26,6 @@ export enum ExploreId {
  */
 export interface ExploreState {
   /**
-   * True if split view is active.
-   */
-  split: boolean;
-  /**
    * True if time interval for panels are synced. Only possible with split mode.
    */
   syncedTimes: boolean;
@@ -41,7 +36,7 @@ export interface ExploreState {
   /**
    * Explore state of the right area in split view.
    */
-  right: ExploreItemState;
+  right?: ExploreItemState;
   /**
    * History of all queries
    */
@@ -134,17 +129,6 @@ export interface ExploreItemState {
    */
   refreshInterval?: string;
 
-  /**
-   * Copy of the state of the URL which is in store.location.query. This is duplicated here so we can diff the two
-   * after a change to see if we need to sync url state back to redux store (like on clicking Back in browser).
-   */
-  urlState: ExploreUrlState | null;
-
-  /**
-   * Map of what changed between real url and local urlState so we can partially update just the things that are needed.
-   */
-  update: ExploreUpdateState;
-
   latency: number;
 
   /**
@@ -156,7 +140,6 @@ export interface ExploreItemState {
    * If true, the live tailing view is paused.
    */
   isPaused: boolean;
-  urlReplaced: boolean;
 
   querySubscription?: Unsubscribable;
 
@@ -172,6 +155,7 @@ export interface ExploreItemState {
   showMetrics?: boolean;
   showTable?: boolean;
   showTrace?: boolean;
+  showNodeGraph?: boolean;
 }
 
 export interface ExploreUpdateState {
@@ -215,7 +199,12 @@ export interface ExplorePanelData extends PanelData {
   tableFrames: DataFrame[];
   logsFrames: DataFrame[];
   traceFrames: DataFrame[];
+  nodeGraphFrames: DataFrame[];
   graphResult: DataFrame[] | null;
   tableResult: DataFrame | null;
   logsResult: LogsModel | null;
 }
+
+export type SplitOpen = <T extends DataQuery = any>(
+  options?: { datasourceUid: string; query: T; range?: TimeRange } | undefined
+) => void;

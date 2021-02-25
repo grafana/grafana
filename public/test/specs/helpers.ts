@@ -2,11 +2,9 @@ import each from 'lodash/each';
 import template from 'lodash/template';
 
 import config from 'app/core/config';
-import { dateMath } from '@grafana/data';
 import { angularMocks, sinon } from '../lib/common';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { RawTimeRange } from '@grafana/data';
-import { PanelPluginMeta } from '@grafana/data';
+import { RawTimeRange, PanelPluginMeta, dateMath } from '@grafana/data';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 
 export function ControllerTestContext(this: any) {
@@ -203,7 +201,7 @@ export function TemplateSrvStub(this: any) {
   this.highlightVariablesAsHtml = (str: string) => {
     return str;
   };
-  this.setGrafanaVariable = function(name: string, value: string) {
+  this.setGrafanaVariable = function (name: string, value: string) {
     this.data[name] = value;
   };
 }

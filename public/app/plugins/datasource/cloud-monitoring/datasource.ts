@@ -37,11 +37,11 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
   }
 
   getVariables() {
-    return this.templateSrv.getVariables().map(v => `$${v.name}`);
+    return this.templateSrv.getVariables().map((v) => `$${v.name}`);
   }
 
   query(request: DataQueryRequest<CloudMonitoringQuery>): Observable<DataQueryResponse> {
-    request.targets = request.targets.map(t => ({
+    request.targets = request.targets.map((t) => ({
       ...this.migrateQuery(t),
       intervalMs: request.intervalMs,
     }));
@@ -157,7 +157,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
         map(({ data }) => {
           return data;
         }),
-        map(response => {
+        map((response) => {
           const result = response.results[refId];
           return result && result.meta ? result.meta.labels : {};
         })
@@ -214,7 +214,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
             ? data.results.getGCEDefaultProject.meta.defaultProject
             : '';
         }),
-        catchError(err => {
+        catchError((err) => {
           return throwError(err.data.error);
         })
       )
@@ -256,10 +256,10 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
   }
 
   async getSLOServices(projectName: string): Promise<Array<SelectableValue<string>>> {
-    return this.api.get(`${this.templateSrv.replace(projectName)}/services`, {
-      responseMap: ({ name }: { name: string }) => ({
+    return this.api.get(`${this.templateSrv.replace(projectName)}/services?pageSize=1000`, {
+      responseMap: ({ name, displayName }: { name: string; displayName: string }) => ({
         value: name.match(/([^\/]*)\/*$/)![1],
-        label: name.match(/([^\/]*)\/*$/)![1],
+        label: displayName || name.match(/([^\/]*)\/*$/)![1],
       }),
     });
   }
@@ -335,7 +335,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
   }
 
   interpolateVariablesInQueries(queries: CloudMonitoringQuery[], scopedVars: ScopedVars): CloudMonitoringQuery[] {
-    return queries.map(query => this.applyTemplateVariables(query, scopedVars) as CloudMonitoringQuery);
+    return queries.map((query) => this.applyTemplateVariables(query, scopedVars) as CloudMonitoringQuery);
   }
 
   interpolateFilters(filters: string[], scopedVars: ScopedVars) {
@@ -362,7 +362,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
 
   interpolateGroupBys(groupBys: string[], scopedVars: {}): string[] {
     let interpolatedGroupBys: string[] = [];
-    (groupBys || []).forEach(gb => {
+    (groupBys || []).forEach((gb) => {
       const interpolated = this.templateSrv.replace(gb, scopedVars || {}, 'csv').split(',');
       if (Array.isArray(interpolated)) {
         interpolatedGroupBys = interpolatedGroupBys.concat(interpolated);

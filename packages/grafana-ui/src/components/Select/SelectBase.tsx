@@ -90,6 +90,7 @@ const CustomControl = (props: any) => {
 
 export function SelectBase<T>({
   allowCustomValue = false,
+  'aria-label': ariaLabel,
   autoFocus = false,
   backspaceRemovesValue = true,
   cacheOptions,
@@ -106,8 +107,10 @@ export function SelectBase<T>({
   inputValue,
   invalid,
   isClearable = false,
+  id,
   isLoading = false,
   isMulti = false,
+  inputId,
   isOpen,
   isOptionDisabled,
   isSearchable = true,
@@ -150,7 +153,7 @@ export function SelectBase<T>({
   let ReactSelectComponent: ReactSelect | Creatable = ReactSelect;
   const creatableProps: any = {};
   let asyncSelectProps: any = {};
-  let selectedValue = [];
+  let selectedValue;
   if (isMulti && loadOptions) {
     selectedValue = value as any;
   } else {
@@ -158,7 +161,7 @@ export function SelectBase<T>({
     // we are selecting the corresponding value from the options
     if (isMulti && value && Array.isArray(value) && !loadOptions) {
       // @ts-ignore
-      selectedValue = value.map(v => findSelectedValue(v.value ?? v, options));
+      selectedValue = value.map((v) => findSelectedValue(v.value ?? v, options));
     } else if (loadOptions) {
       const hasValue = defaultValue || value;
       selectedValue = hasValue ? [hasValue] : [];
@@ -168,6 +171,7 @@ export function SelectBase<T>({
   }
 
   const commonSelectProps = {
+    'aria-label': ariaLabel,
     autoFocus,
     backspaceRemovesValue,
     captureMenuScroll: false,
@@ -181,10 +185,12 @@ export function SelectBase<T>({
     inputValue,
     invalid,
     isClearable,
+    id,
     // Passing isDisabled as react-select accepts this prop
     isDisabled: disabled,
     isLoading,
     isMulti,
+    inputId,
     isOptionDisabled,
     isSearchable,
     maxMenuHeight,
@@ -207,7 +213,7 @@ export function SelectBase<T>({
     renderControl,
     showAllSelectedWhenOpen,
     tabSelectsValue,
-    value: isMulti ? selectedValue : selectedValue[0],
+    value: isMulti ? selectedValue : selectedValue?.[0],
   };
 
   if (allowCustomValue) {
@@ -286,7 +292,7 @@ export function SelectBase<T>({
             return (
               <Icon
                 name="times"
-                onMouseDown={e => {
+                onMouseDown={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   clearValue();

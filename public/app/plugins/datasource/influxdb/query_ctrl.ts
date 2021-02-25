@@ -283,7 +283,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
 
   transformToSegments(addTemplateVars: any) {
     return (results: any) => {
-      const segments = _.map(results, segment => {
+      const segments = _.map(results, (segment) => {
         return this.uiSegmentSrv.newSegment({
           value: segment.text,
           expandable: segment.expandable,

@@ -16,6 +16,7 @@ import { useDescription } from './useDescription';
 import { MovingAverageSettingsEditor } from './MovingAverageSettingsEditor';
 import { uniqueId } from 'lodash';
 import { metricAggregationConfig } from '../utils';
+import { useQuery } from '../../ElasticsearchQueryContext';
 
 // TODO: Move this somewhere and share it with BucketsAggregation Editor
 const inlineFieldProps: Partial<ComponentProps<typeof InlineField>> = {
@@ -30,6 +31,7 @@ interface Props {
 export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetrics }) => {
   const dispatch = useDispatch();
   const description = useDescription(metric);
+  const query = useQuery();
 
   return (
     <SettingsEditorContainer label={description} hidden={metric.hide}>
@@ -38,7 +40,7 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetri
       {metric.type === 'serial_diff' && (
         <InlineField label="Lag">
           <Input
-            onBlur={e => dispatch(changeMetricSetting(metric, 'lag', parseInt(e.target.value, 10)))}
+            onBlur={(e) => dispatch(changeMetricSetting(metric, 'lag', parseInt(e.target.value, 10)))}
             defaultValue={metric.settings?.lag}
           />
         </InlineField>
@@ -63,7 +65,8 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetri
       {(metric.type === 'raw_data' || metric.type === 'raw_document') && (
         <InlineField label="Size" {...inlineFieldProps}>
           <Input
-            onBlur={e => dispatch(changeMetricSetting(metric, 'size', e.target.value))}
+            id={`ES-query-${query.refId}_metric-${metric.id}-size`}
+            onBlur={(e) => dispatch(changeMetricSetting(metric, 'size', e.target.value))}
             defaultValue={metric.settings?.size ?? metricAggregationConfig['raw_data'].defaults.settings?.size}
           />
         </InlineField>
@@ -75,11 +78,11 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetri
 
       {metric.type === 'extended_stats' && (
         <>
-          {extendedStats.map(stat => (
+          {extendedStats.map((stat) => (
             <ExtendedStatSetting
               key={stat.value}
               stat={stat}
-              onChange={checked => dispatch(changeMetricMeta(metric, stat.value, checked))}
+              onChange={(checked) => dispatch(changeMetricMeta(metric, stat.value, checked))}
               value={
                 metric.meta?.[stat.value] !== undefined
                   ? !!metric.meta?.[stat.value]
@@ -95,7 +98,7 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetri
       {metric.type === 'percentiles' && (
         <InlineField label="Percentiles" {...inlineFieldProps}>
           <Input
-            onBlur={e => dispatch(changeMetricSetting(metric, 'percents', e.target.value.split(',').filter(Boolean)))}
+            onBlur={(e) => dispatch(changeMetricSetting(metric, 'percents', e.target.value.split(',').filter(Boolean)))}
             defaultValue={
               metric.settings?.percents || metricAggregationConfig['percentiles'].defaults.settings?.percents
             }

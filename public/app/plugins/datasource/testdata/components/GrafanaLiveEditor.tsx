@@ -29,7 +29,7 @@ export const GrafanaLiveEditor = ({ onChange, query }: EditorProps) => {
           onChange={onChannelChange}
           placeholder="Select channel"
           options={liveTestDataChannels}
-          value={liveTestDataChannels.find(f => f.value === query.channel)}
+          value={liveTestDataChannels.find((f) => f.value === query.channel)}
         />
       </InlineField>
     </InlineFieldRow>

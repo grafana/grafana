@@ -35,7 +35,7 @@ const setFunctionKind = (suggestion: CompletionItem): CompletionItem => {
 
 export function addHistoryMetadata(item: CompletionItem, history: any[]): CompletionItem {
   const cutoffTs = Date.now() - HISTORY_COUNT_CUTOFF;
-  const historyForItem = history.filter(h => h.ts > cutoffTs && h.query === item.label);
+  const historyForItem = history.filter((h) => h.ts > cutoffTs && h.query === item.label);
   const count = historyForItem.length;
   const recent = historyForItem[0];
   let hint = `Queried ${count} times in the last 24h.`;
@@ -92,10 +92,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   cleanText(s: string) {
     const parts = s.split(PREFIX_DELIMITER_REGEX);
     const last = parts.pop()!;
-    return last
-      .trimLeft()
-      .replace(/"$/, '')
-      .replace(/^"/, '');
+    return last.trimLeft().replace(/"$/, '').replace(/^"/, '');
   }
 
   get syntax() {
@@ -208,12 +205,12 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
     if (history && history.length) {
       const historyItems = _.chain(history)
-        .map(h => h.query.expr)
+        .map((h) => h.query.expr)
         .filter()
         .uniq()
         .take(HISTORY_ITEM_COUNT)
         .map(wrapLabel)
-        .map(item => addHistoryMetadata(item, history))
+        .map((item) => addHistoryMetadata(item, history))
         .value();
 
       suggestions.push({
@@ -241,7 +238,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       const limitInfo = addLimitInfo(metrics);
       suggestions.push({
         label: `Metrics${limitInfo}`,
-        items: limitSuggestions(metrics).map(m => addMetricsMetadata(m, metricsMetadata)),
+        items: limitSuggestions(metrics).map((m) => addMetricsMetadata(m, metricsMetadata)),
       });
     }
 
@@ -392,7 +389,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
         const possibleKeys = _.difference(labelKeys, existingKeys);
         if (possibleKeys.length) {
           context = 'context-labels';
-          const newItems = possibleKeys.map(key => ({ label: key }));
+          const newItems = possibleKeys.map((key) => ({ label: key }));
           const limitInfo = addLimitInfo(newItems);
           const newSuggestion: CompletionItemGroup = { label: `Labels${limitInfo}`, items: newItems };
           suggestions.push(newSuggestion);
@@ -469,7 +466,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    * fetchSeriesLabels.
    */
   fetchDefaultLabels = _.once(async () => {
-    const values = await Promise.all(DEFAULT_KEYS.map(key => this.fetchLabelValues(key)));
+    const values = await Promise.all(DEFAULT_KEYS.map((key) => this.fetchLabelValues(key)));
     return values.reduce((acc, value) => ({ ...acc, ...value }), {});
   });
 }

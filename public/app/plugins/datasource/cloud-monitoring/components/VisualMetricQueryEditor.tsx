@@ -35,18 +35,18 @@ function Editor({
       datasource={datasource}
       onChange={onMetricTypeChange}
     >
-      {metric => (
+      {(metric) => (
         <>
           <LabelFilter
             labels={labels}
             filters={query.filters!}
-            onChange={filters => onChange({ ...query, filters })}
+            onChange={(filters) => onChange({ ...query, filters })}
             variableOptionGroup={variableOptionGroup}
           />
           <GroupBys
             groupBys={Object.keys(labels)}
             values={query.groupBys!}
-            onChange={groupBys => onChange({ ...query, groupBys })}
+            onChange={(groupBys) => onChange({ ...query, groupBys })}
             variableOptionGroup={variableOptionGroup}
           />
           <Aggregations
@@ -54,15 +54,15 @@ function Editor({
             templateVariableOptions={variableOptionGroup.options}
             crossSeriesReducer={query.crossSeriesReducer}
             groupBys={query.groupBys!}
-            onChange={crossSeriesReducer => onChange({ ...query, crossSeriesReducer })}
+            onChange={(crossSeriesReducer) => onChange({ ...query, crossSeriesReducer })}
           >
-            {displayAdvancedOptions =>
+            {(displayAdvancedOptions) =>
               displayAdvancedOptions && (
                 <Alignments
                   alignOptions={alignOptions}
                   templateVariableOptions={variableOptionGroup.options}
                   perSeriesAligner={perSeriesAligner || ''}
-                  onChange={perSeriesAligner => onChange({ ...query, perSeriesAligner })}
+                  onChange={(perSeriesAligner) => onChange({ ...query, perSeriesAligner })}
                 />
               )
             }
@@ -73,7 +73,7 @@ function Editor({
             alignmentPeriod={query.alignmentPeriod || ''}
             perSeriesAligner={query.perSeriesAligner || ''}
             usedAlignmentPeriod={usedAlignmentPeriod}
-            onChange={alignmentPeriod => onChange({ ...query, alignmentPeriod })}
+            onChange={(alignmentPeriod) => onChange({ ...query, alignmentPeriod })}
           />
         </>
       )}

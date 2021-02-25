@@ -52,7 +52,7 @@ module.exports.pitch = function pitch(remainingRequest) {
 
   const subCache = `subcache ${__dirname} ${remainingRequest}`;
 
-  childCompiler.plugin('compilation', compilation => {
+  childCompiler.plugin('compilation', (compilation) => {
     if (!compilation.cache) {
       return;
     }

@@ -1,9 +1,9 @@
-import React from 'react';
-import { JaegerDatasource, JaegerQuery } from './datasource';
+import { AppEvents, ExploreQueryFieldProps, TraceData, TraceSpan } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { ButtonCascader, CascaderOption } from '@grafana/ui';
-
-import { AppEvents, ExploreQueryFieldProps, TraceSpan, TraceData } from '@grafana/data';
+import React from 'react';
 import { appEvents } from '../../../core/core';
+import { JaegerDatasource, JaegerQuery } from './datasource';
 
 const ALL_OPERATIONS_KEY = '__ALL__';
 const NO_TRACES_KEY = '__NO_TRACES__';
@@ -14,7 +14,7 @@ interface State {
 }
 
 function findRootSpan(spans: TraceSpan[]): TraceSpan | undefined {
-  return spans.find(s => !s.references?.length);
+  return spans.find((s) => !s.references?.length);
 }
 
 function getLabelFromTrace(trace: TraceData & { spans: TraceSpan[] }): string {
@@ -55,7 +55,7 @@ export class JaegerQueryField extends React.PureComponent<Props, State> {
       }
 
       if (services) {
-        const serviceOptions: CascaderOption[] = services.sort().map(service => ({
+        const serviceOptions: CascaderOption[] = services.sort().map((service) => ({
           label: service,
           value: service,
           isLeaf: false,
@@ -82,14 +82,14 @@ export class JaegerQueryField extends React.PureComponent<Props, State> {
       };
       const operationOptions: CascaderOption[] = [
         allOperationsOption,
-        ...operations.sort().map(operation => ({
+        ...operations.sort().map((operation) => ({
           label: operation,
           value: operation,
           isLeaf: false,
         })),
       ];
-      this.setState(state => {
-        const serviceOptions = state.serviceOptions.map(serviceOption => {
+      this.setState((state) => {
+        const serviceOptions = state.serviceOptions.map((serviceOption) => {
           if (serviceOption.value === service) {
             return {
               ...serviceOption,
@@ -109,7 +109,7 @@ export class JaegerQueryField extends React.PureComponent<Props, State> {
         return;
       }
 
-      let traceOptions: CascaderOption[] = traces.map(trace => ({
+      let traceOptions: CascaderOption[] = traces.map((trace) => ({
         label: getLabelFromTrace(trace),
         value: trace.traceID,
       }));
@@ -121,11 +121,11 @@ export class JaegerQueryField extends React.PureComponent<Props, State> {
           },
         ];
       }
-      this.setState(state => {
+      this.setState((state) => {
         // Place new traces into the correct service/operation sub-tree
-        const serviceOptions = state.serviceOptions.map(serviceOption => {
+        const serviceOptions = state.serviceOptions.map((serviceOption) => {
           if (serviceOption.value === service && serviceOption.children) {
-            const operationOptions = serviceOption.children.map(operationOption => {
+            const operationOptions = serviceOption.children.map((operationOption) => {
               if (operationOption.value === operationValue) {
                 return {
                   ...operationOption,
@@ -203,12 +203,12 @@ export class JaegerQueryField extends React.PureComponent<Props, State> {
             </ButtonCascader>
           </div>
           <div className="gf-form gf-form--grow flex-shrink-1">
-            <div className={'slate-query-field__wrapper'}>
-              <div className="slate-query-field">
+            <div className="slate-query-field__wrapper">
+              <div className="slate-query-field" aria-label={selectors.components.QueryField.container}>
                 <input
                   style={{ width: '100%' }}
                   value={query.query || ''}
-                  onChange={e =>
+                  onChange={(e) =>
                     onChange({
                       ...query,
                       query: e.currentTarget.value,

@@ -1,6 +1,7 @@
 package ngalert
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -8,7 +9,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 )
 
-const alertDefinitionMaxNameLength = 190
+const alertDefinitionMaxTitleLength = 190
+
+var errEmptyTitleError = errors.New("title is empty")
 
 // validateAlertDefinition validates the alert definition interval and organisation.
 // If requireData is true checks that it contains at least one alert query
@@ -17,13 +20,17 @@ func (ng *AlertNG) validateAlertDefinition(alertDefinition *AlertDefinition, req
 		return fmt.Errorf("no queries or expressions are found")
 	}
 
+	if alertDefinition.Title == "" {
+		return errEmptyTitleError
+	}
+
 	if alertDefinition.IntervalSeconds%int64(ng.schedule.baseInterval.Seconds()) != 0 {
 		return fmt.Errorf("invalid interval: %v: interval should be divided exactly by scheduler interval: %v", time.Duration(alertDefinition.IntervalSeconds)*time.Second, ng.schedule.baseInterval)
 	}
 
 	// enfore max name length in SQLite
-	if len(alertDefinition.Title) > alertDefinitionMaxNameLength {
-		return fmt.Errorf("name length should not be greater than %d", alertDefinitionMaxNameLength)
+	if len(alertDefinition.Title) > alertDefinitionMaxTitleLength {
+		return fmt.Errorf("name length should not be greater than %d", alertDefinitionMaxTitleLength)
 	}
 
 	if alertDefinition.OrgID == 0 {

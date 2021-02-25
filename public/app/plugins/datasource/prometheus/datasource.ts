@@ -44,6 +44,7 @@ import { PrometheusVariableSupport } from './variables';
 import PrometheusMetricFindQuery from './metric_find_query';
 
 export const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
+const GET_AND_POST_MEDATADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', 'api/v1/series', 'api/v1/labels'];
 
 export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> {
   type: string;
@@ -83,7 +84,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     this.languageProvider = new PrometheusLanguageProvider(this);
     this.lookupsDisabled = instanceSettings.jsonData.disableMetricsLookup ?? false;
     this.customQueryParameters = new URLSearchParams(instanceSettings.jsonData.customQueryParameters);
-
     this.variables = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
   }
 
@@ -137,14 +137,29 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   }
 
   // Use this for tab completion features, wont publish response to other components
-  metadataRequest<T = any>(url: string) {
+  async metadataRequest<T = any>(url: string) {
     const data: any = {};
     for (const [key, value] of this.customQueryParameters) {
       if (data[key] == null) {
         data[key] = value;
       }
     }
-    return this._request<T>(url, data, { method: 'GET', hideFromInspector: true }).toPromise(); // toPromise until we change getTagValues, getTagKeys to Observable
+
+    // If URL includes endpoint that supports POST and GET method, try to use configured method. This might fail as POST is supported only in v2.10+.
+    if (GET_AND_POST_MEDATADATA_ENDPOINTS.some((endpoint) => url.includes(endpoint))) {
+      try {
+        return await this._request<T>(url, data, { method: this.httpMethod, hideFromInspector: true }).toPromise();
+      } catch (err) {
+        // If status code of error is Method Not Allowed (405) and HTTP method is POST, retry with GET
+        if (this.httpMethod === 'POST' && err.status === 405) {
+          console.warn(`Couldn't use configured POST HTTP method for this request. Trying to use GET method instead.`);
+        } else {
+          throw err;
+        }
+      }
+    }
+
+    return await this._request<T>(url, data, { method: 'GET', hideFromInspector: true }).toPromise(); // toPromise until we change getTagValues, getTagKeys to Observable
   }
 
   interpolateQueryExpr(value: string | string[] = [], variable: any) {
@@ -157,7 +172,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       return prometheusSpecialRegexEscape(value);
     }
 
-    const escapedValues = value.map(val => prometheusSpecialRegexEscape(val));
+    const escapedValues = value.map((val) => prometheusSpecialRegexEscape(val));
 
     if (escapedValues.length === 1) {
       return escapedValues[0];
@@ -262,7 +277,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
   private exploreQuery(queries: PromQueryRequest[], activeTargets: PromQuery[], end: number) {
     let runningQueriesCount = queries.length;
-    const mixedQueries = activeTargets.some(t => t.range) && activeTargets.some(t => t.instant);
+    const mixedQueries = activeTargets.some((t) => t.range) && activeTargets.some((t) => t.instant);
 
     const subQueries = queries.map((query, index) => {
       const target = activeTargets[index];
@@ -338,7 +353,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     });
 
     return forkJoin(observables).pipe(
-      map(results => {
+      map((results) => {
         const data = results.reduce((result, current) => {
           return [...result, ...current];
         }, []);
@@ -605,7 +620,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
     const step = Math.floor(query.step ?? 15) * 1000;
 
-    response?.data?.data?.result?.forEach(series => {
+    response?.data?.data?.result?.forEach((series) => {
       const tags = Object.entries(series.metric)
         .filter(([k]) => splitKeys.includes(k))
         .map(([_k, v]: [string, string]) => v);
@@ -622,8 +637,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         value[0] = timestampValue;
       });
 
-      const activeValues = series.values.filter(value => parseFloat(value[1]) >= 1);
-      const activeValuesTimestamps = activeValues.map(value => value[0]);
+      const activeValues = series.values.filter((value) => parseFloat(value[1]) >= 1);
+      const activeValuesTimestamps = activeValues.map((value) => value[0]);
 
       // Instead of creating singular annotation for each active event we group events into region if they are less
       // then `step` apart.
@@ -663,7 +678,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   }
 
   getExemplars(query: PromQueryRequest) {
-    const url = '/api/v1/query_exemplar';
+    const url = '/api/v1/query_exemplars';
     return this._request<PromDataSuccessResponse<PromExemplarData>>(
       url,
       { query: query.expr, start: query.start.toString(), end: query.end.toString() },
@@ -693,7 +708,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   interpolateVariablesInQueries(queries: PromQuery[], scopedVars: ScopedVars): PromQuery[] {
     let expandedQueries = queries;
     if (queries && queries.length) {
-      expandedQueries = queries.map(query => {
+      expandedQueries = queries.map((query) => {
         const expandedQuery = {
           ...query,
           datasource: this.name,

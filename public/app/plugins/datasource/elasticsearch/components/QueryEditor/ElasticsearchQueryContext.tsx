@@ -41,14 +41,14 @@ export const ElasticsearchProvider: FunctionComponent<Props> = ({
 
   const dispatch = useStatelessReducer(
     // timeField is part of the query model, but its value is always set to be the one from datasource settings.
-    newState => onStateChange({ ...query, ...newState, timeField: datasource.timeField }),
+    (newState) => onStateChange({ ...query, ...newState, timeField: datasource.timeField }),
     query,
     reducer
   );
 
   // This initializes the query by dispatching an init action to each reducer.
   // useStatelessReducer will then call `onChange` with the newly generated query
-  if (!query.metrics && !query.bucketAggs) {
+  if (!query.metrics || !query.bucketAggs || query.query === undefined) {
     dispatch(initQuery());
 
     return null;

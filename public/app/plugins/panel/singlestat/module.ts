@@ -3,7 +3,6 @@ import { auto } from 'angular';
 import $ from 'jquery';
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.gauge';
-import 'app/features/panel/panellinks/link_srv';
 
 import {
   DataFrame,
@@ -641,7 +640,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         });
       });
 
-      elem.click(evt => {
+      elem.click((evt) => {
         if (!linkInfo) {
           return;
         }
@@ -666,7 +665,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         drilldownTooltip.detach();
       });
 
-      elem.mousemove(e => {
+      elem.mousemove((e) => {
         if (!linkInfo) {
           return;
         }

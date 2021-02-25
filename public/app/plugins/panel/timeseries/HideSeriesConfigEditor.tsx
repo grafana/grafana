@@ -4,7 +4,7 @@ import { FilterPill, HorizontalGroup } from '@grafana/ui';
 import { FieldConfigEditorProps } from '@grafana/data';
 import { HideSeriesConfig } from '@grafana/ui/src/components/uPlot/config';
 
-export const SeriesConfigEditor: React.FC<FieldConfigEditorProps<HideSeriesConfig, {}>> = props => {
+export const SeriesConfigEditor: React.FC<FieldConfigEditorProps<HideSeriesConfig, {}>> = (props) => {
   const { value, onChange } = props;
 
   const onChangeToggle = useCallback(

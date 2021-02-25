@@ -4,8 +4,8 @@ import { config } from 'app/core/config';
 import React, { FC, useMemo, useState } from 'react';
 import { useObservable } from 'react-use';
 import { QueryGroup } from '../query/components/QueryGroup';
-import { QueryGroupOptions } from '../query/components/QueryGroupOptions';
 import { PanelQueryRunner } from '../query/state/PanelQueryRunner';
+import { QueryGroupOptions } from 'app/types';
 
 interface State {
   queryRunner: PanelQueryRunner;
