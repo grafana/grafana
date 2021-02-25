@@ -53,7 +53,7 @@ cue def -s $(find packages/grafana-data -type f -name "models.cue") > cue/data/g
 # the relation between the identifier "GraphTooltipOptions" as a top-level
 # importable thing at all stages on the CUE side, then everything on the
 # TypeScript side will line up.
-sed -ie 's/^import.*//g' {cue/ui/gen.cue,cue/data/gen.cue}
+sed -i -e 's/^import.*//g' {cue/ui/gen.cue,cue/data/gen.cue}
 
 # Remove all qualified identifiers
 # (https://cuelang.org/docs/references/spec/#qualified-identifiers) from the
@@ -78,7 +78,10 @@ sed -ie 's/^import.*//g' {cue/ui/gen.cue,cue/data/gen.cue}
 #
 # TODO move into grafana-cli and do a more careful check that we're only
 # eliminating qualified identifiers from imports we're also eliminating
-sed -ie "s/[A-Za-z]*\.\([A-Za-z]*\)/\1/g" {cue/ui/gen.cue,cue/data/gen.cue}
+sed -i -e "s/[A-Za-z]*\.\([A-Za-z]*\)/\1/g" {cue/ui/gen.cue,cue/data/gen.cue}
+
+# uuuugghhhh OSX sed
+rm -f {cue/ui/gen.cue-e,cue/data/gen.cue-e}
 
 # Check that our output is still valid CUE.
 cue eval -E {cue/ui/gen.cue,cue/data/gen.cue} > /dev/null
