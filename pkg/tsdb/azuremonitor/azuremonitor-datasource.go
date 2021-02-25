@@ -58,9 +58,11 @@ func (e *AzureMonitorDatasource) executeTimeSeriesQuery(ctx context.Context, ori
 			return pluginmodels.DataResponse{}, err
 		}
 
-		err = e.parseResponse(queryRes, resp, query)
+		frames, err := e.parseResponse(resp, query)
 		if err != nil {
 			queryRes.Error = err
+		} else {
+			queryRes.Dataframes = frames
 		}
 		result.Results[query.RefID] = queryRes
 	}
@@ -281,9 +283,10 @@ func (e *AzureMonitorDatasource) unmarshalResponse(res *http.Response) (AzureMon
 	return data, nil
 }
 
-func (e *AzureMonitorDatasource) parseResponse(queryRes pluginmodels.DataQueryResult, amr AzureMonitorResponse, query *AzureMonitorQuery) error {
+func (e *AzureMonitorDatasource) parseResponse(amr AzureMonitorResponse, query *AzureMonitorQuery) (
+	pluginmodels.DataFrames, error) {
 	if len(amr.Value) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	frames := data.Frames{}
@@ -341,9 +344,7 @@ func (e *AzureMonitorDatasource) parseResponse(queryRes pluginmodels.DataQueryRe
 		frames = append(frames, frame)
 	}
 
-	queryRes.Dataframes = pluginmodels.NewDecodedDataFrames(frames)
-
-	return nil
+	return pluginmodels.NewDecodedDataFrames(frames), nil
 }
 
 // formatAzureMonitorLegendKey builds the legend key or timeseries name

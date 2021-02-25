@@ -435,11 +435,11 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 			azData := loadTestFile(t, "azuremonitor/"+tt.responseFile)
 			res := pluginmodels.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
 			require.NotNil(t, res)
-			err := datasource.parseResponse(res, azData, tt.mockQuery)
+			dframes, err := datasource.parseResponse(azData, tt.mockQuery)
 			require.NoError(t, err)
-			require.NotNil(t, res.Dataframes)
+			require.NotNil(t, dframes)
 
-			frames, err := res.Dataframes.Decoded()
+			frames, err := dframes.Decoded()
 			require.NoError(t, err)
 			if diff := cmp.Diff(tt.expectedFrames, frames, data.FrameTestCompareOptions()...); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
