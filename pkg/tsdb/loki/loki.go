@@ -2,6 +2,7 @@ package loki
 
 import (
 	"context"
+	"fmt"
 	"regexp"
 	"strings"
 	"time"
@@ -82,6 +83,7 @@ func (e *LokiExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsd
 	return result, nil
 }
 
+// If legend (using of name or pattern instead of time series name) is used, use that name/pattern for formatting
 func formatLegend(metric model.Metric, query *LokiQuery) string {
 	if query.LegendFormat == "" {
 		return metric.String()
@@ -105,24 +107,24 @@ func parseQuery(dsInfo *models.DataSource, queries []*tsdb.Query, queryContext *
 	for _, queryModel := range queries {
 		expr, err := queryModel.Model.Get("expr").String()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to parse From: %v", err)
 		}
 
 		format := queryModel.Model.Get("legendFormat").MustString("")
 
 		start, err := queryContext.TimeRange.ParseFrom()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to parse From: %v", err)
 		}
 
 		end, err := queryContext.TimeRange.ParseTo()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to parse From: %v", err)
 		}
 
 		dsInterval, err := tsdb.GetIntervalFrom(dsInfo, queryModel.Model, time.Second)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to parse From: %v", err)
 		}
 
 		interval := intervalCalculator.Calculate(queryContext.TimeRange, dsInterval)
@@ -145,7 +147,10 @@ func parseResponse(value *loghttp.QueryResponse, query *LokiQuery) (*tsdb.QueryR
 	queryRes := tsdb.NewQueryResult()
 
 	//We are currently processing only matrix results (for alerting)
-	data := value.Data.Result.(loghttp.Matrix)
+	data, ok := value.Data.Result.(loghttp.Matrix)
+	if !ok {
+		return queryRes, fmt.Errorf("unsupported result format: %q", value.Data.ResultType)
+	}
 
 	for _, v := range data {
 		series := tsdb.TimeSeries{
