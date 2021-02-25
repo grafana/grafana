@@ -113,7 +113,7 @@ func TestGenerateConnectionString(t *testing.T) {
 	}
 	for _, tt := range testCases {
 		t.Run(tt.desc, func(t *testing.T) {
-			svc := postgresService{
+			svc := PostgresService{
 				Cfg:        cfg,
 				logger:     log.New("tsdb.postgres"),
 				tlsManager: &tlsTestManager{settings: tt.tlsSettings},
@@ -175,7 +175,7 @@ func TestPostgres(t *testing.T) {
 
 	cfg := setting.NewCfg()
 	cfg.DataPath = t.TempDir()
-	svc := postgresService{
+	svc := PostgresService{
 		Cfg:        cfg,
 		logger:     log.New("tsdb.postgres"),
 		tlsManager: &tlsTestManager{settings: tlsSettings{Mode: "disable"}},

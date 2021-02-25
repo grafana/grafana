@@ -33,6 +33,7 @@ func init() {
 type Service struct {
 	Cfg                    *setting.Cfg                  `inject:""`
 	CloudWatchService      *cloudwatch.CloudWatchService `inject:""`
+	PostgresService        *postgres.PostgresService     `inject:""`
 	CloudMonitoringService *cloudmonitoring.Service      `inject:""`
 	AzureMonitorService    *azuremonitor.Service         `inject:""`
 	PluginManager          *plugins.PluginManager        `inject:""`
@@ -47,7 +48,7 @@ func (s *Service) Init() error {
 	s.registry["prometheus"] = prometheus.NewExecutor
 	s.registry["influxdb"] = influxdb.NewExecutor
 	s.registry["mssql"] = mssql.NewExecutor
-	s.registry["postgres"] = postgres.NewExecutor
+	s.registry["postgres"] = s.PostgresService.NewExecutor
 	s.registry["mysql"] = mysql.NewExecutor
 	s.registry["elasticsearch"] = elasticsearch.NewExecutor
 	s.registry["cloudwatch"] = s.CloudWatchService.NewExecutor
