@@ -30,6 +30,11 @@ export async function getLibraryPanels(): Promise<LibraryPanelDTO[]> {
   return result;
 }
 
+export async function getLibraryPanel(uid: string): Promise<LibraryPanelDTO> {
+  const { result } = await getBackendSrv().get(`/api/library-panels/${uid}`);
+  return result;
+}
+
 export async function addLibraryPanel(panelSaveModel: any, folderId: number): Promise<LibraryPanelDTO> {
   const { result } = await getBackendSrv().post(`/api/library-panels`, {
     folderId,

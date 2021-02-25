@@ -15,6 +15,7 @@ import store from 'app/core/store';
 import pick from 'lodash/pick';
 import omit from 'lodash/omit';
 import isEqual from 'lodash/isEqual';
+import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
 export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardModel): ThunkResult<void> {
   return (dispatch) => {
@@ -43,9 +44,9 @@ export function updateSourcePanel(sourcePanel: PanelModel): ThunkResult<void> {
 }
 
 export function exitPanelEditor(): ThunkResult<void> {
-  return (dispatch, getStore) => {
+  return async (dispatch, getStore) => {
     const dashboard = getStore().dashboard.getModel();
-    const { getPanel, getSourcePanel, shouldDiscardChanges } = getStore().panelEditor;
+    const { getPanel, shouldDiscardChanges } = getStore().panelEditor;
     const onConfirm = () =>
       dispatch(
         updateLocation({
@@ -56,9 +57,19 @@ export function exitPanelEditor(): ThunkResult<void> {
 
     const modifiedPanel = getPanel();
     const modifiedSaveModel = modifiedPanel.getSaveModel();
-    const initialSaveModel = getSourcePanel().getSaveModel();
-    const panelChanged = !isEqual(omit(initialSaveModel, 'id'), omit(modifiedSaveModel, 'id'));
-    if (shouldDiscardChanges || !modifiedPanel.libraryPanel || !panelChanged) {
+
+    if (shouldDiscardChanges || !modifiedPanel.libraryPanel) {
+      onConfirm();
+      return;
+    }
+
+    const libraryPanel = await getLibraryPanel(modifiedPanel.libraryPanel!.uid!);
+    const panelChanged = !isEqual(
+      omit(libraryPanel.model, 'id', 'libraryPanel', 'gridPos'),
+      omit(modifiedSaveModel, 'id', 'libraryPanel', 'gridPos')
+    );
+
+    if (!panelChanged) {
       onConfirm();
       return;
     }
