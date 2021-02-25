@@ -1,7 +1,7 @@
 import React from 'react';
 import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
 import { CallToActionCard, CallToActionCardProps } from './CallToActionCard';
-import { NOOP_CONTROL } from '../../../.storybook/preview';
+import { NOOP_CONTROL } from '../../utils/storybook/noopControl';
 import { Story } from '@storybook/react';
 import { Button } from '../Button/Button';
 import { action } from '@storybook/addon-actions';
@@ -11,7 +11,7 @@ export default {
   component: CallToActionCard,
   parameters: {
     knobs: {
-      disabled: true,
+      disable: true,
     },
   },
   argTypes: {

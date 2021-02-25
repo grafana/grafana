@@ -31,6 +31,7 @@ import {
 } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import { checkBrowserCompatibility } from 'app/core/utils/browser';
+import { arrayMove } from 'app/core/utils/arrayMove';
 import { importPluginModule } from 'app/features/plugins/plugin_loader';
 import { angularModules, coreModule } from 'app/core/core_module';
 import { registerAngularDirectives } from 'app/core/core';
@@ -49,12 +50,9 @@ import { SentryEchoBackend } from './core/services/echo/backends/sentry/SentryBa
 import { monkeyPatchInjectorWithPreAssignedBindings } from './core/injectorMonkeyPatch';
 import { setVariableQueryRunner, VariableQueryRunner } from './features/variables/query/VariableQueryRunner';
 
-// add move to lodash for backward compatabiltiy
+// add move to lodash for backward compatabilty with plugins
 // @ts-ignore
-_.move = (array: [], fromIndex: number, toIndex: number) => {
-  array.splice(toIndex, 0, array.splice(fromIndex, 1)[0]);
-  return array;
-};
+_.move = arrayMove;
 
 // import symlinked extensions
 const extensionsIndex = (require as any).context('.', true, /extensions\/index.ts/);
