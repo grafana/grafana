@@ -1,6 +1,5 @@
 import { reduxTester } from '../../../../../test/core/redux/reduxTester';
-import { getRootReducer } from '../../state/helpers';
-import { TemplatingState } from '../../state/reducers';
+import { getRootReducer, RootReducerType } from '../../state/helpers';
 import { initialVariableModelState, QueryVariableModel, VariableRefresh, VariableSort } from '../../types';
 import {
   hideOptions,
@@ -53,7 +52,7 @@ describe('options picker actions', () => {
       const clearOthers = false;
       const key = NavigationKey.cancel;
 
-      const tester = await reduxTester<{ templating: TemplatingState }>()
+      const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenActionIsDispatched(showOptions(variable))
@@ -86,7 +85,7 @@ describe('options picker actions', () => {
       const clearOthers = false;
       const key = NavigationKey.select;
 
-      const tester = await reduxTester<{ templating: TemplatingState }>()
+      const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenActionIsDispatched(showOptions(variable))
@@ -109,7 +108,7 @@ describe('options picker actions', () => {
       const clearOthers = true;
       const key = NavigationKey.select;
 
-      const tester = await reduxTester<{ templating: TemplatingState }>()
+      const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenActionIsDispatched(showOptions(variable))
@@ -128,7 +127,7 @@ describe('options picker actions', () => {
       const clearOthers = true;
       const key = NavigationKey.select;
 
-      const tester = await reduxTester<{ templating: TemplatingState }>()
+      const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenActionIsDispatched(showOptions(variable))
@@ -149,7 +148,7 @@ describe('options picker actions', () => {
       const clearOthers = true;
       const key = NavigationKey.select;
 
-      const tester = await reduxTester<{ templating: TemplatingState }>()
+      const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenActionIsDispatched(showOptions(variable))
@@ -171,7 +170,7 @@ describe('options picker actions', () => {
       const clearOthers = false;
       const key = NavigationKey.selectAndClose;
 
-      const tester = await reduxTester<{ templating: TemplatingState }>()
+      const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenActionIsDispatched(showOptions(variable))
@@ -205,7 +204,7 @@ describe('options picker actions', () => {
       const variable = createMultiVariable({ options, current: createOption(['A'], ['A'], true), includeAll: false });
       const filter = 'A';
 
-      const tester = await reduxTester<{ templating: TemplatingState }>()
+      const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenActionIsDispatched(showOptions(variable))
@@ -220,7 +219,7 @@ describe('options picker actions', () => {
       const options = [createOption('A', 'A', true), createOption('B'), createOption('C')];
       const variable = createMultiVariable({ options, current: createOption(['A'], ['A'], true), includeAll: false });
 
-      const tester = await reduxTester<{ templating: TemplatingState }>()
+      const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenActionIsDispatched(showOptions(variable))
@@ -247,7 +246,7 @@ describe('options picker actions', () => {
       const variable = createMultiVariable({ options, current: createOption(['A'], ['A'], true), includeAll: false });
       const clearOthers = false;
 
-      const tester = await reduxTester<{ templating: TemplatingState }>()
+      const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenActionIsDispatched(showOptions(variable))
@@ -278,7 +277,7 @@ describe('options picker actions', () => {
       const variable = createMultiVariable({ options, current: createOption(['A'], ['A'], true), includeAll: false });
       const clearOthers = false;
 
-      const tester = await reduxTester<{ templating: TemplatingState }>()
+      const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenActionIsDispatched(showOptions(variable))
@@ -310,7 +309,7 @@ describe('options picker actions', () => {
       const variable = createMultiVariable({ options, current: createOption(['A'], ['A'], true), includeAll: false });
       const clearOthers = false;
 
-      const tester = await reduxTester<{ templating: TemplatingState }>()
+      const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenActionIsDispatched(showOptions(variable))
@@ -329,7 +328,7 @@ describe('options picker actions', () => {
       const variable = createMultiVariable({ options, current: createOption(['A'], ['A'], true), includeAll: false });
       const clearOthers = false;
 
-      const tester = await reduxTester<{ templating: TemplatingState }>()
+      const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenActionIsDispatched(showOptions(variable))
@@ -365,7 +364,7 @@ describe('options picker actions', () => {
         tags: [tag],
       });
 
-      const tester = await reduxTester<{ templating: TemplatingState }>()
+      const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenActionIsDispatched(showOptions(variable))
@@ -391,7 +390,7 @@ describe('options picker actions', () => {
       // @ts-ignore strict null error TS2345: Argument of type '() => Promise<{ value: string; text: string; }[]>' is not assignable to parameter of type '() => Promise<never[]>'
       datasource.metricFindQuery.mockImplementation(() => Promise.resolve(values));
 
-      const tester = await reduxTester<{ templating: TemplatingState }>()
+      const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenActionIsDispatched(showOptions(variable))

@@ -71,7 +71,7 @@ coreModule.directive('heatmapLegend', () => {
         clearLegend(elem);
         if (!_.isEmpty(ctrl.data) && !_.isEmpty(ctrl.data.cards)) {
           const cardStats = ctrl.data.cardStats;
-          const rangeFrom = _.isNil(panel.color.min) ? Math.min(cardStats.min, 0) : panel.color.min;
+          const rangeFrom = _.isNil(panel.color.min) ? Math.max(cardStats.min, 0) : panel.color.min;
           const rangeTo = _.isNil(panel.color.max) ? cardStats.max : panel.color.max;
           const maxValue = cardStats.max;
           const minValue = cardStats.min;

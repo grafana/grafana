@@ -11,9 +11,18 @@ const templateSrv: any = {
         value: 'BBB',
       },
     },
+    {
+      type: 'datasource',
+      name: 'datasourceDefault',
+      current: {
+        value: 'default',
+      },
+    },
   ],
   replace: (v: string) => {
-    return v.replace('${datasource}', 'BBB');
+    let result = v.replace('${datasource}', 'BBB');
+    result = result.replace('${datasourceDefault}', 'default');
+    return result;
   },
 };
 
@@ -117,6 +126,12 @@ describe('datasource_srv', () => {
         expect(ds?.name).toBe('${datasource}');
         expect(ds?.uid).toBe('uid-code-BBB');
       });
+
+      it('should work with variable', () => {
+        const ds = dataSourceSrv.getInstanceSettings('${datasourceDefault}');
+        expect(ds?.name).toBe('${datasourceDefault}');
+        expect(ds?.uid).toBe('uid-code-BBB');
+      });
     });
 
     describe('when getting external metric sources', () => {
@@ -135,7 +150,8 @@ describe('datasource_srv', () => {
 
     it('Can get list of data sources with variables: true', () => {
       const list = dataSourceSrv.getList({ metrics: true, variables: true });
-      expect(list[0].name).toBe('${datasource}');
+      expect(list[0].name).toBe('${datasourceDefault}');
+      expect(list[1].name).toBe('${datasource}');
     });
 
     it('Can get list of data sources with tracing: true', () => {

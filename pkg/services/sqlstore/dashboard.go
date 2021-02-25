@@ -1,7 +1,6 @@
 package sqlstore
 
 import (
-	"fmt"
 	"strings"
 	"time"
 
@@ -331,7 +330,8 @@ func makeQueryResult(query *search.FindPersistedDashboardsQuery, res []Dashboard
 			}
 
 			if query.Sort.MetaName != "" {
-				hit.SortMeta = strings.TrimSpace(fmt.Sprintf("%d %s", item.SortMeta, query.Sort.MetaName))
+				hit.SortMeta = item.SortMeta
+				hit.SortMetaName = query.Sort.MetaName
 			}
 
 			query.Result = append(query.Result, hit)
@@ -720,7 +720,7 @@ func HasEditPermissionInFolders(query *models.HasEditPermissionInFoldersQuery) e
 
 	builder := &SQLBuilder{}
 	builder.Write("SELECT COUNT(dashboard.id) AS count FROM dashboard WHERE dashboard.org_id = ? AND dashboard.is_folder = ?", query.SignedInUser.OrgId, dialect.BooleanStr(true))
-	builder.writeDashboardPermissionFilter(query.SignedInUser, models.PERMISSION_EDIT)
+	builder.WriteDashboardPermissionFilter(query.SignedInUser, models.PERMISSION_EDIT)
 
 	type folderCount struct {
 		Count int64
@@ -744,7 +744,7 @@ func HasAdminPermissionInFolders(query *models.HasAdminPermissionInFoldersQuery)
 
 	builder := &SQLBuilder{}
 	builder.Write("SELECT COUNT(dashboard.id) AS count FROM dashboard WHERE dashboard.org_id = ? AND dashboard.is_folder = ?", query.SignedInUser.OrgId, dialect.BooleanStr(true))
-	builder.writeDashboardPermissionFilter(query.SignedInUser, models.PERMISSION_ADMIN)
+	builder.WriteDashboardPermissionFilter(query.SignedInUser, models.PERMISSION_ADMIN)
 
 	type folderCount struct {
 		Count int64
