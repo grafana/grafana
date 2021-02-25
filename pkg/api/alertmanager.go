@@ -1,6 +1,9 @@
 package api
 
 import (
+	"encoding/json"
+	"fmt"
+
 	"github.com/grafana/grafana/pkg/models"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
@@ -171,13 +174,129 @@ type AlertingConfigResponse struct {
 type ApiAlertingConfig struct {
 	config.Config
 
+	// TODO: PR a followup to https://github.com/go-swagger/go-swagger/pull/1527 in order to allow
+	// explicitly ignoring embedded fields. In the meantime, these are hackily removed in our make targets via `jq`
+
+	AlertManagerRoute   *config.Route `yaml:"alertmanager_route,omitempty" json:"alertmanager_route,omitempty"`
+	GrafanaManagedRoute *config.Route `yaml:"grafana_managed_route,omitempty" json:"grafana_managed_route,omitempty"`
+
 	// Override with our superset receiver type
 	Receivers []*ApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
 }
 
+func (c *ApiAlertingConfig) UnmarshalJSON(b []byte) error {
+	type plain ApiAlertingConfig
+	if err := json.Unmarshal(b, (*plain)(c)); err != nil {
+		return err
+	}
+
+	return c.validate()
+}
+
+// validate ensures that the two routing trees use the correct receiver types.
+func (c *ApiAlertingConfig) validate() error {
+	receivers := make(map[string]ReceiverType, len(c.Receivers))
+
+	for _, r := range c.Receivers {
+		receivers[r.Name] = r.Type()
+	}
+
+	for _, receiver := range AllReceivers(c.GrafanaManagedRoute) {
+		t, ok := receivers[receiver]
+		if !ok {
+			return fmt.Errorf("unexpected receiver (%s) is undefined", receiver)
+		}
+		if t != GrafanaReceiverType {
+			return fmt.Errorf("unexpected receiver (%s): cannot use Alertmanager receiver types in Grafana managed routes", receiver)
+		}
+
+	}
+
+	for _, receiver := range AllReceivers(c.AlertManagerRoute) {
+		t, ok := receivers[receiver]
+		if !ok {
+			return fmt.Errorf("unexpected receiver (%s) is undefined", receiver)
+		}
+		if t != AlertmanagerReceiverType {
+			return fmt.Errorf("unexpected receiver (%s): cannot use Grafana receiver types in non-Grafana managed routes", receiver)
+		}
+
+	}
+
+	return nil
+}
+
+// AllReceivers will recursively walk a routing tree and return a list of all the
+// referenced receiver names.
+func AllReceivers(route *config.Route) (res []string) {
+	res = append(res, route.Receiver)
+	for _, subRoute := range route.Routes {
+		res = append(res, AllReceivers(subRoute)...)
+	}
+	return res
+}
+
 type GrafanaReceiver models.CreateAlertNotificationCommand
+
+type ReceiverType int
+
+const (
+	GrafanaReceiverType ReceiverType = iota
+	AlertmanagerReceiverType
+)
 
 type ApiReceiver struct {
 	config.Receiver
+	GrafanaReceivers
+}
+
+func (r *ApiReceiver) UnmarshalJSON(b []byte) error {
+	type plain ApiReceiver
+	if err := json.Unmarshal(b, (*plain)(r)); err != nil {
+		return err
+	}
+
+	hasGrafanaReceivers := len(r.GrafanaReceivers.GrafanaManagedReceivers) > 0
+
+	if hasGrafanaReceivers {
+		if len(r.EmailConfigs) > 0 {
+			return fmt.Errorf("cannot have both Alertmanager EmailConfigs & Grafana receivers together")
+		}
+		if len(r.PagerdutyConfigs) > 0 {
+			return fmt.Errorf("cannot have both Alertmanager PagerdutyConfigs & Grafana receivers together")
+		}
+		if len(r.SlackConfigs) > 0 {
+			return fmt.Errorf("cannot have both Alertmanager SlackConfigs & Grafana receivers together")
+		}
+		if len(r.WebhookConfigs) > 0 {
+			return fmt.Errorf("cannot have both Alertmanager WebhookConfigs & Grafana receivers together")
+		}
+		if len(r.OpsGenieConfigs) > 0 {
+			return fmt.Errorf("cannot have both Alertmanager OpsGenieConfigs & Grafana receivers together")
+		}
+		if len(r.WechatConfigs) > 0 {
+			return fmt.Errorf("cannot have both Alertmanager WechatConfigs & Grafana receivers together")
+		}
+		if len(r.PushoverConfigs) > 0 {
+			return fmt.Errorf("cannot have both Alertmanager PushoverConfigs & Grafana receivers together")
+		}
+		if len(r.VictorOpsConfigs) > 0 {
+			return fmt.Errorf("cannot have both Alertmanager VictorOpsConfigs & Grafana receivers together")
+		}
+
+	}
+
+	return nil
+
+}
+
+func (r *ApiReceiver) Type() ReceiverType {
+	if len(r.GrafanaReceivers.GrafanaManagedReceivers) > 0 {
+		return GrafanaReceiverType
+	}
+	return AlertmanagerReceiverType
+}
+
+type GrafanaReceivers struct {
 	GrafanaManagedReceivers []*GrafanaReceiver `yaml:"grafana_managed_receiver_configs,omitempty" json:"grafana_managed_receiver_configs,omitempty"`
 }

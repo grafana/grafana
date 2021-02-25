@@ -5,7 +5,8 @@ GO_PKG_FILES = $(shell find $(PKG_DIR) -name *.go -print)
 
 
 spec.json: $(GO_PKG_FILES)
-	swagger generate spec -m -w $(PKG_DIR) -o $@
+	swagger generate spec -m -w $(PKG_DIR) | jq 'del(.definitions.ApiAlertingConfig.properties.route)' > $@
+
 
 .PHONY: openapi
 openapi: spec.json
