@@ -12,7 +12,7 @@ export const RouterDebugger: React.FC<any> = () => {
       <ul>
         {routes.map((r, i) => {
           if (r.path.indexOf(':') > -1 || r.path.indexOf('test') > -1) {
-            if (r.path.indexOf('test') !== -1) {
+            if (r.path.indexOf('test') === -1) {
               manualRoutes.push(r);
             }
             return null;

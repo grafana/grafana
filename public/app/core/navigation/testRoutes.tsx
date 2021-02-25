@@ -29,6 +29,6 @@ export const testRoutes: RouteDescriptor[] = [
   {
     path: '/router-debug',
     // eslint-disable-next-line react/display-name
-    component: RouterDebugger,
+    component: () => RouterDebugger,
   },
 ];
