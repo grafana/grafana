@@ -5,19 +5,20 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
+	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	"github.com/stretchr/testify/require"
 )
 
 func TestHandleRequest(t *testing.T) {
 	t.Run("Should return query result when handling request for query", func(t *testing.T) {
-		req := &TsdbQuery{
-			Queries: []*Query{
-				{RefId: "A", DataSource: &models.DataSource{Id: 1, Type: "test"}},
+		req := pluginmodels.DataQuery{
+			Queries: []pluginmodels.DataSubQuery{
+				{RefID: "A", DataSource: &models.DataSource{Id: 1, Type: "test"}},
 			},
 		}
 
 		fakeExecutor := registerFakeExecutor()
-		fakeExecutor.Return("A", TimeSeriesSlice{&TimeSeries{Name: "argh"}})
+		fakeExecutor.Return("A", pluginmodels.DataTimeSeriesSlice{pluginmodels.DataTimeSeries{Name: "argh"}})
 
 		res, err := HandleRequest(context.TODO(), &models.DataSource{Id: 1, Type: "test"}, req)
 		require.NoError(t, err)
@@ -26,16 +27,16 @@ func TestHandleRequest(t *testing.T) {
 	})
 
 	t.Run("Should return query results when handling request for two queries with same data source", func(t *testing.T) {
-		req := &TsdbQuery{
-			Queries: []*Query{
-				{RefId: "A", DataSource: &models.DataSource{Id: 1, Type: "test"}},
-				{RefId: "B", DataSource: &models.DataSource{Id: 1, Type: "test"}},
+		req := pluginmodels.DataQuery{
+			Queries: []pluginmodels.DataSubQuery{
+				{RefID: "A", DataSource: &models.DataSource{Id: 1, Type: "test"}},
+				{RefID: "B", DataSource: &models.DataSource{Id: 1, Type: "test"}},
 			},
 		}
 
 		fakeExecutor := registerFakeExecutor()
-		fakeExecutor.Return("A", TimeSeriesSlice{&TimeSeries{Name: "argh"}})
-		fakeExecutor.Return("B", TimeSeriesSlice{&TimeSeries{Name: "barg"}})
+		fakeExecutor.Return("A", pluginmodels.DataTimeSeriesSlice{pluginmodels.DataTimeSeries{Name: "argh"}})
+		fakeExecutor.Return("B", pluginmodels.DataTimeSeriesSlice{pluginmodels.DataTimeSeries{Name: "barg"}})
 
 		res, err := HandleRequest(context.TODO(), &models.DataSource{Id: 1, Type: "test"}, req)
 		require.NoError(t, err)
@@ -46,9 +47,9 @@ func TestHandleRequest(t *testing.T) {
 	})
 
 	t.Run("Should return error when handling request for query with unknown type", func(t *testing.T) {
-		req := &TsdbQuery{
-			Queries: []*Query{
-				{RefId: "A", DataSource: &models.DataSource{Id: 1, Type: "asdasdas"}},
+		req := pluginmodels.DataQuery{
+			Queries: []pluginmodels.DataSubQuery{
+				{RefID: "A", DataSource: &models.DataSource{Id: 1, Type: "asdasdas"}},
 			},
 		}
 

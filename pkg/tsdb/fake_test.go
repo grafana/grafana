@@ -4,39 +4,41 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/models"
+	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 )
 
 type FakeExecutor struct {
-	results   map[string]*QueryResult
+	results   map[string]pluginmodels.DataQueryResult
 	resultsFn map[string]ResultsFn
 }
 
-type ResultsFn func(context *TsdbQuery) *QueryResult
+type ResultsFn func(context pluginmodels.DataQuery) pluginmodels.DataQueryResult
 
 func NewFakeExecutor(dsInfo *models.DataSource) (*FakeExecutor, error) {
 	return &FakeExecutor{
-		results:   make(map[string]*QueryResult),
+		results:   make(map[string]pluginmodels.DataQueryResult),
 		resultsFn: make(map[string]ResultsFn),
 	}, nil
 }
 
-func (e *FakeExecutor) Query(ctx context.Context, dsInfo *models.DataSource, context *TsdbQuery) (*Response, error) {
-	result := &Response{Results: make(map[string]*QueryResult)}
+func (e *FakeExecutor) Query(ctx context.Context, dsInfo *models.DataSource, context pluginmodels.DataQuery) (
+	pluginmodels.DataResponse, error) {
+	result := pluginmodels.DataResponse{Results: make(map[string]pluginmodels.DataQueryResult)}
 	for _, query := range context.Queries {
-		if results, has := e.results[query.RefId]; has {
-			result.Results[query.RefId] = results
+		if results, has := e.results[query.RefID]; has {
+			result.Results[query.RefID] = results
 		}
-		if testFunc, has := e.resultsFn[query.RefId]; has {
-			result.Results[query.RefId] = testFunc(context)
+		if testFunc, has := e.resultsFn[query.RefID]; has {
+			result.Results[query.RefID] = testFunc(context)
 		}
 	}
 
 	return result, nil
 }
 
-func (e *FakeExecutor) Return(refId string, series TimeSeriesSlice) {
-	e.results[refId] = &QueryResult{
-		RefId: refId, Series: series,
+func (e *FakeExecutor) Return(refId string, series pluginmodels.DataTimeSeriesSlice) {
+	e.results[refId] = pluginmodels.DataQueryResult{
+		RefID: refId, Series: series,
 	}
 }
 

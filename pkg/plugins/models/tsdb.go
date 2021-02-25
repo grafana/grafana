@@ -34,7 +34,7 @@ type DataQuery struct {
 type DataTimeRange struct {
 	From string
 	To   string
-	now  time.Time
+	Now  time.Time
 }
 
 type DataTable struct {
@@ -80,7 +80,7 @@ func NewDataTimeRange(from, to string) DataTimeRange {
 	return DataTimeRange{
 		From: from,
 		To:   to,
-		now:  time.Now(),
+		Now:  time.Now(),
 	}
 }
 
@@ -125,19 +125,19 @@ func (tr *DataTimeRange) MustGetTo() time.Time {
 }
 
 func (tr DataTimeRange) ParseFrom() (time.Time, error) {
-	return parseTimeRange(tr.From, tr.now, false, nil)
+	return parseTimeRange(tr.From, tr.Now, false, nil)
 }
 
 func (tr DataTimeRange) ParseTo() (time.Time, error) {
-	return parseTimeRange(tr.To, tr.now, true, nil)
+	return parseTimeRange(tr.To, tr.Now, true, nil)
 }
 
 func (tr DataTimeRange) ParseFromWithLocation(location *time.Location) (time.Time, error) {
-	return parseTimeRange(tr.From, tr.now, false, location)
+	return parseTimeRange(tr.From, tr.Now, false, location)
 }
 
 func (tr DataTimeRange) ParseToWithLocation(location *time.Location) (time.Time, error) {
-	return parseTimeRange(tr.To, tr.now, true, location)
+	return parseTimeRange(tr.To, tr.Now, true, location)
 }
 
 func parseTimeRange(s string, now time.Time, withRoundUp bool, location *time.Location) (time.Time, error) {
