@@ -1,11 +1,11 @@
 import React, { FC } from 'react';
 import { Button, Tooltip, Icon, Form, Input, Field, FieldSet } from '@grafana/ui';
-import { User } from 'app/types';
+import { UserDTO } from 'app/types';
 import config from 'app/core/config';
 import { ProfileUpdateFields } from 'app/core/utils/UserProvider';
 
 export interface Props {
-  user: User;
+  user: UserDTO;
   isSavingUser: boolean;
   updateProfile: (payload: ProfileUpdateFields) => void;
 }
@@ -22,8 +22,14 @@ export const UserProfileEditForm: FC<Props> = ({ user, isSavingUser, updateProfi
       {({ register, errors }) => {
         return (
           <FieldSet label="Edit Profile">
-            <Field label="Name" invalid={!!errors.name} error="Name is required">
-              <Input name="name" ref={register({ required: true })} placeholder="Name" defaultValue={user.name} />
+            <Field label="Name" invalid={!!errors.name} error="Name is required" disabled={disableLoginForm}>
+              <Input
+                name="name"
+                ref={register({ required: true })}
+                placeholder="Name"
+                defaultValue={user.name}
+                suffix={<InputSuffix />}
+              />
             </Field>
             <Field label="Email" invalid={!!errors.email} error="Email is required" disabled={disableLoginForm}>
               <Input

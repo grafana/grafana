@@ -8,7 +8,7 @@ RUN powershell Invoke-Expression (New-Object System.Net.WebClient).DownloadStrin
 # Scoop first of all needs git to update itself
 # Run Scoop under PowerShell since it can otherwise fail
 RUN powershell -Command scoop install git@2.29.1.windows.1
-RUN powershell -Command scoop install go@1.15.5 unzip@6.00 gcc@9.3.0-2
+RUN powershell -Command scoop install go@1.16 unzip@6.00 gcc@9.3.0-2
 
 # Install diffutils, in case we need them
 RUN powershell (New-Object Net.WebClient).DownloadFile(\
@@ -21,10 +21,10 @@ RUN mkdir -p "C:\Program Files (x86)\GnuWin32"
 RUN cd "C:\Program Files (x86)\GnuWin32" && unzip C:\App\diffutils-dep.zip && unzip C:\App\diffutils-bin.zip
 
 RUN powershell (New-Object Net.WebClient).DownloadFile(\
-  \"https://github.com/golangci/golangci-lint/releases/download/v1.32.0/golangci-lint-1.32.0-windows-amd64.zip\", \
+  \"https://github.com/golangci/golangci-lint/releases/download/v1.37.1/golangci-lint-1.37.1-windows-amd64.zip\", \
   \"golangci-lint.zip\")
 RUN powershell (Get-FileHash golangci-lint.zip -Algorithm SHA256).Hash -eq \
-  \"97a69c2a153cd4285b7000b327aa6e77b694534e7463cbd1b77481c22b6113cf\"
+  \"a11b73bebd0ab6f2161d3677a5c63883001bf489aeebc494a6aaaead6addd161"
 RUN unzip golangci-lint.zip
 RUN powershell -Command mv golangci-lint-1.32.0-windows-amd64\golangci-lint.exe .
 

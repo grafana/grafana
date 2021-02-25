@@ -549,6 +549,7 @@ export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJso
   name: string;
   typeLogoUrl: string;
   type: string;
+  typeName: string;
   access: string;
   url: string;
   password: string;
