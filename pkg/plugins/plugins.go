@@ -305,11 +305,6 @@ func (pm *PluginManager) loadPlugin(jsonParser *json.Decoder, pluginBase *plugin
 	scanner *PluginScanner, loader pluginmodels.PluginLoader) error {
 	plug, err := loader.Load(jsonParser, pluginBase, scanner.backendPluginManager)
 	if err != nil {
-		if errors.Is(err, pluginmodels.DuplicatePluginError{}) {
-			pm.log.Warn("Plugin is duplicate", "error", err)
-			scanner.errors = append(scanner.errors, err)
-			return nil
-		}
 		return err
 	}
 
@@ -332,7 +327,9 @@ func (pm *PluginManager) loadPlugin(jsonParser *json.Decoder, pluginBase *plugin
 	}
 
 	if p, exists := Plugins[pb.Id]; exists {
-		return pluginmodels.DuplicatePluginError{Plugin: pb, ExistingPlugin: p}
+		pm.log.Warn("Plugin is duplicate", "id", pb.Id)
+		scanner.errors = append(scanner.errors, pluginmodels.DuplicatePluginError{Plugin: pb, ExistingPlugin: p})
+		return nil
 	}
 
 	if !strings.HasPrefix(pluginBase.PluginDir, pm.Cfg.StaticRootPath) {
