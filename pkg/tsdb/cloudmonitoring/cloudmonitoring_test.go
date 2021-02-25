@@ -1098,7 +1098,7 @@ func getCloudMonitoringQueriesFromInterface(t *testing.T, qes []cloudMonitoringQ
 	queries := make([]*cloudMonitoringTimeSeriesFilter, 0)
 	for _, qi := range qes {
 		q, ok := qi.(*cloudMonitoringTimeSeriesFilter)
-		require.True(t, ok)
+		require.Truef(t, ok, "Received wrong type %T", qi)
 		queries = append(queries, q)
 	}
 	return queries

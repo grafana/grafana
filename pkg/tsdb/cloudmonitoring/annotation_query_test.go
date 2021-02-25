@@ -14,10 +14,10 @@ func TestExecutor_parseToAnnotations(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, d.TimeSeries, 3)
 
-	res := pluginmodels.DataQueryResult{Meta: simplejson.New(), RefID: "annotationQuery"}
+	res := &pluginmodels.DataQueryResult{Meta: simplejson.New(), RefID: "annotationQuery"}
 	query := &cloudMonitoringTimeSeriesFilter{}
 
-	err = query.parseToAnnotations(&res, data, "atitle {{metric.label.instance_name}} {{metric.value}}",
+	err = query.parseToAnnotations(res, d, "atitle {{metric.label.instance_name}} {{metric.value}}",
 		"atext {{resource.label.zone}}", "atag")
 	require.NoError(t, err)
 
@@ -30,7 +30,7 @@ func TestExecutor_parseToAnnotations(t *testing.T) {
 }
 
 func TestCloudMonitoringExecutor_parseToAnnotations_emptyTimeSeries(t *testing.T) {
-	res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "annotationQuery"}
+	res := &pluginmodels.DataQueryResult{Meta: simplejson.New(), RefID: "annotationQuery"}
 	query := &cloudMonitoringTimeSeriesFilter{}
 
 	response := cloudMonitoringResponse{
@@ -40,12 +40,13 @@ func TestCloudMonitoringExecutor_parseToAnnotations_emptyTimeSeries(t *testing.T
 	err := query.parseToAnnotations(res, response, "atitle", "atext", "atag")
 	require.NoError(t, err)
 
-	decoded, _ := res.Dataframes.Decoded()
+	decoded, err := res.Dataframes.Decoded()
+	require.NoError(t, err)
 	require.Len(t, decoded, 0)
 }
 
 func TestCloudMonitoringExecutor_parseToAnnotations_noPointsInSeries(t *testing.T) {
-	res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "annotationQuery"}
+	res := &pluginmodels.DataQueryResult{Meta: simplejson.New(), RefID: "annotationQuery"}
 	query := &cloudMonitoringTimeSeriesFilter{}
 
 	response := cloudMonitoringResponse{

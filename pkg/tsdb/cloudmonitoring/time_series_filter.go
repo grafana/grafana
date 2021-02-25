@@ -272,7 +272,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) handleNonDistributionSe
 	setDisplayNameAsFieldName(dataField)
 }
 
-func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseToAnnotations(queryRes pluginmodels.DataQueryResult,
+func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseToAnnotations(queryRes *pluginmodels.DataQueryResult,
 	response cloudMonitoringResponse, title string, text string, tags string) error {
 	frames := data.Frames{}
 	for _, series := range response.TimeSeries {
@@ -293,7 +293,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseToAnnotations(quer
 			annotation["text"] = append(annotation["text"], formatAnnotationText(text, value, series.Metric.Type,
 				series.Metric.Labels, series.Resource.Labels))
 		}
-		frames = append(frames, data.NewFrame(queryRes.RefId,
+		frames = append(frames, data.NewFrame(queryRes.RefID,
 			data.NewField("time", nil, annotation["time"]),
 			data.NewField("title", nil, annotation["title"]),
 			data.NewField("tags", nil, annotation["tags"]),

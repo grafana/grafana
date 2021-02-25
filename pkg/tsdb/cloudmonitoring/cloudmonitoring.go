@@ -221,9 +221,12 @@ func (e *Executor) buildQueryExecutors(tsdbQuery pluginmodels.DataQuery) ([]clou
 	durationSeconds := int(endTime.Sub(startTime).Seconds())
 
 	for _, query := range tsdbQuery.Queries {
-		migrateLegacyQueryModel(query)
+		migrateLegacyQueryModel(&query)
 		q := grafanaQuery{}
-		model, _ := query.Model.MarshalJSON()
+		model, err := query.Model.MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
 		if err := json.Unmarshal(model, &q); err != nil {
 			return nil, fmt.Errorf("could not unmarshal CloudMonitoringQuery json: %w", err)
 		}
@@ -237,7 +240,6 @@ func (e *Executor) buildQueryExecutors(tsdbQuery pluginmodels.DataQuery) ([]clou
 			RefID:    query.RefID,
 			GroupBys: []string{},
 		}
-
 		switch q.QueryType {
 		case metricQueryType:
 			if q.MetricQuery.EditorMode == mqlEditorMode {
@@ -270,6 +272,8 @@ func (e *Executor) buildQueryExecutors(tsdbQuery pluginmodels.DataQuery) ([]clou
 			params.Add("filter", buildSLOFilterExpression(q.SloQuery))
 			setSloAggParams(&params, &q.SloQuery, durationSeconds, query.IntervalMS)
 			queryInterface = cmtsf
+		default:
+			panic(fmt.Sprintf("Unrecognized query type %q", q.QueryType))
 		}
 
 		target = params.Encode()
@@ -287,7 +291,7 @@ func (e *Executor) buildQueryExecutors(tsdbQuery pluginmodels.DataQuery) ([]clou
 	return cloudMonitoringQueryExecutors, nil
 }
 
-func migrateLegacyQueryModel(query pluginmodels.DataSubQuery) {
+func migrateLegacyQueryModel(query *pluginmodels.DataSubQuery) {
 	mq := query.Model.Get("metricQuery").MustMap()
 	if mq == nil {
 		migratedModel := simplejson.NewFromAny(map[string]interface{}{
@@ -421,7 +425,8 @@ func containsLabel(labels []string, newLabel string) bool {
 	return false
 }
 
-func formatLegendKeys(metricType string, defaultMetricName string, labels map[string]string, additionalLabels map[string]string, query *cloudMonitoringTimeSeriesFilter) string {
+func formatLegendKeys(metricType string, defaultMetricName string, labels map[string]string,
+	additionalLabels map[string]string, query *cloudMonitoringTimeSeriesFilter) string {
 	if query.AliasBy == "" {
 		return defaultMetricName
 	}
