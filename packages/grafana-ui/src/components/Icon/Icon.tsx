@@ -7,7 +7,34 @@ import { IconName, IconType, IconSize } from '../../types/icon';
 import SVG from 'react-inlinesvg';
 import { cacheInitialized, initIconCache, iconRoot } from './iconBundle';
 
-const alwaysMonoIcons: IconName[] = ['grafana', 'favorite', 'heart-break', 'heart', 'panel-add', 'library-panel'];
+const alwaysMonoIcons: IconName[] = [
+  'grafana',
+  'favorite',
+  'heart-break',
+  'heart',
+  'panel-add',
+  'library-panel',
+  'reusable-panel',
+  'percona-database',
+  'percona-analytics',
+  'percona-cluster',
+  'percona-cluster-network',
+  'percona-cluster-computing',
+  'percona-dashboard',
+  'percona-kubernetes',
+  'percona-summary',
+  'percona-inventory',
+  'percona-add',
+  'percona-alert',
+  'percona-disk',
+  'percona-memory',
+  'percona-temperature',
+  'percona-cpu',
+  'percona-surface',
+  'percona-network',
+  'percona-process',
+  'percona-setting',
+];
 
 export interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
   name: IconName;
