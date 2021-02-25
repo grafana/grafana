@@ -67,6 +67,7 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
           placeholder="Search the panel library"
           prefix={<Icon name="search" />}
           value={searchString}
+          autoFocus
           onChange={(e) => setSearchString(e.currentTarget.value)}
         ></Input>
         {/* <Select placeholder="Filter by" onChange={() => {}} width={35} /> */}
