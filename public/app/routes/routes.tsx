@@ -1,23 +1,22 @@
 // import './dashboard_loaders';
-import './ReactContainer';
 
+import React from 'react';
 // import { applyRouteRegistrationHandlers } from './registry';
 // import { contextSrv } from 'app/core/services/context_srv';
 
-// Pages
-// import LdapPage from 'app/features/admin/ldap/LdapPage';
+import LdapPage from 'app/features/admin/ldap/LdapPage';
 import UserAdminPage from 'app/features/admin/UserAdminPage';
 import { LoginPage } from 'app/core/components/Login/LoginPage';
 
 import config from 'app/core/config';
-// Types
 
 import { DashboardRouteInfo } from 'app/types';
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
-import { playlistRoutes } from '../features/playlist/playlist_routes';
+// import { playlistRoutes } from '../features/playlist/playlist_routes';
 import { RouteDescriptor } from '../core/navigation/types';
 import { SignupPage } from 'app/core/components/Signup/SignupPage';
 import { testRoutes } from 'app/core/navigation/testRoutes';
+import { Redirect } from 'react-router-dom';
 
 // const importDashboardPage = () =>
 //   SafeDynamicImport(import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage'));
@@ -202,40 +201,27 @@ export const routes: RouteDescriptor[] = [
     path: '/org/users/invite',
     component: SafeDynamicImport(import(/* webpackChunkName: "UserInvitePage" */ 'app/features/org/UserInvitePage')),
   },
-  // TODO[Router]: resolve roles
   {
     path: '/org/apikeys',
     roles: () => ['Editor', 'Admin'],
     component: SafeDynamicImport(import(/* webpackChunkName: "ApiKeysPage" */ 'app/features/api-keys/ApiKeysPage')),
   },
-  // TODO[Router]: resolve roles
-  // {
-  //   path: '/org/teams',
-  //
-  //   resolve: {
-  //     roles: () => (config.editorsCanAdmin ? [] : ['Editor', 'Admin']),
-  //     component: () => SafeDynamicImport(import(/* webpackChunkName: "TeamList" */ 'app/features/teams/TeamList')),
-  //   },
-  // },
-  // TODO[Router]: resolve roles
-  // {
-  //   path: '/org/teams/new',
-  //
-  //   resolve: {
-  //     roles: () => (config.editorsCanAdmin ? [] : ['Admin']),
-  //     component: () =>
-  //       SafeDynamicImport(import(/* webpackChunkName: "CreateTeam" */ 'app/features/teams/CreateTeam')),
-  //   },
-  // },
-  // TODO[Router]: resolve roles
-  // {
-  //   path: '/org/teams/edit/:id/:page?',
-  //
-  //   resolve: {
-  //     roles: () => (config.editorsCanAdmin ? [] : ['Admin']),
-  //     component: () => SafeDynamicImport(import(/* webpackChunkName: "TeamPages" */ 'app/features/teams/TeamPages')),
-  //   },
-  // },
+  {
+    path: '/org/teams',
+    roles: () => (config.editorsCanAdmin ? [] : ['Editor', 'Admin']),
+    component: SafeDynamicImport(import(/* webpackChunkName: "TeamList" */ 'app/features/teams/TeamList')),
+  },
+  {
+    path: '/org/teams/new',
+
+    roles: () => (config.editorsCanAdmin ? [] : ['Admin']),
+    component: SafeDynamicImport(import(/* webpackChunkName: "CreateTeam" */ 'app/features/teams/CreateTeam')),
+  },
+  {
+    path: '/org/teams/edit/:id/:page?',
+    roles: () => (config.editorsCanAdmin ? [] : ['Admin']),
+    component: SafeDynamicImport(import(/* webpackChunkName: "TeamPages" */ 'app/features/teams/TeamPages')),
+  },
   {
     path: '/profile',
     component: SafeDynamicImport(
@@ -253,11 +239,11 @@ export const routes: RouteDescriptor[] = [
     component: SafeDynamicImport(import(/* webpackChunkName: "SelectOrgPage" */ 'app/features/org/SelectOrgPage')),
   },
   // ADMIN
+
   {
     path: '/admin',
-    templateUrl: 'public/app/features/admin/partials/admin_home.html',
-    controller: 'AdminHomeCtrl',
-    controllerAs: 'ctrl',
+    // eslint-disable-next-line react/display-name
+    component: () => <Redirect to="/admin/users" />,
   },
   {
     path: '/admin/settings',
@@ -297,11 +283,10 @@ export const routes: RouteDescriptor[] = [
     path: '/admin/stats',
     component: SafeDynamicImport(import(/* webpackChunkName: "ServerStats" */ 'app/features/admin/ServerStats')),
   },
-  // TODO[Router]
-  // {
-  //   path: '/admin/ldap',
-  //   component: LdapPage,
-  // },
+  {
+    path: '/admin/ldap',
+    component: LdapPage,
+  },
   // LOGIN / SIGNUP
   {
     path: '/login',
@@ -350,15 +335,17 @@ export const routes: RouteDescriptor[] = [
     reloadOnSearch: false, // tabs from query parameters
     component: SafeDynamicImport(import(/* webpackChunkName: "PluginPage" */ '../features/plugins/PluginPage')),
   },
-  {
-    path: '/plugins/:pluginId/page/:slug',
-    templateUrl: 'public/app/features/plugins/partials/plugin_page.html',
-    controller: 'AppPageCtrl',
-    controllerAs: 'ctrl',
-  },
+  // TODO[Router]
+  // {
+  //   path: '/plugins/:pluginId/page/:slug',
+  //   templateUrl: 'public/app/features/plugins/partials/plugin_page.html',
+  //   controller: 'AppPageCtrl',
+  //   controllerAs: 'ctrl',
+  // },
   {
     path: '/alerting',
-    redirectTo: '/alerting/list',
+    // eslint-disable-next-line react/display-name
+    component: () => <Redirect to="/alerting/list" />,
   },
   {
     path: '/alerting/list',
@@ -398,6 +385,7 @@ export const routes: RouteDescriptor[] = [
       import(/* webpackChunkName: "NgAlertingPage"*/ 'app/features/alerting/NextGenAlertingPage')
     ),
   },
+
   // TODO[Router]
   // ...playlistRoutes,
 ];
