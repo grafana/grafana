@@ -29,13 +29,13 @@ func (e *Executor) executeAnnotationQuery(ctx context.Context, tsdbQuery pluginm
 	title := metricQuery.Get("title").MustString()
 	text := metricQuery.Get("text").MustString()
 	tags := metricQuery.Get("tags").MustString()
-	err = queries[0].parseToAnnotations(queryRes, resp, title, text, tags)
+	err = queries[0].parseToAnnotations(&queryRes, resp, title, text, tags)
 	result.Results[firstQuery.RefID] = queryRes
 
 	return result, err
 }
 
-func transformAnnotationToTable(data []map[string]string, result pluginmodels.DataQueryResult) {
+func transformAnnotationToTable(data []map[string]string, result *pluginmodels.DataQueryResult) {
 	table := pluginmodels.DataTable{
 		Columns: make([]pluginmodels.DataTableColumn, 4),
 		Rows:    make([]pluginmodels.DataRowValues, 0),

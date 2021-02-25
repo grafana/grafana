@@ -79,7 +79,8 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context
 	return queryResult, data, req.URL.RawQuery, nil
 }
 
-func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes pluginmodels.DataQueryResult, response cloudMonitoringResponse, executedQueryString string) error {
+func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes *pluginmodels.DataQueryResult,
+	response cloudMonitoringResponse, executedQueryString string) error {
 	labels := make(map[string]map[string]bool)
 	frames := data.Frames{}
 	for _, series := range response.TimeSeries {
@@ -240,7 +241,8 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 }
 
 func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) handleNonDistributionSeries(series timeSeries,
-	defaultMetricName string, seriesLabels map[string]string, queryRes pluginmodels.DataQueryResult, frame *data.Frame) {
+	defaultMetricName string, seriesLabels map[string]string, queryRes *pluginmodels.DataQueryResult,
+	frame *data.Frame) {
 	for i := 0; i < len(series.Points); i++ {
 		point := series.Points[i]
 		value := point.Value.DoubleValue
@@ -269,7 +271,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) handleNonDistributionSe
 	setDisplayNameAsFieldName(dataField)
 }
 
-func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseToAnnotations(queryRes pluginmodels.DataQueryResult,
+func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseToAnnotations(queryRes *pluginmodels.DataQueryResult,
 	data cloudMonitoringResponse, title string, text string, tags string) error {
 	annotations := make([]map[string]string, 0)
 

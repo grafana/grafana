@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb"
+	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -14,10 +14,11 @@ func TestExecutor_parseToAnnotations(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, data.TimeSeries, 3)
 
-	res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "annotationQuery"}
+	res := pluginmodels.DataQueryResult{Meta: simplejson.New(), RefID: "annotationQuery"}
 	query := &cloudMonitoringTimeSeriesFilter{}
 
-	err = query.parseToAnnotations(res, data, "atitle {{metric.label.instance_name}} {{metric.value}}", "atext {{resource.label.zone}}", "atag")
+	err = query.parseToAnnotations(&res, data, "atitle {{metric.label.instance_name}} {{metric.value}}",
+		"atext {{resource.label.zone}}", "atag")
 	require.NoError(t, err)
 
 	require.Len(t, res.Tables, 1)

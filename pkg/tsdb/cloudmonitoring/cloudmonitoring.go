@@ -162,7 +162,7 @@ func (e *Executor) executeTimeSeriesQuery(ctx context.Context, tsdbQuery pluginm
 		if err != nil {
 			return pluginmodels.DataResponse{}, err
 		}
-		err = queryExecutor.parseResponse(queryRes, resp, executedQueryString)
+		err = queryExecutor.parseResponse(&queryRes, resp, executedQueryString)
 		if err != nil {
 			queryRes.Error = err
 		}
