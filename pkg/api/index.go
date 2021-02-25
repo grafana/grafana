@@ -117,13 +117,6 @@ func getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error) {
 			}
 		}
 
-		if len(appLink.Children) > 0 && c.OrgRole == models.ROLE_ADMIN {
-			appLink.Children = append(appLink.Children, &dtos.NavLink{Divider: true})
-			appLink.Children = append(appLink.Children, &dtos.NavLink{
-				Text: "Plugin Config", Icon: "cog", Url: setting.AppSubUrl + "/plugins/" + plugin.Id + "/",
-			})
-		}
-
 		if len(appLink.Children) > 0 {
 			appLinks = append(appLinks, appLink)
 		}

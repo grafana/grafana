@@ -9,12 +9,13 @@ import { updateLocation } from 'app/core/reducers/location';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { saveDashboard as saveDashboardApiCall } from 'app/features/manage-dashboards/state/actions';
 
-const saveDashboard = async (saveModel: any, options: SaveDashboardOptions, dashboard: DashboardModel) => {
+const saveDashboard = (saveModel: any, options: SaveDashboardOptions, dashboard: DashboardModel) => {
   let folderId = options.folderId;
   if (folderId === undefined) {
-    folderId = dashboard.meta.folderId || saveModel.folderId;
+    folderId = dashboard.meta.folderId ?? saveModel.folderId;
   }
-  return await saveDashboardApiCall({ ...options, folderId, dashboard: saveModel });
+
+  return saveDashboardApiCall({ ...options, folderId, dashboard: saveModel });
 };
 
 export const useDashboardSave = (dashboard: DashboardModel) => {
