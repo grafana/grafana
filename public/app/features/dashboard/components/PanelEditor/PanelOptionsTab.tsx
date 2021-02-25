@@ -8,6 +8,10 @@ import { AngularPanelOptions } from './AngularPanelOptions';
 import { VisualizationTab } from './VisualizationTab';
 import { OptionsGroup } from './OptionsGroup';
 import { RepeatRowSelect } from '../RepeatRowSelect/RepeatRowSelect';
+import config from 'app/core/config';
+import { LibraryPanelInformation } from 'app/features/library-panels/components/LibraryPanelInfo/LibraryPanelInfo';
+import { isLibraryPanel } from '../../state/PanelModel';
+import { PanelLibraryOptionsGroup } from 'app/features/library-panels/components/PanelLibraryOptionsGroup/PanelLibraryOptionsGroup';
 
 interface Props {
   panel: PanelModel;
@@ -46,7 +50,18 @@ export const PanelOptionsTab: FC<Props> = ({
       visTabInputRef.current.focus();
     }
   };
-  // Fist common panel settings Title, description
+
+  if (config.featureToggles.panelLibrary && isLibraryPanel(panel)) {
+    elements.push(
+      <LibraryPanelInformation
+        panel={panel}
+        formatDate={(dateString, format) => dashboard.formatDate(dateString, format)}
+        key="Library Panel Information"
+      />
+    );
+  }
+
+  // First common panel settings Title, description
   elements.push(
     <OptionsGroup title="Settings" id="Panel settings" key="Panel settings">
       <Field label="Panel title">
@@ -151,6 +166,10 @@ export const PanelOptionsTab: FC<Props> = ({
       )}
     </OptionsGroup>
   );
+
+  if (config.featureToggles.panelLibrary) {
+    elements.push(<PanelLibraryOptionsGroup panel={panel} dashboard={dashboard} key="Panel Library" />);
+  }
 
   return <>{elements}</>;
 };

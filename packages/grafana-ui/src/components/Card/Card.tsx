@@ -319,13 +319,19 @@ const Meta: FC<ChildProps & { separator?: string }> = memo(({ children, styles, 
 Meta.displayName = 'Meta';
 
 interface ActionsProps extends ChildProps {
-  children: JSX.Element[];
+  children: JSX.Element | JSX.Element[];
   variant?: 'primary' | 'secondary';
 }
 
 const BaseActions: FC<ActionsProps> = ({ children, styles, disabled, variant }) => {
   const css = variant === 'primary' ? styles?.actions : styles?.secondaryActions;
-  return <div className={css}>{React.Children.map(children, (child) => cloneElement(child, { disabled }))}</div>;
+  return (
+    <div className={css}>
+      {Array.isArray(children)
+        ? React.Children.map(children, (child) => cloneElement(child, { disabled }))
+        : cloneElement(children, { disabled })}
+    </div>
+  );
 };
 
 const Actions: FC<ActionsProps> = ({ children, styles, disabled }) => {
