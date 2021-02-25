@@ -23,7 +23,7 @@ const linkTypeOptions = [
   { value: 'link', label: 'Link' },
 ];
 
-const linkIconMap: { [key: string]: string } = {
+export const linkIconMap: { [key: string]: string } = {
   'external link': 'external-link-alt',
   dashboard: 'apps',
   question: 'question-circle',
@@ -73,6 +73,7 @@ export const LinkSettingsEdit: React.FC<LinkSettingsEditProps> = ({ mode, editLi
 
   const updateLink = () => {
     dashboard.links.splice(editLinkIdx!, 1, linkSettings);
+    dashboard.updateSubmenuVisibility();
     backToList();
   };
 
