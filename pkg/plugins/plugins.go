@@ -313,20 +313,23 @@ func (pm *PluginManager) loadPlugin(jsonParser *json.Decoder, pluginBase *plugin
 		return err
 	}
 
+	var pb *pluginmodels.PluginBase
 	switch p := plug.(type) {
 	case *pluginmodels.DataSourcePlugin:
 		DataSources[p.Id] = p
+		pb = &p.PluginBase
 	case *pluginmodels.PanelPlugin:
 		Panels[p.Id] = p
+		pb = &p.PluginBase
 	case *pluginmodels.RendererPlugin:
 		Renderer = p
+		pb = &p.PluginBase
 	case *pluginmodels.AppPlugin:
 		Apps[p.Id] = p
+		pb = &p.PluginBase
 	default:
 		panic(fmt.Sprintf("Unrecognized plugin type %T", plug))
 	}
-
-	pb := plug.(*pluginmodels.PluginBase)
 
 	if p, exists := Plugins[pb.Id]; exists {
 		return pluginmodels.DuplicatePluginError{Plugin: pb, ExistingPlugin: p}
