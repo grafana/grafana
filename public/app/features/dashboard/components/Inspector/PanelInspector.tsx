@@ -1,16 +1,15 @@
-import React, { useCallback, useState } from 'react';
-import { connect, MapStateToProps, useDispatch } from 'react-redux';
-
+import React, { useState } from 'react';
+import { connect, MapStateToProps } from 'react-redux';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-
 import { PanelPlugin } from '@grafana/data';
+import { getLocationService } from '@grafana/runtime';
+
 import { StoreState } from 'app/types';
 import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
 import { usePanelLatestData } from '../PanelEditor/usePanelLatestData';
 import { InspectContent } from './InspectContent';
 import { useDatasourceMetadata, useInspectTabs } from './hooks';
 import { InspectTab } from './types';
-import { updateLocation } from 'app/core/actions';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -29,7 +28,6 @@ const PanelInspectorUnconnected: React.FC<Props> = ({ panel, dashboard, defaultT
     return null;
   }
 
-  const dispatch = useDispatch();
   const [dataOptions, setDataOptions] = useState<GetDataOptions>({
     withTransforms: false,
     withFieldConfig: true,
@@ -37,14 +35,12 @@ const PanelInspectorUnconnected: React.FC<Props> = ({ panel, dashboard, defaultT
   const { data, isLoading, error } = usePanelLatestData(panel, dataOptions);
   const metaDs = useDatasourceMetadata(data);
   const tabs = useInspectTabs(plugin, dashboard, error, metaDs);
-  const onClose = useCallback(() => {
-    dispatch(
-      updateLocation({
-        query: { inspect: null, inspectTab: null },
-        partial: true,
-      })
-    );
-  }, [updateLocation]);
+  const onClose = () => {
+    getLocationService().partial({
+      inspect: null,
+      inspectTab: null,
+    });
+  };
 
   return (
     <InspectContent

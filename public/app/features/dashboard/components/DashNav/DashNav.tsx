@@ -10,13 +10,13 @@ import { DashNavTimeControls } from './DashNavTimeControls';
 import { ButtonGroup, ModalsController, ToolbarButton, PageToolbar } from '@grafana/ui';
 import { textUtil } from '@grafana/data';
 // State
-import { updateLocation } from 'app/core/actions';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 // Types
 import { DashboardModel } from '../../state';
 import { CoreEvents, StoreState } from 'app/types';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
+import { getLocationService } from '@grafana/runtime';
 
 export interface OwnProps {
   dashboard: DashboardModel;
@@ -27,7 +27,6 @@ export interface OwnProps {
 
 interface DispatchProps {
   updateTimeZoneForSession: typeof updateTimeZoneForSession;
-  updateLocation: typeof updateLocation;
 }
 
 interface DashNavButtonModel {
@@ -62,17 +61,11 @@ class DashNav extends PureComponent<Props> {
   }
 
   onFolderNameClick = () => {
-    this.props.updateLocation({
-      query: { search: 'open', folder: 'current' },
-      partial: true,
-    });
+    getLocationService().partial({ search: 'open', folder: 'current' });
   };
 
   onClose = () => {
-    this.props.updateLocation({
-      query: { viewPanel: null },
-      partial: true,
-    });
+    getLocationService().partial({ viewPanel: null });
   };
 
   onToggleTVMode = () => {
@@ -80,10 +73,7 @@ class DashNav extends PureComponent<Props> {
   };
 
   onOpenSettings = () => {
-    this.props.updateLocation({
-      query: { editview: 'settings' },
-      partial: true,
-    });
+    getLocationService().partial({ editview: 'settings' });
   };
 
   onStarDashboard = () => {
@@ -110,10 +100,7 @@ class DashNav extends PureComponent<Props> {
   };
 
   onDashboardNameClick = () => {
-    this.props.updateLocation({
-      query: { search: 'open' },
-      partial: true,
-    });
+    getLocationService().partial({ search: 'open' });
   };
 
   addCustomContent(actions: DashNavButtonModel[], buttons: ReactNode[]) {
@@ -290,7 +277,6 @@ const mapStateToProps = (state: StoreState) => ({
 });
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
-  updateLocation,
   updateTimeZoneForSession,
 };
 

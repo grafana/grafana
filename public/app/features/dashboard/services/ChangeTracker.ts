@@ -49,26 +49,27 @@ export class ChangeTracker {
       return undefined;
     };
 
-    scope.$on('$locationChangeStart', (event: any, next: any) => {
-      // check if we should look for changes
-      if (this.originalPath === $location.path()) {
-        return true;
-      }
-
-      if (this.ignoreChanges()) {
-        return true;
-      }
-
-      if (this.hasChanges()) {
-        event.preventDefault();
-        this.next = next;
-
-        this.$timeout(() => {
-          this.open_modal();
-        });
-      }
-      return false;
-    });
+    // TODO[Router]
+    // scope.$on('$locationChangeStart', (event: any, next: any) => {
+    //   // check if we should look for changes
+    //   if (this.originalPath === $location.path()) {
+    //     return true;
+    //   }
+    //
+    //   if (this.ignoreChanges()) {
+    //     return true;
+    //   }
+    //
+    //   if (this.hasChanges()) {
+    //     event.preventDefault();
+    //     this.next = next;
+    //
+    //     this.$timeout(() => {
+    //       this.open_modal();
+    //     });
+    //   }
+    //   return false;
+    // });
 
     if (originalCopyDelay && !dashboard.meta.fromExplore) {
       this.$timeout(() => {

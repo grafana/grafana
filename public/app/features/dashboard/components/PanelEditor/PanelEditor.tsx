@@ -34,6 +34,7 @@ import { CoreEvents, StoreState } from 'app/types';
 import { DisplayMode, displayModes, PanelEditorTab } from './types';
 import { DashboardModel, PanelModel } from '../../state';
 import { PanelOptionsChangedEvent } from 'app/types/events';
+import { getLocationService } from '@grafana/runtime';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -94,17 +95,17 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   };
 
   onPanelExit = () => {
-    this.props.updateLocation({
-      query: { editPanel: null, tab: null },
-      partial: true,
+    getLocationService().partial({
+      editPanel: null,
+      tab: null,
     });
   };
 
   onDiscard = () => {
     this.props.setDiscardChanges(true);
-    this.props.updateLocation({
-      query: { editPanel: null, tab: null },
-      partial: true,
+    getLocationService().partial({
+      editPanel: null,
+      tab: null,
     });
   };
 
