@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import { Router, Route, Redirect, Switch } from 'react-router-dom';
 import angular from 'angular';
 import { each, extend } from 'lodash';
@@ -9,11 +9,12 @@ import { ErrorBoundaryAlert, ModalRoot, ModalsProvider } from '@grafana/ui';
 import { GrafanaApp } from '../app';
 import { routes } from 'app/routes/routes';
 import { ConfigContext, ThemeProvider } from './utils/ConfigProvider';
-import { GrafanaRouteProps, RouteDescriptor } from './navigation/types';
+import { RouteDescriptor } from './navigation/types';
 import { contextSrv } from './services/context_srv';
 import { SideMenu } from './components/sidemenu/SideMenu';
 import { navigationLogger, queryStringToJSON, shouldForceReload } from './navigation/utils';
 import { updateLocation } from './actions';
+import { GrafanaRoute } from './navigation/GrafanaRoute';
 
 interface AppWrapperProps {
   app: GrafanaApp;
@@ -59,7 +60,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
     );
   }
 
-  renderRoute = (route: RouteDescriptor, index: number) => {
+  renderRoute = (route: RouteDescriptor) => {
     // const { updateLocation } = this.props;
     // TODO[Router]
     // @ts-ignore
@@ -105,10 +106,9 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
             <GrafanaRoute
               {...props}
               component={route.component}
-              pageClass={route.pageClass}
+              route={route}
               $injector={this.state.ngInjector}
               $contextSrv={contextSrv}
-              routeInfo={route.routeInfo}
             />
           );
         }}
@@ -117,7 +117,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
   };
 
   renderRoutes() {
-    return <Switch>{routes.map((descriptor, i) => this.renderRoute(descriptor, i))}</Switch>;
+    return <Switch>{routes.map((r) => this.renderRoute(r))}</Switch>;
   }
 
   render() {
@@ -136,9 +136,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                   <div className="grafana-app">
                     <Router history={getLocationService().getHistory()}>
                       <>
-                        <div className={'sidemenu'}>
-                          <SideMenu />
-                        </div>
+                        <SideMenu />
                         <div className="main-view">
                           <div
                             ref={this.container}
@@ -161,23 +159,3 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
     );
   }
 }
-
-const GrafanaRoute: React.FC<GrafanaRouteProps<any>> = (props) => {
-  const pageClasses = useRef<string[]>([]);
-  pageClasses.current = props.pageClass ? props.pageClass.split(' ') : [];
-
-  useEffect(() => {
-    navigationLogger('GrafanaRoute', false, 'Mounted', props.match);
-    pageClasses.current.forEach((c) => document.body.classList.add(c));
-
-    return () => {
-      pageClasses.current.forEach((c) => document.body.classList.add(c));
-    };
-  });
-
-  const { component, ...routeComponentProps } = props;
-
-  return React.createElement(component, {
-    ...routeComponentProps,
-  });
-};

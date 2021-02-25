@@ -4,13 +4,14 @@ import { ContextSrv } from '../services/context_srv';
 
 export interface GrafanaRouteProps<T, Q = any> extends RouteComponentProps<T> {
   component: React.ComponentType<GrafanaRouteComponentProps<T>>;
+  route: RouteDescriptor;
   $injector: any; // TODO[Router]: annotate correctly
   $contextSrv: ContextSrv;
-  routeInfo?: string;
-  pageClass?: string;
 }
 
-type GrafanaRouteComponentProps<T> = Omit<GrafanaRouteProps<T>, 'component'>;
+type GrafanaRouteComponentProps<T> = Omit<GrafanaRouteProps<T>, 'component' | 'route'> & {
+  routeInfo?: string;
+};
 
 export interface RouteDescriptor {
   path: string;
