@@ -106,7 +106,7 @@ func parseQuery(dsInfo *models.DataSource, queries []*tsdb.Query, queryContext *
 	for _, queryModel := range queries {
 		expr, err := queryModel.Model.Get("expr").String()
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse From: %v", err)
+			return nil, fmt.Errorf("failed to parse Expr: %v", err)
 		}
 
 		format := queryModel.Model.Get("legendFormat").MustString("")
