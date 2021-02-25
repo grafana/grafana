@@ -35,6 +35,7 @@ type Service struct {
 	CloudWatchService      *cloudwatch.CloudWatchService `inject:""`
 	CloudMonitoringService *cloudmonitoring.Service      `inject:""`
 	AzureMonitorService    *azuremonitor.Service         `inject:""`
+	PluginManager          *plugins.PluginManager        `inject:""`
 
 	registry map[string]func(*models.DataSource) (pluginmodels.DataPlugin, error)
 }
@@ -57,7 +58,7 @@ func (s *Service) Init() error {
 
 func (s *Service) HandleRequest(ctx context.Context, ds *models.DataSource, query pluginmodels.DataQuery) (
 	pluginmodels.DataResponse, error) {
-	plugin := plugins.GetDataPlugin(ds.Type)
+	plugin := s.PluginManager.GetDataPlugin(ds.Type)
 	if plugin == nil {
 		factory, exists := s.registry[ds.Type]
 		if !exists {

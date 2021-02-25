@@ -597,7 +597,17 @@ func collectPluginFilesWithin(rootDir string) ([]string, error) {
 }
 
 // GetDataPlugin gets a DataPlugin with a certain name. If none is found, nil is returned.
-func GetDataPlugin(pluginID string) pluginmodels.DataPlugin {
-	return DataSources[pluginID]
-	// TODO: Look among other plugins
+func (pm *PluginManager) GetDataPlugin(pluginID string) pluginmodels.DataPlugin {
+	if p, exists := DataSources[pluginID]; exists {
+		return p
+	}
+
+	// XXX: Might other plugins implement DataPlugin?
+
+	p := pm.BackendPluginManager.GetDataPlugin(pluginID)
+	if p != nil {
+		return p.(pluginmodels.DataPlugin)
+	}
+
+	return nil
 }
