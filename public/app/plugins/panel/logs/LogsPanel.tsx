@@ -26,7 +26,6 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
   return (
     <CustomScrollbar autoHide>
       <LogRows
-        rowLimit={logRows ? logRows.length : undefined}
         logRows={logRows}
         deduplicatedRows={deduplicatedRows}
         dedupStrategy={dedupStrategy}
