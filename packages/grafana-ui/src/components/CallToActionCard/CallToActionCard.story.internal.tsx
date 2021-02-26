@@ -11,7 +11,7 @@ export default {
   component: CallToActionCard,
   parameters: {
     knobs: {
-      disabled: true,
+      disable: true,
     },
   },
   argTypes: {

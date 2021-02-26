@@ -47,6 +47,8 @@ github.com/bombsimon/wsl/v3 v3.1.0/go.mod h1:st10JtZYLE4D5sC7b8xV4zTKZwAQjCH/Hy2
 github.com/cespare/xxhash v1.1.0/go.mod h1:XrSqR1VqqWfGrhpAt58auRo0WTKS1nRRg3ghfAqPWnc=
 github.com/charithe/durationcheck v0.0.3 h1:W+9cu38epH7otBF96pdhbFw5vLilsl1oseMOiOgex5E=
 github.com/charithe/durationcheck v0.0.3/go.mod h1:0oCYOIgY8Om3hZxPedxKn0mzy0rneKTWJhRm+r6Gl20=
+github.com/charithe/durationcheck v0.0.4 h1:lD3ud3KJ2DaoL80EZ768cSBv3DS8Xr7nNgN+kgW1tts=
+github.com/charithe/durationcheck v0.0.4/go.mod h1:0oCYOIgY8Om3hZxPedxKn0mzy0rneKTWJhRm+r6Gl20=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/coreos/bbolt v1.3.2/go.mod h1:iRUV2dpdMOn7Bo10OQBFzIJO9kkE559Wcmn+qkEiiKk=
 github.com/coreos/etcd v3.3.13+incompatible/go.mod h1:uF7uidLiAD3TWHmW31ZFd/JWoc32PjwdhPthX9715RE=
@@ -150,6 +152,8 @@ github.com/golangci/gofmt v0.0.0-20190930125516-244bba706f1a h1:iR3fYXUjHCR97qWS
 github.com/golangci/gofmt v0.0.0-20190930125516-244bba706f1a/go.mod h1:9qCChq59u/eW8im404Q2WWTrnBUQKjpNYKMbU4M7EFU=
 github.com/golangci/golangci-lint v1.37.0 h1:jhxIiiPucX/mOiRP8PbfKg7IHjaBUmInx2kxRBZD3Us=
 github.com/golangci/golangci-lint v1.37.0/go.mod h1:BlaDtSbtsbLI3bY3yX1rz6PaLWZG0PQDV/fqUEBrJZo=
+github.com/golangci/golangci-lint v1.37.1 h1:Unt38FmBltdoILo6oQUMp6PuxwWbJ1YyNSStCrvA7+8=
+github.com/golangci/golangci-lint v1.37.1/go.mod h1:zOcxSdfQDe6AE9andI1mH5mBmOQwmRg0U2kW2a6WhpA=
 github.com/golangci/ineffassign v0.0.0-20190609212857-42439a7714cc h1:gLLhTLMk2/SutryVJ6D4VZCU3CUqr8YloG7FPIBWFpI=
 github.com/golangci/ineffassign v0.0.0-20190609212857-42439a7714cc/go.mod h1:e5tpTHCfVze+7EpLEozzMB3eafxo2KT5veNg1k6byQU=
 github.com/golangci/lint-1 v0.0.0-20191013205115-297bf364a8e0 h1:MfyDlzVjl1hoaPzPD4Gpb/QgoRfSBR0jdhwGyAWwMSA=

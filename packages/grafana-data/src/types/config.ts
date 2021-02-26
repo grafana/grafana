@@ -50,6 +50,7 @@ export interface FeatureToggles {
    * Available only in Grafana Enterprise
    */
   meta: boolean;
+  reportVariables: boolean;
 }
 
 /**

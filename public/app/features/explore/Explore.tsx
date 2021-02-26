@@ -288,14 +288,18 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   });
 
   renderTraceViewPanel() {
-    const { queryResponse, splitOpen } = this.props;
+    const { queryResponse, splitOpen, exploreId } = this.props;
     const dataFrames = queryResponse.series.filter((series) => series.meta?.preferredVisualisationType === 'trace');
 
     return (
       // We expect only one trace at the moment to be in the dataframe
       // If there is no data (like 404) we show a separate error so no need to show anything here
       dataFrames[0] && (
-        <TraceView trace={dataFrames[0].fields[0].values.get(0) as TraceViewData | undefined} splitOpenFn={splitOpen} />
+        <TraceView
+          exploreId={exploreId}
+          trace={dataFrames[0].fields[0].values.get(0) as TraceViewData | undefined}
+          splitOpenFn={splitOpen}
+        />
       )
     );
   }

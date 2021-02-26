@@ -42,14 +42,14 @@ func TestCreatingAlertDefinition(t *testing.T) {
 		expectedUpdated time.Time
 	}{
 		{
-			desc:                 "should create successfuly an alert definition with default interval",
+			desc:                 "should create successfully an alert definition with default interval",
 			inputIntervalSeconds: nil,
 			inputTitle:           "a name",
 			expectedInterval:     defaultIntervalSeconds,
 			expectedUpdated:      time.Unix(0, 0).UTC(),
 		},
 		{
-			desc:                 "should create successfuly an alert definition with custom interval",
+			desc:                 "should create successfully an alert definition with custom interval",
 			inputIntervalSeconds: &customIntervalSeconds,
 			inputTitle:           "another name",
 			expectedInterval:     customIntervalSeconds,

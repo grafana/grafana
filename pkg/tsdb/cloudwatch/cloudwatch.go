@@ -42,6 +42,7 @@ type datasourceInfo struct {
 	assumeRoleARN string
 	externalID    string
 	namespace     string
+	Endpoint      string
 
 	accessKey string
 	secretKey string
@@ -108,6 +109,7 @@ func NewInstanceSettings() datasource.InstanceFactoryFunc {
 			region:        jsonData["defaultRegion"],
 			assumeRoleARN: jsonData["assumeRoleArn"],
 			externalID:    jsonData["externalId"],
+			Endpoint:      jsonData["endpoint"],
 			namespace:     jsonData["customMetricsNamespaces"],
 			datasourceID:  settings.ID,
 		}
@@ -158,7 +160,7 @@ func (e *cloudWatchExecutor) newSession(region string, pluginCtx backend.PluginC
 
 	bldr := strings.Builder{}
 	for i, s := range []string{
-		dsInfo.authType.String(), dsInfo.accessKey, dsInfo.profile, dsInfo.assumeRoleARN, region,
+		dsInfo.authType.String(), dsInfo.accessKey, dsInfo.profile, dsInfo.assumeRoleARN, region, dsInfo.Endpoint,
 	} {
 		if i != 0 {
 			bldr.WriteString(":")
@@ -190,6 +192,10 @@ func (e *cloudWatchExecutor) newSession(region string, pluginCtx backend.PluginC
 	if dsInfo.region != "" {
 		regionCfg = &aws.Config{Region: aws.String(dsInfo.region)}
 		cfgs = append(cfgs, regionCfg)
+	}
+
+	if dsInfo.Endpoint != "" {
+		cfgs = append(cfgs, &aws.Config{Endpoint: aws.String(dsInfo.Endpoint)})
 	}
 
 	switch dsInfo.authType {

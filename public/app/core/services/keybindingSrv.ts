@@ -7,7 +7,8 @@ import { LegacyGraphHoverClearEvent, locationUtil } from '@grafana/data';
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
-import { store } from 'app/store/store';
+import { dispatch, store } from 'app/store/store';
+import { exitPanelEditor } from 'app/features/dashboard/components/PanelEditor/state/actions';
 import { AppEventEmitter, CoreEvents } from 'app/types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { DashboardModel } from 'app/features/dashboard/state';
@@ -17,7 +18,6 @@ import { defaultQueryParams } from 'app/features/search/reducers/searchQueryRedu
 import { ContextSrv } from './context_srv';
 
 export class KeybindingSrv {
-  helpModal: boolean;
   modalOpen = false;
 
   /** @ngInject */
@@ -129,9 +129,7 @@ export class KeybindingSrv {
     }
 
     if (search.editPanel) {
-      delete search.editPanel;
-      delete search.tab;
-      this.$location.search(search);
+      dispatch(exitPanelEditor());
       return;
     }
 
