@@ -24,7 +24,6 @@ interface SvgProps {
   width: number;
   values: DisplayValue[];
   pieType: PieChartType;
-  labelOptions?: PieChartLabelOptions;
   displayLabels?: PieChartLabels[];
   useGradients?: boolean;
 }
@@ -35,12 +34,6 @@ export interface Props extends SvgProps {
 export enum PieChartType {
   Pie = 'pie',
   Donut = 'donut',
-}
-
-export interface PieChartLabelOptions {
-  showName?: boolean;
-  showValue?: boolean;
-  showPercent?: boolean;
 }
 
 export interface PieChartLegendOptions extends VizLegendOptions {
@@ -106,7 +99,7 @@ export const PieChartSvg: FC<SvgProps> = ({
   width,
   height,
   useGradients = true,
-  labelOptions = { showName: true },
+  displayLabels = [],
 }) => {
   const theme = useTheme();
   const componentInstanceId = useComponentInstanceId('PieChart');
@@ -136,7 +129,7 @@ export const PieChartSvg: FC<SvgProps> = ({
     });
   };
 
-  const showLabel = labelOptions.showName || labelOptions.showPercent || labelOptions.showValue;
+  const showLabel = displayLabels.length > 0;
   const total = values.reduce((acc, item) => item.numeric + acc, 0);
   const layout = getPieLayout(width, height, pieType);
 
@@ -189,7 +182,7 @@ export const PieChartSvg: FC<SvgProps> = ({
                         arc={arc}
                         outerRadius={layout.outerRadius}
                         innerRadius={layout.innerRadius}
-                        labelOptions={labelOptions}
+                        displayLabels={displayLabels}
                         total={total}
                       />
                     )}
@@ -213,9 +206,9 @@ const PieLabel: FC<{
   arc: PieArcDatum<DisplayValue>;
   outerRadius: number;
   innerRadius: number;
-  labelOptions: PieChartLabelOptions;
+  displayLabels: PieChartLabels[];
   total: number;
-}> = ({ arc, outerRadius, innerRadius, labelOptions, total }) => {
+}> = ({ arc, outerRadius, innerRadius, displayLabels, total }) => {
   const labelRadius = innerRadius === 0 ? outerRadius / 6 : innerRadius;
   const [labelX, labelY] = getLabelPos(arc, outerRadius, labelRadius);
   const hasSpaceForLabel = arc.endAngle - arc.startAngle >= 0.3;
@@ -224,7 +217,7 @@ const PieLabel: FC<{
     return null;
   }
 
-  let labelFontSize = labelOptions.showName
+  let labelFontSize = displayLabels.includes(PieChartLabels.Name)
     ? Math.min(Math.max((outerRadius / 150) * 14, 12), 30)
     : Math.min(Math.max((outerRadius / 100) * 14, 12), 36);
 
@@ -239,17 +232,17 @@ const PieLabel: FC<{
         textAnchor="middle"
         pointerEvents="none"
       >
-        {labelOptions.showName && (
+        {displayLabels.includes(PieChartLabels.Name) && (
           <tspan x={labelX} dy="1.2em">
             {arc.data.title}
           </tspan>
         )}
-        {labelOptions.showValue && (
+        {displayLabels.includes(PieChartLabels.Value) && (
           <tspan x={labelX} dy="1.2em">
             {formattedValueToString(arc.data)}
           </tspan>
         )}
-        {labelOptions.showPercent && (
+        {displayLabels.includes(PieChartLabels.Percent) && (
           <tspan x={labelX} dy="1.2em">
             {((arc.data.numeric / total) * 100).toFixed(0) + '%'}
           </tspan>
