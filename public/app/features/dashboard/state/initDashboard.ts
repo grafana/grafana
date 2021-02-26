@@ -30,6 +30,7 @@ import { DataQuery, locationUtil } from '@grafana/data';
 import { initVariablesTransaction } from '../../variables/state/actions';
 import { emitDashboardViewEvent } from './analyticsProcessor';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
+import { getLocationService } from '@grafana/runtime';
 
 export interface InitDashboardArgs {
   $injector: any;
@@ -54,7 +55,7 @@ async function redirectToNewUrl(slug: string, dispatch: ThunkDispatch, currentPa
     }
 
     const url = locationUtil.stripBaseFromUrl(newUrl);
-    dispatch(updateLocation({ path: url, partial: true, replace: true }));
+    getLocationService().replace(url);
   }
 }
 
@@ -72,7 +73,7 @@ async function fetchDashboard(
         // if user specified a custom home dashboard redirect to that
         if (dashDTO.redirectUri) {
           const newUrl = locationUtil.stripBaseFromUrl(dashDTO.redirectUri);
-          dispatch(updateLocation({ path: newUrl, replace: true }));
+          getLocationService().replace(newUrl);
           return null;
         }
 
@@ -99,7 +100,7 @@ async function fetchDashboard(
 
           if (dashboardUrl !== currentPath) {
             // replace url to not create additional history items and then return so that initDashboard below isn't executed multiple times.
-            dispatch(updateLocation({ path: dashboardUrl, partial: true, replace: true }));
+            getLocationService().replace(dashboardUrl);
             return null;
           }
         }
@@ -169,6 +170,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     // add missing orgId query param
     const storeState = getState();
     if (!storeState.location.query.orgId) {
+      // TODO this is currently not possible with the LocationService API
       dispatch(updateLocation({ query: { orgId: storeState.user.orgId }, partial: true, replace: true }));
     }
 

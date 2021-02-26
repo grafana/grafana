@@ -43,17 +43,24 @@ export class LocationService implements LocationServiceAPI {
       // @ts-ignore
       window['_debug'] = debugGlobal;
     }
+
+    this.partial = this.partial.bind(this);
+    this.push = this.push.bind(this);
+    this.replace = this.replace.bind(this);
+    this.getUrlSearchParams = this.getUrlSearchParams.bind(this);
+    this.getHistory = this.getHistory.bind(this);
+    this.getCurrentLocation = this.getCurrentLocation.bind(this);
   }
 
   getHistory() {
     return this.history;
   }
 
-  getUrlSearchParams = () => {
+  getUrlSearchParams() {
     return new URLSearchParams(this.history.location.search);
-  };
+  }
 
-  partial = (query: Record<string, any>, replace?: boolean) => {
+  partial(query: Record<string, any>, replace?: boolean) {
     const currentLocation = this.history.location;
     const params = this.getUrlSearchParams();
 
@@ -83,19 +90,19 @@ export class LocationService implements LocationServiceAPI {
     } else {
       this.history.push(locationUpdate);
     }
-  };
+  }
 
-  push = (location: H.Path | H.LocationDescriptor) => {
+  push(location: H.Path | H.LocationDescriptor) {
     this.history.push(location);
-  };
+  }
 
-  replace = (location: H.Path) => {
+  replace(location: H.Path) {
     this.history.replace(location);
-  };
+  }
 
-  getCurrentLocation = () => {
+  getCurrentLocation() {
     return this.history.location;
-  };
+  }
 
   // Angular $location compat API
   // TODO[Router]
