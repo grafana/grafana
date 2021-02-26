@@ -19,6 +19,11 @@ export enum PieChartLabels {
   Percent = 'percent',
 }
 
+export enum LegendColumns {
+  Value = 'value',
+  Percent = 'percent',
+}
+
 interface SvgProps {
   height: number;
   width: number;
@@ -37,15 +42,14 @@ export enum PieChartType {
 }
 
 export interface PieChartLegendOptions extends VizLegendOptions {
-  showPercent?: boolean;
-  showValue?: boolean;
+  displayColumns: LegendColumns[];
 }
 
 const defaultLegendOptions: PieChartLegendOptions = {
   displayMode: LegendDisplayMode.List,
   placement: 'right',
   calcs: [],
-  showPercent: true,
+  displayColumns: [LegendColumns.Percent],
 };
 
 export const PieChart: FC<Props> = ({ values, legendOptions = defaultLegendOptions, width, height, ...restProps }) => {
@@ -63,7 +67,11 @@ export const PieChart: FC<Props> = ({ values, legendOptions = defaultLegendOptio
         getDisplayValues: () => {
           let displayValues = [];
 
-          if (legendOptions.showPercent) {
+          if (legendOptions.displayColumns.includes(LegendColumns.Value)) {
+            displayValues.push({ numeric: value.numeric, text: formattedValueToString(value), title: 'Value' });
+          }
+
+          if (legendOptions.displayColumns.includes(LegendColumns.Percent)) {
             const fractionOfTotal = value.numeric / total;
             const percentOfTotal = fractionOfTotal * 100;
             displayValues.push({
@@ -72,10 +80,6 @@ export const PieChart: FC<Props> = ({ values, legendOptions = defaultLegendOptio
               text: percentOfTotal.toFixed(0) + '%',
               title: 'Percent',
             });
-          }
-
-          if (legendOptions.showValue) {
-            displayValues.push({ numeric: value.numeric, text: formattedValueToString(value), title: 'Value' });
           }
 
           return displayValues;

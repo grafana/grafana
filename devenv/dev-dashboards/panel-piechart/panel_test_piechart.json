@@ -15,6 +15,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
+  "id": 479,
   "links": [],
   "panels": [
     {
@@ -61,10 +62,9 @@
           "showValue": false
         },
         "legend": {
+          "displayColumns": [],
           "displayMode": "list",
-          "placement": "right",
-          "showPercent": false,
-          "showValue": false
+          "placement": "right"
         },
         "pieType": "donut",
         "reduceOptions": {
@@ -137,10 +137,11 @@
           "showValue": false
         },
         "legend": {
+          "displayColumns": [
+            "percent"
+          ],
           "displayMode": "list",
-          "placement": "right",
-          "showPercent": true,
-          "showValue": false
+          "placement": "right"
         },
         "pieType": "pie",
         "reduceOptions": {
@@ -210,10 +211,9 @@
           "showValue": false
         },
         "legend": {
+          "displayColumns": [],
           "displayMode": "hidden",
-          "placement": "right",
-          "showPercent": false,
-          "showValue": false
+          "placement": "right"
         },
         "pieType": "pie",
         "reduceOptions": {
@@ -283,10 +283,11 @@
           "showValue": false
         },
         "legend": {
+          "displayColumns": [
+            "percent"
+          ],
           "displayMode": "table",
-          "placement": "bottom",
-          "showPercent": true,
-          "showValue": false
+          "placement": "bottom"
         },
         "pieType": "pie",
         "reduceOptions": {
@@ -356,10 +357,11 @@
           "showValue": true
         },
         "legend": {
+          "displayColumns": [
+            "value"
+          ],
           "displayMode": "table",
-          "placement": "bottom",
-          "showPercent": false,
-          "showValue": true
+          "placement": "bottom"
         },
         "pieType": "pie",
         "reduceOptions": {
@@ -429,10 +431,9 @@
           "showValue": false
         },
         "legend": {
+          "displayColumns": [],
           "displayMode": "list",
-          "placement": "bottom",
-          "showPercent": false,
-          "showValue": false
+          "placement": "bottom"
         },
         "pieType": "pie",
         "reduceOptions": {
@@ -500,10 +501,9 @@
           "showValue": false
         },
         "legend": {
+          "displayColumns": ["percent", "value"],
           "displayMode": "table",
-          "placement": "bottom",
-          "showPercent": true,
-          "showValue": true
+          "placement": "bottom"
         },
         "pieType": "pie",
         "reduceOptions": {
@@ -549,5 +549,5 @@
   "timezone": "",
   "title": "Panel Tests - Pie chart",
   "uid": "lVE-2YFMz",
-  "version": 3
+  "version": 9
 }
