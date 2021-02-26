@@ -268,7 +268,7 @@ func (e *cloudWatchExecutor) executeMetricFindQuery(ctx context.Context, queryCo
 	}
 
 	queryResult := pluginmodels.DataQueryResult{Meta: simplejson.New(), RefID: firstQuery.RefID}
-	transformToTable(data, queryResult)
+	transformToTable(data, &queryResult)
 	result := pluginmodels.DataResponse{
 		Results: map[string]pluginmodels.DataQueryResult{
 			firstQuery.RefID: queryResult,
@@ -277,7 +277,7 @@ func (e *cloudWatchExecutor) executeMetricFindQuery(ctx context.Context, queryCo
 	return result, nil
 }
 
-func transformToTable(data []suggestData, result pluginmodels.DataQueryResult) {
+func transformToTable(data []suggestData, result *pluginmodels.DataQueryResult) {
 	table := pluginmodels.DataTable{
 		Columns: []pluginmodels.DataTableColumn{
 			{

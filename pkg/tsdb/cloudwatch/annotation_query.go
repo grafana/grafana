@@ -121,12 +121,12 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryCo
 		}
 	}
 
-	transformAnnotationToTable(annotations, queryResult)
+	transformAnnotationToTable(annotations, &queryResult)
 	result.Results[firstQuery.RefID] = queryResult
 	return result, nil
 }
 
-func transformAnnotationToTable(data []map[string]string, result pluginmodels.DataQueryResult) {
+func transformAnnotationToTable(data []map[string]string, result *pluginmodels.DataQueryResult) {
 	table := pluginmodels.DataTable{
 		Columns: make([]pluginmodels.DataTableColumn, 4),
 		Rows:    make([]pluginmodels.DataRowValues, 0),
