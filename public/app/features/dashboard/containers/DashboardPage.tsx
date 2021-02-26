@@ -79,6 +79,23 @@ export class DashboardPage extends PureComponent<Props, State> {
   };
 
   async componentDidMount() {
+    this.initDashboard();
+  }
+
+  componentWillUnmount() {
+    this.closeDashboard();
+  }
+
+  closeDashboard() {
+    this.props.cleanUpDashboardAndVariables();
+    this.setPanelFullscreenClass(false);
+  }
+
+  initDashboard() {
+    if (this.props.dashboard) {
+      this.closeDashboard();
+    }
+
     this.props.initDashboard({
       $injector: this.props.$injector,
       $scope: this.props.$scope,
@@ -89,11 +106,6 @@ export class DashboardPage extends PureComponent<Props, State> {
       routeInfo: this.props.routeInfo,
       fixUrl: true,
     });
-  }
-
-  componentWillUnmount() {
-    this.props.cleanUpDashboardAndVariables();
-    this.setPanelFullscreenClass(false);
   }
 
   componentDidUpdate(prevProps: Props) {
@@ -109,9 +121,8 @@ export class DashboardPage extends PureComponent<Props, State> {
       document.title = dashboard.title + ' - ' + Branding.AppTitle;
     }
 
-    // Due to the angular -> react url bridge we can ge an update here with new uid before the container unmounts
-    // Can remove this condition after we switch to react router
     if (prevProps.urlUid !== urlUid) {
+      this.initDashboard();
       return;
     }
 
