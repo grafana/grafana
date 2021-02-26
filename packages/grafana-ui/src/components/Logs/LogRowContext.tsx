@@ -134,16 +134,13 @@ const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps> = ({
               <List
                 items={rows}
                 renderItem={(item) => {
-                  if (typeof item === 'string' && textUtil.hasAnsiCodes(item)) {
-                    return <LogMessageAnsi value={item} />;
-                  }
                   return (
                     <div
                       className={css`
                         padding: 5px 0;
                       `}
                     >
-                      {item}
+                      {typeof item === 'string' && textUtil.hasAnsiCodes(item) ? <LogMessageAnsi value={item} /> : item}
                     </div>
                   );
                 }}
