@@ -1,5 +1,5 @@
 import React, { useContext, useRef, useState, useLayoutEffect, useEffect } from 'react';
-import { GrafanaTheme, DataQueryError, LogRowModel } from '@grafana/data';
+import { GrafanaTheme, DataQueryError, LogRowModel, textUtil } from '@grafana/data';
 import { css, cx } from 'emotion';
 
 import { Alert } from '../Alert/Alert';
@@ -8,6 +8,7 @@ import { ThemeContext } from '../../themes/ThemeContext';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { List } from '../List/List';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
+import { LogMessageAnsi } from './LogMessageAnsi';
 
 interface LogRowContextProps {
   row: LogRowModel;
@@ -133,6 +134,11 @@ const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps> = ({
               <List
                 items={rows}
                 renderItem={(item) => {
+                  if (typeof item === 'string') {
+                    if (textUtil.hasAnsiCodes(item)) {
+                      return <LogMessageAnsi value={item} />;
+                    }
+                  }
                   return (
                     <div
                       className={css`
