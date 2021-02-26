@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/tsdb"
+	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	"github.com/stretchr/testify/require"
 )
 
@@ -19,8 +19,8 @@ func TestSqlEngine(t *testing.T) {
 	t.Run("Given a time range between 2018-04-12 00:00 and 2018-04-12 00:05", func(t *testing.T) {
 		from := time.Date(2018, 4, 12, 18, 0, 0, 0, time.UTC)
 		to := from.Add(5 * time.Minute)
-		timeRange := tsdb.NewFakeTimeRange("5m", "now", to)
-		query := &tsdb.Query{DataSource: &models.DataSource{}, Model: simplejson.New()}
+		timeRange := pluginmodels.DataTimeRange{From: "5m", To: "now", Now: to}
+		query := pluginmodels.DataSubQuery{DataSource: &models.DataSource{}, Model: simplejson.New()}
 
 		t.Run("interpolate $__interval", func(t *testing.T) {
 			sql, err := Interpolate(query, timeRange, "select $__interval ")
