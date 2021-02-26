@@ -134,8 +134,8 @@ func (hs *HTTPServer) registerRoutes() {
 			userRoute.Get("/orgs", routing.Wrap(GetSignedInUserOrgList))
 			userRoute.Get("/teams", routing.Wrap(GetSignedInUserTeamList))
 
-			userRoute.Post("/stars/dashboard/:id", routing.Wrap(StarDashboard), reqSignedInNoAnonymous)
-			userRoute.Delete("/stars/dashboard/:id", routing.Wrap(UnstarDashboard), reqSignedInNoAnonymous)
+			userRoute.Post("/stars/dashboard/:id", routing.Wrap(StarDashboard))
+			userRoute.Delete("/stars/dashboard/:id", routing.Wrap(UnstarDashboard))
 
 			userRoute.Put("/password", bind(models.ChangeUserPasswordCommand{}), routing.Wrap(ChangeUserPassword))
 			userRoute.Get("/quotas", routing.Wrap(GetUserQuotas))
