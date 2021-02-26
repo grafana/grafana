@@ -107,7 +107,7 @@ func buildCMDNode(dp *simple.DirectedGraph, rn *rawNode) (*CMDNode, error) {
 	case TypeResample:
 		node.Command, err = UnmarshalResampleCommand(rn)
 	case TypeClassicConditions:
-		node.Command, err = classic.UnmarshalClassicConditionsCmd(rn.Query, rn.RefID)
+		node.Command, err = classic.UnmarshalConditionsCmd(rn.Query, rn.RefID)
 	default:
 		return nil, fmt.Errorf("expression command type '%v' in '%v' not implemented", commandType, rn.RefID)
 	}
