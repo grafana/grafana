@@ -57,16 +57,6 @@ export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
           ],
         },
       })
-      .addBooleanSwitch({
-        name: 'Show percent in legend',
-        path: 'legend.showPercent',
-        defaultValue: false,
-      })
-      .addBooleanSwitch({
-        name: 'Show value in legend',
-        path: 'legend.showValue',
-        defaultValue: false,
-      })
       .addRadio({
         path: 'legend.displayMode',
         name: 'Legend mode',
@@ -92,5 +82,15 @@ export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
           ],
         },
         showIf: (c) => c.legend.displayMode !== LegendDisplayMode.Hidden,
+      })
+      .addBooleanSwitch({
+        name: 'Show percent in legend',
+        path: 'legend.showPercent',
+        defaultValue: false,
+      })
+      .addBooleanSwitch({
+        name: 'Show value in legend',
+        path: 'legend.showValue',
+        defaultValue: false,
       });
   });
