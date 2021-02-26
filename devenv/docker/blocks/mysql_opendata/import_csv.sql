@@ -55,11 +55,12 @@ CREATE TABLE IF NOT EXISTS `nyc_open_data` (
   Longitude varchar(255),
   Location varchar(255)
 );
+SET @defaultDateFormat = '%m/%d/%Y %r'
 LOAD DATA INFILE '/var/lib/mysql-files/311_Service_Requests_from_2015.csv' INTO TABLE nyc_open_data FIELDS OPTIONALLY ENCLOSED BY '"' TERMINATED BY ',' IGNORE 1 LINES;
-UPDATE nyc_open_data SET CreatedDate = STR_TO_DATE(CreatedDate, '%m/%d/%Y %r') WHERE CreatedDate <> '';
-UPDATE nyc_open_data SET ClosedDate = STR_TO_DATE(ClosedDate, '%m/%d/%Y %r') WHERE ClosedDate <> '';
-UPDATE nyc_open_data SET DueDate = STR_TO_DATE(DueDate, '%m/%d/%Y %r') WHERE DueDate <> '';
-UPDATE nyc_open_data SET ResolutionActionUpdatedDate = STR_TO_DATE(ResolutionActionUpdatedDate, '%m/%d/%Y %r') WHERE ResolutionActionUpdatedDate <> '';
+UPDATE nyc_open_data SET CreatedDate = STR_TO_DATE(CreatedDate, @defaultDateFormat) WHERE CreatedDate IS NOT NULL AND LEN(CreatedDate) > 0;
+UPDATE nyc_open_data SET ClosedDate = STR_TO_DATE(ClosedDate, @defaultDateFormat) WHERE ClosedDate IS NOT NULL AND LEN(ClosedDate) > 0;
+UPDATE nyc_open_data SET DueDate = STR_TO_DATE(DueDate, @defaultDateFormat) WHERE DueDateIS NOT NULL AND LEN(DueDateIS) > 0;
+UPDATE nyc_open_data SET ResolutionActionUpdatedDate = STR_TO_DATE(ResolutionActionUpdatedDate, @defaultDateFormat) WHERE ResolutionActionUpdatedDate IS NOT NULL AND LEN(ResolutionActionUpdatedDate) > 0;
 
 UPDATE nyc_open_data SET CreatedDate=null WHERE CreatedDate = '';
 UPDATE nyc_open_data SET ClosedDate=null WHERE ClosedDate = '';
