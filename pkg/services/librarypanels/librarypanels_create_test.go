@@ -1,13 +1,10 @@
 package librarypanels
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/models"
 )
 
 func TestCreateLibraryPanel(t *testing.T) {
@@ -96,86 +93,4 @@ func TestCreateLibraryPanel(t *testing.T) {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 			}
 		})
-
-	var roleTests = []struct {
-		role models.RoleType
-	}{
-		{models.ROLE_ADMIN},
-		{models.ROLE_EDITOR},
-		{models.ROLE_VIEWER},
-	}
-
-	for _, testCase := range roleTests {
-		testScenario(t, fmt.Sprintf("When an %s tries to create a library panel and the folder doesn't exist, it should fail", testCase.role),
-			func(t *testing.T, sc scenarioContext) {
-				sc.reqContext.SignedInUser.OrgRole = testCase.role
-				command := getCreateCommand(-1, "Library Panel Name")
-				resp := sc.service.createHandler(sc.reqContext, command)
-				require.Equal(t, 404, resp.Status())
-			})
-	}
-
-	var generalFolderTests = []struct {
-		role   models.RoleType
-		status int
-	}{
-		{models.ROLE_ADMIN, 200},
-		{models.ROLE_EDITOR, 200},
-		{models.ROLE_VIEWER, 403},
-	}
-
-	for _, testCase := range generalFolderTests {
-		testScenario(t, fmt.Sprintf("When an %s tries to create a library panel in the General folder, it should return correct status", testCase.role),
-			func(t *testing.T, sc scenarioContext) {
-				sc.reqContext.SignedInUser.OrgRole = testCase.role
-				command := getCreateCommand(0, "Library Panel Name")
-				resp := sc.service.createHandler(sc.reqContext, command)
-				require.Equal(t, testCase.status, resp.Status())
-			})
-	}
-
-	var accessTests = []struct {
-		role               models.RoleType
-		allFolderStatus    int
-		adminFolderStatus  int
-		editorFolderStatus int
-		viewerFolderStatus int
-		noneFolderStatus   int
-	}{
-		{models.ROLE_ADMIN, 200, 200, 200, 200, 200},
-		{models.ROLE_EDITOR, 200, 403, 200, 200, 403},
-		{models.ROLE_VIEWER, 200, 403, 403, 200, 403},
-	}
-
-	for _, testCase := range accessTests {
-		testScenario(t, fmt.Sprintf("When an %s tries to create a library panel in a folder the user has no access to, it should return correct status", testCase.role),
-			func(t *testing.T, sc scenarioContext) {
-				allFolder := createFolderWithACL(t, "AllFolder", sc.user, []folderACLItem{{models.ROLE_EDITOR, models.PERMISSION_EDIT}, {models.ROLE_VIEWER, models.PERMISSION_EDIT}})
-				adminFolder := createFolderWithACL(t, "AdminFolder", sc.user, []folderACLItem{{models.ROLE_ADMIN, models.PERMISSION_ADMIN}})
-				editorFolder := createFolderWithACL(t, "EditorFolder", sc.user, []folderACLItem{{models.ROLE_EDITOR, models.PERMISSION_EDIT}})
-				viewerFolder := createFolderWithACL(t, "ViewerFolder", sc.user, []folderACLItem{{models.ROLE_EDITOR, models.PERMISSION_EDIT}, {models.ROLE_VIEWER, models.PERMISSION_EDIT}})
-				noneFolder := createFolderWithACL(t, "NoneFolder", sc.user, []folderACLItem{{models.ROLE_ADMIN, models.PERMISSION_VIEW}})
-				sc.reqContext.SignedInUser.OrgRole = testCase.role
-
-				command := getCreateCommand(allFolder.Id, "Library Panel Name")
-				resp := sc.service.createHandler(sc.reqContext, command)
-				require.Equal(t, testCase.allFolderStatus, resp.Status())
-
-				command = getCreateCommand(adminFolder.Id, "Library Panel Name")
-				resp = sc.service.createHandler(sc.reqContext, command)
-				require.Equal(t, testCase.adminFolderStatus, resp.Status())
-
-				command = getCreateCommand(editorFolder.Id, "Library Panel Name")
-				resp = sc.service.createHandler(sc.reqContext, command)
-				require.Equal(t, testCase.editorFolderStatus, resp.Status())
-
-				command = getCreateCommand(viewerFolder.Id, "Library Panel Name")
-				resp = sc.service.createHandler(sc.reqContext, command)
-				require.Equal(t, testCase.viewerFolderStatus, resp.Status())
-
-				command = getCreateCommand(noneFolder.Id, "Library Panel Name")
-				resp = sc.service.createHandler(sc.reqContext, command)
-				require.Equal(t, testCase.noneFolderStatus, resp.Status())
-			})
-	}
 }

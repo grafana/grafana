@@ -66,7 +66,7 @@ func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd cre
 	}
 
 	err := lps.SQLStore.WithTransactionalDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
-		if _, err := hasPermissionsOnFolder(c.SignedInUser, cmd.FolderID); err != nil {
+		if err := requirePermissionsOnFolder(c.SignedInUser, cmd.FolderID); err != nil {
 			return err
 		}
 		if _, err := session.Insert(&libraryPanel); err != nil {
@@ -164,7 +164,9 @@ func (lps *LibraryPanelService) deleteLibraryPanel(c *models.ReqContext, uid str
 		if err != nil {
 			return err
 		}
-
+		if err := requirePermissionsOnFolder(c.SignedInUser, panel.FolderID); err != nil {
+			return err
+		}
 		if _, err := session.Exec("DELETE FROM library_panel_dashboard WHERE librarypanel_id=?", panel.ID); err != nil {
 			return err
 		}
@@ -410,13 +412,13 @@ func handleFolderIDPatches(panelToPatch *LibraryPanel, fromFolderID int64, toFol
 
 	// FolderID was provided in the PATCH request
 	if toFolderID != -1 && toFolderID != fromFolderID {
-		if _, err := hasPermissionsOnFolder(user, toFolderID); err != nil {
+		if err := requirePermissionsOnFolder(user, toFolderID); err != nil {
 			return err
 		}
 	}
 
 	// Always check permissions for the folder where library panel resides
-	if _, err := hasPermissionsOnFolder(user, fromFolderID); err != nil {
+	if err := requirePermissionsOnFolder(user, fromFolderID); err != nil {
 		return err
 	}
 

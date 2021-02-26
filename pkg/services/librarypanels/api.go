@@ -67,6 +67,12 @@ func (lps *LibraryPanelService) deleteHandler(c *models.ReqContext) response.Res
 		if errors.Is(err, errLibraryPanelNotFound) {
 			return response.Error(404, errLibraryPanelNotFound.Error(), err)
 		}
+		if errors.Is(err, models.ErrFolderNotFound) {
+			return response.Error(404, models.ErrFolderNotFound.Error(), err)
+		}
+		if errors.Is(err, models.ErrFolderAccessDenied) {
+			return response.Error(403, models.ErrFolderAccessDenied.Error(), err)
+		}
 		return response.Error(500, "Failed to delete library panel", err)
 	}
 
