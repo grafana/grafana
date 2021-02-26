@@ -1,9 +1,8 @@
 import { variableAdapters } from '../adapters';
 import { createTextBoxVariableAdapter } from './adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
-import { TemplatingState } from 'app/features/variables/state/reducers';
 import { setTextBoxVariableOptionsFromUrl, updateTextBoxVariableOptions } from './actions';
-import { getRootReducer } from '../state/helpers';
+import { getRootReducer, RootReducerType } from '../state/helpers';
 import { VariableOption } from '../types';
 import { toVariablePayload } from '../state/types';
 import { createTextBoxOptions } from './reducer';
@@ -24,7 +23,7 @@ describe('textbox actions', () => {
 
       const variable = textboxBuilder().withId('textbox').withName('textbox').withCurrent('A').withQuery('A').build();
 
-      const tester = await reduxTester<{ templating: TemplatingState }>()
+      const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenAsyncActionIsDispatched(updateTextBoxVariableOptions(toVariablePayload(variable)), true);
@@ -42,7 +41,7 @@ describe('textbox actions', () => {
       const urlValue = 'bB';
       const variable = textboxBuilder().withId('textbox').withName('textbox').withCurrent('A').withQuery('A').build();
 
-      const tester = await reduxTester<{ templating: TemplatingState }>()
+      const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenAsyncActionIsDispatched(setTextBoxVariableOptionsFromUrl(toVariablePayload(variable), urlValue), true);

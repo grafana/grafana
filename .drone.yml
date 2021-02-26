@@ -864,7 +864,7 @@ steps:
   image: grafana/ci-e2e:12.19.0-1
   commands:
   - ./node_modules/.bin/cypress install
-  - ./bin/grabpl e2e-tests --port 3001
+  - ./bin/grabpl e2e-tests --port 3001 --tries 3
   environment:
     HOST: end-to-end-tests-server
   depends_on:
@@ -1275,7 +1275,7 @@ steps:
   image: grafana/ci-e2e:12.19.0-1
   commands:
   - ./node_modules/.bin/cypress install
-  - ./bin/grabpl e2e-tests --port 3001
+  - ./bin/grabpl e2e-tests --port 3001 --tries 3
   environment:
     HOST: end-to-end-tests-server
   depends_on:
@@ -1412,7 +1412,7 @@ steps:
   image: grafana/ci-e2e:12.19.0-1
   commands:
   - ./node_modules/.bin/cypress install
-  - ./bin/grabpl e2e-tests --port 3002
+  - ./bin/grabpl e2e-tests --port 3002 --tries 3
   environment:
     HOST: end-to-end-tests-server-enterprise2
   depends_on:
@@ -1783,7 +1783,7 @@ steps:
   image: grafana/ci-e2e:12.19.0-1
   commands:
   - ./node_modules/.bin/cypress install
-  - ./bin/grabpl e2e-tests --port 3001
+  - ./bin/grabpl e2e-tests --port 3001 --tries 3
   environment:
     HOST: end-to-end-tests-server
   depends_on:
@@ -2183,7 +2183,7 @@ steps:
   image: grafana/ci-e2e:12.19.0-1
   commands:
   - ./node_modules/.bin/cypress install
-  - ./bin/grabpl e2e-tests --port 3001
+  - ./bin/grabpl e2e-tests --port 3001 --tries 3
   environment:
     HOST: end-to-end-tests-server
   depends_on:
@@ -2314,7 +2314,7 @@ steps:
   image: grafana/ci-e2e:12.19.0-1
   commands:
   - ./node_modules/.bin/cypress install
-  - ./bin/grabpl e2e-tests --port 3002
+  - ./bin/grabpl e2e-tests --port 3002 --tries 3
   environment:
     HOST: end-to-end-tests-server-enterprise2
   depends_on:
@@ -2681,7 +2681,7 @@ steps:
   image: grafana/ci-e2e:12.19.0-1
   commands:
   - ./node_modules/.bin/cypress install
-  - ./bin/grabpl e2e-tests --port 3001
+  - ./bin/grabpl e2e-tests --port 3001 --tries 3
   environment:
     HOST: end-to-end-tests-server
   depends_on:
@@ -3049,7 +3049,7 @@ steps:
   image: grafana/ci-e2e:12.19.0-1
   commands:
   - ./node_modules/.bin/cypress install
-  - ./bin/grabpl e2e-tests --port 3001
+  - ./bin/grabpl e2e-tests --port 3001 --tries 3
   environment:
     HOST: end-to-end-tests-server
   depends_on:
@@ -3190,7 +3190,7 @@ steps:
   image: grafana/ci-e2e:12.19.0-1
   commands:
   - ./node_modules/.bin/cypress install
-  - ./bin/grabpl e2e-tests --port 3002
+  - ./bin/grabpl e2e-tests --port 3002 --tries 3
   environment:
     HOST: end-to-end-tests-server-enterprise2
   depends_on:

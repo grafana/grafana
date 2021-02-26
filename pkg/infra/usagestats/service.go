@@ -54,18 +54,18 @@ func (uss *UsageStatsService) Init() error {
 func (uss *UsageStatsService) Run(ctx context.Context) error {
 	uss.updateTotalStats()
 
-	onceEveryDayTick := time.NewTicker(time.Hour * 24)
-	everyMinuteTicker := time.NewTicker(time.Minute)
-	defer onceEveryDayTick.Stop()
-	defer everyMinuteTicker.Stop()
+	sendReportTicker := time.NewTicker(time.Hour * 24)
+	updateStatsTicker := time.NewTicker(time.Minute * 30)
+	defer sendReportTicker.Stop()
+	defer updateStatsTicker.Stop()
 
 	for {
 		select {
-		case <-onceEveryDayTick.C:
+		case <-sendReportTicker.C:
 			if err := uss.sendUsageStats(ctx); err != nil {
 				metricsLogger.Warn("Failed to send usage stats", "err", err)
 			}
-		case <-everyMinuteTicker.C:
+		case <-updateStatsTicker.C:
 			uss.updateTotalStats()
 		case <-ctx.Done():
 			return ctx.Err()
