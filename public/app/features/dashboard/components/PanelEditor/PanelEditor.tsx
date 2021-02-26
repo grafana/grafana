@@ -6,7 +6,14 @@ import { Subscription } from 'rxjs';
 
 import { FieldConfigSource, GrafanaTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { HorizontalGroup, PageToolbar, RadioButtonGroup, stylesFactory, ToolbarButton } from '@grafana/ui';
+import {
+  HorizontalGroup,
+  ModalsController,
+  PageToolbar,
+  RadioButtonGroup,
+  stylesFactory,
+  ToolbarButton,
+} from '@grafana/ui';
 
 import config from 'app/core/config';
 import { appEvents } from 'app/core/core';
@@ -20,7 +27,13 @@ import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPane
 import { SaveDashboardModalProxy } from '../SaveDashboard/SaveDashboardModalProxy';
 import { DashboardPanel } from '../../dashgrid/DashboardPanel';
 
-import { initPanelEditor, panelEditorCleanUp, updatePanelEditorUIState } from './state/actions';
+import {
+  exitPanelEditor,
+  updateSourcePanel,
+  initPanelEditor,
+  panelEditorCleanUp,
+  updatePanelEditorUIState,
+} from './state/actions';
 
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 import { updateLocation } from 'app/core/reducers/location';
@@ -34,6 +47,8 @@ import { CoreEvents, StoreState } from 'app/types';
 import { DisplayMode, displayModes, PanelEditorTab } from './types';
 import { DashboardModel, PanelModel } from '../../state';
 import { PanelOptionsChangedEvent } from 'app/types/events';
+import { UnlinkModal } from '../../../library-panels/components/UnlinkModal/UnlinkModal';
+import { SaveLibraryPanelModal } from 'app/features/library-panels/components/SaveLibraryPanelModal/SaveLibraryPanelModal';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -58,6 +73,8 @@ const mapStateToProps = (state: StoreState) => {
 const mapDispatchToProps = {
   updateLocation,
   initPanelEditor,
+  exitPanelEditor,
+  updateSourcePanel,
   panelEditorCleanUp,
   setDiscardChanges,
   updatePanelEditorUIState,
@@ -93,13 +110,6 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     this.forceUpdate();
   };
 
-  onPanelExit = () => {
-    this.props.updateLocation({
-      query: { editPanel: null, tab: null },
-      partial: true,
-    });
-  };
-
   onDiscard = () => {
     this.props.setDiscardChanges(true);
     this.props.updateLocation({
@@ -116,6 +126,28 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     appEvents.emit(CoreEvents.showModalReact, {
       component: SaveDashboardModalProxy,
       props: { dashboard: this.props.dashboard },
+    });
+  };
+
+  onSavePanel = () => {
+    const panelId = this.props.panel.libraryPanel?.uid;
+    if (!panelId) {
+      // New library panel, no need to display modal
+      return;
+    }
+
+    appEvents.emit(CoreEvents.showModalReact, {
+      component: SaveLibraryPanelModal,
+      props: {
+        panel: this.props.panel,
+        folderId: this.props.dashboard.meta.folderId,
+        isOpen: true,
+        onConfirm: () => {
+          // need to update the source panel here so that when
+          // the user exits the panel editor they aren't prompted to save again
+          this.props.updateSourcePanel(this.props.panel);
+        },
+      },
     });
   };
 
@@ -137,14 +169,14 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     this.props.panel.updateOptions(options);
   };
 
-  onPanelConfigChanged = (configKey: string, value: any) => {
+  onPanelConfigChanged = (configKey: keyof PanelModel, value: any) => {
     // @ts-ignore
     this.props.panel[configKey] = value;
     this.props.panel.render();
     this.forceUpdate();
   };
 
-  onDisplayModeChange = (mode: DisplayMode) => {
+  onDisplayModeChange = (mode?: DisplayMode) => {
     const { updatePanelEditorUIState } = this.props;
     updatePanelEditorUIState({
       mode: mode,
@@ -245,7 +277,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 
   renderEditorActions() {
-    return [
+    let editorActions = [
       <ToolbarButton
         icon="cog"
         onClick={this.onOpenDashboardSettings}
@@ -255,11 +287,22 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
       <ToolbarButton onClick={this.onDiscard} title="Undo all changes" key="discard">
         Discard
       </ToolbarButton>,
-      <ToolbarButton onClick={this.onSaveDashboard} title="Apply changes and save dashboard" key="save">
-        Save
-      </ToolbarButton>,
+      this.props.panel.libraryPanel ? (
+        <ToolbarButton
+          onClick={this.onSavePanel}
+          variant="primary"
+          title="Apply changes and save library panel"
+          key="save-panel"
+        >
+          Save library panel
+        </ToolbarButton>
+      ) : (
+        <ToolbarButton onClick={this.onSaveDashboard} title="Apply changes and save dashboard" key="save">
+          Save
+        </ToolbarButton>
+      ),
       <ToolbarButton
-        onClick={this.onPanelExit}
+        onClick={this.props.exitPanelEditor}
         variant="primary"
         title="Apply changes and go back to dashboard"
         key="apply"
@@ -267,6 +310,41 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         Apply
       </ToolbarButton>,
     ];
+
+    if (this.props.panel.libraryPanel) {
+      editorActions.splice(
+        1,
+        0,
+        <ModalsController key="unlink-controller">
+          {({ showModal, hideModal }) => {
+            return (
+              <ToolbarButton
+                onClick={() => {
+                  showModal(UnlinkModal, {
+                    onConfirm: () => {
+                      delete this.props.panel.libraryPanel;
+                      this.props.panel.render();
+                      this.forceUpdate();
+                    },
+                    onDismiss: hideModal,
+                    isOpen: true,
+                  });
+                }}
+                title="Disconnects this panel from the reusable panel so that you can edit it regularly."
+                key="unlink"
+              >
+                Unlink
+              </ToolbarButton>
+            );
+          }}
+        </ModalsController>
+      );
+
+      // Remove "Apply" button
+      editorActions.pop();
+    }
+
+    return editorActions;
   }
 
   renderOptionsPane() {
@@ -305,7 +383,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
     return (
       <div className={styles.wrapper} aria-label={selectors.components.PanelEditor.General.content}>
-        <PageToolbar title={`${dashboard.title} / Edit Panel`} onGoBack={this.onPanelExit}>
+        <PageToolbar title={`${dashboard.title} / Edit Panel`} onGoBack={this.props.exitPanelEditor}>
           {this.renderEditorActions()}
         </PageToolbar>
         <div className={styles.verticalSplitPanesWrapper}>
