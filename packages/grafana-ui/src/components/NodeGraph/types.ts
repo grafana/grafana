@@ -12,6 +12,7 @@ export type NodeDatum = SimulationNodeDatum & {
     value: number;
     color: string;
   }>;
+  color: string;
 };
 export type EdgeDatum = SimulationLinkDatum<NodeDatum> & {
   id: string;

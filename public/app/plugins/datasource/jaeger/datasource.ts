@@ -11,7 +11,10 @@ import {
   DataFrame,
   TraceViewData,
   FieldDTO,
+  FieldConfig,
 } from '@grafana/data';
+
+import { NodeGraphDataFrameFieldNames as Fields } from '@grafana/ui';
 import { getBackendSrv, BackendSrvRequest } from '@grafana/runtime';
 import { Observable, from, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
@@ -161,7 +164,11 @@ function mapFields(data: Array<Record<string, any>>): FieldDTO[] {
   const map = data.reduce((acc, datum) => {
     for (const key of Object.keys(datum)) {
       if (!acc[key]) {
-        acc[key] = createField(key);
+        if (key === Fields.color) {
+          acc[key] = createField(key, { color: { mode: 'continuous-GrYlRd' } });
+        } else {
+          acc[key] = createField(key);
+        }
       }
       (acc[key].values! as any[]).push(datum[key as keyof typeof datum]);
     }
@@ -170,11 +177,11 @@ function mapFields(data: Array<Record<string, any>>): FieldDTO[] {
   return Object.values(map);
 }
 
-function createField(name: string, displayName?: string): FieldDTO {
+function createField(name: string, config?: Partial<FieldConfig>): FieldDTO {
   return {
     name,
     type: FieldType.string,
     values: [],
-    config: { displayName: displayName || name },
+    config: { displayName: name, ...config },
   };
 }

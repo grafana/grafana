@@ -7,6 +7,7 @@ interface Node {
   [Fields.subTitle]: string;
   [Fields.mainStat]: string;
   [Fields.secondaryStat]: string;
+  [Fields.color]: number;
 }
 
 interface Edge {
@@ -31,8 +32,13 @@ export function convertTraceToGraph(data: TraceViewData): { nodes: Node[]; edges
       [Fields.id]: span.spanID,
       [Fields.title]: process?.serviceName ?? '',
       [Fields.subTitle]: span.operationName,
-      [Fields.mainStat]: `${span.duration}ms (${toFixedNoTrailingZeros((span.duration / traceDuration) * 100)}%)`,
-      [Fields.secondaryStat]: `${selfDuration}ms (${toFixedNoTrailingZeros((selfDuration / span.duration) * 100)}%)`,
+      [Fields.mainStat]: `total: ${toFixedNoTrailingZeros(span.duration / 1000)}ms (${toFixedNoTrailingZeros(
+        (span.duration / traceDuration) * 100
+      )}%)`,
+      [Fields.secondaryStat]: `self: ${toFixedNoTrailingZeros(selfDuration / 1000)}ms (${toFixedNoTrailingZeros(
+        (selfDuration / span.duration) * 100
+      )}%)`,
+      [Fields.color]: selfDuration / traceDuration,
     });
 
     const parentSpanID = span.references?.find((r) => r.refType === 'CHILD_OF')?.spanID;
