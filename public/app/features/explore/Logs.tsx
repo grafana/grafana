@@ -93,14 +93,11 @@ interface State {
   showDetectedFields: string[];
   hasUnescapedNewlines: boolean;
   escapedNewlines: boolean;
-  isEscaping: boolean;
 }
 
 export class UnthemedLogs extends PureComponent<Props, State> {
   flipOrderTimer: NodeJS.Timeout;
   cancelFlippingTimer: NodeJS.Timeout;
-  escapeNewlinesTimer: NodeJS.Timeout;
-  cancelEscapeNewlinesTimer: NodeJS.Timeout;
 
   state: State = {
     showLabels: store.getBool(SETTINGS_KEYS.showLabels, false),
@@ -111,14 +108,11 @@ export class UnthemedLogs extends PureComponent<Props, State> {
     showDetectedFields: [],
     hasUnescapedNewlines: this.props.logRows.some((r) => r.hasUnescapedNewlines),
     escapedNewlines: false,
-    isEscaping: false,
   };
 
   componentWillUnmount() {
     clearTimeout(this.flipOrderTimer);
     clearTimeout(this.cancelFlippingTimer);
-    clearTimeout(this.escapeNewlinesTimer);
-    clearTimeout(this.cancelEscapeNewlinesTimer);
   }
 
   onChangeLogsSortOrder = () => {
@@ -136,14 +130,9 @@ export class UnthemedLogs extends PureComponent<Props, State> {
   };
 
   onEscapeNewlines = () => {
-    this.setState({ isEscaping: true });
-    // we are using setTimeout here to make sure that disabled button is rendered before the rendering of escaped logs
-    this.escapeNewlinesTimer = setTimeout(() => {
-      this.setState((prevState) => ({
-        escapedNewlines: !prevState.escapedNewlines,
-      }));
-    }, 0);
-    this.cancelEscapeNewlinesTimer = setTimeout(() => this.setState({ isEscaping: false }), 2000);
+    this.setState((prevState) => ({
+      escapedNewlines: !prevState.escapedNewlines,
+    }));
   };
 
   onChangeDedup = (dedup: LogsDedupStrategy) => {
@@ -268,7 +257,6 @@ export class UnthemedLogs extends PureComponent<Props, State> {
       isFlipping,
       showDetectedFields,
       hasUnescapedNewlines,
-      isEscaping,
       escapedNewlines,
     } = this.state;
 
@@ -389,10 +377,8 @@ export class UnthemedLogs extends PureComponent<Props, State> {
                     content="We suggest to try to fix the escaping of your log lines first. This is an experimental feature, your logs might not be correctly escaped."
                     placement="right"
                   >
-                    <Button variant="secondary" size="sm" onClick={this.onEscapeNewlines} disabled={isEscaping}>
-                      <span>
-                        {isEscaping ? 'Escaping...' : escapedNewlines ? 'Remove escaping' : 'Escape newlines'}&nbsp;
-                      </span>
+                    <Button variant="secondary" size="sm" onClick={this.onEscapeNewlines}>
+                      <span>{escapedNewlines ? 'Remove escaping' : 'Escape newlines'}&nbsp;</span>
                       <Icon name="exclamation-triangle" className="muted" size="sm" />
                     </Button>
                   </Tooltip>
