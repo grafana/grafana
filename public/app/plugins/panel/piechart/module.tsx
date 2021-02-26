@@ -1,4 +1,4 @@
-import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
+import { FieldColorModeId, FieldConfigProperty, PanelPlugin, SelectFieldConfigSettings } from '@grafana/data';
 import { PieChartPanel } from './PieChartPanel';
 import { PieChartOptions } from './types';
 import { addStandardDataReduceOptions } from '../stat/types';
@@ -36,10 +36,9 @@ export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
         },
         defaultValue: PieChartType.Pie,
       })
-      .addMultiSelect({
+      .addMultiSelect<PieChartLabels, SelectFieldConfigSettings<PieChartLabels>>({
         name: 'Labels',
         path: 'displayLabels',
-        defaultValue: [],
         description: 'Select the labels to be displayed in the pie chart',
         settings: {
           options: [
@@ -75,16 +74,16 @@ export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
         },
         showIf: (c) => c.legend.displayMode !== LegendDisplayMode.Hidden,
       })
-      .addMultiSelect({
+      .addMultiSelect<LegendColumns, SelectFieldConfigSettings<LegendColumns>>({
         name: 'Columns in legend',
         path: 'legend.displayColumns',
-        descriptions: 'Select the columns to be displayed in the legend',
-        defaultValue: [],
+        description: 'Select the columns to be displayed in the legend',
         settings: {
           options: [
             { value: LegendColumns.Percent, label: 'Percent' },
             { value: LegendColumns.Value, label: 'Value' },
           ],
         },
+        showIf: (c) => c.legend.displayMode !== LegendDisplayMode.Hidden,
       });
   });
