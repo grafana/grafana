@@ -226,6 +226,8 @@ function runGrafanaLiveQuery(
       namespace: 'testdata',
       path: target.channel,
     },
-    `testStream.${liveQueryCounter++}`
+    `testStream.${liveQueryCounter++}`,
+    undefined,
+    target.refId
   );
 }

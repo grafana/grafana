@@ -38,7 +38,8 @@ export function getLiveMeasurements(addr: LiveChannelAddress): LiveMeasurements 
 export function getLiveMeasurementsObserver(
   addr: LiveChannelAddress,
   requestId: string,
-  query?: MeasurementsQuery
+  query?: MeasurementsQuery,
+  refId?: string
 ): Observable<DataQueryResponse> {
   const rsp: DataQueryResponse = { data: [] };
   if (!addr || !addr.path) {
@@ -62,6 +63,8 @@ export function getLiveMeasurementsObserver(
           rsp.data = evt.message.getData(query);
           if (!rsp.data.length) {
             // ?? skip when data is empty ???
+          } else if (refId) {
+            rsp.data = rsp.data.map((f) => ({ ...f, refId }));
           }
           delete rsp.error;
           rsp.state = LoadingState.Streaming;

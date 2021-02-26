@@ -2,7 +2,7 @@ import defaults from 'lodash/defaults';
 
 import React, { PureComponent } from 'react';
 import { InlineField, Select, FeatureInfoBox } from '@grafana/ui';
-import { QueryEditorProps, SelectableValue, LiveChannelScope, FeatureState } from '@grafana/data';
+import { QueryEditorProps, SelectableValue, LiveChannelScope, FeatureState, getFrameDisplayName } from '@grafana/data';
 import { getLiveMeasurements, LiveMeasurements } from '@grafana/runtime';
 import { GrafanaDatasource } from '../datasource';
 import { defaultQuery, GrafanaQuery, GrafanaQueryType } from '../types';
@@ -49,7 +49,27 @@ export class QueryEditor extends PureComponent<Props> {
     onRunQuery();
   };
 
+  onFieldNamesChange = (item: SelectableValue<string>) => {
+    const { onChange, query, onRunQuery } = this.props;
+    let fields: string[] = [];
+    if (Array.isArray(item)) {
+      fields = item.map((v) => v.value);
+    } else if (item.value) {
+      fields = [item.value];
+    }
+
+    onChange({
+      ...query,
+      measurements: {
+        ...query.measurements,
+        fields,
+      },
+    });
+    onRunQuery();
+  };
+
   renderMeasurementsQuery() {
+    const { data } = this.props;
     let { channel, measurements } = this.props.query;
     const channels: Array<SelectableValue<string>> = [];
     let currentChannel = channels.find((c) => c.value === channel);
@@ -68,6 +88,22 @@ export class QueryEditor extends PureComponent<Props> {
     const names: Array<SelectableValue<string>> = [
       { value: '', label: 'All measurements', description: 'Show every measurement streamed to this channel' },
     ];
+    const fields: Array<SelectableValue<string>> = [];
+    if (data && data.series?.length) {
+      const distinct = new Set<string>();
+      for (const frame of data.series) {
+        for (const field of frame.fields) {
+          if (distinct.has(field.name) || !field.name) {
+            continue;
+          }
+          fields.push({
+            value: field.name,
+            label: field.name,
+            description: `(${getFrameDisplayName(frame)} / ${field.type})`,
+          });
+        }
+      }
+    }
 
     let info: LiveMeasurements | undefined = undefined;
     if (channel) {
@@ -88,8 +124,6 @@ export class QueryEditor extends PureComponent<Props> {
             foundName = true;
           }
         }
-      } else {
-        console.log('NO INFO for', channel);
       }
 
       if (measurements.name && !foundName) {
@@ -119,22 +153,41 @@ export class QueryEditor extends PureComponent<Props> {
           </InlineField>
         </div>
         {channel && (
-          <div className="gf-form">
-            <InlineField label="Measurement" grow={true} labelWidth={labelWidth}>
-              <Select
-                options={names}
-                value={names.find((v) => v.value === measurements?.name) || names[0]}
-                onChange={this.onMeasurementNameChanged}
-                allowCustomValue={true}
-                backspaceRemovesValue={true}
-                placeholder="Filter by name"
-                isClearable={true}
-                noOptionsMessage="Filter by name"
-                formatCreateLabel={(input: string) => `Show: ${input}`}
-                isSearchable={true}
-              />
-            </InlineField>
-          </div>
+          <>
+            <div className="gf-form">
+              <InlineField label="Measurement" grow={true} labelWidth={labelWidth}>
+                <Select
+                  options={names}
+                  value={names.find((v) => v.value === measurements?.name) || names[0]}
+                  onChange={this.onMeasurementNameChanged}
+                  allowCustomValue={true}
+                  backspaceRemovesValue={true}
+                  placeholder="Filter by name"
+                  isClearable={true}
+                  noOptionsMessage="Filter by name"
+                  formatCreateLabel={(input: string) => `Show: ${input}`}
+                  isSearchable={true}
+                />
+              </InlineField>
+            </div>
+            <div className="gf-form">
+              <InlineField label="Fields" grow={true} labelWidth={labelWidth}>
+                <Select
+                  options={fields}
+                  value={measurements.fields || []}
+                  onChange={this.onFieldNamesChange}
+                  allowCustomValue={true}
+                  backspaceRemovesValue={true}
+                  placeholder="All fields"
+                  isClearable={true}
+                  noOptionsMessage="Unable to list all fields"
+                  formatCreateLabel={(input: string) => `Field: ${input}`}
+                  isSearchable={true}
+                  isMulti={true}
+                />
+              </InlineField>
+            </div>
+          </>
         )}
 
         <FeatureInfoBox title="Grafana Live - Measurements" featureState={FeatureState.alpha}>

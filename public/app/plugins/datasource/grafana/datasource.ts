@@ -38,7 +38,8 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
                 path: channel,
               },
               `${request.requestId}.${counter++}`,
-              measurements
+              measurements,
+              target.refId
             )
           );
         }
