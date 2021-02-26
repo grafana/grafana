@@ -14,6 +14,7 @@ import { contextSrv } from './services/context_srv';
 import { SideMenu } from './components/sidemenu/SideMenu';
 import { navigationLogger } from './navigation/utils';
 import { GrafanaRoute, SyncLocationWithRedux } from './navigation/GrafanaRoute';
+import { monkeyPatchInjectorWithPreAssignedBindings } from './injectorMonkeyPatch';
 
 interface AppWrapperProps {
   app: GrafanaApp;
@@ -44,11 +45,15 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
 
   bootstrapNgApp() {
     const { app } = this.props;
-    const invoker = angular.bootstrap(document, app.ngModuleDependencies);
+    const injector = angular.bootstrap(document, app.ngModuleDependencies);
+
+    monkeyPatchInjectorWithPreAssignedBindings(injector);
+
     navigationLogger('AppWrapper', false, 'Angular app bootstrap');
+
     this.setState(
-      { ngInjector: invoker },
-      invoker.invoke(() => {
+      { ngInjector: injector },
+      injector.invoke(() => {
         each(app.preBootModules, (module) => {
           extend(module, app.registerFunctions);
         });

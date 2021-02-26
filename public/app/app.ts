@@ -22,6 +22,7 @@ import 'vendor/angular-other/angular-strap';
 import config from 'app/core/config';
 // @ts-ignore ignoring this for now, otherwise we would have to extend _ interface with move
 import {
+  AppEvents,
   setLocale,
   setTimeZoneResolver,
   standardEditorsRegistry,
@@ -32,8 +33,8 @@ import {
 import { arrayMove } from 'app/core/utils/arrayMove';
 import { importPluginModule } from 'app/features/plugins/plugin_loader';
 import { angularModules } from 'app/core/core_module';
-import { registerAngularDirectives } from 'app/core/core';
-import { registerEchoBackend, setEchoSrv } from '@grafana/runtime';
+import { appEvents, registerAngularDirectives } from 'app/core/core';
+import { locationService, registerEchoBackend, setEchoSrv } from '@grafana/runtime';
 import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
@@ -55,6 +56,7 @@ import { AppWrapper } from './core/AppWrapper';
 // Ref: https://stackoverflow.com/questions/58146221/is-it-possible-to-tamper-client-side-code-in-angular-app
 import bridgeReactAngularRouting from './core/navigation/bridgeReactAngularRouting';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
+import { CoreEvents } from './types';
 
 // add move to lodash for backward compatabilty with plugins
 // @ts-ignore
@@ -76,6 +78,7 @@ export class GrafanaApp {
   preBootModules: any[] | null;
 
   constructor() {
+    this.registerAppEvents();
     this.preBootModules = [];
     this.registerFunctions = {};
     this.ngModuleDependencies = [];
@@ -171,33 +174,12 @@ export class GrafanaApp {
     // disable tool tip animation
     $.fn.tooltip.defaults.animation = false;
 
-    // bootstrap the app
-    // const injector: any = angular.bootstrap(document, this.ngModuleDependencies);
-
-    // injector.invoke(() => {
-    //   _.each(this.preBootModules, (module: angular.IModule) => {
-    //     _.extend(module, this.registerFunctions);
-    //   });
-    //
-    //   this.preBootModules = null;
-    // TODO[Router]
-    //   if (!checkBrowserCompatibility()) {
-    //     setTimeout(() => {
-    //       appEvents.emit(AppEvents.alertWarning, [
-    //         'Your browser is not fully supported',
-    //         'A newer browser version is recommended',
-    //       ]);
-    //     }, 1000);
-    //   }
-    // });
-    // TODO[Router]
-    //     monkeyPatchInjectorWithPreAssignedBindings(injector);
-
     // Preload selected app plugins
     const promises = [];
     for (const modulePath of config.pluginsToPreload) {
       promises.push(importPluginModule(modulePath));
     }
+
     Promise.all(promises).then(() => {
       ReactDOM.render(
         React.createElement(AppWrapper, {
@@ -208,36 +190,31 @@ export class GrafanaApp {
     });
   }
 
-  // registerAppEvents() {
-  //   appEvents.on(CoreEvents.toggleKioskMode, (options: { exit?: boolean }) => {
-  //     const search: { kiosk?: KioskUrlValue | null } = queryStringToJSON(
-  //       getLocationService().getCurrentLocation().search
-  //     );
+  registerAppEvents() {
+    appEvents.on(CoreEvents.toggleKioskMode, (options: { exit?: boolean }) => {
+      if (options && options.exit) {
+        locationService.partial({ kiosk: null });
+      }
 
-  //     if (options && options.exit) {
-  //       search.kiosk = '1';
-  //     }
+      let kiosk = locationService.getSearch().get('kiosk');
 
-  //     switch (search.kiosk) {
-  //       case 'tv': {
-  //         search.kiosk = true;
-  //         appEvents.emit(AppEvents.alertSuccess, ['Press ESC to exit Kiosk mode']);
-  //         break;
-  //       }
-  //       case '1':
-  //       case true: {
-  //         search.kiosk = null;
-  //         break;
-  //       }
-  //       default: {
-  //         search.kiosk = 'tv';
-  //       }
-  //     }
+      switch (kiosk) {
+        case 'tv':
+          kiosk = 'full';
+          appEvents.emit(AppEvents.alertSuccess, ['Press ESC to exit Kiosk mode']);
+          break;
+        case '1':
+        case '':
+        case 'full':
+          kiosk = null;
+          break;
+        default:
+          kiosk = 'tv';
+      }
 
-  //     locationService.partial(search);
-  //     setViewModeBodyClass(search.kiosk!);
-  //   });
-  // }
+      locationService.partial({ kiosk });
+    });
+  }
 
   initEchoSrv() {
     setEchoSrv(new Echo({ debug: process.env.NODE_ENV === 'development' }));
