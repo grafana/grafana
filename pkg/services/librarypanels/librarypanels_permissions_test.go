@@ -1,8 +1,11 @@
 package librarypanels
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/require"
@@ -16,6 +19,15 @@ func TestLibraryPanelPermissions(t *testing.T) {
 	var viewerOnlyPermissions = []folderACLItem{{models.ROLE_VIEWER, models.PERMISSION_EDIT}}
 	var everyonePermissions = []folderACLItem{{models.ROLE_ADMIN, models.PERMISSION_EDIT}, {models.ROLE_EDITOR, models.PERMISSION_EDIT}, {models.ROLE_VIEWER, models.PERMISSION_EDIT}}
 	var noPermissions = []folderACLItem{{models.ROLE_VIEWER, models.PERMISSION_VIEW}}
+	var folderCases = [][]folderACLItem{
+		defaultPermissions,
+		adminOnlyPermissions,
+		editorOnlyPermissions,
+		editorAndViewerPermissions,
+		viewerOnlyPermissions,
+		everyonePermissions,
+		noPermissions,
+	}
 	var defaultDesc = "default permissions"
 	var adminOnlyDesc = "admin only permissions"
 	var editorOnlyDesc = "editor only permissions"
@@ -197,6 +209,66 @@ func TestLibraryPanelPermissions(t *testing.T) {
 				sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID})
 				resp = sc.service.patchHandler(sc.reqContext, cmd)
 				require.Equal(t, 404, resp.Status())
+			})
+	}
+
+	var getAllCases = []struct {
+		role          models.RoleType
+		panels        int
+		folderIndexes []int
+	}{
+		{models.ROLE_ADMIN, 7, []int{0, 1, 2, 3, 4, 5, 6}},
+		{models.ROLE_EDITOR, 6, []int{0, 2, 3, 4, 5, 6}},
+		{models.ROLE_VIEWER, 5, []int{0, 3, 4, 5, 6}},
+	}
+
+	for _, testCase := range getAllCases {
+		testScenario(t, fmt.Sprintf("When an %s tries to get all library panels, it should return correct status", testCase.role),
+			func(t *testing.T, sc scenarioContext) {
+				var results []libraryPanel
+				for i, folderCase := range folderCases {
+					folder := createFolderWithACL(t, fmt.Sprintf("Folder%v", i), sc.user, folderCase)
+					cmd := getCreateCommand(folder.Id, fmt.Sprintf("Library Panel in Folder%v", i))
+					resp := sc.service.createHandler(sc.reqContext, cmd)
+					result := validateAndUnMarshalResponse(t, resp)
+					result.Result.Meta.CreatedBy.Name = UserInDbName
+					result.Result.Meta.CreatedBy.AvatarUrl = UserInDbAvatar
+					result.Result.Meta.UpdatedBy.Name = UserInDbName
+					result.Result.Meta.UpdatedBy.AvatarUrl = UserInDbAvatar
+					results = append(results, result.Result)
+				}
+				sc.reqContext.SignedInUser.OrgRole = testCase.role
+
+				resp := sc.service.getAllHandler(sc.reqContext)
+				require.Equal(t, 200, resp.Status())
+				var actual libraryPanelsResult
+				err := json.Unmarshal(resp.Body(), &actual)
+				require.NoError(t, err)
+				require.Equal(t, testCase.panels, len(actual.Result))
+				for _, folderIndex := range testCase.folderIndexes {
+					var folderID = int64(folderIndex + 2) // testScenario creates one folder and general folder doesn't count
+					var foundResult libraryPanel
+					var actualResult libraryPanel
+					for _, result := range results {
+						if result.FolderID == folderID {
+							foundResult = result
+							break
+						}
+					}
+					require.NotEmpty(t, foundResult)
+
+					for _, result := range actual.Result {
+						if result.FolderID == folderID {
+							actualResult = result
+							break
+						}
+					}
+					require.NotEmpty(t, actualResult)
+
+					if diff := cmp.Diff(foundResult, actualResult, getCompareOptions()...); diff != "" {
+						t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+					}
+				}
 			})
 	}
 }

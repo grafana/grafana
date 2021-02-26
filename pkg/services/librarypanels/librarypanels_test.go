@@ -22,6 +22,9 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+const UserInDbName = "user_in_db"
+const UserInDbAvatar = "/avatar/402d08de060496d6b6874495fe20f5ad"
+
 func TestConnectLibraryPanel(t *testing.T) {
 	scenarioWithLibraryPanel(t, "When an admin tries to create a connection for a library panel that does not exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
@@ -99,13 +102,13 @@ func TestGetLibraryPanel(t *testing.T) {
 						Updated:             result.Result.Meta.Updated,
 						CreatedBy: LibraryPanelDTOMetaUser{
 							ID:        1,
-							Name:      "user_in_db",
-							AvatarUrl: "/avatar/402d08de060496d6b6874495fe20f5ad",
+							Name:      UserInDbName,
+							AvatarUrl: UserInDbAvatar,
 						},
 						UpdatedBy: LibraryPanelDTOMetaUser{
 							ID:        1,
-							Name:      "user_in_db",
-							AvatarUrl: "/avatar/402d08de060496d6b6874495fe20f5ad",
+							Name:      UserInDbName,
+							AvatarUrl: UserInDbAvatar,
 						},
 					},
 				},
@@ -187,13 +190,13 @@ func TestGetAllLibraryPanels(t *testing.T) {
 							Updated:             result.Result[0].Meta.Updated,
 							CreatedBy: LibraryPanelDTOMetaUser{
 								ID:        1,
-								Name:      "user_in_db",
-								AvatarUrl: "/avatar/402d08de060496d6b6874495fe20f5ad",
+								Name:      UserInDbName,
+								AvatarUrl: UserInDbAvatar,
 							},
 							UpdatedBy: LibraryPanelDTOMetaUser{
 								ID:        1,
-								Name:      "user_in_db",
-								AvatarUrl: "/avatar/402d08de060496d6b6874495fe20f5ad",
+								Name:      UserInDbName,
+								AvatarUrl: UserInDbAvatar,
 							},
 						},
 					},
@@ -216,13 +219,13 @@ func TestGetAllLibraryPanels(t *testing.T) {
 							Updated:             result.Result[1].Meta.Updated,
 							CreatedBy: LibraryPanelDTOMetaUser{
 								ID:        1,
-								Name:      "user_in_db",
-								AvatarUrl: "/avatar/402d08de060496d6b6874495fe20f5ad",
+								Name:      UserInDbName,
+								AvatarUrl: UserInDbAvatar,
 							},
 							UpdatedBy: LibraryPanelDTOMetaUser{
 								ID:        1,
-								Name:      "user_in_db",
-								AvatarUrl: "/avatar/402d08de060496d6b6874495fe20f5ad",
+								Name:      UserInDbName,
+								AvatarUrl: UserInDbAvatar,
 							},
 						},
 					},
@@ -271,53 +274,6 @@ func TestGetAllLibraryPanels(t *testing.T) {
 
 			sc.reqContext.SignedInUser.OrgId = 2
 			sc.reqContext.SignedInUser.OrgRole = models.ROLE_ADMIN
-			resp = sc.service.getAllHandler(sc.reqContext)
-			require.Equal(t, 200, resp.Status())
-
-			result = libraryPanelsResult{}
-			err = json.Unmarshal(resp.Body(), &result)
-			require.NoError(t, err)
-			require.NotNil(t, result.Result)
-			require.Equal(t, 0, len(result.Result))
-		})
-
-	testScenario(t, "When an user tries to get all library panels, library panels in folders where the user has no access should not be returned",
-		func(t *testing.T, sc scenarioContext) {
-			updateFolderACL(t, sc.folder.Id, []folderACLItem{{models.ROLE_EDITOR, models.PERMISSION_EDIT}})
-
-			command := getCreateCommand(sc.folder.Id, "Editor - Library Panel")
-			resp := sc.service.createHandler(sc.reqContext, command)
-			require.Equal(t, 200, resp.Status())
-
-			adminOnly := createFolderWithACL(t, "AdminOnlyFolder", sc.user, []folderACLItem{{models.ROLE_ADMIN, models.PERMISSION_ADMIN}})
-			command = getCreateCommand(adminOnly.Id, "Admin - Library Panel")
-			resp = sc.service.createHandler(sc.reqContext, command)
-			require.Equal(t, 200, resp.Status())
-
-			resp = sc.service.getAllHandler(sc.reqContext)
-			require.Equal(t, 200, resp.Status())
-
-			var result libraryPanelsResult
-			err := json.Unmarshal(resp.Body(), &result)
-			require.NoError(t, err)
-			require.Equal(t, 2, len(result.Result))
-			require.Equal(t, int64(1), result.Result[0].FolderID)
-			require.Equal(t, int64(2), adminOnly.Id)
-			require.Equal(t, "Editor - Library Panel", result.Result[0].Name)
-			require.Equal(t, "Admin - Library Panel", result.Result[1].Name)
-
-			sc.reqContext.SignedInUser.OrgRole = models.ROLE_EDITOR
-			resp = sc.service.getAllHandler(sc.reqContext)
-			require.Equal(t, 200, resp.Status())
-
-			result = libraryPanelsResult{}
-			err = json.Unmarshal(resp.Body(), &result)
-			require.NoError(t, err)
-			require.Equal(t, 1, len(result.Result))
-			require.Equal(t, int64(1), result.Result[0].FolderID)
-			require.Equal(t, "Editor - Library Panel", result.Result[0].Name)
-
-			sc.reqContext.SignedInUser.OrgRole = models.ROLE_VIEWER
 			resp = sc.service.getAllHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
 
@@ -441,13 +397,13 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 								"updated":             sc.initialResult.Result.Meta.Updated,
 								"createdBy": map[string]interface{}{
 									"id":        sc.initialResult.Result.Meta.CreatedBy.ID,
-									"name":      "user_in_db",
-									"avatarUrl": "/avatar/402d08de060496d6b6874495fe20f5ad",
+									"name":      UserInDbName,
+									"avatarUrl": UserInDbAvatar,
 								},
 								"updatedBy": map[string]interface{}{
 									"id":        sc.initialResult.Result.Meta.UpdatedBy.ID,
-									"name":      "user_in_db",
-									"avatarUrl": "/avatar/402d08de060496d6b6874495fe20f5ad",
+									"name":      UserInDbName,
+									"avatarUrl": UserInDbAvatar,
 								},
 							},
 						},
@@ -1149,7 +1105,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		cmd := &models.CreateUserCommand{
 			Email: "user.in.db@test.com",
 			Name:  "User In DB",
-			Login: "user_in_db",
+			Login: UserInDbName,
 		}
 		err := sqlstore.CreateUser(context.Background(), cmd)
 		require.NoError(t, err)
