@@ -27,8 +27,9 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 		tag1 := &Tag{Key: "hostname", Value: "server1", Operator: "="}
 		tag2 := &Tag{Key: "hostname", Value: "server2", Operator: "=", Condition: "OR"}
 
+		timeRange := models.NewDataTimeRange("5m", "now")
 		queryContext := models.DataQuery{
-			TimeRange: models.NewDataTimeRange("5m", "now"),
+			TimeRange: &timeRange,
 		}
 
 		Convey("can build simple query", func() {
@@ -114,12 +115,14 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 			query := Query{}
 			Convey("render from: 2h to now-1h", func() {
 				query := Query{}
-				queryContext := models.DataQuery{TimeRange: models.NewDataTimeRange("2h", "now-1h")}
+				timeRange := models.NewDataTimeRange("2h", "now-1h")
+				queryContext := models.DataQuery{TimeRange: &timeRange}
 				So(query.renderTimeFilter(queryContext), ShouldEqual, "time > now() - 2h and time < now() - 1h")
 			})
 
 			Convey("render from: 10m", func() {
-				queryContext := models.DataQuery{TimeRange: models.NewDataTimeRange("10m", "now")}
+				timeRange := models.NewDataTimeRange("10m", "now")
+				queryContext := models.DataQuery{TimeRange: &timeRange}
 				So(query.renderTimeFilter(queryContext), ShouldEqual, "time > now() - 10m")
 			})
 		})

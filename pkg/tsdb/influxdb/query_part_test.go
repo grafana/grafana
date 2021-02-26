@@ -27,7 +27,8 @@ func TestInfluxdbQueryPart(t *testing.T) {
 		{mode: "non_negative_difference", params: []string{}, input: "max(value)", expected: `non_negative_difference(max(value))`},
 	}
 
-	queryContext := models.DataQuery{TimeRange: models.NewDataTimeRange("5m", "now")}
+	timeRange := models.NewDataTimeRange("5m", "now")
+	queryContext := models.DataQuery{TimeRange: &timeRange}
 	query := &Query{}
 
 	for _, tc := range tcs {
