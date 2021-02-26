@@ -15,6 +15,7 @@ import store from 'app/core/store';
 import pick from 'lodash/pick';
 import omit from 'lodash/omit';
 import isEqual from 'lodash/isEqual';
+import { getLocationService } from '@grafana/runtime';
 
 export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardModel): ThunkResult<void> {
   return (dispatch) => {
@@ -46,18 +47,14 @@ export function exitPanelEditor(): ThunkResult<void> {
   return (dispatch, getStore) => {
     const dashboard = getStore().dashboard.getModel();
     const { getPanel, getSourcePanel, shouldDiscardChanges } = getStore().panelEditor;
-    const onConfirm = () =>
-      dispatch(
-        updateLocation({
-          query: { editPanel: null, tab: null },
-          partial: true,
-        })
-      );
+
+    const onConfirm = () => getLocationService().partial({ editPanel: null, tab: null });
 
     const modifiedPanel = getPanel();
     const modifiedSaveModel = modifiedPanel.getSaveModel();
     const initialSaveModel = getSourcePanel().getSaveModel();
     const panelChanged = !isEqual(omit(initialSaveModel, 'id'), omit(modifiedSaveModel, 'id'));
+
     if (shouldDiscardChanges || !modifiedPanel.libraryPanel || !panelChanged) {
       onConfirm();
       return;

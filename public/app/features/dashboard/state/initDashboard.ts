@@ -171,7 +171,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     const storeState = getState();
     if (!storeState.location.query.orgId) {
       // TODO this is currently not possible with the LocationService API
-      dispatch(updateLocation({ query: { orgId: storeState.user.orgId }, partial: true, replace: true }));
+      getLocationService().partial({ orgId: storeState.user.orgId }, true);
     }
 
     // init services

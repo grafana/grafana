@@ -33,6 +33,7 @@ import { SubMenu } from '../components/SubMenu/SubMenu';
 import { cleanUpDashboardAndVariables } from '../state/actions';
 import { cancelVariables } from '../../variables/state/actions';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
+import { getLocationService } from '@grafana/runtime';
 
 export interface Props {
   urlUid?: string;
@@ -54,7 +55,6 @@ export interface Props {
   initDashboard: typeof initDashboard;
   cleanUpDashboardAndVariables: typeof cleanUpDashboardAndVariables;
   notifyApp: typeof notifyApp;
-  updateLocation: typeof updateLocation;
   inspectTab?: InspectTab;
   isPanelEditorOpen?: boolean;
   cancelVariables: typeof cancelVariables;
@@ -183,13 +183,7 @@ export class DashboardPage extends PureComponent<Props, State> {
       // Panel not found
       this.props.notifyApp(createErrorNotification(`Panel with id ${urlPanelId} not found`));
       // Clear url state
-      this.props.updateLocation({
-        query: {
-          editPanel: null,
-          viewPanel: null,
-        },
-        partial: true,
-      });
+      getLocationService().partial({ editPanel: null, viewPanel: null });
       return;
     }
 
@@ -292,16 +286,7 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 
   render() {
-    const {
-      dashboard,
-      editview,
-      $injector,
-      isInitSlow,
-      initError,
-      inspectTab,
-      isPanelEditorOpen,
-      updateLocation,
-    } = this.props;
+    const { dashboard, editview, $injector, isInitSlow, initError, inspectTab, isPanelEditorOpen } = this.props;
 
     const { editPanel, viewPanel, scrollTop, updateScrollTop } = this.state;
 
@@ -347,7 +332,7 @@ export class DashboardPage extends PureComponent<Props, State> {
 
         {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} defaultTab={inspectTab} />}
         {editPanel && <PanelEditor dashboard={dashboard} sourcePanel={editPanel} />}
-        {editview && <DashboardSettings dashboard={dashboard} updateLocation={updateLocation} editview={editview} />}
+        {editview && <DashboardSettings dashboard={dashboard} editview={editview} />}
       </div>
     );
   }
@@ -375,7 +360,6 @@ const mapDispatchToProps = {
   initDashboard,
   cleanUpDashboardAndVariables,
   notifyApp,
-  updateLocation,
   cancelVariables,
 };
 

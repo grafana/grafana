@@ -111,13 +111,6 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     this.forceUpdate();
   };
 
-  onPanelExit = () => {
-    getLocationService().partial({
-      editPanel: null,
-      tab: null,
-    });
-  };
-
   onDiscard = () => {
     this.props.setDiscardChanges(true);
 
@@ -385,7 +378,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 
   render() {
-    const { dashboard, initDone, updatePanelEditorUIState, uiState } = this.props;
+    const { dashboard, initDone, updatePanelEditorUIState, uiState, exitPanelEditor } = this.props;
     const styles = getStyles(config.theme, this.props);
 
     if (!initDone) {
@@ -394,7 +387,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
     return (
       <div className={styles.wrapper} aria-label={selectors.components.PanelEditor.General.content}>
-        <PageToolbar title={`${dashboard.title} / Edit Panel`} onGoBack={this.props.exitPanelEditor}>
+        <PageToolbar title={`${dashboard.title} / Edit Panel`} onGoBack={exitPanelEditor}>
           {this.renderEditorActions()}
         </PageToolbar>
         <div className={styles.verticalSplitPanesWrapper}>
