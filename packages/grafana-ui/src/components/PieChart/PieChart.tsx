@@ -62,6 +62,7 @@ export const PieChart: FC<Props> = ({ values, legendOptions = defaultLegendOptio
         yAxis: 1,
         getDisplayValues: () => {
           let displayValues = [];
+
           if (legendOptions.showPercent) {
             const fractionOfTotal = value.numeric / total;
             const percentOfTotal = fractionOfTotal * 100;
@@ -69,11 +70,14 @@ export const PieChart: FC<Props> = ({ values, legendOptions = defaultLegendOptio
               numeric: fractionOfTotal,
               percent: percentOfTotal,
               text: percentOfTotal.toFixed(0) + '%',
+              title: 'Percent',
             });
           }
+
           if (legendOptions.showValue) {
-            displayValues.push({ numeric: value.numeric, text: formattedValueToString(value) });
+            displayValues.push({ numeric: value.numeric, text: formattedValueToString(value), title: 'Value' });
           }
+
           return displayValues;
         },
       };
