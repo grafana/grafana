@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
+	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/jwt"
 )
@@ -23,11 +23,11 @@ var (
 )
 
 func TestAccessToken_pluginWithJWTTokenAuthRoute(t *testing.T) {
-	pluginRoute := &plugins.AppPluginRoute{
+	pluginRoute := &pluginmodels.AppPluginRoute{
 		Path:   "pathwithjwttoken1",
 		URL:    "https://api.jwt.io/some/path",
 		Method: "GET",
-		JwtTokenAuth: &plugins.JwtTokenAuth{
+		JwtTokenAuth: &pluginmodels.JwtTokenAuth{
 			Url: "https://login.server.com/{{.JsonData.tenantId}}/oauth2/token",
 			Scopes: []string{
 				"https://www.testapi.com/auth/monitoring.read",
@@ -115,11 +115,11 @@ func TestAccessToken_pluginWithTokenAuthRoute(t *testing.T) {
 	server := httptest.NewServer(apiHandler)
 	defer server.Close()
 
-	pluginRoute := &plugins.AppPluginRoute{
+	pluginRoute := &pluginmodels.AppPluginRoute{
 		Path:   "pathwithtokenauth1",
 		URL:    "",
 		Method: "GET",
-		TokenAuth: &plugins.JwtTokenAuth{
+		TokenAuth: &pluginmodels.JwtTokenAuth{
 			Url: server.URL + "/oauth/token",
 			Scopes: []string{
 				"https://www.testapi.com/auth/monitoring.read",

@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/stretchr/testify/require"
 )
@@ -87,11 +88,11 @@ type mockEndpoint struct {
 	Frames data.Frames
 }
 
-func (me *mockEndpoint) Query(ctx context.Context, ds *models.DataSource, query *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	return &tsdb.Response{
-		Results: map[string]*tsdb.QueryResult{
+func (me *mockEndpoint) Query(ctx context.Context, ds *models.DataSource, query pluginmodels.DataQuery) (pluginmodels.DataResponse, error) {
+	return pluginmodels.DataResponse{
+		Results: map[string]pluginmodels.DataQueryResult{
 			"A": {
-				Dataframes: tsdb.NewDecodedDataFrames(me.Frames),
+				Dataframes: pluginmodels.NewDecodedDataFrames(me.Frames),
 			},
 		},
 	}, nil

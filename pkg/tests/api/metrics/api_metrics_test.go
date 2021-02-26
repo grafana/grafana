@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 
 	cwapi "github.com/aws/aws-sdk-go/service/cloudwatch"
@@ -69,16 +68,16 @@ func TestQueryCloudWatchMetrics(t *testing.T) {
 		}
 		tr := makeCWRequest(t, req, addr)
 
-		assert.Equal(t, tsdb.Response{
-			Results: map[string]*tsdb.QueryResult{
+		assert.Equal(t, pluginmodels.DataResponse{
+			Results: map[string]pluginmodels.DataQueryResult{
 				"A": {
 					RefId: "A",
 					Meta: simplejson.NewFromAny(map[string]interface{}{
 						"rowCount": float64(1),
 					}),
-					Tables: []*tsdb.Table{
+					Tables: []pluginmodels.DataTable{
 						{
-							Columns: []tsdb.TableColumn{
+							Columns: []pluginmodels.DataTableColumn{
 								{
 									Text: "text",
 								},
@@ -86,7 +85,7 @@ func TestQueryCloudWatchMetrics(t *testing.T) {
 									Text: "value",
 								},
 							},
-							Rows: []tsdb.RowValues{
+							Rows: []pluginmodels.DataRowValues{
 								{
 									"Test_MetricName",
 									"Test_MetricName",
@@ -130,7 +129,7 @@ func TestQueryCloudWatchLogs(t *testing.T) {
 		}
 		tr := makeCWRequest(t, req, addr)
 
-		dataFrames := tsdb.NewDecodedDataFrames(data.Frames{
+		dataFrames := pluginmodels.NewDecodedDataFrames(data.Frames{
 			&data.Frame{
 				Name: "logGroups",
 				Fields: []*data.Field{
@@ -145,8 +144,8 @@ func TestQueryCloudWatchLogs(t *testing.T) {
 		// In the future we should use gocmp instead and ignore this field
 		_, err := dataFrames.Encoded()
 		require.NoError(t, err)
-		assert.Equal(t, tsdb.Response{
-			Results: map[string]*tsdb.QueryResult{
+		assert.Equal(t, pluginmodels.DataResponse{
+			Results: map[string]pluginmodels.DataQueryResult{
 				"A": {
 					RefId:      "A",
 					Dataframes: dataFrames,
@@ -156,7 +155,7 @@ func TestQueryCloudWatchLogs(t *testing.T) {
 	})
 }
 
-func makeCWRequest(t *testing.T, req dtos.MetricRequest, addr string) tsdb.Response {
+func makeCWRequest(t *testing.T, req dtos.MetricRequest, addr string) pluginmodels.DataResponse {
 	t.Helper()
 
 	buf := bytes.Buffer{}
@@ -179,7 +178,7 @@ func makeCWRequest(t *testing.T, req dtos.MetricRequest, addr string) tsdb.Respo
 	require.NoError(t, err)
 	require.Equal(t, 200, resp.StatusCode)
 
-	var tr tsdb.Response
+	var tr pluginmodels.DataResponse
 	err = json.Unmarshal(buf.Bytes(), &tr)
 	require.NoError(t, err)
 

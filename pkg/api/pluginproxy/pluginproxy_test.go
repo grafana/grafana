@@ -6,7 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
+	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/assert"
@@ -15,8 +15,8 @@ import (
 
 func TestPluginProxy(t *testing.T) {
 	t.Run("When getting proxy headers", func(t *testing.T) {
-		route := &plugins.AppPluginRoute{
-			Headers: []plugins.AppPluginRouteHeader{
+		route := &pluginmodels.AppPluginRoute{
+			Headers: []pluginmodels.AppPluginRouteHeader{
 				{Name: "x-header", Content: "my secret {{.SecureJsonData.key}}"},
 			},
 		}
@@ -97,7 +97,7 @@ func TestPluginProxy(t *testing.T) {
 	})
 
 	t.Run("When getting templated url", func(t *testing.T) {
-		route := &plugins.AppPluginRoute{
+		route := &pluginmodels.AppPluginRoute{
 			URL:    "{{.JsonData.dynamicUrl}}",
 			Method: "GET",
 		}
@@ -126,7 +126,7 @@ func TestPluginProxy(t *testing.T) {
 	})
 
 	t.Run("When getting complex templated url", func(t *testing.T) {
-		route := &plugins.AppPluginRoute{
+		route := &pluginmodels.AppPluginRoute{
 			URL:    "{{if .JsonData.apiHost}}{{.JsonData.apiHost}}{{else}}https://example.com{{end}}",
 			Method: "GET",
 		}
@@ -151,10 +151,10 @@ func TestPluginProxy(t *testing.T) {
 }
 
 // getPluginProxiedRequest is a helper for easier setup of tests based on global config and ReqContext.
-func getPluginProxiedRequest(t *testing.T, ctx *models.ReqContext, cfg *setting.Cfg, route *plugins.AppPluginRoute) *http.Request {
+func getPluginProxiedRequest(t *testing.T, ctx *models.ReqContext, cfg *setting.Cfg, route *pluginmodels.AppPluginRoute) *http.Request {
 	// insert dummy route if none is specified
 	if route == nil {
-		route = &plugins.AppPluginRoute{
+		route = &pluginmodels.AppPluginRoute{
 			Path:    "api/v4/",
 			URL:     "https://www.google.com",
 			ReqRole: models.ROLE_EDITOR,

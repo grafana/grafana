@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/models"
+	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -23,20 +24,19 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestDataSourceProxy_routeRule(t *testing.T) {
 	t.Run("Plugin with routes", func(t *testing.T) {
-		plugin := &plugins.DataSourcePlugin{
-			Routes: []*plugins.AppPluginRoute{
+		plugin := &pluginmodels.DataSourcePlugin{
+			Routes: []*pluginmodels.AppPluginRoute{
 				{
 					Path:    "api/v4/",
 					URL:     "https://www.google.com",
 					ReqRole: models.ROLE_EDITOR,
-					Headers: []plugins.AppPluginRouteHeader{
+					Headers: []pluginmodels.AppPluginRouteHeader{
 						{Name: "x-header", Content: "my secret {{.SecureJsonData.key}}"},
 					},
 				},
@@ -44,24 +44,24 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 					Path:    "api/admin",
 					URL:     "https://www.google.com",
 					ReqRole: models.ROLE_ADMIN,
-					Headers: []plugins.AppPluginRouteHeader{
+					Headers: []pluginmodels.AppPluginRouteHeader{
 						{Name: "x-header", Content: "my secret {{.SecureJsonData.key}}"},
 					},
 				},
 				{
 					Path: "api/anon",
 					URL:  "https://www.google.com",
-					Headers: []plugins.AppPluginRouteHeader{
+					Headers: []pluginmodels.AppPluginRouteHeader{
 						{Name: "x-header", Content: "my secret {{.SecureJsonData.key}}"},
 					},
 				},
 				{
 					Path: "api/common",
 					URL:  "{{.JsonData.dynamicUrl}}",
-					URLParams: []plugins.AppPluginRouteURLParam{
+					URLParams: []pluginmodels.AppPluginRouteURLParam{
 						{Name: "{{.JsonData.queryParam}}", Content: "{{.SecureJsonData.key}}"},
 					},
-					Headers: []plugins.AppPluginRouteHeader{
+					Headers: []pluginmodels.AppPluginRouteHeader{
 						{Name: "x-header", Content: "my secret {{.SecureJsonData.key}}"},
 					},
 				},
@@ -165,12 +165,12 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 	})
 
 	t.Run("Plugin with multiple routes for token auth", func(t *testing.T) {
-		plugin := &plugins.DataSourcePlugin{
-			Routes: []*plugins.AppPluginRoute{
+		plugin := &pluginmodels.DataSourcePlugin{
+			Routes: []*pluginmodels.AppPluginRoute{
 				{
 					Path: "pathwithtoken1",
 					URL:  "https://api.nr1.io/some/path",
-					TokenAuth: &plugins.JwtTokenAuth{
+					TokenAuth: &pluginmodels.JwtTokenAuth{
 						Url: "https://login.server.com/{{.JsonData.tenantId}}/oauth2/token",
 						Params: map[string]string{
 							"grant_type":    "client_credentials",
@@ -183,7 +183,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 				{
 					Path: "pathwithtoken2",
 					URL:  "https://api.nr2.io/some/path",
-					TokenAuth: &plugins.JwtTokenAuth{
+					TokenAuth: &pluginmodels.JwtTokenAuth{
 						Url: "https://login.server.com/{{.JsonData.tenantId}}/oauth2/token",
 						Params: map[string]string{
 							"grant_type":    "client_credentials",
@@ -286,7 +286,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		})
 		setting.BuildVersion = "5.3.0"
 
-		plugin := &plugins.DataSourcePlugin{}
+		plugin := &pluginmodels.DataSourcePlugin{}
 		ds := &models.DataSource{Url: "htttp://graphite:8080", Type: models.DS_GRAPHITE}
 		ctx := &models.ReqContext{}
 
@@ -305,7 +305,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 	})
 
 	t.Run("When proxying InfluxDB", func(t *testing.T) {
-		plugin := &plugins.DataSourcePlugin{}
+		plugin := &pluginmodels.DataSourcePlugin{}
 
 		ds := &models.DataSource{
 			Type:     models.DS_INFLUXDB_08,
@@ -327,7 +327,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 	})
 
 	t.Run("When proxying a data source with no keepCookies specified", func(t *testing.T) {
-		plugin := &plugins.DataSourcePlugin{}
+		plugin := &pluginmodels.DataSourcePlugin{}
 
 		json, err := simplejson.NewJson([]byte(`{"keepCookies": []}`))
 		require.NoError(t, err)
@@ -354,7 +354,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 	})
 
 	t.Run("When proxying a data source with keep cookies specified", func(t *testing.T) {
-		plugin := &plugins.DataSourcePlugin{}
+		plugin := &pluginmodels.DataSourcePlugin{}
 
 		json, err := simplejson.NewJson([]byte(`{"keepCookies": ["JSESSION_ID"]}`))
 		require.NoError(t, err)
@@ -381,7 +381,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 	})
 
 	t.Run("When proxying a custom datasource", func(t *testing.T) {
-		plugin := &plugins.DataSourcePlugin{}
+		plugin := &pluginmodels.DataSourcePlugin{}
 		ds := &models.DataSource{
 			Type: "custom-datasource",
 			Url:  "http://host/root/",
@@ -431,7 +431,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			return nil
 		})
 
-		plugin := &plugins.DataSourcePlugin{}
+		plugin := &pluginmodels.DataSourcePlugin{}
 		ds := &models.DataSource{
 			Type: "custom-datasource",
 			Url:  "http://host/root/",
@@ -523,7 +523,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 func TestDataSourceProxy_requestHandling(t *testing.T) {
 	var writeErr error
 
-	plugin := &plugins.DataSourcePlugin{}
+	plugin := &pluginmodels.DataSourcePlugin{}
 
 	type setUpCfg struct {
 		headers map[string]string
@@ -638,7 +638,7 @@ func TestNewDataSourceProxy_InvalidURL(t *testing.T) {
 		Url:  "://host/root",
 	}
 	cfg := setting.Cfg{}
-	plugin := plugins.DataSourcePlugin{}
+	plugin := pluginmodels.DataSourcePlugin{}
 	_, err := NewDataSourceProxy(&ds, &plugin, &ctx, "api/method", &cfg)
 	require.Error(t, err)
 	assert.True(t, strings.HasPrefix(err.Error(), `validation of data source URL "://host/root" failed`))
@@ -656,7 +656,7 @@ func TestNewDataSourceProxy_ProtocolLessURL(t *testing.T) {
 		Url:  "127.0.01:5432",
 	}
 	cfg := setting.Cfg{}
-	plugin := plugins.DataSourcePlugin{}
+	plugin := pluginmodels.DataSourcePlugin{}
 
 	_, err := NewDataSourceProxy(&ds, &plugin, &ctx, "api/method", &cfg)
 
@@ -692,7 +692,7 @@ func TestNewDataSourceProxy_MSSQL(t *testing.T) {
 	for _, tc := range tcs {
 		t.Run(tc.description, func(t *testing.T) {
 			cfg := setting.Cfg{}
-			plugin := plugins.DataSourcePlugin{}
+			plugin := pluginmodels.DataSourcePlugin{}
 			ds := models.DataSource{
 				Type: "mssql",
 				Url:  tc.url,
@@ -729,7 +729,7 @@ func (r *closeNotifierResponseRecorder) Close() {
 
 // getDatasourceProxiedRequest is a helper for easier setup of tests based on global config and ReqContext.
 func getDatasourceProxiedRequest(t *testing.T, ctx *models.ReqContext, cfg *setting.Cfg) *http.Request {
-	plugin := &plugins.DataSourcePlugin{}
+	plugin := &pluginmodels.DataSourcePlugin{}
 
 	ds := &models.DataSource{
 		Type: "custom",
@@ -844,7 +844,7 @@ func createAuthTest(t *testing.T, dsType string, authType string, authCheck stri
 }
 
 func runDatasourceAuthTest(t *testing.T, test *testCase) {
-	plugin := &plugins.DataSourcePlugin{}
+	plugin := &pluginmodels.DataSourcePlugin{}
 	ctx := &models.ReqContext{}
 	proxy, err := NewDataSourceProxy(test.datasource, plugin, ctx, "", &setting.Cfg{})
 	require.NoError(t, err)

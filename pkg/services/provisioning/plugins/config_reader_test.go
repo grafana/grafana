@@ -6,10 +6,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	"github.com/stretchr/testify/require"
 )
 
-var (
+const (
 	incorrectSettings = "./testdata/test-configs/incorrect-settings"
 	brokenYaml        = "./testdata/test-configs/broken-yaml"
 	emptyFolder       = "./testdata/test-configs/empty_folder"
@@ -46,7 +47,7 @@ func TestConfigReader(t *testing.T) {
 	})
 
 	t.Run("Can read correct properties", func(t *testing.T) {
-		plugins.Apps = map[string]*plugins.AppPlugin{
+		plugins.Apps = map[string]*pluginmodels.AppPlugin{
 			"test-plugin":   {},
 			"test-plugin-2": {},
 		}
