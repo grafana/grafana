@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -23,12 +23,12 @@ func TestCloudMonitoring(t *testing.T) {
 
 	t.Run("Parse migrated queries from frontend and build Google Cloud Monitoring API queries", func(t *testing.T) {
 		fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
-		tsdbQuery := pluginmodels.DataQuery{
-			TimeRange: &pluginmodels.DataTimeRange{
+		tsdbQuery := plugins.DataQuery{
+			TimeRange: &plugins.DataTimeRange{
 				From: fmt.Sprintf("%v", fromStart.Unix()*1000),
 				To:   fmt.Sprintf("%v", fromStart.Add(34*time.Minute).Unix()*1000),
 			},
-			Queries: []pluginmodels.DataSubQuery{
+			Queries: []plugins.DataSubQuery{
 				{
 					Model: simplejson.NewFromAny(map[string]interface{}{
 						"metricType": "a/metric/type",
@@ -455,12 +455,12 @@ func TestCloudMonitoring(t *testing.T) {
 
 	t.Run("Parse queries from frontend and build Google Cloud Monitoring API queries", func(t *testing.T) {
 		fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
-		tsdbQuery := pluginmodels.DataQuery{
-			TimeRange: &pluginmodels.DataTimeRange{
+		tsdbQuery := plugins.DataQuery{
+			TimeRange: &plugins.DataTimeRange{
 				From: fmt.Sprintf("%v", fromStart.Unix()*1000),
 				To:   fmt.Sprintf("%v", fromStart.Add(34*time.Minute).Unix()*1000),
 			},
-			Queries: []pluginmodels.DataSubQuery{
+			Queries: []plugins.DataSubQuery{
 				{
 					Model: simplejson.NewFromAny(map[string]interface{}{
 						"queryType": metricQueryType,
@@ -600,7 +600,7 @@ func TestCloudMonitoring(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, 1, len(data.TimeSeries))
 
-			res := &pluginmodels.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
+			res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
 			query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}}
 			err = query.parseResponse(res, data, "")
 			require.NoError(t, err)
@@ -625,7 +625,7 @@ func TestCloudMonitoring(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, 3, len(data.TimeSeries))
 
-			res := &pluginmodels.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
+			res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
 			query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}}
 			err = query.parseResponse(res, data, "")
 			require.NoError(t, err)
@@ -662,7 +662,7 @@ func TestCloudMonitoring(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, 3, len(data.TimeSeries))
 
-			res := &pluginmodels.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
+			res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
 			query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}, GroupBys: []string{
 				"metric.label.instance_name", "resource.label.zone",
 			}}
@@ -682,7 +682,7 @@ func TestCloudMonitoring(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, 3, len(data.TimeSeries))
 
-			res := &pluginmodels.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
+			res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
 
 			t.Run("and the alias pattern is for metric type, a metric label and a resource label", func(t *testing.T) {
 				query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}, AliasBy: "{{metric.type}} - {{metric.label.instance_name}} - {{resource.label.zone}}", GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}}
@@ -716,7 +716,7 @@ func TestCloudMonitoring(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, 1, len(data.TimeSeries))
 
-			res := &pluginmodels.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
+			res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
 			query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}, AliasBy: "{{bucket}}"}
 			err = query.parseResponse(res, data, "")
 			require.NoError(t, err)
@@ -757,7 +757,7 @@ func TestCloudMonitoring(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, 1, len(data.TimeSeries))
 
-			res := &pluginmodels.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
+			res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
 			query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}, AliasBy: "{{bucket}}"}
 			err = query.parseResponse(res, data, "")
 			require.NoError(t, err)
@@ -791,7 +791,7 @@ func TestCloudMonitoring(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, 3, len(data.TimeSeries))
 
-			res := &pluginmodels.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
+			res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
 			query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}, AliasBy: "{{bucket}}"}
 			err = query.parseResponse(res, data, "")
 			labels := res.Meta.Get("labels").Interface().(map[string][]string)
@@ -825,7 +825,7 @@ func TestCloudMonitoring(t *testing.T) {
 			assert.Equal(t, 3, len(data.TimeSeries))
 
 			t.Run("and systemlabel contains key with array of string", func(t *testing.T) {
-				res := &pluginmodels.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
+				res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
 				query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}, AliasBy: "{{metadata.system_labels.test}}"}
 				err = query.parseResponse(res, data, "")
 				require.NoError(t, err)
@@ -838,7 +838,7 @@ func TestCloudMonitoring(t *testing.T) {
 			})
 
 			t.Run("and systemlabel contains key with array of string2", func(t *testing.T) {
-				res := &pluginmodels.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
+				res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
 				query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}, AliasBy: "{{metadata.system_labels.test2}}"}
 				err = query.parseResponse(res, data, "")
 				require.NoError(t, err)
@@ -854,7 +854,7 @@ func TestCloudMonitoring(t *testing.T) {
 			assert.Equal(t, 1, len(data.TimeSeries))
 
 			t.Run("and alias by is expanded", func(t *testing.T) {
-				res := &pluginmodels.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
+				res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
 				query := &cloudMonitoringTimeSeriesFilter{
 					Params:      url.Values{},
 					ProjectName: "test-proj",
@@ -876,7 +876,7 @@ func TestCloudMonitoring(t *testing.T) {
 			assert.Equal(t, 1, len(data.TimeSeries))
 
 			t.Run("and alias by is expanded", func(t *testing.T) {
-				res := &pluginmodels.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
+				res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
 				query := &cloudMonitoringTimeSeriesFilter{
 					Params:      url.Values{},
 					ProjectName: "test-proj",
@@ -973,12 +973,12 @@ func TestCloudMonitoring(t *testing.T) {
 
 			t.Run("and alias by is expanded", func(t *testing.T) {
 				fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
-				res := &pluginmodels.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
+				res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
 				query := &cloudMonitoringTimeSeriesQuery{
 					ProjectName: "test-proj",
 					Query:       "test-query",
 					AliasBy:     "{{project}} - {{resource.label.zone}} - {{resource.label.instance_id}}",
-					timeRange: pluginmodels.DataTimeRange{
+					timeRange: plugins.DataTimeRange{
 						From: fmt.Sprintf("%v", fromStart.Unix()*1000),
 						To:   fmt.Sprintf("%v", fromStart.Add(34*time.Minute).Unix()*1000),
 					},

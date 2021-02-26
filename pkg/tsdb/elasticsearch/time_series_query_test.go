@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 	"github.com/grafana/grafana/pkg/tsdb/interval"
 
@@ -898,13 +898,13 @@ func (c *fakeClient) MultiSearch() *es.MultiSearchRequestBuilder {
 	return c.builder
 }
 
-func newDataQuery(body string) (pluginmodels.DataQuery, error) {
+func newDataQuery(body string) (plugins.DataQuery, error) {
 	json, err := simplejson.NewJson([]byte(body))
 	if err != nil {
-		return pluginmodels.DataQuery{}, err
+		return plugins.DataQuery{}, err
 	}
-	return pluginmodels.DataQuery{
-		Queries: []pluginmodels.DataSubQuery{
+	return plugins.DataQuery{
+		Queries: []plugins.DataSubQuery{
 			{
 				Model: json,
 			},
@@ -913,16 +913,16 @@ func newDataQuery(body string) (pluginmodels.DataQuery, error) {
 }
 
 func executeTsdbQuery(c es.Client, body string, from, to time.Time, minInterval time.Duration) (
-	pluginmodels.DataResponse, error) {
+	plugins.DataResponse, error) {
 	json, err := simplejson.NewJson([]byte(body))
 	if err != nil {
-		return pluginmodels.DataResponse{}, err
+		return plugins.DataResponse{}, err
 	}
 	fromStr := fmt.Sprintf("%d", from.UnixNano()/int64(time.Millisecond))
 	toStr := fmt.Sprintf("%d", to.UnixNano()/int64(time.Millisecond))
-	timeRange := pluginmodels.NewDataTimeRange(fromStr, toStr)
-	tsdbQuery := pluginmodels.DataQuery{
-		Queries: []pluginmodels.DataSubQuery{
+	timeRange := plugins.NewDataTimeRange(fromStr, toStr)
+	tsdbQuery := plugins.DataQuery{
+		Queries: []plugins.DataSubQuery{
 			{
 				Model: json,
 			},

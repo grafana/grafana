@@ -14,9 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/adapters"
 	backendmodels "github.com/grafana/grafana/pkg/plugins/backendplugin/models"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
-	"github.com/grafana/grafana/pkg/plugins/models/adapters"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -97,7 +96,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 			continue
 		}
 
-		if pluginDef.State == pluginmodels.PluginStateAlpha && !hs.Cfg.PluginsEnableAlpha {
+		if pluginDef.State == plugins.PluginStateAlpha && !hs.Cfg.PluginsEnableAlpha {
 			continue
 		}
 
@@ -211,7 +210,7 @@ func GetPluginDashboards(c *models.ReqContext) response.Response {
 
 	list, err := plugins.GetPluginDashboards(c.OrgId, pluginID)
 	if err != nil {
-		var notFound pluginmodels.PluginNotFoundError
+		var notFound plugins.PluginNotFoundError
 		if errors.As(err, &notFound) {
 			return response.Error(404, notFound.Error(), nil)
 		}
@@ -228,7 +227,7 @@ func GetPluginMarkdown(c *models.ReqContext) response.Response {
 
 	content, err := plugins.GetPluginMarkdown(pluginID, name)
 	if err != nil {
-		var notFound pluginmodels.PluginNotFoundError
+		var notFound plugins.PluginNotFoundError
 		if errors.As(err, &notFound) {
 			return response.Error(404, notFound.Error(), nil)
 		}

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -14,7 +14,7 @@ func TestExecutor_parseToAnnotations(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, d.TimeSeries, 3)
 
-	res := &pluginmodels.DataQueryResult{Meta: simplejson.New(), RefID: "annotationQuery"}
+	res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "annotationQuery"}
 	query := &cloudMonitoringTimeSeriesFilter{}
 
 	err = query.parseToAnnotations(res, d, "atitle {{metric.label.instance_name}} {{metric.value}}",
@@ -30,7 +30,7 @@ func TestExecutor_parseToAnnotations(t *testing.T) {
 }
 
 func TestCloudMonitoringExecutor_parseToAnnotations_emptyTimeSeries(t *testing.T) {
-	res := &pluginmodels.DataQueryResult{Meta: simplejson.New(), RefID: "annotationQuery"}
+	res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "annotationQuery"}
 	query := &cloudMonitoringTimeSeriesFilter{}
 
 	response := cloudMonitoringResponse{
@@ -46,7 +46,7 @@ func TestCloudMonitoringExecutor_parseToAnnotations_emptyTimeSeries(t *testing.T
 }
 
 func TestCloudMonitoringExecutor_parseToAnnotations_noPointsInSeries(t *testing.T) {
-	res := &pluginmodels.DataQueryResult{Meta: simplejson.New(), RefID: "annotationQuery"}
+	res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "annotationQuery"}
 	query := &cloudMonitoringTimeSeriesFilter{}
 
 	response := cloudMonitoringResponse{

@@ -10,7 +10,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/stretchr/testify/require"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -22,12 +22,12 @@ func TestApplicationInsightsDatasource(t *testing.T) {
 
 		Convey("Parse queries from frontend and build AzureMonitor API queries", func() {
 			fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
-			tsdbQuery := pluginmodels.DataQuery{
-				TimeRange: &pluginmodels.DataTimeRange{
+			tsdbQuery := plugins.DataQuery{
+				TimeRange: &plugins.DataTimeRange{
 					From: fmt.Sprintf("%v", fromStart.Unix()*1000),
 					To:   fmt.Sprintf("%v", fromStart.Add(34*time.Minute).Unix()*1000),
 				},
-				Queries: []pluginmodels.DataSubQuery{
+				Queries: []plugins.DataSubQuery{
 					{
 						DataSource: &models.DataSource{
 							JsonData: simplejson.NewFromAny(map[string]interface{}{}),
@@ -146,13 +146,13 @@ func TestApplicationInsightsDatasource(t *testing.T) {
 
 func TestAppInsightsPluginRoutes(t *testing.T) {
 	datasource := &ApplicationInsightsDatasource{}
-	plugin := &pluginmodels.DataSourcePlugin{
-		Routes: []*pluginmodels.AppPluginRoute{
+	plugin := &plugins.DataSourcePlugin{
+		Routes: []*plugins.AppPluginRoute{
 			{
 				Path:   "appinsights",
 				Method: "GET",
 				URL:    "https://api.applicationinsights.io",
-				Headers: []pluginmodels.AppPluginRouteHeader{
+				Headers: []plugins.AppPluginRouteHeader{
 					{Name: "X-API-Key", Content: "{{.SecureJsonData.appInsightsApiKey}}"},
 					{Name: "x-ms-app", Content: "Grafana"},
 				},
@@ -161,7 +161,7 @@ func TestAppInsightsPluginRoutes(t *testing.T) {
 				Path:   "chinaappinsights",
 				Method: "GET",
 				URL:    "https://api.applicationinsights.azure.cn",
-				Headers: []pluginmodels.AppPluginRouteHeader{
+				Headers: []plugins.AppPluginRouteHeader{
 					{Name: "X-API-Key", Content: "{{.SecureJsonData.appInsightsApiKey}}"},
 					{Name: "x-ms-app", Content: "Grafana"},
 				},

@@ -12,7 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"xorm.io/core"
 )
@@ -37,7 +37,7 @@ func (s *PostgresService) Init() error {
 	return nil
 }
 
-func (s *PostgresService) NewExecutor(datasource *models.DataSource) (pluginmodels.DataPlugin, error) {
+func (s *PostgresService) NewExecutor(datasource *models.DataSource) (plugins.DataPlugin, error) {
 	s.logger.Debug("Creating Postgres query endpoint")
 
 	cnnstr, err := s.generateConnectionString(datasource)
@@ -137,7 +137,7 @@ type postgresQueryResultTransformer struct {
 }
 
 func (t *postgresQueryResultTransformer) TransformQueryResult(columnTypes []*sql.ColumnType, rows *core.Rows) (
-	pluginmodels.DataRowValues, error) {
+	plugins.DataRowValues, error) {
 	values := make([]interface{}, len(columnTypes))
 	valuePtrs := make([]interface{}, len(columnTypes))
 

@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/models"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -23,12 +22,12 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 		return response.Error(http.StatusBadRequest, "No queries found in query", nil)
 	}
 
-	timeRange := pluginmodels.NewDataTimeRange(reqDTO.From, reqDTO.To)
-	request := pluginmodels.DataQuery{
+	timeRange := plugins.NewDataTimeRange(reqDTO.From, reqDTO.To)
+	request := plugins.DataQuery{
 		TimeRange: &timeRange,
 		Debug:     reqDTO.Debug,
 		User:      c.SignedInUser,
-		Queries:   make([]pluginmodels.DataSubQuery, 0, len(reqDTO.Queries)),
+		Queries:   make([]plugins.DataSubQuery, 0, len(reqDTO.Queries)),
 	}
 
 	// Loop to see if we have an expression.
@@ -58,7 +57,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 			}
 		}
 
-		request.Queries = append(request.Queries, pluginmodels.DataSubQuery{
+		request.Queries = append(request.Queries, plugins.DataSubQuery{
 			RefID:         query.Get("refId").MustString("A"),
 			MaxDataPoints: query.Get("maxDataPoints").MustInt64(100),
 			IntervalMS:    query.Get("intervalMs").MustInt64(1000),
@@ -92,12 +91,12 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 
 // handleExpressions handles POST /api/ds/query when there is an expression.
 func (hs *HTTPServer) handleExpressions(c *models.ReqContext, reqDTO dtos.MetricRequest) response.Response {
-	timeRange := pluginmodels.NewDataTimeRange(reqDTO.From, reqDTO.To)
-	request := pluginmodels.DataQuery{
+	timeRange := plugins.NewDataTimeRange(reqDTO.From, reqDTO.To)
+	request := plugins.DataQuery{
 		TimeRange: &timeRange,
 		Debug:     reqDTO.Debug,
 		User:      c.SignedInUser,
-		Queries:   make([]pluginmodels.DataSubQuery, 0, len(reqDTO.Queries)),
+		Queries:   make([]plugins.DataSubQuery, 0, len(reqDTO.Queries)),
 	}
 
 	for _, query := range reqDTO.Queries {
@@ -118,7 +117,7 @@ func (hs *HTTPServer) handleExpressions(c *models.ReqContext, reqDTO dtos.Metric
 			}
 		}
 
-		request.Queries = append(request.Queries, pluginmodels.DataSubQuery{
+		request.Queries = append(request.Queries, plugins.DataSubQuery{
 			RefID:         query.Get("refId").MustString("A"),
 			MaxDataPoints: query.Get("maxDataPoints").MustInt64(100),
 			IntervalMS:    query.Get("intervalMs").MustInt64(1000),
@@ -178,15 +177,15 @@ func (hs *HTTPServer) QueryMetrics(c *models.ReqContext, reqDto dtos.MetricReque
 		return response.Error(http.StatusForbidden, "Access denied", err)
 	}
 
-	timeRange := pluginmodels.NewDataTimeRange(reqDto.From, reqDto.To)
-	request := pluginmodels.DataQuery{
+	timeRange := plugins.NewDataTimeRange(reqDto.From, reqDto.To)
+	request := plugins.DataQuery{
 		TimeRange: &timeRange,
 		Debug:     reqDto.Debug,
 		User:      c.SignedInUser,
 	}
 
 	for _, query := range reqDto.Queries {
-		request.Queries = append(request.Queries, pluginmodels.DataSubQuery{
+		request.Queries = append(request.Queries, plugins.DataSubQuery{
 			RefID:         query.Get("refId").MustString("A"),
 			MaxDataPoints: query.Get("maxDataPoints").MustInt64(100),
 			IntervalMS:    query.Get("intervalMs").MustInt64(1000),
@@ -227,14 +226,14 @@ func (hs *HTTPServer) GetTestDataRandomWalk(c *models.ReqContext) response.Respo
 	to := c.Query("to")
 	intervalMS := c.QueryInt64("intervalMs")
 
-	timeRange := pluginmodels.NewDataTimeRange(from, to)
-	request := pluginmodels.DataQuery{TimeRange: &timeRange}
+	timeRange := plugins.NewDataTimeRange(from, to)
+	request := plugins.DataQuery{TimeRange: &timeRange}
 
 	dsInfo := &models.DataSource{
 		Type:     "testdata",
 		JsonData: simplejson.New(),
 	}
-	request.Queries = append(request.Queries, pluginmodels.DataSubQuery{
+	request.Queries = append(request.Queries, plugins.DataSubQuery{
 		RefID:      "A",
 		IntervalMS: intervalMS,
 		Model: simplejson.NewFromAny(&util.DynMap{

@@ -1,4 +1,4 @@
-package models
+package plugins
 
 import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"

@@ -7,7 +7,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/models"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
+	"github.com/grafana/grafana/pkg/plugins"
 )
 
 // queryOptions represents datasource configuration options
@@ -46,8 +46,8 @@ type queryModel struct {
 // 	return model, nil
 // }
 
-// getQueryModelTSDB builds a queryModel from pluginmodels.DataQuery information and datasource configuration (dsInfo).
-func getQueryModelTSDB(query pluginmodels.DataSubQuery, timeRange pluginmodels.DataTimeRange,
+// getQueryModelTSDB builds a queryModel from plugins.DataQuery information and datasource configuration (dsInfo).
+func getQueryModelTSDB(query plugins.DataSubQuery, timeRange plugins.DataTimeRange,
 	dsInfo *models.DataSource) (*queryModel, error) {
 	model := &queryModel{}
 	queryBytes, err := query.Model.Encode()

@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 )
 
 type PluginDashboardInfoDTO struct {
@@ -30,7 +29,7 @@ func GetPluginDashboards(orgId int64, pluginId string) ([]*PluginDashboardInfoDT
 	plugin, exists := Plugins[pluginId]
 
 	if !exists {
-		return nil, pluginmodels.PluginNotFoundError{pluginId}
+		return nil, PluginNotFoundError{pluginId}
 	}
 
 	result := make([]*PluginDashboardInfoDTO, 0)
@@ -43,7 +42,7 @@ func GetPluginDashboards(orgId int64, pluginId string) ([]*PluginDashboardInfoDT
 
 	existingMatches := make(map[int64]bool)
 	for _, include := range plugin.Includes {
-		if include.Type != pluginmodels.PluginTypeDashboard {
+		if include.Type != PluginTypeDashboard {
 			continue
 		}
 
@@ -90,7 +89,7 @@ func GetPluginDashboards(orgId int64, pluginId string) ([]*PluginDashboardInfoDT
 func LoadPluginDashboard(pluginId, path string) (*models.Dashboard, error) {
 	plugin, exists := Plugins[pluginId]
 	if !exists {
-		return nil, pluginmodels.PluginNotFoundError{pluginId}
+		return nil, PluginNotFoundError{pluginId}
 	}
 
 	dashboardFilePath := filepath.Join(plugin.PluginDir, path)

@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -61,7 +61,7 @@ func (ng *AlertNG) conditionEvalEndpoint(c *models.ReqContext, cmd evalAlertCond
 	}
 
 	frame := evalResults.AsDataFrame()
-	df := pluginmodels.NewDecodedDataFrames([]*data.Frame{&frame})
+	df := plugins.NewDecodedDataFrames([]*data.Frame{&frame})
 	instances, err := df.Encoded()
 	if err != nil {
 		return response.Error(400, "Failed to encode result dataframes", err)
@@ -92,7 +92,7 @@ func (ng *AlertNG) alertDefinitionEvalEndpoint(c *models.ReqContext) response.Re
 	}
 	frame := evalResults.AsDataFrame()
 
-	df := pluginmodels.NewDecodedDataFrames([]*data.Frame{&frame})
+	df := plugins.NewDecodedDataFrames([]*data.Frame{&frame})
 	if err != nil {
 		return response.Error(400, "Failed to instantiate Dataframes from the decoded frames", err)
 	}

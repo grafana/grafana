@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/opentracing/opentracing-go"
@@ -50,21 +49,21 @@ type ApplicationInsightsQuery struct {
 }
 
 func (e *ApplicationInsightsDatasource) executeTimeSeriesQuery(ctx context.Context,
-	originalQueries []pluginmodels.DataSubQuery,
-	timeRange pluginmodels.DataTimeRange) (pluginmodels.DataResponse, error) {
-	result := pluginmodels.DataResponse{
-		Results: map[string]pluginmodels.DataQueryResult{},
+	originalQueries []plugins.DataSubQuery,
+	timeRange plugins.DataTimeRange) (plugins.DataResponse, error) {
+	result := plugins.DataResponse{
+		Results: map[string]plugins.DataQueryResult{},
 	}
 
 	queries, err := e.buildQueries(originalQueries, timeRange)
 	if err != nil {
-		return pluginmodels.DataResponse{}, err
+		return plugins.DataResponse{}, err
 	}
 
 	for _, query := range queries {
 		queryRes, err := e.executeQuery(ctx, query)
 		if err != nil {
-			return pluginmodels.DataResponse{}, err
+			return plugins.DataResponse{}, err
 		}
 		result.Results[query.RefID] = queryRes
 	}
@@ -72,8 +71,8 @@ func (e *ApplicationInsightsDatasource) executeTimeSeriesQuery(ctx context.Conte
 	return result, nil
 }
 
-func (e *ApplicationInsightsDatasource) buildQueries(queries []pluginmodels.DataSubQuery,
-	timeRange pluginmodels.DataTimeRange) ([]*ApplicationInsightsQuery, error) {
+func (e *ApplicationInsightsDatasource) buildQueries(queries []plugins.DataSubQuery,
+	timeRange plugins.DataTimeRange) ([]*ApplicationInsightsQuery, error) {
 	applicationInsightsQueries := []*ApplicationInsightsQuery{}
 	startTime, err := timeRange.ParseFrom()
 	if err != nil {
@@ -140,8 +139,8 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []pluginmodels.Data
 }
 
 func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query *ApplicationInsightsQuery) (
-	pluginmodels.DataQueryResult, error) {
-	queryResult := pluginmodels.DataQueryResult{Meta: simplejson.New(), RefID: query.RefID}
+	plugins.DataQueryResult, error) {
+	queryResult := plugins.DataQueryResult{Meta: simplejson.New(), RefID: query.RefID}
 
 	req, err := e.createRequest(ctx, e.dsInfo)
 	if err != nil {
@@ -182,18 +181,18 @@ func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query 
 		}
 	}()
 	if err != nil {
-		return pluginmodels.DataQueryResult{}, err
+		return plugins.DataQueryResult{}, err
 	}
 
 	if res.StatusCode/100 != 2 {
 		azlog.Debug("Request failed", "status", res.Status, "body", string(body))
-		return pluginmodels.DataQueryResult{}, fmt.Errorf("request failed, status: %s", res.Status)
+		return plugins.DataQueryResult{}, fmt.Errorf("request failed, status: %s", res.Status)
 	}
 
 	mr := MetricsResult{}
 	err = json.Unmarshal(body, &mr)
 	if err != nil {
-		return pluginmodels.DataQueryResult{}, err
+		return plugins.DataQueryResult{}, err
 	}
 
 	frame, err := InsightsMetricsResultToFrame(mr, query.metricName, query.aggregation, query.dimensions)
@@ -204,7 +203,7 @@ func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query 
 
 	applyInsightsMetricAlias(frame, query.Alias)
 
-	queryResult.Dataframes = pluginmodels.NewDecodedDataFrames(data.Frames{frame})
+	queryResult.Dataframes = plugins.NewDecodedDataFrames(data.Frames{frame})
 	return queryResult, nil
 }
 
@@ -243,15 +242,15 @@ func (e *ApplicationInsightsDatasource) createRequest(ctx context.Context, dsInf
 	return req, nil
 }
 
-func (e *ApplicationInsightsDatasource) getPluginRoute(plugin *pluginmodels.DataSourcePlugin, cloudName string) (
-	*pluginmodels.AppPluginRoute, string, error) {
+func (e *ApplicationInsightsDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin, cloudName string) (
+	*plugins.AppPluginRoute, string, error) {
 	pluginRouteName := "appinsights"
 
 	if cloudName == "chinaazuremonitor" {
 		pluginRouteName = "chinaappinsights"
 	}
 
-	var pluginRoute *pluginmodels.AppPluginRoute
+	var pluginRoute *plugins.AppPluginRoute
 	for _, route := range plugin.Routes {
 		if route.Path == pluginRouteName {
 			pluginRoute = route

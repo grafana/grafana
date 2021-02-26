@@ -15,7 +15,7 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"xorm.io/core"
 )
@@ -24,7 +24,7 @@ func characterEscape(s string, escapeChar string) string {
 	return strings.ReplaceAll(s, escapeChar, url.QueryEscape(escapeChar))
 }
 
-func NewExecutor(datasource *models.DataSource) (pluginmodels.DataPlugin, error) {
+func NewExecutor(datasource *models.DataSource) (plugins.DataPlugin, error) {
 	logger := log.New("tsdb.mysql")
 
 	protocol := "tcp"
@@ -77,7 +77,7 @@ type mysqlQueryResultTransformer struct {
 }
 
 func (t *mysqlQueryResultTransformer) TransformQueryResult(columnTypes []*sql.ColumnType, rows *core.Rows) (
-	pluginmodels.DataRowValues, error) {
+	plugins.DataRowValues, error) {
 	values := make([]interface{}, len(columnTypes))
 
 	for i := range values {

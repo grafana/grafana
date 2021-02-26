@@ -8,7 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
+	"github.com/grafana/grafana/pkg/plugins"
 )
 
 var (
@@ -28,7 +28,7 @@ type intervalCalculator struct {
 }
 
 type Calculator interface {
-	Calculate(timeRange pluginmodels.DataTimeRange, minInterval time.Duration) Interval
+	Calculate(timeRange plugins.DataTimeRange, minInterval time.Duration) Interval
 }
 
 type CalculatorOptions struct {
@@ -53,7 +53,7 @@ func (i *Interval) Milliseconds() int64 {
 	return i.Value.Nanoseconds() / int64(time.Millisecond)
 }
 
-func (ic *intervalCalculator) Calculate(timerange pluginmodels.DataTimeRange, minInterval time.Duration) Interval {
+func (ic *intervalCalculator) Calculate(timerange plugins.DataTimeRange, minInterval time.Duration) Interval {
 	to := timerange.MustGetTo().UnixNano()
 	from := timerange.MustGetFrom().UnixNano()
 	interval := time.Duration((to - from) / defaultRes)

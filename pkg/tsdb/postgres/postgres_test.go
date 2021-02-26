@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
@@ -169,7 +169,7 @@ func TestPostgres(t *testing.T) {
 	sqleng.NewXormEngine = func(d, c string) (*xorm.Engine, error) {
 		return x, nil
 	}
-	sqleng.Interpolate = func(query pluginmodels.DataSubQuery, timeRange pluginmodels.DataTimeRange, sql string) (string, error) {
+	sqleng.Interpolate = func(query plugins.DataSubQuery, timeRange plugins.DataTimeRange, sql string) (string, error) {
 		return sql, nil
 	}
 
@@ -233,8 +233,8 @@ func TestPostgres(t *testing.T) {
 		require.NoError(t, err)
 
 		t.Run("When doing a table query should map Postgres column types to Go types", func(t *testing.T) {
-			query := pluginmodels.DataQuery{
-				Queries: []pluginmodels.DataSubQuery{
+			query := plugins.DataQuery{
+				Queries: []plugins.DataSubQuery{
 					{
 						Model: simplejson.NewFromAny(map[string]interface{}{
 							"rawSql": "SELECT * FROM postgres_types",
@@ -318,8 +318,8 @@ func TestPostgres(t *testing.T) {
 		require.NoError(t, err)
 
 		t.Run("When doing a metric query using timeGroup", func(t *testing.T) {
-			query := pluginmodels.DataQuery{
-				Queries: []pluginmodels.DataSubQuery{
+			query := plugins.DataQuery{
+				Queries: []plugins.DataSubQuery{
 					{
 						Model: simplejson.NewFromAny(map[string]interface{}{
 							"rawSql": "SELECT $__timeGroup(time, '5m') AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
@@ -368,8 +368,8 @@ func TestPostgres(t *testing.T) {
 				sqleng.Interpolate = mockInterpolate
 			})
 
-			query := pluginmodels.DataQuery{
-				Queries: []pluginmodels.DataSubQuery{
+			query := plugins.DataQuery{
+				Queries: []plugins.DataSubQuery{
 					{
 						DataSource: &models.DataSource{},
 						Model: simplejson.NewFromAny(map[string]interface{}{
@@ -379,7 +379,7 @@ func TestPostgres(t *testing.T) {
 						RefId: "A",
 					},
 				},
-				TimeRange: pluginmodels.DataTimeRange{
+				TimeRange: plugins.DataTimeRange{
 					From: fmt.Sprintf("%v", fromStart.Unix()*1000),
 					To:   fmt.Sprintf("%v", fromStart.Add(30*time.Minute).Unix()*1000),
 				},
@@ -395,8 +395,8 @@ func TestPostgres(t *testing.T) {
 		})
 
 		t.Run("When doing a metric query using timeGroup with NULL fill enabled", func(t *testing.T) {
-			query := pluginmodels.DataQuery{
-				Queries: []pluginmodels.DataSubQuery{
+			query := plugins.DataQuery{
+				Queries: []plugins.DataSubQuery{
 					{
 						Model: simplejson.NewFromAny(map[string]interface{}{
 							"rawSql": "SELECT $__timeGroup(time, '5m', NULL) AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
@@ -405,7 +405,7 @@ func TestPostgres(t *testing.T) {
 						RefId: "A",
 					},
 				},
-				TimeRange: pluginmodels.DataTimeRange{
+				TimeRange: plugins.DataTimeRange{
 					From: fmt.Sprintf("%v", fromStart.Unix()*1000),
 					To:   fmt.Sprintf("%v", fromStart.Add(34*time.Minute).Unix()*1000),
 				},
@@ -448,8 +448,8 @@ func TestPostgres(t *testing.T) {
 		})
 
 		t.Run("When doing a metric query using timeGroup with value fill enabled", func(t *testing.T) {
-			query := pluginmodels.DataQuery{
-				Queries: []pluginmodels.DataSubQuery{
+			query := plugins.DataQuery{
+				Queries: []plugins.DataSubQuery{
 					{
 						Model: simplejson.NewFromAny(map[string]interface{}{
 							"rawSql": "SELECT $__timeGroup(time, '5m', 1.5) AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
@@ -458,7 +458,7 @@ func TestPostgres(t *testing.T) {
 						RefId: "A",
 					},
 				},
-				TimeRange: pluginmodels.DataTimeRange{
+				TimeRange: plugins.DataTimeRange{
 					From: fmt.Sprintf("%v", fromStart.Unix()*1000),
 					To:   fmt.Sprintf("%v", fromStart.Add(34*time.Minute).Unix()*1000),
 				},
@@ -475,8 +475,8 @@ func TestPostgres(t *testing.T) {
 	})
 
 	t.Run("When doing a metric query using timeGroup with previous fill enabled", func(t *testing.T) {
-		query := pluginmodels.DataQuery{
-			Queries: []pluginmodels.DataSubQuery{
+		query := plugins.DataQuery{
+			Queries: []plugins.DataSubQuery{
 				{
 					Model: simplejson.NewFromAny(map[string]interface{}{
 						"rawSql": "SELECT $__timeGroup(time, '5m', previous), avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
@@ -485,7 +485,7 @@ func TestPostgres(t *testing.T) {
 					RefId: "A",
 				},
 			},
-			TimeRange: pluginmodels.DataTimeRange{
+			TimeRange: plugins.DataTimeRange{
 				From: fmt.Sprintf("%v", fromStart.Unix()*1000),
 				To:   fmt.Sprintf("%v", fromStart.Add(34*time.Minute).Unix()*1000),
 			},
@@ -572,8 +572,8 @@ func TestPostgres(t *testing.T) {
 		t.Run(
 			"When doing a metric query using epoch (int64) as time column and value column (int64) should return metric with time in milliseconds",
 			func(t *testing.T) {
-				query := pluginmodels.DataQuery{
-					Queries: []pluginmodels.DataSubQuery{
+				query := plugins.DataQuery{
+					Queries: []plugins.DataSubQuery{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT "timeInt64" as time, "timeInt64" FROM metric_values ORDER BY time LIMIT 1`,
@@ -595,8 +595,8 @@ func TestPostgres(t *testing.T) {
 
 		t.Run("When doing a metric query using epoch (int64 nullable) as time column and value column (int64 nullable,) should return metric with time in milliseconds",
 			func(t *testing.T) {
-				query := pluginmodels.DataQuery{
-					Queries: []pluginmodels.DataSubQuery{
+				query := plugins.DataQuery{
+					Queries: []plugins.DataSubQuery{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT "timeInt64Nullable" as time, "timeInt64Nullable" FROM metric_values ORDER BY time LIMIT 1`,
@@ -618,8 +618,8 @@ func TestPostgres(t *testing.T) {
 
 		t.Run("When doing a metric query using epoch (float64) as time column and value column (float64), should return metric with time in milliseconds",
 			func(t *testing.T) {
-				query := pluginmodels.DataQuery{
-					Queries: []pluginmodels.DataSubQuery{
+				query := plugins.DataQuery{
+					Queries: []plugins.DataSubQuery{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT "timeFloat64" as time, "timeFloat64" FROM metric_values ORDER BY time LIMIT 1`,
@@ -641,8 +641,8 @@ func TestPostgres(t *testing.T) {
 
 		t.Run("When doing a metric query using epoch (float64 nullable) as time column and value column (float64 nullable), should return metric with time in milliseconds",
 			func(t *testing.T) {
-				query := pluginmodels.DataQuery{
-					Queries: []pluginmodels.DataSubQuery{
+				query := plugins.DataQuery{
+					Queries: []plugins.DataSubQuery{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT "timeFloat64Nullable" as time, "timeFloat64Nullable" FROM metric_values ORDER BY time LIMIT 1`,
@@ -664,8 +664,8 @@ func TestPostgres(t *testing.T) {
 
 		t.Run("When doing a metric query using epoch (int32) as time column and value column (int32), should return metric with time in milliseconds",
 			func(t *testing.T) {
-				query := pluginmodels.DataQuery{
-					Queries: []pluginmodels.DataSubQuery{
+				query := plugins.DataQuery{
+					Queries: []plugins.DataSubQuery{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT "timeInt32" as time, "timeInt32" FROM metric_values ORDER BY time LIMIT 1`,
@@ -687,8 +687,8 @@ func TestPostgres(t *testing.T) {
 
 		t.Run("When doing a metric query using epoch (int32 nullable) as time column and value column (int32 nullable), should return metric with time in milliseconds",
 			func(t *testing.T) {
-				query := pluginmodels.DataQuery{
-					Queries: []pluginmodels.DataSubQuery{
+				query := plugins.DataQuery{
+					Queries: []plugins.DataSubQuery{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT "timeInt32Nullable" as time, "timeInt32Nullable" FROM metric_values ORDER BY time LIMIT 1`,
@@ -710,8 +710,8 @@ func TestPostgres(t *testing.T) {
 
 		t.Run("When doing a metric query using epoch (float32) as time column and value column (float32), should return metric with time in milliseconds",
 			func(t *testing.T) {
-				query := pluginmodels.DataQuery{
-					Queries: []pluginmodels.DataSubQuery{
+				query := plugins.DataQuery{
+					Queries: []plugins.DataSubQuery{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT "timeFloat32" as time, "timeFloat32" FROM metric_values ORDER BY time LIMIT 1`,
@@ -733,8 +733,8 @@ func TestPostgres(t *testing.T) {
 
 		t.Run("When doing a metric query using epoch (float32 nullable) as time column and value column (float32 nullable), should return metric with time in milliseconds",
 			func(t *testing.T) {
-				query := pluginmodels.DataQuery{
-					Queries: []pluginmodels.DataSubQuery{
+				query := plugins.DataQuery{
+					Queries: []plugins.DataSubQuery{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT "timeFloat32Nullable" as time, "timeFloat32Nullable" FROM metric_values ORDER BY time LIMIT 1`,
@@ -755,8 +755,8 @@ func TestPostgres(t *testing.T) {
 			})
 
 		t.Run("When doing a metric query grouping by time and select metric column should return correct series", func(t *testing.T) {
-			query := pluginmodels.DataQuery{
-				Queries: []pluginmodels.DataSubQuery{
+			query := plugins.DataQuery{
+				Queries: []plugins.DataSubQuery{
 					{
 						Model: simplejson.NewFromAny(map[string]interface{}{
 							"rawSql": `SELECT $__timeEpoch(time), measurement || ' - value one' as metric, "valueOne" FROM metric_values ORDER BY 1`,
@@ -778,8 +778,8 @@ func TestPostgres(t *testing.T) {
 		})
 
 		t.Run("When doing a metric query with metric column and multiple value columns", func(t *testing.T) {
-			query := pluginmodels.DataQuery{
-				Queries: []pluginmodels.DataSubQuery{
+			query := plugins.DataQuery{
+				Queries: []plugins.DataSubQuery{
 					{
 						Model: simplejson.NewFromAny(map[string]interface{}{
 							"rawSql": `SELECT $__timeEpoch(time), measurement as metric, "valueOne", "valueTwo" FROM metric_values ORDER BY 1`,
@@ -803,8 +803,8 @@ func TestPostgres(t *testing.T) {
 		})
 
 		t.Run("When doing a metric query grouping by time should return correct series", func(t *testing.T) {
-			query := pluginmodels.DataQuery{
-				Queries: []pluginmodels.DataSubQuery{
+			query := plugins.DataQuery{
+				Queries: []plugins.DataSubQuery{
 					{
 						Model: simplejson.NewFromAny(map[string]interface{}{
 							"rawSql": `SELECT $__timeEpoch(time), "valueOne", "valueTwo" FROM metric_values ORDER BY 1`,
@@ -832,9 +832,9 @@ func TestPostgres(t *testing.T) {
 			})
 			sqleng.Interpolate = origInterpolate
 
-			query := pluginmodels.DataQuery{
-				TimeRange: pluginmodels.DataTimeRange{From: "5m", To: "now", Now: fromStart},
-				Queries: []pluginmodels.DataSubQuery{
+			query := plugins.DataQuery{
+				TimeRange: plugins.DataTimeRange{From: "5m", To: "now", Now: fromStart},
+				Queries: []plugins.DataSubQuery{
 					{
 						DataSource: &models.DataSource{JsonData: simplejson.New()},
 						Model: simplejson.NewFromAny(map[string]interface{}{
@@ -891,8 +891,8 @@ func TestPostgres(t *testing.T) {
 		}
 
 		t.Run("When doing an annotation query of deploy events should return expected result", func(t *testing.T) {
-			query := pluginmodels.DataQuery{
-				Queries: []pluginmodels.DataSubQuery{
+			query := plugins.DataQuery{
+				Queries: []plugins.DataSubQuery{
 					{
 						Model: simplejson.NewFromAny(map[string]interface{}{
 							"rawSql": `SELECT "time_sec" as time, description as text, tags FROM event WHERE $__unixEpochFilter(time_sec) AND tags='deploy' ORDER BY 1 ASC`,
@@ -901,7 +901,7 @@ func TestPostgres(t *testing.T) {
 						RefId: "Deploys",
 					},
 				},
-				TimeRange: pluginmodels.DataTimeRange{
+				TimeRange: plugins.DataTimeRange{
 					From: fmt.Sprintf("%v", fromStart.Add(-20*time.Minute).Unix()*1000),
 					To:   fmt.Sprintf("%v", fromStart.Add(40*time.Minute).Unix()*1000),
 				},
@@ -914,8 +914,8 @@ func TestPostgres(t *testing.T) {
 		})
 
 		t.Run("When doing an annotation query of ticket events should return expected result", func(t *testing.T) {
-			query := pluginmodels.DataQuery{
-				Queries: []pluginmodels.DataSubQuery{
+			query := plugins.DataQuery{
+				Queries: []plugins.DataSubQuery{
 					{
 						Model: simplejson.NewFromAny(map[string]interface{}{
 							"rawSql": `SELECT "time_sec" as time, description as text, tags FROM event WHERE $__unixEpochFilter(time_sec) AND tags='ticket' ORDER BY 1 ASC`,
@@ -924,7 +924,7 @@ func TestPostgres(t *testing.T) {
 						RefId: "Tickets",
 					},
 				},
-				TimeRange: pluginmodels.DataTimeRange{
+				TimeRange: plugins.DataTimeRange{
 					From: fmt.Sprintf("%v", fromStart.Add(-20*time.Minute).Unix()*1000),
 					To:   fmt.Sprintf("%v", fromStart.Add(40*time.Minute).Unix()*1000),
 				},
@@ -940,8 +940,8 @@ func TestPostgres(t *testing.T) {
 			dt := time.Date(2018, 3, 14, 21, 20, 6, 527e6, time.UTC)
 			dtFormat := "2006-01-02 15:04:05.999999999"
 
-			query := pluginmodels.DataQuery{
-				Queries: []pluginmodels.DataSubQuery{
+			query := plugins.DataQuery{
+				Queries: []plugins.DataSubQuery{
 					{
 						Model: simplejson.NewFromAny(map[string]interface{}{
 							"rawSql": fmt.Sprintf(`SELECT
@@ -970,8 +970,8 @@ func TestPostgres(t *testing.T) {
 		t.Run("When doing an annotation query with a time column in epoch second format should return ms", func(t *testing.T) {
 			dt := time.Date(2018, 3, 14, 21, 20, 6, 527e6, time.UTC)
 
-			query := pluginmodels.DataQuery{
-				Queries: []pluginmodels.DataSubQuery{
+			query := plugins.DataQuery{
+				Queries: []plugins.DataSubQuery{
 					{
 						Model: simplejson.NewFromAny(map[string]interface{}{
 							"rawSql": fmt.Sprintf(`SELECT
@@ -1000,8 +1000,8 @@ func TestPostgres(t *testing.T) {
 		t.Run("When doing an annotation query with a time column in epoch second format (t *testing.Tint) should return ms", func(t *testing.T) {
 			dt := time.Date(2018, 3, 14, 21, 20, 6, 527e6, time.UTC)
 
-			query := pluginmodels.DataQuery{
-				Queries: []pluginmodels.DataSubQuery{
+			query := plugins.DataQuery{
+				Queries: []plugins.DataSubQuery{
 					{
 						Model: simplejson.NewFromAny(map[string]interface{}{
 							"rawSql": fmt.Sprintf(`SELECT
@@ -1030,8 +1030,8 @@ func TestPostgres(t *testing.T) {
 		t.Run("When doing an annotation query with a time column in epoch millisecond format should return ms", func(t *testing.T) {
 			dt := time.Date(2018, 3, 14, 21, 20, 6, 527e6, time.UTC)
 
-			query := pluginmodels.DataQuery{
-				Queries: []pluginmodels.DataSubQuery{
+			query := plugins.DataQuery{
+				Queries: []plugins.DataSubQuery{
 					{
 						Model: simplejson.NewFromAny(map[string]interface{}{
 							"rawSql": fmt.Sprintf(`SELECT
@@ -1058,8 +1058,8 @@ func TestPostgres(t *testing.T) {
 		})
 
 		t.Run("When doing an annotation query with a time column holding a bigint null value should return nil", func(t *testing.T) {
-			query := pluginmodels.DataQuery{
-				Queries: []pluginmodels.DataSubQuery{
+			query := plugins.DataQuery{
+				Queries: []plugins.DataSubQuery{
 					{
 						Model: simplejson.NewFromAny(map[string]interface{}{
 							"rawSql": `SELECT
@@ -1086,8 +1086,8 @@ func TestPostgres(t *testing.T) {
 		})
 
 		t.Run("When doing an annotation query with a time column holding a timestamp null value should return nil", func(t *testing.T) {
-			query := pluginmodels.DataQuery{
-				Queries: []pluginmodels.DataSubQuery{
+			query := plugins.DataQuery{
+				Queries: []plugins.DataSubQuery{
 					{
 						Model: simplejson.NewFromAny(map[string]interface{}{
 							"rawSql": `SELECT

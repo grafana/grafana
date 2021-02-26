@@ -5,8 +5,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
+	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/stretchr/testify/require"
 )
 
@@ -47,7 +46,7 @@ func TestConfigReader(t *testing.T) {
 	})
 
 	t.Run("Can read correct properties", func(t *testing.T) {
-		plugins.Apps = map[string]*pluginmodels.AppPlugin{
+		manager.Apps = map[string]*plugins.AppPlugin{
 			"test-plugin":   {},
 			"test-plugin-2": {},
 		}

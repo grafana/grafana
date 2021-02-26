@@ -8,7 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
@@ -20,7 +20,7 @@ type templateData struct {
 }
 
 // NewApiPluginProxy create a plugin proxy
-func NewApiPluginProxy(ctx *models.ReqContext, proxyPath string, route *pluginmodels.AppPluginRoute,
+func NewApiPluginProxy(ctx *models.ReqContext, proxyPath string, route *plugins.AppPluginRoute,
 	appID string, cfg *setting.Cfg) *httputil.ReverseProxy {
 	director := func(req *http.Request) {
 		query := models.GetPluginSettingByIdQuery{OrgId: ctx.OrgId, PluginId: appID}

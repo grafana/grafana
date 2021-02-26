@@ -3,7 +3,6 @@ package plugins
 import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 )
 
 func GetPluginSettings(orgId int64) (map[string]*models.PluginSettingInfoDTO, error) {
@@ -54,16 +53,16 @@ func GetPluginSettings(orgId int64) (map[string]*models.PluginSettingInfoDTO, er
 }
 
 type EnabledPlugins struct {
-	Panels      []*pluginmodels.PanelPlugin
-	DataSources map[string]*pluginmodels.DataSourcePlugin
-	Apps        []*pluginmodels.AppPlugin
+	Panels      []*PanelPlugin
+	DataSources map[string]*DataSourcePlugin
+	Apps        []*AppPlugin
 }
 
 func GetEnabledPlugins(orgID int64) (*EnabledPlugins, error) {
 	enabledPlugins := &EnabledPlugins{
-		Panels:      make([]*pluginmodels.PanelPlugin, 0),
-		DataSources: make(map[string]*pluginmodels.DataSourcePlugin),
-		Apps:        make([]*pluginmodels.AppPlugin, 0),
+		Panels:      make([]*PanelPlugin, 0),
+		DataSources: make(map[string]*DataSourcePlugin),
+		Apps:        make([]*AppPlugin, 0),
 	}
 
 	pluginSettingMap, err := GetPluginSettings(orgID)

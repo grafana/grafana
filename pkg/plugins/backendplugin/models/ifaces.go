@@ -21,7 +21,7 @@ type Manager interface {
 	// CallResource calls a plugin resource.
 	CallResource(pluginConfig backend.PluginContext, ctx *models.ReqContext, path string)
 	// GetDataPlugin gets a DataPlugin with a certain ID or nil if it doesn't exist.
-	// TODO: interface{} is the return type in order to break a dependency cycle. Should be pluginmodels.DataPlugin.
+	// TODO: interface{} is the return type in order to break a dependency cycle. Should be plugins.DataPlugin.
 	GetDataPlugin(pluginID string) interface{}
 }
 

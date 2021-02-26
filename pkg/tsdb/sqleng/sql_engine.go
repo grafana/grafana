@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/interval"
 
@@ -21,7 +22,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	"xorm.io/core"
 	"xorm.io/xorm"
 )
@@ -32,13 +32,13 @@ const MetaKeyExecutedQueryString = "executedQueryString"
 // SqlMacroEngine interpolates macros into sql. It takes in the Query to have access to query context and
 // timeRange to be able to generate queries that use from and to.
 type SqlMacroEngine interface {
-	Interpolate(query pluginmodels.DataSubQuery, timeRange pluginmodels.DataTimeRange, sql string) (string, error)
+	Interpolate(query plugins.DataSubQuery, timeRange plugins.DataTimeRange, sql string) (string, error)
 }
 
 // SqlQueryResultTransformer transforms a query result row to RowValues with proper types.
 type SqlQueryResultTransformer interface {
 	// TransformQueryResult transforms a query result row to RowValues with proper types.
-	TransformQueryResult(columnTypes []*sql.ColumnType, rows *core.Rows) (pluginmodels.DataRowValues, error)
+	TransformQueryResult(columnTypes []*sql.ColumnType, rows *core.Rows) (plugins.DataRowValues, error)
 	// TransformQueryError transforms a query error.
 	TransformQueryError(err error) error
 }
@@ -82,7 +82,7 @@ type SqlQueryEndpointConfiguration struct {
 }
 
 var NewSqlQueryEndpoint = func(config *SqlQueryEndpointConfiguration, queryResultTransformer SqlQueryResultTransformer,
-	macroEngine SqlMacroEngine, log log.Logger) (pluginmodels.DataPlugin, error) {
+	macroEngine SqlMacroEngine, log log.Logger) (plugins.DataPlugin, error) {
 	queryEndpoint := sqlQueryEndpoint{
 		queryResultTransformer: queryResultTransformer,
 		macroEngine:            macroEngine,
@@ -131,9 +131,9 @@ const rowLimit = 1000000
 
 // Query is the main function for the SqlQueryEndpoint
 func (e *sqlQueryEndpoint) DataQuery(ctx context.Context, dsInfo *models.DataSource,
-	tsdbQuery pluginmodels.DataQuery) (pluginmodels.DataResponse, error) {
-	result := pluginmodels.DataResponse{
-		Results: make(map[string]pluginmodels.DataQueryResult),
+	tsdbQuery plugins.DataQuery) (plugins.DataResponse, error) {
+	result := plugins.DataResponse{
+		Results: make(map[string]plugins.DataQueryResult),
 	}
 
 	var wg sync.WaitGroup
@@ -144,7 +144,7 @@ func (e *sqlQueryEndpoint) DataQuery(ctx context.Context, dsInfo *models.DataSou
 			continue
 		}
 
-		queryResult := pluginmodels.DataQueryResult{Meta: simplejson.New(), RefID: query.RefID}
+		queryResult := plugins.DataQueryResult{Meta: simplejson.New(), RefID: query.RefID}
 		result.Results[query.RefID] = queryResult
 
 		// global substitutions
@@ -165,7 +165,7 @@ func (e *sqlQueryEndpoint) DataQuery(ctx context.Context, dsInfo *models.DataSou
 
 		wg.Add(1)
 
-		go func(rawSQL string, query pluginmodels.DataSubQuery, queryResult pluginmodels.DataQueryResult) {
+		go func(rawSQL string, query plugins.DataSubQuery, queryResult plugins.DataQueryResult) {
 			defer wg.Done()
 			session := e.engine.NewSession()
 			defer session.Close()
@@ -206,7 +206,7 @@ func (e *sqlQueryEndpoint) DataQuery(ctx context.Context, dsInfo *models.DataSou
 }
 
 // Interpolate provides global macros/substitutions for all sql datasources.
-var Interpolate = func(query pluginmodels.DataSubQuery, timeRange pluginmodels.DataTimeRange, sql string) (string, error) {
+var Interpolate = func(query plugins.DataSubQuery, timeRange plugins.DataTimeRange, sql string) (string, error) {
 	minInterval, err := interval.GetIntervalFrom(query.DataSource, query.Model, time.Second*60)
 	if err != nil {
 		return sql, nil
@@ -221,8 +221,8 @@ var Interpolate = func(query pluginmodels.DataSubQuery, timeRange pluginmodels.D
 	return sql, nil
 }
 
-func (e *sqlQueryEndpoint) transformToTable(query pluginmodels.DataSubQuery, rows *core.Rows,
-	result pluginmodels.DataQueryResult, tsdbQuery pluginmodels.DataQuery) error {
+func (e *sqlQueryEndpoint) transformToTable(query plugins.DataSubQuery, rows *core.Rows,
+	result plugins.DataQueryResult, tsdbQuery plugins.DataQuery) error {
 	columnNames, err := rows.Columns()
 	columnCount := len(columnNames)
 
@@ -234,9 +234,9 @@ func (e *sqlQueryEndpoint) transformToTable(query pluginmodels.DataSubQuery, row
 	timeIndex := -1
 	timeEndIndex := -1
 
-	table := pluginmodels.DataTable{
-		Columns: make([]pluginmodels.DataTableColumn, columnCount),
-		Rows:    make([]pluginmodels.DataRowValues, 0),
+	table := plugins.DataTable{
+		Columns: make([]plugins.DataTableColumn, columnCount),
+		Rows:    make([]plugins.DataRowValues, 0),
 	}
 
 	for i, name := range columnNames {
@@ -283,7 +283,7 @@ func (e *sqlQueryEndpoint) transformToTable(query pluginmodels.DataSubQuery, row
 	return nil
 }
 
-func newProcessCfg(query pluginmodels.DataSubQuery, tsdbQuery pluginmodels.DataQuery, rows *core.Rows) (*processCfg, error) {
+func newProcessCfg(query plugins.DataSubQuery, tsdbQuery plugins.DataQuery, rows *core.Rows) (*processCfg, error) {
 	columnNames, err := rows.Columns()
 	if err != nil {
 		return nil, err
@@ -305,14 +305,14 @@ func newProcessCfg(query pluginmodels.DataSubQuery, tsdbQuery pluginmodels.DataQ
 		metricPrefix:       false,
 		fillMissing:        fillMissing,
 		seriesByQueryOrder: list.New(),
-		pointsBySeries:     make(map[string]pluginmodels.DataTimeSeries),
+		pointsBySeries:     make(map[string]plugins.DataTimeSeries),
 		tsdbQuery:          tsdbQuery,
 	}
 	return cfg, nil
 }
 
-func (e *sqlQueryEndpoint) transformToTimeSeries(query pluginmodels.DataSubQuery, rows *core.Rows,
-	result pluginmodels.DataQueryResult, tsdbQuery pluginmodels.DataQuery) error {
+func (e *sqlQueryEndpoint) transformToTimeSeries(query plugins.DataSubQuery, rows *core.Rows,
+	result plugins.DataQueryResult, tsdbQuery plugins.DataQuery) error {
 	cfg, err := newProcessCfg(query, tsdbQuery, rows)
 	if err != nil {
 		return err
@@ -394,7 +394,7 @@ func (e *sqlQueryEndpoint) transformToTimeSeries(query pluginmodels.DataSubQuery
 		// align interval start
 		intervalStart = math.Floor(intervalStart/cfg.fillInterval) * cfg.fillInterval
 		for i := intervalStart + cfg.fillInterval; i < intervalEnd; i += cfg.fillInterval {
-			series.Points = append(series.Points, pluginmodels.DataTimePoint{cfg.fillValue, null.FloatFrom(i)})
+			series.Points = append(series.Points, plugins.DataTimePoint{cfg.fillValue, null.FloatFrom(i)})
 			cfg.rowCount++
 		}
 	}
@@ -413,10 +413,10 @@ type processCfg struct {
 	metricPrefix       bool
 	metricPrefixValue  string
 	fillMissing        bool
-	pointsBySeries     map[string]pluginmodels.DataTimeSeries
+	pointsBySeries     map[string]plugins.DataTimeSeries
 	seriesByQueryOrder *list.List
 	fillValue          null.Float
-	tsdbQuery          pluginmodels.DataQuery
+	tsdbQuery          plugins.DataQuery
 	fillInterval       float64
 	fillPrevious       bool
 }
@@ -481,7 +481,7 @@ func (e *sqlQueryEndpoint) processRow(cfg *processCfg) error {
 
 		series, exist := cfg.pointsBySeries[metric]
 		if !exist {
-			series = pluginmodels.DataTimeSeries{Name: metric}
+			series = plugins.DataTimeSeries{Name: metric}
 			cfg.pointsBySeries[metric] = series
 			cfg.seriesByQueryOrder.PushBack(metric)
 		}
@@ -506,12 +506,12 @@ func (e *sqlQueryEndpoint) processRow(cfg *processCfg) error {
 			intervalStart = math.Floor(intervalStart/cfg.fillInterval) * cfg.fillInterval
 
 			for i := intervalStart; i < timestamp; i += cfg.fillInterval {
-				series.Points = append(series.Points, pluginmodels.DataTimePoint{cfg.fillValue, null.FloatFrom(i)})
+				series.Points = append(series.Points, plugins.DataTimePoint{cfg.fillValue, null.FloatFrom(i)})
 				cfg.rowCount++
 			}
 		}
 
-		series.Points = append(series.Points, pluginmodels.DataTimePoint{value, null.FloatFrom(timestamp)})
+		series.Points = append(series.Points, plugins.DataTimePoint{value, null.FloatFrom(timestamp)})
 
 		if setting.Env == setting.Dev {
 			e.log.Debug("Rows", "metric", metric, "time", timestamp, "value", value)
@@ -523,7 +523,7 @@ func (e *sqlQueryEndpoint) processRow(cfg *processCfg) error {
 
 // ConvertSqlTimeColumnToEpochMs converts column named time to unix timestamp in milliseconds
 // to make native datetime types and epoch dates work in annotation and table queries.
-func ConvertSqlTimeColumnToEpochMs(values pluginmodels.DataRowValues, timeIndex int) {
+func ConvertSqlTimeColumnToEpochMs(values plugins.DataRowValues, timeIndex int) {
 	if timeIndex >= 0 {
 		switch value := values[timeIndex].(type) {
 		case time.Time:
@@ -682,7 +682,7 @@ func ConvertSqlValueColumnToFloat(columnName string, columnValue interface{}) (n
 	return value, nil
 }
 
-func SetupFillmode(query pluginmodels.DataSubQuery, interval time.Duration, fillmode string) error {
+func SetupFillmode(query plugins.DataSubQuery, interval time.Duration, fillmode string) error {
 	query.Model.Set("fill", true)
 	query.Model.Set("fillInterval", interval.Seconds())
 	switch fillmode {

@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	backendmodels "github.com/grafana/grafana/pkg/plugins/backendplugin/models"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/stretchr/testify/require"
 )
@@ -32,7 +31,7 @@ func TestService(t *testing.T) {
 	me := &mockEndpoint{
 		Frames: []*data.Frame{dsDF},
 	}
-	s.DataService.RegisterQueryHandler("test", func(*models.DataSource) (pluginmodels.DataPlugin, error) {
+	s.DataService.RegisterQueryHandler("test", func(*models.DataSource) (plugins.DataPlugin, error) {
 		return me, nil
 	})
 	bus.AddHandler("test", func(query *models.GetDataSourceQuery) error {
@@ -102,12 +101,12 @@ type mockEndpoint struct {
 	Frames data.Frames
 }
 
-func (me *mockEndpoint) DataQuery(ctx context.Context, ds *models.DataSource, query pluginmodels.DataQuery) (
-	pluginmodels.DataResponse, error) {
-	return pluginmodels.DataResponse{
-		Results: map[string]pluginmodels.DataQueryResult{
+func (me *mockEndpoint) DataQuery(ctx context.Context, ds *models.DataSource, query plugins.DataQuery) (
+	plugins.DataResponse, error) {
+	return plugins.DataResponse{
+		Results: map[string]plugins.DataQueryResult{
 			"A": {
-				Dataframes: pluginmodels.NewDecodedDataFrames(me.Frames),
+				Dataframes: plugins.NewDecodedDataFrames(me.Frames),
 			},
 		},
 	}, nil

@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	opentracing "github.com/opentracing/opentracing-go"
@@ -41,21 +40,21 @@ const azureMonitorAPIVersion = "2018-01-01"
 // 1. build the AzureMonitor url and querystring for each query
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into the timeseries format
-func (e *AzureMonitorDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []pluginmodels.DataSubQuery,
-	timeRange pluginmodels.DataTimeRange) (pluginmodels.DataResponse, error) {
-	result := pluginmodels.DataResponse{
-		Results: map[string]pluginmodels.DataQueryResult{},
+func (e *AzureMonitorDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []plugins.DataSubQuery,
+	timeRange plugins.DataTimeRange) (plugins.DataResponse, error) {
+	result := plugins.DataResponse{
+		Results: map[string]plugins.DataQueryResult{},
 	}
 
 	queries, err := e.buildQueries(originalQueries, timeRange)
 	if err != nil {
-		return pluginmodels.DataResponse{}, err
+		return plugins.DataResponse{}, err
 	}
 
 	for _, query := range queries {
 		queryRes, resp, err := e.executeQuery(ctx, query, originalQueries, timeRange)
 		if err != nil {
-			return pluginmodels.DataResponse{}, err
+			return plugins.DataResponse{}, err
 		}
 
 		frames, err := e.parseResponse(resp, query)
@@ -70,7 +69,7 @@ func (e *AzureMonitorDatasource) executeTimeSeriesQuery(ctx context.Context, ori
 	return result, nil
 }
 
-func (e *AzureMonitorDatasource) buildQueries(queries []pluginmodels.DataSubQuery, timeRange pluginmodels.DataTimeRange) ([]*AzureMonitorQuery, error) {
+func (e *AzureMonitorDatasource) buildQueries(queries []plugins.DataSubQuery, timeRange plugins.DataTimeRange) ([]*AzureMonitorQuery, error) {
 	azureMonitorQueries := []*AzureMonitorQuery{}
 	startTime, err := timeRange.ParseFrom()
 	if err != nil {
@@ -172,9 +171,9 @@ func (e *AzureMonitorDatasource) buildQueries(queries []pluginmodels.DataSubQuer
 	return azureMonitorQueries, nil
 }
 
-func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *AzureMonitorQuery, queries []pluginmodels.DataSubQuery,
-	timeRange pluginmodels.DataTimeRange) (pluginmodels.DataQueryResult, AzureMonitorResponse, error) {
-	queryResult := pluginmodels.DataQueryResult{RefID: query.RefID}
+func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *AzureMonitorQuery, queries []plugins.DataSubQuery,
+	timeRange plugins.DataTimeRange) (plugins.DataQueryResult, AzureMonitorResponse, error) {
+	queryResult := plugins.DataQueryResult{RefID: query.RefID}
 
 	req, err := e.createRequest(ctx, e.dsInfo)
 	if err != nil {
@@ -232,7 +231,7 @@ func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo *mode
 	}
 
 	cloudName := dsInfo.JsonData.Get("cloudName").MustString("azuremonitor")
-	var azureMonitorRoute *pluginmodels.AppPluginRoute
+	var azureMonitorRoute *plugins.AppPluginRoute
 	for _, route := range plugin.Routes {
 		if route.Path == cloudName {
 			azureMonitorRoute = route
@@ -284,7 +283,7 @@ func (e *AzureMonitorDatasource) unmarshalResponse(res *http.Response) (AzureMon
 }
 
 func (e *AzureMonitorDatasource) parseResponse(amr AzureMonitorResponse, query *AzureMonitorQuery) (
-	pluginmodels.DataFrames, error) {
+	plugins.DataFrames, error) {
 	if len(amr.Value) == 0 {
 		return nil, nil
 	}
@@ -344,7 +343,7 @@ func (e *AzureMonitorDatasource) parseResponse(amr AzureMonitorResponse, query *
 		frames = append(frames, frame)
 	}
 
-	return pluginmodels.NewDecodedDataFrames(frames), nil
+	return plugins.NewDecodedDataFrames(frames), nil
 }
 
 // formatAzureMonitorLegendKey builds the legend key or timeseries name

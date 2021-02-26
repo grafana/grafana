@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/tsdb/interval"
 	"github.com/prometheus/client_golang/api"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
@@ -40,7 +40,7 @@ func (bat basicAuthTransport) RoundTrip(req *http.Request) (*http.Response, erro
 	return bat.Transport.RoundTrip(req)
 }
 
-func NewExecutor(dsInfo *models.DataSource) (pluginmodels.DataPlugin, error) {
+func NewExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
 	transport, err := dsInfo.GetHttpTransport()
 	if err != nil {
 		return nil, err
@@ -84,9 +84,9 @@ func (e *PrometheusExecutor) getClient(dsInfo *models.DataSource) (apiv1.API, er
 }
 
 func (e *PrometheusExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource,
-	tsdbQuery pluginmodels.DataQuery) (pluginmodels.DataResponse, error) {
-	result := pluginmodels.DataResponse{
-		Results: map[string]pluginmodels.DataQueryResult{},
+	tsdbQuery plugins.DataQuery) (plugins.DataResponse, error) {
+	result := plugins.DataResponse{
+		Results: map[string]plugins.DataQueryResult{},
 	}
 
 	client, err := e.getClient(dsInfo)
@@ -148,7 +148,7 @@ func formatLegend(metric model.Metric, query *PrometheusQuery) string {
 	return string(result)
 }
 
-func (e *PrometheusExecutor) parseQuery(dsInfo *models.DataSource, query pluginmodels.DataQuery) (
+func (e *PrometheusExecutor) parseQuery(dsInfo *models.DataSource, query plugins.DataQuery) (
 	[]*PrometheusQuery, error) {
 	qs := []*PrometheusQuery{}
 	for _, queryModel := range query.Queries {
@@ -191,8 +191,8 @@ func (e *PrometheusExecutor) parseQuery(dsInfo *models.DataSource, query pluginm
 	return qs, nil
 }
 
-func parseResponse(value model.Value, query *PrometheusQuery) (pluginmodels.DataQueryResult, error) {
-	var queryRes pluginmodels.DataQueryResult
+func parseResponse(value model.Value, query *PrometheusQuery) (plugins.DataQueryResult, error) {
+	var queryRes plugins.DataQueryResult
 
 	data, ok := value.(model.Matrix)
 	if !ok {
@@ -200,10 +200,10 @@ func parseResponse(value model.Value, query *PrometheusQuery) (pluginmodels.Data
 	}
 
 	for _, v := range data {
-		series := pluginmodels.DataTimeSeries{
+		series := plugins.DataTimeSeries{
 			Name:   formatLegend(v.Metric, query),
 			Tags:   make(map[string]string, len(v.Metric)),
-			Points: make([]pluginmodels.DataTimePoint, 0, len(v.Values)),
+			Points: make([]plugins.DataTimePoint, 0, len(v.Values)),
 		}
 
 		for k, v := range v.Metric {
@@ -211,7 +211,7 @@ func parseResponse(value model.Value, query *PrometheusQuery) (pluginmodels.Data
 		}
 
 		for _, k := range v.Values {
-			series.Points = append(series.Points, pluginmodels.DataTimePoint{
+			series.Points = append(series.Points, plugins.DataTimePoint{
 				null.FloatFrom(float64(k.Value)),
 				null.FloatFrom(float64(k.Timestamp.Unix() * 1000)),
 			})

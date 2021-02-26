@@ -14,7 +14,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/models"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"golang.org/x/oauth2/jwt"
 )
 
@@ -40,7 +40,7 @@ type oauthJwtTokenCacheType struct {
 }
 
 type accessTokenProvider struct {
-	route             *pluginmodels.AppPluginRoute
+	route             *plugins.AppPluginRoute
 	datasourceId      int64
 	datasourceVersion int
 }
@@ -81,7 +81,7 @@ func (token *jwtToken) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func newAccessTokenProvider(ds *models.DataSource, pluginRoute *pluginmodels.AppPluginRoute) *accessTokenProvider {
+func newAccessTokenProvider(ds *models.DataSource, pluginRoute *plugins.AppPluginRoute) *accessTokenProvider {
 	return &accessTokenProvider{
 		datasourceId:      ds.Id,
 		datasourceVersion: ds.Version,

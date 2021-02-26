@@ -1,5 +1,5 @@
 // Package models contains plugin model related logic.
-package models
+package plugins
 
 import (
 	"encoding/json"

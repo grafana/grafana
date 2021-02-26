@@ -12,7 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/flux"
 )
@@ -23,7 +23,7 @@ type Executor struct {
 	ResponseParser *ResponseParser
 }
 
-func NewExecutor(*models.DataSource) (pluginmodels.DataPlugin, error) {
+func NewExecutor(*models.DataSource) (plugins.DataPlugin, error) {
 	return &Executor{
 		QueryParser:    &InfluxdbQueryParser{},
 		ResponseParser: &ResponseParser{},
@@ -40,8 +40,8 @@ func init() {
 	glog = log.New("tsdb.influxdb")
 }
 
-func (e *Executor) DataQuery(ctx context.Context, dsInfo *models.DataSource, tsdbQuery pluginmodels.DataQuery) (
-	pluginmodels.DataResponse, error) {
+func (e *Executor) DataQuery(ctx context.Context, dsInfo *models.DataSource, tsdbQuery plugins.DataQuery) (
+	plugins.DataResponse, error) {
 	glog.Debug("Received a query request", "numQueries", len(tsdbQuery.Queries))
 
 	version := dsInfo.JsonData.Get("version").MustString("")
@@ -56,12 +56,12 @@ func (e *Executor) DataQuery(ctx context.Context, dsInfo *models.DataSource, tsd
 
 	query, err := e.getQuery(dsInfo, tsdbQuery)
 	if err != nil {
-		return pluginmodels.DataResponse{}, err
+		return plugins.DataResponse{}, err
 	}
 
 	rawQuery, err := query.Build(tsdbQuery)
 	if err != nil {
-		return pluginmodels.DataResponse{}, err
+		return plugins.DataResponse{}, err
 	}
 
 	if setting.Env == setting.Dev {
@@ -70,17 +70,17 @@ func (e *Executor) DataQuery(ctx context.Context, dsInfo *models.DataSource, tsd
 
 	req, err := e.createRequest(ctx, dsInfo, rawQuery)
 	if err != nil {
-		return pluginmodels.DataResponse{}, err
+		return plugins.DataResponse{}, err
 	}
 
 	httpClient, err := dsInfo.GetHttpClient()
 	if err != nil {
-		return pluginmodels.DataResponse{}, err
+		return plugins.DataResponse{}, err
 	}
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		return pluginmodels.DataResponse{}, err
+		return plugins.DataResponse{}, err
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
@@ -88,21 +88,21 @@ func (e *Executor) DataQuery(ctx context.Context, dsInfo *models.DataSource, tsd
 		}
 	}()
 	if resp.StatusCode/100 != 2 {
-		return pluginmodels.DataResponse{}, fmt.Errorf("InfluxDB returned error status: %s", resp.Status)
+		return plugins.DataResponse{}, fmt.Errorf("InfluxDB returned error status: %s", resp.Status)
 	}
 
 	var response Response
 	dec := json.NewDecoder(resp.Body)
 	dec.UseNumber()
 	if err := dec.Decode(&response); err != nil {
-		return pluginmodels.DataResponse{}, err
+		return plugins.DataResponse{}, err
 	}
 	if response.Err != nil {
-		return pluginmodels.DataResponse{}, response.Err
+		return plugins.DataResponse{}, response.Err
 	}
 
-	result := pluginmodels.DataResponse{
-		Results: map[string]pluginmodels.DataQueryResult{
+	result := plugins.DataResponse{
+		Results: map[string]plugins.DataQueryResult{
 			"A": e.ResponseParser.Parse(&response, query),
 		},
 	}
@@ -110,7 +110,7 @@ func (e *Executor) DataQuery(ctx context.Context, dsInfo *models.DataSource, tsd
 	return result, nil
 }
 
-func (e *Executor) getQuery(dsInfo *models.DataSource, query pluginmodels.DataQuery) (*Query, error) {
+func (e *Executor) getQuery(dsInfo *models.DataSource, query plugins.DataQuery) (*Query, error) {
 	if len(query.Queries) == 0 {
 		return nil, fmt.Errorf("query request contains no queries")
 	}

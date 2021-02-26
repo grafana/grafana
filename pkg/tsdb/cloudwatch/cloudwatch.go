@@ -26,7 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -70,7 +70,7 @@ func (s *CloudWatchService) Init() error {
 	return nil
 }
 
-func (s *CloudWatchService) NewExecutor(*models.DataSource) (pluginmodels.DataPlugin, error) {
+func (s *CloudWatchService) NewExecutor(*models.DataSource) (plugins.DataPlugin, error) {
 	return newExecutor(s.LogsService), nil
 }
 
@@ -246,7 +246,7 @@ func (e *cloudWatchExecutor) getRGTAClient(region string) (resourcegroupstagging
 }
 
 func (e *cloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
-	queryContext pluginmodels.DataQuery) (*cloudwatchlogs.GetQueryResultsOutput, error) {
+	queryContext plugins.DataQuery) (*cloudwatchlogs.GetQueryResultsOutput, error) {
 	const maxAttempts = 8
 	const pollPeriod = 1000 * time.Millisecond
 
@@ -285,7 +285,7 @@ func (e *cloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwat
 
 // DataQuery executes a CloudWatch query.
 func (e *cloudWatchExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource,
-	queryContext pluginmodels.DataQuery) (pluginmodels.DataResponse, error) {
+	queryContext plugins.DataQuery) (plugins.DataResponse, error) {
 	e.DataSource = dsInfo
 
 	/*
@@ -306,7 +306,7 @@ func (e *cloudWatchExecutor) DataQuery(ctx context.Context, dsInfo *models.DataS
 	queryType := queryParams.Get("type").MustString("")
 
 	var err error
-	var result pluginmodels.DataResponse
+	var result plugins.DataResponse
 	switch queryType {
 	case "metricFindQuery":
 		result, err = e.executeMetricFindQuery(ctx, queryContext)
@@ -325,8 +325,8 @@ func (e *cloudWatchExecutor) DataQuery(ctx context.Context, dsInfo *models.DataS
 	return result, err
 }
 
-func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryContext pluginmodels.DataQuery) (
-	pluginmodels.DataResponse, error) {
+func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryContext plugins.DataQuery) (
+	plugins.DataResponse, error) {
 	queryParams := queryContext.Queries[0].Model
 	queryParams.Set("subtype", "StartQuery")
 	queryParams.Set("queryString", queryParams.Get("expression").MustString(""))
@@ -339,12 +339,12 @@ func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryCont
 
 	logsClient, err := e.getCWLogsClient(region)
 	if err != nil {
-		return pluginmodels.DataResponse{}, err
+		return plugins.DataResponse{}, err
 	}
 
 	result, err := e.executeStartQuery(ctx, logsClient, queryParams, *queryContext.TimeRange)
 	if err != nil {
-		return pluginmodels.DataResponse{}, err
+		return plugins.DataResponse{}, err
 	}
 
 	queryParams.Set("queryId", *result.QueryId)
@@ -352,38 +352,38 @@ func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryCont
 	// Get query results
 	getQueryResultsOutput, err := e.alertQuery(ctx, logsClient, queryContext)
 	if err != nil {
-		return pluginmodels.DataResponse{}, err
+		return plugins.DataResponse{}, err
 	}
 
 	dataframe, err := logsResultsToDataframes(getQueryResultsOutput)
 	if err != nil {
-		return pluginmodels.DataResponse{}, err
+		return plugins.DataResponse{}, err
 	}
 
 	statsGroups := queryParams.Get("statsGroups").MustStringArray()
 	if len(statsGroups) > 0 && len(dataframe.Fields) > 0 {
 		groupedFrames, err := groupResults(dataframe, statsGroups)
 		if err != nil {
-			return pluginmodels.DataResponse{}, err
+			return plugins.DataResponse{}, err
 		}
 
-		response := pluginmodels.DataResponse{
-			Results: make(map[string]pluginmodels.DataQueryResult),
+		response := plugins.DataResponse{
+			Results: make(map[string]plugins.DataQueryResult),
 		}
 
-		response.Results["A"] = pluginmodels.DataQueryResult{
+		response.Results["A"] = plugins.DataQueryResult{
 			RefID:      "A",
-			Dataframes: pluginmodels.NewDecodedDataFrames(groupedFrames),
+			Dataframes: plugins.NewDecodedDataFrames(groupedFrames),
 		}
 
 		return response, nil
 	}
 
-	response := pluginmodels.DataResponse{
-		Results: map[string]pluginmodels.DataQueryResult{
+	response := plugins.DataResponse{
+		Results: map[string]plugins.DataQueryResult{
 			"A": {
 				RefID:      "A",
-				Dataframes: pluginmodels.NewDecodedDataFrames(data.Frames{dataframe}),
+				Dataframes: plugins.NewDecodedDataFrames(data.Frames{dataframe}),
 			},
 		},
 	}

@@ -8,7 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
 )
 
@@ -39,7 +39,7 @@ type AzureMonitorExecutor struct {
 }
 
 // NewAzureMonitorExecutor initializes a http client
-func (s *Service) NewExecutor(dsInfo *models.DataSource) (pluginmodels.DataPlugin, error) {
+func (s *Service) NewExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
 	httpClient, err := dsInfo.GetHttpClient()
 	if err != nil {
 		return nil, err
@@ -56,13 +56,13 @@ func (s *Service) NewExecutor(dsInfo *models.DataSource) (pluginmodels.DataPlugi
 // executes the queries against the API and parses the response into
 // the right format
 func (e *AzureMonitorExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource,
-	tsdbQuery pluginmodels.DataQuery) (pluginmodels.DataResponse, error) {
+	tsdbQuery plugins.DataQuery) (plugins.DataResponse, error) {
 	var err error
 
-	var azureMonitorQueries []pluginmodels.DataSubQuery
-	var applicationInsightsQueries []pluginmodels.DataSubQuery
-	var azureLogAnalyticsQueries []pluginmodels.DataSubQuery
-	var insightsAnalyticsQueries []pluginmodels.DataSubQuery
+	var azureMonitorQueries []plugins.DataSubQuery
+	var applicationInsightsQueries []plugins.DataSubQuery
+	var azureLogAnalyticsQueries []plugins.DataSubQuery
+	var insightsAnalyticsQueries []plugins.DataSubQuery
 
 	for _, query := range tsdbQuery.Queries {
 		queryType := query.Model.Get("queryType").MustString("")
@@ -77,7 +77,7 @@ func (e *AzureMonitorExecutor) DataQuery(ctx context.Context, dsInfo *models.Dat
 		case "Insights Analytics":
 			insightsAnalyticsQueries = append(insightsAnalyticsQueries, query)
 		default:
-			return pluginmodels.DataResponse{}, fmt.Errorf("alerting not supported for %q", queryType)
+			return plugins.DataResponse{}, fmt.Errorf("alerting not supported for %q", queryType)
 		}
 	}
 
@@ -103,22 +103,22 @@ func (e *AzureMonitorExecutor) DataQuery(ctx context.Context, dsInfo *models.Dat
 
 	azResult, err := azDatasource.executeTimeSeriesQuery(ctx, azureMonitorQueries, *tsdbQuery.TimeRange)
 	if err != nil {
-		return pluginmodels.DataResponse{}, err
+		return plugins.DataResponse{}, err
 	}
 
 	aiResult, err := aiDatasource.executeTimeSeriesQuery(ctx, applicationInsightsQueries, *tsdbQuery.TimeRange)
 	if err != nil {
-		return pluginmodels.DataResponse{}, err
+		return plugins.DataResponse{}, err
 	}
 
 	alaResult, err := alaDatasource.executeTimeSeriesQuery(ctx, azureLogAnalyticsQueries, *tsdbQuery.TimeRange)
 	if err != nil {
-		return pluginmodels.DataResponse{}, err
+		return plugins.DataResponse{}, err
 	}
 
 	iaResult, err := iaDatasource.executeTimeSeriesQuery(ctx, insightsAnalyticsQueries, *tsdbQuery.TimeRange)
 	if err != nil {
-		return pluginmodels.DataResponse{}, err
+		return plugins.DataResponse{}, err
 	}
 
 	for k, v := range aiResult.Results {

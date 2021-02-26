@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/interval"
 
 	"github.com/grafana/grafana/pkg/models"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"golang.org/x/net/context/ctxhttp"
 )
 
@@ -43,7 +43,7 @@ type Client interface {
 }
 
 // NewClient creates a new elasticsearch client
-var NewClient = func(ctx context.Context, ds *models.DataSource, timeRange pluginmodels.DataTimeRange) (Client, error) {
+var NewClient = func(ctx context.Context, ds *models.DataSource, timeRange plugins.DataTimeRange) (Client, error) {
 	version, err := ds.JsonData.Get("esVersion").Int()
 	if err != nil {
 		return nil, fmt.Errorf("elasticsearch version is required, err=%v", err)
@@ -88,7 +88,7 @@ type baseClientImpl struct {
 	version      int
 	timeField    string
 	indices      []string
-	timeRange    pluginmodels.DataTimeRange
+	timeRange    plugins.DataTimeRange
 	debugEnabled bool
 }
 

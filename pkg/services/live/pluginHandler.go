@@ -3,12 +3,12 @@ package live
 import (
 	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana/pkg/models"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
+	"github.com/grafana/grafana/pkg/plugins"
 )
 
 // PluginHandler manages all the `grafana/dashboard/*` channels
 type PluginHandler struct {
-	Plugin *pluginmodels.PluginBase
+	Plugin *plugins.PluginBase
 }
 
 // GetHandlerForPath called on init

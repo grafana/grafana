@@ -4,25 +4,25 @@ import (
 	"context"
 	"strings"
 
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
+	"github.com/grafana/grafana/pkg/plugins"
 )
 
-func (e *Executor) executeAnnotationQuery(ctx context.Context, tsdbQuery pluginmodels.DataQuery) (
-	pluginmodels.DataResponse, error) {
-	result := pluginmodels.DataResponse{
-		Results: make(map[string]pluginmodels.DataQueryResult),
+func (e *Executor) executeAnnotationQuery(ctx context.Context, tsdbQuery plugins.DataQuery) (
+	plugins.DataResponse, error) {
+	result := plugins.DataResponse{
+		Results: make(map[string]plugins.DataQueryResult),
 	}
 
 	firstQuery := tsdbQuery.Queries[0]
 
 	queries, err := e.buildQueryExecutors(tsdbQuery)
 	if err != nil {
-		return pluginmodels.DataResponse{}, err
+		return plugins.DataResponse{}, err
 	}
 
 	queryRes, resp, _, err := queries[0].run(ctx, tsdbQuery, e)
 	if err != nil {
-		return pluginmodels.DataResponse{}, err
+		return plugins.DataResponse{}, err
 	}
 
 	metricQuery := firstQuery.Model.Get("metricQuery")
@@ -36,10 +36,10 @@ func (e *Executor) executeAnnotationQuery(ctx context.Context, tsdbQuery pluginm
 	return result, err
 }
 
-func transformAnnotationToTable(data []map[string]string, result *pluginmodels.DataQueryResult) {
-	table := pluginmodels.DataTable{
-		Columns: make([]pluginmodels.DataTableColumn, 4),
-		Rows:    make([]pluginmodels.DataRowValues, 0),
+func transformAnnotationToTable(data []map[string]string, result *plugins.DataQueryResult) {
+	table := plugins.DataTable{
+		Columns: make([]plugins.DataTableColumn, 4),
+		Rows:    make([]plugins.DataRowValues, 0),
 	}
 	table.Columns[0].Text = "time"
 	table.Columns[1].Text = "title"

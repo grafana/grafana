@@ -7,11 +7,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
-	"github.com/grafana/grafana/pkg/plugins/models/adapters"
+	"github.com/grafana/grafana/pkg/plugins/adapters"
 )
 
-func newQueryEndpointAdapter(pluginID string, logger log.Logger, handler backend.QueryDataHandler) pluginmodels.DataPlugin {
+func newQueryEndpointAdapter(pluginID string, logger log.Logger, handler backend.QueryDataHandler) plugins.DataPlugin {
 	return &queryEndpointAdapter{
 		pluginID: pluginID,
 		logger:   logger,
@@ -45,11 +44,11 @@ func modelToInstanceSettings(ds *models.DataSource) (*backend.DataSourceInstance
 	}, nil
 }
 
-func (a *queryEndpointAdapter) DataQuery(ctx context.Context, ds *models.DataSource, query pluginmodels.DataQuery) (
-	pluginmodels.DataResponse, error) {
+func (a *queryEndpointAdapter) DataQuery(ctx context.Context, ds *models.DataSource, query plugins.DataQuery) (
+	plugins.DataResponse, error) {
 	instanceSettings, err := modelToInstanceSettings(ds)
 	if err != nil {
-		return pluginmodels.DataResponse{}, err
+		return plugins.DataResponse{}, err
 	}
 
 	req := &backend.QueryDataRequest{
@@ -66,7 +65,7 @@ func (a *queryEndpointAdapter) DataQuery(ctx context.Context, ds *models.DataSou
 	for _, q := range query.Queries {
 		modelJSON, err := q.Model.MarshalJSON()
 		if err != nil {
-			return pluginmodels.DataResponse{}, err
+			return plugins.DataResponse{}, err
 		}
 		req.Queries = append(req.Queries, backend.DataQuery{
 			RefID:         q.RefID,
@@ -83,15 +82,15 @@ func (a *queryEndpointAdapter) DataQuery(ctx context.Context, ds *models.DataSou
 
 	resp, err := a.handler.QueryData(ctx, req)
 	if err != nil {
-		return pluginmodels.DataResponse{}, err
+		return plugins.DataResponse{}, err
 	}
 
-	tR := pluginmodels.DataResponse{
-		Results: make(map[string]pluginmodels.DataQueryResult, len(resp.Responses)),
+	tR := plugins.DataResponse{
+		Results: make(map[string]plugins.DataQueryResult, len(resp.Responses)),
 	}
 
 	for refID, r := range resp.Responses {
-		qr := pluginmodels.DataQueryResult{
+		qr := plugins.DataQueryResult{
 			RefID: refID,
 		}
 
@@ -101,7 +100,7 @@ func (a *queryEndpointAdapter) DataQuery(ctx context.Context, ds *models.DataSou
 			}
 		}
 
-		qr.Dataframes = pluginmodels.NewDecodedDataFrames(r.Frames)
+		qr.Dataframes = plugins.NewDecodedDataFrames(r.Frames)
 
 		if r.Error != nil {
 			qr.Error = r.Error

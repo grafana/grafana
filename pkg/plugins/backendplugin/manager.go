@@ -15,9 +15,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
 	backendmodels "github.com/grafana/grafana/pkg/plugins/backendplugin/models"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -105,7 +105,7 @@ func (m *manager) GetDataPlugin(pluginID string) interface{} {
 		return nil
 	}
 
-	if tsdbPlugin, ok := plugin.(pluginmodels.DataPlugin); ok {
+	if tsdbPlugin, ok := plugin.(plugins.DataPlugin); ok {
 		return tsdbPlugin
 	}
 

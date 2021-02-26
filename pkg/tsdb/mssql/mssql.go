@@ -13,14 +13,14 @@ import (
 	mssql "github.com/denisenkom/go-mssqldb"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"xorm.io/core"
 )
 
 var logger = log.New("tsdb.mssql")
 
-func NewExecutor(datasource *models.DataSource) (pluginmodels.DataPlugin, error) {
+func NewExecutor(datasource *models.DataSource) (plugins.DataPlugin, error) {
 	cnnstr, err := generateConnectionString(datasource)
 	if err != nil {
 		return nil, err
@@ -103,7 +103,7 @@ type mssqlQueryResultTransformer struct {
 }
 
 func (t *mssqlQueryResultTransformer) TransformQueryResult(columnTypes []*sql.ColumnType, rows *core.Rows) (
-	pluginmodels.DataRowValues, error) {
+	plugins.DataRowValues, error) {
 	values := make([]interface{}, len(columnTypes))
 	valuePtrs := make([]interface{}, len(columnTypes))
 

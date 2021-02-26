@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -48,7 +47,7 @@ type AlertQuery struct {
 
 // Eval evaluates the `QueryCondition`.
 func (c *QueryCondition) Eval(context *alerting.EvalContext, requestHandler tsdbifaces.RequestHandler) (*alerting.ConditionResult, error) {
-	timeRange := pluginmodels.NewDataTimeRange(c.Query.From, c.Query.To)
+	timeRange := plugins.NewDataTimeRange(c.Query.From, c.Query.To)
 
 	seriesList, err := c.executeQuery(context, timeRange, requestHandler)
 	if err != nil {
@@ -109,8 +108,8 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext, requestHandler tsdb
 	}, nil
 }
 
-func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange pluginmodels.DataTimeRange,
-	requestHandler tsdbifaces.RequestHandler) (pluginmodels.DataTimeSeriesSlice, error) {
+func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange plugins.DataTimeRange,
+	requestHandler tsdbifaces.RequestHandler) (plugins.DataTimeSeriesSlice, error) {
 	getDsInfo := &models.GetDataSourceQuery{
 		Id:    c.Query.DatasourceID,
 		OrgId: context.Rule.OrgID,
@@ -126,7 +125,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange p
 	}
 
 	req := c.getRequestForAlertRule(getDsInfo.Result, timeRange, context.IsDebug)
-	result := make(pluginmodels.DataTimeSeriesSlice, 0)
+	result := make(plugins.DataTimeSeriesSlice, 0)
 
 	if context.IsDebug {
 		data := simplejson.New()
@@ -178,7 +177,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange p
 		// If there are dataframes but no series on the result
 		useDataframes := v.Dataframes != nil && (v.Series == nil || len(v.Series) == 0)
 
-		if useDataframes { // convert the dataframes to pluginmodels.DataTimeSeries
+		if useDataframes { // convert the dataframes to plugins.DataTimeSeries
 			frames, err := v.Dataframes.Decoded()
 			if err != nil {
 				return nil, errutil.Wrap("request handler failed to unmarshal arrow dataframes from bytes", err)
@@ -188,7 +187,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange p
 				ss, err := FrameToSeriesSlice(frame)
 				if err != nil {
 					return nil, errutil.Wrapf(err,
-						`request handler failed to convert dataframe "%v" to pluginmodels.DataTimeSeriesSlice`, frame.Name)
+						`request handler failed to convert dataframe "%v" to plugins.DataTimeSeriesSlice`, frame.Name)
 				}
 				result = append(result, ss...)
 			}
@@ -220,12 +219,12 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange p
 	return result, nil
 }
 
-func (c *QueryCondition) getRequestForAlertRule(datasource *models.DataSource, timeRange pluginmodels.DataTimeRange,
-	debug bool) pluginmodels.DataQuery {
+func (c *QueryCondition) getRequestForAlertRule(datasource *models.DataSource, timeRange plugins.DataTimeRange,
+	debug bool) plugins.DataQuery {
 	queryModel := c.Query.Model
-	req := pluginmodels.DataQuery{
+	req := plugins.DataQuery{
 		TimeRange: &timeRange,
-		Queries: []pluginmodels.DataSubQuery{
+		Queries: []plugins.DataSubQuery{
 			{
 				RefID:      "A",
 				Model:      queryModel,
@@ -304,22 +303,22 @@ func validateToValue(to string) error {
 
 // FrameToSeriesSlice converts a frame that is a valid time series as per data.TimeSeriesSchema()
 // to a DataTimeSeriesSlice.
-func FrameToSeriesSlice(frame *data.Frame) (pluginmodels.DataTimeSeriesSlice, error) {
+func FrameToSeriesSlice(frame *data.Frame) (plugins.DataTimeSeriesSlice, error) {
 	tsSchema := frame.TimeSeriesSchema()
 	if tsSchema.Type == data.TimeSeriesTypeNot {
-		// If no fields, or only a time field, create an empty pluginmodels.DataTimeSeriesSlice with a single
+		// If no fields, or only a time field, create an empty plugins.DataTimeSeriesSlice with a single
 		// time series in order to trigger "no data" in alerting.
 		if len(frame.Fields) == 0 || (len(frame.Fields) == 1 && frame.Fields[0].Type().Time()) {
-			return pluginmodels.DataTimeSeriesSlice{{
+			return plugins.DataTimeSeriesSlice{{
 				Name:   frame.Name,
-				Points: make(pluginmodels.DataTimeSeriesPoints, 0),
+				Points: make(plugins.DataTimeSeriesPoints, 0),
 			}}, nil
 		}
 		return nil, fmt.Errorf("input frame is not recognized as a time series")
 	}
 
 	seriesCount := len(tsSchema.ValueIndices)
-	seriesSlice := make(pluginmodels.DataTimeSeriesSlice, 0, seriesCount)
+	seriesSlice := make(plugins.DataTimeSeriesSlice, 0, seriesCount)
 	timeField := frame.Fields[tsSchema.TimeIndex]
 	timeNullFloatSlice := make([]null.Float, timeField.Len())
 
@@ -333,8 +332,8 @@ func FrameToSeriesSlice(frame *data.Frame) (pluginmodels.DataTimeSeriesSlice, er
 
 	for _, fieldIdx := range tsSchema.ValueIndices { // create a TimeSeries for each value Field
 		field := frame.Fields[fieldIdx]
-		ts := pluginmodels.DataTimeSeries{
-			Points: make(pluginmodels.DataTimeSeriesPoints, field.Len()),
+		ts := plugins.DataTimeSeries{
+			Points: make(plugins.DataTimeSeriesPoints, field.Len()),
 		}
 
 		if len(field.Labels) > 0 {
@@ -360,7 +359,7 @@ func FrameToSeriesSlice(frame *data.Frame) (pluginmodels.DataTimeSeriesSlice, er
 				return nil, errutil.Wrapf(err,
 					"failed to convert frame to DataTimeSeriesSlice, can not convert value %v to float", field.At(rowIdx))
 			}
-			ts.Points[rowIdx] = pluginmodels.DataTimePoint{
+			ts.Points[rowIdx] = plugins.DataTimePoint{
 				null.FloatFrom(val),
 				timeNullFloatSlice[rowIdx],
 			}

@@ -8,17 +8,17 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryContext pluginmodels.DataQuery) (
-	pluginmodels.DataResponse, error) {
-	result := pluginmodels.DataResponse{
-		Results: make(map[string]pluginmodels.DataQueryResult),
+func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryContext plugins.DataQuery) (
+	plugins.DataResponse, error) {
+	result := plugins.DataResponse{
+		Results: make(map[string]plugins.DataQueryResult),
 	}
 	firstQuery := queryContext.Queries[0]
-	queryResult := pluginmodels.DataQueryResult{Meta: simplejson.New(), RefID: firstQuery.RefID}
+	queryResult := plugins.DataQueryResult{Meta: simplejson.New(), RefID: firstQuery.RefID}
 
 	parameters := firstQuery.Model
 	usePrefixMatch := parameters.Get("prefixMatching").MustBool(false)
@@ -28,7 +28,7 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryCo
 	dimensions := parameters.Get("dimensions").MustMap()
 	statistics, err := parseStatistics(parameters)
 	if err != nil {
-		return pluginmodels.DataResponse{}, err
+		return plugins.DataResponse{}, err
 	}
 	period := int64(parameters.Get("period").MustInt(0))
 	if period == 0 && !usePrefixMatch {
@@ -39,7 +39,7 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryCo
 
 	cli, err := e.getCWClient(region)
 	if err != nil {
-		return pluginmodels.DataResponse{}, err
+		return plugins.DataResponse{}, err
 	}
 
 	var alarmNames []*string
@@ -51,7 +51,7 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryCo
 		}
 		resp, err := cli.DescribeAlarms(params)
 		if err != nil {
-			return pluginmodels.DataResponse{}, errutil.Wrap("failed to call cloudwatch:DescribeAlarms", err)
+			return plugins.DataResponse{}, errutil.Wrap("failed to call cloudwatch:DescribeAlarms", err)
 		}
 		alarmNames = filterAlarms(resp, namespace, metricName, dimensions, statistics, period)
 	} else {
@@ -82,7 +82,7 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryCo
 			}
 			resp, err := cli.DescribeAlarmsForMetric(params)
 			if err != nil {
-				return pluginmodels.DataResponse{}, errutil.Wrap("failed to call cloudwatch:DescribeAlarmsForMetric", err)
+				return plugins.DataResponse{}, errutil.Wrap("failed to call cloudwatch:DescribeAlarmsForMetric", err)
 			}
 			for _, alarm := range resp.MetricAlarms {
 				alarmNames = append(alarmNames, alarm.AlarmName)
@@ -92,11 +92,11 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryCo
 
 	startTime, err := queryContext.TimeRange.ParseFrom()
 	if err != nil {
-		return pluginmodels.DataResponse{}, err
+		return plugins.DataResponse{}, err
 	}
 	endTime, err := queryContext.TimeRange.ParseTo()
 	if err != nil {
-		return pluginmodels.DataResponse{}, err
+		return plugins.DataResponse{}, err
 	}
 
 	annotations := make([]map[string]string, 0)
@@ -109,7 +109,7 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryCo
 		}
 		resp, err := cli.DescribeAlarmHistory(params)
 		if err != nil {
-			return pluginmodels.DataResponse{}, errutil.Wrap("failed to call cloudwatch:DescribeAlarmHistory", err)
+			return plugins.DataResponse{}, errutil.Wrap("failed to call cloudwatch:DescribeAlarmHistory", err)
 		}
 		for _, history := range resp.AlarmHistoryItems {
 			annotation := make(map[string]string)
@@ -126,10 +126,10 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryCo
 	return result, nil
 }
 
-func transformAnnotationToTable(data []map[string]string, result *pluginmodels.DataQueryResult) {
-	table := pluginmodels.DataTable{
-		Columns: make([]pluginmodels.DataTableColumn, 4),
-		Rows:    make([]pluginmodels.DataRowValues, 0),
+func transformAnnotationToTable(data []map[string]string, result *plugins.DataQueryResult) {
+	table := plugins.DataTable{
+		Columns: make([]plugins.DataTableColumn, 4),
+		Rows:    make([]plugins.DataRowValues, 0),
 	}
 	table.Columns[0].Text = "time"
 	table.Columns[1].Text = "title"

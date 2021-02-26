@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/stretchr/testify/require"
 	ptr "github.com/xorcare/pointer"
 )
@@ -125,12 +125,12 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			for k, v := range commonAzureModelProps {
 				tt.azureMonitorVariedProperties[k] = v
 			}
-			tsdbQuery := pluginmodels.DataQuery{
-				TimeRange: &pluginmodels.DataTimeRange{
+			tsdbQuery := plugins.DataQuery{
+				TimeRange: &plugins.DataTimeRange{
 					From: fmt.Sprintf("%v", fromStart.Unix()*1000),
 					To:   fmt.Sprintf("%v", fromStart.Add(34*time.Minute).Unix()*1000),
 				},
-				Queries: []pluginmodels.DataSubQuery{
+				Queries: []plugins.DataSubQuery{
 					{
 						DataSource: &models.DataSource{
 							JsonData: simplejson.NewFromAny(map[string]interface{}{
@@ -433,7 +433,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			azData := loadTestFile(t, "azuremonitor/"+tt.responseFile)
-			res := pluginmodels.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
+			res := plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
 			require.NotNil(t, res)
 			dframes, err := datasource.parseResponse(azData, tt.mockQuery)
 			require.NoError(t, err)

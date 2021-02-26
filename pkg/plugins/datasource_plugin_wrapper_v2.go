@@ -1,4 +1,4 @@
-package models
+package plugins
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins/models/adapters"
+	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 )
 

@@ -1,4 +1,4 @@
-package models
+package plugins
 
 type PluginSignatureStatus string
 

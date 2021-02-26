@@ -6,9 +6,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
 	backendmodels "github.com/grafana/grafana/pkg/plugins/backendplugin/models"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 )
 
 // corePlugin represents a plugin that's part of Grafana core.
@@ -47,7 +47,7 @@ func (cp *corePlugin) CanHandleDataQueries() bool {
 }
 
 func (cp *corePlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
-	tsdbQuery pluginmodels.DataQuery) (pluginmodels.DataResponse, error) {
+	tsdbQuery plugins.DataQuery) (plugins.DataResponse, error) {
 	// TODO: Inline the adapter
 	adapter := newQueryEndpointAdapter(cp.pluginID, cp.logger, instrumentation.InstrumentQueryDataHandler(
 		cp.QueryDataHandler))

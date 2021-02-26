@@ -17,7 +17,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/opentracing/opentracing-go"
 )
@@ -26,14 +26,14 @@ type GraphiteExecutor struct {
 	HttpClient *http.Client
 }
 
-func NewExecutor(*models.DataSource) (pluginmodels.DataPlugin, error) {
+func NewExecutor(*models.DataSource) (plugins.DataPlugin, error) {
 	return &GraphiteExecutor{}, nil
 }
 
 var glog = log.New("tsdb.graphite")
 
-func (e *GraphiteExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource, tsdbQuery pluginmodels.DataQuery) (
-	pluginmodels.DataResponse, error) {
+func (e *GraphiteExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource, tsdbQuery plugins.DataQuery) (
+	plugins.DataResponse, error) {
 
 	// This logic is used when called from Dashboard Alerting.
 	from := "-" + formatTimeRange(tsdbQuery.TimeRange.From)
@@ -44,7 +44,7 @@ func (e *GraphiteExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSou
 		var err error
 		from, until, err = epochMStoGraphiteTime(*tsdbQuery.TimeRange)
 		if err != nil {
-			return pluginmodels.DataResponse{}, err
+			return plugins.DataResponse{}, err
 		}
 	}
 
@@ -76,7 +76,7 @@ func (e *GraphiteExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSou
 
 	if target == "" {
 		glog.Error("No targets in query model", "models without targets", strings.Join(emptyQueries, "\n"))
-		return pluginmodels.DataResponse{}, errors.New("no query target found for the alert rule")
+		return plugins.DataResponse{}, errors.New("no query target found for the alert rule")
 	}
 
 	formData["target"] = []string{target}
@@ -87,12 +87,12 @@ func (e *GraphiteExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSou
 
 	req, err := e.createRequest(dsInfo, formData)
 	if err != nil {
-		return pluginmodels.DataResponse{}, err
+		return plugins.DataResponse{}, err
 	}
 
 	httpClient, err := dsInfo.GetHttpClient()
 	if err != nil {
-		return pluginmodels.DataResponse{}, err
+		return plugins.DataResponse{}, err
 	}
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "graphite query")
@@ -108,24 +108,24 @@ func (e *GraphiteExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSou
 		span.Context(),
 		opentracing.HTTPHeaders,
 		opentracing.HTTPHeadersCarrier(req.Header)); err != nil {
-		return pluginmodels.DataResponse{}, err
+		return plugins.DataResponse{}, err
 	}
 
 	res, err := ctxhttp.Do(ctx, httpClient, req)
 	if err != nil {
-		return pluginmodels.DataResponse{}, err
+		return plugins.DataResponse{}, err
 	}
 
 	data, err := e.parseResponse(res)
 	if err != nil {
-		return pluginmodels.DataResponse{}, err
+		return plugins.DataResponse{}, err
 	}
 
-	result := pluginmodels.DataResponse{}
-	result.Results = make(map[string]pluginmodels.DataQueryResult)
-	queryRes := pluginmodels.DataQueryResult{}
+	result := plugins.DataResponse{}
+	result.Results = make(map[string]plugins.DataQueryResult)
+	queryRes := plugins.DataQueryResult{}
 	for _, series := range data {
-		queryRes.Series = append(queryRes.Series, pluginmodels.DataTimeSeries{
+		queryRes.Series = append(queryRes.Series, plugins.DataTimeSeries{
 			Name:   series.Target,
 			Points: series.DataPoints,
 		})
@@ -211,7 +211,7 @@ func fixIntervalFormat(target string) string {
 	return target
 }
 
-func isTimeRangeNumeric(tr pluginmodels.DataTimeRange) bool {
+func isTimeRangeNumeric(tr plugins.DataTimeRange) bool {
 	if _, err := strconv.ParseInt(tr.From, 10, 64); err != nil {
 		return false
 	}
@@ -221,7 +221,7 @@ func isTimeRangeNumeric(tr pluginmodels.DataTimeRange) bool {
 	return true
 }
 
-func epochMStoGraphiteTime(tr pluginmodels.DataTimeRange) (string, string, error) {
+func epochMStoGraphiteTime(tr plugins.DataTimeRange) (string, string, error) {
 	from, err := strconv.ParseInt(tr.From, 10, 64)
 	if err != nil {
 		return "", "", err

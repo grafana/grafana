@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
@@ -60,7 +59,7 @@ func (s *Service) updateAppDashboards() {
 	}
 }
 
-func (s *Service) syncPluginDashboards(pluginDef *pluginmodels.PluginBase, orgID int64) {
+func (s *Service) syncPluginDashboards(pluginDef *plugins.PluginBase, orgID int64) {
 	s.logger.Info("Syncing plugin dashboards to DB", "pluginId", pluginDef.Id)
 
 	// Get plugin dashboards

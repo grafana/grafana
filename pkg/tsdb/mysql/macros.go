@@ -8,7 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/gtime"
 	"github.com/grafana/grafana/pkg/infra/log"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
 
@@ -19,8 +19,8 @@ var restrictedRegExp = regexp.MustCompile(`(?im)([\s]*show[\s]+grants|[\s,]sessi
 
 type mySqlMacroEngine struct {
 	*sqleng.SqlMacroEngineBase
-	timeRange pluginmodels.DataTimeRange
-	query     pluginmodels.DataSubQuery
+	timeRange plugins.DataTimeRange
+	query     plugins.DataSubQuery
 	logger    log.Logger
 }
 
@@ -28,7 +28,7 @@ func newMysqlMacroEngine(logger log.Logger) sqleng.SqlMacroEngine {
 	return &mySqlMacroEngine{SqlMacroEngineBase: sqleng.NewSqlMacroEngineBase(), logger: logger}
 }
 
-func (m *mySqlMacroEngine) Interpolate(query pluginmodels.DataSubQuery, timeRange pluginmodels.DataTimeRange, sql string) (string, error) {
+func (m *mySqlMacroEngine) Interpolate(query plugins.DataSubQuery, timeRange plugins.DataTimeRange, sql string) (string, error) {
 	m.timeRange = timeRange
 	m.query = query
 

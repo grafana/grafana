@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/components/null"
-	"github.com/grafana/grafana/pkg/plugins/models"
+	"github.com/grafana/grafana/pkg/plugins"
 )
 
 type ResponseParser struct{}
@@ -21,8 +21,8 @@ func init() {
 	legendFormat = regexp.MustCompile(`\[\[(\w+)(\.\w+)*\]\]*|\$\s*(\w+?)*`)
 }
 
-func (rp *ResponseParser) Parse(response *Response, query *Query) models.DataQueryResult {
-	var queryRes models.DataQueryResult
+func (rp *ResponseParser) Parse(response *Response, query *Query) plugins.DataQueryResult {
+	var queryRes plugins.DataQueryResult
 
 	for _, result := range response.Results {
 		queryRes.Series = append(queryRes.Series, rp.transformRows(result.Series, queryRes, query)...)
@@ -34,22 +34,22 @@ func (rp *ResponseParser) Parse(response *Response, query *Query) models.DataQue
 	return queryRes
 }
 
-func (rp *ResponseParser) transformRows(rows []Row, queryResult models.DataQueryResult, query *Query) models.DataTimeSeriesSlice {
-	var result models.DataTimeSeriesSlice
+func (rp *ResponseParser) transformRows(rows []Row, queryResult plugins.DataQueryResult, query *Query) plugins.DataTimeSeriesSlice {
+	var result plugins.DataTimeSeriesSlice
 	for _, row := range rows {
 		for columnIndex, column := range row.Columns {
 			if column == "time" {
 				continue
 			}
 
-			var points models.DataTimeSeriesPoints
+			var points plugins.DataTimeSeriesPoints
 			for _, valuePair := range row.Values {
 				point, err := rp.parseTimepoint(valuePair, columnIndex)
 				if err == nil {
 					points = append(points, point)
 				}
 			}
-			result = append(result, models.DataTimeSeries{
+			result = append(result, plugins.DataTimeSeries{
 				Name:   rp.formatSeriesName(row, column, query),
 				Points: points,
 				Tags:   row.Tags,
@@ -115,19 +115,19 @@ func (rp *ResponseParser) buildSeriesNameFromQuery(row Row, column string) strin
 	return fmt.Sprintf("%s.%s%s", row.Name, column, tagText)
 }
 
-func (rp *ResponseParser) parseTimepoint(valuePair []interface{}, valuePosition int) (models.DataTimePoint, error) {
+func (rp *ResponseParser) parseTimepoint(valuePair []interface{}, valuePosition int) (plugins.DataTimePoint, error) {
 	value := rp.parseValue(valuePair[valuePosition])
 
 	timestampNumber, ok := valuePair[0].(json.Number)
 	if !ok {
-		return models.DataTimePoint{}, fmt.Errorf("valuePair[0] has invalid type: %#v", valuePair[0])
+		return plugins.DataTimePoint{}, fmt.Errorf("valuePair[0] has invalid type: %#v", valuePair[0])
 	}
 	timestamp, err := timestampNumber.Float64()
 	if err != nil {
-		return models.DataTimePoint{}, err
+		return plugins.DataTimePoint{}, err
 	}
 
-	return models.DataTimePoint{value, null.FloatFrom(timestamp)}, nil
+	return plugins.DataTimePoint{value, null.FloatFrom(timestamp)}, nil
 }
 
 func (rp *ResponseParser) parseValue(value interface{}) null.Float {

@@ -12,14 +12,14 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/net/context/ctxhttp"
 )
 
-func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context, tsdbQuery pluginmodels.DataQuery,
-	e *Executor) (pluginmodels.DataQueryResult, cloudMonitoringResponse, string, error) {
-	queryResult := pluginmodels.DataQueryResult{Meta: simplejson.New(), RefID: timeSeriesFilter.RefID}
+func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context, tsdbQuery plugins.DataQuery,
+	e *Executor) (plugins.DataQueryResult, cloudMonitoringResponse, string, error) {
+	queryResult := plugins.DataQueryResult{Meta: simplejson.New(), RefID: timeSeriesFilter.RefID}
 	projectName := timeSeriesFilter.ProjectName
 	if projectName == "" {
 		defaultProject, err := e.getDefaultProject(ctx)
@@ -79,7 +79,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context
 	return queryResult, data, req.URL.RawQuery, nil
 }
 
-func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes *pluginmodels.DataQueryResult,
+func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes *plugins.DataQueryResult,
 	response cloudMonitoringResponse, executedQueryString string) error {
 	labels := make(map[string]map[string]bool)
 	frames := data.Frames{}
@@ -227,7 +227,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 		frames = addConfigData(frames, dl)
 	}
 
-	queryRes.Dataframes = pluginmodels.NewDecodedDataFrames(frames)
+	queryRes.Dataframes = plugins.NewDecodedDataFrames(frames)
 
 	labelsByKey := make(map[string][]string)
 	for key, values := range labels {
@@ -242,7 +242,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 }
 
 func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) handleNonDistributionSeries(series timeSeries,
-	defaultMetricName string, seriesLabels map[string]string, queryRes *pluginmodels.DataQueryResult,
+	defaultMetricName string, seriesLabels map[string]string, queryRes *plugins.DataQueryResult,
 	frame *data.Frame) {
 	for i := 0; i < len(series.Points); i++ {
 		point := series.Points[i]
@@ -272,7 +272,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) handleNonDistributionSe
 	setDisplayNameAsFieldName(dataField)
 }
 
-func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseToAnnotations(queryRes *pluginmodels.DataQueryResult,
+func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseToAnnotations(queryRes *plugins.DataQueryResult,
 	response cloudMonitoringResponse, title string, text string, tags string) error {
 	frames := data.Frames{}
 	for _, series := range response.TimeSeries {
@@ -300,7 +300,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseToAnnotations(quer
 			data.NewField("text", nil, annotation["text"]),
 		))
 	}
-	queryRes.Dataframes = pluginmodels.NewDecodedDataFrames(frames)
+	queryRes.Dataframes = plugins.NewDecodedDataFrames(frames)
 
 	return nil
 }

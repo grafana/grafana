@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/models"
 	backendmodels "github.com/grafana/grafana/pkg/plugins/backendplugin/models"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -133,7 +132,7 @@ func TestPluginManager_Init(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Len(t, pm.scanningErrors, 1)
-		assert.True(t, errors.Is(pm.scanningErrors[0], pluginmodels.DuplicatePluginError{}))
+		assert.True(t, errors.Is(pm.scanningErrors[0], DuplicatePluginError{}))
 	})
 
 	t.Run("With external back-end plugin with valid v2 signature", func(t *testing.T) {
@@ -153,8 +152,8 @@ func TestPluginManager_Init(t *testing.T) {
 		assert.Equal(t, "Test", Plugins[pluginId].Name)
 		assert.Equal(t, pluginId, Plugins[pluginId].Id)
 		assert.Equal(t, "1.0.0", Plugins[pluginId].Info.Version)
-		assert.Equal(t, pluginmodels.PluginSignatureValid, Plugins[pluginId].Signature)
-		assert.Equal(t, pluginmodels.GrafanaType, Plugins[pluginId].SignatureType)
+		assert.Equal(t, PluginSignatureValid, Plugins[pluginId].Signature)
+		assert.Equal(t, GrafanaType, Plugins[pluginId].SignatureType)
 		assert.Equal(t, "Grafana Labs", Plugins[pluginId].SignatureOrg)
 		assert.False(t, Plugins[pluginId].IsCorePlugin)
 	})
@@ -201,8 +200,8 @@ func TestPluginManager_Init(t *testing.T) {
 		assert.Equal(t, "Test", Plugins[pluginId].Name)
 		assert.Equal(t, pluginId, Plugins[pluginId].Id)
 		assert.Equal(t, "1.0.0", Plugins[pluginId].Info.Version)
-		assert.Equal(t, pluginmodels.PluginSignatureValid, Plugins[pluginId].Signature)
-		assert.Equal(t, pluginmodels.PrivateType, Plugins[pluginId].SignatureType)
+		assert.Equal(t, PluginSignatureValid, Plugins[pluginId].Signature)
+		assert.Equal(t, PrivateType, Plugins[pluginId].SignatureType)
 		assert.Equal(t, "Will Browne", Plugins[pluginId].SignatureOrg)
 		assert.False(t, Plugins[pluginId].IsCorePlugin)
 	})

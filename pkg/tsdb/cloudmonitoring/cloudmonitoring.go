@@ -24,7 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"golang.org/x/oauth2/google"
 )
@@ -86,7 +86,7 @@ type Executor struct {
 }
 
 // NewExecutor returns an Executor.
-func (s *Service) NewExecutor(dsInfo *models.DataSource) (pluginmodels.DataPlugin, error) {
+func (s *Service) NewExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
 	httpClient, err := dsInfo.GetHttpClient()
 	if err != nil {
 		return nil, err
@@ -105,9 +105,9 @@ func init() {
 // Query takes in the frontend queries, parses them into the CloudMonitoring query format
 // executes the queries against the CloudMonitoring API and parses the response into
 // the time series or table format
-func (e *Executor) DataQuery(ctx context.Context, dsInfo *models.DataSource, tsdbQuery pluginmodels.DataQuery) (
-	pluginmodels.DataResponse, error) {
-	var result pluginmodels.DataResponse
+func (e *Executor) DataQuery(ctx context.Context, dsInfo *models.DataSource, tsdbQuery plugins.DataQuery) (
+	plugins.DataResponse, error) {
+	var result plugins.DataResponse
 	var err error
 	queryType := tsdbQuery.Queries[0].Model.Get("type").MustString("")
 
@@ -125,16 +125,16 @@ func (e *Executor) DataQuery(ctx context.Context, dsInfo *models.DataSource, tsd
 	return result, err
 }
 
-func (e *Executor) getGCEDefaultProject(ctx context.Context, tsdbQuery pluginmodels.DataQuery) (pluginmodels.DataResponse, error) {
-	result := pluginmodels.DataResponse{
-		Results: make(map[string]pluginmodels.DataQueryResult),
+func (e *Executor) getGCEDefaultProject(ctx context.Context, tsdbQuery plugins.DataQuery) (plugins.DataResponse, error) {
+	result := plugins.DataResponse{
+		Results: make(map[string]plugins.DataQueryResult),
 	}
 	refID := tsdbQuery.Queries[0].RefID
-	queryResult := pluginmodels.DataQueryResult{Meta: simplejson.New(), RefID: refID}
+	queryResult := plugins.DataQueryResult{Meta: simplejson.New(), RefID: refID}
 
 	gceDefaultProject, err := e.getDefaultProject(ctx)
 	if err != nil {
-		return pluginmodels.DataResponse{}, fmt.Errorf(
+		return plugins.DataResponse{}, fmt.Errorf(
 			"failed to retrieve default project from GCE metadata server, error: %w", err)
 	}
 
@@ -144,15 +144,15 @@ func (e *Executor) getGCEDefaultProject(ctx context.Context, tsdbQuery pluginmod
 	return result, nil
 }
 
-func (e *Executor) executeTimeSeriesQuery(ctx context.Context, tsdbQuery pluginmodels.DataQuery) (
-	pluginmodels.DataResponse, error) {
-	result := pluginmodels.DataResponse{
-		Results: make(map[string]pluginmodels.DataQueryResult),
+func (e *Executor) executeTimeSeriesQuery(ctx context.Context, tsdbQuery plugins.DataQuery) (
+	plugins.DataResponse, error) {
+	result := plugins.DataResponse{
+		Results: make(map[string]plugins.DataQueryResult),
 	}
 
 	queryExecutors, err := e.buildQueryExecutors(tsdbQuery)
 	if err != nil {
-		return pluginmodels.DataResponse{}, err
+		return plugins.DataResponse{}, err
 	}
 
 	unit := e.resolvePanelUnitFromQueries(queryExecutors)
@@ -160,7 +160,7 @@ func (e *Executor) executeTimeSeriesQuery(ctx context.Context, tsdbQuery pluginm
 	for _, queryExecutor := range queryExecutors {
 		queryRes, resp, executedQueryString, err := queryExecutor.run(ctx, tsdbQuery, e)
 		if err != nil {
-			return pluginmodels.DataResponse{}, err
+			return plugins.DataResponse{}, err
 		}
 		err = queryExecutor.parseResponse(&queryRes, resp, executedQueryString)
 		if err != nil {
@@ -177,7 +177,7 @@ func (e *Executor) executeTimeSeriesQuery(ctx context.Context, tsdbQuery pluginm
 				}
 				frames[i].Fields[1].Config.Unit = unit
 			}
-			queryRes.Dataframes = pluginmodels.NewDecodedDataFrames(frames)
+			queryRes.Dataframes = plugins.NewDecodedDataFrames(frames)
 		}
 		result.Results[queryExecutor.getRefID()] = queryRes
 	}
@@ -205,7 +205,7 @@ func (e *Executor) resolvePanelUnitFromQueries(executors []cloudMonitoringQueryE
 	return ""
 }
 
-func (e *Executor) buildQueryExecutors(tsdbQuery pluginmodels.DataQuery) ([]cloudMonitoringQueryExecutor, error) {
+func (e *Executor) buildQueryExecutors(tsdbQuery plugins.DataQuery) ([]cloudMonitoringQueryExecutor, error) {
 	cloudMonitoringQueryExecutors := []cloudMonitoringQueryExecutor{}
 
 	startTime, err := tsdbQuery.TimeRange.ParseFrom()
@@ -291,7 +291,7 @@ func (e *Executor) buildQueryExecutors(tsdbQuery pluginmodels.DataQuery) ([]clou
 	return cloudMonitoringQueryExecutors, nil
 }
 
-func migrateLegacyQueryModel(query *pluginmodels.DataSubQuery) {
+func migrateLegacyQueryModel(query *plugins.DataSubQuery) {
 	mq := query.Model.Get("metricQuery").MustMap()
 	if mq == nil {
 		migratedModel := simplejson.NewFromAny(map[string]interface{}{
@@ -538,7 +538,7 @@ func (e *Executor) createRequest(ctx context.Context, dsInfo *models.DataSource,
 		return nil, errors.New("unable to find datasource plugin CloudMonitoring")
 	}
 
-	var cloudMonitoringRoute *pluginmodels.AppPluginRoute
+	var cloudMonitoringRoute *plugins.AppPluginRoute
 	for _, route := range plugin.Routes {
 		if route.Path == "cloudmonitoring" {
 			cloudMonitoringRoute = route

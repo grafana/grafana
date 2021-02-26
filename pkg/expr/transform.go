@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
@@ -35,7 +34,7 @@ func init() {
 }
 
 // WrapTransformData creates and executes transform requests
-func (s *Service) WrapTransformData(ctx context.Context, query pluginmodels.DataQuery) (pluginmodels.DataResponse, error) {
+func (s *Service) WrapTransformData(ctx context.Context, query plugins.DataQuery) (plugins.DataResponse, error) {
 	sdkReq := &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
 			OrgID: query.User.OrgId,
@@ -46,7 +45,7 @@ func (s *Service) WrapTransformData(ctx context.Context, query pluginmodels.Data
 	for _, q := range query.Queries {
 		modelJSON, err := q.Model.MarshalJSON()
 		if err != nil {
-			return pluginmodels.DataResponse{}, err
+			return plugins.DataResponse{}, err
 		}
 		sdkReq.Queries = append(sdkReq.Queries, backend.DataQuery{
 			JSON:          modelJSON,
@@ -62,16 +61,16 @@ func (s *Service) WrapTransformData(ctx context.Context, query pluginmodels.Data
 	}
 	pbRes, err := s.TransformData(ctx, sdkReq)
 	if err != nil {
-		return pluginmodels.DataResponse{}, err
+		return plugins.DataResponse{}, err
 	}
 
-	tR := pluginmodels.DataResponse{
-		Results: make(map[string]pluginmodels.DataQueryResult, len(pbRes.Responses)),
+	tR := plugins.DataResponse{
+		Results: make(map[string]plugins.DataQueryResult, len(pbRes.Responses)),
 	}
 	for refID, res := range pbRes.Responses {
-		tRes := pluginmodels.DataQueryResult{
+		tRes := plugins.DataQueryResult{
 			RefID:      refID,
-			Dataframes: pluginmodels.NewDecodedDataFrames(res.Frames),
+			Dataframes: plugins.NewDecodedDataFrames(res.Frames),
 		}
 		// if len(res.JsonMeta) != 0 {
 		// 	tRes.Meta = simplejson.NewFromAny(res.JsonMeta)
@@ -184,13 +183,13 @@ func (s *Service) queryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	// Convert plugin-model (datasource) queries to tsdb queries
-	queries := make([]pluginmodels.DataSubQuery, len(req.Queries))
+	queries := make([]plugins.DataSubQuery, len(req.Queries))
 	for i, query := range req.Queries {
 		sj, err := simplejson.NewJson(query.JSON)
 		if err != nil {
 			return nil, err
 		}
-		queries[i] = pluginmodels.DataSubQuery{
+		queries[i] = plugins.DataSubQuery{
 			RefID:         query.RefID,
 			IntervalMS:    query.Interval.Milliseconds(),
 			MaxDataPoints: query.MaxDataPoints,
@@ -201,10 +200,10 @@ func (s *Service) queryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	// For now take Time Range from first query.
-	timeRange := pluginmodels.NewDataTimeRange(strconv.FormatInt(req.Queries[0].TimeRange.From.Unix()*1000, 10),
+	timeRange := plugins.NewDataTimeRange(strconv.FormatInt(req.Queries[0].TimeRange.From.Unix()*1000, 10),
 		strconv.FormatInt(req.Queries[0].TimeRange.To.Unix()*1000, 10))
 
-	tQ := pluginmodels.DataQuery{
+	tQ := plugins.DataQuery{
 		TimeRange: &timeRange,
 		Queries:   queries,
 	}
@@ -234,7 +233,7 @@ func (s *Service) queryData(ctx context.Context, req *backend.QueryDataRequest) 
 		}
 
 		for _, series := range res.Series {
-			frame, err := pluginmodels.SeriesToFrame(series)
+			frame, err := plugins.SeriesToFrame(series)
 			frame.RefID = refID
 			if err != nil {
 				return nil, err

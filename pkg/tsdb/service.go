@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
@@ -25,7 +24,7 @@ import (
 // NewService returns a new Service.
 func NewService() Service {
 	return Service{
-		registry: map[string]func(*models.DataSource) (pluginmodels.DataPlugin, error){},
+		registry: map[string]func(*models.DataSource) (plugins.DataPlugin, error){},
 	}
 }
 
@@ -46,7 +45,7 @@ type Service struct {
 	AzureMonitorService    *azuremonitor.Service         `inject:""`
 	PluginManager          *plugins.PluginManager        `inject:""`
 
-	registry map[string]func(*models.DataSource) (pluginmodels.DataPlugin, error)
+	registry map[string]func(*models.DataSource) (plugins.DataPlugin, error)
 }
 
 // Init initialises the service.
@@ -65,19 +64,19 @@ func (s *Service) Init() error {
 	return nil
 }
 
-func (s *Service) HandleRequest(ctx context.Context, ds *models.DataSource, query pluginmodels.DataQuery) (
-	pluginmodels.DataResponse, error) {
+func (s *Service) HandleRequest(ctx context.Context, ds *models.DataSource, query plugins.DataQuery) (
+	plugins.DataResponse, error) {
 	plugin := s.PluginManager.GetDataPlugin(ds.Type)
 	if plugin == nil {
 		factory, exists := s.registry[ds.Type]
 		if !exists {
-			return pluginmodels.DataResponse{}, fmt.Errorf(
+			return plugins.DataResponse{}, fmt.Errorf(
 				"could not find plugin corresponding to data source type: %q", ds.Type)
 		}
 
 		endpoint, err := factory(ds)
 		if err != nil {
-			return pluginmodels.DataResponse{}, fmt.Errorf("could not instantiate endpoint for data plugin %q: %w",
+			return plugins.DataResponse{}, fmt.Errorf("could not instantiate endpoint for data plugin %q: %w",
 				ds.Type, err)
 		}
 		return endpoint.DataQuery(ctx, ds, query)
@@ -88,6 +87,6 @@ func (s *Service) HandleRequest(ctx context.Context, ds *models.DataSource, quer
 
 // RegisterQueryHandler registers a query handler factory.
 // This is only exposed for tests!
-func (s *Service) RegisterQueryHandler(name string, factory func(*models.DataSource) (pluginmodels.DataPlugin, error)) {
+func (s *Service) RegisterQueryHandler(name string, factory func(*models.DataSource) (plugins.DataPlugin, error)) {
 	s.registry[name] = factory
 }

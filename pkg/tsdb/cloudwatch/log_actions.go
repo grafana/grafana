@@ -12,13 +12,13 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"golang.org/x/sync/errgroup"
 )
 
 func (e *cloudWatchExecutor) executeLogActions(ctx context.Context,
-	queryContext pluginmodels.DataQuery) (pluginmodels.DataResponse, error) {
-	resultChan := make(chan pluginmodels.DataQueryResult, len(queryContext.Queries))
+	queryContext plugins.DataQuery) (plugins.DataResponse, error) {
+	resultChan := make(chan plugins.DataQueryResult, len(queryContext.Queries))
 	eg, ectx := errgroup.WithContext(ctx)
 
 	for _, query := range queryContext.Queries {
@@ -43,9 +43,9 @@ func (e *cloudWatchExecutor) executeLogActions(ctx context.Context,
 					return err
 				}
 
-				resultChan <- pluginmodels.DataQueryResult{
+				resultChan <- plugins.DataQueryResult{
 					RefID:      query.RefID,
-					Dataframes: pluginmodels.NewDecodedDataFrames(groupedFrames),
+					Dataframes: plugins.NewDecodedDataFrames(groupedFrames),
 				}
 				return nil
 			}
@@ -58,21 +58,21 @@ func (e *cloudWatchExecutor) executeLogActions(ctx context.Context,
 				}
 			}
 
-			resultChan <- pluginmodels.DataQueryResult{
+			resultChan <- plugins.DataQueryResult{
 				RefID:      query.RefID,
-				Dataframes: pluginmodels.NewDecodedDataFrames(data.Frames{dataframe}),
+				Dataframes: plugins.NewDecodedDataFrames(data.Frames{dataframe}),
 			}
 			return nil
 		})
 	}
 	if err := eg.Wait(); err != nil {
-		return pluginmodels.DataResponse{}, err
+		return plugins.DataResponse{}, err
 	}
 
 	close(resultChan)
 
-	response := pluginmodels.DataResponse{
-		Results: make(map[string]pluginmodels.DataQueryResult),
+	response := plugins.DataResponse{
+		Results: make(map[string]plugins.DataQueryResult),
 	}
 	for result := range resultChan {
 		response.Results[result.RefID] = result
@@ -81,8 +81,8 @@ func (e *cloudWatchExecutor) executeLogActions(ctx context.Context,
 	return response, nil
 }
 
-func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, queryContext pluginmodels.DataQuery,
-	query pluginmodels.DataSubQuery) (*data.Frame, error) {
+func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, queryContext plugins.DataQuery,
+	query plugins.DataSubQuery) (*data.Frame, error) {
 	parameters := query.Model
 	subType := query.Model.Get("subtype").MustString()
 
@@ -200,7 +200,7 @@ func (e *cloudWatchExecutor) handleDescribeLogGroups(ctx context.Context,
 }
 
 func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
-	parameters *simplejson.Json, timeRange pluginmodels.DataTimeRange) (*cloudwatchlogs.StartQueryOutput, error) {
+	parameters *simplejson.Json, timeRange plugins.DataTimeRange) (*cloudwatchlogs.StartQueryOutput, error) {
 	startTime, err := timeRange.ParseFrom()
 	if err != nil {
 		return nil, err
@@ -237,7 +237,7 @@ func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 }
 
 func (e *cloudWatchExecutor) handleStartQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
-	parameters *simplejson.Json, timeRange pluginmodels.DataTimeRange, refID string) (*data.Frame, error) {
+	parameters *simplejson.Json, timeRange plugins.DataTimeRange, refID string) (*data.Frame, error) {
 	startQueryResponse, err := e.executeStartQuery(ctx, logsClient, parameters, timeRange)
 	if err != nil {
 		return nil, err

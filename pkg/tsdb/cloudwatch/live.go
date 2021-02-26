@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/retryer"
 	"golang.org/x/sync/errgroup"
@@ -108,19 +108,19 @@ func (r *logQueryRunner) publishResults(channelName string) error {
 
 // executeLiveLogQuery executes a CloudWatch Logs query with live updates over WebSocket.
 // A WebSocket channel is created, which goroutines send responses over.
-func (e *cloudWatchExecutor) executeLiveLogQuery(ctx context.Context, queryContext pluginmodels.DataQuery) (
-	pluginmodels.DataResponse, error) {
+func (e *cloudWatchExecutor) executeLiveLogQuery(ctx context.Context, queryContext plugins.DataQuery) (
+	plugins.DataResponse, error) {
 	responseChannelName := uuid.New().String()
-	responseChannel := make(chan pluginmodels.DataResponse)
+	responseChannel := make(chan plugins.DataResponse)
 	if err := e.logsService.AddResponseChannel("plugin/cloudwatch/"+responseChannelName, responseChannel); err != nil {
 		close(responseChannel)
-		return pluginmodels.DataResponse{}, err
+		return plugins.DataResponse{}, err
 	}
 
 	go e.sendLiveQueriesToChannel(queryContext, responseChannel)
 
-	response := pluginmodels.DataResponse{
-		Results: map[string]pluginmodels.DataQueryResult{
+	response := plugins.DataResponse{
+		Results: map[string]plugins.DataQueryResult{
 			"A": {
 				RefID: "A",
 				Meta: simplejson.NewFromAny(map[string]interface{}{
@@ -133,8 +133,8 @@ func (e *cloudWatchExecutor) executeLiveLogQuery(ctx context.Context, queryConte
 	return response, nil
 }
 
-func (e *cloudWatchExecutor) sendLiveQueriesToChannel(queryContext pluginmodels.DataQuery,
-	responseChannel chan pluginmodels.DataResponse) {
+func (e *cloudWatchExecutor) sendLiveQueriesToChannel(queryContext plugins.DataQuery,
+	responseChannel chan plugins.DataResponse) {
 	defer close(responseChannel)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
@@ -211,8 +211,8 @@ func (e *cloudWatchExecutor) fetchConcurrentQueriesQuota(region string) int {
 	return defaultConcurrentQueries
 }
 
-func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel chan pluginmodels.DataResponse,
-	query pluginmodels.DataSubQuery, timeRange pluginmodels.DataTimeRange) error {
+func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel chan plugins.DataResponse,
+	query plugins.DataSubQuery, timeRange plugins.DataTimeRange) error {
 	defaultRegion := e.DataSource.JsonData.Get("defaultRegion").MustString()
 	parameters := query.Model
 	region := parameters.Get("region").MustString(defaultRegion)
@@ -285,11 +285,11 @@ func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel
 			dataFrames = data.Frames{dataFrame}
 		}
 
-		responseChannel <- pluginmodels.DataResponse{
-			Results: map[string]pluginmodels.DataQueryResult{
+		responseChannel <- plugins.DataResponse{
+			Results: map[string]plugins.DataQueryResult{
 				query.RefID: {
 					RefID:      query.RefID,
-					Dataframes: pluginmodels.NewDecodedDataFrames(dataFrames),
+					Dataframes: plugins.NewDecodedDataFrames(dataFrames),
 				},
 			},
 		}

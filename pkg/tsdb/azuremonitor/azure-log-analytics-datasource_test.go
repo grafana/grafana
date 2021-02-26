@@ -10,7 +10,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/stretchr/testify/require"
 )
 
@@ -20,18 +20,18 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 
 	tests := []struct {
 		name                     string
-		queryModel               []pluginmodels.DataSubQuery
-		timeRange                pluginmodels.DataTimeRange
+		queryModel               []plugins.DataSubQuery
+		timeRange                plugins.DataTimeRange
 		azureLogAnalyticsQueries []*AzureLogAnalyticsQuery
 		Err                      require.ErrorAssertionFunc
 	}{
 		{
 			name: "Query with macros should be interpolated",
-			timeRange: pluginmodels.DataTimeRange{
+			timeRange: plugins.DataTimeRange{
 				From: fmt.Sprintf("%v", fromStart.Unix()*1000),
 				To:   fmt.Sprintf("%v", fromStart.Add(34*time.Minute).Unix()*1000),
 			},
-			queryModel: []pluginmodels.DataSubQuery{
+			queryModel: []plugins.DataSubQuery{
 				{
 					DataSource: &models.DataSource{
 						JsonData: simplejson.NewFromAny(map[string]interface{}{}),
@@ -80,13 +80,13 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 
 func TestPluginRoutes(t *testing.T) {
 	datasource := &AzureLogAnalyticsDatasource{}
-	plugin := &pluginmodels.DataSourcePlugin{
-		Routes: []*pluginmodels.AppPluginRoute{
+	plugin := &plugins.DataSourcePlugin{
+		Routes: []*plugins.AppPluginRoute{
 			{
 				Path:   "loganalyticsazure",
 				Method: "GET",
 				URL:    "https://api.loganalytics.io/v1/workspaces",
-				Headers: []pluginmodels.AppPluginRouteHeader{
+				Headers: []plugins.AppPluginRouteHeader{
 					{Name: "x-ms-app", Content: "Grafana"},
 				},
 			},
@@ -94,7 +94,7 @@ func TestPluginRoutes(t *testing.T) {
 				Path:   "chinaloganalyticsazure",
 				Method: "GET",
 				URL:    "https://api.loganalytics.azure.cn/v1/workspaces",
-				Headers: []pluginmodels.AppPluginRouteHeader{
+				Headers: []plugins.AppPluginRouteHeader{
 					{Name: "x-ms-app", Content: "Grafana"},
 				},
 			},
@@ -102,7 +102,7 @@ func TestPluginRoutes(t *testing.T) {
 				Path:   "govloganalyticsazure",
 				Method: "GET",
 				URL:    "https://api.loganalytics.us/v1/workspaces",
-				Headers: []pluginmodels.AppPluginRouteHeader{
+				Headers: []plugins.AppPluginRouteHeader{
 					{Name: "x-ms-app", Content: "Grafana"},
 				},
 			},

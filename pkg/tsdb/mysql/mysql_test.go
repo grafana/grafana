@@ -761,7 +761,7 @@ func TestMySQL(t *testing.T) {
 		Convey("When doing a query with timeFrom,timeTo,unixEpochFrom,unixEpochTo macros", func() {
 			sqleng.Interpolate = origInterpolate
 			query := &tsdb.TsdbQuery{
-				TimeRange: pluginmodels.TimeRange{From: "5m", To: "now", Now: fromStart},
+				TimeRange: plugins.TimeRange{From: "5m", To: "now", Now: fromStart},
 				Queries: []*tsdb.Query{
 					{
 						DataSource: &models.DataSource{JsonData: simplejson.New()},

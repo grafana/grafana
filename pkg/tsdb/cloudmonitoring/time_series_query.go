@@ -13,15 +13,15 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/tsdb/interval"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/net/context/ctxhttp"
 )
 
-func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, tsdbQuery pluginmodels.DataQuery,
-	e *Executor) (pluginmodels.DataQueryResult, cloudMonitoringResponse, string, error) {
-	queryResult := pluginmodels.DataQueryResult{Meta: simplejson.New(), RefID: timeSeriesQuery.RefID}
+func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, tsdbQuery plugins.DataQuery,
+	e *Executor) (plugins.DataQueryResult, cloudMonitoringResponse, string, error) {
+	queryResult := plugins.DataQueryResult{Meta: simplejson.New(), RefID: timeSeriesQuery.RefID}
 	projectName := timeSeriesQuery.ProjectName
 	if projectName == "" {
 		defaultProject, err := e.getDefaultProject(ctx)
@@ -94,7 +94,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, t
 	return queryResult, data, timeSeriesQuery.Query, nil
 }
 
-func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *pluginmodels.DataQueryResult,
+func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *plugins.DataQueryResult,
 	response cloudMonitoringResponse, executedQueryString string) error {
 	labels := make(map[string]map[string]bool)
 	frames := data.Frames{}
@@ -250,7 +250,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *pl
 		frames = addConfigData(frames, dl)
 	}
 
-	queryRes.Dataframes = pluginmodels.NewDecodedDataFrames(frames)
+	queryRes.Dataframes = plugins.NewDecodedDataFrames(frames)
 
 	labelsByKey := make(map[string][]string)
 	for key, values := range labels {
@@ -264,7 +264,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *pl
 	return nil
 }
 
-func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseToAnnotations(queryRes *pluginmodels.DataQueryResult,
+func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseToAnnotations(queryRes *plugins.DataQueryResult,
 	data cloudMonitoringResponse, title string, text string, tags string) error {
 	annotations := make([]map[string]string, 0)
 

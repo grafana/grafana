@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	"github.com/influxdata/influxdb-client-go/v2/api"
 )
@@ -21,22 +21,22 @@ func init() {
 }
 
 // Query builds flux queries, executes them, and returns the results.
-func Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery pluginmodels.DataQuery) (
-	pluginmodels.DataResponse, error) {
+func Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery plugins.DataQuery) (
+	plugins.DataResponse, error) {
 	glog.Debug("Received a query", "query", tsdbQuery)
-	tRes := pluginmodels.DataResponse{
-		Results: make(map[string]pluginmodels.DataQueryResult),
+	tRes := plugins.DataResponse{
+		Results: make(map[string]plugins.DataQueryResult),
 	}
 	r, err := runnerFromDataSource(dsInfo)
 	if err != nil {
-		return pluginmodels.DataResponse{}, err
+		return plugins.DataResponse{}, err
 	}
 	defer r.client.Close()
 
 	for _, query := range tsdbQuery.Queries {
 		qm, err := getQueryModelTSDB(query, *tsdbQuery.TimeRange, dsInfo)
 		if err != nil {
-			tRes.Results[query.RefID] = pluginmodels.DataQueryResult{Error: err}
+			tRes.Results[query.RefID] = plugins.DataQueryResult{Error: err}
 			continue
 		}
 
@@ -96,15 +96,15 @@ func runnerFromDataSource(dsInfo *models.DataSource) (*runner, error) {
 }
 
 // backendDataResponseToDataResponse takes the SDK's style response and changes it into a
-// pluginmodels.DataQueryResult. This is a wrapper so less of existing code needs to be changed. This should
+// plugins.DataQueryResult. This is a wrapper so less of existing code needs to be changed. This should
 // be able to be removed in the near future https://github.com/grafana/grafana/pull/25472.
-func backendDataResponseToDataResponse(dr *backend.DataResponse, refID string) pluginmodels.DataQueryResult {
-	qr := pluginmodels.DataQueryResult{RefID: refID}
+func backendDataResponseToDataResponse(dr *backend.DataResponse, refID string) plugins.DataQueryResult {
+	qr := plugins.DataQueryResult{RefID: refID}
 
 	qr.Error = dr.Error
 
 	if dr.Frames != nil {
-		qr.Dataframes = pluginmodels.NewDecodedDataFrames(dr.Frames)
+		qr.Dataframes = plugins.NewDecodedDataFrames(dr.Frames)
 	}
 	return qr
 }

@@ -1,4 +1,4 @@
-package models
+package plugins
 
 import (
 	"encoding/json"

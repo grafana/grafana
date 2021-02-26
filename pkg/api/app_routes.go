@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	"github.com/grafana/grafana/pkg/util"
 	macaron "gopkg.in/macaron.v1"
 )
@@ -54,7 +53,7 @@ func (hs *HTTPServer) initAppPluginRoutes(r *macaron.Macaron) {
 	}
 }
 
-func AppPluginRoute(route *pluginmodels.AppPluginRoute, appID string, hs *HTTPServer) macaron.Handler {
+func AppPluginRoute(route *plugins.AppPluginRoute, appID string, hs *HTTPServer) macaron.Handler {
 	return func(c *models.ReqContext) {
 		path := c.Params("*")
 

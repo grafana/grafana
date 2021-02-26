@@ -14,7 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -45,8 +45,8 @@ func TestQuery_Metrics(t *testing.T) {
 			},
 		}
 		executor := newExecutor(nil)
-		resp, err := executor.DataQuery(context.Background(), fakeDataSource(), pluginmodels.DataQuery{
-			Queries: []pluginmodels.DataSubQuery{
+		resp, err := executor.DataQuery(context.Background(), fakeDataSource(), plugins.DataQuery{
+			Queries: []plugins.DataSubQuery{
 				{
 					Model: simplejson.NewFromAny(map[string]interface{}{
 						"type":      "metricFindQuery",
@@ -59,15 +59,15 @@ func TestQuery_Metrics(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		assert.Equal(t, pluginmodels.DataResponse{
-			Results: map[string]pluginmodels.DataQueryResult{
+		assert.Equal(t, plugins.DataResponse{
+			Results: map[string]plugins.DataQueryResult{
 				"": {
 					Meta: simplejson.NewFromAny(map[string]interface{}{
 						"rowCount": 1,
 					}),
-					Tables: []pluginmodels.DataTable{
+					Tables: []plugins.DataTable{
 						{
-							Columns: []pluginmodels.DataTableColumn{
+							Columns: []plugins.DataTableColumn{
 								{
 									Text: "text",
 								},
@@ -75,7 +75,7 @@ func TestQuery_Metrics(t *testing.T) {
 									Text: "value",
 								},
 							},
-							Rows: []pluginmodels.DataRowValues{
+							Rows: []plugins.DataRowValues{
 								{
 									"Test_MetricName",
 									"Test_MetricName",
@@ -102,8 +102,8 @@ func TestQuery_Metrics(t *testing.T) {
 			},
 		}
 		executor := newExecutor(nil)
-		resp, err := executor.DataQuery(context.Background(), fakeDataSource(), pluginmodels.DataQuery{
-			Queries: []pluginmodels.DataSubQuery{
+		resp, err := executor.DataQuery(context.Background(), fakeDataSource(), plugins.DataQuery{
+			Queries: []plugins.DataSubQuery{
 				{
 					Model: simplejson.NewFromAny(map[string]interface{}{
 						"type":      "metricFindQuery",
@@ -116,15 +116,15 @@ func TestQuery_Metrics(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		assert.Equal(t, pluginmodels.DataResponse{
-			Results: map[string]pluginmodels.DataQueryResult{
+		assert.Equal(t, plugins.DataResponse{
+			Results: map[string]plugins.DataQueryResult{
 				"": {
 					Meta: simplejson.NewFromAny(map[string]interface{}{
 						"rowCount": 1,
 					}),
-					Tables: []pluginmodels.DataTable{
+					Tables: []plugins.DataTable{
 						{
-							Columns: []pluginmodels.DataTableColumn{
+							Columns: []plugins.DataTableColumn{
 								{
 									Text: "text",
 								},
@@ -132,7 +132,7 @@ func TestQuery_Metrics(t *testing.T) {
 									Text: "value",
 								},
 							},
-							Rows: []pluginmodels.DataRowValues{
+							Rows: []plugins.DataRowValues{
 								{
 									"Test_DimensionName",
 									"Test_DimensionName",
@@ -164,8 +164,8 @@ func TestQuery_Regions(t *testing.T) {
 			regions: []string{regionName},
 		}
 		executor := newExecutor(nil)
-		resp, err := executor.DataQuery(context.Background(), fakeDataSource(), pluginmodels.DataQuery{
-			Queries: []pluginmodels.DataSubQuery{
+		resp, err := executor.DataQuery(context.Background(), fakeDataSource(), plugins.DataQuery{
+			Queries: []plugins.DataSubQuery{
 				{
 					Model: simplejson.NewFromAny(map[string]interface{}{
 						"type":      "metricFindQuery",
@@ -178,7 +178,7 @@ func TestQuery_Regions(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		rows := []pluginmodels.DataRowValues{}
+		rows := []plugins.DataRowValues{}
 		for _, region := range knownRegions {
 			rows = append(rows, []interface{}{
 				region,
@@ -189,15 +189,15 @@ func TestQuery_Regions(t *testing.T) {
 			regionName,
 			regionName,
 		})
-		assert.Equal(t, pluginmodels.DataResponse{
-			Results: map[string]pluginmodels.DataQueryResult{
+		assert.Equal(t, plugins.DataResponse{
+			Results: map[string]plugins.DataQueryResult{
 				"": {
 					Meta: simplejson.NewFromAny(map[string]interface{}{
 						"rowCount": len(knownRegions) + 1,
 					}),
-					Tables: []pluginmodels.DataTable{
+					Tables: []plugins.DataTable{
 						{
-							Columns: []pluginmodels.DataTableColumn{
+							Columns: []plugins.DataTableColumn{
 								{
 									Text: "text",
 								},
@@ -246,8 +246,8 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 			},
 		}
 		executor := newExecutor(nil)
-		resp, err := executor.DataQuery(context.Background(), fakeDataSource(), pluginmodels.DataQuery{
-			Queries: []pluginmodels.DataSubQuery{
+		resp, err := executor.DataQuery(context.Background(), fakeDataSource(), plugins.DataQuery{
+			Queries: []plugins.DataSubQuery{
 				{
 					Model: simplejson.NewFromAny(map[string]interface{}{
 						"type":          "metricFindQuery",
@@ -263,15 +263,15 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		assert.Equal(t, pluginmodels.DataResponse{
-			Results: map[string]pluginmodels.DataQueryResult{
+		assert.Equal(t, plugins.DataResponse{
+			Results: map[string]plugins.DataQueryResult{
 				"": {
 					Meta: simplejson.NewFromAny(map[string]interface{}{
 						"rowCount": 1,
 					}),
-					Tables: []pluginmodels.DataTable{
+					Tables: []plugins.DataTable{
 						{
-							Columns: []pluginmodels.DataTableColumn{
+							Columns: []plugins.DataTableColumn{
 								{
 									Text: "text",
 								},
@@ -279,7 +279,7 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 									Text: "value",
 								},
 							},
-							Rows: []pluginmodels.DataRowValues{
+							Rows: []plugins.DataRowValues{
 								{
 									instanceID,
 									instanceID,
@@ -349,8 +349,8 @@ func TestQuery_EBSVolumeIDs(t *testing.T) {
 			},
 		}
 		executor := newExecutor(nil)
-		resp, err := executor.DataQuery(context.Background(), fakeDataSource(), pluginmodels.DataQuery{
-			Queries: []pluginmodels.DataSubQuery{
+		resp, err := executor.DataQuery(context.Background(), fakeDataSource(), plugins.DataQuery{
+			Queries: []plugins.DataSubQuery{
 				{
 					Model: simplejson.NewFromAny(map[string]interface{}{
 						"type":       "metricFindQuery",
@@ -363,15 +363,15 @@ func TestQuery_EBSVolumeIDs(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		assert.Equal(t, pluginmodels.DataResponse{
-			Results: map[string]pluginmodels.DataQueryResult{
+		assert.Equal(t, plugins.DataResponse{
+			Results: map[string]plugins.DataQueryResult{
 				"": {
 					Meta: simplejson.NewFromAny(map[string]interface{}{
 						"rowCount": 6,
 					}),
-					Tables: []pluginmodels.DataTable{
+					Tables: []plugins.DataTable{
 						{
-							Columns: []pluginmodels.DataTableColumn{
+							Columns: []plugins.DataTableColumn{
 								{
 									Text: "text",
 								},
@@ -379,7 +379,7 @@ func TestQuery_EBSVolumeIDs(t *testing.T) {
 									Text: "value",
 								},
 							},
-							Rows: []pluginmodels.DataRowValues{
+							Rows: []plugins.DataRowValues{
 								{
 									"vol-1-1",
 									"vol-1-1",
@@ -449,8 +449,8 @@ func TestQuery_ResourceARNs(t *testing.T) {
 			},
 		}
 		executor := newExecutor(nil)
-		resp, err := executor.DataQuery(context.Background(), fakeDataSource(), pluginmodels.DataQuery{
-			Queries: []pluginmodels.DataSubQuery{
+		resp, err := executor.DataQuery(context.Background(), fakeDataSource(), plugins.DataQuery{
+			Queries: []plugins.DataSubQuery{
 				{
 					Model: simplejson.NewFromAny(map[string]interface{}{
 						"type":         "metricFindQuery",
@@ -466,15 +466,15 @@ func TestQuery_ResourceARNs(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		assert.Equal(t, pluginmodels.DataResponse{
-			Results: map[string]pluginmodels.DataQueryResult{
+		assert.Equal(t, plugins.DataResponse{
+			Results: map[string]plugins.DataQueryResult{
 				"": {
 					Meta: simplejson.NewFromAny(map[string]interface{}{
 						"rowCount": 2,
 					}),
-					Tables: []pluginmodels.DataTable{
+					Tables: []plugins.DataTable{
 						{
-							Columns: []pluginmodels.DataTableColumn{
+							Columns: []plugins.DataTableColumn{
 								{
 									Text: "text",
 								},
@@ -482,7 +482,7 @@ func TestQuery_ResourceARNs(t *testing.T) {
 									Text: "value",
 								},
 							},
-							Rows: []pluginmodels.DataRowValues{
+							Rows: []plugins.DataRowValues{
 								{
 									"arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567",
 									"arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567",

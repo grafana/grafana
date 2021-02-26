@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 )
 
 // returns a map of queries with query id as key. In the case a q request query
@@ -56,7 +55,7 @@ func (e *cloudWatchExecutor) transformRequestQueriesToCloudWatchQueries(requestQ
 }
 
 func (e *cloudWatchExecutor) transformQueryResponsesToQueryResult(cloudwatchResponses []*cloudwatchResponse,
-	requestQueries []*requestQuery, startTime time.Time, endTime time.Time) (map[string]pluginmodels.DataQueryResult, error) {
+	requestQueries []*requestQuery, startTime time.Time, endTime time.Time) (map[string]plugins.DataQueryResult, error) {
 	responsesByRefID := make(map[string][]*cloudwatchResponse)
 	refIDs := sort.StringSlice{}
 	for _, res := range cloudwatchResponses {
@@ -66,12 +65,12 @@ func (e *cloudWatchExecutor) transformQueryResponsesToQueryResult(cloudwatchResp
 	// Ensure stable results
 	refIDs.Sort()
 
-	results := make(map[string]pluginmodels.DataQueryResult)
+	results := make(map[string]plugins.DataQueryResult)
 	for _, refID := range refIDs {
 		responses := responsesByRefID[refID]
-		queryResult := pluginmodels.DataQueryResult{
+		queryResult := plugins.DataQueryResult{
 			RefID:  refID,
-			Series: pluginmodels.DataTimeSeriesSlice{},
+			Series: plugins.DataTimeSeriesSlice{},
 		}
 		frames := make(data.Frames, 0, len(responses))
 
@@ -135,7 +134,7 @@ func (e *cloudWatchExecutor) transformQueryResponsesToQueryResult(cloudwatchResp
 			frame.Fields[1].Config.Links = createDataLinks(link)
 		}
 
-		queryResult.Dataframes = pluginmodels.NewDecodedDataFrames(frames)
+		queryResult.Dataframes = plugins.NewDecodedDataFrames(frames)
 		results[refID] = queryResult
 	}
 

@@ -16,7 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/models"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
@@ -69,16 +69,16 @@ func TestQueryCloudWatchMetrics(t *testing.T) {
 		}
 		tr := makeCWRequest(t, req, addr)
 
-		assert.Equal(t, pluginmodels.DataResponse{
-			Results: map[string]pluginmodels.DataQueryResult{
+		assert.Equal(t, plugins.DataResponse{
+			Results: map[string]plugins.DataQueryResult{
 				"A": {
 					RefID: "A",
 					Meta: simplejson.NewFromAny(map[string]interface{}{
 						"rowCount": float64(1),
 					}),
-					Tables: []pluginmodels.DataTable{
+					Tables: []plugins.DataTable{
 						{
-							Columns: []pluginmodels.DataTableColumn{
+							Columns: []plugins.DataTableColumn{
 								{
 									Text: "text",
 								},
@@ -86,7 +86,7 @@ func TestQueryCloudWatchMetrics(t *testing.T) {
 									Text: "value",
 								},
 							},
-							Rows: []pluginmodels.DataRowValues{
+							Rows: []plugins.DataRowValues{
 								{
 									"Test_MetricName",
 									"Test_MetricName",
@@ -130,7 +130,7 @@ func TestQueryCloudWatchLogs(t *testing.T) {
 		}
 		tr := makeCWRequest(t, req, addr)
 
-		dataFrames := pluginmodels.NewDecodedDataFrames(data.Frames{
+		dataFrames := plugins.NewDecodedDataFrames(data.Frames{
 			&data.Frame{
 				Name: "logGroups",
 				Fields: []*data.Field{
@@ -145,8 +145,8 @@ func TestQueryCloudWatchLogs(t *testing.T) {
 		// In the future we should use gocmp instead and ignore this field
 		_, err := dataFrames.Encoded()
 		require.NoError(t, err)
-		assert.Equal(t, pluginmodels.DataResponse{
-			Results: map[string]pluginmodels.DataQueryResult{
+		assert.Equal(t, plugins.DataResponse{
+			Results: map[string]plugins.DataQueryResult{
 				"A": {
 					RefID:      "A",
 					Dataframes: dataFrames,
@@ -156,7 +156,7 @@ func TestQueryCloudWatchLogs(t *testing.T) {
 	})
 }
 
-func makeCWRequest(t *testing.T, req dtos.MetricRequest, addr string) pluginmodels.DataResponse {
+func makeCWRequest(t *testing.T, req dtos.MetricRequest, addr string) plugins.DataResponse {
 	t.Helper()
 
 	buf := bytes.Buffer{}
@@ -179,7 +179,7 @@ func makeCWRequest(t *testing.T, req dtos.MetricRequest, addr string) pluginmode
 	require.NoError(t, err)
 	require.Equal(t, 200, resp.StatusCode)
 
-	var tr pluginmodels.DataResponse
+	var tr plugins.DataResponse
 	err = json.Unmarshal(buf.Bytes(), &tr)
 	require.NoError(t, err)
 

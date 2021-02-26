@@ -11,11 +11,11 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
+	"github.com/grafana/grafana/pkg/plugins"
 )
 
 // Parses the json queries and returns a requestQuery. The requestQuery has a 1 to 1 mapping to a query editor row
-func (e *cloudWatchExecutor) parseQueries(queryContext pluginmodels.DataQuery, startTime time.Time,
+func (e *cloudWatchExecutor) parseQueries(queryContext plugins.DataQuery, startTime time.Time,
 	endTime time.Time) (map[string][]*requestQuery, error) {
 	requestQueries := make(map[string][]*requestQuery)
 	for i, query := range queryContext.Queries {

@@ -6,7 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	p "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 )
@@ -53,12 +53,12 @@ func TestPrometheus(t *testing.T) {
 				"refId": "A"
 			}`
 		jsonModel, _ := simplejson.NewJson([]byte(json))
-		queryModels := []pluginmodels.DataSubQuery{
+		queryModels := []plugins.DataSubQuery{
 			{Model: jsonModel},
 		}
 
-		timeRange := pluginmodels.NewDataTimeRange("12h", "now")
-		queryContext := pluginmodels.DataQuery{
+		timeRange := plugins.NewDataTimeRange("12h", "now")
+		queryContext := plugins.DataQuery{
 			Queries:   queryModels,
 			TimeRange: &timeRange,
 		}
@@ -76,12 +76,12 @@ func TestPrometheus(t *testing.T) {
 				"refId": "A"
 			}`
 		jsonModel, _ := simplejson.NewJson([]byte(json))
-		queryModels := []pluginmodels.DataSubQuery{
+		queryModels := []plugins.DataSubQuery{
 			{Model: jsonModel},
 		}
 
-		timeRange := pluginmodels.NewDataTimeRange("48h", "now")
-		queryContext := pluginmodels.DataQuery{
+		timeRange := plugins.NewDataTimeRange("48h", "now")
+		queryContext := plugins.DataQuery{
 			Queries:   queryModels,
 			TimeRange: &timeRange,
 		}
@@ -89,7 +89,7 @@ func TestPrometheus(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, time.Minute*2, models[0].Step)
 
-		timeRange = pluginmodels.NewDataTimeRange("1h", "now")
+		timeRange = plugins.NewDataTimeRange("1h", "now")
 		queryContext.TimeRange = &timeRange
 		models, err = executor.parseQuery(dsInfo, queryContext)
 		require.NoError(t, err)
@@ -104,12 +104,12 @@ func TestPrometheus(t *testing.T) {
 					"refId": "A"
 				}`
 		jsonModel, _ := simplejson.NewJson([]byte(json))
-		queryModels := []pluginmodels.DataSubQuery{
+		queryModels := []plugins.DataSubQuery{
 			{Model: jsonModel},
 		}
 
-		timeRange := pluginmodels.NewDataTimeRange("48h", "now")
-		queryContext := pluginmodels.DataQuery{
+		timeRange := plugins.NewDataTimeRange("48h", "now")
+		queryContext := plugins.DataQuery{
 			TimeRange: &timeRange,
 			Queries:   queryModels,
 		}
@@ -127,12 +127,12 @@ func TestPrometheus(t *testing.T) {
 					"refId": "A"
 				}`
 		jsonModel, _ := simplejson.NewJson([]byte(json))
-		queryModels := []pluginmodels.DataSubQuery{
+		queryModels := []plugins.DataSubQuery{
 			{Model: jsonModel},
 		}
 
-		timeRange := pluginmodels.NewDataTimeRange("48h", "now")
-		queryContext := pluginmodels.DataQuery{
+		timeRange := plugins.NewDataTimeRange("48h", "now")
+		queryContext := plugins.DataQuery{
 			TimeRange: &timeRange,
 			Queries:   queryModels,
 		}
