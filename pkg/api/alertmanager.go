@@ -160,7 +160,12 @@ type BodyAlertingConfig struct {
 	Body UserConfig
 }
 
+// alertmanager routes
 // swagger:parameters RoutePostAlertingConfig RouteGetAlertingConfig RouteDeleteAlertingConfig RouteGetAmAlerts RoutePostAmAlerts RouteGetAmAlertGroups RouteGetSilences RouteCreateSilence RouteGetSilence RouteDeleteSilence RoutePostAlertingConfig
+// ruler routes
+// swagger:parameters RouteGetRulesConfig RoutePostNameRulesConfig RouteGetNamespaceRulesConfig RouteDeleteNamespaceRulesConfig RouteGetRulegGroupConfig RouteDeleteRuleGroupConfig
+// prom routes
+// swagger:parameters RouteGetRuleStatuses RouteGetAlertStatuses
 type DatasourceReference struct {
 	// in:path
 	DatasourceId string

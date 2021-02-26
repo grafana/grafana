@@ -580,13 +580,21 @@
         }
       }
     },
-    "/prometheus/api/v1/alerts": {
+    "/prometheus/{DatasourceId}/api/v1/alerts": {
       "get": {
         "description": "gets the current alerts",
         "tags": [
           "prometheus"
         ],
         "operationId": "RouteGetAlertStatuses",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "DatasourceId",
+            "in": "path",
+            "required": true
+          }
+        ],
         "responses": {
           "200": {
             "description": "AlertResponse",
@@ -597,13 +605,21 @@
         }
       }
     },
-    "/prometheus/api/v1/rules": {
+    "/prometheus/{DatasourceId}/api/v1/rules": {
       "get": {
         "description": "gets the evaluation statuses of all rules",
         "tags": [
           "prometheus"
         ],
         "operationId": "RouteGetRuleStatuses",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "DatasourceId",
+            "in": "path",
+            "required": true
+          }
+        ],
         "responses": {
           "200": {
             "description": "RuleResponse",
@@ -614,7 +630,7 @@
         }
       }
     },
-    "/ruler/api/v1/rules": {
+    "/ruler/{DatasourceId}/api/v1/rules": {
       "get": {
         "description": "List rule groups",
         "produces": [
@@ -624,6 +640,14 @@
           "ruler"
         ],
         "operationId": "RouteGetRulesConfig",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "DatasourceId",
+            "in": "path",
+            "required": true
+          }
+        ],
         "responses": {
           "202": {
             "description": "NamespaceConfigResponse",
@@ -634,7 +658,7 @@
         }
       }
     },
-    "/ruler/api/v1/rules/{Namespace}": {
+    "/ruler/{DatasourceId}/api/v1/rules/{Namespace}": {
       "get": {
         "description": "Get rule groups by namespace",
         "produces": [
@@ -645,6 +669,12 @@
         ],
         "operationId": "RouteGetNamespaceRulesConfig",
         "parameters": [
+          {
+            "type": "string",
+            "name": "DatasourceId",
+            "in": "path",
+            "required": true
+          },
           {
             "type": "string",
             "name": "Namespace",
@@ -672,6 +702,12 @@
         ],
         "operationId": "RoutePostNameRulesConfig",
         "parameters": [
+          {
+            "type": "string",
+            "name": "DatasourceId",
+            "in": "path",
+            "required": true
+          },
           {
             "type": "string",
             "name": "Namespace",
@@ -704,6 +740,12 @@
         "parameters": [
           {
             "type": "string",
+            "name": "DatasourceId",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
             "name": "Namespace",
             "in": "path",
             "required": true
@@ -719,7 +761,7 @@
         }
       }
     },
-    "/ruler/api/v1/rules/{Namespace}/{Groupname}": {
+    "/ruler/{DatasourceId}/api/v1/rules/{Namespace}/{Groupname}": {
       "get": {
         "description": "Get rule group",
         "produces": [
@@ -730,6 +772,12 @@
         ],
         "operationId": "RouteGetRulegGroupConfig",
         "parameters": [
+          {
+            "type": "string",
+            "name": "DatasourceId",
+            "in": "path",
+            "required": true
+          },
           {
             "type": "string",
             "name": "Namespace",
@@ -759,6 +807,12 @@
         ],
         "operationId": "RouteDeleteRuleGroupConfig",
         "parameters": [
+          {
+            "type": "string",
+            "name": "DatasourceId",
+            "in": "path",
+            "required": true
+          },
           {
             "type": "string",
             "name": "Namespace",
