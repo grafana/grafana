@@ -261,7 +261,7 @@ const getStyles = (theme: GrafanaTheme) => {
       display: flex;
       flex-direction: column;
       row-gap: ${theme.spacing.sm};
-      padding: 0 ${theme.spacing.sm} ${theme.spacing.sm} ${theme.spacing.sm} ${theme.spacing.sm};
+      padding: 0 ${theme.spacing.sm} ${theme.spacing.sm} ${theme.spacing.sm};
       height: 100%;
     `,
     libraryPanelsWrapper: css`
@@ -270,7 +270,8 @@ const getStyles = (theme: GrafanaTheme) => {
     headerRow: css`
       display: flex;
       align-items: center;
-      height: ${theme.spacing.gutter};
+      height: 38px;
+      flex-shrink: 0;
       width: 100%;
       font-size: ${theme.typography.size.md};
       font-weight: ${theme.typography.weight.semibold};
