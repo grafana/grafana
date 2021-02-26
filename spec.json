@@ -16,7 +16,7 @@
   },
   "basePath": "/api/v1",
   "paths": {
-    "/api/am/{DatasourceId}/v1/alerts": {
+    "/alertmanager/{DatasourceId}/api/v2/alerts": {
       "get": {
         "description": "get alertmanager alerts",
         "tags": [
@@ -127,7 +127,7 @@
         }
       }
     },
-    "/api/am/{DatasourceId}/v1/alerts/groups": {
+    "/alertmanager/{DatasourceId}/api/v2/alerts/groups": {
       "get": {
         "description": "get alertmanager alerts",
         "tags": [
@@ -199,7 +199,146 @@
         }
       }
     },
-    "/api/am/{DatasourceId}/v1/config": {
+    "/alertmanager/{DatasourceId}/api/v2/silence/{SilenceId}": {
+      "get": {
+        "description": "get silence",
+        "tags": [
+          "alertmanager"
+        ],
+        "operationId": "RouteGetSilence",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "SilenceId",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "DatasourceId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "GettableSilence",
+            "schema": {
+              "$ref": "#/definitions/GettableSilence"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "delete silence",
+        "tags": [
+          "alertmanager"
+        ],
+        "operationId": "RouteDeleteSilence",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "SilenceId",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "DatasourceId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ack",
+            "schema": {
+              "$ref": "#/definitions/Ack"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      }
+    },
+    "/alertmanager/{DatasourceId}/api/v2/silences": {
+      "get": {
+        "description": "get silences",
+        "tags": [
+          "alertmanager"
+        ],
+        "operationId": "RouteGetSilences",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "DatasourceId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "GettableSilences",
+            "schema": {
+              "$ref": "#/definitions/GettableSilences"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "create silence",
+        "tags": [
+          "alertmanager"
+        ],
+        "operationId": "RouteCreateSilence",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/SilenceBody"
+            }
+          },
+          {
+            "type": "string",
+            "name": "DatasourceId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "GettableSilence",
+            "schema": {
+              "$ref": "#/definitions/GettableSilence"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      }
+    },
+    "/alertmanager/{DatasourceId}/config/api/v1/alerts": {
       "get": {
         "description": "gets an Alerting config",
         "tags": [
@@ -285,139 +424,6 @@
             "schema": {
               "$ref": "#/definitions/Ack"
             }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/api/am/{DatasourceId}/v1/silence/{SilenceId}": {
-      "get": {
-        "description": "get silence",
-        "tags": [
-          "alertmanager"
-        ],
-        "operationId": "RouteGetSilence",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "SilenceId",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "DatasourceId",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/GettableSilence"
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "delete": {
-        "description": "delete silence",
-        "tags": [
-          "alertmanager"
-        ],
-        "operationId": "RouteDeleteSilence",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "SilenceId",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "DatasourceId",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/api/am/{DatasourceId}/v1/silences": {
-      "get": {
-        "description": "get silences",
-        "tags": [
-          "alertmanager"
-        ],
-        "operationId": "RouteGetSilences",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "DatasourceId",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "GettableSilences",
-            "schema": {
-              "$ref": "#/definitions/GettableSilences"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "post": {
-        "description": "create silence",
-        "tags": [
-          "alertmanager"
-        ],
-        "operationId": "RouteCreateSilence",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/SilenceBody"
-            }
-          },
-          {
-            "type": "string",
-            "name": "DatasourceId",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "201": {
-            "$ref": "#/responses/GettableSilence"
           },
           "400": {
             "description": "ValidationError",
@@ -574,7 +580,41 @@
         }
       }
     },
-    "/api/v1/rules": {
+    "/prometheus/api/v1/alerts": {
+      "get": {
+        "description": "gets the current alerts",
+        "tags": [
+          "prometheus"
+        ],
+        "operationId": "RouteGetAlertStatuses",
+        "responses": {
+          "200": {
+            "description": "AlertResponse",
+            "schema": {
+              "$ref": "#/definitions/AlertResponse"
+            }
+          }
+        }
+      }
+    },
+    "/prometheus/api/v1/rules": {
+      "get": {
+        "description": "gets the evaluation statuses of all rules",
+        "tags": [
+          "prometheus"
+        ],
+        "operationId": "RouteGetRuleStatuses",
+        "responses": {
+          "200": {
+            "description": "RuleResponse",
+            "schema": {
+              "$ref": "#/definitions/RuleResponse"
+            }
+          }
+        }
+      }
+    },
+    "/ruler/api/v1/rules": {
       "get": {
         "description": "List rule groups",
         "produces": [
@@ -594,7 +634,7 @@
         }
       }
     },
-    "/api/v1/rules/{Namespace}": {
+    "/ruler/api/v1/rules/{Namespace}": {
       "get": {
         "description": "Get rule groups by namespace",
         "produces": [
@@ -679,7 +719,7 @@
         }
       }
     },
-    "/api/v1/rules/{Namespace}/{Groupname}": {
+    "/ruler/api/v1/rules/{Namespace}/{Groupname}": {
       "get": {
         "description": "Get rule group",
         "produces": [
@@ -737,40 +777,6 @@
             "description": "Ack",
             "schema": {
               "$ref": "#/definitions/Ack"
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/status/alerts": {
-      "get": {
-        "description": "gets the current alerts",
-        "tags": [
-          "prometheus"
-        ],
-        "operationId": "RouteGetAlertStatuses",
-        "responses": {
-          "200": {
-            "description": "AlertResponse",
-            "schema": {
-              "$ref": "#/definitions/AlertResponse"
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/status/rules": {
-      "get": {
-        "description": "gets the evaluation statuses of all rules",
-        "tags": [
-          "prometheus"
-        ],
-        "operationId": "RouteGetRuleStatuses",
-        "responses": {
-          "200": {
-            "description": "RuleResponse",
-            "schema": {
-              "$ref": "#/definitions/RuleResponse"
             }
           }
         }
@@ -1516,11 +1522,11 @@
     "Failure": {
       "$ref": "#/definitions/ResponseDetails"
     },
-    "GetableSilence": {
-      "$ref": "#/definitions/silence"
-    },
     "GettableAlerts": {
       "$ref": "#/definitions/gettableAlerts"
+    },
+    "GettableSilence": {
+      "$ref": "#/definitions/silence"
     },
     "GettableSilences": {
       "type": "array",
