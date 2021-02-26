@@ -96,7 +96,7 @@ const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeader
   );
 };
 
-const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps> = ({
+export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps> = ({
   row,
   rows,
   error,
