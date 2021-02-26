@@ -1,4 +1,4 @@
-package plugins
+package manager
 
 import (
 	"encoding/json"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/tsdb/tsdbifaces"
 )
@@ -30,12 +31,12 @@ func (e DashboardInputMissingError) Error() string {
 
 func (pm *PluginManager) ImportDashboard(pluginID, path string, orgID, folderID int64, dashboardModel *simplejson.Json,
 	overwrite bool, inputs []ImportDashboardInput, user *models.SignedInUser,
-	requestHandler tsdbifaces.RequestHandler) (PluginDashboardInfoDTO, error) {
+	requestHandler tsdbifaces.RequestHandler) (plugins.PluginDashboardInfoDTO, error) {
 	var dashboard *models.Dashboard
 	if pluginID != "" {
 		var err error
-		if dashboard, err = LoadPluginDashboard(pluginID, path); err != nil {
-			return PluginDashboardInfoDTO{}, err
+		if dashboard, err = pm.LoadPluginDashboard(pluginID, path); err != nil {
+			return plugins.PluginDashboardInfoDTO{}, err
 		}
 	} else {
 		dashboard = models.NewDashboardFromJson(dashboardModel)
@@ -48,7 +49,7 @@ func (pm *PluginManager) ImportDashboard(pluginID, path string, orgID, folderID 
 
 	generatedDash, err := evaluator.Eval()
 	if err != nil {
-		return PluginDashboardInfoDTO{}, err
+		return plugins.PluginDashboardInfoDTO{}, err
 	}
 
 	saveCmd := models.SaveDashboardCommand{
@@ -69,10 +70,10 @@ func (pm *PluginManager) ImportDashboard(pluginID, path string, orgID, folderID 
 
 	savedDash, err := dashboards.NewService(requestHandler).ImportDashboard(dto)
 	if err != nil {
-		return PluginDashboardInfoDTO{}, err
+		return plugins.PluginDashboardInfoDTO{}, err
 	}
 
-	return PluginDashboardInfoDTO{
+	return plugins.PluginDashboardInfoDTO{
 		PluginId:         pluginID,
 		Title:            savedDash.Title,
 		Path:             path,

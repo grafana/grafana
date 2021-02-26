@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	backendmodels "github.com/grafana/grafana/pkg/plugins/backendplugin/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
@@ -61,7 +62,7 @@ type PluginManager struct {
 	AllowUnsignedPluginsCondition unsignedPluginConditionFunc
 	GrafanaLatestVersion          string
 	GrafanaHasUpdate              bool
-	pluginScanningErrors          map[string]PluginError
+	pluginScanningErrors          map[string]plugins.PluginError
 }
 
 func init() {
@@ -83,7 +84,7 @@ func (pm *PluginManager) Init() error {
 		"app":        plugins.AppPlugin{},
 		"renderer":   plugins.RendererPlugin{},
 	}
-	pm.pluginScanningErrors = map[string]PluginError{}
+	pm.pluginScanningErrors = map[string]plugins.PluginError{}
 
 	pm.log.Info("Starting plugin search")
 
@@ -450,7 +451,7 @@ func (*PluginScanner) IsBackendOnlyPlugin(pluginType string) bool {
 }
 
 // validateSignature validates a plugin's signature.
-func (s *PluginScanner) validateSignature(plugin *plugins.PluginBase) *PluginError {
+func (s *PluginScanner) validateSignature(plugin *plugins.PluginBase) *plugins.PluginError {
 	if plugin.Signature == plugins.PluginSignatureValid {
 		s.log.Debug("Plugin has valid signature", "id", plugin.Id)
 		return nil
@@ -486,7 +487,7 @@ func (s *PluginScanner) validateSignature(plugin *plugins.PluginBase) *PluginErr
 		if allowed := s.allowUnsigned(plugin); !allowed {
 			s.log.Debug("Plugin is unsigned", "id", plugin.Id)
 			s.errors = append(s.errors, fmt.Errorf("plugin %q is unsigned", plugin.Id))
-			return &PluginError{
+			return &plugins.PluginError{
 				ErrorCode: signatureMissing,
 			}
 		}
@@ -496,13 +497,13 @@ func (s *PluginScanner) validateSignature(plugin *plugins.PluginBase) *PluginErr
 	case plugins.PluginSignatureInvalid:
 		s.log.Debug("Plugin %q has an invalid signature", plugin.Id)
 		s.errors = append(s.errors, fmt.Errorf("plugin %q has an invalid signature", plugin.Id))
-		return &PluginError{
+		return &plugins.PluginError{
 			ErrorCode: signatureInvalid,
 		}
 	case plugins.PluginSignatureModified:
 		s.log.Debug("Plugin %q has a modified signature", plugin.Id)
 		s.errors = append(s.errors, fmt.Errorf("plugin %q's signature has been modified", plugin.Id))
-		return &PluginError{
+		return &plugins.PluginError{
 			ErrorCode: signatureModified,
 		}
 	default:
@@ -529,10 +530,10 @@ func (s *PluginScanner) allowUnsigned(plugin *plugins.PluginBase) bool {
 }
 
 // ScanningErrors returns plugin scanning errors encountered.
-func (pm *PluginManager) ScanningErrors() []PluginError {
-	scanningErrs := make([]PluginError, 0)
+func (pm *PluginManager) ScanningErrors() []plugins.PluginError {
+	scanningErrs := make([]plugins.PluginError, 0)
 	for id, e := range pm.pluginScanningErrors {
-		scanningErrs = append(scanningErrs, PluginError{
+		scanningErrs = append(scanningErrs, plugins.PluginError{
 			ErrorCode: e.ErrorCode,
 			PluginID:  id,
 		})
@@ -540,7 +541,7 @@ func (pm *PluginManager) ScanningErrors() []PluginError {
 	return scanningErrs
 }
 
-func GetPluginMarkdown(pluginId string, name string) ([]byte, error) {
+func (pm *PluginManager) GetPluginMarkdown(pluginId string, name string) ([]byte, error) {
 	plug, exists := Plugins[pluginId]
 	if !exists {
 		return nil, plugins.PluginNotFoundError{pluginId}

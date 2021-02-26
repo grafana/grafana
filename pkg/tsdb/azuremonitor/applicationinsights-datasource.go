@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/opentracing/opentracing-go"
@@ -209,7 +210,7 @@ func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query 
 
 func (e *ApplicationInsightsDatasource) createRequest(ctx context.Context, dsInfo *models.DataSource) (*http.Request, error) {
 	// find plugin
-	plugin, ok := plugins.DataSources[dsInfo.Type]
+	plugin, ok := manager.DataSources[dsInfo.Type]
 	if !ok {
 		return nil, errors.New("unable to find datasource plugin Azure Application Insights")
 	}

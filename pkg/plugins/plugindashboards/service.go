@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
@@ -20,7 +21,7 @@ func init() {
 
 type Service struct {
 	DataService   *tsdb.Service          `inject:""`
-	PluginManager *plugins.PluginManager `inject:""`
+	PluginManager *manager.PluginManager `inject:""`
 
 	logger log.Logger
 }
@@ -51,7 +52,7 @@ func (s *Service) updateAppDashboards() {
 			continue
 		}
 
-		if pluginDef, exist := plugins.Plugins[pluginSetting.PluginId]; exist {
+		if pluginDef, exist := manager.Plugins[pluginSetting.PluginId]; exist {
 			if pluginDef.Info.Version != pluginSetting.PluginVersion {
 				s.syncPluginDashboards(pluginDef, pluginSetting.OrgId)
 			}
@@ -63,7 +64,7 @@ func (s *Service) syncPluginDashboards(pluginDef *plugins.PluginBase, orgID int6
 	s.logger.Info("Syncing plugin dashboards to DB", "pluginId", pluginDef.Id)
 
 	// Get plugin dashboards
-	dashboards, err := plugins.GetPluginDashboards(orgID, pluginDef.Id)
+	dashboards, err := s.PluginManager.GetPluginDashboards(orgID, pluginDef.Id)
 	if err != nil {
 		s.logger.Error("Failed to load app dashboards", "error", err)
 		return
@@ -116,7 +117,7 @@ func (s *Service) handlePluginStateChanged(event *models.PluginStateChangedEvent
 	s.logger.Info("Plugin state changed", "pluginId", event.PluginId, "enabled", event.Enabled)
 
 	if event.Enabled {
-		s.syncPluginDashboards(plugins.Plugins[event.PluginId], event.OrgId)
+		s.syncPluginDashboards(manager.Plugins[event.PluginId], event.OrgId)
 	} else {
 		query := models.GetDashboardsByPluginIdQuery{PluginId: event.PluginId, OrgId: event.OrgId}
 		if err := bus.Dispatch(&query); err != nil {
@@ -136,7 +137,7 @@ func (s *Service) handlePluginStateChanged(event *models.PluginStateChangedEvent
 }
 
 func (s *Service) autoUpdateAppDashboard(pluginDashInfo *plugins.PluginDashboardInfoDTO, orgID int64) error {
-	dash, err := plugins.LoadPluginDashboard(pluginDashInfo.PluginId, pluginDashInfo.Path)
+	dash, err := s.PluginManager.LoadPluginDashboard(pluginDashInfo.PluginId, pluginDashInfo.Path)
 	if err != nil {
 		return err
 	}

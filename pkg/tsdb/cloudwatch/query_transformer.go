@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/plugins"
 )
 
 // returns a map of queries with query id as key. In the case a q request query

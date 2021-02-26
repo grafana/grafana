@@ -1,13 +1,13 @@
-package plugins
+package manager
 
 import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 )
 
-func GetPluginSettings(orgId int64) (map[string]*models.PluginSettingInfoDTO, error) {
+func (pm *PluginManager) GetPluginSettings(orgId int64) (map[string]*models.PluginSettingInfoDTO, error) {
 	query := models.GetPluginSettingsQuery{OrgId: orgId}
-
 	if err := bus.Dispatch(&query); err != nil {
 		return nil, err
 	}
@@ -53,19 +53,19 @@ func GetPluginSettings(orgId int64) (map[string]*models.PluginSettingInfoDTO, er
 }
 
 type EnabledPlugins struct {
-	Panels      []*PanelPlugin
-	DataSources map[string]*DataSourcePlugin
-	Apps        []*AppPlugin
+	Panels      []*plugins.PanelPlugin
+	DataSources map[string]*plugins.DataSourcePlugin
+	Apps        []*plugins.AppPlugin
 }
 
-func GetEnabledPlugins(orgID int64) (*EnabledPlugins, error) {
+func (pm *PluginManager) GetEnabledPlugins(orgID int64) (*EnabledPlugins, error) {
 	enabledPlugins := &EnabledPlugins{
-		Panels:      make([]*PanelPlugin, 0),
-		DataSources: make(map[string]*DataSourcePlugin),
-		Apps:        make([]*AppPlugin, 0),
+		Panels:      make([]*plugins.PanelPlugin, 0),
+		DataSources: make(map[string]*plugins.DataSourcePlugin),
+		Apps:        make([]*plugins.AppPlugin, 0),
 	}
 
-	pluginSettingMap, err := GetPluginSettings(orgID)
+	pluginSettingMap, err := pm.GetPluginSettings(orgID)
 	if err != nil {
 		return enabledPlugins, err
 	}

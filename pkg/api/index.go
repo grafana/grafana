@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -63,8 +62,8 @@ func getProfileNode(c *models.ReqContext) *dtos.NavLink {
 	}
 }
 
-func getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error) {
-	enabledPlugins, err := plugins.GetEnabledPlugins(c.OrgId)
+func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error) {
+	enabledPlugins, err := hs.PluginManager.GetEnabledPlugins(c.OrgId)
 	if err != nil {
 		return nil, err
 	}

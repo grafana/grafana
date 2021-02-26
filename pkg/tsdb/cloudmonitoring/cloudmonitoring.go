@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/registry"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -24,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"golang.org/x/oauth2/google"
 )
@@ -533,7 +533,7 @@ func (e *Executor) createRequest(ctx context.Context, dsInfo *models.DataSource,
 	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
 
 	// find plugin
-	plugin, ok := plugins.DataSources[dsInfo.Type]
+	plugin, ok := manager.DataSources[dsInfo.Type]
 	if !ok {
 		return nil, errors.New("unable to find datasource plugin CloudMonitoring")
 	}

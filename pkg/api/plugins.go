@@ -73,7 +73,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 		coreFilter = "1"
 	}
 
-	pluginSettingsMap, err := plugins.GetPluginSettings(c.OrgId)
+	pluginSettingsMap, err := hs.PluginManager.GetPluginSettings(c.OrgId)
 
 	if err != nil {
 		return response.Error(500, "Failed to get list of plugins", err)
@@ -205,10 +205,10 @@ func UpdatePluginSetting(c *models.ReqContext, cmd models.UpdatePluginSettingCmd
 	return response.Success("Plugin settings updated")
 }
 
-func GetPluginDashboards(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetPluginDashboards(c *models.ReqContext) response.Response {
 	pluginID := c.Params(":pluginId")
 
-	list, err := plugins.GetPluginDashboards(c.OrgId, pluginID)
+	list, err := hs.PluginManager.GetPluginDashboards(c.OrgId, pluginID)
 	if err != nil {
 		var notFound plugins.PluginNotFoundError
 		if errors.As(err, &notFound) {
@@ -221,11 +221,11 @@ func GetPluginDashboards(c *models.ReqContext) response.Response {
 	return response.JSON(200, list)
 }
 
-func GetPluginMarkdown(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetPluginMarkdown(c *models.ReqContext) response.Response {
 	pluginID := c.Params(":pluginId")
 	name := c.Params(":name")
 
-	content, err := plugins.GetPluginMarkdown(pluginID, name)
+	content, err := hs.PluginManager.GetPluginMarkdown(pluginID, name)
 	if err != nil {
 		var notFound plugins.PluginNotFoundError
 		if errors.As(err, &notFound) {
@@ -237,7 +237,7 @@ func GetPluginMarkdown(c *models.ReqContext) response.Response {
 
 	// fallback try readme
 	if len(content) == 0 {
-		content, err = plugins.GetPluginMarkdown(pluginID, "readme")
+		content, err = hs.PluginManager.GetPluginMarkdown(pluginID, "readme")
 		if err != nil {
 			return response.Error(501, "Could not get markdown file", err)
 		}
