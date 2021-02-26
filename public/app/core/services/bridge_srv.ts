@@ -1,8 +1,5 @@
 import coreModule from 'app/core/core_module';
 import { dispatch, store } from 'app/store/store';
-import { updateLocation } from 'app/core/actions';
-import { ILocationService, ITimeoutService } from 'angular';
-import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { UrlQueryMap } from '@grafana/data';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { templateVarsChangedInUrl } from 'app/features/variables/state/actions';
@@ -12,7 +9,7 @@ import { isArray, isEqual } from 'lodash';
 export class BridgeSrv {
   private lastQuery: UrlQueryMap = {};
   private lastPath = '';
-  private angularUrl: string;
+  //private angularUrl: string;
   private lastUrl: string | null = null;
 
   /** @ngInject */

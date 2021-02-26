@@ -16,7 +16,7 @@ import { PanelEditor } from '../components/PanelEditor/PanelEditor';
 import { Alert, Button, CustomScrollbar, HorizontalGroup, Spinner, VerticalGroup } from '@grafana/ui';
 // Redux
 import { initDashboard } from '../state/initDashboard';
-import { notifyApp, updateLocation } from 'app/core/actions';
+import { notifyApp } from 'app/core/actions';
 // Types
 import {
   AppNotificationSeverity,

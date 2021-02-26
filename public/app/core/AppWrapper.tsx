@@ -12,8 +12,7 @@ import { ConfigContext, ThemeProvider } from './utils/ConfigProvider';
 import { RouteDescriptor } from './navigation/types';
 import { contextSrv } from './services/context_srv';
 import { SideMenu } from './components/sidemenu/SideMenu';
-import { navigationLogger, queryStringToJSON, shouldForceReload } from './navigation/utils';
-import { updateLocation } from './actions';
+import { navigationLogger } from './navigation/utils';
 import { GrafanaRoute, SyncLocationWithRedux } from './navigation/GrafanaRoute';
 
 interface AppWrapperProps {

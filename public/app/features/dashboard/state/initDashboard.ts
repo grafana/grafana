@@ -7,7 +7,7 @@ import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { AnnotationsSrv } from 'app/features/annotations/annotations_srv';
 import { KeybindingSrv } from 'app/core/services/keybindingSrv';
 // Actions
-import { notifyApp, updateLocation } from 'app/core/actions';
+import { notifyApp } from 'app/core/actions';
 import {
   clearDashboardQueriesToUpdateOnLoad,
   dashboardInitCompleted,

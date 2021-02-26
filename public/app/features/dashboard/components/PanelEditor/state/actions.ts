@@ -9,7 +9,6 @@ import {
   setPanelEditorUIState,
   updateEditorInitState,
 } from './reducers';
-import { updateLocation } from 'app/core/actions';
 import { cleanUpEditPanel, panelModelAndPluginReady } from '../../../state/reducers';
 import store from 'app/core/store';
 import pick from 'lodash/pick';

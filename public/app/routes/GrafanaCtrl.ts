@@ -9,8 +9,8 @@ import {
   setBackendSrv,
   setDataSourceSrv,
   setLegacyAngularInjector,
-  LocationUpdate,
   setLocationSrv,
+  getLocationService,
 } from '@grafana/runtime';
 import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
@@ -20,8 +20,6 @@ import { TimeSrv, setTimeSrv, getTimeSrv } from 'app/features/dashboard/services
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { KeybindingSrv, setKeybindingSrv } from 'app/core/services/keybindingSrv';
 import { AngularLoader, setAngularLoader } from 'app/core/services/AngularLoader';
-
-import { updateLocation } from 'app/core/actions';
 
 // Types
 import { CoreEvents, AppEventEmitter, AppEventConsumer } from 'app/types';
@@ -35,7 +33,6 @@ import { ITimeoutService, IRootScopeService, IAngularEvent, auto } from 'angular
 import { AppEvent, locationUtil } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { initGrafanaLive } from 'app/features/live/live';
-import { store } from '../store/store';
 
 export type GrafanaRootScope = IRootScopeService & AppEventEmitter & AppEventConsumer & { colors: string[] };
 
@@ -74,11 +71,7 @@ export class GrafanaCtrl {
       buildParamsFromVariables: getTemplateSrv().fillVariableValuesForUrl,
     });
 
-    setLocationSrv({
-      update: (opt: LocationUpdate) => {
-        store.dispatch(updateLocation(opt));
-      },
-    });
+    setLocationSrv(getLocationService());
 
     // Initialize websocket event streaming
     if (config.featureToggles.live) {
