@@ -16,6 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/models"
+	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
@@ -71,7 +72,7 @@ func TestQueryCloudWatchMetrics(t *testing.T) {
 		assert.Equal(t, pluginmodels.DataResponse{
 			Results: map[string]pluginmodels.DataQueryResult{
 				"A": {
-					RefId: "A",
+					RefID: "A",
 					Meta: simplejson.NewFromAny(map[string]interface{}{
 						"rowCount": float64(1),
 					}),
@@ -147,7 +148,7 @@ func TestQueryCloudWatchLogs(t *testing.T) {
 		assert.Equal(t, pluginmodels.DataResponse{
 			Results: map[string]pluginmodels.DataQueryResult{
 				"A": {
-					RefId:      "A",
+					RefID:      "A",
 					Dataframes: dataFrames,
 				},
 			},
