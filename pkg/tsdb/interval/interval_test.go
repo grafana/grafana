@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -14,13 +15,13 @@ func TestIntervalCalculator_Calculate(t *testing.T) {
 
 	testCases := []struct {
 		name      string
-		timeRange *TimeRange
+		timeRange pluginmodels.DataTimeRange
 		expected  string
 	}{
-		{"from 5m to now", NewTimeRange("5m", "now"), "200ms"},
-		{"from 15m to now", NewTimeRange("15m", "now"), "500ms"},
-		{"from 30m to now", NewTimeRange("30m", "now"), "1s"},
-		{"from 1h to now", NewTimeRange("1h", "now"), "2s"},
+		{"from 5m to now", pluginmodels.NewDataTimeRange("5m", "now"), "200ms"},
+		{"from 15m to now", pluginmodels.NewDataTimeRange("15m", "now"), "500ms"},
+		{"from 30m to now", pluginmodels.NewDataTimeRange("30m", "now"), "1s"},
+		{"from 1h to now", pluginmodels.NewDataTimeRange("1h", "now"), "2s"},
 	}
 
 	for _, tc := range testCases {
