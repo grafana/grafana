@@ -1,4 +1,10 @@
-import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
+import {
+  FieldColorModeId,
+  FieldConfigProperty,
+  PanelPlugin,
+  SelectFieldConfigSettings,
+  standardEditorsRegistry,
+} from '@grafana/data';
 import { PieChartPanel } from './PieChartPanel';
 import { PieChartOptions } from './types';
 import { addStandardDataReduceOptions } from '../stat/types';
@@ -36,10 +42,12 @@ export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
         },
         defaultValue: PieChartType.Pie,
       })
-      .addSelect({
+      .addCustomEditor<SelectFieldConfigSettings<PieChartLabels>, PieChartLabels[]>({
         name: 'Labels',
         path: 'displayLabels',
+        id: 'displayLabels',
         defaultValue: [],
+        editor: standardEditorsRegistry.get('multi-select').editor,
         description: 'Select the labels to be displayed in the pie chart',
         settings: {
           options: [
@@ -48,21 +56,6 @@ export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
             { value: PieChartLabels.Value, label: 'Value' },
           ],
         },
-      })
-      .addBooleanSwitch({
-        name: 'Show name',
-        path: 'labelOptions.showName',
-        defaultValue: true,
-      })
-      .addBooleanSwitch({
-        name: 'Show value',
-        path: 'labelOptions.showValue',
-        defaultValue: false,
-      })
-      .addBooleanSwitch({
-        name: 'Show percent',
-        path: 'labelOptions.showPercent',
-        defaultValue: false,
       })
       .addBooleanSwitch({
         name: 'Show percent in legend',
