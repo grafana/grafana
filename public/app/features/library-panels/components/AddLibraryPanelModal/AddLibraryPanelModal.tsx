@@ -20,10 +20,10 @@ export const AddLibraryPanelModal: React.FC<Props> = ({ isOpen = false, panel, i
 
   return (
     <Modal title="Add this panel to the panel library" isOpen={isOpen} onDismiss={props.onDismiss}>
-      <Field label="Please set a name for the new reusable panel:">
+      <Field label="Library panel name">
         <Input name="name" value={panelTitle} onChange={(e) => setPanelTitle(e.currentTarget.value)} />
       </Field>
-      <Field label="Your reusable panel will be saved in:">
+      <Field label="Save in folder" description="Library panel permissions are derived from the folder permissions">
         <FolderPicker onChange={({ id }) => setFolderId(id)} initialFolderId={initialFolderId} />
       </Field>
 
