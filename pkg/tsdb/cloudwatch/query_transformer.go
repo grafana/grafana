@@ -79,6 +79,21 @@ func (e *cloudWatchExecutor) transformQueryResponsesToQueryResult(cloudwatchResp
 			frames = append(frames, response.DataFrames...)
 			requestExceededMaxLimit = requestExceededMaxLimit || response.RequestExceededMaxLimit
 			partialData = partialData || response.PartialData
+
+			if requestExceededMaxLimit {
+				frames[0].AppendNotices(data.Notice{
+					Severity: data.NoticeSeverityWarning,
+					Text:     "cloudwatch GetMetricData error: Maximum number of allowed metrics exceeded. Your search may have been limited",
+				})
+			}
+
+			if partialData {
+				frames[0].AppendNotices(data.Notice{
+					Severity: data.NoticeSeverityWarning,
+					Text:     "cloudwatch GetMetricData error: Too many datapoints requested - your search has been limited. Please try to reduce the time range",
+				})
+			}
+
 			executedQueries = append(executedQueries, executedQuery{
 				Expression: response.Expression,
 				ID:         response.Id,
@@ -89,13 +104,6 @@ func (e *cloudWatchExecutor) transformQueryResponsesToQueryResult(cloudwatchResp
 		sort.Slice(frames, func(i, j int) bool {
 			return frames[i].Name < frames[j].Name
 		})
-
-		if requestExceededMaxLimit {
-			queryResult.Error = fmt.Errorf("cloudwatch GetMetricData error: Maximum number of allowed metrics exceeded. Your search may have been limited")
-		}
-		if partialData {
-			queryResult.Error = fmt.Errorf("cloudwatch GetMetricData error: Too many datapoints requested - your search has been limited. Please try to reduce the time range")
-		}
 
 		eq, err := json.Marshal(executedQueries)
 		if err != nil {
