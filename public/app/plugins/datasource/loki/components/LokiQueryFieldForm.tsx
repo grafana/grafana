@@ -9,6 +9,7 @@ import {
   TypeaheadInput,
   BracesPlugin,
   DOMUtil,
+  Icon,
 } from '@grafana/ui';
 
 // Utils & Services
@@ -68,13 +69,18 @@ export interface LokiQueryFieldFormProps extends ExploreQueryFieldProps<LokiData
   runOnBlur?: boolean;
 }
 
-export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormProps, { labelsLoaded: boolean }> {
+interface LokiQueryFieldFormState {
+  labelsLoaded: boolean;
+  chooserVisible: boolean;
+}
+
+export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormProps, LokiQueryFieldFormState> {
   plugins: Plugin[];
 
   constructor(props: LokiQueryFieldFormProps) {
     super(props);
 
-    this.state = { labelsLoaded: false };
+    this.state = { labelsLoaded: false, chooserVisible: false };
 
     this.plugins = [
       BracesPlugin(),
@@ -95,6 +101,7 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
 
   onChangeLogLabels = (selector: string) => {
     this.onChangeQuery(selector, true);
+    this.setState({ chooserVisible: false });
   };
 
   onChangeQuery = (value: string, override?: boolean) => {
@@ -108,6 +115,10 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
         onRunQuery();
       }
     }
+  };
+
+  onClickChooserButton = () => {
+    this.setState((state) => ({ chooserVisible: !state.chooserVisible }));
   };
 
   onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
@@ -130,7 +141,7 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
 
   render() {
     const { ExtraFieldElement, query, datasource, runOnBlur } = this.props;
-    const { labelsLoaded } = this.state;
+    const { labelsLoaded, chooserVisible } = this.state;
     const lokiLanguageProvider = datasource.languageProvider as LokiLanguageProvider;
     const cleanText = datasource.languageProvider ? lokiLanguageProvider.cleanText : undefined;
     const hasLogLabels = lokiLanguageProvider.getLabelKeys().length > 0;
@@ -140,15 +151,14 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
     return (
       <>
         <div className="gf-form-inline gf-form-inline--xs-view-flex-column flex-grow-1">
-          <div className="gf-form flex-shrink-0 min-width-5">
-            <LokiLabelBrowser
-              buttonClass="gf-form-label"
-              buttonText={chooserText}
-              disabled={buttonDisabled}
-              languageProvider={lokiLanguageProvider}
-              onChange={this.onChangeLogLabels}
-            />
-          </div>
+          <button
+            className="gf-form-label query-keyword pointer"
+            onClick={this.onClickChooserButton}
+            disabled={buttonDisabled}
+          >
+            {chooserText}
+            <Icon name={chooserVisible ? 'angle-down' : 'angle-right'} />
+          </button>
           <div className="gf-form gf-form--grow flex-shrink-1 min-width-15">
             <QueryField
               additionalPlugins={this.plugins}
@@ -164,6 +174,11 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
             />
           </div>
         </div>
+        {chooserVisible && (
+          <div className="gf-form gf-form--alt flex-shrink-0">
+            <LokiLabelBrowser languageProvider={lokiLanguageProvider} onChange={this.onChangeLogLabels} />
+          </div>
+        )}
         <LokiOptionFields
           queryType={query.instant ? 'instant' : 'range'}
           lineLimitValue={query?.maxLines?.toString() || ''}

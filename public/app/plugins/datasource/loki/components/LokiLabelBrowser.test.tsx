@@ -3,7 +3,13 @@ import { render, screen, waitFor, waitForElementToBeRemoved } from '@testing-lib
 import userEvent from '@testing-library/user-event';
 
 import { getTheme } from '@grafana/ui';
-import { buildSelector, facetLabels, SelectableLabel, LokiLabelBrowserPopover, BrowserProps } from './LokiLabelBrowser';
+import {
+  buildSelector,
+  facetLabels,
+  SelectableLabel,
+  UnthemedLokiLabelBrowser,
+  BrowserProps,
+} from './LokiLabelBrowser';
 import LokiLanguageProvider from '../language_provider';
 
 describe('buildSelector()', () => {
@@ -116,7 +122,7 @@ describe('LokiLabelBrowser', () => {
 
   it('renders and loader shows when empty, and then first set of labels', async () => {
     const props = setupProps();
-    render(<LokiLabelBrowserPopover {...props} />);
+    render(<UnthemedLokiLabelBrowser {...props} />);
     // Loading appears and dissappears
     screen.getByText(/Loading labels/);
     await waitFor(() => {
@@ -132,7 +138,7 @@ describe('LokiLabelBrowser', () => {
 
   it('allows label and value selection/deselection', async () => {
     const props = setupProps();
-    render(<LokiLabelBrowserPopover {...props} />);
+    render(<UnthemedLokiLabelBrowser {...props} />);
     // Selecting label2
     const label2 = await screen.findByRole('option', { name: /label2/, selected: false });
     expect(screen.queryByRole('list')).not.toBeInTheDocument();
@@ -186,7 +192,7 @@ describe('LokiLabelBrowser', () => {
 
   it('filters values by input text', async () => {
     const props = setupProps();
-    render(<LokiLabelBrowserPopover {...props} />);
+    render(<UnthemedLokiLabelBrowser {...props} />);
     // Selecting label2 and label1
     const label2 = await screen.findByRole('option', { name: /label2/, selected: false });
     userEvent.click(label2);
@@ -204,7 +210,7 @@ describe('LokiLabelBrowser', () => {
 
   it('facets labels', async () => {
     const props = setupProps();
-    render(<LokiLabelBrowserPopover {...props} />);
+    render(<UnthemedLokiLabelBrowser {...props} />);
     // Selecting label2 and label1
     const label2 = await screen.findByRole('option', { name: /label2/, selected: false });
     userEvent.click(label2);

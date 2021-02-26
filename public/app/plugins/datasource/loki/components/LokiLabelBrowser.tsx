@@ -1,16 +1,5 @@
-import React, { Component, createRef, ChangeEvent } from 'react';
-import {
-  Button,
-  ClickOutsideWrapper,
-  HorizontalGroup,
-  Input,
-  Label,
-  LoadingPlaceholder,
-  Popover,
-  PopoverController,
-  stylesFactory,
-  withTheme,
-} from '@grafana/ui';
+import React, { ChangeEvent } from 'react';
+import { Button, HorizontalGroup, Input, Label, LoadingPlaceholder, stylesFactory, withTheme } from '@grafana/ui';
 import LokiLanguageProvider from '../language_provider';
 import { css, cx } from 'emotion';
 import store from 'app/core/store';
@@ -28,20 +17,11 @@ export const LAST_USED_LABELS_KEY = 'grafana.datasources.loki.browser.labels';
 
 type onChange = (selector: string) => void;
 
-interface Props {
-  buttonClass: string;
-  buttonText: string;
-  disabled: boolean;
-  languageProvider: LokiLanguageProvider;
-  theme: GrafanaTheme;
-  onChange: onChange;
-}
-
 export interface BrowserProps {
   languageProvider: LokiLanguageProvider;
   onChange: onChange;
   theme: GrafanaTheme;
-  autoSelect: number;
+  autoSelect?: number;
   hide?: () => void;
 }
 
@@ -50,6 +30,7 @@ interface BrowserState {
   searchTerm: string;
   status: string;
   error: string;
+  validationStatus: string;
 }
 
 interface FacettableValue {
@@ -112,18 +93,9 @@ export function facetLabels(
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   wrapper: css`
-    z-index: 1040;
-    max-width: 70rem;
-  `,
-  popover: css`
-    color: ${theme.colors.text};
-    background: ${theme.colors.bg2};
-    z-index: 1;
-    box-shadow: 0 2px 5px 0 ${theme.colors.dropdownShadow};
-    width: 100%;
-    display: inline-block;
-    border-radius: ${theme.border.radius.sm};
-    padding: ${theme.spacing.sm};
+    background-color: ${theme.colors.bg2};
+    padding: ${theme.spacing.md};
+    max-width: 100rem;
   `,
   list: css`
     margin-top: ${theme.spacing.sm};
@@ -144,7 +116,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
   status: css`
     padding: ${theme.spacing.xs};
-    color: ${theme.colors.textWeak};
+    color: ${theme.colors.textSemiWeak};
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -185,14 +157,23 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     margin-left: -${theme.spacing.xs};
     margin-bottom: ${theme.spacing.sm};
   `,
+  validationStatus: css`
+    padding: ${theme.spacing.xs};
+    margin-bottom: ${theme.spacing.sm};
+    color: ${theme.colors.textStrong};
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  `,
 }));
 
-export class LokiLabelBrowserPopover extends React.Component<BrowserProps, BrowserState> {
+export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, BrowserState> {
   state = {
     labels: [] as SelectableLabel[],
     searchTerm: '',
     status: 'Ready',
     error: '',
+    validationStatus: '',
   };
 
   onChangeSearch = (event: ChangeEvent<HTMLInputElement>) => {
@@ -220,7 +201,7 @@ export class LokiLabelBrowserPopover extends React.Component<BrowserProps, Brows
         hidden: false,
         facets: undefined,
       }));
-      return { labels, searchTerm: '', status: '', error: '' };
+      return { labels, searchTerm: '', status: '', error: '', validationStatus: '' };
     });
     store.delete(LAST_USED_LABELS_KEY);
   };
@@ -282,12 +263,12 @@ export class LokiLabelBrowserPopover extends React.Component<BrowserProps, Brows
       });
       // New status overrides errors
       const error = status ? '' : state.error;
-      return { labels, status, error };
+      return { labels, status, error, validationStatus: '' };
     }, cb);
   }
 
   componentDidMount() {
-    const { languageProvider, autoSelect } = this.props;
+    const { languageProvider, autoSelect = MAX_AUTO_SELECT } = this.props;
     if (languageProvider) {
       const selectedLabels: string[] = store.getObject(LAST_USED_LABELS_KEY, []);
       languageProvider.start().then(() => {
@@ -374,14 +355,14 @@ export class LokiLabelBrowserPopover extends React.Component<BrowserProps, Brows
 
   async validateSelector(selector: string) {
     const { languageProvider } = this.props;
-    this.setState({ status: `Validating selector ${selector}`, error: '' });
+    this.setState({ validationStatus: `Validating selector ${selector}`, error: '' });
     const streams = await languageProvider.fetchSeries(selector);
-    this.setState({ status: `Selector is valid (${streams.length} streams found)` });
+    this.setState({ validationStatus: `Selector is valid (${streams.length} streams found)` });
   }
 
   render() {
     const { theme } = this.props;
-    const { labels, searchTerm, status, error } = this.state;
+    const { labels, searchTerm, status, error, validationStatus } = this.state;
     if (labels.length === 0) {
       return <LoadingPlaceholder text="Loading labels..." />;
     }
@@ -401,7 +382,7 @@ export class LokiLabelBrowserPopover extends React.Component<BrowserProps, Brows
     const selector = buildSelector(this.state.labels);
     const empty = selector === EMPTY_SELECTOR;
     return (
-      <>
+      <div className={styles.wrapper}>
         <div className={styles.section}>
           <Label description="Which labels would you like to consider for your search?">
             1. Select labels to search in
@@ -475,6 +456,7 @@ export class LokiLabelBrowserPopover extends React.Component<BrowserProps, Brows
           <div aria-label="selector" className={styles.selector}>
             {selector}
           </div>
+          {validationStatus && <div className={styles.validationStatus}>{validationStatus}</div>}
           <HorizontalGroup>
             <Button aria-label="Use selector as logs button" disabled={empty} onClick={this.onClickRunLogsQuery}>
               Show logs
@@ -503,97 +485,7 @@ export class LokiLabelBrowserPopover extends React.Component<BrowserProps, Brows
             </div>
           </HorizontalGroup>
         </div>
-      </>
-    );
-  }
-}
-
-class UnthemedLokiLabelBrowser extends Component<Props> {
-  static displayName = 'LokiLabelBrowser';
-  pickerTriggerRef = createRef<any>();
-  hider = {
-    showPopper: () => {},
-    hidePopper: () => {},
-  };
-  showing = false;
-
-  onChange = (selector: string) => {
-    this.props.onChange(selector);
-    this.toggle();
-  };
-
-  onClickOpen = (e: React.MouseEvent) => {
-    // Stop early before it reaches the ClickOutsideWrapper
-    e.stopPropagation();
-    this.toggle();
-  };
-
-  toggle = () => {
-    if (this.showing) {
-      this.hider.hidePopper();
-      this.showing = false;
-    } else {
-      this.hider.showPopper();
-      this.showing = true;
-    }
-  };
-
-  renderContent = () => {
-    const { languageProvider, theme } = this.props;
-    if (this.showing) {
-      return (
-        <ClickOutsideWrapper
-          onClick={() => {
-            if (this.showing) {
-              this.toggle();
-            }
-          }}
-        >
-          <LokiLabelBrowserPopover
-            languageProvider={languageProvider}
-            theme={theme}
-            onChange={this.onChange}
-            autoSelect={MAX_AUTO_SELECT}
-          />
-        </ClickOutsideWrapper>
-      );
-    }
-    // Just satisfying the interface here
-    return <></>;
-  };
-
-  render() {
-    const { buttonClass, buttonText, disabled, theme } = this.props;
-    const styles = getStyles(theme);
-
-    return (
-      <PopoverController content={this.renderContent} hideAfter={300}>
-        {(showPopper, hidePopper, popperProps) => {
-          // HACK
-          this.hider = { hidePopper, showPopper };
-          return (
-            <>
-              {this.pickerTriggerRef.current && (
-                <Popover
-                  {...popperProps}
-                  placement="bottom-end"
-                  referenceElement={this.pickerTriggerRef.current}
-                  wrapperClassName={styles.wrapper}
-                  className={styles.popover}
-                />
-              )}
-              <button
-                disabled={disabled}
-                ref={this.pickerTriggerRef}
-                className={buttonClass}
-                onClick={this.onClickOpen}
-              >
-                {buttonText}
-              </button>
-            </>
-          );
-        }}
-      </PopoverController>
+      </div>
     );
   }
 }
