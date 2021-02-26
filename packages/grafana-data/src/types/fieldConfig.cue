@@ -25,45 +25,20 @@ FieldConfig: {
     // may be used to update the results
     path?: string
 
+    // True if data source can write a value to the path.  Auth/authz are supported separately
+    writeable?: bool
 
-  // True if data source can write a value to the path.  Auth/authz are supported separately
-  writeable?: bool
+    // True if data source field supports ad-hoc filters
+    filterable?: bool
 
-  // True if data source field supports ad-hoc filters
-  filterable?: bool
+    // Numeric Options
+    unit?: string
 
-  // Numeric Options
-  unit?: string
+    // Significant digits (for display)
+    decimals?: number | *null
 
-  // Significant digits (for display)
-  decimals?: number | *null
-
-  min?: number | null
-  max?: number | null
-
-
-} @cuetsy(targetType="interface")
-
-
-
-
-//   /**
-//    * The display value for this field.  This supports template variables blank is auto
-//    */
-//   displayName?: string;
-
-//   /**
-//    * 
-//    */
-//   displayNameFromDS?: string;
-
-//   /**
-//    * 
-//    */
-//   description?: string;
-
-//   path?: string;
-
+    min?: number | null
+    max?: number | null
 
 //   // Convert input values into a display string
 //   mappings?: ValueMapping[];
@@ -80,8 +55,35 @@ FieldConfig: {
 //   // The behavior when clicking on a result
 //   links?: DataLink[];
 
-//   // Alternative to empty string
-//   noValue?: string;
+  // Alternative to empty string
+  noValue?: string
 
-//   // Panel Specific Values
-//   custom?: TOptions;
+  // Panel Specific Values
+  custom?: {} // Can cuetsy make this generic? <T = any>
+
+} @cuetsy(targetType="interface") 
+
+// Defines 
+FieldConfigSource: {
+  // Defaults applied to all numeric fields
+  defaults: FieldConfig // or empty {}
+
+  // Rules to override individual values
+  overrides: [...ConfigOverrideRule]
+} @cuetsy(targetType="interface")
+
+DynamicConfigValue: {
+  id: string | *"" 
+  value?: {} // anythign
+} @cuetsy(targetType="interface")
+
+MatcherConfig: {
+  id: string | *"" 
+  options?: {} // anythign
+} @cuetsy(targetType="interface")
+
+ConfigOverrideRule: {
+  matcher: MatcherConfig
+  properties: [...DynamicConfigValue]
+} @cuetsy(targetType="interface")
+
