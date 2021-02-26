@@ -73,7 +73,6 @@
     "@babel/preset-env": "7.8.4",
     "@babel/preset-react": "7.8.3",
     "@babel/preset-typescript": "7.8.3",
-    "@emotion/core": "10.0.27",
     "@grafana/api-documenter": "7.11.2",
     "@grafana/api-extractor": "7.10.1",
     "@grafana/eslint-config": "2.2.1",
@@ -200,6 +199,7 @@
     "zone.js": "0.7.8"
   },
   "dependencies": {
+    "@emotion/core": "10.0.27",
     "@grafana/slate-react": "0.22.9-grafana",
     "@popperjs/core": "2.5.4",
     "@reduxjs/toolkit": "1.5.0",

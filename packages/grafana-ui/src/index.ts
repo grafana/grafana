@@ -1,3 +1,6 @@
+// Needed for emotion types
+import '@emotion/core';
+
 /**
  * A library containing the different design components of the Grafana ecosystem.
  *
