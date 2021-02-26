@@ -14,7 +14,7 @@ import { contextSrv } from './services/context_srv';
 import { SideMenu } from './components/sidemenu/SideMenu';
 import { navigationLogger, queryStringToJSON, shouldForceReload } from './navigation/utils';
 import { updateLocation } from './actions';
-import { GrafanaRoute } from './navigation/GrafanaRoute';
+import { GrafanaRoute, SyncLocationWithRedux } from './navigation/GrafanaRoute';
 
 interface AppWrapperProps {
   app: GrafanaApp;
@@ -64,14 +64,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
     // const { updateLocation } = this.props;
     // TODO[Router]
     // @ts-ignore
-    const isAngularRoute = !!route.controller;
-    // TODO[Router]
-    // @ts-ignore
     const roles = route.roles ? route.roles() : [];
-
-    if (isAngularRoute) {
-      return null;
-    }
 
     return (
       <Route
@@ -87,14 +80,6 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
             return null;
           }
 
-          store.dispatch(
-            updateLocation({
-              path: props.location.pathname,
-              routeParams: props.match.params,
-              query: queryStringToJSON(props.location.search),
-            })
-          );
-
           // TODO[Router]: test this logic
           if (roles && roles.length) {
             if (!roles.some((r: string) => contextSrv.hasRole(r))) {
@@ -103,13 +88,15 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
           }
 
           return (
-            <GrafanaRoute
-              {...props}
-              component={route.component}
-              route={route}
-              $injector={this.state.ngInjector}
-              $contextSrv={contextSrv}
-            />
+            <SyncLocationWithRedux {...props}>
+              <GrafanaRoute
+                {...props}
+                component={route.component}
+                route={route}
+                $injector={this.state.ngInjector}
+                $contextSrv={contextSrv}
+              />
+            </SyncLocationWithRedux>
           );
         }}
       />

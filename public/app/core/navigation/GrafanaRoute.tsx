@@ -1,24 +1,28 @@
 import React from 'react';
-import { GrafanaRouteProps } from './types';
-import { navigationLogger } from './utils';
+import { useDispatch } from 'react-redux';
+import { RouteComponentProps } from 'react-router-dom';
 // @ts-ignore
 import Drop from 'tether-drop';
+import { GrafanaRouteProps } from './types';
+import { navigationLogger, queryStringToJSON } from './utils';
+import { updateLocation } from '../reducers/location';
+import usePrevious from 'react-use/lib/usePrevious';
 
 export class GrafanaRoute extends React.Component<GrafanaRouteProps<any>> {
   componentDidMount() {
-    navigationLogger('GrafanaRoute', false, 'Mounted', this.props.match);
     this.updateBodyClassNames();
     this.cleanupDOM();
+    navigationLogger('GrafanaRoute', false, 'Mounted', this.props.match);
   }
 
   componentDidUpdate(prevProps: GrafanaRouteProps<any>) {
-    navigationLogger('GrafanaRoute', false, 'Updated', this.props, prevProps);
     this.cleanupDOM();
+    navigationLogger('GrafanaRoute', false, 'Updated', this.props, prevProps);
   }
 
   componentWillUnmount() {
-    navigationLogger('GrafanaRoute', false, 'Unmount', this.props.route);
     this.updateBodyClassNames(true);
+    navigationLogger('GrafanaRoute', false, 'Unmounted', this.props.route);
   }
 
   shouldComponentUpdate(nextProps: GrafanaRouteProps<any>) {
@@ -64,6 +68,7 @@ export class GrafanaRoute extends React.Component<GrafanaRouteProps<any>> {
   }
 
   render() {
+    navigationLogger('GrafanaRoute', false, 'Rendered', this.props.route);
     const { component, route, ...routeComponentProps } = this.props;
 
     return React.createElement(component(), {
@@ -72,3 +77,24 @@ export class GrafanaRoute extends React.Component<GrafanaRouteProps<any>> {
     });
   }
 }
+
+export const SyncLocationWithRedux: React.FC<RouteComponentProps<any>> = (props) => {
+  const dispatch = useDispatch();
+  const prevProps = usePrevious(props);
+  navigationLogger('GrafanaRoute', false, 'Sync location with redux');
+
+  if (!prevProps || prevProps.match !== props.match || prevProps.location !== props.location) {
+    // The dispatch happens during the render. At first sight this looks like a bad practice, but mind that
+    // this component is ONLY rendered on route change making it a perfect place too sync the locationmatch  with Redux.
+    // Thanks to this the page component should have correct location state already available in Redux.
+    dispatch(
+      updateLocation({
+        path: props.location.pathname,
+        routeParams: props.match.params,
+        query: queryStringToJSON(props.location.search),
+      })
+    );
+  }
+
+  return <>{props.children}</>;
+};
