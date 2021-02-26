@@ -2,7 +2,20 @@ package grafanaschema
 
 
 
-TooltipMode:       "single" | "multi" | "none"                             @cuetsy(targetType="type")
+@cuetsy(targetType="enum")
+
+// NOTE: enum should make upper case and remove '-'
+//
+// export enum TableCellDisplayMode {
+//   Auto = 'auto',
+//   ColorText = 'color-text',
+//   ColorBackground = 'color-background',
+//   GradientGauge = '',
+//   LcdGauge = '',
+//   JSONView = '',
+//   BasicGauge = 'basic',
+//   Image = 'image',
+// }
 AxisPlacement:     "auto" | "top" | "right" | "bottom" | "left" | "hidden" @cuetsy(targetType="enum")
 PointVisibility:   "auto" | "never" | "always"                             @cuetsy(targetType="enum")
 DrawStyle:         "line" | "bars" | "points"                              @cuetsy(targetType="enum")
@@ -48,8 +61,11 @@ HideSeriesConfig: {
 	legend:  bool
 	graph:   bool
 } @cuetsy(targetType="interface")
-LegendPlacement:   "bottom" | "right"          @cuetsy(targetType="type")
-LegendDisplayMode: "list" | "table" | "hidden" @cuetsy(targetType="enum")
+TooltipMode:          "single" | "multi" | "none"          @cuetsy(targetType="type")
+FieldTextAlignment:   "auto" | "left" | "right" | "center" @cuetsy(targetType="type")
+TableCellDisplayMode: "auto" | "color-text" | "color-background" | "gradient-gauge" | "lcd-gauge" | "json-view" | "basic" | "image"
+LegendPlacement:      "bottom" | "right"          @cuetsy(targetType="type")
+LegendDisplayMode:    "list" | "table" | "hidden" @cuetsy(targetType="enum")
 GraphTooltipOptions: {
 	mode: TooltipMode
 } @cuetsy(targetType="interface")
@@ -57,6 +73,12 @@ GraphFieldConfig: LineConfig & FillConfig & PointsConfig & AxisConfig & {
 	drawStyle?:    DrawStyle
 	gradientMode?: GraphGradientMode
 	hideFrom?:     HideSeriesConfig
+} @cuetsy(targetType="interface")
+TableFieldOptions: {
+	width?:      number
+	align:       FieldTextAlignment | *"auto"
+	displayMode: TableCellDisplayMode | *"auto"
+	hidden?:     bool
 } @cuetsy(targetType="interface")
 VizLegendOptions: {
 	displayMode: LegendDisplayMode
