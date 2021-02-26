@@ -1,4 +1,4 @@
-import { getLocationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { coreModule } from '../core';
 import { RouteProvider } from './patch/RouteProvider';
 import { RouteParamsProvider } from './patch/RouteParamsProvider';
@@ -18,7 +18,7 @@ const registerInterceptedLinkDirective = () => {
             $event.stopPropagation();
 
             // TODO: refactor to one method insted of chain
-            getLocationService().getHistory().push(elm.attr('href'));
+            locationService.getHistory().push(elm.attr('href'));
             return false;
           }
 
@@ -65,11 +65,11 @@ class AngularLocationWrapper {
     navigationLogger('AngularLocationWrapper', false, 'Angular compat layer: path');
 
     if (pathname) {
-      getLocationService().push(pathname);
+      locationService.push(pathname);
       return this as any;
     }
 
-    return getLocationService().getCurrentLocation().pathname;
+    return locationService.getCurrentLocation().pathname;
   }
 
   port(): number {
@@ -85,6 +85,7 @@ class AngularLocationWrapper {
   }
 
   search(search?: any, paramValue?: any) {
+    navigationLogger('AngularLocationWrapper', false, 'Angular compat layer: search');
     throw new Error('AngularLocationWrapper method not implemented.');
   }
 
@@ -96,10 +97,10 @@ class AngularLocationWrapper {
     navigationLogger('AngularLocationWrapper', false, 'Angular compat layer: url');
 
     if (newUrl) {
-      getLocationService().push(newUrl);
+      locationService.push(newUrl);
     }
 
-    return getLocationService().getCurrentLocation().pathname;
+    return locationService.getCurrentLocation().pathname;
   }
 }
 

@@ -20,15 +20,7 @@ import { appEvents } from '../../../core/core';
 import { CoreEvents } from '../../../types';
 import { config } from 'app/core/config';
 import { getRefreshFromUrl } from '../utils/getRefreshFromUrl';
-import { getLocationService, LocationService } from '@grafana/runtime';
-
-interface TimeSrvDependencies {
-  getLocationService: typeof getLocationService;
-}
-
-const runtimeDependencies: TimeSrvDependencies = {
-  getLocationService,
-};
+import { locationService } from '@grafana/runtime';
 
 export class TimeSrv {
   time: any;
@@ -37,7 +29,6 @@ export class TimeSrv {
   oldRefresh: string | null | undefined;
   dashboard: DashboardModel;
   timeAtLoad: any;
-  locationService: LocationService;
   private autoRefreshBlocked: boolean;
 
   /** @ngInject */
@@ -45,12 +36,10 @@ export class TimeSrv {
     $rootScope: GrafanaRootScope,
     private $timeout: ITimeoutService,
     private timer: any,
-    private contextSrv: ContextSrv,
-    private dependencies = runtimeDependencies
+    private contextSrv: ContextSrv
   ) {
     // default time
     this.time = getDefaultTimeRange().raw;
-    this.locationService = dependencies.getLocationService();
 
     appEvents.on(CoreEvents.zoomOut, this.zoomOut.bind(this));
     appEvents.on(CoreEvents.shiftTime, this.shiftTime.bind(this));
@@ -143,7 +132,7 @@ export class TimeSrv {
   }
 
   private initTimeFromUrl() {
-    const params = this.locationService.getSearch();
+    const params = locationService.getSearch();
 
     if (params.get('time') && params.get('time.window')) {
       this.time = this.getTimeWindow(params.get('time')!, params.get('time.window')!);
@@ -179,7 +168,7 @@ export class TimeSrv {
   }
 
   private routeUpdated() {
-    const params = this.locationService.getSearch();
+    const params = locationService.getSearch();
 
     if (params.get('left')) {
       return; // explore handles this;
@@ -224,9 +213,9 @@ export class TimeSrv {
 
     if (interval) {
       const refresh = this.contextSrv.getValidInterval(interval);
-      this.locationService.partial({ refresh }, true);
+      locationService.partial({ refresh }, true);
     } else {
-      this.locationService.partial({ refresh: null }, true);
+      locationService.partial({ refresh: null }, true);
     }
   }
 
@@ -267,13 +256,13 @@ export class TimeSrv {
     // update url
     if (fromRouteUpdate !== true) {
       const urlRange = this.timeRangeForUrl();
-      const urlParams = new URLSearchParams(this.dependencies.getLocationService().getCurrentLocation().search);
+      const urlParams = locationService.getSearch();
 
       urlParams.set('from', urlRange.from.toString());
       urlParams.set('to', urlRange.to.toString());
 
-      this.dependencies.getLocationService().push({
-        ...this.dependencies.getLocationService().getCurrentLocation(),
+      locationService.push({
+        ...locationService.getCurrentLocation(),
         search: urlParams.toString(),
       });
     }

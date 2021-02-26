@@ -1,5 +1,5 @@
 import { navigationLogger } from '../utils';
-import { getLocationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 
 export function interceptLinkClicks(e: MouseEvent) {
   const target = e.target as HTMLElement;
@@ -9,7 +9,7 @@ export function interceptLinkClicks(e: MouseEvent) {
     if (href) {
       navigationLogger('utils', false, 'intercepting link click', e);
       e.preventDefault();
-      getLocationService().push(href);
+      locationService.push(href);
     }
   }
 }

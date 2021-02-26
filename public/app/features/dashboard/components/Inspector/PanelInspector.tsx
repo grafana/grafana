@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { connect, MapStateToProps } from 'react-redux';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { PanelPlugin } from '@grafana/data';
-import { getLocationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 
 import { StoreState } from 'app/types';
 import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
@@ -36,7 +36,7 @@ const PanelInspectorUnconnected: React.FC<Props> = ({ panel, dashboard, defaultT
   const metaDs = useDatasourceMetadata(data);
   const tabs = useInspectTabs(plugin, dashboard, error, metaDs);
   const onClose = () => {
-    getLocationService().partial({
+    locationService.partial({
       inspect: null,
       inspectTab: null,
     });

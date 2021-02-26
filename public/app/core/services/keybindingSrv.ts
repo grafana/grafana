@@ -15,8 +15,6 @@ import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
 // import { defaultQueryParams } from 'app/features/search/reducers/searchQueryReducer';
 import { ContextSrv } from './context_srv';
-import { getLocationService } from '@grafana/runtime';
-import { queryStringToJSON } from '../navigation/utils';
 
 export class KeybindingSrv {
   modalOpen = false;
@@ -112,7 +110,8 @@ export class KeybindingSrv {
       this.modalOpen = false;
       return;
     }
-    const search = queryStringToJSON(getLocationService().getCurrentLocation().search);
+
+    //const search = queryStringToJSON(getLocationService().getCurrentLocation().search);
     // close settings view
     // const search = this.$location.search();
     // if (search.editview) {
@@ -139,9 +138,9 @@ export class KeybindingSrv {
     //   return;
     // }
 
-    if (search.kiosk) {
-      this.$rootScope.appEvent(CoreEvents.toggleKioskMode, { exit: true });
-    }
+    // if (search.kiosk) {
+    //   this.$rootScope.appEvent(CoreEvents.toggleKioskMode, { exit: true });
+    // }
     //
     // if (search.search) {
     //   this.closeSearch();

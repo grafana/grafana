@@ -15,7 +15,7 @@ import { LinksSettings } from './LinksSettings';
 import { VersionsSettings } from './VersionsSettings';
 import { JsonEditorSettings } from './JsonEditorSettings';
 import { GrafanaTheme } from '@grafana/data';
-import { getLocationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 
 export interface Props {
   dashboard: DashboardModel;
@@ -31,11 +31,11 @@ export interface SettingsPage {
 
 export class DashboardSettings extends PureComponent<Props> {
   onClose = () => {
-    getLocationService().partial({ editview: null });
+    locationService.partial({ editview: null });
   };
 
   onChangePage = (editview: string) => {
-    getLocationService().partial({ editview });
+    locationService.partial({ editview });
   };
 
   getPages(): SettingsPage[] {

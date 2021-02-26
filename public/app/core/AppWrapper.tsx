@@ -2,7 +2,7 @@ import React from 'react';
 import { Router, Route, Redirect, Switch } from 'react-router-dom';
 import angular from 'angular';
 import { each, extend } from 'lodash';
-import { config, getLocationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { Provider } from 'react-redux';
 import { store } from 'app/store/store';
 import { ErrorBoundaryAlert, ModalRoot, ModalsProvider } from '@grafana/ui';
@@ -113,7 +113,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
               <ModalsProvider>
                 <>
                   <div className="grafana-app">
-                    <Router history={getLocationService().getHistory()}>
+                    <Router history={locationService.getHistory()}>
                       <>
                         <SideMenu />
                         <div className="main-view">

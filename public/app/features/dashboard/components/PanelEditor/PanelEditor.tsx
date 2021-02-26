@@ -47,7 +47,7 @@ import { CoreEvents, StoreState } from 'app/types';
 import { DisplayMode, displayModes, PanelEditorTab } from './types';
 import { DashboardModel, PanelModel } from '../../state';
 import { PanelOptionsChangedEvent } from 'app/types/events';
-import { getLocationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { UnlinkModal } from '../../../library-panels/components/UnlinkModal/UnlinkModal';
 import { SaveLibraryPanelModal } from 'app/features/library-panels/components/SaveLibraryPanelModal/SaveLibraryPanelModal';
 
@@ -114,14 +114,14 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   onDiscard = () => {
     this.props.setDiscardChanges(true);
 
-    getLocationService().partial({
+    locationService.partial({
       editPanel: null,
       tab: null,
     });
   };
 
   onOpenDashboardSettings = () => {
-    getLocationService().partial({
+    locationService.partial({
       editview: 'settings',
     });
   };
