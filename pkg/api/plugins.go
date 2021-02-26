@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
 	backendmodels "github.com/grafana/grafana/pkg/plugins/backendplugin/models"
+	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -25,7 +26,7 @@ var ErrPluginNotFound error = errors.New("plugin not found, no installed plugin 
 
 func (hs *HTTPServer) getPluginContext(pluginID string, user *models.SignedInUser) (backend.PluginContext, error) {
 	pc := backend.PluginContext{}
-	plugin, exists := plugins.Plugins[pluginID]
+	plugin, exists := manager.Plugins[pluginID]
 	if !exists {
 		return pc, ErrPluginNotFound
 	}
@@ -80,7 +81,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 	}
 
 	result := make(dtos.PluginList, 0)
-	for _, pluginDef := range plugins.Plugins {
+	for _, pluginDef := range manager.Plugins {
 		// filter out app sub plugins
 		if embeddedFilter == "0" && pluginDef.IncludedInAppId != "" {
 			continue
@@ -130,7 +131,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 		}
 
 		// filter out built in data sources
-		if ds, exists := plugins.DataSources[pluginDef.Id]; exists {
+		if ds, exists := manager.DataSources[pluginDef.Id]; exists {
 			if ds.BuiltIn {
 				continue
 			}
@@ -146,7 +147,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 func GetPluginSettingByID(c *models.ReqContext) response.Response {
 	pluginID := c.Params(":pluginId")
 
-	def, exists := plugins.Plugins[pluginID]
+	def, exists := manager.Plugins[pluginID]
 	if !exists {
 		return response.Error(404, "Plugin not found, no installed plugin with that id", nil)
 	}
@@ -169,7 +170,7 @@ func GetPluginSettingByID(c *models.ReqContext) response.Response {
 		SignatureOrg:  def.SignatureOrg,
 	}
 
-	if app, ok := plugins.Apps[def.Id]; ok {
+	if app, ok := manager.Apps[def.Id]; ok {
 		dto.Enabled = app.AutoEnabled
 		dto.Pinned = app.AutoEnabled
 	}
@@ -194,7 +195,7 @@ func UpdatePluginSetting(c *models.ReqContext, cmd models.UpdatePluginSettingCmd
 	cmd.OrgId = c.OrgId
 	cmd.PluginId = pluginID
 
-	if _, ok := plugins.Apps[cmd.PluginId]; !ok {
+	if _, ok := manager.Apps[cmd.PluginId]; !ok {
 		return response.Error(404, "Plugin not installed.", nil)
 	}
 
@@ -267,7 +268,7 @@ func (hs *HTTPServer) ImportDashboard(c *models.ReqContext, apiCmd dtos.ImportDa
 // /api/plugins/:pluginId/metrics
 func (hs *HTTPServer) CollectPluginMetrics(c *models.ReqContext) response.Response {
 	pluginID := c.Params("pluginId")
-	plugin, exists := plugins.Plugins[pluginID]
+	plugin, exists := manager.Plugins[pluginID]
 	if !exists {
 		return response.Error(404, "Plugin not found", nil)
 	}

@@ -29,8 +29,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 	backendmodels "github.com/grafana/grafana/pkg/plugins/backendplugin/models"
+	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/plugindashboards"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -78,7 +78,7 @@ type HTTPServer struct {
 	License                models.Licensing                   `inject:""`
 	BackendPluginManager   backendmodels.Manager              `inject:""`
 	PluginRequestValidator models.PluginRequestValidator      `inject:""`
-	PluginManager          *plugins.PluginManager             `inject:""`
+	PluginManager          *manager.PluginManager             `inject:""`
 	SearchService          *search.SearchService              `inject:""`
 	ShortURLService        *shorturls.ShortURLService         `inject:""`
 	Live                   *live.GrafanaLive                  `inject:""`
@@ -317,7 +317,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 
 	m.Use(middleware.Recovery(hs.Cfg))
 
-	for _, route := range plugins.StaticRoutes {
+	for _, route := range manager.StaticRoutes {
 		pluginRoute := path.Join("/public/plugins/", route.PluginId)
 		hs.log.Debug("Plugins: Adding route", "route", pluginRoute, "dir", route.Directory)
 		hs.mapStatic(m, route.Directory, "", pluginRoute)

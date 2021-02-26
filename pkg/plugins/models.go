@@ -137,3 +137,9 @@ type PluginStaticRoute struct {
 	Directory string
 	PluginId  string
 }
+
+type EnabledPlugins struct {
+	Panels      []*PanelPlugin
+	DataSources map[string]*DataSourcePlugin
+	Apps        []*AppPlugin
+}

@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 
@@ -17,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/dashdiffs"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -356,7 +356,7 @@ func dashboardSaveErrorToApiResponse(err error) response.Response {
 	if ok := errors.As(err, &pluginErr); ok {
 		message := fmt.Sprintf("The dashboard belongs to plugin %s.", pluginErr.PluginId)
 		// look up plugin name
-		if pluginDef, exist := plugins.Plugins[pluginErr.PluginId]; exist {
+		if pluginDef, exist := manager.Plugins[pluginErr.PluginId]; exist {
 			message = fmt.Sprintf("The dashboard belongs to plugin %s.", pluginDef.Name)
 		}
 		return response.JSON(412, util.DynMap{"status": "plugin-dashboard", "message": message})

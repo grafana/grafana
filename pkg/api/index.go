@@ -212,7 +212,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		})
 	}
 
-	appLinks, err := getAppLinks(c)
+	appLinks, err := hs.getAppLinks(c)
 	if err != nil {
 		return nil, err
 	}

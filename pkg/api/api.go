@@ -265,14 +265,14 @@ func (hs *HTTPServer) registerRoutes() {
 
 		apiRoute.Get("/plugins", routing.Wrap(hs.GetPluginList))
 		apiRoute.Get("/plugins/:pluginId/settings", routing.Wrap(GetPluginSettingByID))
-		apiRoute.Get("/plugins/:pluginId/markdown/:name", routing.Wrap(GetPluginMarkdown))
+		apiRoute.Get("/plugins/:pluginId/markdown/:name", routing.Wrap(hs.GetPluginMarkdown))
 		apiRoute.Get("/plugins/:pluginId/health", routing.Wrap(hs.CheckHealth))
 		apiRoute.Any("/plugins/:pluginId/resources", hs.CallResource)
 		apiRoute.Any("/plugins/:pluginId/resources/*", hs.CallResource)
 		apiRoute.Any("/plugins/errors", routing.Wrap(hs.GetPluginErrorsList))
 
 		apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {
-			pluginRoute.Get("/:pluginId/dashboards/", routing.Wrap(GetPluginDashboards))
+			pluginRoute.Get("/:pluginId/dashboards/", routing.Wrap(hs.GetPluginDashboards))
 			pluginRoute.Post("/:pluginId/settings", bind(models.UpdatePluginSettingCmd{}), routing.Wrap(UpdatePluginSetting))
 			pluginRoute.Get("/:pluginId/metrics", routing.Wrap(hs.CollectPluginMetrics))
 		}, reqOrgAdmin)
