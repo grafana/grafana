@@ -38,6 +38,7 @@ type datasourceInfo struct {
 	AssumeRoleARN string
 	ExternalID    string
 	Namespace     string
+	Endpoint      string
 
 	AccessKey string
 	SecretKey string
@@ -96,7 +97,7 @@ func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error)
 
 	bldr := strings.Builder{}
 	for i, s := range []string{
-		dsInfo.AuthType.String(), dsInfo.AccessKey, dsInfo.Profile, dsInfo.AssumeRoleARN, region,
+		dsInfo.AuthType.String(), dsInfo.AccessKey, dsInfo.Profile, dsInfo.AssumeRoleARN, region, dsInfo.Endpoint,
 	} {
 		if i != 0 {
 			bldr.WriteString(":")
@@ -128,6 +129,10 @@ func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error)
 	if dsInfo.Region != "" {
 		regionCfg = &aws.Config{Region: aws.String(dsInfo.Region)}
 		cfgs = append(cfgs, regionCfg)
+	}
+
+	if dsInfo.Endpoint != "" {
+		cfgs = append(cfgs, &aws.Config{Endpoint: aws.String(dsInfo.Endpoint)})
 	}
 
 	switch dsInfo.AuthType {
@@ -413,6 +418,7 @@ func (e *cloudWatchExecutor) getDSInfo(region string) *datasourceInfo {
 	atStr := e.DataSource.JsonData.Get("authType").MustString()
 	assumeRoleARN := e.DataSource.JsonData.Get("assumeRoleArn").MustString()
 	externalID := e.DataSource.JsonData.Get("externalId").MustString()
+	endpoint := e.DataSource.JsonData.Get("endpoint").MustString()
 	decrypted := e.DataSource.DecryptedValues()
 	accessKey := decrypted["accessKey"]
 	secretKey := decrypted["secretKey"]
@@ -445,6 +451,7 @@ func (e *cloudWatchExecutor) getDSInfo(region string) *datasourceInfo {
 		ExternalID:    externalID,
 		AccessKey:     accessKey,
 		SecretKey:     secretKey,
+		Endpoint:      endpoint,
 	}
 }
 

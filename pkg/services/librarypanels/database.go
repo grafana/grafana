@@ -14,7 +14,8 @@ import (
 
 var (
 	sqlStatmentLibrayPanelDTOWithMeta = `
-SELECT lp.id, lp.org_id, lp.folder_id, lp.uid, lp.name, lp.model, lp.created, lp.created_by, lp.updated, lp.updated_by
+SELECT DISTINCT
+	lp.id, lp.org_id, lp.folder_id, lp.uid, lp.name, lp.model, lp.created, lp.created_by, lp.updated, lp.updated_by
 	, 0 AS can_edit
 	, u1.login AS created_by_name
 	, u1.email AS created_by_email
@@ -275,14 +276,21 @@ func (lps *LibraryPanelService) getLibraryPanel(c *models.ReqContext, uid string
 }
 
 // getAllLibraryPanels gets all library panels.
-func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext) ([]LibraryPanelDTO, error) {
-	orgID := c.SignedInUser.OrgId
+func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext, limit int64) ([]LibraryPanelDTO, error) {
 	libraryPanels := make([]LibraryPanelWithMeta, 0)
 	err := lps.SQLStore.WithDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
-		sql := sqlStatmentLibrayPanelDTOWithMeta + "WHERE lp.org_id=?"
-		sess := session.SQL(sql, orgID)
-		err := sess.Find(&libraryPanels)
-		if err != nil {
+		builder := sqlstore.SQLBuilder{}
+		builder.Write(sqlStatmentLibrayPanelDTOWithMeta)
+		builder.Write(" LEFT JOIN dashboard AS dashboard on lp.folder_id = dashboard.id")
+		builder.Write(` WHERE lp.org_id = ?`, c.SignedInUser.OrgId)
+		if c.SignedInUser.OrgRole != models.ROLE_ADMIN {
+			builder.WriteDashboardPermissionFilter(c.SignedInUser, models.PERMISSION_VIEW)
+		}
+		if limit == 0 {
+			limit = 1000
+		}
+		builder.Write(lps.SQLStore.Dialect.Limit(limit))
+		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&libraryPanels); err != nil {
 			return err
 		}
 
