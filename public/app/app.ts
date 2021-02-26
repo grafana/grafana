@@ -29,9 +29,8 @@ import {
   standardFieldConfigEditorRegistry,
   standardTransformersRegistry,
 } from '@grafana/data';
-
-// TODO[Router]
 // import { checkBrowserCompatibility } from 'app/core/utils/browser';
+import { arrayMove } from 'app/core/utils/arrayMove';
 import { importPluginModule } from 'app/features/plugins/plugin_loader';
 import { angularModules } from 'app/core/core_module';
 import { registerAngularDirectives } from 'app/core/core';
@@ -62,12 +61,9 @@ import appEvents from './core/app_events';
 import { CoreEvents, KioskUrlValue } from './types';
 import { queryStringToJSON, setViewModeBodyClass } from './core/navigation/utils';
 
-// add move to lodash for backward compatabiltiy
+// add move to lodash for backward compatabilty with plugins
 // @ts-ignore
-_.move = (array: [], fromIndex: number, toIndex: number) => {
-  array.splice(toIndex, 0, array.splice(fromIndex, 1)[0]);
-  return array;
-};
+_.move = arrayMove;
 
 // import symlinked extensions
 const extensionsIndex = (require as any).context('.', true, /extensions\/index.ts/);
