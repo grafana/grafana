@@ -13,6 +13,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/shorturls"
@@ -86,6 +87,7 @@ type HTTPServer struct {
 	LibraryPanelService    *librarypanels.LibraryPanelService `inject:""`
 	DataService            *tsdb.Service                      `inject:""`
 	PluginDashboardService *plugindashboards.Service          `inject:""`
+	AlertEngine            *alerting.AlertEngine              `inject:""`
 	Listener               net.Listener
 }
 

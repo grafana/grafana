@@ -358,7 +358,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Post("/ds/query", bind(dtos.MetricRequest{}), routing.Wrap(hs.QueryMetricsV2))
 
 		apiRoute.Group("/alerts", func(alertsRoute routing.RouteRegister) {
-			alertsRoute.Post("/test", bind(dtos.AlertTestCommand{}), routing.Wrap(AlertTest))
+			alertsRoute.Post("/test", bind(dtos.AlertTestCommand{}), routing.Wrap(hs.AlertTest))
 			alertsRoute.Post("/:alertId/pause", reqEditorRole, bind(dtos.PauseAlertCommand{}), routing.Wrap(PauseAlert))
 			alertsRoute.Get("/:alertId", ValidateOrgAlert, routing.Wrap(GetAlert))
 			alertsRoute.Get("/", routing.Wrap(GetAlerts))

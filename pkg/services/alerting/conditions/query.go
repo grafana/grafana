@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
+	"github.com/grafana/grafana/pkg/tsdb/tsdbifaces"
 
 	gocontext "context"
 
@@ -17,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	pluginmodels "github.com/grafana/grafana/pkg/plugins/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -30,12 +30,11 @@ func init() {
 // QueryCondition is responsible for issue and query, reduce the
 // timeseries into single values and evaluate if they are firing or not.
 type QueryCondition struct {
-	Index         int
-	Query         AlertQuery
-	Reducer       *queryReducer
-	Evaluator     AlertEvaluator
-	Operator      string
-	HandleRequest tsdb.HandleRequestFunc
+	Index     int
+	Query     AlertQuery
+	Reducer   *queryReducer
+	Evaluator AlertEvaluator
+	Operator  string
 }
 
 // AlertQuery contains information about what datasource a query
@@ -48,10 +47,10 @@ type AlertQuery struct {
 }
 
 // Eval evaluates the `QueryCondition`.
-func (c *QueryCondition) Eval(context *alerting.EvalContext) (*alerting.ConditionResult, error) {
+func (c *QueryCondition) Eval(context *alerting.EvalContext, requestHandler tsdbifaces.RequestHandler) (*alerting.ConditionResult, error) {
 	timeRange := pluginmodels.NewDataTimeRange(c.Query.From, c.Query.To)
 
-	seriesList, err := c.executeQuery(context, timeRange)
+	seriesList, err := c.executeQuery(context, timeRange, requestHandler)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +109,8 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext) (*alerting.Conditio
 	}, nil
 }
 
-func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange pluginmodels.DataTimeRange) (pluginmodels.DataTimeSeriesSlice, error) {
+func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange pluginmodels.DataTimeRange,
+	requestHandler tsdbifaces.RequestHandler) (pluginmodels.DataTimeSeriesSlice, error) {
 	getDsInfo := &models.GetDataSourceQuery{
 		Id:    c.Query.DatasourceID,
 		OrgId: context.Rule.OrgID,
@@ -165,14 +165,14 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange p
 		})
 	}
 
-	resp, err := c.HandleRequest(context.Ctx, getDsInfo.Result, req)
+	resp, err := requestHandler.HandleRequest(context.Ctx, getDsInfo.Result, req)
 	if err != nil {
 		return nil, toCustomError(err)
 	}
 
 	for _, v := range resp.Results {
 		if v.Error != nil {
-			return nil, fmt.Errorf("tsdb.HandleRequest() response error %v", v)
+			return nil, fmt.Errorf("request handler response error %v", v)
 		}
 
 		// If there are dataframes but no series on the result
@@ -181,14 +181,14 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange p
 		if useDataframes { // convert the dataframes to pluginmodels.DataTimeSeries
 			frames, err := v.Dataframes.Decoded()
 			if err != nil {
-				return nil, errutil.Wrap("tsdb.HandleRequest() failed to unmarshal arrow dataframes from bytes", err)
+				return nil, errutil.Wrap("request handler failed to unmarshal arrow dataframes from bytes", err)
 			}
 
 			for _, frame := range frames {
 				ss, err := FrameToSeriesSlice(frame)
 				if err != nil {
 					return nil, errutil.Wrapf(err,
-						`tsdb.HandleRequest() failed to convert dataframe "%v" to pluginmodels.DataTimeSeriesSlice`, frame.Name)
+						`request handler failed to convert dataframe "%v" to pluginmodels.DataTimeSeriesSlice`, frame.Name)
 				}
 				result = append(result, ss...)
 			}
@@ -245,7 +245,6 @@ func (c *QueryCondition) getRequestForAlertRule(datasource *models.DataSource, t
 func newQueryCondition(model *simplejson.Json, index int) (*QueryCondition, error) {
 	condition := QueryCondition{}
 	condition.Index = index
-	condition.HandleRequest = tsdb.HandleRequest
 
 	queryJSON := model.Get("query")
 
@@ -385,5 +384,5 @@ func toCustomError(err error) error {
 	}
 
 	// generic fallback
-	return fmt.Errorf("tsdb.HandleRequest() error %v", err)
+	return fmt.Errorf("request handler error: %w", err)
 }

@@ -216,17 +216,24 @@ func (ctx *queryConditionTestContext) exec() (*alerting.ConditionResult, error) 
 			Dataframes: pluginmodels.NewDecodedDataFrames(data.Frames{ctx.frame}),
 		}
 	}
-
-	condition.HandleRequest = func(context context.Context, dsInfo *models.DataSource, req pluginmodels.DataQuery) (
-		pluginmodels.DataResponse, error) {
-		return pluginmodels.DataResponse{
+	reqHandler := fakeReqHandler{
+		response: pluginmodels.DataResponse{
 			Results: map[string]pluginmodels.DataQueryResult{
 				"A": qr,
 			},
-		}, nil
+		},
 	}
 
-	return condition.Eval(ctx.result)
+	return condition.Eval(ctx.result, reqHandler)
+}
+
+type fakeReqHandler struct {
+	response pluginmodels.DataResponse
+}
+
+func (rh fakeReqHandler) HandleRequest(context.Context, *models.DataSource, pluginmodels.DataQuery) (
+	pluginmodels.DataResponse, error) {
+	return rh.response, nil
 }
 
 func queryConditionScenario(desc string, fn queryConditionScenarioFunc) {
