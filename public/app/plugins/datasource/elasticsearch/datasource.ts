@@ -530,7 +530,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     let payload = '';
     const targets = this.interpolateVariablesInQueries(_.cloneDeep(options.targets), options.scopedVars);
     const sentTargets: ElasticsearchQuery[] = [];
-    let targetsContainesLogsQuery = targets.some((target) => hasMetricOfType(target, 'logs'));
+    let targetsContainsLogsQuery = targets.some((target) => hasMetricOfType(target, 'logs'));
 
     // add global adhoc filters to timeFilter
     const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
@@ -584,7 +584,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
         const er = new ElasticResponse(sentTargets, res);
 
         // TODO: This needs to be revisited, it seems wroong to process ALL the sent queries as logs if only one of them was a log query
-        if (targetsContainesLogsQuery) {
+        if (targetsContainsLogsQuery) {
           const response = er.getLogs(this.logMessageField, this.logLevelField);
           for (const dataFrame of response.data) {
             enhanceDataFrame(dataFrame, this.dataLinks);

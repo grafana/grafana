@@ -43,7 +43,7 @@ export function defaultBucketAgg(id = '1'): BucketAggregation {
 export const findMetricById = (metrics: MetricAggregation[], id: MetricAggregation['id']) =>
   metrics.find((metric) => metric.id === id);
 
-export function hasMetricOfType(target: ElasticsearchQuery, type: string): boolean {
+export function hasMetricOfType(target: ElasticsearchQuery, type: MetricAggregationType): boolean {
   return !!target?.metrics?.some((m) => m.type === type);
 }
 
