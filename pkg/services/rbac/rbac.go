@@ -53,8 +53,10 @@ func (ac *RBACService) AddMigration(mg *migrator.Migrator) {
 }
 
 func (ac *RBACService) Evaluate(ctx context.Context, user *models.SignedInUser, permission string, scope ...string) (bool, error) {
-	// TODO: Add child roles
 	roles := []string{string(user.OrgRole)}
+	for _, role := range user.OrgRole.Children() {
+		roles = append(roles, string(role))
+	}
 	if user.IsGrafanaAdmin {
 		roles = append(roles, "Grafana Admin")
 	}
