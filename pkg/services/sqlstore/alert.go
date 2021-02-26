@@ -125,7 +125,7 @@ func HandleAlertsQuery(query *models.GetAlertsQuery) error {
 	}
 
 	if query.User.OrgRole != models.ROLE_ADMIN {
-		builder.writeDashboardPermissionFilter(query.User, models.PERMISSION_VIEW)
+		builder.WriteDashboardPermissionFilter(query.User, models.PERMISSION_VIEW)
 	}
 
 	builder.Write(" ORDER BY name ASC")

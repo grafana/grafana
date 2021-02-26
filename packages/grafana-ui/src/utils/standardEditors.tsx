@@ -274,7 +274,7 @@ export const getStandardOptionEditors = () => {
 
   const multiSelect: StandardEditorsRegistryItem<any> = {
     id: 'multi-select',
-    name: 'Select',
+    name: 'Multi select',
     description: 'Allows for multiple option selection',
     editor: MultiSelectValueEditor as any,
   };
