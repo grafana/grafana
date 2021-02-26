@@ -25,8 +25,8 @@ const queryTypeOptions = [
 export function LokiOptionFields(props: LokiOptionFieldsProps) {
   const { lineLimitValue, queryType, query, onRunQuery, runOnBlur, onChange } = props;
 
-  function onChangeQueryLimit(value: string) {
-    const nextQuery = { ...query, maxLines: preprocessMaxLines(value) };
+  function onChangeQueryLimit(maxLines: number) {
+    const nextQuery = { ...query, maxLines };
     onChange(nextQuery);
   }
 
@@ -40,23 +40,12 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
     onChange(nextQuery);
   }
 
-  function preprocessMaxLines(value: string): number {
-    if (value.length === 0) {
-      // empty input - falls back to dataSource.maxLines limit
-      return NaN;
-    } else if (value.length > 0 && (isNaN(+value) || +value < 0)) {
-      // input with at least 1 character and that is either incorrect (value in the input field is not a number) or negative
-      // falls back to the limit of 0 lines
-      return 0;
-    } else {
-      // default case - correct input
-      return +value;
-    }
-  }
-
   function onMaxLinesChange(e: React.SyntheticEvent<HTMLInputElement>) {
-    if (query.maxLines !== preprocessMaxLines(e.currentTarget.value)) {
-      onChangeQueryLimit(e.currentTarget.value);
+    //If value is lower than 0, or if it can't be converted into number, we want to return 0
+    const limit = Math.max(Number(e.currentTarget.value), 0);
+    //Run change only if limit changes
+    if (query.maxLines !== limit) {
+      onChangeQueryLimit(limit);
     }
   }
 
