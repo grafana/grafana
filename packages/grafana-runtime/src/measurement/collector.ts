@@ -143,6 +143,7 @@ export class MeasurementCollector implements LiveMeasurements {
           filtered.push({ ...frame, fields: match }); // Copy the frame with fewer fields
         }
       }
+      return filtered;
     }
     return data;
   }
