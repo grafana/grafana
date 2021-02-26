@@ -62,12 +62,12 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
 
   return (
     <div className={cx(styles.container, className)}>
-      <span>Popular panels from the panel library</span>
       <div className={styles.searchHeader}>
         <Input
           placeholder="Search the panel library"
           prefix={<Icon name="search" />}
           value={searchString}
+          autoFocus
           onChange={(e) => setSearchString(e.currentTarget.value)}
         ></Input>
         {/* <Select placeholder="Filter by" onChange={() => {}} width={35} /> */}
