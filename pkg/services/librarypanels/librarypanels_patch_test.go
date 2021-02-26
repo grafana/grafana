@@ -28,7 +28,7 @@ func TestPatchLibraryPanel(t *testing.T) {
 			resp = sc.service.connectHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
 
-			newFolder := createFolderWithACL(t, "NewFolder", sc.user, models.ROLE_ADMIN, models.PERMISSION_ADMIN)
+			newFolder := createFolderWithACL(t, "NewFolder", sc.user, []folderACLItem{})
 			cmd := patchLibraryPanelCommand{
 				FolderID: newFolder.Id,
 				Name:     "Panel - New name",
@@ -83,7 +83,7 @@ func TestPatchLibraryPanel(t *testing.T) {
 
 	scenarioWithLibraryPanel(t, "When an admin tries to patch a library panel with folder only, it should change folder successfully and return correct result",
 		func(t *testing.T, sc scenarioContext) {
-			newFolder := createFolderWithACL(t, "NewFolder", sc.user, models.ROLE_ADMIN, models.PERMISSION_ADMIN)
+			newFolder := createFolderWithACL(t, "NewFolder", sc.user, []folderACLItem{})
 			cmd := patchLibraryPanelCommand{
 				FolderID: newFolder.Id,
 			}
@@ -167,11 +167,8 @@ func TestPatchLibraryPanel(t *testing.T) {
 
 	scenarioWithLibraryPanel(t, "When an admin tries to patch a library panel with a folder where a library panel with the same name already exists, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			createFolder(t, &sc, &models.CreateFolderCommand{
-				Uid:   "NewTestFolder",
-				Title: "New Test Folder",
-			})
-			command := getCreateCommand(sc.folder.Id, "Text - Library Panel")
+			newFolder := createFolderWithACL(t, "NewFolder", sc.user, []folderACLItem{})
+			command := getCreateCommand(newFolder.Id, "Text - Library Panel")
 			resp := sc.service.createHandler(sc.reqContext, command)
 			var result = validateAndUnMarshalResponse(t, resp)
 			cmd := patchLibraryPanelCommand{
@@ -224,6 +221,7 @@ func TestPatchLibraryPanel(t *testing.T) {
 	for _, testCase := range generalFolderTests {
 		scenarioWithLibraryPanel(t, fmt.Sprintf("When an %s tries to patch a library panel moving it to the General folder, it should return correct status", testCase.role),
 			func(t *testing.T, sc scenarioContext) {
+				updateFolderACL(t, sc.folder.Id, []folderACLItem{{models.ROLE_EDITOR, models.PERMISSION_EDIT}, {models.ROLE_VIEWER, models.PERMISSION_EDIT}})
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 				cmd := patchLibraryPanelCommand{FolderID: 0}
 				sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
@@ -235,6 +233,7 @@ func TestPatchLibraryPanel(t *testing.T) {
 	for _, testCase := range generalFolderTests {
 		testScenario(t, fmt.Sprintf("When an %s tries to patch a library panel moving it from the General folder, it should return correct status", testCase.role),
 			func(t *testing.T, sc scenarioContext) {
+				updateFolderACL(t, sc.folder.Id, []folderACLItem{{models.ROLE_EDITOR, models.PERMISSION_EDIT}, {models.ROLE_VIEWER, models.PERMISSION_EDIT}})
 				command := getCreateCommand(0, "Library Panel")
 				resp := sc.service.createHandler(sc.reqContext, command)
 				result := validateAndUnMarshalResponse(t, resp)
@@ -259,8 +258,8 @@ func TestPatchLibraryPanel(t *testing.T) {
 	for _, testCase := range movingFromTests {
 		testScenario(t, fmt.Sprintf("When an %s tries to patch a library panel moving it from a folder the user has access to, it should return correct status", testCase.role),
 			func(t *testing.T, sc scenarioContext) {
-				allFolder := createFolderWithACL(t, "AllFolder", sc.user, models.ROLE_VIEWER, models.PERMISSION_ADMIN)
-				noneFolder := createFolderWithACL(t, "NoneFolder", sc.user, models.ROLE_VIEWER, models.PERMISSION_VIEW)
+				allFolder := createFolderWithACL(t, "AllFolder", sc.user, []folderACLItem{{models.ROLE_EDITOR, models.PERMISSION_EDIT}, {models.ROLE_VIEWER, models.PERMISSION_EDIT}})
+				noneFolder := createFolderWithACL(t, "NoneFolder", sc.user, []folderACLItem{{models.ROLE_ADMIN, models.PERMISSION_VIEW}})
 				command := getCreateCommand(noneFolder.Id, "Library Panel")
 				resp := sc.service.createHandler(sc.reqContext, command)
 				result := validateAndUnMarshalResponse(t, resp)
@@ -289,11 +288,11 @@ func TestPatchLibraryPanel(t *testing.T) {
 	for _, testCase := range accessTests {
 		scenarioWithLibraryPanel(t, fmt.Sprintf("When an %s tries to patch a library panel moving it to a folder with specific permissions, it should return correct status", testCase.role),
 			func(t *testing.T, sc scenarioContext) {
-				allFolder := createFolderWithACL(t, "AllFolder", sc.user, models.ROLE_VIEWER, models.PERMISSION_ADMIN)
-				adminFolder := createFolderWithACL(t, "AdminFolder", sc.user, models.ROLE_ADMIN, models.PERMISSION_ADMIN)
-				editorFolder := createFolderWithACL(t, "EditorFolder", sc.user, models.ROLE_EDITOR, models.PERMISSION_EDIT)
-				viewerFolder := createFolderWithACL(t, "ViewerFolder", sc.user, models.ROLE_VIEWER, models.PERMISSION_EDIT)
-				noneFolder := createFolderWithACL(t, "NoneFolder", sc.user, models.ROLE_VIEWER, models.PERMISSION_VIEW)
+				allFolder := createFolderWithACL(t, "AllFolder", sc.user, []folderACLItem{{models.ROLE_EDITOR, models.PERMISSION_EDIT}, {models.ROLE_VIEWER, models.PERMISSION_EDIT}})
+				adminFolder := createFolderWithACL(t, "AdminFolder", sc.user, []folderACLItem{{models.ROLE_ADMIN, models.PERMISSION_ADMIN}})
+				editorFolder := createFolderWithACL(t, "EditorFolder", sc.user, []folderACLItem{{models.ROLE_EDITOR, models.PERMISSION_EDIT}})
+				viewerFolder := createFolderWithACL(t, "ViewerFolder", sc.user, []folderACLItem{{models.ROLE_EDITOR, models.PERMISSION_EDIT}, {models.ROLE_VIEWER, models.PERMISSION_EDIT}})
+				noneFolder := createFolderWithACL(t, "NoneFolder", sc.user, []folderACLItem{{models.ROLE_ADMIN, models.PERMISSION_VIEW}})
 				command := getCreateCommand(allFolder.Id, "General Folder")
 				resp := sc.service.createHandler(sc.reqContext, command)
 				result := validateAndUnMarshalResponse(t, resp)

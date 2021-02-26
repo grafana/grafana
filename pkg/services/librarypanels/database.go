@@ -66,10 +66,7 @@ func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd cre
 	}
 
 	err := lps.SQLStore.WithTransactionalDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
-		if _, err := doesFolderExist(session, c.SignedInUser, cmd.FolderID); err != nil {
-			return err
-		}
-		if _, err := doesUserHaveEditorPermissionsOnFolder(session, c.SignedInUser, cmd.FolderID); err != nil {
+		if _, err := hasPermissionsOnFolder(c.SignedInUser, cmd.FolderID); err != nil {
 			return err
 		}
 		if _, err := session.Insert(&libraryPanel); err != nil {
@@ -405,26 +402,25 @@ func (lps *LibraryPanelService) getLibraryPanelsForDashboardID(c *models.ReqCont
 	return libraryPanelMap, err
 }
 
-func handleFolderIDPatches(session *sqlstore.DBSession, panelToPatch *LibraryPanel, fromFolderID int64, toFolderID int64, user *models.SignedInUser) error {
+func handleFolderIDPatches(panelToPatch *LibraryPanel, fromFolderID int64, toFolderID int64, user *models.SignedInUser) error {
 	// FolderID was not provided in the PATCH request
 	if toFolderID == -1 {
-		panelToPatch.FolderID = fromFolderID
+		toFolderID = fromFolderID
 	}
 
 	// FolderID was provided in the PATCH request
 	if toFolderID != -1 && toFolderID != fromFolderID {
-		if _, err := doesFolderExist(session, user, toFolderID); err != nil {
-			return err
-		}
-		if _, err := doesUserHaveEditorPermissionsOnFolder(session, user, toFolderID); err != nil {
+		if _, err := hasPermissionsOnFolder(user, toFolderID); err != nil {
 			return err
 		}
 	}
 
 	// Always check permissions for the folder where library panel resides
-	if _, err := doesUserHaveEditorPermissionsOnFolder(session, user, fromFolderID); err != nil {
+	if _, err := hasPermissionsOnFolder(user, fromFolderID); err != nil {
 		return err
 	}
+
+	panelToPatch.FolderID = toFolderID
 
 	return nil
 }
@@ -457,7 +453,7 @@ func (lps *LibraryPanelService) patchLibraryPanel(c *models.ReqContext, cmd patc
 		if cmd.Model == nil {
 			libraryPanel.Model = panelInDB.Model
 		}
-		if err := handleFolderIDPatches(session, &libraryPanel, panelInDB.FolderID, cmd.FolderID, c.SignedInUser); err != nil {
+		if err := handleFolderIDPatches(&libraryPanel, panelInDB.FolderID, cmd.FolderID, c.SignedInUser); err != nil {
 			return err
 		}
 		if err := syncTitleWithName(&libraryPanel); err != nil {

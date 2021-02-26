@@ -150,11 +150,11 @@ func TestCreateLibraryPanel(t *testing.T) {
 	for _, testCase := range accessTests {
 		testScenario(t, fmt.Sprintf("When an %s tries to create a library panel in a folder the user has no access to, it should return correct status", testCase.role),
 			func(t *testing.T, sc scenarioContext) {
-				allFolder := createFolderWithACL(t, "AllFolder", sc.user, models.ROLE_VIEWER, models.PERMISSION_ADMIN)
-				adminFolder := createFolderWithACL(t, "AdminFolder", sc.user, models.ROLE_ADMIN, models.PERMISSION_ADMIN)
-				editorFolder := createFolderWithACL(t, "EditorFolder", sc.user, models.ROLE_EDITOR, models.PERMISSION_EDIT)
-				viewerFolder := createFolderWithACL(t, "ViewerFolder", sc.user, models.ROLE_VIEWER, models.PERMISSION_EDIT)
-				noneFolder := createFolderWithACL(t, "NoneFolder", sc.user, models.ROLE_VIEWER, models.PERMISSION_VIEW)
+				allFolder := createFolderWithACL(t, "AllFolder", sc.user, []folderACLItem{{models.ROLE_EDITOR, models.PERMISSION_EDIT}, {models.ROLE_VIEWER, models.PERMISSION_EDIT}})
+				adminFolder := createFolderWithACL(t, "AdminFolder", sc.user, []folderACLItem{{models.ROLE_ADMIN, models.PERMISSION_ADMIN}})
+				editorFolder := createFolderWithACL(t, "EditorFolder", sc.user, []folderACLItem{{models.ROLE_EDITOR, models.PERMISSION_EDIT}})
+				viewerFolder := createFolderWithACL(t, "ViewerFolder", sc.user, []folderACLItem{{models.ROLE_EDITOR, models.PERMISSION_EDIT}, {models.ROLE_VIEWER, models.PERMISSION_EDIT}})
+				noneFolder := createFolderWithACL(t, "NoneFolder", sc.user, []folderACLItem{{models.ROLE_ADMIN, models.PERMISSION_VIEW}})
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 
 				command := getCreateCommand(allFolder.Id, "Library Panel Name")

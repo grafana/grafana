@@ -307,20 +307,14 @@ func TestGetAllLibraryPanels(t *testing.T) {
 
 	testScenario(t, "When an user tries to get all library panels, library panels in folders where the user has no access should not be returned",
 		func(t *testing.T, sc scenarioContext) {
-			updateFolderACL(t, sc, models.ROLE_EDITOR, models.PERMISSION_EDIT)
+			updateFolderACL(t, sc.folder.Id, []folderACLItem{{models.ROLE_EDITOR, models.PERMISSION_EDIT}})
 
 			command := getCreateCommand(sc.folder.Id, "Editor - Library Panel")
 			resp := sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, resp.Status())
 
-			cmd := models.CreateFolderCommand{
-				Uid:   "AdminOnlyFolder",
-				Title: "Admin Only Folder",
-			}
-			createFolder(t, &sc, &cmd)
-			updateFolderACL(t, sc, models.ROLE_ADMIN, models.PERMISSION_ADMIN)
-
-			command = getCreateCommand(sc.folder.Id, "Admin - Library Panel")
+			adminOnly := createFolderWithACL(t, "AdminOnlyFolder", sc.user, []folderACLItem{})
+			command = getCreateCommand(adminOnly.Id, "Admin - Library Panel")
 			resp = sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, resp.Status())
 
@@ -332,7 +326,7 @@ func TestGetAllLibraryPanels(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, 2, len(result.Result))
 			require.Equal(t, int64(1), result.Result[0].FolderID)
-			require.Equal(t, int64(2), cmd.Result.Id)
+			require.Equal(t, int64(2), adminOnly.Id)
 			require.Equal(t, "Editor - Library Panel", result.Result[0].Name)
 			require.Equal(t, "Admin - Library Panel", result.Result[1].Name)
 
@@ -1075,7 +1069,12 @@ type scenarioContext struct {
 	initialResult libraryPanelResult
 }
 
-func createFolderWithACL(t *testing.T, title string, user models.SignedInUser, roleType models.RoleType, permission models.PermissionType) *models.Folder {
+type folderACLItem struct {
+	roleType   models.RoleType
+	permission models.PermissionType
+}
+
+func createFolderWithACL(t *testing.T, title string, user models.SignedInUser, items []folderACLItem) *models.Folder {
 	s := dashboards.NewFolderService(user.OrgId, &user)
 	folderCmd := models.CreateFolderCommand{
 		Uid:   title,
@@ -1084,44 +1083,27 @@ func createFolderWithACL(t *testing.T, title string, user models.SignedInUser, r
 	err := s.CreateFolder(&folderCmd)
 	require.NoError(t, err)
 
-	updateACLCmd := models.UpdateDashboardAclCommand{
-		DashboardID: folderCmd.Result.Id,
-		Items: []*models.DashboardAcl{
-			{
-				DashboardID: folderCmd.Result.Id,
-				Role:        &roleType,
-				Permission:  permission,
-				Created:     time.Now(),
-				Updated:     time.Now(),
-			},
-		},
-	}
-	err = bus.Dispatch(&updateACLCmd)
-	require.NoError(t, err)
+	updateFolderACL(t, folderCmd.Result.Id, items)
 
 	return folderCmd.Result
 }
 
-func createFolder(t *testing.T, sc *scenarioContext, cmd *models.CreateFolderCommand) {
-	s := dashboards.NewFolderService(sc.user.OrgId, &sc.user)
-	err := s.CreateFolder(cmd)
-	require.NoError(t, err)
-	sc.folder = cmd.Result
-}
-
-func updateFolderACL(t *testing.T, sc scenarioContext, roleType models.RoleType, permission models.PermissionType) {
+func updateFolderACL(t *testing.T, folderID int64, items []folderACLItem) {
 	cmd := models.UpdateDashboardAclCommand{
-		DashboardID: sc.folder.Id,
-		Items: []*models.DashboardAcl{
-			{
-				DashboardID: sc.folder.Id,
-				Role:        &roleType,
-				Permission:  permission,
-				Created:     time.Now(),
-				Updated:     time.Now(),
-			},
-		},
+		DashboardID: folderID,
 	}
+	for _, item := range items {
+		role := item.roleType
+		permission := item.permission
+		cmd.Items = append(cmd.Items, &models.DashboardAcl{
+			DashboardID: folderID,
+			Role:        &role,
+			Permission:  permission,
+			Created:     time.Now(),
+			Updated:     time.Now(),
+		})
+	}
+
 	err := bus.Dispatch(&cmd)
 	require.NoError(t, err)
 }
@@ -1202,12 +1184,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			},
 		}
 
-		folderCmd := models.CreateFolderCommand{
-			Uid:   "testFolder",
-			Title: "TestFolder",
-		}
-
-		createFolder(t, &sc, &folderCmd)
+		sc.folder = createFolderWithACL(t, "ScenarioFolder", sc.user, []folderACLItem{})
 
 		fn(t, sc)
 	})
