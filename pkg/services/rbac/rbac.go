@@ -53,9 +53,16 @@ func (ac *RBACService) AddMigration(mg *migrator.Migrator) {
 }
 
 func (ac *RBACService) Evaluate(ctx context.Context, user *models.SignedInUser, permission string, scope ...string) (bool, error) {
+	// TODO: Add child roles
+	roles := []string{string(user.OrgRole)}
+	if user.IsGrafanaAdmin {
+		roles = append(roles, "Grafana Admin")
+	}
+
 	res, err := ac.GetUserPermissions(ctx, GetUserPermissionsQuery{
 		OrgId:  user.OrgId,
 		UserId: user.UserId,
+		Roles:  roles,
 	})
 	if err != nil {
 		return false, err

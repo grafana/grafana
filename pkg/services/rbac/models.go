@@ -88,11 +88,13 @@ type GetTeamPoliciesQuery struct {
 type GetUserPoliciesQuery struct {
 	OrgId  int64 `json:"-"`
 	UserId int64
+	Roles  []string
 }
 
 type GetUserPermissionsQuery struct {
 	OrgId  int64 `json:"-"`
 	UserId int64
+	Roles  []string
 }
 
 type CreatePermissionCommand struct {

@@ -348,6 +348,8 @@ func (ac *RBACService) GetUserPolicies(ctx context.Context, query GetUserPolicie
 	var result []*PolicyDTO
 	err := ac.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		// TODO: optimize this
+		filter, params := ac.userPoliciesFilter(query.OrgId, query.UserId, query.Roles)
+
 		q := `SELECT
 			policy.id,
 			policy.org_id,
@@ -356,20 +358,9 @@ func (ac *RBACService) GetUserPolicies(ctx context.Context, query GetUserPolicie
 			policy.created,
 			policy.updated
 				FROM policy
-				WHERE policy.id IN (
-					SELECT up.policy_id FROM user_policy AS up WHERE up.user_id = ?
-					UNION
-					SELECT tp.policy_id FROM team_policy as tp
-						INNER JOIN team_member as tm ON tm.team_id = tp.team_id
-						WHERE tm.user_id = ?
-					UNION
-					SELECT rp.policy_id FROM builtin_role_policy AS rp
-						WHERE role IN (?)
-				)
-				AND policy.org_id = ? `
+				` + filter
 
-		// FIXME: list of built in roles.
-		err := sess.SQL(q, query.UserId, query.UserId, "Viewer", query.OrgId).Find(&result)
+		err := sess.SQL(q, params...).Find(&result)
 		return err
 	})
 
@@ -379,6 +370,8 @@ func (ac *RBACService) GetUserPolicies(ctx context.Context, query GetUserPolicie
 func (ac *RBACService) GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]*Permission, error) {
 	var result []*Permission
 	err := ac.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		filter, params := ac.userPoliciesFilter(query.OrgId, query.UserId, query.Roles)
+
 		// TODO: optimize this
 		q := `SELECT
 			permission.id,
@@ -389,20 +382,9 @@ func (ac *RBACService) GetUserPermissions(ctx context.Context, query GetUserPerm
 			permission.created
 				FROM permission
 				INNER JOIN policy ON policy.id = permission.policy_id
-				WHERE policy.id IN (
-					SELECT up.policy_id FROM user_policy AS up WHERE up.user_id = ?
-					UNION
-					SELECT tp.policy_id FROM team_policy as tp
-						INNER JOIN team_member as tm ON tm.team_id = tp.team_id
-						WHERE tm.user_id = ?
-					UNION
-					SELECT rp.policy_id FROM builtin_role_policy AS rp
-						WHERE role IN (?)
-				)
-				AND policy.org_id = ? `
+				` + filter
 
-		// FIXME: list of built in roles.
-		if err := sess.SQL(q, query.UserId, query.UserId, "Viewer", query.OrgId).Find(&result); err != nil {
+		if err := sess.SQL(q, params...).Find(&result); err != nil {
 			return err
 		}
 
@@ -410,6 +392,31 @@ func (ac *RBACService) GetUserPermissions(ctx context.Context, query GetUserPerm
 	})
 
 	return result, err
+}
+
+func (*RBACService) userPoliciesFilter(orgID, userID int64, roles []string) (string, []interface{}) {
+	q := `WHERE policy.id IN (
+		SELECT up.policy_id FROM user_policy AS up WHERE up.user_id = ?
+		UNION
+		SELECT tp.policy_id FROM team_policy as tp
+			INNER JOIN team_member as tm ON tm.team_id = tp.team_id
+			WHERE tm.user_id = ?`
+	params := []interface{}{userID, userID}
+
+	if len(roles) != 0 {
+		q += `
+	UNION
+	SELECT rp.policy_id FROM builtin_role_policy AS rp
+	WHERE role IN (? ` + strings.Repeat(", ?", len(roles)-1) + `)`
+		for _, role := range roles {
+			params = append(params, role)
+		}
+	}
+
+	q += `) and policy.org_id = ?`
+	params = append(params, orgID)
+
+	return q, params
 }
 
 func (ac *RBACService) AddTeamPolicy(cmd *AddTeamPolicyCommand) error {
