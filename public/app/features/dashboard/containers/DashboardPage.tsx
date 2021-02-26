@@ -231,7 +231,7 @@ export class DashboardPage extends PureComponent<Props, State> {
   };
 
   cancelVariables = () => {
-    this.props.updateLocation({ path: '/' });
+    getLocationService().push('/');
   };
 
   renderSlowInitState() {

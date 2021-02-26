@@ -1,11 +1,7 @@
-import { ILocationService } from 'angular';
 import * as H from 'history';
 import { LocationUpdate } from './LocationSrv';
 
-// Backwards compatibility for Angulars's $location service, picked methods are the ones we actually use
-interface AngularLocationProviderAPI extends Pick<ILocationService, 'path' | 'hash' | 'url' | 'search'> {}
-
-export interface LocationService extends AngularLocationProviderAPI {
+export interface LocationService {
   partial: (query: Record<string, any>, replace?: boolean) => void;
   push: (location: H.Path | H.LocationDescriptor<any>) => void;
   replace: (location: H.Path) => void;
