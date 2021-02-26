@@ -41,7 +41,7 @@ func (s *Service) BuildPipeline(req *backend.QueryDataRequest) (DataPipeline, er
 // ExecutePipeline executes an expression pipeline and returns all the results.
 func (s *Service) ExecutePipeline(ctx context.Context, pipeline DataPipeline) (*backend.QueryDataResponse, error) {
 	res := backend.NewQueryDataResponse()
-	vars, err := pipeline.execute(ctx)
+	vars, err := pipeline.execute(ctx, s)
 	if err != nil {
 		return nil, err
 	}

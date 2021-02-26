@@ -102,7 +102,7 @@ func (pm fakeBackendPM) GetDataPlugin(string) interface{} {
 }
 
 func createService() (Service, *fakeExecutor) {
-	s := newService()
+	s := NewService()
 	s.PluginManager = &plugins.PluginManager{
 		BackendPluginManager: fakeBackendPM{},
 	}

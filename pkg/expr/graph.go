@@ -28,7 +28,7 @@ type Node interface {
 	ID() int64 // ID() allows the gonum graph node interface to be fulfilled
 	NodeType() NodeType
 	RefID() string
-	Execute(c context.Context, vars mathexp.Vars) (mathexp.Results, error)
+	Execute(c context.Context, vars mathexp.Vars, s *Service) (mathexp.Results, error)
 	String() string
 }
 
@@ -37,10 +37,10 @@ type DataPipeline []Node
 
 // execute runs all the command/datasource requests in the pipeline return a
 // map of the refId of the of each command
-func (dp *DataPipeline) execute(c context.Context) (mathexp.Vars, error) {
+func (dp *DataPipeline) execute(c context.Context, s *Service) (mathexp.Vars, error) {
 	vars := make(mathexp.Vars)
 	for _, node := range *dp {
-		res, err := node.Execute(c, vars)
+		res, err := node.Execute(c, vars, s)
 		if err != nil {
 			return nil, err
 		}

@@ -22,14 +22,15 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 )
 
-func newService() Service {
+// NewService returns a new Service.
+func NewService() Service {
 	return Service{
 		registry: map[string]func(*models.DataSource) (pluginmodels.DataPlugin, error){},
 	}
 }
 
 func init() {
-	svc := newService()
+	svc := NewService()
 	registry.Register(&registry.Descriptor{
 		Name:     "DataService",
 		Instance: &svc,
@@ -83,4 +84,10 @@ func (s *Service) HandleRequest(ctx context.Context, ds *models.DataSource, quer
 	}
 
 	return plugin.DataQuery(ctx, ds, query)
+}
+
+// RegisterQueryHandler registers a query handler factory.
+// This is only exposed for tests!
+func (s *Service) RegisterQueryHandler(name string, factory func(*models.DataSource) (pluginmodels.DataPlugin, error)) {
+	s.registry[name] = factory
 }

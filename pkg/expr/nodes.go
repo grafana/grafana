@@ -81,7 +81,7 @@ func (gn *CMDNode) NodeType() NodeType {
 // Execute runs the node and adds the results to vars. If the node requires
 // other nodes they must have already been executed and their results must
 // already by in vars.
-func (gn *CMDNode) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Results, error) {
+func (gn *CMDNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (mathexp.Results, error) {
 	return gn.Command.Execute(ctx, vars)
 }
 
