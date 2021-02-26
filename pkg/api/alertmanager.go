@@ -180,12 +180,6 @@ type AlertingConfigResponse struct {
 type ApiAlertingConfig struct {
 	config.Config
 
-	// TODO: PR a followup to https://github.com/go-swagger/go-swagger/pull/1527 in order to allow
-	// explicitly ignoring embedded fields. In the meantime, these are hackily removed in our make targets via `jq`
-
-	AlertManagerRoute   *config.Route `yaml:"alertmanager_route,omitempty" json:"alertmanager_route,omitempty"`
-	GrafanaManagedRoute *config.Route `yaml:"grafana_managed_route,omitempty" json:"grafana_managed_route,omitempty"`
-
 	// Override with our superset receiver type
 	Receivers []*ApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
 }
@@ -201,32 +195,28 @@ func (c *ApiAlertingConfig) UnmarshalJSON(b []byte) error {
 
 // validate ensures that the two routing trees use the correct receiver types.
 func (c *ApiAlertingConfig) validate() error {
-	receivers := make(map[string]ReceiverType, len(c.Receivers))
+	receivers := make(map[string]struct{}, len(c.Receivers))
 
+	var hasGrafReceivers, hasAMReceivers bool
 	for _, r := range c.Receivers {
-		receivers[r.Name] = r.Type()
+		receivers[r.Name] = struct{}{}
+		switch r.Type() {
+		case GrafanaReceiverType:
+			hasGrafReceivers = true
+		case AlertmanagerReceiverType:
+			hasAMReceivers = true
+		}
 	}
 
-	for _, receiver := range AllReceivers(c.GrafanaManagedRoute) {
-		t, ok := receivers[receiver]
+	if hasGrafReceivers && hasAMReceivers {
+		return fmt.Errorf("cannot mix Alertmanager & Grafana receiver types")
+	}
+
+	for _, receiver := range AllReceivers(c.Route) {
+		_, ok := receivers[receiver]
 		if !ok {
 			return fmt.Errorf("unexpected receiver (%s) is undefined", receiver)
 		}
-		if t != GrafanaReceiverType {
-			return fmt.Errorf("unexpected receiver (%s): cannot use Alertmanager receiver types in Grafana managed routes", receiver)
-		}
-
-	}
-
-	for _, receiver := range AllReceivers(c.AlertManagerRoute) {
-		t, ok := receivers[receiver]
-		if !ok {
-			return fmt.Errorf("unexpected receiver (%s) is undefined", receiver)
-		}
-		if t != AlertmanagerReceiverType {
-			return fmt.Errorf("unexpected receiver (%s): cannot use Grafana receiver types in non-Grafana managed routes", receiver)
-		}
-
 	}
 
 	return nil

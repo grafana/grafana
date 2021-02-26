@@ -1021,14 +1021,8 @@
     "ApiAlertingConfig": {
       "type": "object",
       "properties": {
-        "alertmanager_route": {
-          "$ref": "#/definitions/Route"
-        },
         "global": {
           "$ref": "#/definitions/GlobalConfig"
-        },
-        "grafana_managed_route": {
-          "$ref": "#/definitions/Route"
         },
         "inhibit_rules": {
           "type": "array",
@@ -1044,6 +1038,9 @@
             "$ref": "#/definitions/ApiReceiver"
           },
           "x-go-name": "Receivers"
+        },
+        "route": {
+          "$ref": "#/definitions/Route"
         },
         "templates": {
           "type": "array",
@@ -1736,7 +1733,7 @@
       "properties": {
         "Expr": {
           "type": "string",
-          "example": "(node_filesystem_avail_bytes{fstype!=\"\",job=\"integrations/node_exporter\"} node_filesystem_size_bytes{fstype!=\"\",job=\"integrations/node_exporter\"} * 100 < 5 and node_filesystem_readonly{fstype!=\"\",job=\"integrations/node_exporter\"} == 0)"
+          "example": "(node_filesystem_avail_bytes{fstype!=\"\",job=\"integrations/node_exporter\"} node_filesystem_size_bytes{fstype!=\"\",job=\"integrations/node_exporter\"} * 100 \u003c 5 and node_filesystem_readonly{fstype!=\"\",job=\"integrations/node_exporter\"} == 0)"
         },
         "datasourceUid": {
           "description": "DatasourceUID is required if the query will be sent to grafana to be executed",

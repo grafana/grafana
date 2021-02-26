@@ -11,4 +11,3 @@ This repo aims to define the unified alerting API as code. It generates OpenAPI 
 
 ## Requires
  - [go-swagger](https://github.com/go-swagger/go-swagger)
- - [jq](https://stedolan.github.io/jq/)
