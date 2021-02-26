@@ -20,11 +20,12 @@ import { appEvents } from '../../../core/core';
 import { CoreEvents } from '../../../types';
 import { config } from 'app/core/config';
 import { getRefreshFromUrl } from '../utils/getRefreshFromUrl';
-import { getLocationService } from '@grafana/runtime';
+import { getLocationService, LocationService } from '@grafana/runtime';
 
 interface TimeSrvDependencies {
   getLocationService: typeof getLocationService;
 }
+
 const runtimeDependencies: TimeSrvDependencies = {
   getLocationService,
 };
@@ -36,6 +37,7 @@ export class TimeSrv {
   oldRefresh: string | null | undefined;
   dashboard: DashboardModel;
   timeAtLoad: any;
+  locationService: LocationService;
   private autoRefreshBlocked: boolean;
 
   /** @ngInject */
@@ -48,9 +50,11 @@ export class TimeSrv {
   ) {
     // default time
     this.time = getDefaultTimeRange().raw;
+    this.locationService = dependencies.getLocationService();
 
     appEvents.on(CoreEvents.zoomOut, this.zoomOut.bind(this));
     appEvents.on(CoreEvents.shiftTime, this.shiftTime.bind(this));
+
     $rootScope.$on('$routeUpdate', this.routeUpdated.bind(this));
 
     document.addEventListener('visibilitychange', () => {
@@ -139,7 +143,8 @@ export class TimeSrv {
   }
 
   private initTimeFromUrl() {
-    const params = new URLSearchParams(this.dependencies.getLocationService().getCurrentLocation().search);
+    const params = this.locationService.getSearch();
+
     if (params.get('time') && params.get('time.window')) {
       this.time = this.getTimeWindow(params.get('time')!, params.get('time.window')!);
     }
@@ -147,9 +152,11 @@ export class TimeSrv {
     if (params.get('from')) {
       this.time.from = this.parseUrlParam(params.get('from')!) || this.time.from;
     }
+
     if (params.get('to')) {
       this.time.to = this.parseUrlParam(params.get('to')!) || this.time.to;
     }
+
     // if absolute ignore refresh option saved to dashboard
     if (params.get('to') && params.get('to')!.indexOf('now') === -1) {
       this.refresh = false;
@@ -172,15 +179,20 @@ export class TimeSrv {
   }
 
   private routeUpdated() {
-    const params = this.$location.search();
-    if (params.left) {
+    const params = this.locationService.getSearch();
+
+    if (params.get('left')) {
       return; // explore handles this;
     }
+
     const urlRange = this.timeRangeForUrl();
+    const from = params.get('from');
+    const to = params.get('to');
+
     // check if url has time range
-    if (params.from && params.to) {
+    if (from && to) {
       // is it different from what our current time range?
-      if (params.from !== urlRange.from || params.to !== urlRange.to) {
+      if (from !== urlRange.from || to !== urlRange.to) {
         // issue update
         this.initTimeFromUrl();
         this.setTime(this.time, true);
@@ -210,17 +222,12 @@ export class TimeSrv {
       );
     }
 
-    // update url inside timeout to so that a digest happens after (called from react)
-    this.$timeout(() => {
-      const params = this.$location.search();
-      if (interval) {
-        params.refresh = this.contextSrv.getValidInterval(interval);
-        this.$location.search(params);
-      } else if (params.refresh) {
-        delete params.refresh;
-        this.$location.search(params);
-      }
-    });
+    if (interval) {
+      const refresh = this.contextSrv.getValidInterval(interval);
+      this.locationService.partial({ refresh }, true);
+    } else {
+      this.locationService.partial({ refresh: null }, true);
+    }
   }
 
   refreshDashboard() {

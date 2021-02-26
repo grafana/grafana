@@ -47,7 +47,7 @@ export class LocationService implements LocationServiceAPI {
     this.partial = this.partial.bind(this);
     this.push = this.push.bind(this);
     this.replace = this.replace.bind(this);
-    this.getUrlSearchParams = this.getUrlSearchParams.bind(this);
+    this.getSearch = this.getSearch.bind(this);
     this.getHistory = this.getHistory.bind(this);
     this.getCurrentLocation = this.getCurrentLocation.bind(this);
   }
@@ -56,13 +56,13 @@ export class LocationService implements LocationServiceAPI {
     return this.history;
   }
 
-  getUrlSearchParams() {
+  getSearch() {
     return new URLSearchParams(this.history.location.search);
   }
 
   partial(query: Record<string, any>, replace?: boolean) {
     const currentLocation = this.history.location;
-    const params = this.getUrlSearchParams();
+    const params = this.getSearch();
 
     for (const key of Object.keys(query)) {
       if (params.has(key)) {

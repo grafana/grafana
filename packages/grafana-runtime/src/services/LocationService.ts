@@ -7,6 +7,7 @@ export interface LocationService {
   replace: (location: H.Path) => void;
   getCurrentLocation: () => H.Location;
   getHistory: () => H.History;
+  getSearch: () => URLSearchParams;
 
   /** @depecreated use partial, push or replace instead */
   update: (update: LocationUpdate) => void;
