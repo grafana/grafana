@@ -13,9 +13,6 @@ import { updateLocation } from 'app/core/actions';
 import { cleanUpEditPanel, panelModelAndPluginReady } from '../../../state/reducers';
 import store from 'app/core/store';
 import pick from 'lodash/pick';
-import omit from 'lodash/omit';
-import isEqual from 'lodash/isEqual';
-import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
 export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardModel): ThunkResult<void> {
   return (dispatch) => {
@@ -55,21 +52,14 @@ export function exitPanelEditor(): ThunkResult<void> {
         })
       );
 
-    const modifiedPanel = getPanel();
-    const modifiedSaveModel = modifiedPanel.getSaveModel();
+    const panel = getPanel();
 
-    if (shouldDiscardChanges || !modifiedPanel.libraryPanel) {
+    if (shouldDiscardChanges || !panel.libraryPanel) {
       onConfirm();
       return;
     }
 
-    const libraryPanel = await getLibraryPanel(modifiedPanel.libraryPanel!.uid!);
-    const panelChanged = !isEqual(
-      omit(libraryPanel.model, 'id', 'libraryPanel', 'gridPos'),
-      omit(modifiedSaveModel, 'id', 'libraryPanel', 'gridPos')
-    );
-
-    if (!panelChanged) {
+    if (!panel.hasChanged) {
       onConfirm();
       return;
     }
@@ -77,7 +67,7 @@ export function exitPanelEditor(): ThunkResult<void> {
     appEvents.emit(CoreEvents.showModalReact, {
       component: SaveLibraryPanelModal,
       props: {
-        panel: modifiedPanel,
+        panel,
         folderId: dashboard!.meta.folderId,
         isOpen: true,
         onConfirm,

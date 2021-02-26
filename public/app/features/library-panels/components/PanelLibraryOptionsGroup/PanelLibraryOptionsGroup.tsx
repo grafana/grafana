@@ -26,8 +26,10 @@ export const PanelLibraryOptionsGroup: React.FC<Props> = ({ panel, dashboard }) 
       libraryPanel: pick(panelInfo, 'uid', 'name', 'meta'),
     });
 
-    // dummy change for re-render
-    // onPanelConfigChange('isEditing', true);
+    // Though the panel model has changed, since we're switching to an existing
+    // library panel, we reset the "hasChanged" state.
+    panel.hasChanged = false;
+
     panel.refresh();
     panel.events.publish(PanelQueriesChangedEvent);
   };
