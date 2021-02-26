@@ -1,6 +1,7 @@
 import React from 'react';
 import configureStore, { MockStoreEnhanced } from 'redux-mock-store';
 import { Provider } from 'react-redux';
+import thunk from 'redux-thunk';
 import { StoreState } from '../../types';
 import { render } from '@testing-library/react';
 import { SyncLocationWithRedux } from './GrafanaRoute';
@@ -8,6 +9,7 @@ import { RouteComponentProps } from 'react-router-dom';
 // TODO[Router]: fix this import to from 'history'
 import createMemoryHistory from 'history/createMemoryHistory';
 
+const mockStore = configureStore<StoreState>([thunk]);
 const initialState: Partial<StoreState> = {
   location: { url: '', path: '', query: {}, routeParams: {}, replace: false, lastUpdated: 0 },
 };
@@ -46,38 +48,38 @@ const App = (props: { store: MockStoreEnhanced; routeProps: RouteComponentProps<
 
 describe('SyncLocationWithRedux', () => {
   it('saves the current location in redux when rendered', () => {
-    const mockStore = configureStore<StoreState>()(initialState as StoreState);
+    const store = mockStore(initialState as StoreState);
     const routeProps = mockRouteParamsProps();
     const PageComponent = () => <div />;
 
-    render(<App store={mockStore} routeProps={routeProps} PageComponent={PageComponent} />);
+    render(<App store={store} routeProps={routeProps} PageComponent={PageComponent} />);
 
-    expect(mockStore.getActions()).toHaveLength(1);
+    expect(store.getActions()).toHaveLength(1);
   });
 
   it('updates location when route props change', () => {
-    const mockStore = configureStore<StoreState>()(initialState as StoreState);
+    const store = mockStore(initialState as StoreState);
     const routeProps = mockRouteParamsProps();
     const PageComponent = () => <div />;
 
-    const { rerender } = render(<App store={mockStore} routeProps={routeProps} PageComponent={PageComponent} />);
-    expect(mockStore.getActions()).toHaveLength(1);
+    const { rerender } = render(<App store={store} routeProps={routeProps} PageComponent={PageComponent} />);
+    expect(store.getActions()).toHaveLength(1);
 
     const nextRouteProps = mockRouteParamsProps();
     nextRouteProps.match.params.a = 'paramAUpdated';
-    rerender(<App store={mockStore} routeProps={nextRouteProps} PageComponent={PageComponent} />);
-    expect(mockStore.getActions()).toHaveLength(2);
+    rerender(<App store={store} routeProps={nextRouteProps} PageComponent={PageComponent} />);
+    expect(store.getActions()).toHaveLength(2);
   });
 
   it('does not update location when route props does not change', () => {
-    const mockStore = configureStore<StoreState>()(initialState as StoreState);
+    const store = mockStore(initialState as StoreState);
     const routeProps = mockRouteParamsProps();
     const PageComponent = () => <div />;
 
-    const { rerender } = render(<App store={mockStore} routeProps={routeProps} PageComponent={PageComponent} />);
-    expect(mockStore.getActions()).toHaveLength(1);
+    const { rerender } = render(<App store={store} routeProps={routeProps} PageComponent={PageComponent} />);
+    expect(store.getActions()).toHaveLength(1);
 
-    rerender(<App store={mockStore} routeProps={routeProps} PageComponent={PageComponent} />);
-    expect(mockStore.getActions()).toHaveLength(1);
+    rerender(<App store={store} routeProps={routeProps} PageComponent={PageComponent} />);
+    expect(store.getActions()).toHaveLength(1);
   });
 });

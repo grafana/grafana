@@ -73,13 +73,6 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
         key={`${route.path}`}
         render={(props) => {
           navigationLogger('AppWrapper', false, 'Rendering route', route, 'with match', props.location);
-
-          if (shouldForceReload(props.location.search)) {
-            navigationLogger('AppWrapper', false, 'Force login', props.location);
-            window.location.href = `${props.location.pathname}${props.location.search}`;
-            return null;
-          }
-
           // TODO[Router]: test this logic
           if (roles && roles.length) {
             if (!roles.some((r: string) => contextSrv.hasRole(r))) {

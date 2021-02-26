@@ -9,7 +9,7 @@ export function queryStringToJSON(queryString: string) {
   return Object.fromEntries(new Map(params));
 }
 
-function parseValue(value: string) {
+export function parseValue(value: string) {
   if (value === 'true') {
     return true;
   }
