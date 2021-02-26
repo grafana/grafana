@@ -237,7 +237,7 @@ func extractFiles(archiveFile string, pluginName string, dstDir string, allowSym
 			return err
 		}
 
-		logger.Infof("Removed existing installation of %v\n\n", pluginName)
+		logger.Infof("Removed existing installation of %s\n\n", pluginName)
 	}
 
 	r, err := zip.OpenReader(archiveFile)
