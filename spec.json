@@ -16,7 +16,81 @@
   },
   "basePath": "/api/v1",
   "paths": {
-    "/api/v1/alerts": {
+    "/alertmanager/api/v1/config": {
+      "get": {
+        "description": "gets an Alerting config",
+        "tags": [
+          "alertmanager"
+        ],
+        "operationId": "RouteGetAlertingConfig",
+        "responses": {
+          "200": {
+            "description": "AlertingConfigResponse",
+            "schema": {
+              "$ref": "#/definitions/AlertingConfigResponse"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "sets an Alerting config",
+        "tags": [
+          "alertmanager"
+        ],
+        "operationId": "RoutePostAlertingConfig",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/UserConfig"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Ack",
+            "schema": {
+              "$ref": "#/definitions/Ack"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "deletes the Alerting config for a tenant",
+        "tags": [
+          "alertmanager"
+        ],
+        "operationId": "RouteDeleteAlertingConfig",
+        "responses": {
+          "200": {
+            "description": "Ack",
+            "schema": {
+              "$ref": "#/definitions/Ack"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      }
+    },
+    "/alertmanager/api/v2/alerts": {
       "get": {
         "description": "get alertmanager alerts",
         "tags": [
@@ -115,7 +189,7 @@
         }
       }
     },
-    "/api/v1/alerts/groups": {
+    "/alertmanager/api/v2/alerts/groups": {
       "get": {
         "description": "get alertmanager alerts",
         "tags": [
@@ -181,48 +255,26 @@
         }
       }
     },
-    "/api/v1/config": {
+    "/alertmanager/api/v2/silence/{SilenceId}": {
       "get": {
-        "description": "gets an Alerting config",
+        "description": "get silence",
         "tags": [
           "alertmanager"
         ],
-        "operationId": "RouteGetAlertingConfig",
-        "responses": {
-          "200": {
-            "description": "AlertingConfigResponse",
-            "schema": {
-              "$ref": "#/definitions/AlertingConfigResponse"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "post": {
-        "description": "sets an Alerting config",
-        "tags": [
-          "alertmanager"
-        ],
-        "operationId": "RoutePostAlertingConfig",
+        "operationId": "RouteGetSilence",
         "parameters": [
           {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/UserConfig"
-            }
+            "type": "string",
+            "name": "SilenceId",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
-          "201": {
-            "description": "Ack",
+          "200": {
+            "description": "GettableSilence",
             "schema": {
-              "$ref": "#/definitions/Ack"
+              "$ref": "#/definitions/GettableSilence"
             }
           },
           "400": {
@@ -234,16 +286,77 @@
         }
       },
       "delete": {
-        "description": "deletes the Alerting config for a tenant",
+        "description": "delete silence",
         "tags": [
           "alertmanager"
         ],
-        "operationId": "RouteDeleteAlertingConfig",
+        "operationId": "RouteDeleteSilence",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "SilenceId",
+            "in": "path",
+            "required": true
+          }
+        ],
         "responses": {
           "200": {
             "description": "Ack",
             "schema": {
               "$ref": "#/definitions/Ack"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      }
+    },
+    "/alertmanager/api/v2/silences": {
+      "get": {
+        "description": "get silences",
+        "tags": [
+          "alertmanager"
+        ],
+        "operationId": "RouteGetSilences",
+        "responses": {
+          "200": {
+            "description": "GettableSilences",
+            "schema": {
+              "$ref": "#/definitions/GettableSilences"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "create silence",
+        "tags": [
+          "alertmanager"
+        ],
+        "operationId": "RouteCreateSilence",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/SilenceBody"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "GettableSilence",
+            "schema": {
+              "$ref": "#/definitions/GettableSilence"
             }
           },
           "400": {
@@ -401,7 +514,41 @@
         }
       }
     },
-    "/api/v1/rules": {
+    "/prometheus/api/v1/alerts": {
+      "get": {
+        "description": "gets the current alerts",
+        "tags": [
+          "prometheus"
+        ],
+        "operationId": "RouteGetAlertStatuses",
+        "responses": {
+          "200": {
+            "description": "AlertResponse",
+            "schema": {
+              "$ref": "#/definitions/AlertResponse"
+            }
+          }
+        }
+      }
+    },
+    "/prometheus/api/v1/rules": {
+      "get": {
+        "description": "gets the evaluation statuses of all rules",
+        "tags": [
+          "prometheus"
+        ],
+        "operationId": "RouteGetRuleStatuses",
+        "responses": {
+          "200": {
+            "description": "RuleResponse",
+            "schema": {
+              "$ref": "#/definitions/RuleResponse"
+            }
+          }
+        }
+      }
+    },
+    "/ruler/api/v1/rules": {
       "get": {
         "description": "List rule groups",
         "produces": [
@@ -421,7 +568,7 @@
         }
       }
     },
-    "/api/v1/rules/{Namespace}": {
+    "/ruler/api/v1/rules/{Namespace}": {
       "get": {
         "description": "Get rule groups by namespace",
         "produces": [
@@ -506,7 +653,7 @@
         }
       }
     },
-    "/api/v1/rules/{Namespace}/{Groupname}": {
+    "/ruler/api/v1/rules/{Namespace}/{Groupname}": {
       "get": {
         "description": "Get rule group",
         "produces": [
@@ -564,147 +711,6 @@
             "description": "Ack",
             "schema": {
               "$ref": "#/definitions/Ack"
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/silence/{SilenceId}": {
-      "get": {
-        "description": "get silence",
-        "tags": [
-          "alertmanager"
-        ],
-        "operationId": "RouteGetSilence",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "SilenceId",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/GettableSilence"
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "delete": {
-        "description": "delete silence",
-        "tags": [
-          "alertmanager"
-        ],
-        "operationId": "RouteDeleteSilence",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "SilenceId",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/silences": {
-      "get": {
-        "description": "get silences",
-        "tags": [
-          "alertmanager"
-        ],
-        "operationId": "RouteGetSilences",
-        "responses": {
-          "200": {
-            "description": "GettableSilences",
-            "schema": {
-              "$ref": "#/definitions/GettableSilences"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "post": {
-        "description": "create silence",
-        "tags": [
-          "alertmanager"
-        ],
-        "operationId": "RouteCreateSilence",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/SilenceBody"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "$ref": "#/responses/GettableSilence"
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/status/alerts": {
-      "get": {
-        "description": "gets the current alerts",
-        "tags": [
-          "prometheus"
-        ],
-        "operationId": "RouteGetAlertStatuses",
-        "responses": {
-          "200": {
-            "description": "AlertResponse",
-            "schema": {
-              "$ref": "#/definitions/AlertResponse"
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/status/rules": {
-      "get": {
-        "description": "gets the evaluation statuses of all rules",
-        "tags": [
-          "prometheus"
-        ],
-        "operationId": "RouteGetRuleStatuses",
-        "responses": {
-          "200": {
-            "description": "RuleResponse",
-            "schema": {
-              "$ref": "#/definitions/RuleResponse"
             }
           }
         }
@@ -1450,11 +1456,11 @@
     "Failure": {
       "$ref": "#/definitions/ResponseDetails"
     },
-    "GetableSilence": {
-      "$ref": "#/definitions/silence"
-    },
     "GettableAlerts": {
       "$ref": "#/definitions/gettableAlerts"
+    },
+    "GettableSilence": {
+      "$ref": "#/definitions/silence"
     },
     "GettableSilences": {
       "type": "array",
