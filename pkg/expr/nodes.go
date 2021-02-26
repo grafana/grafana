@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 
 	"gonum.org/v1/gonum/graph/simple"
@@ -106,7 +107,7 @@ func buildCMDNode(dp *simple.DirectedGraph, rn *rawNode) (*CMDNode, error) {
 	case TypeResample:
 		node.Command, err = UnmarshalResampleCommand(rn)
 	case TypeClassicConditions:
-		node.Command, err = UnmarshalClassicConditionsCmd(rn)
+		node.Command, err = classic.UnmarshalClassicConditionsCmd(rn.Query, rn.RefID)
 	default:
 		return nil, fmt.Errorf("expression command type '%v' in '%v' not implemented", commandType, rn.RefID)
 	}

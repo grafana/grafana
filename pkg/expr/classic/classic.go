@@ -1,4 +1,4 @@
-package expr
+package classic
 
 import (
 	"context"
@@ -7,12 +7,9 @@ import (
 	"math"
 	"sort"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 )
-
-// prefixing everything with classic may suggest another package :P
 
 // ClassicConditionsCmd is command for the classic conditions
 // expression operation.
@@ -112,8 +109,8 @@ func (ccc *ClassicConditionsCmd) Execute(ctx context.Context, vars mathexp.Vars)
 }
 
 // UnmarshalClassicConditionsCmd creates a new ClassicConditionsCmd.
-func UnmarshalClassicConditionsCmd(rn *rawNode) (*ClassicConditionsCmd, error) {
-	jsonFromM, err := json.Marshal(rn.Query["conditions"])
+func UnmarshalClassicConditionsCmd(rawQuery map[string]interface{}, refID string) (*ClassicConditionsCmd, error) {
+	jsonFromM, err := json.Marshal(rawQuery["conditions"])
 	if err != nil {
 		return nil, fmt.Errorf("failed to remarshal classic condition body: %w", err)
 	}
@@ -123,7 +120,7 @@ func UnmarshalClassicConditionsCmd(rn *rawNode) (*ClassicConditionsCmd, error) {
 	}
 
 	c := &ClassicConditionsCmd{
-		refID: rn.RefID,
+		refID: refID,
 	}
 
 	for i, cj := range ccj {
@@ -148,7 +145,6 @@ func UnmarshalClassicConditionsCmd(rn *rawNode) (*ClassicConditionsCmd, error) {
 		c.Conditions = append(c.Conditions, cond)
 	}
 
-	spew.Dump(c)
 	return c, nil
 }
 
