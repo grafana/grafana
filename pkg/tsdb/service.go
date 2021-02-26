@@ -22,10 +22,17 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 )
 
+func newService() Service {
+	return Service{
+		registry: map[string]func(*models.DataSource) (pluginmodels.DataPlugin, error){},
+	}
+}
+
 func init() {
+	svc := newService()
 	registry.Register(&registry.Descriptor{
 		Name:     "DataService",
-		Instance: &Service{},
+		Instance: &svc,
 	})
 }
 
