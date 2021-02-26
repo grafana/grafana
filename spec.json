@@ -1057,7 +1057,13 @@
     },
     "ApiReceiver": {
       "type": "object",
+      "required": [
+        "default_receiver"
+      ],
       "properties": {
+        "default_receiver": {
+          "$ref": "#/definitions/GrafanaReceiver"
+        },
         "email_configs": {
           "type": "array",
           "items": {
@@ -1500,6 +1506,14 @@
           ],
           "x-go-name": "NoDataState"
         },
+        "receivers": {
+          "description": "Receivers are optional and used for migrating notification channels of existing alerts",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/GrafanaReceiver"
+          },
+          "x-go-name": "Receivers"
+        },
         "settings": {
           "type": "object",
           "additionalProperties": {
@@ -1610,7 +1624,13 @@
     },
     "GrafanaReceivers": {
       "type": "object",
+      "required": [
+        "default_receiver"
+      ],
       "properties": {
+        "default_receiver": {
+          "$ref": "#/definitions/GrafanaReceiver"
+        },
         "grafana_managed_receiver_configs": {
           "type": "array",
           "items": {
