@@ -5,7 +5,7 @@ import { DashboardInitPhase, DashboardRouteInfo } from 'app/types';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { dashboardInitCompleted, dashboardInitFetching, dashboardInitServices } from './reducers';
 import { updateLocation } from '../../../core/actions';
-import { setEchoSrv } from '@grafana/runtime';
+import { locationService, setEchoSrv } from '@grafana/runtime';
 import { Echo } from '../../../core/services/echo/Echo';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { createConstantVariableAdapter } from 'app/features/variables/constant/adapter';
@@ -179,13 +179,13 @@ describeInitScenario('Initializing new dashboard', (ctx) => {
   });
 
   it('Should update location with orgId query param', () => {
-    expect(ctx.actions[2].type).toBe(updateLocation.type);
-    expect(ctx.actions[2].payload.query.orgId).toBe(12);
+    const search = locationService.getSearch();
+    expect(search.get('orgId')).toBe('12');
   });
 
   it('Should send action dashboardInitCompleted', () => {
-    expect(ctx.actions[8].type).toBe(dashboardInitCompleted.type);
-    expect(ctx.actions[8].payload.title).toBe('New dashboard');
+    expect(ctx.actions[7].type).toBe(dashboardInitCompleted.type);
+    expect(ctx.actions[7].payload.title).toBe('New dashboard');
   });
 
   it('Should initialize services', () => {
@@ -206,8 +206,8 @@ describeInitScenario('Initializing home dashboard', (ctx) => {
   });
 
   it('Should redirect to custom home dashboard', () => {
-    expect(ctx.actions[1].type).toBe(updateLocation.type);
-    expect(ctx.actions[1].payload.path).toBe('/u/123/my-home');
+    const location = locationService.getCurrentLocation();
+    expect(location.pathname).toBe('/u/123/my-home');
   });
 });
 
@@ -252,13 +252,13 @@ describeInitScenario('Initializing existing dashboard', (ctx) => {
   });
 
   it('Should update location with orgId query param', () => {
-    expect(ctx.actions[2].type).toBe(updateLocation.type);
-    expect(ctx.actions[2].payload.query.orgId).toBe(12);
+    const search = locationService.getSearch();
+    expect(search.get('orgId')).toBe('12');
   });
 
   it('Should send action dashboardInitCompleted', () => {
-    expect(ctx.actions[9].type).toBe(dashboardInitCompleted.type);
-    expect(ctx.actions[9].payload.title).toBe('My cool dashboard');
+    expect(ctx.actions[8].type).toBe(dashboardInitCompleted.type);
+    expect(ctx.actions[8].payload.title).toBe('My cool dashboard');
   });
 
   it('Should initialize services', () => {
@@ -270,7 +270,7 @@ describeInitScenario('Initializing existing dashboard', (ctx) => {
   });
 
   it('Should initialize redux variables if newVariables is enabled', () => {
-    expect(ctx.actions[3].type).toBe(variablesInitTransaction.type);
+    expect(ctx.actions[2].type).toBe(variablesInitTransaction.type);
   });
 });
 
