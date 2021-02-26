@@ -200,12 +200,17 @@ interface AddPanelWidgetHandleProps {
 const AddPanelWidgetHandle: React.FC<AddPanelWidgetHandleProps> = ({ children, onBack, onCancel, styles }) => {
   return (
     <div className={cx(styles.headerRow, 'grid-drag-handle')}>
-      {children && <span>{children}</span>}
       {onBack && (
         <div className={styles.backButton}>
-          <IconButton name="arrow-left" onClick={onBack} surface="header" size="md" />
+          <IconButton name="arrow-left" onClick={onBack} surface="header" size="xl" />
         </div>
       )}
+      {!onBack && (
+        <div className={styles.backButton}>
+          <Icon name="panel-add" size="md" />
+        </div>
+      )}
+      {children && <span>{children}</span>}
       <div className="flex-grow-1" />
       <IconButton name="times" onClick={onCancel} surface="header" />
     </div>
