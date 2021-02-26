@@ -70,3 +70,9 @@ Vault integration is not affected by an expired license.
 ### Auditing
 
 Auditing is not affected by an expired license.
+
+### License restrictions
+
+The concurrent session limit remains active for 7 days after the expiration date. Then, it will be turned off.
+
+The active users limit is turned off immediately.
