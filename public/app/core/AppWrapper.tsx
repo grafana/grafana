@@ -1,7 +1,5 @@
 import React from 'react';
 import { Router, Route, Redirect, Switch } from 'react-router-dom';
-import angular from 'angular';
-import { each, extend } from 'lodash';
 import { config, locationService } from '@grafana/runtime';
 import { Provider } from 'react-redux';
 import { store } from 'app/store/store';
@@ -14,7 +12,6 @@ import { contextSrv } from './services/context_srv';
 import { SideMenu } from './components/sidemenu/SideMenu';
 import { navigationLogger } from './navigation/utils';
 import { GrafanaRoute, SyncLocationWithRedux } from './navigation/GrafanaRoute';
-import { monkeyPatchInjectorWithPreAssignedBindings } from './injectorMonkeyPatch';
 
 interface AppWrapperProps {
   app: GrafanaApp;
@@ -44,24 +41,8 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
   }
 
   bootstrapNgApp() {
-    const { app } = this.props;
-    const injector = angular.bootstrap(document, app.ngModuleDependencies);
-
-    monkeyPatchInjectorWithPreAssignedBindings(injector);
-
-    navigationLogger('AppWrapper', false, 'Angular app bootstrap');
-
-    this.setState(
-      { ngInjector: injector },
-      injector.invoke(() => {
-        each(app.preBootModules, (module) => {
-          extend(module, app.registerFunctions);
-        });
-        app.preBootModules = null;
-        // I don't know
-        return () => {};
-      })
-    );
+    const injector = this.props.app.angularApp.bootstrap();
+    this.setState({ ngInjector: injector });
   }
 
   renderRoute = (route: RouteDescriptor) => {
