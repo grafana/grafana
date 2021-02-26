@@ -94,9 +94,7 @@ func (ccc *ClassicConditionsCmd) Execute(ctx context.Context, vars mathexp.Vars)
 			} else {
 				firing = firing && evalRes
 			}
-
 		}
-
 	}
 
 	num := mathexp.NewNumber("", nil)
@@ -164,18 +162,6 @@ func (cr classicReducer) ValidReduceFunc() bool {
 	return false
 }
 
-func validClassicEvalFunc(operator string) bool {
-	switch operator {
-	case "gt", "lt":
-		return true
-	case "within_range", "outside_range":
-		return true
-	case "no_value":
-		return true
-	}
-	return false
-}
-
 type classicEvaluator interface {
 	Eval(mathexp.Number) bool
 }
@@ -228,11 +214,11 @@ func newClassicThresholdEvaluator(model classicConditionEvalJSON) (*classicThres
 	if len(model.Params) == 0 {
 		return nil, fmt.Errorf("evaluator '%v' is missing the threshold parameter", model.Type)
 	}
+
 	return &classicThresholdEvaluator{
 		Type:      model.Type,
 		Threshold: model.Params[0],
 	}, nil
-
 }
 
 func (e *classicNoValueEvaluator) Eval(reducedValue mathexp.Number) bool {
@@ -272,7 +258,7 @@ func nilOrNaN(f *float64) bool {
 }
 
 //nolint: gocyclo
-func (s classicReducer) Reduce(series mathexp.Series) mathexp.Number {
+func (cr classicReducer) Reduce(series mathexp.Series) mathexp.Number {
 	num := mathexp.NewNumber("", nil)
 	num.SetValue(nil)
 
@@ -285,7 +271,7 @@ func (s classicReducer) Reduce(series mathexp.Series) mathexp.Number {
 
 	vF := series.Frame.Fields[series.ValueIdx]
 
-	switch s {
+	switch cr {
 	case "avg":
 		validPointsCount := 0
 		for i := 0; i < vF.Len(); i++ {
