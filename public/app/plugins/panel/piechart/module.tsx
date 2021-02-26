@@ -42,12 +42,10 @@ export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
         },
         defaultValue: PieChartType.Pie,
       })
-      .addCustomEditor<SelectFieldConfigSettings<PieChartLabels>, PieChartLabels[]>({
+      .addMultiSelect({
         name: 'Labels',
         path: 'displayLabels',
-        id: 'displayLabels',
         defaultValue: [],
-        editor: standardEditorsRegistry.get('multi-select').editor,
         description: 'Select the labels to be displayed in the pie chart',
         settings: {
           options: [
