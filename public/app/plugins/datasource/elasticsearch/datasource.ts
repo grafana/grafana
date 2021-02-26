@@ -583,7 +583,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       map((res) => {
         const er = new ElasticResponse(sentTargets, res);
 
-        // TODO: This needs to be revisited, it seems wroong to process ALL the sent queries as logs if only one of them was a log query
+        // TODO: This needs to be revisited, it seems wrong to process ALL the sent queries as logs if only one of them was a log query
         if (targetsContainsLogsQuery) {
           const response = er.getLogs(this.logMessageField, this.logLevelField);
           for (const dataFrame of response.data) {
