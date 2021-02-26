@@ -17,6 +17,8 @@ const SORT_OPTIONS = [
   { label: 'Numerical (desc)', value: VariableSort.numericalDesc },
   { label: 'Alphabetical (case-insensitive, asc)', value: VariableSort.alphabeticalCaseInsensitiveAsc },
   { label: 'Alphabetical (case-insensitive, desc)', value: VariableSort.alphabeticalCaseInsensitiveDesc },
+  { label: 'Version (asc)', value: VariableSort.versionAsc },
+  { label: 'Version (desc)', value: VariableSort.versionDesc },
 ];
 
 export function QueryVariableSortSelect({ onChange, sort }: PropsWithChildren<Props>) {

@@ -31,6 +31,8 @@ export enum VariableSort {
   numericalDesc,
   alphabeticalCaseInsensitiveAsc,
   alphabeticalCaseInsensitiveDesc,
+  versionAsc,
+  versionDesc,
 }
 
 export interface VariableTag {

@@ -288,14 +288,16 @@ describe('queryVariableReducer', () => {
 describe('sortVariableValues', () => {
   describe('when using any sortOrder with an option with null as text', () => {
     it.each`
-      options                                           | sortOrder                                       | expected
-      ${[{ text: '1' }, { text: null }, { text: '2' }]} | ${VariableSort.disabled}                        | ${[{ text: '1' }, { text: null }, { text: '2' }]}
-      ${[{ text: 'a' }, { text: null }, { text: 'b' }]} | ${VariableSort.alphabeticalAsc}                 | ${[{ text: 'a' }, { text: 'b' }, { text: null }]}
-      ${[{ text: 'a' }, { text: null }, { text: 'b' }]} | ${VariableSort.alphabeticalDesc}                | ${[{ text: null }, { text: 'b' }, { text: 'a' }]}
-      ${[{ text: '1' }, { text: null }, { text: '2' }]} | ${VariableSort.numericalAsc}                    | ${[{ text: null }, { text: '1' }, { text: '2' }]}
-      ${[{ text: '1' }, { text: null }, { text: '2' }]} | ${VariableSort.numericalDesc}                   | ${[{ text: '2' }, { text: '1' }, { text: null }]}
-      ${[{ text: 'a' }, { text: null }, { text: 'b' }]} | ${VariableSort.alphabeticalCaseInsensitiveAsc}  | ${[{ text: null }, { text: 'a' }, { text: 'b' }]}
-      ${[{ text: 'a' }, { text: null }, { text: 'b' }]} | ${VariableSort.alphabeticalCaseInsensitiveDesc} | ${[{ text: 'b' }, { text: 'a' }, { text: null }]}
+      options                                            | sortOrder                                       | expected
+      ${[{ text: '1' }, { text: null }, { text: '2' }]}  | ${VariableSort.disabled}                        | ${[{ text: '1' }, { text: null }, { text: '2' }]}
+      ${[{ text: 'a' }, { text: null }, { text: 'b' }]}  | ${VariableSort.alphabeticalAsc}                 | ${[{ text: 'a' }, { text: 'b' }, { text: null }]}
+      ${[{ text: 'a' }, { text: null }, { text: 'b' }]}  | ${VariableSort.alphabeticalDesc}                | ${[{ text: null }, { text: 'b' }, { text: 'a' }]}
+      ${[{ text: '1' }, { text: null }, { text: '2' }]}  | ${VariableSort.numericalAsc}                    | ${[{ text: null }, { text: '1' }, { text: '2' }]}
+      ${[{ text: '1' }, { text: null }, { text: '2' }]}  | ${VariableSort.numericalDesc}                   | ${[{ text: '2' }, { text: '1' }, { text: null }]}
+      ${[{ text: 'a' }, { text: null }, { text: 'b' }]}  | ${VariableSort.alphabeticalCaseInsensitiveAsc}  | ${[{ text: null }, { text: 'a' }, { text: 'b' }]}
+      ${[{ text: 'a' }, { text: null }, { text: 'b' }]}  | ${VariableSort.alphabeticalCaseInsensitiveDesc} | ${[{ text: 'b' }, { text: 'a' }, { text: null }]}
+      ${[{ text: '10' }, { text: null }, { text: '2' }]} | ${VariableSort.versionAsc}                      | ${[{ text: null }, { text: '2' }, { text: '10' }]}
+      ${[{ text: '10' }, { text: null }, { text: '2' }]} | ${VariableSort.versionDesc}                     | ${[{ text: '10' }, { text: '2' }, { text: null }]}
     `(
       'then it should sort the options correctly without throwing (sortOrder:$sortOrder)',
       ({ options, sortOrder, expected }) => {
