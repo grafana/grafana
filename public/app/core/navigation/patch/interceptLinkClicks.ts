@@ -2,9 +2,9 @@ import { navigationLogger } from '../utils';
 import { locationService } from '@grafana/runtime';
 
 export function interceptLinkClicks(e: MouseEvent) {
-  const target = e.target as HTMLElement;
+  const target = getParentAnchor(e.target as HTMLElement);
 
-  if (target && target.tagName === 'A') {
+  if (target) {
     const href = target.getAttribute('href');
 
     if (href) {
@@ -13,4 +13,15 @@ export function interceptLinkClicks(e: MouseEvent) {
       locationService.push(href);
     }
   }
+}
+
+function getParentAnchor(element: HTMLElement | null): HTMLElement | null {
+  while (element !== null) {
+    if (element.tagName.toUpperCase() === 'A') {
+      return element;
+    }
+    element = element.parentNode as HTMLElement;
+  }
+
+  return null;
 }
