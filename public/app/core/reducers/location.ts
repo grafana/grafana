@@ -1,10 +1,9 @@
 import _ from 'lodash';
 import { Action, createAction } from '@reduxjs/toolkit';
-import { LocationUpdate } from '@grafana/runtime';
+import { LocationUpdate, navigationLogger } from '@grafana/runtime';
 
 import { LocationState, ThunkResult } from 'app/types';
 import { urlUtil } from '@grafana/data';
-import { navigationLogger, parseValue } from '../navigation/utils';
 
 export const initialState: LocationState = {
   url: '',
@@ -20,7 +19,7 @@ export const updateLocationInState = createAction<LocationUpdate>('location/upda
 export function updateLocation(payload: LocationUpdate): ThunkResult<void> {
   return async function (dispatch) {
     const forceLoginParam = payload.query?.forceLogin;
-    if (forceLoginParam !== null && parseValue(forceLoginParam as string)) {
+    if (forceLoginParam) {
       navigationLogger('AppWrapper', false, 'Force login', payload);
       window.location.href = `${payload.path}?${urlUtil.toUrlParams({ ...payload.query, forceLogin: 'true' })}`;
       return;

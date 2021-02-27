@@ -1,8 +1,8 @@
 import { locationUtil } from '@grafana/data';
 import * as H from 'history';
-import { navigationLogger } from '../utils/navUtils';
 import { LocationUpdate } from './LocationSrv';
 import createMemoryHistory from 'history/createMemoryHistory';
+import { createLogger } from '@grafana/ui';
 
 export interface LocationService {
   partial: (query: Record<string, any>, replace?: boolean) => void;
@@ -129,4 +129,24 @@ class HistoryWrapper implements LocationService {
   }
 }
 
+/** @internal maybe move in to a LocationService function getSearchObj? */
+export function queryStringToJSON(queryString: string) {
+  const params: Array<[string, string | boolean]> = [];
+  new URLSearchParams(queryString).forEach((v, k) => params.push([k, parseValue(v)]));
+  return Object.fromEntries(new Map(params));
+}
+
+function parseValue(value: string) {
+  if (value === 'true') {
+    return true;
+  }
+  if (value === 'false') {
+    return false;
+  }
+  return value;
+}
+
 export const locationService: LocationService = new HistoryWrapper();
+
+/** @internal */
+export const navigationLogger = createLogger('Router');

@@ -1,5 +1,4 @@
-import { navigationLogger } from '../utils';
-import { locationService } from '@grafana/runtime';
+import { locationService, navigationLogger } from '@grafana/runtime';
 
 export function interceptLinkClicks(e: MouseEvent) {
   const target = getParentAnchor(e.target as HTMLElement);

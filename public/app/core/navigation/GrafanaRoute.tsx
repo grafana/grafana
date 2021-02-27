@@ -4,9 +4,9 @@ import { RouteComponentProps } from 'react-router-dom';
 // @ts-ignore
 import Drop from 'tether-drop';
 import { GrafanaRouteProps } from './types';
-import { navigationLogger, queryStringToJSON } from './utils';
 import { updateLocation } from '../reducers/location';
 import usePrevious from 'react-use/lib/usePrevious';
+import { navigationLogger, queryStringToJSON } from '@grafana/runtime';
 
 export class GrafanaRoute extends React.Component<GrafanaRouteProps<any>> {
   componentDidMount() {

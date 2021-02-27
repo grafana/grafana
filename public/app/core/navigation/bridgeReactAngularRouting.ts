@@ -1,9 +1,8 @@
-import { locationService } from '@grafana/runtime';
+import { locationService, navigationLogger } from '@grafana/runtime';
 import { coreModule } from '../core';
 import { RouteProvider } from './patch/RouteProvider';
 import { RouteParamsProvider } from './patch/RouteParamsProvider';
 import { ILocationService } from 'angular';
-import { navigationLogger } from './utils';
 
 const registerInterceptedLinkDirective = () => {
   coreModule.directive('a', () => {

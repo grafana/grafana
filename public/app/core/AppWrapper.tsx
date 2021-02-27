@@ -1,6 +1,6 @@
 import React from 'react';
 import { Router, Route, Redirect, Switch } from 'react-router-dom';
-import { config, locationService } from '@grafana/runtime';
+import { config, locationService, navigationLogger } from '@grafana/runtime';
 import { Provider } from 'react-redux';
 import { store } from 'app/store/store';
 import { ErrorBoundaryAlert, ModalRoot, ModalsProvider } from '@grafana/ui';
@@ -10,7 +10,6 @@ import { ConfigContext, ThemeProvider } from './utils/ConfigProvider';
 import { RouteDescriptor } from './navigation/types';
 import { contextSrv } from './services/context_srv';
 import { SideMenu } from './components/sidemenu/SideMenu';
-import { navigationLogger } from './navigation/utils';
 import { GrafanaRoute, SyncLocationWithRedux } from './navigation/GrafanaRoute';
 import { AppNotificationList } from './components/AppNotifications/AppNotificationList';
 import { SearchWrapper } from 'app/features/search';
