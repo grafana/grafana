@@ -1,7 +1,5 @@
 import React from 'react';
 import { Router, Route, Redirect, Switch } from 'react-router-dom';
-import angular from 'angular';
-import { each, extend } from 'lodash';
 import { config, locationService } from '@grafana/runtime';
 import { Provider } from 'react-redux';
 import { store } from 'app/store/store';
@@ -43,20 +41,8 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
   }
 
   bootstrapNgApp() {
-    const { app } = this.props;
-    const invoker = angular.bootstrap(document, app.ngModuleDependencies);
-    navigationLogger('AppWrapper', false, 'Angular app bootstrap');
-    this.setState(
-      { ngInjector: invoker },
-      invoker.invoke(() => {
-        each(app.preBootModules, (module) => {
-          extend(module, app.registerFunctions);
-        });
-        app.preBootModules = null;
-        // I don't know
-        return () => {};
-      })
-    );
+    const injector = this.props.app.angularApp.bootstrap();
+    this.setState({ ngInjector: injector });
   }
 
   renderRoute = (route: RouteDescriptor) => {
