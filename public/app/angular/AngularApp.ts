@@ -8,7 +8,7 @@ import { config } from 'app/core/config';
 import { angularModules } from 'app/core/core_module';
 import { DashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { registerAngularDirectives } from 'app/core/core';
-import bridgeReactAngularRouting from 'app/core/navigation/bridgeReactAngularRouting';
+import { initAngularRoutingBridge } from 'app/angular/bridgeReactAngularRouting';
 import { monkeyPatchInjectorWithPreAssignedBindings } from 'app/core/injectorMonkeyPatch';
 import { extend } from 'lodash';
 
@@ -84,7 +84,7 @@ export class AngularApp {
     angular.module('grafana.services').service('dashboardLoaderSrv', DashboardLoaderSrv);
 
     registerAngularDirectives();
-    bridgeReactAngularRouting();
+    initAngularRoutingBridge();
   }
 
   useModule(module: angular.IModule) {

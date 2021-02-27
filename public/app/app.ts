@@ -39,7 +39,7 @@ import { getStandardTransformers } from 'app/core/utils/standardTransformers';
 import { SentryEchoBackend } from './core/services/echo/backends/sentry/SentryBackend';
 import { setVariableQueryRunner, VariableQueryRunner } from './features/variables/query/VariableQueryRunner';
 import { configureStore } from './store/configureStore';
-import { AppWrapper } from './core/AppWrapper';
+import { AppWrapper } from './AppWrapper';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
 import { CoreEvents } from './types';
 import { AngularApp } from './angular/AngularApp';

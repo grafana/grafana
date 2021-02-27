@@ -12,7 +12,9 @@ export interface LocationService {
   getHistory: () => H.History;
   getSearch: () => URLSearchParams;
 
-  /** @depecreated use partial, push or replace instead */
+  /**
+   * This is from the old LocationSrv interface
+   * @deprecated use partial, push or replace instead */
   update: (update: LocationUpdate) => void;
 }
 

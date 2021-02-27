@@ -1,7 +1,7 @@
 import { locationService, navigationLogger } from '@grafana/runtime';
-import { coreModule } from '../core';
-import { RouteProvider } from './patch/RouteProvider';
-import { RouteParamsProvider } from './patch/RouteParamsProvider';
+import { coreModule } from '../core/core_module';
+import { RouteProvider } from '../core/navigation/patch/RouteProvider';
+import { RouteParamsProvider } from '../core/navigation/patch/RouteParamsProvider';
 import { ILocationService } from 'angular';
 
 const registerInterceptedLinkDirective = () => {
@@ -17,7 +17,7 @@ const registerInterceptedLinkDirective = () => {
             $event.stopPropagation();
 
             // TODO: refactor to one method insted of chain
-            locationService.getHistory().push(elm.attr('href'));
+            locationService.push(elm.attr('href'));
             return false;
           }
 
@@ -122,10 +122,8 @@ const interceptAngularLocation = () => {
   coreModule.provider('$routeParams', RouteParamsProvider);
 };
 
-const bridgeReactAngularRouting = () => {
+export function initAngularRoutingBridge() {
   registerInterceptedLinkDirective();
   tamperAngularLocation();
   interceptAngularLocation();
-};
-
-export default bridgeReactAngularRouting;
+}
