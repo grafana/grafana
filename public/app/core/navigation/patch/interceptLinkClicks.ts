@@ -15,7 +15,7 @@ export function interceptLinkClicks(e: MouseEvent) {
 }
 
 function getParentAnchor(element: HTMLElement | null): HTMLElement | null {
-  while (element !== null) {
+  while (element !== null && element.tagName) {
     if (element.tagName.toUpperCase() === 'A') {
       return element;
     }

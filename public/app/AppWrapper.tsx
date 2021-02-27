@@ -92,27 +92,23 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
           <ConfigContext.Provider value={config}>
             <ThemeProvider>
               <ModalsProvider>
-                <>
-                  <div className="grafana-app">
-                    <Router history={locationService.getHistory()}>
-                      <>
-                        <SideMenu />
-                        <div className="main-view">
-                          <div
-                            ref={this.container}
-                            dangerouslySetInnerHTML={{
-                              __html: appSeed,
-                            }}
-                          />
-                          <AppNotificationList />
-                          <SearchWrapper />
-                          {this.state.ngInjector && this.container && this.renderRoutes()}
-                        </div>
-                      </>
-                    </Router>
-                  </div>
-                  <ModalRoot />
-                </>
+                <div className="grafana-app">
+                  <Router history={locationService.getHistory()}>
+                    <SideMenu />
+                    <div className="main-view">
+                      <div
+                        ref={this.container}
+                        dangerouslySetInnerHTML={{
+                          __html: appSeed,
+                        }}
+                      />
+                      <AppNotificationList />
+                      <SearchWrapper />
+                      {this.state.ngInjector && this.container && this.renderRoutes()}
+                    </div>
+                  </Router>
+                </div>
+                <ModalRoot />
               </ModalsProvider>
             </ThemeProvider>
           </ConfigContext.Provider>
