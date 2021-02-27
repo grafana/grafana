@@ -21,6 +21,7 @@ export interface Props {
   onLoadSubscriptions: (type?: string) => void;
   onLoadResources: (type?: string) => void;
 }
+
 export class AnalyticsResourceConfig extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
@@ -42,8 +43,8 @@ export class AnalyticsResourceConfig extends PureComponent<Props, State> {
     this.props.onUpdateSecureJsonDataOption('logAnalyticsClientSecret', event.target.value);
   };
 
-  onLogAnalyticsSubscriptionSelect = (logAnalyticsSubscription: SelectableValue<string>) => {
-    this.props.onUpdateJsonDataOption('logAnalyticsSubscriptionId', logAnalyticsSubscription.value);
+  onLogAnalyticsSubscriptionSelect = (resourceLogAnalyticsSubscription: SelectableValue<string>) => {
+    this.props.onUpdateJsonDataOption('resourceLogAnalyticsSubscriptionId', resourceLogAnalyticsSubscription.value);
   };
 
   onResourceSelectChange = (logAnalyticsDefaultResource: SelectableValue<string>) => {
@@ -106,7 +107,7 @@ export class AnalyticsResourceConfig extends PureComponent<Props, State> {
       jsonData.logAnalyticsTenantId.length &&
       jsonData.logAnalyticsClientId &&
       jsonData.logAnalyticsClientId.length &&
-      jsonData.logAnalyticsSubscriptionId &&
+      jsonData.resourceLogAnalyticsSubscriptionId &&
       (secureJsonFields.logAnalyticsClientSecret || secureJsonData!.logAnalyticsClientSecret)
     );
   };
@@ -156,7 +157,7 @@ export class AnalyticsResourceConfig extends PureComponent<Props, State> {
         {!jsonData.azureResourceLogAnalyticsSameAs && (
           <AzureCredentialsForm
             subscriptionOptions={subscriptions}
-            selectedSubscription={jsonData.logAnalyticsSubscriptionId}
+            selectedSubscription={jsonData.resourceLogAnalyticsSubscriptionId}
             tenantId={jsonData.logAnalyticsTenantId}
             clientId={jsonData.logAnalyticsClientId}
             clientSecret={secureJsonData!.logAnalyticsClientSecret}

@@ -21,10 +21,12 @@ export type Props = DataSourcePluginOptionsEditorProps<AzureDataSourceJsonData, 
 export interface State {
   subscriptions: SelectableValue[];
   logAnalyticsSubscriptions: SelectableValue[];
+  resourceLogAnalyticsSubscriptions: SelectableValue[];
   logAnalyticsWorkspaces: SelectableValue[];
   logAnalyticsResources: SelectableValue[];
   subscriptionId: string;
   logAnalyticsSubscriptionId: string;
+  resourceLogAnalyticsSubscriptionId: string;
 }
 
 export class ConfigEditor extends PureComponent<Props, State> {
@@ -37,10 +39,12 @@ export class ConfigEditor extends PureComponent<Props, State> {
     this.state = {
       subscriptions: [],
       logAnalyticsSubscriptions: [],
+      resourceLogAnalyticsSubscriptions: [],
       logAnalyticsWorkspaces: [],
       logAnalyticsResources: [],
       subscriptionId: '',
       logAnalyticsSubscriptionId: '',
+      resourceLogAnalyticsSubscriptionId: '',
     };
 
     if (this.props.options.id) {
@@ -66,6 +70,10 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
     if (!this.props.options.jsonData.azureLogAnalyticsSameAs) {
       await this.getLogAnalyticsSubscriptions();
+    }
+
+    if (!this.props.options.jsonData.azureResourceLogAnalyticsSameAs) {
+      await this.getResourceLogAnalyticsSubscriptions();
     }
   };
 
@@ -222,6 +230,9 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
     if (this.props.options.jsonData.subscriptionId && this.props.options.jsonData.azureLogAnalyticsSameAs) {
       await this.getWorkspaces();
+    }
+
+    if (this.props.options.jsonData.subscriptionId && this.props.options.jsonData.azureResourceLogAnalyticsSameAs) {
       await this.getResources();
     }
   };
@@ -245,6 +256,27 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
     if (this.props.options.jsonData.logAnalyticsSubscriptionId) {
       await this.getWorkspaces();
+    }
+  };
+
+  getResourceLogAnalyticsSubscriptions = async () => {
+    if (!this.logAnalyticsHasNecessaryCredentials()) {
+      return;
+    }
+
+    const resourceLogAnalyticsSubscriptions = ((await this.loadSubscriptions('workspacesloganalytics')) ||
+      []) as SelectableValue[];
+
+    if (resourceLogAnalyticsSubscriptions && resourceLogAnalyticsSubscriptions.length > 0) {
+      this.setState({ resourceLogAnalyticsSubscriptions });
+
+      this.updateJsonDataOption(
+        'resourceLogAnalyticsSubscriptionId',
+        this.props.options.jsonData.resourceLogAnalyticsSubscriptionId || resourceLogAnalyticsSubscriptions[0].value
+      );
+    }
+
+    if (this.props.options.jsonData.logAnalyticsSubscriptionId) {
       await this.getResources();
     }
   };
@@ -287,7 +319,13 @@ export class ConfigEditor extends PureComponent<Props, State> {
   };
 
   render() {
-    const { subscriptions, logAnalyticsSubscriptions, logAnalyticsWorkspaces, logAnalyticsResources } = this.state;
+    const {
+      subscriptions,
+      logAnalyticsSubscriptions,
+      resourceLogAnalyticsSubscriptions,
+      logAnalyticsWorkspaces,
+      logAnalyticsResources,
+    } = this.state;
     const { options } = this.props;
 
     options.jsonData.cloudName = options.jsonData.cloudName || 'azuremonitor';
@@ -322,7 +360,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
         <AnalyticsResourceConfig
           options={options}
           resources={logAnalyticsResources}
-          subscriptions={logAnalyticsSubscriptions}
+          subscriptions={resourceLogAnalyticsSubscriptions}
           makeSameAs={this.makeSameAs}
           onUpdateDatasourceOptions={this.props.onOptionsChange}
           onUpdateJsonDataOption={this.updateJsonDataOption}

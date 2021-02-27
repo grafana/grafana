@@ -1,5 +1,5 @@
 import AzureMonitorDatasource from '../datasource';
-import FakeSchemaData from '../__mocks__/schema';
+import FakeSchemaData from './__mocks__/schema';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { AzureLogsVariable, KustoSchema } from '../types';
 import { toUtc } from '@grafana/data';
@@ -114,8 +114,7 @@ describe('AzureLogAnalyticsDatasource', () => {
         return ctx.ds.testDatasource().then((results: any) => {
           expect(results.status).toEqual('error');
           expect(results.message).toEqual(
-            '1. Azure Log Analytics: Bad Request: InvalidApiVersionParameter. An error message. ' +
-              '2. Azure Resource Log Analytics: Bad Request: InvalidApiVersionParameter. An error message. '
+            '1. Azure Log Analytics: Bad Request: InvalidApiVersionParameter. An error message. '
           );
         });
       });

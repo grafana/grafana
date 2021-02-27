@@ -298,12 +298,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   }
 
   onQueryTypeChange() {
-    if (this.target.queryType === AzureQueryType.LogAnalytics) {
-      return this.getWorkspaces();
-    }
-    if (this.target.queryType === AzureQueryType.ResourceLogAnalytics) {
-      return this.getResources();
-    }
+    return this.getSubscriptions();
   }
 
   getSubscriptions() {
@@ -317,10 +312,13 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
         switch (this.target.queryType) {
           case AzureQueryType.AzureMonitor:
             this.target.subscription = this.datasource.azureMonitorDatasource.subscriptionId;
+            break;
           case AzureQueryType.LogAnalytics:
             this.target.subscription = this.datasource.azureLogAnalyticsDatasource.logAnalyticsSubscriptionId;
+            break;
           case AzureQueryType.ResourceLogAnalytics:
-            this.target.subscription = this.datasource.azureResourceLogAnalyticsDatasource.logAnalyticsSubscriptionId;
+            this.target.subscription = this.datasource.azureResourceLogAnalyticsDatasource.resourceLogAnalyticsSubscriptionId;
+            break;
           default:
             throw new Error('Query type is not valid.');
         }
@@ -336,11 +334,11 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
 
   onSubscriptionChange() {
     switch (this.target.queryType) {
-      case AzureQueryType.AzureMonitor:
-        return this.getWorkspaces();
       case AzureQueryType.LogAnalytics:
-        return this.getResources();
+        return this.getWorkspaces();
       case AzureQueryType.ResourceLogAnalytics:
+        return this.getResources();
+      case AzureQueryType.AzureMonitor:
         this.target.azureMonitor.resourceGroup = this.defaultDropdownValue;
         this.target.azureMonitor.metricDefinition = this.defaultDropdownValue;
         this.target.azureMonitor.resourceName = this.defaultDropdownValue;
@@ -348,6 +346,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
         this.target.azureMonitor.aggregation = '';
         this.target.azureMonitor.timeGrain = '';
         this.target.azureMonitor.dimensionFilters = [];
+        break;
       default:
         throw new Error('Query type is not valid.');
     }

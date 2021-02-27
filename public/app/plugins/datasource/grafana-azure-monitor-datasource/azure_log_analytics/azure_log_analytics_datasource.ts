@@ -12,6 +12,7 @@ import { getBackendSrv, getTemplateSrv, DataSourceWithBackend } from '@grafana/r
 import { Observable, from } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 import ResponseParser from './response_parser';
+import { LogConfigs } from '../datasource';
 
 export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   AzureMonitorQuery,
@@ -28,7 +29,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>,
-    private readonly configs: any
+    private readonly configs: LogConfigs
   ) {
     super(instanceSettings);
     this.cache = new Map();
@@ -54,10 +55,9 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     this.setUrl();
   }
 
-  isConfigured(): boolean {
+  isConfigured(): boolean | undefined {
     return (
-      (!!this.instanceSettings.jsonData.logAnalyticsSubscriptionId &&
-        this.instanceSettings.jsonData.logAnalyticsSubscriptionId.length > 0) ||
+      (typeof this.configs.subscriptionId === 'string' && this.configs.subscriptionId?.length > 0) ||
       this.configs.sameAsAzureMonitor
     );
   }
@@ -68,7 +68,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
       const azureCloud = this.instanceSettings.jsonData.cloudName || 'azuremonitor';
       this.azureMonitorUrl = `/${azureCloud}/subscriptions`;
     } else {
-      this.subscriptionId = this.instanceSettings.jsonData.logAnalyticsSubscriptionId || '';
+      this.subscriptionId = this.configs.subscriptionId || '';
 
       switch (this.instanceSettings.jsonData.cloudName) {
         case 'govazuremonitor': // Azure US Government
@@ -465,7 +465,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
       return undefined;
     }
 
-    if (!this.isValidConfigField(this.instanceSettings.jsonData.logAnalyticsSubscriptionId)) {
+    if (!this.isValidConfigField(this.configs.subscriptionId)) {
       return {
         status: 'error',
         message: 'The Subscription Id field is required.',

@@ -32,6 +32,7 @@ export interface AzureDataSourceJsonData extends DataSourceJsonData {
 
   // logs
   logAnalyticsSubscriptionId?: string;
+  resourceLogAnalyticsSubscriptionId?: string;
   logAnalyticsTenantId?: string;
   logAnalyticsClientId?: string;
   azureLogAnalyticsSameAs?: boolean;

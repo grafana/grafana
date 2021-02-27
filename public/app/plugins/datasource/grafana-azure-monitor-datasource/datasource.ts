@@ -2,7 +2,13 @@ import _ from 'lodash';
 import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
 import AppInsightsDatasource from './app_insights/app_insights_datasource';
 import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
-import { AzureDataSourceJsonData, AzureMonitorQuery, AzureQueryType, InsightsAnalyticsQuery } from './types';
+import {
+  AzureDataSourceJsonData,
+  AzureLogsVariable,
+  AzureMonitorQuery,
+  AzureQueryType,
+  InsightsAnalyticsQuery,
+} from './types';
 import {
   DataFrame,
   DataQueryRequest,
@@ -18,6 +24,15 @@ import InsightsAnalyticsDatasource from './insights_analytics/insights_analytics
 import { migrateMetricsDimensionFilters } from './query_ctrl';
 import { map } from 'rxjs/operators';
 
+export interface LogConfigs {
+  subscriptionId?: string;
+  queryType: string;
+  postfix: string;
+  azureMonitorPostfix: string;
+  sameAsAzureMonitor?: boolean;
+  getWorkspacesOrResources: (subscription: string, url: string) => Promise<AzureLogsVariable[]>;
+}
+
 export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDataSourceJsonData> {
   azureMonitorDatasource: AzureMonitorDatasource;
   appInsightsDatasource: AppInsightsDatasource;
@@ -30,7 +45,8 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
 
   constructor(instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>) {
     super(instanceSettings);
-    const workspaceLogConfigs = {
+    const workspaceLogConfigs: LogConfigs = {
+      subscriptionId: instanceSettings.jsonData.logAnalyticsSubscriptionId,
       queryType: AzureQueryType.LogAnalytics,
       postfix: 'loganalyticsazure',
       azureMonitorPostfix: 'workspacesloganalytics',
@@ -50,7 +66,8 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
         );
       },
     };
-    const resourceLogConfigs = {
+    const resourceLogConfigs: LogConfigs = {
+      subscriptionId: instanceSettings.jsonData.resourceLogAnalyticsSubscriptionId,
       queryType: AzureQueryType.ResourceLogAnalytics,
       postfix: 'resourceloganalyticsazure',
       azureMonitorPostfix: 'resourcesloganalytics',
