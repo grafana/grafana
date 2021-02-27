@@ -13,6 +13,7 @@ import { SideMenu } from './components/sidemenu/SideMenu';
 import { navigationLogger } from './navigation/utils';
 import { GrafanaRoute, SyncLocationWithRedux } from './navigation/GrafanaRoute';
 import { AppNotificationList } from './components/AppNotifications/AppNotificationList';
+import { SearchWrapper } from 'app/features/search';
 
 interface AppWrapperProps {
   app: GrafanaApp;
@@ -84,7 +85,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
     navigationLogger('AppWrapper', false, 'rendering');
 
     // @ts-ignore
-    const appSeed = `<grafana-app ng-cloak></app-notifications-list><dashboard-search></dashboard-search><div ng-view class="scroll-canvas"><div id="ngRoot"></div></div></grafana-app>`;
+    const appSeed = `<grafana-app ng-cloak></app-notifications-list><div id="ngRoot"></div></grafana-app>`;
 
     return (
       <Provider store={store}>
@@ -105,6 +106,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                             }}
                           />
                           <AppNotificationList />
+                          <SearchWrapper />
                           {this.state.ngInjector && this.container && this.renderRoutes()}
                         </div>
                       </>

@@ -1,9 +1,8 @@
 import React, { FC, memo } from 'react';
-import { MapDispatchToProps, MapStateToProps } from 'react-redux';
+import { connect, ConnectedProps, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { UrlQueryMap } from '@grafana/data';
 import { getLocationQuery } from 'app/core/selectors/location';
 import { updateLocation } from 'app/core/reducers/location';
-import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
 import { StoreState } from 'app/types';
 import DashboardSearch from './DashboardSearch';
 import { defaultQueryParams } from '../reducers/searchQueryReducer';
@@ -19,9 +18,20 @@ interface DispatchProps {
   updateLocation: typeof updateLocation;
 }
 
-export type Props = OwnProps & DispatchProps;
+const mapStateToProps: MapStateToProps<{}, OwnProps, StoreState> = (state: StoreState) => {
+  const { search, folder } = getLocationQuery(state.location);
+  return { search, folder };
+};
 
-export const SearchWrapper: FC<Props> = memo(({ search, folder, updateLocation }) => {
+const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
+  updateLocation,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+export type Props = OwnProps & ConnectedProps<typeof connector>;
+
+export const SearchWrapperUnConnected: FC<Props> = memo(({ search, folder, updateLocation }) => {
   const isOpen = search === 'open';
 
   const closeSearch = () => {
@@ -40,15 +50,6 @@ export const SearchWrapper: FC<Props> = memo(({ search, folder, updateLocation }
   return isOpen ? <DashboardSearch onCloseSearch={closeSearch} folder={folder} /> : null;
 });
 
-SearchWrapper.displayName = 'SearchWrapper';
+SearchWrapperUnConnected.displayName = 'SearchWrapper';
 
-const mapStateToProps: MapStateToProps<{}, OwnProps, StoreState> = (state: StoreState) => {
-  const { search, folder } = getLocationQuery(state.location);
-  return { search, folder };
-};
-
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
-  updateLocation,
-};
-
-export default connectWithStore(SearchWrapper, mapStateToProps, mapDispatchToProps);
+export const SearchWrapper = connector(SearchWrapperUnConnected);

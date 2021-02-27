@@ -22,7 +22,7 @@ import { LokiAnnotationsQueryEditor } from '../plugins/datasource/loki/component
 import { HelpModal } from './components/help/HelpModal';
 import { Footer } from './components/Footer/Footer';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { SearchField, SearchResults, SearchResultsFilter, SearchWrapper } from '../features/search';
+import { SearchField, SearchResults, SearchResultsFilter } from '../features/search';
 
 const { SecretFormField } = LegacyForms;
 
@@ -80,7 +80,6 @@ export function registerAngularDirectives() {
     ['onStarredFilterChange', { watchDepth: 'reference' }],
     ['onTagFilterChange', { watchDepth: 'reference' }],
   ]);
-  react2AngularDirective('searchWrapper', SearchWrapper, []);
   react2AngularDirective('tagFilter', TagFilter, [
     'tags',
     ['onChange', { watchDepth: 'reference' }],
