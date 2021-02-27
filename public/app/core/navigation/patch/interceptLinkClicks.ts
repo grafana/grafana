@@ -3,6 +3,7 @@ import { locationService } from '@grafana/runtime';
 
 export function interceptLinkClicks(e: MouseEvent) {
   const target = e.target as HTMLElement;
+
   if (target && target.tagName === 'A') {
     const href = target.getAttribute('href');
 
