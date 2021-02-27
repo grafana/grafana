@@ -108,6 +108,7 @@ export class GrafanaApp {
     appEvents.on(CoreEvents.toggleKioskMode, (options: { exit?: boolean }) => {
       if (options && options.exit) {
         locationService.partial({ kiosk: null });
+        return;
       }
 
       let kiosk = locationService.getSearch().get('kiosk');

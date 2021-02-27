@@ -3,7 +3,6 @@ import Mousetrap from 'mousetrap';
 import 'mousetrap-global-bind';
 import { IRootScopeService } from 'angular';
 import { LegacyGraphHoverClearEvent, locationUtil } from '@grafana/data';
-
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
@@ -13,8 +12,8 @@ import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
-// import { defaultQueryParams } from 'app/features/search/reducers/searchQueryReducer';
 import { ContextSrv } from './context_srv';
+import { locationService } from '@grafana/runtime';
 
 export class KeybindingSrv {
   modalOpen = false;
@@ -78,25 +77,23 @@ export class KeybindingSrv {
   }
 
   openSearch() {
-    // const search = _.extend(this.$location.search(), { search: 'open' });
-    // this.$location.search(search);
+    locationService.partial({ search: 'open' });
   }
 
   closeSearch() {
-    // const search = _.extend(this.$location.search(), { search: null, ...defaultQueryParams });
-    // this.$location.search(search);
+    locationService.partial({ search: null });
   }
 
   openAlerting() {
-    // this.$location.url('/alerting');
+    locationService.push('/alerting');
   }
 
   goToHome() {
-    // this.$location.url('/');
+    locationService.push('/');
   }
 
   goToProfile() {
-    // this.$location.url('/profile');
+    locationService.push('/profile');
   }
 
   showHelpModal() {
@@ -111,40 +108,35 @@ export class KeybindingSrv {
       return;
     }
 
-    //const search = queryStringToJSON(getLocationService().getCurrentLocation().search);
-    // close settings view
-    // const search = this.$location.search();
-    // if (search.editview) {
-    //   delete search.editview;
-    //   this.$location.search(search);
-    //   return;
-    // }
+    const search = locationService.getSearch();
 
-    // if (search.inspect) {
-    //   delete search.inspect;
-    //   delete search.inspectTab;
-    //   this.$location.search(search);
-    //   return;
-    // }
+    if (search.get('editview')) {
+      locationService.partial({ editview: null });
+      return;
+    }
 
-    // if (search.editPanel) {
-    //   dispatch(exitPanelEditor());
-    //   return;
-    // }
+    if (search.get('inspect')) {
+      locationService.partial({ inspect: null, inspectTab: null });
+      return;
+    }
 
-    // if (search.viewPanel) {
-    //   delete search.viewPanel;
-    //   this.$location.search(search);
-    //   return;
-    // }
+    if (search.get('editPanel')) {
+      locationService.partial({ editPanel: null, tab: null });
+      return;
+    }
 
-    // if (search.kiosk) {
-    //   this.$rootScope.appEvent(CoreEvents.toggleKioskMode, { exit: true });
-    // }
-    //
-    // if (search.search) {
-    //   this.closeSearch();
-    // }
+    if (search.get('viewPanel')) {
+      locationService.partial({ editPanel: null, tab: null });
+      return;
+    }
+
+    if (search.get('kiosk')) {
+      appEvents.emit(CoreEvents.toggleKioskMode, { exit: true });
+    }
+
+    if (search.get('search')) {
+      this.closeSearch();
+    }
   }
 
   bind(keyArg: string | string[], fn: () => void) {
