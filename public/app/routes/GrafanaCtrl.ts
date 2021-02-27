@@ -198,11 +198,6 @@ export function grafanaAppDirective(
       // check every 2 seconds
       setInterval(checkForInActiveUser, 2000);
 
-      appEvents.on(CoreEvents.toggleViewMode, () => {
-        lastActivity = 0;
-        checkForInActiveUser();
-      });
-
       // handle document clicks that should hide things
       body.click((evt) => {
         const target = $(evt.target);

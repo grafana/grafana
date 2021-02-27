@@ -15,7 +15,6 @@ import React from 'react';
 import config from 'app/core/config';
 // @ts-ignore ignoring this for now, otherwise we would have to extend _ interface with move
 import {
-  AppEvents,
   setLocale,
   setTimeZoneResolver,
   standardEditorsRegistry,
@@ -25,8 +24,7 @@ import {
 // import { checkBrowserCompatibility } from 'app/core/utils/browser';
 import { arrayMove } from 'app/core/utils/arrayMove';
 import { importPluginModule } from 'app/features/plugins/plugin_loader';
-import { appEvents } from 'app/core/core';
-import { locationService, registerEchoBackend, setEchoSrv } from '@grafana/runtime';
+import { registerEchoBackend, setEchoSrv } from '@grafana/runtime';
 import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
@@ -41,7 +39,6 @@ import { setVariableQueryRunner, VariableQueryRunner } from './features/variable
 import { configureStore } from './store/configureStore';
 import { AppWrapper } from './AppWrapper';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
-import { CoreEvents } from './types';
 import { AngularApp } from './angular/AngularApp';
 
 // add move to lodash for backward compatabilty with plugins
@@ -62,7 +59,6 @@ export class GrafanaApp {
   angularApp: AngularApp;
 
   constructor() {
-    this.registerAppEvents();
     this.angularApp = new AngularApp();
   }
 
@@ -101,33 +97,6 @@ export class GrafanaApp {
         }),
         document.getElementById('reactRoot')
       );
-    });
-  }
-
-  registerAppEvents() {
-    appEvents.on(CoreEvents.toggleKioskMode, (options: { exit?: boolean }) => {
-      if (options && options.exit) {
-        locationService.partial({ kiosk: null });
-        return;
-      }
-
-      let kiosk = locationService.getSearch().get('kiosk');
-
-      switch (kiosk) {
-        case 'tv':
-          kiosk = 'full';
-          appEvents.emit(AppEvents.alertSuccess, ['Press ESC to exit Kiosk mode']);
-          break;
-        case '1':
-        case '':
-        case 'full':
-          kiosk = null;
-          break;
-        default:
-          kiosk = 'tv';
-      }
-
-      locationService.partial({ kiosk });
     });
   }
 

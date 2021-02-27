@@ -14,6 +14,7 @@ import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
 import { ContextSrv } from './context_srv';
 import { locationService } from '@grafana/runtime';
+import { exitKioskMode, toggleKioskMode } from '../navigation/kiosk';
 
 export class KeybindingSrv {
   modalOpen = false;
@@ -38,16 +39,16 @@ export class KeybindingSrv {
   }
 
   setupGlobal() {
-    // if (!(this.$location.path() === '/login')) {
-    //   this.bind(['?', 'h'], this.showHelpModal);
-    //   this.bind('g h', this.goToHome);
-    //   this.bind('g a', this.openAlerting);
-    //   this.bind('g p', this.goToProfile);
-    //   this.bind('s o', this.openSearch);
-    //   this.bind('f', this.openSearch);
-    this.bind('esc', this.exit);
-    //   this.bindGlobal('esc', this.globalEsc);
-    // }
+    if (locationService.getCurrentLocation().pathname !== '/login') {
+      this.bind(['?', 'h'], this.showHelpModal);
+      this.bind('g h', this.goToHome);
+      this.bind('g a', this.openAlerting);
+      this.bind('g p', this.goToProfile);
+      this.bind('s o', this.openSearch);
+      this.bind('f', this.openSearch);
+      this.bind('esc', this.exit);
+      this.bindGlobal('esc', this.globalEsc);
+    }
   }
 
   globalEsc() {
@@ -131,7 +132,7 @@ export class KeybindingSrv {
     }
 
     if (search.get('kiosk')) {
-      appEvents.emit(CoreEvents.toggleKioskMode, { exit: true });
+      exitKioskMode();
     }
 
     if (search.get('search')) {
@@ -320,7 +321,7 @@ export class KeybindingSrv {
     });
 
     this.bind('d n', () => {
-      // this.$location.url('/dashboard/new');
+      locationService.push('/dashboard/new');
     });
 
     this.bind('d r', () => {
@@ -332,11 +333,7 @@ export class KeybindingSrv {
     });
 
     this.bind('d k', () => {
-      appEvents.emit(CoreEvents.toggleKioskMode);
-    });
-
-    this.bind('d v', () => {
-      appEvents.emit(CoreEvents.toggleViewMode);
+      toggleKioskMode();
     });
 
     //Autofit panels

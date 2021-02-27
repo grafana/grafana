@@ -2,7 +2,6 @@
 import React, { PureComponent, FC, ReactNode } from 'react';
 import { connect, MapDispatchToProps } from 'react-redux';
 // Utils & Services
-import { appEvents } from 'app/core/app_events';
 import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
 // Components
 import { DashNavButton } from './DashNavButton';
@@ -13,10 +12,11 @@ import { textUtil } from '@grafana/data';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 // Types
 import { DashboardModel } from '../../state';
-import { CoreEvents, StoreState } from 'app/types';
+import { StoreState } from 'app/types';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
 import { locationService } from '@grafana/runtime';
+import { toggleKioskMode } from 'app/core/navigation/kiosk';
 
 export interface OwnProps {
   dashboard: DashboardModel;
@@ -69,7 +69,7 @@ class DashNav extends PureComponent<Props> {
   };
 
   onToggleTVMode = () => {
-    appEvents.emit(CoreEvents.toggleKioskMode);
+    toggleKioskMode();
   };
 
   onOpenSettings = () => {

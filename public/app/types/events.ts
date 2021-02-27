@@ -103,7 +103,6 @@ export const playlistStarted = eventFactory('playlist-started');
 export const playlistStopped = eventFactory('playlist-stopped');
 
 export const toggleKioskMode = eventFactory<ToggleKioskModePayload>('toggle-kiosk-mode');
-export const toggleViewMode = eventFactory('toggle-view-mode');
 
 export const timeRangeUpdated = eventFactory<TimeRange>('time-range-updated');
 export const templateVariableValueUpdated = eventFactory('template-variable-value-updated');
