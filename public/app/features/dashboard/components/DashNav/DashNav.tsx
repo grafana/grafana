@@ -16,7 +16,7 @@ import { DashboardModel } from '../../state';
 import { CoreEvents, StoreState } from 'app/types';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
-import { getLocationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 
 export interface OwnProps {
   dashboard: DashboardModel;
@@ -61,11 +61,11 @@ class DashNav extends PureComponent<Props> {
   }
 
   onFolderNameClick = () => {
-    getLocationService().partial({ search: 'open', folder: 'current' });
+    locationService.partial({ search: 'open', folder: 'current' });
   };
 
   onClose = () => {
-    getLocationService().partial({ viewPanel: null });
+    locationService.partial({ viewPanel: null });
   };
 
   onToggleTVMode = () => {
@@ -73,7 +73,7 @@ class DashNav extends PureComponent<Props> {
   };
 
   onOpenSettings = () => {
-    getLocationService().partial({ editview: 'settings' });
+    locationService.partial({ editview: 'settings' });
   };
 
   onStarDashboard = () => {
@@ -100,7 +100,7 @@ class DashNav extends PureComponent<Props> {
   };
 
   onDashboardNameClick = () => {
-    getLocationService().partial({ search: 'open' });
+    locationService.partial({ search: 'open' });
   };
 
   addCustomContent(actions: DashNavButtonModel[], buttons: ReactNode[]) {

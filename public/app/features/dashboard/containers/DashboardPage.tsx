@@ -33,7 +33,7 @@ import { SubMenu } from '../components/SubMenu/SubMenu';
 import { cleanUpDashboardAndVariables } from '../state/actions';
 import { cancelVariables } from '../../variables/state/actions';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
-import { getLocationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 
 export interface Props {
   urlUid?: string;
@@ -183,7 +183,7 @@ export class DashboardPage extends PureComponent<Props, State> {
       // Panel not found
       this.props.notifyApp(createErrorNotification(`Panel with id ${urlPanelId} not found`));
       // Clear url state
-      getLocationService().partial({ editPanel: null, viewPanel: null });
+      locationService.partial({ editPanel: null, viewPanel: null });
       return;
     }
 
@@ -231,7 +231,7 @@ export class DashboardPage extends PureComponent<Props, State> {
   };
 
   cancelVariables = () => {
-    getLocationService().push('/');
+    locationService.push('/');
   };
 
   renderSlowInitState() {

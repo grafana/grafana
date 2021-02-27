@@ -1,5 +1,5 @@
 import { store } from 'app/store/store';
-import { AngularComponent, getDataSourceSrv, getLocationService } from '@grafana/runtime';
+import { AngularComponent, getDataSourceSrv, locationService } from '@grafana/runtime';
 import { PanelMenuItem } from '@grafana/data';
 import { copyPanel, duplicatePanel, removePanel, sharePanel } from 'app/features/dashboard/utils/panel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -18,14 +18,14 @@ export function getPanelMenu(
 ): PanelMenuItem[] {
   const onViewPanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
-    getLocationService().partial({
+    locationService.partial({
       viewPanel: panel.id,
     });
   };
 
   const onEditPanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
-    getLocationService().partial({
+    locationService.partial({
       editPanel: panel.id,
     });
   };
@@ -36,7 +36,7 @@ export function getPanelMenu(
   };
 
   const onInspectPanel = (tab?: string) => {
-    getLocationService().partial({
+    locationService.partial({
       inspect: panel.id,
       inspectTab: tab,
     });

@@ -220,6 +220,7 @@
     "@types/sockjs-client": "^1.1.1",
     "@types/uuid": "8.3.0",
     "@welldone-software/why-did-you-render": "4.0.6",
+    "history": "4.10.1",
     "abortcontroller-polyfill": "1.4.0",
     "angular": "1.8.2",
     "angular-bindonce": "0.3.1",

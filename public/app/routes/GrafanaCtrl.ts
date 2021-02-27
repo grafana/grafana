@@ -10,7 +10,7 @@ import {
   setDataSourceSrv,
   setLegacyAngularInjector,
   setLocationSrv,
-  getLocationService,
+  locationService,
 } from '@grafana/runtime';
 import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
@@ -71,7 +71,7 @@ export class GrafanaCtrl {
       buildParamsFromVariables: getTemplateSrv().fillVariableValuesForUrl,
     });
 
-    setLocationSrv(getLocationService());
+    setLocationSrv(locationService);
 
     // Initialize websocket event streaming
     if (config.featureToggles.live) {
