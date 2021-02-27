@@ -88,12 +88,12 @@ export class QueryEditor extends PureComponent<Props> {
     const names: Array<SelectableValue<string>> = [
       { value: '', label: 'All measurements', description: 'Show every measurement streamed to this channel' },
     ];
+    const distinctFields = new Set<string>();
     const fields: Array<SelectableValue<string>> = [];
     if (data && data.series?.length) {
-      const distinct = new Set<string>();
       for (const frame of data.series) {
         for (const field of frame.fields) {
-          if (distinct.has(field.name) || !field.name) {
+          if (distinctFields.has(field.name) || !field.name) {
             continue;
           }
           fields.push({
@@ -101,6 +101,19 @@ export class QueryEditor extends PureComponent<Props> {
             label: field.name,
             description: `(${getFrameDisplayName(frame)} / ${field.type})`,
           });
+          distinctFields.add(field.name);
+        }
+      }
+    }
+    if (measurements.fields) {
+      for (const f of measurements.fields) {
+        if (!distinctFields.has(f)) {
+          fields.push({
+            value: f,
+            label: `${f} (not loaded)`,
+            description: `Configured, but not found in the query results`,
+          });
+          distinctFields.add(f);
         }
       }
     }
