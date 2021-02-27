@@ -5,9 +5,7 @@ import { AnnotationQueryEditor as CloudWatchAnnotationQueryEditor } from 'app/pl
 import PageHeader from './components/PageHeader/PageHeader';
 import EmptyListCTA from './components/EmptyListCTA/EmptyListCTA';
 import { TagFilter } from './components/TagFilter/TagFilter';
-import { SideMenu } from './components/sidemenu/SideMenu';
 import { MetricSelect } from './components/Select/MetricSelect';
-import AppNotificationList from './components/AppNotifications/AppNotificationList';
 import {
   ColorPicker,
   DataLinksInlineEditor,
@@ -38,9 +36,7 @@ export function registerAngularDirectives() {
   ]);
   react2AngularDirective('spinner', Spinner, ['inline']);
   react2AngularDirective('helpModal', HelpModal, []);
-  react2AngularDirective('sidemenu', SideMenu, []);
   react2AngularDirective('functionEditor', FunctionEditor, ['func', 'onRemove', 'onMoveLeft', 'onMoveRight']);
-  react2AngularDirective('appNotificationsList', AppNotificationList, []);
   react2AngularDirective('pageHeader', PageHeader, ['model', 'noTabs']);
   react2AngularDirective('emptyListCta', EmptyListCTA, [
     'title',

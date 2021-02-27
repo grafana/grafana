@@ -12,6 +12,7 @@ import { contextSrv } from './services/context_srv';
 import { SideMenu } from './components/sidemenu/SideMenu';
 import { navigationLogger } from './navigation/utils';
 import { GrafanaRoute, SyncLocationWithRedux } from './navigation/GrafanaRoute';
+import { AppNotificationList } from './components/AppNotifications/AppNotificationList';
 
 interface AppWrapperProps {
   app: GrafanaApp;
@@ -67,13 +68,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
 
           return (
             <SyncLocationWithRedux {...props}>
-              <GrafanaRoute
-                {...props}
-                component={route.component}
-                route={route}
-                $injector={this.state.ngInjector}
-                $contextSrv={contextSrv}
-              />
+              <GrafanaRoute {...props} component={route.component} route={route} $injector={this.state.ngInjector} />
             </SyncLocationWithRedux>
           );
         }}
@@ -89,7 +84,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
     navigationLogger('AppWrapper', false, 'rendering');
 
     // @ts-ignore
-    const appSeed = `<grafana-app ng-cloak><app-notifications-list class="page-alert-list"></app-notifications-list><dashboard-search></dashboard-search><div ng-view class="scroll-canvas"><div id="ngRoot"></div></div></grafana-app>`;
+    const appSeed = `<grafana-app ng-cloak></app-notifications-list><dashboard-search></dashboard-search><div ng-view class="scroll-canvas"><div id="ngRoot"></div></div></grafana-app>`;
 
     return (
       <Provider store={store}>
@@ -109,6 +104,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                               __html: appSeed,
                             }}
                           />
+                          <AppNotificationList />
                           {this.state.ngInjector && this.container && this.renderRoutes()}
                         </div>
                       </>
