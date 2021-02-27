@@ -218,7 +218,7 @@ func (dn *DiscordNotifier) embedImage(cmd *models.SendWebhookSync, imagePath str
 
 func notEmpty(metric string) string {
 	if metric == "" {
-		return "Empty metric"
+		return "<NO_METRIC_NAME>"
 	}
 
 	return metric
