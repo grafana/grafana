@@ -9,18 +9,18 @@ import { Icon } from '@grafana/ui';
 import { useLocation } from 'react-router-dom';
 
 const homeUrl = config.appSubUrl || '/';
-const queryParamsToHideSidemenu = ['viewPanel'];
 
 export const SideMenu = () => {
   const location = useLocation();
+  const query = new URLSearchParams(location.search);
+  const kiosk = query.get('kiosk');
+
   const toggleSideMenuSmallBreakpoint = useCallback(() => {
     appEvents.emit(CoreEvents.toggleSidemenuMobile);
   }, []);
 
-  for (let i = 0; i < queryParamsToHideSidemenu.length; i++) {
-    if (location.search.indexOf(queryParamsToHideSidemenu[i]) > -1) {
-      return null;
-    }
+  if (kiosk) {
+    return null;
   }
 
   return (
