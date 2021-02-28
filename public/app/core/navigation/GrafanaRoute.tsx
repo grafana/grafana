@@ -59,12 +59,11 @@ export class GrafanaRoute extends React.Component<GrafanaRouteProps<any>> {
 
   render() {
     navigationLogger('GrafanaRoute', false, 'Rendered', this.props.route);
-    const { component, route, ...routeComponentProps } = this.props;
 
-    return React.createElement(component(), {
-      ...routeComponentProps,
-      routeName: route.routeName,
-    });
+    const { route, ...routeComponentProps } = this.props;
+    const RouteComponent = route.component;
+
+    return <RouteComponent {...routeComponentProps} />;
   }
 }
 
