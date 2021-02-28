@@ -1,8 +1,13 @@
+import { locationUtil } from '@grafana/data';
 import { locationService, navigationLogger } from '@grafana/runtime';
-import { config } from 'app/core/config';
 
 export function interceptLinkClicks(e: MouseEvent) {
   const anchor = getParentAnchor(e.target as HTMLElement);
+
+  // Ignore if opening new tab
+  if (e.ctrlKey || e.metaKey) {
+    return;
+  }
 
   if (anchor) {
     let href = anchor.getAttribute('href');
@@ -12,13 +17,12 @@ export function interceptLinkClicks(e: MouseEvent) {
       navigationLogger('utils', false, 'intercepting link click', e);
       e.preventDefault();
 
+      href = locationUtil.stripBaseFromUrl(href);
+
       // Ensure old angular urls with no starting '/' are handled the same as before
       // That is they where seen as being absolute from app root
       if (href[0] !== '/') {
-        href = config.appSubUrl + href;
-        if (href[0] !== '/') {
-          href = '/' + href;
-        }
+        href = `/${href}`;
       }
 
       locationService.push(href);

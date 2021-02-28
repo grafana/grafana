@@ -32,13 +32,16 @@ class HistoryWrapper implements LocationService {
     this.history.listen((update) => {
       navigationLogger('LocationService', false, 'history.listen', update);
       const urlWithoutBase = locationUtil.stripBaseFromUrl(update.pathname);
+      const search = new URLSearchParams(update.search);
 
       if (this.fullPageReloadRoutes.indexOf(urlWithoutBase) > -1) {
         window.location.href = update.pathname;
         return;
       }
-      // const mode = queryStringToJSON(update.search).kiosk as KioskUrlValue;
-      // setViewModeBodyClass(mode);
+
+      if (search.get('forceLogin')) {
+        window.location.href = update.pathname + update.search;
+      }
     });
 
     // For debugging purposes the location service is attached to global _debug variable

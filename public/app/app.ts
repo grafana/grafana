@@ -64,7 +64,6 @@ export class GrafanaApp {
 
   init() {
     addClassIfNoOverlayScrollbar();
-    //setViewModeBodyClass(queryStringToJSON(getLocationService().getCurrentLocation().search).kiosk as KioskUrlValue);
     setLocale(config.bootData.user.locale);
     setTimeZoneResolver(() => config.bootData.user.timezone);
 
