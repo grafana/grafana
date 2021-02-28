@@ -89,10 +89,11 @@ async function fetchDashboard(
         if (args.fixUrl && dashDTO.meta.url) {
           // check if the current url is correct (might be old slug)
           const dashboardUrl = locationUtil.stripBaseFromUrl(dashDTO.meta.url);
-          const currentPath = getState().location.path;
+          const currentPath = locationService.getCurrentLocation().pathname;
 
           if (dashboardUrl !== currentPath) {
             locationService.replace(dashboardUrl);
+            console.log('not correct url correcting', dashboardUrl, currentPath);
             return null;
           }
         }

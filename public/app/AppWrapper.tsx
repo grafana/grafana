@@ -10,7 +10,7 @@ import { ConfigContext, ThemeProvider } from './core/utils/ConfigProvider';
 import { RouteDescriptor } from './core/navigation/types';
 import { contextSrv } from './core/services/context_srv';
 import { SideMenu } from './core/components/sidemenu/SideMenu';
-import { GrafanaRoute, SyncLocationWithRedux } from './core/navigation/GrafanaRoute';
+import { GrafanaRoute } from './core/navigation/GrafanaRoute';
 import { AppNotificationList } from './core/components/AppNotifications/AppNotificationList';
 import { SearchWrapper } from 'app/features/search';
 
@@ -66,11 +66,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
             }
           }
 
-          return (
-            <SyncLocationWithRedux {...props}>
-              <GrafanaRoute {...props} component={route.component} route={route} $injector={this.state.ngInjector} />
-            </SyncLocationWithRedux>
-          );
+          return <GrafanaRoute {...props} route={route} $injector={this.state.ngInjector} />;
         }}
       />
     );

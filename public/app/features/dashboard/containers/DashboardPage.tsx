@@ -34,18 +34,21 @@ import { cleanUpDashboardAndVariables } from '../state/actions';
 import { cancelVariables } from '../../variables/state/actions';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { locationService } from '@grafana/runtime';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
-export interface Props {
-  urlUid?: string;
-  urlSlug?: string;
-  urlType?: string;
+export interface DashboardPageRouteParams {
+  uid?: string;
+  type?: string;
+  slug?: string;
+}
+
+export interface Props extends GrafanaRouteComponentProps<DashboardPageRouteParams> {
   editview?: string;
   urlPanelId?: string;
   urlFolderId?: string;
   inspectPanelId?: string;
   $scope: any;
   $injector: any;
-  routeName: DashboardRoutes;
   urlEditPanelId?: string;
   urlViewPanelId?: string;
   initPhase: DashboardInitPhase;
@@ -92,24 +95,26 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 
   initDashboard() {
-    if (this.props.dashboard) {
+    const { dashboard, match } = this.props;
+
+    if (dashboard) {
       this.closeDashboard();
     }
 
     this.props.initDashboard({
       $injector: this.props.$injector,
       $scope: this.props.$scope,
-      urlSlug: this.props.urlSlug,
-      urlUid: this.props.urlUid,
-      urlType: this.props.urlType,
+      urlSlug: match.params.slug,
+      urlUid: match.params.uid,
+      urlType: match.params.type,
       urlFolderId: this.props.urlFolderId,
-      routeName: this.props.routeName,
+      routeName: this.props.route.routeName as DashboardRoutes,
       fixUrl: true,
     });
   }
 
   componentDidUpdate(prevProps: Props) {
-    const { dashboard, urlEditPanelId, urlViewPanelId, urlUid } = this.props;
+    const { dashboard, urlEditPanelId, urlViewPanelId, match } = this.props;
     const { editPanel, viewPanel } = this.state;
 
     if (!dashboard) {
@@ -121,7 +126,7 @@ export class DashboardPage extends PureComponent<Props, State> {
       document.title = dashboard.title + ' - ' + Branding.AppTitle;
     }
 
-    if (prevProps.urlUid !== urlUid) {
+    if (prevProps.match.params.uid !== match.params.uid) {
       this.initDashboard();
       return;
     }

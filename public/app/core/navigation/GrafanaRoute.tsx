@@ -3,19 +3,21 @@ import { useDispatch } from 'react-redux';
 import { RouteComponentProps } from 'react-router-dom';
 // @ts-ignore
 import Drop from 'tether-drop';
-import { GrafanaRouteProps } from './types';
+import { GrafanaRouteComponentProps } from './types';
 import { updateLocation } from '../reducers/location';
 import usePrevious from 'react-use/lib/usePrevious';
 import { navigationLogger, queryStringToJSON } from '@grafana/runtime';
 
-export class GrafanaRoute extends React.Component<GrafanaRouteProps<any>> {
+export interface Props extends GrafanaRouteComponentProps {}
+
+export class GrafanaRoute extends React.Component<Props> {
   componentDidMount() {
     this.updateBodyClassNames();
     this.cleanupDOM();
     navigationLogger('GrafanaRoute', false, 'Mounted', this.props.match);
   }
 
-  componentDidUpdate(prevProps: GrafanaRouteProps<any>) {
+  componentDidUpdate(prevProps: Props) {
     this.cleanupDOM();
     navigationLogger('GrafanaRoute', false, 'Updated', this.props, prevProps);
   }
@@ -58,12 +60,12 @@ export class GrafanaRoute extends React.Component<GrafanaRouteProps<any>> {
   }
 
   render() {
-    navigationLogger('GrafanaRoute', false, 'Rendered', this.props.route);
+    const { props } = this;
+    navigationLogger('GrafanaRoute', false, 'Rendered', props.route);
 
-    const { route, ...routeComponentProps } = this.props;
-    const RouteComponent = route.component;
+    const RouteComponent = props.route.component;
 
-    return <RouteComponent {...routeComponentProps} />;
+    return <RouteComponent {...props} />;
   }
 }
 
