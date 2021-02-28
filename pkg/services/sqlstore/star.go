@@ -13,8 +13,8 @@ func init() {
 }
 
 func IsStarredByUser(query *models.IsStarredByUserQuery) error {
-	rawSql := "SELECT 1 from star where user_id=? and dashboard_id=?"
-	results, err := x.Query(rawSql, query.UserId, query.DashboardId)
+	rawSQL := "SELECT 1 from star where user_id=? and dashboard_id=?"
+	results, err := x.Query(rawSQL, query.UserId, query.DashboardId)
 
 	if err != nil {
 		return err
@@ -51,8 +51,8 @@ func UnstarDashboard(cmd *models.UnstarDashboardCommand) error {
 	}
 
 	return inTransaction(func(sess *DBSession) error {
-		var rawSql = "DELETE FROM star WHERE user_id=? and dashboard_id=?"
-		_, err := sess.Exec(rawSql, cmd.UserId, cmd.DashboardId)
+		var rawSQL = "DELETE FROM star WHERE user_id=? and dashboard_id=?"
+		_, err := sess.Exec(rawSQL, cmd.UserId, cmd.DashboardId)
 		return err
 	})
 }

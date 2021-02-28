@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/validations"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -19,6 +21,16 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/xorcare/pointer"
 )
+
+func newTimeSeriesPointsFromArgs(values ...float64) tsdb.TimeSeriesPoints {
+	points := make(tsdb.TimeSeriesPoints, 0)
+
+	for i := 0; i < len(values); i += 2 {
+		points = append(points, tsdb.NewTimePoint(null.FloatFrom(values[i]), values[i+1]))
+	}
+
+	return points
+}
 
 func TestQueryCondition(t *testing.T) {
 	Convey("when evaluating query condition", t, func() {
@@ -47,8 +59,8 @@ func TestQueryCondition(t *testing.T) {
 			})
 
 			Convey("should fire when avg is above 100", func() {
-				points := tsdb.NewTimeSeriesPointsFromArgs(120, 0)
-				ctx.series = tsdb.TimeSeriesSlice{tsdb.NewTimeSeries("test1", points)}
+				points := newTimeSeriesPointsFromArgs(120, 0)
+				ctx.series = tsdb.TimeSeriesSlice{&tsdb.TimeSeries{Name: "test1", Points: points}}
 				cr, err := ctx.exec()
 
 				So(err, ShouldBeNil)
@@ -67,8 +79,8 @@ func TestQueryCondition(t *testing.T) {
 			})
 
 			Convey("Should not fire when avg is below 100", func() {
-				points := tsdb.NewTimeSeriesPointsFromArgs(90, 0)
-				ctx.series = tsdb.TimeSeriesSlice{tsdb.NewTimeSeries("test1", points)}
+				points := newTimeSeriesPointsFromArgs(90, 0)
+				ctx.series = tsdb.TimeSeriesSlice{&tsdb.TimeSeries{Name: "test1", Points: points}}
 				cr, err := ctx.exec()
 
 				So(err, ShouldBeNil)
@@ -88,8 +100,8 @@ func TestQueryCondition(t *testing.T) {
 
 			Convey("Should fire if only first series matches", func() {
 				ctx.series = tsdb.TimeSeriesSlice{
-					tsdb.NewTimeSeries("test1", tsdb.NewTimeSeriesPointsFromArgs(120, 0)),
-					tsdb.NewTimeSeries("test2", tsdb.NewTimeSeriesPointsFromArgs(0, 0)),
+					&tsdb.TimeSeries{Name: "test1", Points: newTimeSeriesPointsFromArgs(120, 0)},
+					&tsdb.TimeSeries{Name: "test2", Points: newTimeSeriesPointsFromArgs(0, 0)},
 				}
 				cr, err := ctx.exec()
 
@@ -121,7 +133,7 @@ func TestQueryCondition(t *testing.T) {
 				Convey("Should set Firing if eval match", func() {
 					ctx.evaluator = `{"type": "no_value", "params": []}`
 					ctx.series = tsdb.TimeSeriesSlice{
-						tsdb.NewTimeSeries("test1", tsdb.NewTimeSeriesPointsFromArgs()),
+						&tsdb.TimeSeries{Name: "test1", Points: newTimeSeriesPointsFromArgs()},
 					}
 					cr, err := ctx.exec()
 
@@ -131,8 +143,8 @@ func TestQueryCondition(t *testing.T) {
 
 				Convey("Should set NoDataFound both series are empty", func() {
 					ctx.series = tsdb.TimeSeriesSlice{
-						tsdb.NewTimeSeries("test1", tsdb.NewTimeSeriesPointsFromArgs()),
-						tsdb.NewTimeSeries("test2", tsdb.NewTimeSeriesPointsFromArgs()),
+						&tsdb.TimeSeries{Name: "test1", Points: newTimeSeriesPointsFromArgs()},
+						&tsdb.TimeSeries{Name: "test2", Points: newTimeSeriesPointsFromArgs()},
 					}
 					cr, err := ctx.exec()
 
@@ -142,8 +154,8 @@ func TestQueryCondition(t *testing.T) {
 
 				Convey("Should set NoDataFound both series contains null", func() {
 					ctx.series = tsdb.TimeSeriesSlice{
-						tsdb.NewTimeSeries("test1", tsdb.TimeSeriesPoints{tsdb.TimePoint{null.FloatFromPtr(nil), null.FloatFrom(0)}}),
-						tsdb.NewTimeSeries("test2", tsdb.TimeSeriesPoints{tsdb.TimePoint{null.FloatFromPtr(nil), null.FloatFrom(0)}}),
+						&tsdb.TimeSeries{Name: "test1", Points: tsdb.TimeSeriesPoints{tsdb.TimePoint{null.FloatFromPtr(nil), null.FloatFrom(0)}}},
+						&tsdb.TimeSeries{Name: "test2", Points: tsdb.TimeSeriesPoints{tsdb.TimePoint{null.FloatFromPtr(nil), null.FloatFrom(0)}}},
 					}
 					cr, err := ctx.exec()
 
@@ -153,8 +165,8 @@ func TestQueryCondition(t *testing.T) {
 
 				Convey("Should not set NoDataFound if one series is empty", func() {
 					ctx.series = tsdb.TimeSeriesSlice{
-						tsdb.NewTimeSeries("test1", tsdb.NewTimeSeriesPointsFromArgs()),
-						tsdb.NewTimeSeries("test2", tsdb.NewTimeSeriesPointsFromArgs(120, 0)),
+						&tsdb.TimeSeries{Name: "test1", Points: newTimeSeriesPointsFromArgs()},
+						&tsdb.TimeSeries{Name: "test2", Points: newTimeSeriesPointsFromArgs(120, 0)},
 					}
 					cr, err := ctx.exec()
 
@@ -218,14 +230,15 @@ func (ctx *queryConditionTestContext) exec() (*alerting.ConditionResult, error) 
 
 func queryConditionScenario(desc string, fn queryConditionScenarioFunc) {
 	Convey(desc, func() {
-		bus.AddHandler("test", func(query *models.GetDataSourceByIdQuery) error {
+		bus.AddHandler("test", func(query *models.GetDataSourceQuery) error {
 			query.Result = &models.DataSource{Id: 1, Type: "graphite"}
 			return nil
 		})
 
 		ctx := &queryConditionTestContext{}
 		ctx.result = &alerting.EvalContext{
-			Rule: &alerting.Rule{},
+			Rule:             &alerting.Rule{},
+			RequestValidator: &validations.OSSPluginRequestValidator{},
 		}
 
 		fn(ctx)
@@ -291,6 +304,54 @@ func TestFrameToSeriesSlice(t *testing.T) {
 				&tsdb.TimeSeries{
 					Name:   "Values Floats {Animal Factor=sloth}",
 					Tags:   map[string]string{"Animal Factor": "sloth"},
+					Points: tsdb.TimeSeriesPoints{},
+				},
+			},
+			Err: require.NoError,
+		},
+		{
+			name: "empty labels",
+			frame: data.NewFrame("",
+				data.NewField("Time", data.Labels{}, []time.Time{}),
+				data.NewField(`Values`, data.Labels{}, []float64{})),
+
+			seriesSlice: tsdb.TimeSeriesSlice{
+				&tsdb.TimeSeries{
+					Name:   "Values",
+					Points: tsdb.TimeSeriesPoints{},
+				},
+			},
+			Err: require.NoError,
+		},
+		{
+			name: "display name from data source",
+			frame: data.NewFrame("",
+				data.NewField("Time", data.Labels{}, []time.Time{}),
+				data.NewField(`Values`, data.Labels{"Rating": "10"}, []*int64{}).SetConfig(&data.FieldConfig{
+					DisplayNameFromDS: "sloth",
+				})),
+
+			seriesSlice: tsdb.TimeSeriesSlice{
+				&tsdb.TimeSeries{
+					Name:   "sloth",
+					Points: tsdb.TimeSeriesPoints{},
+					Tags:   map[string]string{"Rating": "10"},
+				},
+			},
+			Err: require.NoError,
+		},
+		{
+			name: "prefer display name over data source display name",
+			frame: data.NewFrame("",
+				data.NewField("Time", data.Labels{}, []time.Time{}),
+				data.NewField(`Values`, data.Labels{}, []*int64{}).SetConfig(&data.FieldConfig{
+					DisplayName:       "sloth #1",
+					DisplayNameFromDS: "sloth #2",
+				})),
+
+			seriesSlice: tsdb.TimeSeriesSlice{
+				&tsdb.TimeSeries{
+					Name:   "sloth #1",
 					Points: tsdb.TimeSeriesPoints{},
 				},
 			},

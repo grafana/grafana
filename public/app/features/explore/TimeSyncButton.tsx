@@ -1,26 +1,5 @@
 import React from 'react';
-import classNames from 'classnames';
-import { css } from 'emotion';
-
-import { Tooltip, useTheme, stylesFactory, Icon } from '@grafana/ui';
-import { GrafanaTheme } from '@grafana/data';
-
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  return {
-    noRightBorderStyle: css`
-      label: noRightBorderStyle;
-      border-right: 0;
-    `,
-    /*
-     * Required top-padding, otherwise is fa-link icon in active state
-     * cut off on top due to fontAwesome icon position
-     */
-    topPadding: css`
-      label: topPadding;
-      padding-top: 1px;
-    `,
-  };
-});
+import { Tooltip, ToolbarButton } from '@grafana/ui';
 
 interface TimeSyncButtonProps {
   isSynced: boolean;
@@ -29,8 +8,6 @@ interface TimeSyncButtonProps {
 
 export function TimeSyncButton(props: TimeSyncButtonProps) {
   const { onClick, isSynced } = props;
-  const theme = useTheme();
-  const styles = getStyles(theme);
 
   const syncTimesTooltip = () => {
     const { isSynced } = props;
@@ -40,15 +17,12 @@ export function TimeSyncButton(props: TimeSyncButtonProps) {
 
   return (
     <Tooltip content={syncTimesTooltip} placement="bottom">
-      <button
-        className={classNames('btn navbar-button navbar-button--attached', {
-          [`explore-active-button`]: isSynced,
-        })}
+      <ToolbarButton
+        icon="link"
+        variant={isSynced ? 'active' : 'default'}
         aria-label={isSynced ? 'Synced times' : 'Unsynced times'}
-        onClick={() => onClick()}
-      >
-        <Icon name="link" className={classNames(styles.topPadding, isSynced && 'icon-brand-gradient')} size="lg" />
-      </button>
+        onClick={onClick}
+      />
     </Tooltip>
   );
 }

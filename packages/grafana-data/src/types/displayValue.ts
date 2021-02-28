@@ -19,6 +19,17 @@ export interface DisplayValue extends FormattedValue {
 }
 
 /**
+ * Explicit control for text settings
+ */
+export interface TextDisplayOptions {
+  /* Explicit text size */
+  titleSize?: number;
+
+  /* Explicit text size */
+  valueSize?: number;
+}
+
+/**
  * These represents the display value with the longest title and text.
  * Used to align widths and heights when displaying multiple DisplayValues
  */

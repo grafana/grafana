@@ -30,7 +30,11 @@ interface Coords {
   y: number;
 }
 
-// Exposes API for Graph cursor position
+/**
+ * Exposes API for Graph cursor position
+ *
+ * @alpha
+ */
 export const CursorPlugin: React.FC<CursorPluginProps> = ({ id, children, capture = 'mousemove', lock = false }) => {
   const pluginId = `CursorPlugin:${id}`;
   const plotCanvas = useRef<HTMLDivElement>(null);
@@ -74,7 +78,7 @@ export const CursorPlugin: React.FC<CursorPluginProps> = ({ id, children, captur
     const unregister = pluginsApi.registerPlugin({
       id: pluginId,
       hooks: {
-        init: u => {
+        init: (u) => {
           // @ts-ignore
           plotCanvas.current = u.root.querySelector<HTMLDivElement>('.u-over');
           // @ts-ignore
@@ -84,7 +88,7 @@ export const CursorPlugin: React.FC<CursorPluginProps> = ({ id, children, captur
             plotCanvas.current.addEventListener('mouseleave', clearCoords);
           }
         },
-        setCursor: u => {
+        setCursor: (u) => {
           setFocusedPointIdx(u.cursor.idx === undefined ? null : u.cursor.idx);
         },
         setSeries: (u, idx) => {

@@ -16,7 +16,7 @@ type Repository interface {
 
 // AnnotationCleaner is responsible for cleaning up old annotations
 type AnnotationCleaner interface {
-	CleanAnnotations(ctx context.Context, cfg *setting.Cfg) error
+	CleanAnnotations(ctx context.Context, cfg *setting.Cfg) (int64, int64, error)
 }
 
 type ItemQuery struct {
@@ -33,15 +33,6 @@ type ItemQuery struct {
 	MatchAny     bool     `json:"matchAny"`
 
 	Limit int64 `json:"limit"`
-}
-
-type PostParams struct {
-	DashboardId int64  `json:"dashboardId"`
-	PanelId     int64  `json:"panelId"`
-	Epoch       int64  `json:"epoch"`
-	Title       string `json:"title"`
-	Text        string `json:"text"`
-	Icon        string `json:"icon"`
 }
 
 type DeleteParams struct {

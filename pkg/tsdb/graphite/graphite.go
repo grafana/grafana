@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"path"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"golang.org/x/net/context/ctxhttp"
@@ -38,8 +39,19 @@ func init() {
 func (e *GraphiteExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	result := &tsdb.Response{}
 
+	// This logic is used when called from Dashboard Alerting.
 	from := "-" + formatTimeRange(tsdbQuery.TimeRange.From)
 	until := formatTimeRange(tsdbQuery.TimeRange.To)
+
+	// This logic is used when called through server side expressions.
+	if isTimeRangeNumeric(tsdbQuery.TimeRange) {
+		var err error
+		from, until, err = epochMStoGraphiteTime(tsdbQuery.TimeRange)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	var target string
 
 	formData := url.Values{
@@ -68,7 +80,7 @@ func (e *GraphiteExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 
 	if target == "" {
 		glog.Error("No targets in query model", "models without targets", strings.Join(emptyQueries, "\n"))
-		return nil, errors.New("No query target found for the alert rule")
+		return nil, errors.New("no query target found for the alert rule")
 	}
 
 	formData["target"] = []string{target}
@@ -133,14 +145,18 @@ func (e *GraphiteExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 
 func (e *GraphiteExecutor) parseResponse(res *http.Response) ([]TargetResponseDTO, error) {
 	body, err := ioutil.ReadAll(res.Body)
-	defer res.Body.Close()
 	if err != nil {
 		return nil, err
 	}
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			glog.Warn("Failed to close response body", "err", err)
+		}
+	}()
 
 	if res.StatusCode/100 != 2 {
 		glog.Info("Request failed", "status", res.Status, "body", string(body))
-		return nil, fmt.Errorf("Request failed status: %v", res.Status)
+		return nil, fmt.Errorf("request failed, status: %s", res.Status)
 	}
 
 	var data []TargetResponseDTO
@@ -150,6 +166,12 @@ func (e *GraphiteExecutor) parseResponse(res *http.Response) ([]TargetResponseDT
 		return nil, err
 	}
 
+	for si := range data {
+		// Convert Response to timestamps MS
+		for pi, point := range data[si].DataPoints {
+			data[si].DataPoints[pi][1].Float64 = point[1].Float64 * 1000
+		}
+	}
 	return data, nil
 }
 
@@ -163,7 +185,7 @@ func (e *GraphiteExecutor) createRequest(dsInfo *models.DataSource, data url.Val
 	req, err := http.NewRequest(http.MethodPost, u.String(), strings.NewReader(data.Encode()))
 	if err != nil {
 		glog.Info("Failed to create request", "error", err)
-		return nil, fmt.Errorf("Failed to create request. error: %v", err)
+		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -191,4 +213,28 @@ func fixIntervalFormat(target string) string {
 		return strings.ReplaceAll(M, "M", "mon")
 	})
 	return target
+}
+
+func isTimeRangeNumeric(tr *tsdb.TimeRange) bool {
+	if _, err := strconv.ParseInt(tr.From, 10, 64); err != nil {
+		return false
+	}
+	if _, err := strconv.ParseInt(tr.To, 10, 64); err != nil {
+		return false
+	}
+	return true
+}
+
+func epochMStoGraphiteTime(tr *tsdb.TimeRange) (string, string, error) {
+	from, err := strconv.ParseInt(tr.From, 10, 64)
+	if err != nil {
+		return "", "", err
+	}
+
+	to, err := strconv.ParseInt(tr.To, 10, 64)
+	if err != nil {
+		return "", "", err
+	}
+
+	return fmt.Sprintf("%d", from/1000), fmt.Sprintf("%d", to/1000), nil
 }

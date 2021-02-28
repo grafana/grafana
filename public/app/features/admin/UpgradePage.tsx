@@ -129,6 +129,7 @@ const FeatureListing: React.FC = () => {
       <Item title="Enhanced LDAP Integration" />
       <Item title="Team Sync">LDAP, GitHub OAuth, Auth Proxy, Okta</Item>
       <Item title="White labeling" />
+      <Item title="Auditing" />
       <Item title="Grafana usage insights">
         <List nested={true}>
           <Item title="Sort dashboards by popularity in search" />

@@ -1,8 +1,8 @@
 import React, { useContext } from 'react';
 import { css, cx } from 'emotion';
 
-import { CompletionItem, selectThemeVariant, ThemeContext } from '../..';
-import { GrafanaTheme, renderMarkdown, textUtil } from '@grafana/data';
+import { CompletionItem, ThemeContext } from '../..';
+import { GrafanaTheme, renderMarkdown } from '@grafana/data';
 
 const getStyles = (theme: GrafanaTheme, height: number, visible: boolean) => {
   return {
@@ -11,19 +11,13 @@ const getStyles = (theme: GrafanaTheme, height: number, visible: boolean) => {
       z-index: 11;
       padding: ${theme.spacing.sm} ${theme.spacing.sm} ${theme.spacing.sm} ${theme.spacing.md};
       border-radius: ${theme.border.radius.md};
-      border: ${selectThemeVariant(
-        { light: `solid 1px ${theme.palette.gray5}`, dark: `solid 1px ${theme.palette.dark1}` },
-        theme.type
-      )};
+      border: ${theme.colors.border2};
       overflow-y: scroll;
       overflow-x: hidden;
       outline: none;
-      background: ${selectThemeVariant({ light: theme.palette.white, dark: theme.palette.dark4 }, theme.type)};
+      background: ${theme.colors.bg2};
       color: ${theme.colors.text};
-      box-shadow: ${selectThemeVariant(
-        { light: `0 5px 10px 0 ${theme.palette.gray5}`, dark: `0 5px 10px 0 ${theme.palette.black}` },
-        theme.type
-      )};
+      box-shadow: 0 0 20px ${theme.colors.dropdownShadow};
       visibility: ${visible === true ? 'visible' : 'hidden'};
       width: 250px;
       height: ${height + parseInt(theme.spacing.xxs, 10)}px;
@@ -41,7 +35,7 @@ interface Props {
 export const TypeaheadInfo: React.FC<Props> = ({ item, height }) => {
   const visible = item && !!item.documentation;
   const label = item ? item.label : '';
-  const documentation = textUtil.sanitize(renderMarkdown(item?.documentation));
+  const documentation = renderMarkdown(item?.documentation);
   const theme = useContext(ThemeContext);
   const styles = getStyles(theme, height, visible);
 

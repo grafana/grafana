@@ -8,8 +8,6 @@ import { connect } from 'react-redux';
 // Components
 import AngularQueryEditor from './QueryEditor';
 import { QueryRowActions } from './QueryRowActions';
-// Actions
-import { changeQuery, modifyQueries, runQueries } from './state/actions';
 // Types
 import { StoreState } from 'app/types';
 import {
@@ -20,18 +18,19 @@ import {
   TimeRange,
   AbsoluteTimeRange,
   LoadingState,
+  EventBusExtended,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { ExploreItemState, ExploreId } from 'app/types/explore';
-import { Emitter } from 'app/core/utils/emitter';
-import { highlightLogsExpressionAction, removeQueryRowAction } from './state/actionTypes';
+import { highlightLogsExpressionAction } from './state/explorePane';
 import { ErrorContainer } from './ErrorContainer';
+import { changeQuery, modifyQueries, removeQueryRowAction, runQueries } from './state/query';
+import { HelpToggle } from '../query/components/HelpToggle';
 
 interface PropsFromParent {
   exploreId: ExploreId;
   index: number;
-  exploreEvents: Emitter;
 }
 
 export interface QueryRowProps extends PropsFromParent {
@@ -49,6 +48,7 @@ export interface QueryRowProps extends PropsFromParent {
   runQueries: typeof runQueries;
   queryResponse: PanelData;
   latency: number;
+  exploreEvents: EventBusExtended;
 }
 
 interface QueryRowState {
@@ -120,8 +120,9 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
 
     const ReactQueryEditor = this.setReactQueryEditor();
 
+    let QueryEditor: JSX.Element;
     if (ReactQueryEditor) {
-      return (
+      QueryEditor = (
         <ReactQueryEditor
           datasource={datasourceInstance}
           query={query}
@@ -134,18 +135,31 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
           exploreId={exploreId}
         />
       );
+    } else {
+      QueryEditor = (
+        <AngularQueryEditor
+          error={queryErrors}
+          datasource={datasourceInstance}
+          onQueryChange={this.onChange}
+          onExecuteQuery={this.onRunQuery}
+          initialQuery={query}
+          exploreEvents={exploreEvents}
+          range={range}
+          textEditModeEnabled={this.state.textEditModeEnabled}
+        />
+      );
     }
+
+    const DatasourceCheatsheet = datasourceInstance.components?.QueryEditorHelp;
     return (
-      <AngularQueryEditor
-        error={queryErrors}
-        datasource={datasourceInstance}
-        onQueryChange={this.onChange}
-        onExecuteQuery={this.onRunQuery}
-        initialQuery={query}
-        exploreEvents={exploreEvents}
-        range={range}
-        textEditModeEnabled={this.state.textEditModeEnabled}
-      />
+      <>
+        {QueryEditor}
+        {DatasourceCheatsheet && (
+          <HelpToggle>
+            <DatasourceCheatsheet onClickExample={(query) => this.onChange(query)} datasource={datasourceInstance} />
+          </HelpToggle>
+        )}
+      </>
     );
   };
 
@@ -187,8 +201,8 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
 
 function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps) {
   const explore = state.explore;
-  const item: ExploreItemState = explore[exploreId];
-  const { datasourceInstance, history, queries, range, absoluteRange, queryResponse, latency } = item;
+  const item: ExploreItemState = explore[exploreId]!;
+  const { datasourceInstance, history, queries, range, absoluteRange, queryResponse, latency, eventBridge } = item;
   const query = queries[index];
 
   return {
@@ -199,6 +213,7 @@ function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps)
     absoluteRange,
     queryResponse,
     latency,
+    exploreEvents: eventBridge,
   };
 }
 

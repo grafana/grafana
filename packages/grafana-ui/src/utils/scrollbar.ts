@@ -18,7 +18,7 @@ export function getScrollbarWidth() {
       MsOverflowStyle: 'scrollbar',
     };
 
-    Object.keys(newStyles).map(style => {
+    Object.keys(newStyles).map((style) => {
       // @ts-ignore
       div.style[style] = newStyles[style];
     });
@@ -29,5 +29,6 @@ export function getScrollbarWidth() {
   } else {
     scrollbarWidth = 0;
   }
+
   return scrollbarWidth || 0;
 }

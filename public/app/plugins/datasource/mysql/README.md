@@ -1,6 +1,6 @@
 # MySQL Data Source -  Native Plugin
 
-Grafana ships with a built-in MySQL data source plugin that allow you to query any visualize data from a MySQL compatible database.
+Grafana ships with a built-in MySQL data source plugin that allows you to query and visualize data from a MySQL compatible database.
 
 ## Adding the data source
 

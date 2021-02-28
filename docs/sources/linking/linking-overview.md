@@ -1,11 +1,7 @@
 +++
 title = "Linking overview"
-type = "docs"
 keywords = ["grafana", "linking", "create links", "link panels", "link dashboards", "navigate"]
-[menu.docs]
 aliases = ["/docs/grafana/latest/features/navigation-links/"]
-identifier = "linking-overview"
-parent = "linking"
 weight = 100
 +++
 

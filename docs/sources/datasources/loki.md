@@ -2,11 +2,7 @@
 title = "Loki"
 description = "Guide for using Loki in Grafana"
 keywords = ["grafana", "loki", "logging", "guide"]
-type = "docs"
 aliases = ["/docs/grafana/latest/features/datasources/loki"]
-[menu.docs]
-name = "Loki"
-parent = "datasources"
 weight = 800
 +++
 
@@ -43,7 +39,7 @@ The Derived Fields configuration allows you to:
 - Add fields parsed from the log message.
 - Add a link that uses the value of the field.
 
-You can use this functionality to link to your tracing backend directly from your logs, or link to a user profile page if a userId is present in the log line. These links appear in the [log details](/explore/#labels-and-parsed-fields).
+You can use this functionality to link to your tracing backend directly from your logs, or link to a user profile page if a userId is present in the log line. These links appear in the [log details](/explore/logs-integration/#labels-and-detected-fields).
 {{< docs-imagebox img="/img/docs/v65/loki_derived_fields.png" class="docs-image--no-shadow" caption="Screenshot of the derived fields configuration" >}}
 Each derived field consists of:
 
@@ -134,8 +130,37 @@ Note that Live Tailing relies on two Websocket connections: one between the brow
 ```
 ProxyPassMatch "^/(api/datasources/proxy/\d+/loki/api/v1/tail)" "ws://127.0.0.1:3000/$1"
 ```
+The following example shows basic NGINX proxy configuration. It assumes that the Grafana server is available at `http://localhost:3000/`, Loki server is running locally without proxy, and your external site uses HTTPS. If you also host Loki behind NGINX proxy, then you might want to repeat the following configuration for Loki as well.
 
-> **Note:** This feature is only available in Grafana v6.3+
+In the `http` section of NGINX configuration, add the following map definition:
+```
+  map $http_upgrade $connection_upgrade {
+    default upgrade;
+    '' close;
+  }
+```
+In your `server` section, add the following configuration:
+```
+  location ~ /(api/datasources/proxy/\d+/loki/api/v1/tail) {
+      proxy_pass          http://localhost:3000$request_uri;
+      proxy_set_header    Host              $host;
+      proxy_set_header    X-Real-IP         $remote_addr;
+      proxy_set_header    X-Forwarded-for   $proxy_add_x_forwarded_for;
+      proxy_set_header    X-Forwarded-Proto "https";
+      proxy_set_header    Connection        $connection_upgrade;
+      proxy_set_header    Upgrade           $http_upgrade;
+  }
+
+  location / {
+      proxy_pass          http://localhost:3000/;
+      proxy_set_header    Host              $host;
+      proxy_set_header    X-Real-IP         $remote_addr;
+      proxy_set_header    X-Forwarded-for   $proxy_add_x_forwarded_for;
+      proxy_set_header    X-Forwarded-Proto "https";
+  }
+```
+
+> **Note:** This feature is only available in Grafana v6.3+.
 
 ## Log Context
 
@@ -205,4 +230,16 @@ datasources:
         - matcherRegex: "traceID=(\\w+)"
           name: TraceID
           url: "http://localhost:16686/trace/$${__value.raw}"
+```
+
+Here's an example of a Jaeger data source corresponding to the above example. Note that the Jaeger `uid` value does match the Loki `datasourceUid` value.
+
+```
+datasources:
+    - name: Jaeger
+      type: jaeger
+      url: http://jaeger-tracing-query:16686/
+      access: proxy
+      # UID should match the datasourceUid in dervidedFields.
+      uid: my_jaeger_uid
 ```

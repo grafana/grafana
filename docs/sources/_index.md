@@ -2,7 +2,6 @@
 title = "Grafana documentation"
 description = "Guides, Installation and Feature Documentation"
 keywords = ["grafana", "installation", "documentation"]
-type = "docs"
 aliases = ["/docs/grafana/v1.1", "/docs/grafana/latest/guides/reference/admin", "/docs/grafana/v3.1"]
 +++
 
@@ -45,10 +44,6 @@ aliases = ["/docs/grafana/v1.1", "/docs/grafana/latest/guides/reference/admin", 
 ## Guides
 
 <div class="nav-cards">
-    <a href="{{< relref "getting-started/what-is-grafana.md" >}}" class="nav-cards__item nav-cards__item--guide">
-        <h4>What is Grafana?</h4>
-        <p>Get an overview of Grafana's key features.</p>
-    </a>
     <a href="{{< relref "getting-started/getting-started.md" >}}" class="nav-cards__item nav-cards__item--guide">
         <h4>Getting started</h4>
         <p>Learn the basics of using Grafana.</p>
@@ -65,8 +60,8 @@ aliases = ["/docs/grafana/v1.1", "/docs/grafana/latest/guides/reference/admin", 
         <h4>Provisioning</h4>
         <p>Learn how to automate your Grafana configuration.</p>
     </a>
-    <a href="{{< relref "whatsnew/whats-new-in-v7-2.md" >}}" class="nav-cards__item nav-cards__item--guide">
-        <h4>What's new in v7.2</h4>
+    <a href="{{< relref "whatsnew/whats-new-in-v7-4.md" >}}" class="nav-cards__item nav-cards__item--guide">
+        <h4>What's new in v7.4</h4>
         <p>Explore the features and enhancements in the latest release.</p>
     </a>
 
@@ -91,7 +86,7 @@ aliases = ["/docs/grafana/v1.1", "/docs/grafana/latest/guides/reference/admin", 
       <img src="/img/docs/logos/icon_prometheus.svg" >
       <h5>Prometheus</h5>
     </a>
-    <a href="{{< relref "datasources/cloudmonitoring.md" >}}" class="nav-cards__item nav-cards__item--ds">
+    <a href="{{< relref "datasources/google-cloud-monitoring/_index.md" >}}" class="nav-cards__item nav-cards__item--ds">
       <img src="/img/docs/logos/icon_cloudmonitoring.svg">
       <h5>Google Cloud Monitoring</h5>
     </a>

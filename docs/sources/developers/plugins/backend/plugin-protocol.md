@@ -1,7 +1,6 @@
 +++
 title = "Plugin protocol"
 keywords = ["grafana", "plugins", "backend", "plugin", "backend-plugins", "documentation"]
-type = "docs"
 +++
 
 # Plugin protocol

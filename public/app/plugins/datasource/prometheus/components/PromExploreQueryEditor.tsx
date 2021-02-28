@@ -57,11 +57,14 @@ export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
       data={data}
       ExtraFieldElement={
         <PromExploreExtraField
-          queryType={query.range && query.instant ? 'both' : query.instant ? 'instant' : 'range'}
+          // Select "both" as default option when Explore is opened. In legacy requests, range and instant can be undefined. In this case, we want to run queries with "both".
+          queryType={query.range === query.instant ? 'both' : query.instant ? 'instant' : 'range'}
           stepValue={query.interval || ''}
           onQueryTypeChange={onQueryTypeChange}
           onStepChange={onStepChange}
           onKeyDownFunc={onReturnKeyDown}
+          query={query}
+          onChange={onChange}
         />
       }
     />

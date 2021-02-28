@@ -1,6 +1,7 @@
 package plugins
 
 import (
+	"sort"
 	"strings"
 	"testing"
 
@@ -46,6 +47,13 @@ NR7DnB0CCQHO+4FlSPtXFTzNepoc+CytQyDAeOLMLmf2Tqhk2YShk+G/YlVX
 		require.NoError(t, err)
 		require.NotNil(t, manifest)
 		assert.Equal(t, "grafana-googlesheets-datasource", manifest.Plugin)
+		assert.Equal(t, "1.0.0-dev", manifest.Version)
+		assert.Equal(t, int64(1586817677115), manifest.Time)
+		assert.Equal(t, "7e4d0c6a708866e7", manifest.KeyID)
+		expectedFiles := []string{"LICENSE", "README.md", "gfx_sheets_darwin_amd64", "gfx_sheets_linux_amd64",
+			"gfx_sheets_windows_amd64.exe", "module.js", "module.js.LICENSE.txt", "module.js.map", "plugin.json",
+		}
+		assert.Equal(t, expectedFiles, fileList(manifest))
 	})
 
 	t.Run("invalid manifest", func(t *testing.T) {
@@ -53,4 +61,62 @@ NR7DnB0CCQHO+4FlSPtXFTzNepoc+CytQyDAeOLMLmf2Tqhk2YShk+G/YlVX
 		_, err := readPluginManifest([]byte(modified))
 		require.Error(t, err)
 	})
+}
+
+func TestReadPluginManifestV2(t *testing.T) {
+	txt := `-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+{
+  "manifestVersion": "2.0.0",
+  "signatureType": "private",
+  "signedByOrg": "willbrowne",
+  "signedByOrgName": "Will Browne",
+  "rootUrls": [
+    "http://localhost:3000/"
+  ],
+  "plugin": "test",
+  "version": "1.0.0",
+  "time": 1605807018050,
+  "keyId": "7e4d0c6a708866e7",
+  "files": {
+    "plugin.json": "2bb467c0bfd6c454551419efe475b8bf8573734e73c7bab52b14842adb62886f"
+  }
+}
+-----BEGIN PGP SIGNATURE-----
+Version: OpenPGP.js v4.10.1
+Comment: https://openpgpjs.org
+
+wqIEARMKAAYFAl+2q6oACgkQfk0ManCIZudmzwIJAXWz58cd/91rTXszKPnE
+xbVEvERCbjKTtPBQBNQyqEvV+Ig3MuBSNOVy2SOGrMsdbS6lONgvgt4Cm+iS
+wV+vYifkAgkBJtg/9DMB7/iX5O0h49CtSltcpfBFXlGqIeOwRac/yENzRzAA
+khdr/tZ1PDgRxMqB/u+Vtbpl0xSxgblnrDOYMSI=
+=rLIE
+-----END PGP SIGNATURE-----`
+
+	t.Run("valid manifest", func(t *testing.T) {
+		manifest, err := readPluginManifest([]byte(txt))
+
+		require.NoError(t, err)
+		require.NotNil(t, manifest)
+		assert.Equal(t, "test", manifest.Plugin)
+		assert.Equal(t, "1.0.0", manifest.Version)
+		assert.Equal(t, int64(1605807018050), manifest.Time)
+		assert.Equal(t, "7e4d0c6a708866e7", manifest.KeyID)
+		assert.Equal(t, "2.0.0", manifest.ManifestVersion)
+		assert.Equal(t, privateType, manifest.SignatureType)
+		assert.Equal(t, "willbrowne", manifest.SignedByOrg)
+		assert.Equal(t, "Will Browne", manifest.SignedByOrgName)
+		assert.Equal(t, []string{"http://localhost:3000/"}, manifest.RootURLs)
+		assert.Equal(t, []string{"plugin.json"}, fileList(manifest))
+	})
+}
+
+func fileList(manifest *pluginManifest) []string {
+	var keys []string
+	for k := range manifest.Files {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
 }

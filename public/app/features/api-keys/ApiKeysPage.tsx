@@ -24,7 +24,7 @@ import { setSearchQuery } from './state/reducers';
 const timeRangeValidationEvents: ValidationEvents = {
   [EventsWithValidation.onBlur]: [
     {
-      rule: value => {
+      rule: (value) => {
         if (!value) {
           return true;
         }
@@ -189,7 +189,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
                   className="gf-form-input"
                   value={newApiKey.name}
                   placeholder="Name"
-                  onChange={evt => this.onApiKeyStateUpdate(evt, ApiKeyStateProps.Name)}
+                  onChange={(evt) => this.onApiKeyStateUpdate(evt, ApiKeyStateProps.Name)}
                 />
               </div>
               <div className="gf-form">
@@ -198,9 +198,9 @@ export class ApiKeysPage extends PureComponent<Props, any> {
                   <select
                     className="gf-form-input gf-size-auto"
                     value={newApiKey.role}
-                    onChange={evt => this.onApiKeyStateUpdate(evt, ApiKeyStateProps.Role)}
+                    onChange={(evt) => this.onApiKeyStateUpdate(evt, ApiKeyStateProps.Role)}
                   >
-                    {Object.keys(OrgRole).map(role => {
+                    {Object.keys(OrgRole).map((role) => {
                       return (
                         <option key={role} label={role} value={role}>
                           {role}
@@ -218,7 +218,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
                   placeholder="1d"
                   validationEvents={timeRangeValidationEvents}
                   value={newApiKey.secondsToLive}
-                  onChange={evt => this.onApiKeyStateUpdate(evt, ApiKeyStateProps.SecondsToLive)}
+                  onChange={(evt) => this.onApiKeyStateUpdate(evt, ApiKeyStateProps.SecondsToLive)}
                 />
               </div>
               <div className="gf-form">
@@ -260,7 +260,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
         <Switch
           label="Show expired"
           checked={includeExpired}
-          onChange={event => {
+          onChange={(event) => {
             // @ts-ignore
             this.onIncludeExpiredChange(event.target.checked);
           }}
@@ -276,7 +276,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
           </thead>
           {apiKeys.length > 0 ? (
             <tbody>
-              {apiKeys.map(key => {
+              {apiKeys.map((key) => {
                 return (
                   <tr key={key.id}>
                     <td>{key.name}</td>

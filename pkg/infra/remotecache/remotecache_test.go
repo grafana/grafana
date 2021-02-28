@@ -19,7 +19,7 @@ func init() {
 	Register(CacheableStruct{})
 }
 
-func createTestClient(t *testing.T, opts *setting.RemoteCacheOptions, sqlstore *sqlstore.SqlStore) CacheStorage {
+func createTestClient(t *testing.T, opts *setting.RemoteCacheOptions, sqlstore *sqlstore.SQLStore) CacheStorage {
 	t.Helper()
 
 	dc := &RemoteCache{

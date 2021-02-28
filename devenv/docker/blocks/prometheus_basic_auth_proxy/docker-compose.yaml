@@ -2,5 +2,6 @@
 # http://prometheus:9090 (Prometheus inside the docker compose)
 
   nginxproxy:
-    build: docker/blocks/nginx_proxy
-    network_mode: host
+    build: docker/blocks/prometheus_basic_auth_proxy
+    ports:
+      - "10090:10090"

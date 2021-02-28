@@ -7,22 +7,49 @@ import LokiLanguageProvider from 'app/plugins/datasource/loki/language_provider'
 import { useRefMounted } from 'app/core/hooks/useRefMounted';
 
 /**
+ * Initialise the language provider. Returns a languageProviderInitialized boolean cause there does not seem other way
+ * to know if the provider is already initialised or not. By the initialisation it modifies the provided
+ * languageProvider directly.
+ */
+const useInitLanguageProvider = (languageProvider: LokiLanguageProvider, absoluteRange: AbsoluteTimeRange) => {
+  const mounted = useRefMounted();
+
+  const [languageProviderInitialized, setLanguageProviderInitialized] = useState(false);
+
+  // Async
+  const initializeLanguageProvider = async () => {
+    languageProvider.initialRange = absoluteRange;
+    await languageProvider.start();
+    if (mounted.current) {
+      setLanguageProviderInitialized(true);
+    }
+  };
+
+  useEffect(() => {
+    initializeLanguageProvider();
+  }, []);
+
+  return languageProviderInitialized;
+};
+
+/**
  *
  * @param languageProvider
- * @param languageProviderInitialised
+ * @param languageProviderInitialized
  * @param absoluteRange
  *
  * @description Fetches missing labels and enables labels refresh
  */
-export const useLokiLabels = (
+export const getLokiLabels = (
   languageProvider: LokiLanguageProvider,
-  languageProviderInitialised: boolean,
+  languageProviderInitialized: boolean,
   absoluteRange: AbsoluteTimeRange
 ) => {
   const mounted = useRefMounted();
 
   // State
   const [logLabelOptions, setLogLabelOptions] = useState<any>([]);
+  const [labelsLoaded, setLabelsLoaded] = useState(false);
   const [shouldTryRefreshLabels, setRefreshLabels] = useState(false);
   const [prevAbsoluteRange, setPrevAbsoluteRange] = useState<AbsoluteTimeRange | null>(null);
   /**
@@ -37,6 +64,7 @@ export const useLokiLabels = (
     await languageProvider.fetchLabelValues(option, absoluteRange);
     if (mounted.current) {
       setLogLabelOptions(languageProvider.logLabelOptions);
+      setLabelsLoaded(true);
     }
   };
 
@@ -56,7 +84,7 @@ export const useLokiLabels = (
   // It's a subject of activeOption state change only. This is because of specific behavior or rc-cascader
   // https://github.com/react-component/cascader/blob/master/src/Cascader.jsx#L165
   useEffect(() => {
-    if (languageProviderInitialised) {
+    if (languageProviderInitialized) {
       const targetOption = activeOption[activeOption.length - 1];
       if (targetOption) {
         const nextOptions = logLabelOptions.map((option: any) => {
@@ -85,14 +113,35 @@ export const useLokiLabels = (
 
   // Initialize labels from the provider after it gets initialized (it's initialisation happens outside of this hook)
   useEffect(() => {
-    if (languageProviderInitialised) {
+    if (languageProviderInitialized) {
       setLogLabelOptions(languageProvider.logLabelOptions);
+      setLabelsLoaded(true);
     }
-  }, [languageProviderInitialised]);
+  }, [languageProviderInitialized]);
 
   return {
     logLabelOptions,
     refreshLabels: () => setRefreshLabels(true),
     setActiveOption,
+    labelsLoaded,
+  };
+};
+
+/**
+ * Initializes given language provider and enables loading label option values
+ */
+export const useLokiLabels = (languageProvider: LokiLanguageProvider, absoluteRange: AbsoluteTimeRange) => {
+  const languageProviderInitialized = useInitLanguageProvider(languageProvider, absoluteRange);
+  const { logLabelOptions, refreshLabels, setActiveOption, labelsLoaded } = getLokiLabels(
+    languageProvider,
+    languageProviderInitialized,
+    absoluteRange
+  );
+
+  return {
+    logLabelOptions,
+    refreshLabels,
+    setActiveOption,
+    labelsLoaded,
   };
 };

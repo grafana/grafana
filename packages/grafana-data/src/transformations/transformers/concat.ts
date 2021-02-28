@@ -2,7 +2,7 @@ import { map } from 'rxjs/operators';
 
 import { DataTransformerID } from './ids';
 import { DataTransformerInfo } from '../../types/transformations';
-import { DataFrame, Field } from '../../types/dataFrame';
+import { DataFrame, Field, TIME_SERIES_VALUE_FIELD_NAME } from '../../types/dataFrame';
 import { ArrayVector } from '../../vector';
 
 export enum ConcatenateFrameNameMode {
@@ -38,9 +38,9 @@ export const concatenateTransformer: DataTransformerInfo<ConcatenateTransformerO
     frameNameMode: ConcatenateFrameNameMode.FieldName,
     frameNameLabel: 'frame',
   },
-  operator: options => source =>
+  operator: (options) => (source) =>
     source.pipe(
-      map(dataFrames => {
+      map((dataFrames) => {
         if (!Array.isArray(dataFrames) || dataFrames.length < 2) {
           return dataFrames; // noop with single frame
         }
@@ -73,7 +73,7 @@ export function concatenateFields(data: DataFrame[], opts: ConcatenateTransforme
         } else if (opts.frameNameMode === ConcatenateFrameNameMode.Label) {
           copy.labels = { ...f.labels };
           copy.labels[frameNameLabel] = frame.name;
-        } else if (!copy.name || copy.name === 'Value') {
+        } else if (!copy.name || copy.name === TIME_SERIES_VALUE_FIELD_NAME) {
           copy.name = frame.name;
         } else {
           copy.name = `${frame.name} · ${f.name}`;
@@ -85,7 +85,7 @@ export function concatenateFields(data: DataFrame[], opts: ConcatenateTransforme
 
   // Make sure all fields have the same length
   if (!sameLength) {
-    fields = fields.map(f => {
+    fields = fields.map((f) => {
       if (f.values.length === maxLength) {
         return f;
       }

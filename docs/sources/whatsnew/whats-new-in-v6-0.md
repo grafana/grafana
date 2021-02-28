@@ -2,13 +2,10 @@
 title = "What's new in Grafana v6.0"
 description = "Feature and improvement highlights for Grafana v6.0"
 keywords = ["grafana", "new", "documentation", "6.0", "release notes"]
-type = "docs"
 aliases = ["/docs/grafana/latest/guides/whats-new-in-v6-0/"]
-[menu.docs]
-name = "Version 6.0"
-identifier = "v6.0"
-parent = "whatsnew"
-weight = -11
+weight = -19
+[_build]
+list = false
 +++
 
 # What's new in Grafana v6.0
@@ -117,7 +114,7 @@ will be shared soon.
 
 Built-in support for [Google Stackdriver](https://cloud.google.com/stackdriver/) is officially released in Grafana 6.0. Beta support was added in Grafana 5.3 and we have added lots of improvements since then.
 
-To get started read the guide: [Using Google Stackdriver in Grafana]({{< relref "../datasources/cloudmonitoring/" >}}).
+To get started read the guide: [Using Google Stackdriver in Grafana]({{< relref "../datasources/google-cloud-monitoring/_index.md/" >}}).
 
 ## Azure Monitor data source
 

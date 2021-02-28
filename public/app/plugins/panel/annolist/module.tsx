@@ -5,7 +5,7 @@ import { AnnoListPanel } from './AnnoListPanel';
 import { AnnoOptions } from './types';
 
 export const plugin = new PanelPlugin<AnnoOptions>(AnnoListPanel)
-  .setPanelOptions(builder => {
+  .setPanelOptions((builder) => {
     builder
       .addBooleanSwitch({
         path: 'showUser',
@@ -60,7 +60,7 @@ export const plugin = new PanelPlugin<AnnoOptions>(AnnoListPanel)
         path: 'tags',
         name: 'Tags',
         description: '',
-        editor: props => {
+        editor(props) {
           return <TagsInput tags={props.value} onChange={props.onChange} />;
         },
       })

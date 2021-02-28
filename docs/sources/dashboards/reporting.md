@@ -2,10 +2,7 @@
 title = "Reporting"
 description = ""
 keywords = ["grafana", "reporting"]
-type = "docs"
 aliases = ["/docs/grafana/latest/administration/reports"]
-[menu.docs]
-parent = "features"
 weight = 8
 +++
 

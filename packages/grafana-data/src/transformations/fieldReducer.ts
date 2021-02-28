@@ -15,6 +15,7 @@ export enum ReducerID {
   count = 'count',
   range = 'range',
   diff = 'diff',
+  diffperc = 'diffperc',
   delta = 'delta',
   step = 'step',
 
@@ -223,6 +224,12 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     standard: false,
     reduce: calculateDistinctCount,
   },
+  {
+    id: ReducerID.diffperc,
+    name: 'Difference percent',
+    description: 'Percentage difference between first and last values',
+    standard: true,
+  },
 ]);
 
 export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
@@ -244,6 +251,7 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
     diff: null,
     delta: 0,
     step: Number.MAX_VALUE,
+    diffperc: 0,
 
     // Just used for calculations -- not exposed as a stat
     previousDeltaUp: true,
@@ -353,6 +361,9 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
     calcs.diff = calcs.lastNotNull - calcs.firstNotNull;
   }
 
+  if (isNumber(calcs.firstNotNull) && isNumber(calcs.diff)) {
+    calcs.diffperc = calcs.diff / calcs.firstNotNull;
+  }
   return calcs;
 }
 

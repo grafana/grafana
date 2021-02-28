@@ -16,6 +16,7 @@ export class User {
   helpFlags1: number;
   lightTheme: boolean;
   hasEditPermissionInFolders: boolean;
+  email?: string;
 
   constructor() {
     if (config.bootData.user) {
@@ -46,6 +47,14 @@ export class ContextSrv {
     this.isEditor = this.hasRole('Editor') || this.hasRole('Admin');
     this.hasEditPermissionInFolders = this.user.hasEditPermissionInFolders;
     this.minRefreshInterval = config.minRefreshInterval;
+  }
+
+  /**
+   * Indicate the user has been logged out
+   */
+  setLoggedOut() {
+    this.user.isSignedIn = false;
+    this.isSignedIn = false;
   }
 
   hasRole(role: string) {

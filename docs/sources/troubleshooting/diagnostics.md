@@ -1,7 +1,5 @@
 +++
 title = "Enable diagnostics"
-type = "docs"
-[menu.docs]
 weight = 200
 +++
 

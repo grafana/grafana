@@ -1,11 +1,18 @@
 import React from 'react';
 import { shallow } from 'enzyme';
+import { render } from '@testing-library/react';
 import { TraceView } from './TraceView';
 import { TracePageHeader, TraceTimelineViewer } from '@jaegertracing/jaeger-ui-components';
 import { TraceSpanData, TraceData } from '@grafana/data';
+import { setDataSourceSrv } from '@grafana/runtime';
+import { ExploreId } from 'app/types';
+
+jest.mock('react-redux', () => ({
+  useSelector: jest.fn(() => undefined),
+}));
 
 function renderTraceView() {
-  const wrapper = shallow(<TraceView trace={response} splitOpenFn={() => {}} />);
+  const wrapper = shallow(<TraceView exploreId={ExploreId.left} trace={response} splitOpenFn={() => {}} />);
   return {
     timeline: wrapper.find(TraceTimelineViewer),
     header: wrapper.find(TracePageHeader),
@@ -14,10 +21,25 @@ function renderTraceView() {
 }
 
 describe('TraceView', () => {
+  beforeAll(() => {
+    setDataSourceSrv({
+      getInstanceSettings() {
+        return undefined;
+      },
+    } as any);
+  });
+
   it('renders TraceTimelineViewer', () => {
     const { timeline, header } = renderTraceView();
     expect(timeline).toHaveLength(1);
     expect(header).toHaveLength(1);
+  });
+
+  it('does not render anything on missing trace', () => {
+    // Simulating Explore's access to empty response data
+    const trace = [][0];
+    const { container } = render(<TraceView exploreId={ExploreId.left} trace={trace} splitOpenFn={() => {}} />);
+    expect(container.hasChildNodes()).toBeFalsy();
   });
 
   it('toggles detailState', () => {

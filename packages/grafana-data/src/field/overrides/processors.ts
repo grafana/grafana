@@ -24,6 +24,12 @@ export const numberOverrideProcessor = (
   return parseFloat(value);
 };
 
+export interface SliderFieldConfigSettings {
+  min: number;
+  max: number;
+  step?: number;
+}
+
 export interface DataLinksFieldConfigSettings {}
 
 export const dataLinksOverrideProcessor = (
@@ -114,8 +120,31 @@ export const booleanOverrideProcessor = (
   return value; // !!!! likely not !!!!
 };
 
-export interface ColorFieldConfigSettings {
-  allowUndefined?: boolean;
-  textWhenUndefined?: string; // Pick Color
-  disableNamedColors?: boolean;
+export interface FieldColorConfigSettings {
+  /**
+   * When switching to a visualization that does not support by value coloring then Grafana will
+   * switch to a by series palette based color mode
+   */
+  byValueSupport?: boolean;
+  /**
+   * When switching to a visualization that has this set to true then Grafana will change color mode
+   * to from thresholds if it was set to a by series palette
+   */
+  preferThresholdsMode?: boolean;
+  /**
+   * Set to true if the visualization supports both by value and by series
+   * This will enable the Color by series UI option that sets the `color.seriesBy` option.
+   */
+  bySeriesSupport?: boolean;
+}
+
+export interface StatsPickerConfigSettings {
+  /**
+   * Enable multi-selection in the stats picker
+   */
+  allowMultiple: boolean;
+  /**
+   * Default stats to be use in the stats picker
+   */
+  defaultStat?: string;
 }

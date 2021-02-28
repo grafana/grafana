@@ -214,8 +214,13 @@ func TestNamedMiddlewareRouteRegister(t *testing.T) {
 		{method: "GET", pattern: "/user/admin/all", handlers: emptyHandlers(5)},
 	}
 
+	namedMiddlewares := map[string]bool{}
 	// Setup
-	rr := NewRouteRegister(emptyHandler)
+	rr := NewRouteRegister(func(name string) macaron.Handler {
+		namedMiddlewares[name] = true
+
+		return struct{ name string }{name: name}
+	})
 
 	rr.Delete("/admin", emptyHandler("1"))
 	rr.Get("/down", emptyHandler("1"), emptyHandler("2"))
@@ -245,6 +250,10 @@ func TestNamedMiddlewareRouteRegister(t *testing.T) {
 
 		if testTable[i].pattern != fr.route[i].pattern {
 			t.Errorf("want %s got %v", testTable[i].pattern, fr.route[i].pattern)
+		}
+
+		if _, exist := namedMiddlewares[testTable[i].pattern]; !exist {
+			t.Errorf("could not find named route named %s", testTable[i].pattern)
 		}
 
 		if len(testTable[i].handlers) != len(fr.route[i].handlers) {

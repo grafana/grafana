@@ -2,13 +2,10 @@
 title = "What's new in Grafana v6.5"
 description = "Feature and improvement highlights for Grafana v6.5"
 keywords = ["grafana", "new", "documentation", "6.5", "release notes"]
-type = "docs"
 aliases = ["/docs/grafana/latest/guides/whats-new-in-v6-5/"]
-[menu.docs]
-name = "Version 6.5"
-identifier = "v6.5"
-parent = "whatsnew"
-weight = -16
+weight = -24
+[_build]
+list = false
 +++
 
 # What's new in Grafana v6.5
@@ -175,7 +172,7 @@ In the Explore split view, you can now link the two timepickers so that if you c
 
 ### Alerting support for Azure Application Insights
 
-The [Azure Monitor]({{< relref "../datasources/azuremonitor/" >}}) data source supports multiple services in the Azure cloud. Before Grafana v6.5, only the Azure Monitor service had support for [Grafana Alerting]({{< relref "../alerting/alerts-overview" >}}). In Grafana 6.5, alerting support has been implemented for the [Application Insights service]({{< relref "../datasources/azuremonitor/#querying-the-application-insights-service" >}}).
+The [Azure Monitor]({{< relref "../datasources/azuremonitor/" >}}) data source supports multiple services in the Azure cloud. Before Grafana v6.5, only the Azure Monitor service had support for [Grafana Alerting]({{< relref "../alerting" >}}). In Grafana 6.5, alerting support has been implemented for the [Application Insights service]({{< relref "../datasources/azuremonitor/#querying-the-application-insights-service" >}}).
 
 ### Allow saving of provisioned dashboards from UI
 

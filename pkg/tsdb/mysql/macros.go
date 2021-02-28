@@ -35,7 +35,7 @@ func (m *mySqlMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.TimeRa
 	matches := restrictedRegExp.FindAllStringSubmatch(sql, 1)
 	if len(matches) > 0 {
 		m.logger.Error("show grants, session_user(), current_user(), system_user() or user() not allowed in query")
-		return "", errors.New("Invalid query. Inspect Grafana server log for details")
+		return "", errors.New("invalid query - inspect Grafana server log for details")
 	}
 
 	rExp, _ := regexp.Compile(sExpr)
@@ -96,7 +96,7 @@ func (m *mySqlMacroEngine) evaluateMacro(name string, args []string) (string, er
 	case "__timeGroupAlias":
 		tg, err := m.evaluateMacro("__timeGroup", args)
 		if err == nil {
-			return tg + " AS \"time\"", err
+			return tg + " AS \"time\"", nil
 		}
 		return "", err
 	case "__unixEpochFilter":
@@ -131,10 +131,10 @@ func (m *mySqlMacroEngine) evaluateMacro(name string, args []string) (string, er
 	case "__unixEpochGroupAlias":
 		tg, err := m.evaluateMacro("__unixEpochGroup", args)
 		if err == nil {
-			return tg + " AS \"time\"", err
+			return tg + " AS \"time\"", nil
 		}
 		return "", err
 	default:
-		return "", fmt.Errorf("Unknown macro %v", name)
+		return "", fmt.Errorf("unknown macro %v", name)
 	}
 }

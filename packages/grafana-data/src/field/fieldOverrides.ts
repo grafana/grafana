@@ -2,7 +2,6 @@ import {
   ApplyFieldOverrideOptions,
   DataFrame,
   DataLink,
-  DataSourceInstanceSettings,
   DynamicConfigValue,
   Field,
   FieldColorModeId,
@@ -13,6 +12,7 @@ import {
   GrafanaTheme,
   InterpolateFunction,
   LinkModel,
+  NumericRange,
   ScopedVars,
   TimeZone,
   ValueLinkConfig,
@@ -40,14 +40,9 @@ interface OverrideProps {
   properties: DynamicConfigValue[];
 }
 
-interface GlobalMinMax {
-  min: number;
-  max: number;
-}
-
-export function findNumericFieldMinMax(data: DataFrame[]): GlobalMinMax {
-  let min = Number.MAX_VALUE;
-  let max = Number.MIN_VALUE;
+export function findNumericFieldMinMax(data: DataFrame[]): NumericRange {
+  let min: number | null = null;
+  let max: number | null = null;
 
   const reducers = [ReducerID.min, ReducerID.max];
 
@@ -55,17 +50,21 @@ export function findNumericFieldMinMax(data: DataFrame[]): GlobalMinMax {
     for (const field of frame.fields) {
       if (field.type === FieldType.number) {
         const stats = reduceField({ field, reducers });
-        if (stats[ReducerID.min] < min) {
-          min = stats[ReducerID.min];
+        const statsMin = stats[ReducerID.min];
+        const statsMax = stats[ReducerID.max];
+
+        if (min === null || statsMin < min) {
+          min = statsMin;
         }
-        if (stats[ReducerID.max] > max) {
-          max = stats[ReducerID.max];
+
+        if (max === null || statsMax > max) {
+          max = statsMax;
         }
       }
     }
   }
 
-  return { min, max };
+  return { min, max, delta: (max ?? 0) - (min ?? 0) };
 }
 
 /**
@@ -84,7 +83,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
   const fieldConfigRegistry = options.fieldConfigRegistry ?? standardFieldConfigEditorRegistry;
 
   let seriesIndex = 0;
-  let range: GlobalMinMax | undefined = undefined;
+  let globalRange: NumericRange | undefined = undefined;
 
   // Prepare the Matchers
   const override: OverrideProps[] = [];
@@ -108,7 +107,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       __series: { text: 'Series', value: { name: getFrameDisplayName(frame, index) } }, // might be missing
     };
 
-    const fields: Field[] = frame.fields.map(field => {
+    const fields: Field[] = frame.fields.map((field) => {
       // Config is mutable within this scope
       const fieldScopedVars = { ...scopedVars };
       const displayName = getFieldDisplayName(field, frame, options.data);
@@ -130,7 +129,6 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         data: options.data!,
         dataFrameIndex: index,
         replaceVariables: options.replaceVariables,
-        getDataSourceSettingsByUid: options.getDataSourceSettingsByUid,
         fieldConfigRegistry: fieldConfigRegistry,
       };
 
@@ -174,18 +172,14 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       }
 
       // Set the Min/Max value automatically
-      if (options.autoMinMax && field.type === FieldType.number) {
-        if (!isNumber(config.min) || !isNumber(config.max)) {
-          if (!range) {
-            range = findNumericFieldMinMax(options.data!); // Global value
-          }
-          if (!isNumber(config.min)) {
-            config.min = range.min;
-          }
-          if (!isNumber(config.max)) {
-            config.max = range.max;
-          }
+      let range: NumericRange | undefined = undefined;
+      if (field.type === FieldType.number) {
+        if (!globalRange && (!isNumber(config.min) || !isNumber(config.max))) {
+          globalRange = findNumericFieldMinMax(options.data!);
         }
+        const min = config.min ?? globalRange!.min;
+        const max = config.max ?? globalRange!.max;
+        range = { min, max, delta: max! - min! };
       }
 
       // Some color modes needs series index to assign field color so we count
@@ -203,6 +197,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
           ...field.state,
           displayName: null,
           seriesIndex,
+          range,
         },
       };
 
@@ -214,17 +209,10 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       });
 
       // Attach data links supplier
-      newField.getLinks = getLinksSupplier(
-        newFrame,
-        newField,
-        fieldScopedVars,
-        context.replaceVariables,
-        context.getDataSourceSettingsByUid,
-        {
-          theme: options.theme,
-          timeZone: options.timeZone,
-        }
-      );
+      newField.getLinks = getLinksSupplier(newFrame, newField, fieldScopedVars, context.replaceVariables, {
+        theme: options.theme,
+        timeZone: options.timeZone,
+      });
 
       return newField;
     });
@@ -294,7 +282,6 @@ const processFieldConfigValue = (
   const currentConfig = get(destination, fieldConfigProperty.path);
   if (currentConfig === null || currentConfig === undefined) {
     const item = context.fieldConfigRegistry.getIfExists(fieldConfigProperty.id);
-    // console.log(item);
     if (!item) {
       return;
     }
@@ -340,7 +327,6 @@ export const getLinksSupplier = (
   field: Field,
   fieldScopedVars: ScopedVars,
   replaceVariables: InterpolateFunction,
-  getDataSourceSettingsByUid: (uid: string) => DataSourceInstanceSettings | undefined,
   options: {
     theme: GrafanaTheme;
     timeZone?: TimeZone;
@@ -405,9 +391,13 @@ export const getLinksSupplier = (
 
     if (link.internal) {
       // For internal links at the moment only destination is Explore.
-      return mapInternalLinkToExplore(link, variables, {} as any, field, {
+      return mapInternalLinkToExplore({
+        link,
+        internalLink: link.internal,
+        scopedVars: variables,
+        field,
+        range: {} as any,
         replaceVariables,
-        getDataSourceSettingsByUid,
       });
     } else {
       let href = locationUtil.assureBaseUrl(link.url.replace(/\n/g, ''));

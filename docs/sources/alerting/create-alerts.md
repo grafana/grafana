@@ -2,11 +2,6 @@
 title = "Create alerts"
 description = "Configure alert rules"
 keywords = ["grafana", "alerting", "guide", "rules"]
-type = "docs"
-[menu.docs]
-name = "Create alerts"
-identifier = "create-alerts"
-parent = "alerting"
 weight = 200
 +++
 
@@ -14,7 +9,7 @@ weight = 200
 
 Grafana alerting allows you to attach rules to your dashboard panels. When you save the dashboard, Grafana extracts the alert rules into a separate alert rule storage and schedules them for evaluation.
 
-{{< imgbox max-width="1000px" img="/img/docs/alerting/drag_handles_gif.gif" caption="Alerting overview" >}}
+![Alerting overview](/img/docs/alerting/drag_handles_gif.gif)
 
 In the Alert tab of the graph panel you can configure how often the alert rule should be evaluated and the conditions that need to be met for the alert to change state and trigger its [notifications]({{< relref "notifications.md" >}}).
 
@@ -38,11 +33,11 @@ This section describes the fields you fill out to create an alert.
 
 ### Rule
 
-- **Name -** Enter a descriptive name. The name will be displayed in the Alert Rules list.
+- **Name -** Enter a descriptive name. The name will be displayed in the Alert Rules list. This field supports [templating]({{< relref "./add-notification-template.md" >}}).
 - **Evaluate every -** Specify how often the scheduler should evaluate the alert rule. This is referred to as the _evaluation interval_.
 - **For -** Specify how long the query needs to violate the configured thresholds before the alert notification triggers.
 
-You can set a minimum evaluation interval in the `alerting.min_interval_seconds` config field, to set a minimum time between evaluations. Refer to [Configuration]({{< relref "../administration/configuration.md" >}}#min-interval-seconds) for more information.
+You can set a minimum evaluation interval in the `alerting.min_interval_seconds` configuration field, to set a minimum time between evaluations. Refer to [Configuration]({{< relref "../administration/configuration.md" >}}#min-interval-seconds) for more information.
 
 > **Caution:** Do not use `For` with the `If no data or all values are null` setting set to `No Data`. The triggering of `No Data` will trigger instantly and not take `For` into consideration. This may also result in that an OK notification not being sent if alert transitions from `No Data -> Pending -> OK`.
 
@@ -122,9 +117,10 @@ The actual notifications are configured and shared between multiple alerts. Read
 [Alert notifications]({{< relref "notifications.md" >}}) for information on how to configure and set up notifications.
 
 - **Send to -** Select an alert notification channel if you have one set up.
-- **Message -** Enter a text message to be sent on the notification channel. Some alert notifiers support transforming the text to HTML or other rich formats.
+- **Message -** Enter a text message to be sent on the notification channel. Some alert notifiers support transforming the text to HTML or other rich formats. This field supports [templating]({{< relref "./add-notification-template.md" >}}).
 - **Tags -** Specify a list of tags (key/value) to be included in the notification. It is only supported by [some notifiers]({{< relref "notifications/#all-supported-notifiers" >}}).
 
 ## Alert state history and annotations
 
 Alert state changes are recorded in the internal annotation table in Grafana's database. The state changes are visualized as annotations in the alert rule's graph panel. You can also go into the `State history` submenu in the alert tab to view and clear state history.
+

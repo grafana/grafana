@@ -1,8 +1,9 @@
 # Use old Debian (this has support into 2022) in order to ensure binary compatibility with older glibc's.
-FROM debian:stretch-20200908-slim AS toolchain
+FROM debian:stretch-20210208 AS toolchain
 
 ENV OSX_MIN=10.10 \
     CTNG=1.24.0 \
+    CTNG_CHKSUM=89b8794a4184ad4928750e29712ed4f194aa1d0b93768d67ff64f30c30f1b1e165647cafc6de94d68d3ef70e50446e544dad65aa36137511a32ee7a667dddfb4 \
     # This is the last revision that builds on Debian Stretch
     OSX_CROSS_REV=a1d7d7a8d569f9f0b8c3140b8b32848dbcd62afa
 
@@ -56,7 +57,9 @@ RUN rm -rf /tmp/osxcross/target/SDK/*/usr/share && \
     rm -rf /tmp/osxcross
 RUN apt-get install -yq                     \
         unzip libtool-bin bison flex gawk gcc g++ gperf help2man libncurses5-dev make patch python-dev texinfo xz-utils
-RUN curl -fL http://crosstool-ng.org/download/crosstool-ng/crosstool-ng-${CTNG}.tar.xz | tar -xJ -C /tmp/
+RUN curl -fLO http://crosstool-ng.org/download/crosstool-ng/crosstool-ng-${CTNG}.tar.xz
+RUN echo $CTNG_CHKSUM crosstool-ng-${CTNG}.tar.xz | sha512sum --check --strict --status
+RUN tar xf crosstool-ng-${CTNG}.tar.xz
 RUN cd /tmp/crosstool-ng-${CTNG}        && \
     ./configure --enable-local          && \
     make && \
@@ -73,30 +76,43 @@ RUN cd /tmp && \
     rm -rf /tmp/x86_64-centos6-linux-gnu/ && \
     rm -rf /tmp/crosstool-ng-${CTNG}
 
-ARG GOLANGCILINT_VERSION=1.31.0
-ARG GOLANGCILINT_CHKSUM=9a5d47b51442d68b718af4c7350f4406cdc087e2236a5b9ae52f37aebede6cb3
+ARG GOLANGCILINT_VERSION=1.37.1
+ARG GOLANGCILINT_CHKSUM=1929425d7733d136b342395c77f171d459aa89b198933465ec4c854aa34c41a2
 
 RUN curl -fLO https://github.com/golangci/golangci-lint/releases/download/v${GOLANGCILINT_VERSION}/golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64.tar.gz
 RUN echo ${GOLANGCILINT_CHKSUM} golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64.tar.gz | sha256sum --check --strict --status
 RUN tar xf golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64.tar.gz
 RUN mv golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64/golangci-lint /tmp/
 
+ARG SHELLCHECK_VERSION=0.7.1
+ARG SHELLCHECK_CHKSUM=beca3d7819a6bdcfbd044576df4fc284053b48f468b2f03428fe66f4ceb2c05d9b5411357fa15003cb0311406c255084cf7283a3b8fce644c340c2f6aa910b9f
+RUN curl -fLO http://storage.googleapis.com/grafana-downloads/ci-dependencies/shellcheck-v${SHELLCHECK_VERSION}.linux.x86_64.tar.xz
+RUN echo $SHELLCHECK_CHKSUM shellcheck-v${SHELLCHECK_VERSION}.linux.x86_64.tar.xz | sha512sum --check --strict --status
+RUN tar xf shellcheck-v${SHELLCHECK_VERSION}.linux.x86_64.tar.xz && mv shellcheck-v${SHELLCHECK_VERSION}/shellcheck /tmp/
+
+ARG CUE_VERSION=0.3.0-alpha5
+ARG CUE_CHKSUM=9d3131e470cdb5182afd9966688f1c052d383145cce005a947156b5591da39b7
+RUN curl -fLO https://github.com/cuelang/cue/releases/download/v${CUE_VERSION}/cue_${CUE_VERSION}_Linux_x86_64.tar.gz
+RUN echo $CUE_CHKSUM cue_${CUE_VERSION}_Linux_x86_64.tar.gz | sha256sum --check --strict --status
+RUN tar xf cue_${CUE_VERSION}_Linux_x86_64.tar.gz -C /tmp cue
+
 # Base image to crossbuild grafana.
 # Use old Debian (this has support into 2022) in order to ensure binary compatibility with older glibc's.
-FROM debian:stretch-20200908
+FROM debian:stretch-20210208
 
-ENV GOVERSION=1.15.1 \
+ENV GOVERSION=1.16 \
     PATH=/usr/local/go/bin:$PATH \
     GOPATH=/go \
-    NODEVERSION=12.19.0-1nodesource1 \
-    YARNVERSION=1.22.5-1 \
-    GO111MODULE=on
+    NODEVERSION=14.15.5-1nodesource1 \
+    YARNVERSION=1.22.5-1
 
 # Use ARG so as not to persist environment variable in image
 ARG DEBIAN_FRONTEND=noninteractive
 
 COPY --from=toolchain /tmp/x86_64-centos6-linux-gnu.tar.xz /tmp/osxcross.tar.xz /tmp/
-COPY --from=toolchain /tmp/golangci-lint /usr/local/bin
+COPY --from=toolchain /tmp/golangci-lint /usr/local/bin/
+COPY --from=toolchain /tmp/shellcheck /usr/local/bin/
+COPY --from=toolchain /tmp/cue /usr/local/bin/
 
 RUN apt-get update && \
     apt-get install -yq  \
@@ -121,7 +137,7 @@ RUN apt-get update && \
         unzip &&        \
     gem install -N fpm && \
     ln -s /usr/bin/llvm-dsymutil-6.0 /usr/bin/dsymutil && \
-    curl -fsL https://deb.nodesource.com/setup_12.x | bash - && \
+    curl -fsL https://deb.nodesource.com/setup_14.x | bash - && \
     apt-get update && apt-get install -yq nodejs=${NODEVERSION} && \
     curl -fsS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \
     echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list && \

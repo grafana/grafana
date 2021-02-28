@@ -1,53 +1,18 @@
 import React from 'react';
-import uPlot from 'uplot';
-import { DataFrame, FieldColor, TimeRange, TimeZone } from '@grafana/data';
+import uPlot, { Options, Hooks, AlignedData } from 'uplot';
+import { TimeRange } from '@grafana/data';
+import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 
-export type NullValuesMode = 'null' | 'connected' | 'asZero';
-
-export enum AxisSide {
-  Top,
-  Right,
-  Bottom,
-  Left,
-}
-
-interface AxisConfig {
-  label: string;
-  side: AxisSide;
-  grid: boolean;
-  width: number;
-}
-
-interface LineConfig {
-  show: boolean;
-  width: number;
-  color: FieldColor;
-}
-interface PointConfig {
-  show: boolean;
-  radius: number;
-}
-interface BarsConfig {
-  show: boolean;
-}
-interface FillConfig {
-  alpha: number;
-}
-
-export interface GraphCustomFieldConfig {
-  axis: AxisConfig;
-  line: LineConfig;
-  points: PointConfig;
-  bars: BarsConfig;
-  fill: FillConfig;
-  nullValues: NullValuesMode;
-}
+export type PlotConfig = Pick<
+  Options,
+  'series' | 'scales' | 'axes' | 'cursor' | 'bands' | 'hooks' | 'select' | 'tzDate'
+>;
 
 export type PlotPlugin = {
   id: string;
   /** can mutate provided opts as necessary */
-  opts?: (self: uPlot, opts: uPlot.Options) => void;
-  hooks: uPlot.PluginHooks;
+  opts?: (self: uPlot, opts: Options) => void;
+  hooks: Hooks.ArraysOrFuncs;
 };
 
 export interface PlotPluginProps {
@@ -55,14 +20,15 @@ export interface PlotPluginProps {
 }
 
 export interface PlotProps {
-  data: DataFrame;
-  timeRange: TimeRange;
-  timeZone: TimeZone;
+  data: AlignedData;
   width: number;
   height: number;
-  children?: React.ReactNode | React.ReactNode[];
-  /** Callback performed when uPlot data is updated */
-  onDataUpdate?: (data: uPlot.AlignedData) => {};
-  /** Callback performed when uPlot is (re)initialized */
-  onPlotInit?: () => {};
+  config: UPlotConfigBuilder;
+  timeRange: TimeRange;
+  children?: React.ReactNode;
+}
+
+export abstract class PlotConfigBuilder<P, T> {
+  constructor(public props: P) {}
+  abstract getConfig(): T;
 }

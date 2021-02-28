@@ -19,19 +19,19 @@ import (
 )
 
 func TestQuery_DescribeLogGroups(t *testing.T) {
-	origNewCWLogsClient := newCWLogsClient
+	origNewCWLogsClient := NewCWLogsClient
 	t.Cleanup(func() {
-		newCWLogsClient = origNewCWLogsClient
+		NewCWLogsClient = origNewCWLogsClient
 	})
 
-	var cli fakeCWLogsClient
+	var cli FakeCWLogsClient
 
-	newCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
+	NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
 		return cli
 	}
 
 	t.Run("Empty log group name prefix", func(t *testing.T) {
-		cli = fakeCWLogsClient{
+		cli = FakeCWLogsClient{
 			logGroups: cloudwatchlogs.DescribeLogGroupsOutput{
 				LogGroups: []*cloudwatchlogs.LogGroup{
 					{
@@ -47,7 +47,7 @@ func TestQuery_DescribeLogGroups(t *testing.T) {
 			},
 		}
 
-		executor := newExecutor()
+		executor := newExecutor(nil)
 		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
 			Queries: []*tsdb.Query{
 				{
@@ -84,7 +84,7 @@ func TestQuery_DescribeLogGroups(t *testing.T) {
 	})
 
 	t.Run("Non-empty log group name prefix", func(t *testing.T) {
-		cli = fakeCWLogsClient{
+		cli = FakeCWLogsClient{
 			logGroups: cloudwatchlogs.DescribeLogGroupsOutput{
 				LogGroups: []*cloudwatchlogs.LogGroup{
 					{
@@ -100,7 +100,7 @@ func TestQuery_DescribeLogGroups(t *testing.T) {
 			},
 		}
 
-		executor := newExecutor()
+		executor := newExecutor(nil)
 		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
 			Queries: []*tsdb.Query{
 				{
@@ -138,18 +138,18 @@ func TestQuery_DescribeLogGroups(t *testing.T) {
 }
 
 func TestQuery_GetLogGroupFields(t *testing.T) {
-	origNewCWLogsClient := newCWLogsClient
+	origNewCWLogsClient := NewCWLogsClient
 	t.Cleanup(func() {
-		newCWLogsClient = origNewCWLogsClient
+		NewCWLogsClient = origNewCWLogsClient
 	})
 
-	var cli fakeCWLogsClient
+	var cli FakeCWLogsClient
 
-	newCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
+	NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
 		return cli
 	}
 
-	cli = fakeCWLogsClient{
+	cli = FakeCWLogsClient{
 		logGroupFields: cloudwatchlogs.GetLogGroupFieldsOutput{
 			LogGroupFields: []*cloudwatchlogs.LogGroupField{
 				{
@@ -170,7 +170,7 @@ func TestQuery_GetLogGroupFields(t *testing.T) {
 
 	const refID = "A"
 
-	executor := newExecutor()
+	executor := newExecutor(nil)
 	resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
 		Queries: []*tsdb.Query{
 			{
@@ -213,19 +213,19 @@ func TestQuery_GetLogGroupFields(t *testing.T) {
 }
 
 func TestQuery_StartQuery(t *testing.T) {
-	origNewCWLogsClient := newCWLogsClient
+	origNewCWLogsClient := NewCWLogsClient
 	t.Cleanup(func() {
-		newCWLogsClient = origNewCWLogsClient
+		NewCWLogsClient = origNewCWLogsClient
 	})
 
-	var cli fakeCWLogsClient
+	var cli FakeCWLogsClient
 
-	newCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
+	NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
 		return cli
 	}
 
 	t.Run("invalid time range", func(t *testing.T) {
-		cli = fakeCWLogsClient{
+		cli = FakeCWLogsClient{
 			logGroupFields: cloudwatchlogs.GetLogGroupFieldsOutput{
 				LogGroupFields: []*cloudwatchlogs.LogGroupField{
 					{
@@ -249,7 +249,7 @@ func TestQuery_StartQuery(t *testing.T) {
 			To:   "1584700643000",
 		}
 
-		executor := newExecutor()
+		executor := newExecutor(nil)
 		_, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
 			TimeRange: timeRange,
 			Queries: []*tsdb.Query{
@@ -271,7 +271,7 @@ func TestQuery_StartQuery(t *testing.T) {
 
 	t.Run("valid time range", func(t *testing.T) {
 		const refID = "A"
-		cli = fakeCWLogsClient{
+		cli = FakeCWLogsClient{
 			logGroupFields: cloudwatchlogs.GetLogGroupFieldsOutput{
 				LogGroupFields: []*cloudwatchlogs.LogGroupField{
 					{
@@ -295,7 +295,7 @@ func TestQuery_StartQuery(t *testing.T) {
 			To:   "1584873443000",
 		}
 
-		executor := newExecutor()
+		executor := newExecutor(nil)
 		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
 			TimeRange: timeRange,
 			Queries: []*tsdb.Query{
@@ -336,18 +336,18 @@ func TestQuery_StartQuery(t *testing.T) {
 }
 
 func TestQuery_StopQuery(t *testing.T) {
-	origNewCWLogsClient := newCWLogsClient
+	origNewCWLogsClient := NewCWLogsClient
 	t.Cleanup(func() {
-		newCWLogsClient = origNewCWLogsClient
+		NewCWLogsClient = origNewCWLogsClient
 	})
 
-	var cli fakeCWLogsClient
+	var cli FakeCWLogsClient
 
-	newCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
+	NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
 		return cli
 	}
 
-	cli = fakeCWLogsClient{
+	cli = FakeCWLogsClient{
 		logGroupFields: cloudwatchlogs.GetLogGroupFieldsOutput{
 			LogGroupFields: []*cloudwatchlogs.LogGroupField{
 				{
@@ -371,7 +371,7 @@ func TestQuery_StopQuery(t *testing.T) {
 		To:   "1584700643000",
 	}
 
-	executor := newExecutor()
+	executor := newExecutor(nil)
 	resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
 		TimeRange: timeRange,
 		Queries: []*tsdb.Query{
@@ -405,19 +405,19 @@ func TestQuery_StopQuery(t *testing.T) {
 }
 
 func TestQuery_GetQueryResults(t *testing.T) {
-	origNewCWLogsClient := newCWLogsClient
+	origNewCWLogsClient := NewCWLogsClient
 	t.Cleanup(func() {
-		newCWLogsClient = origNewCWLogsClient
+		NewCWLogsClient = origNewCWLogsClient
 	})
 
-	var cli fakeCWLogsClient
+	var cli FakeCWLogsClient
 
-	newCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
+	NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
 		return cli
 	}
 
 	const refID = "A"
-	cli = fakeCWLogsClient{
+	cli = FakeCWLogsClient{
 		queryResults: cloudwatchlogs.GetQueryResultsOutput{
 			Results: [][]*cloudwatchlogs.ResultField{
 				{
@@ -458,7 +458,7 @@ func TestQuery_GetQueryResults(t *testing.T) {
 		},
 	}
 
-	executor := newExecutor()
+	executor := newExecutor(nil)
 	resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
 		Queries: []*tsdb.Query{
 			{

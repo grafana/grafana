@@ -1,12 +1,7 @@
 +++
 title = "Data sources"
-type = "docs"
 aliases = ["/docs/grafana/latest/datasources/overview/"]
-[menu.docs]
-name = "Data sources"
-identifier = "datasources"
-parent = "features"
-weight = 50
+weight = 60
 +++
 
 # Data sources
@@ -24,7 +19,7 @@ The following data sources are officially supported:
 - [AWS CloudWatch]({{< relref "cloudwatch.md" >}})
 - [Azure Monitor]({{< relref "azuremonitor.md" >}})
 - [Elasticsearch]({{< relref "elasticsearch.md" >}})
-- [Google Cloud Monitoring]({{< relref "cloudmonitoring.md" >}})
+- [Google Cloud Monitoring]({{< relref "google-cloud-monitoring/_index.md" >}})
 - [Graphite]({{< relref "graphite.md" >}})
 - [InfluxDB]({{< relref "influxdb.md" >}})
 - [Loki]({{< relref "loki.md" >}})
@@ -50,3 +45,4 @@ In addition to the data sources that you have configured in your Grafana, there 
 ## Data source plugins
 
 Since Grafana 3.0 you can install data sources as plugins. Check out [Grafana.com/plugins](https://grafana.com/plugins) for more data sources.
+

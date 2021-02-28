@@ -433,10 +433,9 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			azData, err := loadTestFile("azuremonitor/" + tt.responseFile)
-			require.NoError(t, err)
+			azData := loadTestFile(t, "azuremonitor/"+tt.responseFile)
 			res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-			err = datasource.parseResponse(res, azData, tt.mockQuery)
+			err := datasource.parseResponse(res, azData, tt.mockQuery)
 			require.NoError(t, err)
 
 			frames, err := res.Dataframes.Decoded()
@@ -496,14 +495,17 @@ func TestFindClosestAllowIntervalMS(t *testing.T) {
 	}
 }
 
-func loadTestFile(name string) (AzureMonitorResponse, error) {
-	var azData AzureMonitorResponse
+func loadTestFile(t *testing.T, name string) AzureMonitorResponse {
+	t.Helper()
 
 	path := filepath.Join("testdata", name)
+	// Ignore gosec warning G304 since it's a test
+	// nolint:gosec
 	jsonBody, err := ioutil.ReadFile(path)
-	if err != nil {
-		return azData, err
-	}
+	require.NoError(t, err)
+
+	var azData AzureMonitorResponse
 	err = json.Unmarshal(jsonBody, &azData)
-	return azData, err
+	require.NoError(t, err)
+	return azData
 }

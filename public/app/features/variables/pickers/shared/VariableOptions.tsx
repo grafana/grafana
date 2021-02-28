@@ -64,7 +64,7 @@ export class VariableOptions extends PureComponent<Props> {
     return (
       <div className="variable-options-column">
         <div className="variable-options-column-header text-center">Tags</div>
-        {tags.map(tag => this.renderTag(tag))}
+        {tags.map((tag) => this.renderTag(tag))}
       </div>
     );
   }
@@ -78,7 +78,7 @@ export class VariableOptions extends PureComponent<Props> {
         className={`${tag.selected ? 'variable-option-tag pointer selected' : 'variable-option-tag pointer'}`}
         onClick={this.onToggleTag(tag)}
       >
-        <span className="fa fa-fw variable-option-icon"></span>
+        <span className="variable-option-icon"></span>
         <span className="label-tag" style={{ backgroundColor: color, borderColor }}>
           {tag.text}&nbsp;&nbsp;
           <Icon name="tag-alt" />

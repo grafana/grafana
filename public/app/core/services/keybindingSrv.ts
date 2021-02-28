@@ -2,12 +2,13 @@ import _ from 'lodash';
 import Mousetrap from 'mousetrap';
 import 'mousetrap-global-bind';
 import { ILocationService, IRootScopeService, ITimeoutService } from 'angular';
-import { locationUtil } from '@grafana/data';
+import { LegacyGraphHoverClearEvent, locationUtil } from '@grafana/data';
 
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
-import { store } from 'app/store/store';
+import { dispatch, store } from 'app/store/store';
+import { exitPanelEditor } from 'app/features/dashboard/components/PanelEditor/state/actions';
 import { AppEventEmitter, CoreEvents } from 'app/types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { DashboardModel } from 'app/features/dashboard/state';
@@ -17,9 +18,7 @@ import { defaultQueryParams } from 'app/features/search/reducers/searchQueryRedu
 import { ContextSrv } from './context_srv';
 
 export class KeybindingSrv {
-  helpModal: boolean;
   modalOpen = false;
-  timepickerOpen = false;
 
   /** @ngInject */
   constructor(
@@ -39,8 +38,6 @@ export class KeybindingSrv {
 
     this.setupGlobal();
     appEvents.on(CoreEvents.showModal, () => (this.modalOpen = true));
-    appEvents.on(CoreEvents.timepickerOpen, () => (this.timepickerOpen = true));
-    appEvents.on(CoreEvents.timepickerClosed, () => (this.timepickerOpen = false));
   }
 
   setupGlobal() {
@@ -116,12 +113,6 @@ export class KeybindingSrv {
       return;
     }
 
-    if (this.timepickerOpen) {
-      this.$rootScope.appEvent(CoreEvents.closeTimepicker);
-      this.timepickerOpen = false;
-      return;
-    }
-
     // close settings view
     const search = this.$location.search();
     if (search.editview) {
@@ -138,9 +129,7 @@ export class KeybindingSrv {
     }
 
     if (search.editPanel) {
-      delete search.editPanel;
-      delete search.tab;
-      this.$location.search(search);
+      dispatch(exitPanelEditor());
       return;
     }
 
@@ -197,7 +186,7 @@ export class KeybindingSrv {
   setupDashboardBindings(scope: IRootScopeService & AppEventEmitter, dashboard: DashboardModel) {
     this.bind('mod+o', () => {
       dashboard.graphTooltip = (dashboard.graphTooltip + 1) % 3;
-      appEvents.emit(CoreEvents.graphHoverClear);
+      dashboard.events.publish(new LegacyGraphHoverClearEvent());
       dashboard.startRefresh();
     });
 
@@ -281,7 +270,7 @@ export class KeybindingSrv {
     this.bind('p r', () => {
       const panelId = dashboard.meta.focusPanelId;
 
-      if (panelId && dashboard.canEditPanelById(panelId)) {
+      if (panelId && dashboard.canEditPanelById(panelId) && !(dashboard.panelInView || dashboard.panelInEdit)) {
         appEvents.emit(CoreEvents.removePanel, panelId);
         dashboard.meta.focusPanelId = 0;
       }

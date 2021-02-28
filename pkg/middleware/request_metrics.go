@@ -9,12 +9,17 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
+	cw "github.com/weaveworks/common/middleware"
 	"gopkg.in/macaron.v1"
 )
 
 var (
 	httpRequestsInFlight         prometheus.Gauge
 	httpRequestDurationHistogram *prometheus.HistogramVec
+
+	// DefBuckets are histogram buckets for the response time (in seconds)
+	// of a network service, including one that is responding very slowly.
+	defBuckets = []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5}
 )
 
 func init() {
@@ -30,9 +35,9 @@ func init() {
 			Namespace: "grafana",
 			Name:      "http_request_duration_seconds",
 			Help:      "Histogram of latencies for HTTP requests.",
-			Buckets:   []float64{.1, .2, .4, 1, 3, 8, 20, 60, 120},
+			Buckets:   defBuckets,
 		},
-		[]string{"handler"},
+		[]string{"handler", "status_code", "method"},
 	)
 
 	prometheus.MustRegister(httpRequestsInFlight, httpRequestDurationHistogram)
@@ -52,14 +57,26 @@ func RequestMetrics(cfg *setting.Cfg) func(handler string) macaron.Handler {
 
 			code := sanitizeCode(status)
 			method := sanitizeMethod(req.Method)
-			metrics.MHttpRequestTotal.WithLabelValues(handler, code, method).Inc()
 
-			duration := time.Since(now).Nanoseconds() / int64(time.Millisecond)
-
-			// enable histogram and disable summaries for http requests.
+			// enable histogram and disable summaries + counters for http requests.
 			if cfg.IsHTTPRequestHistogramEnabled() {
-				httpRequestDurationHistogram.WithLabelValues(handler).Observe(float64(duration))
+				// avoiding the sanitize functions for in the new instrumentation
+				// since they dont make much sense. We should remove them later.
+				histogram := httpRequestDurationHistogram.
+					WithLabelValues(handler, strconv.Itoa(rw.Status()), req.Method)
+				if traceID, ok := cw.ExtractSampledTraceID(c.Req.Context()); ok {
+					// Need to type-convert the Observer to an
+					// ExemplarObserver. This will always work for a
+					// HistogramVec.
+					histogram.(prometheus.ExemplarObserver).ObserveWithExemplar(
+						time.Since(now).Seconds(), prometheus.Labels{"traceID": traceID},
+					)
+					return
+				}
+				histogram.Observe(time.Since(now).Seconds())
 			} else {
+				duration := time.Since(now).Nanoseconds() / int64(time.Millisecond)
+				metrics.MHttpRequestTotal.WithLabelValues(handler, code, method).Inc()
 				metrics.MHttpRequestSummary.WithLabelValues(handler, code, method).Observe(float64(duration))
 			}
 

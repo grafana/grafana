@@ -3,10 +3,6 @@ title = "External Group Sync HTTP API "
 description = "Grafana External Group Sync HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "team", "teams", "group", "member", "enterprise"]
 aliases = ["/docs/grafana/latest/http_api/external_group_sync/"]
-type = "docs"
-[menu.docs]
-name = "External Group Sync"
-parent = "http_api"
 +++
 
 # External Group Synchronization API

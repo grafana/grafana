@@ -9,7 +9,7 @@ export class QueryRowCtrl {
   panel: any;
   hasTextEditMode: boolean;
 
-  constructor() {
+  $onInit() {
     this.panelCtrl = this.queryCtrl.panelCtrl;
     this.target = this.queryCtrl.target;
     this.panel = this.panelCtrl.panel;

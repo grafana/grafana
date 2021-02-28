@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/xorcare/pointer"
 )
@@ -112,10 +113,11 @@ func TestLogTableToFrame(t *testing.T) {
 					data.NewField("XLong", nil, []*int64{pointer.Int64(9223372036854775807)}),
 					data.NewField("XReal", nil, []*float64{pointer.Float64(1.797693134862315708145274237317043567981e+308)}),
 					data.NewField("XTimeSpan", nil, []*string{pointer.String("00:00:00.0000001")}),
+					data.NewField("XDecimal", nil, []*float64{pointer.Float64(79228162514264337593543950335)}),
 				)
 				frame.Meta = &data.FrameMeta{
 					Custom: &LogAnalyticsMeta{ColumnTypes: []string{"bool", "string", "datetime",
-						"dynamic", "guid", "int", "long", "real", "timespan"}},
+						"dynamic", "guid", "int", "long", "real", "timespan", "decimal"}},
 				}
 				return frame
 			},
@@ -139,8 +141,7 @@ func TestLogTableToFrame(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			res, err := loadLogAnalyticsTestFileWithNumber(tt.testFile)
-			require.NoError(t, err)
+			res := loadLogAnalyticsTestFileWithNumber(t, tt.testFile)
 			frame, err := LogTableToFrame(&res.Tables[0])
 			require.NoError(t, err)
 
@@ -151,17 +152,22 @@ func TestLogTableToFrame(t *testing.T) {
 	}
 }
 
-func loadLogAnalyticsTestFileWithNumber(name string) (AzureLogAnalyticsResponse, error) {
-	var data AzureLogAnalyticsResponse
-
+func loadLogAnalyticsTestFileWithNumber(t *testing.T, name string) AzureLogAnalyticsResponse {
+	t.Helper()
 	path := filepath.Join("testdata", name)
+	// Ignore gosec warning G304 since it's a test
+	// nolint:gosec
 	f, err := os.Open(path)
-	if err != nil {
-		return data, err
-	}
-	defer f.Close()
+	require.NoError(t, err)
+	defer func() {
+		err := f.Close()
+		assert.NoError(t, err)
+	}()
+
 	d := json.NewDecoder(f)
 	d.UseNumber()
+	var data AzureLogAnalyticsResponse
 	err = d.Decode(&data)
-	return data, err
+	require.NoError(t, err)
+	return data
 }

@@ -40,7 +40,7 @@ export class MockDataSourceApi extends DataSourceApi {
       return Promise.reject(this.error);
     }
 
-    return new Promise(resolver => {
+    return new Promise((resolver) => {
       setTimeout(() => {
         resolver(this.result);
       });

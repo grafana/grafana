@@ -1,9 +1,12 @@
 package conditions
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 
 	gocontext "context"
 
@@ -107,13 +110,18 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext) (*alerting.Conditio
 }
 
 func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *tsdb.TimeRange) (tsdb.TimeSeriesSlice, error) {
-	getDsInfo := &models.GetDataSourceByIdQuery{
+	getDsInfo := &models.GetDataSourceQuery{
 		Id:    c.Query.DatasourceID,
 		OrgId: context.Rule.OrgID,
 	}
 
 	if err := bus.Dispatch(getDsInfo); err != nil {
-		return nil, fmt.Errorf("Could not find datasource %v", err)
+		return nil, fmt.Errorf("could not find datasource: %w", err)
+	}
+
+	err := context.RequestValidator.Validate(getDsInfo.Result.Url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("access denied: %w", err)
 	}
 
 	req := c.getRequestForAlertRule(getDsInfo.Result, timeRange, context.IsDebug)
@@ -158,11 +166,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *
 
 	resp, err := c.HandleRequest(context.Ctx, getDsInfo.Result, req)
 	if err != nil {
-		if err == gocontext.DeadlineExceeded {
-			return nil, fmt.Errorf("Alert execution exceeded the timeout")
-		}
-
-		return nil, fmt.Errorf("tsdb.HandleRequest() error %v", err)
+		return nil, toCustomError(err)
 	}
 
 	for _, v := range resp.Results {
@@ -331,11 +335,16 @@ func FrameToSeriesSlice(frame *data.Frame) (tsdb.TimeSeriesSlice, error) {
 			Points: make(tsdb.TimeSeriesPoints, field.Len()),
 		}
 
+		if len(field.Labels) > 0 {
+			ts.Tags = field.Labels.Copy()
+		}
+
 		switch {
 		case field.Config != nil && field.Config.DisplayName != "":
 			ts.Name = field.Config.DisplayName
-		case field.Labels != nil:
-			ts.Tags = field.Labels.Copy()
+		case field.Config != nil && field.Config.DisplayNameFromDS != "":
+			ts.Name = field.Config.DisplayNameFromDS
+		case len(field.Labels) > 0:
 			// Tags are appended to the name so they are eventually included in EvalMatch's Metric property
 			// for display in notifications.
 			ts.Name = fmt.Sprintf("%v {%v}", field.Name, field.Labels.String())
@@ -358,4 +367,19 @@ func FrameToSeriesSlice(frame *data.Frame) (tsdb.TimeSeriesSlice, error) {
 	}
 
 	return seriesSlice, nil
+}
+
+func toCustomError(err error) error {
+	// is context timeout
+	if errors.Is(err, gocontext.DeadlineExceeded) {
+		return fmt.Errorf("alert execution exceeded the timeout")
+	}
+
+	// is Prometheus error
+	if prometheus.IsAPIError(err) {
+		return prometheus.ConvertAPIError(err)
+	}
+
+	// generic fallback
+	return fmt.Errorf("tsdb.HandleRequest() error %v", err)
 }

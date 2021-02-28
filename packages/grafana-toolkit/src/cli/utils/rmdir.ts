@@ -10,7 +10,7 @@ export const rmdir = (dirPath: string) => {
     return;
   }
 
-  fs.readdirSync(dirPath).forEach(entry => {
+  fs.readdirSync(dirPath).forEach((entry) => {
     const entryPath = path.join(dirPath, entry);
     if (fs.lstatSync(entryPath).isDirectory()) {
       rmdir(entryPath);

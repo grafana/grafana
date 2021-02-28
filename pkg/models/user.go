@@ -7,9 +7,9 @@ import (
 
 // Typed errors
 var (
-	ErrUserNotFound      = errors.New("User not found")
-	ErrUserAlreadyExists = errors.New("User already exists")
-	ErrLastGrafanaAdmin  = errors.New("Cannot remove last grafana admin")
+	ErrUserNotFound      = errors.New("user not found")
+	ErrUserAlreadyExists = errors.New("user already exists")
+	ErrLastGrafanaAdmin  = errors.New("cannot remove last grafana admin")
 )
 
 type Password string
@@ -204,16 +204,16 @@ type UpdateUserLastSeenAtCommand struct {
 	UserId int64
 }
 
-func (user *SignedInUser) HasRole(role RoleType) bool {
-	if user.IsGrafanaAdmin {
+func (u *SignedInUser) HasRole(role RoleType) bool {
+	if u.IsGrafanaAdmin {
 		return true
 	}
 
-	return user.OrgRole.Includes(role)
+	return u.OrgRole.Includes(role)
 }
 
-func (user *SignedInUser) IsRealUser() bool {
-	return user.UserId != 0
+func (u *SignedInUser) IsRealUser() bool {
+	return u.UserId != 0
 }
 
 type UserProfileDTO struct {

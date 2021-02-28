@@ -69,7 +69,3 @@ func (q *cloudWatchQuery) isMultiValuedDimensionExpression() bool {
 
 	return false
 }
-
-func (q *cloudWatchQuery) isMetricStat() bool {
-	return !q.isSearchExpression() && !q.isMathExpression()
-}

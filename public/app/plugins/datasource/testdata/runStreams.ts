@@ -41,7 +41,7 @@ export function runSignalStream(
   query: StreamingQuery,
   req: DataQueryRequest<TestDataQuery>
 ): Observable<DataQueryResponse> {
-  return new Observable<DataQueryResponse>(subscriber => {
+  return new Observable<DataQueryResponse>((subscriber) => {
     const streamId = `signal-${req.panelId}-${target.refId}`;
     const maxDataPoints = req.maxDataPoints || 1000;
 
@@ -98,6 +98,7 @@ export function runSignalStream(
       subscriber.next({
         data: [data],
         key: streamId,
+        state: LoadingState.Streaming,
       });
 
       timeoutId = setTimeout(pushNextEvent, speed);
@@ -118,7 +119,7 @@ export function runLogsStream(
   query: StreamingQuery,
   req: DataQueryRequest<TestDataQuery>
 ): Observable<DataQueryResponse> {
-  return new Observable<DataQueryResponse>(subscriber => {
+  return new Observable<DataQueryResponse>((subscriber) => {
     const streamId = `logs-${req.panelId}-${target.refId}`;
     const maxDataPoints = req.maxDataPoints || 1000;
 
@@ -137,8 +138,8 @@ export function runLogsStream(
     let timeoutId: any = null;
 
     const pushNextEvent = () => {
-      data.values.time.add(Date.now());
-      data.values.line.add(getRandomLine());
+      data.fields[0].values.add(Date.now());
+      data.fields[1].values.add(getRandomLine());
 
       subscriber.next({
         data: [data],
@@ -163,7 +164,7 @@ export function runFetchStream(
   query: StreamingQuery,
   req: DataQueryRequest<TestDataQuery>
 ): Observable<DataQueryResponse> {
-  return new Observable<DataQueryResponse>(subscriber => {
+  return new Observable<DataQueryResponse>((subscriber) => {
     const streamId = `fetch-${req.panelId}-${target.refId}`;
     const maxDataPoints = req.maxDataPoints || 1000;
 
@@ -222,7 +223,7 @@ export function runFetchStream(
       throw new Error('query.url is not defined');
     }
 
-    fetch(new Request(query.url)).then(response => {
+    fetch(new Request(query.url)).then((response) => {
       if (response.body) {
         reader = response.body.getReader();
         reader.read().then(processChunk);

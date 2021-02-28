@@ -39,7 +39,7 @@ export class UtilSrv {
 
     const elem = React.createElement(provideTheme(AngularModalProxy), modalProps);
     this.reactModalRoot.appendChild(this.reactModalNode);
-    return ReactDOM.render(elem, this.reactModalNode);
+    ReactDOM.render(elem, this.reactModalNode);
   }
 
   onReactModalDismiss = () => {
@@ -78,7 +78,7 @@ export class UtilSrv {
       backdrop: options.backdrop,
     });
 
-    Promise.resolve(modal).then(modalEl => {
+    Promise.resolve(modal).then((modalEl) => {
       modalEl.modal('show');
     });
   }

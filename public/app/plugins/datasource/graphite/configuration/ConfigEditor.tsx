@@ -31,7 +31,7 @@ export class ConfigEditor extends PureComponent<Props> {
       <p>
         There are different types of Graphite compatible backends. Here you can specify the type you are using. If you
         are using{' '}
-        <a href="https://github.com/grafana/metrictank" className="pointer" target="_blank">
+        <a href="https://github.com/grafana/metrictank" className="pointer" target="_blank" rel="noreferrer">
           Metrictank
         </a>{' '}
         then select that here. This will enable Metrictank specific features like query processing meta data. Metrictank
@@ -44,7 +44,7 @@ export class ConfigEditor extends PureComponent<Props> {
     const { options, onOptionsChange } = this.props;
 
     const currentVersion =
-      graphiteVersions.find(item => item.value === options.jsonData.graphiteVersion) ?? graphiteVersions[2];
+      graphiteVersions.find((item) => item.value === options.jsonData.graphiteVersion) ?? graphiteVersions[2];
 
     return (
       <>
@@ -73,7 +73,7 @@ export class ConfigEditor extends PureComponent<Props> {
               <InlineFormLabel tooltip={this.renderTypeHelp}>Type</InlineFormLabel>
               <Select
                 options={graphiteTypes}
-                value={graphiteTypes.find(type => type.value === options.jsonData.graphiteType)}
+                value={graphiteTypes.find((type) => type.value === options.jsonData.graphiteType)}
                 width={8}
                 onChange={onUpdateDatasourceJsonDataOptionSelect(this.props, 'graphiteType')}
               />

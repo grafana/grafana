@@ -1,9 +1,5 @@
 +++
 title = "Calculations list"
-type = "docs"
-[menu.docs]
-identifier = "calculations-list"
-parent = "panels"
 weight = 300
 +++
 
@@ -21,6 +17,7 @@ Among other places, these calculations are used in the Transform tab and the bar
 | Count | number of values in a field|
 | Delta | cumulative change in value |
 | Difference | difference between first and last value of a field|
+| Difference percent | percentage change between first and last value of a field |
 | Distinct count | number of unique values in a field |
 | First (not null) | first, not null value in a field|
 | Max | maximum value of a field |

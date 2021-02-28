@@ -1,6 +1,5 @@
 +++
 title = "Add support for variables in plugins"
-type = "docs"
 +++
 
 # Add support for variables in plugins

@@ -17,7 +17,7 @@ import _isEqual from 'lodash/isEqual';
 // @ts-ignore
 import { getTraceSpanIdsAsTree } from '../selectors/trace';
 import { getConfigValue } from '../utils/config/get-config';
-import { TraceKeyValuePair, TraceSpan, TraceSpanData, Trace, TraceData } from '@grafana/data';
+import { TraceKeyValuePair, TraceSpan, Trace, TraceViewData } from '@grafana/data';
 // @ts-ignore
 import TreeNode from '../utils/TreeNode';
 
@@ -25,7 +25,7 @@ import TreeNode from '../utils/TreeNode';
 export function deduplicateTags(spanTags: TraceKeyValuePair[]) {
   const warningsHash: Map<string, string> = new Map<string, string>();
   const tags: TraceKeyValuePair[] = spanTags.reduce<TraceKeyValuePair[]>((uniqueTags, tag) => {
-    if (!uniqueTags.some(t => t.key === tag.key && t.value === tag.value)) {
+    if (!uniqueTags.some((t) => t.key === tag.key && t.value === tag.value)) {
       uniqueTags.push(tag);
     } else {
       warningsHash.set(`${tag.key}:${tag.value}`, `Duplicate tag "${tag.key}:${tag.value}"`);
@@ -71,12 +71,11 @@ export function orderTags(spanTags: TraceKeyValuePair[], topPrefixes?: string[])
  * NOTE: Mutates `data` - Transform the HTTP response data into the form the app
  * generally requires.
  */
-export default function transformTraceData(data: TraceData & { spans: TraceSpanData[] }): Trace | null {
-  let { traceID } = data;
-  if (!traceID) {
+export default function transformTraceData(data: TraceViewData | undefined): Trace | null {
+  if (!data?.traceID) {
     return null;
   }
-  traceID = traceID.toLowerCase();
+  const traceID = data.traceID.toLowerCase();
 
   let traceEndTime = 0;
   let traceStartTime = Number.MAX_SAFE_INTEGER;
@@ -84,7 +83,7 @@ export default function transformTraceData(data: TraceData & { spans: TraceSpanD
   const spanMap = new Map<string, TraceSpan>();
   // filter out spans with empty start times
   // eslint-disable-next-line no-param-reassign
-  data.spans = data.spans.filter(span => Boolean(span.startTime));
+  data.spans = data.spans.filter((span) => Boolean(span.startTime));
 
   const max = data.spans.length;
   for (let i = 0; i < max; i++) {
@@ -167,7 +166,7 @@ export default function transformTraceData(data: TraceData & { spans: TraceSpanD
     });
     spans.push(span);
   });
-  const services = Object.keys(svcCounts).map(name => ({ name, numberOfSpans: svcCounts[name] }));
+  const services = Object.keys(svcCounts).map((name) => ({ name, numberOfSpans: svcCounts[name] }));
   return {
     services,
     spans,

@@ -2,10 +2,7 @@
 title = "Reporting"
 description = ""
 keywords = ["grafana", "reporting"]
-type = "docs"
 aliases = ["/docs/grafana/latest/administration/reports"]
-[menu.docs]
-parent = "enterprise"
 weight = 400
 +++
 
@@ -38,8 +35,8 @@ Currently only Organization Admins can create reports.
    - **Time range -** (optional) Use custom time range for the report. For more information check [Report time range]({{< relref "#report-time-range" >}}).
 1. **Preview PDF** to make sure the report appears as you expect. Update if necessary.
 1. Enter scheduling information. Options vary depending on the frequency you select.
-1. Select the orientation option for generated report: **Portrait** or **Landscape**.  
-1. Select the layout option for generated report: **Simple** or **Grid**.  
+1. Select the orientation option for generated report: **Portrait** or **Landscape**.
+1. Select the layout option for generated report: **Simple** or **Grid**.
 1. **Save** the report.
 1. **Send test email** to verify that the whole configuration is working as expected.
 
@@ -67,7 +64,7 @@ All scheduling indicates when the reporting service will start rendering the das
 Hourly reports are generated once per hour. All fields are required.
 
 - **At minute -** The number of minutes after full hour when the report should be generated.
-- **Time zone -** Time zone to determine the offset of the full hour. Does not currently change the time in the rendered report. 
+- **Time zone -** Time zone to determine the offset of the full hour. Does not currently change the time in the rendered report.
 
 #### Daily
 
@@ -121,7 +118,9 @@ You can send reports programmatically with the [send report]({{< relref "../http
 
 When generating reports, each panel renders separately before being collected in a PDF. The per panel rendering timeout and number of concurrently rendered panels can be configured.
 
-To modify the panels' clarity you can set a scale factor for the rendered images. A higher scale factor is more legible but will increase the file size of the generated PDF.
+To make a panel more legible, you can set a scale factor for the rendered images. However, a higher scale factor increases the file size of the generated PDF.
+
+You can also specify custom fonts that support different Unicode scripts. The DejaVu font is the default used for PDF rendering.
 
 These options are available in the [configuration]({{< relref "../administration/configuration.md">}}) file.
 
@@ -134,6 +133,14 @@ concurrent_render_limit = 4
 # Set the scale factor for rendering images. 2 is enough for monitor resolutions
 # 4 would be better for printed material. Setting a higher value affects performance and memory
 image_scale_factor = 2
+# Path to the directory containing font files
+fonts_path =
+# Name of the TrueType font file with regular style
+font_regular = DejaVuSansCondensed.ttf
+# Name of the TrueType font file with bold style
+font_bold = DejaVuSansCondensed-Bold.ttf
+# Name of the TrueType font file with italic style
+font_italic = DejaVuSansCondensed-Oblique.ttf
 ```
 
 ## Report time range
@@ -141,12 +148,12 @@ image_scale_factor = 2
 > Setting custom report time range is available in Grafana Enterprise v7.2+.
 
 By default, reports use the saved time range of the dashboard. Changing the time range of the report can be done by:
-- Saving a modified time range to the dashboard. 
+- Saving a modified time range to the dashboard.
 - Setting a time range via **Time range** field in the report form. If specified, then this custom time range overrides the one from the report's dashboard.
 
 The page header of the report displays the time range for the dashboard's data queries. Dashboards set to use the browser's time zone will use the time zone on the Grafana server.
 
-If the time zone is set differently between your Grafana server and its remote image renderer, then the time ranges in the report might be different between the page header and the time axes in the panels. We advise always setting the time zone to UTC for dashboards when using a remote renderer to avoid this. 
+If the time zone is set differently between your Grafana server and its remote image renderer, then the time ranges in the report might be different between the page header and the time axes in the panels. We advise always setting the time zone to UTC for dashboards when using a remote renderer to avoid this.
 
 ## Reports settings
 
@@ -154,7 +161,7 @@ If the time zone is set differently between your Grafana server and its remote i
 
 You can configure organization-wide report settings in the **Settings** tab on the **Reporting** page. Settings are applied to all the reports for current organization.
 
-You can customize the branding options.  
+You can customize the branding options.
 
 Report branding:
 **Company logo URL** - Company logo displayed in the report PDF. Defaults to the Grafana logo.
@@ -163,8 +170,8 @@ Email branding:
 - **Company logo URL** - Company logo displayed in the report PDF. Defaults to the Grafana logo.
 - **Email footer** - Toggle to enable report email footer. Select **Sent by** or **None**.
 - **Footer link text** - Text for the link in the report email footer. Defaults to "Grafana".
-- **Footer link URL** - Link for the report email footer.  
-  
+- **Footer link URL** - Link for the report email footer.
+
 {{< docs-imagebox img="/img/docs/enterprise/reports_settings.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ## Troubleshoot reporting

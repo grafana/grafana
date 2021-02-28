@@ -1,5 +1,8 @@
 // Package simplejson provides a wrapper for arbitrary JSON objects that adds methods to access properties.
 // Use of this package in place of types and the standard library's encoding/json package is strongly discouraged.
+//
+// Don't lint for stale code, since it's a copied library and we might as well keep the whole thing.
+// nolint:unused
 package simplejson
 
 import (
@@ -176,6 +179,17 @@ func (j *Json) GetIndex(index int) *Json {
 		}
 	}
 	return &Json{nil}
+}
+
+// SetIndex modifies `Json` array by `index` and `value`
+// for `index` in its `array` representation
+func (j *Json) SetIndex(index int, val interface{}) {
+	a, err := j.Array()
+	if err == nil {
+		if len(a) > index {
+			a[index] = val
+		}
+	}
 }
 
 // CheckGet returns a pointer to a new `Json` object and

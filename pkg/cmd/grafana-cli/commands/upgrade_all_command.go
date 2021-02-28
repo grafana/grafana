@@ -37,7 +37,7 @@ func (cmd Command) upgradeAllCommand(c utils.CommandLine) error {
 	for _, localPlugin := range localPlugins {
 		for _, p := range remotePlugins.Plugins {
 			remotePlugin := p
-			if localPlugin.Id != remotePlugin.Id {
+			if localPlugin.ID != remotePlugin.ID {
 				continue
 			}
 			if shouldUpgrade(localPlugin.Info.Version, &remotePlugin) {
@@ -47,14 +47,14 @@ func (cmd Command) upgradeAllCommand(c utils.CommandLine) error {
 	}
 
 	for _, p := range pluginsToUpgrade {
-		logger.Infof("Updating %v \n", p.Id)
+		logger.Infof("Updating %v \n", p.ID)
 
-		err := services.RemoveInstalledPlugin(pluginsDir, p.Id)
+		err := services.RemoveInstalledPlugin(pluginsDir, p.ID)
 		if err != nil {
 			return err
 		}
 
-		err = InstallPlugin(p.Id, "", c, cmd.Client)
+		err = InstallPlugin(p.ID, "", c, cmd.Client)
 		if err != nil {
 			return err
 		}

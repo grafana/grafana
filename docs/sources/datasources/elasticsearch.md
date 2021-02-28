@@ -2,11 +2,7 @@
 title = "Elasticsearch"
 description = "Guide for using Elasticsearch in Grafana"
 keywords = ["grafana", "elasticsearch", "guide"]
-type = "docs"
 aliases = ["/docs/grafana/latest/features/datasources/elasticsearch"]
-[menu.docs]
-name = "Elasticsearch"
-parent = "datasources"
 weight = 400
 +++
 
@@ -39,6 +35,8 @@ All requests will be made from the browser to Grafana backend/server which in tu
 
 ### Browser (Direct) access
 
+> **Warning:** Browser (Direct) access is deprecated and will be removed in a future release.
+
 All requests will be made from the browser directly to the data source and may be subject to Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the browser if you select this access mode.
 
 If you select Browser access you must update your Elasticsearch configuration to allow other domains to access
@@ -51,7 +49,7 @@ http.cors.allow-origin: "*"
 
 ### Index settings
 
-![Elasticsearch data source details](/img/docs/elasticsearch/elasticsearch_ds_details.png)
+![Elasticsearch data source details](/img/docs/elasticsearch/elasticsearch-ds-details-7-4.png)
 
 Here you can specify a default for the `time field` and specify the name of your Elasticsearch index. You can use
 a time pattern for the index name or a wildcard.
@@ -95,14 +93,14 @@ For example, if you're using a default setup of Filebeat for shipping logs to El
 
 Data links create a link from a specified field that can be accessed in logs view in Explore.
 
-Each data link configuration consists of: 
+Each data link configuration consists of:
 - **Field -** Name of the field used by the data link.
 - **URL/query -** If the link is external, then enter the full link URL. If the link is internal link, then this input serves as query for the target data source. In both cases, you can interpolate the value from the field with `${__value.raw }` macro.
 - **Internal link -** Select if the link is internal or external. In case of internal link, a data source selector allows you to select the target data source. Only tracing data sources are supported.
 
 ## Metric Query editor
 
-![Elasticsearch Query Editor](/img/docs/elasticsearch/query_editor.png)
+![Elasticsearch Query Editor](/img/docs/elasticsearch/query-editor-7-4.png)
 
 The Elasticsearch query editor allows you to select multiple metrics and group by multiple terms or filters. Use the plus and minus icons to the right to add/remove
 metrics or group by clauses. Some metrics and group by clauses haves options, click the option text to expand the row to view and edit metric or group by options.
@@ -121,7 +119,7 @@ You can control the name for time series via the `Alias` input field.
 
 Some metric aggregations are called Pipeline aggregations, for example, *Moving Average* and *Derivative*. Elasticsearch pipeline metrics require another metric to be based on. Use the eye icon next to the metric to hide metrics from appearing in the graph. This is useful for metrics you only have in the query for use in a pipeline metric.
 
-![](/img/docs/elasticsearch/pipeline_metrics_editor.png)
+![Pipeline aggregation editor](/img/docs/elasticsearch/pipeline-aggregation-editor-7-4.png)
 
 ## Templating
 
@@ -171,7 +169,7 @@ There are two syntaxes:
 Why two ways? The first syntax is easier to read and write but does not allow you to use a variable in the middle of a word. When the *Multi-value* or *Include all value*
 options are enabled, Grafana converts the labels from plain text to a lucene compatible condition.
 
-![](/img/docs/v43/elastic_templating_query.png)
+![Query with template variables](/img/docs/elasticsearch/elastic-templating-query-7-4.png)
 
 In the above example, we have a lucene query that filters documents based on the `@hostname`  property using a variable named `$hostname`. It is also using
 a variable in the *Terms* group by field input box. This allows you to use a variable to quickly change how the data is grouped.
@@ -248,3 +246,19 @@ datasources:
       logMessageField: message
       logLevelField: fields.level
 ```
+
+## Amazon Elasticsearch Service
+
+AWS users using Amazon's Elasticsearch Service can use Grafana's Elasticsearch data source to visualize Elasticsearch data.
+If you are using an AWS Identity and Access Management (IAM) policy to control access to your Amazon Elasticsearch Service domain, then you must use AWS Signature Version 4 (AWS SigV4) to sign all requests to that domain.
+For more details on AWS SigV4, refer to the [AWS documentation](https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html).
+
+### AWS Signature Version 4 authentication
+
+> **Note:** Only available in Grafana v7.3+.
+
+In order to sign requests to your Amazon Elasticsearch Service domain, SigV4 can be enabled in the Grafana [configuration]({{< relref "../administration/configuration.md#sigv4_auth_enabled" >}}).
+
+Once AWS SigV4 is enabled, it can be configured on the Elasticsearch data source configuration page. Refer to [Cloudwatch authentication]({{<relref "./cloudwatch.md#authentication" >}}) for more information about authentication options.
+
+{{< docs-imagebox img="/img/docs/v73/elasticsearch-sigv4-config-editor.png" max-width="500px" class="docs-image--no-shadow" caption="SigV4 configuration for AWS Elasticsearch Service" >}}

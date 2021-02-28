@@ -8,10 +8,12 @@ import { DashboardLinks } from './DashboardLinks';
 import { Annotations } from './Annotations';
 import { SubMenuItems } from './SubMenuItems';
 import { DashboardLink } from '../../state/DashboardModel';
+import { AnnotationQuery } from '@grafana/data';
 
 interface OwnProps {
   dashboard: DashboardModel;
   links: DashboardLink[];
+  annotations: AnnotationQuery[];
 }
 
 interface ConnectedProps {
@@ -41,17 +43,17 @@ class SubMenuUnConnected extends PureComponent<Props> {
       return true;
     }
 
-    const visibleVariables = this.props.variables.filter(variable => variable.hide !== VariableHide.hideVariable);
+    const visibleVariables = this.props.variables.filter((variable) => variable.hide !== VariableHide.hideVariable);
     if (visibleVariables.length > 0) {
       return true;
     }
 
-    const visibleAnnotations = this.props.dashboard.annotations.list.filter(annotation => annotation.hide !== true);
+    const visibleAnnotations = this.props.dashboard.annotations.list.filter((annotation) => annotation.hide !== true);
     return visibleAnnotations.length > 0;
   };
 
   render() {
-    const { dashboard, variables, links } = this.props;
+    const { dashboard, variables, links, annotations } = this.props;
 
     if (!this.isSubMenuVisible()) {
       return null;
@@ -60,7 +62,7 @@ class SubMenuUnConnected extends PureComponent<Props> {
     return (
       <div className="submenu-controls">
         <SubMenuItems variables={variables} />
-        <Annotations annotations={dashboard.annotations.list} onAnnotationChanged={this.onAnnotationStateChanged} />
+        <Annotations annotations={annotations} onAnnotationChanged={this.onAnnotationStateChanged} />
         <div className="gf-form gf-form--grow" />
         {dashboard && <DashboardLinks dashboard={dashboard} links={links} />}
         <div className="clearfix" />
@@ -69,7 +71,7 @@ class SubMenuUnConnected extends PureComponent<Props> {
   }
 }
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => {
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state) => {
   return {
     variables: getSubMenuVariables(state.templating.variables),
   };

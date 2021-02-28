@@ -5,13 +5,14 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func GetFolders(c *models.ReqContext) Response {
+func GetFolders(c *models.ReqContext) response.Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
 	folders, err := s.GetFolders(c.QueryInt64("limit"))
 
@@ -29,10 +30,10 @@ func GetFolders(c *models.ReqContext) Response {
 		})
 	}
 
-	return JSON(200, result)
+	return response.JSON(200, result)
 }
 
-func GetFolderByUID(c *models.ReqContext) Response {
+func GetFolderByUID(c *models.ReqContext) response.Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
 	folder, err := s.GetFolderByUID(c.Params(":uid"))
 
@@ -41,10 +42,10 @@ func GetFolderByUID(c *models.ReqContext) Response {
 	}
 
 	g := guardian.New(folder.Id, c.OrgId, c.SignedInUser)
-	return JSON(200, toFolderDto(g, folder))
+	return response.JSON(200, toFolderDto(g, folder))
 }
 
-func GetFolderByID(c *models.ReqContext) Response {
+func GetFolderByID(c *models.ReqContext) response.Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
 	folder, err := s.GetFolderByID(c.ParamsInt64(":id"))
 	if err != nil {
@@ -52,10 +53,10 @@ func GetFolderByID(c *models.ReqContext) Response {
 	}
 
 	g := guardian.New(folder.Id, c.OrgId, c.SignedInUser)
-	return JSON(200, toFolderDto(g, folder))
+	return response.JSON(200, toFolderDto(g, folder))
 }
 
-func (hs *HTTPServer) CreateFolder(c *models.ReqContext, cmd models.CreateFolderCommand) Response {
+func (hs *HTTPServer) CreateFolder(c *models.ReqContext, cmd models.CreateFolderCommand) response.Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
 	err := s.CreateFolder(&cmd)
 	if err != nil {
@@ -69,10 +70,10 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext, cmd models.CreateFolder
 	}
 
 	g := guardian.New(cmd.Result.Id, c.OrgId, c.SignedInUser)
-	return JSON(200, toFolderDto(g, cmd.Result))
+	return response.JSON(200, toFolderDto(g, cmd.Result))
 }
 
-func UpdateFolder(c *models.ReqContext, cmd models.UpdateFolderCommand) Response {
+func UpdateFolder(c *models.ReqContext, cmd models.UpdateFolderCommand) response.Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
 	err := s.UpdateFolder(c.Params(":uid"), &cmd)
 	if err != nil {
@@ -80,17 +81,17 @@ func UpdateFolder(c *models.ReqContext, cmd models.UpdateFolderCommand) Response
 	}
 
 	g := guardian.New(cmd.Result.Id, c.OrgId, c.SignedInUser)
-	return JSON(200, toFolderDto(g, cmd.Result))
+	return response.JSON(200, toFolderDto(g, cmd.Result))
 }
 
-func DeleteFolder(c *models.ReqContext) Response {
+func DeleteFolder(c *models.ReqContext) response.Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
 	f, err := s.DeleteFolder(c.Params(":uid"))
 	if err != nil {
 		return toFolderError(err)
 	}
 
-	return JSON(200, util.DynMap{
+	return response.JSON(200, util.DynMap{
 		"title":   f.Title,
 		"message": fmt.Sprintf("Folder %s deleted", f.Title),
 		"id":      f.Id,
@@ -128,32 +129,32 @@ func toFolderDto(g guardian.DashboardGuardian, folder *models.Folder) dtos.Folde
 	}
 }
 
-func toFolderError(err error) Response {
+func toFolderError(err error) response.Response {
 	var dashboardErr models.DashboardErr
 	if ok := errors.As(err, &dashboardErr); ok {
-		return Error(dashboardErr.StatusCode, err.Error(), err)
+		return response.Error(dashboardErr.StatusCode, err.Error(), err)
 	}
 
-	if err == models.ErrFolderTitleEmpty ||
-		err == models.ErrFolderSameNameExists ||
-		err == models.ErrFolderWithSameUIDExists ||
-		err == models.ErrDashboardTypeMismatch ||
-		err == models.ErrDashboardInvalidUid ||
-		err == models.ErrDashboardUidTooLong {
-		return Error(400, err.Error(), nil)
+	if errors.Is(err, models.ErrFolderTitleEmpty) ||
+		errors.Is(err, models.ErrFolderSameNameExists) ||
+		errors.Is(err, models.ErrFolderWithSameUIDExists) ||
+		errors.Is(err, models.ErrDashboardTypeMismatch) ||
+		errors.Is(err, models.ErrDashboardInvalidUid) ||
+		errors.Is(err, models.ErrDashboardUidTooLong) {
+		return response.Error(400, err.Error(), nil)
 	}
 
-	if err == models.ErrFolderAccessDenied {
-		return Error(403, "Access denied", err)
+	if errors.Is(err, models.ErrFolderAccessDenied) {
+		return response.Error(403, "Access denied", err)
 	}
 
-	if err == models.ErrFolderNotFound {
-		return JSON(404, util.DynMap{"status": "not-found", "message": models.ErrFolderNotFound.Error()})
+	if errors.Is(err, models.ErrFolderNotFound) {
+		return response.JSON(404, util.DynMap{"status": "not-found", "message": models.ErrFolderNotFound.Error()})
 	}
 
-	if err == models.ErrFolderVersionMismatch {
-		return JSON(412, util.DynMap{"status": "version-mismatch", "message": models.ErrFolderVersionMismatch.Error()})
+	if errors.Is(err, models.ErrFolderVersionMismatch) {
+		return response.JSON(412, util.DynMap{"status": "version-mismatch", "message": models.ErrFolderVersionMismatch.Error()})
 	}
 
-	return Error(500, "Folder API error", err)
+	return response.Error(500, "Folder API error", err)
 }

@@ -9,7 +9,7 @@ import appEvents from 'app/core/app_events';
 import { loadFolder, loadFolderPermissions } from './reducers';
 
 export function getFolderByUid(uid: string): ThunkResult<void> {
-  return async dispatch => {
+  return async (dispatch) => {
     const folder = await backendSrv.getFolderByUid(uid);
     dispatch(loadFolder(folder));
     dispatch(updateNavIndex(buildNavModel(folder)));
@@ -17,7 +17,7 @@ export function getFolderByUid(uid: string): ThunkResult<void> {
 }
 
 export function saveFolder(folder: FolderState): ThunkResult<void> {
-  return async dispatch => {
+  return async (dispatch) => {
     const res = await backendSrv.put(`/api/folders/${folder.uid}`, {
       title: folder.title,
       version: folder.version,
@@ -31,14 +31,14 @@ export function saveFolder(folder: FolderState): ThunkResult<void> {
 }
 
 export function deleteFolder(uid: string): ThunkResult<void> {
-  return async dispatch => {
+  return async (dispatch) => {
     await backendSrv.delete(`/api/folders/${uid}`);
     dispatch(updateLocation({ path: `dashboards` }));
   };
 }
 
 export function getFolderPermissions(uid: string): ThunkResult<void> {
-  return async dispatch => {
+  return async (dispatch) => {
     const permissions = await backendSrv.get(`/api/folders/${uid}/permissions`);
     dispatch(loadFolderPermissions(permissions));
   };
@@ -120,7 +120,7 @@ export function addFolderPermission(newItem: NewDashboardAclItem): ThunkResult<v
 }
 
 export function createNewFolder(folderName: string): ThunkResult<void> {
-  return async dispatch => {
+  return async (dispatch) => {
     const newFolder = await getBackendSrv().post('/api/folders', { title: folderName });
     appEvents.emit(AppEvents.alertSuccess, ['Folder Created', 'OK']);
     dispatch(updateLocation({ path: locationUtil.stripBaseFromUrl(newFolder.url) }));

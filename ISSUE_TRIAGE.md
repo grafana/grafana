@@ -304,7 +304,9 @@ Even if you don't have the time or knowledge to investigate an issue we highly r
 We have some automation that triggers on comments or labels being added to issues. Many of these automated behaviors are defined in [commands.json](https://github.com/grafana/grafana/blob/master/.github/commands.json). Or in other [GitHub Actions](https://github.com/grafana/grafana/tree/master/.github/workflows)
 
 * Add /duplicate `#<issue number>`  to have Grafana label & close issue with an appropriate message. 
-* Add `type/question` and the bot will close it with an appropriate message. 
+* Add `bot/question` and the bot will close it with an appropriate message. 
+
+[Read more on bot actions](https://github.com/grafana/grafana/blob/master/.github/bot.md)
 
 ## External PRs
 

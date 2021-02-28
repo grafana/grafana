@@ -2,13 +2,10 @@
 title = "What's new in Grafana v6.1"
 description = "Feature and improvement highlights for Grafana v6.1"
 keywords = ["grafana", "new", "documentation", "6.1", "release notes"]
-type = "docs"
 aliases = ["/docs/grafana/latest/guides/whats-new-in-v6-1/"]
-[menu.docs]
-name = "Version 6.1"
-identifier = "v6.1"
-parent = "whatsnew"
-weight = -12
+weight = -20
+[_build]
+list = false
 +++
 
 # What's new in Grafana v6.1
@@ -27,13 +24,13 @@ Support for fetching a list of label names was released in Prometheus v2.6.0 so 
 
 ### Permissions: Editors can own dashboards, folders and teams they create
 
-When the dashboard folders feature and permissions system was released in Grafana 5.0, users with the editor role were not allowed to administrate dashboards, folders or teams. In the 6.1 release, we have added a config option that can change the default permissions so that editors are admins for any Dashboard, Folder or Team they create.
+When the dashboard folders feature and permissions system was released in Grafana 5.0, users with the editor role were not allowed to administrate dashboards, folders or teams. In the 6.1 release, we have added a configuration option that can change the default permissions so that editors are admins for any Dashboard, Folder or Team they create.
 
 This feature also adds a new Team permission that can be assigned to any user with the editor or viewer role and enables that user to add other users to the Team.
 
 We believe that this is more in line with the Grafana philosophy, as it will allow teams to be more self-organizing. This option will be made permanent if it gets positive feedback from the community so let us know what you think in the [issue on GitHub](https://github.com/grafana/grafana/issues/15590).
 
-To turn this feature on add the following [config option](/administration/configuration/#editors-can-admin) to your Grafana ini file in the `users` section and then restart the Grafana server:
+To turn this feature on add the following [configuration option](/administration/configuration/#editors-can-admin) to your Grafana ini file in the `users` section and then restart the Grafana server:
 
 ```ini
 [users]

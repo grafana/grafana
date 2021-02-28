@@ -31,8 +31,8 @@ export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({
     <>
       <VerticalGroup spacing="lg">
         <small>
-          This dashboard cannot be saved from Grafana's UI since it has been provisioned from another source. Copy the
-          JSON or save it to a file below. Then you can update your dashboard in corresponding provisioning source.
+          This dashboard cannot be saved from Grafana&apos;s UI since it has been provisioned from another source. Copy
+          the JSON or save it to a file below. Then you can update your dashboard in corresponding provisioning source.
           <br />
           <i>
             See{' '}
@@ -40,6 +40,7 @@ export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({
               className="external-link"
               href="http://docs.grafana.org/administration/provisioning/#dashboards"
               target="_blank"
+              rel="noreferrer"
             >
               documentation
             </a>{' '}
@@ -52,7 +53,7 @@ export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({
         <TextArea
           spellCheck={false}
           value={dashboardJSON}
-          onChange={e => {
+          onChange={(e) => {
             setDashboardJson(e.currentTarget.value);
           }}
           className={styles.json}

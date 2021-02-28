@@ -1,12 +1,12 @@
-import React, { useState, useMemo, useContext, useRef, RefObject, memo, useEffect } from 'react';
+import React, { memo, RefObject, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import usePrevious from 'react-use/lib/usePrevious';
 import { DataLinkSuggestions } from './DataLinkSuggestions';
-import { ThemeContext, makeValue } from '../../index';
+import { makeValue, ThemeContext } from '../../index';
 import { SelectionReference } from './SelectionReference';
-import { Portal, getFormStyles } from '../index';
+import { getFormStyles, Portal } from '../index';
 
 // @ts-ignore
-import Prism from 'prismjs';
+import Prism, { Grammar, LanguageMap } from 'prismjs';
 import { Editor } from '@grafana/slate-react';
 import { Value } from 'slate';
 import Plain from 'slate-plain-serializer';
@@ -16,7 +16,7 @@ import { css, cx } from 'emotion';
 import { SlatePrism } from '../../slate-plugins';
 import { SCHEMA } from '../../utils/slate';
 import { stylesFactory } from '../../themes';
-import { GrafanaTheme, VariableSuggestion, VariableOrigin, DataLinkBuiltInVars } from '@grafana/data';
+import { DataLinkBuiltInVars, GrafanaTheme, VariableOrigin, VariableSuggestion } from '@grafana/data';
 
 const modulo = (a: number, n: number) => a - n * Math.floor(a / n);
 
@@ -27,11 +27,20 @@ interface DataLinkInputProps {
   placeholder?: string;
 }
 
+const datalinksSyntax: Grammar = {
+  builtInVariable: {
+    pattern: /(\${\S+?})/,
+  },
+};
+
 const plugins = [
-  SlatePrism({
-    onlyIn: (node: any) => node.type === 'code_block',
-    getSyntax: () => 'links',
-  }),
+  SlatePrism(
+    {
+      onlyIn: (node: any) => node.type === 'code_block',
+      getSyntax: () => 'links',
+    },
+    { ...(Prism.languages as LanguageMap), links: datalinksSyntax }
+  ),
 ];
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
@@ -56,19 +65,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
 }));
 
-export const enableDatalinksPrismSyntax = () => {
-  Prism.languages['links'] = {
-    builtInVariable: {
-      pattern: /(\${\S+?})/,
-    },
-  };
-};
-
 // This memoised also because rerendering the slate editor grabs focus which created problem in some cases this
 // was used and changes to different state were propagated here.
 export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
   ({ value, onChange, suggestions, placeholder = 'http://your-grafana.com/d/000000010/annotations' }) => {
-    enableDatalinksPrismSyntax();
     const editorRef = useRef<Editor>() as RefObject<Editor>;
     const theme = useContext(ThemeContext);
     const styles = getStyles(theme);
@@ -82,7 +82,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
     stateRef.current = { showingSuggestions, suggestions, suggestionsIndex, linkUrl, onChange };
 
     // SelectionReference is used to position the variables suggestion relatively to current DOM selection
-    const selectionRef = useMemo(() => new SelectionReference(), [setShowingSuggestions, linkUrl]);
+    const selectionRef = useMemo(() => new SelectionReference(), []);
 
     const onKeyDown = React.useCallback((event: KeyboardEvent, next: () => any) => {
       if (!stateRef.current.showingSuggestions) {
@@ -106,7 +106,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
         case 'ArrowUp':
           event.preventDefault();
           const direction = event.key === 'ArrowDown' ? 1 : -1;
-          return setSuggestionsIndex(index => modulo(index + direction, stateRef.current.suggestions.length));
+          return setSuggestionsIndex((index) => modulo(index + direction, stateRef.current.suggestions.length));
         default:
           return next();
       }
@@ -130,7 +130,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
       if (item.origin !== VariableOrigin.Template || item.value === DataLinkBuiltInVars.includeVars) {
         editor.insertText(`${includeDollarSign ? '$' : ''}\{${item.value}}`);
       } else {
-        editor.insertText(`var-${item.value}=$\{${item.value}}`);
+        editor.insertText(`\${${item.value}:queryparam}`);
       }
 
       setLinkUrl(editor.value);
@@ -149,11 +149,25 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
                 <ReactPopper
                   referenceElement={selectionRef}
                   placement="top-end"
-                  modifiers={{
-                    preventOverflow: { enabled: true, boundariesElement: 'window' },
-                    arrow: { enabled: false },
-                    offset: { offset: 250 }, // width of the suggestions menu
-                  }}
+                  modifiers={[
+                    {
+                      name: 'preventOverflow',
+                      enabled: true,
+                      options: {
+                        rootBoundary: 'viewport',
+                      },
+                    },
+                    {
+                      name: 'arrow',
+                      enabled: false,
+                    },
+                    {
+                      name: 'offset',
+                      options: {
+                        offset: [250, 0],
+                      },
+                    },
+                  ]}
                 >
                   {({ ref, style, placement }) => {
                     return (

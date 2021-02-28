@@ -12,21 +12,12 @@ export interface SyncInfo {
   enabled: boolean;
   schedule: string;
   nextSync: string;
-  prevSync?: SyncResult;
 }
 
 export interface LdapUserSyncInfo {
   nextSync?: string;
   prevSync?: string;
   status?: string;
-}
-
-export interface SyncResult {
-  started: string;
-  elapsed: string;
-  UpdatedUserIds: number[];
-  MissingUserIds: number[];
-  FailedUsers?: FailedUser[];
 }
 
 export interface FailedUser {

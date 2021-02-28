@@ -9,6 +9,7 @@ import { default as ReactAsyncSelect } from '@torkelo/react-select/async';
 import { default as AsyncCreatable } from '@torkelo/react-select/async-creatable';
 
 import { Icon } from '../Icon/Icon';
+import { Spinner } from '../Spinner/Spinner';
 import { css, cx } from 'emotion';
 import resetSelectStyles from './resetSelectStyles';
 import { SelectMenu, SelectMenuOptions } from './SelectMenu';
@@ -21,7 +22,7 @@ import { SingleValue } from './SingleValue';
 import { MultiValueContainer, MultiValueRemove } from './MultiValue';
 import { useTheme } from '../../themes';
 import { getSelectStyles } from './getSelectStyles';
-import { cleanValue } from './utils';
+import { cleanValue, findSelectedValue } from './utils';
 import { SelectBaseProps, SelectValue } from './types';
 
 interface ExtraValuesIndicatorProps {
@@ -89,6 +90,7 @@ const CustomControl = (props: any) => {
 
 export function SelectBase<T>({
   allowCustomValue = false,
+  'aria-label': ariaLabel,
   autoFocus = false,
   backspaceRemovesValue = true,
   cacheOptions,
@@ -105,8 +107,10 @@ export function SelectBase<T>({
   inputValue,
   invalid,
   isClearable = false,
+  id,
   isLoading = false,
   isMulti = false,
+  inputId,
   isOpen,
   isOptionDisabled,
   isSearchable = true,
@@ -115,7 +119,7 @@ export function SelectBase<T>({
   maxMenuHeight = 300,
   minMenuHeight,
   maxVisibleValues,
-  menuPlacement = 'auto',
+  menuPlacement = 'bottom',
   menuPosition,
   noOptionsMessage = 'No options found',
   onBlur,
@@ -144,12 +148,12 @@ export function SelectBase<T>({
       }
       onChange(value);
     },
-    [isMulti, value, onChange]
+    [isMulti, onChange]
   );
   let ReactSelectComponent: ReactSelect | Creatable = ReactSelect;
   const creatableProps: any = {};
   let asyncSelectProps: any = {};
-  let selectedValue = [];
+  let selectedValue;
   if (isMulti && loadOptions) {
     selectedValue = value as any;
   } else {
@@ -157,11 +161,7 @@ export function SelectBase<T>({
     // we are selecting the corresponding value from the options
     if (isMulti && value && Array.isArray(value) && !loadOptions) {
       // @ts-ignore
-      selectedValue = value.map(v => {
-        return options.filter(o => {
-          return v === o.value || o.value === v.value;
-        })[0];
-      });
+      selectedValue = value.map((v) => findSelectedValue(v.value ?? v, options));
     } else if (loadOptions) {
       const hasValue = defaultValue || value;
       selectedValue = hasValue ? [hasValue] : [];
@@ -171,6 +171,7 @@ export function SelectBase<T>({
   }
 
   const commonSelectProps = {
+    'aria-label': ariaLabel,
     autoFocus,
     backspaceRemovesValue,
     captureMenuScroll: false,
@@ -184,10 +185,12 @@ export function SelectBase<T>({
     inputValue,
     invalid,
     isClearable,
+    id,
     // Passing isDisabled as react-select accepts this prop
     isDisabled: disabled,
     isLoading,
     isMulti,
+    inputId,
     isOptionDisabled,
     isSearchable,
     maxMenuHeight,
@@ -210,7 +213,7 @@ export function SelectBase<T>({
     renderControl,
     showAllSelectedWhenOpen,
     tabSelectsValue,
-    value: isMulti ? selectedValue : selectedValue[0],
+    value: isMulti ? selectedValue : selectedValue?.[0],
   };
 
   if (allowCustomValue) {
@@ -236,26 +239,28 @@ export function SelectBase<T>({
           MenuList: SelectMenu,
           Group: SelectOptionGroup,
           ValueContainer,
-          Placeholder: (props: any) => (
-            <div
-              {...props.innerProps}
-              className={cx(
-                css(props.getStyles('placeholder', props)),
-                css`
-                  display: inline-block;
-                  color: ${theme.colors.formInputPlaceholderText};
-                  position: absolute;
-                  top: 50%;
-                  transform: translateY(-50%);
-                  box-sizing: border-box;
-                  line-height: 1;
-                `
-              )}
-            >
-              {props.children}
-            </div>
-          ),
-          IndicatorsContainer: (props: any) => {
+          Placeholder(props: any) {
+            return (
+              <div
+                {...props.innerProps}
+                className={cx(
+                  css(props.getStyles('placeholder', props)),
+                  css`
+                    display: inline-block;
+                    color: ${theme.colors.formInputPlaceholderText};
+                    position: absolute;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    box-sizing: border-box;
+                    line-height: 1;
+                  `
+                )}
+              >
+                {props.children}
+              </div>
+            );
+          },
+          IndicatorsContainer(props: any) {
             const { selectProps } = props;
             const { value, showAllSelectedWhenOpen, maxVisibleValues, menuIsOpen } = selectProps;
 
@@ -272,20 +277,22 @@ export function SelectBase<T>({
                   menuIsOpen,
                 })
               );
-              return <IndicatorsContainer {...props} children={indicatorChildren} />;
+              return <IndicatorsContainer {...props}>{indicatorChildren}</IndicatorsContainer>;
             }
 
             return <IndicatorsContainer {...props} />;
           },
-          IndicatorSeparator: () => <></>,
+          IndicatorSeparator() {
+            return <></>;
+          },
           Control: CustomControl,
           Option: SelectMenuOptions,
-          ClearIndicator: (props: any) => {
+          ClearIndicator(props: any) {
             const { clearValue } = props;
             return (
               <Icon
                 name="times"
-                onMouseDown={e => {
+                onMouseDown={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   clearValue();
@@ -293,20 +300,22 @@ export function SelectBase<T>({
               />
             );
           },
-          LoadingIndicator: (props: any) => {
-            return <Icon className="fa-spin" name="fa fa-spinner" />;
+          LoadingIndicator(props: any) {
+            return <Spinner inline={true} />;
           },
-          LoadingMessage: (props: any) => {
+          LoadingMessage(props: any) {
             return <div className={styles.loadingMessage}>{loadingMessage}</div>;
           },
-          NoOptionsMessage: (props: any) => {
+          NoOptionsMessage(props: any) {
             return (
               <div className={styles.loadingMessage} aria-label="No options provided">
                 {noOptionsMessage}
               </div>
             );
           },
-          DropdownIndicator: (props: any) => <DropdownIndicator isOpen={props.selectProps.menuIsOpen} />,
+          DropdownIndicator(props: any) {
+            return <DropdownIndicator isOpen={props.selectProps.menuIsOpen} />;
+          },
           SingleValue: SingleValue,
           MultiValueContainer: MultiValueContainer,
           MultiValueRemove: MultiValueRemove,

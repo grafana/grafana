@@ -1,9 +1,5 @@
 +++
 title = "Thresholds"
-type = "docs"
-[menu.docs]
-identifier = "thresholds"
-parent = "panels"
 weight = 300
 +++
 
@@ -36,11 +32,11 @@ The **Base** value represents minus infinity. It is generally the “good” col
 
 You can add as many thresholds to a panel as you want. Grafana automatically sorts thresholds from highest value to lowest.
 
-> **Note:** These instructions apply only to the Stat, Gauge, Bar gauge, and Table visualizations. 
+> **Note:** These instructions apply only to the Stat, Gauge, Bar gauge, and Table visualizations.
 
 1. Navigate to the panel you want to add a threshold to.
 1. Click the **Field** tab.
-1. Click **Add threshold**. 
+1. Click **Add threshold**.
 1. Grafana adds a threshold with suggested numerical and color values.
 1. Accept the recommendations or edit the new threshold.
    - **Edit color:** Click the color dot you wish to change and then select a new color.

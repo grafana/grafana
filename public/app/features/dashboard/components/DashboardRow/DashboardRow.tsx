@@ -53,7 +53,7 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
       title: 'Delete Row',
       text: 'Are you sure you want to remove this row and all its panels?',
       altActionText: 'Delete row only',
-      icon: 'fa-trash',
+      icon: 'trash-alt',
       onConfirm: () => {
         this.props.dashboard.removeRow(this.props.panel, true);
       },

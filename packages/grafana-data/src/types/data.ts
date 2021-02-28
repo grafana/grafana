@@ -6,6 +6,7 @@ export type KeyValue<T = any> = Record<string, T>;
 
 /**
  * Represent panel data loading state.
+ * @public
  */
 export enum LoadingState {
   NotStarted = 'NotStarted',
@@ -19,8 +20,11 @@ export enum DataTopic {
   Annotations = 'annotations',
 }
 
-export type PreferredVisualisationType = 'graph' | 'table' | 'logs' | 'trace';
+export type PreferredVisualisationType = 'graph' | 'table' | 'logs' | 'trace' | 'nodeGraph';
 
+/**
+ * @public
+ */
 export interface QueryResultMeta {
   /** DatasSource Specific Values */
   custom?: Record<string, any>;
@@ -50,9 +54,18 @@ export interface QueryResultMeta {
   executedQueryString?: string;
 
   /**
+   * A browsable path on the datasource
+   */
+  path?: string;
+
+  /**
+   * defaults to '/'
+   */
+  pathSeparator?: string;
+
+  /**
    * Legacy data source specific, should be moved to custom
    * */
-  gmdMeta?: any[]; // used by cloudwatch
   alignmentPeriod?: number; // used by cloud monitoring
   searchWords?: string[]; // used by log models and loki
   limit?: number; // used by log models and loki
@@ -67,6 +80,7 @@ export interface QueryResultMetaStat extends FieldConfig {
 
 /**
  * QueryResultMetaNotice is a structure that provides user notices for query result data
+ * @public
  */
 export interface QueryResultMetaNotice {
   /**
@@ -91,6 +105,9 @@ export interface QueryResultMetaNotice {
   inspect?: 'meta' | 'error' | 'data' | 'stats';
 }
 
+/**
+ * @public
+ */
 export interface QueryResultBase {
   /**
    * Matches the query target refId

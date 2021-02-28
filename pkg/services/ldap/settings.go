@@ -74,7 +74,7 @@ func IsEnabled() bool {
 	return setting.LDAPEnabled
 }
 
-// ReloadConfig reads the config from the disc and caches it.
+// ReloadConfig reads the config from the disk and caches it.
 func ReloadConfig() error {
 	if !IsEnabled() {
 		return nil
@@ -94,8 +94,12 @@ var config *Config
 
 // GetConfig returns the LDAP config if LDAP is enabled otherwise it returns nil. It returns either cached value of
 // the config or it reads it and caches it first.
-func GetConfig() (*Config, error) {
-	if !IsEnabled() {
+func GetConfig(cfg *setting.Cfg) (*Config, error) {
+	if cfg != nil {
+		if !cfg.LDAPEnabled {
+			return nil, nil
+		}
+	} else if !IsEnabled() {
 		return nil, nil
 	}
 
@@ -107,10 +111,7 @@ func GetConfig() (*Config, error) {
 	loadingMutex.Lock()
 	defer loadingMutex.Unlock()
 
-	var err error
-	config, err = readConfig(setting.LDAPConfigFile)
-
-	return config, err
+	return readConfig(setting.LDAPConfigFile)
 }
 
 func readConfig(configFile string) (*Config, error) {
@@ -118,6 +119,8 @@ func readConfig(configFile string) (*Config, error) {
 
 	logger.Info("LDAP enabled, reading config file", "file", configFile)
 
+	// nolint:gosec
+	// We can ignore the gosec G304 warning on this one because `filename` comes from grafana configuration file
 	fileBytes, err := ioutil.ReadFile(configFile)
 	if err != nil {
 		return nil, errutil.Wrap("Failed to load LDAP config file", err)

@@ -2,24 +2,22 @@ package models
 
 import "github.com/centrifugal/centrifuge"
 
-// ChannelPublisher writes data into a channel
+// ChannelPublisher writes data into a channel. Note that pemissions are not checked.
 type ChannelPublisher func(channel string, data []byte) error
 
 // ChannelHandler defines the core channel behavior
 type ChannelHandler interface {
-	// This is called fast and often -- it must be synchrnozed
-	GetChannelOptions(id string) centrifuge.ChannelOptions
+	// OnSubscribe is called when a client wants to subscribe to a channel
+	OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error)
 
-	// Called when a client wants to subscribe to a channel
-	OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) error
-
-	// Called when something writes into the channel.  The returned value will be broadcast if len() > 0
-	OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) ([]byte, error)
+	// OnPublish is called when a client writes a message to the channel websocket.
+	OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) (centrifuge.PublishReply, error)
 }
 
-// ChannelHandlerProvider -- this should be implemented by any core feature
-type ChannelHandlerProvider interface {
-	// This is called fast and often -- it must be synchrnozed
+// ChannelHandlerFactory should be implemented by all core features.
+type ChannelHandlerFactory interface {
+	// GetHandlerForPath gets a ChannelHandler for a path.
+	// This is called fast and often -- it must be synchronized
 	GetHandlerForPath(path string) (ChannelHandler, error)
 }
 

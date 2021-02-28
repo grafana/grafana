@@ -62,7 +62,7 @@ func (s *SocialGitlab) GetGroupsPage(client *http.Client, url string) ([]string,
 		return nil, next
 	}
 
-	response, err := HttpGet(client, url)
+	response, err := s.httpGet(client, url)
 	if err != nil {
 		s.log.Error("Error getting groups from GitLab API", "err", err)
 		return nil, next
@@ -98,18 +98,18 @@ func (s *SocialGitlab) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 		State    string
 	}
 
-	response, err := HttpGet(client, s.apiUrl+"/user")
+	response, err := s.httpGet(client, s.apiUrl+"/user")
 	if err != nil {
 		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}
 
 	err = json.Unmarshal(response.Body, &data)
 	if err != nil {
-		return nil, fmt.Errorf("Error getting user info: %s", err)
+		return nil, fmt.Errorf("error getting user info: %s", err)
 	}
 
 	if data.State != "active" {
-		return nil, fmt.Errorf("User %s is inactive", data.Username)
+		return nil, fmt.Errorf("user %s is inactive", data.Username)
 	}
 
 	groups := s.GetGroups(client)
@@ -123,7 +123,7 @@ func (s *SocialGitlab) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 	}
 
 	if !s.IsGroupMember(groups) {
-		return nil, ErrMissingGroupMembership
+		return nil, errMissingGroupMembership
 	}
 
 	return userInfo, nil

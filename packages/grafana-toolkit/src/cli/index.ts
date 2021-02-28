@@ -1,11 +1,11 @@
 // @ts-ignore
-import program from 'commander';
-import { execTask } from './utils/execTask';
 import chalk from 'chalk';
+import program from 'commander';
+import { promises as fs } from 'fs';
+import { execTask } from './utils/execTask';
 import { startTask } from './tasks/core.start';
 import { changelogTask } from './tasks/changelog';
 import { cherryPickTask } from './tasks/cherrypick';
-import { precommitTask } from './tasks/precommit';
 import { templateTask } from './tasks/template';
 import { pluginBuildTask } from './tasks/plugin.build';
 import { toolkitBuildTask } from './tasks/toolkit.build';
@@ -21,17 +21,18 @@ import { pluginCreateTask } from './tasks/plugin.create';
 import { pluginSignTask } from './tasks/plugin.sign';
 import { bundleManagedTask } from './tasks/plugin/bundle.managed';
 import { componentCreateTask } from './tasks/component.create';
+import { nodeVersionCheckerTask } from './tasks/nodeVersionChecker';
 
 export const run = (includeInternalScripts = false) => {
   if (includeInternalScripts) {
-    program.option('-d, --depreciate <scripts>', 'Inform about npm script deprecation', v => v.split(','));
+    program.option('-d, --depreciate <scripts>', 'Inform about npm script deprecation', (v) => v.split(','));
     program
       .command('core:start')
       .option('-h, --hot', 'Run front-end with HRM enabled')
       .option('-T, --noTsCheck', 'Run bundler without TS type checking')
       .option('-t, --watchTheme', 'Watch for theme changes and regenerate variables.scss files')
       .description('Starts Grafana front-end in development mode with watch enabled')
-      .action(async cmd => {
+      .action(async (cmd) => {
         await execTask(startTask)({
           watchThemes: cmd.watchTheme,
           noTsCheck: cmd.noTsCheck,
@@ -43,7 +44,7 @@ export const run = (includeInternalScripts = false) => {
       .command('package:build')
       .option('-s, --scope <packages>', 'packages=[data|runtime|ui|toolkit|e2e|e2e-selectors]')
       .description('Builds @grafana/* package to packages/grafana-*/dist')
-      .action(async cmd => {
+      .action(async (cmd) => {
         await execTask(buildPackageTask)({
           scope: cmd.scope,
         });
@@ -53,7 +54,7 @@ export const run = (includeInternalScripts = false) => {
       .command('changelog')
       .option('-m, --milestone <milestone>', 'Specify milestone')
       .description('Builds changelog markdown')
-      .action(async cmd => {
+      .action(async (cmd) => {
         if (!cmd.milestone) {
           console.log('Please specify milestone, example: -m <milestone id from github milestone URL>');
           return;
@@ -69,28 +70,28 @@ export const run = (includeInternalScripts = false) => {
       .command('cherrypick')
       .option('-e, --enterprise', 'Run task for grafana-enterprise')
       .description('Helps find commits to cherry pick')
-      .action(async cmd => {
+      .action(async (cmd) => {
         await execTask(cherryPickTask)({ enterprise: !!cmd.enterprise });
       });
 
     program
-      .command('precommit')
-      .description('Executes checks')
-      .action(async cmd => {
-        await execTask(precommitTask)({});
+      .command('node-version-check')
+      .description('Verify node version')
+      .action(async (cmd) => {
+        await execTask(nodeVersionCheckerTask)({});
       });
 
     program
       .command('debug:template')
       .description('Just testing')
-      .action(async cmd => {
+      .action(async (cmd) => {
         await execTask(templateTask)({});
       });
 
     program
       .command('toolkit:build')
       .description('Prepares grafana/toolkit dist package')
-      .action(async cmd => {
+      .action(async (cmd) => {
         await execTask(toolkitBuildTask)({});
       });
 
@@ -98,7 +99,7 @@ export const run = (includeInternalScripts = false) => {
       .command('searchTestData')
       .option('-c, --count <number_of_dashboards>', 'Specify number of dashboards')
       .description('Setup test data for search')
-      .action(async cmd => {
+      .action(async (cmd) => {
         await execTask(searchTestDataSetupTask)({ count: cmd.count });
       });
 
@@ -107,7 +108,7 @@ export const run = (includeInternalScripts = false) => {
       .option('-m, --milestone <milestone>', 'Specify milestone')
       .option('--dryRun', 'Only simulate actions')
       .description('Helps ends a milestone by removing the cherry-pick label and closing it')
-      .action(async cmd => {
+      .action(async (cmd) => {
         if (!cmd.milestone) {
           console.log('Please specify milestone, example: -m <milestone id from github milestone URL>');
           return;
@@ -130,20 +131,32 @@ export const run = (includeInternalScripts = false) => {
       });
   }
 
+  program.option('-v, --version', 'Toolkit version').action(async () => {
+    const pkg = await fs.readFile(`${__dirname}/../../package.json`, 'utf8');
+    const { version } = JSON.parse(pkg);
+    console.log(`v${version}`);
+  });
+
   program
     .command('plugin:create [name]')
     .description('Creates plugin from template')
-    .action(async cmd => {
+    .action(async (cmd) => {
       await execTask(pluginCreateTask)({ name: cmd, silent: true });
     });
 
   program
     .command('plugin:build')
     .option('--maxJestWorkers <num>|<string>', 'Limit number of Jest workers spawned')
-    .description('Prepares plugin dist package')
     .option('--coverage', 'Run code coverage', false)
-    .action(async cmd => {
-      await execTask(pluginBuildTask)({ coverage: cmd.coverage, silent: true, maxJestWorkers: cmd.maxJestWorkers });
+    .option('--preserveConsole', 'Preserves console calls', false)
+    .description('Prepares plugin dist package')
+    .action(async (cmd) => {
+      await execTask(pluginBuildTask)({
+        coverage: cmd.coverage,
+        silent: true,
+        maxJestWorkers: cmd.maxJestWorkers,
+        preserveConsole: cmd.preserveConsole,
+      });
     });
 
   program
@@ -151,7 +164,7 @@ export const run = (includeInternalScripts = false) => {
     .option('-w, --watch', 'Run plugin development mode with watch enabled')
     .option('--yarnlink', 'symlink this project to the local grafana/toolkit')
     .description('Starts plugin dev mode')
-    .action(async cmd => {
+    .action(async (cmd) => {
       await execTask(pluginDevTask)({
         watch: !!cmd.watch,
         yarnlink: !!cmd.yarnlink,
@@ -168,7 +181,7 @@ export const run = (includeInternalScripts = false) => {
     .option('--testNamePattern <regex>', 'Run only tests with a name that matches the regex')
     .option('--maxWorkers <num>|<string>', 'Limit number of workers spawned')
     .description('Executes plugin tests')
-    .action(async cmd => {
+    .action(async (cmd) => {
       await execTask(pluginTestTask)({
         updateSnapshot: !!cmd.updateSnapshot,
         coverage: !!cmd.coverage,
@@ -185,7 +198,7 @@ export const run = (includeInternalScripts = false) => {
     .option('--signatureType <type>', 'Signature Type')
     .option('--rootUrls <urls...>', 'Root URLs')
     .description('Create a plugin signature')
-    .action(async cmd => {
+    .action(async (cmd) => {
       await execTask(pluginSignTask)({
         signatureType: cmd.signatureType,
         rootUrls: cmd.rootUrls,
@@ -198,7 +211,7 @@ export const run = (includeInternalScripts = false) => {
     .option('--finish', 'move all results to the jobs folder', false)
     .option('--maxJestWorkers <num>|<string>', 'Limit number of Jest workers spawned')
     .description('Build the plugin, leaving results in /dist and /coverage')
-    .action(async cmd => {
+    .action(async (cmd) => {
       await execTask(ciBuildPluginTask)({
         finish: cmd.finish,
         maxJestWorkers: cmd.maxJestWorkers,
@@ -208,7 +221,7 @@ export const run = (includeInternalScripts = false) => {
   program
     .command('plugin:ci-docs')
     .description('Build the HTML docs')
-    .action(async cmd => {
+    .action(async (cmd) => {
       await execTask(ciBuildPluginDocsTask)({});
     });
 
@@ -218,7 +231,7 @@ export const run = (includeInternalScripts = false) => {
     .option('--rootUrls <urls...>', 'Root URLs')
     .option('--signing-admin', 'Use the admin API endpoint for signing the manifest. (deprecated)', false)
     .description('Create a zip packages for the plugin')
-    .action(async cmd => {
+    .action(async (cmd) => {
       await execTask(ciPackagePluginTask)({
         signatureType: cmd.signatureType,
         rootUrls: cmd.rootUrls,
@@ -229,7 +242,7 @@ export const run = (includeInternalScripts = false) => {
     .command('plugin:ci-report')
     .description('Build a report for this whole process')
     .option('--upload', 'upload packages also')
-    .action(async cmd => {
+    .action(async (cmd) => {
       await execTask(ciPluginReportTask)({
         upload: cmd.upload,
       });
@@ -238,7 +251,7 @@ export const run = (includeInternalScripts = false) => {
   program
     .command('plugin:bundle-managed')
     .description('Builds managed plugins')
-    .action(async cmd => {
+    .action(async (cmd) => {
       await execTask(bundleManagedTask)({});
     });
 
@@ -248,7 +261,7 @@ export const run = (includeInternalScripts = false) => {
     .option('--verbose', 'Print verbose', false)
     .option('--commitHash <hashKey>', 'Specify the commit hash')
     .description('Publish to github')
-    .action(async cmd => {
+    .action(async (cmd) => {
       await execTask(githubPublishTask)({
         dryrun: cmd.dryrun,
         verbose: cmd.verbose,
@@ -259,7 +272,7 @@ export const run = (includeInternalScripts = false) => {
   program
     .command('plugin:update-circleci')
     .description('Update plugin')
-    .action(async cmd => {
+    .action(async (cmd) => {
       await execTask(pluginUpdateTask)({});
     });
 

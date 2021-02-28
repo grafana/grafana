@@ -16,7 +16,7 @@ func init() {
 // ServerLockService allows servers in HA mode to claim a lock
 // and execute an function if the server was granted the lock
 type ServerLockService struct {
-	SQLStore *sqlstore.SqlStore `inject:""`
+	SQLStore *sqlstore.SQLStore `inject:""`
 	log      log.Logger
 }
 
@@ -98,7 +98,7 @@ func (sl *ServerLockService) getOrCreate(ctx context.Context, actionName string)
 		}
 
 		lockRow := &serverLock{
-			OperationUid:  actionName,
+			OperationUID:  actionName,
 			LastExecution: 0,
 		}
 

@@ -36,7 +36,7 @@ export class TempoDatasource extends DataSourceApi<TempoQuery> {
     const id = options.targets[0]?.query;
     if (id) {
       return this._request(`/api/traces/${encodeURIComponent(id)}`).pipe(
-        map(response => {
+        map((response) => {
           return {
             data: [
               new MutableDataFrame({
@@ -79,13 +79,12 @@ export class TempoDatasource extends DataSourceApi<TempoQuery> {
     try {
       await this._request(`/api/traces/random`).toPromise();
     } catch (e) {
-      // As we are not searching for a valid trace here this will definitely fail but we should return 502 if it's
-      // unreachable. 500 should otherwise be from tempo it self but probably makes sense to report them here.
-      if (e?.status >= 500 && e?.status < 600) {
+      // If all went well this request will get back with 400 - Bad request
+      if (e?.status !== 400) {
         throw e;
       }
     }
-    return true;
+    return { status: 'success', message: 'Data source is working' };
   }
 
   getTimeRange(): { start: number; end: number } {

@@ -1,10 +1,7 @@
 +++
-title = "Alerting"
-type = "docs"
-[menu.docs]
-identifier = "alerting"
-parent = "features"
-weight = 100
+title = "Alerts"
+aliases = ["/docs/grafana/latest/alerting/rules/", "/docs/grafana/latest/alerting/metrics/"]
+weight = 110
 +++
 
 # Alerts overview
@@ -45,7 +42,7 @@ of core Grafana. Only some data sources are supported right now. They include `G
 
 ## Metrics from the alert engine
 
-The alert engine publishes some internal metrics about itself. You can read more about how Grafana publishes [internal metrics]({{< relref "../administration/metrics/" >}}).
+The alert engine publishes some internal metrics about itself. You can read more about how Grafana publishes [internal metrics]({{< relref "../administration/view-server/internal-metrics.md" >}}).
 
 Description | Type | Metric name
 ---------- | ----------- | ----------
@@ -53,5 +50,3 @@ Total number of alerts | counter | `alerting.active_alerts`
 Alert execution result | counter | `alerting.result`
 Notifications sent counter | counter | `alerting.notifications_sent`
 Alert execution timer | timer | `alerting.execution_time`
-
-

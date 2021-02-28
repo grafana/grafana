@@ -2,11 +2,7 @@
 title = "MySQL"
 description = "Guide for using MySQL in Grafana"
 keywords = ["grafana", "mysql", "guide"]
-type = "docs"
 aliases = ["/docs/grafana/latest/features/datasources/mysql/"]
-[menu.docs]
-name = "MySQL"
-parent = "datasources"
 weight = 1000
 +++
 

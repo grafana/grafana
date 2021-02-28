@@ -1,8 +1,5 @@
 +++
 title = "Panel editor"
-type = "docs"
-[menu.docs]
-identifier = "panel-editor"
 weight = 200
 +++
 
@@ -74,3 +71,4 @@ Features in these tabs are documented in the following topics:
 - [Visualizations]({{< relref "visualizations/_index.md" >}}) display options vary widely. They are described in the individual visualization topic.
 - [Field options and overrides]({{< relref "field-options/_index.md" >}}) allow you to control almost every aspect of your visualization, including units, value mappings, and [Thresholds]({{< relref "thresholds.md" >}}).
 - [Panel links]({{< relref "../linking/panel-links.md" >}}) and [Data links]({{< relref "../linking/data-links.md" >}}) help you connect your visualization to other resources.
+

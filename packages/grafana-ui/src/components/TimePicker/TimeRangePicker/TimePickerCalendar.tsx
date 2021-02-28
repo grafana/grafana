@@ -1,4 +1,4 @@
-import React, { FormEvent, memo, useCallback, useEffect, useState } from 'react';
+import React, { FormEvent, memo, useCallback } from 'react';
 import { css } from 'emotion';
 import Calendar from 'react-calendar/dist/entry.nostyle';
 import { dateTime, DateTime, dateTimeParse, GrafanaTheme, TimeZone } from '@grafana/data';
@@ -198,7 +198,7 @@ interface Props {
 
 const stopPropagation = (event: React.MouseEvent<HTMLDivElement>) => event.stopPropagation();
 
-export const TimePickerCalendar = memo<Props>(props => {
+export const TimePickerCalendar = memo<Props>((props) => {
   const theme = useTheme();
   const styles = getStyles(theme, props.isReversed);
   const { isOpen, isFullscreen } = props;
@@ -231,6 +231,8 @@ export const TimePickerCalendar = memo<Props>(props => {
   );
 });
 
+TimePickerCalendar.displayName = 'TimePickerCalendar';
+
 const Header = memo<Props>(({ onClose }) => {
   const theme = useTheme();
   const styles = getHeaderStyles(theme);
@@ -243,15 +245,13 @@ const Header = memo<Props>(({ onClose }) => {
   );
 });
 
+Header.displayName = 'Header';
+
 const Body = memo<Props>(({ onChange, from, to, timeZone }) => {
-  const [value, setValue] = useState<Date[]>();
+  const value = inputToValue(from, to);
   const theme = useTheme();
   const onCalendarChange = useOnCalendarChange(onChange, timeZone);
   const styles = getBodyStyles(theme);
-
-  useEffect(() => {
-    setValue(inputToValue(from, to));
-  }, []);
 
   return (
     <Calendar
@@ -269,6 +269,8 @@ const Body = memo<Props>(({ onChange, from, to, timeZone }) => {
   );
 });
 
+Body.displayName = 'Body';
+
 const Footer = memo<Props>(({ onClose, onApply }) => {
   const theme = useTheme();
   const styles = getFooterStyles(theme);
@@ -284,6 +286,8 @@ const Footer = memo<Props>(({ onClose, onApply }) => {
     </div>
   );
 });
+
+Footer.displayName = 'Footer';
 
 export function inputToValue(from: DateTime, to: DateTime, invalidDateDefault: Date = new Date()): Date[] {
   const fromAsDate = from.toDate();
@@ -309,7 +313,7 @@ function useOnCalendarChange(onChange: (from: DateTime, to: DateTime) => void, t
 
       onChange(from, to);
     },
-    [onChange]
+    [onChange, timeZone]
   );
 }
 

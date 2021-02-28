@@ -99,7 +99,7 @@ type SetCreatedForOutstandingInvites struct {
 	MigrationBase
 }
 
-func (m *SetCreatedForOutstandingInvites) Sql(dialect Dialect) string {
+func (m *SetCreatedForOutstandingInvites) SQL(dialect Dialect) string {
 	return "code migration"
 }
 

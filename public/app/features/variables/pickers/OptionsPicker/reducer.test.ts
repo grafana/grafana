@@ -1,5 +1,6 @@
 import { cloneDeep } from 'lodash';
 import {
+  cleanPickerState,
   hideOptions,
   initialState as optionsPickerInitialState,
   moveOptionsHighlight,
@@ -15,7 +16,7 @@ import {
   updateSearchQuery,
 } from './reducer';
 import { reducerTester } from '../../../../../test/core/redux/reducerTester';
-import { QueryVariableModel, VariableTag, VariableOption } from '../../types';
+import { QueryVariableModel, VariableOption, VariableTag } from '../../types';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../../state/types';
 
 const getVariableTestContext = (extend: Partial<OptionsPickerState>) => {
@@ -570,7 +571,7 @@ describe('optionsPickerReducer', () => {
   });
 
   describe('when toggleAllOptions is dispatched', () => {
-    it('should toggle all values to true', () => {
+    it('should toggle all values except All to true', () => {
       const { initialState } = getVariableTestContext({
         options: [
           { text: 'All', value: '$__all', selected: false },
@@ -587,12 +588,11 @@ describe('optionsPickerReducer', () => {
         .thenStateShouldEqual({
           ...initialState,
           options: [
-            { text: 'All', value: '$__all', selected: true },
+            { text: 'All', value: '$__all', selected: false },
             { text: 'A', value: 'A', selected: true },
             { text: 'B', value: 'B', selected: true },
           ],
           selectedValues: [
-            { text: 'All', value: '$__all', selected: true },
             { text: 'A', value: 'A', selected: true },
             { text: 'B', value: 'B', selected: true },
           ],
@@ -940,6 +940,24 @@ describe('optionsPickerReducer', () => {
           multi: false,
           queryValue: '',
         });
+    });
+  });
+
+  describe('when cleanPickerState is dispatched', () => {
+    it('then state should be correct', () => {
+      const { initialState } = getVariableTestContext({
+        highlightIndex: 19,
+        multi: true,
+        id: 'some id',
+        options: [{ text: 'A', value: 'A', selected: true }],
+        queryValue: 'a query value',
+        selectedValues: [{ text: 'A', value: 'A', selected: true }],
+      });
+
+      reducerTester<OptionsPickerState>()
+        .givenReducer(optionsPickerReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(cleanPickerState())
+        .thenStateShouldEqual({ ...optionsPickerInitialState });
     });
   });
 });

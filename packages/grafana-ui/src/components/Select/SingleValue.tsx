@@ -59,14 +59,7 @@ export const SingleValue = (props: Props) => {
 
   return (
     <components.SingleValue {...props}>
-      <div
-        className={cx(
-          styles.singleValue,
-          css`
-            overflow: hidden;
-          `
-        )}
-      >
+      <div className={cx(styles.singleValue)}>
         {data.imgUrl ? (
           <FadeWithImage loading={loading} imgUrl={data.imgUrl} />
         ) : (

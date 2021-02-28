@@ -57,7 +57,7 @@ func TestNewSession_AssumeRole(t *testing.T) {
 
 		const roleARN = "test"
 
-		e := newExecutor()
+		e := newExecutor(nil)
 		e.DataSource = fakeDataSource(fakeDataSourceCfg{
 			assumeRoleARN: roleARN,
 		})
@@ -84,7 +84,7 @@ func TestNewSession_AssumeRole(t *testing.T) {
 		const roleARN = "test"
 		const externalID = "external"
 
-		e := newExecutor()
+		e := newExecutor(nil)
 		e.DataSource = fakeDataSource(fakeDataSourceCfg{
 			assumeRoleARN: roleARN,
 			externalID:    externalID,

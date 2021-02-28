@@ -102,6 +102,7 @@ type TProps = TExtractUiFindFromStateReturn & {
   createSpanLink?: (
     span: TraceSpan
   ) => { href: string; onClick?: (e: React.MouseEvent) => void; content: React.ReactNode };
+  scrollElement?: Element;
 };
 
 type State = {

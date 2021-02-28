@@ -1,19 +1,18 @@
 import React from 'react';
 import { InfoBox, InfoBoxProps } from './InfoBox';
 import { FeatureState, GrafanaTheme } from '@grafana/data';
-import { stylesFactory, useTheme } from '../../themes';
+import { stylesFactory, useStyles } from '../../themes';
 import { Badge, BadgeProps } from '../Badge/Badge';
 import { css } from 'emotion';
 
-interface FeatureInfoBoxProps extends Omit<InfoBoxProps, 'branded' | 'title' | 'urlTitle'> {
+export interface FeatureInfoBoxProps extends Omit<InfoBoxProps, 'title' | 'urlTitle'> {
   title: string;
   featureState?: FeatureState;
 }
 
 export const FeatureInfoBox = React.memo(
   React.forwardRef<HTMLDivElement, FeatureInfoBoxProps>(({ title, featureState, ...otherProps }, ref) => {
-    const theme = useTheme();
-    const styles = getFeatureInfoBoxStyles(theme);
+    const styles = useStyles(getFeatureInfoBoxStyles);
 
     const titleEl = featureState ? (
       <>
@@ -25,9 +24,10 @@ export const FeatureInfoBox = React.memo(
     ) : (
       <h3>{title}</h3>
     );
-    return <InfoBox branded title={titleEl} urlTitle="Read documentation" {...otherProps} />;
+    return <InfoBox branded title={titleEl} urlTitle="Read documentation" ref={ref} {...otherProps} />;
   })
 );
+FeatureInfoBox.displayName = 'FeatureInfoBox';
 
 const getFeatureInfoBoxStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
@@ -39,11 +39,12 @@ const getFeatureInfoBoxStyles = stylesFactory((theme: GrafanaTheme) => {
 
 interface FeatureBadgeProps {
   featureState: FeatureState;
+  tooltip?: string;
 }
 
-export const FeatureBadge: React.FC<FeatureBadgeProps> = ({ featureState }) => {
+export const FeatureBadge: React.FC<FeatureBadgeProps> = ({ featureState, tooltip }) => {
   const display = getPanelStateBadgeDisplayModel(featureState);
-  return <Badge text={display.text} color={display.color} icon={display.icon} />;
+  return <Badge text={display.text} color={display.color} icon={display.icon} tooltip={tooltip} />;
 };
 
 function getPanelStateBadgeDisplayModel(featureState: FeatureState): BadgeProps {

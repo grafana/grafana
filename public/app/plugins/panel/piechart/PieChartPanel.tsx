@@ -1,16 +1,8 @@
-// Libraries
 import React, { PureComponent } from 'react';
-
-// Services & Utils
 import { config } from 'app/core/config';
-
-// Components
 import { PieChart } from '@grafana/ui';
-import { getFieldDisplayValues } from '@grafana/data';
-
-// Types
 import { PieChartOptions } from './types';
-import { PanelProps } from '@grafana/data';
+import { getFieldDisplayValues, PanelProps } from '@grafana/data';
 
 interface Props extends PanelProps<PieChartOptions> {}
 
@@ -25,7 +17,7 @@ export class PieChartPanel extends PureComponent<Props> {
       theme: config.theme,
       replaceVariables: replaceVariables,
       timeZone,
-    }).map(v => v.display);
+    }).map((v) => v.display);
 
     return (
       <PieChart
@@ -33,8 +25,7 @@ export class PieChartPanel extends PureComponent<Props> {
         height={height}
         values={values}
         pieType={options.pieType}
-        strokeWidth={options.strokeWidth}
-        theme={config.theme}
+        labelOptions={options.labelOptions}
       />
     );
   }

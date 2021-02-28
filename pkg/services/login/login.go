@@ -18,9 +18,12 @@ var (
 	logger = log.New("login.ext_user")
 )
 
+type TeamSyncFunc func(user *models.User, externalUser *models.ExternalUserInfo) error
+
 type LoginService struct {
 	Bus          bus.Bus             `inject:""`
 	QuotaService *quota.QuotaService `inject:""`
+	TeamSync     TeamSyncFunc
 }
 
 func (ls *LoginService) Init() error {
@@ -40,7 +43,6 @@ func (ls *LoginService) UpsertUser(cmd *models.UpsertUserCommand) error {
 		Email:      extUser.Email,
 		Login:      extUser.Login,
 	}
-
 	if err := bus.Dispatch(userQuery); err != nil {
 		if !errors.Is(err, models.ErrUserNotFound) {
 			return err
@@ -110,12 +112,11 @@ func (ls *LoginService) UpsertUser(cmd *models.UpsertUserCommand) error {
 		}
 	}
 
-	err := ls.Bus.Dispatch(&models.SyncTeamsCommand{
-		User:         cmd.Result,
-		ExternalUser: extUser,
-	})
-	if err != nil && !errors.Is(err, bus.ErrHandlerNotFound) {
-		return err
+	if ls.TeamSync != nil {
+		err := ls.TeamSync(cmd.Result, extUser)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

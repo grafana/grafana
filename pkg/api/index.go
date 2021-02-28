@@ -30,11 +30,15 @@ func getProfileNode(c *models.ReqContext) *dtos.NavLink {
 		{
 			Text: "Preferences", Id: "profile-settings", Url: setting.AppSubUrl + "/profile", Icon: "sliders-v-alt",
 		},
-		{
+	}
+
+	if setting.AddChangePasswordLink() {
+		children = append(children, &dtos.NavLink{
 			Text: "Change Password", Id: "change-password", Url: setting.AppSubUrl + "/profile/password",
 			Icon: "lock", HideFromMenu: true,
-		},
+		})
 	}
+
 	if !setting.DisableSignoutMenu {
 		// add sign out first
 		children = append(children, &dtos.NavLink{
@@ -100,6 +104,7 @@ func getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error) {
 						Text: include.Name,
 					}
 				}
+				link.Icon = include.Icon
 				appLink.Children = append(appLink.Children, link)
 			}
 
@@ -110,13 +115,6 @@ func getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error) {
 				}
 				appLink.Children = append(appLink.Children, link)
 			}
-		}
-
-		if len(appLink.Children) > 0 && c.OrgRole == models.ROLE_ADMIN {
-			appLink.Children = append(appLink.Children, &dtos.NavLink{Divider: true})
-			appLink.Children = append(appLink.Children, &dtos.NavLink{
-				Text: "Plugin Config", Icon: "cog", Url: setting.AppSubUrl + "/plugins/" + plugin.Id + "/",
-			})
 		}
 
 		if len(appLink.Children) > 0 {
@@ -159,7 +157,15 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		{Text: "Divider", Divider: true, Id: "divider", HideFromTabs: true},
 		{Text: "Manage", Id: "manage-dashboards", Url: setting.AppSubUrl + "/dashboards", Icon: "sitemap"},
 		{Text: "Playlists", Id: "playlists", Url: setting.AppSubUrl + "/playlists", Icon: "presentation-play"},
-		{Text: "Snapshots", Id: "snapshots", Url: setting.AppSubUrl + "/dashboard/snapshots", Icon: "camera"},
+	}
+
+	if c.IsSignedIn {
+		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
+			Text: "Snapshots",
+			Id:   "snapshots",
+			Url:  setting.AppSubUrl + "/dashboard/snapshots",
+			Icon: "camera",
+		})
 	}
 
 	navTree = append(navTree, &dtos.NavLink{
@@ -269,7 +275,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 
 	if len(configNodes) > 0 {
 		navTree = append(navTree, &dtos.NavLink{
-			Id:         "cfg",
+			Id:         dtos.NavIDCfg,
 			Text:       "Configuration",
 			SubTitle:   "Organization: " + c.OrgName,
 			Icon:       "cog",
@@ -287,7 +293,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 			{Text: "Stats", Id: "server-stats", Url: setting.AppSubUrl + "/admin/stats", Icon: "graph-bar"},
 		}
 
-		if setting.LDAPEnabled {
+		if hs.Cfg.LDAPEnabled {
 			adminNavLinks = append(adminNavLinks, &dtos.NavLink{
 				Text: "LDAP", Id: "ldap", Url: setting.AppSubUrl + "/admin/ldap", Icon: "book",
 			})
@@ -358,7 +364,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 
 	// special case when doing localhost call from image renderer
 	if c.IsRenderCall && !hs.Cfg.ServeFromSubPath {
-		appURL = fmt.Sprintf("%s://localhost:%s", setting.Protocol, setting.HttpPort)
+		appURL = fmt.Sprintf("%s://localhost:%s", hs.Cfg.Protocol, setting.HttpPort)
 		appSubURL = ""
 		settings["appSubUrl"] = ""
 	}
@@ -395,14 +401,17 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		GoogleTagManagerId:      setting.GoogleTagManagerId,
 		BuildVersion:            setting.BuildVersion,
 		BuildCommit:             setting.BuildCommit,
-		NewGrafanaVersion:       plugins.GrafanaLatestVersion,
-		NewGrafanaVersionExists: plugins.GrafanaHasUpdate,
+		NewGrafanaVersion:       hs.PluginManager.GrafanaLatestVersion,
+		NewGrafanaVersionExists: hs.PluginManager.GrafanaHasUpdate,
 		AppName:                 setting.ApplicationName,
 		AppNameBodyClass:        getAppNameBodyClass(hs.License.HasValidLicense()),
 		FavIcon:                 "public/img/fav32.png",
 		AppleTouchIcon:          "public/img/apple-touch-icon.png",
 		AppTitle:                "Grafana",
 		NavTree:                 navTree,
+		Sentry:                  &hs.Cfg.Sentry,
+		Nonce:                   c.RequestNonce,
+		ContentDeliveryURL:      hs.Cfg.GetContentDeliveryURL(hs.License.ContentDeliveryPrefix()),
 	}
 
 	if setting.DisableGravatar {
@@ -434,7 +443,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 func (hs *HTTPServer) Index(c *models.ReqContext) {
 	data, err := hs.setIndexViewData(c)
 	if err != nil {
-		c.Handle(500, "Failed to get settings", err)
+		c.Handle(hs.Cfg, 500, "Failed to get settings", err)
 		return
 	}
 	c.HTML(200, "index", data)
@@ -448,7 +457,7 @@ func (hs *HTTPServer) NotFoundHandler(c *models.ReqContext) {
 
 	data, err := hs.setIndexViewData(c)
 	if err != nil {
-		c.Handle(500, "Failed to get settings", err)
+		c.Handle(hs.Cfg, 500, "Failed to get settings", err)
 		return
 	}
 

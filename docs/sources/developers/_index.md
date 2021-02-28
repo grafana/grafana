@@ -1,7 +1,7 @@
 +++
 title = "Developers"
-type = "docs"
-aliases = ["/docs/plugins/developing/"]
+aliases = ["/docs/grafana/latest/plugins/developing/"]
+weight = 190
 +++
 
 # Developers

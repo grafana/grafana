@@ -6,12 +6,14 @@ import { StoreState } from 'app/types';
 import { ExploreId } from 'app/types/explore';
 
 import { CustomScrollbar, ErrorBoundaryAlert } from '@grafana/ui';
-import { resetExploreAction } from './state/actionTypes';
-import Explore from './Explore';
+import { lastSavedUrl, resetExploreAction, richHistoryUpdatedAction } from './state/main';
+import { getRichHistory } from '../../core/utils/richHistory';
+import { ExplorePaneContainer } from './ExplorePaneContainer';
 
 interface WrapperProps {
   split: boolean;
   resetExploreAction: typeof resetExploreAction;
+  richHistoryUpdatedAction: typeof richHistoryUpdatedAction;
 }
 
 export class Wrapper extends Component<WrapperProps> {
@@ -19,19 +21,27 @@ export class Wrapper extends Component<WrapperProps> {
     this.props.resetExploreAction({});
   }
 
+  componentDidMount() {
+    lastSavedUrl.left = undefined;
+    lastSavedUrl.right = undefined;
+
+    const richHistory = getRichHistory();
+    this.props.richHistoryUpdatedAction({ richHistory });
+  }
+
   render() {
     const { split } = this.props;
 
     return (
       <div className="page-scrollbar-wrapper">
-        <CustomScrollbar autoHeightMin={'100%'} autoHeightMax={''} className="custom-scrollbar--page">
+        <CustomScrollbar autoHeightMin={'100%'}>
           <div className="explore-wrapper">
             <ErrorBoundaryAlert style="page">
-              <Explore exploreId={ExploreId.left} />
+              <ExplorePaneContainer split={split} exploreId={ExploreId.left} />
             </ErrorBoundaryAlert>
             {split && (
               <ErrorBoundaryAlert style="page">
-                <Explore exploreId={ExploreId.right} />
+                <ExplorePaneContainer split={split} exploreId={ExploreId.right} />
               </ErrorBoundaryAlert>
             )}
           </div>
@@ -42,12 +52,16 @@ export class Wrapper extends Component<WrapperProps> {
 }
 
 const mapStateToProps = (state: StoreState) => {
-  const { split } = state.explore;
-  return { split };
+  // Here we use URL to say if we should split or not which is different than in other places. Reason is if we change
+  // the URL first there is no internal state saying we should split. So this triggers render of ExplorePaneContainer
+  // and initialisation of each pane state.
+  const isUrlSplit = Boolean(state.location.query[ExploreId.left] && state.location.query[ExploreId.right]);
+  return { split: isUrlSplit };
 };
 
 const mapDispatchToProps = {
   resetExploreAction,
+  richHistoryUpdatedAction,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(Wrapper));

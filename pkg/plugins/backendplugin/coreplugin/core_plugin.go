@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
+// corePlugin represents a plugin that's part of Grafana core.
 type corePlugin struct {
 	pluginID string
 	logger   log.Logger
@@ -53,7 +54,7 @@ func (cp *corePlugin) Stop(ctx context.Context) error {
 }
 
 func (cp *corePlugin) IsManaged() bool {
-	return false
+	return true
 }
 
 func (cp *corePlugin) Exited() bool {

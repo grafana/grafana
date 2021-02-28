@@ -93,7 +93,7 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme) => {
 });
 
 export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
-  ({ label, description, value, onChange, disabled, ...inputProps }, ref) => {
+  ({ label, description, value, onChange, disabled, className, ...inputProps }, ref) => {
     const theme = useTheme();
     const handleOnChange = useCallback(
       (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -106,7 +106,7 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
     const styles = getCheckboxStyles(theme);
 
     return (
-      <label className={styles.wrapper}>
+      <label className={cx(styles.wrapper, className)}>
         <input
           type="checkbox"
           className={styles.input}

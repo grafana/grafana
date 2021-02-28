@@ -16,15 +16,24 @@ import { useChildrenState } from './useChildrenState';
 import { useDetailState } from './useDetailState';
 import { useHoverIndentGuide } from './useHoverIndentGuide';
 import { colors, useTheme } from '@grafana/ui';
-import { TraceData, TraceSpanData, Trace, TraceSpan, TraceKeyValuePair, TraceLink } from '@grafana/data';
+import { TraceViewData, Trace, TraceSpan, TraceKeyValuePair, TraceLink } from '@grafana/data';
 import { createSpanLinkFactory } from './createSpanLink';
+import { useSelector } from 'react-redux';
+import { StoreState } from 'app/types';
+import { ExploreId, SplitOpen } from 'app/types/explore';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { TraceToLogsData } from 'app/core/components/TraceToLogsSettings';
 
 type Props = {
-  trace: TraceData & { spans: TraceSpanData[] };
-  splitOpenFn: (options: { datasourceUid: string; query: any }) => void;
+  trace?: TraceViewData;
+  splitOpenFn: SplitOpen;
+  exploreId: ExploreId;
 };
 
 export function TraceView(props: Props) {
+  if (!props.trace?.traceID) {
+    return null;
+  }
   const { expandOne, collapseOne, childrenToggle, collapseAll, childrenHiddenIDs, expandAll } = useChildrenState();
   const {
     detailStates,
@@ -51,6 +60,9 @@ export function TraceView(props: Props) {
 
   const traceProp = useMemo(() => transformTraceData(props.trace), [props.trace]);
   const { search, setSearch, spanFindMatches } = useSearch(traceProp?.spans);
+  const dataSourceName = useSelector((state: StoreState) => state.explore[props.exploreId]?.datasourceInstance?.name);
+  const traceToLogsOptions = (getDatasourceSrv().getInstanceSettings(dataSourceName)?.jsonData as TraceToLogsData)
+    ?.tracesToLogs;
 
   const theme = useTheme();
   const traceTheme = useMemo(
@@ -79,7 +91,11 @@ export function TraceView(props: Props) {
     [childrenHiddenIDs, detailStates, hoverIndentGuideIds, spanNameColumnWidth, traceProp?.traceID]
   );
 
-  const createSpanLink = useMemo(() => createSpanLinkFactory(props.splitOpenFn), [props.splitOpenFn]);
+  const createSpanLink = useMemo(() => createSpanLinkFactory(props.splitOpenFn, traceToLogsOptions), [
+    props.splitOpenFn,
+    traceToLogsOptions,
+  ]);
+  const scrollElement = document.getElementsByClassName('scrollbar-view')[0];
 
   if (!traceProp) {
     return null;
@@ -145,6 +161,7 @@ export function TraceView(props: Props) {
           )}
           uiFind={search}
           createSpanLink={createSpanLink}
+          scrollElement={scrollElement}
         />
       </UIElementsContext.Provider>
     </ThemeProvider>

@@ -40,13 +40,16 @@ export const FileUpload: FC<Props> = ({
   const style = getStyles(theme, size);
   const [fileName, setFileName] = useState('');
 
-  const onChange = useCallback((event: FormEvent<HTMLInputElement>) => {
-    const file = event.currentTarget?.files?.[0];
-    if (file) {
-      setFileName(file.name ?? '');
-    }
-    onFileUpload(event);
-  }, []);
+  const onChange = useCallback(
+    (event: FormEvent<HTMLInputElement>) => {
+      const file = event.currentTarget?.files?.[0];
+      if (file) {
+        setFileName(file.name ?? '');
+      }
+      onFileUpload(event);
+    },
+    [onFileUpload]
+  );
 
   return (
     <>

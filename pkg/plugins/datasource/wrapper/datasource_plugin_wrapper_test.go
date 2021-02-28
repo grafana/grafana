@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana-plugin-model/go/datasource"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMapTables(t *testing.T) {
@@ -15,15 +16,10 @@ func TestMapTables(t *testing.T) {
 		Columns: []*datasource.TableColumn{},
 		Rows:    nil,
 	})
-	want := []*tsdb.Table{{}}
 
 	have, err := dpw.mapTables(qr)
-	if err != nil {
-		t.Errorf("failed to map tables. error: %v", err)
-	}
-	if len(want) != len(have) {
-		t.Errorf("could not map all tables")
-	}
+	require.NoError(t, err)
+	require.Len(t, have, 1)
 }
 
 func TestMapTable(t *testing.T) {
@@ -49,24 +45,11 @@ func TestMapTable(t *testing.T) {
 		Columns: []tsdb.TableColumn{{Text: "column1"}, {Text: "column2"}},
 	}
 	have, err := dpw.mapTable(source)
-	if err != nil {
-		t.Fatalf("failed to map table. error: %v", err)
-	}
+	require.NoError(t, err)
 
-	for i := range have.Columns {
-		if want.Columns[i] != have.Columns[i] {
-			t.Fatalf("have column: %s, want %s", have, want)
-		}
-	}
-
-	if len(have.Rows) != 1 {
-		t.Fatalf("Expects one row but got %d", len(have.Rows))
-	}
-
-	rowValuesCount := len(have.Rows[0])
-	if rowValuesCount != 2 {
-		t.Fatalf("Expects two row values, got %d", rowValuesCount)
-	}
+	require.Equal(t, want.Columns, have.Columns)
+	require.Len(t, have.Rows, 1)
+	require.Len(t, have.Rows[0], 2)
 }
 
 func TestMappingRowValue(t *testing.T) {
@@ -74,36 +57,30 @@ func TestMappingRowValue(t *testing.T) {
 
 	boolRowValue, _ := dpw.mapRowValue(&datasource.RowValue{Kind: datasource.RowValue_TYPE_BOOL, BoolValue: true})
 	haveBool, ok := boolRowValue.(bool)
-	if !ok || !haveBool {
-		t.Fatalf("Expected true, was %v", haveBool)
-	}
+	require.True(t, ok)
+	require.True(t, haveBool)
 
 	intRowValue, _ := dpw.mapRowValue(&datasource.RowValue{Kind: datasource.RowValue_TYPE_INT64, Int64Value: 42})
 	haveInt, ok := intRowValue.(int64)
-	if !ok || haveInt != 42 {
-		t.Fatalf("Expected %d, was %d", 42, haveInt)
-	}
+	require.True(t, ok)
+	require.Equal(t, int64(42), haveInt)
 
 	stringRowValue, _ := dpw.mapRowValue(&datasource.RowValue{Kind: datasource.RowValue_TYPE_STRING, StringValue: "grafana"})
 	haveString, ok := stringRowValue.(string)
-	if !ok || haveString != "grafana" {
-		t.Fatalf("Expected %s, was %s", "grafana", haveString)
-	}
+	require.True(t, ok)
+	require.Equal(t, "grafana", haveString)
 
 	doubleRowValue, _ := dpw.mapRowValue(&datasource.RowValue{Kind: datasource.RowValue_TYPE_DOUBLE, DoubleValue: 1.5})
 	haveDouble, ok := doubleRowValue.(float64)
-	if !ok || haveDouble != 1.5 {
-		t.Fatalf("Expected %v, was %v", 1.5, haveDouble)
-	}
+	require.True(t, ok)
+	require.Equal(t, 1.5, haveDouble)
 
 	bytesRowValue, _ := dpw.mapRowValue(&datasource.RowValue{Kind: datasource.RowValue_TYPE_BYTES, BytesValue: []byte{66}})
 	haveBytes, ok := bytesRowValue.([]byte)
-	if !ok || len(haveBytes) != 1 || haveBytes[0] != 66 {
-		t.Fatalf("Expected %v, was %v", []byte{66}, haveBytes)
-	}
+	require.True(t, ok)
+	require.Equal(t, []byte{66}, haveBytes)
 
-	haveNil, _ := dpw.mapRowValue(&datasource.RowValue{Kind: datasource.RowValue_TYPE_NULL})
-	if haveNil != nil {
-		t.Fatalf("Expected %v, was %v", nil, haveNil)
-	}
+	haveNil, err := dpw.mapRowValue(&datasource.RowValue{Kind: datasource.RowValue_TYPE_NULL})
+	require.NoError(t, err)
+	require.Nil(t, haveNil)
 }

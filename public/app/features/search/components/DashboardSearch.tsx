@@ -57,6 +57,7 @@ export const DashboardSearch: FC<Props> = memo(({ onCloseSearch, params, updateL
     </div>
   );
 });
+DashboardSearch.displayName = 'DashboardSearch';
 
 export default connectWithRouteParams(DashboardSearch);
 

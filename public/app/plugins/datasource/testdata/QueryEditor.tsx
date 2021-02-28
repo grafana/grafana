@@ -4,16 +4,18 @@ import { useAsync } from 'react-use';
 
 // Components
 import { selectors as editorSelectors } from '@grafana/e2e-selectors';
-import { Input, InlineFieldRow, InlineField, Select, TextArea, Switch } from '@grafana/ui';
+import { Input, InlineFieldRow, InlineField, Select, TextArea, InlineSwitch } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { StreamingClientEditor, ManualEntryEditor, RandomWalkEditor } from './components';
 
 // Types
 import { TestDataDataSource } from './datasource';
-import { TestDataQuery, Scenario } from './types';
+import { TestDataQuery, Scenario, NodesQuery } from './types';
 import { PredictablePulseEditor } from './components/PredictablePulseEditor';
 import { CSVWaveEditor } from './components/CSVWaveEditor';
 import { defaultQuery } from './constants';
+import { GrafanaLiveEditor } from './components/GrafanaLiveEditor';
+import { NodeGraphEditor } from './components/NodeGraphEditor';
 
 const showLabelsFor = ['random_walk', 'predictable_pulse', 'predictable_csv_wave'];
 const endpoints = [
@@ -21,9 +23,6 @@ const endpoints = [
   { value: 'search', label: 'Search' },
   { value: 'annotations', label: 'Annotations' },
 ];
-
-// Fields that need to be transformed to numbers
-const numberFields = ['lines', 'seriesCount', 'timeStep'];
 
 const selectors = editorSelectors.components.DataSource.TestData.QueryTab;
 
@@ -46,49 +45,62 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
     onRunQuery();
   };
 
-  const currentScenario = useMemo(() => scenarioList?.find(scenario => scenario.id === query.scenarioId), [
+  const currentScenario = useMemo(() => scenarioList?.find((scenario) => scenario.id === query.scenarioId), [
     scenarioList,
     query,
   ]);
   const scenarioId = currentScenario?.id;
 
   const onScenarioChange = (item: SelectableValue<string>) => {
-    const scenario = scenarioList?.find(sc => sc.id === item.value);
+    const scenario = scenarioList?.find((sc) => sc.id === item.value);
 
     if (!scenario) {
       return;
     }
 
-    let stringInput = scenario.stringInput ?? '';
+    const update = { ...query, scenarioId: item.value! };
 
-    if (scenario.id === 'grafana_api') {
-      stringInput = 'datasources';
+    if (scenario.stringInput) {
+      update.stringInput = scenario.stringInput;
     }
 
-    onUpdate({
-      ...query,
-      scenarioId: item.value!,
-      stringInput,
-    });
+    if (scenario.id === 'grafana_api') {
+      update.stringInput = 'datasources';
+    } else if (scenario.id === 'streaming_client') {
+      update.stringInput = '';
+    } else if (scenario.id === 'live') {
+      if (!update.channel) {
+        update.channel = 'random-2s-stream'; // default stream
+      }
+    }
+
+    onUpdate(update);
   };
 
   const onInputChange = (e: FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target as HTMLInputElement | HTMLTextAreaElement;
-    let newValue: Partial<TestDataQuery> = { [name]: value };
+    const { name, value, type } = e.target as HTMLInputElement | HTMLTextAreaElement;
+    let newValue: any = value;
 
-    if (name === 'levelColumn') {
-      newValue = { levelColumn: (e.target as HTMLInputElement).checked };
-    } else if (numberFields.includes(name)) {
-      newValue = { [name]: Number(value) };
+    if (type === 'number') {
+      newValue = Number(value);
     }
 
-    onUpdate({ ...query, ...newValue });
+    if (name === 'levelColumn') {
+      newValue = (e.target as HTMLInputElement).checked;
+    }
+
+    onUpdate({ ...query, [name]: newValue });
   };
 
   const onFieldChange = (field: string) => (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target as HTMLInputElement;
-    const formattedValue = numberFields.includes(name) ? Number(value) : value;
-    onUpdate({ ...query, [field]: { ...query[field as keyof TestDataQuery], [name]: formattedValue } });
+    const { name, value, type } = e.target as HTMLInputElement;
+    let newValue: any = value;
+
+    if (type === 'number') {
+      newValue = Number(value);
+    }
+
+    onUpdate({ ...query, [field]: { ...query[field as keyof TestDataQuery], [name]: newValue } });
   };
 
   const onEndPointChange = ({ value }: SelectableValue) => {
@@ -102,7 +114,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
   const options = useMemo(
     () =>
       (scenarioList || [])
-        .map(item => ({ label: item.name, value: item.id }))
+        .map((item) => ({ label: item.name, value: item.id }))
         .sort((a, b) => a.label.localeCompare(b.label)),
     [scenarioList]
   );
@@ -118,7 +130,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
         <InlineField labelWidth={14} label="Scenario">
           <Select
             options={options}
-            value={options.find(item => item.value === query.scenarioId)}
+            value={options.find((item) => item.value === query.scenarioId)}
             onChange={onScenarioChange}
             width={32}
           />
@@ -157,7 +169,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
                 <br />
                 {`{ key = "value", key2 = "value" }`}
                 <br />
-                key="value", key2="value"
+                key=&quot;value&quot;, key2=&quot;value&quot;
                 <br />
                 key=value, key2=value
                 <br />
@@ -179,6 +191,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       {scenarioId === 'manual_entry' && <ManualEntryEditor onChange={onUpdate} query={query} onRunQuery={onRunQuery} />}
       {scenarioId === 'random_walk' && <RandomWalkEditor onChange={onInputChange} query={query} />}
       {scenarioId === 'streaming_client' && <StreamingClientEditor onChange={onStreamClientChange} query={query} />}
+      {scenarioId === 'live' && <GrafanaLiveEditor onChange={onUpdate} query={query} />}
       {scenarioId === 'logs' && (
         <InlineFieldRow>
           <InlineField label="Lines" labelWidth={14}>
@@ -192,7 +205,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
             />
           </InlineField>
           <InlineField label="Level" labelWidth={14}>
-            <Switch onChange={onInputChange} name="levelColumn" value={!!query.levelColumn} />
+            <InlineSwitch onChange={onInputChange} name="levelColumn" value={!!query.levelColumn} />
           </InlineField>
         </InlineFieldRow>
       )}
@@ -203,7 +216,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
             options={endpoints}
             onChange={onEndPointChange}
             width={32}
-            value={endpoints.find(ep => ep.value === query.stringInput)}
+            value={endpoints.find((ep) => ep.value === query.stringInput)}
           />
         </InlineField>
       )}
@@ -222,6 +235,9 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
 
       {scenarioId === 'predictable_pulse' && <PredictablePulseEditor onChange={onPulseWaveChange} query={query} />}
       {scenarioId === 'predictable_csv_wave' && <CSVWaveEditor onChange={onCSVWaveChange} query={query} />}
+      {scenarioId === 'node_graph' && (
+        <NodeGraphEditor onChange={(val: NodesQuery) => onChange({ ...query, nodes: val })} query={query} />
+      )}
     </>
   );
 };

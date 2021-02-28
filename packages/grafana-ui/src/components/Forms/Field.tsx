@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { HTMLAttributes } from 'react';
 import { Label } from './Label';
 import { stylesFactory, useTheme } from '../../themes';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { FieldValidationMessage } from './FieldValidationMessage';
+import { getChildId } from '../../utils/children';
 
-export interface FieldProps {
+export interface FieldProps extends HTMLAttributes<HTMLDivElement> {
   /** Form input element, i.e Input or Switch */
   children: React.ReactElement;
   /** Label for the field */
@@ -21,7 +22,7 @@ export interface FieldProps {
   /** Indicates if field is required */
   required?: boolean;
   /** Error message to display */
-  error?: string;
+  error?: string | null;
   /** Indicates horizontal layout of the field */
   horizontal?: boolean;
   className?: string;
@@ -59,18 +60,12 @@ export const Field: React.FC<FieldProps> = ({
   error,
   children,
   className,
+  ...otherProps
 }) => {
   const theme = useTheme();
-  let inputId;
   const styles = getFieldStyles(theme);
+  const inputId = getChildId(children);
 
-  // Get the first, and only, child to retrieve form input's id
-  const child = React.Children.map(children, c => c)[0];
-
-  if (child) {
-    // Retrieve input's id to apply on the label for correct click interaction
-    inputId = (child as React.ReactElement<{ id?: string }>).props.id;
-  }
   const labelElement =
     typeof label === 'string' ? (
       <Label htmlFor={inputId} description={description}>
@@ -81,7 +76,7 @@ export const Field: React.FC<FieldProps> = ({
     );
 
   return (
-    <div className={cx(styles.field, horizontal && styles.fieldHorizontal, className)}>
+    <div className={cx(styles.field, horizontal && styles.fieldHorizontal, className)} {...otherProps}>
       {labelElement}
       <div>
         {React.cloneElement(children, { invalid, disabled, loading })}

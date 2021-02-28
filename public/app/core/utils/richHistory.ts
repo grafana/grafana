@@ -5,11 +5,11 @@ import _ from 'lodash';
 import { DataQuery, DataSourceApi, dateTimeFormat, AppEvents, urlUtil, ExploreUrlState } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import store from 'app/core/store';
-import { getExploreDatasources } from '../../features/explore/state/selectors';
 
 // Types
 import { RichHistoryQuery } from 'app/types/explore';
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
+import { getDataSourceSrv } from '@grafana/runtime';
 
 const RICH_HISTORY_KEY = 'grafana.explore.richHistory';
 
@@ -43,23 +43,23 @@ export function addToRichHistory(
 ): any {
   const ts = Date.now();
   /* Save only queries, that are not falsy (e.g. empty object, null, ...) */
-  const newQueriesToSave: DataQuery[] = queries && queries.filter(query => notEmptyQuery(query));
+  const newQueriesToSave: DataQuery[] = queries && queries.filter((query) => notEmptyQuery(query));
   const retentionPeriod: number = store.getObject(RICH_HISTORY_SETTING_KEYS.retentionPeriod, 7);
   const retentionPeriodLastTs = createRetentionPeriodBoundary(retentionPeriod, false);
 
   /* Keep only queries, that are within the selected retention period or that are starred.
    * If no queries, initialize with empty array
    */
-  const queriesToKeep = richHistory.filter(q => q.ts > retentionPeriodLastTs || q.starred === true) || [];
+  const queriesToKeep = richHistory.filter((q) => q.ts > retentionPeriodLastTs || q.starred === true) || [];
 
   if (newQueriesToSave.length > 0) {
     /* Compare queries of a new query and last saved queries. If they are the same, (except selected properties,
      * which can be different) don't save it in rich history.
      */
-    const newQueriesToCompare = newQueriesToSave.map(q => _.omit(q, ['key', 'refId']));
+    const newQueriesToCompare = newQueriesToSave.map((q) => _.omit(q, ['key', 'refId']));
     const lastQueriesToCompare =
       queriesToKeep.length > 0 &&
-      queriesToKeep[0].queries.map(q => {
+      queriesToKeep[0].queries.map((q) => {
         return _.omit(q, ['key', 'refId']);
       });
 
@@ -95,7 +95,7 @@ export function deleteAllFromRichHistory() {
 }
 
 export function updateStarredInRichHistory(richHistory: RichHistoryQuery[], ts: number) {
-  const updatedHistory = richHistory.map(query => {
+  const updatedHistory = richHistory.map((query) => {
     /* Timestamps are currently unique - we can use them to identify specific queries */
     if (query.ts === ts) {
       const isStarred = query.starred;
@@ -119,7 +119,7 @@ export function updateCommentInRichHistory(
   ts: number,
   newComment: string | undefined
 ) {
-  const updatedHistory = richHistory.map(query => {
+  const updatedHistory = richHistory.map((query) => {
     if (query.ts === ts) {
       const updatedQuery = Object.assign({}, query, { comment: newComment });
       return updatedQuery;
@@ -137,7 +137,7 @@ export function updateCommentInRichHistory(
 }
 
 export function deleteQueryInRichHistory(richHistory: RichHistoryQuery[], ts: number) {
-  const updatedHistory = richHistory.filter(query => query.ts !== ts);
+  const updatedHistory = richHistory.filter((query) => query.ts !== ts);
   try {
     store.setObject(RICH_HISTORY_KEY, updatedHistory);
     return updatedHistory;
@@ -259,7 +259,7 @@ export function createQueryText(query: DataQuery, queryDsInstance: DataSourceApi
 export function mapQueriesToHeadings(query: RichHistoryQuery[], sortOrder: SortOrder) {
   let mappedQueriesToHeadings: any = {};
 
-  query.forEach(q => {
+  query.forEach((q) => {
     let heading = createQueryHeading(q, sortOrder);
     if (!(heading in mappedQueriesToHeadings)) {
       mappedQueriesToHeadings[heading] = [q];
@@ -275,22 +275,21 @@ export function mapQueriesToHeadings(query: RichHistoryQuery[], sortOrder: SortO
  * exploreDatasources add generic datasource image and add property isRemoved = true.
  */
 export function createDatasourcesList(queriesDatasources: string[]) {
-  const exploreDatasources = getExploreDatasources();
   const datasources: Array<{ label: string; value: string; imgUrl: string; isRemoved: boolean }> = [];
 
-  queriesDatasources.forEach(queryDsName => {
-    const index = exploreDatasources.findIndex(exploreDs => exploreDs.name === queryDsName);
-    if (index !== -1) {
+  queriesDatasources.forEach((dsName) => {
+    const dsSettings = getDataSourceSrv().getInstanceSettings(dsName);
+    if (dsSettings) {
       datasources.push({
-        label: queryDsName,
-        value: queryDsName,
-        imgUrl: exploreDatasources[index].meta.info.logos.small,
+        label: dsSettings.name,
+        value: dsSettings.name,
+        imgUrl: dsSettings.meta.info.logos.small,
         isRemoved: false,
       });
     } else {
       datasources.push({
-        label: queryDsName,
-        value: queryDsName,
+        label: dsName,
+        value: dsName,
         imgUrl: 'public/img/icn-datasource.svg',
         isRemoved: true,
       });
@@ -314,12 +313,12 @@ export function notEmptyQuery(query: DataQuery) {
 }
 
 export function filterQueriesBySearchFilter(queries: RichHistoryQuery[], searchFilter: string) {
-  return queries.filter(query => {
+  return queries.filter((query) => {
     if (query.comment.includes(searchFilter)) {
       return true;
     }
 
-    const listOfMatchingQueries = query.queries.filter(query =>
+    const listOfMatchingQueries = query.queries.filter((query) =>
       // Remove fields in which we don't want to be searching
       Object.values(_.omit(query, ['datasource', 'key', 'refId', 'hide', 'queryType'])).some((value: any) =>
         value?.toString().includes(searchFilter)
@@ -332,13 +331,13 @@ export function filterQueriesBySearchFilter(queries: RichHistoryQuery[], searchF
 
 export function filterQueriesByDataSource(queries: RichHistoryQuery[], listOfDatasourceFilters: string[] | null) {
   return listOfDatasourceFilters && listOfDatasourceFilters.length > 0
-    ? queries.filter(q => listOfDatasourceFilters.includes(q.datasourceName))
+    ? queries.filter((q) => listOfDatasourceFilters.includes(q.datasourceName))
     : queries;
 }
 
 export function filterQueriesByTime(queries: RichHistoryQuery[], timeFilter: [number, number]) {
   return queries.filter(
-    q =>
+    (q) =>
       q.ts < createRetentionPeriodBoundary(timeFilter[0], true) &&
       q.ts > createRetentionPeriodBoundary(timeFilter[1], false)
   );
@@ -362,7 +361,7 @@ export function filterAndSortQueries(
 
 /* These functions are created to migrate string queries (from 6.7 release) to DataQueries. They can be removed after 7.1 release. */
 function migrateRichHistory(richHistory: RichHistoryQuery[]) {
-  const transformedRichHistory = richHistory.map(query => {
+  const transformedRichHistory = richHistory.map((query) => {
     const transformedQueries: DataQuery[] = query.queries.map((q, index) => createDataQuery(query, q, index));
     return { ...query, queries: transformedQueries };
   });

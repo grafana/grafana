@@ -1,9 +1,7 @@
 +++
 title = "Panels"
-type = "docs"
-[menu.docs]
-identifier = "panels"
-weight = 4
+aliases = ["/docs/grafana/latest/features/panels/panels/"]
+weight = 70
 +++
 
 # Panel overview
@@ -26,3 +24,4 @@ You can drag and drop panels by clicking and holding the panel title, then dragg
 - Ctrl/Shift/Meta + click legend name to hide other series.
 - Hover your cursor over a panel and press `e` to open the panel editor.
 - Hover your cursor over a panel and press `v` to open the panel in fullscreen view.
+

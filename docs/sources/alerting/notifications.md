@@ -2,11 +2,6 @@
 title = "Alert notifications"
 description = "Alerting notifications guide"
 keywords = ["Grafana", "alerting", "guide", "notifications"]
-type = "docs"
-[menu.docs]
-name = "Notifications"
-identifier = "alert-notification"
-parent = "alerting"
 weight = 100
 +++
 
@@ -67,8 +62,9 @@ Microsoft Teams | `teams` | yes, external only | no
 OpsGenie | `opsgenie` | yes, external only | yes
 [Pagerduty](#pagerduty) | `pagerduty` | yes, external only | yes
 Prometheus Alertmanager | `prometheus-alertmanager` | yes, external only | yes
-Pushover | `pushover` | yes | no
+[Pushover](#pushover) | `pushover` | yes | no
 Sensu | `sensu` | yes, external only | no
+[Sensu Go](#sensu-go) | `sensugo` | yes, external only | no
 [Slack](#slack) | `slack` | yes | no
 Telegram | `telegram` | yes | no
 Threema | `threema` | yes, external only | no
@@ -134,6 +130,24 @@ Move any existing rules using `custom_details.myMetric` to `custom_details.queri
 This behavior will become the default in a future version of Grafana.
 
 > Using `dedup_key` tag will override Grafana generated `dedup_key` with a custom key.
+
+### Pushover
+
+To set up Pushover, you must provide a user key and an API token. Refer to [What is Pushover and how do I use it](https://support.pushover.net/i7-what-is-pushover-and-how-do-i-use-it) for instructions on how to generate them.
+
+
+Setting | Description
+---------- | -----------
+API Token | Application token
+User key(s) | A comma-separated list of user keys
+Device(s) | A comma-separated list of devices
+Priority | The priority alerting nottifications are sent
+OK priority | The priority OK notifications are sent; if not set, then OK notifications are sent with the priority set for alerting notifications 
+Retry | How often (in seconds) the Pushover servers send the same notification to the user. (minimum 30 seconds)
+Expire | How many seconds your notification will continue to be retried for (maximum 86400 seconds)
+Alerting sound | The sound for alerting notifications
+OK sound | The sound for OK notifications
+
 ### Webhook
 
 The webhook notification is a simple way to send information about a state change over HTTP to a custom endpoint.
@@ -203,10 +217,6 @@ Once these two properties are set, you can send the alerts to Kafka for further 
 
 Notifications can be sent by setting up an incoming webhook in Google Hangouts chat. For more information about configuring a webhook, refer to [webhooks](https://developers.google.com/hangouts/chat/how-tos/webhooks).
 
-### Squadcast
-
-Squadcast helps you get alerted via Phone call, SMS, Email and Push notifications and lets you take actions on those alerts. Grafana notifications can be sent to Squadcast via a simple incoming webhook. Refer the official [Squadcast support documentation](https://support.squadcast.com/docs/grafana) for configuring these webhooks.
-
 ### Prometheus Alertmanager
 
 Alertmanager handles alerts sent by client applications such as Prometheus server or Grafana. It takes care of deduplicating, grouping, and routing them to the correct receiver. Grafana notifications can be sent to Alertmanager via a simple incoming webhook. Refer to the official [Prometheus Alertmanager documentation](https://prometheus.io/docs/alerting/alertmanager) for configuration information.
@@ -216,6 +226,10 @@ Alertmanager handles alerts sent by client applications such as Prometheus serve
 ### Zenduty
 
 [Zenduty](https://www.zenduty.com) is an incident alerting and response orchestration platform that not alerts the right teams via SMS, Phone(Voice), Email, Slack, Microsoft Teams and Push notifications(Android/iOS) whenever a Grafana alert is triggered, but also helps you rapidly triage and remediate critical, user impacting incidents. Grafana alert are sent to Zenduty through Grafana's native webhook dispatcher. Refer the Zenduty-Grafana [integration documentation](https://docs.zenduty.com/docs/grafana) for configuring the integration.
+
+### Sensu Go
+
+[Sensu](https://sensu.io) is a complete solution for monitoring and observability at scale. Sensu Go is designed to give you visibility into everything you care about: traditional server closets, containers, applications, the cloud, and more. Grafana notifications can be sent to Sensu Go as events via the API. This operation requires an API Key. Refer to the [Sensu Go documentation](https://docs.sensu.io/sensu-go/latest/operations/control-access/use-apikeys/#api-key-authentication) for information on creating this key.
 
 ## Enable images in notifications {#external-image-store}
 
@@ -230,3 +244,9 @@ Notification services which need public image access are marked as 'external onl
 
 All alert notifications contain a link back to the triggered alert in the Grafana instance.
 This URL is based on the [domain]({{< relref "../administration/configuration/#domain" >}}) setting in Grafana.
+
+## Notification templating
+
+> **Note:** Alert notification templating is only available in Grafana v7.4 and above.
+
+The alert notification template feature allows you to take the [label]({{< relref "../getting-started/timeseries-dimensions.md#labels" >}}) value from an alert query and [inject that into alert notifications]({{< relref "./add-notification-template.md" >}}).

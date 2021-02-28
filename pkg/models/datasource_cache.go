@@ -10,6 +10,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana-aws-sdk/pkg/sigv4"
+
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
@@ -191,8 +193,9 @@ func (ds *DataSource) GetHttpTransport() (*dataSourceTransport, error) {
 func (ds *DataSource) sigV4Middleware(next http.RoundTripper) http.RoundTripper {
 	decrypted := ds.DecryptedValues()
 
-	return &SigV4Middleware{
-		Config: &Config{
+	return sigv4.New(
+		&sigv4.Config{
+			Service:       awsServiceNamespace(ds.Type),
 			AccessKey:     decrypted["sigV4AccessKey"],
 			SecretKey:     decrypted["sigV4SecretKey"],
 			Region:        ds.JsonData.Get("sigV4Region").MustString(),
@@ -201,20 +204,24 @@ func (ds *DataSource) sigV4Middleware(next http.RoundTripper) http.RoundTripper 
 			ExternalID:    ds.JsonData.Get("sigV4ExternalId").MustString(),
 			Profile:       ds.JsonData.Get("sigV4Profile").MustString(),
 		},
-		Next: next,
-	}
+		next,
+	)
 }
 
 func (ds *DataSource) GetTLSConfig() (*tls.Config, error) {
 	var tlsSkipVerify, tlsClientAuth, tlsAuthWithCACert bool
+	var serverName string
+
 	if ds.JsonData != nil {
 		tlsClientAuth = ds.JsonData.Get("tlsAuth").MustBool(false)
 		tlsAuthWithCACert = ds.JsonData.Get("tlsAuthWithCACert").MustBool(false)
 		tlsSkipVerify = ds.JsonData.Get("tlsSkipVerify").MustBool(false)
+		serverName = ds.JsonData.Get("serverName").MustString()
 	}
 
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: tlsSkipVerify,
+		ServerName:         serverName,
 	}
 
 	if tlsClientAuth || tlsAuthWithCACert {
@@ -223,7 +230,7 @@ func (ds *DataSource) GetTLSConfig() (*tls.Config, error) {
 			caPool := x509.NewCertPool()
 			ok := caPool.AppendCertsFromPEM([]byte(decrypted["tlsCACert"]))
 			if !ok {
-				return nil, errors.New("Failed to parse TLS CA PEM certificate")
+				return nil, errors.New("failed to parse TLS CA PEM certificate")
 			}
 			tlsConfig.RootCAs = caPool
 		}
@@ -313,4 +320,15 @@ func ClearDSDecryptionCache() {
 	defer dsDecryptionCache.Unlock()
 
 	dsDecryptionCache.cache = make(map[int64]cachedDecryptedJSON)
+}
+
+func awsServiceNamespace(dsType string) string {
+	switch dsType {
+	case DS_ES, DS_ES_OPEN_DISTRO:
+		return "es"
+	case DS_PROMETHEUS:
+		return "aps"
+	default:
+		panic(fmt.Sprintf("Unsupported datasource %q", dsType))
+	}
 }

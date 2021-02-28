@@ -2,6 +2,7 @@ package sqlstore
 
 import (
 	"encoding/base64"
+	"errors"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -33,7 +34,7 @@ func GetUserByAuthInfo(query *models.GetUserByAuthInfoQuery) error {
 		authQuery.AuthId = query.AuthId
 
 		err = GetAuthInfo(authQuery)
-		if err != models.ErrUserNotFound {
+		if !errors.Is(err, models.ErrUserNotFound) {
 			if err != nil {
 				return err
 			}

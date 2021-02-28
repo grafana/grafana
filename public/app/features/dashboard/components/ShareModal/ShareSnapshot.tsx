@@ -1,13 +1,11 @@
 import React, { PureComponent } from 'react';
-import { Button, ClipboardButton, Icon, LegacyForms, LinkButton } from '@grafana/ui';
+import { Button, ClipboardButton, Icon, Spinner, Select, Input, LinkButton, Field } from '@grafana/ui';
 import { AppEvents, SelectableValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { appEvents } from 'app/core/core';
 import { VariableRefresh } from '../../../variables/types';
-
-const { Select, Input } = LegacyForms;
 
 const snapshotApiUrl = '/api/snapshots';
 
@@ -121,14 +119,14 @@ export class ShareSnapshot extends PureComponent<Props, State> {
     dash.time = getTimeSrv().timeRange();
 
     // remove panel queries & links
-    dash.panels.forEach(panel => {
+    dash.panels.forEach((panel) => {
       panel.targets = [];
       panel.links = [];
       panel.datasource = null;
     });
 
     // remove annotation queries
-    const annotations = dash.annotations.list.filter(annotation => annotation.enable);
+    const annotations = dash.annotations.list.filter((annotation) => annotation.enable);
     dash.annotations.list = annotations.map((annotation: any) => {
       return {
         name: annotation.name,
@@ -163,7 +161,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
     this.dashboard.forEachPanel((panel: PanelModel) => {
       delete panel.snapshotData;
     });
-    this.dashboard.annotations.list.forEach(annotation => {
+    this.dashboard.annotations.list.forEach((annotation) => {
       delete annotation.snapshotData;
     });
   };
@@ -221,34 +219,26 @@ export class ShareSnapshot extends PureComponent<Props, State> {
             URL. Share wisely.
           </p>
         </div>
-        <div className="gf-form-group share-modal-options">
-          <div className="gf-form" ng-if="step === 1">
-            <label className="gf-form-label width-12">Snapshot name</label>
-            <Input width={15} value={snapshotName} onChange={this.onSnapshotNameChange} />
-          </div>
-          <div className="gf-form" ng-if="step === 1">
-            <label className="gf-form-label width-12">Expire</label>
-            <Select width={15} options={expireOptions} value={selectedExpireOption} onChange={this.onExpireChange} />
-          </div>
-        </div>
-
-        <p className="share-modal-info-text">
-          You may need to configure the timeout value if it takes a long time to collect your dashboard's metrics.
-        </p>
-
-        <div className="gf-form-group share-modal-options">
-          <div className="gf-form">
-            <span className="gf-form-label width-12">Timeout (seconds)</span>
-            <Input type="number" width={15} value={timeoutSeconds} onChange={this.onTimeoutChange} />
-          </div>
-        </div>
+        <Field label="Snapshot name">
+          <Input width={30} value={snapshotName} onChange={this.onSnapshotNameChange} />
+        </Field>
+        <Field label="Expire">
+          <Select width={30} options={expireOptions} value={selectedExpireOption} onChange={this.onExpireChange} />
+        </Field>
+        <Field
+          label="Timeout (seconds)"
+          description="You may need to configure the timeout value if it takes a long time to collect your dashboard's
+            metrics."
+        >
+          <Input type="number" width={21} value={timeoutSeconds} onChange={this.onTimeoutChange} />
+        </Field>
 
         <div className="gf-form-button-row">
-          <Button className="width-10" variant="primary" disabled={isLoading} onClick={this.createSnapshot()}>
+          <Button variant="primary" disabled={isLoading} onClick={this.createSnapshot()}>
             Local Snapshot
           </Button>
           {externalEnabled && (
-            <Button className="width-16" variant="secondary" disabled={isLoading} onClick={this.createSnapshot(true)}>
+            <Button variant="secondary" disabled={isLoading} onClick={this.createSnapshot(true)}>
               {sharingButtonText}
             </Button>
           )}
@@ -267,7 +257,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
       <>
         <div className="gf-form" style={{ marginTop: '40px' }}>
           <div className="gf-form-row">
-            <a href={snapshotUrl} className="large share-modal-link" target="_blank">
+            <a href={snapshotUrl} className="large share-modal-link" target="_blank" rel="noreferrer">
               <Icon name="external-link-alt" /> {snapshotUrl}
             </a>
             <br />
@@ -277,7 +267,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
           </div>
         </div>
 
-        <div className="pull-right" ng-if="step === 2" style={{ padding: '5px' }}>
+        <div className="pull-right" style={{ padding: '5px' }}>
           Did you make a mistake?{' '}
           <LinkButton variant="link" target="_blank" onClick={this.deleteSnapshot}>
             delete snapshot.
@@ -291,8 +281,8 @@ export class ShareSnapshot extends PureComponent<Props, State> {
     return (
       <div className="share-modal-header">
         <p className="share-modal-info-text">
-          The snapshot has now been deleted. If it you have already accessed it once, It might take up to an hour before
-          it is removed from browser caches or CDN caches.
+          The snapshot has now been deleted. If you have already accessed it once, it might take up to an hour before it
+          is removed from browser caches or CDN caches.
         </p>
       </div>
     );
@@ -304,17 +294,11 @@ export class ShareSnapshot extends PureComponent<Props, State> {
     return (
       <div className="share-modal-body">
         <div className="share-modal-header">
-          {isLoading ? (
-            <div className="share-modal-big-icon">
-              <Icon name="fa fa-spinner" className="fa-spin" />
-            </div>
-          ) : (
-            <Icon name="camera" className="share-modal-big-icon" size="xxl" />
-          )}
           <div className="share-modal-content">
             {step === 1 && this.renderStep1()}
             {step === 2 && this.renderStep2()}
             {step === 3 && this.renderStep3()}
+            {isLoading && <Spinner inline={true} />}
           </div>
         </div>
       </div>

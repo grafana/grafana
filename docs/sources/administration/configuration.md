@@ -2,13 +2,8 @@
 title = "Configuration"
 description = "Configuration documentation"
 keywords = ["grafana", "configuration", "documentation"]
-type = "docs"
 aliases = ["/docs/grafana/latest/installation/configuration/"]
-[menu.docs]
-name = "Configuration"
-identifier = "config"
-parent = "admin"
-weight = 300
+weight = 150
 +++
 
 # Configuration
@@ -16,6 +11,8 @@ weight = 300
 Grafana has a number of configuration options that you can specify in a `.ini` configuration file or specified using environment variables.
 
 > **Note:** You must restart Grafana for any configuration changes to take effect.
+
+To see all settings currently applied to the Grafana server, refer to [View server settings]({{< relref "view-server/view-server-settings.md" >}}).
 
 ## Config file locations
 
@@ -89,9 +86,7 @@ export GF_PLUGIN_GRAFANA_IMAGE_RENDERER_RENDERING_IGNORE_HTTPS_ERRORS=true
 
 ## Variable expansion
 
-> Only available in Grafana 7.1+.
-
-> For any changes to `conf/grafana.ini` (or corresponding environment variables) to take effect, you must restart Grafana.
+> **Note:** Only available in Grafana 7.1+.
 
 If any of your options contains the expression `$__<provider>{<argument>}`
 or `${<environment variable>}`, then they will be processed by Grafana's
@@ -163,7 +158,7 @@ How long temporary images in `data` directory should be kept. Defaults to: `24h`
 
 Path to where Grafana stores logs. This path is usually specified via command line in the init.d script or the systemd service file. You can override it in the configuration file or in the default environment variable file. However, please note that by overriding this the default log path will be used temporarily until Grafana has fully initialized/started.
 
-Override log path using the command line argument `cfg:default.paths.log`:
+Override log path using the command line argument `cfg:default.paths.logs`:
 
 ```bash
 ./grafana-server --config /custom/config.ini --homepath /custom/homepath cfg:default.paths.logs=/custom/path
@@ -263,6 +258,15 @@ Path to the certificate key file (if `protocol` is set to `https` or `h2`).
 ### socket
 
 Path where the socket should be created when `protocol=socket`. Make sure that Grafana has appropriate permissions before you change this setting.
+
+### cdn_url
+
+> **Note**: Available in Grafana v7.4 and later versions.
+
+Specify a full HTTP URL address to the root of your Grafana CDN assets. Grafana will add edition and version paths.
+
+For example, given a cdn url like `https://cdn.myserver.com` grafana will try to load a javascript file from
+`http://cdn.myserver.com/grafana-oss/v7.4.0/public/build/app.<hash>.js`.
 
 <hr />
 
@@ -513,6 +517,14 @@ Set to `true` to enable the X-Content-Type-Options response header. The X-Conten
 
 Set to `false` to disable the X-XSS-Protection header, which tells browsers to stop pages from loading when they detect reflected cross-site scripting (XSS) attacks. The default value is `false` until the next minor release, `6.3`.
 
+### content_security_policy
+
+Set to `true` to add the Content-Security-Policy header to your requests. CSP allows to control resources that the user agent can load and helps prevent XSS attacks.
+
+### content_security_policy_template
+
+Set Content Security Policy template used when adding the Content-Security-Policy header to your requests. `$NONCE` in the template includes a random nonce.
+
 <hr />
 
 ## [snapshots]
@@ -615,8 +627,7 @@ If you manage users externally you can replace the user invite button for organi
 
 ### viewers_can_edit
 
-Viewers can edit/inspect dashboard settings in the browser, but not save the dashboard.
-Default is `false`.
+Viewers can access and use [Explore]({{< relref "../explore/_index.md" >}}) and perform temporary edits on panels in dashboards they have access to. They cannot save their changes. Default is `false`.
 
 ### editors_can_admin
 
@@ -629,6 +640,10 @@ The duration in time a user invitation remains valid before expiring.
 This setting should be expressed as a duration. Examples: 6h (hours), 2d (days), 1w (week).
 Default is `24h` (24 hours). The minimum supported duration is `15m` (15 minutes).
 
+### hidden_users
+
+This is a comma-separated list of usernames. Users specified here are hidden in the Grafana UI. They are still visible to Grafana administrators and to themselves.
+
 <hr>
 
 ## [auth]
@@ -639,13 +654,15 @@ Grafana provides many ways to authenticate users. Refer to the Grafana [Authenti
 
 The cookie name for storing the auth token. Default is `grafana_session`.
 
-### login_maximum_inactive_lifetime_days
+### login_maximum_inactive_lifetime_duration
 
-The lifetime (days) an authenticated user can be inactive before being required to log in at next visit. Default is 7 days.
+The maximum lifetime (duration) an authenticated user can be inactive before being required to login at next visit. Default is 7 days (7d).
+This setting should be expressed as a duration, e.g. 5m (minutes), 6h (hours), 10d (days), 2w (weeks), 1M (month). The lifetime resets at each successful token rotation (token_rotation_interval_minutes).
 
-### login_maximum_lifetime_days
+### login_maximum_lifetime_duration
 
-The maximum lifetime (days) an authenticated user can be logged in before being required to login. Default is 30 days.
+The maximum lifetime (duration) an authenticated user can be logged in since login time before being required to login. Default is 30 days (30d).
+This setting should be expressed as a duration, e.g. 5m (minutes), 6h (hours), 10d (days), 2w (weeks), 1M (month).
 
 ### token_rotation_interval_minutes
 
@@ -754,6 +771,22 @@ Refer to [Auth proxy authentication]({{< relref "../auth/auth-proxy.md" >}}) for
 ## [auth.ldap]
 
 Refer to [LDAP authentication]({{< relref "../auth/ldap.md" >}}) for detailed instructions.
+
+## [aws]
+
+You can configure core and external AWS plugins.
+
+### allowed_auth_providers
+
+Specify what authentication providers the AWS plugins allow. For a list of allowed providers, refer to the data-source configuration page for a given plugin. If you configure a plugin by provisioning, only providers that are specified in `allowed_auth_providers` are allowed.
+
+Options: `default` (AWS SDK default), `keys` (Access and secret key), `credentials` (Credentials file), `ec2_IAM_role` (EC2 IAM role)
+
+### assume_role_enabled
+
+Set to `false` to disable AWS authentication from using an assumed role with temporary security credentials. For details about assume roles, refer to the AWS API reference documentation about the [AssumeRole](https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html) operation.
+
+If this option is disabled, the **Assume Role** and the **External Id** field are removed from the AWS data source configuration page. If the plugin is configured using provisioning, it is possible to use an assumed role as long as `assume_role_enabled` is set to `true`.
 
 <hr />
 
@@ -887,6 +920,8 @@ Enable daily rotation of files, valid options are `false` or `true`. Default is 
 
 Maximum number of days to keep log files. Default is `7`.
 
+<hr>
+
 ## [log.syslog]
 
 Only applicable when "syslog" used in `[log]` mode.
@@ -910,6 +945,36 @@ Syslog facility. Valid options are user, daemon or local0 through local7. Defaul
 ### tag
 
 Syslog tag. By default, the process's `argv[0]` is used.
+
+<hr>
+
+## [log.frontend]
+
+**Note:** This feature is available in Grafana 7.4+.
+
+### enabled
+
+Sentry javascript agent is initialized. Default is `false`.
+
+### sentry_dsn
+
+Sentry DSN if you want to send events to Sentry
+
+### custom_endpoint
+
+Custom HTTP endpoint to send events captured by the Sentry agent to. Default, `/log`, will log the events to stdout.
+
+### sample_rate
+
+Rate of events to be reported between `0` (none) and `1` (all, default), float.
+
+### log_endpoint_requests_per_second_limit
+
+Requests per second limit enforced per an extended period, for Grafana backend log ingestion endpoint, `/log`. Default is `3`.
+
+### log_endpoint_burst_limit
+
+Maximum requests accepted per short interval of time for Grafana backend log ingestion endpoint, `/log`. Default is `15`.
 
 <hr>
 
@@ -965,7 +1030,7 @@ Sets a global limit on number of users that can be logged in at one time. Defaul
 
 ## [alerting]
 
-For more information about the Alerting feature in Grafana, refer to [Alerts overview]({{< relref "../alerting/alerts-overview.md" >}}).
+For more information about the Alerting feature in Grafana, refer to [Alerts overview]({{< relref "../alerting/_index.md" >}}).
 
 ### enabled
 
@@ -1047,7 +1112,7 @@ Configures max number of API annotations that Grafana keeps. Default value is 0,
 
 ## [explore]
 
-For more information about this feature, refer to [Explore]({{< relref "../explore/index.md" >}}).
+For more information about this feature, refer to [Explore]({{< relref "../explore/_index.md" >}}).
 
 ### enabled
 
@@ -1055,7 +1120,7 @@ Enable or disable the Explore section. Default is `enabled`.
 
 ## [metrics]
 
-For detailed instructions, refer to [Internal Grafana metrics]({{< relref "metrics.md" >}}).
+For detailed instructions, refer to [Internal Grafana metrics]({{< relref "view-server/internal-metrics.md" >}}).
 
 ### enabled
 
@@ -1158,6 +1223,10 @@ This is the sampler configuration parameter. Depending on the value of `sampler_
   is received from the mothership
 
 May be set with the environment variable `JAEGER_SAMPLER_PARAM`.
+
+### sampling_server_url
+
+sampling_server_url is the URL of a sampling manager providing a sampling strategy.
 
 ### zipkin_propagation
 
@@ -1336,6 +1405,10 @@ Set to `true` if you want to test alpha plugins that are not yet ready for gener
 
 Enter a comma-separated list of plugin identifiers to identify plugins that are allowed to be loaded even if they lack a valid signature.
 
+### marketplace_url
+
+Custom install/learn more url for enterprise plugins. Defaults to https://grafana.com/grafana/plugins/.
+
 <hr>
 
 ## [plugin.grafana-image-renderer]
@@ -1471,3 +1544,11 @@ Set this to `true` to have date formats automatically derived from your browser 
 ### default_timezone
 
 Used as the default time zone for user preferences. Can be either `browser` for the browser local time zone or a time zone name from the IANA Time Zone database, such as `UTC` or `Europe/Amsterdam`.
+
+## [expressions]
+
+> **Note:** This feature is available in Grafana v7.4 and later versions.
+
+### enabled
+
+Set this to `false` to disable expressions and hide them in the Grafana UI. Default is `true`.

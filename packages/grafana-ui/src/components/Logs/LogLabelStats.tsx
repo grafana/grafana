@@ -4,7 +4,6 @@ import { LogLabelStatsModel, GrafanaTheme } from '@grafana/data';
 
 import { Themeable } from '../../types/theme';
 import { stylesFactory } from '../../themes';
-import { selectThemeVariant } from '../../themes/selectThemeVariant';
 import { withTheme } from '../../themes/index';
 
 //Components
@@ -13,13 +12,6 @@ import { LogLabelStatsRow } from './LogLabelStatsRow';
 const STATS_ROW_LIMIT = 5;
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const borderColor = selectThemeVariant(
-    {
-      light: theme.palette.gray5,
-      dark: theme.palette.dark9,
-    },
-    theme.type
-  );
   return {
     logsStats: css`
       label: logs-stats;
@@ -30,7 +22,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     logsStatsHeader: css`
       label: logs-stats__header;
-      border-bottom: 1px solid ${borderColor};
+      border-bottom: 1px solid ${theme.colors.border2};
       display: flex;
     `,
     logsStatsTitle: css`
@@ -66,14 +58,14 @@ class UnThemedLogLabelStats extends PureComponent<Props> {
     const { label, rowCount, stats, value, theme, isLabel } = this.props;
     const style = getStyles(theme);
     const topRows = stats.slice(0, STATS_ROW_LIMIT);
-    let activeRow = topRows.find(row => row.value === value);
+    let activeRow = topRows.find((row) => row.value === value);
     let otherRows = stats.slice(STATS_ROW_LIMIT);
     const insertActiveRow = !activeRow;
 
     // Remove active row from other to show extra
     if (insertActiveRow) {
-      activeRow = otherRows.find(row => row.value === value);
-      otherRows = otherRows.filter(row => row.value !== value);
+      activeRow = otherRows.find((row) => row.value === value);
+      otherRows = otherRows.filter((row) => row.value !== value);
     }
 
     const otherCount = otherRows.reduce((sum, row) => sum + row.count, 0);
@@ -89,7 +81,7 @@ class UnThemedLogLabelStats extends PureComponent<Props> {
           </div>
         </div>
         <div className={style.logsStatsBody}>
-          {topRows.map(stat => (
+          {topRows.map((stat) => (
             <LogLabelStatsRow key={stat.value} {...stat} active={stat.value === value} />
           ))}
           {insertActiveRow && activeRow && <LogLabelStatsRow key={activeRow.value} {...activeRow} active />}

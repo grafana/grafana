@@ -4,10 +4,12 @@ import { ScopedVars } from './ScopedVars';
 import { LoadingState } from './data';
 import { DataFrame } from './dataFrame';
 import { AbsoluteTimeRange, TimeRange, TimeZone } from './time';
+import { EventBus } from '../events';
 import { FieldConfigSource } from './fieldOverrides';
 import { Registry } from '../utils';
 import { StandardEditorProps } from '../field';
 import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
+import { OptionEditorConfig } from './options';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
@@ -77,6 +79,9 @@ export interface PanelProps<T = any> {
   /** Panel title */
   title: string;
 
+  /** EventBus  */
+  eventBus: EventBus;
+
   /** Panel options change handler */
   onOptionsChange: (options: T) => void;
 
@@ -126,7 +131,8 @@ export type PanelMigrationHandler<TOptions = any> = (panel: PanelModel<TOptions>
 export type PanelTypeChangedHandler<TOptions = any> = (
   panel: PanelModel<TOptions>,
   prevPluginId: string,
-  prevOptions: any
+  prevOptions: Record<string, any>,
+  prevFieldConfig: FieldConfigSource
 ) => Partial<TOptions>;
 
 export type PanelOptionEditorsRegistry = Registry<PanelOptionsEditorItem>;
@@ -136,47 +142,8 @@ export interface PanelOptionsEditorProps<TValue> extends StandardEditorProps<TVa
 export interface PanelOptionsEditorItem<TOptions = any, TValue = any, TSettings = any>
   extends OptionsEditorItem<TOptions, TSettings, PanelOptionsEditorProps<TValue>, TValue> {}
 
-export interface PanelOptionsEditorConfig<TOptions, TSettings = any, TValue = any> {
-  /**
-   * Path of the option property to control.
-   *
-   * @example
-   * Given options object of a type:
-   * ```ts
-   * interface Options {
-   *   a: {
-   *     b: string;
-   *   }
-   * }
-   * ```
-   *
-   * path can be either 'a' or 'a.b'.
-   */
-  path: (keyof TOptions & string) | string;
-  /**
-   * Name of the option. Will be displayed in the UI as form element label.
-   */
-  name: string;
-  /**
-   * Description of the option. Will be displayed in the UI as form element description.
-   */
-  description?: string;
-  /**al
-   * Custom settings of the editor.
-   */
-  settings?: TSettings;
-  /**
-   * Array of strings representing category of the option. First element in the array will make option render as collapsible section.
-   */
-  category?: string[];
-  defaultValue?: TValue;
-  /**
-   * Function that enables configuration of when option editor should be shown based on current panel option properties.
-   *
-   * @param currentConfig Current panel options
-   */
-  showIf?: (currentConfig: TOptions) => boolean | undefined;
-}
+export interface PanelOptionsEditorConfig<TOptions, TSettings = any, TValue = any>
+  extends OptionEditorConfig<TOptions, TSettings, TValue> {}
 
 /**
  * @internal

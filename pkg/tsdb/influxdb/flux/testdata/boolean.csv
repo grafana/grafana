@@ -1,0 +1,9 @@
+#group,false,false,false,false,true,true,false,false,false,true
+#datatype,string,long,string,string,dateTime:RFC3339,dateTime:RFC3339,dateTime:RFC3339,long,boolean,string
+#default,_result,,,,,,,,,
+,result,table,_field,_measurement,_start,_stop,_time,_value,dead,train
+,,0,file_size,ingress,2020-10-28T00:07:53.819772368Z,2020-11-11T00:07:53.819772368Z,2020-11-09T17:27:00Z,3339,true,350117
+,,1,file_size,ingress,2020-10-28T00:07:53.819772368Z,2020-11-11T00:07:53.819772368Z,2020-11-10T12:29:00Z,3666,true,350125
+,,2,file_size,ingress,2020-10-28T00:07:53.819772368Z,2020-11-11T00:07:53.819772368Z,2020-11-09T19:01:00Z,3570,true,350236
+,,3,file_size,ingress,2020-10-28T00:07:53.819772368Z,2020-11-11T00:07:53.819772368Z,2020-11-09T07:13:00Z,2772,true,350410
+

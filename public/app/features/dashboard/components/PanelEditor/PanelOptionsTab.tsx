@@ -8,6 +8,10 @@ import { AngularPanelOptions } from './AngularPanelOptions';
 import { VisualizationTab } from './VisualizationTab';
 import { OptionsGroup } from './OptionsGroup';
 import { RepeatRowSelect } from '../RepeatRowSelect/RepeatRowSelect';
+import config from 'app/core/config';
+import { LibraryPanelInformation } from 'app/features/library-panels/components/LibraryPanelInfo/LibraryPanelInfo';
+import { isLibraryPanel } from '../../state/PanelModel';
+import { PanelLibraryOptionsGroup } from 'app/features/library-panels/components/PanelLibraryOptionsGroup/PanelLibraryOptionsGroup';
 
 interface Props {
   panel: PanelModel;
@@ -39,34 +43,48 @@ export const PanelOptionsTab: FC<Props> = ({
     { label: 'Vertical', value: 'v' },
   ];
 
-  const maxPerRowOptions = [2, 3, 4, 6, 8, 12].map(value => ({ label: value.toString(), value }));
+  const maxPerRowOptions = [2, 3, 4, 6, 8, 12].map((value) => ({ label: value.toString(), value }));
 
   const focusVisPickerInput = (isExpanded: boolean) => {
     if (isExpanded && visTabInputRef.current) {
       visTabInputRef.current.focus();
     }
   };
-  // Fist common panel settings Title, description
+
+  if (config.featureToggles.panelLibrary && isLibraryPanel(panel)) {
+    elements.push(
+      <LibraryPanelInformation
+        panel={panel}
+        formatDate={(dateString, format) => dashboard.formatDate(dateString, format)}
+        key="Library Panel Information"
+      />
+    );
+  }
+
+  // First common panel settings Title, description
   elements.push(
     <OptionsGroup title="Settings" id="Panel settings" key="Panel settings">
       <Field label="Panel title">
-        <Input defaultValue={panel.title} onBlur={e => onPanelConfigChange('title', e.currentTarget.value)} />
+        <Input defaultValue={panel.title} onBlur={(e) => onPanelConfigChange('title', e.currentTarget.value)} />
       </Field>
       <Field label="Description" description="Panel description supports markdown and links.">
         <TextArea
           defaultValue={panel.description}
-          onBlur={e => onPanelConfigChange('description', e.currentTarget.value)}
+          onBlur={(e) => onPanelConfigChange('description', e.currentTarget.value)}
         />
       </Field>
       <Field label="Transparent" description="Display panel without a background.">
-        <Switch value={panel.transparent} onChange={e => onPanelConfigChange('transparent', e.currentTarget.checked)} />
+        <Switch
+          value={panel.transparent}
+          onChange={(e) => onPanelConfigChange('transparent', e.currentTarget.checked)}
+        />
       </Field>
     </OptionsGroup>
   );
 
   elements.push(
     <OptionsGroup title="Visualization" id="Panel type" key="Panel type" defaultToClosed onToggle={focusVisPickerInput}>
-      {toggleExpand => <VisualizationTab panel={panel} ref={visTabInputRef} onToggleOptionGroup={toggleExpand} />}
+      {(toggleExpand) => <VisualizationTab panel={panel} ref={visTabInputRef} onToggleOptionGroup={toggleExpand} />}
     </OptionsGroup>
   );
 
@@ -88,6 +106,7 @@ export const PanelOptionsTab: FC<Props> = ({
         replaceVariables={panel.replaceVariables}
         plugin={plugin}
         data={data?.series}
+        eventBus={dashboard.events}
       />
     );
   }
@@ -100,14 +119,16 @@ export const PanelOptionsTab: FC<Props> = ({
 
   elements.push(
     <OptionsGroup
-      renderTitle={isExpanded => <>Links {!isExpanded && panelLinksCount > 0 && <Counter value={panelLinksCount} />}</>}
+      renderTitle={(isExpanded) => (
+        <>Links {!isExpanded && panelLinksCount > 0 && <Counter value={panelLinksCount} />}</>
+      )}
       id="panel links"
       key="panel links"
       defaultToClosed
     >
       <DataLinksInlineEditor
         links={panel.links}
-        onChange={links => onPanelConfigChange('links', links)}
+        onChange={(links) => onPanelConfigChange('links', links)}
         suggestions={linkVariablesSuggestions}
         data={[]}
       />
@@ -129,7 +150,7 @@ export const PanelOptionsTab: FC<Props> = ({
           <RadioButtonGroup
             options={directionOptions}
             value={panel.repeatDirection || 'h'}
-            onChange={value => onPanelConfigChange('repeatDirection', value)}
+            onChange={(value) => onPanelConfigChange('repeatDirection', value)}
           />
         </Field>
       )}
@@ -139,12 +160,16 @@ export const PanelOptionsTab: FC<Props> = ({
           <Select
             options={maxPerRowOptions}
             value={panel.maxPerRow}
-            onChange={value => onPanelConfigChange('maxPerRow', value.value)}
+            onChange={(value) => onPanelConfigChange('maxPerRow', value.value)}
           />
         </Field>
       )}
     </OptionsGroup>
   );
+
+  if (config.featureToggles.panelLibrary) {
+    elements.push(<PanelLibraryOptionsGroup panel={panel} dashboard={dashboard} key="Panel Library" />);
+  }
 
   return <>{elements}</>;
 };

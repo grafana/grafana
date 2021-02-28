@@ -1,8 +1,9 @@
 package serverlock
 
 type serverLock struct {
+	// nolint:stylecheck
 	Id            int64
-	OperationUid  string
+	OperationUID  string `xorm:"operation_uid"`
 	LastExecution int64
 	Version       int64
 }

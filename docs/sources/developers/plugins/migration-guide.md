@@ -1,6 +1,5 @@
 +++
 title = "Plugin migration guide"
-type = "docs"
 +++
 
 # Plugin migration guide
@@ -46,7 +45,7 @@ For plugins prior to Grafana 7.0, all options are considered _Display options_. 
 
 While backend plugins were available as an experimental feature in previous versions of Grafana, the support has been greatly improved for Grafana 7. Backend plugins for Grafana 7.0 are backwards-compatible and will continue to work. However, the old backend plugin system has been deprecated, and we recommend that you use the new SDK for backend plugins.
 
-Since Grafana 7.0 introduced [signing of backend plugins]({{< relref "../../plugins/plugin-signature-verification.md" >}}), community plugins won’t load by default if they’re unsigned.
+Since Grafana 7.0 introduced [signing of backend plugins]({{< relref "../../plugins/plugin-signatures.md" >}}), community plugins won’t load by default if they’re unsigned.
 
 To learn more, refer to [Backend plugins]({{< relref "backend" >}}).
 
@@ -127,7 +126,7 @@ export const MyPanel: React.FC<Props> = ({ options, data, width, height }) => {
 
 While all plugins are different, we'd like to share a migration process that has worked for some of our users.
 
-1. Define your configuration model and `ConfigEditor`. For many plugins, the config editor is the simplest component so it's a good candidate to start with.
+1. Define your configuration model and `ConfigEditor`. For many plugins, the configuration editor is the simplest component so it's a good candidate to start with.
 1. Implement the `testDatasource()` method on the class that extends `DataSourceApi` using the settings in your configuration model to make sure you can successfully configure and access the external API.
 1. Implement the `query()` method. At this point, you can hard-code your query, because we haven’t yet implemented the query editor. The `query()` method supports both the new data frame response and the old TimeSeries response, so don’t worry about converting to the new format just yet.
 1. Implement the `QueryEditor`. How much work this requires depends on how complex your query model is.
@@ -165,4 +164,4 @@ For more information, refer to [Data frames](https://grafana.com/docs/grafana/la
 
 ## Troubleshoot plugin migration
 
-With Grafana 7.0, backend plugins can now be cryptographically signed to verify their origin. By default, Grafana will ignore unsigned plugins. For more information, refer to [Allow unsigned plugins]({{< relref "../../plugins/plugin-signature-verification.md#allow-unsigned-plugins" >}}).
+With Grafana 7.0, backend plugins can now be cryptographically signed to verify their origin. By default, Grafana will ignore unsigned plugins. For more information, refer to [Allow unsigned plugins]({{< relref "../../plugins/plugin-signatures.md#allow-unsigned-plugins" >}}).

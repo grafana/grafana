@@ -2,11 +2,6 @@
 title = "Google OAuth2 Authentication"
 description = "Grafana OAuthentication Guide "
 keywords = ["grafana", "configuration", "documentation", "oauth"]
-type = "docs"
-[menu.docs]
-name = "Google"
-identifier = "google_oauth2"
-parent = "authentication"
 weight = 600
 +++
 
@@ -45,7 +40,7 @@ allowed_domains = mycompany.com mycompany.org
 allow_sign_up = true
 ```
 
-You may have to set the `root_url` option of `[server]` for the callback URL to be 
+You may have to set the `root_url` option of `[server]` for the callback URL to be
 correct. For example in case you are serving Grafana behind a proxy.
 
 Restart the Grafana back-end. You should now see a Google login button

@@ -113,10 +113,9 @@ class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
           return (
             <GraphWithLegend
               ariaLabel={ariaLabel}
-              displayMode={LegendDisplayMode.List}
+              legendDisplayMode={LegendDisplayMode.List}
               height={height}
-              isLegendVisible={true}
-              placement={'under'}
+              placement={'bottom'}
               width={width}
               timeRange={timeRange}
               timeZone={timeZone}

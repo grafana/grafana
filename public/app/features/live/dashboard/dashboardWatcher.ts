@@ -61,13 +61,11 @@ class DashboardWatcher {
       this.channel = live.getChannel({
         scope: LiveChannelScope.Grafana,
         namespace: 'dashboard',
-        path: uid,
+        path: `uid/${uid}`,
       });
       this.channel.getStream().subscribe(this.observer);
       this.uid = uid;
     }
-
-    console.log('Watch', uid);
   }
 
   leave() {
@@ -168,7 +166,6 @@ export function getDashboardChannelsFeature(): CoreGrafanaLiveFeature {
   const dashboardConfig: LiveChannelConfig = {
     path: '${uid}',
     description: 'Dashboard change events',
-    variables: [{ value: 'uid', label: '${uid}', description: 'unique id for a dashboard' }],
     hasPresence: true,
     canPublish: () => true,
   };

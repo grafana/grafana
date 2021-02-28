@@ -126,7 +126,7 @@ func (m *kqlMacroEngine) evaluateMacro(name string, defaultTimeField string, arg
 	case "escapeMulti":
 		return "", fmt.Errorf("escapeMulti macro not formatted correctly")
 	default:
-		return "", fmt.Errorf("Unknown macro %v", name)
+		return "", fmt.Errorf("unknown macro %q", name)
 	}
 }
 

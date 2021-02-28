@@ -30,6 +30,7 @@ export enum CloudWatchLogsQueryStatus {
   Complete = 'Complete',
   Failed = 'Failed',
   Cancelled = 'Cancelled',
+  Timeout = 'Timeout',
 }
 
 export interface CloudWatchLogsQuery extends DataQuery {
@@ -61,6 +62,7 @@ export interface CloudWatchJsonData extends DataSourceJsonData {
   externalId?: string;
   database?: string;
   customMetricsNamespaces?: string;
+  endpoint?: string;
 }
 
 export interface CloudWatchSecureJsonData {

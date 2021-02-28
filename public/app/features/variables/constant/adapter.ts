@@ -4,10 +4,10 @@ import { dispatch } from '../../../store/store';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { VariableAdapter } from '../adapters';
 import { constantVariableReducer, initialConstantVariableModelState } from './reducer';
-import { OptionsPicker } from '../pickers';
 import { ConstantVariableEditor } from './ConstantVariableEditor';
 import { updateConstantVariableOptions } from './actions';
 import { toVariableIdentifier } from '../state/types';
+import { optionPickerFactory } from '../pickers';
 
 export const createConstantVariableAdapter = (): VariableAdapter<ConstantVariableModel> => {
   return {
@@ -16,7 +16,7 @@ export const createConstantVariableAdapter = (): VariableAdapter<ConstantVariabl
     name: 'Constant',
     initialState: initialConstantVariableModelState,
     reducer: constantVariableReducer,
-    picker: OptionsPicker,
+    picker: optionPickerFactory<ConstantVariableModel>(),
     editor: ConstantVariableEditor,
     dependsOn: () => {
       return false;
@@ -27,15 +27,21 @@ export const createConstantVariableAdapter = (): VariableAdapter<ConstantVariabl
     setValueFromUrl: async (variable, urlValue) => {
       await dispatch(setOptionFromUrl(toVariableIdentifier(variable), urlValue));
     },
-    updateOptions: async variable => {
+    updateOptions: async (variable) => {
       await dispatch(updateConstantVariableOptions(toVariableIdentifier(variable)));
     },
-    getSaveModel: variable => {
-      const { index, id, state, global, ...rest } = cloneDeep(variable);
+    getSaveModel: (variable) => {
+      const { index, id, state, global, current, options, ...rest } = cloneDeep(variable);
       return rest;
     },
-    getValueForUrl: variable => {
+    getValueForUrl: (variable) => {
       return variable.current.value;
+    },
+    beforeAdding: (model) => {
+      const { current, options, query, ...rest } = cloneDeep(model);
+      const option = { selected: true, text: query, value: query };
+
+      return { ...rest, current: option, options: [option], query };
     },
   };
 };

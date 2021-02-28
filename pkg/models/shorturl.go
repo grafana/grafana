@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"time"
 )
 
 var (
@@ -16,4 +17,10 @@ type ShortUrl struct {
 	CreatedBy  int64
 	CreatedAt  int64
 	LastSeenAt int64
+}
+
+type DeleteShortUrlCommand struct {
+	OlderThan time.Time
+
+	NumDeleted int64
 }

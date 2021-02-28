@@ -164,7 +164,11 @@ describe('LogRowContextProvider', () => {
         return <></>;
       });
       await act(async () => {
-        await mount(<LogRowContextProvider row={row} getRowContext={getRowContextMock} children={mockedChildren} />);
+        await mount(
+          <LogRowContextProvider row={row} getRowContext={getRowContextMock}>
+            {mockedChildren}
+          </LogRowContextProvider>
+        );
       });
     });
   });

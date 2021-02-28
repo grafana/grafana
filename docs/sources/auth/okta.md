@@ -2,11 +2,6 @@
 title = "Okta OAuth2 authentication"
 description = "Grafana Okta OAuth Guide "
 keywords = ["grafana", "configuration", "documentation", "oauth"]
-type = "docs"
-[menu.docs]
-name = "Okta"
-identifier = "okta_oauth2"
-parent = "authentication"
 weight = 1000
 +++
 

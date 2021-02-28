@@ -7,12 +7,15 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { GrafanaTheme, AppEvents, DataSourceApi } from '@grafana/data';
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 import { createUrlFromRichHistory, createQueryText } from 'app/core/utils/richHistory';
-import { createShortLink } from '../../explore/utils/links';
+import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { copyStringToClipboard } from 'app/core/utils/explore';
 import appEvents from 'app/core/app_events';
 import { StoreState, CoreEvents } from 'app/types';
 
-import { changeDatasource, updateRichHistory, setQueries } from '../state/actions';
+import { updateRichHistory } from '../state/history';
+import { changeDatasource } from '../state/datasource';
+import { setQueries } from '../state/query';
+
 export interface Props {
   query: RichHistoryQuery;
   dsImg: string;
@@ -173,20 +176,14 @@ export function RichHistoryCard(props: Props) {
   };
 
   const onCopyQuery = () => {
-    const queriesToCopy = query.queries.map(q => createQueryText(q, queryDsInstance)).join('\n');
+    const queriesToCopy = query.queries.map((q) => createQueryText(q, queryDsInstance)).join('\n');
     copyStringToClipboard(queriesToCopy);
     appEvents.emit(AppEvents.alertSuccess, ['Query copied to clipboard']);
   };
 
-  const onCreateLink = async () => {
+  const onCreateShortLink = async () => {
     const link = createUrlFromRichHistory(query);
-    const shortLink = await createShortLink(link);
-    if (shortLink) {
-      copyStringToClipboard(shortLink);
-      appEvents.emit(AppEvents.alertSuccess, ['Shortened link copied to clipboard']);
-    } else {
-      appEvents.emit(AppEvents.alertError, ['Error generating shortened link']);
-    }
+    await createAndCopyShortLink(link);
   };
 
   const onDeleteQuery = () => {
@@ -239,7 +236,7 @@ export function RichHistoryCard(props: Props) {
       <TextArea
         value={comment}
         placeholder={comment ? undefined : 'An optional description of what the query does.'}
-        onChange={e => setComment(e.currentTarget.value)}
+        onChange={(e) => setComment(e.currentTarget.value)}
         className={styles.textArea}
       />
       <div className={styles.commentButtonRow}>
@@ -261,7 +258,9 @@ export function RichHistoryCard(props: Props) {
         title={query.comment?.length > 0 ? 'Edit comment' : 'Add comment'}
       />
       <IconButton name="copy" onClick={onCopyQuery} title="Copy query to clipboard" />
-      {!isRemoved && <IconButton name="share-alt" onClick={onCreateLink} title="Copy shortened link to clipboard" />}
+      {!isRemoved && (
+        <IconButton name="share-alt" onClick={onCreateShortLink} title="Copy shortened link to clipboard" />
+      )}
       <IconButton name="trash-alt" title={'Delete query'} onClick={onDeleteQuery} />
       <IconButton
         name={query.starred ? 'favorite' : 'star'}
@@ -314,9 +313,7 @@ export function RichHistoryCard(props: Props) {
 
 function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
   const explore = state.explore;
-  const { datasourceInstance } = explore[exploreId];
-  // @ts-ignore
-  const item: ExploreItemState = explore[exploreId];
+  const { datasourceInstance } = explore[exploreId]!;
   return {
     exploreId,
     datasourceInstance,

@@ -14,7 +14,7 @@ export const NoDataSourceCallToAction = () => {
       <a
         href="http://docs.grafana.org/administration/provisioning/#datasources?utm_source=explore"
         target="_blank"
-        rel="noopener"
+        rel="noreferrer"
         className="text-link"
       >
         Learn more

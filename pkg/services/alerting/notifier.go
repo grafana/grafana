@@ -131,9 +131,11 @@ func (n *notificationService) sendAndMarkAsComplete(evalContext *EvalContext, no
 	n.log.Debug("Sending notification", "type", notifier.GetType(), "uid", notifier.GetNotifierUID(), "isDefault", notifier.GetIsDefault())
 	metrics.MAlertingNotificationSent.WithLabelValues(notifier.GetType()).Inc()
 
-	err := notifier.Notify(evalContext)
+	if err := evalContext.evaluateNotificationTemplateFields(); err != nil {
+		n.log.Error("failed trying to evaluate notification template fields", "uid", notifier.GetNotifierUID(), "error", err)
+	}
 
-	if err != nil {
+	if err := notifier.Notify(evalContext); err != nil {
 		n.log.Error("failed to send notification", "uid", notifier.GetNotifierUID(), "error", err)
 		metrics.MAlertingNotificationFailed.WithLabelValues(notifier.GetType()).Inc()
 		return err
@@ -160,11 +162,11 @@ func (n *notificationService) sendNotification(evalContext *EvalContext, notifie
 		}
 
 		err := bus.DispatchCtx(evalContext.Ctx, setPendingCmd)
-		if err == models.ErrAlertNotificationStateVersionConflict {
-			return nil
-		}
-
 		if err != nil {
+			if errors.Is(err, models.ErrAlertNotificationStateVersionConflict) {
+				return nil
+			}
+
 			return err
 		}
 
@@ -281,7 +283,7 @@ func (n *notificationService) getNeededNotifiers(orgID int64, notificationUids [
 func InitNotifier(model *models.AlertNotification) (Notifier, error) {
 	notifierPlugin, found := notifierFactories[model.Type]
 	if !found {
-		return nil, errors.New("Unsupported notification type")
+		return nil, fmt.Errorf("unsupported notification type %q", model.Type)
 	}
 
 	return notifierPlugin.Factory(model)

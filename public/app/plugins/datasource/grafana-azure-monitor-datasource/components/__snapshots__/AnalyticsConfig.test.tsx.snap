@@ -5,7 +5,7 @@ exports[`Render should disable log analytics credentials form 1`] = `
   <h3
     className="page-heading"
   >
-    Azure Log Analytics API Details
+    Azure Monitor Logs Details
   </h3>
   <Switch
     checked={false}
@@ -33,12 +33,12 @@ exports[`Render should disable log analytics credentials form 1`] = `
       <div
         className="gf-form"
       >
-        <Component
+        <FormLabel
           className="width-12"
           tooltip="Choose the default/preferred Workspace for Azure Log Analytics queries."
         >
           Default Workspace
-        </Component>
+        </FormLabel>
         <div
           className="width-25"
         >
@@ -101,7 +101,7 @@ exports[`Render should enable azure log analytics load workspaces button 1`] = `
   <h3
     className="page-heading"
   >
-    Azure Log Analytics API Details
+    Azure Monitor Logs Details
   </h3>
   <Switch
     checked={false}
@@ -129,12 +129,12 @@ exports[`Render should enable azure log analytics load workspaces button 1`] = `
       <div
         className="gf-form"
       >
-        <Component
+        <FormLabel
           className="width-12"
           tooltip="Choose the default/preferred Workspace for Azure Log Analytics queries."
         >
           Default Workspace
-        </Component>
+        </FormLabel>
         <div
           className="width-25"
         >
@@ -197,7 +197,7 @@ exports[`Render should render component 1`] = `
   <h3
     className="page-heading"
   >
-    Azure Log Analytics API Details
+    Azure Monitor Logs Details
   </h3>
   <Switch
     checked={false}
@@ -225,12 +225,12 @@ exports[`Render should render component 1`] = `
       <div
         className="gf-form"
       >
-        <Component
+        <FormLabel
           className="width-12"
           tooltip="Choose the default/preferred Workspace for Azure Log Analytics queries."
         >
           Default Workspace
-        </Component>
+        </FormLabel>
         <div
           className="width-25"
         >

@@ -64,7 +64,7 @@ describe('ElasticDetails', () => {
     const options = createDefaultConfigOptions();
     const wrapper = mount(<ElasticDetails onChange={onChangeMock} value={options} />);
 
-    testCases.forEach(tc => {
+    testCases.forEach((tc) => {
       it(`sets maxConcurrentShardRequests = ${tc.maxConcurrentShardRequests} if version = ${tc.version},`, () => {
         wrapper.setProps({
           onChange: onChangeMock,

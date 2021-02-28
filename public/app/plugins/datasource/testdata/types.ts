@@ -25,6 +25,13 @@ export interface TestDataQuery extends DataQuery {
   labels?: string;
   lines?: number;
   levelColumn?: boolean;
+  channel?: string; // for grafana live
+  nodes?: NodesQuery;
+}
+
+export interface NodesQuery {
+  type?: 'random' | 'response';
+  count?: number;
 }
 
 export interface StreamingQuery {

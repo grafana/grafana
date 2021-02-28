@@ -46,7 +46,7 @@ describe('Stats Calculators', () => {
     const stats = fieldReducers.list(names);
     expect(stats.length).toBe(2);
 
-    const found = stats.map(v => v.id);
+    const found = stats.map((v) => v.id);
     const notFound = difference(names, found);
     expect(notFound.length).toBe(2);
 
@@ -130,12 +130,13 @@ describe('Stats Calculators', () => {
 
     const stats = reduceField({
       field: createField('x', info[0].data),
-      reducers: [ReducerID.first, ReducerID.last, ReducerID.firstNotNull, ReducerID.lastNotNull], // uses standard path
+      reducers: [ReducerID.first, ReducerID.last, ReducerID.firstNotNull, ReducerID.lastNotNull, ReducerID.diffperc], // uses standard path
     });
     expect(stats[ReducerID.first]).toEqual(null);
     expect(stats[ReducerID.last]).toEqual(null);
     expect(stats[ReducerID.firstNotNull]).toEqual(200);
     expect(stats[ReducerID.lastNotNull]).toEqual(200);
+    expect(stats[ReducerID.diffperc]).toEqual(0);
 
     const reducers = [ReducerID.lastNotNull, ReducerID.firstNotNull];
     for (const input of info) {

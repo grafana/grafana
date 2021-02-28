@@ -28,12 +28,6 @@ export const ColorValueEditor: React.FC<Props> = ({ value, onChange }) => {
                 color={value ? getColorForTheme(value, theme) : theme.colors.formInputBorder}
               />
             </div>
-            {/* <div className={styles.colorText} onClick={showColorPicker}>
-              {value ?? settings?.textWhenUndefined ?? 'Pick Color'}
-            </div>
-            {value && settings?.allowUndefined && (
-              <Icon className={styles.trashIcon} name="trash-alt" onClick={() => onChange(undefined)} />
-            )} */}
           </div>
         );
       }}

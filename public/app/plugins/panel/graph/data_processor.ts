@@ -1,14 +1,14 @@
 import _ from 'lodash';
 import { colors } from '@grafana/ui';
 import {
-  TimeRange,
-  FieldType,
-  Field,
   DataFrame,
-  getTimeField,
   dateTime,
-  getFieldDisplayName,
+  Field,
+  FieldType,
   getColorForTheme,
+  getFieldDisplayName,
+  getTimeField,
+  TimeRange,
 } from '@grafana/data';
 import TimeSeries from 'app/core/time_series2';
 import config from 'app/core/config';
@@ -95,7 +95,11 @@ export class DataProcessor {
       const from = range.from;
 
       if (last - from.valueOf() < -10000) {
-        series.isOutsideRange = true;
+        // If the data is in reverse order
+        const first = datapoints[0][1];
+        if (first - from.valueOf() < -10000) {
+          series.isOutsideRange = true;
+        }
       }
     }
     return series;

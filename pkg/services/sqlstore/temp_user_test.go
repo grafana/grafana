@@ -4,6 +4,7 @@ package sqlstore
 
 import (
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/models"
 	. "github.com/smartystreets/goconvey/convey"
@@ -68,16 +69,18 @@ func TestTempUserCommandsAndQueries(t *testing.T) {
 			})
 
 			Convey("Should be able expire temp user", func() {
-				cmd2 := models.ExpireTempUsersCommand{OlderThan: timeNow()}
+				createdAt := time.Unix(cmd.Result.Created, 0)
+				cmd2 := models.ExpireTempUsersCommand{OlderThan: createdAt.Add(1 * time.Second)}
 				err := ExpireOldUserInvites(&cmd2)
 				So(err, ShouldBeNil)
-				So(cmd2.NumExpired, ShouldEqual, 1)
+				So(cmd2.NumExpired, ShouldEqual, int64(1))
 
 				Convey("Should do nothing when no temp users to expire", func() {
-					cmd2 = models.ExpireTempUsersCommand{OlderThan: timeNow()}
+					createdAt := time.Unix(cmd.Result.Created, 0)
+					cmd2 := models.ExpireTempUsersCommand{OlderThan: createdAt.Add(1 * time.Second)}
 					err := ExpireOldUserInvites(&cmd2)
 					So(err, ShouldBeNil)
-					So(cmd2.NumExpired, ShouldEqual, 0)
+					So(cmd2.NumExpired, ShouldEqual, int64(0))
 				})
 			})
 		})

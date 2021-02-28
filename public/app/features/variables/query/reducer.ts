@@ -1,11 +1,12 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import _ from 'lodash';
-import { DataSourceApi, DataSourceSelectItem, MetricFindValue, stringToJsRegex } from '@grafana/data';
+import { DataSourceApi, MetricFindValue, stringToJsRegex } from '@grafana/data';
 
 import {
   initialVariableModelState,
   QueryVariableModel,
   VariableOption,
+  VariableQueryEditorType,
   VariableRefresh,
   VariableSort,
   VariableTag,
@@ -19,8 +20,6 @@ import {
   NONE_VARIABLE_VALUE,
   VariablePayload,
 } from '../state/types';
-import { ComponentType } from 'react';
-import { VariableQueryProps } from '../../../types';
 import { initialVariablesState, VariablesState } from '../state/variablesReducer';
 
 interface VariableOptionsUpdate {
@@ -29,8 +28,7 @@ interface VariableOptionsUpdate {
 }
 
 export interface QueryVariableEditorState {
-  VariableQueryEditor: ComponentType<VariableQueryProps> | null;
-  dataSources: DataSourceSelectItem[];
+  VariableQueryEditor: VariableQueryEditorType;
   dataSource: DataSourceApi | null;
 }
 
@@ -54,7 +52,7 @@ export const initialQueryVariableModelState: QueryVariableModel = {
   definition: '',
 };
 
-const sortVariableValues = (options: any[], sortOrder: VariableSort) => {
+export const sortVariableValues = (options: any[], sortOrder: VariableSort) => {
   if (sortOrder === VariableSort.disabled) {
     return options;
   }
@@ -65,7 +63,11 @@ const sortVariableValues = (options: any[], sortOrder: VariableSort) => {
   if (sortType === 1) {
     options = _.sortBy(options, 'text');
   } else if (sortType === 2) {
-    options = _.sortBy(options, opt => {
+    options = _.sortBy(options, (opt) => {
+      if (!opt.text) {
+        return -1;
+      }
+
       const matches = opt.text.match(/.*?(\d+).*/);
       if (!matches || matches.length < 2) {
         return -1;
@@ -74,7 +76,7 @@ const sortVariableValues = (options: any[], sortOrder: VariableSort) => {
       }
     });
   } else if (sortType === 3) {
-    options = _.sortBy(options, opt => {
+    options = _.sortBy(options, (opt) => {
       return _.toLower(opt.text);
     });
   }
@@ -86,18 +88,33 @@ const sortVariableValues = (options: any[], sortOrder: VariableSort) => {
   return options;
 };
 
-const metricNamesToVariableValues = (variableRegEx: string, sort: VariableSort, metricNames: any[]) => {
-  let regex, i, matches;
+const getAllMatches = (str: string, regex: RegExp): RegExpExecArray[] => {
+  const results: RegExpExecArray[] = [];
+  let matches = null;
+
+  regex.lastIndex = 0;
+
+  do {
+    matches = regex.exec(str);
+    if (matches) {
+      results.push(matches);
+    }
+  } while (regex.global && matches && matches[0] !== '' && matches[0] !== undefined);
+
+  return results;
+};
+
+export const metricNamesToVariableValues = (variableRegEx: string, sort: VariableSort, metricNames: any[]) => {
+  let regex;
   let options: VariableOption[] = [];
 
   if (variableRegEx) {
     regex = stringToJsRegex(variableRegEx);
   }
 
-  for (i = 0; i < metricNames.length; i++) {
+  for (let i = 0; i < metricNames.length; i++) {
     const item = metricNames[i];
     let text = item.text === undefined || item.text === null ? item.value : item.text;
-
     let value = item.value === undefined || item.value === null ? item.text : item.value;
 
     if (_.isNumber(value)) {
@@ -109,13 +126,28 @@ const metricNamesToVariableValues = (variableRegEx: string, sort: VariableSort, 
     }
 
     if (regex) {
-      matches = regex.exec(value);
-      if (!matches) {
+      const matches = getAllMatches(value, regex);
+      if (!matches.length) {
         continue;
       }
-      if (matches.length > 1) {
-        value = matches[1];
-        text = matches[1];
+
+      const valueGroup = matches.find((m) => m.groups && m.groups.value);
+      const textGroup = matches.find((m) => m.groups && m.groups.text);
+      const firstMatch = matches.find((m) => m.length > 1);
+      const manyMatches = matches.length > 1 && firstMatch;
+
+      if (valueGroup || textGroup) {
+        value = valueGroup?.groups?.value ?? textGroup?.groups?.text;
+        text = textGroup?.groups?.text ?? valueGroup?.groups?.value;
+      } else if (manyMatches) {
+        for (let j = 0; j < matches.length; j++) {
+          const match = matches[j];
+          options.push({ text: match[1], value: match[1], selected: false });
+        }
+        continue;
+      } else if (firstMatch) {
+        text = firstMatch[1];
+        value = firstMatch[1];
       }
     }
 

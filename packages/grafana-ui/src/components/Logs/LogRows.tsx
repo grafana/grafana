@@ -11,7 +11,6 @@ import { LogRow } from './LogRow';
 import { RowContextOptions } from './LogRowContextProvider';
 
 export const PREVIEW_LIMIT = 100;
-export const RENDER_LIMIT = 500;
 
 export interface Props extends Themeable {
   logRows?: LogRowModel[];
@@ -24,7 +23,6 @@ export interface Props extends Themeable {
   wrapLogMessage: boolean;
   timeZone: TimeZone;
   logsSortOrder?: LogsSortOrder | null;
-  rowLimit?: number;
   allowDetails?: boolean;
   previewLimit?: number;
   // Passed to fix problems with inactive scrolling in Logs Panel
@@ -34,9 +32,9 @@ export interface Props extends Themeable {
   onClickFilterOutLabel?: (key: string, value: string) => void;
   getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<any>;
   getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
-  showParsedFields?: string[];
-  onClickShowParsedField?: (key: string) => void;
-  onClickHideParsedField?: (key: string) => void;
+  showDetectedFields?: string[];
+  onClickShowDetectedField?: (key: string) => void;
+  onClickHideDetectedField?: (key: string) => void;
 }
 
 interface State {
@@ -48,7 +46,6 @@ class UnThemedLogRows extends PureComponent<Props, State> {
 
   static defaultProps = {
     previewLimit: PREVIEW_LIMIT,
-    rowLimit: RENDER_LIMIT,
   };
 
   state: State = {
@@ -95,16 +92,15 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       timeZone,
       onClickFilterLabel,
       onClickFilterOutLabel,
-      rowLimit,
       theme,
       allowDetails,
       previewLimit,
       getFieldLinks,
       disableCustomHorizontalScroll,
       logsSortOrder,
-      showParsedFields,
-      onClickShowParsedField,
-      onClickHideParsedField,
+      showDetectedFields,
+      onClickShowDetectedField,
+      onClickHideDetectedField,
     } = this.props;
     const { renderAll } = this.state;
     const { logsRowsTable, logsRowsHorizontalScroll } = getLogRowStyles(theme);
@@ -117,14 +113,13 @@ class UnThemedLogRows extends PureComponent<Props, State> {
 
     // For horizontal scrolling we can't use CustomScrollbar as it causes the problem with logs context - it is not visible
     // for top log rows. Therefore we use CustomScrollbar only in LogsPanel and for Explore, we use custom css styling.
-    const horizontalScrollWindow = wrapLogMessage && !disableCustomHorizontalScroll ? '' : logsRowsHorizontalScroll;
+    const horizontalScrollWindow = wrapLogMessage || disableCustomHorizontalScroll ? '' : logsRowsHorizontalScroll;
 
     // Staged rendering
     const processedRows = dedupedRows ? dedupedRows : [];
     const orderedRows = logsSortOrder ? this.sortLogs(processedRows, logsSortOrder) : processedRows;
     const firstRows = orderedRows.slice(0, previewLimit!);
-    const rowCount = Math.min(orderedRows.length, rowLimit!);
-    const lastRows = orderedRows.slice(previewLimit!, rowCount);
+    const lastRows = orderedRows.slice(previewLimit!, orderedRows.length);
 
     // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
     const getRows = this.makeGetRows(orderedRows);
@@ -146,14 +141,14 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   showDuplicates={showDuplicates}
                   showLabels={showLabels}
                   showTime={showTime}
-                  showParsedFields={showParsedFields}
+                  showDetectedFields={showDetectedFields}
                   wrapLogMessage={wrapLogMessage}
                   timeZone={timeZone}
                   allowDetails={allowDetails}
                   onClickFilterLabel={onClickFilterLabel}
                   onClickFilterOutLabel={onClickFilterOutLabel}
-                  onClickShowParsedField={onClickShowParsedField}
-                  onClickHideParsedField={onClickHideParsedField}
+                  onClickShowDetectedField={onClickShowDetectedField}
+                  onClickHideDetectedField={onClickHideDetectedField}
                   getFieldLinks={getFieldLinks}
                   logsSortOrder={logsSortOrder}
                 />
@@ -170,21 +165,21 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   showDuplicates={showDuplicates}
                   showLabels={showLabels}
                   showTime={showTime}
-                  showParsedFields={showParsedFields}
+                  showDetectedFields={showDetectedFields}
                   wrapLogMessage={wrapLogMessage}
                   timeZone={timeZone}
                   allowDetails={allowDetails}
                   onClickFilterLabel={onClickFilterLabel}
                   onClickFilterOutLabel={onClickFilterOutLabel}
-                  onClickShowParsedField={onClickShowParsedField}
-                  onClickHideParsedField={onClickHideParsedField}
+                  onClickShowDetectedField={onClickShowDetectedField}
+                  onClickHideDetectedField={onClickHideDetectedField}
                   getFieldLinks={getFieldLinks}
                   logsSortOrder={logsSortOrder}
                 />
               ))}
             {hasData && !renderAll && (
               <tr>
-                <td colSpan={5}>Rendering {rowCount - previewLimit!} rows...</td>
+                <td colSpan={5}>Rendering {orderedRows.length - previewLimit!} rows...</td>
               </tr>
             )}
           </tbody>

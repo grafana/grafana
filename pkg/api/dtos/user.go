@@ -21,25 +21,12 @@ type AdminCreateUserForm struct {
 	OrgId    int64  `json:"orgId"`
 }
 
-type AdminUpdateUserForm struct {
-	Email string `json:"email"`
-	Login string `json:"login"`
-	Name  string `json:"name"`
-}
-
 type AdminUpdateUserPasswordForm struct {
 	Password string `json:"password" binding:"Required"`
 }
 
 type AdminUpdateUserPermissionsForm struct {
 	IsGrafanaAdmin bool `json:"isGrafanaAdmin"`
-}
-
-type AdminUserListItem struct {
-	Email          string `json:"email"`
-	Name           string `json:"name"`
-	Login          string `json:"login"`
-	IsGrafanaAdmin bool   `json:"isGrafanaAdmin"`
 }
 
 type SendResetPasswordEmailForm struct {

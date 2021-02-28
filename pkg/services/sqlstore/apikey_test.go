@@ -71,7 +71,7 @@ func TestApiKeyDataAccess(t *testing.T) {
 
 			query := models.GetApiKeyByNameQuery{KeyName: "key-with-negative-lifespan", OrgId: 1}
 			err = GetApiKeyByName(&query)
-			assert.EqualError(t, err, "Invalid API Key")
+			assert.EqualError(t, err, "invalid API key")
 		})
 
 		t.Run("Add keys", func(t *testing.T) {

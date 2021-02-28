@@ -7,25 +7,26 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 // createShortURL handles requests to create short URLs.
-func (hs *HTTPServer) createShortURL(c *models.ReqContext, cmd dtos.CreateShortURLCmd) Response {
+func (hs *HTTPServer) createShortURL(c *models.ReqContext, cmd dtos.CreateShortURLCmd) response.Response {
 	hs.log.Debug("Received request to create short URL", "path", cmd.Path)
 
 	cmd.Path = strings.TrimSpace(cmd.Path)
 
 	if path.IsAbs(cmd.Path) {
 		hs.log.Error("Invalid short URL path", "path", cmd.Path)
-		return Error(400, "Path should be relative", nil)
+		return response.Error(400, "Path should be relative", nil)
 	}
 
 	shortURL, err := hs.ShortURLService.CreateShortURL(c.Req.Context(), c.SignedInUser, cmd.Path)
 	if err != nil {
-		return Error(500, "Failed to create short URL", err)
+		return response.Error(500, "Failed to create short URL", err)
 	}
 
 	url := fmt.Sprintf("%s/goto/%s", strings.TrimSuffix(setting.AppUrl, "/"), shortURL.Uid)
@@ -36,7 +37,7 @@ func (hs *HTTPServer) createShortURL(c *models.ReqContext, cmd dtos.CreateShortU
 		URL: url,
 	}
 
-	return JSON(200, dto)
+	return response.JSON(200, dto)
 }
 
 func (hs *HTTPServer) redirectFromShortURL(c *models.ReqContext) {
@@ -55,6 +56,11 @@ func (hs *HTTPServer) redirectFromShortURL(c *models.ReqContext) {
 
 		hs.log.Error("Short URL redirection error", "err", err)
 		return
+	}
+
+	// Failure to update LastSeenAt should still allow to redirect
+	if err := hs.ShortURLService.UpdateLastSeenAt(c.Req.Context(), shortURL); err != nil {
+		hs.log.Error("Failed to update short URL last seen at", "error", err)
 	}
 
 	hs.log.Debug("Redirecting short URL", "path", shortURL.Path)

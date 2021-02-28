@@ -6,6 +6,9 @@
  */
 import { UrlQueryMap } from '@grafana/data';
 
+/**
+ * @public
+ */
 export interface LocationUpdate {
   /**
    * Target path where you automatically wants to navigate the user.

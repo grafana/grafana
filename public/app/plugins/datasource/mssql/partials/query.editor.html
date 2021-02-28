@@ -20,12 +20,13 @@
         <icon name="'angle-right'" ng-hide="ctrl.showHelp" style="margin-top: 3px;"></icon>
       </label>
 		</div>
-		<div class="gf-form">
-      <label class="gf-form-label query-keyword" ng-click="ctrl.showQueryInspector()">
+		<div class="gf-form" ng-show="ctrl.lastQueryMeta">
+      <label class="gf-form-label query-keyword pointer" ng-click="ctrl.showLastQuerySQL = !ctrl.showLastQuerySQL">
         Generated SQL
-        <icon name="'angle-right'" style="margin-top: 3px;"></icon>
+        <icon name="'angle-down'" ng-show="ctrl.showLastQuerySQL" style="margin-top: 3px;"></icon>
+        <icon name="'angle-right'" ng-hide="ctrl.showLastQuerySQL" style="margin-top: 3px;"></icon>
       </label>
-		</div>
+    </div>
 		<div class="gf-form gf-form--grow">
 			<div class="gf-form-label gf-form-label--grow"></div>
 		</div>
@@ -77,6 +78,10 @@ Or build your own conditionals using these macros which just return the values:
 	</div>
 
 	</div>
+
+  <div class="gf-form" ng-show="ctrl.showLastQuerySQL">
+    <pre class="gf-form-pre">{{ctrl.lastQueryMeta.executedQueryString}}</pre>
+  </div>
 
 	<div class="gf-form" ng-show="ctrl.lastQueryError">
 		<pre class="gf-form-pre alert alert-error">{{ctrl.lastQueryError}}</pre>

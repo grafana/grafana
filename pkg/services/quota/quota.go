@@ -1,11 +1,15 @@
 package quota
 
 import (
+	"errors"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+var ErrInvalidQuotaTarget = errors.New("invalid quota target")
 
 func init() {
 	registry.RegisterService(&QuotaService{})
@@ -13,6 +17,7 @@ func init() {
 
 type QuotaService struct {
 	AuthTokenService models.UserTokenService `inject:""`
+	Cfg              *setting.Cfg            `inject:""`
 }
 
 func (qs *QuotaService) Init() error {
@@ -20,7 +25,7 @@ func (qs *QuotaService) Init() error {
 }
 
 func (qs *QuotaService) QuotaReached(c *models.ReqContext, target string) (bool, error) {
-	if !setting.Quota.Enabled {
+	if !qs.Cfg.Quota.Enabled {
 		return false, nil
 	}
 	// No request context means this is a background service, like LDAP Background Sync.
@@ -29,8 +34,9 @@ func (qs *QuotaService) QuotaReached(c *models.ReqContext, target string) (bool,
 	if c == nil {
 		return false, nil
 	}
+
 	// get the list of scopes that this target is valid for. Org, User, Global
-	scopes, err := models.GetQuotaScopes(target)
+	scopes, err := qs.getQuotaScopes(target)
 	if err != nil {
 		return false, err
 	}
@@ -105,4 +111,47 @@ func (qs *QuotaService) QuotaReached(c *models.ReqContext, target string) (bool,
 	}
 
 	return false, nil
+}
+
+func (qs *QuotaService) getQuotaScopes(target string) ([]models.QuotaScope, error) {
+	scopes := make([]models.QuotaScope, 0)
+	switch target {
+	case "user":
+		scopes = append(scopes,
+			models.QuotaScope{Name: "global", Target: target, DefaultLimit: qs.Cfg.Quota.Global.User},
+			models.QuotaScope{Name: "org", Target: "org_user", DefaultLimit: qs.Cfg.Quota.Org.User},
+		)
+		return scopes, nil
+	case "org":
+		scopes = append(scopes,
+			models.QuotaScope{Name: "global", Target: target, DefaultLimit: qs.Cfg.Quota.Global.Org},
+			models.QuotaScope{Name: "user", Target: "org_user", DefaultLimit: qs.Cfg.Quota.User.Org},
+		)
+		return scopes, nil
+	case "dashboard":
+		scopes = append(scopes,
+			models.QuotaScope{Name: "global", Target: target, DefaultLimit: qs.Cfg.Quota.Global.Dashboard},
+			models.QuotaScope{Name: "org", Target: target, DefaultLimit: qs.Cfg.Quota.Org.Dashboard},
+		)
+		return scopes, nil
+	case "data_source":
+		scopes = append(scopes,
+			models.QuotaScope{Name: "global", Target: target, DefaultLimit: qs.Cfg.Quota.Global.DataSource},
+			models.QuotaScope{Name: "org", Target: target, DefaultLimit: qs.Cfg.Quota.Org.DataSource},
+		)
+		return scopes, nil
+	case "api_key":
+		scopes = append(scopes,
+			models.QuotaScope{Name: "global", Target: target, DefaultLimit: qs.Cfg.Quota.Global.ApiKey},
+			models.QuotaScope{Name: "org", Target: target, DefaultLimit: qs.Cfg.Quota.Org.ApiKey},
+		)
+		return scopes, nil
+	case "session":
+		scopes = append(scopes,
+			models.QuotaScope{Name: "global", Target: target, DefaultLimit: qs.Cfg.Quota.Global.Session},
+		)
+		return scopes, nil
+	default:
+		return scopes, ErrInvalidQuotaTarget
+	}
 }

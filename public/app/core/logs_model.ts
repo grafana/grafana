@@ -32,7 +32,6 @@ import {
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 
-import { deduplicateLogRowsById } from 'app/core/utils/explore';
 import { SIPrefix } from '@grafana/data/src/valueFormats/symbolFormatters';
 
 export const LogLevelColor = {
@@ -187,7 +186,7 @@ export function makeSeriesForLogs(sortedRows: LogRowModel[], bucketSize: number,
 }
 
 function isLogsData(series: DataFrame) {
-  return series.fields.some(f => f.type === FieldType.time) && series.fields.some(f => f.type === FieldType.string);
+  return series.fields.some((f) => f.type === FieldType.time) && series.fields.some((f) => f.type === FieldType.string);
 }
 
 /**
@@ -270,6 +269,7 @@ function separateLogsAndMetrics(dataFrames: DataFrame[]) {
   const logSeries: DataFrame[] = [];
 
   for (const dataFrame of dataFrames) {
+    // We want to show meta stats even if no result was returned. That's why we are pushing also data frames with no fields.
     if (isLogsData(dataFrame) || !dataFrame.fields.length) {
       logSeries.push(dataFrame);
       continue;
@@ -306,8 +306,12 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   // Find the fields we care about and collect all labels
   let allSeries: LogFields[] = [];
 
-  if (hasFields(logSeries)) {
-    allSeries = logSeries.map(series => {
+  // We are sometimes passing data frames with no fields because we want to calculate correct meta stats.
+  // Therefore we need to filter out series with no fields. These series are used only for meta stats calculation.
+  const seriesWithFields = logSeries.filter((series) => series.fields.length);
+
+  if (seriesWithFields.length) {
+    allSeries = seriesWithFields.map((series) => {
       const fieldCache = new FieldCache(series);
       const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
 
@@ -388,8 +392,6 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
     }
   }
 
-  const deduplicatedLogRows = deduplicateLogRowsById(rows);
-
   // Meta data to display in status
   const meta: LogsMetaItem[] = [];
   if (_.size(commonLabels) > 0) {
@@ -400,7 +402,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
     });
   }
 
-  const limits = logSeries.filter(series => series.meta && series.meta.limit);
+  const limits = logSeries.filter((series) => series.meta && series.meta.limit);
   const limitValue = Object.values(
     limits.reduce((acc: any, elem: any) => {
       acc[elem.refId] = elem.meta.limit;
@@ -411,7 +413,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   if (limits.length > 0) {
     meta.push({
       label: 'Limit',
-      value: `${limitValue} (${deduplicatedLogRows.length} returned)`,
+      value: `${limitValue} (${rows.length} returned)`,
       kind: LogsMetaKind.String,
     });
   }
@@ -419,14 +421,25 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   // Hack to print loki stats in Explore. Should be using proper stats display via drawer in Explore (rework in 7.1)
   let totalBytes = 0;
   const queriesVisited: { [refId: string]: boolean } = {};
+  // To add just 1 error message
+  let errorMetaAdded = false;
 
   for (const series of logSeries) {
     const totalBytesKey = series.meta?.custom?.lokiQueryStatKey;
     const { refId } = series; // Stats are per query, keeping track by refId
 
+    if (!errorMetaAdded && series.meta?.custom?.error) {
+      meta.push({
+        label: '',
+        value: series.meta?.custom.error,
+        kind: LogsMetaKind.Error,
+      });
+      errorMetaAdded = true;
+    }
+
     if (refId && !queriesVisited[refId]) {
       if (totalBytesKey && series.meta?.stats) {
-        const byteStat = series.meta.stats.find(stat => stat.displayName === totalBytesKey);
+        const byteStat = series.meta.stats.find((stat) => stat.displayName === totalBytesKey);
         if (byteStat) {
           totalBytes += byteStat.value;
         }
@@ -448,12 +461,8 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   return {
     hasUniqueLabels,
     meta,
-    rows: deduplicatedLogRows,
+    rows,
   };
-}
-
-function hasFields(logSeries: DataFrame[]): boolean {
-  return logSeries.some(series => series.fields.length);
 }
 
 function getIdField(fieldCache: FieldCache): FieldWithIndex | undefined {

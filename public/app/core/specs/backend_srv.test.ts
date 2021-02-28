@@ -1,10 +1,9 @@
 import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
 import { Observable, of } from 'rxjs';
 import { delay } from 'rxjs/operators';
-import { AppEvents, DataQueryErrorType } from '@grafana/data';
+import { AppEvents, DataQueryErrorType, EventBusExtended } from '@grafana/data';
 
 import { BackendSrv } from '../services/backend_srv';
-import { Emitter } from '../utils/emitter';
 import { ContextSrv, User } from '../services/context_srv';
 import { describe, expect } from '../../../test/lib/common';
 import { BackendSrvRequest, FetchError } from '@grafana/runtime';
@@ -35,9 +34,11 @@ const getTestContext = (overides?: object) => {
     };
     return of(mockedResponse);
   });
-  const appEventsMock: Emitter = ({
+
+  const appEventsMock: EventBusExtended = ({
     emit: jest.fn(),
-  } as any) as Emitter;
+  } as any) as EventBusExtended;
+
   const user: User = ({
     isSignedIn: props.isSignedIn,
     orgId: props.orgId,
@@ -46,7 +47,7 @@ const getTestContext = (overides?: object) => {
     user,
   } as any) as ContextSrv;
   const logoutMock = jest.fn();
-  const parseRequestOptionsMock = jest.fn().mockImplementation(options => options);
+  const parseRequestOptionsMock = jest.fn().mockImplementation((options) => options);
 
   const backendSrv = new BackendSrv({
     fromFetch: fromFetchMock,
@@ -166,7 +167,7 @@ describe('backendSrv', () => {
 
         await backendSrv
           .request({ url, method: 'GET', retry: 0 })
-          .catch(error => {
+          .catch((error) => {
             expect(error.status).toBe(401);
             expect(error.statusText).toBe('UnAuthorized');
             expect(error.data).toEqual({ message: 'UnAuthorized' });
@@ -176,7 +177,7 @@ describe('backendSrv', () => {
             expectRequestCallChain({ url, method: 'GET', retry: 0 });
             jest.advanceTimersByTime(50);
           })
-          .catch(error => {
+          .catch((error) => {
             expect(error).toEqual({ message: 'UnAuthorized' });
             expect(appEventsMock.emit).toHaveBeenCalledTimes(1);
             expect(appEventsMock.emit).toHaveBeenCalledWith(AppEvents.alertWarning, ['UnAuthorized', '']);
@@ -201,7 +202,7 @@ describe('backendSrv', () => {
 
         await backendSrv
           .request({ url, method: 'GET', retry: 0 })
-          .catch(error => {
+          .catch((error) => {
             expect(error.status).toBe(403);
             expect(error.statusText).toBe('Forbidden');
             expect(error.data).toEqual({ message: 'Forbidden' });
@@ -211,7 +212,7 @@ describe('backendSrv', () => {
             expectRequestCallChain({ url, method: 'GET', retry: 0 });
             jest.advanceTimersByTime(50);
           })
-          .catch(error => {
+          .catch((error) => {
             expect(error).toEqual({ message: 'Forbidden' });
             expect(appEventsMock.emit).toHaveBeenCalledTimes(1);
             expect(appEventsMock.emit).toHaveBeenCalledWith(AppEvents.alertWarning, ['Forbidden', '']);
@@ -252,7 +253,7 @@ describe('backendSrv', () => {
 
         await backendSrv
           .request({ url, method: 'GET' })
-          .catch(error => {
+          .catch((error) => {
             expect(error.status).toBe(422);
             expect(error.statusText).toBe('Unprocessable Entity');
             expect(error.data).toEqual({ message: 'Unprocessable Entity' });
@@ -261,7 +262,7 @@ describe('backendSrv', () => {
             expectRequestCallChain({ url, method: 'GET' });
             jest.advanceTimersByTime(50);
           })
-          .catch(error => {
+          .catch((error) => {
             expect(error).toEqual({ message: 'Unprocessable Entity' });
             expect(appEventsMock.emit).toHaveBeenCalledTimes(1);
             expect(appEventsMock.emit).toHaveBeenCalledWith(AppEvents.alertWarning, [
@@ -283,7 +284,7 @@ describe('backendSrv', () => {
         });
         const url = '/api/dashboard/';
 
-        await backendSrv.request({ url, method: 'GET' }).catch(error => {
+        await backendSrv.request({ url, method: 'GET' }).catch((error) => {
           expect(error.status).toBe(404);
           expect(error.statusText).toBe('Not found');
           expect(error.data).toEqual({ message: 'Not found' });
@@ -305,7 +306,7 @@ describe('backendSrv', () => {
         const { backendSrv, fromFetchMock } = getTestContext({ url });
         const unsubscribe = jest.fn();
         const slowData = { message: 'Slow Request' };
-        const slowFetch = new Observable(subscriber => {
+        const slowFetch = new Observable((subscriber) => {
           subscriber.next({
             ok: true,
             status: 200,
@@ -339,7 +340,7 @@ describe('backendSrv', () => {
         };
 
         let slowError: any = null;
-        backendSrv.request(options).catch(err => {
+        backendSrv.request(options).catch((err) => {
           slowError = err;
         });
 
@@ -378,10 +379,10 @@ describe('backendSrv', () => {
 
         let inspectorPacket: any = null;
         backendSrv.getInspectorStream().subscribe({
-          next: rsp => (inspectorPacket = rsp),
+          next: (rsp) => (inspectorPacket = rsp),
         });
 
-        await backendSrv.datasourceRequest({ url, method: 'GET', retry: 0 }).catch(error => {
+        await backendSrv.datasourceRequest({ url, method: 'GET', retry: 0 }).catch((error) => {
           expect(error.status).toBe(401);
           expect(error.statusText).toBe('UnAuthorized');
           expect(error.data).toEqual({ message: 'UnAuthorized' });
@@ -412,7 +413,7 @@ describe('backendSrv', () => {
           .fn()
           .mockRejectedValue({ status: 403, statusText: 'Forbidden', data: { message: 'Forbidden' } });
 
-        await backendSrv.datasourceRequest(options).catch(error => {
+        await backendSrv.datasourceRequest(options).catch((error) => {
           expect(error.status).toBe(403);
           expect(error.statusText).toBe('Forbidden');
           expect(error.data).toEqual({ message: 'Forbidden' });
@@ -437,7 +438,7 @@ describe('backendSrv', () => {
           method: 'GET',
         };
 
-        await backendSrv.datasourceRequest(options).catch(error => {
+        await backendSrv.datasourceRequest(options).catch((error) => {
           expect(error).toEqual({
             status: 500,
             statusText: 'Internal Server Error',
@@ -469,10 +470,10 @@ describe('backendSrv', () => {
 
         let inspectorPacket: any = null;
         backendSrv.getInspectorStream().subscribe({
-          next: rsp => (inspectorPacket = rsp),
+          next: (rsp) => (inspectorPacket = rsp),
         });
 
-        await backendSrv.datasourceRequest(options).catch(error => {
+        await backendSrv.datasourceRequest(options).catch((error) => {
           expect(error).toEqual({
             status: 403,
             statusText: 'Forbidden',
@@ -495,7 +496,7 @@ describe('backendSrv', () => {
       const url = '/api/dashboard/';
 
       const getRequestObservable = (message: string, unsubscribe: any) =>
-        new Observable(subscriber => {
+        new Observable((subscriber) => {
           subscriber.next({
             ok: true,
             status: 200,

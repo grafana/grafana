@@ -1,8 +1,7 @@
 import _ from 'lodash';
 import { coreModule } from 'app/core/core';
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
-import { AnnotationEvent } from '@grafana/data';
-import { dateTime } from '@grafana/data';
+import { AnnotationEvent, dateTime } from '@grafana/data';
 import { AnnotationsSrv } from './all';
 
 export class EventEditorCtrl {
@@ -14,7 +13,9 @@ export class EventEditorCtrl {
   timeFormated: string;
 
   /** @ngInject */
-  constructor(private annotationsSrv: AnnotationsSrv) {
+  constructor(private annotationsSrv: AnnotationsSrv) {}
+
+  $onInit() {
     this.event.panelId = this.panelCtrl.panel.id;
     this.event.dashboardId = this.panelCtrl.dashboard.id;
 

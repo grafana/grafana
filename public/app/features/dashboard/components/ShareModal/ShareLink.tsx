@@ -1,18 +1,16 @@
 import React, { PureComponent } from 'react';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { LegacyForms, ClipboardButton, Icon, InfoBox, Input } from '@grafana/ui';
-const { Select, Switch } = LegacyForms;
+import { Field, RadioButtonGroup, Switch, ClipboardButton, Icon, InfoBox, Input, FieldSet } from '@grafana/ui';
 import { SelectableValue, PanelModel, AppEvents } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
 import { DashboardModel } from 'app/features/dashboard/state';
-import { buildImageUrl, buildShareUrl, getRelativeURLPath } from './utils';
+import { buildImageUrl, buildShareUrl } from './utils';
 import { appEvents } from 'app/core/core';
 import config from 'app/core/config';
 
 const themeOptions: Array<SelectableValue<string>> = [
-  { label: 'current', value: 'current' },
-  { label: 'dark', value: 'dark' },
-  { label: 'light', value: 'light' },
+  { label: 'Current', value: 'current' },
+  { label: 'Dark', value: 'dark' },
+  { label: 'Light', value: 'light' },
 ];
 
 export interface Props {
@@ -22,9 +20,8 @@ export interface Props {
 
 export interface State {
   useCurrentTimeRange: boolean;
-  includeTemplateVars: boolean;
   useShortUrl: boolean;
-  selectedTheme: SelectableValue<string>;
+  selectedTheme: string;
   shareUrl: string;
   imageUrl: string;
 }
@@ -34,9 +31,8 @@ export class ShareLink extends PureComponent<Props, State> {
     super(props);
     this.state = {
       useCurrentTimeRange: true,
-      includeTemplateVars: true,
       useShortUrl: false,
-      selectedTheme: themeOptions[0],
+      selectedTheme: 'current',
       shareUrl: '',
       imageUrl: '',
     };
@@ -47,48 +43,35 @@ export class ShareLink extends PureComponent<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props, prevState: State) {
-    const { useCurrentTimeRange, includeTemplateVars, useShortUrl, selectedTheme } = this.state;
+    const { useCurrentTimeRange, useShortUrl, selectedTheme } = this.state;
     if (
       prevState.useCurrentTimeRange !== useCurrentTimeRange ||
-      prevState.includeTemplateVars !== includeTemplateVars ||
-      prevState.selectedTheme.value !== selectedTheme.value ||
+      prevState.selectedTheme !== selectedTheme ||
       prevState.useShortUrl !== useShortUrl
     ) {
       this.buildUrl();
     }
   }
 
-  buildUrl = () => {
+  buildUrl = async () => {
     const { panel } = this.props;
-    const { useCurrentTimeRange, includeTemplateVars, useShortUrl, selectedTheme } = this.state;
+    const { useCurrentTimeRange, useShortUrl, selectedTheme } = this.state;
 
-    const shareUrl = buildShareUrl(useCurrentTimeRange, includeTemplateVars, selectedTheme.value, panel);
-    const imageUrl = buildImageUrl(useCurrentTimeRange, includeTemplateVars, selectedTheme.value, panel);
+    const shareUrl = await buildShareUrl(useCurrentTimeRange, selectedTheme, panel, useShortUrl);
+    const imageUrl = buildImageUrl(useCurrentTimeRange, selectedTheme, panel);
 
-    if (useShortUrl) {
-      getBackendSrv()
-        .post(`/api/short-urls`, {
-          path: getRelativeURLPath(shareUrl),
-        })
-        .then(res => this.setState({ shareUrl: res.url, imageUrl }));
-    } else {
-      this.setState({ shareUrl, imageUrl });
-    }
+    this.setState({ shareUrl, imageUrl });
   };
 
   onUseCurrentTimeRangeChange = () => {
     this.setState({ useCurrentTimeRange: !this.state.useCurrentTimeRange });
   };
 
-  onIncludeTemplateVarsChange = () => {
-    this.setState({ includeTemplateVars: !this.state.includeTemplateVars });
-  };
-
   onUrlShorten = () => {
     this.setState({ useShortUrl: !this.state.useShortUrl });
   };
 
-  onThemeChange = (value: SelectableValue<string>) => {
+  onThemeChange = (value: string) => {
     this.setState({ selectedTheme: value });
   };
 
@@ -102,60 +85,52 @@ export class ShareLink extends PureComponent<Props, State> {
 
   render() {
     const { panel } = this.props;
-    const { useCurrentTimeRange, includeTemplateVars, useShortUrl, selectedTheme, shareUrl, imageUrl } = this.state;
+    const isRelativeTime = this.props.dashboard ? this.props.dashboard.time.to === 'now' : false;
+    const { useCurrentTimeRange, useShortUrl, selectedTheme, shareUrl, imageUrl } = this.state;
     const selectors = e2eSelectors.pages.SharePanelModal;
 
     return (
       <div className="share-modal-body">
         <div className="share-modal-header">
-          <Icon name="link" className="share-modal-big-icon" size="xxl" />
           <div className="share-modal-content">
             <p className="share-modal-info-text">
               Create a direct link to this dashboard or panel, customized with the options below.
             </p>
-            <div className="gf-form-group">
-              <Switch
-                labelClass="width-12"
-                label="Current time range"
-                checked={useCurrentTimeRange}
-                onChange={this.onUseCurrentTimeRangeChange}
-              />
-              <Switch
-                labelClass="width-12"
-                label="Template variables"
-                checked={includeTemplateVars}
-                onChange={this.onIncludeTemplateVarsChange}
-              />
-              <Switch labelClass="width-12" label="Shorten URL" checked={useShortUrl} onChange={this.onUrlShorten} />
-              <div className="gf-form">
-                <label className="gf-form-label width-12">Theme</label>
-                <Select width={10} options={themeOptions} value={selectedTheme} onChange={this.onThemeChange} />
-              </div>
-            </div>
-            <div>
-              <div className="gf-form-group">
-                <div className="gf-form-inline">
-                  <div className="gf-form gf-form--grow">
-                    <Input
-                      value={shareUrl}
-                      readOnly
-                      addonAfter={
-                        <ClipboardButton
-                          variant="primary"
-                          getText={this.getShareUrl}
-                          onClipboardCopy={this.onShareUrlCopy}
-                        >
-                          <Icon name="copy" /> Copy
-                        </ClipboardButton>
-                      }
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
+            <FieldSet>
+              <Field
+                label="Lock time range"
+                description={
+                  isRelativeTime ? 'Transforms the current relative time range to an absolute time range' : ''
+                }
+              >
+                <Switch
+                  id="share-current-time-range"
+                  value={useCurrentTimeRange}
+                  onChange={this.onUseCurrentTimeRangeChange}
+                />
+              </Field>
+              <Field label="Theme">
+                <RadioButtonGroup options={themeOptions} value={selectedTheme} onChange={this.onThemeChange} />
+              </Field>
+              <Field label="Shorten URL">
+                <Switch id="share-shorten-url" value={useShortUrl} onChange={this.onUrlShorten} />
+              </Field>
+
+              <Field label="Link URL">
+                <Input
+                  value={shareUrl}
+                  readOnly
+                  addonAfter={
+                    <ClipboardButton variant="primary" getText={this.getShareUrl} onClipboardCopy={this.onShareUrlCopy}>
+                      <Icon name="copy" /> Copy
+                    </ClipboardButton>
+                  }
+                />
+              </Field>
+            </FieldSet>
             {panel && config.rendererAvailable && (
               <div className="gf-form">
-                <a href={imageUrl} target="_blank" aria-label={selectors.linkToRenderedImage}>
+                <a href={imageUrl} target="_blank" rel="noreferrer" aria-label={selectors.linkToRenderedImage}>
                   <Icon name="camera" /> Direct link rendered image
                 </a>
               </div>
@@ -167,7 +142,7 @@ export class ShareLink extends PureComponent<Props, State> {
                   <a
                     href="https://grafana.com/grafana/plugins/grafana-image-renderer"
                     target="_blank"
-                    rel="noopener"
+                    rel="noopener noreferrer"
                     className="external-link"
                   >
                     Grafana Image Renderer plugin

@@ -13,6 +13,7 @@ export interface SpectrumPaletteProps extends Themeable {
   onChange: (color: string) => void;
 }
 
+// eslint-disable-next-line react/display-name
 const renderPointer = (theme: GrafanaTheme) => (props: SpectrumPalettePointerProps) => (
   <SpectrumPalettePointer {...props} theme={theme} />
 );

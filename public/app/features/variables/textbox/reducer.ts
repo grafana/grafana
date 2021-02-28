@@ -10,6 +10,7 @@ export const initialTextBoxVariableModelState: TextBoxVariableModel = {
   query: '',
   current: {} as VariableOption,
   options: [],
+  originalQuery: null,
 };
 
 export const textBoxVariableSlice = createSlice({

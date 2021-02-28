@@ -10,6 +10,7 @@ const settingsMock: DataSourceSettings<any, any> = {
   orgId: 1,
   name: 'gdev-influxdb',
   type: 'influxdb',
+  typeName: 'Influxdb',
   typeLogoUrl: '',
   access: 'direct',
   url: 'http://localhost:8086',
@@ -25,6 +26,7 @@ const settingsMock: DataSourceSettings<any, any> = {
     timeInterval: '15s',
     httpMode: 'GET',
     keepCookies: ['cookie1', 'cookie2'],
+    serverName: '',
   },
   secureJsonData: {
     password: true,

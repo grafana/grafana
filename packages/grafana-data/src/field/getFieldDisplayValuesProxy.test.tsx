@@ -29,10 +29,8 @@ describe('getFieldDisplayValuesProxy', () => {
       overrides: [],
     },
     replaceVariables: (val: string) => val,
-    getDataSourceSettingsByUid: (val: string) => ({} as any),
     timeZone: 'utc',
     theme: getTestTheme(),
-    autoMinMax: true,
   })[0];
 
   it('should define all display functions', () => {
