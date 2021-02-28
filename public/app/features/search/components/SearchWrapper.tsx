@@ -1,7 +1,6 @@
 import React, { FC, memo } from 'react';
 import DashboardSearch from './DashboardSearch';
-import { useLocation } from 'react-router-dom';
-import { locationService } from '@grafana/runtime';
+import { useUrlParams } from 'app/core/navigation/hooks';
 
 interface Props {
   folder?: string;
@@ -10,13 +9,12 @@ interface Props {
 }
 
 export const SearchWrapper: FC<Props> = memo(({ folder }) => {
-  const location = useLocation();
-  const query = new URLSearchParams(location.search);
-  const isOpen = query.get('search') === 'open';
+  const [params, updateUrlParams] = useUrlParams();
+  const isOpen = params.get('search') === 'open';
 
   const closeSearch = () => {
     if (isOpen) {
-      locationService.partial({ search: null, folder: null });
+      updateUrlParams({ search: null, folder: null });
     }
   };
 
