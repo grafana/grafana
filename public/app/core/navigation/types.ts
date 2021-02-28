@@ -17,7 +17,6 @@ export interface GrafanaRouteProps<T, Q = any> extends RouteComponentProps<T> {
 export interface RouteDescriptor {
   path: string;
   component: () => GrafanaRouteComponent<any>;
-  reloadOnSearch?: boolean;
   roles?: () => string[];
   pageClass?: string;
   routeName?: string;

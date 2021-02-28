@@ -59,6 +59,10 @@ export class AlertRuleListUnconnected extends PureComponent<Props, any> {
     }
   }
 
+  componentWillUnmount() {
+    console.log('UNMOUUUUNT');
+  }
+
   async fetchRules() {
     await this.props.getAlertRulesAsync({ state: this.getStateFilter() });
   }
@@ -69,7 +73,7 @@ export class AlertRuleListUnconnected extends PureComponent<Props, any> {
   }
 
   onStateFilterChanged = (option: SelectableValue) => {
-    locationService.partial({ query: option.value });
+    locationService.partial({ state: option.value });
   };
 
   onOpenHowTo = () => {
