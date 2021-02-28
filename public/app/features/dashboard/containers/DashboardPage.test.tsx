@@ -3,7 +3,7 @@ import { shallow, ShallowWrapper } from 'enzyme';
 import { DashboardPage, mapStateToProps, Props, State } from './DashboardPage';
 import { DashboardModel } from '../state';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
-import { DashboardInitPhase, DashboardRouteInfo } from 'app/types';
+import { DashboardInitPhase, DashboardRoutes } from 'app/types';
 import { notifyApp, updateLocation } from 'app/core/actions';
 import { cleanUpDashboardAndVariables } from '../state/actions';
 
@@ -57,7 +57,7 @@ function dashboardPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
           $scope: {},
           urlUid: '11',
           $injector: {},
-          routeInfo: DashboardRouteInfo.Normal,
+          routeName: DashboardRoutes.Normal,
           initPhase: DashboardInitPhase.NotStarted,
           isInitSlow: false,
           initDashboard: jest.fn(),

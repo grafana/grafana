@@ -41,7 +41,7 @@ export interface DashboardDataDTO {
   title: string;
 }
 
-export enum DashboardRouteInfo {
+export enum DashboardRoutes {
   Home = 'home-dashboard',
   New = 'new-dashboard',
   Normal = 'normal-dashboard',

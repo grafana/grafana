@@ -10,7 +10,7 @@ import { LoginPage } from 'app/core/components/Login/LoginPage';
 
 import config from 'app/core/config';
 
-import { DashboardRouteInfo } from 'app/types';
+import { DashboardRoutes } from 'app/types';
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
 // import { playlistRoutes } from '../features/playlist/playlist_routes';
 import { RouteDescriptor } from '../core/navigation/types';
@@ -26,7 +26,7 @@ export const routes: RouteDescriptor[] = [
   {
     path: '/',
     pageClass: 'page-dashboard',
-    routeInfo: DashboardRouteInfo.Home,
+    routeName: DashboardRoutes.Home,
     reloadOnSearch: false,
     component: () =>
       SafeDynamicImport(
@@ -36,7 +36,7 @@ export const routes: RouteDescriptor[] = [
   {
     path: '/d/:uid/:slug',
     pageClass: 'page-dashboard',
-    routeInfo: DashboardRouteInfo.Normal,
+    routeName: DashboardRoutes.Normal,
     reloadOnSearch: false,
     component: () =>
       SafeDynamicImport(
@@ -47,7 +47,7 @@ export const routes: RouteDescriptor[] = [
     path: '/d/:uid',
     pageClass: 'page-dashboard',
     reloadOnSearch: false,
-    routeInfo: DashboardRouteInfo.Normal,
+    routeName: DashboardRoutes.Normal,
     component: () =>
       SafeDynamicImport(
         import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage')
@@ -56,7 +56,7 @@ export const routes: RouteDescriptor[] = [
   {
     path: '/dashboard/:type/:slug',
     pageClass: 'page-dashboard',
-    routeInfo: DashboardRouteInfo.Normal,
+    routeName: DashboardRoutes.Normal,
     reloadOnSearch: false,
     component: () =>
       SafeDynamicImport(
@@ -66,7 +66,7 @@ export const routes: RouteDescriptor[] = [
   {
     path: '/dashboard/new',
     pageClass: 'page-dashboard',
-    routeInfo: DashboardRouteInfo.New,
+    routeName: DashboardRoutes.New,
     // TODO[Router]
     //roles: () => (contextSrv.hasEditPermissionInFolders ? [contextSrv.user.orgRole] : ['Admin']),
     reloadOnSearch: false,
@@ -78,7 +78,7 @@ export const routes: RouteDescriptor[] = [
   {
     path: '/d-solo/:uid/:slug',
     pageClass: 'dashboard-solo',
-    routeInfo: DashboardRouteInfo.Normal,
+    routeName: DashboardRoutes.Normal,
     reloadOnSearch: false,
     component: () =>
       SafeDynamicImport(
@@ -88,7 +88,7 @@ export const routes: RouteDescriptor[] = [
   {
     path: '/d-solo/:uid',
     pageClass: 'dashboard-solo',
-    routeInfo: DashboardRouteInfo.Normal,
+    routeName: DashboardRoutes.Normal,
     reloadOnSearch: false,
     component: () =>
       SafeDynamicImport(
@@ -98,7 +98,7 @@ export const routes: RouteDescriptor[] = [
   {
     path: '/dashboard-solo/:type/:slug',
     pageClass: 'dashboard-solo',
-    routeInfo: DashboardRouteInfo.Normal,
+    routeName: DashboardRoutes.Normal,
     reloadOnSearch: false,
     component: () =>
       SafeDynamicImport(

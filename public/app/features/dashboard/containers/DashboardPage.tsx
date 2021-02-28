@@ -22,7 +22,7 @@ import {
   AppNotificationSeverity,
   DashboardInitError,
   DashboardInitPhase,
-  DashboardRouteInfo,
+  DashboardRoutes,
   StoreState,
 } from 'app/types';
 
@@ -45,7 +45,7 @@ export interface Props {
   inspectPanelId?: string;
   $scope: any;
   $injector: any;
-  routeInfo: DashboardRouteInfo;
+  routeName: DashboardRoutes;
   urlEditPanelId?: string;
   urlViewPanelId?: string;
   initPhase: DashboardInitPhase;
@@ -103,7 +103,7 @@ export class DashboardPage extends PureComponent<Props, State> {
       urlUid: this.props.urlUid,
       urlType: this.props.urlType,
       urlFolderId: this.props.urlFolderId,
-      routeInfo: this.props.routeInfo,
+      routeName: this.props.routeName,
       fixUrl: true,
     });
   }

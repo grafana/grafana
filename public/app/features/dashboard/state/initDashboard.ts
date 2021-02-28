@@ -17,14 +17,7 @@ import {
   dashboardInitSlow,
 } from './reducers';
 // Types
-import {
-  DashboardDTO,
-  DashboardRouteInfo,
-  StoreState,
-  ThunkDispatch,
-  ThunkResult,
-  DashboardInitPhase,
-} from 'app/types';
+import { DashboardDTO, DashboardRoutes, StoreState, ThunkDispatch, ThunkResult, DashboardInitPhase } from 'app/types';
 import { DashboardModel } from './DashboardModel';
 import { DataQuery, locationUtil } from '@grafana/data';
 import { initVariablesTransaction } from '../../variables/state/actions';
@@ -39,7 +32,7 @@ export interface InitDashboardArgs {
   urlSlug?: string;
   urlType?: string;
   urlFolderId?: string;
-  routeInfo: DashboardRouteInfo;
+  routeName: DashboardRoutes;
   fixUrl: boolean;
 }
 
@@ -65,8 +58,8 @@ async function fetchDashboard(
   getState: () => StoreState
 ): Promise<DashboardDTO | null> {
   try {
-    switch (args.routeInfo) {
-      case DashboardRouteInfo.Home: {
+    switch (args.routeName) {
+      case DashboardRoutes.Home: {
         // load home dash
         const dashDTO: DashboardDTO = await backendSrv.get('/api/dashboards/home');
 
@@ -83,7 +76,7 @@ async function fetchDashboard(
         dashDTO.meta.canStar = false;
         return dashDTO;
       }
-      case DashboardRouteInfo.Normal: {
+      case DashboardRoutes.Normal: {
         // for old db routes we redirect
         if (args.urlType === 'db') {
           redirectToNewUrl(args.urlSlug!, dispatch, getState().location.path);
@@ -105,11 +98,11 @@ async function fetchDashboard(
         }
         return dashDTO;
       }
-      case DashboardRouteInfo.New: {
+      case DashboardRoutes.New: {
         return getNewDashboardModelData(args.urlFolderId);
       }
       default:
-        throw { message: 'Unknown route ' + args.routeInfo };
+        throw { message: 'Unknown route ' + args.routeName };
     }
   } catch (err) {
     // Ignore cancelled errors
@@ -230,7 +223,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     dashboardSrv.setCurrent(dashboard);
 
     // send open dashboard event
-    if (args.routeInfo !== DashboardRouteInfo.New) {
+    if (args.routeName !== DashboardRoutes.New) {
       emitDashboardViewEvent(dashboard);
 
       // Listen for changes on the current dashboard

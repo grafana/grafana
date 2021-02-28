@@ -10,7 +10,7 @@ import { DashboardPanel } from '../dashgrid/DashboardPanel';
 import { initDashboard } from '../state/initDashboard';
 
 // Types
-import { StoreState, DashboardRouteInfo } from 'app/types';
+import { StoreState, DashboardRoutes } from 'app/types';
 import { PanelModel, DashboardModel } from 'app/features/dashboard/state';
 
 export interface Props {
@@ -20,7 +20,7 @@ export interface Props {
   urlType?: string;
   $scope: any;
   $injector: any;
-  routeInfo: DashboardRouteInfo;
+  routeName: DashboardRoutes;
   initDashboard: typeof initDashboard;
   dashboard: DashboardModel | null;
 }
@@ -37,7 +37,7 @@ export class SoloPanelPage extends Component<Props, State> {
   };
 
   componentDidMount() {
-    const { $injector, $scope, urlUid, urlType, urlSlug, routeInfo } = this.props;
+    const { $injector, $scope, urlUid, urlType, urlSlug, routeName } = this.props;
 
     this.props.initDashboard({
       $injector: $injector,
@@ -45,7 +45,7 @@ export class SoloPanelPage extends Component<Props, State> {
       urlSlug: urlSlug,
       urlUid: urlUid,
       urlType: urlType,
-      routeInfo: routeInfo,
+      routeName: routeName,
       fixUrl: false,
     });
   }

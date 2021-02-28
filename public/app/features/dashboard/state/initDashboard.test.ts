@@ -1,7 +1,7 @@
 import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import { initDashboard, InitDashboardArgs } from './initDashboard';
-import { DashboardInitPhase, DashboardRouteInfo } from 'app/types';
+import { DashboardInitPhase, DashboardRoutes } from 'app/types';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { dashboardInitCompleted, dashboardInitFetching, dashboardInitServices } from './reducers';
 import { locationService, setEchoSrv } from '@grafana/runtime';
@@ -114,7 +114,7 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
         $injector: injectorMock,
         $scope: {},
         fixUrl: false,
-        routeInfo: DashboardRouteInfo.Normal,
+        routeName: DashboardRoutes.Normal,
       },
       backendSrv: getBackendSrv(),
       timeSrv,
@@ -166,7 +166,7 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
 describeInitScenario('Initializing new dashboard', (ctx) => {
   ctx.setup(() => {
     ctx.storeState.user.orgId = 12;
-    ctx.args.routeInfo = DashboardRouteInfo.New;
+    ctx.args.routeName = DashboardRoutes.New;
   });
 
   it('Should send action dashboardInitFetching', () => {
@@ -198,7 +198,7 @@ describeInitScenario('Initializing new dashboard', (ctx) => {
 
 describeInitScenario('Initializing home dashboard', (ctx) => {
   ctx.setup(() => {
-    ctx.args.routeInfo = DashboardRouteInfo.Home;
+    ctx.args.routeName = DashboardRoutes.Home;
     ctx.backendSrv.get.mockResolvedValue({
       redirectUri: '/u/123/my-home',
     });
@@ -212,7 +212,7 @@ describeInitScenario('Initializing home dashboard', (ctx) => {
 
 describeInitScenario('Initializing home dashboard cancelled', (ctx) => {
   ctx.setup(() => {
-    ctx.args.routeInfo = DashboardRouteInfo.Home;
+    ctx.args.routeName = DashboardRoutes.Home;
     ctx.backendSrv.get.mockRejectedValue({ cancelled: true });
   });
 

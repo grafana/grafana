@@ -73,7 +73,7 @@ export class GrafanaRoute extends React.Component<GrafanaRouteProps<any>> {
 
     return React.createElement(component(), {
       ...routeComponentProps,
-      routeInfo: route.routeInfo,
+      routeName: route.routeName,
     });
   }
 }

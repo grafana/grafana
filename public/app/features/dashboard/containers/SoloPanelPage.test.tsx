@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { SoloPanelPage, Props } from './SoloPanelPage';
 import { Props as DashboardPanelProps } from '../dashgrid/DashboardPanel';
 import { DashboardModel } from '../state';
-import { DashboardRouteInfo } from 'app/types';
+import { DashboardRoutes } from 'app/types';
 
 jest.mock('app/features/dashboard/components/DashboardSettings/GeneralSettings', () => ({}));
 jest.mock('app/features/dashboard/dashgrid/DashboardPanel', () => {
@@ -68,7 +68,7 @@ function soloPanelPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
           urlUid: '11',
           urlPanelId: '1',
           $injector: {},
-          routeInfo: DashboardRouteInfo.Normal,
+          routeName: DashboardRoutes.Normal,
           initDashboard: jest.fn(),
           dashboard: null,
         };
