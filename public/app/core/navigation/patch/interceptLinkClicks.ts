@@ -1,12 +1,13 @@
 import { locationService, navigationLogger } from '@grafana/runtime';
 
 export function interceptLinkClicks(e: MouseEvent) {
-  const target = getParentAnchor(e.target as HTMLElement);
+  const anchor = getParentAnchor(e.target as HTMLElement);
 
-  if (target) {
-    const href = target.getAttribute('href');
+  if (anchor) {
+    const href = anchor.getAttribute('href');
+    const target = anchor.getAttribute('target');
 
-    if (href) {
+    if (href && !target) {
       navigationLogger('utils', false, 'intercepting link click', e);
       e.preventDefault();
       locationService.push(href);
