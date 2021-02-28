@@ -788,7 +788,6 @@ exports[`DashboardPage When dashboard has editview url state should render setti
       }
     }
     editview="settings"
-    updateLocation={[MockFunction]}
   />
 </div>
 `;

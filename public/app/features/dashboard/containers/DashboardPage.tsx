@@ -20,7 +20,6 @@ import { notifyApp } from 'app/core/actions';
 // Types
 import { AppNotificationSeverity, DashboardInitError, DashboardInitPhase, StoreState } from 'app/types';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { InspectTab } from '../components/Inspector/types';
 import { PanelInspector } from '../components/Inspector/PanelInspector';
 import { SubMenu } from '../components/SubMenu/SubMenu';
 import { cleanUpDashboardAndVariables } from '../state/actions';
@@ -36,11 +35,8 @@ export interface DashboardPageRouteParams {
 }
 
 export interface Props extends GrafanaRouteComponentProps<DashboardPageRouteParams> {
-  urlFolderId?: string;
-  inspectPanelId?: string;
   $scope: any;
   $injector: any;
-  urlViewPanelId?: string;
   initPhase: DashboardInitPhase;
   isInitSlow: boolean;
   dashboard: DashboardModel | null;
@@ -48,7 +44,6 @@ export interface Props extends GrafanaRouteComponentProps<DashboardPageRoutePara
   initDashboard: typeof initDashboard;
   cleanUpDashboardAndVariables: typeof cleanUpDashboardAndVariables;
   notifyApp: typeof notifyApp;
-  inspectTab?: InspectTab;
   isPanelEditorOpen?: boolean;
   cancelVariables: typeof cancelVariables;
 }
@@ -135,7 +130,7 @@ export class DashboardPage extends PureComponent<Props, State> {
     const urlEditView = searchParams.get('editview');
 
     // entering edit mode
-    if (!editPanel && urlEditPanelId) {
+    if (!editPanel && urlEditPanelId !== null) {
       dashboardWatcher.setEditingState(true);
 
       this.getPanelByIdFromUrlParam(urlEditPanelId, (panel) => {
@@ -156,7 +151,7 @@ export class DashboardPage extends PureComponent<Props, State> {
     }
 
     // entering view mode
-    if (!viewPanel && urlViewPanelId) {
+    if (!viewPanel && urlViewPanelId !== null) {
       this.getPanelByIdFromUrlParam(urlViewPanelId, (panel) => {
         this.setPanelFullscreenClass(true);
         dashboard.initViewPanel(panel);
@@ -281,7 +276,10 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 
   getInspectPanel() {
-    const { dashboard, inspectPanelId } = this.props;
+    const { dashboard, location } = this.props;
+    const searchParams = new URLSearchParams(location.search);
+    const inspectPanelId = searchParams.get('inspect');
+
     if (!dashboard || !inspectPanelId) {
       return null;
     }
@@ -297,7 +295,7 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, $injector, isInitSlow, initError, inspectTab, isPanelEditorOpen } = this.props;
+    const { dashboard, $injector, isInitSlow, initError, isPanelEditorOpen } = this.props;
     const { editPanel, viewPanel, scrollTop, updateScrollTop, editView } = this.state;
 
     if (!dashboard) {
@@ -340,7 +338,7 @@ export class DashboardPage extends PureComponent<Props, State> {
           </CustomScrollbar>
         </div>
 
-        {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} defaultTab={inspectTab} />}
+        {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
         {editPanel && <PanelEditor dashboard={dashboard} sourcePanel={editPanel} />}
         {editView && <DashboardSettings dashboard={dashboard} editview={editView} />}
       </div>
@@ -349,12 +347,10 @@ export class DashboardPage extends PureComponent<Props, State> {
 }
 
 export const mapStateToProps = (state: StoreState) => ({
-  inspectPanelId: state.location.query.inspect,
   initPhase: state.dashboard.initPhase,
   isInitSlow: state.dashboard.isInitSlow,
   initError: state.dashboard.initError,
   dashboard: state.dashboard.getModel(),
-  inspectTab: state.location.query.inspectTab,
   isPanelEditorOpen: state.panelEditor.isOpen,
 });
 

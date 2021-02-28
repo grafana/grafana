@@ -4,7 +4,7 @@ import { DashboardPage, mapStateToProps, Props, State } from './DashboardPage';
 import { DashboardModel } from '../state';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 import { DashboardInitPhase, DashboardRoutes } from 'app/types';
-import { notifyApp, updateLocation } from 'app/core/actions';
+import { notifyApp } from 'app/core/actions';
 import { cleanUpDashboardAndVariables } from '../state/actions';
 
 jest.mock('app/features/dashboard/components/DashboardSettings/GeneralSettings', () => ({}));
@@ -53,15 +53,17 @@ function dashboardPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
       },
       mount: (propOverrides?: Partial<Props>) => {
         const props: Props = {
-          urlSlug: 'my-dash',
+          match: {
+            params: { slug: 'my-dash', uid: '11' },
+          } as any,
           $scope: {},
-          urlUid: '11',
           $injector: {},
-          routeName: DashboardRoutes.Normal,
+          location: {} as any,
+          history: {} as any,
+          route: { routeName: DashboardRoutes.Normal } as any,
           initPhase: DashboardInitPhase.NotStarted,
           isInitSlow: false,
           initDashboard: jest.fn(),
-          updateLocation: mockToolkitActionCreator(updateLocation),
           notifyApp: mockToolkitActionCreator(notifyApp),
           cleanUpDashboardAndVariables: ctx.cleanUpDashboardAndVariablesMock,
           cancelVariables: jest.fn(),
@@ -128,7 +130,7 @@ describe('DashboardPage', () => {
       ctx.mount();
       ctx.setDashboardProp();
       ctx.wrapper?.setProps({
-        urlEditPanelId: '1',
+        location: { search: '?editPanelId=1' } as any,
       });
     });
 
@@ -144,7 +146,7 @@ describe('DashboardPage', () => {
       ctx.mount();
       ctx.setDashboardProp({}, { canEdit: false });
       ctx.wrapper?.setProps({
-        urlEditPanelId: '1',
+        location: { search: '?editPanelId=1' } as any,
       });
     });
 
@@ -153,16 +155,16 @@ describe('DashboardPage', () => {
       expect(state?.editPanel).toBe(null);
     });
   });
-  dashboardPageScenario('When user goes back to dashboard from view panel', (ctx) => {
+  dashboardPageScenario('When user goes back to dashboard from edit panel', (ctx) => {
     ctx.setup(() => {
       ctx.mount();
       ctx.setDashboardProp();
       ctx.wrapper?.setState({ scrollTop: 100 });
       ctx.wrapper?.setProps({
-        urlEditPanelId: '1',
+        location: { search: '?editPanelId=1' } as any,
       });
       ctx.wrapper?.setProps({
-        urlEditPanelId: undefined,
+        location: { search: '' } as any,
       });
     });
 
@@ -186,7 +188,7 @@ describe('DashboardPage', () => {
       ctx.mount();
       ctx.setDashboardProp();
       ctx.wrapper?.setProps({
-        editview: 'settings',
+        location: { search: '?editview=settings' } as any,
       });
     });
 
@@ -223,7 +225,7 @@ describe('DashboardPage', () => {
         schemaVersion: 17,
       });
       ctx.wrapper?.setProps({
-        urlEditPanelId: '0',
+        location: { search: '?editPanel=0' } as any,
       });
     });
 
@@ -250,37 +252,14 @@ describe('DashboardPage', () => {
     });
   });
 
-  describe('mapStateToProps with editPanel', () => {
+  describe('mapStateToProps', () => {
     const props = mapStateToProps({
-      location: {
-        routeParams: {},
-        query: {
-          editPanel: '1',
-        },
-      },
       panelEditor: {},
       dashboard: {
         getModel: () => ({} as DashboardModel),
       },
     } as any);
 
-    expect(props.urlEditPanelId).toBe('1');
-  });
-
-  describe('mapStateToProps with string edit true', () => {
-    const props = mapStateToProps({
-      location: {
-        routeParams: {},
-        query: {
-          viewPanel: '2',
-        },
-      },
-      panelEditor: {},
-      dashboard: {
-        getModel: () => ({} as DashboardModel),
-      },
-    } as any);
-
-    expect(props.urlViewPanelId).toBe('2');
+    expect(props.dashboard).toBeDefined();
   });
 });

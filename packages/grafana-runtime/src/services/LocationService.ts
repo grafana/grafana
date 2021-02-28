@@ -122,12 +122,12 @@ class HistoryWrapper implements LocationService {
   /** @depecreated */
   update(options: LocationUpdate) {
     if (options.partial && options.query) {
-      this.partial(options.query, options.replace);
-    }
-    if (options.replace) {
+      this.partial(options.query, options.partial);
+    } else if (options.replace) {
       this.replace(options.path!);
+    } else {
+      this.push(options.path!);
     }
-    this.push(options.path!);
   }
 }
 

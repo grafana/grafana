@@ -9,12 +9,12 @@ import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
 import { usePanelLatestData } from '../PanelEditor/usePanelLatestData';
 import { InspectContent } from './InspectContent';
 import { useDatasourceMetadata, useInspectTabs } from './hooks';
+import { useLocation } from 'react-router-dom';
 import { InspectTab } from './types';
 
 interface OwnProps {
   dashboard: DashboardModel;
   panel: PanelModel;
-  defaultTab?: InspectTab;
 }
 
 export interface ConnectedProps {
@@ -23,7 +23,7 @@ export interface ConnectedProps {
 
 export type Props = OwnProps & ConnectedProps;
 
-const PanelInspectorUnconnected: React.FC<Props> = ({ panel, dashboard, defaultTab, plugin }) => {
+const PanelInspectorUnconnected: React.FC<Props> = ({ panel, dashboard, plugin }) => {
   if (!plugin) {
     return null;
   }
@@ -32,9 +32,13 @@ const PanelInspectorUnconnected: React.FC<Props> = ({ panel, dashboard, defaultT
     withTransforms: false,
     withFieldConfig: true,
   });
+
+  const location = useLocation();
   const { data, isLoading, error } = usePanelLatestData(panel, dataOptions);
   const metaDs = useDatasourceMetadata(data);
   const tabs = useInspectTabs(plugin, dashboard, error, metaDs);
+  const defaultTab = new URLSearchParams(location.search).get('inspectTab') as InspectTab;
+
   const onClose = () => {
     locationService.partial({
       inspect: null,
