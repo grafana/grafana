@@ -14,7 +14,7 @@ weight = 700
 
 > Only available in Grafana v6.7+
 
-The Azure AD authentication makes it possible to use an Azure Active Directory tenant as an identity provider for Grafana. You can use Azure AD Application Roles to assign users and groups to Grafana roles from the Azure Portal.
+The Azure AD authentication allows you to use an Azure Active Directory tenant as an identity provider for Grafana. You can use Azure AD Application Roles to assign users and groups to Grafana roles from the Azure Portal.
 
 ## Create the Azure AD application
 
@@ -44,7 +44,7 @@ To enable the Azure AD OAuth2 you must register your application with Azure AD.
 
 1. Click **Manifest**.
 
-   - Define the required Application Role values for Grafana: Viewer, Editor, Admin. Without this configuration, all users receive the Viewer role.
+   - Define the required Application Role values for Grafana: Viewer, Editor, Admin. Otherwise, all users will have the Viewer role.
    - Every role requires a unique ID.
    - Generate the unique ID on Linux with `uuidgen`, and on Windows through Microsoft
    PowerShell with `New-Guid`.
@@ -93,7 +93,7 @@ To enable the Azure AD OAuth2 you must register your application with Azure AD.
 
 1. Go to **Azure Active Directory** and then to **Enterprise Applications**. Search for your application and click on it.
 
-1. Click on **Users and Groups** and add Users/Groups to the Grafana roles with **Add User**.
+1. Click **Users and Groups** and add Users/Groups to the Grafana roles with **Add User**.
 
 ## Enable Azure AD OAuth in Grafana
 
@@ -136,7 +136,7 @@ You'll need to ensure that you've [enabled group attributes](https://docs.micros
 
 ### Configure allowed domains
 
-The `allowed_domains` option limits access to the users who belong to the specific domains. Separate domains with a space or comma.
+The `allowed_domains` option limits access to users who belong to specific domains. Separate domains with space or comma.
 
 ```ini
 allowed_domains = mycompany.com mycompany.org
