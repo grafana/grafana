@@ -47,9 +47,6 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
   }
 
   renderRoute = (route: RouteDescriptor) => {
-    // const { updateLocation } = this.props;
-    // TODO[Router]
-    // @ts-ignore
     const roles = route.roles ? route.roles() : [];
 
     return (

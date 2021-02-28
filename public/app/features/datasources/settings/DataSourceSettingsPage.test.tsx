@@ -19,7 +19,7 @@ const setup = (propOverrides?: object) => {
     navModel: {} as NavModel,
     dataSource: getMockDataSource(),
     dataSourceMeta: getMockPlugin(),
-    pageId: 1,
+    dataSourceId: 1,
     deleteDataSource: jest.fn(),
     loadDataSource: jest.fn(),
     setDataSourceName,
@@ -38,7 +38,6 @@ const setup = (propOverrides?: object) => {
 describe('Render', () => {
   it('should render component', () => {
     const wrapper = setup();
-
     expect(wrapper).toMatchSnapshot();
   });
 
