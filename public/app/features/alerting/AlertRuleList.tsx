@@ -4,23 +4,22 @@ import { connect, ConnectedProps } from 'react-redux';
 import Page from 'app/core/components/Page/Page';
 import AlertRuleItem from './AlertRuleItem';
 import appEvents from 'app/core/app_events';
-import { updateLocation } from 'app/core/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { AlertDefinition, AlertRule, CoreEvents, StoreState } from 'app/types';
 import { getAlertRulesAsync, togglePauseAlertRule } from './state/actions';
 import { getAlertRuleItems, getSearchQuery } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { SelectableValue } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { setSearchQuery } from './state/reducers';
 import { Button, LinkButton, Select, VerticalGroup } from '@grafana/ui';
 import { AlertDefinitionItem } from './components/AlertDefinitionItem';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 function mapStateToProps(state: StoreState) {
   return {
     navModel: getNavModel(state.navIndex, 'alert-list'),
     alertRules: getAlertRuleItems(state),
-    stateFilter: state.location.query.state,
     search: getSearchQuery(state.alertRules),
     isLoading: state.alertRules.isLoading,
     ngAlertDefinitions: state.alertDefinition.alertDefinitions,
@@ -28,7 +27,6 @@ function mapStateToProps(state: StoreState) {
 }
 
 const mapDispatchToProps = {
-  updateLocation,
   getAlertRulesAsync,
   setSearchQuery,
   togglePauseAlertRule,
@@ -36,7 +34,7 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-interface OwnProps {}
+interface OwnProps extends GrafanaRouteComponentProps {}
 
 export type Props = OwnProps & ConnectedProps<typeof connector>;
 
@@ -56,7 +54,7 @@ export class AlertRuleListUnconnected extends PureComponent<Props, any> {
   }
 
   componentDidUpdate(prevProps: Props) {
-    if (prevProps.stateFilter !== this.props.stateFilter) {
+    if (prevProps.location.search !== this.props.location.search) {
       this.fetchRules();
     }
   }
@@ -66,17 +64,12 @@ export class AlertRuleListUnconnected extends PureComponent<Props, any> {
   }
 
   getStateFilter(): string {
-    const { stateFilter } = this.props;
-    if (stateFilter) {
-      return stateFilter.toString();
-    }
-    return 'all';
+    const search = new URLSearchParams(this.props.location.search);
+    return search.get('state') ?? 'all';
   }
 
   onStateFilterChanged = (option: SelectableValue) => {
-    this.props.updateLocation({
-      query: { state: option.value },
-    });
+    locationService.partial({ query: option.value });
   };
 
   onOpenHowTo = () => {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { RouteComponentProps } from 'react-router-dom';
 
-interface GrafanaRouteComponentProps<T> extends RouteComponentProps<T> {
+export interface GrafanaRouteComponentProps<T = any> extends RouteComponentProps<T> {
   $injector: any;
   routeName?: string;
 }
