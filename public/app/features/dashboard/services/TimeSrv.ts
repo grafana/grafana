@@ -262,7 +262,7 @@ export class TimeSrv {
       urlParams.set('to', urlRange.to.toString());
 
       locationService.push({
-        ...locationService.getCurrentLocation(),
+        ...locationService.getLocation(),
         search: urlParams.toString(),
       });
     }

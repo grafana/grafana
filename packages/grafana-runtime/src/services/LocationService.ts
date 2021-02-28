@@ -8,7 +8,7 @@ export interface LocationService {
   partial: (query: Record<string, any>, replace?: boolean) => void;
   push: (location: H.Path | H.LocationDescriptor<any>) => void;
   replace: (location: H.Path) => void;
-  getCurrentLocation: () => H.Location;
+  getLocation: () => H.Location;
   getHistory: () => H.History;
   getSearch: () => URLSearchParams;
 
@@ -64,7 +64,7 @@ class HistoryWrapper implements LocationService {
     this.replace = this.replace.bind(this);
     this.getSearch = this.getSearch.bind(this);
     this.getHistory = this.getHistory.bind(this);
-    this.getCurrentLocation = this.getCurrentLocation.bind(this);
+    this.getLocation = this.getLocation.bind(this);
   }
 
   getHistory() {
@@ -115,7 +115,7 @@ class HistoryWrapper implements LocationService {
     this.history.replace(location);
   }
 
-  getCurrentLocation() {
+  getLocation() {
     return this.history.location;
   }
 

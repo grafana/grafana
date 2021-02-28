@@ -2,15 +2,12 @@
 import React, { Component } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-
 // Components
 import { DashboardPanel } from '../dashgrid/DashboardPanel';
-
 // Redux
 import { initDashboard } from '../state/initDashboard';
-
 // Types
-import { StoreState, DashboardRoutes } from 'app/types';
+import { StoreState } from 'app/types';
 import { PanelModel, DashboardModel } from 'app/features/dashboard/state';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 

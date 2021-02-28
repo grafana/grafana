@@ -68,7 +68,7 @@ class AngularLocationWrapper {
       return this as any;
     }
 
-    return locationService.getCurrentLocation().pathname;
+    return locationService.getLocation().pathname;
   }
 
   port(): number {
@@ -99,7 +99,7 @@ class AngularLocationWrapper {
       locationService.push(newUrl);
     }
 
-    return locationService.getCurrentLocation().pathname;
+    return locationService.getLocation().pathname;
   }
 }
 

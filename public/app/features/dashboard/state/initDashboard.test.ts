@@ -205,7 +205,7 @@ describeInitScenario('Initializing home dashboard', (ctx) => {
   });
 
   it('Should redirect to custom home dashboard', () => {
-    const location = locationService.getCurrentLocation();
+    const location = locationService.getLocation();
     expect(location.pathname).toBe('/u/123/my-home');
   });
 });
