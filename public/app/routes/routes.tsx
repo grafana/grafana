@@ -27,7 +27,6 @@ export const routes: RouteDescriptor[] = [
     path: '/',
     pageClass: 'page-dashboard',
     routeName: DashboardRoutes.Home,
-    reloadOnSearch: false,
     component: () =>
       SafeDynamicImport(
         import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage')
@@ -37,7 +36,6 @@ export const routes: RouteDescriptor[] = [
     path: '/d/:uid/:slug',
     pageClass: 'page-dashboard',
     routeName: DashboardRoutes.Normal,
-    reloadOnSearch: false,
     component: () =>
       SafeDynamicImport(
         import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage')
@@ -46,7 +44,6 @@ export const routes: RouteDescriptor[] = [
   {
     path: '/d/:uid',
     pageClass: 'page-dashboard',
-    reloadOnSearch: false,
     routeName: DashboardRoutes.Normal,
     component: () =>
       SafeDynamicImport(
@@ -57,7 +54,6 @@ export const routes: RouteDescriptor[] = [
     path: '/dashboard/:type/:slug',
     pageClass: 'page-dashboard',
     routeName: DashboardRoutes.Normal,
-    reloadOnSearch: false,
     component: () =>
       SafeDynamicImport(
         import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage')
@@ -69,7 +65,6 @@ export const routes: RouteDescriptor[] = [
     routeName: DashboardRoutes.New,
     // TODO[Router]
     //roles: () => (contextSrv.hasEditPermissionInFolders ? [contextSrv.user.orgRole] : ['Admin']),
-    reloadOnSearch: false,
     component: () =>
       SafeDynamicImport(
         import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage')
@@ -79,7 +74,6 @@ export const routes: RouteDescriptor[] = [
     path: '/d-solo/:uid/:slug',
     pageClass: 'dashboard-solo',
     routeName: DashboardRoutes.Normal,
-    reloadOnSearch: false,
     component: () =>
       SafeDynamicImport(
         import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard/containers/SoloPanelPage')
@@ -89,7 +83,6 @@ export const routes: RouteDescriptor[] = [
     path: '/d-solo/:uid',
     pageClass: 'dashboard-solo',
     routeName: DashboardRoutes.Normal,
-    reloadOnSearch: false,
     component: () =>
       SafeDynamicImport(
         import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard/containers/SoloPanelPage')
@@ -99,7 +92,6 @@ export const routes: RouteDescriptor[] = [
     path: '/dashboard-solo/:type/:slug',
     pageClass: 'dashboard-solo',
     routeName: DashboardRoutes.Normal,
-    reloadOnSearch: false,
     component: () =>
       SafeDynamicImport(
         import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard/containers/SoloPanelPage')
@@ -107,7 +99,6 @@ export const routes: RouteDescriptor[] = [
   },
   {
     path: '/dashboard/import',
-    reloadOnSearch: false,
     component: () =>
       SafeDynamicImport(
         import(/* webpackChunkName: "DashboardImport"*/ 'app/features/manage-dashboards/DashboardImportPage')
@@ -122,7 +113,6 @@ export const routes: RouteDescriptor[] = [
   },
   {
     path: '/datasources/edit/:id/',
-    reloadOnSearch: false, // for tabs
     component: () =>
       SafeDynamicImport(
         import(
@@ -144,7 +134,6 @@ export const routes: RouteDescriptor[] = [
   },
   {
     path: '/dashboards',
-    reloadOnSearch: false,
     component: () =>
       SafeDynamicImport(
         import(/* webpackChunkName: "DashboardListPage"*/ 'app/features/search/components/DashboardListPage')
@@ -152,7 +141,6 @@ export const routes: RouteDescriptor[] = [
   },
   {
     path: '/dashboards/folder/new',
-    reloadOnSearch: false,
     component: () =>
       SafeDynamicImport(
         import(/* webpackChunkName: "NewDashboardsFolder"*/ 'app/features/folders/components/NewDashboardsFolder')
@@ -160,19 +148,16 @@ export const routes: RouteDescriptor[] = [
   },
   {
     path: '/dashboards/f/:uid/:slug/permissions',
-    reloadOnSearch: false, // for tabs
     component: () =>
       SafeDynamicImport(import(/* webpackChunkName: "FolderPermissions"*/ 'app/features/folders/FolderPermissions')),
   },
   {
     path: '/dashboards/f/:uid/:slug/settings',
-    reloadOnSearch: false, // for tabs
     component: () =>
       SafeDynamicImport(import(/* webpackChunkName: "FolderSettingsPage"*/ 'app/features/folders/FolderSettingsPage')),
   },
   {
     path: '/dashboards/f/:uid/:slug',
-    reloadOnSearch: false, // for tabs
     component: () =>
       SafeDynamicImport(
         import(/* webpackChunkName: "DashboardListPage"*/ 'app/features/search/components/DashboardListPage')
@@ -180,7 +165,6 @@ export const routes: RouteDescriptor[] = [
   },
   {
     path: '/dashboards/f/:uid',
-    reloadOnSearch: false,
     component: () =>
       SafeDynamicImport(
         import(/* webpackChunkName: "DashboardListPage"*/ 'app/features/search/components/DashboardListPage')
@@ -188,7 +172,6 @@ export const routes: RouteDescriptor[] = [
   },
   {
     path: '/explore',
-    reloadOnSearch: false,
     // TODO
     roles: () => (config.viewersCanEdit ? [] : ['Editor', 'Admin']),
     component: () => SafeDynamicImport(import(/* webpackChunkName: "explore" */ 'app/features/explore/Wrapper')),
@@ -196,7 +179,6 @@ export const routes: RouteDescriptor[] = [
   {
     path: '/a/:pluginId/',
     // Someday * and will get a ReactRouter under that path!
-    reloadOnSearch: false,
     component: () =>
       SafeDynamicImport(import(/* webpackChunkName: "AppRootPage" */ 'app/features/plugins/AppRootPage')),
   },
@@ -207,7 +189,6 @@ export const routes: RouteDescriptor[] = [
   },
   {
     path: '/org/new',
-    reloadOnSearch: false,
     component: () => SafeDynamicImport(import(/* webpackChunkName: "NewOrgPage" */ 'app/features/org/NewOrgPage')),
   },
   {
@@ -340,7 +321,6 @@ export const routes: RouteDescriptor[] = [
   },
   {
     path: '/dashboard/snapshots',
-    reloadOnSearch: false,
     component: () =>
       SafeDynamicImport(
         import(/* webpackChunkName: "SnapshotListPage" */ 'app/features/manage-dashboards/SnapshotListPage')
@@ -353,7 +333,6 @@ export const routes: RouteDescriptor[] = [
   },
   {
     path: '/plugins/:pluginId/',
-    reloadOnSearch: false, // tabs from query parameters
     component: () => SafeDynamicImport(import(/* webpackChunkName: "PluginPage" */ '../features/plugins/PluginPage')),
   },
   // TODO[Router]
@@ -370,13 +349,11 @@ export const routes: RouteDescriptor[] = [
   },
   {
     path: '/alerting/list',
-    reloadOnSearch: false,
     component: () =>
       SafeDynamicImport(import(/* webpackChunkName: "AlertRuleList" */ 'app/features/alerting/AlertRuleList')),
   },
   {
     path: '/alerting/notifications',
-    reloadOnSearch: false,
     component: () =>
       SafeDynamicImport(
         import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsListPage')

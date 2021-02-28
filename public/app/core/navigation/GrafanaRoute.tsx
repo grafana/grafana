@@ -25,16 +25,6 @@ export class GrafanaRoute extends React.Component<GrafanaRouteProps<any>> {
     navigationLogger('GrafanaRoute', false, 'Unmounted', this.props.route);
   }
 
-  shouldComponentUpdate(nextProps: GrafanaRouteProps<any>) {
-    // Most of the pages rely on state.location rather than router/history location. We don't want these pages
-    // to re-render as they will be updated based on the Redux state changes.
-    if (nextProps.route.reloadOnSearch && nextProps.location.search !== this.props.location.search) {
-      return true;
-    }
-    navigationLogger('GrafanaRoute', false, 'skipping page update');
-    return false;
-  }
-
   getPageClasses() {
     return this.props.route.pageClass ? this.props.route.pageClass.split(' ') : [];
   }
