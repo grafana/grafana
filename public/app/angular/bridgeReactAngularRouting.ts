@@ -17,7 +17,7 @@ const registerInterceptedLinkDirective = () => {
             $event.stopPropagation();
 
             // TODO: refactor to one method insted of chain
-            locationService.push(elm.attr('href'));
+            locationService.push(href);
             return false;
           }
 

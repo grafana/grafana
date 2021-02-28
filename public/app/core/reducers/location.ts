@@ -2,7 +2,7 @@ import _ from 'lodash';
 import { Action, createAction } from '@reduxjs/toolkit';
 import { LocationUpdate, navigationLogger } from '@grafana/runtime';
 
-import { LocationState, ThunkResult } from 'app/types';
+import { LocationState } from 'app/types';
 import { urlUtil } from '@grafana/data';
 
 export const initialState: LocationState = {
@@ -14,30 +14,25 @@ export const initialState: LocationState = {
   lastUpdated: 0,
 };
 
-export const updateLocationInState = createAction<LocationUpdate>('location/updateLocation');
+export const updateLocation = createAction<LocationUpdate>('location/updateLocation');
 
-export function updateLocation(payload: LocationUpdate): ThunkResult<void> {
-  return async function (dispatch) {
-    const forceLoginParam = payload.query?.forceLogin;
-    if (forceLoginParam) {
-      navigationLogger('AppWrapper', false, 'Force login', payload);
-      window.location.href = `${payload.path}?${urlUtil.toUrlParams({ ...payload.query, forceLogin: 'true' })}`;
-      return;
-    }
-
-    dispatch(updateLocationInState(payload));
-  };
-}
 // Redux Toolkit uses ImmerJs as part of their solution to ensure that state objects are not mutated.
 // ImmerJs has an autoFreeze option that freezes objects from change which means this reducer can't be migrated to createSlice
 // because the state would become frozen and during run time we would get errors because Angular would try to mutate
 // the frozen state.
 // https://github.com/reduxjs/redux-toolkit/issues/242
-export const locationReducer = (state: LocationState = initialState, action: Action<unknown>) => {
-  if (updateLocationInState.match(action)) {
+export const locationReducer = (state: LocationState = initialState, action: Action<unknown>): LocationState => {
+  if (updateLocation.match(action)) {
     const payload: LocationUpdate = action.payload;
     const { path, routeParams, replace } = payload;
     let query = payload.query || state.query;
+
+    const forceLoginParam = payload.query?.forceLogin;
+    if (forceLoginParam) {
+      navigationLogger('AppWrapper', false, 'Force login', payload);
+      window.location.href = `${payload.path}?${urlUtil.toUrlParams({ ...payload.query, forceLogin: 'true' })}`;
+      return state;
+    }
 
     if (payload.partial) {
       query = _.defaults(query, state.query);

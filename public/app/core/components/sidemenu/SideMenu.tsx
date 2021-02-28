@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { FC, useCallback } from 'react';
 import appEvents from '../../app_events';
 import TopSection from './TopSection';
 import BottomSection from './BottomSection';
@@ -10,7 +10,7 @@ import { useLocation } from 'react-router-dom';
 
 const homeUrl = config.appSubUrl || '/';
 
-export const SideMenu = () => {
+export const SideMenu: FC = React.memo(() => {
   const location = useLocation();
   const query = new URLSearchParams(location.search);
   const kiosk = query.get('kiosk');
@@ -39,4 +39,6 @@ export const SideMenu = () => {
       <BottomSection key="bottomsection" />
     </div>
   );
-};
+});
+
+SideMenu.displayName = 'SideMenu';
