@@ -63,12 +63,16 @@ function soloPanelPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
       },
       mount: (propOverrides?: Partial<Props>) => {
         const props: Props = {
-          urlSlug: 'my-dash',
+          match: {
+            params: { slug: 'my-dash', uid: '11' },
+          } as any,
           $scope: {},
-          urlUid: '11',
-          urlPanelId: '1',
+          location: {
+            search: '?panelId=1',
+          } as any,
+          history: {} as any,
+          route: { routeName: DashboardRoutes.Normal } as any,
           $injector: {},
-          routeName: DashboardRoutes.Normal,
           initDashboard: jest.fn(),
           dashboard: null,
         };

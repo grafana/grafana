@@ -23,7 +23,6 @@ export interface DashboardPageRouteParams {
 export interface Props extends GrafanaRouteComponentProps<DashboardPageRouteParams> {
   $scope: any;
   $injector: any;
-  routeName: DashboardRoutes;
   initDashboard: typeof initDashboard;
   dashboard: DashboardModel | null;
 }
