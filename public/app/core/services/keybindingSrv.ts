@@ -127,7 +127,7 @@ export class KeybindingSrv {
     }
 
     if (search.get('viewPanel')) {
-      locationService.partial({ editPanel: null, tab: null });
+      locationService.partial({ viewPanel: null, tab: null });
       return;
     }
 

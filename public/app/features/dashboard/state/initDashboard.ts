@@ -31,8 +31,8 @@ export interface InitDashboardArgs {
   urlUid?: string;
   urlSlug?: string;
   urlType?: string;
-  urlFolderId?: string;
-  routeName: DashboardRoutes;
+  urlFolderId?: string | null;
+  routeName?: string;
   fixUrl: boolean;
 }
 
@@ -238,7 +238,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
   };
 }
 
-function getNewDashboardModelData(urlFolderId?: string): any {
+function getNewDashboardModelData(urlFolderId?: string | null): any {
   const data = {
     meta: {
       canStar: false,
