@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/stretchr/testify/require"
 )
 
@@ -102,7 +103,7 @@ func (pm fakeBackendPM) GetDataPlugin(string) interface{} {
 
 func createService() (Service, *fakeExecutor) {
 	s := NewService()
-	s.PluginManager = &plugins.PluginManager{
+	s.PluginManager = &manager.PluginManager{
 		BackendPluginManager: fakeBackendPM{},
 	}
 	e := &fakeExecutor{

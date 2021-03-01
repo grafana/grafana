@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/stretchr/testify/require"
 )
@@ -24,7 +25,7 @@ func TestService(t *testing.T) {
 		data.NewField("value", nil, []*float64{fp(2)}))
 
 	dataSvc := tsdb.NewService()
-	dataSvc.PluginManager = &plugins.PluginManager{
+	dataSvc.PluginManager = &manager.PluginManager{
 		BackendPluginManager: fakeBackendPM{},
 	}
 	s := Service{DataService: &dataSvc}

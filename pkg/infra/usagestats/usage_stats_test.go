@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/stretchr/testify/require"
@@ -20,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
@@ -246,9 +246,9 @@ func TestMetrics(t *testing.T) {
 				assert.Equal(t, getSystemStatsQuery.Result.Users, metrics.Get("stats.users.count").MustInt64())
 				assert.Equal(t, getSystemStatsQuery.Result.Orgs, metrics.Get("stats.orgs.count").MustInt64())
 				assert.Equal(t, getSystemStatsQuery.Result.Playlists, metrics.Get("stats.playlist.count").MustInt64())
-				assert.Equal(t, len(plugins.Apps), metrics.Get("stats.plugins.apps.count").MustInt())
-				assert.Equal(t, len(plugins.Panels), metrics.Get("stats.plugins.panels.count").MustInt())
-				assert.Equal(t, len(plugins.DataSources), metrics.Get("stats.plugins.datasources.count").MustInt())
+				assert.Equal(t, len(manager.Apps), metrics.Get("stats.plugins.apps.count").MustInt())
+				assert.Equal(t, len(manager.Panels), metrics.Get("stats.plugins.panels.count").MustInt())
+				assert.Equal(t, len(manager.DataSources), metrics.Get("stats.plugins.datasources.count").MustInt())
 				assert.Equal(t, getSystemStatsQuery.Result.Alerts, metrics.Get("stats.alerts.count").MustInt64())
 				assert.Equal(t, getSystemStatsQuery.Result.ActiveUsers, metrics.Get("stats.active_users.count").MustInt64())
 				assert.Equal(t, getSystemStatsQuery.Result.Datasources, metrics.Get("stats.datasources.count").MustInt64())

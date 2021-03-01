@@ -47,7 +47,7 @@ func TestPluginDashboards(t *testing.T) {
 			return nil
 		})
 
-		dashboards, err := GetPluginDashboards(1, "test-app")
+		dashboards, err := pm.GetPluginDashboards(1, "test-app")
 		So(err, ShouldBeNil)
 
 		Convey("should return 2 dashboards", func() {
