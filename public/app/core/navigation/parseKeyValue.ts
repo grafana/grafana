@@ -139,7 +139,7 @@ function parseKeyValue(keyValue: string | null) {
       }
       key = tryDecodeURIComponent(key);
       if (isDefined(key)) {
-        val = isDefined(val) ? tryDecodeURIComponent(val) : true;
+        val = isDefined(val) ? tryDecodeURIComponent(val as string) : true;
         if (!hasOwnProperty.call(obj, key)) {
           // @ts-ignore
           obj[key] = val;

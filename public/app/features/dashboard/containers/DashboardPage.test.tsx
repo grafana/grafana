@@ -6,6 +6,7 @@ import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 import { DashboardInitPhase, DashboardRoutes } from 'app/types';
 import { notifyApp } from 'app/core/actions';
 import { cleanUpDashboardAndVariables } from '../state/actions';
+import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 
 jest.mock('app/features/dashboard/components/DashboardSettings/GeneralSettings', () => ({}));
 
@@ -53,14 +54,11 @@ function dashboardPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
       },
       mount: (propOverrides?: Partial<Props>) => {
         const props: Props = {
-          match: {
-            params: { slug: 'my-dash', uid: '11' },
-          } as any,
+          ...getRouteComponentProps({
+            match: { params: { slug: 'my-dash', uid: '11' } } as any,
+            route: { routeName: DashboardRoutes.Normal } as any,
+          }),
           $scope: {},
-          location: {} as any,
-          history: {} as any,
-          queryParams: {},
-          route: { routeName: DashboardRoutes.Normal } as any,
           initPhase: DashboardInitPhase.NotStarted,
           isInitSlow: false,
           initDashboard: jest.fn(),

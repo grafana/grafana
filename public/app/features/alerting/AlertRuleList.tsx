@@ -34,11 +34,11 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-interface OwnProps extends GrafanaRouteComponentProps {}
+interface OwnProps extends GrafanaRouteComponentProps<{}, { state: string }> {}
 
 export type Props = OwnProps & ConnectedProps<typeof connector>;
 
-export class AlertRuleListUnconnected extends PureComponent<Props, any> {
+export class AlertRuleListUnconnected extends PureComponent<Props> {
   stateFilters = [
     { label: 'All', value: 'all' },
     { label: 'OK', value: 'ok' },
@@ -54,13 +54,9 @@ export class AlertRuleListUnconnected extends PureComponent<Props, any> {
   }
 
   componentDidUpdate(prevProps: Props) {
-    if (prevProps.location.search !== this.props.location.search) {
+    if (prevProps.queryParams.state !== this.props.queryParams.state) {
       this.fetchRules();
     }
-  }
-
-  componentWillUnmount() {
-    console.log('UNMOUUUUNT');
   }
 
   async fetchRules() {
@@ -68,8 +64,7 @@ export class AlertRuleListUnconnected extends PureComponent<Props, any> {
   }
 
   getStateFilter(): string {
-    const search = new URLSearchParams(this.props.location.search);
-    return search.get('state') ?? 'all';
+    return this.props.queryParams.state ?? 'all';
   }
 
   onStateFilterChanged = (option: SelectableValue) => {
