@@ -3,7 +3,7 @@ import { Story } from '@storybook/react';
 import { ConfirmButton } from '@grafana/ui';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { NOOP_CONTROL } from '../../utils/storybook/noopControl';
-// import { action } from '@storybook/addon-actions';
+import { action } from '@storybook/addon-actions';
 import { Button } from '../Button';
 import { DeleteButton } from './DeleteButton';
 import { Props } from './ConfirmButton';
@@ -33,9 +33,6 @@ export default {
   argTypes: {
     confirmVariant: { control: { type: 'select' } },
     size: { control: { type: 'select' } },
-    onConfirm: {
-      action: 'saved!',
-    },
     className: NOOP_CONTROL,
   },
 };
@@ -52,7 +49,9 @@ export const Basic: Story<StoryProps> = (args) => {
       confirmText={args.confirmText}
       disabled={args.disabled}
       confirmVariant={args.confirmVariant}
-      onConfirm={() => args.onConfirm}
+      onConfirm={() => {
+        action('Saved')('save!');
+      }}
     >
       {args.buttonText}
     </ConfirmButton>
