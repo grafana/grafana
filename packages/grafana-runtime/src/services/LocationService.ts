@@ -11,6 +11,7 @@ export interface LocationService {
   getLocation: () => H.Location;
   getHistory: () => H.History;
   getSearch: () => URLSearchParams;
+  getSearchObject: () => Record<string, string | boolean>;
 
   /**
    * This is from the old LocationSrv interface
@@ -122,6 +123,12 @@ class HistoryWrapper implements LocationService {
     return this.history.location;
   }
 
+  getSearchObject() {
+    const params: Array<[string, string | boolean]> = [];
+    new URLSearchParams(this.history.location.search).forEach((v, k) => params.push([k, parseValue(v)]));
+    return Object.fromEntries(new Map(params));
+  }
+
   /** @depecreated */
   update(options: LocationUpdate) {
     if (options.partial && options.query) {
@@ -132,13 +139,6 @@ class HistoryWrapper implements LocationService {
       this.push(options.path!);
     }
   }
-}
-
-/** @internal maybe move in to a LocationService function getSearchObj? */
-export function queryStringToJSON(queryString: string) {
-  const params: Array<[string, string | boolean]> = [];
-  new URLSearchParams(queryString).forEach((v, k) => params.push([k, parseValue(v)]));
-  return Object.fromEntries(new Map(params));
 }
 
 function parseValue(value: string) {

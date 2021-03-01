@@ -6,7 +6,7 @@ import Drop from 'tether-drop';
 import { GrafanaRouteComponentProps } from './types';
 import { updateLocation } from '../reducers/location';
 import usePrevious from 'react-use/lib/usePrevious';
-import { navigationLogger, queryStringToJSON } from '@grafana/runtime';
+import { locationService, navigationLogger } from '@grafana/runtime';
 
 export interface Props extends GrafanaRouteComponentProps {}
 
@@ -65,7 +65,7 @@ export class GrafanaRoute extends React.Component<Props> {
 
     const RouteComponent = props.route.component;
 
-    return <RouteComponent {...props} queryParams={queryStringToJSON(props.location.search)} />;
+    return <RouteComponent {...props} queryParams={locationService.getSearchObject()} />;
   }
 }
 
@@ -82,7 +82,7 @@ export const SyncLocationWithRedux: React.FC<RouteComponentProps<any>> = (props)
       updateLocation({
         path: props.location.pathname,
         routeParams: props.match.params,
-        query: queryStringToJSON(props.location.search),
+        query: locationService.getSearchObject(),
       })
     );
   }
