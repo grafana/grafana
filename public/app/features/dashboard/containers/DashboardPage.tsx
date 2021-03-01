@@ -34,7 +34,11 @@ export interface DashboardPageRouteParams {
   slug?: string;
 }
 
-export interface Props extends GrafanaRouteComponentProps<DashboardPageRouteParams> {
+export interface DashboardPageRouteSearchParams {
+  tab?: string;
+}
+
+export interface Props extends GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams> {
   $scope: any;
   $injector: any;
   initPhase: DashboardInitPhase;
@@ -339,7 +343,7 @@ export class DashboardPage extends PureComponent<Props, State> {
         </div>
 
         {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
-        {editPanel && <PanelEditor dashboard={dashboard} sourcePanel={editPanel} />}
+        {editPanel && <PanelEditor dashboard={dashboard} sourcePanel={editPanel} tab={this.props.queryParams.tab} />}
         {editView && <DashboardSettings dashboard={dashboard} editview={editView} />}
       </div>
     );

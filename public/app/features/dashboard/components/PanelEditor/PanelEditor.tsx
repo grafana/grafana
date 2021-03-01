@@ -36,7 +36,6 @@ import {
 } from './state/actions';
 
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
-import { updateLocation } from 'app/core/reducers/location';
 import { setDiscardChanges } from './state/reducers';
 
 import { getPanelEditorTabs } from './state/selectors';
@@ -54,6 +53,7 @@ import { SaveLibraryPanelModal } from 'app/features/library-panels/components/Sa
 interface OwnProps {
   dashboard: DashboardModel;
   sourcePanel: PanelModel;
+  tab?: string;
 }
 
 const mapStateToProps = (state: StoreState) => {
@@ -61,18 +61,15 @@ const mapStateToProps = (state: StoreState) => {
   const { plugin } = getPanelStateById(state.dashboard, panel.id);
 
   return {
-    location: state.location,
     plugin: plugin,
     panel,
     initDone: state.panelEditor.initDone,
-    tabs: getPanelEditorTabs(state.location, plugin),
     uiState: state.panelEditor.ui,
     variables: getVariables(state),
   };
 };
 
 const mapDispatchToProps = {
-  updateLocation,
   initPanelEditor,
   exitPanelEditor,
   updateSourcePanel,
@@ -156,7 +153,9 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   };
 
   onChangeTab = (tab: PanelEditorTab) => {
-    this.props.updateLocation({ query: { tab: tab.id }, partial: true });
+    locationService.partial({
+      tab: tab.id,
+    });
   };
 
   onFieldConfigChange = (config: FieldConfigSource) => {
@@ -193,7 +192,9 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   };
 
   renderPanel = (styles: EditorStyles) => {
-    const { dashboard, panel, tabs, uiState } = this.props;
+    const { dashboard, panel, uiState, plugin, tab } = this.props;
+    const tabs = getPanelEditorTabs(tab, plugin);
+
     return (
       <div className={cx(styles.mainPaneWrapper, tabs.length === 0 && styles.mainPaneWrapperNoTabs)} key="panel">
         {this.renderPanelToolbar(styles)}
@@ -224,7 +225,8 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   };
 
   renderPanelAndEditor(styles: EditorStyles) {
-    const { panel, dashboard, tabs } = this.props;
+    const { panel, dashboard, plugin, tab } = this.props;
+    const tabs = getPanelEditorTabs(tab, plugin);
 
     if (tabs.length > 0) {
       return [
@@ -256,7 +258,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 
   renderPanelToolbar(styles: EditorStyles) {
-    const { dashboard, location, uiState, variables, updateTimeZoneForSession } = this.props;
+    const { dashboard, uiState, variables, updateTimeZoneForSession } = this.props;
     return (
       <div className={styles.panelToolbar}>
         <HorizontalGroup justify={variables.length > 0 ? 'space-between' : 'flex-end'} align="flex-start">
@@ -264,11 +266,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
           <HorizontalGroup>
             <RadioButtonGroup value={uiState.mode} options={displayModes} onChange={this.onDisplayModeChange} />
-            <DashNavTimeControls
-              dashboard={dashboard}
-              location={location}
-              onChangeTimeZone={updateTimeZoneForSession}
-            />
+            <DashNavTimeControls dashboard={dashboard} onChangeTimeZone={updateTimeZoneForSession} />
             {!uiState.isPanelOptionsVisible && (
               <ToolbarButton onClick={this.onTogglePanelOptions} tooltip="Open options pane" icon="angle-left">
                 Show options
