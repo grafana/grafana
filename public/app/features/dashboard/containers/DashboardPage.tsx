@@ -36,6 +36,11 @@ export interface DashboardPageRouteParams {
 
 type DashboardPageRouteSearchParams = {
   tab?: string;
+  folderId?: string;
+  editPanel?: string;
+  viewPanel?: string;
+  editview?: string;
+  inspect?: string;
 };
 
 export interface Props extends GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams> {
@@ -91,8 +96,7 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 
   initDashboard() {
-    const { dashboard, match, location } = this.props;
-    const searchParams = new URLSearchParams(location.search);
+    const { dashboard, match, queryParams } = this.props;
 
     if (dashboard) {
       this.closeDashboard();
@@ -104,14 +108,14 @@ export class DashboardPage extends PureComponent<Props, State> {
       urlSlug: match.params.slug,
       urlUid: match.params.uid,
       urlType: match.params.type,
-      urlFolderId: searchParams.get('folderId'),
+      urlFolderId: queryParams.folderId,
       routeName: this.props.route.routeName,
       fixUrl: true,
     });
   }
 
   componentDidUpdate(prevProps: Props) {
-    const { dashboard, match, location } = this.props;
+    const { dashboard, match, queryParams } = this.props;
     const { editPanel, viewPanel, editView } = this.state;
 
     if (!dashboard) {
@@ -128,13 +132,12 @@ export class DashboardPage extends PureComponent<Props, State> {
       return;
     }
 
-    const searchParams = new URLSearchParams(location.search);
-    const urlEditPanelId = searchParams.get('editPanel');
-    const urlViewPanelId = searchParams.get('viewPanel');
-    const urlEditView = searchParams.get('editview');
+    const urlEditPanelId = queryParams.editPanel;
+    const urlViewPanelId = queryParams.viewPanel;
+    const urlEditView = queryParams.editview;
 
     // entering edit mode
-    if (!editPanel && urlEditPanelId !== null) {
+    if (!editPanel && urlEditPanelId) {
       dashboardWatcher.setEditingState(true);
 
       this.getPanelByIdFromUrlParam(urlEditPanelId, (panel) => {
@@ -155,7 +158,7 @@ export class DashboardPage extends PureComponent<Props, State> {
     }
 
     // entering view mode
-    if (!viewPanel && urlViewPanelId !== null) {
+    if (!viewPanel && urlViewPanelId) {
       this.getPanelByIdFromUrlParam(urlViewPanelId, (panel) => {
         this.setPanelFullscreenClass(true);
         dashboard.initViewPanel(panel);
@@ -280,9 +283,9 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 
   getInspectPanel() {
-    const { dashboard, location } = this.props;
-    const searchParams = new URLSearchParams(location.search);
-    const inspectPanelId = searchParams.get('inspect');
+    const { dashboard, queryParams } = this.props;
+
+    const inspectPanelId = queryParams.inspect;
 
     if (!dashboard || !inspectPanelId) {
       return null;
