@@ -66,7 +66,7 @@ func newThresholdEvaluator(model conditionEvalJSON) (*thresholdEvaluator, error)
 }
 
 func (e *noValueEvaluator) Eval(reducedValue mathexp.Number) bool {
-	return !(reducedValue.GetFloat64Value() == nil)
+	return reducedValue.GetFloat64Value() == nil
 }
 
 func newRangedEvaluator(model conditionEvalJSON) (*rangedEvaluator, error) {
