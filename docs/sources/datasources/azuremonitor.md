@@ -165,68 +165,6 @@ Grafana alerting is supported for the Azure Monitor service. This is not Azure A
 
 {{< docs-imagebox img="/img/docs/v60/azuremonitor-alerting.png" class="docs-image--no-shadow" caption="Azure Monitor Alerting" >}}
 
-## Query the Application Insights Service
-
-{{< docs-imagebox img="/img/docs/azuremonitor/insights_metrics_multi-dim.png" class="docs-image--no-shadow" caption="Application Insights Query Editor" >}}
-
-As of Grafana 7.1, you can select more than one group by dimension.
-
-### Formatting legend keys with aliases for Application Insights
-
-The default legend formatting is:
-
-`metricName{dimensionName=dimensionValue,dimensionTwoName=DimensionTwoValue}`
-
-In the Legend Format field, the aliases which are defined below can be combined any way you want.
-
-Application Insights examples:
-
-- `city: {{ client/city }}`
-- `{{ metric }} [Location: {{ client/countryOrRegion }}, {{ client/city }}]`
-
-### Alias patterns for Application Insights
-
-- `{{ groupbyvalue }}` = _Legacy as of 7.1+ (for backwards compatibility)_ replaced with the first dimension's key/label (as sorted by the key/label)
-- `{{ groupbyname }}` = _Legacy as of 7.1+ (for backwards compatibility)_ replaced with first dimension's value (as sorted by the key/label) (e.g. BlockBlob)
-- `{{ metric }}` = replaced with metric name (e.g. requests/count)
-- `{{ arbitraryDim }}` = _Available in 7.1+_ replaced with the value of the corresponding dimension. (e.g. `{{ client/city }}` becomes Chicago)
-
-### Filter expressions for Application Insights
-
-The filter field takes an OData filter expression.
-
-Examples:
-
-- `client/city eq 'Boydton'`
-- `client/city ne 'Boydton'`
-- `client/city ne 'Boydton' and client/city ne 'Dublin'`
-- `client/city eq 'Boydton' or client/city eq 'Dublin'`
-
-### Templating with variables for Application Insights
-
-Use the one of the following queries in the `Query` field in the Variable edit view.
-
-Check out the [Templating]({{< relref "../variables/_index.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
-
-| Name                               | Description                                                  |
-| ---------------------------------- | ------------------------------------------------------------ |
-| `AppInsightsMetricNames()`         | Returns a list of metric names.                              |
-| `AppInsightsGroupBys(aMetricName)` | Returns a list of "group bys" for the specified metric name. |
-
-Examples:
-
-- Metric Names query: `AppInsightsMetricNames()`
-- Passing in metric name variable: `AppInsightsGroupBys(requests/count)`
-- Chaining template variables: `AppInsightsGroupBys($metricnames)`
-
-{{< docs-imagebox img="/img/docs/v60/appinsights-service-variables.png" class="docs-image--no-shadow" caption="Nested Application Insights Template Variables" >}}
-
-### Application Insights alerting
-
-Grafana alerting is supported for Application Insights. This is not Azure Alerts support. For more information about Grafana alerting, refer to [Alerts overview]({{< relref "../alerting/_index.md" >}}).
-
-{{< docs-imagebox img="/img/docs/v60/azuremonitor-alerting.png" class="docs-image--no-shadow" caption="Azure Monitor Alerting" >}}
-
 ## Querying the Logs service
 
 Queries are written in the [Kusto Query Language](https://docs.microsoft.com/en-us/azure/data-explorer/kusto/query/). A Logs query can be formatted as time series data or as table data.
@@ -372,6 +310,68 @@ If you're not currently logged in to the Azure Portal, then the link opens the l
 > Only available in Grafana v7.0+.
 
 Grafana alerting is supported for Application Insights. This is not Azure Alerts support. Read more about how alerting in Grafana works in [Alerting rules]({{< relref "../alerting/_index.md" >}}).
+
+## Query the Application Insights Service
+
+{{< docs-imagebox img="/img/docs/azuremonitor/insights_metrics_multi-dim.png" class="docs-image--no-shadow" caption="Application Insights Query Editor" >}}
+
+As of Grafana 7.1, you can select more than one group by dimension.
+
+### Formatting legend keys with aliases for Application Insights
+
+The default legend formatting is:
+
+`metricName{dimensionName=dimensionValue,dimensionTwoName=DimensionTwoValue}`
+
+In the Legend Format field, the aliases which are defined below can be combined any way you want.
+
+Application Insights examples:
+
+- `city: {{ client/city }}`
+- `{{ metric }} [Location: {{ client/countryOrRegion }}, {{ client/city }}]`
+
+### Alias patterns for Application Insights
+
+- `{{ groupbyvalue }}` = _Legacy as of 7.1+ (for backwards compatibility)_ replaced with the first dimension's key/label (as sorted by the key/label)
+- `{{ groupbyname }}` = _Legacy as of 7.1+ (for backwards compatibility)_ replaced with first dimension's value (as sorted by the key/label) (e.g. BlockBlob)
+- `{{ metric }}` = replaced with metric name (e.g. requests/count)
+- `{{ arbitraryDim }}` = _Available in 7.1+_ replaced with the value of the corresponding dimension. (e.g. `{{ client/city }}` becomes Chicago)
+
+### Filter expressions for Application Insights
+
+The filter field takes an OData filter expression.
+
+Examples:
+
+- `client/city eq 'Boydton'`
+- `client/city ne 'Boydton'`
+- `client/city ne 'Boydton' and client/city ne 'Dublin'`
+- `client/city eq 'Boydton' or client/city eq 'Dublin'`
+
+### Templating with variables for Application Insights
+
+Use the one of the following queries in the `Query` field in the Variable edit view.
+
+Check out the [Templating]({{< relref "../variables/_index.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
+
+| Name                               | Description                                                  |
+| ---------------------------------- | ------------------------------------------------------------ |
+| `AppInsightsMetricNames()`         | Returns a list of metric names.                              |
+| `AppInsightsGroupBys(aMetricName)` | Returns a list of "group bys" for the specified metric name. |
+
+Examples:
+
+- Metric Names query: `AppInsightsMetricNames()`
+- Passing in metric name variable: `AppInsightsGroupBys(requests/count)`
+- Chaining template variables: `AppInsightsGroupBys($metricnames)`
+
+{{< docs-imagebox img="/img/docs/v60/appinsights-service-variables.png" class="docs-image--no-shadow" caption="Nested Application Insights Template Variables" >}}
+
+### Application Insights alerting
+
+Grafana alerting is supported for Application Insights. This is not Azure Alerts support. For more information about Grafana alerting, refer to [Alerts overview]({{< relref "../alerting/_index.md" >}}).
+
+{{< docs-imagebox img="/img/docs/v60/azuremonitor-alerting.png" class="docs-image--no-shadow" caption="Azure Monitor Alerting" >}}
 
 ## Query the Application Insights Analytics service
 
