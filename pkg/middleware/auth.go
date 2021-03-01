@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"errors"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -44,6 +45,15 @@ func notAuthorized(c *models.ReqContext) {
 
 	cookies.WriteCookie(c.Resp, "redirect_to", url.QueryEscape(redirectTo), 0, nil)
 	c.Redirect(setting.AppSubUrl + "/login")
+}
+
+func tokenRevoked(c *models.ReqContext) {
+	if c.IsApiRequest() {
+		c.JsonApiErr(401, "Token revoked", nil)
+		return
+	}
+
+	c.Redirect(setting.AppSubUrl + "/")
 }
 
 var forceLoginParamsRegexp = regexp.MustCompile(`&?forceLogin=true`)
@@ -95,6 +105,13 @@ func Auth(options *AuthOptions) macaron.Handler {
 		requireLogin := !c.AllowAnonymous || forceLogin || options.ReqNoAnonynmous
 
 		if !c.IsSignedIn && options.ReqSignedIn && requireLogin {
+			lookupTokenErr, hasTokenErr := c.Data["lookupTokenErr"].(error)
+			var revokedErr *models.TokenRevokedError
+			if hasTokenErr && errors.As(lookupTokenErr, &revokedErr) {
+				tokenRevoked(c)
+				return
+			}
+
 			notAuthorized(c)
 			return
 		}
