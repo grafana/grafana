@@ -180,7 +180,7 @@ export class DashboardPage extends PureComponent<Props, State> {
       );
     }
 
-    if (urlEditView !== editView) {
+    if (urlEditView && urlEditView !== editView) {
       this.setState({ editView: urlEditView });
     }
   }
