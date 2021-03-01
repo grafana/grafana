@@ -1,6 +1,7 @@
 package classic
 
 import (
+	"math"
 	"testing"
 	"time"
 
@@ -27,6 +28,12 @@ func TestReducer(t *testing.T) {
 			reducer:        classicReducer("min"),
 			inputSeries:    valBasedSeries(ptr.Float64(3), ptr.Float64(2), ptr.Float64(1)),
 			expectedNumber: valBasedNumber(ptr.Float64(1)),
+		},
+		{
+			name:           "min with NaNs only",
+			reducer:        classicReducer("min"),
+			inputSeries:    valBasedSeries(ptr.Float64(math.NaN()), ptr.Float64(math.NaN()), ptr.Float64(math.NaN())),
+			expectedNumber: valBasedNumber(nil),
 		},
 		{
 			name:           "max",
@@ -127,22 +134,22 @@ func TestDiffReducer(t *testing.T) {
 			expectedNumber: valBasedNumber(ptr.Float64(0)),
 		},
 		{
-			name:           "diff two positive points (pos result)",
+			name:           "diff two positive points [1]",
 			inputSeries:    valBasedSeries(ptr.Float64(30), ptr.Float64(40)),
 			expectedNumber: valBasedNumber(ptr.Float64(10)),
 		},
 		{
-			name:           "diff two positive points (neg result)",
+			name:           "diff two positive points [2]",
 			inputSeries:    valBasedSeries(ptr.Float64(30), ptr.Float64(20)),
 			expectedNumber: valBasedNumber(ptr.Float64(-10)),
 		},
 		{
-			name:           "diff two negative points (neg result)",
+			name:           "diff two negative points [1]",
 			inputSeries:    valBasedSeries(ptr.Float64(-30), ptr.Float64(-40)),
 			expectedNumber: valBasedNumber(ptr.Float64(-10)),
 		},
 		{
-			name:           "diff two negative points (pos result)",
+			name:           "diff two negative points [2]",
 			inputSeries:    valBasedSeries(ptr.Float64(-30), ptr.Float64(-10)),
 			expectedNumber: valBasedNumber(ptr.Float64(20)),
 		},
@@ -178,7 +185,216 @@ func TestDiffReducer(t *testing.T) {
 			require.Equal(t, tt.expectedNumber, num)
 		})
 	}
+}
 
+func TestDiffAbsReducer(t *testing.T) {
+	var tests = []struct {
+		name           string
+		inputSeries    mathexp.Series
+		expectedNumber mathexp.Number
+	}{
+		{
+			name:           "diff_abs of one positive point",
+			inputSeries:    valBasedSeries(ptr.Float64(30)),
+			expectedNumber: valBasedNumber(ptr.Float64(0)),
+		},
+		{
+			name:           "diff_abs of one negative point",
+			inputSeries:    valBasedSeries(ptr.Float64(-30)),
+			expectedNumber: valBasedNumber(ptr.Float64(0)),
+		},
+		{
+			name:           "diff_abs two positive points [1]",
+			inputSeries:    valBasedSeries(ptr.Float64(30), ptr.Float64(40)),
+			expectedNumber: valBasedNumber(ptr.Float64(10)),
+		},
+		{
+			name:           "diff_abs two positive points [2]",
+			inputSeries:    valBasedSeries(ptr.Float64(30), ptr.Float64(20)),
+			expectedNumber: valBasedNumber(ptr.Float64(10)),
+		},
+		{
+			name:           "diff_abs two negative points [1]",
+			inputSeries:    valBasedSeries(ptr.Float64(-30), ptr.Float64(-40)),
+			expectedNumber: valBasedNumber(ptr.Float64(10)),
+		},
+		{
+			name:           "diff_abs two negative points [2]",
+			inputSeries:    valBasedSeries(ptr.Float64(-30), ptr.Float64(-10)),
+			expectedNumber: valBasedNumber(ptr.Float64(20)),
+		},
+		{
+			name:           "diff_abs of one positive and one negative point",
+			inputSeries:    valBasedSeries(ptr.Float64(30), ptr.Float64(-40)),
+			expectedNumber: valBasedNumber(ptr.Float64(70)),
+		},
+		{
+			name:           "diff_abs of one negative and one positive point",
+			inputSeries:    valBasedSeries(ptr.Float64(-30), ptr.Float64(40)),
+			expectedNumber: valBasedNumber(ptr.Float64(70)),
+		},
+		{
+			name:           "diff_abs of three positive points",
+			inputSeries:    valBasedSeries(ptr.Float64(30), ptr.Float64(40), ptr.Float64(50)),
+			expectedNumber: valBasedNumber(ptr.Float64(20)),
+		},
+		{
+			name:           "diff_abs of three negative points",
+			inputSeries:    valBasedSeries(ptr.Float64(-30), ptr.Float64(-40), ptr.Float64(-50)),
+			expectedNumber: valBasedNumber(ptr.Float64(20)),
+		},
+		{
+			name:           "diff_abs with only nulls",
+			inputSeries:    valBasedSeries(nil, nil),
+			expectedNumber: valBasedNumber(nil),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			num := classicReducer("diff_abs").Reduce(tt.inputSeries)
+			require.Equal(t, tt.expectedNumber, num)
+		})
+	}
+}
+
+func TestPercentDiffReducer(t *testing.T) {
+	var tests = []struct {
+		name           string
+		inputSeries    mathexp.Series
+		expectedNumber mathexp.Number
+	}{
+		{
+			name:           "percent_diff of one positive point",
+			inputSeries:    valBasedSeries(ptr.Float64(30)),
+			expectedNumber: valBasedNumber(ptr.Float64(0)),
+		},
+		{
+			name:           "percent_diff of one negative point",
+			inputSeries:    valBasedSeries(ptr.Float64(-30)),
+			expectedNumber: valBasedNumber(ptr.Float64(0)),
+		},
+		{
+			name:           "percent_diff two positive points [1]",
+			inputSeries:    valBasedSeries(ptr.Float64(30), ptr.Float64(40)),
+			expectedNumber: valBasedNumber(ptr.Float64(33.33333333333333)),
+		},
+		{
+			name:           "percent_diff two positive points [2]",
+			inputSeries:    valBasedSeries(ptr.Float64(30), ptr.Float64(20)),
+			expectedNumber: valBasedNumber(ptr.Float64(-33.33333333333333)),
+		},
+		{
+			name:           "percent_diff two negative points [1]",
+			inputSeries:    valBasedSeries(ptr.Float64(-30), ptr.Float64(-40)),
+			expectedNumber: valBasedNumber(ptr.Float64(-33.33333333333333)),
+		},
+		{
+			name:           "percent_diff two negative points [2]",
+			inputSeries:    valBasedSeries(ptr.Float64(-30), ptr.Float64(-10)),
+			expectedNumber: valBasedNumber(ptr.Float64(66.66666666666666)),
+		},
+		{
+			name:           "percent_diff of one positive and one negative point",
+			inputSeries:    valBasedSeries(ptr.Float64(30), ptr.Float64(-40)),
+			expectedNumber: valBasedNumber(ptr.Float64(-233.33333333333334)),
+		},
+		{
+			name:           "percent_diff of one negative and one positive point",
+			inputSeries:    valBasedSeries(ptr.Float64(-30), ptr.Float64(40)),
+			expectedNumber: valBasedNumber(ptr.Float64(233.33333333333334)),
+		},
+		{
+			name:           "percent_diff of three positive points",
+			inputSeries:    valBasedSeries(ptr.Float64(30), ptr.Float64(40), ptr.Float64(50)),
+			expectedNumber: valBasedNumber(ptr.Float64(66.66666666666666)),
+		},
+		{
+			name:           "percent_diff of three negative points",
+			inputSeries:    valBasedSeries(ptr.Float64(-30), ptr.Float64(-40), ptr.Float64(-50)),
+			expectedNumber: valBasedNumber(ptr.Float64(-66.66666666666666)),
+		},
+		{
+			name:           "percent_diff with only nulls",
+			inputSeries:    valBasedSeries(nil, nil),
+			expectedNumber: valBasedNumber(nil),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			num := classicReducer("percent_diff").Reduce(tt.inputSeries)
+			require.Equal(t, tt.expectedNumber, num)
+		})
+	}
+}
+
+func TestPercentDiffAbsReducer(t *testing.T) {
+	var tests = []struct {
+		name           string
+		inputSeries    mathexp.Series
+		expectedNumber mathexp.Number
+	}{
+		{
+			name:           "percent_diff_abs of one positive point",
+			inputSeries:    valBasedSeries(ptr.Float64(30)),
+			expectedNumber: valBasedNumber(ptr.Float64(0)),
+		},
+		{
+			name:           "percent_diff_abs of one negative point",
+			inputSeries:    valBasedSeries(ptr.Float64(-30)),
+			expectedNumber: valBasedNumber(ptr.Float64(0)),
+		},
+		{
+			name:           "percent_diff_abs two positive points [1]",
+			inputSeries:    valBasedSeries(ptr.Float64(30), ptr.Float64(40)),
+			expectedNumber: valBasedNumber(ptr.Float64(33.33333333333333)),
+		},
+		{
+			name:           "percent_diff_abs two positive points [2]",
+			inputSeries:    valBasedSeries(ptr.Float64(30), ptr.Float64(20)),
+			expectedNumber: valBasedNumber(ptr.Float64(33.33333333333333)),
+		},
+		{
+			name:           "percent_diff_abs two negative points [1]",
+			inputSeries:    valBasedSeries(ptr.Float64(-30), ptr.Float64(-40)),
+			expectedNumber: valBasedNumber(ptr.Float64(33.33333333333333)),
+		},
+		{
+			name:           "percent_diff_abs two negative points [2]",
+			inputSeries:    valBasedSeries(ptr.Float64(-30), ptr.Float64(-10)),
+			expectedNumber: valBasedNumber(ptr.Float64(66.66666666666666)),
+		},
+		{
+			name:           "percent_diff_abs of one positive and one negative point",
+			inputSeries:    valBasedSeries(ptr.Float64(30), ptr.Float64(-40)),
+			expectedNumber: valBasedNumber(ptr.Float64(233.33333333333334)),
+		},
+		{
+			name:           "percent_diff_abs of one negative and one positive point",
+			inputSeries:    valBasedSeries(ptr.Float64(-30), ptr.Float64(40)),
+			expectedNumber: valBasedNumber(ptr.Float64(233.33333333333334)),
+		},
+		{
+			name:           "percent_diff_abs of three positive points",
+			inputSeries:    valBasedSeries(ptr.Float64(30), ptr.Float64(40), ptr.Float64(50)),
+			expectedNumber: valBasedNumber(ptr.Float64(66.66666666666666)),
+		},
+		{
+			name:           "percent_diff_abs of three negative points",
+			inputSeries:    valBasedSeries(ptr.Float64(-30), ptr.Float64(-40), ptr.Float64(-50)),
+			expectedNumber: valBasedNumber(ptr.Float64(66.66666666666666)),
+		},
+		{
+			name:           "percent_diff_abs with only nulls",
+			inputSeries:    valBasedSeries(nil, nil),
+			expectedNumber: valBasedNumber(nil),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			num := classicReducer("percent_diff_abs").Reduce(tt.inputSeries)
+			require.Equal(t, tt.expectedNumber, num)
+		})
+	}
 }
 
 func valBasedSeries(vals ...*float64) mathexp.Series {

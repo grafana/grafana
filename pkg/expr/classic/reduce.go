@@ -66,7 +66,7 @@ func (cr classicReducer) Reduce(series mathexp.Series) mathexp.Number {
 		value = math.MaxFloat64
 		for i := 0; i < vF.Len(); i++ {
 			if f, ok := vF.At(i).(*float64); ok {
-				if nilOrNaN(f) {
+				if !nilOrNaN(f) {
 					continue
 				}
 				allNull = false
