@@ -301,7 +301,7 @@ func (s *UserAuthTokenService) RevokeToken(ctx context.Context, token *models.Us
 	if soft {
 		model.RevokedAt = getTime().Unix()
 		err = s.SQLStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-			_, err := dbSession.ID(model.Id).Update(&model)
+			rowsAffected, err = dbSession.ID(model.Id).Update(model)
 			return err
 		})
 	} else {
