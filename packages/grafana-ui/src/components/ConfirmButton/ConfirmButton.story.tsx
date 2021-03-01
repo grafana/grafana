@@ -3,7 +3,7 @@ import { Story } from '@storybook/react';
 import { ConfirmButton } from '@grafana/ui';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { NOOP_CONTROL } from '../../utils/storybook/noopControl';
-// import { action } from '@storybook/addon-actions';
+import { action } from '@storybook/addon-actions';
 import { Button } from '../Button';
 import { DeleteButton } from './DeleteButton';
 import { Props } from './ConfirmButton';
