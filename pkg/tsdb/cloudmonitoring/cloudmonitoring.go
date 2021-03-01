@@ -220,8 +220,9 @@ func (e *Executor) buildQueryExecutors(tsdbQuery plugins.DataQuery) ([]cloudMoni
 
 	durationSeconds := int(endTime.Sub(startTime).Seconds())
 
-	for _, query := range tsdbQuery.Queries {
-		migrateLegacyQueryModel(&query)
+	for i := range tsdbQuery.Queries {
+		migrateLegacyQueryModel(&tsdbQuery.Queries[i])
+		query := tsdbQuery.Queries[i]
 		q := grafanaQuery{}
 		model, err := query.Model.MarshalJSON()
 		if err != nil {

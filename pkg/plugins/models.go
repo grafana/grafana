@@ -1,4 +1,3 @@
-// Package models contains plugin model related logic.
 package plugins
 
 import (

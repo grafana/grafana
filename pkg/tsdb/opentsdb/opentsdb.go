@@ -38,7 +38,6 @@ func init() {
 
 func (e *OpenTsdbExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 	queryContext plugins.DataQuery) (plugins.DataResponse, error) {
-
 	var tsdbQuery OpenTsdbQuery
 
 	tsdbQuery.Start = queryContext.TimeRange.GetFromAsMsEpoch()

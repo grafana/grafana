@@ -1,2 +1,2 @@
-// Package plugins contains plugin models and interface types.
+// Package plugins contains plugin related logic.
 package plugins

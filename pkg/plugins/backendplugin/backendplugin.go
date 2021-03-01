@@ -1,4 +1,4 @@
-// Package models contains backend plugin model related logic.
+// Package backendplugin contains backend plugin related logic.
 package backendplugin
 
 import (

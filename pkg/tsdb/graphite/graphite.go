@@ -34,7 +34,6 @@ var glog = log.New("tsdb.graphite")
 
 func (e *GraphiteExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource, tsdbQuery plugins.DataQuery) (
 	plugins.DataResponse, error) {
-
 	// This logic is used when called from Dashboard Alerting.
 	from := "-" + formatTimeRange(tsdbQuery.TimeRange.From)
 	until := formatTimeRange(tsdbQuery.TimeRange.To)

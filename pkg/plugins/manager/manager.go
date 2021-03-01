@@ -544,7 +544,7 @@ func (pm *PluginManager) ScanningErrors() []plugins.PluginError {
 func (pm *PluginManager) GetPluginMarkdown(pluginId string, name string) ([]byte, error) {
 	plug, exists := Plugins[pluginId]
 	if !exists {
-		return nil, plugins.PluginNotFoundError{pluginId}
+		return nil, plugins.PluginNotFoundError{PluginID: pluginId}
 	}
 
 	// nolint:gosec
