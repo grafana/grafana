@@ -33,9 +33,6 @@ export default {
   argTypes: {
     confirmVariant: { control: { type: 'select' } },
     size: { control: { type: 'select' } },
-    onConfirm: {
-      action: 'saved!',
-    },
     className: NOOP_CONTROL,
   },
 };
@@ -52,7 +49,9 @@ export const Basic: Story<StoryProps> = (args) => {
       confirmText={args.confirmText}
       disabled={args.disabled}
       confirmVariant={args.confirmVariant}
-      onConfirm={() => args.onConfirm}
+      onConfirm={() => {
+        action('Saved')('save!');
+      }}
     >
       {args.buttonText}
     </ConfirmButton>
