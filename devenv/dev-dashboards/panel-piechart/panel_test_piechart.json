@@ -55,14 +55,9 @@
       "options": {
         "displayLabels": [
           "name"
-        ],
-        "labelOptions": {
-          "showName": true,
-          "showPercent": false,
-          "showValue": false
-        },
+        ],        
         "legend": {
-          "displayColumns": [],
+          "values": [],
           "displayMode": "list",
           "placement": "right"
         },
@@ -130,14 +125,9 @@
         "displayLabels": [
           "name",
           "percent"
-        ],
-        "labelOptions": {
-          "showName": true,
-          "showPercent": true,
-          "showValue": false
-        },
+        ],        
         "legend": {
-          "displayColumns": [
+          "values": [
             "percent"
           ],
           "displayMode": "list",
@@ -204,14 +194,9 @@
       "options": {
         "displayLabels": [
           "name"
-        ],
-        "labelOptions": {
-          "showName": true,
-          "showPercent": false,
-          "showValue": false
-        },
+        ],        
         "legend": {
-          "displayColumns": [],
+          "values": [],
           "displayMode": "hidden",
           "placement": "right"
         },
@@ -276,14 +261,9 @@
       "options": {
         "displayLabels": [
           "percent"
-        ],
-        "labelOptions": {
-          "showName": false,
-          "showPercent": true,
-          "showValue": false
-        },
+        ],      
         "legend": {
-          "displayColumns": [
+          "values": [
             "percent"
           ],
           "displayMode": "table",
@@ -350,14 +330,9 @@
       "options": {
         "displayLabels": [
           "value"
-        ],
-        "labelOptions": {
-          "showName": false,
-          "showPercent": false,
-          "showValue": true
-        },
+        ],        
         "legend": {
-          "displayColumns": [
+          "values": [
             "value"
           ],
           "displayMode": "table",
@@ -424,14 +399,9 @@
       "options": {
         "displayLabels": [
           "name"
-        ],
-        "labelOptions": {
-          "showName": true,
-          "showPercent": false,
-          "showValue": false
-        },
+        ],        
         "legend": {
-          "displayColumns": [],
+          "values": [],
           "displayMode": "list",
           "placement": "bottom"
         },
@@ -494,14 +464,9 @@
       },
       "id": 10,
       "options": {
-        "displayLabels": [],
-        "labelOptions": {
-          "showName": true,
-          "showPercent": false,
-          "showValue": false
-        },
+        "displayLabels": [],        
         "legend": {
-          "displayColumns": ["percent", "value"],
+          "values": ["percent", "value"],
           "displayMode": "table",
           "placement": "bottom"
         },

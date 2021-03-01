@@ -19,7 +19,7 @@ export enum PieChartLabels {
   Percent = 'percent',
 }
 
-export enum LegendColumns {
+export enum PieChartLegendValues {
   Value = 'value',
   Percent = 'percent',
 }
@@ -42,14 +42,14 @@ export enum PieChartType {
 }
 
 export interface PieChartLegendOptions extends VizLegendOptions {
-  displayColumns: LegendColumns[];
+  values: PieChartLegendValues[];
 }
 
 const defaultLegendOptions: PieChartLegendOptions = {
   displayMode: LegendDisplayMode.List,
   placement: 'right',
   calcs: [],
-  displayColumns: [LegendColumns.Percent],
+  values: [PieChartLegendValues.Percent],
 };
 
 export const PieChart: FC<Props> = ({ values, legendOptions = defaultLegendOptions, width, height, ...restProps }) => {
@@ -65,20 +65,22 @@ export const PieChart: FC<Props> = ({ values, legendOptions = defaultLegendOptio
         color: value.color ?? FALLBACK_COLOR,
         yAxis: 1,
         getDisplayValues: () => {
+          const valuesToShow = legendOptions.values;
           let displayValues = [];
 
-          if (legendOptions.displayColumns.includes(LegendColumns.Value)) {
+          if (valuesToShow.includes(PieChartLegendValues.Value)) {
             displayValues.push({ numeric: value.numeric, text: formattedValueToString(value), title: 'Value' });
           }
 
-          if (legendOptions.displayColumns.includes(LegendColumns.Percent)) {
+          if (valuesToShow.includes(PieChartLegendValues.Percent)) {
             const fractionOfTotal = value.numeric / total;
             const percentOfTotal = fractionOfTotal * 100;
+
             displayValues.push({
               numeric: fractionOfTotal,
               percent: percentOfTotal,
               text: percentOfTotal.toFixed(0) + '%',
-              title: 'Percent',
+              title: valuesToShow.length > 1 ? 'Percent' : undefined,
             });
           }
 
@@ -192,6 +194,7 @@ export const PieChartSvg: FC<SvgProps> = ({
                         innerRadius={layout.innerRadius}
                         displayLabels={displayLabels}
                         total={total}
+                        color={theme.colors.text}
                       />
                     )}
                   </g>
@@ -216,7 +219,8 @@ const PieLabel: FC<{
   innerRadius: number;
   displayLabels: PieChartLabels[];
   total: number;
-}> = ({ arc, outerRadius, innerRadius, displayLabels, total }) => {
+  color: string;
+}> = ({ arc, outerRadius, innerRadius, displayLabels, total, color }) => {
   const labelRadius = innerRadius === 0 ? outerRadius / 6 : innerRadius;
   const [labelX, labelY] = getLabelPos(arc, outerRadius, labelRadius);
   const hasSpaceForLabel = arc.endAngle - arc.startAngle >= 0.3;
@@ -232,7 +236,7 @@ const PieLabel: FC<{
   return (
     <g>
       <text
-        fill="white"
+        fill={color}
         x={labelX}
         y={labelY}
         dy=".33em"
