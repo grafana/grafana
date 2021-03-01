@@ -12,6 +12,7 @@ export interface LibraryPanelDTO {
 
 export interface LibraryPanelDTOMeta {
   canEdit: boolean;
+  connectedDashboards: number;
   created: string;
   updated: string;
   createdBy: LibraryPanelDTOMetaUser;

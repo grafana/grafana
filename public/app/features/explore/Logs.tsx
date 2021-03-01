@@ -352,7 +352,6 @@ export class UnthemedLogs extends PureComponent<Props, State> {
           dedupStrategy={dedupStrategy}
           getRowContext={this.props.getRowContext}
           highlighterExpressions={highlighterExpressions}
-          rowLimit={logRows ? logRows.length : undefined}
           onClickFilterLabel={onClickFilterLabel}
           onClickFilterOutLabel={onClickFilterOutLabel}
           showContextToggle={showContextToggle}

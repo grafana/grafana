@@ -4,29 +4,16 @@ exports[`FolderPicker should render 1`] = `
 <div
   aria-label="Folder picker select container"
 >
-  <div
-    className="gf-form-inline"
-  >
-    <div
-      className="gf-form"
-    >
-      <label
-        className="gf-form-label width-7"
-      >
-        Folder
-      </label>
-      <AsyncSelect
-        allowCustomValue={false}
-        className="width-20"
-        defaultOptions={true}
-        defaultValue={Object {}}
-        loadOptions={[Function]}
-        loadingMessage="Loading folders..."
-        onChange={[Function]}
-        onCreateOption={[Function]}
-        value={Object {}}
-      />
-    </div>
-  </div>
+  <AsyncSelect
+    allowCustomValue={false}
+    defaultOptions={true}
+    defaultValue={Object {}}
+    loadOptions={[Function]}
+    loadingMessage="Loading folders..."
+    menuPosition="fixed"
+    onChange={[Function]}
+    onCreateOption={[Function]}
+    value={Object {}}
+  />
 </div>
 `;
