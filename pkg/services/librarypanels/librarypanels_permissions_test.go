@@ -223,7 +223,7 @@ func TestLibraryPanelPermissions(t *testing.T) {
 	}
 
 	for _, testCase := range getAllCases {
-		testScenario(t, fmt.Sprintf("When an %s tries to get all library panels, it should return correct status", testCase.role),
+		testScenario(t, fmt.Sprintf("When an %s tries to get all library panels, it should return correct response", testCase.role),
 			func(t *testing.T, sc scenarioContext) {
 				var results []libraryPanel
 				for i, folderCase := range folderCases {
@@ -268,6 +268,40 @@ func TestLibraryPanelPermissions(t *testing.T) {
 					if diff := cmp.Diff(foundResult, actualResult, getCompareOptions()...); diff != "" {
 						t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 					}
+				}
+			})
+	}
+
+	var getCases = []struct {
+		role     models.RoleType
+		statuses []int
+	}{
+		{models.ROLE_ADMIN, []int{200, 200, 200, 200, 200, 200, 200}},
+		{models.ROLE_EDITOR, []int{200, 404, 200, 200, 200, 200, 200}},
+		{models.ROLE_VIEWER, []int{200, 404, 404, 200, 200, 200, 200}},
+	}
+
+	for _, testCase := range getCases {
+		testScenario(t, fmt.Sprintf("When an %s tries to get a library panel, it should return correct response", testCase.role),
+			func(t *testing.T, sc scenarioContext) {
+				var results []libraryPanel
+				for i, folderCase := range folderCases {
+					folder := createFolderWithACL(t, fmt.Sprintf("Folder%v", i), sc.user, folderCase)
+					cmd := getCreateCommand(folder.Id, fmt.Sprintf("Library Panel in Folder%v", i))
+					resp := sc.service.createHandler(sc.reqContext, cmd)
+					result := validateAndUnMarshalResponse(t, resp)
+					result.Result.Meta.CreatedBy.Name = UserInDbName
+					result.Result.Meta.CreatedBy.AvatarUrl = UserInDbAvatar
+					result.Result.Meta.UpdatedBy.Name = UserInDbName
+					result.Result.Meta.UpdatedBy.AvatarUrl = UserInDbAvatar
+					results = append(results, result.Result)
+				}
+				sc.reqContext.SignedInUser.OrgRole = testCase.role
+
+				for i, result := range results {
+					sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.UID})
+					resp := sc.service.getHandler(sc.reqContext)
+					require.Equal(t, testCase.statuses[i], resp.Status())
 				}
 			})
 	}

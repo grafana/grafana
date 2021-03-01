@@ -247,9 +247,27 @@ func getLibraryPanel(session *sqlstore.DBSession, uid string, orgID int64) (Libr
 func (lps *LibraryPanelService) getLibraryPanel(c *models.ReqContext, uid string) (LibraryPanelDTO, error) {
 	var libraryPanel LibraryPanelWithMeta
 	err := lps.SQLStore.WithDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
-		var err error
-		libraryPanel, err = getLibraryPanel(session, uid, c.SignedInUser.OrgId)
-		return err
+		libraryPanels := make([]LibraryPanelWithMeta, 0)
+		builder := sqlstore.SQLBuilder{}
+		builder.Write(sqlStatmentLibrayPanelDTOWithMeta)
+		builder.Write(" LEFT JOIN dashboard AS dashboard on lp.folder_id = dashboard.id")
+		builder.Write(` WHERE lp.uid=? AND lp.org_id=?`, uid, c.SignedInUser.OrgId)
+		if c.SignedInUser.OrgRole != models.ROLE_ADMIN {
+			builder.WriteDashboardPermissionFilter(c.SignedInUser, models.PERMISSION_VIEW)
+		}
+		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&libraryPanels); err != nil {
+			return err
+		}
+		if len(libraryPanels) == 0 {
+			return errLibraryPanelNotFound
+		}
+		if len(libraryPanels) > 1 {
+			return fmt.Errorf("found %d panels, while expecting at most one", len(libraryPanels))
+		}
+
+		libraryPanel = libraryPanels[0]
+
+		return nil
 	})
 
 	dto := LibraryPanelDTO{
@@ -287,7 +305,7 @@ func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext, limit 
 		builder := sqlstore.SQLBuilder{}
 		builder.Write(sqlStatmentLibrayPanelDTOWithMeta)
 		builder.Write(" LEFT JOIN dashboard AS dashboard on lp.folder_id = dashboard.id")
-		builder.Write(` WHERE lp.org_id = ?`, c.SignedInUser.OrgId)
+		builder.Write(` WHERE lp.org_id=?`, c.SignedInUser.OrgId)
 		if c.SignedInUser.OrgRole != models.ROLE_ADMIN {
 			builder.WriteDashboardPermissionFilter(c.SignedInUser, models.PERMISSION_VIEW)
 		}
