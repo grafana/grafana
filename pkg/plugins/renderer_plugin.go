@@ -7,8 +7,8 @@ import (
 
 	pluginModel "github.com/grafana/grafana-plugin-model/go/renderer"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
-	backendmodels "github.com/grafana/grafana/pkg/plugins/backendplugin/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -19,11 +19,11 @@ type RendererPlugin struct {
 	Executable           string `json:"executable,omitempty"`
 	GrpcPluginV1         pluginModel.RendererPlugin
 	GrpcPluginV2         pluginextensionv2.RendererPlugin
-	backendPluginManager backendmodels.Manager
+	backendPluginManager backendplugin.Manager
 }
 
 func (r *RendererPlugin) Load(decoder *json.Decoder, base *PluginBase,
-	backendPluginManager backendmodels.Manager) (interface{}, error) {
+	backendPluginManager backendplugin.Manager) (interface{}, error) {
 	if err := decoder.Decode(r); err != nil {
 		return nil, err
 	}

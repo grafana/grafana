@@ -1,4 +1,4 @@
-package backendplugin
+package manager
 
 import (
 	"fmt"

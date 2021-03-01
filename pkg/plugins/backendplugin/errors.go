@@ -1,4 +1,4 @@
-package models
+package backendplugin
 
 import "errors"
 

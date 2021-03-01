@@ -7,8 +7,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-	backendmodels "github.com/grafana/grafana/pkg/plugins/backendplugin/models"
 	"github.com/grafana/grafana/pkg/registry"
 )
 
@@ -17,7 +17,7 @@ func init() {
 }
 
 type testDataPlugin struct {
-	BackendPluginManager backendmodels.Manager `inject:""`
+	BackendPluginManager backendplugin.Manager `inject:""`
 	logger               log.Logger
 	scenarios            map[string]*Scenario
 	queryMux             *datasource.QueryTypeMux

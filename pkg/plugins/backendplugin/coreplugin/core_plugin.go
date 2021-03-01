@@ -7,8 +7,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
-	backendmodels "github.com/grafana/grafana/pkg/plugins/backendplugin/models"
 )
 
 // corePlugin represents a plugin that's part of Grafana core.
@@ -21,9 +21,9 @@ type corePlugin struct {
 	backend.QueryDataHandler
 }
 
-// New returns a new backendmodels.PluginFactoryFunc for creating a core (built-in) backendmodels.Plugin.
-func New(opts backend.ServeOpts) backendmodels.PluginFactoryFunc {
-	return func(pluginID string, logger log.Logger, env []string) (backendmodels.Plugin, error) {
+// New returns a new backendplugin.PluginFactoryFunc for creating a core (built-in) backendplugin.Plugin.
+func New(opts backend.ServeOpts) backendplugin.PluginFactoryFunc {
+	return func(pluginID string, logger log.Logger, env []string) (backendplugin.Plugin, error) {
 		return &corePlugin{
 			pluginID:            pluginID,
 			logger:              logger,
@@ -74,7 +74,7 @@ func (cp *corePlugin) Exited() bool {
 }
 
 func (cp *corePlugin) CollectMetrics(ctx context.Context) (*backend.CollectMetricsResult, error) {
-	return nil, backendmodels.ErrMethodNotImplemented
+	return nil, backendplugin.ErrMethodNotImplemented
 }
 
 func (cp *corePlugin) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
@@ -82,7 +82,7 @@ func (cp *corePlugin) CheckHealth(ctx context.Context, req *backend.CheckHealthR
 		return cp.CheckHealthHandler.CheckHealth(ctx, req)
 	}
 
-	return nil, backendmodels.ErrMethodNotImplemented
+	return nil, backendplugin.ErrMethodNotImplemented
 }
 
 func (cp *corePlugin) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
@@ -90,5 +90,5 @@ func (cp *corePlugin) CallResource(ctx context.Context, req *backend.CallResourc
 		return cp.CallResourceHandler.CallResource(ctx, req, sender)
 	}
 
-	return backendmodels.ErrMethodNotImplemented
+	return backendplugin.ErrMethodNotImplemented
 }

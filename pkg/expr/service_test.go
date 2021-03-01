@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	backendmodels "github.com/grafana/grafana/pkg/plugins/backendplugin/models"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/stretchr/testify/require"
 )
@@ -113,7 +113,7 @@ func (me *mockEndpoint) DataQuery(ctx context.Context, ds *models.DataSource, qu
 }
 
 type fakeBackendPM struct {
-	backendmodels.Manager
+	backendplugin.Manager
 }
 
 func (pm fakeBackendPM) GetDataPlugin(string) interface{} {

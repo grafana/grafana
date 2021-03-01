@@ -1,5 +1,5 @@
 // Package models contains backend plugin model related logic.
-package models
+package backendplugin
 
 import (
 	"github.com/grafana/grafana/pkg/infra/log"

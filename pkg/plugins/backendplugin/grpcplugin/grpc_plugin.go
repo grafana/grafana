@@ -7,7 +7,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/models"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/hashicorp/go-plugin"
 )
 
@@ -26,9 +26,9 @@ type grpcPlugin struct {
 	mutex         sync.RWMutex
 }
 
-// newPlugin allocates and returns a new gRPC (external) models.Plugin.
-func newPlugin(descriptor PluginDescriptor) models.PluginFactoryFunc {
-	return func(pluginID string, logger log.Logger, env []string) (models.Plugin, error) {
+// newPlugin allocates and returns a new gRPC (external) backendplugin.Plugin.
+func newPlugin(descriptor PluginDescriptor) backendplugin.PluginFactoryFunc {
+	return func(pluginID string, logger log.Logger, env []string) (backendplugin.Plugin, error) {
 		return &grpcPlugin{
 			descriptor: descriptor,
 			logger:     logger,
@@ -107,7 +107,7 @@ func (p *grpcPlugin) CollectMetrics(ctx context.Context) (*backend.CollectMetric
 	p.mutex.RLock()
 	if p.client == nil || p.client.Exited() || p.pluginClient == nil {
 		p.mutex.RUnlock()
-		return nil, models.ErrPluginUnavailable
+		return nil, backendplugin.ErrPluginUnavailable
 	}
 	pluginClient := p.pluginClient
 	p.mutex.RUnlock()
@@ -119,7 +119,7 @@ func (p *grpcPlugin) CheckHealth(ctx context.Context, req *backend.CheckHealthRe
 	p.mutex.RLock()
 	if p.client == nil || p.client.Exited() || p.pluginClient == nil {
 		p.mutex.RUnlock()
-		return nil, models.ErrPluginUnavailable
+		return nil, backendplugin.ErrPluginUnavailable
 	}
 	pluginClient := p.pluginClient
 	p.mutex.RUnlock()
@@ -131,7 +131,7 @@ func (p *grpcPlugin) CallResource(ctx context.Context, req *backend.CallResource
 	p.mutex.RLock()
 	if p.client == nil || p.client.Exited() || p.pluginClient == nil {
 		p.mutex.RUnlock()
-		return models.ErrPluginUnavailable
+		return backendplugin.ErrPluginUnavailable
 	}
 	pluginClient := p.pluginClient
 	p.mutex.RUnlock()

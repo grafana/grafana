@@ -6,7 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	backendmodels "github.com/grafana/grafana/pkg/plugins/backendplugin/models"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/stretchr/testify/require"
 )
 
@@ -93,7 +93,7 @@ func (e *fakeExecutor) HandleQuery(refId string, fn resultsFn) {
 }
 
 type fakeBackendPM struct {
-	backendmodels.Manager
+	backendplugin.Manager
 }
 
 func (pm fakeBackendPM) GetDataPlugin(string) interface{} {

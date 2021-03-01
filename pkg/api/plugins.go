@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
-	backendmodels "github.com/grafana/grafana/pkg/plugins/backendplugin/models"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -369,19 +369,19 @@ func (hs *HTTPServer) GetPluginErrorsList(c *models.ReqContext) response.Respons
 }
 
 func translatePluginRequestErrorToAPIError(err error) response.Response {
-	if errors.Is(err, backendmodels.ErrPluginNotRegistered) {
+	if errors.Is(err, backendplugin.ErrPluginNotRegistered) {
 		return response.Error(404, "Plugin not found", err)
 	}
 
-	if errors.Is(err, backendmodels.ErrMethodNotImplemented) {
+	if errors.Is(err, backendplugin.ErrMethodNotImplemented) {
 		return response.Error(404, "Not found", err)
 	}
 
-	if errors.Is(err, backendmodels.ErrHealthCheckFailed) {
+	if errors.Is(err, backendplugin.ErrHealthCheckFailed) {
 		return response.Error(500, "Plugin health check failed", err)
 	}
 
-	if errors.Is(err, backendmodels.ErrPluginUnavailable) {
+	if errors.Is(err, backendplugin.ErrPluginUnavailable) {
 		return response.Error(503, "Plugin unavailable", err)
 	}
 

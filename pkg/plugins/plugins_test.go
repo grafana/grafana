@@ -9,7 +9,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/models"
-	backendmodels "github.com/grafana/grafana/pkg/plugins/backendplugin/models"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -266,12 +266,12 @@ func TestPluginManager_IsBackendOnlyPlugin(t *testing.T) {
 }
 
 type fakeBackendPluginManager struct {
-	backendmodels.Manager
+	backendplugin.Manager
 
 	registeredPlugins []string
 }
 
-func (f *fakeBackendPluginManager) Register(pluginID string, factory backendmodels.PluginFactoryFunc) error {
+func (f *fakeBackendPluginManager) Register(pluginID string, factory backendplugin.PluginFactoryFunc) error {
 	f.registeredPlugins = append(f.registeredPlugins, pluginID)
 	return nil
 }

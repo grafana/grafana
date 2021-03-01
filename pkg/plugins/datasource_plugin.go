@@ -7,8 +7,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
-	backendmodels "github.com/grafana/grafana/pkg/plugins/backendplugin/models"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -37,7 +37,7 @@ type DataSourcePlugin struct {
 	logger       log.Logger
 }
 
-func (p *DataSourcePlugin) Load(decoder *json.Decoder, base *PluginBase, backendPluginManager backendmodels.Manager) (
+func (p *DataSourcePlugin) Load(decoder *json.Decoder, base *PluginBase, backendPluginManager backendplugin.Manager) (
 	interface{}, error) {
 	if err := decoder.Decode(p); err != nil {
 		return nil, errutil.Wrapf(err, "Failed to decode datasource plugin")

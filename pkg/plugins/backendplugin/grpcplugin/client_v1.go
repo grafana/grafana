@@ -7,8 +7,8 @@ import (
 	rendererV1 "github.com/grafana/grafana-plugin-model/go/renderer"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/models"
 	"github.com/hashicorp/go-plugin"
 )
 
@@ -52,15 +52,15 @@ func newClientV1(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 }
 
 func (c *clientV1) CollectMetrics(ctx context.Context) (*backend.CollectMetricsResult, error) {
-	return nil, models.ErrMethodNotImplemented
+	return nil, backendplugin.ErrMethodNotImplemented
 }
 
 func (c *clientV1) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	return nil, models.ErrMethodNotImplemented
+	return nil, backendplugin.ErrMethodNotImplemented
 }
 
 func (c *clientV1) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	return models.ErrMethodNotImplemented
+	return backendplugin.ErrMethodNotImplemented
 }
 
 type datasourceV1QueryFunc func(ctx context.Context, req *datasourceV1.DatasourceRequest) (*datasourceV1.DatasourceResponse, error)

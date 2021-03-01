@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/models"
-	backendmodels "github.com/grafana/grafana/pkg/plugins/backendplugin/models"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 )
 
 const (
@@ -40,7 +40,7 @@ func (e DuplicatePluginError) Is(err error) bool {
 // PluginLoader can load a plugin.
 type PluginLoader interface {
 	// Load loads a plugin and returns it.
-	Load(decoder *json.Decoder, base *PluginBase, backendPluginManager backendmodels.Manager) (interface{}, error)
+	Load(decoder *json.Decoder, base *PluginBase, backendPluginManager backendplugin.Manager) (interface{}, error)
 }
 
 // PluginBase is the base plugin type.

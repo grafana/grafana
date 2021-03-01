@@ -3,7 +3,7 @@ package plugins
 import (
 	"encoding/json"
 
-	backendmodels "github.com/grafana/grafana/pkg/plugins/backendplugin/models"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 )
 
 type PanelPlugin struct {
@@ -11,7 +11,7 @@ type PanelPlugin struct {
 	SkipDataQuery bool `json:"skipDataQuery"`
 }
 
-func (p *PanelPlugin) Load(decoder *json.Decoder, base *PluginBase, backendPluginManager backendmodels.Manager) (
+func (p *PanelPlugin) Load(decoder *json.Decoder, base *PluginBase, backendPluginManager backendplugin.Manager) (
 	interface{}, error) {
 	if err := decoder.Decode(p); err != nil {
 		return nil, err

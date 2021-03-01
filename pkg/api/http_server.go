@@ -29,7 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
-	backendmodels "github.com/grafana/grafana/pkg/plugins/backendplugin/models"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/plugindashboards"
 	"github.com/grafana/grafana/pkg/registry"
@@ -76,7 +76,7 @@ type HTTPServer struct {
 	ProvisioningService    provisioning.ProvisioningService   `inject:""`
 	Login                  *login.LoginService                `inject:""`
 	License                models.Licensing                   `inject:""`
-	BackendPluginManager   backendmodels.Manager              `inject:""`
+	BackendPluginManager   backendplugin.Manager              `inject:""`
 	PluginRequestValidator models.PluginRequestValidator      `inject:""`
 	PluginManager          *manager.PluginManager             `inject:""`
 	SearchService          *search.SearchService              `inject:""`

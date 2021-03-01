@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	backendmodels "github.com/grafana/grafana/pkg/plugins/backendplugin/models"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -43,7 +43,7 @@ type unsignedPluginConditionFunc = func(plugin *plugins.PluginBase) bool
 type PluginScanner struct {
 	pluginPath                    string
 	errors                        []error
-	backendPluginManager          backendmodels.Manager
+	backendPluginManager          backendplugin.Manager
 	cfg                           *setting.Cfg
 	requireSigned                 bool
 	log                           log.Logger
@@ -52,7 +52,7 @@ type PluginScanner struct {
 }
 
 type PluginManager struct {
-	BackendPluginManager backendmodels.Manager `inject:""`
+	BackendPluginManager backendplugin.Manager `inject:""`
 	Cfg                  *setting.Cfg          `inject:""`
 	log                  log.Logger
 	scanningErrors       []error
