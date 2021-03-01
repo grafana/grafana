@@ -2,8 +2,7 @@ import React from 'react';
 // @ts-ignore
 import Drop from 'tether-drop';
 import { GrafanaRouteComponentProps } from './types';
-import { locationService, navigationLogger } from '@grafana/runtime';
-import { getKeybindingSrv } from '../services/keybindingSrv';
+import { locationSearchToObject, navigationLogger } from '@grafana/runtime';
 
 export interface Props extends Omit<GrafanaRouteComponentProps, 'queryParams'> {}
 
@@ -11,7 +10,6 @@ export class GrafanaRoute extends React.Component<Props> {
   componentDidMount() {
     this.updateBodyClassNames();
     this.cleanupDOM();
-    getKeybindingSrv().setupGlobal();
     navigationLogger('GrafanaRoute', false, 'Mounted', this.props.match);
   }
 
@@ -63,6 +61,6 @@ export class GrafanaRoute extends React.Component<Props> {
 
     const RouteComponent = props.route.component;
 
-    return <RouteComponent {...props} queryParams={locationService.getSearchObject()} />;
+    return <RouteComponent {...props} queryParams={locationSearchToObject(props.location.search)} />;
   }
 }

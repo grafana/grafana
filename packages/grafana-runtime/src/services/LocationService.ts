@@ -124,9 +124,7 @@ class HistoryWrapper implements LocationService {
   }
 
   getSearchObject() {
-    const params: Array<[string, string | boolean]> = [];
-    new URLSearchParams(this.history.location.search).forEach((v, k) => params.push([k, parseValue(v)]));
-    return Object.fromEntries(new Map(params));
+    return locationSearchToObject(this.history.location.search);
   }
 
   /** @depecreated */
@@ -149,6 +147,16 @@ function parseValue(value: string) {
     return false;
   }
   return value;
+}
+
+/**
+ * @alpha
+ * Parses a location search string to an object
+ * */
+export function locationSearchToObject(search: string) {
+  const params: Array<[string, string | boolean]> = [];
+  new URLSearchParams(search).forEach((v, k) => params.push([k, parseValue(v)]));
+  return Object.fromEntries(new Map(params));
 }
 
 export const locationService: LocationService = new HistoryWrapper();
