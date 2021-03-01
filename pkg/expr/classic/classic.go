@@ -123,6 +123,11 @@ func UnmarshalConditionsCmd(rawQuery map[string]interface{}, refID string) (*Con
 	for i, cj := range ccj {
 		cond := condition{}
 
+		if cj.Operator.Type != "and" && cj.Operator.Type != "or" {
+			return nil, fmt.Errorf("classic condition %v operator must be `and` or `or`", i+1)
+		}
+		cond.Operator = cj.Operator.Type
+
 		if len(cj.Query.Params) == 0 || cj.Query.Params[0] == "" {
 			return nil, fmt.Errorf("classic condition %v is missing the query refID argument", i+1)
 		}
