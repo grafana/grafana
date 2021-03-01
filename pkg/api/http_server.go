@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	_ "github.com/grafana/grafana/pkg/plugins/backendplugin/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/plugindashboards"
 	"github.com/grafana/grafana/pkg/registry"
