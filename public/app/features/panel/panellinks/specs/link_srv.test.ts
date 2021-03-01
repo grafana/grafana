@@ -31,16 +31,12 @@ describe('linkSrv', () => {
       cancelAll: jest.fn(),
     };
 
-    const location = {
-      search: jest.fn(() => ({})),
-    };
-
     const _dashboard: any = {
       time: { from: 'now-6h', to: 'now' },
       getTimezone: jest.fn(() => 'browser'),
     };
 
-    const timeSrv = new TimeSrv(rootScope as any, jest.fn() as any, location as any, timer, {} as any);
+    const timeSrv = new TimeSrv(rootScope as any, jest.fn() as any, timer, {} as any);
     timeSrv.init(_dashboard);
     timeSrv.setTime({ from: 'now-1h', to: 'now' });
     _dashboard.refresh = false;

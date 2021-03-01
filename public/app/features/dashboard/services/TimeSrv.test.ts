@@ -22,10 +22,6 @@ describe('timeSrv', () => {
     cancelAll: jest.fn(),
   };
 
-  let location = {
-    search: jest.fn(() => ({})),
-  };
-
   let timeSrv: TimeSrv;
 
   const _dashboard: any = {
@@ -158,13 +154,6 @@ describe('timeSrv', () => {
       });
 
       it('handles time window specified in ms', () => {
-        location = {
-          search: jest.fn(() => ({
-            time: '1410337645000',
-            'time.window': '10000',
-          })),
-        };
-
         locationService.push('/d/id?time=1410337645000&time.window=10000');
 
         timeSrv = new TimeSrv(rootScope as any, jest.fn() as any, timer, new ContextSrvStub() as any);

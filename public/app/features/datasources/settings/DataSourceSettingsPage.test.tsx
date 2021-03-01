@@ -5,6 +5,8 @@ import { DataSourceConstructor, DataSourcePlugin, DataSourceSettings, NavModel }
 import { getMockDataSource } from '../__mocks__/dataSourcesMocks';
 import { getMockPlugin } from '../../plugins/__mocks__/pluginMocks';
 import { dataSourceLoaded, setDataSourceName, setIsDefault } from '../state/reducers';
+import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
+import { cleanUpAction } from 'app/core/actions/cleanUp';
 
 const pluginMock = new DataSourcePlugin({} as DataSourceConstructor<any>);
 
@@ -16,6 +18,7 @@ jest.mock('app/features/plugins/plugin_loader', () => {
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
+    ...getRouteComponentProps(),
     navModel: {} as NavModel,
     dataSource: getMockDataSource(),
     dataSourceMeta: getMockPlugin(),
@@ -28,7 +31,11 @@ const setup = (propOverrides?: object) => {
     testDataSource: jest.fn(),
     setIsDefault,
     dataSourceLoaded,
-    query: {},
+    cleanUpAction,
+    page: null,
+    plugin: null,
+    loadError: null,
+    testingStatus: {},
     ...propOverrides,
   };
 
