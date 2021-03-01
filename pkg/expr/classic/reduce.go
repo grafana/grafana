@@ -66,7 +66,7 @@ func (cr classicReducer) Reduce(series mathexp.Series) mathexp.Number {
 		value = math.MaxFloat64
 		for i := 0; i < vF.Len(); i++ {
 			if f, ok := vF.At(i).(*float64); ok {
-				if !nilOrNaN(f) {
+				if nilOrNaN(f) {
 					continue
 				}
 				allNull = false
@@ -74,6 +74,9 @@ func (cr classicReducer) Reduce(series mathexp.Series) mathexp.Number {
 					value = *f
 				}
 			}
+		}
+		if allNull {
+			value = 0
 		}
 	case "max":
 		value = -math.MaxFloat64
@@ -87,6 +90,9 @@ func (cr classicReducer) Reduce(series mathexp.Series) mathexp.Number {
 					value = *f
 				}
 			}
+		}
+		if allNull {
+			value = 0
 		}
 	case "count":
 		value = float64(vF.Len())
