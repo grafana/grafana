@@ -105,8 +105,8 @@ func (m *manager) GetDataPlugin(pluginID string) interface{} {
 		return nil
 	}
 
-	if tsdbPlugin, ok := plugin.(plugins.DataPlugin); ok {
-		return tsdbPlugin
+	if dataPlugin, ok := plugin.(plugins.DataPlugin); ok {
+		return dataPlugin
 	}
 
 	return nil

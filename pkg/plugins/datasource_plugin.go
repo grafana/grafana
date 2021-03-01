@@ -3,6 +3,7 @@ package plugins
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -59,6 +60,10 @@ func (p *DataSourcePlugin) Load(decoder *json.Decoder, base *PluginBase, backend
 }
 
 func (p *DataSourcePlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource, query DataQuery) (DataResponse, error) {
+	if !p.CanHandleDataQueries() {
+		return DataResponse{}, fmt.Errorf("plugin %q can't handle data queries", p.Id)
+	}
+
 	if p.client != nil {
 		endpoint := newDataSourcePluginWrapperV2(p.logger, p.Id, p.Type, p.client.DataPlugin)
 		return endpoint.Query(ctx, dsInfo, query)

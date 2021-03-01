@@ -599,7 +599,7 @@ func collectPluginFilesWithin(rootDir string) ([]string, error) {
 
 // GetDataPlugin gets a DataPlugin with a certain name. If none is found, nil is returned.
 func (pm *PluginManager) GetDataPlugin(pluginID string) plugins.DataPlugin {
-	if p, exists := DataSources[pluginID]; exists {
+	if p, exists := DataSources[pluginID]; exists && p.CanHandleDataQueries() {
 		return p
 	}
 
