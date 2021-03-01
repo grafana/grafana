@@ -165,7 +165,7 @@ Grafana alerting is supported for the Azure Monitor service. This is not Azure A
 
 {{< docs-imagebox img="/img/docs/v60/azuremonitor-alerting.png" class="docs-image--no-shadow" caption="Azure Monitor Alerting" >}}
 
-## Querying the Logs service
+## Query the Logs service
 
 Queries are written in the [Kusto Query Language](https://docs.microsoft.com/en-us/azure/data-explorer/kusto/query/). A Logs query can be formatted as time series data or as table data.
 
