@@ -504,6 +504,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
             rpc={rpc}
             viewStart={viewStart}
             viewEnd={viewEnd}
+            theme={theme}
             getViewedBounds={getViewedBounds}
             color={color}
             shortLabel={label}

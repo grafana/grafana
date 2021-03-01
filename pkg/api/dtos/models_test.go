@@ -5,7 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
-	"gotest.tools/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestIsHiddenUser(t *testing.T) {

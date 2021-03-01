@@ -50,6 +50,7 @@ export interface FeatureToggles {
    * Available only in Grafana Enterprise
    */
   meta: boolean;
+  reportVariables: boolean;
 }
 
 /**
@@ -125,4 +126,5 @@ export interface GrafanaConfig {
   http2Enabled: boolean;
   dateFormats?: SystemDateFormatSettings;
   sentry: SentryConfig;
+  customTheme?: any;
 }

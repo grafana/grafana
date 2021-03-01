@@ -26,6 +26,11 @@ export const movingAvgModelOptions: MovingAverageModelOption[] = [
   { label: 'Holt Winters', value: 'holt_winters' },
 ];
 
+export const highlightTags = {
+  pre: '@HIGHLIGHT@',
+  post: '@/HIGHLIGHT@',
+};
+
 export function defaultMetricAgg(id = '1'): MetricAggregation {
   return { type: 'count', id };
 }

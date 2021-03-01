@@ -16,7 +16,15 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 391,
-  "links": [],
+  "links": [
+    {
+      "icon": "external link",
+      "tags": ["gdev", "graph-ng"],
+      "type": "dashboards",
+      "asDropdown": true,
+      "title": "Graph Tests"
+    }
+  ],
   "panels": [
     {
       "datasource": null,
