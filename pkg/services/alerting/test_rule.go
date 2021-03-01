@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
+// AlertTest makes a test alert.
 func (e *AlertEngine) AlertTest(orgID int64, dashboard *simplejson.Json, panelID int64, user *models.SignedInUser) (*EvalContext, error) {
 	dash := models.NewDashboardFromJson(dashboard)
 

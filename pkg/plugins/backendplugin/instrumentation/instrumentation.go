@@ -1,3 +1,4 @@
+// Package instrumentation contains backend plugin instrumentation logic.
 package instrumentation
 
 import (
@@ -48,19 +49,22 @@ func instrumentPluginRequest(pluginID string, endpoint string, fn func() error) 
 	return err
 }
 
+// InstrumentCollectMetrics instruments collectMetrics.
 func InstrumentCollectMetrics(pluginID string, fn func() error) error {
 	return instrumentPluginRequest(pluginID, "collectMetrics", fn)
 }
 
+// InstrumentCheckHealthRequest instruments checkHealth.
 func InstrumentCheckHealthRequest(pluginID string, fn func() error) error {
 	return instrumentPluginRequest(pluginID, "checkHealth", fn)
 }
 
+// InstrumentCallResourceRequest instruments callResource.
 func InstrumentCallResourceRequest(pluginID string, fn func() error) error {
 	return instrumentPluginRequest(pluginID, "callResource", fn)
 }
 
-// InstrumentQueryDataRequest instruments success rate and latency of query data request.
+// InstrumentQueryDataRequest instruments success rate and latency of query data requests.
 func InstrumentQueryDataRequest(pluginID string, fn func() error) error {
 	return instrumentPluginRequest(pluginID, "queryData", fn)
 }
