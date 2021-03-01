@@ -75,7 +75,7 @@ export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
         showIf: (c) => c.legend.displayMode !== LegendDisplayMode.Hidden,
       })
       .addMultiSelect({
-        name: 'Columns in legend',
+        name: 'Legend values',
         path: 'legend.displayColumns',
         description: 'Select the columns to be displayed in the legend',
         settings: {
