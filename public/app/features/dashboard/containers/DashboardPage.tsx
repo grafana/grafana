@@ -45,7 +45,6 @@ type DashboardPageRouteSearchParams = {
 
 export interface Props extends GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams> {
   $scope: any;
-  $injector: any;
   initPhase: DashboardInitPhase;
   isInitSlow: boolean;
   dashboard: DashboardModel | null;

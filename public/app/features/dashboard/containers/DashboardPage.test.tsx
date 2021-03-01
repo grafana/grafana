@@ -57,9 +57,9 @@ function dashboardPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
             params: { slug: 'my-dash', uid: '11' },
           } as any,
           $scope: {},
-          $injector: {},
           location: {} as any,
           history: {} as any,
+          queryParams: {},
           route: { routeName: DashboardRoutes.Normal } as any,
           initPhase: DashboardInitPhase.NotStarted,
           isInitSlow: false,
@@ -130,7 +130,7 @@ describe('DashboardPage', () => {
       ctx.mount();
       ctx.setDashboardProp();
       ctx.wrapper?.setProps({
-        location: { search: '?editPanelId=1' } as any,
+        queryParams: { editPanel: '1' },
       });
     });
 
@@ -146,7 +146,7 @@ describe('DashboardPage', () => {
       ctx.mount();
       ctx.setDashboardProp({}, { canEdit: false });
       ctx.wrapper?.setProps({
-        location: { search: '?editPanelId=1' } as any,
+        queryParams: { editPanel: '1' },
       });
     });
 
@@ -161,10 +161,10 @@ describe('DashboardPage', () => {
       ctx.setDashboardProp();
       ctx.wrapper?.setState({ scrollTop: 100 });
       ctx.wrapper?.setProps({
-        location: { search: '?editPanelId=1' } as any,
+        queryParams: { editPanel: '1' },
       });
       ctx.wrapper?.setProps({
-        location: { search: '' } as any,
+        queryParams: {},
       });
     });
 
@@ -188,7 +188,7 @@ describe('DashboardPage', () => {
       ctx.mount();
       ctx.setDashboardProp();
       ctx.wrapper?.setProps({
-        location: { search: '?editview=settings' } as any,
+        queryParams: { editview: 'settings' },
       });
     });
 
@@ -225,7 +225,7 @@ describe('DashboardPage', () => {
         schemaVersion: 17,
       });
       ctx.wrapper?.setProps({
-        location: { search: '?editPanel=0' } as any,
+        queryParams: { editPanel: '0' },
       });
     });
 

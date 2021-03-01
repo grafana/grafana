@@ -5,7 +5,6 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
   className="dashboard-container"
 >
   <Connect(DashNav)
-    $injector={Object {}}
     dashboard={
       DashboardModel {
         "annotations": Object {
@@ -374,7 +373,6 @@ exports[`DashboardPage When dashboard has editview url state should render setti
   className="dashboard-container"
 >
   <Connect(DashNav)
-    $injector={Object {}}
     dashboard={
       DashboardModel {
         "annotations": Object {
