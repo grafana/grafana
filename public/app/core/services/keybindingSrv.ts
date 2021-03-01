@@ -164,7 +164,6 @@ export class KeybindingSrv {
 
   showDashEditView() {
     locationService.partial({
-      ...locationService.getSearchObject(),
       editview: 'settings',
     });
   }
@@ -209,7 +208,6 @@ export class KeybindingSrv {
 
       if (dashboard.canEditPanelById(dashboard.meta.focusPanelId)) {
         locationService.partial({
-          ...locationService.getSearchObject(),
           editPanel: dashboard.meta.focusPanelId,
         });
       }
@@ -219,7 +217,6 @@ export class KeybindingSrv {
     this.bind('v', () => {
       if (dashboard.meta.focusPanelId) {
         locationService.partial({
-          ...locationService.getSearchObject(),
           viewPanel: dashboard.meta.focusPanelId,
         });
       }
@@ -228,7 +225,6 @@ export class KeybindingSrv {
     this.bind('i', () => {
       if (dashboard.meta.focusPanelId) {
         locationService.partial({
-          ...locationService.getSearchObject(),
           inspect: dashboard.meta.focusPanelId,
         });
       }
