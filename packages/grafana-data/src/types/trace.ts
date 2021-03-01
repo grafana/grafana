@@ -19,11 +19,17 @@ export interface TraceSpanRow {
   operationName: string;
   serviceName: string;
   serviceTags: TraceKeyValuePair[];
+  // Millisecond epoch time
   startTime: number;
+  // Milliseconds
   duration: number;
   logs?: TraceLog[];
+
+  // Note: To mark spen as having error add tag error: true
   tags?: TraceKeyValuePair[];
   warnings?: string[];
   stackTraces?: string[];
+
+  // Specify custom color of the error icon
   errorIconColor?: string;
 }

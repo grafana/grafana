@@ -1,5 +1,4 @@
 import {
-  DataFrame,
   DataQuery,
   DataQueryRequest,
   DataQueryResponse,
@@ -7,10 +6,8 @@ import {
   DataSourceInstanceSettings,
   dateMath,
   DateTime,
-  FieldDTO,
   FieldType,
   MutableDataFrame,
-  TraceSpanRow,
 } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
 import { from, Observable, of } from 'rxjs';
@@ -18,8 +15,7 @@ import { catchError, map } from 'rxjs/operators';
 
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { serializeParams } from 'app/core/utils/fetch';
-
-import { TraceProcess, Span, TraceResponse } from './types';
+import { createTraceFrame } from './responseTransform';
 
 export type JaegerQuery = {
   query: string;
@@ -122,56 +118,6 @@ function getTime(date: string | DateTime, roundUp: boolean) {
     date = dateMath.parse(date, roundUp)!;
   }
   return date.valueOf() * 1000;
-}
-
-function createTraceFrame(data: TraceResponse): DataFrame {
-  const spans = data.spans.map((s) => toSpanRow(s, data.processes));
-
-  return new MutableDataFrame({
-    fields: mapFields(spans),
-    meta: {
-      preferredVisualisationType: 'trace',
-    },
-  });
-}
-
-function mapFields(data: Array<Record<string, any>>): FieldDTO[] {
-  const map = data.reduce((acc, datum) => {
-    for (const key of Object.keys(datum)) {
-      if (!acc[key]) {
-        acc[key] = {
-          name: key,
-          type: guessFieldType(datum[key]),
-          values: [],
-        };
-      }
-      (acc[key].values! as any[]).push(datum[key as keyof typeof datum]);
-    }
-    return acc;
-  }, {} as Record<string, FieldDTO>);
-  return Object.values(map);
-}
-
-function guessFieldType(val: any) {
-  return typeof val === 'string' ? FieldType.string : typeof val === 'number' ? FieldType.number : FieldType.other;
-}
-
-function toSpanRow(span: Span, processes: Record<string, TraceProcess>): TraceSpanRow {
-  return {
-    spanID: span.spanID,
-    traceID: span.traceID,
-    parentSpanID: span.references?.find((r) => r.refType === 'CHILD_OF')?.spanID,
-    operationName: span.operationName,
-    startTime: span.startTime,
-    duration: span.duration,
-    logs: span.logs,
-    tags: span.tags,
-    warnings: span.warnings ?? undefined,
-    stackTraces: span.stackTraces,
-    errorIconColor: span.errorIconColor,
-    serviceName: processes[span.processID].serviceName,
-    serviceTags: processes[span.processID].tags,
-  };
 }
 
 const emptyTraceDataFrame = new MutableDataFrame({

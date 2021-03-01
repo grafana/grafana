@@ -205,6 +205,8 @@ function transformTraceDataFrame(frame: DataFrame): TraceResponse {
     spans: view.toArray().map((s) => {
       return {
         ...s,
+        duration: s.duration * 1000,
+        startTime: s.startTime * 1000,
         processID: s.serviceName,
         flags: 0,
         references: s.parentSpanID ? [{ refType: 'CHILD_OF', spanID: s.parentSpanID, traceID: s.traceID }] : undefined,

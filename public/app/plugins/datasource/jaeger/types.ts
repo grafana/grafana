@@ -39,7 +39,6 @@ export type Span = {
   warnings?: string[] | null;
   stackTraces?: string[];
   flags: number;
-  errorIconColor?: string;
 };
 
 export type TraceResponse = {
