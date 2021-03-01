@@ -270,6 +270,28 @@ func TestLibraryPanelPermissions(t *testing.T) {
 					}
 				}
 			})
+
+		testScenario(t, fmt.Sprintf("When an %s tries to get all library panels from General folder, it should return correct response", testCase.role),
+			func(t *testing.T, sc scenarioContext) {
+				cmd := getCreateCommand(0, "Library Panel in General Folder")
+				resp := sc.service.createHandler(sc.reqContext, cmd)
+				result := validateAndUnMarshalResponse(t, resp)
+				result.Result.Meta.CreatedBy.Name = UserInDbName
+				result.Result.Meta.CreatedBy.AvatarUrl = UserInDbAvatar
+				result.Result.Meta.UpdatedBy.Name = UserInDbName
+				result.Result.Meta.UpdatedBy.AvatarUrl = UserInDbAvatar
+				sc.reqContext.SignedInUser.OrgRole = testCase.role
+
+				resp = sc.service.getAllHandler(sc.reqContext)
+				require.Equal(t, 200, resp.Status())
+				var actual libraryPanelsResult
+				err := json.Unmarshal(resp.Body(), &actual)
+				require.NoError(t, err)
+				require.Equal(t, 1, len(actual.Result))
+				if diff := cmp.Diff(result.Result, actual.Result[0], getCompareOptions()...); diff != "" {
+					t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+				}
+			})
 	}
 
 	var getCases = []struct {
@@ -302,6 +324,28 @@ func TestLibraryPanelPermissions(t *testing.T) {
 					sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.UID})
 					resp := sc.service.getHandler(sc.reqContext)
 					require.Equal(t, testCase.statuses[i], resp.Status())
+				}
+			})
+
+		testScenario(t, fmt.Sprintf("When an %s tries to get a library panel from General folder, it should return correct response", testCase.role),
+			func(t *testing.T, sc scenarioContext) {
+				cmd := getCreateCommand(0, "Library Panel in General Folder")
+				resp := sc.service.createHandler(sc.reqContext, cmd)
+				result := validateAndUnMarshalResponse(t, resp)
+				result.Result.Meta.CreatedBy.Name = UserInDbName
+				result.Result.Meta.CreatedBy.AvatarUrl = UserInDbAvatar
+				result.Result.Meta.UpdatedBy.Name = UserInDbName
+				result.Result.Meta.UpdatedBy.AvatarUrl = UserInDbAvatar
+				sc.reqContext.SignedInUser.OrgRole = testCase.role
+
+				sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID})
+				resp = sc.service.getHandler(sc.reqContext)
+				require.Equal(t, 200, resp.Status())
+				var actual libraryPanelResult
+				err := json.Unmarshal(resp.Body(), &actual)
+				require.NoError(t, err)
+				if diff := cmp.Diff(result.Result, actual.Result, getCompareOptions()...); diff != "" {
+					t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 				}
 			})
 	}

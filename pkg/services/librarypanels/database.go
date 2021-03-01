@@ -250,11 +250,15 @@ func (lps *LibraryPanelService) getLibraryPanel(c *models.ReqContext, uid string
 		libraryPanels := make([]LibraryPanelWithMeta, 0)
 		builder := sqlstore.SQLBuilder{}
 		builder.Write(sqlStatmentLibrayPanelDTOWithMeta)
-		builder.Write(" LEFT JOIN dashboard AS dashboard on lp.folder_id = dashboard.id")
+		builder.Write(` WHERE lp.uid=? AND lp.org_id=? AND lp.folder_id=0`, uid, c.SignedInUser.OrgId)
+		builder.Write(" UNION ")
+		builder.Write(sqlStatmentLibrayPanelDTOWithMeta)
+		builder.Write(" INNER JOIN dashboard AS dashboard on lp.folder_id = dashboard.id AND lp.folder_id <> 0")
 		builder.Write(` WHERE lp.uid=? AND lp.org_id=?`, uid, c.SignedInUser.OrgId)
 		if c.SignedInUser.OrgRole != models.ROLE_ADMIN {
 			builder.WriteDashboardPermissionFilter(c.SignedInUser, models.PERMISSION_VIEW)
 		}
+		builder.Write(` OR dashboard.id=0`)
 		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&libraryPanels); err != nil {
 			return err
 		}
@@ -304,7 +308,10 @@ func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext, limit 
 	err := lps.SQLStore.WithDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
 		builder := sqlstore.SQLBuilder{}
 		builder.Write(sqlStatmentLibrayPanelDTOWithMeta)
-		builder.Write(" LEFT JOIN dashboard AS dashboard on lp.folder_id = dashboard.id")
+		builder.Write(` WHERE lp.org_id=? AND lp.folder_id=0`, c.SignedInUser.OrgId)
+		builder.Write(" UNION ")
+		builder.Write(sqlStatmentLibrayPanelDTOWithMeta)
+		builder.Write(" INNER JOIN dashboard AS dashboard on lp.folder_id = dashboard.id AND lp.folder_id<>0")
 		builder.Write(` WHERE lp.org_id=?`, c.SignedInUser.OrgId)
 		if c.SignedInUser.OrgRole != models.ROLE_ADMIN {
 			builder.WriteDashboardPermissionFilter(c.SignedInUser, models.PERMISSION_VIEW)
