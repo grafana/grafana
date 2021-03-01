@@ -3,6 +3,7 @@ package librarypanels
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -117,6 +118,37 @@ func TestLibraryPanelPermissions(t *testing.T) {
 				resp = sc.service.deleteHandler(sc.reqContext)
 				require.Equal(t, testCase.status, resp.Status())
 			})
+
+		testScenario(t, fmt.Sprintf("When an %s tries to connect a library panel in a folder with %s, it should return correct status", testCase.role, testCase.desc),
+			func(t *testing.T, sc scenarioContext) {
+				dashboard := createDashboard(t, sc.user)
+				folder := createFolderWithACL(t, "Folder", sc.user, testCase.items)
+				cmd := getCreateCommand(folder.Id, "Library Panel Name")
+				resp := sc.service.createHandler(sc.reqContext, cmd)
+				result := validateAndUnMarshalResponse(t, resp)
+				sc.reqContext.SignedInUser.OrgRole = testCase.role
+
+				sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID, ":dashboardId": strconv.FormatInt(dashboard.Id, 10)})
+				resp = sc.service.connectHandler(sc.reqContext)
+				require.Equal(t, testCase.status, resp.Status())
+			})
+
+		testScenario(t, fmt.Sprintf("When an %s tries to disconnect a library panel in a folder with %s, it should return correct status", testCase.role, testCase.desc),
+			func(t *testing.T, sc scenarioContext) {
+				dashboard := createDashboard(t, sc.user)
+				folder := createFolderWithACL(t, "Folder", sc.user, testCase.items)
+				cmd := getCreateCommand(folder.Id, "Library Panel Name")
+				resp := sc.service.createHandler(sc.reqContext, cmd)
+				result := validateAndUnMarshalResponse(t, resp)
+				sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID, ":dashboardId": strconv.FormatInt(dashboard.Id, 10)})
+				resp = sc.service.connectHandler(sc.reqContext)
+				require.Equal(t, 200, resp.Status())
+				sc.reqContext.SignedInUser.OrgRole = testCase.role
+
+				sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID, ":dashboardId": strconv.FormatInt(dashboard.Id, 10)})
+				resp = sc.service.disconnectHandler(sc.reqContext)
+				require.Equal(t, testCase.status, resp.Status())
+			})
 	}
 
 	var generalFolderCases = []struct {
@@ -175,6 +207,35 @@ func TestLibraryPanelPermissions(t *testing.T) {
 
 				sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID})
 				resp = sc.service.deleteHandler(sc.reqContext)
+				require.Equal(t, testCase.status, resp.Status())
+			})
+
+		testScenario(t, fmt.Sprintf("When an %s tries to connect a library panel in the General folder, it should return correct status", testCase.role),
+			func(t *testing.T, sc scenarioContext) {
+				dashboard := createDashboard(t, sc.user)
+				cmd := getCreateCommand(0, "Library Panel Name")
+				resp := sc.service.createHandler(sc.reqContext, cmd)
+				result := validateAndUnMarshalResponse(t, resp)
+				sc.reqContext.SignedInUser.OrgRole = testCase.role
+
+				sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID, ":dashboardId": strconv.FormatInt(dashboard.Id, 10)})
+				resp = sc.service.connectHandler(sc.reqContext)
+				require.Equal(t, testCase.status, resp.Status())
+			})
+
+		testScenario(t, fmt.Sprintf("When an %s tries to disconnect a library panel in the General folder, it should return correct status", testCase.role),
+			func(t *testing.T, sc scenarioContext) {
+				dashboard := createDashboard(t, sc.user)
+				cmd := getCreateCommand(0, "Library Panel Name")
+				resp := sc.service.createHandler(sc.reqContext, cmd)
+				result := validateAndUnMarshalResponse(t, resp)
+				sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID, ":dashboardId": strconv.FormatInt(dashboard.Id, 10)})
+				resp = sc.service.connectHandler(sc.reqContext)
+				require.Equal(t, 200, resp.Status())
+				sc.reqContext.SignedInUser.OrgRole = testCase.role
+
+				sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID, ":dashboardId": strconv.FormatInt(dashboard.Id, 10)})
+				resp = sc.service.disconnectHandler(sc.reqContext)
 				require.Equal(t, testCase.status, resp.Status())
 			})
 	}

@@ -54,6 +54,12 @@ func (lps *LibraryPanelService) connectHandler(c *models.ReqContext) response.Re
 		if errors.Is(err, errLibraryPanelNotFound) {
 			return response.Error(404, errLibraryPanelNotFound.Error(), err)
 		}
+		if errors.Is(err, models.ErrFolderNotFound) {
+			return response.Error(404, models.ErrFolderNotFound.Error(), err)
+		}
+		if errors.Is(err, models.ErrFolderAccessDenied) {
+			return response.Error(403, models.ErrFolderAccessDenied.Error(), err)
+		}
 		return response.Error(500, "Failed to connect library panel", err)
 	}
 
@@ -88,6 +94,12 @@ func (lps *LibraryPanelService) disconnectHandler(c *models.ReqContext) response
 		}
 		if errors.Is(err, errLibraryPanelDashboardNotFound) {
 			return response.Error(404, errLibraryPanelDashboardNotFound.Error(), err)
+		}
+		if errors.Is(err, models.ErrFolderNotFound) {
+			return response.Error(404, models.ErrFolderNotFound.Error(), err)
+		}
+		if errors.Is(err, models.ErrFolderAccessDenied) {
+			return response.Error(403, models.ErrFolderAccessDenied.Error(), err)
 		}
 		return response.Error(500, "Failed to disconnect library panel", err)
 	}

@@ -111,6 +111,9 @@ func connectDashboard(session *sqlstore.DBSession, dialect migrator.Dialect, use
 	if err != nil {
 		return err
 	}
+	if err := requirePermissionsOnFolder(user, panel.FolderID); err != nil {
+		return err
+	}
 
 	// TODO add check that dashboard exists
 
@@ -190,6 +193,9 @@ func (lps *LibraryPanelService) disconnectDashboard(c *models.ReqContext, uid st
 	return lps.SQLStore.WithTransactionalDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
 		panel, err := getLibraryPanel(session, uid, c.SignedInUser.OrgId)
 		if err != nil {
+			return err
+		}
+		if err := requirePermissionsOnFolder(c.SignedInUser, panel.FolderID); err != nil {
 			return err
 		}
 
