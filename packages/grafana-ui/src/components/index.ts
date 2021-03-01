@@ -17,7 +17,7 @@ export { LoadingPlaceholder, LoadingPlaceholderProps } from './LoadingPlaceholde
 export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
 export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
-export { PieChart, PieChartType, PieChartLabelOptions } from './PieChart/PieChart';
+export { PieChart, PieChartType, PieChartLabels, PieChartLegendOptions } from './PieChart/PieChart';
 export { UnitPicker } from './UnitPicker/UnitPicker';
 export { StatsPicker } from './StatsPicker/StatsPicker';
 export { RefreshPicker, defaultIntervals } from './RefreshPicker/RefreshPicker';

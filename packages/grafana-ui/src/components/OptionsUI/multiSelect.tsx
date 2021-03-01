@@ -9,6 +9,10 @@ interface State<T> {
 
 type Props<T> = FieldConfigEditorProps<T[], SelectFieldConfigSettings<T>>;
 
+/**
+ * MultiSelect for options UI
+ * @alpha
+ */
 export class MultiSelectValueEditor<T> extends React.PureComponent<Props<T>, State<T>> {
   state: State<T> = {
     isLoading: true,

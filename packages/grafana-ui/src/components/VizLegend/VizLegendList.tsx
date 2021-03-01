@@ -39,7 +39,7 @@ export const VizLegendList: React.FunctionComponent<Props> = ({
 
       return (
         <div className={cx(styles.rightWrapper, className)}>
-          <List items={items} renderItem={renderItem} getItemKey={getItemKey} className={className} />
+          <List items={items} renderItem={renderItem} getItemKey={getItemKey} />
         </div>
       );
     }

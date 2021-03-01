@@ -15,7 +15,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 231,
+  "id": 479,
   "links": [],
   "panels": [
     {
@@ -49,23 +49,34 @@
         "h": 14,
         "w": 8,
         "x": 0,
-        "y": 3
+        "y": 0
       },
       "id": 2,
       "options": {
+        "displayLabels": [
+          "name"
+        ],
         "labelOptions": {
           "showName": true,
           "showPercent": false,
           "showValue": false
         },
+        "legend": {
+          "displayColumns": [],
+          "displayMode": "list",
+          "placement": "right"
+        },
         "pieType": "donut",
         "reduceOptions": {
-          "calcs": ["mean"],
+          "calcs": [
+            "mean"
+          ],
           "fields": "",
           "values": false
         },
         "showLegend": true,
-        "strokeWidth": 1
+        "strokeWidth": 1,
+        "text": {}
       },
       "pluginVersion": "7.3.0-pre",
       "targets": [
@@ -112,23 +123,37 @@
         "h": 14,
         "w": 8,
         "x": 8,
-        "y": 3
+        "y": 0
       },
       "id": 11,
       "options": {
+        "displayLabels": [
+          "name",
+          "percent"
+        ],
         "labelOptions": {
           "showName": true,
           "showPercent": true,
           "showValue": false
         },
+        "legend": {
+          "displayColumns": [
+            "percent"
+          ],
+          "displayMode": "list",
+          "placement": "right"
+        },
         "pieType": "pie",
         "reduceOptions": {
-          "calcs": ["mean"],
+          "calcs": [
+            "mean"
+          ],
           "fields": "",
           "values": false
         },
         "showLegend": true,
-        "strokeWidth": 1
+        "strokeWidth": 1,
+        "text": {}
       },
       "pluginVersion": "7.3.0-pre",
       "targets": [
@@ -173,23 +198,34 @@
         "h": 14,
         "w": 8,
         "x": 16,
-        "y": 3
+        "y": 0
       },
       "id": 8,
       "options": {
+        "displayLabels": [
+          "name"
+        ],
         "labelOptions": {
           "showName": true,
           "showPercent": false,
           "showValue": false
         },
+        "legend": {
+          "displayColumns": [],
+          "displayMode": "hidden",
+          "placement": "right"
+        },
         "pieType": "pie",
         "reduceOptions": {
-          "calcs": ["mean"],
+          "calcs": [
+            "mean"
+          ],
           "fields": "",
           "values": false
         },
         "showLegend": false,
-        "strokeWidth": 1
+        "strokeWidth": 1,
+        "text": {}
       },
       "pluginVersion": "7.3.0-pre",
       "targets": [
@@ -202,7 +238,7 @@
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Name",
+      "title": "Name & No legend",
       "type": "piechart"
     },
     {
@@ -234,23 +270,36 @@
         "h": 9,
         "w": 5,
         "x": 0,
-        "y": 17
+        "y": 14
       },
       "id": 3,
       "options": {
+        "displayLabels": [
+          "percent"
+        ],
         "labelOptions": {
           "showName": false,
           "showPercent": true,
           "showValue": false
         },
+        "legend": {
+          "displayColumns": [
+            "percent"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
         "pieType": "pie",
         "reduceOptions": {
-          "calcs": ["mean"],
+          "calcs": [
+            "mean"
+          ],
           "fields": "",
           "values": false
         },
         "showLegend": false,
-        "strokeWidth": 1
+        "strokeWidth": 1,
+        "text": {}
       },
       "pluginVersion": "7.3.0-pre",
       "targets": [
@@ -295,23 +344,36 @@
         "h": 9,
         "w": 5,
         "x": 5,
-        "y": 17
+        "y": 14
       },
       "id": 9,
       "options": {
+        "displayLabels": [
+          "value"
+        ],
         "labelOptions": {
           "showName": false,
           "showPercent": false,
           "showValue": true
         },
+        "legend": {
+          "displayColumns": [
+            "value"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
         "pieType": "pie",
         "reduceOptions": {
-          "calcs": ["mean"],
+          "calcs": [
+            "mean"
+          ],
           "fields": "",
           "values": false
         },
         "showLegend": false,
-        "strokeWidth": 1
+        "strokeWidth": 1,
+        "text": {}
       },
       "pluginVersion": "7.3.0-pre",
       "targets": [
@@ -356,23 +418,34 @@
         "h": 9,
         "w": 6,
         "x": 10,
-        "y": 17
+        "y": 14
       },
       "id": 6,
       "options": {
+        "displayLabels": [
+          "name"
+        ],
         "labelOptions": {
           "showName": true,
           "showPercent": false,
           "showValue": false
         },
-        "pieType": "donut",
+        "legend": {
+          "displayColumns": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "pieType": "pie",
         "reduceOptions": {
-          "calcs": ["mean"],
+          "calcs": [
+            "mean"
+          ],
           "fields": "",
           "values": false
         },
         "showLegend": false,
-        "strokeWidth": 1
+        "strokeWidth": 1,
+        "text": {}
       },
       "pluginVersion": "7.3.0-pre",
       "targets": [
@@ -417,23 +490,32 @@
         "h": 9,
         "w": 8,
         "x": 16,
-        "y": 17
+        "y": 14
       },
       "id": 10,
       "options": {
+        "displayLabels": [],
         "labelOptions": {
           "showName": true,
           "showPercent": false,
           "showValue": false
         },
+        "legend": {
+          "displayColumns": ["percent", "value"],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
         "pieType": "pie",
         "reduceOptions": {
-          "calcs": ["mean"],
+          "calcs": [
+            "mean"
+          ],
           "fields": "",
           "values": false
         },
         "showLegend": false,
-        "strokeWidth": 1
+        "strokeWidth": 1,
+        "text": {}
       },
       "pluginVersion": "7.3.0-pre",
       "targets": [
@@ -450,9 +532,12 @@
       "type": "piechart"
     }
   ],
-  "schemaVersion": 26,
+  "schemaVersion": 27,
   "style": "dark",
-  "tags": ["gdev", "panel-tests"],
+  "tags": [
+    "gdev",
+    "panel-tests"
+  ],
   "templating": {
     "list": []
   },
@@ -464,5 +549,5 @@
   "timezone": "",
   "title": "Panel Tests - Pie chart",
   "uid": "lVE-2YFMz",
-  "version": 1
+  "version": 9
 }
