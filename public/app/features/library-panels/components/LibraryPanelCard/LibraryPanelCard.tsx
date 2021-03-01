@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Icon, IconButton, stylesFactory, ConfirmModal, Tooltip, useStyles, Card } from '@grafana/ui';
+import { Icon, IconButton, ConfirmModal, Tooltip, useStyles, Card } from '@grafana/ui';
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { LibraryPanelDTO } from '../../state/api';
@@ -32,7 +32,7 @@ export const LibraryPanelCard: React.FC<LibraryPanelCardProps & { children?: JSX
     <>
       <Card heading={libraryPanel.name} onClick={onClick ? () => onClick(libraryPanel) : undefined}>
         <Card.Figure>
-          <Icon className={styles.panelIcon} name="book-open" />
+          <Icon className={styles.panelIcon} name="book-open" size="xl" />
         </Card.Figure>
         <Card.Meta>
           <span>Reusable panel</span>
@@ -42,17 +42,6 @@ export const LibraryPanelCard: React.FC<LibraryPanelCardProps & { children?: JSX
               {libraryPanel.meta.connectedDashboards}
             </div>
           </Tooltip>
-
-          {/*
-          Commenting this out as obtaining the number of variables used by a panel
-          isn't implemetned yet.
-          <Tooltip content="Variables used" placement="bottom">
-            <div className={styles.tooltip}>
-              <Icon name="x" className={styles.detailIcon} />
-              {varCount}
-            </div>
-          </Tooltip> */}
-
           <span>
             Last edited {formatDate?.(libraryPanel.meta.updated ?? '') ?? libraryPanel.meta.updated} by{' '}
             {libraryPanel.meta.updatedBy.name}
@@ -94,7 +83,7 @@ export const LibraryPanelCard: React.FC<LibraryPanelCardProps & { children?: JSX
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme) => {
   return {
     tooltip: css`
       display: inline;
@@ -103,10 +92,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       margin-right: 0.5ch;
     `,
     panelIcon: css`
-      margin-right: ${theme.spacing.md};
+      color: ${theme.colors.textWeak};
     `,
     tagList: css`
       align-self: center;
     `,
   };
-});
+};
