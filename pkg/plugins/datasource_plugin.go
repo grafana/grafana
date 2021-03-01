@@ -46,7 +46,7 @@ func (p *DataSourcePlugin) Load(decoder *json.Decoder, base *PluginBase, backend
 
 	if p.Backend {
 		cmd := ComposePluginStartCommand(p.Executable)
-		fullpath := filepath.Join(p.PluginDir, cmd)
+		fullpath := filepath.Join(base.PluginDir, cmd)
 		factory := grpcplugin.NewBackendPlugin(p.Id, fullpath, grpcplugin.PluginStartFuncs{
 			OnLegacyStart: p.onLegacyPluginStart,
 			OnStart:       p.onPluginStart,
