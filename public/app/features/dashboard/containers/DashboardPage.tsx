@@ -18,7 +18,7 @@ import { Alert, Button, CustomScrollbar, HorizontalGroup, Spinner, VerticalGroup
 import { initDashboard } from '../state/initDashboard';
 import { notifyApp } from 'app/core/actions';
 // Types
-import { AppNotificationSeverity, DashboardInitError, DashboardInitPhase, StoreState } from 'app/types';
+import { AppNotificationSeverity, DashboardInitError, DashboardInitPhase, KioskMode, StoreState } from 'app/types';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { PanelInspector } from '../components/Inspector/PanelInspector';
 import { SubMenu } from '../components/SubMenu/SubMenu';
@@ -27,6 +27,7 @@ import { cancelVariables } from '../../variables/state/actions';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { getLegacyAngularInjector, locationService } from '@grafana/runtime';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { selectors } from '@grafana/e2e-selectors';
 
 export interface DashboardPageRouteParams {
   uid?: string;
@@ -41,6 +42,7 @@ type DashboardPageRouteSearchParams = {
   viewPanel?: string;
   editview?: string;
   inspect?: string;
+  kiosk?: KioskMode;
 };
 
 export interface Props extends GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams> {
@@ -301,16 +303,23 @@ export class DashboardPage extends PureComponent<Props, State> {
       if (isInitSlow) {
         return this.renderSlowInitState();
       }
+
       return null;
     }
 
     // Only trigger render when the scroll has moved by 25
     const approximateScrollTop = Math.round(scrollTop / 25) * 25;
     const inspectPanel = this.getInspectPanel();
+    const isInTvKioskMode = queryParams.kiosk && queryParams.kiosk === 'tv';
+    const isInFullKioskMode = queryParams.kiosk && queryParams.kiosk === 'full';
 
     return (
       <div className="dashboard-container">
-        <DashNav dashboard={dashboard} isFullscreen={!!viewPanel} onAddPanel={this.onAddPanel} />
+        {!isInFullKioskMode && (
+          <div aria-label={selectors.pages.Dashboard.DashNav.nav}>
+            <DashNav dashboard={dashboard} isFullscreen={!!viewPanel} onAddPanel={this.onAddPanel} />
+          </div>
+        )}
 
         <div className="dashboard-scroll">
           <CustomScrollbar
@@ -322,8 +331,10 @@ export class DashboardPage extends PureComponent<Props, State> {
           >
             <div className="dashboard-content">
               {initError && this.renderInitFailedState()}
-              {!editPanel && (
-                <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
+              {!editPanel && !isInFullKioskMode && !isInTvKioskMode && (
+                <div aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
+                  <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
+                </div>
               )}
 
               <DashboardGrid

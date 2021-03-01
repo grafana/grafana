@@ -34,7 +34,11 @@ export const Pages = {
   },
   Dashboard: {
     url: (uid: string) => `/d/${uid}`,
+    DashNav: {
+      nav: 'Dashboard navigation',
+    },
     SubMenu: {
+      submenu: 'Dashboard submenu',
       submenuItem: 'Dashboard template variables submenu item',
       submenuItemLabels: (item: string) => `Dashboard template variables submenu Label ${item}`,
       submenuItemValueDropDownValueLinkTexts: (item: string) =>

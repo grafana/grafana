@@ -62,7 +62,8 @@ export interface DashboardInitError {
 }
 
 export const KIOSK_MODE_TV = 'tv';
-export type KioskUrlValue = 'tv' | '1' | true;
+export type KioskMode = 'tv' | 'full';
+
 export type GetMutableDashboardModelFn = () => DashboardModel | null;
 
 export interface QueriesToUpdateOnDashboardLoad {

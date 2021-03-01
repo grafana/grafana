@@ -6,6 +6,7 @@ import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 import { DashboardInitPhase, DashboardRoutes } from 'app/types';
 import { notifyApp } from 'app/core/actions';
 import { cleanUpDashboardAndVariables } from '../state/actions';
+import { selectors } from '@grafana/e2e-selectors';
 
 jest.mock('app/features/dashboard/components/DashboardSettings/GeneralSettings', () => ({}));
 
@@ -249,6 +250,57 @@ describe('DashboardPage', () => {
 
     it('Should call clean up action', () => {
       expect(ctx.cleanUpDashboardAndVariablesMock).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  dashboardPageScenario('Kiosk mode none', (ctx) => {
+    ctx.setup(() => {
+      ctx.mount({
+        queryParams: {},
+      });
+      ctx.setDashboardProp({
+        panels: [{ id: 0, type: 'graph' }],
+        schemaVersion: 17,
+      });
+    });
+
+    it('should not render dashboard navigation ', () => {
+      expect(ctx.wrapper?.find(`[aria-label="${selectors.pages.Dashboard.DashNav.nav}"]`)).toHaveLength(1);
+      expect(ctx.wrapper?.find(`[aria-label="${selectors.pages.Dashboard.SubMenu.submenu}"]`)).toHaveLength(1);
+    });
+  });
+
+  dashboardPageScenario('Kiosk mode tv', (ctx) => {
+    ctx.setup(() => {
+      ctx.mount({
+        queryParams: { kiosk: 'tv' },
+      });
+      ctx.setDashboardProp({
+        panels: [{ id: 0, type: 'graph' }],
+        schemaVersion: 17,
+      });
+    });
+
+    it('should not render dashboard navigation ', () => {
+      expect(ctx.wrapper?.find(`[aria-label="${selectors.pages.Dashboard.DashNav.nav}"]`)).toHaveLength(1);
+      expect(ctx.wrapper?.find(`[aria-label="${selectors.pages.Dashboard.SubMenu.submenu}"]`)).toHaveLength(0);
+    });
+  });
+
+  dashboardPageScenario('Kiosk mode full', (ctx) => {
+    ctx.setup(() => {
+      ctx.mount({
+        queryParams: { kiosk: 'full' },
+      });
+      ctx.setDashboardProp({
+        panels: [{ id: 0, type: 'graph' }],
+        schemaVersion: 17,
+      });
+    });
+
+    it('should not render dashboard navigation and submenu', () => {
+      expect(ctx.wrapper?.find(`[aria-label="${selectors.pages.Dashboard.DashNav.nav}"]`)).toHaveLength(0);
+      expect(ctx.wrapper?.find(`[aria-label="${selectors.pages.Dashboard.SubMenu.submenu}"]`)).toHaveLength(0);
     });
   });
 
