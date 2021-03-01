@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import Mousetrap from 'mousetrap';
 import 'mousetrap-global-bind';
 import { IRootScopeService } from 'angular';
@@ -22,23 +21,16 @@ export class KeybindingSrv {
   /** @ngInject */
   constructor(
     private $rootScope: GrafanaRootScope,
-    // private $timeout: ITimeoutService,
     private datasourceSrv: any,
     private timeSrv: any,
     private contextSrv: ContextSrv
   ) {
-    // clear out all shortcuts on route change
-    // $rootScope.$on('$routeChangeSuccess', () => {
-    //   Mousetrap.reset();
-    //   // rebind global shortcuts
-    //   this.setupGlobal();
-    // });
-
     this.setupGlobal();
     appEvents.on(CoreEvents.showModal, () => (this.modalOpen = true));
   }
 
   setupGlobal() {
+    Mousetrap.reset();
     if (locationService.getLocation().pathname !== '/login') {
       this.bind(['?', 'h'], this.showHelpModal);
       this.bind('g h', this.goToHome);
@@ -171,8 +163,10 @@ export class KeybindingSrv {
   }
 
   showDashEditView() {
-    // const search = _.extend(this.$location.search(), { editview: 'settings' });
-    // this.$location.search(search);
+    locationService.partial({
+      ...locationService.getSearchObject(),
+      editview: 'settings',
+    });
   }
 
   setupDashboardBindings(scope: IRootScopeService & AppEventEmitter, dashboard: DashboardModel) {
@@ -214,23 +208,29 @@ export class KeybindingSrv {
       }
 
       if (dashboard.canEditPanelById(dashboard.meta.focusPanelId)) {
-        // const search = _.extend(this.$location.search(), { editPanel: dashboard.meta.focusPanelId });
-        // this.$location.search(search);
+        locationService.partial({
+          ...locationService.getSearchObject(),
+          editPanel: dashboard.meta.focusPanelId,
+        });
       }
     });
 
     // view panel
     this.bind('v', () => {
       if (dashboard.meta.focusPanelId) {
-        // const search = _.extend(this.$location.search(), { viewPanel: dashboard.meta.focusPanelId });
-        // this.$location.search(search);
+        locationService.partial({
+          ...locationService.getSearchObject(),
+          viewPanel: dashboard.meta.focusPanelId,
+        });
       }
     });
 
     this.bind('i', () => {
       if (dashboard.meta.focusPanelId) {
-        // const search = _.extend(this.$location.search(), { inspect: dashboard.meta.focusPanelId });
-        // this.$location.search(search);
+        locationService.partial({
+          ...locationService.getSearchObject(),
+          inspect: dashboard.meta.focusPanelId,
+        });
       }
     });
 
@@ -251,7 +251,7 @@ export class KeybindingSrv {
           if (url) {
             const urlWithoutBase = locationUtil.stripBaseFromUrl(url);
             if (urlWithoutBase) {
-              // this.$timeout(() => this.$location.url(urlWithoutBase));
+              locationService.push(urlWithoutBase);
             }
           }
         }

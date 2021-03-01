@@ -7,6 +7,7 @@ import { GrafanaRouteComponentProps } from './types';
 import { updateLocation } from '../reducers/location';
 import usePrevious from 'react-use/lib/usePrevious';
 import { locationService, navigationLogger } from '@grafana/runtime';
+import { getKeybindingSrv } from '../services/keybindingSrv';
 
 export interface Props extends GrafanaRouteComponentProps {}
 
@@ -14,6 +15,7 @@ export class GrafanaRoute extends React.Component<Props> {
   componentDidMount() {
     this.updateBodyClassNames();
     this.cleanupDOM();
+    getKeybindingSrv().setupGlobal();
     navigationLogger('GrafanaRoute', false, 'Mounted', this.props.match);
   }
 
