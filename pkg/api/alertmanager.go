@@ -304,7 +304,5 @@ func (r *ApiReceiver) Type() ReceiverType {
 }
 
 type GrafanaReceivers struct {
-	// required: true
-	DefaultReceiver         *GrafanaReceiver   `yaml:"default_receiver" json:"default_receiver"`
 	GrafanaManagedReceivers []*GrafanaReceiver `yaml:"grafana_managed_receiver_configs,omitempty" json:"grafana_managed_receiver_configs,omitempty"`
 }

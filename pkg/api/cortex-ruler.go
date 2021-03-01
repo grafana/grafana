@@ -158,7 +158,7 @@ type ExtendedUpsertAlertDefinitionCommand struct {
 	ExecutionErrorState ExecutionErrorState    `json:"exec_err_state" yaml:"exec_err_state"`
 	Settings            map[string]interface{} `json:"settings" yaml:"settings"`
 	// Receivers are optional and used for migrating notification channels of existing alerts
-	Receivers []*GrafanaReceiver `json:"receivers" yaml:"receivers"`
+	Receivers []string `json:"receivers" yaml:"receivers"`
 	// internal state
 	FolderUID      string   `json:"-" yaml:"-"`
 	DatasourceUIDs []string `json:"-" yaml:"-"`
