@@ -65,7 +65,7 @@ export class GrafanaRoute extends React.Component<Props> {
 
     const RouteComponent = props.route.component;
 
-    return <RouteComponent {...props} />;
+    return <RouteComponent {...props} queryParams={queryStringToJSON(props.location.search)} />;
   }
 }
 

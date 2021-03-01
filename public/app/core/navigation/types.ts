@@ -1,9 +1,10 @@
 import React from 'react';
 import { RouteComponentProps } from 'react-router-dom';
 
-export interface GrafanaRouteComponentProps<T = any> extends RouteComponentProps<T> {
+export interface GrafanaRouteComponentProps<T = any, Q = any> extends RouteComponentProps<T> {
   $injector: any;
   route: RouteDescriptor;
+  queryParams: Q;
 }
 
 export type GrafanaRouteComponent<T = any> = React.ComponentType<GrafanaRouteComponentProps<T>>;
