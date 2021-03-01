@@ -25,7 +25,7 @@ import { SubMenu } from '../components/SubMenu/SubMenu';
 import { cleanUpDashboardAndVariables } from '../state/actions';
 import { cancelVariables } from '../../variables/state/actions';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
-import { locationService } from '@grafana/runtime';
+import { getLegacyAngularInjector, locationService } from '@grafana/runtime';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 export interface DashboardPageRouteParams {
@@ -103,7 +103,7 @@ export class DashboardPage extends PureComponent<Props, State> {
     }
 
     this.props.initDashboard({
-      $injector: this.props.$injector,
+      $injector: getLegacyAngularInjector(),
       $scope: this.props.$scope,
       urlSlug: match.params.slug,
       urlUid: match.params.uid,
@@ -302,7 +302,7 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, $injector, isInitSlow, initError, isPanelEditorOpen } = this.props;
+    const { dashboard, isInitSlow, initError, isPanelEditorOpen } = this.props;
     const { editPanel, viewPanel, scrollTop, updateScrollTop, editView } = this.state;
 
     if (!dashboard) {
@@ -318,7 +318,7 @@ export class DashboardPage extends PureComponent<Props, State> {
 
     return (
       <div className="dashboard-container">
-        <DashNav dashboard={dashboard} isFullscreen={!!viewPanel} $injector={$injector} onAddPanel={this.onAddPanel} />
+        <DashNav dashboard={dashboard} isFullscreen={!!viewPanel} onAddPanel={this.onAddPanel} />
 
         <div className="dashboard-scroll">
           <CustomScrollbar

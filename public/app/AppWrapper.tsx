@@ -63,7 +63,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
             }
           }
 
-          return <GrafanaRoute {...props} route={route} $injector={this.state.ngInjector} />;
+          return <GrafanaRoute {...props} route={route} />;
         }}
       />
     );

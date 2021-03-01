@@ -15,13 +15,13 @@ import { DashboardModel } from '../../state';
 import { StoreState } from 'app/types';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
-import { locationService } from '@grafana/runtime';
+import { getLegacyAngularInjector, locationService } from '@grafana/runtime';
 import { toggleKioskMode } from 'app/core/navigation/kiosk';
+import { getDashboardSrv } from '../../services/DashboardSrv';
 
 export interface OwnProps {
   dashboard: DashboardModel;
   isFullscreen: boolean;
-  $injector: any;
   onAddPanel: () => void;
 }
 
@@ -53,7 +53,7 @@ class DashNav extends PureComponent<Props> {
 
   constructor(props: Props) {
     super(props);
-    this.playlistSrv = this.props.$injector.get('playlistSrv');
+    this.playlistSrv = getLegacyAngularInjector().get('playlistSrv');
   }
 
   onFolderNameClick = () => {
@@ -73,8 +73,8 @@ class DashNav extends PureComponent<Props> {
   };
 
   onStarDashboard = () => {
-    const { dashboard, $injector } = this.props;
-    const dashboardSrv = $injector.get('dashboardSrv');
+    const { dashboard } = this.props;
+    const dashboardSrv = getDashboardSrv();
 
     dashboardSrv.starDashboard(dashboard.id, dashboard.meta.isStarred).then((newState: any) => {
       dashboard.meta.isStarred = newState;

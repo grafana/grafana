@@ -30,7 +30,6 @@ const setup = (propOverrides?: object) => {
       },
     } as any,
     queryParams: {},
-    $injector: {} as any,
     route: {} as any,
     members: [] as TeamMember[],
     editorsCanAdmin: false,
