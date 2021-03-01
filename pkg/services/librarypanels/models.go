@@ -109,7 +109,7 @@ type createLibraryPanelCommand struct {
 
 // patchLibraryPanelCommand is the command for patching a LibraryPanel
 type patchLibraryPanelCommand struct {
-	FolderID int64           `json:"folderId"`
+	FolderID int64           `json:"folderId" binding:"Default(-1)"`
 	Name     string          `json:"name"`
 	Model    json.RawMessage `json:"model"`
 }

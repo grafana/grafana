@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/go-macaron/binding"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
@@ -35,6 +36,12 @@ func (lps *LibraryPanelService) createHandler(c *models.ReqContext, cmd createLi
 		if errors.Is(err, errLibraryPanelAlreadyExists) {
 			return response.Error(400, errLibraryPanelAlreadyExists.Error(), err)
 		}
+		if errors.Is(err, models.ErrFolderNotFound) {
+			return response.Error(404, models.ErrFolderNotFound.Error(), err)
+		}
+		if errors.Is(err, models.ErrFolderAccessDenied) {
+			return response.Error(403, models.ErrFolderAccessDenied.Error(), err)
+		}
 		return response.Error(500, "Failed to create library panel", err)
 	}
 
@@ -46,6 +53,12 @@ func (lps *LibraryPanelService) connectHandler(c *models.ReqContext) response.Re
 	if err := lps.connectDashboard(c, c.Params(":uid"), c.ParamsInt64(":dashboardId")); err != nil {
 		if errors.Is(err, errLibraryPanelNotFound) {
 			return response.Error(404, errLibraryPanelNotFound.Error(), err)
+		}
+		if errors.Is(err, models.ErrFolderNotFound) {
+			return response.Error(404, models.ErrFolderNotFound.Error(), err)
+		}
+		if errors.Is(err, models.ErrFolderAccessDenied) {
+			return response.Error(403, models.ErrFolderAccessDenied.Error(), err)
 		}
 		return response.Error(500, "Failed to connect library panel", err)
 	}
@@ -59,6 +72,12 @@ func (lps *LibraryPanelService) deleteHandler(c *models.ReqContext) response.Res
 	if err != nil {
 		if errors.Is(err, errLibraryPanelNotFound) {
 			return response.Error(404, errLibraryPanelNotFound.Error(), err)
+		}
+		if errors.Is(err, models.ErrFolderNotFound) {
+			return response.Error(404, models.ErrFolderNotFound.Error(), err)
+		}
+		if errors.Is(err, models.ErrFolderAccessDenied) {
+			return response.Error(403, models.ErrFolderAccessDenied.Error(), err)
 		}
 		return response.Error(500, "Failed to delete library panel", err)
 	}
@@ -75,6 +94,12 @@ func (lps *LibraryPanelService) disconnectHandler(c *models.ReqContext) response
 		}
 		if errors.Is(err, errLibraryPanelDashboardNotFound) {
 			return response.Error(404, errLibraryPanelDashboardNotFound.Error(), err)
+		}
+		if errors.Is(err, models.ErrFolderNotFound) {
+			return response.Error(404, models.ErrFolderNotFound.Error(), err)
+		}
+		if errors.Is(err, models.ErrFolderAccessDenied) {
+			return response.Error(403, models.ErrFolderAccessDenied.Error(), err)
 		}
 		return response.Error(500, "Failed to disconnect library panel", err)
 	}
@@ -127,6 +152,12 @@ func (lps *LibraryPanelService) patchHandler(c *models.ReqContext, cmd patchLibr
 		}
 		if errors.Is(err, errLibraryPanelNotFound) {
 			return response.Error(404, errLibraryPanelNotFound.Error(), err)
+		}
+		if errors.Is(err, models.ErrFolderNotFound) {
+			return response.Error(404, models.ErrFolderNotFound.Error(), err)
+		}
+		if errors.Is(err, models.ErrFolderAccessDenied) {
+			return response.Error(403, models.ErrFolderAccessDenied.Error(), err)
 		}
 		return response.Error(500, "Failed to update library panel", err)
 	}
