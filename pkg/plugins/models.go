@@ -29,6 +29,14 @@ type PluginSignatureState struct {
 
 type PluginSignatureStatus string
 
+func (pss PluginSignatureStatus) IsValid() bool {
+	return pss == pluginSignatureValid
+}
+
+func (pss PluginSignatureStatus) IsInternal() bool {
+	return pss == pluginSignatureInternal
+}
+
 const (
 	pluginSignatureInternal PluginSignatureStatus = "internal" // core plugin, no signature
 	pluginSignatureValid    PluginSignatureStatus = "valid"    // signed and accurate MANIFEST
