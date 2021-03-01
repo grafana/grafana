@@ -28,12 +28,6 @@ export class QueryEditorRows extends PureComponent<Props> {
   onChangeQuery(query: DataQuery, index: number) {
     const { queries, onQueriesChange } = this.props;
 
-    const old = queries[index];
-
-    if (old.datasource) {
-      query.datasource = old.datasource;
-    }
-
     // update query in array
     onQueriesChange(
       queries.map((item, itemIndex) => {

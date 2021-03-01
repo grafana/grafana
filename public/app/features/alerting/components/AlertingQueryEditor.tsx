@@ -56,6 +56,7 @@ class AlertingQueryEditorUnconnected extends PureComponent<Props> {
             />
           </div>
           <QueryGroup
+            hideTopSection={true}
             queryRunner={queryRunner!} // if the queryRunner is undefined here somethings very wrong so it's ok to throw an unhandled error
             options={queryOptions}
             onRunQueries={this.onRunQueries}

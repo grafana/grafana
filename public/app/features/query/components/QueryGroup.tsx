@@ -34,6 +34,7 @@ interface Props {
   onOpenQueryInspector?: () => void;
   onRunQueries: () => void;
   onOptionsChange: (options: QueryGroupOptions) => void;
+  hideTopSection?: boolean;
 }
 
 interface State {
@@ -46,12 +47,17 @@ interface State {
   scrollTop: number;
   data: PanelData;
   isHelpOpen: boolean;
+  defaultDataSource?: DataSourceApi;
 }
 
 export class QueryGroup extends PureComponent<Props, State> {
   backendSrv = backendSrv;
   dataSourceSrv = getDataSourceSrv();
   querySubscription: Unsubscribable | null;
+
+  static defaultProps: Partial<Props> = {
+    hideTopSection: false,
+  };
 
   state: State = {
     isLoadingHelp: false,
@@ -77,7 +83,8 @@ export class QueryGroup extends PureComponent<Props, State> {
     try {
       const ds = await this.dataSourceSrv.get(options.dataSource.name);
       const dsSettings = this.dataSourceSrv.getInstanceSettings(options.dataSource.name);
-      this.setState({ dataSource: ds, dsSettings });
+      const defaultDataSource = await this.dataSourceSrv.get();
+      this.setState({ dataSource: ds, dsSettings, defaultDataSource });
     } catch (error) {
       console.log('failed to load data source', error);
     }
@@ -142,11 +149,12 @@ export class QueryGroup extends PureComponent<Props, State> {
 
   onAddQueryClick = () => {
     if (this.state.dsSettings?.meta.mixed) {
-      this.setState({ isAddingMixed: true });
-      return;
+      this.onChange({
+        queries: addQuery(this.props.options.queries, { datasource: this.state.defaultDataSource?.name }),
+      });
+    } else {
+      this.onChange({ queries: addQuery(this.props.options.queries) });
     }
-
-    this.onChange({ queries: addQuery(this.props.options.queries) });
     this.onScrollBottom();
   };
 
@@ -299,8 +307,7 @@ export class QueryGroup extends PureComponent<Props, State> {
   }
 
   renderAddQueryRow(dsSettings: DataSourceInstanceSettings, styles: QueriesTabStyles) {
-    const { isAddingMixed } = this.state;
-    const showAddButton = !(isAddingMixed || isSharedDashboardQuery(dsSettings.name));
+    const showAddButton = !isSharedDashboardQuery(dsSettings.name);
 
     return (
       <HorizontalGroup spacing="md" align="flex-start">
@@ -314,7 +321,6 @@ export class QueryGroup extends PureComponent<Props, State> {
             Query
           </Button>
         )}
-        {isAddingMixed && this.renderMixedPicker()}
         {config.expressionsEnabled && this.isExpressionsSupported(dsSettings) && (
           <Tooltip content="Experimental feature: queries could stop working in next version" placement="right">
             <Button
@@ -333,13 +339,14 @@ export class QueryGroup extends PureComponent<Props, State> {
   }
 
   render() {
+    const { hideTopSection } = this.props;
     const { scrollTop, isHelpOpen, dsSettings } = this.state;
     const styles = getStyles();
 
     return (
       <CustomScrollbar autoHeightMin="100%" scrollTop={scrollTop} setScrollTop={this.setScrollTop}>
         <div className={styles.innerWrapper}>
-          {this.renderTopSection(styles)}
+          {!hideTopSection && this.renderTopSection(styles)}
           {dsSettings && (
             <>
               <div className={styles.queriesWrapper}>{this.renderQueries(dsSettings)}</div>

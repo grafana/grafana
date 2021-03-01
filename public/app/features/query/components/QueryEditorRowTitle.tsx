@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { css, cx } from 'emotion';
-import { DataQuery, GrafanaTheme } from '@grafana/data';
+import { DataQuery, DataSourceInstanceSettings, GrafanaTheme } from '@grafana/data';
 import { Icon, Input, stylesFactory, useTheme, FieldValidationMessage } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
+import { DataSourcePicker } from '../../../core/components/Select/DataSourcePicker';
 
 export interface Props {
   query: DataQuery;
@@ -85,6 +86,10 @@ export const QueryEditorRowTitle: React.FC<Props> = ({
     event.target.select();
   };
 
+  const onDataSourceChange = (dataSource: DataSourceInstanceSettings) => {
+    onChange({ ...query, datasource: dataSource.name });
+  };
+
   return (
     <div className={styles.wrapper}>
       {!isEditing && (
@@ -116,7 +121,7 @@ export const QueryEditorRowTitle: React.FC<Props> = ({
           {validationError && <FieldValidationMessage horizontal>{validationError}</FieldValidationMessage>}
         </>
       )}
-      {inMixedMode && <em className={styles.contextInfo}> ({dataSourceName})</em>}
+      {inMixedMode && <DataSourcePicker current={dataSourceName} onChange={onDataSourceChange} />}
       {disabled && <em className={styles.contextInfo}> Disabled</em>}
 
       {collapsedText && (

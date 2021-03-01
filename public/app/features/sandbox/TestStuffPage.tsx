@@ -81,6 +81,7 @@ export const TestStuffPage: FC = () => {
         )}
         <div style={{ marginTop: '16px', height: '45%' }}>
           <QueryGroup
+            hideTopSection={true}
             options={queryOptions}
             queryRunner={queryRunner}
             onRunQueries={onRunQueries}
