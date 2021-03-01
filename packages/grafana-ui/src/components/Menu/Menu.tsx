@@ -1,16 +1,35 @@
 import React, { useCallback } from 'react';
-import { css } from 'emotion';
-import { GrafanaTheme } from '@grafana/data';
+import { css, cx } from 'emotion';
+import { GrafanaTheme, LinkTarget } from '@grafana/data';
 import { List } from '../List/List';
-import { useStyles } from '../../themes';
-import { ItemProps, MenuItem } from './MenuItem';
+import { styleMixins, useStyles } from '../../themes';
+import { Icon } from '../Icon/Icon';
+import { IconName } from '../../types';
+
+/** @internal */
+export interface MenuItem {
+  /** Label of the menu item */
+  label: string;
+  /** Target of the menu item (i.e. new window)  */
+  target?: LinkTarget;
+  /** Icon of the menu item */
+  icon?: IconName;
+  /** Url of the menu item */
+  url?: string;
+  /** Handler for the click behaviour */
+  onClick?: (event?: React.SyntheticEvent<HTMLElement>) => void;
+  /** Handler for the click behaviour */
+  group?: string;
+  /** Active */
+  active?: boolean;
+}
 
 /** @internal */
 export interface MenuItemsGroup {
   /** Label for the menu items group */
   label?: string;
   /** Items of the group */
-  items: ItemProps[];
+  items: MenuItem[];
 }
 
 /** @internal */
@@ -65,7 +84,7 @@ const MenuGroup: React.FC<MenuGroupProps> = ({ group, onClick }) => {
         items={group.items || []}
         renderItem={(item) => {
           return (
-            <MenuItem
+            <MenuItemComponent
               url={item.url}
               label={item.label}
               target={item.target}
@@ -97,10 +116,51 @@ const MenuGroup: React.FC<MenuGroupProps> = ({ group, onClick }) => {
 };
 MenuGroup.displayName = 'MenuGroup';
 
+interface MenuItemProps {
+  label: string;
+  icon?: IconName;
+  url?: string;
+  target?: LinkTarget;
+  onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
+  className?: string;
+  active?: boolean;
+}
+
+const MenuItemComponent: React.FC<MenuItemProps> = React.memo(
+  ({ url, icon, label, target, onClick, className, active }) => {
+    const styles = useStyles(getMenuStyles);
+    const itemStyle = cx(
+      {
+        [styles.item]: true,
+        [styles.activeItem]: active,
+      },
+      className
+    );
+
+    return (
+      <div className={itemStyle}>
+        <a
+          href={url ? url : undefined}
+          target={target}
+          className={styles.link}
+          onClick={onClick}
+          rel={target === '_blank' ? 'noopener noreferrer' : undefined}
+        >
+          {icon && <Icon name={icon} className={styles.icon} />} {label}
+        </a>
+      </div>
+    );
+  }
+);
+MenuItemComponent.displayName = 'MenuItemComponent';
+
 const getMenuStyles = (theme: GrafanaTheme) => {
+  const linkColor = theme.colors.text;
+  const linkColorHover = theme.colors.linkHover;
   const wrapperBg = theme.colors.formInputBg;
   const wrapperShadow = theme.isDark ? theme.palette.black : theme.palette.gray3;
   const groupLabelColor = theme.colors.textWeak;
+  const itemBgHover = styleMixins.hoverColor(theme.colors.bg1, theme);
   const headerBg = theme.colors.formInputBg;
   const headerSeparator = theme.colors.border3;
 
@@ -118,11 +178,42 @@ const getMenuStyles = (theme: GrafanaTheme) => {
       display: inline-block;
       border-radius: ${theme.border.radius.sm};
     `,
+    link: css`
+      color: ${linkColor};
+      display: flex;
+      cursor: pointer;
+      padding: 5px 12px 5px 10px;
+
+      &:hover {
+        color: ${linkColorHover};
+        text-decoration: none;
+      }
+    `,
+    item: css`
+      background: none;
+      border-left: 2px solid transparent;
+      cursor: pointer;
+      white-space: nowrap;
+
+      &:hover {
+        background: ${itemBgHover};
+        border-image: linear-gradient(#f05a28 30%, #fbca0a 99%);
+        border-image-slice: 1;
+      }
+    `,
+    activeItem: css`
+      background: ${theme.colors.bg2};
+    `,
     groupLabel: css`
       color: ${groupLabelColor};
       font-size: ${theme.typography.size.sm};
       line-height: ${theme.typography.lineHeight.md};
       padding: ${theme.spacing.xs} ${theme.spacing.sm};
+    `,
+    icon: css`
+      opacity: 0.7;
+      margin-right: 10px;
+      color: ${theme.colors.linkDisabled};
     `,
   };
 };
