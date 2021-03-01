@@ -12,6 +12,16 @@ func nilOrNaN(f *float64) bool {
 	return f == nil || math.IsNaN(*f)
 }
 
+func (cr classicReducer) ValidReduceFunc() bool {
+	switch cr {
+	case "avg", "sum", "min", "max", "count", "last", "median":
+		return true
+	case "diff", "diff_abs", "percent_diff", "percent_diff_abs", "count_not_null":
+		return true
+	}
+	return false
+}
+
 //nolint: gocyclo
 func (cr classicReducer) Reduce(series mathexp.Series) mathexp.Number {
 	num := mathexp.NewNumber("", nil)
