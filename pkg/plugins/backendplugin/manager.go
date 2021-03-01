@@ -228,6 +228,10 @@ func (m *manager) CheckHealth(ctx context.Context, pluginContext backend.PluginC
 			return nil, err
 		}
 
+		if errors.Is(err, ErrPluginUnavailable) {
+			return nil, err
+		}
+
 		return nil, errutil.Wrap("failed to check plugin health", ErrHealthCheckFailed)
 	}
 
