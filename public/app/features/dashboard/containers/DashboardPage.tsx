@@ -34,9 +34,9 @@ export interface DashboardPageRouteParams {
   slug?: string;
 }
 
-export interface DashboardPageRouteSearchParams {
+type DashboardPageRouteSearchParams = {
   tab?: string;
-}
+};
 
 export interface Props extends GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams> {
   $scope: any;
