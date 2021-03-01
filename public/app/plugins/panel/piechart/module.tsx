@@ -77,7 +77,6 @@ export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
       .addMultiSelect({
         name: 'Legend values',
         path: 'legend.displayColumns',
-        description: 'Select the columns to be displayed in the legend',
         settings: {
           options: [
             { value: LegendColumns.Percent, label: 'Percent' },
