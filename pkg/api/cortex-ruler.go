@@ -157,6 +157,8 @@ type ExtendedUpsertAlertDefinitionCommand struct {
 	NoDataState         NoDataState            `json:"no_data_state" yaml:"no_data_state"`
 	ExecutionErrorState ExecutionErrorState    `json:"exec_err_state" yaml:"exec_err_state"`
 	Settings            map[string]interface{} `json:"settings" yaml:"settings"`
+	// Receivers are optional and used for migrating notification channels of existing alerts
+	Receivers []string `json:"receivers" yaml:"receivers"`
 	// internal state
 	FolderUID      string   `json:"-" yaml:"-"`
 	DatasourceUIDs []string `json:"-" yaml:"-"`
