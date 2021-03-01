@@ -5,10 +5,12 @@ import { fromBaseUrl } from './url';
 
 export type VisitFunction = (args?: string) => Cypress.Chainable<Window>;
 export type E2EVisit = { visit: VisitFunction };
-export type E2EFunction = (text?: string) => Cypress.Chainable<JQuery<HTMLElement>>;
+export type E2EFunction = ((text?: string, options?: CypressOptions) => Cypress.Chainable<JQuery<HTMLElement>>) &
+  E2EFunctionWithOnlyOptions;
+export type E2EFunctionWithOnlyOptions = (options?: CypressOptions) => Cypress.Chainable<JQuery<HTMLElement>>;
 
 export type TypeSelectors<S> = S extends StringSelector
-  ? E2EFunction
+  ? E2EFunctionWithOnlyOptions
   : S extends FunctionSelector
   ? E2EFunction
   : S extends CssSelector
@@ -26,6 +28,8 @@ export type E2EFunctions<S extends Selectors> = {
 export type E2EObjects<S extends Selectors> = E2EFunctions<S>;
 
 export type E2EFactoryArgs<S extends Selectors> = { selectors: S };
+
+export type CypressOptions = Partial<Cypress.Loggable & Cypress.Timeoutable & Cypress.Withinable & Cypress.Shadow>;
 
 const processSelectors = <S extends Selectors>(e2eObjects: E2EFunctions<S>, selectors: S): E2EFunctions<S> => {
   const logOutput = (data: any) => e2e().logToConsole('Retrieving Selector:', data);
@@ -55,9 +59,9 @@ const processSelectors = <S extends Selectors>(e2eObjects: E2EFunctions<S>, sele
 
     if (typeof value === 'string') {
       // @ts-ignore
-      e2eObjects[key] = () => {
+      e2eObjects[key] = (options?: CypressOptions) => {
         logOutput(value);
-        return e2e().get(Selector.fromAriaLabel(value));
+        return e2e().get(Selector.fromAriaLabel(value), options);
       };
 
       continue;
@@ -65,18 +69,21 @@ const processSelectors = <S extends Selectors>(e2eObjects: E2EFunctions<S>, sele
 
     if (typeof value === 'function') {
       // @ts-ignore
-      e2eObjects[key] = (text?: string) => {
-        if (!text) {
-          const selector = value((undefined as unknown) as string);
+      e2eObjects[key] = (textOrOptions?: string | CypressOptions, options?: CypressOptions) => {
+        // set the selector to default if we are seeing () => or (options) =>
+        let selector = value((undefined as unknown) as string);
 
-          logOutput(selector);
-          return e2e().get(selector);
+        // if (text) => or (text, options) => then we want to update the selector
+        if (typeof textOrOptions === 'string') {
+          const ariaText = value(textOrOptions);
+          selector = Selector.fromAriaLabel(ariaText);
+        } else {
+          // textOrOptions is the options passed in so overwrite the options param
+          options = textOrOptions;
         }
 
-        const selector = value(text);
-
         logOutput(selector);
-        return e2e().get(Selector.fromAriaLabel(selector));
+        return e2e().get(selector, options);
       };
 
       continue;
