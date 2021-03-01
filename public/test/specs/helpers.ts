@@ -179,6 +179,10 @@ export class ContextSrvStub {
   hasRole() {
     return true;
   }
+
+  isAllowedInterval() {
+    return true;
+  }
 }
 
 export function TemplateSrvStub(this: any) {
