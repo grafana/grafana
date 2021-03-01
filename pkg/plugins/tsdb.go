@@ -2,6 +2,9 @@ package plugins
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -59,6 +62,120 @@ type DataQueryResult struct {
 	Series      DataTimeSeriesSlice `json:"series"`
 	Tables      []DataTable         `json:"tables"`
 	Dataframes  DataFrames          `json:"dataframes"`
+}
+
+// UnmarshalJSON deserializes a DataQueryResult from JSON.
+//
+// Deserialization support is required by tests.
+func (r *DataQueryResult) UnmarshalJSON(b []byte) error {
+	m := map[string]interface{}{}
+	if err := json.Unmarshal(b, &m); err != nil {
+		return err
+	}
+
+	refID, ok := m["refId"].(string)
+	if !ok {
+		return fmt.Errorf("can't decode field refId - not a string")
+	}
+	var meta *simplejson.Json
+	if m["meta"] != nil {
+		mm, ok := m["meta"].(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("can't decode field meta - not a JSON object")
+		}
+		meta = simplejson.NewFromAny(mm)
+	}
+	var series DataTimeSeriesSlice
+	/* TODO
+	if m["series"] != nil {
+	}
+	*/
+	var tables []DataTable
+	if m["tables"] != nil {
+		ts, ok := m["tables"].([]interface{})
+		if !ok {
+			return fmt.Errorf("can't decode field tables - not an array of Tables")
+		}
+		for _, ti := range ts {
+			tm, ok := ti.(map[string]interface{})
+			if !ok {
+				return fmt.Errorf("can't decode field tables - not an array of Tables")
+			}
+			var columns []DataTableColumn
+			cs, ok := tm["columns"].([]interface{})
+			if !ok {
+				return fmt.Errorf("can't decode field tables - not an array of Tables")
+			}
+			for _, ci := range cs {
+				cm, ok := ci.(map[string]interface{})
+				if !ok {
+					return fmt.Errorf("can't decode field tables - not an array of Tables")
+				}
+				val, ok := cm["text"].(string)
+				if !ok {
+					return fmt.Errorf("can't decode field tables - not an array of Tables")
+				}
+
+				columns = append(columns, DataTableColumn{Text: val})
+			}
+
+			rs, ok := tm["rows"].([]interface{})
+			if !ok {
+				return fmt.Errorf("can't decode field tables - not an array of Tables")
+			}
+			var rows []DataRowValues
+			for _, ri := range rs {
+				vals, ok := ri.([]interface{})
+				if !ok {
+					return fmt.Errorf("can't decode field tables - not an array of Tables")
+				}
+				rows = append(rows, vals)
+			}
+
+			tables = append(tables, DataTable{
+				Columns: columns,
+				Rows:    rows,
+			})
+		}
+	}
+
+	var dfs *dataFrames
+	if m["dataframes"] != nil {
+		raw, ok := m["dataframes"].([]interface{})
+		if !ok {
+			return fmt.Errorf("can't decode field dataframes - not an array of byte arrays")
+		}
+
+		var encoded [][]byte
+		for _, ra := range raw {
+			encS, ok := ra.(string)
+			if !ok {
+				return fmt.Errorf("can't decode field dataframes - not an array of byte arrays")
+			}
+			enc, err := base64.StdEncoding.DecodeString(encS)
+			if err != nil {
+				return fmt.Errorf("can't decode field dataframes - not an array of arrow frames")
+			}
+			encoded = append(encoded, enc)
+		}
+		decoded, err := data.UnmarshalArrowFrames(encoded)
+		if err != nil {
+			return err
+		}
+		dfs = &dataFrames{
+			decoded: decoded,
+			encoded: encoded,
+		}
+	}
+
+	r.RefID = refID
+	r.Meta = meta
+	r.Series = series
+	r.Tables = tables
+	if dfs != nil {
+		r.Dataframes = dfs
+	}
+	return nil
 }
 
 type DataTimeSeries struct {
