@@ -21,7 +21,7 @@ export interface ArrowDataFrame extends DataFrame {
 
 export function base64StringToArrowTable(text: string): Table {
   const b64 = atob(text);
-  const arr = Uint8Array.from(b64, c => {
+  const arr = Uint8Array.from(b64, (c) => {
     return c.charCodeAt(0);
   });
   return Table.from(arr);

@@ -1,12 +1,11 @@
 // Libraries
 import React, { Component } from 'react';
-import { dateMath, GrafanaTheme, TimeZone } from '@grafana/data';
+import { dateMath, GrafanaTheme, TimeZone, TimeRange } from '@grafana/data';
 import { css } from 'emotion';
 
 // Types
 import { DashboardModel } from '../../state';
 import { LocationState, CoreEvents } from 'app/types';
-import { TimeRange } from '@grafana/data';
 
 // Components
 import { RefreshPicker, withTheme, stylesFactory, Themeable, defaultIntervals } from '@grafana/ui';
@@ -15,15 +14,6 @@ import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePicker
 // Utils & Services
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { appEvents } from 'app/core/core';
-
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  return {
-    container: css`
-      position: relative;
-      display: flex;
-    `,
-  };
-});
 
 export interface Props extends Themeable {
   dashboard: DashboardModel;
@@ -126,3 +116,12 @@ class UnthemedDashNavTimeControls extends Component<Props> {
 }
 
 export const DashNavTimeControls = withTheme(UnthemedDashNavTimeControls);
+
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    container: css`
+      position: relative;
+      display: flex;
+    `,
+  };
+});

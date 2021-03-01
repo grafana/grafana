@@ -87,6 +87,10 @@ export class ThresholdManager {
 
   renderHandle(handleIndex: number, defaultHandleTopPos: number) {
     const model = this.thresholds[handleIndex];
+    if (!model.visible) {
+      return;
+    }
+
     const value = model.value;
     let valueStr = value;
     let handleTopPos = 0;

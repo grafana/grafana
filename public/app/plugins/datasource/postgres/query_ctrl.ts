@@ -7,13 +7,9 @@ import PostgresQuery from './postgres_query';
 import sqlPart from './sql_part';
 import { auto } from 'angular';
 import { CoreEvents } from 'app/types';
-import { PanelEvents } from '@grafana/data';
+import { PanelEvents, QueryResultMeta } from '@grafana/data';
 import { VariableWithMultiSupport } from 'app/features/variables/types';
-import { getLocationSrv, TemplateSrv } from '@grafana/runtime';
-
-export interface QueryMeta {
-  sql: string;
-}
+import { TemplateSrv } from '@grafana/runtime';
 
 const defaultQuery = `SELECT
   $__time(time_column),
@@ -30,7 +26,8 @@ export class PostgresQueryCtrl extends QueryCtrl {
   formats: any[];
   queryModel: PostgresQuery;
   metaBuilder: PostgresMetaQuery;
-  lastQueryError: string | null;
+  lastQueryMeta?: QueryResultMeta;
+  lastQueryError?: string;
   showHelp: boolean;
   tableSegment: any;
   whereAdd: any;
@@ -106,13 +103,6 @@ export class PostgresQueryCtrl extends QueryCtrl {
     this.panelCtrl.events.on(PanelEvents.dataError, this.onDataError.bind(this), $scope);
   }
 
-  showQueryInspector() {
-    getLocationSrv().update({
-      query: { inspect: this.panel.id, inspectTab: 'query' },
-      partial: true,
-    });
-  }
-
   updateRawSqlAndRefresh() {
     if (!this.target.rawQuery) {
       this.target.rawSql = this.queryModel.buildQuery();
@@ -123,14 +113,14 @@ export class PostgresQueryCtrl extends QueryCtrl {
 
   updateProjection() {
     this.selectParts = _.map(this.target.select, (parts: any) => {
-      return _.map(parts, sqlPart.create).filter(n => n);
+      return _.map(parts, sqlPart.create).filter((n) => n);
     });
-    this.whereParts = _.map(this.target.where, sqlPart.create).filter(n => n);
-    this.groupParts = _.map(this.target.group, sqlPart.create).filter(n => n);
+    this.whereParts = _.map(this.target.where, sqlPart.create).filter((n) => n);
+    this.groupParts = _.map(this.target.group, sqlPart.create).filter((n) => n);
   }
 
   updatePersistedParts() {
-    this.target.select = _.map(this.selectParts, selectParts => {
+    this.target.select = _.map(this.selectParts, (selectParts) => {
       return _.map(selectParts, (part: any) => {
         return { type: part.def.type, datatype: part.datatype, params: part.params };
       });
@@ -311,7 +301,8 @@ export class PostgresQueryCtrl extends QueryCtrl {
   }
 
   onDataReceived(dataList: any) {
-    this.lastQueryError = null;
+    this.lastQueryError = undefined;
+    this.lastQueryMeta = dataList[0]?.meta;
   }
 
   onDataError(err: any) {
@@ -325,7 +316,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
 
   transformToSegments(config: { addNone?: any; addTemplateVars?: any; templateQuoter?: any }) {
     return (results: any) => {
-      const segments = _.map(results, segment => {
+      const segments = _.map(results, (segment) => {
         return this.uiSegmentSrv.newSegment({
           value: segment.text,
           expandable: segment.expandable,
@@ -525,10 +516,10 @@ export class PostgresQueryCtrl extends QueryCtrl {
 
     // add aggregates when adding group by
     for (const selectParts of this.selectParts) {
-      if (!selectParts.some(part => part.def.type === 'aggregate')) {
+      if (!selectParts.some((part) => part.def.type === 'aggregate')) {
         const aggregate = sqlPart.create({ type: 'aggregate', params: ['avg'] });
         selectParts.splice(1, 0, aggregate);
-        if (!selectParts.some(part => part.def.type === 'alias')) {
+        if (!selectParts.some((part) => part.def.type === 'alias')) {
           const alias = sqlPart.create({ type: 'alias', params: [selectParts[0].part.params[0]] });
           selectParts.push(alias);
         }

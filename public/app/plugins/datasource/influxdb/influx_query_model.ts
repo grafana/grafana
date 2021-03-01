@@ -46,7 +46,7 @@ export default class InfluxQueryModel {
   }
 
   updatePersistedParts() {
-    this.target.select = _.map(this.selectModels, selectParts => {
+    this.target.select = _.map(this.selectModels, (selectParts) => {
       return _.map(selectParts, (part: any) => {
         return { type: part.def.type, params: part.params };
       });

@@ -1,36 +1,54 @@
 import React from 'react';
 import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
-import { CallToActionCard } from './CallToActionCard';
-import { select, text } from '@storybook/addon-knobs';
+import { CallToActionCard, CallToActionCardProps } from './CallToActionCard';
+import { NOOP_CONTROL } from '../../utils/storybook/noopControl';
+import { Story } from '@storybook/react';
 import { Button } from '../Button/Button';
 import { action } from '@storybook/addon-actions';
 
 export default {
   title: 'Layout/CallToActionCard',
   component: CallToActionCard,
+  parameters: {
+    knobs: {
+      disable: true,
+    },
+  },
+  argTypes: {
+    Element: { control: { type: 'select', options: ['button', 'custom'] } },
+    className: NOOP_CONTROL,
+    callToActionElement: NOOP_CONTROL,
+    theme: NOOP_CONTROL,
+  },
 };
 
-export const basic = () => {
+interface StoryProps extends Partial<CallToActionCardProps> {
+  Element: string;
+  H1Text: string;
+  buttonText: string;
+}
+
+export const Basic: Story<StoryProps> = (args) => {
   const ctaElements: { [key: string]: JSX.Element } = {
-    custom: <h1>This is just H1 tag, you can any component as CTA element</h1>,
+    custom: <h1>{args.H1Text}</h1>,
     button: (
       <Button size="lg" icon="plus" onClick={action('cta button clicked')}>
-        Add datasource
+        {args.buttonText}
       </Button>
     ),
   };
-  const ctaElement = select(
-    'Call to action element',
-    {
-      Custom: 'custom',
-      Button: 'button',
-    },
-    'custom'
-  );
 
   return renderComponentWithTheme(CallToActionCard, {
-    message: text('Call to action message', 'Renders message prop content'),
-    callToActionElement: ctaElements[ctaElement],
-    footer: text('Call to action footer', 'Renders footer prop content'),
+    message: args.message,
+    callToActionElement: ctaElements[args.Element],
+    footer: args.footer,
   });
+};
+
+Basic.args = {
+  Element: 'custom',
+  message: 'Renders message prop content',
+  footer: 'Renders footer prop content',
+  H1Text: 'This is just H1 tag, you can any component as CTA element',
+  buttonText: 'Add datasource',
 };

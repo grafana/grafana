@@ -18,10 +18,19 @@ export interface BuildInfo {
    */
   isEnterprise: boolean;
   env: string;
-  edition: string;
+  edition: GrafanaEdition;
   latestVersion: string;
   hasUpdate: boolean;
   hideVersion: boolean;
+}
+
+/**
+ * @internal
+ */
+export enum GrafanaEdition {
+  OpenSource = 'Open Source',
+  Pro = 'Pro',
+  Enterprise = 'Enterprise',
 }
 
 /**
@@ -33,7 +42,6 @@ export interface BuildInfo {
  */
 export interface FeatureToggles {
   live: boolean;
-  expressions: boolean;
   ngalert: boolean;
   panelLibrary: boolean;
 
@@ -42,6 +50,7 @@ export interface FeatureToggles {
    * Available only in Grafana Enterprise
    */
   meta: boolean;
+  reportVariables: boolean;
 }
 
 /**
@@ -55,7 +64,7 @@ export interface LicenseInfo {
   licenseUrl: string;
   stateInfo: string;
   hasValidLicense: boolean;
-  edition: string;
+  edition: GrafanaEdition;
 }
 
 /**
@@ -117,4 +126,5 @@ export interface GrafanaConfig {
   http2Enabled: boolean;
   dateFormats?: SystemDateFormatSettings;
   sentry: SentryConfig;
+  customTheme?: any;
 }

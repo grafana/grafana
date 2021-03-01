@@ -31,7 +31,7 @@ export function SettingField<T extends MetricAggregationWithSettings, K extends 
       <Input
         id={id}
         placeholder={placeholder}
-        onBlur={e => dispatch(changeMetricSetting(metric, settingName, e.target.value as any))}
+        onBlur={(e) => dispatch(changeMetricSetting(metric, settingName, e.target.value as any))}
         defaultValue={settings?.[settingName as keyof typeof settings]}
       />
     </InlineField>

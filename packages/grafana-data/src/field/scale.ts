@@ -4,13 +4,13 @@ import { Field, FieldConfig, FieldType, GrafanaTheme, NumericRange, Threshold } 
 import { getFieldColorModeForField } from './fieldColor';
 import { getActiveThresholdForValue } from './thresholds';
 
-export interface ScaledValue {
+export interface ColorScaleValue {
   percent: number; // 0-1
   threshold: Threshold;
   color: string;
 }
 
-export type ScaleCalculator = (value: number) => ScaledValue;
+export type ScaleCalculator = (value: number) => ColorScaleValue;
 
 export function getScaleCalculator(field: Field, theme: GrafanaTheme): ScaleCalculator {
   const mode = getFieldColorModeForField(field);
@@ -65,14 +65,20 @@ function getMinMaxAndDelta(field: Field): NumericRange {
   };
 }
 
+/**
+ * @internal
+ */
 export function getFieldConfigWithMinMax(field: Field, local?: boolean): FieldConfig {
   const { config } = field;
   let { min, max } = config;
-  if (isNumber(min) && !isNumber(max)) {
-    return config; // noop
+
+  if (isNumber(min) && isNumber(max)) {
+    return config;
   }
+
   if (local || !field.state?.range) {
     return { ...config, ...getMinMaxAndDelta(field) };
   }
+
   return { ...config, ...field.state.range };
 }

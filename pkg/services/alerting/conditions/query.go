@@ -110,13 +110,18 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext) (*alerting.Conditio
 }
 
 func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *tsdb.TimeRange) (tsdb.TimeSeriesSlice, error) {
-	getDsInfo := &models.GetDataSourceByIdQuery{
+	getDsInfo := &models.GetDataSourceQuery{
 		Id:    c.Query.DatasourceID,
 		OrgId: context.Rule.OrgID,
 	}
 
 	if err := bus.Dispatch(getDsInfo); err != nil {
 		return nil, fmt.Errorf("could not find datasource: %w", err)
+	}
+
+	err := context.RequestValidator.Validate(getDsInfo.Result.Url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("access denied: %w", err)
 	}
 
 	req := c.getRequestForAlertRule(getDsInfo.Result, timeRange, context.IsDebug)

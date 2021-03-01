@@ -1,5 +1,6 @@
 import { findModuleFiles, loadWebpackConfig } from './webpack.plugin.config';
 import fs from 'fs';
+// eslint-disable-next-line no-duplicate-imports
 import * as webpackConfig from './webpack.plugin.config';
 
 jest.mock('./webpack/loaders', () => ({
@@ -33,7 +34,7 @@ describe('Plugin webpack config', () => {
       const moduleFiles = await findModuleFiles('/', modulePathsMock);
       expect(moduleFiles.length).toBe(2);
       // normalize windows path - \\ -> /
-      expect(moduleFiles.map(p => p.replace(/\\/g, '/'))).toEqual(['/some/path/module.ts', '/some/path/module.tsx']);
+      expect(moduleFiles.map((p) => p.replace(/\\/g, '/'))).toEqual(['/some/path/module.ts', '/some/path/module.tsx']);
     });
   });
 

@@ -7,6 +7,7 @@ const setup = (propOverrides?: object) => {
     {
       link: {
         text: 'Hello',
+        icon: 'cloud',
         url: '/asd',
       },
     },

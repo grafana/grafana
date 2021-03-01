@@ -1,19 +1,14 @@
-import { LegendOptions, GraphTooltipOptions } from '@grafana/ui';
+import { VizLegendOptions, GraphTooltipOptions } from '@grafana/ui';
 
 export interface GraphOptions {
-  // Redraw as time passes
-  realTimeUpdates?: boolean;
+  // nothing for now
 }
 
-export interface Options {
+export interface OptionsWithLegend {
+  legend: VizLegendOptions;
+}
+
+export interface Options extends OptionsWithLegend {
   graph: GraphOptions;
-  legend: LegendOptions;
   tooltipOptions: GraphTooltipOptions;
-}
-
-export interface GraphLegendEditorLegendOptions extends LegendOptions {
-  stats?: string[];
-  decimals?: number;
-  sortBy?: string;
-  sortDesc?: boolean;
 }

@@ -35,7 +35,7 @@ describe('Order Transformer', () => {
         },
       };
 
-      await expect(transformDataFrame([cfg], [data])).toEmitValuesWith(received => {
+      await expect(transformDataFrame([cfg], [data])).toEmitValuesWith((received) => {
         const data = received[0];
         const ordered = data[0];
         expect(ordered.fields).toEqual([
@@ -96,7 +96,7 @@ describe('Order Transformer', () => {
         },
       };
 
-      await expect(transformDataFrame([cfg], [data])).toEmitValuesWith(received => {
+      await expect(transformDataFrame([cfg], [data])).toEmitValuesWith((received) => {
         const data = received[0];
         const ordered = data[0];
         expect(ordered.fields).toEqual([
@@ -153,7 +153,7 @@ describe('Order Transformer', () => {
         },
       };
 
-      await expect(transformDataFrame([cfg], [data])).toEmitValuesWith(received => {
+      await expect(transformDataFrame([cfg], [data])).toEmitValuesWith((received) => {
         const data = received[0];
         const ordered = data[0];
         expect(ordered.fields).toEqual([

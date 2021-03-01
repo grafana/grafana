@@ -87,18 +87,20 @@ func (ss *SQLStore) Init() error {
 	x = ss.engine
 	dialect = ss.Dialect
 
-	migrator := migrator.NewMigrator(ss.engine)
-	migrations.AddMigrations(migrator)
+	if !ss.dbCfg.SkipMigrations {
+		migrator := migrator.NewMigrator(ss.engine)
+		migrations.AddMigrations(migrator)
 
-	for _, descriptor := range registry.GetServices() {
-		sc, ok := descriptor.Instance.(registry.DatabaseMigrator)
-		if ok {
-			sc.AddMigration(migrator)
+		for _, descriptor := range registry.GetServices() {
+			sc, ok := descriptor.Instance.(registry.DatabaseMigrator)
+			if ok {
+				sc.AddMigration(migrator)
+			}
 		}
-	}
 
-	if err := migrator.Start(); err != nil {
-		return err
+		if err := migrator.Start(); err != nil {
+			return err
+		}
 	}
 
 	// Init repo instances
@@ -115,8 +117,10 @@ func (ss *SQLStore) Init() error {
 		return err
 	}
 	// Make sure the changes are synced, so they get shared with eventual other DB connections
-	if err := ss.Sync(); err != nil {
-		return err
+	if !ss.dbCfg.SkipMigrations {
+		if err := ss.Sync(); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -388,6 +392,7 @@ func (ss *SQLStore) readConfig() {
 	ss.dbCfg.Path = sec.Key("path").MustString("data/grafana.db")
 
 	ss.dbCfg.CacheMode = sec.Key("cache_mode").MustString("private")
+	ss.dbCfg.SkipMigrations = sec.Key("skip_migrations").MustBool()
 }
 
 // ITestDB is an interface of arguments for testing db
@@ -525,4 +530,5 @@ type DatabaseConfig struct {
 	ConnMaxLifetime  int
 	CacheMode        string
 	UrlQueryParams   map[string][]string
+	SkipMigrations   bool
 }

@@ -17,8 +17,7 @@ import { getDataSource } from './state/selectors';
 
 // Types
 import { PluginDashboard, StoreState } from 'app/types';
-import { DataSourceSettings } from '@grafana/data';
-import { NavModel } from '@grafana/data';
+import { DataSourceSettings, NavModel } from '@grafana/data';
 
 export interface Props {
   navModel: NavModel;
@@ -73,7 +72,7 @@ export class DataSourceDashboards extends PureComponent<Props> {
           <DashboardTable
             dashboards={dashboards}
             onImport={(dashboard, overwrite) => this.onImport(dashboard, overwrite)}
-            onRemove={dashboard => this.onRemove(dashboard)}
+            onRemove={(dashboard) => this.onRemove(dashboard)}
           />
         </Page.Contents>
       </Page>

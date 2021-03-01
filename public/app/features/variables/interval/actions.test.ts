@@ -1,6 +1,5 @@
-import { getRootReducer } from '../state/helpers';
+import { getRootReducer, RootReducerType } from '../state/helpers';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
-import { TemplatingState } from '../state/reducers';
 import { toVariableIdentifier, toVariablePayload } from '../state/types';
 import { updateAutoValue, UpdateAutoValueDependencies, updateIntervalVariableOptions } from './actions';
 import { createIntervalOptions } from './reducer';
@@ -24,13 +23,9 @@ describe('interval actions', () => {
   variableAdapters.setInit(() => [createIntervalVariableAdapter()]);
   describe('when updateIntervalVariableOptions is dispatched', () => {
     it('then correct actions are dispatched', async () => {
-      const interval = intervalBuilder()
-        .withId('0')
-        .withQuery('1s,1m,1h,1d')
-        .withAuto(false)
-        .build();
+      const interval = intervalBuilder().withId('0').withQuery('1s,1m,1h,1d').withAuto(false).build();
 
-      const tester = await reduxTester<{ templating: TemplatingState }>()
+      const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
         .whenAsyncActionIsDispatched(updateIntervalVariableOptions(toVariableIdentifier(interval)), true);
@@ -51,9 +46,7 @@ describe('interval actions', () => {
     it('then an notifyApp action should be dispatched', async () => {
       const timeSrvMock = ({
         timeRange: jest.fn().mockReturnValue({
-          from: dateTime(new Date())
-            .subtract(1, 'days')
-            .toDate(),
+          from: dateTime(new Date()).subtract(1, 'days').toDate(),
           to: new Date(),
           raw: {
             from: 'now-1d',
@@ -70,12 +63,12 @@ describe('interval actions', () => {
         .withAutoMin('1xyz') // illegal interval string
         .build();
 
-      const tester = await reduxTester<{ templating: TemplatingState }>()
+      const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
         .whenAsyncActionIsDispatched(updateOptions(toVariableIdentifier(interval)), true);
 
-      tester.thenDispatchedActionsPredicateShouldEqual(dispatchedActions => {
+      tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
         const expectedNumberOfActions = 4;
         expect(dispatchedActions[0]).toEqual(variableStateFetching(toVariablePayload(interval)));
         expect(dispatchedActions[1]).toEqual(createIntervalOptions(toVariablePayload(interval)));
@@ -106,10 +99,7 @@ describe('interval actions', () => {
   describe('when updateAutoValue is dispatched', () => {
     describe('and auto is false', () => {
       it('then no dependencies are called', async () => {
-        const interval = intervalBuilder()
-          .withId('0')
-          .withAuto(false)
-          .build();
+        const interval = intervalBuilder().withId('0').withAuto(false).build();
 
         const dependencies: UpdateAutoValueDependencies = {
           calculateInterval: jest.fn(),
@@ -130,7 +120,7 @@ describe('interval actions', () => {
           } as unknown) as TemplateSrv,
         };
 
-        await reduxTester<{ templating: TemplatingState }>()
+        await reduxTester<RootReducerType>()
           .givenRootReducer(getRootReducer())
           .whenActionIsDispatched(
             addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval }))
@@ -174,7 +164,7 @@ describe('interval actions', () => {
           } as unknown) as TemplateSrv,
         };
 
-        await reduxTester<{ templating: TemplatingState }>()
+        await reduxTester<RootReducerType>()
           .givenRootReducer(getRootReducer())
           .whenActionIsDispatched(
             addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval }))

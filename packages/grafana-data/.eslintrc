@@ -1,6 +1,6 @@
 {
   "rules": {
-    "no-restricted-imports": ["error", { "patterns": ["@grafana/runtime", "@grafana/ui", "@grafana/data"] }]
+    "no-restricted-imports": ["error", { "patterns": ["@grafana/runtime", "@grafana/ui", "@grafana/data", "@grafana/e2e/*"] }]
   },
   "overrides": [
     {

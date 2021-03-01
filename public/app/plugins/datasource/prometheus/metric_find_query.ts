@@ -58,7 +58,7 @@ export default class PrometheusMetricFindQuery {
     const url = `/api/v1/labels?${params.toString()}`;
 
     return this.datasource.metadataRequest(url).then((result: any) => {
-      return _.map(result.data.data, value => {
+      return _.map(result.data.data, (value) => {
         return { text: value };
       });
     });
@@ -79,7 +79,7 @@ export default class PrometheusMetricFindQuery {
       url = `/api/v1/label/${label}/values?${params.toString()}`;
 
       return this.datasource.metadataRequest(url).then((result: any) => {
-        return _.map(result.data.data, value => {
+        return _.map(result.data.data, (value) => {
           return { text: value };
         });
       });
@@ -92,13 +92,13 @@ export default class PrometheusMetricFindQuery {
       url = `/api/v1/series?${params.toString()}`;
 
       return this.datasource.metadataRequest(url).then((result: any) => {
-        const _labels = _.map(result.data.data, metric => {
+        const _labels = _.map(result.data.data, (metric) => {
           return metric[label] || '';
-        }).filter(label => {
+        }).filter((label) => {
           return label !== '';
         });
 
-        return _.uniq(_labels).map(metric => {
+        return _.uniq(_labels).map((metric) => {
           return {
             text: metric,
             expandable: true,
@@ -119,11 +119,11 @@ export default class PrometheusMetricFindQuery {
 
     return this.datasource.metadataRequest(url).then((result: any) => {
       return _.chain(result.data.data)
-        .filter(metricName => {
+        .filter((metricName) => {
           const r = new RegExp(metricFilterPattern);
           return r.test(metricName);
         })
-        .map(matchedMetricName => {
+        .map((matchedMetricName) => {
           return {
             text: matchedMetricName,
             expandable: true,
@@ -137,8 +137,8 @@ export default class PrometheusMetricFindQuery {
     const end = this.datasource.getPrometheusTime(this.range.to, true);
     const instantQuery: PromQueryRequest = { expr: query } as PromQueryRequest;
     return this.datasource.performInstantQuery(instantQuery, end).pipe(
-      map(result => {
-        return _.map(result.data.data.result, metricData => {
+      map((result) => {
+        return _.map(result.data.data.result, (metricData) => {
           let text = metricData.metric.__name__ || '';
           delete metricData.metric.__name__;
           text +=

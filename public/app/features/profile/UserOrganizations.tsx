@@ -1,9 +1,9 @@
 import React, { PureComponent } from 'react';
-import { User, UserOrg } from 'app/types';
+import { UserDTO, UserOrg } from 'app/types';
 import { LoadingPlaceholder, Button } from '@grafana/ui';
 
 export interface Props {
-  user: User;
+  user: UserDTO;
   orgs: UserOrg[];
   isLoading: boolean;
   loadOrgs: () => void;

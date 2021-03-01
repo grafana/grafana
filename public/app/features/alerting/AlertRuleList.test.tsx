@@ -1,6 +1,6 @@
 import React from 'react';
 import { shallow } from 'enzyme';
-import { AlertRuleList, Props } from './AlertRuleList';
+import { AlertRuleListUnconnected, Props } from './AlertRuleList';
 import { AlertRule } from '../../types';
 import appEvents from '../../core/app_events';
 import { NavModel } from '@grafana/data';
@@ -24,62 +24,18 @@ const setup = (propOverrides?: object) => {
     stateFilter: '',
     search: '',
     isLoading: false,
+    ngAlertDefinitions: [],
   };
 
   Object.assign(props, propOverrides);
 
-  const wrapper = shallow(<AlertRuleList {...props} />);
+  const wrapper = shallow(<AlertRuleListUnconnected {...props} />);
 
   return {
     wrapper,
-    instance: wrapper.instance() as AlertRuleList,
+    instance: wrapper.instance() as AlertRuleListUnconnected,
   };
 };
-
-describe('Render', () => {
-  it('should render component', () => {
-    const { wrapper } = setup();
-
-    expect(wrapper).toMatchSnapshot();
-  });
-
-  it('should render alert rules', () => {
-    const { wrapper } = setup({
-      alertRules: [
-        {
-          id: 1,
-          dashboardId: 7,
-          dashboardUid: 'ggHbN42mk',
-          dashboardSlug: 'alerting-with-testdata',
-          panelId: 3,
-          name: 'TestData - Always OK',
-          state: 'ok',
-          newStateDate: '2018-09-04T10:01:01+02:00',
-          evalDate: '0001-01-01T00:00:00Z',
-          evalData: {},
-          executionError: '',
-          url: '/d/ggHbN42mk/alerting-with-testdata',
-        },
-        {
-          id: 3,
-          dashboardId: 7,
-          dashboardUid: 'ggHbN42mk',
-          dashboardSlug: 'alerting-with-testdata',
-          panelId: 3,
-          name: 'TestData - ok',
-          state: 'ok',
-          newStateDate: '2018-09-04T10:01:01+02:00',
-          evalDate: '0001-01-01T00:00:00Z',
-          evalData: {},
-          executionError: 'error',
-          url: '/d/ggHbN42mk/alerting-with-testdata',
-        },
-      ],
-    });
-
-    expect(wrapper).toMatchSnapshot();
-  });
-});
 
 describe('Life cycle', () => {
   describe('component did mount', () => {

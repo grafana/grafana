@@ -74,11 +74,11 @@ describe('Select utils', () => {
       expect(cleanValue('test1', optGroup)).toEqual([{ label: 'Group 4 - Option 1', value: 'test1' }]);
       expect(cleanValue(3, options)).toEqual([{ label: 'Option 3', value: 3 }]);
     });
-    it('should return empty array for null/undefined/empty values', () => {
-      expect(cleanValue([undefined], options)).toEqual([]);
-      expect(cleanValue(undefined, options)).toEqual([]);
-      expect(cleanValue(null, options)).toEqual([]);
-      expect(cleanValue('', options)).toEqual([]);
+    it('should return undefined for null/undefined/empty values', () => {
+      expect(cleanValue([undefined], options)).toEqual(undefined);
+      expect(cleanValue(undefined, options)).toEqual(undefined);
+      expect(cleanValue(null, options)).toEqual(undefined);
+      expect(cleanValue('', options)).toEqual(undefined);
     });
   });
 });

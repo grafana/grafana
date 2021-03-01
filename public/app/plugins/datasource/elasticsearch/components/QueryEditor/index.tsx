@@ -40,23 +40,25 @@ const QueryEditorForm: FunctionComponent<Props> = ({ value }) => {
             // By default QueryField calls onChange if onBlur is not defined, this will trigger a rerender
             // And slate will claim the focus, making it impossible to leave the field.
             onBlur={() => {}}
-            onChange={query => dispatch(changeQuery(query))}
+            onChange={(query) => dispatch(changeQuery(query))}
             placeholder="Lucene Query"
             portalOrigin="elasticsearch"
           />
         </InlineField>
         <InlineField label="Alias" labelWidth={15}>
           <Input
+            id={`ES-query-${value.refId}_alias`}
             placeholder="Alias Pattern"
-            value={value.alias}
-            onBlur={e => dispatch(changeAliasPattern(e.currentTarget.value))}
+            onBlur={(e) => dispatch(changeAliasPattern(e.currentTarget.value))}
+            defaultValue={value.alias}
           />
         </InlineField>
         <InlineField label="Index Pattern" labelWidth={15}>
           <Input
+            id={`ES-query-${value.refId}_indexOverride`}
             placeholder="Index Pattern Override"
-            value={value.indexPatternOverride}
-            onBlur={e => dispatch(changeIndexPatternOverride(e.currentTarget.value))}
+            defaultValue={value.indexPatternOverride}
+            onBlur={(e) => dispatch(changeIndexPatternOverride(e.currentTarget.value))}
           />
         </InlineField>
       </InlineFieldRow>

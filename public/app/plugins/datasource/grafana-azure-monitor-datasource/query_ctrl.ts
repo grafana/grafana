@@ -21,6 +21,13 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
 
   dummyDiminsionString = '+';
 
+  queryQueryTypeOptions = [
+    { id: AzureQueryType.ApplicationInsights, label: 'Application Insights' },
+    { id: AzureQueryType.AzureMonitor, label: 'Metrics' },
+    { id: AzureQueryType.LogAnalytics, label: 'Logs' },
+    { id: AzureQueryType.InsightsAnalytics, label: 'Insights Analytics' },
+  ];
+
   target: {
     // should be: AzureMonitorQuery
     refId: string;
@@ -499,7 +506,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     if (timeGrain === 'auto') {
       return TimegrainConverter.findClosestTimeGrain(
         '1m',
-        _.map(timeGrains, o => TimegrainConverter.createKbnUnitFromISO8601Duration(o.value)) || [
+        _.map(timeGrains, (o) => TimegrainConverter.createKbnUnitFromISO8601Duration(o.value)) || [
           '1m',
           '5m',
           '15m',
@@ -576,7 +583,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   };
 
   get templateVariables() {
-    return this.templateSrv.getVariables().map(t => '$' + t.name);
+    return this.templateSrv.getVariables().map((t) => '$' + t.name);
   }
 
   getAppInsightsMetricNames() {

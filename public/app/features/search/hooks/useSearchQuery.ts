@@ -51,6 +51,10 @@ export const useSearchQuery = (queryParams: Partial<DashboardQuery>, updateLocat
 
   const onLayoutChange = (layout: SearchLayout) => {
     dispatch({ type: LAYOUT_CHANGE, payload: layout });
+    if (layout === SearchLayout.Folders) {
+      updateLocationQuery({ layout, sort: null });
+      return;
+    }
     updateLocationQuery({ layout });
   };
 

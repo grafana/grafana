@@ -70,8 +70,8 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     const top = templateSrv.replace(item.top || '', scopedVars);
 
     const dimensionFilters = item.dimensionFilters
-      .filter(f => f.dimension && f.dimension !== 'None')
-      .map(f => {
+      .filter((f) => f.dimension && f.dimension !== 'None')
+      .map((f) => {
         const filter = templateSrv.replace(f.filter ?? '', scopedVars);
         return {
           dimension: templateSrv.replace(f.dimension, scopedVars),
@@ -225,7 +225,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
         return ResponseParser.parseResponseValues(result, 'type', 'type');
       })
       .then((result: any) => {
-        return filter(result, t => {
+        return filter(result, (t) => {
           for (let i = 0; i < this.supportedMetricNamespaces.length; i++) {
             if (t.value.toLowerCase() === this.supportedMetricNamespaces[i].toLowerCase()) {
               return true;

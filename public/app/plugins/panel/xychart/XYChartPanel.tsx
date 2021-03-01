@@ -2,8 +2,9 @@ import React, { useCallback, useMemo } from 'react';
 import { Button, TooltipPlugin, GraphNG, GraphNGLegendEvent } from '@grafana/ui';
 import { PanelProps } from '@grafana/data';
 import { Options } from './types';
-import { hideSeriesConfigFactory } from '../timeseries/hideSeriesConfigFactory';
+import { hideSeriesConfigFactory } from '../timeseries/overrides/hideSeriesConfigFactory';
 import { getXYDimensions } from './dims';
+import { changeSeriesColorConfigFactory } from '../timeseries/overrides/colorSeriesConfigFactory';
 
 interface XYChartPanelProps extends PanelProps<Options> {}
 
@@ -18,6 +19,7 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
   onFieldConfigChange,
 }) => {
   const dims = useMemo(() => getXYDimensions(options.dims, data.series), [options.dims, data.series]);
+
   if (dims.error) {
     return (
       <div>
@@ -41,6 +43,13 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
     [fieldConfig, onFieldConfigChange, frames]
   );
 
+  const onSeriesColorChange = useCallback(
+    (label: string, color: string) => {
+      onFieldConfigChange(changeSeriesColorConfigFactory(label, color, fieldConfig));
+    },
+    [fieldConfig, onFieldConfigChange]
+  );
+
   return (
     <GraphNG
       data={frames}
@@ -51,8 +60,9 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
       height={height}
       legend={options.legend}
       onLegendClick={onLegendClick}
+      onSeriesColorChange={onSeriesColorChange}
     >
-      <TooltipPlugin mode={options.tooltipOptions.mode as any} timeZone={timeZone} />
+      <TooltipPlugin data={data.series} mode={options.tooltipOptions.mode as any} timeZone={timeZone} />
       <>{/* needs to be an array */}</>
     </GraphNG>
   );

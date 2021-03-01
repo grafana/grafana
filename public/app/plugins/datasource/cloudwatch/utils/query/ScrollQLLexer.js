@@ -787,7 +787,7 @@ var serializedATN = [
 
 var atn = new antlr4.atn.ATNDeserializer().deserialize(serializedATN);
 
-var decisionsToDFA = atn.decisionToState.map(function(ds, index) {
+var decisionsToDFA = atn.decisionToState.map(function (ds, index) {
   return new antlr4.dfa.DFA(ds, index);
 });
 
@@ -804,7 +804,7 @@ ScrollQLLexer.prototype = Object.create(antlr4.Lexer.prototype);
 ScrollQLLexer.prototype.constructor = ScrollQLLexer;
 
 Object.defineProperty(ScrollQLLexer.prototype, 'atn', {
-  get: function() {
+  get: function () {
     return atn;
   },
 });
@@ -1334,7 +1334,7 @@ ScrollQLLexer.prototype.ruleNames = [
 
 ScrollQLLexer.prototype.grammarFileName = 'ScrollQLLexer.g4';
 
-ScrollQLLexer.prototype.action = function(localctx, ruleIndex, actionIndex) {
+ScrollQLLexer.prototype.action = function (localctx, ruleIndex, actionIndex) {
   switch (ruleIndex) {
     case 76:
       this.SYM_PIPE_action(localctx, actionIndex);
@@ -1347,7 +1347,7 @@ ScrollQLLexer.prototype.action = function(localctx, ruleIndex, actionIndex) {
   }
 };
 
-ScrollQLLexer.prototype.SYM_PIPE_action = function(localctx, actionIndex) {
+ScrollQLLexer.prototype.SYM_PIPE_action = function (localctx, actionIndex) {
   switch (actionIndex) {
     case 0:
       this.isFirstPipe = false;
@@ -1358,7 +1358,7 @@ ScrollQLLexer.prototype.SYM_PIPE_action = function(localctx, actionIndex) {
   }
 };
 
-ScrollQLLexer.prototype.SE_K_SOURCE_action = function(localctx, actionIndex) {
+ScrollQLLexer.prototype.SE_K_SOURCE_action = function (localctx, actionIndex) {
   switch (actionIndex) {
     case 1:
       this.isFirstPipe = true;
@@ -1367,7 +1367,7 @@ ScrollQLLexer.prototype.SE_K_SOURCE_action = function(localctx, actionIndex) {
       throw 'No registered action for:' + actionIndex;
   }
 };
-ScrollQLLexer.prototype.sempred = function(localctx, ruleIndex, predIndex) {
+ScrollQLLexer.prototype.sempred = function (localctx, ruleIndex, predIndex) {
   switch (ruleIndex) {
     case 76:
       return this.SYM_PIPE_sempred(localctx, predIndex);
@@ -1376,7 +1376,7 @@ ScrollQLLexer.prototype.sempred = function(localctx, ruleIndex, predIndex) {
   }
 };
 
-ScrollQLLexer.prototype.SYM_PIPE_sempred = function(localctx, predIndex) {
+ScrollQLLexer.prototype.SYM_PIPE_sempred = function (localctx, predIndex) {
   switch (predIndex) {
     case 0:
       return this.isFirstPipe;

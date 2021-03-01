@@ -1,18 +1,18 @@
 import {
+  ConfigOverrideRule,
+  DynamicConfigValue,
+  FieldColorModeId,
   FieldConfig,
+  FieldConfigProperty,
   FieldConfigSource,
+  FieldMatcherID,
+  fieldReducers,
   NullValueMode,
   PanelModel,
-  fieldReducers,
-  ConfigOverrideRule,
-  FieldMatcherID,
-  DynamicConfigValue,
-  FieldConfigProperty,
-  FieldColorModeId,
 } from '@grafana/data';
 import { GraphFieldConfig, LegendDisplayMode } from '@grafana/ui';
 import {
-  FillGradientMode,
+  GraphGradientMode,
   AxisPlacement,
   DrawStyle,
   LineInterpolation,
@@ -93,6 +93,8 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
     }
   }
 
+  let hasFillBelowTo = false;
+
   if (angular.seriesOverrides?.length) {
     for (const seriesOverride of angular.seriesOverrides) {
       if (!seriesOverride.alias) {
@@ -125,6 +127,13 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
             rule.properties.push({
               id: 'custom.fillOpacity',
               value: v * 10, // was 0-10, new graph is 0 - 100
+            });
+            break;
+          case 'fillBelowTo':
+            hasFillBelowTo = true;
+            rule.properties.push({
+              id: 'custom.fillBelowTo',
+              value: v,
             });
             break;
           case 'fillGradient':
@@ -161,6 +170,12 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
                 value: DrawStyle.Line, // Change from bars
               });
             }
+            break;
+          case 'lines':
+            rule.properties.push({
+              id: 'custom.lineWidth',
+              value: 0, // don't show lines
+            });
             break;
           case 'linewidth':
             rule.properties.push({
@@ -216,6 +231,10 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
 
   if (angular.points) {
     graph.showPoints = PointVisibility.Always;
+
+    if (isNumber(angular.pointradius)) {
+      graph.pointSize = 2 + angular.pointradius * 2;
+    }
   } else if (graph.drawStyle !== DrawStyle.Points) {
     graph.showPoints = PointVisibility.Never;
   }
@@ -225,16 +244,14 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
     graph.lineStyle = dash;
   }
 
-  if (isNumber(angular.pointradius)) {
-    graph.pointSize = 2 + angular.pointradius * 2;
-  }
-
-  if (isNumber(angular.fill)) {
+  if (hasFillBelowTo) {
+    graph.fillOpacity = 35; // bands are hardcoded in flot
+  } else if (isNumber(angular.fill)) {
     graph.fillOpacity = angular.fill * 10; // fill was 0 - 10, new is 0 to 100
   }
 
   if (isNumber(angular.fillGradient) && angular.fillGradient > 0) {
-    graph.fillGradient = FillGradientMode.Opacity;
+    graph.gradientMode = GraphGradientMode.Opacity;
     graph.fillOpacity = angular.fillGradient * 10; // fill is 0-10
   }
 
@@ -256,15 +273,29 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
     legend: {
       displayMode: LegendDisplayMode.List,
       placement: 'bottom',
+      calcs: [],
     },
     tooltipOptions: {
       mode: 'single',
     },
   };
 
-  if (angular.legend?.values) {
-    const show = getReducersFromLegend(angular.legend?.values);
-    console.log('Migrate Legend', show);
+  // Legend config migration
+  const legendConfig = angular.legend;
+  if (legendConfig) {
+    if (legendConfig.show) {
+      options.legend.displayMode = legendConfig.alignAsTable ? LegendDisplayMode.Table : LegendDisplayMode.List;
+    } else {
+      options.legend.displayMode = LegendDisplayMode.Hidden;
+    }
+
+    if (legendConfig.rightSide) {
+      options.legend.placement = 'right';
+    }
+
+    if (angular.legend.values) {
+      options.legend.calcs = getReducersFromLegend(angular.legend);
+    }
   }
 
   return {

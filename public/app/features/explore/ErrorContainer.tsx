@@ -7,7 +7,7 @@ export interface ErrorContainerProps {
   queryError?: DataQueryError;
 }
 
-export const ErrorContainer: FunctionComponent<ErrorContainerProps> = props => {
+export const ErrorContainer: FunctionComponent<ErrorContainerProps> = (props) => {
   const { queryError } = props;
   const showError = queryError ? true : false;
   const duration = showError ? 100 : 10;

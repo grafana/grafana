@@ -26,7 +26,7 @@ describe('opentsdb', () => {
     fetchMock.mockImplementation(() => of(createFetchResponse(data)));
 
     const instanceSettings = { url: '', jsonData: { tsdbVersion: 1 } };
-    const replace = jest.fn(value => value);
+    const replace = jest.fn((value) => value);
     const templateSrv: any = {
       replace,
     };
