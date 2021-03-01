@@ -181,6 +181,16 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     });
   }
 
+  addMultiSelect<TOption, TSettings extends SelectFieldConfigSettings<TOption>>(
+    config: PanelOptionsEditorConfig<TOptions, TSettings, TOption>
+  ) {
+    return this.addCustomEditor({
+      ...config,
+      id: config.path,
+      editor: standardEditorsRegistry.get('multi-select').editor as any,
+    });
+  }
+
   addRadio<TOption, TSettings extends SelectFieldConfigSettings<TOption>>(
     config: PanelOptionsEditorConfig<TOptions, TSettings, TOption>
   ) {
