@@ -19,86 +19,86 @@ func TestReducer(t *testing.T) {
 		{
 			name:           "sum",
 			reducer:        classicReducer("sum"),
-			inputSeries:    makeValueOnlySeries(ptr.Float64(1), ptr.Float64(2), ptr.Float64(3)),
-			expectedNumber: makeNumberValOnly(ptr.Float64(6)),
+			inputSeries:    valBasedSeries(ptr.Float64(1), ptr.Float64(2), ptr.Float64(3)),
+			expectedNumber: valBasedNumber(ptr.Float64(6)),
 		},
 		{
 			name:           "min",
 			reducer:        classicReducer("min"),
-			inputSeries:    makeValueOnlySeries(ptr.Float64(3), ptr.Float64(2), ptr.Float64(1)),
-			expectedNumber: makeNumberValOnly(ptr.Float64(1)),
+			inputSeries:    valBasedSeries(ptr.Float64(3), ptr.Float64(2), ptr.Float64(1)),
+			expectedNumber: valBasedNumber(ptr.Float64(1)),
 		},
 		{
 			name:           "max",
 			reducer:        classicReducer("max"),
-			inputSeries:    makeValueOnlySeries(ptr.Float64(1), ptr.Float64(2), ptr.Float64(3)),
-			expectedNumber: makeNumberValOnly(ptr.Float64(3)),
+			inputSeries:    valBasedSeries(ptr.Float64(1), ptr.Float64(2), ptr.Float64(3)),
+			expectedNumber: valBasedNumber(ptr.Float64(3)),
 		},
 		{
 			name:           "count",
 			reducer:        classicReducer("count"),
-			inputSeries:    makeValueOnlySeries(ptr.Float64(1), ptr.Float64(2), ptr.Float64(3000)),
-			expectedNumber: makeNumberValOnly(ptr.Float64(3)),
+			inputSeries:    valBasedSeries(ptr.Float64(1), ptr.Float64(2), ptr.Float64(3000)),
+			expectedNumber: valBasedNumber(ptr.Float64(3)),
 		},
 		{
 			name:           "last",
 			reducer:        classicReducer("last"),
-			inputSeries:    makeValueOnlySeries(ptr.Float64(1), ptr.Float64(2), ptr.Float64(3000)),
-			expectedNumber: makeNumberValOnly(ptr.Float64(3000)),
+			inputSeries:    valBasedSeries(ptr.Float64(1), ptr.Float64(2), ptr.Float64(3000)),
+			expectedNumber: valBasedNumber(ptr.Float64(3000)),
 		},
 		{
 			name:           "median with odd amount of numbers",
 			reducer:        classicReducer("median"),
-			inputSeries:    makeValueOnlySeries(ptr.Float64(1), ptr.Float64(2), ptr.Float64(3000)),
-			expectedNumber: makeNumberValOnly(ptr.Float64(2)),
+			inputSeries:    valBasedSeries(ptr.Float64(1), ptr.Float64(2), ptr.Float64(3000)),
+			expectedNumber: valBasedNumber(ptr.Float64(2)),
 		},
 		{
 			name:           "median with even amount of numbers",
 			reducer:        classicReducer("median"),
-			inputSeries:    makeValueOnlySeries(ptr.Float64(1), ptr.Float64(2), ptr.Float64(4), ptr.Float64(3000)),
-			expectedNumber: makeNumberValOnly(ptr.Float64(3)),
+			inputSeries:    valBasedSeries(ptr.Float64(1), ptr.Float64(2), ptr.Float64(4), ptr.Float64(3000)),
+			expectedNumber: valBasedNumber(ptr.Float64(3)),
 		},
 		{
 			name:           "median with one value",
 			reducer:        classicReducer("median"),
-			inputSeries:    makeValueOnlySeries(ptr.Float64(1)),
-			expectedNumber: makeNumberValOnly(ptr.Float64(1)),
+			inputSeries:    valBasedSeries(ptr.Float64(1)),
+			expectedNumber: valBasedNumber(ptr.Float64(1)),
 		},
 		{
 			name:           "median should ignore null values",
 			reducer:        classicReducer("median"),
-			inputSeries:    makeValueOnlySeries(nil, nil, nil, ptr.Float64(1), ptr.Float64(2), ptr.Float64(3)),
-			expectedNumber: makeNumberValOnly(ptr.Float64(2)),
+			inputSeries:    valBasedSeries(nil, nil, nil, ptr.Float64(1), ptr.Float64(2), ptr.Float64(3)),
+			expectedNumber: valBasedNumber(ptr.Float64(2)),
 		},
 		{
 			name:           "avg",
 			reducer:        classicReducer("avg"),
-			inputSeries:    makeValueOnlySeries(ptr.Float64(1), ptr.Float64(2), ptr.Float64(3)),
-			expectedNumber: makeNumberValOnly(ptr.Float64(2)),
+			inputSeries:    valBasedSeries(ptr.Float64(1), ptr.Float64(2), ptr.Float64(3)),
+			expectedNumber: valBasedNumber(ptr.Float64(2)),
 		},
 		{
 			name:           "avg with only nulls",
 			reducer:        classicReducer("avg"),
-			inputSeries:    makeValueOnlySeries(nil),
-			expectedNumber: makeNumberValOnly(nil),
+			inputSeries:    valBasedSeries(nil),
+			expectedNumber: valBasedNumber(nil),
 		},
 		{
 			name:           "avg of number values and null values should ignore nulls",
 			reducer:        classicReducer("avg"),
-			inputSeries:    makeValueOnlySeries(ptr.Float64(3), nil, nil, ptr.Float64(3)),
-			expectedNumber: makeNumberValOnly(ptr.Float64(3)),
+			inputSeries:    valBasedSeries(ptr.Float64(3), nil, nil, ptr.Float64(3)),
+			expectedNumber: valBasedNumber(ptr.Float64(3)),
 		},
 		{
 			name:           "count_non_null with mixed null/real values",
 			reducer:        classicReducer("count_non_null"),
-			inputSeries:    makeValueOnlySeries(nil, nil, ptr.Float64(3), ptr.Float64(4)),
-			expectedNumber: makeNumberValOnly(ptr.Float64(2)),
+			inputSeries:    valBasedSeries(nil, nil, ptr.Float64(3), ptr.Float64(4)),
+			expectedNumber: valBasedNumber(ptr.Float64(2)),
 		},
 		{
 			name:           "count_non_null with no values",
 			reducer:        classicReducer("count_non_null"),
-			inputSeries:    makeValueOnlySeries(nil, nil),
-			expectedNumber: makeNumberValOnly(nil),
+			inputSeries:    valBasedSeries(nil, nil),
+			expectedNumber: valBasedNumber(nil),
 		},
 	}
 
@@ -110,7 +110,78 @@ func TestReducer(t *testing.T) {
 	}
 }
 
-func makeValueOnlySeries(vals ...*float64) mathexp.Series {
+func TestDiffReducer(t *testing.T) {
+	var tests = []struct {
+		name           string
+		inputSeries    mathexp.Series
+		expectedNumber mathexp.Number
+	}{
+		{
+			name:           "diff of one positive point",
+			inputSeries:    valBasedSeries(ptr.Float64(30)),
+			expectedNumber: valBasedNumber(ptr.Float64(0)),
+		},
+		{
+			name:           "diff of one negative point",
+			inputSeries:    valBasedSeries(ptr.Float64(-30)),
+			expectedNumber: valBasedNumber(ptr.Float64(0)),
+		},
+		{
+			name:           "diff two positive points (pos result)",
+			inputSeries:    valBasedSeries(ptr.Float64(30), ptr.Float64(40)),
+			expectedNumber: valBasedNumber(ptr.Float64(10)),
+		},
+		{
+			name:           "diff two positive points (neg result)",
+			inputSeries:    valBasedSeries(ptr.Float64(30), ptr.Float64(20)),
+			expectedNumber: valBasedNumber(ptr.Float64(-10)),
+		},
+		{
+			name:           "diff two negative points (neg result)",
+			inputSeries:    valBasedSeries(ptr.Float64(-30), ptr.Float64(-40)),
+			expectedNumber: valBasedNumber(ptr.Float64(-10)),
+		},
+		{
+			name:           "diff two negative points (pos result)",
+			inputSeries:    valBasedSeries(ptr.Float64(-30), ptr.Float64(-10)),
+			expectedNumber: valBasedNumber(ptr.Float64(20)),
+		},
+		{
+			name:           "diff of one positive and one negative point",
+			inputSeries:    valBasedSeries(ptr.Float64(30), ptr.Float64(-40)),
+			expectedNumber: valBasedNumber(ptr.Float64(-70)),
+		},
+		{
+			name:           "diff of one negative and one positive point",
+			inputSeries:    valBasedSeries(ptr.Float64(-30), ptr.Float64(40)),
+			expectedNumber: valBasedNumber(ptr.Float64(70)),
+		},
+		{
+			name:           "diff of three positive points",
+			inputSeries:    valBasedSeries(ptr.Float64(30), ptr.Float64(40), ptr.Float64(50)),
+			expectedNumber: valBasedNumber(ptr.Float64(20)),
+		},
+		{
+			name:           "diff of three negative points",
+			inputSeries:    valBasedSeries(ptr.Float64(-30), ptr.Float64(-40), ptr.Float64(-50)),
+			expectedNumber: valBasedNumber(ptr.Float64(-20)),
+		},
+		{
+			name:           "diff with only nulls",
+			inputSeries:    valBasedSeries(nil, nil),
+			expectedNumber: valBasedNumber(nil),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			num := classicReducer("diff").Reduce(tt.inputSeries)
+			require.Equal(t, tt.expectedNumber, num)
+		})
+	}
+
+}
+
+func valBasedSeries(vals ...*float64) mathexp.Series {
 	newSeries := mathexp.NewSeries("", nil, 0, false, 1, true, len(vals))
 	for idx, f := range vals {
 		err := newSeries.SetPoint(idx, unixTimePointer(int64(idx)), f)
@@ -126,7 +197,7 @@ func unixTimePointer(sec int64) *time.Time {
 	return &t
 }
 
-func makeNumberValOnly(f *float64) mathexp.Number {
+func valBasedNumber(f *float64) mathexp.Number {
 	newNumber := mathexp.NewNumber("", nil)
 	newNumber.SetValue(f)
 	return newNumber
