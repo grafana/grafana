@@ -32,6 +32,13 @@ type TokenExpiredError struct {
 
 func (e *TokenExpiredError) Error() string { return "user token expired" }
 
+type TokenRevokedError struct {
+	UserID  int64
+	TokenID int64
+}
+
+func (e *TokenRevokedError) Error() string { return "user token revoked" }
+
 // UserToken represents a user token
 type UserToken struct {
 	Id            int64
@@ -45,6 +52,7 @@ type UserToken struct {
 	RotatedAt     int64
 	CreatedAt     int64
 	UpdatedAt     int64
+	RevokedAt     int64
 	UnhashedToken string
 }
 

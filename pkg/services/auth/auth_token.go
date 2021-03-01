@@ -49,7 +49,7 @@ func (s *UserAuthTokenService) ActiveTokenCount(ctx context.Context) (int64, err
 	var err error
 	err = s.SQLStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		var model userAuthToken
-		count, err = dbSession.Where(`created_at > ? AND rotated_at > ?`,
+		count, err = dbSession.Where(`created_at > ? AND rotated_at > ? AND revoked_at = 0`,
 			s.createdAfterParam(),
 			s.rotatedAfterParam()).
 			Count(&model)
@@ -84,6 +84,7 @@ func (s *UserAuthTokenService) CreateToken(ctx context.Context, user *models.Use
 		CreatedAt:     now,
 		UpdatedAt:     now,
 		SeenAt:        0,
+		RevokedAt:     0,
 		AuthTokenSeen: false,
 	}
 
@@ -125,6 +126,13 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 
 	if !exists {
 		return nil, models.ErrUserTokenNotFound
+	}
+
+	if model.RevokedAt > 0 {
+		return nil, &models.TokenRevokedError{
+			UserID:  model.UserId,
+			TokenID: model.Id,
+		}
 	}
 
 	if model.CreatedAt <= s.createdAfterParam() || model.RotatedAt <= s.rotatedAfterParam() {
@@ -380,7 +388,7 @@ func (s *UserAuthTokenService) GetUserTokens(ctx context.Context, userId int64) 
 	result := []*models.UserToken{}
 	err := s.SQLStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		var tokens []*userAuthToken
-		err := dbSession.Where("user_id = ? AND created_at > ? AND rotated_at > ?",
+		err := dbSession.Where("user_id = ? AND created_at > ? AND rotated_at > ? AND revoked_at = 0",
 			userId,
 			s.createdAfterParam(),
 			s.rotatedAfterParam()).
