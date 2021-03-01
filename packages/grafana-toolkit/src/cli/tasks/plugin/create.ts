@@ -20,22 +20,25 @@ interface PluginDetails {
   keywords: string;
 }
 
-type PluginType = 'panel-plugin' | 'datasource-plugin' | 'backend-datasource-plugin';
+type PluginType = 'panel-plugin' | 'datasource-plugin' | 'backend-datasource-plugin' | 'app-plugin';
 
 const PluginNames: Record<PluginType, string> = {
   'panel-plugin': 'Grafana Panel Plugin',
   'datasource-plugin': 'Grafana Data Source Plugin',
   'backend-datasource-plugin': 'Grafana Backend Datasource Plugin',
+  'app-plugin': 'Grafana App Plugin',
 };
 const RepositoriesPaths: Record<PluginType, string> = {
-  'panel-plugin': 'https://github.com/grafana/simple-react-panel.git',
-  'datasource-plugin': 'https://github.com/grafana/simple-datasource.git',
-  'backend-datasource-plugin': 'https://github.com/grafana/simple-datasource-backend.git',
+  'panel-plugin': 'https://github.com/grafana/grafana-starter-panel.git',
+  'datasource-plugin': 'https://github.com/grafana/grafana-starter-datasource.git',
+  'backend-datasource-plugin': 'https://github.com/grafana/grafana-starter-datasource-backend.git',
+  'app-plugin': 'https://github.com/grafana/grafana-starter-app.git',
 };
 const TutorialPaths: Record<PluginType, string> = {
   'panel-plugin': 'https://grafana.com/tutorials/build-a-panel-plugin',
   'datasource-plugin': 'https://grafana.com/tutorials/build-a-data-source-plugin',
-  'backend-datasource-plugin': 'TODO',
+  'backend-datasource-plugin': 'https://grafana.com/tutorials/build-a-data-source-backend-plugin',
+  'app-plugin': 'https://grafana.com/tutorials/build-an-app-plugin',
 };
 
 export const getGitUsername = async () => {
