@@ -59,6 +59,7 @@ func (cr classicReducer) Reduce(series mathexp.Series) mathexp.Number {
 					continue
 				}
 				value += *f
+				allNull = false
 			}
 		}
 	case "min":
@@ -68,6 +69,7 @@ func (cr classicReducer) Reduce(series mathexp.Series) mathexp.Number {
 				if nilOrNaN(f) {
 					continue
 				}
+				allNull = false
 				if value > *f {
 					value = *f
 				}
@@ -80,6 +82,7 @@ func (cr classicReducer) Reduce(series mathexp.Series) mathexp.Number {
 				if nilOrNaN(f) {
 					continue
 				}
+				allNull = false
 				if value < *f {
 					value = *f
 				}
