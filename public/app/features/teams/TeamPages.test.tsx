@@ -5,6 +5,7 @@ import { OrgRole, Team, TeamMember } from '../../types';
 import { getMockTeam } from './__mocks__/teamMocks';
 import { User } from 'app/core/services/context_srv';
 import { NavModel } from '@grafana/data';
+import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 
 jest.mock('app/core/config', () => ({
   ...((jest.requireActual('app/core/config') as unknown) as object),
@@ -15,22 +16,20 @@ jest.mock('app/core/config', () => ({
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
+    ...getRouteComponentProps({
+      match: {
+        params: {
+          id: '1',
+          page: null,
+        },
+      } as any,
+    }),
     navModel: {} as NavModel,
     teamId: 1,
     loadTeam: jest.fn(),
     loadTeamMembers: jest.fn(),
     pageName: 'members',
     team: {} as Team,
-    location: {} as any,
-    history: {} as any,
-    match: {
-      params: {
-        id: '1',
-        page: null,
-      },
-    } as any,
-    queryParams: {},
-    route: {} as any,
     members: [] as TeamMember[],
     editorsCanAdmin: false,
     signedInUser: {
