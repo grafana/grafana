@@ -21,6 +21,17 @@ const setup = (propOverrides?: object) => {
     loadTeamMembers: jest.fn(),
     pageName: 'members',
     team: {} as Team,
+    location: {} as any,
+    history: {} as any,
+    match: {
+      params: {
+        id: '1',
+        page: null,
+      },
+    } as any,
+    queryParams: {},
+    $injector: {} as any,
+    route: {} as any,
     members: [] as TeamMember[],
     editorsCanAdmin: false,
     signedInUser: {
