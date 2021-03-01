@@ -238,6 +238,28 @@ func TestLibraryPanelPermissions(t *testing.T) {
 				resp = sc.service.disconnectHandler(sc.reqContext)
 				require.Equal(t, testCase.status, resp.Status())
 			})
+
+		testScenario(t, fmt.Sprintf("When %s tries to get connected dashboards in the General folder for a library panel in the General folder, it should return correct status", testCase.role),
+			func(t *testing.T, sc scenarioContext) {
+				dashboard := createDashboard(t, sc.user, "General Folder Dash", 0)
+				cmd := getCreateCommand(0, "Library Panel Name")
+				resp := sc.service.createHandler(sc.reqContext, cmd)
+				result := validateAndUnMarshalResponse(t, resp)
+				sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID, ":dashboardId": strconv.FormatInt(dashboard.Id, 10)})
+				resp = sc.service.connectHandler(sc.reqContext)
+				require.Equal(t, 200, resp.Status())
+				sc.reqContext.SignedInUser.OrgRole = testCase.role
+
+				sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID})
+				resp = sc.service.getConnectedDashboardsHandler(sc.reqContext)
+				require.Equal(t, 200, resp.Status())
+				var dashResult libraryPanelDashboardsResult
+				err := json.Unmarshal(resp.Body(), &dashResult)
+				require.NoError(t, err)
+				require.Equal(t, 200, resp.Status())
+				require.Equal(t, 1, len(dashResult.Result))
+				require.Equal(t, dashboard.Id, dashResult.Result[0])
+			})
 	}
 
 	var missingFolderCases = []struct {
