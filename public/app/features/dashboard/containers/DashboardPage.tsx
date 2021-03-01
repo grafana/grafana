@@ -59,7 +59,6 @@ export interface Props extends GrafanaRouteComponentProps<DashboardPageRoutePara
 export interface State {
   editPanel: PanelModel | null;
   viewPanel: PanelModel | null;
-  editView: string | null;
   scrollTop: number;
   updateScrollTop?: number;
   rememberScrollTop: number;
@@ -73,7 +72,6 @@ export class DashboardPage extends PureComponent<Props, State> {
     return {
       editPanel: null,
       viewPanel: null,
-      editView: null,
       showLoadingState: false,
       scrollTop: 0,
       rememberScrollTop: 0,
@@ -115,7 +113,7 @@ export class DashboardPage extends PureComponent<Props, State> {
 
   componentDidUpdate(prevProps: Props) {
     const { dashboard, match, queryParams } = this.props;
-    const { editPanel, viewPanel, editView } = this.state;
+    const { editPanel, viewPanel } = this.state;
 
     if (!dashboard) {
       return;
@@ -133,7 +131,6 @@ export class DashboardPage extends PureComponent<Props, State> {
 
     const urlEditPanelId = queryParams.editPanel;
     const urlViewPanelId = queryParams.viewPanel;
-    const urlEditView = queryParams.editview;
 
     // entering edit mode
     if (!editPanel && urlEditPanelId) {
@@ -177,10 +174,6 @@ export class DashboardPage extends PureComponent<Props, State> {
         { viewPanel: null, updateScrollTop: this.state.rememberScrollTop },
         this.triggerPanelsRendering.bind(this)
       );
-    }
-
-    if (urlEditView && urlEditView !== editView) {
-      this.setState({ editView: urlEditView });
     }
   }
 
@@ -301,8 +294,8 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, isInitSlow, initError, isPanelEditorOpen } = this.props;
-    const { editPanel, viewPanel, scrollTop, updateScrollTop, editView } = this.state;
+    const { dashboard, isInitSlow, initError, isPanelEditorOpen, queryParams } = this.props;
+    const { editPanel, viewPanel, scrollTop, updateScrollTop } = this.state;
 
     if (!dashboard) {
       if (isInitSlow) {
@@ -346,7 +339,7 @@ export class DashboardPage extends PureComponent<Props, State> {
 
         {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
         {editPanel && <PanelEditor dashboard={dashboard} sourcePanel={editPanel} tab={this.props.queryParams.tab} />}
-        {editView && <DashboardSettings dashboard={dashboard} editview={editView} />}
+        {queryParams.editview && <DashboardSettings dashboard={dashboard} editview={queryParams.editview} />}
       </div>
     );
   }
