@@ -372,12 +372,15 @@ func (lps *LibraryPanelService) getConnectedDashboards(c *models.ReqContext, uid
 		if err != nil {
 			return err
 		}
-
 		var libraryPanelDashboards []libraryPanelDashboard
-		session.Table("library_panel_dashboard")
-		session.Where("librarypanel_id=?", panel.ID)
-		err = session.Find(&libraryPanelDashboards)
-		if err != nil {
+		builder := sqlstore.SQLBuilder{}
+		builder.Write("SELECT lpd.* FROM library_panel_dashboard lpd")
+		builder.Write(" INNER JOIN dashboard AS dashboard on lpd.dashboard_id = dashboard.id")
+		builder.Write(` WHERE lpd.librarypanel_id=?`, panel.ID)
+		if c.SignedInUser.OrgRole != models.ROLE_ADMIN {
+			builder.WriteDashboardPermissionFilter(c.SignedInUser, models.PERMISSION_VIEW)
+		}
+		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&libraryPanelDashboards); err != nil {
 			return err
 		}
 

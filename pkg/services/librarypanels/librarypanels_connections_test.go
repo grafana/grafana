@@ -2,6 +2,7 @@ package librarypanels
 
 import (
 	"encoding/json"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -73,10 +74,12 @@ func TestGetConnectedDashboards(t *testing.T) {
 
 	scenarioWithLibraryPanel(t, "When an admin tries to get connected dashboards for a library panel that exists and has connections, it should return connected dashboard IDs",
 		func(t *testing.T, sc scenarioContext) {
-			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID, ":dashboardId": "11"})
+			firstDash := createDashboard(t, sc.user, "Dash 1", 0)
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID, ":dashboardId": strconv.FormatInt(firstDash.Id, 10)})
 			resp := sc.service.connectHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
-			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID, ":dashboardId": "12"})
+			secondDash := createDashboard(t, sc.user, "Dash 2", 0)
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID, ":dashboardId": strconv.FormatInt(secondDash.Id, 10)})
 			resp = sc.service.connectHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
 
@@ -88,7 +91,7 @@ func TestGetConnectedDashboards(t *testing.T) {
 			err := json.Unmarshal(resp.Body(), &dashResult)
 			require.NoError(t, err)
 			require.Equal(t, 2, len(dashResult.Result))
-			require.Equal(t, int64(11), dashResult.Result[0])
-			require.Equal(t, int64(12), dashResult.Result[1])
+			require.Equal(t, firstDash.Id, dashResult.Result[0])
+			require.Equal(t, secondDash.Id, dashResult.Result[1])
 		})
 }

@@ -704,13 +704,15 @@ type folderACLItem struct {
 	permission models.PermissionType
 }
 
-func createDashboard(t *testing.T, user models.SignedInUser) *models.Dashboard {
+func createDashboard(t *testing.T, user models.SignedInUser, title string, folderID int64) *models.Dashboard {
+	dash := models.NewDashboard(title)
+	dash.FolderId = folderID
 	dashItem := &dashboards.SaveDashboardDTO{
-		Dashboard: models.NewDashboard("Test dashboard"),
+		Dashboard: dash,
 		Message:   "",
 		OrgId:     user.OrgId,
 		User:      &user,
-		Overwrite: true,
+		Overwrite: false,
 	}
 	bus.AddHandler("test", func(cmd *models.ValidateDashboardAlertsCommand) error {
 		return nil

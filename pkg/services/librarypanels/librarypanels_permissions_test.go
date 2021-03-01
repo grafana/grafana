@@ -66,7 +66,7 @@ func TestLibraryPanelPermissions(t *testing.T) {
 	}
 
 	for _, testCase := range accessCases {
-		testScenario(t, fmt.Sprintf("When an %s tries to create a library panel in a folder with %s, it should return correct status", testCase.role, testCase.desc),
+		testScenario(t, fmt.Sprintf("When %s tries to create a library panel in a folder with %s, it should return correct status", testCase.role, testCase.desc),
 			func(t *testing.T, sc scenarioContext) {
 				folder := createFolderWithACL(t, "Folder", sc.user, testCase.items)
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
@@ -76,7 +76,7 @@ func TestLibraryPanelPermissions(t *testing.T) {
 				require.Equal(t, testCase.status, resp.Status())
 			})
 
-		testScenario(t, fmt.Sprintf("When an %s tries to patch a library panel by moving it to a folder with %s, it should return correct status", testCase.role, testCase.desc),
+		testScenario(t, fmt.Sprintf("When %s tries to patch a library panel by moving it to a folder with %s, it should return correct status", testCase.role, testCase.desc),
 			func(t *testing.T, sc scenarioContext) {
 				fromFolder := createFolderWithACL(t, "Everyone", sc.user, everyonePermissions)
 				command := getCreateCommand(fromFolder.Id, "Library Panel Name")
@@ -91,7 +91,7 @@ func TestLibraryPanelPermissions(t *testing.T) {
 				require.Equal(t, testCase.status, resp.Status())
 			})
 
-		testScenario(t, fmt.Sprintf("When an %s tries to patch a library panel by moving it from a folder with %s, it should return correct status", testCase.role, testCase.desc),
+		testScenario(t, fmt.Sprintf("When %s tries to patch a library panel by moving it from a folder with %s, it should return correct status", testCase.role, testCase.desc),
 			func(t *testing.T, sc scenarioContext) {
 				fromFolder := createFolderWithACL(t, "Everyone", sc.user, testCase.items)
 				command := getCreateCommand(fromFolder.Id, "Library Panel Name")
@@ -106,7 +106,7 @@ func TestLibraryPanelPermissions(t *testing.T) {
 				require.Equal(t, testCase.status, resp.Status())
 			})
 
-		testScenario(t, fmt.Sprintf("When an %s tries to delete a library panel in a folder with %s, it should return correct status", testCase.role, testCase.desc),
+		testScenario(t, fmt.Sprintf("When %s tries to delete a library panel in a folder with %s, it should return correct status", testCase.role, testCase.desc),
 			func(t *testing.T, sc scenarioContext) {
 				folder := createFolderWithACL(t, "Folder", sc.user, testCase.items)
 				cmd := getCreateCommand(folder.Id, "Library Panel Name")
@@ -119,10 +119,10 @@ func TestLibraryPanelPermissions(t *testing.T) {
 				require.Equal(t, testCase.status, resp.Status())
 			})
 
-		testScenario(t, fmt.Sprintf("When an %s tries to connect a library panel in a folder with %s, it should return correct status", testCase.role, testCase.desc),
+		testScenario(t, fmt.Sprintf("When %s tries to connect a library panel in a folder with %s, it should return correct status", testCase.role, testCase.desc),
 			func(t *testing.T, sc scenarioContext) {
-				dashboard := createDashboard(t, sc.user)
 				folder := createFolderWithACL(t, "Folder", sc.user, testCase.items)
+				dashboard := createDashboard(t, sc.user, "Some Folder Dash", folder.Id)
 				cmd := getCreateCommand(folder.Id, "Library Panel Name")
 				resp := sc.service.createHandler(sc.reqContext, cmd)
 				result := validateAndUnMarshalResponse(t, resp)
@@ -133,10 +133,10 @@ func TestLibraryPanelPermissions(t *testing.T) {
 				require.Equal(t, testCase.status, resp.Status())
 			})
 
-		testScenario(t, fmt.Sprintf("When an %s tries to disconnect a library panel in a folder with %s, it should return correct status", testCase.role, testCase.desc),
+		testScenario(t, fmt.Sprintf("When %s tries to disconnect a library panel in a folder with %s, it should return correct status", testCase.role, testCase.desc),
 			func(t *testing.T, sc scenarioContext) {
-				dashboard := createDashboard(t, sc.user)
 				folder := createFolderWithACL(t, "Folder", sc.user, testCase.items)
+				dashboard := createDashboard(t, sc.user, "Some Folder Dash", folder.Id)
 				cmd := getCreateCommand(folder.Id, "Library Panel Name")
 				resp := sc.service.createHandler(sc.reqContext, cmd)
 				result := validateAndUnMarshalResponse(t, resp)
@@ -161,7 +161,7 @@ func TestLibraryPanelPermissions(t *testing.T) {
 	}
 
 	for _, testCase := range generalFolderCases {
-		testScenario(t, fmt.Sprintf("When an %s tries to create a library panel in the General folder, it should return correct status", testCase.role),
+		testScenario(t, fmt.Sprintf("When %s tries to create a library panel in the General folder, it should return correct status", testCase.role),
 			func(t *testing.T, sc scenarioContext) {
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 
@@ -170,7 +170,7 @@ func TestLibraryPanelPermissions(t *testing.T) {
 				require.Equal(t, testCase.status, resp.Status())
 			})
 
-		testScenario(t, fmt.Sprintf("When an %s tries to patch a library panel by moving it to the General folder, it should return correct status", testCase.role),
+		testScenario(t, fmt.Sprintf("When %s tries to patch a library panel by moving it to the General folder, it should return correct status", testCase.role),
 			func(t *testing.T, sc scenarioContext) {
 				folder := createFolderWithACL(t, "Folder", sc.user, everyonePermissions)
 				command := getCreateCommand(folder.Id, "Library Panel Name")
@@ -184,7 +184,7 @@ func TestLibraryPanelPermissions(t *testing.T) {
 				require.Equal(t, testCase.status, resp.Status())
 			})
 
-		testScenario(t, fmt.Sprintf("When an %s tries to patch a library panel by moving it from the General folder, it should return correct status", testCase.role),
+		testScenario(t, fmt.Sprintf("When %s tries to patch a library panel by moving it from the General folder, it should return correct status", testCase.role),
 			func(t *testing.T, sc scenarioContext) {
 				folder := createFolderWithACL(t, "Folder", sc.user, everyonePermissions)
 				command := getCreateCommand(0, "Library Panel Name")
@@ -198,7 +198,7 @@ func TestLibraryPanelPermissions(t *testing.T) {
 				require.Equal(t, testCase.status, resp.Status())
 			})
 
-		testScenario(t, fmt.Sprintf("When an %s tries to delete a library panel in the General folder, it should return correct status", testCase.role),
+		testScenario(t, fmt.Sprintf("When %s tries to delete a library panel in the General folder, it should return correct status", testCase.role),
 			func(t *testing.T, sc scenarioContext) {
 				cmd := getCreateCommand(0, "Library Panel Name")
 				resp := sc.service.createHandler(sc.reqContext, cmd)
@@ -210,9 +210,9 @@ func TestLibraryPanelPermissions(t *testing.T) {
 				require.Equal(t, testCase.status, resp.Status())
 			})
 
-		testScenario(t, fmt.Sprintf("When an %s tries to connect a library panel in the General folder, it should return correct status", testCase.role),
+		testScenario(t, fmt.Sprintf("When %s tries to connect a library panel in the General folder, it should return correct status", testCase.role),
 			func(t *testing.T, sc scenarioContext) {
-				dashboard := createDashboard(t, sc.user)
+				dashboard := createDashboard(t, sc.user, "General Folder Dash", 0)
 				cmd := getCreateCommand(0, "Library Panel Name")
 				resp := sc.service.createHandler(sc.reqContext, cmd)
 				result := validateAndUnMarshalResponse(t, resp)
@@ -223,9 +223,9 @@ func TestLibraryPanelPermissions(t *testing.T) {
 				require.Equal(t, testCase.status, resp.Status())
 			})
 
-		testScenario(t, fmt.Sprintf("When an %s tries to disconnect a library panel in the General folder, it should return correct status", testCase.role),
+		testScenario(t, fmt.Sprintf("When %s tries to disconnect a library panel in the General folder, it should return correct status", testCase.role),
 			func(t *testing.T, sc scenarioContext) {
-				dashboard := createDashboard(t, sc.user)
+				dashboard := createDashboard(t, sc.user, "General Folder Dash", 0)
 				cmd := getCreateCommand(0, "Library Panel Name")
 				resp := sc.service.createHandler(sc.reqContext, cmd)
 				result := validateAndUnMarshalResponse(t, resp)
@@ -249,7 +249,7 @@ func TestLibraryPanelPermissions(t *testing.T) {
 	}
 
 	for _, testCase := range missingFolderCases {
-		testScenario(t, fmt.Sprintf("When an %s tries to create a library panel in a folder that doesn't exist, it should fail", testCase.role),
+		testScenario(t, fmt.Sprintf("When %s tries to create a library panel in a folder that doesn't exist, it should fail", testCase.role),
 			func(t *testing.T, sc scenarioContext) {
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 
@@ -258,7 +258,7 @@ func TestLibraryPanelPermissions(t *testing.T) {
 				require.Equal(t, 404, resp.Status())
 			})
 
-		testScenario(t, fmt.Sprintf("When an %s tries to patch a library panel by moving it to a folder that doesn't exist, it should fail", testCase.role),
+		testScenario(t, fmt.Sprintf("When %s tries to patch a library panel by moving it to a folder that doesn't exist, it should fail", testCase.role),
 			func(t *testing.T, sc scenarioContext) {
 				folder := createFolderWithACL(t, "Folder", sc.user, everyonePermissions)
 				command := getCreateCommand(folder.Id, "Library Panel Name")
@@ -284,7 +284,7 @@ func TestLibraryPanelPermissions(t *testing.T) {
 	}
 
 	for _, testCase := range getAllCases {
-		testScenario(t, fmt.Sprintf("When an %s tries to get all library panels, it should return correct response", testCase.role),
+		testScenario(t, fmt.Sprintf("When %s tries to get all library panels, it should return correct response", testCase.role),
 			func(t *testing.T, sc scenarioContext) {
 				var results []libraryPanel
 				for i, folderCase := range folderCases {
@@ -332,7 +332,7 @@ func TestLibraryPanelPermissions(t *testing.T) {
 				}
 			})
 
-		testScenario(t, fmt.Sprintf("When an %s tries to get all library panels from General folder, it should return correct response", testCase.role),
+		testScenario(t, fmt.Sprintf("When %s tries to get all library panels from General folder, it should return correct response", testCase.role),
 			func(t *testing.T, sc scenarioContext) {
 				cmd := getCreateCommand(0, "Library Panel in General Folder")
 				resp := sc.service.createHandler(sc.reqContext, cmd)
@@ -353,6 +353,30 @@ func TestLibraryPanelPermissions(t *testing.T) {
 					t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 				}
 			})
+
+		testScenario(t, fmt.Sprintf("When %s tries to get connected dashboards for a library panel, it should return correct connected dashboard IDs", testCase.role),
+			func(t *testing.T, sc scenarioContext) {
+				cmd := getCreateCommand(0, "Library Panel in General Folder")
+				resp := sc.service.createHandler(sc.reqContext, cmd)
+				result := validateAndUnMarshalResponse(t, resp)
+				for i, folderCase := range folderCases {
+					folder := createFolderWithACL(t, fmt.Sprintf("Folder%v", i), sc.user, folderCase)
+					dashboard := createDashboard(t, sc.user, "Some Folder Dash", folder.Id)
+					sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID, ":dashboardId": strconv.FormatInt(dashboard.Id, 10)})
+					resp = sc.service.connectHandler(sc.reqContext)
+					require.Equal(t, 200, resp.Status())
+				}
+				sc.reqContext.SignedInUser.OrgRole = testCase.role
+
+				sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID})
+				resp = sc.service.getConnectedDashboardsHandler(sc.reqContext)
+				require.Equal(t, 200, resp.Status())
+
+				var dashResult libraryPanelDashboardsResult
+				err := json.Unmarshal(resp.Body(), &dashResult)
+				require.NoError(t, err)
+				require.Equal(t, testCase.panels, len(dashResult.Result))
+			})
 	}
 
 	var getCases = []struct {
@@ -365,7 +389,7 @@ func TestLibraryPanelPermissions(t *testing.T) {
 	}
 
 	for _, testCase := range getCases {
-		testScenario(t, fmt.Sprintf("When an %s tries to get a library panel, it should return correct response", testCase.role),
+		testScenario(t, fmt.Sprintf("When %s tries to get a library panel, it should return correct response", testCase.role),
 			func(t *testing.T, sc scenarioContext) {
 				var results []libraryPanel
 				for i, folderCase := range folderCases {
@@ -388,7 +412,7 @@ func TestLibraryPanelPermissions(t *testing.T) {
 				}
 			})
 
-		testScenario(t, fmt.Sprintf("When an %s tries to get a library panel from General folder, it should return correct response", testCase.role),
+		testScenario(t, fmt.Sprintf("When %s tries to get a library panel from General folder, it should return correct response", testCase.role),
 			func(t *testing.T, sc scenarioContext) {
 				cmd := getCreateCommand(0, "Library Panel in General Folder")
 				resp := sc.service.createHandler(sc.reqContext, cmd)
