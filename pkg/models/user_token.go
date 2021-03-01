@@ -65,7 +65,7 @@ type UserTokenService interface {
 	CreateToken(ctx context.Context, user *User, clientIP net.IP, userAgent string) (*UserToken, error)
 	LookupToken(ctx context.Context, unhashedToken string) (*UserToken, error)
 	TryRotateToken(ctx context.Context, token *UserToken, clientIP net.IP, userAgent string) (bool, error)
-	RevokeToken(ctx context.Context, token *UserToken) error
+	RevokeToken(ctx context.Context, token *UserToken, soft bool) error
 	RevokeAllUserTokens(ctx context.Context, userId int64) error
 	ActiveTokenCount(ctx context.Context) (int64, error)
 	GetUserToken(ctx context.Context, userId, userTokenId int64) (*UserToken, error)

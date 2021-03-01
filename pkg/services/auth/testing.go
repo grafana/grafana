@@ -11,7 +11,7 @@ type FakeUserAuthTokenService struct {
 	CreateTokenProvider         func(ctx context.Context, user *models.User, clientIP net.IP, userAgent string) (*models.UserToken, error)
 	TryRotateTokenProvider      func(ctx context.Context, token *models.UserToken, clientIP net.IP, userAgent string) (bool, error)
 	LookupTokenProvider         func(ctx context.Context, unhashedToken string) (*models.UserToken, error)
-	RevokeTokenProvider         func(ctx context.Context, token *models.UserToken) error
+	RevokeTokenProvider         func(ctx context.Context, token *models.UserToken, soft bool) error
 	RevokeAllUserTokensProvider func(ctx context.Context, userId int64) error
 	ActiveAuthTokenCount        func(ctx context.Context) (int64, error)
 	GetUserTokenProvider        func(ctx context.Context, userId, userTokenId int64) (*models.UserToken, error)
@@ -36,7 +36,7 @@ func NewFakeUserAuthTokenService() *FakeUserAuthTokenService {
 				UnhashedToken: "",
 			}, nil
 		},
-		RevokeTokenProvider: func(ctx context.Context, token *models.UserToken) error {
+		RevokeTokenProvider: func(ctx context.Context, token *models.UserToken, soft bool) error {
 			return nil
 		},
 		RevokeAllUserTokensProvider: func(ctx context.Context, userId int64) error {
@@ -76,8 +76,8 @@ func (s *FakeUserAuthTokenService) TryRotateToken(ctx context.Context, token *mo
 	return s.TryRotateTokenProvider(context.Background(), token, clientIP, userAgent)
 }
 
-func (s *FakeUserAuthTokenService) RevokeToken(ctx context.Context, token *models.UserToken) error {
-	return s.RevokeTokenProvider(context.Background(), token)
+func (s *FakeUserAuthTokenService) RevokeToken(ctx context.Context, token *models.UserToken, soft bool) error {
+	return s.RevokeTokenProvider(context.Background(), token, soft)
 }
 
 func (s *FakeUserAuthTokenService) RevokeAllUserTokens(ctx context.Context, userId int64) error {

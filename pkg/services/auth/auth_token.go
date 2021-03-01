@@ -286,7 +286,7 @@ func (s *UserAuthTokenService) TryRotateToken(ctx context.Context, token *models
 	return false, nil
 }
 
-func (s *UserAuthTokenService) RevokeToken(ctx context.Context, token *models.UserToken) error {
+func (s *UserAuthTokenService) RevokeToken(ctx context.Context, token *models.UserToken, soft bool) error {
 	if token == nil {
 		return models.ErrUserTokenNotFound
 	}
@@ -297,10 +297,19 @@ func (s *UserAuthTokenService) RevokeToken(ctx context.Context, token *models.Us
 	}
 
 	var rowsAffected int64
-	err = s.SQLStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		rowsAffected, err = dbSession.Delete(model)
-		return err
-	})
+
+	if soft {
+		model.RevokedAt = getTime().Unix()
+		err = s.SQLStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+			_, err := dbSession.ID(model.Id).Update(&model)
+			return err
+		})
+	} else {
+		err = s.SQLStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+			rowsAffected, err = dbSession.Delete(model)
+			return err
+		})
+	}
 
 	if err != nil {
 		return err
@@ -311,7 +320,7 @@ func (s *UserAuthTokenService) RevokeToken(ctx context.Context, token *models.Us
 		return models.ErrUserTokenNotFound
 	}
 
-	s.log.Debug("user auth token revoked", "tokenId", model.Id, "userId", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent)
+	s.log.Debug("user auth token revoked", "tokenId", model.Id, "userId", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent, "soft", soft)
 
 	return nil
 }
