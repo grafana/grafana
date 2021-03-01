@@ -41,9 +41,9 @@ var newResponseParser = func(responses []*es.SearchResponse, targets []*Query, d
 }
 
 func (rp *responseParser) getTimeSeries() (plugins.DataResponse, error) {
-	result := plugins.DataResponse{}
-	result.Results = make(map[string]plugins.DataQueryResult)
-
+	result := plugins.DataResponse{
+		Results: make(map[string]plugins.DataQueryResult),
+	}
 	if rp.Responses == nil {
 		return result, nil
 	}
@@ -71,7 +71,7 @@ func (rp *responseParser) getTimeSeries() (plugins.DataResponse, error) {
 			Columns: make([]plugins.DataTableColumn, 0),
 			Rows:    make([]plugins.DataRowValues, 0),
 		}
-		err := rp.processBuckets(res.Aggregations, target, queryRes.Series, &table, props, 0)
+		err := rp.processBuckets(res.Aggregations, target, &queryRes.Series, &table, props, 0)
 		if err != nil {
 			return plugins.DataResponse{}, err
 		}
@@ -88,7 +88,7 @@ func (rp *responseParser) getTimeSeries() (plugins.DataResponse, error) {
 }
 
 func (rp *responseParser) processBuckets(aggs map[string]interface{}, target *Query,
-	series plugins.DataTimeSeriesSlice, table *plugins.DataTable, props map[string]string, depth int) error {
+	series *plugins.DataTimeSeriesSlice, table *plugins.DataTable, props map[string]string, depth int) error {
 	var err error
 	maxDepth := len(target.BucketAggs) - 1
 
@@ -107,7 +107,7 @@ func (rp *responseParser) processBuckets(aggs map[string]interface{}, target *Qu
 
 		if depth == maxDepth {
 			if aggDef.Type == dateHistType {
-				err = rp.processMetrics(esAgg, target, &series, props)
+				err = rp.processMetrics(esAgg, target, series, props)
 			} else {
 				err = rp.processAggregationDocs(esAgg, aggDef, target, table, props)
 			}
@@ -294,7 +294,8 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 	return nil
 }
 
-func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef *BucketAgg, target *Query, table *plugins.DataTable, props map[string]string) error {
+func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef *BucketAgg, target *Query,
+	table *plugins.DataTable, props map[string]string) error {
 	propKeys := make([]string, 0)
 	for k := range props {
 		propKeys = append(propKeys, k)
@@ -412,25 +413,25 @@ func (rp *responseParser) trimDatapoints(series plugins.DataTimeSeriesSlice, tar
 		return
 	}
 
-	for _, s := range series {
-		if len(s.Points) > trimEdges*2 {
-			s.Points = s.Points[trimEdges : len(s.Points)-trimEdges]
+	for i := range series {
+		if len(series[i].Points) > trimEdges*2 {
+			series[i].Points = series[i].Points[trimEdges : len(series[i].Points)-trimEdges]
 		}
 	}
 }
 
 func (rp *responseParser) nameSeries(seriesList plugins.DataTimeSeriesSlice, target *Query) {
-	set := make(map[string]string)
+	set := make(map[string]struct{})
 	for _, v := range seriesList {
 		if metricType, exists := v.Tags["metric"]; exists {
 			if _, ok := set[metricType]; !ok {
-				set[metricType] = ""
+				set[metricType] = struct{}{}
 			}
 		}
 	}
 	metricTypeCount := len(set)
-	for _, series := range seriesList {
-		series.Name = rp.getSeriesName(series, target, metricTypeCount)
+	for i := range seriesList {
+		seriesList[i].Name = rp.getSeriesName(seriesList[i], target, metricTypeCount)
 	}
 }
 
