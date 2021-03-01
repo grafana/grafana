@@ -8,7 +8,7 @@ import { DashboardModel } from '../../state';
 import { CoreEvents } from 'app/types';
 
 // Components
-import { RefreshPicker, stylesFactory, Themeable, defaultIntervals } from '@grafana/ui';
+import { RefreshPicker, stylesFactory, defaultIntervals } from '@grafana/ui';
 import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePickerWithHistory';
 
 // Utils & Services

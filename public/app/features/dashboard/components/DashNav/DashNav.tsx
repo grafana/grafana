@@ -46,11 +46,7 @@ export function addCustomRightAction(content: DashNavButtonModel) {
   customRightActions.push(content);
 }
 
-export interface StateProps {
-  location: any;
-}
-
-type Props = StateProps & OwnProps & DispatchProps;
+type Props = OwnProps & DispatchProps;
 
 class DashNav extends PureComponent<Props> {
   playlistSrv: PlaylistSrv;
@@ -112,7 +108,8 @@ class DashNav extends PureComponent<Props> {
   }
 
   isInKioskMode() {
-    return !!this.props.location.query.kiosk;
+    // TODO fix this
+    return false;
   }
 
   isPlaylistRunning() {
@@ -176,7 +173,7 @@ class DashNav extends PureComponent<Props> {
   }
 
   renderRightActionsButton() {
-    const { dashboard, onAddPanel, location, updateTimeZoneForSession, isFullscreen } = this.props;
+    const { dashboard, onAddPanel, updateTimeZoneForSession, isFullscreen } = this.props;
     const { canEdit, showSettings } = dashboard.meta;
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
@@ -185,12 +182,7 @@ class DashNav extends PureComponent<Props> {
       <ToolbarButton tooltip="Cycle view mode" icon="monitor" onClick={this.onToggleTVMode} key="tv-button" />
     );
     const timeControls = (
-      <DashNavTimeControls
-        dashboard={dashboard}
-        location={location}
-        onChangeTimeZone={updateTimeZoneForSession}
-        key="time-controls"
-      />
+      <DashNavTimeControls dashboard={dashboard} onChangeTimeZone={updateTimeZoneForSession} key="time-controls" />
     );
 
     if (this.isPlaylistRunning()) {
@@ -272,9 +264,7 @@ class DashNav extends PureComponent<Props> {
   }
 }
 
-const mapStateToProps = (state: StoreState) => ({
-  location: state.location,
-});
+const mapStateToProps = (state: StoreState) => ({});
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   updateTimeZoneForSession,

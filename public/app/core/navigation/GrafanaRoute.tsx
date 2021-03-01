@@ -1,14 +1,10 @@
 import React from 'react';
-import { useDispatch } from 'react-redux';
-import { RouteComponentProps } from 'react-router-dom';
 // @ts-ignore
 import Drop from 'tether-drop';
 import { GrafanaRouteComponentProps } from './types';
-import { updateLocation } from '../reducers/location';
-import usePrevious from 'react-use/lib/usePrevious';
 import { locationService, navigationLogger } from '@grafana/runtime';
 
-export interface Props extends GrafanaRouteComponentProps {}
+export interface Props extends Omit<GrafanaRouteComponentProps, 'queryParams'> {}
 
 export class GrafanaRoute extends React.Component<Props> {
   componentDidMount() {
@@ -68,24 +64,3 @@ export class GrafanaRoute extends React.Component<Props> {
     return <RouteComponent {...props} queryParams={locationService.getSearchObject()} />;
   }
 }
-
-export const SyncLocationWithRedux: React.FC<RouteComponentProps<any>> = (props) => {
-  const dispatch = useDispatch();
-  const prevProps = usePrevious(props);
-  navigationLogger('GrafanaRoute', false, 'Sync location with redux');
-
-  if (!prevProps || prevProps.match !== props.match || prevProps.location !== props.location) {
-    // The dispatch happens during the render. At first sight this looks like a bad practice, but mind that
-    // this component is ONLY rendered on route change making it a perfect place too sync the locationmatch  with Redux.
-    // Thanks to this the page component should have correct location state already available in Redux.
-    dispatch(
-      updateLocation({
-        path: props.location.pathname,
-        routeParams: props.match.params,
-        query: locationService.getSearchObject(),
-      })
-    );
-  }
-
-  return <>{props.children}</>;
-};
