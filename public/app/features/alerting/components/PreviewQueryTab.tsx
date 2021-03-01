@@ -26,7 +26,7 @@ export const PreviewQueryTab: FC<Props> = ({ data, height, onRunQueries, width }
   // Select padding
   const padding = 16;
 
-  if (!Object.keys(data).length) {
+  if (!data) {
     return (
       <EmptyState title="Run queries to view data.">
         <Button onClick={onRunQueries}>Run queries</Button>
@@ -34,27 +34,31 @@ export const PreviewQueryTab: FC<Props> = ({ data, height, onRunQueries, width }
     );
   }
 
-  if (data.series.length > 1) {
-    return (
-      <div className={styles.wrapper}>
-        <div style={{ height: height - theme.spacing.formInputHeight - 16 }}>
-          <Table
-            data={data.series[currentSeries]}
-            height={height - theme.spacing.formInputHeight - padding}
-            width={width}
-          />
+  if (data.series) {
+    if (data.series.length > 1) {
+      return (
+        <div className={styles.wrapper}>
+          <div style={{ height: height - theme.spacing.formInputHeight - 16 }}>
+            <Table
+              data={data.series[currentSeries]}
+              height={height - theme.spacing.formInputHeight - padding}
+              width={width}
+            />
+          </div>
+          <div className={styles.selectWrapper}>
+            <Select
+              onChange={(selectedValue) => setSeries(selectedValue.value!)}
+              options={series}
+              value={currentSeries}
+            />
+          </div>
         </div>
-        <div className={styles.selectWrapper}>
-          <Select
-            onChange={(selectedValue) => setSeries(selectedValue.value!)}
-            options={series}
-            value={currentSeries}
-          />
-        </div>
-      </div>
-    );
+      );
+    } else if (data.series.length > 0) {
+      return <Table data={data.series[0]} height={height} width={width} />;
+    }
   }
-  return <Table data={data.series[0]} height={height} width={width} />;
+  return null;
 };
 
 const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {

@@ -127,7 +127,15 @@ class NextGenAlertingPageUnconnected extends PureComponent<Props> {
   }
 
   render() {
-    const { alertDefinition, uiState, updateAlertDefinitionUiState, getQueryOptions } = this.props;
+    const {
+      alertDefinition,
+      uiState,
+      updateAlertDefinitionUiState,
+      getQueryOptions,
+      getInstances,
+      onRunQueries,
+      queryRunner,
+    } = this.props;
 
     const styles = getStyles(config.theme);
     const queryOptions = getQueryOptions();
@@ -140,7 +148,14 @@ class NextGenAlertingPageUnconnected extends PureComponent<Props> {
         <div className={styles.splitPanesWrapper}>
           <SplitPaneWrapper
             leftPaneComponents={[
-              <AlertingQueryPreview key="queryPreview" onTest={this.onTest} />,
+              <AlertingQueryPreview
+                key="queryPreview"
+                onTest={this.onTest}
+                queries={queryOptions.queries}
+                getInstances={getInstances}
+                queryRunner={queryRunner!}
+                onRunQueries={onRunQueries}
+              />,
               <AlertingQueryEditor key="queryEditor" />,
             ]}
             uiState={uiState}
