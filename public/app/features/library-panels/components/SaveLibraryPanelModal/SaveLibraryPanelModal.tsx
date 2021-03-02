@@ -5,7 +5,8 @@ import { css } from 'emotion';
 import { useAsync, useDebounce } from 'react-use';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { usePanelSave } from '../../utils/usePanelSave';
-import { getLibraryPanelConnectedDashboards, PanelModelWithLibraryPanel } from '../../state/api';
+import { getLibraryPanelConnectedDashboards } from '../../state/api';
+import { PanelModelWithLibraryPanel } from '../../types';
 
 interface Props {
   panel: PanelModelWithLibraryPanel;
