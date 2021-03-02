@@ -14,6 +14,7 @@ type LibraryPanel struct {
 	UID      string `xorm:"uid"`
 	Name     string
 	Model    json.RawMessage
+	Version  int64
 
 	Created time.Time
 	Updated time.Time
@@ -30,6 +31,7 @@ type LibraryPanelWithMeta struct {
 	UID      string `xorm:"uid"`
 	Name     string
 	Model    json.RawMessage
+	Version  int64
 
 	Created time.Time
 	Updated time.Time
@@ -52,6 +54,7 @@ type LibraryPanelDTO struct {
 	UID      string              `json:"uid"`
 	Name     string              `json:"name"`
 	Model    json.RawMessage     `json:"model"`
+	Version  int64               `json:"version"`
 	Meta     LibraryPanelDTOMeta `json:"meta"`
 }
 
@@ -112,4 +115,5 @@ type patchLibraryPanelCommand struct {
 	FolderID int64           `json:"folderId" binding:"Default(-1)"`
 	Name     string          `json:"name"`
 	Model    json.RawMessage `json:"model"`
+	Version  int64           `json:"version" binding:"Required"`
 }

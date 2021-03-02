@@ -637,6 +637,7 @@ type libraryPanel struct {
 	UID      string                 `json:"uid"`
 	Name     string                 `json:"name"`
 	Model    map[string]interface{} `json:"model"`
+	Version  int64                  `json:"version"`
 	Meta     LibraryPanelDTOMeta    `json:"meta"`
 }
 
