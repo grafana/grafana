@@ -1,6 +1,5 @@
-import React, { PureComponent } from 'react';
-import { config } from 'app/core/config';
-import { PieChart } from '@grafana/ui';
+import React from 'react';
+import { PieChart, useTheme } from '@grafana/ui';
 import { PieChartOptions } from './types';
 import { getFieldDisplayValues, PanelProps } from '@grafana/data';
 import { useCallback } from 'react';
@@ -29,7 +28,7 @@ export const PieChartPanel: React.FC<Props> = ({
     fieldConfig,
     reduceOptions: options.reduceOptions,
     data: data.series,
-    theme: config.theme,
+    theme: useTheme(),
     replaceVariables: replaceVariables,
     timeZone,
   }).map((v) => v.display);
