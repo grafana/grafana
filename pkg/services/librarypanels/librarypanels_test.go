@@ -630,6 +630,38 @@ func TestDisconnectLibraryPanelsForDashboard(t *testing.T) {
 		})
 }
 
+func TestDeleteLibraryPanelsInFolder(t *testing.T) {
+	scenarioWithLibraryPanel(t, "When an admin tries to delete a folder that contains connected library panels, it should fail",
+		func(t *testing.T, sc scenarioContext) {
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID, ":dashboardId": "1"})
+			resp := sc.service.connectHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			err := sc.service.DeleteLibraryPanelsInFolder(sc.reqContext, sc.folder.Uid)
+			require.EqualError(t, err, ErrFolderHasConnectedLibraryPanels.Error())
+		})
+
+	scenarioWithLibraryPanel(t, "When an admin tries to delete a folder that contains disconnected library panels, it should delete all disconnected library panels too",
+		func(t *testing.T, sc scenarioContext) {
+			resp := sc.service.getAllHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+			var result libraryPanelsResult
+			err := json.Unmarshal(resp.Body(), &result)
+			require.NoError(t, err)
+			require.NotNil(t, result.Result)
+			require.Equal(t, 1, len(result.Result))
+
+			err = sc.service.DeleteLibraryPanelsInFolder(sc.reqContext, sc.folder.Uid)
+			require.NoError(t, err)
+			resp = sc.service.getAllHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+			err = json.Unmarshal(resp.Body(), &result)
+			require.NoError(t, err)
+			require.NotNil(t, result.Result)
+			require.Equal(t, 0, len(result.Result))
+		})
+}
+
 type libraryPanel struct {
 	ID       int64                  `json:"id"`
 	OrgID    int64                  `json:"orgId"`
