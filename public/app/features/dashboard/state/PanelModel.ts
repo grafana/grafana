@@ -6,17 +6,17 @@ import { getNextRefIdChar } from 'app/core/utils/query';
 // Types
 import {
   DataConfigSource,
+  DataFrameDTO,
   DataLink,
+  DataLinkBuiltInVars,
   DataQuery,
   DataTransformerConfig,
+  EventBus,
+  EventBusSrv,
   FieldConfigSource,
   PanelPlugin,
   ScopedVars,
-  EventBus,
-  EventBusSrv,
-  DataFrameDTO,
   urlUtil,
-  DataLinkBuiltInVars,
 } from '@grafana/data';
 import { EDIT_PANEL_ID } from 'app/core/constants';
 import config from 'app/core/config';
@@ -36,7 +36,7 @@ import {
   isStandardFieldProp,
   restoreCustomOverrideRules,
 } from './getPanelOptionsWithDefaults';
-import { LibraryPanelDTO } from 'app/features/library-panels/state/api';
+import { PanelModelLibraryPanel } from '../../library-panels/types';
 
 export interface GridPos {
   x: number;
@@ -151,7 +151,7 @@ export class PanelModel implements DataConfigSource {
   links?: DataLink[];
   transparent: boolean;
 
-  libraryPanel?: { uid: undefined; name: string } | Pick<LibraryPanelDTO, 'uid' | 'name' | 'meta'>;
+  libraryPanel?: { uid: undefined; name: string } | PanelModelLibraryPanel;
 
   // non persisted
   isViewing: boolean;

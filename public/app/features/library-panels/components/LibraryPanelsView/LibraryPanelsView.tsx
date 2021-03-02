@@ -1,10 +1,12 @@
-import { Icon, Input, Button, stylesFactory, useStyles } from '@grafana/ui';
 import React, { useEffect, useState } from 'react';
 import { useDebounce } from 'react-use';
-import { cx, css } from 'emotion';
-import { LibraryPanelCard } from '../LibraryPanelCard/LibraryPanelCard';
+import { css, cx } from 'emotion';
+import { Button, Icon, Input, stylesFactory, useStyles } from '@grafana/ui';
 import { DateTimeInput, GrafanaTheme } from '@grafana/data';
-import { deleteLibraryPanel, getLibraryPanels, LibraryPanelDTO } from '../../state/api';
+
+import { LibraryPanelCard } from '../LibraryPanelCard/LibraryPanelCard';
+import { deleteLibraryPanel, getLibraryPanels } from '../../state/api';
+import { LibraryPanelDTO } from '../../types';
 
 interface LibraryPanelViewProps {
   className?: string;

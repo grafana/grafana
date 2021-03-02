@@ -29,10 +29,10 @@ import { DashboardPanel } from '../../dashgrid/DashboardPanel';
 
 import {
   exitPanelEditor,
-  updateSourcePanel,
   initPanelEditor,
   panelEditorCleanUp,
   updatePanelEditorUIState,
+  updateSourcePanel,
 } from './state/actions';
 
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
@@ -49,6 +49,14 @@ import { DashboardModel, PanelModel } from '../../state';
 import { PanelOptionsChangedEvent } from 'app/types/events';
 import { UnlinkModal } from '../../../library-panels/components/UnlinkModal/UnlinkModal';
 import { SaveLibraryPanelModal } from 'app/features/library-panels/components/SaveLibraryPanelModal/SaveLibraryPanelModal';
+import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
+import { getLibraryPanelConnectedDashboards } from '../../../library-panels/state/api';
+import {
+  createPanelLibraryErrorNotification,
+  createPanelLibrarySuccessNotification,
+  saveAndRefreshLibraryPanel,
+} from '../../../library-panels/utils';
+import { notifyApp } from '../../../../core/actions';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -79,6 +87,7 @@ const mapDispatchToProps = {
   setDiscardChanges,
   updatePanelEditorUIState,
   updateTimeZoneForSession,
+  notifyApp,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -129,10 +138,25 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     });
   };
 
-  onSavePanel = () => {
-    const panelId = this.props.panel.libraryPanel?.uid;
-    if (!panelId) {
+  onSaveLibraryPanel = async () => {
+    if (!isPanelModelLibraryPanel(this.props.panel)) {
       // New library panel, no need to display modal
+      return;
+    }
+
+    if (this.props.panel.libraryPanel.meta.connectedDashboards === 0) {
+      return;
+    }
+
+    const connectedDashboards = await getLibraryPanelConnectedDashboards(this.props.panel.libraryPanel.uid);
+    if (connectedDashboards.length === 1 && connectedDashboards.indexOf(this.props.dashboard.id) !== -1) {
+      try {
+        await saveAndRefreshLibraryPanel(this.props.panel, this.props.dashboard.meta.folderId!);
+        this.props.updateSourcePanel(this.props.panel);
+        this.props.notifyApp(createPanelLibrarySuccessNotification('Library panel saved'));
+      } catch (err) {
+        this.props.notifyApp(createPanelLibraryErrorNotification(`Error saving library panel: "${err.statusText}"`));
+      }
       return;
     }
 
@@ -289,7 +313,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
       </ToolbarButton>,
       this.props.panel.libraryPanel ? (
         <ToolbarButton
-          onClick={this.onSavePanel}
+          onClick={this.onSaveLibraryPanel}
           variant="primary"
           title="Apply changes and save library panel"
           key="save-panel"
