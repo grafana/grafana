@@ -1207,18 +1207,13 @@ describe('ElasticResponse', () => {
   });
 
   describe('simple logs query and count', () => {
-    const targets: any = [
+    const targets: ElasticsearchQuery[] = [
       {
         refId: 'A',
         metrics: [{ type: 'count', id: '1' }],
         bucketAggs: [{ type: 'date_histogram', settings: { interval: 'auto' }, id: '2' }],
-        context: 'explore',
-        interval: '10s',
-        isLogsQuery: true,
         key: 'Q-1561369883389-0.7611823271062786-0',
-        liveStreaming: false,
-        maxDataPoints: 1620,
-        query: '',
+        query: 'hello AND message',
         timeField: '@timestamp',
       },
     ];

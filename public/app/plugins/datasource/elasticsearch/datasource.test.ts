@@ -226,9 +226,8 @@ describe('ElasticDatasource', function (this: any) {
                 id: '2',
               },
             ],
-            metrics: [{ type: 'count', id: '1' }],
+            metrics: [{ type: 'logs', id: '1' }],
             query: 'escape\\:test',
-            isLogsQuery: true,
             timeField: '@timestamp',
           },
         ],
@@ -926,7 +925,6 @@ const createElasticQuery = (): DataQueryRequest<ElasticsearchQuery> => {
     targets: [
       {
         refId: '',
-        isLogsQuery: false,
         bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '2' }],
         metrics: [{ type: 'count', id: '' }],
         query: 'test',

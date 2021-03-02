@@ -26,7 +26,6 @@ const dataSource = new ElasticDatasource(
 );
 
 const baseLogsQuery: Partial<ElasticsearchQuery> = {
-  isLogsQuery: true,
   metrics: [{ type: 'logs', id: '1' }],
   bucketAggs: [{ ...defaultBucketAgg('2'), field: dataSource.timeField } as DateHistogram],
 };
