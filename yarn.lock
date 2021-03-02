@@ -22045,10 +22045,9 @@ react-transition-group@^4.3.0:
     loose-envify "^1.4.0"
     prop-types "^15.6.2"
 
-react-use-measure@2.0.1:
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/react-use-measure/-/react-use-measure-2.0.1.tgz#4f23f94c832cd4512da55acb300d1915dcbf3ae8"
-  integrity sha512-lFfHiqcXbJ2/6aUkZwt8g5YYM7EGqNVxJhMqMPqv1BVXRKp8D7jYLlmma0SvhRY4WYxxkZpCdbJvhDylb5gcEA==
+react-use-measure@2.0.1, "react-use-measure@https://github.com/mckn/react-use-measure.git#remove-cjs-export":
+  version "2.0.3"
+  resolved "https://github.com/mckn/react-use-measure.git#73530149cb2810cc629f73fa680f8681a0f398ca"
   dependencies:
     debounce "^1.2.0"
 
