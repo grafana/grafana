@@ -105,6 +105,8 @@ export function filterFieldConfigOverrides(
 }
 
 function cleanProperties(obj: any, parentPath: string, fieldConfigRegistry: FieldConfigOptionsRegistry) {
+  let found = false;
+
   for (const propName of Object.keys(obj)) {
     const value = obj[propName];
     const fullPath = `${parentPath}${propName}`;
@@ -112,6 +114,7 @@ function cleanProperties(obj: any, parentPath: string, fieldConfigRegistry: Fiel
 
     // need to check early here as some standard properties have nested properies
     if (existsInRegistry) {
+      found = true;
       continue;
     }
 
@@ -120,9 +123,15 @@ function cleanProperties(obj: any, parentPath: string, fieldConfigRegistry: Fiel
         unset(obj, propName);
       }
     } else {
-      cleanProperties(value, `${fullPath}.`, fieldConfigRegistry);
+      const childPropFound = cleanProperties(value, `${fullPath}.`, fieldConfigRegistry);
+      // If no child props found unset the main object
+      if (!childPropFound) {
+        unset(obj, propName);
+      }
     }
   }
+
+  return found;
 }
 
 function adaptFieldColorMode(
