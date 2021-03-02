@@ -2,7 +2,12 @@ package elasticsearch
 
 import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/plugins"
 )
+
+type queryEndpoint interface {
+	execute() (plugins.DataResponse, error)
+}
 
 // Query represents the time series query model of the datasource
 type Query struct {

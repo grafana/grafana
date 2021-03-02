@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/interval"
 )
 
-// ElasticsearchExecutor represents a handler for handling elasticsearch datasource request
+// Executor represents a handler for handling elasticsearch datasource request
 type Executor struct {
 	intervalCalculator interval.Calculator
 }
@@ -22,7 +22,7 @@ func NewExecutor(*models.DataSource) (plugins.DataPlugin, error) {
 	}, nil
 }
 
-// Query handles an elasticsearch datasource request
+// DataQuery handles an elasticsearch datasource request
 func (e *Executor) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 	tsdbQuery plugins.DataQuery) (plugins.DataResponse, error) {
 	if len(tsdbQuery.Queries) == 0 {
@@ -38,6 +38,21 @@ func (e *Executor) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 		client.EnableDebug()
 	}
 
-	query := newTimeSeriesQuery(client, tsdbQuery, e.intervalCalculator)
+	var queryType string
+	var query queryEndpoint
+
+	if qt, ok := tsdbQuery.Queries[0].Model.CheckGet("queryType"); ok {
+		queryType = qt.MustString("timeseries")
+	}
+
+	switch queryType {
+	case "fields":
+		query = newFieldsQuery(client, tsdbQuery)
+	case "timeseries":
+		fallthrough
+	default:
+		query = newTimeSeriesQuery(client, tsdbQuery, e.intervalCalculator)
+	}
+
 	return query.execute()
 }

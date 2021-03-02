@@ -18,8 +18,13 @@ const (
 	intervalYearly  = "yearly"
 )
 
+var timeNowUtc = func() time.Time {
+	return time.Now().UTC()
+}
+
 type indexPattern interface {
 	GetIndices(timeRange plugins.DataTimeRange) ([]string, error)
+	GetIndexForToday() (string, error)
 }
 
 var newIndexPattern = func(interval string, pattern string) (indexPattern, error) {
@@ -36,6 +41,14 @@ type staticIndexPattern struct {
 
 func (ip *staticIndexPattern) GetIndices(timeRange plugins.DataTimeRange) ([]string, error) {
 	return []string{ip.indexName}, nil
+}
+
+func (ip *staticIndexPattern) GetIndexForToday() (string, error) {
+	return ip.indexName, nil
+}
+
+func (ip *dynamicIndexPattern) GetIndexForToday() (string, error) {
+	return formatDate(timeNowUtc(), ip.pattern), nil
 }
 
 type intervalGenerator interface {

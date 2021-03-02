@@ -1,4 +1,4 @@
-import { MetricFindValue, SelectableValue } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 import { InlineSegmentGroup, Segment, SegmentAsync, useTheme } from '@grafana/ui';
 import { cx } from 'emotion';
 import React, { FunctionComponent } from 'react';
@@ -19,15 +19,11 @@ import {
   MetricAggregation,
   MetricAggregationType,
 } from './aggregations';
+import { useFields } from '../../../hooks/useFields';
 
 const toOption = (metric: MetricAggregation) => ({
   label: metricAggregationConfig[metric.type].label,
   value: metric.type,
-});
-
-const toSelectableValue = ({ value, text }: MetricFindValue): SelectableValue<string> => ({
-  label: text,
-  value: `${value || text}`,
 });
 
 interface Props {
@@ -67,24 +63,13 @@ export const MetricEditor: FunctionComponent<Props> = ({ value }) => {
   const styles = getStyles(useTheme(), !!value.hide);
   const datasource = useDatasource();
   const query = useQuery();
+  const getFields = useFields(value.type);
   const dispatch = useDispatch<MetricAggregationAction>();
 
   const previousMetrics = query.metrics!.slice(
     0,
     query.metrics!.findIndex((m) => m.id === value.id)
   );
-
-  // TODO: This could be common with the one in BucketAggregationEditor
-  const getFields = async () => {
-    const get = () => {
-      if (value.type === 'cardinality') {
-        return datasource.getFields();
-      }
-      return datasource.getFields('number');
-    };
-
-    return (await get().toPromise()).map(toSelectableValue);
-  };
 
   return (
     <>

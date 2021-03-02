@@ -37,20 +37,7 @@ import { isBucketAggregationWithField } from './components/QueryEditor/BucketAgg
 import { generate, Observable, of, throwError } from 'rxjs';
 import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty } from 'rxjs/operators';
 import { getScriptValue } from './utils';
-
-// Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
-// custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
-const ELASTIC_META_FIELDS = [
-  '_index',
-  '_type',
-  '_id',
-  '_source',
-  '_size',
-  '_field_names',
-  '_ignored',
-  '_routing',
-  '_meta',
-];
+import { transformFieldsQueryResponse } from './responseTransformers';
 
 export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, ElasticsearchOptions> {
   basicAuth?: string;
@@ -104,7 +91,36 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     this.languageProvider = new LanguageProvider(this);
   }
 
-  private request(method: string, url: string, data?: undefined): Observable<any> {
+  private request<T = unknown>(data?: any): Observable<T> {
+    const options = {
+      url: '/api/tsdb/query',
+      method: 'POST',
+      data,
+    };
+
+    return getBackendSrv()
+      .fetch<any>(options)
+      .pipe(
+        map((results) => {
+          results.data.$$config = results.config;
+          return results.data;
+        }),
+        catchError((err) => {
+          if (err.data) {
+            const message = err.data.error?.reason ?? err.data.message ?? 'Unknown error';
+
+            return throwError({
+              message: 'Elasticsearch error: ' + message,
+              error: err.data.error,
+            });
+          }
+
+          return throwError(err);
+        })
+      );
+  }
+
+  private legacy_request(method: string, url: string, data?: undefined): Observable<any> {
     const options: any = {
       url: this.url + '/' + url,
       method: method,
@@ -176,7 +192,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     ).pipe(
       mergeMap((index) => {
         // catch all errors and emit an object with an err property to simplify checks later in the pipeline
-        return this.request('GET', indexList[listLen - index - 1]).pipe(catchError((err) => of({ err })));
+        return this.legacy_request('GET', indexList[listLen - index - 1]).pipe(catchError((err) => of({ err })));
       }),
       skipWhile((resp) => resp.err && resp.err.status === 404), // skip all requests that fail because missing Elastic index
       throwIfEmpty(() => 'Could not find an available index for this time range.'), // when i === Math.min(listLen, maxTraversals) generate will complete but without emitting any values which means we didn't find a valid index
@@ -191,8 +207,8 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     );
   }
 
-  private post(url: string, data: any): Observable<any> {
-    return this.request('POST', url, data);
+  private legacy_post(url: string, data: any): Observable<any> {
+    return this.legacy_request('POST', url, data);
   }
 
   annotationQuery(options: any): Promise<any> {
@@ -265,7 +281,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
 
     const payload = JSON.stringify(header) + '\n' + JSON.stringify(data) + '\n';
 
-    return this.post('_msearch', payload)
+    return this.legacy_post('_msearch', payload)
       .pipe(
         map((res) => {
           const list = [];
@@ -370,7 +386,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
 
   testDatasource() {
     // validate that the index exist and has date field
-    return this.getFields('date')
+    return this.getFields(getDefaultTimeRange(), 'date')
       .pipe(
         mergeMap((dateFields) => {
           const timeField: any = _.find(dateFields, { text: this.timeField });
@@ -497,7 +513,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     });
     const payload = [header, esQuery].join('\n') + '\n';
     const url = this.getMultiSearchUrl();
-    const response = await this.post(url, payload).toPromise();
+    const response = await this.legacy_post(url, payload).toPromise();
     const targets: ElasticsearchQuery[] = [{ refId: `${row.dataFrame.refId}`, metrics: [{ type: 'logs', id: '1' }] }];
     const elasticResponse = new ElasticResponse(targets, transformHitsBasedOnDirection(response, sort));
     const logResponse = elasticResponse.getLogs(this.logMessageField, this.logLevelField);
@@ -580,7 +596,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
 
     const url = this.getMultiSearchUrl();
 
-    return this.post(url, payload).pipe(
+    return this.legacy_post(url, payload).pipe(
       map((res) => {
         const er = new ElasticResponse(sentTargets, res);
 
@@ -598,12 +614,55 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     );
   }
 
-  isMetadataField(fieldName: string) {
+  private legacy_useBrowserAccessMode() {
+    return !this.url.startsWith(`/api/datasources/proxy/${this.id}`);
+  }
+
+  private legacy_isMetadataField(fieldName: string) {
+    // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
+    // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
+    const ELASTIC_META_FIELDS = [
+      '_index',
+      '_type',
+      '_id',
+      '_source',
+      '_size',
+      '_field_names',
+      '_ignored',
+      '_routing',
+      '_meta',
+    ];
+
     return ELASTIC_META_FIELDS.includes(fieldName);
   }
 
-  // TODO: instead of being a string, this could be a custom type representing all the elastic types
-  getFields(type?: string, range?: TimeRange): Observable<MetricFindValue[]> {
+  getFields(
+    range: TimeRange,
+    fieldTypeFilter: 'number' | 'date' | 'string' | 'nested' | 'geo_point' | null
+  ): Observable<MetricFindValue[]> {
+    if (this.legacy_useBrowserAccessMode()) {
+      return this.legacy_getFields(fieldTypeFilter, range);
+    }
+
+    return this.request({
+      from: range.from.valueOf().toString(),
+      to: range.to.valueOf().toString(),
+      queries: [
+        {
+          queryType: 'fields',
+          // FIXME: we probably don't need refId here
+          refId: 'A',
+          datasourceId: this.id,
+          fieldTypeFilter,
+        },
+      ],
+    }).pipe(map((data) => transformFieldsQueryResponse('A', data)));
+  }
+
+  private legacy_getFields(
+    type: 'number' | 'date' | 'string' | 'nested' | 'geo_point' | null,
+    range?: TimeRange
+  ): Observable<MetricFindValue[]> {
     const configuredEsVersion = this.esVersion;
     return this.get('/_mapping', range).pipe(
       map((result) => {
@@ -622,7 +681,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
         };
 
         const shouldAddField = (obj: any, key: string) => {
-          if (this.isMetadataField(key)) {
+          if (this.legacy_isMetadataField(key)) {
             return false;
           }
 
@@ -704,7 +763,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
 
     const url = this.getMultiSearchUrl();
 
-    return this.post(url, esQuery).pipe(
+    return this.legacy_post(url, esQuery).pipe(
       map((res) => {
         if (!res.responses[0].aggregations) {
           return [];
@@ -749,7 +808,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   }
 
   getTagKeys() {
-    return this.getFields().toPromise();
+    return this.getFields(getDefaultTimeRange(), null).toPromise();
   }
 
   getTagValues(options: any) {

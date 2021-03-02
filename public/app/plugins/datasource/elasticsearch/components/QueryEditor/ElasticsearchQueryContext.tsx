@@ -6,15 +6,18 @@ import { ElasticsearchQuery } from '../../types';
 import { reducer as metricsReducer } from './MetricAggregationsEditor/state/reducer';
 import { reducer as bucketAggsReducer } from './BucketAggregationsEditor/state/reducer';
 import { aliasPatternReducer, queryReducer, initQuery } from './state';
+import { TimeRange } from '@grafana/data';
 
 const DatasourceContext = createContext<ElasticDatasource | undefined>(undefined);
 const QueryContext = createContext<ElasticsearchQuery | undefined>(undefined);
+const RangeContext = createContext<TimeRange | undefined>(undefined);
 
 interface Props {
   query: ElasticsearchQuery;
   onChange: (query: ElasticsearchQuery) => void;
   onRunQuery: () => void;
   datasource: ElasticDatasource;
+  range: TimeRange;
 }
 
 export const ElasticsearchProvider: FunctionComponent<Props> = ({
@@ -23,6 +26,7 @@ export const ElasticsearchProvider: FunctionComponent<Props> = ({
   onRunQuery,
   query,
   datasource,
+  range,
 }) => {
   const onStateChange = useCallback(
     (query: ElasticsearchQuery) => {
@@ -57,7 +61,9 @@ export const ElasticsearchProvider: FunctionComponent<Props> = ({
   return (
     <DatasourceContext.Provider value={datasource}>
       <QueryContext.Provider value={query}>
-        <DispatchContext.Provider value={dispatch}>{children}</DispatchContext.Provider>
+        <RangeContext.Provider value={range}>
+          <DispatchContext.Provider value={dispatch}>{children}</DispatchContext.Provider>
+        </RangeContext.Provider>
       </QueryContext.Provider>
     </DatasourceContext.Provider>
   );
@@ -80,4 +86,13 @@ export const useDatasource = () => {
   }
 
   return datasource;
+};
+
+export const useRange = () => {
+  const range = useContext(RangeContext);
+  if (!range) {
+    throw new Error('use ElasticsearchProvider first.');
+  }
+
+  return range;
 };

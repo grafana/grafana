@@ -50,13 +50,7 @@ export type BucketsConfiguration = {
   [P in BucketAggregationType]: BucketConfiguration<P>;
 };
 
-export interface ElasticsearchAggregation {
-  id: string;
-  type: MetricAggregationType | BucketAggregationType;
-  settings?: unknown;
-  field?: string;
-  hide: boolean;
-}
+export type ElasticsearchAggregation = BucketAggregation | MetricAggregation;
 
 export interface ElasticsearchQuery extends DataQuery {
   alias?: string;

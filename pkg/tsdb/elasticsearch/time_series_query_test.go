@@ -888,6 +888,13 @@ func (c *fakeClient) GetMinInterval(queryInterval string) (time.Duration, error)
 	return 15 * time.Second, nil
 }
 
+// TODO: properly mock this
+func (c *fakeClient) GetIndexMapping() (*es.IndexMappingResponse, error) {
+	return &es.IndexMappingResponse{
+		StatusCode: 200,
+	}, nil
+}
+
 func (c *fakeClient) ExecuteMultisearch(r *es.MultiSearchRequest) (*es.MultiSearchResponse, error) {
 	c.multisearchRequests = append(c.multisearchRequests, r)
 	return c.multiSearchResponse, c.multiSearchError
