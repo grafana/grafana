@@ -149,7 +149,7 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 
 	if hs.Cfg.IsPanelLibraryEnabled() {
 		// load library panels JSON for this dashboard
-		err = hs.LibraryPanelService.LoadLibraryPanelsForDashboard(dash)
+		err = hs.LibraryPanelService.LoadLibraryPanelsForDashboard(c, dash)
 		if err != nil {
 			return response.Error(500, "Error while loading library panels", err)
 		}
@@ -220,7 +220,7 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 
 	if hs.Cfg.IsPanelLibraryEnabled() {
 		// disconnect all library panels for this dashboard
-		err := hs.LibraryPanelService.DisconnectLibraryPanelsForDashboard(dash)
+		err := hs.LibraryPanelService.DisconnectLibraryPanelsForDashboard(c, dash)
 		if err != nil {
 			hs.log.Error("Failed to disconnect library panels", "dashboard", dash.Id, "user", c.SignedInUser.UserId, "error", err)
 		}

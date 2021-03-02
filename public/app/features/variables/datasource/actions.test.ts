@@ -1,6 +1,7 @@
+import { DataSourceInstanceSettings } from '@grafana/data';
+
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
-import { TemplatingState } from '../state/reducers';
-import { getRootReducer } from '../state/helpers';
+import { getRootReducer, RootReducerType } from '../state/helpers';
 import { toVariableIdentifier, toVariablePayload } from '../state/types';
 import { variableAdapters } from '../adapters';
 import { createDataSourceVariableAdapter } from './adapter';
@@ -9,12 +10,12 @@ import {
   initDataSourceVariableEditor,
   updateDataSourceVariableOptions,
 } from './actions';
-import { DataSourceInstanceSettings, DataSourceJsonData, DataSourcePluginMeta } from '@grafana/data';
 import { getMockPlugin } from '../../plugins/__mocks__/pluginMocks';
 import { createDataSourceOptions } from './reducer';
 import { addVariable, setCurrentVariableValue } from '../state/sharedReducer';
 import { changeVariableEditorExtended } from '../editor/reducer';
 import { datasourceBuilder } from '../shared/testing/builders';
+import { getDataSourceInstanceSetting } from '../shared/testing/helpers';
 
 interface Args {
   sources?: DataSourceInstanceSettings[];
@@ -47,7 +48,7 @@ describe('data source actions', () => {
           query: 'mock-data-id',
         });
 
-        const tester = await reduxTester<{ templating: TemplatingState }>()
+        const tester = await reduxTester<RootReducerType>()
           .givenRootReducer(getRootReducer())
           .whenActionIsDispatched(
             addVariable(toVariablePayload(datasource, { global: false, index: 0, model: datasource }))
@@ -62,10 +63,7 @@ describe('data source actions', () => {
             toVariablePayload(
               { type: 'datasource', id: '0' },
               {
-                sources: [
-                  { name: 'first-name', value: 'first-name', meta },
-                  { name: 'second-name', value: 'second-name', meta },
-                ],
+                sources,
                 regex: (undefined as unknown) as RegExp,
               }
             )
@@ -98,7 +96,7 @@ describe('data source actions', () => {
           regex: '/.*(second-name).*/',
         });
 
-        const tester = await reduxTester<{ templating: TemplatingState }>()
+        const tester = await reduxTester<RootReducerType>()
           .givenRootReducer(getRootReducer())
           .whenActionIsDispatched(
             addVariable(toVariablePayload(datasource, { global: false, index: 0, model: datasource }))
@@ -113,10 +111,7 @@ describe('data source actions', () => {
             toVariablePayload(
               { type: 'datasource', id: '0' },
               {
-                sources: [
-                  { name: 'first-name', value: 'first-name', meta },
-                  { name: 'second-name', value: 'second-name', meta },
-                ],
+                sources,
                 regex: /.*(second-name).*/,
               }
             )
@@ -146,7 +141,7 @@ describe('data source actions', () => {
 
       const { dependencies, getListMock, getDatasourceSrvMock } = getTestContext({ sources });
 
-      await reduxTester<{ templating: TemplatingState }>()
+      await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(initDataSourceVariableEditor(dependencies))
         .thenDispatchedActionsShouldEqual(
@@ -165,14 +160,3 @@ describe('data source actions', () => {
     });
   });
 });
-
-function getDataSourceInstanceSetting(name: string, meta: DataSourcePluginMeta): DataSourceInstanceSettings {
-  return {
-    id: 1,
-    uid: '',
-    type: '',
-    name,
-    meta,
-    jsonData: ({} as unknown) as DataSourceJsonData,
-  };
-}

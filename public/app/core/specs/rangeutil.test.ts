@@ -1,6 +1,5 @@
-import { rangeUtil } from '@grafana/data';
+import { rangeUtil, dateTime } from '@grafana/data';
 import _ from 'lodash';
-import { dateTime } from '@grafana/data';
 
 describe('rangeUtil', () => {
   describe('Can get range grouped list of ranges', () => {

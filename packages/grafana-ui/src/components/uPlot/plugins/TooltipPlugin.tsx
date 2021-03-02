@@ -1,29 +1,40 @@
 import React from 'react';
 import { Portal } from '../../Portal/Portal';
-import { usePlotContext, usePlotData } from '../context';
+import { usePlotContext } from '../context';
 import { CursorPlugin } from './CursorPlugin';
 import { SeriesTable, SeriesTableRowProps } from '../../Graph/GraphTooltip/SeriesTable';
-import { FieldType, formattedValueToString, getDisplayProcessor, getFieldDisplayName, TimeZone } from '@grafana/data';
+import {
+  DataFrame,
+  FieldType,
+  formattedValueToString,
+  getDisplayProcessor,
+  getFieldDisplayName,
+  TimeZone,
+} from '@grafana/data';
 import { TooltipContainer } from '../../Chart/TooltipContainer';
 import { TooltipMode } from '../../Chart/Tooltip';
+import { useGraphNGContext } from '../../GraphNG/hooks';
 
 interface TooltipPluginProps {
   mode?: TooltipMode;
   timeZone: TimeZone;
+  data: DataFrame[];
 }
 
 /**
  * @alpha
  */
-export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', timeZone }) => {
+export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', timeZone, ...otherProps }) => {
   const pluginId = 'PlotTooltip';
   const plotContext = usePlotContext();
-  const { data, getField, getXAxisFields } = usePlotData();
+  const graphContext = useGraphNGContext();
 
-  const xAxisFields = getXAxisFields();
-  // assuming single x-axis
-  const xAxisField = xAxisFields[0];
-  const xAxisFmt = xAxisField.display || getDisplayProcessor({ field: xAxisField, timeZone });
+  let xField = graphContext.getXAxisField(otherProps.data);
+  if (!xField) {
+    return null;
+  }
+
+  const xFieldFmt = xField.display || getDisplayProcessor({ field: xField, timeZone });
 
   return (
     <CursorPlugin id={pluginId}>
@@ -31,7 +42,6 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', t
         if (!plotContext.getPlotInstance()) {
           return null;
         }
-
         let tooltip = null;
 
         // when no no cursor interaction
@@ -39,10 +49,17 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', t
           return null;
         }
 
+        const xVal = xFieldFmt(xField!.values.get(focusedPointIdx)).text;
+
+        // origin field/frame indexes for inspecting the data
+        const originFieldIndex = focusedSeriesIdx
+          ? graphContext.mapSeriesIndexToDataFrameFieldIndex(focusedSeriesIdx)
+          : null;
+
         // when interacting with a point in single mode
-        if (mode === 'single' && focusedSeriesIdx !== null) {
-          const xVal = xAxisFmt(xAxisFields[0]!.values.get(focusedPointIdx)).text;
-          const field = getField(focusedSeriesIdx);
+        if (mode === 'single' && originFieldIndex !== null) {
+          const field = otherProps.data[originFieldIndex.frameIndex].fields[originFieldIndex.fieldIndex];
+
           const fieldFmt = field.display || getDisplayProcessor({ field, timeZone });
           tooltip = (
             <SeriesTable
@@ -50,7 +67,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', t
                 {
                   // TODO: align with uPlot typings
                   color: (plotContext.getSeries()[focusedSeriesIdx!].stroke as any)(),
-                  label: getFieldDisplayName(field, data),
+                  label: getFieldDisplayName(field, otherProps.data[originFieldIndex.frameIndex]),
                   value: fieldFmt(field.values.get(focusedPointIdx)).text,
                 },
               ]}
@@ -60,10 +77,11 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', t
         }
 
         if (mode === 'multi') {
-          const xVal = xAxisFmt(xAxisFields[0].values.get(focusedPointIdx)).text;
-          tooltip = (
-            <SeriesTable
-              series={data.fields.reduce<SeriesTableRowProps[]>((agg, f, i) => {
+          let series: SeriesTableRowProps[] = [];
+
+          for (let i = 0; i < otherProps.data.length; i++) {
+            series = series.concat(
+              otherProps.data[i].fields.reduce<SeriesTableRowProps[]>((agg, f, j) => {
                 // skipping time field and non-numeric fields
                 if (f.type === FieldType.time || f.type !== FieldType.number) {
                   return agg;
@@ -77,16 +95,19 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', t
                   ...agg,
                   {
                     // TODO: align with uPlot typings
-                    color: (plotContext.getSeries()[i].stroke as any)!(),
-                    label: getFieldDisplayName(f, data),
+                    color: (plotContext.getSeries()[j].stroke as any)!(),
+                    label: getFieldDisplayName(f, otherProps.data[i]),
                     value: formattedValueToString(f.display!(f.values.get(focusedPointIdx!))),
-                    isActive: focusedSeriesIdx === i,
+                    isActive: originFieldIndex
+                      ? originFieldIndex.frameIndex === i && originFieldIndex.fieldIndex === j
+                      : false,
                   },
                 ];
-              }, [])}
-              timestamp={xVal}
-            />
-          );
+              }, [])
+            );
+          }
+
+          tooltip = <SeriesTable series={series} timestamp={xVal} />;
         }
 
         if (!tooltip) {

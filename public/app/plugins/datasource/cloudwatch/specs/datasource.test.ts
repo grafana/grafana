@@ -9,7 +9,6 @@ import {
 } from '@grafana/data';
 
 import * as redux from 'app/store/store';
-import '../datasource';
 import { CloudWatchDatasource, MAX_ATTEMPTS } from '../datasource';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CloudWatchLogsQuery, CloudWatchLogsQueryStatus, CloudWatchMetricsQuery, LogAction } from '../types';

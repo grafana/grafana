@@ -169,6 +169,11 @@ func GetPluginSettingByID(c *models.ReqContext) response.Response {
 		SignatureOrg:  def.SignatureOrg,
 	}
 
+	if app, ok := plugins.Apps[def.Id]; ok {
+		dto.Enabled = app.AutoEnabled
+		dto.Pinned = app.AutoEnabled
+	}
+
 	query := models.GetPluginSettingByIdQuery{PluginId: pluginID, OrgId: c.OrgId}
 	if err := bus.Dispatch(&query); err != nil {
 		if !errors.Is(err, models.ErrPluginSettingNotFound) {
@@ -368,7 +373,7 @@ func (hs *HTTPServer) getCachedPluginSettings(pluginID string, user *models.Sign
 }
 
 func (hs *HTTPServer) GetPluginErrorsList(c *models.ReqContext) response.Response {
-	return response.JSON(200, plugins.ScanningErrors())
+	return response.JSON(200, hs.PluginManager.ScanningErrors())
 }
 
 func translatePluginRequestErrorToAPIError(err error) response.Response {

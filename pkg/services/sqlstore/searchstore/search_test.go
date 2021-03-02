@@ -58,10 +58,10 @@ func TestBuilder_EqualResults_Basic(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Len(t, res, 1)
-	res[0].Uid = ""
+	res[0].UID = ""
 	assert.EqualValues(t, []sqlstore.DashboardSearchProjection{
 		{
-			Id:    1,
+			ID:    1,
 			Title: "A",
 			Slug:  "a",
 			Term:  "templated",
