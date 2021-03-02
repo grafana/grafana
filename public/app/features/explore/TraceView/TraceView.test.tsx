@@ -1,6 +1,6 @@
 import React from 'react';
 import { shallow } from 'enzyme';
-import { render } from '@testing-library/react';
+import { render, prettyDOM } from '@testing-library/react';
 import { TraceView } from './TraceView';
 import { TracePageHeader, TraceTimelineViewer } from '@jaegertracing/jaeger-ui-components';
 import { setDataSourceSrv } from '@grafana/runtime';
@@ -49,6 +49,16 @@ describe('TraceView', () => {
     const { timeline, header } = renderTraceViewNew();
     expect(timeline).toHaveLength(1);
     expect(header).toHaveLength(1);
+  });
+
+  it('renders renders the same for old and new format', () => {
+    const { baseElement } = render(
+      <TraceView exploreId={ExploreId.left} dataFrames={[frameNew]} splitOpenFn={() => {}} />
+    );
+    const { baseElement: baseElementOld } = render(
+      <TraceView exploreId={ExploreId.left} dataFrames={[frameOld]} splitOpenFn={() => {}} />
+    );
+    expect(prettyDOM(baseElement)).toEqual(prettyDOM(baseElementOld));
   });
 
   it('does not render anything on missing trace', () => {
