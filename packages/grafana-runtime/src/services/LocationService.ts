@@ -2,6 +2,7 @@ import { locationUtil } from '@grafana/data';
 import * as H from 'history';
 import { LocationUpdate } from './LocationSrv';
 import { createLogger } from '@grafana/ui';
+import { config } from '../config';
 
 export interface LocationService {
   partial: (query: Record<string, any>, replace?: boolean) => void;
@@ -23,14 +24,15 @@ class HistoryWrapper implements LocationService {
   private fullPageReloadRoutes = ['/logout'];
 
   constructor(history?: H.History) {
+    const appSubUrl = config.appSubUrl;
+
     // If no history passed create an in memory one if being called from test
     this.history =
       history || process.env.NODE_ENV === 'test'
         ? H.createMemoryHistory({ initialEntries: ['/'] })
-        : H.createBrowserHistory();
+        : H.createBrowserHistory({ basename: appSubUrl ?? '/' });
 
     this.history.listen((update) => {
-      navigationLogger('LocationService', false, 'history.listen', update);
       const urlWithoutBase = locationUtil.stripBaseFromUrl(update.pathname);
       const search = new URLSearchParams(update.search);
 

@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import _ from 'lodash';
 import DropDownChild from './DropDownChild';
 import { NavModelItem } from '@grafana/data';
-import { Link } from 'react-router-dom';
+import { Link } from '@grafana/ui';
 
 interface Props {
   link: NavModelItem;
@@ -18,7 +18,7 @@ const SideMenuDropDown: FC<Props> = (props) => {
 
   const linkContent = <span className="sidemenu-item-text">{link.text}</span>;
   const anchor = link.url ? (
-    <Link to={link.url} onClick={onHeaderClick} className="side-menu-header-link">
+    <Link href={link.url} onClick={onHeaderClick} className="side-menu-header-link">
       {linkContent}
     </Link>
   ) : (
