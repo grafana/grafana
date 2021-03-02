@@ -129,7 +129,9 @@ This might break custom event rules in your PagerDuty rules if you rely on the f
 Move any existing rules using `custom_details.myMetric` to `custom_details.queries.myMetric`.
 This behavior will become the default in a future version of Grafana.
 
-> Using `dedup_key` tag will override Grafana generated `dedup_key` with a custom key.
+> **Note:** The `dedup_key` tag overrides the Grafana-generated `dedup_key` with a custom key.
+
+> **Note:** The `state` tag overrides the current alert state inside the `custom_details` payload.
 
 ### Pushover
 

@@ -1,14 +1,16 @@
+import React, { useState } from 'react';
+import { css } from 'emotion';
+import pick from 'lodash/pick';
 import { GrafanaTheme } from '@grafana/data';
 import { Button, stylesFactory, useStyles } from '@grafana/ui';
+
 import { OptionsGroup } from 'app/features/dashboard/components/PanelEditor/OptionsGroup';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { css } from 'emotion';
-import React, { useState } from 'react';
 import { AddLibraryPanelModal } from '../AddLibraryPanelModal/AddLibraryPanelModal';
 import { LibraryPanelsView } from '../LibraryPanelsView/LibraryPanelsView';
-import pick from 'lodash/pick';
-import { LibraryPanelDTO } from '../../state/api';
 import { PanelQueriesChangedEvent } from 'app/types/events';
+import { LibraryPanelDTO } from '../../types';
+import { toPanelModelLibraryPanel } from '../../utils';
 
 interface Props {
   panel: PanelModel;
@@ -23,7 +25,7 @@ export const PanelLibraryOptionsGroup: React.FC<Props> = ({ panel, dashboard }) 
     panel.restoreModel({
       ...panelInfo.model,
       ...pick(panel, 'gridPos', 'id'),
-      libraryPanel: pick(panelInfo, 'uid', 'name', 'meta'),
+      libraryPanel: toPanelModelLibraryPanel(panelInfo),
     });
 
     // dummy change for re-render
