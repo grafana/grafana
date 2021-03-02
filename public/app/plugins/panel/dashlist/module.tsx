@@ -48,7 +48,6 @@ export const plugin = new PanelPlugin<DashListOptions>(DashList)
           return (
             <FolderPicker
               initialFolderId={props.value}
-              useNewForms
               initialTitle="All"
               enableReset={true}
               onChange={({ id }) => props.onChange(id)}
