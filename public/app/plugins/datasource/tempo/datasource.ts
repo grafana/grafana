@@ -1,27 +1,25 @@
 import {
+  DataFrame,
   DataQuery,
   DataQueryRequest,
   DataQueryResponse,
-  DataSourceApi,
   DataSourceInstanceSettings,
   dateMath,
   DateTime,
   FieldType,
   MutableDataFrame,
 } from '@grafana/data';
-import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
+import { BackendSrvRequest, DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
 import { serializeParams } from 'app/core/utils/fetch';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { transformResponse } from './transform';
-import { isTempoResponse, TempoResponse } from './types';
 
 export type TempoQuery = {
   query: string;
 } & DataQuery;
 
-export class TempoDatasource extends DataSourceApi<TempoQuery> {
+export class TempoDatasource extends DataSourceWithBackend<TempoQuery> {
   constructor(private instanceSettings: DataSourceInstanceSettings, private readonly timeSrv: TimeSrv = getTimeSrv()) {
     super(instanceSettings);
   }
@@ -32,50 +30,30 @@ export class TempoDatasource extends DataSourceApi<TempoQuery> {
   }
 
   query(options: DataQueryRequest<TempoQuery>): Observable<DataQueryResponse> {
-    // At this moment we expect only one target. In case we somehow change the UI to be able to show multiple
-    // traces at one we need to change this.
-    const id = options.targets[0]?.query;
-    if (id) {
-      return this._request<TempoResponse | { data: any }>(`/api/traces/${encodeURIComponent(id)}`).pipe(
-        map((response) => {
-          return {
-            data: [
-              new MutableDataFrame({
-                fields: [
-                  {
-                    name: 'trace',
-                    type: FieldType.trace,
-                    values: isTempoResponse(response.data)
-                      ? [transformResponse(response.data, id)]
-                      : response.data.data || [],
-                  },
-                ],
-                meta: {
-                  preferredVisualisationType: 'trace',
+    return super.query(options).pipe(
+      map((response) => {
+        if (response.error) {
+          return response;
+        }
+
+        return {
+          data: [
+            new MutableDataFrame({
+              fields: [
+                {
+                  name: 'trace',
+                  type: FieldType.trace,
+                  values: [JSON.parse((response.data as DataFrame[])[0].fields[0].values.get(0))],
                 },
-              }),
-            ],
-          };
-        })
-      );
-    } else {
-      return of({
-        data: [
-          new MutableDataFrame({
-            fields: [
-              {
-                name: 'trace',
-                type: FieldType.trace,
-                values: [],
+              ],
+              meta: {
+                preferredVisualisationType: 'trace',
               },
-            ],
-            meta: {
-              preferredVisualisationType: 'trace',
-            },
-          }),
-        ],
-      });
-    }
+            }),
+          ],
+        };
+      })
+    );
   }
 
   async testDatasource(): Promise<any> {
