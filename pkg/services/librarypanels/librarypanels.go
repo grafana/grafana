@@ -219,11 +219,11 @@ func (lps *LibraryPanelService) DisconnectLibraryPanelsForDashboard(c *models.Re
 	return lps.disconnectLibraryPanelsForDashboard(c, dash.Id, panelCount)
 }
 
-func (lps *LibraryPanelService) DeleteLibraryPanelsInFolder(c *models.ReqContext, folder *models.Folder) error {
+func (lps *LibraryPanelService) DeleteLibraryPanelsInFolder(c *models.ReqContext, folderUID string) error {
 	if !lps.IsEnabled() {
 		return nil
 	}
-	return lps.deleteLibraryPanelsInFolder(c, folder.Uid)
+	return lps.deleteLibraryPanelsInFolder(c, folderUID)
 }
 
 // AddMigration defines database migrations.

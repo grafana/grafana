@@ -637,7 +637,7 @@ func TestDeleteLibraryPanelsInFolder(t *testing.T) {
 			resp := sc.service.connectHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
 
-			err := sc.service.DeleteLibraryPanelsInFolder(sc.reqContext, sc.folder)
+			err := sc.service.DeleteLibraryPanelsInFolder(sc.reqContext, sc.folder.Uid)
 			require.EqualError(t, err, ErrFolderHasConnectedLibraryPanels.Error())
 		})
 
@@ -651,7 +651,7 @@ func TestDeleteLibraryPanelsInFolder(t *testing.T) {
 			require.NotNil(t, result.Result)
 			require.Equal(t, 1, len(result.Result))
 
-			err = sc.service.DeleteLibraryPanelsInFolder(sc.reqContext, sc.folder)
+			err = sc.service.DeleteLibraryPanelsInFolder(sc.reqContext, sc.folder.Uid)
 			require.NoError(t, err)
 			resp = sc.service.getAllHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())

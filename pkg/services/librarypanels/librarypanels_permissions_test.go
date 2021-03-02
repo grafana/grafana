@@ -158,7 +158,7 @@ func TestLibraryPanelPermissions(t *testing.T) {
 				validateAndUnMarshalResponse(t, resp)
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 
-				err := sc.service.DeleteLibraryPanelsInFolder(sc.reqContext, folder)
+				err := sc.service.DeleteLibraryPanelsInFolder(sc.reqContext, folder.Uid)
 				switch testCase.status {
 				case 200:
 					require.NoError(t, err)

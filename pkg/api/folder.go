@@ -89,11 +89,7 @@ func UpdateFolder(c *models.ReqContext, cmd models.UpdateFolderCommand) response
 func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // temporarily adding this function to HTTPServer, will be removed from HTTPServer when librarypanels featuretoggle is removed
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
 	if hs.Cfg.IsPanelLibraryEnabled() {
-		f, err := s.GetFolderByUID(c.Params(":uid"))
-		if err != nil {
-			return toFolderError(err)
-		}
-		err = hs.LibraryPanelService.DeleteLibraryPanelsInFolder(c, f)
+		err := hs.LibraryPanelService.DeleteLibraryPanelsInFolder(c, c.Params(":uid"))
 		if err != nil {
 			if errors.Is(err, librarypanels.ErrFolderHasConnectedLibraryPanels) {
 				return response.Error(403, "Folder could not be deleted because it contains linked library panels", err)
