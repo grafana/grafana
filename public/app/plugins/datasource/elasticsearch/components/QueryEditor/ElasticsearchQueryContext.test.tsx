@@ -4,6 +4,7 @@ import { render } from '@testing-library/react';
 import { ElasticsearchProvider, useDatasource, useQuery } from './ElasticsearchQueryContext';
 import { ElasticsearchQuery } from '../../types';
 import { ElasticDatasource } from '../../datasource';
+import { getDefaultTimeRange } from '@grafana/data';
 
 const query: ElasticsearchQuery = {
   refId: 'A',
@@ -20,6 +21,7 @@ describe('ElasticsearchQueryContext', () => {
 
     render(
       <ElasticsearchProvider
+        range={getDefaultTimeRange()}
         query={{ refId: 'A' }}
         onChange={onChange}
         datasource={datasource}
@@ -49,6 +51,7 @@ describe('ElasticsearchQueryContext', () => {
     it('Should return the current query object', () => {
       const wrapper: FunctionComponent = ({ children }) => (
         <ElasticsearchProvider
+          range={getDefaultTimeRange()}
           datasource={{} as ElasticDatasource}
           query={query}
           onChange={() => {}}
@@ -77,7 +80,13 @@ describe('ElasticsearchQueryContext', () => {
       const datasource = {} as ElasticDatasource;
 
       const wrapper: FunctionComponent = ({ children }) => (
-        <ElasticsearchProvider datasource={datasource} query={query} onChange={() => {}} onRunQuery={() => {}}>
+        <ElasticsearchProvider
+          range={getDefaultTimeRange()}
+          datasource={datasource}
+          query={query}
+          onChange={() => {}}
+          onRunQuery={() => {}}
+        >
           {children}
         </ElasticsearchProvider>
       );

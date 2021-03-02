@@ -659,7 +659,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     }).pipe(map((data) => transformFieldsQueryResponse('A', data)));
   }
 
-  private legacy_getFields(
+  legacy_getFields(
     type: 'number' | 'date' | 'string' | 'nested' | 'geo_point' | null,
     range?: TimeRange
   ): Observable<MetricFindValue[]> {

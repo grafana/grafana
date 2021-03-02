@@ -455,7 +455,7 @@ describe('ElasticDatasource', function (this: any) {
     it('should return nested fields', async () => {
       const { ds } = getTestContext({ data, jsonData: { esVersion: 50 }, database: 'metricbeat' });
 
-      await expect(ds.getFields()).toEmitValuesWith((received) => {
+      await expect(ds.legacy_getFields(null)).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
         const fieldObjects = received[0];
         const fields = _.map(fieldObjects, 'text');
@@ -478,7 +478,7 @@ describe('ElasticDatasource', function (this: any) {
     it('should return number fields', async () => {
       const { ds } = getTestContext({ data, jsonData: { esVersion: 50 }, database: 'metricbeat' });
 
-      await expect(ds.getFields('number')).toEmitValuesWith((received) => {
+      await expect(ds.legacy_getFields('number')).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
         const fieldObjects = received[0];
         const fields = _.map(fieldObjects, 'text');
@@ -490,7 +490,7 @@ describe('ElasticDatasource', function (this: any) {
     it('should return date fields', async () => {
       const { ds } = getTestContext({ data, jsonData: { esVersion: 50 }, database: 'metricbeat' });
 
-      await expect(ds.getFields('date')).toEmitValuesWith((received) => {
+      await expect(ds.legacy_getFields('date')).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
         const fieldObjects = received[0];
         const fields = _.map(fieldObjects, 'text');
@@ -553,7 +553,7 @@ describe('ElasticDatasource', function (this: any) {
 
       const range = timeSrv.timeRange();
 
-      await expect(ds.getFields(undefined, range)).toEmitValuesWith((received) => {
+      await expect(ds.legacy_getFields(null, range)).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
         const fieldObjects = received[0];
         const fields = _.map(fieldObjects, 'text');
@@ -577,7 +577,7 @@ describe('ElasticDatasource', function (this: any) {
 
       const range = timeSrv.timeRange();
 
-      await expect(ds.getFields(undefined, range)).toEmitValuesWith((received) => {
+      await expect(ds.legacy_getFields(null, range)).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
         expect(received[0]).toStrictEqual({ status: 500 });
         expect(fetchMock).toBeCalledTimes(1);
@@ -594,7 +594,7 @@ describe('ElasticDatasource', function (this: any) {
       });
       const range = timeSrv.timeRange();
 
-      await expect(ds.getFields(undefined, range)).toEmitValuesWith((received) => {
+      await expect(ds.legacy_getFields(null, range)).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
         expect(received[0]).toStrictEqual('Could not find an available index for this time range.');
         expect(fetchMock).toBeCalledTimes(7);
@@ -689,7 +689,7 @@ describe('ElasticDatasource', function (this: any) {
     it('should return nested fields', async () => {
       const { ds } = getTestContext({ data, database: 'genuine.es7._mapping.response', jsonData: { esVersion: 70 } });
 
-      await expect(ds.getFields()).toEmitValuesWith((received) => {
+      await expect(ds.legacy_getFields(null)).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
 
         const fieldObjects = received[0];
@@ -716,7 +716,7 @@ describe('ElasticDatasource', function (this: any) {
     it('should return number fields', async () => {
       const { ds } = getTestContext({ data, database: 'genuine.es7._mapping.response', jsonData: { esVersion: 70 } });
 
-      await expect(ds.getFields('number')).toEmitValuesWith((received) => {
+      await expect(ds.legacy_getFields('number')).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
 
         const fieldObjects = received[0];
@@ -735,7 +735,7 @@ describe('ElasticDatasource', function (this: any) {
     it('should return date fields', async () => {
       const { ds } = getTestContext({ data, database: 'genuine.es7._mapping.response', jsonData: { esVersion: 70 } });
 
-      await expect(ds.getFields('date')).toEmitValuesWith((received) => {
+      await expect(ds.legacy_getFields('date')).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
 
         const fieldObjects = received[0];
@@ -851,7 +851,7 @@ describe('ElasticDatasource', function (this: any) {
     it('should replace range as integer not string', async () => {
       const { ds } = getTestContext({ jsonData: { interval: 'Daily', esVersion: 2, timeField: '@time' } });
       const postMock = jest.fn((url: string, data: any) => of(createFetchResponse({ responses: [] })));
-      ds['post'] = postMock;
+      ds['legacy_post'] = postMock;
 
       await expect(ds.query(createElasticQuery())).toEmitValuesWith((received) => {
         expect(postMock).toHaveBeenCalledTimes(1);

@@ -4,6 +4,7 @@ import { SettingsEditor } from '.';
 import { ElasticsearchProvider } from '../../ElasticsearchQueryContext';
 import { ElasticDatasource } from '../../../../datasource';
 import { ElasticsearchQuery } from '../../../../types';
+import { getDefaultTimeRange } from '@grafana/data';
 
 describe('Settings Editor', () => {
   describe('Raw Data', () => {
@@ -29,6 +30,7 @@ describe('Settings Editor', () => {
 
       const { rerender } = render(
         <ElasticsearchProvider
+          range={getDefaultTimeRange()}
           query={query}
           datasource={{} as ElasticDatasource}
           onChange={onChange}
@@ -63,6 +65,7 @@ describe('Settings Editor', () => {
       expect(onChange).toHaveBeenCalledTimes(1);
       rerender(
         <ElasticsearchProvider
+          range={getDefaultTimeRange()}
           query={onChange.mock.calls[0][0]}
           datasource={{} as ElasticDatasource}
           onChange={onChange}
