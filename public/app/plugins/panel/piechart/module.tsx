@@ -2,8 +2,7 @@ import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/dat
 import { PieChartPanel } from './PieChartPanel';
 import { PieChartOptions } from './types';
 import { addStandardDataReduceOptions } from '../stat/types';
-import { LegendDisplayMode, PieChartType } from '@grafana/ui';
-import { LegendColumns, PieChartLabels } from '@grafana/ui/src/components/PieChart/PieChart';
+import { LegendDisplayMode, PieChartType, PieChartLabels, PieChartLegendValues } from '@grafana/ui';
 
 export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
   .useFieldConfig({
@@ -76,11 +75,11 @@ export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
       })
       .addMultiSelect({
         name: 'Legend values',
-        path: 'legend.displayColumns',
+        path: 'legend.values',
         settings: {
           options: [
-            { value: LegendColumns.Percent, label: 'Percent' },
-            { value: LegendColumns.Value, label: 'Value' },
+            { value: PieChartLegendValues.Percent, label: 'Percent' },
+            { value: PieChartLegendValues.Value, label: 'Value' },
           ],
         },
         showIf: (c) => c.legend.displayMode !== LegendDisplayMode.Hidden,
