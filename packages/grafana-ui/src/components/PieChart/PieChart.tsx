@@ -31,6 +31,7 @@ interface SvgProps {
   pieType: PieChartType;
   displayLabels?: PieChartLabels[];
   useGradients?: boolean;
+  onSeriesColorChange?: (label: string, color: string) => void;
 }
 export interface Props extends SvgProps {
   legendOptions?: PieChartLegendOptions;
@@ -52,7 +53,14 @@ const defaultLegendOptions: PieChartLegendOptions = {
   values: [PieChartLegendValues.Percent],
 };
 
-export const PieChart: FC<Props> = ({ values, legendOptions = defaultLegendOptions, width, height, ...restProps }) => {
+export const PieChart: FC<Props> = ({
+  values,
+  legendOptions = defaultLegendOptions,
+  onSeriesColorChange,
+  width,
+  height,
+  ...restProps
+}) => {
   const getLegend = (values: DisplayValue[], legendOptions: PieChartLegendOptions) => {
     if (legendOptions.displayMode === LegendDisplayMode.Hidden) {
       return undefined;
@@ -65,7 +73,7 @@ export const PieChart: FC<Props> = ({ values, legendOptions = defaultLegendOptio
         color: value.color ?? FALLBACK_COLOR,
         yAxis: 1,
         getDisplayValues: () => {
-          const valuesToShow = legendOptions.values;
+          const valuesToShow = legendOptions.values ?? [];
           let displayValues = [];
 
           if (valuesToShow.includes(PieChartLegendValues.Value)) {
@@ -90,7 +98,12 @@ export const PieChart: FC<Props> = ({ values, legendOptions = defaultLegendOptio
     });
 
     return (
-      <VizLegend items={legendItems} placement={legendOptions.placement} displayMode={legendOptions.displayMode} />
+      <VizLegend
+        items={legendItems}
+        onSeriesColorChange={onSeriesColorChange}
+        placement={legendOptions.placement}
+        displayMode={legendOptions.displayMode}
+      />
     );
   };
 
