@@ -69,21 +69,38 @@ const processSelectors = <S extends Selectors>(e2eObjects: E2EFunctions<S>, sele
 
     if (typeof value === 'function') {
       // @ts-ignore
-      e2eObjects[key] = (textOrOptions?: string | CypressOptions, options?: CypressOptions) => {
-        // set the selector to default if we are seeing () => or (options) =>
-        let selector = value((undefined as unknown) as string);
+      e2eObjects[key] = function (textOrOptions?: string | CypressOptions, options?: CypressOptions) {
+        // the input can only be ()
+        if (arguments.length === 0) {
+          const selector = value((undefined as unknown) as string);
 
-        // if (text) => or (text, options) => then we want to update the selector
-        if (typeof textOrOptions === 'string') {
-          const ariaText = value(textOrOptions);
-          selector = Selector.fromAriaLabel(ariaText);
-        } else {
-          // textOrOptions is the options passed in so overwrite the options param
-          options = textOrOptions;
+          logOutput(selector);
+          return e2e().get(selector);
         }
 
-        logOutput(selector);
-        return e2e().get(selector, options);
+        // the input can be (text) or (options)
+        if (arguments.length === 1) {
+          if (typeof textOrOptions === 'string') {
+            const ariaText = value(textOrOptions);
+            const selector = Selector.fromAriaLabel(ariaText);
+
+            logOutput(selector);
+            return e2e().get(selector);
+          }
+          const selector = value((undefined as unknown) as string);
+
+          logOutput(selector);
+          return e2e().get(selector, textOrOptions);
+        }
+
+        // the input can only be (text, options)
+        if (arguments.length === 2) {
+          const ariaText = value(textOrOptions as string);
+          const selector = Selector.fromAriaLabel(ariaText);
+
+          logOutput(selector);
+          return e2e().get(selector, options);
+        }
       };
 
       continue;
