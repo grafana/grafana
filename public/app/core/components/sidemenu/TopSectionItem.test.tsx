@@ -1,6 +1,8 @@
 import React from 'react';
 import { mount } from 'enzyme';
 import TopSectionItem from './TopSectionItem';
+import { locationService } from '@grafana/runtime';
+import { Router } from 'react-router-dom';
 
 const setup = (propOverrides?: object) => {
   const props = Object.assign(
@@ -14,7 +16,11 @@ const setup = (propOverrides?: object) => {
     propOverrides
   );
 
-  return mount(<TopSectionItem {...props} />);
+  return mount(
+    <Router history={locationService.getHistory()}>
+      <TopSectionItem {...props} />
+    </Router>
+  );
 };
 
 describe('Render', () => {
