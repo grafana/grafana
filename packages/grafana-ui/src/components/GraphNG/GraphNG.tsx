@@ -165,6 +165,8 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
         config={config}
         onSeriesColorChange={onSeriesColorChange}
         onLegendClick={onLegendClick}
+        maxHeight="35%"
+        maxWidth="60%"
         {...legend}
       />
     );
