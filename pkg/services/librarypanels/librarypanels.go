@@ -223,7 +223,7 @@ func (lps *LibraryPanelService) DeleteLibraryPanelsInFolder(c *models.ReqContext
 	if !lps.IsEnabled() {
 		return nil
 	}
-	return lps.deleteLibraryPanelsInFolder(c, folder.Id)
+	return lps.deleteLibraryPanelsInFolder(c, folder.Uid)
 }
 
 // AddMigration defines database migrations.

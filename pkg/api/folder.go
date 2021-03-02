@@ -86,7 +86,7 @@ func UpdateFolder(c *models.ReqContext, cmd models.UpdateFolderCommand) response
 	return response.JSON(200, toFolderDto(g, cmd.Result))
 }
 
-func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // temporary adding this function to HTTPServer, will be removed from HTTPServer when librarypanels featuretoggle is removed
+func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // temporarily adding this function to HTTPServer, will be removed from HTTPServer when librarypanels featuretoggle is removed
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
 	if hs.Cfg.IsPanelLibraryEnabled() {
 		f, err := s.GetFolderByUID(c.Params(":uid"))
@@ -96,10 +96,9 @@ func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // 
 		err = hs.LibraryPanelService.DeleteLibraryPanelsInFolder(c, f)
 		if err != nil {
 			if errors.Is(err, librarypanels.ErrFolderHasConnectedLibraryPanels) {
-				return response.Error(500, "Folder could not be deleted because it contains linked library panels", err)
+				return response.Error(403, "Folder could not be deleted because it contains linked library panels", err)
 			}
-			
-			hs.log.Error("Failed to delete library panels in folder", "folder", f.Id, "user", c.SignedInUser.UserId, "error", err)
+			return toFolderError(err)
 		}
 	}
 

@@ -653,7 +653,6 @@ func TestDeleteLibraryPanelsInFolder(t *testing.T) {
 
 			err = sc.service.DeleteLibraryPanelsInFolder(sc.reqContext, sc.folder)
 			require.NoError(t, err)
-
 			resp = sc.service.getAllHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
 			err = json.Unmarshal(resp.Body(), &result)

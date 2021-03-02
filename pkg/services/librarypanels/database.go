@@ -232,19 +232,30 @@ func (lps *LibraryPanelService) disconnectLibraryPanelsForDashboard(c *models.Re
 }
 
 // deleteLibraryPanelsInFolder deletes all Library Panels for a folder.
-func (lps *LibraryPanelService) deleteLibraryPanelsInFolder(c *models.ReqContext, folderID int64) error {
+func (lps *LibraryPanelService) deleteLibraryPanelsInFolder(c *models.ReqContext, folderUID string) error {
 	return lps.SQLStore.WithTransactionalDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
+		var folderUIDs []struct {
+			ID int64 `xorm:"id"`
+		}
+		err := session.SQL("SELECT id from dashboard WHERE uid=? AND org_id=? AND is_folder=1", folderUID, c.SignedInUser.OrgId).Find(&folderUIDs)
+		if err != nil {
+			return err
+		}
+		if len(folderUIDs) != 1 {
+			return fmt.Errorf("found %d folders, while expecting at most one", len(folderUIDs))
+		}
+		folderID := folderUIDs[0].ID
+
 		if err := requirePermissionsOnFolder(c.SignedInUser, folderID); err != nil {
 			return err
 		}
-
 		var dashIDs []struct {
 			DashboardID int64 `xorm:"dashboard_id"`
 		}
 		sql := "SELECT lpd.dashboard_id FROM library_panel AS lp"
 		sql += " INNER JOIN library_panel_dashboard lpd on lp.id = lpd.librarypanel_id"
 		sql += " WHERE lp.folder_id=? AND lp.org_id=?"
-		err := session.SQL(sql, folderID, c.SignedInUser.OrgId).Find(&dashIDs)
+		err = session.SQL(sql, folderID, c.SignedInUser.OrgId).Find(&dashIDs)
 		if err != nil {
 			return err
 		}
