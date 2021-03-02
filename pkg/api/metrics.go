@@ -127,7 +127,10 @@ func (hs *HTTPServer) handleExpressions(c *models.ReqContext, reqDTO dtos.Metric
 		})
 	}
 
-	exprService := expr.Service{Cfg: hs.Cfg}
+	exprService := expr.Service{
+		Cfg:         hs.Cfg,
+		DataService: hs.DataService,
+	}
 	resp, err := exprService.WrapTransformData(c.Req.Context(), request)
 	if err != nil {
 		return response.Error(500, "expression request error", err)

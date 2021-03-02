@@ -141,7 +141,10 @@ func (c *Condition) execute(ctx AlertExecCtx, now time.Time, dataService *tsdb.S
 		})
 	}
 
-	exprService := expr.Service{Cfg: &setting.Cfg{ExpressionsEnabled: ctx.ExpressionsEnabled}}
+	exprService := expr.Service{
+		Cfg:         &setting.Cfg{ExpressionsEnabled: ctx.ExpressionsEnabled},
+		DataService: dataService,
+	}
 	pbRes, err := exprService.TransformData(ctx.Ctx, queryDataReq)
 	if err != nil {
 		return &result, err
