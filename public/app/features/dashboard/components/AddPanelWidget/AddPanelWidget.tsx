@@ -4,7 +4,7 @@ import { css, cx, keyframes } from 'emotion';
 import _ from 'lodash';
 import tinycolor from 'tinycolor2';
 import { LocationUpdate } from '@grafana/runtime';
-import { Icon, IconButton, styleMixins, stylesFactory, useStyles, useTheme } from '@grafana/ui';
+import { Icon, IconButton, styleMixins, useStyles } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import { DateTimeInput, GrafanaTheme } from '@grafana/data';
 
@@ -14,8 +14,9 @@ import { updateLocation } from 'app/core/actions';
 import { addPanel } from 'app/features/dashboard/state/reducers';
 import { DashboardModel, PanelModel } from '../../state';
 import { LibraryPanelsView } from '../../../library-panels/components/LibraryPanelsView/LibraryPanelsView';
-import { LibraryPanelDTO } from 'app/features/library-panels/state/api';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
+import { LibraryPanelDTO } from '../../../library-panels/types';
+import { toPanelModelLibraryPanel } from '../../../library-panels/utils';
 
 export type PanelPluginInfo = { id: any; defaults: { gridPos: { w: any; h: any }; title: any } };
 
@@ -119,7 +120,7 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard, u
     const newPanel: PanelModel = {
       ...panelInfo.model,
       gridPos,
-      libraryPanel: _.pick(panelInfo, 'name', 'uid', 'meta'),
+      libraryPanel: toPanelModelLibraryPanel(panelInfo),
     };
 
     dashboard.addPanel(newPanel);
@@ -142,7 +143,7 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard, u
 
   return (
     <div className={cx('panel-container', styles.wrapper)}>
-      <AddPanelWidgetHandle onCancel={onCancelAddPanel} onBack={addPanelView ? onBack : undefined}>
+      <AddPanelWidgetHandle onCancel={onCancelAddPanel} onBack={addPanelView ? onBack : undefined} styles={styles}>
         {addPanelView ? 'Add panel from panel library' : 'Add panel'}
       </AddPanelWidgetHandle>
       {addPanelView ? (
@@ -194,26 +195,30 @@ interface AddPanelWidgetHandleProps {
   onCancel: (e: React.MouseEvent<HTMLButtonElement>) => void;
   onBack?: () => void;
   children?: string;
+  styles: AddPanelStyles;
 }
 
-const AddPanelWidgetHandle: React.FC<AddPanelWidgetHandleProps> = ({ children, onBack, onCancel }) => {
-  const theme = useTheme();
-  const styles = getAddPanelWigetHandleStyles(theme);
+const AddPanelWidgetHandle: React.FC<AddPanelWidgetHandleProps> = ({ children, onBack, onCancel, styles }) => {
   return (
-    <div className={cx(styles.handle, 'grid-drag-handle')}>
-      <div className={styles.backButton}>
-        {onBack && (
-          <IconButton name="arrow-left" onClick={onBack} surface="header" size="xl" className={styles.noMargin} />
-        )}
-      </div>
-
+    <div className={cx(styles.headerRow, 'grid-drag-handle')}>
+      {onBack && (
+        <div className={styles.backButton}>
+          <IconButton name="arrow-left" onClick={onBack} surface="header" size="xl" />
+        </div>
+      )}
+      {!onBack && (
+        <div className={styles.backButton}>
+          <Icon name="panel-add" size="md" />
+        </div>
+      )}
       {children && <span>{children}</span>}
-      <IconButton name="times" onClick={onCancel} surface="header" className={styles.pushRight} />
+      <div className="flex-grow-1" />
+      <IconButton name="times" onClick={onCancel} surface="header" />
     </div>
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme) => {
   const pulsate = keyframes`
     0% {box-shadow: 0 0 0 2px ${theme.colors.bodyBg}, 0 0 0px 4px ${theme.colors.formFocusOutline};}
     50% {box-shadow: 0 0 0 2px ${theme.colors.bodyBg}, 0 0 0px 4px ${tinycolor(theme.colors.formFocusOutline)
@@ -221,6 +226,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     .toHexString()};}
     100% {box-shadow: 0 0 0 2px ${theme.colors.bodyBg}, 0 0 0px 4px  ${theme.colors.formFocusOutline};}
   `;
+
   return {
     wrapper: css`
       overflow: hidden;
@@ -261,42 +267,27 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       flex-direction: column;
       row-gap: ${theme.spacing.sm};
+      padding: 0 ${theme.spacing.sm} ${theme.spacing.sm} ${theme.spacing.sm};
       height: 100%;
-      margin-left: ${theme.spacing.xl};
-      margin-right: ${theme.spacing.xl};
-      margin-top: ${theme.spacing.base * 4}px;
-      margin-bottom: ${theme.spacing.base * 5}px;
-    `,
-    buttonMargin: css`
-      margin-right: ${theme.spacing.sm};
     `,
     libraryPanelsWrapper: css`
-      padding: ${theme.spacing.base * 4}px ${theme.spacing.xl};
+      padding: ${theme.spacing.sm};
     `,
-  };
-});
-
-const getAddPanelWigetHandleStyles = stylesFactory((theme: GrafanaTheme) => {
-  return {
-    handle: css`
-      position: absolute;
+    headerRow: css`
       display: flex;
       align-items: center;
-      height: ${theme.spacing.gutter};
+      height: 38px;
+      flex-shrink: 0;
       width: 100%;
       font-size: ${theme.typography.size.md};
       font-weight: ${theme.typography.weight.semibold};
+      padding-left: ${theme.spacing.sm};
       transition: background-color 0.1s ease-in-out;
       cursor: move;
+
       &:hover {
         background: ${theme.colors.bg2};
       }
-    `,
-    pushRight: css`
-      margin-left: auto;
-    `,
-    leftPad: css`
-      padding-left: ${theme.spacing.xl};
     `,
     backButton: css`
       display: flex;
@@ -309,4 +300,6 @@ const getAddPanelWigetHandleStyles = stylesFactory((theme: GrafanaTheme) => {
       margin: 0;
     `,
   };
-});
+};
+
+type AddPanelStyles = ReturnType<typeof getStyles>;
