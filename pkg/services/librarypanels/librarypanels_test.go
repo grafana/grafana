@@ -86,8 +86,9 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 						},
 						"datasource": "${DS_GDEV-TESTDATA}",
 						"libraryPanel": map[string]interface{}{
-							"uid":  sc.initialResult.Result.UID,
-							"name": sc.initialResult.Result.Name,
+							"uid":     sc.initialResult.Result.UID,
+							"name":    sc.initialResult.Result.Name,
+							"version": sc.initialResult.Result.Version,
 							"meta": map[string]interface{}{
 								"canEdit":             false,
 								"connectedDashboards": int64(1),

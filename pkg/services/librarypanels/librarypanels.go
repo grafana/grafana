@@ -102,8 +102,9 @@ func (lps *LibraryPanelService) LoadLibraryPanelsForDashboard(c *models.ReqConte
 		elem.Set("gridPos", panelAsJSON.Get("gridPos").MustMap())
 		elem.Set("id", panelAsJSON.Get("id").MustInt64())
 		elem.Set("libraryPanel", map[string]interface{}{
-			"uid":  libraryPanelInDB.UID,
-			"name": libraryPanelInDB.Name,
+			"uid":     libraryPanelInDB.UID,
+			"name":    libraryPanelInDB.Name,
+			"version": libraryPanelInDB.Version,
 			"meta": map[string]interface{}{
 				"canEdit":             libraryPanelInDB.Meta.CanEdit,
 				"connectedDashboards": libraryPanelInDB.Meta.ConnectedDashboards,
