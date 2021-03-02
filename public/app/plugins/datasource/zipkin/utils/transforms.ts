@@ -99,7 +99,11 @@ function endpointToProcess(endpoint: ZipkinEndpoint): Jaeger.TraceProcess {
   };
 }
 
-function valueToTag(key: string, value: string | number | undefined, type: string): Jaeger.TraceKeyValuePair | undefined {
+function valueToTag(
+  key: string,
+  value: string | number | undefined,
+  type: string
+): Jaeger.TraceKeyValuePair | undefined {
   if (!value) {
     return undefined;
   }
