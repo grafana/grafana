@@ -191,7 +191,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
   }
 
   /**
-   * Add all properties of the value as fields on the frame
+   * Add values from an object to corresponding fields. Similar to appendRow but does not create new fields.
    */
   add(value: T) {
     // Will add one value for every field

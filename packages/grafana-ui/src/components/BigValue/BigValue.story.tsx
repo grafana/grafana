@@ -11,7 +11,7 @@ import {
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import mdx from './BigValue.mdx';
 import { useTheme } from '../../themes';
-import { NOOP_CONTROL } from '@grafana/ui/.storybook/preview';
+import { NOOP_CONTROL } from '../../utils/storybook/noopControl';
 import { ArrayVector, FieldSparkline, FieldType } from '@grafana/data';
 
 export default {
@@ -23,7 +23,7 @@ export default {
       page: mdx,
     },
     knobs: {
-      disabled: true,
+      disable: true,
     },
   },
   argTypes: {

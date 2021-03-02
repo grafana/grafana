@@ -18,7 +18,6 @@ export interface Props {
   dashboardId?: any;
   initialTitle?: string;
   initialFolderId?: number;
-  useNewForms?: boolean;
 }
 
 interface State {
@@ -46,7 +45,6 @@ export class FolderPicker extends PureComponent<Props, State> {
     enableReset: false,
     initialTitle: '',
     enableCreateNew: false,
-    useNewForms: false,
   };
 
   componentDidMount = async () => {
@@ -148,41 +146,21 @@ export class FolderPicker extends PureComponent<Props, State> {
 
   render() {
     const { folder } = this.state;
-    const { enableCreateNew, useNewForms } = this.props;
+    const { enableCreateNew } = this.props;
 
     return (
       <div aria-label={selectors.components.FolderPicker.container}>
-        {useNewForms && (
-          <AsyncSelect
-            loadingMessage="Loading folders..."
-            defaultOptions
-            defaultValue={folder}
-            value={folder}
-            allowCustomValue={enableCreateNew}
-            loadOptions={this.debouncedSearch}
-            onChange={this.onFolderChange}
-            onCreateOption={this.createNewFolder}
-            menuPosition="fixed"
-          />
-        )}
-        {!useNewForms && (
-          <div className="gf-form-inline">
-            <div className="gf-form">
-              <label className="gf-form-label width-7">Folder</label>
-              <AsyncSelect
-                loadingMessage="Loading folders..."
-                defaultOptions
-                defaultValue={folder}
-                value={folder}
-                className={'width-20'}
-                allowCustomValue={enableCreateNew}
-                loadOptions={this.debouncedSearch}
-                onChange={this.onFolderChange}
-                onCreateOption={this.createNewFolder}
-              />
-            </div>
-          </div>
-        )}
+        <AsyncSelect
+          loadingMessage="Loading folders..."
+          defaultOptions
+          defaultValue={folder}
+          value={folder}
+          allowCustomValue={enableCreateNew}
+          loadOptions={this.debouncedSearch}
+          onChange={this.onFolderChange}
+          onCreateOption={this.createNewFolder}
+          menuPosition="fixed"
+        />
       </div>
     );
   }

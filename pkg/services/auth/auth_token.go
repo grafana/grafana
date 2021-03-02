@@ -108,10 +108,6 @@ func (s *UserAuthTokenService) CreateToken(ctx context.Context, user *models.Use
 
 func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
 	hashedToken := hashToken(unhashedToken)
-	if setting.Env == setting.Dev {
-		s.log.Debug("looking up token", "unhashed", unhashedToken, "hashed", hashedToken)
-	}
-
 	var model userAuthToken
 	var exists bool
 	var err error

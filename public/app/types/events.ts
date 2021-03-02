@@ -23,7 +23,7 @@ export interface ShowModalPayload {
 }
 
 export interface ShowModalReactPayload {
-  component: React.ComponentType;
+  component: React.ComponentType<any>;
   props?: any;
 }
 
