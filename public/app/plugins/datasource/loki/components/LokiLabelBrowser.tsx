@@ -92,7 +92,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   wrapper: css`
     background-color: ${theme.colors.bg2};
     padding: ${theme.spacing.md};
-    max-width: 100rem;
   `,
   list: css`
     margin-top: ${theme.spacing.sm};
@@ -146,9 +145,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
   valueListArea: css`
     display: flex;
-    flex-direction: row;
+    flex-wrap: wrap;
     margin-top: ${theme.spacing.sm};
-    overflow-x: auto;
   `,
   valueTitle: css`
     margin-left: -${theme.spacing.xs};
@@ -216,6 +214,8 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
       const values = label.values.map((value) => ({ ...value, selected: false }));
       nextValue = { ...nextValue, facets: 0, values };
     }
+    // Resetting search to prevent empty results
+    this.setState({ searchTerm: '' });
     this.updateLabelState(name, nextValue, '', () => this.doFacettingForLabel(name));
   };
 
@@ -224,6 +224,8 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
     if (!label || !label.values) {
       return;
     }
+    // Resetting search to prevent empty results
+    this.setState({ searchTerm: '' });
     // Toggling value for selected label, leaving other values intact
     const values = label.values.map((v) => ({ ...v, selected: v.name === value ? !v.selected : v.selected }));
     this.updateLabelState(name, { values }, '', () => this.doFacetting(name));

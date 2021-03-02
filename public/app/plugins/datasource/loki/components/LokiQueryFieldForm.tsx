@@ -175,7 +175,7 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
           </div>
         </div>
         {labelBrowserVisible && (
-          <div className="gf-form gf-form--alt flex-shrink-0">
+          <div className="gf-form">
             <LokiLabelBrowser languageProvider={lokiLanguageProvider} onChange={this.onChangeLogLabels} />
           </div>
         )}
