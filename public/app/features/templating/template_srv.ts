@@ -5,8 +5,8 @@ import { variableRegex } from '../variables/utils';
 import { isAdHoc } from '../variables/guard';
 import { VariableModel } from '../variables/types';
 import { setTemplateSrv, TemplateSrv as BaseTemplateSrv } from '@grafana/runtime';
-import { formatRegistry, FormatOptions } from './formatRegistry';
-import { ALL_VARIABLE_TEXT } from '../variables/state/types';
+import { FormatOptions, formatRegistry } from './formatRegistry';
+import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../variables/state/types';
 
 interface FieldAccessorCache {
   [key: string]: (obj: any) => any;
@@ -137,9 +137,11 @@ export class TemplateSrv implements BaseTemplateSrv {
       args = [];
     }
 
-    const formatItem = formatRegistry.getIfExists(format);
+    let formatItem = formatRegistry.getIfExists(format);
+
     if (!formatItem) {
-      throw new Error(`Variable format ${format} not found`);
+      console.error(`Variable format ${format} not found. Using glob format as fallback.`);
+      formatItem = formatRegistry.get('glob');
     }
 
     const options: FormatOptions = { value, args, text: text ?? value };
@@ -171,7 +173,7 @@ export class TemplateSrv implements BaseTemplateSrv {
     if (!match) {
       return null;
     }
-    const variableName = match.slice(1).find(match => match !== undefined);
+    const variableName = match.slice(1).find((match) => match !== undefined);
     return variableName;
   }
 
@@ -280,7 +282,7 @@ export class TemplateSrv implements BaseTemplateSrv {
         value = this.getAllValue(variable);
         text = ALL_VARIABLE_TEXT;
         // skip formatting of custom all values
-        if (variable.allValue) {
+        if (variable.allValue && fmt !== 'text' && fmt !== 'queryparam') {
           return this.replace(value);
         }
       }
@@ -300,7 +302,7 @@ export class TemplateSrv implements BaseTemplateSrv {
   }
 
   isAllValue(value: any) {
-    return value === '$__all' || (Array.isArray(value) && value[0] === '$__all');
+    return value === ALL_VARIABLE_VALUE || (Array.isArray(value) && value[0] === ALL_VARIABLE_VALUE);
   }
 
   replaceWithText(target: string, scopedVars?: ScopedVars) {

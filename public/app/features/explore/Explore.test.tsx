@@ -16,21 +16,13 @@ const dummyProps: ExploreProps = {
       logs: true,
     },
     components: {
-      ExploreStartPage: {},
+      QueryEditorHelp: {},
     },
   } as DataSourceApi,
   datasourceMissing: false,
   exploreId: ExploreId.left,
-  initializeExplore: jest.fn(),
-  initialized: true,
+  loading: false,
   modifyQueries: jest.fn(),
-  update: {
-    datasource: false,
-    queries: false,
-    range: false,
-    mode: false,
-  },
-  refreshExplore: jest.fn(),
   scanning: false,
   scanRange: {
     from: '0',
@@ -39,23 +31,11 @@ const dummyProps: ExploreProps = {
   scanStart: jest.fn(),
   scanStopAction: scanStopAction,
   setQueries: jest.fn(),
-  split: false,
   queryKeys: [],
-  initialDatasource: 'test',
-  initialQueries: [],
-  initialRange: {
-    from: toUtc('2019-01-01 10:00:00'),
-    to: toUtc('2019-01-01 16:00:00'),
-    raw: {
-      from: 'now-6h',
-      to: 'now',
-    },
-  },
   isLive: false,
   syncedTimes: false,
   updateTimeRange: jest.fn(),
   graphResult: [],
-  loading: false,
   absoluteRange: {
     from: 0,
     to: 0,
@@ -101,6 +81,7 @@ const dummyProps: ExploreProps = {
   showLogs: true,
   showTable: true,
   showTrace: true,
+  showNodeGraph: true,
   splitOpen: (() => {}) as any,
 };
 

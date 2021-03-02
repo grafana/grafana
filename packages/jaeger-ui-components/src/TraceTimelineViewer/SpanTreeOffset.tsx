@@ -141,7 +141,7 @@ export class UnthemedSpanTreeOffset extends React.PureComponent<TProps> {
     const styles = getStyles(theme);
     return (
       <span className={cx(styles.SpanTreeOffset, { [styles.SpanTreeOffsetParent]: hasChildren })} {...wrapperProps}>
-        {this.ancestorIds.map(ancestorId => (
+        {this.ancestorIds.map((ancestorId) => (
           <span
             key={ancestorId}
             className={cx(styles.indentGuide, {
@@ -149,15 +149,15 @@ export class UnthemedSpanTreeOffset extends React.PureComponent<TProps> {
             })}
             data-ancestor-id={ancestorId}
             data-test-id="SpanTreeOffset--indentGuide"
-            onMouseEnter={event => this.handleMouseEnter(event, ancestorId)}
-            onMouseLeave={event => this.handleMouseLeave(event, ancestorId)}
+            onMouseEnter={(event) => this.handleMouseEnter(event, ancestorId)}
+            onMouseLeave={(event) => this.handleMouseLeave(event, ancestorId)}
           />
         ))}
         {icon && (
           <span
             className={styles.iconWrapper}
-            onMouseEnter={event => this.handleMouseEnter(event, spanID)}
-            onMouseLeave={event => this.handleMouseLeave(event, spanID)}
+            onMouseEnter={(event) => this.handleMouseEnter(event, spanID)}
+            onMouseLeave={(event) => this.handleMouseLeave(event, spanID)}
             data-test-id="icon-wrapper"
           >
             {icon}

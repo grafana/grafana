@@ -2,7 +2,12 @@ import { defaultMetricAgg } from '../../../../query_def';
 import { ElasticsearchQuery } from '../../../../types';
 import { removeEmpty } from '../../../../utils';
 import { INIT, InitAction } from '../../state';
-import { isMetricAggregationWithMeta, isMetricAggregationWithSettings, MetricAggregation } from '../aggregations';
+import {
+  isMetricAggregationWithMeta,
+  isMetricAggregationWithSettings,
+  isPipelineAggregation,
+  MetricAggregation,
+} from '../aggregations';
 import { getChildren, metricAggregationConfig } from '../utils';
 import {
   ADD_METRIC,
@@ -17,30 +22,32 @@ import {
 } from './types';
 
 export const reducer = (
-  state: MetricAggregation[],
+  state: ElasticsearchQuery['metrics'],
   action: MetricAggregationAction | InitAction
 ): ElasticsearchQuery['metrics'] => {
   switch (action.type) {
     case ADD_METRIC:
-      return [...state, defaultMetricAgg(action.payload.id)];
+      return [...state!, defaultMetricAgg(action.payload.id)];
 
     case REMOVE_METRIC:
-      const metricToRemove = state.find(m => m.id === action.payload.id)!;
-      const metricsToRemove = [metricToRemove, ...getChildren(metricToRemove, state)];
-      const resultingMetrics = state.filter(metric => !metricsToRemove.some(toRemove => toRemove.id === metric.id));
+      const metricToRemove = state!.find((m) => m.id === action.payload.id)!;
+      const metricsToRemove = [metricToRemove, ...getChildren(metricToRemove, state!)];
+      const resultingMetrics = state!.filter(
+        (metric) => !metricsToRemove.some((toRemove) => toRemove.id === metric.id)
+      );
       if (resultingMetrics.length === 0) {
         return [defaultMetricAgg('1')];
       }
       return resultingMetrics;
 
     case CHANGE_METRIC_TYPE:
-      return state
-        .filter(metric =>
+      return state!
+        .filter((metric) =>
           // When the new metric type is `isSingleMetric` we remove all other metrics from the query
           // leaving only the current one.
           !!metricAggregationConfig[action.payload.type].isSingleMetric ? metric.id === action.payload.id : true
         )
-        .map(metric => {
+        .map((metric) => {
           if (metric.id !== action.payload.id) {
             return metric;
           }
@@ -59,19 +66,25 @@ export const reducer = (
         });
 
     case CHANGE_METRIC_FIELD:
-      return state.map(metric => {
+      return state!.map((metric) => {
         if (metric.id !== action.payload.id) {
           return metric;
         }
 
-        return {
+        const newMetric = {
           ...metric,
           field: action.payload.field,
         };
+
+        if (isPipelineAggregation(metric)) {
+          return { ...newMetric, pipelineAgg: action.payload.field };
+        }
+
+        return newMetric;
       });
 
     case TOGGLE_METRIC_VISIBILITY:
-      return state.map(metric => {
+      return state!.map((metric) => {
         if (metric.id !== action.payload.id) {
           return metric;
         }
@@ -83,7 +96,7 @@ export const reducer = (
       });
 
     case CHANGE_METRIC_SETTING:
-      return state.map(metric => {
+      return state!.map((metric) => {
         if (metric.id !== action.payload.metric.id) {
           return metric;
         }
@@ -108,7 +121,7 @@ export const reducer = (
       });
 
     case CHANGE_METRIC_META:
-      return state.map(metric => {
+      return state!.map((metric) => {
         if (metric.id !== action.payload.metric.id) {
           return metric;
         }
@@ -129,7 +142,7 @@ export const reducer = (
       });
 
     case CHANGE_METRIC_ATTRIBUTE:
-      return state.map(metric => {
+      return state!.map((metric) => {
         if (metric.id !== action.payload.metric.id) {
           return metric;
         }
@@ -141,6 +154,9 @@ export const reducer = (
       });
 
     case INIT:
+      if (state?.length || 0 > 0) {
+        return state;
+      }
       return [defaultMetricAgg('1')];
 
     default:

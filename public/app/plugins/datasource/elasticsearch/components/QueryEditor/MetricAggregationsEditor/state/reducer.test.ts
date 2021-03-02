@@ -106,7 +106,7 @@ describe('Metric Aggregations Reducer', () => {
   it("Should correctly change aggregation's field", () => {
     const firstAggregation: MetricAggregation = {
       id: '1',
-      type: 'count',
+      type: 'min',
     };
     const secondAggregation: MetricAggregation = {
       id: '2',
@@ -116,12 +116,22 @@ describe('Metric Aggregations Reducer', () => {
     const expectedSecondAggregation = {
       ...secondAggregation,
       field: 'new field',
+      pipelineAgg: 'new field',
+    };
+
+    const expectedFirstAggregation = {
+      ...firstAggregation,
+      field: 'new field',
     };
 
     reducerTester()
       .givenReducer(reducer, [firstAggregation, secondAggregation])
+      // When changing a a pipelineAggregation field we set both pipelineAgg and field
       .whenActionIsDispatched(changeMetricField(secondAggregation.id, expectedSecondAggregation.field))
-      .thenStateShouldEqual([firstAggregation, expectedSecondAggregation]);
+      .thenStateShouldEqual([firstAggregation, expectedSecondAggregation])
+      // otherwhise only field
+      .whenActionIsDispatched(changeMetricField(firstAggregation.id, expectedFirstAggregation.field))
+      .thenStateShouldEqual([expectedFirstAggregation, expectedSecondAggregation]);
   });
 
   it('Should correctly toggle `hide` field', () => {

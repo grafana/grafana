@@ -1,23 +1,15 @@
 import LanguageProvider from './language_provider';
 import { PromQuery } from '../prometheus/types';
 import { ElasticDatasource } from './datasource';
-import { DataSourceInstanceSettings, dateTime } from '@grafana/data';
-import { ElasticsearchOptions } from './types';
+import { DataSourceInstanceSettings } from '@grafana/data';
+import { ElasticsearchOptions, ElasticsearchQuery } from './types';
 import { TemplateSrv } from '../../../features/templating/template_srv';
-import { TimeSrv } from '../../../features/dashboard/services/TimeSrv';
+import { defaultBucketAgg } from './query_def';
+import { DateHistogram } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 
 const templateSrvStub = {
   getAdhocFilters: jest.fn(() => [] as any[]),
   replace: jest.fn((a: string) => a),
-} as any;
-
-const timeSrvStub = {
-  timeRange(): any {
-    return {
-      from: dateTime(1531468681),
-      to: dateTime(1531489712),
-    };
-  },
 } as any;
 
 const dataSource = new ElasticDatasource(
@@ -30,84 +22,154 @@ const dataSource = new ElasticDatasource(
       timeField: '@time',
     },
   } as DataSourceInstanceSettings<ElasticsearchOptions>,
-  templateSrvStub as TemplateSrv,
-  timeSrvStub as TimeSrv
+  templateSrvStub as TemplateSrv
 );
+
+const baseLogsQuery: Partial<ElasticsearchQuery> = {
+  isLogsQuery: true,
+  metrics: [{ type: 'logs', id: '1' }],
+  bucketAggs: [{ ...defaultBucketAgg('2'), field: dataSource.timeField } as DateHistogram],
+};
+
 describe('transform prometheus query to elasticsearch query', () => {
-  it('Prometheus query with exact equals labels ( 2 labels ) and metric __name__', () => {
+  it('With exact equals labels ( 2 labels ) and metric __name__', () => {
     const instance = new LanguageProvider(dataSource);
-    var promQuery: PromQuery = { refId: 'bar', expr: 'my_metric{label1="value1",label2="value2"}' };
+    const promQuery: PromQuery = { refId: 'bar', expr: 'my_metric{label1="value1",label2="value2"}' };
     const result = instance.importQueries([promQuery], 'prometheus');
+
     expect(result).toEqual([
-      { isLogsQuery: true, query: '__name__:"my_metric" AND label1:"value1" AND label2:"value2"', refId: 'bar' },
+      {
+        ...baseLogsQuery,
+        query: '__name__:"my_metric" AND label1:"value1" AND label2:"value2"',
+        refId: promQuery.refId,
+      },
     ]);
   });
-  it('Prometheus query with exact equals labels ( 1 labels ) and metric __name__', () => {
+
+  it('With exact equals labels ( 1 labels ) and metric __name__', () => {
     const instance = new LanguageProvider(dataSource);
-    var promQuery: PromQuery = { refId: 'bar', expr: 'my_metric{label1="value1"}' };
+    const promQuery: PromQuery = { refId: 'bar', expr: 'my_metric{label1="value1"}' };
     const result = instance.importQueries([promQuery], 'prometheus');
-    expect(result).toEqual([{ isLogsQuery: true, query: '__name__:"my_metric" AND label1:"value1"', refId: 'bar' }]);
-  });
-  it('Prometheus query with exact equals labels ( 1 labels )', () => {
-    const instance = new LanguageProvider(dataSource);
-    var promQuery: PromQuery = { refId: 'bar', expr: '{label1="value1"}' };
-    const result = instance.importQueries([promQuery], 'prometheus');
-    expect(result).toEqual([{ isLogsQuery: true, query: 'label1:"value1"', refId: 'bar' }]);
-  });
-  it('Prometheus query with no label and metric __name__', () => {
-    const instance = new LanguageProvider(dataSource);
-    var promQuery: PromQuery = { refId: 'bar', expr: 'my_metric{}' };
-    const result = instance.importQueries([promQuery], 'prometheus');
-    expect(result).toEqual([{ isLogsQuery: true, query: '__name__:"my_metric"', refId: 'bar' }]);
-  });
-  it('Prometheus query with no label and metric __name__ without bracket', () => {
-    const instance = new LanguageProvider(dataSource);
-    var promQuery: PromQuery = { refId: 'bar', expr: 'my_metric' };
-    const result = instance.importQueries([promQuery], 'prometheus');
-    expect(result).toEqual([{ isLogsQuery: true, query: '__name__:"my_metric"', refId: 'bar' }]);
-  });
-  it('Prometheus query with rate function and exact equals labels ( 2 labels ) and metric __name__', () => {
-    const instance = new LanguageProvider(dataSource);
-    var promQuery: PromQuery = { refId: 'bar', expr: 'rate(my_metric{label1="value1",label2="value2"}[5m])' };
-    const result = instance.importQueries([promQuery], 'prometheus');
+
     expect(result).toEqual([
-      { isLogsQuery: true, query: '__name__:"my_metric" AND label1:"value1" AND label2:"value2"', refId: 'bar' },
+      {
+        ...baseLogsQuery,
+        query: '__name__:"my_metric" AND label1:"value1"',
+        refId: promQuery.refId,
+      },
     ]);
   });
-  it('Prometheus query with rate function and exact equals labels not equals labels regex and not regex labels and metric __name__', () => {
+
+  it('With exact equals labels ( 1 labels )', () => {
     const instance = new LanguageProvider(dataSource);
-    var promQuery: PromQuery = {
+    const promQuery: PromQuery = { refId: 'bar', expr: '{label1="value1"}' };
+    const result = instance.importQueries([promQuery], 'prometheus');
+
+    expect(result).toEqual([
+      {
+        ...baseLogsQuery,
+        query: 'label1:"value1"',
+        refId: promQuery.refId,
+      },
+    ]);
+  });
+
+  it('With no label and metric __name__', () => {
+    const instance = new LanguageProvider(dataSource);
+    const promQuery: PromQuery = { refId: 'bar', expr: 'my_metric{}' };
+    const result = instance.importQueries([promQuery], 'prometheus');
+
+    expect(result).toEqual([
+      {
+        ...baseLogsQuery,
+        query: '__name__:"my_metric"',
+        refId: promQuery.refId,
+      },
+    ]);
+  });
+
+  it('With no label and metric __name__ without bracket', () => {
+    const instance = new LanguageProvider(dataSource);
+    const promQuery: PromQuery = { refId: 'bar', expr: 'my_metric' };
+    const result = instance.importQueries([promQuery], 'prometheus');
+
+    expect(result).toEqual([
+      {
+        ...baseLogsQuery,
+        query: '__name__:"my_metric"',
+        refId: promQuery.refId,
+      },
+    ]);
+  });
+
+  it('With rate function and exact equals labels ( 2 labels ) and metric __name__', () => {
+    const instance = new LanguageProvider(dataSource);
+    const promQuery: PromQuery = { refId: 'bar', expr: 'rate(my_metric{label1="value1",label2="value2"}[5m])' };
+    const result = instance.importQueries([promQuery], 'prometheus');
+
+    expect(result).toEqual([
+      {
+        ...baseLogsQuery,
+        query: '__name__:"my_metric" AND label1:"value1" AND label2:"value2"',
+        refId: promQuery.refId,
+      },
+    ]);
+  });
+
+  it('With rate function and exact equals labels not equals labels regex and not regex labels and metric __name__', () => {
+    const instance = new LanguageProvider(dataSource);
+    const promQuery: PromQuery = {
       refId: 'bar',
       expr: 'rate(my_metric{label1="value1",label2!="value2",label3=~"value.+",label4!~".*tothemoon"}[5m])',
     };
     const result = instance.importQueries([promQuery], 'prometheus');
+
     expect(result).toEqual([
       {
-        isLogsQuery: true,
+        ...baseLogsQuery,
         query:
           '__name__:"my_metric" AND label1:"value1" AND NOT label2:"value2" AND label3:/value.+/ AND NOT label4:/.*tothemoon/',
-        refId: 'bar',
+        refId: promQuery.refId,
       },
     ]);
   });
 });
-describe('transform prometheus query to elasticsearch query errors', () => {
-  it('bad prometheus query with only bracket', () => {
+
+describe('transform malformed prometheus query to elasticsearch query', () => {
+  it('With only bracket', () => {
     const instance = new LanguageProvider(dataSource);
-    var promQuery: PromQuery = { refId: 'bar', expr: '{' };
+    const promQuery: PromQuery = { refId: 'bar', expr: '{' };
     const result = instance.importQueries([promQuery], 'prometheus');
-    expect(result).toEqual([{ isLogsQuery: true, query: '', refId: 'bar' }]);
+
+    expect(result).toEqual([
+      {
+        ...baseLogsQuery,
+        query: '',
+        refId: promQuery.refId,
+      },
+    ]);
   });
-  it('bad prometheus empty query', async () => {
+
+  it('Empty query', async () => {
     const instance = new LanguageProvider(dataSource);
-    var promQuery: PromQuery = { refId: 'bar', expr: '' };
+    const promQuery: PromQuery = { refId: 'bar', expr: '' };
     const result = instance.importQueries([promQuery], 'prometheus');
-    expect(result).toEqual([{ isLogsQuery: true, query: '', refId: 'bar' }]);
+
+    expect(result).toEqual([
+      {
+        ...baseLogsQuery,
+        query: '',
+        refId: promQuery.refId,
+      },
+    ]);
   });
-  it('graphite query not handle', async () => {
+});
+
+describe('Unsupportated datasources', () => {
+  it('Generates a default query', async () => {
     const instance = new LanguageProvider(dataSource);
-    var promQuery: PromQuery = { refId: 'bar', expr: '' };
-    const result = instance.importQueries([promQuery], 'graphite');
-    expect(result).toEqual([{ isLogsQuery: true, query: '', refId: 'bar' }]);
+    const someQuery = { refId: 'bar' };
+    const result = instance.importQueries([someQuery], 'THIS DATASOURCE TYPE DOESNT EXIST');
+    expect(result).toEqual([{ refId: someQuery.refId }]);
   });
 });

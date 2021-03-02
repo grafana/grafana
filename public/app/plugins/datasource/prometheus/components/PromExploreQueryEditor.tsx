@@ -63,6 +63,8 @@ export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
           onQueryTypeChange={onQueryTypeChange}
           onStepChange={onStepChange}
           onKeyDownFunc={onReturnKeyDown}
+          query={query}
+          onChange={onChange}
         />
       }
     />

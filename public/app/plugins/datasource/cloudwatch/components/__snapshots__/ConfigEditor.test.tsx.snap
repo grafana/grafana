@@ -225,6 +225,30 @@ exports[`Render should disable access key id field 1`] = `
         />
       </div>
     </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <FormLabel
+          className="width-14"
+          tooltip="Optionally, specify a custom endpoint for the service."
+        >
+          Endpoint
+        </FormLabel>
+        <div
+          className="width-30"
+        >
+          <Input
+            className="width-30"
+            onChange={[Function]}
+            placeholder="https://{service}.{region}.amazonaws.com"
+            value=""
+          />
+        </div>
+      </div>
+    </div>
   </div>
 </Fragment>
 `;
@@ -452,6 +476,30 @@ exports[`Render should render component 1`] = `
           placeholder="Namespace1,Namespace2"
           value=""
         />
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <FormLabel
+          className="width-14"
+          tooltip="Optionally, specify a custom endpoint for the service."
+        >
+          Endpoint
+        </FormLabel>
+        <div
+          className="width-30"
+        >
+          <Input
+            className="width-30"
+            onChange={[Function]}
+            placeholder="https://{service}.{region}.amazonaws.com"
+            value=""
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -683,6 +731,30 @@ exports[`Render should show access key and secret access key fields 1`] = `
         />
       </div>
     </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <FormLabel
+          className="width-14"
+          tooltip="Optionally, specify a custom endpoint for the service."
+        >
+          Endpoint
+        </FormLabel>
+        <div
+          className="width-30"
+        >
+          <Input
+            className="width-30"
+            onChange={[Function]}
+            placeholder="https://{service}.{region}.amazonaws.com"
+            value=""
+          />
+        </div>
+      </div>
+    </div>
   </div>
 </Fragment>
 `;
@@ -912,6 +984,30 @@ exports[`Render should show arn role field 1`] = `
         />
       </div>
     </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <FormLabel
+          className="width-14"
+          tooltip="Optionally, specify a custom endpoint for the service."
+        >
+          Endpoint
+        </FormLabel>
+        <div
+          className="width-30"
+        >
+          <Input
+            className="width-30"
+            onChange={[Function]}
+            placeholder="https://{service}.{region}.amazonaws.com"
+            value=""
+          />
+        </div>
+      </div>
+    </div>
   </div>
 </Fragment>
 `;
@@ -1139,6 +1235,30 @@ exports[`Render should show credentials profile name field 1`] = `
           placeholder="Namespace1,Namespace2"
           value=""
         />
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <FormLabel
+          className="width-14"
+          tooltip="Optionally, specify a custom endpoint for the service."
+        >
+          Endpoint
+        </FormLabel>
+        <div
+          className="width-30"
+        >
+          <Input
+            className="width-30"
+            onChange={[Function]}
+            placeholder="https://{service}.{region}.amazonaws.com"
+            value=""
+          />
+        </div>
       </div>
     </div>
   </div>

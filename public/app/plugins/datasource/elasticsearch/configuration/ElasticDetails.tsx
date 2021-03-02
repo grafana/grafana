@@ -1,7 +1,7 @@
 import React from 'react';
 import { EventsWithValidation, regexValidation, LegacyForms } from '@grafana/ui';
 const { Select, Input, FormField } = LegacyForms;
-import { ElasticsearchOptions } from '../types';
+import { ElasticsearchOptions, Interval } from '../types';
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
 
 const indexPatternTypes = [
@@ -55,7 +55,7 @@ export const ElasticDetails = (props: Props) => {
                   options={indexPatternTypes}
                   onChange={intervalHandler(value, onChange)}
                   value={indexPatternTypes.find(
-                    pattern =>
+                    (pattern) =>
                       pattern.value === (value.jsonData.interval === undefined ? 'none' : value.jsonData.interval)
                   )}
                 />
@@ -82,7 +82,7 @@ export const ElasticDetails = (props: Props) => {
             inputEl={
               <Select
                 options={esVersions}
-                onChange={option => {
+                onChange={(option) => {
                   const maxConcurrentShardRequests = getMaxConcurrenShardRequestOrDefault(
                     value.jsonData.maxConcurrentShardRequests,
                     option.value!
@@ -96,7 +96,7 @@ export const ElasticDetails = (props: Props) => {
                     },
                   });
                 }}
-                value={esVersions.find(version => version.value === value.jsonData.esVersion)}
+                value={esVersions.find((version) => version.value === value.jsonData.esVersion)}
               />
             }
           />
@@ -170,7 +170,9 @@ const jsonDataChangeHandler = (key: keyof ElasticsearchOptions, value: Props['va
   });
 };
 
-const intervalHandler = (value: Props['value'], onChange: Props['onChange']) => (option: SelectableValue<string>) => {
+const intervalHandler = (value: Props['value'], onChange: Props['onChange']) => (
+  option: SelectableValue<Interval | 'none'>
+) => {
   const { database } = value;
   // If option value is undefined it will send its label instead so we have to convert made up value to undefined here.
   const newInterval = option.value === 'none' ? undefined : option.value;
@@ -179,7 +181,7 @@ const intervalHandler = (value: Props['value'], onChange: Props['onChange']) => 
     let newDatabase = '';
 
     if (newInterval !== undefined) {
-      const pattern = indexPatternTypes.find(pattern => pattern.value === newInterval);
+      const pattern = indexPatternTypes.find((pattern) => pattern.value === newInterval);
 
       if (pattern) {
         newDatabase = pattern.example ?? '';

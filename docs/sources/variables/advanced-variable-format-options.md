@@ -105,9 +105,9 @@ Interpolation result: 'test1.|test2'
 Turns off data source-specific formatting, such as single quotes in an SQL query.
 
 ```bash
-servers = ['test1.', 'test2']
+servers = ['test.1', 'test2']
 String to interpolate: '${var_name:raw}'
-Interpolation result: '{test.1,test2}'
+Interpolation result: 'test.1,test2'
 ```
 
 ## Regex
@@ -148,4 +148,14 @@ Formats single- and multi-valued variables into their text representation. For a
 servers = ["test1", "test2"]
 String to interpolate: '${servers:text}'
 Interpolation result: "test1 + test2"
+```
+
+## Query parameters
+
+Formats single- and multi-valued variables into their query parameter representation. Example: `var-foo=value1&var-foo=value2`
+
+```bash
+servers = ["test1", "test2"]
+String to interpolate: '${servers:queryparam}'
+Interpolation result: "var-servers=test1&var-servers=test2"
 ```

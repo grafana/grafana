@@ -31,6 +31,7 @@ Content-Type: application/json
    {
      "id": 1,
      "orgId": 1,
+     "uid": "H8joYFVGz"
      "name": "datasource_elastic",
      "type": "elasticsearch",
      "typeLogoUrl": "public/app/plugins/datasource/elasticsearch/img/elasticsearch.svg",
@@ -74,6 +75,53 @@ Content-Type: application/json
 
 {
   "id": 1,
+  "uid": "kLtEtcRGk",
+  "orgId": 1,
+  "name": "test_datasource",
+  "type": "graphite",
+  "typeLogoUrl": "",
+  "access": "proxy",
+  "url": "http://mydatasource.com",
+  "password": "",
+  "user": "",
+  "database": "",
+  "basicAuth": false,
+  "basicAuthUser": "",
+  "basicAuthPassword": "",
+  "withCredentials": false,
+  "isDefault": false,
+  "jsonData": {
+    "graphiteType": "default",
+    "graphiteVersion": "1.1"
+  },
+  "secureJsonFields": {},
+  "version": 1,
+  "readOnly": false
+}
+```
+
+## Get a single data source by UID
+
+`GET /api/datasources/uid/:uid`
+
+**Example request:**
+
+```http
+GET /api/datasources/uid/kLtEtcRGk HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+  "id": 1,
+  "uid": "kLtEtcRGk",
   "orgId": 1,
   "name": "test_datasource",
   "type": "graphite",
@@ -119,6 +167,7 @@ Content-Type: application/json
 
 {
   "id": 1,
+  "uid": "kLtEtcRGk",
   "orgId": 1,
   "name": "test_datasource",
   "type": "graphite",
@@ -396,6 +445,28 @@ Content-Type: application/json
 {"message":"Data source deleted"}
 ```
 
+## Delete an existing data source by UID
+
+`DELETE /api/datasources/uid/:uid`
+
+**Example request:**
+
+```http
+DELETE /api/datasources/uid/kLtEtcRGk HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{"message":"Data source deleted"}
+```
+
 ## Delete an existing data source by name
 
 `DELETE /api/datasources/name/:datasourceName`
@@ -426,3 +497,110 @@ Content-Type: application/json
 `GET /api/datasources/proxy/:datasourceId/*`
 
 Proxies all calls to the actual data source.
+
+## Query a data source by ID
+
+Queries a data source having backend implementation.
+
+`POST /api/tsdb/query`
+
+> **Note:** Most of Grafana's builtin data sources have backend implementation.
+
+**Example Request**:
+
+```http
+POST /api/tsdb/query HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+
+{
+  "from": "1420066800000",
+  "to": "1575845999999",
+  "queries": [
+    {
+      "refId": "A",
+      "intervalMs": 86400000,
+      "maxDataPoints": 1092,
+      "datasourceId": 86,
+      "rawSql": "SELECT 1 as valueOne, 2 as valueTwo",
+      "format": "table"
+    }
+  ]
+}
+```
+> **Note:** The `from`, `to`, and `queries` properties are required.
+
+JSON Body schema:
+
+- **from/to** – Should be either absolute in epoch timestamps in milliseconds or relative using Grafana time units. For example, `now-1h`.
+- **queries.refId** – Specifies an identifier of the query. Is optional and default to "A".
+- **queries.datasourceId** – Specifies the data source to be queried. Each `query` in the request must have an unique `datasourceId`.
+- **queries.maxDataPoints** - Species maximum amount of data points that dashboard panel can render. Is optional and default to 100.
+- **queries.intervalMs** - Specifies the time interval in milliseconds of time series. Is optional and defaults to 1000.
+
+In addition, each data source has its own specific properties that should be added in a request.
+
+**Example request for the MySQL data source:**
+
+```http
+POST /api/tsdb/query HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+
+{
+  "from": "1420066800000",
+  "to": "1575845999999",
+  "queries": [
+    {
+      "refId": "A",
+      "intervalMs": 86400000,
+      "maxDataPoints": 1092,
+      "datasourceId": 86,
+      "rawSql": "SELECT\n  time,\n  sum(opened) AS \"Opened\",\n  sum(closed) AS \"Closed\"\nFROM\n  issues_activity\nWHERE\n  $__unixEpochFilter(time) AND\n  period = 'm' AND\n  repo IN('grafana/grafana') AND\n  opened_by IN('Contributor','Grafana Labs')\nGROUP BY 1\nORDER BY 1\n",
+      "format": "time_series"
+    }
+  ]
+}
+```
+
+**Example MySQL time series query response:**
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+  "results": {
+    "A": {
+      "refId": "A",
+      "meta": {
+        "rowCount": 0,
+        "sql": "SELECT\n  time,\n  sum(opened) AS \"Opened\",\n  sum(closed) AS \"Closed\"\nFROM\n  issues_activity\nWHERE\n  time >= 1420066800 AND time <= 1575845999 AND\n  period = 'm' AND\n  repo IN('grafana/grafana') AND\n  opened_by IN('Contributor','Grafana Labs')\nGROUP BY 1\nORDER BY 1\n"
+      },
+      "series": [
+        {
+          "name": "Opened",
+          "points": [
+            [
+              109,
+              1420070400000
+            ],
+            [
+              122,
+              1422748800000
+            ]
+          ]
+        },
+        {
+          "name": "Closed",
+          "points": [
+            [
+              89,
+              1420070400000
+            ]
+          ]
+        }
+      ]
+    }
+  }
+}
+```

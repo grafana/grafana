@@ -6,7 +6,7 @@ import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
-    splitted: false,
+    isSmall: false,
     loading: false,
     isLive: false,
     onRun: jest.fn(),

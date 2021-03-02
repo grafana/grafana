@@ -1,8 +1,5 @@
 import React, { ChangeEvent, PropsWithChildren, ReactElement } from 'react';
-import { InlineField, Switch, useStyles } from '@grafana/ui';
-import { GrafanaTheme } from '@grafana/data';
-import { css } from 'emotion';
-
+import { InlineField, InlineSwitch } from '@grafana/ui';
 interface VariableSwitchFieldProps {
   value: boolean;
   name: string;
@@ -18,22 +15,9 @@ export function VariableSwitchField({
   onChange,
   ariaLabel,
 }: PropsWithChildren<VariableSwitchFieldProps>): ReactElement {
-  const styles = useStyles(getStyles);
-
   return (
     <InlineField label={name} labelWidth={20} tooltip={tooltip}>
-      <div aria-label={ariaLabel} className={styles.switchContainer}>
-        <Switch label={name} value={value} onChange={onChange} />
-      </div>
+      <InlineSwitch label={name} value={value} onChange={onChange} aria-label={ariaLabel} />
     </InlineField>
   );
-}
-
-function getStyles(theme: GrafanaTheme) {
-  return {
-    switchContainer: css`
-      margin-left: ${theme.spacing.sm};
-      margin-right: ${theme.spacing.sm};
-    `,
-  };
 }

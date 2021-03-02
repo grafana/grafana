@@ -8,69 +8,56 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestInfluxDB(t *testing.T) {
-	Convey("InfluxDB", t, func() {
-		datasource := &models.DataSource{
-			Url:      "http://awesome-influxdb:1337",
-			Database: "awesome-db",
-			JsonData: simplejson.New(),
-		}
-		query := "SELECT awesomeness FROM somewhere"
-		e := &InfluxDBExecutor{
-			QueryParser:    &InfluxdbQueryParser{},
-			ResponseParser: &ResponseParser{},
-		}
-		Convey("createRequest with GET httpMode", func() {
-			req, err := e.createRequest(context.Background(), datasource, query)
-			So(err, ShouldBeNil)
+func TestInfluxDBExecutor_createRequest(t *testing.T) {
+	datasource := &models.DataSource{
+		Url:      "http://awesome-influxdb:1337",
+		Database: "awesome-db",
+		JsonData: simplejson.New(),
+	}
+	query := "SELECT awesomeness FROM somewhere"
+	e := &InfluxDBExecutor{
+		QueryParser:    &InfluxdbQueryParser{},
+		ResponseParser: &ResponseParser{},
+	}
 
-			Convey("as default", func() {
-				So(req.Method, ShouldEqual, "GET")
-			})
+	t.Run("createRequest with GET httpMode", func(t *testing.T) {
+		req, err := e.createRequest(context.Background(), datasource, query)
+		require.NoError(t, err)
 
-			Convey("has a 'q' GET param that equals to query", func() {
-				q := req.URL.Query().Get("q")
-				So(q, ShouldEqual, query)
-			})
+		assert.Equal(t, "GET", req.Method)
 
-			Convey("has an empty body", func() {
-				So(req.Body, ShouldEqual, nil)
-			})
-		})
+		q := req.URL.Query().Get("q")
+		assert.Equal(t, query, q)
 
-		Convey("createRequest with POST httpMode", func() {
-			datasource.JsonData.Set("httpMode", "POST")
-			req, err := e.createRequest(context.Background(), datasource, query)
-			So(err, ShouldBeNil)
+		assert.Nil(t, req.Body)
+	})
 
-			Convey("method should be POST", func() {
-				So(req.Method, ShouldEqual, "POST")
-			})
+	t.Run("createRequest with POST httpMode", func(t *testing.T) {
+		datasource.JsonData.Set("httpMode", "POST")
+		req, err := e.createRequest(context.Background(), datasource, query)
+		require.NoError(t, err)
 
-			Convey("has no 'q' GET param", func() {
-				q := req.URL.Query().Get("q")
-				So(q, ShouldEqual, "")
-			})
+		assert.Equal(t, "POST", req.Method)
 
-			Convey("has the request as GET param in body", func() {
-				body, _ := ioutil.ReadAll(req.Body)
-				testBodyValues := url.Values{}
-				testBodyValues.Add("q", query)
-				testBody := testBodyValues.Encode()
-				So(string(body), ShouldEqual, testBody)
-			})
-		})
+		q := req.URL.Query().Get("q")
+		assert.Empty(t, q)
 
-		Convey("createRequest with PUT httpMode", func() {
-			datasource.JsonData.Set("httpMode", "PUT")
-			_, err := e.createRequest(context.Background(), datasource, query)
+		body, err := ioutil.ReadAll(req.Body)
+		require.NoError(t, err)
 
-			Convey("should miserably fail", func() {
-				So(err, ShouldEqual, ErrInvalidHttpMode)
-			})
-		})
+		testBodyValues := url.Values{}
+		testBodyValues.Add("q", query)
+		testBody := testBodyValues.Encode()
+		assert.Equal(t, testBody, string(body))
+	})
+
+	t.Run("createRequest with PUT httpMode", func(t *testing.T) {
+		datasource.JsonData.Set("httpMode", "PUT")
+		_, err := e.createRequest(context.Background(), datasource, query)
+		require.EqualError(t, err, ErrInvalidHttpMode.Error())
 	})
 }

@@ -1,6 +1,7 @@
 import React, { FC, CSSProperties, ComponentType } from 'react';
 import { useMeasure } from 'react-use';
-import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
+import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
+import { LegendPlacement } from '..';
 
 /**
  * @beta
@@ -28,13 +29,14 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
     width: `${width}px`,
     height: `${height}px`,
   };
+  const [legendRef, legendMeasure] = useMeasure();
 
   if (!legend) {
     return <div style={containerStyle}>{children(width, height)}</div>;
   }
 
-  const { position, maxHeight, maxWidth } = legend.props;
-  const [legendRef, legendMeasure] = useMeasure();
+  const { placement, maxHeight, maxWidth } = legend.props;
+
   let size: VizSize | null = null;
 
   const vizStyle: CSSProperties = {
@@ -43,7 +45,7 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
 
   const legendStyle: CSSProperties = {};
 
-  switch (position) {
+  switch (placement) {
     case 'bottom':
       containerStyle.flexDirection = 'column';
       legendStyle.maxHeight = maxHeight;
@@ -63,7 +65,7 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
   }
 
   // This happens when position is switched from bottom to right
-  // Then we preserve old with for one render cycle until lenged is measured in it's new position
+  // Then we preserve old with for one render cycle until legend is measured in it's new position
   if (size?.width === 0) {
     size.width = width;
   }
@@ -91,7 +93,7 @@ interface VizSize {
  * @beta
  */
 export interface VizLayoutLegendProps {
-  position: 'bottom' | 'right';
+  placement: LegendPlacement;
   maxHeight?: string;
   maxWidth?: string;
   children: React.ReactNode;

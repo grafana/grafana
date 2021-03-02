@@ -8,11 +8,13 @@ import { SelectableValue } from '@grafana/data';
 import { css } from 'emotion';
 import { onChangeCascader } from './optionMappings';
 
-interface CascaderProps {
+export interface CascaderProps {
   /** The separator between levels in the search */
   separator?: string;
   placeholder?: string;
   options: CascaderOption[];
+  /** Changes the value for every selection, including branch nodes. Defaults to true. */
+  changeOnSelect?: boolean;
   onSelect(val: string): void;
   /** Sets the width to a multiple of 8px. Should only be used with inline forms. Setting width of the container is preferred in other cases.*/
   width?: number;
@@ -69,6 +71,8 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
     };
   }
 
+  static defaultProps = { changeOnSelect: true };
+
   flattenOptions = (options: CascaderOption[], optionPath: CascaderOption[] = []) => {
     let selectOptions: Array<SelectableValue<string[]>> = [];
     for (const option of options) {
@@ -77,8 +81,8 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
       if (!option.items) {
         selectOptions.push({
           singleLabel: cpy[cpy.length - 1].label,
-          label: cpy.map(o => o.label).join(this.props.separator || ' / '),
-          value: cpy.map(o => o.value),
+          label: cpy.map((o) => o.label).join(this.props.separator || ' / '),
+          value: cpy.map((o) => o.value),
         });
       } else {
         selectOptions = [...selectOptions, ...this.flattenOptions(option.items, cpy)];
@@ -174,7 +178,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
   };
 
   render() {
-    const { allowCustomValue, placeholder, width } = this.props;
+    const { allowCustomValue, placeholder, width, changeOnSelect } = this.props;
     const { focusCascade, isSearching, searchableOptions, rcValue, activeLabel } = this.state;
 
     return (
@@ -195,7 +199,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
           <RCCascader
             onChange={onChangeCascader(this.onChange)}
             options={this.props.options}
-            changeOnSelect
+            changeOnSelect={changeOnSelect}
             value={rcValue.value}
             fieldNames={{ label: 'label', value: 'value', children: 'items' }}
             expandIcon={null}

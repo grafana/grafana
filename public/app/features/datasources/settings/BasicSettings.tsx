@@ -29,7 +29,7 @@ const BasicSettings: FC<Props> = ({ dataSourceName, isDefault, onDefaultChange, 
             type="text"
             value={dataSourceName}
             placeholder="Name"
-            onChange={event => onNameChange(event.target.value)}
+            onChange={(event) => onNameChange(event.target.value)}
             required
             aria-label={selectors.pages.DataSource.name}
           />
@@ -37,7 +37,7 @@ const BasicSettings: FC<Props> = ({ dataSourceName, isDefault, onDefaultChange, 
         <Switch
           label="Default"
           checked={isDefault}
-          onChange={event => {
+          onChange={(event) => {
             // @ts-ignore
             onDefaultChange(event.target.checked);
           }}

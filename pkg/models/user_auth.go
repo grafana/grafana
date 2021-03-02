@@ -46,6 +46,10 @@ type LoginInfo struct {
 	Error         error
 }
 
+// RequestURIKey is used as key to save request URI in contexts
+// (used for the Enterprise auditing feature)
+type RequestURIKey struct{}
+
 // ---------------------
 // COMMANDS
 
@@ -121,9 +125,4 @@ type TeamOrgGroupDTO struct {
 type GetTeamsForLDAPGroupCommand struct {
 	Groups []string
 	Result []TeamOrgGroupDTO
-}
-
-type SyncTeamsCommand struct {
-	ExternalUser *ExternalUserInfo
-	User         *User
 }

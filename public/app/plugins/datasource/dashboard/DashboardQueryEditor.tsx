@@ -3,11 +3,10 @@ import { LegacyForms, VerticalGroup } from '@grafana/ui';
 import { DataQuery, PanelData, SelectableValue } from '@grafana/data';
 import { css } from 'emotion';
 
-import { DashboardQuery, ResultInfo } from './types';
+import { DashboardQuery, ResultInfo, SHARED_DASHBODARD_QUERY } from './types';
 import config from 'app/core/config';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { PanelModel } from 'app/features/dashboard/state';
-import { SHARED_DASHBODARD_QUERY } from './types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { filterPanelDataToQuery } from 'app/features/query/components/QueryEditorRow';
 import { DashboardQueryRow } from './DashboardQueryRow';
@@ -43,55 +42,61 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
   }
 
   async componentDidMount() {
-    this.componentDidUpdate(this.props);
+    await this.updateState();
   }
 
   async componentDidUpdate(prevProps: Props) {
     const { panelData, queries } = this.props;
 
-    if (queries.length < 0) {
-      return;
-    }
-
-    if (!prevProps || prevProps.panelData !== panelData) {
-      const query = queries[0] as DashboardQuery;
-      const defaultDS = await getDatasourceSrv().get();
-      const dashboard = getDashboardSrv().getCurrent();
-      const panel = dashboard.getPanelById(query.panelId ?? -124134);
-
-      if (!panel) {
-        this.setState({ defaultDatasource: defaultDS.name });
-        return;
-      }
-
-      const mainDS = await getDatasourceSrv().get(panel.datasource);
-      const info: ResultInfo[] = [];
-
-      for (const query of panel.targets) {
-        const ds = query.datasource ? await getDatasourceSrv().get(query.datasource) : mainDS;
-        const fmt = ds.getQueryDisplayText ? ds.getQueryDisplayText : getQueryDisplayText;
-
-        const qData = filterPanelDataToQuery(panelData, query.refId);
-        const queryData = qData ? qData : panelData;
-
-        info.push({
-          refId: query.refId,
-          query: fmt(query),
-          img: ds.meta.info.logos.small,
-          data: queryData.series,
-          error: queryData.error,
-        });
-      }
-
-      this.setState({ defaultDatasource: defaultDS.name, results: info });
+    if (prevProps.panelData !== panelData || prevProps.queries !== queries) {
+      await this.updateState();
     }
   }
 
+  async updateState() {
+    const { panelData, queries } = this.props;
+
+    const query = queries[0] as DashboardQuery;
+    const defaultDS = await getDatasourceSrv().get();
+    const dashboard = getDashboardSrv().getCurrent();
+    const panel = dashboard.getPanelById(query.panelId ?? -124134);
+
+    if (!panel) {
+      this.setState({ defaultDatasource: defaultDS.name });
+      return;
+    }
+
+    const mainDS = await getDatasourceSrv().get(panel.datasource);
+    const info: ResultInfo[] = [];
+
+    for (const query of panel.targets) {
+      const ds = query.datasource ? await getDatasourceSrv().get(query.datasource) : mainDS;
+      const fmt = ds.getQueryDisplayText ? ds.getQueryDisplayText : getQueryDisplayText;
+
+      const qData = filterPanelDataToQuery(panelData, query.refId);
+      const queryData = qData ? qData : panelData;
+
+      info.push({
+        refId: query.refId,
+        query: fmt(query),
+        img: ds.meta.info.logos.small,
+        data: queryData.series,
+        error: queryData.error,
+      });
+    }
+
+    this.setState({ defaultDatasource: defaultDS.name, results: info });
+  }
+
   onPanelChanged = (id: number) => {
-    const { onChange } = this.props;
     const query = this.getQuery();
-    query.panelId = id;
-    onChange([query]);
+
+    this.props.onChange([
+      {
+        ...query,
+        panelId: id,
+      } as DashboardQuery,
+    ]);
   };
 
   renderQueryData(editURL: string) {
@@ -166,7 +171,7 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
             isSearchable={true}
             options={panels}
             value={selected}
-            onChange={item => this.onPanelChanged(item.value!)}
+            onChange={(item) => this.onPanelChanged(item.value!)}
           />
         </div>
         <div className={css({ padding: '16px' })}>{query.panelId && this.renderQueryData(editURL)}</div>

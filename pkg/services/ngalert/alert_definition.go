@@ -1,6 +1,12 @@
 package ngalert
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
+
+// timeNow makes it possible to test usage of time
+var timeNow = time.Now
 
 // preSave sets datasource and loads the updated model for each alert query.
 func (alertDefinition *AlertDefinition) preSave() error {
@@ -11,5 +17,6 @@ func (alertDefinition *AlertDefinition) preSave() error {
 		}
 		alertDefinition.Data[i] = q
 	}
+	alertDefinition.Updated = timeNow()
 	return nil
 }

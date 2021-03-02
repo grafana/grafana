@@ -15,6 +15,38 @@ export interface ConfigOverrideRule {
   properties: DynamicConfigValue[];
 }
 
+/**
+ * Describes config override rules created when interacting with Grafana.
+ *
+ * @internal
+ */
+export interface SystemConfigOverrideRule extends ConfigOverrideRule {
+  __systemRef: string;
+}
+
+/**
+ * Guard functionality to check if an override rule is of type {@link SystemConfigOverrideRule}.
+ * It will only return true if the {@link SystemConfigOverrideRule} has the passed systemRef.
+ *
+ * @param ref system override reference
+ * @internal
+ */
+export function isSystemOverrideWithRef<T extends SystemConfigOverrideRule>(ref: string) {
+  return (override: ConfigOverrideRule): override is T => {
+    return (override as T)?.__systemRef === ref;
+  };
+}
+
+/**
+ * Guard functionality to check if an override rule is of type {@link SystemConfigOverrideRule}.
+ * It will return true if the {@link SystemConfigOverrideRule} has any systemRef set.
+ *
+ * @internal
+ */
+export const isSystemOverride = (override: ConfigOverrideRule): override is SystemConfigOverrideRule => {
+  return typeof (override as SystemConfigOverrideRule)?.__systemRef === 'string';
+};
+
 export interface FieldConfigSource<TOptions extends object = any> {
   // Defaults applied to all numeric fields
   defaults: FieldConfig<TOptions>;
@@ -48,6 +80,12 @@ export interface FieldConfigEditorConfig<TOptions, TSettings = any, TValue = any
    * @param field
    */
   shouldApply?: (field: Field) => boolean;
+
+  /** Indicates that option shoukd not be available in the Field config tab */
+  hideFromDefaults?: boolean;
+
+  /** Indicates that option should not be available for the overrides */
+  hideFromOverrides?: boolean;
 }
 
 export interface FieldConfigPropertyItem<TOptions = any, TValue = any, TSettings extends {} = any>
@@ -58,20 +96,26 @@ export interface FieldConfigPropertyItem<TOptions = any, TValue = any, TSettings
   /** true for plugin field config properties */
   isCustom?: boolean;
 
-  // Convert the override value to a well typed value
+  /** Hides option from the Field config tab */
+  hideFromDefaults?: boolean;
+
+  /** Indicates that option should not be available for the overrides */
+  hideFromOverrides?: boolean;
+
+  /** Convert the override value to a well typed value */
   process: (value: any, context: FieldOverrideContext, settings?: TSettings) => TValue | undefined | null;
 
-  // Checks if field should be processed
+  /** Checks if field should be processed */
   shouldApply: (field: Field) => boolean;
 }
 
 export interface ApplyFieldOverrideOptions {
   data?: DataFrame[];
   fieldConfig: FieldConfigSource;
+  fieldConfigRegistry?: FieldConfigOptionsRegistry;
   replaceVariables: InterpolateFunction;
   theme: GrafanaTheme;
   timeZone?: TimeZone;
-  fieldConfigRegistry?: FieldConfigOptionsRegistry;
 }
 
 export enum FieldConfigProperty {

@@ -2,6 +2,7 @@ package setting
 
 import (
 	"bufio"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -375,4 +376,54 @@ func TestAuthDurationSettings(t *testing.T) {
 	err = readAuthSettings(f, cfg)
 	require.NoError(t, err)
 	require.Equal(t, maxLifetimeDurationTest, cfg.LoginMaxLifetime)
+
+	f = ini.Empty()
+	sec, err = f.NewSection("auth")
+	require.NoError(t, err)
+	_, err = sec.NewKey("login_maximum_lifetime_days", "")
+	require.NoError(t, err)
+	_, err = sec.NewKey("login_maximum_lifetime_duration", "")
+	require.NoError(t, err)
+	maxLifetimeDurationTest, err = time.ParseDuration("720h")
+	require.NoError(t, err)
+	err = readAuthSettings(f, cfg)
+	require.NoError(t, err)
+	require.Equal(t, maxLifetimeDurationTest, cfg.LoginMaxLifetime)
+}
+
+func TestGetCDNPath(t *testing.T) {
+	var err error
+	cfg := NewCfg()
+	cfg.BuildVersion = "v7.5.0-11124"
+	cfg.CDNRootURL, err = url.Parse("http://cdn.grafana.com")
+	require.NoError(t, err)
+
+	require.Equal(t, "http://cdn.grafana.com/grafana-oss/v7.5.0-11124/", cfg.GetContentDeliveryURL("grafana-oss"))
+	require.Equal(t, "http://cdn.grafana.com/grafana/v7.5.0-11124/", cfg.GetContentDeliveryURL("grafana"))
+}
+
+func TestGetContentDeliveryURLWhenNoCDNRootURLIsSet(t *testing.T) {
+	cfg := NewCfg()
+	require.Equal(t, "", cfg.GetContentDeliveryURL("grafana-oss"))
+}
+
+func TestGetCDNPathWithPreReleaseVersionAndSubPath(t *testing.T) {
+	var err error
+	cfg := NewCfg()
+	cfg.BuildVersion = "v7.5.0-11124pre"
+	cfg.CDNRootURL, err = url.Parse("http://cdn.grafana.com/sub")
+	require.NoError(t, err)
+	require.Equal(t, "http://cdn.grafana.com/sub/grafana-oss/pre-releases/v7.5.0-11124pre/", cfg.GetContentDeliveryURL("grafana-oss"))
+	require.Equal(t, "http://cdn.grafana.com/sub/grafana/pre-releases/v7.5.0-11124pre/", cfg.GetContentDeliveryURL("grafana"))
+}
+
+// Adding a case for this in case we switch to proper semver version strings
+func TestGetCDNPathWithAlphaVersion(t *testing.T) {
+	var err error
+	cfg := NewCfg()
+	cfg.BuildVersion = "v7.5.0-alpha.11124"
+	cfg.CDNRootURL, err = url.Parse("http://cdn.grafana.com")
+	require.NoError(t, err)
+	require.Equal(t, "http://cdn.grafana.com/grafana-oss/pre-releases/v7.5.0-alpha.11124/", cfg.GetContentDeliveryURL("grafana-oss"))
+	require.Equal(t, "http://cdn.grafana.com/grafana/pre-releases/v7.5.0-alpha.11124/", cfg.GetContentDeliveryURL("grafana"))
 }

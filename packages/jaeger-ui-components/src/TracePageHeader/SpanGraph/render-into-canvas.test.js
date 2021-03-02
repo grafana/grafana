@@ -25,7 +25,7 @@ import renderIntoCanvas, {
 } from './render-into-canvas';
 
 const getCanvasWidth = () => window.innerWidth * 2;
-const getBgFillRect = items => ({
+const getBgFillRect = (items) => ({
   fillStyle: BG_COLOR,
   height: !items || items.length < MIN_TOTAL_HEIGHT ? MIN_TOTAL_HEIGHT : Math.min(MAX_TOTAL_HEIGHT, items.length),
   width: getCanvasWidth(),
@@ -163,7 +163,7 @@ describe('renderIntoCanvas()', () => {
 
     it('draws the map', () => {
       const totalValueWidth = 4000;
-      const items = _range(MIN_TOTAL_HEIGHT * 10).map(i => ({
+      const items = _range(MIN_TOTAL_HEIGHT * 10).map((i) => ({
         valueWidth: i,
         valueOffset: i,
         serviceName: `service-name-${i}`,

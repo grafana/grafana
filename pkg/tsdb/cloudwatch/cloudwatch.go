@@ -38,6 +38,7 @@ type datasourceInfo struct {
 	AssumeRoleARN string
 	ExternalID    string
 	Namespace     string
+	Endpoint      string
 
 	AccessKey string
 	SecretKey string
@@ -96,7 +97,7 @@ func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error)
 
 	bldr := strings.Builder{}
 	for i, s := range []string{
-		dsInfo.AuthType.String(), dsInfo.AccessKey, dsInfo.Profile, dsInfo.AssumeRoleARN, region,
+		dsInfo.AuthType.String(), dsInfo.AccessKey, dsInfo.Profile, dsInfo.AssumeRoleARN, region, dsInfo.Endpoint,
 	} {
 		if i != 0 {
 			bldr.WriteString(":")
@@ -128,6 +129,10 @@ func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error)
 	if dsInfo.Region != "" {
 		regionCfg = &aws.Config{Region: aws.String(dsInfo.Region)}
 		cfgs = append(cfgs, regionCfg)
+	}
+
+	if dsInfo.Endpoint != "" {
+		cfgs = append(cfgs, &aws.Config{Endpoint: aws.String(dsInfo.Endpoint)})
 	}
 
 	switch dsInfo.AuthType {
@@ -199,7 +204,7 @@ func (e *cloudWatchExecutor) getCWClient(region string) (cloudwatchiface.CloudWa
 	if err != nil {
 		return nil, err
 	}
-	return newCWClient(sess), nil
+	return NewCWClient(sess), nil
 }
 
 func (e *cloudWatchExecutor) getCWLogsClient(region string) (cloudwatchlogsiface.CloudWatchLogsAPI, error) {
@@ -208,7 +213,7 @@ func (e *cloudWatchExecutor) getCWLogsClient(region string) (cloudwatchlogsiface
 		return nil, err
 	}
 
-	logsClient := newCWLogsClient(sess)
+	logsClient := NewCWLogsClient(sess)
 
 	return logsClient, nil
 }
@@ -413,6 +418,7 @@ func (e *cloudWatchExecutor) getDSInfo(region string) *datasourceInfo {
 	atStr := e.DataSource.JsonData.Get("authType").MustString()
 	assumeRoleARN := e.DataSource.JsonData.Get("assumeRoleArn").MustString()
 	externalID := e.DataSource.JsonData.Get("externalId").MustString()
+	endpoint := e.DataSource.JsonData.Get("endpoint").MustString()
 	decrypted := e.DataSource.DecryptedValues()
 	accessKey := decrypted["accessKey"]
 	secretKey := decrypted["secretKey"]
@@ -445,6 +451,7 @@ func (e *cloudWatchExecutor) getDSInfo(region string) *datasourceInfo {
 		ExternalID:    externalID,
 		AccessKey:     accessKey,
 		SecretKey:     secretKey,
+		Endpoint:      endpoint,
 	}
 }
 
@@ -452,10 +459,10 @@ func isTerminated(queryStatus string) bool {
 	return queryStatus == "Complete" || queryStatus == "Cancelled" || queryStatus == "Failed" || queryStatus == "Timeout"
 }
 
-// newCWClient is a CloudWatch client factory.
+// NewCWClient is a CloudWatch client factory.
 //
 // Stubbable by tests.
-var newCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
+var NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
 	client := cloudwatch.New(sess)
 	client.Handlers.Send.PushFront(func(r *request.Request) {
 		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
@@ -464,10 +471,10 @@ var newCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
 	return client
 }
 
-// newCWLogsClient is a CloudWatch logs client factory.
+// NewCWLogsClient is a CloudWatch logs client factory.
 //
 // Stubbable by tests.
-var newCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
+var NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
 	client := cloudwatchlogs.New(sess)
 	client.Handlers.Send.PushFront(func(r *request.Request) {
 		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))

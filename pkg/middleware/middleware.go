@@ -15,21 +15,26 @@ var (
 		ReqSignedIn:     true,
 		ReqGrafanaAdmin: true,
 	})
-	ReqSignedIn   = Auth(&AuthOptions{ReqSignedIn: true})
-	ReqEditorRole = RoleAuth(models.ROLE_EDITOR, models.ROLE_ADMIN)
-	ReqOrgAdmin   = RoleAuth(models.ROLE_ADMIN)
+	ReqSignedIn            = Auth(&AuthOptions{ReqSignedIn: true})
+	ReqSignedInNoAnonymous = Auth(&AuthOptions{ReqSignedIn: true, ReqNoAnonynmous: true})
+	ReqEditorRole          = RoleAuth(models.ROLE_EDITOR, models.ROLE_ADMIN)
+	ReqOrgAdmin            = RoleAuth(models.ROLE_ADMIN)
 )
 
+func HandleNoCacheHeader(ctx *models.ReqContext) {
+	ctx.SkipCache = ctx.Req.Header.Get("X-Grafana-NoCache") == "true"
+}
+
 func AddDefaultResponseHeaders(cfg *setting.Cfg) macaron.Handler {
-	return func(ctx *macaron.Context) {
-		ctx.Resp.Before(func(w macaron.ResponseWriter) {
+	return func(c *macaron.Context) {
+		c.Resp.Before(func(w macaron.ResponseWriter) {
 			// if response has already been written, skip.
 			if w.Written() {
 				return
 			}
 
-			if !strings.HasPrefix(ctx.Req.URL.Path, "/api/datasources/proxy/") {
-				addNoCacheHeaders(ctx.Resp)
+			if !strings.HasPrefix(c.Req.URL.Path, "/api/datasources/proxy/") {
+				addNoCacheHeaders(c.Resp)
 			}
 
 			if !cfg.AllowEmbedding {

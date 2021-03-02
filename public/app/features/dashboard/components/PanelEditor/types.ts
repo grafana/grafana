@@ -1,3 +1,5 @@
+import { DataFrame, FieldConfigSource, PanelPlugin } from '@grafana/data';
+
 export interface PanelEditorTab {
   id: string;
   text: string;
@@ -23,3 +25,12 @@ export const displayModes = [
   { value: DisplayMode.Fit, label: 'Fit', description: 'Fit in the space keeping ratio' },
   { value: DisplayMode.Exact, label: 'Exact', description: 'Same size as the dashboard' },
 ];
+
+/** @internal */
+export interface Props {
+  plugin: PanelPlugin;
+  config: FieldConfigSource;
+  onChange: (config: FieldConfigSource) => void;
+  /* Helpful for IntelliSense */
+  data: DataFrame[];
+}

@@ -1,20 +1,56 @@
 package ngalert
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 )
 
+var errAlertDefinitionFailedGenerateUniqueUID = errors.New("failed to generate alert definition UID")
+
 // AlertDefinition is the model for alert definitions in Alerting NG.
 type AlertDefinition struct {
-	Id        int64
-	OrgId     int64
-	Name      string
-	Condition string
-	Data      []eval.AlertQuery
+	ID              int64             `xorm:"pk autoincr 'id'" json:"id"`
+	OrgID           int64             `xorm:"org_id" json:"orgId"`
+	Title           string            `json:"title"`
+	Condition       string            `json:"condition"`
+	Data            []eval.AlertQuery `json:"data"`
+	Updated         time.Time         `json:"updated"`
+	IntervalSeconds int64             `json:"intervalSeconds"`
+	Version         int64             `json:"version"`
+	UID             string            `xorm:"uid" json:"uid"`
+	Paused          bool              `json:"paused"`
+}
+
+type alertDefinitionKey struct {
+	orgID         int64
+	definitionUID string
+}
+
+func (k alertDefinitionKey) String() string {
+	return fmt.Sprintf("{orgID: %d, definitionUID: %s}", k.orgID, k.definitionUID)
+}
+
+func (alertDefinition *AlertDefinition) getKey() alertDefinitionKey {
+	return alertDefinitionKey{orgID: alertDefinition.OrgID, definitionUID: alertDefinition.UID}
+}
+
+// AlertDefinitionVersion is the model for alert definition versions in Alerting NG.
+type AlertDefinitionVersion struct {
+	ID                 int64  `xorm:"pk autoincr 'id'"`
+	AlertDefinitionID  int64  `xorm:"alert_definition_id"`
+	AlertDefinitionUID string `xorm:"alert_definition_uid"`
+	ParentVersion      int64
+	RestoredFrom       int64
+	Version            int64
+
+	Created         time.Time
+	Title           string
+	Condition       string
+	Data            []eval.AlertQuery
+	IntervalSeconds int64
 }
 
 var (
@@ -22,71 +58,58 @@ var (
 	errAlertDefinitionNotFound = fmt.Errorf("could not find alert definition")
 )
 
-// getAlertDefinitionByIDQuery is the query for retrieving/deleting an alert definition by ID.
-type getAlertDefinitionByIDQuery struct {
-	ID    int64
+// getAlertDefinitionByUIDQuery is the query for retrieving/deleting an alert definition by UID and organisation ID.
+type getAlertDefinitionByUIDQuery struct {
+	UID   string
 	OrgID int64
 
 	Result *AlertDefinition
 }
 
-type deleteAlertDefinitionByIDQuery struct {
-	ID    int64
+type deleteAlertDefinitionByUIDCommand struct {
+	UID   string
 	OrgID int64
-
-	RowsAffected int64
-}
-
-// condition is the structure used by storing/updating alert definition commmands
-type condition struct {
-	RefID string `json:"refId"`
-
-	QueriesAndExpressions []eval.AlertQuery `json:"queriesAndExpressions"`
 }
 
 // saveAlertDefinitionCommand is the query for saving a new alert definition.
 type saveAlertDefinitionCommand struct {
-	Name         string               `json:"name"`
-	OrgID        int64                `json:"-"`
-	Condition    condition            `json:"condition"`
-	SignedInUser *models.SignedInUser `json:"-"`
-	SkipCache    bool                 `json:"-"`
+	Title           string            `json:"title"`
+	OrgID           int64             `json:"-"`
+	Condition       string            `json:"condition"`
+	Data            []eval.AlertQuery `json:"data"`
+	IntervalSeconds *int64            `json:"intervalSeconds"`
 
 	Result *AlertDefinition
 }
 
-// IsValid validates a SaveAlertDefinitionCommand.
-// Always returns true.
-func (cmd *saveAlertDefinitionCommand) IsValid() bool {
-	return true
-}
-
 // updateAlertDefinitionCommand is the query for updating an existing alert definition.
 type updateAlertDefinitionCommand struct {
-	ID           int64                `json:"-"`
-	Name         string               `json:"name"`
-	OrgID        int64                `json:"-"`
-	Condition    condition            `json:"condition"`
-	SignedInUser *models.SignedInUser `json:"-"`
-	SkipCache    bool                 `json:"-"`
+	Title           string            `json:"title"`
+	OrgID           int64             `json:"-"`
+	Condition       string            `json:"condition"`
+	Data            []eval.AlertQuery `json:"data"`
+	IntervalSeconds *int64            `json:"intervalSeconds"`
+	UID             string            `json:"-"`
 
-	RowsAffected int64
-	Result       *AlertDefinition
-}
-
-// IsValid validates an UpdateAlertDefinitionCommand.
-// Always returns true.
-func (cmd *updateAlertDefinitionCommand) IsValid() bool {
-	return true
+	Result *AlertDefinition
 }
 
 type evalAlertConditionCommand struct {
-	Condition eval.Condition `json:"condition"`
-	Now       time.Time      `json:"now"`
+	Condition string            `json:"condition"`
+	Data      []eval.AlertQuery `json:"data"`
+	Now       time.Time         `json:"now"`
 }
 
-type listAlertDefinitionsCommand struct {
+type listAlertDefinitionsQuery struct {
 	OrgID int64 `json:"-"`
 
 	Result []*AlertDefinition
+}
+
+type updateAlertDefinitionPausedCommand struct {
+	OrgID  int64    `json:"-"`
+	UIDs   []string `json:"uids"`
+	Paused bool     `json:"-"`
+
+	ResultCount int64
 }

@@ -150,7 +150,7 @@ export class DashboardMigrator {
 
       // ensure query refIds
       panelUpgrades.push((panel: any) => {
-        _.each(panel.targets, target => {
+        _.each(panel.targets, (target) => {
           if (!target.refId) {
             target.refId = panel.getNextQueryLetter && panel.getNextQueryLetter();
           }
@@ -160,14 +160,14 @@ export class DashboardMigrator {
 
     if (oldVersion < 8) {
       panelUpgrades.push((panel: any) => {
-        _.each(panel.targets, target => {
+        _.each(panel.targets, (target) => {
           // update old influxdb query schema
           if (target.fields && target.tags && target.groupBy) {
             if (target.rawQuery) {
               delete target.fields;
               delete target.fill;
             } else {
-              target.select = _.map(target.fields, field => {
+              target.select = _.map(target.fields, (field) => {
                 const parts = [];
                 parts.push({ type: 'field', params: [field.name] });
                 parts.push({ type: field.func, params: [] });
@@ -180,7 +180,7 @@ export class DashboardMigrator {
                 return parts;
               });
               delete target.fields;
-              _.each(target.groupBy, part => {
+              _.each(target.groupBy, (part) => {
                 if (part.type === 'time' && part.interval) {
                   part.params = [part.interval];
                   delete part.interval;
@@ -228,7 +228,7 @@ export class DashboardMigrator {
           return;
         }
 
-        _.each(panel.styles, style => {
+        _.each(panel.styles, (style) => {
           if (style.thresholds && style.thresholds.length >= 3) {
             const k = style.thresholds;
             k.shift();
@@ -388,7 +388,7 @@ export class DashboardMigrator {
           // (ie. [1,2,3,4,6,12,24] for 24 columns)
           panel.maxPerRow =
             factors[
-              _.findIndex(factors, o => {
+              _.findIndex(factors, (o) => {
                 return o > max;
               }) - 1
             ];
@@ -491,7 +491,7 @@ export class DashboardMigrator {
           return;
         }
 
-        _.each(panel.styles, style => {
+        _.each(panel.styles, (style) => {
           style.align = 'auto';
         });
       });
@@ -612,7 +612,7 @@ export class DashboardMigrator {
 
     const maxPanelId = _.max(
       _.flattenDeep(
-        _.map(old.rows, row => {
+        _.map(old.rows, (row) => {
           return _.map(row.panels, 'id');
         })
       )
@@ -624,7 +624,7 @@ export class DashboardMigrator {
     }
 
     // Add special "row" panels if even one row is collapsed, repeated or has visible title
-    const showRows = _.some(old.rows, row => row.collapse || row.showTitle || row.repeat);
+    const showRows = _.some(old.rows, (row) => row.collapse || row.showTitle || row.repeat);
 
     for (const row of old.rows) {
       if (row.repeatIteration) {

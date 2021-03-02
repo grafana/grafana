@@ -34,6 +34,7 @@ export interface DashboardMeta {
   createdBy?: string;
   updated?: string;
   updatedBy?: string;
+  hasUnsavedFolderChange?: boolean;
 }
 
 export interface DashboardDataDTO {

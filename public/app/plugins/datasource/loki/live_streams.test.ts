@@ -29,7 +29,7 @@ describe('Live Stream Tests', () => {
     dropped_entries: null,
   };
 
-  it('reads the values into the buffer', done => {
+  it('reads the values into the buffer', (done) => {
     fakeSocket = new Subject<any>();
     const labels: Labels = { job: 'varlogs' };
     const target = makeTarget('fake', labels);
@@ -48,14 +48,14 @@ describe('Live Stream Tests', () => {
         expect(last).toEqual({
           ts: '2019-08-28T20:50:40.118Z',
           tsNs: '1567025440118944705',
-          id: '8c50d09800ce8dda69a2ff25405c9f65',
+          id: '8c50d09800ce8dda69a2ff25405c9f65_A',
           line: 'Kittens',
           labels: { filename: '/var/log/sntpc.log' },
         });
       },
     ];
     stream.subscribe({
-      next: val => {
+      next: (val) => {
         const test = tests.shift();
         test!(val);
       },
@@ -140,7 +140,7 @@ describe('Live Stream Tests', () => {
       })
     ) as any;
     const liveStreams = new LiveStreams();
-    await expect(liveStreams.getStream(makeTarget('url_to_match'), 100)).toEmitValuesWith(received => {
+    await expect(liveStreams.getStream(makeTarget('url_to_match'), 100)).toEmitValuesWith((received) => {
       const data = received[0];
       const view = new DataFrameView(data[0]);
       const firstLog = { ...view.get(0) };

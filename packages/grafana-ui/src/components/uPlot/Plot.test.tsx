@@ -6,6 +6,7 @@ import { GraphFieldConfig, DrawStyle } from '../uPlot/config';
 import uPlot from 'uplot';
 import createMockRaf from 'mock-raf';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
+import { preparePlotData } from './utils';
 
 const mockRaf = createMockRaf();
 const setDataMock = jest.fn();
@@ -68,14 +69,12 @@ describe('UPlotChart', () => {
 
   it('destroys uPlot instance when component unmounts', () => {
     const { data, timeRange, config } = mockData();
-    const uPlotData = { frame: data, isGap: () => false };
 
     const { unmount } = render(
       <UPlotChart
-        data={uPlotData}
+        data={preparePlotData(data)} // mock
         config={config}
         timeRange={timeRange}
-        timeZone={'browser'}
         width={100}
         height={100}
       />
@@ -94,14 +93,12 @@ describe('UPlotChart', () => {
   describe('data update', () => {
     it('skips uPlot reinitialization when there are no field config changes', () => {
       const { data, timeRange, config } = mockData();
-      const uPlotData = { frame: data, isGap: () => false };
 
       const { rerender } = render(
         <UPlotChart
-          data={uPlotData}
+          data={preparePlotData(data)} // mock
           config={config}
           timeRange={timeRange}
-          timeZone={'browser'}
           width={100}
           height={100}
         />
@@ -115,14 +112,12 @@ describe('UPlotChart', () => {
       expect(uPlot).toBeCalledTimes(1);
 
       data.fields[1].values.set(0, 1);
-      uPlotData.frame = data;
 
       rerender(
         <UPlotChart
-          data={uPlotData}
+          data={preparePlotData(data)} // changed
           config={config}
           timeRange={timeRange}
-          timeZone={'browser'}
           width={100}
           height={100}
         />
@@ -135,10 +130,9 @@ describe('UPlotChart', () => {
   describe('config update', () => {
     it('skips uPlot intialization for width and height equal 0', async () => {
       const { data, timeRange, config } = mockData();
-      const uPlotData = { frame: data, isGap: () => false };
 
       const { queryAllByTestId } = render(
-        <UPlotChart data={uPlotData} config={config} timeRange={timeRange} timeZone={'browser'} width={0} height={0} />
+        <UPlotChart data={preparePlotData(data)} config={config} timeRange={timeRange} width={0} height={0} />
       );
 
       expect(queryAllByTestId('uplot-main-div')).toHaveLength(1);
@@ -147,14 +141,12 @@ describe('UPlotChart', () => {
 
     it('reinitializes uPlot when config changes', () => {
       const { data, timeRange, config } = mockData();
-      const uPlotData = { frame: data, isGap: () => false };
 
       const { rerender } = render(
         <UPlotChart
-          data={uPlotData}
+          data={preparePlotData(data)} // frame
           config={config}
           timeRange={timeRange}
-          timeZone={'browser'}
           width={100}
           height={100}
         />
@@ -169,10 +161,9 @@ describe('UPlotChart', () => {
 
       rerender(
         <UPlotChart
-          data={uPlotData}
+          data={preparePlotData(data)}
           config={new UPlotConfigBuilder()}
           timeRange={timeRange}
-          timeZone={'browser'}
           width={100}
           height={100}
         />
@@ -184,14 +175,12 @@ describe('UPlotChart', () => {
 
     it('skips uPlot reinitialization when only dimensions change', () => {
       const { data, timeRange, config } = mockData();
-      const uPlotData = { frame: data, isGap: () => false };
 
       const { rerender } = render(
         <UPlotChart
-          data={uPlotData}
+          data={preparePlotData(data)} // frame
           config={config}
           timeRange={timeRange}
-          timeZone={'browser'}
           width={100}
           height={100}
         />
@@ -204,10 +193,9 @@ describe('UPlotChart', () => {
 
       rerender(
         <UPlotChart
-          data={uPlotData}
+          data={preparePlotData(data)} // frame
           config={new UPlotConfigBuilder()}
           timeRange={timeRange}
-          timeZone={'browser'}
           width={200}
           height={200}
         />

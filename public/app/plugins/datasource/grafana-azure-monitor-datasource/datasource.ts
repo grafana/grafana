@@ -169,7 +169,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
       };
     }
 
-    return Promise.all(promises).then(results => {
+    return Promise.all(promises).then((results) => {
       let status = 'success';
       let message = '';
 
@@ -268,7 +268,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
 
   interpolateVariablesInQueries(queries: AzureMonitorQuery[], scopedVars: ScopedVars): AzureMonitorQuery[] {
     return queries.map(
-      query => this.pseudoDatasource[query.queryType].applyTemplateVariables(query, scopedVars) as AzureMonitorQuery
+      (query) => this.pseudoDatasource[query.queryType].applyTemplateVariables(query, scopedVars) as AzureMonitorQuery
     );
   }
 }

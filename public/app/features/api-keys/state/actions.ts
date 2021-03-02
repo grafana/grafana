@@ -7,7 +7,7 @@ export function addApiKey(
   openModal: (key: string) => void,
   includeExpired: boolean
 ): ThunkResult<void> {
-  return async dispatch => {
+  return async (dispatch) => {
     const result = await getBackendSrv().post('/api/auth/keys', apiKey);
     dispatch(setSearchQuery(''));
     dispatch(loadApiKeys(includeExpired));
@@ -16,14 +16,14 @@ export function addApiKey(
 }
 
 export function loadApiKeys(includeExpired: boolean): ThunkResult<void> {
-  return async dispatch => {
+  return async (dispatch) => {
     const response = await getBackendSrv().get('/api/auth/keys?includeExpired=' + includeExpired);
     dispatch(apiKeysLoaded(response));
   };
 }
 
 export function deleteApiKey(id: number, includeExpired: boolean): ThunkResult<void> {
-  return async dispatch => {
+  return async (dispatch) => {
     getBackendSrv()
       .delete(`/api/auth/keys/${id}`)
       .then(() => dispatch(loadApiKeys(includeExpired)));

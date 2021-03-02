@@ -15,11 +15,11 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func getFSDataSources(c *models.ReqContext, enabledPlugins *plugins.EnabledPlugins) (map[string]interface{}, error) {
+func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins *plugins.EnabledPlugins) (map[string]interface{}, error) {
 	orgDataSources := make([]*models.DataSource, 0)
 
 	if c.OrgId != 0 {
-		query := models.GetDataSourcesQuery{OrgId: c.OrgId}
+		query := models.GetDataSourcesQuery{OrgId: c.OrgId, DataSourceLimit: hs.Cfg.DataSourceLimit}
 		err := bus.Dispatch(&query)
 
 		if err != nil {
@@ -128,6 +128,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 	if err != nil {
 		return nil, err
 	}
+
 	pluginsToPreload := []string{}
 	for _, app := range enabledPlugins.Apps {
 		if app.Preload {
@@ -135,7 +136,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		}
 	}
 
-	dataSources, err := getFSDataSources(c, enabledPlugins)
+	dataSources, err := hs.getFSDataSources(c, enabledPlugins)
 	if err != nil {
 		return nil, err
 	}
@@ -224,8 +225,8 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"commit":        commit,
 			"buildstamp":    buildstamp,
 			"edition":       hs.License.Edition(),
-			"latestVersion": plugins.GrafanaLatestVersion,
-			"hasUpdate":     plugins.GrafanaHasUpdate,
+			"latestVersion": hs.PluginManager.GrafanaLatestVersion,
+			"hasUpdate":     hs.PluginManager.GrafanaHasUpdate,
 			"env":           setting.Env,
 			"isEnterprise":  hs.License.HasValidLicense(),
 		},
@@ -237,11 +238,14 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"licenseUrl":      hs.License.LicenseURL(c.SignedInUser),
 			"edition":         hs.License.Edition(),
 		},
-		"featureToggles":    hs.Cfg.FeatureToggles,
-		"rendererAvailable": hs.RenderService.IsAvailable(),
-		"http2Enabled":      hs.Cfg.Protocol == setting.HTTP2Scheme,
-		"sentry":            hs.Cfg.Sentry,
-		"marketplaceUrl":    hs.Cfg.MarketplaceURL,
+		"featureToggles":          hs.Cfg.FeatureToggles,
+		"rendererAvailable":       hs.RenderService.IsAvailable(),
+		"http2Enabled":            hs.Cfg.Protocol == setting.HTTP2Scheme,
+		"sentry":                  hs.Cfg.Sentry,
+		"marketplaceUrl":          hs.Cfg.MarketplaceURL,
+		"expressionsEnabled":      hs.Cfg.ExpressionsEnabled,
+		"awsAllowedAuthProviders": hs.Cfg.AWSAllowedAuthProviders,
+		"awsAssumeRoleEnabled":    hs.Cfg.AWSAssumeRoleEnabled,
 	}
 
 	return jsonObj, nil
@@ -252,26 +256,28 @@ func getPanelSort(id string) int {
 	switch id {
 	case "graph":
 		sort = 1
-	case "stat":
+	case "timeseries":
 		sort = 2
-	case "gauge":
+	case "stat":
 		sort = 3
-	case "bargauge":
+	case "gauge":
 		sort = 4
-	case "table":
+	case "bargauge":
 		sort = 5
-	case "singlestat":
+	case "table":
 		sort = 6
-	case "text":
+	case "singlestat":
 		sort = 7
-	case "heatmap":
+	case "text":
 		sort = 8
-	case "alertlist":
+	case "heatmap":
 		sort = 9
+	case "alertlist":
+		sort = 10
 	case "dashlist":
-		sort = 10
+		sort = 11
 	case "news":
-		sort = 10
+		sort = 12
 	}
 	return sort
 }

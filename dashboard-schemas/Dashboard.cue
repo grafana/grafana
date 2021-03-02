@@ -20,7 +20,7 @@ package main
 	// 0 for no shared crosshair or tooltip (default).
 	// 1 for shared crosshair.
 	// 2 for shared crosshair AND shared tooltip.
-	graphTooltip: int & >=0 & <=2 | *0
+	graphTooltip: int >= 0 <= 2 | *0
 	// Time range for dashboard, e.g. last 6 hours, last 7 days, etc
 	time?: {
 		from: string | *"now-6h"

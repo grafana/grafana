@@ -17,7 +17,7 @@ export const MovingAverageSettingsEditor: FunctionComponent<Props> = ({ metric }
     <>
       <InlineField label="Model">
         <Select
-          onChange={value => dispatch(changeMetricSetting(metric, 'model', value.value!))}
+          onChange={(value) => dispatch(changeMetricSetting(metric, 'model', value.value!))}
           options={movingAvgModelOptions}
           value={metric.settings?.model}
         />
@@ -25,14 +25,14 @@ export const MovingAverageSettingsEditor: FunctionComponent<Props> = ({ metric }
 
       <InlineField label="Window">
         <Input
-          onBlur={e => dispatch(changeMetricSetting(metric, 'window', parseInt(e.target.value!, 10)))}
+          onBlur={(e) => dispatch(changeMetricSetting(metric, 'window', parseInt(e.target.value!, 10)))}
           defaultValue={metric.settings?.window}
         />
       </InlineField>
 
       <InlineField label="Predict">
         <Input
-          onBlur={e => dispatch(changeMetricSetting(metric, 'predict', parseInt(e.target.value!, 10)))}
+          onBlur={(e) => dispatch(changeMetricSetting(metric, 'predict', parseInt(e.target.value!, 10)))}
           defaultValue={metric.settings?.predict}
         />
       </InlineField>
@@ -41,7 +41,7 @@ export const MovingAverageSettingsEditor: FunctionComponent<Props> = ({ metric }
         <>
           <InlineField label="Alpha">
             <Input
-              onBlur={e => dispatch(changeMetricSetting(metric, 'alpha', parseInt(e.target.value!, 10)))}
+              onBlur={(e) => dispatch(changeMetricSetting(metric, 'alpha', parseInt(e.target.value!, 10)))}
               defaultValue={metric.settings?.alpha}
             />
           </InlineField>
@@ -61,7 +61,7 @@ export const MovingAverageSettingsEditor: FunctionComponent<Props> = ({ metric }
         <>
           <InlineField label="Alpha">
             <Input
-              onBlur={e =>
+              onBlur={(e) =>
                 dispatch(
                   changeMetricSetting(metric, 'settings', {
                     ...metric.settings?.settings,
@@ -74,7 +74,7 @@ export const MovingAverageSettingsEditor: FunctionComponent<Props> = ({ metric }
           </InlineField>
           <InlineField label="Beta">
             <Input
-              onBlur={e =>
+              onBlur={(e) =>
                 dispatch(
                   changeMetricSetting(metric, 'settings', {
                     ...metric.settings?.settings,
@@ -101,7 +101,7 @@ export const MovingAverageSettingsEditor: FunctionComponent<Props> = ({ metric }
         <>
           <InlineField label="Alpha">
             <Input
-              onBlur={e =>
+              onBlur={(e) =>
                 dispatch(
                   changeMetricSetting(metric, 'settings', {
                     ...metric.settings?.settings,
@@ -114,7 +114,7 @@ export const MovingAverageSettingsEditor: FunctionComponent<Props> = ({ metric }
           </InlineField>
           <InlineField label="Beta">
             <Input
-              onBlur={e =>
+              onBlur={(e) =>
                 dispatch(
                   changeMetricSetting(metric, 'settings', {
                     ...metric.settings?.settings,
@@ -127,7 +127,7 @@ export const MovingAverageSettingsEditor: FunctionComponent<Props> = ({ metric }
           </InlineField>
           <InlineField label="Gamma">
             <Input
-              onBlur={e =>
+              onBlur={(e) =>
                 dispatch(
                   changeMetricSetting(metric, 'settings', {
                     ...metric.settings?.settings,
@@ -140,7 +140,7 @@ export const MovingAverageSettingsEditor: FunctionComponent<Props> = ({ metric }
           </InlineField>
           <InlineField label="Period">
             <Input
-              onBlur={e =>
+              onBlur={(e) =>
                 dispatch(
                   changeMetricSetting(metric, 'settings', {
                     ...metric.settings?.settings,

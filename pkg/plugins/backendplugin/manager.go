@@ -51,12 +51,13 @@ type Manager interface {
 }
 
 type manager struct {
-	Cfg            *setting.Cfg     `inject:""`
-	License        models.Licensing `inject:""`
-	pluginsMu      sync.RWMutex
-	plugins        map[string]Plugin
-	logger         log.Logger
-	pluginSettings map[string]pluginSettings
+	Cfg                    *setting.Cfg                  `inject:""`
+	License                models.Licensing              `inject:""`
+	PluginRequestValidator models.PluginRequestValidator `inject:""`
+	pluginsMu              sync.RWMutex
+	plugins                map[string]Plugin
+	logger                 log.Logger
+	pluginSettings         map[string]pluginSettings
 }
 
 func (m *manager) Init() error {
@@ -98,8 +99,13 @@ func (m *manager) Register(pluginID string, factory PluginFactoryFunc) error {
 		hostEnv = append(
 			hostEnv,
 			fmt.Sprintf("GF_ENTERPRISE_LICENSE_PATH=%s", m.Cfg.EnterpriseLicensePath),
-			fmt.Sprintf("GF_ENTERPRISE_LICENSE_TEXT=%s", m.License.TokenRaw()),
 		)
+
+		if envProvider, ok := m.License.(models.LicenseEnvironment); ok {
+			for k, v := range envProvider.Environment() {
+				hostEnv = append(hostEnv, fmt.Sprintf("%s=%s", k, v))
+			}
+		}
 	}
 
 	env := pluginSettings.ToEnv("GF_PLUGIN", hostEnv)
@@ -190,6 +196,19 @@ func (m *manager) CollectMetrics(ctx context.Context, pluginID string) (*backend
 
 // CheckHealth checks the health of a registered backend plugin.
 func (m *manager) CheckHealth(ctx context.Context, pluginContext backend.PluginContext) (*backend.CheckHealthResult, error) {
+	var dsURL string
+	if pluginContext.DataSourceInstanceSettings != nil {
+		dsURL = pluginContext.DataSourceInstanceSettings.URL
+	}
+
+	err := m.PluginRequestValidator.Validate(dsURL, nil)
+	if err != nil {
+		return &backend.CheckHealthResult{
+			Status:  http.StatusForbidden,
+			Message: "Access denied",
+		}, nil
+	}
+
 	m.pluginsMu.RLock()
 	p, registered := m.plugins[pluginContext.PluginID]
 	m.pluginsMu.RUnlock()
@@ -199,13 +218,17 @@ func (m *manager) CheckHealth(ctx context.Context, pluginContext backend.PluginC
 	}
 
 	var resp *backend.CheckHealthResult
-	err := instrumentCheckHealthRequest(p.PluginID(), func() (innerErr error) {
+	err = instrumentCheckHealthRequest(p.PluginID(), func() (innerErr error) {
 		resp, innerErr = p.CheckHealth(ctx, &backend.CheckHealthRequest{PluginContext: pluginContext})
 		return
 	})
 
 	if err != nil {
 		if errors.Is(err, ErrMethodNotImplemented) {
+			return nil, err
+		}
+
+		if errors.Is(err, ErrPluginUnavailable) {
 			return nil, err
 		}
 
@@ -257,13 +280,17 @@ func (m *manager) callResourceInternal(w http.ResponseWriter, req *http.Request,
 		childCtx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		stream := newCallResourceResponseStream(childCtx)
+
+		var wg sync.WaitGroup
+		wg.Add(1)
+
 		defer func() {
 			if err := stream.Close(); err != nil {
 				m.logger.Warn("Failed to close stream", "err", err)
 			}
+			wg.Wait()
 		}()
-		var wg sync.WaitGroup
-		wg.Add(1)
+
 		var flushStreamErr error
 		go func() {
 			flushStreamErr = flushStream(p, stream, w)
@@ -273,11 +300,6 @@ func (m *manager) callResourceInternal(w http.ResponseWriter, req *http.Request,
 		if err := p.CallResource(req.Context(), crReq, stream); err != nil {
 			return err
 		}
-		if err := stream.Close(); err != nil {
-			return err
-		}
-
-		wg.Wait()
 
 		return flushStreamErr
 	})
@@ -285,6 +307,17 @@ func (m *manager) callResourceInternal(w http.ResponseWriter, req *http.Request,
 
 // CallResource calls a plugin resource.
 func (m *manager) CallResource(pCtx backend.PluginContext, reqCtx *models.ReqContext, path string) {
+	var dsURL string
+	if pCtx.DataSourceInstanceSettings != nil {
+		dsURL = pCtx.DataSourceInstanceSettings.URL
+	}
+
+	err := m.PluginRequestValidator.Validate(dsURL, reqCtx.Req.Request)
+	if err != nil {
+		reqCtx.JsonApiErr(http.StatusForbidden, "Access denied", err)
+		return
+	}
+
 	clonedReq := reqCtx.Req.Clone(reqCtx.Req.Context())
 	rawURL := path
 	if clonedReq.URL.RawQuery != "" {

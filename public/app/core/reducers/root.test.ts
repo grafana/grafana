@@ -63,7 +63,7 @@ describe('rootReducer', () => {
       reducerTester<StoreState>()
         .givenReducer(rootReducer, state)
         .whenActionIsDispatched(teamsLoaded(teams))
-        .thenStatePredicateShouldEqual(resultingState => {
+        .thenStatePredicateShouldEqual((resultingState) => {
           expect(resultingState.teams).toEqual({
             hasFetched: true,
             searchQuery: '',
@@ -88,7 +88,7 @@ describe('rootReducer', () => {
       reducerTester<StoreState>()
         .givenReducer(rootReducer, state, false, true)
         .whenActionIsDispatched(cleanUpAction({ stateSelector: (storeState: StoreState) => storeState.teams }))
-        .thenStatePredicateShouldEqual(resultingState => {
+        .thenStatePredicateShouldEqual((resultingState) => {
           expect(resultingState.teams).toEqual({ ...initialTeamsState });
           return true;
         });

@@ -57,7 +57,7 @@ export class LiveChannelEditor extends PureComponent<Props, State> {
       namespaces,
       support,
       paths: paths
-        ? paths.map(p => ({
+        ? paths.map((p) => ({
             label: p.path,
             value: p.path,
             description: p.description,
@@ -117,7 +117,7 @@ export class LiveChannelEditor extends PureComponent<Props, State> {
         <div>
           <div className={style.dropWrap}>
             <Label>Scope</Label>
-            <Select options={scopes} value={scopes.find(s => s.value === scope)} onChange={this.onScopeChanged} />
+            <Select options={scopes} value={scopes.find((s) => s.value === scope)} onChange={this.onScopeChanged} />
           </div>
 
           {scope && (
@@ -126,7 +126,7 @@ export class LiveChannelEditor extends PureComponent<Props, State> {
               <Select
                 options={namespaces}
                 value={
-                  namespaces.find(s => s.value === namespace) ??
+                  namespaces.find((s) => s.value === namespace) ??
                   (namespace ? { label: namespace, value: namespace } : undefined)
                 }
                 onChange={this.onNamespaceChanged}
@@ -155,7 +155,7 @@ export class LiveChannelEditor extends PureComponent<Props, State> {
 }
 
 function findPathOption(paths: Array<SelectableValue<string>>, path?: string): SelectableValue<string> | undefined {
-  const v = paths.find(s => s.value === path);
+  const v = paths.find((s) => s.value === path);
   if (v) {
     return v;
   }

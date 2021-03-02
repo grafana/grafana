@@ -67,7 +67,6 @@ var (
 
 	// Paths
 	HomePath       string
-	PluginsPath    string
 	CustomInitPath = "conf/custom.ini"
 
 	// HTTP server options
@@ -141,10 +140,12 @@ var (
 	appliedCommandLineProperties []string
 	appliedEnvOverrides          []string
 
-	ReportingEnabled   bool
-	CheckForUpdates    bool
-	GoogleAnalyticsId  string
-	GoogleTagManagerId string
+	// analytics
+	ReportingEnabled     bool
+	ReportingDistributor string
+	CheckForUpdates      bool
+	GoogleAnalyticsId    string
+	GoogleTagManagerId   string
 
 	// LDAP
 	LDAPEnabled           bool
@@ -197,6 +198,7 @@ type Cfg struct {
 	SocketPath       string
 	RouterLogging    bool
 	Domain           string
+	CDNRootURL       *url.URL
 
 	// build
 	BuildVersion string
@@ -212,6 +214,7 @@ type Cfg struct {
 	ProvisioningPath   string
 	DataPath           string
 	LogsPath           string
+	PluginsPath        string
 	BundledPluginsPath string
 
 	// SMTP email settings
@@ -236,6 +239,10 @@ type Cfg struct {
 	StrictTransportSecurityMaxAge     int
 	StrictTransportSecurityPreload    bool
 	StrictTransportSecuritySubDomains bool
+	// CSPEnabled toggles Content Security Policy support.
+	CSPEnabled bool
+	// CSPTemplate contains the Content Security Policy template.
+	CSPTemplate string
 
 	TempDataLifetime         time.Duration
 	PluginsEnableAlpha       bool
@@ -265,6 +272,10 @@ type Cfg struct {
 	BasicAuthEnabled             bool
 	AdminUser                    string
 	AdminPassword                string
+
+	// AWS Plugin Auth
+	AWSAllowedAuthProviders []string
+	AWSAssumeRoleEnabled    bool
 
 	// Auth proxy settings
 	AuthProxyEnabled          bool
@@ -314,6 +325,9 @@ type Cfg struct {
 	// Sentry config
 	Sentry Sentry
 
+	// Data sources
+	DataSourceLimit int
+
 	// Snapshots
 	SnapshotPublicMode bool
 
@@ -328,11 +342,13 @@ type Cfg struct {
 	Quota QuotaSettings
 
 	DefaultTheme string
-}
 
-// IsExpressionsEnabled returns whether the expressions feature is enabled.
-func (cfg Cfg) IsExpressionsEnabled() bool {
-	return cfg.FeatureToggles["expressions"]
+	AutoAssignOrg     bool
+	AutoAssignOrgId   int
+	AutoAssignOrgRole string
+
+	// ExpressionsEnabled specifies whether expressions are enabled.
+	ExpressionsEnabled bool
 }
 
 // IsLiveEnabled returns if grafana live should be enabled
@@ -343,6 +359,11 @@ func (cfg Cfg) IsLiveEnabled() bool {
 // IsNgAlertEnabled returns whether the standalone alerts feature is enabled.
 func (cfg Cfg) IsNgAlertEnabled() bool {
 	return cfg.FeatureToggles["ngalert"]
+}
+
+// IsDatabaseMetricsEnabled returns whether the database instrumentation feature is enabled.
+func (cfg Cfg) IsDatabaseMetricsEnabled() bool {
+	return cfg.FeatureToggles["database_metrics"]
 }
 
 // IsHTTPRequestHistogramEnabled returns whether the http_request_histogram feature is enabled.
@@ -471,6 +492,11 @@ func (cfg *Cfg) readAnnotationSettings() {
 	cfg.APIAnnotationCleanupSettings = newAnnotationCleanupSettings(apiIAnnotation, "max_age")
 }
 
+func (cfg *Cfg) readExpressionsSettings() {
+	expressions := cfg.Raw.Section("expressions")
+	cfg.ExpressionsEnabled = expressions.Key("enabled").MustBool(true)
+}
+
 type AnnotationCleanupSettings struct {
 	MaxAge   time.Duration
 	MaxCount int64
@@ -584,8 +610,6 @@ func loadSpecifiedConfigFile(configFile string, masterFile *ini.File) error {
 }
 
 func (cfg *Cfg) loadConfiguration(args *CommandLineArgs) (*ini.File, error) {
-	var err error
-
 	// load config defaults
 	defaultConfigFile := path.Join(HomePath, "conf/defaults.ini")
 	configFiles = append(configFiles, defaultConfigFile)
@@ -665,7 +689,11 @@ func setHomePath(args *CommandLineArgs) {
 		return
 	}
 
-	HomePath, _ = filepath.Abs(".")
+	var err error
+	HomePath, err = filepath.Abs(".")
+	if err != nil {
+		panic(err)
+	}
 	// check if homepath is correct
 	if pathExists(filepath.Join(HomePath, "conf/defaults.ini")) {
 		return
@@ -684,6 +712,21 @@ func NewCfg() *Cfg {
 		Logger: log.New("settings"),
 		Raw:    ini.Empty(),
 	}
+}
+
+var theCfg *Cfg
+
+// GetCfg gets the Cfg singleton.
+// XXX: This is only required for integration tests so that the configuration can be reset for each test,
+// as due to how the current DI framework functions, we can't create a new Cfg object every time (the services
+// constituting the DI graph, and referring to a Cfg instance, get created only once).
+func GetCfg() *Cfg {
+	if theCfg != nil {
+		return theCfg
+	}
+
+	theCfg = NewCfg()
+	return theCfg
 }
 
 func (cfg *Cfg) validateStaticRootPath() error {
@@ -726,12 +769,12 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.Env = Env
 	InstanceName = valueAsString(iniFile.Section(""), "instance_name", "unknown_instance_name")
 	plugins := valueAsString(iniFile.Section("paths"), "plugins", "")
-	PluginsPath = makeAbsolute(plugins, HomePath)
+	cfg.PluginsPath = makeAbsolute(plugins, HomePath)
 	cfg.BundledPluginsPath = makeAbsolute("plugins-bundled", HomePath)
 	provisioning := valueAsString(iniFile.Section("paths"), "provisioning", "")
 	cfg.ProvisioningPath = makeAbsolute(provisioning, HomePath)
 
-	if err := readServerSettings(iniFile, cfg); err != nil {
+	if err := cfg.readServerSettings(iniFile); err != nil {
 		return err
 	}
 
@@ -778,10 +821,14 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.MetricsEndpointDisableTotalStats = iniFile.Section("metrics").Key("disable_total_stats").MustBool(false)
 
 	analytics := iniFile.Section("analytics")
-	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
 	CheckForUpdates = analytics.Key("check_for_updates").MustBool(true)
 	GoogleAnalyticsId = analytics.Key("google_analytics_ua_id").String()
 	GoogleTagManagerId = analytics.Key("google_tag_manager_id").String()
+	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
+	ReportingDistributor = analytics.Key("reporting_distributor").MustString("grafana-labs")
+	if len(ReportingDistributor) >= 100 {
+		ReportingDistributor = ReportingDistributor[:100]
+	}
 
 	if err := readAlertingSettings(iniFile); err != nil {
 		return err
@@ -818,13 +865,17 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 
 	cfg.readLDAPConfig()
+	cfg.readAWSConfig()
 	cfg.readSessionConfig()
 	cfg.readSmtpSettings()
 	cfg.readQuotaSettings()
 	cfg.readAnnotationSettings()
+	cfg.readExpressionsSettings()
 	if err := cfg.readGrafanaEnvironmentMetrics(); err != nil {
 		return err
 	}
+
+	cfg.readDataSourcesSettings()
 
 	if VerifyEmailEnabled && !cfg.Smtp.Enabled {
 		log.Warnf("require_email_validation is enabled but smtp is disabled")
@@ -877,6 +928,18 @@ func (cfg *Cfg) readLDAPConfig() {
 	cfg.LDAPAllowSignup = LDAPAllowSignup
 }
 
+func (cfg *Cfg) readAWSConfig() {
+	awsPluginSec := cfg.Raw.Section("aws")
+	cfg.AWSAssumeRoleEnabled = awsPluginSec.Key("assume_role_enabled").MustBool(true)
+	allowedAuthProviders := awsPluginSec.Key("allowed_auth_providers").String()
+	for _, authProvider := range strings.Split(allowedAuthProviders, ",") {
+		authProvider = strings.TrimSpace(authProvider)
+		if authProvider != "" {
+			cfg.AWSAllowedAuthProviders = append(cfg.AWSAllowedAuthProviders, authProvider)
+		}
+	}
+}
+
 func (cfg *Cfg) readSessionConfig() {
 	sec, _ := cfg.Raw.GetSection("session")
 
@@ -923,7 +986,7 @@ func (cfg *Cfg) LogConfigSources() {
 	cfg.Logger.Info("Path Home", "path", HomePath)
 	cfg.Logger.Info("Path Data", "path", cfg.DataPath)
 	cfg.Logger.Info("Path Logs", "path", cfg.LogsPath)
-	cfg.Logger.Info("Path Plugins", "path", PluginsPath)
+	cfg.Logger.Info("Path Plugins", "path", cfg.PluginsPath)
 	cfg.Logger.Info("Path Provisioning", "path", cfg.ProvisioningPath)
 	cfg.Logger.Info("App mode " + cfg.Env)
 }
@@ -996,6 +1059,8 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.StrictTransportSecurityMaxAge = security.Key("strict_transport_security_max_age_seconds").MustInt(86400)
 	cfg.StrictTransportSecurityPreload = security.Key("strict_transport_security_preload").MustBool(false)
 	cfg.StrictTransportSecuritySubDomains = security.Key("strict_transport_security_subdomains").MustBool(false)
+	cfg.CSPEnabled = security.Key("content_security_policy").MustBool(false)
+	cfg.CSPTemplate = security.Key("content_security_policy_template").MustString("")
 
 	// read data source proxy whitelist
 	DataProxyWhiteList = make(map[string]bool)
@@ -1035,7 +1100,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 		maxLifetimeDaysVal = fmt.Sprintf("%sd", maxLifetimeDaysVal)
 		cfg.Logger.Warn("[Deprecated] the configuration setting 'login_maximum_lifetime_days' is deprecated, please use 'login_maximum_lifetime_duration' instead")
 	} else {
-		maxLifetimeDaysVal = "7d"
+		maxLifetimeDaysVal = "30d"
 	}
 	maxLifetimeDurationVal := valueAsString(auth, "login_maximum_lifetime_duration", maxLifetimeDaysVal)
 	cfg.LoginMaxLifetime, err = gtime.ParseDuration(maxLifetimeDurationVal)
@@ -1115,9 +1180,12 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	users := iniFile.Section("users")
 	AllowUserSignUp = users.Key("allow_sign_up").MustBool(true)
 	AllowUserOrgCreate = users.Key("allow_org_create").MustBool(true)
-	AutoAssignOrg = users.Key("auto_assign_org").MustBool(true)
-	AutoAssignOrgId = users.Key("auto_assign_org_id").MustInt(1)
-	AutoAssignOrgRole = users.Key("auto_assign_org_role").In("Editor", []string{"Editor", "Admin", "Viewer"})
+	cfg.AutoAssignOrg = users.Key("auto_assign_org").MustBool(true)
+	AutoAssignOrg = cfg.AutoAssignOrg
+	cfg.AutoAssignOrgId = users.Key("auto_assign_org_id").MustInt(1)
+	AutoAssignOrgId = cfg.AutoAssignOrgId
+	cfg.AutoAssignOrgRole = users.Key("auto_assign_org_role").In("Editor", []string{"Editor", "Admin", "Viewer"})
+	AutoAssignOrgRole = cfg.AutoAssignOrgRole
 	VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
 
 	LoginHint = valueAsString(users, "login_hint", "")
@@ -1145,7 +1213,9 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	hiddenUsers := users.Key("hidden_users").MustString("")
 	for _, user := range strings.Split(hiddenUsers, ",") {
 		user = strings.TrimSpace(user)
-		cfg.HiddenUsers[user] = struct{}{}
+		if user != "" {
+			cfg.HiddenUsers[user] = struct{}{}
+		}
 	}
 
 	return nil
@@ -1207,7 +1277,7 @@ func readSnapshotsSettings(cfg *Cfg, iniFile *ini.File) error {
 	return nil
 }
 
-func readServerSettings(iniFile *ini.File, cfg *Cfg) error {
+func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 	server := iniFile.Section("server")
 	var err error
 	AppUrl, AppSubUrl, err = parseAppUrlAndSubUrl(server)
@@ -1219,8 +1289,8 @@ func readServerSettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.AppURL = AppUrl
 	cfg.AppSubURL = AppSubUrl
 	cfg.ServeFromSubPath = ServeFromSubPath
-
 	cfg.Protocol = HTTPScheme
+
 	protocolStr := valueAsString(server, "protocol", "http")
 
 	if protocolStr == "https" {
@@ -1253,5 +1323,35 @@ func readServerSettings(iniFile *ini.File, cfg *Cfg) error {
 		return err
 	}
 
+	cdnURL := valueAsString(server, "cdn_url", "")
+	if cdnURL != "" {
+		cfg.CDNRootURL, err = url.Parse(cdnURL)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
+}
+
+// GetContentDeliveryURL returns full content delivery URL with /<edition>/<version> added to URL
+func (cfg *Cfg) GetContentDeliveryURL(prefix string) string {
+	if cfg.CDNRootURL != nil {
+		url := *cfg.CDNRootURL
+		preReleaseFolder := ""
+
+		if strings.Contains(cfg.BuildVersion, "pre") || strings.Contains(cfg.BuildVersion, "alpha") {
+			preReleaseFolder = "pre-releases"
+		}
+
+		url.Path = path.Join(url.Path, prefix, preReleaseFolder, cfg.BuildVersion)
+		return url.String() + "/"
+	}
+
+	return ""
+}
+
+func (cfg *Cfg) readDataSourcesSettings() {
+	datasources := cfg.Raw.Section("datasources")
+	cfg.DataSourceLimit = datasources.Key("datasource_limit").MustInt(5000)
 }

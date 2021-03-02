@@ -181,6 +181,15 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
         />
       </FormLabel>
     </div>
+    <PromExemplarField
+      onChange={[MockFunction]}
+      query={
+        Object {
+          "expr": "",
+          "refId": "A",
+        }
+      }
+    />
   </div>
 </div>
 `;

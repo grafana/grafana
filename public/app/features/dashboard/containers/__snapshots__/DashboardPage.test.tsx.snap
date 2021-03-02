@@ -42,6 +42,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
           "canSave": true,
           "canShare": true,
           "canStar": true,
+          "hasUnsavedFolderChange": false,
           "showSettings": true,
         },
         "originalTemplating": Array [],
@@ -105,14 +106,8 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
     className="dashboard-scroll"
   >
     <CustomScrollbar
-      autoHeightMax="100%"
       autoHeightMin="100%"
-      autoHide={false}
-      autoHideDuration={200}
-      autoHideTimeout={200}
-      className="custom-scrollbar--page"
       hideHorizontalTrack={true}
-      hideTracksWhenNotNeeded={false}
       setScrollTop={[Function]}
       updateAfterMountMs={500}
     >
@@ -169,6 +164,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                 "canSave": true,
                 "canShare": true,
                 "canStar": true,
+                "hasUnsavedFolderChange": false,
                 "showSettings": true,
               },
               "originalTemplating": Array [],
@@ -264,6 +260,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                 "canSave": true,
                 "canShare": true,
                 "canStar": true,
+                "hasUnsavedFolderChange": false,
                 "showSettings": true,
               },
               "originalTemplating": Array [],
@@ -414,6 +411,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
           "canSave": true,
           "canShare": true,
           "canStar": true,
+          "hasUnsavedFolderChange": false,
           "showSettings": true,
         },
         "originalTemplating": Array [],
@@ -477,14 +475,8 @@ exports[`DashboardPage When dashboard has editview url state should render setti
     className="dashboard-scroll"
   >
     <CustomScrollbar
-      autoHeightMax="100%"
       autoHeightMin="100%"
-      autoHide={false}
-      autoHideDuration={200}
-      autoHideTimeout={200}
-      className="custom-scrollbar--page"
       hideHorizontalTrack={true}
-      hideTracksWhenNotNeeded={false}
       setScrollTop={[Function]}
       updateAfterMountMs={500}
     >
@@ -541,6 +533,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                 "canSave": true,
                 "canShare": true,
                 "canStar": true,
+                "hasUnsavedFolderChange": false,
                 "showSettings": true,
               },
               "originalTemplating": Array [],
@@ -636,6 +629,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                 "canSave": true,
                 "canShare": true,
                 "canStar": true,
+                "hasUnsavedFolderChange": false,
                 "showSettings": true,
               },
               "originalTemplating": Array [],
@@ -736,6 +730,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
           "canSave": true,
           "canShare": true,
           "canStar": true,
+          "hasUnsavedFolderChange": false,
           "showSettings": true,
         },
         "originalTemplating": Array [],
@@ -792,6 +787,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
         "version": 0,
       }
     }
+    editview="settings"
     updateLocation={[MockFunction]}
   />
 </div>

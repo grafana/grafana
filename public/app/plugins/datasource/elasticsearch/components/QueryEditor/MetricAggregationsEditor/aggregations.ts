@@ -4,6 +4,7 @@ export type PipelineMetricAggregationType =
   | 'moving_avg'
   | 'moving_fn'
   | 'derivative'
+  | 'serial_diff'
   | 'cumulative_sum'
   | 'bucket_script';
 
@@ -48,11 +49,11 @@ export interface MetricAggregationWithInlineScript extends BaseMetricAggregation
   };
 }
 
-interface Count extends BaseMetricAggregation {
+export interface Count extends BaseMetricAggregation {
   type: 'count';
 }
 
-interface Average
+export interface Average
   extends MetricAggregationWithField,
     MetricAggregationWithMissingSupport,
     MetricAggregationWithInlineScript {
@@ -63,7 +64,7 @@ interface Average
   };
 }
 
-interface Sum extends MetricAggregationWithField, MetricAggregationWithInlineScript {
+export interface Sum extends MetricAggregationWithField, MetricAggregationWithInlineScript {
   type: 'sum';
   settings?: {
     script?: string;
@@ -71,7 +72,7 @@ interface Sum extends MetricAggregationWithField, MetricAggregationWithInlineScr
   };
 }
 
-interface Max extends MetricAggregationWithField, MetricAggregationWithInlineScript {
+export interface Max extends MetricAggregationWithField, MetricAggregationWithInlineScript {
   type: 'max';
   settings?: {
     script?: string;
@@ -79,7 +80,7 @@ interface Max extends MetricAggregationWithField, MetricAggregationWithInlineScr
   };
 }
 
-interface Min extends MetricAggregationWithField, MetricAggregationWithInlineScript {
+export interface Min extends MetricAggregationWithField, MetricAggregationWithInlineScript {
   type: 'min';
   settings?: {
     script?: string;
@@ -113,7 +114,7 @@ export interface ExtendedStats extends MetricAggregationWithField, MetricAggrega
   };
 }
 
-interface Percentiles extends MetricAggregationWithField, MetricAggregationWithInlineScript {
+export interface Percentiles extends MetricAggregationWithField, MetricAggregationWithInlineScript {
   type: 'percentiles';
   settings?: {
     percents?: string[];
@@ -130,29 +131,30 @@ export interface UniqueCount extends MetricAggregationWithField {
   };
 }
 
-interface RawDocument extends BaseMetricAggregation {
+export interface RawDocument extends BaseMetricAggregation {
   type: 'raw_document';
   settings?: {
     size?: string;
   };
 }
 
-interface RawData extends BaseMetricAggregation {
+export interface RawData extends BaseMetricAggregation {
   type: 'raw_data';
   settings?: {
     size?: string;
   };
 }
 
-interface Logs extends BaseMetricAggregation {
+export interface Logs extends BaseMetricAggregation {
   type: 'logs';
 }
 
 export interface BasePipelineMetricAggregation extends MetricAggregationWithField {
   type: PipelineMetricAggregationType;
+  pipelineAgg?: string;
 }
 
-interface PipelineMetricAggregationWithMultipleBucketPaths extends BaseMetricAggregation {
+export interface PipelineMetricAggregationWithMultipleBucketPaths extends BaseMetricAggregation {
   type: PipelineMetricAggregationType;
   pipelineVariables?: PipelineVariable[];
 }
@@ -164,26 +166,27 @@ export interface MovingAverageModelOption {
   value: MovingAverageModel;
 }
 
-interface BaseMovingAverageModelSettings {
+export interface BaseMovingAverageModelSettings {
   model: MovingAverageModel;
   window: number;
   predict: number;
 }
 
-interface MovingAverageSimpleModelSettings extends BaseMovingAverageModelSettings {
+export interface MovingAverageSimpleModelSettings extends BaseMovingAverageModelSettings {
   model: 'simple';
 }
 
-interface MovingAverageLinearModelSettings extends BaseMovingAverageModelSettings {
+export interface MovingAverageLinearModelSettings extends BaseMovingAverageModelSettings {
   model: 'linear';
 }
 
-interface MovingAverageEWMAModelSettings extends BaseMovingAverageModelSettings {
+export interface MovingAverageEWMAModelSettings extends BaseMovingAverageModelSettings {
   model: 'ewma';
   alpha: number;
   minimize: boolean;
 }
-interface MovingAverageHoltModelSettings extends BaseMovingAverageModelSettings {
+
+export interface MovingAverageHoltModelSettings extends BaseMovingAverageModelSettings {
   model: 'holt';
   settings: {
     alpha?: number;
@@ -191,7 +194,8 @@ interface MovingAverageHoltModelSettings extends BaseMovingAverageModelSettings 
   };
   minimize: boolean;
 }
-interface MovingAverageHoltWintersModelSettings extends BaseMovingAverageModelSettings {
+
+export interface MovingAverageHoltWintersModelSettings extends BaseMovingAverageModelSettings {
   model: 'holt_winters';
   settings: {
     alpha?: number;
@@ -230,7 +234,7 @@ export const isHoltWintersMovingAverage = (
   metric: MovingAverage | MovingAverage<'holt_winters'>
 ): metric is MovingAverage<'holt_winters'> => metric.settings?.model === 'holt_winters';
 
-interface MovingFunction extends BasePipelineMetricAggregation {
+export interface MovingFunction extends BasePipelineMetricAggregation {
   type: 'moving_fn';
   settings?: {
     window?: string;
@@ -246,7 +250,14 @@ export interface Derivative extends BasePipelineMetricAggregation {
   };
 }
 
-interface CumulativeSum extends BasePipelineMetricAggregation {
+export interface SerialDiff extends BasePipelineMetricAggregation {
+  type: 'serial_diff';
+  settings?: {
+    lag?: number;
+  };
+}
+
+export interface CumulativeSum extends BasePipelineMetricAggregation {
   type: 'cumulative_sum';
   settings?: {
     format?: string;
@@ -266,6 +277,7 @@ export type MetricAggregationWithSettings =
   | BucketScript
   | CumulativeSum
   | Derivative
+  | SerialDiff
   | RawData
   | RawDocument
   | UniqueCount
@@ -335,6 +347,7 @@ export const METRIC_AGGREGATION_TYPES = [
   'moving_avg',
   'moving_fn',
   'derivative',
+  'serial_diff',
   'cumulative_sum',
   'bucket_script',
 ];

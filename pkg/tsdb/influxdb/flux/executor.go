@@ -27,7 +27,7 @@ func executeQuery(ctx context.Context, query queryModel, runner queryRunner, max
 		glog.Warn("Flux query failed", "err", err, "query", flux)
 		dr.Error = err
 	} else {
-		dr = readDataFrames(tables, int(float64(query.MaxDataPoints)*1.5), maxSeries)
+		dr = readDataFrames(tables, int(float64(query.MaxDataPoints)*2), maxSeries)
 	}
 
 	// Make sure there is at least one frame
@@ -85,7 +85,9 @@ func readDataFrames(result *api.QueryTableResult, maxPoints int, maxSeries int) 
 		}
 	}
 
-	// Attach any errors (may be null)
-	dr.Error = result.Err()
+	// result.Err() is probably more important then the other errors
+	if result.Err() != nil {
+		dr.Error = result.Err()
+	}
 	return dr
 }

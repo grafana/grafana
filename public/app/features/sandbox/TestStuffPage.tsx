@@ -1,11 +1,11 @@
 import { ApplyFieldOverrideOptions, DataTransformerConfig, dateMath, FieldColorModeId, PanelData } from '@grafana/data';
-import { GraphNG, Table } from '@grafana/ui';
+import { GraphNG, LegendDisplayMode, Table } from '@grafana/ui';
 import { config } from 'app/core/config';
 import React, { FC, useMemo, useState } from 'react';
 import { useObservable } from 'react-use';
 import { QueryGroup } from '../query/components/QueryGroup';
-import { QueryGroupOptions } from '../query/components/QueryGroupOptions';
 import { PanelQueryRunner } from '../query/state/PanelQueryRunner';
+import { QueryGroupOptions } from 'app/types';
 
 interface State {
   queryRunner: PanelQueryRunner;
@@ -54,7 +54,14 @@ export const TestStuffPage: FC = () => {
 
       {data && (
         <div style={{ padding: '16px' }}>
-          <GraphNG width={1200} height={300} data={data.series} timeRange={data.timeRange} timeZone="browser" />
+          <GraphNG
+            width={1200}
+            height={300}
+            data={data.series}
+            legend={{ displayMode: LegendDisplayMode.List, placement: 'bottom', calcs: [] }}
+            timeRange={data.timeRange}
+            timeZone="browser"
+          />
           <hr></hr>
           <Table data={data.series[0]} width={1200} height={300} />
         </div>

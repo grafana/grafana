@@ -1,4 +1,4 @@
-import { BusEventBase, eventFactory, TimeRange } from '@grafana/data';
+import { BusEventBase, BusEventWithPayload, eventFactory, GrafanaTheme, TimeRange } from '@grafana/data';
 import { DashboardModel } from 'app/features/dashboard/state';
 
 /**
@@ -23,7 +23,7 @@ export interface ShowModalPayload {
 }
 
 export interface ShowModalReactPayload {
-  component: React.ComponentType;
+  component: React.ComponentType<any>;
   props?: any;
 }
 
@@ -147,4 +147,16 @@ export class PanelOptionsChangedEvent extends BusEventBase {
  */
 export class DashboardPanelsChangedEvent extends BusEventBase {
   static type = 'dashboard-panels-changed';
+}
+
+export class RefreshEvent extends BusEventBase {
+  static type = 'refresh';
+}
+
+export class RenderEvent extends BusEventBase {
+  static type = 'render';
+}
+
+export class ThemeChangedEvent extends BusEventWithPayload<GrafanaTheme> {
+  static type = 'theme-changed';
 }

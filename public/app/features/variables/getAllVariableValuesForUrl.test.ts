@@ -17,7 +17,7 @@ describe('getAllVariableValuesForUrl', () => {
             type: 'query',
             name: 'test',
             current: { value: ['val1', 'val2'] },
-            getValueForUrl: function() {
+            getValueForUrl: function () {
               return this.current.value;
             },
           },
@@ -39,7 +39,7 @@ describe('getAllVariableValuesForUrl', () => {
             name: 'test',
             skipUrlSync: true,
             current: { value: 'value' },
-            getValueForUrl: function() {
+            getValueForUrl: function () {
               return this.current.value;
             },
           },
@@ -62,7 +62,7 @@ describe('getAllVariableValuesForUrl', () => {
             name: 'test',
             skipUrlSync: true,
             current: { value: ['val1', 'val2'] },
-            getValueForUrl: function() {
+            getValueForUrl: function () {
               return this.current.value;
             },
           },

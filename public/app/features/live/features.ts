@@ -26,7 +26,7 @@ export function registerLiveFeatures() {
     name: 'testdata',
     support: {
       getChannelConfig: (path: string) => {
-        return channels.find(c => c.path === path);
+        return channels.find((c) => c.path === path);
       },
       getSupportedPaths: () => channels,
     },

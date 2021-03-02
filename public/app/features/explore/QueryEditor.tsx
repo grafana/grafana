@@ -88,6 +88,6 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
   }
 
   render() {
-    return <div className="gf-form-query" ref={element => (this.element = element)} style={{ width: '100%' }} />;
+    return <div className="gf-form-query" ref={(element) => (this.element = element)} style={{ width: '100%' }} />;
   }
 }

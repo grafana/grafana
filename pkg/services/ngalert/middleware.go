@@ -5,16 +5,12 @@ import (
 )
 
 func (ng *AlertNG) validateOrgAlertDefinition(c *models.ReqContext) {
-	id := c.ParamsInt64(":alertDefinitionId")
-	query := getAlertDefinitionByIDQuery{ID: id}
+	uid := c.ParamsEscape(":alertDefinitionUID")
 
-	if err := ng.getAlertDefinitionByID(&query); err != nil {
+	query := getAlertDefinitionByUIDQuery{UID: uid, OrgID: c.SignedInUser.OrgId}
+
+	if err := ng.getAlertDefinitionByUID(&query); err != nil {
 		c.JsonApiErr(404, "Alert definition not found", nil)
-		return
-	}
-
-	if c.OrgId != query.Result.OrgId {
-		c.JsonApiErr(403, "You are not allowed to edit/view alert definition", nil)
 		return
 	}
 }

@@ -46,7 +46,7 @@ export class PostgresDatasource {
       return value;
     }
 
-    const quotedValues = _.map(value, v => {
+    const quotedValues = _.map(value, (v) => {
       return this.queryModel.quoteLiteral(v);
     });
     return quotedValues.join(',');
@@ -58,7 +58,7 @@ export class PostgresDatasource {
   ): PostgresQueryForInterpolation[] {
     let expandedQueries = queries;
     if (queries && queries.length > 0) {
-      expandedQueries = queries.map(query => {
+      expandedQueries = queries.map((query) => {
         const expandedQuery = {
           ...query,
           datasource: this.name,
@@ -72,9 +72,9 @@ export class PostgresDatasource {
   }
 
   query(options: any): Observable<DataQueryResponse> {
-    const queries = _.filter(options.targets, target => {
+    const queries = _.filter(options.targets, (target) => {
       return target.hide !== true;
-    }).map(target => {
+    }).map((target) => {
       const queryModel = new PostgresQuery(target, this.templateSrv, options.scopedVars);
 
       return {

@@ -89,7 +89,7 @@ export class OpenTsQueryCtrl extends QueryCtrl {
   }
 
   getTextValues(metricFindResult: any) {
-    return _.map(metricFindResult, value => {
+    return _.map(metricFindResult, (value) => {
       return textUtil.escapeHtml(value.text);
     });
   }
