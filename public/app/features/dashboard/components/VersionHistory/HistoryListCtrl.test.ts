@@ -2,7 +2,7 @@ import _ from 'lodash';
 import { IScope } from 'angular';
 
 import { HistoryListCtrl } from './HistoryListCtrl';
-import { compare, restore, versions } from './__mocks__/history';
+import { compare, restore, versions } from './__mocks__/dashboardHistoryMocks';
 import { CoreEvents } from 'app/types';
 
 describe('HistoryListCtrl', () => {

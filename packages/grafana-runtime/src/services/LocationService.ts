@@ -1,7 +1,6 @@
 import { locationUtil } from '@grafana/data';
 import * as H from 'history';
 import { LocationUpdate } from './LocationSrv';
-import createMemoryHistory from 'history/createMemoryHistory';
 import { createLogger } from '@grafana/ui';
 
 export interface LocationService {
@@ -27,7 +26,7 @@ class HistoryWrapper implements LocationService {
     // If no history passed create an in memory one if being called from test
     this.history =
       history || process.env.NODE_ENV === 'test'
-        ? createMemoryHistory({ initialEntries: ['/'] })
+        ? H.createMemoryHistory({ initialEntries: ['/'] })
         : H.createBrowserHistory();
 
     this.history.listen((update) => {

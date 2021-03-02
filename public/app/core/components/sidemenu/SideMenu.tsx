@@ -24,7 +24,7 @@ export const SideMenu: FC = React.memo(() => {
   }
 
   return (
-    <div className="sidemenu">
+    <div className="sidemenu" data-testid="sidemenu">
       <a href={homeUrl} className="sidemenu__logo" key="logo">
         <Branding.MenuLogo />
       </a>
