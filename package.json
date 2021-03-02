@@ -200,6 +200,7 @@
   },
   "dependencies": {
     "@emotion/core": "10.0.27",
+    "@grafana/aws-sdk": "0.0.13",
     "@grafana/slate-react": "0.22.9-grafana",
     "@popperjs/core": "2.5.4",
     "@reduxjs/toolkit": "1.5.0",

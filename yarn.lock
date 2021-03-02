@@ -3136,6 +3136,18 @@
     "@emotion/sheet" "0.9.4"
     "@emotion/utils" "0.11.3"
 
+"@emotion/core@^10.0.27", "@emotion/core@^10.1.1":
+  version "10.1.1"
+  resolved "https://registry.yarnpkg.com/@emotion/core/-/core-10.1.1.tgz#c956c1365f2f2481960064bcb8c4732e5fb612c3"
+  integrity sha512-ZMLG6qpXR8x031NXD8HJqugy/AZSkAuMxxqB46pmAR7ze47MhNJ56cdoX243QPZdGctrdfo+s08yZTiwaUcRKA==
+  dependencies:
+    "@babel/runtime" "^7.5.5"
+    "@emotion/cache" "^10.0.27"
+    "@emotion/css" "^10.0.27"
+    "@emotion/serialize" "^0.11.15"
+    "@emotion/sheet" "0.9.4"
+    "@emotion/utils" "0.11.3"
+
 "@emotion/core@^10.0.9":
   version "10.0.21"
   resolved "https://registry.yarnpkg.com/@emotion/core/-/core-10.0.21.tgz#2e8398d2b92fd90d4ed6ac4d0b66214971de3458"
@@ -3147,18 +3159,6 @@
     "@emotion/serialize" "^0.11.10"
     "@emotion/sheet" "0.9.3"
     "@emotion/utils" "0.11.2"
-
-"@emotion/core@^10.1.1":
-  version "10.1.1"
-  resolved "https://registry.yarnpkg.com/@emotion/core/-/core-10.1.1.tgz#c956c1365f2f2481960064bcb8c4732e5fb612c3"
-  integrity sha512-ZMLG6qpXR8x031NXD8HJqugy/AZSkAuMxxqB46pmAR7ze47MhNJ56cdoX243QPZdGctrdfo+s08yZTiwaUcRKA==
-  dependencies:
-    "@babel/runtime" "^7.5.5"
-    "@emotion/cache" "^10.0.27"
-    "@emotion/css" "^10.0.27"
-    "@emotion/serialize" "^0.11.15"
-    "@emotion/sheet" "0.9.4"
-    "@emotion/utils" "0.11.3"
 
 "@emotion/css@^10.0.14", "@emotion/css@^10.0.9":
   version "10.0.14"
@@ -3431,6 +3431,40 @@
     source-map "~0.6.1"
     typescript "~3.9.7"
 
+"@grafana/aws-sdk@0.0.13":
+  version "0.0.13"
+  resolved "https://npm.pkg.github.com/download/@grafana/aws-sdk/0.0.13/a97bf135a14d4863aa5860ae3be5ffe682684017eb6b657f671f53ea2a45307d#19cbd80d4a6b84651d98905984b28eaa516f6b63"
+  integrity sha1-GcvYDUprhGUdmJBZhLKOqlFva2M=
+  dependencies:
+    "@grafana/data" "7.5.0-pre.0-8379f36a68"
+    "@grafana/runtime" "7.5.0-pre.0-8379f36a68"
+    "@grafana/ui" "7.5.0-pre.0-8379f36a68"
+
+"@grafana/data@7.5.0-pre.0-8379f36a68":
+  version "7.5.0-pre.0-8379f36a68"
+  resolved "https://npm.pkg.github.com/download/@grafana/data/7.5.0-pre.0-8379f36a68/1cd161fc0f6915e531d42e4a53b12e9eebc29ed905c979c036c5e028410cd5f3#a78d8d4afc1a249358e9398ca716979435ef22fc"
+  integrity sha1-p42NSvwaJJNY6TmMpxaXlDXvIvw=
+  dependencies:
+    "@braintree/sanitize-url" "4.0.0"
+    "@types/d3-interpolate" "^1.3.1"
+    apache-arrow "0.16.0"
+    eventemitter3 "4.0.7"
+    lodash "4.17.20"
+    marked "1.2.2"
+    rxjs "6.6.3"
+    xss "1.0.6"
+
+"@grafana/e2e-selectors@7.5.0-pre.0-8379f36a68":
+  version "7.5.0-pre.0-8379f36a68"
+  resolved "https://npm.pkg.github.com/download/@grafana/e2e-selectors/7.5.0-pre.0-8379f36a68/559997a9fbdabe8ee86daf797c681d3f17e619da8e5d7e38407e8428bc2f4fc7#4a5402d9c23d517aea0cc70a40d3b0f93704ea3c"
+  integrity sha1-SlQC2cI9UXrqDMcKQNOw+TcE6jw=
+  dependencies:
+    "@grafana/tsconfig" "^1.0.0-rc1"
+    commander "5.0.0"
+    execa "4.0.0"
+    typescript "4.1.2"
+    yaml "^1.8.3"
+
 "@grafana/eslint-config@2.2.1":
   version "2.2.1"
   resolved "https://registry.yarnpkg.com/@grafana/eslint-config/-/eslint-config-2.2.1.tgz#a7c6dd57ae0011fb2535a688e1e17969e621d21a"
@@ -3446,6 +3480,16 @@
     eslint-plugin-react-hooks "4.2.0"
     prettier "2.2.1"
     typescript "4.1.3"
+
+"@grafana/runtime@7.5.0-pre.0-8379f36a68":
+  version "7.5.0-pre.0-8379f36a68"
+  resolved "https://npm.pkg.github.com/download/@grafana/runtime/7.5.0-pre.0-8379f36a68/bce42996da932d28f97d3ac7e0e3c886f20da049bd2f07f71ff6edfa0bb7d2b2#b78d59d9f616de584a0ea391268400e5a7f694b1"
+  integrity sha1-t41Z2fYW3lhKDqORJoQA5af2lLE=
+  dependencies:
+    "@grafana/data" "7.5.0-pre.0-8379f36a68"
+    "@grafana/ui" "7.5.0-pre.0-8379f36a68"
+    systemjs "0.20.19"
+    systemjs-plugin-css "0.1.37"
 
 "@grafana/slate-react@0.22.9-grafana":
   version "0.22.9-grafana"
@@ -3473,6 +3517,64 @@
   version "1.0.0-rc1"
   resolved "https://registry.yarnpkg.com/@grafana/tsconfig/-/tsconfig-1.0.0-rc1.tgz#d07ea16755a50cae21000113f30546b61647a200"
   integrity sha512-nucKPGyzlSKYSiJk5RA8GzMdVWhdYNdF+Hh65AXxjD9PlY69JKr5wANj8bVdQboag6dgg0BFKqgKPyY+YtV4Iw==
+
+"@grafana/ui@7.5.0-pre.0-8379f36a68":
+  version "7.5.0-pre.0-8379f36a68"
+  resolved "https://npm.pkg.github.com/download/@grafana/ui/7.5.0-pre.0-8379f36a68/641be5400d1cbc780c89d722ac9a57be77031345efea8c9c436b1159bbd582f4#04e12c3103a8fb2289ef3a97b63cbaa127b9fd33"
+  integrity sha1-BOEsMQOo+yKJ7zqXtjy6oSe5/TM=
+  dependencies:
+    "@emotion/core" "^10.0.27"
+    "@grafana/data" "7.5.0-pre.0-8379f36a68"
+    "@grafana/e2e-selectors" "7.5.0-pre.0-8379f36a68"
+    "@grafana/slate-react" "0.22.9-grafana"
+    "@grafana/tsconfig" "^1.0.0-rc1"
+    "@iconscout/react-unicons" "1.1.4"
+    "@popperjs/core" "2.5.4"
+    "@sentry/browser" "5.25.0"
+    "@testing-library/jest-dom" "5.11.9"
+    "@torkelo/react-select" "3.0.8"
+    "@types/hoist-non-react-statics" "3.3.1"
+    "@types/react-beautiful-dnd" "12.1.2"
+    "@types/react-color" "3.0.1"
+    "@types/react-select" "3.0.8"
+    "@types/react-table" "7.0.12"
+    "@types/slate" "0.47.1"
+    "@types/slate-react" "0.22.5"
+    "@visx/event" "1.3.0"
+    "@visx/gradient" "1.0.0"
+    "@visx/scale" "1.4.0"
+    "@visx/shape" "1.4.0"
+    "@visx/tooltip" "1.3.0"
+    classnames "2.2.6"
+    d3 "5.15.0"
+    emotion "10.0.27"
+    hoist-non-react-statics "3.3.2"
+    immutable "3.8.2"
+    jquery "3.5.1"
+    lodash "4.17.20"
+    moment "2.24.0"
+    monaco-editor "0.20.0"
+    papaparse "5.3.0"
+    rc-cascader "1.0.1"
+    rc-drawer "3.1.3"
+    rc-slider "9.6.4"
+    rc-time-picker "^3.7.3"
+    react "17.0.1"
+    react-beautiful-dnd "13.0.0"
+    react-calendar "2.19.2"
+    react-color "2.18.0"
+    react-custom-scrollbars "4.2.1"
+    react-dom "17.0.1"
+    react-highlight-words "0.16.0"
+    react-hook-form "5.1.3"
+    react-monaco-editor "0.36.0"
+    react-popper "2.2.4"
+    react-storybook-addon-props-combinations "1.1.0"
+    react-table "7.0.0"
+    react-transition-group "4.4.1"
+    slate "0.47.8"
+    tinycolor2 "1.4.1"
+    uplot "1.6.4"
 
 "@icons/material@^0.2.4":
   version "0.2.4"
@@ -17592,6 +17694,11 @@ lodash.uniq@4.5.0, lodash.uniq@^4.5.0:
   resolved "https://registry.yarnpkg.com/lodash.uniq/-/lodash.uniq-4.5.0.tgz#d0225373aeb652adc1bc82e4945339a842754773"
   integrity sha1-0CJTc662Uq3BvILklFM5qEJ1R3M=
 
+lodash@4.17.20:
+  version "4.17.20"
+  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.20.tgz#b44a9b6297bcb698f1c51a3545a2b3b368d59c52"
+  integrity sha512-PlhdFcillOINfeV7Ni6oF1TAEayyZBoZ8bcshTHqOYJYlrqzRK5hagpagky5o4HfCzzd1TRkXPMFq6cKk9rGmA==
+
 lodash@4.17.21, lodash@^4, lodash@^4.0.0, lodash@^4.0.1, lodash@^4.1.1, lodash@^4.15.0, lodash@^4.17.10, lodash@^4.17.11, lodash@^4.17.12, lodash@^4.17.13, lodash@^4.17.14, lodash@^4.17.15, lodash@^4.17.19, lodash@^4.17.20, lodash@^4.17.3, lodash@^4.17.4, lodash@^4.17.5, lodash@^4.2.1, lodash@^4.3.0, lodash@~4.17.10, lodash@~4.17.15:
   version "4.17.21"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.21.tgz#679591c564c3bffaae8454cf0b3df370c3d6911c"
@@ -17866,6 +17973,11 @@ markdown-to-jsx@^6.11.4:
   dependencies:
     prop-types "^15.6.2"
     unquote "^1.1.0"
+
+marked@1.2.2:
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/marked/-/marked-1.2.2.tgz#5d77ffb789c4cb0ae828bfe76250f7140b123f70"
+  integrity sha512-5jjKHVl/FPo0Z6ocP3zYhKiJLzkwJAw4CZoLjv57FkvbUuwOX4LIBBGGcXjAY6ATcd1q9B8UTj5T9Umauj0QYQ==
 
 marked@2.0.1:
   version "2.0.1"
