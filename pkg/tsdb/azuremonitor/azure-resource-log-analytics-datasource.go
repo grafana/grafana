@@ -281,17 +281,9 @@ func (e *AzureResourceLogAnalyticsDatasource) unmarshalResponse(res *http.Respon
 	return data, nil
 }
 
-// ResourceLogAnalyticsMeta is a type for the a Frame's Meta's Custom property.
-type ResourceLogAnalyticsMeta struct {
-	ColumnTypes  []string `json:"azureColumnTypes"`
-	Subscription string   `json:"subscription"`
-	Resource     string   `json:"resource"`
-	EncodedQuery []byte   `json:"encodedQuery"` // EncodedQuery is used for deep links.
-}
-
 func setAdditionalResourceFrameMeta(frame *data.Frame, query, subscriptionID, resource string) error {
 	frame.Meta.ExecutedQueryString = query
-	la, ok := frame.Meta.Custom.(*ResourceLogAnalyticsMeta)
+	la, ok := frame.Meta.Custom.(*LogAnalyticsMeta)
 	if !ok {
 		return fmt.Errorf("unexpected type found for frame's custom metadata")
 	}

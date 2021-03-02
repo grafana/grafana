@@ -295,11 +295,13 @@ type LogAnalyticsMeta struct {
 	ColumnTypes  []string `json:"azureColumnTypes"`
 	Subscription string   `json:"subscription"`
 	Workspace    string   `json:"workspace"`
+	Resource     string   `json:"resource"`
 	EncodedQuery []byte   `json:"encodedQuery"` // EncodedQuery is used for deep links.
 }
 
 func setAdditionalFrameMeta(frame *data.Frame, query, subscriptionID, workspace string) error {
 	frame.Meta.ExecutedQueryString = query
+	fmt.Println("workspace", workspace)
 	la, ok := frame.Meta.Custom.(*LogAnalyticsMeta)
 	if !ok {
 		return fmt.Errorf("unexpected type found for frame's custom metadata")
