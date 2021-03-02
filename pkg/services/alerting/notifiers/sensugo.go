@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -111,6 +112,11 @@ func (sn *SensuGoNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	var namespace string
 
+	customData := triggMetrString
+	for _, evt := range evalContext.EvalMatches {
+		customData += fmt.Sprintf("%s: %v\n", evt.Metric, evt.Value)
+	}
+
 	bodyJSON := simplejson.New()
 	// Sensu Go alerts require an entity and a check. We set it to the user-specified
 	// value (optional), else we fallback and use the grafana rule anme  and ruleID.
@@ -134,12 +140,14 @@ func (sn *SensuGoNotifier) Notify(evalContext *alerting.EvalContext) error {
 		bodyJSON.SetPath([]string{"entity", "metadata", "namespace"}, "default")
 		namespace = "default"
 	}
-	// Sensu Go needs check output
+	// Sensu Go needs check output, triggered metrics as default value
 	if evalContext.Rule.Message != "" {
 		bodyJSON.SetPath([]string{"check", "output"}, evalContext.Rule.Message)
 	} else {
-		bodyJSON.SetPath([]string{"check", "output"}, "Grafana Metric Condition Met")
+		bodyJSON.SetPath([]string{"check", "output"}, customData)
 	}
+	// Add timestamp detail in event
+	bodyJSON.SetPath([]string{"check", "issued"}, time.Now().Unix())
 	// Sensu GO requires that the check portion of the event have an interval
 	bodyJSON.SetPath([]string{"check", "interval"}, 86400)
 

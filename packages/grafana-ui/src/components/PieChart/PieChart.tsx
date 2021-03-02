@@ -13,16 +13,28 @@ import { VizLegend, VizLegendItem } from '..';
 import { VizLayout } from '../VizLayout/VizLayout';
 import { LegendDisplayMode, VizLegendOptions } from '../VizLegend/types';
 
+export enum PieChartLabels {
+  Name = 'name',
+  Value = 'value',
+  Percent = 'percent',
+}
+
+export enum PieChartLegendValues {
+  Value = 'value',
+  Percent = 'percent',
+}
+
 interface SvgProps {
   height: number;
   width: number;
   values: DisplayValue[];
   pieType: PieChartType;
-  labelOptions?: PieChartLabelOptions;
+  displayLabels?: PieChartLabels[];
   useGradients?: boolean;
+  onSeriesColorChange?: (label: string, color: string) => void;
 }
 export interface Props extends SvgProps {
-  legendOptions?: VizLegendOptions;
+  legendOptions?: PieChartLegendOptions;
 }
 
 export enum PieChartType {
@@ -30,34 +42,68 @@ export enum PieChartType {
   Donut = 'donut',
 }
 
-export interface PieChartLabelOptions {
-  showName?: boolean;
-  showValue?: boolean;
-  showPercent?: boolean;
+export interface PieChartLegendOptions extends VizLegendOptions {
+  values: PieChartLegendValues[];
 }
 
-const defaultLegendOptions: VizLegendOptions = {
+const defaultLegendOptions: PieChartLegendOptions = {
   displayMode: LegendDisplayMode.List,
   placement: 'right',
   calcs: [],
+  values: [PieChartLegendValues.Percent],
 };
 
-export const PieChart: FC<Props> = ({ values, legendOptions = defaultLegendOptions, width, height, ...restProps }) => {
-  const getLegend = (values: DisplayValue[], legendOptions: VizLegendOptions) => {
+export const PieChart: FC<Props> = ({
+  values,
+  legendOptions = defaultLegendOptions,
+  onSeriesColorChange,
+  width,
+  height,
+  ...restProps
+}) => {
+  const getLegend = (values: DisplayValue[], legendOptions: PieChartLegendOptions) => {
     if (legendOptions.displayMode === LegendDisplayMode.Hidden) {
       return undefined;
     }
+    const total = values.reduce((acc, item) => item.numeric + acc, 0);
 
     const legendItems = values.map<VizLegendItem>((value) => {
       return {
         label: value.title ?? '',
         color: value.color ?? FALLBACK_COLOR,
         yAxis: 1,
+        getDisplayValues: () => {
+          const valuesToShow = legendOptions.values ?? [];
+          let displayValues = [];
+
+          if (valuesToShow.includes(PieChartLegendValues.Value)) {
+            displayValues.push({ numeric: value.numeric, text: formattedValueToString(value), title: 'Value' });
+          }
+
+          if (valuesToShow.includes(PieChartLegendValues.Percent)) {
+            const fractionOfTotal = value.numeric / total;
+            const percentOfTotal = fractionOfTotal * 100;
+
+            displayValues.push({
+              numeric: fractionOfTotal,
+              percent: percentOfTotal,
+              text: percentOfTotal.toFixed(0) + '%',
+              title: valuesToShow.length > 1 ? 'Percent' : undefined,
+            });
+          }
+
+          return displayValues;
+        },
       };
     });
 
     return (
-      <VizLegend items={legendItems} placement={legendOptions.placement} displayMode={legendOptions.displayMode} />
+      <VizLegend
+        items={legendItems}
+        onSeriesColorChange={onSeriesColorChange}
+        placement={legendOptions.placement}
+        displayMode={legendOptions.displayMode}
+      />
     );
   };
 
@@ -76,7 +122,7 @@ export const PieChartSvg: FC<SvgProps> = ({
   width,
   height,
   useGradients = true,
-  labelOptions = { showName: true },
+  displayLabels = [],
 }) => {
   const theme = useTheme();
   const componentInstanceId = useComponentInstanceId('PieChart');
@@ -106,7 +152,7 @@ export const PieChartSvg: FC<SvgProps> = ({
     });
   };
 
-  const showLabel = labelOptions.showName || labelOptions.showPercent || labelOptions.showValue;
+  const showLabel = displayLabels.length > 0;
   const total = values.reduce((acc, item) => item.numeric + acc, 0);
   const layout = getPieLayout(width, height, pieType);
 
@@ -159,8 +205,9 @@ export const PieChartSvg: FC<SvgProps> = ({
                         arc={arc}
                         outerRadius={layout.outerRadius}
                         innerRadius={layout.innerRadius}
-                        labelOptions={labelOptions}
+                        displayLabels={displayLabels}
                         total={total}
+                        color={theme.colors.text}
                       />
                     )}
                   </g>
@@ -183,9 +230,10 @@ const PieLabel: FC<{
   arc: PieArcDatum<DisplayValue>;
   outerRadius: number;
   innerRadius: number;
-  labelOptions: PieChartLabelOptions;
+  displayLabels: PieChartLabels[];
   total: number;
-}> = ({ arc, outerRadius, innerRadius, labelOptions, total }) => {
+  color: string;
+}> = ({ arc, outerRadius, innerRadius, displayLabels, total, color }) => {
   const labelRadius = innerRadius === 0 ? outerRadius / 6 : innerRadius;
   const [labelX, labelY] = getLabelPos(arc, outerRadius, labelRadius);
   const hasSpaceForLabel = arc.endAngle - arc.startAngle >= 0.3;
@@ -194,14 +242,14 @@ const PieLabel: FC<{
     return null;
   }
 
-  let labelFontSize = labelOptions.showName
+  let labelFontSize = displayLabels.includes(PieChartLabels.Name)
     ? Math.min(Math.max((outerRadius / 150) * 14, 12), 30)
     : Math.min(Math.max((outerRadius / 100) * 14, 12), 36);
 
   return (
     <g>
       <text
-        fill="white"
+        fill={color}
         x={labelX}
         y={labelY}
         dy=".33em"
@@ -209,17 +257,17 @@ const PieLabel: FC<{
         textAnchor="middle"
         pointerEvents="none"
       >
-        {labelOptions.showName && (
+        {displayLabels.includes(PieChartLabels.Name) && (
           <tspan x={labelX} dy="1.2em">
             {arc.data.title}
           </tspan>
         )}
-        {labelOptions.showValue && (
+        {displayLabels.includes(PieChartLabels.Value) && (
           <tspan x={labelX} dy="1.2em">
             {formattedValueToString(arc.data)}
           </tspan>
         )}
-        {labelOptions.showPercent && (
+        {displayLabels.includes(PieChartLabels.Percent) && (
           <tspan x={labelX} dy="1.2em">
             {((arc.data.numeric / total) * 100).toFixed(0) + '%'}
           </tspan>

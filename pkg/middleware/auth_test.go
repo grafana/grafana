@@ -38,6 +38,19 @@ func TestMiddlewareAuth(t *testing.T) {
 			cfg.AnonymousOrgName = "test"
 		}
 
+		middlewareScenario(t, "ReqSignIn true and NoAnonynmous true", func(
+			t *testing.T, sc *scenarioContext) {
+			bus.AddHandler("test", func(query *models.GetOrgByNameQuery) error {
+				query.Result = &models.Org{Id: orgID, Name: "test"}
+				return nil
+			})
+
+			sc.m.Get("/api/secure", ReqSignedInNoAnonymous, sc.defaultHandler)
+			sc.fakeReq("GET", "/api/secure").exec()
+
+			assert.Equal(t, 401, sc.resp.Code)
+		}, configure)
+
 		middlewareScenario(t, "ReqSignIn true and request with forceLogin in query string", func(
 			t *testing.T, sc *scenarioContext) {
 			bus.AddHandler("test", func(query *models.GetOrgByNameQuery) error {
