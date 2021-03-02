@@ -86,8 +86,9 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 						},
 						"datasource": "${DS_GDEV-TESTDATA}",
 						"libraryPanel": map[string]interface{}{
-							"uid":  sc.initialResult.Result.UID,
-							"name": sc.initialResult.Result.Name,
+							"uid":     sc.initialResult.Result.UID,
+							"name":    sc.initialResult.Result.Name,
+							"version": sc.initialResult.Result.Version,
 							"meta": map[string]interface{}{
 								"canEdit":             false,
 								"connectedDashboards": int64(1),
@@ -669,6 +670,7 @@ type libraryPanel struct {
 	UID      string                 `json:"uid"`
 	Name     string                 `json:"name"`
 	Model    map[string]interface{} `json:"model"`
+	Version  int64                  `json:"version"`
 	Meta     LibraryPanelDTOMeta    `json:"meta"`
 }
 
