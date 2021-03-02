@@ -15,11 +15,9 @@ const MAX_AUTO_SELECT = 4;
 const EMPTY_SELECTOR = '{}';
 export const LAST_USED_LABELS_KEY = 'grafana.datasources.loki.browser.labels';
 
-type onChange = (selector: string) => void;
-
 export interface BrowserProps {
   languageProvider: LokiLanguageProvider;
-  onChange: onChange;
+  onChange: (selector: string) => void;
   theme: GrafanaTheme;
   autoSelect?: number;
   hide?: () => void;
@@ -35,7 +33,6 @@ interface BrowserState {
 
 interface FacettableValue {
   name: string;
-  // facetted?: boolean; // True if value is possible given the selector
   selected?: boolean;
 }
 
@@ -207,8 +204,6 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
   };
 
   onClickLabel = (name: string, value: string | undefined, event: React.MouseEvent<HTMLElement>) => {
-    // Stop early before it reaches the ClickOutsideWrapper
-    event.stopPropagation();
     const label = this.state.labels.find((l) => l.name === name);
     if (!label) {
       return;
@@ -221,24 +216,10 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
       const values = label.values.map((value) => ({ ...value, selected: false }));
       nextValue = { ...nextValue, facets: 0, values };
     }
-    this.updateLabelState(name, nextValue, '', () => {
-      const selectedLabels = this.state.labels.filter((label) => label.selected).map((label) => label.name);
-      store.setObject(LAST_USED_LABELS_KEY, selectedLabels);
-      if (selected) {
-        // Refetch values for newly selected label...
-        if (!label.values) {
-          this.fetchValues(name);
-        }
-      } else {
-        // Only need to facet when deselecting labels
-        this.doFacetting();
-      }
-    });
+    this.updateLabelState(name, nextValue, '', () => this.doFacettingForLabel(name));
   };
 
   onClickValue = (name: string, value: string | undefined, event: React.MouseEvent<HTMLElement>) => {
-    // Stop early before it reaches the ClickOutsideWrapper
-    event.stopPropagation();
     const label = this.state.labels.find((l) => l.name === name);
     if (!label || !label.values) {
       return;
@@ -293,6 +274,24 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
           });
         });
       });
+    }
+  }
+
+  doFacettingForLabel(name: string) {
+    const label = this.state.labels.find((l) => l.name === name);
+    if (!label) {
+      return;
+    }
+    const selectedLabels = this.state.labels.filter((label) => label.selected).map((label) => label.name);
+    store.setObject(LAST_USED_LABELS_KEY, selectedLabels);
+    if (label.selected) {
+      // Refetch values for newly selected label...
+      if (!label.values) {
+        this.fetchValues(name);
+      }
+    } else {
+      // Only need to facet when deselecting labels
+      this.doFacetting();
     }
   }
 

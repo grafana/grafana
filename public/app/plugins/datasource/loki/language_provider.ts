@@ -430,11 +430,11 @@ export default class LokiLanguageProvider extends LanguageProvider {
     const { from: start, to: end } = this.datasource.getTimeRangeParams();
 
     const cacheKey = this.generateCacheKey(url, start, end, match);
-    const params = { match, start, end };
     let value = this.seriesCache.get(cacheKey);
     if (!value) {
       // Clear value when requesting new one. Empty object being truthy also makes sure we don't request twice.
       this.seriesCache.set(cacheKey, {});
+      const params = { match, start, end };
       const data = await this.request(url, params);
       const { values } = processLabels(data);
       value = values;
@@ -443,6 +443,10 @@ export default class LokiLanguageProvider extends LanguageProvider {
     return value;
   };
 
+  /**
+   * Fetch series for a selector. Use this for raw results. Use fetchSeriesLabels() to get labels.
+   * @param match
+   */
   fetchSeries = async (match: string): Promise<Array<Record<string, string>>> => {
     const url = '/loki/api/v1/series';
     const { from: start, to: end } = this.datasource.getTimeRangeParams();

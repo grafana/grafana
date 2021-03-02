@@ -30,6 +30,7 @@ export const LokiLabel = forwardRef<HTMLElement, Props>(
         onClick(name, value, event);
       }
     };
+    // Using this component for labels and label values. If value is given use value for display text.
     let text = value || name;
     if (facets) {
       text = `${text} (${facets})`;
@@ -72,7 +73,7 @@ const getLabelStyles = (theme: GrafanaTheme) => ({
     color: ${theme.colors.text};
     white-space: nowrap;
     text-shadow: none;
-    padding: 3px 6px;
+    padding: ${theme.spacing.xs};
     border-radius: ${theme.border.radius.md};
     margin-right: ${theme.spacing.sm};
     margin-bottom: ${theme.spacing.xs};

@@ -71,7 +71,7 @@ export interface LokiQueryFieldFormProps extends ExploreQueryFieldProps<LokiData
 
 interface LokiQueryFieldFormState {
   labelsLoaded: boolean;
-  chooserVisible: boolean;
+  labelBrowserVisible: boolean;
 }
 
 export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormProps, LokiQueryFieldFormState> {
@@ -80,7 +80,7 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
   constructor(props: LokiQueryFieldFormProps) {
     super(props);
 
-    this.state = { labelsLoaded: false, chooserVisible: false };
+    this.state = { labelsLoaded: false, labelBrowserVisible: false };
 
     this.plugins = [
       BracesPlugin(),
@@ -101,7 +101,7 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
 
   onChangeLogLabels = (selector: string) => {
     this.onChangeQuery(selector, true);
-    this.setState({ chooserVisible: false });
+    this.setState({ labelBrowserVisible: false });
   };
 
   onChangeQuery = (value: string, override?: boolean) => {
@@ -118,7 +118,7 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
   };
 
   onClickChooserButton = () => {
-    this.setState((state) => ({ chooserVisible: !state.chooserVisible }));
+    this.setState((state) => ({ labelBrowserVisible: !state.labelBrowserVisible }));
   };
 
   onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
@@ -141,7 +141,7 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
 
   render() {
     const { ExtraFieldElement, query, datasource, runOnBlur } = this.props;
-    const { labelsLoaded, chooserVisible } = this.state;
+    const { labelsLoaded, labelBrowserVisible } = this.state;
     const lokiLanguageProvider = datasource.languageProvider as LokiLanguageProvider;
     const cleanText = datasource.languageProvider ? lokiLanguageProvider.cleanText : undefined;
     const hasLogLabels = lokiLanguageProvider.getLabelKeys().length > 0;
@@ -157,7 +157,7 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
             disabled={buttonDisabled}
           >
             {chooserText}
-            <Icon name={chooserVisible ? 'angle-down' : 'angle-right'} />
+            <Icon name={labelBrowserVisible ? 'angle-down' : 'angle-right'} />
           </button>
           <div className="gf-form gf-form--grow flex-shrink-1 min-width-15">
             <QueryField
@@ -174,7 +174,7 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
             />
           </div>
         </div>
-        {chooserVisible && (
+        {labelBrowserVisible && (
           <div className="gf-form gf-form--alt flex-shrink-0">
             <LokiLabelBrowser languageProvider={lokiLanguageProvider} onChange={this.onChangeLogLabels} />
           </div>
