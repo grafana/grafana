@@ -409,13 +409,13 @@ export class PanelModel implements DataConfigSource {
   }
 
   updateQueries(options: QueryGroupOptions) {
-    console.log('update queries');
     this.datasource = options.dataSource.default ? null : options.dataSource.name!;
     this.timeFrom = options.timeRange?.from;
     this.timeShift = options.timeRange?.shift;
     this.hideTimeOverride = options.timeRange?.hide;
     this.interval = options.minInterval;
     this.maxDataPoints = options.maxDataPoints;
+    this.targets = options.queries;
     this.hasChanged = true;
 
     this.events.publish(new PanelQueriesChangedEvent());
