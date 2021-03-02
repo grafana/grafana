@@ -34,7 +34,6 @@ export const useFields = (aggregationType: BucketAggregationType | MetricAggrega
   const datasource = useDatasource();
   const range = useRange();
   const filter = getFilter(aggregationType);
-  console.log(filter);
 
   return async () => {
     const rawFields = await datasource.getFields(range, filter).toPromise();

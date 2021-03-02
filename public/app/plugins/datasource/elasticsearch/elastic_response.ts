@@ -10,13 +10,17 @@ import {
   MutableDataFrame,
   PreferredVisualisationType,
 } from '@grafana/data';
-import { ElasticsearchAggregation, ElasticsearchQuery } from './types';
+import { ElasticsearchQuery } from './types';
 import {
   ExtendedStatMetaType,
   isMetricAggregationWithField,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { describeMetric, getScriptValue } from './utils';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
+import {
+  BucketAggregation,
+  isBucketAggregationWithField,
+} from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 
 const HIGHLIGHT_TAGS_EXP = `${queryDef.highlightTags.pre}([^@]+)${queryDef.highlightTags.post}`;
 
@@ -135,19 +139,19 @@ export class ElasticResponse {
     }
   }
 
-  processAggregationDocs(
-    esAgg: any,
-    aggDef: ElasticsearchAggregation,
-    target: ElasticsearchQuery,
-    table: any,
-    props: any
-  ) {
+  processAggregationDocs(esAgg: any, aggDef: BucketAggregation, target: ElasticsearchQuery, table: any, props: any) {
     // add columns
     if (table.columns.length === 0) {
       for (const propKey of _.keys(props)) {
         table.addColumn({ text: propKey, filterable: true });
       }
-      table.addColumn({ text: aggDef.field, filterable: true });
+
+      // NOTE: this is equivalent to the previous, non-typesafe version
+      if (isBucketAggregationWithField(aggDef)) {
+        table.addColumn({ text: aggDef.field, filterable: true });
+      } else {
+        table.addColumn({ text: undefined, filterable: true });
+      }
     }
 
     // helper func to add values to value array
@@ -211,6 +215,7 @@ export class ElasticResponse {
               }
             }
 
+            // FIXME: this breaks when there's a filters bucket aggregation and no date_histogram
             addMetricValue(values, metricName, bucket[metric.id].value);
             break;
           }
