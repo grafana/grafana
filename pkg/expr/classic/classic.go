@@ -31,7 +31,7 @@ type classicConditionJSON struct {
 	Reducer struct {
 		// Params []interface{} `json:"params"` (Unused)
 		Type string `json:"type"`
-	}
+	} `json:"reducer"`
 }
 
 type conditionEvalJSON struct {
