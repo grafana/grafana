@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/elasticsearch"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb"
+	"github.com/grafana/grafana/pkg/tsdb/loki"
 	"github.com/grafana/grafana/pkg/tsdb/mssql"
 	"github.com/grafana/grafana/pkg/tsdb/mysql"
 	"github.com/grafana/grafana/pkg/tsdb/opentsdb"
@@ -62,6 +63,7 @@ func (s *Service) Init() error {
 	s.registry["cloudwatch"] = s.CloudWatchService.NewExecutor
 	s.registry["stackdriver"] = s.CloudMonitoringService.NewExecutor
 	s.registry["grafana-azure-monitor-datasource"] = s.AzureMonitorService.NewExecutor
+	s.registry["loki"] = loki.NewExecutor
 	return nil
 }
 
