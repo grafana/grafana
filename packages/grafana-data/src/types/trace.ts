@@ -4,6 +4,7 @@ type TraceKeyValuePair = {
 };
 
 type TraceLog = {
+  // Millisecond epoch time
   timestamp: number;
   fields: TraceKeyValuePair[];
 };

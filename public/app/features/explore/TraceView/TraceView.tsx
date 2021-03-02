@@ -210,7 +210,7 @@ function transformTraceDataFrame(frame: DataFrame): TraceResponse {
         processID: s.serviceName,
         flags: 0,
         references: s.parentSpanID ? [{ refType: 'CHILD_OF', spanID: s.parentSpanID, traceID: s.traceID }] : undefined,
-        logs: s.logs || [],
+        logs: s.logs?.map((l) => ({ ...l, timestamp: l.timestamp * 1000 })) || [],
       };
     }),
   };

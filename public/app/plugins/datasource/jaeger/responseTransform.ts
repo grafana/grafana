@@ -41,7 +41,10 @@ function toSpanRow(span: Span, processes: Record<string, TraceProcess>): TraceSp
     // from micro to millis
     startTime: span.startTime / 1000,
     duration: span.duration / 1000,
-    logs: span.logs,
+    logs: span.logs.map((l) => ({
+      ...l,
+      timestamp: l.timestamp / 1000,
+    })),
     tags: span.tags,
     warnings: span.warnings ?? undefined,
     stackTraces: span.stackTraces,
