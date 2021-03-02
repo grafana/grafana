@@ -1,36 +1,5 @@
 import { getBackendSrv } from '@grafana/runtime';
-
-import { PanelModel } from '../../dashboard/state';
-
-export interface LibraryPanelDTO {
-  id: number;
-  orgId: number;
-  folderId: number;
-  uid: string;
-  name: string;
-  model: any;
-  version: number;
-  meta: LibraryPanelDTOMeta;
-}
-
-export interface LibraryPanelDTOMeta {
-  canEdit: boolean;
-  connectedDashboards: number;
-  created: string;
-  updated: string;
-  createdBy: LibraryPanelDTOMetaUser;
-  updatedBy: LibraryPanelDTOMetaUser;
-}
-
-export interface LibraryPanelDTOMetaUser {
-  id: number;
-  name: string;
-  avatarUrl: string;
-}
-
-export interface PanelModelWithLibraryPanel extends PanelModel {
-  libraryPanel: Pick<LibraryPanelDTO, 'uid' | 'name' | 'meta' | 'version'>;
-}
+import { LibraryPanelDTO, PanelModelWithLibraryPanel } from '../types';
 
 export async function getLibraryPanels(): Promise<LibraryPanelDTO[]> {
   const { result } = await getBackendSrv().get(`/api/library-panels`);
