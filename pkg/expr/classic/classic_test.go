@@ -18,7 +18,7 @@ func TestUnmarshalConditionCMD(t *testing.T) {
 		needsVars       []string
 	}{
 		{
-			name: "conditions unmarshal test",
+			name: "basic threshold condition",
 			rawJSON: `{
 				"conditions": [
 				  {
@@ -56,6 +56,46 @@ func TestUnmarshalConditionCMD(t *testing.T) {
 			},
 			needsVars: []string{"A"},
 		},
+		{
+			name: "ranged condition",
+			rawJSON: `{
+				"conditions": [
+				  {
+					"evaluator": {
+					  "params": [
+						2,
+						3
+					  ],
+					  "type": "within_range"
+					},
+					"operator": {
+					  "type": "or"
+					},
+					"query": {
+					  "params": [
+						"A"
+					  ]
+					},
+					"reducer": {
+					  "params": [],
+					  "type": "diff"
+					},
+					"type": "query"
+				  }
+				]
+			}`,
+			expectedCommand: &ConditionsCmd{
+				Conditions: []condition{
+					{
+						QueryRefID: "A",
+						Reducer:    classicReducer("diff"),
+						Operator:   "or",
+						Evaluator:  &rangedEvaluator{Type: "within_range", Lower: 2, Upper: 3},
+					},
+				},
+			},
+			needsVars: []string{"A"},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -75,8 +115,8 @@ func TestUnmarshalConditionCMD(t *testing.T) {
 
 func TestConditionsCmdExecute(t *testing.T) {
 	trueNumber := valBasedNumber(ptr.Float64(1))
-	//falseNumber := valBasedNumber(ptr.Float64(1))
-	//noDataNumber := valBasedNumber(ptr.Float64(nil)) ?
+	falseNumber := valBasedNumber(ptr.Float64(0))
+	noDataNumber := valBasedNumber(nil)
 
 	tests := []struct {
 		name          string
@@ -103,6 +143,46 @@ func TestConditionsCmdExecute(t *testing.T) {
 					},
 				}},
 			resultNumber: trueNumber,
+		},
+		{
+			name: "single query and single ranged condition",
+			vars: mathexp.Vars{
+				"A": mathexp.Results{
+					Values: []mathexp.Value{
+						valBasedSeries(ptr.Float64(30), ptr.Float64(40)),
+					},
+				},
+			},
+			conditionsCmd: &ConditionsCmd{
+				Conditions: []condition{
+					{
+						QueryRefID: "A",
+						Reducer:    classicReducer("diff"),
+						Operator:   "and",
+						Evaluator:  &rangedEvaluator{Type: "within_range", Lower: 2, Upper: 3},
+					},
+				},
+			},
+			resultNumber: falseNumber,
+		},
+		{
+			name: "single query with no data",
+			vars: mathexp.Vars{
+				"A": mathexp.Results{
+					Values: []mathexp.Value{},
+				},
+			},
+			conditionsCmd: &ConditionsCmd{
+				Conditions: []condition{
+					{
+						QueryRefID: "A",
+						Reducer:    classicReducer("avg"),
+						Operator:   "and",
+						Evaluator:  &thresholdEvaluator{"gt", 1},
+					},
+				},
+			},
+			resultNumber: noDataNumber,
 		},
 	}
 

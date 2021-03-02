@@ -65,6 +65,7 @@ func (ccc *ConditionsCmd) NeedsVars() []string {
 func (ccc *ConditionsCmd) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Results, error) {
 	firing := true
 	newRes := mathexp.Results{}
+	noDataFound := true
 
 	for i, c := range ccc.Conditions {
 		querySeriesSet := vars[c.QueryRefID]
@@ -76,17 +77,21 @@ func (ccc *ConditionsCmd) Execute(ctx context.Context, vars mathexp.Vars) (mathe
 
 			reducedNum := c.Reducer.Reduce(series)
 			// TODO handle error / no data signals
+			thisCondNoDataFound := reducedNum.GetFloat64Value() == nil
+
 			evalRes := c.Evaluator.Eval(reducedNum)
 
 			if i == 0 {
 				firing = evalRes
-				//noDataFound = cr.NoDataFound
+				noDataFound = thisCondNoDataFound
 			}
 
 			if c.Operator == "or" {
 				firing = firing || evalRes
+				noDataFound = noDataFound || thisCondNoDataFound
 			} else {
 				firing = firing && evalRes
+				noDataFound = noDataFound && thisCondNoDataFound
 			}
 		}
 	}
@@ -94,11 +99,15 @@ func (ccc *ConditionsCmd) Execute(ctx context.Context, vars mathexp.Vars) (mathe
 	num := mathexp.NewNumber("", nil)
 
 	var v float64
-	if firing {
+	switch {
+	case noDataFound:
+		num.SetValue(nil)
+	case firing:
 		v = 1
+		num.SetValue(&v)
+	case !firing:
+		num.SetValue(&v)
 	}
-
-	num.SetValue(&v)
 
 	newRes.Values = append(newRes.Values, num)
 
