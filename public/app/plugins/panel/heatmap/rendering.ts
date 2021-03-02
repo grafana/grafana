@@ -33,20 +33,20 @@ export default function rendering(scope: any, elem: any, attrs: any, ctrl: any) 
   return new HeatmapRenderer(scope, elem, attrs, ctrl);
 }
 export class HeatmapRenderer {
-  width: number;
-  height: number;
+  width = 200;
+  height = 200;
   yScale: any;
   xScale: any;
-  chartWidth: number;
-  chartHeight: number;
-  chartTop: number;
-  chartBottom: number;
-  yAxisWidth: number;
-  xAxisHeight: number;
-  cardPadding: number;
-  cardRound: number;
-  cardWidth: number;
-  cardHeight: number;
+  chartWidth = 0;
+  chartHeight = 0;
+  chartTop = 0;
+  chartBottom = 0;
+  yAxisWidth = 0;
+  xAxisHeight = 0;
+  cardPadding = 0;
+  cardRound = 0;
+  cardWidth = 0;
+  cardHeight = 0;
   colorScale: any;
   opacityScale: any;
   mouseUpHandler: any;
@@ -61,6 +61,7 @@ export class HeatmapRenderer {
   padding: any;
   margin: any;
   dataRangeWidingFactor: number;
+
   constructor(private scope: any, private elem: any, attrs: any, private ctrl: any) {
     // $heatmap is JQuery object, but heatmap is D3
     this.$heatmap = this.elem.find('.heatmap-panel');
@@ -75,9 +76,7 @@ export class HeatmapRenderer {
     this.padding = { left: 0, right: 0, top: 0, bottom: 0 };
     this.margin = { left: 25, right: 15, top: 10, bottom: 20 };
     this.dataRangeWidingFactor = DATA_RANGE_WIDING_FACTOR;
-
     this.ctrl.events.on(PanelEvents.render, this.onRender.bind(this));
-
     this.ctrl.tickValueFormatter = this.tickValueFormatter.bind(this);
 
     /////////////////////////////
@@ -502,7 +501,7 @@ export class HeatmapRenderer {
     const cardsData = this.data.cards;
     const cardStats = this.data.cardStats;
     const maxValueAuto = cardStats.max;
-    const minValueAuto = Math.min(cardStats.min, 0);
+    const minValueAuto = Math.max(cardStats.min, 0);
     const maxValue = _.isNil(this.panel.color.max) ? maxValueAuto : this.panel.color.max;
     const minValue = _.isNil(this.panel.color.min) ? minValueAuto : this.panel.color.min;
     const colorScheme: any = _.find(this.ctrl.colorSchemes, {
