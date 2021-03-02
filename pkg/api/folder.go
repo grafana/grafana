@@ -94,10 +94,11 @@ func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // 
 			return toFolderError(err)
 		}
 		err = hs.LibraryPanelService.DeleteLibraryPanelsInFolder(c, f)
-		if errors.Is(err, librarypanels.ErrFolderHasConnectedLibraryPanels) {
-			return response.Error(500, "Folder could not be deleted because it contains linked library panels", err)
-		}
 		if err != nil {
+			if errors.Is(err, librarypanels.ErrFolderHasConnectedLibraryPanels) {
+				return response.Error(500, "Folder could not be deleted because it contains linked library panels", err)
+			}
+			
 			hs.log.Error("Failed to delete library panels in folder", "folder", f.Id, "user", c.SignedInUser.UserId, "error", err)
 		}
 	}
