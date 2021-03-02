@@ -27,7 +27,7 @@ import LabeledList from '../common/LabeledList';
 import TraceName from '../common/TraceName';
 import { getTraceName } from '../model/trace-viewer';
 import { TNil } from '../types';
-import { Trace } from '@grafana/data';
+import { Trace } from '../types/trace';
 import { formatDatetime, formatDuration } from '../utils/date';
 import { getTraceLinks } from '../model/link-patterns';
 

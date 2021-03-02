@@ -1,9 +1,10 @@
-import { AppEvents, ExploreQueryFieldProps, TraceData, TraceSpan } from '@grafana/data';
+import { AppEvents, ExploreQueryFieldProps } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { ButtonCascader, CascaderOption } from '@grafana/ui';
 import React from 'react';
 import { appEvents } from '../../../core/core';
 import { JaegerDatasource, JaegerQuery } from './datasource';
+import { Span, TraceResponse } from './types';
 
 const ALL_OPERATIONS_KEY = '__ALL__';
 const NO_TRACES_KEY = '__NO_TRACES__';
@@ -13,11 +14,11 @@ interface State {
   serviceOptions: CascaderOption[];
 }
 
-function findRootSpan(spans: TraceSpan[]): TraceSpan | undefined {
+function findRootSpan(spans: Span[]): Span | undefined {
   return spans.find((s) => !s.references?.length);
 }
 
-function getLabelFromTrace(trace: TraceData & { spans: TraceSpan[] }): string {
+function getLabelFromTrace(trace: TraceResponse): string {
   const rootSpan = findRootSpan(trace.spans);
   if (rootSpan) {
     return `${rootSpan.operationName} [${rootSpan.duration / 1000} ms]`;

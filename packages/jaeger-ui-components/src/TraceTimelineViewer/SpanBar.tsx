@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { TraceSpan } from '@grafana/data';
 import cx from 'classnames';
 import { css } from 'emotion';
 import _groupBy from 'lodash/groupBy';
 import React from 'react';
 import { compose, onlyUpdateForKeys, withProps, withState } from 'recompose';
 import { autoColor, createStyle, Theme } from '../Theme';
+import { TraceSpan } from '../types/trace';
 import { TNil } from '../types';
 import { UIPopover } from '../uiElementsContext';
 import AccordianLogs from './SpanDetail/AccordianLogs';

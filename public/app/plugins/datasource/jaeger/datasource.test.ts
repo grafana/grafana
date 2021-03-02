@@ -1,18 +1,60 @@
 import { JaegerDatasource, JaegerQuery } from './datasource';
-import { DataQueryRequest, DataSourceInstanceSettings, FieldType, PluginType, dateTime } from '@grafana/data';
+import {
+  DataQueryRequest,
+  DataSourceInstanceSettings,
+  FieldType,
+  PluginType,
+  dateTime,
+  ArrayVector,
+} from '@grafana/data';
 import { BackendSrv, BackendSrvRequest, getBackendSrv, setBackendSrv } from '@grafana/runtime';
+import { testResponse } from './testResponse';
 
 describe('JaegerDatasource', () => {
   it('returns trace when queried', async () => {
     await withMockedBackendSrv(makeBackendSrvMock('12345'), async () => {
       const ds = new JaegerDatasource(defaultSettings);
       const response = await ds.query(defaultQuery).toPromise();
-      const field = response.data[0].fields[0];
-      expect(field.name).toBe('trace');
-      expect(field.type).toBe(FieldType.trace);
-      expect(field.values.get(0)).toEqual({
-        traceId: '12345',
-      });
+      expect(response.data[0].fields).toMatchObject(
+        [
+          { name: 'traceID', values: ['3fa414edcef6ad90', '3fa414edcef6ad90'] },
+          { name: 'spanID', values: ['3fa414edcef6ad90', '0f5c1808567e4403'] },
+          { name: 'parentSpanID', values: [undefined, '3fa414edcef6ad90'] },
+          { name: 'operationName', values: ['HTTP GET - api_traces_traceid', '/tempopb.Querier/FindTraceByID'] },
+          { name: 'serviceName', values: ['tempo-querier', 'tempo-querier'] },
+          {
+            name: 'serviceTags',
+            values: [
+              [
+                { key: 'cluster', type: 'string', value: 'ops-tools1' },
+                { key: 'container', type: 'string', value: 'tempo-query' },
+              ],
+              [
+                { key: 'cluster', type: 'string', value: 'ops-tools1' },
+                { key: 'container', type: 'string', value: 'tempo-query' },
+              ],
+            ],
+          },
+          { name: 'startTime', values: [1605873894680.409, 1605873894680.587] },
+          { name: 'duration', values: [1049.141, 1.847] },
+          { name: 'logs', values: [[], []] },
+          {
+            name: 'tags',
+            values: [
+              [
+                { key: 'sampler.type', type: 'string', value: 'probabilistic' },
+                { key: 'sampler.param', type: 'float64', value: 1 },
+              ],
+              [
+                { key: 'component', type: 'string', value: 'gRPC' },
+                { key: 'span.kind', type: 'string', value: 'client' },
+              ],
+            ],
+          },
+          { name: 'warnings', values: [undefined, undefined] },
+          { name: 'stackTraces', values: [undefined, undefined] },
+        ].map((f) => ({ ...f, values: new ArrayVector<any>(f.values) }))
+      );
     });
   });
 
@@ -28,13 +70,8 @@ describe('JaegerDatasource', () => {
           },
         ],
       };
-      const response = await ds.query(query).toPromise();
-      const field = response.data[0].fields[0];
-      expect(field.name).toBe('trace');
-      expect(field.type).toBe(FieldType.trace);
-      expect(field.values.get(0)).toEqual({
-        traceId: 'a/b',
-      });
+      await ds.query(query).toPromise();
+      // there is expect makeBackendSrvMock checking correct encoding
     });
   });
 
@@ -158,11 +195,7 @@ function makeBackendSrvMock(traceId: string) {
       );
       return Promise.resolve({
         data: {
-          data: [
-            {
-              traceId,
-            },
-          ],
+          data: [testResponse],
         },
       });
     },
