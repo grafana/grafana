@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/services/librarypanels"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
@@ -84,8 +86,18 @@ func UpdateFolder(c *models.ReqContext, cmd models.UpdateFolderCommand) response
 	return response.JSON(200, toFolderDto(g, cmd.Result))
 }
 
-func DeleteFolder(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // temporarily adding this function to HTTPServer, will be removed from HTTPServer when librarypanels featuretoggle is removed
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
+	if hs.Cfg.IsPanelLibraryEnabled() {
+		err := hs.LibraryPanelService.DeleteLibraryPanelsInFolder(c, c.Params(":uid"))
+		if err != nil {
+			if errors.Is(err, librarypanels.ErrFolderHasConnectedLibraryPanels) {
+				return response.Error(403, "Folder could not be deleted because it contains linked library panels", err)
+			}
+			return toFolderError(err)
+		}
+	}
+
 	f, err := s.DeleteFolder(c.Params(":uid"))
 	if err != nil {
 		return toFolderError(err)

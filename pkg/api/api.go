@@ -294,7 +294,7 @@ func (hs *HTTPServer) registerRoutes() {
 			folderRoute.Group("/:uid", func(folderUidRoute routing.RouteRegister) {
 				folderUidRoute.Get("/", routing.Wrap(GetFolderByUID))
 				folderUidRoute.Put("/", bind(models.UpdateFolderCommand{}), routing.Wrap(UpdateFolder))
-				folderUidRoute.Delete("/", routing.Wrap(DeleteFolder))
+				folderUidRoute.Delete("/", routing.Wrap(hs.DeleteFolder))
 
 				folderUidRoute.Group("/permissions", func(folderPermissionRoute routing.RouteRegister) {
 					folderPermissionRoute.Get("/", routing.Wrap(hs.GetFolderPermissionList))
