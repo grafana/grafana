@@ -231,6 +231,48 @@ func (lps *LibraryPanelService) disconnectLibraryPanelsForDashboard(c *models.Re
 	})
 }
 
+// deleteLibraryPanelsInFolder deletes all Library Panels for a folder.
+func (lps *LibraryPanelService) deleteLibraryPanelsInFolder(c *models.ReqContext, folderID int64) error {
+	return lps.SQLStore.WithTransactionalDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
+		if err := requirePermissionsOnFolder(c.SignedInUser, folderID); err != nil {
+			return err
+		}
+
+		var dashIDs []struct {
+			DashboardID int64 `xorm:"dashboard_id"`
+		}
+		sql := "SELECT lpd.dashboard_id FROM library_panel AS lp"
+		sql += " INNER JOIN library_panel_dashboard lpd on lp.id = lpd.librarypanel_id"
+		sql += " WHERE lp.folder_id=? AND lp.org_id=?"
+		err := session.SQL(sql, folderID, c.SignedInUser.OrgId).Find(&dashIDs)
+		if err != nil {
+			return err
+		}
+		if len(dashIDs) > 0 {
+			return ErrFolderHasConnectedLibraryPanels
+		}
+
+		var panelIDs []struct {
+			ID int64 `xorm:"id"`
+		}
+		err = session.SQL("SELECT id from library_panel WHERE folder_id=? AND org_id=?", folderID, c.SignedInUser.OrgId).Find(&panelIDs)
+		if err != nil {
+			return err
+		}
+		for _, panelID := range panelIDs {
+			_, err := session.Exec("DELETE FROM library_panel_dashboard WHERE librarypanel_id=?", panelID.ID)
+			if err != nil {
+				return err
+			}
+		}
+		if _, err := session.Exec("DELETE FROM library_panel WHERE folder_id=? AND org_id=?", folderID, c.SignedInUser.OrgId); err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+
 func getLibraryPanel(session *sqlstore.DBSession, uid string, orgID int64) (LibraryPanelWithMeta, error) {
 	libraryPanels := make([]LibraryPanelWithMeta, 0)
 	sql := sqlStatmentLibrayPanelDTOWithMeta + "WHERE lp.uid=? AND lp.org_id=?"
