@@ -1,6 +1,6 @@
 // Libraries
 import React, { Component } from 'react';
-import { dateMath, TimeZone, TimeRange } from '@grafana/data';
+import { dateMath, TimeRange, TimeZone } from '@grafana/data';
 import { css } from 'emotion';
 
 // Types
@@ -8,12 +8,13 @@ import { DashboardModel } from '../../state';
 import { CoreEvents } from 'app/types';
 
 // Components
-import { RefreshPicker, stylesFactory, defaultIntervals } from '@grafana/ui';
+import { defaultIntervals, RefreshPicker, stylesFactory } from '@grafana/ui';
 import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePickerWithHistory';
 
 // Utils & Services
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { appEvents } from 'app/core/core';
+import { ShiftTimeEvent, ShiftTimeEventPayload, ZoomOutEvent } from '../../../../types/events';
 
 export interface Props {
   dashboard: DashboardModel;
@@ -47,11 +48,11 @@ export class DashNavTimeControls extends Component<Props> {
   };
 
   onMoveBack = () => {
-    appEvents.emit(CoreEvents.shiftTime, -1);
+    appEvents.publish(new ShiftTimeEvent(ShiftTimeEventPayload.Left));
   };
 
   onMoveForward = () => {
-    appEvents.emit(CoreEvents.shiftTime, 1);
+    appEvents.publish(new ShiftTimeEvent(ShiftTimeEventPayload.Right));
   };
 
   onChangeTimePicker = (timeRange: TimeRange) => {
@@ -76,7 +77,7 @@ export class DashNavTimeControls extends Component<Props> {
   };
 
   onZoom = () => {
-    appEvents.emit(CoreEvents.zoomOut, 2);
+    appEvents.publish(new ZoomOutEvent(2));
   };
 
   render() {

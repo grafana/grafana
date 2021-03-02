@@ -18,7 +18,7 @@ import {
   PluginType,
   UrlQueryMap,
 } from '@grafana/data';
-import { AppNotificationSeverity, CoreEvents, StoreState } from 'app/types';
+import { AppNotificationSeverity, StoreState } from 'app/types';
 import { Alert, InfoBox, Tooltip } from '@grafana/ui';
 
 import Page from 'app/core/components/Page/Page';
@@ -34,6 +34,7 @@ import { ContextSrv } from '../../core/services/context_srv';
 import { css } from 'emotion';
 import { PluginSignatureBadge } from './PluginSignatureBadge';
 import { selectors } from '@grafana/e2e-selectors';
+import { ShowModalEvent } from 'app/types/events';
 
 export function getLoadingNav(): NavModel {
   const node = {
@@ -180,10 +181,12 @@ class PluginPage extends PureComponent<Props, State> {
   }
 
   showUpdateInfo = () => {
-    appEvents.emit(CoreEvents.showModal, {
-      src: 'public/app/features/plugins/partials/update_instructions.html',
-      model: this.state.plugin!.meta,
-    });
+    appEvents.publish(
+      new ShowModalEvent({
+        src: 'public/app/features/plugins/partials/update_instructions.html',
+        model: this.state.plugin!.meta,
+      })
+    );
   };
 
   renderVersionInfo(meta: PluginMeta) {

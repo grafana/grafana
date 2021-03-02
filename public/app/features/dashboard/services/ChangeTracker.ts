@@ -2,10 +2,10 @@ import angular, { ILocationService, IRootScopeService } from 'angular';
 import _ from 'lodash';
 import { DashboardModel } from '../state/DashboardModel';
 import { ContextSrv } from 'app/core/services/context_srv';
-import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { AppEventConsumer, CoreEvents } from 'app/types';
 import { appEvents } from 'app/core/app_events';
 import { UnsavedChangesModal } from '../components/SaveDashboard/UnsavedChangesModal';
+import { ShowModalReactEvent } from '../../../types/events';
 
 export class ChangeTracker {
   current: any;
@@ -23,8 +23,7 @@ export class ChangeTracker {
     private $location: ILocationService,
     $window: any,
     private $timeout: any,
-    private contextSrv: ContextSrv,
-    private $rootScope: GrafanaRootScope
+    private contextSrv: ContextSrv
   ) {
     this.$location = $location;
     this.$window = $window;
@@ -173,16 +172,18 @@ export class ChangeTracker {
   };
 
   open_modal = () => {
-    this.$rootScope.appEvent(CoreEvents.showModalReact, {
-      component: UnsavedChangesModal,
-      props: {
-        dashboard: this.current,
-        onSaveSuccess: this.onSaveSuccess,
-        onDiscard: () => {
-          this.discardChanges();
+    appEvents.publish(
+      new ShowModalReactEvent({
+        component: UnsavedChangesModal,
+        props: {
+          dashboard: this.current,
+          onSaveSuccess: this.onSaveSuccess,
+          onDiscard: () => {
+            this.discardChanges();
+          },
         },
-      },
-    });
+      })
+    );
   };
 
   onSaveSuccess = () => {

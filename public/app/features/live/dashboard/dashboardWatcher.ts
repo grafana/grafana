@@ -11,11 +11,11 @@ import {
   isLiveChannelStatusEvent,
   isLiveChannelMessageEvent,
 } from '@grafana/data';
-import { CoreEvents } from 'app/types';
 import { DashboardChangedModal } from './DashboardChangedModal';
 import { DashboardEvent, DashboardEventAction } from './types';
 import { CoreGrafanaLiveFeature } from '../scopes';
 import { sessionId } from '../live';
+import { ShowModalReactEvent } from '../../../types/events';
 
 class DashboardWatcher {
   channel?: LiveChannel<DashboardEvent>;
@@ -121,10 +121,12 @@ class DashboardWatcher {
 
             if (action === DashboardEventAction.Saved) {
               if (showPopup) {
-                appEvents.emit(CoreEvents.showModalReact, {
-                  component: DashboardChangedModal,
-                  props: { event },
-                });
+                appEvents.publish(
+                  new ShowModalReactEvent({
+                    component: DashboardChangedModal,
+                    props: { event },
+                  })
+                );
               } else {
                 appEvents.emit(AppEvents.alertSuccess, ['Dashboard updated']);
                 this.reloadPage();

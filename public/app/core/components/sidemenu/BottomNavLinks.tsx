@@ -4,9 +4,9 @@ import appEvents from '../../app_events';
 import { User } from '../../services/context_srv';
 import { NavModelItem } from '@grafana/data';
 import { Icon, IconName } from '@grafana/ui';
-import { CoreEvents } from 'app/types';
 import { OrgSwitcher } from '../OrgSwitcher';
 import { getFooterLinks } from '../Footer/Footer';
+import { ShowModalEvent } from '../../../types/events';
 
 export interface Props {
   link: NavModelItem;
@@ -23,9 +23,11 @@ export default class BottomNavLinks extends PureComponent<Props, State> {
   };
 
   onOpenShortcuts = () => {
-    appEvents.emit(CoreEvents.showModal, {
-      templateHtml: '<help-modal></help-modal>',
-    });
+    appEvents.publish(
+      new ShowModalEvent({
+        templateHtml: '<help-modal></help-modal>',
+      })
+    );
   };
 
   toggleSwitcherModal = () => {

@@ -6,27 +6,30 @@ import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { store } from 'app/store/store';
-import { AppEventEmitter, CoreEvents } from 'app/types';
-import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
+import { AppEventEmitter } from 'app/types';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
-import { ContextSrv } from './context_srv';
 import { locationService } from '@grafana/runtime';
 import { exitKioskMode, toggleKioskMode } from '../navigation/kiosk';
+import {
+  HideModalEvent,
+  RemovePanelEvent,
+  ShiftTimeEvent,
+  ShiftTimeEventPayload,
+  ShowModalEvent,
+  ShowModalReactEvent,
+  ZoomOutEvent,
+} from '../../types/events';
+import { contextSrv } from '../core';
+import { getDatasourceSrv } from '../../features/plugins/datasource_srv';
+import { getTimeSrv } from '../../features/dashboard/services/TimeSrv';
 
 export class KeybindingSrv {
   modalOpen = false;
-
-  /** @ngInject */
-  constructor(
-    private $rootScope: GrafanaRootScope,
-    private datasourceSrv: any,
-    private timeSrv: any,
-    private contextSrv: ContextSrv
-  ) {
+  constructor() {
     this.setupGlobal();
-    appEvents.on(CoreEvents.showModal, () => (this.modalOpen = true));
+    appEvents.subscribe(ShowModalEvent, () => (this.modalOpen = true));
   }
 
   setupGlobal() {
@@ -90,11 +93,11 @@ export class KeybindingSrv {
   }
 
   showHelpModal() {
-    appEvents.emit(CoreEvents.showModal, { templateHtml: '<help-modal></help-modal>' });
+    appEvents.publish(new ShowModalEvent({ templateHtml: '<help-modal></help-modal>' }));
   }
 
   exit() {
-    appEvents.emit(CoreEvents.hideModal);
+    appEvents.publish(new HideModalEvent());
 
     if (this.modalOpen) {
       this.modalOpen = false;
@@ -139,7 +142,7 @@ export class KeybindingSrv {
         evt.preventDefault();
         evt.stopPropagation();
         evt.returnValue = false;
-        return this.$rootScope.$apply(fn.bind(this));
+        fn.call(this);
       },
       'keydown'
     );
@@ -152,7 +155,7 @@ export class KeybindingSrv {
         evt.preventDefault();
         evt.stopPropagation();
         evt.returnValue = false;
-        return this.$rootScope.$apply(fn.bind(this));
+        fn.call(this);
       },
       'keydown'
     );
@@ -176,28 +179,30 @@ export class KeybindingSrv {
     });
 
     this.bind('mod+s', () => {
-      appEvents.emit(CoreEvents.showModalReact, {
-        component: SaveDashboardModalProxy,
-        props: {
-          dashboard,
-        },
-      });
+      appEvents.publish(
+        new ShowModalReactEvent({
+          component: SaveDashboardModalProxy,
+          props: {
+            dashboard,
+          },
+        })
+      );
     });
 
     this.bind('t z', () => {
-      scope.appEvent(CoreEvents.zoomOut, 2);
+      appEvents.publish(new ZoomOutEvent(2));
     });
 
     this.bind('ctrl+z', () => {
-      scope.appEvent(CoreEvents.zoomOut, 2);
+      appEvents.publish(new ZoomOutEvent(2));
     });
 
     this.bind('t left', () => {
-      scope.appEvent(CoreEvents.shiftTime, -1);
+      appEvents.publish(new ShiftTimeEvent(ShiftTimeEventPayload.Left));
     });
 
     this.bind('t right', () => {
-      scope.appEvent(CoreEvents.shiftTime, 1);
+      appEvents.publish(new ShiftTimeEvent(ShiftTimeEventPayload.Right));
     });
 
     // edit panel
@@ -231,17 +236,17 @@ export class KeybindingSrv {
     });
 
     // jump to explore if permissions allow
-    if (this.contextSrv.hasAccessToExplore()) {
+    if (contextSrv.hasAccessToExplore()) {
       this.bind('x', async () => {
         if (dashboard.meta.focusPanelId) {
           const panel = dashboard.getPanelById(dashboard.meta.focusPanelId)!;
-          const datasource = await this.datasourceSrv.get(panel.datasource);
+          const datasource = await getDatasourceSrv().get(panel.datasource);
           const url = await getExploreUrl({
             panel,
             panelTargets: panel.targets,
             panelDatasource: datasource,
-            datasourceSrv: this.datasourceSrv,
-            timeSrv: this.timeSrv,
+            datasourceSrv: getDatasourceSrv(),
+            timeSrv: getTimeSrv(),
           });
 
           if (url) {
@@ -259,7 +264,7 @@ export class KeybindingSrv {
       const panelId = dashboard.meta.focusPanelId;
 
       if (panelId && dashboard.canEditPanelById(panelId) && !(dashboard.panelInView || dashboard.panelInEdit)) {
-        appEvents.emit(CoreEvents.removePanel, panelId);
+        appEvents.publish(new RemovePanelEvent(panelId));
         dashboard.meta.focusPanelId = 0;
       }
     });
@@ -279,13 +284,15 @@ export class KeybindingSrv {
       if (dashboard.meta.focusPanelId) {
         const panelInfo = dashboard.getPanelInfoById(dashboard.meta.focusPanelId);
 
-        appEvents.emit(CoreEvents.showModalReact, {
-          component: ShareModal,
-          props: {
-            dashboard: dashboard,
-            panel: panelInfo?.panel,
-          },
-        });
+        appEvents.publish(
+          new ShowModalReactEvent({
+            component: ShareModal,
+            props: {
+              dashboard: dashboard,
+              panel: panelInfo?.panel,
+            },
+          })
+        );
       }
     });
 
