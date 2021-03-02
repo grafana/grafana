@@ -527,6 +527,9 @@ func (lps *LibraryPanelService) patchLibraryPanel(c *models.ReqContext, cmd patc
 		if err != nil {
 			return err
 		}
+		if panelInDB.Version != cmd.Version {
+			return errLibraryPanelVersionMismatch
+		}
 
 		var libraryPanel = LibraryPanel{
 			ID:        panelInDB.ID,

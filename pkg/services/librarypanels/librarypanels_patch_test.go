@@ -198,4 +198,17 @@ func TestPatchLibraryPanel(t *testing.T) {
 			resp := sc.service.patchHandler(sc.reqContext, cmd)
 			require.Equal(t, 404, resp.Status())
 		})
+
+	scenarioWithLibraryPanel(t, "When an admin tries to patch a library panel with an old version number, it should fail",
+		func(t *testing.T, sc scenarioContext) {
+			cmd := patchLibraryPanelCommand{
+				FolderID: sc.folder.Id,
+				Version:  1,
+			}
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
+			resp := sc.service.patchHandler(sc.reqContext, cmd)
+			require.Equal(t, 200, resp.Status())
+			resp = sc.service.patchHandler(sc.reqContext, cmd)
+			require.Equal(t, 412, resp.Status())
+		})
 }

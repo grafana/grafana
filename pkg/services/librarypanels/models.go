@@ -101,6 +101,8 @@ var (
 	errLibraryPanelHeaderNameMissing = errors.New("library panel header is missing required property name")
 	// ErrFolderHasConnectedLibraryPanels is an error for when an user deletes a folder that contains connected library panels.
 	ErrFolderHasConnectedLibraryPanels = errors.New("folder contains library panels that are linked to dashboards")
+	// errLibraryPanelVersionMismatch is an error for when a library panel has been changed by someone else.
+	errLibraryPanelVersionMismatch = errors.New("the library panel has been changed by someone else")
 )
 
 // Commands
