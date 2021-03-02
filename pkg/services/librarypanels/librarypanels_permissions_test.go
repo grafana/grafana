@@ -159,11 +159,13 @@ func TestLibraryPanelPermissions(t *testing.T) {
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 
 				err := sc.service.DeleteLibraryPanelsInFolder(sc.reqContext, folder)
-				if testCase.status == 200 {
+				switch testCase.status {
+				case 200:
 					require.NoError(t, err)
-				}
-				if testCase.status == 403 {
+				case 403:
 					require.EqualError(t, err, models.ErrFolderAccessDenied.Error())
+				default:
+					t.Fatalf("Unrecognized test case status %d", testCase.status)
 				}
 			})
 	}
