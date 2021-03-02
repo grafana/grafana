@@ -62,29 +62,29 @@ func (e *tempoExecutor) Query(ctx context.Context, dsInfo *models.DataSource, ts
 
 	resp, err := e.httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("Failed get to tempo %w", err)
+		return nil, fmt.Errorf("failed get to tempo %w", err)
 	}
-	defer resp.Body.Close()
+
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			plog.Warn("failed to close response body", "err", err)
+		}
+	}()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			plog.Warn("Failed to close response body", "err", err)
-		}
-	}()
 
 	otTrace := ot_pdata.NewTraces()
 	err = otTrace.FromOtlpProtoBytes(body)
 	if err != nil {
-		return nil, fmt.Errorf("Error converting tempo response to Otlp: %w", err)
+		return nil, fmt.Errorf("failed to convert tempo response to Otlp: %w", err)
 	}
 
 	jaegerBatches, err := ot_jaeger.InternalTracesToJaegerProto(otTrace)
 	if err != nil {
-		return nil, fmt.Errorf("Error translating to jaegerBatches %v: %w", traceID, err)
+		return nil, fmt.Errorf("failed to translate to jaegerBatches %v: %w", traceID, err)
 	}
 
 	jaegerTrace := &jaeger.Trace{
@@ -109,7 +109,7 @@ func (e *tempoExecutor) Query(ctx context.Context, dsInfo *models.DataSource, ts
 	traceBytes, err := json.Marshal(jsonTrace)
 
 	if err != nil {
-		return nil, fmt.Errorf("Failed to json.Marshal trace \"%s\" :%w", traceID, err)
+		return nil, fmt.Errorf("failed to json.Marshal trace \"%s\" :%w", traceID, err)
 	}
 
 	refID := tsdbQuery.Queries[0].RefId
