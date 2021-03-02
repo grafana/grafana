@@ -31,7 +31,6 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { TraceToLogsData } from 'app/core/components/TraceToLogsSettings';
 
 type Props = {
-  // trace?: TraceViewData;
   dataFrames: DataFrame[];
   splitOpenFn: SplitOpen;
   exploreId: ExploreId;
