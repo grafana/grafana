@@ -1,4 +1,6 @@
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
+
+import { PanelModel } from '../../dashboard/state';
 
 export interface LibraryPanelDTO {
   id: number;
@@ -7,6 +9,7 @@ export interface LibraryPanelDTO {
   uid: string;
   name: string;
   model: any;
+  version: number;
   meta: LibraryPanelDTOMeta;
 }
 
@@ -25,12 +28,19 @@ export interface LibraryPanelDTOMetaUser {
   avatarUrl: string;
 }
 
+export interface PanelModelWithLibraryPanel extends PanelModel {
+  libraryPanel: Pick<LibraryPanelDTO, 'uid' | 'name' | 'meta' | 'version'>;
+}
+
 export async function getLibraryPanels(): Promise<LibraryPanelDTO[]> {
   const { result } = await getBackendSrv().get(`/api/library-panels`);
   return result;
 }
 
-export async function addLibraryPanel(panelSaveModel: any, folderId: number): Promise<LibraryPanelDTO> {
+export async function addLibraryPanel(
+  panelSaveModel: PanelModelWithLibraryPanel,
+  folderId: number
+): Promise<LibraryPanelDTO> {
   const { result } = await getBackendSrv().post(`/api/library-panels`, {
     folderId,
     name: panelSaveModel.title,
@@ -39,11 +49,15 @@ export async function addLibraryPanel(panelSaveModel: any, folderId: number): Pr
   return result;
 }
 
-export async function updateLibraryPanel(panelSaveModel: any, folderId: number): Promise<LibraryPanelDTO> {
+export async function updateLibraryPanel(
+  panelSaveModel: PanelModelWithLibraryPanel,
+  folderId: number
+): Promise<LibraryPanelDTO> {
   const { result } = await getBackendSrv().patch(`/api/library-panels/${panelSaveModel.libraryPanel.uid}`, {
     folderId,
     name: panelSaveModel.title,
     model: panelSaveModel,
+    version: panelSaveModel.libraryPanel.version,
   });
   return result;
 }

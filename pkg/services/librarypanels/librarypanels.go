@@ -102,8 +102,9 @@ func (lps *LibraryPanelService) LoadLibraryPanelsForDashboard(c *models.ReqConte
 		elem.Set("gridPos", panelAsJSON.Get("gridPos").MustMap())
 		elem.Set("id", panelAsJSON.Get("id").MustInt64())
 		elem.Set("libraryPanel", map[string]interface{}{
-			"uid":  libraryPanelInDB.UID,
-			"name": libraryPanelInDB.Name,
+			"uid":     libraryPanelInDB.UID,
+			"name":    libraryPanelInDB.Name,
+			"version": libraryPanelInDB.Version,
 			"meta": map[string]interface{}{
 				"canEdit":             libraryPanelInDB.Meta.CanEdit,
 				"connectedDashboards": libraryPanelInDB.Meta.ConnectedDashboards,
@@ -246,6 +247,7 @@ func (lps *LibraryPanelService) AddMigration(mg *migrator.Migrator) {
 			{Name: "created_by", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
 			{Name: "updated_by", Type: migrator.DB_BigInt, Nullable: false},
+			{Name: "version", Type: migrator.DB_BigInt, Nullable: false},
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"org_id", "folder_id", "name"}, Type: migrator.UniqueIndex},

@@ -15,7 +15,7 @@ import (
 var (
 	sqlStatmentLibrayPanelDTOWithMeta = `
 SELECT DISTINCT
-	lp.id, lp.org_id, lp.folder_id, lp.uid, lp.name, lp.model, lp.created, lp.created_by, lp.updated, lp.updated_by
+	lp.id, lp.org_id, lp.folder_id, lp.uid, lp.name, lp.model, lp.created, lp.created_by, lp.updated, lp.updated_by, lp.version
 	, 0 AS can_edit
 	, u1.login AS created_by_name
 	, u1.email AS created_by_email
@@ -53,6 +53,7 @@ func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd cre
 		UID:      util.GenerateShortUID(),
 		Name:     cmd.Name,
 		Model:    cmd.Model,
+		Version:  1,
 
 		Created: time.Now(),
 		Updated: time.Now(),
@@ -85,6 +86,7 @@ func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd cre
 		UID:      libraryPanel.UID,
 		Name:     libraryPanel.Name,
 		Model:    libraryPanel.Model,
+		Version:  libraryPanel.Version,
 		Meta: LibraryPanelDTOMeta{
 			CanEdit:             true,
 			ConnectedDashboards: 0,
@@ -340,6 +342,7 @@ func (lps *LibraryPanelService) getLibraryPanel(c *models.ReqContext, uid string
 		UID:      libraryPanel.UID,
 		Name:     libraryPanel.Name,
 		Model:    libraryPanel.Model,
+		Version:  libraryPanel.Version,
 		Meta: LibraryPanelDTOMeta{
 			CanEdit:             true,
 			ConnectedDashboards: libraryPanel.ConnectedDashboards,
@@ -395,6 +398,7 @@ func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext, limit 
 			UID:      panel.UID,
 			Name:     panel.Name,
 			Model:    panel.Model,
+			Version:  panel.Version,
 			Meta: LibraryPanelDTOMeta{
 				CanEdit:             true,
 				ConnectedDashboards: panel.ConnectedDashboards,
@@ -466,6 +470,7 @@ func (lps *LibraryPanelService) getLibraryPanelsForDashboardID(c *models.ReqCont
 				UID:      panel.UID,
 				Name:     panel.Name,
 				Model:    panel.Model,
+				Version:  panel.Version,
 				Meta: LibraryPanelDTOMeta{
 					CanEdit:             panel.CanEdit,
 					ConnectedDashboards: panel.ConnectedDashboards,
@@ -522,6 +527,9 @@ func (lps *LibraryPanelService) patchLibraryPanel(c *models.ReqContext, cmd patc
 		if err != nil {
 			return err
 		}
+		if panelInDB.Version != cmd.Version {
+			return errLibraryPanelVersionMismatch
+		}
 
 		var libraryPanel = LibraryPanel{
 			ID:        panelInDB.ID,
@@ -530,6 +538,7 @@ func (lps *LibraryPanelService) patchLibraryPanel(c *models.ReqContext, cmd patc
 			UID:       uid,
 			Name:      cmd.Name,
 			Model:     cmd.Model,
+			Version:   panelInDB.Version + 1,
 			Created:   panelInDB.Created,
 			CreatedBy: panelInDB.CreatedBy,
 			Updated:   time.Now(),
@@ -564,6 +573,7 @@ func (lps *LibraryPanelService) patchLibraryPanel(c *models.ReqContext, cmd patc
 			UID:      libraryPanel.UID,
 			Name:     libraryPanel.Name,
 			Model:    libraryPanel.Model,
+			Version:  libraryPanel.Version,
 			Meta: LibraryPanelDTOMeta{
 				CanEdit:             true,
 				ConnectedDashboards: panelInDB.ConnectedDashboards,

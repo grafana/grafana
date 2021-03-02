@@ -14,6 +14,7 @@ type LibraryPanel struct {
 	UID      string `xorm:"uid"`
 	Name     string
 	Model    json.RawMessage
+	Version  int64
 
 	Created time.Time
 	Updated time.Time
@@ -30,6 +31,7 @@ type LibraryPanelWithMeta struct {
 	UID      string `xorm:"uid"`
 	Name     string
 	Model    json.RawMessage
+	Version  int64
 
 	Created time.Time
 	Updated time.Time
@@ -52,6 +54,7 @@ type LibraryPanelDTO struct {
 	UID      string              `json:"uid"`
 	Name     string              `json:"name"`
 	Model    json.RawMessage     `json:"model"`
+	Version  int64               `json:"version"`
 	Meta     LibraryPanelDTOMeta `json:"meta"`
 }
 
@@ -98,6 +101,8 @@ var (
 	errLibraryPanelHeaderNameMissing = errors.New("library panel header is missing required property name")
 	// ErrFolderHasConnectedLibraryPanels is an error for when an user deletes a folder that contains connected library panels.
 	ErrFolderHasConnectedLibraryPanels = errors.New("folder contains library panels that are linked to dashboards")
+	// errLibraryPanelVersionMismatch is an error for when a library panel has been changed by someone else.
+	errLibraryPanelVersionMismatch = errors.New("the library panel has been changed by someone else")
 )
 
 // Commands
@@ -114,4 +119,5 @@ type patchLibraryPanelCommand struct {
 	FolderID int64           `json:"folderId" binding:"Default(-1)"`
 	Name     string          `json:"name"`
 	Model    json.RawMessage `json:"model"`
+	Version  int64           `json:"version" binding:"Required"`
 }
