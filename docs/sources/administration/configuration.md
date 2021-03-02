@@ -268,6 +268,11 @@ Specify a full HTTP URL address to the root of your Grafana CDN assets. Grafana 
 For example, given a cdn url like `https://cdn.myserver.com` grafana will try to load a javascript file from
 `http://cdn.myserver.com/grafana-oss/v7.4.0/public/build/app.<hash>.js`.
 
+### read_timeout
+
+Maximum duration before timing out read of the incoming request, and closing idle connections.
+
+
 <hr />
 
 ## [database]
