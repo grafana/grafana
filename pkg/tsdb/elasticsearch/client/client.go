@@ -354,13 +354,16 @@ func (c *baseClientImpl) GetIndexMapping() (*IndexMappingResponse, error) {
 	start := time.Now()
 	clientLog.Debug("Decoding index mapping json response")
 
+	defer func() {
+		if err := res.httpResponse.Body.Close(); err != nil {
+			clientLog.Warn("Failed to close response body", "err", err)
+		}
+	}()
+
 	var objmap map[string]interface{}
-	defer res.httpResponse.Body.Close()
 	dec := json.NewDecoder(res.httpResponse.Body)
 	err = dec.Decode(&objmap)
 	if err != nil {
-		responseBuffer := bytes.Buffer{}
-		responseBuffer.ReadFrom(res.httpResponse.Body)
 		return nil, err
 	}
 
@@ -374,7 +377,7 @@ func (c *baseClientImpl) GetIndexMapping() (*IndexMappingResponse, error) {
 		imr.Mappings = objmap
 	}
 
-	elapsed := time.Now().Sub(start)
+	elapsed := time.Since(start)
 	clientLog.Debug("Decoded index mapping json response", "took", elapsed)
 
 	return &imr, nil

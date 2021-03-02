@@ -147,7 +147,6 @@ func transform(indexMapping *es.IndexMappingResponse, fieldTypeFilter, refID str
 
 // Given a field name `fieldName` returns `true` if `fieldName` is a known metadata field according to https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields, `false` otherwise
 func isMetadataField(fieldName string) bool {
-
 	// The following are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 	// custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
 	elasticsearchMetaFields := []string{
