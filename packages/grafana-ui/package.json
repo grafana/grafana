@@ -26,7 +26,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@emotion/core": "^10.0.27",
+    "@emotion/core": "10.0.27",
     "@grafana/data": "7.5.0-pre.0",
     "@grafana/e2e-selectors": "7.5.0-pre.0",
     "@grafana/slate-react": "0.22.9-grafana",

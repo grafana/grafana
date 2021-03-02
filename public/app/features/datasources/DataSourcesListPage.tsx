@@ -49,11 +49,7 @@ const emptyListModel = {
 
 export class DataSourcesListPage extends PureComponent<Props> {
   componentDidMount() {
-    this.fetchDataSources();
-  }
-
-  async fetchDataSources() {
-    return await this.props.loadDataSources();
+    this.props.loadDataSources();
   }
 
   render() {
