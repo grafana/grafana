@@ -28,6 +28,7 @@ import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { getLegacyAngularInjector, locationService } from '@grafana/runtime';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { selectors } from '@grafana/e2e-selectors';
+import { getTimeSrv } from '../services/TimeSrv';
 
 export interface DashboardPageRouteParams {
   uid?: string;
@@ -129,6 +130,10 @@ export class DashboardPage extends PureComponent<Props, State> {
     if (prevProps.match.params.uid !== match.params.uid) {
       this.initDashboard();
       return;
+    }
+
+    if (prevProps.location.search !== this.props.location.search) {
+      getTimeSrv().updateTimeRangeFromUrl();
     }
 
     const urlEditPanelId = queryParams.editPanel;

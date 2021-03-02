@@ -19,12 +19,6 @@ describe('linkSrv', () => {
   let templateSrv: TemplateSrv;
 
   function initLinkSrv() {
-    const rootScope = {
-      $on: jest.fn(),
-      onAppEvent: jest.fn(),
-      appEvent: jest.fn(),
-    };
-
     const timer = {
       register: jest.fn(),
       cancel: jest.fn(),
@@ -34,12 +28,14 @@ describe('linkSrv', () => {
     const _dashboard: any = {
       time: { from: 'now-6h', to: 'now' },
       getTimezone: jest.fn(() => 'browser'),
+      timeRangeUpdated: () => {},
     };
 
-    const timeSrv = new TimeSrv(rootScope as any, jest.fn() as any, timer, {} as any);
+    const timeSrv = new TimeSrv(jest.fn() as any, timer, {} as any);
     timeSrv.init(_dashboard);
     timeSrv.setTime({ from: 'now-1h', to: 'now' });
     _dashboard.refresh = false;
+
     templateSrv = initTemplateSrv([
       { type: 'query', name: 'home', current: { value: '127.0.0.1' } },
       { type: 'query', name: 'server1', current: { value: '192.168.0.100' } },

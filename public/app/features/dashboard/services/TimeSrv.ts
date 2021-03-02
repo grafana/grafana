@@ -14,7 +14,6 @@ import {
 import coreModule from 'app/core/core_module';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { DashboardModel } from '../state/DashboardModel';
-import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
 import { appEvents } from '../../../core/core';
 import { CoreEvents } from '../../../types';
@@ -32,19 +31,12 @@ export class TimeSrv {
   private autoRefreshBlocked: boolean;
 
   /** @ngInject */
-  constructor(
-    $rootScope: GrafanaRootScope,
-    private $timeout: ITimeoutService,
-    private timer: any,
-    private contextSrv: ContextSrv
-  ) {
+  constructor(private $timeout: ITimeoutService, private timer: any, private contextSrv: ContextSrv) {
     // default time
     this.time = getDefaultTimeRange().raw;
-
+    this.refreshDashboard = this.refreshDashboard.bind(this);
     appEvents.on(CoreEvents.zoomOut, this.zoomOut.bind(this));
     appEvents.on(CoreEvents.shiftTime, this.shiftTime.bind(this));
-
-    $rootScope.$on('$routeUpdate', this.routeUpdated.bind(this));
 
     document.addEventListener('visibilitychange', () => {
       if (this.autoRefreshBlocked && document.visibilityState === 'visible') {
@@ -167,7 +159,7 @@ export class TimeSrv {
     });
   }
 
-  private routeUpdated() {
+  updateTimeRangeFromUrl() {
     const params = locationService.getSearch();
 
     if (params.get('left')) {
@@ -267,7 +259,7 @@ export class TimeSrv {
       });
     }
 
-    this.$timeout(this.refreshDashboard.bind(this), 0);
+    this.refreshDashboard();
   }
 
   timeRangeForUrl = () => {
