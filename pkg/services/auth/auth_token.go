@@ -420,6 +420,29 @@ func (s *UserAuthTokenService) GetUserTokens(ctx context.Context, userId int64) 
 	return result, err
 }
 
+func (s *UserAuthTokenService) GetUserRevokedTokens(ctx context.Context, userId int64) ([]*models.UserToken, error) {
+	result := []*models.UserToken{}
+	err := s.SQLStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		var tokens []*userAuthToken
+		err := dbSession.Where("user_id = ? AND revoked_at > 0", userId).Find(&tokens)
+		if err != nil {
+			return err
+		}
+
+		for _, token := range tokens {
+			var userToken models.UserToken
+			if err := token.toUserToken(&userToken); err != nil {
+				return err
+			}
+			result = append(result, &userToken)
+		}
+
+		return nil
+	})
+
+	return result, err
+}
+
 func (s *UserAuthTokenService) createdAfterParam() int64 {
 	return getTime().Add(-s.Cfg.LoginMaxLifetime).Unix()
 }

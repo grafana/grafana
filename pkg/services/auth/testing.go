@@ -8,15 +8,16 @@ import (
 )
 
 type FakeUserAuthTokenService struct {
-	CreateTokenProvider         func(ctx context.Context, user *models.User, clientIP net.IP, userAgent string) (*models.UserToken, error)
-	TryRotateTokenProvider      func(ctx context.Context, token *models.UserToken, clientIP net.IP, userAgent string) (bool, error)
-	LookupTokenProvider         func(ctx context.Context, unhashedToken string) (*models.UserToken, error)
-	RevokeTokenProvider         func(ctx context.Context, token *models.UserToken, soft bool) error
-	RevokeAllUserTokensProvider func(ctx context.Context, userId int64) error
-	ActiveAuthTokenCount        func(ctx context.Context) (int64, error)
-	GetUserTokenProvider        func(ctx context.Context, userId, userTokenId int64) (*models.UserToken, error)
-	GetUserTokensProvider       func(ctx context.Context, userId int64) ([]*models.UserToken, error)
-	BatchRevokedTokenProvider   func(ctx context.Context, userIds []int64) error
+	CreateTokenProvider          func(ctx context.Context, user *models.User, clientIP net.IP, userAgent string) (*models.UserToken, error)
+	TryRotateTokenProvider       func(ctx context.Context, token *models.UserToken, clientIP net.IP, userAgent string) (bool, error)
+	LookupTokenProvider          func(ctx context.Context, unhashedToken string) (*models.UserToken, error)
+	RevokeTokenProvider          func(ctx context.Context, token *models.UserToken, soft bool) error
+	RevokeAllUserTokensProvider  func(ctx context.Context, userId int64) error
+	ActiveAuthTokenCount         func(ctx context.Context) (int64, error)
+	GetUserTokenProvider         func(ctx context.Context, userId, userTokenId int64) (*models.UserToken, error)
+	GetUserTokensProvider        func(ctx context.Context, userId int64) ([]*models.UserToken, error)
+	GetUserRevokedTokensProvider func(ctx context.Context, userId int64) ([]*models.UserToken, error)
+	BatchRevokedTokenProvider    func(ctx context.Context, userIds []int64) error
 }
 
 func NewFakeUserAuthTokenService() *FakeUserAuthTokenService {
@@ -94,6 +95,10 @@ func (s *FakeUserAuthTokenService) GetUserToken(ctx context.Context, userId, use
 
 func (s *FakeUserAuthTokenService) GetUserTokens(ctx context.Context, userId int64) ([]*models.UserToken, error) {
 	return s.GetUserTokensProvider(context.Background(), userId)
+}
+
+func (s *FakeUserAuthTokenService) GetUserRevokedTokens(ctx context.Context, userId int64) ([]*models.UserToken, error) {
+	return s.GetUserRevokedTokensProvider(context.Background(), userId)
 }
 
 func (s *FakeUserAuthTokenService) BatchRevokeAllUserTokens(ctx context.Context, userIds []int64) error {
