@@ -497,7 +497,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     const payload = [header, esQuery].join('\n') + '\n';
     const url = this.getMultiSearchUrl();
     const response = await this.post(url, payload).toPromise();
-    const targets: ElasticsearchQuery[] = [{ refId: `${row.dataFrame.refId}`, metrics: [], isLogsQuery: true }];
+    const targets: ElasticsearchQuery[] = [{ refId: `${row.dataFrame.refId}`, metrics: [{ type: 'logs', id: '1' }] }];
     const elasticResponse = new ElasticResponse(targets, transformHitsBasedOnDirection(response, sort));
     const logResponse = elasticResponse.getLogs(this.logMessageField, this.logLevelField);
     const dataFrame = _.first(logResponse.data);
@@ -530,6 +530,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     let payload = '';
     const targets = this.interpolateVariablesInQueries(_.cloneDeep(options.targets), options.scopedVars);
     const sentTargets: ElasticsearchQuery[] = [];
+    let targetsContainsLogsQuery = targets.some((target) => hasMetricOfType(target, 'logs'));
 
     // add global adhoc filters to timeFilter
     const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
@@ -540,11 +541,10 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       }
 
       let queryObj;
-      if (target.isLogsQuery || hasMetricOfType(target, 'logs')) {
+      if (hasMetricOfType(target, 'logs')) {
         target.bucketAggs = [defaultBucketAgg()];
         target.metrics = [];
         // Setting this for metrics queries that are typed as logs
-        target.isLogsQuery = true;
         queryObj = this.queryBuilder.getLogsQuery(target, adhocFilters, target.query);
       } else {
         if (target.alias) {
@@ -583,7 +583,8 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       map((res) => {
         const er = new ElasticResponse(sentTargets, res);
 
-        if (sentTargets.some((target) => target.isLogsQuery)) {
+        // TODO: This needs to be revisited, it seems wrong to process ALL the sent queries as logs if only one of them was a log query
+        if (targetsContainsLogsQuery) {
           const response = er.getLogs(this.logMessageField, this.logLevelField);
           for (const dataFrame of response.data) {
             enhanceDataFrame(dataFrame, this.dataLinks);

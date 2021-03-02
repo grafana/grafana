@@ -96,6 +96,8 @@ var (
 	errLibraryPanelHeaderUIDMissing = errors.New("library panel header is missing required property uid")
 	// errLibraryPanelHeaderNameMissing is an error for when a library panel header is missing the name property.
 	errLibraryPanelHeaderNameMissing = errors.New("library panel header is missing required property name")
+	// ErrFolderHasConnectedLibraryPanels is an error for when an user deletes a folder that contains connected library panels.
+	ErrFolderHasConnectedLibraryPanels = errors.New("folder contains library panels that are linked to dashboards")
 )
 
 // Commands
@@ -109,7 +111,7 @@ type createLibraryPanelCommand struct {
 
 // patchLibraryPanelCommand is the command for patching a LibraryPanel
 type patchLibraryPanelCommand struct {
-	FolderID int64           `json:"folderId"`
+	FolderID int64           `json:"folderId" binding:"Default(-1)"`
 	Name     string          `json:"name"`
 	Model    json.RawMessage `json:"model"`
 }

@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/stretchr/testify/assert"
@@ -27,84 +28,110 @@ import (
 
 // Test generateConnectionString.
 func TestGenerateConnectionString(t *testing.T) {
-	logger := log.New("tsdb.postgres")
+	cfg := setting.NewCfg()
+	cfg.DataPath = t.TempDir()
 
 	testCases := []struct {
-		desc       string
-		host       string
-		user       string
-		password   string
-		database   string
-		tlsMode    string
-		expConnStr string
-		expErr     string
+		desc        string
+		host        string
+		user        string
+		password    string
+		database    string
+		tlsSettings tlsSettings
+		expConnStr  string
+		expErr      string
+		uid         string
 	}{
 		{
-			desc:       "Unix socket host",
-			host:       "/var/run/postgresql",
-			user:       "user",
-			password:   "password",
-			database:   "database",
-			expConnStr: "user='user' password='password' host='/var/run/postgresql' dbname='database' sslmode='verify-full'",
+			desc:        "Unix socket host",
+			host:        "/var/run/postgresql",
+			user:        "user",
+			password:    "password",
+			database:    "database",
+			tlsSettings: tlsSettings{Mode: "verify-full"},
+			expConnStr:  "user='user' password='password' host='/var/run/postgresql' dbname='database' sslmode='verify-full'",
 		},
 		{
-			desc:       "TCP host",
-			host:       "host",
-			user:       "user",
-			password:   "password",
-			database:   "database",
-			expConnStr: "user='user' password='password' host='host' dbname='database' sslmode='verify-full'",
+			desc:        "TCP host",
+			host:        "host",
+			user:        "user",
+			password:    "password",
+			database:    "database",
+			tlsSettings: tlsSettings{Mode: "verify-full"},
+			expConnStr:  "user='user' password='password' host='host' dbname='database' sslmode='verify-full'",
 		},
 		{
-			desc:       "TCP/port host",
-			host:       "host:1234",
-			user:       "user",
-			password:   "password",
-			database:   "database",
-			expConnStr: "user='user' password='password' host='host' dbname='database' sslmode='verify-full' port=1234",
+			desc:        "TCP/port host",
+			host:        "host:1234",
+			user:        "user",
+			password:    "password",
+			database:    "database",
+			tlsSettings: tlsSettings{Mode: "verify-full"},
+			expConnStr:  "user='user' password='password' host='host' dbname='database' port=1234 sslmode='verify-full'",
 		},
 		{
-			desc:     "Invalid port",
-			host:     "host:invalid",
+			desc:        "Invalid port",
+			host:        "host:invalid",
+			user:        "user",
+			database:    "database",
+			tlsSettings: tlsSettings{},
+			expErr:      "invalid port in host specifier",
+		},
+		{
+			desc:        "Password with single quote and backslash",
+			host:        "host",
+			user:        "user",
+			password:    `p'\assword`,
+			database:    "database",
+			tlsSettings: tlsSettings{Mode: "verify-full"},
+			expConnStr:  `user='user' password='p\'\\assword' host='host' dbname='database' sslmode='verify-full'`,
+		},
+		{
+			desc:        "Custom TLS mode disabled",
+			host:        "host",
+			user:        "user",
+			password:    "password",
+			database:    "database",
+			tlsSettings: tlsSettings{Mode: "disable"},
+			expConnStr:  "user='user' password='password' host='host' dbname='database' sslmode='disable'",
+		},
+		{
+			desc:     "Custom TLS mode verify-full with certificate files",
+			host:     "host",
 			user:     "user",
+			password: "password",
 			database: "database",
-			expErr:   "invalid port in host specifier",
-		},
-		{
-			desc:       "Password with single quote and backslash",
-			host:       "host",
-			user:       "user",
-			password:   `p'\assword`,
-			database:   "database",
-			expConnStr: `user='user' password='p\'\\assword' host='host' dbname='database' sslmode='verify-full'`,
-		},
-		{
-			desc:       "Custom TLS/SSL mode",
-			host:       "host",
-			user:       "user",
-			password:   "password",
-			database:   "database",
-			tlsMode:    "disable",
-			expConnStr: "user='user' password='password' host='host' dbname='database' sslmode='disable'",
+			tlsSettings: tlsSettings{
+				Mode:         "verify-full",
+				RootCertFile: "i/am/coding/ca.crt",
+				CertFile:     "i/am/coding/client.crt",
+				CertKeyFile:  "i/am/coding/client.key",
+			},
+			expConnStr: "user='user' password='password' host='host' dbname='database' sslmode='verify-full' " +
+				"sslrootcert='i/am/coding/ca.crt' sslcert='i/am/coding/client.crt' sslkey='i/am/coding/client.key'",
 		},
 	}
 	for _, tt := range testCases {
 		t.Run(tt.desc, func(t *testing.T) {
-			data := map[string]interface{}{}
-			if tt.tlsMode != "" {
-				data["sslmode"] = tt.tlsMode
+			svc := postgresService{
+				Cfg:        cfg,
+				logger:     log.New("tsdb.postgres"),
+				tlsManager: &tlsTestManager{settings: tt.tlsSettings},
 			}
+
 			ds := &models.DataSource{
 				Url:      tt.host,
 				User:     tt.user,
 				Password: tt.password,
 				Database: tt.database,
-				JsonData: simplejson.NewFromAny(data),
+				Uid:      tt.uid,
 			}
-			connStr, err := generateConnectionString(ds, logger)
+
+			connStr, err := svc.generateConnectionString(ds)
+
 			if tt.expErr == "" {
 				require.NoError(t, err, tt.desc)
-				assert.Equal(t, tt.expConnStr, connStr, tt.desc)
+				assert.Equal(t, tt.expConnStr, connStr)
 			} else {
 				require.Error(t, err, tt.desc)
 				assert.True(t, strings.HasPrefix(err.Error(), tt.expErr),
@@ -127,7 +154,7 @@ func TestPostgres(t *testing.T) {
 	runPostgresTests := false
 	// runPostgresTests := true
 
-	if !(sqlstore.IsTestDbPostgres() || runPostgresTests) {
+	if !sqlstore.IsTestDbPostgres() && !runPostgresTests {
 		t.Skip()
 	}
 
@@ -146,7 +173,15 @@ func TestPostgres(t *testing.T) {
 		return sql, nil
 	}
 
-	endpoint, err := newPostgresQueryEndpoint(&models.DataSource{
+	cfg := setting.NewCfg()
+	cfg.DataPath = t.TempDir()
+	svc := postgresService{
+		Cfg:        cfg,
+		logger:     log.New("tsdb.postgres"),
+		tlsManager: &tlsTestManager{settings: tlsSettings{Mode: "disable"}},
+	}
+
+	endpoint, err := svc.newPostgresQueryEndpoint(&models.DataSource{
 		JsonData:       simplejson.New(),
 		SecureJsonData: securejsondata.SecureJsonData{},
 	})
@@ -483,9 +518,9 @@ func TestPostgres(t *testing.T) {
 			ValueTwo            int64 `xorm:"integer 'valueTwo'"`
 		}
 
-		if exist, err := sess.IsTableExist(metric_values{}); err != nil || exist {
+		if exists, err := sess.IsTableExist(metric_values{}); err != nil || exists {
 			require.NoError(t, err)
-			err = sess.DropTable(metric_values{})
+			err := sess.DropTable(metric_values{})
 			require.NoError(t, err)
 		}
 		err := sess.CreateTable(metric_values{})
@@ -1084,9 +1119,7 @@ func InitPostgresTestDB(t *testing.T) *xorm.Engine {
 	testDB := sqlutil.PostgresTestDB()
 	x, err := xorm.NewEngine(testDB.DriverName, strings.Replace(testDB.ConnStr, "dbname=grafanatest",
 		"dbname=grafanadstest", 1))
-	if err != nil {
-		t.Fatalf("Failed to init postgres DB %v", err)
-	}
+	require.NoError(t, err, "Failed to init postgres DB")
 
 	x.DatabaseTZ = time.UTC
 	x.TZLocation = time.UTC
@@ -1107,4 +1140,12 @@ func genTimeRangeByInterval(from time.Time, duration time.Duration, interval tim
 	}
 
 	return timeRange
+}
+
+type tlsTestManager struct {
+	settings tlsSettings
+}
+
+func (m *tlsTestManager) getTLSSettings(datasource *models.DataSource) (tlsSettings, error) {
+	return m.settings, nil
 }

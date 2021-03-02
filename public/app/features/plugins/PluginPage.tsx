@@ -400,7 +400,7 @@ function getPluginTabsNav(
       if (plugin.angularConfigCtrl) {
         pages.push({
           text: 'Config',
-          icon: 'gicon gicon-cog',
+          icon: 'cog',
           url: `${appSubUrl}${path}?page=${PAGE_ID_CONFIG_CTRL}`,
           id: PAGE_ID_CONFIG_CTRL,
         });
@@ -426,7 +426,7 @@ function getPluginTabsNav(
       if (find(meta.includes, { type: PluginIncludeType.dashboard })) {
         pages.push({
           text: 'Dashboards',
-          icon: 'gicon gicon-dashboard',
+          icon: 'apps',
           url: `${appSubUrl}${path}?page=${PAGE_ID_DASHBOARDS}`,
           id: PAGE_ID_DASHBOARDS,
         });

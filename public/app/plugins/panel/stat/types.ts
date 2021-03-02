@@ -23,8 +23,8 @@ export interface StatPanelOptions extends SingleStatBaseOptions {
   textMode: BigValueTextMode;
 }
 
-export function addStandardDataReduceOptions(
-  builder: PanelOptionsEditorBuilder<SingleStatBaseOptions>,
+export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
+  builder: PanelOptionsEditorBuilder<T>,
   includeOrientation = true,
   includeFieldMatcher = true,
   includeTextSizes = true

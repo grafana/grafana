@@ -28,23 +28,13 @@ const getKnobs = () => {
 };
 
 export const basic = () => {
-  const { datapoints, pieType, width, height, showLabelName, showLabelPercent, showLabelValue } = getKnobs();
-  const labelOptions = { showName: showLabelName, showPercent: showLabelPercent, showValue: showLabelValue };
+  const { datapoints, pieType, width, height } = getKnobs();
 
-  return <PieChart width={width} height={height} values={datapoints} pieType={pieType} labelOptions={labelOptions} />;
+  return <PieChart width={width} height={height} values={datapoints} pieType={pieType} />;
 };
 
 export const donut = () => {
-  const { datapoints, width, height, showLabelName, showLabelPercent, showLabelValue } = getKnobs();
-  const labelOptions = { showName: showLabelName, showPercent: showLabelPercent, showValue: showLabelValue };
+  const { datapoints, width, height } = getKnobs();
 
-  return (
-    <PieChart
-      width={width}
-      height={height}
-      values={datapoints}
-      pieType={PieChartType.Donut}
-      labelOptions={labelOptions}
-    />
-  );
+  return <PieChart width={width} height={height} values={datapoints} pieType={PieChartType.Donut} />;
 };
