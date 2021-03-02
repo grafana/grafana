@@ -14,8 +14,9 @@ import { updateLocation } from 'app/core/actions';
 import { addPanel } from 'app/features/dashboard/state/reducers';
 import { DashboardModel, PanelModel } from '../../state';
 import { LibraryPanelsView } from '../../../library-panels/components/LibraryPanelsView/LibraryPanelsView';
-import { LibraryPanelDTO } from 'app/features/library-panels/state/api';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
+import { LibraryPanelDTO } from '../../../library-panels/types';
+import { toPanelModelLibraryPanel } from '../../../library-panels/utils';
 
 export type PanelPluginInfo = { id: any; defaults: { gridPos: { w: any; h: any }; title: any } };
 
@@ -119,7 +120,7 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard, u
     const newPanel: PanelModel = {
       ...panelInfo.model,
       gridPos,
-      libraryPanel: _.pick(panelInfo, 'name', 'uid', 'meta'),
+      libraryPanel: toPanelModelLibraryPanel(panelInfo),
     };
 
     dashboard.addPanel(newPanel);

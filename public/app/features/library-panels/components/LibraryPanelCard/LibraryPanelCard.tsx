@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Icon, IconButton, ConfirmModal, Tooltip, useStyles, Card } from '@grafana/ui';
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { LibraryPanelDTO } from '../../state/api';
+import { LibraryPanelDTO } from '../../types';
 
 export interface LibraryPanelCardProps {
   libraryPanel: LibraryPanelDTO;
