@@ -68,9 +68,9 @@ function soloPanelPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
             match: {
               params: { slug: 'my-dash', uid: '11' },
             } as any,
-            location: {
-              search: '?panelId=1',
-            } as any,
+            queryParams: {
+              panelId: '1',
+            },
             route: { routeName: DashboardRoutes.Normal } as any,
           }),
           $scope: {},

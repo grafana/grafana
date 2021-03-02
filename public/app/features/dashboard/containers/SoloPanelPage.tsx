@@ -17,7 +17,7 @@ export interface DashboardPageRouteParams {
   slug?: string;
 }
 
-export interface Props extends GrafanaRouteComponentProps<DashboardPageRouteParams> {
+export interface Props extends GrafanaRouteComponentProps<DashboardPageRouteParams, { panelId: string }> {
   $scope: any;
   $injector: any;
   initDashboard: typeof initDashboard;
@@ -50,9 +50,7 @@ export class SoloPanelPage extends Component<Props, State> {
   }
 
   getPanelId(): number {
-    const { location } = this.props;
-    const search = new URLSearchParams(location.search);
-    return parseInt(search.get('panelId') ?? '0', 10);
+    return parseInt(this.props.queryParams.panelId ?? '0', 10);
   }
 
   componentDidUpdate(prevProps: Props) {
