@@ -230,7 +230,7 @@ class QueryField extends React.Component<any, any> {
   }
 
   restoreEscapeKeyBinding() {
-    keybindingSrv.resetAndInitGlobals();
+    keybindingSrv.initGlobals();
   }
 
   onClickItem = (item: any) => {

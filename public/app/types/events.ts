@@ -1,5 +1,4 @@
 import { BusEventBase, BusEventWithPayload, eventFactory, GrafanaTheme, TimeRange } from '@grafana/data';
-import { DashboardModel } from 'app/features/dashboard/state';
 
 /**
  * Event Payloads
@@ -84,7 +83,6 @@ export interface PanelChangeViewPayload {}
  */
 
 export const dashLinksUpdated = eventFactory('dash-links-updated');
-export const dashboardSaved = eventFactory<DashboardModel>('dashboard-saved');
 export const searchQuery = eventFactory('search-query');
 
 export const dsRequestResponse = eventFactory<DataSourceResponsePayload>('ds-request-response');
@@ -184,4 +182,8 @@ export class ShowModalReactEvent extends BusEventWithPayload<ShowModalReactPaylo
 
 export class HideModalEvent extends BusEventBase {
   static type = 'hide-modal';
+}
+
+export class DashboardSavedEvent extends BusEventBase {
+  static type = 'dashboard-saved';
 }

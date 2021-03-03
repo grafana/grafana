@@ -24,10 +24,10 @@ import { initVariablesTransaction } from '../../variables/state/actions';
 import { emitDashboardViewEvent } from './analyticsProcessor';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { locationService } from '@grafana/runtime';
+import { ChangeTracker } from '../services/ChangeTracker';
 
 export interface InitDashboardArgs {
   $injector: any;
-  $scope: any;
   urlUid?: string;
   urlSlug?: string;
   urlType?: string;
@@ -170,8 +170,8 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     // init services
     const timeSrv: TimeSrv = args.$injector.get('timeSrv');
     const annotationsSrv: AnnotationsSrv = args.$injector.get('annotationsSrv');
-    const unsavedChangesSrv = args.$injector.get('unsavedChangesSrv');
     const dashboardSrv: DashboardSrv = args.$injector.get('dashboardSrv');
+    const changeTracker = new ChangeTracker();
 
     timeSrv.init(dashboard);
     annotationsSrv.init(dashboard);
@@ -206,8 +206,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
         dashboard.autoFitPanels(window.innerHeight, queryParams.kiosk);
       }
 
-      // init unsaved changes tracking
-      unsavedChangesSrv.init(dashboard, args.$scope);
+      changeTracker.init(dashboard, 2000);
       keybindingSrv.setupDashboardBindings(dashboard);
     } catch (err) {
       dispatch(notifyApp(createErrorNotification('Dashboard init failed', err)));
