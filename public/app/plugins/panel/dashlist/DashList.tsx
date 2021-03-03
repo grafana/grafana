@@ -105,9 +105,9 @@ export function DashList(props: PanelProps<DashListOptions>) {
   const [starredDashboards, recentDashboards, searchedDashboards] = useMemo(() => {
     const dashboardList = [...dashboards.values()];
     return [
-      dashboardList.filter((dash) => dash.isStarred),
+      dashboardList.filter((dash) => dash.isStarred).sort((a, b) => a.title.localeCompare(b.title)),
       dashboardList.filter((dash) => dash.isRecent),
-      dashboardList.filter((dash) => dash.isSearchResult),
+      dashboardList.filter((dash) => dash.isSearchResult).sort((a, b) => a.title.localeCompare(b.title)),
     ];
   }, [dashboards]);
 
