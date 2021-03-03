@@ -60,7 +60,7 @@ With the current feature, instead of file path, users can just paste the SSL cer
 
 In the upcoming Grafana 8.0 release, Application Insights and Insights Analytics query types within the Azure Monitor data source will be deprecated and be made read-only in favor of querying Application Insights from Metrics and Logs. 
 
-Grafana 7.5 includes a deprecation notice for Application Insights and Insights Analytics queries, and some documentation to help users prepare for the upcoming changes.
+Grafana 7.5 includes a deprecation notice for these queries, and some documentation to help users prepare for the upcoming changes.
 
 For more information refer to [Deprecating Application Insights and Insights Analytics]({{< relref "../datasources/azuremonitor.md#deprecating-application-insights-and-insights-analytics" >}}).
 
