@@ -29,7 +29,7 @@ export interface Props extends Themeable {
   // Passed to fix problems with inactive scrolling in Logs Panel
   // Can be removed when we unify scrolling for Panel and Explore
   disableCustomHorizontalScroll?: boolean;
-  escapedNewlines?: boolean;
+  forceEscape?: boolean;
   showDetectedFields?: string[];
   showContextToggle?: (row?: LogRowModel) => boolean;
   onClickFilterLabel?: (key: string, value: string) => void;
@@ -106,7 +106,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       showDetectedFields,
       onClickShowDetectedField,
       onClickHideDetectedField,
-      escapedNewlines,
+      forceEscape,
     } = this.props;
     const { renderAll } = this.state;
     const { logsRowsTable, logsRowsHorizontalScroll } = getLogRowStyles(theme);
@@ -158,7 +158,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   onClickHideDetectedField={onClickHideDetectedField}
                   getFieldLinks={getFieldLinks}
                   logsSortOrder={logsSortOrder}
-                  escapedNewlines={escapedNewlines}
+                  forceEscape={forceEscape}
                 />
               ))}
             {hasData &&
@@ -183,7 +183,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   onClickHideDetectedField={onClickHideDetectedField}
                   getFieldLinks={getFieldLinks}
                   logsSortOrder={logsSortOrder}
-                  escapedNewlines={escapedNewlines}
+                  forceEscape={forceEscape}
                 />
               ))}
             {hasData && !renderAll && (

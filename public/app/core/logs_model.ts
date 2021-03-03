@@ -362,7 +362,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
 
       const hasAnsi = textUtil.hasAnsiCodes(message);
 
-      const hasUnescapedNewlines = !!message.match(/\\n|\\t|\\r/);
+      const hasUnescapedContent = !!message.match(/\\n|\\t|\\r/);
 
       const searchWords = series.meta && series.meta.searchWords ? series.meta.searchWords : [];
 
@@ -386,7 +386,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
         timeUtc: dateTimeFormat(ts, { timeZone: 'utc' }),
         uniqueLabels,
         hasAnsi,
-        hasUnescapedNewlines,
+        hasUnescapedContent,
         searchWords,
         entry: hasAnsi ? ansicolor.strip(message) : message,
         raw: message,

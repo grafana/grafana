@@ -181,7 +181,7 @@ const row: LogRowModel = {
   entry: '4',
   labels: (null as any) as Labels,
   hasAnsi: false,
-  hasUnescapedNewlines: false,
+  hasUnescapedContent: false,
   raw: '4',
   logLevel: LogLevel.info,
   timeEpochMs: 4,

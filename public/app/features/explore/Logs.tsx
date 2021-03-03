@@ -91,8 +91,8 @@ interface State {
   logsSortOrder: LogsSortOrder | null;
   isFlipping: boolean;
   showDetectedFields: string[];
-  hasUnescapedNewlines: boolean;
-  escapedNewlines: boolean;
+  hasUnescapedContent: boolean;
+  forceEscape: boolean;
 }
 
 export class UnthemedLogs extends PureComponent<Props, State> {
@@ -106,8 +106,8 @@ export class UnthemedLogs extends PureComponent<Props, State> {
     logsSortOrder: null,
     isFlipping: false,
     showDetectedFields: [],
-    hasUnescapedNewlines: this.props.logRows.some((r) => r.hasUnescapedNewlines),
-    escapedNewlines: false,
+    hasUnescapedContent: this.props.logRows.some((r) => r.hasUnescapedContent),
+    forceEscape: false,
   };
 
   componentWillUnmount() {
@@ -131,7 +131,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
 
   onEscapeNewlines = () => {
     this.setState((prevState) => ({
-      escapedNewlines: !prevState.escapedNewlines,
+      forceEscape: !prevState.forceEscape,
     }));
   };
 
@@ -256,8 +256,8 @@ export class UnthemedLogs extends PureComponent<Props, State> {
       logsSortOrder,
       isFlipping,
       showDetectedFields,
-      hasUnescapedNewlines,
-      escapedNewlines,
+      hasUnescapedContent,
+      forceEscape,
     } = this.state;
 
     const hasData = logRows && logRows.length > 0;
@@ -367,18 +367,18 @@ export class UnthemedLogs extends PureComponent<Props, State> {
           />
         )}
 
-        {hasUnescapedNewlines && (
+        {hasUnescapedContent && (
           <MetaInfoText
             metaItems={[
               {
-                label: 'Your logs might have incorrectly escaped newlines',
+                label: 'Your logs might have incorrectly escaped content',
                 value: (
                   <Tooltip
                     content="We suggest to try to fix the escaping of your log lines first. This is an experimental feature, your logs might not be correctly escaped."
                     placement="right"
                   >
                     <Button variant="secondary" size="sm" onClick={this.onEscapeNewlines}>
-                      <span>{escapedNewlines ? 'Remove escaping' : 'Escape newlines'}&nbsp;</span>
+                      <span>{forceEscape ? 'Remove escaping' : 'Escape newlines'}&nbsp;</span>
                       <Icon name="exclamation-triangle" className="muted" size="sm" />
                     </Button>
                   </Tooltip>
@@ -400,7 +400,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
           showContextToggle={showContextToggle}
           showLabels={showLabels}
           showTime={showTime}
-          escapedNewlines={escapedNewlines}
+          forceEscape={forceEscape}
           wrapLogMessage={wrapLogMessage}
           timeZone={timeZone}
           getFieldLinks={getFieldLinks}

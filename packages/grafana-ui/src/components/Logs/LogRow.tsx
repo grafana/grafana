@@ -43,7 +43,7 @@ interface Props extends Themeable {
   timeZone: TimeZone;
   allowDetails?: boolean;
   logsSortOrder?: LogsSortOrder | null;
-  escapedNewlines?: boolean;
+  forceEscape?: boolean;
   showDetectedFields?: string[];
   getRows: () => LogRowModel[];
   onClickFilterLabel?: (key: string, value: string) => void;
@@ -141,7 +141,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       wrapLogMessage,
       theme,
       getFieldLinks,
-      escapedNewlines,
+      forceEscape,
     } = this.props;
     const { showDetails, showContext } = this.state;
     const style = getLogRowStyles(theme, row.logLevel);
@@ -152,7 +152,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     });
 
     const processedRow =
-      row.hasUnescapedNewlines && escapedNewlines ? { ...row, entry: escapeUnescapedString(row.entry) } : row;
+      row.hasUnescapedContent && forceEscape ? { ...row, entry: escapeUnescapedString(row.entry) } : row;
 
     return (
       <>
