@@ -155,6 +155,12 @@ The page header of the report displays the time range for the dashboard's data q
 
 If the time zone is set differently between your Grafana server and its remote image renderer, then the time ranges in the report might be different between the page header and the time axes in the panels. We advise always setting the time zone to UTC for dashboards when using a remote renderer to avoid this.
 
+## Report template variables
+
+> Only available in Grafana Enterprise v7.5+ (behind `templateVariables` feature flag).
+
+You can configure report-specific template variables for the dashboard on the report page. The selected variables will override the variables from the dashboard and will be used when rendering the report's PDF file. More detailed information about using template variables is available in the [Templates and variables]({{< relref "../variables/_index.md" >}}) section. 
+
 ## Reports settings
 
 > Only available in Grafana Enterprise v7.2+.
