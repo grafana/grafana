@@ -11,7 +11,8 @@ list = false
 
 > **Note:** This is content for a beta version of Grafana. It will be updated several times before the stable release.
 
-This topic includes the release notes for Grafana v7.5. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
+
+d).
 
 ## Grafana OSS features
 
@@ -35,8 +36,9 @@ A new Loki logs browser lets you construct the queries step by step: you choose 
 
 ### Changed default HTTP method for new Prometheus data sources
 
-For new Prometheus data sources, we have changed the default HTTP method to POST. POST allows for much larger query bodies than using the GET method. This is necessary when sending queries from graphs with a lot of targets, such as many hosts in a dashboard variable. POST also makes the Query Inspector data easier to read since the query is in plain text where the GET query is URL encoded.
-Note: This is not going to affect provisioned data sources or already created data sources.
+For new Prometheus data sources, we have changed the default HTTP method to POST. POST allows for much larger query bodies than using the GET method. This is necessary when sending queries from graphs with a lot of targets, for example, many hosts in a dashboard variable. The POST method also makes the Query Inspector data easier to read since the query is in plain text whereas the GET query is URL encoded.
+
+> **Note:** This is not going to affect provisioned data sources or already created data sources.
 
 ### Word highlighting for Elasticsearch
 
@@ -52,7 +54,7 @@ In Grafana 7.5, we changed how data for the trace view is sent from the data sou
 
 Previously, when users wanted to configure the Postgres data source to connect with SSL certification, they needed to put the certification on the server, and configure the data source with file path.
 
-With the current feature, instead of file path, users can just paste the SSL certification content in the UI. This allows users to configure the certification without access to the server.
+Instead of the file path, users can now paste the SSL certification content in the UI. This allows them to configure the certification even when they do not have access to the server.
 
 > **Note:** It remains as limitation for the hosted Grafana, because the user doesn't have access to the server configuration.
 
@@ -60,7 +62,7 @@ With the current feature, instead of file path, users can just paste the SSL cer
 
 In the upcoming Grafana 8.0 release, Application Insights and Insights Analytics query types within the Azure Monitor data source will be deprecated and be made read-only in favor of querying Application Insights from Metrics and Logs. 
 
-Grafana 7.5 includes a deprecation notice for Application Insights and Insights Analytics queries, and some documentation to help users prepare for the upcoming changes.
+Grafana 7.5 includes a deprecation notice for these queries, and some documentation to help users prepare for the upcoming changes.
 
 For more information refer to [Deprecating Application Insights and Insights Analytics]({{< relref "../datasources/azuremonitor.md#deprecating-application-insights-and-insights-analytics" >}}).
 
