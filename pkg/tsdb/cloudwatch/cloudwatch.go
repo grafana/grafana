@@ -289,7 +289,7 @@ func (e *cloudWatchExecutor) DataQuery(ctx context.Context, dsInfo *models.DataS
 	e.DataSource = dsInfo
 
 	/*
-		Unlike many other data sources,	with Cloudwatch Logs query requests don't receive the results as the response
+		Unlike many other data sources, with Cloudwatch Logs query requests don't receive the results as the response
 		to the query, but rather an ID is first returned. Following this, a client is expected to send requests along
 		with the ID until the status of the query is complete, receiving (possibly partial) results each time. For
 		queries made via dashboards and Explore, the logic of making these repeated queries is handled on the

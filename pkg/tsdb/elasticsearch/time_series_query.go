@@ -17,11 +17,11 @@ type timeSeriesQuery struct {
 	intervalCalculator interval.Calculator
 }
 
-var newTimeSeriesQuery = func(client es.Client, tsdbQuery plugins.DataQuery,
+var newTimeSeriesQuery = func(client es.Client, dataQuery plugins.DataQuery,
 	intervalCalculator interval.Calculator) *timeSeriesQuery {
 	return &timeSeriesQuery{
 		client:             client,
-		tsdbQuery:          tsdbQuery,
+		tsdbQuery:          dataQuery,
 		intervalCalculator: intervalCalculator,
 	}
 }
