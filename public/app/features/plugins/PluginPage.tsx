@@ -19,7 +19,7 @@ import {
   UrlQueryMap,
 } from '@grafana/data';
 import { AppNotificationSeverity, CoreEvents, StoreState } from 'app/types';
-import { Alert, InfoBox, Tooltip } from '@grafana/ui';
+import { Alert, InfoBox, Tooltip, PluginSignatureBadge } from '@grafana/ui';
 
 import Page from 'app/core/components/Page/Page';
 import { getPluginSettings } from './PluginSettingsCache';
@@ -32,7 +32,6 @@ import { appEvents } from 'app/core/core';
 import { config } from 'app/core/config';
 import { ContextSrv } from '../../core/services/context_srv';
 import { css } from 'emotion';
-import { PluginSignatureBadge } from './PluginSignatureBadge';
 import { selectors } from '@grafana/e2e-selectors';
 
 export function getLoadingNav(): NavModel {
