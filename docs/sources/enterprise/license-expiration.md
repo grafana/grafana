@@ -73,6 +73,6 @@ Auditing is not affected by an expired license.
 
 ### License restrictions
 
-The concurrent session limit remains active for 7 days after the expiration date. Then, it will be turned off.
+The concurrent session limit remains active for seven days after the expiration date, after which it will be turned off.
 
 The active users limit is turned off immediately.
