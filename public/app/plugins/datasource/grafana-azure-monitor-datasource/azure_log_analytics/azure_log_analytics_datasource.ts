@@ -259,13 +259,19 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
    */
   metricFindQueryInternal(query: string): Promise<MetricFindValue[]> {
     const workspacesQuery = query.match(/^workspaces\(\)/i);
-    if (workspacesQuery) {
+    const resourcesQuery = query.match(/^resources\(\)/i);
+    if (workspacesQuery || resourcesQuery) {
       return this.getWorkspacesOrResources(this.subscriptionId);
     }
 
     const workspacesQueryWithSub = query.match(/^workspaces\(["']?([^\)]+?)["']?\)/i);
     if (workspacesQueryWithSub) {
       return this.getWorkspacesOrResources((workspacesQueryWithSub[1] || '').trim());
+    }
+
+    const resourcesQueryWithSub = query.match(/^resources\(["']?([^\)]+?)["']?\)/i);
+    if (resourcesQueryWithSub) {
+      return this.getWorkspacesOrResources((resourcesQueryWithSub[1] || '').trim());
     }
 
     return this.getDefaultOrFirst().then((workspace: any) => {
