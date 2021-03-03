@@ -240,7 +240,6 @@ func (st storeImpl) getAlertDefinitions(query *listAlertDefinitionsQuery) error 
 
 		query.Result = alerts
 		return nil
-
 	})
 }
 
