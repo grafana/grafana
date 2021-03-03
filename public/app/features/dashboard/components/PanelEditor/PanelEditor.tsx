@@ -201,8 +201,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   };
 
   onPanelConfigChanged = (configKey: keyof PanelModel, value: any) => {
-    // @ts-ignore
-    this.props.panel[configKey] = value;
+    this.props.panel.setProperty(configKey, value);
     this.props.panel.render();
     this.forceUpdate();
   };
