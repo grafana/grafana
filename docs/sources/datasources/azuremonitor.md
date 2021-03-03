@@ -311,9 +311,9 @@ If you're not currently logged in to the Azure Portal, then the link opens the l
 
 Grafana alerting is supported for Application Insights. This is not Azure Alerts support. Read more about how alerting in Grafana works in [Alerting rules]({{< relref "../alerting/_index.md" >}}).
 
-## Query the Application Insights Service
+## Query Application Insights service
 
-> In an upcoming major release, "Application Insights" will be made read-only and deprecated in favor of Metrics queries.
+> In a future release, "Application Insights" will be made read-only and deprecated in favor of Metrics queries.
 
 {{< docs-imagebox img="/img/docs/azuremonitor/insights_metrics_multi-dim.png" class="docs-image--no-shadow" caption="Application Insights Query Editor" >}}
 
@@ -416,8 +416,8 @@ datasources:
 
 ## Deprecating Application Insights and Insights Analytics
 
-Within the Azure Monitor data source, Application Insights and Insights Analytics are two ways to query the same Azure Application Insights data. Additionally, that same data can also be queried from Metrics. In Grafana 8.0 the Logs query type will be improved to allow querying of Application Insights data using KQL.
+Application Insights and Insights Analytics are two ways to query the same Azure Application Insights data. That same data can also be queried from Metrics. In the upcoming Grafana 8.0 release, the Logs query type will be improved to allow querying of Application Insights data using KQL.
 
-In Grafana 8.0, Application Insights and Insights Analytics will be deprecated and made read-only in favor of querying this data through Metrics and Logs. Existing queries will continue to work, but they may not be edited.
+>**Note** In Grafana 8.0, Application Insights and Insights Analytics will be deprecated and made read-only in favor of querying this data through Metrics and Logs. Existing queries will continue to work, but you cannot edit them.
 
-To prepare for this upcoming change, Application Insights queries can now be made in Metrics instead, under the "microsoft.insights/components" Namespace. Insights Analytics queries cannot yet be made within Logs with KQL.
+To prepare for this upcoming change, Application Insights queries can now be made in Metrics, under the "microsoft.insights/components" Namespace. Insights Analytics queries cannot be made within Logs with KQL at this time.
