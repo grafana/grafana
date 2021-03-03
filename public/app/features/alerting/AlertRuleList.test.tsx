@@ -4,14 +4,14 @@ import { AlertRuleListUnconnected, Props } from './AlertRuleList';
 import { AlertRule } from '../../types';
 import appEvents from '../../core/app_events';
 import { NavModel } from '@grafana/data';
-import { CoreEvents } from 'app/types';
 import { setSearchQuery } from './state/reducers';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { locationService } from '@grafana/runtime';
+import { ShowModalEvent } from '../../types/events';
 
 jest.mock('../../core/app_events', () => ({
-  emit: jest.fn(),
+  publish: jest.fn(),
 }));
 
 const setup = (propOverrides?: object) => {
@@ -92,11 +92,13 @@ describe('Functions', () => {
 
       instance.onOpenHowTo();
 
-      expect(appEvents.emit).toHaveBeenCalledWith(CoreEvents.showModal, {
-        src: 'public/app/features/alerting/partials/alert_howto.html',
-        modalClass: 'confirm-modal',
-        model: {},
-      });
+      expect(appEvents.publish).toHaveBeenCalledWith(
+        new ShowModalEvent({
+          src: 'public/app/features/alerting/partials/alert_howto.html',
+          modalClass: 'confirm-modal',
+          model: {},
+        })
+      );
     });
   });
 

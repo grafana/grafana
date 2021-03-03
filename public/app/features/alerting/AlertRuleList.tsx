@@ -5,7 +5,7 @@ import Page from 'app/core/components/Page/Page';
 import AlertRuleItem from './AlertRuleItem';
 import appEvents from 'app/core/app_events';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { AlertDefinition, AlertRule, CoreEvents, StoreState } from 'app/types';
+import { AlertDefinition, AlertRule, StoreState } from 'app/types';
 import { getAlertRulesAsync, togglePauseAlertRule } from './state/actions';
 import { getAlertRuleItems, getSearchQuery } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
@@ -15,6 +15,7 @@ import { setSearchQuery } from './state/reducers';
 import { Button, LinkButton, Select, VerticalGroup } from '@grafana/ui';
 import { AlertDefinitionItem } from './components/AlertDefinitionItem';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { ShowModalEvent } from '../../types/events';
 
 function mapStateToProps(state: StoreState) {
   return {
@@ -72,11 +73,13 @@ export class AlertRuleListUnconnected extends PureComponent<Props> {
   };
 
   onOpenHowTo = () => {
-    appEvents.emit(CoreEvents.showModal, {
-      src: 'public/app/features/alerting/partials/alert_howto.html',
-      modalClass: 'confirm-modal',
-      model: {},
-    });
+    appEvents.publish(
+      new ShowModalEvent({
+        src: 'public/app/features/alerting/partials/alert_howto.html',
+        modalClass: 'confirm-modal',
+        model: {},
+      })
+    );
   };
 
   onSearchQueryChange = (value: string) => {

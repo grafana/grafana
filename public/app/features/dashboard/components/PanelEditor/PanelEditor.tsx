@@ -42,10 +42,10 @@ import { getPanelEditorTabs } from './state/selectors';
 import { getPanelStateById } from '../../state/selectors';
 import { getVariables } from 'app/features/variables/state/selectors';
 
-import { CoreEvents, StoreState } from 'app/types';
+import { StoreState } from 'app/types';
 import { DisplayMode, displayModes, PanelEditorTab } from './types';
 import { DashboardModel, PanelModel } from '../../state';
-import { PanelOptionsChangedEvent } from 'app/types/events';
+import { PanelOptionsChangedEvent, ShowModalReactEvent } from 'app/types/events';
 import { locationService } from '@grafana/runtime';
 import { UnlinkModal } from '../../../library-panels/components/UnlinkModal/UnlinkModal';
 import { SaveLibraryPanelModal } from 'app/features/library-panels/components/SaveLibraryPanelModal/SaveLibraryPanelModal';
@@ -124,10 +124,12 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   };
 
   onSaveDashboard = () => {
-    appEvents.emit(CoreEvents.showModalReact, {
-      component: SaveDashboardModalProxy,
-      props: { dashboard: this.props.dashboard },
-    });
+    appEvents.publish(
+      new ShowModalReactEvent({
+        component: SaveDashboardModalProxy,
+        props: { dashboard: this.props.dashboard },
+      })
+    );
   };
 
   onSavePanel = () => {
@@ -137,19 +139,21 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
       return;
     }
 
-    appEvents.emit(CoreEvents.showModalReact, {
-      component: SaveLibraryPanelModal,
-      props: {
-        panel: this.props.panel,
-        folderId: this.props.dashboard.meta.folderId,
-        isOpen: true,
-        onConfirm: () => {
-          // need to update the source panel here so that when
-          // the user exits the panel editor they aren't prompted to save again
-          this.props.updateSourcePanel(this.props.panel);
+    appEvents.publish(
+      new ShowModalReactEvent({
+        component: SaveLibraryPanelModal,
+        props: {
+          panel: this.props.panel,
+          folderId: this.props.dashboard.meta.folderId,
+          isOpen: true,
+          onConfirm: () => {
+            // need to update the source panel here so that when
+            // the user exits the panel editor they aren't prompted to save again
+            this.props.updateSourcePanel(this.props.panel);
+          },
         },
-      },
-    });
+      })
+    );
   };
 
   onChangeTab = (tab: PanelEditorTab) => {

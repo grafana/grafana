@@ -16,10 +16,10 @@ import { ContextSrv } from 'app/core/services/context_srv';
 import { DashboardModel } from '../state/DashboardModel';
 import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
 import { appEvents } from '../../../core/core';
-import { CoreEvents } from '../../../types';
 import { config } from 'app/core/config';
 import { getRefreshFromUrl } from '../utils/getRefreshFromUrl';
 import { locationService } from '@grafana/runtime';
+import { ShiftTimeEvent, ShiftTimeEventPayload, ZoomOutEvent } from '../../../types/events';
 
 export class TimeSrv {
   time: any;
@@ -35,8 +35,12 @@ export class TimeSrv {
     // default time
     this.time = getDefaultTimeRange().raw;
     this.refreshDashboard = this.refreshDashboard.bind(this);
-    appEvents.on(CoreEvents.zoomOut, this.zoomOut.bind(this));
-    appEvents.on(CoreEvents.shiftTime, this.shiftTime.bind(this));
+    appEvents.subscribe(ZoomOutEvent, (e) => {
+      this.zoomOut(e.payload);
+    });
+    appEvents.subscribe(ShiftTimeEvent, (e) => {
+      this.shiftTime(e.payload);
+    });
 
     document.addEventListener('visibilitychange', () => {
       if (this.autoRefreshBlocked && document.visibilityState === 'visible') {
@@ -298,7 +302,7 @@ export class TimeSrv {
     this.setTime({ from: toUtc(from), to: toUtc(to) });
   }
 
-  shiftTime(direction: number) {
+  shiftTime(direction: ShiftTimeEventPayload) {
     const range = this.timeRange();
     const { from, to } = getShiftedTimeRange(direction, range);
 
