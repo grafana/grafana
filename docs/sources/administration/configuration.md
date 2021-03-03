@@ -1086,7 +1086,7 @@ Configures max number of alert annotations that Grafana stores. Default value is
 
 ### cleanupjob_batchsize
 
-Configures the batch size for the annotation clean up job. This setting is used for dashboard, api and alert annotations
+Configures the batch size for the annotation clean-up job. This setting is used for dashboard, API, and alert annotations.
 
 ## [annotations.dashboard]
 
