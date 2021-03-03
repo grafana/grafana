@@ -11,7 +11,7 @@ list = false
 
 > **Note:** This is content for a beta version of Grafana. It will be updated several times before the stable release.
 
-This topic discusses the new features and enhancements in Grafana v7.5 release. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
+This topic includes the release notes for Grafana v7.5. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
 ## Grafana OSS features
 
@@ -36,13 +36,14 @@ A new Loki logs browser lets you construct the queries step by step: you choose 
 ### Changed default HTTP method for new Prometheus data sources
 
 For new Prometheus data sources, we have changed the default HTTP method to POST. POST allows for much larger query bodies than using the GET method. This is necessary when sending queries from graphs with a lot of targets, for example, many hosts in a dashboard variable. The POST method also makes the Query Inspector data easier to read since the query is in plain text whereas the GET query is URL encoded.
->**Note:** This is not going to affect provisioned data sources or already created data sources.
+
+> **Note:** This is not going to affect provisioned data sources or already created data sources.
 
 ### Word highlighting for Elasticsearch
 
 When searching for text in Elasticsearch logs, matching words in the log line returned by the query are now highlighted.
 
-![Elastic logs highlighting](/img/docs/elastic/elastic-word-highlighting-7-5.png)
+![Elastic logs highlighting](/img/docs/elasticsearch/elastic-word-highlighting-7-5.png)
 
 ### Better format definition for trace data
 
