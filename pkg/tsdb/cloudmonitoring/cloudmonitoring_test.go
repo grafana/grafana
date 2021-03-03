@@ -606,13 +606,13 @@ func TestCloudMonitoring(t *testing.T) {
 			assert.Equal(t, 3, frames[0].Fields[1].Len())
 
 			assert.Equal(t, 0.05, frames[0].Fields[1].At(0))
-			assert.Equal(t, time.Unix(int64(1536670020000/1000), 0), frames[0].Fields[0].At(0))
+			assert.Equal(t, time.Unix(int64(1536670020000/1000), 0).UTC(), frames[0].Fields[0].At(0))
 
 			assert.Equal(t, 1.05, frames[0].Fields[1].At(1))
-			assert.Equal(t, time.Unix(int64(1536670080000/1000), 0), frames[0].Fields[0].At(1))
+			assert.Equal(t, time.Unix(int64(1536670080000/1000), 0).UTC(), frames[0].Fields[0].At(1))
 
 			assert.Equal(t, 1.0666666666667, frames[0].Fields[1].At(2))
-			assert.Equal(t, time.Unix(int64(1536670260000/1000), 0), frames[0].Fields[0].At(2))
+			assert.Equal(t, time.Unix(int64(1536670260000/1000), 0).UTC(), frames[0].Fields[0].At(2))
 		})
 
 		t.Run("when data from query with no aggregation", func(t *testing.T) {
@@ -726,9 +726,9 @@ func TestCloudMonitoring(t *testing.T) {
 				assert.Equal(t, 3, frames[i].Fields[0].Len())
 			}
 
-			assert.Equal(t, time.Unix(int64(1536668940000/1000), 0), frames[0].Fields[0].At(0))
-			assert.Equal(t, time.Unix(int64(1536669000000/1000), 0), frames[0].Fields[0].At(1))
-			assert.Equal(t, time.Unix(int64(1536669060000/1000), 0), frames[0].Fields[0].At(2))
+			assert.Equal(t, time.Unix(int64(1536668940000/1000), 0).UTC(), frames[0].Fields[0].At(0))
+			assert.Equal(t, time.Unix(int64(1536669000000/1000), 0).UTC(), frames[0].Fields[0].At(1))
+			assert.Equal(t, time.Unix(int64(1536669060000/1000), 0).UTC(), frames[0].Fields[0].At(2))
 
 			assert.Equal(t, "0", frames[0].Fields[1].Name)
 			assert.Equal(t, "1", frames[1].Fields[1].Name)
@@ -765,8 +765,8 @@ func TestCloudMonitoring(t *testing.T) {
 				assert.Equal(t, 2, frames[i].Fields[1].Len())
 			}
 
-			assert.Equal(t, time.Unix(int64(1550859086000/1000), 0), frames[0].Fields[0].At(0))
-			assert.Equal(t, time.Unix(int64(1550859146000/1000), 0), frames[0].Fields[0].At(1))
+			assert.Equal(t, time.Unix(int64(1550859086000/1000), 0).UTC(), frames[0].Fields[0].At(0))
+			assert.Equal(t, time.Unix(int64(1550859146000/1000), 0).UTC(), frames[0].Fields[0].At(1))
 
 			assert.Equal(t, "0", frames[0].Fields[1].Name)
 			assert.Equal(t, "0.01", frames[1].Fields[1].Name)
