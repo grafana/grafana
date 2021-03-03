@@ -1,12 +1,9 @@
 import Mousetrap from 'mousetrap';
 import 'mousetrap-global-bind';
-import { IRootScopeService } from 'angular';
 import { LegacyGraphHoverClearEvent, locationUtil } from '@grafana/data';
-import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { store } from 'app/store/store';
-import { AppEventEmitter } from 'app/types';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
@@ -27,13 +24,14 @@ import { getTimeSrv } from '../../features/dashboard/services/TimeSrv';
 
 export class KeybindingSrv {
   modalOpen = false;
+
   constructor() {
-    this.setupGlobal();
     appEvents.subscribe(ShowModalEvent, () => (this.modalOpen = true));
   }
 
-  setupGlobal() {
+  resetAndInitGlobals() {
     Mousetrap.reset();
+
     if (locationService.getLocation().pathname !== '/login') {
       this.bind(['?', 'h'], this.showHelpModal);
       this.bind('g h', this.goToHome);
@@ -171,7 +169,7 @@ export class KeybindingSrv {
     });
   }
 
-  setupDashboardBindings(scope: IRootScopeService & AppEventEmitter, dashboard: DashboardModel) {
+  setupDashboardBindings(dashboard: DashboardModel) {
     this.bind('mod+o', () => {
       dashboard.graphTooltip = (dashboard.graphTooltip + 1) % 3;
       dashboard.events.publish(new LegacyGraphHoverClearEvent());
@@ -349,18 +347,4 @@ export class KeybindingSrv {
   }
 }
 
-coreModule.service('keybindingSrv', KeybindingSrv);
-
-/**
- * Code below exports the service to react components
- */
-
-let singletonInstance: KeybindingSrv;
-
-export function setKeybindingSrv(instance: KeybindingSrv) {
-  singletonInstance = instance;
-}
-
-export function getKeybindingSrv(): KeybindingSrv {
-  return singletonInstance;
-}
+export const keybindingSrv = new KeybindingSrv();

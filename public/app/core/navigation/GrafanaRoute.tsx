@@ -3,6 +3,7 @@ import React from 'react';
 import Drop from 'tether-drop';
 import { GrafanaRouteComponentProps } from './types';
 import { locationSearchToObject, navigationLogger } from '@grafana/runtime';
+import { keybindingSrv } from '../services/keybindingSrv';
 
 export interface Props extends Omit<GrafanaRouteComponentProps, 'queryParams'> {}
 
@@ -10,6 +11,10 @@ export class GrafanaRoute extends React.Component<Props> {
   componentDidMount() {
     this.updateBodyClassNames();
     this.cleanupDOM();
+
+    // unbinds all and re-bind global keybindins
+    keybindingSrv.resetAndInitGlobals();
+
     navigationLogger('GrafanaRoute', false, 'Mounted', this.props.match);
   }
 

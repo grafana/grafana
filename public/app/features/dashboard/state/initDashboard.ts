@@ -5,7 +5,7 @@ import { DashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { AnnotationsSrv } from 'app/features/annotations/annotations_srv';
-import { KeybindingSrv } from 'app/core/services/keybindingSrv';
+import { keybindingSrv } from 'app/core/services/keybindingSrv';
 // Actions
 import { notifyApp } from 'app/core/actions';
 import {
@@ -170,7 +170,6 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     // init services
     const timeSrv: TimeSrv = args.$injector.get('timeSrv');
     const annotationsSrv: AnnotationsSrv = args.$injector.get('annotationsSrv');
-    const keybindingSrv: KeybindingSrv = args.$injector.get('keybindingSrv');
     const unsavedChangesSrv = args.$injector.get('unsavedChangesSrv');
     const dashboardSrv: DashboardSrv = args.$injector.get('dashboardSrv');
 
@@ -209,7 +208,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
 
       // init unsaved changes tracking
       unsavedChangesSrv.init(dashboard, args.$scope);
-      keybindingSrv.setupDashboardBindings(args.$scope, dashboard);
+      keybindingSrv.setupDashboardBindings(dashboard);
     } catch (err) {
       dispatch(notifyApp(createErrorNotification('Dashboard init failed', err)));
       console.error(err);
