@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/require"
 )
@@ -16,8 +15,7 @@ func TestDashboardAlertConditions(t *testing.T) {
 		// rawJSON, at least for now, is as "conditions" will appear within the alert table
 		// settings column JSON. Which means it has already run through the dashboard
 		// alerting Extractor. It is the input.
-		rawJSON  string
-		expected expr.DataPipeline
+		rawJSON string
 	}{
 		{
 			name:    "two conditions one query but different time ranges",

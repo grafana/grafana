@@ -3,12 +3,14 @@ package translate
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
+	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 )
 
 // Decide on input (model or json, and from where?)
@@ -28,7 +30,7 @@ Need To:
 */
 
 // DashboardAlertConditions turns dashboard alerting conditions into a server side expression conditions.
-func DashboardAlertConditions(rawDCondJSON []byte, orgID int64) (expr.DataPipeline, error) {
+func DashboardAlertConditions(rawDCondJSON []byte, orgID int64) (*struct{}, error) {
 	oldCond := dashConditionsJSON{}
 
 	err := json.Unmarshal(rawDCondJSON, &oldCond)
@@ -37,12 +39,23 @@ func DashboardAlertConditions(rawDCondJSON []byte, orgID int64) (expr.DataPipeli
 	}
 
 	// TODO OrgID
-	req, err := oldCond.GetNew(orgID)
+	ngCond, err := oldCond.GetNew(orgID)
 	if err != nil {
 		return nil, err
 	}
+
+	backendReq, err := ngCond.GetQueryDataRequest(eval.AlertExecCtx{ExpressionsEnabled: true}, time.Unix(500, 0))
+
+	if err != nil {
+		return nil, err
+	}
+
 	svc := &expr.Service{}
-	return svc.BuildPipeline(req)
+	_, err = svc.BuildPipeline(backendReq)
+	if err != nil {
+		return nil, err
+	}
+	return nil, nil
 }
 
 type dashConditionsJSON struct {
@@ -73,7 +86,7 @@ type conditionEvalJSON struct {
 	Type   string    `json:"type"` // e.g. "gt"
 }
 
-func (dc *dashConditionsJSON) GetNew(orgID int64) (*backend.QueryDataRequest, error) {
+func (dc *dashConditionsJSON) GetNew(orgID int64) (*eval.Condition, error) {
 	refIDtoCondIdx := make(map[string][]int)
 	for i, cond := range dc.Conditions {
 		if len(cond.Query.Params) != 3 {
@@ -84,10 +97,12 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*backend.QueryDataRequest, er
 	}
 
 	newRefIDs := make(map[string][]int)
+	newRefIDsToTimeRanges := make(map[string][2]string)
 
 	for refID, condIdxes := range refIDtoCondIdx {
 		if len(condIdxes) == 1 {
 			newRefIDs[refID] = append(newRefIDs[refID], condIdxes[0])
+			newRefIDsToTimeRanges[refID] = [2]string{dc.Conditions[condIdxes[0]].Query.Params[1], dc.Conditions[condIdxes[0]].Query.Params[2]}
 			continue
 		}
 
@@ -103,6 +118,7 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*backend.QueryDataRequest, er
 		if len(timeRanges) == 1 {
 			// all shared time range, no need to create refIds
 			newRefIDs[refID] = append(newRefIDs[refID], condIdxes[0])
+			newRefIDsToTimeRanges[refID] = [2]string{dc.Conditions[condIdxes[0]].Query.Params[1], dc.Conditions[condIdxes[0]].Query.Params[2]}
 			continue
 		}
 
@@ -113,11 +129,12 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*backend.QueryDataRequest, er
 					return nil, err
 				}
 				newRefIDs[newLetter] = append(newRefIDs[newLetter], idxes[i])
+				newRefIDsToTimeRanges[newLetter] = [2]string{dc.Conditions[idxes[i]].Query.Params[1], dc.Conditions[idxes[i]].Query.Params[2]}
 			}
 		}
 	}
 
-	req := &backend.QueryDataRequest{}
+	ngCond := &eval.Condition{}
 	// will need to sort for stable output
 	condIdxToNewRefID := make(map[int]string)
 	for refId, condIdxes := range newRefIDs {
@@ -138,9 +155,9 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*backend.QueryDataRequest, er
 				return nil, fmt.Errorf("could not find datasource: %w", err)
 			}
 
-			queryObj["datasourceId"] = getDsInfo.Id
-			queryObj["datasource"] = getDsInfo.Name
-			queryObj["datasourceUid"] = getDsInfo.Uid
+			//queryObj["datasourceId"] = getDsInfo.Result.Id
+			queryObj["datasource"] = getDsInfo.Result.Name
+			queryObj["datasourceUid"] = getDsInfo.Result.Uid
 			queryObj["refId"] = refId
 
 			if _, found := queryObj["maxDataPoints"]; !found {
@@ -154,12 +171,22 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*backend.QueryDataRequest, er
 			if err != nil {
 				return nil, err
 			}
-			query := backend.DataQuery{
-				RefID: refId,
-				JSON:  encodedObj,
-				// TODO TimeRange: ,
+
+			rawFrom := newRefIDsToTimeRanges[refId][0]
+			rawTo := newRefIDsToTimeRanges[refId][1]
+
+			rTR, err := getRelativeDuration(rawFrom, rawTo)
+			if err != nil {
+				return nil, err
 			}
-			req.Queries = append(req.Queries, query)
+
+			alertQuery := eval.AlertQuery{
+				RefID:             refId,
+				Model:             encodedObj,
+				RelativeTimeRange: *rTR,
+				DatasourceUID:     getDsInfo.Uid,
+			}
+			ngCond.QueriesAndExpressions = append(ngCond.QueriesAndExpressions, alertQuery)
 		}
 	}
 
@@ -181,12 +208,14 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*backend.QueryDataRequest, er
 	if err != nil {
 		return nil, err
 	}
+	ngCond.RefID = ccRefID
+	ngCond.OrgID = orgID
 
 	exprModel := struct {
-		Type       string `json:"type"`
-		RefID      string `json:"refId"`
-		Datasource string `json:"datasource"`
-		Conditions []classic.ClassicConditionJSON
+		Type       string                         `json:"type"`
+		RefID      string                         `json:"refId"`
+		Datasource string                         `json:"datasource"`
+		Conditions []classic.ClassicConditionJSON `json:"conditions"`
 	}{
 		"classic_conditions",
 		ccRefID,
@@ -199,14 +228,27 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*backend.QueryDataRequest, er
 		return nil, err
 	}
 
-	exprQuery := backend.DataQuery{
+	ccAlertQuery := eval.AlertQuery{
 		RefID: ccRefID,
-		JSON:  exprModelJSON,
+		Model: exprModelJSON,
 	}
 
-	req.Queries = append(req.Queries, exprQuery)
+	ngCond.QueriesAndExpressions = append(ngCond.QueriesAndExpressions, ccAlertQuery)
 
-	return req, nil
+	for i := range ngCond.QueriesAndExpressions {
+		err := ngCond.QueriesAndExpressions[i].PreSave()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	b, err := json.MarshalIndent(ngCond, "", " ")
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println(string(b))
+
+	return ngCond, nil
 }
 
 const alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -220,4 +262,50 @@ func getLetter(refIDs map[string][]int) (string, error) {
 		return sR, nil
 	}
 	return "", fmt.Errorf("ran out of letters when creating expression")
+}
+
+func getRelativeDuration(rawFrom, rawTo string) (*eval.RelativeTimeRange, error) {
+	fromD, err := getFrom(rawFrom)
+	if err != nil {
+		return nil, err
+	}
+
+	toD, err := getTo(rawTo)
+	if err != nil {
+		return nil, err
+	}
+	return &eval.RelativeTimeRange{
+		From: eval.Duration(fromD),
+		To:   eval.Duration(toD),
+	}, nil
+}
+
+func getFrom(from string) (time.Duration, error) {
+	fromRaw := strings.Replace(from, "now-", "", 1)
+
+	d, err := time.ParseDuration("-" + fromRaw)
+	if err != nil {
+		return 0, err
+	}
+	return -d, err
+}
+
+func getTo(to string) (time.Duration, error) {
+	if to == "now" {
+		return 0, nil
+	} else if strings.HasPrefix(to, "now-") {
+		withoutNow := strings.Replace(to, "now-", "", 1)
+
+		d, err := time.ParseDuration("-" + withoutNow)
+		if err != nil {
+			return 0, err
+		}
+		return -d, nil
+	}
+
+	d, err := time.ParseDuration(to)
+	if err != nil {
+		return 0, err
+	}
+	return -d, nil
 }
