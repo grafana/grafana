@@ -1,5 +1,5 @@
 import React, { FC, useEffect, useState } from 'react';
-import { InlineFormLabel, Input } from '@grafana/ui';
+import { Input, InlineField } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps, onUpdateDatasourceJsonDataOption } from '@grafana/data';
 import { ConnectionConfig } from '@grafana/aws-sdk';
 
@@ -40,31 +40,23 @@ export const ConfigEditor: FC<Props> = (props: Props) => {
     }
   }, []);
 
-  if (!datasource) {
-    return null;
-  }
-
   return (
     <>
       <ConnectionConfig
         {...props}
-        loadRegions={() =>
-          datasource!.getRegions().then((r) => r.filter((r) => r.value !== 'default').map((v) => v.value))
+        loadRegions={
+          datasource &&
+          (() => datasource!.getRegions().then((r) => r.filter((r) => r.value !== 'default').map((v) => v.value)))
         }
       />
-      <div className="gf-form-inline">
-        <div className="gf-form">
-          <InlineFormLabel className="width-14" tooltip="Namespaces of Custom Metrics.">
-            Custom Metrics
-          </InlineFormLabel>
-          <Input
-            className="width-30"
-            placeholder="Namespace1,Namespace2"
-            value={props.options.jsonData.customMetricsNamespaces || ''}
-            onChange={onUpdateDatasourceJsonDataOption(props, 'customMetricsNamespaces')}
-          />
-        </div>
-      </div>
+      <InlineField label="Namespaces of Custom Metrics" labelWidth={28} tooltip="Namespaces of Custom Metrics.">
+        <Input
+          width={60}
+          placeholder="Namespace1,Namespace2"
+          value={props.options.jsonData.customMetricsNamespaces || ''}
+          onChange={onUpdateDatasourceJsonDataOption(props, 'customMetricsNamespaces')}
+        />
+      </InlineField>
     </>
   );
 };
