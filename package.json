@@ -73,7 +73,6 @@
     "@babel/preset-env": "7.8.4",
     "@babel/preset-react": "7.8.3",
     "@babel/preset-typescript": "7.8.3",
-    "@emotion/core": "10.0.27",
     "@grafana/api-documenter": "7.11.2",
     "@grafana/api-extractor": "7.10.1",
     "@grafana/eslint-config": "2.2.1",
@@ -200,6 +199,7 @@
     "zone.js": "0.7.8"
   },
   "dependencies": {
+    "@emotion/core": "10.0.27",
     "@grafana/slate-react": "0.22.9-grafana",
     "@popperjs/core": "2.5.4",
     "@reduxjs/toolkit": "1.5.0",
@@ -246,7 +246,7 @@
     "is-hotkey": "0.1.6",
     "jquery": "3.5.1",
     "jsurl": "^0.1.5",
-    "lodash": "4.17.20",
+    "lodash": "4.17.21",
     "lru-cache": "^5.1.1",
     "md5": "^2.2.1",
     "memoize-one": "5.1.1",
@@ -295,7 +295,8 @@
     "whatwg-fetch": "3.1.0"
   },
   "resolutions": {
-    "caniuse-db": "1.0.30000772"
+    "caniuse-db": "1.0.30000772",
+    "react-use-measure": "https://github.com/mckn/react-use-measure.git#remove-cjs-export"
   },
   "workspaces": {
     "packages": [

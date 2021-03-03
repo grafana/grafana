@@ -1,10 +1,12 @@
-import { Icon, Input, Button, stylesFactory, useStyles } from '@grafana/ui';
 import React, { useEffect, useState } from 'react';
 import { useDebounce } from 'react-use';
-import { cx, css } from 'emotion';
-import { LibraryPanelCard } from '../LibraryPanelCard/LibraryPanelCard';
+import { css, cx } from 'emotion';
+import { Button, Icon, Input, stylesFactory, useStyles } from '@grafana/ui';
 import { DateTimeInput, GrafanaTheme } from '@grafana/data';
-import { deleteLibraryPanel, getLibraryPanels, LibraryPanelDTO } from '../../state/api';
+
+import { LibraryPanelCard } from '../LibraryPanelCard/LibraryPanelCard';
+import { deleteLibraryPanel, getLibraryPanels } from '../../state/api';
+import { LibraryPanelDTO } from '../../types';
 
 interface LibraryPanelViewProps {
   className?: string;
@@ -13,6 +15,7 @@ interface LibraryPanelViewProps {
   onClickCard?: (panel: LibraryPanelDTO) => void;
   formatDate?: (dateString: DateTimeInput, format?: string) => string;
   showSecondaryActions?: boolean;
+  currentPanelId?: string;
 }
 
 export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
@@ -22,6 +25,7 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
   onClickCard,
   formatDate,
   showSecondaryActions,
+  currentPanelId: currentPanel,
 }) => {
   const styles = useStyles(getPanelViewStyles);
   const [searchString, setSearchString] = useState('');
@@ -38,10 +42,14 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
   const [filteredItems, setFilteredItems] = useState(libraryPanels);
   useDebounce(
     () => {
-      setFilteredItems(libraryPanels?.filter((v) => v.name.toLowerCase().includes(searchString.toLowerCase())));
+      setFilteredItems(
+        libraryPanels?.filter(
+          (v) => v.name.toLowerCase().includes(searchString.toLowerCase()) && v.uid !== currentPanel
+        )
+      );
     },
     300,
-    [searchString, libraryPanels]
+    [searchString, libraryPanels, currentPanel]
   );
 
   const onDeletePanel = async (uid: string) => {
@@ -56,12 +64,12 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
 
   return (
     <div className={cx(styles.container, className)}>
-      <span>Popular panels from the panel library</span>
       <div className={styles.searchHeader}>
         <Input
           placeholder="Search the panel library"
           prefix={<Icon name="search" />}
           value={searchString}
+          autoFocus
           onChange={(e) => setSearchString(e.currentTarget.value)}
         ></Input>
         {/* <Select placeholder="Filter by" onChange={() => {}} width={35} /> */}

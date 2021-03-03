@@ -6,11 +6,22 @@ exports[`Render should render component 1`] = `
 >
   <AddPanelWidgetHandle
     onCancel={[Function]}
+    styles={
+      Object {
+        "actionsRow": "css-txvz1e",
+        "actionsWrapper": "css-gxxmom",
+        "backButton": "css-1cdxa9p",
+        "headerRow": "css-1ka09x",
+        "libraryPanelsWrapper": "css-18m13of",
+        "noMargin": "css-u023fv",
+        "wrapper": "css-1sl7nld",
+      }
+    }
   >
     Add panel
   </AddPanelWidgetHandle>
   <div
-    className="css-t8cafv"
+    className="css-gxxmom"
   >
     <div
       className="css-txvz1e"

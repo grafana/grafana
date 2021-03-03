@@ -64,7 +64,7 @@ export class LogMessageAnsi extends PureComponent<Props, State> {
 
     return chunks.map((chunk, index) =>
       chunk.style ? (
-        <span key={index} style={chunk.style}>
+        <span key={index} style={chunk.style} data-testid="ansiLogLine">
           {chunk.text}
         </span>
       ) : (

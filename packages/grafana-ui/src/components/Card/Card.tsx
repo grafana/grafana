@@ -224,6 +224,9 @@ export const getCardStyles = stylesFactory((theme: GrafanaTheme) => {
     media: css`
       margin-right: ${theme.spacing.md};
       width: 40px;
+      display: flex;
+      align-items: center;
+
       & > * {
         width: 100%;
       }
