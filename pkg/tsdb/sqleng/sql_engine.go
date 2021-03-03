@@ -132,42 +132,53 @@ const rowLimit = 1000000
 
 // Query is the main function for the SqlQueryEndpoint
 func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
-	tsdbQuery plugins.DataQuery) (plugins.DataResponse, error) {
+	queryContext plugins.DataQuery) (plugins.DataResponse, error) {
 	result := plugins.DataResponse{
 		Results: make(map[string]plugins.DataQueryResult),
 	}
 
+	ch := make(chan plugins.DataQueryResult, len(queryContext.Queries))
+
 	var wg sync.WaitGroup
-
-	for _, query := range tsdbQuery.Queries {
-		rawSQL := query.Model.Get("rawSql").MustString()
-		if rawSQL == "" {
+	// Execute each query in a goroutine and wait for them to finish afterwards
+	for _, query := range queryContext.Queries {
+		if query.Model.Get("rawSql").MustString() == "" {
 			continue
 		}
-
-		queryResult := plugins.DataQueryResult{Meta: simplejson.New(), RefID: query.RefID}
-		result.Results[query.RefID] = queryResult
-
-		// global substitutions
-		rawSQL, err := Interpolate(query, *tsdbQuery.TimeRange, rawSQL)
-		if err != nil {
-			queryResult.Error = err
-			continue
-		}
-
-		// datasource specific substitutions
-		rawSQL, err = e.macroEngine.Interpolate(query, *tsdbQuery.TimeRange, rawSQL)
-		if err != nil {
-			queryResult.Error = err
-			continue
-		}
-
-		queryResult.Meta.Set(MetaKeyExecutedQueryString, rawSQL)
 
 		wg.Add(1)
 
-		go func(rawSQL string, query plugins.DataSubQuery, queryResult plugins.DataQueryResult) {
+		go func(query plugins.DataSubQuery) {
 			defer wg.Done()
+
+			queryResult := plugins.DataQueryResult{
+				Meta:  simplejson.New(),
+				RefID: query.RefID,
+			}
+
+			rawSQL := query.Model.Get("rawSql").MustString()
+			if rawSQL == "" {
+				panic("Query model property rawSql should not be empty at this point")
+			}
+
+			// global substitutions
+			rawSQL, err := Interpolate(query, *queryContext.TimeRange, rawSQL)
+			if err != nil {
+				queryResult.Error = err
+				ch <- queryResult
+				return
+			}
+
+			// datasource specific substitutions
+			rawSQL, err = e.macroEngine.Interpolate(query, *queryContext.TimeRange, rawSQL)
+			if err != nil {
+				queryResult.Error = err
+				ch <- queryResult
+				return
+			}
+
+			queryResult.Meta.Set(MetaKeyExecutedQueryString, rawSQL)
+
 			session := e.engine.NewSession()
 			defer session.Close()
 			db := session.DB()
@@ -187,21 +198,30 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 
 			switch format {
 			case "time_series":
-				err := e.transformToTimeSeries(query, rows, queryResult, tsdbQuery)
+				err := e.transformToTimeSeries(query, rows, &queryResult, queryContext)
 				if err != nil {
 					queryResult.Error = err
 					return
 				}
 			case "table":
-				err := e.transformToTable(query, rows, queryResult, tsdbQuery)
+				err := e.transformToTable(query, rows, &queryResult, queryContext)
 				if err != nil {
 					queryResult.Error = err
 					return
 				}
 			}
-		}(rawSQL, query, queryResult)
+
+			ch <- queryResult
+		}(query)
 	}
+
 	wg.Wait()
+
+	// Read results from channels
+	close(ch)
+	for queryResult := range ch {
+		result.Results[queryResult.RefID] = queryResult
+	}
 
 	return result, nil
 }
@@ -223,13 +243,13 @@ var Interpolate = func(query plugins.DataSubQuery, timeRange plugins.DataTimeRan
 }
 
 func (e *dataPlugin) transformToTable(query plugins.DataSubQuery, rows *core.Rows,
-	result plugins.DataQueryResult, tsdbQuery plugins.DataQuery) error {
+	result *plugins.DataQueryResult, queryContext plugins.DataQuery) error {
 	columnNames, err := rows.Columns()
-	columnCount := len(columnNames)
-
 	if err != nil {
 		return err
 	}
+
+	columnCount := len(columnNames)
 
 	rowCount := 0
 	timeIndex := -1
@@ -284,7 +304,7 @@ func (e *dataPlugin) transformToTable(query plugins.DataSubQuery, rows *core.Row
 	return nil
 }
 
-func newProcessCfg(query plugins.DataSubQuery, tsdbQuery plugins.DataQuery, rows *core.Rows) (*processCfg, error) {
+func newProcessCfg(query plugins.DataSubQuery, queryContext plugins.DataQuery, rows *core.Rows) (*processCfg, error) {
 	columnNames, err := rows.Columns()
 	if err != nil {
 		return nil, err
@@ -307,14 +327,14 @@ func newProcessCfg(query plugins.DataSubQuery, tsdbQuery plugins.DataQuery, rows
 		fillMissing:        fillMissing,
 		seriesByQueryOrder: list.New(),
 		pointsBySeries:     make(map[string]plugins.DataTimeSeries),
-		tsdbQuery:          tsdbQuery,
+		queryContext:       queryContext,
 	}
 	return cfg, nil
 }
 
 func (e *dataPlugin) transformToTimeSeries(query plugins.DataSubQuery, rows *core.Rows,
-	result plugins.DataQueryResult, tsdbQuery plugins.DataQuery) error {
-	cfg, err := newProcessCfg(query, tsdbQuery, rows)
+	result *plugins.DataQueryResult, queryContext plugins.DataQuery) error {
+	cfg, err := newProcessCfg(query, queryContext, rows)
 	if err != nil {
 		return err
 	}
@@ -382,7 +402,7 @@ func (e *dataPlugin) transformToTimeSeries(query plugins.DataSubQuery, rows *cor
 		series := cfg.pointsBySeries[key]
 		// fill in values from last fetched value till interval end
 		intervalStart := series.Points[len(series.Points)-1][1].Float64
-		intervalEnd := float64(tsdbQuery.TimeRange.MustGetTo().UnixNano() / 1e6)
+		intervalEnd := float64(queryContext.TimeRange.MustGetTo().UnixNano() / 1e6)
 
 		if cfg.fillPrevious {
 			if len(series.Points) > 0 {
@@ -417,7 +437,7 @@ type processCfg struct {
 	pointsBySeries     map[string]plugins.DataTimeSeries
 	seriesByQueryOrder *list.List
 	fillValue          null.Float
-	tsdbQuery          plugins.DataQuery
+	queryContext       plugins.DataQuery
 	fillInterval       float64
 	fillPrevious       bool
 }
@@ -480,8 +500,8 @@ func (e *dataPlugin) processRow(cfg *processCfg) error {
 			metric = cfg.metricPrefixValue + " " + col
 		}
 
-		series, exist := cfg.pointsBySeries[metric]
-		if !exist {
+		series, exists := cfg.pointsBySeries[metric]
+		if !exists {
 			series = plugins.DataTimeSeries{Name: metric}
 			cfg.pointsBySeries[metric] = series
 			cfg.seriesByQueryOrder.PushBack(metric)
@@ -489,8 +509,8 @@ func (e *dataPlugin) processRow(cfg *processCfg) error {
 
 		if cfg.fillMissing {
 			var intervalStart float64
-			if !exist {
-				intervalStart = float64(cfg.tsdbQuery.TimeRange.MustGetFrom().UnixNano() / 1e6)
+			if !exists {
+				intervalStart = float64(cfg.queryContext.TimeRange.MustGetFrom().UnixNano() / 1e6)
 			} else {
 				intervalStart = series.Points[len(series.Points)-1][1].Float64 + cfg.fillInterval
 			}
@@ -513,7 +533,9 @@ func (e *dataPlugin) processRow(cfg *processCfg) error {
 		}
 
 		series.Points = append(series.Points, plugins.DataTimePoint{value, null.FloatFrom(timestamp)})
+		cfg.pointsBySeries[metric] = series
 
+		// TODO: Make non-global
 		if setting.Env == setting.Dev {
 			e.log.Debug("Rows", "metric", metric, "time", timestamp, "value", value)
 		}

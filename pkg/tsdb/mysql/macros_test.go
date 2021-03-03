@@ -13,7 +13,7 @@ import (
 
 func TestMacroEngine(t *testing.T) {
 	Convey("MacroEngine", t, func() {
-		engine := &mySqlMacroEngine{
+		engine := &mySQLMacroEngine{
 			logger: log.New("test"),
 		}
 		query := plugins.DataSubQuery{}
