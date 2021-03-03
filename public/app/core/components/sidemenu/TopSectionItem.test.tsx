@@ -1,8 +1,7 @@
 import React from 'react';
 import { mount } from 'enzyme';
 import TopSectionItem from './TopSectionItem';
-import { locationService } from '@grafana/runtime';
-import { Router } from 'react-router-dom';
+import { MemoryRouter } from 'react-router-dom';
 
 const setup = (propOverrides?: object) => {
   const props = Object.assign(
@@ -17,9 +16,9 @@ const setup = (propOverrides?: object) => {
   );
 
   return mount(
-    <Router history={locationService.getHistory()}>
+    <MemoryRouter initialEntries={[{ pathname: '/', key: 'testKey' }]}>
       <TopSectionItem {...props} />
-    </Router>
+    </MemoryRouter>
   );
 };
 
