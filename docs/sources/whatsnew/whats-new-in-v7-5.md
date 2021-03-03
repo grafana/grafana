@@ -11,8 +11,7 @@ list = false
 
 > **Note:** This is content for a beta version of Grafana. It will be updated several times before the stable release.
 
-
-d).
+This topic includes the release notes for Grafana v7.5. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
 ## Grafana OSS features
 
