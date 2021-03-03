@@ -10,7 +10,7 @@ interface DataLinksContextMenuProps {
 }
 
 export interface DataLinksContextMenuApi {
-  openMenu?: React.MouseEventHandler<HTMLElement>;
+  openMenu?: React.MouseEventHandler<HTMLElement | SVGElement>;
   targetClassName?: string;
 }
 
