@@ -30,7 +30,7 @@ func NewExecutor(datasource *models.DataSource) (plugins.DataPlugin, error) {
 		logger.Debug("getEngine", "connection", cnnstr)
 	}
 
-	config := sqleng.SqlQueryEndpointConfiguration{
+	config := sqleng.DataPluginConfiguration{
 		DriverName:        "mssql",
 		ConnectionString:  cnnstr,
 		Datasource:        datasource,
@@ -41,7 +41,7 @@ func NewExecutor(datasource *models.DataSource) (plugins.DataPlugin, error) {
 		log: logger,
 	}
 
-	return sqleng.NewSqlQueryEndpoint(&config, &queryResultTransformer, newMssqlMacroEngine(), logger)
+	return sqleng.NewDataPlugin(config, &queryResultTransformer, newMssqlMacroEngine(), logger)
 }
 
 // ParseURL tries to parse an MSSQL URL string into a URL object.

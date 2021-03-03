@@ -57,7 +57,7 @@ func NewExecutor(datasource *models.DataSource) (plugins.DataPlugin, error) {
 		logger.Debug("getEngine", "connection", cnnstr)
 	}
 
-	config := sqleng.SqlQueryEndpointConfiguration{
+	config := sqleng.DataPluginConfiguration{
 		DriverName:        "mysql",
 		ConnectionString:  cnnstr,
 		Datasource:        datasource,
@@ -69,7 +69,7 @@ func NewExecutor(datasource *models.DataSource) (plugins.DataPlugin, error) {
 		log: logger,
 	}
 
-	return sqleng.NewSqlQueryEndpoint(&config, &rowTransformer, newMysqlMacroEngine(logger), logger)
+	return sqleng.NewDataPlugin(config, &rowTransformer, newMysqlMacroEngine(logger), logger)
 }
 
 type mysqlQueryResultTransformer struct {

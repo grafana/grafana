@@ -15,15 +15,15 @@ const rsIdentifier = `([_a-zA-Z0-9]+)`
 const sExpr = `\$` + rsIdentifier + `\(([^\)]*)\)`
 
 type postgresMacroEngine struct {
-	*sqleng.SqlMacroEngineBase
+	*sqleng.SQLMacroEngineBase
 	timeRange   plugins.DataTimeRange
 	query       plugins.DataSubQuery
 	timescaledb bool
 }
 
-func newPostgresMacroEngine(timescaledb bool) sqleng.SqlMacroEngine {
+func newPostgresMacroEngine(timescaledb bool) sqleng.SQLMacroEngine {
 	return &postgresMacroEngine{
-		SqlMacroEngineBase: sqleng.NewSqlMacroEngineBase(),
+		SQLMacroEngineBase: sqleng.NewSQLMacroEngineBase(),
 		timescaledb:        timescaledb,
 	}
 }

@@ -14,17 +14,17 @@ import (
 const rsIdentifier = `([_a-zA-Z0-9]+)`
 const sExpr = `\$` + rsIdentifier + `\(([^\)]*)\)`
 
-type msSqlMacroEngine struct {
-	*sqleng.SqlMacroEngineBase
+type msSQLMacroEngine struct {
+	*sqleng.SQLMacroEngineBase
 	timeRange plugins.DataTimeRange
 	query     plugins.DataSubQuery
 }
 
-func newMssqlMacroEngine() sqleng.SqlMacroEngine {
-	return &msSqlMacroEngine{SqlMacroEngineBase: sqleng.NewSqlMacroEngineBase()}
+func newMssqlMacroEngine() sqleng.SQLMacroEngine {
+	return &msSQLMacroEngine{SQLMacroEngineBase: sqleng.NewSQLMacroEngineBase()}
 }
 
-func (m *msSqlMacroEngine) Interpolate(query plugins.DataSubQuery, timeRange plugins.DataTimeRange,
+func (m *msSQLMacroEngine) Interpolate(query plugins.DataSubQuery, timeRange plugins.DataTimeRange,
 	sql string) (string, error) {
 	m.timeRange = timeRange
 	m.query = query
@@ -52,7 +52,7 @@ func (m *msSqlMacroEngine) Interpolate(query plugins.DataSubQuery, timeRange plu
 	return sql, nil
 }
 
-func (m *msSqlMacroEngine) evaluateMacro(name string, args []string) (string, error) {
+func (m *msSQLMacroEngine) evaluateMacro(name string, args []string) (string, error) {
 	switch name {
 	case "__time":
 		if len(args) == 0 {

@@ -29,9 +29,9 @@ import (
 // MetaKeyExecutedQueryString is the key where the executed query should get stored
 const MetaKeyExecutedQueryString = "executedQueryString"
 
-// SqlMacroEngine interpolates macros into sql. It takes in the Query to have access to query context and
+// SQLMacroEngine interpolates macros into sql. It takes in the Query to have access to query context and
 // timeRange to be able to generate queries that use from and to.
-type SqlMacroEngine interface {
+type SQLMacroEngine interface {
 	Interpolate(query plugins.DataSubQuery, timeRange plugins.DataTimeRange, sql string) (string, error)
 }
 
@@ -64,8 +64,8 @@ var NewXormEngine = func(driverName string, connectionString string) (*xorm.Engi
 
 const timeEndColumnName = "timeend"
 
-type sqlQueryEndpoint struct {
-	macroEngine            SqlMacroEngine
+type dataPlugin struct {
+	macroEngine            SQLMacroEngine
 	queryResultTransformer SqlQueryResultTransformer
 	engine                 *xorm.Engine
 	timeColumnNames        []string
@@ -73,7 +73,7 @@ type sqlQueryEndpoint struct {
 	log                    log.Logger
 }
 
-type SqlQueryEndpointConfiguration struct {
+type DataPluginConfiguration struct {
 	DriverName        string
 	Datasource        *models.DataSource
 	ConnectionString  string
@@ -81,9 +81,10 @@ type SqlQueryEndpointConfiguration struct {
 	MetricColumnTypes []string
 }
 
-var NewSqlQueryEndpoint = func(config *SqlQueryEndpointConfiguration, queryResultTransformer SqlQueryResultTransformer,
-	macroEngine SqlMacroEngine, log log.Logger) (plugins.DataPlugin, error) {
-	queryEndpoint := sqlQueryEndpoint{
+// NewDataPlugin returns a new plugins.DataPlugin
+func NewDataPlugin(config DataPluginConfiguration, queryResultTransformer SqlQueryResultTransformer,
+	macroEngine SQLMacroEngine, log log.Logger) (plugins.DataPlugin, error) {
+	plugin := dataPlugin{
 		queryResultTransformer: queryResultTransformer,
 		macroEngine:            macroEngine,
 		timeColumnNames:        []string{"time"},
@@ -91,11 +92,11 @@ var NewSqlQueryEndpoint = func(config *SqlQueryEndpointConfiguration, queryResul
 	}
 
 	if len(config.TimeColumnNames) > 0 {
-		queryEndpoint.timeColumnNames = config.TimeColumnNames
+		plugin.timeColumnNames = config.TimeColumnNames
 	}
 
 	if len(config.MetricColumnTypes) > 0 {
-		queryEndpoint.metricColumnTypes = config.MetricColumnTypes
+		plugin.metricColumnTypes = config.MetricColumnTypes
 	}
 
 	engineCache.Lock()
@@ -103,8 +104,8 @@ var NewSqlQueryEndpoint = func(config *SqlQueryEndpointConfiguration, queryResul
 
 	if engine, present := engineCache.cache[config.Datasource.Id]; present {
 		if version := engineCache.versions[config.Datasource.Id]; version == config.Datasource.Version {
-			queryEndpoint.engine = engine
-			return &queryEndpoint, nil
+			plugin.engine = engine
+			return &plugin, nil
 		}
 	}
 
@@ -122,15 +123,15 @@ var NewSqlQueryEndpoint = func(config *SqlQueryEndpointConfiguration, queryResul
 
 	engineCache.versions[config.Datasource.Id] = config.Datasource.Version
 	engineCache.cache[config.Datasource.Id] = engine
-	queryEndpoint.engine = engine
+	plugin.engine = engine
 
-	return &queryEndpoint, nil
+	return &plugin, nil
 }
 
 const rowLimit = 1000000
 
 // Query is the main function for the SqlQueryEndpoint
-func (e *sqlQueryEndpoint) DataQuery(ctx context.Context, dsInfo *models.DataSource,
+func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 	tsdbQuery plugins.DataQuery) (plugins.DataResponse, error) {
 	result := plugins.DataResponse{
 		Results: make(map[string]plugins.DataQueryResult),
@@ -221,7 +222,7 @@ var Interpolate = func(query plugins.DataSubQuery, timeRange plugins.DataTimeRan
 	return sql, nil
 }
 
-func (e *sqlQueryEndpoint) transformToTable(query plugins.DataSubQuery, rows *core.Rows,
+func (e *dataPlugin) transformToTable(query plugins.DataSubQuery, rows *core.Rows,
 	result plugins.DataQueryResult, tsdbQuery plugins.DataQuery) error {
 	columnNames, err := rows.Columns()
 	columnCount := len(columnNames)
@@ -311,7 +312,7 @@ func newProcessCfg(query plugins.DataSubQuery, tsdbQuery plugins.DataQuery, rows
 	return cfg, nil
 }
 
-func (e *sqlQueryEndpoint) transformToTimeSeries(query plugins.DataSubQuery, rows *core.Rows,
+func (e *dataPlugin) transformToTimeSeries(query plugins.DataSubQuery, rows *core.Rows,
 	result plugins.DataQueryResult, tsdbQuery plugins.DataQuery) error {
 	cfg, err := newProcessCfg(query, tsdbQuery, rows)
 	if err != nil {
@@ -421,7 +422,7 @@ type processCfg struct {
 	fillPrevious       bool
 }
 
-func (e *sqlQueryEndpoint) processRow(cfg *processCfg) error {
+func (e *dataPlugin) processRow(cfg *processCfg) error {
 	var timestamp float64
 	var value null.Float
 	var metric string
@@ -702,13 +703,13 @@ func SetupFillmode(query plugins.DataSubQuery, interval time.Duration, fillmode 
 	return nil
 }
 
-type SqlMacroEngineBase struct{}
+type SQLMacroEngineBase struct{}
 
-func NewSqlMacroEngineBase() *SqlMacroEngineBase {
-	return &SqlMacroEngineBase{}
+func NewSQLMacroEngineBase() *SQLMacroEngineBase {
+	return &SQLMacroEngineBase{}
 }
 
-func (m *SqlMacroEngineBase) ReplaceAllStringSubmatchFunc(re *regexp.Regexp, str string, repl func([]string) string) string {
+func (m *SQLMacroEngineBase) ReplaceAllStringSubmatchFunc(re *regexp.Regexp, str string, repl func([]string) string) string {
 	result := ""
 	lastIndex := 0
 
