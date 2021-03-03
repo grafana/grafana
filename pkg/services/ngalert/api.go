@@ -15,9 +15,8 @@ import (
 )
 
 type apiImpl struct {
-	ngalert         *AlertNG
-	definitionStore definitionStore
-	instanceStore   instanceStore
+	ngalert *AlertNG
+	store   store
 }
 
 func (api *apiImpl) registerAPIEndpoints() {
@@ -120,7 +119,7 @@ func (api *apiImpl) getAlertDefinitionEndpoint(c *models.ReqContext) response.Re
 		OrgID: c.SignedInUser.OrgId,
 	}
 
-	if err := api.definitionStore.getAlertDefinitionByUID(&query); err != nil {
+	if err := api.store.getAlertDefinitionByUID(&query); err != nil {
 		return response.Error(500, "Failed to get alert definition", err)
 	}
 
@@ -136,7 +135,7 @@ func (api *apiImpl) deleteAlertDefinitionEndpoint(c *models.ReqContext) response
 		OrgID: c.SignedInUser.OrgId,
 	}
 
-	if err := api.definitionStore.deleteAlertDefinitionByUID(&cmd); err != nil {
+	if err := api.store.deleteAlertDefinitionByUID(&cmd); err != nil {
 		return response.Error(500, "Failed to delete alert definition", err)
 	}
 
@@ -157,7 +156,7 @@ func (api *apiImpl) updateAlertDefinitionEndpoint(c *models.ReqContext, cmd upda
 		return response.Error(400, "invalid condition", err)
 	}
 
-	if err := api.definitionStore.updateAlertDefinition(&cmd); err != nil {
+	if err := api.store.updateAlertDefinition(&cmd); err != nil {
 		return response.Error(500, "Failed to update alert definition", err)
 	}
 
@@ -177,7 +176,7 @@ func (api *apiImpl) createAlertDefinitionEndpoint(c *models.ReqContext, cmd save
 		return response.Error(400, "invalid condition", err)
 	}
 
-	if err := api.definitionStore.saveAlertDefinition(&cmd); err != nil {
+	if err := api.store.saveAlertDefinition(&cmd); err != nil {
 		return response.Error(500, "Failed to create alert definition", err)
 	}
 
@@ -188,7 +187,7 @@ func (api *apiImpl) createAlertDefinitionEndpoint(c *models.ReqContext, cmd save
 func (api *apiImpl) listAlertDefinitions(c *models.ReqContext) response.Response {
 	query := listAlertDefinitionsQuery{OrgID: c.SignedInUser.OrgId}
 
-	if err := api.definitionStore.getOrgAlertDefinitions(&query); err != nil {
+	if err := api.store.getOrgAlertDefinitions(&query); err != nil {
 		return response.Error(500, "Failed to list alert definitions", err)
 	}
 
@@ -216,7 +215,7 @@ func (api *apiImpl) alertDefinitionPauseEndpoint(c *models.ReqContext, cmd updat
 	cmd.OrgID = c.SignedInUser.OrgId
 	cmd.Paused = true
 
-	err := api.definitionStore.updateAlertDefinitionPaused(&cmd)
+	err := api.store.updateAlertDefinitionPaused(&cmd)
 	if err != nil {
 		return response.Error(500, "Failed to pause alert definition", err)
 	}
@@ -228,7 +227,7 @@ func (api *apiImpl) alertDefinitionUnpauseEndpoint(c *models.ReqContext, cmd upd
 	cmd.OrgID = c.SignedInUser.OrgId
 	cmd.Paused = false
 
-	err := api.definitionStore.updateAlertDefinitionPaused(&cmd)
+	err := api.store.updateAlertDefinitionPaused(&cmd)
 	if err != nil {
 		return response.Error(500, "Failed to unpause alert definition", err)
 	}

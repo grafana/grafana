@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-type definitionStore interface {
+type store interface {
 	deleteAlertDefinitionByUID(*deleteAlertDefinitionByUIDCommand) error
 	getAlertDefinitionByUID(*getAlertDefinitionByUIDQuery) error
 	getAlertDefinitions(query *listAlertDefinitionsQuery) error

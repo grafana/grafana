@@ -9,12 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-type instanceStore interface {
-	getAlertInstance(*getAlertInstanceQuery) error
-	listAlertInstances(cmd *listAlertInstancesQuery) error
-	saveAlertInstance(cmd *saveAlertInstanceCommand) error
-}
-
 // getAlertInstance is a handler for retrieving an alert instance based on OrgId, AlertDefintionID, and
 // the hash of the labels.
 // nolint:unused

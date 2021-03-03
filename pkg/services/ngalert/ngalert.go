@@ -51,16 +51,15 @@ func (ng *AlertNG) Init() error {
 	store := storeImpl{baseInterval: baseInterval, SQLStore: ng.SQLStore}
 
 	schedCfg := schedulerCfg{
-		c:               clock.New(),
-		baseInterval:    baseInterval,
-		logger:          ng.log,
-		evaluator:       eval.Evaluator{Cfg: ng.Cfg},
-		definitionStore: store,
-		instanceStore:   store,
+		c:            clock.New(),
+		baseInterval: baseInterval,
+		logger:       ng.log,
+		evaluator:    eval.Evaluator{Cfg: ng.Cfg},
+		store:        store,
 	}
 	ng.schedule = newScheduler(schedCfg)
 
-	api := apiImpl{ngalert: ng, definitionStore: store, instanceStore: store}
+	api := apiImpl{ngalert: ng, store: store}
 	api.registerAPIEndpoints()
 
 	return nil
@@ -96,12 +95,12 @@ func (ng *AlertNG) AddMigration(mg *migrator.Migrator) {
 // LoadAlertCondition returns a Condition object for the given alertDefinitionID.
 func (api *apiImpl) LoadAlertCondition(alertDefinitionUID string, orgID int64) (*eval.Condition, error) {
 	q := getAlertDefinitionByUIDQuery{UID: alertDefinitionUID, OrgID: orgID}
-	if err := api.definitionStore.getAlertDefinitionByUID(&q); err != nil {
+	if err := api.store.getAlertDefinitionByUID(&q); err != nil {
 		return nil, err
 	}
 	alertDefinition := q.Result
 
-	err := api.definitionStore.validateAlertDefinition(alertDefinition, true)
+	err := api.store.validateAlertDefinition(alertDefinition, true)
 	if err != nil {
 		return nil, err
 	}

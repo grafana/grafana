@@ -44,7 +44,7 @@ func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key alertDefi
 				// fetch latest alert definition version
 				if alertDefinition == nil || alertDefinition.Version < ctx.version {
 					q := getAlertDefinitionByUIDQuery{OrgID: key.orgID, UID: key.definitionUID}
-					err := sch.DefinitionStore.getAlertDefinitionByUID(&q)
+					err := sch.store.getAlertDefinitionByUID(&q)
 					if err != nil {
 						sch.log.Error("failed to fetch alert definition", "key", key)
 						return err
@@ -68,7 +68,7 @@ func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key alertDefi
 				for _, r := range results {
 					sch.log.Debug("alert definition result", "title", alertDefinition.Title, "key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "instance", r.Instance, "state", r.State.String())
 					cmd := saveAlertInstanceCommand{DefinitionOrgID: key.orgID, DefinitionUID: key.definitionUID, State: InstanceStateType(r.State.String()), Labels: InstanceLabels(r.Instance), LastEvalTime: ctx.now}
-					err := sch.InstanceStore.saveAlertInstance(&cmd)
+					err := sch.store.saveAlertInstance(&cmd)
 					if err != nil {
 						sch.log.Error("failed saving alert instance", "title", alertDefinition.Title, "key", key, "attempt", attempt, "now", ctx.now, "instance", r.Instance, "state", r.State.String(), "error", err)
 					}
@@ -128,36 +128,33 @@ type schedule struct {
 
 	evaluator eval.Evaluator
 
-	DefinitionStore definitionStore
-	InstanceStore   instanceStore
+	store store
 }
 
 type schedulerCfg struct {
-	c               clock.Clock
-	baseInterval    time.Duration
-	logger          log.Logger
-	evalApplied     func(alertDefinitionKey, time.Time)
-	stopApplied     func(alertDefinitionKey)
-	evaluator       eval.Evaluator
-	definitionStore definitionStore
-	instanceStore   instanceStore
+	c            clock.Clock
+	baseInterval time.Duration
+	logger       log.Logger
+	evalApplied  func(alertDefinitionKey, time.Time)
+	stopApplied  func(alertDefinitionKey)
+	evaluator    eval.Evaluator
+	store        store
 }
 
 // newScheduler returns a new schedule.
 func newScheduler(cfg schedulerCfg) *schedule {
 	ticker := alerting.NewTicker(cfg.c.Now(), time.Second*0, cfg.c, int64(cfg.baseInterval.Seconds()))
 	sch := schedule{
-		registry:        alertDefinitionRegistry{alertDefinitionInfo: make(map[alertDefinitionKey]alertDefinitionInfo)},
-		maxAttempts:     maxAttempts,
-		clock:           cfg.c,
-		baseInterval:    cfg.baseInterval,
-		log:             cfg.logger,
-		heartbeat:       ticker,
-		evalApplied:     cfg.evalApplied,
-		stopApplied:     cfg.stopApplied,
-		evaluator:       cfg.evaluator,
-		DefinitionStore: cfg.definitionStore,
-		InstanceStore:   cfg.instanceStore,
+		registry:     alertDefinitionRegistry{alertDefinitionInfo: make(map[alertDefinitionKey]alertDefinitionInfo)},
+		maxAttempts:  maxAttempts,
+		clock:        cfg.c,
+		baseInterval: cfg.baseInterval,
+		log:          cfg.logger,
+		heartbeat:    ticker,
+		evalApplied:  cfg.evalApplied,
+		stopApplied:  cfg.stopApplied,
+		evaluator:    cfg.evaluator,
+		store:        cfg.store,
 	}
 	return &sch
 }

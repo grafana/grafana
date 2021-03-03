@@ -14,7 +14,7 @@ func (api *apiImpl) validateOrgAlertDefinition(c *models.ReqContext) {
 
 	query := getAlertDefinitionByUIDQuery{UID: uid, OrgID: c.SignedInUser.OrgId}
 
-	if err := api.definitionStore.getAlertDefinitionByUID(&query); err != nil {
+	if err := api.store.getAlertDefinitionByUID(&query); err != nil {
 		c.JsonApiErr(404, "Alert definition not found", nil)
 		return
 	}
