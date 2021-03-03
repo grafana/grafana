@@ -47,9 +47,9 @@ Team Admins can [Manage teams]({{< relref "manage-teams/index.md" >}}).
 Users are named accounts in Grafana with granted permissions to access resources throughout Grafana. All users can manage their own accounts to a limited extent.
 
 Users can:
-- [View and edit user profile](user-admin/user-profile.md)
-- [Change password](user-admin/change-your-password.md)
-- [Switch organizations](user-admin/switch-org.md)
+- [View and edit user profile]({{< relref "user-admin/user-profile.md" >}})
+- [Change password]({{< relref "user-admin/change-your-password.md" >}})
+- [Switch organizations]({{< relref "user-admin/switch-org.md" >}})
 
 ## Learn more
 
