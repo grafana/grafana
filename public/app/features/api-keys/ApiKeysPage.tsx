@@ -3,7 +3,7 @@ import ReactDOMServer from 'react-dom/server';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 // Utils
-import { ApiKey, CoreEvents, NewApiKey, OrgRole } from 'app/types';
+import { ApiKey, CoreEvents, NewApiKey, OrgRole, StoreState } from 'app/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getApiKeys, getApiKeysCount } from './state/selectors';
 import { addApiKey, deleteApiKey, loadApiKeys } from './state/actions';
@@ -14,9 +14,8 @@ import config from 'app/core/config';
 import appEvents from 'app/core/app_events';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { DeleteButton, EventsWithValidation, Icon, InlineFormLabel, LegacyForms, ValidationEvents } from '@grafana/ui';
-import { dateTimeFormat, NavModel, rangeUtil } from '@grafana/data';
+import { dateTimeFormat, NavModel, rangeUtil, TimeZone } from '@grafana/data';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
-import { store } from 'app/store/store';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { setSearchQuery } from './state/reducers';
 
@@ -51,6 +50,7 @@ export interface Props {
   setSearchQuery: typeof setSearchQuery;
   addApiKey: typeof addApiKey;
   apiKeysCount: number;
+  timeZone: TimeZone;
 }
 
 export interface State {
@@ -105,7 +105,7 @@ export class ApiKeysPage extends PureComponent<Props, State> {
     this.setState({ isAdding: !this.state.isAdding });
   };
 
-  onAddApiKey = async (evt: any) => {
+  onAddApiKey = (evt: any) => {
     evt.preventDefault();
 
     const openModal = (apiKey: string) => {
@@ -118,19 +118,23 @@ export class ApiKeysPage extends PureComponent<Props, State> {
     };
 
     const secondsToLive = this.state.newApiKey.secondsToLive;
-    const secondsToLiveAsNumber = secondsToLive ? rangeUtil.intervalToSeconds(secondsToLive) : null;
-    const apiKey: ApiKey = {
-      ...this.state.newApiKey,
-      secondsToLive: secondsToLiveAsNumber,
-    };
-    this.props.addApiKey(apiKey, openModal, this.state.includeExpired);
-    this.setState((prevState: State) => {
-      return {
-        ...prevState,
-        newApiKey: initialApiKeyState,
-        isAdding: false,
+    try {
+      const secondsToLiveAsNumber = secondsToLive ? rangeUtil.intervalToSeconds(secondsToLive) : null;
+      const apiKey: ApiKey = {
+        ...this.state.newApiKey,
+        secondsToLive: secondsToLiveAsNumber,
       };
-    });
+      this.props.addApiKey(apiKey, openModal, this.state.includeExpired);
+      this.setState((prevState: State) => {
+        return {
+          ...prevState,
+          newApiKey: initialApiKeyState,
+          isAdding: false,
+        };
+      });
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   onApiKeyStateUpdate = (evt: any, prop: string) => {
@@ -158,7 +162,7 @@ export class ApiKeysPage extends PureComponent<Props, State> {
             buttonIcon="key-skeleton-alt"
             buttonLink="#"
             onClick={this.onToggleAdding}
-            buttonTitle=" New API Key"
+            buttonTitle="New API Key"
             proTip="Remember you can provide view-only API access to other applications."
           />
         )}
@@ -171,8 +175,7 @@ export class ApiKeysPage extends PureComponent<Props, State> {
     if (!date) {
       return 'No expiration date';
     }
-    const timeZone = getTimeZone(store.getState().user);
-    return dateTimeFormat(date, { format, timeZone });
+    return dateTimeFormat(date, { format, timeZone: this.props.timeZone });
   }
 
   renderAddApiKeyForm() {
@@ -312,13 +315,14 @@ export class ApiKeysPage extends PureComponent<Props, State> {
   }
 }
 
-function mapStateToProps(state: any) {
+function mapStateToProps(state: StoreState) {
   return {
     navModel: getNavModel(state.navIndex, 'apikeys'),
     apiKeys: getApiKeys(state.apiKeys),
     searchQuery: state.apiKeys.searchQuery,
     apiKeysCount: getApiKeysCount(state.apiKeys),
     hasFetched: state.apiKeys.hasFetched,
+    timezone: getTimeZone(state.user),
   };
 }
 
