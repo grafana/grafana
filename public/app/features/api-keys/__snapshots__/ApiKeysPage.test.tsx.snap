@@ -37,7 +37,6 @@ exports[`Render should render CTA if there are no API keys 1`] = `
   >
     <EmptyListCTA
       buttonIcon="key-skeleton-alt"
-      buttonLink="#"
       buttonTitle=" New API Key"
       onClick={[Function]}
       proTip="Remember you can provide view-only API access to other applications."
