@@ -23,7 +23,7 @@ export const usePanelSave = () => {
     if (state.value) {
       dispatch(notifyApp(createPanelLibrarySuccessNotification('Library panel saved')));
     }
-  }, [state]);
+  }, [dispatch, state]);
 
   return { state, saveLibraryPanel };
 };
