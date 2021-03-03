@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { Spinner, HorizontalGroup } from '@grafana/ui';
 import { DashboardModel } from '../../state/DashboardModel';
-import { historySrv, RevisionsModel, CalculateDiffOptions } from '../VersionHistory/HistorySrv';
+import { historySrv, RevisionsModel } from '../VersionHistory/HistorySrv';
 import { VersionHistoryTable } from '../VersionHistory/VersionHistoryTable';
 import { VersionHistoryHeader } from '../VersionHistory/VersionHistoryHeader';
 import { VersionsHistoryButtons } from '../VersionHistory/VersionHistoryButtons';
@@ -15,7 +15,7 @@ type State = {
   isAppending: boolean;
   versions: DecoratedRevisionModel[];
   viewMode: 'list' | 'compare';
-  delta: { basic: string; json: string };
+  delta?: { lhs: any; rhs: any };
   newInfo?: DecoratedRevisionModel;
   baseInfo?: DecoratedRevisionModel;
   isNewLatest: boolean;
@@ -24,7 +24,6 @@ type State = {
 export type DecoratedRevisionModel = RevisionsModel & {
   createdDateString: string;
   ageString: string;
-  checked: boolean;
 };
 
 export const VERSIONS_FETCH_LIMIT = 10;
@@ -38,10 +37,6 @@ export class VersionsSettings extends PureComponent<Props, State> {
     this.limit = VERSIONS_FETCH_LIMIT;
     this.start = 0;
     this.state = {
-      delta: {
-        basic: '',
-        json: '',
-      },
       isAppending: true,
       isLoading: true,
       versions: [],
@@ -69,51 +64,29 @@ export class VersionsSettings extends PureComponent<Props, State> {
       .finally(() => this.setState({ isAppending: false }));
   };
 
-  getDiff = (diff: string) => {
+  getDiff = async () => {
     const selectedVersions = this.state.versions.filter((version) => version.checked);
     const [newInfo, baseInfo] = selectedVersions;
     const isNewLatest = newInfo.version === this.props.dashboard.version;
 
     this.setState({
-      baseInfo,
       isLoading: true,
+    });
+
+    const rhs = await historySrv.getVersion(this.props.dashboard.id, newInfo.version);
+    const lhs = await historySrv.getVersion(this.props.dashboard.id, baseInfo.version);
+
+    this.setState({
+      baseInfo,
+      isLoading: false,
       isNewLatest,
       newInfo,
       viewMode: 'compare',
+      delta: {
+        rhs: rhs.data,
+        lhs: lhs.data,
+      },
     });
-
-    const options: CalculateDiffOptions = {
-      new: {
-        dashboardId: this.props.dashboard.id,
-        version: newInfo.version,
-      },
-      base: {
-        dashboardId: this.props.dashboard.id,
-        version: baseInfo.version,
-      },
-      diffType: diff,
-    };
-
-    return historySrv
-      .calculateDiff(options)
-      .then((response: any) => {
-        this.setState({
-          // @ts-ignore
-          delta: {
-            [diff]: response,
-          },
-        });
-      })
-      .catch(() => {
-        this.setState({
-          viewMode: 'list',
-        });
-      })
-      .finally(() => {
-        this.setState({
-          isLoading: false,
-        });
-      });
   };
 
   decorateVersions = (versions: RevisionsModel[]) =>
@@ -139,7 +112,7 @@ export class VersionsSettings extends PureComponent<Props, State> {
   reset = () => {
     this.setState({
       baseInfo: undefined,
-      delta: { basic: '', json: '' },
+      delta: undefined,
       isNewLatest: false,
       newInfo: undefined,
       versions: this.state.versions.map((version) => ({ ...version, checked: false })),
@@ -167,7 +140,6 @@ export class VersionsSettings extends PureComponent<Props, State> {
             <VersionsHistorySpinner msg="Fetching changes&hellip;" />
           ) : (
             <VersionHistoryComparison
-              dashboard={this.props.dashboard}
               newInfo={newInfo}
               baseInfo={baseInfo}
               isNewLatest={isNewLatest}

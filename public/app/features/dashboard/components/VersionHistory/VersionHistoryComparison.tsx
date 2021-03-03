@@ -1,47 +1,61 @@
-import React, { PureComponent } from 'react';
-import { AngularComponent, getAngularLoader } from '@grafana/runtime';
+import React from 'react';
+import { css } from 'emotion';
+import _ from 'lodash';
+import DeepDiff from 'deep-diff';
+import { Button, HorizontalGroup } from '@grafana/ui';
 import { DashboardModel } from '../../state/DashboardModel';
 import { DecoratedRevisionModel } from '../DashboardSettings/VersionsSettings';
+import { VersionHistoryBlock } from './VersionHistoryBlock';
 
 type DiffViewProps = {
-  dashboard: DashboardModel;
   isNewLatest: boolean;
-  newInfo?: DecoratedRevisionModel;
-  baseInfo?: DecoratedRevisionModel;
-  delta: { basic: string; json: string };
+  newInfo: DecoratedRevisionModel;
+  baseInfo: DecoratedRevisionModel;
+  delta: { lhs: DashboardModel; rhs: DashboardModel };
   onFetchFail: () => void;
 };
 
-export class VersionHistoryComparison extends PureComponent<DiffViewProps> {
-  element?: HTMLElement | null;
-  angularCmp?: AngularComponent;
+export const VersionHistoryComparison = ({ baseInfo, newInfo, delta, isNewLatest, onFetchFail }: DiffViewProps) => {
+  const basicDiff = _.groupBy(DeepDiff.diff(delta.lhs, delta.rhs), (change) => change.path![0]);
+  return (
+    <div>
+      <HorizontalGroup justify="space-between" align="center">
+        <div>
+          <p className="small muted">
+            <strong>Version {newInfo.version}</strong> updated by
+            <span>{newInfo.createdBy} </span>
+            <span>{newInfo.ageString}</span>
+            <span> - {newInfo.message}</span>
+          </p>
+          <p className="small muted">
+            <strong>Version {baseInfo.version}</strong> updated by
+            <span>{baseInfo.createdBy} </span>
+            <span>{baseInfo.ageString}</span>
+            <span> - {baseInfo.message}</span>
+          </p>
+        </div>
+        {isNewLatest && (
+          <Button variant="destructive" onClick={() => console.log('restore')} icon="history">
+            Restore to version {baseInfo.version}
+          </Button>
+        )}
+      </HorizontalGroup>
 
-  constructor(props: DiffViewProps) {
-    super(props);
-  }
+      <div
+        className={css`
+          padding-top: 16px;
+        `}
+      >
+        {Object.entries(basicDiff).map(([key, value]) => (
+          <VersionHistoryBlock changes={value} key={key} title={key} />
+        ))}
+      </div>
 
-  componentDidMount() {
-    const loader = getAngularLoader();
-    const template =
-      '<gf-dashboard-history dashboard="dashboard" newinfo="newinfo" baseinfo="baseinfo" isnewlatest="isnewlatest" onfetchfail="onfetchfail" delta="delta"/>';
-    const scopeProps = {
-      dashboard: this.props.dashboard,
-      delta: this.props.delta,
-      baseinfo: this.props.baseInfo,
-      newinfo: this.props.newInfo,
-      isnewlatest: this.props.isNewLatest,
-      onfetchfail: this.props.onFetchFail,
-    };
-    this.angularCmp = loader.load(this.element, scopeProps, template);
-  }
-
-  componentWillUnmount() {
-    if (this.angularCmp) {
-      this.angularCmp.destroy();
-    }
-  }
-
-  render() {
-    return <div data-testid="angular-history-comparison" ref={(ref) => (this.element = ref)} />;
-  }
-}
+      <div className="gf-form-button-row">
+        <Button variant="secondary" onClick={() => console.log({ basicDiff, lhs: delta.lhs, rhs: delta.rhs })}>
+          View JSON Diff
+        </Button>
+      </div>
+    </div>
+  );
+};

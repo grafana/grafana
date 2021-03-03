@@ -41,6 +41,10 @@ export class HistorySrv {
     return getBackendSrv().post('api/dashboards/calculate-diff', options);
   }
 
+  getVersion(id: number, version: number) {
+    return getBackendSrv().get(`api/dashboards/id/${id}/versions/${version}`);
+  }
+
   restoreDashboard(dashboard: DashboardModel, version: number) {
     const id = dashboard && dashboard.id ? dashboard.id : void 0;
     const url = `api/dashboards/id/${id}/restore`;
