@@ -99,9 +99,8 @@ type AlertExecCtx struct {
 	Ctx context.Context
 }
 
-// execute runs the Condition's expressions or queries.
-func (c *Condition) execute(ctx AlertExecCtx, now time.Time) (*ExecutionResults, error) {
-	result := ExecutionResults{}
+// GetQueryDataRequest creates a backend.QueryDataRequest from the condition.
+func (c *Condition) GetQueryDataRequest(ctx AlertExecCtx, now time.Time) (*backend.QueryDataRequest, error) {
 	if !c.IsValid() {
 		return nil, fmt.Errorf("invalid conditions")
 		// TODO: Things probably
@@ -138,6 +137,17 @@ func (c *Condition) execute(ctx AlertExecCtx, now time.Time) (*ExecutionResults,
 			QueryType:     q.QueryType,
 			TimeRange:     q.RelativeTimeRange.toTimeRange(now),
 		})
+	}
+	return queryDataReq, nil
+}
+
+// execute runs the Condition's expressions or queries.
+func (c *Condition) execute(ctx AlertExecCtx, now time.Time) (*ExecutionResults, error) {
+	result := ExecutionResults{}
+
+	queryDataReq, err := c.GetQueryDataRequest(ctx, now)
+	if err != nil {
+		return &result, err
 	}
 
 	exprService := expr.Service{Cfg: &setting.Cfg{ExpressionsEnabled: ctx.ExpressionsEnabled}}
