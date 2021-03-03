@@ -1,5 +1,4 @@
 import { ChangeTracker } from './ChangeTracker';
-import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardModel } from '../state/DashboardModel';
 import { PanelModel } from '../state/PanelModel';
 
@@ -10,12 +9,9 @@ jest.mock('app/core/services/context_srv', () => ({
 }));
 
 describe('ChangeTracker', () => {
-  let location;
-  const timeout = () => {};
   let tracker: ChangeTracker;
   let dash: any;
   let original: any;
-  let scope;
 
   beforeEach(() => {
     dash = new DashboardModel({
@@ -41,18 +37,7 @@ describe('ChangeTracker', () => {
       ],
     });
 
-    scope = {
-      appEvent: jest.fn(),
-      onAppEvent: jest.fn(),
-      $on: jest.fn(),
-    };
-
-    location = {
-      path: jest.fn(),
-    };
-
     tracker = new ChangeTracker();
-
     original = dash.getSaveModelClone();
   });
 
