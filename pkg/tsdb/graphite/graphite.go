@@ -120,8 +120,9 @@ func (e *GraphiteExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSou
 		return plugins.DataResponse{}, err
 	}
 
-	result := plugins.DataResponse{}
-	result.Results = make(map[string]plugins.DataQueryResult)
+	result := plugins.DataResponse{
+		Results: make(map[string]plugins.DataQueryResult),
+	}
 	queryRes := plugins.DataQueryResult{}
 	for _, series := range data {
 		queryRes.Series = append(queryRes.Series, plugins.DataTimeSeries{

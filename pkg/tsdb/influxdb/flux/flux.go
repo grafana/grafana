@@ -99,10 +99,10 @@ func runnerFromDataSource(dsInfo *models.DataSource) (*runner, error) {
 // plugins.DataQueryResult. This is a wrapper so less of existing code needs to be changed. This should
 // be able to be removed in the near future https://github.com/grafana/grafana/pull/25472.
 func backendDataResponseToDataResponse(dr *backend.DataResponse, refID string) plugins.DataQueryResult {
-	qr := plugins.DataQueryResult{RefID: refID}
-
-	qr.Error = dr.Error
-
+	qr := plugins.DataQueryResult{
+		RefID: refID,
+		Error: dr.Error,
+	}
 	if dr.Frames != nil {
 		qr.Dataframes = plugins.NewDecodedDataFrames(dr.Frames)
 	}

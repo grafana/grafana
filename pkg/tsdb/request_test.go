@@ -83,9 +83,9 @@ func (e *fakeExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 	return result, nil
 }
 
-func (e *fakeExecutor) Return(refId string, series plugins.DataTimeSeriesSlice) {
-	e.results[refId] = plugins.DataQueryResult{
-		RefID: refId, Series: series,
+func (e *fakeExecutor) Return(refID string, series plugins.DataTimeSeriesSlice) {
+	e.results[refID] = plugins.DataQueryResult{
+		RefID: refID, Series: series,
 	}
 }
 
