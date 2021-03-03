@@ -29,12 +29,8 @@ func NewExecutor(*models.DataSource) (plugins.DataPlugin, error) {
 }
 
 var (
-	plog log.Logger
-)
-
-func init() {
 	plog = log.New("tsdb.opentsdb")
-}
+)
 
 func (e *OpenTsdbExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 	queryContext plugins.DataQuery) (plugins.DataResponse, error) {
@@ -48,6 +44,7 @@ func (e *OpenTsdbExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSou
 		tsdbQuery.Queries = append(tsdbQuery.Queries, metric)
 	}
 
+	// TODO: Don't use global variable
 	if setting.Env == setting.Dev {
 		plog.Debug("OpenTsdb request", "params", tsdbQuery)
 	}
@@ -101,7 +98,7 @@ func (e *OpenTsdbExecutor) createRequest(dsInfo *models.DataSource, data OpenTsd
 		req.SetBasicAuth(dsInfo.BasicAuthUser, dsInfo.DecryptedBasicAuthPassword())
 	}
 
-	return req, err
+	return req, nil
 }
 
 func (e *OpenTsdbExecutor) parseResponse(query OpenTsdbQuery, res *http.Response) (map[string]plugins.DataQueryResult, error) {
