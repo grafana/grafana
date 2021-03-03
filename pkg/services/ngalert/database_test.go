@@ -68,10 +68,12 @@ func TestCreatingAlertDefinition(t *testing.T) {
 			expectedError:        errEmptyTitleError,
 		},
 	}
+
+	_, store := setupTestEnv(t, baseIntervalSeconds)
+	t.Cleanup(registry.ClearOverrides)
+
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			ng := setupTestEnv(t)
-			t.Cleanup(registry.ClearOverrides)
 
 			q := saveAlertDefinitionCommand{
 				OrgID:     1,
@@ -95,7 +97,7 @@ func TestCreatingAlertDefinition(t *testing.T) {
 			if tc.inputIntervalSeconds != nil {
 				q.IntervalSeconds = tc.inputIntervalSeconds
 			}
-			err := ng.saveAlertDefinition(&q)
+			err := store.saveAlertDefinition(&q)
 			switch {
 			case tc.expectedError != nil:
 				require.Error(t, err)
@@ -111,7 +113,7 @@ func TestCreatingAlertDefinition(t *testing.T) {
 }
 func TestCreatingConflictionAlertDefinition(t *testing.T) {
 	t.Run("Should fail to create alert definition with conflicting org_id, title", func(t *testing.T) {
-		ng := setupTestEnv(t)
+		_, store := setupTestEnv(t, baseIntervalSeconds)
 		t.Cleanup(registry.ClearOverrides)
 
 		q := saveAlertDefinitionCommand{
@@ -134,12 +136,12 @@ func TestCreatingConflictionAlertDefinition(t *testing.T) {
 			},
 		}
 
-		err := ng.saveAlertDefinition(&q)
+		err := store.saveAlertDefinition(&q)
 		require.NoError(t, err)
 
-		err = ng.saveAlertDefinition(&q)
+		err = store.saveAlertDefinition(&q)
 		require.Error(t, err)
-		assert.True(t, ng.SQLStore.Dialect.IsUniqueConstraintViolation(err))
+		assert.True(t, store.SQLStore.Dialect.IsUniqueConstraintViolation(err))
 	})
 }
 
@@ -148,7 +150,7 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 		mockTimeNow()
 		defer resetTimeNow()
 
-		ng := setupTestEnv(t)
+		_, store := setupTestEnv(t, baseIntervalSeconds)
 		t.Cleanup(registry.ClearOverrides)
 
 		q := updateAlertDefinitionCommand{
@@ -172,7 +174,7 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 			},
 		}
 
-		err := ng.updateAlertDefinition(&q)
+		err := store.updateAlertDefinition(&q)
 		require.NoError(t, err)
 	})
 
@@ -180,11 +182,11 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 		mockTimeNow()
 		defer resetTimeNow()
 
-		ng := setupTestEnv(t)
+		_, store := setupTestEnv(t, baseIntervalSeconds)
 		t.Cleanup(registry.ClearOverrides)
 
 		var initialInterval int64 = 120
-		alertDefinition := createTestAlertDefinition(t, ng, initialInterval)
+		alertDefinition := createTestAlertDefinition(t, store, initialInterval)
 		created := alertDefinition.Updated
 
 		var customInterval int64 = 30
@@ -273,7 +275,7 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 					q.OrgID = tc.inputOrgID
 				}
 				q.Title = tc.inputTitle
-				err := ng.updateAlertDefinition(&q)
+				err := store.updateAlertDefinition(&q)
 				switch {
 				case tc.expectedError != nil:
 					require.Error(t, err)
@@ -319,12 +321,12 @@ func TestUpdatingConflictingAlertDefinition(t *testing.T) {
 		mockTimeNow()
 		defer resetTimeNow()
 
-		ng := setupTestEnv(t)
+		_, store := setupTestEnv(t, baseIntervalSeconds)
 		t.Cleanup(registry.ClearOverrides)
 
 		var initialInterval int64 = 120
-		alertDef1 := createTestAlertDefinition(t, ng, initialInterval)
-		alertDef2 := createTestAlertDefinition(t, ng, initialInterval)
+		alertDef1 := createTestAlertDefinition(t, store, initialInterval)
+		alertDef2 := createTestAlertDefinition(t, store, initialInterval)
 
 		q := updateAlertDefinitionCommand{
 			UID:       (*alertDef2).UID,
@@ -346,15 +348,15 @@ func TestUpdatingConflictingAlertDefinition(t *testing.T) {
 			},
 		}
 
-		err := ng.updateAlertDefinition(&q)
+		err := store.updateAlertDefinition(&q)
 		require.Error(t, err)
-		assert.True(t, ng.SQLStore.Dialect.IsUniqueConstraintViolation(err))
+		assert.True(t, store.SQLStore.Dialect.IsUniqueConstraintViolation(err))
 	})
 }
 
 func TestDeletingAlertDefinition(t *testing.T) {
 	t.Run("zero rows affected when deleting unknown alert", func(t *testing.T) {
-		ng := setupTestEnv(t)
+		_, store := setupTestEnv(t, baseIntervalSeconds)
 		t.Cleanup(registry.ClearOverrides)
 
 		q := deleteAlertDefinitionByUIDCommand{
@@ -362,15 +364,15 @@ func TestDeletingAlertDefinition(t *testing.T) {
 			OrgID: 1,
 		}
 
-		err := ng.deleteAlertDefinitionByUID(&q)
+		err := store.deleteAlertDefinitionByUID(&q)
 		require.NoError(t, err)
 	})
 
 	t.Run("deleting successfully existing alert", func(t *testing.T) {
-		ng := setupTestEnv(t)
+		_, store := setupTestEnv(t, baseIntervalSeconds)
 		t.Cleanup(registry.ClearOverrides)
 
-		alertDefinition := createTestAlertDefinition(t, ng, 60)
+		alertDefinition := createTestAlertDefinition(t, store, 60)
 
 		q := deleteAlertDefinitionByUIDCommand{
 			UID:   (*alertDefinition).UID,
@@ -384,21 +386,21 @@ func TestDeletingAlertDefinition(t *testing.T) {
 			State:           InstanceStateFiring,
 			Labels:          InstanceLabels{"test": "testValue"},
 		}
-		err := ng.saveAlertInstance(saveCmd)
+		err := store.saveAlertInstance(saveCmd)
 		require.NoError(t, err)
 		listCommand := &listAlertInstancesQuery{
 			DefinitionOrgID: alertDefinition.OrgID,
 			DefinitionUID:   alertDefinition.UID,
 		}
-		err = ng.listAlertInstances(listCommand)
+		err = store.listAlertInstances(listCommand)
 		require.NoError(t, err)
 		require.Len(t, listCommand.Result, 1)
 
-		err = ng.deleteAlertDefinitionByUID(&q)
+		err = store.deleteAlertDefinitionByUID(&q)
 		require.NoError(t, err)
 
 		// assert that alert instance is deleted
-		err = ng.listAlertInstances(listCommand)
+		err = store.listAlertInstances(listCommand)
 		require.NoError(t, err)
 
 		require.Len(t, listCommand.Result, 0)
