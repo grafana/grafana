@@ -25,7 +25,6 @@ const setup = (propOverrides?: object) => {
     setSearchQuery: mockToolkitActionCreator(setSearchQuery),
     addApiKey: jest.fn(),
     apiKeysCount: 0,
-    includeExpired: false,
   };
 
   Object.assign(props, propOverrides);

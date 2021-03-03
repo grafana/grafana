@@ -13,13 +13,14 @@ import ApiKeysAddedModal from './ApiKeysAddedModal';
 import config from 'app/core/config';
 import appEvents from 'app/core/app_events';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { DeleteButton, EventsWithValidation, InlineFormLabel, LegacyForms, ValidationEvents, Icon } from '@grafana/ui';
-const { Input, Switch } = LegacyForms;
-import { NavModel, dateTimeFormat, rangeUtil } from '@grafana/data';
+import { DeleteButton, EventsWithValidation, Icon, InlineFormLabel, LegacyForms, ValidationEvents } from '@grafana/ui';
+import { dateTimeFormat, NavModel, rangeUtil } from '@grafana/data';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { store } from 'app/store/store';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { setSearchQuery } from './state/reducers';
+
+const { Input, Switch } = LegacyForms;
 
 const timeRangeValidationEvents: ValidationEvents = {
   [EventsWithValidation.onBlur]: [
@@ -50,12 +51,13 @@ export interface Props {
   setSearchQuery: typeof setSearchQuery;
   addApiKey: typeof addApiKey;
   apiKeysCount: number;
-  includeExpired: boolean;
 }
 
 export interface State {
+  includeExpired: boolean;
   isAdding: boolean;
   newApiKey: NewApiKey;
+  hasFetched: boolean;
 }
 
 enum ApiKeyStateProps {
@@ -73,10 +75,10 @@ const initialApiKeyState = {
 const tooltipText =
   'The api key life duration. For example 1d if your key is going to last for one day. All the supported units are: s,m,h,d,w,M,y';
 
-export class ApiKeysPage extends PureComponent<Props, any> {
+export class ApiKeysPage extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { isAdding: false, newApiKey: initialApiKeyState, includeExpired: false };
+    this.state = { isAdding: false, newApiKey: initialApiKeyState, includeExpired: false, hasFetched: false };
   }
 
   componentDidMount() {
@@ -88,7 +90,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
   }
 
   onDeleteApiKey(key: ApiKey) {
-    this.props.deleteApiKey(key.id, this.props.includeExpired);
+    this.props.deleteApiKey(key.id!, this.state.includeExpired);
   }
 
   onSearchQueryChange = (value: string) => {
@@ -115,10 +117,13 @@ export class ApiKeysPage extends PureComponent<Props, any> {
       });
     };
 
-    // make sure that secondsToLive is number or null
-    const secondsToLive = this.state.newApiKey['secondsToLive'];
-    this.state.newApiKey['secondsToLive'] = secondsToLive ? rangeUtil.intervalToSeconds(secondsToLive) : null;
-    this.props.addApiKey(this.state.newApiKey, openModal, this.props.includeExpired);
+    const secondsToLive = this.state.newApiKey.secondsToLive;
+    const secondsToLiveAsNumber = secondsToLive ? rangeUtil.intervalToSeconds(secondsToLive) : null;
+    const apiKey: ApiKey = {
+      ...this.state.newApiKey,
+      secondsToLive: secondsToLiveAsNumber,
+    };
+    this.props.addApiKey(apiKey, openModal, this.state.includeExpired);
     this.setState((prevState: State) => {
       return {
         ...prevState,
@@ -232,8 +237,8 @@ export class ApiKeysPage extends PureComponent<Props, any> {
   }
 
   renderApiKeyList() {
-    const { isAdding } = this.state;
-    const { apiKeys, searchQuery, includeExpired } = this.props;
+    const { isAdding, includeExpired } = this.state;
+    const { apiKeys, searchQuery } = this.props;
 
     return (
       <>
@@ -261,8 +266,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
           label="Show expired"
           checked={includeExpired}
           onChange={(event) => {
-            // @ts-ignore
-            this.onIncludeExpiredChange(event.target.checked);
+            this.onIncludeExpiredChange(event.currentTarget.checked);
           }}
         />
         <table className="filter-table">
@@ -313,7 +317,6 @@ function mapStateToProps(state: any) {
     navModel: getNavModel(state.navIndex, 'apikeys'),
     apiKeys: getApiKeys(state.apiKeys),
     searchQuery: state.apiKeys.searchQuery,
-    includeExpired: state.includeExpired,
     apiKeysCount: getApiKeysCount(state.apiKeys),
     hasFetched: state.apiKeys.hasFetched,
   };
