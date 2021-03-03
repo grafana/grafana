@@ -66,6 +66,7 @@ function dashboardPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
           notifyApp: mockToolkitActionCreator(notifyApp),
           cleanUpDashboardAndVariables: ctx.cleanUpDashboardAndVariablesMock,
           cancelVariables: jest.fn(),
+          templateVarsChangedInUrl: jest.fn(),
           dashboard: null,
         };
 

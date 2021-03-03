@@ -229,9 +229,6 @@ describe('shared actions', () => {
           toVariablePayload(stats, { option: { text: ALL_VARIABLE_TEXT, value: ALL_VARIABLE_VALUE, selected: false } })
         ),
         variableStateCompleted(toVariablePayload(stats)),
-        setCurrentVariableValue(
-          toVariablePayload(stats, { option: { text: ['response'], value: ['response'], selected: false } })
-        ),
         variableStateFetching(toVariablePayload(substats)),
         updateVariableOptions(
           toVariablePayload(substats, { results: [{ text: '200' }, { text: '500' }], templatedRegex: '' })
@@ -241,12 +238,7 @@ describe('shared actions', () => {
             option: { text: [ALL_VARIABLE_TEXT], value: [ALL_VARIABLE_VALUE], selected: true },
           })
         ),
-        variableStateCompleted(toVariablePayload(substats)),
-        setCurrentVariableValue(
-          toVariablePayload(substats, {
-            option: { text: [ALL_VARIABLE_TEXT], value: [ALL_VARIABLE_VALUE], selected: false },
-          })
-        )
+        variableStateCompleted(toVariablePayload(substats))
       );
     });
   });

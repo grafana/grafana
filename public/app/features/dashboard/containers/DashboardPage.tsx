@@ -1,33 +1,29 @@
-// Libraries
 import $ from 'jquery';
 import React, { MouseEvent, PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
+import { getLegacyAngularInjector, locationService } from '@grafana/runtime';
+import { selectors } from '@grafana/e2e-selectors';
+import { Alert, Button, CustomScrollbar, HorizontalGroup, Spinner, VerticalGroup } from '@grafana/ui';
 
-// Services & Utils
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { Branding } from 'app/core/components/Branding/Branding';
-// Components
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { DashNav } from '../components/DashNav';
 import { DashboardSettings } from '../components/DashboardSettings';
 import { PanelEditor } from '../components/PanelEditor/PanelEditor';
-import { Alert, Button, CustomScrollbar, HorizontalGroup, Spinner, VerticalGroup } from '@grafana/ui';
-// Redux
 import { initDashboard } from '../state/initDashboard';
 import { notifyApp } from 'app/core/actions';
-// Types
 import { AppNotificationSeverity, DashboardInitError, DashboardInitPhase, KioskMode, StoreState } from 'app/types';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { PanelInspector } from '../components/Inspector/PanelInspector';
 import { SubMenu } from '../components/SubMenu/SubMenu';
 import { cleanUpDashboardAndVariables } from '../state/actions';
-import { cancelVariables } from '../../variables/state/actions';
+import { cancelVariables, templateVarsChangedInUrl } from '../../variables/state/actions';
+import { findTemplateVarChanges } from '../../variables/utils';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
-import { getLegacyAngularInjector, locationService } from '@grafana/runtime';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { selectors } from '@grafana/e2e-selectors';
 import { getTimeSrv } from '../services/TimeSrv';
 
 export interface DashboardPageRouteParams {
@@ -57,6 +53,7 @@ export interface Props extends GrafanaRouteComponentProps<DashboardPageRoutePara
   notifyApp: typeof notifyApp;
   isPanelEditorOpen?: boolean;
   cancelVariables: typeof cancelVariables;
+  templateVarsChangedInUrl: typeof templateVarsChangedInUrl;
 }
 
 export interface State {
@@ -115,7 +112,7 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props) {
-    const { dashboard, match, queryParams } = this.props;
+    const { dashboard, match, queryParams, templateVarsChangedInUrl } = this.props;
     const { editPanel, viewPanel } = this.state;
 
     if (!dashboard) {
@@ -134,6 +131,12 @@ export class DashboardPage extends PureComponent<Props, State> {
 
     if (prevProps.location.search !== this.props.location.search) {
       getTimeSrv().updateTimeRangeFromUrl();
+
+      const templateVarChanges = findTemplateVarChanges(this.props.queryParams, prevProps.queryParams);
+      if (templateVarChanges) {
+        console.log(templateVarChanges);
+        templateVarsChangedInUrl(templateVarChanges);
+      }
     }
 
     const urlEditPanelId = queryParams.editPanel;
@@ -374,6 +377,7 @@ const mapDispatchToProps = {
   cleanUpDashboardAndVariables,
   notifyApp,
   cancelVariables,
+  templateVarsChangedInUrl,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DashboardPage));

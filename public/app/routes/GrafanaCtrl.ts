@@ -26,7 +26,6 @@ import { CoreEvents, AppEventEmitter, AppEventConsumer } from 'app/types';
 import { setLinkSrv, LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import { UtilSrv } from 'app/core/services/util_srv';
 import { ContextSrv } from 'app/core/services/context_srv';
-import { BridgeSrv } from 'app/core/services/bridge_srv';
 import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
 import { DashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { ITimeoutService, IRootScopeService, IAngularEvent, auto } from 'angular';
@@ -43,7 +42,6 @@ export class GrafanaCtrl {
     utilSrv: UtilSrv,
     $rootScope: GrafanaRootScope,
     contextSrv: ContextSrv,
-    bridgeSrv: BridgeSrv,
     timeSrv: TimeSrv,
     linkSrv: LinkSrv,
     datasourceSrv: DatasourceSrv,
@@ -85,7 +83,6 @@ export class GrafanaCtrl {
 
       profiler.init(config, $rootScope);
       utilSrv.init();
-      bridgeSrv.init();
     };
 
     $rootScope.colors = colors;
