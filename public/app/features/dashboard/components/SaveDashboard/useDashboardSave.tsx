@@ -1,9 +1,8 @@
 import { useEffect } from 'react';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 import { AppEvents, locationUtil } from '@grafana/data';
-import { useSelector } from 'react-redux';
 import { SaveDashboardOptions } from './types';
-import { CoreEvents, StoreState } from 'app/types';
+import { CoreEvents } from 'app/types';
 import appEvents from 'app/core/app_events';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { saveDashboard as saveDashboardApiCall } from 'app/features/manage-dashboards/state/actions';
@@ -19,7 +18,6 @@ const saveDashboard = (saveModel: any, options: SaveDashboardOptions, dashboard:
 };
 
 export const useDashboardSave = (dashboard: DashboardModel) => {
-  const location = useSelector((state: StoreState) => state.location);
   const [state, onDashboardSave] = useAsyncFn(
     async (clone: any, options: SaveDashboardOptions, dashboard: DashboardModel) =>
       await saveDashboard(clone, options, dashboard),
@@ -29,16 +27,16 @@ export const useDashboardSave = (dashboard: DashboardModel) => {
   useEffect(() => {
     if (state.value) {
       dashboard.version = state.value.version;
-
       // important that these happen before location redirect below
       appEvents.emit(CoreEvents.dashboardSaved, dashboard);
       appEvents.emit(AppEvents.alertSuccess, ['Dashboard saved']);
 
+      // Using global locationService because save modals are rendered as a separate React tree
+      const currentPath = locationService.getLocation().pathname;
       const newUrl = locationUtil.stripBaseFromUrl(state.value.url);
-      const currentPath = location.path;
 
       if (newUrl !== currentPath) {
-        locationService.push(newUrl);
+        locationService.replace(newUrl);
       }
     }
   }, [state]);
