@@ -173,6 +173,9 @@ export function TraceView(props: Props) {
 function transformDataFrames(frames: DataFrame[]): Trace | null {
   // At this point we only show single trace.
   const frame = frames[0];
+  if (!frame) {
+    return null;
+  }
   let data: TraceResponse =
     frame.fields.length === 1
       ? // For backward compatibility when we sent whole json response in a single field/value
