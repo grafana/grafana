@@ -19,9 +19,9 @@ type scheduleService interface {
 	Unpause() error
 
 	// the following are used by tests only used for tests
-	EvalApplied(alertDefinitionKey, time.Time)
-	OverrideCfg(cfg schedulerCfg)
-	StopApplied(alertDefinitionKey)
+	evalApplied(alertDefinitionKey, time.Time)
+	stopApplied(alertDefinitionKey)
+	overrideCfg(cfg schedulerCfg)
 }
 
 func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key alertDefinitionKey, evalCh <-chan *evalContext, stopCh <-chan struct{}) error {
@@ -80,7 +80,7 @@ func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key alertDefi
 				evalRunning = true
 				defer func() {
 					evalRunning = false
-					sch.EvalApplied(key, ctx.now)
+					sch.evalApplied(key, ctx.now)
 				}()
 
 				for attempt = 0; attempt < sch.maxAttempts; attempt++ {
@@ -91,7 +91,7 @@ func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key alertDefi
 				}
 			}()
 		case <-stopCh:
-			sch.StopApplied(key)
+			sch.stopApplied(key)
 			sch.log.Debug("stopping alert definition routine", "key", key)
 			// interrupt evaluation if it's running
 			return nil
@@ -117,12 +117,12 @@ type schedule struct {
 	// evalApplied is only used for tests: test code can set it to non-nil
 	// function, and then it'll be called from the event loop whenever the
 	// message from evalApplied is handled.
-	evalApplied func(alertDefinitionKey, time.Time)
+	evalAppliedFunc func(alertDefinitionKey, time.Time)
 
 	// stopApplied is only used for tests: test code can set it to non-nil
 	// function, and then it'll be called from the event loop whenever the
 	// message from stopApplied is handled.
-	stopApplied func(alertDefinitionKey)
+	stopAppliedFunc func(alertDefinitionKey)
 
 	log log.Logger
 
@@ -132,55 +132,55 @@ type schedule struct {
 }
 
 type schedulerCfg struct {
-	c            clock.Clock
-	baseInterval time.Duration
-	logger       log.Logger
-	evalApplied  func(alertDefinitionKey, time.Time)
-	stopApplied  func(alertDefinitionKey)
-	evaluator    eval.Evaluator
-	store        store
+	c               clock.Clock
+	baseInterval    time.Duration
+	logger          log.Logger
+	evalAppliedFunc func(alertDefinitionKey, time.Time)
+	stopAppliedFunc func(alertDefinitionKey)
+	evaluator       eval.Evaluator
+	store           store
 }
 
 // newScheduler returns a new schedule.
 func newScheduler(cfg schedulerCfg) *schedule {
 	ticker := alerting.NewTicker(cfg.c.Now(), time.Second*0, cfg.c, int64(cfg.baseInterval.Seconds()))
 	sch := schedule{
-		registry:     alertDefinitionRegistry{alertDefinitionInfo: make(map[alertDefinitionKey]alertDefinitionInfo)},
-		maxAttempts:  maxAttempts,
-		clock:        cfg.c,
-		baseInterval: cfg.baseInterval,
-		log:          cfg.logger,
-		heartbeat:    ticker,
-		evalApplied:  cfg.evalApplied,
-		stopApplied:  cfg.stopApplied,
-		evaluator:    cfg.evaluator,
-		store:        cfg.store,
+		registry:        alertDefinitionRegistry{alertDefinitionInfo: make(map[alertDefinitionKey]alertDefinitionInfo)},
+		maxAttempts:     maxAttempts,
+		clock:           cfg.c,
+		baseInterval:    cfg.baseInterval,
+		log:             cfg.logger,
+		heartbeat:       ticker,
+		evalAppliedFunc: cfg.evalAppliedFunc,
+		stopAppliedFunc: cfg.stopAppliedFunc,
+		evaluator:       cfg.evaluator,
+		store:           cfg.store,
 	}
 	return &sch
 }
 
-func (sch *schedule) OverrideCfg(cfg schedulerCfg) {
+func (sch *schedule) overrideCfg(cfg schedulerCfg) {
 	sch.clock = cfg.c
 	sch.baseInterval = cfg.baseInterval
 	sch.heartbeat = alerting.NewTicker(cfg.c.Now(), time.Second*0, cfg.c, int64(cfg.baseInterval.Seconds()))
-	sch.evalApplied = cfg.evalApplied
-	sch.stopApplied = cfg.stopApplied
+	sch.evalAppliedFunc = cfg.evalAppliedFunc
+	sch.stopAppliedFunc = cfg.stopAppliedFunc
 }
 
-func (sch *schedule) EvalApplied(alertDefKey alertDefinitionKey, now time.Time) {
-	if sch.evalApplied == nil {
+func (sch *schedule) evalApplied(alertDefKey alertDefinitionKey, now time.Time) {
+	if sch.evalAppliedFunc == nil {
 		return
 	}
 
-	sch.evalApplied(alertDefKey, now)
+	sch.evalAppliedFunc(alertDefKey, now)
 }
 
-func (sch *schedule) StopApplied(alertDefKey alertDefinitionKey) {
-	if sch.stopApplied == nil {
+func (sch *schedule) stopApplied(alertDefKey alertDefinitionKey) {
+	if sch.stopAppliedFunc == nil {
 		return
 	}
 
-	sch.stopApplied(alertDefKey)
+	sch.stopAppliedFunc(alertDefKey)
 }
 
 func (sch *schedule) Pause() error {

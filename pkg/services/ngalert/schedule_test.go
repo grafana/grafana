@@ -40,14 +40,14 @@ func TestAlertingTicker(t *testing.T) {
 	schefCfg := schedulerCfg{
 		c:            mockedClock,
 		baseInterval: baseInterval,
-		evalApplied: func(alertDefKey alertDefinitionKey, now time.Time) {
+		evalAppliedFunc: func(alertDefKey alertDefinitionKey, now time.Time) {
 			evalAppliedCh <- evalAppliedInfo{alertDefKey: alertDefKey, now: now}
 		},
-		stopApplied: func(alertDefKey alertDefinitionKey) {
+		stopAppliedFunc: func(alertDefKey alertDefinitionKey) {
 			stopAppliedCh <- alertDefKey
 		},
 	}
-	ng.schedule.OverrideCfg(schefCfg)
+	ng.schedule.overrideCfg(schefCfg)
 
 	ctx := context.Background()
 	go func() {
