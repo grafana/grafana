@@ -1338,7 +1338,7 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 		}
 	}
 
-	cfg.ReadTimeout = server.Key("read_timeout").MustDuration(time.Minute * 5)
+	cfg.ReadTimeout = server.Key("read_timeout").MustDuration(0)
 
 	return nil
 }
