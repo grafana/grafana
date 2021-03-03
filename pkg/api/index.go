@@ -117,13 +117,6 @@ func getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error) {
 			}
 		}
 
-		if len(appLink.Children) > 0 && c.OrgRole == models.ROLE_ADMIN {
-			appLink.Children = append(appLink.Children, &dtos.NavLink{Divider: true})
-			appLink.Children = append(appLink.Children, &dtos.NavLink{
-				Text: "Plugin Config", Icon: "cog", Url: setting.AppSubUrl + "/plugins/" + plugin.Id + "/",
-			})
-		}
-
 		if len(appLink.Children) > 0 {
 			appLinks = append(appLinks, appLink)
 		}
@@ -193,16 +186,6 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 			Icon:       "compass",
 			SortWeight: dtos.WeightExplore,
 			Url:        setting.AppSubUrl + "/explore",
-		})
-	}
-
-	if hs.Cfg.IsNgAlertEnabled() {
-		navTree = append(navTree, &dtos.NavLink{
-			Text:     "NgAlerting",
-			Id:       "ngalerting",
-			SubTitle: "Next generation alerting",
-			Icon:     "bell",
-			Url:      setting.AppSubUrl + "/ngalerting",
 		})
 	}
 
@@ -292,7 +275,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 
 	if len(configNodes) > 0 {
 		navTree = append(navTree, &dtos.NavLink{
-			Id:         "cfg",
+			Id:         dtos.NavIDCfg,
 			Text:       "Configuration",
 			SubTitle:   "Organization: " + c.OrgName,
 			Icon:       "cog",
@@ -418,8 +401,8 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		GoogleTagManagerId:      setting.GoogleTagManagerId,
 		BuildVersion:            setting.BuildVersion,
 		BuildCommit:             setting.BuildCommit,
-		NewGrafanaVersion:       plugins.GrafanaLatestVersion,
-		NewGrafanaVersionExists: plugins.GrafanaHasUpdate,
+		NewGrafanaVersion:       hs.PluginManager.GrafanaLatestVersion,
+		NewGrafanaVersionExists: hs.PluginManager.GrafanaHasUpdate,
 		AppName:                 setting.ApplicationName,
 		AppNameBodyClass:        getAppNameBodyClass(hs.License.HasValidLicense()),
 		FavIcon:                 "public/img/fav32.png",
@@ -428,6 +411,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		NavTree:                 navTree,
 		Sentry:                  &hs.Cfg.Sentry,
 		Nonce:                   c.RequestNonce,
+		ContentDeliveryURL:      hs.Cfg.GetContentDeliveryURL(hs.License.ContentDeliveryPrefix()),
 	}
 
 	if setting.DisableGravatar {

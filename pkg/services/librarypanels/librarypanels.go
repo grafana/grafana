@@ -45,12 +45,12 @@ func (lps *LibraryPanelService) IsEnabled() bool {
 
 // LoadLibraryPanelsForDashboard loops through all panels in dashboard JSON and replaces any library panel JSON
 // with JSON stored for library panel in db.
-func (lps *LibraryPanelService) LoadLibraryPanelsForDashboard(dash *models.Dashboard) error {
+func (lps *LibraryPanelService) LoadLibraryPanelsForDashboard(c *models.ReqContext, dash *models.Dashboard) error {
 	if !lps.IsEnabled() {
 		return nil
 	}
 
-	libraryPanels, err := lps.getLibraryPanelsForDashboardID(dash.Id)
+	libraryPanels, err := lps.getLibraryPanelsForDashboardID(c, dash.Id)
 	if err != nil {
 		return err
 	}
@@ -102,8 +102,25 @@ func (lps *LibraryPanelService) LoadLibraryPanelsForDashboard(dash *models.Dashb
 		elem.Set("gridPos", panelAsJSON.Get("gridPos").MustMap())
 		elem.Set("id", panelAsJSON.Get("id").MustInt64())
 		elem.Set("libraryPanel", map[string]interface{}{
-			"uid":  libraryPanelInDB.UID,
-			"name": libraryPanelInDB.Name,
+			"uid":     libraryPanelInDB.UID,
+			"name":    libraryPanelInDB.Name,
+			"version": libraryPanelInDB.Version,
+			"meta": map[string]interface{}{
+				"canEdit":             libraryPanelInDB.Meta.CanEdit,
+				"connectedDashboards": libraryPanelInDB.Meta.ConnectedDashboards,
+				"created":             libraryPanelInDB.Meta.Created,
+				"updated":             libraryPanelInDB.Meta.Updated,
+				"createdBy": map[string]interface{}{
+					"id":        libraryPanelInDB.Meta.CreatedBy.ID,
+					"name":      libraryPanelInDB.Meta.CreatedBy.Name,
+					"avatarUrl": libraryPanelInDB.Meta.CreatedBy.AvatarUrl,
+				},
+				"updatedBy": map[string]interface{}{
+					"id":        libraryPanelInDB.Meta.UpdatedBy.ID,
+					"name":      libraryPanelInDB.Meta.UpdatedBy.Name,
+					"avatarUrl": libraryPanelInDB.Meta.UpdatedBy.AvatarUrl,
+				},
+			},
 		})
 	}
 
@@ -178,7 +195,7 @@ func (lps *LibraryPanelService) ConnectLibraryPanelsForDashboard(c *models.ReqCo
 }
 
 // DisconnectLibraryPanelsForDashboard loops through all panels in dashboard JSON and disconnects any library panels from the dashboard.
-func (lps *LibraryPanelService) DisconnectLibraryPanelsForDashboard(dash *models.Dashboard) error {
+func (lps *LibraryPanelService) DisconnectLibraryPanelsForDashboard(c *models.ReqContext, dash *models.Dashboard) error {
 	if !lps.IsEnabled() {
 		return nil
 	}
@@ -200,7 +217,14 @@ func (lps *LibraryPanelService) DisconnectLibraryPanelsForDashboard(dash *models
 		panelCount++
 	}
 
-	return lps.disconnectLibraryPanelsForDashboard(dash.Id, panelCount)
+	return lps.disconnectLibraryPanelsForDashboard(c, dash.Id, panelCount)
+}
+
+func (lps *LibraryPanelService) DeleteLibraryPanelsInFolder(c *models.ReqContext, folderUID string) error {
+	if !lps.IsEnabled() {
+		return nil
+	}
+	return lps.deleteLibraryPanelsInFolder(c, folderUID)
 }
 
 // AddMigration defines database migrations.
@@ -223,6 +247,7 @@ func (lps *LibraryPanelService) AddMigration(mg *migrator.Migrator) {
 			{Name: "created_by", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
 			{Name: "updated_by", Type: migrator.DB_BigInt, Nullable: false},
+			{Name: "version", Type: migrator.DB_BigInt, Nullable: false},
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"org_id", "folder_id", "name"}, Type: migrator.UniqueIndex},

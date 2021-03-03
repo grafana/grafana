@@ -10,7 +10,6 @@ import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { profiler } from 'app/core/profiler';
 import config from 'app/core/config';
-import { updateLocation } from 'app/core/actions';
 // Types
 import { DashboardModel, PanelModel } from '../state';
 import { PANEL_BORDER } from 'app/core/constants';
@@ -40,7 +39,6 @@ export interface Props {
   isInView: boolean;
   width: number;
   height: number;
-  updateLocation: typeof updateLocation;
 }
 
 export interface State {
@@ -138,8 +136,12 @@ export class PanelChrome extends Component<Props, State> {
   // So in this context we can only do a single call to setState
   onDataUpdate(data: PanelData) {
     if (!this.props.isInView) {
-      // Ignore events when not visible.
-      // The call will be repeated when the panel comes into view
+      if (data.state !== LoadingState.Streaming) {
+        // Ignore events when not visible.
+        // The call will be repeated when the panel comes into view
+        this.setState({ refreshWhenInView: true });
+      }
+
       return;
     }
 
@@ -323,7 +325,7 @@ export class PanelChrome extends Component<Props, State> {
   }
 
   render() {
-    const { dashboard, panel, isViewing, isEditing, width, height, updateLocation } = this.props;
+    const { dashboard, panel, isViewing, isEditing, width, height } = this.props;
     const { errorMessage, data } = this.state;
     const { transparent } = panel;
 
@@ -346,7 +348,6 @@ export class PanelChrome extends Component<Props, State> {
           isEditing={isEditing}
           isViewing={isViewing}
           data={data}
-          updateLocation={updateLocation}
         />
         <ErrorBoundary>
           {({ error }) => {

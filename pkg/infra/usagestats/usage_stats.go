@@ -103,6 +103,7 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 	metrics["stats.ds.other.count"] = dsOtherCount
 
 	metrics["stats.packaging."+setting.Packaging+".count"] = 1
+	metrics["stats.distributor."+setting.ReportingDistributor+".count"] = 1
 
 	// Alerting stats
 	alertingUsageStats, err := uss.AlertingUsageStats.QueryUsageStats()
@@ -264,6 +265,7 @@ func (uss *UsageStatsService) updateTotalStats() {
 	}
 
 	metrics.MStatTotalDashboards.Set(float64(statsQuery.Result.Dashboards))
+	metrics.MStatTotalFolders.Set(float64(statsQuery.Result.Folders))
 	metrics.MStatTotalUsers.Set(float64(statsQuery.Result.Users))
 	metrics.MStatActiveUsers.Set(float64(statsQuery.Result.ActiveUsers))
 	metrics.MStatTotalPlaylists.Set(float64(statsQuery.Result.Playlists))

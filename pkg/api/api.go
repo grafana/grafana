@@ -7,6 +7,7 @@ import (
 	"github.com/go-macaron/binding"
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/frontendlogging"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
@@ -18,6 +19,7 @@ var plog = log.New("api")
 // registerRoutes registers all API HTTP routes.
 func (hs *HTTPServer) registerRoutes() {
 	reqSignedIn := middleware.ReqSignedIn
+	reqSignedInNoAnonymous := middleware.ReqSignedInNoAnonymous
 	reqGrafanaAdmin := middleware.ReqGrafanaAdmin
 	reqEditorRole := middleware.ReqEditorRole
 	reqOrgAdmin := middleware.ReqOrgAdmin
@@ -40,10 +42,10 @@ func (hs *HTTPServer) registerRoutes() {
 
 	// authed views
 	r.Get("/", reqSignedIn, hs.Index)
-	r.Get("/profile/", reqSignedIn, hs.Index)
-	r.Get("/profile/password", reqSignedIn, hs.Index)
+	r.Get("/profile/", reqSignedInNoAnonymous, hs.Index)
+	r.Get("/profile/password", reqSignedInNoAnonymous, hs.Index)
 	r.Get("/.well-known/change-password", redirectToChangePassword)
-	r.Get("/profile/switch-org/:id", reqSignedIn, hs.ChangeActiveOrgAndRedirectToHome)
+	r.Get("/profile/switch-org/:id", reqSignedInNoAnonymous, hs.ChangeActiveOrgAndRedirectToHome)
 	r.Get("/org/", reqOrgAdmin, hs.Index)
 	r.Get("/org/new", reqGrafanaAdmin, hs.Index)
 	r.Get("/datasources/", reqOrgAdmin, hs.Index)
@@ -146,7 +148,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 			userRoute.Get("/auth-tokens", routing.Wrap(hs.GetUserAuthTokens))
 			userRoute.Post("/revoke-auth-token", bind(models.RevokeAuthTokenCmd{}), routing.Wrap(hs.RevokeUserAuthToken))
-		})
+		}, reqSignedInNoAnonymous)
 
 		// users (admin permission required)
 		apiRoute.Group("/users", func(usersRoute routing.RouteRegister) {
@@ -292,7 +294,7 @@ func (hs *HTTPServer) registerRoutes() {
 			folderRoute.Group("/:uid", func(folderUidRoute routing.RouteRegister) {
 				folderUidRoute.Get("/", routing.Wrap(GetFolderByUID))
 				folderUidRoute.Put("/", bind(models.UpdateFolderCommand{}), routing.Wrap(UpdateFolder))
-				folderUidRoute.Delete("/", routing.Wrap(DeleteFolder))
+				folderUidRoute.Delete("/", routing.Wrap(hs.DeleteFolder))
 
 				folderUidRoute.Group("/permissions", func(folderPermissionRoute routing.RouteRegister) {
 					folderPermissionRoute.Get("/", routing.Wrap(hs.GetFolderPermissionList))
@@ -444,5 +446,6 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Delete("/api/snapshots/:key", reqEditorRole, routing.Wrap(DeleteDashboardSnapshot))
 
 	// Frontend logs
-	r.Post("/log", middleware.RateLimit(hs.Cfg.Sentry.EndpointRPS, hs.Cfg.Sentry.EndpointBurst, time.Now), bind(frontendSentryEvent{}), routing.Wrap(hs.logFrontendMessage))
+	sourceMapStore := frontendlogging.NewSourceMapStore(hs.Cfg, frontendlogging.ReadSourceMapFromFS)
+	r.Post("/log", middleware.RateLimit(hs.Cfg.Sentry.EndpointRPS, hs.Cfg.Sentry.EndpointBurst, time.Now), bind(frontendlogging.FrontendSentryEvent{}), routing.Wrap(NewFrontendLogMessageHandler(sourceMapStore)))
 }

@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useCallback } from 'react';
+import React, { ChangeEvent, FormEvent, FunctionComponent, useCallback } from 'react';
 import { InlineFieldRow, VerticalGroup } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -16,22 +16,22 @@ export interface SelectionOptionsEditorProps<Model extends VariableWithMultiSupp
 
 export const SelectionOptionsEditor: FunctionComponent<SelectionOptionsEditorProps> = (props) => {
   const onMultiChanged = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
+    (event: ChangeEvent<HTMLInputElement>) => {
       props.onMultiChanged(toVariableIdentifier(props.variable), event.target.checked);
     },
-    [props.onMultiChanged]
+    [props.onMultiChanged, props.variable]
   );
 
   const onIncludeAllChanged = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
+    (event: ChangeEvent<HTMLInputElement>) => {
       props.onPropChange({ propName: 'includeAll', propValue: event.target.checked });
     },
     [props.onPropChange]
   );
 
   const onAllValueChanged = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      props.onPropChange({ propName: 'allValue', propValue: event.target.value });
+    (event: FormEvent<HTMLInputElement>) => {
+      props.onPropChange({ propName: 'allValue', propValue: event.currentTarget.value });
     },
     [props.onPropChange]
   );

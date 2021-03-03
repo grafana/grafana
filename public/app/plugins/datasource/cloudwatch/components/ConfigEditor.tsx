@@ -3,13 +3,13 @@ import { InlineFormLabel, LegacyForms, Button } from '@grafana/ui';
 const { Select, Input } = LegacyForms;
 import {
   AppEvents,
+  SelectableValue,
   DataSourcePluginOptionsEditorProps,
   onUpdateDatasourceJsonDataOptionSelect,
   onUpdateDatasourceResetOption,
   onUpdateDatasourceJsonDataOption,
   onUpdateDatasourceSecureJsonDataOption,
 } from '@grafana/data';
-import { SelectableValue } from '@grafana/data';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchJsonData, CloudWatchSecureJsonData } from '../types';
@@ -100,6 +100,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
             'cn-northwest-1',
             'eu-central-1',
             'eu-north-1',
+            'eu-south-1',
             'eu-west-1',
             'eu-west-2',
             'eu-west-3',
@@ -312,6 +313,21 @@ export class ConfigEditor extends PureComponent<Props, State> {
                 value={options.jsonData.customMetricsNamespaces || ''}
                 onChange={onUpdateDatasourceJsonDataOption(this.props, 'customMetricsNamespaces')}
               />
+            </div>
+          </div>
+          <div className="gf-form-inline">
+            <div className="gf-form">
+              <InlineFormLabel className="width-14" tooltip="Optionally, specify a custom endpoint for the service.">
+                Endpoint
+              </InlineFormLabel>
+              <div className="width-30">
+                <Input
+                  className="width-30"
+                  placeholder={'https://{service}.{region}.amazonaws.com'}
+                  value={options.jsonData.endpoint || ''}
+                  onChange={onUpdateDatasourceJsonDataOption(this.props, 'endpoint')}
+                />
+              </div>
             </div>
           </div>
         </div>

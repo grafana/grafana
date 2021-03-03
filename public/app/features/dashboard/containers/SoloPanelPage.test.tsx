@@ -5,7 +5,7 @@ import { Props as DashboardPanelProps } from '../dashgrid/DashboardPanel';
 import { DashboardModel } from '../state';
 import { DashboardRouteInfo } from 'app/types';
 
-jest.mock('app/features/dashboard/components/DashboardSettings/SettingsCtrl', () => ({}));
+jest.mock('app/features/dashboard/components/DashboardSettings/GeneralSettings', () => ({}));
 jest.mock('app/features/dashboard/dashgrid/DashboardPanel', () => {
   class DashboardPanel extends React.Component<DashboardPanelProps> {
     render() {

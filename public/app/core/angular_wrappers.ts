@@ -25,7 +25,6 @@ import { HelpModal } from './components/help/HelpModal';
 import { Footer } from './components/Footer/Footer';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { SearchField, SearchResults, SearchResultsFilter, SearchWrapper } from '../features/search';
-import { TimePickerSettings } from 'app/features/dashboard/components/DashboardSettings/TimePickerSettings';
 
 const { SecretFormField } = LegacyForms;
 
@@ -162,6 +161,8 @@ export function registerAngularDirectives() {
 
   react2AngularDirective('lokiAnnotationsQueryEditor', LokiAnnotationsQueryEditor, [
     'expr',
+    'maxLines',
+    'instant',
     'onChange',
     ['datasource', { watchDepth: 'reference' }],
   ]);
@@ -184,16 +185,5 @@ export function registerAngularDirectives() {
     ['exitFolderCreation', { watchDepth: 'reference', wrapApply: true }],
     ['onLoad', { watchDepth: 'reference', wrapApply: true }],
     ['onChange', { watchDepth: 'reference', wrapApply: true }],
-  ]);
-  react2AngularDirective('timePickerSettings', TimePickerSettings, [
-    'renderCount',
-    'refreshIntervals',
-    'timePickerHidden',
-    'nowDelay',
-    'timezone',
-    ['onTimeZoneChange', { watchDepth: 'reference', wrapApply: true }],
-    ['onRefreshIntervalChange', { watchDepth: 'reference', wrapApply: true }],
-    ['onNowDelayChange', { watchDepth: 'reference', wrapApply: true }],
-    ['onHideTimePickerChange', { watchDepth: 'reference', wrapApply: true }],
   ]);
 }

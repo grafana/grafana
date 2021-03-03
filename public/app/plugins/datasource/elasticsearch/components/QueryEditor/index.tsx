@@ -46,7 +46,12 @@ const QueryEditorForm: FunctionComponent<Props> = ({ value }) => {
           />
         </InlineField>
         <InlineField label="Alias" labelWidth={15}>
-          <Input placeholder="Alias Pattern" onBlur={(e) => dispatch(changeAliasPattern(e.currentTarget.value))} />
+          <Input
+            id={`ES-query-${value.refId}_alias`}
+            placeholder="Alias Pattern"
+            onBlur={(e) => dispatch(changeAliasPattern(e.currentTarget.value))}
+            defaultValue={value.alias}
+          />
         </InlineField>
       </InlineFieldRow>
 

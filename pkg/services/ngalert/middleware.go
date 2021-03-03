@@ -5,7 +5,7 @@ import (
 )
 
 func (api *apiImpl) validateOrgAlertDefinition(c *models.ReqContext) {
-	uid := c.Params(":alertDefinitionUID")
+	uid := c.ParamsEscape(":alertDefinitionUID")
 
 	if uid == "" {
 		c.JsonApiErr(403, "Permission denied", nil)

@@ -42,14 +42,14 @@ func TestCreatingAlertDefinition(t *testing.T) {
 		expectedUpdated time.Time
 	}{
 		{
-			desc:                 "should create successfuly an alert definition with default interval",
+			desc:                 "should create successfully an alert definition with default interval",
 			inputIntervalSeconds: nil,
 			inputTitle:           "a name",
 			expectedInterval:     defaultIntervalSeconds,
 			expectedUpdated:      time.Unix(0, 0).UTC(),
 		},
 		{
-			desc:                 "should create successfuly an alert definition with custom interval",
+			desc:                 "should create successfully an alert definition with custom interval",
 			inputIntervalSeconds: &customIntervalSeconds,
 			inputTitle:           "another name",
 			expectedInterval:     customIntervalSeconds,
@@ -76,22 +76,20 @@ func TestCreatingAlertDefinition(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 
 			q := saveAlertDefinitionCommand{
-				OrgID: 1,
-				Title: tc.inputTitle,
-				Condition: eval.Condition{
-					RefID: "B",
-					QueriesAndExpressions: []eval.AlertQuery{
-						{
-							Model: json.RawMessage(`{
+				OrgID:     1,
+				Title:     tc.inputTitle,
+				Condition: "B",
+				Data: []eval.AlertQuery{
+					{
+						Model: json.RawMessage(`{
 								"datasource": "__expr__",
 								"type":"math",
 								"expression":"2 + 3 > 1"
 							}`),
-							RefID: "B",
-							RelativeTimeRange: eval.RelativeTimeRange{
-								From: eval.Duration(time.Duration(5) * time.Hour),
-								To:   eval.Duration(time.Duration(3) * time.Hour),
-							},
+						RefID: "B",
+						RelativeTimeRange: eval.RelativeTimeRange{
+							From: eval.Duration(time.Duration(5) * time.Hour),
+							To:   eval.Duration(time.Duration(3) * time.Hour),
 						},
 					},
 				},
@@ -119,22 +117,20 @@ func TestCreatingConflictionAlertDefinition(t *testing.T) {
 		t.Cleanup(registry.ClearOverrides)
 
 		q := saveAlertDefinitionCommand{
-			OrgID: 1,
-			Title: "title",
-			Condition: eval.Condition{
-				RefID: "B",
-				QueriesAndExpressions: []eval.AlertQuery{
-					{
-						Model: json.RawMessage(`{
+			OrgID:     1,
+			Title:     "title",
+			Condition: "B",
+			Data: []eval.AlertQuery{
+				{
+					Model: json.RawMessage(`{
 								"datasource": "__expr__",
 								"type":"math",
 								"expression":"2 + 3 > 1"
 							}`),
-						RefID: "B",
-						RelativeTimeRange: eval.RelativeTimeRange{
-							From: eval.Duration(time.Duration(5) * time.Hour),
-							To:   eval.Duration(time.Duration(3) * time.Hour),
-						},
+					RefID: "B",
+					RelativeTimeRange: eval.RelativeTimeRange{
+						From: eval.Duration(time.Duration(5) * time.Hour),
+						To:   eval.Duration(time.Duration(3) * time.Hour),
 					},
 				},
 			},
@@ -158,23 +154,21 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 		t.Cleanup(registry.ClearOverrides)
 
 		q := updateAlertDefinitionCommand{
-			UID:   "unknown",
-			OrgID: 1,
-			Title: "something completely different",
-			Condition: eval.Condition{
-				RefID: "A",
-				QueriesAndExpressions: []eval.AlertQuery{
-					{
-						Model: json.RawMessage(`{
+			UID:       "unknown",
+			OrgID:     1,
+			Title:     "something completely different",
+			Condition: "A",
+			Data: []eval.AlertQuery{
+				{
+					Model: json.RawMessage(`{
 							"datasource": "__expr__",
 							"type":"math",
 							"expression":"2 + 2 > 1"
 						}`),
-						RefID: "A",
-						RelativeTimeRange: eval.RelativeTimeRange{
-							From: eval.Duration(time.Duration(5) * time.Hour),
-							To:   eval.Duration(time.Duration(3) * time.Hour),
-						},
+					RefID: "A",
+					RelativeTimeRange: eval.RelativeTimeRange{
+						From: eval.Duration(time.Duration(5) * time.Hour),
+						To:   eval.Duration(time.Duration(3) * time.Hour),
 					},
 				},
 			},
@@ -252,21 +246,19 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 		}
 
 		q := updateAlertDefinitionCommand{
-			UID: (*alertDefinition).UID,
-			Condition: eval.Condition{
-				RefID: "B",
-				QueriesAndExpressions: []eval.AlertQuery{
-					{
-						Model: json.RawMessage(`{
+			UID:       (*alertDefinition).UID,
+			Condition: "B",
+			Data: []eval.AlertQuery{
+				{
+					Model: json.RawMessage(`{
 							"datasource": "__expr__",
 							"type":"math",
 							"expression":"2 + 3 > 1"
 						}`),
-						RefID: "B",
-						RelativeTimeRange: eval.RelativeTimeRange{
-							From: eval.Duration(5 * time.Hour),
-							To:   eval.Duration(3 * time.Hour),
-						},
+					RefID: "B",
+					RelativeTimeRange: eval.RelativeTimeRange{
+						From: eval.Duration(5 * time.Hour),
+						To:   eval.Duration(3 * time.Hour),
 					},
 				},
 			},
@@ -337,22 +329,20 @@ func TestUpdatingConflictingAlertDefinition(t *testing.T) {
 		alertDef2 := createTestAlertDefinition(t, store, initialInterval)
 
 		q := updateAlertDefinitionCommand{
-			UID:   (*alertDef2).UID,
-			Title: alertDef1.Title,
-			Condition: eval.Condition{
-				RefID: "B",
-				QueriesAndExpressions: []eval.AlertQuery{
-					{
-						Model: json.RawMessage(`{
+			UID:       (*alertDef2).UID,
+			Title:     alertDef1.Title,
+			Condition: "B",
+			Data: []eval.AlertQuery{
+				{
+					Model: json.RawMessage(`{
 							"datasource": "__expr__",
 							"type":"math",
 							"expression":"2 + 3 > 1"
 						}`),
-						RefID: "B",
-						RelativeTimeRange: eval.RelativeTimeRange{
-							From: eval.Duration(5 * time.Hour),
-							To:   eval.Duration(3 * time.Hour),
-						},
+					RefID: "B",
+					RelativeTimeRange: eval.RelativeTimeRange{
+						From: eval.Duration(5 * time.Hour),
+						To:   eval.Duration(3 * time.Hour),
 					},
 				},
 			},

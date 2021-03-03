@@ -97,8 +97,8 @@ func (st storeImpl) saveAlertDefinition(cmd *saveAlertDefinitionCommand) error {
 		alertDefinition := &AlertDefinition{
 			OrgID:           cmd.OrgID,
 			Title:           cmd.Title,
-			Condition:       cmd.Condition.RefID,
-			Data:            cmd.Condition.QueriesAndExpressions,
+			Condition:       cmd.Condition,
+			Data:            cmd.Data,
 			IntervalSeconds: intervalSeconds,
 			Version:         initialVersion,
 			UID:             uid,
@@ -154,11 +154,11 @@ func (st storeImpl) updateAlertDefinition(cmd *updateAlertDefinitionCommand) err
 		if title == "" {
 			title = existingAlertDefinition.Title
 		}
-		condition := cmd.Condition.RefID
+		condition := cmd.Condition
 		if condition == "" {
 			condition = existingAlertDefinition.Condition
 		}
-		data := cmd.Condition.QueriesAndExpressions
+		data := cmd.Data
 		if data == nil {
 			data = existingAlertDefinition.Data
 		}
@@ -246,6 +246,9 @@ func (st storeImpl) getAlertDefinitions(query *listAlertDefinitionsQuery) error 
 
 func (st storeImpl) updateAlertDefinitionPaused(cmd *updateAlertDefinitionPausedCommand) error {
 	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		if len(cmd.UIDs) == 0 {
+			return nil
+		}
 		placeHolders := strings.Builder{}
 		const separator = ", "
 		separatorVar := separator

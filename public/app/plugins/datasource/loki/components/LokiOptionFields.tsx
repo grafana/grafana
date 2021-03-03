@@ -4,7 +4,7 @@ import { css, cx } from 'emotion';
 import { LokiQuery } from '../types';
 
 // Types
-import { InlineFormLabel, RadioButtonGroup } from '@grafana/ui';
+import { InlineFormLabel, RadioButtonGroup, InlineField, Input } from '@grafana/ui';
 
 export interface LokiOptionFieldsProps {
   lineLimitValue: string;
@@ -108,21 +108,22 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
         )}
         aria-label="Line limit field"
       >
-        <InlineFormLabel width={5}>Line limit</InlineFormLabel>
-        <input
-          type="number"
-          className="gf-form-input width-4"
-          placeholder={'auto'}
-          min={0}
-          onChange={onMaxLinesChange}
-          onKeyDown={onReturnKeyDown}
-          value={lineLimitValue}
-          onBlur={() => {
-            if (runOnBlur) {
-              onRunQuery();
-            }
-          }}
-        />
+        <InlineField label="Line limit">
+          <Input
+            className="width-4"
+            placeholder="auto"
+            type="number"
+            min={0}
+            onChange={onMaxLinesChange}
+            onKeyDown={onReturnKeyDown}
+            value={lineLimitValue}
+            onBlur={() => {
+              if (runOnBlur) {
+                onRunQuery();
+              }
+            }}
+          />
+        </InlineField>
       </div>
     </div>
   );

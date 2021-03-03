@@ -23,12 +23,12 @@ type apiImpl struct {
 func (api *apiImpl) registerAPIEndpoints() {
 	api.ngalert.RouteRegister.Group("/api/alert-definitions", func(alertDefinitions routing.RouteRegister) {
 		alertDefinitions.Get("", middleware.ReqSignedIn, routing.Wrap(api.listAlertDefinitions))
-		alertDefinitions.Get("/eval/:alertDefinitionUID", api.validateOrgAlertDefinition, routing.Wrap(api.alertDefinitionEvalEndpoint))
+		alertDefinitions.Post("/eval/:alertDefinitionUID", middleware.ReqSignedIn, api.validateOrgAlertDefinition, routing.Wrap(api.alertDefinitionEvalEndpoint))
 		alertDefinitions.Post("/eval", middleware.ReqSignedIn, binding.Bind(evalAlertConditionCommand{}), routing.Wrap(api.conditionEvalEndpoint))
-		alertDefinitions.Get("/:alertDefinitionUID", api.validateOrgAlertDefinition, routing.Wrap(api.getAlertDefinitionEndpoint))
-		alertDefinitions.Delete("/:alertDefinitionUID", api.validateOrgAlertDefinition, routing.Wrap(api.deleteAlertDefinitionEndpoint))
+		alertDefinitions.Get("/:alertDefinitionUID", middleware.ReqSignedIn, api.validateOrgAlertDefinition, routing.Wrap(api.getAlertDefinitionEndpoint))
+		alertDefinitions.Delete("/:alertDefinitionUID", middleware.ReqEditorRole, api.validateOrgAlertDefinition, routing.Wrap(api.deleteAlertDefinitionEndpoint))
 		alertDefinitions.Post("/", middleware.ReqEditorRole, binding.Bind(saveAlertDefinitionCommand{}), routing.Wrap(api.createAlertDefinitionEndpoint))
-		alertDefinitions.Put("/:alertDefinitionUID", api.validateOrgAlertDefinition, binding.Bind(updateAlertDefinitionCommand{}), routing.Wrap(api.updateAlertDefinitionEndpoint))
+		alertDefinitions.Put("/:alertDefinitionUID", middleware.ReqEditorRole, api.validateOrgAlertDefinition, binding.Bind(updateAlertDefinitionCommand{}), routing.Wrap(api.updateAlertDefinitionEndpoint))
 		alertDefinitions.Post("/pause", middleware.ReqEditorRole, binding.Bind(updateAlertDefinitionPausedCommand{}), routing.Wrap(api.alertDefinitionPauseEndpoint))
 		alertDefinitions.Post("/unpause", middleware.ReqEditorRole, binding.Bind(updateAlertDefinitionPausedCommand{}), routing.Wrap(api.alertDefinitionUnpauseEndpoint))
 	})
@@ -44,13 +44,23 @@ func (api *apiImpl) registerAPIEndpoints() {
 }
 
 // conditionEvalEndpoint handles POST /api/alert-definitions/eval.
-func (api *apiImpl) conditionEvalEndpoint(c *models.ReqContext, dto evalAlertConditionCommand) response.Response {
-	if err := api.validateCondition(dto.Condition, c.SignedInUser, c.SkipCache); err != nil {
+func (api *apiImpl) conditionEvalEndpoint(c *models.ReqContext, cmd evalAlertConditionCommand) response.Response {
+	evalCond := eval.Condition{
+		RefID:                 cmd.Condition,
+		OrgID:                 c.SignedInUser.OrgId,
+		QueriesAndExpressions: cmd.Data,
+	}
+	if err := api.validateCondition(evalCond, c.SignedInUser, c.SkipCache); err != nil {
 		return response.Error(400, "invalid condition", err)
 	}
 
+	now := cmd.Now
+	if now.IsZero() {
+		now = timeNow()
+	}
+
 	evaluator := eval.Evaluator{Cfg: api.ngalert.Cfg}
-	evalResults, err := evaluator.ConditionEval(&dto.Condition, timeNow())
+	evalResults, err := evaluator.ConditionEval(&evalCond, timeNow())
 	if err != nil {
 		return response.Error(400, "Failed to evaluate conditions", err)
 	}
@@ -67,7 +77,7 @@ func (api *apiImpl) conditionEvalEndpoint(c *models.ReqContext, dto evalAlertCon
 	})
 }
 
-// alertDefinitionEvalEndpoint handles GET /api/alert-definitions/eval/:alertDefinitionUID.
+// alertDefinitionEvalEndpoint handles POST /api/alert-definitions/eval/:alertDefinitionUID.
 func (api *apiImpl) alertDefinitionEvalEndpoint(c *models.ReqContext) response.Response {
 	alertDefinitionUID := c.Params(":alertDefinitionUID")
 
@@ -138,7 +148,12 @@ func (api *apiImpl) updateAlertDefinitionEndpoint(c *models.ReqContext, cmd upda
 	cmd.UID = c.Params(":alertDefinitionUID")
 	cmd.OrgID = c.SignedInUser.OrgId
 
-	if err := api.validateCondition(cmd.Condition, c.SignedInUser, c.SkipCache); err != nil {
+	evalCond := eval.Condition{
+		RefID:                 cmd.Condition,
+		OrgID:                 c.SignedInUser.OrgId,
+		QueriesAndExpressions: cmd.Data,
+	}
+	if err := api.validateCondition(evalCond, c.SignedInUser, c.SkipCache); err != nil {
 		return response.Error(400, "invalid condition", err)
 	}
 
@@ -153,7 +168,12 @@ func (api *apiImpl) updateAlertDefinitionEndpoint(c *models.ReqContext, cmd upda
 func (api *apiImpl) createAlertDefinitionEndpoint(c *models.ReqContext, cmd saveAlertDefinitionCommand) response.Response {
 	cmd.OrgID = c.SignedInUser.OrgId
 
-	if err := api.validateCondition(cmd.Condition, c.SignedInUser, c.SkipCache); err != nil {
+	evalCond := eval.Condition{
+		RefID:                 cmd.Condition,
+		OrgID:                 c.SignedInUser.OrgId,
+		QueriesAndExpressions: cmd.Data,
+	}
+	if err := api.validateCondition(evalCond, c.SignedInUser, c.SkipCache); err != nil {
 		return response.Error(400, "invalid condition", err)
 	}
 

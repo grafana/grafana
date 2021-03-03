@@ -11,7 +11,6 @@ import { LogRow } from './LogRow';
 import { RowContextOptions } from './LogRowContextProvider';
 
 export const PREVIEW_LIMIT = 100;
-export const RENDER_LIMIT = 500;
 
 export interface Props extends Themeable {
   logRows?: LogRowModel[];
@@ -24,7 +23,6 @@ export interface Props extends Themeable {
   wrapLogMessage: boolean;
   timeZone: TimeZone;
   logsSortOrder?: LogsSortOrder | null;
-  rowLimit?: number;
   allowDetails?: boolean;
   previewLimit?: number;
   // Passed to fix problems with inactive scrolling in Logs Panel
@@ -48,7 +46,6 @@ class UnThemedLogRows extends PureComponent<Props, State> {
 
   static defaultProps = {
     previewLimit: PREVIEW_LIMIT,
-    rowLimit: RENDER_LIMIT,
   };
 
   state: State = {
@@ -95,7 +92,6 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       timeZone,
       onClickFilterLabel,
       onClickFilterOutLabel,
-      rowLimit,
       theme,
       allowDetails,
       previewLimit,
@@ -123,8 +119,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     const processedRows = dedupedRows ? dedupedRows : [];
     const orderedRows = logsSortOrder ? this.sortLogs(processedRows, logsSortOrder) : processedRows;
     const firstRows = orderedRows.slice(0, previewLimit!);
-    const rowCount = Math.min(orderedRows.length, rowLimit!);
-    const lastRows = orderedRows.slice(previewLimit!, rowCount);
+    const lastRows = orderedRows.slice(previewLimit!, orderedRows.length);
 
     // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
     const getRows = this.makeGetRows(orderedRows);
@@ -184,7 +179,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
               ))}
             {hasData && !renderAll && (
               <tr>
-                <td colSpan={5}>Rendering {rowCount - previewLimit!} rows...</td>
+                <td colSpan={5}>Rendering {orderedRows.length - previewLimit!} rows...</td>
               </tr>
             )}
           </tbody>

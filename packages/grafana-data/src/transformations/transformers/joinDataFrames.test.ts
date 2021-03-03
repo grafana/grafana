@@ -107,7 +107,6 @@ describe('align frames', () => {
         Object {
           "name": "TheTime",
           "state": Object {
-            "displayName": "TheTime",
             "origin": Object {
               "fieldIndex": 0,
               "frameIndex": 0,
@@ -122,7 +121,6 @@ describe('align frames', () => {
         Object {
           "name": "A1",
           "state": Object {
-            "displayName": "A1",
             "origin": Object {
               "fieldIndex": 1,
               "frameIndex": 0,
@@ -137,7 +135,6 @@ describe('align frames', () => {
         Object {
           "name": "A2",
           "state": Object {
-            "displayName": "A2",
             "origin": Object {
               "fieldIndex": 1,
               "frameIndex": 1,
@@ -164,7 +161,6 @@ describe('align frames', () => {
         Object {
           "name": "TheTime",
           "state": Object {
-            "displayName": "TheTime",
             "origin": Object {
               "fieldIndex": 0,
               "frameIndex": 0,
@@ -174,7 +170,6 @@ describe('align frames', () => {
         Object {
           "name": "A1",
           "state": Object {
-            "displayName": "A1",
             "origin": Object {
               "fieldIndex": 1,
               "frameIndex": 0,

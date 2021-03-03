@@ -64,6 +64,7 @@ export function getConfig(opts: BarsOptions) {
       sidx,
       (series, dataX, dataY, scaleX, scaleY, valToPosX, valToPosY, xOff, yOff, xDim, yDim, moveTo, lineTo, rect) => {
         const fill = new Path2D();
+        const stroke = new Path2D();
 
         let numGroups = dataX.length;
         let barsPerGroup = u.series.length - 1;
@@ -83,6 +84,12 @@ export function getConfig(opts: BarsOptions) {
             let top = Math.round(Math.min(yPos, y0Pos));
             let barHgt = btm - top;
 
+            let strokeWidth = series.width || 0;
+
+            if (strokeWidth) {
+              rect(stroke, lft + strokeWidth / 2, top + strokeWidth / 2, barWid - strokeWidth, barHgt - strokeWidth);
+            }
+
             rect(fill, lft, top, barWid, barHgt);
 
             let x = ori === 0 ? Math.round(lft - xOff) : Math.round(top - yOff);
@@ -95,7 +102,7 @@ export function getConfig(opts: BarsOptions) {
         });
 
         return {
-          stroke: fill,
+          stroke,
           fill,
         };
       }

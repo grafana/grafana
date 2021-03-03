@@ -670,7 +670,7 @@ func randomWalk(query backend.DataQuery, model *simplejson.Json, index int) *dat
 
 	return data.NewFrame("",
 		data.NewField("time", nil, timeVec),
-		data.NewField(frameNameForQuery(query, model, 0), parseLabels(model), floatVec),
+		data.NewField(frameNameForQuery(query, model, index), parseLabels(model), floatVec),
 	)
 }
 

@@ -41,6 +41,14 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
     [fieldConfig, onFieldConfigChange]
   );
 
+  if (!data || !data.series?.length) {
+    return (
+      <div className="panel-empty">
+        <p>No data found in response</p>
+      </div>
+    );
+  }
+
   return (
     <GraphNG
       data={data.series}
@@ -52,15 +60,13 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
       onLegendClick={onLegendClick}
       onSeriesColorChange={onSeriesColorChange}
     >
-      <TooltipPlugin mode={options.tooltipOptions.mode} timeZone={timeZone} />
       <ZoomPlugin onZoom={onChangeTimeRange} />
-      <ContextMenuPlugin timeZone={timeZone} replaceVariables={replaceVariables} />
-      {data.annotations ? (
+      <TooltipPlugin data={data.series} mode={options.tooltipOptions.mode} timeZone={timeZone} />
+      <ContextMenuPlugin data={data.series} timeZone={timeZone} replaceVariables={replaceVariables} />
+      {data.annotations && (
         <ExemplarsPlugin exemplars={data.annotations} timeZone={timeZone} getFieldLinks={getFieldLinks} />
-      ) : (
-        <></>
       )}
-      {data.annotations ? <AnnotationsPlugin annotations={data.annotations} timeZone={timeZone} /> : <></>}
+      {data.annotations && <AnnotationsPlugin annotations={data.annotations} timeZone={timeZone} />}
     </GraphNG>
   );
 };
