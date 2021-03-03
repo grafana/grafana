@@ -9,24 +9,19 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 type apiImpl struct {
-	Cfg             *setting.Cfg             `inject:""`
-	DatasourceCache datasources.CacheService `inject:""`
-	RouteRegister   routing.RouteRegister    `inject:""`
-	DefinitionStore definitionStore          `inject:""`
-	InstanceStore   instanceStore            `inject:""`
-	Schedule        scheduleService          `inject:""`
+	ngalert         *AlertNG
+	definitionStore definitionStore
+	instanceStore   instanceStore
 }
 
 func (api *apiImpl) registerAPIEndpoints() {
-	api.RouteRegister.Group("/api/alert-definitions", func(alertDefinitions routing.RouteRegister) {
+	api.ngalert.RouteRegister.Group("/api/alert-definitions", func(alertDefinitions routing.RouteRegister) {
 		alertDefinitions.Get("", middleware.ReqSignedIn, routing.Wrap(api.listAlertDefinitions))
 		alertDefinitions.Get("/eval/:alertDefinitionUID", api.validateOrgAlertDefinition, routing.Wrap(api.alertDefinitionEvalEndpoint))
 		alertDefinitions.Post("/eval", middleware.ReqSignedIn, binding.Bind(evalAlertConditionCommand{}), routing.Wrap(api.conditionEvalEndpoint))
@@ -38,12 +33,12 @@ func (api *apiImpl) registerAPIEndpoints() {
 		alertDefinitions.Post("/unpause", middleware.ReqEditorRole, binding.Bind(updateAlertDefinitionPausedCommand{}), routing.Wrap(api.alertDefinitionUnpauseEndpoint))
 	})
 
-	api.RouteRegister.Group("/api/ngalert/", func(schedulerRouter routing.RouteRegister) {
+	api.ngalert.RouteRegister.Group("/api/ngalert/", func(schedulerRouter routing.RouteRegister) {
 		schedulerRouter.Post("/pause", routing.Wrap(api.pauseScheduler))
 		schedulerRouter.Post("/unpause", routing.Wrap(api.unpauseScheduler))
 	}, middleware.ReqOrgAdmin)
 
-	api.RouteRegister.Group("/api/alert-instances", func(alertInstances routing.RouteRegister) {
+	api.ngalert.RouteRegister.Group("/api/alert-instances", func(alertInstances routing.RouteRegister) {
 		alertInstances.Get("", middleware.ReqSignedIn, routing.Wrap(api.listAlertInstancesEndpoint))
 	})
 }
@@ -54,7 +49,7 @@ func (api *apiImpl) conditionEvalEndpoint(c *models.ReqContext, dto evalAlertCon
 		return response.Error(400, "invalid condition", err)
 	}
 
-	evaluator := eval.Evaluator{Cfg: api.Cfg}
+	evaluator := eval.Evaluator{Cfg: api.ngalert.Cfg}
 	evalResults, err := evaluator.ConditionEval(&dto.Condition, timeNow())
 	if err != nil {
 		return response.Error(400, "Failed to evaluate conditions", err)
@@ -85,7 +80,7 @@ func (api *apiImpl) alertDefinitionEvalEndpoint(c *models.ReqContext) response.R
 		return response.Error(400, "invalid condition", err)
 	}
 
-	evaluator := eval.Evaluator{Cfg: api.Cfg}
+	evaluator := eval.Evaluator{Cfg: api.ngalert.Cfg}
 	evalResults, err := evaluator.ConditionEval(condition, timeNow())
 	if err != nil {
 		return response.Error(400, "Failed to evaluate alert", err)
@@ -115,7 +110,7 @@ func (api *apiImpl) getAlertDefinitionEndpoint(c *models.ReqContext) response.Re
 		OrgID: c.SignedInUser.OrgId,
 	}
 
-	if err := api.DefinitionStore.getAlertDefinitionByUID(&query); err != nil {
+	if err := api.definitionStore.getAlertDefinitionByUID(&query); err != nil {
 		return response.Error(500, "Failed to get alert definition", err)
 	}
 
@@ -131,7 +126,7 @@ func (api *apiImpl) deleteAlertDefinitionEndpoint(c *models.ReqContext) response
 		OrgID: c.SignedInUser.OrgId,
 	}
 
-	if err := api.DefinitionStore.deleteAlertDefinitionByUID(&cmd); err != nil {
+	if err := api.definitionStore.deleteAlertDefinitionByUID(&cmd); err != nil {
 		return response.Error(500, "Failed to delete alert definition", err)
 	}
 
@@ -147,7 +142,7 @@ func (api *apiImpl) updateAlertDefinitionEndpoint(c *models.ReqContext, cmd upda
 		return response.Error(400, "invalid condition", err)
 	}
 
-	if err := api.DefinitionStore.updateAlertDefinition(&cmd); err != nil {
+	if err := api.definitionStore.updateAlertDefinition(&cmd); err != nil {
 		return response.Error(500, "Failed to update alert definition", err)
 	}
 
@@ -162,7 +157,7 @@ func (api *apiImpl) createAlertDefinitionEndpoint(c *models.ReqContext, cmd save
 		return response.Error(400, "invalid condition", err)
 	}
 
-	if err := api.DefinitionStore.saveAlertDefinition(&cmd); err != nil {
+	if err := api.definitionStore.saveAlertDefinition(&cmd); err != nil {
 		return response.Error(500, "Failed to create alert definition", err)
 	}
 
@@ -173,7 +168,7 @@ func (api *apiImpl) createAlertDefinitionEndpoint(c *models.ReqContext, cmd save
 func (api *apiImpl) listAlertDefinitions(c *models.ReqContext) response.Response {
 	query := listAlertDefinitionsQuery{OrgID: c.SignedInUser.OrgId}
 
-	if err := api.DefinitionStore.getOrgAlertDefinitions(&query); err != nil {
+	if err := api.definitionStore.getOrgAlertDefinitions(&query); err != nil {
 		return response.Error(500, "Failed to list alert definitions", err)
 	}
 
@@ -181,7 +176,7 @@ func (api *apiImpl) listAlertDefinitions(c *models.ReqContext) response.Response
 }
 
 func (api *apiImpl) pauseScheduler() response.Response {
-	err := api.Schedule.Pause()
+	err := api.ngalert.schedule.Pause()
 	if err != nil {
 		return response.Error(500, "Failed to pause scheduler", err)
 	}
@@ -189,7 +184,7 @@ func (api *apiImpl) pauseScheduler() response.Response {
 }
 
 func (api *apiImpl) unpauseScheduler() response.Response {
-	err := api.Schedule.Unpause()
+	err := api.ngalert.schedule.Unpause()
 	if err != nil {
 		return response.Error(500, "Failed to unpause scheduler", err)
 	}
@@ -201,7 +196,7 @@ func (api *apiImpl) alertDefinitionPauseEndpoint(c *models.ReqContext, cmd updat
 	cmd.OrgID = c.SignedInUser.OrgId
 	cmd.Paused = true
 
-	err := api.DefinitionStore.updateAlertDefinitionPaused(&cmd)
+	err := api.definitionStore.updateAlertDefinitionPaused(&cmd)
 	if err != nil {
 		return response.Error(500, "Failed to pause alert definition", err)
 	}
@@ -213,7 +208,7 @@ func (api *apiImpl) alertDefinitionUnpauseEndpoint(c *models.ReqContext, cmd upd
 	cmd.OrgID = c.SignedInUser.OrgId
 	cmd.Paused = false
 
-	err := api.DefinitionStore.updateAlertDefinitionPaused(&cmd)
+	err := api.definitionStore.updateAlertDefinitionPaused(&cmd)
 	if err != nil {
 		return response.Error(500, "Failed to unpause alert definition", err)
 	}

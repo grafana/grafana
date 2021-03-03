@@ -2,10 +2,7 @@ package ngalert
 
 import (
 	"context"
-	"fmt"
 	"time"
-
-	"github.com/facebookgo/inject"
 
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -31,8 +28,6 @@ const (
 	defaultIntervalSeconds int64 = 6 * baseIntervalSeconds
 )
 
-var sched *schedule
-
 // AlertNG is the service for evaluating the condition of an alert definition.
 type AlertNG struct {
 	Cfg             *setting.Cfg             `inject:""`
@@ -40,18 +35,11 @@ type AlertNG struct {
 	RouteRegister   routing.RouteRegister    `inject:""`
 	SQLStore        *sqlstore.SQLStore       `inject:""`
 	log             log.Logger
-	// schedule        scheduleService
-	// definitionStore definitionStore
-	// instanceStore   instanceStore
+	schedule        scheduleService
 }
 
 func init() {
 	registry.RegisterService(&AlertNG{})
-}
-
-func (ng *AlertNG) buildServiceGraph() error {
-
-	return nil
 }
 
 // Init initializes the AlertingService.
@@ -60,46 +48,28 @@ func (ng *AlertNG) Init() error {
 
 	baseInterval := baseIntervalSeconds * time.Second
 
-	store := storeImpl{baseInterval: baseInterval}
+	store := storeImpl{baseInterval: baseInterval, SQLStore: ng.SQLStore}
 
 	schedCfg := schedulerCfg{
-		c:            clock.New(),
-		baseInterval: baseInterval,
-		logger:       ng.log,
-		evaluator:    eval.Evaluator{Cfg: ng.Cfg},
+		c:               clock.New(),
+		baseInterval:    baseInterval,
+		logger:          ng.log,
+		evaluator:       eval.Evaluator{Cfg: ng.Cfg},
+		definitionStore: store,
+		instanceStore:   store,
 	}
-	sched = newScheduler(schedCfg)
+	ng.schedule = newScheduler(schedCfg)
 
-	// build service graph
-	var g inject.Graph
-	var api apiImpl
-
-	objs := []interface{}{&store, sched, &api, ng.RouteRegister}
-
-	services := registry.GetServices()
-	for _, service := range services {
-		objs = append(objs, service.Instance)
-	}
-
-	for _, obj := range objs {
-		if err := g.Provide(&inject.Object{Value: obj}); err != nil {
-			return fmt.Errorf("failed to provide object to the graph: %w", err)
-		}
-	}
-
-	// Resolve services and their dependencies.
-	if err := g.Populate(); err != nil {
-		return fmt.Errorf("failed to populate ngalert service dependencies: %w", err)
-	}
-
+	api := apiImpl{ngalert: ng, definitionStore: store, instanceStore: store}
 	api.registerAPIEndpoints()
+
 	return nil
 }
 
 // Run starts the scheduler
 func (ng *AlertNG) Run(ctx context.Context) error {
 	ng.log.Debug("ngalert starting")
-	return sched.Ticker(ctx)
+	return ng.schedule.Ticker(ctx)
 }
 
 // IsDisabled returns true if the alerting service is disable for this instance.
@@ -126,12 +96,12 @@ func (ng *AlertNG) AddMigration(mg *migrator.Migrator) {
 // LoadAlertCondition returns a Condition object for the given alertDefinitionID.
 func (api *apiImpl) LoadAlertCondition(alertDefinitionUID string, orgID int64) (*eval.Condition, error) {
 	q := getAlertDefinitionByUIDQuery{UID: alertDefinitionUID, OrgID: orgID}
-	if err := api.DefinitionStore.getAlertDefinitionByUID(&q); err != nil {
+	if err := api.definitionStore.getAlertDefinitionByUID(&q); err != nil {
 		return nil, err
 	}
 	alertDefinition := q.Result
 
-	err := api.DefinitionStore.validateAlertDefinition(alertDefinition, true)
+	err := api.definitionStore.validateAlertDefinition(alertDefinition, true)
 	if err != nil {
 		return nil, err
 	}

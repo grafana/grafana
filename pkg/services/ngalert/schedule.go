@@ -17,7 +17,10 @@ type scheduleService interface {
 	Ticker(context.Context) error
 	Pause() error
 	Unpause() error
+
+	// the following are used by tests only used for tests
 	EvalApplied(alertDefinitionKey, time.Time)
+	OverrideCfg(cfg schedulerCfg)
 	StopApplied(alertDefinitionKey)
 }
 
@@ -125,38 +128,46 @@ type schedule struct {
 
 	evaluator eval.Evaluator
 
-	DefinitionStore definitionStore `inject:""`
-	InstanceStore   instanceStore   `inject:""`
+	DefinitionStore definitionStore
+	InstanceStore   instanceStore
 }
 
 type schedulerCfg struct {
-	c            clock.Clock
-	baseInterval time.Duration
-	logger       log.Logger
-	evalApplied  func(alertDefinitionKey, time.Time)
-	stopApplied  func(alertDefinitionKey)
-	evaluator    eval.Evaluator
-	// definitionStore definitionStore
-	// instanceStore   instanceStore
+	c               clock.Clock
+	baseInterval    time.Duration
+	logger          log.Logger
+	evalApplied     func(alertDefinitionKey, time.Time)
+	stopApplied     func(alertDefinitionKey)
+	evaluator       eval.Evaluator
+	definitionStore definitionStore
+	instanceStore   instanceStore
 }
 
 // newScheduler returns a new schedule.
 func newScheduler(cfg schedulerCfg) *schedule {
 	ticker := alerting.NewTicker(cfg.c.Now(), time.Second*0, cfg.c, int64(cfg.baseInterval.Seconds()))
 	sch := schedule{
-		registry:     alertDefinitionRegistry{alertDefinitionInfo: make(map[alertDefinitionKey]alertDefinitionInfo)},
-		maxAttempts:  maxAttempts,
-		clock:        cfg.c,
-		baseInterval: cfg.baseInterval,
-		log:          cfg.logger,
-		heartbeat:    ticker,
-		evalApplied:  cfg.evalApplied,
-		stopApplied:  cfg.stopApplied,
-		evaluator:    cfg.evaluator,
-		// definitionStore: cfg.definitionStore,
-		// instanceStore:   cfg.instanceStore,
+		registry:        alertDefinitionRegistry{alertDefinitionInfo: make(map[alertDefinitionKey]alertDefinitionInfo)},
+		maxAttempts:     maxAttempts,
+		clock:           cfg.c,
+		baseInterval:    cfg.baseInterval,
+		log:             cfg.logger,
+		heartbeat:       ticker,
+		evalApplied:     cfg.evalApplied,
+		stopApplied:     cfg.stopApplied,
+		evaluator:       cfg.evaluator,
+		DefinitionStore: cfg.definitionStore,
+		InstanceStore:   cfg.instanceStore,
 	}
 	return &sch
+}
+
+func (sch *schedule) OverrideCfg(cfg schedulerCfg) {
+	sch.clock = cfg.c
+	sch.baseInterval = cfg.baseInterval
+	sch.heartbeat = alerting.NewTicker(cfg.c.Now(), time.Second*0, cfg.c, int64(cfg.baseInterval.Seconds()))
+	sch.evalApplied = cfg.evalApplied
+	sch.stopApplied = cfg.stopApplied
 }
 
 func (sch *schedule) EvalApplied(alertDefKey alertDefinitionKey, now time.Time) {
