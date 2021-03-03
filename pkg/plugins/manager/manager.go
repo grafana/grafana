@@ -367,8 +367,8 @@ func (pm *PluginManager) loadPlugin(jsonParser *json.Decoder, pluginBase *plugin
 // This function fetches the datasource from the global variable DataSources in this package.
 // Rather then refactor all dependencies on the global variable we can use this as an transition.
 func (pm *PluginManager) GetDatasource(pluginID string) (*plugins.DataSourcePlugin, bool) {
-	ds, exist := DataSources[pluginID]
-	return ds, exist
+	ds, exists := DataSources[pluginID]
+	return ds, exists
 }
 
 func (s *PluginScanner) walker(currentPath string, f os.FileInfo, err error) error {
@@ -580,7 +580,6 @@ func (pm *PluginManager) GetPluginMarkdown(pluginId string, name string) ([]byte
 // gets plugin filenames that require verification for plugin signing
 func collectPluginFilesWithin(rootDir string) ([]string, error) {
 	var files []string
-
 	err := filepath.Walk(rootDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err

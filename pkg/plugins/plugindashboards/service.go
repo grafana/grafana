@@ -52,7 +52,7 @@ func (s *Service) updateAppDashboards() {
 			continue
 		}
 
-		if pluginDef, exist := manager.Plugins[pluginSetting.PluginId]; exist {
+		if pluginDef, exists := manager.Plugins[pluginSetting.PluginId]; exists {
 			if pluginDef.Info.Version != pluginSetting.PluginVersion {
 				s.syncPluginDashboards(pluginDef, pluginSetting.OrgId)
 			}

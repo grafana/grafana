@@ -48,7 +48,7 @@ func (cp *corePlugin) CanHandleDataQueries() bool {
 
 func (cp *corePlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 	tsdbQuery plugins.DataQuery) (plugins.DataResponse, error) {
-	// TODO: Inline the adapter
+	// TODO: Inline the adapter, since it shouldn't be necessary
 	adapter := newQueryEndpointAdapter(cp.pluginID, cp.logger, instrumentation.InstrumentQueryDataHandler(
 		cp.QueryDataHandler))
 	return adapter.DataQuery(ctx, dsInfo, tsdbQuery)
