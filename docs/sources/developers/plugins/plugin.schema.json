@@ -357,8 +357,7 @@
             "properties": {
               "url": {
                 "type": "string",
-                "description": "For data source plugins. URL to fetch the authentication token.",
-                "format": "uri"
+                "description": "For data source plugins. URL to fetch the authentication token."
               },
               "params": {
                 "type": "object",
