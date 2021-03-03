@@ -40,6 +40,7 @@ function toPanelSaveModel(panel: PanelModel): any {
 function updatePanelModelWithUpdate(panel: PanelModel, updated: LibraryPanelDTO): void {
   panel.restoreModel({
     ...updated.model,
+    hasChanged: false, // reset dirty flag, since changes have been saved
     libraryPanel: toPanelModelLibraryPanel(updated),
   });
   panel.refresh();
