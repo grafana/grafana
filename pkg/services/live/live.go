@@ -265,5 +265,7 @@ func handleLog(msg centrifuge.LogEntry) {
 		loggerCF.Error(msg.Message, arr...)
 	case centrifuge.LogLevelInfo:
 		loggerCF.Info(msg.Message, arr...)
+	default:
+		loggerCF.Debug(msg.Message, arr...)
 	}
 }
