@@ -34,6 +34,8 @@ export interface DashboardMeta {
   createdBy?: string;
   updated?: string;
   updatedBy?: string;
+  fromScript?: boolean;
+  fromFile?: boolean;
   hasUnsavedFolderChange?: boolean;
 }
 

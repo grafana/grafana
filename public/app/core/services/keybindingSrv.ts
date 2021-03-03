@@ -29,9 +29,11 @@ export class KeybindingSrv {
     appEvents.subscribe(ShowModalEvent, () => (this.modalOpen = true));
   }
 
-  resetAndInitGlobals() {
+  reset() {
     Mousetrap.reset();
+  }
 
+  initGlobals() {
     if (locationService.getLocation().pathname !== '/login') {
       this.bind(['?', 'h'], this.showHelpModal);
       this.bind('g h', this.goToHome);
@@ -44,7 +46,7 @@ export class KeybindingSrv {
     }
   }
 
-  globalEsc() {
+  private globalEsc() {
     const anyDoc = document as any;
     const activeElement = anyDoc.activeElement;
 
@@ -70,31 +72,31 @@ export class KeybindingSrv {
     this.exit();
   }
 
-  openSearch() {
+  private openSearch() {
     locationService.partial({ search: 'open' });
   }
 
-  closeSearch() {
+  private closeSearch() {
     locationService.partial({ search: null });
   }
 
-  openAlerting() {
+  private openAlerting() {
     locationService.push('/alerting');
   }
 
-  goToHome() {
+  private goToHome() {
     locationService.push('/');
   }
 
-  goToProfile() {
+  private goToProfile() {
     locationService.push('/profile');
   }
 
-  showHelpModal() {
+  private showHelpModal() {
     appEvents.publish(new ShowModalEvent({ templateHtml: '<help-modal></help-modal>' }));
   }
 
-  exit() {
+  private exit() {
     appEvents.publish(new HideModalEvent());
 
     if (this.modalOpen) {
@@ -133,6 +135,12 @@ export class KeybindingSrv {
     }
   }
 
+  private showDashEditView() {
+    locationService.partial({
+      editview: 'settings',
+    });
+  }
+
   bind(keyArg: string | string[], fn: () => void) {
     Mousetrap.bind(
       keyArg,
@@ -161,12 +169,6 @@ export class KeybindingSrv {
 
   unbind(keyArg: string, keyType?: string) {
     Mousetrap.unbind(keyArg, keyType);
-  }
-
-  showDashEditView() {
-    locationService.partial({
-      editview: 'settings',
-    });
   }
 
   setupDashboardBindings(dashboard: DashboardModel) {
