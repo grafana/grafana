@@ -6,13 +6,13 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tsdb"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -37,7 +37,7 @@ type AlertNG struct {
 	SQLStore        *sqlstore.SQLStore       `inject:""`
 	DataService     *tsdb.Service            `inject:""`
 	log             log.Logger
-	schedule        *schedule
+	schedule        scheduleService
 }
 
 func init() {
@@ -48,21 +48,36 @@ func init() {
 func (ng *AlertNG) Init() error {
 	ng.log = log.New("ngalert")
 
-	ng.registerAPIEndpoints()
+	baseInterval := baseIntervalSeconds * time.Second
+
+	store := storeImpl{baseInterval: baseInterval, SQLStore: ng.SQLStore}
+
 	schedCfg := schedulerCfg{
 		c:            clock.New(),
-		baseInterval: baseIntervalSeconds * time.Second,
+		baseInterval: baseInterval,
 		logger:       ng.log,
 		evaluator:    eval.Evaluator{Cfg: ng.Cfg},
+		store:        store,
 	}
-	ng.schedule = newScheduler(schedCfg)
+	ng.schedule = newScheduler(schedCfg, ng.DataService)
+
+	api := apiImpl{
+		Cfg:             ng.Cfg,
+		DatasourceCache: ng.DatasourceCache,
+		RouteRegister:   ng.RouteRegister,
+		DataService:     ng.DataService,
+		schedule:        ng.schedule,
+		store:           store,
+	}
+	api.registerAPIEndpoints()
+
 	return nil
 }
 
 // Run starts the scheduler
 func (ng *AlertNG) Run(ctx context.Context) error {
 	ng.log.Debug("ngalert starting")
-	return ng.alertingTicker(ctx)
+	return ng.schedule.Ticker(ctx)
 }
 
 // IsDisabled returns true if the alerting service is disable for this instance.
@@ -87,14 +102,14 @@ func (ng *AlertNG) AddMigration(mg *migrator.Migrator) {
 }
 
 // LoadAlertCondition returns a Condition object for the given alertDefinitionID.
-func (ng *AlertNG) LoadAlertCondition(alertDefinitionUID string, orgID int64) (*eval.Condition, error) {
+func (api *apiImpl) LoadAlertCondition(alertDefinitionUID string, orgID int64) (*eval.Condition, error) {
 	q := getAlertDefinitionByUIDQuery{UID: alertDefinitionUID, OrgID: orgID}
-	if err := ng.getAlertDefinitionByUID(&q); err != nil {
+	if err := api.store.getAlertDefinitionByUID(&q); err != nil {
 		return nil, err
 	}
 	alertDefinition := q.Result
 
-	err := ng.validateAlertDefinition(alertDefinition, true)
+	err := api.store.validateAlertDefinition(alertDefinition, true)
 	if err != nil {
 		return nil, err
 	}
