@@ -1,6 +1,8 @@
 import React from 'react';
 import { Story } from '@storybook/react';
 import { Menu, MenuProps } from './Menu';
+import { MenuItem } from './MenuItem';
+import { MenuGroup } from './MenuGroup';
 import { GraphContextMenuHeader } from '..';
 
 export default {
@@ -8,7 +10,7 @@ export default {
   component: Menu,
   argTypes: {
     items: { control: { disable: true } },
-    header: { control: { disable: true } },
+    icon: { control: { type: 'select' } },
   },
   parameters: {
     knobs: {
@@ -23,39 +25,23 @@ export default {
   },
 };
 
-export const Simple: Story<MenuProps> = (args) => (
-  <div>
-    <Menu {...args} />
-  </div>
-);
+export const Simple: Story<MenuProps> = (args) => {
+  return (
+    <div>
+      <Menu header={args.header}>
+        <MenuGroup label="Group 1">
+          <MenuItem label="item1" icon="history" active={true} />
+          <MenuItem label="item2" icon="filter" active={true} />
+        </MenuGroup>
+        <MenuGroup label="Group 2">
+          <MenuItem label="item1" icon="history" active={true} />
+        </MenuGroup>
+      </Menu>
+    </div>
+  );
+};
 
 Simple.args = {
-  items: [
-    {
-      label: 'Group 1',
-      items: [
-        {
-          label: 'Menu item 1',
-          icon: 'history',
-        },
-        {
-          label: 'Menu item 2',
-          icon: 'filter',
-        },
-      ],
-    },
-    {
-      label: 'Group 2',
-      items: [
-        {
-          label: 'Menu item 1',
-        },
-        {
-          label: 'Menu item 2',
-        },
-      ],
-    },
-  ],
   header: (
     <GraphContextMenuHeader
       timestamp="2020-11-25 19:04:25"
