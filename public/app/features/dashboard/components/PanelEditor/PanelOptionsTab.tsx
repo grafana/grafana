@@ -168,7 +168,14 @@ export const PanelOptionsTab: FC<Props> = ({
   );
 
   if (config.featureToggles.panelLibrary) {
-    elements.push(<PanelLibraryOptionsGroup panel={panel} dashboard={dashboard} key="Panel Library" />);
+    elements.push(
+      <PanelLibraryOptionsGroup
+        panel={panel}
+        dashboard={dashboard}
+        onChange={() => onPanelConfigChange('isEditing', true)}
+        key="Panel Library"
+      />
+    );
   }
 
   return <>{elements}</>;
