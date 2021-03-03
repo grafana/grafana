@@ -1,5 +1,5 @@
 import { DashboardModel, PanelModel } from '../../../state';
-import { CoreEvents, ThunkResult } from 'app/types';
+import { ThunkResult } from 'app/types';
 import { appEvents } from 'app/core/core';
 import { SaveLibraryPanelModal } from 'app/features/library-panels/components/SaveLibraryPanelModal/SaveLibraryPanelModal';
 import {
@@ -15,6 +15,7 @@ import pick from 'lodash/pick';
 import omit from 'lodash/omit';
 import isEqual from 'lodash/isEqual';
 import { locationService } from '@grafana/runtime';
+import { ShowModalReactEvent } from '../../../../../types/events';
 
 export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardModel): ThunkResult<void> {
   return (dispatch) => {
@@ -59,15 +60,17 @@ export function exitPanelEditor(): ThunkResult<void> {
       return;
     }
 
-    appEvents.emit(CoreEvents.showModalReact, {
-      component: SaveLibraryPanelModal,
-      props: {
-        panel: modifiedPanel,
-        folderId: dashboard!.meta.folderId,
-        isOpen: true,
-        onConfirm,
-      },
-    });
+    appEvents.publish(
+      new ShowModalReactEvent({
+        component: SaveLibraryPanelModal,
+        props: {
+          panel: modifiedPanel,
+          folderId: dashboard!.meta.folderId,
+          isOpen: true,
+          onConfirm,
+        },
+      })
+    );
   };
 }
 

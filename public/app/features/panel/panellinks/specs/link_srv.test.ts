@@ -10,7 +10,7 @@ import { initTemplateSrv } from '../../../../../test/helpers/initTemplateSrv';
 
 jest.mock('app/core/core', () => ({
   appEvents: {
-    on: () => {},
+    subscribe: () => {},
   },
 }));
 

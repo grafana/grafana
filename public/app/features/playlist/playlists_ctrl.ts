@@ -1,13 +1,15 @@
 import { IScope } from 'angular';
 import _ from 'lodash';
 import { AppEvents } from '@grafana/data';
-import { OrgRole, AppEventEmitter, CoreEvents } from 'app/types';
+import { OrgRole, AppEventEmitter } from 'app/types';
 import { getBackendSrv } from '@grafana/runtime';
 
 import coreModule from '../../core/core_module';
 import config from '../../core/config';
 import { NavModelSrv } from 'app/core/nav_model_srv';
 import { promiseToDigest } from '../../core/utils/promiseToDigest';
+import { appEvents } from '../../core/core';
+import { ShowConfirmModalEvent } from '../../types/events';
 
 export class PlaylistsCtrl {
   playlists: any;
@@ -50,15 +52,17 @@ export class PlaylistsCtrl {
   }
 
   removePlaylist(playlist: any) {
-    this.$scope.appEvent(CoreEvents.showConfirmModal, {
-      title: 'Delete',
-      text: 'Are you sure you want to delete playlist ' + playlist.name + '?',
-      yesText: 'Delete',
-      icon: 'trash-alt',
-      onConfirm: () => {
-        this.removePlaylistConfirmed(playlist);
-      },
-    });
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: 'Delete',
+        text: 'Are you sure you want to delete playlist ' + playlist.name + '?',
+        yesText: 'Delete',
+        icon: 'trash-alt',
+        onConfirm: () => {
+          this.removePlaylistConfirmed(playlist);
+        },
+      })
+    );
   }
 }
 

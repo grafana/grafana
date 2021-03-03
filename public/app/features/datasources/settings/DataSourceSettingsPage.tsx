@@ -19,7 +19,7 @@ import {
 import { getNavModel } from 'app/core/selectors/navModel';
 
 // Types
-import { CoreEvents, StoreState } from 'app/types/';
+import { StoreState } from 'app/types/';
 import { DataSourceSettings } from '@grafana/data';
 import { Alert, InfoBox } from '@grafana/ui';
 import { getDataSourceLoadingNav } from '../state/navModel';
@@ -30,6 +30,7 @@ import { CloudInfoBox } from './CloudInfoBox';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { connect, ConnectedProps } from 'react-redux';
 import { cleanUpAction } from 'app/core/actions/cleanUp';
+import { ShowConfirmModalEvent } from '../../../types/events';
 
 export interface OwnProps extends GrafanaRouteComponentProps<{ id: string }> {}
 
@@ -99,15 +100,17 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
   };
 
   onDelete = () => {
-    appEvents.emit(CoreEvents.showConfirmModal, {
-      title: 'Delete',
-      text: 'Are you sure you want to delete this data source?',
-      yesText: 'Delete',
-      icon: 'trash-alt',
-      onConfirm: () => {
-        this.confirmDelete();
-      },
-    });
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: 'Delete',
+        text: 'Are you sure you want to delete this data source?',
+        yesText: 'Delete',
+        icon: 'trash-alt',
+        onConfirm: () => {
+          this.confirmDelete();
+        },
+      })
+    );
   };
 
   confirmDelete = () => {

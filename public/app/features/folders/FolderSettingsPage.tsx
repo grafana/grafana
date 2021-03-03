@@ -7,10 +7,11 @@ const { Input } = LegacyForms;
 import Page from 'app/core/components/Page/Page';
 import appEvents from 'app/core/app_events';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { CoreEvents, FolderState, StoreState } from 'app/types';
+import { FolderState, StoreState } from 'app/types';
 import { deleteFolder, getFolderByUid, saveFolder } from './state/actions';
 import { getLoadingNav } from './state/navModel';
 import { setFolderTitle } from './state/reducers';
+import { ShowConfirmModalEvent } from '../../types/events';
 
 export interface Props {
   navModel: NavModel;
@@ -54,15 +55,17 @@ export class FolderSettingsPage extends PureComponent<Props, State> {
     evt.stopPropagation();
     evt.preventDefault();
 
-    appEvents.emit(CoreEvents.showConfirmModal, {
-      title: 'Delete',
-      text: `Do you want to delete this folder and all its dashboards?`,
-      icon: 'trash-alt',
-      yesText: 'Delete',
-      onConfirm: () => {
-        this.props.deleteFolder(this.props.folder.uid);
-      },
-    });
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: 'Delete',
+        text: `Do you want to delete this folder and all its dashboards?`,
+        icon: 'trash-alt',
+        yesText: 'Delete',
+        onConfirm: () => {
+          this.props.deleteFolder(this.props.folder.uid);
+        },
+      })
+    );
   };
 
   render() {

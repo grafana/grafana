@@ -3,7 +3,7 @@ import ReactDOMServer from 'react-dom/server';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 // Utils
-import { ApiKey, CoreEvents, NewApiKey, OrgRole } from 'app/types';
+import { ApiKey, NewApiKey, OrgRole } from 'app/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getApiKeys, getApiKeysCount } from './state/selectors';
 import { addApiKey, deleteApiKey, loadApiKeys } from './state/actions';
@@ -20,6 +20,7 @@ import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { store } from 'app/store/store';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { setSearchQuery } from './state/reducers';
+import { ShowModalEvent } from '../../types/events';
 
 const timeRangeValidationEvents: ValidationEvents = {
   [EventsWithValidation.onBlur]: [
@@ -110,9 +111,11 @@ export class ApiKeysPage extends PureComponent<Props, any> {
       const rootPath = window.location.origin + config.appSubUrl;
       const modalTemplate = ReactDOMServer.renderToString(<ApiKeysAddedModal apiKey={apiKey} rootPath={rootPath} />);
 
-      appEvents.emit(CoreEvents.showModal, {
-        templateHtml: modalTemplate,
-      });
+      appEvents.publish(
+        new ShowModalEvent({
+          templateHtml: modalTemplate,
+        })
+      );
     };
 
     // make sure that secondsToLive is number or null

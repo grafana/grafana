@@ -5,7 +5,7 @@ import { locationService } from '@grafana/runtime';
 
 jest.mock('app/core/core', () => ({
   appEvents: {
-    on: () => {},
+    subscribe: () => {},
   },
 }));
 

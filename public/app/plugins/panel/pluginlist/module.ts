@@ -2,9 +2,10 @@ import _ from 'lodash';
 import { PanelCtrl } from '../../../features/panel/panel_ctrl';
 import { auto, IScope } from 'angular';
 import { ContextSrv } from '../../../core/services/context_srv';
-import { CoreEvents } from 'app/types';
 import { getBackendSrv } from '@grafana/runtime';
 import { promiseToDigest } from 'app/core/utils/promiseToDigest';
+import { appEvents } from '../../../core/core';
+import { ShowModalEvent } from '../../../types/events';
 
 class PluginListCtrl extends PanelCtrl {
   static templateUrl = 'module.html';
@@ -48,10 +49,12 @@ class PluginListCtrl extends PanelCtrl {
     const modalScope = this.$scope.$new(true);
     modalScope.plugin = plugin;
 
-    this.publishAppEvent(CoreEvents.showModal, {
-      src: 'public/app/features/plugins/partials/update_instructions.html',
-      scope: modalScope,
-    });
+    appEvents.publish(
+      new ShowModalEvent({
+        src: 'public/app/features/plugins/partials/update_instructions.html',
+        scope: modalScope,
+      })
+    );
   }
 
   update() {
