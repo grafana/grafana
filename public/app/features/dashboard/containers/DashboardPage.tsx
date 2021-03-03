@@ -47,7 +47,6 @@ type DashboardPageRouteSearchParams = {
 };
 
 export interface Props extends GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams> {
-  $scope: any;
   initPhase: DashboardInitPhase;
   isInitSlow: boolean;
   dashboard: DashboardModel | null;
@@ -104,7 +103,6 @@ export class DashboardPage extends PureComponent<Props, State> {
 
     this.props.initDashboard({
       $injector: getLegacyAngularInjector(),
-      $scope: this.props.$scope,
       urlSlug: match.params.slug,
       urlUid: match.params.uid,
       urlType: match.params.type,

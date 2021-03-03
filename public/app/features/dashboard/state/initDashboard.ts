@@ -28,7 +28,6 @@ import { ChangeTracker } from '../services/ChangeTracker';
 
 export interface InitDashboardArgs {
   $injector: any;
-  $scope: any;
   urlUid?: string;
   urlSlug?: string;
   urlType?: string;

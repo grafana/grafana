@@ -59,7 +59,6 @@ function dashboardPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
             match: { params: { slug: 'my-dash', uid: '11' } } as any,
             route: { routeName: DashboardRoutes.Normal } as any,
           }),
-          $scope: {},
           initPhase: DashboardInitPhase.NotStarted,
           isInitSlow: false,
           initDashboard: jest.fn(),
