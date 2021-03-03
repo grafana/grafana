@@ -3,7 +3,7 @@ import { css } from 'emotion';
 import appEvents from '../../app_events';
 import { User } from '../../services/context_srv';
 import { NavModelItem } from '@grafana/data';
-import { Icon, IconName } from '@grafana/ui';
+import { Icon, IconName, Link } from '@grafana/ui';
 import { OrgSwitcher } from '../OrgSwitcher';
 import { getFooterLinks } from '../Footer/Footer';
 import { ShowModalEvent } from '../../../types/events';
@@ -51,12 +51,12 @@ export default class BottomNavLinks extends PureComponent<Props, State> {
 
     return (
       <div className="sidemenu-item dropdown dropup">
-        <a href={link.url} className="sidemenu-link" target={link.target}>
+        <Link href={link.url} className="sidemenu-link" target={link.target}>
           <span className="icon-circle sidemenu-icon">
             {link.icon && <Icon name={link.icon as IconName} size="xl" />}
             {link.img && <img src={link.img} />}
           </span>
-        </a>
+        </Link>
         <ul className="dropdown-menu dropdown-menu--sidemenu" role="menu">
           {link.subTitle && (
             <li className="sidemenu-subtitle">

@@ -4,30 +4,6 @@ import { RouteProvider } from '../core/navigation/patch/RouteProvider';
 import { RouteParamsProvider } from '../core/navigation/patch/RouteParamsProvider';
 import { ILocationService } from 'angular';
 
-const registerInterceptedLinkDirective = () => {
-  coreModule.directive('a', () => {
-    return {
-      restrict: 'E', // only Elements (<a>),
-      link: (scope, elm, attr) => {
-        // every time you click on the link
-        elm.on('click', ($event) => {
-          const href = elm.attr('href');
-          if (href) {
-            $event.preventDefault();
-            $event.stopPropagation();
-
-            // TODO: refactor to one method insted of chain
-            locationService.push(href);
-            return false;
-          }
-
-          return true;
-        });
-      },
-    };
-  });
-};
-
 // Neutralizing Angular’s location tampering
 // https://stackoverflow.com/a/19825756
 const tamperAngularLocation = () => {
@@ -123,7 +99,6 @@ const interceptAngularLocation = () => {
 };
 
 export function initAngularRoutingBridge() {
-  registerInterceptedLinkDirective();
   tamperAngularLocation();
   interceptAngularLocation();
 }

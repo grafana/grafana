@@ -1,7 +1,6 @@
 import React, { FC } from 'react';
-import { Link } from 'react-router-dom';
 import SideMenuDropDown from './SideMenuDropDown';
-import { Icon } from '@grafana/ui';
+import { Icon, Link } from '@grafana/ui';
 import { NavModelItem } from '@grafana/data';
 
 export interface Props {
@@ -18,7 +17,7 @@ const TopSectionItem: FC<Props> = ({ link, onClick }) => {
   );
 
   const anchor = link.url ? (
-    <Link className="sidemenu-link" to={link.url} target={link.target} onClick={onClick}>
+    <Link className="sidemenu-link" href={link.url} target={link.target} onClick={onClick}>
       {linkContent}
     </Link>
   ) : (
