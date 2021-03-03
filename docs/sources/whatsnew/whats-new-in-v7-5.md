@@ -52,7 +52,7 @@ In Grafana 7.5, we changed how data for the trace view is sent from the data sou
 
 Previously, when users wanted to configure the Postgres data source to connect with SSL certification, they needed to put the certification on the server, and configure the data source with file path.
 
-With the current feature, instead of file path, users can just paste the SSL certification content in the UI. This allows users to configure the certification without access to the server.
+Instead of the file path, users can now paste the SSL certification content in the UI. This allows them to configure the certification even when they do not have access to the server.
 
 > **Note:** It remains as limitation for the hosted Grafana, because the user doesn't have access to the server configuration.
 
