@@ -4,7 +4,7 @@ import {
   ContextMenu,
   GraphContextMenuHeader,
   IconName,
-  MenuItem,
+  MenuItemProps,
   MenuItemsGroup,
   Portal,
   useGraphNGContext,
@@ -135,7 +135,7 @@ export const ContextMenuView: React.FC<ContextMenuProps> = ({
 
       if (linksSupplier) {
         items.push({
-          items: linksSupplier.getLinks(replaceVariables).map<MenuItem>((link) => {
+          items: linksSupplier.getLinks(replaceVariables).map<MenuItemProps>((link) => {
             return {
               label: link.title,
               url: link.href,
