@@ -18,7 +18,6 @@ import { profiler } from 'app/core/profiler';
 import appEvents from 'app/core/app_events';
 import { TimeSrv, setTimeSrv, getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { KeybindingSrv, setKeybindingSrv } from 'app/core/services/keybindingSrv';
 import { AngularLoader, setAngularLoader } from 'app/core/services/AngularLoader';
 
 // Types
@@ -45,7 +44,6 @@ export class GrafanaCtrl {
     timeSrv: TimeSrv,
     linkSrv: LinkSrv,
     datasourceSrv: DatasourceSrv,
-    keybindingSrv: KeybindingSrv,
     dashboardSrv: DashboardSrv,
     angularLoader: AngularLoader,
     $injector: auto.IInjectorService
@@ -56,7 +54,6 @@ export class GrafanaCtrl {
     setDataSourceSrv(datasourceSrv);
     setTimeSrv(timeSrv);
     setLinkSrv(linkSrv);
-    setKeybindingSrv(keybindingSrv);
     setDashboardSrv(dashboardSrv);
     setLegacyAngularInjector($injector);
 
