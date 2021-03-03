@@ -34,7 +34,7 @@ Name               | Description
 `Max idle`         | The maximum number of connections in the idle connection pool, default `2` (Grafana v5.4+).
 `Max lifetime`     | The maximum amount of time in seconds a connection may be reused, default `14400`/4 hours (Grafana v5.4+).
 `Version`          |Determines which functions are available in the query builder (only available in Grafana 5.3+).
-`TimescaleDB`      |A time-series database built as a PostgreSQL extension. If enabled, Grafana uses `time_bucket` in the `$__timeGroup` macro to display TimescaleDB specific aggregate functions in the query builder (only available in Grafana 5.3+).
+`TimescaleDB`      |A time-series database built as a PostgreSQL extension. When enabled, Grafana uses `time_bucket` in the `$__timeGroup` macro to display TimescaleDB specific aggregate functions in the query builder (only available in Grafana 5.3+).
 
 ### Min time interval
 
