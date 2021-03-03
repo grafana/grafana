@@ -29,6 +29,8 @@ import {
   InlineSwitch,
   withTheme,
   stylesFactory,
+  Icon,
+  Tooltip,
 } from '@grafana/ui';
 import store from 'app/core/store';
 import { ExploreGraphPanel } from './ExploreGraphPanel';
@@ -89,6 +91,8 @@ interface State {
   logsSortOrder: LogsSortOrder | null;
   isFlipping: boolean;
   showDetectedFields: string[];
+  hasUnescapedContent: boolean;
+  forceEscape: boolean;
 }
 
 export class UnthemedLogs extends PureComponent<Props, State> {
@@ -102,6 +106,8 @@ export class UnthemedLogs extends PureComponent<Props, State> {
     logsSortOrder: null,
     isFlipping: false,
     showDetectedFields: [],
+    hasUnescapedContent: this.props.logRows.some((r) => r.hasUnescapedContent),
+    forceEscape: false,
   };
 
   componentWillUnmount() {
@@ -121,6 +127,12 @@ export class UnthemedLogs extends PureComponent<Props, State> {
       });
     }, 0);
     this.cancelFlippingTimer = setTimeout(() => this.setState({ isFlipping: false }), 1000);
+  };
+
+  onEscapeNewlines = () => {
+    this.setState((prevState) => ({
+      forceEscape: !prevState.forceEscape,
+    }));
   };
 
   onChangeDedup = (dedup: LogsDedupStrategy) => {
@@ -237,7 +249,16 @@ export class UnthemedLogs extends PureComponent<Props, State> {
       theme,
     } = this.props;
 
-    const { showLabels, showTime, wrapLogMessage, logsSortOrder, isFlipping, showDetectedFields } = this.state;
+    const {
+      showLabels,
+      showTime,
+      wrapLogMessage,
+      logsSortOrder,
+      isFlipping,
+      showDetectedFields,
+      hasUnescapedContent,
+      forceEscape,
+    } = this.state;
 
     const hasData = logRows && logRows.length > 0;
     const dedupCount = dedupedRows
@@ -346,6 +367,27 @@ export class UnthemedLogs extends PureComponent<Props, State> {
           />
         )}
 
+        {hasUnescapedContent && (
+          <MetaInfoText
+            metaItems={[
+              {
+                label: 'Your logs might have incorrectly escaped content',
+                value: (
+                  <Tooltip
+                    content="We suggest to try to fix the escaping of your log lines first. This is an experimental feature, your logs might not be correctly escaped."
+                    placement="right"
+                  >
+                    <Button variant="secondary" size="sm" onClick={this.onEscapeNewlines}>
+                      <span>{forceEscape ? 'Remove escaping' : 'Escape newlines'}&nbsp;</span>
+                      <Icon name="exclamation-triangle" className="muted" size="sm" />
+                    </Button>
+                  </Tooltip>
+                ),
+              },
+            ]}
+          />
+        )}
+
         <LogRows
           logRows={logRows}
           deduplicatedRows={dedupedRows}
@@ -357,6 +399,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
           showContextToggle={showContextToggle}
           showLabels={showLabels}
           showTime={showTime}
+          forceEscape={forceEscape}
           wrapLogMessage={wrapLogMessage}
           timeZone={timeZone}
           getFieldLinks={getFieldLinks}

@@ -223,3 +223,6 @@ export const checkLogsError = (logRow: LogRowModel): { hasError: boolean; errorM
     hasError: false,
   };
 };
+
+export const escapeUnescapedString = (string: string) =>
+  string.replace(/\\n|\\t|\\r/g, (match: string) => (match.slice(1) === 't' ? '\t' : '\n'));
