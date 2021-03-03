@@ -12,7 +12,7 @@ import { LibraryPanelsView } from '../LibraryPanelsView/LibraryPanelsView';
 import { PanelQueriesChangedEvent } from 'app/types/events';
 import { LibraryPanelDTO } from '../../types';
 import { toPanelModelLibraryPanel } from '../../utils';
-import { connect, MapDispatchToProps } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { changePanelPlugin } from 'app/features/dashboard/state/actions';
 
 interface Props {
@@ -20,18 +20,11 @@ interface Props {
   dashboard: DashboardModel;
   onChange: () => void;
 }
-interface DispatchProps {
-  changePanelPlugin: typeof changePanelPlugin;
-}
 
-export const PanelLibraryOptionsGroupUnconnected: React.FC<Props & DispatchProps> = ({
-  panel,
-  dashboard,
-  onChange,
-  changePanelPlugin,
-}) => {
+export const PanelLibraryOptionsGroup: React.FC<Props> = ({ panel, dashboard, onChange }) => {
   const styles = useStyles(getStyles);
   const [showingAddPanelModal, setShowingAddPanelModal] = useState(false);
+  const dispatch = useDispatch();
 
   const useLibraryPanel = (panelInfo: LibraryPanelDTO) => {
     const panelTypeChanged = panel.type !== panelInfo.model.type;
@@ -42,7 +35,7 @@ export const PanelLibraryOptionsGroupUnconnected: React.FC<Props & DispatchProps
     });
 
     if (panelTypeChanged) {
-      changePanelPlugin(panel, panelInfo.model.type);
+      dispatch(changePanelPlugin(panel, panelInfo.model.type));
     }
 
     // Though the panel model has changed, since we're switching to an existing
@@ -111,7 +104,3 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
   };
 });
-
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, Props> = { changePanelPlugin };
-
-export const PanelLibraryOptionsGroup = connect(undefined, mapDispatchToProps)(PanelLibraryOptionsGroupUnconnected);
