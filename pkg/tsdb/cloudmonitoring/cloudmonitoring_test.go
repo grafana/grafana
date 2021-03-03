@@ -22,27 +22,8 @@ func TestCloudMonitoring(t *testing.T) {
 	executor := &Executor{}
 
 	t.Run("Parse migrated queries from frontend and build Google Cloud Monitoring API queries", func(t *testing.T) {
-		fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
-		tsdbQuery := plugins.DataQuery{
-			TimeRange: &plugins.DataTimeRange{
-				From: fmt.Sprintf("%v", fromStart.Unix()*1000),
-				To:   fmt.Sprintf("%v", fromStart.Add(34*time.Minute).Unix()*1000),
-			},
-			Queries: []plugins.DataSubQuery{
-				{
-					Model: simplejson.NewFromAny(map[string]interface{}{
-						"metricType": "a/metric/type",
-						"view":       "FULL",
-						"aliasBy":    "testalias",
-						"type":       "timeSeriesQuery",
-					}),
-					RefID: "A",
-				},
-			},
-		}
-
 		t.Run("and query has no aggregation set", func(t *testing.T) {
-			qes, err := executor.buildQueryExecutors(tsdbQuery)
+			qes, err := executor.buildQueryExecutors(getBaseQuery())
 			require.NoError(t, err)
 			queries := getCloudMonitoringQueriesFromInterface(t, qes)
 
@@ -77,12 +58,13 @@ func TestCloudMonitoring(t *testing.T) {
 		})
 
 		t.Run("and query has filters", func(t *testing.T) {
-			tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
+			query := getBaseQuery()
+			query.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
 				"metricType": "a/metric/type",
 				"filters":    []interface{}{"key", "=", "value", "AND", "key2", "=", "value2", "AND", "resource.type", "=", "another/resource/type"},
 			})
 
-			qes, err := executor.buildQueryExecutors(tsdbQuery)
+			qes, err := executor.buildQueryExecutors(query)
 			require.NoError(t, err)
 			queries := getCloudMonitoringQueriesFromInterface(t, qes)
 			assert.Equal(t, 1, len(queries))
@@ -107,6 +89,7 @@ func TestCloudMonitoring(t *testing.T) {
 
 		t.Run("and alignmentPeriod is set to grafana-auto", func(t *testing.T) {
 			t.Run("and IntervalMS is larger than 60000", func(t *testing.T) {
+				tsdbQuery := getBaseQuery()
 				tsdbQuery.Queries[0].IntervalMS = 1000000
 				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
 					"alignmentPeriod": "grafana-auto",
@@ -134,6 +117,7 @@ func TestCloudMonitoring(t *testing.T) {
 				verifyDeepLink(t, dl, expectedTimeSelection, expectedTimeSeriesFilter)
 			})
 			t.Run("and IntervalMS is less than 60000", func(t *testing.T) {
+				tsdbQuery := getBaseQuery()
 				tsdbQuery.Queries[0].IntervalMS = 30000
 				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
 					"alignmentPeriod": "grafana-auto",
@@ -164,6 +148,7 @@ func TestCloudMonitoring(t *testing.T) {
 
 		t.Run("and alignmentPeriod is set to cloud-monitoring-auto", func(t *testing.T) { // legacy
 			t.Run("and range is two hours", func(t *testing.T) {
+				tsdbQuery := getBaseQuery()
 				tsdbQuery.TimeRange.From = "1538033322461"
 				tsdbQuery.TimeRange.To = "1538040522461"
 				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
@@ -178,6 +163,7 @@ func TestCloudMonitoring(t *testing.T) {
 			})
 
 			t.Run("and range is 22 hours", func(t *testing.T) {
+				tsdbQuery := getBaseQuery()
 				tsdbQuery.TimeRange.From = "1538034524922"
 				tsdbQuery.TimeRange.To = "1538113724922"
 				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
@@ -192,6 +178,7 @@ func TestCloudMonitoring(t *testing.T) {
 			})
 
 			t.Run("and range is 23 hours", func(t *testing.T) {
+				tsdbQuery := getBaseQuery()
 				tsdbQuery.TimeRange.From = "1538034567985"
 				tsdbQuery.TimeRange.To = "1538117367985"
 				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
@@ -206,6 +193,7 @@ func TestCloudMonitoring(t *testing.T) {
 			})
 
 			t.Run("and range is 7 days", func(t *testing.T) {
+				tsdbQuery := getBaseQuery()
 				tsdbQuery.TimeRange.From = "1538036324073"
 				tsdbQuery.TimeRange.To = "1538641124073"
 				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
@@ -222,6 +210,7 @@ func TestCloudMonitoring(t *testing.T) {
 
 		t.Run("and alignmentPeriod is set to stackdriver-auto", func(t *testing.T) { // legacy
 			t.Run("and range is two hours", func(t *testing.T) {
+				tsdbQuery := getBaseQuery()
 				tsdbQuery.TimeRange.From = "1538033322461"
 				tsdbQuery.TimeRange.To = "1538040522461"
 				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
@@ -251,6 +240,7 @@ func TestCloudMonitoring(t *testing.T) {
 			})
 
 			t.Run("and range is 22 hours", func(t *testing.T) {
+				tsdbQuery := getBaseQuery()
 				tsdbQuery.TimeRange.From = "1538034524922"
 				tsdbQuery.TimeRange.To = "1538113724922"
 				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
@@ -280,6 +270,7 @@ func TestCloudMonitoring(t *testing.T) {
 			})
 
 			t.Run("and range is 23 hours", func(t *testing.T) {
+				tsdbQuery := getBaseQuery()
 				tsdbQuery.TimeRange.From = "1538034567985"
 				tsdbQuery.TimeRange.To = "1538117367985"
 				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
@@ -309,6 +300,7 @@ func TestCloudMonitoring(t *testing.T) {
 			})
 
 			t.Run("and range is 7 days", func(t *testing.T) {
+				tsdbQuery := getBaseQuery()
 				tsdbQuery.TimeRange.From = "1538036324073"
 				tsdbQuery.TimeRange.To = "1538641124073"
 				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
@@ -340,6 +332,7 @@ func TestCloudMonitoring(t *testing.T) {
 
 		t.Run("and alignmentPeriod is set in frontend", func(t *testing.T) {
 			t.Run("and alignment period is within accepted range", func(t *testing.T) {
+				tsdbQuery := getBaseQuery()
 				tsdbQuery.Queries[0].IntervalMS = 1000
 				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
 					"alignmentPeriod": "+600s",
@@ -368,6 +361,7 @@ func TestCloudMonitoring(t *testing.T) {
 		})
 
 		t.Run("and query has aggregation mean set", func(t *testing.T) {
+			tsdbQuery := getBaseQuery()
 			tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
 				"metricType":         "a/metric/type",
 				"crossSeriesReducer": "REDUCE_SUM",
@@ -410,6 +404,7 @@ func TestCloudMonitoring(t *testing.T) {
 		})
 
 		t.Run("and query has group bys", func(t *testing.T) {
+			tsdbQuery := getBaseQuery()
 			tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
 				"metricType":         "a/metric/type",
 				"crossSeriesReducer": "REDUCE_NONE",
@@ -642,7 +637,7 @@ func TestCloudMonitoring(t *testing.T) {
 			assert.Equal(t, 9.7730520330369, frames[0].Fields[1].At(2))
 
 			labels := res.Meta.Get("labels").Interface().(map[string][]string)
-			require.Nil(t, labels)
+			require.NotNil(t, labels)
 			assert.Equal(t, 3, len(labels["metric.label.instance_name"]))
 			assert.Contains(t, labels["metric.label.instance_name"], "collector-asia-east-1")
 			assert.Contains(t, labels["metric.label.instance_name"], "collector-europe-west-1")
@@ -1161,4 +1156,26 @@ func verifyDeepLink(t *testing.T, dl string, expectedTimeSelection map[string]st
 			assert.Equal(t, v, s)
 		}
 	}
+}
+
+func getBaseQuery() plugins.DataQuery {
+	fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
+	query := plugins.DataQuery{
+		TimeRange: &plugins.DataTimeRange{
+			From: fmt.Sprintf("%v", fromStart.Unix()*1000),
+			To:   fmt.Sprintf("%v", fromStart.Add(34*time.Minute).Unix()*1000),
+		},
+		Queries: []plugins.DataSubQuery{
+			{
+				Model: simplejson.NewFromAny(map[string]interface{}{
+					"metricType": "a/metric/type",
+					"view":       "FULL",
+					"aliasBy":    "testalias",
+					"type":       "timeSeriesQuery",
+				}),
+				RefID: "A",
+			},
+		},
+	}
+	return query
 }
