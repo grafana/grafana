@@ -27,10 +27,12 @@ describe('AddAlertRuleModal', () => {
     threshold: '1 %',
     lastNotified: '',
     disabled: false,
+    expr: '',
     rawValues: {
       channels: [],
       filters: [],
       disabled: false,
+      expr: '',
       template: {
         name: 'pmm_mongodb_connections_memory_usage',
         summary: 'Memory used by MongoDB connections',
@@ -109,5 +111,15 @@ describe('AddAlertRuleModal', () => {
     const button = wrapper.find(dataQa('add-alert-rule-modal-add-button')).find('button');
 
     expect(button.props().disabled).toBe(true);
+  });
+
+  it('should disable template edition', () => {
+    const wrapper = mount(<AddAlertRuleModal setVisible={jest.fn()} isVisible alertRule={initialValues} />);
+    expect(
+      wrapper
+        .find(dataQa('template-select-input'))
+        .first()
+        .prop('disabled')
+    ).toBeTruthy();
   });
 });
