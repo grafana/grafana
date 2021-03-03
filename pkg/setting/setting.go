@@ -472,11 +472,12 @@ func (cfg *Cfg) readGrafanaEnvironmentMetrics() error {
 }
 
 func (cfg *Cfg) readAnnotationSettings() {
+	section := cfg.Raw.Section("annotations")
+	cfg.AnnotationCleanupJobBatchSize = section.Key("cleanupjob_batchsize").MustInt64(100)
+
 	dashboardAnnotation := cfg.Raw.Section("annotations.dashboard")
 	apiIAnnotation := cfg.Raw.Section("annotations.api")
 	alertingSection := cfg.Raw.Section("alerting")
-	section := cfg.Raw.Section("annotations")
-	cleanupJobBatchSize := section.Key("cleanupjob_batchsize").MustInt64(100)
 
 	var newAnnotationCleanupSettings = func(section *ini.Section, maxAgeField string) AnnotationCleanupSettings {
 		maxAge, err := gtime.ParseDuration(section.Key(maxAgeField).MustString(""))
@@ -493,7 +494,6 @@ func (cfg *Cfg) readAnnotationSettings() {
 	cfg.AlertingAnnotationCleanupSetting = newAnnotationCleanupSettings(alertingSection, "max_annotation_age")
 	cfg.DashboardAnnotationCleanupSettings = newAnnotationCleanupSettings(dashboardAnnotation, "max_age")
 	cfg.APIAnnotationCleanupSettings = newAnnotationCleanupSettings(apiIAnnotation, "max_age")
-	cfg.AnnotationCleanupJobBatchSize = cleanupJobBatchSize
 }
 
 func (cfg *Cfg) readExpressionsSettings() {
