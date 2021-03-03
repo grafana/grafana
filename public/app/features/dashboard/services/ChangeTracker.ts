@@ -29,7 +29,7 @@ export class ChangeTracker {
 
     const history = locationService.getHistory();
 
-    const blockUnsub = history.block((location, tx) => {
+    const blockUnsub = history.block((location) => {
       if (originalPath === location.pathname) {
         return;
       }
@@ -64,7 +64,6 @@ export class ChangeTracker {
 
     const historyListenUnsub = history.listen((location) => {
       if (originalPath !== location.pathname) {
-        console.log('history.block UNSUB');
         blockUnsub();
         historyListenUnsub();
         savedEventUnsub.unsubscribe();
