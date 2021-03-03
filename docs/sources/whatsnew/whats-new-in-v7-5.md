@@ -42,7 +42,7 @@ Note: This is not going to affect provisioned data sources or already created da
 
 When searching for text in Elasticsearch logs, matching words in the log line returned by the query are now highlighted.
 
-![Elastic logs highlighting](/img/docs/elastic/elastic-word-highlighting-7-5.png)
+![Elastic logs highlighting](/img/docs/elasticsearch/elastic-word-highlighting-7-5.png)
 
 ### Better format definition for trace data
 
