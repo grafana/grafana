@@ -36,7 +36,7 @@ A new Loki logs browser lets you construct the queries step by step: you choose 
 ### Changed default HTTP method for new Prometheus data sources
 
 For new Prometheus data sources, we have changed the default HTTP method to POST. POST allows for much larger query bodies than using the GET method. This is necessary when sending queries from graphs with a lot of targets, for example, many hosts in a dashboard variable. The POST method also makes the Query Inspector data easier to read since the query is in plain text whereas the GET query is URL encoded.
-Note: This is not going to affect provisioned data sources or already created data sources.
+>**Note:** This is not going to affect provisioned data sources or already created data sources.
 
 ### Word highlighting for Elasticsearch
 
