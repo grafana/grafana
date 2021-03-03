@@ -319,7 +319,7 @@ Grafana alerting is supported for Application Insights. This is not Azure Alerts
 
 As of Grafana 7.1, you can select more than one group by dimension.
 
-### Formatting legend keys with aliases for Application Insights
+### Format legend keys with aliases for Application Insights
 
 The default legend formatting is:
 
