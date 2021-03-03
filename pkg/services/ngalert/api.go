@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/expr/translate"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -44,6 +45,50 @@ func (api *apiImpl) registerAPIEndpoints() {
 
 	api.RouteRegister.Group("/api/alert-instances", func(alertInstances routing.RouteRegister) {
 		alertInstances.Get("", middleware.ReqSignedIn, routing.Wrap(api.listAlertInstancesEndpoint))
+	})
+
+	if api.Cfg.Env == setting.Dev {
+		api.RouteRegister.Group("/api/alert-definitions", func(alertDefinitions routing.RouteRegister) {
+			alertDefinitions.Post("/evalOld", middleware.ReqSignedIn, routing.Wrap(api.conditionEvalOldEndpoint))
+		})
+	}
+}
+
+// conditionEvalEndpoint handles POST /api/alert-definitions/evalOld.
+func (api *apiImpl) conditionEvalOldEndpoint(c *models.ReqContext) response.Response {
+	b, err := c.Req.Body().Bytes()
+	if err != nil {
+		response.Error(400, "failed to read body", err)
+	}
+	evalCond, err := translate.DashboardAlertConditions(b, c.OrgId)
+	if err != nil {
+		return response.Error(400, "Failed to translate alert conditions", err)
+	}
+
+	if err := api.validateCondition(*evalCond, c.SignedInUser, c.SkipCache); err != nil {
+		return response.Error(400, "invalid condition", err)
+	}
+
+	//now := cmd.Now
+	//if now.IsZero() {
+	//now := timeNow()
+	//}
+
+	evaluator := eval.Evaluator{Cfg: api.Cfg}
+	evalResults, err := evaluator.ConditionEval(evalCond, timeNow())
+	if err != nil {
+		return response.Error(400, "Failed to evaluate conditions", err)
+	}
+
+	frame := evalResults.AsDataFrame()
+	df := tsdb.NewDecodedDataFrames([]*data.Frame{&frame})
+	instances, err := df.Encoded()
+	if err != nil {
+		return response.Error(400, "Failed to encode result dataframes", err)
+	}
+
+	return response.JSON(200, util.DynMap{
+		"instances": instances,
 	})
 }
 
