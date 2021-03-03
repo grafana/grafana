@@ -313,7 +313,7 @@ Grafana alerting is supported for Application Insights. This is not Azure Alerts
 
 ## Query the Application Insights Service
 
-> In an upcoming major release, "Application Insights" will be deprecated in favor of Metrics queries.
+> In an upcoming major release, "Application Insights" will be made read-only and deprecated in favor of Metrics queries.
 
 {{< docs-imagebox img="/img/docs/azuremonitor/insights_metrics_multi-dim.png" class="docs-image--no-shadow" caption="Application Insights Query Editor" >}}
 
@@ -377,7 +377,7 @@ Grafana alerting is supported for Application Insights. This is not Azure Alerts
 
 ## Query the Application Insights Analytics service
 
-> In an upcoming major release, "Insights Analytics" will be deprecated in favor of Logs queries.
+> In an upcoming major release, "Insights Analytics" will be made read-only and deprecated in favor of Logs queries.
 
 If you change the service type to **Insights Analytics**, then a similar editor to the Log Analytics service is available. This service also uses the Kusto language, so the instructions for querying data are identical to [querying the log analytics service]({{< relref "#querying-the-azure-log-analytics-service" >}}), except that you query Application Insights Analytics data instead.
 
@@ -416,14 +416,8 @@ datasources:
 
 ## Deprecating Application Insights and Insights Analytics
 
-TODO:
+Within the Azure Monitor data source, Application Insights and Insights Analytics are two ways to query the same Azure Application Insights data. Additionally, that same data can also be queried from Metrics. In Grafana 8.0 the Logs query type will be improved to allow querying of Application Insights data using KQL.
 
-In 8.0, Application Insights and Application Insights will be deprecated and made read-only, and users encouraged to migrate to Metrics and Logs.
+In Grafana 8.0, Application Insights and Insights Analytics will be deprecated and made read-only in favor of querying this data through Metrics and Logs. Existing queries will continue to work, but they may not be edited.
 
-Application Insights can be migrated manually to Metrics now before 8.0
-
-- namespace "microsoft.insights" or something like that
-
-Insights Analytics cannot be migrated right now - will be able to in 8.0
-
-API keys will not be supported for Metrics/Logs, will need to create an Application(?) and use Client ID/Secret.
+To prepare for this upcoming change, Application Insights queries can now be made in Metrics instead, under the "microsoft.insights/components" Namespace. Insights Analytics queries cannot yet be made within Logs with KQL.
