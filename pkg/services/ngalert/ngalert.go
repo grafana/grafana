@@ -59,7 +59,12 @@ func (ng *AlertNG) Init() error {
 	}
 	ng.schedule = newScheduler(schedCfg)
 
-	api := apiImpl{ngalert: ng, store: store}
+	api := apiImpl{
+		Cfg:             ng.Cfg,
+		DatasourceCache: ng.DatasourceCache,
+		RouteRegister:   ng.RouteRegister,
+		schedule:        ng.schedule,
+		store:           store}
 	api.registerAPIEndpoints()
 
 	return nil

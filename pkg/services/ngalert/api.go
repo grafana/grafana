@@ -9,18 +9,23 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 type apiImpl struct {
-	ngalert *AlertNG
-	store   store
+	Cfg             *setting.Cfg             `inject:""`
+	DatasourceCache datasources.CacheService `inject:""`
+	RouteRegister   routing.RouteRegister    `inject:""`
+	schedule        scheduleService
+	store           store
 }
 
 func (api *apiImpl) registerAPIEndpoints() {
-	api.ngalert.RouteRegister.Group("/api/alert-definitions", func(alertDefinitions routing.RouteRegister) {
+	api.RouteRegister.Group("/api/alert-definitions", func(alertDefinitions routing.RouteRegister) {
 		alertDefinitions.Get("", middleware.ReqSignedIn, routing.Wrap(api.listAlertDefinitions))
 		alertDefinitions.Post("/eval/:alertDefinitionUID", middleware.ReqSignedIn, api.validateOrgAlertDefinition, routing.Wrap(api.alertDefinitionEvalEndpoint))
 		alertDefinitions.Post("/eval", middleware.ReqSignedIn, binding.Bind(evalAlertConditionCommand{}), routing.Wrap(api.conditionEvalEndpoint))
@@ -32,12 +37,12 @@ func (api *apiImpl) registerAPIEndpoints() {
 		alertDefinitions.Post("/unpause", middleware.ReqEditorRole, binding.Bind(updateAlertDefinitionPausedCommand{}), routing.Wrap(api.alertDefinitionUnpauseEndpoint))
 	})
 
-	api.ngalert.RouteRegister.Group("/api/ngalert/", func(schedulerRouter routing.RouteRegister) {
+	api.RouteRegister.Group("/api/ngalert/", func(schedulerRouter routing.RouteRegister) {
 		schedulerRouter.Post("/pause", routing.Wrap(api.pauseScheduler))
 		schedulerRouter.Post("/unpause", routing.Wrap(api.unpauseScheduler))
 	}, middleware.ReqOrgAdmin)
 
-	api.ngalert.RouteRegister.Group("/api/alert-instances", func(alertInstances routing.RouteRegister) {
+	api.RouteRegister.Group("/api/alert-instances", func(alertInstances routing.RouteRegister) {
 		alertInstances.Get("", middleware.ReqSignedIn, routing.Wrap(api.listAlertInstancesEndpoint))
 	})
 }
@@ -58,7 +63,7 @@ func (api *apiImpl) conditionEvalEndpoint(c *models.ReqContext, cmd evalAlertCon
 		now = timeNow()
 	}
 
-	evaluator := eval.Evaluator{Cfg: api.ngalert.Cfg}
+	evaluator := eval.Evaluator{Cfg: api.Cfg}
 	evalResults, err := evaluator.ConditionEval(&evalCond, timeNow())
 	if err != nil {
 		return response.Error(400, "Failed to evaluate conditions", err)
@@ -89,7 +94,7 @@ func (api *apiImpl) alertDefinitionEvalEndpoint(c *models.ReqContext) response.R
 		return response.Error(400, "invalid condition", err)
 	}
 
-	evaluator := eval.Evaluator{Cfg: api.ngalert.Cfg}
+	evaluator := eval.Evaluator{Cfg: api.Cfg}
 	evalResults, err := evaluator.ConditionEval(condition, timeNow())
 	if err != nil {
 		return response.Error(400, "Failed to evaluate alert", err)
@@ -195,7 +200,7 @@ func (api *apiImpl) listAlertDefinitions(c *models.ReqContext) response.Response
 }
 
 func (api *apiImpl) pauseScheduler() response.Response {
-	err := api.ngalert.schedule.Pause()
+	err := api.schedule.Pause()
 	if err != nil {
 		return response.Error(500, "Failed to pause scheduler", err)
 	}
@@ -203,7 +208,7 @@ func (api *apiImpl) pauseScheduler() response.Response {
 }
 
 func (api *apiImpl) unpauseScheduler() response.Response {
-	err := api.ngalert.schedule.Unpause()
+	err := api.schedule.Unpause()
 	if err != nil {
 		return response.Error(500, "Failed to unpause scheduler", err)
 	}
