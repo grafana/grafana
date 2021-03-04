@@ -327,6 +327,8 @@ types of template variables.
 | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
 | `workspaces()`                                     | Returns a list of workspaces for the default subscription.                                             |
 | `workspaces(12345678-aaaa-bbbb-cccc-123456789aaa)` | Returns a list of workspaces for the specified subscription (the parameter can be quoted or unquoted). |
+| `resources()`                                      | Returns a list of resources for the default subscription.                                              |
+| `resources(12345678-aaaa-bbbb-cccc-123456789aaa)`  | Returns a list of resources for the specified subscription (the parameter can be quoted or unquoted).  |
 
 Example variable queries:
 
@@ -337,6 +339,9 @@ Example variable queries:
 | `workspaces()`                                                                          | Returns a list of workspaces for default subscription     |
 | `workspaces("12345678-aaaa-bbbb-cccc-123456789aaa")`                                    | Returns a list of workspaces for a specified subscription |
 | `workspaces("$subscription")`                                                           | With template variable for the subscription parameter     |
+| `resources()`                                                                           | Returns a list of resources for default subscription      |
+| `resources("12345678-aaaa-bbbb-cccc-123456789aaa")`                                     | Returns a list of resources for a specified subscription  |
+| `resources("$subscription")`                                                            | With template variable for the subscription parameter     |
 | `workspace("myWorkspace").Heartbeat \| distinct Computer`                               | Returns a list of Virtual Machines                        |
 | `workspace("$workspace").Heartbeat \| distinct Computer`                                | Returns a list of Virtual Machines with template variable |
 | `workspace("$workspace").Perf \| distinct ObjectName`                                   | Returns a list of objects from the Perf table             |
