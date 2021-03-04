@@ -133,12 +133,8 @@ const rowLimit = 1000000
 // Query is the main function for the SqlQueryEndpoint
 func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 	queryContext plugins.DataQuery) (plugins.DataResponse, error) {
-	result := plugins.DataResponse{
-		Results: make(map[string]plugins.DataQueryResult),
-	}
-
+	timeRange := *queryContext.TimeRange
 	ch := make(chan plugins.DataQueryResult, len(queryContext.Queries))
-
 	var wg sync.WaitGroup
 	// Execute each query in a goroutine and wait for them to finish afterwards
 	for _, query := range queryContext.Queries {
@@ -162,7 +158,7 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 			}
 
 			// global substitutions
-			rawSQL, err := Interpolate(query, *queryContext.TimeRange, rawSQL)
+			rawSQL, err := Interpolate(query, timeRange, rawSQL)
 			if err != nil {
 				queryResult.Error = err
 				ch <- queryResult
@@ -170,7 +166,7 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 			}
 
 			// datasource specific substitutions
-			rawSQL, err = e.macroEngine.Interpolate(query, *queryContext.TimeRange, rawSQL)
+			rawSQL, err = e.macroEngine.Interpolate(query, timeRange, rawSQL)
 			if err != nil {
 				queryResult.Error = err
 				ch <- queryResult
@@ -219,6 +215,9 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 
 	// Read results from channels
 	close(ch)
+	result := plugins.DataResponse{
+		Results: make(map[string]plugins.DataQueryResult),
+	}
 	for queryResult := range ch {
 		result.Results[queryResult.RefID] = queryResult
 	}
