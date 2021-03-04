@@ -14,6 +14,7 @@ export interface MenuGroupProps extends Partial<MenuItemsGroup> {
   children?: React.ReactNode;
 }
 
+/** @internal */
 export const MenuGroup: React.FC<MenuGroupProps> = ({ label, children }) => {
   const styles = useStyles(getStyles);
 
