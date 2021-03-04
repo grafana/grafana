@@ -203,6 +203,47 @@ describe('FieldDisplay', () => {
       expect(result[3].display.text).toEqual(mappedValue);
     });
   });
+
+  describe('auto option', () => {
+    it('No string fields', () => {
+      const options = createDisplayOptions({
+        data: [
+          toDataFrame({
+            name: 'Series Name',
+            fields: [
+              { name: 'A', values: [10] },
+              { name: 'B', values: [20] },
+            ],
+          }),
+        ],
+      });
+
+      const result = getFieldDisplayValues(options);
+      expect(result[0].display.title).toEqual('A');
+      expect(result[0].display.text).toEqual('10');
+      expect(result[1].display.title).toEqual('B');
+      expect(result[1].display.text).toEqual('20');
+    });
+
+    it('String field', () => {
+      const options = createDisplayOptions({
+        data: [
+          toDataFrame({
+            fields: [
+              { name: 'Name', values: ['A', 'B'] },
+              { name: 'Value', values: [10, 20] },
+            ],
+          }),
+        ],
+      });
+
+      const result = getFieldDisplayValues(options);
+      expect(result[0].display.title).toEqual('A');
+      expect(result[0].display.text).toEqual('10');
+      expect(result[1].display.title).toEqual('B');
+      expect(result[1].display.text).toEqual('20');
+    });
+  });
 });
 
 function createEmptyDisplayOptions(extend = {}): GetFieldDisplayValuesOptions {

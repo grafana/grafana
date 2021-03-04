@@ -22,6 +22,7 @@ import { ScopedVars } from '../types/ScopedVars';
 import { getTimeField } from '../dataframe/processDataFrame';
 import { getFieldMatcher } from '../transformations';
 import { FieldMatcherID } from '../transformations/matchers/ids';
+import { getFieldDisplayName } from './fieldState';
 
 /**
  * Options for how to turn DataFrames into an array of display values
@@ -104,136 +105,134 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
         }
   );
 
-  if (options.data) {
-    // Field overrides are applied already
-    const data = options.data;
-    let hitLimit = false;
-    const limit = reduceOptions.limit ? reduceOptions.limit : DEFAULT_FIELD_DISPLAY_VALUES_LIMIT;
-    const scopedVars: ScopedVars = {};
-    const defaultDisplayName = getTitleTemplate(calcs);
+  const data = options.data ?? [];
+  const limit = reduceOptions.limit ? reduceOptions.limit : DEFAULT_FIELD_DISPLAY_VALUES_LIMIT;
+  const scopedVars: ScopedVars = {};
+  const defaultDisplayName = getTitleTemplate(calcs);
 
-    for (let s = 0; s < data.length && !hitLimit; s++) {
-      const series = data[s]; // Name is already set
+  let hitLimit = false;
 
-      const { timeField } = getTimeField(series);
-      const view = new DataFrameView(series);
+  for (let s = 0; s < data.length && !hitLimit; s++) {
+    const dataFrame = data[s]; // Name is already set
 
-      for (let i = 0; i < series.fields.length && !hitLimit; i++) {
-        const field = series.fields[i];
-        const fieldLinksSupplier = field.getLinks;
+    const { timeField } = getTimeField(dataFrame);
+    const view = new DataFrameView(dataFrame);
 
-        // To filter out time field, need an option for this
-        if (!fieldMatcher(field, series, data)) {
-          continue;
-        }
+    for (let i = 0; i < dataFrame.fields.length && !hitLimit; i++) {
+      const field = dataFrame.fields[i];
+      const fieldLinksSupplier = field.getLinks;
 
-        let config = field.config; // already set by the prepare task
+      // To filter out time field, need an option for this
+      if (!fieldMatcher(field, dataFrame, data)) {
+        continue;
+      }
 
-        if (field.state?.range) {
-          // Us the global min/max values
-          config = {
-            ...config,
-            ...field.state?.range,
-          };
-        }
+      let config = field.config; // already set by the prepare task
 
-        const displayName = field.config.displayName ?? defaultDisplayName;
+      if (field.state?.range) {
+        // Us the global min/max values
+        config = {
+          ...config,
+          ...field.state?.range,
+        };
+      }
 
-        const display =
-          field.display ??
-          getDisplayProcessor({
-            field,
-            theme: options.theme,
-            timeZone,
-          });
+      const displayName = getFieldDisplayName(field, dataFrame, data);
 
-        // Show all rows
-        if (reduceOptions.values) {
-          const usesCellValues = displayName.indexOf(VAR_CELL_PREFIX) >= 0;
+      const display =
+        field.display ??
+        getDisplayProcessor({
+          field,
+          theme: options.theme,
+          timeZone,
+        });
 
-          for (let j = 0; j < field.values.length; j++) {
-            // Add all the row variables
-            if (usesCellValues) {
-              for (let k = 0; k < series.fields.length; k++) {
-                const f = series.fields[k];
-                const v = f.values.get(j);
-                scopedVars[VAR_CELL_PREFIX + k] = {
-                  value: v,
-                  text: toString(v),
-                };
-              }
-            }
+      // Show all rows
+      if (reduceOptions.values) {
+        const usesCellValues = displayName.indexOf(VAR_CELL_PREFIX) >= 0;
 
-            const displayValue = display(field.values.get(j));
-            displayValue.title = replaceVariables(displayName, {
-              ...field.state?.scopedVars, // series and field scoped vars
-              ...scopedVars,
-            });
-
-            values.push({
-              name: '',
-              field: config,
-              display: displayValue,
-              view,
-              colIndex: i,
-              rowIndex: j,
-              getLinks: fieldLinksSupplier
-                ? () =>
-                    fieldLinksSupplier({
-                      valueRowIndex: j,
-                    })
-                : () => [],
-              hasLinks: hasLinks(field),
-            });
-
-            if (values.length >= limit) {
-              hitLimit = true;
-              break;
-            }
-          }
-        } else {
-          const results = reduceField({
-            field,
-            reducers: calcs, // The stats to calculate
-          });
-
-          for (const calc of calcs) {
-            scopedVars[VAR_CALC] = { value: calc, text: calc };
-            const displayValue = display(results[calc]);
-            displayValue.title = replaceVariables(displayName, {
-              ...field.state?.scopedVars, // series and field scoped vars
-              ...scopedVars,
-            });
-
-            let sparkline: FieldSparkline | undefined = undefined;
-            if (options.sparkline) {
-              sparkline = {
-                y: series.fields[i],
-                x: timeField,
+        for (let j = 0; j < field.values.length; j++) {
+          // Add all the row variables
+          if (usesCellValues) {
+            for (let k = 0; k < series.fields.length; k++) {
+              const f = series.fields[k];
+              const v = f.values.get(j);
+              scopedVars[VAR_CELL_PREFIX + k] = {
+                value: v,
+                text: toString(v),
               };
-              if (calc === ReducerID.last) {
-                sparkline.highlightIndex = sparkline.y.values.length - 1;
-              } else if (calc === ReducerID.first) {
-                sparkline.highlightIndex = 0;
-              }
             }
-
-            values.push({
-              name: calc,
-              field: config,
-              display: displayValue,
-              sparkline,
-              view,
-              colIndex: i,
-              getLinks: fieldLinksSupplier
-                ? () =>
-                    fieldLinksSupplier({
-                      calculatedValue: displayValue,
-                    })
-                : () => [],
-              hasLinks: hasLinks(field),
-            });
           }
+
+          const displayValue = display(field.values.get(j));
+          displayValue.title = replaceVariables(displayName, {
+            ...field.state?.scopedVars, // series and field scoped vars
+            ...scopedVars,
+          });
+
+          values.push({
+            name: '',
+            field: config,
+            display: displayValue,
+            view,
+            colIndex: i,
+            rowIndex: j,
+            getLinks: fieldLinksSupplier
+              ? () =>
+                  fieldLinksSupplier({
+                    valueRowIndex: j,
+                  })
+              : () => [],
+            hasLinks: hasLinks(field),
+          });
+
+          if (values.length >= limit) {
+            hitLimit = true;
+            break;
+          }
+        }
+      } else {
+        const results = reduceField({
+          field,
+          reducers: calcs, // The stats to calculate
+        });
+
+        for (const calc of calcs) {
+          scopedVars[VAR_CALC] = { value: calc, text: calc };
+          const displayValue = display(results[calc]);
+          displayValue.title = replaceVariables(displayName, {
+            ...field.state?.scopedVars, // series and field scoped vars
+            ...scopedVars,
+          });
+
+          let sparkline: FieldSparkline | undefined = undefined;
+          if (options.sparkline) {
+            sparkline = {
+              y: series.fields[i],
+              x: timeField,
+            };
+            if (calc === ReducerID.last) {
+              sparkline.highlightIndex = sparkline.y.values.length - 1;
+            } else if (calc === ReducerID.first) {
+              sparkline.highlightIndex = 0;
+            }
+          }
+
+          values.push({
+            name: calc,
+            field: config,
+            display: displayValue,
+            sparkline,
+            view,
+            colIndex: i,
+            getLinks: fieldLinksSupplier
+              ? () =>
+                  fieldLinksSupplier({
+                    calculatedValue: displayValue,
+                  })
+              : () => [],
+            hasLinks: hasLinks(field),
+          });
         }
       }
     }
