@@ -1,4 +1,4 @@
-import React, { ChangeEvent, FC, FormEvent, useState } from 'react';
+import React, { ChangeEvent, FC, FormEvent, useEffect, useState } from 'react';
 import { EventsWithValidation, Icon, InlineFormLabel, LegacyForms, ValidationEvents } from '@grafana/ui';
 import { NewApiKey, OrgRole } from '../../types';
 import { rangeUtil } from '@grafana/data';
@@ -12,20 +12,21 @@ interface Props {
   onKeyAdded: (apiKey: NewApiKey) => void;
 }
 
+function isValidInterval(value: string): boolean {
+  if (!value) {
+    return true;
+  }
+  try {
+    rangeUtil.intervalToSeconds(value);
+    return true;
+  } catch {}
+  return false;
+}
+
 const timeRangeValidationEvents: ValidationEvents = {
   [EventsWithValidation.onBlur]: [
     {
-      rule: (value) => {
-        if (!value) {
-          return true;
-        }
-        try {
-          rangeUtil.intervalToSeconds(value);
-          return true;
-        } catch {
-          return false;
-        }
-      },
+      rule: isValidInterval,
       errorMessage: 'Not a valid duration',
     },
   ],
@@ -38,13 +39,18 @@ export const ApiKeysForm: FC<Props> = ({ show, onClose, onKeyAdded }) => {
   const [name, setName] = useState<string>('');
   const [role, setRole] = useState<OrgRole>(OrgRole.Viewer);
   const [secondsToLive, setSecondsToLive] = useState<string>('');
-  const onSubmit = (event: FormEvent) => {
-    event.preventDefault();
-    onKeyAdded({ name, role, secondsToLive });
+  useEffect(() => {
     setName('');
     setRole(OrgRole.Viewer);
     setSecondsToLive('');
-    onClose();
+  }, [show]);
+
+  const onSubmit = (event: FormEvent) => {
+    event.preventDefault();
+    if (isValidInterval(secondsToLive)) {
+      onKeyAdded({ name, role, secondsToLive });
+      onClose();
+    }
   };
   const onNameChange = (event: ChangeEvent<HTMLInputElement>) => {
     setName(event.currentTarget.value);
