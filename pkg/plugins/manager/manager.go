@@ -135,15 +135,18 @@ func (pm *PluginManager) Init() error {
 	}
 
 	for _, ds := range DataSources {
-		ds.InitFrontendPlugin()
+		staticRoutes := ds.InitFrontendPlugin()
+		StaticRoutes = append(StaticRoutes, staticRoutes...)
 	}
 
 	for _, app := range Apps {
-		app.InitApp(Panels, DataSources)
+		staticRoutes := app.InitApp(Panels, DataSources)
+		StaticRoutes = append(StaticRoutes, staticRoutes...)
 	}
 
 	if Renderer != nil {
-		Renderer.InitFrontendPlugin()
+		staticRoutes := Renderer.InitFrontendPlugin()
+		StaticRoutes = append(StaticRoutes, staticRoutes...)
 	}
 
 	for _, p := range Plugins {

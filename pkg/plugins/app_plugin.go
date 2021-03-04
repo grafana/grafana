@@ -77,8 +77,8 @@ func (app *AppPlugin) Load(decoder *json.Decoder, base *PluginBase, backendPlugi
 	return app, nil
 }
 
-func (app *AppPlugin) InitApp(panels map[string]*PanelPlugin, dataSources map[string]*DataSourcePlugin) {
-	app.InitFrontendPlugin()
+func (app *AppPlugin) InitApp(panels map[string]*PanelPlugin, dataSources map[string]*DataSourcePlugin) []*PluginStaticRoute {
+	staticRoutes := app.InitFrontendPlugin()
 
 	// check if we have child panels
 	for _, panel := range panels {
@@ -116,4 +116,6 @@ func (app *AppPlugin) InitApp(panels map[string]*PanelPlugin, dataSources map[st
 			app.DefaultNavUrl = setting.AppSubUrl + "/dashboard/db/" + include.Slug
 		}
 	}
+
+	return staticRoutes
 }
