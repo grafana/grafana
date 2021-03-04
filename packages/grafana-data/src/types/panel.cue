@@ -1,8 +1,5 @@
 package grafanaschema
 
-import fieldConfig "github.com/grafana/grafana/packages/grafana-data/src/types/fieldConfig:grafanaschema"
-
-
 PanelGridPos: {
     // Panel height.
     h: int > 0 | *9
@@ -16,7 +13,7 @@ PanelGridPos: {
     static?: bool
 }
 
-BasePanelModel: {
+#Panel: {
 	// The panel plugin type id. 
 	type: string | *"" // empty is actually invalid!
 
@@ -37,11 +34,11 @@ BasePanelModel: {
 	// Direction to repeat in if 'repeat' is set.
 	// "h" for horizontal, "v" for vertical.
 	repeatDirection: *"h" | "v"
-	// Panel targets - speciic values depend on the datasource
+	// Panel targets - specific values depend on the datasource
 	targets?: [...{}]
 
     // The values depend on panel type
     options: {}
 
-    fieldConfig: fieldConfig.FieldConfigSource // < also generic
+    fieldConfig: FieldConfigSource // < also generic
 }

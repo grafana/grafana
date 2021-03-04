@@ -11,9 +11,7 @@ import "cuelang.org/go/cue"
 var rt *cue.Runtime
 
 // A Family is the identifier for a group of related schemas that all specify a
-// single kind of object - e.g., a dashboard. Each Family
-// Each Family may contain many
-// schemas, subdivided into two basic types: versioned and legacy.
+// single kind of object - e.g., a dashboard.
 //
 // Versioned schemas are numbered using semver (disallowing v0, build or
 // prerelease - purely major, minor, patch). All schemas in a family with
@@ -43,17 +41,6 @@ func (s Seq) Validate() error {
 
 	// TODO semver-style thinking would entail that something can sit on v0
 	// through breaking changes
-}
-
-// A Resource represents a concrete configuration object - e.g., JSON
-// representing a dashboard.
-//
-// This type mostly exists to improve readability for users - having a type that
-// differentiates schema cue.Value from resource cue.Value is handy. It also
-// gives us a working type for a resource that can be reused across multiple
-// calls, so that re-parsing isn't necessary.
-type Resource struct {
-	Value cue.Value
 }
 
 // CueSchema represents a single, complete CUE-based schema that can perform
@@ -109,7 +96,7 @@ type VersionedCueSchema interface {
 	Next() VersionedCueSchema
 }
 
-// Validate checks the the provided Resource against all CueSchema known
+// Validate checks the provided Resource against all CueSchema known
 // to the Family, stopping as soon as one succeeds. The first schema
 // that successfully validates is returned.
 //
@@ -123,6 +110,17 @@ type VersionedCueSchema interface {
 // Additional CueSchema may be provided to check for validation.
 func (f *Family) Validate(r Resource, s ...CueSchema) (CueSchema, error) {
 
+}
+
+// A Resource represents a concrete configuration object - e.g., JSON
+// representing a dashboard.
+//
+// This type mostly exists to improve readability for users - having a type that
+// differentiates schema cue.Value from resource cue.Value is handy. It also
+// gives us a working type for a resource that can be reused across multiple
+// calls, so that re-parsing isn't necessary.
+type Resource struct {
+	Value cue.Value
 }
 
 // Indicates that an resource has indicated it is created from a schema version

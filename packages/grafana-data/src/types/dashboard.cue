@@ -1,5 +1,13 @@
 package grafanaschema
 
+// TODO it is really less than ideal that we have to define all the potentially
+// separable sub-objects (dashboard vs panel vs target vs fieldconfig) in the
+// same place, but i haven't yet figured out a way to maintain the most
+// important invariant - preserving and extending old versions as schema evolve
+// - without keeping them all declared in the same sequence Family and sequence.
+// It does seems plausible that there's a reasonable way.
+
+
 dashboardFamily: #SchemaFamily & {
 	seqs: [
 		[ // 0.0
@@ -96,7 +104,7 @@ dashboardFamily: #SchemaFamily & {
                     // Direction to repeat in if 'repeat' is set.
                     // "h" for horizontal, "v" for vertical.
                     repeatDirection: *"h" | "v"
-                    // Schema for panel targets is specified by datasource
+                    // TODO Schema for panel targets is specified by datasource
                     // plugins. We use a placeholder definition, which the Go
                     // schema loader either left open/as-is with the Base
                     // variant of the Dashboard and Panel families, or filled
@@ -106,7 +114,7 @@ dashboardFamily: #SchemaFamily & {
                     targets?: [...{}]
 
                     // The values depend on panel type
-                    options: {}
+                        options: {}
 
                     // TODO This references a type defined outside the Family
                     // decl. This probably isn't OK at all, because it means we
@@ -129,134 +137,4 @@ dashboardFamily: #SchemaFamily & {
 #Latest: {
     #Dashboard: dashboardFamily.latest.Dashboard
     #Panel: dashboardFamily.latest.Panel
-}
-
-#SchemaLineage: [{...}, ...{...}]
-#LastSchema: {
-    _p: #SchemaLineage
-    _p[len(_p)-1]
-}
-
-// TODO define structures for migrations
-
-#SchemaFamily: {
-    // TODO This encodes the idea that schemata are organized into a series of
-    // (backwards compatible) lineage sequences, with major and minor versions
-    // corresponding to their position in the series of arrays. (i.e. the
-    // first schema in the first lineage is 0.0.)
-    // 
-    // This approach can, and probably should, change. However, any approach 
-    // will need to maintain certain properties: 
-    //  - Specific versions of a schema can be extracted by querying the family
-    //    for with version number
-    //  - (Probably) individual schema do not internally define
-    //    version fields, but instead rely on this SchemaFamily meta-structure to do it
-	seqs: [#SchemaLineage, ...#SchemaLineage]
-	let lseq = seqs[len(seqs)-1]
-	latest: #LastSchema & { _p: lseq }
-
-    // TODO add migration structures, once defined
-}
-
-//  Every property is optional
-//  Plugins may extend this with additional  Something like series overrides
-FieldConfig: {
-	// The display value for this   This supports template variables blank is auto
-	displayName?: string
-
-	// This can be used by data sources that return and explicit naming structure for values and labels
-	// When this property is configured, this value is used rather than the default naming 
-	displayNameFromDS?: string
-
-	// Human readable field metadata
-	description?: string
-
-	// An explict path to the field in the   When the frame meta includes a path,
-	// This will default to `${metapath}/${name}
-	//
-	// When defined, this value can be used as an identifier within the datasource scope, and
-	// may be used to update the results
-	path?: string
-
-	// True if data source can write a value to the   Auth/authz are supported separately
-	writeable?: bool
-
-	// True if data source field supports ad-hoc filters
-	filterable?: bool
-
-	// Numeric Options
-	unit?: string
-
-	// Significant digits (for display)
-	decimals?: number | *null
-	min?:      number | null
-	max?:      number | null
-
-	// Alternative to empty string
-	noValue?: string
-
-	// Panel Specific Values
-	custom?: {}
-} @cuetsy(targetType="interface")
-
-// Defines 
-FieldConfigSource: {
-	// Defaults applied to all numeric fields
-	defaults: FieldConfig
-
-	// Rules to override individual values
-	overrides: [ConfigOverrideRule]
-} @cuetsy(targetType="interface")
-DynamicConfigValue: {
-	id: string | *""
-	value?: {}
-} @cuetsy(targetType="interface")
-MatcherConfig: {
-	id: string | *""
-	options?: {}
-} @cuetsy(targetType="interface")
-PanelGridPos: {
-	// Panel 
-	h: int > 0 | *9
-	// Panel 
-	w: int > 0 <= 24 | *12
-	// Panel x 
-	x: int >= 0 < 24 | *0
-	// Panel y 
-	y: int >= 0 | *0
-	// true if fixed
-	static?: bool
-}
-
-ConfigOverrideRule: {
-	matcher: MatcherConfig
-	properties: [DynamicConfigValue]
-} @cuetsy(targetType="interface")
-#Panel: {
-	// The panel plugin type  
-	type: string | *""
-
-	// Panel 
-	title?: string
-	// 
-	description?: string
-	// Whether to display the panel without a 
-	transparent: bool | *false
-	// Name of default 
-	datasource?: string
-	// Grid 
-	gridPos?: PanelGridPos
-	// Panel 
-	// links?: [_panelLink]
-	// Name of template variable to repeat 
-	repeat?: string
-	// Direction to repeat in if 'repeat' is 
-	// "h" for horizontal, "v" for 
-	repeatDirection: *"h" | "v"
-	// Panel targets - specific values depend on the datasource
-	targets?: [{}]
-
-	// The values depend on panel type
-	options: {}
-	fieldConfig: FieldConfigSource
 }

@@ -1,43 +1,58 @@
 package load
 
 import (
+	"io"
+
 	"cuelang.org/go/cue/load"
 	"github.com/grafana/grafana/pkg/schema"
 )
 
-// DashboardLoadPaths contains the configuration for loading a UniversalDashboard
+// Families can have variants, where more typing information narrows the
+// possible values for certain keys in schemas. These are a meta-property
+// of the schema, effectively encoded in these loaders.
 //
-// TODO it would probably be best to implement these with the new Go 1.16 io.fs
-// virtual filesystem, as it would make it easy to embed the relevant .cue files.
-// That may be impossible unless/until CUE's SDK (in particular
-// load.Instances()) changes its API to accept io.fs, as well. Also, Grafana will
-// need to update to 1.16.
-type DashboardLoadPaths struct {
-	// GrafanaCueRoot should point to a directory containing the filesystem layout
+// We can generally define three variants:
+//  - "Base": strictly core schema files, no plugins. (go:embed-able)
+//  - "Dist": "Base" + plugins that ship with vanilla Grafana (go:embed-able)
+//  - "Instance": "Dist" + the non-core plugins available in an actual, running Grafana
+
+// BaseLoadPaths contains the configuration for loading a DistDashboard
+type BaseLoadPaths struct {
+	// BaseCueFS should be rooted at a directory containing the filesystem layout
 	// expected to exist at github.com/grafana/grafana/cue.
-	GrafanaCueRoot string
+	BaseCueFS io.FS
+
+	// DistPluginCueFS should point to some fs path (TBD) under which all core
+	// plugins live.
+	DistPluginCueFS io.FS
+
+	// InstanceCueFS should point to a root dir in which non-core plugins live.
+	// Normal case will be that this only happens when an actual Grafana
+	// instance is making the call, and has a plugin dir to offer - though
+	// external tools could always create their own dirs shaped like a Grafana
+	// plugin dir, and point to those.
+	InstanceCueFS io.FS
 }
 
-// LoadUniversalDashboard creates a schema.Family that correponds to all known
+// LoadBaseDashboard creates a schema.Family that correponds to all known
 // core-only dashboard schemata in this version of Grafana.
-func LoadUniversalDashboard(p DashboardLoadPaths) (schema.Family, error) {
+func LoadBaseDashboard(p BaseLoadPaths) (*schema.Family, error) {
 	// TODO deal with making sure we're using the same cue.Runtime everywhere
 
-	// The universal dashboard is comprised of the set of schemas that
-	l := load.Instances([]string{p.GrafanaCueRoot + "/cue/data"}, &load.Config{Package: "grafanaschema"})
-	if err != nil {
-		return nil, err
-	}
+	// TODO see if we can trick load.Instances into using our io.FS. If not, we'll
+	// probably have to use cue.Runtime directly. The loss there, i think, would
+	// be the default `cue` behavior for loading packages in ancestor dirs, all files
+	// of the same package in a dir, etc. We could minimize the cost by keeping our
+	// on-disk filesystem structures simple.
+	l := load.Instances([]string{p.BaseCueFS + "/cue/data"}, &load.Config{Package: "grafanaschema"})
 
 	// Select the dashboard schema Value from the instance path at which we have
 	// defined it to live.
 	// TODO ugh, we need to fully define the schema family pattern to pull out the current dashboard
-	dashv := l.Lookup("#Dashboard")
-}
+	famval := l.Lookup("dashboardFamily")
+	fam := &schema.Family{}
 
-// TODO how are we gonna handle nested things (dashboards and panels) that are independently versioned?
-
-func LoadLocalDashboard(p DashboardLoadPaths) (schema.Family, error) {
+	// TODO Iterate over seqs in famval, create corresponding CueSchema on fam
 }
 
 // ---
