@@ -137,7 +137,8 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
         };
       }
 
-      const displayName = getFieldDisplayName(field, dataFrame, data);
+      // const displayName = getFieldDisplayName(field, dataFrame, data);
+      const displayName = field.config.displayName ?? '';
 
       const display =
         field.display ??
@@ -154,8 +155,8 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
         for (let j = 0; j < field.values.length; j++) {
           // Add all the row variables
           if (usesCellValues) {
-            for (let k = 0; k < series.fields.length; k++) {
-              const f = series.fields[k];
+            for (let k = 0; k < dataFrame.fields.length; k++) {
+              const f = dataFrame.fields[k];
               const v = f.values.get(j);
               scopedVars[VAR_CELL_PREFIX + k] = {
                 value: v,
@@ -165,10 +166,15 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
           }
 
           const displayValue = display(field.values.get(j));
-          displayValue.title = replaceVariables(displayName, {
-            ...field.state?.scopedVars, // series and field scoped vars
-            ...scopedVars,
-          });
+
+          if (displayName !== '') {
+            displayValue.title = replaceVariables(displayName, {
+              ...field.state?.scopedVars, // series and field scoped vars
+              ...scopedVars,
+            });
+          } else {
+            displayValue.title = getSmartDisplayNameForRow(dataFrame, field, j);
+          }
 
           values.push({
             name: '',
@@ -200,15 +206,20 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
         for (const calc of calcs) {
           scopedVars[VAR_CALC] = { value: calc, text: calc };
           const displayValue = display(results[calc]);
-          displayValue.title = replaceVariables(displayName, {
-            ...field.state?.scopedVars, // series and field scoped vars
-            ...scopedVars,
-          });
+
+          if (displayName !== '') {
+            displayValue.title = replaceVariables(displayName, {
+              ...field.state?.scopedVars, // series and field scoped vars
+              ...scopedVars,
+            });
+          } else {
+            displayValue.title = getFieldDisplayName(field, dataFrame, data);
+          }
 
           let sparkline: FieldSparkline | undefined = undefined;
           if (options.sparkline) {
             sparkline = {
-              y: series.fields[i],
+              y: dataFrame.fields[i],
               x: timeField,
             };
             if (calc === ReducerID.last) {
@@ -244,6 +255,32 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
 
   return values;
 };
+
+function getSmartDisplayNameForRow(frame: DataFrame, field: Field, rowIndex: number): string {
+  let parts: string[] = [];
+  let otherNumericFields = 0;
+
+  for (const otherField of frame.fields) {
+    if (otherField === field) {
+      continue;
+    }
+
+    if (otherField.type === FieldType.string) {
+      const value = otherField.values.get(rowIndex) ?? '';
+      if (value.length > 0) {
+        parts.push(value);
+      }
+    } else if (otherField.type === FieldType.number) {
+      otherNumericFields++;
+    }
+  }
+
+  if (otherNumericFields || parts.length === 0) {
+    parts.push(getFieldDisplayName(field));
+  }
+
+  return parts.join(' ');
+}
 
 export function hasLinks(field: Field): boolean {
   return field.config?.links?.length ? field.config.links.length > 0 : false;
