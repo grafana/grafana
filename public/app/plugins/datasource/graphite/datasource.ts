@@ -38,6 +38,8 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     this.basicAuth = instanceSettings.basicAuth;
     this.url = instanceSettings.url;
     this.name = instanceSettings.name;
+    // graphiteVersion is set when a datasource is created but I hadn't been set in the past
+    // so we're still falling back to 1.1 here for backwards compatibility (see also #17429)
     this.graphiteVersion = instanceSettings.jsonData.graphiteVersion || '1.1';
     this.isMetricTank = instanceSettings.jsonData.graphiteType === GraphiteType.Metrictank;
     this.supportsTags = supportsTags(this.graphiteVersion);
@@ -473,15 +475,20 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       httpOptions.params.until = this.translateTime(options.range.to, true, options.timezone);
     }
 
-    return this.doGraphiteRequest(httpOptions).then((results: any) => {
-      if (results.data) {
-        return _.map(results.data, (tag) => {
-          return { text: tag };
-        });
-      } else {
+    return this.doGraphiteRequest(httpOptions)
+      .then((results: any) => {
+        if (results.data) {
+          return _.map(results.data, (tag) => {
+            return { text: tag };
+          });
+        } else {
+          return [];
+        }
+      })
+      .catch((error) => {
+        console.error(error);
         return [];
-      }
-    });
+      });
   }
 
   getTagValuesAutoComplete(expressions: any[], tag: any, valuePrefix: any, optionalOptions: any) {
@@ -509,15 +516,20 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       httpOptions.params.until = this.translateTime(options.range.to, true, options.timezone);
     }
 
-    return this.doGraphiteRequest(httpOptions).then((results: any) => {
-      if (results.data) {
-        return _.map(results.data, (value) => {
-          return { text: value };
-        });
-      } else {
+    return this.doGraphiteRequest(httpOptions)
+      .then((results: any) => {
+        if (results.data) {
+          return _.map(results.data, (value) => {
+            return { text: value };
+          });
+        } else {
+          return [];
+        }
+      })
+      .catch((error) => {
+        console.error(error);
         return [];
-      }
-    });
+      });
   }
 
   getVersion(optionalOptions: any) {
