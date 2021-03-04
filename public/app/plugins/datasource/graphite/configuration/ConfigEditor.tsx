@@ -3,6 +3,7 @@ import { DataSourceHttpSettings, InlineFormLabel, LegacyForms } from '@grafana/u
 const { Select, Switch } = LegacyForms;
 import {
   DataSourcePluginOptionsEditorProps,
+  updateDatasourcePluginJsonDataOption,
   onUpdateDatasourceJsonDataOptionSelect,
   onUpdateDatasourceJsonDataOptionChecked,
 } from '@grafana/data';
@@ -13,6 +14,7 @@ const graphiteVersions = [
   { label: '1.0.x', value: '1.0' },
   { label: '1.1.x', value: '1.1' },
 ];
+const DEFAULT_GRAPHITE_VERSION = graphiteVersions[2];
 
 const graphiteTypes = Object.entries(GraphiteType).map(([label, value]) => ({
   label,
@@ -40,11 +42,16 @@ export class ConfigEditor extends PureComponent<Props> {
     );
   };
 
+  componentDidMount() {
+    const graphiteVersion = this.props.options.jsonData.graphiteVersion || DEFAULT_GRAPHITE_VERSION.value;
+    updateDatasourcePluginJsonDataOption(this.props, 'graphiteVersion', graphiteVersion);
+  }
+
   render() {
     const { options, onOptionsChange } = this.props;
 
     const currentVersion =
-      graphiteVersions.find((item) => item.value === options.jsonData.graphiteVersion) ?? graphiteVersions[2];
+      graphiteVersions.find((item) => item.value === options.jsonData.graphiteVersion) ?? DEFAULT_GRAPHITE_VERSION;
 
     return (
       <>
