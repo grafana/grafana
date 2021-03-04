@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { css } from 'emotion';
 import pick from 'lodash/pick';
+import omit from 'lodash/omit';
 import { GrafanaTheme } from '@grafana/data';
 import { Button, stylesFactory, useStyles } from '@grafana/ui';
 
@@ -11,29 +12,40 @@ import { LibraryPanelsView } from '../LibraryPanelsView/LibraryPanelsView';
 import { PanelQueriesChangedEvent } from 'app/types/events';
 import { LibraryPanelDTO } from '../../types';
 import { toPanelModelLibraryPanel } from '../../utils';
+import { useDispatch } from 'react-redux';
+import { changePanelPlugin } from 'app/features/dashboard/state/actions';
 
 interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
+  onChange: () => void;
 }
 
-export const PanelLibraryOptionsGroup: React.FC<Props> = ({ panel, dashboard }) => {
+export const PanelLibraryOptionsGroup: React.FC<Props> = ({ panel, dashboard, onChange }) => {
   const styles = useStyles(getStyles);
   const [showingAddPanelModal, setShowingAddPanelModal] = useState(false);
+  const dispatch = useDispatch();
 
   const useLibraryPanel = (panelInfo: LibraryPanelDTO) => {
+    const panelTypeChanged = panel.type !== panelInfo.model.type;
     panel.restoreModel({
-      ...panelInfo.model,
+      ...omit(panelInfo.model, 'type'),
       ...pick(panel, 'gridPos', 'id'),
       libraryPanel: toPanelModelLibraryPanel(panelInfo),
     });
 
+    if (panelTypeChanged) {
+      dispatch(changePanelPlugin(panel, panelInfo.model.type));
+    }
+
     // Though the panel model has changed, since we're switching to an existing
     // library panel, we reset the "hasChanged" state.
     panel.hasChanged = false;
-
     panel.refresh();
     panel.events.publish(PanelQueriesChangedEvent);
+
+    // onChange is called here to force the panel editor to re-render
+    onChange();
   };
 
   const onAddToPanelLibrary = (e: React.MouseEvent) => {
