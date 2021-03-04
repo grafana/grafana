@@ -52,6 +52,7 @@ export const MenuItem: React.FC<MenuItemProps> = React.memo(
 );
 MenuItem.displayName = 'MenuItem';
 
+/** @internal */
 const getStyles = (theme: GrafanaTheme) => {
   const linkColor = theme.colors.text;
   const linkColorHover = theme.colors.linkHover;

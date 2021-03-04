@@ -27,6 +27,7 @@ export const MenuGroup: React.FC<MenuGroupProps> = ({ label, children }) => {
 };
 MenuGroup.displayName = 'MenuGroup';
 
+/** @internal */
 const getStyles = (theme: GrafanaTheme) => {
   const groupLabelColor = theme.colors.textWeak;
   return {
