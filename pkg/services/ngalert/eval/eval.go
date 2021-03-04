@@ -209,16 +209,19 @@ func evaluateExecutionResult(results *ExecutionResults) (Results, error) {
 		}
 		labels[labelsStr] = true
 
-		state := Normal
 		val, ok := f.Fields[0].At(0).(*float64)
 		if !ok {
 			return nil, &invalidEvalResultFormatError{refID: f.RefID, reason: fmt.Sprintf("expected nullable float64 but got type %T", f.Fields[0].Type())}
 		}
+
+		var state state
 		switch {
 		case err != nil:
 			state = Error
 		case val == nil:
 			state = NoData
+		case *val == 0:
+			state = Normal
 		default:
 			state = Alerting
 		}
