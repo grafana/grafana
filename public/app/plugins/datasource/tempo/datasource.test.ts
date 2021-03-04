@@ -1,39 +1,82 @@
-import { DataSourceInstanceSettings, FieldType, MutableDataFrame, PluginType } from '@grafana/data';
-import { backendSrv } from 'app/core/services/backend_srv';
-import { of } from 'rxjs';
-import { createFetchResponse } from 'test/helpers/createFetchResponse';
-import { TempoDatasource } from './datasource';
+import { TempoDatasource, TempoQuery } from './datasource';
+import { DataQueryRequest, DataSourceInstanceSettings, FieldType, PluginType, dateTime } from '@grafana/data';
+import { BackendSrv, BackendSrvRequest, getBackendSrv, setBackendSrv } from '@grafana/runtime';
 
-jest.mock('../../../../../packages/grafana-runtime/src/services/backendSrv.ts', () => ({
-  getBackendSrv: () => backendSrv,
-}));
-
-jest.mock('../../../../../packages/grafana-runtime/src/utils/queryResponse.ts', () => ({
-  toDataQueryResponse: (resp: any) => resp,
-}));
-
-describe('Tempo data source', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
+describe('JaegerDatasource', () => {
   it('returns trace when queried', async () => {
-    const responseDataFrame = new MutableDataFrame({ fields: [{ name: 'trace', values: ['{}'] }] });
-    setupBackendSrv([responseDataFrame]);
-    const ds = new TempoDatasource(defaultSettings);
-    await expect(ds.query({ targets: [{ query: '12345' }] } as any)).toEmitValuesWith((response) => {
-      const field = response[0].data[0].fields[0];
+    await withMockedBackendSrv(makeBackendSrvMock('12345'), async () => {
+      const ds = new TempoDatasource(defaultSettings);
+      const response = await ds.query(defaultQuery).toPromise();
+      const field = response.data[0].fields[0];
       expect(field.name).toBe('trace');
       expect(field.type).toBe(FieldType.trace);
+      expect(field.values.get(0)).toEqual({
+        traceId: '12345',
+      });
     });
+  });
+
+  it('returns trace when traceId with special characters is queried', async () => {
+    await withMockedBackendSrv(makeBackendSrvMock('a/b'), async () => {
+      const ds = new TempoDatasource(defaultSettings);
+      const query = {
+        ...defaultQuery,
+        targets: [
+          {
+            query: 'a/b',
+            refId: '1',
+          },
+        ],
+      };
+      const response = await ds.query(query).toPromise();
+      const field = response.data[0].fields[0];
+      expect(field.name).toBe('trace');
+      expect(field.type).toBe(FieldType.trace);
+      expect(field.values.get(0)).toEqual({
+        traceId: 'a/b',
+      });
+    });
+  });
+
+  it('returns empty response if trace id is not specified', async () => {
+    const ds = new TempoDatasource(defaultSettings);
+    const response = await ds
+      .query({
+        ...defaultQuery,
+        targets: [],
+      })
+      .toPromise();
+    const field = response.data[0].fields[0];
+    expect(field.name).toBe('trace');
+    expect(field.type).toBe(FieldType.trace);
+    expect(field.values.length).toBe(0);
   });
 });
 
-function setupBackendSrv(response: any) {
-  const defaultMock = () => of(createFetchResponse(response));
+function makeBackendSrvMock(traceId: string) {
+  return {
+    datasourceRequest(options: BackendSrvRequest): Promise<any> {
+      expect(options.url.substr(options.url.length - 17, options.url.length)).toBe(
+        `/api/traces/${encodeURIComponent(traceId)}`
+      );
+      return Promise.resolve({
+        data: {
+          data: [
+            {
+              traceId,
+            },
+          ],
+        },
+      });
+    },
+  } as any;
+}
 
-  const fetchMock = jest.spyOn(backendSrv, 'fetch');
-  fetchMock.mockImplementation(defaultMock);
+async function withMockedBackendSrv(srv: BackendSrv, fn: () => Promise<void>) {
+  const oldSrv = getBackendSrv();
+  setBackendSrv(srv);
+  await fn();
+  setBackendSrv(oldSrv);
 }
 
 const defaultSettings: DataSourceInstanceSettings = {
@@ -50,4 +93,27 @@ const defaultSettings: DataSourceInstanceSettings = {
     baseUrl: '',
   },
   jsonData: {},
+};
+
+const defaultQuery: DataQueryRequest<TempoQuery> = {
+  requestId: '1',
+  dashboardId: 0,
+  interval: '0',
+  intervalMs: 10,
+  panelId: 0,
+  scopedVars: {},
+  range: {
+    from: dateTime().subtract(1, 'h'),
+    to: dateTime(),
+    raw: { from: '1h', to: 'now' },
+  },
+  timezone: 'browser',
+  app: 'explore',
+  startTime: 0,
+  targets: [
+    {
+      query: '12345',
+      refId: '1',
+    },
+  ],
 };
