@@ -772,6 +772,22 @@ Refer to [Auth proxy authentication]({{< relref "../auth/auth-proxy.md" >}}) for
 
 Refer to [LDAP authentication]({{< relref "../auth/ldap.md" >}}) for detailed instructions.
 
+## [aws]
+
+You can configure core and external AWS plugins.
+
+### allowed_auth_providers
+
+Specify what authentication providers the AWS plugins allow. For a list of allowed providers, refer to the data-source configuration page for a given plugin. If you configure a plugin by provisioning, only providers that are specified in `allowed_auth_providers` are allowed.
+
+Options: `default` (AWS SDK default), `keys` (Access and secret key), `credentials` (Credentials file), `ec2_IAM_role` (EC2 IAM role)
+
+### assume_role_enabled
+
+Set to `false` to disable AWS authentication from using an assumed role with temporary security credentials. For details about assume roles, refer to the AWS API reference documentation about the [AssumeRole](https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html) operation.
+
+If this option is disabled, the **Assume Role** and the **External Id** field are removed from the AWS data source configuration page. If the plugin is configured using provisioning, it is possible to use an assumed role as long as `assume_role_enabled` is set to `true`.
+
 <hr />
 
 ## [smtp]
@@ -1530,6 +1546,9 @@ Set this to `true` to have date formats automatically derived from your browser 
 Used as the default time zone for user preferences. Can be either `browser` for the browser local time zone or a time zone name from the IANA Time Zone database, such as `UTC` or `Europe/Amsterdam`.
 
 ## [expressions]
+
 > **Note:** This feature is available in Grafana v7.4 and later versions.
+
 ### enabled
+
 Set this to `false` to disable expressions and hide them in the Grafana UI. Default is `true`.

@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/ui",
-  "version": "7.4.3",
+  "version": "7.5.0-pre.0",
   "description": "Grafana Components Library",
   "keywords": [
     "grafana",
@@ -26,9 +26,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@emotion/core": "^10.0.27",
-    "@grafana/data": "7.4.3",
-    "@grafana/e2e-selectors": "7.4.3",
+    "@emotion/core": "10.0.27",
+    "@grafana/data": "7.5.0-pre.0",
+    "@grafana/e2e-selectors": "7.5.0-pre.0",
     "@grafana/slate-react": "0.22.9-grafana",
     "@grafana/tsconfig": "^1.0.0-rc1",
     "@iconscout/react-unicons": "1.1.4",
@@ -54,7 +54,7 @@
     "hoist-non-react-statics": "3.3.2",
     "immutable": "3.8.2",
     "jquery": "3.5.1",
-    "lodash": "4.17.20",
+    "lodash": "4.17.21",
     "moment": "2.24.0",
     "monaco-editor": "0.20.0",
     "papaparse": "5.3.0",

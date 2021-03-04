@@ -48,6 +48,7 @@ export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, dat
             return (
               <div className="panel-title">
                 <PanelHeaderNotices frames={data.series} panelId={panel.id} />
+                {panel.libraryPanel && <Icon name="reusable-panel" style={{ marginRight: '4px' }} />}
                 {alertState ? (
                   <Icon
                     name={alertState === 'alerting' ? 'heart-break' : 'heart'}

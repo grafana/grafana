@@ -183,6 +183,14 @@ func getTimeSeriesTimeColumn(columns []*query.FluxColumn) *query.FluxColumn {
 	return nil
 }
 
+type maxPointsExceededError struct {
+	Count int
+}
+
+func (e maxPointsExceededError) Error() string {
+	return fmt.Sprintf("max data points limit exceeded (count is %d)", e.Count)
+}
+
 func getTableID(record *query.FluxRecord, groupColumns []string) []interface{} {
 	result := make([]interface{}, len(groupColumns))
 
@@ -300,8 +308,9 @@ func (fb *frameBuilder) Append(record *query.FluxRecord) error {
 		}
 	}
 
-	if fb.active.Fields[0].Len() > fb.maxPoints {
-		return fmt.Errorf("returned too many points in a series: %d", fb.maxPoints)
+	pointsCount := fb.active.Fields[0].Len()
+	if pointsCount > fb.maxPoints {
+		return maxPointsExceededError{Count: pointsCount}
 	}
 
 	return nil
