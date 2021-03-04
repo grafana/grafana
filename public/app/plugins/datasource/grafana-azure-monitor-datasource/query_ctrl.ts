@@ -22,9 +22,9 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   dummyDiminsionString = '+';
 
   queryQueryTypeOptions = [
-    { id: AzureQueryType.ApplicationInsights, label: 'Application Insights' },
     { id: AzureQueryType.AzureMonitor, label: 'Metrics' },
     { id: AzureQueryType.LogAnalytics, label: 'Logs' },
+    { id: AzureQueryType.ApplicationInsights, label: 'Application Insights' },
     { id: AzureQueryType.InsightsAnalytics, label: 'Insights Analytics' },
   ];
 
