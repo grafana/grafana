@@ -2,6 +2,7 @@ package rbac
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -80,7 +81,7 @@ func (s *seeder) seed(ctx context.Context, orgID int64, policies []PolicyDTO, po
 		if roles, exists := policyGrants[policy.Name]; exists {
 			for _, role := range roles {
 				err := s.Service.AddBuiltinRolePolicy(ctx, orgID, policyID, role)
-				if err != nil {
+				if err != nil && !errors.Is(err, ErrUserPolicyAlreadyAdded) {
 					s.log.Error("failed to assign policy to role",
 						"name", policy.Name,
 						"role", role,
@@ -134,7 +135,7 @@ func (s *seeder) createOrUpdatePolicy(ctx context.Context, policy PolicyDTO, old
 	}
 
 	if oldVersion >= currentVersion {
-		return 0, nil
+		return old.Id, nil
 	}
 
 	_, err = s.Service.UpdatePolicy(ctx, UpdatePolicyCommand{
