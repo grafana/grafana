@@ -10,11 +10,11 @@ export interface MenuProps extends React.HTMLAttributes<HTMLDivElement> {
   children?: React.ReactNode;
 }
 
-export const Menu = React.forwardRef<HTMLDivElement, MenuProps>(({ header, children }, ref) => {
+export const Menu = React.forwardRef<HTMLDivElement, MenuProps>(({ header, children, ...otherProps }, ref) => {
   const styles = useStyles(getStyles);
 
   return (
-    <div ref={ref} className={styles.wrapper}>
+    <div {...otherProps} ref={ref} className={styles.wrapper}>
       {header && <div className={styles.header}>{header}</div>}
       {children}
     </div>
