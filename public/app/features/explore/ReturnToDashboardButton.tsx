@@ -1,6 +1,5 @@
 import React, { FC } from 'react';
 import { connect } from 'react-redux';
-import { hot } from 'react-hot-loader';
 import { Icon, Tooltip, ButtonSelect, ToolbarButton, ButtonGroup } from '@grafana/ui';
 import { DataQuery } from '@grafana/data';
 
@@ -8,22 +7,20 @@ import kbn from '../../core/utils/kbn';
 import { getDashboardSrv } from '../dashboard/services/DashboardSrv';
 import { StoreState } from 'app/types';
 import { ExploreId } from 'app/types/explore';
-import { updateLocation } from 'app/core/actions';
 import { setDashboardQueriesToUpdateOnLoad } from '../dashboard/state/reducers';
 import { isSplit } from './state/selectors';
+import { locationService } from '@grafana/runtime';
 
 interface Props {
   exploreId: ExploreId;
   splitted: boolean;
   queries: DataQuery[];
   originPanelId?: number | null;
-  updateLocation: typeof updateLocation;
   setDashboardQueriesToUpdateOnLoad: typeof setDashboardQueriesToUpdateOnLoad;
 }
 
 export const UnconnectedReturnToDashboardButton: FC<Props> = ({
   originPanelId,
-  updateLocation,
   setDashboardQueriesToUpdateOnLoad,
   queries,
   splitted,
@@ -63,7 +60,7 @@ export const UnconnectedReturnToDashboardButton: FC<Props> = ({
       query.viewPanel = originPanelId;
     }
 
-    updateLocation({ path: `/d/${dash.uid}/:${titleSlug}`, query });
+    locationService.push({ pathname: `/d/${dash.uid}/:${titleSlug}` });
   };
 
   return (
@@ -97,7 +94,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreI
 }
 
 const mapDispatchToProps = {
-  updateLocation,
   setDashboardQueriesToUpdateOnLoad,
 };
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(UnconnectedReturnToDashboardButton));
+
+export default connect(mapStateToProps, mapDispatchToProps)(UnconnectedReturnToDashboardButton);

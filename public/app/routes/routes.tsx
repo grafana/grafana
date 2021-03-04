@@ -158,7 +158,7 @@ export const routes: RouteDescriptor[] = [
   },
   {
     path: '/explore',
-    // TODO
+    pageClass: 'page-explore',
     roles: () => (config.viewersCanEdit ? [] : ['Editor', 'Admin']),
     component: SafeDynamicImport(() => import(/* webpackChunkName: "explore" */ 'app/features/explore/Wrapper')),
   },

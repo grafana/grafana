@@ -34,12 +34,13 @@ export class GrafanaRoute extends React.Component<Props> {
   }
 
   updateBodyClassNames(clear = false) {
-    this.getPageClasses().forEach((c) => {
+    for (const cls of this.getPageClasses()) {
       if (clear) {
-        document.body.classList.remove(c);
+        document.body.classList.remove(cls);
+      } else {
+        document.body.classList.add(cls);
       }
-      document.body.classList.add(c);
-    });
+    }
   }
 
   cleanupDOM() {
