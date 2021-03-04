@@ -6,11 +6,14 @@ import { MenuItemProps } from './MenuItem';
 
 /** @internal */
 export interface MenuItemsGroup {
+  /** Label for the menu items group */
   label?: string;
+  /** Items of the group */
   items: MenuItemProps[];
 }
 /** @internal */
 export interface MenuGroupProps extends Partial<MenuItemsGroup> {
+  /** special children prop to pass children elements */
   children?: React.ReactNode;
 }
 
