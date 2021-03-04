@@ -85,7 +85,7 @@ func TestLibraryPanelPermissions(t *testing.T) {
 				toFolder := createFolderWithACL(t, "Folder", sc.user, testCase.items)
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 
-				cmd := patchLibraryPanelCommand{FolderID: toFolder.Id}
+				cmd := patchLibraryPanelCommand{FolderID: toFolder.Id, Version: 1}
 				sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID})
 				resp = sc.service.patchHandler(sc.reqContext, cmd)
 				require.Equal(t, testCase.status, resp.Status())
@@ -100,7 +100,7 @@ func TestLibraryPanelPermissions(t *testing.T) {
 				toFolder := createFolderWithACL(t, "Folder", sc.user, everyonePermissions)
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 
-				cmd := patchLibraryPanelCommand{FolderID: toFolder.Id}
+				cmd := patchLibraryPanelCommand{FolderID: toFolder.Id, Version: 1}
 				sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID})
 				resp = sc.service.patchHandler(sc.reqContext, cmd)
 				require.Equal(t, testCase.status, resp.Status())
@@ -197,7 +197,7 @@ func TestLibraryPanelPermissions(t *testing.T) {
 				result := validateAndUnMarshalResponse(t, resp)
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 
-				cmd := patchLibraryPanelCommand{FolderID: 0}
+				cmd := patchLibraryPanelCommand{FolderID: 0, Version: 1}
 				sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID})
 				resp = sc.service.patchHandler(sc.reqContext, cmd)
 				require.Equal(t, testCase.status, resp.Status())
@@ -211,7 +211,7 @@ func TestLibraryPanelPermissions(t *testing.T) {
 				result := validateAndUnMarshalResponse(t, resp)
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 
-				cmd := patchLibraryPanelCommand{FolderID: folder.Id}
+				cmd := patchLibraryPanelCommand{FolderID: folder.Id, Version: 1}
 				sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID})
 				resp = sc.service.patchHandler(sc.reqContext, cmd)
 				require.Equal(t, testCase.status, resp.Status())
@@ -307,7 +307,7 @@ func TestLibraryPanelPermissions(t *testing.T) {
 				result := validateAndUnMarshalResponse(t, resp)
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 
-				cmd := patchLibraryPanelCommand{FolderID: -100}
+				cmd := patchLibraryPanelCommand{FolderID: -100, Version: 1}
 				sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID})
 				resp = sc.service.patchHandler(sc.reqContext, cmd)
 				require.Equal(t, 404, resp.Status())

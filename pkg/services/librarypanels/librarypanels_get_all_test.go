@@ -49,6 +49,7 @@ func TestGetAllLibraryPanels(t *testing.T) {
 							"title":      "Text - Library Panel",
 							"type":       "text",
 						},
+						Version: 1,
 						Meta: LibraryPanelDTOMeta{
 							CanEdit:             true,
 							ConnectedDashboards: 0,
@@ -78,6 +79,7 @@ func TestGetAllLibraryPanels(t *testing.T) {
 							"title":      "Text - Library Panel2",
 							"type":       "text",
 						},
+						Version: 1,
 						Meta: LibraryPanelDTOMeta{
 							CanEdit:             true,
 							ConnectedDashboards: 0,
