@@ -172,7 +172,7 @@ Since not all datasources have the same configuration settings we only have the 
 | tsdbVersion             | string  | OpenTSDB                                                         | Version                                                                                     |
 | tsdbResolution          | string  | OpenTSDB                                                         | Resolution                                                                                  |
 | sslmode                 | string  | PostgreSQL                                                       | SSLmode. 'disable', 'require', 'verify-ca' or 'verify-full'                                 |
-| tlsConfigurationMethod  | string  | PostgreSQL                                        | How SSL Certificate is going to be configured 'file-path' or 'file-content'                       |
+| tlsConfigurationMethod  | string  | PostgreSQL                                        | SSL Certificate configuration, either by 'file-path' or 'file-content'                       |
 | sslRootCertFile         | string  | PostgreSQL                                                       | SSL server root certificate file, must be readable by the Grafana user                      |
 | sslCertFile             | string  | PostgreSQL                                                       | SSL client certificate file, must be readable by the Grafana user                           |
 | sslKeyFile              | string  | PostgreSQL                                                       | SSL client key file, must be readable by _only_ the Grafana user                            |
