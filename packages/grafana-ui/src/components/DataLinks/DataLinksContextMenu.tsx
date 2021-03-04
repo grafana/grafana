@@ -1,8 +1,9 @@
 import React from 'react';
-import { WithContextMenu } from '../ContextMenu/WithContextMenu';
 import { FieldConfig, LinkModel } from '@grafana/data';
-import { linkModelToContextMenuItems } from '../../utils/dataLinks';
+import { selectors } from '@grafana/e2e-selectors';
 import { css } from 'emotion';
+import { WithContextMenu } from '../ContextMenu/WithContextMenu';
+import { linkModelToContextMenuItems } from '../../utils/dataLinks';
 
 interface DataLinksContextMenuProps {
   children: (props: DataLinksContextMenuApi) => JSX.Element;
@@ -43,6 +44,7 @@ export const DataLinksContextMenu: React.FC<DataLinksContextMenuProps> = ({ chil
         target={linkModel.target}
         title={linkModel.title}
         style={{ display: 'flex' }}
+        aria-label={selectors.components.DataLinksContextMenu.singleLink}
       >
         {children({})}
       </a>
