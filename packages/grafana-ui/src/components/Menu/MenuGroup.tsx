@@ -4,15 +4,20 @@ import { GrafanaTheme } from '@grafana/data';
 import { useStyles } from '../../themes';
 import { MenuItemProps } from './MenuItem';
 
-export interface MenuGroupProps {
+/** @internal */
+export interface MenuItemsGroup {
+  /** Label for the menu items group */
   label?: string;
-  children?: React.ReactNode;
-  item?: MenuItemProps[];
+  /** Items of the group */
+  items: MenuItemProps[];
 }
-export interface MenuItemsGroup extends MenuGroupProps {
-  item?: MenuItemProps[];
+/** @internal */
+export interface MenuGroupProps extends Partial<MenuItemsGroup> {
+  /** special children prop to pass children elements */
+  children?: React.ReactNode;
 }
 
+/** @internal */
 export const MenuGroup: React.FC<MenuGroupProps> = ({ label, children }) => {
   const styles = useStyles(getStyles);
 
@@ -25,6 +30,7 @@ export const MenuGroup: React.FC<MenuGroupProps> = ({ label, children }) => {
 };
 MenuGroup.displayName = 'MenuGroup';
 
+/** @internal */
 const getStyles = (theme: GrafanaTheme) => {
   const groupLabelColor = theme.colors.textWeak;
   return {

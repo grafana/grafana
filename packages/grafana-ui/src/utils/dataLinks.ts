@@ -1,11 +1,11 @@
 import { LinkModel } from '@grafana/data';
-import { MenuItem } from '../components/Menu/Menu';
+import { MenuItemProps } from '../components/Menu/MenuItem';
 import { IconName } from '../types';
 
 /**
  * Delays creating links until we need to open the ContextMenu
  */
-export const linkModelToContextMenuItems: (links: () => LinkModel[]) => MenuItem[] = (links) => {
+export const linkModelToContextMenuItems: (links: () => LinkModel[]) => MenuItemProps[] = (links) => {
   return links().map((link) => {
     return {
       label: link.title,

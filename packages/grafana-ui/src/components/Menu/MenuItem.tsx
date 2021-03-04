@@ -23,6 +23,7 @@ export interface MenuItemProps {
   active?: boolean;
 }
 
+/** @internal */
 export const MenuItem: React.FC<MenuItemProps> = React.memo(
   ({ url, icon, label, target, onClick, className, active }) => {
     const styles = useStyles(getStyles);
@@ -51,6 +52,7 @@ export const MenuItem: React.FC<MenuItemProps> = React.memo(
 );
 MenuItem.displayName = 'MenuItem';
 
+/** @internal */
 const getStyles = (theme: GrafanaTheme) => {
   const linkColor = theme.colors.text;
   const linkColorHover = theme.colors.linkHover;

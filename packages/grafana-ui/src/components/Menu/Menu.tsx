@@ -10,6 +10,7 @@ export interface MenuProps extends React.HTMLAttributes<HTMLDivElement> {
   children?: React.ReactNode;
 }
 
+/** @internal */
 export const Menu = React.forwardRef<HTMLDivElement, MenuProps>(({ header, children, ...otherProps }, ref) => {
   const styles = useStyles(getStyles);
 
@@ -22,6 +23,7 @@ export const Menu = React.forwardRef<HTMLDivElement, MenuProps>(({ header, child
 });
 Menu.displayName = 'Menu';
 
+/** @internal */
 const getStyles = (theme: GrafanaTheme) => {
   const wrapperBg = theme.colors.formInputBg;
   const wrapperShadow = theme.isDark ? theme.palette.black : theme.palette.gray3;

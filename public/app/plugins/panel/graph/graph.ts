@@ -24,7 +24,7 @@ import ReactDOM from 'react-dom';
 import { GraphLegendProps, Legend } from './Legend/Legend';
 
 import { GraphCtrl } from './module';
-import { graphTickFormatter, graphTimeFormat, IconName, MenuItem, MenuItemsGroup } from '@grafana/ui';
+import { graphTickFormatter, graphTimeFormat, IconName, MenuItemProps, MenuItemsGroup } from '@grafana/ui';
 import { provideTheme } from 'app/core/utils/ConfigProvider';
 import {
   DataFrame,
@@ -221,7 +221,7 @@ class GraphElement {
 
       const dataLinks = [
         {
-          items: linksSupplier.getLinks(this.panel.replaceVariables).map<MenuItem>((link) => {
+          items: linksSupplier.getLinks(this.panel.replaceVariables).map<MenuItemProps>((link) => {
             return {
               label: link.title,
               url: link.href,

@@ -8,30 +8,27 @@ describe('Menu', () => {
   it('renders items without error', () => {
     expect(() => {
       render(
-        <div>
-          <Menu header="mock header">
-            <MenuGroup label="Group 1">
-              <MenuItem label="item1" icon="history" active={true} />
-              <MenuItem label="item2" icon="filter" active={true} />
-            </MenuGroup>
-          </Menu>
-        </div>
-      );
-    });
-  });
-
-  it('renders correct contents', () => {
-    render(
-      <div>
         <Menu header="mock header">
           <MenuGroup label="Group 1">
             <MenuItem label="item1" icon="history" active={true} />
             <MenuItem label="item2" icon="filter" active={true} />
           </MenuGroup>
         </Menu>
-      </div>
+      );
+    });
+  });
+
+  it('renders correct contents', () => {
+    render(
+      <Menu data-testid="my-test-id" header="mock header">
+        <MenuGroup data-testid="my-test-id" label="Group 1">
+          <MenuItem data-testid="my-test-id" label="item1" icon="history" active={true} />
+          <MenuItem data-testid="my-test-id" label="item2" icon="filter" active={true} />
+        </MenuGroup>
+      </Menu>
     );
-    expect(screen.getByLabelText('Group 1')).toBeInTheDocument();
-    expect(screen.getByLabelText('item1')).toBeInTheDocument();
+    expect(screen.getByTestId('my-test-id')).toHaveTextContent('item1');
+    expect(screen.getByTestId('my-test-id')).toHaveTextContent('Group 1');
+    expect(screen.getByTestId('my-test-id')).toHaveTextContent('mock header');
   });
 });
