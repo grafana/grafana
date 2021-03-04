@@ -9,7 +9,7 @@ import { ExploreUrlState } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
 const getNavigateToExploreContext = async (openInNewWindow?: (url: string) => void) => {
-  const url = '/explore?left=query1&right=query2';
+  const url = '/explore';
   const panel: Partial<PanelModel> = {
     datasource: 'mocked datasource',
     targets: [{ refId: 'A' }],
