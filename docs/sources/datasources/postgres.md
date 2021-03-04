@@ -28,8 +28,8 @@ Name               | Description
 `User`             | Database user's login/username
 `Password`         | Database user's password
 `SSL Mode`         | This option determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server. When SSL Mode is disable, SSL Method and Auth Details would not be visible.
-`SSL Method`       | This option determines SSL Auth details would be configured as file path or file content
-`SSL Auth Details` | File path or file content of SSL root certificate, client certificate and client key
+`SSL Auth Details Method`       | This option determines SSL Auth details would be configured as file path or file content (Grafana v7.5+).
+`SSL Auth Details Value` | File path or file content of SSL root certificate, client certificate and client key
 `Max open`         | The maximum number of open connections to the database, default `unlimited` (Grafana v5.4+).
 `Max idle`         | The maximum number of connections in the idle connection pool, default `2` (Grafana v5.4+).
 `Max lifetime`     | The maximum amount of time in seconds a connection may be reused, default `14400`/4 hours (Grafana v5.4+).
