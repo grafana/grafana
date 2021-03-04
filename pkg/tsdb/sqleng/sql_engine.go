@@ -133,7 +133,10 @@ const rowLimit = 1000000
 // Query is the main function for the SqlQueryEndpoint
 func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 	queryContext plugins.DataQuery) (plugins.DataResponse, error) {
-	timeRange := *queryContext.TimeRange
+	var timeRange plugins.DataTimeRange
+	if queryContext.TimeRange != nil {
+		timeRange = *queryContext.TimeRange
+	}
 	ch := make(chan plugins.DataQueryResult, len(queryContext.Queries))
 	var wg sync.WaitGroup
 	// Execute each query in a goroutine and wait for them to finish afterwards
