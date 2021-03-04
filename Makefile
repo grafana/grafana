@@ -9,10 +9,6 @@ spec.json: $(GO_PKG_FILES)
 post.json: spec.json
 	go run cmd/clean-swagger/main.go -if $(<) -of $@
 
-.PHONY: server
-server: post.json
-	swagger generate server --exclude-main -t pkg/gen --with-flatten=full --with-flatten=remove-unused -f $(<)
-
 .PHONY: openapi
 openapi: post.json
 	docker run --rm -p 80:8080 -v $$(pwd):/tmp -e SWAGGER_FILE=/tmp/$(<) swaggerapi/swagger-editor
