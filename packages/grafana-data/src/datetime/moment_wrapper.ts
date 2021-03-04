@@ -1,6 +1,6 @@
 import { TimeZone } from '../types/time';
 /* eslint-disable id-blacklist, no-restricted-imports, @typescript-eslint/ban-types */
-import moment, { Moment, MomentInput, DurationInputArg1 } from 'moment';
+import moment, { Moment, MomentInput, DurationInputArg1, DurationInputArg2 } from 'moment';
 export interface DateTimeBuiltinFormat {
   __momentBuiltinFormatBrand: any;
 }
@@ -17,6 +17,7 @@ export type DurationUnit =
   | 'M'
   | 'week'
   | 'weeks'
+  | 'isoWeek'
   | 'w'
   | 'day'
   | 'days'
@@ -96,7 +97,7 @@ export const toUtc = (input?: DateTimeInput, formatInput?: FormatInput): DateTim
 };
 
 export const toDuration = (input?: DurationInput, unit?: DurationUnit): DateTimeDuration => {
-  return moment.duration(input as DurationInputArg1, unit) as DateTimeDuration;
+  return moment.duration(input as DurationInputArg1, unit as DurationInputArg2) as DateTimeDuration;
 };
 
 export const dateTime = (input?: DateTimeInput, formatInput?: FormatInput): DateTime => {
