@@ -15,7 +15,7 @@ interface OwnProps {
 }
 
 interface ConnectedProps {
-  plugin?: PanelPlugin;
+  plugin: PanelPlugin;
 }
 
 interface DispatchProps {
@@ -30,9 +30,6 @@ export const VisualizationTabUnconnected = React.forwardRef<HTMLInputElement, Pr
     const theme = useTheme();
     const styles = getStyles(theme);
 
-    if (!plugin) {
-      return null;
-    }
     const onPluginTypeChange = (meta: PanelPluginMeta) => {
       if (meta.id === plugin.meta.id) {
         onToggleOptionGroup(false);
@@ -62,6 +59,10 @@ export const VisualizationTabUnconnected = React.forwardRef<HTMLInputElement, Pr
           Clear filter
         </span>
       ) : null;
+
+    if (!plugin) {
+      return null;
+    }
 
     return (
       <div className={styles.wrapper}>
