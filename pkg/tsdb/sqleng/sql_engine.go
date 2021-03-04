@@ -328,7 +328,7 @@ func newProcessCfg(query plugins.DataSubQuery, queryContext plugins.DataQuery, r
 		metricPrefix:       false,
 		fillMissing:        fillMissing,
 		seriesByQueryOrder: list.New(),
-		pointsBySeries:     make(map[string]plugins.DataTimeSeries),
+		pointsBySeries:     make(map[string]*plugins.DataTimeSeries),
 		queryContext:       queryContext,
 	}
 	return cfg, nil
@@ -396,8 +396,8 @@ func (e *dataPlugin) transformToTimeSeries(query plugins.DataSubQuery, rows *cor
 
 	for elem := cfg.seriesByQueryOrder.Front(); elem != nil; elem = elem.Next() {
 		key := elem.Value.(string)
-		result.Series = append(result.Series, cfg.pointsBySeries[key])
 		if !cfg.fillMissing {
+			result.Series = append(result.Series, *cfg.pointsBySeries[key])
 			continue
 		}
 
@@ -420,6 +420,8 @@ func (e *dataPlugin) transformToTimeSeries(query plugins.DataSubQuery, rows *cor
 			series.Points = append(series.Points, plugins.DataTimePoint{cfg.fillValue, null.FloatFrom(i)})
 			cfg.rowCount++
 		}
+
+		result.Series = append(result.Series, *cfg.pointsBySeries[key])
 	}
 
 	result.Meta.Set("rowCount", cfg.rowCount)
@@ -436,7 +438,7 @@ type processCfg struct {
 	metricPrefix       bool
 	metricPrefixValue  string
 	fillMissing        bool
-	pointsBySeries     map[string]plugins.DataTimeSeries
+	pointsBySeries     map[string]*plugins.DataTimeSeries
 	seriesByQueryOrder *list.List
 	fillValue          null.Float
 	queryContext       plugins.DataQuery
@@ -474,16 +476,17 @@ func (e *dataPlugin) processRow(cfg *processCfg) error {
 	}
 
 	if cfg.metricIndex >= 0 {
-		if columnValue, ok := values[cfg.metricIndex].(string); ok {
-			if cfg.metricPrefix {
-				cfg.metricPrefixValue = columnValue
-			} else {
-				metric = columnValue
-			}
-		} else {
+		columnValue, ok := values[cfg.metricIndex].(string)
+		if !ok {
 			return fmt.Errorf("column metric must be of type %s. metric column name: %s type: %s but datatype is %T",
 				strings.Join(e.metricColumnTypes, ", "), cfg.columnNames[cfg.metricIndex],
 				cfg.columnTypes[cfg.metricIndex].DatabaseTypeName(), values[cfg.metricIndex])
+		}
+
+		if cfg.metricPrefix {
+			cfg.metricPrefixValue = columnValue
+		} else {
+			metric = columnValue
 		}
 	}
 
@@ -504,7 +507,7 @@ func (e *dataPlugin) processRow(cfg *processCfg) error {
 
 		series, exists := cfg.pointsBySeries[metric]
 		if !exists {
-			series = plugins.DataTimeSeries{Name: metric}
+			series = &plugins.DataTimeSeries{Name: metric}
 			cfg.pointsBySeries[metric] = series
 			cfg.seriesByQueryOrder.PushBack(metric)
 		}
