@@ -1,7 +1,7 @@
 // Libraries
 import _ from 'lodash';
 // Utils
-import { createQueryRunner, getTemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv } from '@grafana/runtime';
 import { getNextRefIdChar } from 'app/core/utils/query';
 // Types
 import {
@@ -38,6 +38,7 @@ import {
 } from './getPanelOptionsWithDefaults';
 import { QueryGroupOptions } from 'app/types';
 import { PanelModelLibraryPanel } from '../../library-panels/types';
+import { PanelQueryRunner } from 'app/features/query/state/PanelQueryRunner';
 
 export interface GridPos {
   x: number;
@@ -478,7 +479,7 @@ export class PanelModel implements DataConfigSource {
 
   getQueryRunner(): QueryRunner {
     if (!this.queryRunner) {
-      this.queryRunner = createQueryRunner(this);
+      this.queryRunner = new PanelQueryRunner(this);
     }
     return this.queryRunner;
   }

@@ -12,7 +12,7 @@ import React, { FC, useMemo, useState } from 'react';
 import { useObservable } from 'react-use';
 import { QueryGroup } from '../query/components/QueryGroup';
 import { QueryGroupOptions } from 'app/types';
-import { createQueryRunner } from '@grafana/runtime';
+import { PanelQueryRunner } from '../query/state/PanelQueryRunner';
 
 interface State {
   queryRunner: QueryRunner;
@@ -97,7 +97,7 @@ export function getDefaultState(): State {
   };
 
   return {
-    queryRunner: createQueryRunner(dataConfig),
+    queryRunner: new PanelQueryRunner(dataConfig),
     queryOptions: {
       queries: [],
       dataSource: {
