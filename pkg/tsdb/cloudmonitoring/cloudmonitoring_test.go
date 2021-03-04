@@ -624,7 +624,8 @@ func TestCloudMonitoring(t *testing.T) {
 			query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}}
 			err = query.parseResponse(res, data, "")
 			require.NoError(t, err)
-			frames, _ := res.Dataframes.Decoded()
+			frames, err := res.Dataframes.Decoded()
+			require.NoError(t, err)
 
 			assert.Equal(t, 3, len(frames))
 			assert.Equal(t, "compute.googleapis.com/instance/cpu/usage_time collector-asia-east-1", frames[0].Fields[1].Name)
