@@ -60,6 +60,10 @@ func (e *tempoExecutor) Query(ctx context.Context, dsInfo *models.DataSource, ts
 		return nil, err
 	}
 
+	if dsInfo.BasicAuth {
+		req.SetBasicAuth(dsInfo.BasicAuthUser, dsInfo.DecryptedBasicAuthPassword())
+	}
+
 	req.Header.Set("Accept", "application/protobuf")
 
 	resp, err := e.httpClient.Do(req)
