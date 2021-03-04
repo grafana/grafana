@@ -24,7 +24,7 @@ export const SaveLibraryPanelModal: React.FC<Props> = ({
   onDismiss,
   onConfirm,
   onDiscard,
-}: Props) => {
+}) => {
   const [searchString, setSearchString] = useState('');
   const connectedDashboardsState = useAsync(async () => {
     const connectedDashboards = await getLibraryPanelConnectedDashboards(panel.libraryPanel.uid);
