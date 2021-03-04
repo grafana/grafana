@@ -6,7 +6,7 @@ interface WithContextMenuProps {
   /** Menu item trigger that accepts openMenu prop */
   children: (props: { openMenu: React.MouseEventHandler<HTMLElement> }) => JSX.Element;
   /** A function that returns an array of menu items */
-  getContextMenuItems: () => MenuItemsGroup;
+  getContextMenuItems: () => MenuItemsGroup[];
 }
 
 export const WithContextMenu: React.FC<WithContextMenuProps> = ({ children, getContextMenuItems }) => {
@@ -30,7 +30,7 @@ export const WithContextMenu: React.FC<WithContextMenuProps> = ({ children, getC
           onClose={() => setIsMenuOpen(false)}
           x={menuPosition.x}
           y={menuPosition.y}
-          group={getContextMenuItems()}
+          itemsGroup={getContextMenuItems()}
         />
       )}
     </>

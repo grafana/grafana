@@ -4,6 +4,7 @@ import { Portal } from '../Portal/Portal';
 import { Menu } from '../Menu/Menu';
 import { MenuGroup, MenuItemsGroup } from '../Menu/MenuGroup';
 import { MenuItem } from '../Menu/MenuItem';
+import { List } from '../List/List';
 
 export interface ContextMenuProps {
   /** Starting horizontal position for the menu */
@@ -13,12 +14,12 @@ export interface ContextMenuProps {
   /** Callback for closing the menu */
   onClose?: () => void;
   /** List of the menu items to display */
-  group?: MenuItemsGroup;
+  itemsGroup?: MenuItemsGroup[];
   /** A function that returns header element */
   renderHeader?: () => React.ReactNode;
 }
 
-export const ContextMenu: React.FC<ContextMenuProps> = React.memo(({ x, y, onClose, group, renderHeader }) => {
+export const ContextMenu: React.FC<ContextMenuProps> = React.memo(({ x, y, onClose, itemsGroup, renderHeader }) => {
   const menuRef = useRef<HTMLDivElement>(null);
   const [positionStyles, setPositionStyles] = useState({});
 
@@ -56,20 +57,26 @@ export const ContextMenu: React.FC<ContextMenuProps> = React.memo(({ x, y, onClo
   return (
     <Portal>
       <Menu header={header} ref={menuRef} style={positionStyles}>
-        {group?.item && (
-          <MenuGroup label={group.label}>
-            {group.item.map((item) => {
-              <MenuItem
-                url={item.url}
-                label={item.label}
-                target={item.target}
-                icon={item.icon}
-                active={item.active}
-                onClick={onClick}
-              />;
-            })}
-          </MenuGroup>
-        )}
+        {itemsGroup &&
+          itemsGroup.map((group) => (
+            <MenuGroup key={group.label} label={group.label}>
+              <List
+                items={group.items || []}
+                renderItem={(item) => {
+                  return (
+                    <MenuItem
+                      url={item.url}
+                      label={item.label}
+                      target={item.target}
+                      icon={item.icon}
+                      active={item.active}
+                      onClick={onClick}
+                    />
+                  );
+                }}
+              />
+            </MenuGroup>
+          ))}
       </Menu>
     </Portal>
   );
