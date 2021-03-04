@@ -86,7 +86,6 @@ Required fields:
 | serviceTags | TraceKeyValuePair[] | List of tags relevant for the service. |
 | startTime  | number | Start time of the span in millisecond epoch time. |
 | duration   | number | Duration of the span in milliseconds. |
-| serviceTags | TraceKeyValuePair[] | List of tags relevant for the service. |
 
 Optional fields:
 
