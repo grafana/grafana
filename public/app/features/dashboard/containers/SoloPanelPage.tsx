@@ -18,7 +18,6 @@ export interface DashboardPageRouteParams {
 }
 
 export interface Props extends GrafanaRouteComponentProps<DashboardPageRouteParams, { panelId: string }> {
-  $scope: any;
   $injector: any;
   initDashboard: typeof initDashboard;
   dashboard: DashboardModel | null;
@@ -36,11 +35,10 @@ export class SoloPanelPage extends Component<Props, State> {
   };
 
   componentDidMount() {
-    const { $injector, $scope, match, route } = this.props;
+    const { $injector, match, route } = this.props;
 
     this.props.initDashboard({
       $injector: $injector,
-      $scope: $scope,
       urlSlug: match.params.slug,
       urlUid: match.params.uid,
       urlType: match.params.type,

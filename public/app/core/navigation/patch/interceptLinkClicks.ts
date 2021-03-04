@@ -4,8 +4,8 @@ import { locationService, navigationLogger } from '@grafana/runtime';
 export function interceptLinkClicks(e: MouseEvent) {
   const anchor = getParentAnchor(e.target as HTMLElement);
 
-  // Ignore if opening new tab
-  if (e.ctrlKey || e.metaKey) {
+  // Ignore if opening new tab or already default prevented
+  if (e.ctrlKey || e.metaKey || e.defaultPrevented) {
     return;
   }
 

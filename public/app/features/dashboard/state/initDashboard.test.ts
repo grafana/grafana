@@ -10,6 +10,7 @@ import { variableAdapters } from 'app/features/variables/adapters';
 import { createConstantVariableAdapter } from 'app/features/variables/constant/adapter';
 import { constantBuilder } from 'app/features/variables/shared/testing/builders';
 import { TransactionStatus, variablesInitTransaction } from '../../variables/state/transactionReducer';
+import { keybindingSrv } from 'app/core/services/keybindingSrv';
 
 jest.mock('app/core/services/backend_srv');
 jest.mock('app/features/dashboard/services/TimeSrv', () => {
@@ -27,6 +28,7 @@ jest.mock('app/core/services/context_srv', () => ({
     user: { orgId: 1, orgName: 'TestOrg' },
   },
 }));
+jest.mock('app/features/dashboard/services/ChangeTracker');
 
 variableAdapters.register(createConstantVariableAdapter());
 const mockStore = configureMockStore([thunk]);
@@ -35,10 +37,8 @@ interface ScenarioContext {
   args: InitDashboardArgs;
   timeSrv: any;
   annotationsSrv: any;
-  unsavedChangesSrv: any;
   dashboardSrv: any;
   loaderSrv: any;
-  keybindingSrv: any;
   backendSrv: any;
   setup: (fn: () => void) => void;
   actions: any[];
@@ -51,9 +51,7 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
   describe(description, () => {
     const timeSrv = { init: jest.fn() };
     const annotationsSrv = { init: jest.fn() };
-    const unsavedChangesSrv = { init: jest.fn() };
     const dashboardSrv = { setCurrent: jest.fn() };
-    const keybindingSrv = { setupDashboardBindings: jest.fn() };
     const loaderSrv = {
       loadDashboard: jest.fn(() => ({
         meta: {
@@ -94,12 +92,8 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
             return annotationsSrv;
           case 'dashboardLoaderSrv':
             return loaderSrv;
-          case 'unsavedChangesSrv':
-            return unsavedChangesSrv;
           case 'dashboardSrv':
             return dashboardSrv;
-          case 'keybindingSrv':
-            return keybindingSrv;
           default:
             throw { message: 'Unknown service ' + name };
         }
@@ -112,16 +106,13 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
       args: {
         urlUid: 'DGmvKKxZz',
         $injector: injectorMock,
-        $scope: {},
         fixUrl: false,
         routeName: DashboardRoutes.Normal,
       },
       backendSrv: getBackendSrv(),
       timeSrv,
       annotationsSrv,
-      unsavedChangesSrv,
       dashboardSrv,
-      keybindingSrv,
       loaderSrv,
       actions: [],
       storeState: {
@@ -149,6 +140,8 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
     };
 
     beforeEach(async () => {
+      keybindingSrv.setupDashboardBindings = jest.fn();
+
       setupFn();
       setEchoSrv(new Echo());
 
@@ -190,9 +183,8 @@ describeInitScenario('Initializing new dashboard', (ctx) => {
   it('Should initialize services', () => {
     expect(ctx.timeSrv.init).toBeCalled();
     expect(ctx.annotationsSrv.init).toBeCalled();
-    expect(ctx.unsavedChangesSrv.init).toBeCalled();
-    expect(ctx.keybindingSrv.setupDashboardBindings).toBeCalled();
     expect(ctx.dashboardSrv.setCurrent).toBeCalled();
+    expect(keybindingSrv.setupDashboardBindings).toBeCalled();
   });
 });
 
@@ -263,9 +255,8 @@ describeInitScenario('Initializing existing dashboard', (ctx) => {
   it('Should initialize services', () => {
     expect(ctx.timeSrv.init).toBeCalled();
     expect(ctx.annotationsSrv.init).toBeCalled();
-    expect(ctx.unsavedChangesSrv.init).toBeCalled();
-    expect(ctx.keybindingSrv.setupDashboardBindings).toBeCalled();
     expect(ctx.dashboardSrv.setCurrent).toBeCalled();
+    expect(keybindingSrv.setupDashboardBindings).toBeCalled();
   });
 
   it('Should initialize redux variables if newVariables is enabled', () => {
@@ -299,8 +290,7 @@ describeInitScenario('Initializing previously canceled dashboard initialization'
   });
 
   it('Should not initialize other services', () => {
-    expect(ctx.unsavedChangesSrv.init).not.toBeCalled();
-    expect(ctx.keybindingSrv.setupDashboardBindings).not.toBeCalled();
     expect(ctx.dashboardSrv.setCurrent).not.toBeCalled();
+    expect(keybindingSrv.setupDashboardBindings).not.toBeCalled();
   });
 });

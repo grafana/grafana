@@ -13,7 +13,8 @@ export class GrafanaRoute extends React.Component<Props> {
     this.cleanupDOM();
 
     // unbinds all and re-bind global keybindins
-    keybindingSrv.resetAndInitGlobals();
+    keybindingSrv.reset();
+    keybindingSrv.initGlobals();
 
     navigationLogger('GrafanaRoute', false, 'Mounted', this.props.match);
   }
