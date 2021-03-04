@@ -57,6 +57,9 @@ Instead of the file path, users can now paste the SSL certification content in t
 
 > **Note:** It remains as limitation for the hosted Grafana, because the user doesn't have access to the server configuration.
 
+[Postgres data source]({{< relref "../datasources/postgres.md" >}}) and [Provisioning]({{< relref "../administration/provisioning.md" >}}) were updated as a result of this change.
+
+
 ### Deprecation notice for some Azure Monitor queries
 
 In the upcoming Grafana 8.0 release, Application Insights and Insights Analytics query types within the Azure Monitor data source will be deprecated and be made read-only in favor of querying Application Insights from Metrics and Logs. 
