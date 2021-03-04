@@ -421,7 +421,7 @@ func (e *dataPlugin) transformToTimeSeries(query plugins.DataSubQuery, rows *cor
 			cfg.rowCount++
 		}
 
-		result.Series = append(result.Series, *cfg.pointsBySeries[key])
+		result.Series = append(result.Series, *series)
 	}
 
 	result.Meta.Set("rowCount", cfg.rowCount)
