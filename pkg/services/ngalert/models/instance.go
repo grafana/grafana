@@ -1,4 +1,4 @@
-package ngalert
+package models
 
 import (
 	"fmt"
@@ -33,8 +33,8 @@ func (i InstanceStateType) IsValid() bool {
 		i == InstanceStateNormal
 }
 
-// saveAlertInstanceCommand is the query for saving a new alert instance.
-type saveAlertInstanceCommand struct {
+// SaveAlertInstanceCommand is the query for saving a new alert instance.
+type SaveAlertInstanceCommand struct {
 	DefinitionOrgID int64
 	DefinitionUID   string
 	Labels          InstanceLabels
@@ -42,9 +42,9 @@ type saveAlertInstanceCommand struct {
 	LastEvalTime    time.Time
 }
 
-// getAlertDefinitionByIDQuery is the query for retrieving/deleting an alert definition by ID.
+// GetAlertInstanceQuery is the query for retrieving/deleting an alert definition by ID.
 // nolint:unused
-type getAlertInstanceQuery struct {
+type GetAlertInstanceQuery struct {
 	DefinitionOrgID int64
 	DefinitionUID   string
 	Labels          InstanceLabels
@@ -52,17 +52,17 @@ type getAlertInstanceQuery struct {
 	Result *AlertInstance
 }
 
-// listAlertInstancesCommand is the query list alert Instances.
-type listAlertInstancesQuery struct {
+// ListAlertInstancesQuery is the query list alert Instances.
+type ListAlertInstancesQuery struct {
 	DefinitionOrgID int64 `json:"-"`
 	DefinitionUID   string
 	State           InstanceStateType
 
-	Result []*listAlertInstancesQueryResult
+	Result []*ListAlertInstancesQueryResult
 }
 
-// listAlertInstancesQueryResult represents the result of listAlertInstancesQuery.
-type listAlertInstancesQueryResult struct {
+// ListAlertInstancesQueryResult represents the result of listAlertInstancesQuery.
+type ListAlertInstancesQueryResult struct {
 	DefinitionOrgID   int64             `xorm:"def_org_id" json:"definitionOrgId"`
 	DefinitionUID     string            `xorm:"def_uid" json:"definitionUid"`
 	DefinitionTitle   string            `xorm:"def_title" json:"definitionTitle"`
@@ -73,9 +73,9 @@ type listAlertInstancesQueryResult struct {
 	LastEvalTime      time.Time         `json:"lastEvalTime"`
 }
 
-// validateAlertInstance validates that the alert instance contains an alert definition id,
+// ValidateAlertInstance validates that the alert instance contains an alert definition id,
 // and state.
-func validateAlertInstance(alertInstance *AlertInstance) error {
+func ValidateAlertInstance(alertInstance *AlertInstance) error {
 	if alertInstance == nil {
 		return fmt.Errorf("alert instance is invalid because it is nil")
 	}
