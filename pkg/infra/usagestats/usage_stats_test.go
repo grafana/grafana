@@ -530,6 +530,9 @@ func (aum *alertingUsageMock) QueryUsageStats() (*alerting.UsageStats, error) {
 }
 
 func setupSomeDataSourcePlugins(t *testing.T) {
+	originalDataSources := plugins.DataSources
+	t.Cleanup(func() { plugins.DataSources = originalDataSources })
+
 	plugins.DataSources = make(map[string]*plugins.DataSourcePlugin)
 
 	plugins.DataSources[models.DS_ES] = &plugins.DataSourcePlugin{
@@ -562,6 +565,4 @@ func setupSomeDataSourcePlugins(t *testing.T) {
 			},
 		},
 	}
-
-	t.Cleanup(func() { plugins.DataSources = nil })
 }
