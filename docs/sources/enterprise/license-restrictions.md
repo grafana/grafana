@@ -31,7 +31,7 @@ When the number of maximum active viewers or editors is reached, only them can l
 
 ### Concurrent sessions limit
 
-Sometimes it is useful to sign in to an account from multiple locations simultaneously. As of Grafana Enterprise 7.5.0, accounts are limited to the number of concurrent sessions authorized in your license, which is typically three. A new session is created when a user signs in to Grafana from a new device, a different browser, or an incognito window. If a user signs in to Grafana from another tab or window within the same browser, then only one session is used.
+Sometimes it is useful to sign in to an account from multiple locations simultaneously. As of Grafana Enterprise 7.5.0, accounts are limited to the number of concurrent sessions authorized in your license, which is typically three. A new session is created when you sign in to Grafana from a new device, a different browser, or an incognito window. If you sign in to Grafana from another tab or window within the same browser, then only one session is used.
 
 Given a limit of three sessions, the longest inactive session is signed out of when a fourth person signs in to the same account.
 
