@@ -70,11 +70,11 @@ export class ExplorePaneContainerUnconnected extends React.PureComponent<Props> 
     this.refreshExplore(prevProps.urlQuery);
   }
 
-  refreshExplore = (prevUrlState: string) => {
+  refreshExplore = (prevUrlQuery: string) => {
     const { exploreId, urlQuery } = this.props;
 
     // Update state from url only if it changed and only if the change wasn't initialised by redux to prevent any loops
-    if (urlQuery !== prevUrlState && urlQuery !== lastSavedUrl[exploreId]) {
+    if (urlQuery !== prevUrlQuery && urlQuery !== lastSavedUrl[exploreId]) {
       this.props.refreshExplore(exploreId, urlQuery);
     }
   };
