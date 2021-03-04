@@ -181,7 +181,7 @@ func TestPostgres(t *testing.T) {
 		tlsManager: &tlsTestManager{settings: tlsSettings{Mode: "disable"}},
 	}
 
-	endpoint, err := svc.newPostgresQueryEndpoint(&models.DataSource{
+	exe, err := svc.NewExecutor(&models.DataSource{
 		JsonData:       simplejson.New(),
 		SecureJsonData: securejsondata.SecureJsonData{},
 	})
@@ -240,12 +240,12 @@ func TestPostgres(t *testing.T) {
 							"rawSql": "SELECT * FROM postgres_types",
 							"format": "table",
 						}),
-						RefId: "A",
+						RefID: "A",
 					},
 				},
 			}
 
-			resp, err := endpoint.Query(context.Background(), nil, query)
+			resp, err := exe.DataQuery(context.Background(), nil, query)
 			require.NoError(t, err)
 			queryResult := resp.Results["A"]
 			require.NoError(t, queryResult.Error)
@@ -325,12 +325,12 @@ func TestPostgres(t *testing.T) {
 							"rawSql": "SELECT $__timeGroup(time, '5m') AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
 							"format": "time_series",
 						}),
-						RefId: "A",
+						RefID: "A",
 					},
 				},
 			}
 
-			resp, err := endpoint.Query(context.Background(), nil, query)
+			resp, err := exe.DataQuery(context.Background(), nil, query)
 			require.NoError(t, err)
 			queryResult := resp.Results["A"]
 			require.NoError(t, queryResult.Error)
@@ -376,16 +376,16 @@ func TestPostgres(t *testing.T) {
 							"rawSql": "SELECT $__timeGroup(time, $__interval) AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
 							"format": "time_series",
 						}),
-						RefId: "A",
+						RefID: "A",
 					},
 				},
-				TimeRange: plugins.DataTimeRange{
+				TimeRange: &plugins.DataTimeRange{
 					From: fmt.Sprintf("%v", fromStart.Unix()*1000),
 					To:   fmt.Sprintf("%v", fromStart.Add(30*time.Minute).Unix()*1000),
 				},
 			}
 
-			resp, err := endpoint.Query(context.Background(), nil, query)
+			resp, err := exe.DataQuery(context.Background(), nil, query)
 			require.NoError(t, err)
 			queryResult := resp.Results["A"]
 			require.NoError(t, queryResult.Error)
@@ -402,16 +402,16 @@ func TestPostgres(t *testing.T) {
 							"rawSql": "SELECT $__timeGroup(time, '5m', NULL) AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
 							"format": "time_series",
 						}),
-						RefId: "A",
+						RefID: "A",
 					},
 				},
-				TimeRange: plugins.DataTimeRange{
+				TimeRange: &plugins.DataTimeRange{
 					From: fmt.Sprintf("%v", fromStart.Unix()*1000),
 					To:   fmt.Sprintf("%v", fromStart.Add(34*time.Minute).Unix()*1000),
 				},
 			}
 
-			resp, err := endpoint.Query(context.Background(), nil, query)
+			resp, err := exe.DataQuery(context.Background(), nil, query)
 			require.NoError(t, err)
 			queryResult := resp.Results["A"]
 			require.NoError(t, queryResult.Error)
@@ -455,16 +455,16 @@ func TestPostgres(t *testing.T) {
 							"rawSql": "SELECT $__timeGroup(time, '5m', 1.5) AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
 							"format": "time_series",
 						}),
-						RefId: "A",
+						RefID: "A",
 					},
 				},
-				TimeRange: plugins.DataTimeRange{
+				TimeRange: &plugins.DataTimeRange{
 					From: fmt.Sprintf("%v", fromStart.Unix()*1000),
 					To:   fmt.Sprintf("%v", fromStart.Add(34*time.Minute).Unix()*1000),
 				},
 			}
 
-			resp, err := endpoint.Query(context.Background(), nil, query)
+			resp, err := exe.DataQuery(context.Background(), nil, query)
 			require.NoError(t, err)
 			queryResult := resp.Results["A"]
 			require.NoError(t, queryResult.Error)
@@ -482,16 +482,16 @@ func TestPostgres(t *testing.T) {
 						"rawSql": "SELECT $__timeGroup(time, '5m', previous), avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
 						"format": "time_series",
 					}),
-					RefId: "A",
+					RefID: "A",
 				},
 			},
-			TimeRange: plugins.DataTimeRange{
+			TimeRange: &plugins.DataTimeRange{
 				From: fmt.Sprintf("%v", fromStart.Unix()*1000),
 				To:   fmt.Sprintf("%v", fromStart.Add(34*time.Minute).Unix()*1000),
 			},
 		}
 
-		resp, err := endpoint.Query(context.Background(), nil, query)
+		resp, err := exe.DataQuery(context.Background(), nil, query)
 		require.NoError(t, err)
 		queryResult := resp.Results["A"]
 		require.NoError(t, queryResult.Error)
@@ -579,12 +579,12 @@ func TestPostgres(t *testing.T) {
 								"rawSql": `SELECT "timeInt64" as time, "timeInt64" FROM metric_values ORDER BY time LIMIT 1`,
 								"format": "time_series",
 							}),
-							RefId: "A",
+							RefID: "A",
 						},
 					},
 				}
 
-				resp, err := endpoint.Query(context.Background(), nil, query)
+				resp, err := exe.DataQuery(context.Background(), nil, query)
 				require.NoError(t, err)
 				queryResult := resp.Results["A"]
 				require.NoError(t, queryResult.Error)
@@ -602,12 +602,12 @@ func TestPostgres(t *testing.T) {
 								"rawSql": `SELECT "timeInt64Nullable" as time, "timeInt64Nullable" FROM metric_values ORDER BY time LIMIT 1`,
 								"format": "time_series",
 							}),
-							RefId: "A",
+							RefID: "A",
 						},
 					},
 				}
 
-				resp, err := endpoint.Query(context.Background(), nil, query)
+				resp, err := exe.DataQuery(context.Background(), nil, query)
 				require.NoError(t, err)
 				queryResult := resp.Results["A"]
 				require.NoError(t, queryResult.Error)
@@ -625,12 +625,12 @@ func TestPostgres(t *testing.T) {
 								"rawSql": `SELECT "timeFloat64" as time, "timeFloat64" FROM metric_values ORDER BY time LIMIT 1`,
 								"format": "time_series",
 							}),
-							RefId: "A",
+							RefID: "A",
 						},
 					},
 				}
 
-				resp, err := endpoint.Query(context.Background(), nil, query)
+				resp, err := exe.DataQuery(context.Background(), nil, query)
 				require.NoError(t, err)
 				queryResult := resp.Results["A"]
 				require.NoError(t, queryResult.Error)
@@ -648,12 +648,12 @@ func TestPostgres(t *testing.T) {
 								"rawSql": `SELECT "timeFloat64Nullable" as time, "timeFloat64Nullable" FROM metric_values ORDER BY time LIMIT 1`,
 								"format": "time_series",
 							}),
-							RefId: "A",
+							RefID: "A",
 						},
 					},
 				}
 
-				resp, err := endpoint.Query(context.Background(), nil, query)
+				resp, err := exe.DataQuery(context.Background(), nil, query)
 				require.NoError(t, err)
 				queryResult := resp.Results["A"]
 				require.NoError(t, queryResult.Error)
@@ -671,12 +671,12 @@ func TestPostgres(t *testing.T) {
 								"rawSql": `SELECT "timeInt32" as time, "timeInt32" FROM metric_values ORDER BY time LIMIT 1`,
 								"format": "time_series",
 							}),
-							RefId: "A",
+							RefID: "A",
 						},
 					},
 				}
 
-				resp, err := endpoint.Query(context.Background(), nil, query)
+				resp, err := exe.DataQuery(context.Background(), nil, query)
 				require.NoError(t, err)
 				queryResult := resp.Results["A"]
 				require.NoError(t, queryResult.Error)
@@ -694,12 +694,12 @@ func TestPostgres(t *testing.T) {
 								"rawSql": `SELECT "timeInt32Nullable" as time, "timeInt32Nullable" FROM metric_values ORDER BY time LIMIT 1`,
 								"format": "time_series",
 							}),
-							RefId: "A",
+							RefID: "A",
 						},
 					},
 				}
 
-				resp, err := endpoint.Query(context.Background(), nil, query)
+				resp, err := exe.DataQuery(context.Background(), nil, query)
 				require.NoError(t, err)
 				queryResult := resp.Results["A"]
 				require.NoError(t, queryResult.Error)
@@ -717,12 +717,12 @@ func TestPostgres(t *testing.T) {
 								"rawSql": `SELECT "timeFloat32" as time, "timeFloat32" FROM metric_values ORDER BY time LIMIT 1`,
 								"format": "time_series",
 							}),
-							RefId: "A",
+							RefID: "A",
 						},
 					},
 				}
 
-				resp, err := endpoint.Query(context.Background(), nil, query)
+				resp, err := exe.DataQuery(context.Background(), nil, query)
 				require.NoError(t, err)
 				queryResult := resp.Results["A"]
 				require.NoError(t, queryResult.Error)
@@ -740,12 +740,12 @@ func TestPostgres(t *testing.T) {
 								"rawSql": `SELECT "timeFloat32Nullable" as time, "timeFloat32Nullable" FROM metric_values ORDER BY time LIMIT 1`,
 								"format": "time_series",
 							}),
-							RefId: "A",
+							RefID: "A",
 						},
 					},
 				}
 
-				resp, err := endpoint.Query(context.Background(), nil, query)
+				resp, err := exe.DataQuery(context.Background(), nil, query)
 				require.NoError(t, err)
 				queryResult := resp.Results["A"]
 				require.NoError(t, queryResult.Error)
@@ -762,12 +762,12 @@ func TestPostgres(t *testing.T) {
 							"rawSql": `SELECT $__timeEpoch(time), measurement || ' - value one' as metric, "valueOne" FROM metric_values ORDER BY 1`,
 							"format": "time_series",
 						}),
-						RefId: "A",
+						RefID: "A",
 					},
 				},
 			}
 
-			resp, err := endpoint.Query(context.Background(), nil, query)
+			resp, err := exe.DataQuery(context.Background(), nil, query)
 			require.NoError(t, err)
 			queryResult := resp.Results["A"]
 			require.NoError(t, queryResult.Error)
@@ -785,12 +785,12 @@ func TestPostgres(t *testing.T) {
 							"rawSql": `SELECT $__timeEpoch(time), measurement as metric, "valueOne", "valueTwo" FROM metric_values ORDER BY 1`,
 							"format": "time_series",
 						}),
-						RefId: "A",
+						RefID: "A",
 					},
 				},
 			}
 
-			resp, err := endpoint.Query(context.Background(), nil, query)
+			resp, err := exe.DataQuery(context.Background(), nil, query)
 			require.NoError(t, err)
 			queryResult := resp.Results["A"]
 			require.NoError(t, queryResult.Error)
@@ -810,12 +810,12 @@ func TestPostgres(t *testing.T) {
 							"rawSql": `SELECT $__timeEpoch(time), "valueOne", "valueTwo" FROM metric_values ORDER BY 1`,
 							"format": "time_series",
 						}),
-						RefId: "A",
+						RefID: "A",
 					},
 				},
 			}
 
-			resp, err := endpoint.Query(context.Background(), nil, query)
+			resp, err := exe.DataQuery(context.Background(), nil, query)
 			require.NoError(t, err)
 			queryResult := resp.Results["A"]
 			require.NoError(t, queryResult.Error)
@@ -833,7 +833,7 @@ func TestPostgres(t *testing.T) {
 			sqleng.Interpolate = origInterpolate
 
 			query := plugins.DataQuery{
-				TimeRange: plugins.DataTimeRange{From: "5m", To: "now", Now: fromStart},
+				TimeRange: &plugins.DataTimeRange{From: "5m", To: "now", Now: fromStart},
 				Queries: []plugins.DataSubQuery{
 					{
 						DataSource: &models.DataSource{JsonData: simplejson.New()},
@@ -841,12 +841,12 @@ func TestPostgres(t *testing.T) {
 							"rawSql": `SELECT time FROM metric_values WHERE time > $__timeFrom() OR time < $__timeFrom() OR 1 < $__unixEpochFrom() OR $__unixEpochTo() > 1 ORDER BY 1`,
 							"format": "time_series",
 						}),
-						RefId: "A",
+						RefID: "A",
 					},
 				},
 			}
 
-			resp, err := endpoint.Query(context.Background(), nil, query)
+			resp, err := exe.DataQuery(context.Background(), nil, query)
 			require.NoError(t, err)
 			queryResult := resp.Results["A"]
 			require.NoError(t, queryResult.Error)
@@ -898,16 +898,16 @@ func TestPostgres(t *testing.T) {
 							"rawSql": `SELECT "time_sec" as time, description as text, tags FROM event WHERE $__unixEpochFilter(time_sec) AND tags='deploy' ORDER BY 1 ASC`,
 							"format": "table",
 						}),
-						RefId: "Deploys",
+						RefID: "Deploys",
 					},
 				},
-				TimeRange: plugins.DataTimeRange{
+				TimeRange: &plugins.DataTimeRange{
 					From: fmt.Sprintf("%v", fromStart.Add(-20*time.Minute).Unix()*1000),
 					To:   fmt.Sprintf("%v", fromStart.Add(40*time.Minute).Unix()*1000),
 				},
 			}
 
-			resp, err := endpoint.Query(context.Background(), nil, query)
+			resp, err := exe.DataQuery(context.Background(), nil, query)
 			queryResult := resp.Results["Deploys"]
 			require.NoError(t, err)
 			require.Len(t, queryResult.Tables[0].Rows, 3)
@@ -921,16 +921,16 @@ func TestPostgres(t *testing.T) {
 							"rawSql": `SELECT "time_sec" as time, description as text, tags FROM event WHERE $__unixEpochFilter(time_sec) AND tags='ticket' ORDER BY 1 ASC`,
 							"format": "table",
 						}),
-						RefId: "Tickets",
+						RefID: "Tickets",
 					},
 				},
-				TimeRange: plugins.DataTimeRange{
+				TimeRange: &plugins.DataTimeRange{
 					From: fmt.Sprintf("%v", fromStart.Add(-20*time.Minute).Unix()*1000),
 					To:   fmt.Sprintf("%v", fromStart.Add(40*time.Minute).Unix()*1000),
 				},
 			}
 
-			resp, err := endpoint.Query(context.Background(), nil, query)
+			resp, err := exe.DataQuery(context.Background(), nil, query)
 			queryResult := resp.Results["Tickets"]
 			require.NoError(t, err)
 			require.Len(t, queryResult.Tables[0].Rows, 3)
@@ -951,12 +951,12 @@ func TestPostgres(t *testing.T) {
 							`, dt.Format(dtFormat)),
 							"format": "table",
 						}),
-						RefId: "A",
+						RefID: "A",
 					},
 				},
 			}
 
-			resp, err := endpoint.Query(context.Background(), nil, query)
+			resp, err := exe.DataQuery(context.Background(), nil, query)
 			require.NoError(t, err)
 			queryResult := resp.Results["A"]
 			require.NoError(t, queryResult.Error)
@@ -981,12 +981,12 @@ func TestPostgres(t *testing.T) {
 							`, dt.Unix()),
 							"format": "table",
 						}),
-						RefId: "A",
+						RefID: "A",
 					},
 				},
 			}
 
-			resp, err := endpoint.Query(context.Background(), nil, query)
+			resp, err := exe.DataQuery(context.Background(), nil, query)
 			require.NoError(t, err)
 			queryResult := resp.Results["A"]
 			require.NoError(t, queryResult.Error)
@@ -1011,12 +1011,12 @@ func TestPostgres(t *testing.T) {
 							`, dt.Unix()),
 							"format": "table",
 						}),
-						RefId: "A",
+						RefID: "A",
 					},
 				},
 			}
 
-			resp, err := endpoint.Query(context.Background(), nil, query)
+			resp, err := exe.DataQuery(context.Background(), nil, query)
 			require.NoError(t, err)
 			queryResult := resp.Results["A"]
 			require.NoError(t, queryResult.Error)
@@ -1041,12 +1041,12 @@ func TestPostgres(t *testing.T) {
 							`, dt.Unix()*1000),
 							"format": "table",
 						}),
-						RefId: "A",
+						RefID: "A",
 					},
 				},
 			}
 
-			resp, err := endpoint.Query(context.Background(), nil, query)
+			resp, err := exe.DataQuery(context.Background(), nil, query)
 			require.NoError(t, err)
 			queryResult := resp.Results["A"]
 			require.NoError(t, queryResult.Error)
@@ -1069,12 +1069,12 @@ func TestPostgres(t *testing.T) {
 							`,
 							"format": "table",
 						}),
-						RefId: "A",
+						RefID: "A",
 					},
 				},
 			}
 
-			resp, err := endpoint.Query(context.Background(), nil, query)
+			resp, err := exe.DataQuery(context.Background(), nil, query)
 			require.NoError(t, err)
 			queryResult := resp.Results["A"]
 			require.NoError(t, queryResult.Error)
@@ -1097,12 +1097,12 @@ func TestPostgres(t *testing.T) {
 							`,
 							"format": "table",
 						}),
-						RefId: "A",
+						RefID: "A",
 					},
 				},
 			}
 
-			resp, err := endpoint.Query(context.Background(), nil, query)
+			resp, err := exe.DataQuery(context.Background(), nil, query)
 			require.NoError(t, err)
 			queryResult := resp.Results["A"]
 			require.NoError(t, queryResult.Error)
