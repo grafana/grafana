@@ -5,8 +5,7 @@ import Centrifuge, {
   SubscribeErrorContext,
   UnsubscribeContext,
   SubscriptionEvents,
-} from 'centrifuge/dist/centrifuge.protobuf';
-import SockJS from 'sockjs-client';
+} from 'centrifuge/dist/centrifuge';
 import { WorkerCommand, WorkerResponse } from './workerTypes';
 
 const ctx: Worker = self as any;
@@ -14,9 +13,10 @@ let centrifuge: Centrifuge;
 const subscriptions: Record<string, Centrifuge.Subscription> = {};
 
 const initialize = ({ appUrl, sessionId }: { appUrl: string; sessionId: string }) => {
-  centrifuge = new Centrifuge(`${appUrl}live/sockjs`, {
+  // build live url replacing scheme in appUrl.
+  const liveUrl = `${appUrl}live/ws`.replace(/^(http)(s)?:\/\//, 'ws$2://');
+  centrifuge = new Centrifuge(liveUrl, {
     debug: true,
-    sockjs: SockJS,
   });
   centrifuge.setConnectData({
     sessionId,
