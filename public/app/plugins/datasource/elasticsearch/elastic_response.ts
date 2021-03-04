@@ -306,7 +306,7 @@ export class ElasticResponse {
       if (series.metric && queryDef.isPipelineAggWithMultipleBucketPaths(series.metric)) {
         const agg: any = _.find(target.metrics, { id: series.metricId });
         if (agg && agg.settings.script) {
-          metricName = agg.settings.script;
+          metricName = getScriptValue(agg);
 
           for (const pv of agg.pipelineVariables) {
             const appliedAgg: any = _.find(target.metrics, { id: pv.pipelineAgg });
