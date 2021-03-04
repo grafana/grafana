@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, within } from '@testing-library/react';
-import { ApiKeysPage, Props } from './ApiKeysPage';
+import { ApiKeysPageUnconnected, Props } from './ApiKeysPage';
 import { ApiKey, OrgRole } from 'app/types';
 import { NavModel } from '@grafana/data';
 import { setSearchQuery } from './state/reducers';
@@ -37,7 +37,7 @@ const setup = (propOverrides: Partial<Props>) => {
 
   Object.assign(props, propOverrides);
 
-  const { rerender } = render(<ApiKeysPage {...props} />);
+  const { rerender } = render(<ApiKeysPageUnconnected {...props} />);
   return { rerender, props, loadApiKeysMock, setSearchQueryMock, deleteApiKeyMock, addApiKeyMock };
 };
 
@@ -48,6 +48,13 @@ describe('ApiKeysPage', () => {
       const { loadApiKeysMock } = setup({});
       expect(loadApiKeysMock).toHaveBeenCalledTimes(1);
       expect(loadApiKeysMock).toHaveBeenCalledWith(false);
+    });
+  });
+
+  describe('when loading', () => {
+    it('then should show Loading message', () => {
+      setup({ hasFetched: false });
+      expect(screen.getByText(/loading \.\.\./i)).toBeInTheDocument();
     });
   });
 
@@ -104,7 +111,7 @@ describe('ApiKeysPage', () => {
   });
 
   describe('when a user deletes an api key', () => {
-    it('then it should dispatch setSearchQuery with correct parameters', async () => {
+    it('then it should dispatch deleteApi with correct parameters', async () => {
       const apiKeys = [
         { id: 1, name: 'First', role: OrgRole.Admin, secondsToLive: 60, expiration: '2021-01-01' },
         { id: 2, name: 'Second', role: OrgRole.Editor, secondsToLive: 60, expiration: '2021-01-02' },
