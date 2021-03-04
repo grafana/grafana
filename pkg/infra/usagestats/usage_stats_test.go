@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -530,27 +531,19 @@ func (aum *alertingUsageMock) QueryUsageStats() (*alerting.UsageStats, error) {
 }
 
 func setupSomeDataSourcePlugins(t *testing.T) {
-	originalDataSources := plugins.DataSources
-	t.Cleanup(func() { plugins.DataSources = originalDataSources })
+	originalDataSources := manager.DataSources
+	t.Cleanup(func() { manager.DataSources = originalDataSources })
 
-	plugins.DataSources = make(map[string]*plugins.DataSourcePlugin)
+	manager.DataSources = make(map[string]*plugins.DataSourcePlugin)
 
-	plugins.DataSources[models.DS_ES] = &plugins.DataSourcePlugin{
+	manager.DataSources[models.DS_ES] = &plugins.DataSourcePlugin{
 		FrontendPluginBase: plugins.FrontendPluginBase{
 			PluginBase: plugins.PluginBase{
 				Signature: "internal",
 			},
 		},
 	}
-	plugins.DataSources[models.DS_PROMETHEUS] = &plugins.DataSourcePlugin{
-		FrontendPluginBase: plugins.FrontendPluginBase{
-			PluginBase: plugins.PluginBase{
-				Signature: "internal",
-			},
-		},
-	}
-
-	plugins.DataSources[models.DS_GRAPHITE] = &plugins.DataSourcePlugin{
+	manager.DataSources[models.DS_PROMETHEUS] = &plugins.DataSourcePlugin{
 		FrontendPluginBase: plugins.FrontendPluginBase{
 			PluginBase: plugins.PluginBase{
 				Signature: "internal",
@@ -558,7 +551,15 @@ func setupSomeDataSourcePlugins(t *testing.T) {
 		},
 	}
 
-	plugins.DataSources[models.DS_MYSQL] = &plugins.DataSourcePlugin{
+	manager.DataSources[models.DS_GRAPHITE] = &plugins.DataSourcePlugin{
+		FrontendPluginBase: plugins.FrontendPluginBase{
+			PluginBase: plugins.PluginBase{
+				Signature: "internal",
+			},
+		},
+	}
+
+	manager.DataSources[models.DS_MYSQL] = &plugins.DataSourcePlugin{
 		FrontendPluginBase: plugins.FrontendPluginBase{
 			PluginBase: plugins.PluginBase{
 				Signature: "internal",

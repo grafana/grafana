@@ -291,7 +291,7 @@ func (uss *UsageStatsService) updateTotalStats() {
 }
 
 func (uss *UsageStatsService) shouldBeReported(dsType string) bool {
-	ds, ok := plugins.DataSources[dsType]
+	ds, ok := manager.DataSources[dsType]
 	if !ok {
 		return false
 	}
