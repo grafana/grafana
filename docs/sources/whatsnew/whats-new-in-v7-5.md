@@ -94,7 +94,7 @@ For more information on Grafana Enterprise licensing and restrictions, refer to 
 
 ### Query caching
 
-If you enable this feature, then Grafana hashes and cashes data source queries and serves cached versions of hashed queries if applicable.
+If you enable this feature, then Grafana hashes and caches data source queries and serves cached versions of hashed queries if applicable.
 
 ### Use template variable in reports
 
