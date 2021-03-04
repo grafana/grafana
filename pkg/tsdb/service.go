@@ -77,12 +77,12 @@ func (s *Service) HandleRequest(ctx context.Context, ds *models.DataSource, quer
 				"could not find plugin corresponding to data source type: %q", ds.Type)
 		}
 
-		endpoint, err := factory(ds)
+		var err error
+		plugin, err = factory(ds)
 		if err != nil {
 			return plugins.DataResponse{}, fmt.Errorf("could not instantiate endpoint for data plugin %q: %w",
 				ds.Type, err)
 		}
-		return endpoint.DataQuery(ctx, ds, query)
 	}
 
 	return plugin.DataQuery(ctx, ds, query)
