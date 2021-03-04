@@ -92,9 +92,12 @@ async function fetchDashboard(
           const currentPath = locationService.getLocation().pathname;
 
           if (dashboardUrl !== currentPath) {
-            locationService.replace(dashboardUrl);
+            // Spread current location to persist search params used for navigation
+            locationService.replace({
+              ...locationService.getLocation(),
+              pathname: dashboardUrl,
+            });
             console.log('not correct url correcting', dashboardUrl, currentPath);
-            return null;
           }
         }
         return dashDTO;

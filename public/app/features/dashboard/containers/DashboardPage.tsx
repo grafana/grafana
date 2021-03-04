@@ -25,6 +25,7 @@ import { findTemplateVarChanges } from '../../variables/utils';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getTimeSrv } from '../services/TimeSrv';
+import { shouldReloadPage } from 'app/core/navigation/utils';
 
 export interface DashboardPageRouteParams {
   uid?: string;
@@ -122,7 +123,7 @@ export class DashboardPage extends PureComponent<Props, State> {
       document.title = dashboard.title + ' - ' + Branding.AppTitle;
     }
 
-    if (prevProps.match.params.uid !== match.params.uid) {
+    if (prevProps.match.params.uid !== match.params.uid || shouldReloadPage(this.props.location)) {
       this.initDashboard();
       return;
     }
