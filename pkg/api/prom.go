@@ -36,7 +36,9 @@ type AlertResponse struct {
 	Data AlertDiscovery `json:"data"`
 }
 
+// swagger:model
 type discoveryBase struct {
+	// required: true
 	Status string `json:"status"`
 	// required: false
 	ErrorType v1.ErrorType `json:"errorType"`
@@ -44,58 +46,83 @@ type discoveryBase struct {
 	Error string `json:"error"`
 }
 
+// swagger:model
 type RuleDiscovery struct {
+	// required: true
 	RuleGroups []*RuleGroup `json:"groups"`
 }
 
 // AlertDiscovery has info for all active alerts.
+// swagger:model
 type AlertDiscovery struct {
+	// required: true
 	Alerts []*Alert `json:"alerts"`
 }
 
+// swagger:model
 type RuleGroup struct {
+	// required: true
 	Name string `json:"name"`
+	// required: true
 	File string `json:"file"`
 	// In order to preserve rule ordering, while exposing type (alerting or recording)
 	// specific properties, both alerting and recording rules are exposed in the
 	// same array.
-	Rules          []AlertingRule `json:"rules"`
-	Interval       float64        `json:"interval"`
-	LastEvaluation time.Time      `json:"lastEvaluation"`
-	EvaluationTime float64        `json:"evaluationTime"`
+	// required: true
+	Rules []AlertingRule `json:"rules"`
+	// required: true
+	Interval       float64   `json:"interval"`
+	LastEvaluation time.Time `json:"lastEvaluation"`
+	EvaluationTime float64   `json:"evaluationTime"`
 }
 
 // adapted from cortex
+// swagger:model
 type AlertingRule struct {
 	// State can be "pending", "firing", "inactive".
-	State       string   `json:"state,omitempty"`
-	Name        string   `json:"name,omitempty"`
-	Query       string   `json:"query,omitempty"`
-	Duration    float64  `json:"duration,omitempty"`
-	Annotations labels   `json:"annotations,omitempty"`
-	Alerts      []*Alert `json:"alerts,omitempty"`
+	// required: true
+	State string `json:"state,omitempty"`
+	// required: true
+	Name string `json:"name,omitempty"`
+	// required: true
+	Query    string  `json:"query,omitempty"`
+	Duration float64 `json:"duration,omitempty"`
+	// required: true
+	Annotations labels `json:"annotations,omitempty"`
+	// required: true
+	Alerts []*Alert `json:"alerts,omitempty"`
 	Rule
 }
 
 // adapted from cortex
+// swagger:model
 type Rule struct {
-	Name           string      `json:"name"`
-	Query          string      `json:"query"`
-	Labels         labels      `json:"labels"`
-	Health         string      `json:"health"`
-	LastError      string      `json:"lastError"`
+	// required: true
+	Name string `json:"name"`
+	// required: true
+	Query  string `json:"query"`
+	Labels labels `json:"labels"`
+	// required: true
+	Health    string `json:"health"`
+	LastError string `json:"lastError"`
+	// required: true
 	Type           v1.RuleType `json:"type"`
 	LastEvaluation time.Time   `json:"lastEvaluation"`
 	EvaluationTime float64     `json:"evaluationTime"`
 }
 
 // Alert has info for an alert.
+// swagger:model
 type Alert struct {
-	Labels      labels     `json:"labels"`
-	Annotations labels     `json:"annotations"`
-	State       string     `json:"state"`
-	ActiveAt    *time.Time `json:"activeAt"`
-	Value       string     `json:"value"`
+	// required: true
+	Labels labels `json:"labels"`
+	// required: true
+	Annotations labels `json:"annotations"`
+	// required: true
+	State    string     `json:"state"`
+	ActiveAt *time.Time `json:"activeAt"`
+	// required: true
+	Value string `json:"value"`
 }
 
 // override the labels type with a map for generation.
