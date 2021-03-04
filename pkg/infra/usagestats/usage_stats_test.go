@@ -39,6 +39,8 @@ func Test_InterfaceContractValidity(t *testing.T) {
 
 func TestMetrics(t *testing.T) {
 	t.Run("When sending usage stats", func(t *testing.T) {
+		setupSomeDataSourcePlugins(t)
+
 		uss := &UsageStatsService{
 			Bus:      bus.New(),
 			SQLStore: sqlstore.InitTestDB(t),
@@ -525,4 +527,42 @@ func (aum *alertingUsageMock) QueryUsageStats() (*alerting.UsageStats, error) {
 			"unknown-datasource": 90,
 		},
 	}, nil
+}
+
+func setupSomeDataSourcePlugins(t *testing.T) {
+	originalDataSources := plugins.DataSources
+	t.Cleanup(func() { plugins.DataSources = originalDataSources })
+
+	plugins.DataSources = make(map[string]*plugins.DataSourcePlugin)
+
+	plugins.DataSources[models.DS_ES] = &plugins.DataSourcePlugin{
+		FrontendPluginBase: plugins.FrontendPluginBase{
+			PluginBase: plugins.PluginBase{
+				Signature: "internal",
+			},
+		},
+	}
+	plugins.DataSources[models.DS_PROMETHEUS] = &plugins.DataSourcePlugin{
+		FrontendPluginBase: plugins.FrontendPluginBase{
+			PluginBase: plugins.PluginBase{
+				Signature: "internal",
+			},
+		},
+	}
+
+	plugins.DataSources[models.DS_GRAPHITE] = &plugins.DataSourcePlugin{
+		FrontendPluginBase: plugins.FrontendPluginBase{
+			PluginBase: plugins.PluginBase{
+				Signature: "internal",
+			},
+		},
+	}
+
+	plugins.DataSources[models.DS_MYSQL] = &plugins.DataSourcePlugin{
+		FrontendPluginBase: plugins.FrontendPluginBase{
+			PluginBase: plugins.PluginBase{
+				Signature: "internal",
+			},
+		},
+	}
 }
