@@ -43,11 +43,11 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-export interface OwnProps {}
+interface OwnProps {}
 
-type Props = OwnProps & ConnectedProps<typeof connector>;
+export type Props = OwnProps & ConnectedProps<typeof connector>;
 
-export interface State {
+interface State {
   includeExpired: boolean;
   hasFetched: boolean;
 }
