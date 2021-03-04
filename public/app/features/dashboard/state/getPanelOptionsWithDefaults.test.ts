@@ -8,6 +8,7 @@ import {
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
   StandardOptionConfig,
+  ThresholdsMode,
 } from '@grafana/data';
 import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
 import { mockStandardFieldConfigOptions } from 'test/helpers/fieldConfig';
@@ -59,9 +60,7 @@ describe('getPanelOptionsWithDefaults', () => {
       expect(result).toMatchInlineSnapshot(`
         Object {
           "fieldConfig": Object {
-            "defaults": Object {
-              "custom": Object {},
-            },
+            "defaults": Object {},
             "overrides": Array [],
           },
           "options": Object {},
@@ -229,6 +228,30 @@ describe('getPanelOptionsWithDefaults', () => {
         isAfterPluginChange: true,
       });
       expect(result.fieldConfig.defaults.color!.mode).toBe(FieldColorModeId.Thresholds);
+    });
+  });
+
+  describe('when changing panel type to one that does not use standard field config', () => {
+    it('should clean defaults', () => {
+      const plugin = getPanelPlugin({ id: 'graph' });
+
+      const result = getPanelOptionsWithDefaults({
+        plugin,
+        currentOptions: {},
+        currentFieldConfig: {
+          defaults: {
+            color: { mode: FieldColorModeId.Thresholds },
+            thresholds: {
+              mode: ThresholdsMode.Absolute,
+              steps: [],
+            },
+          },
+          overrides: [],
+        },
+        isAfterPluginChange: true,
+      });
+
+      expect(result.fieldConfig.defaults.thresholds).toBeUndefined();
     });
   });
 
