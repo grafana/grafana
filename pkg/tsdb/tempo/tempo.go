@@ -47,6 +47,9 @@ func (e *tempoExecutor) Query(ctx context.Context, dsInfo *models.DataSource, ts
 	result := &tsdb.Response{
 		Results: map[string]*tsdb.QueryResult{},
 	}
+	refID := tsdbQuery.Queries[0].RefId
+	queryResult := &tsdb.QueryResult{}
+	result.Results[refID] = queryResult
 
 	traceID := tsdbQuery.Queries[0].Model.Get("query").MustString("")
 
@@ -69,6 +72,11 @@ func (e *tempoExecutor) Query(ctx context.Context, dsInfo *models.DataSource, ts
 			plog.Warn("failed to close response body", "err", err)
 		}
 	}()
+
+	if resp.StatusCode == http.StatusNotFound {
+		queryResult.Error = fmt.Errorf("failed to get trace: %s", traceID)
+		return result, nil
+	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -110,13 +118,10 @@ func (e *tempoExecutor) Query(ctx context.Context, dsInfo *models.DataSource, ts
 		return nil, fmt.Errorf("failed to json.Marshal trace \"%s\" :%w", traceID, err)
 	}
 
-	refID := tsdbQuery.Queries[0].RefId
-	queryResult := &tsdb.QueryResult{}
 	frames := []*data.Frame{
 		{Name: "Traces", RefID: refID, Fields: []*data.Field{data.NewField("trace", nil, []string{string(traceBytes)})}},
 	}
 	queryResult.Dataframes = tsdb.NewDecodedDataFrames(frames)
-	result.Results[refID] = queryResult
 
 	return result, nil
 }

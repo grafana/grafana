@@ -50,7 +50,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery> {
   async testDatasource(): Promise<any> {
     const response = await super.query({ targets: [{ query: '', refId: 'A' }] } as any).toPromise();
 
-    if (response.error?.data?.error?.endsWith('connection refused')) {
+    if (!response.error?.message?.startsWith('failed to get trace')) {
       return { status: 'error', message: 'Data source is not working' };
     }
 
