@@ -38,7 +38,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     this.basicAuth = instanceSettings.basicAuth;
     this.url = instanceSettings.url;
     this.name = instanceSettings.name;
-    // graphiteVersion is set when a datasource is created but I hadn't been set in the past
+    // graphiteVersion is set when a datasource is created but it hadn't been set in the past
     // so we're still falling back to 1.1 here for backwards compatibility (see also #17429)
     this.graphiteVersion = instanceSettings.jsonData.graphiteVersion || '1.1';
     this.isMetricTank = instanceSettings.jsonData.graphiteType === GraphiteType.Metrictank;
