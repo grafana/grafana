@@ -4,10 +4,12 @@ import { GrafanaTheme } from '@grafana/data';
 import { useStyles } from '../../themes';
 import { MenuItemProps } from './MenuItem';
 
+/** @internal */
 export interface MenuItemsGroup {
   label?: string;
   items: MenuItemProps[];
 }
+/** @internal */
 export interface MenuGroupProps extends Partial<MenuItemsGroup> {
   children?: React.ReactNode;
 }
