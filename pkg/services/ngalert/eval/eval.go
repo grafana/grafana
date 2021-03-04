@@ -79,10 +79,18 @@ const (
 	// Alerting is the eval state for an alert instance condition
 	// that evaluated to false.
 	Alerting
+
+	// NoData is the eval state for an alert rule condition
+	// that evaluated to NoData.
+	NoData
+
+	// Error is the eval state for an alert rule condition
+	// that evaluated to NoData.
+	Error
 )
 
 func (s state) String() string {
-	return [...]string{"Normal", "Alerting"}[s]
+	return [...]string{"Normal", "Alerting", "NoData", "Error"}[s]
 }
 
 // IsValid checks the condition's validity.
@@ -202,8 +210,16 @@ func evaluateExecutionResult(results *ExecutionResults) (Results, error) {
 		labels[labelsStr] = true
 
 		state := Normal
-		val, err := f.Fields[0].FloatAt(0)
-		if err != nil || val != 0 {
+		val, ok := f.Fields[0].At(0).(*float64)
+		if !ok {
+			return nil, &invalidEvalResultFormatError{refID: f.RefID, reason: fmt.Sprintf("expected nullable float64 but got type %T", f.Fields[0].Type())}
+		}
+		switch {
+		case err != nil:
+			state = Error
+		case val == nil:
+			state = NoData
+		default:
 			state = Alerting
 		}
 
@@ -221,7 +237,7 @@ func evaluateExecutionResult(results *ExecutionResults) (Results, error) {
 func (evalResults Results) AsDataFrame() data.Frame {
 	fields := make([]*data.Field, 0)
 	for _, evalResult := range evalResults {
-		fields = append(fields, data.NewField("", evalResult.Instance, []bool{evalResult.State != Normal}))
+		fields = append(fields, data.NewField("", evalResult.Instance, []string{evalResult.State.String()}))
 	}
 	f := data.NewFrame("", fields...)
 	return *f
