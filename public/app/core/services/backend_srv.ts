@@ -213,12 +213,12 @@ export class BackendSrv implements BackendService {
               const firstAttempt = i === 0 && options.retry === 0;
 
               if (error.status === 401 && isLocalUrl(options.url) && firstAttempt && isSignedIn) {
-                if (error.data.message.includes('revoked')) {
-                  appEvents.emit(CoreEvents.showModalReact, {
+                if (error.data?.message?.includes('revoked')) {
+                  this.dependencies.appEvents.emit(CoreEvents.showModalReact, {
                     component: TokenRevokedModal,
                   });
 
-                  return of(null);
+                  return of({});
                 }
 
                 return from(this.loginPing()).pipe(
