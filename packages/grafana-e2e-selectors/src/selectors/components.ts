@@ -178,4 +178,7 @@ export const Components = {
     dropDown: 'Dashboard link dropdown',
     link: 'Dashboard link',
   },
+  CallToActionCard: {
+    button: (name: string) => `Call to action button ${name}`,
+  },
 };
