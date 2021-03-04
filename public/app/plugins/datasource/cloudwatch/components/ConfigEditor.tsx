@@ -48,15 +48,16 @@ export const ConfigEditor: FC<Props> = (props: Props) => {
           datasource &&
           (() => datasource!.getRegions().then((r) => r.filter((r) => r.value !== 'default').map((v) => v.value)))
         }
-      />
-      <InlineField label="Namespaces of Custom Metrics" labelWidth={28} tooltip="Namespaces of Custom Metrics.">
-        <Input
-          width={60}
-          placeholder="Namespace1,Namespace2"
-          value={props.options.jsonData.customMetricsNamespaces || ''}
-          onChange={onUpdateDatasourceJsonDataOption(props, 'customMetricsNamespaces')}
-        />
-      </InlineField>
+      >
+        <InlineField label="Namespaces of Custom Metrics" labelWidth={28} tooltip="Namespaces of Custom Metrics.">
+          <Input
+            width={60}
+            placeholder="Namespace1,Namespace2"
+            value={props.options.jsonData.customMetricsNamespaces || ''}
+            onChange={onUpdateDatasourceJsonDataOption(props, 'customMetricsNamespaces')}
+          />
+        </InlineField>
+      </ConnectionConfig>
     </>
   );
 };

@@ -3431,10 +3431,10 @@
     source-map "~0.6.1"
     typescript "~3.9.7"
 
-"@grafana/aws-sdk@0.0.15":
-  version "0.0.15"
-  resolved "https://registry.yarnpkg.com/@grafana/aws-sdk/-/aws-sdk-0.0.15.tgz#e9e3db6335c87ebc3fffc50f6d4472a9ca7e7ff9"
-  integrity sha512-oQFWnf3kIqzjSDM6uwQ+Nesgdz4YH7rNSGr8ndG1YbDqWMcfMv64oBu0XifcksRbTlYoY72j6KQOx/Vi2zlcaw==
+"@grafana/aws-sdk@0.0.152":
+  version "0.0.152"
+  resolved "https://npm.pkg.github.com/download/@grafana/aws-sdk/0.0.152/1886fd500eaa9b3f5cd713c724f6063bbd8becf2295e50e6c5b7ae81f6277f6d#e30d800fdd3a0c8b822028433bc59572c7214fb6"
+  integrity sha512-N6cnp+vkvAv2LNU7+BvAXBcrHEIfiGhKZjU7weBohL9J8dDCbPD6KhTR6xe31ZvtjXNM5pzMcoyVLiTbvNv5Pg==
   dependencies:
     "@grafana/data" canary
     "@grafana/runtime" canary
