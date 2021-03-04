@@ -57,12 +57,11 @@ func (e *tempoExecutor) Query(ctx context.Context, dsInfo *models.DataSource, ts
 		return nil, err
 	}
 
-	// Set content type to grpc
 	req.Header.Set("Accept", "application/protobuf")
 
 	resp, err := e.httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("failed get to tempo %w", err)
+		return nil, fmt.Errorf("failed get to tempo: %w", err)
 	}
 
 	defer func() {
@@ -107,7 +106,6 @@ func (e *tempoExecutor) Query(ctx context.Context, dsInfo *models.DataSource, ts
 	jsonTrace := jaeger_json.FromDomain(jaegerTrace)
 
 	traceBytes, err := json.Marshal(jsonTrace)
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to json.Marshal trace \"%s\" :%w", traceID, err)
 	}
