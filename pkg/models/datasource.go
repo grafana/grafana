@@ -14,6 +14,7 @@ const (
 	DS_INFLUXDB_08    = "influxdb_08"
 	DS_ES             = "elasticsearch"
 	DS_PROMETHEUS     = "prometheus"
+	DS_MYSQL          = "mysql"
 	DS_ACCESS_DIRECT  = "direct"
 	DS_ACCESS_PROXY   = "proxy"
 	DS_ES_OPEN_DISTRO = "grafana-es-open-distro-datasource"
