@@ -2,6 +2,14 @@ package plugins
 
 type PluginSignatureStatus string
 
+func (pss PluginSignatureStatus) IsValid() bool {
+	return pss == PluginSignatureValid
+}
+
+func (pss PluginSignatureStatus) IsInternal() bool {
+	return pss == PluginSignatureInternal
+}
+
 const (
 	PluginSignatureInternal PluginSignatureStatus = "internal" // core plugin, no signature
 	PluginSignatureValid    PluginSignatureStatus = "valid"    // signed and accurate MANIFEST
