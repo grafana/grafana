@@ -150,7 +150,7 @@ export const navigateToExplore = (
       return;
     }
 
-    locationService.push({ pathname: path });
+    locationService.push(path!);
   };
 };
 
