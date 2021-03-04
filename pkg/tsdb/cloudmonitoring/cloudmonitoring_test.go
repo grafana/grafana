@@ -716,7 +716,8 @@ func TestCloudMonitoring(t *testing.T) {
 			query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}, AliasBy: "{{bucket}}"}
 			err = query.parseResponse(res, data, "")
 			require.NoError(t, err)
-			frames, _ := res.Dataframes.Decoded()
+			frames, err := res.Dataframes.Decoded()
+			require.NoError(t, err)
 			assert.Equal(t, 11, len(frames))
 			for i := 0; i < 11; i++ {
 				if i == 0 {
@@ -757,7 +758,8 @@ func TestCloudMonitoring(t *testing.T) {
 			query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}, AliasBy: "{{bucket}}"}
 			err = query.parseResponse(res, data, "")
 			require.NoError(t, err)
-			frames, _ := res.Dataframes.Decoded()
+			frames, err := res.Dataframes.Decoded()
+			require.NoError(t, err)
 			assert.Equal(t, 33, len(frames))
 			for i := 0; i < 33; i++ {
 				if i == 0 {
@@ -790,9 +792,10 @@ func TestCloudMonitoring(t *testing.T) {
 			res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
 			query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}, AliasBy: "{{bucket}}"}
 			err = query.parseResponse(res, data, "")
-			labels := res.Meta.Get("labels").Interface().(map[string][]string)
 			require.NoError(t, err)
-			frames, _ := res.Dataframes.Decoded()
+			labels := res.Meta.Get("labels").Interface().(map[string][]string)
+			frames, err := res.Dataframes.Decoded()
+			require.NoError(t, err)
 			assert.Equal(t, 3, len(frames))
 
 			assert.Equal(t, 5, len(labels["metadata.system_labels.test"]))
@@ -825,7 +828,8 @@ func TestCloudMonitoring(t *testing.T) {
 				query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}, AliasBy: "{{metadata.system_labels.test}}"}
 				err = query.parseResponse(res, data, "")
 				require.NoError(t, err)
-				frames, _ := res.Dataframes.Decoded()
+				frames, err := res.Dataframes.Decoded()
+				require.NoError(t, err)
 				assert.Equal(t, 3, len(frames))
 				fmt.Println(frames[0].Fields[1].Name)
 				assert.Equal(t, "value1, value2", frames[0].Fields[1].Name)
@@ -838,7 +842,8 @@ func TestCloudMonitoring(t *testing.T) {
 				query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}, AliasBy: "{{metadata.system_labels.test2}}"}
 				err = query.parseResponse(res, data, "")
 				require.NoError(t, err)
-				frames, _ := res.Dataframes.Decoded()
+				frames, err := res.Dataframes.Decoded()
+				require.NoError(t, err)
 				assert.Equal(t, 3, len(frames))
 				assert.Equal(t, "testvalue", frames[2].Fields[1].Name)
 			})
@@ -860,7 +865,8 @@ func TestCloudMonitoring(t *testing.T) {
 					AliasBy:     "{{project}} - {{service}} - {{slo}} - {{selector}}",
 				}
 				err = query.parseResponse(res, data, "")
-				frames, _ := res.Dataframes.Decoded()
+				require.NoError(t, err)
+				frames, err := res.Dataframes.Decoded()
 				require.NoError(t, err)
 				assert.Equal(t, "test-proj - test-service - test-slo - select_slo_compliance", frames[0].Fields[1].Name)
 			})
@@ -1091,6 +1097,7 @@ func loadTestFile(path string) (cloudMonitoringResponse, error) {
 
 func getCloudMonitoringQueriesFromInterface(t *testing.T, qes []cloudMonitoringQueryExecutor) []*cloudMonitoringTimeSeriesFilter {
 	t.Helper()
+
 	queries := make([]*cloudMonitoringTimeSeriesFilter, 0)
 	for _, qi := range qes {
 		q, ok := qi.(*cloudMonitoringTimeSeriesFilter)
@@ -1102,6 +1109,8 @@ func getCloudMonitoringQueriesFromInterface(t *testing.T, qes []cloudMonitoringQ
 
 func verifyDeepLink(t *testing.T, dl string, expectedTimeSelection map[string]string,
 	expectedTimeSeriesFilter map[string]interface{}) {
+	t.Helper()
+
 	u, err := url.Parse(dl)
 	require.NoError(t, err)
 	assert.Equal(t, "https", u.Scheme)
