@@ -3,7 +3,6 @@ title = "What's new in Grafana v7.5"
 description = "Feature and improvement highlights for Grafana v7.5"
 keywords = ["grafana", "new", "documentation", "7.5", "release notes"]
 weight = -32
-aliases = ["/docs/grafana/latest/guides/whats-new-in-v7-5/"]
 [_build]
 list = false
 +++
@@ -58,13 +57,15 @@ Instead of the file path, users can now paste the SSL certification content in t
 
 > **Note:** It remains as limitation for the hosted Grafana, because the user doesn't have access to the server configuration.
 
-### Deprecation notice for some Azure Monitor queries 
+### Deprecation notice for some Azure Monitor queries
 
 In the upcoming Grafana 8.0 release, Application Insights and Insights Analytics query types within the Azure Monitor data source will be deprecated and be made read-only in favor of querying Application Insights from Metrics and Logs. 
 
 Grafana 7.5 includes a deprecation notice for these queries, and some documentation to help users prepare for the upcoming changes.
 
 For more information refer to [Deprecating Application Insights and Insights Analytics]({{< relref "../datasources/azuremonitor.md#deprecating-application-insights-and-insights-analytics" >}}).
+
+[Azure Monitor data source]({{< relref "../datasources/azuremonitor.md" >}}) was updated as a result of this change.
 
 ## Enterprise features
 
