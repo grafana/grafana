@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { DataSourceApi, PanelData, PanelPlugin } from '@grafana/data';
+import { DataSourceApi, PanelData, PanelPlugin, GetDataOptions } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { CustomScrollbar, Drawer, TabContent } from '@grafana/ui';
 import { getPanelInspectorStyles } from './styles';
@@ -12,7 +12,6 @@ import { InspectStatsTab } from './InspectStatsTab';
 import { QueryInspector } from './QueryInspector';
 import { InspectTab } from './types';
 import { DashboardModel, PanelModel } from '../../state';
-import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
 
 interface Props {
   dashboard: DashboardModel;

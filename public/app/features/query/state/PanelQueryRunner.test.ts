@@ -6,12 +6,12 @@ jest.mock('@grafana/data', () => ({
   applyFieldOverrides: applyFieldOverridesMock,
 }));
 
-import { PanelQueryRunner } from './PanelQueryRunner';
 // Importing this way to be able to spy on grafana/data
 import * as grafanaData from '@grafana/data';
 import { DashboardModel } from '../../dashboard/state/index';
 import { setDataSourceSrv, setEchoSrv } from '@grafana/runtime';
 import { Echo } from '../../../core/services/echo/Echo';
+import { PanelQueryRunner } from './PanelQueryRunner';
 
 jest.mock('app/core/services/backend_srv');
 jest.mock('app/core/config', () => ({
@@ -46,7 +46,7 @@ interface ScenarioContext {
   events?: grafanaData.PanelData[];
   res?: grafanaData.PanelData;
   queryCalledWith?: grafanaData.DataQueryRequest;
-  runner: PanelQueryRunner;
+  runner: grafanaData.QueryRunner;
 }
 
 type ScenarioFn = (ctx: ScenarioContext) => void;

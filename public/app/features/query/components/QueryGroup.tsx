@@ -16,20 +16,20 @@ import {
   getDefaultTimeRange,
   LoadingState,
   PanelData,
+  QueryRunner,
 } from '@grafana/data';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { addQuery } from 'app/core/utils/query';
 import { Unsubscribable } from 'rxjs';
 import { expressionDatasource, ExpressionDatasourceID } from 'app/features/expressions/ExpressionDatasource';
 import { selectors } from '@grafana/e2e-selectors';
-import { PanelQueryRunner } from '../state/PanelQueryRunner';
 import { QueryGroupOptionsEditor } from './QueryGroupOptions';
 import { DashboardQueryEditor, isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
 import { css } from 'emotion';
 import { QueryGroupOptions } from 'app/types';
 
 interface Props {
-  queryRunner: PanelQueryRunner;
+  queryRunner: QueryRunner;
   options: QueryGroupOptions;
   onOpenQueryInspector?: () => void;
   onRunQueries: () => void;

@@ -1,7 +1,7 @@
 // Libraries
 import _ from 'lodash';
 // Utils
-import { getTemplateSrv } from '@grafana/runtime';
+import { createQueryRunner, getTemplateSrv } from '@grafana/runtime';
 import { getNextRefIdChar } from 'app/core/utils/query';
 // Types
 import {
@@ -15,12 +15,12 @@ import {
   EventBusSrv,
   FieldConfigSource,
   PanelPlugin,
+  QueryRunner,
   ScopedVars,
   urlUtil,
 } from '@grafana/data';
 import { EDIT_PANEL_ID } from 'app/core/constants';
 import config from 'app/core/config';
-import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import {
   PanelOptionsChangedEvent,
   PanelQueriesChangedEvent,
@@ -168,7 +168,7 @@ export class PanelModel implements DataConfigSource {
   legend?: { show: boolean; sort?: string; sortDesc?: boolean };
   plugin?: PanelPlugin;
 
-  private queryRunner?: PanelQueryRunner;
+  private queryRunner?: QueryRunner;
 
   constructor(model: any) {
     this.events = new EventBusSrv();
@@ -476,9 +476,9 @@ export class PanelModel implements DataConfigSource {
     };
   }
 
-  getQueryRunner(): PanelQueryRunner {
+  getQueryRunner(): QueryRunner {
     if (!this.queryRunner) {
-      this.queryRunner = new PanelQueryRunner(this);
+      this.queryRunner = createQueryRunner(this);
     }
     return this.queryRunner;
   }

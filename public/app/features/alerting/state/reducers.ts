@@ -16,8 +16,7 @@ import {
   QueryGroupOptions,
 } from 'app/types';
 import store from 'app/core/store';
-import { config } from '@grafana/runtime';
-import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
+import { config, createQueryRunner } from '@grafana/runtime';
 
 export const ALERT_DEFINITION_UI_STATE_STORAGE_KEY = 'grafana.alerting.alertDefinition.ui';
 const DEFAULT_ALERT_DEFINITION_UI_STATE: AlertDefinitionUiState = { rightPaneSize: 400, topPaneSize: 0.45 };
@@ -62,7 +61,7 @@ export const initialAlertDefinitionState: AlertDefinitionState = {
     data: [],
     intervalSeconds: 60,
   },
-  queryRunner: new PanelQueryRunner(dataConfig),
+  queryRunner: createQueryRunner(dataConfig),
   uiState: { ...store.getObject(ALERT_DEFINITION_UI_STATE_STORAGE_KEY, DEFAULT_ALERT_DEFINITION_UI_STATE) },
   data: [],
   alertDefinitions: [] as AlertDefinition[],
@@ -197,7 +196,7 @@ const alertDefinitionSlice = createSlice({
         state.queryRunner.destroy();
         state.queryRunner = undefined;
         delete state.queryRunner;
-        state.queryRunner = new PanelQueryRunner(dataConfig);
+        state.queryRunner = createQueryRunner(dataConfig);
       }
 
       state.alertDefinitions = initialAlertDefinitionState.alertDefinitions;

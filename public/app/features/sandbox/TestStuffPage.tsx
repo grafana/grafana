@@ -1,14 +1,21 @@
-import { ApplyFieldOverrideOptions, DataTransformerConfig, dateMath, FieldColorModeId, PanelData } from '@grafana/data';
+import {
+  ApplyFieldOverrideOptions,
+  DataTransformerConfig,
+  dateMath,
+  FieldColorModeId,
+  PanelData,
+  QueryRunner,
+} from '@grafana/data';
 import { GraphNG, LegendDisplayMode, Table } from '@grafana/ui';
 import { config } from 'app/core/config';
 import React, { FC, useMemo, useState } from 'react';
 import { useObservable } from 'react-use';
 import { QueryGroup } from '../query/components/QueryGroup';
-import { PanelQueryRunner } from '../query/state/PanelQueryRunner';
 import { QueryGroupOptions } from 'app/types';
+import { createQueryRunner } from '@grafana/runtime';
 
 interface State {
-  queryRunner: PanelQueryRunner;
+  queryRunner: QueryRunner;
   queryOptions: QueryGroupOptions;
   data?: PanelData;
 }
@@ -90,7 +97,7 @@ export function getDefaultState(): State {
   };
 
   return {
-    queryRunner: new PanelQueryRunner(dataConfig),
+    queryRunner: createQueryRunner(dataConfig),
     queryOptions: {
       queries: [],
       dataSource: {

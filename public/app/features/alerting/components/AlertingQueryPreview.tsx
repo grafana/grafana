@@ -2,9 +2,8 @@ import React, { FC, useMemo, useState } from 'react';
 import { useObservable } from 'react-use';
 import { css } from 'emotion';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import { DataFrame, DataQuery, GrafanaTheme, PanelData } from '@grafana/data';
+import { DataFrame, DataQuery, GrafanaTheme, PanelData, QueryRunner } from '@grafana/data';
 import { Button, Icon, Tab, TabContent, TabsBar, useStyles } from '@grafana/ui';
-import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import { PreviewQueryTab } from './PreviewQueryTab';
 import { PreviewInstancesTab } from './PreviewInstancesTab';
 
@@ -19,7 +18,7 @@ const tabs = [
 ];
 
 interface Props {
-  queryRunner: PanelQueryRunner;
+  queryRunner: QueryRunner;
   getInstances: () => DataFrame[];
   queries: DataQuery[];
   onTest: () => void;

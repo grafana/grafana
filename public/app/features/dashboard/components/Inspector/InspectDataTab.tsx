@@ -11,6 +11,7 @@ import {
   toCSV,
   transformDataFrame,
   CSVConfig,
+  GetDataOptions,
 } from '@grafana/data';
 import { Button, Container, Field, HorizontalGroup, Spinner, Select, Switch, Table, VerticalGroup } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
@@ -19,7 +20,6 @@ import { getPanelInspectorStyles } from './styles';
 import { config } from 'app/core/config';
 import { saveAs } from 'file-saver';
 import { css } from 'emotion';
-import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { PanelModel } from 'app/features/dashboard/state';
 import { DetailText } from './DetailText';

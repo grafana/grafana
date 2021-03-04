@@ -14,50 +14,23 @@ import {
   applyFieldOverrides,
   CoreApp,
   DataConfigSource,
-  DataQuery,
   DataQueryRequest,
   DataSourceApi,
-  DataSourceJsonData,
-  DataTransformerConfig,
   LoadingState,
   PanelData,
   rangeUtil,
   ScopedVars,
-  TimeRange,
-  TimeZone,
   transformDataFrame,
+  QueryRunnerOptions,
+  GetDataOptions,
+  QueryRunner,
 } from '@grafana/data';
-
-export interface QueryRunnerOptions<
-  TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData
-> {
-  datasource: string | DataSourceApi<TQuery, TOptions> | null;
-  queries: TQuery[];
-  panelId?: number;
-  dashboardId?: number;
-  timezone: TimeZone;
-  timeRange: TimeRange;
-  timeInfo?: string; // String description of time range for display
-  maxDataPoints: number;
-  minInterval: string | undefined | null;
-  scopedVars?: ScopedVars;
-  cacheTimeout?: string;
-  delayStateNotification?: number; // default 100ms.
-  transformations?: DataTransformerConfig[];
-}
 
 let counter = 100;
 function getNextRequestId() {
   return 'Q' + counter++;
 }
-
-export interface GetDataOptions {
-  withTransforms: boolean;
-  withFieldConfig: boolean;
-}
-
-export class PanelQueryRunner {
+export class PanelQueryRunner implements QueryRunner {
   private subject: ReplaySubject<PanelData>;
   private subscription?: Unsubscribable;
   private lastResult?: PanelData;
@@ -240,7 +213,7 @@ export class PanelQueryRunner {
     }
   }
 
-  useLastResultFrom(runner: PanelQueryRunner) {
+  useLastResultFrom(runner: QueryRunner) {
     this.lastResult = runner.getLastResult();
 
     if (this.lastResult) {

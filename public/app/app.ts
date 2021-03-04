@@ -36,7 +36,7 @@ import { importPluginModule } from 'app/features/plugins/plugin_loader';
 import { angularModules, coreModule } from 'app/core/core_module';
 import { registerAngularDirectives } from 'app/core/core';
 import { setupAngularRoutes } from 'app/routes/routes';
-import { registerEchoBackend, setEchoSrv } from '@grafana/runtime';
+import { registerEchoBackend, setEchoSrv, setQueryRunnerFactory } from '@grafana/runtime';
 import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
@@ -49,6 +49,7 @@ import { getStandardTransformers } from 'app/core/utils/standardTransformers';
 import { SentryEchoBackend } from './core/services/echo/backends/sentry/SentryBackend';
 import { monkeyPatchInjectorWithPreAssignedBindings } from './core/injectorMonkeyPatch';
 import { setVariableQueryRunner, VariableQueryRunner } from './features/variables/query/VariableQueryRunner';
+import { PanelQueryRunner } from './features/query/state/PanelQueryRunner';
 
 // add move to lodash for backward compatabilty with plugins
 // @ts-ignore
@@ -91,6 +92,7 @@ export class GrafanaApp {
     addClassIfNoOverlayScrollbar();
     setLocale(config.bootData.user.locale);
     setTimeZoneResolver(() => config.bootData.user.timezone);
+    setQueryRunnerFactory((options) => new PanelQueryRunner(options));
 
     standardEditorsRegistry.setInit(getStandardOptionEditors);
     standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
