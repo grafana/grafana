@@ -1,9 +1,15 @@
-type TraceKeyValuePair = {
+/**
+ * Type representing a tag in a trace span or fields of a log.
+ */
+export type TraceKeyValuePair = {
   key: string;
   value: any;
 };
 
-type TraceLog = {
+/**
+ * Type representing a log in a span.
+ */
+export type TraceLog = {
   // Millisecond epoch time
   timestamp: number;
   fields: TraceKeyValuePair[];
@@ -16,7 +22,7 @@ type TraceLog = {
 export interface TraceSpanRow {
   traceID: string;
   spanID: string;
-  parentSpanID?: string;
+  parentSpanID: string | undefined;
   operationName: string;
   serviceName: string;
   serviceTags: TraceKeyValuePair[];
