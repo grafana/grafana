@@ -93,6 +93,7 @@ export class DashboardPage extends PureComponent<Props, State> {
 
   initDashboard() {
     const { dashboard, match, queryParams } = this.props;
+    console.log(queryParams);
 
     if (dashboard) {
       this.closeDashboard();
