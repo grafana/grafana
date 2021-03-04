@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/tsdb"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -108,9 +110,9 @@ func (r *logQueryRunner) publishResults(channelName string) error {
 
 // executeLiveLogQuery executes a CloudWatch Logs query with live updates over WebSocket.
 // A WebSocket channel is created, which goroutines send responses over.
-func (e *cloudWatchExecutor) executeLiveLogQuery(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (e *cloudWatchExecutor) executeLiveLogQuery(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) { // tsdb.Response
 	responseChannelName := uuid.New().String()
-	responseChannel := make(chan *backend.QueryDataResponse)
+	responseChannel := make(chan *tsdb.Response)
 	if err := e.logsService.AddResponseChannel("plugin/cloudwatch/"+responseChannelName, responseChannel); err != nil {
 		close(responseChannel)
 		return nil, err
@@ -133,7 +135,7 @@ func (e *cloudWatchExecutor) executeLiveLogQuery(ctx context.Context, req *backe
 	return response, nil
 }
 
-func (e *cloudWatchExecutor) sendLiveQueriesToChannel(req *backend.QueryDataRequest, responseChannel chan *backend.QueryDataResponse) {
+func (e *cloudWatchExecutor) sendLiveQueriesToChannel(req *backend.QueryDataRequest, responseChannel chan *tsdb.Response) {
 	defer close(responseChannel)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
@@ -209,7 +211,7 @@ func (e *cloudWatchExecutor) fetchConcurrentQueriesQuota(region string, pluginCt
 	return defaultConcurrentQueries
 }
 
-func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel chan *backend.QueryDataResponse, query backend.DataQuery, timeRange backend.TimeRange, pluginCtx backend.PluginContext) error {
+func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel chan *tsdb.Response, query backend.DataQuery, timeRange backend.TimeRange, pluginCtx backend.PluginContext) error {
 	model, err := simplejson.NewJson(query.JSON)
 	if err != nil {
 		return err
@@ -291,10 +293,11 @@ func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel
 			dataFrames = data.Frames{dataFrame}
 		}
 
-		responseChannel <- &backend.QueryDataResponse{
-			Responses: backend.Responses{
+		responseChannel <- &tsdb.Response{
+			Results: map[string]*tsdb.QueryResult{
 				query.RefID: {
-					Frames: dataFrames,
+					RefId:      query.RefID,
+					Dataframes: tsdb.NewDecodedDataFrames(dataFrames),
 				},
 			},
 		}
