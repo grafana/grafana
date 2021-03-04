@@ -671,13 +671,13 @@
         "parameters": [
           {
             "type": "string",
-            "name": "Namespace",
+            "name": "DatasourceId",
             "in": "path",
             "required": true
           },
           {
             "type": "string",
-            "name": "DatasourceId",
+            "name": "Namespace",
             "in": "path",
             "required": true
           }
@@ -704,6 +704,12 @@
         "parameters": [
           {
             "type": "string",
+            "name": "DatasourceId",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
             "name": "Namespace",
             "in": "path",
             "required": true
@@ -714,12 +720,6 @@
             "schema": {
               "$ref": "#/definitions/RuleGroupConfig"
             }
-          },
-          {
-            "type": "string",
-            "name": "DatasourceId",
-            "in": "path",
-            "required": true
           }
         ],
         "responses": {
@@ -740,13 +740,13 @@
         "parameters": [
           {
             "type": "string",
-            "name": "Namespace",
+            "name": "DatasourceId",
             "in": "path",
             "required": true
           },
           {
             "type": "string",
-            "name": "DatasourceId",
+            "name": "Namespace",
             "in": "path",
             "required": true
           }
@@ -774,6 +774,12 @@
         "parameters": [
           {
             "type": "string",
+            "name": "DatasourceId",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
             "name": "Namespace",
             "in": "path",
             "required": true
@@ -781,12 +787,6 @@
           {
             "type": "string",
             "name": "Groupname",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "DatasourceId",
             "in": "path",
             "required": true
           }
@@ -809,6 +809,12 @@
         "parameters": [
           {
             "type": "string",
+            "name": "DatasourceId",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
             "name": "Namespace",
             "in": "path",
             "required": true
@@ -816,12 +822,6 @@
           {
             "type": "string",
             "name": "Groupname",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "DatasourceId",
             "in": "path",
             "required": true
           }
@@ -2521,7 +2521,7 @@
           "x-go-name": "StartsAt"
         }
       },
-      "x-go-package": "github.com/grafana/alerting-api/pkg/tst"
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     },
     "SlackAction": {
       "description": "See https://api.slack.com/docs/message-attachments#action_fields and https://api.slack.com/docs/message-buttons\nfor more information.",
@@ -2856,7 +2856,7 @@
           "x-go-name": "TemplateFiles"
         }
       },
-      "x-go-package": "github.com/grafana/alerting-api/pkg/tst"
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     },
     "Userinfo": {
       "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
