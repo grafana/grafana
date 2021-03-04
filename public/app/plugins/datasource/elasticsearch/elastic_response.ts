@@ -15,7 +15,7 @@ import {
   ExtendedStatMetaType,
   isMetricAggregationWithField,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
-import { describeMetric } from './utils';
+import { describeMetric, getScriptValue } from './utils';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 
 const HIGHLIGHT_TAGS_EXP = `${queryDef.highlightTags.pre}([^@]+)${queryDef.highlightTags.post}`;
@@ -207,7 +207,7 @@ export class ElasticResponse {
 
               if (metric.type === 'bucket_script') {
                 //Use the formula in the column name
-                metricName = metric.settings?.script || '';
+                metricName = getScriptValue(metric);
               }
             }
 
