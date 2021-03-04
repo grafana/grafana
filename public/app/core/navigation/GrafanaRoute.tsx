@@ -4,6 +4,7 @@ import Drop from 'tether-drop';
 import { GrafanaRouteComponentProps } from './types';
 import { locationSearchToObject, navigationLogger } from '@grafana/runtime';
 import { keybindingSrv } from '../services/keybindingSrv';
+import { shouldReloadPage } from './utils';
 
 export interface Props extends Omit<GrafanaRouteComponentProps, 'queryParams'> {}
 
@@ -21,6 +22,13 @@ export class GrafanaRoute extends React.Component<Props> {
 
   componentDidUpdate(prevProps: Props) {
     this.cleanupDOM();
+
+    // Clear force reload state when route updates
+    if (shouldReloadPage(this.props.location)) {
+      navigationLogger('GrafanaRoute', false, 'Force reload', this.props, prevProps);
+      delete (this.props.history.location.state as any)?.forceRouteReload;
+    }
+
     navigationLogger('GrafanaRoute', false, 'Updated', this.props, prevProps);
   }
 

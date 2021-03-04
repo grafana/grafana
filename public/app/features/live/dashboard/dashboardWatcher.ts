@@ -1,4 +1,4 @@
-import { getGrafanaLiveSrv, getLegacyAngularInjector } from '@grafana/runtime';
+import { getGrafanaLiveSrv, getLegacyAngularInjector, locationService } from '@grafana/runtime';
 import { getDashboardSrv } from '../../dashboard/services/DashboardSrv';
 import { appEvents } from 'app/core/core';
 import {
@@ -153,12 +153,7 @@ class DashboardWatcher {
   };
 
   reloadPage() {
-    const $route = getLegacyAngularInjector().get<any>('$route');
-    if ($route) {
-      $route.reload();
-    } else {
-      location.reload();
-    }
+    locationService.reload();
   }
 }
 

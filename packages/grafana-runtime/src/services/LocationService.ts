@@ -7,7 +7,8 @@ import { config } from '../config';
 export interface LocationService {
   partial: (query: Record<string, any>, replace?: boolean) => void;
   push: (location: H.Path | H.LocationDescriptor<any>) => void;
-  replace: (location: H.Path) => void;
+  replace: (location: H.Path | H.LocationDescriptor<any>, forceRouteReload?: boolean) => void;
+  reload: () => void;
   getLocation: () => H.Location;
   getHistory: () => H.History;
   getSearch: () => URLSearchParams;
@@ -116,8 +117,24 @@ class HistoryWrapper implements LocationService {
     this.history.push(location);
   }
 
-  replace(location: H.Path) {
-    this.history.replace(location);
+  replace(location: H.Path | H.LocationDescriptor, forceRouteReload?: boolean) {
+    const state = forceRouteReload ? { forceRouteReload: true } : undefined;
+
+    if (typeof location === 'string') {
+      this.history.replace(location, state);
+    } else {
+      this.history.replace({
+        ...location,
+        state,
+      });
+    }
+  }
+
+  reload() {
+    this.history.replace({
+      ...this.history.location,
+      state: { forceRouteReload: true },
+    });
   }
 
   getLocation() {
