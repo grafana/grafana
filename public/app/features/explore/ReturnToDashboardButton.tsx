@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { connect } from 'react-redux';
 import { Icon, Tooltip, ButtonSelect, ToolbarButton, ButtonGroup } from '@grafana/ui';
-import { DataQuery } from '@grafana/data';
+import { DataQuery, urlUtil } from '@grafana/data';
 
 import kbn from '../../core/utils/kbn';
 import { getDashboardSrv } from '../dashboard/services/DashboardSrv';
@@ -60,7 +60,7 @@ export const UnconnectedReturnToDashboardButton: FC<Props> = ({
       query.viewPanel = originPanelId;
     }
 
-    locationService.push({ pathname: `/d/${dash.uid}/:${titleSlug}` });
+    locationService.push(urlUtil.renderUrl(`/d/${dash.uid}/:${titleSlug}`, query));
   };
 
   return (
