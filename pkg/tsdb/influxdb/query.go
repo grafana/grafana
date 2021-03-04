@@ -77,7 +77,24 @@ func (query *Query) renderTags() []string {
 	return res
 }
 
+func isTimeRangeNumeric(tr *tsdb.TimeRange) bool {
+	if _, err := strconv.ParseInt(tr.From, 10, 64); err != nil {
+		return false
+	}
+	if _, err := strconv.ParseInt(tr.To, 10, 64); err != nil {
+		return false
+	}
+	return true
+}
+
 func (query *Query) renderTimeFilter(queryContext *tsdb.TsdbQuery) string {
+	// If from expressions
+	if isTimeRangeNumeric(queryContext.TimeRange) {
+		from, to, _ := epochMStoInfluxTime(queryContext.TimeRange)
+		return fmt.Sprintf(" time > %s and time < %s ", from, to)
+	}
+
+	// else from dashboard alerting
 	from := "now() - " + queryContext.TimeRange.From
 	to := ""
 
@@ -160,4 +177,18 @@ func (query *Query) renderTz() string {
 		return ""
 	}
 	return fmt.Sprintf(" tz('%s')", tz)
+}
+
+func epochMStoInfluxTime(tr *tsdb.TimeRange) (string, string, error) {
+	from, err := strconv.ParseInt(tr.From, 10, 64)
+	if err != nil {
+		return "", "", err
+	}
+
+	to, err := strconv.ParseInt(tr.To, 10, 64)
+	if err != nil {
+		return "", "", err
+	}
+
+	return fmt.Sprintf("%dms", from), fmt.Sprintf("%dms", to), nil
 }
