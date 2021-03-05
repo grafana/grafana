@@ -42,7 +42,7 @@ describe('DataLinksContextMenu', () => {
     );
 
     expect(screen.getByLabelText(fakeAriaLabel)).toBeInTheDocument();
-    expect(screen.queryAllByLabelText(selectors.components.DashboardLinks.singleLink)).toHaveLength(0);
+    expect(screen.queryAllByLabelText(selectors.components.DataLinksContextMenu.singleLink)).toHaveLength(0);
   });
 
   it('renders link when there is a single data link', () => {

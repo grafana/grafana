@@ -10,7 +10,6 @@ import { Registry } from '../utils';
 import { StandardEditorProps } from '../field';
 import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
 import { OptionEditorConfig } from './options';
-import { LinkModel } from './dataLink';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
@@ -79,9 +78,6 @@ export interface PanelProps<T = any> {
 
   /** Panel title */
   title: string;
-
-  /** Panel links */
-  links?: () => Array<LinkModel<PanelModel>>;
 
   /** EventBus  */
   eventBus: EventBus;

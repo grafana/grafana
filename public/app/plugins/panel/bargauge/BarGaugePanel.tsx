@@ -54,7 +54,6 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
   renderValue = (valueProps: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>): JSX.Element => {
     const { value } = valueProps;
     const { hasLinks, getLinks } = value;
-    const { links } = this.props;
 
     if (hasLinks && getLinks) {
       return (
@@ -65,24 +64,7 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
         </DataLinksContextMenu>
       );
     }
-    const vizComponent = this.renderComponent(valueProps, {});
-
-    if (links) {
-      const panelLink = links()[0];
-      return (
-        <a
-          href={panelLink.href}
-          onClick={panelLink.onClick}
-          target={panelLink.target}
-          title={panelLink.title}
-          style={{ display: 'flex' }}
-        >
-          {vizComponent}
-        </a>
-      );
-    }
-
-    return vizComponent;
+    return this.renderComponent(valueProps, {});
   };
 
   getValues = (): FieldDisplay[] => {

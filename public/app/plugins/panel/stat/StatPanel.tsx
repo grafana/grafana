@@ -64,7 +64,6 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
   }
 
   renderValue = (valueProps: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>): JSX.Element => {
-    const { links } = this.props;
     const { value } = valueProps;
     const { getLinks, hasLinks } = value;
 
@@ -78,18 +77,7 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
       );
     }
 
-    const vizComponent = this.renderComponent(valueProps, {});
-
-    if (links) {
-      const panelLink = links()[0];
-      return (
-        <a href={panelLink.href} onClick={panelLink.onClick} target={panelLink.target} title={panelLink.title}>
-          {vizComponent}
-        </a>
-      );
-    }
-
-    return vizComponent;
+    return this.renderComponent(valueProps, {});
   };
 
   getValues = (): FieldDisplay[] => {

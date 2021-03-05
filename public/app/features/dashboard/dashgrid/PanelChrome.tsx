@@ -27,7 +27,6 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
 import { RefreshEvent, RenderEvent } from 'app/types/events';
-import { getPanelLinksSupplier } from '../../panel/panellinks/linkSuppliers';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -282,8 +281,6 @@ export class PanelChrome extends Component<Props, State> {
     });
     const panelOptions = panel.getOptions();
 
-    const panelLinksSupplier = getPanelLinksSupplier(panel);
-
     return (
       <>
         <div className={panelContentClassNames}>
@@ -291,7 +288,6 @@ export class PanelChrome extends Component<Props, State> {
             id={panel.id}
             data={data}
             title={panel.title}
-            links={panelLinksSupplier ? () => panelLinksSupplier.getLinks(panel.replaceVariables) : undefined}
             timeRange={timeRange}
             timeZone={this.props.dashboard.getTimezone()}
             options={panelOptions}
