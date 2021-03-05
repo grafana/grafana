@@ -45,17 +45,6 @@ export const VAR_FIELD_LABELS = '__field.labels';
 export const VAR_CALC = '__calc';
 export const VAR_CELL_PREFIX = '__cell_'; // consistent with existing table templates
 
-function getTitleTemplate(stats: string[]): string {
-  const parts: string[] = [];
-  if (stats.length > 1) {
-    parts.push('${' + VAR_CALC + '}');
-  }
-
-  parts.push('${' + VAR_FIELD_NAME + '}');
-
-  return parts.join(' ');
-}
-
 export interface FieldSparkline {
   y: Field; // Y values
   x?: Field; // if this does not exist, use the index
