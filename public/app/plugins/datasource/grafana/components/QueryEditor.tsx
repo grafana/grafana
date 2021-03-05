@@ -43,7 +43,7 @@ export class QueryEditor extends PureComponent<Props> {
       ...query,
       measurements: {
         ...query.measurements,
-        key: sel?.value,
+        name: sel?.value,
       },
     });
     onRunQuery();
@@ -79,12 +79,12 @@ export class QueryEditor extends PureComponent<Props> {
 
       let foundName = false;
       if (info) {
-        for (const name of info.getKeys()) {
+        for (const name of info.getDistinctNames()) {
           names.push({
             value: name,
             label: name,
           });
-          if (name === measurements.key) {
+          if (name === measurements.name) {
             foundName = true;
           }
         }
@@ -92,11 +92,11 @@ export class QueryEditor extends PureComponent<Props> {
         console.log('NO INFO for', channel);
       }
 
-      if (measurements.key && !foundName) {
+      if (measurements.name && !foundName) {
         names.push({
-          label: measurements.key,
-          value: measurements.key,
-          description: `Frames with key ${measurements.key}`,
+          label: measurements.name,
+          value: measurements.name,
+          description: `Frames with name ${measurements.name}`,
         });
       }
     }
@@ -123,7 +123,7 @@ export class QueryEditor extends PureComponent<Props> {
             <InlineField label="Measurement" grow={true} labelWidth={labelWidth}>
               <Select
                 options={names}
-                value={names.find((v) => v.value === measurements?.key) || names[0]}
+                value={names.find((v) => v.value === measurements?.name) || names[0]}
                 onChange={this.onMeasurementNameChanged}
                 allowCustomValue={true}
                 backspaceRemovesValue={true}

@@ -1,4 +1,31 @@
-import { DataFrame, DataFrameJSON } from '@grafana/data';
+import { DataFrame, Labels, FieldConfig } from '@grafana/data';
+
+/**
+ * the raw channel events are batches of Measurements
+ *
+ * @alpha -- experimental
+ */
+export interface Measurement {
+  name: string;
+  time?: number; // Missing will use the browser time
+  values: Record<string, any>;
+  config?: Record<string, FieldConfig>;
+  labels?: Labels;
+}
+
+/**
+ * @alpha -- experimental
+ */
+export enum MeasurementAction {
+  /** The measurements will be added to the client buffer */
+  Append = 'append',
+
+  /** The measurements will replace the client buffer  */
+  Replace = 'replace',
+
+  /** All measurements will be removed from the client buffer before processing */
+  Clear = 'clear',
+}
 
 /**
  * List of Measurements sent in a batch
@@ -7,16 +34,28 @@ import { DataFrame, DataFrameJSON } from '@grafana/data';
  */
 export interface MeasurementBatch {
   /**
+   * The default action is to append values to the client buffer
+   */
+  action?: MeasurementAction;
+
+  /**
    * List of measurements to process
    */
-  batch: DataFrameJSON[];
+  measurements: Measurement[];
+
+  /**
+   * This will set the capacity on the client buffer for everything
+   * in the measurement channel
+   */
+  capacity?: number;
 }
 
 /**
  * @alpha -- experimental
  */
 export interface MeasurementsQuery {
-  key?: string;
+  name?: string;
+  labels?: Labels;
   fields?: string[]; // only include the fields with these names
 }
 
@@ -27,6 +66,8 @@ export interface MeasurementsQuery {
  */
 export interface LiveMeasurements {
   getData(query?: MeasurementsQuery): DataFrame[];
-  getKeys(): string[];
-  ensureCapacity(size: number): void;
+  getDistinctNames(): string[];
+  getDistinctLabels(name: string): Labels[];
+  setCapacity(size: number): void;
+  getCapacity(): number;
 }
