@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/plugins"
 
 	jaeger "github.com/jaegertracing/jaeger/model"
 	jaeger_json "github.com/jaegertracing/jaeger/model/converter/json"
@@ -23,7 +23,7 @@ type tempoExecutor struct {
 	httpClient *http.Client
 }
 
-func newTempoExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+func NewTempoExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
 	httpClient, err := dsInfo.GetHttpClient()
 	if err != nil {
 		return nil, err
@@ -35,29 +35,25 @@ func newTempoExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error)
 }
 
 var (
-	tlog log.Logger
+	tlog = log.New("tsdb.tempo")
 )
 
-func init() {
-	tlog = log.New("tsdb.tempo")
-	tsdb.RegisterTsdbQueryEndpoint("tempo", newTempoExecutor)
-}
-
-func (e *tempoExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	result := &tsdb.Response{
-		Results: map[string]*tsdb.QueryResult{},
+func (e *tempoExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource,
+	queryContext plugins.DataQuery) (plugins.DataResponse, error) {
+	result := plugins.DataResponse{
+		Results: map[string]plugins.DataQueryResult{},
 	}
-	refID := tsdbQuery.Queries[0].RefId
-	queryResult := &tsdb.QueryResult{}
+	refID := queryContext.Queries[0].RefID
+	queryResult := plugins.DataQueryResult{}
 	result.Results[refID] = queryResult
 
-	traceID := tsdbQuery.Queries[0].Model.Get("query").MustString("")
+	traceID := queryContext.Queries[0].Model.Get("query").MustString("")
 
 	tlog.Debug("Querying tempo with traceID", "traceID", traceID)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", dsInfo.Url+"/api/traces/"+traceID, nil)
 	if err != nil {
-		return nil, err
+		return plugins.DataResponse{}, err
 	}
 
 	if dsInfo.BasicAuth {
@@ -68,7 +64,7 @@ func (e *tempoExecutor) Query(ctx context.Context, dsInfo *models.DataSource, ts
 
 	resp, err := e.httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("failed get to tempo: %w", err)
+		return plugins.DataResponse{}, fmt.Errorf("failed get to tempo: %w", err)
 	}
 
 	defer func() {
@@ -79,7 +75,7 @@ func (e *tempoExecutor) Query(ctx context.Context, dsInfo *models.DataSource, ts
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return plugins.DataResponse{}, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
@@ -91,12 +87,12 @@ func (e *tempoExecutor) Query(ctx context.Context, dsInfo *models.DataSource, ts
 	otTrace := ot_pdata.NewTraces()
 	err = otTrace.FromOtlpProtoBytes(body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to convert tempo response to Otlp: %w", err)
+		return plugins.DataResponse{}, fmt.Errorf("failed to convert tempo response to Otlp: %w", err)
 	}
 
 	jaegerBatches, err := ot_jaeger.InternalTracesToJaegerProto(otTrace)
 	if err != nil {
-		return nil, fmt.Errorf("failed to translate to jaegerBatches %v: %w", traceID, err)
+		return plugins.DataResponse{}, fmt.Errorf("failed to translate to jaegerBatches %v: %w", traceID, err)
 	}
 
 	jaegerTrace := &jaeger.Trace{
@@ -120,13 +116,13 @@ func (e *tempoExecutor) Query(ctx context.Context, dsInfo *models.DataSource, ts
 
 	traceBytes, err := json.Marshal(jsonTrace)
 	if err != nil {
-		return nil, fmt.Errorf("failed to json.Marshal trace \"%s\" :%w", traceID, err)
+		return plugins.DataResponse{}, fmt.Errorf("failed to json.Marshal trace \"%s\" :%w", traceID, err)
 	}
 
 	frames := []*data.Frame{
 		{Name: "Traces", RefID: refID, Fields: []*data.Field{data.NewField("trace", nil, []string{string(traceBytes)})}},
 	}
-	queryResult.Dataframes = tsdb.NewDecodedDataFrames(frames)
+	queryResult.Dataframes = plugins.NewDecodedDataFrames(frames)
 
 	return result, nil
 }
