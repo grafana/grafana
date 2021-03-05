@@ -59,6 +59,7 @@ export const Simple = Template.bind({});
 Simple.args = {
   separator: '',
 };
+
 export const WithInitialValue = Template.bind({});
 WithInitialValue.args = {
   initialValue: '3',
@@ -69,4 +70,10 @@ WithCustomValue.args = {
   initialValue: 'Custom Initial Value',
   allowCustomValue: true,
   formatCreateLabel: (val) => 'Custom Label' + val,
+};
+
+export const WithDisplayAllSelectedLevels = Template.bind({});
+WithDisplayAllSelectedLevels.args = {
+  displayAllSelectedLevels: true,
+  separator: ',',
 };
