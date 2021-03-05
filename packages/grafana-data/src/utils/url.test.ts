@@ -23,3 +23,15 @@ describe('toUrlParams', () => {
     expect(url).toBe('server=:@');
   });
 });
+
+describe('parseKeyValue', () => {
+  it('should parse url search params to object', () => {
+    const obj = urlUtil.parseKeyValue('param=value&param2=value2&kiosk');
+    expect(obj).toEqual({ param: 'value', param2: 'value2', kiosk: true });
+  });
+
+  it('should parse same url key multiple times to array', () => {
+    const obj = urlUtil.parseKeyValue('servers=A&servers=B');
+    expect(obj).toEqual({ servers: ['A', 'B'] });
+  });
+});

@@ -10,6 +10,7 @@ import { initDashboard } from '../state/initDashboard';
 import { StoreState } from 'app/types';
 import { PanelModel, DashboardModel } from 'app/features/dashboard/state';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { getLegacyAngularInjector } from '@grafana/runtime';
 
 export interface DashboardPageRouteParams {
   uid?: string;
@@ -18,7 +19,6 @@ export interface DashboardPageRouteParams {
 }
 
 export interface Props extends GrafanaRouteComponentProps<DashboardPageRouteParams, { panelId: string }> {
-  $injector: any;
   initDashboard: typeof initDashboard;
   dashboard: DashboardModel | null;
 }
@@ -35,10 +35,10 @@ export class SoloPanelPage extends Component<Props, State> {
   };
 
   componentDidMount() {
-    const { $injector, match, route } = this.props;
+    const { match, route } = this.props;
 
     this.props.initDashboard({
-      $injector: $injector,
+      $injector: getLegacyAngularInjector(),
       urlSlug: match.params.slug,
       urlUid: match.params.uid,
       urlType: match.params.type,

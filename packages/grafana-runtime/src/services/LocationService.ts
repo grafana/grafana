@@ -1,4 +1,4 @@
-import { locationUtil } from '@grafana/data';
+import { locationUtil, UrlQueryMap, urlUtil } from '@grafana/data';
 import * as H from 'history';
 import { LocationUpdate } from './LocationSrv';
 import { createLogger } from '@grafana/ui';
@@ -12,7 +12,7 @@ export interface LocationService {
   getLocation: () => H.Location;
   getHistory: () => H.History;
   getSearch: () => URLSearchParams;
-  getSearchObject: () => Record<string, string | boolean>;
+  getSearchObject: () => UrlQueryMap;
 
   /**
    * This is from the old LocationSrv interface
@@ -81,33 +81,23 @@ class HistoryWrapper implements LocationService {
 
   partial(query: Record<string, any>, replace?: boolean) {
     const currentLocation = this.history.location;
-    const params = this.getSearch();
+    const newQuery = this.getSearchObject();
 
     for (const key of Object.keys(query)) {
-      if (params.has(key)) {
-        // removing params with null | undefined
-        if (query[key] === null || query[key] === undefined) {
-          params.delete(key);
-        } else {
-          params.set(key, query[key]);
-        }
+      // removing params with null | undefined
+      if (query[key] === null || query[key] === undefined) {
+        delete newQuery[key];
       } else {
-        // ignoring params with null | undefined values
-        if (query[key] !== null && query[key] !== undefined) {
-          params.append(key, query[key]);
-        }
+        newQuery[key] = query[key];
       }
     }
 
-    const locationUpdate: H.Location = {
-      ...currentLocation,
-      search: params.toString(),
-    };
+    const updatedUrl = urlUtil.renderUrl(currentLocation.pathname, newQuery);
 
     if (replace) {
-      this.history.replace(locationUpdate);
+      this.history.replace(updatedUrl);
     } else {
-      this.history.push(locationUpdate);
+      this.history.push(updatedUrl);
     }
   }
 
@@ -155,24 +145,16 @@ class HistoryWrapper implements LocationService {
   }
 }
 
-function parseValue(value: string) {
-  if (value === 'true') {
-    return true;
-  }
-  if (value === 'false') {
-    return false;
-  }
-  return value;
-}
-
 /**
  * @alpha
  * Parses a location search string to an object
  * */
-export function locationSearchToObject(search: string) {
-  const params: Array<[string, string | boolean]> = [];
-  new URLSearchParams(search).forEach((v, k) => params.push([k, parseValue(v)]));
-  return Object.fromEntries(new Map(params));
+export function locationSearchToObject(search: string): UrlQueryMap {
+  if (search.length > 0) {
+    return urlUtil.parseKeyValue(search.substring(1));
+  }
+
+  return {};
 }
 
 export const locationService: LocationService = new HistoryWrapper();
