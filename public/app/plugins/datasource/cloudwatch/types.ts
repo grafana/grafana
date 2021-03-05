@@ -1,5 +1,5 @@
 import { DataQuery, SelectableValue } from '@grafana/data';
-import { AwsDataSourceJsonData, AwsDataSourceSecureJsonData } from '@grafana/aws-sdk';
+import { AwsAuthDataSourceSecureJsonData, AwsAuthDataSourceJsonData } from '@grafana/aws-sdk';
 
 export interface CloudWatchMetricsQuery extends DataQuery {
   queryMode?: 'Metrics';
@@ -57,14 +57,14 @@ export interface AnnotationQuery extends CloudWatchMetricsQuery {
 
 export type SelectableStrings = Array<SelectableValue<string>>;
 
-export interface CloudWatchJsonData extends AwsDataSourceJsonData {
+export interface CloudWatchJsonData extends AwsAuthDataSourceJsonData {
   timeField?: string;
   database?: string;
   customMetricsNamespaces?: string;
   endpoint?: string;
 }
 
-export interface CloudWatchSecureJsonData extends AwsDataSourceSecureJsonData {
+export interface CloudWatchSecureJsonData extends AwsAuthDataSourceSecureJsonData {
   accessKey: string;
   secretKey: string;
 }
