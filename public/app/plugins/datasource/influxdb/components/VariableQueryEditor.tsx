@@ -19,13 +19,12 @@ export default class VariableQueryEditor extends PureComponent<Props> {
     if (datasource.isFlux) {
       return (
         <FluxQueryEditor
-          datasource={datasource}
           query={{
             refId: 'A',
             query,
           }}
           onRunQuery={this.onRefresh}
-          onChange={(v) => onChange(v.query)}
+          onQueryChange={(v) => onChange(v.query)}
         />
       );
     }

@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import coreModule from 'app/core/core_module';
 import { InfluxQuery } from '../types';
-import { SelectableValue, QueryEditorProps } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 import { cx, css } from 'emotion';
 import {
   InlineFormLabel,
@@ -12,10 +12,22 @@ import {
   CodeEditorSuggestionItemKind,
 } from '@grafana/ui';
 import { getTemplateSrv } from '@grafana/runtime';
-import InfluxDatasource from '../datasource';
 
-// @ts-ignore -- complicated since the datasource is not really reactified yet!
-type Props = QueryEditorProps<InfluxDatasource, InfluxQuery>;
+// NOTE: we must not have an attribute called `onChange` here,
+// because when this component is called from angular,
+// the angular-widget gets a prop named "onchange",
+// and as this widget contains a textarea inside,
+// it will sometimes emit onchange events, they will bubble up,
+// and the browser will try to call that "onchange"
+// attribute. the easiest fix is to simply use a different name,
+// we use "onRunQuery". when the angular-integration is removed,
+// this restriction will not be necessary.
+
+type Props = {
+  onQueryChange: (query: InfluxQuery) => void;
+  onRunQuery: () => void;
+  query: InfluxQuery;
+};
 
 const samples: Array<SelectableValue<string>> = [
   { label: 'Show buckets', description: 'List the available buckets (table)', value: 'buckets()' },
@@ -85,12 +97,12 @@ v1.tagValues(
 
 export class FluxQueryEditor extends PureComponent<Props> {
   onFluxQueryChange = (query: string) => {
-    this.props.onChange({ ...this.props.query, query });
+    this.props.onQueryChange({ ...this.props.query, query });
     this.props.onRunQuery();
   };
 
   onSampleChange = (val: SelectableValue<string>) => {
-    this.props.onChange({
+    this.props.onQueryChange({
       ...this.props.query,
       query: val.value!,
     });
@@ -208,6 +220,6 @@ export class FluxQueryEditor extends PureComponent<Props> {
 coreModule.directive('fluxQueryEditor', [
   'reactDirective',
   (reactDirective: any) => {
-    return reactDirective(FluxQueryEditor, ['query', 'onChange', 'onRunQuery']);
+    return reactDirective(FluxQueryEditor, ['query', 'onQueryChange', 'onRunQuery']);
   },
 ]);
