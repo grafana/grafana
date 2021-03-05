@@ -19,6 +19,7 @@ export interface GraphNGLegendEvent {
   mode: GraphNGLegendEventMode;
 }
 
+/** @alpha */
 export interface XYFieldMatchers {
   x: FieldMatcher; // first match
   y: FieldMatcher;
