@@ -10,6 +10,9 @@ import {
   toDataFrame,
   TimeRange,
 } from '@grafana/data';
+import { store } from 'app/store/store';
+import { notifyApp } from 'app/core/actions';
+import { createErrorNotification } from 'app/core/copy/appNotification';
 import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
 import gfunc from './gfunc';
 import { getBackendSrv } from '@grafana/runtime';
@@ -32,6 +35,8 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
   funcDefs: any = null;
   funcDefsPromise: Promise<any> | null = null;
   _seriesRefLetters: string;
+  // to avoid error flooding, it's shown only once per session
+  private _autoCompleteErrorShown = false;
 
   constructor(instanceSettings: any, private readonly templateSrv: TemplateSrv = getTemplateSrv()) {
     super(instanceSettings);
@@ -454,9 +459,10 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
   getTagsAutoComplete(expressions: any[], tagPrefix: any, optionalOptions: any) {
     const options = optionalOptions || {};
 
+    const url = '/tags/autoComplete/tags';
     const httpOptions: any = {
       method: 'GET',
-      url: '/tags/autoComplete/tags',
+      url,
       params: {
         expr: _.map(expressions, (expression) => this.templateSrv.replace((expression || '').trim())),
       },
@@ -487,6 +493,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       })
       .catch((error) => {
         console.error(error);
+        this.displayTagsAutocompleteAlert(error, url);
         return [];
       });
   }
@@ -494,9 +501,10 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
   getTagValuesAutoComplete(expressions: any[], tag: any, valuePrefix: any, optionalOptions: any) {
     const options = optionalOptions || {};
 
+    const url = '/tags/autoComplete/values';
     const httpOptions: any = {
       method: 'GET',
-      url: '/tags/autoComplete/values',
+      url,
       params: {
         expr: _.map(expressions, (expression) => this.templateSrv.replace((expression || '').trim())),
         tag: this.templateSrv.replace((tag || '').trim()),
@@ -528,6 +536,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       })
       .catch((error) => {
         console.error(error);
+        this.displayTagsAutocompleteAlert(error, url);
         return [];
       });
   }
@@ -701,6 +710,13 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     }
 
     return cleanOptions;
+  }
+
+  private displayTagsAutocompleteAlert(error: Error, url: string): void {
+    if (!this._autoCompleteErrorShown) {
+      this._autoCompleteErrorShown = true;
+      store.dispatch(notifyApp(createErrorNotification(`${url} failed with: ${error.message}`)));
+    }
   }
 }
 
