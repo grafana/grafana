@@ -21,4 +21,4 @@ Query caching currently works for all backend data sources. You can enable the c
 
 ## Enable query caching
 
-To enable and configure query caching, please refer the the [Query caching section of Enterprise Configuration]({{< relref "./enterprise-configuration.md#query-caching" >}})
+To enable and configure query caching, please refer the the [Query caching section of Enterprise Configuration]({{< relref "./enterprise-configuration.md#query-caching" >}}).
