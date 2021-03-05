@@ -1,6 +1,8 @@
 import React from 'react';
 import { Cascader } from './Cascader';
 import { shallow } from 'enzyme';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 const options = [
   {
@@ -58,5 +60,69 @@ describe('Cascader', () => {
 
   it('Should convert options to searchable strings', () => {
     expect(cascader.state('searchableOptions')).toEqual(flatOptions);
+  });
+
+  it('displays all levels selected with default separator when displayAllSelectedLevels is true', () => {
+    const placeholder = 'cascader-placeholder';
+    render(
+      <Cascader displayAllSelectedLevels={true} placeholder={placeholder} options={options} onSelect={() => {}} />
+    );
+
+    expect(screen.queryByDisplayValue('First/Second')).not.toBeInTheDocument();
+
+    userEvent.click(screen.getByPlaceholderText(placeholder));
+    userEvent.click(screen.getByText('First'));
+    userEvent.click(screen.getByText('Second'));
+
+    expect(screen.getByDisplayValue('First/Second')).toBeInTheDocument();
+  });
+
+  it('displays all levels selected with separator passed in when displayAllSelectedLevels is true', () => {
+    const placeholder = 'cascader-placeholder';
+    const separator = ',';
+
+    render(
+      <Cascader
+        displayAllSelectedLevels={true}
+        separator={separator}
+        placeholder={placeholder}
+        options={options}
+        onSelect={() => {}}
+      />
+    );
+
+    expect(screen.queryByDisplayValue('First/Second')).not.toBeInTheDocument();
+
+    userEvent.click(screen.getByPlaceholderText(placeholder));
+    userEvent.click(screen.getByText('First'));
+    userEvent.click(screen.getByText('Second'));
+
+    expect(screen.getByDisplayValue(`First${separator}Second`)).toBeInTheDocument();
+  });
+
+  it('displays last level selected when displayAllSelectedLevels is false', () => {
+    const placeholder = 'cascader-placeholder';
+
+    render(
+      <Cascader displayAllSelectedLevels={false} placeholder={placeholder} options={options} onSelect={() => {}} />
+    );
+
+    userEvent.click(screen.getByPlaceholderText(placeholder));
+    userEvent.click(screen.getByText('First'));
+    userEvent.click(screen.getByText('Second'));
+
+    expect(screen.getByDisplayValue('Second')).toBeInTheDocument();
+  });
+
+  it('displays last level selected when displayAllSelectedLevels is not passed in', () => {
+    const placeholder = 'cascader-placeholder';
+
+    render(<Cascader placeholder={placeholder} options={options} onSelect={() => {}} />);
+
+    userEvent.click(screen.getByPlaceholderText(placeholder));
+    userEvent.click(screen.getByText('First'));
+    userEvent.click(screen.getByText('Second'));
+
+    expect(screen.getByDisplayValue('Second')).toBeInTheDocument();
   });
 });
