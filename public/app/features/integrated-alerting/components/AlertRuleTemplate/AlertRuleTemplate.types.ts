@@ -4,6 +4,7 @@ export interface UploadAlertRuleTemplatePayload {
 
 export interface UpdateAlertRuleTemplatePayload {
   yaml: string;
+  name: string;
 }
 
 export interface DeleteAlertRuleTemplatePayload {
