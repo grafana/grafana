@@ -8,7 +8,7 @@ weight = 1200
 
 # PostgreSQL data source
 
-Grafana ships with a built-in PostgreSQL data source plugin that allows you to query and visualize data from a PostgreSQL compatible database. This topic explains options, variables, querying, and other options specific to the this data source. Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
+Grafana ships with a built-in PostgreSQL data source plugin that allows you to query and visualize data from a PostgreSQL compatible database. This topic explains options, variables, querying, and other options specific to this data source. For instructions about how to add a data source to Grafana, refer to [Add a data source]({{< relref "add-a-data-source.md" >}}). Only users with the organization admin role can add data sources.
 
 ## PostgreSQL settings
 
