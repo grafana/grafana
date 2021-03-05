@@ -119,6 +119,9 @@ const ENTITY_MAP: Record<keyof FieldValueEntityLookup, any> = {
   NaN: NaN,
 };
 
+/**
+ * @internal use locally
+ */
 export function decodeFieldValueEntities(lookup: FieldValueEntityLookup, values: any[]) {
   if (!lookup || !values) {
     return;
