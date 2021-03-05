@@ -181,4 +181,7 @@ export const Components = {
   CallToActionCard: {
     button: (name: string) => `Call to action button ${name}`,
   },
+  DataLinksContextMenu: {
+    singleLink: 'Data link',
+  },
 };
