@@ -3,6 +3,9 @@ import { QueryResultMeta } from '../types';
 import { ArrayVector } from '../vector';
 import { DataFrameJSON, decodeFieldValueEntities } from './DataFrameJSON';
 
+/**
+ * @alpha
+ */
 export interface StreamingFrameOptions {
   maxLength?: number; // 1000
   maxSeconds?: number; // how long to keep things
