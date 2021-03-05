@@ -43,9 +43,10 @@ export interface MetricAggregationWithMissingSupport extends BaseMetricAggregati
   };
 }
 
+type InlineScript = string | { inline?: string };
 export interface MetricAggregationWithInlineScript extends BaseMetricAggregation {
   settings?: {
-    script?: string;
+    script?: InlineScript;
   };
 }
 
@@ -59,7 +60,7 @@ interface Average
     MetricAggregationWithInlineScript {
   type: 'avg';
   settings?: {
-    script?: string;
+    script?: InlineScript;
     missing?: string;
   };
 }
@@ -67,7 +68,7 @@ interface Average
 interface Sum extends MetricAggregationWithField, MetricAggregationWithInlineScript {
   type: 'sum';
   settings?: {
-    script?: string;
+    script?: InlineScript;
     missing?: string;
   };
 }
@@ -75,7 +76,7 @@ interface Sum extends MetricAggregationWithField, MetricAggregationWithInlineScr
 interface Max extends MetricAggregationWithField, MetricAggregationWithInlineScript {
   type: 'max';
   settings?: {
-    script?: string;
+    script?: InlineScript;
     missing?: string;
   };
 }
@@ -83,7 +84,7 @@ interface Max extends MetricAggregationWithField, MetricAggregationWithInlineScr
 interface Min extends MetricAggregationWithField, MetricAggregationWithInlineScript {
   type: 'min';
   settings?: {
-    script?: string;
+    script?: InlineScript;
     missing?: string;
   };
 }
@@ -105,7 +106,7 @@ export interface ExtendedStat {
 export interface ExtendedStats extends MetricAggregationWithField, MetricAggregationWithInlineScript {
   type: 'extended_stats';
   settings?: {
-    script?: string;
+    script?: InlineScript;
     missing?: string;
     sigma?: string;
   };
@@ -118,7 +119,7 @@ export interface Percentiles extends MetricAggregationWithField, MetricAggregati
   type: 'percentiles';
   settings?: {
     percents?: string[];
-    script?: string;
+    script?: InlineScript;
     missing?: string;
   };
 }
@@ -236,7 +237,7 @@ interface MovingFunction extends BasePipelineMetricAggregation {
   type: 'moving_fn';
   settings?: {
     window?: string;
-    script?: string;
+    script?: InlineScript;
     shift?: string;
   };
 }
@@ -265,7 +266,7 @@ interface CumulativeSum extends BasePipelineMetricAggregation {
 export interface BucketScript extends PipelineMetricAggregationWithMultipleBucketPaths {
   type: 'bucket_script';
   settings?: {
-    script?: string;
+    script?: InlineScript;
   };
 }
 
