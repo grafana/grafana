@@ -35,11 +35,11 @@ func newTempoExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error)
 }
 
 var (
-	plog log.Logger
+	tlog log.Logger
 )
 
 func init() {
-	plog = log.New("tsdb.tempo")
+	tlog = log.New("tsdb.tempo")
 	tsdb.RegisterTsdbQueryEndpoint("tempo", newTempoExecutor)
 }
 
@@ -53,7 +53,7 @@ func (e *tempoExecutor) Query(ctx context.Context, dsInfo *models.DataSource, ts
 
 	traceID := tsdbQuery.Queries[0].Model.Get("query").MustString("")
 
-	plog.Debug("Querying tempo with traceID", "traceID", traceID)
+	tlog.Debug("Querying tempo with traceID", "traceID", traceID)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", dsInfo.Url+"/api/traces/"+traceID, nil)
 	if err != nil {
@@ -73,18 +73,19 @@ func (e *tempoExecutor) Query(ctx context.Context, dsInfo *models.DataSource, ts
 
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			plog.Warn("failed to close response body", "err", err)
+			tlog.Warn("failed to close response body", "err", err)
 		}
 	}()
-
-	if resp.StatusCode == http.StatusNotFound {
-		queryResult.Error = fmt.Errorf("failed to get trace: %s", traceID)
-		return result, nil
-	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		queryResult.Error = fmt.Errorf("failed to get trace: %s", traceID)
+		tlog.Error("Request to tempo failed", "Status", resp.Status, "Body", string(body))
+		return result, nil
 	}
 
 	otTrace := ot_pdata.NewTraces()
