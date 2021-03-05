@@ -25,13 +25,11 @@ class HistoryWrapper implements LocationService {
   private fullPageReloadRoutes = ['/logout'];
 
   constructor(history?: H.History) {
-    const appSubUrl = config.appSubUrl;
-
     // If no history passed create an in memory one if being called from test
     this.history =
       history || process.env.NODE_ENV === 'test'
         ? H.createMemoryHistory({ initialEntries: ['/'] })
-        : H.createBrowserHistory({ basename: appSubUrl ?? '/' });
+        : H.createBrowserHistory({ basename: config.appSubUrl ?? '/' });
 
     this.history.listen((update) => {
       const urlWithoutBase = locationUtil.stripBaseFromUrl(update.pathname);

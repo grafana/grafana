@@ -18,7 +18,6 @@ export function interceptLinkClicks(e: MouseEvent) {
       e.preventDefault();
 
       href = locationUtil.stripBaseFromUrl(href);
-
       // Ensure old angular urls with no starting '/' are handled the same as before
       // That is they where seen as being absolute from app root
       if (href[0] !== '/') {
