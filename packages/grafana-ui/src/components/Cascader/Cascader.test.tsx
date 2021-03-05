@@ -1,6 +1,5 @@
 import React from 'react';
 import { Cascader } from './Cascader';
-import { shallow } from 'enzyme';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
@@ -29,41 +28,19 @@ const options = [
   },
 ];
 
-const flatOptions = [
-  {
-    singleLabel: 'Second',
-    label: 'First / Second',
-    value: ['1', '2'],
-  },
-  {
-    singleLabel: 'Third',
-    label: 'First / Third',
-    value: ['1', '3'],
-  },
-  {
-    singleLabel: 'Fourth',
-    label: 'First / Fourth',
-    value: ['1', '4'],
-  },
-  {
-    singleLabel: 'FirstFirst',
-    label: 'FirstFirst',
-    value: ['5'],
-  },
-];
-
 describe('Cascader', () => {
-  let cascader: any;
-  beforeEach(() => {
-    cascader = shallow(<Cascader options={options} onSelect={() => {}} />);
-  });
+  const placeholder = 'cascader-placeholder';
 
-  it('Should convert options to searchable strings', () => {
-    expect(cascader.state('searchableOptions')).toEqual(flatOptions);
+  it('filters results when searching', () => {
+    render(<Cascader placeholder={placeholder} options={options} onSelect={() => {}} />);
+
+    userEvent.type(screen.getByPlaceholderText(placeholder), 'Third');
+
+    expect(screen.queryByText('Second')).not.toBeInTheDocument();
+    expect(screen.getByText('First / Third')).toBeInTheDocument();
   });
 
   it('displays all levels selected with default separator when displayAllSelectedLevels is true', () => {
-    const placeholder = 'cascader-placeholder';
     render(
       <Cascader displayAllSelectedLevels={true} placeholder={placeholder} options={options} onSelect={() => {}} />
     );
@@ -78,7 +55,6 @@ describe('Cascader', () => {
   });
 
   it('displays all levels selected with separator passed in when displayAllSelectedLevels is true', () => {
-    const placeholder = 'cascader-placeholder';
     const separator = ',';
 
     render(
@@ -101,8 +77,6 @@ describe('Cascader', () => {
   });
 
   it('displays last level selected when displayAllSelectedLevels is false', () => {
-    const placeholder = 'cascader-placeholder';
-
     render(
       <Cascader displayAllSelectedLevels={false} placeholder={placeholder} options={options} onSelect={() => {}} />
     );
@@ -115,8 +89,6 @@ describe('Cascader', () => {
   });
 
   it('displays last level selected when displayAllSelectedLevels is not passed in', () => {
-    const placeholder = 'cascader-placeholder';
-
     render(<Cascader placeholder={placeholder} options={options} onSelect={() => {}} />);
 
     userEvent.click(screen.getByPlaceholderText(placeholder));
