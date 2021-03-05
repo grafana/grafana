@@ -8,18 +8,23 @@ import { EditAlertRuleTemplateModalProps, EditAlertRuleTemplateRenderProps } fro
 import { getStyles } from './EditAlertRuleTemplateModal.styles';
 import { AlertRuleTemplateService } from '../AlertRuleTemplate.service';
 import { Messages } from './EditAlertRuleTemplateModal.messages';
+import { MAX_TITLE_LENGTH } from './EditAlertRuleTemplateModal.constants';
+import { WarningBlock } from 'app/features/backup/components/StorageLocations/WarningBlock';
 
 export const EditAlertRuleTemplateModal: FC<EditAlertRuleTemplateModalProps> = ({
   yaml,
+  name,
+  summary,
   isVisible,
   setVisible,
   getAlertRuleTemplates,
 }) => {
   const styles = useStyles(getStyles);
   const { required } = validators;
+  let truncatedTitle = summary.length > MAX_TITLE_LENGTH ? `${summary.substring(0, MAX_TITLE_LENGTH - 3)}...` : summary;
   const onSubmit = async (values: EditAlertRuleTemplateRenderProps) => {
     try {
-      await AlertRuleTemplateService.update(values);
+      await AlertRuleTemplateService.update({ ...values, name });
       setVisible(false);
       appEvents.emit(AppEvents.alertSuccess, [Messages.editSuccess]);
       getAlertRuleTemplates();
@@ -29,7 +34,7 @@ export const EditAlertRuleTemplateModal: FC<EditAlertRuleTemplateModalProps> = (
   };
 
   return (
-    <Modal title={Messages.title} isVisible={isVisible} onClose={() => setVisible(false)}>
+    <Modal title={Messages.getTitle(truncatedTitle)} isVisible={isVisible} onClose={() => setVisible(false)}>
       <Form
         initialValues={{ yaml }}
         onSubmit={onSubmit}
@@ -37,11 +42,13 @@ export const EditAlertRuleTemplateModal: FC<EditAlertRuleTemplateModalProps> = (
           <form onSubmit={handleSubmit}>
             <>
               <TextareaInputField
+                fieldClassName={styles.field}
                 name="yaml"
                 label={Messages.alertRuleTemplateLabel}
                 validators={[required]}
                 className={styles.alertRuleTemplate}
               />
+              <WarningBlock message={Messages.nameNotEditable} type="warning" dataQa="alert-rule-name-warning" />
               <HorizontalGroup justify="center" spacing="md">
                 <LoaderButton
                   data-qa="alert-rule-template-edit-button"
