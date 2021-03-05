@@ -1,5 +1,12 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { ApplyFieldOverrideOptions, DataFrame, DataTransformerConfig, dateTime, FieldColorModeId } from '@grafana/data';
+import {
+  ApplyFieldOverrideOptions,
+  DataFrame,
+  DataQuery,
+  DataTransformerConfig,
+  dateTime,
+  FieldColorModeId,
+} from '@grafana/data';
 import alertDef from './alertDef';
 import {
   AlertDefinition,
@@ -62,7 +69,7 @@ export const initialAlertDefinitionState: AlertDefinitionState = {
     data: [],
     intervalSeconds: 60,
   },
-  queryRunner: new PanelQueryRunner(dataConfig),
+  queryRunners: {},
   uiState: { ...store.getObject(ALERT_DEFINITION_UI_STATE_STORAGE_KEY, DEFAULT_ALERT_DEFINITION_UI_STATE) },
   data: [],
   alertDefinitions: [] as AlertDefinition[],
@@ -172,9 +179,13 @@ const alertDefinitionSlice = createSlice({
       state.alertDefinition.intervalSeconds = action.payload.intervalSeconds;
       state.alertDefinition.data = action.payload.data;
       state.alertDefinition.description = action.payload.description;
+      state.queryRunners = {};
       state.getQueryOptions = () => ({
         ...currentOptions,
-        queries: action.payload.data.map((q: AlertDefinitionQueryModel) => ({ ...q.model })),
+        queries: action.payload.data.map((q: AlertDefinitionQueryModel) => {
+          state.queryRunners[q.model.refId] = new PanelQueryRunner(dataConfig);
+          return { ...q.model };
+        }),
       });
     },
     updateAlertDefinitionOptions: (state: AlertDefinitionState, action: PayloadAction<Partial<AlertDefinition>>) => {
@@ -185,6 +196,21 @@ const alertDefinitionSlice = createSlice({
     },
     setQueryOptions: (state: AlertDefinitionState, action: PayloadAction<QueryGroupOptions>) => {
       state.getQueryOptions = () => action.payload;
+      Object.keys(state.queryRunners).forEach((key) => {
+        if (action.payload.queries.length === 0) {
+          state.queryRunners = {};
+        } else if (action.payload.queries.some((q) => q.refId === key)) {
+          delete state.queryRunners[key];
+        }
+        console.log('remove');
+      });
+      action.payload.queries.forEach((query: DataQuery) => {
+        //add
+        console.log('add');
+        if (!state.queryRunners[query.refId]) {
+          state.queryRunners[query.refId] = new PanelQueryRunner(dataConfig);
+        }
+      });
     },
     setAlertDefinitions: (state: AlertDefinitionState, action: PayloadAction<AlertDefinition[]>) => {
       state.alertDefinitions = action.payload;
@@ -193,19 +219,13 @@ const alertDefinitionSlice = createSlice({
       state.getInstances = () => action.payload;
     },
     cleanUpState: (state: AlertDefinitionState, action: PayloadAction<undefined>) => {
-      if (state.queryRunner) {
-        state.queryRunner.destroy();
-        state.queryRunner = undefined;
-        delete state.queryRunner;
-        state.queryRunner = new PanelQueryRunner(dataConfig);
-      }
-
       state.alertDefinitions = initialAlertDefinitionState.alertDefinitions;
       state.alertDefinition = initialAlertDefinitionState.alertDefinition;
       state.data = initialAlertDefinitionState.data;
       state.getInstances = initialAlertDefinitionState.getInstances;
       state.getQueryOptions = initialAlertDefinitionState.getQueryOptions;
       state.uiState = initialAlertDefinitionState.uiState;
+      state.queryRunners = {};
     },
   },
 });

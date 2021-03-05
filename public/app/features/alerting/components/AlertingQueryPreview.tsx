@@ -1,5 +1,4 @@
-import React, { FC, useMemo, useState } from 'react';
-import { useObservable } from 'react-use';
+import React, { FC, useEffect, useState } from 'react';
 import { css } from 'emotion';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { DataFrame, DataQuery, GrafanaTheme, PanelData } from '@grafana/data';
@@ -7,6 +6,8 @@ import { Button, Icon, Tab, TabContent, TabsBar, useStyles } from '@grafana/ui';
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import { PreviewQueryTab } from './PreviewQueryTab';
 import { PreviewInstancesTab } from './PreviewInstancesTab';
+import { forkJoin } from 'rxjs';
+import { mergeAll } from 'rxjs/operators';
 
 enum Tabs {
   Query = 'query',
@@ -19,19 +20,30 @@ const tabs = [
 ];
 
 interface Props {
-  queryRunner: PanelQueryRunner;
+  queryRunners: Record<string, PanelQueryRunner>;
   getInstances: () => DataFrame[];
   queries: DataQuery[];
   onTest: () => void;
   onRunQueries: () => void;
 }
 
-export const AlertingQueryPreview: FC<Props> = ({ getInstances, onRunQueries, onTest, queryRunner, queries }) => {
+export const AlertingQueryPreview: FC<Props> = ({ getInstances, onRunQueries, onTest, queryRunners, queries }) => {
   const [activeTab, setActiveTab] = useState<string>(Tabs.Query);
   const styles = useStyles(getStyles);
 
-  const observable = useMemo(() => queryRunner.getData({ withFieldConfig: true, withTransforms: true }), []);
-  const data = useObservable<PanelData>(observable);
+  let data = {} as PanelData;
+  useEffect(() => {
+    const runningQueries = Object.values(queryRunners).map((queryRunner) =>
+      queryRunner.getData({ withFieldConfig: true, withTransforms: true })
+    );
+    const subscription = forkJoin(runningQueries)
+      .pipe(mergeAll())
+      .subscribe((value) => {
+        data = value;
+      });
+    return () => subscription.unsubscribe();
+  }, [queryRunners]);
+
   const instances = getInstances();
 
   return (
@@ -72,7 +84,7 @@ export const AlertingQueryPreview: FC<Props> = ({ getInstances, onRunQueries, on
 
                 case Tabs.Query:
                 default:
-                  if (data) {
+                  if (Object.keys(data).length > 0) {
                     return <PreviewQueryTab data={data} width={width} height={height} />;
                   }
                   return (

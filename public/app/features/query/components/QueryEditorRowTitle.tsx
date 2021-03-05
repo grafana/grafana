@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { css, cx } from 'emotion';
-import { DataQuery, DataSourceInstanceSettings, GrafanaTheme } from '@grafana/data';
-import { Icon, Input, stylesFactory, useTheme, FieldValidationMessage } from '@grafana/ui';
+import { DataQuery, DataSourceInstanceSettings, GrafanaTheme, TimeRange } from '@grafana/data';
+import { Icon, Input, stylesFactory, useTheme, FieldValidationMessage, TimeRangeInput } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import { DataSourcePicker } from '../../../core/components/Select/DataSourcePicker';
 
@@ -90,6 +90,13 @@ export const QueryEditorRowTitle: React.FC<Props> = ({
     onChange({ ...query, datasource: dataSource.name });
   };
 
+  const onTimeRangeChange = (timeRange: TimeRange) => {
+    onChange({
+      ...query,
+      timeRange,
+    });
+  };
+
   return (
     <div className={styles.wrapper}>
       {!isEditing && (
@@ -121,7 +128,12 @@ export const QueryEditorRowTitle: React.FC<Props> = ({
           {validationError && <FieldValidationMessage horizontal>{validationError}</FieldValidationMessage>}
         </>
       )}
-      {inMixedMode && <DataSourcePicker current={dataSourceName} onChange={onDataSourceChange} />}
+      {inMixedMode && (
+        <div style={{ display: 'flex', marginLeft: '8px' }}>
+          <DataSourcePicker current={dataSourceName} onChange={onDataSourceChange} />
+          <TimeRangeInput onChange={onTimeRangeChange} value={query.timeRange!} />
+        </div>
+      )}
       {disabled && <em className={styles.contextInfo}> Disabled</em>}
 
       {collapsedText && (

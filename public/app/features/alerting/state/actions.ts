@@ -170,18 +170,23 @@ export function queryOptionsChange(queryOptions: QueryGroupOptions): ThunkResult
 
 export function onRunQueries(): ThunkResult<void> {
   return (dispatch, getStore) => {
-    const { queryRunner, getQueryOptions } = getStore().alertDefinition;
-    const timeRange = { from: 'now-1h', to: 'now' };
+    const { queryRunners, getQueryOptions } = getStore().alertDefinition;
     const queryOptions = getQueryOptions();
 
-    queryRunner!.run({
-      // if the queryRunner is undefined here somethings very wrong so it's ok to throw an unhandled error
-      timezone: 'browser',
-      timeRange: { from: dateMath.parse(timeRange.from)!, to: dateMath.parse(timeRange.to)!, raw: timeRange },
-      maxDataPoints: queryOptions.maxDataPoints ?? 100,
-      minInterval: queryOptions.minInterval,
-      queries: queryOptions.queries,
-      datasource: queryOptions.dataSource.name!,
+    queryOptions.queries.forEach((query) => {
+      queryRunners[query.refId]!.run({
+        // if the queryRunner is undefined here somethings very wrong so it's ok to throw an unhandled error
+        timezone: 'browser',
+        timeRange: {
+          from: dateMath.parse(query.timeRange!.from)!,
+          to: dateMath.parse(query.timeRange!.to)!,
+          raw: query.timeRange!,
+        },
+        maxDataPoints: queryOptions.maxDataPoints ?? 100,
+        minInterval: queryOptions.minInterval,
+        queries: [query],
+        datasource: query.datasource!,
+      });
     });
   };
 }
@@ -276,8 +281,8 @@ function buildDataQueryModel(queryOptions: QueryGroupOptions, defaultDataSource:
       },
       refId: query.refId,
       relativeTimeRange: {
-        From: 500,
-        To: 0,
+        From: query.timeRange!.from,
+        To: query.timeRange!.to,
       },
     };
   });

@@ -12,7 +12,6 @@ import { QueryGroupOptions, StoreState } from 'app/types';
 function mapStateToProps(state: StoreState) {
   return {
     queryOptions: state.alertDefinition.getQueryOptions(),
-    queryRunner: state.alertDefinition.queryRunner,
   };
 }
 
@@ -41,7 +40,7 @@ class AlertingQueryEditorUnconnected extends PureComponent<Props> {
   };
 
   render() {
-    const { queryOptions, queryRunner } = this.props;
+    const { queryOptions } = this.props;
     const styles = getStyles(config.theme);
 
     return (
@@ -57,7 +56,6 @@ class AlertingQueryEditorUnconnected extends PureComponent<Props> {
           </div>
           <QueryGroup
             hideTopSection={true}
-            queryRunner={queryRunner!} // if the queryRunner is undefined here somethings very wrong so it's ok to throw an unhandled error
             options={queryOptions}
             onRunQueries={this.onRunQueries}
             onOptionsChange={this.onQueryOptionsChange}

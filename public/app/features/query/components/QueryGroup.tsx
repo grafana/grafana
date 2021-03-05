@@ -13,6 +13,8 @@ import {
   DataQuery,
   DataSourceApi,
   DataSourceInstanceSettings,
+  dateMath,
+  dateTime,
   getDefaultTimeRange,
   LoadingState,
   PanelData,
@@ -29,7 +31,7 @@ import { css } from 'emotion';
 import { QueryGroupOptions } from 'app/types';
 
 interface Props {
-  queryRunner: PanelQueryRunner;
+  queryRunner?: PanelQueryRunner;
   options: QueryGroupOptions;
   onOpenQueryInspector?: () => void;
   onRunQueries: () => void;
@@ -76,9 +78,11 @@ export class QueryGroup extends PureComponent<Props, State> {
   async componentDidMount() {
     const { queryRunner, options } = this.props;
 
-    this.querySubscription = queryRunner.getData({ withTransforms: false, withFieldConfig: false }).subscribe({
-      next: (data: PanelData) => this.onPanelDataUpdate(data),
-    });
+    if (queryRunner) {
+      this.querySubscription = queryRunner.getData({ withTransforms: false, withFieldConfig: false }).subscribe({
+        next: (data: PanelData) => this.onPanelDataUpdate(data),
+      });
+    }
 
     try {
       const ds = await this.dataSourceSrv.get(options.dataSource.name);
@@ -148,9 +152,19 @@ export class QueryGroup extends PureComponent<Props, State> {
   };
 
   onAddQueryClick = () => {
-    if (this.state.dsSettings?.meta.mixed) {
+    const { options } = this.props;
+    const { dsSettings, defaultDataSource } = this.state;
+
+    if (dsSettings?.meta.mixed) {
       this.onChange({
-        queries: addQuery(this.props.options.queries, { datasource: this.state.defaultDataSource?.name }),
+        queries: addQuery(options.queries, {
+          datasource: defaultDataSource?.name,
+          timeRange: {
+            from: dateMath.parse('now-6h')!,
+            to: dateTime(),
+            raw: { from: 'now-6h', to: 'now' },
+          },
+        }),
       });
     } else {
       this.onChange({ queries: addQuery(this.props.options.queries) });

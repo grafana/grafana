@@ -30,7 +30,7 @@ function mapStateToProps(state: StoreState) {
   return {
     uiState: state.alertDefinition.uiState,
     getQueryOptions: state.alertDefinition.getQueryOptions,
-    queryRunner: state.alertDefinition.queryRunner,
+    queryRunners: state.alertDefinition.queryRunners,
     getInstances: state.alertDefinition.getInstances,
     alertDefinition: state.alertDefinition.alertDefinition,
     pageId: (pageId as string) ?? '',
@@ -128,7 +128,7 @@ class NextGenAlertingPageUnconnected extends PureComponent<Props> {
       getInstances,
       uiState,
       updateAlertDefinitionUiState,
-      queryRunner,
+      queryRunners,
       getQueryOptions,
       onRunQueries,
     } = this.props;
@@ -146,7 +146,7 @@ class NextGenAlertingPageUnconnected extends PureComponent<Props> {
             leftPaneComponents={[
               <AlertingQueryPreview
                 key="queryPreview"
-                queryRunner={queryRunner!} // if the queryRunner is undefined here somethings very wrong so it's ok to throw an unhandled error
+                queryRunners={queryRunners!} // if the queryRunner is undefined here somethings very wrong so it's ok to throw an unhandled error
                 getInstances={getInstances}
                 queries={queryOptions.queries}
                 onTest={this.onTest}

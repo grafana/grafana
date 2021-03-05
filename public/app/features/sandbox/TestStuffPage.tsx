@@ -81,7 +81,6 @@ export const TestStuffPage: FC = () => {
         )}
         <div style={{ marginTop: '16px', height: '45%' }}>
           <QueryGroup
-            hideTopSection={true}
             options={queryOptions}
             queryRunner={queryRunner}
             onRunQueries={onRunQueries}
@@ -117,7 +116,7 @@ export function getDefaultState(): State {
     queryOptions: {
       queries: [],
       dataSource: {
-        name: '-- Mixed --',
+        name: 'gdev-testdata',
       },
       maxDataPoints: 100,
     },
