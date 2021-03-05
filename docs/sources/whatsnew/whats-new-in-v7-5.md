@@ -28,6 +28,8 @@ Grafana 7.5 comes with alerting support for Loki. With LogQL you can wrap a log 
 
 With alerting support for Loki, you can now create alerts on Loki metrics queries.
 
+[Alerting]({{< relref "../alerting/_index.md" >}}) was updated as a result of this change.
+
 ![Loki alerting](/img/docs/alerting/alerting-for-loki-7-5.png)
 
 ### Loki label browser
@@ -39,6 +41,8 @@ A new Loki logs browser lets you construct the queries step by step: you choose 
 For new Prometheus data sources, we have changed the default HTTP method to POST. POST allows for much larger query bodies than using the GET method. This is necessary when sending queries from graphs with a lot of targets, for example, many hosts in a dashboard variable. The POST method also makes the Query Inspector data easier to read since the query is in plain text whereas the GET query is URL encoded.
 
 > **Note:** This is not going to affect provisioned data sources or already created data sources.
+
+[Prometheus data source]({{< relref "../datasources/prometheus.md" >}}) was updated as a result of this change.
 
 ### Word highlighting for Elasticsearch
 
