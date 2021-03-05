@@ -23,7 +23,7 @@ type tempoExecutor struct {
 	httpClient *http.Client
 }
 
-func NewTempoExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
+func NewExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
 	httpClient, err := dsInfo.GetHttpClient()
 	if err != nil {
 		return nil, err

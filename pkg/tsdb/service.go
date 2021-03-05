@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/opentsdb"
 	"github.com/grafana/grafana/pkg/tsdb/postgres"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
+	"github.com/grafana/grafana/pkg/tsdb/tempo"
 )
 
 // NewService returns a new Service.
@@ -64,6 +65,7 @@ func (s *Service) Init() error {
 	s.registry["stackdriver"] = s.CloudMonitoringService.NewExecutor
 	s.registry["grafana-azure-monitor-datasource"] = s.AzureMonitorService.NewExecutor
 	s.registry["loki"] = loki.NewExecutor
+	s.registry["tempo"] = tempo.NewExecutor
 	return nil
 }
 
