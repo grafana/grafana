@@ -3,6 +3,7 @@ package translate
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -97,50 +98,75 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*eval.Condition, error) {
 		refIDtoCondIdx[refID] = append(refIDtoCondIdx[refID], i)
 	}
 
-	newRefIDs := make(map[string][]int)
+	newRefIDstoCondIdx := make(map[string][]int)
 	newRefIDsToTimeRanges := make(map[string][2]string)
 
-	for refID, condIdxes := range refIDtoCondIdx {
+	refIDs := make([]string, 0, len(refIDtoCondIdx))
+	for refID := range refIDtoCondIdx {
+		refIDs = append(refIDs, refID)
+	}
+	sort.Strings(refIDs)
+
+	for _, refID := range refIDs {
+		condIdxes := refIDtoCondIdx[refID]
 		if len(condIdxes) == 1 {
-			newRefIDs[refID] = append(newRefIDs[refID], condIdxes[0])
+			newRefIDstoCondIdx[refID] = append(newRefIDstoCondIdx[refID], condIdxes[0])
 			newRefIDsToTimeRanges[refID] = [2]string{dc.Conditions[condIdxes[0]].Query.Params[1], dc.Conditions[condIdxes[0]].Query.Params[2]}
 			continue
 		}
 
 		// track unique time ranges within the same refId
-		timeRanges := make(map[[2]string][]int)
+		timeRangesToCondIdx := make(map[[2]string][]int)
 		for i, idx := range condIdxes {
 			timeParamFrom := dc.Conditions[i].Query.Params[1]
 			timeParamTo := dc.Conditions[i].Query.Params[2]
 			key := [2]string{timeParamFrom, timeParamTo}
-			timeRanges[key] = append(timeRanges[key], idx)
+			timeRangesToCondIdx[key] = append(timeRangesToCondIdx[key], idx)
 		}
 
-		if len(timeRanges) == 1 {
+		if len(timeRangesToCondIdx) == 1 {
 			// all shared time range, no need to create refIds
-			newRefIDs[refID] = append(newRefIDs[refID], condIdxes[0])
+			newRefIDstoCondIdx[refID] = append(newRefIDstoCondIdx[refID], condIdxes[0])
 			newRefIDsToTimeRanges[refID] = [2]string{dc.Conditions[condIdxes[0]].Query.Params[1], dc.Conditions[condIdxes[0]].Query.Params[2]}
 			continue
 		}
 
-		for _, idxes := range timeRanges {
+		timeRanges := make([][2]string, 0, len(timeRangesToCondIdx))
+		for tr := range timeRangesToCondIdx {
+			timeRanges = append(timeRanges, tr)
+		}
+
+		sort.Slice(timeRanges, func(i, j int) bool {
+			// proper sort needed
+			return timeRanges[i][0] < timeRanges[j][0]
+		})
+
+		for _, tr := range timeRanges {
+			idxes := timeRangesToCondIdx[tr]
 			for i := 0; i < len(idxes); i++ {
-				newLetter, err := getLetter(newRefIDs)
+				newLetter, err := getLetter(newRefIDstoCondIdx)
 				if err != nil {
 					return nil, err
 				}
-				newRefIDs[newLetter] = append(newRefIDs[newLetter], idxes[i])
+				newRefIDstoCondIdx[newLetter] = append(newRefIDstoCondIdx[newLetter], idxes[i])
 				newRefIDsToTimeRanges[newLetter] = [2]string{dc.Conditions[idxes[i]].Query.Params[1], dc.Conditions[idxes[i]].Query.Params[2]}
 			}
 		}
 	}
 
+	newRefIDs := make([]string, 0, len(newRefIDstoCondIdx))
+	for refID := range newRefIDstoCondIdx {
+		newRefIDs = append(newRefIDs, refID)
+	}
+	sort.Strings(newRefIDs)
+
 	ngCond := &eval.Condition{}
 	// will need to sort for stable output
 	condIdxToNewRefID := make(map[int]string)
-	for refId, condIdxes := range newRefIDs {
+	for _, refID := range newRefIDs {
+		condIdxes := newRefIDstoCondIdx[refID]
 		for _, condIdx := range condIdxes {
-			condIdxToNewRefID[condIdx] = refId
+			condIdxToNewRefID[condIdx] = refID
 			var queryObj map[string]interface{}
 			err := json.Unmarshal(dc.Conditions[condIdx].Query.Model, &queryObj)
 			if err != nil {
@@ -159,7 +185,7 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*eval.Condition, error) {
 			//queryObj["datasourceId"] = getDsInfo.Result.Id
 			queryObj["datasource"] = getDsInfo.Result.Name
 			queryObj["datasourceUid"] = getDsInfo.Result.Uid
-			queryObj["refId"] = refId
+			queryObj["refId"] = refID
 
 			if _, found := queryObj["maxDataPoints"]; !found {
 				queryObj["maxDataPoints"] = 100
@@ -173,8 +199,8 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*eval.Condition, error) {
 				return nil, err
 			}
 
-			rawFrom := newRefIDsToTimeRanges[refId][0]
-			rawTo := newRefIDsToTimeRanges[refId][1]
+			rawFrom := newRefIDsToTimeRanges[refID][0]
+			rawTo := newRefIDsToTimeRanges[refID][1]
 
 			rTR, err := getRelativeDuration(rawFrom, rawTo)
 			if err != nil {
@@ -182,7 +208,7 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*eval.Condition, error) {
 			}
 
 			alertQuery := eval.AlertQuery{
-				RefID:             refId,
+				RefID:             refID,
 				Model:             encodedObj,
 				RelativeTimeRange: *rTR,
 				DatasourceUID:     getDsInfo.Uid,
@@ -205,7 +231,7 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*eval.Condition, error) {
 		conditions[i] = newCond
 	}
 
-	ccRefID, err := getLetter(newRefIDs)
+	ccRefID, err := getLetter(newRefIDstoCondIdx)
 	if err != nil {
 		return nil, err
 	}
@@ -248,6 +274,10 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*eval.Condition, error) {
 		return nil, err
 	}
 	fmt.Println(string(b))
+
+	sort.Slice(ngCond.QueriesAndExpressions, func(i, j int) bool {
+		return ngCond.QueriesAndExpressions[i].RefID < ngCond.QueriesAndExpressions[j].RefID
+	})
 
 	return ngCond, nil
 }
