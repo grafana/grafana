@@ -68,7 +68,7 @@ const getLabelStyles = (theme: GrafanaTheme) => ({
     cursor: pointer;
     font-size: ${theme.typography.size.sm};
     line-height: ${theme.typography.lineHeight.xs};
-    background-color: ${theme.colors.bg3};
+    border: 1px solid ${theme.colors.border2};
     vertical-align: baseline;
     color: ${theme.colors.text};
     white-space: nowrap;
@@ -77,6 +77,8 @@ const getLabelStyles = (theme: GrafanaTheme) => ({
     border-radius: ${theme.border.radius.md};
     margin-right: ${theme.spacing.sm};
     margin-bottom: ${theme.spacing.xs};
+    text-overflow: ellipsis;
+    overflow: hidden;
   `,
   loading: css`
     font-weight: ${theme.typography.weight.semibold};
