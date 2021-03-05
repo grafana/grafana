@@ -19,7 +19,6 @@ Query caching currently works for all backend data sources. You can enable the c
 - Reduced API costs.
 - Reduced likelihood that APIs will rate-limit or throttle requests.
 
-Query caching currently works for all backend data sources. You can enable the cache globally or per data source, and you can configure the cache duration per data source. The cache is in-memory only.
 
 ## Enable query caching
 
