@@ -6,17 +6,17 @@ import { getNextRefIdChar } from 'app/core/utils/query';
 // Types
 import {
   DataConfigSource,
+  DataFrameDTO,
   DataLink,
+  DataLinkBuiltInVars,
   DataQuery,
   DataTransformerConfig,
+  EventBus,
+  EventBusSrv,
   FieldConfigSource,
   PanelPlugin,
   ScopedVars,
-  EventBus,
-  EventBusSrv,
-  DataFrameDTO,
   urlUtil,
-  DataLinkBuiltInVars,
 } from '@grafana/data';
 import { EDIT_PANEL_ID } from 'app/core/constants';
 import config from 'app/core/config';
@@ -36,7 +36,8 @@ import {
   isStandardFieldProp,
   restoreCustomOverrideRules,
 } from './getPanelOptionsWithDefaults';
-import { LibraryPanelDTO } from 'app/features/library-panels/state/api';
+import { QueryGroupOptions } from 'app/types';
+import { PanelModelLibraryPanel } from '../../library-panels/types';
 
 export interface GridPos {
   x: number;
@@ -57,6 +58,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   queryRunner: true,
   replaceVariables: true,
   editSourceId: true,
+  hasChanged: true,
 };
 
 // For angular panels we need to clean up properties when changing type
@@ -151,12 +153,13 @@ export class PanelModel implements DataConfigSource {
   links?: DataLink[];
   transparent: boolean;
 
-  libraryPanel?: { uid: undefined; name: string } | Pick<LibraryPanelDTO, 'uid' | 'name' | 'meta'>;
+  libraryPanel?: { uid: undefined; name: string } | PanelModelLibraryPanel;
 
   // non persisted
   isViewing: boolean;
   isEditing: boolean;
   isInView: boolean;
+  hasChanged: boolean;
 
   hasRefreshed: boolean;
   events: EventBus;
@@ -228,12 +231,14 @@ export class PanelModel implements DataConfigSource {
 
   updateOptions(options: object) {
     this.options = options;
+    this.hasChanged = true;
     this.events.publish(new PanelOptionsChangedEvent());
     this.render();
   }
 
   updateFieldConfig(config: FieldConfigSource) {
     this.fieldConfig = config;
+    this.hasChanged = true;
     this.events.publish(new PanelOptionsChangedEvent());
 
     this.resendLastResult();
@@ -392,6 +397,7 @@ export class PanelModel implements DataConfigSource {
     // switch
     this.type = pluginId;
     this.plugin = newPlugin;
+    this.hasChanged = true;
 
     // For some reason I need to rebind replace variables here, otherwise the viz repeater does not work
     this.replaceVariables = this.replaceVariables.bind(this);
@@ -402,20 +408,30 @@ export class PanelModel implements DataConfigSource {
     }
   }
 
-  updateQueries(queries: DataQuery[]) {
+  updateQueries(options: QueryGroupOptions) {
+    this.datasource = options.dataSource.default ? null : options.dataSource.name!;
+    this.timeFrom = options.timeRange?.from;
+    this.timeShift = options.timeRange?.shift;
+    this.hideTimeOverride = options.timeRange?.hide;
+    this.interval = options.minInterval;
+    this.maxDataPoints = options.maxDataPoints;
+    this.targets = options.queries;
+    this.hasChanged = true;
+
     this.events.publish(new PanelQueriesChangedEvent());
-    this.targets = queries;
   }
 
   addQuery(query?: Partial<DataQuery>) {
     query = query || { refId: 'A' };
     query.refId = getNextRefIdChar(this.targets);
     this.targets.push(query as DataQuery);
+    this.hasChanged = true;
   }
 
   changeQuery(query: DataQuery, index: number) {
     // ensure refId is maintained
     query.refId = this.targets[index].refId;
+    this.hasChanged = true;
 
     // update query in array
     this.targets = this.targets.map((item, itemIndex) => {
@@ -486,7 +502,13 @@ export class PanelModel implements DataConfigSource {
   setTransformations(transformations: DataTransformerConfig[]) {
     this.transformations = transformations;
     this.resendLastResult();
+    this.hasChanged = true;
     this.events.publish(new PanelTransformationsChangedEvent());
+  }
+
+  setProperty(key: keyof this, value: any) {
+    this[key] = value;
+    this.hasChanged = true;
   }
 
   replaceVariables(value: string, extraVars: ScopedVars | undefined, format?: string | Function) {

@@ -3,7 +3,13 @@ import {
   ThemeOptions,
   ThemeProvider,
   ThemeType,
+  Trace,
+  TraceKeyValuePair,
+  TraceLink,
   TracePageHeader,
+  TraceProcess,
+  TraceResponse,
+  TraceSpan,
   TraceTimelineViewer,
   transformTraceData,
   TTraceTimeline,
@@ -16,7 +22,7 @@ import { useChildrenState } from './useChildrenState';
 import { useDetailState } from './useDetailState';
 import { useHoverIndentGuide } from './useHoverIndentGuide';
 import { colors, useTheme } from '@grafana/ui';
-import { TraceViewData, Trace, TraceSpan, TraceKeyValuePair, TraceLink } from '@grafana/data';
+import { DataFrame, DataFrameView, TraceSpanRow } from '@grafana/data';
 import { createSpanLinkFactory } from './createSpanLink';
 import { useSelector } from 'react-redux';
 import { StoreState } from 'app/types';
@@ -25,13 +31,13 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { TraceToLogsData } from 'app/core/components/TraceToLogsSettings';
 
 type Props = {
-  trace?: TraceViewData;
+  dataFrames: DataFrame[];
   splitOpenFn: SplitOpen;
   exploreId: ExploreId;
 };
 
 export function TraceView(props: Props) {
-  if (!props.trace?.traceID) {
+  if (!props.dataFrames.length) {
     return null;
   }
   const { expandOne, collapseOne, childrenToggle, collapseAll, childrenHiddenIDs, expandAll } = useChildrenState();
@@ -58,7 +64,7 @@ export function TraceView(props: Props) {
    */
   const [slim, setSlim] = useState(false);
 
-  const traceProp = useMemo(() => transformTraceData(props.trace), [props.trace]);
+  const traceProp = useMemo(() => transformDataFrames(props.dataFrames), [props.dataFrames]);
   const { search, setSearch, spanFindMatches } = useSearch(traceProp?.spans);
   const dataSourceName = useSelector((state: StoreState) => state.explore[props.exploreId]?.datasourceInstance?.name);
   const traceToLogsOptions = (getDatasourceSrv().getInstanceSettings(dataSourceName)?.jsonData as TraceToLogsData)
@@ -166,4 +172,45 @@ export function TraceView(props: Props) {
       </UIElementsContext.Provider>
     </ThemeProvider>
   );
+}
+
+function transformDataFrames(frames: DataFrame[]): Trace | null {
+  // At this point we only show single trace.
+  const frame = frames[0];
+  let data: TraceResponse =
+    frame.fields.length === 1
+      ? // For backward compatibility when we sent whole json response in a single field/value
+        frame.fields[0].values.get(0)
+      : transformTraceDataFrame(frame);
+  return transformTraceData(data);
+}
+
+function transformTraceDataFrame(frame: DataFrame): TraceResponse {
+  const view = new DataFrameView<TraceSpanRow>(frame);
+  const processes: Record<string, TraceProcess> = {};
+  for (let i = 0; i < view.length; i++) {
+    const span = view.get(i);
+    if (!processes[span.serviceName]) {
+      processes[span.serviceName] = {
+        serviceName: span.serviceName,
+        tags: span.serviceTags,
+      };
+    }
+  }
+
+  return {
+    traceID: view.get(0).traceID,
+    processes,
+    spans: view.toArray().map((s) => {
+      return {
+        ...s,
+        duration: s.duration * 1000,
+        startTime: s.startTime * 1000,
+        processID: s.serviceName,
+        flags: 0,
+        references: s.parentSpanID ? [{ refType: 'CHILD_OF', spanID: s.parentSpanID, traceID: s.traceID }] : undefined,
+        logs: s.logs?.map((l) => ({ ...l, timestamp: l.timestamp * 1000 })) || [],
+      };
+    }),
+  };
 }

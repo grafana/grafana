@@ -94,9 +94,9 @@ interface VizSize {
  */
 export interface VizLayoutLegendProps {
   placement: LegendPlacement;
+  children: React.ReactNode;
   maxHeight?: string;
   maxWidth?: string;
-  children: React.ReactNode;
 }
 
 /**
