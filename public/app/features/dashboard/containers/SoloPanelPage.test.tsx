@@ -73,7 +73,6 @@ function soloPanelPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
             },
             route: { routeName: DashboardRoutes.Normal } as any,
           }),
-          $injector: {},
           initDashboard: jest.fn(),
           dashboard: null,
         };
