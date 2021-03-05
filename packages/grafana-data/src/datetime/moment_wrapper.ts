@@ -97,6 +97,7 @@ export const toUtc = (input?: DateTimeInput, formatInput?: FormatInput): DateTim
 };
 
 export const toDuration = (input?: DurationInput, unit?: DurationUnit): DateTimeDuration => {
+  // moment built-in types are a bit flaky, for example `isoWeek` is not in the type definition but it's present in the js source.
   return moment.duration(input as DurationInputArg1, unit as DurationInputArg2) as DateTimeDuration;
 };
 
