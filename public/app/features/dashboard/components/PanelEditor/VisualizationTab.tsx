@@ -15,7 +15,7 @@ interface OwnProps {
 }
 
 interface ConnectedProps {
-  plugin?: PanelPlugin;
+  plugin: PanelPlugin;
 }
 
 interface DispatchProps {
@@ -32,13 +32,13 @@ export const VisualizationTabUnconnected = React.forwardRef<HTMLInputElement, Pr
 
     const onPluginTypeChange = useCallback(
       (meta: PanelPluginMeta) => {
-        if (meta.id === plugin?.meta.id) {
+        if (meta.id === plugin.meta.id) {
           onToggleOptionGroup(false);
         } else {
           changePanelPlugin(panel, meta.id);
         }
       },
-      [changePanelPlugin, onToggleOptionGroup, panel, plugin?.meta.id]
+      [changePanelPlugin, onToggleOptionGroup, panel, plugin.meta.id]
     );
 
     const onKeyPress = useCallback(
@@ -66,6 +66,10 @@ export const VisualizationTabUnconnected = React.forwardRef<HTMLInputElement, Pr
           Clear filter
         </span>
       ) : null;
+
+    if (!plugin) {
+      return null;
+    }
 
     return (
       <div className={styles.wrapper}>

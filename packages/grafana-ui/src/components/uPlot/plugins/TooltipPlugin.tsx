@@ -82,8 +82,8 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', t
           for (let i = 0; i < otherProps.data.length; i++) {
             series = series.concat(
               otherProps.data[i].fields.reduce<SeriesTableRowProps[]>((agg, f, j) => {
-                // skipping time field and non-numeric fields
-                if (f.type === FieldType.time || f.type !== FieldType.number) {
+                // skipping xField, time fields, and non-numeric fields
+                if (f === xField || f.type === FieldType.time || f.type !== FieldType.number) {
                   return agg;
                 }
 
