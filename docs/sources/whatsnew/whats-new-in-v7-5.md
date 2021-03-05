@@ -64,7 +64,7 @@ In the upcoming Grafana 8.0 release, Application Insights and Insights Analytics
 
 Grafana 7.5 includes a deprecation notice for these queries, and some documentation to help users prepare for the upcoming changes.
 
-For more information refer to [Deprecating Application Insights and Insights Analytics]({{< relref "../datasources/azuremonitor.md#deprecating-application-insights-and-insights-analytics" >}}).
+For more information, refer to [Deprecating Application Insights and Insights Analytics]({{< relref "../datasources/azuremonitor.md#deprecating-application-insights-and-insights-analytics" >}}).
 
 ### Cloudwatch data source enhancements
 
@@ -94,9 +94,7 @@ Caching currently works for all backend data sources. You can enable the cache g
 
 If you have created dashboards with template variables, then you can choose which values are selected when rendering a report. This makes it easier to tailor reports to their audience or generate multiple reports from the same dashboard.
 
-Enable in configuration settings using the `templateVariables` flag.
-
-For more information on template variables in reports, refer to [Reporting](../enterprise/reporting.md#choose-template-variables).
+Enable this feature in configuration settings using the `templateVariables` flag.
 
 ### Active user limits
 
