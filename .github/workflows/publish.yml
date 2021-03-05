@@ -21,7 +21,7 @@ jobs:
         path: '**/node_modules'
         key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
     - name: generate-packages-docs
-      uses: actions/setup-node@v2.1.4
+      uses: actions/setup-node@v2.1.5
       id: generate-docs
       with:
         node-version: '14'
