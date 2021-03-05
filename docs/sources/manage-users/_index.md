@@ -17,8 +17,8 @@ Grafana Server Admins are user accounts that have the Grafana Admin option set t
 
 Server Admins can:
 
-- [Manage users]({{< relref "server-admin-manage-users.md" >}})
-- [Manage organizations]({{< relref "server-admin-manage-orgs.md" >}})
+- [Manage users]({{< relref "server-admin/server-admin-manage-users.md" >}})
+- [Manage organizations]({{< relref "server-admin/server-admin-manage-orgs.md" >}})
 
 ## Organization
 

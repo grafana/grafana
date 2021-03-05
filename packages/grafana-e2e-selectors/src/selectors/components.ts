@@ -181,4 +181,7 @@ export const Components = {
   LoadingIndicator: {
     icon: 'Loading indicator',
   },
+  CallToActionCard: {
+    button: (name: string) => `Call to action button ${name}`,
+  },
 };
