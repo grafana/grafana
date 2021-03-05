@@ -40,12 +40,8 @@ var (
 
 func (e *tempoExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 	queryContext plugins.DataQuery) (plugins.DataResponse, error) {
-	result := plugins.DataResponse{
-		Results: map[string]plugins.DataQueryResult{},
-	}
 	refID := queryContext.Queries[0].RefID
 	queryResult := plugins.DataQueryResult{}
-	result.Results[refID] = queryResult
 
 	traceID := queryContext.Queries[0].Model.Get("query").MustString("")
 
@@ -81,7 +77,11 @@ func (e *tempoExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource
 	if resp.StatusCode != http.StatusOK {
 		queryResult.Error = fmt.Errorf("failed to get trace: %s", traceID)
 		tlog.Error("Request to tempo failed", "Status", resp.Status, "Body", string(body))
-		return result, nil
+		return plugins.DataResponse{
+			Results: map[string]plugins.DataQueryResult{
+				refID: queryResult,
+			},
+		}, nil
 	}
 
 	otTrace := ot_pdata.NewTraces()
@@ -124,5 +124,9 @@ func (e *tempoExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource
 	}
 	queryResult.Dataframes = plugins.NewDecodedDataFrames(frames)
 
-	return result, nil
+	return plugins.DataResponse{
+		Results: map[string]plugins.DataQueryResult{
+			refID: queryResult,
+		},
+	}, nil
 }
