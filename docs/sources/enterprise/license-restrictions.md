@@ -11,7 +11,7 @@ Enterprise licenses are limited by the number of active users, a license expirat
 
 ## User limits
 
-Users are limited by the number of active users and the number of concurrent sessions for a same account.
+Users are limited by the number of active users and the number of concurrent sessions for a given account.
 
 ### Active users limit
 
@@ -27,7 +27,7 @@ In the context of licensing, each user is classified as either a viewer or an ed
 
 Restrictions are applied separately for viewers and editors.
 
-When the number of maximum active viewers or editors is reached, only them can log in. New users or non-active users can't log in.
+When the number of maximum active viewers or editors is reached, only they can sign in. New users or non-active users cannot sign in.
 
 ### Concurrent sessions limit
 
