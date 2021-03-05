@@ -210,11 +210,13 @@ github.com/cenkalti/backoff v1.0.0/go.mod h1:90ReRw6GdpyfrHakVjL/QHaoyV4aDUVVkXQ
 github.com/cenkalti/backoff v2.2.1+incompatible/go.mod h1:90ReRw6GdpyfrHakVjL/QHaoyV4aDUVVkXQJJJ3NXXM=
 github.com/cenkalti/backoff/v4 v4.0.2/go.mod h1:eEew/i+1Q6OrCDZh3WiXYv3+nJwBASZ8Bog/87DQnVg=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
-github.com/centrifugal/centrifuge v0.13.0 h1:nfcpaa/TXoA56ba/xXs3rc2Vrj/UZTFS1iTQ9q2MSZE=
-github.com/centrifugal/centrifuge v0.13.0/go.mod h1:jdFw/2dBFpME3OTisc5FVAC1ilqodnyMnQFjem0k0yg=
+github.com/centrifugal/centrifuge v0.15.0 h1:6B8BGSXOJ7S6RCz29L19hJv3MZN6szRX5nVVnlJ7P4A=
+github.com/centrifugal/centrifuge v0.15.0/go.mod h1:HZ8joq0C1KJYQgmS9ElLLmB01DzdD7/UeBWLOdlIBJs=
 github.com/centrifugal/centrifuge-go v0.6.5/go.mod h1:YW9BKhnEMOBPU7C/wfqdqzhIiF0xRd0R4sHW82a7sf8=
 github.com/centrifugal/protocol v0.3.4 h1:9q22iSp4CQOdQahfopvfmWWxDbj1Lo7ERG2j56mAxkE=
 github.com/centrifugal/protocol v0.3.4/go.mod h1:2YbBCaDwQHl37ErRdMrKSj18X2yVvpkQYtSX6aVbe5A=
+github.com/centrifugal/protocol v0.3.5 h1:3Tu1iNoKfEw5xkJotKm2or0vhyOl4HtfPbGSDnEWoGA=
+github.com/centrifugal/protocol v0.3.5/go.mod h1:2YbBCaDwQHl37ErRdMrKSj18X2yVvpkQYtSX6aVbe5A=
 github.com/cespare/xxhash v0.0.0-20181017004759-096ff4a8a059/go.mod h1:XrSqR1VqqWfGrhpAt58auRo0WTKS1nRRg3ghfAqPWnc=
 github.com/cespare/xxhash v1.1.0 h1:a6HrQnmkObjyL+Gs60czilIUGqrzKutQD6XZog3p+ko=
 github.com/cespare/xxhash v1.1.0/go.mod h1:XrSqR1VqqWfGrhpAt58auRo0WTKS1nRRg3ghfAqPWnc=
@@ -1226,10 +1228,6 @@ github.com/prometheus/prometheus v1.8.2-0.20200819132913-cb830b0a9c78/go.mod h1:
 github.com/prometheus/prometheus v1.8.2-0.20200923143134-7e2db3d092f3/go.mod h1:9VNWoDFHOMovlubld5uKKxfCDcPBj2GMOCjcUFXkYaM=
 github.com/prometheus/prometheus v1.8.2-0.20201014093524-73e2ce1bd643 h1:BDAexvKlOVjE5A8MlqRxzwkEpPl1/v6ydU1/J7kJtZc=
 github.com/prometheus/prometheus v1.8.2-0.20201014093524-73e2ce1bd643/go.mod h1:XYjkJiog7fyQu3puQNivZPI2pNq1C/775EIoHfDvuvY=
-github.com/quasilyte/go-ruleguard v0.3.1 h1:2KTXnHBCR4BUl8UAL2bCUorOBGC8RsmYncuDA9NEFW4=
-github.com/quasilyte/go-ruleguard/dsl v0.3.1 h1:CHGOKP2LDz35P49TjW4Bx4BCfFI6ZZU/8zcneECD0q4=
-github.com/quasilyte/go-ruleguard/dsl/fluent v0.0.0-20201222093424-5d7e62a465d3 h1:eL7x4/zMnlquMxYe7V078BD7MGskZ0daGln+SJCVzuY=
-github.com/quasilyte/go-ruleguard/dsl/fluent v0.0.0-20201222093424-5d7e62a465d3/go.mod h1:P7JlQWFT7jDcFZMtUPQbtGzzzxva3rBn6oIF+LPwFcM=
 github.com/rafaeljusto/redigomock v0.0.0-20190202135759-257e089e14a1/go.mod h1:JaY6n2sDr+z2WTsXkOmNRUfDy6FN0L6Nk7x06ndm4tY=
 github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be h1:ta7tUOvsPHVHGom5hKW5VXNc2xZIkfCKP8iaqOyYtUQ=
 github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be/go.mod h1:MIDFMn7db1kT65GmV94GzpX9Qdi7N/pQlwb+AN8wh+Q=
