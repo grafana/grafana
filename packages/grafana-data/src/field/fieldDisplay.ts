@@ -108,7 +108,6 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
   const data = options.data ?? [];
   const limit = reduceOptions.limit ? reduceOptions.limit : DEFAULT_FIELD_DISPLAY_VALUES_LIMIT;
   const scopedVars: ScopedVars = {};
-  const defaultDisplayName = getTitleTemplate(calcs);
 
   let hitLimit = false;
 
