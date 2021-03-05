@@ -1,6 +1,7 @@
 import {
   isMetricAggregationWithField,
   MetricAggregation,
+  MetricAggregationWithInlineScript,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 
@@ -62,3 +63,31 @@ export const convertOrderByToMetricId = (orderBy: string): string | undefined =>
   const metricIdMatches = orderBy.match(/^(\d+)/);
   return metricIdMatches ? metricIdMatches[1] : void 0;
 };
+
+/** Gets the actual script value for metrics that support inline scripts.
+ *
+ *  This is needed because the `script` is a bit polymorphic.
+ *  when creating a query with Grafana < 7.4 it was stored as:
+ * ```json
+ * {
+ *    "settings": {
+ *      "script": {
+ *        "inline": "value"
+ *      }
+ *    }
+ * }
+ * ```
+ *
+ * while from 7.4 it's stored as
+ * ```json
+ * {
+ *    "settings": {
+ *      "script": "value"
+ *    }
+ * }
+ * ```
+ *
+ * This allows us to access both formats and support both queries created before 7.4 and after.
+ */
+export const getScriptValue = (metric: MetricAggregationWithInlineScript) =>
+  (typeof metric.settings?.script === 'object' ? metric.settings?.script?.inline : metric.settings?.script) || '';

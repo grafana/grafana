@@ -36,6 +36,7 @@ import { bucketAggregationConfig } from './components/QueryEditor/BucketAggregat
 import { isBucketAggregationWithField } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 import { generate, Observable, of, throwError } from 'rxjs';
 import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty } from 'rxjs/operators';
+import { getScriptValue } from './utils';
 
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
@@ -425,7 +426,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
         text += metric.field;
       }
       if (isPipelineAggregationWithMultipleBucketPaths(metric)) {
-        text += metric.settings?.script?.replace(new RegExp('params.', 'g'), '');
+        text += getScriptValue(metric).replace(new RegExp('params.', 'g'), '');
       }
       text += '), ';
 
