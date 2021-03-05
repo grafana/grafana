@@ -340,7 +340,7 @@ The caching backend to use when storing cached queries. Options: memory
 
 ### enabled
 
-Setting 'enabled' to true enables caching datasource queries for all datasources.
+Setting 'enabled' to true enables caching datasource queries for all data sources.
 
 ### ttl
 
