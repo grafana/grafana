@@ -3,6 +3,7 @@ title = "What's new in Grafana v7.5"
 description = "Feature and improvement highlights for Grafana v7.5"
 keywords = ["grafana", "new", "documentation", "7.5", "release notes"]
 weight = -32
+aliases = ["/docs/grafana/latest/guides/whats-new-in-v7-5/"]
 [_build]
 list = false
 +++
@@ -93,7 +94,7 @@ For more information on Grafana Enterprise licensing and restrictions, refer to 
 
 ### Query caching
 
-If you enable this feature, then Grafana hashes and cashes data source queries and serves cached versions of hashed queries if applicable.
+If you enable this feature, then Grafana hashes and caches data source queries and serves cached versions of hashed queries if applicable.
 
 ### Use template variable in reports
 
