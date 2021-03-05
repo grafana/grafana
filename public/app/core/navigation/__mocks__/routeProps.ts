@@ -2,7 +2,7 @@ import { GrafanaRouteComponentProps } from '../types';
 import createMemoryHistory from 'history/createMemoryHistory';
 import { merge } from 'lodash';
 
-export function getRouteComponentProps<T = {}, Q = {}>(
+export function getRouteComponentProps<T = {}, Q extends Record<string, string | null | undefined> = {}>(
   overrides: Partial<GrafanaRouteComponentProps> = {}
 ): GrafanaRouteComponentProps<T, Q> {
   const defaults: GrafanaRouteComponentProps<T, Q> = {

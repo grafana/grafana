@@ -21,6 +21,11 @@ export enum ExploreId {
   right = 'right',
 }
 
+export type ExploreQueryParams = {
+  left: string;
+  right: string;
+};
+
 /**
  * Global Explore state
  */
