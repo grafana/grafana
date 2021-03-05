@@ -59,8 +59,12 @@ func ParseURL(u string) (*url.URL, error) {
 		logger.Debug("Recognized as ODBC URL format", "url", u)
 		host = u
 	default:
-		logger.Debug("Couldn't recognize as valid MSSQL URL", "url", u)
-		return nil, fmt.Errorf("unrecognized MSSQL URL format: %q", u)
+		_, err := url.Parse(u)
+		if err != nil {
+			logger.Debug("Couldn't recognize as valid MSSQL URL", "url", u)
+			return nil, fmt.Errorf("unrecognized MSSQL URL format: %q", u)
+		}
+		host = u
 	}
 	return &url.URL{
 		Scheme: "sqlserver",
