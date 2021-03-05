@@ -433,7 +433,7 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
                       return null;
                     }
                     return (
-                      <div style={style} className={styles.valueCell}>
+                      <div style={style}>
                         <LokiLabel
                           name={label.name}
                           value={value?.name}
