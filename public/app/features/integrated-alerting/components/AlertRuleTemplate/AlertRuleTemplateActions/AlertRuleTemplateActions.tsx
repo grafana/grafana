@@ -13,7 +13,7 @@ export const AlertRuleTemplateActions: FC<AlertRuleTemplateActionsProps> = ({ te
   const styles = useStyles(getStyles);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
-  const { source, yaml } = template;
+  const { source, yaml, name, summary } = template;
   const isActionDisabled = useMemo(() => source === SourceDescription.BUILT_IN, [source]);
 
   return (
@@ -32,6 +32,8 @@ export const AlertRuleTemplateActions: FC<AlertRuleTemplateActionsProps> = ({ te
       />
       <EditAlertRuleTemplateModal
         yaml={yaml}
+        name={name}
+        summary={summary}
         isVisible={editModalVisible}
         setVisible={setEditModalVisible}
         getAlertRuleTemplates={getAlertRuleTemplates}
