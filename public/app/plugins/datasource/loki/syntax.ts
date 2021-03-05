@@ -79,7 +79,7 @@ export const PIPE_OPERATORS: CompletionItem[] = [
   {
     label: 'label_format',
     insertText: 'label_format',
-    documentation: 
+    documentation:
       'Use to rename, modify or add labels. For example, | label_format foo=bar . Only available in Loki 2.0+.',
   },
   {
