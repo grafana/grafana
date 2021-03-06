@@ -21,7 +21,6 @@ import {
   standardFieldConfigEditorRegistry,
   standardTransformersRegistry,
 } from '@grafana/data';
-// import { checkBrowserCompatibility } from 'app/core/utils/browser';
 import { arrayMove } from 'app/core/utils/arrayMove';
 import { importPluginModule } from 'app/features/plugins/plugin_loader';
 import { registerEchoBackend, setEchoSrv } from '@grafana/runtime';
