@@ -11,7 +11,7 @@ weight = 110
 
 When query caching is enabled, Grafana temporarily stores the results of data source queries. When you or another user submit the exact same query again, the results will come back from the cache instead of from the data source (like Splunk or ServiceNow) itself.
 
-Query caching currently works for all backend data sources. You can enable the cache globally or per data source, and you can configure the cache duration per data source. The cache is in-memory only.
+Query caching currently works for all backend data sources. You can enable the cache globally and configure the cache duration (also called Time to Live, or TTL). The cache is in-memory only.
 
 ## Query caching benefits
 
