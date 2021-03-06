@@ -5,7 +5,7 @@ import { TagList, Card, useStyles, Icon, IconName } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { DashboardSectionItem, OnToggleChecked } from '../types';
 import { SearchCheckbox } from './SearchCheckbox';
-import { SEARCH_ITEM_HEIGHT } from '../constants';
+import { SEARCH_ITEM_HEIGHT, SEARCH_ITEM_MARGIN } from '../constants';
 
 export interface Props {
   item: DashboardSectionItem;
@@ -76,6 +76,7 @@ const getStyles = (theme: GrafanaTheme) => {
   return {
     container: css`
       padding: ${theme.spacing.sm} ${theme.spacing.md};
+      margin-bottom: ${SEARCH_ITEM_MARGIN}px;
     `,
     metaContainer: css`
       display: flex;
