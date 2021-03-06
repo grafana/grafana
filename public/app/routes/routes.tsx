@@ -372,17 +372,23 @@ export const routes: RouteDescriptor[] = [
     ),
   },
   {
-    path: 'alerting/new',
+    path: '/alerting/new',
     pageClass: 'page-alerting',
     component: SafeDynamicImport(
       () => import(/* webpackChunkName: "NgAlertingPage"*/ 'app/features/alerting/NextGenAlertingPage')
     ),
   },
   {
-    path: 'alerting/:id/edit',
+    path: '/alerting/:id/edit',
     pageClass: 'page-alerting',
     component: SafeDynamicImport(
       () => import(/* webpackChunkName: "NgAlertingPage"*/ 'app/features/alerting/NextGenAlertingPage')
+    ),
+  },
+  {
+    path: '/playlists',
+    component: SafeDynamicImport(
+      () => import(/* webpackChunkName: "PlaylistPage"*/ 'app/features/playlist/PlaylistPage')
     ),
   },
 
