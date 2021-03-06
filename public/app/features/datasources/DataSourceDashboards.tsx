@@ -1,6 +1,5 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import { hot } from 'react-hot-loader';
 import { connect, ConnectedProps } from 'react-redux';
 
 // Components
@@ -91,4 +90,4 @@ export class DataSourceDashboards extends PureComponent<Props> {
   }
 }
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DataSourceDashboards));
+export default connector(DataSourceDashboards);

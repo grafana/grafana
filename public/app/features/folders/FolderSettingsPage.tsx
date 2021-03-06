@@ -1,27 +1,38 @@
 import React, { PureComponent } from 'react';
-import { hot } from 'react-hot-loader';
-import { connect } from 'react-redux';
-import { NavModel } from '@grafana/data';
+import { connect, ConnectedProps } from 'react-redux';
 import { LegacyForms } from '@grafana/ui';
 const { Input } = LegacyForms;
 import Page from 'app/core/components/Page/Page';
 import appEvents from 'app/core/app_events';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { FolderState, StoreState } from 'app/types';
+import { StoreState } from 'app/types';
 import { deleteFolder, getFolderByUid, saveFolder } from './state/actions';
 import { getLoadingNav } from './state/navModel';
 import { setFolderTitle } from './state/reducers';
 import { ShowConfirmModalEvent } from '../../types/events';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
-export interface Props {
-  navModel: NavModel;
-  folderUid: string;
-  folder: FolderState;
-  getFolderByUid: typeof getFolderByUid;
-  setFolderTitle: typeof setFolderTitle;
-  saveFolder: typeof saveFolder;
-  deleteFolder: typeof deleteFolder;
-}
+export interface OwnProps extends GrafanaRouteComponentProps<{ uid: string }> {}
+
+const mapStateToProps = (state: StoreState, props: OwnProps) => {
+  const uid = props.match.params.uid;
+  return {
+    navModel: getNavModel(state.navIndex, `folder-settings-${uid}`, getLoadingNav(2)),
+    folderUid: uid,
+    folder: state.folder,
+  };
+};
+
+const mapDispatchToProps = {
+  getFolderByUid,
+  saveFolder,
+  setFolderTitle,
+  deleteFolder,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+export type Props = OwnProps & ConnectedProps<typeof connector>;
 
 export interface State {
   isLoading: boolean;
@@ -103,21 +114,4 @@ export class FolderSettingsPage extends PureComponent<Props, State> {
   }
 }
 
-const mapStateToProps = (state: StoreState) => {
-  const uid = state.location.routeParams.uid;
-
-  return {
-    navModel: getNavModel(state.navIndex, `folder-settings-${uid}`, getLoadingNav(2)),
-    folderUid: uid,
-    folder: state.folder,
-  };
-};
-
-const mapDispatchToProps = {
-  getFolderByUid,
-  saveFolder,
-  setFolderTitle,
-  deleteFolder,
-};
-
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(FolderSettingsPage));
+export default connector(FolderSettingsPage);
