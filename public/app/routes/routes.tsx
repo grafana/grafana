@@ -1,24 +1,14 @@
-// import './dashboard_loaders';
-
 import React from 'react';
-// import { applyRouteRegistrationHandlers } from './registry';
-// import { contextSrv } from 'app/core/services/context_srv';
-
 import LdapPage from 'app/features/admin/ldap/LdapPage';
 import UserAdminPage from 'app/features/admin/UserAdminPage';
 import { LoginPage } from 'app/core/components/Login/LoginPage';
-
 import config from 'app/core/config';
-
 import { DashboardRoutes } from 'app/types';
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
-// import { playlistRoutes } from '../features/playlist/playlist_routes';
 import { RouteDescriptor } from '../core/navigation/types';
 import { SignupPage } from 'app/core/components/Signup/SignupPage';
 import { Redirect } from 'react-router-dom';
-
-// const importDashboardPage = () =>
-//   SafeDynamicImport(import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage'));
+import ErrorPage from 'app/core/components/ErrorPage/ErrorPage';
 
 export const routes: RouteDescriptor[] = [
   {
@@ -390,6 +380,10 @@ export const routes: RouteDescriptor[] = [
     component: SafeDynamicImport(
       () => import(/* webpackChunkName: "PlaylistPage"*/ 'app/features/playlist/PlaylistPage')
     ),
+  },
+  {
+    path: '/*',
+    component: ErrorPage,
   },
 
   // TODO[Router]
