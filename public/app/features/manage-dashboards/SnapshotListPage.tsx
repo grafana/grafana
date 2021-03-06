@@ -4,8 +4,8 @@ import { NavModel } from '@grafana/data';
 import Page from 'app/core/components/Page/Page';
 import { StoreState } from 'app/types';
 import { SnapshotListTable } from './components/SnapshotListTable';
-import { getDashboardNavModel } from './state/selectors';
 import { GrafanaRouteComponentProps } from '../../core/navigation/types';
+import { getNavModel } from 'app/core/selectors/navModel';
 
 interface ConnectedProps {
   navModel: NavModel;
@@ -23,7 +23,7 @@ export const SnapshotListPage: FC<Props> = ({ navModel, location }) => {
 };
 
 const mapStateToProps: MapStateToProps<ConnectedProps, {}, StoreState> = (state: StoreState) => ({
-  navModel: getDashboardNavModel(state),
+  navModel: getNavModel(state.navIndex, 'snapshots'),
 });
 
 export default connect(mapStateToProps)(SnapshotListPage);
