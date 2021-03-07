@@ -3,7 +3,6 @@ import 'mousetrap-global-bind';
 import { LegacyGraphHoverClearEvent, locationUtil } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
-import { store } from 'app/store/store';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
@@ -342,7 +341,7 @@ export class KeybindingSrv {
     //Autofit panels
     this.bind('d a', () => {
       // this has to be a full page reload
-      const queryParams = store.getState().location.query;
+      const queryParams = locationService.getSearchObject();
       const newUrlParam = queryParams.autofitpanels ? '' : '&autofitpanels';
       window.location.href = window.location.href + newUrlParam;
     });
