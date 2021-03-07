@@ -1,14 +1,11 @@
 import React, { FC } from 'react';
 import { Icon } from '@grafana/ui';
 import { useLocation } from 'react-router-dom';
-import { locationSearchToObject } from '@grafana/runtime';
-import { urlUtil } from '@grafana/data';
+import { getForcedLoginUrl } from './utils';
 
 export const SignIn: FC<any> = () => {
   const location = useLocation();
-  const searchObj = locationSearchToObject(location.search);
-  searchObj.forceLogin = 'true';
-  const forcedLoginUrl = urlUtil.renderUrl(location.pathname, searchObj);
+  const forcedLoginUrl = getForcedLoginUrl(location.pathname + location.search);
 
   return (
     <div className="sidemenu-item">
