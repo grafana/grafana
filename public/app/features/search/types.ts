@@ -102,4 +102,5 @@ export interface SearchQueryParams {
   starred?: boolean | null;
   tag?: string[] | null;
   layout?: SearchLayout | null;
+  folder?: string | null;
 }
