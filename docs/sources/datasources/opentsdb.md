@@ -25,7 +25,6 @@ To access OpenTSDB settings, hover your mouse over the **Configuration** (gear) 
 | `Lookup Limit`| Default is 1000.                                                                                                                     |
 | `Min time interval`| Explained below.                                                                                                                     |
 
-- Min time interval
 
 A lower limit for the auto group by time interval. Recommended to be set to write frequency, for example `1m` if your data is written every minute.
 This option can also be overridden/configured in a dashboard panel under data source options. It's important to note that this value _must_ be formatted as a
