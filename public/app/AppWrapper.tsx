@@ -5,7 +5,7 @@ import { Provider } from 'react-redux';
 import { store } from 'app/store/store';
 import { ErrorBoundaryAlert, ModalRoot, ModalsProvider } from '@grafana/ui';
 import { GrafanaApp } from './app';
-import { routes } from 'app/routes/routes';
+import { getAppRoutes } from 'app/routes/routes';
 import { ConfigContext, ThemeProvider } from './core/utils/ConfigProvider';
 import { RouteDescriptor } from './core/navigation/types';
 import { contextSrv } from './core/services/context_srv';
@@ -48,6 +48,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
 
   renderRoute = (route: RouteDescriptor) => {
     const roles = route.roles ? route.roles() : [];
+    console.log('render route');
 
     return (
       <Route
@@ -70,7 +71,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
   };
 
   renderRoutes() {
-    return <Switch>{routes.map((r) => this.renderRoute(r))}</Switch>;
+    return <Switch>{getAppRoutes().map((r) => this.renderRoute(r))}</Switch>;
   }
 
   render() {

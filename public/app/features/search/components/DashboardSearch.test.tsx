@@ -6,6 +6,7 @@ import * as MockSearchSrv from 'app/core/services/__mocks__/search_srv';
 import { DashboardSearch, Props } from './DashboardSearch';
 import { searchResults } from '../testData';
 import { SearchLayout } from '../types';
+import { locationService } from '@grafana/runtime';
 
 jest.mock('app/core/services/search_srv');
 // Typecast the mock search so the mock import is correctly recognised by TS
@@ -118,8 +119,8 @@ describe('DashboardSearch', () => {
   });
 
   it('should call search api with provided search params', async () => {
-    const params = { query: 'test query', tag: ['tag1'], sort: { value: 'asc' } };
-    setup({ params });
+    locationService.partial({ query: 'test query', tag: ['tag1'], sort: { value: 'asc' } });
+    setup({});
 
     await waitFor(() => {
       expect(mockSearch).toHaveBeenCalledTimes(1);
