@@ -21,16 +21,14 @@ type Props = DashboardSearchProps | ManageDashboardsProps;
 
 const mapStateToProps: MapStateToProps<ConnectProps, Props, StoreState> = (state) => {
   const { query, starred, sort, tag, layout, folder } = getLocationQuery(state.location);
-  return parseRouteParams(
-    {
-      query,
-      tag,
-      starred,
-      sort,
-      layout,
-    },
-    folder
-  );
+  return parseRouteParams({
+    query,
+    tag,
+    starred,
+    sort,
+    layout,
+    folder,
+  });
 };
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, Props> = {

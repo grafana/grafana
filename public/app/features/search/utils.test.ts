@@ -8,7 +8,7 @@ import {
   parseRouteParams,
 } from './utils';
 import { sections, searchResults } from './testData';
-import { RouteParams } from './types';
+import { SearchQueryParams } from './types';
 
 describe('Search utils', () => {
   describe('getFlattenedSections', () => {
@@ -151,7 +151,7 @@ describe('Search utils', () => {
 
   describe('parseRouteParams', () => {
     it('should remove all undefined keys', () => {
-      const params: Partial<RouteParams> = { sort: undefined, tag: undefined, query: 'test' };
+      const params: Partial<SearchQueryParams> = { sort: undefined, tag: undefined, query: 'test' };
 
       expect(parseRouteParams(params)).toEqual({
         params: {
@@ -170,7 +170,7 @@ describe('Search utils', () => {
         },
       });
 
-      const params2: Partial<RouteParams> = { sort: undefined, tag: ['test'], query: 'test' };
+      const params2: Partial<SearchQueryParams> = { sort: undefined, tag: ['test'], query: 'test' };
       expect(parseRouteParams(params2)).toEqual({
         params: {
           query: 'test',
@@ -180,7 +180,7 @@ describe('Search utils', () => {
     });
 
     it('should return sort as a SelectableValue', () => {
-      const params: Partial<RouteParams> = { sort: 'test' };
+      const params: Partial<SearchQueryParams> = { sort: 'test' };
 
       expect(parseRouteParams(params)).toEqual({
         params: {
@@ -196,7 +196,7 @@ describe('Search utils', () => {
         },
       });
       // Prepend to exiting query
-      const params: Partial<RouteParams> = { query: 'test' };
+      const params: Partial<SearchQueryParams> = { query: 'test' };
       expect(parseRouteParams(params, 'current')).toEqual({
         params: {
           query: 'folder:current test',
