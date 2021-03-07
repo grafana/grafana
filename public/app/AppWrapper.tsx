@@ -48,7 +48,6 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
 
   renderRoute = (route: RouteDescriptor) => {
     const roles = route.roles ? route.roles() : [];
-    console.log('render route');
 
     return (
       <Route
