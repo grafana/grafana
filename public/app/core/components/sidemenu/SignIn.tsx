@@ -1,12 +1,14 @@
 import React, { FC } from 'react';
-
-import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
-import { StoreState } from 'app/types';
 import { Icon } from '@grafana/ui';
-import { getForcedLoginUrl } from './utils';
+import { useLocation } from 'react-router-dom';
+import { locationSearchToObject } from '@grafana/runtime';
+import { urlUtil } from '@grafana/data';
 
-export const SignIn: FC<any> = ({ url }) => {
-  const forcedLoginUrl = getForcedLoginUrl(url);
+export const SignIn: FC<any> = () => {
+  const location = useLocation();
+  const searchObj = locationSearchToObject(location.search);
+  searchObj.forceLogin = 'true';
+  const forcedLoginUrl = urlUtil.renderUrl(location.pathname, searchObj);
 
   return (
     <div className="sidemenu-item">
@@ -25,9 +27,3 @@ export const SignIn: FC<any> = ({ url }) => {
     </div>
   );
 };
-
-const mapStateToProps = (state: StoreState) => ({
-  url: state.location.url,
-});
-
-export default connectWithStore(SignIn, mapStateToProps);

@@ -165,7 +165,9 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
 
     // add missing orgId query param
     const storeState = getState();
-    if (!storeState.location.query.orgId) {
+    const queryParams = locationService.getSearchObject();
+
+    if (!queryParams.orgId) {
       // TODO this is currently not possible with the LocationService API
       locationService.partial({ orgId: storeState.user.orgId }, true);
     }
@@ -204,7 +206,6 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       dashboard.updateSubmenuVisibility();
 
       // handle auto fix experimental feature
-      const queryParams = getState().location.query;
       if (queryParams.autofitpanels) {
         dashboard.autoFitPanels(window.innerHeight, queryParams.kiosk);
       }
