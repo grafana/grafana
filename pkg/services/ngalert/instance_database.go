@@ -12,8 +12,8 @@ import (
 // getAlertInstance is a handler for retrieving an alert instance based on OrgId, AlertDefintionID, and
 // the hash of the labels.
 // nolint:unused
-func (ng *AlertNG) getAlertInstance(cmd *getAlertInstanceQuery) error {
-	return ng.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+func (st storeImpl) getAlertInstance(cmd *getAlertInstanceQuery) error {
+	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		instance := AlertInstance{}
 		s := strings.Builder{}
 		s.WriteString(`SELECT * FROM alert_instance
@@ -45,8 +45,8 @@ func (ng *AlertNG) getAlertInstance(cmd *getAlertInstanceQuery) error {
 
 // listAlertInstances is a handler for retrieving alert instances within specific organisation
 // based on various filters.
-func (ng *AlertNG) listAlertInstances(cmd *listAlertInstancesQuery) error {
-	return ng.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+func (st storeImpl) listAlertInstances(cmd *listAlertInstancesQuery) error {
+	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		alertInstances := make([]*listAlertInstancesQueryResult, 0)
 
 		s := strings.Builder{}
@@ -78,8 +78,8 @@ func (ng *AlertNG) listAlertInstances(cmd *listAlertInstancesQuery) error {
 
 // saveAlertDefinition is a handler for saving a new alert definition.
 // nolint:unused
-func (ng *AlertNG) saveAlertInstance(cmd *saveAlertInstanceCommand) error {
-	return ng.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+func (st storeImpl) saveAlertInstance(cmd *saveAlertInstanceCommand) error {
+	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		labelTupleJSON, labelsHash, err := cmd.Labels.StringAndHash()
 		if err != nil {
 			return err
@@ -101,7 +101,7 @@ func (ng *AlertNG) saveAlertInstance(cmd *saveAlertInstanceCommand) error {
 
 		params := append(make([]interface{}, 0), alertInstance.DefinitionOrgID, alertInstance.DefinitionUID, labelTupleJSON, alertInstance.LabelsHash, alertInstance.CurrentState, alertInstance.CurrentStateSince.Unix(), alertInstance.LastEvalTime.Unix())
 
-		upsertSQL := ng.SQLStore.Dialect.UpsertSQL(
+		upsertSQL := st.SQLStore.Dialect.UpsertSQL(
 			"alert_instance",
 			[]string{"def_org_id", "def_uid", "labels_hash"},
 			[]string{"def_org_id", "def_uid", "labels", "labels_hash", "current_state", "current_state_since", "last_eval_time"})

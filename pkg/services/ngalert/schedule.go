@@ -13,8 +13,19 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-func (ng *AlertNG) definitionRoutine(grafanaCtx context.Context, key alertDefinitionKey, evalCh <-chan *evalContext, stopCh <-chan struct{}) error {
-	ng.log.Debug("alert definition routine started", "key", key)
+type scheduleService interface {
+	Ticker(context.Context) error
+	Pause() error
+	Unpause() error
+
+	// the following are used by tests only used for tests
+	evalApplied(alertDefinitionKey, time.Time)
+	stopApplied(alertDefinitionKey)
+	overrideCfg(cfg schedulerCfg)
+}
+
+func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key alertDefinitionKey, evalCh <-chan *evalContext, stopCh <-chan struct{}) error {
+	sch.log.Debug("alert definition routine started", "key", key)
 
 	evalRunning := false
 	var start, end time.Time
@@ -33,13 +44,13 @@ func (ng *AlertNG) definitionRoutine(grafanaCtx context.Context, key alertDefini
 				// fetch latest alert definition version
 				if alertDefinition == nil || alertDefinition.Version < ctx.version {
 					q := getAlertDefinitionByUIDQuery{OrgID: key.orgID, UID: key.definitionUID}
-					err := ng.getAlertDefinitionByUID(&q)
+					err := sch.store.getAlertDefinitionByUID(&q)
 					if err != nil {
-						ng.schedule.log.Error("failed to fetch alert definition", "key", key)
+						sch.log.Error("failed to fetch alert definition", "key", key)
 						return err
 					}
 					alertDefinition = q.Result
-					ng.schedule.log.Debug("new alert definition version fetched", "title", alertDefinition.Title, "key", key, "version", alertDefinition.Version)
+					sch.log.Debug("new alert definition version fetched", "title", alertDefinition.Title, "key", key, "version", alertDefinition.Version)
 				}
 
 				condition := eval.Condition{
@@ -47,19 +58,19 @@ func (ng *AlertNG) definitionRoutine(grafanaCtx context.Context, key alertDefini
 					OrgID:                 alertDefinition.OrgID,
 					QueriesAndExpressions: alertDefinition.Data,
 				}
-				results, err := ng.schedule.evaluator.ConditionEval(&condition, ctx.now)
+				results, err := sch.evaluator.ConditionEval(&condition, ctx.now)
 				end = timeNow()
 				if err != nil {
 					// consider saving alert instance on error
-					ng.schedule.log.Error("failed to evaluate alert definition", "title", alertDefinition.Title, "key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "error", err)
+					sch.log.Error("failed to evaluate alert definition", "title", alertDefinition.Title, "key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "error", err)
 					return err
 				}
 				for _, r := range results {
-					ng.schedule.log.Debug("alert definition result", "title", alertDefinition.Title, "key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "instance", r.Instance, "state", r.State.String())
+					sch.log.Debug("alert definition result", "title", alertDefinition.Title, "key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "instance", r.Instance, "state", r.State.String())
 					cmd := saveAlertInstanceCommand{DefinitionOrgID: key.orgID, DefinitionUID: key.definitionUID, State: InstanceStateType(r.State.String()), Labels: InstanceLabels(r.Instance), LastEvalTime: ctx.now}
-					err := ng.saveAlertInstance(&cmd)
+					err := sch.store.saveAlertInstance(&cmd)
 					if err != nil {
-						ng.schedule.log.Error("failed saving alert instance", "title", alertDefinition.Title, "key", key, "attempt", attempt, "now", ctx.now, "instance", r.Instance, "state", r.State.String(), "error", err)
+						sch.log.Error("failed saving alert instance", "title", alertDefinition.Title, "key", key, "attempt", attempt, "now", ctx.now, "instance", r.Instance, "state", r.State.String(), "error", err)
 					}
 				}
 				return nil
@@ -69,12 +80,10 @@ func (ng *AlertNG) definitionRoutine(grafanaCtx context.Context, key alertDefini
 				evalRunning = true
 				defer func() {
 					evalRunning = false
-					if ng.schedule.evalApplied != nil {
-						ng.schedule.evalApplied(key, ctx.now)
-					}
+					sch.evalApplied(key, ctx.now)
 				}()
 
-				for attempt = 0; attempt < ng.schedule.maxAttempts; attempt++ {
+				for attempt = 0; attempt < sch.maxAttempts; attempt++ {
 					err := evaluate(attempt)
 					if err == nil {
 						break
@@ -82,10 +91,8 @@ func (ng *AlertNG) definitionRoutine(grafanaCtx context.Context, key alertDefini
 				}
 			}()
 		case <-stopCh:
-			if ng.schedule.stopApplied != nil {
-				ng.schedule.stopApplied(key)
-			}
-			ng.schedule.log.Debug("stopping alert definition routine", "key", key)
+			sch.stopApplied(key)
+			sch.log.Debug("stopping alert definition routine", "key", key)
 			// interrupt evaluation if it's running
 			return nil
 		case <-grafanaCtx.Done():
@@ -110,43 +117,73 @@ type schedule struct {
 	// evalApplied is only used for tests: test code can set it to non-nil
 	// function, and then it'll be called from the event loop whenever the
 	// message from evalApplied is handled.
-	evalApplied func(alertDefinitionKey, time.Time)
+	evalAppliedFunc func(alertDefinitionKey, time.Time)
 
 	// stopApplied is only used for tests: test code can set it to non-nil
 	// function, and then it'll be called from the event loop whenever the
 	// message from stopApplied is handled.
-	stopApplied func(alertDefinitionKey)
+	stopAppliedFunc func(alertDefinitionKey)
 
 	log log.Logger
 
 	evaluator eval.Evaluator
+
+	store store
 }
 
 type schedulerCfg struct {
-	c            clock.Clock
-	baseInterval time.Duration
-	logger       log.Logger
-	evalApplied  func(alertDefinitionKey, time.Time)
-	evaluator    eval.Evaluator
+	c               clock.Clock
+	baseInterval    time.Duration
+	logger          log.Logger
+	evalAppliedFunc func(alertDefinitionKey, time.Time)
+	stopAppliedFunc func(alertDefinitionKey)
+	evaluator       eval.Evaluator
+	store           store
 }
 
 // newScheduler returns a new schedule.
 func newScheduler(cfg schedulerCfg) *schedule {
 	ticker := alerting.NewTicker(cfg.c.Now(), time.Second*0, cfg.c, int64(cfg.baseInterval.Seconds()))
 	sch := schedule{
-		registry:     alertDefinitionRegistry{alertDefinitionInfo: make(map[alertDefinitionKey]alertDefinitionInfo)},
-		maxAttempts:  maxAttempts,
-		clock:        cfg.c,
-		baseInterval: cfg.baseInterval,
-		log:          cfg.logger,
-		heartbeat:    ticker,
-		evalApplied:  cfg.evalApplied,
-		evaluator:    cfg.evaluator,
+		registry:        alertDefinitionRegistry{alertDefinitionInfo: make(map[alertDefinitionKey]alertDefinitionInfo)},
+		maxAttempts:     maxAttempts,
+		clock:           cfg.c,
+		baseInterval:    cfg.baseInterval,
+		log:             cfg.logger,
+		heartbeat:       ticker,
+		evalAppliedFunc: cfg.evalAppliedFunc,
+		stopAppliedFunc: cfg.stopAppliedFunc,
+		evaluator:       cfg.evaluator,
+		store:           cfg.store,
 	}
 	return &sch
 }
 
-func (sch *schedule) pause() error {
+func (sch *schedule) overrideCfg(cfg schedulerCfg) {
+	sch.clock = cfg.c
+	sch.baseInterval = cfg.baseInterval
+	sch.heartbeat = alerting.NewTicker(cfg.c.Now(), time.Second*0, cfg.c, int64(cfg.baseInterval.Seconds()))
+	sch.evalAppliedFunc = cfg.evalAppliedFunc
+	sch.stopAppliedFunc = cfg.stopAppliedFunc
+}
+
+func (sch *schedule) evalApplied(alertDefKey alertDefinitionKey, now time.Time) {
+	if sch.evalAppliedFunc == nil {
+		return
+	}
+
+	sch.evalAppliedFunc(alertDefKey, now)
+}
+
+func (sch *schedule) stopApplied(alertDefKey alertDefinitionKey) {
+	if sch.stopAppliedFunc == nil {
+		return
+	}
+
+	sch.stopAppliedFunc(alertDefKey)
+}
+
+func (sch *schedule) Pause() error {
 	if sch == nil {
 		return fmt.Errorf("scheduler is not initialised")
 	}
@@ -155,7 +192,7 @@ func (sch *schedule) pause() error {
 	return nil
 }
 
-func (sch *schedule) unpause() error {
+func (sch *schedule) Unpause() error {
 	if sch == nil {
 		return fmt.Errorf("scheduler is not initialised")
 	}
@@ -164,20 +201,20 @@ func (sch *schedule) unpause() error {
 	return nil
 }
 
-func (ng *AlertNG) alertingTicker(grafanaCtx context.Context) error {
+func (sch *schedule) Ticker(grafanaCtx context.Context) error {
 	dispatcherGroup, ctx := errgroup.WithContext(grafanaCtx)
 	for {
 		select {
-		case tick := <-ng.schedule.heartbeat.C:
-			tickNum := tick.Unix() / int64(ng.schedule.baseInterval.Seconds())
-			alertDefinitions := ng.fetchAllDetails(tick)
-			ng.schedule.log.Debug("alert definitions fetched", "count", len(alertDefinitions))
+		case tick := <-sch.heartbeat.C:
+			tickNum := tick.Unix() / int64(sch.baseInterval.Seconds())
+			alertDefinitions := sch.fetchAllDetails(tick)
+			sch.log.Debug("alert definitions fetched", "count", len(alertDefinitions))
 
 			// registeredDefinitions is a map used for finding deleted alert definitions
 			// initially it is assigned to all known alert definitions from the previous cycle
 			// each alert definition found also in this cycle is removed
 			// so, at the end, the remaining registered alert definitions are the deleted ones
-			registeredDefinitions := ng.schedule.registry.keyMap()
+			registeredDefinitions := sch.registry.keyMap()
 
 			type readyToRunItem struct {
 				key            alertDefinitionKey
@@ -191,24 +228,24 @@ func (ng *AlertNG) alertingTicker(grafanaCtx context.Context) error {
 
 				key := item.getKey()
 				itemVersion := item.Version
-				newRoutine := !ng.schedule.registry.exists(key)
-				definitionInfo := ng.schedule.registry.getOrCreateInfo(key, itemVersion)
-				invalidInterval := item.IntervalSeconds%int64(ng.schedule.baseInterval.Seconds()) != 0
+				newRoutine := !sch.registry.exists(key)
+				definitionInfo := sch.registry.getOrCreateInfo(key, itemVersion)
+				invalidInterval := item.IntervalSeconds%int64(sch.baseInterval.Seconds()) != 0
 
 				if newRoutine && !invalidInterval {
 					dispatcherGroup.Go(func() error {
-						return ng.definitionRoutine(ctx, key, definitionInfo.evalCh, definitionInfo.stopCh)
+						return sch.definitionRoutine(ctx, key, definitionInfo.evalCh, definitionInfo.stopCh)
 					})
 				}
 
 				if invalidInterval {
 					// this is expected to be always false
 					// give that we validate interval during alert definition updates
-					ng.schedule.log.Debug("alert definition with invalid interval will be ignored: interval should be divided exactly by scheduler interval", "key", key, "interval", time.Duration(item.IntervalSeconds)*time.Second, "scheduler interval", ng.schedule.baseInterval)
+					sch.log.Debug("alert definition with invalid interval will be ignored: interval should be divided exactly by scheduler interval", "key", key, "interval", time.Duration(item.IntervalSeconds)*time.Second, "scheduler interval", sch.baseInterval)
 					continue
 				}
 
-				itemFrequency := item.IntervalSeconds / int64(ng.schedule.baseInterval.Seconds())
+				itemFrequency := item.IntervalSeconds / int64(sch.baseInterval.Seconds())
 				if item.IntervalSeconds != 0 && tickNum%itemFrequency == 0 {
 					readyToRun = append(readyToRun, readyToRunItem{key: key, definitionInfo: definitionInfo})
 				}
@@ -219,7 +256,7 @@ func (ng *AlertNG) alertingTicker(grafanaCtx context.Context) error {
 
 			var step int64 = 0
 			if len(readyToRun) > 0 {
-				step = ng.schedule.baseInterval.Nanoseconds() / int64(len(readyToRun))
+				step = sch.baseInterval.Nanoseconds() / int64(len(readyToRun))
 			}
 
 			for i := range readyToRun {
@@ -232,13 +269,13 @@ func (ng *AlertNG) alertingTicker(grafanaCtx context.Context) error {
 
 			// unregister and stop routines of the deleted alert definitions
 			for key := range registeredDefinitions {
-				definitionInfo, err := ng.schedule.registry.get(key)
+				definitionInfo, err := sch.registry.get(key)
 				if err != nil {
-					ng.schedule.log.Error("failed to get alert definition routine information", "err", err)
+					sch.log.Error("failed to get alert definition routine information", "err", err)
 					continue
 				}
 				definitionInfo.stopCh <- struct{}{}
-				ng.schedule.registry.del(key)
+				sch.registry.del(key)
 			}
 		case <-grafanaCtx.Done():
 			err := dispatcherGroup.Wait()

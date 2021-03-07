@@ -20,7 +20,7 @@ import cx from 'classnames';
 import CopyIcon from '../../common/CopyIcon';
 
 import { TNil } from '../../types';
-import { TraceKeyValuePair, TraceLink } from '@grafana/data';
+import { TraceKeyValuePair, TraceLink } from '../../types/trace';
 import { UIDropdown, UIIcon, UIMenu, UIMenuItem } from '../../uiElementsContext';
 import { autoColor, createStyle, Theme, useTheme } from '../../Theme';
 import { ubInlineBlock, uWidth100 } from '../../uberUtilityStyles';
