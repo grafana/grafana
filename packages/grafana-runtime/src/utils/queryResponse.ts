@@ -39,7 +39,7 @@ export function toDataQueryResponse(res: any, queries?: DataQuery[]): DataQueryR
     const usedResultIDs = new Set<string>(resultIDs);
     const data: DataResponse[] = [];
 
-    for (const refId of refIDs) {
+    for (const refId of refIDs.sort()) {
       const dr = results[refId] as DataResponse;
       if (!dr) {
         continue;
