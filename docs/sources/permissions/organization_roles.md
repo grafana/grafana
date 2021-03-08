@@ -23,13 +23,14 @@ Can do everything scoped to the organization. For example:
 
 - Can add, edit, and delete data sources.
 - Can add and edit users and teams in their organization.
-- Can add, edit, and delete folders containing dashboards for data sources associated with their organization.
+- Can add, edit, and delete folders containing dashboards for data sources associated with their organization. They can also edit folder permissions.
 - Can configure app plugins and organization settings.
 - Can do everything allowed by the Editor role.
 
 ## Editor role
 
 - Can view, add, and edit dashboards, panels, and alert rules in dashboards they have access to. This can be disabled on specific folders and dashboards.
+- Can add, edit, and delete folders containing dashboards for data sources associated with their organization. They cannot edit folder permissions.
 - Can create, update, or delete playlists.
 - Can access Explore.
 - Can add, edit, or delete alert notification channels.
