@@ -104,7 +104,7 @@ If you enable the feature, then you can use template variables in reports.
 
 ### Tempo as a backend data source
 
-We have converted Tempo to a backend data source and dropped support tempo-query's (Jaeger) response. You can now point to the port that is set in tempo's config file.
+We have converted Tempo to a backend data source and dropped support for tempo-query's (Jaeger) response. To configure, you can now point to the port that is set in Tempo's configuration file.
 
 ```yaml
 server:
