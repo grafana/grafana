@@ -22,6 +22,9 @@ import { UPlotChart } from '../uPlot/Plot';
 import { LegendDisplayMode, VizLegendOptions } from '../VizLegend/types';
 import { VizLayout } from '../VizLayout/VizLayout';
 
+/**
+ * @internal -- not a public API
+ */
 export const FIXED_UNIT = '__fixed';
 
 export interface GraphNGProps extends Themeable {
