@@ -269,3 +269,10 @@ datasources:
     access: proxy
     url: http://localhost:9411
     editable: false
+
+  - name: gdev-tempo
+    type: tempo
+    uid: gdev-tempo
+    access: proxy
+    url: http://localhost:3101
+    editable: false

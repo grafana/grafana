@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/tsdb/tsdbifaces"
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -13,7 +14,7 @@ import (
 
 type FakeCondition struct{}
 
-func (f *FakeCondition) Eval(context *EvalContext) (*ConditionResult, error) {
+func (f *FakeCondition) Eval(context *EvalContext, reqHandler tsdbifaces.RequestHandler) (*ConditionResult, error) {
 	return &ConditionResult{}, nil
 }
 

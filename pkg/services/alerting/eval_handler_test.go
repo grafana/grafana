@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/services/validations"
+	"github.com/grafana/grafana/pkg/tsdb/tsdbifaces"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -16,13 +17,13 @@ type conditionStub struct {
 	noData   bool
 }
 
-func (c *conditionStub) Eval(context *EvalContext) (*ConditionResult, error) {
+func (c *conditionStub) Eval(context *EvalContext, reqHandler tsdbifaces.RequestHandler) (*ConditionResult, error) {
 	return &ConditionResult{Firing: c.firing, EvalMatches: c.matches, Operator: c.operator, NoDataFound: c.noData}, nil
 }
 
 func TestAlertingEvaluationHandler(t *testing.T) {
 	Convey("Test alert evaluation handler", t, func() {
-		handler := NewEvalHandler()
+		handler := NewEvalHandler(nil)
 
 		Convey("Show return triggered with single passing condition", func() {
 			context := NewEvalContext(context.TODO(), &Rule{

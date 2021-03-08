@@ -54,6 +54,8 @@ When searching for text in Elasticsearch logs, matching words in the log line re
 
 In Grafana 7.5, we changed how data for the trace view is sent from the data source. The required data frame has a clear format, which is more aligned with how data is generally represented in Grafana. This makes it easier for third-party developers to implement data sources leveraging the trace view.
 
+For more information, refer to [trace data API docs]({{< relref "../explore/trace-integration.md#data-api" >}}).
+
 ### Paste in SSL certs for Postgres data source
 
 Previously, when users wanted to configure the Postgres data source to connect with SSL certification, they needed to put the certification on the server, and configure the data source with file path.
@@ -64,7 +66,7 @@ Instead of the file path, users can now paste the SSL certification content in t
 
 ### Deprecation notice for some Azure Monitor queries
 
-In the upcoming Grafana 8.0 release, Application Insights and Insights Analytics query types within the Azure Monitor data source will be deprecated and be made read-only in favor of querying Application Insights from Metrics and Logs. 
+In the upcoming Grafana 8.0 release, Application Insights and Insights Analytics query types within the Azure Monitor data source will be deprecated and be made read-only in favor of querying Application Insights from Metrics and Logs.
 
 Grafana 7.5 includes a deprecation notice for these queries, and some documentation to help users prepare for the upcoming changes.
 
@@ -121,6 +123,15 @@ Each Grafana Enterprise user will be limited to three concurrent user sessions. 
 A new session is created when you sign in to Grafana from a different device or a different browser. Multiple windows and tabs in the same browser are all part of the same session, so having many Grafana tabs open will not cause any issues.
 
 For more information on Grafana Enterprise licensing and restrictions, refer to [License restrictions]({{< relref "../enterprise/license-restrictions.md" >}}).
+
+### Tempo as a backend data source
+
+We have converted Tempo to a backend data source and dropped support for tempo-query's (Jaeger) response. To configure, you can now point to the port that is set in Tempo's configuration file.
+
+```yaml
+server:
+  http_listen_port: 3101
+```
 
 ## Breaking changes
 
