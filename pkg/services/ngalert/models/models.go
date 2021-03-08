@@ -4,8 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"time"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 )
 
 var (
@@ -17,16 +15,16 @@ var (
 
 // AlertDefinition is the model for alert definitions in Alerting NG.
 type AlertDefinition struct {
-	ID              int64             `xorm:"pk autoincr 'id'" json:"id"`
-	OrgID           int64             `xorm:"org_id" json:"orgId"`
-	Title           string            `json:"title"`
-	Condition       string            `json:"condition"`
-	Data            []eval.AlertQuery `json:"data"`
-	Updated         time.Time         `json:"updated"`
-	IntervalSeconds int64             `json:"intervalSeconds"`
-	Version         int64             `json:"version"`
-	UID             string            `xorm:"uid" json:"uid"`
-	Paused          bool              `json:"paused"`
+	ID              int64        `xorm:"pk autoincr 'id'" json:"id"`
+	OrgID           int64        `xorm:"org_id" json:"orgId"`
+	Title           string       `json:"title"`
+	Condition       string       `json:"condition"`
+	Data            []AlertQuery `json:"data"`
+	Updated         time.Time    `json:"updated"`
+	IntervalSeconds int64        `json:"intervalSeconds"`
+	Version         int64        `json:"version"`
+	UID             string       `xorm:"uid" json:"uid"`
+	Paused          bool         `json:"paused"`
 }
 
 // AlertDefinitionKey is the alert definition identifier
@@ -69,7 +67,7 @@ type AlertDefinitionVersion struct {
 	Created         time.Time
 	Title           string
 	Condition       string
-	Data            []eval.AlertQuery
+	Data            []AlertQuery
 	IntervalSeconds int64
 }
 
@@ -89,32 +87,32 @@ type DeleteAlertDefinitionByUIDCommand struct {
 
 // SaveAlertDefinitionCommand is the query for saving a new alert definition.
 type SaveAlertDefinitionCommand struct {
-	Title           string            `json:"title"`
-	OrgID           int64             `json:"-"`
-	Condition       string            `json:"condition"`
-	Data            []eval.AlertQuery `json:"data"`
-	IntervalSeconds *int64            `json:"intervalSeconds"`
+	Title           string       `json:"title"`
+	OrgID           int64        `json:"-"`
+	Condition       string       `json:"condition"`
+	Data            []AlertQuery `json:"data"`
+	IntervalSeconds *int64       `json:"intervalSeconds"`
 
 	Result *AlertDefinition
 }
 
 // UpdateAlertDefinitionCommand is the query for updating an existing alert definition.
 type UpdateAlertDefinitionCommand struct {
-	Title           string            `json:"title"`
-	OrgID           int64             `json:"-"`
-	Condition       string            `json:"condition"`
-	Data            []eval.AlertQuery `json:"data"`
-	IntervalSeconds *int64            `json:"intervalSeconds"`
-	UID             string            `json:"-"`
+	Title           string       `json:"title"`
+	OrgID           int64        `json:"-"`
+	Condition       string       `json:"condition"`
+	Data            []AlertQuery `json:"data"`
+	IntervalSeconds *int64       `json:"intervalSeconds"`
+	UID             string       `json:"-"`
 
 	Result *AlertDefinition
 }
 
 // EvalAlertConditionCommand is the command for evaluating a condition
 type EvalAlertConditionCommand struct {
-	Condition string            `json:"condition"`
-	Data      []eval.AlertQuery `json:"data"`
-	Now       time.Time         `json:"now"`
+	Condition string       `json:"condition"`
+	Data      []AlertQuery `json:"data"`
+	Now       time.Time    `json:"now"`
 }
 
 // ListAlertDefinitionsQuery is the query for listing alert definitions
@@ -131,4 +129,19 @@ type UpdateAlertDefinitionPausedCommand struct {
 	Paused bool     `json:"-"`
 
 	ResultCount int64
+}
+
+// Condition contains backend expressions and queries and the RefID
+// of the query or expression that will be evaluated.
+type Condition struct {
+	RefID string `json:"refId"`
+	OrgID int64  `json:"-"`
+
+	QueriesAndExpressions []AlertQuery `json:"queriesAndExpressions"`
+}
+
+// IsValid checks the condition's validity.
+func (c Condition) IsValid() bool {
+	// TODO search for refIDs in QueriesAndExpressions
+	return len(c.QueriesAndExpressions) != 0
 }

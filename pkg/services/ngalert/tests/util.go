@@ -16,7 +16,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
@@ -68,16 +67,16 @@ func createTestAlertDefinition(t *testing.T, store *store.DBstore, intervalSecon
 		OrgID:     1,
 		Title:     fmt.Sprintf("an alert definition %d", rand.Intn(1000)),
 		Condition: "A",
-		Data: []eval.AlertQuery{
+		Data: []models.AlertQuery{
 			{
 				Model: json.RawMessage(`{
 						"datasource": "__expr__",
 						"type":"math",
 						"expression":"2 + 2 > 1"
 					}`),
-				RelativeTimeRange: eval.RelativeTimeRange{
-					From: eval.Duration(5 * time.Hour),
-					To:   eval.Duration(3 * time.Hour),
+				RelativeTimeRange: models.RelativeTimeRange{
+					From: models.Duration(5 * time.Hour),
+					To:   models.Duration(3 * time.Hour),
 				},
 				RefID: "A",
 			},

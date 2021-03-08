@@ -54,7 +54,7 @@ func TestAlertingTicker(t *testing.T) {
 		Store:  dbstore,
 		Logger: log.New("ngalert schedule test"),
 	}
-	sched := schedule.NewScheduler(schefCfg)
+	sched := schedule.NewScheduler(schefCfg, nil)
 
 	ctx := context.Background()
 	go func() {

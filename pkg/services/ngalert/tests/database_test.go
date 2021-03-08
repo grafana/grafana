@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -84,7 +83,7 @@ func TestCreatingAlertDefinition(t *testing.T) {
 				OrgID:     1,
 				Title:     tc.inputTitle,
 				Condition: "B",
-				Data: []eval.AlertQuery{
+				Data: []models.AlertQuery{
 					{
 						Model: json.RawMessage(`{
 								"datasource": "__expr__",
@@ -92,9 +91,9 @@ func TestCreatingAlertDefinition(t *testing.T) {
 								"expression":"2 + 3 > 1"
 							}`),
 						RefID: "B",
-						RelativeTimeRange: eval.RelativeTimeRange{
-							From: eval.Duration(time.Duration(5) * time.Hour),
-							To:   eval.Duration(time.Duration(3) * time.Hour),
+						RelativeTimeRange: models.RelativeTimeRange{
+							From: models.Duration(time.Duration(5) * time.Hour),
+							To:   models.Duration(time.Duration(3) * time.Hour),
 						},
 					},
 				},
@@ -125,7 +124,7 @@ func TestCreatingConflictionAlertDefinition(t *testing.T) {
 			OrgID:     1,
 			Title:     "title",
 			Condition: "B",
-			Data: []eval.AlertQuery{
+			Data: []models.AlertQuery{
 				{
 					Model: json.RawMessage(`{
 								"datasource": "__expr__",
@@ -133,9 +132,9 @@ func TestCreatingConflictionAlertDefinition(t *testing.T) {
 								"expression":"2 + 3 > 1"
 							}`),
 					RefID: "B",
-					RelativeTimeRange: eval.RelativeTimeRange{
-						From: eval.Duration(time.Duration(5) * time.Hour),
-						To:   eval.Duration(time.Duration(3) * time.Hour),
+					RelativeTimeRange: models.RelativeTimeRange{
+						From: models.Duration(time.Duration(5) * time.Hour),
+						To:   models.Duration(time.Duration(3) * time.Hour),
 					},
 				},
 			},
@@ -163,7 +162,7 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 			OrgID:     1,
 			Title:     "something completely different",
 			Condition: "A",
-			Data: []eval.AlertQuery{
+			Data: []models.AlertQuery{
 				{
 					Model: json.RawMessage(`{
 							"datasource": "__expr__",
@@ -171,9 +170,9 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 							"expression":"2 + 2 > 1"
 						}`),
 					RefID: "A",
-					RelativeTimeRange: eval.RelativeTimeRange{
-						From: eval.Duration(time.Duration(5) * time.Hour),
-						To:   eval.Duration(time.Duration(3) * time.Hour),
+					RelativeTimeRange: models.RelativeTimeRange{
+						From: models.Duration(time.Duration(5) * time.Hour),
+						To:   models.Duration(time.Duration(3) * time.Hour),
 					},
 				},
 			},
@@ -253,7 +252,7 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 		q := models.UpdateAlertDefinitionCommand{
 			UID:       (*alertDefinition).UID,
 			Condition: "B",
-			Data: []eval.AlertQuery{
+			Data: []models.AlertQuery{
 				{
 					Model: json.RawMessage(`{
 							"datasource": "__expr__",
@@ -261,9 +260,9 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 							"expression":"2 + 3 > 1"
 						}`),
 					RefID: "B",
-					RelativeTimeRange: eval.RelativeTimeRange{
-						From: eval.Duration(5 * time.Hour),
-						To:   eval.Duration(3 * time.Hour),
+					RelativeTimeRange: models.RelativeTimeRange{
+						From: models.Duration(5 * time.Hour),
+						To:   models.Duration(3 * time.Hour),
 					},
 				},
 			},
@@ -337,7 +336,7 @@ func TestUpdatingConflictingAlertDefinition(t *testing.T) {
 			UID:       (*alertDef2).UID,
 			Title:     alertDef1.Title,
 			Condition: "B",
-			Data: []eval.AlertQuery{
+			Data: []models.AlertQuery{
 				{
 					Model: json.RawMessage(`{
 							"datasource": "__expr__",
@@ -345,9 +344,9 @@ func TestUpdatingConflictingAlertDefinition(t *testing.T) {
 							"expression":"2 + 3 > 1"
 						}`),
 					RefID: "B",
-					RelativeTimeRange: eval.RelativeTimeRange{
-						From: eval.Duration(5 * time.Hour),
-						To:   eval.Duration(3 * time.Hour),
+					RelativeTimeRange: models.RelativeTimeRange{
+						From: models.Duration(5 * time.Hour),
+						To:   models.Duration(3 * time.Hour),
 					},
 				},
 			},
