@@ -7,7 +7,7 @@ import { QueryCtrl } from 'app/plugins/sdk';
 import { promiseToDigest } from 'app/core/utils/promiseToDigest';
 import { auto } from 'angular';
 import { TemplateSrv } from '@grafana/runtime';
-import { store } from 'app/store/store';
+import { dispatch } from 'app/store/store';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 
@@ -110,7 +110,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
         }
       })
       .catch((err: any) => {
-        store.dispatch(notifyApp(createErrorNotification('Error', err)));
+        dispatch(notifyApp(createErrorNotification('Error', err)));
       });
   }
 
@@ -434,7 +434,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     console.log(error);
     if (!this._autoCompleteErrorShown) {
       this._autoCompleteErrorShown = true;
-      store.dispatch(
+      dispatch(
         notifyApp(createErrorNotification(`Fetching tags failed: ${error.message}. Check console for more details.`))
       );
     }
