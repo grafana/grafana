@@ -46,7 +46,7 @@
     "ci:test-frontend": "yarn run prettier:check && yarn run typecheck && yarn run lint && yarn run test:ci && yarn grafana-toolkit node-version-check && ./scripts/ci-check-strict.sh"
   },
   "grafana": {
-    "whatsNewUrl": "https://grafana.com/docs/grafana/latest/guides/whats-new-in-v7-4/",
+    "whatsNewUrl": "https://grafana.com/docs/grafana/latest/guides/whats-new-in-v7-5/",
     "releaseNotesUrl": "https://grafana.com/docs/grafana/latest/release-notes/"
   },
   "husky": {
@@ -215,7 +215,6 @@
     "@types/md5": "^2.1.33",
     "@types/react-loadable": "5.5.2",
     "@types/react-virtualized-auto-sizer": "1.0.0",
-    "@types/sockjs-client": "^1.1.1",
     "@types/uuid": "8.3.0",
     "@welldone-software/why-did-you-render": "4.0.6",
     "abortcontroller-polyfill": "1.4.0",
@@ -246,7 +245,7 @@
     "is-hotkey": "0.1.6",
     "jquery": "3.5.1",
     "jsurl": "^0.1.5",
-    "lodash": "4.17.20",
+    "lodash": "4.17.21",
     "lru-cache": "^5.1.1",
     "md5": "^2.2.1",
     "memoize-one": "5.1.1",
@@ -256,7 +255,7 @@
     "mousetrap-global-bind": "1.1.0",
     "nodemon": "2.0.2",
     "papaparse": "5.3.0",
-    "prismjs": "1.21.0",
+    "prismjs": "1.23.0",
     "prop-types": "15.7.2",
     "rc-cascader": "1.0.1",
     "re-resizable": "^6.2.0",
@@ -285,7 +284,6 @@
     "search-query-parser": "1.5.4",
     "slate": "0.47.8",
     "slate-plain-serializer": "0.7.10",
-    "sockjs-client": "^1.4.0",
     "tether": "1.4.7",
     "tether-drop": "https://github.com/torkelo/drop/tarball/master",
     "tinycolor2": "1.4.1",
@@ -295,7 +293,8 @@
     "whatwg-fetch": "3.1.0"
   },
   "resolutions": {
-    "caniuse-db": "1.0.30000772"
+    "caniuse-db": "1.0.30000772",
+    "react-use-measure": "https://github.com/mckn/react-use-measure.git#remove-cjs-export"
   },
   "workspaces": {
     "packages": [

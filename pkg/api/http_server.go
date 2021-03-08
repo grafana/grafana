@@ -13,9 +13,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/grafana/grafana/pkg/services/rbac"
-
+	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/live"
+	"github.com/grafana/grafana/pkg/services/rbac"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -85,6 +85,9 @@ type HTTPServer struct {
 	ContextHandler         *contexthandler.ContextHandler     `inject:""`
 	SQLStore               *sqlstore.SQLStore                 `inject:""`
 	LibraryPanelService    *librarypanels.LibraryPanelService `inject:""`
+	DataService            *tsdb.Service                      `inject:""`
+	PluginDashboardService *plugindashboards.Service          `inject:""`
+	AlertEngine            *alerting.AlertEngine              `inject:""`
 	AccessControl          rbac.AccessControl                 `inject:""`
 	Listener               net.Listener
 }

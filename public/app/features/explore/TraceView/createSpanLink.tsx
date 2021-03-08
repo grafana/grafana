@@ -1,4 +1,4 @@
-import { DataLink, dateTime, Field, mapInternalLinkToExplore, TimeRange, TraceSpan } from '@grafana/data';
+import { DataLink, dateTime, Field, mapInternalLinkToExplore, TimeRange } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Icon } from '@grafana/ui';
 import { SplitOpen } from 'app/types/explore';
@@ -6,6 +6,7 @@ import { TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import React from 'react';
 import { LokiQuery } from '../../../plugins/datasource/loki/types';
+import { TraceSpan } from '@jaegertracing/jaeger-ui-components';
 
 /**
  * This is a factory for the link creator. It returns the function mainly so it can return undefined in which case

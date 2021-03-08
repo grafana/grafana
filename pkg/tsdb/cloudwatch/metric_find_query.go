@@ -17,7 +17,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -106,9 +106,10 @@ var metricsMap = map[string][]string{
 	"AWS/NATGateway":              {"ActiveConnectionCount", "BytesInFromDestination", "BytesInFromSource", "BytesOutToDestination", "BytesOutToSource", "ConnectionAttemptCount", "ConnectionEstablishedCount", "ErrorPortAllocation", "IdleTimeoutCount", "PacketsDropCount", "PacketsInFromDestination", "PacketsInFromSource", "PacketsOutToDestination", "PacketsOutToSource"},
 	"AWS/Neptune":                 {"CPUUtilization", "ClusterReplicaLag", "ClusterReplicaLagMaximum", "ClusterReplicaLagMinimum", "EngineUptime", "FreeLocalStorage", "FreeableMemory", "GremlinErrors", "GremlinHttp1xx", "GremlinHttp2xx", "GremlinHttp4xx", "GremlinHttp5xx", "GremlinRequests", "GremlinRequestsPerSec", "GremlinWebSocketAvailableConnections", "GremlinWebSocketClientErrors", "GremlinWebSocketServerErrors", "GremlinWebSocketSuccess", "Http100", "Http101", "Http1xx", "Http200", "Http2xx", "Http400", "Http403", "Http405", "Http413", "Http429", "Http4xx", "Http500", "Http501", "Http5xx", "LoaderErrors", "LoaderRequests", "NetworkReceiveThroughput", "NetworkThroughput", "NetworkTransmitThroughput", "SparqlErrors", "SparqlHttp1xx", "SparqlHttp2xx", "SparqlHttp4xx", "SparqlHttp5xx", "SparqlRequests", "SparqlRequestsPerSec", "StatusErrors", "StatusRequests", "VolumeBytesUsed", "VolumeReadIOPs", "VolumeWriteIOPs"},
 	"AWS/NetworkELB":              {"ActiveFlowCount", "ActiveFlowCount_TLS", "ClientTLSNegotiationErrorCount", "ConsumedLCUs", "HealthyHostCount", "NewFlowCount", "NewFlowCount_TLS", "ProcessedBytes", "ProcessedBytes_TLS", "TCP_Client_Reset_Count", "TCP_ELB_Reset_Count", "TCP_Target_Reset_Count", "TargetTLSNegotiationErrorCount", "UnHealthyHostCount"},
+	"AWS/NetworkFirewall":         {"DroppedPackets", "Packets", "PassedPackets", "ReceivedPacketCount"},
 	"AWS/OpsWorks":                {"cpu_idle", "cpu_nice", "cpu_steal", "cpu_system", "cpu_user", "cpu_waitio", "load_1", "load_15", "load_5", "memory_buffers", "memory_cached", "memory_free", "memory_swap", "memory_total", "memory_used", "procs"},
 	"AWS/Polly":                   {"2XXCount", "4XXCount", "5XXCount", "RequestCharacters", "ResponseLatency"},
-	"AWS/RDS":                     {"ActiveTransactions", "AuroraBinlogReplicaLag", "AuroraGlobalDBDataTransferBytes", "AuroraGlobalDBReplicatedWriteIO", "AuroraGlobalDBReplicationLag", "AuroraReplicaLag", "AuroraReplicaLagMaximum", "AuroraReplicaLagMinimum", "BacktrackChangeRecordsCreationRate", "BacktrackChangeRecordsStored", "BacktrackWindowActual", "BacktrackWindowAlert", "BackupRetentionPeriodStorageUsed", "BinLogDiskUsage", "BlockedTransactions", "BufferCacheHitRatio", "BurstBalance", "CPUCreditBalance", "CPUCreditUsage", "CPUUtilization", "CommitLatency", "CommitThroughput", "DDLLatency", "DDLThroughput", "DMLLatency", "DMLThroughput", "DatabaseConnections", "Deadlocks", "DeleteLatency", "DeleteThroughput", "DiskQueueDepth", "EngineUptime", "FailedSQLServerAgentJobsCount", "FreeLocalStorage", "FreeStorageSpace", "FreeableMemory", "InsertLatency", "InsertThroughput", "LoginFailures", "MaximumUsedTransactionIDs", "NetworkReceiveThroughput", "NetworkThroughput", "NetworkTransmitThroughput", "OldestReplicationSlotLag", "Queries", "RDSToAuroraPostgreSQLReplicaLag", "ReadIOPS", "ReadLatency", "ReadThroughput", "ReplicaLag", "ReplicationSlotDiskUsage", "ResultSetCacheHitRatio", "SelectLatency", "SelectThroughput", "ServerlessDatabaseCapacity", "SnapshotStorageUsed", "SwapUsage", "TotalBackupStorageBilled", "TransactionLogsDiskUsage", "TransactionLogsGeneration", "UpdateLatency", "UpdateThroughput", "VolumeBytesUsed", "VolumeReadIOPs", "VolumeWriteIOPs", "WriteIOPS", "WriteLatency", "WriteThroughput"},
+	"AWS/RDS":                     {"ActiveTransactions", "AuroraBinlogReplicaLag", "AuroraGlobalDBDataTransferBytes", "AuroraGlobalDBReplicatedWriteIO", "AuroraGlobalDBReplicationLag", "AuroraReplicaLag", "AuroraReplicaLagMaximum", "AuroraReplicaLagMinimum", "AvailabilityPercentage", "BacktrackChangeRecordsCreationRate", "BacktrackChangeRecordsStored", "BacktrackWindowActual", "BacktrackWindowAlert", "BackupRetentionPeriodStorageUsed", "BinLogDiskUsage", "BlockedTransactions", "BufferCacheHitRatio", "BurstBalance", "CPUCreditBalance", "CPUCreditUsage", "CPUUtilization", "ClientConnections", "ClientConnectionsClosed", "ClientConnectionsNoTLS", "ClientConnectionsReceived", "ClientConnectionsSetupFailedAuth", "ClientConnectionsSetupSucceeded", "ClientConnectionsTLS", "CommitLatency", "CommitThroughput", "DDLLatency", "DDLThroughput", "DMLLatency", "DMLThroughput", "DatabaseConnectionRequests", "DatabaseConnectionRequestsWithTLS", "DatabaseConnections", "DatabaseConnectionsBorrowLatency", "DatabaseConnectionsCurrentlyBorrowed", "DatabaseConnectionsCurrentlyInTransaction", "DatabaseConnectionsCurrentlySessionPinned", "DatabaseConnectionsSetupFailed", "DatabaseConnectionsSetupSucceeded", "DatabaseConnectionsWithTLS", "Deadlocks", "DeleteLatency", "DeleteThroughput", "DiskQueueDepth", "EngineUptime", "FailedSQLServerAgentJobsCount", "FreeLocalStorage", "FreeStorageSpace", "FreeableMemory", "InsertLatency", "InsertThroughput", "LoginFailures", "MaxDatabaseConnectionsAllowed", "MaximumUsedTransactionIDs", "NetworkReceiveThroughput", "NetworkThroughput", "NetworkTransmitThroughput", "OldestReplicationSlotLag", "Queries", "QueryDatabaseResponseLatency", "QueryRequests", "QueryRequestsNoTLS", "QueryRequestsTLS", "QueryResponseLatency", "RDSToAuroraPostgreSQLReplicaLag", "ReadIOPS", "ReadLatency", "ReadThroughput", "ReplicaLag", "ReplicationSlotDiskUsage", "ResultSetCacheHitRatio", "SelectLatency", "SelectThroughput", "ServerlessDatabaseCapacity", "SnapshotStorageUsed", "SwapUsage", "TotalBackupStorageBilled", "TransactionLogsDiskUsage", "TransactionLogsGeneration", "UpdateLatency", "UpdateThroughput", "VolumeBytesUsed", "VolumeReadIOPs", "VolumeWriteIOPs", "WriteIOPS", "WriteLatency", "WriteThroughput"},
 	"AWS/Redshift":                {"CPUUtilization", "DatabaseConnections", "HealthStatus", "MaintenanceMode", "NetworkReceiveThroughput", "NetworkTransmitThroughput", "PercentageDiskSpaceUsed", "QueriesCompletedPerSecond", "QueryDuration", "QueryRuntimeBreakdown", "ReadIOPS", "ReadLatency", "ReadThroughput", "TotalTableCount", "WLMQueriesCompletedPerSecond", "WLMQueryDuration", "WLMQueueLength", "WriteIOPS", "WriteLatency", "WriteThroughput"},
 	"AWS/Route53":                 {"ChildHealthCheckHealthyCount", "ConnectionTime", "DNSQueries", "HealthCheckPercentageHealthy", "HealthCheckStatus", "SSLHandshakeTime", "TimeToFirstByte"},
 	"AWS/Route53Resolver":         {"InboundQueryVolume", "OutboundQueryVolume", "OutboundQueryAggregatedVolume"},
@@ -123,6 +124,7 @@ var metricsMap = map[string][]string{
 	"AWS/States":                  {"ActivitiesFailed", "ActivitiesHeartbeatTimedOut", "ActivitiesScheduled", "ActivitiesStarted", "ActivitiesSucceeded", "ActivitiesTimedOut", "ActivityRunTime", "ActivityScheduleTime", "ActivityTime", "ConsumedCapacity", "ExecutionThrottled", "ExecutionTime", "ExecutionsAborted", "ExecutionsFailed", "ExecutionsStarted", "ExecutionsSucceeded", "ExecutionsTimedOut", "LambdaFunctionRunTime", "LambdaFunctionScheduleTime", "LambdaFunctionTime", "LambdaFunctionsFailed", "LambdaFunctionsHeartbeatTimedOut", "LambdaFunctionsScheduled", "LambdaFunctionsStarted", "LambdaFunctionsSucceeded", "LambdaFunctionsTimedOut", "ProvisionedBucketSize", "ProvisionedRefillRate", "ThrottledEvents"},
 	"AWS/StorageGateway":          {"CacheFree", "CacheHitPercent", "CachePercentDirty", "CachePercentUsed", "CacheUsed", "CloudBytesDownloaded", "CloudBytesUploaded", "CloudDownloadLatency", "QueuedWrites", "ReadBytes", "ReadTime", "TimeSinceLastRecoveryPoint", "TotalCacheSize", "UploadBufferFree", "UploadBufferPercentUsed", "UploadBufferUsed", "WorkingStorageFree", "WorkingStoragePercentUsed", "WorkingStorageUsed", "WriteBytes", "WriteTime"},
 	"AWS/Textract":                {"ResponseTime", "ServerErrorCount", "SuccessfulRequestCount", "ThrottledCount", "UserErrorCount"},
+	"AWS/Timestream":              {"SuccessfulRequestLatency", "SystemErrors", "UserErrors", "DataScannedBytes"},
 	"AWS/ThingsGraph":             {"EventStoreQueueSize", "FlowExecutionTime", "FlowExecutionsFailed", "FlowExecutionsStarted", "FlowExecutionsSucceeded", "FlowStepExecutionTime", "FlowStepExecutionsFailed", "FlowStepExecutionsStarted", "FlowStepExecutionsSucceeded"},
 	"AWS/TransitGateway":          {"BytesIn", "BytesOut", "PacketDropCountBlackhole", "PacketDropCountNoRoute", "PacketsIn", "PacketsOut"},
 	"AWS/Translate":               {"CharacterCount", "ResponseTime", "ServerErrorCount", "SuccessfulRequestCount", "ThrottledCount", "UserErrorCount"},
@@ -203,9 +205,10 @@ var dimensionsMap = map[string][]string{
 	"AWS/NATGateway":              {"NatGatewayId"},
 	"AWS/Neptune":                 {"DBClusterIdentifier", "DatabaseClass", "EngineName", "Role"},
 	"AWS/NetworkELB":              {"AvailabilityZone", "LoadBalancer", "TargetGroup"},
+	"AWS/NetworkFirewall":         {"AvailabilityZone", "CustomAction", "Engine", "FirewallName"},
 	"AWS/OpsWorks":                {"InstanceId", "LayerId", "StackId"},
 	"AWS/Polly":                   {"Operation"},
-	"AWS/RDS":                     {"DBClusterIdentifier", "DBInstanceIdentifier", "DatabaseClass", "DbClusterIdentifier", "EngineName", "Role", "SourceRegion"},
+	"AWS/RDS":                     {"DBClusterIdentifier", "DBInstanceIdentifier", "DatabaseClass", "DbClusterIdentifier", "EngineName", "ProxyName", "Role", "SourceRegion", "Target", "TargetGroup", "TargetRole"},
 	"AWS/Redshift":                {"ClusterIdentifier", "NodeID", "service class", "stage", "latency", "wlmid"},
 	"AWS/Route53":                 {"HealthCheckId", "Region", "HostedZoneId"},
 	"AWS/Route53Resolver":         {"EndpointId"},
@@ -220,6 +223,7 @@ var dimensionsMap = map[string][]string{
 	"AWS/States":                  {"APIName", "ActivityArn", "LambdaFunctionArn", "StateMachineArn", "StateTransition"},
 	"AWS/StorageGateway":          {"GatewayId", "GatewayName", "VolumeId"},
 	"AWS/Textract":                {},
+	"AWS/Timestream":              {"Operation", "DatabaseName", "TableName"},
 	"AWS/ThingsGraph":             {"FlowTemplateId", "StepName", "SystemTemplateId"},
 	"AWS/TransitGateway":          {"TransitGateway", "TransitGatewayAttachment"},
 	"AWS/Translate":               {"LanguagePair", "Operation"},
@@ -237,7 +241,8 @@ var dimensionsMap = map[string][]string{
 
 var regionCache sync.Map
 
-func (e *cloudWatchExecutor) executeMetricFindQuery(ctx context.Context, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
+func (e *cloudWatchExecutor) executeMetricFindQuery(ctx context.Context, queryContext plugins.DataQuery) (
+	plugins.DataResponse, error) {
 	firstQuery := queryContext.Queries[0]
 
 	parameters := firstQuery.Model
@@ -263,22 +268,22 @@ func (e *cloudWatchExecutor) executeMetricFindQuery(ctx context.Context, queryCo
 		data, err = e.handleGetResourceArns(ctx, parameters, queryContext)
 	}
 	if err != nil {
-		return nil, err
+		return plugins.DataResponse{}, err
 	}
 
-	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: firstQuery.RefId}
-	transformToTable(data, queryResult)
-	result := &tsdb.Response{
-		Results: map[string]*tsdb.QueryResult{
-			firstQuery.RefId: queryResult,
+	queryResult := plugins.DataQueryResult{Meta: simplejson.New(), RefID: firstQuery.RefID}
+	transformToTable(data, &queryResult)
+	result := plugins.DataResponse{
+		Results: map[string]plugins.DataQueryResult{
+			firstQuery.RefID: queryResult,
 		},
 	}
 	return result, nil
 }
 
-func transformToTable(data []suggestData, result *tsdb.QueryResult) {
-	table := &tsdb.Table{
-		Columns: []tsdb.TableColumn{
+func transformToTable(data []suggestData, result *plugins.DataQueryResult) {
+	table := plugins.DataTable{
+		Columns: []plugins.DataTableColumn{
 			{
 				Text: "text",
 			},
@@ -286,7 +291,7 @@ func transformToTable(data []suggestData, result *tsdb.QueryResult) {
 				Text: "value",
 			},
 		},
-		Rows: make([]tsdb.RowValues, 0),
+		Rows: make([]plugins.DataRowValues, 0),
 	}
 
 	for _, r := range data {
@@ -317,7 +322,7 @@ func parseMultiSelectValue(input string) []string {
 // Whenever this list is updated, the frontend list should also be updated.
 // Please update the region list in public/app/plugins/datasource/cloudwatch/partials/config.html
 func (e *cloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *simplejson.Json,
-	queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+	queryContext plugins.DataQuery) ([]suggestData, error) {
 	dsInfo := e.getDSInfo(defaultRegion)
 	profile := dsInfo.Profile
 	if cache, ok := regionCache.Load(profile); ok {
@@ -362,7 +367,7 @@ func (e *cloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *s
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) handleGetNamespaces(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetNamespaces(ctx context.Context, parameters *simplejson.Json, queryContext plugins.DataQuery) ([]suggestData, error) {
 	keys := []string{}
 	for key := range metricsMap {
 		keys = append(keys, key)
@@ -381,7 +386,7 @@ func (e *cloudWatchExecutor) handleGetNamespaces(ctx context.Context, parameters
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) handleGetMetrics(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetMetrics(ctx context.Context, parameters *simplejson.Json, queryContext plugins.DataQuery) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	namespace := parameters.Get("namespace").MustString()
 
@@ -407,7 +412,7 @@ func (e *cloudWatchExecutor) handleGetMetrics(ctx context.Context, parameters *s
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters *simplejson.Json, queryContext plugins.DataQuery) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	namespace := parameters.Get("namespace").MustString()
 
@@ -433,7 +438,7 @@ func (e *cloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) handleGetDimensionValues(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetDimensionValues(ctx context.Context, parameters *simplejson.Json, queryContext plugins.DataQuery) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	namespace := parameters.Get("namespace").MustString()
 	metricName := parameters.Get("metricName").MustString()
@@ -485,7 +490,7 @@ func (e *cloudWatchExecutor) handleGetDimensionValues(ctx context.Context, param
 }
 
 func (e *cloudWatchExecutor) handleGetEbsVolumeIds(ctx context.Context, parameters *simplejson.Json,
-	queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+	queryContext plugins.DataQuery) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	instanceId := parameters.Get("instanceId").MustString()
 
@@ -508,7 +513,7 @@ func (e *cloudWatchExecutor) handleGetEbsVolumeIds(ctx context.Context, paramete
 }
 
 func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, parameters *simplejson.Json,
-	queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+	queryContext plugins.DataQuery) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	attributeName := parameters.Get("attributeName").MustString()
 	filterJson := parameters.Get("filters").MustMap()
@@ -588,7 +593,7 @@ func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 }
 
 func (e *cloudWatchExecutor) handleGetResourceArns(ctx context.Context, parameters *simplejson.Json,
-	queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+	queryContext plugins.DataQuery) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	resourceType := parameters.Get("resourceType").MustString()
 	filterJson := parameters.Get("tags").MustMap()
