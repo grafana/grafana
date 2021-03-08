@@ -1,4 +1,4 @@
-package eval
+package models
 
 import (
 	"encoding/json"
@@ -49,7 +49,7 @@ func (rtr *RelativeTimeRange) isValid() bool {
 	return rtr.From > rtr.To
 }
 
-func (rtr *RelativeTimeRange) toTimeRange(now time.Time) backend.TimeRange {
+func (rtr *RelativeTimeRange) ToTimeRange(now time.Time) backend.TimeRange {
 	return backend.TimeRange{
 		From: now.Add(-time.Duration(rtr.From)),
 		To:   now.Add(-time.Duration(rtr.To)),
@@ -147,7 +147,7 @@ func (aq *AlertQuery) setMaxDatapoints() error {
 	return nil
 }
 
-func (aq *AlertQuery) getMaxDatapoints() (int64, error) {
+func (aq *AlertQuery) GetMaxDatapoints() (int64, error) {
 	err := aq.setMaxDatapoints()
 	if err != nil {
 		return 0, err
@@ -192,7 +192,7 @@ func (aq *AlertQuery) getIntervalMS() (int64, error) {
 	return int64(intervalMs), nil
 }
 
-func (aq *AlertQuery) getIntervalDuration() (time.Duration, error) {
+func (aq *AlertQuery) GetIntervalDuration() (time.Duration, error) {
 	err := aq.setIntervalMS()
 	if err != nil {
 		return 0, err
@@ -214,7 +214,7 @@ func (aq *AlertQuery) GetDatasource() (string, error) {
 	return aq.DatasourceUID, nil
 }
 
-func (aq *AlertQuery) getModel() ([]byte, error) {
+func (aq *AlertQuery) GetModel() ([]byte, error) {
 	err := aq.setDatasource()
 	if err != nil {
 		return nil, err
@@ -270,7 +270,7 @@ func (aq *AlertQuery) PreSave() error {
 	}
 
 	// override model
-	model, err := aq.getModel()
+	model, err := aq.GetModel()
 	if err != nil {
 		return err
 	}

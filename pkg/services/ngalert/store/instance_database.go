@@ -1,20 +1,20 @@
-package ngalert
+package store
 
 import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-// getAlertInstance is a handler for retrieving an alert instance based on OrgId, AlertDefintionID, and
+// GetAlertInstance is a handler for retrieving an alert instance based on OrgId, AlertDefintionID, and
 // the hash of the labels.
 // nolint:unused
-func (st storeImpl) getAlertInstance(cmd *getAlertInstanceQuery) error {
+func (st DBstore) GetAlertInstance(cmd *models.GetAlertInstanceQuery) error {
 	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		instance := AlertInstance{}
+		instance := models.AlertInstance{}
 		s := strings.Builder{}
 		s.WriteString(`SELECT * FROM alert_instance
 			WHERE
@@ -43,11 +43,11 @@ func (st storeImpl) getAlertInstance(cmd *getAlertInstanceQuery) error {
 	})
 }
 
-// listAlertInstances is a handler for retrieving alert instances within specific organisation
+// ListAlertInstances is a handler for retrieving alert instances within specific organisation
 // based on various filters.
-func (st storeImpl) listAlertInstances(cmd *listAlertInstancesQuery) error {
+func (st DBstore) ListAlertInstances(cmd *models.ListAlertInstancesQuery) error {
 	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		alertInstances := make([]*listAlertInstancesQueryResult, 0)
+		alertInstances := make([]*models.ListAlertInstancesQueryResult, 0)
 
 		s := strings.Builder{}
 		params := make([]interface{}, 0)
@@ -76,26 +76,26 @@ func (st storeImpl) listAlertInstances(cmd *listAlertInstancesQuery) error {
 	})
 }
 
-// saveAlertDefinition is a handler for saving a new alert definition.
+// SaveAlertInstance is a handler for saving a new alert instance.
 // nolint:unused
-func (st storeImpl) saveAlertInstance(cmd *saveAlertInstanceCommand) error {
+func (st DBstore) SaveAlertInstance(cmd *models.SaveAlertInstanceCommand) error {
 	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		labelTupleJSON, labelsHash, err := cmd.Labels.StringAndHash()
 		if err != nil {
 			return err
 		}
 
-		alertInstance := &AlertInstance{
+		alertInstance := &models.AlertInstance{
 			DefinitionOrgID:   cmd.DefinitionOrgID,
 			DefinitionUID:     cmd.DefinitionUID,
 			Labels:            cmd.Labels,
 			LabelsHash:        labelsHash,
 			CurrentState:      cmd.State,
-			CurrentStateSince: time.Now(),
+			CurrentStateSince: TimeNow(),
 			LastEvalTime:      cmd.LastEvalTime,
 		}
 
-		if err := validateAlertInstance(alertInstance); err != nil {
+		if err := models.ValidateAlertInstance(alertInstance); err != nil {
 			return err
 		}
 

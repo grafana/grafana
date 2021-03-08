@@ -1,4 +1,4 @@
-package ngalert
+package models
 
 import (
 	// nolint:gosec

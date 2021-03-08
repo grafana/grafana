@@ -1,4 +1,4 @@
-package ngalert
+package tests
 
 import (
 	"context"
@@ -8,7 +8,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
+
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -16,47 +21,49 @@ import (
 )
 
 type evalAppliedInfo struct {
-	alertDefKey alertDefinitionKey
+	alertDefKey models.AlertDefinitionKey
 	now         time.Time
 }
 
 func TestAlertingTicker(t *testing.T) {
-	ng, store := setupTestEnv(t, 1)
+	dbstore := setupTestEnv(t, 1)
 	t.Cleanup(registry.ClearOverrides)
 
-	alerts := make([]*AlertDefinition, 0)
+	alerts := make([]*models.AlertDefinition, 0)
 	// create alert definition with zero interval (should never run)
-	alerts = append(alerts, createTestAlertDefinition(t, store, 0))
+	alerts = append(alerts, createTestAlertDefinition(t, dbstore, 0))
 
 	// create alert definition with one second interval
-	alerts = append(alerts, createTestAlertDefinition(t, store, 1))
+	alerts = append(alerts, createTestAlertDefinition(t, dbstore, 1))
 
 	evalAppliedCh := make(chan evalAppliedInfo, len(alerts))
-	stopAppliedCh := make(chan alertDefinitionKey, len(alerts))
+	stopAppliedCh := make(chan models.AlertDefinitionKey, len(alerts))
 
 	mockedClock := clock.NewMock()
 	baseInterval := time.Second
 
-	schefCfg := schedulerCfg{
-		c:            mockedClock,
-		baseInterval: baseInterval,
-		evalAppliedFunc: func(alertDefKey alertDefinitionKey, now time.Time) {
+	schefCfg := schedule.SchedulerCfg{
+		C:            mockedClock,
+		BaseInterval: baseInterval,
+		EvalAppliedFunc: func(alertDefKey models.AlertDefinitionKey, now time.Time) {
 			evalAppliedCh <- evalAppliedInfo{alertDefKey: alertDefKey, now: now}
 		},
-		stopAppliedFunc: func(alertDefKey alertDefinitionKey) {
+		StopAppliedFunc: func(alertDefKey models.AlertDefinitionKey) {
 			stopAppliedCh <- alertDefKey
 		},
+		Store:  dbstore,
+		Logger: log.New("ngalert schedule test"),
 	}
-	ng.schedule.overrideCfg(schefCfg)
+	sched := schedule.NewScheduler(schefCfg, nil)
 
 	ctx := context.Background()
 	go func() {
-		err := ng.schedule.Ticker(ctx)
+		err := sched.Ticker(ctx)
 		require.NoError(t, err)
 	}()
 	runtime.Gosched()
 
-	expectedAlertDefinitionsEvaluated := []alertDefinitionKey{alerts[1].getKey()}
+	expectedAlertDefinitionsEvaluated := []models.AlertDefinitionKey{alerts[1].GetKey()}
 	t.Run(fmt.Sprintf("on 1st tick alert definitions: %s should be evaluated", concatenate(expectedAlertDefinitionsEvaluated)), func(t *testing.T) {
 		tick := advanceClock(t, mockedClock)
 		assertEvalRun(t, evalAppliedCh, tick, expectedAlertDefinitionsEvaluated...)
@@ -64,93 +71,93 @@ func TestAlertingTicker(t *testing.T) {
 
 	// change alert definition interval to three seconds
 	var threeSecInterval int64 = 3
-	err := store.updateAlertDefinition(&updateAlertDefinitionCommand{
+	err := dbstore.UpdateAlertDefinition(&models.UpdateAlertDefinitionCommand{
 		UID:             alerts[0].UID,
 		IntervalSeconds: &threeSecInterval,
 		OrgID:           alerts[0].OrgID,
 	})
 	require.NoError(t, err)
-	t.Logf("alert definition: %v interval reset to: %d", alerts[0].getKey(), threeSecInterval)
+	t.Logf("alert definition: %v interval reset to: %d", alerts[0].GetKey(), threeSecInterval)
 
-	expectedAlertDefinitionsEvaluated = []alertDefinitionKey{alerts[1].getKey()}
+	expectedAlertDefinitionsEvaluated = []models.AlertDefinitionKey{alerts[1].GetKey()}
 	t.Run(fmt.Sprintf("on 2nd tick alert definition: %s should be evaluated", concatenate(expectedAlertDefinitionsEvaluated)), func(t *testing.T) {
 		tick := advanceClock(t, mockedClock)
 		assertEvalRun(t, evalAppliedCh, tick, expectedAlertDefinitionsEvaluated...)
 	})
 
-	expectedAlertDefinitionsEvaluated = []alertDefinitionKey{alerts[1].getKey(), alerts[0].getKey()}
+	expectedAlertDefinitionsEvaluated = []models.AlertDefinitionKey{alerts[1].GetKey(), alerts[0].GetKey()}
 	t.Run(fmt.Sprintf("on 3rd tick alert definitions: %s should be evaluated", concatenate(expectedAlertDefinitionsEvaluated)), func(t *testing.T) {
 		tick := advanceClock(t, mockedClock)
 		assertEvalRun(t, evalAppliedCh, tick, expectedAlertDefinitionsEvaluated...)
 	})
 
-	expectedAlertDefinitionsEvaluated = []alertDefinitionKey{alerts[1].getKey()}
+	expectedAlertDefinitionsEvaluated = []models.AlertDefinitionKey{alerts[1].GetKey()}
 	t.Run(fmt.Sprintf("on 4th tick alert definitions: %s should be evaluated", concatenate(expectedAlertDefinitionsEvaluated)), func(t *testing.T) {
 		tick := advanceClock(t, mockedClock)
 		assertEvalRun(t, evalAppliedCh, tick, expectedAlertDefinitionsEvaluated...)
 	})
 
-	err = store.deleteAlertDefinitionByUID(&deleteAlertDefinitionByUIDCommand{UID: alerts[1].UID, OrgID: alerts[1].OrgID})
+	err = dbstore.DeleteAlertDefinitionByUID(&models.DeleteAlertDefinitionByUIDCommand{UID: alerts[1].UID, OrgID: alerts[1].OrgID})
 	require.NoError(t, err)
-	t.Logf("alert definition: %v deleted", alerts[1].getKey())
+	t.Logf("alert definition: %v deleted", alerts[1].GetKey())
 
-	expectedAlertDefinitionsEvaluated = []alertDefinitionKey{}
+	expectedAlertDefinitionsEvaluated = []models.AlertDefinitionKey{}
 	t.Run(fmt.Sprintf("on 5th tick alert definitions: %s should be evaluated", concatenate(expectedAlertDefinitionsEvaluated)), func(t *testing.T) {
 		tick := advanceClock(t, mockedClock)
 		assertEvalRun(t, evalAppliedCh, tick, expectedAlertDefinitionsEvaluated...)
 	})
-	expectedAlertDefinitionsStopped := []alertDefinitionKey{alerts[1].getKey()}
+	expectedAlertDefinitionsStopped := []models.AlertDefinitionKey{alerts[1].GetKey()}
 	t.Run(fmt.Sprintf("on 5th tick alert definitions: %s should be stopped", concatenate(expectedAlertDefinitionsStopped)), func(t *testing.T) {
 		assertStopRun(t, stopAppliedCh, expectedAlertDefinitionsStopped...)
 	})
 
-	expectedAlertDefinitionsEvaluated = []alertDefinitionKey{alerts[0].getKey()}
+	expectedAlertDefinitionsEvaluated = []models.AlertDefinitionKey{alerts[0].GetKey()}
 	t.Run(fmt.Sprintf("on 6th tick alert definitions: %s should be evaluated", concatenate(expectedAlertDefinitionsEvaluated)), func(t *testing.T) {
 		tick := advanceClock(t, mockedClock)
 		assertEvalRun(t, evalAppliedCh, tick, expectedAlertDefinitionsEvaluated...)
 	})
 
 	// create alert definition with one second interval
-	alerts = append(alerts, createTestAlertDefinition(t, store, 1))
+	alerts = append(alerts, createTestAlertDefinition(t, dbstore, 1))
 
-	expectedAlertDefinitionsEvaluated = []alertDefinitionKey{alerts[2].getKey()}
+	expectedAlertDefinitionsEvaluated = []models.AlertDefinitionKey{alerts[2].GetKey()}
 	t.Run(fmt.Sprintf("on 7th tick alert definitions: %s should be evaluated", concatenate(expectedAlertDefinitionsEvaluated)), func(t *testing.T) {
 		tick := advanceClock(t, mockedClock)
 		assertEvalRun(t, evalAppliedCh, tick, expectedAlertDefinitionsEvaluated...)
 	})
 
 	// pause alert definition
-	err = store.updateAlertDefinitionPaused(&updateAlertDefinitionPausedCommand{UIDs: []string{alerts[2].UID}, OrgID: alerts[2].OrgID, Paused: true})
+	err = dbstore.UpdateAlertDefinitionPaused(&models.UpdateAlertDefinitionPausedCommand{UIDs: []string{alerts[2].UID}, OrgID: alerts[2].OrgID, Paused: true})
 	require.NoError(t, err)
-	t.Logf("alert definition: %v paused", alerts[2].getKey())
+	t.Logf("alert definition: %v paused", alerts[2].GetKey())
 
-	expectedAlertDefinitionsEvaluated = []alertDefinitionKey{}
+	expectedAlertDefinitionsEvaluated = []models.AlertDefinitionKey{}
 	t.Run(fmt.Sprintf("on 8th tick alert definitions: %s should be evaluated", concatenate(expectedAlertDefinitionsEvaluated)), func(t *testing.T) {
 		tick := advanceClock(t, mockedClock)
 		assertEvalRun(t, evalAppliedCh, tick, expectedAlertDefinitionsEvaluated...)
 	})
 
-	expectedAlertDefinitionsStopped = []alertDefinitionKey{alerts[2].getKey()}
+	expectedAlertDefinitionsStopped = []models.AlertDefinitionKey{alerts[2].GetKey()}
 	t.Run(fmt.Sprintf("on 8th tick alert definitions: %s should be stopped", concatenate(expectedAlertDefinitionsStopped)), func(t *testing.T) {
 		assertStopRun(t, stopAppliedCh, expectedAlertDefinitionsStopped...)
 	})
 
 	// unpause alert definition
-	err = store.updateAlertDefinitionPaused(&updateAlertDefinitionPausedCommand{UIDs: []string{alerts[2].UID}, OrgID: alerts[2].OrgID, Paused: false})
+	err = dbstore.UpdateAlertDefinitionPaused(&models.UpdateAlertDefinitionPausedCommand{UIDs: []string{alerts[2].UID}, OrgID: alerts[2].OrgID, Paused: false})
 	require.NoError(t, err)
-	t.Logf("alert definition: %v unpaused", alerts[2].getKey())
+	t.Logf("alert definition: %v unpaused", alerts[2].GetKey())
 
-	expectedAlertDefinitionsEvaluated = []alertDefinitionKey{alerts[0].getKey(), alerts[2].getKey()}
+	expectedAlertDefinitionsEvaluated = []models.AlertDefinitionKey{alerts[0].GetKey(), alerts[2].GetKey()}
 	t.Run(fmt.Sprintf("on 9th tick alert definitions: %s should be evaluated", concatenate(expectedAlertDefinitionsEvaluated)), func(t *testing.T) {
 		tick := advanceClock(t, mockedClock)
 		assertEvalRun(t, evalAppliedCh, tick, expectedAlertDefinitionsEvaluated...)
 	})
 }
 
-func assertEvalRun(t *testing.T, ch <-chan evalAppliedInfo, tick time.Time, keys ...alertDefinitionKey) {
+func assertEvalRun(t *testing.T, ch <-chan evalAppliedInfo, tick time.Time, keys ...models.AlertDefinitionKey) {
 	timeout := time.After(time.Second)
 
-	expected := make(map[alertDefinitionKey]struct{}, len(keys))
+	expected := make(map[models.AlertDefinitionKey]struct{}, len(keys))
 	for _, k := range keys {
 		expected[k] = struct{}{}
 	}
@@ -175,10 +182,10 @@ func assertEvalRun(t *testing.T, ch <-chan evalAppliedInfo, tick time.Time, keys
 	}
 }
 
-func assertStopRun(t *testing.T, ch <-chan alertDefinitionKey, keys ...alertDefinitionKey) {
+func assertStopRun(t *testing.T, ch <-chan models.AlertDefinitionKey, keys ...models.AlertDefinitionKey) {
 	timeout := time.After(time.Second)
 
-	expected := make(map[alertDefinitionKey]struct{}, len(keys))
+	expected := make(map[models.AlertDefinitionKey]struct{}, len(keys))
 	for _, k := range keys {
 		expected[k] = struct{}{}
 	}
@@ -208,7 +215,7 @@ func advanceClock(t *testing.T, mockedClock *clock.Mock) time.Time {
 	// t.Logf("Tick: %v", mockedClock.Now())
 }
 
-func concatenate(keys []alertDefinitionKey) string {
+func concatenate(keys []models.AlertDefinitionKey) string {
 	s := make([]string, len(keys))
 	for _, k := range keys {
 		s = append(s, k.String())

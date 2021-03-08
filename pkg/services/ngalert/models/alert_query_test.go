@@ -1,4 +1,4 @@
-package eval
+package models
 
 import (
 	"encoding/json"
@@ -186,7 +186,7 @@ func TestAlertQuery(t *testing.T) {
 			})
 
 			t.Run("can update model maxDataPoints (if missing)", func(t *testing.T) {
-				maxDataPoints, err := tc.alertQuery.getMaxDatapoints()
+				maxDataPoints, err := tc.alertQuery.GetMaxDatapoints()
 				require.NoError(t, err)
 				require.Equal(t, tc.expectedMaxPoints, maxDataPoints)
 			})
@@ -198,7 +198,7 @@ func TestAlertQuery(t *testing.T) {
 			})
 
 			t.Run("can get the updated model with the default properties (if missing)", func(t *testing.T) {
-				blob, err := tc.alertQuery.getModel()
+				blob, err := tc.alertQuery.GetModel()
 				require.NoError(t, err)
 				model := make(map[string]interface{})
 				err = json.Unmarshal(blob, &model)

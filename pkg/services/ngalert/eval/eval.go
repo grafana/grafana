@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 
@@ -46,7 +48,7 @@ type Condition struct {
 	RefID string `json:"refId"`
 	OrgID int64  `json:"-"`
 
-	QueriesAndExpressions []AlertQuery `json:"queriesAndExpressions"`
+	QueriesAndExpressions []models.AlertQuery `json:"queriesAndExpressions"`
 }
 
 // ExecutionResults contains the unevaluated results from executing
@@ -117,16 +119,16 @@ func (c *Condition) execute(ctx AlertExecCtx, now time.Time, dataService *tsdb.S
 
 	for i := range c.QueriesAndExpressions {
 		q := c.QueriesAndExpressions[i]
-		model, err := q.getModel()
+		model, err := q.GetModel()
 		if err != nil {
 			return nil, fmt.Errorf("failed to get query model: %w", err)
 		}
-		interval, err := q.getIntervalDuration()
+		interval, err := q.GetIntervalDuration()
 		if err != nil {
 			return nil, fmt.Errorf("failed to retrieve intervalMs from the model: %w", err)
 		}
 
-		maxDatapoints, err := q.getMaxDatapoints()
+		maxDatapoints, err := q.GetMaxDatapoints()
 		if err != nil {
 			return nil, fmt.Errorf("failed to retrieve maxDatapoints from the model: %w", err)
 		}
@@ -137,7 +139,7 @@ func (c *Condition) execute(ctx AlertExecCtx, now time.Time, dataService *tsdb.S
 			RefID:         q.RefID,
 			MaxDataPoints: maxDatapoints,
 			QueryType:     q.QueryType,
-			TimeRange:     q.RelativeTimeRange.toTimeRange(now),
+			TimeRange:     q.RelativeTimeRange.ToTimeRange(now),
 		})
 	}
 
