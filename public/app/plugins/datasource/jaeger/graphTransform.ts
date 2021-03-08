@@ -1,5 +1,6 @@
-import { TraceSpanData, TraceViewData } from '@grafana/data';
+import { DataFrame, FieldType, MutableDataFrame } from '@grafana/data';
 import { NodeGraphDataFrameFieldNames as Fields } from '@grafana/ui';
+import { Span, TraceResponse } from './types';
 
 interface Node {
   [Fields.id]: string;
@@ -16,7 +17,46 @@ interface Edge {
   [Fields.source]: string;
 }
 
-export function convertTraceToGraph(data: TraceViewData): { nodes: Node[]; edges: Edge[] } {
+export function createGraphFrames(data: TraceResponse): DataFrame[] {
+  const { nodes, edges } = convertTraceToGraph(data);
+
+  const nodesFrame = new MutableDataFrame({
+    fields: [
+      { name: Fields.id, type: FieldType.string },
+      { name: Fields.title, type: FieldType.string },
+      { name: Fields.subTitle, type: FieldType.string },
+      { name: Fields.mainStat, type: FieldType.string },
+      { name: Fields.secondaryStat, type: FieldType.string },
+      { name: Fields.color, type: FieldType.number, config: { color: { mode: 'continuous-GrYlRd' } } },
+    ],
+    meta: {
+      preferredVisualisationType: 'nodeGraph',
+    },
+  });
+
+  for (const node of nodes) {
+    nodesFrame.add(node);
+  }
+
+  const edgesFrame = new MutableDataFrame({
+    fields: [
+      { name: Fields.id, type: FieldType.string },
+      { name: Fields.target, type: FieldType.string },
+      { name: Fields.source, type: FieldType.string },
+    ],
+    meta: {
+      preferredVisualisationType: 'nodeGraph',
+    },
+  });
+
+  for (const edge of edges) {
+    edgesFrame.add(edge);
+  }
+
+  return [nodesFrame, edgesFrame];
+}
+
+function convertTraceToGraph(data: TraceResponse): { nodes: Node[]; edges: Edge[] } {
   const nodes: Node[] = [];
   const edges: Edge[] = [];
 
@@ -62,7 +102,7 @@ function toFixedNoTrailingZeros(n: number) {
  * Get the duration of the whole trace as it isn't a part of the response data.
  * Note: Seems like this should be the same as just longest span, but this is probably safer.
  */
-function findTraceDuration(spans: TraceSpanData[]): number {
+function findTraceDuration(spans: Span[]): number {
   let traceEndTime = 0;
   let traceStartTime = Infinity;
 
@@ -82,8 +122,8 @@ function findTraceDuration(spans: TraceSpanData[]): number {
 /**
  * Returns a map of the spans with children array for easier processing.
  */
-function makeSpanMap(spans: TraceSpanData[]): { [id: string]: { span: TraceSpanData; children: string[] } } {
-  const spanMap: { [id: string]: { span?: TraceSpanData; children: string[] } } = {};
+function makeSpanMap(spans: Span[]): { [id: string]: { span: Span; children: string[] } } {
+  const spanMap: { [id: string]: { span?: Span; children: string[] } } = {};
 
   for (const span of spans) {
     if (!spanMap[span.spanID]) {
@@ -101,17 +141,17 @@ function makeSpanMap(spans: TraceSpanData[]): { [id: string]: { span: TraceSpanD
           children: [span.spanID],
         };
       } else {
-        spanMap[span.spanID].children.push(span.spanID);
+        spanMap[parent].children.push(span.spanID);
       }
     }
   }
-  return spanMap as { [id: string]: { span: TraceSpanData; children: string[] } };
+  return spanMap as { [id: string]: { span: Span; children: string[] } };
 }
 
 /**
  * Get non overlapping duration of the spans.
  */
-function getDuration(spans: TraceSpanData[]): number {
+function getDuration(spans: Span[]): number {
   const ranges = spans.map<[number, number]>((span) => [span.startTime, span.startTime + span.duration]);
   ranges.sort((a, b) => a[0] - b[0]);
   const mergedRanges = ranges.reduce((acc, range) => {

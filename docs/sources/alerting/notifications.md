@@ -129,7 +129,9 @@ This might break custom event rules in your PagerDuty rules if you rely on the f
 Move any existing rules using `custom_details.myMetric` to `custom_details.queries.myMetric`.
 This behavior will become the default in a future version of Grafana.
 
-> Using `dedup_key` tag will override Grafana generated `dedup_key` with a custom key.
+> **Note:** The `dedup_key` tag overrides the Grafana-generated `dedup_key` with a custom key.
+
+> **Note:** The `state` tag overrides the current alert state inside the `custom_details` payload.
 
 ### Pushover
 
@@ -216,10 +218,6 @@ Once these two properties are set, you can send the alerts to Kafka for further 
 ### Google Hangouts Chat
 
 Notifications can be sent by setting up an incoming webhook in Google Hangouts chat. For more information about configuring a webhook, refer to [webhooks](https://developers.google.com/hangouts/chat/how-tos/webhooks).
-
-### Squadcast
-
-Squadcast helps you get alerted via Phone call, SMS, Email and Push notifications and lets you take actions on those alerts. Grafana notifications can be sent to Squadcast via a simple incoming webhook. Refer the official [Squadcast support documentation](https://support.squadcast.com/docs/grafana) for configuring these webhooks.
 
 ### Prometheus Alertmanager
 

@@ -15,7 +15,7 @@ var errEmptyTitleError = errors.New("title is empty")
 
 // validateAlertDefinition validates the alert definition interval and organisation.
 // If requireData is true checks that it contains at least one alert query
-func (ng *AlertNG) validateAlertDefinition(alertDefinition *AlertDefinition, requireData bool) error {
+func (st storeImpl) validateAlertDefinition(alertDefinition *AlertDefinition, requireData bool) error {
 	if !requireData && len(alertDefinition.Data) == 0 {
 		return fmt.Errorf("no queries or expressions are found")
 	}
@@ -24,8 +24,8 @@ func (ng *AlertNG) validateAlertDefinition(alertDefinition *AlertDefinition, req
 		return errEmptyTitleError
 	}
 
-	if alertDefinition.IntervalSeconds%int64(ng.schedule.baseInterval.Seconds()) != 0 {
-		return fmt.Errorf("invalid interval: %v: interval should be divided exactly by scheduler interval: %v", time.Duration(alertDefinition.IntervalSeconds)*time.Second, ng.schedule.baseInterval)
+	if alertDefinition.IntervalSeconds%int64(st.baseInterval.Seconds()) != 0 {
+		return fmt.Errorf("invalid interval: %v: interval should be divided exactly by scheduler interval: %v", time.Duration(alertDefinition.IntervalSeconds)*time.Second, st.baseInterval)
 	}
 
 	// enfore max name length in SQLite
@@ -41,7 +41,7 @@ func (ng *AlertNG) validateAlertDefinition(alertDefinition *AlertDefinition, req
 }
 
 // validateCondition validates that condition queries refer to existing datasources
-func (ng *AlertNG) validateCondition(c eval.Condition, user *models.SignedInUser, skipCache bool) error {
+func (api *apiImpl) validateCondition(c eval.Condition, user *models.SignedInUser, skipCache bool) error {
 	var refID string
 
 	if len(c.QueriesAndExpressions) == 0 {
@@ -66,7 +66,7 @@ func (ng *AlertNG) validateCondition(c eval.Condition, user *models.SignedInUser
 			continue
 		}
 
-		_, err = ng.DatasourceCache.GetDatasourceByUID(datasourceUID, user, skipCache)
+		_, err = api.DatasourceCache.GetDatasourceByUID(datasourceUID, user, skipCache)
 		if err != nil {
 			return fmt.Errorf("failed to get datasource: %s: %w", datasourceUID, err)
 		}

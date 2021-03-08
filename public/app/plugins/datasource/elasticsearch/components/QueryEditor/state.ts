@@ -1,4 +1,5 @@
 import { Action } from '../../hooks/useStatelessReducer';
+import { ElasticsearchQuery } from '../../types';
 
 export const INIT = 'init';
 const CHANGE_QUERY = 'change_query';
@@ -18,6 +19,10 @@ interface ChangeAliasPatternAction extends Action<typeof CHANGE_ALIAS_PATTERN> {
   };
 }
 
+/**
+ * When the `initQuery` Action is dispatched, the query gets populated with default values where values are not present.
+ * This means it won't override any existing value in place, but just ensure the query is in a "runnable" state.
+ */
 export const initQuery = (): InitAction => ({ type: INIT });
 
 export const changeQuery = (query: string): ChangeQueryAction => ({
@@ -34,26 +39,29 @@ export const changeAliasPattern = (aliasPattern: string): ChangeAliasPatternActi
   },
 });
 
-export const queryReducer = (prevQuery: string, action: ChangeQueryAction | InitAction) => {
+export const queryReducer = (prevQuery: ElasticsearchQuery['query'], action: ChangeQueryAction | InitAction) => {
   switch (action.type) {
     case CHANGE_QUERY:
       return action.payload.query;
 
     case INIT:
-      return '';
+      return prevQuery || '';
 
     default:
       return prevQuery;
   }
 };
 
-export const aliasPatternReducer = (prevAliasPattern: string, action: ChangeAliasPatternAction | InitAction) => {
+export const aliasPatternReducer = (
+  prevAliasPattern: ElasticsearchQuery['alias'],
+  action: ChangeAliasPatternAction | InitAction
+) => {
   switch (action.type) {
     case CHANGE_ALIAS_PATTERN:
       return action.payload.aliasPattern;
 
     case INIT:
-      return '';
+      return prevAliasPattern || '';
 
     default:
       return prevAliasPattern;

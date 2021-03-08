@@ -36,6 +36,7 @@ type DataSourceListItemDTO struct {
 	OrgId       int64            `json:"orgId"`
 	Name        string           `json:"name"`
 	Type        string           `json:"type"`
+	TypeName    string           `json:"typeName"`
 	TypeLogoUrl string           `json:"typeLogoUrl"`
 	Access      models.DsAccess  `json:"access"`
 	Url         string           `json:"url"`

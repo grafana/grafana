@@ -68,7 +68,6 @@ export const ImportDashboardForm: FC<Props> = ({
         <InputControl
           as={FolderPicker}
           name="folder"
-          useNewForms
           enableCreateNew
           initialFolderId={initialFolderId}
           control={control}

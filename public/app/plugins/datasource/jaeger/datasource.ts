@@ -1,27 +1,23 @@
 import {
-  dateMath,
-  DateTime,
-  MutableDataFrame,
-  DataSourceApi,
-  DataSourceInstanceSettings,
+  DataQuery,
   DataQueryRequest,
   DataQueryResponse,
-  DataQuery,
+  DataSourceApi,
+  DataSourceInstanceSettings,
+  dateMath,
+  DateTime,
   FieldType,
-  DataFrame,
-  TraceViewData,
-  FieldDTO,
-  FieldConfig,
+  MutableDataFrame,
 } from '@grafana/data';
 
-import { NodeGraphDataFrameFieldNames as Fields } from '@grafana/ui';
 import { getBackendSrv, BackendSrvRequest } from '@grafana/runtime';
 import { Observable, from, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { serializeParams } from 'app/core/utils/fetch';
-import { convertTraceToGraph } from './graphTransform';
+import { createGraphFrames } from './graphTransform';
+import { createTraceFrame } from './responseTransform';
 
 export type JaegerQuery = {
   query: string;
@@ -41,16 +37,20 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
     // At this moment we expect only one target. In case we somehow change the UI to be able to show multiple
     // traces at one we need to change this.
     const id = options.targets[0]?.query;
-
     if (!id) {
-      return of({ data: [createTraceFrame([])] });
+      return of({ data: [emptyTraceDataFrame] });
     }
 
     // TODO: this api is internal, used in jaeger ui. Officially they have gRPC api that should be used.
     return this._request(`/api/traces/${encodeURIComponent(id)}`).pipe(
       map((response) => {
+        // We assume there is only one trace, as the querying right now does not work to query for multiple traces.
+        const traceData = response?.data?.data?.[0];
+        if (!traceData) {
+          return { data: [emptyTraceDataFrame] };
+        }
         return {
-          data: [createTraceFrame(response?.data?.data || []), ...createGraphFrames(response?.data?.data || [])],
+          data: [createTraceFrame(traceData), ...createGraphFrames(traceData)],
         };
       })
     );
@@ -127,61 +127,15 @@ function getTime(date: string | DateTime, roundUp: boolean) {
   return date.valueOf() * 1000;
 }
 
-function createTraceFrame(data: any): DataFrame {
-  return new MutableDataFrame({
-    fields: [
-      {
-        name: 'trace',
-        type: FieldType.trace,
-        values: data,
-      },
-    ],
-    meta: {
-      preferredVisualisationType: 'trace',
+const emptyTraceDataFrame = new MutableDataFrame({
+  fields: [
+    {
+      name: 'trace',
+      type: FieldType.trace,
+      values: [],
     },
-  });
-}
-
-function createGraphFrames(data: TraceViewData[]): DataFrame[] {
-  const { nodes, edges } = convertTraceToGraph(data[0]);
-
-  return [
-    new MutableDataFrame({
-      name: 'nodes',
-      fields: mapFields(nodes),
-      meta: { preferredVisualisationType: 'nodeGraph' },
-    }),
-
-    new MutableDataFrame({
-      name: 'edges',
-      fields: mapFields(edges),
-      meta: { preferredVisualisationType: 'nodeGraph' },
-    }),
-  ];
-}
-
-function mapFields(data: Array<Record<string, any>>): FieldDTO[] {
-  const map = data.reduce((acc, datum) => {
-    for (const key of Object.keys(datum)) {
-      if (!acc[key]) {
-        if (key === Fields.color) {
-          acc[key] = createField(key, { color: { mode: 'continuous-GrYlRd' } });
-        } else {
-          acc[key] = createField(key);
-        }
-      }
-      (acc[key].values! as any[]).push(datum[key as keyof typeof datum]);
-    }
-    return acc;
-  }, {} as Record<string, FieldDTO>);
-  return Object.values(map);
-}
-
-function createField(name: string, config?: Partial<FieldConfig>): FieldDTO {
-  return {
-    name,
-    type: FieldType.string,
-    values: [],
-    config: { displayName: name, ...config },
-  };
-}
+  ],
+  meta: {
+    preferredVisualisationType: 'trace',
+  },
+});
