@@ -91,7 +91,6 @@ func TestFrontendLoggingEndpoint(t *testing.T) {
 	require.NoError(t, err)
 
 	// fake plugin route so we will try to find a source map there. I can't believe I can do this
-	// TODO
 	manager.StaticRoutes = append(manager.StaticRoutes, &plugins.PluginStaticRoute{
 		Directory: "/usr/local/telepathic-panel",
 		PluginId:  "telepathic",
