@@ -763,7 +763,7 @@ func createDashboard(t *testing.T, user models.SignedInUser, title string, folde
 		return nil
 	})
 
-	dashboard, err := dashboards.NewService().SaveDashboard(dashItem, true)
+	dashboard, err := dashboards.NewService(nil).SaveDashboard(dashItem, true)
 	require.NoError(t, err)
 
 	return dashboard

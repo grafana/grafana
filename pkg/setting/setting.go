@@ -143,7 +143,6 @@ var (
 	// analytics
 	ReportingEnabled     bool
 	ReportingDistributor string
-	CheckForUpdates      bool
 	GoogleAnalyticsId    string
 	GoogleTagManagerId   string
 
@@ -334,6 +333,9 @@ type Cfg struct {
 	ErrTemplateName string
 
 	Env string
+
+	// Analytics
+	CheckForUpdates bool
 
 	// LDAP
 	LDAPEnabled     bool
@@ -821,7 +823,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.MetricsEndpointDisableTotalStats = iniFile.Section("metrics").Key("disable_total_stats").MustBool(false)
 
 	analytics := iniFile.Section("analytics")
-	CheckForUpdates = analytics.Key("check_for_updates").MustBool(true)
+	cfg.CheckForUpdates = analytics.Key("check_for_updates").MustBool(true)
 	GoogleAnalyticsId = analytics.Key("google_analytics_ua_id").String()
 	GoogleTagManagerId = analytics.Key("google_tag_manager_id").String()
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)

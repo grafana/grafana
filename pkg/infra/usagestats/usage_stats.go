@@ -12,7 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -53,9 +53,9 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 	metrics["stats.users.count"] = statsQuery.Result.Users
 	metrics["stats.orgs.count"] = statsQuery.Result.Orgs
 	metrics["stats.playlist.count"] = statsQuery.Result.Playlists
-	metrics["stats.plugins.apps.count"] = len(plugins.Apps)
-	metrics["stats.plugins.panels.count"] = len(plugins.Panels)
-	metrics["stats.plugins.datasources.count"] = len(plugins.DataSources)
+	metrics["stats.plugins.apps.count"] = len(manager.Apps)
+	metrics["stats.plugins.panels.count"] = len(manager.Panels)
+	metrics["stats.plugins.datasources.count"] = len(manager.DataSources)
 	metrics["stats.alerts.count"] = statsQuery.Result.Alerts
 	metrics["stats.active_users.count"] = statsQuery.Result.ActiveUsers
 	metrics["stats.datasources.count"] = statsQuery.Result.Datasources
@@ -291,7 +291,7 @@ func (uss *UsageStatsService) updateTotalStats() {
 }
 
 func (uss *UsageStatsService) shouldBeReported(dsType string) bool {
-	ds, ok := plugins.DataSources[dsType]
+	ds, ok := manager.DataSources[dsType]
 	if !ok {
 		return false
 	}

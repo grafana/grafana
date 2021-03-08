@@ -11,7 +11,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/services/rendering"
 
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -50,7 +50,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg) (*macaron.Macaron, *HT
 		Bus:           bus.GetBus(),
 		License:       &licensing.OSSLicensingService{Cfg: cfg},
 		RenderService: r,
-		PluginManager: &plugins.PluginManager{Cfg: cfg},
+		PluginManager: &manager.PluginManager{Cfg: cfg},
 	}
 
 	m := macaron.New()

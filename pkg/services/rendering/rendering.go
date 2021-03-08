@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -86,7 +87,7 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 
 	if rs.pluginAvailable() {
 		rs.log = rs.log.New("renderer", "plugin")
-		rs.pluginInfo = plugins.Renderer
+		rs.pluginInfo = manager.Renderer
 
 		if err := rs.startPlugin(ctx); err != nil {
 			return err
@@ -106,7 +107,7 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 }
 
 func (rs *RenderingService) pluginAvailable() bool {
-	return plugins.Renderer != nil
+	return manager.Renderer != nil
 }
 
 func (rs *RenderingService) remoteAvailable() bool {

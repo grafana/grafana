@@ -3,6 +3,7 @@ package dtos
 import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager"
 )
 
 type PluginSetting struct {
@@ -63,6 +64,6 @@ type ImportDashboardCommand struct {
 	Path      string                         `json:"path"`
 	Overwrite bool                           `json:"overwrite"`
 	Dashboard *simplejson.Json               `json:"dashboard"`
-	Inputs    []plugins.ImportDashboardInput `json:"inputs"`
+	Inputs    []manager.ImportDashboardInput `json:"inputs"`
 	FolderId  int64                          `json:"folderId"`
 }

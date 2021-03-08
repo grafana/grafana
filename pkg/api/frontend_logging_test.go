@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/setting"
 	log "github.com/inconshreveable/log15"
 
@@ -90,7 +91,7 @@ func TestFrontendLoggingEndpoint(t *testing.T) {
 	require.NoError(t, err)
 
 	// fake plugin route so we will try to find a source map there. I can't believe I can do this
-	plugins.StaticRoutes = append(plugins.StaticRoutes, &plugins.PluginStaticRoute{
+	manager.StaticRoutes = append(manager.StaticRoutes, &plugins.PluginStaticRoute{
 		Directory: "/usr/local/telepathic-panel",
 		PluginId:  "telepathic",
 	})

@@ -6,7 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/plugins"
 	p "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 )
@@ -15,6 +15,9 @@ func TestPrometheus(t *testing.T) {
 	dsInfo := &models.DataSource{
 		JsonData: simplejson.New(),
 	}
+	plug, err := NewExecutor(dsInfo)
+	executor := plug.(*PrometheusExecutor)
+	require.NoError(t, err)
 
 	t.Run("converting metric name", func(t *testing.T) {
 		metric := map[p.LabelName]p.LabelValue{
@@ -50,14 +53,17 @@ func TestPrometheus(t *testing.T) {
 				"refId": "A"
 			}`
 		jsonModel, _ := simplejson.NewJson([]byte(json))
-		queryContext := &tsdb.TsdbQuery{}
-		queryModels := []*tsdb.Query{
+		queryModels := []plugins.DataSubQuery{
 			{Model: jsonModel},
 		}
 
-		queryContext.TimeRange = tsdb.NewTimeRange("12h", "now")
+		timeRange := plugins.NewDataTimeRange("12h", "now")
+		queryContext := plugins.DataQuery{
+			Queries:   queryModels,
+			TimeRange: &timeRange,
+		}
 
-		models, err := parseQuery(dsInfo, queryModels, queryContext)
+		models, err := executor.parseQuery(dsInfo, queryContext)
 		require.NoError(t, err)
 		require.Equal(t, time.Second*30, models[0].Step)
 	})
@@ -70,18 +76,22 @@ func TestPrometheus(t *testing.T) {
 				"refId": "A"
 			}`
 		jsonModel, _ := simplejson.NewJson([]byte(json))
-		queryContext := &tsdb.TsdbQuery{}
-		queryModels := []*tsdb.Query{
+		queryModels := []plugins.DataSubQuery{
 			{Model: jsonModel},
 		}
 
-		queryContext.TimeRange = tsdb.NewTimeRange("48h", "now")
-		models, err := parseQuery(dsInfo, queryModels, queryContext)
+		timeRange := plugins.NewDataTimeRange("48h", "now")
+		queryContext := plugins.DataQuery{
+			Queries:   queryModels,
+			TimeRange: &timeRange,
+		}
+		models, err := executor.parseQuery(dsInfo, queryContext)
 		require.NoError(t, err)
 		require.Equal(t, time.Minute*2, models[0].Step)
 
-		queryContext.TimeRange = tsdb.NewTimeRange("1h", "now")
-		models, err = parseQuery(dsInfo, queryModels, queryContext)
+		timeRange = plugins.NewDataTimeRange("1h", "now")
+		queryContext.TimeRange = &timeRange
+		models, err = executor.parseQuery(dsInfo, queryContext)
 		require.NoError(t, err)
 		require.Equal(t, time.Second*15, models[0].Step)
 	})
@@ -94,14 +104,17 @@ func TestPrometheus(t *testing.T) {
 					"refId": "A"
 				}`
 		jsonModel, _ := simplejson.NewJson([]byte(json))
-		queryContext := &tsdb.TsdbQuery{}
-		queryModels := []*tsdb.Query{
+		queryModels := []plugins.DataSubQuery{
 			{Model: jsonModel},
 		}
 
-		queryContext.TimeRange = tsdb.NewTimeRange("48h", "now")
+		timeRange := plugins.NewDataTimeRange("48h", "now")
+		queryContext := plugins.DataQuery{
+			TimeRange: &timeRange,
+			Queries:   queryModels,
+		}
 
-		models, err := parseQuery(dsInfo, queryModels, queryContext)
+		models, err := executor.parseQuery(dsInfo, queryContext)
 		require.NoError(t, err)
 		require.Equal(t, time.Minute*20, models[0].Step)
 	})
@@ -114,14 +127,17 @@ func TestPrometheus(t *testing.T) {
 					"refId": "A"
 				}`
 		jsonModel, _ := simplejson.NewJson([]byte(json))
-		queryContext := &tsdb.TsdbQuery{}
-		queryModels := []*tsdb.Query{
+		queryModels := []plugins.DataSubQuery{
 			{Model: jsonModel},
 		}
 
-		queryContext.TimeRange = tsdb.NewTimeRange("48h", "now")
+		timeRange := plugins.NewDataTimeRange("48h", "now")
+		queryContext := plugins.DataQuery{
+			TimeRange: &timeRange,
+			Queries:   queryModels,
+		}
 
-		models, err := parseQuery(dsInfo, queryModels, queryContext)
+		models, err := executor.parseQuery(dsInfo, queryContext)
 		require.NoError(t, err)
 		require.Equal(t, time.Minute*2, models[0].Step)
 	})

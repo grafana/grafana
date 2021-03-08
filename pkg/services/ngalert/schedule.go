@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/tsdb"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -24,7 +25,8 @@ type scheduleService interface {
 	overrideCfg(cfg schedulerCfg)
 }
 
-func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key alertDefinitionKey, evalCh <-chan *evalContext, stopCh <-chan struct{}) error {
+func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key alertDefinitionKey,
+	evalCh <-chan *evalContext, stopCh <-chan struct{}) error {
 	sch.log.Debug("alert definition routine started", "key", key)
 
 	evalRunning := false
@@ -58,11 +60,12 @@ func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key alertDefi
 					OrgID:                 alertDefinition.OrgID,
 					QueriesAndExpressions: alertDefinition.Data,
 				}
-				results, err := sch.evaluator.ConditionEval(&condition, ctx.now)
+				results, err := sch.evaluator.ConditionEval(&condition, ctx.now, sch.dataService)
 				end = timeNow()
 				if err != nil {
 					// consider saving alert instance on error
-					sch.log.Error("failed to evaluate alert definition", "title", alertDefinition.Title, "key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "error", err)
+					sch.log.Error("failed to evaluate alert definition", "title", alertDefinition.Title,
+						"key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "error", err)
 					return err
 				}
 				for _, r := range results {
@@ -129,6 +132,8 @@ type schedule struct {
 	evaluator eval.Evaluator
 
 	store store
+
+	dataService *tsdb.Service
 }
 
 type schedulerCfg struct {
@@ -142,7 +147,7 @@ type schedulerCfg struct {
 }
 
 // newScheduler returns a new schedule.
-func newScheduler(cfg schedulerCfg) *schedule {
+func newScheduler(cfg schedulerCfg, dataService *tsdb.Service) *schedule {
 	ticker := alerting.NewTicker(cfg.c.Now(), time.Second*0, cfg.c, int64(cfg.baseInterval.Seconds()))
 	sch := schedule{
 		registry:        alertDefinitionRegistry{alertDefinitionInfo: make(map[alertDefinitionKey]alertDefinitionInfo)},
@@ -155,6 +160,7 @@ func newScheduler(cfg schedulerCfg) *schedule {
 		stopAppliedFunc: cfg.stopAppliedFunc,
 		evaluator:       cfg.evaluator,
 		store:           cfg.store,
+		dataService:     dataService,
 	}
 	return &sch
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
 	"github.com/hashicorp/go-plugin"
 )
 
@@ -75,7 +76,7 @@ func instrumentDatasourcePluginV1(plugin datasourceV1.DatasourcePlugin) datasour
 
 	return datasourceV1QueryFunc(func(ctx context.Context, req *datasourceV1.DatasourceRequest) (*datasourceV1.DatasourceResponse, error) {
 		var resp *datasourceV1.DatasourceResponse
-		err := backendplugin.InstrumentQueryDataRequest(req.Datasource.Type, func() (innerErr error) {
+		err := instrumentation.InstrumentQueryDataRequest(req.Datasource.Type, func() (innerErr error) {
 			resp, innerErr = plugin.Query(ctx, req)
 			return
 		})

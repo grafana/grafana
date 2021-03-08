@@ -12,7 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/plugins"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -48,8 +48,8 @@ func TestQuery_DescribeLogGroups(t *testing.T) {
 		}
 
 		executor := newExecutor(nil)
-		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
-			Queries: []*tsdb.Query{
+		resp, err := executor.DataQuery(context.Background(), fakeDataSource(), plugins.DataQuery{
+			Queries: []plugins.DataSubQuery{
 				{
 					Model: simplejson.NewFromAny(map[string]interface{}{
 						"type":    "logAction",
@@ -62,10 +62,10 @@ func TestQuery_DescribeLogGroups(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 
-		assert.Equal(t, &tsdb.Response{
-			Results: map[string]*tsdb.QueryResult{
+		assert.Equal(t, plugins.DataResponse{
+			Results: map[string]plugins.DataQueryResult{
 				"": {
-					Dataframes: tsdb.NewDecodedDataFrames(data.Frames{
+					Dataframes: plugins.NewDecodedDataFrames(data.Frames{
 						&data.Frame{
 							Name: "logGroups",
 							Fields: []*data.Field{
@@ -101,8 +101,8 @@ func TestQuery_DescribeLogGroups(t *testing.T) {
 		}
 
 		executor := newExecutor(nil)
-		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
-			Queries: []*tsdb.Query{
+		resp, err := executor.DataQuery(context.Background(), fakeDataSource(), plugins.DataQuery{
+			Queries: []plugins.DataSubQuery{
 				{
 					Model: simplejson.NewFromAny(map[string]interface{}{
 						"type":               "logAction",
@@ -115,10 +115,10 @@ func TestQuery_DescribeLogGroups(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 
-		assert.Equal(t, &tsdb.Response{
-			Results: map[string]*tsdb.QueryResult{
+		assert.Equal(t, plugins.DataResponse{
+			Results: map[string]plugins.DataQueryResult{
 				"": {
-					Dataframes: tsdb.NewDecodedDataFrames(data.Frames{
+					Dataframes: plugins.NewDecodedDataFrames(data.Frames{
 						&data.Frame{
 							Name: "logGroups",
 							Fields: []*data.Field{
@@ -171,10 +171,10 @@ func TestQuery_GetLogGroupFields(t *testing.T) {
 	const refID = "A"
 
 	executor := newExecutor(nil)
-	resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
-		Queries: []*tsdb.Query{
+	resp, err := executor.DataQuery(context.Background(), fakeDataSource(), plugins.DataQuery{
+		Queries: []plugins.DataSubQuery{
 			{
-				RefId: refID,
+				RefID: refID,
 				Model: simplejson.NewFromAny(map[string]interface{}{
 					"type":         "logAction",
 					"subtype":      "GetLogGroupFields",
@@ -202,11 +202,11 @@ func TestQuery_GetLogGroupFields(t *testing.T) {
 		},
 	}
 	expFrame.RefID = refID
-	assert.Equal(t, &tsdb.Response{
-		Results: map[string]*tsdb.QueryResult{
+	assert.Equal(t, plugins.DataResponse{
+		Results: map[string]plugins.DataQueryResult{
 			refID: {
-				Dataframes: tsdb.NewDecodedDataFrames(data.Frames{expFrame}),
-				RefId:      refID,
+				Dataframes: plugins.NewDecodedDataFrames(data.Frames{expFrame}),
+				RefID:      refID,
 			},
 		},
 	}, resp)
@@ -244,15 +244,15 @@ func TestQuery_StartQuery(t *testing.T) {
 			},
 		}
 
-		timeRange := &tsdb.TimeRange{
+		timeRange := plugins.DataTimeRange{
 			From: "1584873443000",
 			To:   "1584700643000",
 		}
 
 		executor := newExecutor(nil)
-		_, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
-			TimeRange: timeRange,
-			Queries: []*tsdb.Query{
+		_, err := executor.DataQuery(context.Background(), fakeDataSource(), plugins.DataQuery{
+			TimeRange: &timeRange,
+			Queries: []plugins.DataSubQuery{
 				{
 					Model: simplejson.NewFromAny(map[string]interface{}{
 						"type":        "logAction",
@@ -290,17 +290,17 @@ func TestQuery_StartQuery(t *testing.T) {
 			},
 		}
 
-		timeRange := &tsdb.TimeRange{
+		timeRange := plugins.DataTimeRange{
 			From: "1584700643000",
 			To:   "1584873443000",
 		}
 
 		executor := newExecutor(nil)
-		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
-			TimeRange: timeRange,
-			Queries: []*tsdb.Query{
+		resp, err := executor.DataQuery(context.Background(), fakeDataSource(), plugins.DataQuery{
+			TimeRange: &timeRange,
+			Queries: []plugins.DataSubQuery{
 				{
-					RefId: refID,
+					RefID: refID,
 					Model: simplejson.NewFromAny(map[string]interface{}{
 						"type":        "logAction",
 						"subtype":     "StartQuery",
@@ -324,11 +324,11 @@ func TestQuery_StartQuery(t *testing.T) {
 			},
 			PreferredVisualization: "logs",
 		}
-		assert.Equal(t, &tsdb.Response{
-			Results: map[string]*tsdb.QueryResult{
+		assert.Equal(t, plugins.DataResponse{
+			Results: map[string]plugins.DataQueryResult{
 				refID: {
-					Dataframes: tsdb.NewDecodedDataFrames(data.Frames{expFrame}),
-					RefId:      refID,
+					Dataframes: plugins.NewDecodedDataFrames(data.Frames{expFrame}),
+					RefID:      refID,
 				},
 			},
 		}, resp)
@@ -366,15 +366,15 @@ func TestQuery_StopQuery(t *testing.T) {
 		},
 	}
 
-	timeRange := &tsdb.TimeRange{
+	timeRange := plugins.DataTimeRange{
 		From: "1584873443000",
 		To:   "1584700643000",
 	}
 
 	executor := newExecutor(nil)
-	resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
-		TimeRange: timeRange,
-		Queries: []*tsdb.Query{
+	resp, err := executor.DataQuery(context.Background(), fakeDataSource(), plugins.DataQuery{
+		TimeRange: &timeRange,
+		Queries: []plugins.DataSubQuery{
 			{
 				Model: simplejson.NewFromAny(map[string]interface{}{
 					"type":    "logAction",
@@ -395,10 +395,10 @@ func TestQuery_StopQuery(t *testing.T) {
 			PreferredVisualization: "logs",
 		},
 	}
-	assert.Equal(t, &tsdb.Response{
-		Results: map[string]*tsdb.QueryResult{
+	assert.Equal(t, plugins.DataResponse{
+		Results: map[string]plugins.DataQueryResult{
 			"": {
-				Dataframes: tsdb.NewDecodedDataFrames(data.Frames{expFrame}),
+				Dataframes: plugins.NewDecodedDataFrames(data.Frames{expFrame}),
 			},
 		},
 	}, resp)
@@ -459,10 +459,10 @@ func TestQuery_GetQueryResults(t *testing.T) {
 	}
 
 	executor := newExecutor(nil)
-	resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
-		Queries: []*tsdb.Query{
+	resp, err := executor.DataQuery(context.Background(), fakeDataSource(), plugins.DataQuery{
+		Queries: []plugins.DataSubQuery{
 			{
-				RefId: refID,
+				RefID: refID,
 				Model: simplejson.NewFromAny(map[string]interface{}{
 					"type":    "logAction",
 					"subtype": "GetQueryResults",
@@ -507,11 +507,11 @@ func TestQuery_GetQueryResults(t *testing.T) {
 		PreferredVisualization: "logs",
 	}
 
-	assert.Equal(t, &tsdb.Response{
-		Results: map[string]*tsdb.QueryResult{
+	assert.Equal(t, plugins.DataResponse{
+		Results: map[string]plugins.DataQueryResult{
 			refID: {
-				RefId:      refID,
-				Dataframes: tsdb.NewDecodedDataFrames(data.Frames{expFrame}),
+				RefID:      refID,
+				Dataframes: plugins.NewDecodedDataFrames(data.Frames{expFrame}),
 			},
 		},
 	}, resp)
