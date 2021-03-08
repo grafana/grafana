@@ -145,3 +145,7 @@ func (c fakeRGTAClient) GetResourcesPages(in *resourcegroupstaggingapi.GetResour
 	}, true)
 	return nil
 }
+
+func newDefaultAWSSettings() *awsSettings {
+	return &awsSettings{AllowedAuthProviders: []string{"default"}, AssumeRoleEnabled: true}
+}
