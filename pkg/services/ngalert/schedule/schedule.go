@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/tsdb"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -32,7 +33,8 @@ type ScheduleService interface {
 	overrideCfg(cfg SchedulerCfg)
 }
 
-func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key models.AlertDefinitionKey, evalCh <-chan *evalContext, stopCh <-chan struct{}) error {
+func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key models.AlertDefinitionKey,
+	evalCh <-chan *evalContext, stopCh <-chan struct{}) error {
 	sch.log.Debug("alert definition routine started", "key", key)
 
 	evalRunning := false
@@ -66,11 +68,12 @@ func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key models.Al
 					OrgID:                 alertDefinition.OrgID,
 					QueriesAndExpressions: alertDefinition.Data,
 				}
-				results, err := sch.evaluator.ConditionEval(&condition, ctx.now)
+				results, err := sch.evaluator.ConditionEval(&condition, ctx.now, sch.dataService)
 				end = timeNow()
 				if err != nil {
 					// consider saving alert instance on error
-					sch.log.Error("failed to evaluate alert definition", "title", alertDefinition.Title, "key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "error", err)
+					sch.log.Error("failed to evaluate alert definition", "title", alertDefinition.Title,
+						"key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "error", err)
 					return err
 				}
 				for _, r := range results {
@@ -137,6 +140,8 @@ type schedule struct {
 	evaluator eval.Evaluator
 
 	store store.Store
+
+	dataService *tsdb.Service
 }
 
 // SchedulerCfg is the scheduler configuration.
@@ -152,7 +157,7 @@ type SchedulerCfg struct {
 }
 
 // NewScheduler returns a new schedule.
-func NewScheduler(cfg SchedulerCfg) *schedule {
+func NewScheduler(cfg SchedulerCfg, dataService *tsdb.Service) *schedule {
 	ticker := alerting.NewTicker(cfg.C.Now(), time.Second*0, cfg.C, int64(cfg.BaseInterval.Seconds()))
 	sch := schedule{
 		registry:        alertDefinitionRegistry{alertDefinitionInfo: make(map[models.AlertDefinitionKey]alertDefinitionInfo)},
@@ -165,6 +170,7 @@ func NewScheduler(cfg SchedulerCfg) *schedule {
 		stopAppliedFunc: cfg.StopAppliedFunc,
 		evaluator:       cfg.Evaluator,
 		store:           cfg.Store,
+		dataService:     dataService,
 	}
 	return &sch
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/tsdb"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -39,6 +40,7 @@ type AlertNG struct {
 	DatasourceCache datasources.CacheService `inject:""`
 	RouteRegister   routing.RouteRegister    `inject:""`
 	SQLStore        *sqlstore.SQLStore       `inject:""`
+	DataService     *tsdb.Service            `inject:""`
 	Log             log.Logger
 	schedule        schedule.ScheduleService
 }
@@ -63,12 +65,13 @@ func (ng *AlertNG) Init() error {
 		Evaluator:    eval.Evaluator{Cfg: ng.Cfg},
 		Store:        store,
 	}
-	ng.schedule = schedule.NewScheduler(schedCfg)
+	ng.schedule = schedule.NewScheduler(schedCfg, ng.DataService)
 
 	api := api.API{
 		Cfg:             ng.Cfg,
 		DatasourceCache: ng.DatasourceCache,
 		RouteRegister:   ng.RouteRegister,
+		DataService:     ng.DataService,
 		Schedule:        ng.schedule,
 		Store:           store}
 	api.RegisterAPIEndpoints()

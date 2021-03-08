@@ -43,7 +43,6 @@ UPlotConfigBuilder {
     "x": false,
     "y": false,
   },
-  "getTimeZone": [Function],
   "hasBottomAxis": true,
   "hasLeftAxis": true,
   "hooks": Object {
@@ -116,6 +115,7 @@ UPlotConfigBuilder {
       },
     },
   ],
+  "tz": "UTC",
   "tzDate": [Function],
 }
 `;
@@ -163,7 +163,6 @@ UPlotConfigBuilder {
     "x": false,
     "y": false,
   },
-  "getTimeZone": [Function],
   "hasBottomAxis": true,
   "hasLeftAxis": true,
   "hooks": Object {
@@ -236,6 +235,7 @@ UPlotConfigBuilder {
       },
     },
   ],
+  "tz": "UTC",
   "tzDate": [Function],
 }
 `;
@@ -283,7 +283,6 @@ UPlotConfigBuilder {
     "x": false,
     "y": false,
   },
-  "getTimeZone": [Function],
   "hasBottomAxis": true,
   "hasLeftAxis": true,
   "hooks": Object {
@@ -356,6 +355,7 @@ UPlotConfigBuilder {
       },
     },
   ],
+  "tz": "UTC",
   "tzDate": [Function],
 }
 `;
@@ -403,7 +403,6 @@ UPlotConfigBuilder {
     "x": false,
     "y": false,
   },
-  "getTimeZone": [Function],
   "hasBottomAxis": true,
   "hasLeftAxis": true,
   "hooks": Object {
@@ -476,6 +475,7 @@ UPlotConfigBuilder {
       },
     },
   ],
+  "tz": "UTC",
   "tzDate": [Function],
 }
 `;
@@ -523,7 +523,6 @@ UPlotConfigBuilder {
     "x": false,
     "y": false,
   },
-  "getTimeZone": [Function],
   "hasBottomAxis": true,
   "hasLeftAxis": true,
   "hooks": Object {
@@ -596,6 +595,7 @@ UPlotConfigBuilder {
       },
     },
   ],
+  "tz": "UTC",
   "tzDate": [Function],
 }
 `;
@@ -643,7 +643,6 @@ UPlotConfigBuilder {
     "x": false,
     "y": false,
   },
-  "getTimeZone": [Function],
   "hasBottomAxis": true,
   "hasLeftAxis": true,
   "hooks": Object {
@@ -716,6 +715,7 @@ UPlotConfigBuilder {
       },
     },
   ],
+  "tz": "UTC",
   "tzDate": [Function],
 }
 `;
@@ -763,7 +763,6 @@ UPlotConfigBuilder {
     "x": false,
     "y": false,
   },
-  "getTimeZone": [Function],
   "hasBottomAxis": true,
   "hasLeftAxis": true,
   "hooks": Object {
@@ -836,6 +835,7 @@ UPlotConfigBuilder {
       },
     },
   ],
+  "tz": "UTC",
   "tzDate": [Function],
 }
 `;
@@ -883,7 +883,6 @@ UPlotConfigBuilder {
     "x": false,
     "y": false,
   },
-  "getTimeZone": [Function],
   "hasBottomAxis": true,
   "hasLeftAxis": true,
   "hooks": Object {
@@ -956,6 +955,7 @@ UPlotConfigBuilder {
       },
     },
   ],
+  "tz": "UTC",
   "tzDate": [Function],
 }
 `;

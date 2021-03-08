@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/tsdb/interval"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -15,7 +15,7 @@ func TestSearchRequest(t *testing.T) {
 	Convey("Test elasticsearch search request", t, func() {
 		timeField := "@timestamp"
 		Convey("Given new search request builder for es version 5", func() {
-			b := NewSearchRequestBuilder(5, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
+			b := NewSearchRequestBuilder(5, interval.Interval{Value: 15 * time.Second, Text: "15s"})
 
 			Convey("When building search request", func() {
 				sr, err := b.Build()
@@ -390,7 +390,7 @@ func TestSearchRequest(t *testing.T) {
 		})
 
 		Convey("Given new search request builder for es version 2", func() {
-			b := NewSearchRequestBuilder(2, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
+			b := NewSearchRequestBuilder(2, interval.Interval{Value: 15 * time.Second, Text: "15s"})
 
 			Convey("When adding doc value field", func() {
 				b.AddDocValueField(timeField)
@@ -449,7 +449,7 @@ func TestMultiSearchRequest(t *testing.T) {
 			b := NewMultiSearchRequestBuilder(0)
 
 			Convey("When adding one search request", func() {
-				b.Search(tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
+				b.Search(interval.Interval{Value: 15 * time.Second, Text: "15s"})
 
 				Convey("When building search request should contain one search request", func() {
 					mr, err := b.Build()
@@ -459,8 +459,8 @@ func TestMultiSearchRequest(t *testing.T) {
 			})
 
 			Convey("When adding two search requests", func() {
-				b.Search(tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
-				b.Search(tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
+				b.Search(interval.Interval{Value: 15 * time.Second, Text: "15s"})
+				b.Search(interval.Interval{Value: 15 * time.Second, Text: "15s"})
 
 				Convey("When building search request should contain two search requests", func() {
 					mr, err := b.Build()
