@@ -8,38 +8,40 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/plugins"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestMacroEngine(t *testing.T) {
 	Convey("MacroEngine", t, func() {
-		engine := &msSqlMacroEngine{}
-		query := &tsdb.Query{
+		engine := &msSQLMacroEngine{}
+		query := plugins.DataSubQuery{
 			Model: simplejson.New(),
 		}
+
+		dfltTimeRange := plugins.DataTimeRange{}
 
 		Convey("Given a time range between 2018-04-12 00:00 and 2018-04-12 00:05", func() {
 			from := time.Date(2018, 4, 12, 18, 0, 0, 0, time.UTC)
 			to := from.Add(5 * time.Minute)
-			timeRange := tsdb.NewFakeTimeRange("5m", "now", to)
+			timeRange := plugins.DataTimeRange{From: "5m", Now: to, To: "now"}
 
 			Convey("interpolate __time function", func() {
-				sql, err := engine.Interpolate(query, nil, "select $__time(time_column)")
+				sql, err := engine.Interpolate(query, dfltTimeRange, "select $__time(time_column)")
 				So(err, ShouldBeNil)
 
 				So(sql, ShouldEqual, "select time_column AS time")
 			})
 
 			Convey("interpolate __timeEpoch function", func() {
-				sql, err := engine.Interpolate(query, nil, "select $__timeEpoch(time_column)")
+				sql, err := engine.Interpolate(query, dfltTimeRange, "select $__timeEpoch(time_column)")
 				So(err, ShouldBeNil)
 
 				So(sql, ShouldEqual, "select DATEDIFF(second, '1970-01-01', time_column) AS time")
 			})
 
 			Convey("interpolate __timeEpoch function wrapped in aggregation", func() {
-				sql, err := engine.Interpolate(query, nil, "select min($__timeEpoch(time_column))")
+				sql, err := engine.Interpolate(query, dfltTimeRange, "select min($__timeEpoch(time_column))")
 				So(err, ShouldBeNil)
 
 				So(sql, ShouldEqual, "select min(DATEDIFF(second, '1970-01-01', time_column) AS time)")
@@ -166,7 +168,9 @@ func TestMacroEngine(t *testing.T) {
 		Convey("Given a time range between 1960-02-01 07:00 and 1965-02-03 08:00", func() {
 			from := time.Date(1960, 2, 1, 7, 0, 0, 0, time.UTC)
 			to := time.Date(1965, 2, 3, 8, 0, 0, 0, time.UTC)
-			timeRange := tsdb.NewTimeRange(strconv.FormatInt(from.UnixNano()/int64(time.Millisecond), 10), strconv.FormatInt(to.UnixNano()/int64(time.Millisecond), 10))
+			timeRange := plugins.NewDataTimeRange(
+				strconv.FormatInt(from.UnixNano()/int64(time.Millisecond), 10),
+				strconv.FormatInt(to.UnixNano()/int64(time.Millisecond), 10))
 
 			Convey("interpolate __timeFilter function", func() {
 				sql, err := engine.Interpolate(query, timeRange, "WHERE $__timeFilter(time_column)")
@@ -193,7 +197,9 @@ func TestMacroEngine(t *testing.T) {
 		Convey("Given a time range between 1960-02-01 07:00 and 1980-02-03 08:00", func() {
 			from := time.Date(1960, 2, 1, 7, 0, 0, 0, time.UTC)
 			to := time.Date(1980, 2, 3, 8, 0, 0, 0, time.UTC)
-			timeRange := tsdb.NewTimeRange(strconv.FormatInt(from.UnixNano()/int64(time.Millisecond), 10), strconv.FormatInt(to.UnixNano()/int64(time.Millisecond), 10))
+			timeRange := plugins.NewDataTimeRange(
+				strconv.FormatInt(from.UnixNano()/int64(time.Millisecond), 10),
+				strconv.FormatInt(to.UnixNano()/int64(time.Millisecond), 10))
 
 			Convey("interpolate __timeFilter function", func() {
 				sql, err := engine.Interpolate(query, timeRange, "WHERE $__timeFilter(time_column)")

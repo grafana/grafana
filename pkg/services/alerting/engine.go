@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	tlog "github.com/opentracing/opentracing-go/log"
@@ -26,6 +27,7 @@ type AlertEngine struct {
 	RenderService    rendering.Service             `inject:""`
 	Bus              bus.Bus                       `inject:""`
 	RequestValidator models.PluginRequestValidator `inject:""`
+	DataService      *tsdb.Service                 `inject:""`
 
 	execQueue     chan *Job
 	ticker        *Ticker
@@ -50,7 +52,7 @@ func (e *AlertEngine) Init() error {
 	e.ticker = NewTicker(time.Now(), time.Second*0, clock.New(), 1)
 	e.execQueue = make(chan *Job, 1000)
 	e.scheduler = newScheduler()
-	e.evalHandler = NewEvalHandler()
+	e.evalHandler = NewEvalHandler(e.DataService)
 	e.ruleReader = newRuleReader()
 	e.log = log.New("alerting.engine")
 	e.resultHandler = newResultHandler(e.RenderService)
