@@ -29,6 +29,7 @@ func addRBACMigrations(mg *migrator.Migrator) {
 			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "name", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "description", Type: migrator.DB_Text, Nullable: true},
+			{Name: "version", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "org_id", Type: migrator.DB_BigInt},
 			{Name: "uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: false},
 			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},

@@ -14,6 +14,7 @@ import (
 
 // timeNow makes it possible to test usage of time
 var timeNow = time.Now
+var errVersionLE = fmt.Errorf("the provided policy version is smaller than or equal to stored policy")
 
 func (ac *RBACService) GetPolicies(ctx context.Context, orgID int64) ([]*Policy, error) {
 	var result []*Policy
@@ -175,9 +176,25 @@ func (ac *RBACService) UpdatePolicy(ctx context.Context, cmd UpdatePolicyCommand
 			return err
 		}
 
+		version := existingPolicy.Version + 1
+		if cmd.Version != 0 {
+			if existingPolicy.Version >= cmd.Version {
+				return fmt.Errorf(
+					"could not update '%s' (UID %s) from version %d to %d: %w",
+					cmd.Name,
+					existingPolicy.UID,
+					existingPolicy.Version,
+					cmd.Version,
+					errVersionLE,
+				)
+			}
+			version = cmd.Version
+		}
+
 		policy := &Policy{
 			Id:          existingPolicy.Id,
 			UID:         existingPolicy.UID,
+			Version:     version,
 			OrgId:       existingPolicy.OrgId,
 			Name:        cmd.Name,
 			Description: cmd.Description,
@@ -196,6 +213,7 @@ func (ac *RBACService) UpdatePolicy(ctx context.Context, cmd UpdatePolicyCommand
 
 		result = &PolicyDTO{
 			Id:          policy.Id,
+			Version:     version,
 			UID:         policy.UID,
 			OrgId:       policy.OrgId,
 			Name:        policy.Name,
@@ -581,6 +599,7 @@ func getPolicyByUID(sess *sqlstore.DBSession, uid string, orgId int64) (*PolicyD
 	policyDTO := PolicyDTO{
 		Id:          policy.Id,
 		UID:         policy.UID,
+		Version:     policy.Version,
 		OrgId:       policy.OrgId,
 		Name:        policy.Name,
 		Description: policy.Description,

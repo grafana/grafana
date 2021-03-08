@@ -20,6 +20,7 @@ var (
 type Policy struct {
 	Id          int64  `json:"id"`
 	OrgId       int64  `json:"orgId"`
+	Version     int64  `json:"version"`
 	UID         string `xorm:"uid" json:"uid"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
@@ -31,6 +32,7 @@ type Policy struct {
 type PolicyDTO struct {
 	Id          int64        `json:"id"`
 	OrgId       int64        `json:"orgId"`
+	Version     int64        `json:"version"`
 	UID         string       `xorm:"uid" json:"uid"`
 	Name        string       `json:"name"`
 	Description string       `json:"description"`
@@ -116,6 +118,7 @@ type DeletePermissionCommand struct {
 type CreatePolicyCommand struct {
 	OrgId       int64  `json:"-"`
 	UID         string `json:"uid"`
+	Version     int64  `json:"version"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 }
@@ -123,6 +126,7 @@ type CreatePolicyCommand struct {
 type CreatePolicyWithPermissionsCommand struct {
 	OrgId       int64        `json:"orgId"`
 	UID         string       `json:"uid"`
+	Version     int64        `json:"version"`
 	Name        string       `json:"name"`
 	Description string       `json:"description"`
 	Permissions []Permission `json:"permissions"`
@@ -131,6 +135,7 @@ type CreatePolicyWithPermissionsCommand struct {
 type UpdatePolicyCommand struct {
 	Id          int64        `json:"id"`
 	OrgId       int64        `json:"orgId"`
+	Version     int64        `json:"version"`
 	UID         string       `json:"uid"`
 	Name        string       `json:"name"`
 	Description string       `json:"description"`
