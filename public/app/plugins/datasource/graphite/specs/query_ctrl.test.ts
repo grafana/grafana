@@ -202,6 +202,7 @@ describe('GraphiteQueryCtrl', () => {
         })
       );
     });
+
     it('getTags should handle autocomplete errors', async () => {
       await expect(async () => {
         await ctx.ctrl.getTags(0, 'any');
@@ -212,6 +213,7 @@ describe('GraphiteQueryCtrl', () => {
         );
       }).not.toThrow();
     });
+
     it('getTags should display the error message only once', async () => {
       await ctx.ctrl.getTags(0, 'any');
       expect(mockDispatch.mock.calls.length).toBe(1);
@@ -219,6 +221,7 @@ describe('GraphiteQueryCtrl', () => {
       await ctx.ctrl.getTags(0, 'any');
       expect(mockDispatch.mock.calls.length).toBe(1);
     });
+
     it('getTagsAsSegments should handle autocomplete errors', async () => {
       await expect(async () => {
         await ctx.ctrl.getTagsAsSegments('any');
@@ -229,6 +232,7 @@ describe('GraphiteQueryCtrl', () => {
         );
       }).not.toThrow();
     });
+
     it('getTagsAsSegments should display the error message only once', async () => {
       await ctx.ctrl.getTagsAsSegments('any');
       expect(mockDispatch.mock.calls.length).toBe(1);

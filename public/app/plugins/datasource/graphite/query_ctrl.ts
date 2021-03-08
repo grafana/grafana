@@ -25,7 +25,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   paused: boolean;
 
   // to avoid error flooding, it's shown only once per session
-  private _autoCompleteErrorShown = false;
+  private _tagsAutoCompleteErrorShown = false;
 
   /** @ngInject */
   constructor(
@@ -343,7 +343,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
         return mapToDropdownOptions(altTags);
       })
       .catch((err: any) => {
-        this.handleTagsAutocompleteAlert(err);
+        this.handleTagsAutoCompleteError(err);
       });
   }
 
@@ -361,7 +361,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
         });
       })
       .catch((err: any) => {
-        this.handleTagsAutocompleteAlert(err);
+        this.handleTagsAutoCompleteError(err);
       });
   }
 
@@ -430,10 +430,10 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     return this.target.target;
   }
 
-  private handleTagsAutocompleteAlert(error: Error): void {
+  private handleTagsAutoCompleteError(error: Error): void {
     console.log(error);
-    if (!this._autoCompleteErrorShown) {
-      this._autoCompleteErrorShown = true;
+    if (!this._tagsAutoCompleteErrorShown) {
+      this._tagsAutoCompleteErrorShown = true;
       dispatch(
         notifyApp(createErrorNotification(`Fetching tags failed: ${error.message}. Check console for more details.`))
       );
