@@ -6,8 +6,8 @@ describe('LocationService', () => {
       locationService.push('/test?query1=false&query2=123&query3=text');
 
       expect(locationService.getSearchObject()).toEqual({
-        query1: 'false',
-        query2: '123',
+        query1: false,
+        query2: 123,
         query3: 'text',
       });
     });

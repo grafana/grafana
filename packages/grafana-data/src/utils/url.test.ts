@@ -34,4 +34,14 @@ describe('parseKeyValue', () => {
     const obj = urlUtil.parseKeyValue('servers=A&servers=B');
     expect(obj).toEqual({ servers: ['A', 'B'] });
   });
+
+  it('should parse numeric params', () => {
+    const obj = urlUtil.parseKeyValue('num1=12&num2=12.2');
+    expect(obj).toEqual({ num1: 12, num2: 12.2 });
+  });
+
+  it('should parse boolean params', () => {
+    const obj = urlUtil.parseKeyValue('bool1&bool2=true&bool3=false');
+    expect(obj).toEqual({ bool1: true, bool2: true, bool3: false });
+  });
 });
