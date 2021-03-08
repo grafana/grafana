@@ -1,5 +1,4 @@
 import angular from 'angular';
-import { config } from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import { ThresholdManager } from '../threshold_manager';
 

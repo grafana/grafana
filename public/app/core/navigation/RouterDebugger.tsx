@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { routes } from '../../routes/routes';
+import { getAppRoutes } from '../../routes/routes';
 import { PageContents } from '../components/Page/PageContents';
 import { RouteDescriptor } from './types';
 
@@ -10,7 +10,7 @@ export const RouterDebugger: React.FC<any> = () => {
     <PageContents>
       <h1>Static routes</h1>
       <ul>
-        {routes.map((r, i) => {
+        {getAppRoutes().map((r, i) => {
           if (r.path.indexOf(':') > -1 || r.path.indexOf('test') > -1) {
             if (r.path.indexOf('test') === -1) {
               manualRoutes.push(r);
