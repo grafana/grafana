@@ -12,7 +12,7 @@ This guide assumes that you're already familiar with how to [Build a data source
 
 ## Add annotations support to your data source
 
-To enable annotation support for your data source, you need to add the following two lines of code. Grafana uses your default query editor for editing annotation queries.
+To enable annotation support for your data source, add the following two lines of code. Grafana uses your default query editor for editing annotation queries.
 
 1. Add `"annotations": true` to the [plugin.json]({{< relref "metadata.md" >}}) file.
 
