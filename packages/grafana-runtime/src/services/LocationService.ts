@@ -20,7 +20,8 @@ export interface LocationService {
   update: (update: LocationUpdate) => void;
 }
 
-class HistoryWrapper implements LocationService {
+/** @internal */
+export class HistoryWrapper implements LocationService {
   private readonly history: H.History;
 
   constructor(history?: H.History) {
@@ -134,15 +135,30 @@ class HistoryWrapper implements LocationService {
  * @alpha
  * Parses a location search string to an object
  * */
-export function locationSearchToObject(search: string): UrlQueryMap {
-  if (search.length > 0) {
-    return urlUtil.parseKeyValue(search.substring(1));
+export function locationSearchToObject(search: string | number): UrlQueryMap {
+  let queryString = typeof search === 'number' ? String(search) : search;
+
+  if (queryString.length > 0) {
+    if (queryString.startsWith('?')) {
+      return urlUtil.parseKeyValue(queryString.substring(1));
+    }
+    return urlUtil.parseKeyValue(queryString);
   }
 
   return {};
 }
 
-export const locationService: LocationService = new HistoryWrapper();
+export let locationService: LocationService = new HistoryWrapper();
+
+/** @internal
+ * Used for tests only
+ */
+export const setLocationService = (location: LocationService) => {
+  if (process.env.NODE_ENV !== 'test') {
+    throw new Error('locationService can be only overriden in test environment');
+  }
+  locationService = location;
+};
 
 /** @internal */
 export const navigationLogger = createLogger('Router');

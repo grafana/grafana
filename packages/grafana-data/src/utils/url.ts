@@ -2,6 +2,7 @@
  * @preserve jquery-param (c) 2015 KNOWLEDGECODE | MIT
  */
 
+import _ from 'lodash';
 import { ExploreUrlState } from '../types/explore';
 
 /**
@@ -153,12 +154,19 @@ export function parseKeyValue(keyValue: string) {
       if (key !== undefined) {
         val = val !== undefined ? tryDecodeURIComponent(val as string) : true;
 
+        let parsedVal: any;
+        if (typeof val === 'string') {
+          parsedVal = val === 'true' || val === 'false' ? val === 'true' : _.toNumber(val);
+        } else {
+          parsedVal = val;
+        }
+
         if (!obj.hasOwnProperty(key)) {
-          obj[key] = val;
+          obj[key] = isNaN(parsedVal) ? val : parsedVal;
         } else if (Array.isArray(obj[key])) {
           obj[key].push(val);
         } else {
-          obj[key] = [obj[key], val];
+          obj[key] = [obj[key], isNaN(parsedVal) ? val : parsedVal];
         }
       }
     }
