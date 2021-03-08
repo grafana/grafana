@@ -10,7 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/tsdb/interval"
 	"github.com/grafana/loki/pkg/logcli/client"
 	"github.com/grafana/loki/pkg/loghttp"
 	"github.com/grafana/loki/pkg/logproto"
@@ -18,28 +19,30 @@ import (
 	"github.com/prometheus/common/model"
 )
 
-type LokiExecutor struct{}
+type LokiExecutor struct {
+	intervalCalculator interval.Calculator
+}
 
-func NewLokiExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-	return &LokiExecutor{}, nil
+func NewExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
+	return newExecutor(), nil
+}
+
+func newExecutor() *LokiExecutor {
+	return &LokiExecutor{
+		intervalCalculator: interval.NewCalculator(interval.CalculatorOptions{MinInterval: time.Second * 1}),
+	}
 }
 
 var (
-	plog               log.Logger
-	legendFormat       *regexp.Regexp
-	intervalCalculator tsdb.IntervalCalculator
+	plog         = log.New("tsdb.loki")
+	legendFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 )
 
-func init() {
-	plog = log.New("tsdb.loki")
-	tsdb.RegisterTsdbQueryEndpoint("loki", NewLokiExecutor)
-	legendFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
-	intervalCalculator = tsdb.NewIntervalCalculator(&tsdb.IntervalOptions{MinInterval: time.Second * 1})
-}
-
-func (e *LokiExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	result := &tsdb.Response{
-		Results: map[string]*tsdb.QueryResult{},
+// DataQuery executes a Loki query.
+func (e *LokiExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource,
+	queryContext plugins.DataQuery) (plugins.DataResponse, error) {
+	result := plugins.DataResponse{
+		Results: map[string]plugins.DataQueryResult{},
 	}
 
 	client := &client.DefaultClient{
@@ -48,9 +51,9 @@ func (e *LokiExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsd
 		Password: dsInfo.DecryptedBasicAuthPassword(),
 	}
 
-	queries, err := parseQuery(dsInfo, tsdbQuery.Queries, tsdbQuery)
+	queries, err := e.parseQuery(dsInfo, queryContext)
 	if err != nil {
-		return nil, err
+		return plugins.DataResponse{}, err
 	}
 
 	for _, query := range queries {
@@ -67,23 +70,22 @@ func (e *LokiExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsd
 		interval := time.Second * 1
 
 		value, err := client.QueryRange(query.Expr, limit, query.Start, query.End, logproto.BACKWARD, query.Step, interval, false)
-
 		if err != nil {
-			return nil, err
+			return plugins.DataResponse{}, err
 		}
 
 		queryResult, err := parseResponse(value, query)
 		if err != nil {
-			return nil, err
+			return plugins.DataResponse{}, err
 		}
-		result.Results[query.RefId] = queryResult
+		result.Results[query.RefID] = queryResult
 	}
 
 	return result, nil
 }
 
 //If legend (using of name or pattern instead of time series name) is used, use that name/pattern for formatting
-func formatLegend(metric model.Metric, query *LokiQuery) string {
+func formatLegend(metric model.Metric, query *lokiQuery) string {
 	if query.LegendFormat == "" {
 		return metric.String()
 	}
@@ -101,9 +103,9 @@ func formatLegend(metric model.Metric, query *LokiQuery) string {
 	return string(result)
 }
 
-func parseQuery(dsInfo *models.DataSource, queries []*tsdb.Query, queryContext *tsdb.TsdbQuery) ([]*LokiQuery, error) {
-	qs := []*LokiQuery{}
-	for _, queryModel := range queries {
+func (e *LokiExecutor) parseQuery(dsInfo *models.DataSource, queryContext plugins.DataQuery) ([]*lokiQuery, error) {
+	qs := []*lokiQuery{}
+	for _, queryModel := range queryContext.Queries {
 		expr, err := queryModel.Model.Get("expr").String()
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse Expr: %v", err)
@@ -121,29 +123,29 @@ func parseQuery(dsInfo *models.DataSource, queries []*tsdb.Query, queryContext *
 			return nil, fmt.Errorf("failed to parse To: %v", err)
 		}
 
-		dsInterval, err := tsdb.GetIntervalFrom(dsInfo, queryModel.Model, time.Second)
+		dsInterval, err := interval.GetIntervalFrom(dsInfo, queryModel.Model, time.Second)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse Interval: %v", err)
 		}
 
-		interval := intervalCalculator.Calculate(queryContext.TimeRange, dsInterval)
+		interval := e.intervalCalculator.Calculate(*queryContext.TimeRange, dsInterval)
 		step := time.Duration(int64(interval.Value))
 
-		qs = append(qs, &LokiQuery{
+		qs = append(qs, &lokiQuery{
 			Expr:         expr,
 			Step:         step,
 			LegendFormat: format,
 			Start:        start,
 			End:          end,
-			RefId:        queryModel.RefId,
+			RefID:        queryModel.RefID,
 		})
 	}
 
 	return qs, nil
 }
 
-func parseResponse(value *loghttp.QueryResponse, query *LokiQuery) (*tsdb.QueryResult, error) {
-	queryRes := tsdb.NewQueryResult()
+func parseResponse(value *loghttp.QueryResponse, query *lokiQuery) (plugins.DataQueryResult, error) {
+	var queryRes plugins.DataQueryResult
 
 	//We are currently processing only matrix results (for alerting)
 	data, ok := value.Data.Result.(loghttp.Matrix)
@@ -152,10 +154,10 @@ func parseResponse(value *loghttp.QueryResponse, query *LokiQuery) (*tsdb.QueryR
 	}
 
 	for _, v := range data {
-		series := tsdb.TimeSeries{
+		series := plugins.DataTimeSeries{
 			Name:   formatLegend(v.Metric, query),
 			Tags:   make(map[string]string, len(v.Metric)),
-			Points: make([]tsdb.TimePoint, 0, len(v.Values)),
+			Points: make([]plugins.DataTimePoint, 0, len(v.Values)),
 		}
 
 		for k, v := range v.Metric {
@@ -163,10 +165,12 @@ func parseResponse(value *loghttp.QueryResponse, query *LokiQuery) (*tsdb.QueryR
 		}
 
 		for _, k := range v.Values {
-			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(float64(k.Value)), float64(k.Timestamp.Unix()*1000)))
+			series.Points = append(series.Points, plugins.DataTimePoint{
+				null.FloatFrom(float64(k.Value)), null.FloatFrom(float64(k.Timestamp.Unix() * 1000)),
+			})
 		}
 
-		queryRes.Series = append(queryRes.Series, &series)
+		queryRes.Series = append(queryRes.Series, series)
 	}
 
 	return queryRes, nil

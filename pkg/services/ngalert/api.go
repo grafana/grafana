@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr/translate"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/setting"
@@ -22,6 +23,7 @@ type apiImpl struct {
 	Cfg             *setting.Cfg             `inject:""`
 	DatasourceCache datasources.CacheService `inject:""`
 	RouteRegister   routing.RouteRegister    `inject:""`
+	DataService     *tsdb.Service
 	schedule        scheduleService
 	store           store
 }
@@ -79,13 +81,13 @@ func (api *apiImpl) conditionEvalOldEndpoint(c *models.ReqContext) response.Resp
 	//}
 
 	evaluator := eval.Evaluator{Cfg: api.Cfg}
-	evalResults, err := evaluator.ConditionEval(evalCond, timeNow())
+	evalResults, err := evaluator.ConditionEval(evalCond, timeNow(), api.DataService)
 	if err != nil {
 		return response.Error(400, "Failed to evaluate conditions", err)
 	}
 
 	frame := evalResults.AsDataFrame()
-	df := tsdb.NewDecodedDataFrames([]*data.Frame{&frame})
+	df := plugins.NewDecodedDataFrames([]*data.Frame{&frame})
 	instances, err := df.Encoded()
 	if err != nil {
 		return response.Error(400, "Failed to encode result dataframes", err)
@@ -137,13 +139,13 @@ func (api *apiImpl) conditionEvalOldEndpointByID(c *models.ReqContext) response.
 	//}
 
 	evaluator := eval.Evaluator{Cfg: api.Cfg}
-	evalResults, err := evaluator.ConditionEval(evalCond, timeNow())
+	evalResults, err := evaluator.ConditionEval(evalCond, timeNow(), api.DataService)
 	if err != nil {
 		return response.Error(400, "Failed to evaluate conditions", err)
 	}
 
 	frame := evalResults.AsDataFrame()
-	df := tsdb.NewDecodedDataFrames([]*data.Frame{&frame})
+	df := plugins.NewDecodedDataFrames([]*data.Frame{&frame})
 	instances, err := df.Encoded()
 	if err != nil {
 		return response.Error(400, "Failed to encode result dataframes", err)
@@ -171,13 +173,13 @@ func (api *apiImpl) conditionEvalEndpoint(c *models.ReqContext, cmd evalAlertCon
 	}
 
 	evaluator := eval.Evaluator{Cfg: api.Cfg}
-	evalResults, err := evaluator.ConditionEval(&evalCond, timeNow())
+	evalResults, err := evaluator.ConditionEval(&evalCond, timeNow(), api.DataService)
 	if err != nil {
 		return response.Error(400, "Failed to evaluate conditions", err)
 	}
 
 	frame := evalResults.AsDataFrame()
-	df := tsdb.NewDecodedDataFrames([]*data.Frame{&frame})
+	df := plugins.NewDecodedDataFrames([]*data.Frame{&frame})
 	instances, err := df.Encoded()
 	if err != nil {
 		return response.Error(400, "Failed to encode result dataframes", err)
@@ -202,13 +204,13 @@ func (api *apiImpl) alertDefinitionEvalEndpoint(c *models.ReqContext) response.R
 	}
 
 	evaluator := eval.Evaluator{Cfg: api.Cfg}
-	evalResults, err := evaluator.ConditionEval(condition, timeNow())
+	evalResults, err := evaluator.ConditionEval(condition, timeNow(), api.DataService)
 	if err != nil {
 		return response.Error(400, "Failed to evaluate alert", err)
 	}
 	frame := evalResults.AsDataFrame()
 
-	df := tsdb.NewDecodedDataFrames([]*data.Frame{&frame})
+	df := plugins.NewDecodedDataFrames([]*data.Frame{&frame})
 	if err != nil {
 		return response.Error(400, "Failed to instantiate Dataframes from the decoded frames", err)
 	}

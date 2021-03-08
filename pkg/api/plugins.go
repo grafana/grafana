@@ -14,8 +14,9 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/datasource/wrapper"
+	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -25,7 +26,7 @@ var ErrPluginNotFound error = errors.New("plugin not found, no installed plugin 
 
 func (hs *HTTPServer) getPluginContext(pluginID string, user *models.SignedInUser) (backend.PluginContext, error) {
 	pc := backend.PluginContext{}
-	plugin, exists := plugins.Plugins[pluginID]
+	plugin, exists := manager.Plugins[pluginID]
 	if !exists {
 		return pc, ErrPluginNotFound
 	}
@@ -53,7 +54,7 @@ func (hs *HTTPServer) getPluginContext(pluginID string, user *models.SignedInUse
 	return backend.PluginContext{
 		OrgID:    user.OrgId,
 		PluginID: plugin.Id,
-		User:     wrapper.BackendUserFromSignedInUser(user),
+		User:     adapters.BackendUserFromSignedInUser(user),
 		AppInstanceSettings: &backend.AppInstanceSettings{
 			JSONData:                jsonData,
 			DecryptedSecureJSONData: decryptedSecureJSONData,
@@ -73,14 +74,14 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 		coreFilter = "1"
 	}
 
-	pluginSettingsMap, err := plugins.GetPluginSettings(c.OrgId)
+	pluginSettingsMap, err := hs.PluginManager.GetPluginSettings(c.OrgId)
 
 	if err != nil {
 		return response.Error(500, "Failed to get list of plugins", err)
 	}
 
 	result := make(dtos.PluginList, 0)
-	for _, pluginDef := range plugins.Plugins {
+	for _, pluginDef := range manager.Plugins {
 		// filter out app sub plugins
 		if embeddedFilter == "0" && pluginDef.IncludedInAppId != "" {
 			continue
@@ -130,7 +131,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 		}
 
 		// filter out built in data sources
-		if ds, exists := plugins.DataSources[pluginDef.Id]; exists {
+		if ds, exists := manager.DataSources[pluginDef.Id]; exists {
 			if ds.BuiltIn {
 				continue
 			}
@@ -146,7 +147,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 func GetPluginSettingByID(c *models.ReqContext) response.Response {
 	pluginID := c.Params(":pluginId")
 
-	def, exists := plugins.Plugins[pluginID]
+	def, exists := manager.Plugins[pluginID]
 	if !exists {
 		return response.Error(404, "Plugin not found, no installed plugin with that id", nil)
 	}
@@ -169,7 +170,7 @@ func GetPluginSettingByID(c *models.ReqContext) response.Response {
 		SignatureOrg:  def.SignatureOrg,
 	}
 
-	if app, ok := plugins.Apps[def.Id]; ok {
+	if app, ok := manager.Apps[def.Id]; ok {
 		dto.Enabled = app.AutoEnabled
 		dto.Pinned = app.AutoEnabled
 	}
@@ -194,7 +195,7 @@ func UpdatePluginSetting(c *models.ReqContext, cmd models.UpdatePluginSettingCmd
 	cmd.OrgId = c.OrgId
 	cmd.PluginId = pluginID
 
-	if _, ok := plugins.Apps[cmd.PluginId]; !ok {
+	if _, ok := manager.Apps[cmd.PluginId]; !ok {
 		return response.Error(404, "Plugin not installed.", nil)
 	}
 
@@ -205,10 +206,10 @@ func UpdatePluginSetting(c *models.ReqContext, cmd models.UpdatePluginSettingCmd
 	return response.Success("Plugin settings updated")
 }
 
-func GetPluginDashboards(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetPluginDashboards(c *models.ReqContext) response.Response {
 	pluginID := c.Params(":pluginId")
 
-	list, err := plugins.GetPluginDashboards(c.OrgId, pluginID)
+	list, err := hs.PluginManager.GetPluginDashboards(c.OrgId, pluginID)
 	if err != nil {
 		var notFound plugins.PluginNotFoundError
 		if errors.As(err, &notFound) {
@@ -221,11 +222,11 @@ func GetPluginDashboards(c *models.ReqContext) response.Response {
 	return response.JSON(200, list)
 }
 
-func GetPluginMarkdown(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetPluginMarkdown(c *models.ReqContext) response.Response {
 	pluginID := c.Params(":pluginId")
 	name := c.Params(":name")
 
-	content, err := plugins.GetPluginMarkdown(pluginID, name)
+	content, err := hs.PluginManager.GetPluginMarkdown(pluginID, name)
 	if err != nil {
 		var notFound plugins.PluginNotFoundError
 		if errors.As(err, &notFound) {
@@ -237,7 +238,7 @@ func GetPluginMarkdown(c *models.ReqContext) response.Response {
 
 	// fallback try readme
 	if len(content) == 0 {
-		content, err = plugins.GetPluginMarkdown(pluginID, "readme")
+		content, err = hs.PluginManager.GetPluginMarkdown(pluginID, "readme")
 		if err != nil {
 			return response.Error(501, "Could not get markdown file", err)
 		}
@@ -248,27 +249,18 @@ func GetPluginMarkdown(c *models.ReqContext) response.Response {
 	return resp
 }
 
-func ImportDashboard(c *models.ReqContext, apiCmd dtos.ImportDashboardCommand) response.Response {
+func (hs *HTTPServer) ImportDashboard(c *models.ReqContext, apiCmd dtos.ImportDashboardCommand) response.Response {
 	if apiCmd.PluginId == "" && apiCmd.Dashboard == nil {
 		return response.Error(422, "Dashboard must be set", nil)
 	}
 
-	cmd := plugins.ImportDashboardCommand{
-		OrgId:     c.OrgId,
-		User:      c.SignedInUser,
-		PluginId:  apiCmd.PluginId,
-		Path:      apiCmd.Path,
-		Inputs:    apiCmd.Inputs,
-		Overwrite: apiCmd.Overwrite,
-		FolderId:  apiCmd.FolderId,
-		Dashboard: apiCmd.Dashboard,
-	}
-
-	if err := bus.Dispatch(&cmd); err != nil {
+	dashInfo, err := hs.PluginManager.ImportDashboard(apiCmd.PluginId, apiCmd.Path, c.OrgId, apiCmd.FolderId,
+		apiCmd.Dashboard, apiCmd.Overwrite, apiCmd.Inputs, c.SignedInUser, hs.DataService)
+	if err != nil {
 		return dashboardSaveErrorToApiResponse(err)
 	}
 
-	return response.JSON(200, cmd.Result)
+	return response.JSON(200, dashInfo)
 }
 
 // CollectPluginMetrics collect metrics from a plugin.
@@ -276,7 +268,7 @@ func ImportDashboard(c *models.ReqContext, apiCmd dtos.ImportDashboardCommand) r
 // /api/plugins/:pluginId/metrics
 func (hs *HTTPServer) CollectPluginMetrics(c *models.ReqContext) response.Response {
 	pluginID := c.Params("pluginId")
-	plugin, exists := plugins.Plugins[pluginID]
+	plugin, exists := manager.Plugins[pluginID]
 	if !exists {
 		return response.Error(404, "Plugin not found", nil)
 	}

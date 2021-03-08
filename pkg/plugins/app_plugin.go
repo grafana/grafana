@@ -59,33 +59,29 @@ type JwtTokenAuth struct {
 	Params map[string]string `json:"params"`
 }
 
-func (app *AppPlugin) Load(decoder *json.Decoder, base *PluginBase, backendPluginManager backendplugin.Manager) error {
+func (app *AppPlugin) Load(decoder *json.Decoder, base *PluginBase, backendPluginManager backendplugin.Manager) (
+	interface{}, error) {
 	if err := decoder.Decode(app); err != nil {
-		return err
-	}
-
-	if err := app.registerPlugin(base); err != nil {
-		return err
+		return nil, err
 	}
 
 	if app.Backend {
 		cmd := ComposePluginStartCommand(app.Executable)
-		fullpath := filepath.Join(app.PluginDir, cmd)
+		fullpath := filepath.Join(base.PluginDir, cmd)
 		factory := grpcplugin.NewBackendPlugin(app.Id, fullpath, grpcplugin.PluginStartFuncs{})
 		if err := backendPluginManager.Register(app.Id, factory); err != nil {
-			return errutil.Wrapf(err, "failed to register backend plugin")
+			return nil, errutil.Wrapf(err, "failed to register backend plugin")
 		}
 	}
 
-	Apps[app.Id] = app
-	return nil
+	return app, nil
 }
 
-func (app *AppPlugin) initApp() {
-	app.initFrontendPlugin()
+func (app *AppPlugin) InitApp(panels map[string]*PanelPlugin, dataSources map[string]*DataSourcePlugin) []*PluginStaticRoute {
+	staticRoutes := app.InitFrontendPlugin()
 
 	// check if we have child panels
-	for _, panel := range Panels {
+	for _, panel := range panels {
 		if strings.HasPrefix(panel.PluginDir, app.PluginDir) {
 			panel.setPathsBasedOnApp(app)
 			app.FoundChildPlugins = append(app.FoundChildPlugins, &PluginInclude{
@@ -97,7 +93,7 @@ func (app *AppPlugin) initApp() {
 	}
 
 	// check if we have child datasources
-	for _, ds := range DataSources {
+	for _, ds := range dataSources {
 		if strings.HasPrefix(ds.PluginDir, app.PluginDir) {
 			ds.setPathsBasedOnApp(app)
 			app.FoundChildPlugins = append(app.FoundChildPlugins, &PluginInclude{
@@ -120,4 +116,6 @@ func (app *AppPlugin) initApp() {
 			app.DefaultNavUrl = setting.AppSubUrl + "/dashboard/db/" + include.Slug
 		}
 	}
+
+	return staticRoutes
 }

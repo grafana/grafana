@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -150,7 +151,7 @@ func (c *Condition) GetQueryDataRequest(ctx AlertExecCtx, now time.Time) (*backe
 }
 
 // execute runs the Condition's expressions or queries.
-func (c *Condition) execute(ctx AlertExecCtx, now time.Time) (*ExecutionResults, error) {
+func (c *Condition) execute(ctx AlertExecCtx, now time.Time, dataService *tsdb.Service) (*ExecutionResults, error) {
 	result := ExecutionResults{}
 
 	queryDataReq, err := c.GetQueryDataRequest(ctx, now)
@@ -158,7 +159,10 @@ func (c *Condition) execute(ctx AlertExecCtx, now time.Time) (*ExecutionResults,
 		return &result, err
 	}
 
-	exprService := expr.Service{Cfg: &setting.Cfg{ExpressionsEnabled: ctx.ExpressionsEnabled}}
+	exprService := expr.Service{
+		Cfg:         &setting.Cfg{ExpressionsEnabled: ctx.ExpressionsEnabled},
+		DataService: dataService,
+	}
 	pbRes, err := exprService.TransformData(ctx.Ctx, queryDataReq)
 	if err != nil {
 		return &result, err
@@ -247,13 +251,13 @@ func (evalResults Results) AsDataFrame() data.Frame {
 }
 
 // ConditionEval executes conditions and evaluates the result.
-func (e *Evaluator) ConditionEval(condition *Condition, now time.Time) (Results, error) {
+func (e *Evaluator) ConditionEval(condition *Condition, now time.Time, dataService *tsdb.Service) (Results, error) {
 	alertCtx, cancelFn := context.WithTimeout(context.Background(), alertingEvaluationTimeout)
 	defer cancelFn()
 
 	alertExecCtx := AlertExecCtx{OrgID: condition.OrgID, Ctx: alertCtx, ExpressionsEnabled: e.Cfg.ExpressionsEnabled}
 
-	execResult, err := condition.execute(alertExecCtx, now)
+	execResult, err := condition.execute(alertExecCtx, now, dataService)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute conditions: %w", err)
 	}

@@ -5,10 +5,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/plugins"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
+	"github.com/grafana/grafana/pkg/tsdb/interval"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -897,13 +898,13 @@ func (c *fakeClient) MultiSearch() *es.MultiSearchRequestBuilder {
 	return c.builder
 }
 
-func newTsdbQuery(body string) (*tsdb.TsdbQuery, error) {
+func newDataQuery(body string) (plugins.DataQuery, error) {
 	json, err := simplejson.NewJson([]byte(body))
 	if err != nil {
-		return nil, err
+		return plugins.DataQuery{}, err
 	}
-	return &tsdb.TsdbQuery{
-		Queries: []*tsdb.Query{
+	return plugins.DataQuery{
+		Queries: []plugins.DataSubQuery{
 			{
 				Model: json,
 			},
@@ -911,22 +912,24 @@ func newTsdbQuery(body string) (*tsdb.TsdbQuery, error) {
 	}, nil
 }
 
-func executeTsdbQuery(c es.Client, body string, from, to time.Time, minInterval time.Duration) (*tsdb.Response, error) {
+func executeTsdbQuery(c es.Client, body string, from, to time.Time, minInterval time.Duration) (
+	plugins.DataResponse, error) {
 	json, err := simplejson.NewJson([]byte(body))
 	if err != nil {
-		return nil, err
+		return plugins.DataResponse{}, err
 	}
 	fromStr := fmt.Sprintf("%d", from.UnixNano()/int64(time.Millisecond))
 	toStr := fmt.Sprintf("%d", to.UnixNano()/int64(time.Millisecond))
-	tsdbQuery := &tsdb.TsdbQuery{
-		Queries: []*tsdb.Query{
+	timeRange := plugins.NewDataTimeRange(fromStr, toStr)
+	tsdbQuery := plugins.DataQuery{
+		Queries: []plugins.DataSubQuery{
 			{
 				Model: json,
 			},
 		},
-		TimeRange: tsdb.NewTimeRange(fromStr, toStr),
+		TimeRange: &timeRange,
 	}
-	query := newTimeSeriesQuery(c, tsdbQuery, tsdb.NewIntervalCalculator(&tsdb.IntervalOptions{MinInterval: minInterval}))
+	query := newTimeSeriesQuery(c, tsdbQuery, interval.NewCalculator(interval.CalculatorOptions{MinInterval: minInterval}))
 	return query.execute()
 }
 
@@ -985,7 +988,7 @@ func TestTimeSeriesQueryParser(t *testing.T) {
 					}
 				]
 			}`
-			tsdbQuery, err := newTsdbQuery(body)
+			tsdbQuery, err := newDataQuery(body)
 			So(err, ShouldBeNil)
 			queries, err := p.parse(tsdbQuery)
 			So(err, ShouldBeNil)
