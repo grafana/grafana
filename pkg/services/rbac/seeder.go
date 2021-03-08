@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 )
@@ -17,8 +15,8 @@ type seeder struct {
 
 var builtInPolicies = []PolicyDTO{
 	{
-		Name:        "grafana:builtin:users:read:self",
-		Description: "v1",
+		Name:    "grafana:builtin:users:read:self",
+		Version: 1,
 		Permissions: []Permission{
 			{
 				Permission: "users:read",
@@ -67,7 +65,7 @@ func (s *seeder) seed(ctx context.Context, orgID int64, policies []PolicyDTO, po
 
 		current, exists := policySet[policy.Name]
 		if exists {
-			if policy.Description == current.Description {
+			if policy.Version <= current.Version {
 				continue
 			}
 		}
@@ -97,9 +95,14 @@ func (s *seeder) seed(ctx context.Context, orgID int64, policies []PolicyDTO, po
 }
 
 func (s *seeder) createOrUpdatePolicy(ctx context.Context, policy PolicyDTO, old *Policy) (int64, error) {
+	if policy.Version == 0 {
+		return 0, fmt.Errorf("error when seeding '%s': all seeder policies must have a version", policy.Name)
+	}
+
 	if old == nil {
 		p, err := s.Service.CreatePolicyWithPermissions(ctx, CreatePolicyWithPermissionsCommand{
 			OrgId:       policy.OrgId,
+			Version:     policy.Version,
 			Name:        policy.Name,
 			Description: policy.Description,
 			Permissions: policy.Permissions,
@@ -110,40 +113,16 @@ func (s *seeder) createOrUpdatePolicy(ctx context.Context, policy PolicyDTO, old
 		return p.Id, nil
 	}
 
-	// FIXME: We probably want to be able to have a description as well
-	currentVersion, err := strconv.Atoi(policy.Description[1:])
-	if err != nil {
-		return 0, fmt.Errorf(
-			"failed to read version for policy %s (\"%s\"): %w",
-			policy.Name,
-			policy.Description,
-			err,
-		)
-	}
-
-	var oldVersion int
-	if strings.HasPrefix(old.Description, "v") {
-		oldVersion, err = strconv.Atoi(old.Description[1:])
-		if err != nil {
-			return 0, fmt.Errorf(
-				"failed to read previous version for policy %s (\"%s\"): %w",
-				policy.Name,
-				old.Description,
-				err,
-			)
-		}
-	}
-
-	if oldVersion >= currentVersion {
-		return old.Id, nil
-	}
-
-	_, err = s.Service.UpdatePolicy(ctx, UpdatePolicyCommand{
+	_, err := s.Service.UpdatePolicy(ctx, UpdatePolicyCommand{
 		UID:         old.UID,
 		Name:        policy.Name,
 		Description: policy.Description,
+		Version:     policy.Version,
 	})
 	if err != nil {
+		if errors.Is(err, errVersionLE) {
+			return old.Id, nil
+		}
 		return 0, err
 	}
 
