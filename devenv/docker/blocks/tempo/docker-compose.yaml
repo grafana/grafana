@@ -6,13 +6,3 @@
       - "3101:3101"
     volumes:
       - ./docker/blocks/tempo/tempo.yaml:/etc/tempo.yaml
-
-  tempo-query:
-    image: grafana/tempo-query:latest
-    command: ["--grpc-storage-plugin.configuration-file=/etc/tempo-query.yaml"]
-    ports:
-      - "16686:16686"
-    volumes:
-      - ./docker/blocks/tempo/tempo-query.yaml:/etc/tempo-query.yaml
-    depends_on:
-      - tempo
