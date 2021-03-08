@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 import { css } from 'emotion';
 import { capitalize } from 'lodash';
+import memoizeOne from 'memoize-one';
 
 import {
   rangeUtil,
@@ -91,7 +92,6 @@ interface State {
   logsSortOrder: LogsSortOrder | null;
   isFlipping: boolean;
   showDetectedFields: string[];
-  hasUnescapedContent: boolean;
   forceEscape: boolean;
 }
 
@@ -106,7 +106,6 @@ export class UnthemedLogs extends PureComponent<Props, State> {
     logsSortOrder: null,
     isFlipping: false,
     showDetectedFields: [],
-    hasUnescapedContent: this.props.logRows.some((r) => r.hasUnescapedContent),
     forceEscape: false,
   };
 
@@ -226,6 +225,10 @@ export class UnthemedLogs extends PureComponent<Props, State> {
     });
   };
 
+  checkUnescapedContent = memoizeOne((logRows: LogRowModel[]) => {
+    return !!logRows.some((r) => r.hasUnescapedContent);
+  });
+
   render() {
     const {
       logRows,
@@ -256,7 +259,6 @@ export class UnthemedLogs extends PureComponent<Props, State> {
       logsSortOrder,
       isFlipping,
       showDetectedFields,
-      hasUnescapedContent,
       forceEscape,
     } = this.state;
 
@@ -285,6 +287,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
     const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
     const series = logsSeries ? logsSeries : [];
     const styles = getStyles(theme);
+    const hasUnescapedContent = this.checkUnescapedContent(logRows);
 
     return (
       <>
