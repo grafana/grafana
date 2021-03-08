@@ -20,9 +20,9 @@ func TestSeeder(t *testing.T) {
 	}
 
 	v1 := PolicyDTO{
-		OrgId:       1,
-		Name:        "grafana:tests:fake",
-		Description: "v1",
+		OrgId:   1,
+		Name:    "grafana:tests:fake",
+		Version: 1,
 		Permissions: []Permission{
 			{
 				Permission: "ice_cream:eat",
@@ -35,9 +35,9 @@ func TestSeeder(t *testing.T) {
 		},
 	}
 	v2 := PolicyDTO{
-		OrgId:       1,
-		Name:        "grafana:tests:fake",
-		Description: "v2",
+		OrgId:   1,
+		Name:    "grafana:tests:fake",
+		Version: 2,
 		Permissions: []Permission{
 			{
 				Permission: "ice_cream:eat",
