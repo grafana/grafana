@@ -51,9 +51,9 @@ export function getAlertRulesAsync(options: { state: string }): ThunkResult<void
 }
 
 export function togglePauseAlertRule(id: number, options: { paused: boolean }): ThunkResult<void> {
-  return async (dispatch, getState) => {
+  return async (dispatch) => {
     await getBackendSrv().post(`/api/alerts/${id}/pause`, options);
-    const stateFilter = getState().location.query.state || 'all';
+    const stateFilter = locationService.getSearchObject().state || 'all';
     dispatch(getAlertRulesAsync({ state: stateFilter.toString() }));
   };
 }
