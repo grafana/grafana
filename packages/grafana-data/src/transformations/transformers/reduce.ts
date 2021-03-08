@@ -1,7 +1,7 @@
 import { map } from 'rxjs/operators';
 
 import { DataTransformerID } from './ids';
-import { DataTransformerInfo, MatcherConfig, FieldMatcher } from '../../types/transformations';
+import { DataTransformerInfo, FieldMatcher, MatcherConfig } from '../../types/transformations';
 import { fieldReducers, reduceField, ReducerID } from '../fieldReducer';
 import { alwaysFieldMatcher, notTimeFieldMatcher } from '../matchers/predicates';
 import { DataFrame, Field, FieldType } from '../../types/dataFrame';
@@ -119,6 +119,10 @@ export function reduceSeriesToRows(
     }
 
     for (const f of fields) {
+      if (f === fields[0]) {
+        continue;
+      }
+
       const t = guessFieldTypeForField(f);
 
       if (t) {
