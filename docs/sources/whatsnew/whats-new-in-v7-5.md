@@ -77,7 +77,7 @@ For more information, refer to [Deprecating Application Insights and Insights An
 - Support for region eu-south-1 has been added to the CloudWatch data source. New metrics have also been added to the namespaces AWS/Timestream, AWS/RDS (RDS Proxy metrics), AWS/NetworkFirewall, AWS/GroundStation, and AWS/DDoSProtection. Many thanks to [relvira](https://github.com/relvira), [ilyastoli](https://github.com/ilyastoli), and [rubycut](https://github.com/rubycut) for contributing!
 - You can now specify a custom endpoint in the CloudWatch data source configuration page. This field is optional, and if it is left empty, then the default endpoint for CloudWatch is used. By specifying a regional endpoint, you can reduce request latency.
 
-  [Cloudwatch data source]({{< relref "../datasources/cloudwatch.md#endpoint" >}}) was updated as a result of this change.
+  [AWS Cloudwatch data source]({{< relref "../datasources/cloudwatch.md#endpoint" >}}) was updated as a result of this change.
 
 ### Increased API limit for CloudMonitoring Services
 
