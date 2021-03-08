@@ -1,10 +1,12 @@
 package translate
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/stretchr/testify/require"
@@ -35,6 +37,44 @@ func TestDashboardAlertConditions(t *testing.T) {
 					From: eval.Duration(time.Second * 600),
 					To:   eval.Duration(time.Second * 300),
 				}, firstQuery.RelativeTimeRange, "unexpected timerange for first query")
+
+				secondQuery := cond.QueriesAndExpressions[1]
+				require.Equal(t, "B", secondQuery.RefID, "unexpected refId for second query")
+				require.Equal(t, eval.RelativeTimeRange{
+					From: eval.Duration(time.Second * 300),
+					To:   eval.Duration(0),
+				}, secondQuery.RelativeTimeRange, "unexpected timerange for second query")
+
+				condQuery := cond.QueriesAndExpressions[2]
+				require.Equal(t, "C", condQuery.RefID, "unexpected refId for second query")
+				isExpr, err := condQuery.IsExpression()
+				require.NoError(t, err)
+				require.Equal(t, true, isExpr, "third query should be an expression")
+
+				c := struct {
+					Conditions []classic.ClassicConditionJSON `json:"conditions"`
+				}{}
+				err = json.Unmarshal(condQuery.Model, &c)
+				require.NoError(t, err)
+
+				require.Equal(t, 2, len(c.Conditions), "expected 2 conditions in classic condition")
+
+				// This is "correct" in that the condition gets the correct time range,
+				// but a bit odd that it creates B then A, can look into changing that
+				// later.
+				firstCond := c.Conditions[0]
+				require.Equal(t, "eq", firstCond.Evaluator.Type, "expected first cond to use eq")
+				require.Equal(t, "B", firstCond.Query.Params[0], "expected first cond to reference B")
+
+				secondCond := c.Conditions[1]
+				require.Equal(t, "gt", secondCond.Evaluator.Type, "expected second cond to use gt")
+				require.Equal(t, "A", secondCond.Query.Params[0], "expected second cond to reference A")
+			},
+		},
+		{
+			name:    "something",
+			rawJSON: twoCondOneQueryDiffTime,
+			spotCheckFn: func(t *testing.T, cond *eval.Condition) {
 			},
 		},
 	}
@@ -55,10 +95,10 @@ var twoCondOneQueryDiffTime = `{
 		"params": [
 		  0
 		],
-		"type": "gt"
+		"type": "eq"
 	  },
 	  "operator": {
-		"type": "and"
+		"type": ""
 	  },
 	  "query": {
 		"datasourceId": 2,
