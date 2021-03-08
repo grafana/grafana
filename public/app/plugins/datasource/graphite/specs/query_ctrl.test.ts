@@ -1,4 +1,3 @@
-import 'jest';
 import { dispatch } from 'app/store/store';
 import { uiSegmentSrv } from 'app/core/services/segment_srv';
 import gfunc from '../gfunc';
