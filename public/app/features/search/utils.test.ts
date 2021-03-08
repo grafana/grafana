@@ -183,11 +183,13 @@ describe('Search utils', () => {
 
     it('should prepend folder:{folder} to the query if folder is present', () => {
       expect(parseRouteParams({ folder: 'current' })).toEqual({
+        folder: 'current',
         query: 'folder:current ',
       });
       // Prepend to exiting query
       const params: Partial<SearchQueryParams> = { query: 'test', folder: 'current' };
       expect(parseRouteParams(params)).toEqual({
+        folder: 'current',
         query: 'folder:current test',
       });
     });
