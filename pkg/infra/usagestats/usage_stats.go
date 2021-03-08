@@ -12,7 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -53,9 +53,9 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 	metrics["stats.users.count"] = statsQuery.Result.Users
 	metrics["stats.orgs.count"] = statsQuery.Result.Orgs
 	metrics["stats.playlist.count"] = statsQuery.Result.Playlists
-	metrics["stats.plugins.apps.count"] = len(plugins.Apps)
-	metrics["stats.plugins.panels.count"] = len(plugins.Panels)
-	metrics["stats.plugins.datasources.count"] = len(plugins.DataSources)
+	metrics["stats.plugins.apps.count"] = len(manager.Apps)
+	metrics["stats.plugins.panels.count"] = len(manager.Panels)
+	metrics["stats.plugins.datasources.count"] = len(manager.DataSources)
 	metrics["stats.alerts.count"] = statsQuery.Result.Alerts
 	metrics["stats.active_users.count"] = statsQuery.Result.ActiveUsers
 	metrics["stats.datasources.count"] = statsQuery.Result.Datasources
@@ -94,7 +94,7 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 	// as sending that name could be sensitive information
 	dsOtherCount := 0
 	for _, dsStat := range dsStats.Result {
-		if models.IsKnownDataSourcePlugin(dsStat.Type) {
+		if uss.shouldBeReported(dsStat.Type) {
 			metrics["stats.ds."+dsStat.Type+".count"] = dsStat.Count
 		} else {
 			dsOtherCount += dsStat.Count
@@ -118,7 +118,7 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 
 	alertingOtherCount := 0
 	for dsType, usageCount := range alertingUsageStats.DatasourceUsage {
-		if models.IsKnownDataSourcePlugin(dsType) {
+		if uss.shouldBeReported(dsType) {
 			addAlertingUsageStats(dsType, usageCount)
 		} else {
 			alertingOtherCount += usageCount
@@ -145,7 +145,7 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 
 		access := strings.ToLower(dsAccessStat.Access)
 
-		if models.IsKnownDataSourcePlugin(dsAccessStat.Type) {
+		if uss.shouldBeReported(dsAccessStat.Type) {
 			metrics["stats.ds_access."+dsAccessStat.Type+"."+access+".count"] = dsAccessStat.Count
 		} else {
 			old := dsAccessOtherCount[access]
@@ -288,6 +288,15 @@ func (uss *UsageStatsService) updateTotalStats() {
 	for _, dsStat := range dsStats.Result {
 		metrics.StatsTotalDataSources.WithLabelValues(dsStat.Type).Set(float64(dsStat.Count))
 	}
+}
+
+func (uss *UsageStatsService) shouldBeReported(dsType string) bool {
+	ds, ok := manager.DataSources[dsType]
+	if !ok {
+		return false
+	}
+
+	return ds.Signature.IsValid() || ds.Signature.IsInternal()
 }
 
 func getEdition() string {

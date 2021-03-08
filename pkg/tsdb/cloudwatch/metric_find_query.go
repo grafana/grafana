@@ -17,7 +17,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -241,7 +241,8 @@ var dimensionsMap = map[string][]string{
 
 var regionCache sync.Map
 
-func (e *cloudWatchExecutor) executeMetricFindQuery(ctx context.Context, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
+func (e *cloudWatchExecutor) executeMetricFindQuery(ctx context.Context, queryContext plugins.DataQuery) (
+	plugins.DataResponse, error) {
 	firstQuery := queryContext.Queries[0]
 
 	parameters := firstQuery.Model
@@ -267,22 +268,22 @@ func (e *cloudWatchExecutor) executeMetricFindQuery(ctx context.Context, queryCo
 		data, err = e.handleGetResourceArns(ctx, parameters, queryContext)
 	}
 	if err != nil {
-		return nil, err
+		return plugins.DataResponse{}, err
 	}
 
-	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: firstQuery.RefId}
-	transformToTable(data, queryResult)
-	result := &tsdb.Response{
-		Results: map[string]*tsdb.QueryResult{
-			firstQuery.RefId: queryResult,
+	queryResult := plugins.DataQueryResult{Meta: simplejson.New(), RefID: firstQuery.RefID}
+	transformToTable(data, &queryResult)
+	result := plugins.DataResponse{
+		Results: map[string]plugins.DataQueryResult{
+			firstQuery.RefID: queryResult,
 		},
 	}
 	return result, nil
 }
 
-func transformToTable(data []suggestData, result *tsdb.QueryResult) {
-	table := &tsdb.Table{
-		Columns: []tsdb.TableColumn{
+func transformToTable(data []suggestData, result *plugins.DataQueryResult) {
+	table := plugins.DataTable{
+		Columns: []plugins.DataTableColumn{
 			{
 				Text: "text",
 			},
@@ -290,7 +291,7 @@ func transformToTable(data []suggestData, result *tsdb.QueryResult) {
 				Text: "value",
 			},
 		},
-		Rows: make([]tsdb.RowValues, 0),
+		Rows: make([]plugins.DataRowValues, 0),
 	}
 
 	for _, r := range data {
@@ -321,7 +322,7 @@ func parseMultiSelectValue(input string) []string {
 // Whenever this list is updated, the frontend list should also be updated.
 // Please update the region list in public/app/plugins/datasource/cloudwatch/partials/config.html
 func (e *cloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *simplejson.Json,
-	queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+	queryContext plugins.DataQuery) ([]suggestData, error) {
 	dsInfo := e.getDSInfo(defaultRegion)
 	profile := dsInfo.Profile
 	if cache, ok := regionCache.Load(profile); ok {
@@ -366,7 +367,7 @@ func (e *cloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *s
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) handleGetNamespaces(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetNamespaces(ctx context.Context, parameters *simplejson.Json, queryContext plugins.DataQuery) ([]suggestData, error) {
 	keys := []string{}
 	for key := range metricsMap {
 		keys = append(keys, key)
@@ -385,7 +386,7 @@ func (e *cloudWatchExecutor) handleGetNamespaces(ctx context.Context, parameters
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) handleGetMetrics(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetMetrics(ctx context.Context, parameters *simplejson.Json, queryContext plugins.DataQuery) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	namespace := parameters.Get("namespace").MustString()
 
@@ -411,7 +412,7 @@ func (e *cloudWatchExecutor) handleGetMetrics(ctx context.Context, parameters *s
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters *simplejson.Json, queryContext plugins.DataQuery) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	namespace := parameters.Get("namespace").MustString()
 
@@ -437,7 +438,7 @@ func (e *cloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) handleGetDimensionValues(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetDimensionValues(ctx context.Context, parameters *simplejson.Json, queryContext plugins.DataQuery) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	namespace := parameters.Get("namespace").MustString()
 	metricName := parameters.Get("metricName").MustString()
@@ -489,7 +490,7 @@ func (e *cloudWatchExecutor) handleGetDimensionValues(ctx context.Context, param
 }
 
 func (e *cloudWatchExecutor) handleGetEbsVolumeIds(ctx context.Context, parameters *simplejson.Json,
-	queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+	queryContext plugins.DataQuery) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	instanceId := parameters.Get("instanceId").MustString()
 
@@ -512,7 +513,7 @@ func (e *cloudWatchExecutor) handleGetEbsVolumeIds(ctx context.Context, paramete
 }
 
 func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, parameters *simplejson.Json,
-	queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+	queryContext plugins.DataQuery) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	attributeName := parameters.Get("attributeName").MustString()
 	filterJson := parameters.Get("filters").MustMap()
@@ -592,7 +593,7 @@ func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 }
 
 func (e *cloudWatchExecutor) handleGetResourceArns(ctx context.Context, parameters *simplejson.Json,
-	queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+	queryContext plugins.DataQuery) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	resourceType := parameters.Get("resourceType").MustString()
 	filterJson := parameters.Get("tags").MustMap()
