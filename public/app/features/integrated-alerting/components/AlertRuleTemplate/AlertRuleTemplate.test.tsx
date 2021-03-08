@@ -76,7 +76,6 @@ describe('AlertRuleTemplate', () => {
     });
 
     expect(wrapper.find(dataQa('table-loading'))).toHaveLength(1);
-    expect(wrapper.find(dataQa('table-thead')).find('tr')).toHaveLength(0);
-    expect(wrapper.find(dataQa('table-no-data'))).toHaveLength(0);
+    expect(wrapper.find(dataQa('table-no-data'))).toHaveLength(1);
   });
 });

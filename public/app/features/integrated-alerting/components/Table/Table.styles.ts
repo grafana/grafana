@@ -33,6 +33,7 @@ export const getStyles = (theme: GrafanaTheme) => {
               position: sticky;
               top: 0;
               cursor: pointer;
+              z-index: 2;
             }
           }
         }
