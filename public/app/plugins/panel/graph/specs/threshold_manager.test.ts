@@ -32,7 +32,6 @@ describe('ThresholdManager', () => {
 
   describe('When creating plot markings', () => {
     plotOptionsScenario('for simple gt threshold', (ctx: any) => {
-      console.log('config', config.theme);
       ctx.setup([{ op: 'gt', value: 300, fill: true, line: true, colorMode: 'critical' }]);
 
       it('should add fill for threshold with fill: true', () => {

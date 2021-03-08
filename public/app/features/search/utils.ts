@@ -258,5 +258,6 @@ export const parseRouteParams = (params: UrlQueryMap) => {
       query: `${folderStr} ${(cleanedParams.query ?? '').replace(folderStr, '')}`,
     };
   }
-  return { cleanedParams };
+
+  return { ...cleanedParams };
 };
