@@ -100,6 +100,7 @@ require (
 	gopkg.in/redis.v5 v5.2.9
 	gopkg.in/square/go-jose.v2 v2.5.1
 	gopkg.in/yaml.v2 v2.4.0
+	gotest.tools v2.2.0+incompatible
 	xorm.io/core v0.7.3
 	xorm.io/xorm v0.8.2
 )

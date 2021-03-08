@@ -19,7 +19,10 @@ import (
 var metricsLogger log.Logger = log.New("metrics")
 
 func init() {
-	registry.RegisterService(&UsageStatsService{})
+	registry.RegisterService(&UsageStatsService{
+		log:             log.New("infra.usagestats"),
+		externalMetrics: make(map[string]MetricFunc),
+	})
 }
 
 type UsageStats interface {
@@ -45,9 +48,7 @@ type UsageStatsService struct {
 }
 
 func (uss *UsageStatsService) Init() error {
-	uss.log = log.New("infra.usagestats")
 	uss.oauthProviders = social.GetOAuthProviders(uss.Cfg)
-	uss.externalMetrics = make(map[string]MetricFunc)
 	return nil
 }
 
