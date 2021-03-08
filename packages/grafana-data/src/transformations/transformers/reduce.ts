@@ -119,10 +119,6 @@ export function reduceSeriesToRows(
     }
 
     for (const f of fields) {
-      if (f === fields[0]) {
-        continue;
-      }
-
       const t = guessFieldTypeForField(f);
 
       if (t) {
@@ -153,15 +149,18 @@ export function mergeResults(data: DataFrame[]): DataFrame | undefined {
   for (let seriesIndex = 1; seriesIndex < data.length; seriesIndex++) {
     const series = data[seriesIndex];
 
-    for (const baseField of baseFrame.fields) {
-      for (const field of series.fields) {
-        if (baseField.type !== field.type || baseField.name !== field.name) {
-          continue;
-        }
+    for (let baseIndex = 0; baseIndex < baseFrame.fields.length; baseIndex++) {
+      const baseField = baseFrame.fields[baseIndex];
+      for (let fieldIndex = 0; fieldIndex < series.fields.length; fieldIndex++) {
+        const field = series.fields[fieldIndex];
+        const isFirstField = baseIndex === 0 && fieldIndex === 0;
+        const isSameField = baseField.type === field.type && baseField.name === field.name;
 
-        const baseValues: any[] = ((baseField.values as unknown) as ArrayVector).buffer;
-        const values: any[] = ((field.values as unknown) as ArrayVector).buffer;
-        ((baseField.values as unknown) as ArrayVector).buffer = baseValues.concat(values);
+        if (isFirstField || isSameField) {
+          const baseValues: any[] = baseField.values.toArray();
+          const values: any[] = field.values.toArray();
+          ((baseField.values as unknown) as ArrayVector).buffer = baseValues.concat(values);
+        }
       }
     }
   }
