@@ -60,9 +60,9 @@ Instead of the file path, users can now paste the SSL certification content in t
 
 > **Note:** It remains as limitation for the hosted Grafana, because the user doesn't have access to the server configuration.
 
-### Deprecation notice for some Azure Monitor queries 
+### Deprecation notice for some Azure Monitor queries
 
-In the upcoming Grafana 8.0 release, Application Insights and Insights Analytics query types within the Azure Monitor data source will be deprecated and be made read-only in favor of querying Application Insights from Metrics and Logs. 
+In the upcoming Grafana 8.0 release, Application Insights and Insights Analytics query types within the Azure Monitor data source will be deprecated and be made read-only in favor of querying Application Insights from Metrics and Logs.
 
 Grafana 7.5 includes a deprecation notice for these queries, and some documentation to help users prepare for the upcoming changes.
 
@@ -101,6 +101,15 @@ If you enable this feature, then Grafana hashes and caches data source queries a
 ### Use template variable in reports
 
 If you enable the feature, then you can use template variables in reports.
+
+### Tempo as a backend data source
+
+We have converted Tempo to a backend data source and dropped support for tempo-query's (Jaeger) response. To configure, you can now point to the port that is set in Tempo's configuration file.
+
+```yaml
+server:
+  http_listen_port: 3101
+```
 
 ## Breaking changes
 
