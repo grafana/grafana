@@ -4,7 +4,7 @@ import _ from 'lodash';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { dateTime, getFrameDisplayName } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
-import { DEFAULT_GRAPHITE_VERSION } from '../graphite_versions';
+import { DEFAULT_GRAPHITE_VERSION } from '../versions';
 
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),

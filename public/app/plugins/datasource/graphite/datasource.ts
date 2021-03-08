@@ -18,7 +18,7 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 import { GraphiteOptions, GraphiteQuery, GraphiteType, MetricTankRequestMeta } from './types';
 import { getRollupNotice, getRuntimeConsolidationNotice } from 'app/plugins/datasource/graphite/meta';
 import { getSearchFilterScopedVar } from '../../../features/variables/utils';
-import { DEFAULT_GRAPHITE_VERSION } from './graphite_versions';
+import { DEFAULT_GRAPHITE_VERSION } from './versions';
 
 export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOptions> {
   basicAuth: string;

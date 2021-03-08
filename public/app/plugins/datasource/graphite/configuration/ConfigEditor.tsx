@@ -8,7 +8,7 @@ import {
   onUpdateDatasourceJsonDataOptionChecked,
 } from '@grafana/data';
 import { GraphiteOptions, GraphiteType } from '../types';
-import { DEFAULT_GRAPHITE_VERSION, GRAPHITE_VERSIONS } from '../graphite_versions';
+import { DEFAULT_GRAPHITE_VERSION, GRAPHITE_VERSIONS } from '../versions';
 
 const graphiteVersions = GRAPHITE_VERSIONS.map((version) => ({ label: `${version}.x`, value: version }));
 
