@@ -60,9 +60,9 @@ Instead of the file path, users can now paste the SSL certification content in t
 
 > **Note:** It remains as limitation for the hosted Grafana, because the user doesn't have access to the server configuration.
 
-### Deprecation notice for some Azure Monitor queries 
+### Deprecation notice for some Azure Monitor queries
 
-In the upcoming Grafana 8.0 release, Application Insights and Insights Analytics query types within the Azure Monitor data source will be deprecated and be made read-only in favor of querying Application Insights from Metrics and Logs. 
+In the upcoming Grafana 8.0 release, Application Insights and Insights Analytics query types within the Azure Monitor data source will be deprecated and be made read-only in favor of querying Application Insights from Metrics and Logs.
 
 Grafana 7.5 includes a deprecation notice for these queries, and some documentation to help users prepare for the upcoming changes.
 
@@ -105,3 +105,13 @@ If you enable the feature, then you can use template variables in reports.
 ## Breaking changes
 
 There are no known breaking changes in this release.
+
+## Updated configuration
+
+```
+[server]
+read_timeout = 0
+```
+
+Sets the maximum time using a duration format (5s/5m/5ms) before timing out read of an incoming request and closing idle connections.
+`0` means there is no timeout for reading the request

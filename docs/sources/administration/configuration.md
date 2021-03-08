@@ -270,9 +270,8 @@ For example, given a cdn url like `https://cdn.myserver.com` grafana will try to
 
 ### read_timeout
 
-Sets the maximum time in minutes before timing out read of an incoming request and closing idle connections. 
+Sets the maximum time using a duration format (5s/5m/5ms) before timing out read of an incoming request and closing idle connections.
 `0` means there is no timeout for reading the request
-
 
 <hr />
 
