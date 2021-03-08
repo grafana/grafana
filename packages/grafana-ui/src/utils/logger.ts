@@ -7,7 +7,7 @@ const throttledLog = throttle((...t: any[]) => {
 
 /** @internal */
 export const createLogger = (name: string, enable = true) => (id: string, throttle = false, ...t: any[]) => {
-  if (process.env.NODE_ENV === 'production' || !enable) {
+  if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'test' || !enable) {
     return;
   }
   const fn = throttle ? throttledLog : console.log;
