@@ -7,20 +7,23 @@ import { useStyles } from '../../themes';
 export interface MenuProps extends React.HTMLAttributes<HTMLDivElement> {
   /** React element rendered at the top of the menu */
   header?: React.ReactNode;
-  children?: React.ReactNode;
+  children: React.ReactNode;
+  ariaLabel?: string;
 }
 
 /** @internal */
-export const Menu = React.forwardRef<HTMLDivElement, MenuProps>(({ header, children, ...otherProps }, ref) => {
-  const styles = useStyles(getStyles);
+export const Menu = React.forwardRef<HTMLDivElement, MenuProps>(
+  ({ header, children, ariaLabel, ...otherProps }, ref) => {
+    const styles = useStyles(getStyles);
 
-  return (
-    <div {...otherProps} ref={ref} className={styles.wrapper}>
-      {header && <div className={styles.header}>{header}</div>}
-      {children}
-    </div>
-  );
-});
+    return (
+      <div {...otherProps} ref={ref} className={styles.wrapper} aria-label={ariaLabel}>
+        {header && <div className={styles.header}>{header}</div>}
+        {children}
+      </div>
+    );
+  }
+);
 Menu.displayName = 'Menu';
 
 /** @internal */

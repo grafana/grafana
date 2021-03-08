@@ -9,6 +9,7 @@ export const linkModelToContextMenuItems: (links: () => LinkModel[]) => MenuItem
   return links().map((link) => {
     return {
       label: link.title,
+      ariaLabel: link.title,
       // TODO: rename to href
       url: link.href,
       target: link.target,

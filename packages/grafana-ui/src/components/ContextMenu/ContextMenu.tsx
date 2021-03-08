@@ -1,4 +1,5 @@
 import React, { useRef, useState, useLayoutEffect, useCallback } from 'react';
+import { selectors } from '@grafana/e2e-selectors';
 import { useClickAway } from 'react-use';
 import { Portal } from '../Portal/Portal';
 import { Menu } from '../Menu/Menu';
@@ -56,10 +57,15 @@ export const ContextMenu: React.FC<ContextMenuProps> = React.memo(({ x, y, onClo
   const header = renderHeader && renderHeader();
   return (
     <Portal>
-      <Menu header={header} ref={menuRef} style={positionStyles}>
+      <Menu
+        header={header}
+        ref={menuRef}
+        style={positionStyles}
+        ariaLabel={selectors.components.Menu.MenuComponent('Context')}
+      >
         {itemsGroup &&
           itemsGroup.map((group) => (
-            <MenuGroup key={group.label} label={group.label}>
+            <MenuGroup key={group.label} label={group.label} ariaLabel={group.label}>
               <List
                 items={group.items || []}
                 renderItem={(item) => {
@@ -67,6 +73,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = React.memo(({ x, y, onClo
                     <MenuItem
                       url={item.url}
                       label={item.label}
+                      ariaLabel={item.label}
                       target={item.target}
                       icon={item.icon}
                       active={item.active}

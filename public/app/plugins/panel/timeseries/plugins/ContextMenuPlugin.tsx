@@ -138,6 +138,7 @@ export const ContextMenuView: React.FC<ContextMenuProps> = ({
           items: linksSupplier.getLinks(replaceVariables).map<MenuItemProps>((link) => {
             return {
               label: link.title,
+              ariaLabel: link.title,
               url: link.href,
               target: link.target,
               icon: `${link.target === '_self' ? 'link' : 'external-link-alt'}` as IconName,

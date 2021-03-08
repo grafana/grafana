@@ -9,6 +9,8 @@ import { IconName } from '../../types';
 export interface MenuItemProps {
   /** Label of the menu item */
   label: string;
+  /** Aria label for accessibility support */
+  ariaLabel: string;
   /** Target of the menu item (i.e. new window)  */
   target?: LinkTarget;
   /** Icon of the menu item */
@@ -25,7 +27,7 @@ export interface MenuItemProps {
 
 /** @internal */
 export const MenuItem: React.FC<MenuItemProps> = React.memo(
-  ({ url, icon, label, target, onClick, className, active }) => {
+  ({ url, icon, label, ariaLabel, target, onClick, className, active }) => {
     const styles = useStyles(getStyles);
     const itemStyle = cx(
       {
@@ -36,7 +38,7 @@ export const MenuItem: React.FC<MenuItemProps> = React.memo(
     );
 
     return (
-      <div className={itemStyle}>
+      <div className={itemStyle} aria-label={ariaLabel}>
         <a
           href={url ? url : undefined}
           target={target}

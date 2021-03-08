@@ -67,6 +67,7 @@ export const ButtonSelect = React.memo(<T,>(props: Props<T>) => {
                     return (
                       <MenuItem
                         label={(item.label || item.value) as string}
+                        ariaLabel={(item.label || item.value) as string}
                         onClick={() => onChangeInternal(item)}
                         active={item.value === value?.value}
                       />

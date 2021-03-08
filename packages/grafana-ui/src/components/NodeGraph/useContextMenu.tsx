@@ -82,8 +82,10 @@ function getItems(links: LinkModel[]) {
   return Object.keys(groups).map((key) => {
     return {
       label: key,
+      ariaLabel: key,
       items: groups[key].map((link) => ({
         label: link.newTitle || link.l.title,
+        ariaLabel: link.newTitle || link.l.title,
         url: link.l.href,
         onClick: link.l.onClick,
       })),

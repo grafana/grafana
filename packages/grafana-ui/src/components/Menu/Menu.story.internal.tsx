@@ -28,13 +28,13 @@ export default {
 export const Simple: Story<MenuProps> = (args) => {
   return (
     <div>
-      <Menu header={args.header}>
-        <MenuGroup label="Group 1">
-          <MenuItem label="item1" icon="history" active={true} />
-          <MenuItem label="item2" icon="filter" active={true} />
+      <Menu header={args.header} ariaLabel="Menu header test">
+        <MenuGroup label="Group 1" ariaLabel="Menu Group test">
+          <MenuItem label="item1" icon="history" active={true} ariaLabel="Menu item test" />
+          <MenuItem label="item2" icon="filter" active={true} ariaLabel="Menu item test" />
         </MenuGroup>
-        <MenuGroup label="Group 2">
-          <MenuItem label="item1" icon="history" active={true} />
+        <MenuGroup label="Group 2" ariaLabel="Menu Group test">
+          <MenuItem label="item1" icon="history" active={true} ariaLabel="Menu item test" />
         </MenuGroup>
       </Menu>
     </div>

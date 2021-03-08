@@ -8,22 +8,28 @@ import { MenuItemProps } from './MenuItem';
 export interface MenuItemsGroup {
   /** Label for the menu items group */
   label?: string;
+  /** Aria label for accessibility support */
+  ariaLabel?: string;
   /** Items of the group */
   items: MenuItemProps[];
 }
 /** @internal */
 export interface MenuGroupProps extends Partial<MenuItemsGroup> {
   /** special children prop to pass children elements */
-  children?: React.ReactNode;
+  children: React.ReactNode;
 }
 
 /** @internal */
-export const MenuGroup: React.FC<MenuGroupProps> = ({ label, children }) => {
+export const MenuGroup: React.FC<MenuGroupProps> = ({ label, children, ariaLabel }) => {
   const styles = useStyles(getStyles);
 
   return (
     <div>
-      {label && <div className={styles.groupLabel}>{label}</div>}
+      {label && (
+        <div className={styles.groupLabel} aria-label={ariaLabel}>
+          {label}
+        </div>
+      )}
       {children}
     </div>
   );
