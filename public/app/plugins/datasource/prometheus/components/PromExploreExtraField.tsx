@@ -20,9 +20,9 @@ export interface PromExploreExtraFieldProps {
 export const PromExploreExtraField: React.FC<PromExploreExtraFieldProps> = memo(
   ({ queryType, stepValue, query, onChange, onStepChange, onQueryTypeChange, onKeyDownFunc }) => {
     const rangeOptions = [
-      { value: 'range', label: 'Range' },
-      { value: 'instant', label: 'Instant' },
-      { value: 'both', label: 'Both' },
+      { value: 'range', label: 'Range', description: 'Range query queries over a range of time.' },
+      { value: 'instant', label: 'Instant', description: 'Instant query queries against a single point in time.' },
+      { value: 'both', label: 'Both', description: "With both, you'll run two queries - one instant and one range." },
     ];
 
     return (
@@ -38,12 +38,7 @@ export const PromExploreExtraField: React.FC<PromExploreExtraFieldProps> = memo(
           )}
           aria-label="Query type field"
         >
-          <InlineFormLabel
-            width="auto"
-            tooltip="Choose the type of query you would like to run. An instant query queries against a single point in time. A range query queries over a range of time. With both, you'll run two queries - one instant and one range. "
-          >
-            Query type
-          </InlineFormLabel>
+          <InlineFormLabel width="auto">Query type</InlineFormLabel>
 
           <RadioButtonGroup options={rangeOptions} value={queryType} onChange={onQueryTypeChange} />
         </div>

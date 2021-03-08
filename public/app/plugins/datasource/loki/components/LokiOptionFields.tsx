@@ -18,8 +18,8 @@ export interface LokiOptionFieldsProps {
 type LokiQueryType = 'instant' | 'range';
 
 const queryTypeOptions = [
-  { value: 'range', label: 'Range' },
-  { value: 'instant', label: 'Instant' },
+  { value: 'range', label: 'Range', description: 'Range query queries over a range of time.' },
+  { value: 'instant', label: 'Instant', description: 'Instant query queries against a single point in time.' },
 ];
 
 export function LokiOptionFields(props: LokiOptionFieldsProps) {
@@ -79,12 +79,7 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
         )}
         aria-label="Query type field"
       >
-        <InlineFormLabel
-          tooltip="Choose the type of query you would like to run. An instant query queries against a single point in time. A range query queries over a range of time."
-          width="auto"
-        >
-          Query type
-        </InlineFormLabel>
+        <InlineFormLabel width="auto">Query type</InlineFormLabel>
 
         <RadioButtonGroup
           options={queryTypeOptions}
