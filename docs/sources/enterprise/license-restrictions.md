@@ -11,6 +11,10 @@ Enterprise licenses are limited by the number of active users, a license expirat
 
 ## User limits
 
+Users are limited by the number of active users and the number of concurrent sessions for a given account.
+
+### Active users limit
+
 Grafana licenses allow for a certain number of active users per instance. An active user is any user that has signed in to Grafana within the past 30 days.
 
 In the context of licensing, each user is classified as either a viewer or an editor:
@@ -23,9 +27,13 @@ In the context of licensing, each user is classified as either a viewer or an ed
 
 Restrictions are applied separately for viewers and editors.
 
-When the number of maximum active viewers or editors is reached, Grafana displays a warning banner.
+When the number of maximum active viewers or editors is reached, only they can sign in. New users or non-active users cannot sign in.
 
-Sometimes it is useful to log in to an account from multiple locations concurrently. With Grafana Enterprise 7.5 and up, accounts are limited to three concurrent sessions.
+### Concurrent sessions limit
+
+Sometimes it is useful to sign in to an account from multiple locations simultaneously. As of Grafana Enterprise 7.5+, accounts are limited to the number of concurrent sessions authorized in each license, which is typically three. A new session is created when a user signs in to Grafana from a new device, a different browser, or an incognito window. If a user signs in to Grafana from another tab or window within the same browser, then only one session is used.
+
+Given a limit of three sessions, the longest inactive session is signed out of when a fourth person signs in to the same account.
 
 ## Expiration date
 
