@@ -20,7 +20,6 @@ distributor:
 
 ingester:
   trace_idle_period: 10s               # the length of time after a trace has not received spans to consider it complete and flush it
-  max_block_bytes: 1_000_000           # cut the head block when it hits this size or ...
   max_block_duration: 5m               #   this much time passes
 
 compactor:
@@ -33,10 +32,6 @@ compactor:
 storage:
   trace:
     backend: local                     # backend configuration to use
-    block:
-      bloom_filter_false_positive: .05 # bloom filter false positive rate.  lower values create larger filters but fewer false positives
-      index_downsample: 10             # number of traces per index record
-      encoding: lz4-64k                # block encoding/compression.  options: none, gzip, lz4-64k, lz4-256k, lz4-1M, lz4, snappy, zstd
     wal:
       path: /tmp/tempo/wal             # where to store the the wal locally
     local:
