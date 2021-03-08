@@ -21,7 +21,11 @@ export const PromExploreExtraField: React.FC<PromExploreExtraFieldProps> = memo(
   ({ queryType, stepValue, query, onChange, onStepChange, onQueryTypeChange, onKeyDownFunc }) => {
     const rangeOptions = [
       { value: 'range', label: 'Range', description: 'Range query queries over a range of time.' },
-      { value: 'instant', label: 'Instant', description: 'Instant query queries against a single point in time.' },
+      {
+        value: 'instant',
+        label: 'Instant',
+        description: 'Instant query queries against a single point in time. For this query, the "To" time is used.',
+      },
       { value: 'both', label: 'Both', description: "With both, you'll run two queries - one instant and one range." },
     ];
 

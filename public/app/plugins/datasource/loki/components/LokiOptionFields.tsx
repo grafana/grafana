@@ -19,7 +19,11 @@ type LokiQueryType = 'instant' | 'range';
 
 const queryTypeOptions = [
   { value: 'range', label: 'Range', description: 'Range query queries over a range of time.' },
-  { value: 'instant', label: 'Instant', description: 'Instant query queries against a single point in time.' },
+  {
+    value: 'instant',
+    label: 'Instant',
+    description: 'Instant query queries against a single point in time. For this query, the "To" time is used.',
+  },
 ];
 
 export function LokiOptionFields(props: LokiOptionFieldsProps) {
