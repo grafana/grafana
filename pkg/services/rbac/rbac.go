@@ -30,10 +30,6 @@ func init() {
 func (ac *RBACService) Init() error {
 	ac.log = log.New("rbac")
 
-	if _, exists := ac.Cfg.FeatureToggles["new_authz"]; !exists {
-		return nil
-	}
-
 	seeder := &seeder{
 		Service: ac,
 		log:     ac.log,
@@ -48,7 +44,16 @@ func (ac *RBACService) Init() error {
 	return nil
 }
 
+func (ac *RBACService) IsDisabled() bool {
+	_, exists := ac.Cfg.FeatureToggles["new_authz"]
+	return !exists
+}
+
 func (ac *RBACService) AddMigration(mg *migrator.Migrator) {
+	if ac.IsDisabled() {
+		return
+	}
+
 	addRBACMigrations(mg)
 }
 
