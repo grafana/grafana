@@ -105,7 +105,7 @@ func (ss *SQLStore) Init() error {
 
 	// Init repo instances
 	annotations.SetRepository(&SQLAnnotationRepo{})
-	annotations.SetAnnotationCleaner(&AnnotationCleanupService{batchSize: 100, log: log.New("annotationcleaner")})
+	annotations.SetAnnotationCleaner(&AnnotationCleanupService{batchSize: ss.Cfg.AnnotationCleanupJobBatchSize, log: log.New("annotationcleaner")})
 	ss.Bus.SetTransactionManager(ss)
 
 	// Register handlers
