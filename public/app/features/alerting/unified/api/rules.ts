@@ -1,5 +1,5 @@
-import { RuleNamespace } from 'app/types/alerting-unified/internal';
-import { PromRulesResponse } from 'app/types/alerting-unified/dto';
+import { RuleNamespace } from 'app/types/unified-alerting/internal';
+import { PromRulesResponse } from 'app/types/unified-alerting/dto';
 import { getDatasourceByName } from '../utils/config';
 import { datasourceRequest, DataSourceType } from '../utils/datasource';
 

@@ -1,9 +1,9 @@
 import { combineReducers } from 'redux';
-import { createAsyncSlice } from '../utils/redux';
+import { createAsyncMapSlice } from '../utils/redux';
 import { fetchRulesAction } from './actions';
 
 export const reducer = combineReducers({
-  rules: createAsyncSlice('rules', fetchRulesAction).reducer,
+  rules: createAsyncMapSlice('rules', fetchRulesAction, (datasourceName) => datasourceName).reducer,
 });
 
 export type UnifiedAlertingState = ReturnType<typeof reducer>;

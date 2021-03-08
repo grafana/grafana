@@ -1,8 +1,7 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { RulesSourceResult } from 'app/types/unified-alerting/internal';
+import { RuleNamespace } from 'app/types/unified-alerting/internal';
 import { fetchRules } from '../api/rules';
-import { getAllDataSources } from '../utils/config';
-import { DataSourceType } from '../utils/datasource';
+import { withSerializedError } from '../utils/redux';
 
 /*
  * Will need to be updated to:
@@ -13,14 +12,5 @@ import { DataSourceType } from '../utils/datasource';
 
 export const fetchRulesAction = createAsyncThunk(
   'unifiedalerting/fetchRules',
-  (): Promise<RulesSourceResult[]> =>
-    Promise.all(
-      getAllDataSources()
-        .filter((ds) => ds.type === DataSourceType.Loki || ds.type === DataSourceType.Prometheus)
-        .map((ds) =>
-          fetchRules(ds.name)
-            .then((namespaces) => ({ datasourceName: ds.name, namespaces }))
-            .catch((error) => ({ datasourceName: ds.name, error }))
-        )
-    )
+  (datasourceName: string): Promise<RuleNamespace[]> => withSerializedError(fetchRules(datasourceName))
 );

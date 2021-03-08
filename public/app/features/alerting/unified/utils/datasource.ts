@@ -7,6 +7,8 @@ export enum DataSourceType {
   Prometheus = 'prometheus',
 }
 
+export const RulesDatasourceTypes: string[] = [DataSourceType.Loki, DataSourceType.Prometheus];
+
 // using ds proxy only temporarily until the new alerting API is running
 export function datasourceRequest<T = any>(
   dataSourceName: string,

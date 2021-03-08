@@ -1,29 +1,23 @@
-import React, { FC, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
+import React, { FC, useMemo } from 'react';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
-import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
-import { fetchRulesAction } from './state/actions';
+import { RulesSource } from './components/rules/RulesSource';
+import { getAllDataSources } from './utils/config';
+import { RulesDatasourceTypes } from './utils/datasource';
 
 export const RuleList: FC = () => {
-  const dispatch = useDispatch();
-
-  useEffect(() => {
-    dispatch(fetchRulesAction());
-  }, []);
-
-  const { loading, result, error } = useUnifiedAlertingSelector((state) => state.rules);
+  const rulesDatasources = useMemo(
+    () =>
+      getAllDataSources()
+        .filter((ds) => RulesDatasourceTypes.includes(ds.type))
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    []
+  );
 
   return (
-    <AlertingPageWrapper isLoading={loading}>
-      {error !== undefined && <p>Error while loading rules.</p>}
-      {result &&
-        result.map(({ error, namespaces, datasourceName }) => (
-          <p key={datasourceName}>
-            <strong>{datasourceName}</strong> <br />
-            {error && 'Error loading rules.'}
-            {namespaces && `${namespaces.length} namespaces`}
-          </p>
-        ))}
+    <AlertingPageWrapper>
+      {rulesDatasources.map((rulesSource) => (
+        <RulesSource key={rulesSource.name} datasourceName={rulesSource.name} />
+      ))}
     </AlertingPageWrapper>
   );
 };

@@ -102,6 +102,8 @@ export interface Props {
   collapsible?: boolean;
   /** Callback for the toggle functionality */
   onToggle?: (isOpen: boolean) => void;
+  /** Additional class name for the root element */
+  className?: string;
 }
 
 export const ControlledCollapse: FunctionComponent<Props> = ({ isOpen, onToggle, ...otherProps }) => {
@@ -120,7 +122,15 @@ export const ControlledCollapse: FunctionComponent<Props> = ({ isOpen, onToggle,
   );
 };
 
-export const Collapse: FunctionComponent<Props> = ({ isOpen, label, loading, collapsible, onToggle, children }) => {
+export const Collapse: FunctionComponent<Props> = ({
+  isOpen,
+  label,
+  loading,
+  collapsible,
+  onToggle,
+  className,
+  children,
+}) => {
   const theme = useContext(ThemeContext);
   const style = getStyles(theme);
   const onClickToggle = () => {
@@ -129,7 +139,7 @@ export const Collapse: FunctionComponent<Props> = ({ isOpen, label, loading, col
     }
   };
 
-  const panelClass = cx([style.collapse, 'panel-container']);
+  const panelClass = cx([style.collapse, 'panel-container', className]);
   const loaderClass = loading ? cx([style.loader, style.loaderActive]) : cx([style.loader]);
   const headerClass = collapsible ? cx([style.header]) : cx([style.headerCollapsed]);
   const headerButtonsClass = collapsible ? cx([style.headerButtons]) : cx([style.headerButtonsCollapsed]);
