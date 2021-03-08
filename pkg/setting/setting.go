@@ -143,7 +143,6 @@ var (
 	// analytics
 	ReportingEnabled     bool
 	ReportingDistributor string
-	CheckForUpdates      bool
 	GoogleAnalyticsId    string
 	GoogleTagManagerId   string
 
@@ -273,6 +272,10 @@ type Cfg struct {
 	AdminUser                    string
 	AdminPassword                string
 
+	// AWS Plugin Auth
+	AWSAllowedAuthProviders []string
+	AWSAssumeRoleEnabled    bool
+
 	// Auth proxy settings
 	AuthProxyEnabled          bool
 	AuthProxyHeaderName       string
@@ -330,6 +333,9 @@ type Cfg struct {
 	ErrTemplateName string
 
 	Env string
+
+	// Analytics
+	CheckForUpdates bool
 
 	// LDAP
 	LDAPEnabled     bool
@@ -817,7 +823,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.MetricsEndpointDisableTotalStats = iniFile.Section("metrics").Key("disable_total_stats").MustBool(false)
 
 	analytics := iniFile.Section("analytics")
-	CheckForUpdates = analytics.Key("check_for_updates").MustBool(true)
+	cfg.CheckForUpdates = analytics.Key("check_for_updates").MustBool(true)
 	GoogleAnalyticsId = analytics.Key("google_analytics_ua_id").String()
 	GoogleTagManagerId = analytics.Key("google_tag_manager_id").String()
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
@@ -861,6 +867,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 
 	cfg.readLDAPConfig()
+	cfg.readAWSConfig()
 	cfg.readSessionConfig()
 	cfg.readSmtpSettings()
 	cfg.readQuotaSettings()
@@ -921,6 +928,18 @@ func (cfg *Cfg) readLDAPConfig() {
 	LDAPActiveSyncEnabled = ldapSec.Key("active_sync_enabled").MustBool(false)
 	LDAPAllowSignup = ldapSec.Key("allow_sign_up").MustBool(true)
 	cfg.LDAPAllowSignup = LDAPAllowSignup
+}
+
+func (cfg *Cfg) readAWSConfig() {
+	awsPluginSec := cfg.Raw.Section("aws")
+	cfg.AWSAssumeRoleEnabled = awsPluginSec.Key("assume_role_enabled").MustBool(true)
+	allowedAuthProviders := awsPluginSec.Key("allowed_auth_providers").String()
+	for _, authProvider := range strings.Split(allowedAuthProviders, ",") {
+		authProvider = strings.TrimSpace(authProvider)
+		if authProvider != "" {
+			cfg.AWSAllowedAuthProviders = append(cfg.AWSAllowedAuthProviders, authProvider)
+		}
+	}
 }
 
 func (cfg *Cfg) readSessionConfig() {
@@ -1196,7 +1215,9 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	hiddenUsers := users.Key("hidden_users").MustString("")
 	for _, user := range strings.Split(hiddenUsers, ",") {
 		user = strings.TrimSpace(user)
-		cfg.HiddenUsers[user] = struct{}{}
+		if user != "" {
+			cfg.HiddenUsers[user] = struct{}{}
+		}
 	}
 
 	return nil

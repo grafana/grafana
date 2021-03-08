@@ -7,6 +7,8 @@ export type InputActionMeta = {
 };
 
 export interface SelectCommonProps<T> {
+  /** Aria label applied to the input field */
+  ['aria-label']?: string;
   allowCustomValue?: boolean;
   /** Focus is set to the Select when rendered*/
   autoFocus?: boolean;
@@ -18,15 +20,19 @@ export interface SelectCommonProps<T> {
   defaultValue?: any;
   disabled?: boolean;
   filterOption?: (option: SelectableValue, searchQuery: string) => boolean;
-  /**   Function for formatting the text that is displayed when creating a new value*/
+  /** Function for formatting the text that is displayed when creating a new value*/
   formatCreateLabel?: (input: string) => string;
   getOptionLabel?: (item: SelectableValue<T>) => React.ReactNode;
   getOptionValue?: (item: SelectableValue<T>) => string;
   inputValue?: string;
   invalid?: boolean;
   isClearable?: boolean;
+  /** The id to set on the SelectContainer component. To set the id for a label (with htmlFor), @see inputId instead */
+  id?: string;
   isLoading?: boolean;
   isMulti?: boolean;
+  /** The id of the search input. Use this to set a matching label with htmlFor */
+  inputId?: string;
   isOpen?: boolean;
   /** Disables the possibility to type into the input*/
   isSearchable?: boolean;

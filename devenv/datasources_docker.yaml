@@ -34,6 +34,17 @@ datasources:
     secureJsonData:
       password: grafana
 
+  - name: gdev-influxdb2
+    type: influxdb
+    access: proxy
+    url: http://influxdb2:8086
+    secureJsonData:
+      token: mytoken
+    jsonData:
+      version: Flux
+      organization: myorg
+      defaultBucket: mybucket
+      
   - name: gdev-influxdb-telegraf
     type: influxdb
     access: proxy
@@ -226,20 +237,6 @@ datasources:
     jsonData:
       authType: credentials
       defaultRegion: eu-west-2
-
-  # Keep to test old /api/prom API
-  - name: gdev-loki-0.3
-    type: loki
-    access: proxy
-    url: http://loki0.3:3100
-    editable: false
-
-  # First version with new v1 API (remove once v1 is out)
-  - name: gdev-loki-0.4
-    type: loki
-    access: proxy
-    url: http://loki0.4:3100
-    editable: false
 
   - name: gdev-loki
     type: loki

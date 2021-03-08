@@ -17,7 +17,13 @@ export { LoadingPlaceholder, LoadingPlaceholderProps } from './LoadingPlaceholde
 export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
 export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
-export { PieChart, PieChartType } from './PieChart/PieChart';
+export {
+  PieChart,
+  PieChartType,
+  PieChartLabels,
+  PieChartLegendOptions,
+  PieChartLegendValues,
+} from './PieChart/PieChart';
 export { UnitPicker } from './UnitPicker/UnitPicker';
 export { StatsPicker } from './StatsPicker/StatsPicker';
 export { RefreshPicker, defaultIntervals } from './RefreshPicker/RefreshPicker';
@@ -129,6 +135,7 @@ export { StringArrayEditor } from './OptionsUI/strings';
 export { NumberValueEditor } from './OptionsUI/number';
 export { SliderValueEditor } from './OptionsUI/slider';
 export { SelectValueEditor } from './OptionsUI/select';
+export { MultiSelectValueEditor } from './OptionsUI/multiSelect';
 
 // Next-gen forms
 export { Form } from './Forms/Form';
@@ -205,8 +212,9 @@ export { UPlotChart } from './uPlot/Plot';
 export * from './uPlot/geometries';
 export * from './uPlot/plugins';
 export { useRefreshAfterGraphRendered } from './uPlot/hooks';
-export { usePlotContext, usePlotData, usePlotPluginContext } from './uPlot/context';
+export { usePlotContext, usePlotPluginContext } from './uPlot/context';
 export { GraphNG, FIXED_UNIT } from './GraphNG/GraphNG';
+export { useGraphNGContext } from './GraphNG/hooks';
 export { BarChart } from './BarChart/BarChart';
 export { BarChartOptions, BarStackingMode, BarValueVisibility, BarChartFieldConfig } from './BarChart/types';
 export { GraphNGLegendEvent, GraphNGLegendEventMode } from './GraphNG/types';

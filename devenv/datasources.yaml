@@ -32,6 +32,19 @@ datasources:
       timeInterval: "15s"
     secureJsonData:
       password: grafana
+  
+  - name: gdev-influxdb2
+    type: influxdb
+    access: proxy
+    url: http://localhost:8087
+    user: grafana
+    secureJsonData:
+      token: mytoken
+      password: grafana12345
+    jsonData:
+      version: Flux
+      organization: myorg
+      defaultBucket: mybucket
 
   - name: gdev-influxdb-telegraf
     type: influxdb
@@ -43,7 +56,7 @@ datasources:
       timeInterval: "10s"
     secureJsonData:
       password: grafana
-
+    
   - name: gdev-opentsdb
     type: opentsdb
     access: proxy
@@ -226,20 +239,6 @@ datasources:
       authType: credentials
       defaultRegion: eu-west-2
       customMetricsNamespaces: "CWAgent"
-
-  # Keep to test old /api/prom API
-  - name: gdev-loki-0.3
-    type: loki
-    access: proxy
-    url: http://localhost:3103
-    editable: false
-
-  # First version with new v1 API (remove once v1 is out)
-  - name: gdev-loki-0.4
-    type: loki
-    access: proxy
-    url: http://localhost:3104
-    editable: false
 
   - name: gdev-loki
     type: loki

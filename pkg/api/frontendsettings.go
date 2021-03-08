@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins/manager"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/util"
@@ -109,12 +110,12 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins *plu
 
 	// add data sources that are built in (meaning they are not added via data sources page, nor have any entry in
 	// the datasource table)
-	for _, ds := range plugins.DataSources {
+	for _, ds := range manager.DataSources {
 		if ds.BuiltIn {
 			dataSources[ds.Name] = map[string]interface{}{
 				"type": ds.Type,
 				"name": ds.Name,
-				"meta": plugins.DataSources[ds.Id],
+				"meta": manager.DataSources[ds.Id],
 			}
 		}
 	}
@@ -124,10 +125,11 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins *plu
 
 // getFrontendSettingsMap returns a json object with all the settings needed for front end initialisation.
 func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]interface{}, error) {
-	enabledPlugins, err := plugins.GetEnabledPlugins(c.OrgId)
+	enabledPlugins, err := hs.PluginManager.GetEnabledPlugins(c.OrgId)
 	if err != nil {
 		return nil, err
 	}
+
 	pluginsToPreload := []string{}
 	for _, app := range enabledPlugins.Apps {
 		if app.Preload {
@@ -237,12 +239,14 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"licenseUrl":      hs.License.LicenseURL(c.SignedInUser),
 			"edition":         hs.License.Edition(),
 		},
-		"featureToggles":     hs.Cfg.FeatureToggles,
-		"rendererAvailable":  hs.RenderService.IsAvailable(),
-		"http2Enabled":       hs.Cfg.Protocol == setting.HTTP2Scheme,
-		"sentry":             hs.Cfg.Sentry,
-		"marketplaceUrl":     hs.Cfg.MarketplaceURL,
-		"expressionsEnabled": hs.Cfg.ExpressionsEnabled,
+		"featureToggles":          hs.Cfg.FeatureToggles,
+		"rendererAvailable":       hs.RenderService.IsAvailable(),
+		"http2Enabled":            hs.Cfg.Protocol == setting.HTTP2Scheme,
+		"sentry":                  hs.Cfg.Sentry,
+		"marketplaceUrl":          hs.Cfg.MarketplaceURL,
+		"expressionsEnabled":      hs.Cfg.ExpressionsEnabled,
+		"awsAllowedAuthProviders": hs.Cfg.AWSAllowedAuthProviders,
+		"awsAssumeRoleEnabled":    hs.Cfg.AWSAssumeRoleEnabled,
 	}
 
 	return jsonObj, nil

@@ -94,13 +94,11 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
   }
 
   annotationDataTopicTest(target: TestDataQuery, req: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
-    return new Observable<DataQueryResponse>((observer) => {
-      const events = this.buildFakeAnnotationEvents(req.range, 10);
-      const dataFrame = new ArrayDataFrame(events);
-      dataFrame.meta = { dataTopic: DataTopic.Annotations };
+    const events = this.buildFakeAnnotationEvents(req.range, 10);
+    const dataFrame = new ArrayDataFrame(events);
+    dataFrame.meta = { dataTopic: DataTopic.Annotations };
 
-      observer.next({ key: target.refId, data: [dataFrame] });
-    });
+    return of({ key: target.refId, data: [dataFrame] }).pipe(delay(100));
   }
 
   buildFakeAnnotationEvents(range: TimeRange, count: number): AnnotationEvent[] {

@@ -1,8 +1,8 @@
-grabpl_version = '0.5.38'
-build_image = 'grafana/build-container:1.3.2'
+grabpl_version = '0.5.43'
+build_image = 'grafana/build-container:1.4.0'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
-alpine_image = 'alpine:3.12'
+alpine_image = 'alpine:3.13'
 windows_image = 'mcr.microsoft.com/windows:1809'
 dockerize_version = '0.6.1'
 wix_image = 'grafana/ci-wix:0.1.1'
@@ -71,7 +71,7 @@ def slack_step(channel):
                 'from_secret': 'slack_webhook',
             },
             'channel': channel,
-            'template': 'Build {{build.number}} failed: {{build.link}}',
+            'template': 'Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}\nAuthor: {{build.author}}',
         },
     }
 
@@ -205,7 +205,7 @@ def enterprise_downstream_step(edition):
         },
     }
 
-def lint_backend_step(edition):    
+def lint_backend_step(edition):
     return {
         'name': 'lint-backend' + enterprise2_sfx(edition),
         'image': build_image,
@@ -445,7 +445,7 @@ def build_plugins_step(edition, sign=False):
         ],
     }
 
-def test_backend_step(edition):    
+def test_backend_step(edition):
     return {
         'name': 'test-backend' + enterprise2_sfx(edition),
         'image': build_image,
@@ -580,7 +580,7 @@ def gen_version_step(ver_mode, include_enterprise2=False, is_downstream=False):
 def package_step(edition, ver_mode, variants=None, is_downstream=False):
     variants_str = ''
     if variants:
-        variants_str = ' --variants {}'.format(','.join(variants))    
+        variants_str = ' --variants {}'.format(','.join(variants))
 
     if ver_mode in ('master', 'release', 'test-release', 'release-branch'):
         sign_args = ' --sign'
@@ -644,9 +644,9 @@ def package_step(edition, ver_mode, variants=None, is_downstream=False):
         'commands': cmds,
     }
 
-def e2e_tests_server_step(edition, port=3001):    
+def e2e_tests_server_step(edition, port=3001):
     package_file_pfx = ''
-    if edition == 'enterprise2':        
+    if edition == 'enterprise2':
         package_file_pfx = 'grafana' + enterprise2_sfx(edition)
     elif edition == 'enterprise':
         package_file_pfx = 'grafana-' + edition
@@ -671,7 +671,10 @@ def e2e_tests_server_step(edition, port=3001):
         ],
     }
 
-def e2e_tests_step(edition, port=3001):
+def e2e_tests_step(edition, port=3001, tries=None):
+    cmd = './bin/grabpl e2e-tests --port {}'.format(port)
+    if tries:
+        cmd += ' --tries {}'.format(tries)
     return {
         'name': 'end-to-end-tests' + enterprise2_sfx(edition),
         'image': 'grafana/ci-e2e:12.19.0-1',
@@ -685,7 +688,7 @@ def e2e_tests_step(edition, port=3001):
             # Have to re-install Cypress since it insists on searching for its binary beneath /root/.cache,
             # even though the Yarn cache directory is beneath /usr/local/share somewhere
             './node_modules/.bin/cypress install',
-            './bin/grabpl e2e-tests --port {}'.format(port),
+            cmd,
         ],
     }
 
@@ -724,13 +727,13 @@ def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publis
 
     ubuntu_sfx = ''
     if ubuntu:
-        ubuntu_sfx = '-ubuntu'      
+        ubuntu_sfx = '-ubuntu'
 
     settings = {
         'dry_run': not publish,
         'edition': edition,
         'ubuntu': ubuntu,
-    }    
+    }
 
     if publish:
         settings['username'] = {
@@ -836,7 +839,7 @@ def deploy_to_kubernetes_step(edition, is_downstream=False):
         ],
     }
 
-def enterprise2_sfx(edition):      
+def enterprise2_sfx(edition):
     if edition == 'enterprise2':
         return '-{}'.format(edition)
     return ''
@@ -844,7 +847,7 @@ def enterprise2_sfx(edition):
 def upload_packages_step(edition, ver_mode, is_downstream=False):
     if ver_mode == 'master' and edition in ('enterprise', 'enterprise2') and not is_downstream:
         return None
-    
+
     packages_bucket = ' --packages-bucket grafana-downloads' + enterprise2_sfx(edition)
 
     if ver_mode == 'test-release':

@@ -549,6 +549,7 @@ export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJso
   name: string;
   typeLogoUrl: string;
   type: string;
+  typeName: string;
   access: string;
   url: string;
   password: string;
@@ -594,6 +595,9 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
   withCredentials?: boolean;
 }
 
+/**
+ * @deprecated -- use {@link DataSourceInstanceSettings} instead
+ */
 export interface DataSourceSelectItem {
   name: string;
   value: string | null;

@@ -4,11 +4,11 @@ import (
 	"time"
 )
 
-func (ng *AlertNG) fetchAllDetails(now time.Time) []*AlertDefinition {
+func (sch *schedule) fetchAllDetails(now time.Time) []*AlertDefinition {
 	q := listAlertDefinitionsQuery{}
-	err := ng.getAlertDefinitions(&q)
+	err := sch.store.getAlertDefinitions(&q)
 	if err != nil {
-		ng.schedule.log.Error("failed to fetch alert definitions", "now", now, "err", err)
+		sch.log.Error("failed to fetch alert definitions", "now", now, "err", err)
 		return nil
 	}
 	return q.Result

@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -63,8 +62,8 @@ func getProfileNode(c *models.ReqContext) *dtos.NavLink {
 	}
 }
 
-func getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error) {
-	enabledPlugins, err := plugins.GetEnabledPlugins(c.OrgId)
+func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error) {
+	enabledPlugins, err := hs.PluginManager.GetEnabledPlugins(c.OrgId)
 	if err != nil {
 		return nil, err
 	}
@@ -115,13 +114,6 @@ func getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error) {
 				}
 				appLink.Children = append(appLink.Children, link)
 			}
-		}
-
-		if len(appLink.Children) > 0 && c.OrgRole == models.ROLE_ADMIN {
-			appLink.Children = append(appLink.Children, &dtos.NavLink{Divider: true})
-			appLink.Children = append(appLink.Children, &dtos.NavLink{
-				Text: "Plugin Config", Icon: "cog", Url: setting.AppSubUrl + "/plugins/" + plugin.Id + "/",
-			})
 		}
 
 		if len(appLink.Children) > 0 {
@@ -220,7 +212,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		})
 	}
 
-	appLinks, err := getAppLinks(c)
+	appLinks, err := hs.getAppLinks(c)
 	if err != nil {
 		return nil, err
 	}
@@ -282,7 +274,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 
 	if len(configNodes) > 0 {
 		navTree = append(navTree, &dtos.NavLink{
-			Id:         "cfg",
+			Id:         dtos.NavIDCfg,
 			Text:       "Configuration",
 			SubTitle:   "Organization: " + c.OrgName,
 			Icon:       "cog",
