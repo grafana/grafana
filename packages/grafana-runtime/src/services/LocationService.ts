@@ -4,6 +4,10 @@ import { LocationUpdate } from './LocationSrv';
 import { createLogger } from '@grafana/ui';
 import { config } from '../config';
 
+/**
+ * @alpha
+ * A wrapper to help work with browser location and history
+ */
 export interface LocationService {
   partial: (query: Record<string, any>, replace?: boolean) => void;
   push: (location: H.Path | H.LocationDescriptor<any>) => void;
@@ -142,6 +146,9 @@ export function locationSearchToObject(search: string): UrlQueryMap {
   return {};
 }
 
+/**
+ * @alpha
+ */
 export const locationService: LocationService = new HistoryWrapper();
 
 /** @internal */
