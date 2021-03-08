@@ -318,6 +318,7 @@ type Cfg struct {
 	HiddenUsers           map[string]struct{}
 
 	// Annotations
+	AnnotationCleanupJobBatchSize      int64
 	AlertingAnnotationCleanupSetting   AnnotationCleanupSettings
 	DashboardAnnotationCleanupSettings AnnotationCleanupSettings
 	APIAnnotationCleanupSettings       AnnotationCleanupSettings
@@ -471,6 +472,9 @@ func (cfg *Cfg) readGrafanaEnvironmentMetrics() error {
 }
 
 func (cfg *Cfg) readAnnotationSettings() {
+	section := cfg.Raw.Section("annotations")
+	cfg.AnnotationCleanupJobBatchSize = section.Key("cleanupjob_batchsize").MustInt64(100)
+
 	dashboardAnnotation := cfg.Raw.Section("annotations.dashboard")
 	apiIAnnotation := cfg.Raw.Section("annotations.api")
 	alertingSection := cfg.Raw.Section("alerting")
