@@ -127,10 +127,6 @@ func TestNewSession_AssumeRole(t *testing.T) {
 }
 
 func TestNewSession_EC2IAMRole(t *testing.T) {
-	t.Cleanup(func() {
-		sessCache = map[string]envelope{}
-	})
-
 	newSession = func(cfgs ...*aws.Config) (*session.Session, error) {
 		cfg := aws.Config{}
 		cfg.MergeIn(cfgs...)
@@ -166,10 +162,6 @@ func TestNewSession_EC2IAMRole(t *testing.T) {
 }
 
 func TestNewSession_AllowedAuthProviders(t *testing.T) {
-	t.Cleanup(func() {
-		sessCache = map[string]envelope{}
-	})
-
 	t.Run("Not allowed auth type is used", func(t *testing.T) {
 		e := newExecutor(nil, &awsSettings{AllowedAuthProviders: []string{"keys"}})
 		e.DataSource = fakeDataSource()
