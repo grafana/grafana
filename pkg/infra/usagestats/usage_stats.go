@@ -122,7 +122,11 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 
 			for _, data := range dsSettings.Result {
 				var m models.ESJSONData
-				json.Unmarshal([]byte(data.JsonData), &m)
+
+				if err := json.Unmarshal([]byte(data.JsonData), &m); err != nil {
+					return report, err
+				}
+
 				statName := fmt.Sprintf("stats.ds.elasticsearch.v%d.count", m.ESVersion)
 
 				count, _ := metrics[statName].(int64)
