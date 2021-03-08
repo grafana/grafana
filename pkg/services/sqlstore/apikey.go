@@ -28,7 +28,7 @@ func GetApiKeys(query *models.GetApiKeysQuery) error {
 }
 
 func DeleteApiKeyCtx(ctx context.Context, cmd *models.DeleteApiKeyCommand) error {
-	return withDbSession(ctx, func(sess *DBSession) error {
+	return withDbSession(ctx, x, func(sess *DBSession) error {
 		var rawSQL = "DELETE FROM api_key WHERE id=? and org_id=?"
 		_, err := sess.Exec(rawSQL, cmd.Id, cmd.OrgId)
 		return err

@@ -48,20 +48,11 @@ func startSession(ctx context.Context, engine *xorm.Engine, beginTran bool) (*DB
 
 // WithDbSession calls the callback with a session.
 func (ss *SQLStore) WithDbSession(ctx context.Context, callback dbTransactionFunc) error {
-	sess, err := startSession(ctx, ss.engine, false)
-	if err != nil {
-		return err
-	}
-	defer sess.Close()
-
-	return callback(sess)
+	return withDbSession(ctx, ss.engine, callback)
 }
 
-func withDbSession(ctx context.Context, callback dbTransactionFunc) error {
-	sess, err := startSession(ctx, x, false)
-	if err != nil {
-		return err
-	}
+func withDbSession(ctx context.Context, engine *xorm.Engine, callback dbTransactionFunc) error {
+	sess := &DBSession{Session: engine.NewSession()}
 	defer sess.Close()
 
 	return callback(sess)
