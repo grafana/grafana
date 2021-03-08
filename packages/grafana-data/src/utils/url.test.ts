@@ -25,7 +25,7 @@ describe('toUrlParams', () => {
 });
 
 describe('parseKeyValue', () => {
-  it.only('should parse url search params to object', () => {
+  it('should parse url search params to object', () => {
     const obj = urlUtil.parseKeyValue('param=value&param2=value2&kiosk');
     expect(obj).toEqual({ param: 'value', param2: 'value2', kiosk: true });
   });
@@ -42,6 +42,6 @@ describe('parseKeyValue', () => {
 
   it('should parse boolean params', () => {
     const obj = urlUtil.parseKeyValue('bool1&bool2=true&bool3=false');
-    expect(obj).toEqual({ bool: true, bool1: true, bool2: false });
+    expect(obj).toEqual({ bool1: true, bool2: true, bool3: false });
   });
 });
