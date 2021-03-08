@@ -40,6 +40,6 @@ describe('Menu', () => {
     );
     expect(screen.getByLabelText(selectors.components.Menu.MenuComponent('Test'))).toBeInTheDocument();
     expect(screen.getByLabelText(selectors.components.Menu.MenuGroup('Test'))).toBeInTheDocument();
-    expect(screen.getByLabelText(selectors.components.Menu.MenuItem('Test'))).toHaveLength(2);
+    expect(screen.getAllByLabelText(selectors.components.Menu.MenuItem('Test'))).toHaveLength(2);
   });
 });
