@@ -12,6 +12,7 @@ import (
 func init() {
 	bus.AddHandler("sql", GetSystemStats)
 	bus.AddHandler("sql", GetDataSourceStats)
+	bus.AddHandler("sql", GetESJSONData)
 	bus.AddHandler("sql", GetDataSourceAccessStats)
 	bus.AddHandler("sql", GetAdminStats)
 	bus.AddHandlerCtx("sql", GetAlertNotifiersUsageStats)
@@ -37,6 +38,13 @@ func GetDataSourceStats(query *models.GetDataSourceStatsQuery) error {
 func GetDataSourceAccessStats(query *models.GetDataSourceAccessStatsQuery) error {
 	var rawSQL = `SELECT COUNT(*) AS count, type, access FROM ` + dialect.Quote("data_source") + ` GROUP BY type, access`
 	query.Result = make([]*models.DataSourceAccessStats, 0)
+	err := x.SQL(rawSQL).Find(&query.Result)
+	return err
+}
+
+func GetESJSONData(query *models.GetESJSONDataQuery) error {
+	var rawSQL = `SELECT json_data FROM ` + dialect.Quote("data_source") + ` WHERE type = "elasticsearch"`
+	query.Result = make([]*models.JSONData, 0)
 	err := x.SQL(rawSQL).Find(&query.Result)
 	return err
 }

@@ -112,6 +112,24 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 		} else {
 			dsOtherCount += dsStat.Count
 		}
+
+		if dsStat.Type == models.DS_ES {
+			dsSettings := models.GetESJSONDataQuery{}
+			if err := uss.Bus.Dispatch(&dsSettings); err != nil {
+				metricsLogger.Error("Failed to get elasticsearch json data", "error", err)
+				return report, err
+			}
+
+			for _, data := range dsSettings.Result {
+				var m models.ESJSONData
+				json.Unmarshal([]byte(data.JsonData), &m)
+				statName := fmt.Sprintf("stats.ds.elasticsearch.v%d.count", m.ESVersion)
+
+				count, _ := metrics[statName].(int64)
+
+				metrics[statName] = count + 1
+			}
+		}
 	}
 	metrics["stats.ds.other.count"] = dsOtherCount
 
