@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -104,6 +105,8 @@ func TestNewSession_AssumeRole(t *testing.T) {
 		}), cmpopts.IgnoreFields(stscreds.AssumeRoleProvider{}, "Expiry"))
 		assert.Empty(t, diff)
 	})
+}
+
 func TestNewSession_EC2IAMRole(t *testing.T) {
 	newSession = func(cfgs ...*aws.Config) (*session.Session, error) {
 		cfg := aws.Config{}
@@ -120,7 +123,7 @@ func TestNewSession_EC2IAMRole(t *testing.T) {
 	}
 
 	t.Run("Credentials are created", func(t *testing.T) {
-		e := newExecutor(nil, &setting.Cfg{AWSAllowedAuthProviders: []string{"ec2_iam_role", "keys"}})
+		e := newExecutor(nil)
 		e.DataSource = fakeDataSource()
 		e.DataSource.JsonData.Set("authType", "ec2_iam_role")
 
@@ -137,5 +140,4 @@ func TestNewSession_EC2IAMRole(t *testing.T) {
 		}), cmpopts.IgnoreFields(stscreds.AssumeRoleProvider{}, "Expiry"))
 		assert.Empty(t, diff)
 	})
-}
 }
