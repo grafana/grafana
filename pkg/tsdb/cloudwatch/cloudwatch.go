@@ -104,7 +104,7 @@ func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error)
 		}
 	}
 	if !authTypeAllowed {
-		return nil, fmt.Errorf("attempting to use an auth type that is not allowed: %s", dsInfo.AuthType.String())
+		return nil, fmt.Errorf("attempting to use an auth type that is not allowed: %q", dsInfo.AuthType.String())
 	}
 
 	if dsInfo.AssumeRoleARN != "" && !e.settings.AWSAssumeRoleEnabled {
