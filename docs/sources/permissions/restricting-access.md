@@ -12,7 +12,7 @@ The highest permission always wins so if you for example want to hide a folder o
 
 Here are some examples of how Grafana resolves multiple permissions.
 
-## Example 1 (`user1` has the Editor Role)
+## Example 1 (user1 has the Editor Role)
 
 Permissions for a dashboard:
 
@@ -21,7 +21,7 @@ Permissions for a dashboard:
 
 Result: `user1` has Edit permission as the highest permission always wins.
 
-## Example 2 (`user1` has the Viewer Role and is a member of `team1`)
+## Example 2 (user1 has the Viewer Role and is a member of team1)
 
 Permissions for a dashboard:
 

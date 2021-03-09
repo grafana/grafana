@@ -10,11 +10,11 @@ weight = 200
 
 You can assign and remove permissions for organization roles, users, and teams for specific dashboards and dashboard folders.
 
-{{< docs-imagebox img="/img/docs/permissions/folder-permissions7-5.png" >}}
-
 This page explains how to grant permissions to specific folders and dashboards.
 
-To learn more about denying access to certain Grafana users, refer to [Restricting access]({{< relref "restricting-access.md">}})
+To learn more about denying access to certain Grafana users, refer to [Restricting access]({{< relref "restricting-access.md">}}).
+
+![Folder permissions](/img/docs/permissions/folder-permissions-7-5.png)
 
 ## Permission levels
 
