@@ -19,7 +19,7 @@ export const SideMenu: FC = React.memo(() => {
     appEvents.emit(CoreEvents.toggleSidemenuMobile);
   }, []);
 
-  if (kiosk) {
+  if (kiosk !== null) {
     return null;
   }
 

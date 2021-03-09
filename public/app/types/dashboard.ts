@@ -63,8 +63,11 @@ export interface DashboardInitError {
   error: any;
 }
 
-export const KIOSK_MODE_TV = 'tv';
-export type KioskMode = 'tv' | 'full';
+export enum KioskMode {
+  Off = 'off',
+  TV = 'tv',
+  Full = 'full',
+}
 
 export type GetMutableDashboardModelFn = () => DashboardModel | null;
 

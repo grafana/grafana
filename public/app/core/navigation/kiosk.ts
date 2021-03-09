@@ -4,18 +4,15 @@ import appEvents from '../app_events';
 import { KioskMode } from '../../types';
 
 export function toggleKioskMode() {
-  let kiosk;
+  let kiosk = locationService.getSearchObject().kiosk;
 
-  switch (locationService.getSearch().get('kiosk') as KioskMode) {
+  switch (kiosk) {
     case 'tv':
-      kiosk = 'full';
+      kiosk = true;
       appEvents.emit(AppEvents.alertSuccess, ['Press ESC to exit Kiosk mode']);
       break;
-    //  legacy support
-    case '1' as KioskMode:
-    //  legacy support
-    case '' as KioskMode:
-    case 'full':
+    case '1':
+    case true:
       kiosk = null;
       break;
     default:
@@ -23,6 +20,19 @@ export function toggleKioskMode() {
   }
 
   locationService.partial({ kiosk });
+}
+
+export function getKioskMode(queryParam?: string | boolean | null): KioskMode {
+  switch (queryParam) {
+    case 'tv':
+      return KioskMode.TV;
+    //  legacy support
+    case '1':
+    case true:
+      return KioskMode.Full;
+    default:
+      return KioskMode.Off;
+  }
 }
 
 export function exitKioskMode() {

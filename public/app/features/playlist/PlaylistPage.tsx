@@ -74,13 +74,13 @@ export interface StartModalProps {
 }
 
 export const StartModal: FC<StartModalProps> = ({ playlist, onDismiss }) => {
-  const [mode, setMode] = useState<string>('');
+  const [mode, setMode] = useState<any>(false);
   const [autoFit, setAutofit] = useState(false);
 
-  const modes: Array<SelectableValue<string>> = [
-    { label: 'Normal', value: '' },
+  const modes: Array<SelectableValue<any>> = [
+    { label: 'Normal', value: false },
     { label: 'TV', value: 'tv' },
-    { label: 'Kiosk', value: 'full' },
+    { label: 'Kiosk', value: true },
   ];
 
   const onStart = () => {

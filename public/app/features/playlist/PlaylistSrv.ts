@@ -68,7 +68,6 @@ export class PlaylistSrv {
   // Detect url changes not caused by playlist srv and stop playlist
   locationUpdated(location: Location) {
     if (location.pathname !== this.validPlaylistUrl) {
-      console.log('asd', location.pathname, this.validPlaylistUrl);
       this.stop();
     }
   }
@@ -99,8 +98,8 @@ export class PlaylistSrv {
   }
 
   stop() {
-    if (this.isPlaying) {
-      locationService.partial({ kiosk: null });
+    if (!this.isPlaying) {
+      return;
     }
 
     this.index = 0;
@@ -112,6 +111,10 @@ export class PlaylistSrv {
 
     if (this.nextTimeoutId) {
       clearTimeout(this.nextTimeoutId);
+    }
+
+    if (locationService.getSearchObject().kiosk) {
+      locationService.partial({ kiosk: null });
     }
 
     appEvents.emit(CoreEvents.playlistStopped);

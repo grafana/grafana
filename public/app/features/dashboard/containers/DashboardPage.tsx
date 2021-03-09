@@ -26,6 +26,7 @@ import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getTimeSrv } from '../services/TimeSrv';
 import { shouldReloadPage } from 'app/core/navigation/utils';
+import { getKioskMode } from 'app/core/navigation/kiosk';
 
 export interface DashboardPageRouteParams {
   uid?: string;
@@ -316,12 +317,11 @@ export class DashboardPage extends PureComponent<Props, State> {
     // Only trigger render when the scroll has moved by 25
     const approximateScrollTop = Math.round(scrollTop / 25) * 25;
     const inspectPanel = this.getInspectPanel();
-    const isInTvKioskMode = queryParams?.kiosk === 'tv';
-    const isInFullKioskMode = queryParams?.kiosk === 'full';
+    const kioskMode = getKioskMode(queryParams.kiosk);
 
     return (
       <div className="dashboard-container">
-        {!isInFullKioskMode && (
+        {kioskMode !== KioskMode.Full && (
           <div aria-label={selectors.pages.Dashboard.DashNav.nav}>
             <DashNav dashboard={dashboard} isFullscreen={!!viewPanel} onAddPanel={this.onAddPanel} />
           </div>
@@ -337,7 +337,7 @@ export class DashboardPage extends PureComponent<Props, State> {
           >
             <div className="dashboard-content">
               {initError && this.renderInitFailedState()}
-              {!editPanel && !isInFullKioskMode && !isInTvKioskMode && (
+              {!editPanel && kioskMode === KioskMode.Off && (
                 <div aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
                   <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
                 </div>
