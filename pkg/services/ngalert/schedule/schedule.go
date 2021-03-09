@@ -1,10 +1,14 @@
-package ngalert
+package schedule
 
 import (
 	"context"
 	"fmt"
 	"sync"
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -14,25 +18,29 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-type scheduleService interface {
+// timeNow makes it possible to test usage of time
+var timeNow = time.Now
+
+// ScheduleService handles scheduling
+type ScheduleService interface {
 	Ticker(context.Context) error
 	Pause() error
 	Unpause() error
 
 	// the following are used by tests only used for tests
-	evalApplied(alertDefinitionKey, time.Time)
-	stopApplied(alertDefinitionKey)
-	overrideCfg(cfg schedulerCfg)
+	evalApplied(models.AlertDefinitionKey, time.Time)
+	stopApplied(models.AlertDefinitionKey)
+	overrideCfg(cfg SchedulerCfg)
 }
 
-func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key alertDefinitionKey,
+func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key models.AlertDefinitionKey,
 	evalCh <-chan *evalContext, stopCh <-chan struct{}) error {
 	sch.log.Debug("alert definition routine started", "key", key)
 
 	evalRunning := false
 	var start, end time.Time
 	var attempt int64
-	var alertDefinition *AlertDefinition
+	var alertDefinition *models.AlertDefinition
 	for {
 		select {
 		case ctx := <-evalCh:
@@ -45,8 +53,8 @@ func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key alertDefi
 
 				// fetch latest alert definition version
 				if alertDefinition == nil || alertDefinition.Version < ctx.version {
-					q := getAlertDefinitionByUIDQuery{OrgID: key.orgID, UID: key.definitionUID}
-					err := sch.store.getAlertDefinitionByUID(&q)
+					q := models.GetAlertDefinitionByUIDQuery{OrgID: key.OrgID, UID: key.DefinitionUID}
+					err := sch.store.GetAlertDefinitionByUID(&q)
 					if err != nil {
 						sch.log.Error("failed to fetch alert definition", "key", key)
 						return err
@@ -70,8 +78,8 @@ func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key alertDefi
 				}
 				for _, r := range results {
 					sch.log.Debug("alert definition result", "title", alertDefinition.Title, "key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "instance", r.Instance, "state", r.State.String())
-					cmd := saveAlertInstanceCommand{DefinitionOrgID: key.orgID, DefinitionUID: key.definitionUID, State: InstanceStateType(r.State.String()), Labels: InstanceLabels(r.Instance), LastEvalTime: ctx.now}
-					err := sch.store.saveAlertInstance(&cmd)
+					cmd := models.SaveAlertInstanceCommand{DefinitionOrgID: key.OrgID, DefinitionUID: key.DefinitionUID, State: models.InstanceStateType(r.State.String()), Labels: models.InstanceLabels(r.Instance), LastEvalTime: ctx.now}
+					err := sch.store.SaveAlertInstance(&cmd)
 					if err != nil {
 						sch.log.Error("failed saving alert instance", "title", alertDefinition.Title, "key", key, "attempt", attempt, "now", ctx.now, "instance", r.Instance, "state", r.State.String(), "error", err)
 					}
@@ -120,60 +128,62 @@ type schedule struct {
 	// evalApplied is only used for tests: test code can set it to non-nil
 	// function, and then it'll be called from the event loop whenever the
 	// message from evalApplied is handled.
-	evalAppliedFunc func(alertDefinitionKey, time.Time)
+	evalAppliedFunc func(models.AlertDefinitionKey, time.Time)
 
 	// stopApplied is only used for tests: test code can set it to non-nil
 	// function, and then it'll be called from the event loop whenever the
 	// message from stopApplied is handled.
-	stopAppliedFunc func(alertDefinitionKey)
+	stopAppliedFunc func(models.AlertDefinitionKey)
 
 	log log.Logger
 
 	evaluator eval.Evaluator
 
-	store store
+	store store.Store
 
 	dataService *tsdb.Service
 }
 
-type schedulerCfg struct {
-	c               clock.Clock
-	baseInterval    time.Duration
-	logger          log.Logger
-	evalAppliedFunc func(alertDefinitionKey, time.Time)
-	stopAppliedFunc func(alertDefinitionKey)
-	evaluator       eval.Evaluator
-	store           store
+// SchedulerCfg is the scheduler configuration.
+type SchedulerCfg struct {
+	C               clock.Clock
+	BaseInterval    time.Duration
+	Logger          log.Logger
+	EvalAppliedFunc func(models.AlertDefinitionKey, time.Time)
+	MaxAttempts     int64
+	StopAppliedFunc func(models.AlertDefinitionKey)
+	Evaluator       eval.Evaluator
+	Store           store.Store
 }
 
-// newScheduler returns a new schedule.
-func newScheduler(cfg schedulerCfg, dataService *tsdb.Service) *schedule {
-	ticker := alerting.NewTicker(cfg.c.Now(), time.Second*0, cfg.c, int64(cfg.baseInterval.Seconds()))
+// NewScheduler returns a new schedule.
+func NewScheduler(cfg SchedulerCfg, dataService *tsdb.Service) *schedule {
+	ticker := alerting.NewTicker(cfg.C.Now(), time.Second*0, cfg.C, int64(cfg.BaseInterval.Seconds()))
 	sch := schedule{
-		registry:        alertDefinitionRegistry{alertDefinitionInfo: make(map[alertDefinitionKey]alertDefinitionInfo)},
-		maxAttempts:     maxAttempts,
-		clock:           cfg.c,
-		baseInterval:    cfg.baseInterval,
-		log:             cfg.logger,
+		registry:        alertDefinitionRegistry{alertDefinitionInfo: make(map[models.AlertDefinitionKey]alertDefinitionInfo)},
+		maxAttempts:     cfg.MaxAttempts,
+		clock:           cfg.C,
+		baseInterval:    cfg.BaseInterval,
+		log:             cfg.Logger,
 		heartbeat:       ticker,
-		evalAppliedFunc: cfg.evalAppliedFunc,
-		stopAppliedFunc: cfg.stopAppliedFunc,
-		evaluator:       cfg.evaluator,
-		store:           cfg.store,
+		evalAppliedFunc: cfg.EvalAppliedFunc,
+		stopAppliedFunc: cfg.StopAppliedFunc,
+		evaluator:       cfg.Evaluator,
+		store:           cfg.Store,
 		dataService:     dataService,
 	}
 	return &sch
 }
 
-func (sch *schedule) overrideCfg(cfg schedulerCfg) {
-	sch.clock = cfg.c
-	sch.baseInterval = cfg.baseInterval
-	sch.heartbeat = alerting.NewTicker(cfg.c.Now(), time.Second*0, cfg.c, int64(cfg.baseInterval.Seconds()))
-	sch.evalAppliedFunc = cfg.evalAppliedFunc
-	sch.stopAppliedFunc = cfg.stopAppliedFunc
+func (sch *schedule) overrideCfg(cfg SchedulerCfg) {
+	sch.clock = cfg.C
+	sch.baseInterval = cfg.BaseInterval
+	sch.heartbeat = alerting.NewTicker(cfg.C.Now(), time.Second*0, cfg.C, int64(cfg.BaseInterval.Seconds()))
+	sch.evalAppliedFunc = cfg.EvalAppliedFunc
+	sch.stopAppliedFunc = cfg.StopAppliedFunc
 }
 
-func (sch *schedule) evalApplied(alertDefKey alertDefinitionKey, now time.Time) {
+func (sch *schedule) evalApplied(alertDefKey models.AlertDefinitionKey, now time.Time) {
 	if sch.evalAppliedFunc == nil {
 		return
 	}
@@ -181,7 +191,7 @@ func (sch *schedule) evalApplied(alertDefKey alertDefinitionKey, now time.Time) 
 	sch.evalAppliedFunc(alertDefKey, now)
 }
 
-func (sch *schedule) stopApplied(alertDefKey alertDefinitionKey) {
+func (sch *schedule) stopApplied(alertDefKey models.AlertDefinitionKey) {
 	if sch.stopAppliedFunc == nil {
 		return
 	}
@@ -223,7 +233,7 @@ func (sch *schedule) Ticker(grafanaCtx context.Context) error {
 			registeredDefinitions := sch.registry.keyMap()
 
 			type readyToRunItem struct {
-				key            alertDefinitionKey
+				key            models.AlertDefinitionKey
 				definitionInfo alertDefinitionInfo
 			}
 			readyToRun := make([]readyToRunItem, 0)
@@ -232,7 +242,7 @@ func (sch *schedule) Ticker(grafanaCtx context.Context) error {
 					continue
 				}
 
-				key := item.getKey()
+				key := item.GetKey()
 				itemVersion := item.Version
 				newRoutine := !sch.registry.exists(key)
 				definitionInfo := sch.registry.getOrCreateInfo(key, itemVersion)
@@ -292,12 +302,12 @@ func (sch *schedule) Ticker(grafanaCtx context.Context) error {
 
 type alertDefinitionRegistry struct {
 	mu                  sync.Mutex
-	alertDefinitionInfo map[alertDefinitionKey]alertDefinitionInfo
+	alertDefinitionInfo map[models.AlertDefinitionKey]alertDefinitionInfo
 }
 
 // getOrCreateInfo returns the channel for the specific alert definition
 // if it does not exists creates one and returns it
-func (r *alertDefinitionRegistry) getOrCreateInfo(key alertDefinitionKey, definitionVersion int64) alertDefinitionInfo {
+func (r *alertDefinitionRegistry) getOrCreateInfo(key models.AlertDefinitionKey, definitionVersion int64) alertDefinitionInfo {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -313,7 +323,7 @@ func (r *alertDefinitionRegistry) getOrCreateInfo(key alertDefinitionKey, defini
 
 // get returns the channel for the specific alert definition
 // if the key does not exist returns an error
-func (r *alertDefinitionRegistry) get(key alertDefinitionKey) (*alertDefinitionInfo, error) {
+func (r *alertDefinitionRegistry) get(key models.AlertDefinitionKey) (*alertDefinitionInfo, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -324,7 +334,7 @@ func (r *alertDefinitionRegistry) get(key alertDefinitionKey) (*alertDefinitionI
 	return &info, nil
 }
 
-func (r *alertDefinitionRegistry) exists(key alertDefinitionKey) bool {
+func (r *alertDefinitionRegistry) exists(key models.AlertDefinitionKey) bool {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -332,15 +342,15 @@ func (r *alertDefinitionRegistry) exists(key alertDefinitionKey) bool {
 	return ok
 }
 
-func (r *alertDefinitionRegistry) del(key alertDefinitionKey) {
+func (r *alertDefinitionRegistry) del(key models.AlertDefinitionKey) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	delete(r.alertDefinitionInfo, key)
 }
 
-func (r *alertDefinitionRegistry) iter() <-chan alertDefinitionKey {
-	c := make(chan alertDefinitionKey)
+func (r *alertDefinitionRegistry) iter() <-chan models.AlertDefinitionKey {
+	c := make(chan models.AlertDefinitionKey)
 
 	f := func() {
 		r.mu.Lock()
@@ -356,8 +366,8 @@ func (r *alertDefinitionRegistry) iter() <-chan alertDefinitionKey {
 	return c
 }
 
-func (r *alertDefinitionRegistry) keyMap() map[alertDefinitionKey]struct{} {
-	definitionsIDs := make(map[alertDefinitionKey]struct{})
+func (r *alertDefinitionRegistry) keyMap() map[models.AlertDefinitionKey]struct{} {
+	definitionsIDs := make(map[models.AlertDefinitionKey]struct{})
 	for k := range r.iter() {
 		definitionsIDs[k] = struct{}{}
 	}
