@@ -11,7 +11,7 @@ import {
   toCSV,
   transformDataFrame,
   CSVConfig,
-  GetDataOptions,
+  QueryRunnerGetDataOptions,
 } from '@grafana/data';
 import { Button, Container, Field, HorizontalGroup, Spinner, Select, Switch, Table, VerticalGroup } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
@@ -28,8 +28,8 @@ interface Props {
   panel: PanelModel;
   data?: DataFrame[];
   isLoading: boolean;
-  options: GetDataOptions;
-  onOptionsChange: (options: GetDataOptions) => void;
+  options: QueryRunnerGetDataOptions;
+  onOptionsChange: (options: QueryRunnerGetDataOptions) => void;
 }
 
 interface State {

@@ -22,7 +22,7 @@ import {
   ScopedVars,
   transformDataFrame,
   QueryRunnerOptions,
-  GetDataOptions,
+  QueryRunnerGetDataOptions,
   QueryRunner,
 } from '@grafana/data';
 
@@ -36,15 +36,18 @@ export class PanelQueryRunner implements QueryRunner {
   private lastResult?: PanelData;
   private dataConfigSource: DataConfigSource;
 
-  constructor(dataConfigSource: DataConfigSource) {
+  constructor(dataConfigSource?: DataConfigSource) {
     this.subject = new ReplaySubject(1);
-    this.dataConfigSource = dataConfigSource;
+    this.dataConfigSource = dataConfigSource || {
+      getTransformations: () => undefined,
+      getFieldOverrideOptions: () => undefined,
+    };
   }
 
   /**
    * Returns an observable that subscribes to the shared multi-cast subject (that reply last result).
    */
-  getData(options: GetDataOptions): Observable<PanelData> {
+  getData(options: QueryRunnerGetDataOptions): Observable<PanelData> {
     const { withFieldConfig, withTransforms } = options;
 
     return this.subject.pipe(

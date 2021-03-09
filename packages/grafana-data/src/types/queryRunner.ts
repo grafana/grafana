@@ -5,6 +5,12 @@ import { ScopedVars } from './ScopedVars';
 import { TimeRange, TimeZone } from './time';
 import { DataTransformerConfig } from './transformations';
 
+/**
+ * Describes the options being passed to {@link QueryRunner.run} when running a query against any of the
+ * supported datasource plugins.
+ *
+ * @alpha
+ */
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
@@ -24,13 +30,25 @@ export interface QueryRunnerOptions<
   transformations?: DataTransformerConfig[];
 }
 
-export interface GetDataOptions {
+/**
+ * Describes the options being passed to {@link QueryRunner.getData} when fetching
+ * data for a query.
+ *
+ * @alpha
+ */
+export interface QueryRunnerGetDataOptions {
   withTransforms: boolean;
   withFieldConfig: boolean;
 }
 
+/**
+ * Describes the QueryRunner that can be used to run queries against any of the
+ * supported datasource plugins installed on the current Grafana instance.
+ *
+ * @alpha
+ */
 export interface QueryRunner {
-  getData(options: GetDataOptions): Observable<PanelData>;
+  getData(options: QueryRunnerGetDataOptions): Observable<PanelData>;
   run(options: QueryRunnerOptions): Promise<void>;
   cancelQuery(): void;
   resendLastResult(): void;

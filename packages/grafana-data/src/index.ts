@@ -20,4 +20,4 @@ export {
 } from './transformations/matchers/valueMatchers/types';
 export { PanelPlugin, SetFieldConfigOptionsArgs, StandardOptionConfig } from './panel/PanelPlugin';
 export { createFieldConfigRegistry } from './panel/registryFactories';
-export { QueryRunnerOptions, QueryRunner, GetDataOptions } from './types/queryRunner';
+export { QueryRunnerOptions, QueryRunner, QueryRunnerGetDataOptions } from './types/queryRunner';

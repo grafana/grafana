@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { DataSourceApi, PanelData, PanelPlugin, GetDataOptions } from '@grafana/data';
+import { DataSourceApi, PanelData, PanelPlugin, QueryRunnerGetDataOptions } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { CustomScrollbar, Drawer, TabContent } from '@grafana/ui';
 import { getPanelInspectorStyles } from './styles';
@@ -22,10 +22,10 @@ interface Props {
   // The last raw response
   data?: PanelData;
   isDataLoading: boolean;
-  dataOptions: GetDataOptions;
+  dataOptions: QueryRunnerGetDataOptions;
   // If the datasource supports custom metadata
   metadataDatasource?: DataSourceApi;
-  onDataOptionsChange: (options: GetDataOptions) => void;
+  onDataOptionsChange: (options: QueryRunnerGetDataOptions) => void;
   onClose: () => void;
 }
 

@@ -3,7 +3,7 @@ import { connect, MapStateToProps, useDispatch } from 'react-redux';
 
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
-import { PanelPlugin, GetDataOptions } from '@grafana/data';
+import { PanelPlugin, QueryRunnerGetDataOptions } from '@grafana/data';
 import { StoreState } from 'app/types';
 import { usePanelLatestData } from '../PanelEditor/usePanelLatestData';
 import { InspectContent } from './InspectContent';
@@ -29,7 +29,7 @@ const PanelInspectorUnconnected: React.FC<Props> = ({ panel, dashboard, defaultT
   }
 
   const dispatch = useDispatch();
-  const [dataOptions, setDataOptions] = useState<GetDataOptions>({
+  const [dataOptions, setDataOptions] = useState<QueryRunnerGetDataOptions>({
     withTransforms: false,
     withFieldConfig: true,
   });
