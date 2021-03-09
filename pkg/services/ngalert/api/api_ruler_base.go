@@ -30,7 +30,7 @@ type RulerApiBase struct {
 	log log.Logger
 }
 
-func (api *API) RegisterRulerApiEndpoints(srv RulerApiBase) {
+func (api *API) RegisterRulerApiEndpoints(srv RulerApiService) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Delete(toMacaronPath("/ruler/{DatasourceId}/api/v1/rules/{Namespace}"), routing.Wrap(srv.RouteDeleteNamespaceRulesConfig))
 		group.Delete(toMacaronPath("/ruler/{DatasourceId}/api/v1/rules/{Namespace}/{Groupname}"), routing.Wrap(srv.RouteDeleteRuleGroupConfig))

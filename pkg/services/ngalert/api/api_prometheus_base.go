@@ -24,7 +24,7 @@ type PrometheusApiBase struct {
 	log log.Logger
 }
 
-func (api *API) RegisterPrometheusApiEndpoints(srv PrometheusApiBase) {
+func (api *API) RegisterPrometheusApiEndpoints(srv PrometheusApiService) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Get(toMacaronPath("/prometheus/{DatasourceId}/api/v1/alerts"), routing.Wrap(srv.RouteGetAlertStatuses))
 		group.Get(toMacaronPath("/prometheus/{DatasourceId}/api/v1/rules"), routing.Wrap(srv.RouteGetRuleStatuses))

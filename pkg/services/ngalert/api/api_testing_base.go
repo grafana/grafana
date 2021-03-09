@@ -26,7 +26,7 @@ type TestingApiBase struct {
 	log log.Logger
 }
 
-func (api *API) RegisterTestingApiEndpoints(srv TestingApiBase) {
+func (api *API) RegisterTestingApiEndpoints(srv TestingApiService) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Get(toMacaronPath("/api/v1/receiver/test"), binding.Bind(apimodels.ExtendedReceiver{}), routing.Wrap(srv.RouteTestReceiverConfig))
 		group.Get(toMacaronPath("/api/v1/rule/test"), binding.Bind(apimodels.TestRulePayload{}), routing.Wrap(srv.RouteTestRuleConfig))

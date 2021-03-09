@@ -26,7 +26,7 @@ type PermissionsApiBase struct {
 	log log.Logger
 }
 
-func (api *API) RegisterPermissionsApiEndpoints(srv PermissionsApiBase) {
+func (api *API) RegisterPermissionsApiEndpoints(srv PermissionsApiService) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Get(toMacaronPath("/api/v1/namespace/{Namespace}/permissions"), routing.Wrap(srv.RouteGetNamespacePermissions))
 		group.Post(toMacaronPath("/api/v1/namespace/{Namespace}/permissions"), binding.Bind(apimodels.Permissions{}), routing.Wrap(srv.RouteSetNamespacePermissions))

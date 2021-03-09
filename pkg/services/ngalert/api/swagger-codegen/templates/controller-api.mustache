@@ -21,7 +21,7 @@ type {{classname}}Base struct {
 	log log.Logger
 }
 
-func (api *API) Register{{classname}}Endpoints(srv {{classname}}Base) {
+func (api *API) Register{{classname}}Endpoints(srv {{classname}}Service) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister){ {{#operations}}{{#operation}}
 		group.{{httpMethod}}(toMacaronPath("{{{path}}}"){{#bodyParams}}, binding.Bind(apimodels.{{dataType}}{}){{/bodyParams}}, routing.Wrap(srv.{{nickname}})){{/operation}}{{/operations}}
 	})

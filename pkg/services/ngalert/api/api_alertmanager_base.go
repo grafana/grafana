@@ -34,7 +34,7 @@ type AlertmanagerApiBase struct {
 	log log.Logger
 }
 
-func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiBase) {
+func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiService) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Post(toMacaronPath("/alertmanager/{DatasourceId}/api/v2/silences"), binding.Bind(apimodels.SilenceBody{}), routing.Wrap(srv.RouteCreateSilence))
 		group.Delete(toMacaronPath("/alertmanager/{DatasourceId}/config/api/v1/alerts"), routing.Wrap(srv.RouteDeleteAlertingConfig))
