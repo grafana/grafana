@@ -11,6 +11,7 @@ import { PlaylistDTO } from './types';
 import { Button, Card, Checkbox, Field, LinkButton, Modal, RadioButtonGroup, VerticalGroup } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import OrgActionBar from 'app/core/components/OrgActionBar/OrgActionBar';
+import EmptyListCTA from '../../core/components/EmptyListCTA/EmptyListCTA';
 
 interface ConnectedProps {
   navModel: NavModel;
@@ -22,40 +23,63 @@ export const PlaylistPage: FC<Props> = ({ navModel }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [startPlaylist, setStartPlaylist] = useState<PlaylistDTO | undefined>();
 
-  const { value: lists, loading } = useAsync(async () => {
+  const { value: playlists, loading } = useAsync(async () => {
     return getBackendSrv().get('/api/playlists', { query: searchQuery }) as Promise<PlaylistDTO[]>;
   });
+  const hasPlaylists = playlists && playlists.length > 0;
+
+  let content = (
+    <EmptyListCTA
+      title="There are no playlists created yet"
+      buttonIcon="plus"
+      buttonLink="playlists/create"
+      buttonTitle="Create Playlist"
+      proTip="You can use playlists to cycle dashboards on TVs without user control"
+      proTipLink="http://docs.grafana.org/reference/playlist/"
+      proTipLinkTitle="Learn more"
+      proTipTarget="_blank"
+    />
+  );
+
+  if (hasPlaylists) {
+    content = (
+      <>
+        {playlists!.map((playlist) => (
+          <Card heading={playlist.name} key={playlist.id.toString()}>
+            <Card.Actions>
+              <Button variant="secondary" icon="play" onClick={() => setStartPlaylist(playlist)}>
+                Start playlist
+              </Button>
+              {contextSrv.isEditor && (
+                <LinkButton
+                  key="edit"
+                  variant="secondary"
+                  href={`/playlists/edit/${playlist.id}`}
+                  icon="cog"
+                  disabled
+                  title="Feature temporarily disabled"
+                >
+                  Edit playlist
+                </LinkButton>
+              )}
+            </Card.Actions>
+          </Card>
+        ))}
+      </>
+    );
+  }
 
   return (
     <Page navModel={navModel}>
       <Page.Contents isLoading={loading}>
-        <OrgActionBar
-          searchQuery={searchQuery}
-          linkButton={{ title: 'New playlist', href: '/playlists/new' }}
-          setSearchQuery={setSearchQuery}
-        />
-        {lists &&
-          lists.map((playlist) => (
-            <Card heading={playlist.name} key={playlist.id.toString()}>
-              <Card.Actions>
-                <Button variant="secondary" icon="play" onClick={() => setStartPlaylist(playlist)}>
-                  Start playlist
-                </Button>
-                {contextSrv.isEditor && (
-                  <LinkButton
-                    key="edit"
-                    variant="secondary"
-                    href={`/playlists/edit/${playlist.id}`}
-                    icon="cog"
-                    disabled
-                    title="Feature temporarily disabled"
-                  >
-                    Edit playlist
-                  </LinkButton>
-                )}
-              </Card.Actions>
-            </Card>
-          ))}
+        {hasPlaylists && (
+          <OrgActionBar
+            searchQuery={searchQuery}
+            linkButton={{ title: 'New playlist', href: '/playlists/new' }}
+            setSearchQuery={setSearchQuery}
+          />
+        )}
+        {content}
         {startPlaylist && <StartModal playlist={startPlaylist} onDismiss={() => setStartPlaylist(undefined)} />}
       </Page.Contents>
     </Page>
