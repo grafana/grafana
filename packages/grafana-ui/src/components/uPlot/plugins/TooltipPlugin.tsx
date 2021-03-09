@@ -59,6 +59,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', t
         // when interacting with a point in single mode
         if (mode === 'single' && originFieldIndex !== null) {
           const field = otherProps.data[originFieldIndex.frameIndex].fields[originFieldIndex.fieldIndex];
+          const plotSeries = plotContext.getSeries();
 
           const fieldFmt = field.display || getDisplayProcessor({ field, timeZone });
           tooltip = (
@@ -66,7 +67,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', t
               series={[
                 {
                   // TODO: align with uPlot typings
-                  color: (plotContext.getSeries()[focusedSeriesIdx!].stroke as any)(),
+                  color: (plotSeries[focusedSeriesIdx!].stroke as any)(),
                   label: getFieldDisplayName(field, otherProps.data[originFieldIndex.frameIndex]),
                   value: fieldFmt(field.values.get(focusedPointIdx)).text,
                 },
@@ -77,34 +78,38 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', t
         }
 
         if (mode === 'multi') {
+          const plotSeries = plotContext.getSeries();
+
           let series: SeriesTableRowProps[] = [];
 
-          for (let i = 0; i < otherProps.data.length; i++) {
-            series = series.concat(
-              otherProps.data[i].fields.reduce<SeriesTableRowProps[]>((agg, f, j) => {
-                // skipping xField, time fields, and non-numeric fields
-                if (f === xField || f.type === FieldType.time || f.type !== FieldType.number) {
-                  return agg;
-                }
+          let frames = otherProps.data;
 
-                if (f.config.custom?.hideFrom?.tooltip) {
-                  return agg;
-                }
+          for (let i = 0; i < frames.length; i++) {
+            let fields = frames[i].fields;
 
-                return [
-                  ...agg,
-                  {
-                    // TODO: align with uPlot typings
-                    color: (plotContext.getSeries()[j].stroke as any)!(),
-                    label: getFieldDisplayName(f, otherProps.data[i]),
-                    value: formattedValueToString(f.display!(f.values.get(focusedPointIdx!))),
-                    isActive: originFieldIndex
-                      ? originFieldIndex.frameIndex === i && originFieldIndex.fieldIndex === j
-                      : false,
-                  },
-                ];
-              }, [])
-            );
+            for (let j = 0; j < fields.length; j++) {
+              let f = fields[j];
+
+              // skipping xField, time fields, non-numeric, and hidden fields
+              if (
+                f === xField ||
+                f.type === FieldType.time ||
+                f.type !== FieldType.number ||
+                f.config.custom?.hideFrom?.tooltip
+              ) {
+                continue;
+              }
+
+              series.push({
+                // TODO: align with uPlot typings
+                color: (plotSeries[j].stroke as any)!(),
+                label: getFieldDisplayName(f, otherProps.data[i]),
+                value: formattedValueToString(f.display!(f.values.get(focusedPointIdx!))),
+                isActive: originFieldIndex
+                  ? originFieldIndex.frameIndex === i && originFieldIndex.fieldIndex === j
+                  : false,
+              });
+            }
           }
 
           tooltip = <SeriesTable series={series} timestamp={xVal} />;
