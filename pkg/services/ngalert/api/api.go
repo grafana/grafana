@@ -44,7 +44,7 @@ func (api *API) RegisterAPIEndpoints() {
 	api.RegisterAlertmanagerApiEndpoints(AlertmanagerApiBase{log: logger})
 	api.RegisterPermissionsApiEndpoints(PermissionsApiBase{log: logger})
 	api.RegisterPrometheusApiEndpoints(PrometheusApiBase{log: logger})
-	api.RegisterRulerApiEndpoints(RulerApiBase{log: logger})
+	api.RegisterRulerApiEndpoints(RulerApiMock{log: logger})
 	api.RegisterTestingApiEndpoints(TestingApiBase{log: logger})
 
 	// Legacy routes; they will be removed in v8
