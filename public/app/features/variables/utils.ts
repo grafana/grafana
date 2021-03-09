@@ -137,7 +137,7 @@ export function getTemplatedRegex(variable: QueryVariableModel, templateSrv = ge
 
 export function getLegacyQueryOptions(variable: QueryVariableModel, searchFilter?: string, timeSrv = getTimeSrv()) {
   const queryOptions: any = { range: undefined, variable, searchFilter };
-  if (variable.refresh === VariableRefresh.onTimeRangeChanged) {
+  if (variable.refresh === VariableRefresh.onTimeRangeChanged || variable.refresh === VariableRefresh.onDashboardLoad) {
     queryOptions.range = timeSrv.timeRange();
   }
 
