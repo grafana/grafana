@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type fakeDataSourceCfg struct {
@@ -144,4 +145,8 @@ func (c fakeRGTAClient) GetResourcesPages(in *resourcegroupstaggingapi.GetResour
 		ResourceTagMappingList: c.tagMapping,
 	}, true)
 	return nil
+}
+
+func newTestConfig() *setting.Cfg {
+	return &setting.Cfg{AWSAllowedAuthProviders: []string{"default"}, AWSAssumeRoleEnabled: true}
 }

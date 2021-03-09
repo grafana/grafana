@@ -373,6 +373,18 @@ To request a quota increase, visit the [AWS Service Quotas console](https://cons
 
 Please see the AWS documentation for [Service Quotas](https://docs.aws.amazon.com/servicequotas/latest/userguide/intro.html) and [CloudWatch limits](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/cloudwatch_limits.html) for more information.
 
+## Configure the data source with grafana.ini
+
+In the [Grafana configuration](https://grafana.com/docs/grafana/latest/administration/configuration/#aws) there's an `AWS` section that allows you to customize the data source.
+
+### allowed_auth_providers
+
+Specify which authentication providers are allowed for the CloudWatch data source. The following providers are enabled by default in OSS Grafana: `default` (AWS SDK default), keys (Access and secret key), credentials (Credentials file), ec2_IAM_role (EC2 IAM role).
+
+### assume_role_enabled
+
+Allows you to disable `assume role (ARN)` in the CloudWatch data source. By default, assume role (ARN) is enabled for OSS Grafana.
+
 ## Configure the data source with provisioning
 
 It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../administration/provisioning/#datasources" >}})

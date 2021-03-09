@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -58,7 +59,7 @@ func TestNewSession_AssumeRole(t *testing.T) {
 
 		const roleARN = "test"
 
-		e := newExecutor(nil)
+		e := newExecutor(nil, newTestConfig())
 		e.DataSource = fakeDataSource(fakeDataSourceCfg{
 			assumeRoleARN: roleARN,
 		})
@@ -85,7 +86,7 @@ func TestNewSession_AssumeRole(t *testing.T) {
 		const roleARN = "test"
 		const externalID = "external"
 
-		e := newExecutor(nil)
+		e := newExecutor(nil, newTestConfig())
 		e.DataSource = fakeDataSource(fakeDataSourceCfg{
 			assumeRoleARN: roleARN,
 			externalID:    externalID,
@@ -105,6 +106,50 @@ func TestNewSession_AssumeRole(t *testing.T) {
 		}), cmpopts.IgnoreFields(stscreds.AssumeRoleProvider{}, "Expiry"))
 		assert.Empty(t, diff)
 	})
+
+	t.Run("Assume role not enabled", func(t *testing.T) {
+		t.Cleanup(func() {
+			sessCache = map[string]envelope{}
+		})
+
+		const roleARN = "test"
+
+		e := newExecutor(nil, &setting.Cfg{AWSAllowedAuthProviders: []string{"default"}, AWSAssumeRoleEnabled: false})
+		e.DataSource = fakeDataSource(fakeDataSourceCfg{
+			assumeRoleARN: roleARN,
+		})
+
+		sess, err := e.newSession(defaultRegion)
+		require.Error(t, err)
+		require.Nil(t, sess)
+
+		expectedError := "attempting to use assume role (ARN) which is disabled in grafana.ini"
+		assert.Equal(t, expectedError, err.Error())
+	})
+}
+
+func TestNewSession_AllowedAuthProviders(t *testing.T) {
+	t.Run("Not allowed auth type is used", func(t *testing.T) {
+		e := newExecutor(nil, &setting.Cfg{AWSAllowedAuthProviders: []string{"keys"}})
+		e.DataSource = fakeDataSource()
+		e.DataSource.JsonData.Set("authType", "default")
+
+		sess, err := e.newSession(defaultRegion)
+		require.Error(t, err)
+		require.Nil(t, sess)
+
+		assert.Equal(t, `attempting to use an auth type that is not allowed: "default"`, err.Error())
+	})
+
+	t.Run("Allowed auth type is used", func(t *testing.T) {
+		e := newExecutor(nil, &setting.Cfg{AWSAllowedAuthProviders: []string{"keys"}})
+		e.DataSource = fakeDataSource()
+		e.DataSource.JsonData.Set("authType", "keys")
+
+		sess, err := e.newSession(defaultRegion)
+		require.NoError(t, err)
+		require.NotNil(t, sess)
+	})
 }
 
 func TestNewSession_EC2IAMRole(t *testing.T) {
@@ -123,7 +168,7 @@ func TestNewSession_EC2IAMRole(t *testing.T) {
 	}
 
 	t.Run("Credentials are created", func(t *testing.T) {
-		e := newExecutor(nil)
+		e := newExecutor(nil, &setting.Cfg{AWSAllowedAuthProviders: []string{"ec2_iam_role"}, AWSAssumeRoleEnabled: true})
 		e.DataSource = fakeDataSource()
 		e.DataSource.JsonData.Set("authType", "ec2_iam_role")
 
