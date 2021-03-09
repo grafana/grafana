@@ -46,6 +46,16 @@ datasources:
       organization: myorg
       defaultBucket: mybucket
 
+  - name: gdev-influxdb2-influxql
+    type: influxdb
+    access: proxy
+    database: site
+    url: http://localhost:8087
+    jsonData:
+      httpHeaderName1: "Authorization"
+    secureJsonData:
+      httpHeaderValue1: "Token mytoken"
+
   - name: gdev-influxdb-telegraf
     type: influxdb
     access: proxy
