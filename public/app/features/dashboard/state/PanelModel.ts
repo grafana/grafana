@@ -15,7 +15,6 @@ import {
   EventBusSrv,
   FieldConfigSource,
   PanelPlugin,
-  QueryRunner,
   ScopedVars,
   urlUtil,
 } from '@grafana/data';
@@ -169,7 +168,7 @@ export class PanelModel implements DataConfigSource {
   legend?: { show: boolean; sort?: string; sortDesc?: boolean };
   plugin?: PanelPlugin;
 
-  private queryRunner?: QueryRunner;
+  private queryRunner?: PanelQueryRunner;
 
   constructor(model: any) {
     this.events = new EventBusSrv();
@@ -477,7 +476,7 @@ export class PanelModel implements DataConfigSource {
     };
   }
 
-  getQueryRunner(): QueryRunner {
+  getQueryRunner(): PanelQueryRunner {
     if (!this.queryRunner) {
       this.queryRunner = new PanelQueryRunner(this);
     }

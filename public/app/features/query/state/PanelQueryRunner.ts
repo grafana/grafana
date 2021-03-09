@@ -216,7 +216,7 @@ export class PanelQueryRunner implements QueryRunner {
     }
   }
 
-  useLastResultFrom(runner: QueryRunner) {
+  useLastResultFrom(runner: PanelQueryRunner) {
     this.lastResult = runner.getLastResult();
 
     if (this.lastResult) {

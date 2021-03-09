@@ -51,8 +51,5 @@ export interface QueryRunner {
   getData(options: QueryRunnerGetDataOptions): Observable<PanelData>;
   run(options: QueryRunnerOptions): Promise<void>;
   cancelQuery(): void;
-  resendLastResult(): void;
   destroy(): void;
-  useLastResultFrom(runner: QueryRunner): void;
-  getLastResult(): PanelData | undefined;
 }
