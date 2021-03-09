@@ -3,18 +3,15 @@ module github.com/grafana/alerting-api
 go 1.15
 
 require (
-	github.com/aws/aws-sdk-go v1.37.8 // indirect
-	github.com/grafana/grafana v1.9.2-0.20210217182004-6c4be29655a6
+	github.com/grafana/grafana v1.9.2-0.20210308201921-4ce0a49eac03
 	github.com/kr/text v0.2.0 // indirect
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/prometheus/alertmanager v0.21.1-0.20210211203738-a7ca7b1d2951
 	github.com/prometheus/client_golang v1.9.0
-	github.com/prometheus/common v0.15.0
-	github.com/prometheus/prometheus v1.8.2-0.20201014093524-73e2ce1bd643
+	github.com/prometheus/common v0.18.0
+	github.com/prometheus/prometheus v1.8.2-0.20201105135750-00f16d1ac3a4
 	github.com/stretchr/testify v1.7.0
 	golang.org/x/net v0.0.0-20210119194325-5f4716e94777 // indirect
-	golang.org/x/oauth2 v0.0.0-20210210192628-66670185b0cd // indirect
-	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
 

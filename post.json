@@ -30,9 +30,70 @@
      "x-go-name": "Value"
     }
    },
+   "required": [
+    "labels",
+    "annotations",
+    "state",
+    "value"
+   ],
    "title": "Alert has info for an alert.",
    "type": "object",
    "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+  },
+  "AlertDefinition": {
+   "properties": {
+    "condition": {
+     "type": "string",
+     "x-go-name": "Condition"
+    },
+    "data": {
+     "items": {
+      "$ref": "#/definitions/AlertQuery"
+     },
+     "type": "array",
+     "x-go-name": "Data"
+    },
+    "id": {
+     "format": "int64",
+     "type": "integer",
+     "x-go-name": "ID"
+    },
+    "intervalSeconds": {
+     "format": "int64",
+     "type": "integer",
+     "x-go-name": "IntervalSeconds"
+    },
+    "orgId": {
+     "format": "int64",
+     "type": "integer",
+     "x-go-name": "OrgID"
+    },
+    "paused": {
+     "type": "boolean",
+     "x-go-name": "Paused"
+    },
+    "title": {
+     "type": "string",
+     "x-go-name": "Title"
+    },
+    "uid": {
+     "type": "string",
+     "x-go-name": "UID"
+    },
+    "updated": {
+     "format": "date-time",
+     "type": "string",
+     "x-go-name": "Updated"
+    },
+    "version": {
+     "format": "int64",
+     "type": "integer",
+     "x-go-name": "Version"
+    }
+   },
+   "title": "AlertDefinition is the model for alert definitions in Alerting NG.",
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/models"
   },
   "AlertDiscovery": {
    "properties": {
@@ -44,6 +105,9 @@
      "x-go-name": "Alerts"
     }
    },
+   "required": [
+    "alerts"
+   ],
    "title": "AlertDiscovery has info for all active alerts.",
    "type": "object",
    "x-go-package": "github.com/grafana/alerting-api/pkg/api"
@@ -142,31 +206,28 @@
    },
    "title": "AlertQuery represents a single query associated with an alert definition.",
    "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/eval"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/models"
   },
   "AlertResponse": {
    "properties": {
-    "Body": {
-     "description": "in: body",
-     "properties": {
-      "data": {
-       "$ref": "#/definitions/AlertDiscovery"
-      },
-      "error": {
-       "type": "string",
-       "x-go-name": "Error"
-      },
-      "errorType": {
-       "$ref": "#/definitions/ErrorType"
-      },
-      "status": {
-       "type": "string",
-       "x-go-name": "Status"
-      }
-     },
-     "type": "object"
+    "data": {
+     "$ref": "#/definitions/AlertDiscovery"
+    },
+    "error": {
+     "type": "string",
+     "x-go-name": "Error"
+    },
+    "errorType": {
+     "$ref": "#/definitions/ErrorType"
+    },
+    "status": {
+     "type": "string",
+     "x-go-name": "Status"
     }
    },
+   "required": [
+    "status"
+   ],
    "type": "object",
    "x-go-package": "github.com/grafana/alerting-api/pkg/api"
   },
@@ -235,6 +296,15 @@
      "$ref": "#/definitions/RuleType"
     }
    },
+   "required": [
+    "name",
+    "query",
+    "health",
+    "type",
+    "state",
+    "annotations",
+    "alerts"
+   ],
    "type": "object",
    "x-go-package": "github.com/grafana/alerting-api/pkg/api"
   },
@@ -380,6 +450,22 @@
    },
    "type": "object",
    "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+  },
+  "Authorization": {
+   "properties": {
+    "Credentials": {
+     "$ref": "#/definitions/Secret"
+    },
+    "CredentialsFile": {
+     "type": "string"
+    },
+    "Type": {
+     "type": "string"
+    }
+   },
+   "title": "Authorization contains HTTP authorization credentials.",
+   "type": "object",
+   "x-go-package": "github.com/prometheus/common/config"
   },
   "BasicAuth": {
    "properties": {
@@ -684,13 +770,14 @@
   "ExtendedUpsertAlertDefinitionCommand": {
    "description": "ExtendedUpsertAlertDefinitionCommand extends UpsertAlertDefinitionCommand\nwith properties of grafana dashboard alerts",
    "properties": {
+    "Result": {
+     "$ref": "#/definitions/AlertDefinition"
+    },
     "condition": {
-     "description": "Condition is the refID of the query or expression to be evaluated",
      "type": "string",
      "x-go-name": "Condition"
     },
     "data": {
-     "description": "Data is an array of the queries and expressions",
      "items": {
       "$ref": "#/definitions/AlertQuery"
      },
@@ -704,6 +791,11 @@
      ],
      "type": "string",
      "x-go-name": "ExecutionErrorState"
+    },
+    "intervalSeconds": {
+     "format": "int64",
+     "type": "integer",
+     "x-go-name": "IntervalSeconds"
     },
     "no_data_state": {
      "enum": [
@@ -733,11 +825,6 @@
     "title": {
      "type": "string",
      "x-go-name": "Title"
-    },
-    "uid": {
-     "description": "UID is set only for existing definitions",
-     "type": "string",
-     "x-go-name": "UID"
     }
    },
    "type": "object",
@@ -847,6 +934,9 @@
   },
   "HTTPClientConfig": {
    "properties": {
+    "Authorization": {
+     "$ref": "#/definitions/Authorization"
+    },
     "BasicAuth": {
      "$ref": "#/definitions/BasicAuth"
     },
@@ -854,8 +944,12 @@
      "$ref": "#/definitions/Secret"
     },
     "BearerTokenFile": {
-     "description": "The bearer token file for the targets.",
+     "description": "The bearer token file for the targets. Deprecated in favour of\nAuthorization.CredentialsFile.",
      "type": "string"
+    },
+    "FollowRedirects": {
+     "description": "FollowRedirects specifies whether the client should follow HTTP 3xx redirects.\nThe omitempty flag is not set, because it would be hidden from the\nmarshalled configuration when set to false.",
+     "type": "boolean"
     },
     "ProxyURL": {
      "$ref": "#/definitions/URL"
@@ -1378,7 +1472,7 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/eval"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/models"
   },
   "ResponseDetails": {
    "properties": {
@@ -1482,6 +1576,12 @@
      "$ref": "#/definitions/RuleType"
     }
    },
+   "required": [
+    "name",
+    "query",
+    "health",
+    "type"
+   ],
    "type": "object",
    "x-go-package": "github.com/grafana/alerting-api/pkg/api"
   },
@@ -1495,6 +1595,9 @@
      "x-go-name": "RuleGroups"
     }
    },
+   "required": [
+    "groups"
+   ],
    "type": "object",
    "x-go-package": "github.com/grafana/alerting-api/pkg/api"
   },
@@ -1532,6 +1635,12 @@
      "x-go-name": "Rules"
     }
    },
+   "required": [
+    "name",
+    "file",
+    "rules",
+    "interval"
+   ],
    "type": "object",
    "x-go-package": "github.com/grafana/alerting-api/pkg/api"
   },
@@ -1577,27 +1686,24 @@
   },
   "RuleResponse": {
    "properties": {
-    "Body": {
-     "description": "in: body",
-     "properties": {
-      "data": {
-       "$ref": "#/definitions/RuleDiscovery"
-      },
-      "error": {
-       "type": "string",
-       "x-go-name": "Error"
-      },
-      "errorType": {
-       "$ref": "#/definitions/ErrorType"
-      },
-      "status": {
-       "type": "string",
-       "x-go-name": "Status"
-      }
-     },
-     "type": "object"
+    "data": {
+     "$ref": "#/definitions/RuleDiscovery"
+    },
+    "error": {
+     "type": "string",
+     "x-go-name": "Error"
+    },
+    "errorType": {
+     "$ref": "#/definitions/ErrorType"
+    },
+    "status": {
+     "type": "string",
+     "x-go-name": "Status"
     }
    },
+   "required": [
+    "status"
+   ],
    "type": "object",
    "x-go-package": "github.com/grafana/alerting-api/pkg/api"
   },
@@ -1926,7 +2032,6 @@
    "x-go-package": "github.com/grafana/alerting-api/pkg/api"
   },
   "URL": {
-   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -1959,9 +2064,39 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "A URL represents a parsed URL (technically, a URI reference).",
+   "title": "URL is a custom URL type that allows validation at configuration load time.",
    "type": "object",
-   "x-go-package": "net/url"
+   "x-go-package": "github.com/prometheus/common/config"
+  },
+  "UpdateAlertDefinitionCommand": {
+   "properties": {
+    "Result": {
+     "$ref": "#/definitions/AlertDefinition"
+    },
+    "condition": {
+     "type": "string",
+     "x-go-name": "Condition"
+    },
+    "data": {
+     "items": {
+      "$ref": "#/definitions/AlertQuery"
+     },
+     "type": "array",
+     "x-go-name": "Data"
+    },
+    "intervalSeconds": {
+     "format": "int64",
+     "type": "integer",
+     "x-go-name": "IntervalSeconds"
+    },
+    "title": {
+     "type": "string",
+     "x-go-name": "Title"
+    }
+   },
+   "title": "UpdateAlertDefinitionCommand is the query for updating an existing alert definition.",
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/models"
   },
   "UpdateDashboardAclCommand": {
    "properties": {
@@ -1975,36 +2110,6 @@
    },
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
-  },
-  "UpsertAlertDefinitionCommand": {
-   "description": "https://github.com/grafana/grafana/blob/debb82e12417e82a0e2bd09e1a450065f884c1bc/pkg/services/ngalert/models.go#L85",
-   "properties": {
-    "condition": {
-     "description": "Condition is the refID of the query or expression to be evaluated",
-     "type": "string",
-     "x-go-name": "Condition"
-    },
-    "data": {
-     "description": "Data is an array of the queries and expressions",
-     "items": {
-      "$ref": "#/definitions/AlertQuery"
-     },
-     "type": "array",
-     "x-go-name": "Data"
-    },
-    "title": {
-     "type": "string",
-     "x-go-name": "Title"
-    },
-    "uid": {
-     "description": "UID is set only for existing definitions",
-     "type": "string",
-     "x-go-name": "UID"
-    }
-   },
-   "title": "UpsertAlertDefinitionCommand is copy of the unexported struct:",
-   "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
   },
   "UserConfig": {
    "properties": {
@@ -2347,6 +2452,9 @@
      "x-go-name": "Status"
     }
    },
+   "required": [
+    "status"
+   ],
    "type": "object",
    "x-go-package": "github.com/grafana/alerting-api/pkg/api"
   },
