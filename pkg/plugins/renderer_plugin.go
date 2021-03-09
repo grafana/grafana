@@ -22,29 +22,25 @@ type RendererPlugin struct {
 	backendPluginManager backendplugin.Manager
 }
 
-func (r *RendererPlugin) Load(decoder *json.Decoder, base *PluginBase, backendPluginManager backendplugin.Manager) error {
+func (r *RendererPlugin) Load(decoder *json.Decoder, base *PluginBase,
+	backendPluginManager backendplugin.Manager) (interface{}, error) {
 	if err := decoder.Decode(r); err != nil {
-		return err
-	}
-
-	if err := r.registerPlugin(base); err != nil {
-		return err
+		return nil, err
 	}
 
 	r.backendPluginManager = backendPluginManager
 
 	cmd := ComposePluginStartCommand("plugin_start")
-	fullpath := filepath.Join(r.PluginDir, cmd)
+	fullpath := filepath.Join(base.PluginDir, cmd)
 	factory := grpcplugin.NewRendererPlugin(r.Id, fullpath, grpcplugin.PluginStartFuncs{
 		OnLegacyStart: r.onLegacyPluginStart,
 		OnStart:       r.onPluginStart,
 	})
 	if err := backendPluginManager.Register(r.Id, factory); err != nil {
-		return errutil.Wrapf(err, "Failed to register backend plugin")
+		return nil, errutil.Wrapf(err, "failed to register backend plugin")
 	}
 
-	Renderer = r
-	return nil
+	return r, nil
 }
 
 func (r *RendererPlugin) Start(ctx context.Context) error {

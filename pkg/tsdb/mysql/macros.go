@@ -8,7 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/gtime"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
 
@@ -17,18 +17,18 @@ const sExpr = `\$` + rsIdentifier + `\(([^\)]*)\)`
 
 var restrictedRegExp = regexp.MustCompile(`(?im)([\s]*show[\s]+grants|[\s,]session_user\([^\)]*\)|[\s,]current_user(\([^\)]*\))?|[\s,]system_user\([^\)]*\)|[\s,]user\([^\)]*\))([\s,;]|$)`)
 
-type mySqlMacroEngine struct {
-	*sqleng.SqlMacroEngineBase
-	timeRange *tsdb.TimeRange
-	query     *tsdb.Query
+type mySQLMacroEngine struct {
+	*sqleng.SQLMacroEngineBase
+	timeRange plugins.DataTimeRange
+	query     plugins.DataSubQuery
 	logger    log.Logger
 }
 
-func newMysqlMacroEngine(logger log.Logger) sqleng.SqlMacroEngine {
-	return &mySqlMacroEngine{SqlMacroEngineBase: sqleng.NewSqlMacroEngineBase(), logger: logger}
+func newMysqlMacroEngine(logger log.Logger) sqleng.SQLMacroEngine {
+	return &mySQLMacroEngine{SQLMacroEngineBase: sqleng.NewSQLMacroEngineBase(), logger: logger}
 }
 
-func (m *mySqlMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string) (string, error) {
+func (m *mySQLMacroEngine) Interpolate(query plugins.DataSubQuery, timeRange plugins.DataTimeRange, sql string) (string, error) {
 	m.timeRange = timeRange
 	m.query = query
 
@@ -38,6 +38,7 @@ func (m *mySqlMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.TimeRa
 		return "", errors.New("invalid query - inspect Grafana server log for details")
 	}
 
+	// TODO: Handle error
 	rExp, _ := regexp.Compile(sExpr)
 	var macroError error
 
@@ -61,7 +62,7 @@ func (m *mySqlMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.TimeRa
 	return sql, nil
 }
 
-func (m *mySqlMacroEngine) evaluateMacro(name string, args []string) (string, error) {
+func (m *mySQLMacroEngine) evaluateMacro(name string, args []string) (string, error) {
 	switch name {
 	case "__timeEpoch", "__time":
 		if len(args) == 0 {

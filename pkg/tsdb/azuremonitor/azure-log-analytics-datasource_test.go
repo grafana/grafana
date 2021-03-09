@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/stretchr/testify/require"
 )
 
@@ -21,18 +20,18 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 
 	tests := []struct {
 		name                     string
-		queryModel               []*tsdb.Query
-		timeRange                *tsdb.TimeRange
+		queryModel               []plugins.DataSubQuery
+		timeRange                plugins.DataTimeRange
 		azureLogAnalyticsQueries []*AzureLogAnalyticsQuery
 		Err                      require.ErrorAssertionFunc
 	}{
 		{
 			name: "Query with macros should be interpolated",
-			timeRange: &tsdb.TimeRange{
+			timeRange: plugins.DataTimeRange{
 				From: fmt.Sprintf("%v", fromStart.Unix()*1000),
 				To:   fmt.Sprintf("%v", fromStart.Add(34*time.Minute).Unix()*1000),
 			},
-			queryModel: []*tsdb.Query{
+			queryModel: []plugins.DataSubQuery{
 				{
 					DataSource: &models.DataSource{
 						JsonData: simplejson.NewFromAny(map[string]interface{}{}),
@@ -45,7 +44,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 							"resultFormat": "time_series",
 						},
 					}),
-					RefId: "A",
+					RefID: "A",
 				},
 			},
 			azureLogAnalyticsQueries: []*AzureLogAnalyticsQuery{

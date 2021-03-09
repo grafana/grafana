@@ -1,18 +1,29 @@
 import React from 'react';
-import { text, boolean, select } from '@storybook/addon-knobs';
+import { Story } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+import { NOOP_CONTROL } from '../../utils/storybook/noopControl';
 import { ConfirmModal } from '@grafana/ui';
 import mdx from './ConfirmModal.mdx';
+import { Props } from './ConfirmModal';
 
-const getKnobs = () => {
-  return {
-    title: text('Title', 'Delete user'),
-    body: text('Body', 'Are you sure you want to delete this user?'),
-    confirm: text('Confirm', 'Delete'),
-    visible: boolean('Visible', true),
-    icon: select('Icon', ['exclamation-triangle', 'power', 'cog', 'lock'], 'exclamation-triangle'),
-  };
+export default {
+  title: 'Overlays/ConfirmModal',
+  component: ConfirmModal,
+  decorators: [withCenteredStory],
+  parameters: {
+    docs: {
+      page: mdx,
+    },
+    knobs: {
+      disable: true,
+    },
+  },
+  argTypes: {
+    icon: { control: { type: 'select', options: ['exclamation-triangle', 'power', 'cog', 'lock'] } },
+    isOpen: NOOP_CONTROL,
+    body: NOOP_CONTROL,
+  },
 };
 
 const defaultActions = {
@@ -24,29 +35,32 @@ const defaultActions = {
   },
 };
 
-export default {
-  title: 'Overlays/ConfirmModal',
-  component: ConfirmModal,
-  decorators: [withCenteredStory],
-  parameters: {
-    docs: {
-      page: mdx,
-    },
-  },
-};
+interface StoryProps extends Props {
+  visible: boolean;
+  bodyText: string;
+}
 
-export const basic = () => {
-  const { title, body, confirm, icon, visible } = getKnobs();
+export const Basic: Story<StoryProps> = ({ title, bodyText, confirmText, dismissText, icon, visible }) => {
   const { onConfirm, onDismiss } = defaultActions;
   return (
     <ConfirmModal
       isOpen={visible}
       title={title}
-      body={body}
-      confirmText={confirm}
+      body={bodyText}
+      confirmText={confirmText}
+      dismissText={dismissText}
       icon={icon}
       onConfirm={onConfirm}
       onDismiss={onDismiss}
     />
   );
+};
+
+Basic.args = {
+  title: 'Delete user',
+  bodyText: 'Are you sure you want to delete this user?',
+  confirmText: 'Delete',
+  dismissText: 'Cancel',
+  icon: 'exclamation-triangle',
+  visible: true,
 };
