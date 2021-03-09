@@ -2,7 +2,6 @@ package notifiers
 
 import (
 	"context"
-	"io/ioutil"
 	"net/url"
 
 	gokit_log "github.com/go-kit/kit/log"
@@ -10,9 +9,9 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
-	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/util"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -23,17 +22,15 @@ import (
 // alert notifications over email.
 type EmailNotifier struct {
 	old_notifiers.NotifierBase
-	Addresses           []string
-	SingleEmail         bool
-	log                 log.Logger
-	templateString      string
-	template            *template.Template
-	notificationService *notifications.NotificationService
+	Addresses   []string
+	SingleEmail bool
+	log         log.Logger
+	externalUrl *url.URL
 }
 
 // NewEmailNotifier is the constructor function
 // for the EmailNotifier.
-func NewEmailNotifier(model *models.AlertNotification, ns *notifications.NotificationService) (*EmailNotifier, error) {
+func NewEmailNotifier(model *models.AlertNotification) (*EmailNotifier, error) {
 	addressesString := model.Settings.Get("addresses").MustString()
 	singleEmail := model.Settings.Get("singleEmail").MustBool(false)
 
@@ -44,70 +41,49 @@ func NewEmailNotifier(model *models.AlertNotification, ns *notifications.Notific
 	// split addresses with a few different ways
 	addresses := util.SplitEmails(addressesString)
 
-	// TODO(codesome): understand how this works with everything else.
-	tmpl, err := template.FromGlobs("templates/email.html")
-	if err != nil {
-		return nil, err
-	}
 	// TODO: remove this URL hack and add an actual external URL.
 	u, err := url.Parse("http://localhost")
 	if err != nil {
 		return nil, err
 	}
-	tmpl.ExternalURL = u
-
-	templateBytes, err := ioutil.ReadFile("templates/email.html")
-	if err != nil {
-		return nil, err
-	}
 
 	return &EmailNotifier{
-		NotifierBase:        old_notifiers.NewNotifierBase(model),
-		Addresses:           addresses,
-		SingleEmail:         singleEmail,
-		log:                 log.New("alerting.notifier.email"),
-		templateString:      string(templateBytes),
-		template:            tmpl,
-		notificationService: ns,
+		NotifierBase: old_notifiers.NewNotifierBase(model),
+		Addresses:    addresses,
+		SingleEmail:  singleEmail,
+		log:          log.New("alerting.notifier.email"),
+		externalUrl:  u,
 	}, nil
 }
 
 // Notify sends the alert notification.
 func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) error {
-	if en.notificationService == nil {
-		return nil
-	}
-
-	msg, err := en.generateEmailMessage(ctx, as)
-	if err != nil {
-		return err
-	}
-
-	_, err = en.notificationService.Send(msg)
-	return err
-}
-
-func (en *EmailNotifier) generateEmailMessage(ctx context.Context, as []*types.Alert) (*notifications.Message, error) {
 	// TODO(codesome): make sure the receiver name is added in the ctx before calling this.
 	ctx = notify.WithReceiverName(ctx, "email-notification-channel") // Dummy.
 	// TODO(codesome): make sure the group labels is added in the ctx before calling this.
 	ctx = notify.WithGroupLabels(ctx, model.LabelSet{}) // Dummy.
 
-	// We only need ExternalURL from this template object.
-	data := notify.GetTemplateData(ctx, en.template, as, gokit_log.NewNopLogger())
-	body, err := en.template.ExecuteHTMLString(en.templateString, data)
-	if err != nil {
-		return nil, err
+	// We only need ExternalURL from this template object. This hack should go away with https://github.com/prometheus/alertmanager/pull/2508.
+	data := notify.GetTemplateData(ctx, &template.Template{ExternalURL: en.externalUrl}, as, gokit_log.NewNopLogger())
+
+	cmd := &models.SendEmailCommandSync{
+		SendEmailCommand: models.SendEmailCommand{
+			Subject: "TODO",
+			Data: map[string]interface{}{
+				"Title":             "TODO",
+				"Receiver":          data.Receiver,
+				"Status":            data.Status,
+				"Alerts":            data.Alerts,
+				"GroupLabels":       data.GroupLabels,
+				"CommonLabels":      data.CommonLabels,
+				"CommonAnnotations": data.CommonAnnotations,
+				"ExternalURL":       data.ExternalURL,
+			},
+			To:          en.Addresses,
+			SingleEmail: en.SingleEmail,
+			Template:    "ng_alert_notification.html",
+		},
 	}
 
-	return &notifications.Message{
-		To:          en.Addresses,
-		SingleEmail: en.SingleEmail,
-		From:        "",  // TODO(codesome): set this.
-		Subject:     "",  // TODO(codesome): set this.
-		Info:        "",  // TODO(codesome): what is this?
-		ReplyTo:     nil, // TODO(codesome): set this.
-		Body:        body,
-	}, nil
-
+	return bus.DispatchCtx(ctx, cmd)
 }

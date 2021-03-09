@@ -1,0 +1,134 @@
+[[Subject .Subject "[[.Title]]"]]
+
+<table class="row">
+  <tr>
+    <td class="wrapper last">
+      <table class="twelve columns">
+        <tr>
+          <td class="center">
+            <h3 style="/*text-align:center*/;color: [[.SeverityColor]]; font-weight: bold; font-style: italic;">[[.Title]]</h3>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+<table class="row" >
+  <tr>
+    <td class="last">
+      <table class="twelve columns">
+        <tr>
+          <td class="center">
+            <p style="/*text-align:center*/">[[.Message]]</p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+[[if ne .Error "" ]]
+<table class="row" >
+  <tr>
+    <td class="last">
+      <center>
+      <table class="twelve columns" >
+        <tr>
+          <td class="twelve last">
+            <h5 style="font-weight: bold;">Error message</h5>
+          </td>
+        </tr>
+        <tr>
+          <td class="twelve last">
+            <p>[[.Error]]</p>
+          </td>
+        </tr>
+      </table>
+      </center>
+    </td>
+  </tr>
+</table>
+[[end]]
+
+[[if ne .State "ok" ]]
+<table class="row" >
+  <tr>
+    <td class="last">
+      <center>
+      <table class="twelve columns" >
+        <tr>
+          <td class="six">
+            <h5 style="font-weight: bold;">Metric name</h5>
+          </td>
+          <td class="six last" style="text-align: right; width:100px;">
+            <h5 style="font-weight: bold;text-align: right;">Value</h5>
+          </td>
+        </tr>
+        [[range .EvalMatches]]
+        <tr>
+          <td class="six">
+            <h5 class="data">[[.Metric]]</h5>
+          </td>
+          <td class="six last" style="text-align: right; width:100px;">
+            <h5 class="data" style="text-align: right;">[[.Value]]</h5>
+          </td>
+        </tr>
+        [[end]]
+      </table>
+      </center>
+    </td>
+  </tr>
+</table>
+[[end]]
+
+<table class="row" >
+    <tr>
+    <td class="wrapper last">
+      <table class="twelve columns">
+        <tr>
+          <td class="center">
+            [[if ne .ImageLink "" ]]
+              <img src="[[.ImageLink]]" alt="Alerting Panel"/>
+            [[end]]
+            [[if ne .EmbeddedImage "" ]]
+              <img src="cid:[[.EmbeddedImage]]" alt="Alerting Panel"/>
+            [[end]]
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+
+<table class="row">
+  <tr>
+    <td class="wrapper last">
+      <table class="twelve columns">
+        <tr>
+          <td class="center six">
+            <table class="better-button" align="center" border="0" cellspacing="0" cellpadding="0">
+              <tr>
+                <td align="center" class="better-button" bgcolor="#ff8f2b">
+                  <a href="[[.RuleUrl]]"  target="_blank">View your Alert rule</a>
+                </td>
+              </tr>
+            </table>
+            </td>
+            <td class="center six">
+            <table class="better-button" align="center" border="0" cellspacing="0" cellpadding="0">
+              <tr>
+                <td align="center" class="better-button-alt" bgcolor="#efefef">
+                  <a href="[[.AlertPageUrl]]"  target="_blank"> Go to the Alerts page</a>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+
