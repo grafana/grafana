@@ -71,6 +71,7 @@ describe('StorageLocationsUtils', () => {
 
   it('should correctly convert to raw StorageLocationResponse', () => {
     expect(formatToRawLocation(s3Location)).toEqual({
+      location_id: s3Location.locationID,
       name: s3Location.name,
       description: s3Location.description,
       s3_config: {
@@ -82,6 +83,7 @@ describe('StorageLocationsUtils', () => {
     });
 
     expect(formatToRawLocation(fsLocation)).toEqual({
+      location_id: fsLocation.locationID,
       name: fsLocation.name,
       description: fsLocation.description,
       pmm_client_config: {
@@ -90,6 +92,7 @@ describe('StorageLocationsUtils', () => {
     });
 
     expect(formatToRawLocation({ ...fsLocation, type: LocationType.SERVER })).toEqual({
+      location_id: fsLocation.locationID,
       name: fsLocation.name,
       description: fsLocation.description,
       pmm_server_config: {

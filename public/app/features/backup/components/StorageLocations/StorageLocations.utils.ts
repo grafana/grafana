@@ -37,9 +37,9 @@ export const formatLocationList = (rawList: StorageLocationListReponse): Storage
 };
 
 export const formatToRawLocation = (location: StorageLocation | S3Location): StorageLocationReponse => {
-  const { name, description, path, type } = location;
+  const { name, description, path, type, locationID } = location;
   const localObj = { path };
-  const result: Partial<StorageLocationReponse> = { name, description };
+  const result: Partial<StorageLocationReponse> = { name, description, location_id: locationID };
 
   if (isS3Location(location)) {
     const { accessKey, secretKey, bucketName } = location;

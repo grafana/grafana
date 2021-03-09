@@ -1,15 +1,13 @@
 import { css } from 'emotion';
 
-export const getStyles = () => ({
+import { GrafanaTheme } from '@grafana/data';
+
+export const getStyles = ({ spacing }: GrafanaTheme) => ({
   fieldWrapper: css`
     position: relative;
   `,
-  input: css`
-    padding: 0;
-    border: none;
-    &[readonly] {
-      background-color: transparent;
-    }
+  smallPassword: css`
+    margin-right: ${spacing.sm};
   `,
   lock: css`
     cursor: pointer;
