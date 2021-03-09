@@ -3,7 +3,7 @@ package api
 import (
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/prometheus/promql"
 )
@@ -65,9 +65,9 @@ type LotexQuery struct {
 
 // swagger:model
 type EvalAlertConditionCommand struct {
-	Condition string            `json:"condition"`
-	Data      []eval.AlertQuery `json:"data"`
-	Now       time.Time         `json:"now"`
+	Condition string              `json:"condition"`
+	Data      []models.AlertQuery `json:"data"`
+	Now       time.Time           `json:"now"`
 }
 
 // swagger:model
