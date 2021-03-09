@@ -198,7 +198,7 @@ export const PieChartSvg: FC<SvgProps> = ({
                 ) : undefined;
                 if (arc.data.hasLinks && arc.data.getLinks) {
                   return (
-                    <DataLinksContextMenu key={arc.index} links={arc.data.getLinks}>
+                    <DataLinksContextMenu config={arc.data.field} key={arc.index} links={arc.data.getLinks}>
                       {(api) => (
                         <PieSlice
                           tooltip={tooltip}
