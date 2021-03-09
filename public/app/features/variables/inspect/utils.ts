@@ -146,10 +146,15 @@ export const getPropsWithVariable = (variableId: string, parent: { key: string; 
   return result;
 };
 
+export interface VariableUsageTree {
+  variable: VariableModel;
+  tree: any;
+}
+
 export interface VariableUsages {
   unUsed: VariableModel[];
-  unknown: Array<{ variable: VariableModel; tree: any }>;
-  usages: Array<{ variable: VariableModel; tree: any }>;
+  unknown: VariableUsageTree[];
+  usages: VariableUsageTree[];
 }
 
 export const createUsagesNetwork = (variables: VariableModel[], dashboard: DashboardModel | null): VariableUsages => {
@@ -158,8 +163,8 @@ export const createUsagesNetwork = (variables: VariableModel[], dashboard: Dashb
   }
 
   const unUsed: VariableModel[] = [];
-  let usages: Array<{ variable: VariableModel; tree: any }> = [];
-  let unknown: Array<{ variable: VariableModel; tree: any }> = [];
+  let usages: VariableUsageTree[] = [];
+  let unknown: VariableUsageTree[] = [];
   const model = dashboard.getSaveModelClone();
 
   const unknownVariables = getUnknownVariableStrings(variables, model);
@@ -220,7 +225,7 @@ export const traverseTree = (usage: UsagesToNetwork, parent: { id: string; value
   return usage;
 };
 
-export const transformUsagesToNetwork = (usages: Array<{ variable: VariableModel; tree: any }>): UsagesToNetwork[] => {
+export const transformUsagesToNetwork = (usages: VariableUsageTree[]): UsagesToNetwork[] => {
   const results: UsagesToNetwork[] = [];
 
   for (const usage of usages) {
@@ -249,12 +254,7 @@ const countLeaves = (object: any): number => {
   return (total as unknown) as number;
 };
 
-export const getVariableUsages = (
-  variableId: string,
-  variables: VariableModel[],
-  dashboard: DashboardModel | null
-): number => {
-  const { usages } = createUsagesNetwork(variables, dashboard);
+export const getVariableUsages = (variableId: string, usages: VariableUsageTree[]): number => {
   const usage = usages.find((usage) => usage.variable.id === variableId);
   if (!usage) {
     return 0;
