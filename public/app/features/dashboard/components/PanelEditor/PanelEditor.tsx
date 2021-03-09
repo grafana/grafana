@@ -171,6 +171,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
           // the user exits the panel editor they aren't prompted to save again
           this.props.updateSourcePanel(this.props.panel);
         },
+        onDiscard: this.onDiscard,
       },
     });
   };
