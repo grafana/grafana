@@ -10,6 +10,9 @@ export const StorageLocationsService = {
   async add(payload: StorageLocationReponse): Promise<void> {
     return api.post(`${BASE_URL}/Add`, payload);
   },
+  async update(payload: StorageLocationReponse): Promise<void> {
+    return api.post(`${BASE_URL}/Change`, payload);
+  },
   async delete(locationID: string): Promise<void> {
     // TODO remove force: true after adding checkbox to deletion modal
     api.post(`${BASE_URL}/Remove`, { location_id: locationID, force: true });

@@ -37,7 +37,7 @@ export const StorageLocations: FC = () => {
           const restProps = row.getToggleRowExpandedProps ? row.getToggleRowExpandedProps() : {};
           return (
             <div className={styles.nameWrapper} {...restProps}>
-              {value}
+              <span>{value}</span>
               {row.isExpanded ? (
                 <IconButton data-qa="hide-storage-location-details" name="arrow-up" />
               ) : (
@@ -60,7 +60,11 @@ export const StorageLocations: FC = () => {
         Header: actions,
         accessor: 'locationID',
         Cell: ({ row }) => (
-          <StorageLocationsActions onDelete={onDeleteCLick} location={row.original as StorageLocation} />
+          <StorageLocationsActions
+            onUpdate={handleUpdate}
+            onDelete={onDeleteCLick}
+            location={row.original as StorageLocation}
+          />
         ),
         width: '130px',
       },
@@ -87,14 +91,25 @@ export const StorageLocations: FC = () => {
 
   const onAdd = async (location: StorageLocation) => {
     try {
-      await StorageLocationsService.add(formatToRawLocation(location));
-      appEvents.emit(AppEvents.alertSuccess, [Messages.addSuccess]);
+      if (location.locationID) {
+        await StorageLocationsService.update(formatToRawLocation(location));
+        appEvents.emit(AppEvents.alertSuccess, [Messages.editSuccess(location.name)]);
+      } else {
+        await StorageLocationsService.add(formatToRawLocation(location));
+        appEvents.emit(AppEvents.alertSuccess, [Messages.addSuccess]);
+      }
       getData();
     } catch (e) {
       logger.error(e);
     } finally {
       setAddModalVisible(false);
+      setSelectedLocation(null);
     }
+  };
+
+  const handleUpdate = (location: StorageLocation) => {
+    setSelectedLocation(location);
+    setAddModalVisible(true);
   };
 
   const onDeleteCLick = (location: StorageLocation) => {

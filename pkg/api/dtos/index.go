@@ -44,6 +44,7 @@ const (
 	WeightPlugin
 	WeightConfig
 	WeightAdmin
+	WeightBackup
 	WeightHelp
 )
 

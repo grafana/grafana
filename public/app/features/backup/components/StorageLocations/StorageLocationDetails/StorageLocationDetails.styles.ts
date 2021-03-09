@@ -7,7 +7,8 @@ export const getStyles = ({ spacing }: GrafanaTheme) => ({
     align-items: center;
 
     & > * {
-      flex: 1 1 calc(100% / 3);
+      word-break: break-all;
+      flex: 1 0 calc(100% / 3);
 
       &:not(:last-child) {
         padding-right: ${spacing.md};
