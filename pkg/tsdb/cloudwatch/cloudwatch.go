@@ -133,8 +133,6 @@ func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error)
 		cfgs = append(cfgs, &aws.Config{Endpoint: aws.String(dsInfo.Endpoint)})
 	}
 
-	var err error
-	var sess *session.Session
 	switch dsInfo.AuthType {
 	case authTypeSharedCreds:
 		plog.Debug("Authenticating towards AWS with shared credentials", "profile", dsInfo.Profile,
@@ -151,7 +149,7 @@ func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error)
 		plog.Debug("Authenticating towards AWS with default SDK method", "region", dsInfo.Region)
 	case authTypeEC2IAMRole:
 		plog.Debug("Authenticating towards AWS with IAM Role", "region", dsInfo.Region)
-		sess, err = newSession(cfgs...)
+		sess, err := newSession(cfgs...)
 		if err != nil {
 			return nil, err
 		}
@@ -159,7 +157,7 @@ func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error)
 	default:
 		panic(fmt.Sprintf("Unrecognized authType: %d", dsInfo.AuthType))
 	}
-	sess, err = newSession(cfgs...)
+	sess, err := newSession(cfgs...)
 	if err != nil {
 		return nil, err
 	}
