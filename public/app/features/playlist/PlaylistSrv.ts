@@ -2,9 +2,6 @@
 import _ from 'lodash';
 
 // Utils
-import appEvents from 'app/core/app_events';
-
-import { CoreEvents } from 'app/types';
 import { getBackendSrv, locationService } from '@grafana/runtime';
 import { locationUtil, urlUtil, rangeUtil } from '@grafana/data';
 import { Location } from 'history';
@@ -82,8 +79,6 @@ export class PlaylistSrv {
     // setup location tracking
     this.locationListenerUnsub = locationService.getHistory().listen(this.locationUpdated);
 
-    appEvents.emit(CoreEvents.playlistStarted);
-
     return getBackendSrv()
       .get(`/api/playlists/${playlistId}`)
       .then((playlist: any) => {
@@ -116,8 +111,6 @@ export class PlaylistSrv {
     if (locationService.getSearchObject().kiosk) {
       locationService.partial({ kiosk: null });
     }
-
-    appEvents.emit(CoreEvents.playlistStopped);
   }
 }
 

@@ -139,14 +139,6 @@ export function grafanaAppDirective() {
         body.toggleClass('sidemenu-hidden');
       });
 
-      appEvents.on(CoreEvents.playlistStarted, () => {
-        elem.toggleClass('view-mode--playlist', true);
-      });
-
-      appEvents.on(CoreEvents.playlistStopped, () => {
-        elem.toggleClass('view-mode--playlist', false);
-      });
-
       // handle in active view state class
       let lastActivity = new Date().getTime();
       let activeUser = true;
