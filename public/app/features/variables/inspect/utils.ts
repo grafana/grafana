@@ -65,6 +65,16 @@ export const toVisNetworkEdges = (edges: GraphEdge[]): any[] => {
   return new vis.DataSet(edgesWithStyle);
 };
 
+function getVariableName(expression: string) {
+  variableRegex.lastIndex = 0;
+  const match = variableRegex.exec(expression);
+  if (!match) {
+    return null;
+  }
+  const variableName = match.slice(1).find((match) => match !== undefined);
+  return variableName;
+}
+
 export const getUnknownVariableStrings = (variables: VariableModel[], model: any) => {
   const unknownVariableNames: string[] = [];
   const modelAsString = safeStringifyValue(model, 2);
@@ -89,7 +99,7 @@ export const getUnknownVariableStrings = (variables: VariableModel[], model: any
       continue;
     }
 
-    const variableName = match.slice(1);
+    const variableName = getVariableName(match);
 
     if (variables.some((variable) => variable.id === variableName)) {
       // ignore defined variables
@@ -100,16 +110,32 @@ export const getUnknownVariableStrings = (variables: VariableModel[], model: any
       continue;
     }
 
-    unknownVariableNames.push(variableName);
+    if (variableName) {
+      unknownVariableNames.push(variableName);
+    }
   }
 
   return unknownVariableNames;
 };
 
+const validVariableNames: Record<string, RegExp[]> = {
+  alias: [/^m$/, /^measurement$/, /^col$/, /^tag_\w+|\d+$/],
+  query: [/^timeFilter$/],
+};
+
 export const getPropsWithVariable = (variableId: string, parent: { key: string; value: any }, result: any) => {
   const stringValues = Object.keys(parent.value).reduce((all, key) => {
     const value = parent.value[key];
-    if (value && typeof value === 'string' && containsVariable(value, variableId)) {
+    if (!value || typeof value !== 'string') {
+      return all;
+    }
+
+    const isValidName = validVariableNames[key]
+      ? validVariableNames[key].find((regex: RegExp) => regex.test(variableId))
+      : undefined;
+    const hasVariable = containsVariable(value, variableId);
+
+    if (!isValidName && hasVariable) {
       all = {
         ...all,
         [key]: value,
