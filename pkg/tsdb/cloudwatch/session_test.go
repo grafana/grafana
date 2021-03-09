@@ -168,7 +168,7 @@ func TestNewSession_EC2IAMRole(t *testing.T) {
 	}
 
 	t.Run("Credentials are created", func(t *testing.T) {
-		e := newExecutor(nil)
+		e := newExecutor(nil, &setting.Cfg{AWSAllowedAuthProviders: []string{"ec2_iam_role"}, AWSAssumeRoleEnabled: true})
 		e.DataSource = fakeDataSource()
 		e.DataSource.JsonData.Set("authType", "ec2_iam_role")
 
