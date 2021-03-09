@@ -100,10 +100,7 @@ export class PlaylistSrv {
 
   stop() {
     if (this.isPlaying) {
-      const queryParams = locationService.getSearchObject();
-      if (queryParams.kiosk) {
-        appEvents.emit(CoreEvents.toggleKioskMode, { exit: true });
-      }
+      locationService.partial({ kiosk: null });
     }
 
     this.index = 0;

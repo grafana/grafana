@@ -80,7 +80,7 @@ export const StartModal: FC<StartModalProps> = ({ playlist, onDismiss }) => {
   const modes: Array<SelectableValue<string>> = [
     { label: 'Normal', value: '' },
     { label: 'TV', value: 'tv' },
-    { label: 'Kiosk', value: 'kiosk' },
+    { label: 'Kiosk', value: 'full' },
   ];
 
   const onStart = () => {
