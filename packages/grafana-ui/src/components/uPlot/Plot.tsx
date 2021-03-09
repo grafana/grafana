@@ -80,7 +80,7 @@ export const UPlotChart: React.FC<PlotProps> = (props) => {
   );
 };
 
-function initializePlot(data: AlignedData | null, config: Options, el: HTMLDivElement) {
+function initializePlot(data: AlignedData, config: Options, el: HTMLDivElement) {
   pluginLog('UPlotChart: init uPlot', false, 'initialized with', data, config);
   return new uPlot(config, data, el);
 }
