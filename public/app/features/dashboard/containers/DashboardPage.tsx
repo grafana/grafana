@@ -133,7 +133,6 @@ export class DashboardPage extends PureComponent<Props, State> {
 
       const templateVarChanges = findTemplateVarChanges(this.props.queryParams, prevProps.queryParams);
       if (templateVarChanges) {
-        console.log(templateVarChanges);
         templateVarsChangedInUrl(templateVarChanges);
       }
     }
