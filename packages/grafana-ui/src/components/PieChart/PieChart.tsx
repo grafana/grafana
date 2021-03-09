@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, ReactNode } from 'react';
 import { DisplayValue, FALLBACK_COLOR, FieldDisplay, formattedValueToString, GrafanaTheme } from '@grafana/data';
 import { useStyles, useTheme } from '../../themes/ThemeContext';
 import tinycolor from 'tinycolor2';
@@ -13,6 +13,7 @@ import { VizLegend, VizLegendItem } from '..';
 import { VizLayout } from '../VizLayout/VizLayout';
 import { LegendDisplayMode, VizLegendOptions } from '../VizLegend/types';
 import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
+import { UseTooltipParams } from '@visx/tooltip/lib/hooks/useTooltip';
 
 export enum PieChartLabels {
   Name = 'name',
@@ -131,7 +132,7 @@ export const PieChartSvg: FC<SvgProps> = ({
   const theme = useTheme();
   const componentInstanceId = useComponentInstanceId('PieChart');
   const styles = useStyles(getStyles);
-  const { tooltipData, tooltipLeft, tooltipTop, tooltipOpen, showTooltip, hideTooltip } = useTooltip<DisplayValue>();
+  const tooltip = useTooltip<DisplayValue>();
   const { containerRef, TooltipInPortal } = useTooltipInPortal({
     detectBounds: true,
     scroll: true,
@@ -147,61 +148,21 @@ export const PieChartSvg: FC<SvgProps> = ({
     return `url(#${getGradientId(color)})`;
   };
 
-  const onMouseMoveOverArc = (event: any, datum: any) => {
-    const coords = localPoint(event.target.ownerSVGElement, event);
-    showTooltip({
-      tooltipLeft: coords!.x,
-      tooltipTop: coords!.y,
-      tooltipData: datum,
-    });
-  };
-
   const showLabel = displayLabels.length > 0;
   const total = fieldDisplayValues.reduce((acc, item) => item.display.numeric + acc, 0);
   const layout = getPieLayout(width, height, pieType);
-
-  const getPieSlice = (
-    arc: PieArcDatum<FieldDisplay>,
-    pie: ProvidedProps<FieldDisplay>,
-    openMenu?: (event: React.MouseEvent<SVGElement>) => void
-  ) => {
-    return (
-      <g
-        key={arc.data.display.title}
-        className={styles.svgArg}
-        onMouseMove={(event) => onMouseMoveOverArc(event, arc.data.display)}
-        onMouseOut={hideTooltip}
-        onClick={openMenu}
-      >
-        <path
-          d={pie.path({ ...arc })!}
-          fill={useGradients ? getGradientColor(arc.data.display.color ?? FALLBACK_COLOR) : arc.data.display.color}
-          stroke={theme.colors.panelBg}
-          strokeWidth={1}
-        />
-        {showLabel && (
-          <PieLabel
-            arc={arc}
-            outerRadius={layout.outerRadius}
-            innerRadius={layout.innerRadius}
-            displayLabels={displayLabels}
-            total={total}
-            color={theme.colors.text}
-          />
-        )}
-      </g>
-    );
-  };
+  const colors = [
+    ...new Set(fieldDisplayValues.map((fieldDisplayValue) => fieldDisplayValue.display.color ?? FALLBACK_COLOR)),
+  ];
 
   return (
     <div className={styles.container}>
       <svg width={layout.size} height={layout.size} ref={containerRef}>
         <Group top={layout.position} left={layout.position}>
-          {fieldDisplayValues.map((fieldDisplayValue) => {
-            const color = fieldDisplayValue.display.color ?? FALLBACK_COLOR;
+          {colors.map((color) => {
             return (
               <RadialGradient
-                key={fieldDisplayValue.display.color}
+                key={color}
                 id={getGradientId(color)}
                 from={getGradientColorFrom(color, theme)}
                 to={getGradientColorTo(color, theme)}
@@ -224,26 +185,85 @@ export const PieChartSvg: FC<SvgProps> = ({
           >
             {(pie) => {
               return pie.arcs.map((arc) => {
+                const color = arc.data.display.color ?? FALLBACK_COLOR;
+                const label = showLabel ? (
+                  <PieLabel
+                    arc={arc}
+                    outerRadius={layout.outerRadius}
+                    innerRadius={layout.innerRadius}
+                    displayLabels={displayLabels}
+                    total={total}
+                    color={theme.colors.text}
+                  />
+                ) : undefined;
                 if (arc.data.hasLinks && arc.data.getLinks) {
                   return (
                     <DataLinksContextMenu key={arc.index} links={arc.data.getLinks}>
-                      {(api) => getPieSlice(arc, pie, api.openMenu)}
+                      {(api) => (
+                        <PieSlice
+                          tooltip={tooltip}
+                          arc={arc}
+                          pie={pie}
+                          fill={getGradientColor(color)}
+                          openMenu={api.openMenu}
+                        >
+                          {label}
+                        </PieSlice>
+                      )}
                     </DataLinksContextMenu>
                   );
                 } else {
-                  return getPieSlice(arc, pie);
+                  return (
+                    <PieSlice key={arc.index} tooltip={tooltip} arc={arc} pie={pie} fill={getGradientColor(color)}>
+                      {label}
+                    </PieSlice>
+                  );
                 }
               });
             }}
           </Pie>
         </Group>
       </svg>
-      {tooltipOpen && (
-        <TooltipInPortal key={Math.random()} top={tooltipTop} left={tooltipLeft}>
-          {tooltipData!.title} {formattedValueToString(tooltipData!)}
+      {tooltip.tooltipOpen && (
+        <TooltipInPortal key={Math.random()} top={tooltip.tooltipTop} left={tooltip.tooltipLeft}>
+          {tooltip.tooltipData!.title} {formattedValueToString(tooltip.tooltipData!)}
         </TooltipInPortal>
       )}
     </div>
+  );
+};
+
+const PieSlice: FC<{
+  children: ReactNode;
+  arc: PieArcDatum<FieldDisplay>;
+  pie: ProvidedProps<FieldDisplay>;
+  fill: string;
+  tooltip: UseTooltipParams<DisplayValue>;
+  openMenu?: (event: React.MouseEvent<SVGElement>) => void;
+}> = ({ arc, children, pie, openMenu, fill, tooltip }) => {
+  const theme = useTheme();
+  const styles = useStyles(getStyles);
+
+  const onMouseMoveOverArc = (event: any, datum: any) => {
+    const coords = localPoint(event.target.ownerSVGElement, event);
+    tooltip.showTooltip({
+      tooltipLeft: coords!.x,
+      tooltipTop: coords!.y,
+      tooltipData: datum,
+    });
+  };
+
+  return (
+    <g
+      key={arc.data.display.title}
+      className={styles.svgArg}
+      onMouseMove={(event) => onMouseMoveOverArc(event, arc.data.display)}
+      onMouseOut={tooltip.hideTooltip}
+      onClick={openMenu}
+    >
+      <path d={pie.path({ ...arc })!} fill={fill} stroke={theme.colors.panelBg} strokeWidth={1} />
+      {children}
+    </g>
   );
 };
 
