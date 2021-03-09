@@ -23,14 +23,7 @@ export const PlaylistPage: FC<Props> = ({ navModel }) => {
   const [startPlaylist, setStartPlaylist] = useState<PlaylistDTO | undefined>();
 
   const { value: lists, loading } = useAsync(async () => {
-    return getBackendSrv()
-      .get('/api/playlists', { query: searchQuery })
-      .then((result: PlaylistDTO[]) => {
-        return result.map((item) => {
-          item.startUrl = `/playlists/play/${item.id}`;
-          return item;
-        });
-      });
+    return getBackendSrv().get('/api/playlists', { query: searchQuery }) as Promise<PlaylistDTO[]>;
   });
 
   return (

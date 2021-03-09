@@ -25,9 +25,8 @@ import { CoreEvents, AppEventEmitter, AppEventConsumer } from 'app/types';
 import { setLinkSrv, LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import { UtilSrv } from 'app/core/services/util_srv';
 import { ContextSrv } from 'app/core/services/context_srv';
-import { PlaylistSrv } from 'app/features/playlist/PlaylistSrv';
 import { DashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { ITimeoutService, IRootScopeService, IAngularEvent, auto } from 'angular';
+import { IRootScopeService, IAngularEvent, auto } from 'angular';
 import { AppEvent, locationUtil } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { initGrafanaLive } from 'app/features/live/live';
@@ -121,12 +120,7 @@ export class GrafanaCtrl {
 }
 
 /** @ngInject */
-export function grafanaAppDirective(
-  playlistSrv: PlaylistSrv,
-  contextSrv: ContextSrv,
-  $timeout: ITimeoutService,
-  $rootScope: IRootScopeService
-) {
+export function grafanaAppDirective() {
   return {
     restrict: 'E',
     controller: GrafanaCtrl,

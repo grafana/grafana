@@ -390,6 +390,12 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "PlaylistPage"*/ 'app/features/playlist/PlaylistPage')
       ),
     },
+    {
+      path: '/playlists/play/:id',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "PlaylistStartPage"*/ 'app/features/playlist/PlaylistStartPage')
+      ),
+    },
     ...extraRoutes,
     {
       path: '/*',
