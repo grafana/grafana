@@ -126,6 +126,7 @@ func TestNewSession_AssumeRole(t *testing.T) {
 		assert.Equal(t, expectedError, err.Error())
 	})
 }
+
 func TestNewSession_AllowedAuthProviders(t *testing.T) {
 	t.Run("Not allowed auth type is used", func(t *testing.T) {
 		e := newExecutor(nil, &setting.Cfg{AWSAllowedAuthProviders: []string{"keys"}})
