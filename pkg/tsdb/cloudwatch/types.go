@@ -65,8 +65,3 @@ type metricStatMeta struct {
 	Stat   string `json:"stat"`
 	Period int    `json:"period"`
 }
-
-type awsSettings struct {
-	AllowedAuthProviders []string
-	AssumeRoleEnabled    bool
-}
