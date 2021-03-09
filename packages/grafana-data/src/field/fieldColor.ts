@@ -207,7 +207,7 @@ export function getFieldColorModeForField(field: Field): FieldColorMode {
   return fieldColorModeRegistry.get(field.config.color?.mode ?? FieldColorModeId.Thresholds);
 }
 
-export function getFieldColorMode(mode?: FieldColorModeId): FieldColorMode {
+export function getFieldColorMode(mode?: FieldColorModeId | string): FieldColorMode {
   return fieldColorModeRegistry.get(mode ?? FieldColorModeId.Thresholds);
 }
 
