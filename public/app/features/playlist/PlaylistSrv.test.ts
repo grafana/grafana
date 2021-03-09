@@ -1,6 +1,6 @@
 // @ts-ignore
 import configureMockStore from 'redux-mock-store';
-import { PlaylistSrv } from '../playlist_srv';
+import { PlaylistSrv } from './PlaylistSrv';
 import { setStore } from 'app/store/store';
 import { locationService } from '@grafana/runtime';
 
@@ -32,7 +32,7 @@ function createPlaylistSrv(): PlaylistSrv {
   const mockTimeout = jest.fn();
   (mockTimeout as any).cancel = jest.fn();
 
-  return new PlaylistSrv(mockTimeout);
+  return new PlaylistSrv();
 }
 
 const mockWindowLocation = (): [jest.MockInstance<any, any>, () => void] => {
