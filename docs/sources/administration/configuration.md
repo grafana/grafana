@@ -266,7 +266,7 @@ Path where the socket should be created when `protocol=socket`. Make sure that G
 Specify a full HTTP URL address to the root of your Grafana CDN assets. Grafana will add edition and version paths.
 
 For example, given a cdn url like `https://cdn.myserver.com` grafana will try to load a javascript file from
-`http://cdn.myserver.com/grafana-oss/v7.4.0/public/build/app.<hash>.js`.
+`http://cdn.myserver.com/grafana-oss/7.4.0/public/build/app.<hash>.js`.
 
 <hr />
 
@@ -1081,6 +1081,12 @@ This setting should be expressed as a duration. Examples: 6h (hours), 10d (days)
 Configures max number of alert annotations that Grafana stores. Default value is 0, which keeps all alert annotations.
 
 <hr>
+
+## [annotations]
+
+### cleanupjob_batchsize
+
+Configures the batch size for the annotation clean-up job. This setting is used for dashboard, API, and alert annotations.
 
 ## [annotations.dashboard]
 

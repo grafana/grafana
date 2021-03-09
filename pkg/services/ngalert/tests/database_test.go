@@ -1,6 +1,6 @@
 // +build integration
 
-package ngalert
+package tests
 
 import (
 	"encoding/json"
@@ -8,15 +8,19 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
+
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
+const baseIntervalSeconds = 10
+
 func mockTimeNow() {
 	var timeSeed int64
-	timeNow = func() time.Time {
+	store.TimeNow = func() time.Time {
 		fakeNow := time.Unix(timeSeed, 0).UTC()
 		timeSeed++
 		return fakeNow
@@ -24,12 +28,15 @@ func mockTimeNow() {
 }
 
 func resetTimeNow() {
-	timeNow = time.Now
+	store.TimeNow = time.Now
 }
 
 func TestCreatingAlertDefinition(t *testing.T) {
 	mockTimeNow()
 	defer resetTimeNow()
+
+	dbstore := setupTestEnv(t, baseIntervalSeconds)
+	t.Cleanup(registry.ClearOverrides)
 
 	var customIntervalSeconds int64 = 120
 	testCases := []struct {
@@ -45,7 +52,7 @@ func TestCreatingAlertDefinition(t *testing.T) {
 			desc:                 "should create successfully an alert definition with default interval",
 			inputIntervalSeconds: nil,
 			inputTitle:           "a name",
-			expectedInterval:     defaultIntervalSeconds,
+			expectedInterval:     dbstore.DefaultIntervalSeconds,
 			expectedUpdated:      time.Unix(0, 0).UTC(),
 		},
 		{
@@ -58,28 +65,25 @@ func TestCreatingAlertDefinition(t *testing.T) {
 		{
 			desc:                 "should fail to create an alert definition with too big name",
 			inputIntervalSeconds: &customIntervalSeconds,
-			inputTitle:           getLongString(alertDefinitionMaxTitleLength + 1),
+			inputTitle:           getLongString(store.AlertDefinitionMaxTitleLength + 1),
 			expectedError:        errors.New(""),
 		},
 		{
 			desc:                 "should fail to create an alert definition with empty title",
 			inputIntervalSeconds: &customIntervalSeconds,
 			inputTitle:           "",
-			expectedError:        errEmptyTitleError,
+			expectedError:        store.ErrEmptyTitleError,
 		},
 	}
-
-	_, store := setupTestEnv(t, baseIntervalSeconds)
-	t.Cleanup(registry.ClearOverrides)
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 
-			q := saveAlertDefinitionCommand{
+			q := models.SaveAlertDefinitionCommand{
 				OrgID:     1,
 				Title:     tc.inputTitle,
 				Condition: "B",
-				Data: []eval.AlertQuery{
+				Data: []models.AlertQuery{
 					{
 						Model: json.RawMessage(`{
 								"datasource": "__expr__",
@@ -87,9 +91,9 @@ func TestCreatingAlertDefinition(t *testing.T) {
 								"expression":"2 + 3 > 1"
 							}`),
 						RefID: "B",
-						RelativeTimeRange: eval.RelativeTimeRange{
-							From: eval.Duration(time.Duration(5) * time.Hour),
-							To:   eval.Duration(time.Duration(3) * time.Hour),
+						RelativeTimeRange: models.RelativeTimeRange{
+							From: models.Duration(time.Duration(5) * time.Hour),
+							To:   models.Duration(time.Duration(3) * time.Hour),
 						},
 					},
 				},
@@ -97,7 +101,7 @@ func TestCreatingAlertDefinition(t *testing.T) {
 			if tc.inputIntervalSeconds != nil {
 				q.IntervalSeconds = tc.inputIntervalSeconds
 			}
-			err := store.saveAlertDefinition(&q)
+			err := dbstore.SaveAlertDefinition(&q)
 			switch {
 			case tc.expectedError != nil:
 				require.Error(t, err)
@@ -113,14 +117,14 @@ func TestCreatingAlertDefinition(t *testing.T) {
 }
 func TestCreatingConflictionAlertDefinition(t *testing.T) {
 	t.Run("Should fail to create alert definition with conflicting org_id, title", func(t *testing.T) {
-		_, store := setupTestEnv(t, baseIntervalSeconds)
+		dbstore := setupTestEnv(t, baseIntervalSeconds)
 		t.Cleanup(registry.ClearOverrides)
 
-		q := saveAlertDefinitionCommand{
+		q := models.SaveAlertDefinitionCommand{
 			OrgID:     1,
 			Title:     "title",
 			Condition: "B",
-			Data: []eval.AlertQuery{
+			Data: []models.AlertQuery{
 				{
 					Model: json.RawMessage(`{
 								"datasource": "__expr__",
@@ -128,20 +132,20 @@ func TestCreatingConflictionAlertDefinition(t *testing.T) {
 								"expression":"2 + 3 > 1"
 							}`),
 					RefID: "B",
-					RelativeTimeRange: eval.RelativeTimeRange{
-						From: eval.Duration(time.Duration(5) * time.Hour),
-						To:   eval.Duration(time.Duration(3) * time.Hour),
+					RelativeTimeRange: models.RelativeTimeRange{
+						From: models.Duration(time.Duration(5) * time.Hour),
+						To:   models.Duration(time.Duration(3) * time.Hour),
 					},
 				},
 			},
 		}
 
-		err := store.saveAlertDefinition(&q)
+		err := dbstore.SaveAlertDefinition(&q)
 		require.NoError(t, err)
 
-		err = store.saveAlertDefinition(&q)
+		err = dbstore.SaveAlertDefinition(&q)
 		require.Error(t, err)
-		assert.True(t, store.SQLStore.Dialect.IsUniqueConstraintViolation(err))
+		assert.True(t, dbstore.SQLStore.Dialect.IsUniqueConstraintViolation(err))
 	})
 }
 
@@ -150,15 +154,15 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 		mockTimeNow()
 		defer resetTimeNow()
 
-		_, store := setupTestEnv(t, baseIntervalSeconds)
+		dbstore := setupTestEnv(t, baseIntervalSeconds)
 		t.Cleanup(registry.ClearOverrides)
 
-		q := updateAlertDefinitionCommand{
+		q := models.UpdateAlertDefinitionCommand{
 			UID:       "unknown",
 			OrgID:     1,
 			Title:     "something completely different",
 			Condition: "A",
-			Data: []eval.AlertQuery{
+			Data: []models.AlertQuery{
 				{
 					Model: json.RawMessage(`{
 							"datasource": "__expr__",
@@ -166,15 +170,15 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 							"expression":"2 + 2 > 1"
 						}`),
 					RefID: "A",
-					RelativeTimeRange: eval.RelativeTimeRange{
-						From: eval.Duration(time.Duration(5) * time.Hour),
-						To:   eval.Duration(time.Duration(3) * time.Hour),
+					RelativeTimeRange: models.RelativeTimeRange{
+						From: models.Duration(time.Duration(5) * time.Hour),
+						To:   models.Duration(time.Duration(3) * time.Hour),
 					},
 				},
 			},
 		}
 
-		err := store.updateAlertDefinition(&q)
+		err := dbstore.UpdateAlertDefinition(&q)
 		require.NoError(t, err)
 	})
 
@@ -182,11 +186,11 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 		mockTimeNow()
 		defer resetTimeNow()
 
-		_, store := setupTestEnv(t, baseIntervalSeconds)
+		dbstore := setupTestEnv(t, baseIntervalSeconds)
 		t.Cleanup(registry.ClearOverrides)
 
 		var initialInterval int64 = 120
-		alertDefinition := createTestAlertDefinition(t, store, initialInterval)
+		alertDefinition := createTestAlertDefinition(t, dbstore, initialInterval)
 		created := alertDefinition.Updated
 
 		var customInterval int64 = 30
@@ -231,7 +235,7 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 				desc:          "should not update alert definition if the title it's too big",
 				inputInterval: &customInterval,
 				inputOrgID:    0,
-				inputTitle:    getLongString(alertDefinitionMaxTitleLength + 1),
+				inputTitle:    getLongString(store.AlertDefinitionMaxTitleLength + 1),
 				expectedError: errors.New(""),
 			},
 			{
@@ -245,10 +249,10 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 			},
 		}
 
-		q := updateAlertDefinitionCommand{
+		q := models.UpdateAlertDefinitionCommand{
 			UID:       (*alertDefinition).UID,
 			Condition: "B",
-			Data: []eval.AlertQuery{
+			Data: []models.AlertQuery{
 				{
 					Model: json.RawMessage(`{
 							"datasource": "__expr__",
@@ -256,9 +260,9 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 							"expression":"2 + 3 > 1"
 						}`),
 					RefID: "B",
-					RelativeTimeRange: eval.RelativeTimeRange{
-						From: eval.Duration(5 * time.Hour),
-						To:   eval.Duration(3 * time.Hour),
+					RelativeTimeRange: models.RelativeTimeRange{
+						From: models.Duration(5 * time.Hour),
+						To:   models.Duration(3 * time.Hour),
 					},
 				},
 			},
@@ -275,7 +279,7 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 					q.OrgID = tc.inputOrgID
 				}
 				q.Title = tc.inputTitle
-				err := store.updateAlertDefinition(&q)
+				err := dbstore.UpdateAlertDefinition(&q)
 				switch {
 				case tc.expectedError != nil:
 					require.Error(t, err)
@@ -321,18 +325,18 @@ func TestUpdatingConflictingAlertDefinition(t *testing.T) {
 		mockTimeNow()
 		defer resetTimeNow()
 
-		_, store := setupTestEnv(t, baseIntervalSeconds)
+		dbstore := setupTestEnv(t, baseIntervalSeconds)
 		t.Cleanup(registry.ClearOverrides)
 
 		var initialInterval int64 = 120
-		alertDef1 := createTestAlertDefinition(t, store, initialInterval)
-		alertDef2 := createTestAlertDefinition(t, store, initialInterval)
+		alertDef1 := createTestAlertDefinition(t, dbstore, initialInterval)
+		alertDef2 := createTestAlertDefinition(t, dbstore, initialInterval)
 
-		q := updateAlertDefinitionCommand{
+		q := models.UpdateAlertDefinitionCommand{
 			UID:       (*alertDef2).UID,
 			Title:     alertDef1.Title,
 			Condition: "B",
-			Data: []eval.AlertQuery{
+			Data: []models.AlertQuery{
 				{
 					Model: json.RawMessage(`{
 							"datasource": "__expr__",
@@ -340,70 +344,70 @@ func TestUpdatingConflictingAlertDefinition(t *testing.T) {
 							"expression":"2 + 3 > 1"
 						}`),
 					RefID: "B",
-					RelativeTimeRange: eval.RelativeTimeRange{
-						From: eval.Duration(5 * time.Hour),
-						To:   eval.Duration(3 * time.Hour),
+					RelativeTimeRange: models.RelativeTimeRange{
+						From: models.Duration(5 * time.Hour),
+						To:   models.Duration(3 * time.Hour),
 					},
 				},
 			},
 		}
 
-		err := store.updateAlertDefinition(&q)
+		err := dbstore.UpdateAlertDefinition(&q)
 		require.Error(t, err)
-		assert.True(t, store.SQLStore.Dialect.IsUniqueConstraintViolation(err))
+		assert.True(t, dbstore.SQLStore.Dialect.IsUniqueConstraintViolation(err))
 	})
 }
 
 func TestDeletingAlertDefinition(t *testing.T) {
 	t.Run("zero rows affected when deleting unknown alert", func(t *testing.T) {
-		_, store := setupTestEnv(t, baseIntervalSeconds)
+		dbstore := setupTestEnv(t, baseIntervalSeconds)
 		t.Cleanup(registry.ClearOverrides)
 
-		q := deleteAlertDefinitionByUIDCommand{
+		q := models.DeleteAlertDefinitionByUIDCommand{
 			UID:   "unknown",
 			OrgID: 1,
 		}
 
-		err := store.deleteAlertDefinitionByUID(&q)
+		err := dbstore.DeleteAlertDefinitionByUID(&q)
 		require.NoError(t, err)
 	})
 
 	t.Run("deleting successfully existing alert", func(t *testing.T) {
-		_, store := setupTestEnv(t, baseIntervalSeconds)
+		dbstore := setupTestEnv(t, baseIntervalSeconds)
 		t.Cleanup(registry.ClearOverrides)
 
-		alertDefinition := createTestAlertDefinition(t, store, 60)
+		alertDefinition := createTestAlertDefinition(t, dbstore, 60)
 
-		q := deleteAlertDefinitionByUIDCommand{
+		q := models.DeleteAlertDefinitionByUIDCommand{
 			UID:   (*alertDefinition).UID,
 			OrgID: 1,
 		}
 
 		// save an instance for the definition
-		saveCmd := &saveAlertInstanceCommand{
+		saveCmd := &models.SaveAlertInstanceCommand{
 			DefinitionOrgID: alertDefinition.OrgID,
 			DefinitionUID:   alertDefinition.UID,
-			State:           InstanceStateFiring,
-			Labels:          InstanceLabels{"test": "testValue"},
+			State:           models.InstanceStateFiring,
+			Labels:          models.InstanceLabels{"test": "testValue"},
 		}
-		err := store.saveAlertInstance(saveCmd)
+		err := dbstore.SaveAlertInstance(saveCmd)
 		require.NoError(t, err)
-		listCommand := &listAlertInstancesQuery{
+		listQuery := &models.ListAlertInstancesQuery{
 			DefinitionOrgID: alertDefinition.OrgID,
 			DefinitionUID:   alertDefinition.UID,
 		}
-		err = store.listAlertInstances(listCommand)
+		err = dbstore.ListAlertInstances(listQuery)
 		require.NoError(t, err)
-		require.Len(t, listCommand.Result, 1)
+		require.Len(t, listQuery.Result, 1)
 
-		err = store.deleteAlertDefinitionByUID(&q)
+		err = dbstore.DeleteAlertDefinitionByUID(&q)
 		require.NoError(t, err)
 
 		// assert that alert instance is deleted
-		err = store.listAlertInstances(listCommand)
+		err = dbstore.ListAlertInstances(listQuery)
 		require.NoError(t, err)
 
-		require.Len(t, listCommand.Result, 0)
+		require.Len(t, listQuery.Result, 0)
 	})
 }
 

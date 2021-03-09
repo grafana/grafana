@@ -7,7 +7,7 @@ weight = 110
 
 # License restrictions
 
-Enterprise licenses are limited by the number of active users, a license expiration date, and the URL of the Grafana instance.
+Enterprise licenses are limited by the number of active users, the license expiration date, and the URL of the Grafana instance.
 
 ## User limits
 
@@ -49,11 +49,10 @@ This CSV report helps to identify users, teams, and roles that have been granted
 
 To download the report:
 1. Hover your cursor over the **Server Admin** (shield) icon in the side menu and then click **Licensing**.
-2. At the bottom of the page, click **Download report**.
+1. At the bottom of the page, click **Download report**.
 
 ## Update license restrictions
 
-To increase the number of licensed users within Grafana, extend a license, or change your licensed URL, contact [Grafana support](https://grafana.com/profile/org#support) or your Grafana Labs account team. They will update your license, which you can activate from within Grafana. 
+To increase the number of licensed users within Grafana, extend a license, or change your licensed URL, contact [Grafana support](https://grafana.com/profile/org#support) or your Grafana Labs account team. They will update your license, which you can activate from within Grafana.
 
-For instructions on how to activate your license after it is updated, refer to 
-[Activate an Enterprise license]({{< relref "./activate-license.md" >}})
+For instructions on how to activate your license after it is updated, refer to [Activate an Enterprise license]({{< relref "./activate-license.md" >}}).
