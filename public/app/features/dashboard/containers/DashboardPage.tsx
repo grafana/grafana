@@ -316,8 +316,8 @@ export class DashboardPage extends PureComponent<Props, State> {
     // Only trigger render when the scroll has moved by 25
     const approximateScrollTop = Math.round(scrollTop / 25) * 25;
     const inspectPanel = this.getInspectPanel();
-    const isInTvKioskMode = queryParams.kiosk && queryParams.kiosk === 'tv';
-    const isInFullKioskMode = queryParams.kiosk && queryParams.kiosk === 'full';
+    const isInTvKioskMode = queryParams?.kiosk === 'tv';
+    const isInFullKioskMode = queryParams?.kiosk === 'full';
 
     return (
       <div className="dashboard-container">
