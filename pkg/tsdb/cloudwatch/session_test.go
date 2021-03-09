@@ -104,4 +104,38 @@ func TestNewSession_AssumeRole(t *testing.T) {
 		}), cmpopts.IgnoreFields(stscreds.AssumeRoleProvider{}, "Expiry"))
 		assert.Empty(t, diff)
 	})
+func TestNewSession_EC2IAMRole(t *testing.T) {
+	newSession = func(cfgs ...*aws.Config) (*session.Session, error) {
+		cfg := aws.Config{}
+		cfg.MergeIn(cfgs...)
+		return &session.Session{
+			Config: &cfg,
+		}, nil
+	}
+	newEC2Metadata = func(p client.ConfigProvider, cfgs ...*aws.Config) *ec2metadata.EC2Metadata {
+		return nil
+	}
+	newEC2RoleCredentials = func(sess *session.Session) *credentials.Credentials {
+		return credentials.NewCredentials(&ec2rolecreds.EC2RoleProvider{Client: newEC2Metadata(nil), ExpiryWindow: stscreds.DefaultDuration})
+	}
+
+	t.Run("Credentials are created", func(t *testing.T) {
+		e := newExecutor(nil, &setting.Cfg{AWSAllowedAuthProviders: []string{"ec2_iam_role", "keys"}})
+		e.DataSource = fakeDataSource()
+		e.DataSource.JsonData.Set("authType", "ec2_iam_role")
+
+		sess, err := e.newSession(defaultRegion)
+		require.NoError(t, err)
+		require.NotNil(t, sess)
+
+		expCreds := credentials.NewCredentials(&ec2rolecreds.EC2RoleProvider{
+			Client: newEC2Metadata(nil), ExpiryWindow: stscreds.DefaultDuration,
+		})
+
+		diff := cmp.Diff(expCreds, sess.Config.Credentials, cmp.Exporter(func(_ reflect.Type) bool {
+			return true
+		}), cmpopts.IgnoreFields(stscreds.AssumeRoleProvider{}, "Expiry"))
+		assert.Empty(t, diff)
+	})
+}
 }

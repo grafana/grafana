@@ -133,6 +133,8 @@ func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error)
 		cfgs = append(cfgs, &aws.Config{Endpoint: aws.String(dsInfo.Endpoint)})
 	}
 
+	var err error
+	var sess *session.Session
 	switch dsInfo.AuthType {
 	case authTypeSharedCreds:
 		plog.Debug("Authenticating towards AWS with shared credentials", "profile", dsInfo.Profile,
@@ -147,10 +149,17 @@ func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error)
 		})
 	case authTypeDefault:
 		plog.Debug("Authenticating towards AWS with default SDK method", "region", dsInfo.Region)
+	case authTypeEC2IAMRole:
+		plog.Debug("Authenticating towards AWS with IAM Role", "region", dsInfo.Region)
+		sess, err = newSession(cfgs...)
+		if err != nil {
+			return nil, err
+		}
+		cfgs = append(cfgs, &aws.Config{Credentials: newEC2RoleCredentials(sess)})
 	default:
 		panic(fmt.Sprintf("Unrecognized authType: %d", dsInfo.AuthType))
 	}
-	sess, err := newSession(cfgs...)
+	sess, err = newSession(cfgs...)
 	if err != nil {
 		return nil, err
 	}
@@ -396,6 +405,7 @@ const (
 	authTypeDefault authType = iota
 	authTypeSharedCreds
 	authTypeKeys
+	authTypeEC2IAMRole
 )
 
 func (at authType) String() string {
@@ -403,9 +413,11 @@ func (at authType) String() string {
 	case authTypeDefault:
 		return "default"
 	case authTypeSharedCreds:
-		return "sharedCreds"
+		return "credentials"
 	case authTypeKeys:
 		return "keys"
+	case authTypeEC2IAMRole:
+		return "ec2_iam_role"
 	default:
 		panic(fmt.Sprintf("Unrecognized auth type %d", at))
 	}
@@ -432,6 +444,8 @@ func (e *cloudWatchExecutor) getDSInfo(region string) *datasourceInfo {
 		at = authTypeKeys
 	case "default":
 		at = authTypeDefault
+	case "ec2_iam_role":
+		at = authTypeEC2IAMRole
 	case "arn":
 		at = authTypeDefault
 		plog.Warn("Authentication type \"arn\" is deprecated, falling back to default")
