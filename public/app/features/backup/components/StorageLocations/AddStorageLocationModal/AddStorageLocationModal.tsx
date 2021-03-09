@@ -15,6 +15,7 @@ import {
   AddStorageLocationModalProps,
   TypeFieldProps,
 } from './AddStorageLocationModal.types';
+import { MAX_NAME_LENGTH } from './AddStorageLocationModal.constants';
 import { S3Fields } from './S3Fields';
 import { LocalFields } from './LocalFields';
 import { toFormStorageLocation, toStorageLocation } from './AddStorageLocation.utils';
@@ -55,21 +56,26 @@ const required = [validators.required];
 export const AddStorageLocationModal: FC<AddStorageLocationModalProps> = ({
   isVisible,
   location = null,
-  onClose,
-  onAdd,
+  onClose = () => null,
+  onAdd = () => null,
 }) => {
   const initialValues = toFormStorageLocation(location);
 
   const onSubmit = (values: AddStorageLocationFormProps) => onAdd(toStorageLocation(values));
 
   return (
-    <Modal title={Messages.title} isVisible={isVisible} onClose={onClose}>
+    <Modal title={location ? Messages.editTitle : Messages.addTitle} isVisible={isVisible} onClose={onClose}>
       <Form
         initialValues={initialValues}
         onSubmit={onSubmit}
         render={({ handleSubmit, valid, pristine, submitting, values }) => (
           <form onSubmit={handleSubmit}>
-            <TextInputField name="name" label={Messages.name} validators={required} />
+            <TextInputField
+              inputProps={{ maxLength: MAX_NAME_LENGTH }}
+              name="name"
+              label={Messages.name}
+              validators={required}
+            />
             <TextareaInputField name="description" label={Messages.description} />
             {/* TODO remove disabled when API allows all three types */}
             <RadioButtonGroupField disabled options={typeOptions} name="type" label={Messages.type} fullWidth />
@@ -93,9 +99,4 @@ export const AddStorageLocationModal: FC<AddStorageLocationModalProps> = ({
       />
     </Modal>
   );
-};
-
-AddStorageLocationModal.defaultProps = {
-  onClose: () => null,
-  onAdd: () => null,
 };

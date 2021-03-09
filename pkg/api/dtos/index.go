@@ -46,6 +46,7 @@ const (
 	WeightConfig
 	WeightAdmin
 	WeightProfile
+	WeightBackup
 	WeightHelp
 )
 

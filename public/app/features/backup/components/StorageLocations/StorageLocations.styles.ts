@@ -6,6 +6,11 @@ export const getStyles = ({ spacing }: GrafanaTheme) => ({
     display: flex;
     justify-content: space-between;
     align-items: center;
+
+    & > span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
   `,
   addWrapper: css`
     display: flex;

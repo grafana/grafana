@@ -1,5 +1,6 @@
 export const Messages = {
-  title: 'Add Storage Location',
+  addTitle: 'Add Storage Location',
+  editTitle: 'Edit Storage Location',
   name: 'Name',
   description: 'Description',
   type: 'Type',
