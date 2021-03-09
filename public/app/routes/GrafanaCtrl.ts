@@ -25,7 +25,7 @@ import { CoreEvents, AppEventEmitter, AppEventConsumer } from 'app/types';
 import { setLinkSrv, LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import { UtilSrv } from 'app/core/services/util_srv';
 import { ContextSrv } from 'app/core/services/context_srv';
-import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
+import { PlaylistSrv } from 'app/features/playlist/PlaylistSrv';
 import { DashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { ITimeoutService, IRootScopeService, IAngularEvent, auto } from 'angular';
 import { AppEvent, locationUtil } from '@grafana/data';
@@ -60,7 +60,7 @@ export class GrafanaCtrl {
     datasourceSrv.init(config.datasources, config.defaultDatasource);
 
     locationUtil.initialize({
-      getConfig: () => config,
+      config,
       getTimeRangeForUrl: getTimeSrv().timeRangeForUrl,
       // @ts-ignore
       buildParamsFromVariables: getTemplateSrv().fillVariableValuesForUrl,
