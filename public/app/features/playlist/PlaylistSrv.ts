@@ -24,7 +24,6 @@ export class PlaylistSrv {
 
   isPlaying: boolean;
 
-  /** @ngInject */
   constructor() {
     this.locationUpdated = this.locationUpdated.bind(this);
   }
