@@ -4,6 +4,7 @@ import { Button, Drawer } from '@grafana/ui';
 import { UseState } from '../../utils/storybook/UseState';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import mdx from './Drawer.mdx';
+import { Props } from './Drawer';
 
 export default {
   title: 'Overlays/Drawer',
@@ -31,7 +32,7 @@ export default {
   },
 };
 
-export const Global: Story = (args) => {
+export const Global: Story<Props> = (args) => {
   return (
     <UseState initialState={{ isOpen: false }}>
       {(state, updateValue) => {
@@ -72,7 +73,7 @@ Global.args = {
   title: 'Drawer title',
 };
 
-export const LongContent: Story = (args) => {
+export const LongContent: Story<Props> = (args) => {
   return (
     <UseState initialState={{ isOpen: true }}>
       {(state, updateValue) => {
@@ -173,7 +174,7 @@ LongContent.args = {
   title: 'Drawer title with long content',
 };
 
-export const InLine: Story = (args) => {
+export const InLine: Story<Props> = (args) => {
   return (
     <UseState initialState={{ isOpen: false }}>
       {(state, updateValue) => {
