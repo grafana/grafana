@@ -137,7 +137,7 @@ func TestNewSession_AllowedAuthProviders(t *testing.T) {
 		require.Error(t, err)
 		require.Nil(t, sess)
 
-		assert.Equal(t, "attempting to use an auth type that is not allowed: default", err.Error())
+		assert.Equal(t, `attempting to use an auth type that is not allowed: "default"`, err.Error())
 	})
 
 	t.Run("Allowed auth type is used", func(t *testing.T) {
