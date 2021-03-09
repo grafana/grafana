@@ -1,12 +1,15 @@
 import React, { FC, useEffect, useState } from 'react';
 import { Modal, logger } from '@percona/platform-core';
 import { Form as FormFinal } from 'react-final-form';
+import { useStyles } from '@grafana/ui';
 import { EditDBClusterModalProps, EditDBClusterRenderProps } from './EditDBClusterModal.types';
 import { DBClusterAdvancedOptions } from './DBClusterAdvancedOptions/DBClusterAdvancedOptions';
 import { DEFAULT_SIZES } from './DBClusterAdvancedOptions/DBClusterAdvancedOptions.constants';
 import { DBClusterResources, DBClusterTopology } from './DBClusterAdvancedOptions/DBClusterAdvancedOptions.types';
 import { DATABASE_LABELS } from 'app/percona/shared/core';
 import { newDBClusterService } from '../DBCluster.utils';
+import { DBCluster } from '../DBCluster.types';
+import { getStyles } from './EditDBClusterModal.styles';
 
 export const EditDBClusterModal: FC<EditDBClusterModalProps> = ({
   isVisible,
@@ -14,6 +17,7 @@ export const EditDBClusterModal: FC<EditDBClusterModalProps> = ({
   onDBClusterChanged,
   selectedCluster,
 }) => {
+  const styles = useStyles(getStyles);
   const onSubmit = async ({ databaseType, topology, nodes, single, memory, cpu, disk }: Record<string, any>) => {
     if (!selectedCluster) {
       setVisible(false);
@@ -82,16 +86,18 @@ export const EditDBClusterModal: FC<EditDBClusterModalProps> = ({
   }, [selectedCluster]);
 
   return (
-    <Modal title={editModalTitle} isVisible={isVisible} onClose={() => setVisible(false)}>
-      <FormFinal
-        onSubmit={onSubmit}
-        initialValues={initialValues}
-        render={renderProps => (
-          <form onSubmit={renderProps.handleSubmit}>
-            <DBClusterAdvancedOptions {...renderProps} />
-          </form>
-        )}
-      />
-    </Modal>
+    <div className={styles.modalWrapper}>
+      <Modal title={editModalTitle} isVisible={isVisible} onClose={() => setVisible(false)}>
+        <FormFinal
+          onSubmit={onSubmit}
+          initialValues={initialValues}
+          render={renderProps => (
+            <form onSubmit={renderProps.handleSubmit}>
+              <DBClusterAdvancedOptions selectedCluster={selectedCluster as DBCluster} renderProps={renderProps} />
+            </form>
+          )}
+        />
+      </Modal>
+    </div>
   );
 };
