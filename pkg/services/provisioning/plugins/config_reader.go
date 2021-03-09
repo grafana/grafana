@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager"
 	"gopkg.in/yaml.v2"
 )
 
@@ -112,7 +112,7 @@ func validatePluginsConfig(apps []*pluginsAsConfig) error {
 		}
 
 		for _, app := range apps[i].Apps {
-			if !plugins.IsAppInstalled(app.PluginID) {
+			if !manager.IsAppInstalled(app.PluginID) {
 				return fmt.Errorf("app plugin not installed: %s", app.PluginID)
 			}
 		}
