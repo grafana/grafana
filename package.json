@@ -294,7 +294,7 @@
   },
   "resolutions": {
     "caniuse-db": "1.0.30000772",
-    "react-use-measure": "https://github.com/mckn/react-use-measure"
+    "react-use-measure": "https://github.com/mckn/react-use-measure#remove-cjs-export"
   },
   "workspaces": {
     "packages": [
