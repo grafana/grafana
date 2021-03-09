@@ -12,4 +12,4 @@ export { reportMetaAnalytics } from './utils/analytics';
 export { logInfo, logDebug, logWarning, logError } from './utils/logging';
 export { DataSourceWithBackend, HealthCheckResult, HealthStatus } from './utils/DataSourceWithBackend';
 export { toDataQueryError, toDataQueryResponse, frameToMetricFindValue } from './utils/queryResponse';
-export { DataSourcePicker } from './datasources/DataSourcePicker';
+export { DataSourcePicker, DataSourcePickerProps, DataSourcePickerState } from './datasources/DataSourcePicker';

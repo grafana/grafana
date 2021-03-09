@@ -7,7 +7,12 @@ import { DataSourceInstanceSettings, isUnsignedPluginSignature, SelectableValue 
 import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceSrv } from '../services/dataSourceSrv';
 
-interface Props {
+/**
+ * Component props description for the {@link DataSourcePicker}
+ *
+ * @alpha
+ */
+export interface DataSourcePickerProps {
   onChange: (ds: DataSourceInstanceSettings) => void;
   current: string | null;
   hideTextValue?: boolean;
@@ -25,7 +30,12 @@ interface Props {
   noDefault?: boolean;
 }
 
-interface State {
+/**
+ * Component state description for the {@link DataSourcePicker}
+ *
+ * @alpha
+ */
+export interface DataSourcePickerState {
   error?: string;
 }
 
@@ -33,20 +43,20 @@ interface State {
  * Component to be able to select a datasource from the list of installed and enabled
  * datasources in the current Grafana instance.
  *
- * @beta
+ * @alpha
  */
-export class DataSourcePicker extends PureComponent<Props, State> {
+export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataSourcePickerState> {
   dataSourceSrv = getDataSourceSrv();
 
-  static defaultProps: Partial<Props> = {
+  static defaultProps: Partial<DataSourcePickerProps> = {
     autoFocus: false,
     openMenuOnFocus: false,
     placeholder: 'Select datasource',
   };
 
-  state: State = {};
+  state: DataSourcePickerState = {};
 
-  constructor(props: Props) {
+  constructor(props: DataSourcePickerProps) {
     super(props);
   }
 
