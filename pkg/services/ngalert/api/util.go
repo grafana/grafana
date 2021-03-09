@@ -5,7 +5,7 @@ import (
 	"regexp"
 )
 
-var searchRegex = regexp.MustCompile(`\\{(\\w+)\\}`)
+var searchRegex = regexp.MustCompile(`\{(\w+)\}`)
 
 func toMacaronPath(path string) string {
 	return string(searchRegex.ReplaceAllFunc([]byte(path), func(s []byte) []byte {
