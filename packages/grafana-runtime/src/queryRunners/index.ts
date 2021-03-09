@@ -1,1 +1,1 @@
-export { setQueryRunnerFactory, createQueryRunner } from './queryRunner';
+export { setQueryRunnerFactory, createQueryRunner, QueryRunnerFactory } from './queryRunner';

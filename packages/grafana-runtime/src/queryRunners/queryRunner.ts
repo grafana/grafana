@@ -24,7 +24,8 @@ export const setQueryRunnerFactory = (factory: QueryRunnerFactory): void => {
  * any of the datasource plugins installed in the current Grafana instance.
  *
  * @param config - configuration instructing the created query runner what transformations and field overrides to use.
- * @returns {QueryRunner} that can be used to run queries against supported datasources.
+ *
+ * @public
  */
 export const createQueryRunner = (config?: DataConfigSource): QueryRunner => {
   if (!instance) {
