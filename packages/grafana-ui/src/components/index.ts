@@ -176,7 +176,7 @@ export { Card, Props as CardProps, ContainerProps, CardInnerProps, getCardStyles
 export { FormattedValueDisplay } from './FormattedValueDisplay/FormattedValueDisplay';
 
 export { ButtonSelect } from './Dropdown/ButtonSelect';
-export { PluginSignatureBadge } from './PluginSignatureBadge/PluginSignatureBadge';
+export { PluginSignatureBadge, PluginSignatureBadgeProps } from './PluginSignatureBadge/PluginSignatureBadge';
 
 // Legacy forms
 
