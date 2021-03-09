@@ -855,7 +855,9 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     })
       .pipe(
         map((r) => {
-          return r.results['annotationQuery'].tables[0].rows.map((v) => ({
+          const frames = toDataQueryResponse({ data: r }).data as DataFrame[];
+          const table = toLegacyResponseData(frames[0]) as TableData;
+          return table.rows.map((v) => ({
             annotation: annotation,
             time: Date.parse(v[0]),
             title: v[1],
