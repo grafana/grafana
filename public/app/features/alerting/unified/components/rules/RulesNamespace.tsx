@@ -1,15 +1,17 @@
-import { Collapse, useStyles } from '@grafana/ui';
+import { useStyles } from '@grafana/ui';
 import { RuleNamespace } from 'app/types/unified-alerting/internal';
 import React, { FC, useMemo, useState } from 'react';
 import pluralize from 'pluralize';
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
+import { RuleCollapse } from './RuleCollapse';
+import { RulesGroup } from './RulesGroup';
 
 interface Props {
   namespace: RuleNamespace;
 }
 
-export const Namespace: FC<Props> = ({ namespace }) => {
+export const RulesNamespace: FC<Props> = ({ namespace }) => {
   const styles = useStyles(getStyles);
 
   const [isOpen, setIsOpen] = useState(false);
@@ -22,38 +24,35 @@ export const Namespace: FC<Props> = ({ namespace }) => {
     [namespace]
   );
 
-  const title: React.ReactNode = (
-    <div className={styles.title}>
-      <strong>{namespace.name}</strong>
-      <span className={styles.stats}>
-        {stats.groupCount} {pluralize('group', stats.groupCount)}, {stats.ruleCount}{' '}
-        {pluralize('rule', stats.ruleCount)} total
-      </span>
-    </div>
+  const labelLeft = <strong>{namespace.name}</strong>;
+  const labelRight = (
+    <span className={styles.stats}>
+      {stats.groupCount} {pluralize('group', stats.groupCount)}, {stats.ruleCount} {pluralize('rule', stats.ruleCount)}{' '}
+      total
+    </span>
   );
   return (
-    <Collapse
-      className={styles.collapse}
+    <RuleCollapse
       collapsible={true}
       isOpen={isOpen}
       onToggle={() => setIsOpen(!isOpen)}
-      label={title}
+      labelLeft={labelLeft}
+      labelRight={labelRight}
     >
-      <p>@TODO</p>
-    </Collapse>
+      <div className={styles.content}>
+        {namespace.groups.map((group) => (
+          <RulesGroup key={group.name} group={group} />
+        ))}
+      </div>
+    </RuleCollapse>
   );
 };
 
 const getStyles = (theme: GrafanaTheme) => ({
-  collapse: css`
-    background-color: ${theme.colors.bg2};
-    & > div > div + div {
-      flex: 1;
+  content: css`
+    & > div + div {
+      margin-top: ${theme.spacing.md};
     }
-  `,
-  title: css`
-    display: flex;
-    justify-content: space-between;
   `,
   stats: css`
     font-weight: ${theme.typography.weight.regular};

@@ -2,7 +2,7 @@ import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { Alert, LoadingPlaceholder, useStyles } from '@grafana/ui';
 import React, { FC, useEffect } from 'react';
-import { Namespace } from './Namespace';
+import { RulesNamespace } from './RulesNamespace';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { initialAsyncRequestState } from '../../utils/redux';
 import { useDispatch } from 'react-redux';
@@ -27,7 +27,7 @@ export const RulesSource: FC<Props> = ({ datasourceName }) => {
       {!result && loading && <LoadingPlaceholder text="Loading rules..." />}
       {error && <Alert title={`Error loading rules: ${error.message || 'Unknown error.'}`} severity="error" />}
       {result?.map((ns) => (
-        <Namespace key={ns.name} namespace={ns} />
+        <RulesNamespace key={ns.name} namespace={ns} />
       ))}
       {result?.length === 0 && <p>No rules found.</p>}
     </section>
