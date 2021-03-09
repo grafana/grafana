@@ -26,9 +26,9 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 type datasourceInfo struct {
@@ -38,6 +38,7 @@ type datasourceInfo struct {
 	AssumeRoleARN string
 	ExternalID    string
 	Namespace     string
+	Endpoint      string
 
 	AccessKey string
 	SecretKey string
@@ -66,13 +67,11 @@ type CloudWatchService struct {
 }
 
 func (s *CloudWatchService) Init() error {
-	plog.Debug("initing")
-
-	tsdb.RegisterTsdbQueryEndpoint("cloudwatch", func(ds *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-		return newExecutor(s.LogsService), nil
-	})
-
 	return nil
+}
+
+func (s *CloudWatchService) NewExecutor(*models.DataSource) (plugins.DataPlugin, error) {
+	return newExecutor(s.LogsService), nil
 }
 
 func newExecutor(logsService *LogsService) *cloudWatchExecutor {
@@ -96,7 +95,7 @@ func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error)
 
 	bldr := strings.Builder{}
 	for i, s := range []string{
-		dsInfo.AuthType.String(), dsInfo.AccessKey, dsInfo.Profile, dsInfo.AssumeRoleARN, region,
+		dsInfo.AuthType.String(), dsInfo.AccessKey, dsInfo.Profile, dsInfo.AssumeRoleARN, region, dsInfo.Endpoint,
 	} {
 		if i != 0 {
 			bldr.WriteString(":")
@@ -128,6 +127,10 @@ func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error)
 	if dsInfo.Region != "" {
 		regionCfg = &aws.Config{Region: aws.String(dsInfo.Region)}
 		cfgs = append(cfgs, regionCfg)
+	}
+
+	if dsInfo.Endpoint != "" {
+		cfgs = append(cfgs, &aws.Config{Endpoint: aws.String(dsInfo.Endpoint)})
 	}
 
 	switch dsInfo.AuthType {
@@ -243,12 +246,12 @@ func (e *cloudWatchExecutor) getRGTAClient(region string) (resourcegroupstagging
 }
 
 func (e *cloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
-	queryContext *tsdb.TsdbQuery) (*cloudwatchlogs.GetQueryResultsOutput, error) {
+	queryContext plugins.DataQuery) (*cloudwatchlogs.GetQueryResultsOutput, error) {
 	const maxAttempts = 8
 	const pollPeriod = 1000 * time.Millisecond
 
 	queryParams := queryContext.Queries[0].Model
-	startQueryOutput, err := e.executeStartQuery(ctx, logsClient, queryParams, queryContext.TimeRange)
+	startQueryOutput, err := e.executeStartQuery(ctx, logsClient, queryParams, *queryContext.TimeRange)
 	if err != nil {
 		return nil, err
 	}
@@ -280,15 +283,17 @@ func (e *cloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwat
 	return nil, nil
 }
 
-// Query executes a CloudWatch query.
-func (e *cloudWatchExecutor) Query(ctx context.Context, dsInfo *models.DataSource, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
+// DataQuery executes a CloudWatch query.
+func (e *cloudWatchExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource,
+	queryContext plugins.DataQuery) (plugins.DataResponse, error) {
 	e.DataSource = dsInfo
 
 	/*
-		Unlike many other data sources,	with Cloudwatch Logs query requests don't receive the results as the response to the query, but rather
-		an ID is first returned. Following this, a client is expected to send requests along with the ID until the status of the query is complete,
-		receiving (possibly partial) results each time. For queries made via dashboards and Explore, the logic of making these repeated queries is handled on
-		the frontend, but because alerts are executed on the backend the logic needs to be reimplemented here.
+		Unlike many other data sources, with Cloudwatch Logs query requests don't receive the results as the response
+		to the query, but rather an ID is first returned. Following this, a client is expected to send requests along
+		with the ID until the status of the query is complete, receiving (possibly partial) results each time. For
+		queries made via dashboards and Explore, the logic of making these repeated queries is handled on the
+		frontend, but because alerts are executed on the backend the logic needs to be reimplemented here.
 	*/
 	queryParams := queryContext.Queries[0].Model
 	_, fromAlert := queryContext.Headers["FromAlert"]
@@ -301,7 +306,7 @@ func (e *cloudWatchExecutor) Query(ctx context.Context, dsInfo *models.DataSourc
 	queryType := queryParams.Get("type").MustString("")
 
 	var err error
-	var result *tsdb.Response
+	var result plugins.DataResponse
 	switch queryType {
 	case "metricFindQuery":
 		result, err = e.executeMetricFindQuery(ctx, queryContext)
@@ -320,7 +325,8 @@ func (e *cloudWatchExecutor) Query(ctx context.Context, dsInfo *models.DataSourc
 	return result, err
 }
 
-func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
+func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryContext plugins.DataQuery) (
+	plugins.DataResponse, error) {
 	queryParams := queryContext.Queries[0].Model
 	queryParams.Set("subtype", "StartQuery")
 	queryParams.Set("queryString", queryParams.Get("expression").MustString(""))
@@ -333,12 +339,12 @@ func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryCont
 
 	logsClient, err := e.getCWLogsClient(region)
 	if err != nil {
-		return nil, err
+		return plugins.DataResponse{}, err
 	}
 
-	result, err := e.executeStartQuery(ctx, logsClient, queryParams, queryContext.TimeRange)
+	result, err := e.executeStartQuery(ctx, logsClient, queryParams, *queryContext.TimeRange)
 	if err != nil {
-		return nil, err
+		return plugins.DataResponse{}, err
 	}
 
 	queryParams.Set("queryId", *result.QueryId)
@@ -346,38 +352,38 @@ func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryCont
 	// Get query results
 	getQueryResultsOutput, err := e.alertQuery(ctx, logsClient, queryContext)
 	if err != nil {
-		return nil, err
+		return plugins.DataResponse{}, err
 	}
 
 	dataframe, err := logsResultsToDataframes(getQueryResultsOutput)
 	if err != nil {
-		return nil, err
+		return plugins.DataResponse{}, err
 	}
 
 	statsGroups := queryParams.Get("statsGroups").MustStringArray()
 	if len(statsGroups) > 0 && len(dataframe.Fields) > 0 {
 		groupedFrames, err := groupResults(dataframe, statsGroups)
 		if err != nil {
-			return nil, err
+			return plugins.DataResponse{}, err
 		}
 
-		response := &tsdb.Response{
-			Results: make(map[string]*tsdb.QueryResult),
+		response := plugins.DataResponse{
+			Results: make(map[string]plugins.DataQueryResult),
 		}
 
-		response.Results["A"] = &tsdb.QueryResult{
-			RefId:      "A",
-			Dataframes: tsdb.NewDecodedDataFrames(groupedFrames),
+		response.Results["A"] = plugins.DataQueryResult{
+			RefID:      "A",
+			Dataframes: plugins.NewDecodedDataFrames(groupedFrames),
 		}
 
 		return response, nil
 	}
 
-	response := &tsdb.Response{
-		Results: map[string]*tsdb.QueryResult{
+	response := plugins.DataResponse{
+		Results: map[string]plugins.DataQueryResult{
 			"A": {
-				RefId:      "A",
-				Dataframes: tsdb.NewDecodedDataFrames(data.Frames{dataframe}),
+				RefID:      "A",
+				Dataframes: plugins.NewDecodedDataFrames(data.Frames{dataframe}),
 			},
 		},
 	}
@@ -413,6 +419,7 @@ func (e *cloudWatchExecutor) getDSInfo(region string) *datasourceInfo {
 	atStr := e.DataSource.JsonData.Get("authType").MustString()
 	assumeRoleARN := e.DataSource.JsonData.Get("assumeRoleArn").MustString()
 	externalID := e.DataSource.JsonData.Get("externalId").MustString()
+	endpoint := e.DataSource.JsonData.Get("endpoint").MustString()
 	decrypted := e.DataSource.DecryptedValues()
 	accessKey := decrypted["accessKey"]
 	secretKey := decrypted["secretKey"]
@@ -445,6 +452,7 @@ func (e *cloudWatchExecutor) getDSInfo(region string) *datasourceInfo {
 		ExternalID:    externalID,
 		AccessKey:     accessKey,
 		SecretKey:     secretKey,
+		Endpoint:      endpoint,
 	}
 }
 

@@ -30,16 +30,15 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       transition: opacity 0.1s ease;
       z-index: 0;
     `,
-    confirmButtonContainer: css`
+    confirmButton: css`
+      align-items: flex-start;
+      background: ${theme.colors.bg1};
+      display: flex;
       overflow: hidden;
       position: absolute;
-      z-index: 1;
-    `,
-    confirmButton: css`
-      display: flex;
-      align-items: flex-start;
     `,
     confirmButtonShow: css`
+      z-index: 1;
       opacity: 1;
       transition: opacity 0.08s ease-out, transform 0.1s ease-out;
       transform: translateX(0);
@@ -137,6 +136,7 @@ class UnThemedConfirmButton extends PureComponent<Props, State> {
       styles.confirmButton,
       this.state.showConfirm ? styles.confirmButtonShow : styles.confirmButtonHide
     );
+
     const onClick = disabled ? () => {} : this.onClickButton;
 
     return (
@@ -152,15 +152,13 @@ class UnThemedConfirmButton extends PureComponent<Props, State> {
             {children}
           </span>
         )}
-        <span className={styles.confirmButtonContainer}>
-          <span className={confirmButtonClass}>
-            <Button size={size} variant="link" onClick={this.onClickCancel}>
-              Cancel
-            </Button>
-            <Button size={size} variant={confirmButtonVariant} onClick={this.onConfirm}>
-              {confirmText}
-            </Button>
-          </span>
+        <span className={confirmButtonClass}>
+          <Button size={size} variant="link" onClick={this.onClickCancel}>
+            Cancel
+          </Button>
+          <Button size={size} variant={confirmButtonVariant} onClick={this.onConfirm}>
+            {confirmText}
+          </Button>
         </span>
       </span>
     );

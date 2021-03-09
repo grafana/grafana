@@ -6,19 +6,17 @@ aliases = ["/docs/grafana/latest/datasources/cloudwatch"]
 weight = 200
 +++
 
-# Using AWS CloudWatch in Grafana
+# AWS CloudWatch data source
 
-Grafana ships with built-in support for CloudWatch. Add it as a data source, then you are ready to
-build dashboards or use Explore with CloudWatch metrics and CloudWatch Logs.
+Grafana ships with built-in support for CloudWatch. Add it as a data source, then you are ready to build dashboards or use Explore with CloudWatch metrics and CloudWatch Logs.
 
-## Adding the data source
+This topic explains options, variables, querying, and other options specific to this data source. Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
 
-1. In the side menu under the `Configuration` link, click on `Data Sources`.
-1. Click the `Add data source` button.
-1. Select `Cloudwatch` in the `Cloud` section.
+> **Note:** If you have issues with getting this data source to work and Grafana is giving you undescriptive errors, then check your log file (try looking in /var/log/grafana/grafana.log).
 
-> **Note:** If at any moment you have issues with getting this data source to work and Grafana is giving you undescriptive errors then don't
-> forget to check your log file (try looking in /var/log/grafana/grafana.log).
+## Cloudwatch settings
+
+To access data source settings, hover your mouse over the **Configuration** (gear) icon, then click **Data Sources**, and then click the AWS Cloudwatch data source.
 
 | Name                       | Description                                                                                                             |
 | -------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
@@ -104,6 +102,10 @@ Here is a minimal policy example:
 ### Assuming a role
 
 The `Assume Role ARN` field allows you to specify which IAM role to assume, if any. When left blank, the provided credentials are used directly and the associated role or user should have the required permissions. If this field is non-blank, on the other hand, the provided credentials are used to perform an [sts:AssumeRole](https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html) call.
+
+### Endpoint
+
+The `Endpoint` field allows you to specify a custom endpoint URL that overrides the default generated endpoint for the CloudWatch API. Leave this field blank if you want to use the default generated endpoint. For more information on why and how to use Service endpoints, refer to the [AWS service endpoints documentation](https://docs.aws.amazon.com/general/latest/gr/rande.html).
 
 ### EKS IAM roles for service accounts
 

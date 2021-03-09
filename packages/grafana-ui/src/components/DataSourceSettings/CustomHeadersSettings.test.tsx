@@ -9,6 +9,7 @@ const setup = (propOverrides?: object) => {
       orgId: 1,
       name: 'gdev-influxdb',
       type: 'influxdb',
+      typeName: 'Influxdb',
       typeLogoUrl: '',
       access: 'direct',
       url: 'http://localhost:8086',

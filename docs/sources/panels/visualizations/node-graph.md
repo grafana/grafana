@@ -1,5 +1,5 @@
 +++
-title = "Node graph"
+title = "Node graph panel"
 keywords = ["grafana", "dashboard", "documentation", "panels", "node graph", "directed graph"]
 weight = 850
 +++

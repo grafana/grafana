@@ -54,12 +54,12 @@ export const Pages = {
       },
       Annotations: {
         List: {
-          addAnnotationCTA: 'Call to action button Add Annotation Query',
+          addAnnotationCTA: Components.CallToActionCard.button('Add Annotation Query'),
         },
       },
       Variables: {
         List: {
-          addVariableCTA: 'Call to action button Add variable',
+          addVariableCTA: Components.CallToActionCard.button('Add variable'),
           newButton: 'Variable editor New variable button',
           table: 'Variable editor Table',
           tableRowNameFields: (variableName: string) => `Variable editor Table Name field ${variableName}`,
