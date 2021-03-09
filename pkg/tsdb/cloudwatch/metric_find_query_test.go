@@ -44,7 +44,7 @@ func TestQuery_Metrics(t *testing.T) {
 				},
 			},
 		}
-		executor := newExecutor(nil)
+		executor := newExecutor(nil, newTestConfig())
 		resp, err := executor.DataQuery(context.Background(), fakeDataSource(), plugins.DataQuery{
 			Queries: []plugins.DataSubQuery{
 				{
@@ -101,7 +101,7 @@ func TestQuery_Metrics(t *testing.T) {
 				},
 			},
 		}
-		executor := newExecutor(nil)
+		executor := newExecutor(nil, newTestConfig())
 		resp, err := executor.DataQuery(context.Background(), fakeDataSource(), plugins.DataQuery{
 			Queries: []plugins.DataSubQuery{
 				{
@@ -163,7 +163,7 @@ func TestQuery_Regions(t *testing.T) {
 		cli = fakeEC2Client{
 			regions: []string{regionName},
 		}
-		executor := newExecutor(nil)
+		executor := newExecutor(nil, newTestConfig())
 		resp, err := executor.DataQuery(context.Background(), fakeDataSource(), plugins.DataQuery{
 			Queries: []plugins.DataSubQuery{
 				{
@@ -245,7 +245,7 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 				},
 			},
 		}
-		executor := newExecutor(nil)
+		executor := newExecutor(nil, newTestConfig())
 		resp, err := executor.DataQuery(context.Background(), fakeDataSource(), plugins.DataQuery{
 			Queries: []plugins.DataSubQuery{
 				{
@@ -348,7 +348,7 @@ func TestQuery_EBSVolumeIDs(t *testing.T) {
 				},
 			},
 		}
-		executor := newExecutor(nil)
+		executor := newExecutor(nil, newTestConfig())
 		resp, err := executor.DataQuery(context.Background(), fakeDataSource(), plugins.DataQuery{
 			Queries: []plugins.DataSubQuery{
 				{
@@ -448,7 +448,7 @@ func TestQuery_ResourceARNs(t *testing.T) {
 				},
 			},
 		}
-		executor := newExecutor(nil)
+		executor := newExecutor(nil, newTestConfig())
 		resp, err := executor.DataQuery(context.Background(), fakeDataSource(), plugins.DataQuery{
 			Queries: []plugins.DataSubQuery{
 				{
