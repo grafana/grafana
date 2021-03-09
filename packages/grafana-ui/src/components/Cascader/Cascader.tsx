@@ -22,6 +22,7 @@ export interface CascaderProps {
   allowCustomValue?: boolean;
   /** A function for formatting the message for custom value creation. Only applies when allowCustomValue is set to true*/
   formatCreateLabel?: (val: string) => string;
+  displayAllSelectedLevels?: boolean;
 }
 
 interface CascaderState {
@@ -57,6 +58,8 @@ const disableDivFocus = css(`
 }
 `);
 
+const DEFAULT_SEPARATOR = '/';
+
 export class Cascader extends React.PureComponent<CascaderProps, CascaderState> {
   constructor(props: CascaderProps) {
     super(props);
@@ -81,7 +84,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
       if (!option.items) {
         selectOptions.push({
           singleLabel: cpy[cpy.length - 1].label,
-          label: cpy.map((o) => o.label).join(this.props.separator || ' / '),
+          label: cpy.map((o) => o.label).join(this.props.separator || ` ${DEFAULT_SEPARATOR} `),
           value: cpy.map((o) => o.value),
         });
       } else {
@@ -116,7 +119,9 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
     this.setState({
       rcValue: value,
       focusCascade: true,
-      activeLabel: selectedOptions[selectedOptions.length - 1].label,
+      activeLabel: this.props.displayAllSelectedLevels
+        ? selectedOptions.map((option) => option.label).join(this.props.separator || DEFAULT_SEPARATOR)
+        : selectedOptions[selectedOptions.length - 1].label,
     });
 
     this.props.onSelect(selectedOptions[selectedOptions.length - 1].value);

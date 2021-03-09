@@ -7,8 +7,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/tsdb"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -21,6 +19,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/retryer"
 	"golang.org/x/sync/errgroup"
@@ -110,9 +109,9 @@ func (r *logQueryRunner) publishResults(channelName string) error {
 
 // executeLiveLogQuery executes a CloudWatch Logs query with live updates over WebSocket.
 // A WebSocket channel is created, which goroutines send responses over.
-func (e *cloudWatchExecutor) executeLiveLogQuery(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) { // tsdb.Response
+func (e *cloudWatchExecutor) executeLiveLogQuery(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	responseChannelName := uuid.New().String()
-	responseChannel := make(chan *tsdb.Response)
+	responseChannel := make(chan plugins.DataResponse)
 	if err := e.logsService.AddResponseChannel("plugin/cloudwatch/"+responseChannelName, responseChannel); err != nil {
 		close(responseChannel)
 		return nil, err
@@ -135,7 +134,7 @@ func (e *cloudWatchExecutor) executeLiveLogQuery(ctx context.Context, req *backe
 	return response, nil
 }
 
-func (e *cloudWatchExecutor) sendLiveQueriesToChannel(req *backend.QueryDataRequest, responseChannel chan *tsdb.Response) {
+func (e *cloudWatchExecutor) sendLiveQueriesToChannel(req *backend.QueryDataRequest, responseChannel chan plugins.DataResponse) {
 	defer close(responseChannel)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
@@ -203,7 +202,8 @@ func (e *cloudWatchExecutor) fetchConcurrentQueriesQuota(region string, pluginCt
 		return defaultConcurrentQueries
 	}
 
-	if defaultConcurrentQueriesQuota != nil && defaultConcurrentQueriesQuota.Quota != nil && defaultConcurrentQueriesQuota.Quota.Value != nil {
+	if defaultConcurrentQueriesQuota != nil && defaultConcurrentQueriesQuota.Quota != nil &&
+		defaultConcurrentQueriesQuota.Quota.Value != nil {
 		return int(*defaultConcurrentQueriesQuota.Quota.Value)
 	}
 
@@ -211,7 +211,7 @@ func (e *cloudWatchExecutor) fetchConcurrentQueriesQuota(region string, pluginCt
 	return defaultConcurrentQueries
 }
 
-func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel chan *tsdb.Response, query backend.DataQuery, timeRange backend.TimeRange, pluginCtx backend.PluginContext) error {
+func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel chan plugins.DataResponse, query backend.DataQuery, timeRange backend.TimeRange, pluginCtx backend.PluginContext) error {
 	model, err := simplejson.NewJson(query.JSON)
 	if err != nil {
 		return err
@@ -293,11 +293,11 @@ func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel
 			dataFrames = data.Frames{dataFrame}
 		}
 
-		responseChannel <- &tsdb.Response{
-			Results: map[string]*tsdb.QueryResult{
+		responseChannel <- plugins.DataResponse{
+			Results: map[string]plugins.DataQueryResult{
 				query.RefID: {
-					RefId:      query.RefID,
-					Dataframes: tsdb.NewDecodedDataFrames(dataFrames),
+					RefID:      query.RefID,
+					Dataframes: plugins.NewDecodedDataFrames(dataFrames),
 				},
 			},
 		}

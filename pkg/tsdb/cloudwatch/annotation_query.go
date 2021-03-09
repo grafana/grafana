@@ -135,7 +135,8 @@ func transformAnnotationToTable(annotations []map[string]string, query backend.D
 	return frame
 }
 
-func filterAlarms(alarms *cloudwatch.DescribeAlarmsOutput, namespace string, metricName string, dimensions map[string]interface{}, statistics []string, period int64) []*string {
+func filterAlarms(alarms *cloudwatch.DescribeAlarmsOutput, namespace string, metricName string,
+	dimensions map[string]interface{}, statistics []string, period int64) []*string {
 	alarmNames := make([]*string, 0)
 
 	for _, alarm := range alarms.MetricAlarms {

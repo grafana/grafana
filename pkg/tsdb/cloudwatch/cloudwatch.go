@@ -350,10 +350,11 @@ func (e *cloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwat
 // Query executes a CloudWatch query.
 func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	/*
-		Unlike many other data sources,	with Cloudwatch Logs query requests don't receive the results as the response to the query, but rather
-		an ID is first returned. Following this, a client is expected to send requests along with the ID until the status of the query is complete,
-		receiving (possibly partial) results each time. For queries made via dashboards and Explore, the logic of making these repeated queries is handled on
-		the frontend, but because alerts are executed on the backend the logic needs to be reimplemented here.
+		Unlike many other data sources, with Cloudwatch Logs query requests don't receive the results as the response
+		to the query, but rather an ID is first returned. Following this, a client is expected to send requests along
+		with the ID until the status of the query is complete, receiving (possibly partial) results each time. For
+		queries made via dashboards and Explore, the logic of making these repeated queries is handled on the
+		frontend, but because alerts are executed on the backend the logic needs to be reimplemented here.
 	*/
 	q := req.Queries[0]
 	model, err := simplejson.NewJson(q.JSON)

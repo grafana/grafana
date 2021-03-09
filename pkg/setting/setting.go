@@ -143,7 +143,6 @@ var (
 	// analytics
 	ReportingEnabled     bool
 	ReportingDistributor string
-	CheckForUpdates      bool
 	GoogleAnalyticsId    string
 	GoogleTagManagerId   string
 
@@ -318,6 +317,7 @@ type Cfg struct {
 	HiddenUsers           map[string]struct{}
 
 	// Annotations
+	AnnotationCleanupJobBatchSize      int64
 	AlertingAnnotationCleanupSetting   AnnotationCleanupSettings
 	DashboardAnnotationCleanupSettings AnnotationCleanupSettings
 	APIAnnotationCleanupSettings       AnnotationCleanupSettings
@@ -334,6 +334,9 @@ type Cfg struct {
 	ErrTemplateName string
 
 	Env string
+
+	// Analytics
+	CheckForUpdates bool
 
 	// LDAP
 	LDAPEnabled     bool
@@ -471,6 +474,9 @@ func (cfg *Cfg) readGrafanaEnvironmentMetrics() error {
 }
 
 func (cfg *Cfg) readAnnotationSettings() {
+	section := cfg.Raw.Section("annotations")
+	cfg.AnnotationCleanupJobBatchSize = section.Key("cleanupjob_batchsize").MustInt64(100)
+
 	dashboardAnnotation := cfg.Raw.Section("annotations.dashboard")
 	apiIAnnotation := cfg.Raw.Section("annotations.api")
 	alertingSection := cfg.Raw.Section("alerting")
@@ -821,7 +827,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.MetricsEndpointDisableTotalStats = iniFile.Section("metrics").Key("disable_total_stats").MustBool(false)
 
 	analytics := iniFile.Section("analytics")
-	CheckForUpdates = analytics.Key("check_for_updates").MustBool(true)
+	cfg.CheckForUpdates = analytics.Key("check_for_updates").MustBool(true)
 	GoogleAnalyticsId = analytics.Key("google_analytics_ua_id").String()
 	GoogleTagManagerId = analytics.Key("google_tag_manager_id").String()
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)

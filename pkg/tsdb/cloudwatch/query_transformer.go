@@ -150,8 +150,10 @@ func (e *cloudWatchExecutor) transformQueryResponsesToQueryResult(cloudwatchResp
 	return results, nil
 }
 
-// buildDeepLink generates a deep link from Grafana to the CloudWatch console. The link params are based on metric(s) for a given query row in the Query Editor.
-func buildDeepLink(refID string, requestQueries []*requestQuery, executedQueries []executedQuery, startTime time.Time, endTime time.Time) (string, error) {
+// buildDeepLink generates a deep link from Grafana to the CloudWatch console. The link params are based on
+// metric(s) for a given query row in the Query Editor.
+func buildDeepLink(refID string, requestQueries []*requestQuery, executedQueries []executedQuery, startTime time.Time,
+	endTime time.Time) (string, error) {
 	if isMathExpression(executedQueries) {
 		return "", nil
 	}
