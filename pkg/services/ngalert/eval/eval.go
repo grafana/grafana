@@ -7,7 +7,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -45,7 +48,7 @@ type Condition struct {
 	RefID string `json:"refId"`
 	OrgID int64  `json:"-"`
 
-	QueriesAndExpressions []AlertQuery `json:"queriesAndExpressions"`
+	QueriesAndExpressions []models.AlertQuery `json:"queriesAndExpressions"`
 }
 
 // ExecutionResults contains the unevaluated results from executing
@@ -100,7 +103,7 @@ type AlertExecCtx struct {
 }
 
 // execute runs the Condition's expressions or queries.
-func (c *Condition) execute(ctx AlertExecCtx, now time.Time) (*ExecutionResults, error) {
+func (c *Condition) execute(ctx AlertExecCtx, now time.Time, dataService *tsdb.Service) (*ExecutionResults, error) {
 	result := ExecutionResults{}
 	if !c.IsValid() {
 		return nil, fmt.Errorf("invalid conditions")
@@ -116,16 +119,16 @@ func (c *Condition) execute(ctx AlertExecCtx, now time.Time) (*ExecutionResults,
 
 	for i := range c.QueriesAndExpressions {
 		q := c.QueriesAndExpressions[i]
-		model, err := q.getModel()
+		model, err := q.GetModel()
 		if err != nil {
 			return nil, fmt.Errorf("failed to get query model: %w", err)
 		}
-		interval, err := q.getIntervalDuration()
+		interval, err := q.GetIntervalDuration()
 		if err != nil {
 			return nil, fmt.Errorf("failed to retrieve intervalMs from the model: %w", err)
 		}
 
-		maxDatapoints, err := q.getMaxDatapoints()
+		maxDatapoints, err := q.GetMaxDatapoints()
 		if err != nil {
 			return nil, fmt.Errorf("failed to retrieve maxDatapoints from the model: %w", err)
 		}
@@ -136,11 +139,14 @@ func (c *Condition) execute(ctx AlertExecCtx, now time.Time) (*ExecutionResults,
 			RefID:         q.RefID,
 			MaxDataPoints: maxDatapoints,
 			QueryType:     q.QueryType,
-			TimeRange:     q.RelativeTimeRange.toTimeRange(now),
+			TimeRange:     q.RelativeTimeRange.ToTimeRange(now),
 		})
 	}
 
-	exprService := expr.Service{Cfg: &setting.Cfg{ExpressionsEnabled: ctx.ExpressionsEnabled}}
+	exprService := expr.Service{
+		Cfg:         &setting.Cfg{ExpressionsEnabled: ctx.ExpressionsEnabled},
+		DataService: dataService,
+	}
 	pbRes, err := exprService.TransformData(ctx.Ctx, queryDataReq)
 	if err != nil {
 		return &result, err
@@ -218,13 +224,13 @@ func (evalResults Results) AsDataFrame() data.Frame {
 }
 
 // ConditionEval executes conditions and evaluates the result.
-func (e *Evaluator) ConditionEval(condition *Condition, now time.Time) (Results, error) {
+func (e *Evaluator) ConditionEval(condition *Condition, now time.Time, dataService *tsdb.Service) (Results, error) {
 	alertCtx, cancelFn := context.WithTimeout(context.Background(), alertingEvaluationTimeout)
 	defer cancelFn()
 
 	alertExecCtx := AlertExecCtx{OrgID: condition.OrgID, Ctx: alertCtx, ExpressionsEnabled: e.Cfg.ExpressionsEnabled}
 
-	execResult, err := condition.execute(alertExecCtx, now)
+	execResult, err := condition.execute(alertExecCtx, now, dataService)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute conditions: %w", err)
 	}

@@ -20,8 +20,11 @@ export class UPlotConfigBuilder {
   private hasLeftAxis = false;
   private hasBottomAxis = false;
   private hooks: Hooks.Arrays = {};
+  private tz: string | undefined = undefined;
 
-  constructor(private getTimeZone = () => DefaultTimeZone) {}
+  constructor(getTimeZone = () => DefaultTimeZone) {
+    this.tz = getTimeZoneInfo(getTimeZone(), Date.now())?.ianaName;
+  }
 
   addHook(type: keyof Hooks.Defs, hook: valueof<Hooks.Defs>) {
     if (!this.hooks[type]) {
@@ -166,15 +169,8 @@ export class UPlotConfigBuilder {
   }
 
   private tzDate = (ts: number) => {
-    if (!this.getTimeZone) {
-      return new Date(ts);
-    }
-    const tz = getTimeZoneInfo(this.getTimeZone(), Date.now())?.ianaName;
+    let date = new Date(ts);
 
-    if (!tz) {
-      return new Date(ts);
-    }
-
-    return uPlot.tzDate(new Date(ts), tz);
+    return this.tz ? uPlot.tzDate(date, this.tz) : date;
   };
 }
