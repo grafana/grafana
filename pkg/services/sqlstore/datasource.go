@@ -66,11 +66,20 @@ func GetDataSource(query *models.GetDataSourceQuery) error {
 
 func GetDataSources(query *models.GetDataSourcesQuery) error {
 	var sess *xorm.Session
-	if query.DataSourceLimit <= 0 {
-		sess = x.Where("org_id=?", query.OrgId).Asc("name")
-	} else {
-		sess = x.Limit(query.DataSourceLimit, 0).Where("org_id=?", query.OrgId).Asc("name")
+	sess = x.Asc("name")
+
+	if query.OrgId != 0 {
+		sess = sess.Where("org_id=?", query.OrgId)
 	}
+
+	if query.DataSourceLimit > 0 {
+		sess = sess.Limit(query.DataSourceLimit, 0)
+	}
+
+	if query.Type != "" {
+		sess = sess.Where("type=?", query.Type)
+	}
+
 	query.Result = make([]*models.DataSource, 0)
 	return sess.Find(&query.Result)
 }

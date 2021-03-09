@@ -149,6 +149,7 @@ type DeleteDataSourceCommand struct {
 
 type GetDataSourcesQuery struct {
 	OrgId           int64
+	Type            string
 	DataSourceLimit int
 	User            *SignedInUser
 	Result          []*DataSource

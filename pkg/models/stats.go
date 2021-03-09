@@ -51,18 +51,6 @@ type GetDataSourceAccessStatsQuery struct {
 	Result []*DataSourceAccessStats
 }
 
-type ESJSONData struct {
-	ESVersion int
-}
-
-type JSONData struct {
-	JsonData string `json:"jsonData"`
-}
-
-type GetESJSONDataQuery struct {
-	Result []*JSONData
-}
-
 type NotifierUsageStats struct {
 	Type  string
 	Count int64

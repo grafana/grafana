@@ -218,7 +218,7 @@ func TestDataAccess(t *testing.T) {
 		require.Equal(t, 0, len(query.Result))
 	})
 
-	t.Run("GetDataSource", func(t *testing.T) {
+	t.Run("GetDataSources", func(t *testing.T) {
 		t.Run("Number of data sources returned limited to 6 per organization", func(t *testing.T) {
 			InitTestDB(t)
 			datasourceLimit := 6
@@ -286,6 +286,72 @@ func TestDataAccess(t *testing.T) {
 
 			require.NoError(t, err)
 			require.Equal(t, numberOfDatasource, len(query.Result))
+		})
+
+		t.Run("Only returns datasources of specified type", func(t *testing.T) {
+			InitTestDB(t)
+
+			err := AddDataSource(&models.AddDataSourceCommand{
+				OrgId:    10,
+				Name:     "Elasticsearch",
+				Type:     models.DS_ES,
+				Access:   models.DS_ACCESS_DIRECT,
+				Url:      "http://test",
+				Database: "site",
+				ReadOnly: true,
+			})
+			require.NoError(t, err)
+
+			err = AddDataSource(&models.AddDataSourceCommand{
+				OrgId:    10,
+				Name:     "Graphite",
+				Type:     models.DS_GRAPHITE,
+				Access:   models.DS_ACCESS_DIRECT,
+				Url:      "http://test",
+				Database: "site",
+				ReadOnly: true,
+			})
+			require.NoError(t, err)
+
+			query := models.GetDataSourcesQuery{Type: models.DS_ES}
+
+			err = GetDataSources(&query)
+
+			require.NoError(t, err)
+			require.Equal(t, 1, len(query.Result))
+		})
+
+		t.Run("Returns all datasources if no type specified", func(t *testing.T) {
+			InitTestDB(t)
+
+			err := AddDataSource(&models.AddDataSourceCommand{
+				OrgId:    10,
+				Name:     "Elasticsearch",
+				Type:     models.DS_ES,
+				Access:   models.DS_ACCESS_DIRECT,
+				Url:      "http://test",
+				Database: "site",
+				ReadOnly: true,
+			})
+			require.NoError(t, err)
+
+			err = AddDataSource(&models.AddDataSourceCommand{
+				OrgId:    10,
+				Name:     "Graphite",
+				Type:     models.DS_GRAPHITE,
+				Access:   models.DS_ACCESS_DIRECT,
+				Url:      "http://test",
+				Database: "site",
+				ReadOnly: true,
+			})
+			require.NoError(t, err)
+
+			query := models.GetDataSourcesQuery{}
+
+			err = GetDataSources(&query)
+
+			require.NoError(t, err)
+			require.Equal(t, 2, len(query.Result))
 		})
 	})
 }

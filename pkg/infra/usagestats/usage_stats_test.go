@@ -91,20 +91,26 @@ func TestMetrics(t *testing.T) {
 			return nil
 		})
 
-		var getESJSONDataQuery *models.GetESJSONDataQuery
-		uss.Bus.AddHandler(func(query *models.GetESJSONDataQuery) error {
-			query.Result = []*models.JSONData{
+		var getESDatasSourcesQuery *models.GetDataSourcesQuery
+		uss.Bus.AddHandler(func(query *models.GetDataSourcesQuery) error {
+			query.Result = []*models.DataSource{
 				{
-					JsonData: `{"esVersion": 2}`,
+					JsonData: simplejson.NewFromAny(map[string]interface{}{
+						"esVersion": 2,
+					}),
 				},
 				{
-					JsonData: `{"esVersion": 2}`,
+					JsonData: simplejson.NewFromAny(map[string]interface{}{
+						"esVersion": 2,
+					}),
 				},
 				{
-					JsonData: `{"esVersion": 70}`,
+					JsonData: simplejson.NewFromAny(map[string]interface{}{
+						"esVersion": 70,
+					}),
 				},
 			}
-			getESJSONDataQuery = query
+			getESDatasSourcesQuery = query
 			return nil
 		})
 
@@ -207,7 +213,7 @@ func TestMetrics(t *testing.T) {
 			assert.Nil(t, getSystemStatsQuery)
 			assert.Nil(t, getDataSourceStatsQuery)
 			assert.Nil(t, getDataSourceAccessStatsQuery)
-			assert.Nil(t, getESJSONDataQuery)
+			assert.Nil(t, getESDatasSourcesQuery)
 		})
 
 		t.Run("Given reporting enabled, stats should be gathered and sent to HTTP endpoint", func(t *testing.T) {
@@ -266,6 +272,7 @@ func TestMetrics(t *testing.T) {
 
 			assert.NotNil(t, getSystemStatsQuery)
 			assert.NotNil(t, getDataSourceStatsQuery)
+			assert.NotNil(t, getESDatasSourcesQuery)
 			assert.NotNil(t, getDataSourceAccessStatsQuery)
 			assert.NotNil(t, getAlertNotifierUsageStatsQuery)
 			assert.NotNil(t, resp.req)
@@ -443,8 +450,8 @@ func TestMetrics(t *testing.T) {
 			return nil
 		})
 
-		uss.Bus.AddHandler(func(query *models.GetESJSONDataQuery) error {
-			query.Result = []*models.JSONData{}
+		uss.Bus.AddHandler(func(query *models.GetDataSourcesQuery) error {
+			query.Result = []*models.DataSource{}
 			return nil
 		})
 
