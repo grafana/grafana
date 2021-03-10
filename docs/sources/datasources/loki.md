@@ -50,7 +50,7 @@ The new field with the link shown in log details:
 
 ## Loki Query Editor
 
-Loki query editor can be used to create both logs and metrics queries.
+Loki query editor can be used to create both log and metric queries.
 
 | Name               | Description                                                                                                                                                                                                 |
 | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -63,7 +63,7 @@ Loki query editor can be used to create both logs and metrics queries.
 
 // TODO David
 
-## Querying with Loki Logs
+## Querying with Loki
 
 There are two types of LogQL queries:
 
@@ -129,7 +129,7 @@ In your `server` section, add the following configuration:
 
 > **Note:** This feature is only available in Grafana v6.3+.
 
-## Metrics queries
+## Metric queries
 
 LogQL supports wrapping a log query with functions that allow for creating metrics out of the logs. See [LogQL](https://grafana.com/docs/loki/latest/logql/#metric-queries) documentation on how to create and use metrics queries.
 
