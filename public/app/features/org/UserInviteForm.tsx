@@ -71,7 +71,7 @@ export const UserInviteForm: FC<Props> = ({ updateLocation }) => {
             <Field invalid={!!errors.role} label="Role">
               <InputControl as={RadioButtonGroup} control={control} options={roles} name="role" />
             </Field>
-            <Field invalid={!!errors.sendEmail} label="Send invite email">
+            <Field label="Send invite email">
               <Switch name="sendEmail" ref={register} />
             </Field>
             <HorizontalGroup>
