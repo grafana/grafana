@@ -3431,6 +3431,40 @@
     source-map "~0.6.1"
     typescript "~3.9.7"
 
+"@grafana/aws-sdk@0.0.2":
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/@grafana/aws-sdk/-/aws-sdk-0.0.2.tgz#dcaa8672158ce12d5e83b10c6d801b718e03e66a"
+  integrity sha512-nKkFoNJ76NgGolJArdro39Ho7YA769BO3nq8/NeUHai9MeEVmPviuqC5pnswb08Q4QTEKESi0Zo3x8GvfF6cZg==
+  dependencies:
+    "@grafana/data" "7.5.0-beta.1"
+    "@grafana/runtime" "7.5.0-beta.1"
+    "@grafana/ui" "7.5.0-beta.1"
+
+"@grafana/data@7.5.0-beta.1":
+  version "7.5.0-beta.1"
+  resolved "https://registry.yarnpkg.com/@grafana/data/-/data-7.5.0-beta.1.tgz#4c6dcd07daee713a06e46d230b9c09877fd5f732"
+  integrity sha512-hYU3XWVp2rsLfSZVwYFM9wL0e+i1ktlNPzELGL66EcSV+ak41orlcjpwEpke4O7Vtht6t5qSoTycYlmj6+aZEw==
+  dependencies:
+    "@braintree/sanitize-url" "4.0.0"
+    "@types/d3-interpolate" "^1.3.1"
+    apache-arrow "0.16.0"
+    eventemitter3 "4.0.7"
+    lodash "4.17.21"
+    marked "2.0.1"
+    rxjs "6.6.3"
+    xss "1.0.6"
+
+"@grafana/e2e-selectors@7.5.0-beta.1":
+  version "7.5.0-beta.1"
+  resolved "https://registry.yarnpkg.com/@grafana/e2e-selectors/-/e2e-selectors-7.5.0-beta.1.tgz#063734af7a112033d2e78219969619194fca3526"
+  integrity sha512-zn23xTrkNtCRSI4wg23CatAq2t4R2JWtqwEKvRfP3qWuJTwql2vu1pLJufJUcTkJtn3ImmwSMGvxZ/wI9SPbqQ==
+  dependencies:
+    "@grafana/tsconfig" "^1.0.0-rc1"
+    commander "5.0.0"
+    execa "4.0.0"
+    typescript "4.1.2"
+    yaml "^1.8.3"
+
 "@grafana/eslint-config@2.2.1":
   version "2.2.1"
   resolved "https://registry.yarnpkg.com/@grafana/eslint-config/-/eslint-config-2.2.1.tgz#a7c6dd57ae0011fb2535a688e1e17969e621d21a"
@@ -3446,6 +3480,16 @@
     eslint-plugin-react-hooks "4.2.0"
     prettier "2.2.1"
     typescript "4.1.3"
+
+"@grafana/runtime@7.5.0-beta.1":
+  version "7.5.0-beta.1"
+  resolved "https://registry.yarnpkg.com/@grafana/runtime/-/runtime-7.5.0-beta.1.tgz#f0e29a2493d440b7dd6d09def9727c2ce41cb743"
+  integrity sha512-Cn62/9N1g3TX9vaoGgpD0/bWG2U1nsAoHboLbQnKkztH8tmLoChHqUaZ/5Lsu3s9K5mxI3YA+4PrAxr4NlUPjw==
+  dependencies:
+    "@grafana/data" "7.5.0-beta.1"
+    "@grafana/ui" "7.5.0-beta.1"
+    systemjs "0.20.19"
+    systemjs-plugin-css "0.1.37"
 
 "@grafana/slate-react@0.22.9-grafana":
   version "0.22.9-grafana"
@@ -3473,6 +3517,64 @@
   version "1.0.0-rc1"
   resolved "https://registry.yarnpkg.com/@grafana/tsconfig/-/tsconfig-1.0.0-rc1.tgz#d07ea16755a50cae21000113f30546b61647a200"
   integrity sha512-nucKPGyzlSKYSiJk5RA8GzMdVWhdYNdF+Hh65AXxjD9PlY69JKr5wANj8bVdQboag6dgg0BFKqgKPyY+YtV4Iw==
+
+"@grafana/ui@7.5.0-beta.1":
+  version "7.5.0-beta.1"
+  resolved "https://registry.yarnpkg.com/@grafana/ui/-/ui-7.5.0-beta.1.tgz#0de30ebe9e51df956fa20f1d0a396d286b3f8c5f"
+  integrity sha512-/+VeGVRjRtd9bOwhzdwWqk8IVrENlGoMWCuRaNQU0+q2tdPQurXYbE3rmxKVtKysPTYNzbhS5Ox5QzYkPkoriA==
+  dependencies:
+    "@emotion/core" "10.0.27"
+    "@grafana/data" "7.5.0-beta.1"
+    "@grafana/e2e-selectors" "7.5.0-beta.1"
+    "@grafana/slate-react" "0.22.9-grafana"
+    "@grafana/tsconfig" "^1.0.0-rc1"
+    "@iconscout/react-unicons" "1.1.4"
+    "@popperjs/core" "2.5.4"
+    "@sentry/browser" "5.25.0"
+    "@testing-library/jest-dom" "5.11.9"
+    "@torkelo/react-select" "3.0.8"
+    "@types/hoist-non-react-statics" "3.3.1"
+    "@types/react-beautiful-dnd" "12.1.2"
+    "@types/react-color" "3.0.1"
+    "@types/react-select" "3.0.8"
+    "@types/react-table" "7.0.12"
+    "@types/slate" "0.47.1"
+    "@types/slate-react" "0.22.5"
+    "@visx/event" "1.3.0"
+    "@visx/gradient" "1.0.0"
+    "@visx/scale" "1.4.0"
+    "@visx/shape" "1.4.0"
+    "@visx/tooltip" "1.3.0"
+    classnames "2.2.6"
+    d3 "5.15.0"
+    emotion "10.0.27"
+    hoist-non-react-statics "3.3.2"
+    immutable "3.8.2"
+    jquery "3.5.1"
+    lodash "4.17.21"
+    moment "2.24.0"
+    monaco-editor "0.20.0"
+    papaparse "5.3.0"
+    rc-cascader "1.0.1"
+    rc-drawer "3.1.3"
+    rc-slider "9.6.4"
+    rc-time-picker "^3.7.3"
+    react "17.0.1"
+    react-beautiful-dnd "13.0.0"
+    react-calendar "2.19.2"
+    react-color "2.18.0"
+    react-custom-scrollbars "4.2.1"
+    react-dom "17.0.1"
+    react-highlight-words "0.16.0"
+    react-hook-form "5.1.3"
+    react-monaco-editor "0.36.0"
+    react-popper "2.2.4"
+    react-storybook-addon-props-combinations "1.1.0"
+    react-table "7.0.0"
+    react-transition-group "4.4.1"
+    slate "0.47.8"
+    tinycolor2 "1.4.1"
+    uplot "1.6.4"
 
 "@icons/material@^0.2.4":
   version "0.2.4"
