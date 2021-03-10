@@ -226,7 +226,12 @@ export const PieChartSvg: FC<SvgProps> = ({
         </Group>
       </svg>
       {tooltip.tooltipOpen && (
-        <TooltipInPortal key={Math.random()} top={tooltip.tooltipTop} left={tooltip.tooltipLeft}>
+        <TooltipInPortal
+          key={Math.random()}
+          top={tooltip.tooltipTop}
+          className={styles.tooltipPortal}
+          left={tooltip.tooltipLeft}
+        >
           {tooltip.tooltipData!.title} {formattedValueToString(tooltip.tooltipData!)}
         </TooltipInPortal>
       )}
@@ -378,6 +383,9 @@ const getStyles = (theme: GrafanaTheme) => {
       &:hover {
         transform: scale3d(1.03, 1.03, 1);
       }
+    `,
+    tooltipPortal: css`
+      z-index: 1050;
     `,
   };
 };
