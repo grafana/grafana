@@ -1,5 +1,6 @@
 import InfluxDatasource from './datasource';
 import { InfluxQueryCtrl } from './query_ctrl';
+import { QueryEditor } from './components/QueryEditor';
 import InfluxStartPage from './components/InfluxStartPage';
 import { DataSourcePlugin } from '@grafana/data';
 import ConfigEditor from './components/ConfigEditor';
@@ -15,9 +16,18 @@ class InfluxAnnotationsQueryCtrl {
   static templateUrl = 'partials/annotations.editor.html';
 }
 
-export const plugin = new DataSourcePlugin(InfluxDatasource)
+const ENABLE_REACT_QUERY_EDITOR = true;
+
+const plugin = new DataSourcePlugin(InfluxDatasource)
   .setConfigEditor(ConfigEditor)
-  .setQueryCtrl(InfluxQueryCtrl)
   .setAnnotationQueryCtrl(InfluxAnnotationsQueryCtrl)
   .setVariableQueryEditor(VariableQueryEditor)
   .setQueryEditorHelp(InfluxStartPage);
+
+if (ENABLE_REACT_QUERY_EDITOR) {
+  plugin.setQueryEditor(QueryEditor);
+} else {
+  plugin.setQueryCtrl(InfluxQueryCtrl);
+}
+
+export { plugin };
