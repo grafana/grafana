@@ -88,7 +88,7 @@ type RuleGroupConfigResponse struct {
 }
 
 // swagger:model
-type NamespaceConfigResponse map[string]RuleGroupConfig
+type NamespaceConfigResponse map[string][]RuleGroupConfig
 
 // swagger:model
 type RuleGroupConfig struct {
