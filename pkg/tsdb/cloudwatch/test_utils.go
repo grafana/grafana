@@ -79,12 +79,24 @@ type FakeCWClient struct {
 	cloudwatchiface.CloudWatchAPI
 
 	Metrics []*cloudwatch.Metric
+
+	MetricsPerPage int
 }
 
 func (c FakeCWClient) ListMetricsPages(input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error {
-	fn(&cloudwatch.ListMetricsOutput{
-		Metrics: c.Metrics,
-	}, true)
+	if c.MetricsPerPage == 0 {
+		c.MetricsPerPage = 1000
+	}
+	chunks := chunkSlice(c.Metrics, c.MetricsPerPage)
+
+	for i, metrics := range chunks {
+		response := fn(&cloudwatch.ListMetricsOutput{
+			Metrics: metrics,
+		}, i+1 == len(chunks))
+		if !response {
+			break
+		}
+	}
 	return nil
 }
 
@@ -147,6 +159,23 @@ func (c fakeRGTAClient) GetResourcesPages(in *resourcegroupstaggingapi.GetResour
 	return nil
 }
 
+func chunkSlice(slice []*cloudwatch.Metric, chunkSize int) [][]*cloudwatch.Metric {
+	var chunks [][]*cloudwatch.Metric
+	for {
+		if len(slice) == 0 {
+			break
+		}
+		if len(slice) < chunkSize {
+			chunkSize = len(slice)
+		}
+
+		chunks = append(chunks, slice[0:chunkSize])
+		slice = slice[chunkSize:]
+	}
+
+	return chunks
+}
+
 func newTestConfig() *setting.Cfg {
-	return &setting.Cfg{AWSAllowedAuthProviders: []string{"default"}, AWSAssumeRoleEnabled: true}
+	return &setting.Cfg{AWSAllowedAuthProviders: []string{"default"}, AWSAssumeRoleEnabled: true, AWSListMetricsPageLimit: 1000}
 }
