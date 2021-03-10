@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 
@@ -18,7 +19,8 @@ func TestDashboardService(t *testing.T) {
 		bus.ClearBusHandlers()
 
 		service := &dashboardServiceImpl{
-			log: log.New("test.logger"),
+			log:                log.New("test.logger"),
+			dashboardValidator: &fakeDashboardValidator{},
 		}
 
 		origNewDashboardGuardian := guardian.New
@@ -51,14 +53,13 @@ func TestDashboardService(t *testing.T) {
 			})
 
 			Convey("When saving a dashboard should validate uid", func() {
-				bus.AddHandler("test", func(cmd *models.ValidateDashboardAlertsCommand) error {
-					return nil
+				origValidateAlerts := validateAlerts
+				t.Cleanup(func() {
+					validateAlerts = origValidateAlerts
 				})
-
-				bus.AddHandler("test", func(cmd *models.ValidateDashboardBeforeSaveCommand) error {
-					cmd.Result = &models.ValidateDashboardBeforeSaveResult{}
+				validateAlerts = func(dash *models.Dashboard, user *models.SignedInUser) error {
 					return nil
-				})
+				}
 
 				bus.AddHandler("test", func(cmd *models.GetProvisionedDashboardDataByIdQuery) error {
 					cmd.Result = nil
@@ -96,14 +97,13 @@ func TestDashboardService(t *testing.T) {
 					return nil
 				})
 
-				bus.AddHandler("test", func(cmd *models.ValidateDashboardAlertsCommand) error {
-					return nil
+				origValidateAlerts := validateAlerts
+				t.Cleanup(func() {
+					validateAlerts = origValidateAlerts
 				})
-
-				bus.AddHandler("test", func(cmd *models.ValidateDashboardBeforeSaveCommand) error {
-					cmd.Result = &models.ValidateDashboardBeforeSaveResult{}
+				validateAlerts = func(dash *models.Dashboard, user *models.SignedInUser) error {
 					return nil
-				})
+				}
 
 				dto.Dashboard = models.NewDashboard("Dash")
 				dto.Dashboard.SetId(3)
@@ -121,14 +121,13 @@ func TestDashboardService(t *testing.T) {
 					return nil
 				})
 
-				bus.AddHandler("test", func(cmd *models.ValidateDashboardAlertsCommand) error {
-					return nil
+				origValidateAlerts := validateAlerts
+				t.Cleanup(func() {
+					validateAlerts = origValidateAlerts
 				})
-
-				bus.AddHandler("test", func(cmd *models.ValidateDashboardBeforeSaveCommand) error {
-					cmd.Result = &models.ValidateDashboardBeforeSaveResult{}
+				validateAlerts = func(dash *models.Dashboard, user *models.SignedInUser) error {
 					return nil
-				})
+				}
 
 				dto.Dashboard = models.NewDashboard("Dash")
 				dto.Dashboard.SetId(3)
@@ -144,9 +143,13 @@ func TestDashboardService(t *testing.T) {
 					return nil
 				})
 
-				bus.AddHandler("test", func(cmd *models.ValidateDashboardAlertsCommand) error {
-					return fmt.Errorf("alert validation error")
+				origValidateAlerts := validateAlerts
+				t.Cleanup(func() {
+					validateAlerts = origValidateAlerts
 				})
+				validateAlerts = func(dash *models.Dashboard, user *models.SignedInUser) error {
+					return fmt.Errorf("alert validation error")
+				}
 
 				dto.Dashboard = models.NewDashboard("Dash")
 				_, err := service.SaveDashboard(dto, false)
@@ -165,14 +168,21 @@ func TestDashboardService(t *testing.T) {
 					return nil
 				})
 
-				bus.AddHandler("test", func(cmd *models.ValidateDashboardAlertsCommand) error {
-					return nil
+				origUpdateAlerting := updateAlerting
+				t.Cleanup(func() {
+					updateAlerting = origUpdateAlerting
 				})
+				updateAlerting = func(orgID int64, dashboard *models.Dashboard, user *models.SignedInUser) error {
+					return nil
+				}
 
-				bus.AddHandler("test", func(cmd *models.ValidateDashboardBeforeSaveCommand) error {
-					cmd.Result = &models.ValidateDashboardBeforeSaveResult{}
-					return nil
+				origValidateAlerts := validateAlerts
+				t.Cleanup(func() {
+					validateAlerts = origValidateAlerts
 				})
+				validateAlerts = func(dash *models.Dashboard, user *models.SignedInUser) error {
+					return nil
+				}
 
 				bus.AddHandler("test", func(cmd *models.SaveProvisionedDashboardCommand) error {
 					return nil
@@ -200,14 +210,13 @@ func TestDashboardService(t *testing.T) {
 					return nil
 				})
 
-				bus.AddHandler("test", func(cmd *models.ValidateDashboardAlertsCommand) error {
-					return nil
+				origValidateAlerts := validateAlerts
+				t.Cleanup(func() {
+					validateAlerts = origValidateAlerts
 				})
-
-				bus.AddHandler("test", func(cmd *models.ValidateDashboardBeforeSaveCommand) error {
-					cmd.Result = &models.ValidateDashboardBeforeSaveResult{}
+				validateAlerts = func(dash *models.Dashboard, user *models.SignedInUser) error {
 					return nil
-				})
+				}
 
 				bus.AddHandler("test", func(cmd *models.SaveProvisionedDashboardCommand) error {
 					return nil
@@ -238,14 +247,13 @@ func TestDashboardService(t *testing.T) {
 					return nil
 				})
 
-				bus.AddHandler("test", func(cmd *models.ValidateDashboardAlertsCommand) error {
-					return nil
+				origValidateAlerts := validateAlerts
+				t.Cleanup(func() {
+					validateAlerts = origValidateAlerts
 				})
-
-				bus.AddHandler("test", func(cmd *models.ValidateDashboardBeforeSaveCommand) error {
-					cmd.Result = &models.ValidateDashboardBeforeSaveResult{}
+				validateAlerts = func(dash *models.Dashboard, user *models.SignedInUser) error {
 					return nil
-				})
+				}
 
 				bus.AddHandler("test", func(cmd *models.SaveProvisionedDashboardCommand) error {
 					return nil
@@ -325,4 +333,15 @@ func setupDeleteHandlers(provisioned bool) *Result {
 	})
 
 	return result
+}
+
+type fakeDashboardValidator struct {
+	dashboards.Validator
+
+	validationError error
+}
+
+func (v *fakeDashboardValidator) ValidateDashboardBeforeSave(orgID int64, dashboard *models.Dashboard, overwrite bool) (
+	bool, error) {
+	return false, v.validationError
 }

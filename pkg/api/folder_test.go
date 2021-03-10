@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
+	dboards "github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/setting"
@@ -174,12 +175,16 @@ func updateFolderScenario(t *testing.T, desc string, url string, routePattern st
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		defer bus.ClearBusHandlers()
 
+		hs := HTTPServer{
+			Cfg: setting.NewCfg(),
+		}
+
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			sc.context.SignedInUser = &models.SignedInUser{OrgId: testOrgID, UserId: testUserID}
 
-			return UpdateFolder(c, cmd)
+			return hs.UpdateFolder(c, cmd)
 		})
 
 		origNewFolderService := dashboards.NewFolderService
@@ -238,7 +243,8 @@ func (s *fakeFolderService) DeleteFolder(uid string) (*models.Folder, error) {
 }
 
 func mockFolderService(mock *fakeFolderService) {
-	dashboards.NewFolderService = func(orgId int64, user *models.SignedInUser) dashboards.FolderService {
+	dashboards.NewFolderService = func(orgId int64, user *models.SignedInUser,
+		dashboardValidator dboards.Validator) dashboards.FolderService {
 		return mock
 	}
 }

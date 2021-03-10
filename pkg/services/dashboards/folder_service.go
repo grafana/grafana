@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/search"
@@ -20,10 +21,11 @@ type FolderService interface {
 }
 
 // NewFolderService factory for creating a new folder service
-var NewFolderService = func(orgId int64, user *models.SignedInUser) FolderService {
+var NewFolderService = func(orgId int64, user *models.SignedInUser, dashboardValidator dashboards.Validator) FolderService {
 	return &dashboardServiceImpl{
-		orgId: orgId,
-		user:  user,
+		orgId:              orgId,
+		user:               user,
+		dashboardValidator: dashboardValidator,
 	}
 }
 

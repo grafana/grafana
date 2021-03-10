@@ -27,10 +27,8 @@ type ProvisioningService interface {
 func init() {
 	registry.Register(&registry.Descriptor{
 		Name: "ProvisioningService",
-		Instance: NewProvisioningServiceImpl(
-			func(path string) (dashboards.DashboardProvisioner, error) {
-				return dashboards.New(path)
-			},
+		Instance: newProvisioningServiceImpl(
+			dashboards.New,
 			notifiers.Provision,
 			datasources.Provision,
 			plugins.Provision,
@@ -39,7 +37,7 @@ func init() {
 	})
 }
 
-func NewProvisioningServiceImpl(
+func newProvisioningServiceImpl(
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory,
 	provisionNotifiers func(string) error,
 	provisionDatasources func(string) error,

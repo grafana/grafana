@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	dboards "github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -748,13 +749,6 @@ func createDashboard(t *testing.T, user models.SignedInUser, title string, folde
 		User:      &user,
 		Overwrite: false,
 	}
-	bus.AddHandler("test", func(cmd *models.ValidateDashboardAlertsCommand) error {
-		return nil
-	})
-	bus.AddHandler("test", func(cmd *models.ValidateDashboardBeforeSaveCommand) error {
-		cmd.Result = &models.ValidateDashboardBeforeSaveResult{}
-		return nil
-	})
 	bus.AddHandler("test", func(cmd *models.GetProvisionedDashboardDataByIdQuery) error {
 		cmd.Result = nil
 		return nil
@@ -763,14 +757,14 @@ func createDashboard(t *testing.T, user models.SignedInUser, title string, folde
 		return nil
 	})
 
-	dashboard, err := dashboards.NewService(nil).SaveDashboard(dashItem, true)
+	dashboard, err := dashboards.NewService(&fakeDashboardValidator{}, nil).SaveDashboard(dashItem, true)
 	require.NoError(t, err)
 
 	return dashboard
 }
 
 func createFolderWithACL(t *testing.T, title string, user models.SignedInUser, items []folderACLItem) *models.Folder {
-	s := dashboards.NewFolderService(user.OrgId, &user)
+	s := dashboards.NewFolderService(user.OrgId, &user, &fakeDashboardValidator{})
 	folderCmd := models.CreateFolderCommand{
 		Uid:   title,
 		Title: title,
@@ -895,4 +889,12 @@ func getCompareOptions() []cmp.Option {
 			return in.UTC().Unix()
 		}),
 	}
+}
+
+type fakeDashboardValidator struct {
+	dboards.Validator
+}
+
+func (v *fakeDashboardValidator) ValidateDashboardBeforeSave(int64, *models.Dashboard, bool) (bool, error) {
+	return false, nil
 }

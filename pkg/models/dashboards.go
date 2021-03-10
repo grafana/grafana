@@ -367,13 +367,6 @@ type DeleteDashboardCommand struct {
 	OrgId int64
 }
 
-type ValidateDashboardBeforeSaveCommand struct {
-	OrgId     int64
-	Dashboard *Dashboard
-	Overwrite bool
-	Result    *ValidateDashboardBeforeSaveResult
-}
-
 type DeleteOrphanedProvisionedDashboardsCommand struct {
 	ReaderNames []string
 }

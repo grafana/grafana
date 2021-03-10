@@ -217,10 +217,3 @@ type UpdateDashboardAlertsCommand struct {
 	Dashboard *Dashboard
 	User      *SignedInUser
 }
-
-type ValidateDashboardAlertsCommand struct {
-	UserId    int64
-	OrgId     int64
-	Dashboard *Dashboard
-	User      *SignedInUser
-}

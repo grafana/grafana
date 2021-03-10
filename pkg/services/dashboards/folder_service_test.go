@@ -15,8 +15,9 @@ import (
 func TestFolderService(t *testing.T) {
 	Convey("Folder service tests", t, func() {
 		service := dashboardServiceImpl{
-			orgId: 1,
-			user:  &models.SignedInUser{UserId: 1},
+			orgId:              1,
+			user:               &models.SignedInUser{UserId: 1},
+			dashboardValidator: &fakeDashboardValidator{},
 		}
 
 		Convey("Given user has no permissions", func() {
@@ -28,24 +29,21 @@ func TestFolderService(t *testing.T) {
 				return nil
 			})
 
-			bus.AddHandler("test", func(cmd *models.ValidateDashboardAlertsCommand) error {
-				return nil
+			origValidator := service.dashboardValidator
+			t.Cleanup(func() {
+				service.dashboardValidator = origValidator
 			})
-
-			bus.AddHandler("test", func(cmd *models.ValidateDashboardBeforeSaveCommand) error {
-				cmd.Result = &models.ValidateDashboardBeforeSaveResult{}
-				return models.ErrDashboardUpdateAccessDenied
-			})
+			service.dashboardValidator = &fakeDashboardValidator{
+				validationError: models.ErrDashboardUpdateAccessDenied,
+			}
 
 			Convey("When get folder by id should return access denied error", func() {
 				_, err := service.GetFolderByID(1)
-				So(err, ShouldNotBeNil)
 				So(err, ShouldEqual, models.ErrFolderAccessDenied)
 			})
 
 			Convey("When get folder by uid should return access denied error", func() {
 				_, err := service.GetFolderByUID("uid")
-				So(err, ShouldNotBeNil)
 				So(err, ShouldEqual, models.ErrFolderAccessDenied)
 			})
 
@@ -53,7 +51,6 @@ func TestFolderService(t *testing.T) {
 				err := service.CreateFolder(&models.CreateFolderCommand{
 					Title: "Folder",
 				})
-				So(err, ShouldNotBeNil)
 				So(err, ShouldEqual, models.ErrFolderAccessDenied)
 			})
 
@@ -62,7 +59,6 @@ func TestFolderService(t *testing.T) {
 					Uid:   "uid",
 					Title: "Folder",
 				})
-				So(err, ShouldNotBeNil)
 				So(err, ShouldEqual, models.ErrFolderAccessDenied)
 			})
 
@@ -89,18 +85,13 @@ func TestFolderService(t *testing.T) {
 				return nil
 			})
 
-			bus.AddHandler("test", func(cmd *models.ValidateDashboardAlertsCommand) error {
-				return nil
+			origUpdateAlerting := updateAlerting
+			t.Cleanup(func() {
+				updateAlerting = origUpdateAlerting
 			})
-
-			bus.AddHandler("test", func(cmd *models.ValidateDashboardBeforeSaveCommand) error {
-				cmd.Result = &models.ValidateDashboardBeforeSaveResult{}
+			updateAlerting = func(orgID int64, dashboard *models.Dashboard, user *models.SignedInUser) error {
 				return nil
-			})
-
-			bus.AddHandler("test", func(cmd *models.UpdateDashboardAlertsCommand) error {
-				return nil
-			})
+			}
 
 			bus.AddHandler("test", func(cmd *models.SaveDashboardCommand) error {
 				cmd.Result = dash

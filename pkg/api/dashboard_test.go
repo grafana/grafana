@@ -28,7 +28,10 @@ func TestGetHomeDashboard(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.StaticRootPath = "../../public/"
 
-	hs := &HTTPServer{Cfg: cfg, Bus: bus.New()}
+	hs := &HTTPServer{
+		Cfg: cfg, Bus: bus.New(),
+		PluginManager: &fakePluginManager{},
+	}
 	hs.Bus.AddHandler(func(query *models.GetPreferencesWithDefaultsQuery) error {
 		query.Result = &models.Preferences{
 			HomeDashboardId: 0,
@@ -1191,6 +1194,7 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 			QuotaService: &quota.QuotaService{
 				Cfg: cfg,
 			},
+			PluginManager: &fakePluginManager{},
 		}
 
 		sc := setupScenarioContext(t, url)

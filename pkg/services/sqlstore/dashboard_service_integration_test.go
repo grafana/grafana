@@ -22,10 +22,6 @@ func TestIntegratedDashboardService(t *testing.T) {
 		var testOrgId int64 = 1
 
 		Convey("Given saved folders and dashboards in organization A", func() {
-			bus.AddHandler("test", func(cmd *models.ValidateDashboardAlertsCommand) error {
-				return nil
-			})
-
 			bus.AddHandler("test", func(cmd *models.UpdateDashboardAlertsCommand) error {
 				return nil
 			})

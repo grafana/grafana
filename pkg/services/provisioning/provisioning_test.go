@@ -90,7 +90,7 @@ func setup() *serviceTestStruct {
 		pollChangesChannel <- ctx
 	}
 
-	serviceTest.service = NewProvisioningServiceImpl(
+	serviceTest.service = newProvisioningServiceImpl(
 		func(path string) (dashboards.DashboardProvisioner, error) {
 			return serviceTest.mock, nil
 		},

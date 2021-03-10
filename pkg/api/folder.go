@@ -14,8 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func GetFolders(c *models.ReqContext) response.Response {
-	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
+func (hs *HTTPServer) GetFolders(c *models.ReqContext) response.Response {
+	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
 	folders, err := s.GetFolders(c.QueryInt64("limit"))
 
 	if err != nil {
@@ -35,10 +35,9 @@ func GetFolders(c *models.ReqContext) response.Response {
 	return response.JSON(200, result)
 }
 
-func GetFolderByUID(c *models.ReqContext) response.Response {
-	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
+func (hs *HTTPServer) GetFolderByUID(c *models.ReqContext) response.Response {
+	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
 	folder, err := s.GetFolderByUID(c.Params(":uid"))
-
 	if err != nil {
 		return toFolderError(err)
 	}
@@ -47,8 +46,8 @@ func GetFolderByUID(c *models.ReqContext) response.Response {
 	return response.JSON(200, toFolderDto(g, folder))
 }
 
-func GetFolderByID(c *models.ReqContext) response.Response {
-	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
+func (hs *HTTPServer) GetFolderByID(c *models.ReqContext) response.Response {
+	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
 	folder, err := s.GetFolderByID(c.ParamsInt64(":id"))
 	if err != nil {
 		return toFolderError(err)
@@ -59,7 +58,7 @@ func GetFolderByID(c *models.ReqContext) response.Response {
 }
 
 func (hs *HTTPServer) CreateFolder(c *models.ReqContext, cmd models.CreateFolderCommand) response.Response {
-	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
+	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
 	err := s.CreateFolder(&cmd)
 	if err != nil {
 		return toFolderError(err)
@@ -75,8 +74,8 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext, cmd models.CreateFolder
 	return response.JSON(200, toFolderDto(g, cmd.Result))
 }
 
-func UpdateFolder(c *models.ReqContext, cmd models.UpdateFolderCommand) response.Response {
-	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
+func (hs *HTTPServer) UpdateFolder(c *models.ReqContext, cmd models.UpdateFolderCommand) response.Response {
+	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
 	err := s.UpdateFolder(c.Params(":uid"), &cmd)
 	if err != nil {
 		return toFolderError(err)
@@ -87,7 +86,7 @@ func UpdateFolder(c *models.ReqContext, cmd models.UpdateFolderCommand) response
 }
 
 func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // temporarily adding this function to HTTPServer, will be removed from HTTPServer when librarypanels featuretoggle is removed
-	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
+	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
 	if hs.Cfg.IsPanelLibraryEnabled() {
 		err := hs.LibraryPanelService.DeleteLibraryPanelsInFolder(c, c.Params(":uid"))
 		if err != nil {
