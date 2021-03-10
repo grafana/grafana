@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -122,7 +121,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 		}
 
 		if listItem.DefaultNavUrl == "" || !listItem.Enabled {
-			listItem.DefaultNavUrl = setting.AppSubUrl + "/plugins/" + listItem.Id + "/"
+			listItem.DefaultNavUrl = hs.Cfg.AppSubURL + "/plugins/" + listItem.Id + "/"
 		}
 
 		// filter out disabled plugins

@@ -77,13 +77,14 @@ func (app *AppPlugin) Load(decoder *json.Decoder, base *PluginBase, backendPlugi
 	return app, nil
 }
 
-func (app *AppPlugin) InitApp(panels map[string]*PanelPlugin, dataSources map[string]*DataSourcePlugin) []*PluginStaticRoute {
-	staticRoutes := app.InitFrontendPlugin()
+func (app *AppPlugin) InitApp(panels map[string]*PanelPlugin, dataSources map[string]*DataSourcePlugin,
+	cfg *setting.Cfg) []*PluginStaticRoute {
+	staticRoutes := app.InitFrontendPlugin(cfg)
 
 	// check if we have child panels
 	for _, panel := range panels {
 		if strings.HasPrefix(panel.PluginDir, app.PluginDir) {
-			panel.setPathsBasedOnApp(app)
+			panel.setPathsBasedOnApp(app, cfg)
 			app.FoundChildPlugins = append(app.FoundChildPlugins, &PluginInclude{
 				Name: panel.Name,
 				Id:   panel.Id,
@@ -95,7 +96,7 @@ func (app *AppPlugin) InitApp(panels map[string]*PanelPlugin, dataSources map[st
 	// check if we have child datasources
 	for _, ds := range dataSources {
 		if strings.HasPrefix(ds.PluginDir, app.PluginDir) {
-			ds.setPathsBasedOnApp(app)
+			ds.setPathsBasedOnApp(app, cfg)
 			app.FoundChildPlugins = append(app.FoundChildPlugins, &PluginInclude{
 				Name: ds.Name,
 				Id:   ds.Id,
@@ -110,10 +111,10 @@ func (app *AppPlugin) InitApp(panels map[string]*PanelPlugin, dataSources map[st
 			include.Slug = slug.Make(include.Name)
 		}
 		if include.Type == "page" && include.DefaultNav {
-			app.DefaultNavUrl = setting.AppSubUrl + "/plugins/" + app.Id + "/page/" + include.Slug
+			app.DefaultNavUrl = cfg.AppSubURL + "/plugins/" + app.Id + "/page/" + include.Slug
 		}
 		if include.Type == "dashboard" && include.DefaultNav {
-			app.DefaultNavUrl = setting.AppSubUrl + "/dashboard/db/" + include.Slug
+			app.DefaultNavUrl = cfg.AppSubURL + "/dashboard/db/" + include.Slug
 		}
 	}
 

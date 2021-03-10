@@ -111,9 +111,9 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	hs.applyRoutes()
 
 	// Remove any square brackets enclosing IPv6 addresses, a format we support for backwards compatibility
-	host := strings.TrimSuffix(strings.TrimPrefix(setting.HttpAddr, "["), "]")
+	host := strings.TrimSuffix(strings.TrimPrefix(hs.Cfg.HTTPAddr, "["), "]")
 	hs.httpSrv = &http.Server{
-		Addr:    net.JoinHostPort(host, setting.HttpPort),
+		Addr:    net.JoinHostPort(host, hs.Cfg.HTTPPort),
 		Handler: hs.macaron,
 	}
 	switch hs.Cfg.Protocol {
@@ -159,7 +159,7 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 			return err
 		}
 	case setting.HTTP2Scheme, setting.HTTPSScheme:
-		if err := hs.httpSrv.ServeTLS(listener, setting.CertFile, setting.KeyFile); err != nil {
+		if err := hs.httpSrv.ServeTLS(listener, hs.Cfg.CertFile, hs.Cfg.KeyFile); err != nil {
 			if errors.Is(err, http.ErrServerClosed) {
 				hs.log.Debug("server was shutdown gracefully")
 				return nil
@@ -207,20 +207,20 @@ func (hs *HTTPServer) getListener() (net.Listener, error) {
 }
 
 func (hs *HTTPServer) configureHttps() error {
-	if setting.CertFile == "" {
+	if hs.Cfg.CertFile == "" {
 		return fmt.Errorf("cert_file cannot be empty when using HTTPS")
 	}
 
-	if setting.KeyFile == "" {
+	if hs.Cfg.KeyFile == "" {
 		return fmt.Errorf("cert_key cannot be empty when using HTTPS")
 	}
 
-	if _, err := os.Stat(setting.CertFile); os.IsNotExist(err) {
-		return fmt.Errorf(`cannot find SSL cert_file at %q`, setting.CertFile)
+	if _, err := os.Stat(hs.Cfg.CertFile); os.IsNotExist(err) {
+		return fmt.Errorf(`cannot find SSL cert_file at %q`, hs.Cfg.CertFile)
 	}
 
-	if _, err := os.Stat(setting.KeyFile); os.IsNotExist(err) {
-		return fmt.Errorf(`cannot find SSL key_file at %q`, setting.KeyFile)
+	if _, err := os.Stat(hs.Cfg.KeyFile); os.IsNotExist(err) {
+		return fmt.Errorf(`cannot find SSL key_file at %q`, hs.Cfg.KeyFile)
 	}
 
 	tlsCfg := &tls.Config{
@@ -248,20 +248,20 @@ func (hs *HTTPServer) configureHttps() error {
 }
 
 func (hs *HTTPServer) configureHttp2() error {
-	if setting.CertFile == "" {
+	if hs.Cfg.CertFile == "" {
 		return fmt.Errorf("cert_file cannot be empty when using HTTP2")
 	}
 
-	if setting.KeyFile == "" {
+	if hs.Cfg.KeyFile == "" {
 		return fmt.Errorf("cert_key cannot be empty when using HTTP2")
 	}
 
-	if _, err := os.Stat(setting.CertFile); os.IsNotExist(err) {
-		return fmt.Errorf(`cannot find SSL cert_file at %q`, setting.CertFile)
+	if _, err := os.Stat(hs.Cfg.CertFile); os.IsNotExist(err) {
+		return fmt.Errorf(`cannot find SSL cert_file at %q`, hs.Cfg.CertFile)
 	}
 
-	if _, err := os.Stat(setting.KeyFile); os.IsNotExist(err) {
-		return fmt.Errorf(`cannot find SSL key_file at %q`, setting.KeyFile)
+	if _, err := os.Stat(hs.Cfg.KeyFile); os.IsNotExist(err) {
+		return fmt.Errorf(`cannot find SSL key_file at %q`, hs.Cfg.KeyFile)
 	}
 
 	tlsCfg := &tls.Config{
@@ -312,7 +312,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 
 	m.Use(middleware.Logger(hs.Cfg))
 
-	if setting.EnableGzip {
+	if hs.Cfg.EnableGzip {
 		m.Use(middleware.Gziper())
 	}
 
@@ -324,22 +324,22 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 		hs.mapStatic(m, route.Directory, "", pluginRoute)
 	}
 
-	hs.mapStatic(m, setting.StaticRootPath, "build", "public/build")
-	hs.mapStatic(m, setting.StaticRootPath, "", "public")
-	hs.mapStatic(m, setting.StaticRootPath, "robots.txt", "robots.txt")
+	hs.mapStatic(m, hs.Cfg.StaticRootPath, "build", "public/build")
+	hs.mapStatic(m, hs.Cfg.StaticRootPath, "", "public")
+	hs.mapStatic(m, hs.Cfg.StaticRootPath, "robots.txt", "robots.txt")
 
-	if setting.ImageUploadProvider == "local" {
+	if hs.Cfg.ImageUploadProvider == "local" {
 		hs.mapStatic(m, hs.Cfg.ImagesDir, "", "/public/img/attachments")
 	}
 
 	m.Use(middleware.AddDefaultResponseHeaders(hs.Cfg))
 
-	if setting.ServeFromSubPath && setting.AppSubUrl != "" {
-		m.SetURLPrefix(setting.AppSubUrl)
+	if hs.Cfg.ServeFromSubPath && hs.Cfg.AppSubURL != "" {
+		m.SetURLPrefix(hs.Cfg.AppSubURL)
 	}
 
 	m.Use(macaron.Renderer(macaron.RenderOptions{
-		Directory:  filepath.Join(setting.StaticRootPath, "views"),
+		Directory:  filepath.Join(hs.Cfg.StaticRootPath, "views"),
 		IndentJSON: macaron.Env != macaron.PROD,
 		Delims:     macaron.Delims{Left: "[[", Right: "]]"},
 	}))
@@ -354,7 +354,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m.Use(middleware.OrgRedirect(hs.Cfg))
 
 	// needs to be after context handler
-	if setting.EnforceDomain {
+	if hs.Cfg.EnforceDomain {
 		m.Use(middleware.ValidateHostHeader(hs.Cfg))
 	}
 
@@ -411,8 +411,8 @@ func (hs *HTTPServer) apiHealthHandler(ctx *macaron.Context) {
 	data := simplejson.New()
 	data.Set("database", "ok")
 	if !hs.Cfg.AnonymousHideVersion {
-		data.Set("version", setting.BuildVersion)
-		data.Set("commit", setting.BuildCommit)
+		data.Set("version", hs.Cfg.BuildVersion)
+		data.Set("commit", hs.Cfg.BuildCommit)
 	}
 
 	if !hs.databaseHealthy() {

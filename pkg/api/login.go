@@ -109,7 +109,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 		return
 	}
 
-	if tryOAuthAutoLogin(c) {
+	if hs.tryOAuthAutoLogin(c) {
 		return
 	}
 
@@ -136,14 +136,14 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 			return
 		}
 
-		c.Redirect(setting.AppSubUrl + "/")
+		c.Redirect(hs.Cfg.AppSubURL + "/")
 		return
 	}
 
 	c.HTML(200, getViewIndex(), viewData)
 }
 
-func tryOAuthAutoLogin(c *models.ReqContext) bool {
+func (hs *HTTPServer) tryOAuthAutoLogin(c *models.ReqContext) bool {
 	if !setting.OAuthAutoLogin {
 		return false
 	}
@@ -153,7 +153,7 @@ func tryOAuthAutoLogin(c *models.ReqContext) bool {
 		return false
 	}
 	for key := range setting.OAuthService.OAuthInfos {
-		redirectUrl := setting.AppSubUrl + "/login/" + key
+		redirectUrl := hs.Cfg.AppSubURL + "/login/" + key
 		log.Infof("OAuth auto login enabled. Redirecting to " + redirectUrl)
 		c.Redirect(redirectUrl, 307)
 		return true
@@ -279,7 +279,7 @@ func (hs *HTTPServer) loginUserWithUser(user *models.User, c *models.ReqContext)
 
 func (hs *HTTPServer) Logout(c *models.ReqContext) {
 	if hs.Cfg.SAMLEnabled && hs.Cfg.SAMLSingleLogoutEnabled && hs.License.HasValidLicense() {
-		c.Redirect(setting.AppSubUrl + "/logout/saml")
+		c.Redirect(hs.Cfg.AppSubURL + "/logout/saml")
 		return
 	}
 
@@ -294,7 +294,7 @@ func (hs *HTTPServer) Logout(c *models.ReqContext) {
 		c.Redirect(setting.SignoutRedirectUrl)
 	} else {
 		hs.log.Info("Successful Logout", "User", c.Email)
-		c.Redirect(setting.AppSubUrl + "/login")
+		c.Redirect(hs.Cfg.AppSubURL + "/login")
 	}
 }
 
@@ -330,7 +330,7 @@ func (hs *HTTPServer) redirectWithError(ctx *models.ReqContext, err error, v ...
 		hs.log.Error("Failed to set encrypted cookie", "err", err)
 	}
 
-	ctx.Redirect(setting.AppSubUrl + "/login")
+	ctx.Redirect(hs.Cfg.AppSubURL + "/login")
 }
 
 func (hs *HTTPServer) RedirectResponseWithError(ctx *models.ReqContext, err error, v ...interface{}) *response.RedirectResponse {
@@ -339,7 +339,7 @@ func (hs *HTTPServer) RedirectResponseWithError(ctx *models.ReqContext, err erro
 		hs.log.Error("Failed to set encrypted cookie", "err", err)
 	}
 
-	return response.Redirect(setting.AppSubUrl + "/login")
+	return response.Redirect(hs.Cfg.AppSubURL + "/login")
 }
 
 func getLoginExternalError(err error) string {
