@@ -8,9 +8,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/plugins"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 
-	"github.com/grafana/grafana/pkg/tsdb"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -999,9 +999,10 @@ func newResponseParserForTest(tsdbQueries map[string]string, responseBody string
 	to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
 	fromStr := fmt.Sprintf("%d", from.UnixNano()/int64(time.Millisecond))
 	toStr := fmt.Sprintf("%d", to.UnixNano()/int64(time.Millisecond))
-	tsdbQuery := &tsdb.TsdbQuery{
-		Queries:   []*tsdb.Query{},
-		TimeRange: tsdb.NewTimeRange(fromStr, toStr),
+	timeRange := plugins.NewDataTimeRange(fromStr, toStr)
+	tsdbQuery := plugins.DataQuery{
+		Queries:   []plugins.DataSubQuery{},
+		TimeRange: &timeRange,
 	}
 
 	for refID, tsdbQueryBody := range tsdbQueries {
@@ -1010,9 +1011,9 @@ func newResponseParserForTest(tsdbQueries map[string]string, responseBody string
 			return nil, err
 		}
 
-		tsdbQuery.Queries = append(tsdbQuery.Queries, &tsdb.Query{
+		tsdbQuery.Queries = append(tsdbQuery.Queries, plugins.DataSubQuery{
 			Model: tsdbQueryJSON,
-			RefId: refID,
+			RefID: refID,
 		})
 	}
 

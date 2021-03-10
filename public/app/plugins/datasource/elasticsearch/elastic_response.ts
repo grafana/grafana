@@ -15,7 +15,7 @@ import {
   ExtendedStatMetaType,
   isMetricAggregationWithField,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
-import { describeMetric } from './utils';
+import { describeMetric, getScriptValue } from './utils';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 
 const HIGHLIGHT_TAGS_EXP = `${queryDef.highlightTags.pre}([^@]+)${queryDef.highlightTags.post}`;
@@ -207,7 +207,7 @@ export class ElasticResponse {
 
               if (metric.type === 'bucket_script') {
                 //Use the formula in the column name
-                metricName = metric.settings?.script || '';
+                metricName = getScriptValue(metric);
               }
             }
 
@@ -306,7 +306,7 @@ export class ElasticResponse {
       if (series.metric && queryDef.isPipelineAggWithMultipleBucketPaths(series.metric)) {
         const agg: any = _.find(target.metrics, { id: series.metricId });
         if (agg && agg.settings.script) {
-          metricName = agg.settings.script;
+          metricName = getScriptValue(agg);
 
           for (const pv of agg.pipelineVariables) {
             const appliedAgg: any = _.find(target.metrics, { id: pv.pipelineAgg });
@@ -425,7 +425,7 @@ export class ElasticResponse {
   }
 
   getTimeSeries() {
-    if (this.targets.some((target) => target.metrics?.some((metric) => metric.type === 'raw_data'))) {
+    if (this.targets.some((target) => queryDef.hasMetricOfType(target, 'raw_data'))) {
       return this.processResponseToDataFrames(false);
     }
     return this.processResponseToSeries();

@@ -15,7 +15,7 @@ import (
 var (
 	sqlStatmentLibrayPanelDTOWithMeta = `
 SELECT DISTINCT
-	lp.id, lp.org_id, lp.folder_id, lp.uid, lp.name, lp.model, lp.created, lp.created_by, lp.updated, lp.updated_by
+	lp.id, lp.org_id, lp.folder_id, lp.uid, lp.name, lp.model, lp.created, lp.created_by, lp.updated, lp.updated_by, lp.version
 	, 0 AS can_edit
 	, u1.login AS created_by_name
 	, u1.email AS created_by_email
@@ -53,6 +53,7 @@ func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd cre
 		UID:      util.GenerateShortUID(),
 		Name:     cmd.Name,
 		Model:    cmd.Model,
+		Version:  1,
 
 		Created: time.Now(),
 		Updated: time.Now(),
@@ -85,6 +86,7 @@ func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd cre
 		UID:      libraryPanel.UID,
 		Name:     libraryPanel.Name,
 		Model:    libraryPanel.Model,
+		Version:  libraryPanel.Version,
 		Meta: LibraryPanelDTOMeta{
 			CanEdit:             true,
 			ConnectedDashboards: 0,
@@ -231,6 +233,59 @@ func (lps *LibraryPanelService) disconnectLibraryPanelsForDashboard(c *models.Re
 	})
 }
 
+// deleteLibraryPanelsInFolder deletes all Library Panels for a folder.
+func (lps *LibraryPanelService) deleteLibraryPanelsInFolder(c *models.ReqContext, folderUID string) error {
+	return lps.SQLStore.WithTransactionalDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
+		var folderUIDs []struct {
+			ID int64 `xorm:"id"`
+		}
+		err := session.SQL("SELECT id from dashboard WHERE uid=? AND org_id=? AND is_folder=1", folderUID, c.SignedInUser.OrgId).Find(&folderUIDs)
+		if err != nil {
+			return err
+		}
+		if len(folderUIDs) != 1 {
+			return fmt.Errorf("found %d folders, while expecting at most one", len(folderUIDs))
+		}
+		folderID := folderUIDs[0].ID
+
+		if err := requirePermissionsOnFolder(c.SignedInUser, folderID); err != nil {
+			return err
+		}
+		var dashIDs []struct {
+			DashboardID int64 `xorm:"dashboard_id"`
+		}
+		sql := "SELECT lpd.dashboard_id FROM library_panel AS lp"
+		sql += " INNER JOIN library_panel_dashboard lpd on lp.id = lpd.librarypanel_id"
+		sql += " WHERE lp.folder_id=? AND lp.org_id=?"
+		err = session.SQL(sql, folderID, c.SignedInUser.OrgId).Find(&dashIDs)
+		if err != nil {
+			return err
+		}
+		if len(dashIDs) > 0 {
+			return ErrFolderHasConnectedLibraryPanels
+		}
+
+		var panelIDs []struct {
+			ID int64 `xorm:"id"`
+		}
+		err = session.SQL("SELECT id from library_panel WHERE folder_id=? AND org_id=?", folderID, c.SignedInUser.OrgId).Find(&panelIDs)
+		if err != nil {
+			return err
+		}
+		for _, panelID := range panelIDs {
+			_, err := session.Exec("DELETE FROM library_panel_dashboard WHERE librarypanel_id=?", panelID.ID)
+			if err != nil {
+				return err
+			}
+		}
+		if _, err := session.Exec("DELETE FROM library_panel WHERE folder_id=? AND org_id=?", folderID, c.SignedInUser.OrgId); err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+
 func getLibraryPanel(session *sqlstore.DBSession, uid string, orgID int64) (LibraryPanelWithMeta, error) {
 	libraryPanels := make([]LibraryPanelWithMeta, 0)
 	sql := sqlStatmentLibrayPanelDTOWithMeta + "WHERE lp.uid=? AND lp.org_id=?"
@@ -287,6 +342,7 @@ func (lps *LibraryPanelService) getLibraryPanel(c *models.ReqContext, uid string
 		UID:      libraryPanel.UID,
 		Name:     libraryPanel.Name,
 		Model:    libraryPanel.Model,
+		Version:  libraryPanel.Version,
 		Meta: LibraryPanelDTOMeta{
 			CanEdit:             true,
 			ConnectedDashboards: libraryPanel.ConnectedDashboards,
@@ -342,6 +398,7 @@ func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext, limit 
 			UID:      panel.UID,
 			Name:     panel.Name,
 			Model:    panel.Model,
+			Version:  panel.Version,
 			Meta: LibraryPanelDTOMeta{
 				CanEdit:             true,
 				ConnectedDashboards: panel.ConnectedDashboards,
@@ -413,6 +470,7 @@ func (lps *LibraryPanelService) getLibraryPanelsForDashboardID(c *models.ReqCont
 				UID:      panel.UID,
 				Name:     panel.Name,
 				Model:    panel.Model,
+				Version:  panel.Version,
 				Meta: LibraryPanelDTOMeta{
 					CanEdit:             panel.CanEdit,
 					ConnectedDashboards: panel.ConnectedDashboards,
@@ -469,6 +527,9 @@ func (lps *LibraryPanelService) patchLibraryPanel(c *models.ReqContext, cmd patc
 		if err != nil {
 			return err
 		}
+		if panelInDB.Version != cmd.Version {
+			return errLibraryPanelVersionMismatch
+		}
 
 		var libraryPanel = LibraryPanel{
 			ID:        panelInDB.ID,
@@ -477,6 +538,7 @@ func (lps *LibraryPanelService) patchLibraryPanel(c *models.ReqContext, cmd patc
 			UID:       uid,
 			Name:      cmd.Name,
 			Model:     cmd.Model,
+			Version:   panelInDB.Version + 1,
 			Created:   panelInDB.Created,
 			CreatedBy: panelInDB.CreatedBy,
 			Updated:   time.Now(),
@@ -511,6 +573,7 @@ func (lps *LibraryPanelService) patchLibraryPanel(c *models.ReqContext, cmd patc
 			UID:      libraryPanel.UID,
 			Name:     libraryPanel.Name,
 			Model:    libraryPanel.Model,
+			Version:  libraryPanel.Version,
 			Meta: LibraryPanelDTOMeta{
 				CanEdit:             true,
 				ConnectedDashboards: panelInDB.ConnectedDashboards,

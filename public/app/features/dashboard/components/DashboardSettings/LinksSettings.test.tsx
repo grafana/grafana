@@ -3,6 +3,8 @@ import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import { within } from '@testing-library/dom';
 import userEvent from '@testing-library/user-event';
+import { selectors } from '@grafana/e2e-selectors';
+
 import { LinksSettings } from './LinksSettings';
 
 describe('LinksSettings', () => {
@@ -61,7 +63,9 @@ describe('LinksSettings', () => {
     render(<LinksSettings dashboard={linklessDashboard} />);
 
     expect(screen.getByRole('heading', { name: 'Dashboard Links' })).toBeInTheDocument();
-    expect(screen.getByLabelText('Call to action button Add Dashboard Link')).toBeInTheDocument();
+    expect(
+      screen.getByLabelText(selectors.components.CallToActionCard.button('Add Dashboard Link'))
+    ).toBeInTheDocument();
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
   });
 
@@ -72,7 +76,9 @@ describe('LinksSettings', () => {
     const tableBodyRows = within(screen.getAllByRole('rowgroup')[1]).getAllByRole('row');
 
     expect(tableBodyRows.length).toBe(links.length);
-    expect(screen.queryByLabelText('Call to action button Add Dashboard Link')).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText(selectors.components.CallToActionCard.button('Add Dashboard Link'))
+    ).not.toBeInTheDocument();
   });
 
   test('it rearranges the order of dashboard links', () => {

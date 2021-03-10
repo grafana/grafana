@@ -144,7 +144,7 @@ const fetchTagValues = (tagText: string): ThunkResult<Promise<string[]>> => {
 };
 
 const getTimeRange = (variable: QueryVariableModel) => {
-  if (variable.refresh === VariableRefresh.onTimeRangeChanged) {
+  if (variable.refresh === VariableRefresh.onTimeRangeChanged || variable.refresh === VariableRefresh.onDashboardLoad) {
     return getTimeSrv().timeRange();
   }
   return undefined;

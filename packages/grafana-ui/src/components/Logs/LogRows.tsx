@@ -17,7 +17,6 @@ export interface Props extends Themeable {
   deduplicatedRows?: LogRowModel[];
   dedupStrategy: LogsDedupStrategy;
   highlighterExpressions?: string[];
-  showContextToggle?: (row?: LogRowModel) => boolean;
   showLabels: boolean;
   showTime: boolean;
   wrapLogMessage: boolean;
@@ -28,11 +27,13 @@ export interface Props extends Themeable {
   // Passed to fix problems with inactive scrolling in Logs Panel
   // Can be removed when we unify scrolling for Panel and Explore
   disableCustomHorizontalScroll?: boolean;
+  forceEscape?: boolean;
+  showDetectedFields?: string[];
+  showContextToggle?: (row?: LogRowModel) => boolean;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
   getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<any>;
   getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
-  showDetectedFields?: string[];
   onClickShowDetectedField?: (key: string) => void;
   onClickHideDetectedField?: (key: string) => void;
 }
@@ -101,6 +102,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       showDetectedFields,
       onClickShowDetectedField,
       onClickHideDetectedField,
+      forceEscape,
     } = this.props;
     const { renderAll } = this.state;
     const { logsRowsTable, logsRowsHorizontalScroll } = getLogRowStyles(theme);
@@ -151,6 +153,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   onClickHideDetectedField={onClickHideDetectedField}
                   getFieldLinks={getFieldLinks}
                   logsSortOrder={logsSortOrder}
+                  forceEscape={forceEscape}
                 />
               ))}
             {hasData &&
@@ -175,6 +178,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   onClickHideDetectedField={onClickHideDetectedField}
                   getFieldLinks={getFieldLinks}
                   logsSortOrder={logsSortOrder}
+                  forceEscape={forceEscape}
                 />
               ))}
             {hasData && !renderAll && (
