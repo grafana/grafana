@@ -115,6 +115,8 @@ If you have created dashboards with template variables, then you can choose whic
 
 Enable this feature in configuration settings using the `templateVariables` flag.
 
+For more information, refer to [Reporting]({{< relref "../enterprise/reporting.md#choose-template-variables" >}}).
+
 ### Active user limits
 
 If a Grafana instance has exceeded its licensed number of active users, then non-active users who try to sign in to Grafana will be prevented from doing so. Active users are users who have logged in to Grafana in the past 30 days. The total number of users registered in Grafana does not affect this rule. This enforcement is applied separately for Viewers and for Editor/Admins, so if you reach your active Viewer limit, new Editor/Admins will still be able to sign in. This rule also includes a 10% buffer, meaning that you need to exceed your limit by 10% before users are prevented from signing in.
