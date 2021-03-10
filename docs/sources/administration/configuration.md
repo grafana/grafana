@@ -291,9 +291,7 @@ The database user's password (not applicable for `sqlite3`). If the password con
 ### url
 
 Use either URL or the other fields below to configure the database
-Example: `mysql://user:secret@
-
-:port/database`
+Example: `mysql://user:secret@host:port/database`
 
 ### max_idle_conn
 
