@@ -14,6 +14,7 @@ import TimeGrainField from './TimeGrainField';
 import DimensionFields from './DimensionFields';
 import TopField from './TopField';
 import LegendFormatField from './LegendFormatField';
+import { InlineFieldRow } from '@grafana/ui';
 
 interface MetricsQueryEditorProps {
   query: AzureMonitorQuery;
@@ -34,73 +35,75 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
 
   return (
     <div data-testid="azure-monitor-metrics-query-editor">
-      <SubscriptionField
-        query={query}
-        datasource={datasource}
-        subscriptionId={subscriptionId}
-        variableOptionGroup={variableOptionGroup}
-        onQueryChange={onChange}
-      />
+      <InlineFieldRow>
+        <SubscriptionField
+          query={query}
+          datasource={datasource}
+          subscriptionId={subscriptionId}
+          variableOptionGroup={variableOptionGroup}
+          onQueryChange={onChange}
+        />
 
-      <ResourceGroupsField
-        query={query}
-        datasource={datasource}
-        subscriptionId={subscriptionId}
-        variableOptionGroup={variableOptionGroup}
-        onQueryChange={onChange}
-      />
+        <ResourceGroupsField
+          query={query}
+          datasource={datasource}
+          subscriptionId={subscriptionId}
+          variableOptionGroup={variableOptionGroup}
+          onQueryChange={onChange}
+        />
+      </InlineFieldRow>
 
-      <NamespaceField
-        query={query}
-        datasource={datasource}
-        subscriptionId={subscriptionId}
-        variableOptionGroup={variableOptionGroup}
-        onQueryChange={onChange}
-      />
+      <InlineFieldRow>
+        <NamespaceField
+          query={query}
+          datasource={datasource}
+          subscriptionId={subscriptionId}
+          variableOptionGroup={variableOptionGroup}
+          onQueryChange={onChange}
+        />
+        <ResourceNameField
+          query={query}
+          datasource={datasource}
+          subscriptionId={subscriptionId}
+          variableOptionGroup={variableOptionGroup}
+          onQueryChange={onChange}
+        />
+      </InlineFieldRow>
 
-      <ResourceNameField
-        query={query}
-        datasource={datasource}
-        subscriptionId={subscriptionId}
-        variableOptionGroup={variableOptionGroup}
-        onQueryChange={onChange}
-      />
-
-      {/* TODO: Can we hide this field if there's only one option, and its the same as the namespace? */}
-      <MetricNamespaceField
-        query={query}
-        datasource={datasource}
-        subscriptionId={subscriptionId}
-        variableOptionGroup={variableOptionGroup}
-        onQueryChange={onChange}
-      />
-
-      <MetricNameField
-        query={query}
-        datasource={datasource}
-        subscriptionId={subscriptionId}
-        variableOptionGroup={variableOptionGroup}
-        onQueryChange={onChange}
-      />
-
-      <AggregationField
-        query={query}
-        datasource={datasource}
-        subscriptionId={subscriptionId}
-        variableOptionGroup={variableOptionGroup}
-        onQueryChange={onChange}
-        aggregationOptions={metricsMetadata?.aggOptions ?? []}
-      />
-
-      <TimeGrainField
-        query={query}
-        datasource={datasource}
-        subscriptionId={subscriptionId}
-        variableOptionGroup={variableOptionGroup}
-        onQueryChange={onChange}
-        timeGrainOptions={metricsMetadata?.timeGrains ?? []}
-      />
-
+      <InlineFieldRow>
+        <MetricNamespaceField
+          query={query}
+          datasource={datasource}
+          subscriptionId={subscriptionId}
+          variableOptionGroup={variableOptionGroup}
+          onQueryChange={onChange}
+        />
+        <MetricNameField
+          query={query}
+          datasource={datasource}
+          subscriptionId={subscriptionId}
+          variableOptionGroup={variableOptionGroup}
+          onQueryChange={onChange}
+        />
+      </InlineFieldRow>
+      <InlineFieldRow>
+        <AggregationField
+          query={query}
+          datasource={datasource}
+          subscriptionId={subscriptionId}
+          variableOptionGroup={variableOptionGroup}
+          onQueryChange={onChange}
+          aggregationOptions={metricsMetadata?.aggOptions ?? []}
+        />
+        <TimeGrainField
+          query={query}
+          datasource={datasource}
+          subscriptionId={subscriptionId}
+          variableOptionGroup={variableOptionGroup}
+          onQueryChange={onChange}
+          timeGrainOptions={metricsMetadata?.timeGrains ?? []}
+        />
+      </InlineFieldRow>
       <DimensionFields
         query={query}
         datasource={datasource}
@@ -109,7 +112,6 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
         onQueryChange={onChange}
         dimensionOptions={metricsMetadata?.dimensions ?? []}
       />
-
       <TopField
         query={query}
         datasource={datasource}
@@ -117,7 +119,6 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
         variableOptionGroup={variableOptionGroup}
         onQueryChange={onChange}
       />
-
       <LegendFormatField
         query={query}
         datasource={datasource}
