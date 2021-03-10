@@ -169,6 +169,7 @@ func TestQuery_GetLogGroupFields(t *testing.T) {
 	}
 
 	const refID = "A"
+
 	executor := newExecutor(nil, newTestConfig())
 	resp, err := executor.DataQuery(context.Background(), fakeDataSource(), plugins.DataQuery{
 		Queries: []plugins.DataSubQuery{

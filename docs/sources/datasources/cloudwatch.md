@@ -300,7 +300,7 @@ Filters syntax:
 Example `ec2_instance_attribute()` query
 
 ```javascript
-ec2_instance_attribute(us-east-1, InstanceId, { "tag:Environment": ["production"] });
+ec2_instance_attribute(us - east - 1, InstanceId, { 'tag:Environment': ['production'] });
 ```
 
 ### Selecting attributes
@@ -341,7 +341,7 @@ Tags can be selected by prepending the tag name with `Tags.`
 Example `ec2_instance_attribute()` query
 
 ```javascript
-ec2_instance_attribute(us-east-1, Tags.Name, { "tag:Team": ["sysops"] });
+ec2_instance_attribute(us - east - 1, Tags.Name, { 'tag:Team': ['sysops'] });
 ```
 
 ## Using json format template variables
@@ -384,6 +384,10 @@ Specify which authentication providers are allowed for the CloudWatch data sourc
 ### assume_role_enabled
 
 Allows you to disable `assume role (ARN)` in the CloudWatch data source. By default, assume role (ARN) is enabled for OSS Grafana.
+
+### list_metrics_page_limit
+
+When a custom namespace is specified in the query editor, the [List Metrics API](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_ListMetrics.html) is used to populate the _Metrics_ field and the _Dimension_ fields. The API is paginated and returns up to 500 results per page. The CloudWatch data source also limits the number of pages to 500. However, you can change this limit using the `list_metrics_page_limit` variable in the [grafana configuration file](https://grafana.com/docs/grafana/latest/administration/configuration/#aws).
 
 ## Configure the data source with provisioning
 
