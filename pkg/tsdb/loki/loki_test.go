@@ -6,7 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/plugins"
 	p "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 )
@@ -22,7 +22,7 @@ func TestLoki(t *testing.T) {
 			p.LabelName("device"): p.LabelValue("mobile"),
 		}
 
-		query := &LokiQuery{
+		query := &lokiQuery{
 			LegendFormat: "legend {{app}} {{ device }} {{broken}}",
 		}
 
@@ -36,7 +36,7 @@ func TestLoki(t *testing.T) {
 			p.LabelName("device"):          p.LabelValue("mobile"),
 		}
 
-		query := &LokiQuery{
+		query := &lokiQuery{
 			LegendFormat: "",
 		}
 
@@ -49,15 +49,19 @@ func TestLoki(t *testing.T) {
 				"format": "time_series",
 				"refId": "A"
 			}`
-		jsonModel, _ := simplejson.NewJson([]byte(json))
-		queryContext := &tsdb.TsdbQuery{}
-		queryModels := []*tsdb.Query{
-			{Model: jsonModel},
+		jsonModel, err := simplejson.NewJson([]byte(json))
+		require.NoError(t, err)
+		timeRange := plugins.NewDataTimeRange("12h", "now")
+		queryContext := plugins.DataQuery{
+			Queries: []plugins.DataSubQuery{
+				{Model: jsonModel},
+			},
+			TimeRange: &timeRange,
 		}
 
-		queryContext.TimeRange = tsdb.NewTimeRange("12h", "now")
-
-		models, err := parseQuery(dsInfo, queryModels, queryContext)
+		exe := newExecutor()
+		require.NoError(t, err)
+		models, err := exe.parseQuery(dsInfo, queryContext)
 		require.NoError(t, err)
 		require.Equal(t, time.Second*30, models[0].Step)
 	})
@@ -68,19 +72,24 @@ func TestLoki(t *testing.T) {
 				"format": "time_series",
 				"refId": "A"
 			}`
-		jsonModel, _ := simplejson.NewJson([]byte(json))
-		queryContext := &tsdb.TsdbQuery{}
-		queryModels := []*tsdb.Query{
-			{Model: jsonModel},
+		jsonModel, err := simplejson.NewJson([]byte(json))
+		require.NoError(t, err)
+		timeRange := plugins.NewDataTimeRange("48h", "now")
+		queryContext := plugins.DataQuery{
+			TimeRange: &timeRange,
+			Queries: []plugins.DataSubQuery{
+				{Model: jsonModel},
+			},
 		}
-
-		queryContext.TimeRange = tsdb.NewTimeRange("48h", "now")
-		models, err := parseQuery(dsInfo, queryModels, queryContext)
+		exe := newExecutor()
+		require.NoError(t, err)
+		models, err := exe.parseQuery(dsInfo, queryContext)
 		require.NoError(t, err)
 		require.Equal(t, time.Minute*2, models[0].Step)
 
-		queryContext.TimeRange = tsdb.NewTimeRange("1h", "now")
-		models, err = parseQuery(dsInfo, queryModels, queryContext)
+		timeRange = plugins.NewDataTimeRange("1h", "now")
+		queryContext.TimeRange = &timeRange
+		models, err = exe.parseQuery(dsInfo, queryContext)
 		require.NoError(t, err)
 		require.Equal(t, time.Second*2, models[0].Step)
 	})

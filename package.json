@@ -46,7 +46,7 @@
     "ci:test-frontend": "yarn run prettier:check && yarn run typecheck && yarn run lint && yarn run test:ci && yarn grafana-toolkit node-version-check && ./scripts/ci-check-strict.sh"
   },
   "grafana": {
-    "whatsNewUrl": "https://grafana.com/docs/grafana/latest/guides/whats-new-in-v7-4/",
+    "whatsNewUrl": "https://grafana.com/docs/grafana/latest/guides/whats-new-in-v7-5/",
     "releaseNotesUrl": "https://grafana.com/docs/grafana/latest/release-notes/"
   },
   "husky": {
@@ -92,6 +92,7 @@
     "@types/enzyme": "3.10.5",
     "@types/enzyme-adapter-react-16": "1.0.6",
     "@types/file-saver": "2.0.1",
+    "@types/history": "^4.7.8",
     "@types/is-hotkey": "0.1.1",
     "@types/jest": "26.0.15",
     "@types/jquery": "3.3.38",
@@ -107,6 +108,7 @@
     "@types/react-dom": "16.9.9",
     "@types/react-grid-layout": "1.1.1",
     "@types/react-redux": "7.1.7",
+    "@types/react-router-dom": "^5.1.7",
     "@types/react-select": "3.0.8",
     "@types/react-test-renderer": "16.9.2",
     "@types/react-transition-group": "4.4.0",
@@ -200,6 +202,7 @@
   },
   "dependencies": {
     "@emotion/core": "10.0.27",
+    "@grafana/aws-sdk": "0.0.2",
     "@grafana/slate-react": "0.22.9-grafana",
     "@popperjs/core": "2.5.4",
     "@reduxjs/toolkit": "1.5.0",
@@ -215,9 +218,9 @@
     "@types/md5": "^2.1.33",
     "@types/react-loadable": "5.5.2",
     "@types/react-virtualized-auto-sizer": "1.0.0",
-    "@types/sockjs-client": "^1.1.1",
     "@types/uuid": "8.3.0",
     "@welldone-software/why-did-you-render": "4.0.6",
+    "history": "4.10.1",
     "abortcontroller-polyfill": "1.4.0",
     "angular": "1.8.2",
     "angular-bindonce": "0.3.1",
@@ -256,7 +259,7 @@
     "mousetrap-global-bind": "1.1.0",
     "nodemon": "2.0.2",
     "papaparse": "5.3.0",
-    "prismjs": "1.21.0",
+    "prismjs": "1.23.0",
     "prop-types": "15.7.2",
     "rc-cascader": "1.0.1",
     "re-resizable": "^6.2.0",
@@ -269,6 +272,7 @@
     "react-popper": "2.2.4",
     "react-redux": "7.2.0",
     "react-reverse-portal": "^2.0.1",
+    "react-router-dom": "^5.2.0",
     "react-sizeme": "2.6.12",
     "react-split-pane": "0.1.89",
     "react-transition-group": "4.4.1",
@@ -285,7 +289,6 @@
     "search-query-parser": "1.5.4",
     "slate": "0.47.8",
     "slate-plain-serializer": "0.7.10",
-    "sockjs-client": "^1.4.0",
     "tether": "1.4.7",
     "tether-drop": "https://github.com/torkelo/drop/tarball/master",
     "tinycolor2": "1.4.1",
