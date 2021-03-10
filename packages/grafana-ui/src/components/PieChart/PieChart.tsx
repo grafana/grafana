@@ -70,11 +70,12 @@ export const PieChart: FC<Props> = ({
     const values = fields.map((v) => v.display);
     const total = values.reduce((acc, item) => item.numeric + acc, 0);
 
-    const legendItems = values.map<VizLegendItem>((value) => {
+    const legendItems = values.map<VizLegendItem>((value, idx) => {
       return {
         label: value.title ?? '',
         color: value.color ?? FALLBACK_COLOR,
         yAxis: 1,
+        getItemKey: () => (value.title ?? '') + idx,
         getDisplayValues: () => {
           const valuesToShow = legendOptions.values ?? [];
           let displayValues = [];
